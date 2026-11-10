@@ -7,6 +7,7 @@ import {
   InstantSchema,
   LocalDateKeySchema,
 } from '../user-state/user-state-record';
+import { xpEntryOf, type XpEntry } from './xp-entry';
 
 /** The most days a Break lasts (ADR 0066). */
 export const BREAK_DAYS_AT_MOST = 7;
@@ -29,9 +30,10 @@ export const XpSourceSchema = z.literal([
  * date, with its length in days, the Daily Goal the reader set from that
  * day on, a Badge earned on its date, a Badge the reader first opened, or a
  * Game Round answered wrong (ADR 0085). The kinds the ADR names besides these come with their own
- * tickets.
+ * tickets. The stored XP entry keeps the fields of every source; it reads as
+ * the form of its own source by the rule of `xpEntryOf`.
  */
-const XpRecordSchema = z.discriminatedUnion('kind', [
+const StoredXpRecordSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('xp'),
     date: LocalDateKeySchema,
@@ -99,7 +101,13 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
   }),
 ]);
 
-export type XpRecord = z.infer<typeof XpRecordSchema>;
+const XpRecordSchema = StoredXpRecordSchema.transform((record): XpRecord =>
+  record.kind === 'xp' ? xpEntryOf(record) : record,
+);
+
+type StoredXpRecord = z.infer<typeof StoredXpRecordSchema>;
+/** One record of the XP log in memory: an XP entry holds only the fields of its own source. */
+export type XpRecord = XpEntry | Exclude<StoredXpRecord, { kind: 'xp' }>;
 export type XpSource = z.infer<typeof XpSourceSchema>;
 
 /** The records of the progress: Active Days, the XP log and the reported Streak break. */
