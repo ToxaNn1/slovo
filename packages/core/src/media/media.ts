@@ -154,8 +154,20 @@ export function createMedia<Asset>({
     }
   }
 
+  /** The download under way of each Media Store path, so a tap during the prefetch fetches the file once. */
+  const downloading = new Map<string, Promise<void>>();
+
+  /** Downloads a file whole into the cache, joining a download of it under way. */
+  function fetchInto(file: StoredFile): Promise<void> {
+    const underWay = downloading.get(file.path);
+    if (underWay !== undefined) return underWay;
+    const download = downloadInto(file).finally(() => downloading.delete(file.path));
+    downloading.set(file.path, download);
+    return download;
+  }
+
   /** Downloads a file whole into the cache; a short or failed download leaves the cache as it was. */
-  async function fetchInto(file: StoredFile): Promise<void> {
+  async function downloadInto(file: StoredFile): Promise<void> {
     const bytes = await fetcher.download(file.url);
     if (bytes.length !== file.size)
       throw new Error(
