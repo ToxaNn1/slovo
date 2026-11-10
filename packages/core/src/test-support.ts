@@ -26,6 +26,7 @@ import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } fr
 import { openEligibility } from './mix/open-eligibility';
 import { createSubject } from './subject';
 import type { UserState } from './user-state/user-state';
+import { createTextComparison } from './text/text-comparison';
 
 // Helpers the Core's tests share. They are not part of the public `index.ts`;
 // `testing.ts` exports `testEdition` to the tests of other packages.
@@ -34,8 +35,8 @@ import type { UserState } from './user-state/user-state';
  * The config of the test Edition, in the shape of a real Edition's
  * `edition.json`: every Feature Switch on, one Category `test`, the one the
  * test Words carry, in its default Mix with every kind of Entry, the Daily
- * Limit off, four moods that shift nothing, and no notification time, origin
- * language or search letter.
+ * Limit off, four moods that shift nothing, the UA Edition's apostrophes, and
+ * no notification time, origin language or search letter.
  */
 const testEditionConfig = {
   id: 'test',
@@ -45,6 +46,7 @@ const testEditionConfig = {
   languageTraits: {
     stress: { marked: false },
     alphabet: 'a b c d e f g h i j k l m n o p q r s t u v w x y z',
+    apostrophes: "ʼ ' ’",
     sortLocale: 'en',
   },
   featureSwitches: Object.fromEntries(
@@ -190,6 +192,9 @@ export function testEdition({
 }
 
 /** The Known counts by kind of Entry: those named, and 0 for every other kind. */
+/** How the test Edition compares text. */
+export const testComparison = createTextComparison(testEdition());
+
 export const knownCounts = (counts: Partial<KnownCounts> = {}): KnownCounts => ({
   word: 0,
   correction: 0,

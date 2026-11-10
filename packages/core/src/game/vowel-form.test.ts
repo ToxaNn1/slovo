@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AnswerSheet } from './answer-form';
 import { vowelForm, type VowelContent } from './vowel-form';
+import { testComparison } from '../test-support';
 
 const sheet: AnswerSheet = {
   answer: { text: 'вимо́ва', stressedVowels: ['о'] },
@@ -16,28 +17,34 @@ describe('the vowel form', () => {
   });
 
   it('judges a stressed vowel right, with the sheet', () => {
-    expect(vowelForm.judge(content, round, { form: 'vowel', position: 3 })).toEqual({
-      answer: { form: 'vowel', chosen: 3, stressed: [3], right: true, sheet },
-    });
+    expect(vowelForm.judge(content, round, { form: 'vowel', position: 3 }, testComparison)).toEqual(
+      {
+        answer: { form: 'vowel', chosen: 3, stressed: [3], right: true, sheet },
+      },
+    );
   });
 
   it('judges any of several stressed vowels right', () => {
     const both = { ...content, stressed: [1, 3] };
-    expect(vowelForm.judge(both, round, { form: 'vowel', position: 1 })?.answer.right).toBe(true);
+    expect(
+      vowelForm.judge(both, round, { form: 'vowel', position: 1 }, testComparison)?.answer.right,
+    ).toBe(true);
   });
 
   it('judges another vowel wrong', () => {
-    expect(vowelForm.judge(content, round, { form: 'vowel', position: 5 })?.answer.right).toBe(
-      false,
-    );
+    expect(
+      vowelForm.judge(content, round, { form: 'vowel', position: 5 }, testComparison)?.answer.right,
+    ).toBe(false);
   });
 
   it('judges nothing for a place that is no vowel to tap', () => {
-    expect(vowelForm.judge(content, round, { form: 'vowel', position: 2 })).toBeUndefined();
+    expect(
+      vowelForm.judge(content, round, { form: 'vowel', position: 2 }, testComparison),
+    ).toBeUndefined();
   });
 
   it('shows the prompt stressed on the vowel tapped in the Game Review', () => {
-    const judged = vowelForm.judge(content, round, { form: 'vowel', position: 5 });
+    const judged = vowelForm.judge(content, round, { form: 'vowel', position: 5 }, testComparison);
     expect(judged && vowelForm.reviewAnswer(round, judged.answer)).toEqual({
       text: 'вимова́',
       stressedVowels: ['а'],

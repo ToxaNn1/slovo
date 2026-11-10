@@ -11,13 +11,17 @@ export type { ChipKind, ChipLayout, FixedChip } from './chips-form';
 /**
  * What the Game needs to know of the Edition: its Feature Switches, whether
  * it marks Stress and on which vowels, the punctuation an Idiom's expression
- * may hold, its alphabet, where letter tiles' decoys come from, and the
+ * may hold, its alphabet, where letter tiles' decoys come from, how it
+ * compares text (its apostrophes, case locale and Search letters), and the
  * languages Words come from; an Edition that leaves the last out has no
  * origin languages.
  */
-export type GameEdition = Pick<Edition, 'isFeatureEnabled'> &
+export type GameEdition = Pick<Edition, 'isFeatureEnabled' | 'searchLetters'> &
   Partial<Pick<Edition, 'originLanguages'>> & {
-    readonly languageTraits: Pick<LanguageTraits, 'stress' | 'expressionPunctuation' | 'alphabet'>;
+    readonly languageTraits: Pick<
+      LanguageTraits,
+      'stress' | 'expressionPunctuation' | 'alphabet' | 'apostrophes' | 'sortLocale'
+    >;
   };
 
 /**

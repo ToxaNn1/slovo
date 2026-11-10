@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AnswerSheet } from './answer-form';
 import { chipsForm, type ChipsContent } from './chips-form';
+import { testComparison } from '../test-support';
 
 const sheet: AnswerSheet = {
   answer: { text: 'зʼїзд', stressedVowels: [] },
@@ -49,7 +50,9 @@ describe('the chips form', () => {
   });
 
   it('judges the chips in the right order right, equal chips interchangeable', () => {
-    expect(chipsForm.judge(content, round, { form: 'chips', chips: [2, 1, 3, 0] })).toEqual({
+    expect(
+      chipsForm.judge(content, round, { form: 'chips', chips: [2, 1, 3, 0] }, testComparison),
+    ).toEqual({
       answer: {
         form: 'chips',
         chosen: [2, 1, 3, 0],
@@ -62,12 +65,15 @@ describe('the chips form', () => {
 
   it('judges the chips in another order wrong', () => {
     expect(
-      chipsForm.judge(content, round, { form: 'chips', chips: [0, 1, 2, 3] })?.answer.right,
+      chipsForm.judge(content, round, { form: 'chips', chips: [0, 1, 2, 3] }, testComparison)
+        ?.answer.right,
     ).toBe(false);
   });
 
   it('judges nothing for a chip the Round does not have', () => {
-    expect(chipsForm.judge(content, round, { form: 'chips', chips: [1, 2, 3, 4] })).toBeUndefined();
+    expect(
+      chipsForm.judge(content, round, { form: 'chips', chips: [1, 2, 3, 4] }, testComparison),
+    ).toBeUndefined();
   });
 
   it('is well formed only when the chips are the answer reordered', () => {
@@ -77,7 +83,12 @@ describe('the chips form', () => {
   });
 
   it('shows the letters tapped as one Word in the Game Review, the fixed characters in place', () => {
-    const judged = chipsForm.judge(content, round, { form: 'chips', chips: [0, 1, 2, 3] });
+    const judged = chipsForm.judge(
+      content,
+      round,
+      { form: 'chips', chips: [0, 1, 2, 3] },
+      testComparison,
+    );
     expect(judged && chipsForm.reviewAnswer(round, judged.answer)).toEqual({
       text: 'дʼззї',
       stressedVowels: [],
@@ -93,7 +104,7 @@ describe('the chips form', () => {
       sheet,
     };
     const shown = { ...chipsForm.shown(words, []), prompt: 'Ледарювати' };
-    const judged = chipsForm.judge(words, shown, { form: 'chips', chips: [0, 1] });
+    const judged = chipsForm.judge(words, shown, { form: 'chips', chips: [0, 1] }, testComparison);
     expect(judged && chipsForm.reviewAnswer(shown, judged.answer)?.text).toBe('байдики бити');
   });
 

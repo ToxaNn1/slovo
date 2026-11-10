@@ -38,6 +38,7 @@ import {
   type RoundPlanner,
 } from './round-plan';
 import { typedForm } from './typed-form';
+import { createTextComparison, type TextComparison } from '../text/text-comparison';
 
 export type { RoundBlank } from './typed-form';
 export type { GivenAnswer, RoundAnswer } from './answer-forms';
@@ -247,6 +248,7 @@ function createGameInPlay({
   rounds: planned,
   planRounds,
   eligible: eligibleAtStart,
+  comparison,
 }: {
   mode: GameMode;
   /** The Rounds the Game starts over, as the mode planned them. */
@@ -254,6 +256,8 @@ function createGameInPlay({
   planRounds: RoundPlanner;
   /** The eligible Entries of the mode's kinds the Rounds were planned from. */
   eligible: EligibleOfKind<AskableEntry>;
+  /** How the Edition compares a typed answer. */
+  comparison: TextComparison;
 }): GameInPlay | undefined {
   const first = planned[0];
   if (first === undefined) return undefined;
@@ -317,7 +321,8 @@ function createGameInPlay({
     answer(game, given) {
       if (game.status !== 'playing') return undefined;
       const at = plannedAt(game.round.number);
-      const judged = at && judge(at.planned.content, game.round, given, at.planned.entry);
+      const judged =
+        at && judge(at.planned.content, game.round, given, at.planned.entry, comparison);
       if (judged === undefined) return undefined;
       const { answer, entry } = judged;
       const answered: PlayingGame = {
@@ -620,6 +625,7 @@ export async function openGame({
     ids.add(id);
   }
   const gameOn = edition.isFeatureEnabled('game');
+  const comparison = createTextComparison(edition);
   const modes = gameOn ? registered.filter((mode) => mode.isOn(edition)) : [];
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
@@ -736,7 +742,7 @@ export async function openGame({
     const modesNow = sameOffers(offers, state.modes) ? state.modes : offers;
     played =
       'rounds' in plan
-        ? createGameInPlay({ mode, rounds: plan.rounds, planRounds, eligible })
+        ? createGameInPlay({ mode, rounds: plan.rounds, planRounds, eligible, comparison })
         : undefined;
     stopTime();
     const first =
