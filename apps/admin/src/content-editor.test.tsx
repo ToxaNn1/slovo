@@ -45,6 +45,7 @@ test('lists the records of a kind as a table of label, version and state', async
           { id: 'w_a1', label: 'обруч', retired: false, recordVersion: 3 },
           { id: 'w_a2', label: 'жупан', retired: true, recordVersion: 1 },
         ],
+        total: 2,
       }),
     ),
   );
@@ -58,6 +59,47 @@ test('lists the records of a kind as a table of label, version and state', async
     'обруч3чинний',
     'жупан1виведено',
   ]);
+});
+
+test('lists 50 records a page, moves between pages, and a search starts again on the first', async () => {
+  const asked: URL[] = [];
+  server.use(
+    http.get('*/admin/content/:editionId/records/:kind', ({ request }) => {
+      const url = new URL(request.url);
+      asked.push(url);
+      const page = Number(url.searchParams.get('page') ?? '1');
+      return HttpResponse.json({
+        records: [
+          {
+            id: `w_p${String(page)}`,
+            label: `слово ${String(page)}`,
+            retired: false,
+            recordVersion: 1,
+          },
+        ],
+        total: 120,
+      });
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+
+  const pages = await screen.findByRole('navigation', { name: 'Сторінки записів' });
+  await within(pages).findByText('1–50 з 120');
+  expect(within(pages).getByRole('button', { name: 'Назад' })).toHaveProperty('disabled', true);
+  await user.click(within(pages).getByRole('button', { name: '3' }));
+  await screen.findByRole('button', { name: 'слово 3' });
+  expect(within(pages).getByText('101–120 з 120')).toBeDefined();
+  expect(within(pages).getByRole('button', { name: 'Далі' })).toHaveProperty('disabled', true);
+  await user.click(within(pages).getByRole('button', { name: 'Назад' }));
+  await screen.findByRole('button', { name: 'слово 2' });
+
+  await user.type(screen.getByRole('textbox', { name: 'Пошук' }), 'обр');
+  await user.click(screen.getByRole('button', { name: 'Шукати' }));
+  await screen.findByRole('button', { name: 'слово 1' });
+  const last = asked.at(-1);
+  expect(last?.searchParams.get('query')).toBe('обр');
+  expect(last?.searchParams.get('page') ?? '1').toBe('1');
 });
 
 test('shows the Edition card read-only, and opens an editor with its fields for each kind', async () => {
