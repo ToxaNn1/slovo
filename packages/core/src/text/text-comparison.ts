@@ -40,6 +40,10 @@ export interface TextComparison {
     sought: string,
     options?: { readonly wholeWord?: boolean },
   ): FoundRange | undefined;
+  /** Whether the Edition reads the character as an apostrophe. */
+  isApostrophe(character: string): boolean;
+  /** The text in lower case, by the Edition's locale, as every Comparison Key folds it. */
+  lowerCase(text: string): string;
   /** The apostrophe a Comparison Key writes for each the Edition reads as one; none in an Edition that lists none. */
   readonly apostrophe: string | undefined;
 }
@@ -61,35 +65,31 @@ export function createTextComparison({
 }: TextComparisonEdition): TextComparison {
   const [apostrophe] = apostrophes;
   const readAsApostrophe = new Set(apostrophes);
+  const isApostrophe = (character: string) => readAsApostrophe.has(character);
+  const lowerCase = (text: string) => text.toLocaleLowerCase(sortLocale);
   const withApostrophe = (text: string) =>
     Array.from(text, (character) =>
-      apostrophe !== undefined && readAsApostrophe.has(character) ? apostrophe : character,
+      apostrophe !== undefined && isApostrophe(character) ? apostrophe : character,
     ).join('');
   /** The text as every Comparison Key writes it, before its ends are dropped. */
-  const folded = (text: string) =>
-    withApostrophe(
-      text
-        .normalize('NFD')
-        .replaceAll(STRESS_MARK, '')
-        .normalize('NFC')
-        .toLocaleLowerCase(sortLocale),
-    );
-  const typedAnswer = (text: string) => folded(text).trim();
+  const keyed = (text: string) =>
+    withApostrophe(lowerCase(text.normalize('NFD').replaceAll(STRESS_MARK, '').normalize('NFC')));
+  const typedAnswer = (text: string) => keyed(text).trim();
   const isWordCharacter = (character: string) =>
-    /[\p{L}\p{M}\p{N}-]/u.test(character) || readAsApostrophe.has(character);
+    /[\p{L}\p{M}\p{N}-]/u.test(character) || isApostrophe(character);
   function find(
     text: string,
     sought: string,
     { wholeWord = false }: { readonly wholeWord?: boolean } = {},
   ): FoundRange | undefined {
-    const wanted = folded(sought);
+    const wanted = keyed(sought);
     if (wanted === '') return undefined;
     let plain = '';
-    /** The place in the text of each place in `plain` that begins a character's folded form. */
+    /** The place in the text of each place in `plain` that begins a character's keyed form. */
     const placeAt = new Map<number, number>();
     let place = 0;
     for (const character of text) {
-      const form = folded(character);
+      const form = keyed(character);
       if (form !== '' && !placeAt.has(plain.length)) placeAt.set(plain.length, place);
       plain += form;
       place += character.length;
@@ -120,6 +120,8 @@ export function createTextComparison({
     key: (text, purpose) => keyFor[purpose](text),
     same: (one, other, purpose) => keyFor[purpose](one) === keyFor[purpose](other),
     find,
+    isApostrophe,
+    lowerCase,
     apostrophe,
   };
 }

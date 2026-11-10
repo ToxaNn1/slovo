@@ -38,7 +38,7 @@ import {
   type RoundPlanner,
 } from './round-plan';
 import { typedForm } from './typed-form';
-import { createTextComparison, type TextComparison } from '../text/text-comparison';
+import type { TextComparison } from '../text/text-comparison';
 
 export type { RoundBlank } from './typed-form';
 export type { GivenAnswer, RoundAnswer } from './answer-forms';
@@ -579,6 +579,7 @@ const offerOf = (mode: GameMode, plan: RoundPlan, best: number | undefined): Gam
  */
 export async function openGame({
   edition,
+  comparison,
   entries,
   history,
   knowledge,
@@ -594,6 +595,8 @@ export async function openGame({
   analytics,
 }: {
   edition: GameEdition;
+  /** The Edition's text comparison, built once by the composition. */
+  comparison: TextComparison;
   entries: Pick<Entries, 'eligibleOfKind'>;
   history: Pick<History, 'list'>;
   knowledge: Pick<Knowledge, 'weak' | 'answer' | 'confirm'>;
@@ -625,7 +628,6 @@ export async function openGame({
     ids.add(id);
   }
   const gameOn = edition.isFeatureEnabled('game');
-  const comparison = createTextComparison(edition);
   const modes = gameOn ? registered.filter((mode) => mode.isOn(edition)) : [];
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
@@ -663,7 +665,7 @@ export async function openGame({
   };
 
   /** The one place that decides whether a mode can start, see `createRoundPlanner`. */
-  const planRounds = createRoundPlanner({ history, knowledge, random, edition });
+  const planRounds = createRoundPlanner({ history, knowledge, random, edition, comparison });
 
   /**
    * Plans the modes on offer, once the composition is open and again after

@@ -5,17 +5,15 @@ import type { Random } from '../ports';
 import { shuffled } from '../shuffled';
 import type { TextComparison } from '../text/text-comparison';
 
-/** The characters of a Word that stay in place and are never blanks: an apostrophe of any kind or a hyphen. */
-const IN_PLACE = new Set(["'", 'ʼ', '’', '-']);
-
-/** Whether a character of a Word stays in place among its blanks: an apostrophe of any kind or a hyphen. */
-const staysInPlace = (character: string): boolean => IN_PLACE.has(character);
+/** Whether a character of a Word stays in place, never a tile or blank: one the Edition reads as an apostrophe, or a hyphen. */
+const staysInPlace = (character: string, comparison: TextComparison): boolean =>
+  character === '-' || comparison.isApostrophe(character);
 
 /** How many letter tiles a Round shows at least, and the columns they stand in, which their count fills. */
 const TILES = { min: 8, columns: 4 } as const;
 
 /**
- * The letter tiles of a Word, in lower case: its letters plus decoys, letters
+ * The letter tiles of a Word, in lower case by the Edition's locale: its letters plus decoys, letters
  * of the alphabet not in the Word, as many as make at least 8 tiles, rounded
  * up to a multiple of 4, so none for a Word of 8 or 12 letters; all shuffled
  * by the port, the first tiles never spelling the Word in its order.
@@ -44,8 +42,8 @@ function tilesRound(
   const letters: string[] = [];
   const fixed: FixedChip[] = [];
   for (const character of lemma) {
-    if (staysInPlace(character)) fixed.push({ at: letters.length, text: character });
-    else letters.push(character.toLowerCase());
+    if (staysInPlace(character, comparison)) fixed.push({ at: letters.length, text: character });
+    else letters.push(comparison.lowerCase(character));
   }
   return {
     form: 'chips',
@@ -64,10 +62,10 @@ function tilesRound(
  * primary Definition. With `letterTiles` on (board 07), the reader taps
  * letter tiles, the Word's letters plus decoys from the Edition's alphabet,
  * into a red slot for each letter. With it off, a blank stands for each
- * letter and the reader types the Word, compared the way
- * `typedAnswerMatches` does; «Відкрити літеру» opens one letter at a time
- * until one is left, at no cost. An apostrophe or a hyphen stays in place
- * and is no tile or blank; a Word with a space never plays. Its sheet shows
+ * letter and the reader types the Word, compared by its Comparison Key as a
+ * typed answer; «Відкрити літеру» opens one letter at a time until one is
+ * left, at no cost. A character the Edition reads as an apostrophe, or a
+ * hyphen, stays in place and is no tile or blank; a Word with a space never plays. Its sheet shows
  * the Lemma with its Stress and its first Example, if it has one.
  */
 export const byLettersMode: GameMode = {
@@ -87,7 +85,7 @@ export const byLettersMode: GameMode = {
       return tilesRound({ lemma: answer.lemma, prompt, sheet }, alphabet, random, comparison);
     }
     const inPlace = Array.from(answer.lemma).flatMap((character, place) =>
-      staysInPlace(character) ? [place] : [],
+      staysInPlace(character, comparison) ? [place] : [],
     );
     return {
       form: 'typed',

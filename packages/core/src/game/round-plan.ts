@@ -10,7 +10,7 @@ import {
   type RoundContent,
 } from './game-mode';
 import { shuffled } from '../shuffled';
-import { createTextComparison } from '../text/text-comparison';
+import type { TextComparison } from '../text/text-comparison';
 
 /** How many Rounds a Game has, in a Game Mode that sets no Round limit of its own. */
 export const GAME_ROUNDS = 15;
@@ -120,13 +120,15 @@ export function createRoundPlanner({
   knowledge,
   random,
   edition,
+  comparison,
 }: {
   history: Pick<History, 'list'>;
   knowledge: Pick<Knowledge, 'weak'>;
   random: Random;
   edition: GameEdition;
+  /** The Edition's text comparison, built once by the composition. */
+  comparison: TextComparison;
 }): RoundPlanner {
-  const comparison = createTextComparison(edition);
   return (mode, ofKind, count = roundsToPlanOf(mode), asked = new Set(), from = 1) => {
     if ('refusal' in ofKind) return ofKind;
     const eligible = ofKind.entries;

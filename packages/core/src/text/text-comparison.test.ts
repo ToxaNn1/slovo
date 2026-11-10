@@ -57,27 +57,27 @@ describe('a typed answer', () => {
 });
 
 describe('a Search query', () => {
-  const searchKey = (text: string) => ua.key(text, 'searchQuery');
+  const queryKey = (text: string) => ua.key(text, 'searchQuery');
 
   it('is one for a text with or without capitals, Stress and ґ', () => {
-    expect(searchKey('Ґанок')).toBe(searchKey('ганок'));
-    expect(searchKey('га́нок')).toBe(searchKey('ганок'));
-    expect(searchKey('ГА́НОК')).toBe(searchKey('ґанок'));
+    expect(queryKey('Ґанок')).toBe(queryKey('ганок'));
+    expect(queryKey('га́нок')).toBe(queryKey('ганок'));
+    expect(queryKey('ГА́НОК')).toBe(queryKey('ґанок'));
   });
 
   it('treats е and ё alike, with or without Stress', () => {
-    expect(searchKey('Ёлка')).toBe(searchKey('елка'));
-    expect(searchKey('ё́лка')).toBe(searchKey('елка'));
+    expect(queryKey('Ёлка')).toBe(queryKey('елка'));
+    expect(queryKey('ё́лка')).toBe(queryKey('елка'));
   });
 
   it('treats every kind of apostrophe alike', () => {
-    expect(searchKey('мʼята')).toBe(searchKey("м'ята"));
-    expect(searchKey('м’ята')).toBe(searchKey("м'ята"));
+    expect(queryKey('мʼята')).toBe(queryKey("м'ята"));
+    expect(queryKey('м’ята')).toBe(queryKey("м'ята"));
   });
 
   it('drops the spaces at the ends, never inside', () => {
-    expect(searchKey('  на сумирному \n')).toBe(searchKey('на сумирному'));
-    expect(searchKey('на сумирному')).not.toBe(searchKey('насумирному'));
+    expect(queryKey('  на сумирному \n')).toBe(queryKey('на сумирному'));
+    expect(queryKey('на сумирному')).not.toBe(queryKey('насумирному'));
   });
 
   it('reads no letters alike in an Edition without Search letters', () => {
@@ -90,11 +90,11 @@ describe('a Search query', () => {
   });
 
   it('keeps every other letter apart', () => {
-    expect(searchKey('ганок')).not.toBe(searchKey('ганка'));
-    expect(searchKey('є')).not.toBe(searchKey('е'));
-    expect(searchKey('ї')).not.toBe(searchKey('і'));
-    expect(searchKey('й')).not.toBe(searchKey('и'));
-    expect(searchKey('мята')).not.toBe(searchKey('мʼята'));
+    expect(queryKey('ганок')).not.toBe(queryKey('ганка'));
+    expect(queryKey('є')).not.toBe(queryKey('е'));
+    expect(queryKey('ї')).not.toBe(queryKey('і'));
+    expect(queryKey('й')).not.toBe(queryKey('и'));
+    expect(queryKey('мята')).not.toBe(queryKey('мʼята'));
   });
 
   it('leaves a typed answer strict on г/ґ and е/ё', () => {
@@ -131,6 +131,19 @@ describe('an Edition’s own traits', () => {
     const en = createTextComparison({ languageTraits: { sortLocale: 'en' }, searchLetters: {} });
     expect(en.same("don't", 'don’t', 'typedAnswer')).toBe(false);
     expect(en.apostrophe).toBeUndefined();
+  });
+
+  it('tells the characters the Edition reads as an apostrophe', () => {
+    expect(['ʼ', "'", '’'].every((character) => ua.isApostrophe(character))).toBe(true);
+    expect(ua.isApostrophe('-')).toBe(false);
+    const en = createTextComparison({ languageTraits: { sortLocale: 'en' }, searchLetters: {} });
+    expect(en.isApostrophe("'")).toBe(false);
+  });
+
+  it('writes a text in lower case with the Edition’s locale', () => {
+    const tr = createTextComparison({ languageTraits: { sortLocale: 'tr' }, searchLetters: {} });
+    expect(tr.lowerCase('I')).toBe('ı');
+    expect(ua.lowerCase('Ґ')).toBe('ґ');
   });
 
   it('writes every apostrophe as the first the Edition lists', () => {

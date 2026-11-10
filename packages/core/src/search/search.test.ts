@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { FeatureSwitch } from '@slovo/contracts';
 
 import { createSearch } from './search';
+import { createTextComparison } from '../text/text-comparison';
 import { createMemoryContentPort } from '../testing';
 import { correction, idiom, synonymRow, tip, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -24,6 +25,7 @@ async function searchOver(
   return createSearch({
     content: createMemoryContentPort(pack),
     edition: edition(off),
+    comparison: createTextComparison(edition(off)),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
   });
 }
@@ -120,6 +122,7 @@ describe('Search over Word Lemmas', () => {
         words: [word('w_nature', { lemma: 'сумирний', categoryId: 'nature', rarity: 5 })],
       }),
       edition: edition(),
+      comparison: createTextComparison(edition()),
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     });
 

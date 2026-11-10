@@ -241,12 +241,12 @@ function tipRound({ gameQuestion, example }: Tip, random: Random): RoundContent 
  * option only. In Rounds 6–10 a Word's Round shows instead its first Example
  * with the Lemma as written, a gap in its place, which the Round marks; a
  * Word with no such Example is asked by its Definition (ADR 0052). From Round
- * 11 a Word's Round asks its Definition for the Word typed, compared the way
- * `typedAnswerMatches` does, and its sheet shows the Lemma with its Stress; a
+ * 11 a Word's Round asks its Definition for the Word typed, compared by its
+ * Comparison Key as a typed answer, and its sheet shows the Lemma with its Stress; a
  * Word whose Definition another eligible Word shares is asked by a pick
  * instead, so the Round keeps one right answer. A pick of a Word offers four
- * Lemmas with their Stress, the three Distractors by the Edition's Distractor
- * rule, no two with the same Lemma, so homonyms never share a Round. An idiom's Round offers four idioms, the
+ * Lemmas with their Stress, the three Distractors of the answer's part of
+ * speech first, no two with the same Lemma, so homonyms never share a Round. An idiom's Round offers four idioms, the
  * three Distractors drawn at random from the other idioms; a place name is
  * never asked or offered. Its sheet shows the answer and its first Example,
  * if it has one. It asks about Synonym Rows too, with no quota, only while at
