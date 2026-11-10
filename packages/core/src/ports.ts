@@ -3,7 +3,9 @@ import type {
   CuratedCollection,
   Entry,
   EntryKind,
+  IllustrationRow,
   PackMetadata,
+  RecordingRow,
   Word,
 } from '@slovo/contracts';
 import type { ApiClient, Patch } from '@slovo/contracts/api';
@@ -292,6 +294,16 @@ export const systemRandom: Random = { next: () => Math.random() };
 export type PackVersion = Readonly<Pick<PackMetadata, 'contentVersion' | 'packFormat'>>;
 
 /**
+ * The live media of one Word, as the pack holds it after the Patches applied
+ * (ADR 0099): each row names a file in the Media Store by the Word id and the
+ * hash. A retired row is no longer among them.
+ */
+export interface WordMedia {
+  readonly recordings: readonly Omit<RecordingRow, 'retired'>[];
+  readonly illustrations: readonly Omit<IllustrationRow, 'retired'>[];
+}
+
+/**
  * The device's writable Language Pack as the content update changes it: its
  * content version and the ETag of the Patch applied last, and the one way to
  * change it, a Patch applied in one transaction (ADR 0090).
@@ -307,6 +319,8 @@ export interface ContentStore {
    * rejection changes nothing.
    */
   apply(patch: Patch, etag: string): Promise<void>;
+  /** The live Recording and Illustration rows of a Word, none for an id the pack has no media of. */
+  mediaOf(wordId: string): Promise<WordMedia>;
 }
 
 /**

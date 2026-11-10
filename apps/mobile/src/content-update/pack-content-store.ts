@@ -1,5 +1,10 @@
-import type { ContentStore } from '@slovo/core';
-import { applyPatch, patchStateOf, type PackWriteDatabase } from '@slovo/language-pack/reader';
+import type { ContentStore, WordMedia } from '@slovo/core';
+import {
+  applyPatch,
+  mediaOf,
+  patchStateOf,
+  type PackWriteDatabase,
+} from '@slovo/language-pack/reader';
 
 /** The Patch-related state of the pack, read in a transaction of its own. */
 async function stateOf(db: PackWriteDatabase) {
@@ -24,6 +29,14 @@ export async function openPackContentStore(db: PackWriteDatabase): Promise<Conte
     async apply(patch, etag) {
       await applyPatch(db, patch, etag);
       state = await stateOf(db);
+    },
+    async mediaOf(wordId) {
+      let media: WordMedia | undefined;
+      await db.transaction(async (tx) => {
+        media = await mediaOf(tx, wordId);
+      });
+      if (media === undefined) throw new Error('The pack read no media');
+      return media;
     },
   };
 }
