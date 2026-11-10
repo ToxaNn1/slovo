@@ -1,4 +1,5 @@
-import type { Media, MediaSource } from '@slovo/core';
+import type { Media } from '@slovo/core';
+import type { MediaSource } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { watchIllustration, type IllustrationSource } from './illustration-source';

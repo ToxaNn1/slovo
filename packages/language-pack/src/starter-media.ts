@@ -125,6 +125,7 @@ export async function downloadStarterMedia(
     writeFileSync(`${target}.part`, bytes);
     renameSync(`${target}.part`, target);
   }
+  mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, LIST_FILE), `${JSON.stringify(list, null, 2)}\n`);
 }
 
