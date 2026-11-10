@@ -15,3 +15,6 @@ Owner grant: ~/.slovo-coord/grant-media-1110.md — «так даю дозвол
 ## Log (UTC)
 - 2026-11-10 08:00 coordinator (laptop, T3 thread «🟢 🧭 Координатор · Media Store (#1764)») created feat/1764-media-store from main 79e6df00b; launching #1765 and #1771.
 - 2026-11-10 08:10 launched implementers (T3 delegate, Opus, worktrees): #1765 → feat/1765-media-rows, #1771 → chore/1771-neon-patch-route. Registered in safety-net WAVES.md (media-1764).
+- 2026-11-10 08:27 load peaked 106–302; both implementers stopped. #1765: no code, context limit; handoff ~/.slovo-coord/media-1765/HANDOFF.md. #1771: work uncommitted in its worktree on chore/1771-neon-patch-route (Patch s-maxage=60 + test, ADR 0099 Amsterdam/Frankfurt, deploy.md Neon/CDN, handbook, owner-checks); left: full pnpm test, commit, merge integration, push.
+- Paused by the owner's load rule: relaunch only on the owner's word («продовжуй»).
+WAITING until 2026-11-10T12:00:00Z: owner's word to resume after the load peak
