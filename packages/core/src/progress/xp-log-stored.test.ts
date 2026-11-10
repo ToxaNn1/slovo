@@ -84,13 +84,18 @@ describe('the XP log entries kept in the user state', () => {
     expect(xpLog.milestones.rightByMode).toEqual(new Map([['definition', 1]]));
     expect(xpLog.milestones.rightRarities).toEqual(new Set([4]));
     expect(xpLog.milestones.crosswords).toEqual(new Set(['2026-10-11', '2026-10-12']));
-    expect(xpLog.crosswordSolveOn('2026-10-11')).toEqual({ solveSeconds: undefined, hinted: false });
+    expect(xpLog.crosswordSolveOn('2026-10-11')).toEqual({
+      solveSeconds: undefined,
+      hinted: false,
+    });
     expect(xpLog.crosswordSolveOn('2026-10-12')).toEqual({ solveSeconds: 95, hinted: true });
   });
 
   it('ignores the fields foreign to an entry’s source', async () => {
     const { xpLog } = await open({
-      'xp.quick': entry('"source":"quick-question","amount":3,"mode":"definition","right":1,"played":1'),
+      'xp.quick': entry(
+        '"source":"quick-question","amount":3,"mode":"definition","right":1,"played":1',
+      ),
       'xp.round': entry('"source":"game-round","amount":2,"solveSeconds":4,"right":1,"played":1'),
       'xp.daily-crossword-2026-10-12': entry(
         '"source":"daily-crossword","amount":20,"mode":"definition","rarity":4',
@@ -102,7 +107,10 @@ describe('the XP log entries kept in the user state', () => {
     expect(xpLog.milestones.flawless).toEqual(new Set());
     expect(xpLog.milestones.rightByMode).toEqual(new Map());
     expect(xpLog.milestones.rightRarities).toEqual(new Set());
-    expect(xpLog.crosswordSolveOn('2026-10-12')).toEqual({ solveSeconds: undefined, hinted: false });
+    expect(xpLog.crosswordSolveOn('2026-10-12')).toEqual({
+      solveSeconds: undefined,
+      hinted: false,
+    });
   });
 
   it('keeps the entries kept before, and writes a new entry in the bytes it had before', async () => {
@@ -126,13 +134,17 @@ describe('the XP log entries kept in the user state', () => {
     ]);
     expect(
       written(
-        xpLog.award({ source: 'daily-crossword', date: '2026-10-14', solveSeconds: 61, hinted: false })
-          .changes,
+        xpLog.award({
+          source: 'daily-crossword',
+          date: '2026-10-14',
+          solveSeconds: 61,
+          hinted: false,
+        }).changes,
       ),
     ).toEqual([today('"source":"daily-crossword","amount":15,"solveSeconds":61,"hinted":false')]);
-    expect(
-      written(xpLog.award({ source: 'daily-crossword', date: '2026-10-14' }).changes),
-    ).toEqual([today('"source":"daily-crossword","amount":15')]);
+    expect(written(xpLog.award({ source: 'daily-crossword', date: '2026-10-14' }).changes)).toEqual(
+      [today('"source":"daily-crossword","amount":15')],
+    );
     expect(written(xpLog.award({ source: 'game-best' }).changes)).toEqual([
       today('"source":"game-best","amount":5'),
     ]);
