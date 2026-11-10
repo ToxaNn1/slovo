@@ -32,4 +32,6 @@ export {
 } from './fakes/seeded-user-state';
 export { UserStateTooNewError } from './user-state/user-state';
 export { createMemoryContentStore, type MemoryContentStore } from './fakes/memory-content-store';
+export { createMemoryMediaCache } from './fakes/memory-media-cache';
+export { createFakeMediaFetcher, type FakeMediaFetcher } from './fakes/fake-media-fetcher';
 export { testEdition, type TestEditionOverrides } from './test-support';

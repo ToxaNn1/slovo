@@ -246,7 +246,24 @@ export {
   createContentUpdate,
   type ContentUpdate,
 } from './content-update/content-update';
-export type { ContentStore, PackVersion, WordMedia } from './ports';
+export type {
+  CachedMediaFile,
+  ContentStore,
+  MediaCache,
+  MediaFetcher,
+  PackVersion,
+  WordMedia,
+} from './ports';
+export {
+  createMedia,
+  MEDIA_CACHE_LIMIT,
+  PREFETCH_CARDS,
+  type CardMedia,
+  type Media,
+  type MediaSource,
+  type MediaSwitch,
+  type StarterMedia,
+} from './media/media';
 export { type ProgressState } from './progress/progress';
 export type { XpAction, XpAward } from './game/game-xp';
 export type { CrosswordSolve, XpLog, XpLogState } from './progress/xp-log';

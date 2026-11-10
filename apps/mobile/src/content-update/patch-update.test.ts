@@ -52,7 +52,8 @@ beforeAll(() => {
       mediaBase: 'https://media.slovo.test',
       recordings: [],
       illustrations: [],
-      needsNewRecording: [],
+      // Read once the test runs: the Words are picked below.
+      needsNewRecording: [second?.id ?? ''],
     },
     outFile: builtFile,
     today,
@@ -159,6 +160,8 @@ describe('the media rows of a Patch', () => {
     await contentUpdate.checkForUpdate();
 
     expect(await contentUpdate.mediaOf(first.id)).toEqual({
+      mediaBase: 'https://media.slovo.test',
+      needsNewRecording: false,
       recordings: [
         {
           wordId: first.id,
@@ -171,6 +174,7 @@ describe('the media rows of a Patch', () => {
       ],
       illustrations: [{ wordId: first.id, hash: hashOf('c'), size: 51_200 }],
     });
+    expect((await contentUpdate.mediaOf(second.id)).needsNewRecording).toBe(true);
   });
 
   it('takes a retired row out of the live set and keeps the one that replaced it', async () => {
@@ -195,7 +199,10 @@ describe('the media rows of a Patch', () => {
   it('answers none for a Word without media', async () => {
     const { contentUpdate } = await device();
 
-    expect(await contentUpdate.mediaOf(first.id)).toEqual({ recordings: [], illustrations: [] });
+    expect(await contentUpdate.mediaOf(first.id)).toMatchObject({
+      recordings: [],
+      illustrations: [],
+    });
   });
 
   it('leaves the content as it was when the app reads only the old format', async () => {
@@ -209,7 +216,10 @@ describe('the media rows of a Patch', () => {
     expect(await entries().get(first.id)).toMatchObject({
       primaryDefinition: first.primaryDefinition,
     });
-    expect(await contentUpdate.mediaOf(first.id)).toEqual({ recordings: [], illustrations: [] });
+    expect(await contentUpdate.mediaOf(first.id)).toMatchObject({
+      recordings: [],
+      illustrations: [],
+    });
     expect(contentUpdate.contentVersion()).toBe(content.contentVersion);
   });
 });
