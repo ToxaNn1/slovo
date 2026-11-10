@@ -440,6 +440,8 @@ function mediaColumns() {
     createdAt: time('created_at'),
     /** When the row left the live set; none while it is live. */
     retiredAt: timestamp('retired_at', { withTimezone: true }),
+    /** When the Recordings job deleted the retired row's file from the Media Store; none while it is kept. */
+    fileDeletedAt: timestamp('file_deleted_at', { withTimezone: true }),
     /** The Edition's content version the row last changed at. */
     contentVersion: integer('content_version').notNull(),
   };

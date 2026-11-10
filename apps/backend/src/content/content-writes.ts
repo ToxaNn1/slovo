@@ -15,6 +15,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import type { Database } from '../database/database';
+import { retireRecordings } from './media-rows';
 import { quoteCheckCounts } from './quote-check';
 import {
   actionLog,
@@ -470,12 +471,17 @@ export function createContentWrites({
         const published = contentVersion + 1;
         // A Word's Recordings no longer read it once its Lemma or Stress changed (ADR 0083).
         const wordBefore = records.word.find((row) => row.id === id);
+        const textChanged =
+          record.kind === 'word' &&
+          wordBefore !== undefined &&
+          (wordBefore.fields.lemma !== record.entry.lemma ||
+            JSON.stringify(wordBefore.fields.stress) !== JSON.stringify(record.entry.stress));
         const needsNewRecording =
           record.kind === 'word' &&
           wordBefore !== undefined &&
-          (wordBefore.needsNewRecording ||
-            wordBefore.fields.lemma !== record.entry.lemma ||
-            JSON.stringify(wordBefore.fields.stress) !== JSON.stringify(record.entry.stress));
+          (wordBefore.needsNewRecording || textChanged);
+        if (textChanged)
+          await retireRecordings(tx, { editionId, wordId: id, version: published, now });
         await saveRow(
           tx,
           record,
