@@ -1,5 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 
+import type { Illustrations } from '../content/illustrations';
 import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
 import {
@@ -106,6 +107,7 @@ export function adminProcedures(
   editions: EditionRegistry,
   served: readonly Edition[],
   contentWrites: ContentWrites,
+  illustrations: Illustrations,
   mailer: Mailer,
   development: DevelopmentOverview,
   contentQueue: ContentQueue,
@@ -592,12 +594,25 @@ export function adminProcedures(
         const { ok: _ok, ...report } = reported;
         return report;
       }),
+      uploadIllustration: content.uploadIllustration.handler(async ({ context, input, errors }) => {
+        await writerOf(context.headers, errors);
+        const uploaded = await illustrations.upload(
+          input.editionId,
+          input.id,
+          Buffer.from(input.png, 'base64'),
+        );
+        if (!uploaded.ok) throw refusalOf(uploaded, errors);
+        const { ok: _ok, ...answer } = uploaded;
+        return answer;
+      }),
       record: content.record.handler(async ({ context, input, errors }) => {
         await writerOf(context.headers, errors, { writes: false });
         const found = await contentWrites.record(input.editionId, input.kind, input.id);
         if (!found.ok) throw refusalOf(found, errors);
         const { ok: _ok, ...record } = found;
-        return record;
+        if (input.kind !== 'word') return record;
+        const illustration = await illustrations.live(input.editionId, input.id);
+        return illustration === undefined ? record : { ...record, illustration };
       }),
       records: content.records.handler(async ({ context, input, errors }) => {
         await writerOf(context.headers, errors, { writes: false });

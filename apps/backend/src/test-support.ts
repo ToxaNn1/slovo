@@ -5,6 +5,7 @@
  * time, frozen when the test starts, which both better-auth and the backend's
  * `Clock` read and only `passTime` moves.
  */
+import { memoryMediaStore } from './media/media-store';
 import { randomInt, randomUUID } from 'node:crypto';
 import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -667,6 +668,7 @@ export function testApp({
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
+  const mediaStore = memoryMediaStore();
   const mailer = createFakeMailer();
   const alerts = createFakeAlerts();
   const posthog = createFakePostHog();
@@ -696,6 +698,7 @@ export function testApp({
     sentry,
     ciToken: TEST_CI_TOKEN,
     mediaBase: TEST_MEDIA_BASE,
+    mediaStore,
   });
   const ip = newIp();
   // The one way a request reaches the app.
@@ -737,6 +740,8 @@ export function testApp({
   return {
     /** The app itself, for a test that serves it over HTTP. */
     app,
+    /** The fake Media Store the content editor keeps Illustrations in. */
+    mediaStore,
     /** The IP address the requests come from unless the test names another. */
     ip,
     /** Every email the backend sent. */

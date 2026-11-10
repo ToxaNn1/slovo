@@ -22,7 +22,10 @@ export type RuleName =
   | 'crossword-day-entry'
   | 'crossword-days-gap'
   | 'crossword-days-repeat'
-  | 'crossword-days-immutable';
+  | 'crossword-days-immutable'
+  | 'illustration-png'
+  | 'illustration-size'
+  | 'illustration-square';
 
 /** One record a rule refuses, located as precisely as possible. */
 export interface Refusal {

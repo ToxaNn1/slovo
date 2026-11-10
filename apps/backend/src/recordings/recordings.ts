@@ -12,6 +12,7 @@ import type { RecordingKind, Word } from '@slovo/contracts';
 import type { Clock, Edition } from '@slovo/server-core';
 import { and, asc, eq, inArray, isNotNull, isNull, lt, sql } from 'drizzle-orm';
 
+import { illustrationKey } from '../content/illustrations';
 import { createMediaRows, type NewRecording, type RecordedWord } from '../content/media-rows';
 import type { Database } from '../database/database';
 import { contentWords, mediaIllustrations, mediaRecordings } from '../database/schema';
@@ -45,10 +46,6 @@ export const recordingKey = ({
   hash,
 }: Pick<NewRecording, 'narratorVoice' | 'recordingKind' | 'wordId' | 'hash'>) =>
   `recordings/${narratorVoice}/${recordingKind}/${wordId}.${hash}.mp3`;
-
-/** The Media Store key of an Illustration file (ADR 0099). */
-const illustrationKey = ({ wordId, hash }: { wordId: string; hash: string }) =>
-  `illustrations/${wordId}.${hash}.png`;
 
 export function createRecordings({
   database,

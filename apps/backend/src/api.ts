@@ -1,4 +1,5 @@
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
+import type { Illustrations } from './content/illustrations';
 import { OpenAPIReferencePlugin } from '@orpc/openapi/plugins';
 import { implement, ORPCError } from '@orpc/server';
 import { ResponseHeadersPlugin, type ResponseHeadersPluginContext } from '@orpc/server/plugins';
@@ -87,6 +88,7 @@ export function createApiHandler({
   contentQueue,
   contentStore,
   contentWrites,
+  illustrations,
   development,
   mediaBase,
   editions,
@@ -107,6 +109,7 @@ export function createApiHandler({
   contentQueue: ContentQueue;
   contentStore: ContentStore;
   contentWrites: ContentWrites;
+  illustrations: Illustrations;
   development: DevelopmentOverview;
   /** The URL root of the Media Store the snapshot and the Patch name (ADR 0099). */
   mediaBase: string;
@@ -136,6 +139,7 @@ export function createApiHandler({
         editions,
         served,
         contentWrites,
+        illustrations,
         mailer,
         development,
         contentQueue,

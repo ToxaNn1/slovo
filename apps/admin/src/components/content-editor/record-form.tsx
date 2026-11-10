@@ -22,7 +22,7 @@ export type FormRecord =
   | { readonly at: 'create' }
   | { readonly at: 'edit'; readonly id: string; readonly recordVersion: number };
 
-const RefusedSchema = z.object({
+export const RefusedSchema = z.object({
   code: z.literal('REFUSED'),
   data: z.object({
     refusals: z.array(

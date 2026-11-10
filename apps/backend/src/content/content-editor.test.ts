@@ -2,13 +2,16 @@ import { cpSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { ApiClient } from '@slovo/contracts/api';
+import { createHash } from 'node:crypto';
+
+import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
 import { afterAll, describe, expect, it, onTestFinished } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
+import { readEditions } from '../edition/edition-folders';
 import { createDatabase } from '../database/database';
 import { systemRandom } from '../random';
 import {
@@ -16,9 +19,11 @@ import {
   createTestDatabase,
   signedInAdmin,
   silentLogger,
+  TEST_MEDIA_BASE,
   testApp,
   testDatabaseUrl,
 } from '../test-support';
+import { createMediaRows } from './media-rows';
 
 /** A copy of the UA Edition folder, removed after the file. */
 const folder = (() => {
@@ -134,5 +139,145 @@ describe('the content editor through an admin session', () => {
 
     const { batchId } = await backend.agent.admin.content.openBatch({ editionId: 'uk' });
     expect(batchId).toMatch(/^[0-9a-f-]{36}$/);
+  });
+});
+
+/** A square PNG header of the size, padded to the length in bytes; the seed makes its content its own. */
+function png(width: number, height: number, length = 2_000, seed = 0): Buffer {
+  const bytes = Buffer.alloc(length, seed);
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]).copy(bytes);
+  bytes.write('IHDR', 12, 'latin1');
+  bytes.writeUInt32BE(width, 16);
+  bytes.writeUInt32BE(height, 20);
+  return bytes;
+}
+
+const sha256 = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
+
+const illustrationPatch = async (client: ApiClient, since: number) => {
+  const answer = await client.content.patch({
+    params: { editionId: 'uk' },
+    query: { since, patchFormat: PATCH_FORMAT },
+  });
+  if (answer.status !== 200 || answer.body.status !== 'patch') throw new Error('no Patch');
+  return answer.body.patch.illustrations;
+};
+
+describe("a Word's Illustration uploaded in the content editor", () => {
+  it('refuses a file that breaks a rule with the name of the rule, and writes nothing', async () => {
+    const backend = await editorBackend();
+    const { client: owner } = await signedInAdmin(backend, 'owner');
+    const { contentVersion } = await wordOf(backend.client);
+    const upload = (bytes: Buffer) =>
+      owner.admin.content.uploadIllustration({
+        editionId: 'uk',
+        id: WORD_ID,
+        png: bytes.toString('base64'),
+      });
+    const refusedBy = (rule: string) => ({
+      code: 'REFUSED',
+      data: {
+        refusals: [expect.objectContaining({ rule, field: 'illustration', entryId: WORD_ID })],
+      },
+    });
+
+    await expect(upload(png(640, 480))).rejects.toMatchObject(refusedBy('illustration-square'));
+    const tooLarge = png(512, 512, 151_000);
+    await expect(upload(tooLarge)).rejects.toMatchObject(refusedBy('illustration-size'));
+    await expect(upload(Buffer.from('GIF89a, not a PNG'))).rejects.toMatchObject(
+      refusedBy('illustration-png'),
+    );
+
+    expect((await wordOf(backend.client)).contentVersion).toBe(contentVersion);
+    expect(await illustrationPatch(backend.client, contentVersion - 1)).toEqual([]);
+    expect(
+      await backend.mediaStore.head(`illustrations/${WORD_ID}.${sha256(tooLarge)}.png`),
+    ).toBeUndefined();
+  });
+
+  it('keeps a valid PNG in the Media Store, retires the one it replaces and publishes both in the Patch', async () => {
+    const backend = await editorBackend();
+    const { client: owner } = await signedInAdmin(backend, 'owner');
+    const first = png(512, 512, 2_000, 1);
+    const second = png(256, 256, 3_000, 2);
+    const upload = (bytes: Buffer) =>
+      owner.admin.content.uploadIllustration({
+        editionId: 'uk',
+        id: WORD_ID,
+        png: bytes.toString('base64'),
+      });
+    const { contentVersion: before } = await wordOf(backend.client);
+
+    const uploaded = await upload(first);
+    expect(uploaded.contentVersion).toBe(before + 1);
+    const replaced = await upload(second);
+
+    expect(replaced).toEqual({
+      contentVersion: before + 2,
+      illustration: {
+        hash: sha256(second),
+        url: `${TEST_MEDIA_BASE}/illustrations/${WORD_ID}.${sha256(second)}.png`,
+      },
+    });
+    expect(await backend.mediaStore.head(`illustrations/${WORD_ID}.${sha256(second)}.png`)).toEqual(
+      { size: 3_000, contentType: 'image/png' },
+    );
+    expect(await illustrationPatch(backend.client, before + 1)).toEqual([
+      { wordId: WORD_ID, hash: sha256(first), size: 2_000, retired: true },
+      { wordId: WORD_ID, hash: sha256(second), size: 3_000, retired: false },
+    ]);
+    const record = await owner.admin.content.record({ editionId: 'uk', kind: 'word', id: WORD_ID });
+    expect(record.illustration).toEqual(replaced.illustration);
+  });
+
+  it('refuses an Illustration for a Word the Edition lacks', async () => {
+    const backend = await editorBackend();
+    const { client: owner } = await signedInAdmin(backend, 'owner');
+    await expect(
+      owner.admin.content.uploadIllustration({
+        editionId: 'uk',
+        id: 'w_zzzzzz',
+        png: png(512, 512).toString('base64'),
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});
+
+describe('the media gaps in the content report', () => {
+  it('counts the live Words without a Recording per Narrator Voice and without an Illustration', async () => {
+    const backend = await editorBackend();
+    const { client: owner } = await signedInAdmin(backend, 'owner');
+    const voices = readEditions(EDITIONS_DIR)
+      .find(({ config }) => config.id === 'uk')
+      ?.config.narratorVoices.voices.map(({ id }) => id);
+    if (voices === undefined) throw new Error('no UA Edition');
+    const [voice] = voices;
+    if (voice === undefined) throw new Error('no Narrator Voice');
+    const { report } = await owner.admin.content.report({ editionId: 'uk' });
+    expect(report.media).toEqual({
+      withoutRecording: voices.map((narratorVoice) => ({ narratorVoice, words: report.words })),
+      withoutIllustration: report.words,
+    });
+
+    await createMediaRows({ database: backend.database, clock: systemClock }).saveRecording('uk', {
+      wordId: WORD_ID,
+      narratorVoice: voice,
+      recordingKind: 'plain',
+      hash: 'a'.repeat(64),
+      size: 8_000,
+      durationMs: 900,
+    });
+    await owner.admin.content.uploadIllustration({
+      editionId: 'uk',
+      id: WORD_ID,
+      png: png(512, 512).toString('base64'),
+    });
+
+    const after = (await owner.admin.content.report({ editionId: 'uk' })).report;
+    expect(after.media.withoutIllustration).toBe(report.words - 1);
+    expect(after.media.withoutRecording).toContainEqual({
+      narratorVoice: voice,
+      words: report.words - 1,
+    });
   });
 });
