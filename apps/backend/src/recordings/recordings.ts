@@ -87,7 +87,6 @@ export function createRecordings({
       .select({
         id: contentWords.id,
         fields: contentWords.fields,
-        flagged: contentWords.needsNewRecording,
       })
       .from(contentWords)
       .where(
