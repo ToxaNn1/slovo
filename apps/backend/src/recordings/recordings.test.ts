@@ -94,7 +94,10 @@ async function recordingsBackend() {
   });
   const out: string[] = [];
   const io = { out: (line: string) => out.push(line), err: () => undefined };
-  await runAdminCommand(['agent', 'add', 'claude-content'], adminCommandDeps(admin, database), io);
+  const commandDeps = adminCommandDeps(admin, database);
+  // The admin API answers only once an owner exists.
+  await runAdminCommand(['owner', 'add', 'owner@example.com'], commandDeps, io);
+  await runAdminCommand(['agent', 'add', 'claude-content'], commandDeps, io);
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
   const imported = await backend.importContent('uk', folder);
