@@ -1,7 +1,7 @@
 import type { Word } from '@slovo/contracts';
 
 import type { AskableEntry } from '../entries/entries';
-import { renderStress, stressedVowelsOf, withoutStress } from '../entries/stress';
+import { renderStress, stressedVowelsOf } from '../entries/stress';
 import { ROUND_OPTIONS, type GameMode, type GridPair } from './game-mode';
 import { shuffled } from '../shuffled';
 
@@ -15,10 +15,6 @@ const gridOrder = (answer: Word, others: readonly Word[]): Word[] => [
   ...others.filter((word) => word.partOfSpeech === answer.partOfSpeech),
   ...others.filter((word) => word.partOfSpeech !== answer.partOfSpeech),
 ];
-
-/** A primary Definition as the reader tells it apart: without case, extra spaces or Stress marks. */
-const definitionOf = ({ primaryDefinition }: Word) =>
-  withoutStress(primaryDefinition).toLowerCase().replace(/\s+/g, ' ').trim();
 
 const isWord = (entry: AskableEntry): entry is Word => entry.kind === 'word';
 
@@ -49,7 +45,10 @@ export const pairsMode: GameMode = {
   group: 'words',
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gamePairs'),
-  buildRound({ answer, next, upTo, random }) {
+  buildRound({ answer, next, upTo, random, comparison }) {
+    /** A primary Definition as the reader tells it apart: its Comparison Key as a Definition. */
+    const definitionOf = ({ primaryDefinition }: Word) =>
+      comparison.key(primaryDefinition, 'definition');
     if (answer.kind !== 'word') return undefined;
     const others = gridOrder(answer, next.filter(isWord));
     const grid = [answer];

@@ -134,8 +134,16 @@ export function createRoundPlanner({
     const inHistory = eligible.filter((entry) => met.has(entry.id));
     /** Whether the mode can ask about the Entry: it makes a Round of it. */
     const askable = (answer: AskableEntry) =>
-      mode.buildRound({ answer, eligible, next: [], upTo: 1, round: from, random, edition, comparison }) !==
-      undefined;
+      mode.buildRound({
+        answer,
+        eligible,
+        next: [],
+        upTo: 1,
+        round: from,
+        random,
+        edition,
+        comparison,
+      }) !== undefined;
     const pool = new Set(enough(inHistory, askable, GAME_ROUNDS) ? inHistory : eligible);
     const weak = new Set(knowledge.weak());
     const unasked = eligible.filter((entry) => !asked.has(entry.id));

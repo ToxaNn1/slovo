@@ -35,7 +35,11 @@ export interface TextComparison {
    * it. Nothing when it holds none, or the sought text is empty. Both texts
    * are taken as written in one Unicode form.
    */
-  find(text: string, sought: string, options?: { readonly wholeWord?: boolean }): FoundRange | undefined;
+  find(
+    text: string,
+    sought: string,
+    options?: { readonly wholeWord?: boolean },
+  ): FoundRange | undefined;
   /** The apostrophe a Comparison Key writes for each the Edition reads as one; none in an Edition that lists none. */
   readonly apostrophe: string | undefined;
 }
@@ -91,12 +95,17 @@ export function createTextComparison({
       place += character.length;
     }
     /** The place in the text where the character after `plain`'s place stands, past Stress marks; the end of the text when none. */
-    const endAt = (at: number) => placeAt.get(at) ?? (at === plain.length ? text.length : undefined);
+    const endAt = (at: number) =>
+      placeAt.get(at) ?? (at === plain.length ? text.length : undefined);
     for (let at = plain.indexOf(wanted); at >= 0; at = plain.indexOf(wanted, at + 1)) {
       const start = placeAt.get(at);
       const end = endAt(at + wanted.length);
       if (start === undefined || end === undefined) continue;
-      if (wholeWord && (isWordCharacter(text.charAt(start - 1)) || isWordCharacter(text.charAt(end)))) continue;
+      if (
+        wholeWord &&
+        (isWordCharacter(text.charAt(start - 1)) || isWordCharacter(text.charAt(end)))
+      )
+        continue;
       return { start, end };
     }
     return undefined;

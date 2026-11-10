@@ -1,4 +1,4 @@
-import { firstOccurrence, mainEquivalentOf, plays } from './correction-mode';
+import { mainEquivalentOf, plays } from './correction-mode';
 import type { GameMode } from './game-mode';
 
 /**
@@ -15,10 +15,10 @@ export const typeWordMode: GameMode = {
   group: 'words',
   entryKind: 'correction',
   isOn: (edition) => edition.isFeatureEnabled('gameTypeWord'),
-  buildRound({ answer }) {
+  buildRound({ answer, comparison }) {
     if (answer.kind !== 'correction' || !plays(answer)) return undefined;
     const prompt = answer.examplePair.nonStandard;
-    const highlight = firstOccurrence(prompt, answer.nonStandardForm);
+    const highlight = comparison.find(prompt, answer.nonStandardForm);
     const right = mainEquivalentOf(answer);
     return {
       form: 'typed',
