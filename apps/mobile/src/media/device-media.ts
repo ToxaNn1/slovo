@@ -105,17 +105,15 @@ function deviceMediaCache(): MediaCache {
 
 /**
  * The Core media of the device over the Language Pack's content store: the
- * Starter Media, the device's one file cache and `fetch`, in the Narrator
- * Voice given and by the Feature Switches in effect.
+ * Starter Media, the device's one file cache and `fetch`, by the Feature
+ * Switches in effect.
  */
 export function openDeviceMedia({
   store,
   edition,
-  voice,
 }: {
   store: Pick<ContentStore, 'mediaOf'>;
   edition: () => Pick<Edition, 'isFeatureEnabled' | 'narratorVoiceOf'>;
-  voice: () => string;
 }): Media<number> {
   return createMedia({
     store,
@@ -123,7 +121,6 @@ export function openDeviceMedia({
     fetcher: fetchMediaFetcher,
     starter,
     clock: deviceClock,
-    voice,
     defaultVoice: edition().narratorVoiceOf(undefined).id,
     isOn: (name) => edition().isFeatureEnabled(name),
   });

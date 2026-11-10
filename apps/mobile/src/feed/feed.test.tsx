@@ -19,12 +19,18 @@ jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
 jest.mock('expo-router', () => ({ useIsFocused: () => true }));
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
 /** The media prefetch the Feed asks for, by the Words it names. */
-const mockPrefetchAhead = jest.fn((_shell: unknown, _wordIds: readonly string[]) =>
+const mockPrefetchAhead = jest.fn((_shell: unknown, _wordIds: readonly string[], _voice: string) =>
   Promise.resolve(),
 );
 jest.mock('../shell-value', () => ({ useShell: () => ({}) }));
 jest.mock('../media/shell-media', () => ({
-  prefetchAhead: (shell: unknown, wordIds: readonly string[]) => mockPrefetchAhead(shell, wordIds),
+  prefetchAhead: (shell: unknown, wordIds: readonly string[], voice: string) =>
+    mockPrefetchAhead(shell, wordIds, voice),
+}));
+/** The Narrator Voice the reader chose in the settings. */
+let mockNarratorVoice = 'oksana';
+jest.mock('../settings/settings', () => ({
+  useSettings: () => ({ current: { narratorVoice: mockNarratorVoice } }),
 }));
 
 /** A Word «слово{n}» that links the Correction `c_one`. */
@@ -152,6 +158,24 @@ describe('the Feed on its pager', () => {
     expect(ahead.length).toBeGreaterThan(0);
     await waitFor(() => {
       expect(mockPrefetchAhead.mock.lastCall?.[1]).toEqual(ahead);
+    });
+  });
+
+  it('downloads the media ahead again in the voice the reader chose', async () => {
+    mockNarratorVoice = 'oksana';
+    const { feed } = await openFeed();
+    await act(() => {
+      feed.result.current.onCardChange(1);
+    });
+    await waitFor(() => {
+      expect(mockPrefetchAhead.mock.lastCall?.[2]).toBe('oksana');
+    });
+
+    mockNarratorVoice = 'taras';
+    await feed.rerender({});
+
+    await waitFor(() => {
+      expect(mockPrefetchAhead.mock.lastCall?.[2]).toBe('taras');
     });
   });
 });

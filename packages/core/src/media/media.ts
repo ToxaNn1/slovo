@@ -39,13 +39,18 @@ export interface StarterMedia<Asset> {
 
 /** The Core media module: what a card shows and plays, what to download ahead and what to drop. */
 export interface Media<Asset> {
-  ofWord(wordId: string): Promise<CardMedia<Asset>>;
+  /**
+   * Each call takes the Narrator Voice the reader chose, so a voice changed in
+   * the settings takes effect at the next call; with `narratorVoice` off the
+   * Edition's default voice reads instead.
+   */
+  ofWord(wordId: string, voice: string): Promise<CardMedia<Asset>>;
   /** Downloads the missing media of the next Feed cards, the first {@link PREFETCH_CARDS} of those given. */
-  prefetch(wordIds: readonly string[]): Promise<void>;
+  prefetch(wordIds: readonly string[], voice: string): Promise<void>;
   /** Downloads a Word's Recording not yet cached, as a tap on it does, and answers its source. */
-  downloadRecording(wordId: string): Promise<MediaSource<Asset>>;
+  downloadRecording(wordId: string, voice: string): Promise<MediaSource<Asset>>;
   /** Marks a Word's cached Recording played or Illustration shown, so the cache evicts it later. */
-  used(wordId: string, media: 'recording' | 'illustration'): Promise<void>;
+  used(wordId: string, media: 'recording' | 'illustration', voice: string): Promise<void>;
   /** Evicts the files of the rows a Patch applied retired. */
   patchApplied(patch: Patch): Promise<void>;
 }
@@ -73,7 +78,6 @@ export function createMedia<Asset>({
   fetcher,
   starter,
   clock,
-  voice,
   defaultVoice,
   isOn,
 }: {
@@ -82,20 +86,18 @@ export function createMedia<Asset>({
   fetcher: MediaFetcher;
   starter: StarterMedia<Asset>;
   clock: Clock;
-  /** The Narrator Voice the reader chose. */
-  voice: () => string;
   defaultVoice: string;
   isOn: (name: MediaSwitch) => boolean;
 }): Media<Asset> {
-  const chosenVoice = () => (isOn('narratorVoice') ? voice() : defaultVoice);
+  const voiceOf = (chosen: string) => (isOn('narratorVoice') ? chosen : defaultVoice);
 
   function fileOf(media: WordMedia, path: string, size: number): StoredFile {
     return { path, url: `${media.mediaBase.replace(/\/+$/, '')}/${path}`, size };
   }
 
   /** The Media Store files of a Word card, undefined where it has none or bundles one. */
-  function storedFiles(wordId: string, media: WordMedia) {
-    const narrator = chosenVoice();
+  function storedFiles(wordId: string, media: WordMedia, voice: string) {
+    const narrator = voiceOf(voice);
     // `plain` is the one Recording Kind so far; each later Kind brings its own Feature Switch.
     const row = media.recordings.find((r) => r.narratorVoice === narrator);
     const picture = media.illustrations[0];
@@ -121,9 +123,9 @@ export function createMedia<Asset>({
   }
 
   /** The files a card needs downloaded: each its switch allows and the Starter Media doesn't bundle. */
-  async function wanted(wordId: string): Promise<StoredFile[]> {
+  async function wanted(wordId: string, voice: string): Promise<StoredFile[]> {
     const media = await store.mediaOf(wordId);
-    const files = storedFiles(wordId, media);
+    const files = storedFiles(wordId, media, voice);
     const wants: StoredFile[] = [];
     if (
       files.recording !== undefined &&
@@ -177,9 +179,9 @@ export function createMedia<Asset>({
     await trim();
   }
 
-  async function ofWord(wordId: string): Promise<CardMedia<Asset>> {
+  async function ofWord(wordId: string, voice: string): Promise<CardMedia<Asset>> {
     const media = await store.mediaOf(wordId);
-    const files = storedFiles(wordId, media);
+    const files = storedFiles(wordId, media, voice);
     return {
       recording:
         isOn('pronunciation') && !media.needsNewRecording
@@ -191,9 +193,9 @@ export function createMedia<Asset>({
 
   return {
     ofWord,
-    async prefetch(wordIds) {
+    async prefetch(wordIds, voice) {
       for (const wordId of wordIds.slice(0, PREFETCH_CARDS)) {
-        for (const file of await wanted(wordId)) {
+        for (const file of await wanted(wordId, voice)) {
           if ((await cache.get(file.path)) !== undefined) continue;
           try {
             await fetchInto(file);
@@ -203,15 +205,15 @@ export function createMedia<Asset>({
         }
       }
     },
-    async downloadRecording(wordId) {
-      const { recording } = await ofWord(wordId);
+    async downloadRecording(wordId, voice) {
+      const { recording } = await ofWord(wordId, voice);
       if (recording.kind !== 'remote') return recording;
-      const file = storedFiles(wordId, await store.mediaOf(wordId)).recording;
+      const file = storedFiles(wordId, await store.mediaOf(wordId), voice).recording;
       if (file !== undefined) await fetchInto(file);
-      return (await ofWord(wordId)).recording;
+      return (await ofWord(wordId, voice)).recording;
     },
-    async used(wordId, kind) {
-      const file = storedFiles(wordId, await store.mediaOf(wordId))[kind];
+    async used(wordId, kind, voice) {
+      const file = storedFiles(wordId, await store.mediaOf(wordId), voice)[kind];
       if (file !== undefined && (await cache.get(file.path)) !== undefined)
         await cache.touch(file.path, clock.now());
     },

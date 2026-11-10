@@ -3,14 +3,6 @@ import type { Edition, Media } from '@slovo/core';
 import { edition } from '../edition/edition';
 import { openDeviceMedia } from './device-media';
 
-/** The id of the Narrator Voice the Words are read in, as the cards last drew it (ADR 0083). */
-let narratorVoice = edition.narratorVoiceOf(undefined).id;
-
-/** Sets the Narrator Voice the media plays and downloads the Recordings in. */
-export function setNarratorVoice(id: string): void {
-  narratorVoice = id;
-}
-
 /** The Edition in effect the last shell opened, whose Feature Switches the media follows. */
 let inEffect: Pick<Edition, 'isFeatureEnabled' | 'narratorVoiceOf'> = edition;
 
@@ -28,7 +20,7 @@ const mediaOfStore = new WeakMap<object, Media<number>>();
 export function storeMedia(store: Parameters<typeof openDeviceMedia>[0]['store']): Media<number> {
   let media = mediaOfStore.get(store);
   if (media === undefined) {
-    media = openDeviceMedia({ store, edition: () => inEffect, voice: () => narratorVoice });
+    media = openDeviceMedia({ store, edition: () => inEffect });
     mediaOfStore.set(store, media);
   }
   return media;

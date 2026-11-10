@@ -1,6 +1,7 @@
 import type { Media } from '@slovo/core';
 import { useEffect, useState } from 'react';
 
+import { useSettings } from '../settings/settings';
 import { useShell, type Shell } from '../shell-value';
 import { onMediaArrived } from './device-media';
 import { watchIllustration, type IllustrationSource } from './illustration-source';
@@ -16,10 +17,14 @@ export async function shellMedia(shell: Shell): Promise<Media<number>> {
   return storeMedia(store);
 }
 
-/** Downloads the media of the Words the Feed shows next (ADR 0099). */
-export async function prefetchAhead(shell: Shell, wordIds: readonly string[]): Promise<void> {
+/** Downloads the media of the Words the Feed shows next, in the Narrator Voice the reader chose (ADR 0099). */
+export async function prefetchAhead(
+  shell: Shell,
+  wordIds: readonly string[],
+  voice: string,
+): Promise<void> {
   if (wordIds.length === 0) return;
-  await (await shellMedia(shell)).prefetch(wordIds);
+  await (await shellMedia(shell)).prefetch(wordIds, voice);
 }
 
 /**
@@ -29,18 +34,20 @@ export async function prefetchAhead(shell: Shell, wordIds: readonly string[]): P
  */
 export function useWordIllustration(wordId: string): IllustrationSource | undefined {
   const shell = useShell();
+  const voice = useSettings().current.narratorVoice;
   const [shown, setShown] = useState<{ wordId: string; source: IllustrationSource | undefined }>();
   useEffect(
     () =>
       watchIllustration({
         media: () => shellMedia(shell),
         wordId,
+        voice,
         arrivals: onMediaArrived,
         show: (source) => {
           setShown({ wordId, source });
         },
       }),
-    [shell, wordId],
+    [shell, wordId, voice],
   );
   return shown?.wordId === wordId ? shown.source : undefined;
 }
