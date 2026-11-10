@@ -26196,6 +26196,93 @@
                                 ],
                                 "additionalProperties": false
                               }
+                            },
+                            "mediaBase": {
+                              "type": "string",
+                              "format": "uri"
+                            },
+                            "recordings": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "wordId": {
+                                    "type": "string",
+                                    "pattern": "^w_[a-z0-9]+$"
+                                  },
+                                  "hash": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  },
+                                  "size": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "exclusiveMinimum": 0
+                                  },
+                                  "retired": {
+                                    "type": "boolean"
+                                  },
+                                  "narratorVoice": {
+                                    "type": "string",
+                                    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                                  },
+                                  "recordingKind": {
+                                    "enum": [
+                                      "plain"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "durationMs": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "exclusiveMinimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "wordId",
+                                  "hash",
+                                  "size",
+                                  "retired",
+                                  "narratorVoice",
+                                  "recordingKind",
+                                  "durationMs"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "illustrations": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "wordId": {
+                                    "type": "string",
+                                    "pattern": "^w_[a-z0-9]+$"
+                                  },
+                                  "hash": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  },
+                                  "size": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "exclusiveMinimum": 0
+                                  },
+                                  "retired": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "wordId",
+                                  "hash",
+                                  "size",
+                                  "retired"
+                                ],
+                                "additionalProperties": false
+                              }
                             }
                           },
                           "required": [
@@ -26209,7 +26296,10 @@
                             "tips",
                             "synonymRows",
                             "curatedCollections",
-                            "crosswordDays"
+                            "crosswordDays",
+                            "mediaBase",
+                            "recordings",
+                            "illustrations"
                           ]
                         }
                       },
@@ -27289,6 +27379,93 @@
                         "additionalProperties": false
                       }
                     },
+                    "mediaBase": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "recordings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "wordId": {
+                            "type": "string",
+                            "pattern": "^w_[a-z0-9]+$"
+                          },
+                          "hash": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "size": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "retired": {
+                            "type": "boolean"
+                          },
+                          "narratorVoice": {
+                            "type": "string",
+                            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                          },
+                          "recordingKind": {
+                            "enum": [
+                              "plain"
+                            ],
+                            "type": "string"
+                          },
+                          "durationMs": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "required": [
+                          "wordId",
+                          "hash",
+                          "size",
+                          "retired",
+                          "narratorVoice",
+                          "recordingKind",
+                          "durationMs"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "illustrations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "wordId": {
+                            "type": "string",
+                            "pattern": "^w_[a-z0-9]+$"
+                          },
+                          "hash": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "size": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "retired": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "wordId",
+                          "hash",
+                          "size",
+                          "retired"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
                     "needsNewRecording": {
                       "type": "array",
                       "items": {
@@ -27307,6 +27484,9 @@
                     "synonymRows",
                     "curatedCollections",
                     "crosswordDays",
+                    "mediaBase",
+                    "recordings",
+                    "illustrations",
                     "needsNewRecording"
                   ]
                 }
