@@ -77,6 +77,21 @@ describe('the Illustration a Word card shows', () => {
     expect(shown).toEqual([undefined, { uri: 'file:///cache/w1.png' }]);
   });
 
+  it('marks the file used once, however many files arrive after', async () => {
+    const { media, used, state } = fakeMedia({ kind: 'remote', url: 'https://media/w1.png' });
+    const { shown, settle, arrive } = watch(media);
+    await settle();
+    state.illustration = { kind: 'cached', uri: 'file:///cache/w1.png' };
+    arrive();
+    await settle();
+    arrive();
+    arrive();
+    await settle();
+
+    expect(shown).toEqual([undefined, { uri: 'file:///cache/w1.png' }]);
+    expect(used).toEqual(['w1:illustration']);
+  });
+
   it('is none when the Word has none or the media cannot be read', async () => {
     const absent = watch(fakeMedia({ kind: 'absent' }).media);
     const failing = watch(fakeMedia({ kind: 'bundled', asset: 7 }, { failing: true }).media);

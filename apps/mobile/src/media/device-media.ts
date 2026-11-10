@@ -1,6 +1,5 @@
 import {
   createMedia,
-  type CachedMediaFile,
   type ContentStore,
   type Edition,
   type Media,
@@ -11,16 +10,14 @@ import {
 import { deviceClock } from '../device/device-clock';
 import { nativeModules } from '../device/device-native-modules';
 import { activeEditionFiles } from '../edition/edition';
-
-/** The cache's index: each cached file by its Media Store path, with its size and when it was last used. */
-type Index = Record<string, { readonly size: number; readonly usedAt: string }>;
+import { createIndexedMediaCache } from './indexed-media-cache';
 
 /**
  * The device's media cache over `expo-file-system` (ADR 0099): a folder of
  * the app's cache, each file named by its Media Store path and written to a
- * `.part` file first, then moved in place, so a file is whole or absent. An
- * index keeps the sizes and the times of use. A file the system purged reads
- * as absent. Undefined on a binary without the file-system module.
+ * `.part` file first, then moved in place, so a file is whole or absent. A
+ * file the system purged reads as absent. Undefined on a binary without the
+ * file-system module.
  */
 function createFileMediaCache(): MediaCache | undefined {
   return nativeModules.load('contentUpdates', () => {
@@ -29,58 +26,30 @@ function createFileMediaCache(): MediaCache | undefined {
       require('expo-file-system') as typeof import('expo-file-system');
     const folder = new Directory(Paths.cache, 'media');
     const indexFile = new File(folder, 'index.json');
-    const fileOf = (path: string) => new File(folder, path.replaceAll('/', '~'));
-    let index: Index | undefined;
-
-    async function read(): Promise<Index> {
-      if (index !== undefined) return index;
-      if (!folder.exists) folder.create({ intermediates: true });
-      try {
-        index = indexFile.exists ? (JSON.parse(await indexFile.text()) as Index) : {};
-      } catch {
-        index = {};
-      }
-      return index;
-    }
-
-    async function save(next: Index): Promise<void> {
-      index = next;
-      await indexFile.write(JSON.stringify(next));
-    }
-
-    return {
-      async get(path) {
-        const known = (await read())[path];
-        const file = fileOf(path);
-        return known !== undefined && file.exists ? file.uri : undefined;
+    const nameOf = (path: string) => path.replaceAll('/', '~');
+    const fileOf = (path: string) => new File(folder, nameOf(path));
+    return createIndexedMediaCache({
+      async readIndex() {
+        if (!folder.exists) folder.create({ intermediates: true });
+        return indexFile.exists ? await indexFile.text() : undefined;
       },
-      async put(path, bytes, usedAt) {
-        const current = await read();
-        const part = new File(folder, `${path.replaceAll('/', '~')}.part`);
+      async writeIndex(text) {
+        await indexFile.write(text);
+      },
+      async write(path, bytes) {
+        const part = new File(folder, `${nameOf(path)}.part`);
         await part.write(bytes);
         await part.move(fileOf(path), { overwrite: true });
-        await save({ ...current, [path]: { size: bytes.length, usedAt: usedAt.toISOString() } });
       },
-      async touch(path, usedAt) {
-        const current = await read();
-        const known = current[path];
-        if (known !== undefined)
-          await save({ ...current, [path]: { ...known, usedAt: usedAt.toISOString() } });
+      uriOf(path) {
+        const file = fileOf(path);
+        return file.exists ? file.uri : undefined;
       },
-      async evict(path) {
-        const { [path]: _evicted, ...rest } = await read();
+      remove(path) {
         const file = fileOf(path);
         if (file.exists) file.delete();
-        await save(rest);
       },
-      async files() {
-        return Object.entries(await read()).map(([path, { size, usedAt }]): CachedMediaFile => ({
-          path,
-          size,
-          usedAt: new Date(usedAt),
-        }));
-      },
-    };
+    });
   });
 }
 

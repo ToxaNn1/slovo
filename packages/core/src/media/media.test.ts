@@ -312,6 +312,17 @@ describe('the media cache', () => {
     });
     expect((await media.ofWord('w1')).recording).toEqual(cached);
   });
+
+  it('downloads a file once when a tap comes while the prefetch is downloading it', async () => {
+    const { media, fetcher } = await device({
+      rows: { recordings: [recording('w1', hashOf('a'))] },
+    });
+
+    const [, tapped] = await Promise.all([media.prefetch(['w1']), media.downloadRecording('w1')]);
+
+    expect(fetcher.asked).toEqual([`${BASE}/recordings/oksana/plain/w1.${hashOf('a')}.mp3`]);
+    expect(tapped.kind).toBe('cached');
+  });
 });
 
 describe('a Patch applied', () => {
