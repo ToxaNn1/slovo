@@ -46,11 +46,11 @@ Every variable the server reads at start, with the value it takes in the Deploym
 
 **Neon.** One Neon project in Frankfurt (`aws-eu-central-1`) holds the Deployment's Postgres; its default branch `main` is the live database. Neon restores `main` to any point inside its history window, and it scales to zero while idle (about half a second on the first query after sleep).
 
-| Setting                         | Value                                                                                                                                                      |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Railway variable `DATABASE_URL` | The pooled connection string of `main`, on the backend and on both Cron services. The pre-deploy command `pnpm db:migrate` runs the migrations against it. |
-| Neon API key                    | Secret. Lives only in Neon's GitHub integration (the GitHub secret `NEON_API_KEY`), never in the repository.                                               |
-| `NEON_PROJECT_ID`               | The GitHub Actions variable naming the project, for the branch per pull request.                                                                           |
+| Setting                           | Value                                                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Railway variable `DATABASE_URL`   | The pooled connection string of `main`, on the backend and on both Cron services. The pre-deploy command `pnpm db:migrate` runs the migrations against it. |
+| Neon API key                      | Secret. Lives only in Neon's GitHub integration (the GitHub secret `NEON_API_KEY`), never in the repository.                                               |
+| GitHub variable `NEON_PROJECT_ID` | The GitHub Actions variable naming the project, for the branch per pull request.                                                                           |
 
 **The move from Railway's Postgres.** Once, before `DATABASE_URL` changes: stop writes (no admin saves, the Cron services paused), copy the database with `pg_dump --format=custom --no-owner '<DATABASE_PUBLIC_URL of the Railway Postgres>' > slovo.dump` and `pg_restore --no-owner --dbname='<the Neon connection string, unpooled>' slovo.dump`, point `DATABASE_URL` at Neon, deploy, check `/health`, then remove the Railway Postgres service.
 
