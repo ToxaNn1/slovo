@@ -73,9 +73,7 @@ export function createTextComparison({
     ).join('');
   /** The text as every Comparison Key writes it, before its ends are dropped. */
   const keyed = (text: string) =>
-    withApostrophe(
-      lowerCase(text.normalize('NFD').replaceAll(STRESS_MARK, '').normalize('NFC')),
-    );
+    withApostrophe(lowerCase(text.normalize('NFD').replaceAll(STRESS_MARK, '').normalize('NFC')));
   const typedAnswer = (text: string) => keyed(text).trim();
   const isWordCharacter = (character: string) =>
     /[\p{L}\p{M}\p{N}-]/u.test(character) || isApostrophe(character);

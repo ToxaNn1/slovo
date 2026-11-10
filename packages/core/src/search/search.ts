@@ -1,5 +1,13 @@
 import type { Analytics } from '../analytics/analytics';
-import type { Correction, Entry, Idiom, LanguageTraits, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type {
+  Correction,
+  Entry,
+  Idiom,
+  LanguageTraits,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import { byKind, featureOfKind, type ByKind, type MixKind } from '../entries/entry-kinds';

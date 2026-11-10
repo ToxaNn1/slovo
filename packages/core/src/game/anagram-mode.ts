@@ -24,7 +24,8 @@ export const anagramMode: GameMode = {
     const letters: string[] = [];
     const fixed: FixedChip[] = [];
     for (const character of answer.lemma) {
-      if (character === '-' || comparison.isApostrophe(character)) fixed.push({ at: letters.length, text: character });
+      if (character === '-' || comparison.isApostrophe(character))
+        fixed.push({ at: letters.length, text: character });
       else letters.push(character);
     }
     if (letters.length < LETTERS.min || letters.length > LETTERS.max) return undefined;
