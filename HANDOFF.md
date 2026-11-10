@@ -35,6 +35,7 @@ Owner grant: ~/.slovo-coord/grant-media-1110.md — «так даю дозвол
 - 2026-11-10 11:39 #1769 impl #2 stopped at 121k: 4f8e6d8a9 (handoff step 1: build returns starterMedia, CLI downloads to git-ignored editions/<id>/starter-media/, folder checks + missingRecordings + illustrations.ts gone). Launched «#1769 impl #3» with a narrow scope (steps 2–3: Metro, player/Pronunciation via createMedia); steps 4–5 (WordIllustration, Feed prefetch, handbook) for impl #4. Integration e3a34d34f (#1766 finish merged main); Backend still red on run 42808550558, «#1766 finish» still working.
 - 2026-11-10 11:52 #1766 DONE: integration c9376f8ea, PR #1792 all green incl. backend DB tests; Result 6/6; handbook озвучка.md. Launched «#1767 Illustration upload» (new worktree, feat/1767-illustration-upload; lane backend/admin/content-rules, not language-pack). 
 - 2026-11-10 11:55 watchdog: feat/1769-mobile-media no commit 15 min — not stuck: impl #3 has uncommitted edits in ~10 mobile files (metro.config, pronunciation*, edition). Running: #1769 impl #3 + #1767. Next: #1770 (←1766,1769), #1772 last.
+- 2026-11-10 12:05 #1769 impl #3 done: 089cc9066 (Metro bundles only Starter Media; Pronunciation via Core media + expo-file-system cache + fetch; tests green language-pack/ui/mobile). Illustrations temporarily broken until step 4 (keyed by Word id vs file name). Launched «#1769 impl #4» (steps 4–5, handbook, ticks) in the same worktree t3-64ed63df…. Running: #1769 impl #4 + #1767.
 
 ## Handoff to coordinator #2 (2026-11-10 09:35 UTC; #1 at 112k context)
 State: done #1771 (in integration b901fc745 + CI fix c8701a5d5). Draft PR #1792, CI green.
@@ -50,3 +51,10 @@ Frontier after that: #1769 (←1768, can start now), #1767 (←1766), then #1770
 Reserved migrations: 0022 #1765, 0023 #1766, 0024 #1768 (unused). Next free: 0024.
 Open owner question: generator in its own recordings.Dockerfile for the Railway Cron instead of the API image (ticket text) — coordinator accepted, owner may veto.
 Lessons: implementers burn context exploring — brief ≤15 exploration calls, point at handoffs; children sometimes end the turn while a background test runs — nudge with t3_thread_send; load spikes > 90 → pause; 2 implementers max; worktrees under ~/.t3/worktrees/SLOVO/.
+
+## Handoff to coordinator #4 (prepared 2026-11-10 12:05 UTC by #3 at 107k; used when #3 hands off)
+Done: #1771, #1765, #1768, #1766 (integration c9376f8ea+, PR #1792 green incl. DB tests). Merge worktree of #3: scratchpad/integ (branch merge/1764-integ) — or make your own.
+Running (T3 children of #3; their notices reach #3, who forwards): #1769 impl #4 in /Users/mykhailo/.t3/worktrees/SLOVO/t3-64ed63df-982369dfcdfd5bfa (feat/1769-mobile-media, handoff ~/.slovo-coord/media-1769/HANDOFF.md); #1767 in its own new worktree (feat/1767-illustration-upload, handoff ~/.slovo-coord/media-1767/HANDOFF.md when it stops). No commit 30 min → stuck: relaunch from the handoff.
+Next: merge #1769 and #1767 into integration (fetch, `git merge --no-ff`, push, CI on #1792); then #1770 (←1766,1769), #1772 last (owner checklist); then /code-review on integration, one fix implementer, mark #1792 ready, ask the owner for the main merge.
+Lesson: implementers hit 120k fast on #1769 — give narrow scopes (1–2 handoff steps) and stop at 100k.
+Owner questions open: generator in recordings.Dockerfile (accepted, owner may veto); Starter Media = sample Word in every voice (ADR 0099 over the ticket text).
