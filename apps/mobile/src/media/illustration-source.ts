@@ -9,8 +9,9 @@ export type IllustrationSource = number | { readonly uri: string };
 async function illustrationSourceOf(
   media: Media<number>,
   wordId: string,
+  voice: string,
 ): Promise<IllustrationSource | undefined> {
-  const source = (await media.ofWord(wordId)).illustration;
+  const source = (await media.ofWord(wordId, voice)).illustration;
   switch (source.kind) {
     case 'bundled':
       return source.asset;
@@ -32,11 +33,14 @@ async function illustrationSourceOf(
 export function watchIllustration({
   media,
   wordId,
+  voice,
   arrivals,
   show,
 }: {
   media: () => Promise<Media<number>>;
   wordId: string;
+  /** The Narrator Voice the reader chose, which the Core media reads a card's media in. */
+  voice: string;
   arrivals: (listener: () => void) => () => void;
   show: (source: IllustrationSource | undefined) => void;
 }): () => void {
@@ -44,11 +48,11 @@ export function watchIllustration({
   const read = async () => {
     try {
       const opened = await media();
-      const source = await illustrationSourceOf(opened, wordId);
+      const source = await illustrationSourceOf(opened, wordId, voice);
       if (!watching) return;
       if (source !== undefined) stop();
       show(source);
-      if (typeof source === 'object') await opened.used(wordId, 'illustration');
+      if (typeof source === 'object') await opened.used(wordId, 'illustration', voice);
     } catch (error) {
       logError('Could not get the Illustration of a Word', error);
       if (watching) show(undefined);

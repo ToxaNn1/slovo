@@ -8,6 +8,7 @@ import { useInForeground } from '../foreground/in-foreground';
 import { keep } from '../keep';
 import { prefetchAhead } from '../media/shell-media';
 import { useSubscribed } from '../opening';
+import { useSettings } from '../settings/settings';
 import { useShell } from '../shell-value';
 import { wordIdsAhead } from './feed-ahead';
 import { cardOnScreen, type TurnedTo } from './feed-screen';
@@ -46,6 +47,7 @@ export function useFeed(
 ): FeedState {
   const { feed, onboarding } = useComposition();
   const shell = useShell();
+  const voice = useSettings().current.narratorVoice;
   const cards = useSubscribed(feed, (open) => open.cards);
   const today = useSubscribed(feed, (open) => open.today);
   /** The card the reader turned to last, by the Feed's position, in the Feed they turned it in. */
@@ -90,11 +92,12 @@ export function useFeed(
     if (onScreen === undefined) return;
     void keep('the Feed state', feed.show(onScreen));
   }, [feed, onScreen]);
-  // The Feed advancing downloads the media of the Words ahead (ADR 0099).
+  // The Feed advancing downloads the media of the Words ahead (ADR 0099), and
+  // a Narrator Voice the reader chose downloads them again in that voice.
   useEffect(() => {
     if (onScreen === undefined) return;
-    void keep('the media ahead', prefetchAhead(shell, wordIdsAhead(cards, onScreen)));
-  }, [shell, cards, onScreen]);
+    void keep('the media ahead', prefetchAhead(shell, wordIdsAhead(cards, onScreen), voice));
+  }, [shell, cards, onScreen, voice]);
   useEffect(() => {
     if (!inSight) return;
     return () => {

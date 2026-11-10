@@ -75,12 +75,10 @@ const starter = {
 /** The Core media over a memory pack, a memory file cache and a fake fetcher serving every row. */
 async function device({
   rows = {},
-  voice = 'oksana',
   off = [],
   needsNewRecording = [],
 }: {
   rows?: Pick<Partial<Patch>, 'recordings' | 'illustrations'>;
-  voice?: string;
   off?: MediaSwitch[];
   needsNewRecording?: string[];
 } = {}) {
@@ -106,7 +104,6 @@ async function device({
     fetcher,
     starter,
     clock: time.clock,
-    voice: () => voice,
     defaultVoice: 'oksana',
     isOn: (name) => !off.includes(name),
   });
@@ -117,7 +114,7 @@ describe('the media of a Word card', () => {
   it('answers a Starter Media Word bundled, with no download', async () => {
     const { media, fetcher } = await device();
 
-    expect(await media.ofWord('starter')).toEqual({
+    expect(await media.ofWord('starter', 'oksana')).toEqual({
       recording: { kind: 'bundled', asset: 'bundled:starter.mp3' },
       illustration: { kind: 'bundled', asset: 'bundled:starter.png' },
     });
@@ -136,7 +133,7 @@ describe('the media of a Word card', () => {
     await store.apply(patch, '"uk.3.p2"');
     await media.patchApplied(patch);
 
-    expect(await media.ofWord('starter')).toEqual({
+    expect(await media.ofWord('starter', 'oksana')).toEqual({
       recording: {
         kind: 'remote',
         url: `${BASE}/recordings/oksana/plain/starter.${hashOf('u')}.mp3`,
@@ -153,7 +150,7 @@ describe('the media of a Word card', () => {
       },
     });
 
-    expect(await media.ofWord('w1')).toEqual({
+    expect(await media.ofWord('w1', 'oksana')).toEqual({
       recording: { kind: 'remote', url: `${BASE}/recordings/oksana/plain/w1.${hashOf('a')}.mp3` },
       illustration: { kind: 'remote', url: `${BASE}/illustrations/w1.${hashOf('b')}.png` },
     });
@@ -162,7 +159,7 @@ describe('the media of a Word card', () => {
   it('answers a Word without rows absent', async () => {
     const { media } = await device();
 
-    expect(await media.ofWord('w1')).toEqual({
+    expect(await media.ofWord('w1', 'oksana')).toEqual({
       recording: { kind: 'absent' },
       illustration: { kind: 'absent' },
     });
@@ -174,8 +171,8 @@ describe('the media of a Word card', () => {
       needsNewRecording: ['w1', 'starter'],
     });
 
-    expect((await media.ofWord('w1')).recording).toEqual({ kind: 'absent' });
-    expect((await media.ofWord('starter')).recording).toEqual({ kind: 'absent' });
+    expect((await media.ofWord('w1', 'oksana')).recording).toEqual({ kind: 'absent' });
+    expect((await media.ofWord('starter', 'oksana')).recording).toEqual({ kind: 'absent' });
   });
 });
 
@@ -183,7 +180,6 @@ describe('the prefetch of the next Feed cards', () => {
   it('downloads the media of the next 20 cards in the chosen voice only, and answers them cached', async () => {
     const ids = Array.from({ length: 21 }, (_, i) => `w${String(i + 1)}`);
     const { media, fetcher } = await device({
-      voice: 'taras',
       rows: {
         recordings: ids.flatMap((id) => [
           recording(id, hashOf('a')),
@@ -193,15 +189,15 @@ describe('the prefetch of the next Feed cards', () => {
       },
     });
 
-    await media.prefetch(ids);
+    await media.prefetch(ids, 'taras');
 
     expect(fetcher.asked).toHaveLength(21);
     expect(fetcher.asked.every((url) => !url.includes('/oksana/'))).toBe(true);
-    expect(await media.ofWord('w1')).toEqual({
+    expect(await media.ofWord('w1', 'taras')).toEqual({
       recording: { kind: 'cached', uri: `memory://recordings/taras/plain/w1.${hashOf('b')}.mp3` },
       illustration: { kind: 'cached', uri: `memory://illustrations/w1.${hashOf('c')}.png` },
     });
-    expect((await media.ofWord('w21')).recording).toEqual({
+    expect((await media.ofWord('w21', 'taras')).recording).toEqual({
       kind: 'remote',
       url: `${BASE}/recordings/taras/plain/w21.${hashOf('b')}.mp3`,
     });
@@ -212,8 +208,8 @@ describe('the prefetch of the next Feed cards', () => {
       rows: { recordings: [recording('w1', hashOf('a'))] },
     });
 
-    await media.prefetch(['w1']);
-    await media.prefetch(['w1']);
+    await media.prefetch(['w1'], 'oksana');
+    await media.prefetch(['w1'], 'oksana');
 
     expect(fetcher.asked).toHaveLength(1);
   });
@@ -224,10 +220,10 @@ describe('the prefetch of the next Feed cards', () => {
     });
     fetcher.cutShort(`${BASE}/recordings/oksana/plain/w1.${hashOf('a')}.mp3`);
 
-    await media.prefetch(['w1', 'w2']);
+    await media.prefetch(['w1', 'w2'], 'oksana');
 
-    expect((await media.ofWord('w1')).recording.kind).toBe('remote');
-    expect((await media.ofWord('w2')).recording.kind).toBe('cached');
+    expect((await media.ofWord('w1', 'oksana')).recording.kind).toBe('remote');
+    expect((await media.ofWord('w2', 'oksana')).recording.kind).toBe('cached');
   });
 
   it('leaves the cache unchanged when a download fails', async () => {
@@ -236,9 +232,9 @@ describe('the prefetch of the next Feed cards', () => {
     });
     fetcher.fail(`${BASE}/recordings/oksana/plain/w1.${hashOf('a')}.mp3`);
 
-    await media.prefetch(['w1']);
+    await media.prefetch(['w1'], 'oksana');
 
-    expect((await media.ofWord('w1')).recording.kind).toBe('remote');
+    expect((await media.ofWord('w1', 'oksana')).recording.kind).toBe('remote');
   });
 
   it('fetches no Recording with `pronunciation` off and no Illustration with `illustrations` off', async () => {
@@ -249,18 +245,42 @@ describe('the prefetch of the next Feed cards', () => {
     const silent = await device({ rows, off: ['pronunciation'] });
     const plain = await device({ rows, off: ['illustrations'] });
 
-    await silent.media.prefetch(['w1']);
-    await plain.media.prefetch(['w1']);
+    await silent.media.prefetch(['w1'], 'oksana');
+    await plain.media.prefetch(['w1'], 'oksana');
 
     expect(silent.fetcher.asked).toEqual([`${BASE}/illustrations/w1.${hashOf('b')}.png`]);
-    expect((await silent.media.ofWord('starter')).recording).toEqual({ kind: 'absent' });
+    expect((await silent.media.ofWord('starter', 'oksana')).recording).toEqual({ kind: 'absent' });
     expect(plain.fetcher.asked).toEqual([`${BASE}/recordings/oksana/plain/w1.${hashOf('a')}.mp3`]);
-    expect((await plain.media.ofWord('starter')).illustration).toEqual({ kind: 'absent' });
+    expect((await plain.media.ofWord('starter', 'oksana')).illustration).toEqual({
+      kind: 'absent',
+    });
+  });
+
+  it('downloads in the voice each call names, so a voice the reader changes takes effect at once', async () => {
+    const { media, fetcher } = await device({
+      rows: {
+        recordings: [
+          recording('w1', hashOf('a')),
+          recording('w1', hashOf('b'), { narratorVoice: 'taras' }),
+        ],
+      },
+    });
+
+    await media.prefetch(['w1'], 'oksana');
+    await media.prefetch(['w1'], 'taras');
+
+    expect(fetcher.asked).toEqual([
+      `${BASE}/recordings/oksana/plain/w1.${hashOf('a')}.mp3`,
+      `${BASE}/recordings/taras/plain/w1.${hashOf('b')}.mp3`,
+    ]);
+    expect((await media.ofWord('w1', 'taras')).recording).toEqual({
+      kind: 'cached',
+      uri: `memory://recordings/taras/plain/w1.${hashOf('b')}.mp3`,
+    });
   });
 
   it('uses the default voice with `narratorVoice` off', async () => {
     const { media, fetcher } = await device({
-      voice: 'taras',
       off: ['narratorVoice'],
       rows: {
         recordings: [
@@ -270,7 +290,7 @@ describe('the prefetch of the next Feed cards', () => {
       },
     });
 
-    await media.prefetch(['w1']);
+    await media.prefetch(['w1'], 'taras');
 
     expect(fetcher.asked).toEqual([`${BASE}/recordings/oksana/plain/w1.${hashOf('a')}.mp3`]);
   });
@@ -288,29 +308,29 @@ describe('the media cache', () => {
         ],
       },
     });
-    await media.prefetch(['w1', 'w2']);
+    await media.prefetch(['w1', 'w2'], 'oksana');
     advance(60_000);
-    await media.used('w1', 'recording');
+    await media.used('w1', 'recording', 'oksana');
     advance(60_000);
 
-    await media.prefetch(['w3']);
+    await media.prefetch(['w3'], 'oksana');
 
-    expect((await media.ofWord('w1')).recording.kind).toBe('cached');
-    expect((await media.ofWord('w2')).recording.kind).toBe('remote');
-    expect((await media.ofWord('w3')).recording.kind).toBe('cached');
-    expect((await media.ofWord('starter')).recording.kind).toBe('bundled');
+    expect((await media.ofWord('w1', 'oksana')).recording.kind).toBe('cached');
+    expect((await media.ofWord('w2', 'oksana')).recording.kind).toBe('remote');
+    expect((await media.ofWord('w3', 'oksana')).recording.kind).toBe('cached');
+    expect((await media.ofWord('starter', 'oksana')).recording.kind).toBe('bundled');
   });
 
   it('downloads a remote Recording on a tap and answers it cached', async () => {
     const { media } = await device({ rows: { recordings: [recording('w1', hashOf('a'))] } });
 
-    const cached = await media.downloadRecording('w1');
+    const cached = await media.downloadRecording('w1', 'oksana');
 
     expect(cached).toEqual({
       kind: 'cached',
       uri: `memory://recordings/oksana/plain/w1.${hashOf('a')}.mp3`,
     });
-    expect((await media.ofWord('w1')).recording).toEqual(cached);
+    expect((await media.ofWord('w1', 'oksana')).recording).toEqual(cached);
   });
 
   it('downloads a file once when a tap comes while the prefetch is downloading it', async () => {
@@ -318,7 +338,10 @@ describe('the media cache', () => {
       rows: { recordings: [recording('w1', hashOf('a'))] },
     });
 
-    const [, tapped] = await Promise.all([media.prefetch(['w1']), media.downloadRecording('w1')]);
+    const [, tapped] = await Promise.all([
+      media.prefetch(['w1'], 'oksana'),
+      media.downloadRecording('w1', 'oksana'),
+    ]);
 
     expect(fetcher.asked).toEqual([`${BASE}/recordings/oksana/plain/w1.${hashOf('a')}.mp3`]);
     expect(tapped.kind).toBe('cached');
@@ -333,7 +356,7 @@ describe('a Patch applied', () => {
         illustrations: [illustration('w1', hashOf('b'))],
       },
     });
-    await media.prefetch(['w1']);
+    await media.prefetch(['w1'], 'oksana');
     const patch = patchOf(2, {
       recordings: [recording('w1', hashOf('a'), { retired: true }), recording('w1', hashOf('d'))],
       illustrations: [
@@ -345,7 +368,7 @@ describe('a Patch applied', () => {
 
     await media.patchApplied(patch);
 
-    expect(await media.ofWord('w1')).toEqual({
+    expect(await media.ofWord('w1', 'oksana')).toEqual({
       recording: { kind: 'remote', url: `${BASE}/recordings/oksana/plain/w1.${hashOf('d')}.mp3` },
       illustration: { kind: 'remote', url: `${BASE}/illustrations/w1.${hashOf('e')}.png` },
     });

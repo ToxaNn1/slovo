@@ -15,8 +15,8 @@ function fakeMedia(illustration: MediaSource<number>, { failing = false } = {}) 
         : Promise.resolve({ recording: { kind: 'absent' }, illustration: state.illustration }),
     prefetch: () => Promise.resolve(),
     downloadRecording: () => Promise.resolve({ kind: 'absent' }),
-    used(wordId, kind) {
-      used.push(`${wordId}:${kind}`);
+    used(wordId, kind, voice) {
+      used.push(`${wordId}:${kind}:${voice}`);
       return Promise.resolve();
     },
     patchApplied: () => Promise.resolve(),
@@ -32,6 +32,7 @@ function watch(media: Media<number>) {
   const stop = watchIllustration({
     media: () => Promise.resolve(media),
     wordId: 'w1',
+    voice: 'taras',
     arrivals: (listener) => {
       arrived = listener;
       return () => {
@@ -61,7 +62,7 @@ describe('the Illustration a Word card shows', () => {
     await settle();
 
     expect(shown).toEqual([{ uri: 'file:///cache/w1.png' }]);
-    expect(used).toEqual(['w1:illustration']);
+    expect(used).toEqual(['w1:illustration:taras']);
   });
 
   it('is none while the file is remote, and fills in once it arrives in the cache', async () => {
@@ -89,7 +90,7 @@ describe('the Illustration a Word card shows', () => {
     await settle();
 
     expect(shown).toEqual([undefined, { uri: 'file:///cache/w1.png' }]);
-    expect(used).toEqual(['w1:illustration']);
+    expect(used).toEqual(['w1:illustration:taras']);
   });
 
   it('is none when the Word has none or the media cannot be read', async () => {
