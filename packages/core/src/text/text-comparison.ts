@@ -15,12 +15,27 @@ export type TextComparisonEdition = Pick<Edition, 'searchLetters'> & {
   readonly languageTraits: Pick<LanguageTraits, 'apostrophes' | 'sortLocale'>;
 };
 
+/** A stretch of a text, from its first character to the one after its last, in UTF-16 places. */
+export interface FoundRange {
+  readonly start: number;
+  readonly end: number;
+}
+
 /** How the Edition compares text: the Comparison Key of a text for each purpose. */
 export interface TextComparison {
   /** The Comparison Key of the text for the purpose. */
   key(text: string, purpose: ComparisonPurpose): string;
   /** Whether two texts have the same Comparison Key for the purpose. */
   same(one: string, other: string, purpose: ComparisonPurpose): boolean;
+  /**
+   * Where the text first holds the sought text by the rules every Comparison
+   * Key shares (case, Stress marks, apostrophes), as written in the text, the
+   * Stress marks after its last letter included; with `wholeWord`, only where
+   * no letter, mark, digit, hyphen or apostrophe of the Edition stands next to
+   * it. Nothing when it holds none, or the sought text is empty. Both texts
+   * are taken as written in one Unicode form.
+   */
+  find(text: string, sought: string, options?: { readonly wholeWord?: boolean }): FoundRange | undefined;
   /** The apostrophe a Comparison Key writes for each the Edition reads as one; none in an Edition that lists none. */
   readonly apostrophe: string | undefined;
 }
@@ -42,18 +57,50 @@ export function createTextComparison({
 }: TextComparisonEdition): TextComparison {
   const [apostrophe] = apostrophes;
   const readAsApostrophe = new Set(apostrophes);
-  const typedAnswer = (text: string) =>
-    Array.from(
+  const withApostrophe = (text: string) =>
+    Array.from(text, (character) =>
+      apostrophe !== undefined && readAsApostrophe.has(character) ? apostrophe : character,
+    ).join('');
+  /** The text as every Comparison Key writes it, before its ends are dropped. */
+  const folded = (text: string) =>
+    withApostrophe(
       text
         .normalize('NFD')
         .replaceAll(STRESS_MARK, '')
         .normalize('NFC')
         .toLocaleLowerCase(sortLocale),
-      (character) =>
-        apostrophe !== undefined && readAsApostrophe.has(character) ? apostrophe : character,
-    )
-      .join('')
-      .trim();
+    );
+  const typedAnswer = (text: string) => folded(text).trim();
+  const isWordCharacter = (character: string) =>
+    /[\p{L}\p{M}\p{N}-]/u.test(character) || readAsApostrophe.has(character);
+  function find(
+    text: string,
+    sought: string,
+    { wholeWord = false }: { readonly wholeWord?: boolean } = {},
+  ): FoundRange | undefined {
+    const wanted = folded(sought);
+    if (wanted === '') return undefined;
+    let plain = '';
+    /** The place in the text of each place in `plain` that begins a character's folded form. */
+    const placeAt = new Map<number, number>();
+    let place = 0;
+    for (const character of text) {
+      const form = folded(character);
+      if (form !== '' && !placeAt.has(plain.length)) placeAt.set(plain.length, place);
+      plain += form;
+      place += character.length;
+    }
+    /** The place in the text where the character after `plain`'s place stands, past Stress marks; the end of the text when none. */
+    const endAt = (at: number) => placeAt.get(at) ?? (at === plain.length ? text.length : undefined);
+    for (let at = plain.indexOf(wanted); at >= 0; at = plain.indexOf(wanted, at + 1)) {
+      const start = placeAt.get(at);
+      const end = endAt(at + wanted.length);
+      if (start === undefined || end === undefined) continue;
+      if (wholeWord && (isWordCharacter(text.charAt(start - 1)) || isWordCharacter(text.charAt(end)))) continue;
+      return { start, end };
+    }
+    return undefined;
+  }
   const keyFor: Readonly<Record<ComparisonPurpose, (text: string) => string>> = {
     typedAnswer,
     searchQuery: (text) =>
@@ -63,6 +110,7 @@ export function createTextComparison({
   return {
     key: (text, purpose) => keyFor[purpose](text),
     same: (one, other, purpose) => keyFor[purpose](one) === keyFor[purpose](other),
+    find,
     apostrophe,
   };
 }
