@@ -32,10 +32,7 @@ export async function prefetchAhead(
  * arrives. The caller passes the reader's Narrator Voice, so media never
  * imports settings (settings → feed → media is one way).
  */
-export function useWordIllustration(
-  wordId: string,
-  voice: string,
-): IllustrationSource | undefined {
+export function useWordIllustration(wordId: string, voice: string): IllustrationSource | undefined {
   const shell = useShell();
   const [shown, setShown] = useState<{ wordId: string; source: IllustrationSource | undefined }>();
   useEffect(
