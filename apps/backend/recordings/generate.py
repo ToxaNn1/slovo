@@ -1,18 +1,19 @@
-"""Generates the Recordings of an Edition's Words in its Narrator Voices (ADR 0083).
+"""Generates Recordings of Words in their Narrator Voices (ADR 0083, 0099).
 
-    python tools/recordings/generate.py --model <dir> --requests <file> [--edition-dir <dir>]
-    python tools/recordings/generate.py --model <dir> --requests <file> --check
+    python recordings/generate.py --model <dir> --requests <file> --out-dir <dir>
+    python recordings/generate.py --model <dir> --requests <file> --check
 
-The requests are the list `pnpm recording-requests <edition-id>` prints:
-`{ voice, wordId, text }`, the text being the Lemma with a combining acute
-after its first stressed vowel. Each Recording goes to
-`<edition-dir>/assets/recordings/<voice>/<wordId>.mp3`, mono 24 kHz 48 kbps,
-and its text to `texts.json` in the same folder, Word id to text, so the
-build asks again for a Recording whose Word's text has changed since.
+The requests are a JSON list of `{ id, voice, text }`, the text being what
+the voice reads (the Lemma with a combining acute after its first stressed
+vowel). The Recordings service (`pnpm recordings`) writes the list and reads
+the result. Each Recording goes to `<out-dir>/<id>.mp3`, mono 24 kHz 48 kbps,
+and `<out-dir>/results.json` lists `{ id, ok, durationMs }` for every
+request: a request the engine fails on is `ok: false` and the others still
+get their Recordings.
 
 `--check` is the Stress spot-check: it reads the Words of `CHECK_LEMMAS`
-from the requests, once in each voice, writes nothing to the Edition, and
-fails unless the text the engine read stresses the vowels the Word marks.
+from the requests, once in each voice, writes no Recording, and fails unless
+the text the engine read stresses the vowels the Word marks.
 
 The model files come from `fetch-model.sh`, checked by SHA256; the engine is
 given that folder, so it downloads nothing else.
@@ -27,6 +28,7 @@ import subprocess
 import sys
 import tempfile
 import unicodedata
+import wave
 from pathlib import Path
 
 # The ukrainian-tts voice that reads each Narrator Voice of the Edition config.
@@ -40,7 +42,6 @@ ENGINE_VOICES = {
 
 # The Words of the Stress spot-check: their Stress is known and easy to misplace.
 CHECK_LEMMAS = ("кромлех", "антаблемент", "кракелюр", "заграва", "заплава")
-TEXTS_FILE = "texts.json"
 
 ACUTE = "́"
 VOWELS = set("аеєиіїоуюяАЕЄИІЇОУЮЯ")
@@ -112,33 +113,27 @@ def to_mp3(wav: Path, mp3: Path) -> None:
     os.replace(partial, mp3)
 
 
-def generate(engine: Engine, requests: list[dict[str, str]], edition_dir: Path) -> None:
-    recordings = edition_dir / "assets" / "recordings"
+def duration_ms(wav: Path) -> int:
+    with wave.open(str(wav), "rb") as file:
+        return round(file.getnframes() * 1000 / file.getframerate())
+
+
+def generate(engine: Engine, requests: list[dict[str, str]], out_dir: Path) -> None:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    results: list[dict[str, object]] = []
     with tempfile.TemporaryDirectory() as work:
         wav = Path(work) / "recording.wav"
-        texts: dict[str, dict[str, str]] = {}
         for done, request in enumerate(requests, start=1):
-            voice_dir = recordings / request["voice"]
-            engine.read(request["voice"], request["text"], wav)
-            to_mp3(wav, voice_dir / f"{request['wordId']}.mp3")
-            voice_texts = texts.setdefault(request["voice"], read_texts(voice_dir))
-            voice_texts[request["wordId"]] = request["text"]
-            write_texts(voice_dir, voice_texts)
+            try:
+                engine.read(request["voice"], request["text"], wav)
+                to_mp3(wav, out_dir / f"{request['id']}.mp3")
+                results.append({"id": request["id"], "ok": True, "durationMs": duration_ms(wav)})
+            except Exception as error:  # noqa: BLE001 - one failing Word must not stop the others
+                print(f"FAIL {request['id']} {request['voice']}: {error}", file=sys.stderr)
+                results.append({"id": request["id"], "ok": False})
             if done % 50 == 0 or done == len(requests):
                 print(f"{done}/{len(requests)}", flush=True)
-
-
-def read_texts(voice_dir: Path) -> dict[str, str]:
-    file = voice_dir / TEXTS_FILE
-    return json.loads(file.read_text(encoding="utf-8")) if file.exists() else {}
-
-
-def write_texts(voice_dir: Path, texts: dict[str, str]) -> None:
-    partial = voice_dir / f"{TEXTS_FILE}.partial"
-    partial.write_text(
-        json.dumps(texts, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-    os.replace(partial, voice_dir / TEXTS_FILE)
+    (out_dir / "results.json").write_text(json.dumps(results) + "\n", encoding="utf-8")
 
 
 def check(engine: Engine, requests: list[dict[str, str]]) -> bool:
@@ -161,7 +156,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--requests", type=Path, required=True)
-    parser.add_argument("--edition-dir", type=Path)
+    parser.add_argument("--out-dir", type=Path)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 
@@ -173,9 +168,9 @@ def main() -> int:
     engine = Engine(args.model)
     if args.check:
         return 0 if check(engine, requests) else 1
-    if args.edition_dir is None:
-        parser.error("--edition-dir is required unless --check")
-    generate(engine, requests, args.edition_dir)
+    if args.out_dir is None:
+        parser.error("--out-dir is required unless --check")
+    generate(engine, requests, args.out_dir)
     return 0
 
 

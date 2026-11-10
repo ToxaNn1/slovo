@@ -121,7 +121,31 @@ const ServerVariablesSchema = z.object({
       .refine((url) => !url.endsWith('/'), 'must not end with a slash')
       .default('http://localhost:8787/media'),
   ),
+  // The Cloudflare R2 bucket of the Media Store and an API token's S3 keys
+  // with write access to it; all four or none. Unset, the Recordings command
+  // keeps its files in memory, which suits development only.
+  R2_ACCOUNT_ID: unsetWhenEmpty(z.string().min(1)),
+  R2_BUCKET: unsetWhenEmpty(z.string().min(1)),
+  R2_ACCESS_KEY_ID: unsetWhenEmpty(z.string().min(1)),
+  R2_SECRET_ACCESS_KEY: unsetWhenEmpty(z.string().min(1)),
+  // The Python and the model the Recording generator runs; the defaults are
+  // where recordings.Dockerfile puts them.
+  RECORDINGS_PYTHON: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(1).default('/opt/recordings/venv/bin/python'),
+  ),
+  RECORDINGS_MODEL_DIR: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(1).default('/opt/recordings/model'),
+  ),
 });
+
+const R2_VARIABLES = [
+  'R2_ACCOUNT_ID',
+  'R2_BUCKET',
+  'R2_ACCESS_KEY_ID',
+  'R2_SECRET_ACCESS_KEY',
+] as const;
 
 /** The options of PostHog's query API, or none while its key or project is unset. */
 function posthogOf({
@@ -216,6 +240,49 @@ export const CronConfigSchema = ServerVariablesSchema.pick({
   ...rest,
   posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
 }));
+
+/** The environment the Recordings service's `pnpm recordings` reads. */
+export const RecordingsConfigSchema = ServerVariablesSchema.pick({
+  NODE_ENV: true,
+  DATABASE_URL: true,
+  EDITIONS_DIR: true,
+  R2_ACCOUNT_ID: true,
+  R2_BUCKET: true,
+  R2_ACCESS_KEY_ID: true,
+  R2_SECRET_ACCESS_KEY: true,
+  RECORDINGS_PYTHON: true,
+  RECORDINGS_MODEL_DIR: true,
+})
+  .superRefine((variables, context) => {
+    const unset = R2_VARIABLES.filter((name) => variables[name] === undefined);
+    const required = variables.NODE_ENV === 'production' || unset.length < R2_VARIABLES.length;
+    if (!required) return;
+    for (const name of unset) {
+      context.addIssue({
+        code: 'custom',
+        path: [name],
+        message:
+          variables.NODE_ENV === 'production'
+            ? 'is required in production'
+            : 'is required with the other R2 variables',
+      });
+    }
+  })
+  .transform(({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, ...rest }) => ({
+    ...rest,
+    r2:
+      R2_ACCOUNT_ID === undefined ||
+      R2_BUCKET === undefined ||
+      R2_ACCESS_KEY_ID === undefined ||
+      R2_SECRET_ACCESS_KEY === undefined
+        ? undefined
+        : {
+            accountId: R2_ACCOUNT_ID,
+            bucket: R2_BUCKET,
+            accessKeyId: R2_ACCESS_KEY_ID,
+            secretAccessKey: R2_SECRET_ACCESS_KEY,
+          },
+  }));
 
 /** The environment the publish command reads. */
 export const PublishConfigSchema = ServerVariablesSchema.pick({

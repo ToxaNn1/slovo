@@ -162,6 +162,13 @@
       "when": 1794300468985,
       "tag": "0022_media",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794308011289,
+      "tag": "0023_media_file_deleted",
+      "breakpoints": true
     }
   ]
 }

@@ -2,7 +2,7 @@
 # Downloads the ukrainian-tts v6.0.0 model files from the upstream release
 # into the given folder and checks each by SHA256; a mismatch fails (ADR 0083).
 #
-#   tools/recordings/fetch-model.sh <model-dir>
+#   apps/backend/recordings/fetch-model.sh <model-dir>
 set -euo pipefail
 
 release="https://github.com/robinhad/ukrainian-tts/releases/download/v6.0.0"

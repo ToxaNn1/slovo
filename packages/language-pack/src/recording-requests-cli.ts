@@ -5,7 +5,7 @@
  *
  * Each item is `{ voice, wordId, text }`. `--only missing` (the default)
  * leaves out the Words a Narrator Voice already has a Recording of.
- * The Recordings generator (`tools/recordings/generate.py`) reads this list.
+ * The Recordings generator (`apps/backend/recordings/generate.py`) read this list until ADR 0099.
  */
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
