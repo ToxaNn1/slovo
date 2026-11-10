@@ -314,7 +314,9 @@ describe('the media cache', () => {
   });
 
   it('downloads a file once when a tap comes while the prefetch is downloading it', async () => {
-    const { media, fetcher } = await device({ rows: { recordings: [recording('w1', hashOf('a'))] } });
+    const { media, fetcher } = await device({
+      rows: { recordings: [recording('w1', hashOf('a'))] },
+    });
 
     const [, tapped] = await Promise.all([media.prefetch(['w1']), media.downloadRecording('w1')]);
 
