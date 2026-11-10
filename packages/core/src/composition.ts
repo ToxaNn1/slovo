@@ -10,11 +10,6 @@ import { buildIdiomMode } from './game/build-idiom-mode';
 import { byLettersMode } from './game/by-letters-mode';
 import { correctionMode } from './game/correction-mode';
 import {
-  openDailyCrossword,
-  type CrosswordReadPort,
-  type DailyCrossword,
-} from './game/daily-crossword';
-import {
   openCrossingCrossword,
   type CrossingCrosswordOpening,
 } from './game/crossing-crossword-progress';
@@ -190,13 +185,6 @@ export interface Composition extends Hiding {
   readonly rarityTest: RarityTest;
   /** The Rarity Ceiling, the one «Рідкість» setting every surface obeys (ADR 0072). */
   readonly rarityCeiling: RarityCeiling;
-  /**
-   * Opens today's Daily Crossword with the letters this device kept for it,
-   * for its card and its screen; nothing when the Edition has it off, the pack
-   * has no day for the local date or the composition was opened without
-   * `crossword`. Open it again once the next local day starts.
-   */
-  openDailyCrossword(): Promise<DailyCrossword | undefined>;
   /**
    * Opens today's traced Daily Crossword (ADR 0073) with the Words this device
    * found in it: `off` while the Edition has it off, `no-tiling` when the Words
@@ -382,7 +370,6 @@ export async function openComposition({
   clock,
   random,
   gameModes = [],
-  crossword,
   feedNotices = noFeedNotices,
   backend,
   analytics: analyticsSink,
@@ -390,8 +377,6 @@ export async function openComposition({
   ...ports
 }: {
   content: ContentReadPort;
-  /** The Daily Crossword's days, which the pack reader gives next to `content`; without it, as in tests of other features, there is none. */
-  crossword?: CrosswordReadPort;
   /** The Edition as the app runs it (`loadEdition`); each module reads of it what it names. */
   edition: Edition;
   userState: UserState;
@@ -784,17 +769,6 @@ export async function openComposition({
     recentQueries: createRecentQueries({ edition, userState }),
     rarityTest,
     rarityCeiling,
-    async openDailyCrossword() {
-      if (crossword === undefined) return undefined;
-      return openDailyCrossword({
-        content: crossword,
-        userState,
-        clock,
-        edition,
-        xp: xpLog,
-        analytics,
-      });
-    },
     openTracedCrossword: () =>
       openTracedCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
     openCrossingCrossword: () =>

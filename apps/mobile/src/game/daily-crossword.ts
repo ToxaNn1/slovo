@@ -1,11 +1,5 @@
 import { fill, pluralCount, type EditionStrings } from '@slovo/contracts';
-import type {
-  Composition,
-  CrossingPlay,
-  CrossingPuzzle,
-  CrosswordSolve,
-  DailyCrosswordState,
-} from '@slovo/core';
+import type { Composition, CrossingPlay, CrossingPuzzle, CrosswordSolve } from '@slovo/core';
 import type { CrosswordDayCardState, CrosswordMiniCell, DailyCrosswordCard } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ComponentProps } from 'react';
@@ -15,6 +9,7 @@ import { edition, editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { crossingMiniGrid, crossingProgress, crossingSolveOf } from './crossing-crossword';
 import { solveTimeText } from './crossword-share';
+import type { DailyCrosswordProgress } from './crossword-progress';
 import { tracedMiniGrid, tracedProgress } from './traced-crossword';
 
 /**
@@ -98,7 +93,9 @@ function crossingCard(
  * with the letters typed.
  */
 function dailyCrosswordCard(
-  state: Pick<DailyCrosswordState, 'date' | 'progress'> & {
+  state: {
+    readonly date: string;
+    readonly progress: DailyCrosswordProgress;
     readonly grid: readonly (readonly CrosswordMiniCell[])[];
   },
   strings: Strings,

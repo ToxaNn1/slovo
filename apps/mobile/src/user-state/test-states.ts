@@ -1,4 +1,4 @@
-import type { CrosswordDay, EntryKind } from '@slovo/contracts';
+import type { EntryKind } from '@slovo/contracts';
 import {
   changesOfFacts,
   dateKeyOf,
@@ -64,7 +64,6 @@ export interface TestStateSources {
   readonly clock: Clock;
   readonly edition: Pick<Edition, 'levels' | 'badges'>;
   readonly content: Pick<ContentReadPort, 'listIds'>;
-  readonly crossword: { crosswordDay(date: string): Promise<CrosswordDay | undefined> };
 }
 
 type XpRecord = UserStateFact<'xpLog'>[string];
@@ -129,7 +128,7 @@ function calendarOf(clock: Clock) {
       markedAt: at(days),
     };
   }
-  return { today: date(0), date, at, activeDays, xp, crosswordSolved, unknown };
+  return { date, at, activeDays, xp, crosswordSolved, unknown };
 }
 
 type Calendar = ReturnType<typeof calendarOf>;
@@ -142,20 +141,6 @@ function onboarded({ date, at }: Calendar): UserStateFacts {
 /** Each id with the same value. */
 function each<T>(ids: readonly string[], value: (id: string, index: number) => T) {
   return Object.fromEntries(ids.map((id, index) => [id, value(id, index)]));
-}
-
-/** Today's Daily Crossword with every word's letters in its cells, when the pack has the day. */
-async function solvedGrid({ crossword }: TestStateSources, today: string): Promise<UserStateFacts> {
-  const day = await crossword.crosswordDay(today);
-  if (day === undefined) return {};
-  const letters: Record<string, string> = {};
-  for (const { answer, row, column, direction } of day.words) {
-    Array.from(answer).forEach((letter, index) => {
-      const place = direction === 'across' ? [row, column + index] : [row + index, column];
-      letters[place.join(',')] = letter;
-    });
-  }
-  return { crosswordProgress: { date: today, letters } };
 }
 
 /** The ids of every Entry of the content, Words first. */
@@ -193,7 +178,7 @@ function fullSaved(calendar: Calendar, words: readonly string[]): UserStateFacts
 /** The user state each test state holds. */
 async function factsOf(name: TestStateName, sources: TestStateSources): Promise<UserStateFacts> {
   const calendar = calendarOf(sources.clock);
-  const { date, at, activeDays, xp, crosswordSolved, unknown, today } = calendar;
+  const { date, at, activeDays, xp, crosswordSolved, unknown } = calendar;
   const base = onboarded(calendar);
   const { levels, badges } = sources.edition;
   switch (name) {
@@ -290,7 +275,6 @@ async function factsOf(name: TestStateName, sources: TestStateSources): Promise<
       return {
         ...base,
         xpLog: { ...activeDays(2), ...crosswordSolved(0) },
-        ...(await solvedGrid(sources, today)),
       };
     case 'crossword-7-in-a-row': {
       let solved: Record<string, XpRecord> = {};
@@ -298,7 +282,6 @@ async function factsOf(name: TestStateName, sources: TestStateSources): Promise<
       return {
         ...base,
         xpLog: { ...activeDays(6), ...solved },
-        ...(await solvedGrid(sources, today)),
       };
     }
   }

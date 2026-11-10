@@ -36,7 +36,6 @@ async function load(name: TestStateName): Promise<void> {
     clock: deviceClock,
     edition,
     content: reader,
-    crossword: reader,
   });
   await reloadAppAsync(`test state ${name}`);
 }

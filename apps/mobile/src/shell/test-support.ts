@@ -230,7 +230,6 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
         const content = (await languagePack.opened()).reader;
         return openComposition({
           content,
-          crossword: content,
           edition: (await remoteSwitches.opened()).edition,
           userState: await userState.opened(),
           clock,

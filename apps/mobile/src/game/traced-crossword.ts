@@ -2,7 +2,6 @@ import { fill, type EditionStrings } from '@slovo/contracts';
 import {
   isSolved,
   type Composition,
-  type DailyCrosswordState,
   type CrosswordPuzzle,
   type PuzzleAction,
   type PuzzlePlace,
@@ -14,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
 import { useComposition } from '../composition';
+import type { DailyCrosswordProgress } from './crossword-progress';
 import { logError } from '../diagnostics/log';
 import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
@@ -41,7 +41,7 @@ export function tracedMiniGrid(puzzle: CrosswordPuzzle, state: PuzzleState): Cro
 }
 
 /** How far the reader is in the traced Daily Crossword, as its card says it. */
-export function tracedProgress(state: PuzzleState): DailyCrosswordState['progress'] {
+export function tracedProgress(state: PuzzleState): DailyCrosswordProgress {
   if (isSolved(state)) return 'solved';
   return foundCount(state) > 0 ? 'started' : 'untouched';
 }

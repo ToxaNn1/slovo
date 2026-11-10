@@ -29,7 +29,6 @@ async function openOver({
     // Read at each opening, so a reopen opens over the Edition in effect now.
     ...(await ports.opened()),
     content,
-    crossword: content,
     scheduling: {
       scheduler: deviceNotificationScheduler,
       ellipsis: editionStrings.notificationBody.ellipsis,
