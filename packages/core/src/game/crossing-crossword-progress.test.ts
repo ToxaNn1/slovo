@@ -276,6 +276,21 @@ describe('the crossing Daily Crossword of the composition', () => {
     );
   });
 
+  it('opens over the typed crossword record of an older app and leaves it as it was (ADR 0013)', async () => {
+    const typed = '{"date":"2026-11-04","letters":{"0,1":"п"}}';
+    const records = new Map([['crossword.progress', typed]]);
+    const composition = await app(['game', 'dailyCrossword', 'crossingCrossword'], records);
+    const opening = await composition.openCrossingCrossword();
+    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    expect(Object.values(opening.crossword.state.cells).some(({ kind }) => kind === 'filled')).toBe(
+      false,
+    );
+
+    await solve(opening.crossword, opening.crossword.state.current);
+    expect(records.has('crossword.crossing')).toBe(true);
+    expect(records.get('crossword.progress')).toBe(typed);
+  });
+
   it('reads the Solve time and the hint of a solve back on another device with the synced records', async () => {
     const on: FeatureSwitch[] = [
       'game',

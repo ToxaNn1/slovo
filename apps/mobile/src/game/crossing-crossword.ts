@@ -10,7 +10,6 @@ import {
   type CrossingPlay,
   type CrossingPuzzle,
   type CrossingWord,
-  type DailyCrosswordState,
   type PuzzlePlace,
 } from '@slovo/core';
 import type { CrossingGridCell, CrosswordMiniCell, WheelMiss } from '@slovo/ui';
@@ -18,6 +17,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useComposition } from '../composition';
+import type { DailyCrosswordProgress } from './crossword-progress';
 import { deviceClock } from '../device/device-clock';
 import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
@@ -145,7 +145,7 @@ export function crossingMiniGrid(
 export function crossingProgress(
   state: CrossingPlay,
   solve: CrosswordSolve | undefined,
-): DailyCrosswordState['progress'] {
+): DailyCrosswordProgress {
   if (solve !== undefined) return 'solved';
   return Object.values(state.cells).some(({ kind }) => kind === 'filled') ? 'started' : 'untouched';
 }

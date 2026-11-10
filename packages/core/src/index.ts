@@ -153,12 +153,6 @@ export {
   type LocalDay,
 } from './local-date';
 export {
-  type CrosswordPlace,
-  type DailyCrossword,
-  type DailyCrosswordState,
-  type DailyCrosswordWord,
-} from './game/daily-crossword';
-export {
   areAdjacent,
   foundIds,
   generateCrosswordPuzzle,

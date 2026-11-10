@@ -63,9 +63,9 @@ export const GameStringsSchema = z.strictObject({
     /** A mode not played yet, e.g. «—». */
     none: TextSchema,
   }),
-  /** The button that opens one letter of the answer, in a mode that has it and in the Daily Crossword. */
+  /** The button that opens one letter of the answer, in a mode that has it. */
   openLetter: TextSchema,
-  /** What VoiceOver reads for a letter in its place in a Word: a vowel button, a blank, a crossword cell. */
+  /** What VoiceOver reads for a letter in its place in a Word: a vowel button, a blank. */
   letters: z.strictObject({
     /** A letter, e.g. «а, третя літера». Takes `{letter}` and `{place}`, one of the `ordinals`. */
     label: templateOf('letter', 'place'),
@@ -88,14 +88,6 @@ export const GameStringsSchema = z.strictObject({
     solvedMark: TextSchema,
     /** The screen's line once it is solved, e.g. «Розв’язано!». */
     solved: TextSchema,
-    /** What VoiceOver reads for the delete key of its keyboard, e.g. «Стерти». */
-    eraseKey: TextSchema,
-    /**
-     * What VoiceOver reads for a cell of its grid, e.g. «к, перша літера. Звір. Рядок 1, стовпець 1».
-     * Takes `{cell}`, the letter in its place as `letters` reads it, `{clue}`, the clue of the word
-     * that place is in, and `{row}` and `{column}`, counted from 1 at the top left corner.
-     */
-    cellLabel: templateOf('cell', 'clue', 'row', 'column'),
     /** The traced Daily Crossword's line over its grid, which says how to play, e.g. «Веди пальцем по сусідніх літерах…». */
     traceHint: TextSchema,
     /** The traced Daily Crossword's button that checks the cells tapped with VoiceOver on, e.g. «Перевірити». */

@@ -206,7 +206,6 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       reader: {
         ...createMemoryContentPort(),
         metadata: () => Promise.reject(new Error('A test pack has no metadata')),
-        crosswordDay: () => Promise.resolve(undefined),
       },
       contentVersion: () => 1,
       contentUpdate: undefined,
@@ -230,7 +229,6 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
         const content = (await languagePack.opened()).reader;
         return openComposition({
           content,
-          crossword: content,
           edition: (await remoteSwitches.opened()).edition,
           userState: await userState.opened(),
           clock,
