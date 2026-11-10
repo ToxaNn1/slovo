@@ -112,7 +112,7 @@ export function buildFromSnapshot({
     contentChecksum: checksumOf(content),
     packFormat: PACK_FORMAT,
   };
-  writePack(outFile, content, metadata);
+  writePack(outFile, content, metadata, snapshot);
   const report = contentReport(content);
   return {
     ok: true,
