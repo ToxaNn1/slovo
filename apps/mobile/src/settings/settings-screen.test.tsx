@@ -43,12 +43,15 @@ jest.mock('../edition/edition', () => {
     ...actual,
     activeEditionFiles: {
       ...actual.activeEditionFiles,
-      recordings: Object.fromEntries(
-        Object.entries(sampleRecordings).map(([voice, recording]) => [
-          voice,
-          { [word]: recording },
-        ]),
-      ),
+      starterMedia: {
+        ...actual.activeEditionFiles.starterMedia,
+        recordings: Object.fromEntries(
+          Object.entries(sampleRecordings).map(([voice, recording]) => [
+            voice,
+            { [word]: recording },
+          ]),
+        ),
+      },
     },
   };
 });
