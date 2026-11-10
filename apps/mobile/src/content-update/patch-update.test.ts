@@ -49,6 +49,9 @@ beforeAll(() => {
       synonymRows: [...content.synonymRows],
       curatedCollections: [...(content.curatedCollections ?? [])],
       crosswordDays: [...(content.crosswordDays ?? [])],
+      mediaBase: 'https://media.slovo.test',
+      recordings: [],
+      illustrations: [],
       needsNewRecording: [],
     },
     outFile: builtFile,
@@ -81,6 +84,9 @@ function patchOf(records: Partial<Patch>): Patch {
     synonymRows: [],
     curatedCollections: [],
     crosswordDays: [],
+    mediaBase: 'https://media.slovo.test',
+    recordings: [],
+    illustrations: [],
     ...records,
   };
 }
