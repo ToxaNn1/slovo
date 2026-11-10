@@ -6,7 +6,10 @@ import { useCallback, useEffect, useState, useSyncExternalStore, type RefObject 
 import { useComposition } from '../composition';
 import { useInForeground } from '../foreground/in-foreground';
 import { keep } from '../keep';
+import { prefetchAhead } from '../media/shell-media';
 import { useSubscribed } from '../opening';
+import { useShell } from '../shell-value';
+import { wordIdsAhead } from './feed-ahead';
 import { cardOnScreen, type TurnedTo } from './feed-screen';
 import type { LandingAsked, WordOfTheDayLanding } from './word-of-the-day-landing';
 
@@ -42,6 +45,7 @@ export function useFeed(
   { clock, landing }: { clock: Clock; landing: WordOfTheDayLanding },
 ): FeedState {
   const { feed, onboarding } = useComposition();
+  const shell = useShell();
   const cards = useSubscribed(feed, (open) => open.cards);
   const today = useSubscribed(feed, (open) => open.today);
   /** The card the reader turned to last, by the Feed's position, in the Feed they turned it in. */
@@ -86,6 +90,11 @@ export function useFeed(
     if (onScreen === undefined) return;
     void keep('the Feed state', feed.show(onScreen));
   }, [feed, onScreen]);
+  // The Feed advancing downloads the media of the Words ahead (ADR 0099).
+  useEffect(() => {
+    if (onScreen === undefined) return;
+    void keep('the media ahead', prefetchAhead(shell, wordIdsAhead(cards, onScreen)));
+  }, [shell, cards, onScreen]);
   useEffect(() => {
     if (!inSight) return;
     return () => {
