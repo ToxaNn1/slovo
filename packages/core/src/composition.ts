@@ -396,6 +396,8 @@ export async function openComposition({
   signedIn?: () => boolean;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
+  /** The Edition's text comparison, built once and handed to every module that compares text. */
+  const comparison = createTextComparison(edition);
   // The named subjects the modules link through (ADR 0018), made before any
   // module opens. A subject's listeners follow in the order the modules open.
   const eligibility: Subject<void> = createSubject();
@@ -580,6 +582,7 @@ export async function openComposition({
     opened,
     quickQuestion: createQuickQuestion({
       edition,
+      comparison,
       entries,
       knowledge,
       xp: xpLog,
@@ -598,6 +601,7 @@ export async function openComposition({
   // that fails is tried again.
   const game = await openGame({
     edition,
+    comparison,
     entries,
     history,
     knowledge,
@@ -624,7 +628,7 @@ export async function openComposition({
         },
       },
     }),
-    openCollections({ rows, userState, clock, random, comparison: createTextComparison(edition) }),
+    openCollections({ rows, userState, clock, random, comparison }),
   ]);
   const badges = await openBadges({
     edition,
@@ -756,8 +760,8 @@ export async function openComposition({
     game,
     onboarding,
     questionnaire: later.questionnaire,
-    search: withNoResultEvent(createSearch({ content, edition, userState }), analytics),
-    recentQueries: createRecentQueries({ edition, userState }),
+    search: withNoResultEvent(createSearch({ content, edition, comparison, userState }), analytics),
+    recentQueries: createRecentQueries({ comparison, userState }),
     rarityTest,
     rarityCeiling,
     openDailyCrossword: () =>

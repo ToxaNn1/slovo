@@ -1,12 +1,12 @@
 import type { Analytics } from '../analytics/analytics';
-import type { Correction, Entry, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type { Correction, Entry, Idiom, LanguageTraits, SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import { byKind, featureOfKind, type ByKind, type MixKind } from '../entries/entry-kinds';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
-import { createTextComparison, type TextComparisonEdition } from '../text/text-comparison';
+import type { TextComparison } from '../text/text-comparison';
 
 /** The shortest query Search answers, in letters of its Comparison Key (ADR 0054). */
 const SHORTEST_QUERY = 2;
@@ -115,13 +115,17 @@ const breaksWord = (character: string, apostrophe: string | undefined) =>
 export function createSearch({
   content,
   edition,
+  comparison,
   userState,
 }: {
   content: Pick<ContentReadPort, 'listWords' | 'getEntries' | 'listIds'>;
-  edition: Pick<Edition, 'isFeatureEnabled'> & TextComparisonEdition;
+  edition: Pick<Edition, 'isFeatureEnabled'> & {
+    readonly languageTraits: Pick<LanguageTraits, 'sortLocale'>;
+  };
+  /** The Edition's text comparison, built once by the composition. */
+  comparison: TextComparison;
   userState: Pick<UserState, 'list'>;
 }): Search {
-  const comparison = createTextComparison(edition);
   const keyOf = (text: string) => comparison.key(text, 'searchQuery');
   /**
    * Whether the text, as its Comparison Key, or any of its words starts with
