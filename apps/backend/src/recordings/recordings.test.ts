@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
-import { afterAll, afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
@@ -15,11 +15,10 @@ import { memoryMediaStore, type MediaStore } from '../media/media-store';
 import { systemRandom } from '../random';
 import {
   adminCommandDeps,
-  createTestDatabase,
+  importedDatabases,
   passTime,
   silentLogger,
   testApp,
-  testDatabaseUrl,
 } from '../test-support';
 import type { RecordingGenerator, RecordingRequest } from './generator';
 import { createRecordings, RETIRED_FILE_KEPT_MS } from './recordings';
@@ -79,9 +78,21 @@ function keptStore(): MediaStore & { readonly keys: Set<string> } {
   };
 }
 
+/** The UA Edition imported and its backlog recorded once, copied for every test. */
+const importedDatabase = importedDatabases('uk', folder, (database) =>
+  createRecordings({
+    database,
+    clock: systemClock,
+    store: memoryMediaStore(),
+    generator: fakeGenerator(),
+    editions,
+    batch: 100_000,
+  }).run(),
+);
+
 /** The backend on a database of its own, the UA Edition imported and its backlog recorded. */
 async function recordingsBackend() {
-  const own = await createTestDatabase(testDatabaseUrl());
+  const own = await importedDatabase();
   onTestFinished(() => own.drop());
   const database = createDatabase(own.url, silentLogger);
   onTestFinished(() => database.close());
@@ -100,14 +111,11 @@ async function recordingsBackend() {
   await runAdminCommand(['agent', 'add', 'claude-content'], commandDeps, io);
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
-  const imported = await backend.importContent('uk', folder);
-  if (!imported.ok) throw new Error('the UA Edition did not import');
   const agent = backend.clientOf(token);
   const { batchId } = await agent.admin.content.openBatch({ editionId: 'uk' });
   const store = keptStore();
   const run = (generator: RecordingGenerator, batch = 50) =>
     createRecordings({ database, clock: systemClock, store, generator, editions, batch }).run();
-  await run(fakeGenerator(), 100_000);
   return { ...backend, agent, batchId, store, run };
 }
 
@@ -153,6 +161,11 @@ afterEach(() => {
 });
 
 describe('the Recordings job', () => {
+  // The template database imports the Edition and records its backlog once, before the first test.
+  beforeAll(async () => {
+    await (await importedDatabase()).drop();
+  }, 180_000);
+
   it('records a new Word in every Narrator Voice at one content version, and a second run writes nothing', async () => {
     const { client, agent, batchId, store, run } = await recordingsBackend();
     const id = await createWord(client, agent, batchId, 'обручичок', 3);

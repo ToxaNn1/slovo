@@ -140,7 +140,11 @@ export async function createTestDatabase(
  * and each database is a copy of it: a test pays a copy, not an import of the
  * whole Edition. The template is dropped after the file.
  */
-export function importedDatabases(editionId: string, editionDir: string) {
+export function importedDatabases(
+  editionId: string,
+  editionDir: string,
+  prepare: (database: Database) => Promise<unknown> = () => Promise.resolve(),
+) {
   let template: Promise<TestDatabase> | undefined;
   afterAll(async () => {
     await template?.then(
@@ -154,6 +158,7 @@ export function importedDatabases(editionId: string, editionDir: string) {
     try {
       const result = await testApp({ database }).importContent(editionId, editionDir);
       if (!result.ok) throw new Error(`the ${editionId} Edition did not import`);
+      await prepare(database);
     } finally {
       // A template takes no copy while a connection to it is open.
       await database.close();
