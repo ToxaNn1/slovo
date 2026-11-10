@@ -258,15 +258,10 @@ describe('the crossing Daily Crossword of the composition', () => {
     });
   }
 
-  it('is off while the Edition has it off', async () => {
-    const composition = await app(['game', 'dailyCrossword']);
-    expect(await composition.openCrossingCrossword()).toEqual({ kind: 'off' });
-  });
-
   it('opens the puzzle of the Words within the Rarity Ceiling, which a solve plays', async () => {
     const composition = await app(['game', 'dailyCrossword', 'crossingCrossword']);
-    const opening = await composition.openCrossingCrossword();
-    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    const opening = await composition.openDailyCrossword();
+    if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);
     const ids = vocabulary.map(({ id }) => id);
     for (const { word: placed } of opening.crossword.puzzle.words) expect(ids).toContain(placed.id);
     const before = opening.crossword.state.words.filter(({ kind }) => kind === 'solved').length;
@@ -280,8 +275,8 @@ describe('the crossing Daily Crossword of the composition', () => {
     const typed = '{"date":"2026-11-04","letters":{"0,1":"п"}}';
     const records = new Map([['crossword.progress', typed]]);
     const composition = await app(['game', 'dailyCrossword', 'crossingCrossword'], records);
-    const opening = await composition.openCrossingCrossword();
-    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    const opening = await composition.openDailyCrossword();
+    if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);
     expect(Object.values(opening.crossword.state.cells).some(({ kind }) => kind === 'filled')).toBe(
       false,
     );
@@ -301,8 +296,8 @@ describe('the crossing Daily Crossword of the composition', () => {
     ];
     const records = new Map<string, string>();
     const first = await app(on, records);
-    const opening = await first.openCrossingCrossword();
-    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    const opening = await first.openDailyCrossword();
+    if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);
     await opening.crossword.play({ type: 'tick', seconds: 95 });
     for (let i = 0; i < opening.crossword.puzzle.words.length; i += 1)
       await solve(opening.crossword, i);

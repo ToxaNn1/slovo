@@ -60,8 +60,8 @@ type App = Awaited<ReturnType<typeof run>>['app'];
 
 /** Opens today's Daily Crossword. */
 async function daily(app: App) {
-  const opening = await app.openCrossingCrossword();
-  if (opening.kind !== 'open') throw new Error(`No Daily Crossword today: ${opening.kind}`);
+  const opening = await app.openDailyCrossword();
+  if (opening.kind !== 'crossing') throw new Error(`No Daily Crossword today: ${opening.kind}`);
   return opening.crossword;
 }
 

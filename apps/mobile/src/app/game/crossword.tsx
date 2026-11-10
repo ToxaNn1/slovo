@@ -1,4 +1,4 @@
-import type { CrosswordSolve } from '@slovo/core';
+import type { CrossingCrossword, CrosswordSolve, TracedCrossword } from '@slovo/core';
 import {
   CrossingClueBar,
   CrossingGrid,
@@ -24,12 +24,8 @@ import { logError } from '@/diagnostics/log';
 import { editionStrings } from '@/edition/edition';
 import { crosswordShare } from '@/game/crossword-share';
 import { useCrossingCrossword, type CrossingCrosswordPlay } from '@/game/crossing-crossword';
-import {
-  tracedCrosswordTexts,
-  useScreenReader,
-  useTracedCrossword,
-  type TracedCrosswordPlay,
-} from '@/game/traced-crossword';
+import { useDailyCrossword } from '@/game/daily-crossword';
+import { tracedCrosswordTexts, useScreenReader, useTracedCrossword } from '@/game/traced-crossword';
 import { MascotAs } from '@/mascot/mascot';
 import { ShareCardSheet } from '@/share/share-card-sheet';
 import { useShell } from '@/shell-value';
@@ -51,18 +47,10 @@ const wheelTexts = {
  * back to the Game.
  */
 export default function DailyCrosswordScreen() {
-  const crossing = useCrossingCrossword();
-  if (crossing === undefined) return <CrosswordFrame />;
-  if (crossing.kind === 'play') return <CrossingCrosswordScreen crossword={crossing} />;
-  if (crossing.kind === 'off') return <TracedCrossword />;
-  return <Redirect href="/game" />;
-}
-
-/** The traced Daily Crossword while the crossing one is off (ADR 0073); the Game when it cannot open. */
-function TracedCrossword() {
-  const traced = useTracedCrossword();
-  if (traced === undefined) return <CrosswordFrame />;
-  if (traced.kind === 'play') return <TracedCrosswordScreen crossword={traced} />;
+  const opening = useDailyCrossword();
+  if (opening === undefined) return <CrosswordFrame />;
+  if (opening.kind === 'crossing') return <CrossingCrosswordScreen opened={opening.crossword} />;
+  if (opening.kind === 'traced') return <TracedCrosswordScreen opened={opening.crossword} />;
   return <Redirect href="/game" />;
 }
 
@@ -117,7 +105,8 @@ function CrosswordFrame({
  * «Розв’язано!» and its Share Card, every cell open with no letter, once
  * every Word is found.
  */
-function TracedCrosswordScreen({ crossword }: { crossword: TracedCrosswordPlay }) {
+function TracedCrosswordScreen({ opened }: { opened: TracedCrossword }) {
+  const crossword = useTracedCrossword(opened);
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
@@ -194,7 +183,8 @@ function TracedCrosswordScreen({ crossword }: { crossword: TracedCrosswordPlay }
  * long until a Word is solved, and the Letter Wheel at the foot; a trace that spells no Word shakes in ink under
  * «Десь закралася помилка. Шукай уважніше!»; «Розв’язано!» once every Word is solved.
  */
-function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPlay }) {
+function CrossingCrosswordScreen({ opened }: { opened: CrossingCrossword }) {
+  const crossword = useCrossingCrossword(opened);
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();

@@ -9,11 +9,7 @@ import { anglicismMode } from './game/anglicism-mode';
 import { buildIdiomMode } from './game/build-idiom-mode';
 import { byLettersMode } from './game/by-letters-mode';
 import { correctionMode } from './game/correction-mode';
-import {
-  openCrossingCrossword,
-  type CrossingCrosswordOpening,
-} from './game/crossing-crossword-progress';
-import { openTracedCrossword, type TracedCrosswordOpening } from './game/traced-crossword';
+import { openDailyCrossword, type DailyCrosswordOpening } from './game/daily-crossword';
 import { openCycle } from './feed/cycle';
 import { openCorrectionTypes, type CorrectionTypes } from './dashboard/correction-types';
 import { openCuratedCollections, type CuratedCollections } from './dashboard/curated-collections';
@@ -186,19 +182,13 @@ export interface Composition extends Hiding {
   /** The Rarity Ceiling, the one «Рідкість» setting every surface obeys (ADR 0072). */
   readonly rarityCeiling: RarityCeiling;
   /**
-   * Opens today's traced Daily Crossword (ADR 0073) with the Words this device
-   * found in it: `off` while the Edition has it off, `no-tiling` when the Words
-   * within the Rarity Ceiling cannot fill the grid, for the screen's fallback
-   * to the printed Daily Crossword. Open it again once the next local day starts.
+   * Opens today's Daily Crossword, the one its card and its screen draw: the
+   * crossing one (ADR 0087) with the progress this device made in it, the
+   * traced one (ADR 0073) with the Words this device found while the crossing
+   * one is off, or none on a day no pattern fills, while the traced one cannot
+   * fill its grid or with both off. Open it again once the next local day starts.
    */
-  openTracedCrossword(): Promise<TracedCrosswordOpening>;
-  /**
-   * Opens today's crossing Daily Crossword (ADR 0087) with the progress this
-   * device made in it: `off` while the Edition has it off, `no-fill` when no
-   * block pattern fills with the Words within the Rarity Ceiling, so the card
-   * is not shown that day. Open it again once the next local day starts.
-   */
-  openCrossingCrossword(): Promise<CrossingCrosswordOpening>;
+  openDailyCrossword(): Promise<DailyCrosswordOpening>;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry or the Synonym Row a Word card links back to; nothing for an id the Language Pack doesn't have. The card of
@@ -769,10 +759,8 @@ export async function openComposition({
     recentQueries: createRecentQueries({ edition, userState }),
     rarityTest,
     rarityCeiling,
-    openTracedCrossword: () =>
-      openTracedCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
-    openCrossingCrossword: () =>
-      openCrossingCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
+    openDailyCrossword: () =>
+      openDailyCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     openedFromNotification: openedFromOutside,
