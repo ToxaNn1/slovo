@@ -6,16 +6,21 @@
  * of rows retired longer than RETIRED_FILE_KEPT_MS, which no device on a
  * Patch that old still asks for.
  */
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import type { RecordingKind, Word } from '@slovo/contracts';
 import type { Clock, Edition } from '@slovo/server-core';
-import { and, asc, eq, inArray, isNotNull, isNull, lt, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm';
 
 import { illustrationKey } from '../content/illustrations';
 import { createMediaRows, type NewRecording, type RecordedWord } from '../content/media-rows';
 import type { Database } from '../database/database';
-import { contentWords, mediaIllustrations, mediaRecordings } from '../database/schema';
+import {
+  contentWords,
+  mediaIllustrations,
+  mediaRecordings,
+  recordingLeases,
+} from '../database/schema';
 import type { MediaStore } from '../media/media-store';
 import type { RecordingGenerator } from './generator';
 import { RECORDING_KINDS, RECORDING_TEXTS } from './recording-text';
@@ -24,6 +29,9 @@ type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
 
 /** How long the Media Store keeps the file of a retired row: 30 days. */
 export const RETIRED_FILE_KEPT_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** How long a run's lease on an Edition lasts before another run may take it: 30 minutes. */
+export const RECORDING_LEASE_MS = 30 * 60 * 1000;
 
 /** What one run did, summed over the Editions. */
 export interface RecordingsRun {
@@ -133,8 +141,44 @@ export function createRecordings({
     });
   }
 
-  /** Records the Edition's next batch of Words; how many were recorded and how many failed. */
-  async function recordEdition(edition: Edition) {
+  const leaseEnd = () => new Date(clock.now().getTime() + RECORDING_LEASE_MS);
+
+  /** Takes the Edition's lease for the holder when no run holds it or its lease expired; whether it did. */
+  async function takeLease(editionId: string, holder: string) {
+    const taken = await db
+      .insert(recordingLeases)
+      .values({ editionId, holder, expiresAt: leaseEnd() })
+      .onConflictDoUpdate({
+        target: recordingLeases.editionId,
+        set: { holder, expiresAt: leaseEnd() },
+        setWhere: lte(recordingLeases.expiresAt, clock.now()),
+      })
+      .returning({ holder: recordingLeases.holder });
+    return taken.length > 0;
+  }
+
+  /** Extends the holder's lease; false when another run took it over. */
+  async function renewLease(editionId: string, holder: string) {
+    const renewed = await db
+      .update(recordingLeases)
+      .set({ expiresAt: leaseEnd() })
+      .where(and(eq(recordingLeases.editionId, editionId), eq(recordingLeases.holder, holder)))
+      .returning({ holder: recordingLeases.holder });
+    return renewed.length > 0;
+  }
+
+  async function releaseLease(editionId: string, holder: string) {
+    await db
+      .delete(recordingLeases)
+      .where(and(eq(recordingLeases.editionId, editionId), eq(recordingLeases.holder, holder)));
+  }
+
+  /**
+   * Records the Edition's next batch of Words; how many were recorded and how
+   * many failed. Nothing is written when the holder lost its lease while the
+   * generator read.
+   */
+  async function recordEdition(edition: Edition, holder: string) {
     const editionId = edition.config.id;
     const voices = edition.config.narratorVoices.voices.map(({ id }) => id);
     const words = await candidates(editionId, voices);
@@ -148,6 +192,7 @@ export function createRecordings({
     );
     if (requests.length === 0) return { recorded: 0, failed: 0 };
     const outcomes = await generator.record(requests.map(({ voice, text }) => ({ voice, text })));
+    if (!(await renewLease(editionId, holder))) return { recorded: 0, failed: 0 };
     const recorded: RecordedWord[] = [];
     for (const word of words) {
       const own = requests.flatMap((request, index) =>
@@ -260,21 +305,24 @@ export function createRecordings({
   }
 
   /**
-   * One run: every Edition records its next batch under its own lock, so two
-   * runs never record the same Word; an Edition another run holds is skipped.
+   * One run: every Edition records its next batch under the run's lease on
+   * it, so two runs never record the same Word; an Edition another run holds
+   * is skipped until that lease expires.
    */
   async function run(): Promise<RecordingsRun> {
+    const holder = randomUUID();
     let recorded = 0;
     let failed = 0;
     for (const edition of editions) {
-      const counts = await db.transaction(async (tx) => {
-        const { rows: locks } = await tx.execute<{ held: boolean }>(
-          sql`select pg_try_advisory_xact_lock(hashtext(${`recordings:${edition.config.id}`})) as held`,
-        );
-        return locks[0]?.held === true ? recordEdition(edition) : { recorded: 0, failed: 0 };
-      });
-      recorded += counts.recorded;
-      failed += counts.failed;
+      const editionId = edition.config.id;
+      if (!(await takeLease(editionId, holder))) continue;
+      try {
+        const counts = await recordEdition(edition, holder);
+        recorded += counts.recorded;
+        failed += counts.failed;
+      } finally {
+        await releaseLease(editionId, holder);
+      }
     }
     return { recorded, failed, deleted: await deleteRetired() };
   }

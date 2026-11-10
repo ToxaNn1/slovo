@@ -12,7 +12,7 @@ import { beforeAll, describe, expect, it, onTestFinished } from 'vitest';
 import { createDatabase } from '../database/database';
 import { readEditions } from '../edition/edition-folders';
 import { RECORDING_TEXTS } from '../recordings/recording-text';
-import { importedDatabases, silentLogger, testApp } from '../test-support';
+import { importedDatabases, png, silentLogger, testApp } from '../test-support';
 import { createMediaImport } from './media-import';
 import { memoryMediaStore, type MediaStore } from './media-store';
 import { mp3Of } from './test-mp3';
@@ -64,6 +64,10 @@ function mediaFolder() {
     },
     illustration(name: string, bytes: Uint8Array) {
       write(`assets/illustrations/${name}`, bytes);
+    },
+    /** Puts any file at the path in the folder. */
+    file(path: string, text: string) {
+      write(path, text);
     },
   };
 }
@@ -120,11 +124,11 @@ describe('the media import', () => {
     const oksana = mp3Of(24, 'oksana');
     const taras = mp3Of(30, 'taras');
     const second = mp3Of(10, 'second');
-    const png = new TextEncoder().encode('a png');
+    const picture = png(512, 512);
     folder.recording('oksana', words.first, oksana);
     folder.recording('taras', words.first, taras);
     folder.recording('oksana', words.second, second);
-    folder.illustration(words.illustrated.illustration, png);
+    folder.illustration(words.illustrated.illustration, picture);
 
     const imported = await run(folder.dir);
 
@@ -155,14 +159,19 @@ describe('the media import', () => {
         .sort((a, b) => a.wordId.localeCompare(b.wordId)),
     );
     expect(patch.illustrations).toEqual([
-      { wordId: words.illustrated.id, hash: sha256(png), size: png.byteLength, retired: false },
+      {
+        wordId: words.illustrated.id,
+        hash: sha256(picture),
+        size: picture.byteLength,
+        retired: false,
+      },
     ]);
     expect(store.files).toEqual(
       new Map([
         [`recordings/oksana/plain/${words.first.id}.${sha256(oksana)}.mp3`, 'audio/mpeg'],
         [`recordings/taras/plain/${words.first.id}.${sha256(taras)}.mp3`, 'audio/mpeg'],
         [`recordings/oksana/plain/${words.second.id}.${sha256(second)}.mp3`, 'audio/mpeg'],
-        [`illustrations/${words.illustrated.id}.${sha256(png)}.png`, 'image/png'],
+        [`illustrations/${words.illustrated.id}.${sha256(picture)}.png`, 'image/png'],
       ]),
     );
   });
@@ -223,6 +232,27 @@ describe('the media import', () => {
         'assets/recordings/oksana/w_nosuch.mp3: no Word w_nosuch in the Edition',
         `assets/recordings/taras/${words.second.id}.mp3: not an mp3`,
         'assets/illustrations/nobody.png: no Word names this Illustration',
+      ],
+    });
+    expect(store.files.size).toBe(0);
+    expect((await client.content.snapshot({ editionId: 'uk' })).contentVersion).toBe(
+      contentVersion,
+    );
+  });
+
+  it('refuses a folder whose Illustration breaks a content rule or whose texts.json is no JSON, and writes nothing', async () => {
+    const { client, store, run, contentVersion, words } = await importBackend();
+    const folder = mediaFolder();
+    folder.recording('oksana', words.first, mp3Of(5));
+    folder.file('assets/recordings/taras/texts.json', '{ not json');
+    folder.illustration(words.illustrated.illustration, png(640, 480));
+
+    expect(await run(folder.dir)).toEqual({
+      ok: false,
+      reason: 'refused',
+      problems: [
+        'assets/recordings/taras/texts.json: not JSON',
+        `assets/illustrations/${words.illustrated.illustration}: The picture is 640×480 px, not square`,
       ],
     });
     expect(store.files.size).toBe(0);

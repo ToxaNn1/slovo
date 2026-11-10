@@ -31,7 +31,7 @@ import {
   testApp,
 } from '../test-support';
 import type { RecordingGenerator, RecordingRequest } from './generator';
-import { createRecordings, RETIRED_FILE_KEPT_MS } from './recordings';
+import { createRecordings, RECORDING_LEASE_MS, RETIRED_FILE_KEPT_MS } from './recordings';
 
 /** A copy of the UA Edition folder, removed after the file. */
 const folder = (() => {
@@ -66,6 +66,29 @@ function fakeGenerator(
               },
         ),
       );
+    },
+  };
+}
+
+/** A generator that answers like `fakeGenerator` only once `answer` is called. */
+function heldGenerator(): RecordingGenerator & {
+  readonly asked: RecordingRequest[];
+  answer(): void;
+} {
+  const inner = fakeGenerator();
+  let answer = (): void => undefined;
+  const answered = new Promise<void>((resolve) => {
+    answer = resolve;
+  });
+  return {
+    asked: inner.asked,
+    answer: () => {
+      answer();
+    },
+    async record(requests) {
+      const outcomes = inner.record(requests);
+      await answered;
+      return outcomes;
     },
   };
 }
@@ -213,6 +236,32 @@ describe('the Recordings job', () => {
     const again = fakeGenerator();
     await run(again);
     expect(again.asked).toEqual([]);
+    expect(await versionOf(client)).toBe(before + 1);
+  });
+
+  it('records nothing while another run holds the Edition, and takes it over once that lease expired', async () => {
+    const { client, agent, batchId, run } = await recordingsBackend();
+    await createWord(client, agent, batchId, 'обручичок', 3);
+    const before = await versionOf(client);
+    const held = heldGenerator();
+
+    const first = run(held);
+    await vi.waitFor(() => {
+      expect(held.asked).not.toEqual([]);
+    });
+    const meanwhile = fakeGenerator();
+    await run(meanwhile);
+    expect(meanwhile.asked).toEqual([]);
+
+    vi.setSystemTime(Date.now() + RECORDING_LEASE_MS + 1);
+    const later = fakeGenerator();
+    await run(later);
+    expect(later.asked).toEqual(VOICES.map((voice) => ({ voice, text: 'обру́чичок' })));
+    expect(await versionOf(client)).toBe(before + 1);
+
+    // The run whose lease expired writes nothing when its generator answers at last.
+    held.answer();
+    await first;
     expect(await versionOf(client)).toBe(before + 1);
   });
 

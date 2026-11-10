@@ -449,6 +449,17 @@ function mediaColumns() {
   };
 }
 
+/**
+ * The Recordings job's lease per Edition: the run that holds it records the
+ * Edition's batch, and an expired lease can be taken by the next run. A row,
+ * not a session advisory lock, because the database URL is a pooled one.
+ */
+export const recordingLeases = pgTable('recording_leases', {
+  editionId: text('edition_id').primaryKey(),
+  holder: uuid('holder').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+});
+
 /** A Recording per Word, Narrator Voice and Recording Kind. */
 export const mediaRecordings = pgTable(
   'media_recordings',
