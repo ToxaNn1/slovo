@@ -7,6 +7,8 @@
   // A type or an interface that a file uses in its own signatures is part of
   // that file's contract, even when no other file names it. A function or a
   // constant used only in its own file is not: take the `export` off.
+  // The videos are left out of every check (ADR 0087).
+  "ignoreWorkspaces": ["apps/video"],
   "ignoreExportsUsedInFile": { "interface": true, "type": true },
   "workspaces": {
     ".": {

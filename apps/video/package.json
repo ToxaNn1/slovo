@@ -1,0 +1,22 @@
+{
+  "name": "@slovo/video",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The landing's 2D videos made with Remotion: the promo «Спочатку було слово» and the series «Тобі бракувало слова» (ADR 0087). No lint, typecheck or tests: CI leaves it out.",
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.541",
+    "@remotion/fonts": "4.0.541",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.541"
+  },
+  "devDependencies": {
+    "@types/react": "~19.3.0",
+    "typescript": "~6.0.3"
+  }
+}

@@ -64,7 +64,8 @@ jobs:
           site=true
           if [ -n "$BASE_SHA" ]; then
             git fetch --depth=1 origin "$BASE_SHA"
-            changed=$(git diff --name-only "$BASE_SHA" HEAD)
+            # The videos (apps/video) are left out of CI (ADR 0087).
+            changed=$(git diff --name-only "$BASE_SHA" HEAD | grep -v '^apps/video/' || true)
             # The app links to the legal pages by address and never reads them.
             site_only='^(apps/site/|editions/[^/]+/legal/|\.github/workflows/pages\.yml$)'
             mobile_only='^(apps/mobile/|\.github/workflows/(maestro|ota-update)\.yml$)'
@@ -93,6 +94,7 @@ jobs:
             run: >-
               pnpm test --filter='!@slovo/backend' --filter='!@slovo/core'
               --filter='!@slovo/ui' --filter='!@slovo/mobile' --filter='!@slovo/site'
+              --filter='!@slovo/video'
           - { name: site, for: site, run: 'pnpm test --filter=@slovo/site' }
           - { name: app Vitest, for: mobile, run: 'pnpm --filter=@slovo/mobile exec vitest run' }
           # The app's Jest tests, the slowest part, cut in three.
