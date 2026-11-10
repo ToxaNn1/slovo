@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  openRemoteSwitches,
-  SWITCHES_REFRESH_MS,
-  type Edition,
-  type FeatureSwitch,
-  type Schedule,
-} from '../index';
+import { openRemoteSwitches, type Edition, type FeatureSwitch, type Schedule } from '../index';
+import { SWITCHES_REFRESH_MS } from './remote-switches';
 import {
   fakeClock,
   randomOf,
@@ -107,7 +102,7 @@ describe('the remote Feature Switches', () => {
     await switches.ask();
 
     expect(switches.edition.isFeatureEnabled('communityCounters')).toBe(false);
-    expect(switches.edition.isFeatureEnabled('communityWord')).toBe(true);
+    expect(switches.edition.isFeatureEnabled('communityWord')).toBe(false);
     expect(switches.edition.isFeatureEnabled('mistakeReports')).toBe(true);
   });
 

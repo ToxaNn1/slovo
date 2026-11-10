@@ -1,17 +1,25 @@
 import type { Analytics } from '../analytics/analytics';
-import type { Correction, Entry, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type {
+  Correction,
+  Entry,
+  Idiom,
+  LanguageTraits,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import { byKind, featureOfKind, type ByKind, type MixKind } from '../entries/entry-kinds';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
-import { searchKey } from './search-key';
+import type { TextComparison } from '../text/text-comparison';
 
-/** The shortest query Search answers, in letters of its Search key (ADR 0054). */
+/** The shortest query Search answers, in letters of its Comparison Key (ADR 0054). */
 const SHORTEST_QUERY = 2;
 
-/** The shortest query «За значенням» answers, in letters of its Search key (ADR 0054). */
+/** The shortest query «За значенням» answers, in letters of its Comparison Key (ADR 0054). */
 const SHORTEST_MEANING_QUERY = 3;
 
 /** The most Entries a group of results holds (ADR 0054). */
@@ -50,14 +58,14 @@ export interface SearchResults {
 export interface Search {
   /**
    * The Entries whose text, or any of its words, starts with the query, as
-   * the Search key reads both: from 2 letters, up to 50 a group; from 3
+   * the Comparison Key reads both: from 2 letters, up to 50 a group; from 3
    * letters, «За значенням» as well. Nothing
    * while the Edition turns Search off. The Hidden Entries are read afresh on
    * every call, the Language Pack once per Patch (ADR 0090).
    */
   search(query: string): Promise<SearchResults>;
   /**
-   * Whether Search answers the query: 2 letters of its Search key at least,
+   * Whether Search answers the query: 2 letters of its Comparison Key at least,
    * while the Edition turns Search on. A query it answers with no Entry found
    * is «Нічого не знайдено»; one it doesn't answer, nothing yet.
    */
@@ -98,44 +106,48 @@ const MEANING_TEXTS: ByKind<readonly string[]> = {
   tip: () => [],
 };
 
-/** An Entry with the Search keys of its texts. */
+/** An Entry with the Comparison Keys of its texts. */
 interface Keyed<Found extends Entry> {
   readonly entry: Found;
   readonly shown: string;
   readonly keys: readonly string[];
-  /** The Search keys of the texts «За значенням» reads. */
+  /** The Comparison Keys of the texts «За значенням» reads. */
   readonly meaningKeys: readonly string[];
 }
 
-/** A character that ends a word: anything but a letter, a mark or the apostrophe inside a word. */
-const WORD_BREAK = /[^\p{L}\p{M}ʼ]/u;
-
-/**
- * Whether the text, as its Search key, or any of its words starts with the
- * query's key; a word starts after a space, a quote, a bracket or a hyphen.
- */
-const matches = (key: string, query: string) =>
-  Array.from({ length: key.length }).some(
-    (_, index) =>
-      key.startsWith(query, index) && (index === 0 || WORD_BREAK.test(key.charAt(index - 1))),
-  );
+/** Whether a character of a Comparison Key ends a word: anything but a letter, a mark or the apostrophe inside a word. */
+const breaksWord = (character: string, apostrophe: string | undefined) =>
+  character !== apostrophe && !/[\p{L}\p{M}]/u.test(character);
 
 /** Opens Search over the Language Pack and the user's Hidden Entries. */
 export function createSearch({
   content,
   edition,
+  comparison,
   userState,
 }: {
   content: Pick<ContentReadPort, 'listWords' | 'getEntries' | 'listIds'>;
-  edition: Pick<Edition, 'isFeatureEnabled' | 'searchLetters'> & {
-    readonly languageTraits: Pick<Edition['languageTraits'], 'sortLocale'>;
+  edition: Pick<Edition, 'isFeatureEnabled'> & {
+    readonly languageTraits: Pick<LanguageTraits, 'sortLocale'>;
   };
+  /** The Edition's text comparison, built once by the composition. */
+  comparison: TextComparison;
   userState: Pick<UserState, 'list'>;
 }): Search {
-  const keyOf = (text: string) => searchKey(text, edition.searchLetters);
+  const keyOf = (text: string) => comparison.key(text, 'searchQuery');
+  /**
+   * Whether the text, as its Comparison Key, or any of its words starts with
+   * the query's key; a word starts after a space, a quote, a bracket or a hyphen.
+   */
+  const matches = (key: string, query: string) =>
+    Array.from({ length: key.length }).some(
+      (_, index) =>
+        key.startsWith(query, index) &&
+        (index === 0 || breaksWord(key.charAt(index - 1), comparison.apostrophe)),
+    );
   const collator = new Intl.Collator(edition.languageTraits.sortLocale);
 
-  /** Reads the live Entries once, with their texts' Search keys; a read that fails is tried again. */
+  /** Reads the live Entries once, with their texts. Comparison Keys; a read that fails is tried again. */
   const readKeyedOnce = <Found extends Entry>(read: () => Promise<readonly Found[]>) => {
     let keyed: Promise<readonly Keyed<Found>[]> | undefined;
     return () =>

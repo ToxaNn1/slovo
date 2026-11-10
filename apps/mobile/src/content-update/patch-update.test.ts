@@ -4,14 +4,13 @@ import { join } from 'node:path';
 
 import type { IllustrationRow, RecordingRow, Word } from '@slovo/contracts';
 import { PATCH_FORMAT, type Patch } from '@slovo/contracts/api';
+import { createContentUpdate, openMistakeReports, systemRandom } from '@slovo/core';
 import {
-  createContentUpdate,
+  createFakeBackend,
+  seedUserState,
   createEntries,
   EVERYTHING_IN,
-  openMistakeReports,
-  systemRandom,
-} from '@slovo/core';
-import { createFakeBackend, seedUserState } from '@slovo/core/testing';
+} from '@slovo/core/testing';
 import {
   buildFromSnapshot,
   openLanguagePack,

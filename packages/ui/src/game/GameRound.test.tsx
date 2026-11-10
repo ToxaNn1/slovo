@@ -1,5 +1,5 @@
+import { type PlayingGame } from '@slovo/core/testing';
 import type {
-  CurrentGame,
   GivenAnswer,
   Haptics,
   PlayedRound,
@@ -101,7 +101,7 @@ const OPTIONS = ['ardent', 'brittle', 'candid', 'dour'] as const;
 /** The place of the right option. */
 const CORRECT = 2;
 
-const first: CurrentGame = {
+const first: PlayingGame = {
   modeId: 'definition-to-word',
   round: {
     number: 1,
@@ -124,7 +124,7 @@ const first: CurrentGame = {
 };
 
 /** The Game with its Round answered as given, as the Game in play answers it. */
-function answered(game: CurrentGame, given: GivenAnswer): CurrentGame {
+function answered(game: PlayingGame, given: GivenAnswer): PlayingGame {
   if (given.form === 'vowel') return answeredVowel(game, given.position);
   if (given.form === 'pairs') return answeredPair(game, given.word, given.definition);
   if (given.form === 'typed') return answeredTyped(game, given.text);
@@ -133,7 +133,7 @@ function answered(game: CurrentGame, given: GivenAnswer): CurrentGame {
 }
 
 /** The Game with its pick Round answered with the option at that place. */
-function answeredPick(game: CurrentGame, given: GivenAnswer): CurrentGame {
+function answeredPick(game: PlayingGame, given: GivenAnswer): PlayingGame {
   const chosen = given.form === 'pick' ? given.option : -1;
   return {
     ...game,
@@ -153,7 +153,7 @@ function answeredPick(game: CurrentGame, given: GivenAnswer): CurrentGame {
 }
 
 /** A Round of «Наголос» about a Word, «banana» with its second vowel stressed, its sheet the Word's Example. */
-const wordVowelRound: CurrentGame = {
+const wordVowelRound: PlayingGame = {
   ...first,
   modeId: 'stress',
   round: {
@@ -171,7 +171,7 @@ const wordVowelRound: CurrentGame = {
 };
 
 /** A Round of «Наголос» about a stress trap, «mango» stressed on its first vowel, its sheet the explanation. */
-const trapVowelRound: CurrentGame = {
+const trapVowelRound: PlayingGame = {
   ...first,
   modeId: 'stress',
   round: {
@@ -210,7 +210,7 @@ const VOWEL_ANSWERS: Record<string, Pick<VowelAnswer, 'stressed' | 'sheet'>> = {
 type VowelAnswer = Extract<RoundAnswer, { form: 'vowel' }>;
 
 /** The Game with its vowel Round answered with the vowel at that position. */
-function answeredVowel(game: CurrentGame, chosen: number): CurrentGame {
+function answeredVowel(game: PlayingGame, chosen: number): PlayingGame {
   const { round } = game;
   const held = VOWEL_ANSWERS[round.prompt];
   if (held === undefined) throw new Error(`No vowel Round is «${round.prompt}»`);
@@ -224,13 +224,13 @@ function answeredVowel(game: CurrentGame, chosen: number): CurrentGame {
 }
 
 /** The first Round asking about a Synonym Row, the dominant its prompt, as the Core builds it. */
-const rowRound: CurrentGame = {
+const rowRound: PlayingGame = {
   ...first,
   round: { ...first.round, entryKind: 'synonymRow', labelKind: 'synonymRow', prompt: 'frank' },
 };
 
 /** The first Round asking a Tip its own question, a long one, as the Core builds it. */
-const tipRound: CurrentGame = {
+const tipRound: PlayingGame = {
   ...first,
   round: {
     ...first.round,
@@ -242,7 +242,7 @@ const tipRound: CurrentGame = {
 };
 
 /** The sixth Round of «Вгадай слово», an Example with a gap where its Word stands, as the Core builds it. */
-const gapRound: CurrentGame = {
+const gapRound: PlayingGame = {
   ...first,
   round: {
     ...first.round,
@@ -255,7 +255,7 @@ const gapRound: CurrentGame = {
 };
 
 /** A Round of «Знайди помилку»: a sentence with its non-standard form highlighted, no gap. */
-const highlightRound: CurrentGame = {
+const highlightRound: PlayingGame = {
   ...first,
   round: {
     ...first.round,
@@ -270,7 +270,7 @@ const PAIR_WORDS = ['ardent', 'candid'] as const;
 const PAIR_DEFINITIONS = ['open and honest', 'full of passion'] as const;
 const OWN_DEFINITION = [1, 0] as const;
 
-const pairsRound: CurrentGame = {
+const pairsRound: PlayingGame = {
   ...first,
   modeId: 'pairs',
   round: {
@@ -289,7 +289,7 @@ const pairsRound: CurrentGame = {
 };
 
 /** The Game with its pairs Round answered with the Word, then the Definition at those places. */
-function answeredPair(game: CurrentGame, word: number, definition: number): CurrentGame {
+function answeredPair(game: PlayingGame, word: number, definition: number): PlayingGame {
   const correct = OWN_DEFINITION[word] ?? -1;
   const right = definition === correct;
   return {
@@ -315,7 +315,7 @@ function answeredPair(game: CurrentGame, word: number, definition: number): Curr
 
 /** A Round of «За буквами»: «well-read» to type, its hyphen in place from the start. */
 const TYPED = 'well-read';
-const typedRound: CurrentGame = {
+const typedRound: PlayingGame = {
   ...first,
   modeId: 'by-letters',
   round: {
@@ -334,7 +334,7 @@ const typedRound: CurrentGame = {
 };
 
 /** The Game with its typed Round answered with the text, right only as typed exactly. */
-function answeredTyped(game: CurrentGame, typed: string): CurrentGame {
+function answeredTyped(game: PlayingGame, typed: string): PlayingGame {
   const right = typed === TYPED;
   return {
     ...game,
@@ -357,7 +357,7 @@ function answeredTyped(game: CurrentGame, typed: string): CurrentGame {
 }
 
 /** The Game with the first blank of its typed Round opened, as the Game in play opens it. */
-function withLetterOpened(game: CurrentGame): CurrentGame {
+function withLetterOpened(game: PlayingGame): PlayingGame {
   const { round } = game;
   if (round.form !== 'typed' || round.blanks === undefined) return game;
   const empty = (blank: RoundBlank) => !('mark' in blank) && blank.letter === undefined;
@@ -372,7 +372,7 @@ function withLetterOpened(game: CurrentGame): CurrentGame {
 /** A Round of «Анаграми»: «o'brok» from shuffled letters, its apostrophe in place. */
 const CHIPS = ['k', 'o', 'r', 'b', 'o'] as const;
 const ANAGRAM = ['o', 'b', 'r', 'o', 'k'] as const;
-const chipsRound: CurrentGame = {
+const chipsRound: PlayingGame = {
   ...first,
   modeId: 'anagram',
   round: {
@@ -394,7 +394,7 @@ const chipsRound: CurrentGame = {
 };
 
 /** The Game with its chips Round answered with the chips at those places, equal chips interchangeable. */
-function answeredChips(game: CurrentGame, chosen: readonly number[]): CurrentGame {
+function answeredChips(game: PlayingGame, chosen: readonly number[]): PlayingGame {
   const right = chosen.every((place, index) => CHIPS[place] === ANAGRAM[index]);
   return {
     ...game,
@@ -417,7 +417,7 @@ function answeredChips(game: CurrentGame, chosen: readonly number[]): CurrentGam
 }
 
 /** The mode's label over a Round, by its answer form. */
-const LABELS: Partial<Record<CurrentGame['round']['form'], string>> = {
+const LABELS: Partial<Record<PlayingGame['round']['form'], string>> = {
   vowel: 'Where is the stress?',
   pairs: 'Find the pairs',
 };
@@ -430,7 +430,7 @@ function Game({
   streak,
   feedback = 'sheet',
 }: {
-  start: CurrentGame;
+  start: PlayingGame;
   onAnswer: (given: GivenAnswer) => void;
   onLeave: () => void;
   onOpenLetter: () => void;
@@ -465,7 +465,7 @@ const play = jest.fn();
 async function renderRound(
   onAnswer: (given: GivenAnswer) => void = jest.fn(),
   onLeave: () => void = jest.fn(),
-  start: CurrentGame = first,
+  start: PlayingGame = first,
   onOpenLetter: () => void = jest.fn(),
   streak?: Streak,
 ) {
@@ -582,7 +582,7 @@ describe('GameRound', () => {
   });
 
   it('shows the streak, a big counter of the Rounds passed and its line with the record, in place of the passed line', async () => {
-    const survival: CurrentGame = {
+    const survival: PlayingGame = {
       ...first,
       modeId: 'survival',
       roundsPassed: 4,
@@ -1027,7 +1027,7 @@ describe('GameRound', () => {
 
   describe('a timed Game', () => {
     /** A Round of a mode that moves on, 60 seconds of play, with no Lives, its clock running. */
-    const timed: CurrentGame = {
+    const timed: PlayingGame = {
       ...first,
       modeId: 'timed',
       roundLimit: undefined,
@@ -1038,7 +1038,7 @@ describe('GameRound', () => {
     };
 
     /** The Round on the screen with the time the screen ticks, which a test changes by `rerender`. */
-    function TimedRound({ game, timeLeft }: { game: CurrentGame; timeLeft: number }) {
+    function TimedRound({ game, timeLeft }: { game: PlayingGame; timeLeft: number }) {
       return (
         <SafeAreaProvider initialMetrics={metrics}>
           <EditionProvider edition={{ locale: 'en' }} strings={strings}>
@@ -1060,7 +1060,7 @@ describe('GameRound', () => {
     }
 
     /** The Game gone on to its next Round with the current one answered as given, as a mode that moves on does. */
-    function movedOn(game: CurrentGame, right: boolean): CurrentGame {
+    function movedOn(game: PlayingGame, right: boolean): PlayingGame {
       const { round } = answeredPick(game, { form: 'pick', option: right ? CORRECT : 0 });
       const { answer } = round;
       if (answer === undefined) throw new Error('No answer');

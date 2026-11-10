@@ -1,19 +1,15 @@
 import type { FeatureSwitch } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemorySessionStore,
-  openAccount,
-  openSync,
-  type RecordChange,
-  type UserStateChanges,
-} from '../index';
+import { createMemorySessionStore, openAccount, openSync } from '../index';
+import { type RecordChange, type UserStateChanges } from '../ports';
 import {
   createFakeAppleSignInSheet,
   createFakeBackend,
   createFakeGoogleSignInSheet,
 } from '../testing';
 import { SYNC_AFTER_WRITE } from './sync';
+import { switchedOn } from '../edition/edition';
 import { fakeClock, randomOf, testSchedule } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { trackChanges } from '../user-state/tracked-user-state';
@@ -86,7 +82,7 @@ async function device({
       },
     },
     account,
-    edition: { id: 'uk', isFeatureEnabled: (feature) => !switchedOff.has(feature) },
+    edition: { id: 'uk', isFeatureEnabled: switchedOn((feature) => !switchedOff.has(feature)) },
     clock: time.clock,
     schedule: timers.schedule,
     random: randomOf(0.5),

@@ -1,4 +1,5 @@
-import type { Haptics, WordFeedCard } from '@slovo/core';
+import { type WordFeedCard } from '@slovo/core/testing';
+import type { Haptics } from '@slovo/core';
 import {
   EditionProvider,
   EntryCard,

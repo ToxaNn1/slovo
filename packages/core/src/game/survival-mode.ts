@@ -19,8 +19,7 @@ export const survivalMode: GameMode = {
   lives: 3,
   roundLimit: 'none',
   takesTurns: true,
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameSurvival') && edition.isFeatureEnabled('corrections'),
+  isOn: (edition) => edition.isFeatureEnabled('gameSurvival'),
   buildRound(input) {
     if (input.answer.kind === 'word') return guessWord.buildRound({ ...input, round: 1 });
     return correctionMode.buildRound(input);

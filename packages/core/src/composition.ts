@@ -9,16 +9,7 @@ import { anglicismMode } from './game/anglicism-mode';
 import { buildIdiomMode } from './game/build-idiom-mode';
 import { byLettersMode } from './game/by-letters-mode';
 import { correctionMode } from './game/correction-mode';
-import {
-  openDailyCrossword,
-  type CrosswordReadPort,
-  type DailyCrossword,
-} from './game/daily-crossword';
-import {
-  openCrossingCrossword,
-  type CrossingCrosswordOpening,
-} from './game/crossing-crossword-progress';
-import { openTracedCrossword, type TracedCrosswordOpening } from './game/traced-crossword';
+import { openDailyCrossword, type DailyCrosswordOpening } from './game/daily-crossword';
 import { openCycle } from './feed/cycle';
 import { openCorrectionTypes, type CorrectionTypes } from './dashboard/correction-types';
 import { openCuratedCollections, type CuratedCollections } from './dashboard/curated-collections';
@@ -26,6 +17,7 @@ import { openDashboard, type Dashboard } from './dashboard/dashboard';
 import { openMoodCheckIns, type MoodCheckIns } from './mood/mood';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
 import type { Edition } from './edition/edition';
+import { createTextComparison } from './text/text-comparison';
 import type { Entries } from './entries/entries';
 import type { EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
@@ -191,26 +183,13 @@ export interface Composition extends Hiding {
   /** The Rarity Ceiling, the one «Рідкість» setting every surface obeys (ADR 0072). */
   readonly rarityCeiling: RarityCeiling;
   /**
-   * Opens today's Daily Crossword with the letters this device kept for it,
-   * for its card and its screen; nothing when the Edition has it off, the pack
-   * has no day for the local date or the composition was opened without
-   * `crossword`. Open it again once the next local day starts.
+   * Opens today's Daily Crossword, the one its card and its screen draw: the
+   * crossing one (ADR 0087) with the progress this device made in it, the
+   * traced one (ADR 0073) with the Words this device found while the crossing
+   * one is off, or none on a day no pattern fills, while the traced one cannot
+   * fill its grid or with both off. Open it again once the next local day starts.
    */
-  openDailyCrossword(): Promise<DailyCrossword | undefined>;
-  /**
-   * Opens today's traced Daily Crossword (ADR 0073) with the Words this device
-   * found in it: `off` while the Edition has it off, `no-tiling` when the Words
-   * within the Rarity Ceiling cannot fill the grid, for the screen's fallback
-   * to the printed Daily Crossword. Open it again once the next local day starts.
-   */
-  openTracedCrossword(): Promise<TracedCrosswordOpening>;
-  /**
-   * Opens today's crossing Daily Crossword (ADR 0087) with the progress this
-   * device made in it: `off` while the Edition has it off, `no-fill` when no
-   * block pattern fills with the Words within the Rarity Ceiling, so the card
-   * is not shown that day. Open it again once the next local day starts.
-   */
-  openCrossingCrossword(): Promise<CrossingCrosswordOpening>;
+  openDailyCrossword(): Promise<DailyCrosswordOpening>;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry or the Synonym Row a Word card links back to; nothing for an id the Language Pack doesn't have. The card of
@@ -382,7 +361,6 @@ export async function openComposition({
   clock,
   random,
   gameModes = [],
-  crossword,
   feedNotices = noFeedNotices,
   backend,
   analytics: analyticsSink,
@@ -390,8 +368,6 @@ export async function openComposition({
   ...ports
 }: {
   content: ContentReadPort;
-  /** The Daily Crossword's days, which the pack reader gives next to `content`; without it, as in tests of other features, there is none. */
-  crossword?: CrosswordReadPort;
   /** The Edition as the app runs it (`loadEdition`); each module reads of it what it names. */
   edition: Edition;
   userState: UserState;
@@ -420,6 +396,8 @@ export async function openComposition({
   signedIn?: () => boolean;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
+  /** The Edition's text comparison, built once and handed to every module that compares text. */
+  const comparison = createTextComparison(edition);
   // The named subjects the modules link through (ADR 0018), made before any
   // module opens. A subject's listeners follow in the order the modules open.
   const eligibility: Subject<void> = createSubject();
@@ -604,6 +582,7 @@ export async function openComposition({
     opened,
     quickQuestion: createQuickQuestion({
       edition,
+      comparison,
       entries,
       knowledge,
       xp: xpLog,
@@ -622,6 +601,7 @@ export async function openComposition({
   // that fails is tried again.
   const game = await openGame({
     edition,
+    comparison,
     entries,
     history,
     knowledge,
@@ -648,7 +628,7 @@ export async function openComposition({
         },
       },
     }),
-    openCollections({ rows, userState, clock, random }),
+    openCollections({ rows, userState, clock, random, comparison }),
   ]);
   const badges = await openBadges({
     edition,
@@ -780,25 +760,12 @@ export async function openComposition({
     game,
     onboarding,
     questionnaire: later.questionnaire,
-    search: withNoResultEvent(createSearch({ content, edition, userState }), analytics),
-    recentQueries: createRecentQueries({ edition, userState }),
+    search: withNoResultEvent(createSearch({ content, edition, comparison, userState }), analytics),
+    recentQueries: createRecentQueries({ comparison, userState }),
     rarityTest,
     rarityCeiling,
-    async openDailyCrossword() {
-      if (crossword === undefined) return undefined;
-      return openDailyCrossword({
-        content: crossword,
-        userState,
-        clock,
-        edition,
-        xp: xpLog,
-        analytics,
-      });
-    },
-    openTracedCrossword: () =>
-      openTracedCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
-    openCrossingCrossword: () =>
-      openCrossingCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
+    openDailyCrossword: () =>
+      openDailyCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     openedFromNotification: openedFromOutside,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createSettings, type UserStateChanges } from '../index';
+import { createSettings } from '../index';
+import { type UserStateChanges } from '../ports';
 import { openCycle } from '../feed/cycle';
 import { openWordOfTheDay } from '../feed/word-of-the-day';
 import { userStateRecords } from '../user-state-schema';

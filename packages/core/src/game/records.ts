@@ -21,10 +21,11 @@ export const gameRecords = {
    */
   gameBest: declareRecords('game.best.', z.number().int().nonnegative(), { sync: 'highest' }),
   /**
-   * The letters typed into the Daily Crossword and the local date of its day:
-   * each letter by its cell, `row,column`. Only today's day counts; a new day
-   * starts an empty grid. It stays on the device, with no Sync (ADR 0052). A
-   * new key, so no migration.
+   * Reserved (ADR 0013): the letters typed into the typed Daily Crossword of
+   * ADR 0052, each by its cell, `row,column`, and the local date of its day.
+   * The typed crossword is gone (ADR 0087) and nothing reads or writes the
+   * record; it stays declared so user state that holds it opens as before and
+   * the key is never given to another record. Device-only, with no Sync.
    */
   crosswordProgress: declareRecord(
     'crossword.progress',

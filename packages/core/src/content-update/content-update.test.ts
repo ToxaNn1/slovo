@@ -1,7 +1,8 @@
 import { PATCH_FORMAT, type Patch } from '@slovo/contracts/api';
 import { describe, expect, it } from 'vitest';
 
-import { CONTENT_UPDATE_EVERY, createContentUpdate } from '../index';
+import { createContentUpdate } from '../index';
+import { CONTENT_UPDATE_EVERY } from './content-update';
 import { createFakeBackend, createMemoryContentStore } from '../testing';
 import { fakeClock, randomOf, testSchedule } from '../test-support';
 

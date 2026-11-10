@@ -58,7 +58,7 @@ async function run({
     content: createMemoryContentPort({ corrections }),
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: { mix: { categoryIds: [], corrections: correctionsInMix } },
+      userSettingDefaults: { mix: { categoryIds: [], kinds: { correction: correctionsInMix } } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {

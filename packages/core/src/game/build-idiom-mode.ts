@@ -19,9 +19,8 @@ export const buildIdiomMode: GameMode = {
   id: 'build-idiom',
   group: 'idioms',
   entryKind: 'idiom',
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameBuildIdiom') && edition.isFeatureEnabled('idioms'),
-  buildRound({ answer, random, edition }) {
+  isOn: (edition) => edition.isFeatureEnabled('gameBuildIdiom'),
+  buildRound({ answer, random, edition, comparison }) {
     if (answer.kind !== 'idiom' || answer.idiomType === 'placeName') return undefined;
     const punctuation = new Set(edition.languageTraits.expressionPunctuation ?? []);
     const words = answer.expression
@@ -35,7 +34,7 @@ export const buildIdiomMode: GameMode = {
       form: 'chips',
       chipKind: 'word',
       prompt: answer.primaryDefinition,
-      chips: outOfOrder(words, shuffled(words, random)),
+      chips: outOfOrder(words, shuffled(words, random), comparison),
       expected: words,
       sheet: {
         answer: { text: answer.expression, stressedVowels: [] },

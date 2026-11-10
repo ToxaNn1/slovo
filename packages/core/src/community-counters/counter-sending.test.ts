@@ -28,7 +28,7 @@ async function device() {
   const edition = testEdition({
     isFeatureEnabled: (feature) => !switchedOff.has(feature),
     userSettingDefaults: {
-      mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
+      mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
     },
   });
   const userState = await openUserState({ port: createMemoryUserStatePort() });

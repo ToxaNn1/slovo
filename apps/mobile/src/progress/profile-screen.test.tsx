@@ -1,10 +1,10 @@
+import { type Word } from '@slovo/contracts';
 import { describe, expect, it, jest } from '@jest/globals';
 import {
   createMemorySessionStore,
   openAccount,
   systemRandom,
   type FeatureSwitch,
-  type Word,
 } from '@slovo/core';
 import {
   createFakeAppleSignInSheet,
@@ -131,7 +131,6 @@ async function renderScreen({
         words: [sumyrnyi],
       }),
       metadata: () => Promise.reject(new Error('A test pack has no metadata')),
-      crosswordDay: () => Promise.resolve(undefined),
     },
     contentVersion: () => 1,
     contentUpdate: undefined,

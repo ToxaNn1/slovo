@@ -1,4 +1,4 @@
-import type { CurrentGame } from '@slovo/core';
+import type { GameOver } from '@slovo/core';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import {
   ScrollView,
@@ -148,8 +148,8 @@ export function ResultNumber({
  * halftone raster, with the title and the line of a win or a loss in ink and
  * the `mascot` beside them; then tiles of the Rounds passed (out of the mode's
  * Round limit, or alone in a mode without one), the Lives left and the best
- * result; a timed Game ends with its time up, its right answers in place of
- * the Rounds passed. The Game Review of every Round follows, while it opens
+ * result; a Game in a mode with a time limit ends as a time-up, its right
+ * answers in place of the Rounds passed, even when it ran out of Rounds first. The Game Review of every Round follows, while it opens
  * Entries, then «На головну» for the Feed beside «Ще раз» for a new Game in
  * the same mode. A win arrives with the success haptic twice.
  */
@@ -161,8 +161,8 @@ export function GameResult({
   onOpenEntry,
   mascot,
 }: {
-  /** The Game just over, won or lost. */
-  game: CurrentGame;
+  /** The Game just over, won, lost or with its time up. */
+  game: GameOver;
   /** The best result, the Game just over included. */
   bestResult: number | undefined;
   onAgain: () => void;
@@ -177,9 +177,10 @@ export function GameResult({
   const { strings, voice, count } = useEdition();
   const words = strings.game;
   const { roundsPassed, roundLimit, lives } = game;
-  const won = game.status === 'won';
-  // A timed Game ends once its time is up, and counts its right answers.
-  const timed = game.time !== undefined;
+  // A Game in a mode with a time limit counts its right answers, as its Best
+  // result does, and arrives as a win does, even when it ran out of Rounds first.
+  const timed = game.timeLimit !== undefined;
+  const won = game.status !== 'lost';
   const right = game.played.filter((round) => round.right).length;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
   const gameHaptics = useGameHaptics();

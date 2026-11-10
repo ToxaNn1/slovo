@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { CrosswordDay, Word } from '@slovo/contracts';
+import type { Word } from '@slovo/contracts';
 import {
   openComposition,
   openTrackedUserState,
@@ -49,22 +49,6 @@ function word(index: number): Word {
 const words = Array.from({ length: 40 }, (_, index) => word(index + 1));
 const content = createMemoryContentPort({ words });
 
-/** Today's Daily Crossword: four words across, one per row. */
-const crosswordDay: CrosswordDay = {
-  date: TODAY,
-  words: ['дім', 'сад', 'ліс', 'мак'].map((answer, row) => ({
-    entryId: words[row]?.id ?? '',
-    answer,
-    clue: 'A clue.',
-    row,
-    column: 0,
-    direction: 'across' as const,
-  })),
-};
-const crossword = {
-  crosswordDay: (date: string) => Promise.resolve(date === TODAY ? crosswordDay : undefined),
-};
-
 const databases: NodeDriver[] = [];
 afterAll(() => {
   for (const db of databases) db.close();
@@ -83,10 +67,9 @@ async function storedPort() {
 /** The app as it opens after the reload: the Core composition over the stored state the link loaded. */
 async function opened(name: TestStateName): Promise<Composition> {
   const port = await storedPort();
-  await loadTestState(name, port, { clock, edition: ukrainian, content, crossword });
+  await loadTestState(name, port, { clock, edition: ukrainian, content });
   return openComposition({
     content,
-    crossword,
     edition: ukrainian,
     userState: await openTrackedUserState({ port, clock }),
     clock,
@@ -204,20 +187,18 @@ describe('a test state loaded from its link', () => {
   it("crossword-solved: today's Daily Crossword solved", async () => {
     const app = await opened('crossword-solved');
 
-    expect((await app.openDailyCrossword())?.state.progress).toBe('solved');
     expect(app.xpLog.milestones.crosswords.has(TODAY)).toBe(true);
   });
 
   it('crossword-7-in-a-row: seven Daily Crosswords solved in a row up to today', async () => {
     const app = await opened('crossword-7-in-a-row');
 
-    expect((await app.openDailyCrossword())?.state.progress).toBe('solved');
     expect(app.xpLog.milestones.crosswords.size).toBe(7);
   });
 });
 
 describe('the app reopened by the reload a test state asks for', () => {
-  const sources = { clock, edition: ukrainian, content, crossword };
+  const sources = { clock, edition: ukrainian, content };
 
   it('knows it was, once, so the link it reopens with loads nothing again', async () => {
     const port = await storedPort();

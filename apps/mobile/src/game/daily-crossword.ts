@@ -4,17 +4,18 @@ import type {
   CrossingPlay,
   CrossingPuzzle,
   CrosswordSolve,
-  DailyCrosswordState,
+  DailyCrosswordOpening,
 } from '@slovo/core';
 import type { CrosswordDayCardState, CrosswordMiniCell, DailyCrosswordCard } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState, type ComponentProps } from 'react';
+import { useCallback, useEffect, useState, type ComponentProps } from 'react';
 
 import { useComposition } from '../composition';
 import { edition, editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { crossingMiniGrid, crossingProgress, crossingSolveOf } from './crossing-crossword';
 import { solveTimeText } from './crossword-share';
+import type { DailyCrosswordProgress } from './crossword-progress';
 import { tracedMiniGrid, tracedProgress } from './traced-crossword';
 
 /**
@@ -98,7 +99,9 @@ function crossingCard(
  * with the letters typed.
  */
 function dailyCrosswordCard(
-  state: Pick<DailyCrosswordState, 'date' | 'progress'> & {
+  state: {
+    readonly date: string;
+    readonly progress: DailyCrosswordProgress;
     readonly grid: readonly (readonly CrosswordMiniCell[])[];
   },
   strings: Strings,
@@ -133,27 +136,47 @@ type CardState =
   | ({ readonly kind: 'crossing' } & CrossingCardState)
   | ({ readonly kind: 'traced' } & TracedCardState);
 
-/**
- * What the card shows: today's crossing Daily Crossword (ADR 0087), none on a
- * day no pattern fills or when it cannot open, and while it is off the traced
- * one when it opens (ADR 0073).
- */
+/** What the card shows of the Daily Crossword the Core opened today: none when it opens none. */
 async function cardState(composition: Composition): Promise<CardState | undefined> {
-  const crossing = await composition.openCrossingCrossword();
-  if (crossing.kind === 'open') {
-    const { puzzle, state } = crossing.crossword;
+  const opening = await composition.openDailyCrossword();
+  if (opening.kind === 'none') return undefined;
+  if (opening.kind === 'crossing') {
+    const { puzzle, state } = opening.crossword;
     return { kind: 'crossing', puzzle, state, solve: crossingSolveOf(composition, puzzle, state) };
   }
-  if (crossing.kind === 'no-fill') return undefined;
-  const traced = await composition.openTracedCrossword();
-  if (traced.kind !== 'open') return undefined;
-  const { puzzle, state } = traced.crossword;
+  const { puzzle, state } = opening.crossword;
   return {
     kind: 'traced',
     date: puzzle.date,
     progress: tracedProgress(state),
     grid: tracedMiniGrid(puzzle, state),
   };
+}
+
+/**
+ * Today's Daily Crossword for its screen, as the Core opened it, opened as the
+ * screen opens and again in a composition reopened: `undefined` while it
+ * opens. An opening that fails is logged and opens none.
+ */
+export function useDailyCrossword(): DailyCrosswordOpening | undefined {
+  const composition = useComposition();
+  const [read, setRead] = useState<{ in: Composition; opening: DailyCrosswordOpening }>();
+  useEffect(() => {
+    let active = true;
+    composition.openDailyCrossword().then(
+      (opening) => {
+        if (active) setRead({ in: composition, opening });
+      },
+      (error: unknown) => {
+        logError('Could not open the Daily Crossword', error);
+        if (active) setRead({ in: composition, opening: { kind: 'none' } });
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [composition]);
+  return read?.in === composition ? read.opening : undefined;
 }
 
 /**

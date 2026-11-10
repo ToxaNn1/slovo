@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type Composition,
   type FeatureSwitch,
-  type UserStateChanges,
   type UserStatePort,
 } from '../index';
+import { SEEN_DWELL_MS } from '../feed/feed';
+import { type UserStateChanges } from '../ports';
 import { createMemoryContentPort } from '../testing';
 import {
   correction,
@@ -55,7 +55,7 @@ async function run({
     content,
     edition: testEdition({
       isFeatureEnabled: () => false,
-      userSettingDefaults: { mix: { corrections: false } },
+      userSettingDefaults: { mix: { kinds: { correction: false } } },
     }),
     userState: await openUserState({ port }),
     clock,
@@ -413,7 +413,7 @@ describe('The knowledge counts', () => {
       }),
       edition: testEdition({
         isFeatureEnabled: (feature) => feature === 'knowledge',
-        userSettingDefaults: { mix: { corrections: false } },
+        userSettingDefaults: { mix: { kinds: { correction: false } } },
       }),
       userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
       clock: fakeClock('2026-10-19T09:00:00+03:00').clock,
@@ -535,7 +535,7 @@ describe('The Active Days calendar', () => {
         content,
         edition: testEdition({
           isFeatureEnabled: (feature) => switches.includes(feature),
-          userSettingDefaults: { mix: { corrections: false } },
+          userSettingDefaults: { mix: { kinds: { correction: false } } },
         }),
         userState: await openUserState({ port: createMemoryUserStatePort(records) }),
         clock: fakeClock(`${date}T09:00:00+03:00`).clock,

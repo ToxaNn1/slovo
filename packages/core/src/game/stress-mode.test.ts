@@ -143,8 +143,8 @@ async function run({
     content: pack,
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: { mix: { corrections } },
-      languageTraits: { marksStress, ...(marksStress ? { vowels } : {}) },
+      userSettingDefaults: { mix: { kinds: { correction: corrections } } },
+      languageTraits: { stress: marksStress ? { marked: true, vowels } : { marked: false } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {

@@ -22,6 +22,7 @@ import {
   type Correction,
   type CuratedCollection,
   type EditionConfig,
+  type EntryKind,
   type Idiom,
   type SplashDecor,
   type SynonymRow,
@@ -225,9 +226,6 @@ export interface AuthoredContent {
   /** The Entry files that couldn't be read or broke the schema; the other Entries are kept. */
   readonly errors: readonly BuildError[];
 }
-
-/** The kinds of Entry, as each Entry names its own kind. */
-export type EntryKind = 'word' | 'correction' | 'idiom' | 'synonymRow' | 'tip';
 
 /**
  * The text an Entry is known by, so that a new Entry of the same text can be

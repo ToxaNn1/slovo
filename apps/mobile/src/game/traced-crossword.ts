@@ -1,8 +1,6 @@
 import { fill, type EditionStrings } from '@slovo/contracts';
 import {
   isSolved,
-  type Composition,
-  type DailyCrosswordState,
   type CrosswordPuzzle,
   type PuzzleAction,
   type PuzzlePlace,
@@ -13,8 +11,7 @@ import type { CrosswordMiniCell, TracedMiss, TracedWord } from '@slovo/ui';
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
-import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
+import type { DailyCrosswordProgress } from './crossword-progress';
 import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 
@@ -41,7 +38,7 @@ export function tracedMiniGrid(puzzle: CrosswordPuzzle, state: PuzzleState): Cro
 }
 
 /** How far the reader is in the traced Daily Crossword, as its card says it. */
-export function tracedProgress(state: PuzzleState): DailyCrosswordState['progress'] {
+export function tracedProgress(state: PuzzleState): DailyCrosswordProgress {
   if (isSolved(state)) return 'solved';
   return foundCount(state) > 0 ? 'started' : 'untouched';
 }
@@ -70,7 +67,6 @@ function tracedTexts(strings: EditionStrings['game']['dailyCrossword']) {
 
 /** Today's traced Daily Crossword on its screen: what the grid draws, and the reader's moves. */
 export interface TracedCrosswordPlay {
-  readonly kind: 'play';
   readonly puzzle: CrosswordPuzzle;
   readonly words: readonly TracedWord[];
   readonly trace: readonly PuzzlePlace[];
@@ -82,59 +78,34 @@ export interface TracedCrosswordPlay {
   readonly release: () => void;
 }
 
-/**
- * What the Daily Crossword's screen shows: the traced puzzle, or the printed
- * Daily Crossword (`printed`) while the Edition has the traced one off or the
- * Words within the Rarity Ceiling cannot fill its grid (ADR 0073).
- */
-export type TracedCrosswordView = { readonly kind: 'printed' } | TracedCrosswordPlay;
-
 interface Opened {
-  readonly in: Composition;
-  readonly crossword: TracedCrossword | undefined;
-  readonly state: PuzzleState | undefined;
+  readonly crossword: TracedCrossword;
+  readonly state: PuzzleState;
   readonly miss: TracedMiss | undefined;
 }
 
-/**
- * Today's traced Daily Crossword for its screen, opened with the Words this
- * device found as the screen opens and again in a composition reopened:
- * `undefined` while it opens. Each move goes to the Core in turn; a release
- * of two cells or more that locks no Word becomes the `miss`. A move that
- * fails is logged and changes nothing; an opening that fails falls back to
- * the printed Daily Crossword.
- */
-export function useTracedCrossword(): TracedCrosswordView | undefined {
-  const composition = useComposition();
-  const [opened, setOpened] = useState<Opened>();
-  useEffect(() => {
-    let active = true;
-    composition.openTracedCrossword().then(
-      (opening) => {
-        if (!active) return;
-        const crossword = opening.kind === 'open' ? opening.crossword : undefined;
-        setOpened({ in: composition, crossword, state: crossword?.state, miss: undefined });
-      },
-      (error: unknown) => {
-        logError('Could not open the traced Daily Crossword', error);
-        if (active)
-          setOpened({ in: composition, crossword: undefined, state: undefined, miss: undefined });
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [composition]);
+const fresh = (crossword: TracedCrossword): Opened => ({
+  crossword,
+  state: crossword.state,
+  miss: undefined,
+});
 
-  if (opened?.in !== composition) return undefined;
-  const { crossword, state, miss } = opened;
-  if (crossword === undefined || state === undefined) return { kind: 'printed' };
+/**
+ * Today's traced Daily Crossword for its screen, as the Core opened it with
+ * the Words this device found, and afresh for another one opened. Each move
+ * goes to the Core in turn; a release of two cells or more that locks no Word
+ * becomes the `miss`. A move that fails is logged and changes nothing.
+ */
+export function useTracedCrossword(crossword: TracedCrossword): TracedCrosswordPlay {
+  const [opened, setOpened] = useState(() => fresh(crossword));
+  if (opened.crossword !== crossword) setOpened(fresh(crossword));
+  const { state, miss } = opened;
 
   const play = (action: PuzzleAction) => {
     void keep('the traced Daily Crossword', crossword.play(action)).then((next) => {
       if (next === undefined) return;
       setOpened((now) => {
-        if (now?.crossword !== crossword || now.state === undefined) return now;
+        if (now.crossword !== crossword) return now;
         const missed =
           action.type === 'release' &&
           now.state.trace.length > 1 &&
@@ -148,7 +119,6 @@ export function useTracedCrossword(): TracedCrosswordView | undefined {
     });
   };
   return {
-    kind: 'play',
     puzzle: crossword.puzzle,
     words: tracedWords(crossword.puzzle, state),
     trace: state.trace,

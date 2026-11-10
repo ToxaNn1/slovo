@@ -1,9 +1,9 @@
+import { type IdiomFeedCard } from '@slovo/core/testing';
 import {
   buildShareCardContent,
   type AnyEntryCard,
   type EntryFeedCard,
   type IdiomCardModel,
-  type IdiomFeedCard,
   type SynonymRowCardModel,
   type SynonymRowFeedCard,
   type TipCardModel,

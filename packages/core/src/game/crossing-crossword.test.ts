@@ -2,12 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { CROSSWORD_SIZE } from '@slovo/contracts';
 
-import {
-  CROSSING_PATTERNS,
-  crossingPlacesOf,
-  generateCrossingCrossword,
-  seededRandomOf,
-} from '../index';
+import { crossingPlacesOf } from '../index';
+import { CROSSING_PATTERNS, generateCrossingCrossword } from './crossing-crossword';
+import { seededRandomOf } from './traced-crossword';
 import {
   ALPHABET,
   crossingsOf,

@@ -18,6 +18,8 @@ The Game has thirteen Game Modes with answer forms of their own, typed answers, 
 
 **Typed answers.** One Core comparison judges every typed answer: it ignores case, Stress marks, the kind of apostrophe (' ʼ ’) and spaces at the ends, and keeps г and ґ, е and ё distinct, so the Game still teaches spelling. A wrong typed answer costs a Life and the answer sheet shows the right one.
 
+**Amended by ADR 0101.** The comparison judges a typed answer by its Comparison Key, built from the Edition's Language Traits: case is folded with the Edition's locale, and the apostrophes are the characters the Edition lists as `apostrophes` (ʼ ' ’ in the UA Edition).
+
 **The modes.**
 
 - **«Вгадай слово» (`guess-word`) gets harder as it goes**, always: Rounds 1–5 give a Definition → pick of four; Rounds 6–10 an Example with the Word replaced by a gap → pick of four, only when an Example contains the Lemma as written (Stress and case set aside), otherwise a Definition Round; Rounds 11–15 a Definition → type the Word, judged by the one typed-answer comparison, unless another eligible Word has the same primary Definition, which makes it a Definition pick so the Round keeps one right answer. Idioms, Synonym Rows and Tips stay four-option picks at every stage.

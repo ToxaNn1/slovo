@@ -1,17 +1,12 @@
+import { type Idiom } from '@slovo/contracts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import {
-  createEntries,
-  EVERYTHING_IN,
-  type Idiom,
-  openComposition,
-  type Entries,
-} from '@slovo/core';
-import { seedUserState } from '@slovo/core/testing';
+import { openComposition } from '@slovo/core';
+import { seedUserState, createEntries, EVERYTHING_IN, type Entries } from '@slovo/core/testing';
 
 import { openLanguagePack, type NodeLanguagePack } from './index';
 import { buildUkrainianPack, ukrainian, ukrainianFolder } from './test-support';
@@ -41,7 +36,7 @@ afterAll(() => {
 describe('the Idioms of the UA Edition', () => {
   it('turns Idioms on and has them in the default Mix', () => {
     expect(ukrainian.isFeatureEnabled('idioms')).toBe(true);
-    expect(ukrainianFolder.config.userSettingDefaults.mix.idioms).toBe(true);
+    expect(ukrainianFolder.config.userSettingDefaults.mix.kinds.idiom).toBe(true);
   });
 
   it('names each Idiom Type in the Edition strings', () => {

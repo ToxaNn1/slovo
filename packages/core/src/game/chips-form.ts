@@ -1,4 +1,5 @@
 import type { AnswerForm, AnswerSheet, RoundOption } from './answer-form';
+import type { TextComparison } from '../text/text-comparison';
 
 /** What a chips Round's chips are: a Word's letters or an expression's words. */
 export type ChipKind = 'letter' | 'word';
@@ -64,10 +65,20 @@ export interface ChipsAnswer {
   readonly sheet: AnswerSheet;
 }
 
-/** Whether the chips stand in the right order, equal chips interchangeable and case ignored. */
-export const chipsMatch = (chips: readonly string[], right: readonly string[]): boolean =>
+/**
+ * Whether the chips stand in the right order, chips with the same Comparison
+ * Key as a typed answer interchangeable.
+ */
+const chipsMatch = (
+  chips: readonly string[],
+  right: readonly string[],
+  comparison: TextComparison,
+): boolean =>
   chips.length === right.length &&
-  chips.every((chip, place) => chip.toLowerCase() === right[place]?.toLowerCase());
+  chips.every(
+    (chip, place) =>
+      right[place] !== undefined && comparison.same(chip, right[place], 'typedAnswer'),
+  );
 
 /**
  * The chips of a shuffle, never starting in the right order: when the
@@ -78,8 +89,9 @@ export const chipsMatch = (chips: readonly string[], right: readonly string[]): 
 export const outOfOrder = (
   right: readonly string[],
   chips: readonly string[],
+  comparison: TextComparison,
 ): readonly string[] =>
-  chipsMatch(chips.slice(0, right.length), right)
+  chipsMatch(chips.slice(0, right.length), right, comparison)
     ? [...chips.slice(1), ...chips.slice(0, 1)]
     : chips;
 
@@ -122,7 +134,7 @@ export const chipsForm: AnswerForm<ChipsContent, ChipsRound, ChipsGiven, ChipsAn
     layout,
     slots: expected.length,
   }),
-  judge({ chips, expected, sheet }, _shown, { chips: chosen }) {
+  judge({ chips, expected, sheet }, _shown, { chips: chosen }, comparison) {
     const tapped: string[] = [];
     for (const place of chosen) {
       const chip = chips[place];
@@ -130,7 +142,13 @@ export const chipsForm: AnswerForm<ChipsContent, ChipsRound, ChipsGiven, ChipsAn
       tapped.push(chip);
     }
     return {
-      answer: { form: 'chips', chosen, expected, right: chipsMatch(tapped, expected), sheet },
+      answer: {
+        form: 'chips',
+        chosen,
+        expected,
+        right: chipsMatch(tapped, expected, comparison),
+        sheet,
+      },
     };
   },
   reviewAnswer({ chips, fixed }, { chosen }): RoundOption {

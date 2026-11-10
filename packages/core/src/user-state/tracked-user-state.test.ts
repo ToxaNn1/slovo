@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createSettings,
-  openComposition,
-  type UserStateChanges,
-  type UserStatePort,
-} from '../index';
+import { createSettings, openComposition, type UserStatePort } from '../index';
+import { type UserStateChanges } from '../ports';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from './user-state';
@@ -216,7 +212,7 @@ describe('the settings and the composition over the tracked user state', () => {
       content: createMemoryContentPort({ words: [word('w_one'), word('w_two')], corrections: [] }),
       edition: testEdition({
         isFeatureEnabled: () => false,
-        userSettingDefaults: { mix: { corrections: false } },
+        userSettingDefaults: { mix: { kinds: { correction: false } } },
       }),
       userState,
       clock: time.clock,

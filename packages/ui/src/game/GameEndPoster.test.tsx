@@ -1,4 +1,4 @@
-import type { CurrentGame, GameEnd, Haptics } from '@slovo/core';
+import type { GameEnd, GameOver, Haptics } from '@slovo/core';
 import { EditionProvider, GameEndPoster, HapticsProvider, mascotWidth, space } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -13,7 +13,9 @@ const strings = testStrings({
   },
 });
 
-const game: CurrentGame = {
+const end: GameEnd = { kind: 'lives-over', played: 5, right: 2, xp: 0, newBest: false };
+
+const game: GameOver = {
   modeId: 'survival',
   round: {
     number: 2,
@@ -33,6 +35,7 @@ const game: CurrentGame = {
   livesAtStart: 3,
   played: [],
   status: 'lost',
+  end,
 };
 
 const haptics: Haptics = {
@@ -42,8 +45,6 @@ const haptics: Haptics = {
   success: jest.fn(),
   warning: jest.fn(),
 };
-
-const end: GameEnd = { kind: 'lives-over', played: 5, right: 2, xp: 0, newBest: false };
 
 async function renderPoster() {
   await render(

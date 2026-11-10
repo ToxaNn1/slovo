@@ -160,7 +160,9 @@ async function run({
       isFeatureEnabled: (feature) =>
         !off.includes(feature) &&
         (feature === 'game' || feature === 'gameGuessWord' || withCorrections),
-      userSettingDefaults: { mix: { categoryIds: ['nature'], corrections: correctionsInMix } },
+      userSettingDefaults: {
+        mix: { categoryIds: ['nature'], kinds: { correction: correctionsInMix } },
+      },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: {

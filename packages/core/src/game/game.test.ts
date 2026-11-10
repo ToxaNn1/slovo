@@ -18,9 +18,7 @@ import {
   createHaptics,
   GAME_ROUNDS,
   openComposition,
-  renderStress,
   withoutStress,
-  SEEN_DWELL_MS,
   type AnalyticsPort,
   type Clock,
   type Composition,
@@ -28,12 +26,14 @@ import {
   type CurrentGame,
   type FeatureSwitch,
   type PlayedRound,
-  type GameMode,
   type Round,
   type Schedule,
-  type UserStateChanges,
   type UserStatePort,
 } from '../index';
+import { renderStress } from '../entries/stress';
+import { SEEN_DWELL_MS } from '../feed/feed';
+import { type GameMode } from './game-mode';
+import { type UserStateChanges } from '../ports';
 import { GAME_LIVES, streakOf } from './game';
 import { createMemoryContentPort } from '../testing';
 import {
@@ -234,7 +234,7 @@ async function run({
         !off.includes(feature) &&
         (((feature === 'game' || feature === 'gameGuessWord') && game) || on.includes(feature)),
       userSettingDefaults: {
-        mix: { categoryIds: categories.map(({ id }) => id), corrections: false },
+        mix: { categoryIds: categories.map(({ id }) => id), kinds: { correction: false } },
       },
       ...(badges === undefined ? {} : { badges }),
     }),
