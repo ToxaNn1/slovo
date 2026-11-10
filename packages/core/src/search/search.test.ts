@@ -10,7 +10,7 @@ import { createMemoryUserStatePort, openUserState } from '../user-state/user-sta
 /** An Ukrainian-like Edition: Search on, ґ read as г and ё as е. */
 const edition = (off: readonly FeatureSwitch[] = []) => ({
   isFeatureEnabled: (feature: FeatureSwitch) => !off.includes(feature),
-  languageTraits: { sortLocale: 'uk' },
+  languageTraits: { apostrophes: ['ʼ', "'", '’'], sortLocale: 'uk' },
   searchLetters: { ґ: 'г', ё: 'е' },
 });
 
