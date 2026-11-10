@@ -1,4 +1,0 @@
--- The empty database the backend starts from. It gives the migrate command a
--- first migration to record, so every later migration is generated from the
--- schema on top of it (`pnpm db:generate`). Migrations only go forward: a
--- shipped one is never edited, and a fix is a new migration.
