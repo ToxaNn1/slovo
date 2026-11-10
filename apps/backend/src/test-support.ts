@@ -22,7 +22,6 @@ import {
   EDITIONS_DIR,
   editionFiles,
   FONTS_DIR,
-  ILLUSTRATIONS_DIR,
   openAppConfig,
   openEdition,
   REPO_DIR,
@@ -462,10 +461,6 @@ export function testEditions(
     const { dir: editionDir } = editionFiles(join(dir, id));
     if (!withContent.has(id)) {
       cpSync(join(ukrainian.dir, 'content'), join(editionDir, 'content'), { recursive: true });
-      // The Words name these, so the content is recorded only with them.
-      cpSync(join(ukrainian.dir, ILLUSTRATIONS_DIR), join(editionDir, ILLUSTRATIONS_DIR), {
-        recursive: true,
-      });
       // The Edition check reads the font of the Word of the Day the config names.
       cpSync(join(ukrainian.dir, FONTS_DIR), join(editionDir, FONTS_DIR), { recursive: true });
       // The content checksum takes in the Edition, so the copy is recorded under its own id.
