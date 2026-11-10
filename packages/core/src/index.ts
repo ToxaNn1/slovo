@@ -178,13 +178,8 @@ export {
   createMedia,
   illustrationPath,
   recordingPath,
-  MEDIA_CACHE_LIMIT,
   PREFETCH_CARDS,
-  type CardMedia,
   type Media,
-  type MediaSource,
-  type MediaSwitch,
-  type StarterMedia,
 } from './media/media';
 export { type ProgressState } from './progress/progress';
 export type { CrosswordSolve, XpLogState } from './progress/xp-log';
