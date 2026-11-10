@@ -174,13 +174,7 @@ export type {
   PackVersion,
   WordMedia,
 } from './ports';
-export {
-  createMedia,
-  illustrationPath,
-  recordingPath,
-  PREFETCH_CARDS,
-  type Media,
-} from './media/media';
+export { createMedia, PREFETCH_CARDS, type Media } from './media/media';
 export { type ProgressState } from './progress/progress';
 export type { CrosswordSolve, XpLogState } from './progress/xp-log';
 export type { BadgeState } from './progress/badges';

@@ -8,11 +8,10 @@
  */
 import { createHash, randomUUID } from 'node:crypto';
 
-import type { RecordingKind, Word } from '@slovo/contracts';
+import { illustrationPath, recordingPath, type RecordingKind, type Word } from '@slovo/contracts';
 import type { Clock, Edition } from '@slovo/server-core';
 import { and, asc, eq, inArray, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm';
 
-import { illustrationKey } from '../content/illustrations';
 import { createMediaRows, type NewRecording, type RecordedWord } from '../content/media-rows';
 import type { Database } from '../database/database';
 import {
@@ -47,15 +46,6 @@ interface Slot {
   readonly narratorVoice: string;
   readonly recordingKind: RecordingKind;
 }
-
-/** The Media Store key of a Recording file (ADR 0099). */
-export const recordingKey = ({
-  narratorVoice,
-  recordingKind,
-  wordId,
-  hash,
-}: Pick<NewRecording, 'narratorVoice' | 'recordingKind' | 'wordId' | 'hash'>) =>
-  `recordings/${narratorVoice}/${recordingKind}/${wordId}.${hash}.mp3`;
 
 export function createRecordings({
   database,
@@ -208,7 +198,7 @@ export function createRecordings({
           size: outcome.bytes.byteLength,
           durationMs: outcome.durationMs,
         };
-        await store.put(recordingKey(file), outcome.bytes, 'audio/mpeg');
+        await store.put(recordingPath(file), outcome.bytes, 'audio/mpeg');
         files.push(file);
       }
       if (files.length < own.length) continue;
@@ -273,7 +263,7 @@ export function createRecordings({
             ),
           )
           .returning({ hash: mediaRecordings.hash });
-        if (stamped.length > 0) await store.delete(recordingKey(row));
+        if (stamped.length > 0) await store.delete(recordingPath(row));
         return stamped.length > 0;
       });
       if (swept) deleted += 1;
@@ -296,7 +286,7 @@ export function createRecordings({
             ),
           )
           .returning({ hash: mediaIllustrations.hash });
-        if (stamped.length > 0) await store.delete(illustrationKey(row));
+        if (stamped.length > 0) await store.delete(illustrationPath(row));
         return stamped.length > 0;
       });
       if (swept) deleted += 1;

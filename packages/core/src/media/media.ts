@@ -1,3 +1,4 @@
+import { illustrationPath, recordingPath } from '@slovo/contracts';
 import type { Patch } from '@slovo/contracts/api';
 
 import type { Clock, ContentStore, MediaCache, MediaFetcher, WordMedia } from '../ports';
@@ -62,16 +63,6 @@ interface StoredFile {
   readonly size: number;
 }
 
-/** A Recording's path in the Media Store, named by its Word id and hash (ADR 0099). */
-export function recordingPath(wordId: string, voice: string, kind: string, hash: string): string {
-  return `recordings/${voice}/${kind}/${wordId}.${hash}.mp3`;
-}
-
-/** An Illustration's path in the Media Store, named by its Word id and hash (ADR 0099). */
-export function illustrationPath(wordId: string, hash: string): string {
-  return `illustrations/${wordId}.${hash}.png`;
-}
-
 export function createMedia<Asset>({
   store,
   cache,
@@ -105,11 +96,20 @@ export function createMedia<Asset>({
       recording:
         row === undefined
           ? undefined
-          : fileOf(media, recordingPath(wordId, narrator, row.recordingKind, row.hash), row.size),
+          : fileOf(
+              media,
+              recordingPath({
+                wordId,
+                narratorVoice: narrator,
+                recordingKind: row.recordingKind,
+                hash: row.hash,
+              }),
+              row.size,
+            ),
       illustration:
         picture === undefined
           ? undefined
-          : fileOf(media, illustrationPath(wordId, picture.hash), picture.size),
+          : fileOf(media, illustrationPath({ wordId, hash: picture.hash }), picture.size),
     };
   }
 
@@ -219,12 +219,8 @@ export function createMedia<Asset>({
     },
     async patchApplied(patch) {
       const retired = [
-        ...patch.recordings
-          .filter((row) => row.retired)
-          .map((row) => recordingPath(row.wordId, row.narratorVoice, row.recordingKind, row.hash)),
-        ...patch.illustrations
-          .filter((row) => row.retired)
-          .map((row) => illustrationPath(row.wordId, row.hash)),
+        ...patch.recordings.filter((row) => row.retired).map(recordingPath),
+        ...patch.illustrations.filter((row) => row.retired).map(illustrationPath),
       ];
       for (const path of retired) await cache.evict(path);
     },

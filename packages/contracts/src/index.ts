@@ -267,6 +267,8 @@ export {
   IllustrationRowSchema,
   RecordingKindSchema,
   RecordingRowSchema,
+  illustrationPath,
+  recordingPath,
   type IllustrationRow,
   type RecordingKind,
   type RecordingRow,

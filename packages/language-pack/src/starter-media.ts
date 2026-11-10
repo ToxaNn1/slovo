@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 
 import type { EditionConfig } from '@slovo/contracts';
 import type { ContentSnapshot } from '@slovo/contracts/api';
-import { illustrationPath, recordingPath } from '@slovo/core';
+import { illustrationPath, recordingPath } from '@slovo/contracts';
 import { z } from 'zod';
 
 /** How many Words of the default Mix the app bundles the media of (ADR 0099). */
@@ -74,7 +74,7 @@ export function starterMediaOf(config: EditionConfig, snapshot: ContentSnapshot)
         row.wordId === sampleWordId || (row.narratorVoice === voice && starters.has(row.wordId)),
     )
     .map((row) => {
-      const path = recordingPath(row.wordId, row.narratorVoice, row.recordingKind, row.hash);
+      const path = recordingPath(row);
       return {
         kind: 'recording',
         wordId: row.wordId,
@@ -87,7 +87,7 @@ export function starterMediaOf(config: EditionConfig, snapshot: ContentSnapshot)
   const illustrations: StarterFile[] = snapshot.illustrations
     .filter((row) => !row.retired && (starters.has(row.wordId) || row.wordId === sampleWordId))
     .map((row) => {
-      const path = illustrationPath(row.wordId, row.hash);
+      const path = illustrationPath(row);
       return {
         kind: 'illustration',
         wordId: row.wordId,
