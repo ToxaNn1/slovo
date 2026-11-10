@@ -16,7 +16,9 @@ The Game has thirteen Game Modes with answer forms of their own, typed answers, 
 - **Haptics** are the same for a right and a wrong answer in every mode (ADR 0025); in «На час» a wrong answer costs no Life, so no Life haptic follows it.
 - **Leaving.** A Game left before its end never counts towards a Best result, since the Game lives in memory only (ADR 0024).
 
-**Typed answers.** One Core comparison judges every typed answer by its Comparison Key, built from the Edition's Language Traits: it ignores case (folded with the Edition's locale), Stress marks, the kind of apostrophe (the characters the Edition lists as `apostrophes`; ʼ ' ’ in the UA Edition) and spaces at the ends, and keeps г and ґ, е and ё distinct, so the Game still teaches spelling. A wrong typed answer costs a Life and the answer sheet shows the right one.
+**Typed answers.** One Core comparison judges every typed answer: it ignores case, Stress marks, the kind of apostrophe (' ʼ ’) and spaces at the ends, and keeps г and ґ, е and ё distinct, so the Game still teaches spelling. A wrong typed answer costs a Life and the answer sheet shows the right one.
+
+**Amended by ADR 0101.** The comparison judges a typed answer by its Comparison Key, built from the Edition's Language Traits: case is folded with the Edition's locale, and the apostrophes are the characters the Edition lists as `apostrophes` (ʼ ' ’ in the UA Edition).
 
 **The modes.**
 
