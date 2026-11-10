@@ -63,3 +63,4 @@ Owner asked to keep #1767 part 1 OUT of integration until the ticket is done (he
 Lesson: implementers hit 120k fast on #1769 — give narrow scopes (1–2 handoff steps) and stop at 100k.
 Owner questions open: generator in recordings.Dockerfile (accepted, owner may veto); Starter Media = sample Word in every voice (ADR 0099 over the ticket text).
 - 2026-11-10 17:17 UTC safety net takeover (last commit 2026-11-10 16:15 UTC)
+- 2026-11-10 17:35 safety net: integration Lint red on fff011c57 (unused eslint-disable in apps/mobile/src/diagnostics/crash-reports.ts, same on main) → fixed 824557963, CI running on #1792. Unmerged: feat/1764-fix-keys 1fa6c8cf2 (contracts media paths, scope unknown), feat/1770-media-cleanup b990a6513 (#1770 part 2).
