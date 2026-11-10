@@ -3,6 +3,7 @@ import { outOfOrder, type FixedChip } from './chips-form';
 import type { AnswerSheet, GameMode, RoundContent } from './game-mode';
 import type { Random } from '../ports';
 import { shuffled } from '../shuffled';
+import type { TextComparison } from '../text/text-comparison';
 
 /** The characters of a Word that stay in place and are never blanks: an apostrophe of any kind or a hyphen. */
 const IN_PLACE = new Set(["'", 'ʼ', '’', '-']);
@@ -23,13 +24,14 @@ function tilesOf(
   letters: readonly string[],
   alphabet: readonly string[],
   random: Random,
+  comparison: TextComparison,
 ): readonly string[] {
   const count = Math.max(TILES.min, Math.ceil(letters.length / TILES.columns) * TILES.columns);
   const decoys = shuffled(
     alphabet.filter((letter) => !letters.includes(letter)),
     random,
   ).slice(0, count - letters.length);
-  return outOfOrder(letters, shuffled([...letters, ...decoys], random));
+  return outOfOrder(letters, shuffled([...letters, ...decoys], random), comparison);
 }
 
 /** A Round of letter tiles: the Word's letters in lower case and decoys, tapped into a slot for each letter. */
@@ -37,6 +39,7 @@ function tilesRound(
   { lemma, prompt, sheet }: { lemma: string; prompt: string; sheet: AnswerSheet },
   alphabet: readonly string[],
   random: Random,
+  comparison: TextComparison,
 ): RoundContent {
   const letters: string[] = [];
   const fixed: FixedChip[] = [];
@@ -49,7 +52,7 @@ function tilesRound(
     chipKind: 'letter',
     layout: 'tiles',
     prompt,
-    chips: tilesOf(letters, alphabet, random),
+    chips: tilesOf(letters, alphabet, random, comparison),
     expected: letters,
     fixed,
     sheet,
@@ -72,7 +75,7 @@ export const byLettersMode: GameMode = {
   group: 'words',
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gameByLetters'),
-  buildRound({ answer, edition, random }) {
+  buildRound({ answer, edition, random, comparison }) {
     if (answer.kind !== 'word' || answer.lemma.includes(' ')) return undefined;
     const sheet = {
       answer: { text: renderStress(answer), stressedVowels: stressedVowelsOf(answer) },
@@ -81,7 +84,7 @@ export const byLettersMode: GameMode = {
     if (edition.isFeatureEnabled('letterTiles')) {
       const prompt = answer.primaryDefinition;
       const { alphabet } = edition.languageTraits;
-      return tilesRound({ lemma: answer.lemma, prompt, sheet }, alphabet, random);
+      return tilesRound({ lemma: answer.lemma, prompt, sheet }, alphabet, random, comparison);
     }
     const inPlace = Array.from(answer.lemma).flatMap((character, place) =>
       staysInPlace(character) ? [place] : [],

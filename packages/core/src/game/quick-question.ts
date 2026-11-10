@@ -5,6 +5,7 @@ import type { UserState } from '../user-state/user-state';
 import { shuffled } from '../shuffled';
 import type { GameEdition, GameMode, RoundContent } from './game-mode';
 import type { GameXp } from './game-xp';
+import { createTextComparison } from '../text/text-comparison';
 
 /** A Round the reader answers by picking one of its options. */
 export type PickRound = Extract<RoundContent, { readonly form: 'pick' }>;
@@ -55,6 +56,7 @@ export function createQuickQuestion({
   answered?: (askedId: string, right: boolean) => Promise<void>;
 }): QuickQuestion {
   const modes = registered.filter((mode) => mode.isOn(edition));
+  const comparison = createTextComparison(edition);
 
   async function build(avoid?: string): Promise<QuickQuestionContent | undefined> {
     for (const mode of shuffled(modes, random)) {
@@ -71,6 +73,7 @@ export function createQuickQuestion({
         round: 1,
         random,
         edition,
+        comparison,
       });
       if (round?.form === 'pick') return { entry: answer, modeId: mode.id, round };
     }

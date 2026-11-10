@@ -22,7 +22,7 @@ export const anagramMode: GameMode = {
   group: 'words',
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gameAnagram'),
-  buildRound({ answer, random }) {
+  buildRound({ answer, random, comparison }) {
     if (answer.kind !== 'word' || answer.lemma.includes(' ')) return undefined;
     const letters: string[] = [];
     const fixed: FixedChip[] = [];
@@ -35,7 +35,7 @@ export const anagramMode: GameMode = {
       form: 'chips',
       chipKind: 'letter',
       prompt: answer.primaryDefinition,
-      chips: outOfOrder(letters, shuffled(letters, random)),
+      chips: outOfOrder(letters, shuffled(letters, random), comparison),
       expected: letters,
       fixed,
       sheet: {

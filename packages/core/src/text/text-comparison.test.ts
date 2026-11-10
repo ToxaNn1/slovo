@@ -138,3 +138,53 @@ describe('an Edition’s own traits', () => {
     expect(ua.key('м’ята', 'typedAnswer')).toBe('мʼята');
   });
 });
+
+describe('a text found in another', () => {
+  const found = (text: string, sought: string) => {
+    const range = ua.find(text, sought);
+    return range && text.slice(range.start, range.end);
+  };
+
+  it('finds the first place the text holds it, as written in the text', () => {
+    expect(found('Кіт і кіт', 'кіт')).toBe('Кіт');
+    expect(ua.find('Кіт і кіт', 'кіт')).toEqual({ start: 0, end: 3 });
+  });
+
+  it('finds it over the Stress marks of either, keeping those of the match', () => {
+    expect(found('Старий ґа́нок скрипить', 'ґанок')).toBe('ґа́нок');
+    expect(found('Старий ганок скрипить', 'га́нок')).toBe('ганок');
+    expect(found('Він прийшов з міста́', 'міста')).toBe('міста́');
+  });
+
+  it('finds it whatever the kind of apostrophe', () => {
+    expect(found('Їх було п’ятеро', "п'ятеро")).toBe('п’ятеро');
+  });
+
+  it('keeps г and ґ, е and ё apart', () => {
+    expect(ua.find('старий ганок', 'ґанок')).toBeUndefined();
+    expect(ua.find('ёлка', 'елка')).toBeUndefined();
+  });
+
+  it('finds it as a whole word only when asked, an apostrophe or hyphen being part of a word', () => {
+    expect(found('Підкова і кова', 'кова')).toBe('кова');
+    expect(ua.find('Підкова і кова', 'кова', { wholeWord: true })).toEqual({ start: 10, end: 14 });
+    expect(ua.find('м’ясо', 'ясо', { wholeWord: true })).toBeUndefined();
+    expect(ua.find('ось-ось', 'ось', { wholeWord: true })).toBeUndefined();
+    expect(found('Ма́ти, ти тут?', 'ти')).toBe('ти');
+    expect(ua.find('Ма́ти, ти тут?', 'ти', { wholeWord: true })).toEqual({ start: 7, end: 9 });
+  });
+
+  it('finds nothing in a text that does not hold it', () => {
+    expect(ua.find('старий ганок', 'двір')).toBeUndefined();
+    expect(ua.find('кіт', '')).toBeUndefined();
+  });
+
+  it('folds case with the Edition’s locale, a lower case longer than its capital too', () => {
+    const tr = createTextComparison({
+      languageTraits: { apostrophes: [], sortLocale: 'tr' },
+      searchLetters: {},
+    });
+    expect(tr.find('KIRMIZI elma', 'kırmızı')).toEqual({ start: 0, end: 7 });
+    expect(ua.find('İstanbul', 'i̇stanbul')).toEqual({ start: 0, end: 8 });
+  });
+});

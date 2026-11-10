@@ -2,6 +2,7 @@ import type { LanguageTraits } from '@slovo/contracts';
 
 import type { RoundForm } from './answer-forms';
 import type { Edition } from '../edition/edition';
+import type { TextComparison } from '../text/text-comparison';
 import type { AskableEntry, AskableKind, KindRefusal, ShownKind } from '../entries/entries';
 import type { Random } from '../ports';
 
@@ -91,6 +92,8 @@ export interface RoundInput {
   /** The source of every shuffle. */
   readonly random: Random;
   readonly edition: GameEdition;
+  /** How the Edition compares text, such as an option with another. */
+  readonly comparison: TextComparison;
 }
 
 /**

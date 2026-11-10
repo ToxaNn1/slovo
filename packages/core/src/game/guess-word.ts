@@ -18,7 +18,8 @@ import {
 import { shuffled } from '../shuffled';
 import type { AskableEntry } from '../entries/entries';
 import type { Random } from '../ports';
-import { renderStress, STRESS_MARK, stressedVowelsOf, withoutStress } from '../entries/stress';
+import { renderStress, stressedVowelsOf } from '../entries/stress';
+import type { TextComparison } from '../text/text-comparison';
 
 /**
  * The Words a Distractor may be, best first: the Words of the answer's part
@@ -35,15 +36,23 @@ const distractorOrder = (answer: Word, others: readonly Word[], random: Random):
   ),
 ];
 
-/** The Definitions `definitionOf` has told apart, by Entry: every Round compares the answer with all eligible Entries. */
-const definitions = new WeakMap<Word | Idiom, string>();
+/**
+ * The Comparison Keys of primary Definitions, by the comparison and the Entry
+ * they were given for: every Round compares the answer with all eligible Entries.
+ */
+const definitions = new WeakMap<TextComparison, WeakMap<Word | Idiom, string>>();
 
-/** A primary Definition as the reader tells it apart: without case, extra spaces or Stress marks. */
-function definitionOf(entry: Word | Idiom): string {
-  let definition = definitions.get(entry);
+/** A primary Definition as the reader tells it apart: its Comparison Key as a Definition. */
+function definitionOfEntry(comparison: TextComparison, entry: Word | Idiom): string {
+  let keys = definitions.get(comparison);
+  if (keys === undefined) {
+    keys = new WeakMap();
+    definitions.set(comparison, keys);
+  }
+  let definition = keys.get(entry);
   if (definition === undefined) {
-    definition = withoutStress(entry.primaryDefinition).toLowerCase().replace(/\s+/g, ' ').trim();
-    definitions.set(entry, definition);
+    definition = comparison.key(entry.primaryDefinition, 'definition');
+    keys.set(entry, definition);
   }
   return definition;
 }
@@ -91,32 +100,6 @@ const typedRound = (word: Word): RoundContent => ({
 /** What stands for the Lemma in an Example with a gap. */
 const GAP = '…';
 
-/** A character that belongs to a word: a letter, a mark, a digit, an apostrophe or a hyphen. */
-const wordCharacter = /[\p{L}\p{M}\p{N}'’ʼ-]/u;
-
-/**
- * Where the text has the Lemma as written, a whole word, its case and Stress
- * marks set aside, the Stress marks of the match within it; nothing when it
- * has none.
- */
-function lemmaIn(text: string, lemma: string): TextRange | undefined {
-  const sought = withoutStress(lemma).toLowerCase();
-  /** The places of the text's characters but its Stress marks. */
-  const places = [...text.matchAll(new RegExp(`[^${STRESS_MARK}]`, 'gu'))].map(
-    ({ index }) => index,
-  );
-  const plain = withoutStress(text).toLowerCase();
-  if (plain.length !== places.length) return undefined;
-  for (let at = plain.indexOf(sought); at >= 0; at = plain.indexOf(sought, at + 1)) {
-    const after = at + sought.length;
-    if (wordCharacter.test(plain.charAt(at - 1)) || wordCharacter.test(plain.charAt(after))) {
-      continue;
-    }
-    return { start: places[at] ?? 0, end: places[after] ?? text.length };
-  }
-  return undefined;
-}
-
 /**
  * The first Example of the Word with its Lemma as written, which a gap takes
  * the place of, for a Round from `GAP_ROUNDS.first` to `GAP_ROUNDS.last`;
@@ -125,10 +108,11 @@ function lemmaIn(text: string, lemma: string): TextRange | undefined {
 function gapIn(
   word: Word,
   round: number,
+  comparison: TextComparison,
 ): { prompt: string; highlight: TextRange; example: Example } | undefined {
   if (round < GAP_ROUNDS.first || round > GAP_ROUNDS.last) return undefined;
   for (const example of word.examples) {
-    const found = lemmaIn(example.text, word.lemma);
+    const found = comparison.find(example.text, word.lemma, { wholeWord: true });
     if (found === undefined) continue;
     const { text } = example;
     return {
@@ -184,7 +168,8 @@ export const rowWordOption = ({ text, stress }: SynonymRowDominant): RoundOption
 });
 
 /** A word of a Synonym Row as the reader tells it apart: its text without case, whatever its Stress. */
-const rowTextOf = ({ text }: SynonymRowDominant) => text.toLowerCase();
+const rowTextOf = (comparison: TextComparison, { text }: SynonymRowDominant) =>
+  comparison.key(text, 'definition');
 
 /**
  * The Round that asks for a synonym of the row's dominant: one of its
@@ -197,21 +182,23 @@ function synonymRound(
   answer: SynonymRow,
   eligible: readonly AskableEntry[],
   random: Random,
+  comparison: TextComparison,
 ): RoundContent | undefined {
+  const textOf = (word: SynonymRowDominant) => rowTextOf(comparison, word);
   const others = eligible.filter(
     (entry): entry is SynonymRow => entry.kind === 'synonymRow' && entry.id !== answer.id,
   );
   if (others.length + 1 < ROWS_TO_PLAY) return undefined;
-  const taken = new Set([answer.dominant, ...answer.members].map(rowTextOf));
+  const taken = new Set([answer.dominant, ...answer.members].map(textOf));
   const distractors: SynonymRowDominant[] = [];
   for (const row of shuffled(others, random)) {
     if (distractors.length === ROUND_OPTIONS - 1) break;
     const [member] = shuffled(
-      row.members.filter((each) => !taken.has(rowTextOf(each))),
+      row.members.filter((each) => !taken.has(textOf(each))),
       random,
     );
     if (member === undefined) continue;
-    taken.add(rowTextOf(member));
+    taken.add(textOf(member));
     distractors.push(member);
   }
   const [right] = shuffled(answer.members, random);
@@ -276,7 +263,8 @@ export const guessWord: GameMode = {
   entryKind: 'word',
   alsoAsks: ['idiom', 'synonymRow', 'tip'],
   isOn: (edition) => edition.isFeatureEnabled('gameGuessWord'),
-  buildRound({ answer, eligible, round, random }) {
+  buildRound({ answer, eligible, round, random, comparison }) {
+    const definitionOf = (entry: Word | Idiom) => definitionOfEntry(comparison, entry);
     if (answer.kind === 'word') {
       const definition = definitionOf(answer);
       const words = eligible.filter((entry): entry is Word => entry.kind === 'word');
@@ -286,9 +274,9 @@ export const guessWord: GameMode = {
       );
       if (round >= FIRST_TYPED_ROUND && !sharesDefinition) return typedRound(answer);
       const order = distractorOrder(answer, others, random);
-      return roundOf(answer, order, wordOptions, random, gapIn(answer, round));
+      return roundOf(answer, order, wordOptions, random, gapIn(answer, round, comparison));
     }
-    if (answer.kind === 'synonymRow') return synonymRound(answer, eligible, random);
+    if (answer.kind === 'synonymRow') return synonymRound(answer, eligible, random, comparison);
     if (answer.kind === 'tip') return tipRound(answer, random);
     if (!isIdiomProper(answer)) return undefined;
     const definition = definitionOf(answer);
