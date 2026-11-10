@@ -381,6 +381,10 @@ _Avoid_: Muted topic
 An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind whose Feature Switch is in effect, in the user's Mix (a Word of a Category in the Mix within the Rarity Ceiling; a Correction while Corrections and its Category are in; an Idiom while Idioms are in; a Synonym Row while Synonym Rows are in; a Tip while Tips are in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
 _Avoid_: Available, visible, active entry
 
+**Comparison Key**:
+The form a text is compared by, which the Core gives from the Edition's Language Traits for one purpose: a typed answer in the Game, a Search query, or a Definition or option among Distractors. Every Comparison Key folds case with the Edition's locale, takes out Stress marks, writes each character the Edition reads as an apostrophe as one and drops spaces at the ends; a Search query's also reads the Edition's Search letters alike (г/ґ, е/ё), and a Definition's reads the spaces between words as one. Two texts match when their Comparison Keys are equal.
+_Avoid_: Normalized text, search key, folded form
+
 **Search**:
 «Пошук»: finding Entries by their visible text, behind a magnifier in the «Стрічка» header. It covers every Entry of a kind the Edition turns on that is neither Retired nor Hidden, the Mix and the Rarity Ceiling aside, and ignores case, Stress, the kind of apostrophe, г/ґ and е/ё. A text matches from 2 characters when it or one of its words starts with the query; «За значенням», from 3 characters, finds Words by their Definition and the Synonym Rows that contain the query. Opening a result makes nothing Seen. The last 10 queries stay on the device.
 _Avoid_: Lookup, filter, dictionary
