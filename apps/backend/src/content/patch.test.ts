@@ -169,6 +169,20 @@ describe('the Patch read API', () => {
     expect(patchIn(next).words).toEqual([edited]);
   });
 
+  it('lets the CDN keep a Patch for a minute while the device revalidates it, the 304 included', async () => {
+    const { client } = await contentBackend();
+    const { contentVersion } = await snapshotOf(client);
+    const cdnCacheable = 'public, max-age=0, s-maxage=60';
+
+    const first = await patchOf(client, contentVersion);
+    expect(first.headers['cache-control']).toBe(cdnCacheable);
+
+    await expect(patchOf(client, contentVersion, first.headers.etag)).resolves.toMatchObject({
+      status: 304,
+      headers: { etag: first.headers.etag, 'cache-control': cdnCacheable },
+    });
+  });
+
   it('gives a device at version 0 every record of every kind', async () => {
     const { client } = await contentBackend();
     const { editionId, contentVersion, ...rest } = await snapshotOf(client);

@@ -4,7 +4,7 @@ The backend runs as one container image on Railway, one Deployment for every Edi
 
 - **The image**: `Dockerfile` at the repository root installs the backend and the workspace packages it needs with pnpm; tsx runs their TypeScript sources. It leaves every Language Pack out, sets `NODE_ENV=production` and starts the server. CI builds it on every pull request (the job "Container image"), runs the migrations from it against a fresh Postgres and waits for `/health` to answer `200`; it pushes nothing.
 - **The Railway config**: `railway.json` builds that Dockerfile, runs `pnpm db:migrate` as the release (pre-deploy) command, so the new server serves only once every migration ran, and watches `GET /health`, which answers `200` when the database answers.
-- **Postgres** is Railway's; its `DATABASE_URL` reaches the service through a reference variable.
+- **Postgres** is Neon's, in Frankfurt (`aws-eu-central-1`), beside the backend in Railway's EU West, Amsterdam (ADR 0099): Railway has no Frankfurt region. Its connection string is the service's `DATABASE_URL`; see [Neon and the CDN](#neon-and-the-cdn).
 
 ## Variables
 
@@ -13,7 +13,7 @@ Every variable the server reads at start, with the value it takes in the Deploym
 | Variable                   | In the Deployment                                                                                                                                                                                                                                                                                                                      |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `NODE_ENV`                 | `production`, set by the image. The server then refuses to start without the SMTP settings and the sender.                                                                                                                                                                                                                             |
-| `DATABASE_URL`             | `${{Postgres.DATABASE_URL}}`, the reference to Railway's Postgres service.                                                                                                                                                                                                                                                             |
+| `DATABASE_URL`             | Secret. The pooled connection string of the Neon project's `main` branch (`postgresql://…-pooler.eu-central-1.aws.neon.tech/…?sslmode=require`).                                                                                                                                                                                       |
 | `AUTH_SECRET`              | Secret. Signs the Sessions; make it once with `openssl rand -base64 32`. Changing it signs every reader out.                                                                                                                                                                                                                           |
 | `SMTP_HOST`                | The SMTP server of the owner's email account.                                                                                                                                                                                                                                                                                          |
 | `SMTP_PORT`                | Its port: 465 with `SMTP_TLS=true`, 587 otherwise.                                                                                                                                                                                                                                                                                     |
@@ -38,16 +38,41 @@ Every variable the server reads at start, with the value it takes in the Deploym
 | `POSTHOG_PERSONAL_API_KEY` | Secret. A PostHog personal API key with the read-only `query` scope, for the admin's Аналітика. Unset, it answers «PostHog недоступний».                                                                                                                                                                                               |
 | `POSTHOG_PROJECT_ID`       | The number of the PostHog project the app sends its Analytics events to.                                                                                                                                                                                                                                                               |
 | `POSTHOG_HOST`             | The PostHog host; unset, `https://eu.posthog.com`.                                                                                                                                                                                                                                                                                     |
-| `TRUSTED_PROXY_HOPS`       | `1`: Railway's proxy is the one hop whose forwarded-for address the limits per IP trust.                                                                                                                                                                                                                                               |
+| `TRUSTED_PROXY_HOPS`       | `2` once the Cloudflare zone proxies the backend's domain: Cloudflare and Railway's proxy are the two hops whose forwarded-for addresses the limits per IP trust. `1` while only Railway's proxy stands in front.                                                                                                                      |
 | `PORT`                     | Unset: Railway sets it, and its proxy sends the traffic there.                                                                                                                                                                                                                                                                         |
 | `EDITIONS_DIR`             | Unset: the image's `editions/`.                                                                                                                                                                                                                                                                                                        |
+
+## Neon and the CDN
+
+**Neon.** One Neon project in Frankfurt (`aws-eu-central-1`) holds the Deployment's Postgres; its default branch `main` is the live database. Neon restores `main` to any point inside its history window, and it scales to zero while idle (about half a second on the first query after sleep).
+
+| Setting                         | Value                                                                                                                                                      |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Railway variable `DATABASE_URL` | The pooled connection string of `main`, on the backend and on both Cron services. The pre-deploy command `pnpm db:migrate` runs the migrations against it. |
+| Neon API key                    | Secret. Lives only in Neon's GitHub integration (the GitHub secret `NEON_API_KEY`), never in the repository.                                               |
+| `NEON_PROJECT_ID`               | The GitHub Actions variable naming the project, for the branch per pull request.                                                                           |
+
+**The move from Railway's Postgres.** Once, before `DATABASE_URL` changes: stop writes (no admin saves, the Cron services paused), copy the database with `pg_dump --format=custom --no-owner '<DATABASE_PUBLIC_URL of the Railway Postgres>' > slovo.dump` and `pg_restore --no-owner --dbname='<the Neon connection string, unpooled>' slovo.dump`, point `DATABASE_URL` at Neon, deploy, check `/health`, then remove the Railway Postgres service.
+
+**A branch per pull request.** Neon's GitHub integration makes a branch `preview/pr-<number>` from `main` when a pull request opens and deletes it when it closes: a copy of the live content to run the pull request's migrations and backend against before they reach `main`. CI's backend tests keep their own Postgres service, a database per test file, so a pull request never writes to a Neon branch it shares.
+
+**The Cloudflare zone.** The backend's domain is a Cloudflare zone whose DNS record for the API is proxied (the orange cloud) to the Railway service's domain. One Cache Rule makes the Patch route eligible for the cache:
+
+| Setting   | Value                                                                   |
+| --------- | ----------------------------------------------------------------------- |
+| When      | URI path matches `/v1/editions/*/content/patch` and the method is `GET` |
+| Cache     | Eligible for cache                                                      |
+| Edge TTL  | Use the cache-control header of the origin                              |
+| Cache key | The whole query string                                                  |
+
+The Patch route answers `cache-control: public, max-age=0, s-maxage=60` with its ETag (ADR 0099): the CDN keeps each Patch for a minute under its URL (the Edition, `since` and `patchFormat`), so most devices never reach the database, and the device revalidates it by its ETag and gets 304. An edit reaches every device within that minute; nothing needs a purge. Every other route stays uncached. The Media Store's R2 variables are listed with the Recording generation service.
 
 ## Importing an Edition's content
 
 An Edition's content lives in the Deployment's Postgres (ADR 0090). The Edition folder reaches it once, through the import command, run on the owner's machine with the same operator credential:
 
 ```sh
-DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm content import --edition uk
+DATABASE_URL='<the Neon connection string>' pnpm content import --edition uk
 ```
 
 The command checks every content rule first and writes nothing when one refuses a record; it prints the count of each kind of record and the content version it wrote. A second import writes nothing and says so, because the database is the live content from then on; `--override` imports the folder again over the database and raises the content version.
@@ -92,23 +117,23 @@ Content lives in the Deployment's Postgres and reaches the app as Patches (ADR 0
 EXPO_PUBLIC_SLOVO_API_URL='<the Deployment backend address>' pnpm build:pack uk
 ```
 
-The operator credential of the commands below is the public address of Railway's Postgres (`DATABASE_PUBLIC_URL` in the Postgres service's variables), given in the command's environment and never written to a file in the repository. A variable in the environment wins over the same one in `apps/backend/.env`, so the local `.env` stays pointed at the local Postgres. The operator commands (`pnpm switches off`, `pnpm reports`, `pnpm collection-links`, `pnpm admin`) reach the Deployment the same way.
+The operator credential of the commands below is the Neon connection string of the `main` branch (the Neon console › the project › Connect), given in the command's environment and never written to a file in the repository. A variable in the environment wins over the same one in `apps/backend/.env`, so the local `.env` stays pointed at the local Postgres. The operator commands (`pnpm switches off`, `pnpm reports`, `pnpm collection-links`, `pnpm admin`) reach the Deployment the same way.
 
 ## The owner admin's people and Агент tokens
 
 The admin and its API (`/v1/admin`) answer 404 until a Власник exists (ADR 0088). The server commands add the first one and issue or revoke the token of a coding agent; each logs itself in the Action log:
 
 ```sh
-DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin owner add <email>
-DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin agent add <name>
-DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin agent revoke <name>
+DATABASE_URL='<the Neon connection string>' pnpm admin owner add <email>
+DATABASE_URL='<the Neon connection string>' pnpm admin agent add <name>
+DATABASE_URL='<the Neon connection string>' pnpm admin agent revoke <name>
 ```
 
 The Owner checks of a version live in the same database; the owner ticks them in Розробка. One command adds a check, and a one-time import reads a Markdown file of checks (a line takes the version of the nearest heading that names one, else `--version`; it refuses once the table holds checks):
 
 ```sh
-DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin check add <version> <text>
-DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin check import <file> [--version <version>]
+DATABASE_URL='<the Neon connection string>' pnpm admin check add <version> <text>
+DATABASE_URL='<the Neon connection string>' pnpm admin check import <file> [--version <version>]
 ```
 
 `agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. A person signs in to `/admin` with a code emailed by the mailer above and a TOTP; the TOTP secrets are sealed with a key derived from `BETTER_AUTH_SECRET`, so rotating it makes every Admin user set up the TOTP again.
