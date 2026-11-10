@@ -16,32 +16,36 @@ export interface EditionPresentation {
   readonly count: (forms: Plural, count: number) => string;
   /** The Pronunciation button for a Lemma; a Word card has none without it. */
   readonly Pronunciation: ComponentType<{ lemma: string; entryId: string }> | undefined;
-  /** The Illustrations the app bundles, by file name; a Word naming any other file shows none. */
-  readonly illustrations: Readonly<Record<string, ImageSourcePropType>>;
+  /**
+   * The hook that gives a Word's Illustration by its Word id, from the media
+   * the shell connects (ADR 0099): none while the device has no file for it,
+   * and the image once the file arrives.
+   */
+  readonly useIllustration: (wordId: string) => ImageSourcePropType | undefined;
 }
 
-/** No bundled Illustrations, for an Edition that brings none. */
-const NO_ILLUSTRATIONS: Readonly<Record<string, ImageSourcePropType>> = {};
+/** No Illustrations, for an Edition that brings none. */
+const noIllustration = (_wordId: string): ImageSourcePropType | undefined => undefined;
 
 const EditionContext = createContext<EditionPresentation | undefined>(undefined);
 
 /**
  * Gives every component below the Edition's strings and language, and the
  * Pronunciation button the shell connects to the device's voice, and the
- * Illustrations the app bundles as Edition assets (ADR 0055). Category
+ * hook that gives each Word's Illustration from the media (ADR 0055, 0099). Category
  * names come with the cards, from the Language Pack (ADR 0033).
  */
 export function EditionProvider({
   edition,
   strings,
   pronunciation,
-  illustrations = NO_ILLUSTRATIONS,
+  useIllustration = noIllustration,
   children,
 }: {
   edition: Pick<Edition, 'locale'>;
   strings: EditionStrings;
   pronunciation?: ComponentType<{ lemma: string; entryId: string }>;
-  illustrations?: Readonly<Record<string, ImageSourcePropType>>;
+  useIllustration?: (wordId: string) => ImageSourcePropType | undefined;
   children: ReactNode;
 }) {
   const value = useMemo(
@@ -50,9 +54,9 @@ export function EditionProvider({
       voice: { accessibilityLanguage: edition.locale },
       count: pluralCount(edition.locale),
       Pronunciation: pronunciation,
-      illustrations,
+      useIllustration,
     }),
-    [edition, strings, pronunciation, illustrations],
+    [edition, strings, pronunciation, useIllustration],
   );
   return <EditionContext value={value}>{children}</EditionContext>;
 }

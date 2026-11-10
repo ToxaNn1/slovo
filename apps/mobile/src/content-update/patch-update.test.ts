@@ -112,7 +112,7 @@ async function device({ readableFormats = [PATCH_FORMAT] } = {}) {
   const pack = openLanguagePack(file, { writable: true });
   opened.push(pack);
   const api = createFakeBackend();
-  const store = await openPackContentStore(pack.writer);
+  const store = await openPackContentStore(pack.writer, () => Promise.resolve());
   const contentUpdate = createContentUpdate({
     backend: api.backend,
     edition: ukrainian,

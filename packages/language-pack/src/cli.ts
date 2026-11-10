@@ -11,8 +11,9 @@
  * or from a snapshot saved to a file with `--snapshot`. It fails, writing no
  * pack, when the backend gives no snapshot.
  * The pack goes to `editions/<edition-id>/dist/language-pack.db` unless
- * `--out` says otherwise. Prints the content report after every successful
- * build. Exits non-zero, listing every error, when the content is invalid,
+ * `--out` says otherwise. It downloads the Starter Media the app bundles
+ * (ADR 0099) to `editions/<edition-id>/starter-media/`, which git ignores.
+ * Prints the content report after every successful build. Exits non-zero, listing every error, when the content is invalid,
  * and listing every miss when the content falls short of the Edition's
  * content targets (`content/targets.json`); the pack is still written then.
  *
@@ -22,11 +23,11 @@
  * Edition that keeps crossword days (`content/crossword-days.json`), it also
  * appends days so that 400 lie ahead (ADR 0052).
  */
-import { relative, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
-import { buildFromBackend, buildFromSnapshot, type BuildResult } from './build';
+import { buildFromBackend, buildFromSnapshot, type SnapshotBuildResult } from './build';
 import { formatBuildError } from './build-error';
 import {
   EDITIONS_DIR,
@@ -39,6 +40,7 @@ import {
 import { recordContent } from './record';
 import { formatContentReport } from './report';
 import { readSnapshotFile, SnapshotUnreachableError } from './snapshot-source';
+import { downloadStarterMedia, STARTER_MEDIA_DIR } from './starter-media';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 
@@ -103,7 +105,7 @@ async function main(): Promise<number> {
 
   const outFile = values.out === undefined ? edition.path('languagePack') : fromCwd(values.out);
   const apiUrl = process.env['EXPO_PUBLIC_SLOVO_API_URL'];
-  let result: BuildResult;
+  let result: SnapshotBuildResult;
   if (values.snapshot !== undefined) {
     const snapshot = readSnapshotFile(fromCwd(values.snapshot));
     result = buildFromSnapshot({ editionDir, snapshot, outFile });
@@ -130,7 +132,13 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  const { metadata, report, missedTargets, missingRecordings } = result;
+  const { metadata, report, missedTargets, starterMedia } = result;
+  const starterDir = join(editionDir, STARTER_MEDIA_DIR);
+  await downloadStarterMedia(starterMedia, starterDir, async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`${url} answered ${String(response.status)}`);
+    return new Uint8Array(await response.arrayBuffer());
+  });
   console.log(`Built the Language Pack for "${metadata.editionId}"`);
   console.log(`  file:            ${displayPath(outFile)}`);
   console.log(`  content version: ${String(metadata.contentVersion)}`);
@@ -139,9 +147,9 @@ async function main(): Promise<number> {
   console.log('');
   console.log(formatContentReport(report));
   console.log('');
-  // A Word without a Recording is read by the device's voice (ADR 0083).
-  console.log('Words without a Recording:');
-  for (const { voice, count } of missingRecordings) console.log(`  ${voice}: ${String(count)}`);
+  console.log(
+    `Starter Media: ${String(starterMedia.files.length)} files in ${displayPath(starterDir)}`,
+  );
   console.log('');
   if (missedTargets.length === 0) {
     console.log('Content targets: none missed');

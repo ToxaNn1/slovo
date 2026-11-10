@@ -101,11 +101,6 @@ export interface Edition {
   readonly badges: readonly Badge[];
   /** The Mascot's short line for each moment it shows in. */
   readonly mascot: MascotLines;
-  /**
-   * The file names of the Illustrations the app bundles as Edition assets; a
-   * Word naming any other file shows no Illustration (ADR 0055).
-   */
-  readonly illustrations: ReadonlySet<string>;
   /** The Edition's own Feature Switch states, which hold where no remote Rule matches (ADR 0089). */
   readonly featureSwitches: FeatureSwitches;
   /**
@@ -121,11 +116,10 @@ export class InvalidEditionConfigError extends Error {
 }
 
 /**
- * Validates an Edition config and reports the Edition, with the file names of
- * the Illustrations the app bundles (none by default). Every feature asks the
- * Edition returned here instead of reading the config directly.
+ * Validates an Edition config and reports the Edition. Every feature asks
+ * the Edition returned here instead of reading the config directly.
  */
-export function loadEdition(config: unknown, illustrations: readonly string[] = []): Edition {
+export function loadEdition(config: unknown): Edition {
   const result = EditionConfigSchema.safeParse(config);
   if (!result.success) {
     const problems = result.error.issues.map(
@@ -196,7 +190,6 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     badgeFamilies,
     badges,
     mascot,
-    illustrations: new Set(illustrations),
     featureSwitches,
     isFeatureEnabled: switchedOn((feature) => featureSwitches[feature] === 'on'),
   };

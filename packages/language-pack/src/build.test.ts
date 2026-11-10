@@ -95,7 +95,7 @@ async function withEntries<T>(outFile: string, use: (entries: Entries) => Promis
     return await use(
       createEntries({
         content: pack,
-        edition: { isFeatureEnabled: () => true, illustrations: new Set() },
+        edition: { isFeatureEnabled: () => true },
         choices: EVERYTHING_IN,
       }),
     );
@@ -178,6 +178,22 @@ describe('buildFromSnapshot', () => {
       expect((await entries.eligible()).words).toEqual(['w_fx0002', 'w_fx0003']);
     });
     expect(needingNewRecording(outFile)).toEqual(['w_fx0002']);
+  });
+
+  it('gives the Starter Media of the snapshot: its live Words of the default Mix in the default voice', () => {
+    const snapshot = snapshotFixture();
+
+    const result = buildFromSnapshot({
+      editionDir: fixture('valid'),
+      snapshot,
+      outFile: packPath(),
+    });
+
+    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+    expect(result.starterMedia).toMatchObject({ voice: 'anna', sampleWordId: 'w_fx0001' });
+    expect(result.starterMedia.wordIds).toEqual(
+      snapshot.words.filter((word) => !word.retired).map((word) => word.id),
+    );
   });
 
   it('refuses a snapshot record that breaks a rule, naming it, and writes no pack', () => {
@@ -1775,13 +1791,6 @@ describe('buildLanguagePack', () => {
       return editionDir;
     }
 
-    const refusal = (message: string): BuildError => ({
-      file: 'content/words/w_fx0002.json',
-      entryId: 'w_fx0002',
-      field: 'illustration',
-      message,
-    });
-
     it('builds a Word that names an Illustration and reads the name back, in pack format 12', async () => {
       const editionDir = withIllustration('w_fx0002.png', png(320, 320));
       record(editionDir);
@@ -1797,81 +1806,6 @@ describe('buildLanguagePack', () => {
         if (word?.kind !== 'word' || other?.kind !== 'word') throw new Error('No Words');
         expect(word.illustration).toBe('w_fx0002.png');
         expect(other).not.toHaveProperty('illustration');
-      });
-    });
-
-    it('builds an Illustration of exactly 150 KB', () => {
-      const editionDir = withIllustration('w_fx0002.png', png(320, 320, 150_000));
-      record(editionDir);
-
-      const result = buildLanguagePack({ editionDir, outFile: packPath() });
-
-      expect(result.ok ? [] : result.errors).toEqual([]);
-    });
-
-    it('refuses an Illustration whose file is missing', () => {
-      const editionDir = withIllustration('w_fx0002.png');
-
-      expect(buildErrors(editionDir)).toEqual([
-        refusal('No file w_fx0002.png in assets/illustrations/'),
-      ]);
-    });
-
-    it('refuses an Illustration whose name is a folder, not a file', () => {
-      const editionDir = withIllustration('w_fx0002.png');
-      mkdirSync(join(editionDir, 'assets/illustrations/w_fx0002.png'), { recursive: true });
-
-      expect(buildErrors(editionDir)).toEqual([
-        refusal('No file w_fx0002.png in assets/illustrations/'),
-      ]);
-    });
-
-    it.each([
-      ['a JPEG named .png', 'w_fx0002.png', Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10])],
-      ['a PNG not named .png', 'w_fx0002.jpg', png(320, 320)],
-    ])('refuses an Illustration that is %s as not a PNG', (_, name, file) => {
-      const editionDir = withIllustration(name, file);
-
-      expect(buildErrors(editionDir)).toEqual([
-        refusal(`assets/illustrations/${name} is not a PNG`),
-      ]);
-    });
-
-    it('refuses an Illustration over 150 KB', () => {
-      const editionDir = withIllustration('w_fx0002.png', png(320, 320, 150_001));
-
-      expect(buildErrors(editionDir)).toEqual([
-        refusal(
-          'assets/illustrations/w_fx0002.png is 150001 bytes, over the 150 KB (150000 bytes) limit',
-        ),
-      ]);
-    });
-
-    it('refuses an Illustration that is not square', () => {
-      const editionDir = withIllustration('w_fx0002.png', png(320, 200));
-
-      expect(buildErrors(editionDir)).toEqual([
-        refusal('assets/illustrations/w_fx0002.png is 320×200 px, not square'),
-      ]);
-    });
-
-    it('refuses an Illustration with every reason that applies', () => {
-      const editionDir = withIllustration('w_fx0002.png', png(320, 200, 150_001));
-
-      expect(buildErrors(editionDir)).toEqual([
-        refusal(
-          'assets/illustrations/w_fx0002.png is 150001 bytes, over the 150 KB (150000 bytes) limit',
-        ),
-        refusal('assets/illustrations/w_fx0002.png is 320×200 px, not square'),
-      ]);
-    });
-
-    it('refuses the same broken Illustration in checkLanguagePack', () => {
-      const editionDir = withIllustration('w_fx0002.png', png(320, 200));
-
-      expect(checkLanguagePack({ editionDir })).toEqual({
-        ok: false,
-        errors: [refusal('assets/illustrations/w_fx0002.png is 320×200 px, not square')],
       });
     });
 
@@ -2070,104 +2004,9 @@ describe('buildLanguagePack', () => {
   });
 });
 
-describe('the Recordings of the Narrator Voices', () => {
-  const recordingsDir = (editionDir: string) => join(editionDir, 'assets/recordings');
-
-  /** A copy of the valid fixture with the fixture Recordings: two of anna's, one of boris's. */
-  function withRecordings(): string {
-    const editionDir = copyFixture('valid');
-    cpSync(fixture('recordings'), recordingsDir(editionDir), { recursive: true });
-    return editionDir;
-  }
-
-  it('builds an Edition with a Recording folder per Narrator Voice', () => {
-    const editionDir = withRecordings();
-
-    const result = buildLanguagePack({ editionDir, outFile: packPath() });
-
-    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-  });
-
-  it('reports the Words without a Recording per Narrator Voice without failing', () => {
-    const editionDir = withRecordings();
-
-    const result = buildLanguagePack({ editionDir, outFile: packPath() });
-
-    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-    expect(result.missingRecordings).toEqual([
-      { voice: 'anna', count: 1 },
-      { voice: 'boris', count: 2 },
-    ]);
-  });
-
-  it('reports every Word of a Narrator Voice without a folder as missing', () => {
-    const editionDir = withRecordings();
-    rmSync(join(recordingsDir(editionDir), 'boris'), { recursive: true });
-
-    const result = buildLanguagePack({ editionDir, outFile: packPath() });
-
-    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-    expect(result.missingRecordings).toContainEqual({ voice: 'boris', count: 2 });
-  });
-
-  it('reports a Recording made from another text than the Word reads now as missing', () => {
-    const editionDir = withRecordings();
-    writeFileSync(join(recordingsDir(editionDir), 'anna/texts.json'), '{"w_fx0002": "бала́кучий"}');
-
-    const result = buildLanguagePack({ editionDir, outFile: packPath() });
-
-    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-    expect(result.missingRecordings).toContainEqual({ voice: 'anna', count: 2 });
-  });
-
-  it('refuses a texts file that is not a map of Word id to text', () => {
-    const editionDir = withRecordings();
-    writeFileSync(join(recordingsDir(editionDir), 'anna/texts.json'), '["заметі́ль"]');
-
-    expect(buildErrors(editionDir)).toEqual([
-      expect.objectContaining({
-        file: 'assets/recordings/anna/texts.json',
-        message: 'Not a map of Word id to the text its Recording was made from',
-      }),
-    ]);
-  });
-
-  it('refuses a folder inside a Narrator Voice folder', () => {
-    const editionDir = withRecordings();
-    mkdirSync(join(recordingsDir(editionDir), 'anna/old'));
-
-    expect(buildErrors(editionDir)).toEqual([
-      expect.objectContaining({ file: 'assets/recordings/anna/old', message: 'Not an mp3' }),
-    ]);
-  });
-
-  it('refuses a Recording of a Word id the Edition does not have', () => {
-    const editionDir = withRecordings();
-    cpSync(
-      join(recordingsDir(editionDir), 'anna/w_fx0001.mp3'),
-      join(recordingsDir(editionDir), 'anna/w_fx0099.mp3'),
-    );
-
-    expect(buildErrors(editionDir)).toEqual([
-      expect.objectContaining({
-        file: 'assets/recordings/anna/w_fx0099.mp3',
-        message: 'No Word w_fx0099 in the Edition',
-      }),
-    ]);
-  });
-
-  it("reports a broken Word's own problem, not its Recordings as of an unknown Word", () => {
-    const editionDir = withRecordings();
-    writeFileSync(join(editionDir, 'content/words/w_fx0001.json'), '{');
-
-    const errors = buildErrors(editionDir);
-
-    expect(errors).toContainEqual(expect.objectContaining({ file: 'content/words/w_fx0001.json' }));
-    expect(errors.filter(({ file }) => file.startsWith('assets/recordings'))).toEqual([]);
-  });
-
+describe('the sample Word of the voice screen', () => {
   it('refuses a sample Word of the voice screen the Edition does not have', () => {
-    const editionDir = withRecordings();
+    const editionDir = copyFixture('valid');
     editJson(editionDir, 'edition.json', (config) => ({
       ...config,
       narratorVoices: {
@@ -2184,46 +2023,16 @@ describe('the Recordings of the Narrator Voices', () => {
       }),
     ]);
   });
-
-  it('refuses a folder of a Narrator Voice the Edition does not declare', () => {
-    const editionDir = withRecordings();
-    cpSync(join(recordingsDir(editionDir), 'anna'), join(recordingsDir(editionDir), 'olga'), {
-      recursive: true,
-    });
-
-    expect(buildErrors(editionDir)).toEqual([
-      expect.objectContaining({
-        file: 'assets/recordings/olga',
-        message: 'No Narrator Voice olga in the Edition config',
-      }),
-    ]);
-  });
-
-  it.each([
-    ['a file of another kind', 'w_fx0003.wav', Buffer.from('RIFF....WAVE')],
-    ['an mp3 name on other bytes', 'w_fx0003.mp3', Buffer.from('not a sound at all')],
-  ])('refuses %s', (_, name, bytes) => {
-    const editionDir = withRecordings();
-    writeFileSync(join(recordingsDir(editionDir), 'anna', name), bytes);
-
-    expect(buildErrors(editionDir)).toEqual([
-      expect.objectContaining({ file: `assets/recordings/anna/${name}`, message: 'Not an mp3' }),
-    ]);
-  });
 });
 
 describe('checkLanguagePack', () => {
-  it('passes valid content with the targets it misses and the Recordings it lacks, as the build does', () => {
+  it('passes valid content with the targets it misses, as the build does', () => {
     const editionDir = copyFixture('valid');
     writeFileSync(join(editionDir, 'content/targets.json'), JSON.stringify({ minWords: 3 }));
 
     expect(checkLanguagePack({ editionDir })).toEqual({
       ok: true,
       missedTargets: [{ target: 'minWords', message: '2 Words, below the target of 3' }],
-      missingRecordings: [
-        { voice: 'anna', count: 2 },
-        { voice: 'boris', count: 2 },
-      ],
     });
   });
 

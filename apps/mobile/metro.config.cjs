@@ -9,6 +9,10 @@ const { APP_CONFIG_FILE, EDITIONS_DIR, REPO_DIR, openAppConfig, openEdition } = 
   '@slovo/language-pack/edition',
   __filename,
 );
+const { STARTER_MEDIA_DIR, starterMediaFiles } = tsxRequire(
+  '@slovo/language-pack/starter-media',
+  __filename,
+);
 
 /**
  * The Editions the app bundles (ADR 0065), as the one module `slovo-editions`
@@ -59,14 +63,24 @@ function mandatory(edition, file, missing = '') {
 }
 
 /**
- * The Illustrations of an Edition (ADR 0055): each PNG of its
- * `assets/illustrations/` by file name.
+ * The Starter Media of an Edition (ADR 0099): the Recordings and the
+ * Illustrations of its first Words, which the Edition build downloads to its
+ * `starter-media/` folder. The rest the app downloads from the Media Store.
  */
-function illustrations(edition) {
-  const lines = edition
-    .illustrations()
-    .map((name) => `      ${JSON.stringify(name)}: ${required(edition.illustration(name))},`);
-  return `{\n${lines.join('\n')}\n    }`;
+function starterMedia(edition) {
+  const { recordings, illustrations } = starterMediaFiles(join(edition.dir, STARTER_MEDIA_DIR));
+  const byId = (files, indent) =>
+    Object.entries(files)
+      .map(([wordId, file]) => `${indent}${JSON.stringify(wordId)}: ${required(file)},`)
+      .join('\n');
+  const voices = Object.entries(recordings).map(
+    ([voice, files]) =>
+      `        ${JSON.stringify(voice)}: {\n${byId(files, '          ')}\n        },`,
+  );
+  return `{
+      recordings: {\n${voices.join('\n')}\n      },
+      illustrations: {\n${byId(illustrations, '        ')}\n      },
+    }`;
 }
 
 /**
@@ -81,27 +95,6 @@ function sounds(edition) {
   return `{\n${lines.join('\n')}\n    }`;
 }
 
-/**
- * The Recordings of an Edition (ADR 0083): for each Narrator Voice folder of
- * its `assets/recordings/`, each mp3 by Word id. The Edition build has
- * refused any other file.
- */
-function recordings(edition) {
-  const voices = edition
-    .recordings()
-    .filter((entry) => entry.kind === 'folder')
-    .map((folder) => {
-      const lines = folder.files
-        .filter((file) => file.endsWith('.mp3'))
-        .map(
-          (file) =>
-            `        ${JSON.stringify(basename(file, '.mp3'))}: ${required(edition.recording(folder.name, file))},`,
-        );
-      return `      ${JSON.stringify(folder.name)}: {\n${lines.join('\n')}\n      },`;
-    });
-  return `{\n${voices.join('\n')}\n    }`;
-}
-
 /** The files of one bundled Edition, which the app validates at startup. */
 function bundledEdition(edition) {
   const id = edition.config.id;
@@ -110,9 +103,8 @@ function bundledEdition(edition) {
     strings: ${mandatory(edition, 'strings')},
     tokens: ${optional(edition, 'tokens')},
     decor: ${optional(edition, 'decor')},
-    illustrations: ${illustrations(edition)},
     sounds: ${sounds(edition)},
-    recordings: ${recordings(edition)},
+    starterMedia: ${starterMedia(edition)},
     languagePack: ${mandatory(edition, 'languagePack', `Run \`pnpm build:pack ${id}\` to build the Language Pack first.`)},
   },`;
 }

@@ -67,7 +67,6 @@ const word: WordFeedCard = {
     details: undefined,
     linkedCorrections: [],
     synonymRow: undefined,
-    illustration: undefined,
   },
 };
 

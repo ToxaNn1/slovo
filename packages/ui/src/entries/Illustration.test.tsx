@@ -1,8 +1,9 @@
 import { type WordFeedCard } from '@slovo/core/testing';
 import { EditionProvider, EntryCard } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import type { ReactNode } from 'react';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { useSyncExternalStore, type ReactNode } from 'react';
+import type { ImageSourcePropType } from 'react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
@@ -17,7 +18,7 @@ const strings = testStrings({
   },
 });
 
-/** A Word that names the Illustration `abacus.png`. */
+/** A Word whose Illustration the fake media holds by its Word id. */
 const word: WordFeedCard = {
   kind: 'word',
   entryId: 'w1',
@@ -40,16 +41,37 @@ const word: WordFeedCard = {
     details: undefined,
     linkedCorrections: [],
     synonymRow: undefined,
-    illustration: 'abacus.png',
   },
 };
 
-/** The Illustrations the app bundles, by file name, as Metro gives their assets. */
-const illustrations = { 'abacus.png': 7 };
+/**
+ * A fake of the app's media: the Illustration of each Word id it holds, as
+ * the Starter Media asset or a cached file gives it, and a file that arrives
+ * later, as a download does.
+ */
+function fakeMedia(held: Record<string, ImageSourcePropType>) {
+  let files = held;
+  const listeners = new Set<() => void>();
+  const subscribe = (listener: () => void) => {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  };
+  return {
+    useIllustration: (wordId: string) => useSyncExternalStore(subscribe, () => files[wordId]),
+    arrive(wordId: string, source: ImageSourcePropType) {
+      files = { ...files, [wordId]: source };
+      for (const listener of listeners) listener();
+    },
+  };
+}
 
-function inEdition(children: ReactNode) {
+function inEdition(children: ReactNode, media = fakeMedia({ w1: 7 })) {
   return (
-    <EditionProvider edition={{ locale: 'en' }} strings={strings} illustrations={illustrations}>
+    <EditionProvider
+      edition={{ locale: 'en' }}
+      strings={strings}
+      useIllustration={media.useIllustration}
+    >
       {children}
     </EditionProvider>
   );
@@ -77,17 +99,26 @@ describe('The Illustration on a Word card', () => {
     expect(screen.getByRole('image', { name: label })).toBeTruthy();
   });
 
-  it('is absent from a Word without one, which looks as before', async () => {
-    const plain = { ...word, model: { ...word.model, illustration: undefined } };
-    await render(inEdition(<EntryCard card={plain} />));
+  it('is absent while the media holds no file for the Word, and fills in when it arrives', async () => {
+    const media = fakeMedia({});
+    await render(inEdition(<EntryCard card={word} />, media));
 
     expect(screen.queryByRole('image')).toBeNull();
     expect(screen.getByText('A frame with beads for counting.')).toBeTruthy();
+    await act(() => {
+      media.arrive('w1', { uri: 'file:///cache/media/illustrations~w1.h1.png' });
+    });
+    expect(screen.getByRole('image', { name: label })).toHaveProp('source', {
+      uri: 'file:///cache/media/illustrations~w1.h1.png',
+    });
   });
 
-  it('is absent when the app bundles no file of that name', async () => {
-    const unknown = { ...word, model: { ...word.model, illustration: 'missing.png' } };
-    await render(inEdition(<EntryCard card={unknown} />));
+  it('is absent with no media given, as for an Edition that brings no Illustrations', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <EntryCard card={word} />
+      </EditionProvider>,
+    );
 
     expect(screen.queryByRole('image')).toBeNull();
   });

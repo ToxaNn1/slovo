@@ -9,8 +9,7 @@ const { editions } = vi.hoisted(() => {
     strings: {},
     tokens: undefined,
     decor: undefined,
-    illustrations: {},
-    recordings: {},
+    starterMedia: { recordings: {}, illustrations: {} },
     sounds: {},
     languagePack: 1,
   });

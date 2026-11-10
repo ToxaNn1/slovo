@@ -235,15 +235,18 @@ export function WordSections({
   );
 }
 
-/** The Word's Illustration above its Definition, the same in both Themes; a file the app lacks shows none (ADR 0055). */
+/**
+ * The Word's Illustration above its Definition, the same in both Themes
+ * (ADR 0055): none while the device has no file for the Word, drawn when
+ * the file arrives (ADR 0099).
+ */
 export function WordIllustration({ card }: { card: WordCardModel }) {
   const edition = useEdition();
   const { voice } = edition;
   const strings = edition.strings.wordCard;
   // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
   const turnActions = usePageTurnActions();
-  const illustration =
-    card.illustration === undefined ? undefined : edition.illustrations[card.illustration];
+  const illustration = edition.useIllustration(card.wordId);
   if (illustration === undefined) return null;
   return (
     <Image

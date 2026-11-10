@@ -16,13 +16,10 @@ export const activeEditionId = deviceActiveEdition(bundledEditions);
 /** The bundled files of the active Edition. */
 export const activeEditionFiles = bundledEditions.files(activeEditionId);
 
-const { config, strings, tokens, decor, illustrations } = activeEditionFiles;
-
-/** The Illustrations the active Edition bundles as assets, by file name (ADR 0055). */
-export const editionIllustrations = illustrations;
+const { config, strings, tokens, decor } = activeEditionFiles;
 
 /** The active Edition, validated by the Core at startup. */
-export const edition = loadEdition(config, Object.keys(illustrations));
+export const edition = loadEdition(config);
 
 const app = AppConfigSchema.parse(appConfig);
 
