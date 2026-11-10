@@ -1,5 +1,5 @@
+import { type PlayingGame } from '@slovo/core/testing';
 import type {
-  PlayingGame,
   GivenAnswer,
   Haptics,
   PlayedRound,

@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  openComposition,
-  type Clock,
-  type Composition,
-  type UserStateChanges,
-  type UserStatePort,
-} from './index';
+import { openComposition, type Clock, type Composition, type UserStatePort } from './index';
+import { type UserStateChanges } from './ports';
 import { createMemoryContentPort } from './testing';
 import { fakeClock, knownCounts, testEdition, word } from './test-support';
 import { createMemoryUserStatePort, openUserState } from './user-state/user-state';

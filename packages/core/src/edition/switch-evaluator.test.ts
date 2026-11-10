@@ -1,7 +1,8 @@
 import { FeatureSwitchesSchema, type FeatureSwitchState } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { evaluateSwitches, type RemoteRule, type SwitchFacts } from '../index';
+import { evaluateSwitches } from '../index';
+import { type RemoteRule, type SwitchFacts } from './switch-evaluator';
 
 /** The Edition's states: every Feature Switch on but those given. */
 const statesWith = (states: Partial<Record<string, FeatureSwitchState>> = {}) =>

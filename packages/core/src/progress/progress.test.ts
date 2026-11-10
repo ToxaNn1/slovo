@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type Composition,
   type FeatureSwitch,
-  type UserStateChanges,
   type UserStatePort,
 } from '../index';
+import { SEEN_DWELL_MS } from '../feed/feed';
+import { type UserStateChanges } from '../ports';
 import { createMemoryContentPort } from '../testing';
 import {
   correction,

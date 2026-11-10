@@ -2,13 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { FeatureSwitch, Word } from '@slovo/contracts';
 
-import {
-  openComposition,
-  SEEN_DWELL_MS,
-  type Composition,
-  type Feed,
-  type FeedCard,
-} from '../index';
+import { openComposition, type Composition, type Feed, type FeedCard } from '../index';
+import { SEEN_DWELL_MS } from './feed';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';

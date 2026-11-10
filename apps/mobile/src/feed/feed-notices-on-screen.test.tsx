@@ -8,13 +8,13 @@ import {
   type Edition,
   type Haptics,
   type NotificationSchedulerPort,
-  type XpRecord,
 } from '@slovo/core';
 import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
   seedUserState,
   type UserStateFacts,
+  type XpRecord,
 } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';

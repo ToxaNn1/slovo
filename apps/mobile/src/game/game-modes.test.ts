@@ -1,13 +1,12 @@
 import type { Word } from '@slovo/contracts';
+import { openComposition, systemRandom, type Composition, type GameModeOffer } from '@slovo/core';
 import {
-  openComposition,
-  systemRandom,
-  type Composition,
+  createMemoryContentPort,
+  testEdition,
+  seedUserState,
   type GameMode,
   type GameModeGroup,
-  type GameModeOffer,
-} from '@slovo/core';
-import { createMemoryContentPort, testEdition, seedUserState } from '@slovo/core/testing';
+} from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { gameModeCard, gameModeGroups, gameModeStrings } from './game-modes';

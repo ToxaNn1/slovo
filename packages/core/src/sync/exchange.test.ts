@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createSettings, openComposition, type Backend, type UserStateChanges } from '../index';
+import { createSettings, openComposition, type Backend } from '../index';
+import { type UserStateChanges } from '../ports';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { createSyncExchange } from './exchange';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';

@@ -1,10 +1,9 @@
+import { type Word } from '@slovo/contracts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-
-import type { Word } from '@slovo/core';
 
 import { openLanguagePack, type NodeLanguagePack } from './index';
 import { buildUkrainianPack, ukrainian } from './test-support';

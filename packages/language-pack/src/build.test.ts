@@ -1,4 +1,11 @@
 import {
+  buildEntryCard,
+  buildWordCard,
+  createEntries,
+  EVERYTHING_IN,
+  type Entries,
+} from '@slovo/core/testing';
+import {
   cpSync,
   existsSync,
   mkdirSync,
@@ -19,13 +26,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { CorrectionSchema, WordSchema } from '@slovo/contracts';
 import { ContentSnapshotSchema, type ContentSnapshot } from '@slovo/contracts/api';
-import {
-  buildEntryCard,
-  buildWordCard,
-  createEntries,
-  EVERYTHING_IN,
-  type Entries,
-} from '@slovo/core';
 
 import {
   buildFromBackend,

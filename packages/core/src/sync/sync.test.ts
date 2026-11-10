@@ -1,13 +1,8 @@
 import type { FeatureSwitch } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemorySessionStore,
-  openAccount,
-  openSync,
-  type RecordChange,
-  type UserStateChanges,
-} from '../index';
+import { createMemorySessionStore, openAccount, openSync } from '../index';
+import { type RecordChange, type UserStateChanges } from '../ports';
 import {
   createFakeAppleSignInSheet,
   createFakeBackend,

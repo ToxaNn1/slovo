@@ -10,9 +10,8 @@ import {
   type Edition,
   type Haptics,
   type Schedule,
-  type XpRecord,
 } from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState, type XpRecord } from '@slovo/core/testing';
 import { coreTokens, EditionProvider, HapticsProvider, systemSchedule, typeStyle } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';

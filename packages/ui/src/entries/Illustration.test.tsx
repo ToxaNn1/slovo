@@ -1,4 +1,4 @@
-import type { WordFeedCard } from '@slovo/core';
+import { type WordFeedCard } from '@slovo/core/testing';
 import { EditionProvider, EntryCard } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';

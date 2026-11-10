@@ -2,13 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { Correction, FeatureSwitch, Word } from '@slovo/contracts';
 
-import {
-  NOTIFICATION_BODY_LENGTH,
-  openComposition,
-  type Clock,
-  type Composition,
-  type PlannedNotification,
-} from '../index';
+import { openComposition, type Clock, type Composition, type PlannedNotification } from '../index';
+import { NOTIFICATION_BODY_LENGTH } from './notification-text';
 import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
