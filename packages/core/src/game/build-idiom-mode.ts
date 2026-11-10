@@ -19,8 +19,7 @@ export const buildIdiomMode: GameMode = {
   id: 'build-idiom',
   group: 'idioms',
   entryKind: 'idiom',
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameBuildIdiom') && edition.isFeatureEnabled('idioms'),
+  isOn: (edition) => edition.isFeatureEnabled('gameBuildIdiom'),
   buildRound({ answer, random, edition }) {
     if (answer.kind !== 'idiom' || answer.idiomType === 'placeName') return undefined;
     const punctuation = new Set(edition.languageTraits.expressionPunctuation ?? []);

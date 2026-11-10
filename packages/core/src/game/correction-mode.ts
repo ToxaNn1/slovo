@@ -50,8 +50,7 @@ export const correctionMode: GameMode = {
   id: 'correction',
   group: 'corrections',
   entryKind: 'correction',
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameCorrection') && edition.isFeatureEnabled('corrections'),
+  isOn: (edition) => edition.isFeatureEnabled('gameCorrection'),
   buildRound({ answer, eligible, random }) {
     if (answer.kind !== 'correction' || !plays(answer)) return undefined;
     const taken = new Set(answer.standardEquivalents.map(folded));

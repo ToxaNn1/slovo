@@ -61,7 +61,13 @@ describe('The Correction Types', () => {
 
   it('carries the Categories of Corrections in pack order with `correctionCategoryScreens` on', async () => {
     const { app } = await run({
-      on: ['dashboard', 'corrections', 'correctionTypes', 'correctionCategoryScreens'],
+      on: [
+        'wordOfTheDay',
+        'dashboard',
+        'corrections',
+        'correctionTypes',
+        'correctionCategoryScreens',
+      ],
     });
     const categories = await content.listCorrectionCategories();
 

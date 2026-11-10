@@ -94,7 +94,7 @@ export async function openActiveDays({
       frozen: xpLog.days.frozen,
       breaks: xpLog.days.breaks,
       today,
-      freezes: xpOn && edition.isFeatureEnabled('streakFreezes'),
+      freezes: edition.isFeatureEnabled('streakFreezes'),
     });
 
   function tell(change: XpLogChange = 'other'): void {

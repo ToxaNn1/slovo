@@ -181,6 +181,47 @@ describe('the Kill switch through the admin API', () => {
   });
 });
 
+describe('a switch turned off alone', () => {
+  it.each([
+    ['corrections', ['gameSurvival', 'gameAnglicism', 'gameTypeWord', 'gameCorrection']],
+    ['idioms', ['gameIdiomMeaning', 'gameBuildIdiom']],
+    ['communityCounters', ['communityWord']],
+    ['account', ['sync']],
+    ['widget', ['widgetHint']],
+    ['notifications', ['notificationExplainer']],
+    ['xpLog', ['levels', 'streakFreezes']],
+  ] as const)('%s turns off %j, as it does on the phone', async (dependency, dependents) => {
+    const id = `alone-${dependency.toLowerCase()}`;
+    const folder = testEditions([id], (config) => ({
+      ...config,
+      featureSwitches: {
+        ...config.featureSwitches,
+        ...Object.fromEntries([dependency, ...dependents].map((feature) => [feature, 'on'])),
+      },
+    }));
+    const app = testApp({ editions: folder.read() });
+    const editions = createEditions({
+      database: app.database,
+      clock: systemClock,
+      editions: folder.read(),
+      alerts: app.alerts,
+    });
+    const off = async () => {
+      const answer = await app.client.edition.switches({ params: { editionId: id } });
+      if (answer.status !== 200) throw new Error('The switches came without a body');
+      return answer.body.off;
+    };
+    for (const dependent of dependents) expect(await off()).not.toContain(dependent);
+
+    await editions.kill(dependency, id, {
+      who: { kind: 'command', command: 'test' },
+      reason: 'off alone',
+    });
+
+    expect(await off()).toEqual(expect.arrayContaining([dependency, ...dependents]));
+  });
+});
+
 describe('the switches command', () => {
   it('turns a feature off for everyone and logs who and why', async () => {
     const { client, store, editions } = await adminOn('shell');

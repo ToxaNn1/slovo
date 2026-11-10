@@ -1,5 +1,4 @@
 import type {
-  DistractorRule,
   Entry,
   Example,
   Idiom,
@@ -22,25 +21,19 @@ import type { Random } from '../ports';
 import { renderStress, STRESS_MARK, stressedVowelsOf, withoutStress } from '../entries/stress';
 
 /**
- * The Words a Distractor may be, best first, by each Distractor rule an
- * Edition may choose. `same-part-of-speech`: the Words of the answer's part of
- * speech in a random order, then the others in a random order.
+ * The Words a Distractor may be, best first: the Words of the answer's part
+ * of speech in a random order, then the others in a random order.
  */
-const distractorOrder: Record<
-  DistractorRule,
-  (answer: Word, others: readonly Word[], random: Random) => Word[]
-> = {
-  'same-part-of-speech': (answer, others, random) => [
-    ...shuffled(
-      others.filter((word) => word.partOfSpeech === answer.partOfSpeech),
-      random,
-    ),
-    ...shuffled(
-      others.filter((word) => word.partOfSpeech !== answer.partOfSpeech),
-      random,
-    ),
-  ],
-};
+const distractorOrder = (answer: Word, others: readonly Word[], random: Random): Word[] => [
+  ...shuffled(
+    others.filter((word) => word.partOfSpeech === answer.partOfSpeech),
+    random,
+  ),
+  ...shuffled(
+    others.filter((word) => word.partOfSpeech !== answer.partOfSpeech),
+    random,
+  ),
+];
 
 /** The Definitions `definitionOf` has told apart, by Entry: every Round compares the answer with all eligible Entries. */
 const definitions = new WeakMap<Word | Idiom, string>();
@@ -283,7 +276,7 @@ export const guessWord: GameMode = {
   entryKind: 'word',
   alsoAsks: ['idiom', 'synonymRow', 'tip'],
   isOn: (edition) => edition.isFeatureEnabled('gameGuessWord'),
-  buildRound({ answer, eligible, round, random, edition }) {
+  buildRound({ answer, eligible, round, random }) {
     if (answer.kind === 'word') {
       const definition = definitionOf(answer);
       const words = eligible.filter((entry): entry is Word => entry.kind === 'word');
@@ -292,7 +285,7 @@ export const guessWord: GameMode = {
         (entry) => entry.id !== answer.id && definitionOf(entry) === definition,
       );
       if (round >= FIRST_TYPED_ROUND && !sharesDefinition) return typedRound(answer);
-      const order = distractorOrder[edition.languageTraits.distractorRule](answer, others, random);
+      const order = distractorOrder(answer, others, random);
       return roundOf(answer, order, wordOptions, random, gapIn(answer, round));
     }
     if (answer.kind === 'synonymRow') return synonymRound(answer, eligible, random);

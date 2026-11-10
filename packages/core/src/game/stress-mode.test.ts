@@ -144,7 +144,7 @@ async function run({
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
       userSettingDefaults: { mix: { corrections } },
-      languageTraits: { marksStress, ...(marksStress ? { vowels } : {}) },
+      languageTraits: { stress: marksStress ? { marked: true, vowels } : { marked: false } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {

@@ -416,7 +416,7 @@ export function createNotificationPlanner({
       frozen,
       breaks,
       today: date,
-      freezes: xpOn && edition.isFeatureEnabled('streakFreezes'),
+      freezes: edition.isFeatureEnabled('streakFreezes'),
     });
     if (xpOn && streak >= STREAK_WARNING_AT && !xpLog.days.active.has(date) && freezesHeld === 0) {
       return 'streakWarning';

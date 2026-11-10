@@ -43,11 +43,7 @@ export function createNotificationExplainer({
 }): FeedNotices {
   return {
     async forDay(day) {
-      if (
-        !edition.isFeatureEnabled('notificationExplainer') ||
-        !edition.isFeatureEnabled('notifications') ||
-        permission() !== 'not-asked'
-      )
+      if (!edition.isFeatureEnabled('notificationExplainer') || permission() !== 'not-asked')
         return [];
       const finished = await userState.read(onboardingFinished);
       if (finished === undefined) return [];

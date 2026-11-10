@@ -616,9 +616,7 @@ export async function openGame({
   };
   /** Whether the next finished Game with a Life left offers the widget hint: until it is shown. */
   let widgetHintDue =
-    edition.isFeatureEnabled('widget') &&
-    edition.isFeatureEnabled('widgetHint') &&
-    (await userState.read(widgetHintShown)) === undefined;
+    edition.isFeatureEnabled('widgetHint') && (await userState.read(widgetHintShown)) === undefined;
   /** The Game in play, or just over; none on the mode screen. */
   let played: GameInPlay | undefined;
   /** When the Game in play started, by the clock. */
