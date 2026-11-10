@@ -472,17 +472,13 @@ export const mediaRecordings = pgTable(
 );
 
 /** An Illustration per Word. */
-export const mediaIllustrations = pgTable(
-  'media_illustrations',
-  mediaColumns(),
-  (table) => [
-    primaryKey({ columns: [table.editionId, table.wordId, table.hash] }),
-    uniqueIndex('media_illustrations_live')
-      .on(table.editionId, table.wordId)
-      .where(sql`${table.retiredAt} is null`),
-    index().on(table.editionId, table.contentVersion),
-  ],
-);
+export const mediaIllustrations = pgTable('media_illustrations', mediaColumns(), (table) => [
+  primaryKey({ columns: [table.editionId, table.wordId, table.hash] }),
+  uniqueIndex('media_illustrations_live')
+    .on(table.editionId, table.wordId)
+    .where(sql`${table.retiredAt} is null`),
+  index().on(table.editionId, table.contentVersion),
+]);
 
 /**
  * The quote check's last finding per quoted record (ADR 0084), at the record

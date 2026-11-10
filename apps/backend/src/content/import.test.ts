@@ -7,7 +7,7 @@ import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { systemClock } from '@slovo/server-core';
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { testApp } from '../test-support';
+import { TEST_MEDIA_BASE, testApp } from '../test-support';
 
 /** A copy of the UA Edition folder the test may change, removed after the file. */
 function copyOfUkrainian(): string {
@@ -90,6 +90,10 @@ describe('importing an Edition into the database', () => {
       synonymRows: content.synonymRows,
       curatedCollections: content.curatedCollections ?? [],
       crosswordDays: content.crosswordDays ?? [],
+      // The import brings no media rows: they come from the Media Store.
+      mediaBase: TEST_MEDIA_BASE,
+      recordings: [],
+      illustrations: [],
       // A Word's text has not changed since the import, so none needs a new Recording.
       needsNewRecording: [],
     });

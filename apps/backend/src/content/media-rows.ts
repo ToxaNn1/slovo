@@ -118,7 +118,11 @@ export function createMediaRows({ database, clock }: { database: Database; clock
         .insert(mediaIllustrations)
         .values({ editionId, ...file, createdAt: now, retiredAt: null, contentVersion: version })
         .onConflictDoUpdate({
-          target: [mediaIllustrations.editionId, mediaIllustrations.wordId, mediaIllustrations.hash],
+          target: [
+            mediaIllustrations.editionId,
+            mediaIllustrations.wordId,
+            mediaIllustrations.hash,
+          ],
           set: { retiredAt: null, contentVersion: version },
         });
       return true;
@@ -154,7 +158,10 @@ export async function readMediaRows(
     .select()
     .from(mediaIllustrations)
     .where(
-      and(eq(mediaIllustrations.editionId, editionId), gt(mediaIllustrations.contentVersion, since)),
+      and(
+        eq(mediaIllustrations.editionId, editionId),
+        gt(mediaIllustrations.contentVersion, since),
+      ),
     )
     .orderBy(
       asc(mediaIllustrations.wordId),
