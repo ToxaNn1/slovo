@@ -129,13 +129,12 @@ export async function downloadStarterMedia(
   writeFileSync(join(dir, LIST_FILE), `${JSON.stringify(list, null, 2)}\n`);
 }
 
-/** The bundled files of the Starter Media, as absolute paths. */
-export interface StarterMediaFiles {
-  /** By Narrator Voice id and then Word id. */
-  readonly recordings: Readonly<Record<string, Readonly<Record<string, string>>>>;
-  /** By Word id. */
-  readonly illustrations: Readonly<Record<string, string>>;
-}
+/**
+ * The bundled files of the Starter Media, as absolute paths by Media Store
+ * path: the path carries the hash, so the app bundles a file only for the row
+ * it was cut from.
+ */
+export type StarterMediaFiles = Readonly<Record<string, string>>;
 
 /**
  * The Starter Media files in `dir` that Metro bundles; none when the folder
@@ -143,14 +142,7 @@ export interface StarterMediaFiles {
  */
 export function starterMediaFiles(dir: string): StarterMediaFiles {
   const listFile = join(dir, LIST_FILE);
-  if (!existsSync(listFile)) return { recordings: {}, illustrations: {} };
+  if (!existsSync(listFile)) return {};
   const list = StarterMediaListSchema.parse(JSON.parse(readFileSync(listFile, 'utf8')));
-  const recordings: Record<string, Record<string, string>> = {};
-  const illustrations: Record<string, string> = {};
-  for (const file of list.files) {
-    const path = join(dir, file.path);
-    if (file.kind === 'recording') (recordings[file.voice] ??= {})[file.wordId] = path;
-    else illustrations[file.wordId] = path;
-  }
-  return { recordings, illustrations };
+  return Object.fromEntries(list.files.map((file) => [file.path, join(dir, file.path)]));
 }

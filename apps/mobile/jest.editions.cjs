@@ -21,7 +21,7 @@ module.exports = {
           require(join(dir, 'assets/sounds', `${sound}.wav`)),
         ]),
       ),
-      starterMedia: { recordings: {}, illustrations: {} },
+      starterMedia: {},
       languagePack: 1,
     },
   },

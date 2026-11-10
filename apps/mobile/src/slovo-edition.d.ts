@@ -14,13 +14,8 @@ declare module 'slovo-editions' {
     readonly decor: unknown;
     /** The asset ids of the Interface sounds the Edition brings, by sound. */
     readonly sounds: Readonly<Partial<Record<'shout' | 'right' | 'wrong' | 'tap', number>>>;
-    /** The asset ids of the Starter Media the Edition bundles (ADR 0099). */
-    readonly starterMedia: {
-      /** The Recordings by Narrator Voice id and then Word id. */
-      readonly recordings: Readonly<Record<string, Readonly<Record<string, number>>>>;
-      /** The Illustrations by Word id. */
-      readonly illustrations: Readonly<Record<string, number>>;
-    };
+    /** The asset ids of the Starter Media the Edition bundles, by Media Store path (ADR 0099). */
+    readonly starterMedia: Readonly<Record<string, number>>;
     /** The asset id of the compiled Language Pack. */
     readonly languagePack: number;
   }
