@@ -86,9 +86,11 @@ The command checks every content rule first and writes nothing when one refuses 
 
 ## Importing an Edition's media
 
-The Recordings and Illustrations in an Edition folder reach the Media Store once (#1770), after its content import and before the Recordings Cron service runs its first backlog. Run it on the owner's laptop with the four `R2_*` of the Media Store's bucket and the Deployment's `DATABASE_URL`; the command refuses to start without any of them, so the files never land in memory:
+The Recordings and Illustrations in an Edition folder reach the Media Store once (#1770), after its content import and before the Recordings Cron service runs its first backlog. Run it on the owner's laptop with the four `R2_*` of the Media Store's bucket and the Deployment's `DATABASE_URL`; the command refuses to start without any of them, so the files never land in memory. The repo no longer holds those files (ADR 0099), so run the command from a checkout of commit `3c4770c8f`, the last one before they were removed:
 
 ```sh
+git worktree add ../slovo-media 3c4770c8f
+cd ../slovo-media && pnpm install
 DATABASE_URL='<the Neon connection string>' R2_ACCOUNT_ID='…' R2_BUCKET='…' \
 R2_ACCESS_KEY_ID='…' R2_SECRET_ACCESS_KEY='…' \
 pnpm --filter @slovo/backend import-media --edition uk
@@ -119,7 +121,7 @@ The Recordings job (ADR 0083, 0099) runs as a fourth Railway service, a Cron ser
 | Schedule   | `0 * * * *`: hourly, UTC                                               |
 | Restart    | Never: the command exits when done, and the next run comes on schedule |
 
-Its variables are `DATABASE_URL`, a reference to the same Postgres, and the four `R2_*` of the Media Store's bucket. Each run takes, per Edition and under a lock of its own, the next 50 live Words in id order that miss a live Recording in one of the Edition's Narrator Voices and Recording Kinds, or whose Lemma or Stress changed. It makes their Recordings with `apps/backend/recordings/generate.py`, puts each file in R2 at `recordings/<voice>/<kind>/<Word id>.<hash>.mp3`, and saves the rows at one content version, so the next Patch carries them. A Word the generator fails for keeps what it has and comes back on the next run. An edit of a Word's Lemma or Stress retires its Recordings at once, in the same Patch as the Word. Last, the run deletes from R2 the file of every Recording or Illustration row retired more than 30 days ago and marks the row, which stays. Turn the Cron service on only after `pnpm import-media` has put the Recordings in the repo in the Media Store (Importing an Edition's media), or its first runs record every Word again.
+Its variables are `DATABASE_URL`, a reference to the same Postgres, and the four `R2_*` of the Media Store's bucket. Each run takes, per Edition and under a lock of its own, the next 50 live Words in id order that miss a live Recording in one of the Edition's Narrator Voices and Recording Kinds, or whose Lemma or Stress changed. It makes their Recordings with `apps/backend/recordings/generate.py`, puts each file in R2 at `recordings/<voice>/<kind>/<Word id>.<hash>.mp3`, and saves the rows at one content version, so the next Patch carries them. A Word the generator fails for keeps what it has and comes back on the next run. An edit of a Word's Lemma or Stress retires its Recordings at once, in the same Patch as the Word. Last, the run deletes from R2 the file of every Recording or Illustration row retired more than 30 days ago and marks the row, which stays. Turn the Cron service on only after `pnpm import-media` has put the Recordings of commit `3c4770c8f` in the Media Store (Importing an Edition's media), or its first runs record every Word again.
 
 ## The alerts Cron service
 
