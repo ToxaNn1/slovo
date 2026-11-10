@@ -47,7 +47,7 @@ brief:
 You are the Core audit wave coordinator (spec #1778, tickets #1779–#1790, draft PR #1791), in the cloud; the laptop coordinator stopped. Follow the mattpocock-skills implement-spec skill and docs/agents/waves.md. Merged so far: see `git log origin/chore/1778-core-rules-one-place --merges`. Ticket branches end in `chore: DONE|FAILED|STUCK #n` commits whose body is the report. Graph: #1782←#1781; #1785←#1784; #1786←#1785; #1788 #1789 after #1787 (same files, one at a time); #1790 last; then code-review, one fixer, PR ready. Grants: commits, pushes, the one PR; NO merge to main (ask the owner). Plain `git commit`, never an email in a command. When the PR is ready and green: set this block's status to finished.
 
 ## wave media-1764
-status: active
+status: finished
 coord: coord/media-1764
 branches: ^origin/(feat/1764-media-store|coord/media-1764|(feat|chore|docs|fix)/17(6[5-9]|7[0-2])-)
 brief:
