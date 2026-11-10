@@ -55,7 +55,10 @@ export function contentProcedures(
       return {
         status: 200 as const,
         headers,
-        body: { status: 'patch' as const, patch: { ...patch, mediaBase, patchFormat: PATCH_FORMAT } },
+        body: {
+          status: 'patch' as const,
+          patch: { ...patch, mediaBase, patchFormat: PATCH_FORMAT },
+        },
       };
     }),
 

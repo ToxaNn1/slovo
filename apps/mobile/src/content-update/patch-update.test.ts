@@ -2,8 +2,7 @@ import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { Word } from '@slovo/contracts';
-import type { IllustrationRow, RecordingRow } from '@slovo/contracts';
+import type { IllustrationRow, RecordingRow, Word } from '@slovo/contracts';
 import { PATCH_FORMAT, type Patch } from '@slovo/contracts/api';
 import {
   createContentUpdate,

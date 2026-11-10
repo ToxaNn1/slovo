@@ -34,13 +34,14 @@ export function mediaStatements({
   illustrations: readonly IllustrationRow[];
 }): Statement[] {
   return [
-    ...recordings.map(({ wordId, narratorVoice, recordingKind, hash, size, durationMs, retired }) =>
-      retired
-        ? { sql: SQL.retireRecording, params: [wordId, narratorVoice, recordingKind, hash] }
-        : {
-            sql: SQL.recording,
-            params: [wordId, narratorVoice, recordingKind, hash, size, durationMs],
-          },
+    ...recordings.map(
+      ({ wordId, narratorVoice, recordingKind, hash, size, durationMs, retired }) =>
+        retired
+          ? { sql: SQL.retireRecording, params: [wordId, narratorVoice, recordingKind, hash] }
+          : {
+              sql: SQL.recording,
+              params: [wordId, narratorVoice, recordingKind, hash, size, durationMs],
+            },
     ),
     ...illustrations.map(({ wordId, hash, size, retired }) =>
       retired
@@ -75,7 +76,7 @@ interface MediaReader {
 export async function mediaOf(db: MediaReader, wordId: string): Promise<WordMedia> {
   // One read after the other: a transaction runs one statement at a time.
   const recordings = await db.getAllAsync<RecordingRecord>(
-      `SELECT word_id, narrator_voice, recording_kind, hash, size, duration_ms FROM media_recordings
+    `SELECT word_id, narrator_voice, recording_kind, hash, size, duration_ms FROM media_recordings
         WHERE word_id = ? ORDER BY narrator_voice, recording_kind, hash`,
     [wordId],
   );

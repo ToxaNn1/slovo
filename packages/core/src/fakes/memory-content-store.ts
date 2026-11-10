@@ -63,6 +63,7 @@ export function createMemoryContentStore({
 }
 
 /** A media row as the live set holds it, without its retired flag. */
-function liveOf<Row extends { retired: boolean }>({ retired: _, ...live }: Row): Omit<Row, 'retired'> {
+function liveOf<Row extends { retired: boolean }>(row: Row): Omit<Row, 'retired'> {
+  const { retired: _retired, ...live } = row;
   return live;
 }

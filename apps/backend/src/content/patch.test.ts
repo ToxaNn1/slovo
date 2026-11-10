@@ -191,9 +191,19 @@ describe('the Patch read API', () => {
   });
 
   it('gives a device at version 0 every record of every kind', async () => {
-    const { client } = await contentBackend();
-    const { editionId, contentVersion, ...rest } = await snapshotOf(client);
-    const { needsNewRecording, ...kinds } = rest;
+    const { client, media } = await contentBackend();
+    // An imported Edition carries no media rows: they come from the Media Store.
+    await media.saveRecording('uk', {
+      wordId: WORD_ID,
+      narratorVoice: 'oksana',
+      recordingKind: 'plain',
+      hash: hashOf('a'),
+      size: 7000,
+      durationMs: 900,
+    });
+    await media.saveIllustration('uk', { wordId: WORD_ID, hash: hashOf('b'), size: 40_000 });
+    const { editionId, contentVersion, mediaBase, needsNewRecording, ...kinds } =
+      await snapshotOf(client);
     expect(needsNewRecording).toEqual([]);
     for (const records of Object.values(kinds)) expect(records).not.toEqual([]);
 
@@ -202,6 +212,7 @@ describe('the Patch read API', () => {
       since: 0,
       contentVersion,
       patchFormat: PATCH_FORMAT,
+      mediaBase,
       ...kinds,
     });
   });
