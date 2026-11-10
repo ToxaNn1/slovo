@@ -169,6 +169,13 @@
       "when": 1794308011289,
       "tag": "0023_media_file_deleted",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794324767054,
+      "tag": "0024_recording_failed",
+      "breakpoints": true
     }
   ]
 }

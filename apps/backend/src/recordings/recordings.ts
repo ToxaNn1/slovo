@@ -20,6 +20,8 @@ import type { MediaStore } from '../media/media-store';
 import type { RecordingGenerator } from './generator';
 import { RECORDING_KINDS, RECORDING_TEXTS } from './recording-text';
 
+type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
+
 /** How long the Media Store keeps the file of a retired row: 30 days. */
 export const RETIRED_FILE_KEPT_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -66,7 +68,12 @@ export function createRecordings({
   const { db } = database;
   const rows = createMediaRows({ database, clock });
 
-  /** The Edition's live Words that need Recordings, each with the slots it misses, in id order. */
+  /**
+   * The Edition's live Words that need Recordings, each with the slots it
+   * misses: the Words the job never failed for first, in id order, then the
+   * ones it failed for, longest ago first, so a Word that always fails never
+   * holds the batch.
+   */
   async function candidates(editionId: string, voices: readonly string[]) {
     const slots = voices.length * RECORDING_KINDS.length;
     const liveCount = sql`(select count(*) from ${mediaRecordings} r
@@ -93,7 +100,7 @@ export function createRecordings({
           sql`(${contentWords.needsNewRecording} or ${liveCount} < ${slots})`,
         ),
       )
-      .orderBy(asc(contentWords.id))
+      .orderBy(sql`${contentWords.recordingFailedAt} asc nulls first`, asc(contentWords.id))
       .limit(batch);
     if (words.length === 0) return [];
     const held = await db
@@ -142,7 +149,6 @@ export function createRecordings({
     if (requests.length === 0) return { recorded: 0, failed: 0 };
     const outcomes = await generator.record(requests.map(({ voice, text }) => ({ voice, text })));
     const recorded: RecordedWord[] = [];
-    let failed = 0;
     for (const word of words) {
       const own = requests.flatMap((request, index) =>
         request.word === word ? [{ ...request, outcome: outcomes[index] }] : [],
@@ -160,55 +166,97 @@ export function createRecordings({
         await store.put(recordingKey(file), outcome.bytes, 'audio/mpeg');
         files.push(file);
       }
-      if (files.length < own.length) {
-        failed += 1;
-        continue;
-      }
+      if (files.length < own.length) continue;
       recorded.push({ wordId: word.id, read: readOf(word.fields), files });
     }
     await rows.saveRecordings(editionId, recorded);
-    return { recorded: recorded.length, failed };
+    await markFailures(editionId, words, recorded);
+    return { recorded: recorded.length, failed: words.length - recorded.length };
   }
 
-  /** Deletes the files of rows retired before the cutoff; how many. */
+  /** Stamps the Words the run failed for, and clears the stamp of the ones it recorded. */
+  async function markFailures(
+    editionId: string,
+    words: readonly { readonly id: string }[],
+    recorded: readonly RecordedWord[],
+  ) {
+    const done = new Set(recorded.map(({ wordId }) => wordId));
+    const stamp = async (ids: string[], recordingFailedAt: Date | null) => {
+      if (ids.length === 0) return;
+      await db
+        .update(contentWords)
+        .set({ recordingFailedAt })
+        .where(and(eq(contentWords.editionId, editionId), inArray(contentWords.id, ids)));
+    };
+    await stamp(
+      words.filter(({ id }) => !done.has(id)).map(({ id }) => id),
+      clock.now(),
+    );
+    await stamp([...done], null);
+  }
+
+  /**
+   * Deletes the files of rows retired before the cutoff; how many. Each row
+   * is stamped under its Edition's write lock, the one a save that re-lives
+   * it takes, and only while it is still due, so a row a save re-lived keeps
+   * its file.
+   */
   async function deleteRetired() {
     const before = new Date(clock.now().getTime() - RETIRED_FILE_KEPT_MS);
     const dueOf = (table: typeof mediaRecordings | typeof mediaIllustrations) =>
       and(isNotNull(table.retiredAt), lt(table.retiredAt, before), isNull(table.fileDeletedAt));
+    const locked = (editionId: string, sweep: (tx: Transaction) => Promise<boolean>) =>
+      db.transaction(async (tx) => {
+        await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${editionId}))`);
+        return sweep(tx);
+      });
+    let deleted = 0;
     const recordings = await db.select().from(mediaRecordings).where(dueOf(mediaRecordings));
     for (const row of recordings) {
-      await store.delete(recordingKey(row));
-      await db
-        .update(mediaRecordings)
-        .set({ fileDeletedAt: clock.now() })
-        .where(
-          and(
-            eq(mediaRecordings.editionId, row.editionId),
-            eq(mediaRecordings.wordId, row.wordId),
-            eq(mediaRecordings.narratorVoice, row.narratorVoice),
-            eq(mediaRecordings.recordingKind, row.recordingKind),
-            eq(mediaRecordings.hash, row.hash),
-          ),
-        );
+      const swept = await locked(row.editionId, async (tx) => {
+        const stamped = await tx
+          .update(mediaRecordings)
+          .set({ fileDeletedAt: clock.now() })
+          .where(
+            and(
+              eq(mediaRecordings.editionId, row.editionId),
+              eq(mediaRecordings.wordId, row.wordId),
+              eq(mediaRecordings.narratorVoice, row.narratorVoice),
+              eq(mediaRecordings.recordingKind, row.recordingKind),
+              eq(mediaRecordings.hash, row.hash),
+              dueOf(mediaRecordings),
+            ),
+          )
+          .returning({ hash: mediaRecordings.hash });
+        if (stamped.length > 0) await store.delete(recordingKey(row));
+        return stamped.length > 0;
+      });
+      if (swept) deleted += 1;
     }
     const illustrations = await db
       .select()
       .from(mediaIllustrations)
       .where(dueOf(mediaIllustrations));
     for (const row of illustrations) {
-      await store.delete(illustrationKey(row));
-      await db
-        .update(mediaIllustrations)
-        .set({ fileDeletedAt: clock.now() })
-        .where(
-          and(
-            eq(mediaIllustrations.editionId, row.editionId),
-            eq(mediaIllustrations.wordId, row.wordId),
-            eq(mediaIllustrations.hash, row.hash),
-          ),
-        );
+      const swept = await locked(row.editionId, async (tx) => {
+        const stamped = await tx
+          .update(mediaIllustrations)
+          .set({ fileDeletedAt: clock.now() })
+          .where(
+            and(
+              eq(mediaIllustrations.editionId, row.editionId),
+              eq(mediaIllustrations.wordId, row.wordId),
+              eq(mediaIllustrations.hash, row.hash),
+              dueOf(mediaIllustrations),
+            ),
+          )
+          .returning({ hash: mediaIllustrations.hash });
+        if (stamped.length > 0) await store.delete(illustrationKey(row));
+        return stamped.length > 0;
+      });
+      if (swept) deleted += 1;
     }
-    return recordings.length + illustrations.length;
+    return deleted;
   }
 
   /**

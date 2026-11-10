@@ -10,7 +10,7 @@ import { createGoogleVerifier } from './account/google-verifier';
 import { createSmtpMailer } from './account/smtp-mailer';
 import { ownerAlertsOf } from './alerts/owner-chat';
 import { createApp } from './app';
-import { readConfig, RecordingsConfigSchema, ServerConfigSchema } from './config';
+import { readConfig, ServerConfigSchema } from './config';
 import { memoryMediaStore, r2MediaStore } from './media/media-store';
 import { createDatabase } from './database/database';
 import { createEasSource } from './development/eas-source';
@@ -55,13 +55,10 @@ const app = createApp({
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
   sentry: sentryOf(config, systemClock),
   ciToken: config.CI_HISTORY_TOKEN,
-  mediaBase: config.MEDIA_BASE,
-  // The R2 variables the Recordings service reads, required in production;
-  // unset in development, Illustrations stay in memory.
-  mediaStore: (({ r2 }) =>
-    r2 === undefined ? memoryMediaStore() : r2MediaStore(r2, { clock: systemClock }))(
-    readConfig(RecordingsConfigSchema, process.env),
-  ),
+  mediaBase: config.mediaBase,
+  // Unset in development, the Media Store's files stay in memory.
+  mediaStore:
+    config.r2 === undefined ? memoryMediaStore() : r2MediaStore(config.r2, { clock: systemClock }),
 });
 const server = await startServer({ app, database, port: config.PORT });
 
