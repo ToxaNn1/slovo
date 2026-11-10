@@ -3,11 +3,15 @@ import { Composition } from 'remotion';
 import { Board, boardLength } from './board/Board';
 import { FindMistake, findMistakeLength } from './fix/FindMistake';
 import './look';
+import { SayNicerCompositions } from './nicer/SayNicerRoot';
+import { OneWordCompositions } from './oneword/OneWordRoot';
 import { Promo, promoLength } from './promo/Promo';
 import { PromoSocial, promoSocialLength } from './promo/PromoSocial';
 import { Bundiuchnyi } from './series/Bundiuchnyi';
 import { beats } from './series/Missing';
+import { StopFrameCompositions } from './stopframe/StopFrameRoot';
 import { Stress, stressLength } from './stress/Stress';
+import { WeekCompositions } from './week/WeekRoot';
 
 export function Root() {
   return (
@@ -56,6 +60,11 @@ export function Root() {
       <Composition id="FindMistake" component={FindMistake} defaultProps={{ episode: 0 }} durationInFrames={findMistakeLength} fps={30} width={1080} height={1920} />
       <Composition id="FindMistake2" component={FindMistake} defaultProps={{ episode: 1 }} durationInFrames={findMistakeLength} fps={30} width={1080} height={1920} />
       <Composition id="FindMistake3" component={FindMistake} defaultProps={{ episode: 2 }} durationInFrames={findMistakeLength} fps={30} width={1080} height={1920} />
+      {/* «Одним словом», «Стоп-кадр», «Скажи гарніше», «7 днів — 7 слів»: 9:16 only. */}
+      <OneWordCompositions />
+      <StopFrameCompositions />
+      <SayNicerCompositions />
+      <WeekCompositions />
     </>
   );
 }
