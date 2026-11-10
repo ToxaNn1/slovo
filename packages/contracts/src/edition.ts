@@ -130,7 +130,13 @@ export const LanguageTraitsSchema = z
      * None when left out.
      */
     expressionPunctuation: LetterListSchema.optional(),
-    /** The language tag used to sort text in the Edition's language. */
+    /**
+     * The characters read as one apostrophe when text is compared, such as
+     * the ones a reader's keyboard may type; a Comparison Key writes each as
+     * the first. None when left out.
+     */
+    apostrophes: LetterListSchema.optional(),
+    /** The language tag used to sort text and fold its case in the Edition's language. */
     sortLocale: LanguageTagSchema,
     /**
      * The rows of the on-screen keyboard of the Daily Crossword, top to
