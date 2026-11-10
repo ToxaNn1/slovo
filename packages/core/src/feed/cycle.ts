@@ -104,27 +104,44 @@ const allLists = ({ words, corrections, idioms, synonymRows, tips }: EntryIds) =
   tips,
 ];
 
-const orderOf = (ids: EntryIds, seed: number): EntryIds =>
-  eachList(ids, (list) => shuffle(list, seed));
-
 /**
  * Opens the current Cycle, or starts the first one with a seed from the
  * random port. A Cycle covers the Entries eligible when it opens or starts,
- * and shuffles them with its seed.
+ * and shuffles them with its seed. The first Cycle opens with the Starter
+ * Words, shuffled among themselves, so a new phone's first cards play the
+ * media the app bundles; a later Cycle orders them as any Word.
  */
 export async function openCycle({
   entries,
   userState,
   random,
+  starterWords,
 }: {
   entries: Pick<Entries, 'eligible'>;
   userState: UserState;
   random: Random;
+  /** The ids of the Words whose media the app bundles as Starter Media. */
+  starterWords: readonly string[];
 }): Promise<Cycle> {
+  const starters = new Set(starterWords);
+  /** The Entries in the order of the Cycle with the id and the seed. */
+  function orderOf(ids: EntryIds, { id, seed }: { id: number; seed: number }): EntryIds {
+    const shuffledIds = eachList(ids, (list) => shuffle(list, seed));
+    if (id !== 1) return shuffledIds;
+    const { words } = shuffledIds;
+    return {
+      ...shuffledIds,
+      words: [
+        ...words.filter((word) => starters.has(word)),
+        ...words.filter((word) => !starters.has(word)),
+      ],
+    };
+  }
+
   const stored = await userState.read(cycleRecord);
   let cycle = stored ?? { id: 1, seed: drawSeed(random) };
   if (stored === undefined) await userState.write(cycleRecord.change(cycle));
-  let order = orderOf(await entries.eligible(), cycle.seed);
+  let order = orderOf(await entries.eligible(), cycle);
   // Only the marks of this Cycle; one of another Cycle reads as not Seen.
   const seen = new Set(
     [...(await userState.list(seenRecords))].flatMap(([id, seenIn]) =>
@@ -167,7 +184,7 @@ export async function openCycle({
     async start() {
       const started = { id: cycle.id + 1, seed: drawSeed(random) };
       const read = await readEligible();
-      const startedOrder = orderOf(read.eligible, started.seed);
+      const startedOrder = orderOf(read.eligible, started);
       // Every Seen record, also any kept by another Cycle over the user state
       // or brought from another Cycle by a device.
       const seenIds = (await userState.list(seenRecords)).keys();
@@ -179,7 +196,7 @@ export async function openCycle({
         ]),
         commit() {
           // Entries read again since are covered with the new seed.
-          order = read.keepIfLatest() ? startedOrder : orderOf(order, started.seed);
+          order = read.keepIfLatest() ? startedOrder : orderOf(order, started);
           cycle = started;
           seen.clear();
         },
@@ -187,7 +204,7 @@ export async function openCycle({
     },
     async readEligibleAgain() {
       const read = await readEligible();
-      if (read.keepIfLatest()) order = orderOf(read.eligible, cycle.seed);
+      if (read.keepIfLatest()) order = orderOf(read.eligible, cycle);
     },
   };
 }

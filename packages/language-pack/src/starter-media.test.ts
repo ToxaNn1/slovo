@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import {
   downloadStarterMedia,
   starterMediaFiles,
+  starterWordIds,
   starterMediaOf,
   STARTER_WORDS,
   type StarterMediaList,
@@ -184,5 +185,14 @@ describe('The Starter Media folder', () => {
     ).rejects.toThrow('ended at 1 of 3 bytes');
     expect(existsSync(join(dir, 'list.json'))).toBe(false);
     expect(starterMediaFiles(dir)).toEqual({});
+  });
+
+  it('gives Metro the Starter Words once the build listed them, none before', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'starter-'));
+    expect(starterWordIds(dir)).toEqual([]);
+    await downloadStarterMedia({ ...list, wordIds: ['w1', 'w2'], files: [] }, dir, () =>
+      Promise.resolve(new Uint8Array()),
+    );
+    expect(starterWordIds(dir)).toEqual(['w1', 'w2']);
   });
 });
