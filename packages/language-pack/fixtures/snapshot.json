@@ -247,5 +247,8 @@
     }
   ],
   "crosswordDays": [],
+  "mediaBase": "https://media.slovo.test",
+  "recordings": [],
+  "illustrations": [],
   "needsNewRecording": ["w_fx0002"]
 }

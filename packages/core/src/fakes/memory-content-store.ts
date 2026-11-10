@@ -1,6 +1,6 @@
 import type { Patch } from '@slovo/contracts/api';
 
-import type { ContentStore } from '../ports';
+import type { ContentStore, WordMedia } from '../ports';
 
 /** A content store in memory: the Patches it applied, in order, and whether the next one fails. */
 export interface MemoryContentStore extends ContentStore {
@@ -19,6 +19,8 @@ export function createMemoryContentStore({
   let lastEtag = etag;
   let failing = false;
   const applied: Patch[] = [];
+  const recordings = new Map<string, WordMedia['recordings'][number]>();
+  const illustrations = new Map<string, WordMedia['illustrations'][number]>();
   return {
     applied,
     contentVersion: () => version,
@@ -32,9 +34,35 @@ export function createMemoryContentStore({
         return Promise.reject(new Error('The Patch is not for this pack'));
       }
       applied.push(patch);
+      for (const row of patch.recordings) {
+        const key = `${row.wordId} ${row.narratorVoice} ${row.recordingKind} ${row.hash}`;
+        if (row.retired) recordings.delete(key);
+        else recordings.set(key, liveOf(row));
+      }
+      for (const row of patch.illustrations) {
+        const key = `${row.wordId} ${row.hash}`;
+        if (row.retired) illustrations.delete(key);
+        else illustrations.set(key, liveOf(row));
+      }
       version = patch.contentVersion;
       lastEtag = patchEtag;
       return Promise.resolve();
     },
+    mediaOf(wordId) {
+      const ofWord = <Row extends { wordId: string }>(rows: Map<string, Row>) =>
+        [...rows.entries()]
+          .filter(([, row]) => row.wordId === wordId)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([, row]) => row);
+      return Promise.resolve({
+        recordings: ofWord(recordings),
+        illustrations: ofWord(illustrations),
+      });
+    },
   };
+}
+
+/** A media row as the live set holds it, without its retired flag. */
+function liveOf<Row extends { retired: boolean }>({ retired: _, ...live }: Row): Omit<Row, 'retired'> {
+  return live;
 }

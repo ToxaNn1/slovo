@@ -1,5 +1,6 @@
 import type { Patch } from '@slovo/contracts/api';
 
+import { mediaStatements } from './media-rows';
 import {
   childDeletes,
   correctionRows,
@@ -91,6 +92,7 @@ export async function applyPatch(db: PackWriteDatabase, patch: Patch, etag: stri
       ...patch.tips.flatMap(tipRows),
       ...patch.crosswordDays.flatMap(crosswordDayRows),
       ...patch.curatedCollections.flatMap(curatedCollectionRows),
+      ...mediaStatements(patch),
       {
         sql: "UPDATE metadata SET value = ? WHERE key = 'content_version'",
         params: [String(patch.contentVersion)],

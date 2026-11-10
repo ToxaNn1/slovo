@@ -88,6 +88,7 @@ export function createApiHandler({
   contentStore,
   contentWrites,
   development,
+  mediaBase,
   editions,
   mailer,
   mistakeReports,
@@ -107,6 +108,8 @@ export function createApiHandler({
   contentStore: ContentStore;
   contentWrites: ContentWrites;
   development: DevelopmentOverview;
+  /** The URL root of the Media Store the snapshot and the Patch name (ADR 0099). */
+  mediaBase: string;
   editions: EditionRegistry;
   /** Sends the notice of an admin invite. */
   mailer: Mailer;
@@ -141,7 +144,7 @@ export function createApiHandler({
         quality,
       ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
-      content: contentProcedures(editions, contentStore),
+      content: contentProcedures(editions, contentStore, mediaBase),
       counters: countersProcedures(communityCounters),
       edition: editionProcedures(editions, clock),
       reports: reportsProcedures(mistakeReports),

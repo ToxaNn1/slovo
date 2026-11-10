@@ -62,6 +62,7 @@ import { createApp } from './app';
 import { deleteCollectionLink } from './collection-links/collection-link-delete';
 import { createDatabase, type Database } from './database/database';
 import { migrateDatabase } from './database/migrate';
+import { createMediaRows } from './content/media-rows';
 import { createContentStore } from './content/content-store';
 import { accounts, sessions, signInMethods } from './database/schema';
 import { readEditions } from './edition/edition-folders';
@@ -689,6 +690,7 @@ export function testApp({
     eas,
     sentry,
     ciToken: TEST_CI_TOKEN,
+    mediaBase: TEST_MEDIA_BASE,
   });
   const ip = newIp();
   // The one way a request reaches the app.
@@ -775,6 +777,8 @@ export function testApp({
         [],
         TEST_WRITE,
       ),
+    /** The Edition's media rows, written as the Recording generation and the Illustration upload write them. */
+    media: createMediaRows({ database, clock: systemClock }),
     /** Imports the Edition folder into the content tables, as the import command does. */
     importContent: (editionId: string, editionDir: string, options?: { override?: boolean }) =>
       createContentStore({
@@ -794,6 +798,9 @@ export function testApp({
 }
 
 /** The token CI pushes its history with, in tests. */
+/** The Media Store's URL root the test backend names. */
+export const TEST_MEDIA_BASE = 'https://media.slovo.test';
+
 export const TEST_CI_TOKEN = 'a-test-ci-history-token-of-32-characters-at-least';
 
 /** A Sentry that answers the numbers a test sets, and counts the reads it was asked. */

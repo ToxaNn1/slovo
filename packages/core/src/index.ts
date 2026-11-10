@@ -246,7 +246,7 @@ export {
   createContentUpdate,
   type ContentUpdate,
 } from './content-update/content-update';
-export type { ContentStore, PackVersion } from './ports';
+export type { ContentStore, PackVersion, WordMedia } from './ports';
 export { type ProgressState } from './progress/progress';
 export type { XpAction, XpAward } from './game/game-xp';
 export type { CrosswordSolve, XpLog, XpLogState } from './progress/xp-log';

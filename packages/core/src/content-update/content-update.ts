@@ -1,6 +1,6 @@
 import { answerOf } from '../backend';
 import type { Edition } from '../edition/edition';
-import type { Backend, ContentStore, Random, Schedule } from '../ports';
+import type { Backend, ContentStore, Random, Schedule, WordMedia } from '../ports';
 import { withRetries } from '../retry';
 
 /** An Edition the backend doesn't serve, one with content updates off, or one not imported yet. */
@@ -32,6 +32,8 @@ export interface ContentUpdate {
   followForeground(): () => void;
   /** The content version the pack holds now. */
   contentVersion(): number;
+  /** The live Recording and Illustration rows of a Word, as the Patches applied left them (ADR 0099). */
+  mediaOf(wordId: string): Promise<WordMedia>;
   /** Calls the listener after each Patch applied, until the returned function unsubscribes it. */
   subscribe(listener: () => void): () => void;
 }
@@ -111,6 +113,7 @@ export function createContentUpdate({
     checkForUpdate,
     followForeground,
     contentVersion: () => store.contentVersion(),
+    mediaOf: (wordId) => store.mediaOf(wordId),
     subscribe(listener) {
       listeners.add(listener);
       return () => {
