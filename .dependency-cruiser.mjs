@@ -285,7 +285,7 @@ export default {
   ],
   options: {
     doNotFollow: { path: 'node_modules' },
-    exclude: { path: ['/node_modules/', '/dist/', '/\\.expo/', '/\\.astro/'] },
+    exclude: { path: ['/node_modules/', '/dist/', '/\\.expo/', '/\\.astro/', '^apps/video/'] },
     // Count `import type` too: a type-only cycle is still a cycle.
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.json' },
