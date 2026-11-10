@@ -18,7 +18,6 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { crc32, deflateSync } from 'node:zlib';
 
 import { DatabaseSync } from 'node:sqlite';
 
@@ -1748,51 +1747,18 @@ describe('buildLanguagePack', () => {
   });
 
   describe('the Illustration of a Word', () => {
-    function pngChunk(type: string, data: Buffer): Buffer {
-      const body = Buffer.concat([Buffer.from(type, 'latin1'), data]);
-      const length = Buffer.alloc(4);
-      length.writeUInt32BE(data.length);
-      const crc = Buffer.alloc(4);
-      crc.writeUInt32BE(crc32(body));
-      return Buffer.concat([length, body, crc]);
-    }
-
-    /** A blank greyscale PNG, padded with a comment to `bytes` when given. */
-    function png(width: number, height: number, bytes?: number): Buffer {
-      const header = Buffer.alloc(13);
-      header.writeUInt32BE(width, 0);
-      header.writeUInt32BE(height, 4);
-      header.writeUInt8(8, 8);
-      const rows = Buffer.alloc((width + 1) * height);
-      const parts = [
-        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-        pngChunk('IHDR', header),
-        pngChunk('IDAT', deflateSync(rows)),
-        pngChunk('IEND', Buffer.alloc(0)),
-      ];
-      if (bytes === undefined) return Buffer.concat(parts);
-      const keyword = Buffer.from('Comment\0', 'latin1');
-      const padding = bytes - Buffer.concat(parts).length - 12 - keyword.length;
-      const comment = pngChunk('tEXt', Buffer.concat([keyword, Buffer.alloc(padding, 'x')]));
-      return Buffer.concat([...parts.slice(0, -1), comment, parts.at(-1) ?? Buffer.alloc(0)]);
-    }
-
-    /** A copy of the valid fixture whose Word w_fx0002 names `name`, with `file` in its illustrations. */
-    function withIllustration(name: string, file?: Buffer): string {
+    /** A copy of the valid fixture whose Word w_fx0002 names `name`. */
+    function withIllustration(name: string): string {
       const editionDir = copyFixture('valid');
       editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
         ...word,
         illustration: name,
       }));
-      if (file !== undefined) {
-        mkdirSync(join(editionDir, 'assets/illustrations'), { recursive: true });
-        writeFileSync(join(editionDir, 'assets/illustrations', name), file);
-      }
       return editionDir;
     }
 
     it('builds a Word that names an Illustration and reads the name back, in pack format 12', async () => {
-      const editionDir = withIllustration('w_fx0002.png', png(320, 320));
+      const editionDir = withIllustration('w_fx0002.png');
       record(editionDir);
       const outFile = packPath();
 
