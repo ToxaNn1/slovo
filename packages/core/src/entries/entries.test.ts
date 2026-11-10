@@ -342,10 +342,7 @@ describe('the Entries', () => {
           mix: {
             categoryIds: 'all' as const,
             correctionCategoryIds: 'all' as const,
-            corrections: true,
-            idioms: false,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: false, synonymRow: true, tip: true },
           },
         },
       };
@@ -389,7 +386,10 @@ describe('the Entries', () => {
             ...edition,
             userSettingDefaults: {
               ...edition.userSettingDefaults,
-              mix: { ...edition.userSettingDefaults.mix, [feature]: false },
+              mix: {
+                ...edition.userSettingDefaults.mix,
+                kinds: { ...edition.userSettingDefaults.mix.kinds, [kind]: false },
+              },
             },
           },
         );

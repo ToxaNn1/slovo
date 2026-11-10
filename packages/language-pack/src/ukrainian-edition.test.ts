@@ -98,10 +98,7 @@ describe('the UA Edition', () => {
       mix: {
         categoryIds: 'all',
         correctionCategoryIds: 'all',
-        corrections: true,
-        idioms: true,
-        synonymRows: true,
-        tips: true,
+        kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
       },
       rarityCeiling: 5,
       narratorVoice: 'oksana',

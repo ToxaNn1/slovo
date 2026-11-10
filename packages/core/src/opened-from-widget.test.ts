@@ -41,7 +41,7 @@ async function run({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) => feature === 'corrections',
-      userSettingDefaults: { mix: { corrections } },
+      userSettingDefaults: { mix: { kinds: { correction: corrections } } },
     }),
     userState: await openUserState({ port }),
     clock,

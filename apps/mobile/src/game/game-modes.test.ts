@@ -76,7 +76,7 @@ async function open({
     content: createMemoryContentPort({ words: Array.from({ length: words }, (_, i) => word(i)) }),
     edition: testEdition({
       isFeatureEnabled: (feature) => !switchedOff.includes(feature),
-      userSettingDefaults: { mix: { corrections: correctionsInMix } },
+      userSettingDefaults: { mix: { kinds: { correction: correctionsInMix } } },
     }),
     userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-15T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },

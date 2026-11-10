@@ -26,7 +26,7 @@ const content = createMemoryContentPort({
 
 const edition = testEdition({
   isFeatureEnabled: (feature) => feature === 'knowledge' || feature === 'rarityCeiling',
-  userSettingDefaults: { mix: { categoryIds: ['test', 'sea'], corrections: false } },
+  userSettingDefaults: { mix: { categoryIds: ['test', 'sea'], kinds: { correction: false } } },
 });
 
 /** One Account on a fake backend, and the devices signed into it, on one clock. */

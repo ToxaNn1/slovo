@@ -234,7 +234,7 @@ async function run({
         !off.includes(feature) &&
         (((feature === 'game' || feature === 'gameGuessWord') && game) || on.includes(feature)),
       userSettingDefaults: {
-        mix: { categoryIds: categories.map(({ id }) => id), corrections: false },
+        mix: { categoryIds: categories.map(({ id }) => id), kinds: { correction: false } },
       },
       ...(badges === undefined ? {} : { badges }),
     }),

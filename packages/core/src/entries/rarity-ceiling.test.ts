@@ -41,10 +41,7 @@ const edition = ({ off = [], ceiling = 5 }: Options) =>
       rarityCeiling: ceiling,
       mix: {
         categoryIds: 'all',
-        corrections: true,
-        idioms: false,
-        synonymRows: false,
-        tips: false,
+        kinds: { correction: true, idiom: false, synonymRow: false, tip: false },
       },
       notificationTimes: ['09:00'],
     },

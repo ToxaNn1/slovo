@@ -35,10 +35,7 @@ async function open({
       userSettingDefaults: {
         mix: {
           categoryIds: 'all',
-          corrections: false,
-          idioms: false,
-          synonymRows: false,
-          tips: false,
+          kinds: { correction: false, idiom: false, synonymRow: false, tip: false },
         },
         notificationTimes: ['09:00'],
       },

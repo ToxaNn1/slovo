@@ -34,7 +34,7 @@ async function run({ clock = fakeClock().clock }: { clock?: Clock } = {}) {
     content,
     edition: testEdition({
       isFeatureEnabled: () => false,
-      userSettingDefaults: { mix: { corrections: false } },
+      userSettingDefaults: { mix: { kinds: { correction: false } } },
     }),
     userState: await openUserState({ port }),
     clock,

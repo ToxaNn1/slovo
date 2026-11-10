@@ -216,7 +216,7 @@ describe('the settings and the composition over the tracked user state', () => {
       content: createMemoryContentPort({ words: [word('w_one'), word('w_two')], corrections: [] }),
       edition: testEdition({
         isFeatureEnabled: () => false,
-        userSettingDefaults: { mix: { corrections: false } },
+        userSettingDefaults: { mix: { kinds: { correction: false } } },
       }),
       userState,
       clock: time.clock,

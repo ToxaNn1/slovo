@@ -13,7 +13,7 @@ const edition = (off: readonly FeatureSwitch[] = []) =>
     isFeatureEnabled: (feature) => !off.includes(feature),
     languageTraits: { sortLocale: 'uk' },
     searchLetters: { ґ: 'г' },
-    userSettingDefaults: { mix: { corrections: false } },
+    userSettingDefaults: { mix: { kinds: { correction: false } } },
   });
 
 const content = createMemoryContentPort({

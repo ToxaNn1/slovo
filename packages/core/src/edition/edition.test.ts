@@ -149,10 +149,7 @@ const validConfig = {
     mix: {
       categories: 'all',
       correctionCategories: 'all',
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
+      kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
     },
     rarityCeiling: 5,
   },
@@ -424,10 +421,7 @@ describe('loadEdition', () => {
       mix: {
         categoryIds: 'all',
         correctionCategoryIds: 'all',
-        corrections: true,
-        idioms: true,
-        synonymRows: true,
-        tips: true,
+        kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
       },
     });
   });
@@ -440,10 +434,7 @@ describe('loadEdition', () => {
         mix: {
           categories: ['speech'],
           correctionCategories: ['work'],
-          corrections: false,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
+          kinds: { correction: false, idiom: true, synonymRow: true, tip: true },
         },
       },
     });
@@ -451,10 +442,7 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.mix).toEqual({
       categoryIds: ['speech'],
       correctionCategoryIds: ['work'],
-      corrections: false,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
+      kinds: { correction: false, idiom: true, synonymRow: true, tip: true },
     });
   });
 
@@ -1184,10 +1172,7 @@ describe('loadEdition', () => {
           mix: {
             categories: ['nature', 'military'],
             correctionCategories: 'all',
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1201,10 +1186,7 @@ describe('loadEdition', () => {
           mix: {
             categories: [],
             correctionCategories: 'all',
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1218,10 +1200,7 @@ describe('loadEdition', () => {
           mix: {
             categories: 'all',
             correctionCategories: ['nature'],
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1235,10 +1214,7 @@ describe('loadEdition', () => {
           mix: {
             categories: 'all',
             correctionCategories: [],
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1251,10 +1227,7 @@ describe('loadEdition', () => {
           ...userSettingDefaults,
           mix: {
             categories: 'all',
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
