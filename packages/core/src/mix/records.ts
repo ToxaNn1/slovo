@@ -1,7 +1,41 @@
 import { MixKindWeightSchema, QuickQuestionEverySchema } from '@slovo/contracts';
 import { z } from 'zod';
 
-import { declareRecord, declareRecords, InstantSchema } from '../user-state/user-state-record';
+import {
+  featureOfKind,
+  tableOfMixKinds,
+  type KindNames,
+  type MixKind,
+} from '../entries/entry-kinds';
+import {
+  declareRecord,
+  declareRecords,
+  InstantSchema,
+  type UserStateRecord,
+} from '../user-state/user-state-record';
+
+/**
+ * Whether the user has each kind of Entry beside Words, as a whole, in the
+ * Mix, one record per kind under `mix.` and the kind's name (`mix.idioms`);
+ * without it, the Edition's default Mix. They sync last write wins like the
+ * rest of the Mix (ADR 0041, 0051); a further kind's key needs no migration.
+ */
+export const mixKindRecords = tableOfMixKinds((kind) =>
+  declareRecord(`mix.${featureOfKind(kind)}`, z.boolean()),
+);
+
+/**
+ * The same records by the name the user state keeps each under. A further
+ * kind of Entry in the Mix is a row the compiler asks for here.
+ */
+const mixKindRecordsByName: {
+  readonly [Kind in MixKind as `mix${Capitalize<KindNames[Kind]>}`]: UserStateRecord<boolean>;
+} = {
+  mixCorrections: mixKindRecords.correction,
+  mixIdioms: mixKindRecords.idiom,
+  mixSynonymRows: mixKindRecords.synonymRow,
+  mixTips: mixKindRecords.tip,
+};
 
 /** The records of the Mix and the Hidden Entries. */
 export const mixRecords = {
@@ -21,26 +55,7 @@ export const mixRecords = {
    * rest of the Mix (ADR 0041); a new key needs no migration.
    */
   mixCorrectionCategories: declareRecords('mix.correctionCategories.', z.boolean()),
-  /** Whether the user has Corrections, as a whole, in the Mix; without it, the Edition's default Mix. */
-  mixCorrections: declareRecord('mix.corrections', z.boolean()),
-  /**
-   * Whether the user has Idioms, as a whole, in the Mix; without it, the
-   * Edition's default Mix. It syncs last write wins like the rest of the Mix
-   * (ADR 0041); a new key needs no migration.
-   */
-  mixIdioms: declareRecord('mix.idioms', z.boolean()),
-  /**
-   * Whether the user has Synonym Rows, as a whole, in the Mix; without it, the
-   * Edition's default Mix. It syncs last write wins like the rest of the Mix
-   * (ADR 0041, 0051).
-   */
-  mixSynonymRows: declareRecord('mix.synonymRows', z.boolean()),
-  /**
-   * Whether the user has Tips, as a whole, in the Mix; without it, the
-   * Edition's default Mix. It syncs last write wins like the rest of the Mix
-   * (ADR 0041, 0051).
-   */
-  mixTips: declareRecord('mix.tips', z.boolean()),
+  ...mixKindRecordsByName,
   /**
    * The Mix kind weight the user chose for Corrections, Idioms, Synonym Rows
    * or Tips, one record per kind; without it, «Звичайно». It syncs last write

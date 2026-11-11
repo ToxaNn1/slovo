@@ -1,7 +1,14 @@
 import type { Category, EntryKind, MixKindWeight, QuickQuestionEvery } from '@slovo/contracts';
 
 import type { DefaultMix, Edition, UserSettingDefaults } from '../edition/edition';
-import { featureOfKind, MIX_KINDS, type CategoryKind, type MixKind } from './entry-kinds';
+import { mixKindRecords } from '../mix/records';
+import {
+  featureOfKind,
+  MIX_KINDS,
+  tableOfMixKinds,
+  type CategoryKind,
+  type MixKind,
+} from './entry-kinds';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
@@ -26,23 +33,7 @@ export type KindsInMix = Readonly<Record<MixKind, boolean>>;
 export type MixKindWeights = Readonly<Record<MixKind, MixKindWeight>>;
 
 /** Every kind at «Звичайно»: the Feed's turns of 0.9, also while the Edition turns the weights off. */
-export const NORMAL_KIND_WEIGHTS: MixKindWeights = {
-  correction: 'normal',
-  idiom: 'normal',
-  synonymRow: 'normal',
-  tip: 'normal',
-};
-
-/**
- * Each kind of Entry in the Mix as a whole (the kind table names them, ADR
- * 0015): its user-state record (ADR 0013, 0041).
- */
-const KIND_RECORDS: Readonly<Record<MixKind, typeof userStateRecords.mixCorrections>> = {
-  correction: userStateRecords.mixCorrections,
-  idiom: userStateRecords.mixIdioms,
-  synonymRow: userStateRecords.mixSynonymRows,
-  tip: userStateRecords.mixTips,
-};
+export const NORMAL_KIND_WEIGHTS: MixKindWeights = tableOfMixKinds(() => 'normal');
 
 /** How often the Feed asks a Quick Question until the user chooses: every 10th card. */
 const DEFAULT_QUICK_QUESTION_EVERY: QuickQuestionEvery = 10;
@@ -254,16 +245,6 @@ interface MixChoices {
   readonly quickQuestionEvery: QuickQuestionEvery | undefined;
 }
 
-/** A record over each kind of Entry in the Mix as a whole, from what `of` gives for it. */
-function eachKind<T>(of: (kind: MixKind) => T): Readonly<Record<MixKind, T>> {
-  return {
-    correction: of('correction'),
-    idiom: of('idiom'),
-    synonymRow: of('synonymRow'),
-    tip: of('tip'),
-  };
-}
-
 /** A record over each kind of Entry with Categories, from what `of` gives for it. */
 function eachList<T>(of: (kind: CategoryKind) => T): Readonly<Record<CategoryKind, T>> {
   return { word: of('word'), correction: of('correction') };
@@ -450,8 +431,10 @@ function mixStateOf(lists: CategoryLists, edition: MixEdition, choices: MixChoic
   return {
     ...categoriesInMixOf(lists.word, edition, choices, 'word'),
     correctionCategories: categoriesInMixOf(lists.correction, edition, choices, 'correction'),
-    kinds: eachKind((kind) => choices.kinds[kind] ?? mix.kinds[kind]),
-    kindWeights: eachKind((kind) => choices.kindWeights.get(kind) ?? NORMAL_KIND_WEIGHTS[kind]),
+    kinds: tableOfMixKinds((kind) => choices.kinds[kind] ?? mix.kinds[kind]),
+    kindWeights: tableOfMixKinds(
+      (kind) => choices.kindWeights.get(kind) ?? NORMAL_KIND_WEIGHTS[kind],
+    ),
     quickQuestionEvery: choices.quickQuestionEvery ?? DEFAULT_QUICK_QUESTION_EVERY,
   };
 }
@@ -459,13 +442,13 @@ function mixStateOf(lists: CategoryLists, edition: MixEdition, choices: MixChoic
 async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise<MixChoices> {
   const [lists, read, kindWeights, quickQuestionEvery] = await Promise.all([
     Promise.all(CATEGORY_KINDS.map((kind) => userState.list(CATEGORY_LISTS[kind].records))),
-    Promise.all(MIX_KINDS.map((kind) => userState.read(KIND_RECORDS[kind]))),
+    Promise.all(MIX_KINDS.map((kind) => userState.read(mixKindRecords[kind]))),
     userState.list(kindWeightRecords),
     userState.read(quickQuestionRecord),
   ]);
   return {
     categories: eachList((kind) => lists[CATEGORY_KINDS.indexOf(kind)] ?? new Map()),
-    kinds: eachKind((kind) => read[MIX_KINDS.indexOf(kind)]),
+    kinds: tableOfMixKinds((kind) => read[MIX_KINDS.indexOf(kind)]),
     kindWeights,
     quickQuestionEvery,
   };
@@ -534,7 +517,7 @@ export async function openMix({
     });
     for (const kind of MIX_KINDS) {
       if (kinds[kind] === state.kinds[kind]) continue;
-      for (const [key, value] of KIND_RECORDS[kind].change(kinds[kind])) writes.set(key, value);
+      for (const [key, value] of mixKindRecords[kind].change(kinds[kind])) writes.set(key, value);
     }
     const weights = new Map(choices.kindWeights);
     for (const kind of MIX_KINDS) {
@@ -556,7 +539,7 @@ export async function openMix({
     await userState.write(writes);
     const next: MixChoices = {
       categories: changed,
-      kinds: eachKind((kind) =>
+      kinds: tableOfMixKinds((kind) =>
         kinds[kind] === state.kinds[kind] ? choices.kinds[kind] : kinds[kind],
       ),
       kindWeights: weights,

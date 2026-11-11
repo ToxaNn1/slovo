@@ -61,3 +61,8 @@ export type Rarity = z.infer<typeof RaritySchema>;
 export const WordIdSchema = z
   .string()
   .regex(/^w_[a-z0-9]+$/, 'Expected a Word id: w_ followed by lowercase letters and digits');
+
+/** A lowercase kebab-case id, e.g. `proto-slavic`. */
+export const KebabCaseIdSchema = z
+  .string()
+  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Expected a lowercase kebab-case id');
