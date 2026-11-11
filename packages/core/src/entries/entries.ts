@@ -14,6 +14,7 @@ import {
   ENTRY_KINDS,
   featureOfKind,
   tableOfKinds,
+  tableOfMixKinds,
   type CategoryKind,
   type EntryOfKind,
   type KindNames,
@@ -203,7 +204,7 @@ export const EVERYTHING_IN: EligibilityChoices = {
 /** The Mix as the Entries read it. */
 type MixChoice = ReturnType<EligibilityChoices['mix']>;
 
-const ALL_KINDS_IN: KindsInMix = { correction: true, idiom: true, synonymRow: true, tip: true };
+const ALL_KINDS_IN: KindsInMix = tableOfMixKinds(() => true);
 
 /**
  * Reads once and keeps the result, as the Language Pack changes only by a

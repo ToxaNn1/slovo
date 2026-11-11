@@ -10,7 +10,7 @@ import { feedRecords } from './feed/records';
 import { gameRecords } from './game/records';
 import { knowledgeRecords } from './knowledge/records';
 import { mistakeReportRecords } from './mistake-reports/records';
-import { mixRecords } from './mix/records';
+import { mixKindRecords, mixRecords } from './mix/records';
 import { moodRecords } from './mood/records';
 import { notificationRecords } from './notifications/records';
 import { onboardingRecords } from './onboarding/records';
@@ -292,3 +292,6 @@ export const userStateMigrations: readonly UserStateMigration[] = [
     },
   },
 ];
+
+/** The Mix record of each kind of Entry beside Words, by kind. */
+export { mixKindRecords };

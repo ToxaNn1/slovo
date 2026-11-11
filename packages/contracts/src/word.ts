@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { CorrectionIdSchema } from './correction';
-import { OriginLanguageSchema } from './edition';
+import { OriginLanguageSchema } from './origin-language';
 import { hasNoRepeats, RaritySchema, SourceSchema, EntryTextSchema, WordIdSchema } from './shared';
 
 /**
