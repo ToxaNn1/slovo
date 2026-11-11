@@ -196,7 +196,7 @@ The workflow **Maestro** ([`.github/workflows/maestro.yml`](.github/workflows/ma
 
 ## Run the backend
 
-The backend serves every Edition from one deployment ([ADR 0030](docs/adr/0030-the-backend-is-a-factory-too.md)). It runs on the Mac with Node; Postgres 17 and Mailpit run in Docker. You need Docker Desktop running.
+The backend serves every Edition from one deployment ([ADR 0030](docs/adr/0030-the-backend-is-a-factory-too.md)). It runs on the Mac with Node; Postgres 18 and Mailpit run in Docker. You need Docker Desktop running.
 
 `pnpm dev` does steps 1–4 below and starts Metro pointed at the backend, in one terminal (see [Commands](#commands)). The steps are here for doing them one by one.
 
@@ -256,7 +256,7 @@ The backend serves every Edition from one deployment ([ADR 0030](docs/adr/0030-t
    curl -i -H 'authorization: Bearer <token>' 'http://localhost:8787/v1/editions/uk/records?after=0'
    ```
 
-5. Run the backend's tests. Each run makes a database with a random name on the local Postgres, runs the migrations on it and drops it at the end, so runs in parallel worktrees never meet. The tests call the backend through the API's client built from the contract, the one the app uses, with its fetch pointed at the backend in process, so no port is opened. When Postgres is not reachable, the run stops and asks you to start Docker. `pnpm test` from the root runs them with every other package's; CI runs them in the job "Backend" on a Postgres 17 service, after running every migration on an empty database. `DATABASE_URL` names another Postgres server for the tests.
+5. Run the backend's tests. Each run makes a database with a random name on the local Postgres, runs the migrations on it and drops it at the end, so runs in parallel worktrees never meet. The tests call the backend through the API's client built from the contract, the one the app uses, with its fetch pointed at the backend in process, so no port is opened. When Postgres is not reachable, the run stops and asks you to start Docker. `pnpm test` from the root runs them with every other package's; CI runs them in the job "Backend" on a Postgres 18 service, after running every migration on an empty database. `DATABASE_URL` names another Postgres server for the tests.
 
    ```sh
    pnpm --filter @slovo/backend test

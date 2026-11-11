@@ -197,7 +197,7 @@ jobs:
     # app build builds it from the Deployment's.
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_USER: slovo
           POSTGRES_PASSWORD: slovo
@@ -311,7 +311,7 @@ jobs:
     services:
       postgres:
         # The same image as the local services in compose.yaml.
-        image: postgres:17-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_USER: slovo
           POSTGRES_PASSWORD: slovo
@@ -347,7 +347,7 @@ jobs:
     timeout-minutes: 15
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_USER: slovo
           POSTGRES_PASSWORD: slovo
