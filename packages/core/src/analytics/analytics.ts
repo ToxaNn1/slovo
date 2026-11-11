@@ -47,7 +47,10 @@ export interface AnalyticsEvents {
   readonly breakStarted: { readonly days: number };
   /** The reader started a Game of the mode. */
   readonly gameStarted: { readonly mode: string };
-  /** A Game ended, won or lost: its mode, how long it ran and its result. */
+  /**
+   * A Game ended: its mode, how long it ran and its result. `status` is `won`
+   * when the Game counts as won (`countsAsWon`), a Game whose time is up included.
+   */
   readonly gameFinished: {
     readonly mode: string;
     readonly durationSeconds: number;
