@@ -18,3 +18,4 @@ commitlint types/scopes; never touch feat/1108-video, apps/video, backend media 
 
 ## Log
 - 2026-11-11T21:18:30Z step 0: coord branch created
+- 2026-11-11T21:23:51Z spec #1800, tickets #1801 #1802 #1803 #1804 #1805 #1806(after 1803) #1807(after #1792); integration chore/1800-core-cleanup pushed (PLAN). T6/T7 dropped: already on main. Push identity: noreply via scratchpad id.sh (env gmail is refused by GitHub).
