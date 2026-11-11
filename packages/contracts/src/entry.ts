@@ -33,7 +33,7 @@ export type MixKind = Exclude<EntryKind, 'word'>;
 export const MixKindSchema = z.literal(
   EntrySchema.options
     .map((entry) => entry.shape.kind.unwrap().value)
-    .filter((kind): kind is MixKind => kind !== 'word'),
+    .filter((kind) => kind !== 'word'),
 );
 
 /** The id of an Entry of any of the five kinds, told apart by its prefix. */
