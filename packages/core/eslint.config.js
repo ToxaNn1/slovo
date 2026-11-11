@@ -1,6 +1,7 @@
 import { builtinModules } from 'node:module';
 
 import shared from '@slovo/config/eslint';
+import switchLint from '@slovo/config/switch-lint';
 
 const uiFrameworks = ['react', 'react-dom', 'react-native', 'expo', '@expo/*', 'expo-*'];
 const nodeMessage = 'The Core must not depend on Node; put platform code behind a port.';
@@ -17,9 +18,6 @@ const webGlobals = [
   'XMLHttpRequest',
   'WebSocket',
 ];
-
-/** A question about one Feature Switch, as the Core asks the Edition. */
-const switchQuestion = "CallExpression[callee.property.name='isFeatureEnabled']";
 
 export default [
   ...shared,
@@ -67,14 +65,10 @@ export default [
             'Literal[value=/[\\u0400-\\u04FF]/], TemplateElement[value.raw=/[\\u0400-\\u04FF]/]',
           message: 'The Core must not contain language-specific text; read it from the Edition.',
         },
-        {
-          // A dependency between two Feature Switches lives in the one table of
-          // the contracts (`DEPENDS_ON`), which the Edition applies (ADR 0089).
-          selector: `LogicalExpression:has(> .left:matches(${switchQuestion}, :has(${switchQuestion}))):has(> .right:matches(${switchQuestion}, :has(${switchQuestion})))`,
-          message:
-            'Ask about one Feature Switch in a condition; a dependency between two goes into DEPENDS_ON in the contracts.',
-        },
       ],
     },
   },
+  // A dependency between two Feature Switches lives in the one table of the
+  // contracts (`DEPENDS_ON`), which the Edition applies (ADR 0089).
+  ...switchLint,
 ];
