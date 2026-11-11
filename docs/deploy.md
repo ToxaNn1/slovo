@@ -53,9 +53,19 @@ Every variable the server reads at start, with the value it takes in the Deploym
 | `quote-check` | `Dockerfile`            | `pnpm quote-check` | `0 * * * *`    | never               |
 | `recordings`  | `recordings.Dockerfile` | `pnpm recordings`  | `0 * * * *`    | never               |
 
-No service has a source: nothing links the project to a GitHub account, and a deploy is `railway up` with a project token. The file holds no secret. Every variable of the backend in «Variables» is `preserve()`, so Railway keeps the value set in its variables, where the owner sets it once; even `TRUSTED_PROXY_HOPS`, which is `1` behind Railway's proxy alone and `2` once Cloudflare is in front (ADR 0099). The Cron services take the backend's variables by reference, so each secret is set once, on the backend.
+No service has a source: nothing links the project to a GitHub account, and a deploy is `railway up` with a project token, which CI runs (see «Deploying»). The file holds no secret. Every variable of the backend in «Variables» is `preserve()`, so Railway keeps the value set in its variables, where the owner sets it once; even `TRUSTED_PROXY_HOPS`, which is `1` behind Railway's proxy alone and `2` once Cloudflare is in front (ADR 0099). The Cron services take the backend's variables by reference, so each secret is set once, on the backend.
 
 `railway config plan` shows what the file changes against the project and `railway config apply` applies it; an apply can delete a resource the file leaves out. Run them signed in to SLOVO's Railway account (accounts@slovoapp.org), never a personal one. The `recordings` service builds `recordings.Dockerfile`, which comes with the Media Store (ADR 0099); deploy it only once that file is on `main`.
+
+## Deploying
+
+CI deploys (ADR 0104): on every push to `main`, once the check "Lint, typecheck, test and Language Pack" passed, the job "Deploy to Railway" of `.github/workflows/ci.yml`
+
+1. installs the Railway CLI at the version the job pins (`@railway/cli`; the root `railway` package is only the SDK the file imports);
+2. runs `railway config apply --yes`, which brings the project to `.railway/railway.ts`; an apply that would delete a resource fails the job instead, since it has no `--confirm-destructive`;
+3. runs `railway up --ci --service <name>` for `backend`, `alerts` and `quote-check`, and for `recordings` once `recordings.Dockerfile` exists.
+
+It signs in with the GitHub Actions secret `RAILWAY_TOKEN`, a Railway project token of the `production` environment (project `slovo` → Settings → Tokens); to rotate it, make a new token there and set the secret to it. A pull request never deploys, and the concurrency group `railway-deploy` keeps deploys from overlapping: a newer push waits for the running deploy. To deploy by hand, set `RAILWAY_TOKEN` in the shell to that token and run the same commands from the repository root.
 
 ## Importing an Edition's content
 
@@ -126,4 +136,4 @@ DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin check ad
 DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin check import <file> [--version <version>]
 ```
 
-`agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. A person signs in to `/admin` with a code emailed by the mailer above and a TOTP; the TOTP secrets are sealed with a key derived from `BETTER_AUTH_SECRET`, so rotating it makes every Admin user set up the TOTP again.
+`agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. A person signs in to `/admin` with a code emailed by the mailer above and a TOTP; the TOTP secrets are sealed with a key derived from `AUTH_SECRET`, so rotating it makes every Admin user set up the TOTP again.

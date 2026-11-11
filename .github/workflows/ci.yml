@@ -303,6 +303,49 @@ jobs:
           CI_HISTORY_TOKEN: ${{ secrets.CI_HISTORY_TOKEN }}
         run: mkdir -p "$RUNNER_TEMP/reports" && node scripts/ci-history.mjs "$RUNNER_TEMP/reports"
 
+  # Deploys the Railway project from main once every check passed (ADR 0104):
+  # applies .railway/railway.ts, then uploads each service with `railway up`.
+  # RAILWAY_TOKEN is a project token of the production environment; the CLI
+  # reads it from the environment, so no step prints it.
+  deploy:
+    name: Deploy to Railway
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: [checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # One deploy at a time: a newer push waits for the running deploy and
+    # replaces any deploy still waiting.
+    concurrency:
+      group: railway-deploy
+      cancel-in-progress: false
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      # The Railway CLI, pinned; the root `railway` package is the SDK that
+      # .railway/railway.ts imports, and it needs this CLI 5.42.1 or newer.
+      RAILWAY_CLI_VERSION: 5.71.0
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Install the Railway CLI
+        run: npm install --global "@railway/cli@$RAILWAY_CLI_VERSION"
+      # Without --confirm-destructive, an apply that would delete a resource
+      # fails here instead of deleting it.
+      - name: Apply the Railway project file
+        run: railway config apply --yes
+      - name: Deploy the services
+        shell: bash
+        run: |
+          services=(backend alerts quote-check)
+          # The recordings service builds recordings.Dockerfile, which comes
+          # with the Media Store (ADR 0099).
+          if [ -f recordings.Dockerfile ]; then services+=(recordings); fi
+          for service in "${services[@]}"; do
+            echo "Deploying $service"
+            railway up --ci --service "$service"
+          done
+
   backend:
     name: Backend
     needs: changes
