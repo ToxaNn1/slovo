@@ -8,6 +8,7 @@
     "./tsconfig.base.json": "./tsconfig.base.json",
     "./eslint": "./eslint.config.js",
     "./token-lint": "./token-lint.js",
+    "./switch-lint": "./switch-lint.js",
     "./prettier": "./prettier.config.js",
     "./test-reports": {
       "types": "./test-reports.d.ts",
