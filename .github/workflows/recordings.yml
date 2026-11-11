@@ -81,7 +81,7 @@ jobs:
         run: |
           git add "editions/$EDITION/assets/recordings"
           if git diff --cached --quiet; then echo "No new Recordings"; exit 0; fi
-          git -c user.name=anton -c user.email=antondemydenko113@gmail.com \
+          git -c user.name=anton -c user.email="$(cat .github/owner-email)" \
             commit -m "feat(content): Recordings of $EDITION in its Narrator Voices"
           git pull --rebase origin "$GITHUB_REF_NAME"
           git push origin "HEAD:$GITHUB_REF_NAME"
