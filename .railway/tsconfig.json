@@ -1,0 +1,13 @@
+{
+  // Type-checks the Railway project file (ADR 0103); `pnpm typecheck` runs it.
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "es2024",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "skipLibCheck": true,
+    "types": []
+  },
+  "include": ["railway.ts"]
+}
