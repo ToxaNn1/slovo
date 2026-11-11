@@ -1,7 +1,6 @@
 import type { Category, EntryKind, MixKindWeight, QuickQuestionEvery } from '@slovo/contracts';
 
 import type { DefaultMix, Edition, UserSettingDefaults } from '../edition/edition';
-import { mixKindRecords } from '../mix/records';
 import {
   featureOfKind,
   MIX_KINDS,
@@ -12,7 +11,7 @@ import {
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state-schema';
+import { mixKindRecords, userStateRecords } from '../user-state-schema';
 
 /**
  * What the Mix needs to know of the Edition: its default Mix, and which kinds
