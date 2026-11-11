@@ -52,3 +52,10 @@ coord: coord/media-1764
 branches: ^origin/(feat/1764-media-store|coord/media-1764|(feat|chore|docs|fix)/17(6[5-9]|7[0-2])-)
 brief:
 You are the Media Store wave coordinator (spec #1764, tickets #1765–#1772), in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/media-1764 (graph, grants, log tail) and continue with mattpocock-skills:implement-spec: Opus implementer subagents with tdd in own worktrees, merger subagents, integration branch feat/1764-media-store, one PR to main. NO main merge without the owner's word. Never write the owner's email anywhere. Grants: commits, pushes, one PR. When done: `STATUS: FINISHED` first line of HANDOFF.md.
+
+## wave cleanup-1111
+status: active
+coord: coord/cleanup-1111
+branches: ^origin/(coord/cleanup-1111|chore/[0-9]+-core-cleanup.*)
+brief:
+You are the cleanup-1111 coordinator, in the cloud; the previous one stopped. Read HANDOFF.md on origin/coord/cleanup-1111 and continue from the log tail. Grants: commits, pushes, one PR to main after #1792 merges; no main merge, no auto-merge, no force-push.
