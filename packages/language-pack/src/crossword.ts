@@ -56,18 +56,31 @@ export function generateDailyCrossword({
   const recorded = days.find((day) => day.date === date);
   if (recorded !== undefined) return { ok: true, day: recorded };
   const last = days.at(-1)?.date;
-  if (last === undefined || date < last) return dayAfterDays(content, [], date);
-  const between = daysThrough(content, days, dateAfter(last, 1), dateAfter(date, -1));
-  return between.ok ? dayAfterDays(content, [...days, ...between.days], date) : between;
+  if (last === undefined || date < last) return dayAfterDays(content, [], date, SEARCH_BUDGET);
+  const between = daysThrough(
+    content,
+    days,
+    dateAfter(last, 1),
+    dateAfter(date, -1),
+    SEARCH_BUDGET,
+  );
+  return between.ok
+    ? dayAfterDays(content, [...days, ...between.days], date, SEARCH_BUDGET)
+    : between;
 }
 
 /**
  * The days to append to an Edition's crossword days so that 400 lie ahead of
  * `today` (ADR 0052): from the day after its last one, or from `today` when
  * it has none. It gives the new days, none when enough lie ahead, and
- * refuses when a day can't be made.
+ * refuses when a day can't be made. Each day's search tries at most
+ * `searchBudget` placements; tests pass a smaller one to build days fast.
  */
-export function newCrosswordDays(content: PackContent, today: string): DaysResult {
+export function newCrosswordDays(
+  content: PackContent,
+  today: string,
+  { searchBudget = SEARCH_BUDGET }: { readonly searchBudget?: number } = {},
+): DaysResult {
   const days = content.crosswordDays ?? [];
   const last = days.at(-1)?.date;
   return daysThrough(
@@ -75,6 +88,7 @@ export function newCrosswordDays(content: PackContent, today: string): DaysResul
     days,
     last === undefined ? today : dateAfter(last, 1),
     dateAfter(today, CROSSWORD_DAYS_AHEAD),
+    searchBudget,
   );
 }
 
@@ -91,10 +105,11 @@ function daysThrough(
   before: readonly CrosswordDay[],
   first: string,
   last: string,
+  budget: number,
 ): DaysResult {
   const days = [...before];
   for (let date = first; date <= last; date = dateAfter(date, 1)) {
-    const result = dayAfterDays(content, days, date);
+    const result = dayAfterDays(content, days, date, budget);
     if (!result.ok) return result;
     days.push(result.day);
   }
@@ -109,10 +124,11 @@ function dayAfterDays(
   content: PackContent,
   days: readonly CrosswordDay[],
   date: string,
+  budget: number,
 ): CrosswordResult {
   const since = dateAfter(date, 1 - CROSSWORD_REPEAT_DAYS);
   const recent = days.filter((day) => day.date >= since).flatMap(({ words }) => words);
-  return crosswordDayOf(content, date, new Set(recent.map((word) => word.entryId)));
+  return crosswordDayOf(content, date, new Set(recent.map((word) => word.entryId)), budget);
 }
 
 /** The Daily Crossword of a date from content, with none of the Entries to avoid. */
@@ -120,9 +136,10 @@ function crosswordDayOf(
   content: PackContent,
   date: string,
   avoid: ReadonlySet<string>,
+  budget: number,
 ): CrosswordResult {
   const supply = crosswordSupply(content).filter(({ entryId }) => !avoid.has(entryId));
-  const words = searchGrid(supply, randomOf(date));
+  const words = searchGrid(supply, randomOf(date), budget);
   if (words === undefined) {
     return {
       ok: false,
@@ -182,9 +199,13 @@ function withoutAnswer(clue: string, answer: string): string {
  * may hold, or when its budget runs out, and gives the fullest grid found
  * when that has enough words.
  */
-function searchGrid(supply: readonly Clued[], random: () => number): CrosswordWord[] | undefined {
+function searchGrid(
+  supply: readonly Clued[],
+  random: () => number,
+  searchBudget: number,
+): CrosswordWord[] | undefined {
   const lettered = supply.map((clued) => ({ clued, letters: Array.from(clued.answer) }));
-  let budget = SEARCH_BUDGET;
+  let budget = searchBudget;
   let best: CrosswordWord[] = [];
 
   function extend(grid: Grid, placed: readonly CrosswordWord[]): boolean {
