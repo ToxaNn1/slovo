@@ -60,7 +60,7 @@ The native app is a development build made in EAS cloud ([ADR 0004](docs/adr/000
 
 Every build is the one app (ADR 0065) and bundles the AppConfig's default Edition (`defaultEdition` in `app/app.json`); no command names an Edition. The app name, bundle id, icon and splash come from the AppConfig, and the locale, fonts and notification sound from `editions/<edition>/`: the fonts are the Core's (`packages/ui/assets/fonts/`) and every file in the Edition's `assets/fonts/` (ADR 0006), and the native splash is a plain colour per Theme from `decor/splash.json`. An Edition without a splash gets the Core's plain one. Once the JavaScript runs, the app's splash (ADR 0070) takes over from the native one with the Edition's wordmark and tagline.
 
-You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulator (iOS 17 or later) and access to the Expo account `anton_de`. The commands below run the Expo CLI and `eas-cli` through `npx`, so neither needs a global install.
+You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulator (iOS 17 or later) and membership of the Expo organization `slovo-app`. The commands below run the Expo CLI and `eas-cli` through `npx`, so neither needs a global install.
 
 1. Install the dependencies and build the Language Pack. Rebuild the pack whenever the content changes; Metro picks up the new file. The build prints the content report and fails when the content misses a target in `editions/<edition>/content/targets.json` (ADR 0009).
 
