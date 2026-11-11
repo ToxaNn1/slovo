@@ -254,7 +254,7 @@ function requireReleaseApiUrl(build: Build): void {
   }
 }
 
-/** The EAS project @anton_de/slovo. */
+/** The EAS project @slovo-app/slovo. */
 const EAS_PROJECT_ID = 'e2401ef2-2a47-407e-b0ff-03706421b71c';
 
 /** The public code-signing certificate of OTA updates; its private key lives in EAS only. */
@@ -355,7 +355,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     ...config,
     name,
     slug: 'slovo',
-    owner: 'anton_de',
+    owner: 'slovo-app',
     version: '0.9',
     scheme,
     orientation: 'portrait',

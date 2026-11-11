@@ -60,7 +60,7 @@ The native app is a development build made in EAS cloud ([ADR 0004](docs/adr/000
 
 Every build is the one app (ADR 0065) and bundles the AppConfig's default Edition (`defaultEdition` in `app/app.json`); no command names an Edition. The app name, bundle id, icon and splash come from the AppConfig, and the locale, fonts and notification sound from `editions/<edition>/`: the fonts are the Core's (`packages/ui/assets/fonts/`) and every file in the Edition's `assets/fonts/` (ADR 0006), and the native splash is a plain colour per Theme from `decor/splash.json`. An Edition without a splash gets the Core's plain one. Once the JavaScript runs, the app's splash (ADR 0070) takes over from the native one with the Edition's wordmark and tagline.
 
-You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulator (iOS 17 or later) and access to the Expo account `anton_de`. The commands below run the Expo CLI and `eas-cli` through `npx`, so neither needs a global install.
+You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulator (iOS 17 or later) and membership of the Expo organization `slovo-app`. The commands below run the Expo CLI and `eas-cli` through `npx`, so neither needs a global install.
 
 1. Install the dependencies and build the Language Pack. Rebuild the pack whenever the content changes; Metro picks up the new file. The build prints the content report and fails when the content misses a target in `editions/<edition>/content/targets.json` (ADR 0009).
 
@@ -196,7 +196,7 @@ The workflow **Maestro** ([`.github/workflows/maestro.yml`](.github/workflows/ma
 
 ## Run the backend
 
-The backend serves every Edition from one deployment ([ADR 0030](docs/adr/0030-the-backend-is-a-factory-too.md)). It runs on the Mac with Node; Postgres 17 and Mailpit run in Docker. You need Docker Desktop running.
+The backend serves every Edition from one deployment ([ADR 0030](docs/adr/0030-the-backend-is-a-factory-too.md)). It runs on the Mac with Node; Postgres 18 and Mailpit run in Docker. You need Docker Desktop running.
 
 `pnpm dev` does steps 1–4 below and starts Metro pointed at the backend, in one terminal (see [Commands](#commands)). The steps are here for doing them one by one.
 
@@ -256,7 +256,7 @@ The backend serves every Edition from one deployment ([ADR 0030](docs/adr/0030-t
    curl -i -H 'authorization: Bearer <token>' 'http://localhost:8787/v1/editions/uk/records?after=0'
    ```
 
-5. Run the backend's tests. Each run makes a database with a random name on the local Postgres, runs the migrations on it and drops it at the end, so runs in parallel worktrees never meet. The tests call the backend through the API's client built from the contract, the one the app uses, with its fetch pointed at the backend in process, so no port is opened. When Postgres is not reachable, the run stops and asks you to start Docker. `pnpm test` from the root runs them with every other package's; CI runs them in the job "Backend" on a Postgres 17 service, after running every migration on an empty database. `DATABASE_URL` names another Postgres server for the tests.
+5. Run the backend's tests. Each run makes a database with a random name on the local Postgres, runs the migrations on it and drops it at the end, so runs in parallel worktrees never meet. The tests call the backend through the API's client built from the contract, the one the app uses, with its fetch pointed at the backend in process, so no port is opened. When Postgres is not reachable, the run stops and asks you to start Docker. `pnpm test` from the root runs them with every other package's; CI runs them in the job "Backend" on a Postgres 18 service, after running every migration on an empty database. `DATABASE_URL` names another Postgres server for the tests.
 
    ```sh
    pnpm --filter @slovo/backend test

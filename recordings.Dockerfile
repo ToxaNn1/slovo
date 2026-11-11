@@ -3,7 +3,7 @@
 # It is the backend's image (`Dockerfile`) plus the Recordings generator: the
 # locked Python 3.10 environment, ffmpeg and the checked model files (ADR
 # 0083). They stay out of the backend's own image, which they would grow by
-# gigabytes. `railway.recordings.json` names its hourly command.
+# gigabytes. `.railway/railway.ts` names its hourly command.
 FROM node:22.23.4-bookworm-slim AS base
 ENV NODE_ENV=production \
     COREPACK_HOME=/usr/local/share/corepack \

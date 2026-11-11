@@ -3,7 +3,7 @@
 The backend runs as one container image on Railway, one Deployment for every Edition, behind the Edition's domain (ADR 0030, 0063).
 
 - **The image**: `Dockerfile` at the repository root installs the backend and the workspace packages it needs with pnpm; tsx runs their TypeScript sources. It leaves every Language Pack out, sets `NODE_ENV=production` and starts the server. CI builds it on every pull request (the job "Container image"), runs the migrations from it against a fresh Postgres and waits for `/health` to answer `200`; it pushes nothing.
-- **The Railway config**: `railway.json` builds that Dockerfile, runs `pnpm db:migrate` as the release (pre-deploy) command, so the new server serves only once every migration ran, and watches `GET /health`, which answers `200` when the database answers.
+- **The Railway project**: `.railway/railway.ts` declares it as Infrastructure as Code (ADR 0103): project `slovo` with the backend and its three Cron services, each built from a Dockerfile, in EU West (Amsterdam, `europe-west4-drams3a`), one replica. The backend runs `pnpm db:migrate` as the release (pre-deploy) command, so the new server serves only once every migration ran; Railway watches `GET /health`, which answers `200` when the database answers, for up to 120 seconds, and restarts a failed backend up to 5 times. See «The Railway project file» below.
 - **Postgres** is Neon's, in Frankfurt (`aws-eu-central-1`), beside the backend in Railway's EU West, Amsterdam (ADR 0099): Railway has no Frankfurt region. Its connection string is the service's `DATABASE_URL`; see [Neon and the CDN](#neon-and-the-cdn).
 
 ## Variables
@@ -53,11 +53,11 @@ Every variable the server reads at start, with the value it takes in the Deploym
 
 **Neon.** One Neon project in Frankfurt (`aws-eu-central-1`) holds the Deployment's Postgres; its default branch `main` is the live database. Neon restores `main` to any point inside its history window, and it scales to zero while idle (about half a second on the first query after sleep).
 
-| Setting                           | Value                                                                                                                                                      |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Railway variable `DATABASE_URL`   | The pooled connection string of `main`, on the backend and on both Cron services. The pre-deploy command `pnpm db:migrate` runs the migrations against it. |
-| Neon API key                      | Secret. Lives only in Neon's GitHub integration (the GitHub secret `NEON_API_KEY`), never in the repository.                                               |
-| GitHub variable `NEON_PROJECT_ID` | The GitHub Actions variable naming the project, for the branch per pull request.                                                                           |
+| Setting                           | Value                                                                                                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Railway variable `DATABASE_URL`   | The pooled connection string of `main`, on the backend and on the Cron services. The pre-deploy command `pnpm db:migrate` runs the migrations against it. |
+| Neon API key                      | Secret. Lives only in Neon's GitHub integration (the GitHub secret `NEON_API_KEY`), never in the repository.                                              |
+| GitHub variable `NEON_PROJECT_ID` | The GitHub Actions variable naming the project, for the branch per pull request.                                                                          |
 
 **The move from Railway's Postgres.** Once, before `DATABASE_URL` changes: stop writes (no admin saves, the Cron services paused), copy the database with `pg_dump --format=custom --no-owner '<DATABASE_PUBLIC_URL of the Railway Postgres>' > slovo.dump` and `pg_restore --no-owner --dbname='<the Neon connection string, unpooled>' slovo.dump`, point `DATABASE_URL` at Neon, deploy, check `/health`, then remove the Railway Postgres service.
 
@@ -73,6 +73,31 @@ Every variable the server reads at start, with the value it takes in the Deploym
 | Cache key | The whole query string                                                  |
 
 The Patch route answers `cache-control: public, max-age=0, s-maxage=60` with its ETag (ADR 0099): the CDN keeps each Patch for a minute under its URL (the Edition, `since` and `patchFormat`), so most devices never reach the database, and the device revalidates it by its ETag and gets 304. An edit reaches every device within that minute; nothing needs a purge. Every other route stays uncached. The Media Store's R2 variables are listed with the Recording generation service.
+
+## The Railway project file
+
+`.railway/railway.ts` replaces the Config as Code files (`railway.json` and one per Cron service), which Railway no longer takes for new services and stops reading on 2026-12-01 (ADR 0103). It uses the `railway` package's `railway/iac`, pinned in the root `package.json`; `pnpm typecheck` checks it. It declares:
+
+| Service       | Dockerfile              | Command            | Schedule (UTC) | Restart             |
+| ------------- | ----------------------- | ------------------ | -------------- | ------------------- |
+| `backend`     | `Dockerfile`            | the image's `CMD`  | none           | on failure, 5 times |
+| `alerts`      | `Dockerfile`            | `pnpm cron`        | `*/15 * * * *` | never               |
+| `quote-check` | `Dockerfile`            | `pnpm quote-check` | `0 * * * *`    | never               |
+| `recordings`  | `recordings.Dockerfile` | `pnpm recordings`  | `0 * * * *`    | never               |
+
+No service has a source: nothing links the project to a GitHub account, and a deploy is `railway up` with a project token, which CI runs (see «Deploying»). The file holds no secret. Every variable of the backend in «Variables» is `preserve()`, so Railway keeps the value set in its variables, where the owner sets it once; even `TRUSTED_PROXY_HOPS`, which is `1` behind Railway's proxy alone and `2` once Cloudflare is in front (ADR 0099). The Cron services take the backend's variables by reference, so each secret is set once, on the backend.
+
+`railway config plan` shows what the file changes against the project and `railway config apply` applies it; an apply can delete a resource the file leaves out. Run them signed in to SLOVO's Railway account (accounts@slovoapp.org), never a personal one. The `recordings` service builds `recordings.Dockerfile`, which comes with the Media Store (ADR 0099); deploy it only once that file is on `main`.
+
+## Deploying
+
+CI deploys (ADR 0104): on every push to `main`, once the check "Lint, typecheck, test and Language Pack" passed, the job "Deploy to Railway" of `.github/workflows/ci.yml`
+
+1. installs the Railway CLI at the version the job pins (`@railway/cli`; the root `railway` package is only the SDK the file imports);
+2. runs `railway config apply --yes`, which brings the project to `.railway/railway.ts`; an apply that would delete a resource fails the job instead, since it has no `--confirm-destructive`;
+3. runs `railway up --ci --service <name>` for `backend`, `alerts` and `quote-check`, and for `recordings` once `recordings.Dockerfile` exists.
+
+It signs in with the GitHub Actions secret `RAILWAY_TOKEN`, a Railway project token of the `production` environment (project `slovo` → Settings → Tokens); to rotate it, make a new token there and set the secret to it. A pull request never deploys, and the concurrency group `railway-deploy` keeps deploys from overlapping: a newer push waits for the running deploy. To deploy by hand, set `RAILWAY_TOKEN` in the shell to that token and run the same commands from the repository root.
 
 ## Importing an Edition's content
 
@@ -100,7 +125,7 @@ It checks every file first and uploads nothing when one names no Narrator Voice 
 
 ## The quote check
 
-The quote check (ADR 0084) runs on the Deployment as a second Railway service, a Cron service on the same image: `railway.quote-check.json` holds its settings.
+The quote check (ADR 0084) runs on the Deployment as a second Railway service, a Cron service on the same image: its service in `.railway/railway.ts` holds its settings.
 
 | Setting  | Value                                                                  |
 | -------- | ---------------------------------------------------------------------- |
@@ -108,11 +133,11 @@ The quote check (ADR 0084) runs on the Deployment as a second Railway service, a
 | Schedule | `0 * * * *`: hourly, UTC                                               |
 | Restart  | Never: the command exits when done, and the next run comes on schedule |
 
-Its one variable is `DATABASE_URL`, a reference to the same Postgres. A save never waits for it: every create or edit of a Word, Correction, Idiom, Synonym Row or Tip leaves the record unverified, and the job checks the quoted text of each unverified record against its first source's page, through the sourcing cache in Postgres (a fetched page stands for 30 days). A quote it does not find is flagged for the Content queue with the finding, and the record stays live. A page it cannot fetch leaves the record unverified for the next run. Imported records count as checked, since CI ran `pnpm content verify` on them, and a record with no source page is not checked. The admin content report gives the counts of unverified and failed records.
+Its one variable is `DATABASE_URL`, a reference to the backend's. A save never waits for it: every create or edit of a Word, Correction, Idiom, Synonym Row or Tip leaves the record unverified, and the job checks the quoted text of each unverified record against its first source's page, through the sourcing cache in Postgres (a fetched page stands for 30 days). A quote it does not find is flagged for the Content queue with the finding, and the record stays live. A page it cannot fetch leaves the record unverified for the next run. Imported records count as checked, since CI ran `pnpm content verify` on them, and a record with no source page is not checked. The admin content report gives the counts of unverified and failed records.
 
 ## The Recordings Cron service
 
-The Recordings job (ADR 0083, 0099) runs as a fourth Railway service, a Cron service on an image of its own: `railway.recordings.json` holds its settings. `recordings.Dockerfile` is the backend's image plus ffmpeg, the Python of `apps/backend/recordings/` and the voice model, kept apart from the API's image so the web backend doesn't carry the model's gigabytes.
+The Recordings job (ADR 0083, 0099) runs as a fourth Railway service, a Cron service on an image of its own, declared in `.railway/railway.ts`. `recordings.Dockerfile` is the backend's image plus ffmpeg, the Python of `apps/backend/recordings/` and the voice model, kept apart from the API's image so the web backend doesn't carry the model's gigabytes.
 
 | Setting    | Value                                                                  |
 | ---------- | ---------------------------------------------------------------------- |
@@ -125,7 +150,7 @@ Its variables are `DATABASE_URL`, a reference to the same Postgres, and the four
 
 ## The alerts Cron service
 
-The owner's alerts and daily digest (spec #1709) run as a third Railway service, a Cron service on the same image: `railway.cron.json` holds its settings.
+The owner's alerts and daily digest (spec #1709) run as a third Railway service, a Cron service on the same image: its service in `.railway/railway.ts` holds its settings.
 
 | Setting  | Value                                                                  |
 | -------- | ---------------------------------------------------------------------- |
@@ -170,4 +195,4 @@ DATABASE_URL='<the Neon connection string>' pnpm admin check add <version> <text
 DATABASE_URL='<the Neon connection string>' pnpm admin check import <file> [--version <version>]
 ```
 
-`agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. A person signs in to `/admin` with a code emailed by the mailer above and a TOTP; the TOTP secrets are sealed with a key derived from `BETTER_AUTH_SECRET`, so rotating it makes every Admin user set up the TOTP again.
+`agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. A person signs in to `/admin` with a code emailed by the mailer above and a TOTP; the TOTP secrets are sealed with a key derived from `AUTH_SECRET`, so rotating it makes every Admin user set up the TOTP again.

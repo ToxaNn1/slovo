@@ -23,7 +23,7 @@
     "content": "pnpm --filter @slovo/content content",
     "smoke:halves": "node scripts/smoke-halves.mjs",
     "lint": "oxlint && turbo run lint && prettier --check .",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "turbo run typecheck && tsc -p .railway",
     "deps": "depcruise apps packages tools editions --config .dependency-cruiser.mjs && depcruise apps/mobile/src packages/core/src packages/ui/src --config .dependency-cruiser.folders.mjs && node scripts/core-exports.mjs",
     "test": "turbo run test --concurrency=50%",
     "verify": "oxlint --quiet && TURBO_SCM_BASE=origin/main turbo run lint typecheck test --affected --concurrency=50% --output-logs=errors-only && pnpm --silent deps && prettier --check . --log-level warn",
@@ -39,6 +39,7 @@
     "knip": "^6.44.1",
     "oxlint": "~1.91.0",
     "prettier": "^3.9.10",
+    "railway": "3.16.0",
     "turbo": "^2.11.10",
     "typescript": "~6.0.3"
   }

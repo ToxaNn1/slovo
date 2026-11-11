@@ -3,7 +3,7 @@
 # The workspace packages ship their TypeScript sources, which tsx runs, so the
 # build is the install of the backend and the workspace packages it needs. The
 # Language Pack is not built here: content lives in the Deployment's Postgres
-# and reaches the app as Patches (ADR 0090). `railway.json` names the release
+# and reaches the app as Patches (ADR 0090). `.railway/railway.ts` names the release
 # command and the health route.
 FROM node:22.23.4-bookworm-slim AS base
 
