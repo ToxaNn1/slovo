@@ -93,6 +93,14 @@ function figureNow(): { up: number; opacity: number; moving: boolean } {
   };
 }
 
+/** How opaque the rays are now. */
+function raysNow(): number {
+  const style = getAnimatedStyle(
+    screen.getByTestId('mascot-rays-flicker', { includeHiddenElements: true }),
+  ) as unknown as { opacity?: number };
+  return style.opacity ?? 1;
+}
+
 async function pass(ms: number) {
   await act(async () => {
     await jest.advanceTimersByTimeAsync(ms);
@@ -185,6 +193,30 @@ describe('Mascot', () => {
     await pass(1200);
 
     expect(figureNow().up).toBeCloseTo(5, 0);
+  });
+
+  it('flickers its rays while it shouts, in two steps down to a quarter and back', async () => {
+    await renderMascot('shouts');
+    // The middle of each quarter of the 450 ms cycle, then the next cycle's first.
+    const seen: number[] = [];
+    await pass(56);
+    for (let at = 0; at < 4; at += 1) {
+      seen.push(raysNow());
+      await pass(112);
+    }
+    await pass(2);
+
+    expect(seen).toEqual([1, 0.625, 0.25, 0.625]);
+    expect(raysNow()).toBe(1);
+  });
+
+  it('keeps its rays still under Reduce Motion', async () => {
+    reduceMotion(true);
+    await renderMascot('shouts');
+    await pass(0);
+    await pass(225);
+
+    expect(raysNow()).toBe(1);
   });
 
   it('stays still in the hat-off state', async () => {

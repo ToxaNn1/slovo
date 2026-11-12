@@ -15,6 +15,8 @@ export const ColorTokensSchema = z.strictObject({
   ink: ColorSchema,
   /** Secondary labels: part of speech, captions. */
   muted: ColorSchema,
+  /** The tagline under the splash's wordmark. */
+  tagline: ColorSchema,
   /** The active tab, the Pronunciation button, selected controls: fills, borders and large text. */
   accent: ColorSchema,
   /**

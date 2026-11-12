@@ -201,7 +201,7 @@ export {
   type MixState,
   type OutOfMix,
 } from './entries/mix';
-export { launchKind, type LaunchKind, type OnboardingStep } from './onboarding/onboarding';
+export { type OnboardingStep } from './onboarding/onboarding';
 export type { OptionQuestion, QuestionnaireOption } from './questionnaire/questionnaire';
 export { type RarityTestAnswer, type RarityTestWord } from './mix/rarity-test';
 // The shell keeps the Session in memory on a development client without the Keychain.

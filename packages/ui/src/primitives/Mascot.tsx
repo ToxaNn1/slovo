@@ -21,6 +21,7 @@ import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import {
   mascotMotion,
+  mascotRayFlicker,
   mascotPose,
   mascotWidth,
   motion,
@@ -127,9 +128,6 @@ function Figure({
           height={(width * mascot.height) / mascot.width}
           viewBox={`0 0 ${String(mascot.width)} ${String(mascot.height)}`}
         >
-          {(state === 'shouts' || state === 'celebrates') && (
-            <Shapes testID="mascot-rays" shapes={mascot.rays} paints={paints} />
-          )}
           <G transform={`rotate(${String(turn)} ${String(pivotX)} ${String(pivotY)})`}>
             <Shapes testID="mascot-body" shapes={mascot.figure} paints={paints} />
             {!hatOff && <Shapes testID="mascot-shine" shapes={mascot.shine} paints={paints} />}
@@ -153,9 +151,54 @@ function Figure({
             <Shapes testID="mascot-sleep-marks" shapes={mascot.sleepMarks} paints={paints} />
           )}
         </Svg>
+        {(state === 'shouts' || state === 'celebrates') && (
+          <Rays mascot={mascot} paints={paints} width={width} />
+        )}
       </Animated.View>
     </DecorView>
   );
+}
+
+/** The rays of a shouting or celebrating figure, over it, flickering as the design's do. */
+function Rays({ mascot, paints, width }: { mascot: MascotFigure; paints: Paints; width: number }) {
+  const style = useRayFlicker();
+  return (
+    <Animated.View
+      testID="mascot-rays-flicker"
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFill, style]}
+    >
+      <Svg
+        width={width}
+        height={(width * mascot.height) / mascot.width}
+        viewBox={`0 0 ${String(mascot.width)} ${String(mascot.height)}`}
+      >
+        <Shapes testID="mascot-rays" shapes={mascot.rays} paints={paints} />
+      </Svg>
+    </Animated.View>
+  );
+}
+
+/** The rays' flicker (`mascotRayFlicker`), in steps; under Reduce Motion they hold still. */
+function useRayFlicker() {
+  const reduceMotion = useReduceMotion();
+  const cycle = useSharedValue(0);
+  const { duration, opacities } = mascotRayFlicker;
+
+  useEffect(() => {
+    cancelAnimation(cycle);
+    cycle.value = 0;
+    if (reduceMotion) return;
+    cycle.value = withRepeat(
+      withTiming(1, { duration, easing: Easing.linear, reduceMotion: ReduceMotion.Never }),
+      -1,
+    );
+  }, [cycle, duration, reduceMotion]);
+
+  return useAnimatedStyle(() => {
+    const step = Math.min(opacities.length - 1, Math.floor(cycle.value * opacities.length));
+    return { opacity: opacities[step] ?? 1 };
+  });
 }
 
 /** One part of the vector, each shape in the colour its paint resolves to. */

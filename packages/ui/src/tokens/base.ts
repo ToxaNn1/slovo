@@ -39,6 +39,7 @@ export const coreTokens: DesignTokens = {
       surface: '#FFFFFF',
       ink: '#161616',
       muted: '#6A6A6A',
+      tagline: '#6A6A6A',
       accent: '#161616',
       accentText: '#161616',
       decor: '#D6D6D2',
@@ -61,6 +62,7 @@ export const coreTokens: DesignTokens = {
       surface: '#1C1C1C',
       ink: '#F2F2F0',
       muted: '#9C9C9C',
+      tagline: '#9C9C9C',
       accent: '#F2F2F0',
       accentText: '#F2F2F0',
       decor: '#3A3A3A',
@@ -1051,6 +1053,13 @@ export const mascotMotion = {
     }
   | undefined
 >;
+
+/**
+ * How the rays of a shouting or celebrating Mascot flicker (`rpRay` in
+ * `Rupor.dc.html`): down to a quarter and back in `duration`, each half in two
+ * steps (`steps(2)`), so a cycle holds these four opacities in equal parts.
+ */
+export const mascotRayFlicker = { duration: 450, opacities: [1, 0.625, 0.25, 0.625] } as const;
 
 /**
  * How the Core poses the Mascot's parts in some states: the turn of the whole
