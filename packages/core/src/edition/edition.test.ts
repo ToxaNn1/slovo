@@ -129,12 +129,17 @@ const validConfig = {
     correctionTypes: 'on',
     curatedCollections: 'on',
     swipeMarks: 'on',
+    gesturesHintDemo: 'on',
     wordTabs: 'on',
     searchButton: 'on',
     dashboardWordmark: 'on',
+    dailySplash: 'on',
+    heroSparks: 'on',
     feedTab: 'on',
     categoryScreens: 'on',
     correctionCategoryScreens: 'on',
+    categoryFeed: 'on',
+    categoryKnownFirst: 'on',
     quietCategories: 'on',
     collectionBoardStyle: 'on',
     profileConfirmedByRarity: 'on',
@@ -178,7 +183,7 @@ const validConfig = {
     { id: 'energetic', name: 'Energetic', emoji: '⚡', reply: 'Keep the pace!' },
     { id: 'thoughtful', name: 'Thoughtful', emoji: '🤔', reply: 'Food for thought.' },
   ],
-  dashboardMoods: ['energetic', 'thoughtful', 'calm', 'joyful'],
+  dashboardMoods: ['energetic', 'thoughtful', 'calm', 'joyful', 'sad'],
   narratorVoices: {
     default: 'anna',
     voices: [
@@ -817,9 +822,9 @@ describe('loadEdition', () => {
     expect(loadEdition(validConfig).narratorVoiceOf('olga').id).toBe('anna');
   });
 
-  it('resolves the four Dashboard moods, in their order', () => {
+  it('resolves the five Dashboard moods, in their order', () => {
     const { moods, dashboardMoods } = loadEdition(validConfig);
-    expect(dashboardMoods).toEqual([moods[3], moods[4], moods[1], moods[0]]);
+    expect(dashboardMoods).toEqual([moods[3], moods[4], moods[1], moods[0], moods[2]]);
   });
 
   it('accepts an Edition whose Categories require no history', () => {
@@ -934,6 +939,16 @@ describe('loadEdition', () => {
       'featureSwitches.categoryScreens',
     ],
     [
+      "a missing Category's Feed Feature Switch",
+      withoutSwitch('categoryFeed'),
+      'featureSwitches.categoryFeed',
+    ],
+    [
+      'a missing Known-first Feature Switch',
+      withoutSwitch('categoryKnownFirst'),
+      'featureSwitches.categoryKnownFirst',
+    ],
+    [
       'a missing correctionCategoryScreens Feature Switch',
       withoutSwitch('correctionCategoryScreens'),
       'featureSwitches.correctionCategoryScreens',
@@ -963,6 +978,16 @@ describe('loadEdition', () => {
       withoutSwitch('dashboardWordmark'),
       'featureSwitches.dashboardWordmark',
     ],
+    [
+      'a missing daily splash Feature Switch',
+      withoutSwitch('dailySplash'),
+      'featureSwitches.dailySplash',
+    ],
+    [
+      "a missing hero's sparks Feature Switch",
+      withoutSwitch('heroSparks'),
+      'featureSwitches.heroSparks',
+    ],
     ['a missing Feed tab Feature Switch', withoutSwitch('feedTab'), 'featureSwitches.feedTab'],
     [
       'a missing Search button Feature Switch',
@@ -973,6 +998,11 @@ describe('loadEdition', () => {
       'a missing swipe marks Feature Switch',
       withoutSwitch('swipeMarks'),
       'featureSwitches.swipeMarks',
+    ],
+    [
+      'a missing gestures hint demo Feature Switch',
+      withoutSwitch('gesturesHintDemo'),
+      'featureSwitches.gesturesHintDemo',
     ],
     [
       'a missing Share Cards Feature Switch',
@@ -1332,21 +1362,25 @@ describe('loadEdition', () => {
     ],
     ['no `dashboardMoods`', { dashboardMoods: undefined }, 'dashboardMoods'],
     ['no Dashboard moods', { moods: [], dashboardMoods: [] }, 'dashboardMoods'],
-    ['three Dashboard moods', { dashboardMoods: ['joyful', 'calm', 'sad'] }, 'dashboardMoods'],
     [
-      'five Dashboard moods',
-      { dashboardMoods: ['joyful', 'calm', 'sad', 'energetic', 'thoughtful'] },
+      'four Dashboard moods',
+      { dashboardMoods: ['joyful', 'calm', 'sad', 'energetic'] },
+      'dashboardMoods',
+    ],
+    [
+      'six Dashboard moods',
+      { dashboardMoods: ['joyful', 'calm', 'sad', 'energetic', 'thoughtful', 'sleepy'] },
       'dashboardMoods',
     ],
     [
       'a Dashboard mood the Edition does not list',
-      { dashboardMoods: ['joyful', 'calm', 'sad', 'angry'] },
-      'dashboardMoods.3',
+      { dashboardMoods: ['joyful', 'calm', 'sad', 'energetic', 'angry'] },
+      'dashboardMoods.4',
     ],
     [
       'a repeated Dashboard mood',
-      { dashboardMoods: ['joyful', 'calm', 'sad', 'calm'] },
-      'dashboardMoods.3',
+      { dashboardMoods: ['joyful', 'calm', 'sad', 'energetic', 'calm'] },
+      'dashboardMoods.4',
     ],
     ['no Narrator Voices', { narratorVoices: undefined }, 'narratorVoices'],
     [
@@ -1467,13 +1501,18 @@ const dependentSwitches = [
   ['previousWords', ['dashboard', 'wordOfTheDayArchive', 'wordOfTheDay']],
   ['correctionTypes', ['dashboard', 'wordOfTheDay', 'corrections']],
   ['swipeMarks', ['knowledge']],
+  ['gesturesHintDemo', ['swipeMarks', 'knowledge']],
   ['searchButton', ['search']],
   ['dashboardWordmark', ['dashboard', 'wordOfTheDay']],
+  ['dailySplash', ['dashboard', 'wordOfTheDay']],
+  ['heroSparks', ['dashboard', 'wordOfTheDay']],
   ['feedTab', ['dashboard', 'wordOfTheDay']],
   ['narratorVoice', ['pronunciation']],
   ['categoryScreens', ['dashboard', 'wordOfTheDay']],
   ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],
   ['quietCategories', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
+  ['categoryFeed', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
+  ['categoryKnownFirst', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
   ['gameSurvival', ['corrections', 'game']],
   ['gameAnglicism', ['corrections', 'game']],
   ['gameTypeWord', ['corrections', 'game']],

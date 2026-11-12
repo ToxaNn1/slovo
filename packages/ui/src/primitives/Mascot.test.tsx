@@ -39,7 +39,7 @@ const mascot = {
   hatOnGround: part('ground'),
   rays: part('rays', 'ink'),
   confetti: part('confetti'),
-  sleepMarks: part('z', 'ink'),
+  sleepMarks: [...part('z', 'ink'), ...part('z2', 'ink')],
 };
 
 const accessory = (replacesHat: boolean) => ({ shapes: part('accessory'), replacesHat });
@@ -174,6 +174,37 @@ describe('Mascot', () => {
     expect(drawn('hat')).toBeUndefined();
   });
 
+  it('stays muted with its hat off on red too, as the design draws it on any ground', async () => {
+    await renderMascot('hatOff', { onRed: true });
+
+    expect(drawn('body')?.[0]?.fill).toBe(argb(light.muted));
+  });
+
+  it('drops headwear with the hat when it cringes, and leaves other accessories in place', async () => {
+    const drop = (part: string) =>
+      (
+        screen.getByTestId(part, { includeHiddenElements: true }).parent?.props['matrix'] as
+          number[] | undefined
+      )?.[5];
+
+    await renderMascot('cringes', { decor: { ...withMascot, mascotAccessory: accessory(true) } });
+    expect(drop('mascot-accessory')).toBe(4);
+
+    await renderMascot('cringes', { decor: { ...withMascot, mascotAccessory: accessory(false) } });
+    expect(drop('mascot-accessory')).toBe(0);
+    expect(drop('mascot-hat')).toBe(4);
+  });
+
+  it('leaves room past its frame, so confetti and tall hats are never cut', async () => {
+    await renderMascot('celebrates');
+    const canvas = screen.getAllByTestId('mascot-canvas', { includeHiddenElements: true })[0];
+
+    expect(canvas?.props['minX']).toBeLessThan(0);
+    expect(canvas?.props['minY']).toBeLessThan(0);
+    expect(canvas?.props['vbWidth']).toBeGreaterThan(150);
+    expect(canvas?.props['vbHeight']).toBeGreaterThan(112);
+  });
+
   it('wears no accessory without one in the Decor', async () => {
     await renderMascot('happy');
 
@@ -193,6 +224,37 @@ describe('Mascot', () => {
     await pass(1200);
 
     expect(figureNow().up).toBeCloseTo(5, 0);
+  });
+
+  it('hops to the top of its jump at the frame the design sets, every cycle', async () => {
+    await renderMascot('happy');
+    await pass(320);
+    expect(figureNow().up).toBeCloseTo(12, 1);
+
+    await pass(800);
+    expect(figureNow().up).toBeCloseTo(12, 1);
+  });
+
+  it('lets its sleep marks drift up and fade, the second one late and still until then', async () => {
+    const markNow = (index: number) => {
+      const style = getAnimatedStyle(
+        screen.getByTestId(`mascot-sleep-mark-${String(index)}-drift`, {
+          includeHiddenElements: true,
+        }),
+      ) as unknown as { opacity?: number; transform?: Record<string, number>[] };
+      const transform = Object.assign({}, ...(style.transform ?? [])) as Record<string, number>;
+      return { opacity: style.opacity ?? 1, y: transform['translateY'] ?? 0 };
+    };
+    await renderMascot('sleeps');
+    await pass(16);
+    const start = markNow(0);
+    expect(markNow(1)).toEqual({ opacity: 1, y: 0 });
+
+    await pass(1184);
+    expect(start.opacity).toBeLessThan(0.1);
+    expect(markNow(0).opacity).toBeCloseTo(1, 1);
+    expect(markNow(0).y).toBeLessThan(start.y);
+    expect(markNow(1).opacity).toBeLessThan(1);
   });
 
   it('flickers its rays while it shouts, in two steps down to a quarter and back', async () => {

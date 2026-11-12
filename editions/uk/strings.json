@@ -1303,15 +1303,18 @@
     }
   },
   "dashboard": {
-    "toCard": "До картки →",
+    "reveal": "Розкрий слово",
+    "toCard": "Ще про слово →",
     "open": "SLOVO, на головну",
+    "dailySplash": "SLOVO, заставка дня",
     "kicker": "Слово дня · {day}.{month}",
+    "kickerNumber": "Слово дня · №{number}",
     "subtitle": "Рідкісне. Свіже. Твоє на 24 години.",
     "wordLine": "{stress} · {partOfSpeech}",
-    "rarity": "Рідкість {rarity}/5",
+    "rarity": "Рідкість {rarity} з 5",
     "mood": {
       "question": "Як настрій?",
-      "note": "Mood дня"
+      "note": "Настрій дня"
     },
     "curatedCollectionsTitle": "Добірки",
     "curatedCollectionCount": {
@@ -1355,19 +1358,20 @@
       "inMix": "У МІКСІ",
       "known": "ЗНАЮ {x} З {n}",
       "knownStamp": "ЗНАЮ",
+      "feedKicker": "Категорія · {name} · {place} з {of}",
       "toasts": {
         "added": "„{name}“ тепер у твоєму Міксі.",
         "removed": "„{name}“ прибрано з Міксу."
       }
     },
     "previousWords": {
-      "title": "Попередні слова",
+      "title": "Минулі Слова дня",
       "months": ["січ", "лют", "бер", "кві", "тра", "чер", "лип", "сер", "вер", "жов", "лис", "гру"]
     },
     "correctionTypes": {
       "title": "Виправлення",
       "workedThrough": "Розібрано {x} з {n}",
-      "reveal": "Як правильно?",
+      "reveal": "Відповідь",
       "tiles": {
         "russianism": "Росіянізми",
         "calque": "Кальки",

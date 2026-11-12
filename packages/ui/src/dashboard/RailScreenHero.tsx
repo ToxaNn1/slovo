@@ -201,26 +201,30 @@ function HeroActionButton({ id, action, top }: { id: string; action: HeroAction;
   }
   const { on } = action;
   return (
-    <Pressable
-      {...common}
-      accessibilityState={{ selected: on }}
-      style={({ pressed }) => [
-        styles.add,
-        {
-          top,
-          backgroundColor: on ? keyInk : cream,
-          // The board's hard edge under the button not yet pressed.
-          borderBottomWidth: on ? 0 : place.add.edge,
-          borderBottomColor: withAlpha(keyInk, place.add.edgeAlpha),
-        },
-        pressed && styles.pressed,
-      ]}
-    >
-      <ToggleIcon testID={`${common.testID}-icon`} on={on} color={on ? cream : keyInk} />
-      <Text {...voice} style={[typeStyle('railAdd', tokens), { color: on ? cream : keyInk }]}>
-        {action.label}
-      </Text>
-    </Pressable>
+    <View style={[styles.addPlace, { top }]}>
+      {/* The board's hard shadow, below the button and over the red, while it is off. */}
+      {!on && (
+        <View
+          testID={`${common.testID}-edge`}
+          style={[styles.addEdge, { backgroundColor: withAlpha(keyInk, place.add.edgeAlpha) }]}
+        />
+      )}
+      <Pressable
+        {...common}
+        accessibilityState={{ selected: on }}
+        style={({ pressed }) => [
+          styles.add,
+          { backgroundColor: on ? keyInk : cream },
+          // A press lowers the button onto its shadow, as the board's `:active` does.
+          pressed && !on && styles.addPressed,
+        ]}
+      >
+        <ToggleIcon testID={`${common.testID}-icon`} on={on} color={on ? cream : keyInk} />
+        <Text {...voice} style={[typeStyle('railAdd', tokens), { color: on ? cream : keyInk }]}>
+          {action.label}
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -278,9 +282,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  add: {
+  addPlace: { position: 'absolute', right: place.add.right },
+  addEdge: {
     position: 'absolute',
-    right: place.add.right,
+    left: 0,
+    right: 0,
+    top: place.add.edge,
+    height: place.add.height,
+    borderRadius: place.add.radius,
+  },
+  addPressed: { transform: [{ translateY: place.add.edge }] },
+  add: {
     height: place.add.height,
     paddingHorizontal: place.add.paddingHorizontal,
     borderRadius: place.add.radius,

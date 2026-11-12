@@ -18,16 +18,24 @@ import type { CuratedCollectionCard, CuratedCollections } from './curated-collec
 const PREVIOUS_WORDS = 3;
 
 /**
- * The Word of the Day hero: unrevealed until «Розкрити», revealed with its
- * Lemma, Stress and short Definition once the Word is Seen in the current
- * Cycle (ADR 0076). Revealed is derived from Seen, never stored.
+ * The Word of the Day hero: unrevealed until «Розкрий слово», revealed with
+ * its Lemma, Stress and short Definition once the Word is Seen in the current
+ * Cycle (ADR 0076). Revealed is derived from Seen, never stored. Its `number`
+ * is the reader's own count of Words of the Day, «№312»: the kept archive days
+ * before today, plus one (ADR 0105).
  */
 export type WordOfTheDayHero =
-  | { readonly state: 'unrevealed'; readonly wordId: string; readonly date: LocalDate }
+  | {
+      readonly state: 'unrevealed';
+      readonly wordId: string;
+      readonly date: LocalDate;
+      readonly number: number;
+    }
   | {
       readonly state: 'revealed';
       readonly wordId: string;
       readonly date: LocalDate;
+      readonly number: number;
       /** The Lemma with Stress, as the Word card shows it. */
       readonly lemmaWithStress: string;
       /** The stressed vowels of the Lemma, in order, as VoiceOver names them. */
@@ -60,18 +68,18 @@ export interface WordOfTheDayBlock {
 
 /**
  * The Mood check-in's block, after the hero: asking «Як настрій?» with the
- * four moods, or today's chosen Mood with its reply. A skipped day has no
+ * five moods, or today's chosen Mood with its reply. A skipped day has no
  * block till tomorrow (ADR 0076).
  */
 export interface MoodBlock {
   readonly kind: 'mood';
-  /** The four moods to choose from, in display order. */
+  /** The five moods to choose from, in display order. */
   readonly moods: readonly Mood[];
   readonly check: { readonly state: 'asking' } | { readonly state: 'chosen'; readonly mood: Mood };
 }
 
 /**
- * «Попередні слова», after the Mood check-in: the three newest days of the
+ * «Минулі Слова дня», after the Mood check-in: the three newest days of the
  * Word of the Day archive before today, newest first. A Retired Word stays;
  * with no such day there is no block (ADR 0076). A tap opens the Entry card
  * as Search does, making nothing Seen.
@@ -169,13 +177,15 @@ export async function openDashboard({
     const today = wordOfTheDay.chosen() ?? (await feed.wordOfTheDay());
     if (today === undefined) return undefined;
     const { wordId, date } = today;
+    const number = (await archiveDaysBefore(date)).length + 1;
     const isSeen = cycle.covers(wordId) && !cycle.unseen().words.includes(wordId);
     const word = isSeen ? await entries.get(wordId) : undefined;
-    if (word?.kind !== 'word') return { state: 'unrevealed', wordId, date };
+    if (word?.kind !== 'word') return { state: 'unrevealed', wordId, date, number };
     return {
       state: 'revealed',
       wordId,
       date,
+      number,
       lemmaWithStress: renderStress(word),
       stressedVowels: stressedVowelsOf(word),
       definition: word.primaryDefinition,
@@ -191,12 +201,15 @@ export async function openDashboard({
     return { kind: 'mood', moods: mood.moods, check };
   }
 
+  /** The kept archive days before `day`, newest first. */
+  async function archiveDaysBefore(day: LocalDate): Promise<readonly WordOfTheDayArchiveDay[]> {
+    const dayKey = dateKeyOf(day);
+    return (await archive.list()).filter(({ date }) => dateKeyOf(date) < dayKey);
+  }
+
   async function previousWords(): Promise<PreviousWordsBlock | undefined> {
     // Today's day is the hero's, so it is left out.
-    const todayKey = dateKeyOf(todayDate(clock));
-    const days = (await archive.list())
-      .filter(({ date }) => dateKeyOf(date) < todayKey)
-      .slice(0, PREVIOUS_WORDS);
+    const days = (await archiveDaysBefore(todayDate(clock))).slice(0, PREVIOUS_WORDS);
     return days.length === 0 ? undefined : { kind: 'previousWords', days };
   }
 
@@ -268,7 +281,7 @@ function blockKeyOf(block: DashboardBlock): string {
   switch (block.kind) {
     case 'wordOfTheDay': {
       const { hero } = block;
-      return `${hero.state}:${hero.wordId}:${dateKeyOf(hero.date)}`;
+      return `${hero.state}:${hero.wordId}:${dateKeyOf(hero.date)}:${String(hero.number)}`;
     }
     case 'mood': {
       const { check } = block;

@@ -3,13 +3,15 @@ import {
   EditionProvider,
   EntryCard,
   HapticsProvider,
+  SwipeDemoStage,
   UndoToastProvider,
+  useGesturesDemo,
   usePageTurnActions,
   VerticalPager,
 } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { AccessibilityInfo, Text } from 'react-native';
 import { GestureHandlerRootView, State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
@@ -439,27 +441,33 @@ function Actions() {
 async function renderPaged({
   pages = ['c1', 'c2'],
   card = correction,
-}: { pages?: string[]; card?: EntryFeedCard } = {}) {
+  demo,
+}: { pages?: string[]; card?: EntryFeedCard; demo?: boolean } = {}) {
   const onMark = jest.fn<(mark: KnowledgeMark) => void>();
   const onUndo = jest.fn();
   const onIndexChange = jest.fn<(index: number) => void>();
-  await render(
-    providers(
-      <VerticalPager
-        testID="pager"
-        items={pages}
-        onIndexChange={onIndexChange}
-        turnActionLabels={{ next: 'Next card', previous: 'Previous card' }}
-        renderPage={(page) =>
-          page === 'c1' ? <PagedCard card={card} onMark={onMark} onUndo={onUndo} /> : <Actions />
-        }
-      />,
-    ),
+  const pager = (
+    <VerticalPager
+      testID="pager"
+      items={pages}
+      onIndexChange={onIndexChange}
+      turnActionLabels={{ next: 'Next card', previous: 'Previous card' }}
+      renderPage={(page) =>
+        page === 'c1' ? <PagedCard card={card} onMark={onMark} onUndo={onUndo} /> : <Actions />
+      }
+    />
   );
+  await render(providers(demo === undefined ? pager : <Demo playing={demo}>{pager}</Demo>));
   await fireEvent(screen.getByTestId('pager'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 800 } },
   });
   return { onMark, onUndo, onIndexChange };
+}
+
+/** The swipe hint's demo around the Feed, playing while `playing`, as the Feed puts it. */
+function Demo({ playing, children }: { playing: boolean; children: ReactNode }) {
+  const demo = useGesturesDemo(playing);
+  return <SwipeDemoStage demo={demo}>{children}</SwipeDemoStage>;
 }
 
 function cardX(): number | undefined {
@@ -620,5 +628,77 @@ describe('SwipeMarks in a VerticalPager', () => {
 
     expect(onMark.mock.calls).toEqual([['unknown']]);
     expect(screen.getByText('Marked: unknown')).toBeTruthy();
+  });
+});
+
+/** The card's tilt, in degrees. */
+function cardTilt(): number {
+  const { transform = [] } = getAnimatedStyle(
+    screen.getByTestId('swipe-card', { includeHiddenElements: true }),
+  ) as { transform?: { rotate?: string }[] };
+  return Number.parseFloat(transform.find((step) => step.rotate !== undefined)?.rotate ?? '0');
+}
+
+/** How far the stage lifts the Feed, the card under it and the next one. */
+function lift(): number {
+  const { transform = [] } = getAnimatedStyle(screen.getByTestId('swipe-demo-stage')) as {
+    transform?: { translateY?: number }[];
+  };
+  return transform.find((step) => step.translateY !== undefined)?.translateY ?? 0;
+}
+
+describe("SwipeMarks in the swipe hint's demo", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  // The demo loops in 8.4 s, as on board XSwipeV: right, back, left, back, up with the next card, back.
+  it("swings the card on screen right with «KNOW», left with «DON'T KNOW» and lifts it with the next", async () => {
+    await renderPaged({ demo: true });
+
+    await pass(1760);
+    expect(cardX()).toBeCloseTo(118);
+    expect(cardTilt()).toBeCloseTo(8);
+    expect(opacityOf('swipe-edge-known')).toBeCloseTo(1);
+    expect(opacityOf('swipe-edge-unknown')).toBeCloseTo(0);
+
+    await pass(2690);
+    expect(cardX()).toBeCloseTo(-118);
+    expect(cardTilt()).toBeCloseTo(-8);
+    expect(opacityOf('swipe-edge-known')).toBeCloseTo(0);
+    expect(opacityOf('swipe-edge-unknown')).toBeCloseTo(1);
+
+    await pass(2780);
+    expect(cardX()).toBeCloseTo(0);
+    expect(lift()).toBeCloseTo(-150);
+
+    // Round again: the loop goes on.
+    await pass(8400 - 7230 + 1760);
+    expect(cardX()).toBeCloseTo(118);
+    expect(lift()).toBeCloseTo(0);
+  });
+
+  it('leaves the card still once the demo stops', async () => {
+    await renderPaged({ demo: false });
+
+    await pass(1760);
+    expect(cardX()).toBe(0);
+    expect(lift()).toBe(0);
+    expect(opacityOf('swipe-edge-known')).toBe(0);
+  });
+
+  it('leaves the card still under Reduce Motion', async () => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    await renderPaged({ demo: true });
+
+    await pass(1760);
+    expect(cardX()).toBe(0);
+    expect(lift()).toBe(0);
   });
 });

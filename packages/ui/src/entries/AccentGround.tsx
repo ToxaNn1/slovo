@@ -35,11 +35,9 @@ export function AccentGround({
 }: {
   /** Unique on the screen: it names the raster. */
   id: string;
+  /** The giant letter, or '' for none. */
   letter: string;
-  letterRole: Extract<
-    TypeRole,
-    'giantLetter' | 'panelLetter' | 'dashboardQuestion' | 'dashboardLetter'
-  >;
+  letterRole: Extract<TypeRole, 'giantLetter' | 'panelLetter' | 'dashboardQuestion'>;
   /** How far the letter overhangs the top right corner. */
   letterAt: { right: number; top: number };
   points?: Wedge;

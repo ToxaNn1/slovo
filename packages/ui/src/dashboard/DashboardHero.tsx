@@ -2,58 +2,103 @@ import {
   partOfSpeechText,
   stressLabel,
   withoutStress,
+  type InterfaceSound,
   type LocalDate,
   type WordOfTheDayHero,
 } from '@slovo/core';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 
 import { AccentGround } from '../entries/AccentGround';
-import { firstLetter } from '../entries/WordHero';
 import { Mascot } from '../primitives/Mascot';
 import { PressedTile } from '../primitives/PressedTile';
+import { Wedge } from '../primitives/Wedge';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { dashboard, space, typeStyle, wedges, withAlpha, type TypeRole } from '../tokens';
+import {
+  capitalMarkRoom,
+  dashboard,
+  roleSize,
+  space,
+  typeStyle,
+  wedges,
+  withAlpha,
+  type TypeRole,
+} from '../tokens';
+import { FlyingLemma, RisesIn } from './HeroReveal';
+import { HeroSparks } from './HeroSparks';
 
 const { hero: place } = dashboard;
+const { card } = place;
 const RARITY_BARS = [1, 2, 3, 4, 5] as const;
 
 /**
  * The Word of the Day hero of the Dashboard (ADR 0076), on the red ground
  * whose bottom falls to the left. Unrevealed, it shouts «Лови слово!» under a
- * giant «?» with «Розкрити» and the waiting Mascot; revealed, it shows the
- * Lemma in capitals, its Stress and part of speech, its rarity and the short
- * Definition, with «До картки →», which opens the Feed on the Word of the Day
- * card, and the happy Mascot.
+ * giant «?» with «Розкрий слово» and the waiting Mascot; revealed, it shows
+ * the Lemma in capitals over a cream card of its Stress and part of speech,
+ * rarity bars, short Definition and rarity, with «Ще про слово →», which opens
+ * the Feed on the Word of the Day card, and the happy Mascot. Revealed while
+ * on screen, it opens as the board does (ADR 0105): the reveal shouts, the
+ * Mascot shouts a moment, the Lemma flies in letter by letter and the card,
+ * then the button, rise in. Opened already revealed, it stands still.
+ * With `sparks`, the Mascot throws the board's sparks from its megaphone,
+ * closed and open (ADR 0109).
  */
 export function DashboardHero({
   hero,
+  sparks,
   onReveal,
   onToCard,
 }: {
   hero: WordOfTheDayHero;
+  /** The Edition's `heroSparks` is on in effect. */
+  sparks: boolean;
   onReveal: () => void;
   onToCard: () => void;
 }) {
   const { strings } = useEdition();
   const revealed = hero.state === 'revealed';
+  const [openedClosed] = useState(!revealed);
+  const plays = revealed && openedClosed;
+  const [shouted, setShouted] = useState(false);
+  useEffect(() => {
+    if (!plays) return undefined;
+    const timer = setTimeout(() => {
+      setShouted(true);
+    }, place.reveal.shouts);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [plays]);
+  const mascot = !revealed ? 'waits' : plays && !shouted ? 'shouts' : 'happy';
+  const toCard = (
+    <HeroButton
+      testID="dashboard-to-card"
+      role="dashboardToCardButton"
+      paddingHorizontal={place.button.toCardPaddingHorizontal}
+      label={strings.dashboard.toCard}
+      sound="tap"
+      onPress={onToCard}
+    />
+  );
   return (
     <AccentGround
       id="dashboard-hero"
       testID="dashboard-hero"
-      letter={revealed ? firstLetter(hero.lemmaWithStress) : '?'}
-      letterRole={revealed ? 'dashboardLetter' : 'dashboardQuestion'}
-      letterAt={revealed ? place.letter : place.question}
-      letterOpacity={revealed ? 1 : place.questionOpacity}
+      letter={revealed ? '' : '?'}
+      letterRole="dashboardQuestion"
+      letterAt={place.question}
+      letterOpacity={place.questionOpacity}
       points={wedges.dashboardHero}
       letterStopsAt={place.cutAt}
       style={styles.hero}
     >
-      <Kicker day={hero.date} />
+      <Kicker hero={hero} />
       {revealed ? (
-        <RevealedWord hero={hero} />
+        <RevealedWord hero={hero} plays={plays} />
       ) : (
         <>
           <HeroText role="dashboardShout" style={styles.shout}>
@@ -64,98 +109,217 @@ export function DashboardHero({
           </HeroText>
         </>
       )}
+      {sparks && <HeroSparks />}
       <View style={styles.mascot}>
-        <Mascot state={revealed ? 'happy' : 'waits'} onRed width={place.mascot.width} />
+        <Mascot state={mascot} onRed width={place.mascot.width} />
       </View>
       {revealed ? (
-        <HeroButton
-          testID="dashboard-to-card"
-          role="dashboardToCardButton"
-          paddingHorizontal={place.button.toCardPaddingHorizontal}
-          label={strings.dashboard.toCard}
-          onPress={onToCard}
-        />
+        plays ? (
+          <RisesIn at="button" style={[styles.button, { bottom: place.button.bottom }]}>
+            {toCard}
+          </RisesIn>
+        ) : (
+          <View style={[styles.button, { bottom: place.button.bottom }]}>{toCard}</View>
+        )
       ) : (
-        <HeroButton
-          testID="dashboard-reveal"
-          role="dashboardButton"
-          paddingHorizontal={place.button.paddingHorizontal}
-          label={strings.wordOfTheDay.reveal}
-          onPress={onReveal}
-        />
+        <View style={[styles.button, { bottom: place.button.revealBottom }]}>
+          <HeroButton
+            testID="dashboard-reveal"
+            role="dashboardButton"
+            paddingHorizontal={place.button.paddingHorizontal}
+            label={strings.dashboard.reveal}
+            sound="shout"
+            onPress={onReveal}
+          />
+        </View>
       )}
     </AccentGround>
   );
 }
 
-/** The open hero's Lemma, its Stress and part of speech, its rarity bars and the short Definition. */
-function RevealedWord({ hero }: { hero: Extract<WordOfTheDayHero, { state: 'revealed' }> }) {
+/**
+ * The open hero's Lemma, and under it the cream card: its Stress and part of
+ * speech beside the rarity bars, the short Definition and «Рідкість N з 5».
+ * While `plays`, the Lemma flies in over itself and the card rises in.
+ */
+function RevealedWord({
+  hero,
+  plays,
+}: {
+  hero: Extract<WordOfTheDayHero, { state: 'revealed' }>;
+  plays: boolean;
+}) {
   const tokens = useTokens();
-  const keyInk = useSchemeColors('light').ink;
+  const { ink: keyInk, background: cream, accentText } = useSchemeColors('light');
   const { strings, voice } = useEdition();
+  // Measured, not '100%': Yoga sizes an absolute child's percent width by the
+  // card's content box, so the cream ended `paddingHorizontal` short on the right.
+  const [cardSize, setCardSize] = useState<{ width: number; height: number }>();
   const rarity = fill(strings.dashboard.rarity, { rarity: String(hero.rarity) });
+  const lemma = withoutStress(hero.lemmaWithStress);
+  const lemmaStyle = [typeStyle('dashboardLemma', tokens), { color: keyInk }];
+  const room = capitalMarkRoom('dashboardLemma');
+  const content = (
+    <View
+      testID="dashboard-hero-card"
+      onLayout={(event) => {
+        const { width, height } = event.nativeEvent.layout;
+        setCardSize({ width, height });
+      }}
+      style={styles.card}
+    >
+      {cardSize === undefined ? null : (
+        <Wedge
+          testID="dashboard-hero-card-cream"
+          points={[
+            [0, card.cut / cardSize.height],
+            [1, 0],
+            [1, 1],
+            [0, 1],
+          ]}
+          color={cream}
+          width={cardSize.width}
+          height={cardSize.height}
+          style={styles.cream}
+        />
+      )}
+      <View style={styles.cardRow}>
+        <WordLine
+          text={fill(strings.dashboard.wordLine, {
+            stress: hero.lemmaWithStress,
+            partOfSpeech: partOfSpeechText(strings.wordCard, hero, 'short'),
+          })}
+        />
+        <View
+          testID="dashboard-hero-rarity"
+          accessible
+          accessibilityLabel={rarity}
+          style={styles.bars}
+        >
+          {RARITY_BARS.map((bar) => (
+            <View
+              key={bar}
+              testID={
+                bar <= hero.rarity ? 'dashboard-hero-rarity-full' : 'dashboard-hero-rarity-empty'
+              }
+              style={[
+                styles.bar,
+                {
+                  backgroundColor: bar <= hero.rarity ? keyInk : withAlpha(keyInk, place.emptyBar),
+                },
+              ]}
+            />
+          ))}
+        </View>
+      </View>
+      <HeroText role="dashboardDefinition">{hero.definition}</HeroText>
+      <Text
+        {...voice}
+        importantForAccessibility="no"
+        accessibilityElementsHidden
+        style={[typeStyle('dashboardRarity', tokens), { color: accentText }]}
+      >
+        {rarity}
+      </Text>
+    </View>
+  );
   return (
     <>
       {/* Measured to fit the line: `adjustsFontSizeToFit` alone let a long Lemma such as «ВЕРБОЛІЗ» run past the edge on iOS. */}
       <View style={styles.lemma}>
-        <WholeWordsText
-          testID="dashboard-hero-lemma"
-          {...voice}
-          text={withoutStress(hero.lemmaWithStress)}
-          typeRole="dashboardLemma"
-          numberOfLines={1}
-          accessibilityLabel={stressLabel(
-            strings.wordCard,
-            hero.lemmaWithStress,
-            hero.stressedVowels,
-          )}
-          style={[typeStyle('dashboardLemma', tokens), { color: keyInk }]}
-        />
-      </View>
-      <HeroText role="dashboardWordLine" style={styles.line}>
-        {fill(strings.dashboard.wordLine, {
-          stress: hero.lemmaWithStress,
-          partOfSpeech: partOfSpeechText(strings.wordCard, hero, 'short'),
-        })}
-      </HeroText>
-      <View
-        testID="dashboard-hero-rarity"
-        accessible
-        accessibilityLabel={rarity}
-        style={styles.rarity}
-      >
-        {RARITY_BARS.map((bar) => (
-          <View
-            key={bar}
-            testID={
-              bar <= hero.rarity ? 'dashboard-hero-rarity-full' : 'dashboard-hero-rarity-empty'
-            }
-            style={[
-              styles.bar,
-              { backgroundColor: bar <= hero.rarity ? keyInk : withAlpha(keyInk, place.emptyBar) },
-            ]}
+        <View style={plays && styles.clear}>
+          <WholeWordsText
+            testID="dashboard-hero-lemma"
+            {...voice}
+            text={lemma}
+            typeRole="dashboardLemma"
+            numberOfLines={1}
+            accessibilityLabel={stressLabel(
+              strings.wordCard,
+              hero.lemmaWithStress,
+              hero.stressedVowels,
+            )}
+            style={lemmaStyle}
           />
-        ))}
-        <Text
-          {...voice}
-          style={[typeStyle('dashboardRarity', tokens), styles.rarityLabel, { color: keyInk }]}
-        >
-          {rarity}
-        </Text>
+        </View>
+        {plays && (
+          <FlyingLemma
+            text={lemma.toLocaleUpperCase(voice.accessibilityLanguage)}
+            style={[...lemmaStyle, { paddingTop: room, marginTop: -room }]}
+          />
+        )}
       </View>
-      <HeroText role="dashboardDefinition" style={styles.definition}>
-        {hero.definition}
-      </HeroText>
+      {plays ? <RisesIn at="card">{content}</RisesIn> : content}
     </>
   );
 }
 
-/** «СЛОВО ДНЯ · 2.11» at the hero's top left. */
-function Kicker({ day: { day, month } }: { day: LocalDate }) {
+/**
+ * The card's Stress and part of speech on one line beside the rarity bars,
+ * drawn smaller when it is wider than its room, so a long Lemma such as
+ * «високопревосходи́тельство» neither wraps under the bars nor pushes the card
+ * onto «Ще про слово →». Measured, as the Lemma is: the line is measured at
+ * full size and hidden until it is.
+ */
+function WordLine({ text }: { text: string }) {
+  const tokens = useTokens();
+  const keyInk = useSchemeColors('light').ink;
+  const { voice } = useEdition();
+  const [room, setRoom] = useState<number>();
+  const [natural, setNatural] = useState<number>();
+  // A point of slack, so rounding never pushes the line back over its room.
+  const scale =
+    room === undefined || natural === undefined ? undefined : Math.min(1, (room - 1) / natural);
+  const full = roleSize('dashboardWordLine');
+  const lineStyle = [typeStyle('dashboardWordLine', tokens), { color: keyInk }];
+  return (
+    <View
+      style={styles.wordLine}
+      onLayout={(event) => {
+        // A view not laid out yet reports no width, which would scale the line away.
+        if (event.nativeEvent.layout.width > 0) setRoom(event.nativeEvent.layout.width);
+      }}
+    >
+      <Text
+        {...voice}
+        numberOfLines={1}
+        style={[
+          lineStyle,
+          { fontSize: full.fontSize * (scale ?? 1), lineHeight: full.lineHeight * (scale ?? 1) },
+          scale === undefined && styles.clear,
+        ]}
+      >
+        {text}
+      </Text>
+      <View
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={styles.measure}
+      >
+        <Text
+          {...voice}
+          onTextLayout={(event) => {
+            setNatural(Math.max(...event.nativeEvent.lines.map((line) => line.width)));
+          }}
+          style={lineStyle}
+        >
+          {text}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/** At the hero's top left: «СЛОВО ДНЯ · №312» closed, «СЛОВО ДНЯ · 2.11» open (ADR 0105). */
+function Kicker({ hero }: { hero: WordOfTheDayHero }) {
   const { strings } = useEdition();
+  const { day, month }: LocalDate = hero.date;
   return (
     <HeroText role="dashboardKicker" style={styles.kicker}>
-      {fill(strings.dashboard.kicker, { day: String(day), month: String(month) })}
+      {hero.state === 'revealed'
+        ? fill(strings.dashboard.kicker, { day: String(day), month: String(month) })
+        : fill(strings.dashboard.kickerNumber, { number: String(hero.number) })}
     </HeroText>
   );
 }
@@ -167,7 +331,7 @@ function HeroText({
   children,
 }: {
   role: TypeRole;
-  style: StyleProp<TextStyle>;
+  style?: StyleProp<TextStyle>;
   children: string;
 }) {
   const tokens = useTokens();
@@ -180,18 +344,20 @@ function HeroText({
   );
 }
 
-/** The hero's ink button at the bottom right, above the cut: «Розкрити» or «До картки →». */
+/** The hero's ink button: «Розкрий слово», which shouts, or «Ще про слово →». */
 function HeroButton({
   testID,
   role,
   paddingHorizontal,
   label,
+  sound,
   onPress,
 }: {
   testID: string;
   role: Extract<TypeRole, 'dashboardButton' | 'dashboardToCardButton'>;
   paddingHorizontal: number;
   label: string;
+  sound: InterfaceSound;
   onPress: () => void;
 }) {
   const tokens = useTokens();
@@ -199,23 +365,21 @@ function HeroButton({
   const sounds = useInterfaceSounds();
   const { voice } = useEdition();
   return (
-    <View style={styles.button}>
-      <PressedTile
-        tone="ink"
-        radius={place.button.radius}
-        accessibilityLabel={label}
-        onPress={() => {
-          sounds.play('tap');
-          onPress();
-        }}
-        faceStyle={[styles.buttonFace, { paddingHorizontal }]}
-        testID={testID}
-      >
-        <Text {...voice} style={[typeStyle(role, tokens), { color: cream }]}>
-          {label}
-        </Text>
-      </PressedTile>
-    </View>
+    <PressedTile
+      tone="ink"
+      radius={place.button.radius}
+      accessibilityLabel={label}
+      onPress={() => {
+        sounds.play(sound);
+        onPress();
+      }}
+      faceStyle={[styles.buttonFace, { paddingHorizontal }]}
+      testID={testID}
+    >
+      <Text {...voice} style={[typeStyle(role, tokens), { color: cream }]}>
+        {label}
+      </Text>
+    </PressedTile>
   );
 }
 
@@ -229,28 +393,39 @@ const styles = StyleSheet.create({
   shout: { position: 'absolute', ...place.shout },
   subtitle: { position: 'absolute', ...place.subtitle },
   lemma: { position: 'absolute', ...place.lemma },
-  line: { position: 'absolute', ...place.line },
-  rarity: {
+  clear: { opacity: 0 },
+  card: {
     position: 'absolute',
-    left: place.rarity.left,
-    top: place.rarity.top,
+    left: card.left,
+    right: card.right,
+    top: card.top,
+    paddingTop: card.paddingTop,
+    paddingHorizontal: card.paddingHorizontal,
+    paddingBottom: card.paddingBottom,
+    gap: card.gap,
+  },
+  cream: { position: 'absolute', left: 0, top: 0 },
+  cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: place.rarity.gap,
+    justifyContent: 'space-between',
+    gap: card.rowGap,
   },
+  wordLine: { flex: 1 },
+  // Wide enough that the measured line never wraps.
+  measure: { position: 'absolute', top: 0, left: 0, width: 10000, opacity: 0 },
+  bars: { flexDirection: 'row', alignItems: 'center', gap: card.bars.gap },
   bar: {
-    width: place.rarity.bar.width,
-    height: place.rarity.bar.height,
-    transform: [{ skewX: place.rarity.bar.skew }],
+    width: card.bars.width,
+    height: card.bars.height,
+    transform: [{ skewX: card.bars.skew }],
   },
-  rarityLabel: { marginLeft: place.rarity.labelGap },
-  definition: { position: 'absolute', ...place.definition },
   // The Mascot pads its figure by `space[4]`; the board places the figure itself.
   mascot: {
     position: 'absolute',
     left: place.mascot.left - space[4],
     top: place.mascot.top - space[4],
   },
-  button: { position: 'absolute', right: place.button.right, bottom: place.button.bottom },
+  button: { position: 'absolute', right: place.button.right },
   buttonFace: { height: place.button.height, justifyContent: 'center' },
 });

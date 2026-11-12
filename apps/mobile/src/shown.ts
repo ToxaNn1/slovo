@@ -130,14 +130,24 @@ export interface Shown {
   readonly dashboard: boolean;
   /** The Feed header's wordmark opens the Dashboard (ADR 0079). */
   readonly dashboardWordmark: boolean;
+  /** The Dashboard's logo plays the daily splash, the short cut, then the Dashboard again (ADR 0105). */
+  readonly dailySplash: boolean;
+  /** The Mascot in the Dashboard's hero throws sparks from its megaphone (ADR 0109). */
+  readonly heroSparks: boolean;
   /** The «Стрічка» tab opens the Feed; the Dashboard stays the home at launch (ADR 0093). */
   readonly feedTab: boolean;
+  /** A tap on a Word of a Category's screen opens the Category's Feed (ADR 0110). */
+  readonly categoryFeed: boolean;
+  /** A Category's screen lists its Known Entries first (ADR 0111). */
+  readonly categoryKnownFirst: boolean;
   /** The Mood check-in block of the Dashboard, «Як настрій?» (ADR 0076). */
   readonly mood: boolean;
   /** The Curated Collections rail of the Dashboard, «Добірки» (ADR 0076). */
   readonly curatedCollections: boolean;
   /** Side swipes mark an Entry Known or Unknown; the card corner holds the heart, Collections and «⋯» in place of the action row (ADR 0077). */
   readonly swipeMarks: boolean;
+  /** While the gestures hint is open, the Feed's card plays the swipes it names (ADR 0112). */
+  readonly gesturesHintDemo: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
   /** The «Рідкість» row of Settings, the Rarity Ceiling (ADR 0072). */
@@ -225,10 +235,15 @@ export function shownOf({
     fastReveal: on('fastReveal'),
     dashboard: on('dashboard'),
     dashboardWordmark: on('dashboardWordmark'),
+    dailySplash: on('dailySplash'),
+    heroSparks: on('heroSparks'),
     feedTab: on('feedTab'),
+    categoryFeed: on('categoryFeed'),
+    categoryKnownFirst: on('categoryKnownFirst'),
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
     swipeMarks: on('swipeMarks'),
+    gesturesHintDemo: on('gesturesHintDemo'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
     rarityCeiling: on('rarityCeiling'),
     rarityTest: on('rarityTest'),

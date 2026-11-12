@@ -160,7 +160,7 @@ Where a dialect Word is said (e.g. Гуцульщина), a short text in the Ed
 _Avoid_: Area, dialect, location
 
 **Category**:
-A thematic group a Word or a Correction belongs to. Words and Corrections each have the Edition's own list: Words by what they name (e.g. human body, emotions, military), Corrections by where a reader meets them (e.g. at work, in a shop, transport). Every Word and every Correction has one Category of its list. Every Category carries a one-line description and a tone, loud or quiet; a quiet Category (e.g. the Words removed from dictionaries in the 1930s) has a quiet tile and a quiet screen without the Mix button or progress. A Category has a screen of its live Entries, opened from its grid (ADR 0081).
+A thematic group a Word or a Correction belongs to. Words and Corrections each have the Edition's own list: Words by what they name (e.g. human body, emotions, military), Corrections by where a reader meets them (e.g. at work, in a shop, transport). Every Word and every Correction has one Category of its list. Every Category carries a one-line description and a tone, loud or quiet; a quiet Category (e.g. the Words removed from dictionaries in the 1930s) has a quiet tile and a quiet screen without the Mix button or progress. A Category has a screen of its live Entries, opened from its grid (ADR 0081), the Known ones first (ADR 0111); a tap on a Word there opens the Category's Feed, its Words alone from the tapped one, round again after the last (ADR 0110).
 _Avoid_: Topic, tag, theme
 
 **Rare Word**:
@@ -323,7 +323,7 @@ A Feed card that is not an Entry, shown one at a time. The 1.0 list: the Weekly 
 _Avoid_: Banner, tip (a Tip is an Entry)
 
 **Seen**:
-An Entry is Seen in the current Cycle once its card stayed on screen for a minimum dwell time in the Feed, or the user opened it from a notification or widget. The Dashboard's reveal of the Word of the Day makes it Seen, through the Feed's own Seen. Opening an Entry from Search, «Попередні слова», a Curated Collection or a Correction Type, the Rarity Test and Feed Notices make nothing Seen.
+An Entry is Seen in the current Cycle once its card stayed on screen for a minimum dwell time in the Feed, or the user opened it from a notification or widget. The Dashboard's reveal of the Word of the Day makes it Seen, through the Feed's own Seen. Opening an Entry from Search, «Попередні слова», a Curated Collection, a Correction Type or a Category's screen, a Category's Feed (ADR 0110), the Rarity Test and Feed Notices make nothing Seen.
 _Avoid_: Viewed, read
 
 **Cycle**:

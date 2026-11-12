@@ -25,6 +25,8 @@ export const splashMotion = {
   frame: { width: 390, height: 844 },
   duration: 4200,
   reduceMotionHold: 800,
+  /** The daily splash from the Dashboard's logo (ADR 0105): the same cut, played in `duration` ms, shouting `shoutAt` ms in. */
+  daily: { duration: 560, reduceMotionHold: 350, shoutAt: 100 },
   /** The frame the splash holds under Reduce Motion: every piece in place, the wipe not yet in. */
   still: 0.86,
   /** The mark, a red wedge with the cream S, on a 100 × 100 box drawn `size` wide. */

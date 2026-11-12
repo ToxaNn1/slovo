@@ -25,12 +25,22 @@ import { SettingsProvider } from '../settings/settings';
 
 const { config } = activeEditionFiles;
 
-/** The UA Edition with the side swipes marking an Entry as `swipeMarks` says. */
-function editionWith(swipeMarks: boolean): Edition {
+const onOff = (on: boolean) => (on ? 'on' : 'off');
+
+/**
+ * The UA Edition with the side swipes marking an Entry as `swipeMarks` says,
+ * and the hint playing its demo as `gesturesHintDemo` says.
+ */
+function editionWith(swipeMarks: boolean, gesturesHintDemo = true): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   return loadEdition({
     ...rest,
-    featureSwitches: { ...featureSwitches, knowledge: 'on', swipeMarks: swipeMarks ? 'on' : 'off' },
+    featureSwitches: {
+      ...featureSwitches,
+      knowledge: 'on',
+      swipeMarks: onOff(swipeMarks),
+      gesturesHintDemo: onOff(gesturesHintDemo),
+    },
   });
 }
 
@@ -84,8 +94,8 @@ function word(id: string, lemma: string): Word {
 }
 
 /** Opens the composition over two Words. */
-async function open(swipeMarks: boolean) {
-  editionInEffect = editionWith(swipeMarks);
+async function open(swipeMarks: boolean, gesturesHintDemo = true) {
+  editionInEffect = editionWith(swipeMarks, gesturesHintDemo);
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
   userState = await seedUserState({ onboardingFinished: '2026-09-01T09:00:00.000Z' }, { clock });
   await reopen();
@@ -116,14 +126,18 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  motionPlays = false;
   jest.useRealTimers();
   screenSettled();
 });
 
+/** Whether motion plays: the demo then loops for good, so settling runs a while, not every timer. */
+let motionPlays = false;
+
 async function settle(action: () => unknown = () => undefined) {
   await act(async () => {
     await action();
-    await jest.runAllTimersAsync();
+    await (motionPlays ? jest.advanceTimersByTimeAsync(2000) : jest.runAllTimersAsync());
   });
 }
 
@@ -214,5 +228,28 @@ describe('the gestures hint sheet on the Feed', () => {
     expect(screen.getByTestId('feed')).toBeOnTheScreen();
     expect(screen.queryByTestId('gestures-hint')).toBeNull();
     expect(screen.queryByText('ГОРТАЙ ПАЛЬЦЕМ')).toBeNull();
+  });
+});
+
+// Board XSwipeV: the hint plays the Feed's real card under a finger (ADR 0112).
+describe("the swipe hint's demo on the Feed", () => {
+  beforeEach(() => {
+    motionPlays = true;
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
+  });
+
+  it('drags a finger over the card with gesturesHintDemo on', async () => {
+    await open(true, true);
+    await renderApp();
+    expect(screen.getByTestId('gestures-hint')).toBeOnTheScreen();
+    expect(screen.getByTestId('gestures-hint-finger')).toBeOnTheScreen();
+  });
+
+  it('shows the sheet without a finger with gesturesHintDemo off', async () => {
+    await open(true, false);
+    await renderApp();
+    expect(screen.getByTestId('gestures-hint')).toBeOnTheScreen();
+    expect(screen.getByText('ГОРТАЙ ПАЛЬЦЕМ')).toBeOnTheScreen();
+    expect(screen.queryByTestId('gestures-hint-finger')).toBeNull();
   });
 });

@@ -3,18 +3,7 @@
 
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  Extrapolation,
-  ReduceMotion,
-  cancelAnimation,
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-  type SharedValue,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import Svg, { Polygon } from 'react-native-svg';
 
 import { BottomSheet } from '../primitives/BottomSheet';
@@ -22,8 +11,8 @@ import { Button } from '../primitives/Button';
 import { SheetTitle } from '../primitives/SheetParts';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
 import { gesturesHint, space, typeStyle } from '../tokens';
+import { demoFinger, demoRow, type SwipeDemo } from '../entries/swipe-demo';
 
 /** A row of the sheet: what one gesture does. */
 interface HintRow {
@@ -42,69 +31,48 @@ export interface GesturesHintTexts {
 const gestures = ['known', 'unknown', 'next'] as const;
 type Gesture = (typeof gestures)[number];
 
-/** One gesture of the demo, as on board 04 (2.8 s each). */
-const GESTURE_MS = 2800;
-
 /**
  * The «ГОРТАЙ ПАЛЬЦЕМ» sheet the Feed shows once (board 04): its title, a row
  * per gesture (right marks the Entry Known, left Unknown, up turns to the next
  * card) and «ЗРОЗУМІЛО», which asks `onDismiss`; nothing else closes it. While
- * it is open a finger over the card plays the three gestures in a loop and
- * each row lights up in turn with its gesture. With Reduce Motion it is a
- * static frame: no finger and no light. `onShown` is called once it is drawn,
- * so the caller can keep that it was seen.
+ * the swipe hint's `demo` plays (board XSwipeV) the card swings under a finger
+ * and each row lights up in turn with its gesture; with no demo (switched off,
+ * or Reduce Motion) it is a static frame: no finger and no light. `onShown` is
+ * called once it is drawn, so the caller can keep that it was seen.
  */
 export function GesturesHintSheet({
   visible,
   texts,
+  demo,
   onShown,
   onDismiss,
   testID = 'gestures-hint',
 }: {
   visible: boolean;
   texts: GesturesHintTexts;
+  demo: SwipeDemo | undefined;
   onShown: () => void;
   onDismiss: () => void;
   testID?: string;
 }) {
-  const reduceMotion = useReduceMotion();
-  const animated = visible && !reduceMotion;
-  /** The demo's place: the gesture playing, and how far it is through it. */
-  const progress = useSharedValue(0);
+  const playing = visible ? demo : undefined;
 
   useEffect(() => {
     if (visible) onShown();
   }, [visible, onShown]);
 
-  useEffect(() => {
-    if (!animated) return;
-    progress.value = 0;
-    progress.value = withRepeat(
-      withTiming(gestures.length, {
-        duration: GESTURE_MS * gestures.length,
-        easing: Easing.linear,
-        reduceMotion: ReduceMotion.Never,
-      }),
-      -1,
-    );
-    return () => {
-      cancelAnimation(progress);
-    };
-  }, [animated, progress]);
-
   return (
     <>
-      {animated && <Finger progress={progress} testID={`${testID}-finger`} />}
+      {playing !== undefined && <Finger demo={playing} testID={`${testID}-finger`} />}
       <BottomSheet visible={visible} testID={testID}>
         <SheetTitle>{texts.title}</SheetTitle>
         <View style={styles.rows}>
-          {gestures.map((gesture, index) => (
+          {gestures.map((gesture) => (
             <Row
               key={gesture}
               gesture={gesture}
               row={texts.rows[gesture]}
-              progress={animated ? progress : undefined}
-              index={index}
+              demo={playing}
               testID={`${testID}-${gesture}`}
             />
           ))}
@@ -120,38 +88,22 @@ export function GesturesHintSheet({
   );
 }
 
-/** How far `progress` is through the gesture at `index`: below 0 before it, 1 and over after it. */
-function through(progress: number, index: number) {
-  'worklet';
-  return progress - index;
-}
-
 function Row({
   gesture,
   row,
-  progress,
-  index,
+  demo,
   testID,
 }: {
   gesture: Gesture;
   row: HintRow;
-  progress: SharedValue<number> | undefined;
-  index: number;
+  demo: SwipeDemo | undefined;
   testID: string;
 }) {
   const tokens = useTokens();
   const { colors, radii } = tokens;
   const { voice } = useEdition();
   const light = useAnimatedStyle(() => ({
-    opacity:
-      progress === undefined
-        ? 0
-        : interpolate(
-            through(progress.value, index),
-            [0, 0.16, 0.28, 0.88, 1],
-            [0, 0, 1, 1, 0],
-            Extrapolation.CLAMP,
-          ),
+    opacity: demo === undefined ? 0 : demoRow(demo.value, gesture),
   }));
   return (
     <View
@@ -162,6 +114,7 @@ function Row({
       style={[styles.row, { borderRadius: radii.tile }]}
     >
       <Animated.View
+        testID={`${testID}-light`}
         pointerEvents="none"
         style={[
           StyleSheet.absoluteFill,
@@ -213,25 +166,16 @@ function GestureKey({ gesture }: { gesture: Gesture }) {
   );
 }
 
-/** The finger over the card: it presses, travels right, left and up, and lifts, in a loop. */
-function Finger({ progress, testID }: { progress: SharedValue<number>; testID: string }) {
+/** The finger over the card: it presses, drags right, left and up, and lifts, with the demo. */
+function Finger({ demo, testID }: { demo: SwipeDemo; testID: string }) {
   const key = useSchemeColors('light');
   const style = useAnimatedStyle(() => {
-    const index = Math.min(Math.floor(progress.value), gestures.length - 1);
-    const t = through(progress.value, index);
-    const travel = interpolate(t, [0.2, 0.56], [0, gesturesHint.fingerTravel], Extrapolation.CLAMP);
-    return {
-      opacity: interpolate(t, [0, 0.08, 0.2, 0.8, 0.92], [0, 0, 1, 1, 0], Extrapolation.CLAMP),
-      transform: [
-        { translateX: index === 0 ? travel : index === 1 ? -travel : 0 },
-        { translateY: index === 2 ? -travel : 0 },
-        { scale: interpolate(t, [0.08, 0.2], [1.5, 1], Extrapolation.CLAMP) },
-      ],
-    };
+    const { opacity, x, y, scale } = demoFinger(demo.value);
+    return { opacity, transform: [{ translateX: x }, { translateY: y }, { scale }] };
   });
   return (
     <View testID={testID} pointerEvents="none" style={styles.fingerArea}>
-      <Animated.View style={[styles.finger, style]}>
+      <Animated.View testID={`${testID}-tip`} style={[styles.finger, style]}>
         <View style={[styles.fingerRing, { backgroundColor: key.background }]} />
         <View style={[styles.fingerTip, { backgroundColor: key.background }]} />
       </Animated.View>
@@ -256,13 +200,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // The finger rests a third of the way down the screen, over the card above the sheet.
-  fingerArea: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center',
-    paddingTop: '33%',
-  },
+  // The finger rests over the middle of the card above the sheet, as on board XSwipeV.
+  fingerArea: { ...StyleSheet.absoluteFill },
   finger: {
+    position: 'absolute',
+    top: gesturesHint.fingerTop,
+    left: '50%',
+    marginLeft: -(gesturesHint.fingerSize / 2 + gesturesHint.fingerRing),
     width: gesturesHint.fingerSize + 2 * gesturesHint.fingerRing,
     height: gesturesHint.fingerSize + 2 * gesturesHint.fingerRing,
     alignItems: 'center',

@@ -1,7 +1,10 @@
 import type { LocalDate, WordCardModel } from '@slovo/core';
 import type { ReactNode } from 'react';
+import { StyleSheet, Text } from 'react-native';
 
 import type { TextSize } from '../providers/FontSizeProvider';
+import { useTokens } from '../providers/TokensProvider';
+import { typeStyle } from '../tokens';
 import { CategoryChip } from './CategoryChip';
 import { KickerRow } from './KickerRow';
 import { WordHeadline, WordSections } from './WordCard';
@@ -32,6 +35,7 @@ export function WordCardBody({
   wordOfTheDayFont,
   corner,
   tabs,
+  kicker,
 }: {
   card: WordCardModel;
   /** On the card of the Word of the Day: the local day it is the Word of, its kicker with tabs and its badge without. */
@@ -54,11 +58,17 @@ export function WordCardBody({
   corner: ReactNode | undefined;
   /** The tabs under the Lemma in place of the one column, while `wordTabs` is on (ADR 0091). */
   tabs: boolean;
+  /** The card's kicker beside its corner, such as its place in a Category's Feed (ADR 0110). */
+  kicker?: string | undefined;
 }) {
   return (
     <>
       <KickerRow testID="word-kicker-row" corner={corner}>
-        {wordOfTheDay === undefined ? null : tabs ? (
+        {wordOfTheDay === undefined ? (
+          kicker === undefined ? null : (
+            <CardKicker text={kicker} />
+          )
+        ) : tabs ? (
           <WordOfTheDayKicker day={wordOfTheDay} />
         ) : (
           <WordOfTheDayBadge day={wordOfTheDay} />
@@ -95,3 +105,20 @@ export function WordCardBody({
     </>
   );
 }
+
+/** A kicker in ink capitals over the Word, as XSwipeV's «КАТЕГОРІЯ · … · 2 З 4»; it wraps rather than shrinks. */
+function CardKicker({ text }: { text: string }) {
+  const tokens = useTokens();
+  return (
+    <Text
+      testID="word-card-kicker"
+      style={[typeStyle('cardKicker', tokens), styles.kicker, { color: tokens.colors.ink }]}
+    >
+      {text}
+    </Text>
+  );
+}
+
+const styles = StyleSheet.create({
+  kicker: { flexShrink: 1 },
+});

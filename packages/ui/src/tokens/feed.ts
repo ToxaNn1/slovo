@@ -10,12 +10,21 @@ export const xpBarHeight = 40;
 export const feedStateButtonHeight = 54;
 
 /**
- * The gestures hint's demo (board 04): how far the finger travels over the
- * card, the finger's size and the ring around it, and the size, corner and
- * border of a key.
+ * The gestures hint's demo (board XSwipeV): how long one round takes, how far
+ * the card and the finger travel to a side and how far the card tilts there,
+ * how far the Feed lifts for the next card, how low the finger presses for
+ * the lift and how high it rises, where the finger rests (its ring's top, a
+ * share of the screen's height), the finger's size and the ring around it,
+ * and the size, corner and border of a key.
  */
 export const gesturesHint = {
+  period: 8400,
   fingerTravel: 118,
+  cardTilt: 8,
+  lift: 150,
+  fingerDrop: 40,
+  fingerRise: 110,
+  fingerTop: '43.7%',
   fingerSize: 52,
   fingerRing: 8,
   keySize: 40,
@@ -108,29 +117,71 @@ export const dashboard = {
     radius: 30,
     cutAt: 0.9,
     question: { right: -70, top: -90 },
-    letter: { right: -60, top: -70 },
     kicker: { left: 22, top: 24 },
     shout: { left: 20, top: 58 },
     subtitle: { left: 22, top: 170, width: 190 },
     lemma: { left: 18, top: 52, right: 18 },
-    line: { left: 22, top: 118 },
-    rarity: {
-      left: 22,
-      top: 150,
-      gap: 4,
-      labelGap: 8,
-      bar: { width: 16, height: 12, skew: '-20deg' },
+    /**
+     * The open hero's cream card under the Lemma, its top left corner cut
+     * `cut` points down: its place, padding and the gap between its lines.
+     */
+    card: {
+      left: 14,
+      right: 14,
+      top: 116,
+      paddingTop: 30,
+      paddingHorizontal: 18,
+      paddingBottom: 20,
+      cut: 14,
+      gap: 12,
+      rowGap: 10,
+      bars: { gap: 3, width: 12, height: 10, skew: '-20deg' },
     },
-    definition: { left: 22, top: 182, width: 220 },
     button: {
       right: 20,
+      /** The open hero's «Ще про слово →». */
       bottom: 76,
+      /** The closed hero's «Розкрий слово», higher (ADR 0105). */
+      revealBottom: 132,
       height: 58,
       paddingHorizontal: 24,
       toCardPaddingHorizontal: 22,
       radius: 16,
     },
-    mascot: { left: 14, top: 318, width: 136 },
+    mascot: { left: 4, top: 334, width: 136 },
+    /**
+     * How the hero opens (ADR 0105): the Mascot shouts for `shouts` ms; each
+     * letter of the Lemma flies in `stagger` ms after the one before, from
+     * `entryReveal.from` moved `shift` points left per letter; the card and
+     * then the button rise in.
+     */
+    reveal: {
+      shouts: 1200,
+      letters: { delay: 120, stagger: 60, duration: 550, shift: 44 },
+      card: { delay: 600, duration: 450 },
+      button: { delay: 900, duration: 400 },
+    },
+    /**
+     * The sparks the Mascot throws from its megaphone (ADR 0109), as the
+     * board's `slLeaf`: each leaves `from` points right of and below the
+     * Mascot's figure and flies `travel` away, turning `turn` degrees; it
+     * shows over the first `showsBy` of its flight and fades out to its end.
+     * The sparks alternate the key ink and the cream; spark `i` flies for
+     * `duration + i × durationStep` ms, `i × delayStep` ms after the first,
+     * and again, endlessly.
+     */
+    sparks: {
+      count: 5,
+      from: { x: 136, y: 32 },
+      width: 13,
+      height: 9,
+      travel: { x: 90, xStep: 40, y: 40, yStep: 14 },
+      turn: 320,
+      showsBy: 0.15,
+      duration: 3000,
+      durationStep: 400,
+      delayStep: 700,
+    },
     /** The empty rarity bar: the key ink at a fifth. */
     emptyBar: 0.2,
     questionOpacity: 0.9,
@@ -171,11 +222,22 @@ export const moodTile = {
       [0.6, 1],
       [0, 1],
     ],
+    [
+      [0, 0.3],
+      [1, 0],
+      [1, 0.7],
+      [0, 1],
+    ],
   ],
 } as const satisfies { marks: readonly Shape[] } & Record<string, unknown>;
 
-/** A row of «Попередні слова»: its padding, the line under it, the date column's width, the gaps and the chevron. */
+/**
+ * A row of «Минулі Слова дня»: its padding, the line under it, the date
+ * column's width, the gaps, the chevron, and how the rows rise in one after
+ * another (ADR 0105).
+ */
 export const previousWordRow = {
+  cascade: { delay: 150, stagger: 60, duration: 450 },
   padding: 14,
   border: 1,
   gap: 14,
@@ -965,8 +1027,16 @@ export const railScreen = {
   card: { radius: 18, padding: 16, gap: 12, wordGap: 8, edge: 4, labelGap: 6, line: 1 },
   /** The cards rise in one after another (the board's `slCasc`): each lasts `duration`, `stagger` after the one before. */
   cascade: { duration: 450, stagger: 70 },
+  /** A Correction Type's cards start rising `cascadeDelay` ms after the screen opens (the board's `slCasc .45s ${.2+i*.07}s`). */
+  cascadeDelay: 200,
   chip: { paddingHorizontal: 9, paddingVertical: 5, radius: 8 },
-  strike: { thickness: 3, at: 0.55 },
+  /**
+   * The struck form's red line: `at` is where its middle falls, as a share of
+   * the line's height. The board's CSS line-through sits two thirds of the
+   * font's ascent below the text's top: on Onest 600 18/23.4 that is
+   * (23.4 − 22.95) / 2 + ⅔ · 17.46 ≈ 11.9 points, a share of 0.508.
+   */
+  strike: { thickness: 3, at: 0.508 },
   button: { height: 52, radius: 14, paddingHorizontal: 18 },
   /** The revealed block: red, its top falling 8 points to the left, a little wider than the card. */
   revealed: {
@@ -975,6 +1045,12 @@ export const railScreen = {
     gap: 8,
     overhang: 4,
     slant: 8,
+    /**
+     * The block pops in as it shows (the board's `slPop .35s`): from `from`
+     * of its size to `peak` at `peakAt` of `duration` ms, then to its size,
+     * each leg on the board's `ease`.
+     */
+    pop: { duration: 350, from: 0.6, peak: 1.12, peakAt: 0.6 },
     /** The slanted top strip: its left end `slant` lower than its right. */
     topCut: [
       [0, 1],

@@ -80,8 +80,9 @@ const testEditionConfig = {
     { id: 'thoughtful', name: 'Thoughtful', emoji: '🤔', reply: 'Food for thought.' },
     { id: 'calm', name: 'Calm', emoji: '😌', reply: 'No hurry.' },
     { id: 'joyful', name: 'Joyful', emoji: '😊', reply: 'Catch a bright word!' },
+    { id: 'sad', name: 'Sad', emoji: '😢', reply: 'A word warms.' },
   ],
-  dashboardMoods: ['energetic', 'thoughtful', 'calm', 'joyful'],
+  dashboardMoods: ['energetic', 'thoughtful', 'calm', 'joyful', 'sad'],
   narratorVoices: {
     default: 'anna',
     voices: [{ id: 'anna', name: 'Anna', description: 'Female · calm' }],

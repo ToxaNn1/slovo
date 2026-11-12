@@ -1590,13 +1590,13 @@ describe('buildLanguagePack', () => {
       corrections: 4,
       retiredCorrections: 0,
       correctionsPerType: [
-        { correctionType: 'russianism', corrections: 2 },
-        { correctionType: 'calque', corrections: 0 },
         { correctionType: 'surzhyk', corrections: 1 },
-        { correctionType: 'officialese', corrections: 1 },
-        { correctionType: 'anglicism', corrections: 0 },
         { correctionType: 'wrongStress', corrections: 0 },
+        { correctionType: 'calque', corrections: 0 },
+        { correctionType: 'officialese', corrections: 1 },
         { correctionType: 'paronym', corrections: 0 },
+        { correctionType: 'russianism', corrections: 2 },
+        { correctionType: 'anglicism', corrections: 0 },
       ],
       correctionsPerCategory: [
         { categoryId: 'work', displayName: 'На роботі', corrections: 3 },

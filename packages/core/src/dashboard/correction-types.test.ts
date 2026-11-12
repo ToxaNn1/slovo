@@ -38,12 +38,12 @@ async function run({
 }
 
 describe('The Correction Types', () => {
-  it('shows a tile per Correction Type with live Corrections, in the contract order, with N and X', async () => {
+  it('shows a tile per Correction Type with live Corrections, in the board order (суржик before кальки), with N and X', async () => {
     const { app } = await run();
 
     expect(app.correctionTypes.tiles).toEqual([
-      { type: 'calque', total: 2, workedThrough: 0 },
       { type: 'surzhyk', total: 1, workedThrough: 0 },
+      { type: 'calque', total: 2, workedThrough: 0 },
     ]);
     expect(app.dashboard.blocks.map(({ kind }) => kind)).toEqual([
       'wordOfTheDay',
@@ -101,23 +101,26 @@ describe('The Correction Types', () => {
     const { app, records } = await run();
     let told = 0;
     app.correctionTypes.subscribe(() => (told += 1));
+    // The Dashboard refreshes on its own after the tell; wait for its change.
+    const dashboardTold = new Promise<void>((resolve) => app.dashboard.subscribe(resolve));
 
     await app.correctionTypes.reveal('c_two');
     await app.correctionTypes.reveal('c_two');
+    await dashboardTold;
 
     expect(app.correctionTypes.tiles).toEqual([
-      { type: 'calque', total: 2, workedThrough: 1 },
       { type: 'surzhyk', total: 1, workedThrough: 0 },
+      { type: 'calque', total: 2, workedThrough: 1 },
     ]);
     expect(told).toBe(1);
     expect(records.has('correctionsWorkedThrough.c_two')).toBe(true);
     const block = app.dashboard.blocks.find(({ kind }) => kind === 'correctionTypes');
     expect(block).toMatchObject({
-      tiles: [{ type: 'calque', workedThrough: 1 }, { type: 'surzhyk' }],
+      tiles: [{ type: 'surzhyk' }, { type: 'calque', workedThrough: 1 }],
     });
 
     const again = await run({ records });
-    expect(again.app.correctionTypes.tiles[0]).toEqual({
+    expect(again.app.correctionTypes.tiles[1]).toEqual({
       type: 'calque',
       total: 2,
       workedThrough: 1,
@@ -136,8 +139,8 @@ describe('The Correction Types', () => {
     await app.feed.show(undefined);
 
     expect(app.correctionTypes.tiles).toEqual([
-      { type: 'calque', total: 2, workedThrough: 0 },
       { type: 'surzhyk', total: 1, workedThrough: 1 },
+      { type: 'calque', total: 2, workedThrough: 0 },
     ]);
     const [row] = await app.correctionTypes.corrections('surzhyk');
     expect(row).toMatchObject({ correction: { id: 'c_one' }, workedThrough: true });

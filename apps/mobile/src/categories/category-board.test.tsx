@@ -13,9 +13,12 @@ import { Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { State } from 'react-native-gesture-handler';
+import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
 import CategoryScreen from '../app/category/[categoryId]';
 import EntryFromSearchScreen from '../app/search/[entryId]';
+import CategoryFeedScreen from '../app/category-feed/[categoryId]';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
@@ -63,16 +66,24 @@ let composition: Composition;
 let shellOf: () => ReturnType<typeof testShell>;
 
 /** Opens the composition over two Categories of Words, «Емоції» with three live Words and a Retired one, «Порожня» with none. */
-async function open({ quietCategories = true }: { quietCategories?: boolean } = {}) {
+async function open({
+  quietCategories = true,
+  categoryFeed = true,
+  categoryKnownFirst = true,
+}: { quietCategories?: boolean; categoryFeed?: boolean; categoryKnownFirst?: boolean } = {}) {
   const shipped = loadEdition(activeEditionFiles.config);
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
       feature === 'quietCategories'
         ? quietCategories
-        : feature === 'dashboard' ||
-          feature === 'categoryScreens' ||
-          shipped.isFeatureEnabled(feature),
+        : feature === 'categoryFeed'
+          ? categoryFeed
+          : feature === 'categoryKnownFirst'
+            ? categoryKnownFirst
+            : feature === 'dashboard' ||
+              feature === 'categoryScreens' ||
+              shipped.isFeatureEnabled(feature),
   };
   const userState = await seedUserState(
     { onboardingFinished: '2026-09-01T09:00:00.000Z' },
@@ -151,6 +162,7 @@ async function renderCategory(categoryId: string) {
       index: () => null,
       'category/[categoryId]': CategoryScreen,
       'search/[entryId]': EntryFromSearchScreen,
+      'category-feed/[categoryId]': CategoryFeedScreen,
     },
     { initialUrl: `/category/${categoryId}` },
   );
@@ -209,8 +221,23 @@ describe('the Category screen', () => {
     expect(screen.getByText(editionStrings.mix.lastCategoryHint)).toBeTruthy();
   });
 
-  it('lists a card per live Word in pack order, «ЗНАЮ» on a Known one, and a tap opens its Entry without a Seen', async () => {
+  it('lists the Known Words first, then the rest, each in pack order', async () => {
     await open();
+    await composition.knowledge.set('w_tykhyi', 'known');
+    await composition.knowledge.set('w_lahidnyi', 'known');
+    await renderCategory('emotions-character');
+
+    const meanings = screen.getAllByText(/^Значення слова /);
+    ['лагідний', 'тихий', 'сумирний'].forEach((lemma, at) => {
+      expect(meanings[at]).toHaveTextContent(`Значення слова ${lemma}.`);
+    });
+    expect(screen.getByTestId('category-entry-w_lahidnyi-known')).toBeTruthy();
+    expect(screen.getByTestId('category-entry-w_tykhyi-known')).toBeTruthy();
+    expect(screen.queryByTestId('category-entry-w_sumyrnyi-known')).toBeNull();
+  });
+
+  it("lists a card per live Word in pack order, «ЗНАЮ» on a Known one, and with the Category's Feed off a tap opens its Entry without a Seen", async () => {
+    await open({ categoryFeed: false, categoryKnownFirst: false });
     await composition.knowledge.set('w_tykhyi', 'known');
     await renderCategory('emotions-character');
 
@@ -250,7 +277,7 @@ describe('the Category screen', () => {
 
 describe('the quiet Category screen (k3)', () => {
   it('shows «Категорія», the name and description, no right button, no progress and plain rows', async () => {
-    await open();
+    await open({ categoryFeed: false });
     await renderCategory('war');
 
     expect(screen.getByText(editionStrings.dashboard.category.quiet)).toBeTruthy();
@@ -276,5 +303,82 @@ describe('the quiet Category screen (k3)', () => {
     expect(within(hero).getByText('ЗНАЮ 0 З 1')).toBeTruthy();
     expect(screen.getByTestId('category-mix')).toBeTruthy();
     expect(screen.queryByText(editionStrings.dashboard.category.quiet)).toBeNull();
+  });
+});
+
+const ACTIVATION = 12;
+
+/** Turns the Category's Feed to its next card. */
+async function swipeUp() {
+  await act(async () => {
+    fireGestureHandler(getByGestureTestId('category-feed-swipe'), [
+      { state: State.BEGAN, translationY: 0, velocityY: 0 },
+      { state: State.ACTIVE, translationY: -ACTIVATION, velocityY: -1000 },
+      { state: State.ACTIVE, translationY: -ACTIVATION, velocityY: -1000 },
+      { state: State.ACTIVE, translationY: -400, velocityY: -1000 },
+      { state: State.END, translationY: -400, velocityY: -1000 },
+    ]);
+    await jest.advanceTimersByTimeAsync(500);
+  });
+}
+
+/** Lays the Category's Feed out on a phone's screen, as the pager draws its pages only then. */
+async function layOut() {
+  await settle(() =>
+    fireEvent(screen.getByTestId('category-feed'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 700 } },
+    }),
+  );
+}
+
+/** The Lemma and the kicker of the Category's Feed card on screen at `position`. */
+function cardAt(position: number) {
+  const page = within(screen.getByTestId(`category-feed-card-${String(position)}`));
+  return {
+    kicker: page.getByTestId('word-card-kicker'),
+    meaning: page.getByText(/^Значення слова /),
+  };
+}
+
+describe("the Category's Feed", () => {
+  it('opens on the tapped Word with its place, then the next Words in pack order and round again, endlessly', async () => {
+    await open();
+    await renderCategory('emotions-character');
+
+    await settle(() => fireEvent.press(screen.getByTestId('category-entry-w_lahidnyi')));
+    await layOut();
+
+    expect(screen.queryByTestId('category-hero')).toBeNull();
+    const lemmas = ['лагідний', 'тихий', 'сумирний', 'лагідний', 'тихий'];
+    for (const [position, lemma] of lemmas.entries()) {
+      if (position > 0) await swipeUp();
+      const card = cardAt(position);
+      expect(card.meaning).toHaveTextContent(`Значення слова ${lemma}.`);
+      expect(card.kicker).toHaveTextContent(
+        `Категорія · Емоції · ${String((position % 3) + 1)} з 3`,
+      );
+    }
+  });
+
+  it('makes nothing Seen and leaves History as it was', async () => {
+    await open();
+    await renderCategory('emotions-character');
+
+    await settle(() => fireEvent.press(screen.getByTestId('category-entry-w_sumyrnyi')));
+    await layOut();
+    await swipeUp();
+    await settle(() => jest.advanceTimersByTimeAsync(10_000));
+
+    expect(composition.history.list).toEqual([]);
+  });
+
+  it('leads back to the Category screen by its back tile, named for the Category', async () => {
+    await open();
+    await renderCategory('emotions-character');
+    await settle(() => fireEvent.press(screen.getByTestId('category-entry-w_sumyrnyi')));
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'Емоції' })));
+
+    expect(screen.getByTestId('category-hero')).toBeTruthy();
   });
 });

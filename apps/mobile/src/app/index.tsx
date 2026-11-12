@@ -7,10 +7,12 @@ import {
   FeedHeader,
   MoodCheckIn,
   PreviousWords,
+  SplashOverlay,
   UndoToastProvider,
   useTokens,
 } from '@slovo/ui';
 import { todayDate, type DashboardBlock } from '@slovo/core';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -60,6 +62,9 @@ function DashboardBlocks() {
   } = useDashboardScreen();
   const tonesOf = useTonesOf('quietRail');
   const { colors } = useTokens();
+  const shown = useShown();
+  // The daily splash from the logo plays over the Dashboard, then hands it back (ADR 0105).
+  const [splash, setSplash] = useState(false);
   return (
     <SafeAreaView
       testID="dashboard"
@@ -73,6 +78,16 @@ function DashboardBlocks() {
             wordmark={edition.displayName}
             today={todayText(todayDate(deviceClock), editionStrings)}
             streak={<StatsPillAndSheet />}
+            onLogo={
+              shown.dailySplash
+                ? {
+                    label: editionStrings.dashboard.dailySplash,
+                    onPress: () => {
+                      setSplash(true);
+                    },
+                  }
+                : undefined
+            }
           />
         </View>
         {blocks.map((block) => (
@@ -81,13 +96,39 @@ function DashboardBlocks() {
           </View>
         ))}
       </ScrollView>
+      {splash && (
+        <SplashOverlay
+          pace="daily"
+          wordmark={editionStrings.splash.wordmark}
+          tagline={editionStrings.splash.tagline}
+          onDone={() => {
+            setSplash(false);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 
   function blockOf(block: DashboardBlock) {
     switch (block.kind) {
       case 'wordOfTheDay':
-        return <DashboardHero hero={block.hero} onReveal={reveal} onToCard={toCard} />;
+        // TEMP owner test 12.11, NOT FOR COMMIT: a long Lemma in the revealed hero.
+        return (
+          <DashboardHero
+            hero={
+              block.hero.state === 'revealed'
+                ? {
+                    ...block.hero,
+                    lemmaWithStress: 'високопревосходи́тельство',
+                    stressedVowels: ['и'],
+                  }
+                : block.hero
+            }
+            sparks={shown.heroSparks}
+            onReveal={reveal}
+            onToCard={toCard}
+          />
+        );
       case 'mood':
         return <MoodCheckIn block={block} onChoose={chooseMood} />;
       case 'previousWords':

@@ -18,14 +18,16 @@ const cascadeEasing = Easing.bezier(...motion.cascade.easing);
 const fadeEasing = Easing.bezier(...motion.reduceMotion.easing);
 
 /**
- * How the items of a list enter, one `stagger` ms after the one before, each
- * taking `duration` ms: a `rise` lifts it in by `motion.cascade.rise` as it
- * shows, a `fade` only shows it.
+ * How the items of a list enter, the first `delay` ms in (none by default),
+ * each next one `stagger` ms after the one before, each taking `duration` ms:
+ * a `rise` lifts it in by `motion.cascade.rise` as it shows, a `fade` only
+ * shows it.
  */
 export interface Cascade {
   readonly variant: 'rise' | 'fade';
   readonly stagger: number;
   readonly duration: number;
+  readonly delay?: number;
 }
 
 /**
@@ -33,7 +35,7 @@ export interface Cascade {
  * enters after `index` items, or under Reduce Motion only fades in at once
  * (ADR 0055).
  */
-export function useCascade(index: number, { variant, stagger, duration }: Cascade) {
+export function useCascade(index: number, { variant, stagger, duration, delay = 0 }: Cascade) {
   const reduceMotion = useReduceMotion();
   // 1 once the item has entered.
   const entered = useSharedValue(0);
@@ -45,7 +47,7 @@ export function useCascade(index: number, { variant, stagger, duration }: Cascad
           reduceMotion: ReduceMotion.Never,
         })
       : withDelay(
-          index * stagger,
+          delay + index * stagger,
           withTiming(1, {
             duration,
             easing: variant === 'rise' ? cascadeEasing : fadeEasing,
@@ -53,7 +55,7 @@ export function useCascade(index: number, { variant, stagger, duration }: Cascad
           }),
           ReduceMotion.Never,
         );
-  }, [entered, index, stagger, duration, variant, reduceMotion]);
+  }, [entered, index, stagger, duration, delay, variant, reduceMotion]);
   const rises = variant === 'rise' && !reduceMotion;
   return useAnimatedStyle(() =>
     rises

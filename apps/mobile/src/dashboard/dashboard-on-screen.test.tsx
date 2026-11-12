@@ -245,7 +245,7 @@ describe('the home', () => {
 
     expect(screen.getByTestId('dashboard')).toBeTruthy();
     expect(screen.queryByTestId('feed')).toBeNull();
-    expect(screen.getByText(editionStrings.wordOfTheDay.reveal)).toBeTruthy();
+    expect(screen.getByText(editionStrings.dashboard.reveal)).toBeTruthy();
     expect(screen.queryByText('Значення слова сумирний.')).toBeNull();
   });
 
@@ -263,11 +263,11 @@ describe('the Word of the Day hero', () => {
     await open(true);
     await renderApp();
 
-    await settle(() => fireEvent.press(screen.getByText(editionStrings.wordOfTheDay.reveal)));
+    await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.reveal)));
 
     expect(screen.getByTestId('dashboard')).toBeTruthy();
     expect(screen.getByText('Значення слова сумирний.')).toBeTruthy();
-    expect(screen.queryByText(editionStrings.wordOfTheDay.reveal)).toBeNull();
+    expect(screen.queryByText(editionStrings.dashboard.reveal)).toBeNull();
     expect(composition.history.list.map(({ entryId }) => entryId)).toContain('w_sumyrnyi');
   });
 
@@ -276,7 +276,7 @@ describe('the Word of the Day hero', () => {
     await renderApp();
 
     expect(screen.queryByText(editionStrings.dashboard.toCard)).toBeNull();
-    await settle(() => fireEvent.press(screen.getByText(editionStrings.wordOfTheDay.reveal)));
+    await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.reveal)));
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));
     await layOutFeed();
 
@@ -296,13 +296,15 @@ describe('the Mood check-in', () => {
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-energetic')));
 
     expect(composition.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'energetic' } });
-    expect(screen.getByText('Бадьоро? Тоді доженемо ціль ще до обіду.')).toBeTruthy();
+    expect(
+      screen.getByText('Бадьоро? Тоді слова сьогодні рідкісніші, а Виправлень більше.'),
+    ).toBeTruthy();
     expect(
       screen.getByTestId('dashboard-mood-energetic').props['accessibilityState'],
     ).toMatchObject({
       selected: true,
     });
-    expect(screen.getByTestId('dashboard-mood-sleepy').props['accessibilityState']).toMatchObject({
+    expect(screen.getByTestId('dashboard-mood-joyful').props['accessibilityState']).toMatchObject({
       selected: false,
     });
   });
@@ -312,10 +314,10 @@ describe('the Mood check-in', () => {
     await renderApp();
 
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-energetic')));
-    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-sleepy')));
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-joyful')));
 
-    expect(composition.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'sleepy' } });
-    expect(screen.getByText('«Сонно» — теж слово. Але, на жаль, не рідкісне.')).toBeTruthy();
+    expect(composition.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'joyful' } });
+    expect(screen.getByText('Радісно? Ловімо слово, яким можна поділитися з другом.')).toBeTruthy();
     expect(
       screen.getByTestId('dashboard-mood-energetic').props['accessibilityState'],
     ).toMatchObject({
@@ -404,7 +406,7 @@ describe('the Correction Types rail', () => {
     expect(screen.queryByRole('button', { name: /^Виправлення/ })).toBeNull();
   });
 
-  it('«Як правильно?» shows the standard form and the explanation, and counts it «розібрано»', async () => {
+  it('«Відповідь» shows the standard form and the explanation, and counts it «розібрано»', async () => {
     await open(true);
     await renderApp();
 

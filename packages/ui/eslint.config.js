@@ -45,7 +45,11 @@ export default [
     // Modules with Reanimated or gesture code opt out of the compiler with
     // 'use no memo' (ADR 0059), so its rules do not apply to them.
     files: [
+      'src/dashboard/HeroReveal.tsx',
+      'src/dashboard/CorrectionTypeRow.tsx',
+      'src/dashboard/HeroSparks.tsx',
       'src/dashboard/MoodCheckIn.tsx',
+      'src/dashboard/PreviousWords.tsx',
       'src/dashboard/QuietScreenRow.tsx',
       'src/dashboard/RailScreenCard.tsx',
       'src/dashboard/RailScreenHero.tsx',
@@ -54,6 +58,7 @@ export default [
       'src/entries/SwipeMarks.tsx',
       'src/entries/reveal.tsx',
       'src/feed/GesturesHintSheet.tsx',
+      'src/entries/swipe-demo.tsx',
       'src/game/ChipsRound.tsx',
       'src/game/CrossingGrid.tsx',
       'src/game/GameRound.tsx',

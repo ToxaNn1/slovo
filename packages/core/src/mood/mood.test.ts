@@ -84,6 +84,11 @@ async function run({
 const moodBlock = (app: Awaited<ReturnType<typeof run>>['app']) =>
   app.dashboard.blocks.find((block) => block.kind === 'mood');
 
+/** Resolves on the Dashboard's next change: it refreshes on its own after a Mood's tell. */
+function dashboardChange(app: { dashboard: { subscribe(listener: () => void): unknown } }) {
+  return new Promise<void>((resolve) => app.dashboard.subscribe(resolve));
+}
+
 describe('The Mood check-in', () => {
   it('asks on a day without a record, with the four moods of the Dashboard in order', async () => {
     const { app } = await run();
@@ -102,8 +107,10 @@ describe('The Mood check-in', () => {
     const { app, records, events } = await run();
     let told = 0;
     app.mood.subscribe(() => (told += 1));
+    const dashboardTold = dashboardChange(app);
 
     await app.mood.choose('calm');
+    await dashboardTold;
 
     expect(app.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'calm' } });
     expect(moodBlock(app)).toMatchObject({ check: { state: 'chosen', mood: { id: 'calm' } } });
@@ -160,8 +167,10 @@ describe('The Mood check-in', () => {
 
   it('skips the day, which hides the block till tomorrow', async () => {
     const { app, events } = await run();
+    const dashboardTold = dashboardChange(app);
 
     await app.mood.skip();
+    await dashboardTold;
 
     expect(app.mood.today).toEqual({ state: 'skipped' });
     expect(moodBlock(app)).toBeUndefined();

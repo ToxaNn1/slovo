@@ -1,4 +1,10 @@
-import { coreTokens, EditionProvider, SplashOverlay, TokensProvider } from '@slovo/ui';
+import {
+  coreTokens,
+  EditionProvider,
+  InterfaceSoundsProvider,
+  SplashOverlay,
+  TokensProvider,
+} from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo, Dimensions, StyleSheet } from 'react-native';
@@ -59,6 +65,45 @@ describe('SplashOverlay', () => {
     expect(onDone).not.toHaveBeenCalled();
     await pass(10);
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it.each<[boolean, number]>([
+    [false, 560],
+    [true, 350],
+  ])(
+    'plays the daily splash, the short cut, and hands back (Reduce Motion %s) after %i ms',
+    async (rm, ms) => {
+      jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(rm);
+      const onDone = jest.fn();
+      await render(
+        <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+          <SplashOverlay pace="daily" wordmark="SLOVO" tagline="rare words" onDone={onDone} />
+        </EditionProvider>,
+      );
+      await pass(ms - 10);
+      expect(onDone).not.toHaveBeenCalled();
+      await pass(10);
+      expect(onDone).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('shouts 100 ms into the daily splash, once', async () => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
+    const play = jest.fn();
+    await render(
+      <InterfaceSoundsProvider sounds={{ play }}>
+        <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+          <SplashOverlay pace="daily" wordmark="SLOVO" tagline="rare words" onDone={jest.fn()} />
+        </EditionProvider>
+      </InterfaceSoundsProvider>,
+    );
+    await pass(90);
+    expect(play).not.toHaveBeenCalled();
+    await pass(10);
+    expect(play).toHaveBeenCalledTimes(1);
+    expect(play).toHaveBeenCalledWith('shout');
+    await pass(1000);
+    expect(play).toHaveBeenCalledTimes(1);
   });
 
   it('hands over through the latest onDone it was given', async () => {
