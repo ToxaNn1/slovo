@@ -19,11 +19,13 @@ RUN pnpm install --frozen-lockfile --prod \
       --filter @slovo/backend... --filter '!@slovo/config'
 RUN find editions -path '*/content/*' -type f ! -name targets.json -delete
 
-# The generator: ffmpeg, uv, the environment of requirements.lock and the
-# model files of the upstream v6.0.0 release, each checked by SHA256.
-FROM base AS engine
+# The generator's build: uv, the environment of requirements.lock and the
+# model files of the upstream v6.0.0 release, each checked by SHA256. Three
+# locked packages come from git and some compile C, so this stage has git and
+# a compiler; the image keeps only /opt/recordings.
+FROM base AS generator
 RUN apt-get update -q \
-    && apt-get install -yq --no-install-recommends ffmpeg curl ca-certificates \
+    && apt-get install -yq --no-install-recommends build-essential git curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /usr/local/bin/uv
 ENV UV_PYTHON_INSTALL_DIR=/opt/recordings/python
@@ -31,6 +33,13 @@ COPY apps/backend/recordings /opt/recordings/scripts
 RUN /opt/recordings/scripts/setup.sh /opt/recordings/venv \
     && /opt/recordings/scripts/fetch-model.sh /opt/recordings/model \
     && rm -rf /root/.cache
+
+# The generator at run time: ffmpeg and the built /opt/recordings.
+FROM base AS engine
+RUN apt-get update -q \
+    && apt-get install -yq --no-install-recommends ffmpeg ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=generator /opt/recordings /opt/recordings
 
 FROM engine
 ENV pnpm_config_verify_deps_before_run=false \
