@@ -1,4 +1,4 @@
-import type { Entry, EntryKind } from '@slovo/contracts';
+import type { Entry, EntryKind, MixKind } from '@slovo/contracts';
 
 /**
  * The name of each kind of Entry as a whole: the key of its list in
@@ -17,9 +17,9 @@ export interface KindNames {
 /**
  * A kind of Entry that is in or out of the Mix as a whole, which its Feature
  * Switch turns on: every kind but the Word, whose Categories are in or out
- * one by one (ADR 0019, 0051).
+ * one by one (ADR 0019, 0051). The contracts derive it from the Entry.
  */
-export type MixKind = Exclude<EntryKind, 'word'>;
+export type { MixKind };
 
 /** The name of a kind of Entry in the Mix as a whole, which is also its Feature Switch. */
 export type MixKindName = KindNames[MixKind];
@@ -76,10 +76,12 @@ export const ENTRY_KINDS: { readonly [Kind in EntryKind]: EntryKindTraits<Kind> 
   tip: { idPrefix: 't_', name: 'tips', feedTurn: 11, shown: false },
 };
 
-/** A table over every kind of Entry, each row what `of` gives for the kind. */
-export function tableOfKinds<Row>(of: (kind: EntryKind) => Row): Readonly<Record<EntryKind, Row>> {
+/**
+ * A table over every kind of Entry in the Mix as a whole, each row what `of`
+ * gives for the kind: the one list of them, in the Mix screen's order.
+ */
+export function tableOfMixKinds<Row>(of: (kind: MixKind) => Row): Readonly<Record<MixKind, Row>> {
   return {
-    word: of('word'),
     correction: of('correction'),
     idiom: of('idiom'),
     synonymRow: of('synonymRow'),
@@ -87,13 +89,16 @@ export function tableOfKinds<Row>(of: (kind: EntryKind) => Row): Readonly<Record
   };
 }
 
-/** Every kind of Entry, in the kind table's order. */
-export const ALL_KINDS: readonly EntryKind[] = Object.values(tableOfKinds((kind) => kind));
+/** A table over every kind of Entry, each row what `of` gives for the kind. */
+export function tableOfKinds<Row>(of: (kind: EntryKind) => Row): Readonly<Record<EntryKind, Row>> {
+  return { word: of('word'), ...tableOfMixKinds(of) };
+}
 
 /** Every kind of Entry in the Mix as a whole, in the Mix screen's order. */
-export const MIX_KINDS: readonly MixKind[] = ALL_KINDS.filter(
-  (kind): kind is MixKind => kind !== 'word',
-);
+export const MIX_KINDS: readonly MixKind[] = Object.values(tableOfMixKinds((kind) => kind));
+
+/** Every kind of Entry, in the kind table's order. */
+export const ALL_KINDS: readonly EntryKind[] = Object.values(tableOfKinds((kind) => kind));
 
 /** The Feature Switch that turns the kind of Entry on, which also names the kind as a whole. */
 export const featureOfKind = <Kind extends MixKind>(kind: Kind): KindNames[Kind] =>

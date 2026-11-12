@@ -1,11 +1,15 @@
 import { z } from 'zod';
 
+import { MixKindSchema } from './entry';
 import { NotificationSoundFileSchema } from './notification-sound';
-import { HexColorSchema, RaritySchema, TextSchema, WordIdSchema } from './shared';
-
-const KebabCaseIdSchema = z
-  .string()
-  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Expected a lowercase kebab-case id');
+import { OriginLanguageSchema } from './origin-language';
+import {
+  HexColorSchema,
+  KebabCaseIdSchema,
+  RaritySchema,
+  TextSchema,
+  WordIdSchema,
+} from './shared';
 
 /** A BCP 47 language tag, e.g. `uk` or `uk-UA`. */
 const LanguageTagSchema = z
@@ -31,24 +35,6 @@ export const CategorySchema = z.discriminatedUnion('tone', [
 ]);
 
 export type Category = z.infer<typeof CategorySchema>;
-
-/**
- * A language Words come from, for a Word's `origin` and «Звідки слово»
- * (ADR 0052). The code is an ISO 639 code where one fits the language, e.g.
- * `la` or `trk`, otherwise a lowercase English word, e.g. `proto-slavic` or
- * `other`; the name is in the Edition's language.
- */
-export const OriginLanguageSchema = z.strictObject({
-  code: KebabCaseIdSchema,
-  name: z.string().min(1),
-});
-
-export type OriginLanguage = z.infer<typeof OriginLanguageSchema>;
-
-/** The kinds of Entry beside Words, each with a Mix kind weight. */
-export const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
-
-export type WeightedKind = z.infer<typeof WeightedKindSchema>;
 
 /**
  * The band of rarities a Mood puts first in the Feed (ADR 0076): `upper` is
@@ -81,7 +67,7 @@ export const MoodSchema = z.strictObject({
   emoji: z.string().min(1),
   reply: TextSchema,
   rarityBand: RarityBandSchema.default('whole'),
-  shifts: z.partialRecord(WeightedKindSchema, MoodShiftSchema).default({}),
+  shifts: z.partialRecord(MixKindSchema, MoodShiftSchema).default({}),
 });
 
 export type Mood = z.infer<typeof MoodSchema>;
@@ -774,12 +760,7 @@ export const MixConfigSchema = z.strictObject({
    * Whether each kind of Entry beside Words is in the Mix as a whole (ADR
    * 0033, 0046, 0051): the same map of Entry kinds as the Mix state in the Core.
    */
-  kinds: z.strictObject({
-    correction: z.boolean(),
-    idiom: z.boolean(),
-    synonymRow: z.boolean(),
-    tip: z.boolean(),
-  }),
+  kinds: z.record(MixKindSchema, z.boolean()),
 });
 
 export type MixConfig = z.infer<typeof MixConfigSchema>;
@@ -905,7 +886,7 @@ export const QuestionnaireSchema = z.strictObject({
       z.strictObject({
         id: QuestionnaireAnswerIdSchema,
         label: TextSchema,
-        kindWeights: z.partialRecord(WeightedKindSchema, MixKindWeightSchema),
+        kindWeights: z.partialRecord(MixKindSchema, MixKindWeightSchema),
       }),
     )
     .min(1),

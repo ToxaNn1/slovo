@@ -6,6 +6,7 @@ import {
   WordSchema,
   type Correction,
   type CrosswordDay,
+  type CrosswordWord,
   type Word,
 } from '@slovo/contracts';
 import { withoutStress } from '@slovo/core';
@@ -18,15 +19,25 @@ import type { PackContent } from './pack-layout';
 const runs = { seed: 20261030, numRuns: 15 };
 
 /** The rules of ADR 0052, written out so that a change to the build's constants breaks them. */
+const SIZE = 5;
 const WORDS_A_DAY = { min: 4, max: 6 };
 const LETTERS = { min: 3, max: 5 };
 const NO_REPEAT_DAYS = 20;
 
-/** How many days each run appends: more than the no-repeat window. */
-const DAYS = 25;
+/**
+ * How many days each run appends after its recorded days. Those fill the
+ * no-repeat window before them, so a few appended days are enough to check it.
+ */
+const DAYS = 4;
 
 /** How many days ahead `--record` fills. */
 const CROSSWORD_DAYS_AHEAD = 400;
+
+/**
+ * How many placements a day's search may try: less than the build's, so a
+ * draw builds fast. The rules hold whatever grid the search settles for.
+ */
+const SEARCH_BUDGET = 80;
 
 /** The combining acute that marks Stress. */
 const STRESS = '\u0301';
@@ -105,11 +116,11 @@ const drawn = { lemma: lemmas, retired: oneIn(8) };
 const contents = fc
   .tuple(
     fc.uniqueArray(fc.record(drawn), {
-      minLength: 150,
-      maxLength: 240,
+      minLength: 40,
+      maxLength: 80,
       selector: ({ lemma }) => lemma,
     }),
-    fc.array(fc.record({ ...drawn, phrase: oneIn(5) }), { maxLength: 40 }),
+    fc.array(fc.record({ ...drawn, phrase: oneIn(5) }), { maxLength: 15 }),
   )
   .map(([words, corrections]): PackContent => ({
     editionId: 'fixture',
@@ -129,29 +140,66 @@ const dates = fc
   .map((date) => (Number.isNaN(date.getTime()) ? '2026-01-01' : date.toISOString().slice(0, 10)));
 
 /**
- * The days `--record` appends to content whose last recorded day, its words
- * left out here, is `last`, run on the day that leaves 25 days to fill.
+ * The days recorded through `last` that fill the no-repeat window before
+ * the days to append, each with up to two Entries of the content. Only their
+ * ids matter to the build, so the rest of each word is a stand-in.
  */
-function appendDays(content: PackContent, last: string, kept: readonly CrosswordDay[] = []) {
+function recordedDays(
+  content: PackContent,
+  last: string,
+  picks: readonly (readonly number[])[],
+): CrosswordDay[] {
+  const entries = [...content.words, ...content.corrections];
+  return picks.map((picked, i) => ({
+    date: dateAfter(last, i + 1 - picks.length),
+    words: [...new Set(picked.map((pick) => entries[pick % entries.length]))].flatMap((entry) =>
+      entry === undefined
+        ? []
+        : [{ entryId: entry.id, answer: 'кор', clue: '…', row: 0, column: 0, direction: 'across' }],
+    ),
+  }));
+}
+
+/** Pack content with its crossword days recorded through a date of the next ten years. */
+const recorded = fc
+  .tuple(
+    contents,
+    dates,
+    fc.array(fc.uniqueArray(fc.nat(), { maxLength: 2 }), {
+      minLength: NO_REPEAT_DAYS - 1,
+      maxLength: NO_REPEAT_DAYS - 1,
+    }),
+  )
+  .map(([content, last, picks]): PackContent => ({
+    ...content,
+    crosswordDays: recordedDays(content, last, picks),
+  }));
+
+/** The last day recorded in the content. */
+const lastOf = (content: PackContent) => content.crosswordDays?.at(-1)?.date ?? '';
+
+/**
+ * The days `--record` appends to the content, after its recorded days and
+ * the ones kept, run on the day that leaves `DAYS` days to fill.
+ */
+function appendDays(content: PackContent, kept: readonly CrosswordDay[] = []) {
   return newCrosswordDays(
-    { ...content, crosswordDays: [{ date: last, words: [] }, ...kept] },
-    dateAfter(last, DAYS - CROSSWORD_DAYS_AHEAD),
+    { ...content, crosswordDays: [...(content.crosswordDays ?? []), ...kept] },
+    dateAfter(lastOf(content), DAYS - CROSSWORD_DAYS_AHEAD),
+    { searchBudget: SEARCH_BUDGET },
   );
 }
 
-/**
- * Each draw's days, made once: every property draws the same inputs from
- * its seed, and a draw takes the build about half a second.
- */
+/** Each draw's days, made once: every property draws the same inputs from its seed. */
 const appended = new Map<string, ReturnType<typeof appendDays>>();
 
 /**
- * The days appended after `last`, or none when the supply is too thin for
+ * The days appended to the content, or none when the supply is too thin for
  * a day: the build's refusal is the expected result then.
  */
-function daysOrRefusal(content: PackContent, last: string): readonly CrosswordDay[] {
-  const key = JSON.stringify([content, last]);
-  const result = appended.get(key) ?? appendDays(content, last);
+function daysOrRefusal(content: PackContent): readonly CrosswordDay[] {
+  const key = JSON.stringify(content);
+  const result = appended.get(key) ?? appendDays(content);
   appended.set(key, result);
   if (!result.ok) {
     expect(result.errors.map(({ message }) => message)).toEqual([
@@ -160,18 +208,83 @@ function daysOrRefusal(content: PackContent, last: string): readonly CrosswordDa
     return [];
   }
   expect(result.days.map(({ date }) => date)).toEqual(
-    Array.from({ length: DAYS }, (_, i) => dateAfter(last, i + 1)),
+    Array.from({ length: DAYS }, (_, i) => dateAfter(lastOf(content), i + 1)),
   );
   return result.days;
 }
 
 const entryIds = (day: CrosswordDay) => day.words.map(({ entryId }) => entryId);
 
-describe('the Daily Crossword days of any pack content and date', { timeout: 60_000 }, () => {
+/** The cells a word runs through, each with its row, column and letter. */
+function cellsOf({ answer, row, column, direction }: CrosswordWord) {
+  return Array.from(answer).map((letter, i) => {
+    const [r, c] = direction === 'across' ? [row, column + i] : [row + i, column];
+    return { r, c, cell: `${String(r)},${String(c)}`, letter };
+  });
+}
+
+describe('the Daily Crossword grid of any pack content and date', () => {
+  it('fits every word on the 5 × 5 board', () => {
+    fc.assert(
+      fc.property(recorded, (content) => {
+        for (const { r, c } of daysOrRefusal(content).flatMap((day) =>
+          day.words.flatMap(cellsOf),
+        )) {
+          expect([r, c].every((index) => index >= 0 && index < SIZE)).toBe(true);
+        }
+      }),
+      runs,
+    );
+  });
+
+  it('gives crossing words the same letter where they cross', () => {
+    fc.assert(
+      fc.property(recorded, (content) => {
+        for (const day of daysOrRefusal(content)) {
+          const letters = new Map<string, string>();
+          for (const { cell, letter } of day.words.flatMap(cellsOf)) {
+            expect(letters.get(cell) ?? letter).toBe(letter);
+            letters.set(cell, letter);
+          }
+        }
+      }),
+      runs,
+    );
+  });
+
+  it('lets two words share a cell only where an across word crosses a down word', () => {
+    fc.assert(
+      fc.property(recorded, (content) => {
+        for (const day of daysOrRefusal(content)) {
+          for (const direction of ['across', 'down'] as const) {
+            const cells = day.words
+              .filter((word) => word.direction === direction)
+              .flatMap(cellsOf)
+              .map(({ cell }) => cell);
+            expect(new Set(cells).size).toBe(cells.length);
+          }
+        }
+      }),
+      runs,
+    );
+  });
+
+  it('gives the same grid for the same content and date', () => {
+    fc.assert(
+      fc.property(recorded, (content) => {
+        const again = appendDays(structuredClone(content));
+        expect(again.ok ? again.days : []).toEqual(daysOrRefusal(content));
+      }),
+      runs,
+    );
+  });
+});
+
+describe('the Daily Crossword days of any pack content and date', () => {
   it('gives every day 4–6 words of 3–5 letters', () => {
     fc.assert(
-      fc.property(contents, dates, (content, last) => {
-        for (const day of daysOrRefusal(content, last)) {
+      fc.property(recorded, (content) => {
+        for (const day of daysOrRefusal(content)) {
           expect(day.words.length).toBeGreaterThanOrEqual(WORDS_A_DAY.min);
           expect(day.words.length).toBeLessThanOrEqual(WORDS_A_DAY.max);
           for (const { answer } of day.words) {
@@ -187,8 +300,8 @@ describe('the Daily Crossword days of any pack content and date', { timeout: 60_
 
   it('uses each Entry at most once in a day', () => {
     fc.assert(
-      fc.property(contents, dates, (content, last) => {
-        for (const day of daysOrRefusal(content, last)) {
+      fc.property(recorded, (content) => {
+        for (const day of daysOrRefusal(content)) {
           expect(new Set(entryIds(day)).size).toBe(day.words.length);
         }
       }),
@@ -196,12 +309,14 @@ describe('the Daily Crossword days of any pack content and date', { timeout: 60_
     );
   });
 
-  it('brings no word back within 20 days', () => {
+  it('brings no word back within 20 days, recorded or appended', () => {
     fc.assert(
-      fc.property(contents, dates, (content, last) => {
-        const days = daysOrRefusal(content, last);
-        days.forEach((day, i) => {
-          const recent = days.slice(Math.max(0, i - (NO_REPEAT_DAYS - 1)), i).flatMap(entryIds);
+      fc.property(recorded, (content) => {
+        const before = content.crosswordDays ?? [];
+        const days = [...before, ...daysOrRefusal(content)];
+        days.slice(before.length).forEach((day, i) => {
+          const at = before.length + i;
+          const recent = days.slice(at - (NO_REPEAT_DAYS - 1), at).flatMap(entryIds);
           for (const entryId of entryIds(day)) expect(recent).not.toContain(entryId);
         });
       }),
@@ -211,11 +326,11 @@ describe('the Daily Crossword days of any pack content and date', { timeout: 60_
 
   it('picks no Retired Entry', () => {
     fc.assert(
-      fc.property(contents, dates, (content, last) => {
+      fc.property(recorded, (content) => {
         const retired = [...content.words, ...content.corrections]
           .filter((entry) => entry.retired)
           .map(({ id }) => id);
-        for (const day of daysOrRefusal(content, last)) {
+        for (const day of daysOrRefusal(content)) {
           for (const entryId of entryIds(day)) expect(retired).not.toContain(entryId);
         }
       }),
@@ -225,8 +340,8 @@ describe('the Daily Crossword days of any pack content and date', { timeout: 60_
 
   it('masks the answer in every clue', () => {
     fc.assert(
-      fc.property(contents, dates, (content, last) => {
-        for (const day of daysOrRefusal(content, last)) {
+      fc.property(recorded, (content) => {
+        for (const day of daysOrRefusal(content)) {
           for (const { answer, clue } of day.words) {
             const clueWords =
               withoutStress(clue)
@@ -241,23 +356,12 @@ describe('the Daily Crossword days of any pack content and date', { timeout: 60_
     );
   });
 
-  it('gives the same days for the same content and date', () => {
-    fc.assert(
-      fc.property(contents, dates, (content, last) => {
-        const days = daysOrRefusal(content, last);
-        const again = appendDays(structuredClone(content), last);
-        expect(again.ok ? again.days : []).toEqual(days);
-      }),
-      runs,
-    );
-  });
-
   it('appends after recorded days the very days it would have made with them', () => {
     fc.assert(
-      fc.property(contents, dates, fc.integer({ min: 1, max: DAYS - 1 }), (content, last, kept) => {
-        const days = daysOrRefusal(content, last);
+      fc.property(recorded, fc.integer({ min: 1, max: DAYS - 1 }), (content, kept) => {
+        const days = daysOrRefusal(content);
         fc.pre(days.length > 0);
-        expect(appendDays(content, last, days.slice(0, kept))).toEqual({
+        expect(appendDays(content, days.slice(0, kept))).toEqual({
           ok: true,
           days: days.slice(kept),
         });

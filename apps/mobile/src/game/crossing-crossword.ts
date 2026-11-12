@@ -4,8 +4,8 @@ import {
   crossingPlacesOf,
   isCrossingSolved,
   type Composition,
-  type CrossingAction,
   type CrosswordSolve,
+  type CrossingAction,
   type CrossingCrossword,
   type CrossingPlay,
   type CrossingPuzzle,
@@ -14,7 +14,7 @@ import {
 } from '@slovo/core';
 import type { CrossingGridCell, CrosswordMiniCell, WheelMiss } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
 import { useComposition } from '../composition';
 import type { DailyCrosswordProgress } from './crossword-progress';
@@ -22,6 +22,7 @@ import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
 import { useInForeground } from '../foreground/in-foreground';
 import { keep } from '../keep';
+import { useOpenCrossword } from './open-crossword';
 
 type Strings = EditionStrings['game']['dailyCrossword'];
 
@@ -179,20 +180,6 @@ export interface CrossingCrosswordPlay {
   readonly hint: (() => void) | undefined;
 }
 
-interface Opened {
-  readonly crossword: CrossingCrossword;
-  readonly state: CrossingPlay;
-  readonly miss: WheelMiss | undefined;
-  readonly touched: boolean;
-}
-
-const fresh = (crossword: CrossingCrossword): Opened => ({
-  crossword,
-  state: crossword.state,
-  miss: undefined,
-  touched: false,
-});
-
 const DIRECTION_MARK = { across: '→', down: '↓' } as const;
 
 /**
@@ -206,8 +193,6 @@ const DIRECTION_MARK = { across: '→', down: '↓' } as const;
  */
 export function useCrossingCrossword(crossword: CrossingCrossword): CrossingCrosswordPlay {
   const composition = useComposition();
-  const [opened, setOpened] = useState(() => fresh(crossword));
-  if (opened.crossword !== crossword) setOpened(fresh(crossword));
   const inForeground = useInForeground();
   useFocusEffect(
     useCallback(() => {
@@ -230,33 +215,17 @@ export function useCrossingCrossword(crossword: CrossingCrossword): CrossingCros
   );
 
   const { puzzle } = crossword;
-  const { state, miss, touched } = opened;
+  const { state, miss, touched, play } = useOpenCrossword<CrossingPlay, CrossingAction, WheelMiss>(
+    crossword,
+    'the crossing Daily Crossword',
+    (before, next, key) => {
+      if (before.trace.length === 0 || solvedCount(next) !== solvedCount(before)) return undefined;
+      const word = puzzle.words[before.current];
+      return { key, letters: before.trace.map((tile) => word?.wheel[tile] ?? '') };
+    },
+  );
   const strings = editionStrings.game.dailyCrossword;
 
-  const play = (action: CrossingAction) => {
-    void keep('the crossing Daily Crossword', crossword.play(action)).then((next) => {
-      if (next === undefined) return;
-      setOpened((now) => {
-        if (now.crossword !== crossword) return now;
-        const word = puzzle.words[now.state.current];
-        const missed =
-          action.type === 'release' &&
-          now.state.trace.length > 0 &&
-          solvedCount(next) === solvedCount(now.state);
-        return {
-          ...now,
-          state: next,
-          touched: now.touched || action.type === 'extend',
-          miss: missed
-            ? {
-                key: (now.miss?.key ?? 0) + 1,
-                letters: now.state.trace.map((tile) => word?.wheel[tile] ?? ''),
-              }
-            : now.miss,
-        };
-      });
-    });
-  };
   const current = puzzle.words[state.current];
   const solve = crossingSolveOf(composition, puzzle, state);
   return {

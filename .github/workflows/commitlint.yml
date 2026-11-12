@@ -89,10 +89,9 @@ jobs:
           status=0
           # The body without the cloud session footer, as the footer job leaves it on the PR (ADR 0100).
           PR_TEXT="$PR_TITLE $(printf '%s' "$PR_BODY" | node scripts/strip-pr-footer.mjs)"
-          # The owner's address is .github/owner-email (the owner's GitHub noreply address); the
-          # second one is the old address, still accepted on branches started before the switch.
+          # The owner's address is .github/owner-email (the owner's GitHub noreply address).
           OWNER_EMAIL="$(cat .github/owner-email)"
-          if git log --format='%ae' "$BASE_SHA..$HEAD_SHA" | grep -qvx -e "$OWNER_EMAIL" -e 'antondemydenko113@gmail.com'; then
+          if git log --format='%ae' "$BASE_SHA..$HEAD_SHA" | grep -qvx -e "$OWNER_EMAIL"; then
             echo "::error::Every commit must be authored by $OWNER_EMAIL"; status=1
           fi
           # The agent guide's file name is not an attribution.

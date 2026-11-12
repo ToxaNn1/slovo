@@ -18,7 +18,7 @@ import {
   type MascotLines,
   type Levels,
   type Questionnaire,
-  type EntryKind,
+  type MixKind,
   switchedOn,
 } from '@slovo/contracts';
 
@@ -35,7 +35,7 @@ export interface DefaultMix {
   /** The Categories of Corrections in the Mix, under Corrections as a whole (ADR 0033). */
   readonly correctionCategoryIds: 'all' | readonly string[];
   /** Whether each kind of Entry beside Words is in the Mix as a whole. */
-  readonly kinds: Readonly<Record<Exclude<EntryKind, 'word'>, boolean>>;
+  readonly kinds: Readonly<Record<MixKind, boolean>>;
 }
 
 /** The settings a new user starts with, as declared by the Edition. */
