@@ -147,17 +147,6 @@ export interface Onboarding {
 const { onboardingFinished, firstWeekFrom, shareCounters } = userStateRecords;
 
 /**
- * How the app opens, which sets how long its splash runs: the first launch,
- * while the onboarding was never finished or skipped, or a later open.
- */
-export type LaunchKind = 'first' | 'daily';
-
-/** The kind of this launch, read from the user state before anything else opens. */
-export async function launchKind(userState: Pick<UserState, 'read'>): Promise<LaunchKind> {
-  return (await userState.read(onboardingFinished)) === undefined ? 'first' : 'daily';
-}
-
-/**
  * Opens the onboarding over the user state, for the Core composition, once
  * today's Word of the Day is chosen. The answers change the composition's
  * Mix, the Daily Goal its XP log; `backend` counts the answers, none without it.

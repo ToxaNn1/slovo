@@ -14,8 +14,8 @@ const easeOut: Easing = [0, 0, 0.58, 1];
  * background the red wedge unfolds with a spring, the S is drawn as a stroke,
  * the wordmark's letters pop up one after another, the tagline rises, the
  * Mascot jumps in and shouts, everything fades and a red wedge wipes the
- * screen; then the app takes over. The cut plays once, in `duration`: the
- * whole of it on the first launch, fast on a daily open. Every track is a list
+ * screen; then the app takes over. The cut plays once, whole, in `duration`,
+ * on every launch: one turn of the board's loop. Every track is a list
  * of keyframes over the cut, eased segment by segment as CSS eases them, and
  * holds its first value before its first stop and its last after its last.
  * Under Reduce Motion nothing moves: the splash holds the cut's `still` frame,
@@ -23,8 +23,8 @@ const easeOut: Easing = [0, 0, 0.58, 1];
  */
 export const splashMotion = {
   frame: { width: 390, height: 844 },
-  first: { duration: 2000, reduceMotionHold: 800 },
-  daily: { duration: 500, reduceMotionHold: 350 },
+  duration: 4200,
+  reduceMotionHold: 800,
   /** The frame the splash holds under Reduce Motion: every piece in place, the wipe not yet in. */
   still: 0.86,
   /** The mark, a red wedge with the cream S, on a 100 × 100 box drawn `size` wide. */

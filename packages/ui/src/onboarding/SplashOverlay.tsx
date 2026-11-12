@@ -1,7 +1,6 @@
 'use no memo';
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
-import type { LaunchKind } from '@slovo/core';
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
@@ -22,6 +21,7 @@ import { Mascot } from '../primitives/Mascot';
 import {
   capitalMarkRoom,
   roleAt,
+  space,
   splashMotion,
   typeRoles,
   typeStyle,
@@ -34,8 +34,6 @@ export interface SplashOverlayProps {
   wordmark: string;
   /** The Edition's tagline under the wordmark. */
   tagline: string;
-  /** The first launch plays the whole cut; the daily open plays it fast. */
-  kind: LaunchKind;
   /** Called once the splash is on screen, when the native splash can go. */
   onShown?: () => void;
   /** Called once the cut has played, when the app takes over. */
@@ -90,10 +88,10 @@ interface Fit {
  * The design's splash cut (ADR 0070): on the Theme's background the red wedge
  * unfolds, the S is drawn, the wordmark's letters pop up, the tagline rises,
  * the Mascot jumps in shouting, and a red wedge wipes the screen to the app.
- * It plays once: the whole cut on the first launch, fast on a daily open.
+ * It plays once, whole, on every launch.
  * Under Reduce Motion nothing moves: the cut's still frame holds a moment.
  */
-export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: SplashOverlayProps) {
+export function SplashOverlay({ wordmark, tagline, onShown, onDone }: SplashOverlayProps) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
@@ -109,7 +107,7 @@ export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: Spla
     x: (x) => width / 2 + (x - frame.width / 2) * scale,
     y: (y) => height / 2 + (y - frame.height / 2) * scale,
   };
-  const { duration, reduceMotionHold } = splashMotion[kind];
+  const { duration, reduceMotionHold } = splashMotion;
   const shown = useRef(false);
   const progress = useSharedValue(0);
 
@@ -168,7 +166,7 @@ export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: Spla
           style={[
             typeStyle('splashTagline', tokens),
             roleAt('splashTagline', taglineSize),
-            { color: colors.muted },
+            { color: colors.tagline },
           ]}
         >
           {tagline}
@@ -274,6 +272,8 @@ function LetterRow({
           index={index}
           progress={progress}
           fit={fit}
+          // iOS draws a capital higher in its line than the board's browser:
+          // 105% of the line alone leaves its top showing under the row.
           rise={drawn.lineHeight + room}
         />
       ))}
@@ -358,7 +358,10 @@ function MascotJump({ progress, fit }: { progress: SharedValue<number>; fit: Fit
         jumpStyle,
       ]}
     >
-      <Mascot state="shouts" width={mascot.width * fit.scale} />
+      {/* The board's box holds the figure alone: the Mascot's own padding cancelled. */}
+      <View style={styles.figure}>
+        <Mascot state="shouts" width={mascot.width * fit.scale} />
+      </View>
       <Animated.View
         style={[
           styles.shout,
@@ -423,6 +426,7 @@ const styles = StyleSheet.create({
   },
   letters: { overflow: 'hidden' },
   mascot: { position: 'absolute', alignItems: 'center', transformOrigin: 'bottom' },
+  figure: { margin: -space[4] },
   shout: { position: 'absolute', transformOrigin: 'left' },
   wipe: { position: 'absolute' },
 });
