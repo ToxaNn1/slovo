@@ -117,7 +117,7 @@ async function openFeed(clock: Clock, kept: UserStateFacts = {}) {
   const ref = { current: pager };
   const landing = createWordOfTheDayLanding();
   const shell = testShell({ composition: opened(composition) });
-  const feed = await renderHook(() => useFeed(ref, { clock, landing }), {
+  const feed = await renderHook(() => useFeed(ref, { clock, landing, voice: 'oksana' }), {
     wrapper: ({ children }: { children: ReactNode }) => (
       <ShellProvider shell={shell}>{children}</ShellProvider>
     ),

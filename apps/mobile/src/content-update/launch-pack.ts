@@ -14,6 +14,8 @@ export interface LaunchPack<R> {
   /** The content version the pack holds now, which a Mistake Report carries (ADR 0056); a Patch raises it. */
   readonly contentVersion: () => number;
   readonly contentUpdate: ContentUpdate | undefined;
+  /** The content store of the pack, which the Core media reads the Recordings and Illustrations from (ADR 0099). */
+  readonly store: ContentStore;
 }
 
 /**
@@ -55,6 +57,7 @@ export async function openLaunchPack<R>({
   const { store } = patched;
   return {
     reader: patched.reader,
+    store,
     contentVersion: () => store.contentVersion(),
     contentUpdate: edition.isFeatureEnabled('contentUpdates')
       ? openContentUpdate(store)

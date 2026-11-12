@@ -273,3 +273,56 @@ test('a new Crossword day sends its date and words to the crosswordDay kind', as
     ]);
   });
 });
+
+const ILLUSTRATION = `${RECORD}/illustration`;
+const LIVE = { hash: 'a'.repeat(64), url: 'https://media.slovo.test/illustrations/w_a1.old.png' };
+
+test("a Word shows its Illustration, and an upload sends the file's bytes and shows the new one", async () => {
+  const sent: unknown[] = [];
+  server.use(
+    http.get(RECORD, () => HttpResponse.json({ ...FIXTURES.content.record, illustration: LIVE })),
+    http.put(ILLUSTRATION, async ({ request }) => {
+      sent.push(await request.json());
+      return HttpResponse.json(FIXTURES.content.uploadIllustration);
+    }),
+  );
+  const user = await openWord();
+  const image = await screen.findByRole('img', { name: 'Ілюстрація' });
+  expect(image.getAttribute('src')).toBe(LIVE.url);
+
+  const png = new File([new Uint8Array([137, 80, 78, 71])], 'obruch.png', { type: 'image/png' });
+  await user.upload(screen.getByLabelText('Завантажити ілюстрацію'), png);
+
+  await waitFor(() => {
+    expect(screen.getByRole('img', { name: 'Ілюстрація' }).getAttribute('src')).toBe(
+      FIXTURES.content.uploadIllustration.illustration.url,
+    );
+  });
+  expect(sent).toEqual([{ png: btoa(String.fromCharCode(137, 80, 78, 71)) }]);
+});
+
+test('a refused Illustration shows the rule it breaks', async () => {
+  server.use(
+    http.put(ILLUSTRATION, () =>
+      HttpResponse.json(
+        {
+          defined: true,
+          code: 'REFUSED',
+          status: 422,
+          message: 'The record breaks a content rule',
+          data: {
+            refusals: [{ rule: 'illustration-size', message: 'Файл більший за 150 КБ' }],
+          },
+        },
+        { status: 422 },
+      ),
+    ),
+  );
+  const user = await openWord();
+  expect(screen.queryByRole('img', { name: 'Ілюстрація' })).toBeNull();
+
+  const png = new File([new Uint8Array([1, 2, 3])], 'big.png', { type: 'image/png' });
+  await user.upload(screen.getByLabelText('Завантажити ілюстрацію'), png);
+
+  expect(await screen.findByText('illustration-size: Файл більший за 150 КБ')).toBeDefined();
+});

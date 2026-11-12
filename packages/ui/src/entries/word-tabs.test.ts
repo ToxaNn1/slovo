@@ -21,7 +21,6 @@ const bare: WordCardModel = {
   details: undefined,
   linkedCorrections: [],
   synonymRow: undefined,
-  illustration: undefined,
 };
 
 const full: WordCardModel = {

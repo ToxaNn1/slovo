@@ -5,14 +5,18 @@ import { CrosswordDaySchema } from '../crossword';
 import { CuratedCollectionSchema } from '../curated-collection';
 import { EditionIdSchema } from '../edition';
 import { IdiomSchema } from '../idiom';
+import { IllustrationRowSchema, RecordingRowSchema } from '../media';
 import { SynonymRowSchema } from '../synonym-row';
 import { TipSchema } from '../tip';
 import { WordIdSchema, WordSchema } from '../word';
 import { PublishedPackSchema } from '../language-pack';
 import { procedure } from './procedure';
 
-/** The Patch format the backend writes; an app refuses a newer one and keeps its content (ADR 0090). */
-export const PATCH_FORMAT = 1;
+/**
+ * The Patch format the backend writes; an app refuses another one and keeps
+ * its content (ADR 0090). Format 2 brought the media rows (ADR 0099).
+ */
+export const PATCH_FORMAT = 2;
 
 /** The seven kinds of content records, each in id order, the Retired ones included (ADR 0090). */
 const contentKinds = {
@@ -26,12 +30,25 @@ const contentKinds = {
   crosswordDays: z.array(CrosswordDaySchema),
 };
 
+/**
+ * The media rows beside the records (ADR 0099): every row changed after the
+ * version asked, the retired ones with their flag, in Word id order. A file's
+ * URL comes from its row and the media base, never from a stored URL.
+ */
+const mediaRows = {
+  /** The URL root of the Edition's Media Store, with no trailing slash. */
+  mediaBase: z.url(),
+  recordings: z.array(RecordingRowSchema),
+  illustrations: z.array(IllustrationRowSchema),
+};
+
 /** The whole content of an Edition at its current content version, as the backend serves it. */
 export const ContentSnapshotSchema = z.object({
   editionId: EditionIdSchema,
   /** The Edition's content version; every record below is as of it. */
   contentVersion: z.number().int().positive(),
   ...contentKinds,
+  ...mediaRows,
   /** The ids of the Words whose text changed since their Recordings, in id order. */
   needsNewRecording: z.array(WordIdSchema),
 });
@@ -51,11 +68,12 @@ export const PatchSchema = z.object({
   contentVersion: z.number().int().positive(),
   patchFormat: z.number().int().positive(),
   ...contentKinds,
+  ...mediaRows,
 });
 
 export type Patch = z.infer<typeof PatchSchema>;
 
-/** How a client or a proxy keeps a Patch: always revalidated, by its ETag. */
+/** How a client or a proxy keeps a Patch: the CDN for a minute, the device revalidating it by its ETag. */
 const PatchCachingSchema = z.object({
   etag: z.string(),
   'cache-control': z.string(),

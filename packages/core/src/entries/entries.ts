@@ -173,12 +173,6 @@ export interface Entries {
    * of the Mix (ADR 0051). Derived from the rows: nothing on the Word names it.
    */
   linkingSynonymRow(word: Word): Promise<SynonymRow | undefined>;
-  /**
-   * The file name of the Word's Illustration, or none when the Word has none,
-   * the app doesn't bundle the file a content update names or the Edition or
-   * a remote Feature Switch turns `illustrations` off (ADR 0055).
-   */
-  illustrationOf(word: Word): string | undefined;
 }
 
 /**
@@ -226,7 +220,7 @@ function readOnce<T>(read: () => Promise<T>): () => Promise<T> {
 }
 
 /** What the Entries ask of the Edition. */
-type EntriesEdition = Pick<Edition, 'isFeatureEnabled' | 'illustrations'>;
+type EntriesEdition = Pick<Edition, 'isFeatureEnabled'>;
 
 /**
  * The Entries over the Language Pack and the reader's choices, read live from
@@ -468,13 +462,6 @@ export function createEntries({
       if (first === undefined) return undefined;
       const [row] = await content.getEntries([first]);
       return row?.kind === 'synonymRow' ? row : undefined;
-    },
-    illustrationOf({ illustration }) {
-      return illustration !== undefined &&
-        edition.isFeatureEnabled('illustrations') &&
-        edition.illustrations.has(illustration)
-        ? illustration
-        : undefined;
     },
   };
 }

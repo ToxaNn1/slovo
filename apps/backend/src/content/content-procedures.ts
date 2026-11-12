@@ -5,17 +5,27 @@ import type { EditionRegistry } from '@slovo/server-core';
 import { namesEtag } from '../etag';
 import type { ContentStore } from './content-store';
 
-/** A Patch changes with every edit, so the device revalidates it by its ETag each time. */
-const PATCH_CACHE_CONTROL = 'no-cache';
+/**
+ * The CDN keeps a Patch for a minute, keyed by its URL (the Edition and the
+ * device's content version), so most devices never reach the database; the
+ * device revalidates it by its ETag each time. An edit reaches every device
+ * within that minute, with no purge (ADR 0099).
+ */
+const PATCH_CACHE_CONTROL = 'public, max-age=0, s-maxage=60';
 
 /** The content procedures of the contract, over the Editions and the content tables. */
-export function contentProcedures(editions: EditionRegistry, contentStore: ContentStore) {
+export function contentProcedures(
+  editions: EditionRegistry,
+  contentStore: ContentStore,
+  /** The URL root of the Media Store the snapshot and the Patch name (ADR 0099). */
+  mediaBase: string,
+) {
   const content = implement(apiContract.content);
   return content.router({
     snapshot: content.snapshot.handler(async ({ input, errors }) => {
       const snapshot = await contentStore.snapshot(input.editionId);
       if (snapshot === undefined) throw errors.NOT_FOUND();
-      return snapshot;
+      return { ...snapshot, mediaBase };
     }),
 
     patch: content.patch.handler(async ({ input, errors }) => {
@@ -45,7 +55,10 @@ export function contentProcedures(editions: EditionRegistry, contentStore: Conte
       return {
         status: 200 as const,
         headers,
-        body: { status: 'patch' as const, patch: { ...patch, patchFormat: PATCH_FORMAT } },
+        body: {
+          status: 'patch' as const,
+          patch: { ...patch, mediaBase, patchFormat: PATCH_FORMAT },
+        },
       };
     }),
 

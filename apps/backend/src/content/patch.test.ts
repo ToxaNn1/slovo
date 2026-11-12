@@ -17,6 +17,7 @@ import {
   silentLogger,
   testApp,
   testDatabaseUrl,
+  TEST_MEDIA_BASE,
 } from '../test-support';
 
 /** A copy of the UA Edition folder, removed after the file. */
@@ -82,6 +83,9 @@ function patchIn(answer: Awaited<ReturnType<typeof patchOf>>) {
 }
 
 const NO_RECORDS = {
+  mediaBase: TEST_MEDIA_BASE,
+  recordings: [],
+  illustrations: [],
   words: [],
   idioms: [],
   corrections: [],
@@ -92,6 +96,9 @@ const NO_RECORDS = {
 };
 
 const WORD_ID = 'w_009orq';
+
+/** A SHA-256 in hex made of one repeated digit, as a media file's hash. */
+const hashOf = (digit: string) => digit.repeat(64);
 
 describe('the Patch read API', () => {
   it('answers the one record edited since the device version, and a Retired one with its flag', async () => {
@@ -169,10 +176,34 @@ describe('the Patch read API', () => {
     expect(patchIn(next).words).toEqual([edited]);
   });
 
-  it('gives a device at version 0 every record of every kind', async () => {
+  it('lets the CDN keep a Patch for a minute while the device revalidates it, the 304 included', async () => {
     const { client } = await contentBackend();
-    const { editionId, contentVersion, ...rest } = await snapshotOf(client);
-    const { needsNewRecording, ...kinds } = rest;
+    const { contentVersion } = await snapshotOf(client);
+    const cdnCacheable = 'public, max-age=0, s-maxage=60';
+
+    const first = await patchOf(client, contentVersion);
+    expect(first.headers['cache-control']).toBe(cdnCacheable);
+
+    await expect(patchOf(client, contentVersion, first.headers.etag)).resolves.toMatchObject({
+      status: 304,
+      headers: { etag: first.headers.etag, 'cache-control': cdnCacheable },
+    });
+  });
+
+  it('gives a device at version 0 every record of every kind', async () => {
+    const { client, media } = await contentBackend();
+    // An imported Edition carries no media rows: they come from the Media Store.
+    await media.saveRecording('uk', {
+      wordId: WORD_ID,
+      narratorVoice: 'oksana',
+      recordingKind: 'plain',
+      hash: hashOf('a'),
+      size: 7000,
+      durationMs: 900,
+    });
+    await media.saveIllustration('uk', { wordId: WORD_ID, hash: hashOf('b'), size: 40_000 });
+    const { editionId, contentVersion, mediaBase, needsNewRecording, ...kinds } =
+      await snapshotOf(client);
     expect(needsNewRecording).toEqual([]);
     for (const records of Object.values(kinds)) expect(records).not.toEqual([]);
 
@@ -181,6 +212,7 @@ describe('the Patch read API', () => {
       since: 0,
       contentVersion,
       patchFormat: PATCH_FORMAT,
+      mediaBase,
       ...kinds,
     });
   });
@@ -198,6 +230,70 @@ describe('the Patch read API', () => {
     });
   });
 
+  it('carries the media rows changed since the device version, a replaced one retired, and the media base', async () => {
+    const { client, media } = await contentBackend();
+    const before = await snapshotOf(client);
+    expect(before).toMatchObject({ mediaBase: TEST_MEDIA_BASE, recordings: [], illustrations: [] });
+
+    const recording = {
+      wordId: WORD_ID,
+      narratorVoice: 'oksana',
+      recordingKind: 'plain' as const,
+      hash: hashOf('a'),
+      size: 7000,
+      durationMs: 900,
+    };
+    await media.saveRecording('uk', recording);
+    await media.saveIllustration('uk', { wordId: WORD_ID, hash: hashOf('b'), size: 40_000 });
+    const added = patchIn(await patchOf(client, before.contentVersion));
+    expect(added).toEqual({
+      editionId: 'uk',
+      since: before.contentVersion,
+      contentVersion: before.contentVersion + 2,
+      patchFormat: PATCH_FORMAT,
+      ...NO_RECORDS,
+      recordings: [{ ...recording, retired: false }],
+      illustrations: [{ wordId: WORD_ID, hash: hashOf('b'), size: 40_000, retired: false }],
+    });
+
+    const replacement = { ...recording, hash: hashOf('c'), size: 7100, durationMs: 950 };
+    await media.saveRecording('uk', replacement);
+    const replaced = patchIn(await patchOf(client, added.contentVersion));
+    expect(replaced).toEqual({
+      editionId: 'uk',
+      since: added.contentVersion,
+      contentVersion: added.contentVersion + 1,
+      patchFormat: PATCH_FORMAT,
+      ...NO_RECORDS,
+      recordings: [
+        { ...recording, retired: true },
+        { ...replacement, retired: false },
+      ],
+    });
+
+    await expect(snapshotOf(client)).resolves.toMatchObject({
+      contentVersion: replaced.contentVersion,
+      recordings: [
+        { ...recording, retired: true },
+        { ...replacement, retired: false },
+      ],
+      illustrations: [{ wordId: WORD_ID, hash: hashOf('b'), size: 40_000, retired: false }],
+    });
+  });
+
+  it('writes nothing for a media file the Word already has live', async () => {
+    const { client, media } = await contentBackend();
+    const illustration = { wordId: WORD_ID, hash: hashOf('b'), size: 40_000 };
+    await media.saveIllustration('uk', illustration);
+    const { contentVersion } = await snapshotOf(client);
+
+    await media.saveIllustration('uk', illustration);
+    expect(patchIn(await patchOf(client, contentVersion))).toMatchObject({
+      contentVersion,
+      illustrations: [],
+    });
+  });
+
   it('answers a Patch format it does not serve as unsupported', async () => {
     const { client } = await contentBackend();
     const answer = await client.content.patch({
@@ -207,6 +303,14 @@ describe('the Patch read API', () => {
     expect(answer).toMatchObject({
       status: 200,
       body: { status: 'unsupported-format', patchFormat: PATCH_FORMAT },
+    });
+    // The format before media rows: an app of it keeps its content.
+    expect(PATCH_FORMAT).toBe(2);
+    await expect(
+      client.content.patch({ params: { editionId: 'uk' }, query: { since: 0, patchFormat: 1 } }),
+    ).resolves.toMatchObject({
+      status: 200,
+      body: { status: 'unsupported-format', patchFormat: 2 },
     });
   });
 

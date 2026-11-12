@@ -106,6 +106,7 @@ describe('openUserState', () => {
       },
       userState,
       random: { next: () => 0.5 },
+      starterWords: [],
     });
     const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
 
@@ -182,6 +183,7 @@ describe('openUserState', () => {
       },
       userState,
       random: { next: () => 0.5 },
+      starterWords: [],
     });
 
     expect(writes).toEqual([

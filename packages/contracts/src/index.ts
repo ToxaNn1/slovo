@@ -263,3 +263,13 @@ export {
 } from './feature-switch-rules';
 export { DEPENDS_ON, switchedOn } from './feature-switch-dependencies';
 export { ContentTargetsSchema, type ContentTargets } from './content-targets';
+export {
+  IllustrationRowSchema,
+  RecordingKindSchema,
+  RecordingRowSchema,
+  illustrationPath,
+  recordingPath,
+  type IllustrationRow,
+  type RecordingKind,
+  type RecordingRow,
+} from './media';

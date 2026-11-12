@@ -32,6 +32,7 @@ import { useEntrySlots, useYesterdaySlots } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/use-open-screen';
 import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
+import { useSettings } from '@/settings/settings';
 import { gameModeStrings } from '@/game/game-modes';
 import { wordOfTheDayLanding } from '@/feed/word-of-the-day-landing';
 import { useFirstWeekStreak } from '@/feed/first-week';
@@ -65,7 +66,8 @@ export default function FeedRoute() {
 
 function FeedScreen() {
   const pager = useRef<VerticalPagerHandle>(null);
-  const feed = useFeed(pager, { clock: deviceClock, landing: wordOfTheDayLanding });
+  const voice = useSettings().current.narratorVoice;
+  const feed = useFeed(pager, { clock: deviceClock, landing: wordOfTheDayLanding, voice });
   const { colors } = useTokens();
   const { top } = useSafeAreaInsets();
   const shown = useShown();

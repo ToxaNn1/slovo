@@ -1,4 +1,5 @@
 import { logError } from '../diagnostics/log';
+import type { RecordingSource } from '../media/recording-source';
 import type { RecordingPlayer } from '../sounds/recording-player';
 
 /** A voice the device can speak with, as `expo-speech` lists it. */
@@ -73,8 +74,8 @@ export function createPronunciation({
   /** The Edition's locale (BCP 47), e.g. "uk-UA". */
   locale: string;
   player: RecordingPlayer;
-  /** The Recording of the Word with this id in the Narrator Voice, if it has one. */
-  recordingOf: (id: string) => number | undefined;
+  /** The Recording of the Word with this id in the Narrator Voice, if it has one; it may download first. */
+  recordingOf: (id: string) => Promise<RecordingSource | undefined>;
   /** Whether «Звуки» are on now. */
   soundsOn: () => boolean;
 }): Pronunciation {
@@ -118,7 +119,9 @@ export function createPronunciation({
         return;
       }
 
-      const recording = recordingOf(id);
+      const recording = await recordingOf(id);
+      // A later tap came while the Recording was found; it reads instead.
+      if (latestTap !== tap) return;
       if (recording !== undefined) {
         if (state?.state === 'playing') {
           await silence();

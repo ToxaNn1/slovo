@@ -18,6 +18,15 @@ jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
 // The Feed is in sight: its tab is focused and the app in the foreground.
 jest.mock('expo-router', () => ({ useIsFocused: () => true }));
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
+/** The media prefetch the Feed asks for, by the Words it names. */
+const mockPrefetchAhead = jest.fn((_shell: unknown, _wordIds: readonly string[], _voice: string) =>
+  Promise.resolve(),
+);
+jest.mock('../shell-value', () => ({ useShell: () => ({}) }));
+jest.mock('../media/shell-media', () => ({
+  prefetchAhead: (shell: unknown, wordIds: readonly string[], voice: string) =>
+    mockPrefetchAhead(shell, wordIds, voice),
+}));
 
 /** A Word «слово{n}» that links the Correction `c_one`. */
 const word = (index: number): Word => ({
@@ -88,7 +97,10 @@ async function openFeed() {
   const pager = fakePager();
   const ref = { current: pager };
   const landing = createWordOfTheDayLanding();
-  const feed = await renderHook(() => useFeed(ref, { clock, landing }));
+  const feed = await renderHook(
+    ({ voice }: { voice: string }) => useFeed(ref, { clock, landing, voice }),
+    { initialProps: { voice: 'oksana' } },
+  );
   await waitFor(() => {
     expect(feed.result.current.cards.length).toBeGreaterThan(1);
   });
@@ -129,5 +141,37 @@ describe('the Feed on its pager', () => {
     expect(feed.result.current.cards[0]?.entryId).toBe(reader);
     expect(pager.page).toBe(0);
     expect(mockComposition.feed.position).toBe(0);
+  });
+
+  it('downloads the media of the Words after the card the reader turned to', async () => {
+    const { feed } = await openFeed();
+
+    await act(() => {
+      feed.result.current.onCardChange(1);
+    });
+
+    const ahead = feed.result.current.cards
+      .slice(2)
+      .flatMap((card) => (card.kind === 'word' ? [card.model.wordId] : []));
+    expect(ahead.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(mockPrefetchAhead.mock.lastCall?.[1]).toEqual(ahead);
+    });
+  });
+
+  it('downloads the media ahead again in the voice the reader chose', async () => {
+    const { feed } = await openFeed();
+    await act(() => {
+      feed.result.current.onCardChange(1);
+    });
+    await waitFor(() => {
+      expect(mockPrefetchAhead.mock.lastCall?.[2]).toBe('oksana');
+    });
+
+    await feed.rerender({ voice: 'taras' });
+
+    await waitFor(() => {
+      expect(mockPrefetchAhead.mock.lastCall?.[2]).toBe('taras');
+    });
   });
 });

@@ -45,7 +45,6 @@ const word: WordCardModel = {
   details: undefined,
   linkedCorrections: [],
   synonymRow: undefined,
-  illustration: undefined,
 };
 
 const haptics: Haptics = {

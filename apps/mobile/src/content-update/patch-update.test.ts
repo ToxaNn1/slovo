@@ -2,7 +2,7 @@ import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { Word } from '@slovo/contracts';
+import type { IllustrationRow, RecordingRow, Word } from '@slovo/contracts';
 import { PATCH_FORMAT, type Patch } from '@slovo/contracts/api';
 import { createContentUpdate, openMistakeReports, systemRandom } from '@slovo/core';
 import {
@@ -48,7 +48,11 @@ beforeAll(() => {
       synonymRows: [...content.synonymRows],
       curatedCollections: [...(content.curatedCollections ?? [])],
       crosswordDays: [...(content.crosswordDays ?? [])],
-      needsNewRecording: [],
+      mediaBase: 'https://media.slovo.test',
+      recordings: [],
+      illustrations: [],
+      // Read once the test runs: the Words are picked below.
+      needsNewRecording: [second?.id ?? ''],
     },
     outFile: builtFile,
     today,
@@ -80,6 +84,9 @@ function patchOf(records: Partial<Patch>): Patch {
     synonymRows: [],
     curatedCollections: [],
     crosswordDays: [],
+    mediaBase: 'https://media.slovo.test',
+    recordings: [],
+    illustrations: [],
     ...records,
   };
 }
@@ -98,27 +105,123 @@ const now = (run: () => void) => {
 
 let copies = 0;
 /** The app on a device with a fresh copy of the built pack open, and the backend. */
-async function device() {
+async function device({ readableFormats = [PATCH_FORMAT] } = {}) {
   copies += 1;
   const file = join(dir, `pack-${String(copies)}.db`);
   copyFileSync(builtFile, file);
   const pack = openLanguagePack(file, { writable: true });
   opened.push(pack);
   const api = createFakeBackend();
-  const store = await openPackContentStore(pack.writer);
+  const store = await openPackContentStore(pack.writer, () => Promise.resolve());
   const contentUpdate = createContentUpdate({
     backend: api.backend,
     edition: ukrainian,
     store,
     random: systemRandom,
     schedule: now,
-    readableFormats: [PATCH_FORMAT],
+    readableFormats,
   });
   // A Patch makes new Entries: the next read sees the patched records.
   const entries = () =>
     createEntries({ content: pack, edition: ukrainian, choices: EVERYTHING_IN });
   return { api, pack, contentUpdate, entries };
 }
+
+const hashOf = (digit: string) => digit.repeat(64);
+
+const recording = (wordId: string, hash: string, retired = false): RecordingRow => ({
+  wordId,
+  narratorVoice: 'oksana',
+  recordingKind: 'plain',
+  hash,
+  size: 20_480,
+  durationMs: 900,
+  retired,
+});
+
+const illustration = (wordId: string, hash: string, retired = false): IllustrationRow => ({
+  wordId,
+  hash,
+  size: 51_200,
+  retired,
+});
+
+describe('the media rows of a Patch', () => {
+  it('answers the live Recording and Illustration rows of a Word by its id', async () => {
+    const { api, contentUpdate } = await device();
+    api.content.publishPatch(
+      patchOf({
+        recordings: [recording(first.id, hashOf('a')), recording(second.id, hashOf('b'))],
+        illustrations: [illustration(first.id, hashOf('c'))],
+      }),
+    );
+
+    await contentUpdate.checkForUpdate();
+
+    expect(await contentUpdate.mediaOf(first.id)).toEqual({
+      mediaBase: 'https://media.slovo.test',
+      needsNewRecording: false,
+      recordings: [
+        {
+          wordId: first.id,
+          narratorVoice: 'oksana',
+          recordingKind: 'plain',
+          hash: hashOf('a'),
+          size: 20_480,
+          durationMs: 900,
+        },
+      ],
+      illustrations: [{ wordId: first.id, hash: hashOf('c'), size: 51_200 }],
+    });
+    expect((await contentUpdate.mediaOf(second.id)).needsNewRecording).toBe(true);
+  });
+
+  it('takes a retired row out of the live set and keeps the one that replaced it', async () => {
+    const { api, contentUpdate } = await device();
+    api.content.publishPatch(patchOf({ recordings: [recording(first.id, hashOf('a'))] }));
+    await contentUpdate.checkForUpdate();
+    api.content.publishPatch(
+      patchOf({
+        since: content.contentVersion + 1,
+        contentVersion: content.contentVersion + 2,
+        recordings: [recording(first.id, hashOf('a'), true), recording(first.id, hashOf('d'))],
+        illustrations: [],
+      }),
+    );
+
+    await contentUpdate.checkForUpdate();
+
+    const { recordings } = await contentUpdate.mediaOf(first.id);
+    expect(recordings.map(({ hash }) => hash)).toEqual([hashOf('d')]);
+  });
+
+  it('answers none for a Word without media', async () => {
+    const { contentUpdate } = await device();
+
+    expect(await contentUpdate.mediaOf(first.id)).toMatchObject({
+      recordings: [],
+      illustrations: [],
+    });
+  });
+
+  it('leaves the content as it was when the app reads only the old format', async () => {
+    const { api, contentUpdate, entries } = await device({ readableFormats: [PATCH_FORMAT - 1] });
+    api.content.publishPatch(
+      patchOf({ words: [changed(first)], recordings: [recording(first.id, hashOf('a'))] }),
+    );
+
+    await contentUpdate.checkForUpdate();
+
+    expect(await entries().get(first.id)).toMatchObject({
+      primaryDefinition: first.primaryDefinition,
+    });
+    expect(await contentUpdate.mediaOf(first.id)).toMatchObject({
+      recordings: [],
+      illustrations: [],
+    });
+    expect(contentUpdate.contentVersion()).toBe(content.contentVersion);
+  });
+});
 
 describe('a Patch applied to the open Language Pack', () => {
   it('changes a record at once, read by its id', async () => {

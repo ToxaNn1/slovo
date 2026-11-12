@@ -112,7 +112,73 @@ const ServerVariablesSchema = z.object({
   PORT: z.coerce.number().int().min(0).max(65535).default(8787),
   // The folder that holds one folder per Edition (ADR 0035).
   EDITIONS_DIR: z.string().min(1).default(EDITIONS_DIR),
+  // The URL root of the Media Store the snapshot and the Patch name (ADR
+  // 0099), with no trailing slash: one setting moves it to media.<domain>.
+  MEDIA_BASE: unsetWhenEmpty(
+    z
+      .url({ error: 'must be a URL' })
+      .refine((url) => !url.endsWith('/'), 'must not end with a slash'),
+  ),
+  // The Cloudflare R2 bucket of the Media Store and an API token's S3 keys
+  // with write access to it; all four or none, required in production. Unset,
+  // the backend and the Recordings command keep their files in memory, which
+  // suits development only.
+  R2_ACCOUNT_ID: unsetWhenEmpty(z.string().min(1)),
+  R2_BUCKET: unsetWhenEmpty(z.string().min(1)),
+  R2_ACCESS_KEY_ID: unsetWhenEmpty(z.string().min(1)),
+  R2_SECRET_ACCESS_KEY: unsetWhenEmpty(z.string().min(1)),
+  // The Python and the model the Recording generator runs; the defaults are
+  // where recordings.Dockerfile puts them.
+  RECORDINGS_PYTHON: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(1).default('/opt/recordings/venv/bin/python'),
+  ),
+  RECORDINGS_MODEL_DIR: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(1).default('/opt/recordings/model'),
+  ),
 });
+
+const R2_VARIABLES = [
+  'R2_ACCOUNT_ID',
+  'R2_BUCKET',
+  'R2_ACCESS_KEY_ID',
+  'R2_SECRET_ACCESS_KEY',
+] as const;
+
+/** Where a development backend serves its Media Store from, MEDIA_BASE unset. */
+const DEVELOPMENT_MEDIA_BASE = 'http://localhost:8787/media';
+
+type R2Variables = Partial<Record<(typeof R2_VARIABLES)[number], string | undefined>>;
+
+/** Names each R2 variable that is unset when production needs it, or when another one is set. */
+function refineR2(variables: R2Variables & { NODE_ENV: string }, context: z.RefinementCtx): void {
+  const unset = R2_VARIABLES.filter((name) => variables[name] === undefined);
+  const production = variables.NODE_ENV === 'production';
+  if (!production && unset.length === R2_VARIABLES.length) return;
+  for (const name of unset) {
+    context.addIssue({
+      code: 'custom',
+      path: [name],
+      message: production ? 'is required in production' : 'is required with the other R2 variables',
+    });
+  }
+}
+
+/** The R2 bucket's options, or none while its variables are unset. */
+function r2Of({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY }: R2Variables) {
+  return R2_ACCOUNT_ID === undefined ||
+    R2_BUCKET === undefined ||
+    R2_ACCESS_KEY_ID === undefined ||
+    R2_SECRET_ACCESS_KEY === undefined
+    ? undefined
+    : {
+        accountId: R2_ACCOUNT_ID,
+        bucket: R2_BUCKET,
+        accessKeyId: R2_ACCESS_KEY_ID,
+        secretAccessKey: R2_SECRET_ACCESS_KEY,
+      };
+}
 
 /** The options of PostHog's query API, or none while its key or project is unset. */
 function posthogOf({
@@ -151,6 +217,14 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
   for (const name of required) {
     if (variables[name] === undefined) context.addIssue({ code: 'custom', path: [name], message });
   }
+  if (variables.NODE_ENV === 'production' && variables.MEDIA_BASE === undefined) {
+    context.addIssue({
+      code: 'custom',
+      path: ['MEDIA_BASE'],
+      message: 'must be set in production',
+    });
+  }
+  refineR2(variables, context);
 }).transform(
   ({
     NODE_ENV: _environment,
@@ -163,10 +237,17 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     POSTHOG_PERSONAL_API_KEY,
     POSTHOG_PROJECT_ID,
     POSTHOG_HOST,
+    MEDIA_BASE,
+    R2_ACCOUNT_ID,
+    R2_BUCKET,
+    R2_ACCESS_KEY_ID,
+    R2_SECRET_ACCESS_KEY,
     ...rest
   }) => ({
     ...rest,
     posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
+    mediaBase: MEDIA_BASE ?? DEVELOPMENT_MEDIA_BASE,
+    r2: r2Of({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY }),
     smtp: {
       host: SMTP_HOST ?? 'localhost',
       port: SMTP_PORT ?? 1025,
@@ -207,6 +288,54 @@ export const CronConfigSchema = ServerVariablesSchema.pick({
   ...rest,
   posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
 }));
+
+/** The environment the Recordings service's `pnpm recordings` reads. */
+export const RecordingsConfigSchema = ServerVariablesSchema.pick({
+  NODE_ENV: true,
+  DATABASE_URL: true,
+  EDITIONS_DIR: true,
+  R2_ACCOUNT_ID: true,
+  R2_BUCKET: true,
+  R2_ACCESS_KEY_ID: true,
+  R2_SECRET_ACCESS_KEY: true,
+  RECORDINGS_PYTHON: true,
+  RECORDINGS_MODEL_DIR: true,
+})
+  .superRefine(refineR2)
+  .transform(({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, ...rest }) => ({
+    ...rest,
+    r2: r2Of({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY }),
+  }));
+
+/** An R2 variable the media import can't run without. */
+const requiredR2 = z.preprocess(
+  (value) => (value === '' ? undefined : value),
+  z.string({ error: 'is required: the media import puts the files in R2' }).min(1),
+);
+
+/**
+ * The environment `pnpm import-media` reads: the database and the R2 bucket,
+ * every R2 variable required, so the files never land in a memory store.
+ */
+export const MediaImportConfigSchema = ServerVariablesSchema.pick({
+  DATABASE_URL: true,
+  EDITIONS_DIR: true,
+})
+  .extend({
+    R2_ACCOUNT_ID: requiredR2,
+    R2_BUCKET: requiredR2,
+    R2_ACCESS_KEY_ID: requiredR2,
+    R2_SECRET_ACCESS_KEY: requiredR2,
+  })
+  .transform(({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, ...rest }) => ({
+    ...rest,
+    r2: {
+      accountId: R2_ACCOUNT_ID,
+      bucket: R2_BUCKET,
+      accessKeyId: R2_ACCESS_KEY_ID,
+      secretAccessKey: R2_SECRET_ACCESS_KEY,
+    },
+  }));
 
 /** The environment the publish command reads. */
 export const PublishConfigSchema = ServerVariablesSchema.pick({

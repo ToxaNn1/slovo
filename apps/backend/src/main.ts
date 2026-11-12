@@ -11,6 +11,7 @@ import { createSmtpMailer } from './account/smtp-mailer';
 import { ownerAlertsOf } from './alerts/owner-chat';
 import { createApp } from './app';
 import { readConfig, ServerConfigSchema } from './config';
+import { memoryMediaStore, r2MediaStore } from './media/media-store';
 import { createDatabase } from './database/database';
 import { createEasSource } from './development/eas-source';
 import { createGitHubSource } from './development/github-source';
@@ -54,6 +55,10 @@ const app = createApp({
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
   sentry: sentryOf(config, systemClock),
   ciToken: config.CI_HISTORY_TOKEN,
+  mediaBase: config.mediaBase,
+  // Unset in development, the Media Store's files stay in memory.
+  mediaStore:
+    config.r2 === undefined ? memoryMediaStore() : r2MediaStore(config.r2, { clock: systemClock }),
 });
 const server = await startServer({ app, database, port: config.PORT });
 

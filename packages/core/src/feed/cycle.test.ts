@@ -14,7 +14,9 @@ async function open({
   random = randomOf(0.25),
   words = wordIds,
   corrections = correctionIds,
+  starterWords = [],
 }: {
+  starterWords?: readonly string[];
   records?: Map<string, string>;
   random?: Random;
   words?: readonly string[];
@@ -28,6 +30,7 @@ async function open({
     },
     userState,
     random,
+    starterWords,
   });
 }
 
@@ -207,6 +210,7 @@ describe('the Cycle', () => {
         entries: { eligible: () => Promise.resolve({ ...eligible }) },
         userState,
         random: randomOf(0.25),
+        starterWords: [],
       });
       return { cycle, eligible };
     }
@@ -364,6 +368,7 @@ describe('the Cycle', () => {
         },
         userState,
         random: randomOf(0.25),
+        starterWords: [],
       });
 
       words.splice(0, 2, 'w_new');
@@ -371,6 +376,57 @@ describe('the Cycle', () => {
 
       expect(new Set(cycle.order().words)).toEqual(new Set(words));
       expect(cycle.order().corrections).toEqual([]);
+    });
+  });
+
+  describe('with Starter Words', () => {
+    const starterWords = ['w_7', 'w_2', 'w_9'];
+
+    it('opens the first Cycle with the Starter Words, then the rest, each part shuffled', async () => {
+      const plain = (await open()).order();
+      const cycle = await open({ starterWords });
+
+      const { words } = cycle.order();
+      expect(new Set(words.slice(0, 3))).toEqual(new Set(starterWords));
+      expect(words).toEqual([
+        ...plain.words.filter((id) => starterWords.includes(id)),
+        ...plain.words.filter((id) => !starterWords.includes(id)),
+      ]);
+      expect(cycle.order().corrections).toEqual(plain.corrections);
+      expect(cycle.unseen().words).toEqual(words);
+    });
+
+    it('leaves out a Starter Word that is not eligible', async () => {
+      const cycle = await open({ starterWords: [...starterWords, 'w_gone'] });
+
+      expect(cycle.order().words).toHaveLength(wordIds.length);
+      expect(new Set(cycle.order().words.slice(0, 3))).toEqual(new Set(starterWords));
+    });
+
+    it('keeps the Starter Words first across a restart and a new read of the eligible Entries', async () => {
+      const records = new Map<string, string>();
+      const first = await open({ records, starterWords });
+      const order = first.order();
+
+      const again = await open({ records, starterWords, random: randomOf(0.9) });
+      await again.readEligibleAgain();
+
+      expect(again.order()).toEqual(order);
+    });
+
+    it('orders a later Cycle as without Starter Words', async () => {
+      const records = new Map<string, string>();
+      const plainRecords = new Map<string, string>();
+      const random = () => randomSequence(0.25, 0.6);
+      const cycle = await open({ records, starterWords, random: random() });
+      const plain = await open({ records: plainRecords, random: random() });
+
+      await keep(records, await cycle.start());
+      await keep(plainRecords, await plain.start());
+
+      expect(cycle.isFirst()).toBe(false);
+      expect(cycle.order()).toEqual(plain.order());
+      expect((await open({ records, starterWords })).order()).toEqual(plain.order());
     });
   });
 });

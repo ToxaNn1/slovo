@@ -27,6 +27,9 @@ import {
 import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+
+import { createIllustrations } from './content/illustrations';
+import type { MediaStore } from './media/media-store';
 import { requestId, type RequestIdVariables } from 'hono/request-id';
 import type { Logger } from 'pino';
 
@@ -102,6 +105,10 @@ export interface AppDependencies {
   readonly sentry: SentryReader;
   /** The Bearer token CI pushes its history with (ADR 0096); unset refuses every push. */
   readonly ciToken: string | undefined;
+  /** The URL root of the Media Store the snapshot and the Patch name (ADR 0099). */
+  readonly mediaBase: string;
+  /** The Media Store the content editor keeps Illustrations in (ADR 0099). */
+  readonly mediaStore: MediaStore;
   /** The folder of the built owner admin app (apps/admin/dist), served at `/admin`; without it none. */
   readonly adminDist?: string | undefined;
 }
@@ -166,6 +173,8 @@ export function createApp({
   adminDist,
   sentry,
   ciToken,
+  mediaBase,
+  mediaStore,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions, alerts });
   const rateLimits = createRateLimits(database, { secret: authSecret });
@@ -240,7 +249,15 @@ export function createApp({
     contentQueue: createContentQueue({ database, clock }),
     contentStore,
     contentWrites,
+    illustrations: createIllustrations({
+      database,
+      clock,
+      editions: editionRegistry,
+      mediaStore,
+      mediaBase,
+    }),
     development: createDevelopment({ github, eas, clock }),
+    mediaBase,
     editions: editionRegistry,
     mailer,
     mistakeReports,

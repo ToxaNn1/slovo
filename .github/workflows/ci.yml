@@ -428,6 +428,11 @@ jobs:
           SMTP_PASSWORD=ci
           MAIL_FROM=no-reply@example.com
           TRUSTED_PROXY_HOPS=1
+          R2_ACCOUNT_ID=ci
+          R2_BUCKET=ci
+          R2_ACCESS_KEY_ID=ci
+          R2_SECRET_ACCESS_KEY=ci
+          MEDIA_BASE=https://media.example.com
           EOF
           run=(docker run --network host --env-file "$RUNNER_TEMP/backend.env")
           "${run[@]}" --rm slovo-backend pnpm db:migrate

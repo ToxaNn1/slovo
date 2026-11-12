@@ -10,7 +10,6 @@
     "dev": "node scripts/dev.mjs",
     "dev:admin": "pnpm --filter @slovo/admin dev",
     "build:pack": "pnpm --filter @slovo/language-pack build-pack",
-    "recording-requests": "pnpm --silent --filter @slovo/language-pack recording-requests",
     "switches": "pnpm --filter @slovo/backend switches",
     "admin": "pnpm --filter @slovo/backend admin",
     "cron": "pnpm --filter @slovo/backend cron",

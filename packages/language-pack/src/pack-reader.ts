@@ -29,6 +29,7 @@ export {
   type PackTransaction,
   type PackWriteDatabase,
 } from './apply-patch';
+export { mediaOf } from './media-rows';
 
 /** A value bound to a `?` placeholder. */
 type BindValue = string | number;

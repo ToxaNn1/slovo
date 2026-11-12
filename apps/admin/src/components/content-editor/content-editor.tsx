@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { adminApi } from '../../api';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
+import { IllustrationUpload } from './illustration';
 import { CONTENT_KINDS, type KindEditor } from './kinds';
 import { Pager } from './pager';
 import { RecordForm, type Written } from './record-form';
@@ -229,6 +230,21 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
               fields={record.data.fields}
               record={{ at: 'edit', id: open.id, recordVersion: record.data.recordVersion }}
               onWritten={onWritten}
+            />
+          )}
+          {open.at === 'edit' && kind === 'word' && record.data !== undefined && (
+            <IllustrationUpload
+              key={open.id}
+              editionId={editionId}
+              id={open.id}
+              illustration={record.data.illustration}
+              onUploaded={(contentVersion) => {
+                onWritten({
+                  id: open.id,
+                  recordVersion: record.data.recordVersion,
+                  contentVersion,
+                });
+              }}
             />
           )}
         </div>

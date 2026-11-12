@@ -360,6 +360,7 @@ export async function openComposition({
   edition,
   clock,
   random,
+  starterWords = [],
   gameModes = [],
   feedNotices = noFeedNotices,
   backend,
@@ -373,6 +374,12 @@ export async function openComposition({
   userState: UserState;
   clock: Clock;
   random: Random;
+  /**
+   * The ids of the Words whose media the app bundles as Starter Media (ADR
+   * 0099), which the first Cycle opens with; without it, as in tools and
+   * tests of other features, the first Cycle orders every Word alike.
+   */
+  starterWords?: readonly string[];
   scheduling?: NotificationScheduling;
   schedule?: Schedule;
   gameModes?: readonly GameMode[];
@@ -415,7 +422,7 @@ export async function openComposition({
     clock,
     eligibility,
   });
-  const cycle = await openCycle({ entries, userState, random });
+  const cycle = await openCycle({ entries, userState, random, starterWords });
   // The Cycle reads the eligible Entries first; the Feed, the plan and the Game follow it.
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });

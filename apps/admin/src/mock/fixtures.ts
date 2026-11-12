@@ -211,6 +211,13 @@ export const FIXTURES: AdminApiOutputs = {
     retire: WRITTEN,
     flag: { id: 'w_a1', batchId: BATCH_ID },
     record: { fields: WORD_FIELDS, recordVersion: 1, retired: false, needsNewRecording: false },
+    uploadIllustration: {
+      contentVersion: 2,
+      illustration: {
+        hash: 'b'.repeat(64),
+        url: `https://media.slovo.test/illustrations/w_a1.${'b'.repeat(64)}.png`,
+      },
+    },
     records: {
       records: [{ id: 'w_a1', label: 'обруч', retired: false, recordVersion: 1 }],
       total: 1,
@@ -230,6 +237,7 @@ export const FIXTURES: AdminApiOutputs = {
         idioms: 0,
         retiredIdioms: 0,
         idiomsPerType: [],
+        media: { withoutRecording: [], withoutIllustration: 0 },
       },
       targets: {},
       missed: [],

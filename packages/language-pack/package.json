@@ -7,11 +7,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./edition": "./src/edition-folder.ts",
-    "./reader": "./src/pack-reader.ts"
+    "./reader": "./src/pack-reader.ts",
+    "./starter-media": "./src/starter-media.ts"
   },
   "scripts": {
     "build-pack": "tsx --disable-warning=ExperimentalWarning src/cli.ts",
-    "recording-requests": "tsx --disable-warning=ExperimentalWarning src/recording-requests-cli.ts",
     "lint": "eslint .",
     "typecheck": "tsc --build",
     "test": "vitest run"

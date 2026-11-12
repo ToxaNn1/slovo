@@ -22,6 +22,9 @@ function patchOf(since: number, records: Partial<Patch> = {}): Patch {
     synonymRows: [],
     curatedCollections: [],
     crosswordDays: [],
+    mediaBase: 'https://media.slovo.test',
+    recordings: [],
+    illustrations: [],
     ...records,
   };
 }

@@ -1,5 +1,6 @@
 // Before anything that counts in the Edition's language.
 import '@/shell/intl-polyfill';
+import { useWordIllustration } from '../media/shell-media';
 import { MascotCelebrations } from '@/mascot/mascot';
 
 import { createHaptics } from '@slovo/core';
@@ -17,13 +18,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useMemo, type ReactNode } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import {
-  edition,
-  editionDecor,
-  editionIllustrations,
-  editionStrings,
-  editionTokens,
-} from '@/edition/edition';
+import { edition, editionDecor, editionStrings, editionTokens } from '@/edition/edition';
 import { ScreenViews } from '@/analytics/screen-views';
 import { hapticEngine } from '@/game/haptics';
 import { deviceClock } from '@/device/device-clock';
@@ -62,7 +57,7 @@ export default function RootLayout() {
             edition={edition}
             strings={editionStrings}
             pronunciation={LemmaPronunciation}
-            illustrations={editionIllustrations}
+            useIllustration={useReaderIllustration}
           >
             <DecorProvider decor={editionDecor}>
               <ThemedTabs />
@@ -174,4 +169,9 @@ function ReduceMotionInEffect({ children }: { children: ReactNode }) {
 /** The route on screen for every sheet below, so a sheet closes when another route comes on screen. */
 function RouteInEffect({ children }: { children: ReactNode }) {
   return <RouteProvider route={usePathname()}>{children}</RouteProvider>;
+}
+
+/** A Word's Illustration in the Narrator Voice the reader chose. */
+function useReaderIllustration(wordId: string) {
+  return useWordIllustration(wordId, useSettings().current.narratorVoice);
 }

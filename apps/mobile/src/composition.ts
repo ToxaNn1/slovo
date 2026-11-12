@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { logError } from './diagnostics/log';
 import { deviceNotificationScheduler } from './notifications/device-notifications';
-import { editionStrings } from './edition/edition';
+import { activeEditionFiles, editionStrings } from './edition/edition';
 import type { LaunchPack } from './content-update/launch-pack';
 import { gameModeStrings } from './game/game-modes';
 import { openOnce, useOpened, type Opening, type OpeningState } from './opening';
@@ -29,6 +29,8 @@ async function openOver({
     // Read at each opening, so a reopen opens over the Edition in effect now.
     ...(await ports.opened()),
     content,
+    // A new phone's first Cycle opens with the Words whose media the app bundles.
+    starterWords: activeEditionFiles.starterWords,
     scheduling: {
       scheduler: deviceNotificationScheduler,
       ellipsis: editionStrings.notificationBody.ellipsis,

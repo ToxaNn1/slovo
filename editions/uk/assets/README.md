@@ -9,6 +9,6 @@ The sound is the design's tap, quieter (owner 02.11): `generate-interface-sounds
 
 ## Illustrations
 
-`illustrations/` holds the Illustrations a Word names in its `illustration` field (ADR 0055): square PNGs of at most 150 000 bytes, which the Language Pack build checks. Keep only those PNGs there, since the content CLI lists the folder as the files a Word may name.
+The Illustrations a Word names in its `illustration` field (ADR 0055) live in the Media Store, not here (ADR 0099): square PNGs of at most 150 000 bytes, put there once by `import-media` from commit `3c4770c8f` (`docs/deploy.md`). The Narrator Voices' Recordings live there too.
 
-The 15 Illustrations are **placeholders**: simple vector drawings in `illustration-sources/`, one SVG per PNG of the same name, exported at 512×512 by a headless browser. Each sits on its own light tile, so the one Illustration reads on light and dark cards alike. `illustration-sources/contact-sheet.png` shows all 15 on the light and the dark background. Final art replaces them before 1.0.
+The 15 Illustrations are **placeholders**: simple vector drawings in `illustration-sources/`, one SVG per Illustration, exported to PNG at 512×512 by a headless browser. Each sits on its own light tile, so the one Illustration reads on light and dark cards alike. `illustration-sources/contact-sheet.png` shows all 15 on the light and the dark background. Final art replaces them before 1.0.

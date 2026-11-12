@@ -268,6 +268,19 @@ const writeErrors = {
 
 const recordPath = '/admin/content/{editionId}/records/{kind}';
 
+/** A Word's live Illustration, as the content editor shows it (ADR 0099). */
+const LiveIllustrationSchema = z.object({
+  hash: z.string(),
+  /** The file in the Media Store. */
+  url: z.url(),
+});
+
+/**
+ * An Illustration file in base64: room for a file somewhat over the 150 KB
+ * limit, so the backend refuses it by the rule's name (ADR 0055).
+ */
+const IllustrationFileSchema = z.base64().max(1_000_000);
+
 /** A record as the content editor lists it. */
 export const ContentRecordSummarySchema = z.object({
   id: z.string(),
@@ -331,6 +344,11 @@ const ContentReportSchema = z.object({
   idioms: z.number().int(),
   retiredIdioms: z.number().int(),
   idiomsPerType: z.array(z.object({ idiomType: IdiomTypeSchema, idioms: z.number().int() })),
+  /** The media gaps (ADR 0099): live Words without a live Recording per Narrator Voice, and without an Illustration. */
+  media: z.object({
+    withoutRecording: z.array(z.object({ narratorVoice: z.string(), words: z.number().int() })),
+    withoutIllustration: z.number().int(),
+  }),
 });
 
 /**
@@ -367,6 +385,25 @@ const contentWriteContract = {
       }),
     )
     .output(WrittenSchema),
+  uploadIllustration: contentProcedure
+    .route({
+      method: 'PUT',
+      path: '/admin/content/{editionId}/records/word/{id}/illustration',
+      summary: "Upload a Word's Illustration: checked, kept in the Media Store and published",
+      description:
+        'A PNG, square, at most 150 KB (ADR 0055). It becomes the live Illustration, retires the one it replaces and raises the content version (ADR 0099).',
+      tags: ['admin'],
+    })
+    .errors({ REFUSED: writeErrors.REFUSED })
+    .input(
+      z.strictObject({ editionId: EditionIdSchema, id: z.string(), png: IllustrationFileSchema }),
+    )
+    .output(
+      z.object({
+        contentVersion: z.number().int().positive(),
+        illustration: LiveIllustrationSchema,
+      }),
+    ),
   edit: contentProcedure
     .route({
       method: 'PUT',
@@ -442,6 +479,8 @@ const contentWriteContract = {
         retired: z.boolean(),
         /** Words only: whether the Word's Recordings no longer read its text (ADR 0083). */
         needsNewRecording: z.boolean().optional(),
+        /** Words only: the live Illustration, when the Word has one. */
+        illustration: LiveIllustrationSchema.optional(),
       }),
     ),
   records: contentProcedure

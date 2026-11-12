@@ -16,9 +16,14 @@ import {
   type Schedule,
   type UserSettings,
 } from '@slovo/core';
-import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import {
+  createFakeBackend,
+  createMemoryContentPort,
+  createMemoryContentStore,
+  seedUserState,
+} from '@slovo/core/testing';
 
-import type { FeatureSwitch } from '@slovo/contracts';
+import type { FeatureSwitch, IllustrationRow, RecordingRow } from '@slovo/contracts';
 
 import { edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
@@ -172,6 +177,21 @@ const testReader: ReaderFacts = {
 
 const clock: Clock = { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
+/** A test Language Pack with no content and the live media rows given. */
+export function packWithMedia(
+  media: { recordings?: readonly RecordingRow[]; illustrations?: readonly IllustrationRow[] } = {},
+): Shell['languagePack'] {
+  return opened({
+    reader: {
+      ...createMemoryContentPort(),
+      metadata: () => Promise.reject(new Error('A test pack has no metadata')),
+    },
+    contentVersion: () => 1,
+    contentUpdate: undefined,
+    store: createMemoryContentStore({ media }),
+  });
+}
+
 /**
  * A Shell for a test, so a route renders under `ShellProvider` over the Core
  * itself: each opening the test gives, such as `opened(composition)`, and the
@@ -200,16 +220,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
         }),
       { onError },
     );
-  const languagePack =
-    overrides.languagePack ??
-    opened({
-      reader: {
-        ...createMemoryContentPort(),
-        metadata: () => Promise.reject(new Error('A test pack has no metadata')),
-      },
-      contentVersion: () => 1,
-      contentUpdate: undefined,
-    });
+  const languagePack = overrides.languagePack ?? packWithMedia();
   return {
     userState,
     settings: openOnce(

@@ -12,12 +12,12 @@ declare module 'slovo-editions' {
     readonly tokens: unknown;
     /** Undefined when the Edition supplies none: the Core's neutral Decor. */
     readonly decor: unknown;
-    /** The asset ids of the Illustrations the Edition brings, by file name. */
-    readonly illustrations: Readonly<Record<string, number>>;
     /** The asset ids of the Interface sounds the Edition brings, by sound. */
     readonly sounds: Readonly<Partial<Record<'shout' | 'right' | 'wrong' | 'tap', number>>>;
-    /** The asset ids of the Recordings the Edition brings, by Narrator Voice id and then Word id. */
-    readonly recordings: Readonly<Record<string, Readonly<Record<string, number>>>>;
+    /** The asset ids of the Starter Media the Edition bundles, by Media Store path (ADR 0099). */
+    readonly starterMedia: Readonly<Record<string, number>>;
+    /** The ids of the Starter Words, whose media the Starter Media holds; the first Cycle opens with them. */
+    readonly starterWords: readonly string[];
     /** The asset id of the compiled Language Pack. */
     readonly languagePack: number;
   }

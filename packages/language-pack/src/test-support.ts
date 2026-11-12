@@ -37,6 +37,9 @@ export function ukrainianSnapshot(): ContentSnapshot {
     synonymRows: [...content.synonymRows],
     curatedCollections: [...(content.curatedCollections ?? [])],
     crosswordDays: [...(content.crosswordDays ?? [])],
+    mediaBase: 'https://media.slovo.test',
+    recordings: [],
+    illustrations: [],
     needsNewRecording: [],
   };
 }

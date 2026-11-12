@@ -12,8 +12,7 @@ import { categoryArtErrors } from './category-art';
 import type { ContentManifest } from './content-manifest';
 import type { ContentTargets } from './content-targets';
 import { editionFiles, EditionFolderError, type AuthoredContent } from './edition-folder';
-import { illustrationErrors } from './illustrations';
-import { missingRecordings, recordingErrors, type MissingRecordings } from './recordings';
+import { sampleWordErrors } from './recordings';
 import { missingEntryErrors } from './id-registry';
 import type { PackContent } from './pack-layout';
 import { editionFontErrors } from './edition-fonts';
@@ -29,8 +28,6 @@ export interface EditionSource {
   readonly synonymRows: readonly Authored<SynonymRow>[];
   readonly tips: readonly Authored<Tip>[];
   readonly curatedCollections: readonly Authored<CuratedCollection>[];
-  /** How many Words each Narrator Voice has no Recording of; none when the config can't be read. */
-  readonly missingRecordings: readonly MissingRecordings[];
   /** The known ids: none when the registry is optional and missing, unset when it can't be read. */
   readonly registry?: readonly string[];
   /** Set when there are no errors. */
@@ -45,8 +42,6 @@ export interface EditionSource {
 /** The part of the content a snapshot gives the build, everything else coming from the folder. */
 export interface SnapshotSource {
   readonly errors: readonly BuildError[];
-  /** How many Words each Narrator Voice has no Recording of; none when the config can't be read. */
-  readonly missingRecordings: readonly MissingRecordings[];
   /** Set when there are no errors. */
   readonly valid?: {
     /** The content at the snapshot's content version. */
@@ -98,12 +93,12 @@ export function readEditionWithSnapshot(
   },
 ): SnapshotSource {
   const { source, checked } = readWith(editionDir, today, { from: 'snapshot', snapshot });
-  const { errors, missingRecordings } = source;
+  const { errors } = source;
   if (source.editionId !== undefined && source.editionId !== snapshot.editionId) {
     const message = `The snapshot is of Edition ${snapshot.editionId}, not ${source.editionId}`;
-    return { errors: [...errors, { file: SNAPSHOT_FILE, message }], missingRecordings };
+    return { errors: [...errors, { file: SNAPSHOT_FILE, message }] };
   }
-  if (checked === undefined) return { errors, missingRecordings };
+  if (checked === undefined) return { errors };
   const content: PackContent = {
     ...checked.content,
     contentVersion: snapshot.contentVersion,
@@ -111,7 +106,7 @@ export function readEditionWithSnapshot(
       ? {}
       : { needsNewRecording: snapshot.needsNewRecording }),
   };
-  return { errors, missingRecordings, valid: { content, targets: checked.targets } };
+  return { errors, valid: { content, targets: checked.targets } };
 }
 
 /** What the errors of a snapshot name as their file. */
@@ -209,12 +204,9 @@ function readWith(
       ),
       ...editionFontErrors(config, tokens, folder.fonts()),
       ...categoryArtErrors(config, decor),
-      ...recordingErrors(config, isWord, folder.recordings(), (voice, name) =>
-        folder.recording(voice, name),
-      ),
+      ...sampleWordErrors(config, isWord),
     );
   }
-  errors.push(...illustrationErrors(words, (name) => folder.illustration(name)));
   if (registry !== undefined) {
     errors.push(
       ...missingEntryErrors(
@@ -233,8 +225,6 @@ function readWith(
     synonymRows,
     tips,
     curatedCollections,
-    missingRecordings:
-      config === undefined ? [] : missingRecordings(config, words, folder.recordings()),
     ...(config === undefined ? {} : { editionId: config.id }),
     ...(registry === undefined ? {} : { registry }),
   };

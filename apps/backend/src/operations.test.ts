@@ -318,7 +318,30 @@ describe('the server', { timeout: 30_000 }, () => {
     }
   });
 
-  it('starts in production with its SMTP settings and sender', async () => {
+  it('refuses to start in production without its Media Store, naming each variable', async () => {
+    const server = runServer({ ...VALID_ENV, NODE_ENV: 'production' });
+
+    expect(await server.exited).toBe(1);
+    for (const name of [
+      'MEDIA_BASE',
+      'R2_ACCOUNT_ID',
+      'R2_BUCKET',
+      'R2_ACCESS_KEY_ID',
+      'R2_SECRET_ACCESS_KEY',
+    ]) {
+      expect(server.output().stderr).toContain(`${name}: is not set`);
+    }
+  });
+
+  it('refuses to start with only some of the R2 variables, naming the rest', async () => {
+    const server = runServer({ ...VALID_ENV, R2_BUCKET: 'media' });
+
+    expect(await server.exited).toBe(1);
+    expect(server.output().stderr).toContain('R2_ACCOUNT_ID: is not set');
+    expect(server.output().stderr).not.toContain('R2_BUCKET');
+  });
+
+  it('starts in production with its SMTP settings, sender and Media Store', async () => {
     const server = runServer({
       ...VALID_ENV,
       DATABASE_URL: testDatabaseUrl(),
@@ -330,6 +353,11 @@ describe('the server', { timeout: 30_000 }, () => {
       SMTP_PASSWORD: 'a-password',
       SMTP_TLS: 'true',
       MAIL_FROM: 'no-reply@example.com',
+      MEDIA_BASE: 'https://media.example.com',
+      R2_ACCOUNT_ID: 'account',
+      R2_BUCKET: 'media',
+      R2_ACCESS_KEY_ID: 'key',
+      R2_SECRET_ACCESS_KEY: 'secret',
     });
 
     await server.listening;

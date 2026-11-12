@@ -259,6 +259,28 @@ CREATE TABLE sources (
   archived_url TEXT,
   PRIMARY KEY (entry_id, position)
 ) WITHOUT ROWID;
+
+-- The live Recordings of the Words, as the snapshot and the Patches bring
+-- them (ADR 0099): a retired row leaves the table. The file in the Media Store
+-- is named by the Word id and the hash; the metadata key media_base holds its
+-- URL root.
+CREATE TABLE media_recordings (
+  word_id TEXT NOT NULL,
+  narrator_voice TEXT NOT NULL,
+  recording_kind TEXT NOT NULL,
+  hash TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  duration_ms INTEGER NOT NULL,
+  PRIMARY KEY (word_id, narrator_voice, recording_kind, hash)
+) WITHOUT ROWID;
+
+-- The live Illustrations of the Words, as media_recordings holds Recordings.
+CREATE TABLE media_illustrations (
+  word_id TEXT NOT NULL,
+  hash TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  PRIMARY KEY (word_id, hash)
+) WITHOUT ROWID;
 `;
 
 /**
@@ -291,9 +313,11 @@ CREATE TABLE sources (
  * `curated_collection_entries`) of the Dashboard's rail (spec #1564, ADR 0076);
  * format 11 adds the columns `description` and `tone` to both Category tables
  * (spec #1604), and later the Word's `needs_new_recording` column, which no
- * app reads, so the format stays (spec #1708).
+ * app reads, so the format stays (spec #1708); format 12 adds the media
+ * tables `media_recordings` and `media_illustrations` and the metadata key
+ * `media_base` (ADR 0099).
  */
-export const PACK_FORMAT = 11;
+export const PACK_FORMAT = 12;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how

@@ -5,6 +5,7 @@
  * time, frozen when the test starts, which both better-auth and the backend's
  * `Clock` read and only `passTime` moves.
  */
+import { memoryMediaStore } from './media/media-store';
 import { randomInt, randomUUID } from 'node:crypto';
 import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -21,7 +22,6 @@ import {
   EDITIONS_DIR,
   editionFiles,
   FONTS_DIR,
-  ILLUSTRATIONS_DIR,
   openAppConfig,
   openEdition,
   REPO_DIR,
@@ -62,6 +62,7 @@ import { createApp } from './app';
 import { deleteCollectionLink } from './collection-links/collection-link-delete';
 import { createDatabase, type Database } from './database/database';
 import { migrateDatabase } from './database/migrate';
+import { createMediaRows } from './content/media-rows';
 import { createContentStore } from './content/content-store';
 import { accounts, sessions, signInMethods } from './database/schema';
 import { readEditions } from './edition/edition-folders';
@@ -139,7 +140,11 @@ export async function createTestDatabase(
  * and each database is a copy of it: a test pays a copy, not an import of the
  * whole Edition. The template is dropped after the file.
  */
-export function importedDatabases(editionId: string, editionDir: string) {
+export function importedDatabases(
+  editionId: string,
+  editionDir: string,
+  prepare: (database: Database) => Promise<unknown> = () => Promise.resolve(),
+) {
   let template: Promise<TestDatabase> | undefined;
   afterAll(async () => {
     await template?.then(
@@ -153,6 +158,7 @@ export function importedDatabases(editionId: string, editionDir: string) {
     try {
       const result = await testApp({ database }).importContent(editionId, editionDir);
       if (!result.ok) throw new Error(`the ${editionId} Edition did not import`);
+      await prepare(database);
     } finally {
       // A template takes no copy while a connection to it is open.
       await database.close();
@@ -455,10 +461,6 @@ export function testEditions(
     const { dir: editionDir } = editionFiles(join(dir, id));
     if (!withContent.has(id)) {
       cpSync(join(ukrainian.dir, 'content'), join(editionDir, 'content'), { recursive: true });
-      // The Words name these, so the content is recorded only with them.
-      cpSync(join(ukrainian.dir, ILLUSTRATIONS_DIR), join(editionDir, ILLUSTRATIONS_DIR), {
-        recursive: true,
-      });
       // The Edition check reads the font of the Word of the Day the config names.
       cpSync(join(ukrainian.dir, FONTS_DIR), join(editionDir, FONTS_DIR), { recursive: true });
       // The content checksum takes in the Edition, so the copy is recorded under its own id.
@@ -661,6 +663,7 @@ export function testApp({
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
+  const mediaStore = memoryMediaStore();
   const mailer = createFakeMailer();
   const alerts = createFakeAlerts();
   const posthog = createFakePostHog();
@@ -689,6 +692,8 @@ export function testApp({
     eas,
     sentry,
     ciToken: TEST_CI_TOKEN,
+    mediaBase: TEST_MEDIA_BASE,
+    mediaStore,
   });
   const ip = newIp();
   // The one way a request reaches the app.
@@ -730,6 +735,8 @@ export function testApp({
   return {
     /** The app itself, for a test that serves it over HTTP. */
     app,
+    /** The fake Media Store the content editor keeps Illustrations in. */
+    mediaStore,
     /** The IP address the requests come from unless the test names another. */
     ip,
     /** Every email the backend sent. */
@@ -775,6 +782,8 @@ export function testApp({
         [],
         TEST_WRITE,
       ),
+    /** The Edition's media rows, written as the Recording generation and the Illustration upload write them. */
+    media: createMediaRows({ database, clock: systemClock }),
     /** Imports the Edition folder into the content tables, as the import command does. */
     importContent: (editionId: string, editionDir: string, options?: { override?: boolean }) =>
       createContentStore({
@@ -794,6 +803,9 @@ export function testApp({
 }
 
 /** The token CI pushes its history with, in tests. */
+/** The Media Store's URL root the test backend names. */
+export const TEST_MEDIA_BASE = 'https://media.slovo.test';
+
 export const TEST_CI_TOKEN = 'a-test-ci-history-token-of-32-characters-at-least';
 
 /** A Sentry that answers the numbers a test sets, and counts the reads it was asked. */
@@ -878,4 +890,14 @@ export async function signedInAdmin(
 ) {
   await createAdminStore(backend.database).addAdminUser({ email, role, createdAt: new Date() });
   return signInAdmin(backend, email);
+}
+
+/** A square PNG header of the size, padded to the length in bytes; the seed makes its content its own. */
+export function png(width: number, height: number, length = 2_000, seed = 0): Buffer {
+  const bytes = Buffer.alloc(length, seed);
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]).copy(bytes);
+  bytes.write('IHDR', 12, 'latin1');
+  bytes.writeUInt32BE(width, 16);
+  bytes.writeUInt32BE(height, 20);
+  return bytes;
 }

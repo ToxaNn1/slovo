@@ -3,7 +3,9 @@ import type {
   CuratedCollection,
   Entry,
   EntryKind,
+  IllustrationRow,
   PackMetadata,
+  RecordingRow,
   Word,
 } from '@slovo/contracts';
 import type { ApiClient, Patch } from '@slovo/contracts/api';
@@ -292,6 +294,47 @@ export const systemRandom: Random = { next: () => Math.random() };
 export type PackVersion = Readonly<Pick<PackMetadata, 'contentVersion' | 'packFormat'>>;
 
 /**
+ * The live media of one Word, as the pack holds it after the Patches applied
+ * (ADR 0099): each row names a file in the Media Store by the Word id and the
+ * hash. A retired row is no longer among them.
+ */
+export interface WordMedia {
+  /** The URL root of the Edition's Media Store, as the pack holds it. */
+  readonly mediaBase: string;
+  /** The Word's text or stress changed and its Recordings no longer read it (ADR 0090). */
+  readonly needsNewRecording: boolean;
+  readonly recordings: readonly Omit<RecordingRow, 'retired'>[];
+  readonly illustrations: readonly Omit<IllustrationRow, 'retired'>[];
+}
+
+/** A file the media cache holds: its path in the Media Store, its size and when it was last played or shown. */
+export interface CachedMediaFile {
+  readonly path: string;
+  readonly size: number;
+  readonly usedAt: Date;
+}
+
+/**
+ * The device's media cache (ADR 0099): files keyed by their path in the Media
+ * Store, each written whole or not at all.
+ */
+export interface MediaCache {
+  /** The local URI of a cached file, or undefined. */
+  get(path: string): Promise<string | undefined>;
+  put(path: string, bytes: Uint8Array, usedAt: Date): Promise<void>;
+  /** Marks a cached file played or shown at the time given. */
+  touch(path: string, usedAt: Date): Promise<void>;
+  evict(path: string): Promise<void>;
+  /** Every cached file, with its size. */
+  files(): Promise<readonly CachedMediaFile[]>;
+}
+
+/** Downloads a file of the Media Store whole; rejects when the download fails. */
+export interface MediaFetcher {
+  download(url: string): Promise<Uint8Array>;
+}
+
+/**
  * The device's writable Language Pack as the content update changes it: its
  * content version and the ETag of the Patch applied last, and the one way to
  * change it, a Patch applied in one transaction (ADR 0090).
@@ -307,6 +350,8 @@ export interface ContentStore {
    * rejection changes nothing.
    */
   apply(patch: Patch, etag: string): Promise<void>;
+  /** The live Recording and Illustration rows of a Word, none for an id the pack has no media of. */
+  mediaOf(wordId: string): Promise<WordMedia>;
 }
 
 /**

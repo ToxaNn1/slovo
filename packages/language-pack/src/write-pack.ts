@@ -4,6 +4,7 @@ import { DatabaseSync, type StatementSync } from 'node:sqlite';
 
 import type { PackMetadata } from '@slovo/contracts';
 
+import { mediaStatements } from './media-rows';
 import { metadataRows, PACK_SCHEMA, type PackContent } from './pack-layout';
 import {
   correctionRows,
@@ -22,7 +23,13 @@ import {
  * build never leaves a half-written pack behind. Rows go in sorted order, so
  * the same content yields the same file.
  */
-export function writePack(outFile: string, content: PackContent, metadata: PackMetadata): void {
+export function writePack(
+  outFile: string,
+  content: PackContent,
+  metadata: PackMetadata,
+  /** The media rows of the backend's snapshot, when the pack is built from one (ADR 0099). */
+  media?: Parameters<typeof mediaStatements>[0],
+): void {
   mkdirSync(dirname(outFile), { recursive: true });
   const tempFile = `${outFile}.tmp`;
   rmSync(tempFile, { force: true });
@@ -74,6 +81,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     for (const collection of content.curatedCollections ?? []) {
       curatedCollectionRows(collection).forEach(run);
     }
+    if (media !== undefined) mediaStatements(media).forEach(run);
 
     db.exec('COMMIT');
   } catch (error) {

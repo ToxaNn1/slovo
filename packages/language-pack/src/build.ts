@@ -6,7 +6,7 @@ import { missedTargets, type MissedTarget } from './content-targets';
 import { unregisteredEntries } from './id-registry';
 import { PACK_FORMAT, type PackContent } from './pack-layout';
 import { readEdition, readEditionWithSnapshot } from './read-edition';
-import type { MissingRecordings } from './recordings';
+import { starterMediaOf, type StarterMediaList } from './starter-media';
 import { contentReport, type ContentReport } from './report';
 import { fetchSnapshot } from './snapshot-source';
 import { checksumOf } from '@slovo/content-rules';
@@ -22,18 +22,19 @@ export type BuildResult =
       readonly report: ContentReport;
       /** The content targets the Edition declares and the content misses. */
       readonly missedTargets: readonly MissedTarget[];
-      /** How many Words each Narrator Voice has no Recording of (ADR 0083). */
-      readonly missingRecordings: readonly MissingRecordings[];
     }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
+
+/** A build from a snapshot, which also gives the Starter Media to bundle (ADR 0099). */
+export type SnapshotBuildResult =
+  | (Extract<BuildResult, { ok: true }> & { readonly starterMedia: StarterMediaList })
+  | Extract<BuildResult, { ok: false }>;
 
 export type CheckResult =
   | {
       readonly ok: true;
       /** The content targets the Edition declares and the content misses. */
       readonly missedTargets: readonly MissedTarget[];
-      /** For each Narrator Voice, how many Words it has no Recording of (ADR 0083). */
-      readonly missingRecordings: readonly MissingRecordings[];
     }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
 
@@ -52,8 +53,7 @@ export function checkLanguagePack({
 }): CheckResult {
   const checked = checkEdition(editionDir, today);
   if (!checked.ok) return checked;
-  const { missedTargets, missingRecordings } = checked;
-  return { ok: true, missedTargets, missingRecordings };
+  return { ok: true, missedTargets: checked.missedTargets };
 }
 
 /**
@@ -76,9 +76,9 @@ export function buildLanguagePack({
 }): BuildResult {
   const checked = checkEdition(editionDir, today);
   if (!checked.ok) return checked;
-  const { content, metadata, report, missedTargets, missingRecordings } = checked;
+  const { content, metadata, report, missedTargets } = checked;
   writePack(outFile, content, metadata);
-  return { ok: true, metadata, report, missedTargets, missingRecordings };
+  return { ok: true, metadata, report, missedTargets };
 }
 
 /**
@@ -100,7 +100,7 @@ export function buildFromSnapshot({
   outFile: string;
   /** The day the public domain is judged on (ADR 0045). */
   today?: Date;
-}): BuildResult {
+}): SnapshotBuildResult {
   const source = readEditionWithSnapshot(editionDir, snapshot, { today });
   if (source.errors.length > 0 || source.valid === undefined) {
     return { ok: false, errors: source.errors };
@@ -112,14 +112,14 @@ export function buildFromSnapshot({
     contentChecksum: checksumOf(content),
     packFormat: PACK_FORMAT,
   };
-  writePack(outFile, content, metadata);
+  writePack(outFile, content, metadata, snapshot);
   const report = contentReport(content);
   return {
     ok: true,
     metadata,
     report,
     missedTargets: missedTargets(report, targets),
-    missingRecordings: source.missingRecordings,
+    starterMedia: starterMediaOf(editionFiles(editionDir).read('config'), snapshot),
   };
 }
 
@@ -141,7 +141,7 @@ export async function buildFromBackend({
   /** The day the public domain is judged on (ADR 0045). */
   today?: Date;
   fetch?: ApiFetch;
-}): Promise<BuildResult> {
+}): Promise<SnapshotBuildResult> {
   const { id: editionId } = editionFiles(editionDir).read('config');
   const snapshot = await fetchSnapshot({
     apiUrl,
@@ -161,7 +161,6 @@ function checkEdition(
       metadata: PackMetadata;
       report: ContentReport;
       missedTargets: MissedTarget[];
-      missingRecordings: readonly MissingRecordings[];
     }
   | { ok: false; errors: readonly BuildError[] } {
   const source = readEdition(editionDir, { registryRequired: true, today });
@@ -206,6 +205,5 @@ function checkEdition(
     metadata,
     report,
     missedTargets: missedTargets(report, targets),
-    missingRecordings: source.missingRecordings,
   };
 }
