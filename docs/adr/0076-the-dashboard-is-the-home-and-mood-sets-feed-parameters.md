@@ -2,6 +2,8 @@
 
 **Amended by ADR 0081.** The Dashboard rail headers open the Category screens.
 
+**Amended by ADR 0105.** Five Moods, no «Добірки» on the UA Dashboard, the hero's number, the revealed card, the reveal motion and the daily splash behind `dailySplash`.
+
 Spec #1564 (owner decisions of 2026-11-04). The app opened straight into the Feed, which left no place to see the day at a glance, and Mood (ADR 0054) was a roulette over hand-tagged Words with no memory and no effect on the Feed. The «Рупор» boards draw the home as a Dashboard.
 
 **The Dashboard is the home.** The route behind the «Стрічка» tab renders the Dashboard: the Word of the Day hero, the Mood check-in, «Попередні слова», the Curated Collections rail and the Correction Types rail. The Feed is opened from it. With `dashboard` off the Feed is the home as before and the «Стрічка» tab opens it. Onboarding still ends on the home route (amends ADR 0067: «the Feed» at its end becomes the home), and every «open the home» path (notification, widget, App Intent, Collection Link) lands on the home route; the «Слово дня» App Intent still lands on the Word of the Day card in the Feed, opened over the Dashboard.

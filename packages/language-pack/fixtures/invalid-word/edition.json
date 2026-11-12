@@ -121,12 +121,17 @@
     "mood": "on",
     "curatedCollections": "on",
     "swipeMarks": "on",
+    "gesturesHintDemo": "on",
     "wordTabs": "on",
     "searchButton": "on",
     "dashboardWordmark": "on",
+    "dailySplash": "on",
+    "heroSparks": "on",
     "feedTab": "on",
     "categoryScreens": "on",
     "correctionCategoryScreens": "on",
+    "categoryFeed": "on",
+    "categoryKnownFirst": "on",
     "quietCategories": "on",
     "collectionBoardStyle": "on",
     "previousWords": "on",
@@ -212,9 +217,15 @@
       "name": "радісний",
       "emoji": "😊",
       "reply": "Лови світле слово!"
+    },
+    {
+      "id": "sad",
+      "name": "сумний",
+      "emoji": "😢",
+      "reply": "Слово зігріє."
     }
   ],
-  "dashboardMoods": ["energetic", "thoughtful", "calm", "joyful"],
+  "dashboardMoods": ["energetic", "thoughtful", "calm", "joyful", "sad"],
   "narratorVoices": {
     "default": "anna",
     "voices": [

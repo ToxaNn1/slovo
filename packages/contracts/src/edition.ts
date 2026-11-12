@@ -464,18 +464,28 @@ export const FeatureSwitchesSchema = z.strictObject({
   curatedCollections: FeatureSwitchStateSchema,
   /** Swipe marks: the reader swipes an Entry card right for Known and left for Unknown, with an undo; off, the card's mark buttons stay. Off while `knowledge` is. */
   swipeMarks: FeatureSwitchStateSchema,
+  /** The gestures hint's demo: while «ГОРТАЙ ПАЛЬЦЕМ» is open, the Feed's card plays the swipes right, left and up in a loop, its edge labels sliding in, with a finger over it and each row of the sheet lit in turn (ADR 0112); off, the sheet stands still. Off while `swipeMarks` is. */
+  gesturesHintDemo: FeatureSwitchStateSchema,
   /** Word tabs: every Entry card in a fixed-height frame (ADR 0091), the Word of the Day's once it is open, with tabs under its head: a Word's «Суть», «Приклад», «Зв’язки» and «Історія», a Correction's «Як краще», «Чому» and «Приклади», an Idiom's «Суть», «Звідки» and «Приклад», a Tip's «Суть» and «Приклад»; a Synonym Row's in the same frame. Content too tall for the frame shrinks a font size at a time, then is clamped under «Детальніше», which opens it whole. The Word of the Day card is the red card while Self-check keeps it closed; the Feed's header draws no XP bar. Off, the cards are one column, the Word's with «Детальніше». */
   wordTabs: FeatureSwitchStateSchema,
   /** The Search button of the Feed's header, which opens the Search screen; Search itself stays under `search`. Off while `search` is. */
   searchButton: FeatureSwitchStateSchema,
   /** The Feed header's wordmark as a button that opens the Dashboard (ADR 0079). Off while `dashboard` is. */
   dashboardWordmark: FeatureSwitchStateSchema,
+  /** The daily splash: a tap on the Dashboard's logo plays the short splash cut, then the Dashboard again (ADR 0105). Off while `dashboard` is. */
+  dailySplash: FeatureSwitchStateSchema,
+  /** The hero's sparks: the Mascot in the Dashboard's hero throws sparks from its megaphone, always, not as Decor (ADR 0109). Off while `dashboard` is. */
+  heroSparks: FeatureSwitchStateSchema,
   /** The «Стрічка» tab opens the Feed, not the Dashboard, which stays the home at launch (ADR 0093). Off while `dashboard` is. */
   feedTab: FeatureSwitchStateSchema,
   /** Category screens: the Dashboard's «Категорії» rail of Categories of Words, their grid and each one's screen (ADR 0081). Off while `dashboard` is. */
   categoryScreens: FeatureSwitchStateSchema,
   /** The grid of the Categories of Corrections behind the «Виправлення» rail header and each one's screen (ADR 0081); off, the header is a plain title. Off while `dashboard` or `corrections` is. */
   correctionCategoryScreens: FeatureSwitchStateSchema,
+  /** The Category's Feed: a tap on a Word of a Category's screen opens a Feed of that Category's Words alone, from the tapped one in Language Pack order and round again after the last (ADR 0110); off, the tap opens the Word's card as Search does. Off while `categoryScreens` is. */
+  categoryFeed: FeatureSwitchStateSchema,
+  /** Known first on a Category's screen: its Known Entries, stamped «ЗНАЮ», come before the rest, each group in Language Pack order (ADR 0111); off, all in Language Pack order as the board draws. Off while `categoryScreens` is. */
+  categoryKnownFirst: FeatureSwitchStateSchema,
   /** Quiet Categories: the quiet variant of a Category screen and the muted tile for a Category whose tone is `quiet` (ADR 0081); off, a quiet Category draws loud. Off while `categoryScreens` is. */
   quietCategories: FeatureSwitchStateSchema,
   /** The board style of the Collections: their list as the Category grid and a Collection's screen as a Category screen (ADR 0082); off, today's list and screen. */
@@ -958,16 +968,16 @@ export const EditionConfigSchema = z
     originLanguages: z.array(OriginLanguageSchema),
     /**
      * The moods, in their order (ADR 0054): the Edition owns the list, so the
-     * Core stays language-agnostic. It lists at least the four `dashboardMoods` name.
+     * Core stays language-agnostic. It lists at least the five `dashboardMoods` name.
      */
     moods: z.array(MoodSchema),
     /**
-     * The four moods the Dashboard's Mood check-in offers, by id among
-     * `moods`, in display order (ADR 0076): exactly four.
+     * The five moods the Dashboard's Mood check-in offers, by id among
+     * `moods`, in display order (ADR 0076, ADR 0105): exactly five.
      */
     dashboardMoods: z
       .array(KebabCaseIdSchema)
-      .length(4, { message: 'The Dashboard lists exactly four moods' }),
+      .length(5, { message: 'The Dashboard lists exactly five moods' }),
     /**
      * The letters Search reads as another (ADR 0054), each lower-case letter
      * to the one it reads as, such as ґ to г: the Edition owns them, so the

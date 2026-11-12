@@ -524,8 +524,6 @@ export const typeRoles = {
   panelLetter: role('word', '900', 420, 420),
   /** The Dashboard's giant «?» behind the hero while it is closed. */
   dashboardQuestion: role('word', '900', 560, 560),
-  /** The Dashboard's giant first letter behind the open hero. */
-  dashboardLetter: role('word', '900', 520, 520),
   /** The Dashboard hero's kicker, such as «СЛОВО ДНЯ · 2.11». */
   dashboardKicker: role('word', '800', 12, 12, 2, 'uppercase'),
   /** The Dashboard hero's shout, «ЛОВИ СЛОВО!», on two lines. */
@@ -534,15 +532,15 @@ export const typeRoles = {
   dashboardLemma: role('word', '900', 50, 50, -1.5, 'uppercase'),
   /** The line under the shout or the Lemma on the Dashboard hero. */
   dashboardSubtitle: role('ui', '600', 15, 20.25),
-  /** The Stress and part of speech under the Lemma on the Dashboard hero. */
+  /** The Stress and part of speech on the open Dashboard hero's card. */
   dashboardWordLine: role('ui', '600', 15, 15),
-  /** «РІДКІСТЬ 3/5» beside the rarity bars on the Dashboard hero. */
-  dashboardRarity: role('word', '700', 12, 12, 1, 'uppercase'),
-  /** The short Definition on the open Dashboard hero. */
-  dashboardDefinition: role('ui', '600', 16, 21.6),
-  /** The closed Dashboard hero's ink button, «РОЗКРИТИ». */
+  /** «РІДКІСТЬ 3 З 5» at the foot of the open Dashboard hero's card. */
+  dashboardRarity: role('word', '700', 11, 11, 1.5, 'uppercase'),
+  /** The short Definition on the open Dashboard hero's card. */
+  dashboardDefinition: role('ui', '600', 18, 25.2),
+  /** The closed Dashboard hero's ink button, «РОЗКРИЙ СЛОВО». */
   dashboardButton: role('word', '900', 16, 16, 0.5, 'uppercase'),
-  /** The open Dashboard hero's «ДО КАРТКИ →», a size under «РОЗКРИТИ». */
+  /** The open Dashboard hero's «ЩЕ ПРО СЛОВО →», a size under «РОЗКРИЙ СЛОВО». */
   dashboardToCardButton: role('word', '900', 15, 15, 0.5, 'uppercase'),
   /** A block's title on the Dashboard, such as «Як настрій?». */
   blockTitle: role('word', '800', 15, 15),
@@ -584,7 +582,7 @@ export const typeRoles = {
   railLabel: role('word', '700', 10, 10, 1.5, 'uppercase'),
   /** The struck non-standard form on a Correction's card. */
   railStruck: role('ui', '600', 18, 23.4),
-  /** The ink button on a Correction's card, «ЯК ПРАВИЛЬНО?». */
+  /** The ink button on a Correction's card, «ВІДПОВІДЬ». */
   railButton: role('word', '900', 13, 13, 0, 'uppercase'),
   /** The standard form in a Correction card's revealed block. */
   railStandard: role('word', '900', 19, 22.8, -0.3),
@@ -871,6 +869,13 @@ export const wedges = {
     [1, 0.9],
     [0, 1],
   ],
+  /** A spark from the Mascot's megaphone in the Dashboard's hero: a diamond whose top and bottom stand left of centre (the board's `slLeaf`). */
+  spark: [
+    [0, 0.5],
+    [0.45, 0],
+    [1, 0.5],
+    [0.45, 1],
+  ],
   /** The ink plate under the Dashboard's logo: a left edge shorter than the right. */
   logoPlate: [
     [0, 0.16],
@@ -985,7 +990,8 @@ export interface MascotFrame {
 /**
  * The Mascot's motion in each state, from the design's keyframes (`rpBob`,
  * `rpBreath`, `rpShout`, `rpHop`, `rpPop`, `rpSquish`, `rpSway`), turning
- * about 30% across and 60% down the figure. `loop` repeats, `alternate` goes
+ * about 30% across and 60% down the figure. As in CSS, `easing` eases each
+ * step from one frame to the next, not the whole cycle. `loop` repeats, `alternate` goes
  * back and forth, `once` plays and holds its end. The hat-off state is still,
  * and under Reduce Motion every state is the one fade of `motion.reduceMotion`.
  */
@@ -1066,6 +1072,27 @@ export const mascotRayFlicker = { duration: 450, opacities: [1, 0.625, 0.25, 0.6
  * figure about the Edition's pivot, in degrees, and how far the hat drops.
  */
 export const mascotPose = { sadTurn: 14, hatOffTurn: 26, cringeHatDrop: 4 } as const;
+
+/**
+ * How each mark of a sleeping Mascot drifts (`rpZ` in `Rupor.dc.html`): in a
+ * `duration` cycle it fades in to the middle and out again, each half eased,
+ * while it rises from `from` to `to` in the vector's units; the n-th mark
+ * starts `delays[n]` late and stands still until then, as the design's does.
+ */
+export const mascotSleepMarks = {
+  duration: 2400,
+  delays: [0, 800],
+  easing: ease,
+  from: { x: 0, y: 6 },
+  to: { x: 6, y: -8 },
+} as const;
+
+/**
+ * How far, in the vector's units, the Mascot's parts may reach past its frame
+ * without being cut, as the design's `overflow:visible` lets them: confetti,
+ * a tall holiday hat, a star on a stick.
+ */
+export const mascotBleed = 24;
 
 /** A `#RRGGBB` colour at the given opacity; any other colour as it is. */
 export function withAlpha(color: string, alpha: number): string {

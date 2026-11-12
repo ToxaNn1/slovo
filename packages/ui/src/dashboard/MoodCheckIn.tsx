@@ -13,7 +13,7 @@ import { BlockTitle } from './BlockTitle';
 /**
  * The Mood check-in of the Dashboard (ADR 0076), from the board: «Як
  * настрій?» with «Mood дня» at the end, over a tile for each Mood, two to a
- * row, each with its own red mark. A tap chooses the Mood, or changes it, and
+ * row (an odd last tile keeps half a row), each with its own red mark. A tap chooses the Mood, or changes it, and
  * a toast says its reply; the chosen tile turns red. It needs an
  * `UndoToastProvider` above it.
  */
@@ -48,6 +48,9 @@ export function MoodCheckIn({
                 }}
               />
             ))}
+            {row.length < moodTile.columns ? (
+              <View testID="dashboard-mood-empty" style={styles.cell} />
+            ) : null}
           </View>
         ))}
       </View>
@@ -92,7 +95,7 @@ function MoodTile({
           width={moodTile.mark.width}
           height={moodTile.mark.height}
         />
-        <Text {...voice} style={[typeStyle('moodName', tokens), { color: ink }]}>
+        <Text {...voice} style={[typeStyle('moodName', tokens), styles.name, { color: ink }]}>
           {mood.name}
         </Text>
       </PressedTile>
@@ -120,4 +123,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: moodTile.markGap,
   },
+  // The board's `line-height: 1` centres the glyphs on the line in a browser; on iOS a
+  // line height under the font's own drops them below the mark. The font's own line
+  // height lets the row centre the glyphs on the mark, as the board does.
+  name: { lineHeight: undefined },
 });

@@ -24,7 +24,7 @@ export default function CorrectionTypeRoute() {
 
 /**
  * The type's red hero over its Corrections, each revealed in place with
- * «Як правильно?» (ADR 0076), as the board's «fix» screen draws it.
+ * «Відповідь» (ADR 0076), as the board's «fix» screen draws it.
  */
 function CorrectionTypeScreen({ type }: { type: CorrectionType }) {
   const { title, description, place, rows, reveal } = useCorrectionTypeScreen(type);
@@ -40,10 +40,11 @@ function CorrectionTypeScreen({ type }: { type: CorrectionType }) {
       <FlatList<Row>
         data={rows}
         keyExtractor={({ correction }) => correction.id}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <CorrectionTypeRow
             correction={item.correction}
             workedThrough={item.workedThrough}
+            index={index}
             onReveal={() => {
               reveal(item.correction.id);
             }}

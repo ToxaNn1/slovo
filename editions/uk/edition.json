@@ -123,14 +123,19 @@
     "fastReveal": "on",
     "dashboard": "on",
     "mood": "on",
-    "curatedCollections": "on",
+    "curatedCollections": "off",
     "swipeMarks": "on",
+    "gesturesHintDemo": "on",
     "wordTabs": "on",
     "searchButton": "off",
     "dashboardWordmark": "on",
+    "dailySplash": "on",
+    "heroSparks": "on",
     "feedTab": "on",
     "categoryScreens": "on",
     "correctionCategoryScreens": "on",
+    "categoryFeed": "on",
+    "categoryKnownFirst": "on",
     "quietCategories": "on",
     "collectionBoardStyle": "on",
     "previousWords": "on",
@@ -370,9 +375,9 @@
     },
     {
       "id": "joyful",
-      "name": "Радісний",
+      "name": "Радісно",
       "emoji": "😊",
-      "reply": "Лови світле слово!",
+      "reply": "Радісно? Ловімо слово, яким можна поділитися з другом.",
       "rarityBand": "whole",
       "shifts": {
         "synonymRow": "more",
@@ -381,21 +386,21 @@
     },
     {
       "id": "sad",
-      "name": "Сумний",
+      "name": "Сумно",
       "emoji": "😢",
-      "reply": "Слово зігріє."
+      "reply": "Сумно? Сьогодні — тепліші й лагідніші слова. Тримайся."
     },
     {
       "id": "in-love",
-      "name": "Закоханий",
+      "name": "Закохано",
       "emoji": "😍",
-      "reply": "Ніжні слова поруч."
+      "reply": "Закохано? Гортай — десь тут слово, яке захочеться подарувати."
     },
     {
       "id": "energetic",
       "name": "Бадьоро",
       "emoji": "⚡",
-      "reply": "Бадьоро? Тоді доженемо ціль ще до обіду.",
+      "reply": "Бадьоро? Тоді слова сьогодні рідкісніші, а Виправлень більше.",
       "rarityBand": "upper",
       "shifts": {
         "correction": "more"
@@ -403,9 +408,9 @@
     },
     {
       "id": "calm",
-      "name": "Спокійний",
+      "name": "Спокійно",
       "emoji": "😌",
-      "reply": "Без поспіху.",
+      "reply": "Спокійно? Саме час для довгого слова й ще довшого вислову.",
       "rarityBand": "lower",
       "shifts": {
         "tip": "more",
@@ -423,7 +428,7 @@
       }
     }
   ],
-  "dashboardMoods": ["energetic", "sleepy", "curious", "thoughtful"],
+  "dashboardMoods": ["energetic", "joyful", "sad", "in-love", "calm"],
   "narratorVoices": {
     "default": "oksana",
     "voices": [

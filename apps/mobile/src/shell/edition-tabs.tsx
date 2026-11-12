@@ -177,6 +177,17 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       <Tabs.Screen name="correction-type/[type]" options={offTabs} />
       {/* A Curated Collection's screen, from its card on the Dashboard; no tab leads to it. */}
       <Tabs.Screen name="curated-collection/[collectionId]" options={offTabs} />
+      {/*
+        The Categories (k1, k2) and a Category's screen (k3), from the Dashboard; no tab
+        leads to them. A route left out here would be a hidden tab that sends its focus
+        back to the Dashboard (Expo Router 58), so its tile would open nothing.
+      */}
+      <Tabs.Screen name="categories" options={offTabs} />
+      <Tabs.Screen name="category/[categoryId]" options={offTabs} />
+      {/* A Category's Feed, from a Word of its screen (ADR 0110); no tab leads to it. */}
+      <Tabs.Screen name="category-feed/[categoryId]" options={offTabs} />
+      <Tabs.Screen name="correction-categories" options={offTabs} />
+      <Tabs.Screen name="correction-category/[categoryId]" options={offTabs} />
       {/* Search, from the magnifier of the «Стрічка» header; no tab leads to it. */}
       <Tabs.Screen name="search" options={offTabs} />
     </Tabs>

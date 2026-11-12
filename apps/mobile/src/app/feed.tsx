@@ -11,6 +11,7 @@ import {
   HeaderFade,
   PagerScrollView,
   RevealPace,
+  SwipeDemoStage,
   Placeholder,
   QuickQuestionRound,
   SearchButton,
@@ -21,6 +22,7 @@ import {
   VerticalPager,
   YesterdayCard,
   type VerticalPagerHandle,
+  useGesturesDemo,
 } from '@slovo/ui';
 import type { FeedCard, FeedNoticeCard, WordCardModel } from '@slovo/core';
 import { memo, useCallback, useRef, type ComponentProps } from 'react';
@@ -73,6 +75,8 @@ function FeedScreen() {
   const shown = useShown();
   const { toolsRow, topRow } = useHeaderRows();
   const gesturesHint = useGesturesHint(shown.swipeMarks);
+  // While the hint is open the Feed's own card plays the gestures (board XSwipeV, ADR 0112).
+  const gesturesDemo = useGesturesDemo(gesturesHint.visible && shown.gesturesHintDemo);
   const openScreen = useOpenScreen();
 
   const { cards, onCardChange, openCorrection, answerQuickQuestion } = feed;
@@ -106,17 +110,19 @@ function FeedScreen() {
   return (
     <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Each time the Feed comes back in sight, its first card plays the full reveal again. */}
-      <RevealPace fast={shown.fastReveal} visiting={feed.inSight}>
-        <VerticalPager
-          ref={pager}
-          testID="feed"
-          items={cards}
-          initialIndex={feed.startPosition}
-          renderPage={renderPage}
-          onIndexChange={onIndexChange}
-          turnActionLabels={turnActionLabels}
-        />
-      </RevealPace>
+      <SwipeDemoStage demo={gesturesDemo}>
+        <RevealPace fast={shown.fastReveal} visiting={feed.inSight}>
+          <VerticalPager
+            ref={pager}
+            testID="feed"
+            items={cards}
+            initialIndex={feed.startPosition}
+            renderPage={renderPage}
+            onIndexChange={onIndexChange}
+            turnActionLabels={turnActionLabels}
+          />
+        </RevealPace>
+      </SwipeDemoStage>
       {/*
         The header stays put over the cards, on the screen's background from the top edge, so a
         scrolled card passes under it unseen. Its lower edge fades out inside the top row, so the
@@ -139,10 +145,13 @@ function FeedScreen() {
           today={todayText(feed.today, editionStrings)}
           streak={<StatsPillAndSheet />}
           // The Feed opened from the Dashboard leads back to it by its wordmark (ADR 0079).
-          onOpenDashboard={
+          onLogo={
             shown.dashboardWordmark
-              ? () => {
-                  openScreen('/');
+              ? {
+                  label: editionStrings.dashboard.open,
+                  onPress: () => {
+                    openScreen('/');
+                  },
                 }
               : undefined
           }
@@ -166,6 +175,7 @@ function FeedScreen() {
       <GesturesHintSheet
         visible={gesturesHint.visible}
         texts={editionStrings.knowledge.swipe.hint}
+        demo={gesturesDemo}
         onShown={gesturesHint.markShown}
         onDismiss={gesturesHint.dismiss}
       />

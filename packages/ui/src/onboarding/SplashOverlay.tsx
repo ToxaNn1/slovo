@@ -15,6 +15,7 @@ import Animated, {
 import Svg, { Path, Polygon } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
+import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Mascot } from '../primitives/Mascot';
@@ -30,6 +31,8 @@ import {
 } from '../tokens';
 
 export interface SplashOverlayProps {
+  /** The whole cut at launch, or the short daily splash from the Dashboard's logo, which shouts (ADR 0105). */
+  pace?: 'launch' | 'daily';
   /** The app's name, whose letters pop up. */
   wordmark: string;
   /** The Edition's tagline under the wordmark. */
@@ -88,10 +91,17 @@ interface Fit {
  * The design's splash cut (ADR 0070): on the Theme's background the red wedge
  * unfolds, the S is drawn, the wordmark's letters pop up, the tagline rises,
  * the Mascot jumps in shouting, and a red wedge wipes the screen to the app.
- * It plays once, whole, on every launch.
+ * It plays once, whole, on every launch; the daily splash plays the same cut
+ * fast and shouts at its start.
  * Under Reduce Motion nothing moves: the cut's still frame holds a moment.
  */
-export function SplashOverlay({ wordmark, tagline, onShown, onDone }: SplashOverlayProps) {
+export function SplashOverlay({
+  pace = 'launch',
+  wordmark,
+  tagline,
+  onShown,
+  onDone,
+}: SplashOverlayProps) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
@@ -107,7 +117,8 @@ export function SplashOverlay({ wordmark, tagline, onShown, onDone }: SplashOver
     x: (x) => width / 2 + (x - frame.width / 2) * scale,
     y: (y) => height / 2 + (y - frame.height / 2) * scale,
   };
-  const { duration, reduceMotionHold } = splashMotion;
+  const { duration, reduceMotionHold } = pace === 'daily' ? splashMotion.daily : splashMotion;
+  const sounds = useInterfaceSounds();
   const shown = useRef(false);
   const progress = useSharedValue(0);
 
@@ -125,6 +136,17 @@ export function SplashOverlay({ wordmark, tagline, onShown, onDone }: SplashOver
     });
     return duration;
   });
+
+  const shout = useEffectEvent(() => {
+    sounds.play('shout');
+  });
+  useEffect(() => {
+    if (pace !== 'daily') return;
+    const timer = setTimeout(shout, splashMotion.daily.shoutAt);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [pace]);
 
   useEffect(() => {
     // The cut waits for the system to say whether it may move, then plays once.

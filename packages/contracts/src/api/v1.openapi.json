@@ -8211,6 +8211,14 @@
                           ],
                           "type": "string"
                         },
+                        "gesturesHintDemo": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "wordTabs": {
                           "enum": [
                             "on",
@@ -8235,6 +8243,22 @@
                           ],
                           "type": "string"
                         },
+                        "dailySplash": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "heroSparks": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "feedTab": {
                           "enum": [
                             "on",
@@ -8252,6 +8276,22 @@
                           "type": "string"
                         },
                         "correctionCategoryScreens": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "categoryFeed": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "categoryKnownFirst": {
                           "enum": [
                             "on",
                             "off",
@@ -8414,12 +8454,17 @@
                         "correctionTypes",
                         "curatedCollections",
                         "swipeMarks",
+                        "gesturesHintDemo",
                         "wordTabs",
                         "searchButton",
                         "dashboardWordmark",
+                        "dailySplash",
+                        "heroSparks",
                         "feedTab",
                         "categoryScreens",
                         "correctionCategoryScreens",
+                        "categoryFeed",
+                        "categoryKnownFirst",
                         "quietCategories",
                         "collectionBoardStyle",
                         "profileConfirmedByRarity",
@@ -9906,6 +9951,14 @@
                           ],
                           "type": "string"
                         },
+                        "gesturesHintDemo": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "wordTabs": {
                           "enum": [
                             "on",
@@ -9930,6 +9983,22 @@
                           ],
                           "type": "string"
                         },
+                        "dailySplash": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "heroSparks": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "feedTab": {
                           "enum": [
                             "on",
@@ -9947,6 +10016,22 @@
                           "type": "string"
                         },
                         "correctionCategoryScreens": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "categoryFeed": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "categoryKnownFirst": {
                           "enum": [
                             "on",
                             "off",
@@ -10109,12 +10194,17 @@
                         "correctionTypes",
                         "curatedCollections",
                         "swipeMarks",
+                        "gesturesHintDemo",
                         "wordTabs",
                         "searchButton",
                         "dashboardWordmark",
+                        "dailySplash",
+                        "heroSparks",
                         "feedTab",
                         "categoryScreens",
                         "correctionCategoryScreens",
+                        "categoryFeed",
+                        "categoryKnownFirst",
                         "quietCategories",
                         "collectionBoardStyle",
                         "profileConfirmedByRarity",
@@ -11532,6 +11622,14 @@
                           ],
                           "type": "string"
                         },
+                        "gesturesHintDemo": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "wordTabs": {
                           "enum": [
                             "on",
@@ -11556,6 +11654,22 @@
                           ],
                           "type": "string"
                         },
+                        "dailySplash": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "heroSparks": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "feedTab": {
                           "enum": [
                             "on",
@@ -11573,6 +11687,22 @@
                           "type": "string"
                         },
                         "correctionCategoryScreens": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "categoryFeed": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "categoryKnownFirst": {
                           "enum": [
                             "on",
                             "off",
@@ -11735,12 +11865,17 @@
                         "correctionTypes",
                         "curatedCollections",
                         "swipeMarks",
+                        "gesturesHintDemo",
                         "wordTabs",
                         "searchButton",
                         "dashboardWordmark",
+                        "dailySplash",
+                        "heroSparks",
                         "feedTab",
                         "categoryScreens",
                         "correctionCategoryScreens",
+                        "categoryFeed",
+                        "categoryKnownFirst",
                         "quietCategories",
                         "collectionBoardStyle",
                         "profileConfirmedByRarity",
@@ -18228,13 +18363,13 @@
                             "properties": {
                               "correctionType": {
                                 "enum": [
-                                  "russianism",
-                                  "calque",
                                   "surzhyk",
-                                  "officialese",
-                                  "anglicism",
                                   "wrongStress",
-                                  "paronym"
+                                  "calque",
+                                  "officialese",
+                                  "paronym",
+                                  "russianism",
+                                  "anglicism"
                                 ],
                                 "type": "string"
                               },
@@ -26201,13 +26336,13 @@
                                   },
                                   "correctionType": {
                                     "enum": [
-                                      "russianism",
-                                      "calque",
                                       "surzhyk",
-                                      "officialese",
-                                      "anglicism",
                                       "wrongStress",
-                                      "paronym"
+                                      "calque",
+                                      "officialese",
+                                      "paronym",
+                                      "russianism",
+                                      "anglicism"
                                     ],
                                     "type": "string"
                                   },
@@ -27383,13 +27518,13 @@
                           },
                           "correctionType": {
                             "enum": [
-                              "russianism",
-                              "calque",
                               "surzhyk",
-                              "officialese",
-                              "anglicism",
                               "wrongStress",
-                              "paronym"
+                              "calque",
+                              "officialese",
+                              "paronym",
+                              "russianism",
+                              "anglicism"
                             ],
                             "type": "string"
                           },

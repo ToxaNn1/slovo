@@ -72,6 +72,8 @@ export interface EntryCardProps {
    * card with its kicker.
    */
   tabs?: boolean | undefined;
+  /** A Word card's kicker, such as its place in a Category's Feed (ADR 0110); none in the Feed. */
+  kicker?: string | undefined;
 }
 
 /**
@@ -121,6 +123,7 @@ export function EntryCard({
   stressFalls = false,
   wordOfTheDayFont,
   tabs = false,
+  kicker,
 }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
   const face = (
@@ -134,6 +137,7 @@ export function EntryCard({
       stressFalls={stressFalls}
       wordOfTheDayFont={wordOfTheDayFont}
       tabs={tabs}
+      kicker={kicker}
       concealed={concealed}
       reveal={reveal}
     />
@@ -162,6 +166,7 @@ function EntryCardFace({
   stressFalls = false,
   wordOfTheDayFont,
   tabs = false,
+  kicker,
   concealed,
   reveal,
 }: Omit<EntryCardProps, 'selfCheck'> & { concealed: boolean; reveal: () => void }) {
@@ -267,6 +272,7 @@ function EntryCardFace({
             wordOfTheDayFont={wordOfTheDayFont}
             corner={bodyCorner}
             tabs={tabs}
+            kicker={kicker}
           />
         ) : card.kind === 'correction' ? (
           <CorrectionCardBody

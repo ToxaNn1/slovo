@@ -220,14 +220,16 @@ describe('the whole Dashboard', () => {
 
     // The hero: «Розкрити» reveals the Word of the Day in place and makes it Seen.
     expect(screen.queryByText('Значення слова сумирний.')).toBeNull();
-    await settle(() => fireEvent.press(screen.getByText(editionStrings.wordOfTheDay.reveal)));
+    await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.reveal)));
     expect(screen.getByText('Значення слова сумирний.')).toBeTruthy();
     expect(composition.history.list.map(({ entryId }) => entryId)).toEqual(['w_sumyrnyi']);
 
     // A Mood tile chooses today's Mood, and a toast says its reply.
     await press('dashboard-mood-energetic');
     expect(composition.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'energetic' } });
-    expect(screen.getByText('Бадьоро? Тоді доженемо ціль ще до обіду.')).toBeTruthy();
+    expect(
+      screen.getByText('Бадьоро? Тоді слова сьогодні рідкісніші, а Виправлень більше.'),
+    ).toBeTruthy();
 
     // «Попередні слова»: yesterday's Word opens its Entry, making nothing more Seen.
     await press('dashboard-previous-word-2026-10-27');
@@ -236,7 +238,7 @@ describe('the whole Dashboard', () => {
     await back('entry-screen-back');
     expect(screen.getByTestId('dashboard')).toBeTruthy();
 
-    // A Correction Type: its screen lists the type's Corrections, and «Як правильно?» counts one.
+    // A Correction Type: its screen lists the type's Corrections, and «Відповідь» counts one.
     expect(composition.correctionTypes.tiles).toEqual([
       { type: 'surzhyk', total: 2, workedThrough: 0 },
     ]);

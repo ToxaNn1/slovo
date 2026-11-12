@@ -89,16 +89,25 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   curatedCollections: ['dashboard'],
   // A swipe sets a Knowledge Mark.
   swipeMarks: ['knowledge'],
+  // The demo plays the side swipes on the Feed's card (ADR 0112).
+  gesturesHintDemo: ['swipeMarks'],
   // The Feed header's Search button opens the Search screen.
   searchButton: ['search'],
   // The wordmark leads to the Dashboard (ADR 0079).
   dashboardWordmark: ['dashboard'],
+  // The daily splash plays from the Dashboard's logo (ADR 0105).
+  dailySplash: ['dashboard'],
+  // The sparks fly in the Dashboard's hero (ADR 0109).
+  heroSparks: ['dashboard'],
   // The «Стрічка» tab opens the Feed the Dashboard otherwise opens (ADR 0093).
   feedTab: ['dashboard'],
   // The Categories rail and its grid are Dashboard blocks (ADR 0081).
   categoryScreens: ['dashboard'],
   // The grid of the Categories of Corrections opens from the Dashboard's Corrections rail (ADR 0081).
   correctionCategoryScreens: ['dashboard', 'corrections'],
+  // The Category's Feed opens from a Category's screen (ADR 0110).
+  categoryFeed: ['categoryScreens'],
+  categoryKnownFirst: ['categoryScreens'],
   // The quiet variant is a variant of a Category screen (ADR 0081).
   quietCategories: ['categoryScreens'],
   notificationTimeStep: ['notifications'],

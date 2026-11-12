@@ -59,10 +59,15 @@ const everything: Shown = {
   fastReveal: true,
   dashboard: true,
   dashboardWordmark: true,
+  dailySplash: true,
+  heroSparks: true,
   feedTab: true,
+  categoryFeed: true,
+  categoryKnownFirst: true,
   mood: true,
   curatedCollections: true,
   swipeMarks: true,
+  gesturesHintDemo: true,
   wordOfTheDayArchive: true,
   rarityCeiling: true,
   rarityTest: true,
@@ -102,6 +107,26 @@ describe('what the reader is shown', () => {
     [
       'a plain wordmark with the Dashboard wordmark off',
       { off: ['dashboardWordmark'], shown: { dashboardWordmark: false } },
+    ],
+    [
+      'a plain Dashboard logo with the daily splash off',
+      { off: ['dailySplash'], shown: { dailySplash: false } },
+    ],
+    [
+      "a still Mascot in the Dashboard's hero with the hero's sparks off",
+      { off: ['heroSparks'], shown: { heroSparks: false } },
+    ],
+    [
+      'a still gestures hint with its demo off',
+      { off: ['gesturesHintDemo'], shown: { gesturesHintDemo: false } },
+    ],
+    [
+      "a Word's card from a Category's screen with the Category's Feed off",
+      { off: ['categoryFeed'], shown: { categoryFeed: false } },
+    ],
+    [
+      "a Category's screen in Language Pack order alone with Known first off",
+      { off: ['categoryKnownFirst'], shown: { categoryKnownFirst: false } },
     ],
     [
       'a «Стрічка» tab to the Dashboard with the Feed tab off',

@@ -16,6 +16,7 @@ import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 import { useMixState } from '../mix/mix';
 import { useSubscribed } from '../opening';
+import { useShown } from '../shown-in-effect';
 import { useOpenScreen } from '../use-open-screen';
 
 const { toasts } = editionStrings.dashboard.category;
@@ -28,7 +29,8 @@ const lastCategoryHint: Record<CategoryKind, string> = {
 /** What a Category's screen draws and does. */
 export interface CategoryScreen {
   /**
-   * A card per live Entry of the Category, in the Language Pack's order;
+   * A card per live Entry of the Category, in the Language Pack's order, the
+   * Known ones first while `categoryKnownFirst` is on (ADR 0111);
    * `undefined` till the first read ends, so nothing counts the Entries before.
    */
   readonly cards: readonly RailBoardCard[] | undefined;
@@ -39,7 +41,10 @@ export interface CategoryScreen {
    * last Category of its list stays in, with the Mix screen's reason why.
    */
   readonly toggleMix: () => void;
-  /** Opens an Entry's card as Search does, which makes nothing Seen (ADR 0076). */
+  /**
+   * Opens a Word in the Category's Feed while `categoryFeed` is on (ADR 0110),
+   * else an Entry's card as Search does; neither makes anything Seen (ADR 0076).
+   */
   readonly openEntry: (entryId: string) => void;
 }
 
@@ -56,6 +61,7 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
   const mixState = useMixState();
   const showToast = useUndoToast();
   const openScreen = useOpenScreen();
+  const { categoryFeed, categoryKnownFirst } = useShown();
   const [read, setRead] = useState<{
     in: Composition;
     key: string;
@@ -89,11 +95,15 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
     row,
     known: knowledge.isKnown(row.entryId),
   }));
+  const listed =
+    cards && categoryKnownFirst
+      ? [...cards.filter((card) => card.known), ...cards.filter((card) => !card.known)]
+      : cards;
   const place: CategoryPlace = categoryPlace(mixState, of, category.id);
   const inMix = place === 'in' || place === 'last';
   const name = category.displayName;
   return {
-    cards,
+    cards: listed,
     inMix,
     toggleMix: () => {
       void keep('the Mix', mix.setCategory(category.id, !inMix, of)).then((done) => {
@@ -108,6 +118,10 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
     },
     // The Entry route of Search opens the card through `entryCard`, with the way back named.
     openEntry: (entryId) => {
+      if (of === 'word' && categoryFeed) {
+        openScreen(`/category-feed/${category.id}?from=${encodeURIComponent(entryId)}`);
+        return;
+      }
       openScreen(`/search/${entryId}?back=${encodeURIComponent(name)}`);
     },
   };

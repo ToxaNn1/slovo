@@ -70,6 +70,9 @@ describe('RailScreenHero', () => {
 
     const add = screen.getByRole('button', { name: 'Add' });
     expect(add).not.toBeSelected();
+    // The board's hard shadow lies below the button, outside its face.
+    expect(screen.getByTestId('hero-action-edge')).toBeOnTheScreen();
+    expect(add).not.toHaveStyle({ borderBottomWidth: 3 });
 
     await fireEvent.press(add);
 
@@ -83,6 +86,7 @@ describe('RailScreenHero', () => {
 
     expect(screen.getByRole('button', { name: 'In the mix' })).toBeSelected();
     expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
+    expect(screen.queryByTestId('hero-action-edge')).toBeNull();
   });
 
   describe('the tick of the toggle', () => {

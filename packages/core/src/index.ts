@@ -43,6 +43,7 @@ export {
 export { buildEntryRow, type EntryRowModel } from './entries/entry-row';
 export { type Favorite } from './saved/favorites';
 export { isTodaysWordOfTheDay, type Feed } from './feed/feed';
+export { categoryFeedPage, type CategoryFeedPage } from './feed/category-feed';
 export {
   type AnyEntryCard,
   type EntryFeedCard,

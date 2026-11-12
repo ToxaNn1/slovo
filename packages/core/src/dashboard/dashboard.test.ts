@@ -77,6 +77,23 @@ describe('The Dashboard', () => {
     });
   });
 
+  it("numbers today's Word of the Day by the reader's kept archive days before today, plus one", async () => {
+    const first = await run();
+    expect(heroOf(first.app.dashboard.blocks).number).toBe(1);
+
+    const { app } = await run({
+      records: archived({
+        '2026-11-04': 'w_one',
+        '2026-11-03': 'w_five',
+        '2026-11-01': 'w_two',
+        '2026-10-31': 'w_three',
+      }),
+    });
+    expect(heroOf(app.dashboard.blocks).number).toBe(4);
+    await app.dashboard.reveal();
+    expect(heroOf(app.dashboard.blocks).number).toBe(4);
+  });
+
   it('has no Word of the Day block with `dashboard` off', async () => {
     const { app } = await run({ on: ['wordOfTheDay', 'wordOfTheDayArchive'] });
 

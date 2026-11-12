@@ -4,30 +4,36 @@ import { CorrectionTypeSchema } from '../correction';
 import { TextSchema } from '../shared';
 import { PluralSchema, templateOf } from './shared';
 
-/** The Dashboard, the home behind «Стрічка» (ADR 0076). The hero's «Розкрити» is `wordOfTheDay.reveal`. */
+/** The Dashboard, the home behind «Стрічка» (ADR 0076). */
 export const DashboardStringsSchema = z.strictObject({
-  /** The hero's button that opens the Feed on the Word of the Day card, «До картки →». */
+  /** The closed hero's button that reveals the Word of the Day, «Розкрий слово» (ADR 0105). */
+  reveal: TextSchema,
+  /** The open hero's button that opens the Feed on the Word of the Day card, «Ще про слово →». */
   toCard: TextSchema,
   /** What VoiceOver reads for the Feed header's wordmark, which opens the Dashboard (ADR 0079), «SLOVO, на головну». */
   open: TextSchema,
-  /** The hero's kicker, «Слово дня · {day}.{month}». Takes `{day}` and `{month}`, both numbers. */
+  /** What VoiceOver reads for the Dashboard's logo, which plays the daily splash (ADR 0105), «SLOVO, заставка дня». */
+  dailySplash: TextSchema,
+  /** The open hero's kicker, «Слово дня · {day}.{month}». Takes `{day}` and `{month}`, both numbers. */
   kicker: templateOf('day', 'month'),
+  /** The closed hero's kicker, «Слово дня · №{number}». Takes `{number}`, the reader's count of Words of the Day (ADR 0105). */
+  kickerNumber: templateOf('number'),
   /** The line under the closed hero's shout, «Рідкісне. Свіже. Твоє на 24 години.». */
   subtitle: TextSchema,
   /** The line under the open hero's Lemma, «{stress} · {partOfSpeech}». Takes the Lemma with its Stress and the short part of speech. */
   wordLine: templateOf('stress', 'partOfSpeech'),
-  /** The label beside the open hero's rarity bars, «Рідкість {rarity}/5». */
+  /** The label beside the open hero's rarity bars, «Рідкість {rarity} з 5». */
   rarity: templateOf('rarity'),
   /** The Mood check-in block under the hero. */
   mood: z.strictObject({
     /** The block's title over the Mood tiles, «Як настрій?». */
     question: TextSchema,
-    /** The note at the end of the title, «Mood дня». */
+    /** The note at the end of the title, «Настрій дня». */
     note: TextSchema,
   }),
-  /** The block «Попередні слова» under the Mood check-in: the Word of the Day archive's newest days before today. */
+  /** The block «Минулі Слова дня» under the Mood check-in: the Word of the Day archive's newest days before today. */
   previousWords: z.strictObject({
-    /** The block's title, «Попередні слова». */
+    /** The block's title, «Минулі Слова дня». */
     title: TextSchema,
     /** Each month as a row's date column says it under the day, from January, «жов». */
     months: z.array(TextSchema).length(12),
@@ -38,7 +44,7 @@ export const DashboardStringsSchema = z.strictObject({
     title: TextSchema,
     /** A tile's count, «Розібрано {x} з {n}». Takes `{x}`, the Corrections «розібрано», and `{n}`, all of the type. */
     workedThrough: templateOf('x', 'n'),
-    /** The button that reveals a Correction's standard form and explanation in place, «Як правильно?». */
+    /** The button that reveals a Correction's standard form and explanation in place, «Відповідь». */
     reveal: TextSchema,
     /** Each Correction Type's tile name and screen title, in the plural, «Суржик». */
     tiles: z.record(CorrectionTypeSchema, TextSchema),
@@ -100,6 +106,11 @@ export const DashboardStringsSchema = z.strictObject({
     known: templateOf('x', 'n'),
     /** The stamp on a card marked Known, «ЗНАЮ». */
     knownStamp: TextSchema,
+    /**
+     * The kicker of a card in the Category's Feed, «Категорія · {name} · {place} з {of}», drawn in capitals (ADR 0110).
+     * Takes `{name}`, the Category's display name, `{place}`, the card's place from the tapped Word, and `{of}`, the Category's Words.
+     */
+    feedKicker: templateOf('name', 'place', 'of'),
     /** The toasts of the right button. Each takes `{name}`, the Category's display name. */
     toasts: z.strictObject({
       /** «„{name}“ тепер у твоєму Міксі.» */

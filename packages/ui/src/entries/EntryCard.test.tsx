@@ -1047,3 +1047,20 @@ describe('the corner of an Entry card', () => {
     expect(known()).toBeEnabled();
   });
 });
+
+describe("a Word card's kicker", () => {
+  it("says the card's place in its Category's Feed, one-column or tabbed", async () => {
+    const kicker = 'CATEGORY · EMOTIONS · 2 OF 4';
+    await render(inEdition(<EntryCard card={wordCard} kicker={kicker} />));
+    expect(screen.getByTestId('word-card-kicker')).toHaveTextContent(kicker);
+
+    await render(inEdition(<EntryCard card={wordCard} kicker={kicker} tabs />));
+    expect(screen.getByTestId('word-card-kicker')).toHaveTextContent(kicker);
+  });
+
+  it('is left out of a Word card in the Feed', async () => {
+    await render(inEdition(<EntryCard card={wordCard} />));
+
+    expect(screen.queryByTestId('word-card-kicker')).toBeNull();
+  });
+});

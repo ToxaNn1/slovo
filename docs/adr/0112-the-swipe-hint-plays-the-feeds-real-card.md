@@ -1,0 +1,7 @@
+# The swipe hint plays the Feed's real card
+
+The gestures hint «ГОРТАЙ ПАЛЬЦЕМ» (ADR 0092) opens once on the Feed with `swipeMarks` on. In the app it drew a finger over an empty spot and lit its three rows in turn, 2.8 s each, while the card under it stood still. The board (`docs/design/export/XSwipeV.dc.html`, and the owner's recording of it) plays the Feed's own card instead: while the sheet is open, the card on screen swings right with its «✓ ЗНАЮ» edge label sliding in and comes back, swings left with «НЕ ЗНАЮ» and comes back, then lifts up together with the next card and comes back, in one 8.4 s loop. A finger in the board's cream circle drags each swipe, and each row of the sheet lights red while its gesture plays.
+
+Behind the new Feature Switch `gesturesHintDemo` (needs `swipeMarks`) the app plays it as the board does: the board's keyframes, distances (118 px to a side, 8° tilt, 150 px lift) and easings, from one looping clock, `useGesturesDemo` in `@slovo/ui`. The Feed hands the clock to `SwipeDemoStage`, which lifts the whole pager, and to the sheet, whose finger and rows read it. The card on screen reads it through the stage's context, so the demo moves the real card, not a copy. Nothing is marked: the demo moves only how the card is drawn, and no Knowledge Mark, Seen or swipe happens.
+
+Under Reduce Motion, and with `gesturesHintDemo` off, the sheet stands still: no finger, no lit row, the card in place. The demo stops when the sheet goes.

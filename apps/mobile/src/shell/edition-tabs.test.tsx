@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import type { Edition } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { router } from 'expo-router';
 import { renderRoutes } from './test-render';
 import { Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
@@ -56,6 +57,11 @@ async function renderTabs(url: string, editionInEffect: Edition = edition) {
       'search/index': () => <Text>Search</Text>,
       'correction-type/[type]': () => <Text>Correction Type</Text>,
       'curated-collection/[collectionId]': () => <Text>Curated Collection</Text>,
+      categories: () => <Text>Categories</Text>,
+      'category/[categoryId]': () => <Text>Category</Text>,
+      'category-feed/[categoryId]': () => <Text>Category Feed</Text>,
+      'correction-categories': () => <Text>Correction Categories</Text>,
+      'correction-category/[categoryId]': () => <Text>Correction Category</Text>,
     },
     { initialUrl: url },
   );
@@ -132,6 +138,11 @@ describe('the tab bar', () => {
     ['/search', 'Search'],
     ['/correction-type/surzhyk', 'Correction Type'],
     ['/curated-collection/cc_one', 'Curated Collection'],
+    ['/categories', 'Categories'],
+    ['/category/emotions-character', 'Category'],
+    ['/category-feed/emotions-character', 'Category Feed'],
+    ['/correction-categories', 'Correction Categories'],
+    ['/correction-category/everyday', 'Correction Category'],
     ['/game/crossword', 'Crossword'],
     ['/settings', 'Settings'],
   ])('hides over a screen pushed off the tabs: %s', async (url, shown) => {
@@ -139,6 +150,23 @@ describe('the tab bar', () => {
 
     expect(await screen.findByText(shown)).toBeOnTheScreen();
     expect(screen.queryByText(tabs.home)).toBeNull();
+  });
+
+  it.each([
+    ['/correction-type/surzhyk', 'Correction Type'],
+    ['/curated-collection/cc_one', 'Curated Collection'],
+    ['/categories', 'Categories'],
+    ['/category/emotions-character', 'Category'],
+    ['/category-feed/emotions-character', 'Category Feed'],
+    ['/correction-categories', 'Correction Categories'],
+    ['/correction-category/everyday', 'Correction Category'],
+  ])('opens a screen off the tabs from the Dashboard: %s', async (url, shown) => {
+    await renderTabs('/');
+    await settle(() => {
+      router.push(url);
+    });
+
+    expect(await screen.findByText(shown)).toBeOnTheScreen();
   });
 });
 

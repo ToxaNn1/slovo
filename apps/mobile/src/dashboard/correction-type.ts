@@ -17,7 +17,7 @@ export interface CorrectionTypeScreen {
   readonly place: number;
   /** The type's live Corrections in the Language Pack's order; nothing until the first read ends. */
   readonly rows: readonly CorrectionTypeRow[] | undefined;
-  /** «Як правильно?»: marks the Correction worked through, which reveals it in place. */
+  /** «Відповідь»: marks the Correction worked through, which reveals it in place. */
   readonly reveal: (correctionId: string) => void;
 }
 

@@ -14,8 +14,13 @@ const strings = testStrings({
 
 async function renderHeader({
   hideStreak = false,
-  onOpenDashboard,
-}: { hideStreak?: boolean; onOpenDashboard?: () => void } = {}) {
+  logo = 'wedge',
+  onLogo,
+}: {
+  hideStreak?: boolean;
+  logo?: 'wedge' | 'plate';
+  onLogo?: { label: string; onPress: () => void };
+} = {}) {
   const onPress = jest.fn();
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
@@ -23,7 +28,8 @@ async function renderHeader({
         wordmark="SLOVO"
         today="Mon, 2 November"
         streak={<StatsPill streak={12} hideStreak={hideStreak} onPress={onPress} />}
-        onOpenDashboard={onOpenDashboard}
+        logo={logo}
+        onLogo={onLogo}
       />
     </EditionProvider>,
   );
@@ -52,11 +58,18 @@ describe('FeedHeader', () => {
   });
 
   it('opens the Dashboard from the wordmark when it is given a way there', async () => {
-    const onOpenDashboard = jest.fn();
-    await renderHeader({ onOpenDashboard });
+    const onPress = jest.fn();
+    await renderHeader({ onLogo: { label: 'SLOVO, home', onPress } });
     expect(screen.queryByRole('header', { name: 'SLOVO' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'SLOVO, home' }));
-    expect(onOpenDashboard).toHaveBeenCalledTimes(1);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it("plays the daily splash from the Dashboard's logo on its plate", async () => {
+    const onPress = jest.fn();
+    await renderHeader({ logo: 'plate', onLogo: { label: 'Play the splash', onPress } });
+    await fireEvent.press(screen.getByRole('button', { name: 'Play the splash' }));
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the wordmark a plain header without a way to the Dashboard', async () => {

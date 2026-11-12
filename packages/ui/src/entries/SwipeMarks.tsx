@@ -30,6 +30,7 @@ import {
 } from '../primitives/VerticalPager';
 import { useUndoToast } from '../primitives/UndoToast';
 import { Wedge } from '../primitives/Wedge';
+import { demoCard, demoEdge, useSwipeDemo } from '../feed/swipe-demo';
 import { useEdition } from '../providers/EditionProvider';
 import { useHaptics } from '../providers/HapticsProvider';
 import { useTokens } from '../providers/TokensProvider';
@@ -156,6 +157,9 @@ export function SwipeMarks({
   const turnToNextOnUI = useTurnToNextPageOnUI();
   const turnBackHere = useTurnToThisPage();
   const onScreen = useIsPageOnScreen();
+  /** The swipe hint's demo, which only the card on screen plays, and only while it can be swiped. */
+  const swipeDemo = useSwipeDemo();
+  const demo = onScreen && !concealed ? swipeDemo : undefined;
   const { mark, onMark, onUndo } = swipe;
 
   const offset = useSharedValue(0);
@@ -345,16 +349,28 @@ export function SwipeMarks({
   );
   const pan = usePanGesture(panConfig);
 
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: offset.value },
-      // hidden: not on board 04, owner 05.11. The nudge added `+ lift.value` here.
-      { translateY: Math.abs(offset.value) * 0.04 },
-      { rotate: `${String(offset.value / 16)}deg` },
-    ],
-  }));
+  const cardStyle = useAnimatedStyle(() => {
+    if (demo !== undefined) {
+      const { x, tilt } = demoCard(demo.value);
+      return {
+        transform: [{ translateX: x }, { translateY: 0 }, { rotate: `${String(tilt)}deg` }],
+      };
+    }
+    return {
+      transform: [
+        { translateX: offset.value },
+        // hidden: not on board 04, owner 05.11. The nudge added `+ lift.value` here.
+        { translateY: Math.abs(offset.value) * 0.04 },
+        { rotate: `${String(offset.value / 16)}deg` },
+      ],
+    };
+  });
   // Each wedge slides in from its edge as the drag nears the threshold, fully in at it; under Reduce Motion it only fades.
   const knownEdgeStyle = useAnimatedStyle(() => {
+    if (demo !== undefined) {
+      const { opacity, shift } = demoEdge(demo.value, 'known');
+      return { opacity, transform: [{ translateX: shift * knownWidth.value }] };
+    }
     const progress = Math.min(1, Math.max(0, drag.value) / markDistance.value);
     return {
       opacity: progress,
@@ -362,6 +378,10 @@ export function SwipeMarks({
     };
   });
   const unknownEdgeStyle = useAnimatedStyle(() => {
+    if (demo !== undefined) {
+      const { opacity, shift } = demoEdge(demo.value, 'unknown');
+      return { opacity, transform: [{ translateX: shift * unknownWidth.value }] };
+    }
     const progress = Math.min(1, Math.max(0, -drag.value) / markDistance.value);
     return {
       opacity: progress,
