@@ -30,6 +30,7 @@
 @keyframes tuRow1{0%,10%,30%,100%{background:transparent}14%,27%{background:#FF3B2F}}
 @keyframes tuRow2{0%,42%,62%,100%{background:transparent}46%,59%{background:#FF3B2F}}
 @keyframes tuRow3{0%,72%,94%,100%{background:transparent}76%,91%{background:#FF3B2F}}
+@keyframes enRise{from{opacity:0;transform:translateY(16px)}}
 </style>
 </helmet>
 <div data-slovo="1" data-th="{{ th }}" data-rm="{{ rmAttr }}" style="width:{{ fW }};height:{{ fH }};padding:{{ fP }};background:{{ fBg }};border-radius:{{ fR }};box-shadow:{{ fSh }};font-family:'Onest',sans-serif;flex:none">
@@ -43,24 +44,33 @@
     <sc-for list="{{ cards }}" as="c" hint-placeholder-count="2">
       <div style="position:absolute;inset:0;transform:{{ c.tf }};transition:{{ c.tr }};z-index:{{ c.z }}">
         <div style="position:absolute;inset:0;animation:{{ c.wrapAnim }}">
-        <div style="position:absolute;inset:0;background:{{ c.bg }};color:#140C0A;overflow:hidden;padding:120px 22px 26px;display:flex;flex-direction:column;gap:10px;box-shadow:0 {{ c.lift }} 40px rgba(20,12,10,.28)">
-          <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
-          <div style="position:absolute;right:-50px;top:40px;font:900 420px/1 Unbounded,sans-serif;color:#FFF4E6;pointer-events:none">{{ c.g }}</div>
-          <div style="position:relative;display:flex;align-items:flex-start;gap:10px;min-height:44px">
-            <span style="flex:1;min-width:0;font:800 11px/1.45 Unbounded,sans-serif;letter-spacing:2px;text-wrap:balance">{{ c.kick }}</span>
-            <div style="flex:none;display:flex;align-items:center;gap:6px">
+        <div style="position:absolute;inset:0;background:var(--bg);overflow:hidden">
+          <div style="position:absolute;left:14px;right:22px;top:{{ cTop }};bottom:{{ cBot }};border-radius:24px;background:var(--sf);border:2.5px solid var(--ink);box-shadow:8px 8px 0 #FF3B2F;padding:20px 22px 0;display:flex;flex-direction:column;gap:16px;color:var(--ink)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px">
+              <span style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;font:800 11px/1.3 Unbounded,sans-serif;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#FF3B2F"><span style="flex:none;width:14px;height:12px;background:#FF3B2F;clip-path:polygon(0 0,100% 30%,100% 70%,0 100%)"></span>{{ c.kick }}</span>
+              <div style="flex:none;display:flex;align-items:center;gap:6px">
               <button onPointerDown="{{ stop }}" onClick="{{ toggleFav }}" aria-label="Улюблене" style="width:44px;height:44px;border:0;border-radius:13px;background:#140C0A;color:{{ c.favFg }};box-shadow:0 4px 0 rgba(20,12,10,.4);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0"><span style="display:flex;animation:{{ c.favAnim }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z" fill="{{ c.favFill }}"></path></svg></span></button>
               <button onPointerDown="{{ stop }}" onClick="{{ toggleCol }}" aria-label="До колекції" style="width:44px;height:44px;border:0;border-radius:13px;background:#140C0A;color:#FFF4E6;box-shadow:0 4px 0 rgba(20,12,10,.4);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0"><span style="display:flex;animation:{{ c.colAnim }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M6 3h12v18l-6-4.5L6 21z" fill="{{ c.colFill }}"></path><path d="{{ c.colD2 }}" stroke="{{ c.colS2 }}"></path></svg></span></button>
               <button onPointerDown="{{ stop }}" onClick="{{ openMenu }}" aria-label="Ще" style="width:44px;height:44px;border:0;border-radius:13px;background:{{ dotsBg }};box-shadow:0 4px 0 rgba(20,12,10,.4);display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;padding:0"><span style="width:5px;height:5px;background:{{ dotsFg }}"></span><span style="width:5px;height:5px;background:{{ dotsFg }}"></span><span style="width:5px;height:5px;background:{{ dotsFg }}"></span></button>
             </div>
-          </div>
-          <span style="position:relative;font:900 {{ c.wFs }}/1 Unbounded,sans-serif;letter-spacing:-1.5px">{{ c.w }}</span>
-          <span style="position:relative;font:600 14px/1 Onest">{{ c.gr }}</span>
-          <div style="flex:1"></div>
-          <div style="position:relative;border-radius:18px;background:#FFF4E6;padding:16px;display:flex;flex-direction:column;gap:8px">
-            <span style="font:600 17px/1.35 Onest">{{ c.d }}</span>
-            <span style="padding-left:12px;border-left:3px solid #FF3B2F;font:italic 400 15px/1.45 Onest">{{ c.ex }}</span>
-            <span style="font:500 13px/1.3 Onest;color:#6B5D55">{{ c.cat }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <span style="font:900 {{ c.wFs }}/1 Unbounded,sans-serif;letter-spacing:-1.5px;white-space:nowrap">{{ c.w }}</span>
+              <span style="height:9px;width:46%;background:#FF3B2F;transform:skewX(-24deg);transform-origin:left"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font:600 15px/1 Onest;color:var(--mute);white-space:nowrap">{{ c.gr }}</span>
+              <span style="min-width:0;padding:6px 9px;border-radius:7px;background:var(--sf2);font:600 12px/1 Onest;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.catN }}</span>
+              <span style="flex:1"></span>
+              <span style="flex:none;width:44px;height:44px;border-radius:50%;border:2.5px solid #FF3B2F;color:#FF3B2F;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor"></path><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"></path></svg></span>
+            </div>
+            <div style="position:relative;flex:1;min-height:0;overflow:hidden">
+              <sc-if value="{{ c.isPlain }}" hint-placeholder-val="{{ true }}"><span style="display:block;font:500 {{ c.tFs }}/1.42 Onest;text-wrap:pretty;animation:enRise .28s both">{{ c.tTxt }}</span></sc-if>
+              <sc-if value="{{ c.isEx }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:10px;animation:enRise .28s both"><span style="font:900 54px/.6 Unbounded,sans-serif;color:#FF3B2F;height:26px">«</span><span style="font:italic 400 19px/28px Onest;text-wrap:pretty">{{ c.tTxt }}</span></div></sc-if>
+            </div>
+            <div style="flex:none;display:grid;grid-template-columns:repeat({{ c.tabN }},minmax(0,1fr));border-top:2px solid var(--line);margin:0 -4px">
+              <sc-for list="{{ c.tabs }}" as="t" hint-placeholder-count="3"><button onPointerDown="{{ stop }}" onClick="{{ t.onClick }}" style="position:relative;height:52px;border:0;background:none;color:{{ t.fg }};font:{{ t.font }};white-space:nowrap;display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;cursor:pointer;transition:color .15s"><span style="position:absolute;left:18%;right:18%;top:-2px;height:5px;background:#FF3B2F;transform:skewX(-24deg) scaleX({{ t.on }});transition:transform .2s cubic-bezier(.2,.9,.3,1.3)"></span>{{ t.n }}</button></sc-for>
+            </div>
           </div>
           <div style="position:absolute;left:0;top:300px;padding:14px 26px 14px 20px;background:#140C0A;color:#FFF4E6;clip-path:polygon(0 0,100% 18%,100% 82%,0 100%);display:flex;align-items:center;gap:10px;font:900 26px/1 Unbounded,sans-serif;letter-spacing:-.02em;opacity:{{ c.kOp }};transform:translateX({{ c.kX }});animation:{{ c.tKnow }};pointer-events:none"><svg width="24" height="20" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#FF3B2F"></polygon></svg>ЗНАЮ</div>
           <div style="position:absolute;right:0;top:300px;padding:14px 20px 14px 26px;background:#FFF4E6;color:#140C0A;clip-path:polygon(0 18%,100% 0,100% 100%,0 82%);box-shadow:inset 0 0 0 4px #140C0A;display:flex;align-items:center;gap:10px;font:900 26px/1 Unbounded,sans-serif;letter-spacing:-.02em;opacity:{{ c.lOp }};transform:translateX({{ c.lX }});animation:{{ c.tLearn }};pointer-events:none">НЕ ЗНАЮ<svg width="20" height="22" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z" fill="#140C0A"></path></svg></div>
@@ -86,7 +96,7 @@
     <div style="position:absolute;left:14px;right:14px;bottom:{{ toastB }};z-index:70;display:flex;align-items:center;gap:12px;padding:10px 10px 10px 14px;background:var(--ink);color:var(--bg);clip-path:polygon(0 0,100% 0,97% 100%,0 100%);border-radius:14px 0 0 14px;animation:slToast .35s cubic-bezier(.2,.9,.3,1.1) both">
       <span style="flex:none;width:12px;height:22px;background:#FF3B2F;clip-path:polygon(0 0,100% 25%,100% 100%,0 75%)"></span>
       <span style="flex:1;font:600 14px/1.3 Onest;min-width:0;min-height:38px;display:flex;align-items:center">{{ toastTxt }}</span>
-      <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ true }}"><button onClick="{{ undo }}" style="flex:none;height:38px;padding:0 18px 0 12px;border:0;border-radius:10px;background:#FF3B2F;color:#140C0A;font:800 12px/1 Unbounded,sans-serif;cursor:pointer">СКАСУВАТИ</button></sc-if>
+      <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ true }}"><button onClick="{{ undo }}" style="flex:none;height:38px;padding:0 18px 0 12px;border:0;border-radius:10px;background:#FF3B2F;color:#140C0A;font:800 12px/1 Unbounded,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center">СКАСУВАТИ</button></sc-if>
     </div>
   </sc-if>
 
@@ -108,25 +118,25 @@
       <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden">
         <sc-for list="{{ menu }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" style="display:flex;align-items:center;gap:14px;padding:16px;border:0;border-top:{{ m.bt }};background:{{ m.bg }};color:var(--ink);width:100%;text-align:left;cursor:pointer;font:inherit"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="{{ m.d1 }}"></path><path d="{{ m.d2 }}"></path></svg><span style="font:600 16px/1.2 Onest">{{ m.n }}</span></button></sc-for>
       </div>
-      <button onClick="{{ closeMenu }}" style="height:60px;border-radius:16px;background:var(--tile);color:var(--ink);border:1px solid var(--line);box-shadow:0 5px 0 var(--edge);font:900 15px/1 Unbounded,sans-serif;cursor:pointer">СКАСУВАТИ</button></sc-if>
+      <button onClick="{{ closeMenu }}" style="height:60px;border-radius:16px;background:var(--tile);color:var(--ink);border:1px solid var(--line);box-shadow:0 5px 0 var(--edge);font:900 15px/1 Unbounded,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center">СКАСУВАТИ</button></sc-if>
     </div>
   </sc-if>
 
   <sc-if value="{{ tut }}" hint-placeholder-val="{{ false }}">
     <div style="position:absolute;left:0;right:0;bottom:0;z-index:61;padding:58px 16px 34px;background:var(--sf);clip-path:polygon(0 28px,100% 0,100% 100%,0 100%);animation:slSheet .5s .15s cubic-bezier(.2,.9,.3,1) both;display:flex;flex-direction:column;gap:6px">
-      <div style="position:absolute;left:18px;top:26px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 17px/1 Unbounded,sans-serif;transform:rotate(-4.1deg);transform-origin:left">ГОРТАЙТЕ ПАЛЬЦЕМ</div>
+      <div style="position:absolute;left:18px;top:26px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 17px/1 Unbounded,sans-serif;transform:rotate(-4.1deg);transform-origin:left">ГОРТАЙ ПАЛЬЦЕМ</div>
       <div style="height:6px"></div>
       <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:14px;animation:tuRow1 8.4s infinite">
         <span style="flex:none;width:40px;height:40px;border-radius:11px;background:#140C0A;color:#FFF4E6;display:flex;align-items:center;justify-content:center"><svg width="18" height="14" viewBox="0 0 18 14"><polygon points="18,7 11,0 11,4 0,4 0,10 11,10 11,14" fill="currentColor"></polygon></svg></span>
-        <span style="display:flex;flex-direction:column;gap:3px"><span style="font:900 15px/1.1 Unbounded,sans-serif">Вправо — знаю</span><span style="font:500 13px/1.3 Onest">Слово піде в підтверджені.</span></span>
+        <span style="display:flex;flex-direction:column;gap:3px"><span style="font:900 15px/1.1 Unbounded,sans-serif">Вправо — знаю</span><span style="font:500 13px/1.3 Onest">Позначу слово як відоме.</span></span>
       </div>
       <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:14px;animation:tuRow2 8.4s infinite">
         <span style="flex:none;width:40px;height:40px;border-radius:11px;background:#FFF4E6;color:#140C0A;border:2px solid #140C0A;display:flex;align-items:center;justify-content:center"><svg width="18" height="14" viewBox="0 0 18 14"><polygon points="0,7 7,0 7,4 18,4 18,10 7,10 7,14" fill="currentColor"></polygon></svg></span>
-        <span style="display:flex;flex-direction:column;gap:3px"><span style="font:900 15px/1.1 Unbounded,sans-serif">Вліво — не знаю</span><span style="font:500 13px/1.3 Onest">Додам у «Вчу» з днем повторення.</span></span>
+        <span style="display:flex;flex-direction:column;gap:3px"><span style="font:900 15px/1.1 Unbounded,sans-serif">Вліво — не знаю</span><span style="font:500 13px/1.3 Onest">Додам у «Вчу» — повторимо завтра.</span></span>
       </div>
       <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:14px;animation:tuRow3 8.4s infinite">
         <span style="flex:none;width:40px;height:40px;border-radius:11px;background:#FF3B2F;color:#140C0A;display:flex;align-items:center;justify-content:center"><svg width="14" height="18" viewBox="0 0 14 18"><polygon points="7,0 14,7 10,7 10,18 4,18 4,7 0,7" fill="currentColor"></polygon></svg></span>
-        <span style="display:flex;flex-direction:column;gap:3px"><span style="font:900 15px/1.1 Unbounded,sans-serif">Вгору — наступне слово</span><span style="font:500 13px/1.3 Onest">Нове слово тільки коли ви готові.</span></span>
+        <span style="display:flex;flex-direction:column;gap:3px"><span style="font:900 15px/1.1 Unbounded,sans-serif">Вгору — наступне слово</span><span style="font:500 13px/1.3 Onest">Нове слово — коли захочеш.</span></span>
       </div>
       <button onClick="{{ tutDone }}" style="margin-top:6px;height:60px;border:0;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;width:100%">ЗРОЗУМІЛО</button>
     </div>
@@ -140,16 +150,16 @@
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;live&quot;,&quot;tut&quot;,&quot;dragUp&quot;,&quot;markedR&quot;,&quot;markedL&quot;,&quot;toastR&quot;,&quot;toastL&quot;,&quot;undo1&quot;,&quot;undo2&quot;,&quot;menuNone&quot;,&quot;menuKnow&quot;,&quot;menuLearn&quot;,&quot;menuToast&quot;,&quot;revisitK&quot;,&quot;revisitL&quot;],&quot;default&quot;:&quot;live&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;favOn&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;v2&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;live&quot;,&quot;tut&quot;,&quot;dragUp&quot;,&quot;markedR&quot;,&quot;markedL&quot;,&quot;toastR&quot;,&quot;toastL&quot;,&quot;undo1&quot;,&quot;undo2&quot;,&quot;menuNone&quot;,&quot;menuKnow&quot;,&quot;menuLearn&quot;,&quot;menuToast&quot;,&quot;revisitK&quot;,&quot;revisitL&quot;],&quot;default&quot;:&quot;live&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;favOn&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;v2&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
 const TABI={feed:'polygon(0 10%,100% 0,100% 38%,0 46%,0 56%,100% 50%,100% 100%,0 100%)',games:'polygon(50% 0,100% 50%,50% 100%,0 50%,22% 50%,50% 78%,78% 50%,50% 22%,22% 50%,0 50%)',saved:'polygon(12% 8%,88% 0,88% 100%,50% 74%,12% 100%)',profile:'polygon(30% 0,70% 0,74% 40%,50% 48%,26% 40%,30% 0,30% 0,0 100%,8% 58%,92% 54%,100% 100%,0 100%)'};
-const MENU=[['Поділитися','M12 3v12M7.5 7.5 12 3l4.5 4.5','M5 12v8h14v-8'],['Сховати','M4 4h4v10H4zM8 14l3.5 6.5c1.4 0 2.6-1.1 2.2-2.6L13 15h5.5a2 2 0 0 0 2-2.3l-1.1-6.6A2.5 2.5 0 0 0 16.9 4H8',''],['Повідомити про помилку','M5 21V4','M5 4h12l-2.5 4.5L17 13H5']];
+const MENU=[['Поділитися','M12 3v12M7.5 7.5 12 3l4.5 4.5','M5 12v8h14v-8'],['Не показувати','M4 4h4v10H4zM8 14l3.5 6.5c1.4 0 2.6-1.1 2.2-2.6L13 15h5.5a2 2 0 0 0 2-2.3l-1.1-6.6A2.5 2.5 0 0 0 16.9 4H8',''],['Повідомити про помилку','M5 21V4','M5 4h12l-2.5 4.5L17 13H5']];
 const WORDS=[
- {w:'голі́нка',g:'Г',gr:'ім., ж. р.',d:'Частина ноги від коліна до стопи; гомілка.',ex:'Вода в річці сягала голінок.',cat:'Людина і тіло · рідкість 4',kick:'СЛОВО ДНЯ · 4 ЛИСТОПАДА'},
- {w:'заграва',g:'З',gr:'ім., ж. р.',d:'Червоне світло на небі під час сходу чи заходу сонця.',ex:'Над лісом палала заграва.',cat:'Природа і погода · рідкість 4',kick:'СТРІЧКА · 2 З 6'},
- {w:'видноко́ло',g:'В',gr:'ім., с. р.',d:'Лінія, де небо ніби сходиться з землею; обрій.',ex:'Аж до видноколу тяглися поля.',cat:'Природа і погода · рідкість 3',kick:'СТРІЧКА · 3 З 6'},
- {w:'шухля́да',g:'Ш',gr:'ім., ж. р.',d:'Висувна скринька в столі чи шафі.',ex:'Ключі лежали в нижній шухляді.',cat:'Побут і ремесла · рідкість 2',kick:'СТРІЧКА · 4 З 6'},
- {w:'оболо́нь',g:'О',gr:'ім., ж. р.',d:'Низинний луг біля річки, який навесні заливає повінь.',ex:'Навесні оболонь ставала морем.',cat:'Природа і погода · рідкість 4',kick:'СТРІЧКА · 5 З 6'},
- {w:'хурде́лиця',g:'Х',gr:'ім., ж. р.',d:'Сильна заметіль, снігова буря з вітром.',ex:'Хурделиця замела дорогу до лісу.',cat:'Природа і погода · рідкість 3',kick:'СТРІЧКА · 6 З 6'}];
+ {syn:'гомілка',w:'голі́нка',g:'Г',gr:'ім., ж. р.',d:'Частина ноги від коліна до стопи; гомілка.',ex:'Вода в річці сягала голінок.',cat:'Рухи · рідкість 4',kick:'СЛОВО ДНЯ · 4 ЛИСТОПАДА'},
+ {syn:'зоря, жевріння, рум’янець, сяйво',hist:'Від «заграти» — «засвітитися, заіскритися».',w:'заграва',g:'З',gr:'ім., ж. р.',d:'Червоне світло на небі під час сходу чи заходу сонця.',ex:'Над лісом палала заграва.',cat:'Природа · рідкість 4',kick:'СТРІЧКА · 2 З 6'},
+ {syn:'обрій, небокрай, овид',w:'видноко́ло',g:'В',gr:'ім., с. р.',d:'Лінія, де небо ніби сходиться з землею; обрій.',ex:'Аж до видноколу тяглися поля.',cat:'Природа · рідкість 3',kick:'СТРІЧКА · 3 З 6'},
+ {hist:'З польської szuflada, а туди — з німецької Schublade.',w:'шухля́да',g:'Ш',gr:'ім., ж. р.',d:'Висувна скринька в столі чи шафі.',ex:'Ключі лежали в нижній шухляді.',cat:'Хата і побут · рідкість 2',kick:'СТРІЧКА · 4 З 6'},
+ {syn:'заплава, луг, лука',w:'оболо́нь',g:'О',gr:'ім., ж. р.',d:'Низинний луг біля річки, який навесні заливає повінь.',ex:'Навесні оболонь ставала морем.',cat:'Природа · рідкість 4',kick:'СТРІЧКА · 5 З 6'},
+ {syn:'заметіль, хуртовина, завірюха',w:'хурде́лиця',g:'Х',gr:'ім., ж. р.',d:'Сильна заметіль, снігова буря з вітром.',ex:'Хурделиця замела дорогу до лісу.',cat:'Природа · рідкість 3',kick:'СТРІЧКА · 6 З 6'}];
 const TH=90,TY=110,GAP=0,BG=['#FF3B2F','#FF3B2F'];
 class Component extends DCLogic {
   state={dx:0,dy:0,drag:false,ax:null,idx:0,marks:{},known:12,learn:3,toast:null,fav:{},col:{},tutOff:false,snap:false,busy:false,nudge:0};
@@ -197,7 +207,7 @@ class Component extends DCLogic {
     if(fixed&&scr==='menuToast'){marks={0:-1};toast='ml';}
     if(fixed&&scr==='revisitK'){marks={0:1};kickF='ЗБЕРЕЖЕНЕ · УЛЮБЛЕНЕ';}
     if(fixed&&scr==='revisitL'){marks={0:-1};kickF='ПОШУК · «ГОЛ»';}
-    const v2=!!p.v2;
+    const v2=p.v2!==false;
     const idx=s.idx;
     const v={bare,notBare:!bare,fW:bare?'100%':'406px',fH:bare?'100%':'860px',fP:bare?'0':'8px',fBg:bare?'transparent':'#0B0706',fR:bare?'0':'62px',fSh:bare?'none':'0 0 0 1.5px #3A2C27,0 30px 70px rgba(20,12,10,.35)',iR:bare?'0':'54px',pH:H+'px',hintB:bare?'34px':'96px',toastB:bare?'84px':'140px',back:()=>p.onBack&&p.onBack(),th:p.theme||'light',rmAttr:rm?'1':'0',known,learn,tut,curW:WORDS[idx].w};
     const tr=(drag||s.snap)?'none':(rm?'transform .2s ease':'transform .42s cubic-bezier(.2,1,.3,1)');
@@ -207,13 +217,17 @@ class Component extends DCLogic {
       const L=w.w.replace(/\u0301/g,'').length;
       const hx=cur?dx:0;
       const tf=cur?(rm?`translate(${hx*.35}px,${off+dy}px)`:`translate(${hx}px,${off+dy+Math.abs(hx)*.04}px) rotate(${hx/16}deg)`):`translate(0,${off+dy}px)`;
-      return {...w,kick:cur&&kickF?kickF:w.kick,wFs:L>11?'32px':'44px',tf,tr,z:cur?3:2,bg:BG[0],lift:cur&&drag?'18px':'8px',
+      return {...w,kick:String(cur&&kickF?kickF:w.kick).replace(/(\d+) (СІЧНЯ|ЛЮТОГО|БЕРЕЗНЯ|КВІТНЯ|ТРАВНЯ|ЧЕРВНЯ|ЛИПНЯ|СЕРПНЯ|ВЕРЕСНЯ|ЖОВТНЯ|ЛИСТОПАДА|ГРУДНЯ)/,(m,d,mo)=>d+'.'+(['СІЧНЯ','ЛЮТОГО','БЕРЕЗНЯ','КВІТНЯ','ТРАВНЯ','ЧЕРВНЯ','ЛИПНЯ','СЕРПНЯ','ВЕРЕСНЯ','ЖОВТНЯ','ЛИСТОПАДА','ГРУДНЯ'].indexOf(mo)+1)),wFs:Math.min(52,Math.floor(296/(L*.8)))+'px',tf,tr,z:cur?3:2,bg:BG[0],lift:cur&&drag?'18px':'8px',
         kOp:cur&&!tut?kOp:0,lOp:cur&&!tut?lOp:0,kX:((1-(cur?kOp:0))*-100)+'%',lX:((1-(cur?lOp:0))*100)+'%',
         tKnow:cur&&tut?'tuKnow3 8.4s infinite':'none',tLearn:cur&&tut?'tuLearn3 8.4s infinite':'none',
         wrapAnim:tut?(cur?'tuCard3 8.4s cubic-bezier(.45,0,.25,1) infinite':'tuNext3 8.4s cubic-bezier(.45,0,.25,1) infinite'):(cur&&m&&s.nudge&&!drag?'vNudge 1.1s .55s ease-in-out both':'none'),
         marked:!!m&&!(cur&&drag&&(s.ax==='x'||fixed)),mTxt:m>0?'✓ ЗНАЮ':(v2?'НЕ ЗНАЮ':'У «ВЧУ»'),mBg:m>0?'#140C0A':'#FFF4E6',mFg:m>0?'#FFF4E6':'#140C0A',mSh:m>0?'0 4px 0 rgba(20,12,10,.4)':'inset 0 0 0 3px #140C0A,0 4px 0 rgba(20,12,10,.4)',
         favFg:fav?'#FF3B2F':'#FFF4E6',favFill:fav?'currentColor':'none',favAnim:fav?'slPop .35s both':'none',
-        colFill:col?'currentColor':'none',colD2:col?'M9 10.5l2.2 2.2L15.5 8':'M12 7v6M9 10h6',colS2:col?'#140C0A':'currentColor',colAnim:col?'slPop .35s both':'none'};});
+        colFill:col?'currentColor':'none',colD2:col?'M9 10.5l2.2 2.2L15.5 8':'M12 7v6M9 10h6',colS2:col?'#140C0A':'currentColor',colAnim:col?'slPop .35s both':'none',
+        ...(()=>{const TB=[['mean','Суть',w.d],['ex','Приклад',w.ex],['rel','Зв’язки',w.syn],['hist','Історія',w.hist]].filter(t=>t[2]);const ct=(s.ctab&&s.ctab[i])||'mean',cur2=TB.find(t=>t[0]===ct)||TB[0];
+          return {catN:String(w.cat||'').split(' · ')[0],tabN:TB.length,isEx:cur2[0]==='ex',isPlain:cur2[0]!=='ex',tTxt:cur2[2],tFs:String(cur2[2]).length>160?'17px':'21px',
+            tabs:TB.map(([k,n])=>{const on=k===cur2[0];return {n,on:on?1:0,fg:on?'var(--ink)':'var(--mute)',font:on?'800 15px/1 Onest,sans-serif':'600 15px/1 Onest,sans-serif',onClick:()=>this.setState(st=>({ctab:{...(st.ctab||{}),[i]:k}}))};})};})()};});
+    v.cTop=bare?'114px':'108px';v.cBot='26px';
     v.hintUp=!tut&&!!marks[idx]&&!drag&&idx<WORDS.length-1&&!s.busy;
     v.down=e=>{if(tut||s.busy)return;this.sx=e.clientX;this.sy=e.clientY;try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}this.setState({drag:true,dx:0,dy:0,ax:null,touched:true});};
     v.move=e=>{if(this.sx==null)return;const ddx=e.clientX-this.sx,ddy=e.clientY-this.sy;let ax=this.state.ax;if(!ax&&(Math.abs(ddx)>8||Math.abs(ddy)>8))ax=Math.abs(ddx)>Math.abs(ddy)?'x':'y';if(ax==='x')this.setState({ax,dx:ddx,dy:0});else if(ax==='y'){const atEdge=(ddy>0&&this.state.idx===0)||(ddy<0&&this.state.idx===this.W.length-1);this.setState({ax,dy:atEdge?ddy*.25:ddy,dx:0});}};
@@ -222,13 +236,13 @@ class Component extends DCLogic {
     v.toggleFav=()=>this.setState(x=>({fav:{...x.fav,[x.idx]:!x.fav[x.idx]},touched:true}));
     v.toggleCol=()=>this.setState(x=>({col:{...x.col,[x.idx]:!x.col[x.idx]},touched:true}));
     v.tutDone=()=>{this.setState({tutOff:true});if(p.onTutDone)p.onTutDone();};
-    v.toastOn=!!toast;v.toastUndo=toast==='know'||toast==='learn';v.toastTxt=v2?({know:'Позначено: знаю',learn:'Позначено: не знаю. Повторимо завтра',mk:'Позначено: знаю',ml:'Позначено: не знаю',m0:'Позначку знято'})[toast]:(toast==='learn'?'Додав у «Вчу» · повторимо завтра':'Знаю ✓ · +1 до підтверджених');
+    v.toastOn=!!toast;v.toastUndo=toast==='know'||toast==='learn';v.toastTxt=v2?({know:'Позначено: знаю',learn:'Позначено: не знаю. Повторимо завтра',mk:'Позначено: знаю',ml:'Позначено: не знаю. Повторимо завтра',m0:'Позначку знято'})[toast]:(toast==='learn'?'Додав у «Вчу» · повторимо завтра':'Знаю ✓ · +1 до підтверджених');
     v.undo=()=>{const l=this.state.last;clearTimeout(this.t2);if(!l){this.setState({toast:null,touched:true});return;}const rdir=(this.state.marks[l.idx]||0);this.setState(x=>{const cur=x.marks[l.idx]||0,mk={...x.marks};if(l.prev)mk[l.idx]=l.prev;else delete mk[l.idx];return {toast:null,marks:mk,known:x.known-(cur>0?1:0)+(l.prev>0?1:0),learn:x.learn-(cur<0?1:0)+(l.prev<0?1:0),last:null,...(v2&&!rm&&rdir?{dx:rdir*420,snap:true,ax:null,drag:false}:{})};});if(v2&&!rm&&rdir)requestAnimationFrame(()=>requestAnimationFrame(()=>this.setState({snap:false,dx:0})));};
     const menuOn=!!s.menu||!!menuF;v.menuOn=menuOn;v.openMenu=()=>this.setState({menu:true});v.closeMenu=()=>this.setState({menu:false,touched:true});
     v.dotsBg=menuOn?'#FF3B2F':'#140C0A';v.dotsFg=menuOn?'#140C0A':'#FFF4E6';
     {const cm=marks[idx]||0,CK='M5 12.5l4.5 4.5L19 7',CL='M6 3h12v18l-6-4.5L6 21z',CX='M6 6l12 12M18 6 6 18';
      const mi=!v2?[]:cm===0?[['Знаю',CK,'',()=>this.setMark(1)],['Не знаю',CL,'',()=>this.setMark(-1)]]:cm>0?[['Змінити на «Не знаю»',CL,'',()=>this.setMark(-1)],['Зняти позначку',CX,'',()=>this.setMark(0)]]:[['Змінити на «Знаю»',CK,'',()=>this.setMark(1)],['Зняти позначку',CX,'',()=>this.setMark(0)]];
-     const all=mi.map(m=>({n:m[0],d1:m[1],d2:m[2],onClick:m[3],bg:'var(--sf2)'})).concat(MENU.map(m=>({n:m[0],d1:m[1],d2:m[2],onClick:()=>this.setState({menu:false}),bg:'transparent'})));
+     const all=mi.map(m=>({n:m[0],d1:m[1],d2:m[2],onClick:m[3],bg:'var(--sf2)'})).concat(MENU.map((m,mi2)=>({n:m[0],d1:m[1],d2:m[2],onClick:()=>{this.setState({menu:false});const cw=((this.W||[])[idx]||{});this.props.onAction&&this.props.onAction(['share','hide','report'][mi2],{w:cw.w,cat:String(cw.cat||'').split(' · ')[0]});},bg:'transparent'})));
      v.menu=all.map((m,i)=>({...m,bt:i?'1px solid var(--line)':'0'}));}
     v.tabs=[['feed','Стрічка'],['games','Ігри'],['saved','Збережене'],['profile','Профіль']].map(([id,n])=>({n,ic:TABI[id],c:id==='feed'?'var(--ink)':'var(--mute)',on:id==='feed'?1:0}));
     return v;

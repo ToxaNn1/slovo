@@ -42,8 +42,8 @@
       <div style="width:158px;height:158px;border-radius:24px;background:#FF3B2F;color:#140C0A;padding:14px;display:flex;flex-direction:column;justify-content:space-between;animation:slPop .4s .08s both"><span style="font:800 8px/1.3 Unbounded,sans-serif;letter-spacing:1.2px">КОЛЕКЦІЯ · ОСІННІ СЛОВА</span><span style="font:900 17px/1 Unbounded,sans-serif">Хурделиця</span></div>
     </div>
     <div style="position:relative;display:flex;gap:22px">
-      <div style="width:158px;height:158px;border-radius:24px;background:var(--glass);padding:14px;display:flex;flex-direction:column;justify-content:space-between;animation:slPop .4s .16s both"><span style="font:800 8px/1 Unbounded,sans-serif;letter-spacing:1.2px;color:var(--mute)">УЛЮБЛЕНЕ</span><span style="font:600 13px/1.3 Onest">Додайте слова в Улюблене</span></div>
-      <div style="width:158px;height:158px;border-radius:24px;background:var(--glass);padding:14px;display:flex;flex-direction:column;justify-content:space-between;animation:slPop .4s .24s both"><span style="font:800 8px/1 Unbounded,sans-serif;letter-spacing:1.2px;color:var(--mute)">КОЛЕКЦІЯ</span><span style="font:600 13px/1.3 Onest">Оберіть колекцію для віджета</span></div>
+      <div style="width:158px;height:158px;border-radius:24px;background:var(--glass);padding:14px;display:flex;flex-direction:column;justify-content:space-between;animation:slPop .4s .16s both"><span style="font:800 8px/1 Unbounded,sans-serif;letter-spacing:1.2px;color:var(--mute)">УЛЮБЛЕНЕ</span><span style="font:600 13px/1.3 Onest">Додай слова в Улюблене</span></div>
+      <div style="width:158px;height:158px;border-radius:24px;background:var(--glass);padding:14px;display:flex;flex-direction:column;justify-content:space-between;animation:slPop .4s .24s both"><span style="font:800 8px/1 Unbounded,sans-serif;letter-spacing:1.2px;color:var(--mute)">КОЛЕКЦІЯ</span><span style="font:600 13px/1.3 Onest">Обери колекцію для віджета</span></div>
     </div>
     <div style="position:relative;height:158px;border-radius:24px;background:var(--glass);padding:16px;display:flex;align-items:center;gap:14px;animation:slPop .4s .32s both"><dc-import name="Rupor" state="sleep" size="{{ 90 }}" motion="none" hint-size="90px,68px"></dc-import><div style="display:flex;flex-direction:column;gap:6px"><span style="font:800 9px/1 Unbounded,sans-serif;letter-spacing:1.2px;color:var(--mute)">РІДКІСНЕ СЛОВО</span><span style="font:800 17px/1.2 Unbounded,sans-serif">Слово дня переглянуто</span></div></div>
   </sc-if>
@@ -159,7 +159,7 @@ class Component extends DCLogic {
     const v={th:this.props.theme||'light',rmAttr:this.props.reduceMotion?'1':'0'};
     v['is_'+s]=true;
     v.homeOn=s==='o1'||s==='o2';v.webOn=s==='o4'||s==='o6';
-    v.pushes=[['зараз','Серія під загрозою: зазирніть хоч на хвилинку','23 дні поспіль — шкода втратити через один вечір.'],['19:00','Ціль ще не виконана','Дві картки — і день зараховано.'],['вчора','Ми зупиняємо нагадування','Повертайтеся, коли захочете. Слова чекатимуть.']].map(([t,h,b],i)=>({t,h,b,anim:'slToastD .5s '+(.1+i*.12)+'s cubic-bezier(.2,.9,.3,1.1) both'}));
+    v.pushes=[['зараз','Серія під загрозою: зазирни хоч на хвилинку','23 дні поспіль — шкода втратити через один вечір.'],['19:00','Ціль дня ще відкрита: кілька слів — і готово.','Дві картки — і день зараховано.'],['учора','Нагадування на паузі. Слова нікуди не дінуться — повертайся, коли захочеш.','Повертайся, коли захочеш. Слова чекатимуть.']].map(([t,h,b],i)=>({t,h,b,anim:'slToastD .5s '+(.1+i*.12)+'s cubic-bezier(.2,.9,.3,1.1) both'}));
     v.words=[['Заграва','червоне світло на небі'],['Хурделиця','снігова буря'],['Лелітка','блискітка'],['Оболонь','низький луг біля річки'],['Видноколо','обрій']].map(([w,m])=>({w,m}));
     return v;
   }

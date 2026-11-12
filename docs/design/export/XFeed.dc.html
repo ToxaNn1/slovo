@@ -40,7 +40,7 @@
 <sc-if value="{{ is_f1 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:slCasc .4s .1s both">
-    <div style="display:flex;gap:8px;align-items:center"><span style="padding:7px 10px;background:var(--ink);color:var(--bg);font:800 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:skewX(-10deg)">ВИПРАВЛЕННЯ</span><span style="font:600 13px/1 Onest;color:var(--mute)">калька · У розмові</span></div>
+    <div style="display:flex;gap:8px;align-items:center"><span style="padding:7px 10px;background:var(--ink);color:var(--bg);font:800 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:skewX(-10deg)">ВИПРАВЛЕННЯ</span><span style="font:600 13px/1 Onest;color:var(--mute)">калька · Кальки</span></div>
     <div style="display:flex;flex-direction:column;gap:6px"><span style="font:600 12px/1 Onest;color:var(--mute);letter-spacing:.5px">Так часто кажуть</span>
       <span style="position:relative;align-self:flex-start;font:800 24px/1.1 Unbounded,sans-serif;color:var(--mute)">приймати участь<span style="position:absolute;left:-4px;right:-4px;top:50%;height:4px;background:#FF3B2F;transform:rotate(-4deg);animation:slSlash .4s .5s both"></span></span></div>
     <div style="height:2px;background:var(--line)"></div>
@@ -79,14 +79,14 @@
 <sc-if value="{{ is_f3 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:22px 20px;display:flex;flex-direction:column;gap:16px;animation:slCasc .4s .1s both">
-    <div style="display:flex;gap:8px;align-items:center"><span style="padding:7px 10px;background:var(--ink);color:var(--bg);font:800 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:skewX(-10deg)">ВИПРАВЛЕННЯ</span><span style="font:600 13px/1 Onest;color:var(--mute)">суржик · У магазині</span></div>
+    <div style="display:flex;gap:8px;align-items:center"><span style="padding:7px 10px;background:var(--ink);color:var(--bg);font:800 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:skewX(-10deg)">ВИПРАВЛЕННЯ</span><span style="font:600 13px/1 Onest;color:var(--mute)">суржик · Суржик</span></div>
     <span style="font:900 26px/1.1 Unbounded,sans-serif">Як правильно?</span>
     <span style="font:500 15px/1.4 Onest;color:var(--mute)">замість «скіко»</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <button style="height:64px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:800 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--edge)">скільки</button>
       <button style="height:64px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:800 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--edge)">скільки ж</button>
     </div>
-    <button style="height:56px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px)">ПОКАЗАТИ</button>
+    <button style="height:56px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px)">ВІДПОВІДЬ</button>
   </div>
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:slCasc .4s .25s both">
     <span style="align-self:flex-start;padding:7px 10px;background:var(--ink);color:var(--bg);font:800 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:skewX(-10deg)">ШВИДКЕ ПИТАННЯ</span>
@@ -104,12 +104,12 @@
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="position:relative;height:380px;border-radius:28px 28px 0 0;background:#FF3B2F;color:#140C0A;clip-path:polygon(0 0,100% 0,100% 90%,0 100%);overflow:hidden;padding:24px 22px;display:flex;flex-direction:column;gap:12px;animation:slCasc .4s .05s both">
     <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
-    <div style="position:absolute;right:-30px;top:-60px;font:900 380px/1 Unbounded,sans-serif;color:#FFF4E6">20</div>
+    <div style="position:absolute;right:-10px;top:-60px;font:900 380px/1 Unbounded,sans-serif;color:#FFF4E6">3</div>
     <span style="position:relative;font:800 12px/1 Unbounded,sans-serif;letter-spacing:2px">ДЕННА ЦІЛЬ</span>
-    <span style="position:relative;font:900 38px/.98 Unbounded,sans-serif;letter-spacing:-1.5px;width:240px">Денну ціль виконано!</span>
-    <div style="position:relative;display:flex;align-items:center;gap:10px;width:220px"><div style="flex:1;height:12px;background:rgba(20,12,10,.2);transform:skewX(-20deg)"><div style="height:100%;background:#140C0A;transform-origin:left;animation:slGrow .8s .4s cubic-bezier(.2,.8,.2,1) both"></div></div><span style="font:800 13px/1 Unbounded,sans-serif">20/20 XP</span></div>
+    <span style="position:relative;font:900 38px/.98 Unbounded,sans-serif;letter-spacing:-1.5px;width:240px">Ціль дня виконано! Завтра нова — і серія росте.</span>
+    <div style="position:relative;display:flex;align-items:center;gap:10px;width:220px"><div style="flex:1;height:12px;background:rgba(20,12,10,.2);transform:skewX(-20deg)"><div style="height:100%;background:#140C0A;transform-origin:left;animation:slGrow .8s .4s cubic-bezier(.2,.8,.2,1) both"></div></div><span style="font:800 13px/1 Unbounded,sans-serif">3/3 слова</span></div>
     <div style="position:absolute;left:18px;bottom:44px"><dc-import name="Rupor" state="celebrate" on-red="{{ true }}" size="{{ 130 }}" hint-size="130px,98px"></dc-import></div>
-    <button style="position:absolute;right:20px;bottom:56px;height:54px;padding:0 22px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 14px/1 Unbounded,sans-serif">ГОРТАТИ ДАЛІ</button>
+    <button style="position:absolute;right:20px;bottom:56px;height:54px;padding:0 22px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ГОРТАТИ ДАЛІ</button>
   </div>
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:18px 20px;display:flex;flex-direction:column;gap:6px;animation:slCasc .4s .3s both;opacity:.7">
     <span style="font:600 12px/1 Onest;color:var(--mute)">Наступна картка</span><span style="font:800 20px/1.1 Unbounded,sans-serif">Лелітка</span>
@@ -120,19 +120,19 @@
 <sc-if value="{{ is_f5 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:16px;animation:slCasc .4s .1s both">
-    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:900 22px/1 Unbounded,sans-serif">Ваш тиждень</span><span style="font:500 13px/1 Onest;color:var(--mute)">26.10–1.11</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:900 22px/1 Unbounded,sans-serif">Твій тиждень</span><span style="font:500 13px/1 Onest;color:var(--mute)">26.10–1.11</span></div>
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
       <div style="padding:12px 10px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:6px;animation:slPop .35s .2s both"><span style="font:900 24px/1 Unbounded,sans-serif">48</span><span style="font:500 12px/1.2 Onest;color:var(--mute)">переглянуто</span></div>
       <div style="padding:12px 10px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:6px;animation:slPop .35s .26s both"><span style="font:900 24px/1 Unbounded,sans-serif">9</span><span style="font:500 12px/1.2 Onest;color:var(--mute)">збережено</span></div>
-      <div style="padding:12px 10px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:6px;animation:slPop .35s .32s both"><span style="font:900 24px/1 Unbounded,sans-serif">31</span><span style="font:500 12px/1.2 Onest;color:var(--mute)">знаю</span></div>
+      <div style="padding:12px 10px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:6px;animation:slPop .35s .32s both"><span style="font:900 24px/1 Unbounded,sans-serif">31</span><span style="font:500 12px/1.2 Onest;color:var(--mute)">«Знаю»</span></div>
       <div style="padding:12px 10px;border-radius:14px;background:#FF3B2F;color:#140C0A;display:flex;flex-direction:column;gap:6px;animation:slPop .35s .38s both"><span style="font:900 24px/1 Unbounded,sans-serif">23</span><span style="font:600 12px/1.2 Onest">серія</span></div>
       <div style="padding:12px 10px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:6px;animation:slPop .35s .44s both"><span style="font:900 24px/1 Unbounded,sans-serif">340</span><span style="font:500 12px/1.2 Onest;color:var(--mute)">XP</span></div>
-      <div style="padding:12px 10px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:6px;animation:slPop .35s .5s both"><span style="font:900 24px/1 Unbounded,sans-serif">5/7</span><span style="font:500 12px/1.2 Onest;color:var(--mute)">дні з ціллю</span></div>
+      <div style="padding:12px 10px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:6px;animation:slPop .35s .5s both"><span style="font:900 24px/1 Unbounded,sans-serif">5/7</span><span style="font:500 12px/1.2 Onest;color:var(--mute)">ціль виконано</span></div>
     </div>
     <button style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОТОВО</button>
   </div>
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:slCasc .4s .25s both">
-    <span style="font:900 19px/1.15 Unbounded,sans-serif">Пам’ятаєте вчорашнє слово?</span>
+    <span style="font:900 19px/1.15 Unbounded,sans-serif">Пам’ятаєш учорашнє слово?</span>
     <span style="font:800 26px/1 Unbounded,sans-serif;color:#FF3B2F">Оболонь</span>
     <div style="display:flex;flex-direction:column;gap:8px">
       <div style="height:50px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 16px;font:600 15px/1 Onest">низький луг біля річки</div>
@@ -148,11 +148,11 @@
   <div style="border-radius:24px;background:var(--sf2);padding:24px 20px 20px;display:flex;flex-direction:column;gap:14px;animation:slCasc .4s .1s both">
     <dc-import name="Rupor" state="sleep" size="{{ 110 }}" hint-size="110px,83px"></dc-import>
     <span style="font:900 24px/1.1 Unbounded,sans-serif">Може, на сьогодні досить?</span>
-    <span style="font:400 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">Ви вже переглянули 40 карток. Рідкісні слова краще засвоюються невеликими порціями.</span>
-    <button style="height:54px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОРТАТИ ДАЛІ</button>
+    <span style="font:400 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">Уже 40 карток позаду. Рідкісні слова краще засвоюються невеликими порціями.</span>
+    <button style="height:54px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ЩЕ ОДНЕ СЛОВО</button>
   </div>
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:12px;animation:slCasc .4s .25s both">
-    <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:40px;height:40px;border-radius:11px;background:#FF3B2F;display:flex;align-items:center;justify-content:center;overflow:hidden"><svg width="100%" height="100%" viewBox="0 0 100 100" style="display:block;flex:none"><polygon points="10,27 90,9 90,91 10,73" fill="#140C0A"></polygon><path d="M65.5,40 C65.5,33.5 59.5,30.5 52.5,30.5 C45.5,30.5 40,33.5 40,39.5 C40,46 47,47.2 53,48.8 C59.5,50.5 66,52.5 66,59.8 C66,66.5 60,69.5 52.5,69.5 C44.5,69.5 39,66.2 39,59.5" fill="none" stroke="#FF3B2F" stroke-width="11.5" stroke-linecap="butt"></path></svg></span><span style="font:900 19px/1.15 Unbounded,sans-serif">Надсилати слово дня?</span></div>
+    <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:40px;height:40px;border-radius:11px;background:#FF3B2F;display:flex;align-items:center;justify-content:center;overflow:hidden"><svg width="100%" height="100%" viewBox="0 0 100 100" style="display:block;flex:none"><polygon points="10,27 90,9 90,91 10,73" fill="#140C0A"></polygon><path d="M65.5,40 C65.5,33.5 59.5,30.5 52.5,30.5 C45.5,30.5 40,33.5 40,39.5 C40,46 47,47.2 53,48.8 C59.5,50.5 66,52.5 66,59.8 C66,66.5 60,69.5 52.5,69.5 C44.5,69.5 39,66.2 39,59.5" fill="none" stroke="#FF3B2F" stroke-width="11.5" stroke-linecap="butt"></path></svg></span><span style="font:900 19px/1.15 Unbounded,sans-serif">Слово дня само прийде</span></div>
     <span style="font:400 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">Зранку слово дня, увечері коротке нагадування. Не більше двох сповіщень на день.</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <button style="height:52px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ПІЗНІШЕ</button>
@@ -169,16 +169,15 @@
     <span style="position:relative;font:800 12px/1 Unbounded,sans-serif;letter-spacing:2px;opacity:.7">НОВИЙ РІВЕНЬ</span>
     <span style="position:relative;font:900 26px/1.05 Unbounded,sans-serif;width:220px">Рівень 3 — Знавець</span>
     <span style="position:relative;font:400 15px/1.4 Onest;opacity:.8;width:230px">Новий рівень! Так тримати.</span>
-    <button style="position:relative;align-self:flex-start;height:48px;padding:0 20px;border-radius:14px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;font:900 13px/1 Unbounded,sans-serif">ГОТОВО</button>
+    <button style="position:relative;align-self:flex-start;height:48px;padding:0 20px;border-radius:14px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ГОТОВО</button>
   </div>
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:slCasc .4s .25s both">
-    <span style="font:900 20px/1.1 Unbounded,sans-serif">Ваша денна ціль</span>
-    <span style="font:400 15px/1.45 Onest;color:var(--mute)">Скільки XP збирати щодня. Поки не оберете — 20.</span>
-    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
-      <div style="height:64px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font:900 20px/1 Unbounded,sans-serif">10</span><span style="font:500 11px/1 Onest;color:var(--mute)">XP</span></div>
-      <div style="height:64px;border-radius:14px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;animation:slPop .35s .4s both"><span style="font:900 20px/1 Unbounded,sans-serif">20</span><span style="font:600 11px/1 Onest">XP</span></div>
-      <div style="height:64px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font:900 20px/1 Unbounded,sans-serif">30</span><span style="font:500 11px/1 Onest;color:var(--mute)">XP</span></div>
-      <div style="height:64px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font:900 20px/1 Unbounded,sans-serif">50</span><span style="font:500 11px/1 Onest;color:var(--mute)">XP</span></div>
+    <span style="font:900 20px/1.1 Unbounded,sans-serif">Твоя денна ціль</span>
+    <span style="font:400 15px/1.45 Onest;color:var(--mute)">Ціль тримає серію: виконаєш її — день зараховано. Обери свою.</span>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+      <div style="height:64px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font:900 20px/1 Unbounded,sans-serif">1</span><span style="font:500 11px/1 Onest;color:var(--mute)">слово</span></div>
+      <div style="height:64px;border-radius:14px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;animation:slPop .35s .4s both"><span style="font:900 20px/1 Unbounded,sans-serif">3</span><span style="font:600 11px/1 Onest">слова</span></div>
+      <div style="height:64px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font:900 20px/1 Unbounded,sans-serif">5</span><span style="font:500 11px/1 Onest;color:var(--mute)">слів</span></div>
     </div>
     <button style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОТОВО</button>
   </div>
@@ -188,7 +187,7 @@
 <sc-if value="{{ is_f8 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:slCasc .4s .1s both">
-    <span style="font:900 20px/1.1 Unbounded,sans-serif">Що вам цікаво?</span>
+    <span style="font:900 20px/1.1 Unbounded,sans-serif">Що тобі цікаво?</span>
     <div style="display:flex;flex-wrap:wrap;gap:8px">
       <span style="padding:12px 14px;border-radius:12px;background:var(--ink);color:var(--bg);font:600 14px/1 Onest">Навчаюсь</span>
       <span style="padding:12px 14px;border-radius:12px;background:var(--sf2);font:600 14px/1 Onest">Працюю</span>
@@ -203,9 +202,9 @@
     <button style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОТОВО</button>
   </div>
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:12px;animation:slCasc .4s .25s both">
-    <span style="font:900 20px/1.1 Unbounded,sans-serif">Який у вас словниковий запас?</span>
+    <span style="font:900 20px/1.1 Unbounded,sans-serif">Який у тебе словниковий запас?</span>
     <div style="display:flex;flex-direction:column;border-radius:14px;border:1px solid var(--line);overflow:hidden">
-      <div style="display:flex;align-items:center;gap:12px;padding:15px 14px;font:600 15px/1.2 Onest"><span style="flex:none;width:22px;height:22px;border-radius:50%;border:2.5px solid var(--mute)"></span>Знаю мало рідкісних слів</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 14px;font:600 15px/1.2 Onest"><span style="flex:none;width:22px;height:22px;border-radius:50%;border:2.5px solid var(--mute)"></span>Поки небагато</div>
       <div style="display:flex;align-items:center;gap:12px;padding:15px 14px;border-top:1px solid var(--line);font:600 15px/1.2 Onest;background:var(--sf2)"><span style="flex:none;width:22px;height:22px;border-radius:50%;border:7px solid #FF3B2F"></span>Знаю чимало</div>
     </div>
   </div>
@@ -215,16 +214,16 @@
 <sc-if value="{{ is_f9 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:12px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="border-radius:22px;background:var(--sf);border:1px solid var(--line);padding:18px 20px;display:flex;align-items:center;gap:14px;animation:slCasc .4s .1s both">
-    <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 17px/1.15 Unbounded,sans-serif">Перевірте свій рівень</span><span style="font:400 14px/1.35 Onest;color:var(--mute)">10 слів — і ми підберемо рідкість саме для вас</span></div>
-    <button style="flex:none;height:46px;padding:0 16px;border-radius:13px;background:var(--ink);color:var(--bg);font:900 12px/1 Unbounded,sans-serif">ВІДКРИТИ</button>
+    <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 17px/1.15 Unbounded,sans-serif">Перевір свій рівень</span><span style="font:400 14px/1.35 Onest;color:var(--mute)">10 слів, хвилина, лише «Знаю» чи «Не знаю» — і Стрічка підбере рідкість саме для тебе.</span></div>
+    <button style="flex:none;height:46px;padding:0 16px;border-radius:13px;background:var(--ink);color:var(--bg);font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ЗАРАЗ</button>
   </div>
   <div style="border-radius:22px;background:var(--sf);border:1px solid var(--line);padding:18px 20px;display:flex;align-items:center;gap:14px;animation:slCasc .4s .2s both">
-    <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 17px/1.15 Unbounded,sans-serif">Перегляньте свій Мікс</span><span style="font:400 14px/1.35 Onest;color:var(--mute)">Рідкість 2–4 · 9 категорій · 4 типи карток</span></div>
-    <button style="flex:none;height:46px;padding:0 16px;border-radius:13px;background:var(--ink);color:var(--bg);font:900 12px/1 Unbounded,sans-serif">ВІДКРИТИ</button>
+    <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 17px/1.15 Unbounded,sans-serif">Переглянь свій Мікс</span><span style="font:400 14px/1.35 Onest;color:var(--mute)">Налаштуй, що показувати у Стрічці: категорії слів, Виправлення, Фразеологізми, Синонімічні ряди, Поради.</span></div>
+    <button style="flex:none;height:46px;padding:0 16px;border-radius:13px;background:var(--ink);color:var(--bg);font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ЗАРАЗ</button>
   </div>
   <div style="border-radius:24px;background:#FF3B2F;color:#140C0A;padding:22px 20px;display:flex;flex-direction:column;gap:12px;animation:slCasc .4s .3s both">
-    <span style="font:900 22px/1.1 Unbounded,sans-serif">Збережіть свій прогрес</span>
-    <span style="font:500 15px/1.45 Onest;text-wrap:pretty">Увійдіть, щоб серія, рівень і збережені слова не загубилися, якщо зміните телефон.</span>
+    <span style="font:900 22px/1.1 Unbounded,sans-serif">Збережи свій прогрес</span>
+    <span style="font:500 15px/1.45 Onest;text-wrap:pretty">Увійди, щоб серія, рівень і збережені слова не загубилися, якщо зміниш телефон.</span>
     <button style="height:56px;border-radius:15px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ЗБЕРЕГТИ ПРОГРЕС</button>
     <button style="height:40px;font:700 14px/1 Onest;display:flex;align-items:center;justify-content:center">Пізніше</button>
   </div>
@@ -235,7 +234,7 @@
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="position:relative;border-radius:24px;background:var(--sf2);padding:22px 20px;overflow:hidden;display:flex;flex-direction:column;gap:12px;animation:slCasc .4s .1s both">
     <div style="display:flex;align-items:center;gap:14px"><dc-import name="Rupor" state="happy" size="{{ 96 }}" hint-size="96px,72px"></dc-import><span style="font:900 22px/1.1 Unbounded,sans-serif">Тиждень із нами</span></div>
-    <span style="font:400 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">Сім днів, 52 нові слова й жодного пропуску. Так тримати.</span>
+    <span style="font:400 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">Сім днів із SLOVO — і нових слів у запасі вже чимало! Твоя серія — 7 днів поспіль. Завтра чекають нове слово дня і свіжий «Кросворд дня» — повертайся.</span>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
       <span style="height:30px;border-radius:8px;background:#FF3B2F;animation:slPop .3s .2s both"></span><span style="height:30px;border-radius:8px;background:#FF3B2F;animation:slPop .3s .25s both"></span><span style="height:30px;border-radius:8px;background:#FF3B2F;animation:slPop .3s .3s both"></span><span style="height:30px;border-radius:8px;background:#FF3B2F;animation:slPop .3s .35s both"></span><span style="height:30px;border-radius:8px;background:#FF3B2F;animation:slPop .3s .4s both"></span><span style="height:30px;border-radius:8px;background:#FF3B2F;animation:slPop .3s .45s both"></span><span style="height:30px;border-radius:8px;background:#FF3B2F;animation:slPop .3s .5s both"></span>
     </div>
@@ -244,7 +243,7 @@
     <span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:#FF3B2F">СЛОВО ТИЖНЯ СПІЛЬНОТИ</span>
     <span style="font:900 30px/1 Unbounded,sans-serif;letter-spacing:-.5px">Лелітка</span>
     <span style="font:500 16px/1.4 Onest">Блискітка, що мерехтить на світлі.</span>
-    <div style="display:flex;gap:16px;font:600 13px/1 Onest;color:var(--mute)"><span>Знають 412 з 3 910 читачів</span><span>зберегли 1 208</span></div>
+    <div style="display:flex;gap:16px;font:600 13px/1 Onest;color:var(--mute)"><span>«Знаю» — 412 з 3 910 читачів</span><span>до Улюбленого додали 1 208 читачів</span></div>
     <button style="height:50px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ВІДКРИТИ</button>
   </div>
 </div>
@@ -254,8 +253,8 @@
 <div style="position:absolute;inset:0;padding:120px 28px 100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="position:absolute;left:-40px;top:150px;font:900 330px/1 Unbounded,sans-serif;color:var(--sf2)">∞</div>
   <div style="position:relative"><dc-import name="Rupor" state="wait" size="{{ 150 }}" hint-size="150px,113px"></dc-import></div>
-  <span style="position:relative;font:900 26px/1.1 Unbounded,sans-serif;text-wrap:balance">Ви переглянули всі слова</span>
-  <span style="position:relative;font:400 16px/1.45 Onest;color:var(--mute);text-wrap:pretty">Чекайте оновлення. Гортайте далі — почнемо нове коло.</span>
+  <span style="position:relative;font:900 26px/1.1 Unbounded,sans-serif;text-wrap:balance">Усі слова переглянуто</span>
+  <span style="position:relative;font:400 16px/1.45 Onest;color:var(--mute);text-wrap:pretty">Увесь словник — твій. Завтра тут буде нове Слово дня, а повторення прийдуть самі. Гортай далі — починаємо нове коло.</span>
   <svg width="22" height="30" viewBox="0 0 22 30" style="position:relative;animation:slCasc .6s .5s both"><polygon points="0,0 11,10 22,0 22,8 11,18 0,8" fill="#FF3B2F"></polygon><polygon points="0,12 11,22 22,12 22,20 11,30 0,20" fill="var(--mute)"></polygon></svg>
 </div>
 </sc-if>
@@ -273,7 +272,7 @@
   </div>
   <div style="padding:6px 20px 0;display:flex;flex-direction:column;gap:16px">
     <span style="font:500 18px/1.4 Onest">Червоне світло на небі під час сходу чи заходу сонця, від пожежі.</span>
-    <div style="display:flex;gap:16px;font:600 13px/1 Onest;color:var(--mute);animation:slCasc .4s .2s both"><span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:12px;background:#FF3B2F;clip-path:polygon(0 0,100% 30%,100% 70%,0 100%)"></span>Знають 1 284 з 3 910 читачів</span><span>зберегли 312</span></div>
+    <div style="display:flex;gap:16px;font:600 13px/1 Onest;color:var(--mute);animation:slCasc .4s .2s both"><span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:12px;background:#FF3B2F;clip-path:polygon(0 0,100% 30%,100% 70%,0 100%)"></span>«Знаю» — 1 284 з 3 910 читачів</span><span>до Улюбленого додали 312 читачів</span></div>
     <div style="padding:16px;border-radius:18px;background:var(--sf2);display:flex;flex-direction:column;gap:8px;animation:slCasc .4s .3s both"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1px">ПОХОДЖЕННЯ</span><span style="font:400 15px/1.45 Onest;text-wrap:pretty">Від «заграти» в давньому значенні «засвітитися, заіскритися».</span></div>
     <div style="display:flex;flex-direction:column;gap:10px;animation:slCasc .4s .4s both"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1px">ПРИКЛАДИ</span>
       <span style="padding-left:14px;border-left:3px solid #FF3B2F;font:italic 400 15px/1.45 Onest">Над лісом ще довго стояла рожева заграва.</span>
@@ -290,7 +289,7 @@
   <div style="height:12px"></div>
   <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden">
     <div style="padding:16px;font:600 15px/1.2 Onest">Не показувати цей запис</div>
-    <div style="padding:16px;border-top:1px solid var(--line);font:600 15px/1.2 Onest">Не показувати категорію «Природа і погода»</div>
+    <div style="padding:16px;border-top:1px solid var(--line);font:600 15px/1.2 Onest">Не показувати категорію «Природа»</div>
     <div style="padding:16px;border-top:1px solid var(--line);font:600 15px/1.2 Onest">Не показувати Виправлення</div>
     <div style="padding:16px;border-top:1px solid var(--line);font:600 15px/1.2 Onest">Не показувати Фразеологізми</div>
     <div style="padding:16px;border-top:1px solid var(--line);font:600 15px/1.2 Onest">Не показувати Синонімічні ряди</div>
@@ -304,7 +303,7 @@
 <div style="position:absolute;left:14px;right:14px;bottom:40px;z-index:70;display:flex;align-items:center;gap:12px;padding:12px 12px 12px 14px;background:var(--ink);color:var(--bg);clip-path:polygon(0 0,100% 0,97% 100%,0 100%);border-radius:14px 0 0 14px;animation:slToast .35s cubic-bezier(.2,.9,.3,1.1) both">
   <span style="flex:none;width:12px;height:22px;background:#FF3B2F;clip-path:polygon(0 0,100% 25%,100% 100%,0 75%)"></span>
   <span style="flex:1;font:600 14px/1.35 Onest;min-width:0">Фразеологізми приховано</span>
-  <button style="flex:none;height:38px;padding:0 18px 0 12px;border-radius:10px;background:#FF3B2F;color:#140C0A;font:800 12px/1 Unbounded,sans-serif">СКАСУВАТИ</button>
+  <button style="flex:none;height:38px;padding:0 18px 0 12px;border-radius:10px;background:#FF3B2F;color:#140C0A;font:800 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">СКАСУВАТИ</button>
 </div>
 </sc-if>
 

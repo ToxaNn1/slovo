@@ -60,6 +60,13 @@
 @keyframes tuLearn{0%,70%{opacity:0;transform:translateX(100%)}78%,90%{opacity:1;transform:translateX(0)}98%,100%{opacity:0;transform:translateX(30%)}}
 @keyframes tuRowR{0%,8%,50%,100%{background:transparent}14%,44%{background:#FF3B2F}}
 @keyframes tuRowL{0%,58%,100%{background:transparent}64%,94%{background:#FF3B2F}}
+@keyframes vWave{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
+@keyframes vcSyl{0%,100%{color:#140C0A}50%{color:#FFF4E6}}
+@keyframes cxPop{0%{transform:scale(.4) rotate(-8deg)}60%{transform:scale(1.15) rotate(2deg)}100%{transform:none}}
+@keyframes cxShake{0%,100%{transform:none}20%{transform:translateX(-10px) rotate(-2deg)}40%{transform:translateX(9px) rotate(2deg)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+@keyframes cxIn{from{opacity:0;transform:scale(.5)}}
+@keyframes cxFly{0%{transform:none;opacity:1}100%{transform:translateY(-90px) scale(.6);opacity:0}}
+@keyframes cxHand{0%{transform:translate(0,0);opacity:0}10%{opacity:1}30%{transform:translate(-74px,-50px)}55%{transform:translate(0,-96px)}80%{transform:translate(74px,-50px);opacity:1}100%{transform:translate(74px,-50px);opacity:0}}
 </style>
 </helmet>
 <div data-slovo="1" data-th="{{ th }}" data-rm="{{ rmAttr }}" style="width:406px;height:860px;padding:8px;background:#0B0706;border-radius:62px;box-shadow:0 0 0 1.5px #3A2C27,0 30px 70px rgba(20,12,10,.35);font-family:'Onest',sans-serif;flex:none">
@@ -88,11 +95,11 @@
 
 <sc-if value="{{ isOb }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;display:flex;flex-direction:column;animation:slScr .55s cubic-bezier(.2,.8,.2,1)">
-  <div style="position:relative;height:440px;flex:none;background:#FF3B2F;clip-path:polygon(0 0,100% 0,100% 80%,0 100%);overflow:hidden;color:#140C0A">
+  <div style="position:relative;height:{{ obRedH }};flex:none;background:#FF3B2F;clip-path:polygon(0 0,100% 0,100% 80%,0 100%);transition:height .4s cubic-bezier(.2,.8,.2,1);overflow:hidden;color:#140C0A">
     <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
-    <div style="position:absolute;left:10px;top:120px;font:900 80px/.9 Unbounded,sans-serif;letter-spacing:-4px;white-space:nowrap;transform:rotate(-8deg);animation:slFly .6s cubic-bezier(.2,.9,.25,1.15) both;--fx:-120px;--fy:0px">{{ ob.big }}</div>
+    <div style="position:absolute;left:10px;top:120px;font:900 {{ obBigS }}/.9 Unbounded,sans-serif;letter-spacing:-4px;white-space:nowrap;transform:rotate(-8deg);animation:slFly .6s cubic-bezier(.2,.9,.25,1.15) both;--fx:-120px;--fy:0px">{{ ob.big }}</div>
   </div>
-  <div style="position:absolute;right:40px;top:282px;z-index:2;animation:slFly .6s .15s cubic-bezier(.2,.9,.25,1.15) both;--fx:120px;--fy:0px">
+  <div style="position:absolute;right:40px;top:{{ obMasT }};z-index:2;transition:top .4s cubic-bezier(.2,.8,.2,1);animation:slFly .6s .15s cubic-bezier(.2,.9,.25,1.15) both;--fx:120px;--fy:0px">
     <dc-import name="Rupor" state="{{ ob.m }}" on-red="{{ true }}" size="{{ 140 }}" decor="{{ decorName }}" hint-size="140px,105px"></dc-import>
   </div>
   <div style="flex:1;display:flex;flex-direction:column;padding:6px 24px 40px;gap:14px">
@@ -100,7 +107,7 @@
       <sc-for list="{{ obDots }}" as="d" hint-placeholder-count="3"><div style="height:8px;width:{{ d.w }};background:{{ d.bg }};transform:skewX(-20deg);transition:all .3s"></div></sc-for>
     </div>
     <div style="font:800 28px/1.1 Unbounded,sans-serif;letter-spacing:-.5px;text-wrap:balance">{{ ob.t }}</div>
-    <div style="font:400 16px/1.45 Onest,sans-serif;color:var(--mute);text-wrap:pretty">{{ ob.x }}</div>
+    <sc-if value="{{ obHasX }}" hint-placeholder-val="{{ true }}"><div style="font:400 16px/1.45 Onest,sans-serif;color:var(--mute);text-wrap:pretty">{{ ob.x }}</div></sc-if>
     <sc-if value="{{ obGoal }}" hint-placeholder-val="{{ false }}">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px">
         <sc-for list="{{ goals }}" as="gl" hint-placeholder-count="3">
@@ -108,6 +115,18 @@
             <span style="font:900 26px/1 Unbounded,sans-serif">{{ gl.n }}</span><span style="font:600 12px/1 Onest">{{ gl.l }}</span>
           </button>
         </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ obWord }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:6px;padding:16px;border-radius:18px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;flex-direction:column;gap:6px;animation:slCasc .4s .2s both">
+        <span style="font:900 26px/1 Unbounded,sans-serif">Заграва</span>
+        <span style="font:500 13px/1 Onest;color:var(--mute)">за-гра́-ва · ім., ж. р.</span>
+        <span style="font:500 15px/1.4 Onest;text-wrap:pretty">Червоне світло на небі під час сходу чи заходу сонця.</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{ obHasOpts }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:2px">
+        <sc-for list="{{ obOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="min-height:52px;padding:12px 16px;border-radius:16px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};transform:{{ o.tf }};display:flex;align-items:center;text-align:left;font:600 16px/1.3 Onest;transition:transform .08s,box-shadow .08s,background .15s">{{ o.t }}</button></sc-for>
       </div>
     </sc-if>
     <div style="flex:1"></div>
@@ -119,7 +138,7 @@
 <sc-if value="{{ isFeed }}" hint-placeholder-val="{{ true }}">
 <div style="position:absolute;inset:0;overflow-y:auto;padding:54px 0 110px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px 14px">
-    <button onClick="{{ playDaily }}" style="display:flex;align-items:center;gap:8px">
+    <button onClick="{{ playDaily }}" style="display:flex;align-items:center;gap:8px;justify-content:center;text-align:center">
       <span style="display:inline-flex;align-items:center;flex:none;padding:9.2px 11.0px 9.2px 7.9px;background:var(--ink);color:var(--bg);clip-path:polygon(0 16%,100% 0,100% 100%,0 84%);font:900 22px/1 Unbounded,sans-serif;letter-spacing:-.03em;white-space:nowrap">SLOVO</span>
     </button>
     <div style="display:flex;align-items:center;gap:10px">
@@ -136,7 +155,7 @@
       <div style="position:absolute;left:22px;top:24px;font:800 12px/1 Unbounded,sans-serif;letter-spacing:2px">СЛОВО ДНЯ · №312</div>
       <div style="position:absolute;left:20px;top:58px;font:900 50px/.95 Unbounded,sans-serif;letter-spacing:-2px">ЛОВИ<br>СЛОВО!</div>
       <div style="position:absolute;left:22px;top:170px;width:190px;font:600 15px/1.35 Onest;text-wrap:pretty">Рідкісне. Свіже. Твоє на 24 години.</div>
-      <button onClick="{{ reveal }}" style="position:absolute;right:20px;bottom:76px;height:58px;padding:0 24px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 16px/1 Unbounded,sans-serif;letter-spacing:.5px;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(20,12,10,.45)">РОЗКРИТИ</button>
+      <button onClick="{{ reveal }}" style="position:absolute;right:20px;bottom:132px;height:58px;padding:0 24px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 16px/1 Unbounded,sans-serif;letter-spacing:.5px;transition:transform .08s,box-shadow .08s;display:flex;align-items:center;justify-content:center;text-align:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(20,12,10,.45)">РОЗКРИЙ СЛОВО</button>
     </sc-if>
     <sc-if value="{{ heroOpen }}" hint-placeholder-val="{{ false }}">
       <div style="position:absolute;left:22px;top:24px;font:800 12px/1 Unbounded,sans-serif;letter-spacing:2px">СЛОВО ДНЯ · 2.11</div>
@@ -149,19 +168,19 @@
           <span style="display:flex;align-items:center;gap:3px"><sc-for list="{{ rarBars }}" as="b" hint-placeholder-count="5"><span style="width:12px;height:10px;background:{{ b.bg }};transform:skewX(-20deg)"></span></sc-for></span>
         </div>
         <span style="font:600 18px/1.4 Onest;text-wrap:pretty">{{ hw.mean }}</span>
-        <span style="font:700 11px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:#C4271D">РІДКІСТЬ {{ hw.rar }}/5</span>
+        <span style="font:700 11px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:#C4271D">РІДКІСТЬ {{ hw.rar }} З 5</span>
       </div>
-      <button onClick="{{ openWord }}" style="position:absolute;right:20px;bottom:76px;height:58px;padding:0 22px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 15px/1 Unbounded,sans-serif;letter-spacing:.5px;animation:slCasc .4s .9s both;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(20,12,10,.45)">ДО КАРТКИ →</button>
+      <button onClick="{{ openWord }}" style="position:absolute;right:20px;bottom:76px;height:58px;padding:0 22px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 15px/1 Unbounded,sans-serif;letter-spacing:.5px;animation:slCasc .4s .9s both;transition:transform .08s,box-shadow .08s;display:flex;align-items:center;justify-content:center;text-align:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(20,12,10,.45)">ЩЕ ПРО СЛОВО →</button>
     </sc-if>
     <sc-for list="{{ leaves }}" as="lf" hint-placeholder-count="0">
       <div style="position:absolute;left:150px;top:350px;width:13px;height:{{ lf.sz }};background:{{ lf.c }};clip-path:{{ lf.clip }};opacity:0;--lx:{{ lf.lx }};--ly:{{ lf.ly }};animation:{{ lf.anim }}"></div>
     </sc-for>
-    <div style="position:absolute;left:14px;top:318px">
+    <div style="position:absolute;left:4px;top:334px">
       <dc-import name="Rupor" state="{{ heroMascot }}" on-red="{{ true }}" size="{{ 136 }}" decor="{{ decorName }}" hint-size="136px,102px"></dc-import>
     </div>
   </div>
   <div style="padding:22px 20px 0;display:flex;flex-direction:column;gap:12px">
-    <div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font:800 15px/1 Unbounded,sans-serif">Як настрій?</span><span style="font:500 13px/1 Onest;color:var(--mute)">Mood дня</span></div>
+    <div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font:800 15px/1 Unbounded,sans-serif">Як настрій?</span><span style="font:500 13px/1 Onest;color:var(--mute)">Настрій дня</span></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <sc-for list="{{ moods }}" as="m" hint-placeholder-count="4">
         <button onClick="{{ m.onClick }}" style="height:52px;border-radius:14px;background:{{ m.bg }};color:{{ m.fg }};box-shadow:0 4px 0 {{ m.sh }};font:700 15px/1 Onest;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .08s,box-shadow .08s,background .2s" style-active="transform:translateY(3px);box-shadow:0 1px 0 var(--edge)"><span style="width:10px;height:14px;background:{{ m.dot }};clip-path:{{ m.clip }}"></span>{{ m.n }}</button>
@@ -169,9 +188,9 @@
     </div>
   </div>
   <div style="padding:26px 20px 0;display:flex;flex-direction:column">
-    <div style="font:800 15px/1 Unbounded,sans-serif;margin-bottom:6px">Попередні слова</div>
+    <div style="font:800 15px/1 Unbounded,sans-serif;margin-bottom:6px">Минулі Слова дня</div>
     <sc-for list="{{ recent }}" as="r" hint-placeholder-count="4">
-      <button onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);animation:{{ r.anim }};min-width:0;width:100%" style-active="opacity:.6">
+      <button onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);animation:{{ r.anim }};min-width:0;width:100%;justify-content:flex-start;text-align:left" style-active="opacity:.6">
         <span style="width:38px;font:600 12px/1.2 Onest;color:var(--mute);flex:none">{{ r.d }}</span>
         <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
           <span style="font:800 17px/1.1 Unbounded,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.w }}</span>
@@ -236,7 +255,7 @@
           <span style="font:600 18px/1.3 Onest;text-decoration:line-through;text-decoration-color:#FF3B2F;text-decoration-thickness:3px">{{ f.wr }}</span>
         </div>
         <sc-if value="{{ f.off }}" hint-placeholder-val="{{ true }}">
-          <button onClick="{{ f.show }}" style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:0 18px;font:900 13px/1 Unbounded,sans-serif;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.35)">ЯК ПРАВИЛЬНО?</button>
+          <button onClick="{{ f.show }}" style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:0 18px;font:900 13px/1 Unbounded,sans-serif;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.35)">ВІДПОВІДЬ</button>
         </sc-if>
         <sc-if value="{{ f.on }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;flex-direction:column;gap:8px;padding:14px;margin:0 -4px;background:#FF3B2F;color:#140C0A;clip-path:polygon(0 8px,100% 0,100% 100%,0 100%);padding-top:20px;animation:slPop .35s both">
@@ -253,7 +272,7 @@
 
 <sc-if value="{{ isWord }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <dc-import name="XSwipeV" bare="{{ true }}" key="{{ pgKey }}" words="{{ pgWords }}" screen="{{ pgScreen }}" theme="{{ thName }}" reduce-motion="{{ rmOn }}" on-back="{{ back }}" on-tut-done="{{ swTutDone }}" on-mark="{{ pgMark }}" style="position:absolute;inset:0" hint-size="100%,100%"></dc-import>
+  <dc-import name="XSwipeV" bare="{{ true }}" key="{{ pgKey }}" words="{{ pgWords }}" screen="{{ pgScreen }}" theme="{{ thName }}" reduce-motion="{{ rmOn }}" on-back="{{ back }}" on-tut-done="{{ swTutDone }}" on-mark="{{ pgMark }}" on-action="{{ pgAction }}" style="position:absolute;inset:0" hint-size="100%,100%"></dc-import>
 </div>
 </sc-if>
 
@@ -262,7 +281,7 @@
   <div style="position:relative;height:392px;background:{{ catV.bg }};color:{{ catV.fg }};clip-path:polygon(0 0,100% 0,100% 88%,0 100%);overflow:hidden">
     <sc-if value="{{ catV.loud }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div></sc-if>
     <button onClick="{{ back }}" style="position:absolute;left:12px;top:54px;width:44px;height:44px;border-radius:14px;background:{{ catV.btn }};color:{{ catV.btnFg }};display:flex;align-items:center;justify-content:center" style-active="transform:scale(.92)"><svg width="18" height="18" viewBox="0 0 24 24"><polygon points="15,2 19,6 12,12 19,18 15,22 4,12" fill="currentColor"></polygon></svg></button>
-    <button onClick="{{ catV.toggleMix }}" style="position:absolute;right:12px;top:54px;height:44px;padding:0 16px;border-radius:14px;background:{{ catV.mixBg }};color:{{ catV.mixFg }};box-shadow:{{ catV.mixSh }};display:flex;align-items:center;gap:8px;font:900 12px/1 Unbounded,sans-serif;letter-spacing:.5px;transition:background .2s,color .2s" style-active="transform:translateY(3px);box-shadow:none"><span style="display:flex;animation:{{ catV.mixAnim }}"><svg width="14" height="14" viewBox="0 0 26 22"><polygon points="{{ catV.mixIc }}" fill="currentColor"></polygon></svg></span>{{ catV.mixT }}</button>
+    <button onClick="{{ catV.toggleMix }}" style="position:absolute;right:12px;top:54px;height:44px;padding:0 16px;border-radius:14px;background:{{ catV.mixBg }};color:{{ catV.mixFg }};box-shadow:{{ catV.mixSh }};display:flex;align-items:center;gap:8px;font:900 12px/1 Unbounded,sans-serif;letter-spacing:.5px;transition:background .2s,color .2s;justify-content:center;text-align:center" style-active="transform:translateY(3px);box-shadow:none"><span style="display:flex;animation:{{ catV.mixAnim }}"><svg width="14" height="14" viewBox="0 0 26 22"><polygon points="{{ catV.mixIc }}" fill="currentColor"></polygon></svg></span>{{ catV.mixT }}</button>
     <div style="position:absolute;left:22px;top:116px;right:22px;display:flex;flex-direction:column;gap:12px;animation:slCasc .45s .1s both">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="width:34px;height:34px;border-radius:10px;background:{{ catV.tile }};display:flex;align-items:center;justify-content:center"><span style="width:18px;height:18px;background:{{ catV.tileFg }};clip-path:{{ catV.s1 }}"></span></span>
@@ -298,7 +317,7 @@
     <span style="font:900 36px/1 Unbounded,sans-serif;letter-spacing:-1px">ІГРИ</span>
     <span style="display:flex;align-items:center;height:32px;padding:0 12px;border-radius:10px;background:var(--ink);color:var(--bg);font:800 13px/1 Unbounded,sans-serif">{{ xp }} XP</span>
   </div>
-  <button onClick="{{ openCw }}" style="position:relative;display:flex;gap:16px;align-items:center;margin:0 16px;width:calc(100% - 32px);padding:18px;border-radius:22px;background:#FF3B2F;color:#140C0A;box-shadow:0 6px 0 #C4271D;overflow:hidden;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(5px);box-shadow:0 1px 0 #C4271D">
+  <button onClick="{{ openCw }}" style="position:relative;display:flex;gap:16px;align-items:center;margin:0 16px;width:calc(100% - 32px);padding:18px;border-radius:22px;background:#FF3B2F;color:#140C0A;box-shadow:0 6px 0 #C4271D;overflow:hidden;transition:transform .08s,box-shadow .08s;justify-content:center;text-align:center" style-active="transform:translateY(5px);box-shadow:0 1px 0 #C4271D">
     <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.2) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
     <div style="position:relative;display:grid;grid-template-columns:repeat(5,22px);gap:4px;flex:none">
       <sc-for list="{{ cwMini }}" as="c" hint-placeholder-count="25"><span style="width:22px;height:22px;border-radius:5px;background:{{ c.bg }};box-shadow:0 2px 0 {{ c.sh }};font:800 11px/22px Unbounded,sans-serif;text-align:center">{{ c.ch }}</span></sc-for>
@@ -313,7 +332,7 @@
     <div style="padding:26px 20px 0">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:10px;height:14px;background:#FF3B2F;clip-path:polygon(0 0,100% 25%,100% 100%,0 75%)"></span><span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1.5px">{{ gr.t }}</span></div>
       <sc-for list="{{ gr.modes }}" as="m" hint-placeholder-count="3">
-        <button onClick="{{ m.onClick }}" style="display:flex;align-items:center;gap:14px;width:100%;padding:12px 0;border-bottom:1px solid var(--line);animation:{{ m.anim }}" style-active="opacity:.6">
+        <button onClick="{{ m.onClick }}" style="display:flex;align-items:center;gap:14px;width:100%;padding:12px 0;border-bottom:1px solid var(--line);animation:{{ m.anim }};justify-content:center;text-align:center" style-active="opacity:.6">
           <span style="width:46px;height:46px;flex:none;border-radius:13px;background:{{ m.bg }};color:{{ m.fg }};box-shadow:0 4px 0 {{ m.sh }};display:flex;align-items:center;justify-content:center;font:900 15px/1 Unbounded,sans-serif">{{ m.g }}</span>
           <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:700 16px/1.1 Onest">{{ m.n }}</span><span style="font:400 13px/1.2 Onest;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.d }}</span></span>
           <span style="font:800 12px/1 Unbounded,sans-serif;color:var(--mute);flex:none">{{ m.rec }}</span>
@@ -342,11 +361,12 @@
   <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:18px">
     <div style="display:flex;flex-direction:column;gap:8px">
       <span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:2px;color:var(--mute)">{{ gTitle }} · {{ gNum }}</span>
-      <span style="font:800 24px/1.1 Unbounded,sans-serif;max-width:230px;text-wrap:balance">{{ gPrompt }}</span>
+      <sc-if value="{{ gPromptShort }}" hint-placeholder-val="{{ true }}"><span style="font:800 24px/1.1 Unbounded,sans-serif;max-width:230px;text-wrap:balance">{{ gPrompt }}</span></sc-if>
+      <sc-if value="{{ gPromptLong }}" hint-placeholder-val="{{ false }}"><span style="font:600 18px/1.4 Onest,sans-serif;max-width:250px;text-wrap:pretty"><sc-for list="{{ gPromptParts }}" as="p" hint-placeholder-count="1"><span style="text-decoration:{{ p.dec }};text-decoration-color:#FF3B2F;text-decoration-thickness:3px">{{ p.t }}</span></sc-for></span></sc-if>
     </div>
     <dc-import name="Rupor" state="{{ gMascot }}" size="{{ 88 }}" decor="{{ decorName }}" hint-size="88px,66px"></dc-import>
   </div>
-  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px">
+  <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:safe center;gap:12px;padding:10px 0">
     <sc-if value="{{ isStress }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex;justify-content:center;gap:4px;flex-wrap:nowrap">
         <sc-for list="{{ sTiles }}" as="t" hint-placeholder-count="8">
@@ -360,8 +380,9 @@
     </sc-if>
     <sc-if value="{{ isChoose }}" hint-placeholder-val="{{ false }}">
       <sc-for list="{{ cOpts }}" as="o" hint-placeholder-count="2">
-        <button onClick="{{ o.onClick }}" style="position:relative;height:84px;border-radius:18px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};font:800 21px/1 Unbounded,sans-serif;display:flex;align-items:center;padding:0 22px;transform:{{ o.tf }};opacity:{{ o.op }};animation:{{ o.anim }};transition:transform .25s,box-shadow .08s,background .2s;overflow:visible" style-active="transform:translateY(4px)">
-          {{ o.txt }}
+        <button onClick="{{ o.onClick }}" style="position:relative;flex:none;min-height:{{ o.minH }};border-radius:18px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};font:{{ o.font }};display:flex;align-items:{{ o.al }};gap:14px;padding:{{ o.pad }};text-align:left;transform:{{ o.tf }};opacity:{{ o.op }};animation:{{ o.anim }};transition:transform .25s,box-shadow .08s,background .2s;overflow:visible" style-active="transform:translateY(4px)">
+          <sc-if value="{{ o.showKey }}" hint-placeholder-val="{{ false }}"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:{{ o.kb }};color:{{ o.kf }};display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">{{ o.k }}</span></sc-if>
+          <span style="flex:1;min-width:0;text-wrap:pretty;padding-right:{{ o.prR }}"><sc-for list="{{ o.parts }}" as="p" hint-placeholder-count="1"><span style="background:{{ p.bg }};box-shadow:{{ p.sh }};text-decoration:{{ p.dec }};text-decoration-color:#FF3B2F;text-decoration-thickness:2px">{{ p.t }}</span></sc-for></span>
           <sc-if value="{{ o.slash }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:12px;right:12px;top:40px;height:5px;background:#FF3B2F;transform:rotate(-4deg);animation:slSlash .3s ease-out both"></span></sc-if>
           <sc-if value="{{ o.stamp }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:16px;top:14px;width:56px;height:56px;border:4px solid #140C0A;border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(-8deg);animation:slStamp .45s cubic-bezier(.2,.9,.3,1.2) both"><svg width="26" height="22" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#140C0A"></polygon></svg></span></sc-if>
         </button>
@@ -373,7 +394,7 @@
           <sc-for list="{{ pLeft }}" as="p" hint-placeholder-count="4"><button onClick="{{ p.onClick }}" style="height:70px;border-radius:16px;background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.sh }};font:800 14px/1.15 Unbounded,sans-serif;padding:0 12px;display:flex;align-items:center;justify-content:center;text-align:center;transform:{{ p.tf }};opacity:{{ p.op }};animation:{{ p.anim }};transition:transform .2s,box-shadow .08s,background .15s" style-active="transform:translateY(4px)">{{ p.txt }}</button></sc-for>
         </div>
         <div style="display:flex;flex-direction:column;gap:12px">
-          <sc-for list="{{ pRight }}" as="p" hint-placeholder-count="4"><button onClick="{{ p.onClick }}" style="height:70px;border-radius:16px;background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.sh }};font:600 15px/1.25 Onest;padding:0 14px;display:flex;align-items:center;text-wrap:pretty;transform:{{ p.tf }};opacity:{{ p.op }};animation:{{ p.anim }};transition:transform .2s,box-shadow .08s,background .15s" style-active="transform:translateY(4px)">{{ p.txt }}</button></sc-for>
+          <sc-for list="{{ pRight }}" as="p" hint-placeholder-count="4"><button onClick="{{ p.onClick }}" style="height:70px;border-radius:16px;background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.sh }};font:600 15px/1.25 Onest;padding:0 14px;display:flex;align-items:center;text-wrap:pretty;transform:{{ p.tf }};opacity:{{ p.op }};animation:{{ p.anim }};transition:transform .2s,box-shadow .08s,background .15s;justify-content:center;text-align:center" style-active="transform:translateY(4px)">{{ p.txt }}</button></sc-for>
         </div>
       </div>
     </sc-if>
@@ -384,7 +405,7 @@
       <div style="display:flex;justify-content:center;gap:8px;margin-top:22px">
         <sc-for list="{{ aPool }}" as="p" hint-placeholder-count="5"><button onClick="{{ p.onClick }}" style="width:54px;height:60px;border-radius:14px;background:{{ p.bg }};color:var(--ink);box-shadow:{{ p.sh }};font:900 24px/60px Unbounded,sans-serif;text-align:center;opacity:{{ p.op }};transition:transform .08s,box-shadow .08s,opacity .2s" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--edge)">{{ p.ch }}</button></sc-for>
       </div>
-      <button onClick="{{ aUndo }}" style="align-self:center;height:44px;padding:0 18px;border-radius:12px;font:700 14px/1 Onest;color:var(--mute)" style-active="opacity:.6">← Стерти літеру</button>
+      <button onClick="{{ aUndo }}" style="align-self:center;height:44px;padding:0 18px;border-radius:12px;font:700 14px/1 Onest;color:var(--mute);display:flex;align-items:center;justify-content:center;text-align:center" style-active="opacity:.6">← Стерти літеру</button>
     </sc-if>
   </div>
   <sc-if value="{{ gBanner }}" hint-placeholder-val="{{ false }}">
@@ -416,14 +437,14 @@
     <div style="display:flex;flex-direction:column">
       <span style="font:800 15px/1 Unbounded,sans-serif;margin-bottom:4px">Огляд раундів</span>
       <sc-for list="{{ oRows }}" as="r" hint-placeholder-count="5">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);animation:{{ r.anim }}">
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);animation:{{ r.anim }}">
           <span style="width:28px;height:28px;flex:none;border-radius:8px;background:{{ r.bg }};color:{{ r.fg }};display:flex;align-items:center;justify-content:center;font:900 14px/1 Unbounded,sans-serif">{{ r.mark }}</span>
-          <span style="font:600 16px/1.2 Onest;flex:1;min-width:0">{{ r.txt }}</span>
+          <span style="font:600 16px/1.35 Onest;flex:1;min-width:0;padding-top:4px;text-wrap:pretty">{{ r.txt }}</span>
         </div>
       </sc-for>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <button onClick="{{ toGames }}" style="height:62px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--edge)">ДО ІГОР</button>
+      <button onClick="{{ toFeed }}" style="height:62px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--edge)">ДО СТРІЧКИ</button>
       <button onClick="{{ again }}" style="height:62px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 #C4271D">ЩЕ РАЗ!</button>
     </div>
   </div>
@@ -435,27 +456,38 @@
   <div style="display:flex;align-items:center;gap:12px;height:44px">
     <button onClick="{{ toGames }}" style="width:44px;height:44px;border-radius:14px;background:var(--sf2);display:flex;align-items:center;justify-content:center" style-active="transform:scale(.92)"><svg width="18" height="18" viewBox="0 0 24 24"><polygon points="15,2 19,6 12,12 19,18 15,22 4,12" fill="currentColor"></polygon></svg></button>
     <span style="flex:1;font:900 18px/1 Unbounded,sans-serif">КРОСВОРД ДНЯ</span>
-    <button onClick="{{ cwHint }}" style="height:40px;padding:0 14px;border-radius:12px;background:var(--ink);color:var(--bg);font:700 13px/1 Onest" style-active="transform:scale(.95)">Підказка</button>
+    <button onClick="{{ cwHint }}" style="height:40px;padding:0 14px;border-radius:12px;background:var(--ink);color:var(--bg);font:700 13px/1 Onest;display:flex;align-items:center;justify-content:center;text-align:center" style-active="transform:scale(.95)">Підказка</button>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(5,62px);gap:8px;justify-content:center;margin-top:18px">
+  <div style="display:grid;grid-template-columns:repeat(5,54px);gap:7px;justify-content:center;margin-top:16px">
     <sc-for list="{{ cwCells }}" as="c" hint-placeholder-count="25">
-      <button onClick="{{ c.onClick }}" style="position:relative;width:62px;height:62px;border-radius:14px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};font:900 26px/62px Unbounded,sans-serif;text-align:center;transition:background .15s,transform .08s,box-shadow .08s;animation:{{ c.anim }}" style-active="transform:translateY(4px)">
-        <span style="position:absolute;left:6px;top:5px;font:700 10px/1 Onest">{{ c.num }}</span>{{ c.ch }}
+      <button onClick="{{ c.onClick }}" style="position:relative;width:54px;height:54px;border-radius:12px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};font:900 22px/54px Unbounded,sans-serif;text-align:center;transition:background .25s,box-shadow .25s;animation:{{ c.anim }}">
+        <span style="position:absolute;left:6px;top:5px;font:700 10px/1 Onest;color:{{ c.nf }}">{{ c.num }}</span>{{ c.ch }}
       </button>
     </sc-for>
   </div>
-  <div style="display:flex;align-items:center;gap:10px;margin-top:18px;min-height:56px;padding:10px 12px;border-radius:14px;background:var(--ink);color:var(--bg)">
-    <span style="flex:none;min-width:40px;height:34px;padding:0 6px;border-radius:9px;background:#FF3B2F;color:#140C0A;font:900 14px/34px Unbounded,sans-serif;text-align:center">{{ cwClue.id }}</span>
-    <span style="flex:1;min-width:0;font:600 15px/1.3 Onest">{{ cwClue.t }}</span>
-    <button onClick="{{ cwToggle }}" style="flex:none;width:36px;height:36px;border-radius:10px;background:rgba(127,127,127,.25);font:800 16px/1 Unbounded" style-active="transform:scale(.9)">⇆</button>
+  <div style="display:flex;align-items:center;gap:12px;margin-top:14px;height:54px;padding:0 8px;border-radius:16px;background:#140C0A;color:#FFF4E6">
+    <span style="flex:none;min-width:42px;height:38px;padding:0 8px;border-radius:10px;background:#FF3B2F;color:#140C0A;font:900 13px/38px Unbounded,sans-serif;text-align:center">{{ cwClue.id }}</span>
+    <span style="flex:1;min-width:0;font:600 15px/1.25 Onest;text-wrap:pretty">{{ cwClue.t }}</span>
+    <button onClick="{{ cwNext }}" aria-label="Наступне слово" style="flex:none;width:40px;height:38px;border-radius:10px;background:rgba(255,244,230,.12);color:#FFF4E6;display:flex;align-items:center;justify-content:center" style-active="transform:scale(.9)"><svg width="18" height="14" viewBox="0 0 18 14"><polygon points="18,7 11,0 11,4 0,4 0,10 11,10 11,14" fill="currentColor"></polygon></svg></button>
+  </div>
+  <div style="min-height:48px;margin-top:8px;display:flex;align-items:center;justify-content:center;text-align:center">
+    <sc-if value="{{ cwHasPath }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:4px;padding:6px;border-radius:14px;background:{{ cwPvBg }};animation:{{ cwPvAnim }}">
+        <sc-for list="{{ cwPv }}" as="p" hint-placeholder-count="3"><span style="width:34px;height:36px;border-radius:9px;background:{{ p.bg }};color:{{ p.fg }};display:flex;align-items:center;justify-content:center;font:900 18px/1 Unbounded,sans-serif;animation:cxIn .18s both">{{ p.t }}</span></sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ cwNoPath }}" hint-placeholder-val="{{ true }}"><span style="font:500 15px/1 Onest;color:var(--mute)">{{ cwHelp }}</span></sc-if>
   </div>
   <div style="flex:1"></div>
-  <div style="display:flex;flex-direction:column;gap:7px">
-    <sc-for list="{{ kb }}" as="row" hint-placeholder-count="3">
-      <div style="display:flex;justify-content:center;gap:4px">
-        <sc-for list="{{ row }}" as="k" hint-placeholder-count="11"><button onClick="{{ k.onClick }}" style="width:{{ k.w }};height:46px;border-radius:9px;background:var(--tile);box-shadow:0 3px 0 var(--edge);font:700 15px/46px Onest;text-align:center;transition:transform .06s,box-shadow .06s" style-active="transform:translateY(2px);box-shadow:0 1px 0 var(--edge)">{{ k.k }}</button></sc-for>
-      </div>
-    </sc-for>
+  <div style="position:relative;align-self:center;width:260px;height:260px;flex:none">
+    <div style="position:absolute;inset:0;border-radius:50%;background:var(--sf2);box-shadow:inset 0 6px 0 var(--edge)"></div>
+    <div onPointerDown="{{ cwDown }}" onPointerMove="{{ cwMove }}" onPointerUp="{{ cwUp }}" onPointerCancel="{{ cwUp }}" style="position:absolute;inset:0;touch-action:none;cursor:pointer">
+      <svg width="260" height="260" viewBox="0 0 260 260" style="position:absolute;inset:0;pointer-events:none"><polyline points="{{ cwLine }}" fill="none" stroke="{{ cwLineC }}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity=".92"></polyline></svg>
+      <sc-for list="{{ cwWheel }}" as="l" hint-placeholder-count="6">
+        <span style="position:absolute;left:{{ l.x }};top:{{ l.y }};width:62px;height:62px;border-radius:18px;background:{{ l.bg }};color:{{ l.fg }};box-shadow:{{ l.sh }};transform:{{ l.tf }};display:flex;align-items:center;justify-content:center;font:900 26px/1 Unbounded,sans-serif;pointer-events:none;transition:transform .1s,background .12s,box-shadow .1s;animation:{{ l.anim }}">{{ l.t }}</span>
+      </sc-for>
+      <sc-if value="{{ cwShowHand }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:112px;top:196px;width:36px;height:36px;border-radius:50%;background:rgba(20,12,10,.35);border:3px solid #FFF4E6;pointer-events:none;animation:cxHand 2.4s .6s ease-in-out infinite"></span></sc-if>
+    </div>
   </div>
   <sc-if value="{{ cwSolved }}" hint-placeholder-val="{{ false }}">
     <div style="position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;animation:slFade .3s both;z-index:4">
@@ -490,13 +522,13 @@
   </div>
   <div style="display:flex;gap:8px;overflow-x:auto;padding:14px 20px 6px">
     <sc-for list="{{ sTabs }}" as="t" hint-placeholder-count="5">
-      <button onClick="{{ t.onClick }}" style="flex:none;height:38px;padding:0 14px;border-radius:11px;background:{{ t.bg }};color:{{ t.fg }};font:700 14px/1 Onest;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:background .2s" style-active="transform:scale(.95)">{{ t.n }}<span style="font:600 12px/1 Onest;opacity:.7">{{ t.c }}</span></button>
+      <button onClick="{{ t.onClick }}" style="flex:none;height:38px;padding:0 14px;border-radius:11px;background:{{ t.bg }};color:{{ t.fg }};font:700 14px/1 Onest;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:background .2s;justify-content:center;text-align:center" style-active="transform:scale(.95)">{{ t.n }}<span style="font:600 12px/1 Onest;opacity:.7">{{ t.c }}</span></button>
     </sc-for>
   </div>
   <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
     <div style="padding:0 20px">
       <sc-for list="{{ sItems }}" as="r" hint-placeholder-count="5">
-        <button onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 0;border-bottom:1px solid var(--line);animation:{{ r.anim }};min-width:0" style-active="opacity:.6">
+        <button onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 0;border-bottom:1px solid var(--line);animation:{{ r.anim }};min-width:0;justify-content:center;text-align:center" style-active="opacity:.6">
           <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
             <span style="font:800 17px/1.15 Unbounded,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.w }}</span>
             <span style="font:400 14px/1.3 Onest;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.m }}</span>
@@ -544,7 +576,7 @@
     <div style="position:relative;display:flex;flex-direction:column;gap:6px;min-width:0">
       <span style="font:900 21px/1.1 Unbounded,sans-serif">Словолов</span>
       <span style="font:600 14px/1.3 Onest">{{ xp }} / 1000 XP</span>
-      <span style="font:500 13px/1.3 Onest;opacity:.8">ще {{ xpLeft }} до «Словотвора»</span>
+      <span style="font:500 13px/1.3 Onest;opacity:.8">Словотвор: ще {{ xpLeft }} XP</span>
     </div>
   </div>
   <div style="padding:24px 20px 0;display:flex;align-items:flex-end;gap:12px">
@@ -563,14 +595,14 @@
       </sc-for>
     </div>
   </div>
-  <div style="padding:28px 20px 0;display:flex;align-items:baseline;justify-content:space-between"><span style="font:800 15px/1 Unbounded,sans-serif">Бейджі</span><span style="font:600 13px/1 Onest;color:var(--mute)">10 з 21</span></div>
+  <div style="padding:28px 20px 0;display:flex;align-items:baseline;justify-content:space-between"><span style="font:800 15px/1 Unbounded,sans-serif">Відзнаки</span><span style="font:600 13px/1 Onest;color:var(--mute)">{{ badgeCnt }}</span></div>
   <sc-for list="{{ fams }}" as="f" hint-placeholder-count="3">
     <div style="padding:14px 20px 0">
-      <div style="font:600 12px/1 Onest;color:var(--mute);margin-bottom:10px">{{ f.f }}</div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+      <div style="display:flex;justify-content:space-between;font:600 12px/1 Onest;color:var(--mute);margin-bottom:10px"><span>{{ f.f }}</span><span>{{ f.c }}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
         <sc-for list="{{ f.items }}" as="b" hint-placeholder-count="7">
-          <button onClick="{{ b.onClick }}" style="aspect-ratio:1;filter:{{ b.flt }};transition:transform .1s" style-active="transform:scale(.88)">
-            <span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:{{ b.bg }};color:#140C0A;clip-path:{{ b.clip }};font:900 13px/1 Unbounded,sans-serif">{{ b.gl }}</span>
+          <button onClick="{{ b.onClick }}" style="aspect-ratio:1;filter:{{ b.flt }};transition:transform .1s;display:flex;align-items:center;justify-content:center;text-align:center" style-active="transform:scale(.88)">
+            <span style="position:relative;display:block;width:100%;height:100%"><span style="position:absolute;inset:0;clip-path:{{ b.clip }};background:{{ b.ring }}"></span><span style="position:absolute;inset:8%;clip-path:{{ b.clip }};background:{{ b.bg }};display:flex;align-items:center;justify-content:center;color:{{ b.fg }};font:900 {{ b.fs }}/1 Unbounded,sans-serif;letter-spacing:-.5px">{{ b.gl }}</span></span>
           </button>
         </sc-for>
       </div>
@@ -608,7 +640,7 @@
     </div>
   </sc-for>
   <div style="padding:14px 16px 0">
-    <button onClick="{{ askReset }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:16px;border-radius:18px;background:var(--sf);border:1px solid var(--line)" style-active="background:var(--sf2)">
+    <button onClick="{{ askReset }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:16px;border-radius:18px;background:var(--sf);border:1px solid var(--line);justify-content:center;text-align:center" style-active="background:var(--sf2)">
       <span style="flex:none;width:30px;height:30px;border-radius:9px;background:#FF3B2F;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 20 20"><polygon points="0,3 3,0 10,7 17,0 20,3 13,10 20,17 17,20 10,13 3,20 0,17 7,10" fill="#140C0A"></polygon></svg></span>
       <span style="font:700 16px/1 Onest">Скинути прогрес</span>
     </button>
@@ -657,14 +689,41 @@
       <span style="position:relative;display:flex"><span style="display:inline-flex;align-items:center;flex:none;padding:14.3px 17.0px 14.3px 12.2px;background:#140C0A;color:#FFF4E6;clip-path:polygon(0 16%,100% 0,100% 100%,0 84%);font:900 34px/1 Unbounded,sans-serif;letter-spacing:-.03em;white-space:nowrap">SLOVO</span></span>
     </div>
   </sc-if>
+  <sc-if value="{{ subVoice }}" hint-placeholder-val="{{ false }}">
+    <div style="margin:0 16px;position:relative;border-radius:26px;background:#FF3B2F;color:#140C0A;overflow:hidden;padding:22px 20px 20px;display:flex;flex-direction:column;gap:16px;animation:slCasc .4s both">
+      <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.2) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
+      <span style="position:relative;font:700 11px/1 Unbounded,sans-serif;letter-spacing:1.5px">ЧИТАЄ · {{ vCurUp }}</span>
+      <span style="position:relative;display:flex;gap:2px;font:900 40px/1 Unbounded,sans-serif;letter-spacing:-1.5px">
+        <sc-for list="{{ vSyl }}" as="y" hint-placeholder-count="3"><span style="color:{{ y.c }};animation:{{ y.anim }}">{{ y.t }}</span></sc-for>
+      </span>
+      <span style="position:relative;font:600 14px/1 Onest">за-гра́-ва · ім., ж. р.</span>
+      <div style="position:relative;display:flex;align-items:center;gap:14px">
+        <button onClick="{{ vPlayCur }}" aria-label="Прослухати" style="flex:none;width:64px;height:64px;border-radius:18px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(20,12,10,.45)"><svg width="22" height="22" viewBox="0 0 20 20"><path d="{{ vCurIc }}" fill="currentColor"></path></svg></button>
+        <span style="flex:1;display:flex;align-items:center;gap:4px;height:40px">
+          <sc-for list="{{ vBigBars }}" as="b" hint-placeholder-count="16"><span style="flex:1;height:{{ b.h }};background:#140C0A;animation:{{ b.anim }}"></span></sc-for>
+        </span>
+      </div>
+    </div>
+    <div style="padding:22px 20px 10px;font:700 11px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:var(--mute)">ОБЕРІТЬ ГОЛОС</div>
+    <div style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <sc-for list="{{ voices }}" as="o" hint-placeholder-count="4">
+        <button onClick="{{ o.pick }}" style="height:64px;border-radius:16px;background:{{ o.cBg }};color:{{ o.cFg }};box-shadow:{{ o.cSh }};border:{{ o.cBd }};transform:{{ o.cTf }};padding:0 14px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;text-align:left;transition:transform .12s,box-shadow .12s,background .2s;animation:{{ o.anim }}">
+          <span style="font:900 15px/1 Unbounded,sans-serif">{{ o.n }}</span>
+          <span style="font:500 12px/1 Onest;opacity:.75">{{ o.d }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ subList }}" hint-placeholder-val="{{ true }}">
   <div style="margin:0 16px;border-radius:18px;background:var(--sf);border:1px solid var(--line);overflow:hidden">
     <sc-for list="{{ subOpts }}" as="o" hint-placeholder-count="3">
-      <button onClick="{{ o.onClick }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:17px 16px;border-top:{{ o.bt }};font:600 16px/1 Onest;animation:{{ o.anim }}" style-active="background:var(--sf2)">
+      <button onClick="{{ o.onClick }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:17px 16px;border-top:{{ o.bt }};font:600 16px/1 Onest;animation:{{ o.anim }};justify-content:center;text-align:center" style-active="background:var(--sf2)">
         <span style="flex:1">{{ o.n }}</span>
         <span style="width:24px;height:24px;border-radius:7px;border:2.5px solid {{ o.bc }};background:{{ o.bg }};display:flex;align-items:center;justify-content:center;transition:background .15s"><sc-if value="{{ o.on }}" hint-placeholder-val="{{ false }}"><svg width="13" height="11" viewBox="0 0 26 22" style="animation:slPop .3s both"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#140C0A"></polygon></svg></sc-if></span>
       </button>
     </sc-for>
   </div>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -695,20 +754,39 @@
   <div style="position:absolute;left:18px;top:30px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 18px/1 Unbounded,sans-serif;letter-spacing:.5px;transform:rotate(-4.4deg);transform-origin:left">{{ sheetTitle }}</div>
   <div style="height:16px"></div>
   <sc-if value="{{ isReset }}" hint-placeholder-val="{{ false }}">
-    <span style="font:500 16px/1.45 Onest;text-wrap:pretty">Серія, XP і бейджі зникнуть назавжди. Збережені слова й колекції залишаться.</span>
+    <span style="font:500 16px/1.45 Onest;text-wrap:pretty">Серія, XP і відзнаки зникнуть назавжди. Збережені слова й колекції залишаться.</span>
     <button onClick="{{ doReset }}" style="height:64px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 #C4271D">СКИНУТИ</button>
     <button onClick="{{ closeSheet }}" style="height:64px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--edge)">СКАСУВАТИ</button>
   </sc-if>
+  <sc-if value="{{ isHide }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden">
+      <sc-for list="{{ hideRows }}" as="m" hint-placeholder-count="6"><button onClick="{{ m.onClick }}" style="padding:15px 16px;border-top:{{ m.bt }};width:100%;text-align:left;font:600 15px/1.25 Onest" style-active="background:var(--sf2)">{{ m.n }}</button></sc-for>
+    </div>
+    <button onClick="{{ closeSheet }}" style="height:60px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">СКАСУВАТИ</button>
+  </sc-if>
+  <sc-if value="{{ isReport }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <sc-for list="{{ repOpts }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.onClick }}" style="height:54px;border-radius:14px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};transform:{{ o.tf }};font:700 14px/1.2 Onest;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 8px;transition:transform .1s,box-shadow .1s">{{ o.n }}</button></sc-for>
+    </div>
+    <div style="height:84px;border-radius:14px;background:var(--sf2);box-shadow:inset 0 3px 0 var(--edge);padding:12px 14px;font:500 15px/1.3 Onest;color:var(--mute)">Коментар (необов’язково)</div>
+    <button onClick="{{ repSend }}" style="height:64px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);opacity:{{ repOp }};font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)">НАДІСЛАТИ</button>
+  </sc-if>
+  <sc-if value="{{ isShareS }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;justify-content:center;align-items:flex-end;gap:22px">
+      <sc-for list="{{ shFmts }}" as="f" hint-placeholder-count="2"><button onClick="{{ f.onClick }}" style="display:flex;flex-direction:column;align-items:center;gap:8px;color:{{ f.fg }};justify-content:center;text-align:center"><span style="position:relative;width:{{ f.w }};height:{{ f.h }};border-radius:12px;background:#FF3B2F;color:#140C0A;outline:{{ f.bd }};outline-offset:3px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:8px;gap:3px"><span style="font:800 6px/1 Unbounded,sans-serif;letter-spacing:1px">СЛОВО ДНЯ</span><span style="font:900 12px/1 Unbounded,sans-serif;letter-spacing:-.3px;word-break:break-all">{{ shWordUp }}</span></span><span style="font:700 13px/1 Onest">{{ f.n }}</span></button></sc-for>
+    </div>
+    <button onClick="{{ shSend }}" style="height:64px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)">ПОДІЛИТИСЯ</button>
+  </sc-if>
   <sc-if value="{{ isMenu }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden">
-      <sc-for list="{{ menuRows }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" style="display:flex;align-items:center;gap:14px;padding:16px;border-top:{{ m.bt }};width:100%" style-active="background:var(--sf2)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="{{ m.d1 }}"></path><path d="{{ m.d2 }}"></path></svg><span style="font:600 16px/1.2 Onest">{{ m.n }}</span></button></sc-for>
+      <sc-for list="{{ menuRows }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" style="display:flex;align-items:center;gap:14px;padding:16px;border-top:{{ m.bt }};width:100%;justify-content:center;text-align:center" style-active="background:var(--sf2)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="{{ m.d1 }}"></path><path d="{{ m.d2 }}"></path></svg><span style="font:600 16px/1.2 Onest">{{ m.n }}</span></button></sc-for>
     </div>
     <button onClick="{{ closeSheet }}" style="height:64px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">СКАСУВАТИ</button>
   </sc-if>
   <sc-if value="{{ isCollect }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden">
       <sc-for list="{{ colRows }}" as="c" hint-placeholder-count="3">
-        <button onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:12px;padding:14px;border-top:{{ c.bt }};min-width:0;width:100%" style-active="background:var(--sf2)">
+        <button onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:12px;padding:14px;border-top:{{ c.bt }};min-width:0;width:100%;justify-content:center;text-align:center" style-active="background:var(--sf2)">
           <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:700 15px/1.2 Onest;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.n }}</span><span style="font:500 13px/1 Onest;color:var(--mute)">{{ c.c }} · {{ c.t }}</span></span>
           <span style="flex:none;width:26px;height:26px;border-radius:8px;border:2.5px solid {{ c.bc }};background:{{ c.bg }};display:flex;align-items:center;justify-content:center"><sc-if value="{{ c.on }}" hint-placeholder-val="{{ false }}"><svg width="13" height="11" viewBox="0 0 26 22" style="animation:slPop .3s both"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#140C0A"></polygon></svg></sc-if></span>
         </button>
@@ -722,12 +800,12 @@
 <sc-if value="{{ stampOn }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;z-index:95;background:#FF3B2F;color:#140C0A;overflow:hidden;animation:slFade .2s both;display:flex;flex-direction:column;align-items:center;padding:110px 28px 40px">
   <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
-  <div style="position:absolute;left:-30px;top:66px;font:900 120px/.9 Unbounded,sans-serif;letter-spacing:-6px;color:#FFF4E6;transform:rotate(-8deg);white-space:nowrap">БЕЙДЖ</div>
+  <div style="position:absolute;left:-30px;top:66px;font:900 120px/.9 Unbounded,sans-serif;letter-spacing:-6px;color:#FFF4E6;transform:rotate(-8deg);white-space:nowrap">ВІДЗНАКА</div>
   <div style="position:relative;width:210px;height:210px;margin-top:70px;transform:rotate(-8deg);animation:slStamp .55s .15s cubic-bezier(.2,.9,.3,1.2) both;filter:drop-shadow(0 8px 0 #140C0A)">
-    <div style="width:100%;height:100%;background:#FFF4E6;clip-path:{{ stamp.clip }};display:flex;align-items:center;justify-content:center;font:900 64px/1 Unbounded,sans-serif">{{ stamp.gl }}</div>
+    <div style="position:absolute;inset:0;background:#140C0A;clip-path:{{ stamp.clip }}"></div><div style="position:absolute;inset:7%;background:#FFF4E6;clip-path:{{ stamp.clip }};display:flex;align-items:center;justify-content:center;font:900 64px/1 Unbounded,sans-serif;color:#140C0A">{{ stamp.gl }}</div>
   </div>
-  <div style="position:relative;margin-top:34px;font:900 30px/1.05 Unbounded,sans-serif;text-align:center">ТВІЙ!</div>
-  <div style="position:relative;margin-top:10px;font:600 16px/1.4 Onest;text-align:center">{{ stamp.n }} · {{ stamp.f }}</div>
+  <div style="position:relative;margin-top:34px;font:900 26px/1.1 Unbounded,sans-serif;text-align:center;text-wrap:balance">{{ stamp.n }}</div>
+  <div style="position:relative;margin-top:10px;font:600 16px/1.4 Onest;text-align:center">Нова відзнака — тепер вона твоя назавжди.</div>
   <div style="flex:1"></div>
   <div style="position:relative;align-self:flex-start;margin-bottom:-6px"><dc-import name="Rupor" state="celebrate" on-red="{{ true }}" size="{{ 120 }}" decor="{{ decorName }}" hint-size="120px,90px"></dc-import></div>
   <button onClick="{{ closeStamp }}" style="position:relative;align-self:stretch;height:62px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(20,12,10,.45)">ЗАБРАТИ</button>
@@ -764,6 +842,9 @@ const ANA=[{w:'ВЕРЕС',s:'СЕРВЕ',h:'Кущ, що цвіте восен�
 const SOL='СЛОВОО#З#ПН#Е#ЕЦ#Р#РЕПОХА'.split('');
 const CWW=[{id:'1→',c:[0,1,2,3,4],t:'Те, що SLOVO дарує щодня',d:'a'},{id:'4→',c:[20,21,22,23,24],t:'Довгий період в історії',d:'a'},{id:'1↓',c:[0,5,10,15,20],t:'Світить удень, гріє влітку',d:'d'},{id:'2↓',c:[2,7,12,17,22],t:'Водойма, де вода стоїть',d:'d'},{id:'3↓',c:[4,9,14,19,24],t:'Вистава, де всі співають',d:'d'}];
 const NUMS={0:'1',2:'2',4:'3',20:'4'};
+const CX_DECOY=['Т','К','И','Д','М'],CX_PERM=[[2,5,0,4,1,3],[4,1,3,0,5,2],[1,3,5,0,2,4],[5,2,0,3,1,4],[3,0,4,2,5,1]];
+const cxWheel=wi=>{const L=[...CWW[wi].c.map(i=>SOL[i]),CX_DECOY[wi]];return CX_PERM[wi].map(j=>L[j]);};
+const cxPos=k=>{const a=-Math.PI/2+k*Math.PI/3;return {x:130+88*Math.cos(a),y:130+88*Math.sin(a)};};
 const PRE={0:'С',12:'Е',24:'А'};
 const KB=[['Й','Ц','У','К','Е','Н','Г','Ш','Щ','З','Х'],['Ф','І','В','А','П','Р','О','Л','Д','Ж','Є'],['Я','Ч','С','М','И','Т','Ь','Б','Ю','Ї','⌫']];
 const SH=['polygon(0 0,100% 0,100% 100%)','polygon(0 0,100% 30%,100% 100%,0 70%)','polygon(50% 0,100% 100%,0 100%)','polygon(0 0,100% 0,60% 100%,0 100%)','polygon(0 30%,100% 0,100% 70%,0 100%)','polygon(30% 0,100% 0,70% 100%,0 100%)'];
@@ -786,32 +867,46 @@ const CS=[
  ['polygon(0 20%,100% 0,100% 80%,40% 80%,20% 100%,20% 80%,0 80%)','polygon(0 0,100% 50%,0 100%)'],
  ['polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)','polygon(40% 0,60% 0,60% 100%,40% 100%)']];
 const FS=['polygon(0 0,100% 0,100% 30%,30% 30%,30% 70%,100% 70%,100% 100%,0 100%)','polygon(45% 0,100% 0,40% 100%,0 100%)','polygon(0 0,45% 0,45% 100%,0 100%,0 0,55% 0,100% 0,100% 100%,55% 100%)','polygon(0 0,100% 0,100% 20%,0 20%,0 40%,100% 40%,100% 60%,0 60%,0 80%,60% 80%,60% 100%,0 100%)','polygon(0 0,40% 50%,0 100%,60% 100%,100% 50%,60% 0)','polygon(0 100%,0 60%,100% 0,100% 40%)','polygon(0 55%,15% 40%,40% 65%,85% 0,100% 15%,40% 95%)'];
-const CATS=['Погода','Почуття','Побут','Розстріляна лексика','Ремесла','Їжа','Природа','Звуки','Рухи','Кохання','Музика','Діалектизми','Архаїзми','Неологізми','Сленг','Наука'];
+const CATS=['Погода','Почуття','Хата і побут','Розстріляна лексика','Ремесла','Їжа','Природа','Звуки','Рухи','Кохання','Музика','Діалектизми','Архаїзми','Неологізми','Сленг','Наука'];
 const FIXES=['Суржик','Наголоси','Кальки','Канцелярит','Пароніми','Відмінки','Правопис'];
-const MOODS=[{n:'Бадьоро',r:'Бадьоро? Тоді доженемо ціль ще до обіду.'},{n:'Сонно',r:'«Сонно» — теж слово. Але, на жаль, не рідкісне.'},{n:'Допитливо',r:'Для допитливих я відкладаю найрідкісніше.'},{n:'Задумливо',r:'Задумливо — ідеальний стан для кросворду.'}];
-const GROUPS=[{t:'ЗВУК',modes:[{id:'stress',n:'Наголос',g:'Á',d:'Влуч у правильний склад'},{id:'rhyme',n:'Рими',g:'≈',d:'Знайди слово до пари за звуком'}]},{t:'ЗНАЧЕННЯ',modes:[{id:'choose',n:'Обери правильне',g:'?!',d:'Як кажуть українською'},{id:'pairs',n:'Пари',g:'=',d:'Слово і його значення'},{id:'syn',n:'Синоніми',g:'≡',d:'Те саме, але інакше'},{id:'idiom',n:'Фразеологізми',g:'«»',d:'Що означає вислів'}]},{t:'БУКВИ',modes:[{id:'anagram',n:'Анаграми',g:'АЯ',d:'Збери слово з літер'},{id:'missing',n:'Пропущена літера',g:'А_',d:'Е чи И, Г чи Ґ'},{id:'odd',n:'Зайве слово',g:'×',d:'Що тут не до гурту'}]},{t:'ШВИДКІСТЬ',modes:[{id:'time',n:'На час',g:'20с',d:'Обери правильне за 20 секунд'},{id:'blitz',n:'Бліц',g:'!!',d:'Три хвилини, без пауз'},{id:'marathon',n:'Марафон',g:'42',d:'Доки не схибиш тричі'},{id:'surzh',n:'Суржик-фікс',g:'✓',d:'Виправ фразу'}]}];
-const PLAY=['stress','rhyme','choose','pairs','syn','idiom','anagram','missing','odd','time','blitz','marathon','surzh'];
+const MOODS=[{n:'Бадьоро',r:'Бадьоро? Тоді слова сьогодні рідкісніші, а Виправлень більше.'},{n:'Радісно',r:'Радісно? Ловімо слово, яким можна поділитися з другом.'},{n:'Сумно',r:'Сумно? Сьогодні — тепліші й лагідніші слова. Тримайся.'},{n:'Закохано',r:'Закохано? Гортай — десь тут слово, яке захочеться подарувати.'},{n:'Спокійно',r:'Спокійно? Саме час для довгого слова й ще довшого вислову.'}];
+const GROUPS=[{t:'ЗВУК',modes:[{id:'stress',n:'Наголос',g:'Á',d:'Торкнись наголошеної голосної'},{id:'rhyme',n:'Рими',g:'≈',d:'Знайди слово до пари за звуком'}]},{t:'ЗНАЧЕННЯ',modes:[{id:'choose',n:'Обери правильне',g:'?!',d:'Як кажуть українською'},{id:'pairs',n:'Пари',g:'=',d:'Чотири слова й чотири визначення — з’єднуєш їх у пари.'},{id:'syn',n:'Синоніми',g:'≡',d:'Те саме, але інакше'},{id:'idiom',n:'Фразеологізми',g:'«»',d:'Вгадай, що означає вислів'}]},{t:'БУКВИ',modes:[{id:'anagram',n:'Анаграми',g:'АЯ',d:'Склади слово з перемішаних літер'},{id:'missing',n:'Пропущена літера',g:'А_',d:'Е чи И, Г чи Ґ'},{id:'odd',n:'Зайве слово',g:'×',d:'Що тут не до гурту'}]},{t:'ШВИДКІСТЬ',modes:[{id:'time',n:'На час',g:'60 с',d:'Хвилина. Скільки слів встигнеш?'},{id:'blitz',n:'Бліц',g:'!!',d:'Три хвилини, без пауз'},{id:'marathon',n:'Марафон',g:'42',d:'Доки не схибиш тричі'},{id:'surzh',n:'Суржик-фікс',g:'✓',d:'У реченні — помилка, яку часто чуєш. Обери, як сказати краще.'}]},{t:'НОВЕ',modes:[{id:'guess',n:'Вгадай слово',g:'Д?',d:'Визначення є. Яке це слово?'},{id:'letters',n:'За літерами',g:'А…',d:'Збери слово літера за літерою'},{id:'write',n:'Впиши слово',g:'Аб|',d:'У реченні — помилка, яку часто чуєш. Впиши, як сказати краще.'},{id:'origin',n:'Звідки слово',g:'→А',d:'З якої мови прийшло слово?'},{id:'angl',n:'Англіцизми',g:'EN',d:'Заміни англіцизм українським'},{id:'phrase',n:'Склади вислів',g:'«…»',d:'Читаєш значення — складаєш вислів слово за словом.'},{id:'survive',n:'Виживання',g:'⚑⚑⚑',d:'Три життя. Як далеко зайдеш?'}]}];
+const PLAY=['stress','rhyme','choose','pairs','syn','idiom','anagram','missing','odd','time','blitz','marathon','surzh','guess','letters','write','origin','angl','phrase','survive'];
+const GKEYS=['А','Б','В','Г'];
+const gTier=t=>{const x=t.replace(/[\[\]]/g,'');return x.length<=14?'s':x.length<=34?'m':'l';};
+const G_FONT={s:'800 21px/1.1 Unbounded,sans-serif',m:'600 17px/1.3 Onest,sans-serif',l:'500 16px/1.4 Onest,sans-serif'};
+const gParts=(t,mode)=>t.split(/(\[[^\]]+\])/).filter(Boolean).map(x=>{const h=x[0]==='[';return {t:h?x.slice(1,-1):x,bg:h&&mode==='mark'?'rgba(255,59,47,.22)':'transparent',sh:h&&mode==='mark'?'0 2px 0 #FF3B2F':'none',dec:mode==='strike'?'line-through':'none'};});
 const EXTRAQ={
+ guess:[{q:'Дрібна блискітка, що мерехтить на світлі.',o:['лелітка','левада','лепеха','пелехатий'],a:0},{q:'Низький луг біля річки, який навесні заливає вода.',o:['оболонь','обрій','отава','ожина'],a:0},{q:'Сильна заметіль, снігова буря з вітром.',o:['хурделиця','хуртовина','хащі','хвиля'],a:0}],
+ letters:[{q:'ЗА___ — червоне світло на небі на сході чи заході сонця',o:['заграва','загата','заметіль'],a:0},{q:'ВИД_____ — обрій',o:['видноколо','видиво','видолинок'],a:0},{q:'ШУХ___ — висувна скринька в столі',o:['шухляда','шухер','шумовиння'],a:0}],
+ write:[{q:'Як сказати краще: «Ми [приймаємо участь] у конкурсі вже другий рік»?',o:['Ми [беремо участь] у конкурсі вже другий рік.','Ми [здійснюємо участь] у конкурсі вже другий рік.','Ми [приймаємо участь] у конкурсі вже другий рік.'],a:0},{q:'Як сказати краще: «[Самий кращий] день у році»?',o:['[Самий кращий] день у році.','[Найкращий] день у році.'],a:1}],
+ origin:[{q:'Звідки слово «гарбуз»?',o:['Із тюркських мов','З латини через польську','Праслов’янське','З перської через грецьку'],a:0},{q:'Звідки слово «шухляда»?',o:['З німецької через польську','Із тюркських мов','З грецької через латину'],a:0},{q:'Звідки слово «рушник»?',o:['Праслов’янське','З німецької','Із французької'],a:0}],
+ angl:[{q:'Чим замінити «[дедлайн]»: «Дедлайн по звіту знову перенесли на п’ятницю»?',o:['[Кінцевий термін] звіту знову перенесли на п’ятницю.','[Крайній строк] по звіту знову перенесли на п’ятницю.','[Час Х] по звіту знову перенесли на п’ятницю.'],a:0},{q:'Чим замінити «[фідбек]»?',o:['відгук','фідбечок','реплай'],a:0},{q:'Чим замінити «[локація]»?',o:['місце','локус','позиція'],a:0}],
+ phrase:[{q:'Склади вислів: «Дуже швидко, миттю».',o:['Не встиг і оком моргнути','Не встиг і оком кліпнути','Як оком змигнути не встиг'],a:0},{q:'Склади вислів: «Ледарювати».',o:['Бити байдики','Бити байдака','Ловити байдики'],a:0}],
+ survive:[{q:'«Веремія» — це…',o:['Метушня, безлад і гамір навколо','Тиха безвітряна погода восени','Весняне свято на честь сонця'],a:0},{q:'«Бамбетель» — це…',o:['Лава-скриня, на якій сплять','Музичний інструмент','Святковий пиріг'],a:0},{q:'«Чвалати» — це…',o:['Іти повільно, неохоче','Швидко бігти','Голосно сміятися'],a:0},{q:'«Мжичка» — це…',o:['Дрібний густий дощ','Нічний метелик','Легкий туман над річкою'],a:0}],
  rhyme:[{q:'Рима до «заграва»',o:['загадка','отава','загін'],a:1},{q:'Рима до «хурделиця»',o:['метелиця','хурма','діло'],a:0},{q:'Рима до «оболонь»',o:['болото','оболок','долонь'],a:2}],
- syn:[{q:'Синонім до «веремія»',o:['тиша','метушня','погода'],a:1},{q:'Синонім до «видноколо»',o:['обрій','коло','вікно'],a:0},{q:'Синонім до «чвалати»',o:['бігти','літати','плентатися'],a:2}],
- idiom:[{q:'«Бити байдики» — це…',o:['битися','ледарювати','працювати'],a:1},{q:'«Пекти раків» — це…',o:['червоніти','готувати','рибалити'],a:0},{q:'«Накивати п’ятами» — це…',o:['танцювати','спіткнутися','втекти'],a:2}],
+ syn:[{q:'Яке слово — синонім до «веремія»?',o:['тиша','метушня','погода'],a:1},{q:'Яке слово — синонім до «видноколо»?',o:['обрій','коло','вікно'],a:0},{q:'Яке слово — синонім до «чвалати»?',o:['бігти','літати','плентатися'],a:2}],
+ idiom:[{q:'«Бити байдики» — це…',o:['Ледарювати, гаяти час без діла','Сваритися з кимось через дрібниці','Важко працювати з ранку до ночі'],a:0},{q:'«Пекти раків» — це…',o:['Червоніти від сорому чи збентеження','Готувати щось смачне для гостей','Довго рибалити біля річки'],a:0},{q:'«Накивати п’ятами» — це…',o:['Танцювати до самого ранку','Спіткнутися на рівному місці','Швидко втекти, не попрощавшись'],a:2}],
  missing:[{q:'Пропущена літера: «ґ_нок»',o:['е','а','о'],a:1},{q:'Пропущена літера: «д_ржава»',o:['е','и'],a:0},{q:'Пропущена літера: «_удзик»',o:['Г','Ґ'],a:1}],
  odd:[{q:'Що тут зайве?',o:['світанок','присмерк','хурделиця','заграва'],a:2},{q:'Що тут зайве?',o:['оболонь','лелітка','левада','толока'],a:1}],
- surzh:[{q:'«Він на мене обіжається»',o:['ображається','обіжається'],a:0},{q:'«Скіко коштує?»',o:['Скіко','Скільки'],a:1},{q:'«Ну шо, підемо?»',o:['що','шо'],a:0}]
+ surzh:[{q:'Як сказати краще: «Ми [приймаємо участь] у конкурсі вже другий рік»?',o:['Ми [беремо участь] у конкурсі вже другий рік.','Ми [приймаємо участь] у конкурсі вже другий рік.','Ми [здійснюємо участь] у конкурсі вже другий рік.'],a:0},{q:'Як сказати краще: «[Скіко] коштує цей квиток до Львова?»',o:['[Скіко] коштує цей квиток до Львова?','[Скільки] коштує цей квиток до Львова?'],a:1},{q:'Як сказати краще: «Діяти [згідно наказу] директора»?',o:['Діяти [згідно наказу] директора.','Діяти [згідно з наказом] директора.','Діяти [по наказу] директора.'],a:1}]
 };
 const PAIRS=[{w:'Заграва',m:'червоне світло неба'},{w:'Оболонь',m:'луг біля річки'},{w:'Лелітка',m:'блискітка'},{w:'Веремія',m:'метушня, безлад'}];
 const PAIR_R=[2,0,3,1];
 const TIMED={time:20,blitz:30};
-const FAMS=[{f:'Серія',clip:'polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%)',e:3,items:[['3','Три дні'],['7','Тиждень'],['14','Два тижні'],['30','Місяць'],['100','Сотня днів'],['200','Двісті днів'],['365','Рік без пропусків']]},{f:'Ігри',clip:'circle(50%)',e:4,items:[['Á','Влучний наголос'],['?!','Без жодної помилки'],['=','Пароль-пара'],['АЯ','Анаграміст'],['20с','Блискавка'],['×10','Десять перемог'],['×50','П’ятдесят перемог']]},{f:'Слова',clip:'polygon(0 0,100% 0,100% 64%,50% 100%,0 64%)',e:3,items:[['Ґ','Перше слово'],['Ї','Їжак-словник'],['10','Десять слів'],['50','П’ятдесят слів'],['100','Сто слів'],['Є','Колекціонер'],['500','Ходячий словник']]}];
-const OB=[{big:'СЛОВО',t:'Щодня одне рідкісне слово',x:'Заграва, оболонь, веремія. Слова, які ти чув у бабусі, але не встиг спитати, що вони значать.',m:'shout'},{big:'ГРАЙ!',t:'Ігри, де треба влучати',x:'Наголос, пари, анаграми й кросворд дня. Жодних лотерей — тільки ти і слово.',m:'happy'},{big:'ЦІЛЬ',t:'Скільки слів на день?',x:'Нагадаю о 20:30. Коротко й по ділу, без спаму.',m:'wait'}];
+const BSH={hex:'polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%)',shield:'polygon(0 0,100% 0,100% 64%,50% 100%,0 64%)',circle:'circle(50%)',tile:'polygon(10% 0,100% 0,100% 90%,90% 100%,0 100%,0 10%)',wedge:'polygon(0 18%,100% 0,100% 100%,0 82%)',diamond:'polygon(50% 0,100% 50%,50% 100%,0 50%)'};
+const BTONE={red:{ring:'#C4271D',bg:'#FF3B2F',fg:'#140C0A',flt:'drop-shadow(0 3px 0 #140C0A)'},ink:{ring:'#FF3B2F',bg:'var(--ink)',fg:'#FF3B2F',flt:'drop-shadow(0 3px 0 #C4271D)'},cream:{ring:'#140C0A',bg:'#FFF4E6',fg:'#140C0A',flt:'drop-shadow(0 3px 0 #140C0A)'}};
+const FAMS=[{f:'Серія',sh:'hex',tone:'red',items:[['3','Три дні поспіль',1],['7','Тиждень поспіль',1],['30','Місяць поспіль',0],['100','Сто днів поспіль',0],['365','Рік поспіль',0]]},{f:'Підтверджені',sh:'shield',tone:'ink',items:[['10','10 підтверджених',1],['50','50 підтверджених',1],['100','100 підтверджених',0],['500','500 підтверджених',0]]},{f:'Перші перемоги',sh:'circle',tone:'red',items:[['Сл','Перша перемога в словах',1],['Вп','Перша перемога у виправленнях',1],['Вс','Перша перемога у висловах',0],['Á','Перша перемога в наголосі',1],['!','Перша перемога у виживанні',0]]},{f:'Кросворд',sh:'tile',tone:'cream',items:[['7×','Сім кросвордів поспіль',0]]},{f:'Рівні',sh:'wedge',tone:'ink',items:[['5','Рівень 5',0],['10','Рівень 10',0],['20','Рівень 20',0]]},{f:'Майстерність',sh:'diamond',tone:'red',items:[['Ґ','Перше рідкісне слово',1],['✓','Чиста мова',0],['´','Влучний наголос',0]]}];
+const OB=[{big:'СЛОВО',t:'Рідкісні слова рідної мови — нові щодня.',x:'Слова, якими захочеться здивувати друзів.',m:'shout',b:'ДО ПЕРШОГО СЛОВА'},{big:'ТРИМАЙ!',t:'Твоє перше Слово дня. Завтра буде нове.',x:'',m:'happy',b:'БЕРУ!',word:1},{big:'ГРАЙ!',t:'Ігри, де треба влучати',x:'Кросворд дня — щодня новий. А ще наголос, пари й анаграми. Тільки ти і слово.',m:'happy',b:'ЗІГРАЮ!'},{big:'РІВЕНЬ',t:'Як у тебе з рідкісними словами?',x:'',m:'wait',b:'ДАЛІ',o:['Поки небагато','Знаю чимало','Перевір мене']},{big:'НАВІЩО',t:'Чого ти хочеш від SLOVO?',x:'',m:'wait',b:'ДАЛІ',o:['Писати без помилок','Знати рідкісні слова','Грати зі словами']},{big:'ЦІЛЬ',t:'Скільки слів щодня?',x:'Це твоя денна ціль. Змінити можна в Налаштуваннях.',m:'wait',b:'ОБИРАЮ',goal:1},{big:'ДЗИНЬ!',t:'Коли нагадати про слово?',x:'',m:'shout',b:'ДАЛІ',o:['09:00','13:00','19:00']}];
+const VOICES=[{n:'Оксана',d:'Жіночий · спокійний',p:1.15,r:.9},{n:'Тарас',d:'Чоловічий · низький',p:.7,r:.88},{n:'Марта',d:'Жіночий · жвавий',p:1.35,r:1.05},{n:'Остап',d:'Чоловічий · теплий',p:.9,r:.95}];
 const GOALS=[{n:'1',l:'слово'},{n:'3',l:'слова'},{n:'5',l:'слів'}];
-const COLS=[{n:'Осінні слова',c:'6 слів',t:'20:30'},{n:'Для листа колезі, яка обожнює канцелярит',c:'12 слів',t:'вчора'},{n:'Карпатські діалекти',c:'14 слів',t:'28 жов'}];
-const SAVEDCOLS=[{n:'Осінні слова',c:'6 слів',t:'20:30'},{n:'Для листа колезі, яка обожнює канцелярит',c:'12 слів',t:'вчора'},{n:'Карпатські діалекти',c:'14 слів',t:'28 жов'},{n:'Смішні',c:'3 слова',t:'25 жов'}];
+const COLS=[{n:'Осінні слова',c:'6 слів',t:'20:30'},{n:'Для листа колезі, яка обожнює канцелярит',c:'12 слів',t:'учора'},{n:'Карпатські діалекти',c:'14 слів',t:'28 жов'}];
+const SAVEDCOLS=[{n:'Осінні слова',c:'6 слів',t:'20:30'},{n:'Для листа колезі, яка обожнює канцелярит',c:'12 слів',t:'учора'},{n:'Карпатські діалекти',c:'14 слів',t:'28 жов'},{n:'Смішні',c:'3 слова',t:'25 жов'}];
 const FIX_RAW=[
- ['суржик','Слова, що прослизають у мову непомітно.',[['Скіко коштує?','Скільки коштує?','«Скіко» — суржикова форма, у літературній мові лише «скільки».'],['Він на мене обіжається','Він на мене ображається','Дієслово «ображатися» має корінь «образ-».'],['Получилося','Вийшло / вдалося','«Получитися» — пряме запозичення.'],['Ладно, давай','Гаразд, давай','«Ладно» — росіянізм; кажіть «гаразд» або «добре».']]],
+ ['суржик','Коли в одному реченні перемішалися дві мови.',[['Скіко коштує?','Скільки коштує?','«Скіко» — суржикова форма, у літературній мові лише «скільки».'],['Він на мене обіжається','Він на мене ображається','Дієслово «ображатися» має корінь «образ-».'],['Получилося','Вийшло / вдалося','«Получитися» — пряме запозичення.'],['Ладно, давай','Гаразд, давай','«Ладно» — росіянізм; кажи «гаразд» або «добре».']]],
  ['наголос','Де ставити наголос, щоб не різало вухо.',[['дОговір','до́говір → догові́р','Правильно — догові́р.'],['кУхонний','ку́хонний → кухо́нний','Наголос на другому складі: кухо́нний.'],['вИпадок','ви́падок','Тут правильно саме ви́падок — перевірте себе.'],['фенОмен','фено́мен','Наголос на «о»: фено́мен.']]],
  ['калька','Дослівні переклади, що звучать не по-нашому.',[['Приймати участь','Брати участь','Участь беруть, а не приймають.'],['Самий кращий','Найкращий','Найвищий ступінь утворюємо через «най-».'],['Співпадати','Збігатися','«Співпадати» — калька з російської.'],['Вірна відповідь','Правильна відповідь','«Вірний» — це про друга, а не про відповідь.']]],
- ['канцелярит','Коли людина пише, як довідка з ЖЕКу.',[['Здійснити оплату','Оплатити','Одне дієслово замість двох слів.'],['У зв’язку з тим, що','Бо, оскільки','Коротше — і зрозуміліше.'],['Провести зустріч','Зустрітися','Дія краща за процес.'],['Надати допомогу','Допомогти','Не надавайте — просто допомагайте.']]],
+ ['канцелярит','Коли людина пише, як довідка з ЖЕКу.',[['Здійснити оплату','Оплатити','Одне дієслово замість двох слів.'],['У зв’язку з тим, що','Бо, оскільки','Коротше — і зрозуміліше.'],['Провести зустріч','Зустрітися','Дія краща за процес.'],['Надати допомогу','Допомогти','Не надавай — просто допомагай.']]],
  ['пароніми','Схожі слова з різним змістом.',[['Ефектна знижка','Ефективна знижка','Ефектна — та, що вражає; ефективна — та, що діє.'],['Дільниця лікаря','Ділянка лікаря','Дільниця — адміністративна; ділянка — частина площі.'],['Уява про справу','Уявлення про справу','Уява — фантазія; уявлення — розуміння.'],['Особистий рахунок','Особовий рахунок','Особовий — закріплений за особою.']]],
  ['відмінок','Закінчення, що видають неуважність.',[['Пане Олег!','Пане Олегу!','Кличний відмінок: Олегу.'],['Немає часа','Немає часу','Родовий відмінок: часу.'],['Дякую вас','Дякую вам','«Дякувати» — кому? Вам.'],['Згідно наказу','Згідно з наказом','Після «згідно» — «з» і орудний відмінок.']]],
  ['правопис','Літери, через які сперечаються в чатах.',[['Пів-яблука','Пів яблука','«Пів» пишемо окремо перед іменником.'],['Будь ласка у Києві','Будь ласка, у Києві','Звертання виокремлюємо комами.'],['Проект','Проєкт','З 2019 року — через «є».'],['Ії','її','Займенник пишемо з «ї» двічі.']]]
@@ -840,14 +935,14 @@ const mkW=a=>({w:a[0],stress:a[1],posShort:a[2],pos:POS[a[2]]||a[2],rar:a[3],mea
 const MOURN_W=[{w:'Надвечір’я',m:'Час перед вечором, коли сонце вже низько.'},{w:'Сутінь',m:'Напівтемрява, присмерк.'},{w:'Пломінь',m:'Полум’я, вогонь.'}];
 const ICON={tri:'polygon(0 0,100% 50%,0 100%)',sq:'polygon(0 0,100% 15%,100% 100%,0 85%)',dia:'polygon(50% 0,100% 50%,50% 100%,0 50%)',hex:'polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)',wedge:'polygon(0 0,100% 30%,100% 70%,0 100%)',bar:'polygon(0 30%,100% 0,100% 70%,0 100%)'};
 const TABI={feed:'polygon(0 10%,100% 0,100% 38%,0 46%,0 56%,100% 50%,100% 100%,0 100%)',games:'polygon(50% 0,100% 50%,50% 100%,0 50%,22% 50%,50% 78%,78% 50%,50% 22%,22% 50%,0 50%)',saved:'polygon(12% 8%,88% 0,88% 100%,50% 74%,12% 100%)',profile:'polygon(30% 0,70% 0,74% 40%,50% 48%,26% 40%,30% 0,30% 0,0 100%,8% 58%,92% 54%,100% 100%,0 100%)'};
-const SUBS={notif:{n:'Сповіщення',sub:'Одне нагадування на день. Текст — як від друга, без тиску.',opts:['08:00','12:30','20:30','Вимкнено'],sel:2},goal:{n:'Ціль дня',sub:'Скільки нових слів відкривати щодня.',opts:['1 слово','3 слова','5 слів'],sel:1},widgets:{n:'Віджети',sub:'Слово дня на головному екрані та екрані блокування.',opts:['Малий','Середній','Великий','Екран блокування'],sel:1},font:{n:'Шрифт і розмір',sub:'Розмір тексту в картках і списках.',opts:['Як у системі','Більший','Найбільший'],sel:0},account:{n:'Акаунт і синхронізація',sub:'Увійди, щоб серія і слова не загубилися при зміні телефону.',opts:['Увійти через Apple','Увійти поштою'],sel:-1},privacy:{n:'Конфіденційність',sub:'Ми не продаємо дані й не показуємо рекламу.',opts:['Анонімна статистика','Експортувати мої дані'],sel:-1},about:{n:'Про SLOVO',sub:'Версія 2.0 (312). Зроблено з любов’ю до рідкісних слів.',opts:['Показати перший запуск','Оцінити застосунок'],sel:-1}};
+const SUBS={notif:{n:'Сповіщення',sub:'Одне нагадування на день. Текст — як від друга, без тиску.',opts:['08:00','12:30','20:30','Вимкнено'],sel:2},goal:{n:'Ціль дня',sub:'Скільки нових слів відкривати щодня.',opts:['1 слово','3 слова','5 слів'],sel:1},voice:{n:'Голос диктора',sub:'Хто читає слова вголос на картці.',opts:['Оксана','Тарас','Марта','Остап'],sel:0},widgets:{n:'Віджети',sub:'Слово дня на головному екрані та екрані блокування.',opts:['Малий','Середній','Великий','Екран блокування'],sel:1},font:{n:'Шрифт і розмір',sub:'Розмір тексту в картках і списках.',opts:['Як у системі','Більший','Найбільший'],sel:0},account:{n:'Акаунт і синхронізація',sub:'Увійди, щоб серія і слова не загубилися при зміні телефону.',opts:['Увійти через Apple','Увійти поштою'],sel:-1},privacy:{n:'Конфіденційність',sub:'Анонімні лічильники слів і відповідей опитування та анонімна статистика використання. Без акаунта, пошти й ідентифікатора пристрою.',opts:['Анонімна статистика','Експортувати мої дані'],sel:-1},about:{n:'Про SLOVO',sub:'Версія 2.0 (312). Зроблено з любов’ю до рідкісних слів.',opts:['Показати перший запуск','Оцінити застосунок'],sel:-1}};
 
 class Component extends DCLogic {
   state = {
     screen:(()=>{const [a]=(this.props.start||'splash').split(':');return a==='game'||a==='over'?'games':a;})(),cat:+((this.props.start||'').startsWith('cat:')?this.props.start.split(':')[1]:0),sub:(this.props.start||'').startsWith('sub:')?this.props.start.split(':')[1]:null,splash:'first',theme:this.props.theme||'light',rm:!!this.props.reduceMotion,sound:this.props.sound??true,decor:this.props.decor??true,
     ob:0,goal:1,revealed:false,revealing:false,wordIdx:0,answered:null,fav:false,mood:null,
     game:null,over:null,records:{stress:4,choose:5,time:7,anagram:2},
-    cw:{sel:1,dir:'a',vals:{...PRE},solved:false,t0:Date.now(),time:'0:00'},
+    cw:{sel:1,dir:'a',vals:{...PRE},solved:false,t0:Date.now(),time:'0:00'},cx:{wi:0,path:[],ptr:null,flash:null,fresh:[],touched:false},
     savedTab:'learn',q:'',sheet:null,cols:[true,false,false],toast:null,stamp:null,playing:false,xp:640,cat:0,sub:null,subSel:{},sweepK:0,prev:'feed'
   };
   _tm=[];
@@ -911,11 +1006,11 @@ class Component extends DCLogic {
     }
   }
   accent(w,a){const l=w.toLowerCase();return l.slice(0,a+1)+'\u0301'+l.slice(a+1);}
-  label(m,r){if(!r)return '';return m==='pairs'?r.w+' — '+r.m:m==='stress'?this.accent(r.w,r.a):m==='anagram'?r.w.toLowerCase():r.o[r.a];}
+  label(m,r){if(!r)return '';return m==='pairs'?r.w+' — '+r.m:m==='stress'?this.accent(r.w,r.a):m==='anagram'?r.w.toLowerCase():r.o[r.a].replace(/[\[\]]/g,'');}
   startGame(mode){
     clearInterval(this._iv);
     const total=TIMED[mode]||20;
-    this.go('game',{game:{mode,i:0,lives:3,res:[],phase:'q',pick:null,built:[],left:total,total,lost:-1,matched:[],selL:null,selR:null,flash:null,pm:null}});
+    this.go('game',{game:{mode,i:0,lives:mode==='survive'?1:3,res:[],phase:'q',pick:null,built:[],left:total,total,lost:-1,matched:[],selL:null,selR:null,flash:null,pm:null}});
     if(TIMED[mode]){
       this._iv=setInterval(()=>{const g=this.state.game;if(!g||this.state.screen!=='game'){clearInterval(this._iv);return;}
         const left=Math.max(0,g.left-.1);this.setState({game:{...g,left}});if(left<=0){clearInterval(this._iv);this.finish();}},100);
@@ -968,6 +1063,22 @@ class Component extends DCLogic {
     this.snd('tap');
     this.setState({cw:{...cw,vals,sel}},()=>this.cwCheck());
   }
+  cxSolved(vals,wi){return CWW[wi].c.every(i=>vals[i]===SOL[i]);}
+  cxAdvance(vals,from){for(let d=1;d<=CWW.length;d++){const wi=(from+d)%CWW.length;if(!this.cxSolved(vals,wi))return wi;}return -1;}
+  cxLocal(e){const r=this._cxr,sc=r.width/260;return {x:(e.clientX-r.left)/sc,y:(e.clientY-r.top)/sc};}
+  cxHit(q){for(let k=0;k<6;k++){const p=cxPos(k);if(Math.hypot(q.x-p.x,q.y-p.y)<34)return k;}return -1;}
+  cxAfterFill(vals,wi){
+    this.later(()=>{const nx=this.cxAdvance(vals,wi);
+      if(nx<0){const sec=Math.round((Date.now()-this.state.cw.t0)/1000);const time=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');this.snd('shout');this.setState(s=>({cw:{...s.cw,solved:true,time},cx:{...s.cx,path:[],flash:null,fresh:[]},xp:s.xp+50}));}
+      else this.setState(s=>({cx:{...s.cx,wi:nx,path:[],flash:null,fresh:[]}}));},850);
+  }
+  cxCommit(){
+    const s=this.state,x=s.cx,w=cxWheel(x.wi),word=x.path.map(k=>w[k]).join(''),target=CWW[x.wi].c.map(i=>SOL[i]).join('');
+    if(x.path.length<2){this.setState({cx:{...x,path:[],ptr:null}});return;}
+    if(word===target){const vals={...s.cw.vals};CWW[x.wi].c.forEach(i=>{vals[i]=SOL[i];});this.snd('ok');
+      this.setState({cw:{...s.cw,vals},cx:{...x,ptr:null,flash:'ok',fresh:CWW[x.wi].c}});this.cxAfterFill(vals,x.wi);}
+    else{this.snd('tap');this.setState({cx:{...x,ptr:null,flash:'bad'}});this.later(()=>this.setState(st=>({cx:{...st.cx,path:[],flash:null}})),650);}
+  }
   cwCheck(){
     const cw=this.state.cw;const cells=SOL.map((c,i)=>i).filter(i=>SOL[i]!=='#');
     if(!cells.every(i=>cw.vals[i]))return;
@@ -996,11 +1107,12 @@ class Component extends DCLogic {
      v.sxTag=an('sxTag','ease-out');v.sxRup=an('sxRup','cubic-bezier(.3,1,.4,1)');v.sxShout=an('sxShout','ease-out');v.sxWipe=rm?'none;display:none':an('sxWipe','cubic-bezier(.7,0,.3,1)');
      v.sxLetters='SLOVO'.split('').map((ch,i)=>({ch,anim:rm?'none':an('sxLet','cubic-bezier(.2,.9,.3,1.2)',(lp?i*.07:i*.04*(s.splash==='daily'?.3:1))+'s')}));}
     // onboarding
-    const ob=OB[s.ob];v.ob=ob;v.obGoal=s.ob===2;
+    const ob=OB[s.ob];v.ob=ob;v.obGoal=!!ob.goal;{const cmp=!!(ob.o||ob.word);v.obRedH=cmp?'300px':'440px';v.obMasT=cmp?'186px':'282px';}v.obHasX=!!ob.x;v.obWord=!!ob.word;v.obBigS=ob.big.length<=5?'80px':ob.big.length===6?'64px':'56px';
+    {const os=s.obSel||{};v.obHasOpts=!!ob.o;v.obOpts=(ob.o||[]).map((t,i)=>{const on=(os[s.ob]??(s.ob===6?0:-1))===i;return {t,bg:on?R:'var(--tile)',fg:on?K:'var(--ink)',sh:on?'0 1px 0 '+RE:'0 5px 0 var(--edge)',tf:on?'translateY(4px)':'none',onClick:()=>{this.snd('tap');this.setState(x=>({obSel:{...(x.obSel||{}),[x.ob]:i}}));}};});}
     v.obDots=OB.map((_,i)=>({w:i===s.ob?'34px':'14px',bg:i<=s.ob?R:'var(--sil)'}));
     v.goals=GOALS.map((g,i)=>({...g,bg:i===s.goal?R:'var(--tile)',fg:i===s.goal?K:'var(--ink)',sh:i===s.goal?RE:'var(--edge)',onClick:()=>{this.snd('tap');this.setState({goal:i});}}));
-    v.obBtn=s.ob<2?'ДАЛІ':'ПОЇХАЛИ!';
-    v.obNext=()=>{this.snd('tap');if(s.ob<2)this.setState({ob:s.ob+1});else this.go('feed');};
+    v.obBtn=ob.b;
+    v.obNext=()=>{this.snd('tap');if(s.ob<OB.length-1)this.setState({ob:s.ob+1});else this.go('feed');};
     // feed
     v.heroIdle=!s.revealed&&!s.revealing;v.heroOpen=s.revealed||s.revealing;
     v.heroMascot=s.revealing?'shout':s.revealed?'happy':'wait';
@@ -1033,12 +1145,12 @@ class Component extends DCLogic {
     {const anyCol=s.cols.some(Boolean);v.colFill=anyCol?'currentColor':'none';v.colD2=anyCol?'M9 10.5l2.2 2.2L15.5 8':'M12 7v6M9 10h6';v.colS2=anyCol?'#140C0A':'currentColor';}
     v.dotsBg=s.sheet==='menu'?R:K;v.dotsFg=s.sheet==='menu'?K:C;
     v.openMenu=()=>this.setState({sheet:'menu'});
-    const MI={share:['Поділитися','M12 3v12M7.5 7.5 12 3l4.5 4.5','M5 12v8h14v-8'],hide:['Сховати…','M4 4h4v10H4zM8 14l3.5 6.5c1.4 0 2.6-1.1 2.2-2.6L13 15h5.5a2 2 0 0 0 2-2.3l-1.1-6.6A2.5 2.5 0 0 0 16.9 4H8',''],flag:['Повідомити про помилку','M5 21V4','M5 4h12l-2.5 4.5L17 13H5']};
-    v.menuRows=['share','hide','flag'].map((k,i)=>({n:MI[k][0],d1:MI[k][1],d2:MI[k][2],bt:i?'1px solid var(--line)':'0',onClick:()=>{this.setState({sheet:null});this.toast(k==='share'?'Картку слова скопійовано — лови друзів на гачок.':k==='hide'?'«'+(w&&w.up?w.up:'Слово')+'» приховано.':'Дякуємо! Ми перевіримо.');}}));
+    const MI={share:['Поділитися','M12 3v12M7.5 7.5 12 3l4.5 4.5','M5 12v8h14v-8'],hide:['Не показувати','M4 4h4v10H4zM8 14l3.5 6.5c1.4 0 2.6-1.1 2.2-2.6L13 15h5.5a2 2 0 0 0 2-2.3l-1.1-6.6A2.5 2.5 0 0 0 16.9 4H8',''],flag:['Повідомити про помилку','M5 21V4','M5 4h12l-2.5 4.5L17 13H5']};
+    v.menuRows=['share','hide','flag'].map((k,i)=>({n:MI[k][0],d1:MI[k][1],d2:MI[k][2],bt:i?'1px solid var(--line)':'0',onClick:()=>this.setState({sheet:k==='flag'?'report':k,shWord:{w:w&&w.w,cat:CATS[s.cat]},repPick:null,shFmt:0})}));
     {const cur=s.catWord||w,base=s.catWord?(()=>{const craw=CATS[s.cat]==='Розстріляна лексика'?MOURN_FULL:((CW_RAW[s.cat]||CW_RAW[0])[1]);return craw.map(mkW);})():WORDS;
      const i0=Math.max(0,base.findIndex(b=>b.w===cur.w)),lst=base.slice(i0).concat(base.slice(0,i0));
      const catN=s.catWord?CATS[s.cat]:null;
-     v.pgWords=lst.map((b,k)=>({w:b.stress&&b.stress.includes('\u0301')?b.w:b.w,g:b.w[0].toUpperCase(),gr:b.posShort||b.pos,d:b.mean,ex:b.ex,cat:(catN||b.cat||'Природа і погода')+' · рідкість '+b.rar,kick:k===0&&!catN&&s.wordIdx===0?'СЛОВО ДНЯ · 2 ЛИСТОПАДА':(catN?'КАТЕГОРІЯ · '+catN.toUpperCase():'СТРІЧКА')+' · '+(k+1)+' З '+lst.length}));
+     v.pgWords=lst.map((b,k)=>({w:b.stress&&b.stress.includes('\u0301')?b.w:b.w,g:b.w[0].toUpperCase(),gr:b.posShort||b.pos,d:b.mean,ex:b.ex,cat:(catN||b.cat||'Природа')+' · рідкість '+b.rar,kick:k===0&&!catN&&s.wordIdx===0?'СЛОВО ДНЯ · 2 ЛИСТОПАДА':(catN?'КАТЕГОРІЯ · '+catN.toUpperCase():'СТРІЧКА')+' · '+(k+1)+' З '+lst.length}));
      v.pgKey=(s.catWord?'c'+s.cat:'w')+':'+cur.w;v.pgScreen=(!s.swTutSeen&&!this.props.freeze)?'tut':'live';
      v.thName=th==='dark'?'dark':'light';v.rmOn=!!(this.props.reduceMotion||s.rm);
      v.swTutDone=()=>this.setState({swTutSeen:true});
@@ -1049,7 +1161,7 @@ class Component extends DCLogic {
     // fix category
     v.isFix=scr==='fix';
     {const fr=FIX_RAW[s.fixCat||0],shown=s.fixShown||{},key=(s.fixCat||0)+':';const n=fr[2].filter((_,i)=>shown[key+i]).length;
-     v.fixV={n:FIXES[s.fixCat||0],t:fr[0],d:fr[1],s1:FS[s.fixCat||0],cnt:fr[2].length+' приклади',prog:n+' З '+fr[2].length,pw:Math.round(n/fr[2].length*100)+'%'};
+     v.fixV={n:FIXES[s.fixCat||0],t:fr[0],d:fr[1],s1:FS[s.fixCat||0],cnt:fr[2].length+' виправлення',prog:n+' З '+fr[2].length,pw:Math.round(n/fr[2].length*100)+'%'};
      v.fixItems=fr[2].map((it,i)=>{const on=!!shown[key+i];return {wr:it[0],ok:it[1],note:it[2],on,off:!on,t:fr[0],anim:`slCasc .45s ${.2+i*.07}s both`,show:()=>{this.snd('ok');this.setState(x=>({fixShown:{...(x.fixShown||{}),[key+i]:1}}));}};});}
     // category
     const cn=CATS[s.cat],mourn=cn==='Розстріляна лексика';
@@ -1059,16 +1171,16 @@ class Component extends DCLogic {
       :{n:cn,bg:R,fg:K,loud:true,btn:K,btnFg:C,cnt:cws.length+' слова',d:craw[0],m:'wait',decor:decorName,tile:K,tileFg:R,bar:K,barBg:'rgba(20,12,10,.2)'};
     v.catV.s1=CS[s.cat][0];
     {const mix=s.catMix||{},on=!!mix[s.cat];
-     Object.assign(v.catV,{mixT:on?'У МІКСІ':'ДОДАТИ',mixIc:on?'0,12 4,8 10,14 22,0 26,4 10,22':'11,0 15,0 15,9 26,9 26,13 15,13 15,22 11,22 11,13 0,13 0,9 11,9',
+     Object.assign(v.catV,{mixT:on?'У МІКСІ':'ДОДАТИ СОБІ',mixIc:on?'0,12 4,8 10,14 22,0 26,4 10,22':'11,0 15,0 15,9 26,9 26,13 15,13 15,22 11,22 11,13 0,13 0,9 11,9',
       mixBg:on?(mourn?C:K):(mourn?'rgba(255,244,230,.14)':C),mixFg:on?(mourn?K:C):(mourn?C:K),mixSh:on?'none':(mourn?'none':'0 3px 0 rgba(20,12,10,.35)'),mixAnim:on?'slPop .35s both':'none',
-      toggleMix:()=>{this.snd(on?'tap':'ok');this.setState(x=>({catMix:{...(x.catMix||{}),[x.cat]:!on}}));this.toast(on?'«'+cn+'» прибрано з Міксу.':'«'+cn+'» тепер у вашому Міксі.');}});}v.catV.prog=nk+' З '+cws.length;v.catV.pw=Math.round(nk/cws.length*100)+'%';
+      toggleMix:()=>{this.snd(on?'tap':'ok');this.setState(x=>({catMix:{...(x.catMix||{}),[x.cat]:!on}}));this.toast(on?'«'+cn+'» прибрано з Міксу.':'«'+cn+'» тепер у твоєму Міксі.');}});}v.catV.prog=nk+' З '+cws.length;v.catV.pw=Math.round(nk/cws.length*100)+'%';
     v.catWords=cws.map((r,i)=>({...r,bars:[1,2,3,4,5].map(j=>({bg:j<=r.rar?(mourn?'var(--ink)':R):'var(--sil)'})),known:!!known[r.w],anim:`slCasc .45s ${.2+i*.07}s both`,onClick:()=>{this.snd('tap');this.go('word',{catWord:r,answered:known[r.w]?'know':null,catBack:true});}}));
     // games hub
     v.cwStatus=s.cw.solved?'РОЗГАДАНО ✓':'ГРАТИ →';
     v.cwMini=SOL.map((c,i)=>({bg:c==='#'?K:C,sh:c==='#'?'transparent':RE,ch:s.cw.solved?c.replace('#',''):(PRE[i]||'')}));
     v.openCw=()=>this.go('cw',{cw:s.cw.solved?s.cw:{...s.cw,t0:Date.now()}});
     let gi=0;
-    v.groups=GROUPS.map(g=>({t:g.t,modes:g.modes.map(m=>{const p=PLAY.includes(m.id);const idx=gi++;return {...m,rec:s.records[m.id]?'★ '+s.records[m.id]:'—',bg:p?R:'var(--tile)',fg:p?K:'var(--ink)',sh:p?RE:'var(--edge)',anim:`slCasc .4s ${.1+idx*.035}s both`,onClick:()=>{if(p)this.startGame(m.id);else this.toast('«'+m.n+'» ще розминається. Влучай поки в «Наголос»!');}};})}));
+    v.groups=GROUPS.map(g=>({t:g.t,modes:g.modes.map(m=>{const p=PLAY.includes(m.id);const idx=gi++;return {...m,rec:s.records[m.id]?'Рекорд: '+s.records[m.id]+' з 10':'Ще жодної гри',bg:p?R:'var(--tile)',fg:p?K:'var(--ink)',sh:p?RE:'var(--edge)',anim:`slCasc .4s ${.1+idx*.035}s both`,onClick:()=>{if(p)this.startGame(m.id);else this.toast('«'+m.n+'» ще розминається. Влучай поки в «Наголос»!');}};})}));
     // game
     const g=s.game;
     if(g&&(scr==='game')){
@@ -1083,7 +1195,7 @@ class Component extends DCLogic {
       const ph=isP?(g.pm||'q'):g.phase;
       v.gMascot=ph==='q'?'wait':ph==='ok'?'happy':(g.lives<=0?'sad':'cringe');
       v.isStress=g.mode==='stress';v.isAna=g.mode==='anagram';v.isPairs=isP;v.isChoose=!v.isStress&&!v.isAna&&!isP;
-      v.gPrompt=v.isStress?'Де наголос?':v.isAna?r.h:isP?'З’єднай слово і значення':r.q;
+      v.gPromptShort=true;v.gPromptLong=false;v.gPrompt=v.isStress?'Де наголос?':v.isAna?r.h:isP?'З’єднай слово і значення':r.q;
       if(isP){
         const cell=(side,i,txt,pi)=>{const m=g.matched.includes(pi),sel=(side==='l'?g.selL:g.selR)===i,bad=g.flash&&g.flash[side]===i;
           return {txt,onClick:()=>this.pairTap(side,i),bg:m?R:bad?'var(--sf2)':sel?'var(--ink)':'var(--tile)',fg:m?K:bad?'var(--mute)':sel?'var(--bg)':'var(--ink)',
@@ -1098,10 +1210,14 @@ class Component extends DCLogic {
           bg:right?R:wrong?'var(--sf2)':vw?'var(--tile)':'transparent',fg:right?K:wrong?'var(--mute)':vw?'var(--ink)':'var(--mute)',
           sh:right?'0 5px 0 '+RE:wrong?'none':vw?'0 5px 0 var(--edge)':'none',tf:wrong?'translateY(12px) rotate(-6deg)':'none',op:wrong?'.55':'1',
           anim:right?'slPop .4s both':wrong?'slDrop .4s ease-in both':'none'};});
-      if(v.isChoose) v.cOpts=r.o.map((t,i)=>{const right=done&&i===r.a,wrong=done&&i===g.pick&&i!==r.a;
-        return {txt:t,slash:wrong,stamp:right,onClick:()=>{if(!done)this.answer(i===r.a,i);},
+      if(v.isChoose){ const T=r.o.map(gTier).includes('l')?'l':r.o.map(gTier).includes('m')?'m':'s';
+      v.gPromptParts=(r.q||'').split(/(\[[^\]]+\])/).filter(Boolean).map(x=>({t:x[0]==='['?x.slice(1,-1):x,dec:x[0]==='['?'line-through':'none'}));v.gPromptLong=(r.q||'').length>40;v.gPromptShort=!v.gPromptLong;
+      v.cOpts=r.o.map((t,i)=>{const right=done&&i===r.a,wrong=done&&i===g.pick&&i!==r.a;
+        return {txt:t,slash:wrong&&T==='s',stamp:right&&T!=='l',k:right?'✓':wrong?'✕':GKEYS[i],kb:right?K:wrong?'var(--ink)':'var(--sf2)',kf:right?R:wrong?'var(--bg)':'var(--ink)',showKey:T!=='s',
+          font:G_FONT[T],al:T==='l'?'flex-start':'center',pad:T==='s'?'0 22px':(T==='l'?'16px 16px 16px 14px':'0 16px 0 14px'),minH:T==='s'?'84px':'66px',
+          parts:gParts(t,wrong&&T!=='s'?'strike':(T==='l'&&!right?'mark':'none')),prR:right&&T==='m'?'60px':'0',onClick:()=>{if(!done)this.answer(i===r.a,i);},
           bg:right?R:wrong?'var(--sf2)':'var(--tile)',fg:right?K:wrong?'var(--mute)':'var(--ink)',sh:right?'0 6px 0 '+RE:wrong?'none':'0 6px 0 var(--edge)',
-          tf:wrong?'translateY(8px)':'none',op:(done&&!right&&!wrong)?'.5':'1',anim:right?'slPop .4s both':'none'};});
+          tf:wrong?'translateY(8px)':'none',op:(done&&!right&&!wrong)?'.5':'1',anim:right?'slPop .4s both':'none'};});}
       if(v.isAna){
         const built=done&&g.phase==='no'?r.w.split('').map(c=>c):g.built.map(i=>r.s[i]);
         v.aSlots=r.w.split('').map((_,i)=>{const ch=built[i]||'';const ok=g.phase==='ok',no=g.phase==='no';
@@ -1114,34 +1230,50 @@ class Component extends DCLogic {
       const okT=['ВЛУЧИВ!','В ЯБЛУЧКО!','ТОЧНО!'][g.i%3];
       v.gbBg=g.phase==='ok'?R:'var(--ink)';v.gbFg=g.phase==='ok'?K:'var(--bg)';
       v.gbTitle=g.phase==='ok'?okT:(g.lives<=0?'ЖИТТЯ ВСЕ':'МИМО');
-      v.gbSub=g.phase==='ok'?'+10 XP':'Правильно: '+this.label(g.mode,r);
+      v.gbSub=g.phase==='ok'?'+10 XP':'Майже. Ось як правильно: '+this.label(g.mode,r);
     }
     v.quitGame=()=>{clearInterval(this._iv);this.go('games',{game:null});};
     // over
     const o=s.over;
     if(o){
       const good=o.score>=Math.ceil(o.total*.6)&&o.total>0;
-      v.oTitle=good?'ВЛУЧНО!':'ЩЕ РАУНД!';v.oScore=o.score+' з '+o.total+' влучань'+(TIMED[o.mode]?' за '+TIMED[o.mode]+' секунд':'');
+      v.oTitle=good?'ВЛУЧНО!':'ЩЕ РАУНД!';
+      {const n=o.total,m10=n%10,m100=n%100,rw=m10===1&&m100!==11?'раунд':(m10>=2&&m10<=4&&(m100<12||m100>14))?'раунди':'раундів';
+       v.oScore=TIMED[o.mode]?o.score+' · Ось скільки вдалося за хвилину. Побити?':o.score===n?n+' '+rw+' — '+(n===1?'і той твій.':'і всі твої.'):o.score+' з '+n+'. Нижче видно, де була помилка. А потім — ще раз?';}
       v.oMascot=good?'celebrate':'sad';v.oNewRec=o.newRec;v.oXp=o.xp+' XP';v.oRec=o.rec;
       v.oRows=o.res.map((r,i)=>({txt:r.label,mark:r.ok?'✓':'✗',bg:r.ok?R:'var(--ink)',fg:r.ok?K:'var(--bg)',anim:`slCasc .4s ${.3+i*.06}s both`}));
       v.again=()=>this.startGame(o.mode);
     }
-    v.toGames=()=>this.go('games');
+    v.toGames=()=>this.go('games');v.toFeed=()=>this.go('feed');
     // crossword
     const cw=s.cw,cur=this.wordOf(cw.sel,cw.dir)||this.wordOf(cw.sel,cw.dir==='a'?'d':'a');
-    v.cwCells=SOL.map((c,i)=>{if(c==='#')return {num:'',ch:'',bg:'var(--sil)',fg:'transparent',sh:'none',anim:'none',onClick:()=>{}};
-      const sel=i===cw.sel,inW=cur&&cur.c.includes(i);
-      return {num:NUMS[i]||'',ch:cw.vals[i]||'',onClick:()=>this.cwSel(i),bg:sel?R:inW?'var(--hl)':'var(--tile)',fg:sel?K:'var(--ink)',sh:sel?'0 5px 0 '+RE+', 0 0 0 3px var(--ink)':'0 5px 0 var(--edge)',anim:sel?'slPop .25s both':'none'};});
-    v.cwClue=cur?{id:cur.id,t:cur.t}:{id:'',t:''};
-    v.cwToggle=()=>{const o2=cw.dir==='a'?'d':'a';if(this.wordOf(cw.sel,o2))this.setState({cw:{...cw,dir:o2}});else{const nw=CWW[(CWW.indexOf(cur)+1)%CWW.length];this.setState({cw:{...cw,sel:nw.c.find(x=>!cw.vals[x])??nw.c[0],dir:nw.d}});}};
-    v.kb=KB.map(row=>row.map(k=>({k,w:k==='⌫'?'44px':'29px',onClick:()=>this.cwKey(k)})));
-    v.cwHint=()=>{if(cw.vals[cw.sel]===SOL[cw.sel]){this.toast('Ця клітинка вже правильна. Спробуй іншу.');return;}this.cwKey(SOL[cw.sel]);};
+    const cx=s.cx||{wi:0,path:[],fresh:[]},cxc=CWW[cx.wi],cxw=cxWheel(cx.wi);
+    v.cwCells=SOL.map((c,i)=>{if(c==='#')return {num:'',ch:'',bg:'var(--sil)',fg:'transparent',nf:'transparent',sh:'none',anim:'none',onClick:()=>{}};
+      const inC=!cw.solved&&cxc.c.includes(i),fr=cx.fresh.indexOf(i),hot=fr>=0&&!!cx.flash,has=!!cw.vals[i];
+      return {num:NUMS[i]||'',ch:has?cw.vals[i]:'',bg:hot?R:inC?'var(--hl)':'var(--tile)',fg:hot?K:'var(--ink)',nf:hot?K:'var(--mute)',sh:hot?'0 4px 0 '+RE:'0 4px 0 var(--edge)',
+        anim:hot?`cxPop .45s ${(Math.max(0,cxc.c.indexOf(i))*.07).toFixed(2)}s both`:'none',
+        onClick:()=>{if(cw.solved||cx.flash)return;const opts=CWW.map((w,k)=>k).filter(k=>CWW[k].c.includes(i)&&!this.cxSolved(cw.vals,k));const t=opts.find(k=>k!==cx.wi)??opts[0];if(t!=null)this.setState({cx:{...cx,wi:t,path:[]}});}};});
+    v.cwClue={id:cxc.id,t:cxc.t};
+    v.cwNext=()=>{if(cx.flash)return;const nx=this.cxAdvance(cw.vals,cx.wi);if(nx>=0)this.setState({cx:{...cx,wi:nx,path:[]}});};
+    v.cwHasPath=cx.path.length>0;v.cwNoPath=!v.cwHasPath;v.cwHelp='Веди пальцем по сусідніх літерах, можна й навскіс, і склади слово з підказки. Кожна літера належить лише одному слову.';
+    v.cwPv=cx.path.map(k=>({t:cxw[k],bg:cx.flash==='ok'?K:cx.flash==='bad'?'rgba(255,244,230,.14)':R,fg:cx.flash==='ok'?R:cx.flash==='bad'?C:K}));
+    v.cwPvBg=cx.flash==='ok'?R:K;v.cwPvAnim=cx.flash==='bad'?'cxShake .45s both':cx.flash==='ok'?'cxFly .5s .35s both':'none';
+    v.cwWheel=cxw.map((t,k)=>{const q=cxPos(k),on=cx.path.includes(k),bad=on&&cx.flash==='bad';return {t,x:(q.x-31)+'px',y:(q.y-31)+'px',bg:bad?'var(--ink)':on?R:'var(--tile)',fg:bad?'var(--bg)':on?K:'var(--ink)',sh:on?'0 1px 0 '+(bad?'rgba(0,0,0,.4)':RE):'0 5px 0 var(--edge)',tf:on?'translateY(4px)':'none',anim:`cxIn .35s ${(.05+k*.04).toFixed(2)}s both`};});
+    {const pts=cx.path.map(cxPos);if(cx.ptr&&cx.path.length)pts.push(cx.ptr);v.cwLine=pts.map(q=>q.x.toFixed(1)+','+q.y.toFixed(1)).join(' ');}
+    v.cwLineC=cx.flash==='bad'?'var(--ink)':R;v.cwShowHand=!cx.touched&&!this.props.freeze;
+    v.cwDown=e=>{if(cx.flash||cw.solved)return;this._cxr=e.currentTarget.getBoundingClientRect();try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}const q=this.cxLocal(e),k=this.cxHit(q);this._cxd=true;this.setState({cx:{...cx,path:k>=0?[k]:[],ptr:q,touched:true}});};
+    v.cwMove=e=>{if(!this._cxd)return;const q=this.cxLocal(e),k=this.cxHit(q),X=this.state.cx,P=X.path;
+      if(k>=0&&P.length>1&&P[P.length-2]===k){this.setState({cx:{...X,path:P.slice(0,-1),ptr:q}});return;}
+      if(k>=0&&!P.includes(k)){this.snd&&0;this.setState({cx:{...X,path:[...P,k],ptr:q}});return;}
+      this.setState({cx:{...X,ptr:q}});};
+    v.cwUp=()=>{if(!this._cxd)return;this._cxd=false;this.cxCommit();};
+        v.cwHint=()=>{if(cx.flash||cw.solved)return;const i=cxc.c.find(x=>cw.vals[x]!==SOL[x]);if(i==null)return;const vals={...cw.vals,[i]:SOL[i]};this.snd('tap');this.setState({cw:{...cw,vals},cx:{...cx,fresh:[i],flash:'hint',touched:true}});if(this.cxSolved(vals,cx.wi))this.cxAfterFill(vals,cx.wi);else this.later(()=>this.setState(st=>({cx:{...st.cx,flash:null,fresh:[]}})),600);};
     v.cwSolved=cw.solved;v.cwTime=cw.time;
     v.cwShare=SOL.map(c=>({bg:c==='#'?'var(--sil)':R}));
     v.cwShareBtn=()=>this.toast('Скопійовано. Жодної літери — тільки клини.');
     // saved
     const qq=s.q.trim().toLowerCase();
-    const lists={learn:[WORDS[0],WORDS[1],...EXTRA.slice(0,3)].map(x=>({w:x.w,m:x.mean||x.m,meta:'повтор завтра'})),fav:[WORDS[4],WORDS[2],WORDS[3]].map(x=>({w:x.w,m:x.mean,meta:'★'})),hist:[...WORDS,...EXTRA].map((x,i)=>({w:x.w,m:x.mean||x.m,meta:x.d||(28-i)+' жов'})),wod:[...WORDS,{w:'Пелехатий',mean:'Кудлатий, розпатланий.',d:'28 жов'}].map(x=>({w:x.w,m:x.mean,meta:x.d}))};
+    const lists={learn:[WORDS[0],WORDS[1],...EXTRA.slice(0,3)].map(x=>({w:x.w,m:x.mean||x.m,meta:'повтор завтра'})),fav:[WORDS[4],WORDS[2],WORDS[3]].map(x=>({w:x.w,m:x.mean,meta:'♥'})),hist:[...WORDS,...EXTRA].map((x,i)=>({w:x.w,m:x.mean||x.m,meta:x.d||(28-i)+' жов'})),wod:[...WORDS,{w:'Пелехатий',mean:'Кудлатий, розпатланий.',d:'28 жов'}].map(x=>({w:x.w,m:x.mean,meta:x.d}))};
     const counts={learn:5,fav:3,hist:9,col:4,wod:6};
     v.sTabs=[['learn','Вчу'],['fav','Улюблене'],['hist','Історія'],['col','Колекції'],['wod','Слова дня']].map(([id,n])=>({n,c:counts[id],bg:s.savedTab===id?'var(--ink)':'var(--sf2)',fg:s.savedTab===id?'var(--bg)':'var(--ink)',onClick:()=>this.setState({savedTab:id})}));
     v.q=s.q;v.hasQ=!!s.q;v.onQ=e=>this.setState({q:e.target.value});v.clearQ=()=>this.setState({q:''});
@@ -1157,9 +1289,10 @@ class Component extends DCLogic {
     v.cal=[...Array(35)].map((_,i)=>{const oct=i<27;const d=oct?5+i:i-26;const st=(oct&&(d===7||d===10))?'miss':(!oct&&d===2)?'today':(!oct&&d>2)?'future':'done';
       const m=oct?'жовтня':'листопада';
       const map={done:{bg:R,fg:K,sh:'0 4px 0 '+RE,bd:'0'},today:{bg:'var(--ink)',fg:'var(--bg)',sh:'0 4px 0 '+R,bd:'0'},miss:{bg:'var(--tile)',fg:'var(--mute)',sh:'0 4px 0 var(--edge)',bd:'0'},future:{bg:'transparent',fg:'var(--mute)',sh:'none',bd:'2px dashed var(--line)'}}[st];
-      const tt={done:d+' '+m+': слово відкрито, ціль виконано.',today:'Сьогодні. Заграва вже твоя!',miss:d+' '+m+': тут серія спіткнулась. Але ж піднялась!',future:'Це ще попереду. Не підглядай.'}[st];
+      const tt={done:d+' '+m+': слово відкрито, ціль виконано.',today:'Сьогодні. Заграва — уже твоє слово!',miss:d+' '+m+': тут серія спіткнулась. Але ж нова починається з будь-якого дня!',future:'Це ще попереду. Не підглядай.'}[st];
       return {d,...map,anim:`slCasc .35s ${i*.015}s both`,onClick:()=>{this.snd('tap');this.toast(tt);}};});
-    v.fams=FAMS.map(fm=>({f:fm.f,items:fm.items.map(([gl,n],i)=>{const e=i<fm.e;return {gl:e?gl:'',bg:e?R:'var(--sil)',clip:fm.clip,flt:e?'drop-shadow(0 4px 0 '+RE+')':'none',onClick:()=>{if(e){this.snd('shout');this.setState({stamp:{gl,n,f:fm.f,clip:fm.clip}});}else this.toast('«'+n+'» ще не твій. Поки що.');}};})}));
+    v.fams=FAMS.map(fm=>{const clip=BSH[fm.sh],T=BTONE[fm.tone];return {f:fm.f,c:fm.items.filter(x=>x[2]).length+' з '+fm.items.length,items:fm.items.map(([gl,n,e])=>({gl:e?gl:'',fs:gl.length>=3?'12px':gl.length===2?'14px':'18px',clip,ring:e?T.ring:'var(--sil)',bg:e?T.bg:'var(--sil)',fg:T.fg,flt:e?T.flt:'none',onClick:()=>{if(e){this.snd('shout');this.setState({stamp:{gl,n,f:fm.f,clip}});}else this.toast('«'+n+'» ще не твоя. Поки що.');}}))};});
+    v.badgeCnt=FAMS.reduce((a,f)=>a+f.items.filter(x=>x[2]).length,0)+' з 21';
     v.openSettings=()=>this.go('settings');v.toProfile=()=>this.go('profile');
     v.stampOn=!!s.stamp;v.stamp=s.stamp||{gl:'',n:'',f:'',clip:'none'};v.closeStamp=()=>this.setState({stamp:null});
     // settings
@@ -1173,6 +1306,7 @@ class Component extends DCLogic {
         {n:'Шрифт і розмір',sub:'Розмір тексту в картках',ic:ICON.sq,...chev('font','Як у системі')}]},
       {t:'ЗВУК І СПОВІЩЕННЯ',rows:[
         {n:'Звуки',sub:'Крик на розкритті, «влучно» й «мимо»',ic:ICON.tri,...tog(s.sound,()=>this.setState({sound:!s.sound}))},
+        {n:'Голос диктора',sub:'Хто читає слова вголос',ic:ICON.tri,...chev('voice',VOICES[s.subSel.voice??0].n)},
         {n:'Сповіщення',sub:'Нагадування про слово дня',ic:ICON.dia,...chev('notif','20:30')},
         {n:'Віджети',sub:'Головний екран і блокування',ic:ICON.sq,...chev('widgets','Середній')}]},
       {t:'НАВЧАННЯ',rows:[{n:'Ціль дня',sub:'Нових слів щодня',ic:ICON.wedge,...chev('goal',GOALS[s.goal].n+' '+GOALS[s.goal].l)}]},
@@ -1186,6 +1320,16 @@ class Component extends DCLogic {
     const sel=s.subSel[s.sub]??(s.sub==='goal'?s.goal:sb.sel);
     v.subOpts=sb.opts.map((n,i)=>({n,on:i===sel,bc:i===sel?R:'var(--line)',bg:i===sel?R:'transparent',bt:i?'1px solid var(--line)':'0',anim:`slCasc .35s ${.05+i*.05}s both`,
       onClick:()=>{if(s.sub==='about'&&i===0){this.startSplash('first');this.setState({ob:0});return;}this.snd('tap');const u={subSel:{...s.subSel,[s.sub]:i}};if(s.sub==='goal')u.goal=i;this.setState(u);}}));
+    v.subVoice=s.sub==='voice';v.subList=s.sub!=='voice';
+    {const vi=s.subSel.voice??0,say=(i)=>{this.setState({vPlay:i});try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance('Заграва');u.lang='uk-UA';u.pitch=VOICES[i].p;u.rate=VOICES[i].r;speechSynthesis.speak(u);}catch(e){}clearTimeout(this._vp);this._vp=setTimeout(()=>this.setState({vPlay:null}),1400);};
+     v.vCur=VOICES[vi];v.vPlayCur=()=>say(vi);v.vCurBars=[.5,.9,.6,1,.7,.85,.45,.75,.55,.95,.6,.4].map((h,k)=>({h:Math.round(h*34)+'px',anim:s.vPlay===vi?'vWave .6s '+(k*.05)+'s ease-in-out infinite alternate':'none'}));
+     v.voices=VOICES.map((x,i)=>{const on=i===vi,pl=s.vPlay===i;return {...x,on,bc:on?R:'var(--line)',bg:on?R:'transparent',bt:i?'1px solid var(--line)':'0',anim:`slCasc .35s ${.05+i*.05}s both`,plBg:pl?R:'var(--sf2)',plFg:pl?K:'var(--ink)',plIc:pl?'M3 3h4v14H3zM10 3h4v14h-4z':'M4 2l13 8-13 8z',
+       pick:()=>{this.snd('tap');this.setState({subSel:{...s.subSel,voice:i}});say(i);},play:e=>{e.stopPropagation();say(i);}};});}
+    {const vi=s.subSel.voice??0,pc=s.vPlay!=null,rmv=!!(this.props.reduceMotion||s.rm),wv=(k)=>pc&&!rmv?'vWave .'+(42+(k%3)*8)+'s '+(k*.04).toFixed(2)+'s ease-in-out infinite alternate':'none',seed=[[.4,.7,.55,.9,.6,.8,.5,.65,.45],[.8,.95,.7,1,.85,.6,.9,.75,.7],[.3,.9,.4,1,.35,.85,.5,.95,.4],[.6,.75,.85,.7,.9,.8,.65,.75,.6]][vi];
+     v.vCurUp=VOICES[vi].n.toUpperCase();v.vCurIc=pc?'M4 3h4v14H4zM12 3h4v14h-4z':'M5 2l13 8-13 8z';
+     v.vBigBars=Array.from({length:16},(_,k)=>({h:Math.round((.3+.7*seed[k%9])*40)+'px',anim:wv(k)}));
+     v.vSyl=['за','гра́','ва'].map((t,k)=>({t,c:k===1?'#FFF4E6':'#140C0A',anim:pc&&!rmv?'vcSyl .5s '+(k*.45)+'s both':'none'}));
+     v.voices=v.voices.map(o=>({...o,cBg:o.on?'var(--ink)':'var(--tile)',cFg:o.on?'var(--bg)':'var(--ink)',cSh:o.on?'inset 0 3px 0 rgba(0,0,0,.3)':'0 4px 0 var(--edge)',cBd:o.on?'0':'1px solid var(--line)',cTf:o.on?'translateY(4px)':'none'}));}
     v.subNotif=s.sub==='notif';v.subGoal=s.sub==='goal';v.subWidgets=s.sub==='widgets';v.subFont=s.sub==='font';v.subAbout=s.sub==='about';
     v.subTime=sb.opts[sel]==='Вимкнено'?'вимкнено':sb.opts[sel]||'20:30';
     v.subGoalN=GOALS[s.goal].n;v.subGoalT=['Одне слово — і серія жива. Для найзайнятіших.','Три слова — золота середина. Так вчать найчастіше.','П’ять слів — для тих, хто збирає словник.'][s.goal];
@@ -1200,7 +1344,16 @@ class Component extends DCLogic {
     // overlays
     v.toastOn=!!s.toast;v.toastText=s.toast?s.toast.text:'';v.toastBottom=v.showTabs?'104px':'36px';
     v.sheetOn=!!s.sheet;v.isReset=s.sheet==='reset';v.isCollect=s.sheet==='collect';
-    v.isMenu=s.sheet==='menu';v.sheetTitle=s.sheet==='reset'?'СКИНУТИ ПРОГРЕС?':s.sheet==='menu'?'ДІЇ ЗІ СЛОВОМ':'ДО КОЛЕКЦІЇ';
+    v.isMenu=s.sheet==='menu';v.isHide=s.sheet==='hide';v.isReport=s.sheet==='report';v.isShareS=s.sheet==='share';
+    v.sheetTitle={reset:'СКИНУТИ ПРОГРЕС?',menu:'ДІЇ ЗІ СЛОВОМ',hide:'НЕ ПОКАЗУВАТИ',report:'ПОВІДОМИТИ ПРО ПОМИЛКУ',share:'ПОДІЛИТИСЯ'}[s.sheet]||'ДО КОЛЕКЦІЇ';
+    v.pgAction=(k,info)=>this.setState({sheet:k,shWord:info||{},repPick:null,shFmt:0});
+    {const sw=s.shWord||{},hn=['Не показувати цей запис','Не показувати категорію «'+(sw.cat||'Природа')+'»','Не показувати Виправлення','Не показувати Фразеологізми','Не показувати Синонімічні ряди','Не показувати Поради'],ht=['Запис','«'+(sw.cat||'Природа')+'»','Виправлення','Фразеологізми','Синонімічні ряди','Поради'];
+     v.hideRows=hn.map((n,i)=>({n,bt:i?'1px solid var(--line)':'0',onClick:()=>{this.setState({sheet:null});this.toast(ht[i]+' приховано');}}));
+     v.repOpts=['Друкарська помилка','Наголос','Визначення','Інше'].map((n,i)=>{const on=s.repPick===i;return {n,bg:on?'var(--ink)':'var(--tile)',fg:on?'var(--bg)':'var(--ink)',sh:on?'inset 0 3px 0 rgba(0,0,0,.35)':'0 4px 0 var(--edge)',tf:on?'translateY(3px)':'none',onClick:()=>this.setState({repPick:i})};});
+     v.repSend=()=>{if(s.repPick==null)return;this.setState({sheet:null});this.toast('Дякуємо! Ми перевіримо.');};v.repOp=s.repPick==null?.4:1;
+     v.shFmts=['Сторіс','Квадрат'].map((n,i)=>{const on=(s.shFmt||0)===i;return {n,h:i?'92px':'150px',w:i?'92px':'84px',bd:on?'3px solid #FF3B2F':'3px solid transparent',fg:on?'var(--ink)':'var(--mute)',onClick:()=>this.setState({shFmt:i})};});
+     v.shWordUp=String(sw.w||'ЗАГРАВА').replace(/\u0301/g,'').toUpperCase();
+     v.shSend=()=>{this.setState({sheet:null});this.toast('Картку «'+v.shWordUp+'» готово — лови друзів на гачок.');};}
     v.closeSheet=()=>this.setState({sheet:null});
     v.doReset=()=>{this.setState({sheet:null,xp:0});this.toast('Прогрес скинуто. Слова збережено.');};
     v.colRows=COLS.map((c,i)=>({...c,on:s.cols[i],bc:s.cols[i]?R:'var(--line)',bg:s.cols[i]?R:'transparent',bt:i?'1px solid var(--line)':'0',onClick:()=>{const cc=[...s.cols];cc[i]=!cc[i];this.setState({cols:cc});}}));

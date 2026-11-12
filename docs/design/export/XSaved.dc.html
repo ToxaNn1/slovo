@@ -43,7 +43,7 @@
   <div style="position:relative;border-radius:22px;background:#FF3B2F;color:#140C0A;padding:18px 18px 18px 20px;display:flex;align-items:center;gap:14px;overflow:hidden">
     <div style="position:absolute;right:90px;top:-30px;font:900 140px/1 Unbounded,sans-serif;color:#FFF4E6;opacity:.85">6</div>
     <div style="position:relative;flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 18px/1.1 Unbounded,sans-serif">Перевір себе</span><span style="font:600 13px/1 Onest">6 слів на сьогодні</span></div>
-    <button style="position:relative;flex:none;height:48px;padding:0 18px;border-radius:14px;background:#140C0A;color:#FFF4E6;box-shadow:0 4px 0 rgba(20,12,10,.45);font:900 12px/1 Unbounded,sans-serif">ПОЧАТИ</button>
+    <button style="position:relative;flex:none;height:48px;padding:0 18px;border-radius:14px;background:#140C0A;color:#FFF4E6;box-shadow:0 4px 0 rgba(20,12,10,.45);font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ПОЧАТИ</button>
   </div>
   <div style="display:flex;flex-direction:column">
     <sc-for list="{{ learn }}" as="r" hint-placeholder-count="6">
@@ -61,7 +61,7 @@
   <dc-import name="Rupor" state="{{ emptyM }}" size="{{ 140 }}" hint-size="140px,105px"></dc-import>
   <span style="font:900 22px/1.15 Unbounded,sans-serif;text-wrap:balance">{{ emptyT }}</span>
   <span style="font:400 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">{{ emptyS }}</span>
-  <sc-if value="{{ emptyBtn }}" hint-placeholder-val="{{ false }}"><button style="margin-top:6px;height:56px;padding:0 26px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;font:900 14px/1 Unbounded,sans-serif">{{ emptyBtn }}</button></sc-if>
+  <sc-if value="{{ emptyBtn }}" hint-placeholder-val="{{ false }}"><button style="margin-top:6px;height:56px;padding:0 26px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">{{ emptyBtn }}</button></sc-if>
 </div>
 </sc-if>
 
@@ -110,7 +110,7 @@
   <div style="position:relative;border-radius:24px;background:var(--sf2);padding:22px 20px;overflow:hidden;display:flex;flex-direction:column;gap:12px">
     <div style="position:absolute;right:-6px;top:-30px;font:900 170px/1 Unbounded,sans-serif;color:var(--mute);opacity:.35">23</div>
     <div style="position:relative;display:flex;align-items:center;gap:10px"><span style="display:flex;gap:4px"><span style="width:7px;height:24px;background:var(--ink);transform:skewX(-14deg)"></span><span style="width:7px;height:24px;background:var(--ink);transform:skewX(-14deg)"></span></span><span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1.5px">ПЕРЕРВА</span></div>
-    <span style="position:relative;font:900 26px/1.05 Unbounded,sans-serif;width:230px">Серія 23 на паузі</span>
+    <span style="position:relative;font:900 26px/1.05 Unbounded,sans-serif;width:230px">Серія на паузі: 23</span>
     <span style="position:relative;font:500 15px/1.4 Onest;color:var(--mute)">Перерва триває до 9 листопада включно.</span>
   </div>
   <div style="border-radius:20px;background:var(--sf);border:1px solid var(--line);padding:16px;display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
@@ -124,14 +124,14 @@
 <div style="position:absolute;inset:0;padding:122px 16px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="border-radius:24px;background:var(--ink);color:var(--bg);padding:20px;display:flex;flex-direction:column;gap:14px">
     <div style="display:flex;align-items:center;justify-content:space-between"><span style="font:900 20px/1.1 Unbounded,sans-serif">Заморозка серії</span><span style="height:30px;padding:0 10px;border-radius:9px;background:#FFF4E6;color:#140C0A;display:flex;align-items:center;flex:none;white-space:nowrap;font:800 12px/1 Unbounded,sans-serif">2 У ЗАПАСІ</span></div>
-    <span style="font:400 15px/1.45 Onest;opacity:.8;text-wrap:pretty">Пропустили день — заморозка спрацює сама, і серія не обнулиться.</span>
+    <span style="font:400 15px/1.45 Onest;opacity:.8;text-wrap:pretty">День пропущено — заморозка спрацює сама, і серія не обнулиться.</span>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
       <sc-for list="{{ freezeCal }}" as="d" hint-placeholder-count="7"><span style="position:relative;aspect-ratio:1;border-radius:9px;background:{{ d.bg }};color:{{ d.fg }};display:flex;align-items:center;justify-content:center;font:700 13px/1 Onest;overflow:hidden">{{ d.n }}<sc-if value="{{ d.ice }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(20,12,10,.0) 0 5px,rgba(20,12,10,.25) 5px 7px);animation:slFrost .6s .3s both"></span></sc-if></span></sc-for>
     </div>
   </div>
   <div style="display:flex;gap:12px">
     <div style="flex:1;border-radius:20px;background:var(--sf2);padding:16px;display:flex;flex-direction:column;gap:8px"><span style="font:900 34px/1 Unbounded,sans-serif;color:#FF3B2F">23</span><span style="font:500 13px/1 Onest;color:var(--mute)">днів поспіль</span></div>
-    <div style="flex:1;border-radius:20px;background:var(--sf2);padding:16px;display:flex;flex-direction:column;gap:8px"><span style="font:900 34px/1 Unbounded,sans-serif">1</span><span style="font:500 13px/1 Onest;color:var(--mute)">день врятовано</span></div>
+    <div style="flex:1;border-radius:20px;background:var(--sf2);padding:16px;display:flex;flex-direction:column;gap:8px"><span style="font:900 34px/1 Unbounded,sans-serif">1</span><span style="font:500 13px/1 Onest;color:var(--mute)">заморозка врятувала день</span></div>
   </div>
 </div>
 </sc-if>
@@ -144,7 +144,7 @@
   <span style="font:900 24px/1.1 Unbounded,sans-serif">{{ bName }}</span>
   <span style="font:500 15px/1.4 Onest;color:var(--mute)">{{ bSub }}</span>
   <div style="width:100%;height:10px;background:var(--sil);transform:skewX(-20deg)"><div style="width:{{ bPct }};height:100%;background:#FF3B2F"></div></div>
-  <button style="width:100%;height:60px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif">ГОТОВО</button>
+  <button style="width:100%;height:60px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ГОТОВО</button>
 </div>
 </sc-if>
 
@@ -153,7 +153,7 @@
   <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
   <div style="position:absolute;left:-30px;top:66px;font:900 120px/.9 Unbounded,sans-serif;letter-spacing:-6px;color:#FFF4E6;transform:rotate(-8deg);white-space:nowrap">{{ redBig }}</div>
   <sc-if value="{{ is_p5 }}" hint-placeholder-val="{{ false }}">
-    <div style="position:relative;margin-top:110px;width:190px;height:190px;background:#140C0A;clip-path:polygon(0 0,100% 30%,100% 70%,0 100%);display:flex;align-items:center;padding-left:34px;animation:slStamp .6s .2s cubic-bezier(.3,1.4,.5,1) both"><span style="font:900 64px/1 Unbounded,sans-serif;color:#FFF4E6">а́</span></div>
+    <div style="position:relative;margin-top:110px;width:190px;height:190px;animation:slStamp .6s .2s cubic-bezier(.3,1.4,.5,1) both;filter:drop-shadow(0 8px 0 #140C0A)"><div style="position:absolute;inset:0;border-radius:50%;background:#140C0A"></div><div style="position:absolute;inset:7%;border-radius:50%;background:#FFF4E6;display:flex;align-items:center;justify-content:center"><span style="font:900 72px/1 Unbounded,sans-serif;color:#140C0A">Á</span></div></div>
   </sc-if>
   <sc-if value="{{ is_p6 }}" hint-placeholder-val="{{ false }}">
     <div style="position:relative;margin-top:96px;font:900 220px/.9 Unbounded,sans-serif;letter-spacing:-10px;animation:slStamp .6s .2s cubic-bezier(.3,1.4,.5,1) both">4</div>
@@ -189,10 +189,10 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;s1&quot;,&quot;s2&quot;,&quot;s3&quot;,&quot;s4&quot;,&quot;s5&quot;,&quot;s6&quot;,&quot;s7&quot;,&quot;p1&quot;,&quot;p2&quot;,&quot;p3&quot;,&quot;p4&quot;,&quot;p5&quot;,&quot;p6&quot;],&quot;default&quot;:&quot;s1&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
 const TABI={feed:'polygon(0 10%,100% 0,100% 38%,0 46%,0 56%,100% 50%,100% 100%,0 100%)',games:'polygon(50% 0,100% 50%,50% 100%,0 50%,22% 50%,50% 78%,78% 50%,50% 22%,22% 50%,0 50%)',saved:'polygon(12% 8%,88% 0,88% 100%,50% 74%,12% 100%)',profile:'polygon(30% 0,70% 0,74% 40%,50% 48%,26% 40%,30% 0,30% 0,0 100%,8% 58%,92% 54%,100% 100%,0 100%)'};
 const EMPTY={
- s2:{top:'150px',m:'sleep',t:'Поки нічого вчити',s:'Позначте «Не знаю» на картці — і запис з’явиться тут із днем повторення.'},
+ s2:{top:'150px',m:'sleep',t:'Поки нічого вчити',s:'Познач «Не знаю» на картці — і запис з’явиться тут із днем повторення.'},
  s4:{top:'170px',m:'wait',t:'Колекція порожня',s:'Тут поки порожньо, але це ненадовго.'},
- s5:{top:'150px',m:'wait',t:'Колекцій ще немає',s:'Створіть першу — і складайте в неї слова кнопкою закладки під карткою.',b:'НОВА КОЛЕКЦІЯ'},
- s7:{top:'120px',m:'sleep',t:'Нічого не знайдено',s:'Спробуйте інше слово або коротший запит.'}};
+ s5:{top:'150px',m:'wait',t:'Колекцій ще немає',s:'Створи першу — і складай у неї слова кнопкою закладки під карткою.',b:'НОВА КОЛЕКЦІЯ'},
+ s7:{top:'120px',m:'sleep',t:'Нічого не знайдено',s:'Спробуй інше написання. Пошук за значенням працює від трьох літер. Бракує слова? Запропонуй його в Налаштуваннях, у пункті «Про застосунок і відгук».'}};
 class Component extends DCLogic {
   renderVals(){
     const s=this.props.screen||'s1';
@@ -220,7 +220,7 @@ class Component extends DCLogic {
     if(s==='p3'){v.bBg='#FF3B2F';v.bFg='#140C0A';v.bSym='7';v.bName='Тиждень поспіль';v.bSub='Отримано 28 жовтня';v.bPct='100%';}
     if(s==='p4'){v.bBg='var(--sil)';v.bFg='var(--mute)';v.bSym='30';v.bName='Місяць поспіль';v.bSub='Ще ні · 23 з 30 днів';v.bPct='77%';}
     v.redOn=red;
-    if(s==='p5'){v.redBig='ВІДЗНАКА';v.redT='Перша перемога в наголосах';v.redS='Нова відзнака — тепер вона ваша назавжди.';}
+    if(s==='p5'){v.redBig='ВІДЗНАКА';v.redT='Перша перемога в наголосі';v.redS='Нова відзнака — тепер вона твоя назавжди.';}
     if(s==='p6'){v.redBig='РІВЕНЬ';v.redT='Рівень 4 — Книжник';v.redS='Новий рівень! Так тримати.';}
     v.showTabs=!red&&!['s3','s4','s6','s7'].includes(s);
     const tab=s[0]==='p'?'profile':'saved';

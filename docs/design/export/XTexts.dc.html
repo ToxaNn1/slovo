@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+[data-xt][data-th="light"]{--bg:#FFF4E6;--ink:#140C0A;--sf:#FFFBF5;--sf2:#F5E4CF;--line:rgba(20,12,10,.13);--mute:#6B5D55;--tile:#FFFBF5;--edge:#DCC2A6;--sil:rgba(20,12,10,.12)}
+[data-xt][data-th="dark"]{--bg:#140C0A;--ink:#FFF4E6;--sf:#221714;--sf2:#4A332A;--line:rgba(255,244,230,.13);--mute:#BDAE9F;--tile:#33241F;--edge:#050302;--sil:rgba(255,244,230,.08)}
+[data-xt] *{box-sizing:border-box}
+[data-xt][data-rm="1"] *{animation-name:xtRm!important;animation-duration:.3s!important;animation-delay:0s!important}
+@keyframes xtRm{from{opacity:0}}
+@keyframes xtUp{from{opacity:0;transform:translateY(14px)}}
+@keyframes xtSheet{0%{transform:translateY(100%)}72%{transform:translateY(-8px)}100%{transform:none}}
+@keyframes xtPop{0%{transform:scale(.5) rotate(-6deg);opacity:0}70%{transform:scale(1.08)}100%{transform:none}}
+</style>
+</helmet>
+<div data-xt="1" data-th="{{ th }}" data-rm="{{ rmAttr }}" style="width:406px;height:860px;padding:8px;background:#0B0706;border-radius:62px;box-shadow:0 0 0 1.5px #3A2C27,0 30px 70px rgba(20,12,10,.35);font-family:Onest,sans-serif;flex:none">
+<div style="position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;background:{{ scrBg }};color:var(--ink)">
+
+<sc-if value="{{ isPoster }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;left:0;right:0;top:0;height:330px;background:#FF3B2F;color:#140C0A;clip-path:polygon(0 0,100% 0,100% 86%,0 100%);overflow:hidden">
+    <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
+    <span style="position:absolute;left:18px;top:112px;font:900 {{ d.shS }}/.9 Unbounded,sans-serif;letter-spacing:-3px;white-space:nowrap;transform:rotate(-8deg);transform-origin:left;animation:xtPop .5s .1s both">{{ d.sh }}</span>
+    <div style="position:absolute;right:22px;top:198px;animation:xtUp .5s .2s both"><dc-import name="Rupor" state="{{ d.m }}" on-red="{{ true }}" size="{{ 124 }}" hint-size="124px,93px"></dc-import></div>
+  </div>
+  <div style="position:absolute;left:20px;right:20px;top:338px;bottom:34px;display:flex;flex-direction:column;gap:12px">
+    <span style="font:900 23px/1.15 Unbounded,sans-serif;letter-spacing:-.5px;text-wrap:balance;animation:xtUp .4s .15s both">{{ d.t }}</span>
+    <sc-if value="{{ hasX }}" hint-placeholder-val="{{ false }}"><span style="font:500 16px/1.45 Onest;color:var(--mute);text-wrap:pretty;animation:xtUp .4s .2s both">{{ d.x }}</span></sc-if>
+    <sc-if value="{{ hasWord }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:16px;border-radius:18px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;flex-direction:column;gap:6px;animation:xtUp .4s .25s both">
+        <span style="font:900 26px/1 Unbounded,sans-serif">Заграва</span>
+        <span style="font:500 13px/1 Onest;color:var(--mute)">за-гра́-ва · ім., ж. р.</span>
+        <span style="font:500 15px/1.4 Onest">Червоне світло на небі під час сходу чи заходу сонця.</span>
+      </div>
+    </sc-if>
+    <sc-for list="{{ opts }}" as="o" hint-placeholder-count="0">
+      <div style="min-height:54px;padding:12px 16px;border-radius:16px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};border:{{ o.bd }};transform:{{ o.tf }};display:flex;align-items:center;font:600 16px/1.3 Onest;animation:{{ o.anim }}">{{ o.t }}</div>
+    </sc-for>
+    <sc-for list="{{ rounds }}" as="r" hint-placeholder-count="0">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)">
+        <span style="flex:none;width:28px;height:28px;border-radius:8px;background:{{ r.bg }};color:{{ r.fg }};display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">{{ r.ic }}</span>
+        <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font:600 15px/1.25 Onest">{{ r.t }}</span><span style="font:500 13px/1.3 Onest;color:var(--mute)">{{ r.s }}</span></span>
+      </div>
+    </sc-for>
+    <div style="flex:1"></div>
+    <sc-for list="{{ btns }}" as="b" hint-placeholder-count="1">
+      <div style="height:60px;border-radius:16px;background:{{ b.bg }};color:{{ b.fg }};box-shadow:{{ b.sh }};border:{{ b.bd }};display:flex;align-items:center;justify-content:center;font:900 15px/1 Unbounded,sans-serif;text-align:center;padding:0 14px">{{ b.t }}</div>
+    </sc-for>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;padding:58px 16px 30px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="flex:none;width:44px;height:44px;border-radius:14px;background:var(--sf2);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24"><polygon points="15,2 19,6 12,12 19,18 15,22 4,12" fill="currentColor"></polygon></svg></span>
+      <span style="font:900 22px/1.1 Unbounded,sans-serif;letter-spacing:-.5px">{{ d.t }}</span>
+    </div>
+    <sc-if value="{{ hasBanner }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:16px;border-radius:18px;background:var(--sf);border:1px solid var(--line);display:flex;flex-direction:column;gap:12px;animation:xtUp .4s .1s both">
+        <span style="font:500 15px/1.45 Onest;text-wrap:pretty">{{ d.banner.t }}</span>
+        <div style="height:50px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">{{ d.banner.b }}</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ hasErr }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:8px;animation:xtUp .4s .1s both">
+        <div style="height:56px;border-radius:14px;background:var(--tile);border:2px solid #FF3B2F;display:flex;align-items:center;padding:0 16px;font:500 16px/1 Onest">olena@gmail.com</div>
+        <span style="font:600 13px/1.4 Onest;color:#FF3B2F">{{ d.err }}</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{ hasCal }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:16px;border-radius:20px;background:var(--sf);border:1px solid var(--line);display:flex;flex-direction:column;gap:12px">
+        <span style="font:800 15px/1 Unbounded,sans-serif">Листопад</span>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+          <sc-for list="{{ cal }}" as="c" hint-placeholder-count="28"><span style="height:38px;border-radius:9px;background:{{ c.bg }};box-shadow:{{ c.sh }};color:{{ c.fg }};display:flex;align-items:center;justify-content:center;font:700 13px/1 Onest">{{ c.n }}</span></sc-for>
+        </div>
+        <span style="font:500 13px/1.4 Onest;color:var(--mute);text-align:center">{{ d.calHint }}</span>
+      </div>
+    </sc-if>
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="1">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-if value="{{ g.hasH }}" hint-placeholder-val="{{ false }}"><span style="padding:6px 4px 0;font:700 11px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:var(--mute)">{{ g.h }}</span></sc-if>
+        <div style="border-radius:18px;background:var(--sf);border:1px solid var(--line);overflow:hidden">
+          <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+            <div style="position:relative;display:flex;align-items:center;gap:12px;min-height:60px;padding:12px {{ r.pr }} 12px 16px;border-top:{{ r.bt }};overflow:hidden">
+              <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;transform:{{ r.tf }}"><span style="font:600 16px/1.25 Onest">{{ r.t }}</span><sc-if value="{{ r.hasS }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.4 Onest;color:var(--mute);text-wrap:pretty">{{ r.s }}</span></sc-if></span>
+              <sc-if value="{{ r.hasV }}" hint-placeholder-val="{{ false }}"><span style="flex:none;max-width:46%;text-align:right;font:600 14px/1.3 Onest;color:var(--mute)">{{ r.v }}</span></sc-if>
+              <sc-if value="{{ r.tog }}" hint-placeholder-val="{{ false }}"><span style="flex:none;width:50px;height:30px;border-radius:15px;background:#FF3B2F;position:relative"><span style="position:absolute;right:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#140C0A"></span></span></sc-if>
+              <sc-if value="{{ r.hasAct }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:0;top:0;bottom:0;width:104px;background:#FF3B2F;color:#140C0A;display:flex;align-items:center;justify-content:center;font:800 13px/1 Unbounded,sans-serif">{{ r.act }}</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:16px;right:16px;bottom:34px;min-height:56px;padding:14px 16px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 10px 30px rgba(0,0,0,.3);display:flex;align-items:center;font:600 15px/1.35 Onest;animation:xtUp .4s .4s both">{{ d.toast }}</div>
+  </sc-if>
+</sc-if>
+
+<sc-if value="{{ isFeed }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;padding:58px 16px 30px;display:flex;flex-direction:column;gap:12px">
+    <span style="font:900 22px/1 Unbounded,sans-serif;letter-spacing:-.5px;padding:4px 2px 4px">Стрічка</span>
+    <sc-for list="{{ cards }}" as="c" hint-placeholder-count="2">
+      <div style="position:relative;padding:18px;border-radius:22px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};border:{{ c.bd }};display:flex;flex-direction:column;gap:10px;animation:{{ c.anim }}">
+        <sc-if value="{{ c.hasKick }}" hint-placeholder-val="{{ false }}"><span style="font:700 11px/1 Unbounded,sans-serif;letter-spacing:1.5px;opacity:.8">{{ c.kick }}</span></sc-if>
+        <sc-if value="{{ c.hasTag }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:14px;top:14px;padding:6px 9px;background:{{ c.tagBg }};color:{{ c.tagFg }};font:800 11px/1 Unbounded,sans-serif;letter-spacing:.5px;transform:rotate(-3deg)">{{ c.tag }}</span></sc-if>
+        <sc-if value="{{ c.hasT }}" hint-placeholder-val="{{ false }}"><span style="font:900 19px/1.2 Unbounded,sans-serif;letter-spacing:-.3px;text-wrap:balance;padding-right:{{ c.tPad }}">{{ c.t }}</span></sc-if>
+        <sc-if value="{{ c.hasW }}" hint-placeholder-val="{{ false }}"><span style="font:900 30px/1 Unbounded,sans-serif;letter-spacing:-1px">{{ c.w }}</span></sc-if>
+        <sc-if value="{{ c.hasChips }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ c.chips }}" as="h" hint-placeholder-count="5"><span style="height:40px;padding:0 14px;border-radius:12px;background:{{ h.bg }};color:{{ h.fg }};box-shadow:{{ h.sh }};transform:{{ h.tf }};display:flex;align-items:center;font:700 14px/1 Onest">{{ h.t }}</span></sc-for></div>
+        </sc-if>
+        <sc-if value="{{ c.hasS }}" hint-placeholder-val="{{ false }}"><span style="font:500 15px/1.45 Onest;text-wrap:pretty;opacity:.92">{{ c.s }}</span></sc-if>
+        <sc-for list="{{ c.stats }}" as="st" hint-placeholder-count="0"><span style="font:600 13px/1.3 Onest;opacity:.75">{{ st }}</span></sc-for>
+        <sc-if value="{{ c.hasB }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:8px;margin-top:4px"><sc-for list="{{ c.btns }}" as="b" hint-placeholder-count="2"><span style="flex:1;height:48px;border-radius:14px;background:{{ b.bg }};color:{{ b.fg }};box-shadow:{{ b.sh }};border:{{ b.bd }};display:flex;align-items:center;justify-content:center;font:900 12px/1 Unbounded,sans-serif;text-align:center;padding:0 8px">{{ b.t }}</span></sc-for></div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:16px;right:16px;bottom:34px;min-height:56px;padding:14px 16px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 10px 30px rgba(0,0,0,.3);display:flex;align-items:center;font:600 15px/1.35 Onest;animation:xtUp .4s .4s both">{{ d.toast }}</div>
+  </sc-if>
+</sc-if>
+
+<sc-if value="{{ isSheet }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;padding:58px 16px;display:flex;flex-direction:column;gap:10px">
+    <span style="font:900 22px/1 Unbounded,sans-serif;padding-bottom:6px">{{ d.bgT }}</span>
+    <sc-for list="{{ bgRows }}" as="r" hint-placeholder-count="5"><div style="height:66px;border-radius:18px;background:var(--tile);box-shadow:0 4px 0 var(--edge);display:flex;align-items:center;justify-content:space-between;padding:0 16px"><span style="font:800 15px/1 Unbounded,sans-serif">{{ r.t }}</span><span style="font:600 13px/1 Onest;color:var(--mute)">{{ r.v }}</span></div></sc-for>
+  </div>
+  <div style="position:absolute;inset:0;background:rgba(20,12,10,.55)"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:68px 18px 34px;background:var(--sf);clip-path:polygon(0 30px,100% 0,100% 100%,0 100%);display:flex;flex-direction:column;gap:12px;animation:xtSheet .55s .1s cubic-bezier(.2,.9,.3,1) both">
+    <span style="position:absolute;left:18px;top:28px;max-width:340px;padding:11px 16px;background:#140C0A;color:#FFF4E6;font:900 17px/1.15 Unbounded,sans-serif;transform:rotate(-4deg);transform-origin:left">{{ d.st }}</span>
+    <div style="height:14px"></div>
+    <sc-if value="{{ hasSx }}" hint-placeholder-val="{{ false }}"><span style="font:500 16px/1.45 Onest;text-wrap:pretty">{{ d.sx }}</span></sc-if>
+    <sc-for list="{{ opts }}" as="o" hint-placeholder-count="0">
+      <div style="min-height:52px;padding:12px 16px;border-radius:14px;background:{{ o.bg }};color:{{ o.fg }};border:{{ o.bd }};display:flex;align-items:center;gap:12px;font:600 15px/1.3 Onest"><span style="flex:none;width:20px;height:20px;border-radius:50%;border:2.5px solid currentColor;display:flex;align-items:center;justify-content:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ o.dot }}"></span></span>{{ o.t }}</div>
+    </sc-for>
+    <sc-for list="{{ btns }}" as="b" hint-placeholder-count="2">
+      <div style="min-height:60px;border-radius:16px;background:{{ b.bg }};color:{{ b.fg }};box-shadow:{{ b.sh }};border:{{ b.bd }};display:flex;align-items:center;justify-content:center;font:900 15px/1.2 Unbounded,sans-serif;text-align:center;padding:10px 14px">{{ b.t }}</div>
+    </sc-for>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isGame }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;padding:58px 16px 34px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="flex:none;width:44px;height:44px;border-radius:14px;background:var(--sf2);display:flex;align-items:center;justify-content:center;font:900 16px/1 Unbounded,sans-serif">✕</span>
+      <span style="flex:1;font:900 17px/1 Unbounded,sans-serif">{{ d.mode }}</span>
+      <sc-if value="{{ hasLives }}" hint-placeholder-val="{{ false }}"><span style="display:flex;gap:4px"><sc-for list="{{ lives }}" as="l" hint-placeholder-count="3"><span style="width:16px;height:22px;background:{{ l }};clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%)"></span></sc-for></span></sc-if>
+    </div>
+    <div style="height:8px;border-radius:4px;background:var(--sil);overflow:hidden"><div style="width:{{ d.prog }};height:100%;background:#FF3B2F"></div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <span style="padding:8px 12px;border-radius:10px;background:#140C0A;color:#FFF4E6;font:800 12px/1 Unbounded,sans-serif;letter-spacing:.5px">{{ d.label }}</span>
+      <sc-if value="{{ hasTimer }}" hint-placeholder-val="{{ false }}"><span style="font:700 14px/1 Onest;color:#FF3B2F">{{ d.timer }}</span></sc-if>
+      <sc-if value="{{ hasLivesT }}" hint-placeholder-val="{{ false }}"><span style="font:600 14px/1 Onest;color:var(--mute)">{{ d.livesT }}</span></sc-if>
+    </div>
+    <div style="padding:22px 18px;border-radius:22px;background:var(--sf);border:1px solid var(--line);display:flex;flex-direction:column;gap:10px">
+      <span style="font:700 11px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:var(--mute)">{{ d.qk }}</span>
+      <span style="font:800 21px/1.3 Unbounded,sans-serif;letter-spacing:-.3px;text-wrap:pretty">{{ d.q }}</span>
+    </div>
+    <sc-for list="{{ gopts }}" as="o" hint-placeholder-count="4">
+      <div style="min-height:58px;padding:12px 14px;border-radius:16px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;gap:12px;font:600 16px/1.3 Onest"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);display:flex;align-items:center;justify-content:center;font:800 13px/1 Unbounded,sans-serif">{{ o.k }}</span>{{ o.t }}</div>
+    </sc-for>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isLock }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;background:#140C0A;color:#FFF4E6">
+    <div style="position:absolute;left:-40px;right:-40px;top:470px;height:420px;background:#FF3B2F;transform:rotate(-9deg)"></div>
+    <div style="position:absolute;left:0;right:0;top:78px;display:flex;flex-direction:column;align-items:center;gap:4px">
+      <span style="font:600 17px/1 Onest;opacity:.85">вівторок, 11 листопада</span>
+      <span style="font:800 88px/1 Unbounded,sans-serif;letter-spacing:-3px">09:00</span>
+    </div>
+    <div style="position:absolute;left:14px;right:14px;top:250px;display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ pushes }}" as="p" hint-placeholder-count="1">
+        <div style="padding:14px;border-radius:22px;background:rgba(255,244,230,.16);display:flex;gap:12px;animation:xtUp .4s .2s both">
+          <span style="flex:none;width:40px;height:40px;border-radius:11px;background:#FF3B2F;color:#140C0A;display:flex;align-items:center;justify-content:center;font:900 18px/1 Unbounded,sans-serif">S</span>
+          <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="display:flex;justify-content:space-between;font:600 13px/1 Onest;opacity:.7"><span>SLOVO</span><span>зараз</span></span><span style="font:700 15px/1.3 Onest">{{ p.t }}</span><sc-if value="{{ p.hasS }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px/1.35 Onest;opacity:.85">{{ p.s }}</span></sc-if></span>
+        </div>
+      </sc-for>
+      <sc-if value="{{ hasWidget }}" hint-placeholder-val="{{ false }}">
+        <div style="align-self:center;width:338px;height:158px;border-radius:24px;background:#FFF4E6;color:#140C0A;padding:16px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 0 rgba(0,0,0,.25);animation:xtUp .4s .3s both">
+          <span style="font:700 11px/1 Unbounded,sans-serif;letter-spacing:1.5px">{{ d.wk }}</span>
+          <span style="font:800 19px/1.2 Unbounded,sans-serif;text-wrap:balance">{{ d.wt }}</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{ hasStep }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:8px;padding:16px;border-radius:20px;background:#FFF4E6;color:#140C0A;display:flex;align-items:center;gap:14px;animation:xtUp .4s .45s both">
+          <span style="flex:none;width:44px;height:44px;border-radius:12px;background:#140C0A;color:#FF3B2F;display:flex;align-items:center;justify-content:center;font:900 20px/1 Unbounded,sans-serif">2</span>
+          <span style="font:700 16px/1.3 Onest">{{ d.step }}</span>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isShare }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;background:rgba(20,12,10,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px">
+    <div style="position:relative;width:330px;height:330px;background:#FF3B2F;color:#140C0A;overflow:hidden;padding:26px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 50px rgba(0,0,0,.4);animation:xtPop .5s both">
+      <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.2) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
+      <span style="position:relative;font:700 11px/1 Unbounded,sans-serif;letter-spacing:1.5px">ТАК ЧАСТО КАЖУТЬ</span>
+      <span style="position:relative;font:600 20px/1.2 Onest;text-decoration:line-through;text-decoration-thickness:3px">Скіко коштує?</span>
+      <span style="position:relative;margin-top:10px;align-self:flex-start;padding:8px 12px;background:#140C0A;color:#FFF4E6;font:900 15px/1 Unbounded,sans-serif;transform:rotate(-3deg)">{{ d.st }}</span>
+      <span style="position:relative;font:900 30px/1.05 Unbounded,sans-serif;letter-spacing:-1px">Скільки коштує?</span>
+      <span style="position:absolute;left:26px;bottom:22px;font:900 15px/1 Unbounded,sans-serif">SLOVO</span>
+    </div>
+    <div style="display:flex;gap:10px"><span style="height:44px;padding:0 18px;border-radius:12px;background:#FF3B2F;color:#140C0A;display:flex;align-items:center;font:800 12px/1 Unbounded,sans-serif">СТОРІС</span><span style="height:44px;padding:0 18px;border-radius:12px;background:rgba(255,244,230,.14);color:#FFF4E6;display:flex;align-items:center;font:800 12px/1 Unbounded,sans-serif">КВАДРАТ</span></div>
+  </div>
+</sc-if>
+
+<span style="position:absolute;left:34px;top:18px;font:700 16px/1 Onest;color:{{ sbC }}">9:41</span>
+<span style="position:absolute;left:50%;top:10px;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#0B0706"></span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;empty&quot;,&quot;mood&quot;,&quot;mix&quot;,&quot;cats&quot;,&quot;curated&quot;,&quot;notices1&quot;,&quot;notices2&quot;,&quot;community&quot;,&quot;refuse&quot;,&quot;refuseOff&quot;,&quot;survive&quot;,&quot;timed&quot;,&quot;won&quot;,&quot;lost&quot;,&quot;timeup&quot;,&quot;cw&quot;,&quot;rarity&quot;,&quot;ob1&quot;,&quot;ob2&quot;,&quot;ob3&quot;,&quot;ob4&quot;,&quot;ob5&quot;,&quot;ob6&quot;,&quot;archive&quot;,&quot;archiveEmpty&quot;,&quot;streak&quot;,&quot;notif&quot;,&quot;lock&quot;,&quot;widgetGuide&quot;,&quot;share&quot;,&quot;fav&quot;,&quot;history&quot;,&quot;calendar&quot;,&quot;settings&quot;,&quot;account&quot;,&quot;accountErr&quot;,&quot;hide&quot;],&quot;default&quot;:&quot;empty&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const R='#FF3B2F',RE='#C4271D',K='#140C0A',C='#FFF4E6';
+const S={
+ empty:{L:'poster',m:'sleep',sh:'',t:'Слів поки немає.',x:'Зазирни в Мій Мікс або до прихованих записів у Параметрах.',b:[['Мій Мікс',1]]},
+ mood:{L:'feed',cards:[{kick:'НАСТРІЙ ДНЯ',t:'Як настрій?',chips:['Бадьоро','Радісно','Сумно','Закохано','Спокійно'],sel:3,s:'Закохано? Гортай — десь тут слово, яке захочеться подарувати.'}]},
+ mix:{L:'list',t:'Мій Мікс',groups:[{h:'ТИПИ КАРТОК',rows:[{t:'Виправлення',s:'Росіянізми, кальки, суржик, наголос — і як краще сказати українською',v:'Помірно'},{t:'Фразеологізми',s:'Сталі вирази, прислів’я і топоніми з їхнім походженням',v:'Помірно'}]},{h:'ІГРИ',rows:[{t:'Швидке питання',s:'Як часто у Стрічці трапляється питання з Ігор.',v:'Помірно'}]}]},
+ cats:{L:'list',t:'Категорії',groups:[{h:'СЛОВА',rows:[{t:'Хата і побут'},{t:'Мистецтво і культура',s:'Слова сцени, полотна й книжки — щоб в антракті було що сказати.'},{t:'Наука',s:'Зорі, кислоти й прилади теж мають українські імена. Згадаймо їх.'}]},{h:'ВИПРАВЛЕННЯ',rows:[{t:'У магазині',s:'Каса, знижки й черга — і решта замість «здачі».',v:'21 виправлення'},{t:'У дорозі',v:'12 виправлень'},{t:'Дозвілля і медіа',s:'Кіно, спорт і соцмережі — обговорюй матч і серіал так, щоб не різало вухо.',v:'3 виправлення'}]}]},
+ curated:{L:'feed',toast:'«Осінні слова» прибрано з Міксу.',cards:[{kick:'ДОБІРКА',t:'Осінні слова',s:'Паморозь, сльота, мжичка.',btns:[['+ Додати собі',1]]},{kick:'ДОБІРКА',t:'Слова сцени',tag:'У Міксі ✓',btns:[['У МІКСІ',2]]}]},
+ notices1:{L:'feed',cards:[{kick:'НОВИЙ РІВЕНЬ',t:'Рівень 7 — Словолов',s:'Ще одна сходинка вгору! Спробуй рідкісніші слова або нову категорію в Міксі — тобі це вже під силу.',btns:[['Пізніше',0],['Відкрити',1]],red:1},{t:'Що тобі цікаво?',s:'Познач категорії слів для Стрічки. Решту сховаємо — повернути їх можна в Міксі.',btns:[['Пізніше',0],['Відкрити',1]]},{t:'Переглянь свій Мікс',s:'Налаштуй, що показувати у Стрічці: категорії слів, Виправлення, Фразеологізми, Синонімічні ряди, Поради.',btns:[['Пізніше',0],['Відкрити',1]]}]},
+ notices2:{L:'feed',cards:[{kick:'ТИЖДЕНЬ ІЗ НАМИ · ДЕНЬ 1',t:'Час пограти',s:'На вкладці «Ігри» слова з твого Міксу стають грою, а «Кросворд дня» щодня новий.',btns:[['Відкрити',1]],red:1},{kick:'ТИЖДЕНЬ ІЗ НАМИ · ДЕНЬ 3',s:'Обери, що бачити у Стрічці: категорії слів, Виправлення, Фразеологізми, Синонімічні ряди, Поради. Це — у Налаштуваннях, розділ «Мій Мікс».',btns:[['Відкрити',1]]},{kick:'ТИЖДЕНЬ ІЗ НАМИ · ДЕНЬ 7',s:'Сім днів із SLOVO — і нових слів у запасі вже чимало! Завтра чекають нове слово дня і свіжий «Кросворд дня» — повертайся.',btns:[['Готово',1]]}]},
+ community:{L:'feed',cards:[{kick:'СЛОВО ТИЖНЯ СПІЛЬНОТИ',w:'Лелітка',s:'Блискітка, вогник, що мерехтить.',stats:['«Знаю» — 21 з 31 читача','до Улюбленого додав 21 читач'],red:1},{kick:'ПАМ’ЯТАЄШ?',t:'Пам’ятаєш учорашнє слово?',chips:['обрій','кругле вікно'],btns:[['Відповідь',1]]}]},
+ refuse:{L:'sheet',bgT:'Ігри',bgRows:[['Анаграми','Рекорд: 8 з 10'],['Наголос','Рекорд: 10 з 10'],['Пари','Рекорд: 6 з 8'],['Склади вислів','—']],st:'АНАГРАМИ',sx:'Цьому режиму бракує слів на 4–9 літер. Поверни категорії в Налаштуваннях, розділ «Мій Мікс».',b:[['Відкрити',1],['Пізніше',0]]},
+ refuseOff:{L:'sheet',bgT:'Ігри',bgRows:[['Склади вислів','—'],['Впиши слово','Рекорд: 7 з 10'],['Виживання','Рекорд: 14'],['На час','Рекорд: 18']],st:'СКЛАДИ ВИСЛІВ',sx:'Фразеологізми вимкнено. Увімкни їх у Налаштуваннях, розділ «Мій Мікс».',b:[['Відкрити',1],['Пізніше',0]]},
+ survive:{L:'game',mode:'Виживання',label:'Твій хід',livesN:2,livesT:'Життів: 2 з 3',prog:'40%',qk:'ВГАДАЙ СЛОВО',q:'Червоне світло на небі під час сходу чи заходу сонця.',o:['Заграва','Мжичка','Левада','Сутінь']},
+ timed:{L:'game',mode:'На час',label:'Раунд 9',timer:'лишилося 12 секунд',prog:'80%',qk:'ЯК СКАЗАТИ КРАЩЕ?',q:'Він на мене обіжається.',o:['Він на мене ображається','Він на мене обижається','Він до мене обіжається','Він на мене обідився']},
+ won:{L:'poster',m:'celebrate',sh:'ВЛУЧНО!',t:'10 раундів — і всі твої.',b:[['ЩЕ РАЗ!',1],['До Стрічки',0]]},
+ lost:{L:'poster',m:'sad',sh:'МИМО',t:'Нижче видно, де була помилка. А потім — ще раз?',rounds:[[1,'Заграва','Ваш вибір: Заграва'],[0,'Оболонь','Ваш вибір: Левада'],[1,'Мжичка','Ваш вибір: Мжичка']],b:[['ЩЕ РАЗ!',1],['До Стрічки',0]]},
+ timeup:{L:'poster',m:'surprised',sh:'18',t:'Ось скільки вдалося за хвилину. Побити?',b:[['ЩЕ РАЗ!',1],['До Стрічки',0]]},
+ cw:{L:'feed',cards:[{kick:'КРОСВОРД ДНЯ · 2 ЛИСТОПАДА',t:'Кросворд дня',tag:'✓ Розгадано',btns:[['Поділитися без спойлера',1]]},{kick:'ПІДКАЗКА',s:'Веди пальцем по сусідніх літерах, можна й навскіс, і склади слово з підказки. Кожна літера належить лише одному слову.'}]},
+ rarity:{L:'poster',m:'wait',sh:'ТЕСТ',t:'Перевірити рівень',x:'10 слів — і Стрічка підбере слова, нові саме для тебе',b:[['ПОЧАТИ',1]]},
+ ob1:{L:'poster',m:'shout',sh:'СЛОВО',t:'Рідкісні слова рідної мови — нові щодня.',x:'Слова, якими захочеться здивувати друзів.',b:[['До першого слова',1]]},
+ ob2:{L:'poster',m:'happy',sh:'ТРИМАЙ!',t:'Твоє перше Слово дня. Завтра буде нове.',word:1,b:[['Беру!',1]]},
+ ob3:{L:'poster',m:'wait',sh:'РІВЕНЬ',t:'Як у тебе з рідкісними словами?',o:['Поки небагато','Знаю чимало','Перевір мене'],sel:2,b:[['ДАЛІ',1]]},
+ ob4:{L:'poster',m:'wait',sh:'НАВІЩО',t:'Чого ти хочеш від SLOVO?',o:['Писати без помилок','Знати рідкісні слова','Грати зі словами'],sel:1,b:[['ДАЛІ',1]]},
+ ob5:{L:'poster',m:'shout',sh:'ЦІЛЬ',t:'Скільки слів щодня?',x:'Це твоя денна ціль. Змінити можна в Налаштуваннях.',o:['1 слово','3 слова','5 слів'],sel:1,b:[['ОБИРАЮ',1]]},
+ ob6:{L:'poster',m:'shout',sh:'ДЗИНЬ!',t:'Коли нагадати про слово?',o:['09:00','13:00','19:00'],sel:0,b:[['ДАЛІ',1]]},
+ archive:{L:'list',t:'Слова дня',groups:[{rows:[{t:'Заграва',v:'2 листоп.'},{t:'Оболонь',v:'31 жовт.'},{t:'Паморозь',v:'14 верес.'},{t:'Мжичка',v:'2 серп.'},{t:'Левада',v:'9 черв.'},{t:'Ослін',v:'5 січ.'}]}]},
+ archiveEmpty:{L:'poster',m:'sleep',sh:'',t:'Слова дня',x:'Сьогоднішнє вже чекає у Стрічці. Відкрий його — і тут з’явиться перший запис.',b:[['До Стрічки',1]]},
+ streak:{L:'poster',m:'celebrate',sh:'7',t:'Оце серія! Завтра продовжимо?',b:[['Готово',1]]},
+ notif:{L:'list',t:'Сповіщення',banner:{t:'Сповіщення вимкнено в налаштуваннях iOS, тому Слово дня вранці не приходить. Увімкни їх там — і воно повернеться.',b:'Відкрити налаштування iOS'},groups:[{h:'ЧАС',rows:[{t:'Сповіщення, 09:00'},{t:'Сповіщення, 19:00'}]}]},
+ lock:{L:'lock',pushes:[{t:'Знаєш слово «лелітка»?'}],wk:'КОЛЕКЦІЯ · ОСІННІ СЛОВА',wt:'Додай слова в колекцію'},
+ widgetGuide:{L:'lock',pushes:[],wk:'РІДКІСНЕ СЛОВО',wt:'Заграва',step:'Утримуй віджет і обери режим'},
+ share:{L:'share',st:'Так правильно'},
+ fav:{L:'list',t:'Улюблене',groups:[{rows:[{t:'Заграва',s:'Червоне світло на небі.',act:'Прибрати'},{t:'Бити байдики',s:'Нічого не робити.'},{t:'Видноколо',s:'Обрій.'}]}]},
+ history:{L:'list',t:'Історія',toast:'«Бити байдики» знову в Стрічці',groups:[{rows:[{t:'Заграва',v:'учора, 21:40'},{t:'Оболонь',v:'учора, 08:12'},{t:'Мжичка',v:'9 листоп.'}]}]},
+ calendar:{L:'list',t:'Профіль',cal:1,calHint:'Проведи вгору або вниз, щоб змінити місяць',groups:[]},
+ settings:{L:'list',t:'Налаштування',groups:[{h:'КОНФІДЕНЦІЙНІСТЬ',rows:[{t:'Анонімна статистика',s:'Анонімні лічильники слів і відповідей опитування та анонімна статистика використання. Без акаунта, пошти й ідентифікатора пристрою.',tog:1}]},{h:'ПРОФІЛЬ',rows:[{t:'Ігри',v:'Ще жодної гри'}]},{h:'ВІДЗНАКИ',rows:[{t:'Сім кросвордів поспіль',s:'Кросворд дня 1 день поспіль'}]}]},
+ account:{L:'sheet',bgT:'Акаунт',bgRows:[['Ви увійшли як','olena@gmail.com'],['Вийти',''],['Вийти на всіх пристроях','']],st:'Видалити «olena@gmail.com»?',b:[['Видалити «olena@gmail.com»',3],['Скасувати',0]]},
+ accountErr:{L:'list',t:'Акаунт',err:'Вхід не підтверджено. Спробуй ще раз або увійди кодом.',groups:[{rows:[{t:'Увійти через Google'},{t:'Увійти через Apple'}]}]},
+ hide:{L:'sheet',bgT:'Стрічка',bgRows:[['Заграва',''],['Скіко коштує?',''],['Бити байдики','']],st:'НЕ ПОКАЗУВАТИ',o:['Не показувати цей запис','Не показувати категорію «Природа»','Не показувати Виправлення'],sel:0,b:[['Сховати',1],['Скасувати',0]]}
+};
+const btn=([t,k])=>k===1?{t,bg:'var(--ink)',fg:'var(--bg)',sh:'0 5px 0 rgba(0,0,0,.35)',bd:'0'}:k===2?{t,bg:'var(--sf2)',fg:'var(--ink)',sh:'inset 0 3px 0 rgba(0,0,0,.18)',bd:'0'}:k===3?{t,bg:R,fg:K,sh:'0 5px 0 '+RE,bd:'0'}:{t,bg:'var(--tile)',fg:'var(--ink)',sh:'0 5px 0 var(--edge)',bd:'1px solid var(--line)'};
+class Component extends DCLogic {
+  renderVals(){
+    const p=this.props,d=S[p.screen]||S.empty,L=d.L;
+    const v={d,th:p.theme||'light',rmAttr:p.reduceMotion?'1':'0',isPoster:L==='poster',isList:L==='list',isFeed:L==='feed',isSheet:L==='sheet',isGame:L==='game',isLock:L==='lock',isShare:L==='share'};
+    v.scrBg=L==='lock'||L==='share'?K:'var(--bg)';v.sbC=L==='lock'||L==='share'||L==='poster'?(L==='poster'?K:C):'var(--ink)';
+    d.shS=(d.sh||'').length>6?'54px':'66px';
+    v.hasX=!!d.x;v.hasWord=!!d.word;v.hasSx=!!d.sx;v.hasToast=!!d.toast;v.hasBanner=!!d.banner;v.hasErr=!!d.err;v.hasCal=!!d.cal;
+    v.btns=(d.b||[]).map(btn);
+    v.opts=(d.o&&L!=='game'?d.o:[]).map((t,i)=>{const on=i===d.sel;return L==='sheet'?{t,bg:on?'var(--sf2)':'transparent',fg:'var(--ink)',bd:'1px solid var(--line)',dot:on?'currentColor':'transparent'}:{t,bg:on?R:'var(--tile)',fg:on?K:'var(--ink)',sh:on?'0 1px 0 '+RE:'0 4px 0 var(--edge)',bd:on?'0':'1px solid var(--line)',tf:on?'translateY(3px)':'none',anim:`xtUp .35s ${(.2+i*.06).toFixed(2)}s both`};});
+    v.rounds=(d.rounds||[]).map(([ok,t,s])=>({t,s,ic:ok?'✓':'✕',bg:ok?R:'var(--ink)',fg:ok?K:'var(--bg)'}));
+    v.groups=(d.groups||[]).map(g=>({h:g.h||'',hasH:!!g.h,rows:g.rows.map((r,i)=>({...r,s:r.s||'',v:r.v||'',act:r.act||'',hasS:!!r.s,hasV:!!r.v,tog:!!r.tog,hasAct:!!r.act,tf:'none',pr:r.act?'116px':'16px',bt:i?'1px solid var(--line)':'0'}))}));
+    v.cal=Array.from({length:28},(_,i)=>{const n=i+1,frz=n===6,on=n<=11&&n!==6;return {n,bg:frz?'#8FC7E8':on?R:'var(--tile)',fg:frz||on?K:'var(--mute)',sh:on?'inset 0 3px 0 '+RE:frz?'inset 0 3px 0 #5E9CC0':'0 3px 0 var(--edge)'};});
+    v.cards=(d.cards||[]).map((c,i)=>({kick:c.kick||'',hasKick:!!c.kick,t:c.t||'',hasT:!!c.t,w:c.w||'',hasW:!!c.w,s:c.s||'',hasS:!!c.s,tag:c.tag||'',hasTag:!!c.tag,tPad:c.tag?'110px':'0',stats:c.stats||[],
+      hasChips:!!c.chips,chips:(c.chips||[]).map((t,j)=>{const on=j===c.sel;return {t,bg:on?K:(c.red?'rgba(20,12,10,.12)':'var(--sf2)'),fg:on?R:'inherit',sh:on?'none':'0 3px 0 '+(c.red?RE:'var(--edge)'),tf:on?'translateY(3px)':'none'};}),
+      hasB:!!c.btns,btns:(c.btns||[]).map(b=>c.red&&b[1]===1?{t:b[0],bg:K,fg:C,sh:'0 4px 0 rgba(20,12,10,.45)',bd:'0'}:btn(b)),
+      tagBg:K,tagFg:C,bg:c.red?R:'var(--sf)',fg:c.red?K:'var(--ink)',sh:c.red?'0 6px 0 '+RE:'none',bd:c.red?'0':'1px solid var(--line)',anim:`xtUp .4s ${(.1+i*.08).toFixed(2)}s both`}));
+    v.bgRows=(d.bgRows||[]).map(([t,vv])=>({t,v:vv}));
+    v.hasLives=!!d.livesN;v.lives=[0,1,2].map(i=>i<(d.livesN||0)?R:'var(--sil)');v.hasLivesT=!!d.livesT;v.hasTimer=!!d.timer;
+    v.gopts=(L==='game'?d.o:[]).map((t,i)=>({t,k:'АБВГ'[i]}));
+    v.pushes=(d.pushes||[]).map(x=>({...x,hasS:!!x.s}));v.hasWidget=!!d.wt;v.hasStep=!!d.step;
+    return v;
+  }
+}
+</script>
+</body>
+</html>
