@@ -106,6 +106,14 @@ type GameInPlayStatus = 'playing' | 'answered';
 type GameOverStatus = 'won' | 'lost' | 'time-up';
 
 /**
+ * Whether a Game over counts as won: one won at its Round limit and one whose
+ * time is up do, one lost with its last Life does not. The one place that
+ * decides it, for the Game's end, its analytics event and its result screen.
+ */
+export const countsAsWon = ({ status }: { readonly status: GameOverStatus }): boolean =>
+  status !== 'lost';
+
+/**
  * The play time a Game in a mode with a time limit has left: `left`
  * milliseconds when it last paused or started, and while its clock runs, the
  * moment it ends, which pauses leave out.
@@ -540,10 +548,10 @@ export function streakOf({ current, bestResults }: GameState): Streak | undefine
  * How a Game just over ended, by its status: its last Life lost, its time up,
  * or its Round limit reached; at least half the answers right is on target.
  */
-function endOf({ status }: EndedGame, counts: Omit<GameEnd, 'kind' | 'onTarget'>): GameEnd {
-  if (status === 'lost') return { kind: 'lives-over', ...counts };
+function endOf(ended: EndedGame, counts: Omit<GameEnd, 'kind' | 'onTarget'>): GameEnd {
+  if (!countsAsWon(ended)) return { kind: 'lives-over', ...counts };
   const onTarget = counts.played > 0 && counts.right * 2 >= counts.played;
-  return { kind: status === 'time-up' ? 'time-up' : 'finished', onTarget, ...counts };
+  return { kind: ended.status === 'time-up' ? 'time-up' : 'finished', onTarget, ...counts };
 }
 
 /** A mode's Best result as its offer says it, out of the mode's Round limit when it has one. */
@@ -888,8 +896,8 @@ export async function openGame({
         durationSeconds: Math.round((clock.now().getTime() - startedAt.getTime()) / 1000),
         right,
         played: over.played.length,
-        // Analytics keeps its two results: a Game whose time is up is won.
-        status: over.status === 'lost' ? 'lost' : 'won',
+        // Analytics keeps its two results: a Game whose time is up counts as won.
+        status: countsAsWon(over) ? 'won' : 'lost',
       })
       .catch(() => undefined);
     const mode = beaten ? modes.find(({ id }) => id === over.modeId) : undefined;

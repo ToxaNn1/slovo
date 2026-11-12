@@ -1,4 +1,4 @@
-import type { GameOver } from '@slovo/core';
+import { countsAsWon, type GameOver } from '@slovo/core';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import {
   ScrollView,
@@ -180,7 +180,7 @@ export function GameResult({
   // A Game in a mode with a time limit counts its right answers, as its Best
   // result does, and arrives as a win does, even when it ran out of Rounds first.
   const timed = game.timeLimit !== undefined;
-  const won = game.status !== 'lost';
+  const won = countsAsWon(game);
   const right = game.played.filter((round) => round.right).length;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
   const gameHaptics = useGameHaptics();
