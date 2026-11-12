@@ -12,7 +12,7 @@ import { SheetTitle } from '../primitives/SheetParts';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { gesturesHint, space, typeStyle } from '../tokens';
-import { demoFinger, demoRow, type SwipeDemo } from './swipe-demo';
+import { demoFinger, demoRow, type SwipeDemo } from '../entries/swipe-demo';
 
 /** A row of the sheet: what one gesture does. */
 interface HintRow {

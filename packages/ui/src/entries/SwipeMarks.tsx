@@ -30,7 +30,7 @@ import {
 } from '../primitives/VerticalPager';
 import { useUndoToast } from '../primitives/UndoToast';
 import { Wedge } from '../primitives/Wedge';
-import { demoCard, demoEdge, useSwipeDemo } from '../feed/swipe-demo';
+import { demoCard, demoEdge, useSwipeDemo } from './swipe-demo';
 import { useEdition } from '../providers/EditionProvider';
 import { useHaptics } from '../providers/HapticsProvider';
 import { useTokens } from '../providers/TokensProvider';

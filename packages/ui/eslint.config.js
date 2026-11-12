@@ -58,7 +58,7 @@ export default [
       'src/entries/SwipeMarks.tsx',
       'src/entries/reveal.tsx',
       'src/feed/GesturesHintSheet.tsx',
-      'src/feed/swipe-demo.tsx',
+      'src/entries/swipe-demo.tsx',
       'src/game/ChipsRound.tsx',
       'src/game/CrossingGrid.tsx',
       'src/game/GameRound.tsx',

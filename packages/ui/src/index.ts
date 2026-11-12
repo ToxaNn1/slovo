@@ -8,7 +8,7 @@ export { ResendButton } from './account/ResendButton';
 export { BackLink } from './primitives/BackLink';
 export { FeedError, FeedLoading } from './feed/FeedStates';
 export { GesturesHintSheet } from './feed/GesturesHintSheet';
-export { SwipeDemoStage, useGesturesDemo, type SwipeDemo } from './feed/swipe-demo';
+export { SwipeDemoStage, useGesturesDemo, type SwipeDemo } from './entries/swipe-demo';
 export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
 export { NarratorVoicePicker } from './settings/NarratorVoicePicker';
