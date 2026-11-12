@@ -12,8 +12,8 @@ import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
 import type { DailyCrosswordProgress } from './crossword-progress';
-import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
+import { useOpenCrossword } from './open-crossword';
 
 /** How many Words of the puzzle are found. */
 const foundCount = ({ words }: PuzzleState) => words.filter(({ kind }) => kind === 'found').length;
@@ -78,18 +78,6 @@ export interface TracedCrosswordPlay {
   readonly release: () => void;
 }
 
-interface Opened {
-  readonly crossword: TracedCrossword;
-  readonly state: PuzzleState;
-  readonly miss: TracedMiss | undefined;
-}
-
-const fresh = (crossword: TracedCrossword): Opened => ({
-  crossword,
-  state: crossword.state,
-  miss: undefined,
-});
-
 /**
  * Today's traced Daily Crossword for its screen, as the Core opened it with
  * the Words this device found, and afresh for another one opened. Each move
@@ -97,27 +85,14 @@ const fresh = (crossword: TracedCrossword): Opened => ({
  * becomes the `miss`. A move that fails is logged and changes nothing.
  */
 export function useTracedCrossword(crossword: TracedCrossword): TracedCrosswordPlay {
-  const [opened, setOpened] = useState(() => fresh(crossword));
-  if (opened.crossword !== crossword) setOpened(fresh(crossword));
-  const { state, miss } = opened;
-
-  const play = (action: PuzzleAction) => {
-    void keep('the traced Daily Crossword', crossword.play(action)).then((next) => {
-      if (next === undefined) return;
-      setOpened((now) => {
-        if (now.crossword !== crossword) return now;
-        const missed =
-          action.type === 'release' &&
-          now.state.trace.length > 1 &&
-          foundCount(next) === foundCount(now.state);
-        return {
-          ...now,
-          state: next,
-          miss: missed ? { key: (now.miss?.key ?? 0) + 1, path: now.state.trace } : now.miss,
-        };
-      });
-    });
-  };
+  const { state, miss, play } = useOpenCrossword<PuzzleState, PuzzleAction, TracedMiss>(
+    crossword,
+    'the traced Daily Crossword',
+    (before, next, key) =>
+      before.trace.length > 1 && foundCount(next) === foundCount(before)
+        ? { key, path: before.trace }
+        : undefined,
+  );
   return {
     puzzle: crossword.puzzle,
     words: tracedWords(crossword.puzzle, state),
