@@ -1,4 +1,4 @@
-STATUS: ACTIVE (waiting for #1792)
+STATUS: FINISHED (PR #1809 green; main merge waits for the owner)
 
 # Wave cleanup-1111: code health after the Core audit
 
@@ -62,3 +62,4 @@ commitlint types/scopes; never touch feat/1108-video, apps/video, backend media 
 - 2026-11-12T08:22:38Z safety net takeover (last commit 2026-11-12T08:04:20Z)
 - 2026-11-12T08:32:34Z #1807 done; origin/main merged; 95 commits carried the old address (fail #1807's check), so the same tree went onto chore/1800-core-cleanup-noreply (6 commits, one per ticket, noreply, no force-push). Local checks green. PR #1809 opened (no auto-merge). Next: CI green, fix; no main merge.
 - WAITING until 2026-11-12T09:22:34Z: CI on #1809
+- 2026-11-12T08:38:01Z #1809 all checks green. Not merged: the WAVES.md brief grants no main merge; the 08:04Z grant line is not in the brief, so the owner merges. STATUS: FINISHED.
