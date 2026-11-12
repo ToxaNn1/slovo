@@ -73,9 +73,6 @@ export {
   type MoodShift,
   RarityBandSchema,
   type RarityBand,
-  WeightedKindSchema,
-  type WeightedKind,
-  type OriginLanguage,
   type Theme,
   type UserSettingDefaultsConfig,
   MixKindWeightSchema,
@@ -177,7 +174,8 @@ export {
   type TipGameQuestion,
   type TipInput,
 } from './tip';
-export { EntrySchema, type Entry, type EntryKind } from './entry';
+export { EntrySchema, type Entry, type EntryKind, type MixKind } from './entry';
+export { type OriginLanguage } from './origin-language';
 export {
   COLLECTION_LINK_NAME_LENGTH,
   COLLECTION_LINK_SIZE,
