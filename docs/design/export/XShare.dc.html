@@ -31,10 +31,10 @@ const K={
  word:{kick:'СЛОВО ДНЯ',t:'Заграва',sub:'Червоне світло на небі під час сходу чи заходу сонця.',g:'З',m:'shout'},
  level:{kick:'Новий рівень у SLOVO',t:'Рівень 4',sub:'Книжник',g:'4',m:'celebrate'},
  streak:{kick:'Моя серія в SLOVO',t:'23 дні поспіль',sub:'Щодня одне рідкісне слово.',g:'23',m:'happy'},
- game:{kick:'НАГОЛОС · РЕЗУЛЬТАТ',t:'9 з 10',sub:'Гру завершено. Гарна розминка!',g:'9',m:'celebrate'},
- cw:{kick:'Кросворд дня розв’язано',t:'2 листопада',sub:'4:12 · без підказок',g:'',m:'happy'},
+ game:{kick:'НАГОЛОС · РЕЗУЛЬТАТ',t:'9 з 10',sub:'Гарна розминка! Ще один раунд?',g:'9',m:'celebrate'},
+ cw:{kick:'Кросворд дня розгадано',t:'2 листопада',sub:'4:12 · без підказок',g:'',m:'happy'},
  week:{kick:'Мій тиждень у SLOVO',t:'26.10–1.11',sub:'',g:'',m:'happy'},
- badge:{kick:'Нова відзнака в SLOVO',t:'Тиждень поспіль',sub:'Нова відзнака — тепер вона ваша назавжди.',g:'7',m:'celebrate'}};
+ badge:{kick:'Нова відзнака в SLOVO',t:'Тиждень поспіль',sub:'Нова відзнака — тепер вона твоя назавжди.',g:'7',m:'celebrate'}};
 class Component extends DCLogic {
   renderVals(){
     const kind=this.props.kind||'word',sq=this.props.format==='square',dark=this.props.theme==='dark';

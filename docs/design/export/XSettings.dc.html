@@ -59,7 +59,7 @@
 
 <sc-if value="{{ is_t2 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:12px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <span style="font:500 15px/1.4 Onest;color:var(--mute)">Те, що ви попросили не показувати в Стрічці.</span>
+  <span style="font:500 15px/1.4 Onest;color:var(--mute)">Те, що ти попросив приховати зі Стрічки.</span>
   <div style="border-radius:18px;background:var(--sf);border:1px solid var(--line);overflow:hidden">
     <sc-for list="{{ hidden }}" as="h" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:12px;padding:14px;border-top:{{ h.bt }};animation:{{ h.anim }}"><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:700 15px/1.2 Onest">{{ h.n }}</span><span style="font:500 12px/1 Onest;color:var(--mute)">{{ h.k }}</span></span><span style="flex:none;height:36px;padding:0 14px;border-radius:10px;background:var(--sf2);display:flex;align-items:center;font:700 13px/1 Onest">Показати</span></div></sc-for>
   </div>
@@ -71,7 +71,7 @@
   <sc-for list="{{ fams }}" as="f" hint-placeholder-count="5">
     <div style="display:flex;flex-direction:column;gap:8px">
       <div style="display:flex;justify-content:space-between"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1px">{{ f.t }}</span><span style="font:600 12px/1 Onest;color:var(--mute)">{{ f.c }}</span></div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ f.items }}" as="b" hint-placeholder-count="4"><span title="{{ b.n }}" style="width:58px;height:58px;background:{{ b.bg }};clip-path:{{ f.clip }};display:flex;align-items:center;justify-content:center;font:900 15px/1 Unbounded,sans-serif;color:{{ b.fg }};animation:{{ b.anim }}">{{ b.s }}</span></sc-for></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ f.items }}" as="b" hint-placeholder-count="4"><span title="{{ b.n }}" style="position:relative;width:54px;height:54px;animation:{{ b.anim }}"><span style="position:absolute;inset:0;clip-path:{{ f.clip }};background:{{ b.ring }}"></span><span style="position:absolute;inset:8%;background:{{ b.bg }};clip-path:{{ f.clip }};display:flex;align-items:center;justify-content:center;font:900 14px/1 Unbounded,sans-serif;color:{{ b.fg }}">{{ b.s }}</span></span></sc-for></div>
     </div>
   </sc-for>
 </div>
@@ -79,7 +79,7 @@
 
 <sc-if value="{{ is_t4 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:18px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <span style="font:500 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">Серія завмре, нагадування замовкнуть. Повертайтеся, коли зручно.</span>
+  <span style="font:500 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">Серія завмре, нагадування замовкнуть. Повертайся, коли зручно.</span>
   <span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px">Тривалість, днів</span>
   <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:20px;background:var(--sf2)">
     <span style="width:64px;height:64px;border-radius:16px;background:var(--tile);box-shadow:0 4px 0 var(--edge);display:flex;align-items:center;justify-content:center;font:900 28px/1 Unbounded,sans-serif">−</span>
@@ -109,7 +109,7 @@
 <sc-if value="{{ is_t6 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:160px 16px 40px;display:flex;flex-direction:column;gap:16px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="display:flex;gap:4px"><sc-for list="{{ tseg }}" as="c" hint-placeholder-count="10"><span style="flex:1;height:6px;background:{{ c }};transform:skewX(-20deg)"></span></sc-for></div>
-  <span style="font:600 13px/1 Onest;color:var(--mute)">4 з 10 · Чи знаєте ви це слово?</span>
+  <span style="font:600 13px/1 Onest;color:var(--mute)">4 з 10 · Чи знаєш ти це слово?</span>
   <div style="flex:1;display:flex;align-items:center;justify-content:center"><span style="font:900 46px/1 Unbounded,sans-serif;letter-spacing:-1.5px;animation:slPop .35s both">вирій</span></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <button style="height:66px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">НЕ ЗНАЮ</button>
@@ -122,13 +122,13 @@
 <div style="position:absolute;inset:0;padding:160px 16px 40px;display:flex;flex-direction:column;gap:16px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="position:relative;border-radius:24px;background:var(--sf2);padding:22px 20px;overflow:hidden;display:flex;flex-direction:column;gap:14px">
     <div style="position:absolute;right:-14px;top:-40px;font:900 200px/1 Unbounded,sans-serif;color:#FF3B2F;animation:slPop .45s both">3</div>
-    <span style="position:relative;font:900 26px/1.05 Unbounded,sans-serif;width:200px">Ваш рівень: від 3</span>
+    <span style="position:relative;font:900 26px/1.05 Unbounded,sans-serif;width:200px">Твоя рідкість — до 3. Стрічка бере незнайоме, рідші почекають.</span>
     <div style="position:relative;display:flex;gap:5px;width:200px"><sc-for list="{{ rarRes }}" as="r" hint-placeholder-count="5"><span style="flex:1;height:14px;background:{{ r }};transform:skewX(-20deg)"></span></sc-for></div>
     <span style="position:relative;font:500 14px/1.4 Onest;color:var(--mute);width:220px">7 з 10 слів знайомі. Стрічка покаже рідкість від 3 до 5.</span>
   </div>
   <div style="flex:1"></div>
   <button style="height:62px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОТОВО</button>
-  <button style="height:48px;font:700 15px/1 Onest;display:flex;align-items:center;justify-content:center">Пройти тест ще раз</button>
+  <button style="height:48px;font:700 15px/1 Onest;display:flex;align-items:center;justify-content:center">Перевірити рівень ще раз</button>
 </div>
 </sc-if>
 
@@ -147,7 +147,7 @@
   <button style="height:58px;border-radius:15px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:700 16px/1 Onest;display:flex;align-items:center;justify-content:center;gap:10px"><span style="font:900 18px/1 Unbounded,sans-serif">G</span>Увійти через Google</button>
   <div style="display:flex;align-items:center;gap:10px;margin:8px 0;font:600 13px/1 Onest;color:var(--mute)"><span style="flex:1;height:1px;background:var(--line)"></span>або поштою<span style="flex:1;height:1px;background:var(--line)"></span></div>
   <div style="height:58px;border-radius:15px;border:2.5px solid #FF3B2F;background:var(--sf);display:flex;align-items:center;padding:0 16px;font:500 16px/1 Onest;animation:slShake .35s .2s both">olena@ukrnet</div>
-  <span style="font:600 13px/1 Onest;color:#FF3B2F">Перевірте адресу пошти.</span>
+  <span style="font:600 13px/1 Onest;color:#FF3B2F">Перевір адресу пошти.</span>
   <button style="height:58px;border-radius:15px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">НАДІСЛАТИ КОД</button>
 </div>
 </sc-if>
@@ -161,7 +161,7 @@
   <span style="font:700 14px/1 Onest">Змінити пошту</span>
   <div style="margin-top:10px;padding:14px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:10px">
     <span style="font:600 12px/1 Onest;color:var(--mute)">Якщо код прострочено:</span>
-    <span style="font:600 14px/1.3 Onest;color:#FF3B2F">Код більше не діє. Надішліть новий.</span>
+    <span style="font:600 14px/1.3 Onest;color:#FF3B2F">Код більше не діє. Надішли новий.</span>
     <span style="align-self:flex-start;height:40px;padding:0 16px;border-radius:11px;background:var(--ink);color:var(--bg);display:flex;align-items:center;font:800 12px/1 Unbounded,sans-serif">НАДІСЛАТИ КОД</span>
   </div>
 </div>
@@ -169,7 +169,7 @@
 
 <sc-if value="{{ is_a3 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <div style="padding:18px;border-radius:20px;background:var(--sf2);display:flex;flex-direction:column;gap:6px"><span style="font:500 13px/1 Onest;color:var(--mute)">Ви увійшли як</span><span style="font:800 18px/1.2 Unbounded,sans-serif">olena@ukr.net</span><span style="display:flex;align-items:center;gap:6px;font:600 13px/1 Onest;color:var(--mute);margin-top:4px"><svg width="13" height="11" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#FF3B2F"></polygon></svg>Синхронізовано сьогодні о 20:12</span></div>
+  <div style="padding:18px;border-radius:20px;background:var(--sf2);display:flex;flex-direction:column;gap:6px"><span style="font:500 13px/1 Onest;color:var(--mute)">Твій акаунт</span><span style="font:800 18px/1.2 Unbounded,sans-serif">olena@ukr.net</span><span style="display:flex;align-items:center;gap:6px;font:600 13px/1 Onest;color:var(--mute);margin-top:4px"><svg width="13" height="11" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#FF3B2F"></polygon></svg>Синхронізовано сьогодні, 20:12</span></div>
   <div style="flex:1"></div>
   <button style="height:60px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ВИЙТИ</button>
   <button style="height:60px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ВИЙТИ НА ВСІХ ПРИСТРОЯХ</button>
@@ -216,7 +216,7 @@
 </div>
 <div style="position:absolute;left:14px;right:14px;top:56px;z-index:70;display:flex;align-items:center;gap:12px;padding:15px 16px;background:var(--ink);color:var(--bg);border-radius:14px;clip-path:polygon(0 0,100% 0,100% 100%,3% 100%);animation:slToastD .4s cubic-bezier(.2,.9,.3,1.1) both">
   <svg width="20" height="16" viewBox="0 0 20 16" style="flex:none"><rect x="0" y="11" width="4" height="5" fill="currentColor" opacity=".35"></rect><rect x="6" y="7" width="4" height="9" fill="currentColor" opacity=".35"></rect><rect x="12" y="3" width="4" height="13" fill="currentColor" opacity=".35"></rect><polygon points="1,0 4,0 19,14 19,16 16,16 1,2" fill="#FF3B2F"></polygon></svg>
-  <span style="font:600 14px/1.35 Onest">Немає з’єднання. Спробуйте пізніше.</span>
+  <span style="font:600 14px/1.35 Onest">Немає з’єднання. Спробуй пізніше.</span>
 </div>
 </sc-if>
 
@@ -224,8 +224,8 @@
 <div style="position:absolute;inset:0;padding:120px 32px 120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;animation:slFade .3s both">
   <svg width="220" height="60" viewBox="0 0 220 60"><path d="M0 30 Q30 10 60 30 T96 28" fill="none" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"></path><path d="M124 34 Q150 50 180 30 T220 30" fill="none" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"></path><polygon points="98,14 108,30 98,44" fill="#FF3B2F"></polygon><polygon points="122,16 112,32 122,46" fill="#FF3B2F"></polygon></svg>
   <span style="font:900 26px/1.1 Unbounded,sans-serif">Нитка урвалася</span>
-  <span style="font:400 16px/1.45 Onest;color:var(--mute)">Не вдалося відкрити словник.</span>
-  <button style="margin-top:8px;height:58px;padding:0 28px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif">СПРОБУВАТИ ЩЕ</button>
+  <span style="font:400 16px/1.45 Onest;color:var(--mute)">Не вдалося відкрити словник. Спробуй ще раз — слова нікуди не поділися.</span>
+  <button style="margin-top:8px;height:58px;padding:0 28px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ЩЕ РАЗ</button>
 </div>
 </sc-if>
 
@@ -255,14 +255,15 @@ const CS=[
  ['polygon(30% 0,70% 0,70% 70%,40% 100%,10% 85%,30% 60%)','polygon(0 0,100% 0,100% 30%,0 30%)'],
  ['polygon(20% 0,80% 0,80% 100%,20% 100%)','polygon(0 45%,100% 45%,100% 55%,0 55%)'],
  ['polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)','polygon(40% 0,60% 0,60% 100%,40% 100%)']];
-const NEWCATS=['Людина і тіло','Емоції та характер','Природа і погода','Побут і ремесла','Техніка','Військова справа','Мистецтво і культура','Історія та старовина','Наука','Мова і мовлення','Діалекти','Дотепна лайка','Народні назви','Старі ремесла','Розстріляна лексика','Слова-хамелеони'];
-const TITLE={t1:'Мій Мікс',t2:'Приховане',t3:'Відзнаки',t4:'Перерва',t5:'Опитування ще раз',t6:'Тест рідкості',t7:'Тест рідкості',t8:'Профіль',a1:'Акаунт',a2:'Код із листа',a3:'Акаунт'};
+const NEWCATS=['Погода','Почуття','Хата і побут','Розстріляна лексика','Ремесла','Їжа','Природа','Звуки','Рухи','Кохання','Музика','Діалектизми','Архаїзми','Неологізми','Сленг','Наука'];
+const TITLE={t1:'Мій Мікс',t2:'Приховане',t3:'Відзнаки',t4:'Перерва',t5:'Анкета: підлаштувати Стрічку',t6:'Тест рідкості',t7:'Тест рідкості',t8:'Профіль',a1:'Акаунт',a2:'Код із листа',a3:'Акаунт'};
 const FAMS=[
- {t:'СЕРІЯ',clip:'polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)',items:[['Три дні поспіль','3',1],['Тиждень поспіль','7',1],['Місяць поспіль','30',0],['Сто днів поспіль','100',0],['Рік поспіль','365',0]]},
- {t:'ПІДТВЕРДЖЕНІ',clip:'polygon(50% 0,100% 50%,50% 100%,0 50%)',items:[['10 підтверджених','10',1],['50 підтверджених','50',1],['100 підтверджених','100',0],['500 підтверджених','500',0]]},
- {t:'ПЕРШІ ПЕРЕМОГИ',clip:'polygon(0 0,100% 30%,100% 70%,0 100%)',items:[['Перша перемога в словах','Сл',1],['Перша перемога в суржику','Сж',0],['Перша перемога у фразеологізмах','Фр',1],['Перша перемога в наголосах','а́',1],['Перша перемога у випробуваннях','Вп',0]]},
- {t:'РІВНІ',clip:'polygon(10% 0,100% 8%,90% 100%,0 92%)',items:[['Рівень 5','5',0],['Рівень 10','10',0],['Рівень 20','20',0]]},
- {t:'ОСОБЛИВІ',clip:'circle(50%)',items:[['Сім кросвордів поспіль','7×',1],['Перше рідкісне слово','R',1],['Чиста мова','Ч',0],['Влучний наголос','́',0]]}];
+ {t:'СЕРІЯ',clip:'polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%)',bg:'#FF3B2F',fg:'#140C0A',items:[['Три дні поспіль','3',1],['Тиждень поспіль','7',1],['Місяць поспіль','30',0],['Сто днів поспіль','100',0],['Рік поспіль','365',0]]},
+ {t:'ПІДТВЕРДЖЕНІ',clip:'polygon(0 0,100% 0,100% 64%,50% 100%,0 64%)',bg:'var(--ink)',fg:'#FF3B2F',items:[['10 підтверджених','10',1],['50 підтверджених','50',1],['100 підтверджених','100',0],['500 підтверджених','500',0]]},
+ {t:'ПЕРШІ ПЕРЕМОГИ',clip:'circle(50%)',bg:'#FF3B2F',fg:'#140C0A',items:[['Перша перемога в словах','Сл',1],['Перша перемога у виправленнях','Вп',1],['Перша перемога у висловах','Вс',0],['Перша перемога в наголосі','Á',1],['Перша перемога у виживанні','!',0]]},
+ {t:'КРОСВОРД',clip:'polygon(10% 0,100% 0,100% 90%,90% 100%,0 100%,0 10%)',bg:'#FFF4E6',fg:'#140C0A',items:[['Сім кросвордів поспіль','7×',0]]},
+ {t:'РІВНІ',clip:'polygon(0 18%,100% 0,100% 100%,0 82%)',bg:'var(--ink)',fg:'#FF3B2F',items:[['Рівень 5','5',0],['Рівень 10','10',0],['Рівень 20','20',0]]},
+ {t:'МАЙСТЕРНІСТЬ',clip:'polygon(50% 0,100% 50%,50% 100%,0 50%)',bg:'#FF3B2F',fg:'#140C0A',items:[['Перше рідкісне слово','Ґ',1],['Чиста мова','✓',0],['Влучний наголос','´',0]]}];
 class Component extends DCLogic {
   renderVals(){
     const s=this.props.screen||'t1';
@@ -272,18 +273,18 @@ class Component extends DCLogic {
     const sel=[0,1,2,6,7,9,10,12,14];
     v.cats=NEWCATS.map((n,i)=>{const on=sel.includes(i);return {n,shape:CS[i][0],dl:(i*0.025).toFixed(3)+'s',bg:on?'var(--ink)':'var(--sf)',fg:on?'var(--bg)':'var(--ink)',bc:on?'transparent':'var(--line)',sh:on?'0 4px 0 rgba(0,0,0,.3)':'0 4px 0 var(--edge)',tile:on?'#FF3B2F':'var(--sf2)',gl:on?'#140C0A':'var(--mute)',ck:on?'#FF3B2F':'transparent',ckFg:on?'#140C0A':'transparent'};});
     v.types=[['Слова',1],['Виправлення',1],['Фразеологізми',1],['Синонімічні ряди',0],['Поради',1]].map(([n,on],i)=>({n,bt:i?'1px solid var(--line)':'0',track:on?'#FF3B2F':'var(--sil)',jc:on?'flex-end':'flex-start'}));
-    v.hidden=[['Діалекти','категорія'],['Поради','тип карток'],['Бити байдики','запис'],['Шухляда','запис']].map(([n,k],i)=>({n,k,bt:i?'1px solid var(--line)':'0',anim:'slCasc .3s '+(.1+i*.05)+'s both'}));
+    v.hidden=[['Діалектизми','категорія'],['Поради','тип карток'],['Бити байдики','запис'],['Шухляда','запис']].map(([n,k],i)=>({n,k,bt:i?'1px solid var(--line)':'0',anim:'slCasc .3s '+(.1+i*.05)+'s both'}));
     let k=0;
-    v.fams=FAMS.map(f=>({t:f.t,clip:f.clip,c:f.items.filter(x=>x[2]).length+' з '+f.items.length,items:f.items.map(([n,sy,got])=>({n,s:sy,bg:got?'#FF3B2F':'var(--sil)',fg:got?'#140C0A':'transparent',anim:'slPop .3s '+(.05+(k++)*.03)+'s both'}))}));
+    v.fams=FAMS.map(f=>({t:f.t,clip:f.clip,c:f.items.filter(x=>x[2]).length+' з '+f.items.length,items:f.items.map(([n,sy,got])=>({n,s:sy,bg:got?f.bg:'var(--sil)',fg:got?f.fg:'transparent',ring:got?(f.bg==='#FF3B2F'?'#C4271D':f.bg==='#FFF4E6'?'#140C0A':'#FF3B2F'):'var(--sil)',anim:'slPop .3s '+(.05+(k++)*.03)+'s both'}))}));
     const opt=(arr,on)=>arr.map(n=>({n,bg:n===on?'var(--ink)':'var(--sf2)',fg:n===on?'var(--bg)':'var(--ink)'}));
-    v.survey=[{t:'ХТО ВИ',o:opt(['Навчаюсь','Працюю','Мовний гурман'],'Мовний гурман')},{t:'НАВІЩО',o:opt(['Писати без помилок','Знати рідкісні слова','Грати зі словами'],'Знати рідкісні слова')},{t:'САМООЦІНКА',o:opt(['Знаю мало рідкісних слів','Знаю чимало'],'Знаю чимало')}].map((q,i)=>({...q,anim:'slCasc .35s '+(.1+i*.08)+'s both'}));
+    v.survey=[{t:'ХТО ВИ',o:opt(['Навчаюсь','Працюю','Мовний гурман'],'Мовний гурман')},{t:'НАВІЩО',o:opt(['Писати без помилок','Знати рідкісні слова','Грати зі словами'],'Знати рідкісні слова')},{t:'САМООЦІНКА',o:opt(['Поки небагато','Знаю чимало'],'Знаю чимало')}].map((q,i)=>({...q,anim:'slCasc .35s '+(.1+i*.08)+'s both'}));
     v.tseg=Array.from({length:10},(_,i)=>i<3?'#FF3B2F':i===3?'var(--mute)':'var(--sil)');
     v.rarRes=[1,2,3,4,5].map(n=>n>=3?'#FF3B2F':'var(--sil)');
-    v.prof=[['Ім’я','Олена'],['Хто ви','Мовний гурман'],['Навіщо','Знати рідкісні слова'],['Самооцінка','Знаю чимало']].map(([n,val],i)=>({n,v:val,bt:i?'1px solid var(--line)':'0'}));
+    v.prof=[['Ім’я','Олена'],['Хто ти','Мовний гурман'],['Навіщо','Знати рідкісні слова'],['Самооцінка','Знаю чимало']].map(([n,val],i)=>({n,v:val,bt:i?'1px solid var(--line)':'0'}));
     v.code=['4','8','1','9','0','2'].map(d=>({d,bc:'#FF3B2F'}));
     const SH={
       m1:{t:'НОВА КОЛЕКЦІЯ',f:1,val:'Осінні слова',err:'Колекція з такою назвою вже є.',p:'СТВОРИТИ'},
-      m1b:{t:'НОВА КОЛЕКЦІЯ',f:1,val:'',err:'Дайте колекції назву.',p:'СТВОРИТИ'},
+      m1b:{t:'НОВА КОЛЕКЦІЯ',f:1,val:'',err:'Дай колекції назву.',p:'СТВОРИТИ'},
       m2:{t:'ПЕРЕЙМЕНУВАТИ',f:1,val:'Слова, які я почула від бабусі в Карпатах',err:'Назва задовга: не більше 40 символів.',p:'ЗБЕРЕГТИ'},
       m3:{t:'ВИДАЛИТИ КОЛЕКЦІЮ «ОСІННІ СЛОВА»?',f:0,p:'ВИДАЛИТИ',red:1},
       m4:{t:'СПОВІЩЕННЯ',f:0,p:'ГОТОВО'}};

@@ -43,15 +43,14 @@
 </sc-if>
 
 <sc-if value="{{ is_g1 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;padding:180px 18px 40px;display:flex;flex-direction:column;gap:18px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+<div style="position:absolute;inset:0;padding:176px 18px 40px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:#FF3B2F">ВИЗНАЧЕННЯ</span>
-  <span style="font:800 24px/1.25 Unbounded,sans-serif;text-wrap:pretty">Дрібна блискітка, що мерехтить на світлі.</span>
+  <span style="font:800 22px/1.25 Unbounded,sans-serif;text-wrap:pretty">Дрібна блискітка, що мерехтить на світлі.</span>
   <div style="flex:1"></div>
-  <div style="display:flex;flex-direction:column;gap:12px">
-    <div style="height:66px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 20px;font:800 18px/1 Unbounded,sans-serif;animation:slCasc .3s .1s both">лелітка</div>
-    <div style="height:66px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 20px;font:800 18px/1 Unbounded,sans-serif;animation:slCasc .3s .16s both">левада</div>
-    <div style="height:66px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 20px;font:800 18px/1 Unbounded,sans-serif;animation:slCasc .3s .22s both">лепеха</div>
-  </div>
+  <div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:1;animation:slCasc .3s 0.10s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">А</span><span style="flex:1;min-width:0;font:800 18px/1.15 Unbounded,sans-serif;text-wrap:pretty">лелітка</span></div>
+    <div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:1;animation:slCasc .3s 0.16s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">Б</span><span style="flex:1;min-width:0;font:800 18px/1.15 Unbounded,sans-serif;text-wrap:pretty">левада</span></div>
+    <div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:1;animation:slCasc .3s 0.22s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">В</span><span style="flex:1;min-width:0;font:800 18px/1.15 Unbounded,sans-serif;text-wrap:pretty">лепеха</span></div>
+    <div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:1;animation:slCasc .3s 0.28s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">Г</span><span style="flex:1;min-width:0;font:800 18px/1.15 Unbounded,sans-serif;text-wrap:pretty">пелехатий</span></div></div>
 </div>
 </sc-if>
 
@@ -88,78 +87,64 @@
 </sc-if>
 
 <sc-if value="{{ is_g4 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;padding:180px 18px 40px;display:flex;flex-direction:column;gap:16px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+<div style="position:absolute;inset:0;padding:176px 18px 40px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <span style="font:900 22px/1.1 Unbounded,sans-serif">Звідки це слово?</span>
-  <div style="position:relative;height:150px;border-radius:22px;background:var(--sf2);overflow:hidden;display:flex;align-items:flex-end;padding:18px">
-    <div style="position:absolute;right:-20px;top:-40px;font:900 200px/1 Unbounded,sans-serif;color:var(--bg)">Ш</div>
-    <span style="position:relative;font:900 34px/1 Unbounded,sans-serif;letter-spacing:-1px">шухляда</span>
-  </div>
+  <div style="height:110px;border-radius:22px;background:var(--sf2);display:flex;align-items:flex-end;padding:18px"><span style="font:900 34px/1 Unbounded,sans-serif;letter-spacing:-1px">шухляда</span></div>
   <div style="flex:1"></div>
-  <div style="display:flex;flex-direction:column;gap:12px">
-    <div style="height:62px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 20px;font:700 17px/1 Onest">з німецької</div>
-    <div style="height:62px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 20px;font:700 17px/1 Onest">з тюркських мов</div>
-    <div style="height:62px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 20px;font:700 17px/1 Onest">з грецької</div>
-  </div>
+  <div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:1;animation:slCasc .3s 0.10s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">А</span><span style="flex:1;min-width:0;font:600 17px/1.3 Onest,sans-serif;text-wrap:pretty">З німецької через польську</span></div>
+    <div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:1;animation:slCasc .3s 0.16s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">Б</span><span style="flex:1;min-width:0;font:600 17px/1.3 Onest,sans-serif;text-wrap:pretty">Із тюркських мов</span></div>
+    <div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:1;animation:slCasc .3s 0.22s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">В</span><span style="flex:1;min-width:0;font:600 17px/1.3 Onest,sans-serif;text-wrap:pretty">З грецької через латину</span></div>
+    <div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:1;animation:slCasc .3s 0.28s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">Г</span><span style="flex:1;min-width:0;font:600 17px/1.3 Onest,sans-serif;text-wrap:pretty">Праслов’янське</span></div></div>
 </div>
 </sc-if>
 
 <sc-if value="{{ is_g5 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;padding:180px 18px 40px;display:flex;flex-direction:column;gap:16px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <span style="font:500 16px/1.4 Onest;color:var(--mute)">замість «дедлайн»</span>
-  <span style="font:900 40px/1 Unbounded,sans-serif;letter-spacing:-1px">дедлайн</span>
+<div style="position:absolute;inset:0;padding:176px 18px 40px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:#FF3B2F">АНГЛІЦИЗМИ</span>
+  <span style="font:600 18px/1.4 Onest;text-wrap:pretty">Чим замінити «дедлайн»: «<span style="background:rgba(255,59,47,.22);box-shadow:0 2px 0 #FF3B2F">Дедлайн</span> по звіту знову перенесли на п’ятницю»?</span>
   <div style="flex:1"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-    <div style="height:96px;border-radius:18px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;font:800 15px/1.2 Unbounded,sans-serif;animation:slPop .35s both">кінцевий термін</div>
-    <div style="height:96px;border-radius:18px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;font:800 15px/1.2 Unbounded,sans-serif;opacity:.55">мертва лінія</div>
-    <div style="height:96px;border-radius:18px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;font:800 15px/1.2 Unbounded,sans-serif;opacity:.55">межа часу</div>
-    <div style="height:96px;border-radius:18px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;font:800 15px/1.2 Unbounded,sans-serif;opacity:.55">лінія смерті</div>
-  </div>
-  <span style="font:800 16px/1 Unbounded,sans-serif;color:#FF3B2F">Влучно!</span>
+  <div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:flex-start;gap:14px;min-height:66px;padding:16px 16px 16px 14px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;border:0;transform:none;opacity:1;animation:slCasc .3s 0.10s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:#140C0A;color:#FF3B2F;display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">✓</span><span style="flex:1;min-width:0;font:500 16px/1.4 Onest,sans-serif;text-wrap:pretty">Кінцевий термін звіту знову перенесли на п’ятницю.</span></div>
+    <div style="display:flex;align-items:flex-start;gap:14px;min-height:66px;padding:16px 16px 16px 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:0.45;animation:slCasc .3s 0.16s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">Б</span><span style="flex:1;min-width:0;font:500 16px/1.4 Onest,sans-serif;text-wrap:pretty"><span style="background:rgba(255,59,47,.22);box-shadow:0 2px 0 #FF3B2F">Крайній строк</span> по звіту знову перенесли на п’ятницю.</span></div>
+    <div style="display:flex;align-items:flex-start;gap:14px;min-height:66px;padding:16px 16px 16px 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:0.45;animation:slCasc .3s 0.22s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">В</span><span style="flex:1;min-width:0;font:500 16px/1.4 Onest,sans-serif;text-wrap:pretty"><span style="background:rgba(255,59,47,.22);box-shadow:0 2px 0 #FF3B2F">Час Х</span> по звіту знову перенесли на п’ятницю.</span></div></div>
+  <div style="padding:16px 18px;border-radius:16px;background:#FF3B2F;color:#140C0A;display:flex;flex-direction:column;gap:6px;animation:slCasc .35s .3s both"><span style="font:900 16px/1 Unbounded,sans-serif">Влучно!</span><span style="font:500 14px/1.4 Onest">«По звіту» — калька. Кажемо «термін звіту».</span></div>
 </div>
 </sc-if>
 
 <sc-if value="{{ is_g6 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;padding:180px 18px 40px;display:flex;flex-direction:column;gap:18px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <span style="font:900 22px/1.1 Unbounded,sans-serif">Складіть вислів</span>
-  <span style="font:500 16px/1.4 Onest;color:var(--mute)">Нічого не робити, гаяти час.</span>
-  <div style="min-height:130px;border-radius:20px;background:var(--sf2);box-shadow:inset 0 4px 0 var(--edge);padding:16px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:10px">
-    <span style="height:52px;padding:0 18px;border-radius:14px;background:var(--ink);color:var(--bg);display:flex;align-items:center;font:800 17px/1 Unbounded,sans-serif;animation:slPop .3s both">ловити</span>
-    <span style="height:52px;width:80px;border-radius:14px;border:2.5px dashed var(--mute)"></span>
+<div style="position:absolute;inset:0;padding:176px 18px 40px;display:flex;flex-direction:column;gap:16px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <span style="font:900 22px/1.1 Unbounded,sans-serif">Склади вислів</span>
+  <span style="font:500 16px/1.4 Onest;color:var(--mute)">Нічого не робити, гаяти час без діла.</span>
+  <div style="min-height:130px;border-radius:20px;background:var(--sf2);box-shadow:inset 0 4px 0 var(--edge);padding:16px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:8px">
+    <span style="padding:12px 14px;border-radius:12px;background:var(--ink);color:var(--bg);font:700 16px/1.2 Onest;animation:slPop .3s both">Цілий день</span>
+    <span style="padding:12px 14px;border-radius:12px;background:var(--ink);color:var(--bg);font:700 16px/1.2 Onest;animation:slPop .3s .1s both">тільки й робить, що</span>
+    <span style="width:80px;height:44px;border-radius:12px;border:2.5px dashed var(--mute)"></span>
   </div>
   <div style="flex:1"></div>
-  <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
-    <span style="height:56px;padding:0 20px;border-radius:14px;background:var(--sf2);display:flex;align-items:center;font:800 17px/1 Unbounded,sans-serif;color:transparent">ловити</span>
-    <span style="height:56px;padding:0 20px;border-radius:14px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;font:800 17px/1 Unbounded,sans-serif">гав</span>
-    <span style="height:56px;padding:0 20px;border-radius:14px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;font:800 17px/1 Unbounded,sans-serif">байдики</span>
-    <span style="height:56px;padding:0 20px;border-radius:14px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;font:800 17px/1 Unbounded,sans-serif">вітер</span>
-  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px"><span style="padding:13px 15px;border-radius:12px;background:var(--sf2);box-shadow:none;border:1px solid var(--line);font:700 16px/1.2 Onest;opacity:0.3">Цілий день</span><span style="padding:13px 15px;border-radius:12px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:700 16px/1.2 Onest;opacity:1">б’є байдики</span><span style="padding:13px 15px;border-radius:12px;background:var(--sf2);box-shadow:none;border:1px solid var(--line);font:700 16px/1.2 Onest;opacity:0.3">тільки й робить, що</span><span style="padding:13px 15px;border-radius:12px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:700 16px/1.2 Onest;opacity:1">ловить гав</span><span style="padding:13px 15px;border-radius:12px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:700 16px/1.2 Onest;opacity:1">пасе задніх</span><span style="padding:13px 15px;border-radius:12px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:700 16px/1.2 Onest;opacity:1">і в ус не дме</span></div>
+  <button style="height:58px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ПЕРЕВІРИТИ</button>
 </div>
 </sc-if>
 
 <sc-if value="{{ is_g7 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;padding:180px 18px 40px;display:flex;flex-direction:column;gap:16px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+<div style="position:absolute;inset:0;padding:176px 18px 40px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="display:flex;align-items:flex-end;justify-content:space-between"><span style="font:900 80px/.85 Unbounded,sans-serif;color:#FF3B2F;letter-spacing:-3px;animation:slPop .35s both">14</span><span style="font:600 13px/1.3 Onest;color:var(--mute);text-align:right">поспіль<br>рекорд 21</span></div>
   <span style="font:800 21px/1.25 Unbounded,sans-serif;text-wrap:pretty">«Веремія» — це…</span>
   <div style="flex:1"></div>
-  <div style="display:flex;flex-direction:column;gap:12px">
-    <div style="height:62px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 20px;font:700 17px/1 Onest">метушня, безлад</div>
-    <div style="height:62px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 20px;font:700 17px/1 Onest">тиха погода</div>
-    <div style="height:62px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 20px;font:700 17px/1 Onest">весняне свято</div>
-  </div>
+  <div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:1;animation:slCasc .3s 0.10s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">А</span><span style="flex:1;min-width:0;font:600 17px/1.3 Onest,sans-serif;text-wrap:pretty">Метушня, безлад і гамір навколо</span></div>
+    <div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:1;animation:slCasc .3s 0.16s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">Б</span><span style="flex:1;min-width:0;font:600 17px/1.3 Onest,sans-serif;text-wrap:pretty">Тиха безвітряна погода восени</span></div>
+    <div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:1;animation:slCasc .3s 0.22s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">В</span><span style="flex:1;min-width:0;font:600 17px/1.3 Onest,sans-serif;text-wrap:pretty">Весняне свято на честь сонця</span></div></div>
 </div>
 </sc-if>
 
 <sc-if value="{{ is_g8 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;padding:180px 18px 40px;display:flex;flex-direction:column;gap:18px">
-  <span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:#FF3B2F">ВИЗНАЧЕННЯ</span>
-  <span style="font:800 22px/1.25 Unbounded,sans-serif;text-wrap:pretty">Сильна снігова буря з вітром.</span>
+<div style="position:absolute;inset:0;padding:176px 18px 40px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:#FF3B2F">ЗВІДКИ ЦЕ СЛОВО?</span>
+  <span style="font:900 34px/1 Unbounded,sans-serif;letter-spacing:-1px">гарбуз</span>
   <div style="flex:1"></div>
-  <div style="display:flex;flex-direction:column;gap:12px">
-    <div style="height:66px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:2.5px solid #FF3B2F;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:800 18px/1 Unbounded,sans-serif">хурделиця<svg width="18" height="15" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#FF3B2F"></polygon></svg></div>
-    <div style="height:66px;border-radius:16px;background:var(--sf2);display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:800 18px/1 Unbounded,sans-serif;color:var(--mute);animation:slDrop .35s .2s ease-in both">заграва<span style="font:900 18px/1 Unbounded,sans-serif">✗</span></div>
-    <div style="height:66px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 20px;font:800 18px/1 Unbounded,sans-serif;opacity:.5">видноколо</div>
-  </div>
-  <div style="padding:16px 18px;border-radius:16px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:space-between;animation:slCasc .35s .3s both"><span style="font:600 15px/1.3 Onest">Майже. Наступне вийде.</span><span style="font:900 13px/1 Unbounded,sans-serif;color:#FF3B2F">ДАЛІ →</span></div>
+  <div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;border:0;transform:none;opacity:1;animation:slCasc .3s 0.10s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:#140C0A;color:#FF3B2F;display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">✓</span><span style="flex:1;min-width:0;font:600 17px/1.3 Onest,sans-serif;text-wrap:pretty">Із тюркських мов</span></div>
+    <div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--sf2);color:var(--ink);box-shadow:inset 0 3px 0 var(--edge);border:0;transform:translateY(3px);opacity:1;animation:slCasc .3s 0.16s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">✕</span><span style="flex:1;min-width:0;font:600 17px/1.3 Onest,sans-serif;text-wrap:pretty">З латини через польську</span></div>
+    <div style="display:flex;align-items:center;gap:14px;min-height:66px;padding:0 16px 0 14px;border-radius:16px;background:var(--tile);color:var(--ink);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);transform:none;opacity:0.45;animation:slCasc .3s 0.22s both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:var(--sf2);color:var(--ink);display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">В</span><span style="flex:1;min-width:0;font:600 17px/1.3 Onest,sans-serif;text-wrap:pretty">Праслов’янське</span></div></div>
+  <div style="padding:16px 18px;border-radius:16px;background:var(--ink);color:var(--bg);display:flex;flex-direction:column;gap:8px;animation:slCasc .35s .3s both"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font:900 15px/1.2 Unbounded,sans-serif">Майже. Наступне вийде.</span><span style="font:900 13px/1 Unbounded,sans-serif;color:#FF3B2F">ДАЛІ →</span></div><span style="font:500 14px/1.4 Onest;opacity:.85">«Гарбуз» прийшов із тюркських мов: так називали велику диню.</span></div>
 </div>
 </sc-if>
 
@@ -169,13 +154,13 @@
     <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
     <div style="position:absolute;right:-30px;top:40px;font:900 260px/1 Unbounded,sans-serif;color:#FFF4E6;letter-spacing:-10px">0/3</div>
     <span style="position:relative;display:block;font:800 12px/1 Unbounded,sans-serif;letter-spacing:2px">НАГОЛОС · 6/10</span>
-    <span style="position:relative;display:block;margin-top:12px;font:900 40px/.95 Unbounded,sans-serif;letter-spacing:-1.5px;width:240px">Життя закінчилися</span>
+    <span style="position:relative;display:block;margin-top:12px;font:900 40px/.95 Unbounded,sans-serif;letter-spacing:-1.5px;width:240px">Розминка!</span>
     <div style="position:absolute;left:18px;top:220px"><dc-import name="Rupor" state="sad" on-red="{{ true }}" size="{{ 120 }}" hint-size="120px,90px"></dc-import></div>
   </div>
   <div style="padding:4px 20px 0;display:flex;flex-direction:column;gap:10px">
-    <span style="font:800 15px/1 Unbounded,sans-serif">Ваші раунди</span>
+    <span style="font:800 15px/1 Unbounded,sans-serif">Твої раунди</span>
     <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden">
-      <sc-for list="{{ rounds }}" as="r" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-top:{{ r.bt }};animation:{{ r.anim }}"><span style="flex:none;width:28px;height:28px;border-radius:8px;background:{{ r.bg }};color:{{ r.fg }};display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">{{ r.mark }}</span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font:700 15px/1.1 Onest">{{ r.w }}</span><span style="font:500 12px/1.2 Onest;color:var(--mute)">{{ r.sub }}</span></span></div></sc-for>
+      <sc-for list="{{ rounds }}" as="r" hint-placeholder-count="4"><div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-top:{{ r.bt }};animation:{{ r.anim }}"><span style="flex:none;width:28px;height:28px;border-radius:8px;background:{{ r.bg }};color:{{ r.fg }};display:flex;align-items:center;justify-content:center;font:900 13px/1 Unbounded,sans-serif">{{ r.mark }}</span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font:700 15px/1.3 Onest;text-wrap:pretty">{{ r.w }}</span><span style="font:500 13px/1.35 Onest;color:var(--mute);text-wrap:pretty">{{ r.sub }}</span></span></div></sc-for>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
       <button style="height:56px;border-radius:15px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ДО ІГОР</button>
@@ -193,7 +178,7 @@
 <div style="position:absolute;left:0;right:0;bottom:0;z-index:81;padding:62px 20px 38px;background:var(--sf);clip-path:polygon(0 30px,100% 0,100% 100%,0 100%);animation:slSheet .45s cubic-bezier(.2,.9,.3,1) both;display:flex;flex-direction:column;gap:16px">
   <div style="position:absolute;left:18px;top:30px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 18px/1 Unbounded,sans-serif;transform:rotate(-4.4deg);transform-origin:left">ВИЙТИ З ГРИ?</div>
   <div style="height:12px"></div>
-  <span style="font:500 16px/1.45 Onest">Прогрес буде втрачено.</span>
+  <span style="font:500 16px/1.45 Onest">Пройдені раунди пропадуть, а рекорд не оновиться.</span>
   <button style="height:64px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ВИЙТИ</button>
   <button style="height:64px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГРАТИ ДАЛІ</button>
 </div>
@@ -204,17 +189,17 @@
   <span style="padding:6px 4px 4px;font:900 30px/1 Unbounded,sans-serif;letter-spacing:-1px">Ігри</span>
   <div style="border-radius:22px;background:var(--sf);border:1px solid var(--line);padding:18px;display:flex;align-items:center;gap:14px;animation:slCasc .3s .05s both">
     <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:800 16px/1.15 Unbounded,sans-serif">Кросворд дня · 2 листопада</span><span style="font:500 13px/1 Onest;color:var(--mute)">5×5 · 8 слів</span></div>
-    <button style="flex:none;height:46px;padding:0 18px;border-radius:13px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;font:900 12px/1 Unbounded,sans-serif">ПОЧАТИ</button>
+    <button style="flex:none;height:46px;padding:0 18px;border-radius:13px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">РОЗГАДАТИ</button>
   </div>
   <div style="border-radius:22px;background:var(--sf);border:1px solid var(--line);padding:18px;display:flex;align-items:center;gap:14px;animation:slCasc .3s .12s both">
     <div style="flex:1;display:flex;flex-direction:column;gap:8px"><span style="font:800 16px/1.15 Unbounded,sans-serif">Кросворд дня · 2 листопада</span><div style="height:8px;background:var(--sil);transform:skewX(-20deg)"><div style="width:45%;height:100%;background:var(--ink)"></div></div></div>
-    <button style="flex:none;height:46px;padding:0 16px;border-radius:13px;background:var(--ink);color:var(--bg);font:900 12px/1 Unbounded,sans-serif">ПРОДОВЖИТИ</button>
+    <button style="flex:none;height:46px;padding:0 16px;border-radius:13px;background:var(--ink);color:var(--bg);font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ПРОДОВЖИТИ</button>
   </div>
   <div style="position:relative;border-radius:22px;background:var(--ink);color:var(--bg);padding:18px;display:flex;flex-direction:column;gap:14px;overflow:hidden;animation:slCasc .3s .19s both">
     <div style="display:flex;align-items:center;justify-content:space-between"><span style="font:800 16px/1.15 Unbounded,sans-serif">Кросворд дня · 2 листопада</span></div>
     <div style="display:flex;align-items:center;gap:16px">
       <div style="display:grid;grid-template-columns:repeat(5,22px);gap:3px"><sc-for list="{{ cwGrid }}" as="c" hint-placeholder-count="25"><span style="width:22px;height:22px;border-radius:5px;background:{{ c }}"></span></sc-for></div>
-      <div style="display:flex;flex-direction:column;gap:6px"><span style="font:900 18px/1 Unbounded,sans-serif;color:#FF3B2F">✓ Розв’язано</span><span style="font:500 13px/1.3 Onest;opacity:.75">за 4:12 · без підказок</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font:900 18px/1 Unbounded,sans-serif;color:#FF3B2F">✓ Розгадано</span><span style="font:500 13px/1.3 Onest;opacity:.75">за 4:12 · без підказок</span></div>
     </div>
   </div>
 </div>
@@ -224,11 +209,11 @@
 <div style="position:absolute;inset:0;background:#FF3B2F;color:#140C0A;overflow:hidden;animation:slFade .2s both;display:flex;flex-direction:column;align-items:center;padding:120px 28px 40px">
   <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
   <div style="position:absolute;left:-40px;top:70px;font:900 120px/.9 Unbounded,sans-serif;letter-spacing:-6px;color:#FFF4E6;transform:rotate(-8deg);white-space:nowrap">7 ПОСПІЛЬ</div>
-  <div style="position:relative;margin-top:110px;width:200px;height:200px;background:#140C0A;clip-path:circle(50%);display:flex;align-items:center;justify-content:center;animation:slStamp .6s .2s cubic-bezier(.3,1.4,.5,1) both">
-    <div style="display:grid;grid-template-columns:repeat(3,24px);gap:4px"><span style="height:24px;background:#FF3B2F"></span><span style="height:24px;background:#FFF4E6"></span><span style="height:24px;background:#FF3B2F"></span><span style="height:24px;background:#FFF4E6"></span><span style="height:24px;background:#FF3B2F"></span><span style="height:24px;background:#FFF4E6"></span><span style="height:24px;background:#FF3B2F"></span><span style="height:24px;background:#FFF4E6"></span><span style="height:24px;background:#FF3B2F"></span></div>
+  <div style="position:relative;margin-top:110px;width:200px;height:200px;animation:slStamp .6s .2s cubic-bezier(.3,1.4,.5,1) both;filter:drop-shadow(0 8px 0 #140C0A)"><div style="position:absolute;inset:0;background:#140C0A;clip-path:polygon(10% 0,100% 0,100% 90%,90% 100%,0 100%,0 10%)"></div><div style="position:absolute;inset:7%;background:#FFF4E6;clip-path:polygon(10% 0,100% 0,100% 90%,90% 100%,0 100%,0 10%);display:flex;align-items:center;justify-content:center">
+    <div style="display:grid;grid-template-columns:repeat(3,24px);gap:4px"><span style="height:24px;background:#FF3B2F"></span><span style="height:24px;background:#140C0A"></span><span style="height:24px;background:#FF3B2F"></span><span style="height:24px;background:#140C0A"></span><span style="height:24px;background:#FF3B2F"></span><span style="height:24px;background:#140C0A"></span><span style="height:24px;background:#FF3B2F"></span><span style="height:24px;background:#140C0A"></span><span style="height:24px;background:#FF3B2F"></span></div></div>
   </div>
   <span style="position:relative;margin-top:36px;font:900 26px/1.1 Unbounded,sans-serif;text-align:center">Сім кросвордів поспіль</span>
-  <span style="position:relative;margin-top:12px;font:600 16px/1.4 Onest;text-align:center">Нова відзнака — тепер вона ваша назавжди.</span>
+  <span style="position:relative;margin-top:12px;font:600 16px/1.4 Onest;text-align:center">Нова відзнака — тепер вона твоя назавжди.</span>
   <div style="flex:1"></div>
   <button style="position:relative;width:100%;height:62px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОТОВО</button>
 </div>
@@ -256,7 +241,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;g1&quot;,&quot;g2&quot;,&quot;g3&quot;,&quot;g4&quot;,&quot;g5&quot;,&quot;g6&quot;,&quot;g7&quot;,&quot;g8&quot;,&quot;g9&quot;,&quot;g10&quot;,&quot;c1&quot;,&quot;c2&quot;],&quot;default&quot;:&quot;g1&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
 const TABI={feed:'polygon(0 10%,100% 0,100% 38%,0 46%,0 56%,100% 50%,100% 100%,0 100%)',games:'polygon(50% 0,100% 50%,50% 100%,0 50%,22% 50%,50% 78%,78% 50%,50% 22%,22% 50%,0 50%)',saved:'polygon(12% 8%,88% 0,88% 100%,50% 74%,12% 100%)',profile:'polygon(30% 0,70% 0,74% 40%,50% 48%,26% 40%,30% 0,30% 0,0 100%,8% 58%,92% 54%,100% 100%,0 100%)'};
-const TITLES={g1:'ВГАДАЙ СЛОВО',g2:'ЗА БУКВАМИ',g3:'ВПИШИ СЛОВО',g4:'ЗВІДКИ СЛОВО',g5:'АНГЛІЦИЗМИ',g6:'СКЛАДИ ВИСЛІВ',g7:'ВИЖИВАННЯ',g8:'ВГАДАЙ СЛОВО',g10:'ВГАДАЙ СЛОВО'};
+const TITLES={g1:'ВГАДАЙ СЛОВО',g2:'ЗА ЛІТЕРАМИ',g3:'ВПИШИ СЛОВО',g4:'ЗВІДКИ СЛОВО',g5:'АНГЛІЦИЗМИ',g6:'СКЛАДИ ВИСЛІВ',g7:'ВИЖИВАННЯ',g8:'ВГАДАЙ СЛОВО',g10:'ВГАДАЙ СЛОВО'};
 const LIVES={g8:2,g7:1};
 class Component extends DCLogic {
   renderVals(){
@@ -271,7 +256,7 @@ class Component extends DCLogic {
     v.segs=Array.from({length:s==='g7'?1:10},(_,i)=>s==='g7'?'#FF3B2F':i<cur?(i===2&&s==='g8'?'var(--ink)':'#FF3B2F'):i===cur?'var(--mute)':'var(--sil)');
     v.letters=['Л','О','Н','Ь','И','А','Р','Е'].map((ch,i)=>({ch,bg:i===0||i===1?'var(--sf2)':'var(--tile)',sh:i<2?'none':'0 4px 0 var(--edge)',op:i<2?'.35':'1'}));
     v.kb=[['й','ц','у','к','е','н','г','ш','щ','з','х'],['ф','і','в','а','п','р','о','л','д','ж','є'],['я','ч','с','м','и','т','ь','б','ю','ї']];
-    v.rounds=[['хурдели́ця',true],['ви́дноколо',false,'Ваш вибір: видноко́ло'],['оболо́нь',true],['лелі́тка',false,'Ваш вибір: ле́літка'],['загра́ва',true],['веремі́я',false,'Ваш вибір: вере́мія']].map(([w,ok,sub],i)=>({w,sub:ok?'правильно':sub,mark:ok?'✓':'✗',bg:ok?'#FF3B2F':'var(--ink)',fg:ok?'#140C0A':'var(--bg)',bt:i?'1px solid var(--line)':'0',anim:'slCasc .35s '+(.2+i*.06)+'s both'}));
+    v.rounds=[['хурдели́ця',true],['ви́дноколо',false,'Твій вибір: видноко́ло'],['оболо́нь',true],['лелі́тка',false,'Твій вибір: ле́літка'],['загра́ва',true],['веремі́я',false,'Твій вибір: вере́мія']].map(([w,ok,sub],i)=>({w,sub:ok?'правильно':sub,mark:ok?'✓':'✗',bg:ok?'#FF3B2F':'var(--ink)',fg:ok?'#140C0A':'var(--bg)',bt:i?'1px solid var(--line)':'0',anim:'slCasc .35s '+(.2+i*.06)+'s both'}));
     const pat=[1,1,1,0,1, 1,0,1,1,1, 1,1,1,0,1, 0,1,0,1,1, 1,1,1,1,0];
     v.cwGrid=pat.map(p=>p?'#FF3B2F':'rgba(255,244,230,.12)');
     v.showTabs=s==='c1';

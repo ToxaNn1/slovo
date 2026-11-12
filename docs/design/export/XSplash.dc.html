@@ -11,6 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800;900&family=Onest:wght@500;700&display=swap" rel="stylesheet">
 <style>
 body{margin:0}
+[data-th="light"]{--sbg:#FFF4E6;--sfg:#140C0A;--smute:#4A3E38;--ink:#140C0A;--bg:#FFF4E6}
+[data-th="dark"]{--sbg:#140C0A;--sfg:#FFF4E6;--smute:#BDAE9F;--ink:#FFF4E6;--bg:#140C0A}
 @keyframes xLogo{0%,5%{transform:scale(.7) rotate(-10deg);opacity:0}9%{opacity:1}20%{transform:scale(1.04) rotate(2deg)}26%{transform:scale(1) rotate(0)}38%{transform:scale(1)}41%{transform:scale(1.07)}45%,88%{transform:scale(1);opacity:1}92%,100%{transform:scale(1);opacity:0}}
 @keyframes xWedge{0%,6%{transform:scaleX(0)}18%{transform:scaleX(1.08)}24%,100%{transform:scaleX(1)}}
 @keyframes xS{0%,20%{stroke-dashoffset:150}38%,100%{stroke-dashoffset:0}}
@@ -22,7 +24,7 @@ body{margin:0}
 </style>
 </helmet>
 <div style="width:406px;height:860px;box-sizing:border-box;border:8px solid #140C0A;border-radius:62px;background:#140C0A;overflow:hidden">
-<div style="position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;background:#FFF4E6;color:#140C0A">
+<div data-th="{{ th }}" style="position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;background:var(--sbg);color:var(--sfg)">
   <div style="position:absolute;left:50%;top:11px;width:122px;height:34px;margin-left:-61px;border-radius:20px;background:#000;z-index:9"></div>
   <div style="position:absolute;left:50%;top:216px;width:200px;height:200px;margin-left:-100px;animation:{{ aLogo }}">
     <svg width="200" height="200" viewBox="0 0 100 100" style="display:block;overflow:visible">
@@ -33,21 +35,22 @@ body{margin:0}
   <div style="position:absolute;left:0;right:0;top:450px;display:flex;justify-content:center;overflow:hidden;padding:4px 0;font:900 58px/1 Unbounded,sans-serif;letter-spacing:-2px">
     <sc-for list="{{ letters }}" as="l" hint-placeholder-count="5"><span style="display:inline-block;animation:{{ l.anim }}">{{ l.ch }}</span></sc-for>
   </div>
-  <div style="position:absolute;left:0;right:0;top:534px;display:flex;justify-content:center;color:#4A3E38;font:500 17px/1 Onest,sans-serif;animation:{{ aTag }}">Щодня одне рідкісне слово</div>
+  <div style="position:absolute;left:0;right:0;top:534px;display:flex;justify-content:center;color:var(--smute);font:500 17px/1 Onest,sans-serif;animation:{{ aTag }}">Щодня одне рідкісне слово</div>
   <div style="position:absolute;left:96px;bottom:60px;width:200px;display:flex;justify-content:center;transform-origin:50% 100%;animation:{{ aRup }}">
     <dc-import name="Rupor" state="shout" size="{{ 150 }}" hint-size="150px,113px"></dc-import>
-    <svg width="46" height="70" viewBox="0 0 46 70" style="position:absolute;right:-6px;top:6px;transform-origin:0 50%;animation:{{ aShout }}"><polygon points="4,14 40,2 36,12" fill="#FF3B2F"></polygon><polygon points="6,35 44,33 42,41 6,39" fill="#140C0A"></polygon><polygon points="4,56 36,58 40,68" fill="#FF3B2F"></polygon></svg>
+    <svg width="46" height="70" viewBox="0 0 46 70" style="position:absolute;right:-6px;top:6px;transform-origin:0 50%;animation:{{ aShout }}"><polygon points="4,14 40,2 36,12" fill="#FF3B2F"></polygon><polygon points="6,35 44,33 42,41 6,39" fill="var(--sfg)"></polygon><polygon points="4,56 36,58 40,68" fill="#FF3B2F"></polygon></svg>
   </div>
   <div style="position:absolute;top:-40px;bottom:-40px;left:-30%;width:160%;background:#FF3B2F;z-index:8;animation:{{ aWipe }}"></div>
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;duration&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:2,&quot;max&quot;:8,&quot;step&quot;:0.2,&quot;unit&quot;:&quot;s&quot;,&quot;default&quot;:4.2,&quot;tsType&quot;:&quot;number&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;duration&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:2,&quot;max&quot;:8,&quot;step&quot;:0.2,&quot;unit&quot;:&quot;s&quot;,&quot;default&quot;:4.2,&quot;tsType&quot;:&quot;number&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
 class Component extends DCLogic {
   renderVals(){
     const rm=!!this.props.reduceMotion, D=(this.props.duration??4.2)+'s';
     const a=(k,e,d)=>rm?'none':`${k} ${D} ${e} ${d||'0s'} infinite both`;
     return {
+      th:this.props.theme||'light',
       aLogo:a('xLogo','cubic-bezier(.3,1,.4,1)'),aWedge:a('xWedge','cubic-bezier(.7,0,.2,1)'),aS:a('xS','cubic-bezier(.5,0,.3,1)'),
       aTag:a('xTag','ease-out'),aRup:a('xRup','cubic-bezier(.3,1,.4,1)'),aShout:a('xShout','ease-out'),aWipe:rm?'none;display:none':a('xWipe','cubic-bezier(.7,0,.3,1)'),
       letters:'SLOVO'.split('').map((ch,i)=>({ch,anim:rm?'none':`xLet ${D} cubic-bezier(.2,.9,.3,1.2) ${i*0.07}s infinite both`}))
