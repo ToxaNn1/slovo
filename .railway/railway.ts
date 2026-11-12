@@ -50,6 +50,7 @@ export default defineRailway(() => {
       R2_BUCKET: preserve(),
       R2_ACCESS_KEY_ID: preserve(),
       R2_SECRET_ACCESS_KEY: preserve(),
+      MEDIA_BASE: preserve(),
       TRUSTED_PROXY_HOPS: preserve(),
     },
   });
