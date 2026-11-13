@@ -19,10 +19,15 @@ const blockOf = { word: 'categories', correction: 'correctionTypes' } as const;
  */
 export function useBlockCategories(of: CategoryKind): readonly Category[] {
   const { dashboard } = useComposition();
-  return useSubscribed(
-    dashboard,
-    ({ blocks }) => blocks.find((block) => block.kind === blockOf[of])?.categories ?? none,
-  );
+  return useSubscribed(dashboard, ({ blocks }) => {
+    for (const block of blocks)
+      if (
+        (block.kind === 'categories' || block.kind === 'correctionTypes') &&
+        block.kind === blockOf[of]
+      )
+        return block.categories;
+    return none;
+  });
 }
 
 /**
