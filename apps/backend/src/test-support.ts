@@ -201,9 +201,7 @@ afterAll(() => fileDatabase?.drop());
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../migrations', import.meta.url));
 const JOURNAL_FILE = 'meta/_journal.json';
-const JOURNAL = z
-  .object({ entries: z.array(z.object({ tag: z.string() }).passthrough()) })
-  .passthrough();
+const JOURNAL = z.looseObject({ entries: z.array(z.looseObject({ tag: z.string() })) });
 
 /**
  * The migrations folder as it was before the migration whose name ends with
