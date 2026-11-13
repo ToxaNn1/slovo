@@ -1,7 +1,8 @@
-import { untilNextLocalDay, type Clock } from '@slovo/core';
+import type { Clock } from '@slovo/core';
 
 import type { Opening } from '../opening';
 import type { AppStateSource } from './foreground';
+import { everyNextLocalDay } from './next-local-day';
 
 /**
  * What the foreground reports tell a listener: `launch` once its opening is
@@ -30,11 +31,12 @@ export interface ForegroundReports {
 
 /**
  * Reports the app's moments over the device's app state and the clock. A
- * move between two states out of the foreground, such as from inactive to
- * the background, is no return; only the background itself is reported. The
- * timer holds no day rule: one that fires early reports anyway, and the
- * listener finds the same day. Listeners are told in the order their
- * openings opened.
+ * return is a move to the foreground from the background, or the first one
+ * of an app that launched out of it; a move from inactive back to active,
+ * such as the control centre pulled down and put back, is none. A move
+ * between two states out of the foreground, such as from inactive to the
+ * background, is no return either; only the background itself is reported.
+ * Listeners are told in the order their openings opened.
  */
 export function reportForeground({
   clock,
@@ -45,30 +47,26 @@ export function reportForeground({
 }): ForegroundReports {
   const listeners: ((moment: ForegroundMoment) => void)[] = [];
   let stopped = false;
-  let timer: ReturnType<typeof setTimeout> | undefined;
 
   function tell(moment: ForegroundMoment): void {
     for (const hear of listeners) hear(moment);
   }
 
-  function waitForNextDay(): void {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      tell('new-day');
-      waitForNextDay();
-    }, untilNextLocalDay(clock));
-  }
-
-  waitForNextDay();
-  let state = appState.currentState;
+  const newDay = () => {
+    tell('new-day');
+  };
+  let stopWaiting = everyNextLocalDay(clock, newDay);
+  // Away from the foreground: in the background, or not yet in the foreground at all.
+  let away = appState.currentState !== 'active';
   const subscription = appState.addEventListener('change', (next) => {
-    if (next === state) return;
-    state = next;
-    if (next === 'active') {
+    if (next === 'active' && away) {
+      away = false;
       tell('return');
       // Timers stop in the background, so the foreground starts the wait again.
-      waitForNextDay();
-    } else if (next === 'background') {
+      stopWaiting();
+      stopWaiting = everyNextLocalDay(clock, newDay);
+    } else if (next === 'background' && !away) {
+      away = true;
       tell('background');
     }
   });
@@ -88,7 +86,7 @@ export function reportForeground({
     },
     stop() {
       stopped = true;
-      clearTimeout(timer);
+      stopWaiting();
       subscription.remove();
       listeners.length = 0;
     },
