@@ -65,3 +65,4 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 - 20:00Z coordinator (3) saw OWNER-ANSWERS.md (perf answer A, relayed by a local coordinator). Coordinator 3's own grant forbids force-push, so it does NOT do the reword; the PR/REPORT keep it as a Question unless a session with that grant does it after all lanes merge.
 - 20:06Z L4 DONE 20 (0b883571; R22 adds EntryCard prop `page`; Question R171 moved selfCheck/wordTabs into SwipedEntryCard) merged by coord 3 (tip 240b1d97, mobile+ui green). Running: LXa LXb.
 - 20:07Z LXa STUCK 4 (R5 R13 R18 R158; skipped R110 needs infra apps/mobile/package.json expo-crypto, R150 needs infra jest configs) -> relaunched for R24 R23 R66 R85 R149 R151 R169 R176 after merging integration. Running: LXa LXb.
+- 20:15Z LXb STUCK 7 (R37 R166 R127 R79 R72 R98 R107; handbook Колекції, Повідомлення про помилку) -> relaunched for R70 R156 R59. Running: LXa LXb.
