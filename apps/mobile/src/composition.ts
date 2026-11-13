@@ -87,7 +87,8 @@ const loading = { status: 'loading' } as const;
  * of a change, so keep that one outside the component. Only the latest read
  * is shown: an earlier one that ends after it is dropped. A read that fails is
  * logged as `failure` and ends failed, with a retry that reads again. The
- * last thing read stays until the next read ends.
+ * last thing read stays until the next read ends, but not over a composition
+ * reopened: what the old one read is loading in the new one.
  */
 export function useCompositionRead<T>(
   read: (composition: Composition) => Promise<T>,
@@ -95,7 +96,10 @@ export function useCompositionRead<T>(
   changes?: (composition: Composition) => Source,
 ): OpeningState<T> {
   const open = useComposition();
-  const [state, setState] = useState<OpeningState<T>>(loading);
+  const [last, setRead] = useState<{ in: Composition; state: OpeningState<T> }>({
+    in: open,
+    state: loading,
+  });
   // A retry counts up, so the effect reads again.
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -106,16 +110,19 @@ export function useCompositionRead<T>(
       const mine = latest;
       read(open).then(
         (value) => {
-          if (active && mine === latest) setState({ status: 'ready', value });
+          if (active && mine === latest) setRead({ in: open, state: { status: 'ready', value } });
         },
         (error: unknown) => {
           logError(failure, error);
           if (!active || mine !== latest) return;
-          setState({
-            status: 'failed',
-            retry() {
-              setState(loading);
-              setAttempt((count) => count + 1);
+          setRead({
+            in: open,
+            state: {
+              status: 'failed',
+              retry() {
+                setRead({ in: open, state: loading });
+                setAttempt((count) => count + 1);
+              },
             },
           });
         },
@@ -128,5 +135,5 @@ export function useCompositionRead<T>(
       stop?.();
     };
   }, [open, read, failure, changes, attempt]);
-  return state;
+  return last.in === open ? last.state : loading;
 }
