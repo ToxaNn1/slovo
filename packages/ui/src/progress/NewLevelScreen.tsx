@@ -4,7 +4,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  Easing,
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
@@ -17,20 +16,14 @@ import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { capitalMarkRoom, motion, newLevelStamp, typeStyle } from '../tokens';
 import { StampHalftone } from './StampHalftone';
+import { bezier, REDUCED_FADE } from '../primitives/timing';
 
 /** The number lands with the design's `slStamp`. */
 const LAND = {
   duration: motion.stamp.duration,
-  easing: Easing.bezier(...motion.stamp.easing),
+  easing: bezier(motion.stamp.easing),
   reduceMotion: ReduceMotion.Never,
 };
-/** Under Reduce Motion the number fades in place. */
-const FADE = {
-  duration: motion.reduceMotion.duration,
-  easing: Easing.bezier(...motion.reduceMotion.easing),
-  reduceMotion: ReduceMotion.Never,
-};
-
 /**
  * A new Level on red, over the whole screen (p6): the giant `kicker` with the
  * `level` stamped into it, `title` under it, the `mascot` and a button
@@ -61,7 +54,7 @@ export function NewLevelScreen({
   const reduceMotion = useReduceMotion();
   const landed = useSharedValue(0);
   useEffect(() => {
-    landed.value = withTiming(1, reduceMotion ? FADE : LAND);
+    landed.value = withTiming(1, reduceMotion ? REDUCED_FADE : LAND);
   }, [landed, reduceMotion]);
   const numberStyle = useAnimatedStyle(() => {
     const t = landed.value;
