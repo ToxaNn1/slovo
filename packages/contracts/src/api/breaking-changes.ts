@@ -347,12 +347,22 @@ function responseChanges(promised: Part, described: Part): string[] {
 }
 
 /**
+ * Whether a path is the admin's. `apps/admin` and the Агент tooling ship with
+ * the backend, so no caller in the field sends an old request: an admin input
+ * may narrow (ADR 0122). Its outputs are held as every other.
+ */
+function isAdmin(path: string): boolean {
+  return path.startsWith('/v1/admin/');
+}
+
+/**
  * Every way the `described` API breaks the `promised` one for an app in the
  * field, as lines such as `GET /v1/account/me: 200 body.email is gone`; none
  * when it only adds. A procedure, an output field, an input an app sent, a
  * successful answer and an error code stay, nothing optional becomes
  * required, and no type or constraint changes, save an input bound or enum
- * that widens and an output one that narrows (ADR 0031).
+ * that widens and an output one that narrows (ADR 0031); an admin input may
+ * narrow (ADR 0122).
  */
 export function breakingChanges(promised: object, described: object): string[] {
   const changes: string[] = [];
@@ -366,7 +376,7 @@ export function breakingChanges(promised: object, described: object): string[] {
         continue;
       }
       const located = [
-        ...requestChanges(part(operation), part(match)),
+        ...(isAdmin(path) ? [] : requestChanges(part(operation), part(match))),
         ...responseChanges(part(operation), part(match)),
       ];
       changes.push(...located.map((change) => `${name}: ${change}`));

@@ -142,6 +142,22 @@ describe('a change of the contract', () => {
     expect(await changesFrom(before, after)).toEqual([]);
   });
 
+  it('breaks nothing when an admin input narrows, but still breaks an admin output (ADR 0122)', async () => {
+    const before = thingContract({
+      path: '/admin/things',
+      input: z.object({ name: z.string(), reason: z.string() }),
+    });
+    const after = thingContract({
+      path: '/admin/things',
+      input: z.strictObject({ name: z.string().max(10), reason: z.string().max(500) }),
+      output: z.object({ id: z.string() }),
+    });
+
+    expect(await changesFrom(before, after)).toEqual([
+      'POST /v1/admin/things: 200 body.size is gone',
+    ]);
+  });
+
   it('breaks an input enum that loses a value, or an output one that gains a value', async () => {
     const before = thingContract({
       input: z.strictObject({ kind: z.enum(['word', 'phrase']) }),
