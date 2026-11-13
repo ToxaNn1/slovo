@@ -1,7 +1,15 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { Correction, CuratedCollection, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type {
+  Correction,
+  CuratedCollection,
+  EditionConfig,
+  Idiom,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
 import { WordIdSchema } from '@slovo/contracts';
 import type { ContentSnapshot } from '@slovo/contracts/api';
 
@@ -47,6 +55,8 @@ export interface SnapshotSource {
     /** The content at the snapshot's content version. */
     readonly content: PackContent;
     readonly targets: ContentTargets;
+    /** The Edition's config, read once for the whole build. */
+    readonly config: EditionConfig;
   };
 }
 
@@ -106,7 +116,7 @@ export function readEditionWithSnapshot(
       ? {}
       : { needsNewRecording: snapshot.needsNewRecording }),
   };
-  return { errors, valid: { content, targets: checked.targets } };
+  return { errors, valid: { content, targets: checked.targets, config: checked.config } };
 }
 
 /** What the errors of a snapshot name as their file. */
@@ -125,7 +135,11 @@ function readWith(
   source: EditionSource;
   manifest?: ContentManifest;
   /** Set when there are no errors. */
-  checked?: { content: Omit<PackContent, 'contentVersion'>; targets: ContentTargets };
+  checked?: {
+    content: Omit<PackContent, 'contentVersion'>;
+    targets: ContentTargets;
+    config: EditionConfig;
+  };
 } {
   const folder = editionFiles(editionDir);
   const errors: BuildError[] = [];
@@ -244,7 +258,7 @@ function readWith(
       ? {}
       : { curatedCollections: sortedById(curatedCollections) }),
   };
-  return { ...read, checked: { content, targets } };
+  return { ...read, checked: { content, targets, config } };
 }
 
 /** The snapshot's records, each named by its kind and id in the errors. */
