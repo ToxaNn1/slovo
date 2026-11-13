@@ -61,7 +61,7 @@ brief:
 You are the cleanup-1111 coordinator, in the cloud; the previous one stopped. Read HANDOFF.md on origin/coord/cleanup-1111 and continue from the log tail. Grants: commits, pushes, one PR to main after #1792 merges; no main merge, no auto-merge, no force-push.
 
 ## wave review-fixes-1113
-status: active
+status: finished
 coord: coord/review-fixes-1113
 branches: ^origin/(coord/review-fixes-1113|fix/1113-code-review.*)
 brief:
