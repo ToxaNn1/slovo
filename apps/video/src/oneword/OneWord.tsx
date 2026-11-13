@@ -7,6 +7,7 @@ import { type Safe, tileSizeFor, useSafe } from '../safe';
 import { Bed, Horn, Knock, levels, Sfx, sfx, Voice } from '../sound';
 import { Tile } from '../Tile';
 import { clamp, pop } from '../shared/motion';
+import { Rings } from '../shared/Rings';
 
 const blackEdge = 'rgba(20, 12, 10, 0.28)';
 const acute = '́';
@@ -267,7 +268,7 @@ function Scene({ episode }: { episode: Episode }) {
     <AbsoluteFill>
       <Brand safe={safe} s={s} />
       <Title safe={safe} s={s} />
-      <Rings mouth={mouth} target={target} s={s} />
+      <Rings mouth={mouth} target={target} s={s} at={beats.shout} life={22} grow={5} />
       <Shouter rupor={rupor} width={ruporWidth} height={ruporHeight} aim={aim} s={s} />
 
       <Count text={lettersOf(count)} left={rupor.left + ruporWidth + 46 * s} top={cellsTop + layout.cell + 56 * s} s={s} />
@@ -614,37 +615,6 @@ function Ask({ safe, s }: { safe: Safe; s: number }) {
       <div style={{ color: light.ink, scale: String(one), transformOrigin: 'left center' }}>{first}</div>
       <div style={{ color: light.accent, scale: String(two), transformOrigin: 'left center' }}>{second}</div>
     </div>
-  );
-}
-
-/** The rings of the shout, going from the megaphone up to the description. */
-function Rings({ mouth, target, s }: { mouth: { x: number; y: number }; target: { x: number; y: number }; s: number }) {
-  const frame = useCurrentFrame();
-  return (
-    <>
-      {[0, 1, 2].map((ring) => {
-        const t = interpolate(frame, [beats.shout + ring * 5, beats.shout + 22 + ring * 5], [0, 1], clamp);
-        if (t === 0 || t === 1) return null;
-        const size = 120 * s;
-        return (
-          <div
-            key={ring}
-            style={{
-              position: 'absolute',
-              left: mouth.x + (target.x - mouth.x) * t * 0.7 - size / 2,
-              top: mouth.y + (target.y - mouth.y) * t * 0.7 - size / 2,
-              width: size,
-              height: size,
-              boxSizing: 'border-box',
-              borderRadius: '50%',
-              border: `${10 * s}px solid ${light.accent}`,
-              scale: String(0.6 + t * 5),
-              opacity: 1 - t,
-            }}
-          />
-        );
-      })}
-    </>
   );
 }
 
