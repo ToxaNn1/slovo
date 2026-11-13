@@ -5,15 +5,27 @@
  * block holds is refused; any other page is its plain text. Pages come through
  * the sourcing tool's polite client, so a page is fetched once across runs.
  * An Entry whose first source has no page is unverified, unless a book
- * verifies it.
+ * verifies it. A file or folder outside the Edition folder holds drafts, one
+ * JSON file per record, each verified as the Entry it would become, before
+ * `add` sends it.
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
-import { relative, resolve, sep } from 'node:path';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
 
 import type { EditionFolder } from '@slovo/language-pack/edition';
-import { quoteOf, quoteOnPage, squash, withoutFinalPeriod } from '@slovo/content-rules';
+import {
+  ID_PREFIX,
+  parseRecord,
+  quoteOf,
+  quoteOnPage,
+  squash,
+  withoutFinalPeriod,
+  type AuthoredRecord,
+} from '@slovo/content-rules';
 import type { PoliteClient } from '@slovo/sourcing';
+
+import { readDraftFiles } from './input';
 
 /** Which Entries to verify: named on the command line, or those that differ from a git ref. */
 export type VerifyTargets =
@@ -35,6 +47,8 @@ export interface VerifyRequest {
 type Outcome = 'ok' | 'miss' | 'llm' | 'fetch-failed' | 'unverified';
 const OUTCOMES: readonly Outcome[] = ['ok', 'miss', 'llm', 'fetch-failed', 'unverified'];
 const FAILING: ReadonlySet<Outcome> = new Set(['miss', 'llm', 'fetch-failed']);
+/** The kinds a draft can be: those with a quoted field. */
+const DRAFT_KINDS = ['word', 'correction', 'idiom', 'synonymRow', 'tip'] as const;
 
 /** An Entry as `verify` sees it: the one quoted field, and every field a book is checked for. */
 interface Quoted {
@@ -82,14 +96,23 @@ export async function verifyEntries(request: VerifyRequest): Promise<number> {
   return failed ? 1 : 0;
 }
 
-/** The quoted field per kind, and for a Tip every field it quotes from its book. */
+/** The Entries of the Edition, each with its quoted field. */
 function quotedEntries(edition: EditionFolder): Quoted[] {
   const content = edition.entries();
+  return [
+    ...content.words.map((authored) => quotedOf({ kind: 'word', ...authored })),
+    ...content.corrections.map((authored) => quotedOf({ kind: 'correction', ...authored })),
+    ...content.idioms.map((authored) => quotedOf({ kind: 'idiom', ...authored })),
+    ...content.synonymRows.map((authored) => quotedOf({ kind: 'synonymRow', ...authored })),
+    ...content.tips.map((authored) => quotedOf({ kind: 'tip', ...authored })),
+  ].filter((entry) => entry !== undefined);
+}
+
+/** The quoted field per kind, and for a Tip every field it quotes from its book. */
+function quotedOf(record: AuthoredRecord): Quoted | undefined {
+  if (record.kind === 'crosswordDay' || record.kind === 'curatedCollection') return undefined;
+  const { file, entry } = record;
   const quoted = (
-    {
-      file,
-      entry,
-    }: { file: string; entry: { id: string; sources: readonly { url?: string | undefined }[] } },
     text: string,
     bookFields: readonly (readonly [string, string | undefined])[] = [['quote', text]],
   ): Quoted => ({
@@ -99,14 +122,17 @@ function quotedEntries(edition: EditionFolder): Quoted[] {
     text,
     bookFields: bookFields.filter((field): field is [string, string] => field[1] !== undefined),
   });
-  return [
-    ...content.words.map((authored) => quoted(authored, authored.entry.primaryDefinition)),
-    ...content.corrections.map((authored) => quoted(authored, authored.entry.explanation)),
-    ...content.idioms.map((authored) => quoted(authored, authored.entry.primaryDefinition)),
-    ...content.synonymRows.map((authored) => quoted(authored, authored.entry.meaning)),
-    ...content.tips.map((authored) => {
-      const tip = authored.entry;
-      return quoted(authored, tip.explanation, [
+  switch (record.kind) {
+    case 'word':
+    case 'idiom':
+      return quoted(record.entry.primaryDefinition);
+    case 'correction':
+      return quoted(record.entry.explanation);
+    case 'synonymRow':
+      return quoted(record.entry.meaning);
+    case 'tip': {
+      const tip = record.entry;
+      return quoted(tip.explanation, [
         ['title', tip.title],
         ['nonStandardForm', tip.nonStandardForm],
         ['standardForm', tip.standardForm],
@@ -114,8 +140,8 @@ function quotedEntries(edition: EditionFolder): Quoted[] {
         ['example', tip.example?.text],
         ['rightAnswer', tip.gameQuestion.rightAnswer],
       ]);
-    }),
-  ];
+    }
+  }
 }
 
 type Selection = { ok: true; entries: Quoted[] } | { ok: false; error: string };
@@ -128,27 +154,62 @@ function select(all: readonly Quoted[], request: VerifyRequest): Selection {
     return { ok: true, entries: all.filter((entry) => files.files.has(entry.file)) };
   }
   const picked = new Set<Quoted>();
+  const problems: string[] = [];
   for (const name of targets.names) {
     const matches = matching(all, name, request);
-    if (matches.length === 0) return { ok: false, error: `No Entry of the Edition is ${name}` };
-    for (const entry of matches) picked.add(entry);
+    if (!matches.ok) problems.push(matches.error);
+    else for (const entry of matches.entries) picked.add(entry);
   }
-  return { ok: true, entries: all.filter((entry) => picked.has(entry)) };
+  return problems.length === 0
+    ? { ok: true, entries: [...picked] }
+    : { ok: false, error: problems.join('\n') };
 }
 
-/** The Entries a name stands for: an id, an Entry file, or a folder of them. */
-function matching(all: readonly Quoted[], name: string, request: VerifyRequest): Quoted[] {
+/**
+ * The Entries a name stands for: an id, an Entry file, or a folder of them;
+ * a file or folder outside the Edition folder holds drafts.
+ */
+function matching(all: readonly Quoted[], name: string, request: VerifyRequest): Selection {
   const byId = all.filter((entry) => entry.id === name);
-  if (byId.length > 0) return byId;
+  if (byId.length > 0) return { ok: true, entries: byId };
   const path = resolve(request.cwd, name);
-  if (!existsSync(path)) return [];
+  const none = { ok: false, error: `No Entry of the Edition is ${name}` } as const;
+  if (!existsSync(path)) return none;
   // Both sides resolved through symlinks: macOS's /var is /private/var.
   const inEdition = relative(realpathSync(request.edition.dir), realpathSync(path));
-  if (statSync(path).isDirectory()) {
-    const folder = inEdition === '' ? '' : `${inEdition}${sep}`;
-    return all.filter((entry) => entry.file.startsWith(folder));
+  if (inEdition.startsWith('..') || isAbsolute(inEdition)) return drafts(path, request.cwd);
+  const entries = statSync(path).isDirectory()
+    ? all.filter((entry) => entry.file.startsWith(inEdition === '' ? '' : `${inEdition}${sep}`))
+    : all.filter((entry) => entry.file === inEdition);
+  return entries.length === 0 ? none : { ok: true, entries };
+}
+
+/** The drafts of a file or folder, each read as the Entry its id prefix names (ADR 0010). */
+function drafts(path: string, cwd: string): Selection {
+  const read = readDraftFiles(path);
+  if (!read.ok) return { ok: false, error: read.problems.join('\n') };
+  const entries: Quoted[] = [];
+  const problems: string[] = [];
+  for (const { draft, file } of read.drafts) {
+    const shown = relative(cwd, file);
+    const id = typeof draft['id'] === 'string' ? draft['id'] : '';
+    const kind = DRAFT_KINDS.find((candidate) => id.startsWith(ID_PREFIX[candidate]));
+    if (kind === undefined) {
+      problems.push(`${shown}: The draft's id names no kind of Entry`);
+      continue;
+    }
+    const parsed = parseRecord(kind, shown, draft);
+    if (!parsed.ok) {
+      problems.push(...parsed.refusals.map((refusal) => `${shown}: ${refusal.message}`));
+      continue;
+    }
+    const quoted = quotedOf(parsed.record);
+    if (quoted !== undefined) entries.push(quoted);
   }
-  return all.filter((entry) => entry.file === inEdition);
+  if (problems.length > 0) return { ok: false, error: problems.join('\n') };
+  return entries.length === 0
+    ? { ok: false, error: `No draft is in ${relative(cwd, path)}` }
+    : { ok: true, entries };
 }
 
 /** The Edition's files, relative to its folder, that differ from the ref or are new to git. */
