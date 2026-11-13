@@ -29,7 +29,7 @@ describe('useCompositionRead', () => {
         <Reading />
       </ShellProvider>,
     );
-    await act(async () => reads[0]?.resolve('first'));
+    await act(() => Promise.resolve(reads[0]?.resolve('first')));
     expect(screen.getByText('first')).toBeTruthy();
 
     await act(() => shell.composition.reopen());
@@ -38,7 +38,7 @@ describe('useCompositionRead', () => {
     expect(screen.queryByText('first')).toBeNull();
     expect(screen.getByText('loading')).toBeTruthy();
 
-    await act(async () => reads[1]?.resolve('second'));
+    await act(() => Promise.resolve(reads[1]?.resolve('second')));
     expect(screen.getByText('second')).toBeTruthy();
   });
 });
