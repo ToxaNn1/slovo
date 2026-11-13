@@ -1416,9 +1416,12 @@ describe('QuickQuestionRound', () => {
     retired: false,
   };
 
-  const renderTip = (asked: Tip) =>
+  const renderTip = (
+    asked: Tip,
+    { definition, given = strings }: { definition?: string; given?: typeof strings } = {},
+  ) =>
     render(
-      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+      <EditionProvider edition={{ locale: 'en' }} strings={given}>
         <HapticsProvider haptics={haptics}>
           <QuickQuestionRound
             title="Quick question"
@@ -1429,6 +1432,7 @@ describe('QuickQuestionRound', () => {
               options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
               correct: CORRECT,
               sheet: { answer: { text: OPTIONS[CORRECT], stressedVowels: [] }, example: undefined },
+              ...(definition === undefined ? {} : { definition }),
             }}
             entry={asked}
             label="Definition"
@@ -1463,6 +1467,27 @@ describe('QuickQuestionRound', () => {
     expect(screen.getByTestId('game-instead')).toHaveTextContent(instead);
     expect(String(screen.getByTestId('game-prompt').props['accessibilityLabel'])).toContain(
       instead,
+    );
+  });
+
+  it('ends the «instead» line with a stop before the Definition VoiceOver reads', async () => {
+    const plainInstead = {
+      ...strings,
+      game: {
+        ...strings.game,
+        round: {
+          ...strings.game.round,
+          prompts: { ...strings.game.round.prompts, instead: 'not {wrong}' },
+        },
+      },
+    };
+    await renderTip(
+      { ...tip, nonStandardForm: 'frank' },
+      { definition: 'Open and honest.', given: plainInstead },
+    );
+
+    expect(String(screen.getByTestId('game-prompt').props['accessibilityLabel'])).toContain(
+      `${tip.gameQuestion.prompt} not frank. Open and honest.`,
     );
   });
 
