@@ -353,10 +353,10 @@ export interface MetadataRow {
 
 /** The rows of the `metadata` table that record the metadata. */
 export function metadataRows(metadata: PackMetadata): MetadataRow[] {
-  return Object.entries(METADATA_FIELDS).map(([field, { key }]) => ({
-    key,
-    value: String(metadata[field as keyof PackMetadata]),
-  }));
+  return Object.entries(METADATA_FIELDS).flatMap(([field, { key }]) => {
+    const value = metadata[field as keyof PackMetadata];
+    return value === undefined ? [] : [{ key, value: String(value) }];
+  });
 }
 
 /** The metadata the rows record. Throws when a key is missing or a value is invalid. */
