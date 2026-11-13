@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 
 import { adminApi } from '../../api';
@@ -15,6 +15,7 @@ export function useQueueBatches() {
   return useQuery({
     queryKey: ['contentQueue', 'batches', edition],
     queryFn: () => adminApi.contentQueue.batches(input),
+    retry: false,
   });
 }
 
@@ -23,6 +24,7 @@ export function useQueueFlags() {
   return useQuery({
     queryKey: ['contentQueue', 'flags', edition],
     queryFn: () => adminApi.contentQueue.flags(input),
+    retry: false,
   });
 }
 
@@ -31,14 +33,6 @@ export function useQueueReports() {
   return useQuery({
     queryKey: ['contentQueue', 'reports', edition],
     queryFn: () => adminApi.contentQueue.reports(input),
-  });
-}
-
-/** A queue write; every query reloads after it, the sidebar's count too. */
-export function useQueueWrite<I, O>(write: (input: I) => Promise<O>) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: write,
-    onSuccess: () => queryClient.invalidateQueries(),
+    retry: false,
   });
 }

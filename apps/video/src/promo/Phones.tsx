@@ -3,9 +3,8 @@ import { AbsoluteFill, Easing, Img, interpolate, Sequence, useCurrentFrame } fro
 import { dark, light, uiFont, wordFont } from '../look';
 import { useSafe } from '../safe';
 import { Knock, Sfx, sfx } from '../sound';
+import { clamp, pop } from '../shared/motion';
 
-const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
-const pop = Easing.bezier(0.34, 1.56, 0.64, 1);
 
 /** How long a step's background takes to wipe over the one before it. */
 const wipe = 8;
