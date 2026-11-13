@@ -488,6 +488,24 @@ describe('checkNewCorrections', () => {
       ]);
     },
   );
+  it('judges the public domain on the given day', () => {
+    const late = draft({
+      literaryUses: [
+        {
+          text: 'Тим паче він прийшов.',
+          author: 'Тестовий автор',
+          work: 'Тестовий твір',
+          authorDeathYear: 2000,
+        },
+      ],
+    });
+    const edition = openEdition(editionsWith(), 'fixture');
+
+    expect(edition.checkNewCorrections([late], new Date(2080, 0, 1))).toEqual([]);
+    expect(edition.checkNewCorrections([late], new Date(2030, 0, 1))).toEqual([
+      expect.objectContaining({ field: 'literaryUses.0.authorDeathYear' }),
+    ]);
+  });
 });
 
 describe('checkNewSynonymRows', () => {
