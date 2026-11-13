@@ -192,6 +192,36 @@ export interface XpLog {
 
 /** The award of an action that earns nothing: no change to write, nothing to make in memory. */
 type WordGoalRecord = Extract<XpRecord, { kind: 'word-goal' }>;
+type XpGoalRecord = Extract<XpRecord, { kind: 'daily-goal' }>;
+
+/** A record kept in the log, with its id and its instant. */
+interface Kept {
+  readonly at: string;
+  readonly id: string;
+  readonly record: XpRecord;
+}
+
+/**
+ * Where `item` goes in `inOrder`, a list by instant and then by id, so the
+ * records at one instant read the same on every device: after every item
+ * not after it.
+ */
+function placeOf(
+  inOrder: readonly Pick<Kept, 'at' | 'id'>[],
+  item: Pick<Kept, 'at' | 'id'>,
+): number {
+  let low = 0;
+  let high = inOrder.length;
+  while (low < high) {
+    const middle = (low + high) >> 1;
+    const other = inOrder[middle];
+    if (other === undefined) break;
+    const before = other.at === item.at ? other.id <= item.id : other.at < item.at;
+    if (before) low = middle + 1;
+    else high = middle;
+  }
+  return low;
+}
 
 const NOTHING_EARNED: XpAward = {
   changes: new Map(),
@@ -277,10 +307,20 @@ export async function openXpLog({
       );
     return wordGoals;
   }
-  /** Keeps a record in the log, and forgets the goals' order when it is a goal. */
+  /**
+   * Keeps a record in the log and folds it into what the log derives. A goal
+   * in Words changes what the records after it count, and a record under an
+   * id already kept takes another's place, so either folds the log anew.
+   */
   function keep(id: string, record: XpRecord): void {
+    const anew = records.has(id) || record.kind === 'word-goal';
     records.set(id, record);
-    if (record.kind === 'word-goal') wordGoals = undefined;
+    if (!anew) {
+      folded.add(id, record);
+      return;
+    }
+    wordGoals = undefined;
+    folded = foldAll();
   }
   const subscribers = createSubscribers<XpLogChange>();
   const goalMetSubscribers = createSubscribers();
@@ -292,21 +332,22 @@ export async function openXpLog({
    * Counts records in turn: Review XP up to the daily cap of its date, and
    * the Seen-Word records up to the Daily Goal in Words of its date, also as
    * two devices' logs merge. `reviewXpOf` is the Review XP counted on a date
-   * so far, `seenWordsOf` the Seen-Word records.
+   * so far, `seenWordsOf` the Seen-Word records, `goalFor` the goal in
+   * force on a date, looked up once.
    */
   function counter() {
     const reviewXp = new Map<string, number>();
     const seenWords = new Map<string, number>();
     const goals = new Map<string, DailyGoal | undefined>();
-    function goalAsCap(date: string): number {
+    function goalFor(date: string): DailyGoal | undefined {
       if (!goals.has(date)) goals.set(date, goalOf(date));
-      return goals.get(date) ?? Infinity;
+      return goals.get(date);
     }
     return {
       count: ({ source, date, amount }: Extract<XpRecord, { kind: 'xp' }>): number => {
         if (source === 'seen-word') {
           const before = seenWords.get(date) ?? 0;
-          if (before >= goalAsCap(date)) return 0;
+          if (before >= (goalFor(date) ?? Infinity)) return 0;
           seenWords.set(date, before + 1);
           return amount;
         }
@@ -318,6 +359,7 @@ export async function openXpLog({
       },
       reviewXpOf: (date: string) => reviewXp.get(date) ?? 0,
       seenWordsOf: (date: string) => seenWords.get(date) ?? 0,
+      goalFor,
     };
   }
 
@@ -353,13 +395,12 @@ export async function openXpLog({
    */
   function xpGoalOf(
     date: string,
-    ofDay: readonly XpRecord[],
+    ofDay: readonly Kept[],
     count: (record: Extract<XpRecord, { kind: 'xp' }>) => number,
   ): DailyGoalState | undefined {
-    let before: Extract<XpRecord, { kind: 'daily-goal' }> | undefined;
-    for (const record of records.values()) {
+    let before: XpGoalRecord | undefined;
+    for (const record of folded.xpGoals) {
       if (
-        record.kind === 'daily-goal' &&
         record.date < date &&
         (before === undefined ||
           record.date > before.date ||
@@ -370,7 +411,7 @@ export async function openXpLog({
     let goal = before?.goal;
     let xp = 0;
     let met = false;
-    for (const record of ofDay) {
+    for (const { record } of ofDay) {
       if (record.kind === 'xp') xp += count(record);
       else if (record.kind === 'daily-goal') goal = record.goal;
       if (goal !== undefined && xp >= goal) met = true;
@@ -380,19 +421,13 @@ export async function openXpLog({
 
   function dayOf(date: string): XpDay {
     const { count } = counter();
-    // By instant, then by id, so records at one instant read the same on every device.
-    const ofDay = [...records]
-      .filter(([, record]) => record.date === date)
-      .sort(([oneId, one], [otherId, other]) =>
-        one.at === other.at ? (oneId < otherId ? -1 : 1) : one.at < other.at ? -1 : 1,
-      )
-      .map(([, record]) => record);
+    const ofDay = folded.ofDate.get(date) ?? [];
     const dailyGoal =
       goalOn && date < todayKey(clock) && !wordGoalSetBy(date)
         ? (xpGoalOf(date, ofDay, counter().count) ?? null)
         : dailyGoalOf(date);
     let xp = 0;
-    for (const record of ofDay) if (record.kind === 'xp') xp += count(record);
+    for (const { record } of ofDay) if (record.kind === 'xp') xp += count(record);
     return { xp, dailyGoal };
   }
 
@@ -412,32 +447,46 @@ export async function openXpLog({
     return seen;
   }
 
-  function derive(): XpLogDays & {
-    state: XpLogState;
-    reviewToday: number;
-    /** Today's Seen-Word records counted toward today's goal. */
-    seenWordsCounted: number;
-    milestones: XpLogMilestones;
-  } {
-    const date = todayKey(clock);
+  /**
+   * What the records come to, a record at a time: `add` folds one record in,
+   * in the order the records were kept, so an append costs its own record
+   * and not the log's length.
+   */
+  function fold() {
     let total = 0;
     const byDate = new Map<string, number>();
+    const active = new Set<string>();
     const frozen = new Set<string>();
     const breaks = new Map<string, number>();
     /** The Review and Seen-Word XP of each date, which count up to their caps even as two devices' logs merge. */
-    const { count, reviewXpOf, seenWordsOf } = counter();
+    const { count, reviewXpOf, seenWordsOf, goalFor } = counter();
     const wins = new Set<string>();
     const rightByMode = new Map<string, number>();
     const flawless = new Set<string>();
-    const answered: { at: string; id: string; mode: string; right: boolean }[] = [];
+    /** The instant and the id of each Game answer, in the order of `answers`. */
+    const answered: Pick<Kept, 'at' | 'id'>[] = [];
+    const answers: { mode: string; right: boolean }[] = [];
     const rightRarities = new Set<number>();
     const crosswords = new Set<string>();
     const badges = new Map<string, string>();
     const opened = new Set<string>();
-    for (const [id, record] of records) {
+    const ofDate = new Map<string, Kept[]>();
+    const xpGoals: XpGoalRecord[] = [];
+
+    function answer(at: string, id: string, mode: string, right: boolean): void {
+      const index = placeOf(answered, { at, id });
+      answered.splice(index, 0, { at, id });
+      answers.splice(index, 0, { mode, right });
+    }
+
+    function add(id: string, record: XpRecord): void {
+      const kept = { at: record.at, id, record };
+      const ofDay = ofDate.get(record.date);
+      if (ofDay === undefined) ofDate.set(record.date, [kept]);
+      else ofDay.splice(placeOf(ofDay, kept), 0, kept);
       switch (record.kind) {
         case 'wrong-answer':
-          answered.push({ at: record.at, id, mode: record.mode, right: false });
+          answer(record.at, id, record.mode, false);
           break;
         case 'badge':
           badges.set(record.badge, record.date);
@@ -449,8 +498,13 @@ export async function openXpLog({
           breaks.set(record.date, Math.max(breaks.get(record.date) ?? 0, record.days));
           break;
         case 'daily-goal':
+          xpGoals.push(record);
+          break;
         case 'word-goal':
+          break;
         case 'goal-met':
+          // A day met stays met whatever goal is set later, «Без цілі» included.
+          active.add(record.date);
           break;
         case 'badge-opened':
           opened.add(record.badge);
@@ -468,7 +522,7 @@ export async function openXpLog({
               const { mode, rarity } = record;
               if (mode !== undefined) {
                 rightByMode.set(mode, (rightByMode.get(mode) ?? 0) + 1);
-                answered.push({ at: record.at, id, mode, right: true });
+                answer(record.at, id, mode, true);
               }
               if (rarity !== undefined) rightRarities.add(rarity);
               break;
@@ -478,19 +532,59 @@ export async function openXpLog({
           }
           const amount = count(record);
           total += amount;
-          byDate.set(record.date, (byDate.get(record.date) ?? 0) + amount);
+          const xp = (byDate.get(record.date) ?? 0) + amount;
+          byDate.set(record.date, xp);
+          // A day with a goal is active once met: its `goal-met` record says so.
+          if (goalFor(record.date) === undefined && xp >= ACTIVE_DAY_XP) active.add(record.date);
         }
       }
     }
-    const active = new Set<string>();
-    for (const [day, xp] of byDate) {
-      if (goalOf(day) === undefined ? xp >= ACTIVE_DAY_XP : records.has(metId(day)))
-        active.add(day);
-    }
-    for (const record of records.values()) {
-      // A day met stays met whatever goal is set later, «Без цілі» included.
-      if (record.kind === 'goal-met') active.add(record.date);
-    }
+
+    const milestones: XpLogMilestones = {
+      wins,
+      rightByMode,
+      flawless,
+      answers,
+      rightRarities,
+      crosswords,
+      badges,
+      opened,
+    };
+    return {
+      add,
+      get total() {
+        return total;
+      },
+      reviewXpOf,
+      seenWordsOf,
+      byDate,
+      active,
+      frozen,
+      breaks,
+      milestones,
+      ofDate,
+      xpGoals,
+    };
+  }
+
+  /** The fold of every record kept, in the order kept. */
+  function foldAll(): ReturnType<typeof fold> {
+    const all = fold();
+    for (const [id, record] of records) all.add(id, record);
+    return all;
+  }
+  let folded = foldAll();
+
+  /** The log as of today, read off the fold. */
+  function derive(): XpLogDays & {
+    state: XpLogState;
+    reviewToday: number;
+    /** Today's Seen-Word records counted toward today's goal. */
+    seenWordsCounted: number;
+    milestones: XpLogMilestones;
+  } {
+    const date = todayKey(clock);
+    const { total, byDate, active, frozen, breaks, milestones } = folded;
     const { xp, dailyGoal } = dayOf(date);
     return {
       date,
@@ -500,24 +594,13 @@ export async function openXpLog({
         dailyGoal: dailyGoal === null ? null : { ...dailyGoal, seen: seenToday() },
         level: levelsOn ? levelOf(edition.levels, total) : undefined,
       },
-      reviewToday: reviewXpOf(date),
-      seenWordsCounted: seenWordsOf(date),
+      reviewToday: folded.reviewXpOf(date),
+      seenWordsCounted: folded.seenWordsOf(date),
       byDate,
       active,
       frozen,
       breaks,
-      milestones: {
-        wins,
-        rightByMode,
-        flawless,
-        answers: answered
-          .sort((a, b) => (a.at === b.at ? (a.id < b.id ? -1 : 1) : a.at < b.at ? -1 : 1))
-          .map(({ mode, right }) => ({ mode, right })),
-        rightRarities,
-        crosswords,
-        badges,
-        opened,
-      },
+      milestones,
     };
   }
   let derived = derive();
@@ -640,7 +723,7 @@ export async function openXpLog({
     return {
       changes: xpRecords.record(id).change(record),
       commit() {
-        records.set(id, record);
+        keep(id, record);
         change();
       },
     };
@@ -657,7 +740,7 @@ export async function openXpLog({
     return {
       changes: xpRecords.record(id).change(record),
       commit() {
-        records.set(id, record);
+        keep(id, record);
         change();
       },
     };
