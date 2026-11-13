@@ -555,6 +555,24 @@ describe('the Curated Collections rail', () => {
     ).toBeNull();
   });
 
+  it('shows the error with a retry when its read fails, and the retry reads it again', async () => {
+    await open(true);
+    await renderApp();
+    jest
+      .spyOn(composition.curatedCollections, 'screen')
+      .mockRejectedValueOnce(new Error('The pack is busy'));
+    await settle(() =>
+      fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
+    );
+
+    const error = screen.getByTestId('curated-collection-error');
+    expect(within(error).getByText(editionStrings.loadFailed.title)).toBeTruthy();
+
+    await settle(() => fireEvent.press(within(error).getByText(editionStrings.loadFailed.retry)));
+    expect(screen.queryByTestId('curated-collection-error')).toBeNull();
+    expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
+  });
+
   it('a tap on a row opens its Entry without making it Seen', async () => {
     await open(true);
     await renderApp();

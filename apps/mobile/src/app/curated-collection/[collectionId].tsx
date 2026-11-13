@@ -13,21 +13,31 @@ import { FlatList, StyleSheet, View } from 'react-native';
 
 import { useCuratedCollectionScreen } from '@/dashboard/curated-collection';
 import { editionStrings } from '@/edition/edition';
+import { ReadFailed } from '@/read-failed';
 
 const { curatedCollection: words, curatedCollectionCount } = editionStrings.dashboard;
 
 /**
  * A Curated Collection's screen, from its card on the Dashboard, as the
  * board's «cat» screen draws it: the red hero with «Додати», its Entries as
- * cards under it. An id with no screen returns home.
+ * cards under it. An id with no screen returns home; a failed read shows
+ * the error with its retry.
  */
 export default function CuratedCollectionRoute() {
   const { collectionId } = useLocalSearchParams<{ collectionId: string }>();
-  const { screen, place, add, openEntry } = useCuratedCollectionScreen(collectionId);
+  const { screen, retry, place, add, openEntry } = useCuratedCollectionScreen(collectionId);
   const { colors } = useTokens();
   const { count } = useEdition();
   const router = useRouter();
   if (screen === null) return <Redirect href="/" />;
+  if (retry !== undefined)
+    return (
+      <ReadFailed
+        back={{ testID: 'curated-collection-back', label: editionStrings.tabs.home }}
+        onRetry={retry}
+        testID="curated-collection-error"
+      />
+    );
   const [glyph] = categoryTile.shapes[place % categoryTile.shapes.length] ?? categoryTile.shapes[0];
   return (
     <View
