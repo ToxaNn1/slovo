@@ -58,13 +58,27 @@ export function reopenAfterSync({
   /** Writes the Widget Snapshot the widget builds. */
   writeWidgetSnapshot: (widget: Composition['widget']) => void;
 }): () => Promise<void> {
+  const reopen = reopenComposition(composition, writeWidgetSnapshot);
+  return async () => {
+    await Promise.all([settings.reopen(), reopen()]);
+  };
+}
+
+/**
+ * Reopens the composition, such as over remote switches, a Patch or a sync,
+ * and does what the launch did: the composition makes the notification plan
+ * as it opens, and the Widget Snapshot is written from the composition that
+ * opened. A reopen that failed keeps the composition the snapshot was written
+ * from, and writes none.
+ */
+export function reopenComposition(
+  composition: Opening<Composition>,
+  writeWidgetSnapshot: (widget: Composition['widget']) => void,
+): () => Promise<void> {
   return async () => {
     const before = composition.state;
-    await Promise.all([settings.reopen(), composition.reopen()]);
+    await composition.reopen();
     const { state } = composition;
-    // A reopen that failed kept the composition the Widget Snapshot was written from.
-    if (state.status === 'ready' && state !== before) {
-      writeWidgetSnapshot(state.value.widget);
-    }
+    if (state.status === 'ready' && state !== before) writeWidgetSnapshot(state.value.widget);
   };
 }
