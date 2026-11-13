@@ -8,7 +8,7 @@ describe('the source cache', () => {
     const clock = { ms: 0, now: () => new Date(clock.ms) };
     const cache = createSourceCache<number>({ clock, freshForMs: 1000 });
     let fetches = 0;
-    const fetch = async () => ++fetches;
+    const fetch = () => Promise.resolve(++fetches);
     return { clock, read: () => cache.read('k', fetch), fetches: () => fetches };
   }
 
