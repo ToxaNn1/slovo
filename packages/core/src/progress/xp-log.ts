@@ -596,11 +596,8 @@ export async function openXpLog({
     };
   }
 
-  function freeze(dates: readonly string[]): XpLogAppend {
-    const at = clock.now().toISOString();
-    const added = new Map<string, XpRecord>(
-      dates.map((date) => [`freeze-${date}`, { kind: 'freeze', date, at }]),
-    );
+  /** The append of several records at once: one write, one change told, and none for no record. */
+  function appendAll(added: ReadonlyMap<string, XpRecord>): XpLogAppend {
     return {
       changes: new Map(
         [...added].flatMap(([id, record]) => [...xpRecords.record(id).change(record)]),
@@ -613,22 +610,19 @@ export async function openXpLog({
     };
   }
 
+  function freeze(dates: readonly string[]): XpLogAppend {
+    const at = clock.now().toISOString();
+    return appendAll(
+      new Map(dates.map((date) => [`freeze-${date}`, { kind: 'freeze', date, at }])),
+    );
+  }
+
   function earn(badges: readonly string[]): XpLogAppend {
     const date = todayKey(clock);
     const at = clock.now().toISOString();
-    const added = new Map<string, XpRecord>(
-      badges.map((badge) => [`badge-${badge}`, { kind: 'badge', date, at, badge }]),
+    return appendAll(
+      new Map(badges.map((badge) => [`badge-${badge}`, { kind: 'badge', date, at, badge }])),
     );
-    return {
-      changes: new Map(
-        [...added].flatMap(([id, record]) => [...xpRecords.record(id).change(record)]),
-      ),
-      commit() {
-        if (added.size === 0) return;
-        for (const [id, record] of added) keep(id, record);
-        change();
-      },
-    };
   }
 
   function answeredWrong(mode: string): XpLogAppend {
