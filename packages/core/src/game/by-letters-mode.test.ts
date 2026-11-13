@@ -70,18 +70,21 @@ async function run({
   words = content,
   random = seededRandom(seed),
   apostrophes = ['ʼ', "'", '’'],
+  alphabet,
 }: {
   seed?: number;
   off?: readonly string[];
   words?: ContentReadPort;
   random?: Random;
   apostrophes?: string[];
+  /** The Edition's alphabet, its own unless named. */
+  alphabet?: string[];
 } = {}): Promise<Composition> {
   const app = await openComposition({
     content: words,
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      languageTraits: { apostrophes },
+      languageTraits: { apostrophes, ...(alphabet === undefined ? {} : { alphabet }) },
       userSettingDefaults: { mix: { categoryIds: ['test', 'crafts'] } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
@@ -531,6 +534,25 @@ describe('«За буквами» with letter tiles', () => {
 
     await app.game.answer({ form: 'chips', chips: right });
     expect(current(app)).toMatchObject({ status: 'answered', round: { answer: { right: true } } });
+  });
+
+  it('leaves out a Word the alphabet has too few decoys for, so the tiles always fill their rows', async () => {
+    // 3 decoys fill 8 tiles for a Word of 5 letters or more; «пірʼя» has 4 and needs 4.
+    for (let seed = 1; seed <= 12; seed += 1) {
+      const rounds = await playTiles(await run({ off: [], seed, alphabet: ['x', 'y', 'z'] }));
+
+      expect(rounds).toHaveLength(GAME_ROUNDS);
+      for (const round of rounds) {
+        expect(lemmaOf(round)).not.toBe('пірʼя');
+        expect(round.form === 'chips' && round.chips.length % 4).toBe(0);
+      }
+    }
+  });
+
+  it("can't start when the alphabet leaves too few Words their decoys", async () => {
+    const app = await run({ off: [], alphabet: ['x', 'y'] });
+
+    expect(byLettersOffer(app)).toMatchObject({ canStart: false, refusal: 'too-few-entries' });
   });
 
   it('types the Word with letter tiles off', async () => {
