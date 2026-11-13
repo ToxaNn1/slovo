@@ -109,8 +109,15 @@ function ShareSheetContent({
   async function share() {
     if (sharing.current || captured.current === null) return;
     sharing.current = true;
-    const outcome = await onShare(captured.current, format);
-    sharing.current = false;
+    let outcome: Awaited<ReturnType<typeof onShare>> | 'failed';
+    try {
+      outcome = await onShare(captured.current, format);
+    } catch {
+      // A share that throws is one that failed: the button takes the next tap.
+      outcome = 'failed';
+    } finally {
+      sharing.current = false;
+    }
     if (outcome === 'failed') setFailures((count) => count + 1);
     else onClose();
   }

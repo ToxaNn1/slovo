@@ -33,7 +33,7 @@ import {
   wedges,
 } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
+import { useReduceMotionKnown } from '../providers/useReduceMotion';
 
 /** How long a step takes to slide in (ADR 0055). */
 const SLIDE_MS = 300;
@@ -129,7 +129,8 @@ export function OnboardingStep({
   const { onboarding } = strings;
 
   // With Reduce Motion the step only fades in, so the timing runs whatever the system says.
-  const reduceMotion = useReduceMotion();
+  const known = useReduceMotionKnown();
+  const reduceMotion = known === true;
   const progress = useSharedValue(0);
   const fly = useSharedValue(0);
   useEffect(() => {
@@ -138,14 +139,18 @@ export function OnboardingStep({
       easing: Easing.out(Easing.cubic),
       reduceMotion: ReduceMotion.Never,
     });
-    const { duration, easing } = reduceMotion ? motion.reduceMotion : motion.fly;
+  }, [progress]);
+  // The shout word waits for the system's answer, so it never begins its full flight under Reduce Motion.
+  useEffect(() => {
+    if (known === undefined) return;
+    const { duration, easing } = known ? motion.reduceMotion : motion.fly;
     const [x1, y1, x2, y2] = easing;
     fly.value = withTiming(1, {
       duration,
       easing: Easing.bezier(x1, y1, x2, y2),
       reduceMotion: ReduceMotion.Never,
     });
-  }, [progress, fly, reduceMotion]);
+  }, [fly, known]);
   // A step after the welcome replaces the one VoiceOver was on: start at its number.
   const dots = useRef<HostInstance>(null);
   useEffect(() => {
@@ -161,7 +166,7 @@ export function OnboardingStep({
   const flyIn = useAnimatedStyle(() => ({
     opacity: Math.min(1, fly.value),
     transform: [
-      { translateX: reduceMotion ? 0 : (1 - fly.value) * shoutAt.flyFrom },
+      { translateX: known === false ? (1 - fly.value) * shoutAt.flyFrom : 0 },
       { rotate: SHOUT_TURN },
     ],
   }));

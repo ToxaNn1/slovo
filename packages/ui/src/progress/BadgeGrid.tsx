@@ -25,8 +25,8 @@ export type BadgeGridItem = {
 export function markStateOf(badge: BadgeGridItem): BadgeMarkState {
   if (badge.earned) return { kind: 'earned', isNew: badge.isNew };
   const { current, target } = badge.progress;
-  return current > 0 && current < target
-    ? { kind: 'progress', fraction: current / target }
+  return current > 0
+    ? { kind: 'progress', fraction: Math.min(1, current / target) }
     : { kind: 'locked' };
 }
 
