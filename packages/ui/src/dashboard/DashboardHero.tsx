@@ -46,9 +46,15 @@ const RARITY_BARS = [1, 2, 3, 4, 5] as const;
  * Mascot shouts a moment, the Lemma flies in letter by letter and the card,
  * then the button, rise in. Opened already revealed, it stands still.
  * With `sparks`, the Mascot throws the board's sparks from its megaphone,
- * closed and open (ADR 0109).
+ * closed and open (ADR 0109). Each day's hero opens anew, so a new day's
+ * reveal plays though the day before stood revealed.
  */
-export function DashboardHero({
+export function DashboardHero(props: Parameters<typeof HeroOfTheDay>[0]) {
+  const { year, month, day } = props.hero.date;
+  return <HeroOfTheDay key={`${String(year)}-${String(month)}-${String(day)}`} {...props} />;
+}
+
+function HeroOfTheDay({
   hero,
   sparks,
   onReveal,

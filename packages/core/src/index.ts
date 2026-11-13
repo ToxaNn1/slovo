@@ -111,6 +111,8 @@ export {
 export { openCounterSending } from './community-counters/counter-sending';
 export {
   createAnalytics,
+  createVisit,
+  type Visit,
   type AnalyticsEvent,
   type AnalyticsEvents,
   type AnalyticsPort,
@@ -143,9 +145,11 @@ export {
 } from './game/crossing-crossword';
 export {
   crossingCellKey,
+  crossingGridOf,
   isCrossingSolved,
   type CrossingAction,
   type CrossingPlay,
+  type CrossingSpot,
 } from './game/crossing-play';
 export { type CrossingCrossword } from './game/crossing-crossword-progress';
 export { type TracedCrossword } from './game/traced-crossword';

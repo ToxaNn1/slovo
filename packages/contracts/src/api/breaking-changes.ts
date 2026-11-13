@@ -14,8 +14,12 @@ const NOTES = ['description', 'summary', 'title', 'examples', 'deprecated'];
 /** The keys of a schema that hold other schemas; the rule walks them itself. */
 const NESTED = ['properties', 'required', 'additionalProperties', 'items', 'anyOf', 'oneOf'];
 
+function isPart(value: unknown): value is Part {
+  return typeof value === 'object' && value !== null;
+}
+
 function part(value: unknown): Part {
-  return typeof value === 'object' && value !== null ? (value as Part) : {};
+  return isPart(value) ? value : {};
 }
 
 function names(value: unknown): string[] {

@@ -70,6 +70,8 @@ import { createSpotlight, type Spotlight } from './spotlight/spotlight';
 import { createSubject, type Subject } from './subject';
 import {
   createAnalytics,
+  createVisit,
+  type Visit,
   type AnalyticsSink,
   type EntryEventProperties,
   type ShareCardKind,
@@ -365,6 +367,7 @@ export async function openComposition({
   feedNotices = noFeedNotices,
   backend,
   analytics: analyticsSink,
+  visit = createVisit(),
   signedIn,
   ...ports
 }: {
@@ -395,6 +398,8 @@ export async function openComposition({
   backend?: Pick<Backend, 'collectionLinks' | 'counters'>;
   /** Where the Analytics events go (ADR 0068); without it, as in tools and tests of other features, nowhere. */
   analytics?: AnalyticsSink;
+  /** The app run's Visit, which outlives a reopen; without it, this composition's own. */
+  visit?: Visit;
   /**
    * Whether the reader is signed in to the Account, which opens apart from
    * the composition (ADR 0037); without it, as in tools and tests of other
@@ -427,8 +432,6 @@ export async function openComposition({
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   const analytics = createAnalytics({ edition, userState, sink: analyticsSink });
-  /** When the Visit under way began, while the app is in the foreground. */
-  let visitStarted: Date | undefined;
   const { history, recorder } = await openHistory({ rows, userState });
   const xpLog = await openXpLog({
     edition,
@@ -816,13 +819,13 @@ export async function openComposition({
       notificationOpened: (kind) =>
         analytics.track('notificationOpened', { kind }).catch(() => undefined),
       async sessionStarted() {
-        visitStarted = clock.now();
+        visit.begin(clock.now());
         await analytics.track('sessionStarted', {}).catch(() => undefined);
       },
       async sessionEnded() {
-        if (visitStarted === undefined) return;
-        const durationSeconds = Math.round((clock.now().getTime() - visitStarted.getTime()) / 1000);
-        visitStarted = undefined;
+        const began = visit.end();
+        if (began === undefined) return;
+        const durationSeconds = Math.round((clock.now().getTime() - began.getTime()) / 1000);
         await analytics.track('sessionEnded', { durationSeconds }).catch(() => undefined);
       },
     },

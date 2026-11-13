@@ -1452,12 +1452,14 @@ describe('QuickQuestionRound', () => {
     expect(screen.getByText(tip.gameQuestion.prompt)).toBeOnTheScreen();
   });
 
-  it('shows one label, the Tip’s, and keeps its title as the heading VoiceOver reads', async () => {
+  it('shows one label, the Tip’s, and VoiceOver reads it first in the heading, then the title', async () => {
     await renderTip(tip);
 
     expect(screen.getAllByText(strings.game.round.tip.label)).toHaveLength(1);
     expect(screen.queryByText('Quick question')).not.toBeOnTheScreen();
-    expect(screen.getByRole('header', { name: 'Quick question' })).toBeOnTheScreen();
+    expect(
+      screen.getByRole('header', { name: `${strings.game.round.tip.label}. Quick question` }),
+    ).toBeOnTheScreen();
   });
 
   it('names the non-standard form a Tip replaces under its question', async () => {

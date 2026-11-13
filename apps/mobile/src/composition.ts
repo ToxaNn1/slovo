@@ -1,4 +1,10 @@
-import { openComposition, type Account, type Composition } from '@slovo/core';
+import {
+  createVisit,
+  openComposition,
+  type Account,
+  type Composition,
+  type Visit,
+} from '@slovo/core';
 import type { PackReader } from '@slovo/language-pack/reader';
 import { useEffect, useState } from 'react';
 
@@ -19,11 +25,10 @@ interface CompositionSources {
   account: Opening<Account> | undefined;
 }
 
-async function openOver({
-  languagePack,
-  ports,
-  account,
-}: CompositionSources): Promise<Composition> {
+async function openOver(
+  { languagePack, ports, account }: CompositionSources,
+  visit: Visit,
+): Promise<Composition> {
   const content = (await languagePack.opened()).reader;
   const composition = await openComposition({
     // Read at each opening, so a reopen opens over the Edition in effect now.
@@ -31,6 +36,8 @@ async function openOver({
     content,
     // A new phone's first Cycle opens with the Words whose media the app bundles.
     starterWords: activeEditionFiles.starterWords,
+    // The app run's Visit, so a reopen in the foreground still ends the Visit begun before it.
+    visit,
     scheduling: {
       scheduler: deviceNotificationScheduler,
       ellipsis: editionStrings.notificationBody.ellipsis,
@@ -63,7 +70,8 @@ async function openOver({
  * nothing; an undo toast undoes in the composition open at the tap (ADR 0018).
  */
 export function compositionOpening(sources: CompositionSources): Opening<Composition> {
-  return openOnce(() => openOver(sources), {
+  const visit = createVisit();
+  return openOnce(() => openOver(sources, visit), {
     onError(error) {
       logError('Could not open the Core composition', error);
     },

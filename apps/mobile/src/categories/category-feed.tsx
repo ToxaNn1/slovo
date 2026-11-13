@@ -155,18 +155,25 @@ function CategoryFeedPageView({
   });
   return (
     <View testID={`category-feed-card-${String(position)}`} style={styles.page}>
-      <PagerScrollView contentContainerStyle={styles.content}>
-        <EntryCard
-          card={card}
-          slots={slots}
-          kicker={kicker}
-          selfCheck={selfCheck}
-          stressFalls={stressFall}
-          tabs={wordTabs}
-          sourceTab={sourceTab}
-          tipExceptions={tipExceptions}
-        />
-      </PagerScrollView>
+      <EntryCard
+        card={card}
+        slots={slots}
+        kicker={kicker}
+        selfCheck={selfCheck}
+        stressFalls={stressFall}
+        tabs={wordTabs}
+        sourceTab={sourceTab}
+        tipExceptions={tipExceptions}
+        // A tabbed card is a fixed frame the page's height, as in the Feed: only
+        // an opened tab inside it scrolls (ADR 0091, ADR 0113). Any other card scrolls.
+        page={(entry, framed) =>
+          framed ? (
+            <View style={[styles.page, styles.content]}>{entry}</View>
+          ) : (
+            <PagerScrollView contentContainerStyle={styles.content}>{entry}</PagerScrollView>
+          )
+        }
+      />
     </View>
   );
 }
