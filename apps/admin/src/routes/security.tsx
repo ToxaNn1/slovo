@@ -57,10 +57,24 @@ function authorOf(who: Action['who']): string {
 
 const shown = (value: unknown) => (value === null ? '—' : JSON.stringify(value));
 
-function Block({ title, children }: { title: string; children: ReactNode }) {
+/** A block of Безпека; `failed` says its read did not load rather than leave it empty. */
+function Block({
+  title,
+  failed = false,
+  children,
+}: {
+  title: string;
+  failed?: boolean;
+  children: ReactNode;
+}) {
   return (
     <section aria-label={title} className="flex flex-col gap-3">
       <h2 className="font-display text-lg font-semibold">{title}</h2>
+      {failed ? (
+        <p role="alert" className="text-sm text-destructive">
+          Не вдалося завантажити.
+        </p>
+      ) : null}
       {children}
     </section>
   );
@@ -116,7 +130,7 @@ function OwnerSecurity({ email }: { email: string }) {
 }
 
 function People({ self, confirm }: { self: string; confirm: Confirm }) {
-  const people = useQuery({ queryKey: ['people'], queryFn: () => adminApi.people() });
+  const people = useQuery({ queryKey: ['people'], queryFn: () => adminApi.people(), retry: false });
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>('admin');
   const invite = useAdminWrite(adminApi.invite, () => {
@@ -137,7 +151,7 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
   }
 
   return (
-    <Block title="Люди і доступ">
+    <Block title="Люди і доступ" failed={people.isError}>
       <ul
         aria-label="Люди"
         className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-surface shadow-panel"
@@ -231,7 +245,11 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
 }
 
 function AgentTokens({ confirm }: { confirm: Confirm }) {
-  const tokens = useQuery({ queryKey: ['agent-tokens'], queryFn: () => adminApi.agentTokens() });
+  const tokens = useQuery({
+    queryKey: ['agent-tokens'],
+    queryFn: () => adminApi.agentTokens(),
+    retry: false,
+  });
   const [name, setName] = useState('');
   // The one-time token lives here alone: once closed, only names render.
   const [issued, setIssued] = useState<{ name: string; token: string } | null>(null);
@@ -253,7 +271,7 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
   }
 
   return (
-    <Block title="Токени Агентів">
+    <Block title="Токени Агентів" failed={tokens.isError}>
       {issued === null ? null : (
         <div role="status" className="flex flex-col gap-2 rounded-[14px] bg-sunk px-4 py-3 text-sm">
           <p>Токен Агента {issued.name}. Його видно лише зараз: скопіюйте і збережіть.</p>
@@ -346,10 +364,11 @@ function AlertThresholds({ confirm }: { confirm: Confirm }) {
   const thresholds = useQuery({
     queryKey: ['alert-thresholds'],
     queryFn: () => adminApi.alertThresholds(),
+    retry: false,
   });
   const change = useAdminWrite(adminApi.setAlertThreshold);
   return (
-    <Block title="Пороги сповіщень">
+    <Block title="Пороги сповіщень" failed={thresholds.isError}>
       <ul className="flex flex-col gap-2">
         {(thresholds.data?.thresholds ?? []).map((threshold) => (
           // Keyed by value too: a changed threshold starts its field afresh.
@@ -418,9 +437,10 @@ function ActionLog() {
   const actions = useQuery({
     queryKey: ['actions', edition],
     queryFn: () => adminApi.actions(edition === undefined ? {} : { editionId: edition }),
+    retry: false,
   });
   return (
-    <Block title="Журнал дій">
+    <Block title="Журнал дій" failed={actions.isError}>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-[13px]">
           <thead className="text-xs text-subtle">
