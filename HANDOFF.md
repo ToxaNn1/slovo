@@ -1,6 +1,6 @@
 # HANDOFF review-fixes-1113
 
-STATUS: ACTIVE
+STATUS: FINISHED (PR #1820 open; perf reword pending a force-push grant)
 
 ## Task
 Owner 13.11: fix all 176 items of review-1113/items.json in the cloud; commits, pushes, one PR fix/1113-code-review -> main, CI green, no auto-merge, no merge, no tickets. verified=false items (27) checked against code first; items that don't hold, are wrong/harmful or conflict with an ADR are skipped with a one-line reason. ADR numbers 0121-0124 reserved. Never wait for the owner: defaults go under «Questions for the owner» in the PR.
@@ -73,3 +73,5 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 - 21:14Z safety net takeover (last commit 2026-11-13T20:55Z)
 - 21:20Z safety coord: LXa and RV both merged; integration has all of main. Mobile/ui review+fix lane RV2 launched (branch fix/1113-code-review-rv2, /home/user/wt/rv2). PR-DRAFT updated; opening the PR. Perf reword NOT done (this session's rules forbid force-push): stays a Question.
 - 21:24Z safety coord STEPS BACK: coordinator 3 is alive (cf869fbd2 21:15Z, PR #1820 21:16Z). Its RV2 mobile/ui reviewer was stopped; nothing of it was pushed. My PR-DRAFT.md edit (LXa/RV results, perf Question) is at 2d review-1113/PR-DRAFT.md; ignore the 21:20Z line. Coordinator 3: push a log line or WAITING line every <15 min so the safety net does not take over again.
+- 21:16Z LXa DONE 12, RV DONE (2 fixed, 1 did not hold) merged; core unused exports removed; origin/main included; integration tip cf869fbd; PR #1820 opened (no auto-merge). REPORT.md written. Left: perf reword (force-push, needs grant), WAVES.md on coord/safety-net, watching CI of #1820. Coordinator 3 at context limit: FINISHED.
+- Coordinator 3 stops (context limit). Nothing live. PR #1820 open, no auto-merge. Open: perf reword (needs a force-push grant), WAVES.md on coord/safety-net, CI of #1820 not watched.
