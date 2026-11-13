@@ -115,7 +115,9 @@ export function Overview() {
   const wide = useWide();
 
   const analytics = useQuery(analyticsQuery(editionId, days));
-  const quality = useQuery(qualityQuery({ editionId: search.edition, period: qualityPeriod(period) }));
+  const quality = useQuery(
+    qualityQuery({ editionId: search.edition, period: qualityPeriod(period) }),
+  );
   const development = useQuery({
     queryKey: ['development'],
     queryFn: () => adminApi.development(),
