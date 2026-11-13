@@ -13,6 +13,7 @@ import {
   type RecordKind,
   type Refusal,
   type RuleName,
+  plainText,
 } from './index';
 
 type Json = Record<string, unknown>;
@@ -344,5 +345,11 @@ describe('checkRecord', () => {
     const broken = fixtureSet({ w_fx0003: { categoryId: 'unknown' } });
     const edit = parsed(record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' }));
     expect(checkRecord(config, broken, edit, { today })).toEqual([]);
+  });
+});
+
+describe('plainText', () => {
+  it('keeps an entity past the last code point as it is written', () => {
+    expect(plainText('a &#x110000; b &#1114112; &#x441;')).toBe('a &#x110000; b &#1114112; с');
   });
 });
