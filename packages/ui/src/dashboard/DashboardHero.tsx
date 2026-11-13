@@ -270,10 +270,7 @@ function WordLine({ text }: { text: string }) {
   const full = roleSize('dashboardWordLine');
   const lineStyle = [typeStyle('dashboardWordLine', tokens), { color: keyInk }];
   return (
-    <View
-      style={styles.wordLine}
-      onLayout={onRoomLayout}
-    >
+    <View style={styles.wordLine} onLayout={onRoomLayout}>
       <Text
         {...voice}
         numberOfLines={1}
