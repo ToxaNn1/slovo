@@ -1,6 +1,7 @@
-import type { EntryKind, Rarity } from '@slovo/contracts';
+import { RARITIES, type EntryKind, type Rarity } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
+import { ALL_KINDS } from '../entries/entry-kinds';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from '../mix/hidden-entries';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -182,13 +183,11 @@ const off: KnowledgeState = {
 };
 
 const sameCounts = (one: KnownCounts, other: KnownCounts) =>
-  (Object.keys(one) as EntryKind[]).every((kind) => one[kind] === other[kind]);
+  ALL_KINDS.every((kind) => one[kind] === other[kind]);
 
 const sameConfirmed = (one: ConfirmedCounts, other: ConfirmedCounts) =>
   one.total === other.total &&
-  (Object.keys(one.byRarity) as unknown as Rarity[]).every(
-    (rarity) => one.byRarity[rarity] === other.byRarity[rarity],
-  );
+  RARITIES.every((rarity) => one.byRarity[rarity] === other.byRarity[rarity]);
 
 const sameState = (one: KnowledgeState, other: KnowledgeState) =>
   one.known === other.known &&

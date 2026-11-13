@@ -1,6 +1,7 @@
 import {
   FeatureSwitchesSchema,
   type Correction,
+  type EntryKind,
   type FeatureSwitches,
   type Idiom,
   type LanguageTraits,
@@ -16,6 +17,7 @@ import {
   type Edition,
   type UserSettingDefaults,
 } from './edition/edition';
+import type { CategoryKind } from './entries/entry-kinds';
 import type { PlayedRound, Round, RoundAnswer } from './game/game';
 import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
@@ -393,16 +395,30 @@ export function countingReads(content: ContentReadPort): {
   reads: () => number;
 } {
   let reads = 0;
-  const counted = Object.fromEntries(
-    Object.entries(content).map(([name, read]) => [
-      name,
-      (...args: never[]) => {
-        reads += 1;
-        return (read as (...args: never[]) => unknown)(...args);
-      },
-    ]),
-  ) as unknown as ContentReadPort;
-  return { content: counted, reads: () => reads };
+  const counted = <T>(read: T): T => {
+    reads += 1;
+    return read;
+  };
+  function listIds(kind: EntryKind): Promise<readonly string[]>;
+  function listIds(kind: CategoryKind, categoryId: string): Promise<readonly string[]>;
+  function listIds(kind: EntryKind, categoryId?: string) {
+    return counted(
+      categoryId === undefined || (kind !== 'word' && kind !== 'correction')
+        ? content.listIds(kind)
+        : content.listIds(kind, categoryId),
+    );
+  }
+  const counting: ContentReadPort = {
+    listCategories: () => counted(content.listCategories()),
+    listCorrectionCategories: () => counted(content.listCorrectionCategories()),
+    listIds,
+    listWords: () => counted(content.listWords()),
+    getEntries: (ids) => counted(content.getEntries(ids)),
+    listLinkedWordIds: (correctionId) => counted(content.listLinkedWordIds(correctionId)),
+    listLinkingSynonymRowIds: (wordId) => counted(content.listLinkingSynonymRowIds(wordId)),
+    listCuratedCollections: () => counted(content.listCuratedCollections()),
+  };
+  return { content: counting, reads: () => reads };
 }
 
 /** The options of a Round of the pick form, the one every Core mode of 0.8.11 plays. */
