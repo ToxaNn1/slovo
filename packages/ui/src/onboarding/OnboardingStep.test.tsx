@@ -173,6 +173,16 @@ describe('An onboarding step', () => {
     expect(shoutAside()).toBeCloseTo(0);
   });
 
+  it('starts no fly-in before the system says whether Reduce Motion is on', async () => {
+    jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockReturnValue(new Promise<boolean>(() => undefined));
+    await renderWelcome();
+    await pass(150);
+
+    expect(shoutAside()).toBeCloseTo(0);
+  });
+
   // Audit C15: the shout word was cut to one letter and «…».
   it('draws its whole shout word, smaller when it is wider than the top, at any text size', async () => {
     await renderWelcome();
