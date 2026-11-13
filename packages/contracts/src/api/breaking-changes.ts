@@ -131,6 +131,13 @@ function schemaChanges(
     );
   }
 
+  // A strict output refuses a field it does not know, so an app would refuse a new one.
+  if (direction === 'output' && promised['additionalProperties'] === false) {
+    for (const name of Object.keys(describedFields)) {
+      if (!(name in promisedFields)) changes.push(`${at}.${name} is new in a strict object`);
+    }
+  }
+
   const promisedRequired = names(promised['required']);
   const describedRequired = names(described['required']);
   if (direction === 'output') {

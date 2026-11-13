@@ -246,7 +246,7 @@ export function createEditionRegistry({
     async serving(editionId, feature) {
       const edition = byId.get(editionId);
       if (edition === undefined) return unknownEdition;
-      const { rules } = await switches(edition);
+      const rules = await switchStore.rules(editionId);
       const inEffect = switchedOn((switchName) => onForAnyone(edition, rules, switchName));
       return inEffect(feature) ? { ok: true, edition } : { ok: false, reason: 'switched-off' };
     },

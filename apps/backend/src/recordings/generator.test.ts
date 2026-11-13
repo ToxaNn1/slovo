@@ -39,6 +39,19 @@ describe('the script generator', () => {
     ]);
   });
 
+  it('stops a hung script at its time limit and fails the batch', async () => {
+    const hung = join(dir, 'hung.cjs');
+    writeFileSync(hung, 'setTimeout(() => {}, 60_000);');
+    const generator = scriptGenerator({
+      command: [process.execPath, hung],
+      modelDir: dir,
+      timeoutMs: 200,
+    });
+    const started = Date.now();
+    await expect(generator.record([{ voice: 'oksana', text: 'обру́ч' }])).rejects.toThrow();
+    expect(Date.now() - started).toBeLessThan(10_000);
+  });
+
   it('records nothing for no requests, without running the script', async () => {
     const generator = scriptGenerator({ command: ['/nonexistent'], modelDir: dir });
     expect(await generator.record([])).toEqual([]);

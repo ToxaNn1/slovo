@@ -208,6 +208,15 @@ describe('the web page of a Collection Link', () => {
     expect(textOf(page)).toContain('Цього посилання більше немає.');
   });
 
+  it('answers a JSON client asking for a link under the path of another Edition as not found', async () => {
+    const { request, id } = await shared(['w_00g2ap'], 'other');
+
+    const response = await request(`/uk/c/${id}`, { headers: { accept: 'application/json' } });
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({ code: 'NOT_FOUND' });
+  });
+
   it('serves no link under a path that names no Edition', async () => {
     const { request, id } = await shared(['w_00g2ap']);
 

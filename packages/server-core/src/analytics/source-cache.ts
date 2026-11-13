@@ -24,21 +24,34 @@ export function createSourceCache<T>({
   clock: Clock;
   freshForMs: number;
 }): SourceCache<T> {
-  const kept = new Map<string, Promise<Fetched<T>>>();
+  // A key's read, and its fetchedAt once it is done: the check below stays
+  // synchronous, so reads that arrive together share one fetch.
+  const kept = new Map<string, { reading: Promise<Fetched<T>>; fetchedAt?: number }>();
   return {
-    async read(key, fetch) {
+    read(key, fetch) {
       const now = clock.now().getTime();
       const found = kept.get(key);
-      // A read still running counts as fresh: its fetchedAt comes after now.
-      if (found !== undefined && now - (await found).fetchedAt.getTime() < freshForMs) {
-        return found;
+      // A read still running counts as fresh.
+      if (
+        found !== undefined &&
+        (found.fetchedAt === undefined || now - found.fetchedAt < freshForMs)
+      ) {
+        return found.reading;
       }
-      const reading = fetch().then((value) => ({ value, fetchedAt: clock.now() }));
-      kept.set(key, reading);
-      reading.catch(() => {
-        if (kept.get(key) === reading) kept.delete(key);
+      const entry: { reading: Promise<Fetched<T>>; fetchedAt?: number } = {
+        reading: Promise.resolve()
+          .then(fetch)
+          .then((value) => {
+            const fetched = { value, fetchedAt: clock.now() };
+            entry.fetchedAt = fetched.fetchedAt.getTime();
+            return fetched;
+          }),
+      };
+      kept.set(key, entry);
+      entry.reading.catch(() => {
+        if (kept.get(key) === entry) kept.delete(key);
       });
-      return reading;
+      return entry.reading;
     },
   };
 }

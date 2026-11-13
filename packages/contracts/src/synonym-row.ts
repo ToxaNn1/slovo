@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { SourceSchema, EntryTextSchema } from './shared';
-import { ExampleSchema, WordIdSchema } from './word';
+import { SourceOutputSchema, SourceSchema, EntryTextSchema } from './shared';
+import { ExampleOutputSchema, ExampleSchema, WordIdSchema } from './word';
 
 /**
  * A Synonym Row id: opaque, assigned when the row is authored and never
@@ -39,15 +39,38 @@ const RowWordShape = {
 /** The dominant of a Synonym Row: the word the row gives synonyms for. */
 export const SynonymRowDominantSchema = z.strictObject(RowWordShape);
 
+const SynonymRowDominantOutputSchema = z.object(RowWordShape);
+
 export type SynonymRowDominant = z.infer<typeof SynonymRowDominantSchema>;
 
 /** A member of a Synonym Row, with an optional note on its shade («повільно»). */
-export const SynonymRowMemberSchema = z.strictObject({
+const rowMemberShape = {
   ...RowWordShape,
   shadeNote: EntryTextSchema.max(SHADE_NOTE_MAX_LENGTH).optional(),
-});
+};
+
+export const SynonymRowMemberSchema = z.strictObject(rowMemberShape);
+
+const SynonymRowMemberOutputSchema = z.object(rowMemberShape);
 
 export type SynonymRowMember = z.infer<typeof SynonymRowMemberSchema>;
+
+// The fields of a Synonym Row, with its nested schemas strict for content and open for outputs.
+const synonymRowShape = (
+  dominant: typeof SynonymRowDominantSchema | typeof SynonymRowDominantOutputSchema,
+  member: typeof SynonymRowMemberSchema | typeof SynonymRowMemberOutputSchema,
+  example: typeof ExampleSchema | typeof ExampleOutputSchema,
+  source: typeof SourceSchema | typeof SourceOutputSchema,
+) => ({
+  kind: z.literal('synonymRow').default('synonymRow'),
+  id: SynonymRowIdSchema,
+  dominant,
+  meaning: EntryTextSchema,
+  members: z.array(member).min(5).max(12),
+  example: example.optional(),
+  sources: z.array(source).min(1),
+  retired: z.boolean().default(false),
+});
 
 /**
  * A Synonym Row as authored in an Edition's content and as returned by the
@@ -59,16 +82,19 @@ export type SynonymRowMember = z.infer<typeof SynonymRowMemberSchema>;
  * folder already says what they hold. `retired` defaults to false; a Retired
  * Synonym Row stays reachable by id but is left out like a Retired Word.
  */
-export const SynonymRowSchema = z.strictObject({
-  kind: z.literal('synonymRow').default('synonymRow'),
-  id: SynonymRowIdSchema,
-  dominant: SynonymRowDominantSchema,
-  meaning: EntryTextSchema,
-  members: z.array(SynonymRowMemberSchema).min(5).max(12),
-  example: ExampleSchema.optional(),
-  sources: z.array(SourceSchema).min(1),
-  retired: z.boolean().default(false),
-});
+export const SynonymRowSchema = z.strictObject(
+  synonymRowShape(SynonymRowDominantSchema, SynonymRowMemberSchema, ExampleSchema, SourceSchema),
+);
+
+/** A Synonym Row as an output carries it: open to fields a later backend adds (ADR 0031). */
+export const SynonymRowOutputSchema = z.object(
+  synonymRowShape(
+    SynonymRowDominantOutputSchema,
+    SynonymRowMemberOutputSchema,
+    ExampleOutputSchema,
+    SourceOutputSchema,
+  ),
+);
 
 /** A Synonym Row with every default filled in, as the Core returns it. */
 export type SynonymRow = z.output<typeof SynonymRowSchema>;

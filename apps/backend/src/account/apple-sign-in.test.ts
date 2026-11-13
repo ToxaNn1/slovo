@@ -135,6 +135,20 @@ describe('one email reaches one Account (ADR 0047)', () => {
       signInMethods: [{ providerId: 'apple' }, { providerId: 'google' }],
     });
   });
+
+  it('twice at once for a new email: one Account, the method recorded once', async () => {
+    const { signInWithApple, rowsOf } = signingIn();
+    const email = newEmail();
+
+    const [first, second] = await Promise.all([signInWithApple(email), signInWithApple(email)]);
+
+    await expect(first.me()).resolves.toEqual(await second.me());
+    expect(await rowsOf(email)).toMatchObject({
+      accountRows: 1,
+      sessions: [{}, {}],
+      signInMethods: [{ providerId: 'apple' }],
+    });
+  });
 });
 
 describe('an Apple identity token', () => {

@@ -8,6 +8,7 @@ import { systemClock } from '@slovo/server-core';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { TEST_MEDIA_BASE, testApp } from '../test-support';
+import { createMediaRows } from './media-rows';
 
 /** A copy of the UA Edition folder the test may change, removed after the file. */
 function copyOfUkrainian(): string {
@@ -144,5 +145,28 @@ describe('importing an Edition into the database', () => {
     const snapshot = await client.content.snapshot({ editionId: 'uk' });
     expect(snapshot.words.find(({ id }) => id === 'w_zzzzzz')).toMatchObject({ retired: true });
     expect(snapshot.words).toHaveLength(content.words.length + 1);
+  });
+  it('retires the Recordings of a Word an override changes the Lemma of, and asks for new ones', async () => {
+    const changed = copyOfUkrainian();
+    const word = join(changed, 'content', 'words', 'w_009orq.json');
+    writeFileSync(word, readFileSync(word, 'utf8').replace('"обруч"', '"обручик"'));
+    const { client, importContent, database } = testApp();
+    await importContent('uk', folder, { override: true });
+    await createMediaRows({ database, clock: systemClock }).saveRecording('uk', {
+      wordId: 'w_009orq',
+      narratorVoice: 'oksana',
+      recordingKind: 'plain',
+      hash: 'c'.repeat(64),
+      size: 7000,
+      durationMs: 900,
+    });
+
+    await importContent('uk', changed, { override: true });
+
+    const snapshot = await client.content.snapshot({ editionId: 'uk' });
+    expect(snapshot.recordings.filter(({ wordId }) => wordId === 'w_009orq')).toMatchObject([
+      { retired: true },
+    ]);
+    expect(snapshot.needsNewRecording).toEqual(['w_009orq']);
   });
 });
