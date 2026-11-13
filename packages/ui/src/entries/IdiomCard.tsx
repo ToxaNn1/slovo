@@ -23,6 +23,7 @@ import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { capitalised } from './capitalised';
+import { NumberedDefinitions } from './NumberedDefinitions';
 import { CardTabs } from './CardTabs';
 import { ExampleMark } from './ExampleMark';
 import { useFlyingText } from './reveal';
@@ -135,17 +136,7 @@ export function IdiomCardBody({
               testID="idiom-extra-definitions"
               title={edition.strings.wordCard.extraDefinitions}
             >
-              {card.extraDefinitions.map((definition, index) => (
-                <WholeLinesText
-                  key={index}
-                  accessibilityLabel={withoutStress(`${String(index + 2)}. ${definition}`)}
-                  {...voice}
-                  style={bodyText}
-                >
-                  {/* The primary Definition is the first; these number on from 2. */}
-                  {`${String(index + 2)}. ${capitalised(definition, voice.accessibilityLanguage)}`}
-                </WholeLinesText>
-              ))}
+              <NumberedDefinitions definitions={card.extraDefinitions} style={bodyText} />
             </DetailSection>
           )}
           {card.examples.map((example, index) => (
@@ -205,17 +196,7 @@ function IdiomTabContent({ tab, sourceTab }: { tab: IdiomTab; sourceTab: boolean
           >
             {capitalised(tab.definition, voice.accessibilityLanguage)}
           </WholeLinesText>
-          {tab.meanings.map((meaning, index) => (
-            <WholeLinesText
-              key={index}
-              accessibilityLabel={withoutStress(`${String(index + 2)}. ${meaning}`)}
-              {...voice}
-              style={body}
-            >
-              {/* The primary Definition is the first; these number on from 2. */}
-              {`${String(index + 2)}. ${capitalised(meaning, voice.accessibilityLanguage)}`}
-            </WholeLinesText>
-          ))}
+          <NumberedDefinitions definitions={tab.meanings} style={body} />
           {sourceTab ? null : <IdiomSources sourceNames={tab.sourceNames} />}
         </>
       );
