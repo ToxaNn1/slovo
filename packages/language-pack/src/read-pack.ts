@@ -1,6 +1,8 @@
+import type { PackMetadata } from '@slovo/contracts';
 import { DatabaseSync, type StatementSync } from 'node:sqlite';
 
 import type { PackWriteDatabase } from './apply-patch';
+import { metadataOf } from './pack-layout';
 import { createPackReader, type PackDatabase, type PackReader } from './pack-reader';
 
 /** A Language Pack opened in Node, for tests and tooling; a writable one takes Patches (`applyPatch`). */
@@ -58,4 +60,21 @@ export function openLanguagePack(
       db.close();
     },
   };
+}
+
+/**
+ * The metadata a pack file records, read at once, for a build step that has
+ * no event loop to wait on, such as the Metro config.
+ */
+export function packMetadataOf(file: string): PackMetadata {
+  const db = new DatabaseSync(file, { readOnly: true });
+  try {
+    const rows = db
+      .prepare('SELECT key, value FROM metadata')
+      .all()
+      .map(({ key, value }) => ({ key: String(key), value: String(value) }));
+    return metadataOf(rows);
+  } finally {
+    db.close();
+  }
 }
