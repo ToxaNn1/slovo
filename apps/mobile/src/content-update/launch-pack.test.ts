@@ -37,7 +37,7 @@ function device({ bundled, patched }: { bundled: number; patched?: PackFile }) {
   const launch = (edition: Edition = ukrainian) =>
     openLaunchPack({
       edition,
-      bundledVersion: () => Promise.resolve({ contentVersion: bundled, packFormat: PACK_FORMAT }),
+      bundledContentVersion: bundled,
       openPatched() {
         const file = onDevice;
         if (file === undefined) return Promise.reject(new Error('No pack'));
