@@ -8,6 +8,7 @@ import { Bed, Horn, Knock, Sfx, sfx, Voice } from '../sound';
 import { Tile } from '../Tile';
 import { widthInEm } from './advance';
 import { clamp, pop } from '../shared/motion';
+import { Rings } from '../shared/Rings';
 
 
 /** One episode of «Знайди помилку»: a phrase everyone hears, with one calque in it. */
@@ -289,7 +290,7 @@ function Scene({ episode }: { episode: Episode }) {
 
   return (
     <AbsoluteFill>
-      <Rings mouth={mouth} target={target} s={s} />
+      <Rings mouth={mouth} target={target} s={s} at={beats.shout} life={24} grow={6} />
       <Shouter rupor={rupor} width={ruporWidth} height={ruporHeight} aim={aim} solved={tiles.solved} s={s} />
       <Title answer={episode.answer} safe={safe} s={s} />
 
@@ -692,37 +693,6 @@ function Ask({ safe, s }: { safe: Safe; s: number }) {
         {texts.honest}
       </div>
     </div>
-  );
-}
-
-/** The rings of the shout, going from the megaphone towards the calque. */
-function Rings({ mouth, target, s }: { mouth: { x: number; y: number }; target: { x: number; y: number }; s: number }) {
-  const frame = useCurrentFrame();
-  return (
-    <>
-      {[0, 1, 2].map((ring) => {
-        const t = interpolate(frame, [beats.shout + ring * 5, beats.shout + 24 + ring * 5], [0, 1], clamp);
-        if (t === 0 || t === 1) return null;
-        const size = 120 * s;
-        return (
-          <div
-            key={ring}
-            style={{
-              position: 'absolute',
-              left: mouth.x + (target.x - mouth.x) * t * 0.7 - size / 2,
-              top: mouth.y + (target.y - mouth.y) * t * 0.7 - size / 2,
-              width: size,
-              height: size,
-              boxSizing: 'border-box',
-              borderRadius: '50%',
-              border: `${10 * s}px solid ${light.accent}`,
-              scale: String(0.6 + t * 6),
-              opacity: 1 - t,
-            }}
-          />
-        );
-      })}
-    </>
   );
 }
 

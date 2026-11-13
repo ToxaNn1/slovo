@@ -9,6 +9,7 @@ import { Bed, Horn, Knock, levels, Sfx, sfx, Voice } from '../sound';
 import { Tile } from '../Tile';
 import { charInEm, onestInEm } from './onest';
 import { clamp, pop } from '../shared/motion';
+import { Rings } from '../shared/Rings';
 
 
 /** One episode of «Скажи гарніше»: an everyday answer in a chat and the nicer word for it. */
@@ -283,7 +284,7 @@ function Scene({ episode }: { episode: Episode }) {
       <Shouter rupor={rupor} width={ruporWidth} height={ruporHeight} aim={aim} solved={tiles.solved} s={s} />
 
       <AbsoluteFill style={{ opacity: dim }}>
-        <Rings mouth={mouth} target={target} s={s} />
+        <Rings mouth={mouth} target={target} s={s} at={beats.shout} life={24} grow={5} />
 
         <Bubble side="left" left={safe.left} top={layout.ask.top} height={layout.ask.height} padX={layout.padX} s={s}>
           <Line font={layout.ask.font} color={light.ink}>
@@ -736,37 +737,6 @@ function Title({ safe, s }: { safe: Safe; s: number }) {
         {texts.title.toUpperCase()}
       </div>
     </div>
-  );
-}
-
-/** The rings of the shout, going from the megaphone towards the answer. */
-function Rings({ mouth, target, s }: { mouth: { x: number; y: number }; target: { x: number; y: number }; s: number }) {
-  const frame = useCurrentFrame();
-  return (
-    <>
-      {[0, 1, 2].map((ring) => {
-        const t = interpolate(frame, [beats.shout + ring * 5, beats.shout + 24 + ring * 5], [0, 1], clamp);
-        if (t === 0 || t === 1) return null;
-        const size = 120 * s;
-        return (
-          <div
-            key={ring}
-            style={{
-              position: 'absolute',
-              left: mouth.x + (target.x - mouth.x) * t * 0.7 - size / 2,
-              top: mouth.y + (target.y - mouth.y) * t * 0.7 - size / 2,
-              width: size,
-              height: size,
-              boxSizing: 'border-box',
-              borderRadius: '50%',
-              border: `${10 * s}px solid ${light.accent}`,
-              scale: String(0.6 + t * 5),
-              opacity: 1 - t,
-            }}
-          />
-        );
-      })}
-    </>
   );
 }
 
