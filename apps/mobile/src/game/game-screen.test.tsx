@@ -712,54 +712,6 @@ describe('the Game screen', () => {
     expect(screen.queryByRole('button', { name: /Новий рівень/ })).toBeNull();
   });
 
-  // DESIGN-06: no progress share offers on the board's hub, kept for the owner
-  // it('offers the Level reached today as a Share Card and tells Analytics once it is shared', async () => {
-  //   await open({ xp: [{ date: '2026-10-26', amount: 60 }] });
-  //   await renderScreen({ shareCard: sendingShareCard });
-  //
-  //   await fireEvent.press(
-  //     await screen.findByRole('button', { name: 'Новий рівень у SLOVO · Рівень 1' }),
-  //   );
-  //   expect(
-  //     within(screen.getByTestId('share-preview')).getByTestId('share-card'),
-  //   ).toHaveAccessibleName(/Рівень 1/);
-  //   await fireEvent.press(screen.getByTestId('share-sheet-share'));
-  //
-  //   await waitFor(() => {
-  //     expect(events).toContainEqual(['shareCardShared', { card: 'level' }]);
-  //   });
-  // });
-  //
-  // it('draws the 28 poster mark on the Share Card of a Badge earned today', async () => {
-  //   await open();
-  //   await renderScreen({ shareCard: sendingShareCard });
-  //   // The first win in a Game Mode group earns a Badge.
-  //   await act(() => {
-  //     composition.xpLog
-  //       .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
-  //       .commit();
-  //   });
-  //
-  //   await fireEvent.press(await screen.findByTestId('progress-share-badge'));
-  //   expect(
-  //     within(screen.getByTestId('share-preview')).getByTestId('share-card-badge'),
-  //   ).toBeOnTheScreen();
-  // });
-  //
-  // it('offers no progress Share Card for a Level reached on another day', async () => {
-  //   await open({ xp: [{ date: '2026-10-25', amount: 60 }] });
-  //   await renderScreen({ shareCard: sendingShareCard });
-  //
-  //   expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
-  // });
-  //
-  // it('offers no progress Share Card with its Feature Switch off', async () => {
-  //   await open({ xp: [{ date: '2026-10-26', amount: 60 }], switchedOff: ['progressShareCards'] });
-  //   await renderScreen({ shareCard: sendingShareCard });
-  //
-  //   expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
-  // });
-
   it('starts «Наголос» from its card and plays a whole Game to the result screen', async () => {
     await renderScreen();
 
