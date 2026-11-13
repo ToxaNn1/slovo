@@ -1,7 +1,7 @@
 'use no memo';
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -19,6 +19,8 @@ import {
   usePanGesture,
   useTapGesture,
   type ComposedGesture,
+  type PanGestureConfig,
+  type TapGestureConfig,
 } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -192,39 +194,56 @@ export function BottomSheet({
     // of Reduce Motion runs it again towards the same end, which moves nothing.
   }, [shown, reduceMotion, drag, progress, height]);
 
-  const closeByDrag = (velocity: number) => {
+  const closable = onClose !== undefined;
+  // Stable, so the memoised configs below change only with what they draw on.
+  const closeByDrag = useCallback((velocity: number) => {
     flick.current = velocity;
-    onClose?.();
-  };
+    onCloseRef.current?.();
+  }, []);
+  const close = useCallback(() => {
+    onCloseRef.current?.();
+  }, []);
 
   // Only a sheet with `onClose` has the top strip that takes the drag.
-  const pan = usePanGesture({
-    onUpdate: ({ translationY }) => {
-      drag.value = Math.max(translationY, 0);
-    },
-    onDeactivate: ({ translationY, velocityY }) => {
-      if (
-        onClose !== undefined &&
-        (translationY > motion.sheet.close.distance || velocityY > motion.sheet.close.velocity)
-      ) {
-        scheduleOnRN(closeByDrag, velocityY);
-      } else if (reduceMotion) {
-        // Under Reduce Motion the sheet is simply back in place.
-        drag.value = 0;
-      } else {
-        drag.value = withSpring(0, { ...DRAG_SPRING, velocity: velocityY });
-      }
-    },
-    testID: testID === undefined ? undefined : `${testID}-drag`,
-  });
+  // Memoised configs, as Gesture Handler asks; each callback says it is a worklet.
+  const panConfig = useMemo(
+    (): PanGestureConfig => ({
+      onUpdate: ({ translationY }) => {
+        'worklet';
+        drag.value = Math.max(translationY, 0);
+      },
+      onDeactivate: ({ translationY, velocityY }) => {
+        'worklet';
+        if (
+          closable &&
+          (translationY > motion.sheet.close.distance || velocityY > motion.sheet.close.velocity)
+        ) {
+          scheduleOnRN(closeByDrag, velocityY);
+        } else if (reduceMotion) {
+          // Under Reduce Motion the sheet is simply back in place.
+          drag.value = 0;
+        } else {
+          drag.value = withSpring(0, { ...DRAG_SPRING, velocity: velocityY });
+        }
+      },
+      testID: testID === undefined ? undefined : `${testID}-drag`,
+    }),
+    [closable, reduceMotion, testID, drag, closeByDrag],
+  );
+  const pan = usePanGesture(panConfig);
   // A tall sheet leaves the scrim little more than the corner over its slant,
   // which the strip covers: a tap there closes the sheet, as on the scrim.
-  const tap = useTapGesture({
-    onDeactivate: ({ canceled }) => {
-      if (!canceled && onClose !== undefined) scheduleOnRN(onClose);
-    },
-    testID: testID === undefined ? undefined : `${testID}-tap`,
-  });
+  const tapConfig = useMemo(
+    (): TapGestureConfig => ({
+      onDeactivate: ({ canceled }) => {
+        'worklet';
+        if (!canceled && closable) scheduleOnRN(close);
+      },
+      testID: testID === undefined ? undefined : `${testID}-tap`,
+    }),
+    [closable, testID, close],
+  );
+  const tap = useTapGesture(tapConfig);
   const strip = useCompetingGestures(pan, tap);
 
   const sheetStyle = useAnimatedStyle(() => ({
