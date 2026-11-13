@@ -56,18 +56,33 @@ export function unknownCrosswordEntries(
   const ids = new Set(entries.map(({ entry }) => entry.id));
   return days.flatMap(({ words }, day) =>
     words.flatMap(({ entryId }, word) =>
-      ids.has(entryId)
-        ? []
-        : [
-            {
-              rule: 'crossword-day-entry' as const,
-              file: CROSSWORD_DAYS_FILE,
-              field: `${String(day)}.words.${String(word)}.entryId`,
-              message: `No Word or Correction ${entryId} in the Edition`,
-            },
-          ],
+      unknownEntry(
+        ids,
+        entryId,
+        CROSSWORD_DAYS_FILE,
+        `${String(day)}.words.${String(word)}.entryId`,
+      ),
     ),
   );
+}
+
+/** The refusal of a crossword word whose Entry is not among the ids, none when it is. */
+function unknownEntry(
+  ids: ReadonlySet<string>,
+  entryId: string,
+  file: string,
+  field: string,
+): Refusal[] {
+  return ids.has(entryId)
+    ? []
+    : [
+        {
+          rule: 'crossword-day-entry',
+          file,
+          field,
+          message: `No Word or Correction ${entryId} in the Edition`,
+        },
+      ];
 }
 
 /** A gap between days, and a word that comes back within 20 days, each on its own. */
@@ -149,16 +164,8 @@ export function checkCrosswordDay(
   const ids = new Set(entries.map(({ entry }) => entry.id));
   const words = day.words.flatMap(({ entryId }, word): Refusal[] => {
     const field = `words.${String(word)}.entryId`;
-    if (!ids.has(entryId)) {
-      return [
-        {
-          rule: 'crossword-day-entry',
-          file,
-          field,
-          message: `No Word or Correction ${entryId} in the Edition`,
-        },
-      ];
-    }
+    const unknown = unknownEntry(ids, entryId, file, field);
+    if (unknown.length > 0) return unknown;
     const near = others.find(
       (other) =>
         other.date > dateAfter(day.date, -CROSSWORD_REPEAT_DAYS) &&
