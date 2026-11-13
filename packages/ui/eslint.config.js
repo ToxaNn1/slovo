@@ -71,6 +71,7 @@ export default [
       'src/game/TracedCrosswordGrid.tsx',
       'src/game/TypedRound.tsx',
       'src/game/useAnswerMotion.ts',
+      'src/game/useTraceDrag.ts',
       'src/game/VowelButtons.tsx',
       'src/game/VowelRound.tsx',
       'src/onboarding/OnboardingStep.tsx',
