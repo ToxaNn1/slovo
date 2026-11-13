@@ -190,6 +190,13 @@
       "when": 1794595699326,
       "tag": "0026_sign_in_method_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1794596880450,
+      "tag": "0027_totp_last_step",
+      "breakpoints": true
     }
   ]
 }

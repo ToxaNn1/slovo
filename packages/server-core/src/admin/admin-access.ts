@@ -73,6 +73,11 @@ export interface AdminStore {
   ): Promise<void>;
   /** Turns the pending TOTP on: it has signed in once. */
   confirmTotp(adminUserId: string, at: Date): Promise<void>;
+  /**
+   * Spends the TOTP step: keeps it as the user's last; `false` when the last
+   * step that signed in is this one or later.
+   */
+  spendTotpStep(adminUserId: string, step: number): Promise<boolean>;
   /** Spends the recovery code; `false` when it is not one of the user's unspent codes. */
   spendRecoveryCode(adminUserId: string, codeHash: string, at: Date): Promise<boolean>;
   addAdminSession(session: {

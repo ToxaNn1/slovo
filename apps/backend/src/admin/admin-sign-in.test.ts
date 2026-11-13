@@ -48,7 +48,8 @@ describe('the admin sign-in', () => {
 
     const again = await signInAgain(backend, email, {
       kind: 'totp',
-      totp: totpOf(hmacSha1, enrolment.secret, new Date()),
+      // The next step: the set-up spent this one.
+      totp: totpOf(hmacSha1, enrolment.secret, new Date(Date.now() + 30_000)),
     });
     expect(again.status).toBe(200);
     const set = again.headers.get('set-cookie') ?? '';
@@ -81,6 +82,15 @@ describe('the admin sign-in', () => {
     expect((await signInAgain(backend, email, { kind: 'recovery', recoveryCode })).status).toBe(
       401,
     );
+  });
+
+  it('refuses a TOTP no newer than the last one it took', async () => {
+    const backend = await adminOn();
+    const { email, enrolment } = await signedInAdmin(backend, 'admin');
+    // One step back: in the window, and at or before the step the set-up took.
+    const totp = totpOf(hmacSha1, enrolment.secret, new Date(Date.now() - 30_000));
+
+    expect((await signInAgain(backend, email, { kind: 'totp', totp })).status).toBe(401);
   });
 
   it('refuses a code 10 minutes old', async () => {
@@ -222,7 +232,8 @@ describe('an admin session', () => {
     const first = await signedInAdmin(backend, 'admin');
     const second = await signInAgain(backend, first.email, {
       kind: 'totp',
-      totp: totpOf(hmacSha1, first.enrolment.secret, new Date()),
+      // The next step: the set-up spent this one.
+      totp: totpOf(hmacSha1, first.enrolment.secret, new Date(Date.now() + 30_000)),
     });
     const other = backend.clientWith(
       adminHeaders((second.headers.get('set-cookie') ?? '').split(';')[0]),

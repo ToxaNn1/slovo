@@ -544,6 +544,8 @@ export const adminUsers = pgTable('admin_users', {
   totpSecret: text('totp_secret'),
   /** When the TOTP first signed in; until then the secret is pending and set anew at each enrolment. */
   totpConfirmedAt: timestamp('totp_confirmed_at', { withTimezone: true }),
+  /** The 30-second step of the last TOTP that signed in: a TOTP of this step or before is refused. */
+  totpLastStep: bigint('totp_last_step', { mode: 'number' }),
   state: text('state').$type<'active' | 'removed'>().notNull(),
   createdAt: time('created_at'),
 });
