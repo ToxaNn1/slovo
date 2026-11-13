@@ -19,7 +19,7 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 | L2 | packages/content-rules, packages/language-pack | 17 | DONE 14, merged |
 | L3a | packages/ui/src/{game,entries,primitives} | 27 | DONE 19, merged |
 | L3b | rest of packages/ui | 25 | DONE 21, merged |
-| L4 | apps/mobile | 24 | STUCK 17, relaunch for R22 R161 R171 |
+| L4 | apps/mobile | 24 | DONE 20, merged |
 | L5 | apps/backend, packages/server-core, packages/contracts | 32 | DONE 30, merged |
 | L6 | apps/admin, apps/video, tools, scripts | 23 | DONE 22, merged |
 | LX | cross-folder items, after all lanes | 14 (+R79 from L6) | todo |
@@ -63,3 +63,4 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 - 19:48Z LX split: LXa (core/mobile/ui, lanes/LXa.json, 14) and LXb (contracts/admin/backend/infra, lanes/LXb.json, 10) launched in parallel with L4 on fix/1113-code-review-lxa/lxb; may touch any folder their items name; LXb may touch infra files (not package.json/lockfile/.github).
 - 20:00Z LXb STUCK 3 (R37 R166 R127; Question R127: contentChecksum optional) -> relaunched for R79 R72 R98 R107 R70 R156 R59. Running: L4 LXa LXb.
 - 20:00Z coordinator (3) saw OWNER-ANSWERS.md (perf answer A, relayed by a local coordinator). Coordinator 3's own grant forbids force-push, so it does NOT do the reword; the PR/REPORT keep it as a Question unless a session with that grant does it after all lanes merge.
+- 20:06Z L4 DONE 20 (0b883571; R22 adds EntryCard prop `page`; Question R171 moved selfCheck/wordTabs into SwipedEntryCard) merged by coord 3 (tip 240b1d97, mobile+ui green). Running: LXa LXb.
