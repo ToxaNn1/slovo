@@ -1,10 +1,11 @@
 import type { AdminApiOutputs, AlertThresholdKey } from '@slovo/contracts/admin-api';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
 import { useState, type ReactNode, type SubmitEvent } from 'react';
 
 import { adminApi } from '../api';
-import { ConfirmDialog } from '../components/confirm-dialog';
+import { useAdminWrite } from '../components/admin-write';
+import { ConfirmDialog, type PendingWrite } from '../components/confirm-dialog';
 import { Button } from '../components/ui/button';
 import { useSignedInAdmin } from '../session';
 
@@ -65,15 +66,7 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-/** A write of Безпека: its confirmation stays open until the write ends. */
-interface SecurityWrite {
-  readonly title: string;
-  readonly confirm: string;
-  readonly danger?: boolean;
-  readonly run: (reason: string) => Promise<unknown>;
-}
-
-type Confirm = (write: SecurityWrite) => void;
+type Confirm = (write: PendingWrite) => void;
 
 /** Безпека: a Власник only; an Адмін reads why it stays closed. */
 function Security() {
@@ -89,7 +82,7 @@ function Security() {
 }
 
 function OwnerSecurity({ email }: { email: string }) {
-  const [pending, setPending] = useState<SecurityWrite | null>(null);
+  const [pending, setPending] = useState<PendingWrite | null>(null);
   return (
     <section aria-label="Безпека" className="flex flex-col gap-8">
       <div className="flex items-baseline justify-between gap-4">
@@ -122,27 +115,15 @@ function OwnerSecurity({ email }: { email: string }) {
   );
 }
 
-/** A write of Безпека that refreshes what it changed. */
-function useSecurityWrite<I, O>(write: (input: I) => Promise<O>, onDone?: (output: O) => void) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: write,
-    onSuccess: async (output) => {
-      onDone?.(output);
-      await queryClient.invalidateQueries();
-    },
-  });
-}
-
 function People({ self, confirm }: { self: string; confirm: Confirm }) {
   const people = useQuery({ queryKey: ['people'], queryFn: () => adminApi.people() });
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>('admin');
-  const invite = useSecurityWrite(adminApi.invite, () => {
+  const invite = useAdminWrite(adminApi.invite, () => {
     setEmail('');
   });
-  const changeRole = useSecurityWrite(adminApi.setRole);
-  const remove = useSecurityWrite(adminApi.removePerson);
+  const changeRole = useAdminWrite(adminApi.setRole);
+  const remove = useAdminWrite(adminApi.removePerson);
 
   function onInvite(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -254,11 +235,11 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
   const [name, setName] = useState('');
   // The one-time token lives here alone: once closed, only names render.
   const [issued, setIssued] = useState<{ name: string; token: string } | null>(null);
-  const issue = useSecurityWrite(adminApi.issueAgentToken, (output) => {
+  const issue = useAdminWrite(adminApi.issueAgentToken, (output) => {
     setIssued(output);
     setName('');
   });
-  const revoke = useSecurityWrite(adminApi.revokeAgentToken);
+  const revoke = useAdminWrite(adminApi.revokeAgentToken);
 
   function onIssue(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -366,7 +347,7 @@ function AlertThresholds({ confirm }: { confirm: Confirm }) {
     queryKey: ['alert-thresholds'],
     queryFn: () => adminApi.alertThresholds(),
   });
-  const change = useSecurityWrite(adminApi.setAlertThreshold);
+  const change = useAdminWrite(adminApi.setAlertThreshold);
   return (
     <Block title="Пороги сповіщень">
       <ul className="flex flex-col gap-2">
