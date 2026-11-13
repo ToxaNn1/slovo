@@ -172,72 +172,105 @@ export function createContentWrites({
   editions: EditionRegistry;
 }) {
   const { db } = database;
+  // A read sees one content version throughout and takes no lock.
+  const readOnly = { isolationLevel: 'repeatable read', accessMode: 'read only' } as const;
   type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-  /** Every record of the Edition, by kind; with an id, only the record of that id. */
-  async function recordsOf(tx: Tx, editionId: string, id?: string) {
+  /** A reader of each kind of the Edition's records; with an id, of only the record of that id. */
+  function readersOf(tx: Tx, editionId: string, id?: string) {
     const of = (table: { editionId: AnyPgColumn; id: AnyPgColumn }) =>
       id === undefined
         ? eq(table.editionId, editionId)
         : and(eq(table.editionId, editionId), eq(table.id, id));
-    const word = await tx
-      .select({
-        id: contentWords.id,
-        fields: contentWords.fields,
-        recordVersion: contentWords.recordVersion,
-        needsNewRecording: contentWords.needsNewRecording,
-      })
-      .from(contentWords)
-      .where(of(contentWords));
-    const correction = await tx
-      .select({
-        id: contentCorrections.id,
-        fields: contentCorrections.fields,
-        recordVersion: contentCorrections.recordVersion,
-      })
-      .from(contentCorrections)
-      .where(of(contentCorrections));
-    const idiom = await tx
-      .select({
-        id: contentIdioms.id,
-        fields: contentIdioms.fields,
-        recordVersion: contentIdioms.recordVersion,
-      })
-      .from(contentIdioms)
-      .where(of(contentIdioms));
-    const synonymRow = await tx
-      .select({
-        id: contentSynonymRows.id,
-        fields: contentSynonymRows.fields,
-        recordVersion: contentSynonymRows.recordVersion,
-      })
-      .from(contentSynonymRows)
-      .where(of(contentSynonymRows));
-    const tip = await tx
-      .select({
-        id: contentTips.id,
-        fields: contentTips.fields,
-        recordVersion: contentTips.recordVersion,
-      })
-      .from(contentTips)
-      .where(of(contentTips));
-    const curatedCollection = await tx
-      .select({
-        id: contentCuratedCollections.id,
-        fields: contentCuratedCollections.fields,
-        recordVersion: contentCuratedCollections.recordVersion,
-      })
-      .from(contentCuratedCollections)
-      .where(of(contentCuratedCollections));
-    const crosswordDay = await tx
-      .select({
-        id: contentCrosswordDays.id,
-        fields: contentCrosswordDays.fields,
-        recordVersion: contentCrosswordDays.recordVersion,
-      })
-      .from(contentCrosswordDays)
-      .where(of(contentCrosswordDays));
-    return { word, correction, idiom, synonymRow, tip, curatedCollection, crosswordDay };
+    return {
+      word: () =>
+        tx
+          .select({
+            id: contentWords.id,
+            fields: contentWords.fields,
+            recordVersion: contentWords.recordVersion,
+            needsNewRecording: contentWords.needsNewRecording,
+          })
+          .from(contentWords)
+          .where(of(contentWords)),
+      correction: () =>
+        tx
+          .select({
+            id: contentCorrections.id,
+            fields: contentCorrections.fields,
+            recordVersion: contentCorrections.recordVersion,
+          })
+          .from(contentCorrections)
+          .where(of(contentCorrections)),
+      idiom: () =>
+        tx
+          .select({
+            id: contentIdioms.id,
+            fields: contentIdioms.fields,
+            recordVersion: contentIdioms.recordVersion,
+          })
+          .from(contentIdioms)
+          .where(of(contentIdioms)),
+      synonymRow: () =>
+        tx
+          .select({
+            id: contentSynonymRows.id,
+            fields: contentSynonymRows.fields,
+            recordVersion: contentSynonymRows.recordVersion,
+          })
+          .from(contentSynonymRows)
+          .where(of(contentSynonymRows)),
+      tip: () =>
+        tx
+          .select({
+            id: contentTips.id,
+            fields: contentTips.fields,
+            recordVersion: contentTips.recordVersion,
+          })
+          .from(contentTips)
+          .where(of(contentTips)),
+      curatedCollection: () =>
+        tx
+          .select({
+            id: contentCuratedCollections.id,
+            fields: contentCuratedCollections.fields,
+            recordVersion: contentCuratedCollections.recordVersion,
+          })
+          .from(contentCuratedCollections)
+          .where(of(contentCuratedCollections)),
+      crosswordDay: () =>
+        tx
+          .select({
+            id: contentCrosswordDays.id,
+            fields: contentCrosswordDays.fields,
+            recordVersion: contentCrosswordDays.recordVersion,
+          })
+          .from(contentCrosswordDays)
+          .where(of(contentCrosswordDays)),
+    };
+  }
+
+  /** Every record of the Edition, by kind; with an id, only the record of that id. */
+  async function recordsOf(tx: Tx, editionId: string, id?: string) {
+    const read = readersOf(tx, editionId, id);
+    return {
+      word: await read.word(),
+      correction: await read.correction(),
+      idiom: await read.idiom(),
+      synonymRow: await read.synonymRow(),
+      tip: await read.tip(),
+      curatedCollection: await read.curatedCollection(),
+      crosswordDay: await read.crosswordDay(),
+    };
+  }
+
+  /** The Edition's content version as a read sees it, without a lock; none while it is not imported. */
+  async function importedVersion(tx: Tx, editionId: string) {
+    const [imported] = await tx
+      .select({ contentVersion: contentVersions.contentVersion })
+      .from(contentVersions)
+      .where(eq(contentVersions.editionId, editionId));
+    return imported?.contentVersion;
   }
 
   /** The Edition's content version, held to the commit; none while it is not imported. */
@@ -569,56 +602,50 @@ export function createContentWrites({
   async function report(editionId: string) {
     const edition = editions.find(editionId);
     if (edition === undefined) return { ok: false, reason: 'not-found' } as const;
-    return db.transaction(
-      async (tx) => {
-        const [held] = await tx
-          .select({ contentVersion: contentVersions.contentVersion })
-          .from(contentVersions)
-          .where(eq(contentVersions.editionId, editionId));
-        if (held === undefined) return { ok: false, reason: 'not-imported' } as const;
-        const records = await recordsOf(tx, editionId);
-        const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
-          rows.map((row) => row.fields);
-        const counted = contentReport({
-          categories: edition.config.categories,
-          correctionCategories: edition.config.correctionCategories,
-          words: fieldsOf(records.word),
-          corrections: fieldsOf(records.correction),
-          idioms: fieldsOf(records.idiom),
-        });
-        return {
-          ok: true as const,
-          contentVersion: held.contentVersion,
-          // The API's arrays are its own.
-          report: {
-            ...counted,
-            wordsPerCategory: [...counted.wordsPerCategory],
-            rarity: [...counted.rarity],
-            correctionsPerType: [...counted.correctionsPerType],
-            correctionsPerCategory: [...counted.correctionsPerCategory],
-            idiomsPerType: [...counted.idiomsPerType],
-            media: await mediaGaps(tx, editionId, {
-              wordIds: records.word.filter((row) => !row.fields.retired).map((row) => row.id),
-              voices: edition.config.narratorVoices.voices.map(({ id }) => id),
-            }),
-          },
-          targets: edition.targets,
-          missed: missedTargets(counted, edition.targets),
-          quoteCheck: await quoteCheckCounts(tx, editionId),
-        };
-      },
-      { isolationLevel: 'repeatable read', accessMode: 'read only' },
-    );
+    return db.transaction(async (tx) => {
+      const contentVersion = await importedVersion(tx, editionId);
+      if (contentVersion === undefined) return { ok: false, reason: 'not-imported' } as const;
+      const records = await recordsOf(tx, editionId);
+      const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
+        rows.map((row) => row.fields);
+      const counted = contentReport({
+        categories: edition.config.categories,
+        correctionCategories: edition.config.correctionCategories,
+        words: fieldsOf(records.word),
+        corrections: fieldsOf(records.correction),
+        idioms: fieldsOf(records.idiom),
+      });
+      return {
+        ok: true as const,
+        contentVersion,
+        // The API's arrays are its own.
+        report: {
+          ...counted,
+          wordsPerCategory: [...counted.wordsPerCategory],
+          rarity: [...counted.rarity],
+          correctionsPerType: [...counted.correctionsPerType],
+          correctionsPerCategory: [...counted.correctionsPerCategory],
+          idiomsPerType: [...counted.idiomsPerType],
+          media: await mediaGaps(tx, editionId, {
+            wordIds: records.word.filter((row) => !row.fields.retired).map((row) => row.id),
+            voices: edition.config.narratorVoices.voices.map(({ id }) => id),
+          }),
+        },
+        targets: edition.targets,
+        missed: missedTargets(counted, edition.targets),
+        quoteCheck: await quoteCheckCounts(tx, editionId),
+      };
+    }, readOnly);
   }
 
   /** A record's fields and its record version, which an edit is made from. */
   async function record(editionId: string, kind: RecordKind, id: string) {
     if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
     return db.transaction(async (tx) => {
-      if ((await heldVersion(tx, editionId)) === undefined) {
+      if ((await importedVersion(tx, editionId)) === undefined) {
         return { ok: false, reason: 'not-imported' } as const;
       }
-      const [current] = (await recordsOf(tx, editionId, id))[kind];
+      const [current] = await readersOf(tx, editionId, id)[kind]();
       if (current === undefined) return { ok: false, reason: 'not-found' } as const;
       return {
         ok: true,
@@ -627,7 +654,7 @@ export function createContentWrites({
         retired: 'retired' in current.fields && current.fields.retired === true,
         ...('needsNewRecording' in current ? { needsNewRecording: current.needsNewRecording } : {}),
       } as const;
-    });
+    }, readOnly);
   }
 
   /**
@@ -650,11 +677,11 @@ export function createContentWrites({
   ) {
     if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
     return db.transaction(async (tx) => {
-      if ((await heldVersion(tx, editionId)) === undefined) {
+      if ((await importedVersion(tx, editionId)) === undefined) {
         return { ok: false, reason: 'not-imported' } as const;
       }
       const needle = query.trim().toLocaleLowerCase();
-      const records = (await recordsOf(tx, editionId))[kind]
+      const records = (await readersOf(tx, editionId)[kind]())
         .map((row) => {
           const fields: Readonly<Record<string, unknown>> = row.fields;
           return {
@@ -673,7 +700,7 @@ export function createContentWrites({
         records: records.slice(start, start + CONTENT_PAGE_SIZE),
         total: records.length,
       } as const;
-    });
+    }, readOnly);
   }
 
   return { openBatch, write, flag, report, record, list };
