@@ -15,10 +15,7 @@ export {
   type Collections,
 } from './saved/collections';
 export { type CollectionLinkPreview } from './collection-links/copy-collection';
-export {
-  type CorrectionCardExamplePair,
-  type CorrectionCardModel,
-} from './entries/correction-card';
+export { type CorrectionCardModel } from './entries/correction-card';
 export { type IdiomCardModel } from './entries/idiom-card';
 export { type SynonymRowCardModel, type SynonymRowMemberModel } from './entries/synonym-row-card';
 export { type TipCardModel } from './entries/tip-card';
