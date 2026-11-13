@@ -17,9 +17,8 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useComposition } from '@/composition';
 import { editionStrings } from '@/edition/edition';
-import { useSubscribed } from '@/opening';
+import { useKnownCards } from '@/knowledge/marks';
 import { useCollectionChanges, useCollectionEntries } from '@/saved/collections';
 import { useCollectionSharing } from '@/saved/collection-sharing';
 import { createMenuFollowUp } from '@/saved/menu-follow-up';
@@ -50,9 +49,6 @@ function Board({ collectionId }: { collectionId: string }) {
   const { collection, entries } = useCollectionEntries(collectionId);
   const { rename, remove } = useCollectionChanges();
   const { available: sharingAvailable, share } = useCollectionSharing();
-  const { knowledge } = useComposition();
-  // Read again on every Knowledge Mark, so «ЗНАЮ» and the stamps follow at once.
-  useSubscribed(knowledge, (open) => open.state);
   const { count } = useEdition();
   const router = useRouter();
   const openScreen = useOpenScreen();
@@ -75,10 +71,7 @@ function Board({ collectionId }: { collectionId: string }) {
   );
 
   const name = collection?.name ?? '';
-  const cards =
-    collection === undefined
-      ? []
-      : entries.map(({ entryId, row }) => ({ entryId, row, known: knowledge.isKnown(entryId) }));
+  const cards = useKnownCards(collection === undefined ? undefined : entries) ?? [];
   // DESIGN-05: not on the board, owner decides — the swipe (and its VoiceOver action) that takes
   // the Entry out of this Collection, and the kind and the date added, «слово · 3 лист.». A card
   // would carry both, with `const { collection, entries, remove: removeEntry } =

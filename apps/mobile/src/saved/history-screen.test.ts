@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { historySections } from './history-screen';
 import { historyText } from './history-text';
-import { count, strings, ukrainian } from '../test-support';
+import { strings, ukrainian } from '../test-support';
 
 /** The Language Pack's one Category, the test Words' own. */
 const categoryId = 'nature-weather';
@@ -75,7 +75,7 @@ async function open(
 const sectionsOf = (app: Composition, clock: Clock) =>
   historySections({
     history: app.history.list,
-    text: historyText({ strings: strings.history, dates: strings.dates, count, clock }),
+    text: historyText({ strings: strings.history, dates: strings.dates, clock }),
     clock,
   });
 

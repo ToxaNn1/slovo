@@ -13,7 +13,7 @@ import { deviceNotificationScheduler } from './notifications/device-notification
 import { activeEditionFiles, editionStrings } from './edition/edition';
 import type { LaunchPack } from './content-update/launch-pack';
 import { gameModeStrings } from './game/game-modes';
-import { openOnce, useOpened, type Opening, type OpeningState } from './opening';
+import { openOnce, useOpened, type Opening, type OpeningState, type Source } from './opening';
 import { useShell, type DevicePorts } from './shell-value';
 
 /** What the composition opens over. */
@@ -91,41 +91,57 @@ const loading = { status: 'loading' } as const;
 
 /**
  * Reads one thing from the composition, and again when `read` changes, so
- * keep it in a `useCallback`. Nothing is read while `enabled` is false. A read
- * that fails is logged as `failure` and ends failed, with a retry that reads
- * again. The last thing read stays until the next read ends.
+ * keep it in a `useCallback`, and each time the source `changes` names tells
+ * of a change, so keep that one outside the component. Only the latest read
+ * is shown: an earlier one that ends after it is dropped. A read that fails is
+ * logged as `failure` and ends failed, with a retry that reads again. The
+ * last thing read stays until the next read ends, but not over a composition
+ * reopened: what the old one read is loading in the new one.
  */
 export function useCompositionRead<T>(
   read: (composition: Composition) => Promise<T>,
   failure: string,
-  enabled = true,
+  changes?: (composition: Composition) => Source,
 ): OpeningState<T> {
   const open = useComposition();
-  const [state, setState] = useState<OpeningState<T>>(loading);
+  const [last, setRead] = useState<{ in: Composition; state: OpeningState<T> }>({
+    in: open,
+    state: loading,
+  });
   // A retry counts up, so the effect reads again.
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    if (!enabled) return;
     let active = true;
-    read(open).then(
-      (value) => {
-        if (active) setState({ status: 'ready', value });
-      },
-      (error: unknown) => {
-        logError(failure, error);
-        if (!active) return;
-        setState({
-          status: 'failed',
-          retry() {
-            setState(loading);
-            setAttempt((count) => count + 1);
-          },
-        });
-      },
-    );
+    let latest = 0;
+    const reread = () => {
+      latest += 1;
+      const mine = latest;
+      read(open).then(
+        (value) => {
+          if (active && mine === latest) setRead({ in: open, state: { status: 'ready', value } });
+        },
+        (error: unknown) => {
+          logError(failure, error);
+          if (!active || mine !== latest) return;
+          setRead({
+            in: open,
+            state: {
+              status: 'failed',
+              retry() {
+                setRead({ in: open, state: loading });
+                setAttempt((count) => count + 1);
+              },
+            },
+          });
+        },
+      );
+    };
+    reread();
+    const stop = changes?.(open).subscribe(reread);
     return () => {
       active = false;
+      stop?.();
     };
-  }, [open, read, failure, enabled, attempt]);
-  return state;
+  }, [open, read, failure, changes, attempt]);
+  return last.in === open ? last.state : loading;
 }

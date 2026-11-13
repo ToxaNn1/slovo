@@ -1,23 +1,18 @@
 import { linkSourceOf, type EntryLinkSource } from '@slovo/core';
-import { useLocalSearchParams } from 'expo-router';
 import type { ReactElement } from 'react';
 
 import { editionStrings } from '../edition/edition';
+import { useQueryParam, useSegmentParam } from '../route-params';
 import { useCollectionList } from '../saved/collections';
 import { EntryScreen } from './entry-screen';
 
-/**
- * What an Entry route reads from its URL: the Entry, the name of its link
- * back and the stack's own params. A type alias, as Expo Router takes the
- * params as an object type, not an interface.
- */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type EntryRouteParams = {
-  entryId: string;
-  back?: string;
-  from?: string;
-  collectionId?: string;
-};
+/** What an Entry route reads from its URL: the Entry, the name of its link back and the stack's own params. */
+interface EntryRouteParams {
+  readonly entryId: string;
+  readonly back: string | undefined;
+  readonly from: string | undefined;
+  readonly collectionId: string | undefined;
+}
 
 /** How one stack opens its Entry screen: the link back without a `back` param, and what opened the Entry. */
 interface EntryStack {
@@ -59,7 +54,12 @@ const stacks = {
 export function entryRoute(stack: keyof typeof stacks): () => ReactElement {
   const { useDefaultBack, openedFrom }: EntryStack = stacks[stack];
   return function EntryRoute() {
-    const params = useLocalSearchParams<EntryRouteParams>();
+    const params: EntryRouteParams = {
+      entryId: useSegmentParam('entryId'),
+      back: useQueryParam('back'),
+      from: useQueryParam('from'),
+      collectionId: useQueryParam('collectionId'),
+    };
     const defaultBack = useDefaultBack(params);
     return (
       <EntryScreen

@@ -1,10 +1,12 @@
 import type { Composition, CuratedCollectionScreen as Screen } from '@slovo/core';
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
-import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
+import { useComposition, useCompositionRead } from '../composition';
 import { keep } from '../keep';
 import { useOpenScreen } from '../use-open-screen';
+
+/** What tells of a change to a Curated Collection's screen. */
+const changes = (open: Composition) => open.curatedCollections;
 
 /** What a Curated Collection's screen draws and does. */
 export interface CuratedCollectionScreen {
@@ -13,6 +15,8 @@ export interface CuratedCollectionScreen {
    * read ends, `null` for an id with no screen (not on the rail, or the switch off).
    */
   readonly screen: Screen | null | undefined;
+  /** Set once the read failed: reads the collection again. */
+  readonly retry: (() => void) | undefined;
   /** Its tile's place on the rail, which picks its pictogram; 0 once it left the rail. */
   readonly place: number;
   /** «+ Додати»: copies it into the reader's Collections. */
@@ -26,38 +30,18 @@ export interface CuratedCollectionScreen {
  * Core tells of, so a Knowledge Mark or a copy shows at once.
  */
 export function useCuratedCollectionScreen(collectionId: string): CuratedCollectionScreen {
-  const composition = useComposition();
-  const { curatedCollections } = composition;
+  const { curatedCollections } = useComposition();
   const openScreen = useOpenScreen();
-  const [read, setRead] = useState<{ in: Composition; id: string; screen: Screen | null }>();
-  useEffect(() => {
-    let active = true;
-    // Only the latest read is shown: an earlier one that ends after it is dropped.
-    let latest = 0;
-    const reread = () => {
-      latest += 1;
-      const mine = latest;
-      curatedCollections.screen(collectionId).then(
-        (screen) => {
-          if (active && mine === latest)
-            setRead({ in: composition, id: collectionId, screen: screen ?? null });
-        },
-        (error: unknown) => {
-          logError('Could not read a Curated Collection', error);
-        },
-      );
-    };
-    reread();
-    const stop = curatedCollections.subscribe(reread);
-    return () => {
-      active = false;
-      stop();
-    };
-  }, [composition, curatedCollections, collectionId]);
-  const name = read?.screen?.collection.name ?? '';
+  const read = useCallback(
+    async (open: Composition) => (await open.curatedCollections.screen(collectionId)) ?? null,
+    [collectionId],
+  );
+  const reading = useCompositionRead(read, 'Could not read a Curated Collection', changes);
+  const screen = reading.status === 'ready' ? reading.value : undefined;
+  const name = screen?.collection.name ?? '';
   return {
-    // A read of a composition since reopened, or of another collection, is not shown.
-    screen: read?.in === composition && read.id === collectionId ? read.screen : undefined,
+    screen,
+    retry: reading.status === 'failed' ? reading.retry : undefined,
     place: Math.max(
       0,
       curatedCollections.rail.findIndex(({ collection }) => collection.id === collectionId),

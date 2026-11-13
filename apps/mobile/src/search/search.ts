@@ -2,7 +2,7 @@ import { fill } from '@slovo/contracts';
 import type { Composition, EntryRowModel, SearchResults } from '@slovo/core';
 import { useCallback, useEffect, useState } from 'react';
 
-import { useComposition } from '../composition';
+import { useComposition, useCompositionRead } from '../composition';
 import { logError } from '../diagnostics/log';
 import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
@@ -84,25 +84,13 @@ async function searchScreenModel(
  * always shows the last one's.
  */
 export function useSearchScreen(query: string): SearchScreenModel {
-  const composition = useComposition();
-  const [model, setModel] = useState(nothingYet);
-  useEffect(() => {
-    let active = true;
-    searchScreenModel(composition, query).then(
-      (found) => {
-        if (active) setModel(found);
-      },
-      (error: unknown) => {
-        logError('Could not search', error);
-        // The results of an earlier query are not this one's.
-        if (active) setModel(nothingYet);
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [composition, query]);
-  return model;
+  const read = useCallback(
+    (composition: Composition) => searchScreenModel(composition, query),
+    [query],
+  );
+  const reading = useCompositionRead(read, 'Could not search');
+  // The results of an earlier query are not those of one that failed.
+  return reading.status === 'ready' ? reading.value : nothingYet;
 }
 
 /**
