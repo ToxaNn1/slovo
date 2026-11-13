@@ -26,12 +26,8 @@ test('Якість shows each Sentry number with its change against yesterday an
   expect(
     within(screen.getByRole('listitem', { name: 'Запуск застосунку' })).getByText('Немає даних'),
   ).toBeDefined();
-  const fetched = new Date('2026-11-08T10:00:00.000Z');
-  expect(
-    screen.getByText(
-      `Останні дані за ${fetched.toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' })}`,
-    ),
-  ).toBeDefined();
+  // 10:00 UTC is 12:00 in Kyiv.
+  expect(screen.getByText('Останні дані за 8 лист. 2026 р., 12:00')).toBeDefined();
 });
 
 test('Якість charts the coverage, the flaky tests and the CI durations of the period', async () => {

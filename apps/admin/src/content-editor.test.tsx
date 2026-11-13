@@ -326,3 +326,53 @@ test('a refused Illustration shows the rule it breaks', async () => {
 
   expect(await screen.findByText('illustration-size: Файл більший за 150 КБ')).toBeDefined();
 });
+
+test('retire keeps its confirmation open until the write ends', async () => {
+  let answer: (response: Response) => void = () => undefined;
+  const bodies: unknown[] = [];
+  server.use(
+    http.post(`${RECORD}/retire`, async ({ request }) => {
+      bodies.push(await request.json());
+      return new Promise<Response>((resolve) => {
+        answer = resolve;
+      });
+    }),
+  );
+  const user = await openWord();
+
+  await user.click(screen.getByRole('button', { name: 'Вивести з ужитку' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByLabelText('Причина'), 'дубль');
+  await user.click(dialog.getByRole('button', { name: 'Вивести з ужитку' }));
+
+  await waitFor(() => {
+    expect(bodies).toHaveLength(1);
+  });
+  expect(screen.getByRole('dialog')).toBeDefined();
+  expect(dialog.getByRole('button', { name: 'Вивести з ужитку' })).toHaveProperty('disabled', true);
+  answer(HttpResponse.json(FIXTURES.content.retire));
+  await waitFor(() => {
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+  expect(bodies).toHaveLength(1);
+});
+
+test('a stale answer whose re-read fails says the save did not go through', async () => {
+  edits(() =>
+    HttpResponse.json(
+      {
+        defined: true,
+        code: 'STALE',
+        status: 409,
+        message: 'The record changed since the version the write saw',
+        data: { currentVersion: 4 },
+      },
+      { status: 409 },
+    ),
+  );
+  const user = await openWord();
+  server.use(http.get(RECORD, () => HttpResponse.json({}, { status: 502 })));
+
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  expect(await screen.findByText('Не вдалося. Спробуйте ще раз.')).toBeDefined();
+});

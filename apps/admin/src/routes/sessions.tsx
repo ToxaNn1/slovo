@@ -4,13 +4,11 @@ import { createFileRoute } from '@tanstack/react-router';
 import { adminApi } from '../api';
 import { Button } from '../components/ui/button';
 import { ME_KEY } from '../session';
+import { formatMoment } from '../format';
 
 export const Route = createFileRoute('/sessions')({
   component: Sessions,
 });
-
-const when = (iso: string) =>
-  new Date(iso).toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
 
 /** «Мої сесії»: the signed-in Admin user's sessions, and «Вийти всюди». */
 function Sessions() {
@@ -46,7 +44,7 @@ function Sessions() {
             className="flex flex-wrap items-center gap-3 px-[18px] py-3 text-[13px]"
           >
             <span className="grow">
-              Вхід {when(session.createdAt)} · остання дія {when(session.lastSeenAt)}
+              Вхід {formatMoment(session.createdAt)} · остання дія {formatMoment(session.lastSeenAt)}
             </span>
             {session.current ? (
               <span className="rounded-[20px] bg-ok-soft px-[9px] py-[3px] text-[11.5px] font-semibold text-ok">

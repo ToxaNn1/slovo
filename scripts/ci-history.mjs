@@ -10,8 +10,9 @@
  * run, and SLOVO_BACKEND_URL and CI_HISTORY_TOKEN. Without either of the last
  * two it says so and ends with 0: the history must never turn `main` red.
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 /** Every file under the folder whose name is `name`. */
 function filesNamed(folder, name) {
@@ -140,6 +141,10 @@ async function main([folder, flag]) {
   );
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run as a script, also from a path with spaces or through a symlink.
+if (
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href
+) {
   await main(process.argv.slice(2));
 }
