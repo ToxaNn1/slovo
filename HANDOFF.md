@@ -17,10 +17,10 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 | ---- | ------- | ----- | ------ |
 | L1 | packages/core | 15 | DONE 13, merged |
 | L2 | packages/content-rules, packages/language-pack | 17 | DONE 14, merged |
-| L3a | packages/ui/src/{game,entries,primitives} | 27 | DONE 19, merging |
-| L3b | rest of packages/ui | 25 | DONE 21, merging |
-| L4 | apps/mobile | 24 | relaunched after STUCK 9 |
-| L5 | apps/backend, packages/server-core, packages/contracts | 32 | relaunched (3rd) after STUCK 25 |
+| L3a | packages/ui/src/{game,entries,primitives} | 27 | DONE 19, merged |
+| L3b | rest of packages/ui | 25 | DONE 21, merged |
+| L4 | apps/mobile | 24 | relaunched after STUCK 11 |
+| L5 | apps/backend, packages/server-core, packages/contracts | 32 | DONE 30, merging |
 | L6 | apps/admin, apps/video, tools, scripts | 23 | DONE 22, merged |
 | LX | cross-folder items, after all lanes | 14 (+R79 from L6) | todo |
 
@@ -56,3 +56,5 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 - 19:05Z L4 STUCK 9 (R21 R26 R27 R28 R109 R111 R141 R160 R175; skipped R86 kept for owner DESIGN-06, R59 needs infra build config, R85 needs core -> LX) relaunched here. L5 STUCK 18 (+R38 R60 R61 R62) relaunched here. Backend tests need DATABASE_URL=postgres://slovo:slovo@localhost:5432/slovo. Running here: L3a L3b L4 L5 + merger L1/L2.
 - 19:17Z L3a DONE 19, L3b DONE 21 -> merger merging both (+ mobile test 2. Покірний). L1 L2 merged (tip 9087d42b; language-pack/mobile tests flaky only in parallel turbo runs: run per package). L5 STUCK 25 -> relaunched (remaining R136 R162 R164 R165 R172 R173 R79-export). L4 running. Out-of-lane items collected in review-1113/LX-extra.md.
 - NEXT: when L4 L5 DONE: merge each; then LX (lanes/LX.json + LX-extra.md, one Opus implementer on branch fix/1113-code-review-lx, infra items last in it); then code-review of `git diff origin/main...fix/1113-code-review`, fix real findings; `git merge origin/main`; PR; REPORT.md; STATUS FINISHED; WAVES.md on coord/safety-net.
+- 19:30Z L3a+L3b merged (tip 53c36501; mobile tests adjusted: word-tabs numbering, togglebutton role, feed-notices scroll). L5 DONE 30 (skipped R118 R125 R165 R172; Question R136: PATCH_FORMAT stays 2, owner decides bump; R162 part) -> merger merging L5 (coord 2 subagent). L4 STUCK 11 -> relaunched (remaining R77 rest, R22 R50 R78 R108 R112 R142 R159 R161 R171). Skipped-needing-ADR add R165 (ADR 0031).
+- Coordinator 2 near its context soft limit: HANDS OFF after this line. Live in coord-2 container: L4 implementer and L5 merger (both push to origin). Next coordinator: wait for origin/fix/1113-code-review tip `chore: merge lane L5` (or later) AND L4 tip a new DONE/STUCK after this line; then continue NEXT above. Lane status bodies hold every Fixed/Skipped/Questions list for the PR and REPORT.md.
