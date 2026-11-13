@@ -35,6 +35,10 @@ export default {
   },
   resolver: './jest.resolver.cjs',
   setupFiles: ['./jest.setup.js'],
+  // Half the cores, beside Vitest and the other packages turbo runs at once, and a worker
+  // past 1 GB is restarted between files, so a run on a loaded machine does not time out.
+  maxWorkers: '50%',
+  workerIdleMemoryLimit: '1GB',
   // Where CI keeps the transforms from run to run, one cache per shard (.github/workflows/ci.yml).
   cacheDirectory: '<rootDir>/node_modules/.cache/jest',
 };

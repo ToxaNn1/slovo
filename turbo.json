@@ -1,16 +1,21 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "agentGuidance": false,
-  "globalDependencies": [".oxlintrc.json"],
   "tasks": {
     "lint": {
-      "dependsOn": ["^typecheck"]
+      "dependsOn": ["^typecheck"],
+      // ESLint turns off every rule Oxlint runs (packages/config/eslint.config.js);
+      // only lint reads this file, so a change to it leaves the test cache alone.
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.oxlintrc.json"]
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": ["dist/**"]
     },
     "test": {
+      // Inputs: the package's files git sees ($TURBO_DEFAULT$) and the hashes of the
+      // tasks it depends on; a package whose tests read files outside its folder
+      // names them in its own turbo.json, so an unchanged package hits the cache.
       "dependsOn": ["^typecheck"],
       "outputs": []
     }

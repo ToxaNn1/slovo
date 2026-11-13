@@ -1,0 +1,14 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      // scripts/dev-admin.test.ts runs the repo's scripts/dev-admin.mjs, which imports dev-services.mjs.
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/scripts/dev-admin.mjs",
+        "$TURBO_ROOT$/scripts/dev-services.mjs"
+      ]
+    }
+  }
+}
