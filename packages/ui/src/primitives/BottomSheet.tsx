@@ -1,7 +1,15 @@
 'use no memo';
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -196,10 +204,25 @@ export function BottomSheet({
 
   const closable = onClose !== undefined;
   // Stable, so the memoised configs below change only with what they draw on.
+  /** Counts the drags that asked to close, so the render after each can tell whether the owner refused. */
+  const [closeAsks, setCloseAsks] = useState(0);
   const closeByDrag = useCallback((velocity: number) => {
     flick.current = velocity;
+    setCloseAsks((asks) => asks + 1);
     onCloseRef.current?.();
   }, []);
+  // An owner that agrees closes in the same render; one that keeps the sheet
+  // open leaves it where the finger left it, so it springs back in place.
+  // Reads `shown` and Reduce Motion as they are, so only a new ask checks again.
+  const keptOpen = useEffectEvent(() => {
+    if (!shown || flick.current === undefined) return;
+    const velocity = flick.current;
+    flick.current = undefined;
+    drag.value = reduceMotion ? 0 : withSpring(0, { ...DRAG_SPRING, velocity });
+  });
+  useEffect(() => {
+    if (closeAsks > 0) keptOpen();
+  }, [closeAsks]);
   const close = useCallback(() => {
     onCloseRef.current?.();
   }, []);
