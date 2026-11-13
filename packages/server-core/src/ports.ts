@@ -497,6 +497,14 @@ export interface PackageCoverage {
   readonly branches: number;
 }
 
+/** One job of a CI run. */
+export interface CiJob {
+  readonly name: string;
+  readonly seconds: number;
+  /** ISO times the job started and finished; the jobs run side by side. */
+  readonly span?: { readonly startedAt: string; readonly completedAt: string } | undefined;
+}
+
 /** One CI run on `main`, as CI pushes it after the run. */
 export interface CiRun {
   /** GitHub's id of the workflow run: a run is kept once. */
@@ -508,8 +516,8 @@ export interface CiRun {
   /** The names of the tests that failed. */
   readonly failedTests: readonly string[];
   readonly coverage: readonly PackageCoverage[];
-  /** How long each job took, in seconds. */
-  readonly jobs: readonly { readonly name: string; readonly seconds: number }[];
+  /** How long each job took, in seconds, and when it ran (missing on the runs kept before 2026-11-13). */
+  readonly jobs: readonly CiJob[];
 }
 
 /** The CI runs on `main`, kept by the backend. */

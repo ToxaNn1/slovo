@@ -68,7 +68,14 @@ export const CiRunSchema = z.object({
     )
     .max(100),
   jobs: z
-    .array(z.object({ name: z.string().min(1).max(200), seconds: z.number().nonnegative() }))
+    .array(
+      z.object({
+        name: z.string().min(1).max(200),
+        seconds: z.number().nonnegative(),
+        /** When the job ran; missing on the runs kept before 2026-11-13. */
+        span: z.object({ startedAt: z.iso.datetime(), completedAt: z.iso.datetime() }).optional(),
+      }),
+    )
     .max(100),
 });
 export type CiRunInput = z.infer<typeof CiRunSchema>;

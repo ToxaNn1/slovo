@@ -56,6 +56,7 @@ export {
   type AppleIdentity,
   type AppleTokenCheck,
   type AppleVerifier,
+  type CiJob,
   type CiRun,
   type CiRunStore,
   type PackageCoverage,

@@ -43,7 +43,13 @@ const runOf = (
   tests: 120,
   failedTests,
   coverage: [{ package: '@slovo/core', lines: 90 + runId, branches: 80 + runId }],
-  jobs: [{ name: 'checks', seconds: 300 + runId }],
+  jobs: [
+    {
+      name: 'checks',
+      seconds: 300 + runId,
+      span: { startedAt: '2026-11-13T13:37:03.000Z', completedAt: '2026-11-13T13:40:55.000Z' },
+    },
+  ],
 });
 
 const push = (backend: ReturnType<typeof testApp>, run: unknown, headers: Record<string, string>) =>
@@ -74,7 +80,13 @@ describe('the CI history', () => {
       failedTests: failed,
       flakyTests: ['core > draws a card'],
       coverage: [{ package: '@slovo/core', lines: 91, branches: 81 }],
-      jobs: [{ name: 'checks', seconds: 301 }],
+      jobs: [
+        {
+          name: 'checks',
+          seconds: 301,
+          span: { startedAt: '2026-11-13T13:37:03.000Z', completedAt: '2026-11-13T13:40:55.000Z' },
+        },
+      ],
     });
     expect(runs[1]).toMatchObject({ flakyTests: [] });
     expect(runs[2]).toMatchObject({ flakyTests: [], jobs: [{ name: 'checks', seconds: 302 }] });

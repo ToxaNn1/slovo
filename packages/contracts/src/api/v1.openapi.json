@@ -23439,6 +23439,23 @@
                                 "seconds": {
                                   "type": "number",
                                   "minimum": 0
+                                },
+                                "span": {
+                                  "type": "object",
+                                  "properties": {
+                                    "startedAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "completedAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    }
+                                  },
+                                  "required": [
+                                    "startedAt",
+                                    "completedAt"
+                                  ]
                                 }
                               },
                               "required": [
@@ -23803,6 +23820,23 @@
                         "seconds": {
                           "type": "number",
                           "minimum": 0
+                        },
+                        "span": {
+                          "type": "object",
+                          "properties": {
+                            "startedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "completedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            }
+                          },
+                          "required": [
+                            "startedAt",
+                            "completedAt"
+                          ]
                         }
                       },
                       "required": [
