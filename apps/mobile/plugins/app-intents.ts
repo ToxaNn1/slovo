@@ -38,6 +38,12 @@ export const APP_INTENTS: Readonly<
   openGame: { type: 'OpenGameIntent', route: APP_INTENT_ROUTES.openGame, symbol: 'puzzlepiece' },
 };
 
+/** Every intent's key, once each: the table names each key as its own value. */
+const INTENT_KEYS: readonly IntentKey[] = Object.values({
+  wordOfTheDay: 'wordOfTheDay',
+  openGame: 'openGame',
+} satisfies { readonly [Key in IntentKey]: Key });
+
 /** The key of an intent's title in the app's `Localizable.strings`, as the Swift code names it. */
 const titleKey = (intent: IntentKey) => `appIntents.${intent}`;
 
@@ -81,8 +87,8 @@ function shortcutPhrase(phrase: string, displayName: string, field: string): str
  * which names the Edition (`edition=<id>`), so the app opens it in that Edition.
  */
 function appShortcutsSwift({ editionId, displayName, strings }: AppIntentsEdition): string {
-  const intents = Object.entries(APP_INTENTS) as [IntentKey, (typeof APP_INTENTS)[IntentKey]][];
-  const shortcuts = intents.map(([key, { type, symbol }]) => {
+  const shortcuts = INTENT_KEYS.map((key) => {
+    const { type, symbol } = APP_INTENTS[key];
     const phrases = strings[key].phrases.map((phrase, index) =>
       shortcutPhrase(phrase, displayName, `appIntents.${key}.phrases.${String(index)}`),
     );
@@ -95,8 +101,8 @@ function appShortcutsSwift({ editionId, displayName, strings }: AppIntentsEditio
       `    )`,
     ].join('\n');
   });
-  const routes = intents.map(
-    ([, { type, route }]) =>
+  const routes = INTENT_KEYS.map((key) => APP_INTENTS[key]).map(
+    ({ type, route }) =>
       `extension ${type} {\n  static let route = "${swiftText(editionRoute(route, editionId))}"\n}\n`,
   );
   return [
@@ -120,10 +126,7 @@ function appShortcutsSwift({ editionId, displayName, strings }: AppIntentsEditio
  */
 export function appIntentTitles(strings: EditionStrings['appIntents']): Record<string, string> {
   return Object.fromEntries(
-    (Object.keys(APP_INTENTS) as IntentKey[]).map((key) => [
-      titleKey(key),
-      stringsText(strings[key].title),
-    ]),
+    INTENT_KEYS.map((key) => [titleKey(key), stringsText(strings[key].title)]),
   );
 }
 

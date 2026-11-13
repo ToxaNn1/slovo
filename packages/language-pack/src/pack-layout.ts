@@ -345,6 +345,14 @@ const METADATA_FIELDS = {
   packFormat: { key: 'pack_format', read: Number },
 } as const satisfies Record<keyof PackMetadata, { key: string; read: (text: string) => unknown }>;
 
+/** Every field of the pack metadata, once each: the table names each field as its own value. */
+const METADATA_KEYS: readonly (keyof PackMetadata)[] = Object.values({
+  editionId: 'editionId',
+  contentVersion: 'contentVersion',
+  contentChecksum: 'contentChecksum',
+  packFormat: 'packFormat',
+} satisfies { readonly [Field in keyof PackMetadata]: Field });
+
 /** One row of the `metadata` table. */
 export interface MetadataRow {
   readonly key: string;
@@ -353,9 +361,9 @@ export interface MetadataRow {
 
 /** The rows of the `metadata` table that record the metadata. */
 export function metadataRows(metadata: PackMetadata): MetadataRow[] {
-  return Object.entries(METADATA_FIELDS).map(([field, { key }]) => ({
-    key,
-    value: String(metadata[field as keyof PackMetadata]),
+  return METADATA_KEYS.map((field) => ({
+    key: METADATA_FIELDS[field].key,
+    value: String(metadata[field]),
   }));
 }
 
