@@ -25,7 +25,7 @@ The short map. `README.md` is for people; grep it for one section when you need 
 
 Truth: `CONTEXT.md` (glossary) and `docs/adr/` override everything. Read both with `grep -n`, never whole.
 
-Commands (repo root): `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm deps`, `pnpm format`. While working, run one package: `pnpm turbo run lint typecheck test --filter=<pkg> --output-logs=errors-only`. CI runs everything.
+Commands (repo root): `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm deps`, `pnpm format`. While working, run one package: `pnpm turbo run lint typecheck test --filter=<pkg> --output-logs=errors-only`; only the packages changed against `origin/main`: `pnpm test:affected`; one folder of Jest tests: `pnpm --filter <pkg> exec jest src/entries`, and in `apps/mobile` the files changed since the last commit: `pnpm --filter @slovo/mobile exec jest --onlyChanged`. Turbo keeps each package's result and replays it until the package's files or its dependencies change. CI runs everything.
 
 Content commands (repo root, each with `--edition <id>`): `pnpm source:words`, `pnpm source:idioms`, `pnpm source:corrections`, `pnpm source:synonyms` draft Entries from goroh into `tools/sourcing/review/<kind>/`; `pnpm content have` and `pnpm content counts` print the API's content snapshot and content report, `pnpm content add|edit|retire|flag` write through the content write API with the Агент token (`SLOVO_AGENT_TOKEN`, `SLOVO_API_URL`), `pnpm content verify` checks every quote of drafts against its source page (the Deployment's hourly quote check covers the records, ADR 0095), `pnpm content check <kind> <drafts>` runs the shared content rules locally. A content wave runs by [content-wave.md](content-wave.md) with `scripts/content-wave/launch.sh`.
 

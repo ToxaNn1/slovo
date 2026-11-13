@@ -13,7 +13,9 @@
         "$TURBO_ROOT$/editions/*/tokens.json",
         "$TURBO_ROOT$/editions/*/widget-snapshot.example.json",
         "$TURBO_ROOT$/editions/*/assets/**",
-        "$TURBO_ROOT$/editions/*/decor/**"
+        "$TURBO_ROOT$/editions/*/decor/**",
+        // The AppConfig, which app.config.ts and the Jest config read (ADR 0065).
+        "$TURBO_ROOT$/app/app.json"
       ]
     }
   }

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      // src/tokens.test.ts reads the UA Edition's tokens.
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/editions/*/tokens.json"]
+    }
+  }
+}
