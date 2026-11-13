@@ -139,9 +139,7 @@ export function createCommunityCounters({
     },
 
     async communityWord(editionId) {
-      // The Community Word is made of the counters' adds, so it goes when they do.
-      const counting = await editions.serving(editionId, 'communityCounters');
-      if (!counting.ok) return counting;
+      // The Community Word is made of the counters' adds; `DEPENDS_ON` turns it off with them.
       const serving = await editions.serving(editionId, 'communityWord');
       if (!serving.ok) return serving;
       const lastWeek = isoWeekOf(new Date(clock.now().getTime() - WEEK_MS));
