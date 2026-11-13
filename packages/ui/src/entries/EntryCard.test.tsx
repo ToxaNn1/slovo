@@ -927,10 +927,7 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
       within(screen.getByTestId('word-meanings')).getByText('2. A handsome yóuth.', {
         includeHiddenElements: true,
       }),
-    ).toHaveProp(
-      'accessibilityLabel',
-      '2. A handsome youth.',
-    );
+    ).toHaveProp('accessibilityLabel', '2. A handsome youth.');
   });
 
   it('shows the Stress marks on an Idiom card and reads its texts without them', async () => {

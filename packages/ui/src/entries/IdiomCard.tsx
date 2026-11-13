@@ -23,6 +23,7 @@ import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { capitalised } from './capitalised';
+import { SourceLine } from './SourceLine';
 import { NumberedDefinitions } from './NumberedDefinitions';
 import { CardTabs } from './CardTabs';
 import { ExampleMark } from './ExampleMark';
@@ -158,7 +159,11 @@ export function IdiomCardBody({
               </WholeLinesText>
             </DetailSection>
           )}
-          <IdiomSources sourceNames={card.sourceNames} />
+          <SourceLine
+            testID="idiom-source"
+            template={edition.strings.idiomCard.source}
+            sourceNames={card.sourceNames}
+          />
         </>
       )}
     </>
@@ -170,7 +175,7 @@ function IdiomTabContent({ tab, sourceTab }: { tab: IdiomTab; sourceTab: boolean
   const tokens = useTokens();
   const { colors } = tokens;
   const sizes = useWordTextSizes();
-  const { voice } = useEdition();
+  const { voice, strings: editionStrings } = useEdition();
   // In the Feed, VoiceOver turns to the next or previous card from the Definition too.
   const turnActions = usePageTurnActions();
   const body = [typeStyle('sectionText', tokens), { color: colors.ink }];
@@ -197,7 +202,13 @@ function IdiomTabContent({ tab, sourceTab }: { tab: IdiomTab; sourceTab: boolean
             {capitalised(tab.definition, voice.accessibilityLanguage)}
           </WholeLinesText>
           <NumberedDefinitions definitions={tab.meanings} style={body} />
-          {sourceTab ? null : <IdiomSources sourceNames={tab.sourceNames} />}
+          {sourceTab ? null : (
+            <SourceLine
+              testID="idiom-source"
+              template={editionStrings.idiomCard.source}
+              sourceNames={tab.sourceNames}
+            />
+          )}
         </>
       );
     case 'origin':
@@ -233,25 +244,6 @@ function IdiomTabContent({ tab, sourceTab }: { tab: IdiomTab; sourceTab: boolean
     }
   }
 }
-
-/** The line naming an Idiom's sources, when it has any. */
-function IdiomSources({ sourceNames }: { sourceNames: readonly string[] }) {
-  const tokens = useTokens();
-  const edition = useEdition();
-  if (sourceNames.length === 0) return null;
-  return (
-    <WholeLinesText
-      testID="idiom-source"
-      {...edition.voice}
-      style={[typeStyle('meta', tokens), { color: tokens.colors.muted }]}
-    >
-      {fill(edition.strings.idiomCard.source, { source: sourceNames.join(SOURCE_SEPARATOR) })}
-    </WholeLinesText>
-  );
-}
-
-/** What sits between the titles of an Idiom's sources on the source line. */
-const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
   header: { gap: space[2] },

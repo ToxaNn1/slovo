@@ -16,6 +16,7 @@ import { usePageTurnActions } from '../primitives/VerticalPager';
 import { NonStandardForm, StandardForm } from './CorrectionCard';
 import { ExampleText } from './WordCard';
 import { capitalised } from './capitalised';
+import { SourceLine } from './SourceLine';
 import { CardTabs } from './CardTabs';
 import { tipTabsOf, type TipTab } from './tip-tabs';
 
@@ -139,7 +140,7 @@ export function TipCardBody({
  */
 function TipRule({ tab, sourceLine }: { tab: TipTab; sourceLine: boolean }) {
   const tokens = useTokens();
-  const { voice } = useEdition();
+  const { voice, strings } = useEdition();
   return (
     <>
       <WholeLinesText
@@ -155,7 +156,13 @@ function TipRule({ tab, sourceLine }: { tab: TipTab; sourceLine: boolean }) {
         words={tab.chips}
         byIndex
       />
-      {tab.key === 'rule' && sourceLine ? <TipSource sourceNames={tab.sourceNames} /> : null}
+      {tab.key === 'rule' && sourceLine ? (
+        <SourceLine
+          testID="tip-source"
+          template={strings.correctionCard.source}
+          sourceNames={tab.sourceNames}
+        />
+      ) : null}
     </>
   );
 }
@@ -177,7 +184,7 @@ function TipEssence({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { voice } = useEdition();
+  const { voice, strings } = useEdition();
   return (
     <>
       <StandardForm
@@ -194,30 +201,14 @@ function TipEssence({
       >
         {capitalised(explanation, voice.accessibilityLanguage)}
       </WholeLinesText>
-      <TipSource sourceNames={sourceNames} />
+      <SourceLine
+        testID="tip-source"
+        template={strings.correctionCard.source}
+        sourceNames={sourceNames}
+      />
     </>
   );
 }
-
-/** The line naming a Tip's sources, or nothing when it has none. */
-function TipSource({ sourceNames }: { sourceNames: readonly string[] }) {
-  const tokens = useTokens();
-  const edition = useEdition();
-  return sourceNames.length === 0 ? null : (
-    <WholeLinesText
-      testID="tip-source"
-      {...edition.voice}
-      style={[typeStyle('meta', tokens), { color: tokens.colors.muted }]}
-    >
-      {fill(edition.strings.correctionCard.source, {
-        source: sourceNames.join(SOURCE_SEPARATOR),
-      })}
-    </WholeLinesText>
-  );
-}
-
-/** What sits between the titles of a Tip's sources on the source line. */
-const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
   header: { gap: space[2] },
