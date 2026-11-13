@@ -1,15 +1,13 @@
 import { fill } from '@slovo/contracts';
-import type { CuratedCollectionEntry } from '@slovo/core';
 import {
   categoryTile,
-  railScreen,
-  RailScreenCard,
+  knownShare,
+  RailBoard,
   RailScreenHero,
+  shapeAt,
   useEdition,
-  useTokens,
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
-import { FlatList, StyleSheet, View } from 'react-native';
 
 import { useCuratedCollectionScreen } from '@/dashboard/curated-collection';
 import { editionStrings } from '@/edition/edition';
@@ -27,7 +25,6 @@ const { curatedCollection: words, curatedCollectionCount } = editionStrings.dash
 export default function CuratedCollectionRoute() {
   const collectionId = useSegmentParam('collectionId');
   const { screen, retry, place, add, openEntry } = useCuratedCollectionScreen(collectionId);
-  const { colors } = useTokens();
   const { count } = useEdition();
   const router = useRouter();
   if (screen === null) return <Redirect href="/" />;
@@ -39,76 +36,43 @@ export default function CuratedCollectionRoute() {
         testID="curated-collection-error"
       />
     );
-  const [glyph] = categoryTile.shapes[place % categoryTile.shapes.length] ?? categoryTile.shapes[0];
+  const [glyph] = shapeAt(categoryTile.shapes, place);
+  const { known, total, done } = knownShare(screen?.entries ?? []);
   return (
-    <View
+    <RailBoard
       testID="curated-collection"
-      style={[styles.screen, { backgroundColor: colors.background }]}
-    >
-      <FlatList<CuratedCollectionEntry>
-        data={screen?.entries ?? []}
-        keyExtractor={({ entryId }) => entryId}
-        renderItem={({ item: { entryId, row, known }, index }) => (
-          <RailScreenCard
-            testID={`curated-collection-entry-${entryId}`}
-            row={row}
-            known={known}
-            index={index}
-            onPress={() => {
-              openEntry(entryId);
-            }}
-          />
-        )}
-        ListHeaderComponent={
-          <RailScreenHero
-            id="curated-collection-hero"
-            glyph={glyph}
-            kicker={fill(words.kicker, {
-              count: count(curatedCollectionCount, screen?.total ?? 0),
-            })}
-            title={screen?.collection.name ?? ''}
-            description={screen?.collection.description ?? ''}
-            progress={fill(words.known, {
-              x: String(screen?.known ?? 0),
-              n: String(screen?.total ?? 0),
-            })}
-            done={screen === undefined || screen.total === 0 ? 0 : screen.known / screen.total}
-            mascot="waits"
-            back={{
-              testID: 'curated-collection-back',
-              label: editionStrings.tabs.home,
+      cards={screen?.entries ?? []}
+      onOpen={openEntry}
+      hero={
+        <RailScreenHero
+          id="curated-collection-hero"
+          glyph={glyph}
+          kicker={fill(words.kicker, { count: count(curatedCollectionCount, total) })}
+          title={screen?.collection.name ?? ''}
+          description={screen?.collection.description ?? ''}
+          progress={fill(words.known, { x: String(known), n: String(total) })}
+          done={done}
+          mascot="waits"
+          back={{
+            testID: 'curated-collection-back',
+            label: editionStrings.tabs.home,
+            onPress: () => {
+              router.back();
+            },
+          }}
+          {...(screen !== undefined && {
+            action: {
+              kind: 'toggle',
+              testID: 'curated-collection-add',
+              label: screen.added ? words.addedButton : words.addButton,
+              on: screen.added,
               onPress: () => {
-                router.back();
+                if (!screen.added) add();
               },
-            }}
-            {...(screen !== undefined && {
-              action: {
-                kind: 'toggle',
-                testID: 'curated-collection-add',
-                label: screen.added ? words.addedButton : words.addButton,
-                on: screen.added,
-                onPress: () => {
-                  if (!screen.added) add();
-                },
-              },
-            })}
-          />
-        }
-        ListHeaderComponentStyle={styles.hero}
-        ItemSeparatorComponent={Gap}
-        contentContainerStyle={styles.content}
-      />
-    </View>
+            },
+          })}
+        />
+      }
+    />
   );
 }
-
-function Gap() {
-  return <View style={styles.gap} />;
-}
-
-const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  hero: { marginHorizontal: -railScreen.list.side, marginBottom: railScreen.list.top },
-  content: { paddingHorizontal: railScreen.list.side, paddingBottom: railScreen.list.bottom },
-  gap: { height: railScreen.list.wordGap },
-});
