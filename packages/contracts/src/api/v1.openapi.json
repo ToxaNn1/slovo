@@ -13507,8 +13507,7 @@
                         "required": [
                           "key",
                           "count"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "visitsByDay": {
@@ -13528,8 +13527,7 @@
                         "required": [
                           "key",
                           "count"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "medianVisitSeconds": {
@@ -13554,8 +13552,7 @@
                         "required": [
                           "key",
                           "count"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "appVersions": {
@@ -13575,8 +13572,7 @@
                         "required": [
                           "key",
                           "count"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "fetchedAt": {
@@ -13591,8 +13587,7 @@
                     "devices",
                     "appVersions",
                     "fetchedAt"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -13952,8 +13947,7 @@
                         "required": [
                           "key",
                           "count"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "fetchedAt": {
@@ -13964,8 +13958,7 @@
                   "required": [
                     "variants",
                     "fetchedAt"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
@@ -14335,8 +14328,7 @@
                           "question",
                           "answer",
                           "count"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     }
                   },
@@ -14345,8 +14337,7 @@
                     "unknown",
                     "saved",
                     "answers"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               }
             }
