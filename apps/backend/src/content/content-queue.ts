@@ -17,7 +17,7 @@ import {
   contentWords,
   mistakeReports,
 } from '../database/schema';
-import { retireRecordings } from './media-rows';
+import { readsDifferently, retireRecordings } from './media-rows';
 
 /** The table of each kind of record. */
 const TABLES = {
@@ -251,9 +251,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
               .where(where);
             // A Word's Recordings no longer read it once its Lemma or Stress changed (ADR 0083).
             const textChanged =
-              word !== undefined &&
-              (word.fields.lemma !== record.entry.lemma ||
-                JSON.stringify(word.fields.stress) !== JSON.stringify(record.entry.stress));
+              word !== undefined && readsDifferently(word.fields, record.entry);
             const needsNewRecording = word !== undefined && (word.needs || textChanged);
             if (textChanged)
               await retireRecordings(tx, { editionId, wordId: write.id, version: published, now });
