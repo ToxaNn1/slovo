@@ -21,7 +21,7 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 | L3b | rest of packages/ui | 25 | todo |
 | L4 | apps/mobile | 24 | todo |
 | L5 | apps/backend, packages/server-core, packages/contracts | 32 | running |
-| L6 | apps/admin, apps/video, tools, scripts | 23 | running (2nd session, after STUCK) |
+| L6 | apps/admin, apps/video, tools, scripts | 23 | DONE 20, R134 R135 relaunched (coord 2) |
 | LX | cross-folder items, after all lanes | 14 (+R79 from L6) | todo |
 
 ## Log
@@ -44,3 +44,4 @@ Your next steps:
 Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STUCK body. Commit author is the noreply owner address: correct. L1 used one `perf(core)` commit (hook accepted it).
 - 18:45Z coordinator (2) started as cloud session session_01VefVQUAKPt8Ak4bxrvvsRC; old container keeps its 4 live lane implementers (L2 L3a L5 L6) until they push a status commit.
 - 18:47Z coordinator (2): setup redone (Postgres, identity in snapshot); main repo on fix/1113-code-review, coord branch at /home/user/wt/coord; worktrees l1 l3b l4; launched L1 (R52 R54 R55, Fable), L3b, L4 (Opus). Old container still runs L2 L3a L5 L6. Wait script /tmp/claude-0/wait.sh <min> <since> <lanes>.
+- 18:51Z L6 DONE 20 fixed (old container); R134 R135 not attempted -> L6 relaunched here; merger merging L6 into integration.
