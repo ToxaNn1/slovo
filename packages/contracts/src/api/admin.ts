@@ -115,46 +115,39 @@ const AnalyticsEditionSchema = EditionIdSchema;
 const DaySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD');
 
 /** A count of one key (a day, a device, a version, a Variant): never a person or an id (ADR 0060). */
-export const AnalyticsCountSchema = z
-  .object({ key: z.string(), count: z.number().int().min(0) })
-  .strict();
+export const AnalyticsCountSchema = z.object({ key: z.string(), count: z.number().int().min(0) });
 export type AnalyticsCount = z.infer<typeof AnalyticsCountSchema>;
 
 /** When the oldest part of a PostHog read was read, as an ISO time. */
 const FetchedAtSchema = z.iso.datetime();
 
 /** The Аналітика of an Edition over a period, from PostHog: aggregates only. */
-export const AnalyticsOverviewSchema = z
-  .object({
-    activeByDay: z.array(AnalyticsCountSchema),
-    visitsByDay: z.array(AnalyticsCountSchema),
-    medianVisitSeconds: z.number().int().min(0),
-    devices: z.array(AnalyticsCountSchema),
-    appVersions: z.array(AnalyticsCountSchema),
-    fetchedAt: FetchedAtSchema,
-  })
-  .strict();
+export const AnalyticsOverviewSchema = z.object({
+  activeByDay: z.array(AnalyticsCountSchema),
+  visitsByDay: z.array(AnalyticsCountSchema),
+  medianVisitSeconds: z.number().int().min(0),
+  devices: z.array(AnalyticsCountSchema),
+  appVersions: z.array(AnalyticsCountSchema),
+  fetchedAt: FetchedAtSchema,
+});
 export type AnalyticsOverview = z.infer<typeof AnalyticsOverviewSchema>;
 
 /** People active in each Variant of an A/B Feature Switch. */
-export const VariantResultsSchema = z
-  .object({ variants: z.array(AnalyticsCountSchema), fetchedAt: FetchedAtSchema })
-  .strict();
+export const VariantResultsSchema = z.object({
+  variants: z.array(AnalyticsCountSchema),
+  fetchedAt: FetchedAtSchema,
+});
 export type VariantResults = z.infer<typeof VariantResultsSchema>;
 
 /** The Community Counters sums and the questionnaire counters of an Edition. */
-export const CountersSummarySchema = z
-  .object({
-    known: z.number().int().min(0),
-    unknown: z.number().int().min(0),
-    saved: z.number().int().min(0),
-    answers: z.array(
-      z
-        .object({ question: z.string(), answer: z.string(), count: z.number().int().min(0) })
-        .strict(),
-    ),
-  })
-  .strict();
+export const CountersSummarySchema = z.object({
+  known: z.number().int().min(0),
+  unknown: z.number().int().min(0),
+  saved: z.number().int().min(0),
+  answers: z.array(
+    z.object({ question: z.string(), answer: z.string(), count: z.number().int().min(0) }),
+  ),
+});
 export type CountersSummary = z.infer<typeof CountersSummarySchema>;
 
 /** A role of an Admin user: Власник (`owner`) or Адмін (`admin`). */
