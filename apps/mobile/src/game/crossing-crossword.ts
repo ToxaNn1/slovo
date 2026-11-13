@@ -1,7 +1,7 @@
 import { fill, type EditionStrings } from '@slovo/contracts';
 import {
   crossingCellKey,
-  crossingPlacesOf,
+  crossingGridOf,
   isCrossingSolved,
   type Composition,
   type CrosswordSolve,
@@ -32,39 +32,10 @@ const TICK_MS = 1000;
 const solvedCount = ({ words }: CrossingPlay) =>
   words.filter(({ kind }) => kind === 'solved').length;
 
-/** The side of the puzzle's square grid. */
-const sizeOf = (puzzle: CrossingPuzzle) =>
-  Math.max(
-    0,
-    ...puzzle.blocks.flatMap(({ row, column }) => [row + 1, column + 1]),
-    ...puzzle.words.flatMap((word) =>
-      crossingPlacesOf(word).flatMap(({ row, column }) => [row + 1, column + 1]),
-    ),
-  );
-
-const isBlock = (puzzle: CrossingPuzzle, place: PuzzlePlace) =>
-  puzzle.blocks.some(({ row, column }) => row === place.row && column === place.column);
-
-const through = (puzzle: CrossingPuzzle, place: PuzzlePlace) =>
-  puzzle.words.filter((word) =>
-    crossingPlacesOf(word).some(({ row, column }) => row === place.row && column === place.column),
-  );
-
 const letterAt = (state: CrossingPlay, place: PuzzlePlace) => {
   const cell = state.cells[crossingCellKey(place)];
   return cell === undefined || cell.kind === 'empty' ? undefined : cell.letter;
 };
-
-/** The puzzle's own letter at a place: a letter of a Word through it. */
-const answerAt = (puzzle: CrossingPuzzle, place: PuzzlePlace) =>
-  puzzle.words
-    .map((word) => {
-      const index = crossingPlacesOf(word).findIndex(
-        ({ row, column }) => row === place.row && column === place.column,
-      );
-      return index < 0 ? undefined : word.letters[index];
-    })
-    .find((letter) => letter !== undefined);
 
 /**
  * Today's solve: the one the XP log records, which Sync brings from every
@@ -96,14 +67,12 @@ export function crossingCells(
   strings: Strings,
   solved: boolean,
 ): CrossingGridCell[][] {
-  const size = sizeOf(puzzle);
-  const current = puzzle.words[state.current];
-  return Array.from({ length: size }, (_, row) =>
-    Array.from({ length: size }, (__, column): CrossingGridCell => {
-      const place = { row, column };
-      if (isBlock(puzzle, place)) return { kind: 'block' };
-      const words = through(puzzle, place);
-      const letter = solved ? answerAt(puzzle, place) : letterAt(state, place);
+  const current = state.current;
+  return crossingGridOf(puzzle).map((spots, row) =>
+    spots.map((spot, column): CrossingGridCell => {
+      if (spot.kind === 'block') return { kind: 'block' };
+      const words = spot.words.flatMap((i) => puzzle.words[i] ?? []);
+      const letter = solved ? spot.answer : letterAt(state, { row, column });
       const starting = words.find(
         ({ start }) => start.row === row && start.column === column,
       )?.number;
@@ -111,10 +80,8 @@ export function crossingCells(
         kind: 'cell',
         letter,
         number: starting,
-        current: current !== undefined && words.includes(current),
-        solved:
-          solved ||
-          words.some((word) => state.words[puzzle.words.indexOf(word)]?.kind === 'solved'),
+        current: spot.words.includes(current),
+        solved: solved || spot.words.some((i) => state.words[i]?.kind === 'solved'),
         label: fill(strings.crossingCellLabel, {
           cell: letter ?? strings.emptyCell,
           words: words.map((word) => crossingWordName(word, strings)).join(', '),
@@ -131,12 +98,12 @@ export function crossingMiniGrid(
   puzzle: CrossingPuzzle,
   state: CrossingPlay,
 ): CrosswordMiniCell[][] {
-  const size = sizeOf(puzzle);
-  return Array.from({ length: size }, (_, row) =>
-    Array.from({ length: size }, (__, column): CrosswordMiniCell =>
-      isBlock(puzzle, { row, column })
-        ? { kind: 'block' }
-        : { kind: 'cell', letter: letterAt(state, { row, column }) },
+  return crossingGridOf(puzzle).map((spots, row) =>
+    spots.map(
+      (spot, column): CrosswordMiniCell =>
+        spot.kind === 'block'
+          ? { kind: 'block' }
+          : { kind: 'cell', letter: letterAt(state, { row, column }) },
     ),
   );
 }
