@@ -112,7 +112,11 @@ export const ALL_EDITIONS = 'all';
 const AnalyticsEditionSchema = EditionIdSchema;
 
 /** A day as `YYYY-MM-DD`. */
-const DaySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD');
+const DaySchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD')
+  // A day of the calendar, checked past the description: a `date` format there would break /v1 (ADR 0031).
+  .refine((day) => z.iso.date().safeParse(day).success, 'Expected a day of the calendar');
 
 /** A count of one key (a day, a device, a version, a Variant): never a person or an id (ADR 0060). */
 export const AnalyticsCountSchema = z.object({ key: z.string(), count: z.number().int().min(0) });
