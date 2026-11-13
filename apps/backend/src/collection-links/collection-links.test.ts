@@ -74,7 +74,7 @@ describe('collectionLinks.create', () => {
 
     await expect(client.collectionLinks.create(validLink())).resolves.toEqual({
       id,
-      url: `https://slovo.example/uk/c/${id}`,
+      url: `https://slovoapp.org/uk/c/${id}`,
     });
     await expect(keptOf(database, id)).resolves.toEqual({
       id,
@@ -104,7 +104,7 @@ describe('collectionLinks.create', () => {
 
     await expect(client.collectionLinks.create(validLink({ name: 'Друга' }))).resolves.toEqual({
       id: free,
-      url: `https://slovo.example/uk/c/${free}`,
+      url: `https://slovoapp.org/uk/c/${free}`,
     });
     await expect(client.collectionLinks.read({ id: taken })).resolves.toMatchObject({
       name: 'Перша',
@@ -199,7 +199,7 @@ describe('collectionLinks.create', () => {
 
     await expect(
       client.collectionLinks.create(validLink({ edition: 'pl' })),
-    ).resolves.toMatchObject({ url: `https://slovo.example/pl/c/${id}` });
+    ).resolves.toMatchObject({ url: `https://slovoapp.org/pl/c/${id}` });
   });
 });
 

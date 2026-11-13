@@ -72,8 +72,8 @@ describe('About', () => {
   });
 
   it.each([
-    ['privacy policy', 'about-row-privacy', 'https://slovo.example/uk/privacy'],
-    ['terms', 'about-row-terms', 'https://slovo.example/uk/terms'],
+    ['privacy policy', 'about-row-privacy', 'https://slovoapp.org/uk/privacy'],
+    ['terms', 'about-row-terms', 'https://slovoapp.org/uk/terms'],
   ])("opens the Edition's %s in the browser", async (_page, rowId, address) => {
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     await renderAbout();
