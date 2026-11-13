@@ -4,8 +4,9 @@ import { useState, type ReactNode } from 'react';
 import { adminApi } from '../../api';
 import { cn } from '../../lib/utils';
 import { ConfirmDialog, type PendingWrite } from '../confirm-dialog';
+import { useAdminWrite } from '../admin-write';
 import { Button } from '../ui/button';
-import { useQueueBatches, useQueueFlags, useQueueReports, useQueueWrite } from './queries';
+import { useQueueBatches, useQueueFlags, useQueueReports } from './queries';
 
 type Batch = AdminApiOutputs['contentQueue']['batches']['batches'][number];
 type Flag = AdminApiOutputs['contentQueue']['flags']['flags'][number];
@@ -71,6 +72,11 @@ export function ContentQueue() {
     reports.data.reports.length === 0;
   return (
     <section aria-label="Черга контенту" className="flex flex-col gap-4">
+      {batches.isError || flags.isError || reports.isError ? (
+        <p role="alert" className={cn(noticeClass, 'text-destructive')}>
+          Не вдалося завантажити чергу.
+        </p>
+      ) : null}
       {empty ? (
         <p className="rounded-2xl bg-surface shadow-panel p-12 text-center font-display text-lg font-medium">
           Усе перевірено
@@ -87,9 +93,8 @@ export function ContentQueue() {
           title={pending.title}
           confirmLabel={pending.confirm}
           danger={pending.danger}
-          onConfirm={(reason) => {
-            pending.run(reason);
-            return Promise.resolve();
+          onConfirm={async (reason) => {
+            await pending.run(reason);
           }}
           onClose={() => {
             setPending(null);
@@ -102,8 +107,8 @@ export function ContentQueue() {
 }
 
 function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Confirm }) {
-  const review = useQueueWrite(adminApi.contentQueue.review);
-  const rollback = useQueueWrite(adminApi.contentQueue.rollback);
+  const review = useAdminWrite(adminApi.contentQueue.review);
+  const rollback = useAdminWrite(adminApi.contentQueue.rollback);
   const skipped = rollback.data?.skipped.length ?? 0;
   return (
     <Block title="Пачки Агентів">
@@ -134,9 +139,7 @@ function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Con
                 confirm({
                   title: `Позначити пачку ${batch.author} перевіреною?`,
                   confirm: 'Позначити перевіреним',
-                  run: (reason) => {
-                    review.mutate({ batchId: batch.id, reason });
-                  },
+                  run: (reason) => review.mutateAsync({ batchId: batch.id, reason }),
                 });
               }}
             >
@@ -150,9 +153,7 @@ function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Con
                   title: `Відкотити пачку ${batch.author}? Записи, змінені після неї, буде пропущено.`,
                   confirm: 'Відкотити пачку',
                   danger: true,
-                  run: (reason) => {
-                    rollback.mutate({ batchId: batch.id, reason });
-                  },
+                  run: (reason) => rollback.mutateAsync({ batchId: batch.id, reason }),
                 });
               }}
             >
@@ -166,14 +167,12 @@ function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Con
 }
 
 function Flags({ flags, confirm }: { flags: readonly Flag[]; confirm: Confirm }) {
-  const resolve = useQueueWrite(adminApi.contentQueue.resolveFlag);
+  const resolve = useAdminWrite(adminApi.contentQueue.resolveFlag);
   const decide = (flag: Flag, decision: 'accept' | 'reject', label: string) => () => {
     confirm({
       title: `${label} прапорець на ${flag.recordId}?`,
       confirm: label,
-      run: (reason) => {
-        resolve.mutate({ id: flag.id, decision, reason });
-      },
+      run: (reason) => resolve.mutateAsync({ id: flag.id, decision, reason }),
     });
   };
   return (
@@ -208,7 +207,7 @@ function Flags({ flags, confirm }: { flags: readonly Flag[]; confirm: Confirm })
 }
 
 function Reports({ reports, confirm }: { reports: readonly Report[]; confirm: Confirm }) {
-  const resolve = useQueueWrite(adminApi.contentQueue.resolveReport);
+  const resolve = useAdminWrite(adminApi.contentQueue.resolveReport);
   return (
     <Block title="Помилки в записах">
       {resolve.isError ? (
@@ -234,9 +233,7 @@ function Reports({ reports, confirm }: { reports: readonly Report[]; confirm: Co
                 confirm({
                   title: `Позначити помилку в ${report.entryId} вирішеною? Звіт буде видалено.`,
                   confirm: 'Вирішено',
-                  run: (reason) => {
-                    resolve.mutate({ id: report.id, reason });
-                  },
+                  run: (reason) => resolve.mutateAsync({ id: report.id, reason }),
                 });
               }}
             >

@@ -136,8 +136,12 @@ export function RecordForm({
       return;
     }
     if (StaleSchema.safeParse(error).success && record.at === 'edit') {
-      const current = await adminApi.content.record({ editionId, kind, id: record.id });
-      setStale({ fields: current.fields, recordVersion: current.recordVersion });
+      try {
+        const current = await adminApi.content.record({ editionId, kind, id: record.id });
+        setStale({ fields: current.fields, recordVersion: current.recordVersion });
+      } catch (reread) {
+        setErrors([refusalText(reread)]);
+      }
       return;
     }
     setErrors([refusalText(error)]);
@@ -152,11 +156,10 @@ export function RecordForm({
       setPending({
         title: 'Додати запис',
         confirm: 'Додати',
-        run: (confirmed) => {
-          void write((batchId) =>
+        run: (confirmed) =>
+          write((batchId) =>
             adminApi.content.create({ editionId, kind, batchId, fields: next, reason: confirmed }),
-          );
-        },
+          ),
       });
       return;
     }
@@ -179,8 +182,8 @@ export function RecordForm({
     setPending({
       title: 'Вивести запис з ужитку',
       confirm: 'Вивести з ужитку',
-      run: (confirmed) => {
-        void write((batchId) =>
+      run: (confirmed) =>
+        write((batchId) =>
           adminApi.content.retire({
             editionId,
             kind,
@@ -189,8 +192,7 @@ export function RecordForm({
             recordVersion: base.recordVersion,
             reason: confirmed,
           }),
-        );
-      },
+        ),
     });
   };
 
@@ -298,9 +300,8 @@ export function RecordForm({
         <ConfirmDialog
           title={pending.title}
           confirmLabel={pending.confirm}
-          onConfirm={(reason) => {
-            pending.run(reason);
-            return Promise.resolve();
+          onConfirm={async (reason) => {
+            await pending.run(reason);
           }}
           onClose={() => {
             setPending(undefined);
