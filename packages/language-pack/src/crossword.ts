@@ -55,20 +55,21 @@ export function generateDailyCrossword({
     return { ok: false, errors: source.errors };
   }
   const { content } = source.valid;
+  const supply = crosswordSupply(content);
   const days = content.crosswordDays ?? [];
   const recorded = days.find((day) => day.date === date);
   if (recorded !== undefined) return { ok: true, day: recorded };
   const last = days.at(-1)?.date;
-  if (last === undefined || date < last) return dayAfterDays(content, [], date, SEARCH_BUDGET);
+  if (last === undefined || date < last) return dayAfterDays(supply, [], date, SEARCH_BUDGET);
   const between = daysThrough(
-    content,
+    supply,
     days,
     dateAfter(last, 1),
     dateAfter(date, -1),
     SEARCH_BUDGET,
   );
   return between.ok
-    ? dayAfterDays(content, [...days, ...between.days], date, SEARCH_BUDGET)
+    ? dayAfterDays(supply, [...days, ...between.days], date, SEARCH_BUDGET)
     : between;
 }
 
@@ -87,7 +88,7 @@ export function newCrosswordDays(
   const days = content.crosswordDays ?? [];
   const last = days.at(-1)?.date;
   return daysThrough(
-    content,
+    crosswordSupply(content),
     days,
     last === undefined ? today : dateAfter(last, 1),
     dateAfter(today, CROSSWORD_DAYS_AHEAD),
@@ -104,7 +105,7 @@ type DaysResult =
  * day, each with no word from fewer than `CROSSWORD_REPEAT_DAYS` days before it.
  */
 function daysThrough(
-  content: PackContent,
+  supply: readonly Clued[],
   before: readonly CrosswordDay[],
   first: string,
   last: string,
@@ -112,7 +113,7 @@ function daysThrough(
 ): DaysResult {
   const days = [...before];
   for (let date = first; date <= last; date = dateAfter(date, 1)) {
-    const result = dayAfterDays(content, days, date, budget);
+    const result = dayAfterDays(supply, days, date, budget);
     if (!result.ok) return result;
     days.push(result.day);
   }
@@ -121,27 +122,32 @@ function daysThrough(
 
 /**
  * The Daily Crossword of a date with no word from fewer than
- * `CROSSWORD_REPEAT_DAYS` days before it among the days given.
+ * `CROSSWORD_REPEAT_DAYS` days before it among the days given, which run
+ * in date order, one a date, all before it: those days are among the last
+ * `CROSSWORD_REPEAT_DAYS` given.
  */
 function dayAfterDays(
-  content: PackContent,
+  supply: readonly Clued[],
   days: readonly CrosswordDay[],
   date: string,
   budget: number,
 ): CrosswordResult {
   const since = dateAfter(date, 1 - CROSSWORD_REPEAT_DAYS);
-  const recent = days.filter((day) => day.date >= since).flatMap(({ words }) => words);
-  return crosswordDayOf(content, date, new Set(recent.map((word) => word.entryId)), budget);
+  const recent = days
+    .slice(-CROSSWORD_REPEAT_DAYS)
+    .filter((day) => day.date >= since)
+    .flatMap(({ words }) => words);
+  return crosswordDayOf(supply, date, new Set(recent.map((word) => word.entryId)), budget);
 }
 
-/** The Daily Crossword of a date from content, with none of the Entries to avoid. */
+/** The Daily Crossword of a date from the supply, with none of the Entries to avoid. */
 function crosswordDayOf(
-  content: PackContent,
+  allSupply: readonly Clued[],
   date: string,
   avoid: ReadonlySet<string>,
   budget: number,
 ): CrosswordResult {
-  const supply = crosswordSupply(content).filter(({ entryId }) => !avoid.has(entryId));
+  const supply = allSupply.filter(({ entryId }) => !avoid.has(entryId));
   const words = searchGrid(supply, randomOf(date), budget);
   if (words === undefined) {
     return {
