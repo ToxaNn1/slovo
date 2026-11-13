@@ -305,7 +305,7 @@ function wordKey(word: string): string {
  */
 function keptWords(words: readonly string[], said: readonly string[]): boolean[] {
   const width = said.length + 1;
-  const longest = new Array<number>((words.length + 1) * width).fill(0);
+  const longest = Array.from({ length: (words.length + 1) * width }, () => 0);
   const at = (i: number, j: number) => longest[i * width + j] ?? 0;
   for (let i = words.length - 1; i >= 0; i -= 1) {
     for (let j = said.length - 1; j >= 0; j -= 1) {
