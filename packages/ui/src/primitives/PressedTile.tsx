@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { useEdition } from '../providers/EditionProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import {
@@ -66,7 +67,7 @@ export function PressedTile({
   /** Whether it takes no press while it keeps its look, as an answered tile. */
   inert?: boolean;
   accessibilityLabel?: string;
-  /** The language VoiceOver reads the label in: the Edition's, from `voice`, for a tile with no text. */
+  /** The language VoiceOver reads the label in; the Edition's when left out. */
   accessibilityLanguage?: string;
   accessibilityHint?: string | undefined;
   accessibilityState?: { busy?: boolean; selected?: boolean | undefined; disabled?: boolean };
@@ -78,6 +79,7 @@ export function PressedTile({
   children: ReactNode;
 }) {
   const { colors, radii } = useTokens();
+  const { voice } = useEdition();
   const keyInk = useSchemeColors('light').ink;
   const reduceMotion = useReduceMotion();
   const pressed = useSharedValue(0);
@@ -114,7 +116,7 @@ export function PressedTile({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      accessibilityLanguage={accessibilityLanguage}
+      accessibilityLanguage={accessibilityLanguage ?? voice.accessibilityLanguage}
       accessibilityHint={accessibilityHint}
       accessibilityState={{
         ...accessibilityState,
