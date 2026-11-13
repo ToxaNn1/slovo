@@ -38,6 +38,31 @@ describe('the Sentry API', () => {
     expect(await issues.sentry.read('newIssueEvents', window)).toEqual({ ok: true, value: 12 });
   });
 
+  it('counts the new issues of every page, following the cursor', async () => {
+    const link = (cursor: string, results: boolean) =>
+      `<https://sentry.io/api/0/organizations/org/issues/?cursor=${cursor}>; rel="next"; results="${String(results)}"; cursor="${cursor}"`;
+    const pages = new Map([
+      [null, { rows: 100, link: link('0:100:0', true) }],
+      ['0:100:0', { rows: 5, link: link('0:200:0', false) }],
+    ]);
+    const sentry = createSentryApi({
+      token: 'token',
+      org: 'org',
+      appProject: '1',
+      backendProject: '2',
+      clock: { now: () => now },
+      fetch: (url) => {
+        const cursor = url instanceof URL ? url.searchParams.get('cursor') : null;
+        const page = pages.get(cursor);
+        if (page === undefined) return Promise.resolve(new Response('', { status: 404 }));
+        const body = Array.from({ length: page.rows }, () => ({ count: '1' }));
+        return Promise.resolve(Response.json(body, { headers: { link: page.link } }));
+      },
+    });
+
+    expect(await sentry.read('newIssues', window)).toEqual({ ok: true, value: 105 });
+  });
+
   it.each([
     ['a body that is not JSON', () => new Response('<html>Bad gateway</html>')],
     ['a truncated body', () => new Response('{"data": [')],
