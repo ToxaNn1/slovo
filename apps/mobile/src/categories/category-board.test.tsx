@@ -263,6 +263,20 @@ describe('the Category screen', () => {
     expect(composition.history.list).toEqual([]);
   });
 
+  it('shows the error with a retry when its read fails, and the retry reads the Words again', async () => {
+    await open();
+    jest.spyOn(composition, 'categoryEntries').mockRejectedValueOnce(new Error('The pack is busy'));
+    await renderCategory('emotions-character');
+
+    const error = screen.getByTestId('category-error');
+    expect(within(error).getByText(editionStrings.loadFailed.title)).toBeOnTheScreen();
+    expect(screen.queryAllByTestId(/^category-entry-/)).toEqual([]);
+
+    await settle(() => fireEvent.press(within(error).getByText(editionStrings.loadFailed.retry)));
+    expect(screen.queryByTestId('category-error')).not.toBeOnTheScreen();
+    expect(screen.getAllByText(/^Значення слова /)).toHaveLength(3);
+  });
+
   it('shows the hero and no cards for an empty Category', async () => {
     await open();
     await renderCategory('empty');
