@@ -15,12 +15,12 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 
 | lane | folders | items | status |
 | ---- | ------- | ----- | ------ |
-| L1 | packages/core | 15 | DONE 13, merging |
-| L2 | packages/content-rules, packages/language-pack | 17 | DONE 14, merging |
-| L3a | packages/ui/src/{game,entries,primitives} | 27 | relaunched by coord 2 after STUCK 14 |
-| L3b | rest of packages/ui | 25 | relaunched after STUCK 14 |
-| L4 | apps/mobile | 24 | running (coord 2) |
-| L5 | apps/backend, packages/server-core, packages/contracts | 32 | relaunched by coord 2 after STUCK 13 |
+| L1 | packages/core | 15 | DONE 13, merged |
+| L2 | packages/content-rules, packages/language-pack | 17 | DONE 14, merged |
+| L3a | packages/ui/src/{game,entries,primitives} | 27 | DONE 19, merging |
+| L3b | rest of packages/ui | 25 | DONE 21, merging |
+| L4 | apps/mobile | 24 | relaunched after STUCK 9 |
+| L5 | apps/backend, packages/server-core, packages/contracts | 32 | relaunched (3rd) after STUCK 25 |
 | L6 | apps/admin, apps/video, tools, scripts | 23 | DONE 22, merged |
 | LX | cross-folder items, after all lanes | 14 (+R79 from L6) | todo |
 
@@ -54,3 +54,5 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
   - L3a STUCK: fixed R6 R10 R68 R69 R12 R14 R56 R67 R71 R90-R94; skipped R11 (Pressable sets disabled), R48 (RN 0.88 new arch: measureLayout sync); R13 needs mobile test quick-question-on-screen.test.tsx:182 changed -> LX; R70 needs packages/ui/eslint.config.js Reanimated opt-out list (+ADR 0059 list) -> infra lane. Not started: R49 R89 R95 R96 R97 R137 R138 R156 R174. Breaks mobile test apps/mobile/src/feed/word-tabs-on-screen.test.tsx:313 (expects «1. Покірний.», now «2. Покірний.»): fix in L4 or at merge.
 - 18:59Z L1 DONE 13/15 (R52 new seam Entries.wordsLinking; Question: hide+restore of one Entry within one Cycle read can leave a card without the link until next change). L2 DONE. Merger merging L1 then L2. L3b STUCK 14 -> relaunched here (remaining R20 R57 R58 R73 R75 R76 R105 R157; skipped R98 R107 need Edition string -> LX/infra, R158 in L3a folder -> LX). LX/infra adds: R70 (packages/ui/eslint.config.js Reanimated opt-out), R13, R98, R107, R158, R127, R166 ID_PREFIX export. Note: R106 commit message has a Ukrainian button name (pushed, left).
 - 19:05Z L4 STUCK 9 (R21 R26 R27 R28 R109 R111 R141 R160 R175; skipped R86 kept for owner DESIGN-06, R59 needs infra build config, R85 needs core -> LX) relaunched here. L5 STUCK 18 (+R38 R60 R61 R62) relaunched here. Backend tests need DATABASE_URL=postgres://slovo:slovo@localhost:5432/slovo. Running here: L3a L3b L4 L5 + merger L1/L2.
+- 19:17Z L3a DONE 19, L3b DONE 21 -> merger merging both (+ mobile test 2. Покірний). L1 L2 merged (tip 9087d42b; language-pack/mobile tests flaky only in parallel turbo runs: run per package). L5 STUCK 25 -> relaunched (remaining R136 R162 R164 R165 R172 R173 R79-export). L4 running. Out-of-lane items collected in review-1113/LX-extra.md.
+- NEXT: when L4 L5 DONE: merge each; then LX (lanes/LX.json + LX-extra.md, one Opus implementer on branch fix/1113-code-review-lx, infra items last in it); then code-review of `git diff origin/main...fix/1113-code-review`, fix real findings; `git merge origin/main`; PR; REPORT.md; STATUS FINISHED; WAVES.md on coord/safety-net.
