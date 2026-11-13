@@ -179,22 +179,25 @@ function UndoToast({
     if (!ready) return;
     let active = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    void AccessibilityInfo.isScreenReaderEnabled().then((screenReader) => {
-      if (!active) return;
-      if (!screenReader || !hasUndo) {
-        timer = setTimeout(() => {
-          timeOut();
-        }, lasts);
-      }
-      if (!screenReader) {
-        comeIn();
-        return;
-      }
-      // VoiceOver skips a view that is still coming in, so the toast shows at once.
-      shown.value = 1;
-      if (messageRef.current !== null)
-        AccessibilityInfo.sendAccessibilityEvent(messageRef.current, 'focus');
-    });
+    // A check that fails counts as no screen reader, so the toast still comes in and leaves.
+    void AccessibilityInfo.isScreenReaderEnabled()
+      .catch(() => false)
+      .then((screenReader) => {
+        if (!active) return;
+        if (!screenReader || !hasUndo) {
+          timer = setTimeout(() => {
+            timeOut();
+          }, lasts);
+        }
+        if (!screenReader) {
+          comeIn();
+          return;
+        }
+        // VoiceOver skips a view that is still coming in, so the toast shows at once.
+        shown.value = 1;
+        if (messageRef.current !== null)
+          AccessibilityInfo.sendAccessibilityEvent(messageRef.current, 'focus');
+      });
     return () => {
       active = false;
       clearTimeout(timer);

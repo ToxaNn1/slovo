@@ -2,18 +2,9 @@ import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { Button } from '../primitives/Button';
-import { WholeWordsText } from '../primitives/WholeWordsText';
-import {
-  blockGap,
-  dailyCrosswordCard,
-  fontScaleCap,
-  resultLayout,
-  space,
-  typeStyle,
-} from '../tokens';
-import { PanelGround, TITLE_TRACKING } from './GameResult';
+import { useTokens } from '../providers/TokensProvider';
+import { blockGap, dailyCrosswordCard, fontScaleCap, space, typeStyle } from '../tokens';
+import { ResultButtons, ResultPanel } from './GameResult';
 
 const { mini } = dailyCrosswordCard;
 
@@ -49,7 +40,6 @@ export function CrosswordSolvedPoster({
   const { colors } = tokens;
   const { strings, voice } = useEdition();
   const texts = strings.game.dailyCrossword.solvedScreen;
-  const keyInk = useSchemeColors('light').ink;
 
   return (
     <ScrollView
@@ -57,30 +47,12 @@ export function CrosswordSolvedPoster({
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.screen}
     >
-      <View style={styles.panel}>
-        <PanelGround color={colors.accent} />
-        <View style={styles.panelFoot}>
-          <View accessible {...voice} style={styles.text}>
-            <WholeWordsText
-              text={texts.title}
-              typeRole="resultTitle"
-              tracking={TITLE_TRACKING}
-              accessibilityRole="header"
-              style={[typeStyle('resultTitle', tokens), { color: keyInk }]}
-            />
-            {time === undefined ? null : (
-              <Text
-                testID="crossword-solved-time"
-                maxFontSizeMultiplier={fontScaleCap.text}
-                style={[typeStyle('resultLine', tokens), { color: keyInk }]}
-              >
-                {time}
-              </Text>
-            )}
-          </View>
-          {mascot}
-        </View>
-      </View>
+      <ResultPanel
+        title={texts.title}
+        line={time}
+        lineTestID="crossword-solved-time"
+        mascot={mascot}
+      />
       <View style={styles.body}>
         <Text
           maxFontSizeMultiplier={fontScaleCap.text}
@@ -122,21 +94,14 @@ export function CrosswordSolvedPoster({
             </Text>
           )}
         </View>
-        <View style={styles.buttons}>
-          <View style={styles.button}>
-            <Button
-              variant="neutral"
-              testID="crossword-solved-to-games"
-              label={texts.toGames}
-              onPress={onToGames}
-            />
-          </View>
-          {onShare === undefined ? null : (
-            <View style={styles.button}>
-              <Button testID="crossword-solved-share" label={texts.share} onPress={onShare} />
-            </View>
-          )}
-        </View>
+        <ResultButtons
+          away={{ testID: 'crossword-solved-to-games', label: texts.toGames, onPress: onToGames }}
+          on={
+            onShare === undefined
+              ? undefined
+              : { testID: 'crossword-solved-share', label: texts.share, onPress: onShare }
+          }
+        />
       </View>
     </ScrollView>
   );
@@ -144,20 +109,9 @@ export function CrosswordSolvedPoster({
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, paddingBottom: space[8] + space[2] },
-  panel: { height: resultLayout.panelHeight, justifyContent: 'flex-end' },
-  panelFoot: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: space[3],
-    paddingHorizontal: space[5],
-    paddingBottom: resultLayout.panelFootBottom,
-  },
-  text: { flex: 1, gap: space[2] - 2 },
   body: { paddingHorizontal: space[5], gap: blockGap },
   grid: { gap: mini.gap, alignSelf: 'center' },
   gridRow: { flexDirection: 'row', gap: mini.gap },
   cell: { width: mini.cell * 1.5, height: mini.cell * 1.5, borderRadius: mini.radius },
   line: { gap: space[1], alignItems: 'center' },
-  buttons: { flexDirection: 'row', gap: space[3] },
-  button: { flex: 1 },
 });

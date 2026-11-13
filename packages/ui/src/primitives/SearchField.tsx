@@ -3,7 +3,7 @@ import Svg, { Circle, Polygon } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, searchFieldDrawing, typeStyle } from '../tokens';
+import { fontScaleCap, minTouchTarget, searchFieldDrawing, typeStyle } from '../tokens';
 
 /** The slack around the clear button up to the smallest tap area. */
 const CLEAR_HIT_SLOP = (minTouchTarget - searchFieldDrawing.clear) / 2;
@@ -35,6 +35,8 @@ export function SearchField({
         testID={testID}
         accessibilityLabel={label}
         {...voice}
+        // The box keeps its drawn height, so the query grows no further than it fits.
+        maxFontSizeMultiplier={fontScaleCap.text}
         {...input}
         value={value}
         onChangeText={onChangeText}
@@ -102,6 +104,7 @@ export function SearchLink({
       <Magnifier color={colors.ink} />
       <Text
         numberOfLines={1}
+        maxFontSizeMultiplier={fontScaleCap.text}
         style={[typeStyle('fieldText', tokens), styles.placeholder, { color: colors.muted }]}
       >
         {label}

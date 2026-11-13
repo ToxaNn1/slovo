@@ -195,6 +195,17 @@ describe('VerticalPager', () => {
     expect(screen.getByText('Third')).toBeTruthy();
   });
 
+  it('turns to no page once every page has left', async () => {
+    const onIndexChange = jest.fn();
+    const pagesLeft = await renderPager({ onIndexChange });
+    await pagesLeft([]);
+
+    await swipe(-HEIGHT / 2, -3000);
+    await swipe(HEIGHT / 2, 3000);
+
+    expect(onIndexChange).not.toHaveBeenCalled();
+  });
+
   it('shows the last page left once the current page and those after it leave', async () => {
     const setPages = await renderPager({ initialIndex: 2 });
 
