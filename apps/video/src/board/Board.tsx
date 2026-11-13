@@ -26,9 +26,8 @@ import { EndCardAt } from '../EndCard';
 import { dark, light, uiFont, wordFont } from '../look';
 import { useSafe } from '../safe';
 import { Bed, Knock, levels, Sfx, sfx, Voice } from '../sound';
+import { clamp, pop } from '../shared/motion';
 
-const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
-const pop = Easing.bezier(0.34, 1.56, 0.64, 1);
 
 /** The board's cells: as many as the word of the day has letters. */
 const target = [...word.lemma.toUpperCase()];

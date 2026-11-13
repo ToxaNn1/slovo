@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMatchRoute, useNavigate, useSearch } from '@tanstack/react-router';
 
-import { adminApi } from '../api';
+import { editionsQuery } from '../queries';
 import {
   DEFAULT_PERIOD,
   FILTERS_OFF_HINT,
@@ -17,7 +17,7 @@ const ALL_EDITIONS = '';
 /** The label of the Edition filter's choice: an Edition's name or «Усі Editions». */
 export function useEditionLabel(): string {
   const search = useSearch({ from: '__root__' });
-  const editions = useQuery({ queryKey: ['editions'], queryFn: () => adminApi.editions() });
+  const editions = useQuery(editionsQuery);
   if (search.edition === undefined) return 'Усі Editions';
   return (
     editions.data?.editions.find((edition) => edition.id === search.edition)?.displayName ??
@@ -43,7 +43,7 @@ export function FilterChips() {
   const search = useSearch({ from: '__root__' });
   const choose = useChooseFilters();
   const period = search.period ?? DEFAULT_PERIOD;
-  const editions = useQuery({ queryKey: ['editions'], queryFn: () => adminApi.editions() });
+  const editions = useQuery(editionsQuery);
   const options = [
     { id: undefined, name: 'Усі Editions' },
     ...(editions.data?.editions.map(({ id, displayName }) => ({ id, name: displayName })) ?? []),
@@ -95,7 +95,7 @@ export function FiltersBar() {
   const off = Boolean(matchRoute({ to: '/development' }) || matchRoute({ to: '/sessions' }));
   const chosen = search.period ?? DEFAULT_PERIOD;
   const period = onQuality ? qualityPeriod(chosen) : chosen;
-  const editions = useQuery({ queryKey: ['editions'], queryFn: () => adminApi.editions() });
+  const editions = useQuery(editionsQuery);
 
   return (
     <div className="flex flex-wrap items-center gap-2">

@@ -34,7 +34,7 @@ const decode = (s) =>
 const lines = [];
 for (let n = 0; n <= Number(last); n++) {
   const url = n === 0 ? base : `${base}list-${n}.html`;
-  const html = execFileSync('curl', ['-sSL', '--max-time', '30', url], {
+  const html = execFileSync('curl', ['-fsSL', '--max-time', '30', url], {
     maxBuffer: 16 * 1024 * 1024,
   }).toString('utf8');
   for (const m of html.matchAll(/<p>([\s\S]*?)(?=<p>|<\/p>|<div)/g)) {
