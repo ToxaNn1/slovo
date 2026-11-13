@@ -44,7 +44,8 @@ function Sessions() {
             className="flex flex-wrap items-center gap-3 px-[18px] py-3 text-[13px]"
           >
             <span className="grow">
-              Вхід {formatMoment(session.createdAt)} · остання дія {formatMoment(session.lastSeenAt)}
+              Вхід {formatMoment(session.createdAt)} · остання дія{' '}
+              {formatMoment(session.lastSeenAt)}
             </span>
             {session.current ? (
               <span className="rounded-[20px] bg-ok-soft px-[9px] py-[3px] text-[11.5px] font-semibold text-ok">

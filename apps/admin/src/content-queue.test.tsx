@@ -163,9 +163,7 @@ test('a queue write keeps its confirmation open until it ends, and a refusal sta
 });
 
 test('a queue that fails to load says so', async () => {
-  server.use(
-    http.get('*/admin/content-queue/*', () => HttpResponse.json({}, { status: 502 })),
-  );
+  server.use(http.get('*/admin/content-queue/*', () => HttpResponse.json({}, { status: 502 })));
   render(<Admin />);
 
   expect(await screen.findByText('Не вдалося завантажити чергу.')).toBeDefined();
