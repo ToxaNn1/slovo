@@ -123,7 +123,7 @@ It checks every file first and uploads nothing when one names no Narrator Voice 
 
 ## The quote check
 
-The quote check (ADR 0084) runs on the Deployment as a second Railway service, a Cron service on the same image: its service in `.railway/railway.ts` holds its settings.
+The quote check (ADR 0095) runs on the Deployment as a second Railway service, a Cron service on the same image: its service in `.railway/railway.ts` holds its settings.
 
 | Setting  | Value                                                                  |
 | -------- | ---------------------------------------------------------------------- |

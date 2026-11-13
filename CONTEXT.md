@@ -23,7 +23,7 @@ The changed records of an Edition since a content version, whole records the app
 _Avoid_: Delta, diff (that is what the editor shows on a version conflict), OTA
 
 **Content version**:
-A per-Edition number the Deployment's database raises on every publish, a rollback included; it only grows, and two different contents never share one (ADR 0011, 0090). A record version is the per-record counter a save names and the server checks, refusing a save over a newer one.
+A per-Edition number the Deployment's database raises on every publish, a rollback included; it only grows, and two different contents never share one (ADR 0090). A record version is the per-record counter a save names and the server checks, refusing a save over a newer one.
 _Avoid_: Pack version, checksum, revision
 
 **Update channel**:
@@ -56,7 +56,7 @@ _Avoid_: Inbox, moderation queue
 
 **Batch** («пачка»):
 The records one `pnpm content add|edit|flag` run adds or edits, published at once and reviewed afterwards in the Content queue; «Відкотити пачку» reverts it whole, new records to Retired and edits to their previous versions, skipping a record anyone changed after the batch (ADR 0090).
-_Avoid_: Wave (that is the repo process of ADR 0080), PR, commit
+_Avoid_: Wave (that is the retired repo process of ADR 0080, replaced by ADR 0090), PR, commit
 
 **Owner check**:
 A manual check the owner ticks in the Owner admin, kept in the database per version; agents add one through a command (ADR 0088).

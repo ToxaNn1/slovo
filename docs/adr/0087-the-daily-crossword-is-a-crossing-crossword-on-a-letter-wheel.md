@@ -1,6 +1,6 @@
 # The Daily Crossword is a crossing crossword played on a letter wheel
 
-Owner decisions 07.11 (spec #1674, board 08): the traced grid of ADR 0073 gives way to a classic crossing crossword entered on a letter wheel. This ADR supersedes ADR 0073's Puzzle, Generation, Play, Progress and fallback; ADR 0073's card, XP, Share Card and «not a Game» stay. It amends ADR 0085 (one new Badge family shape) and ADR 0052 (the typed fallback goes). Behind `crossingCrossword` and its parts `crosswordHint`, `crosswordSolveTime`, `crosswordSolvedScreen` and `crosswordBadgeStamp` (needs `badges`); off, the traced crossword of ADR 0073 stays.
+Owner decisions 07.11 (spec #1674, board 08): the traced grid of ADR 0073 gives way to a classic crossing crossword entered on a letter wheel. This ADR supersedes ADR 0073's Puzzle, Generation, Play, Progress and fallback; ADR 0073's card, XP, Share Card and «not a Game» stay, now stated here (ADR 0073 is superseded by this one). It amends ADR 0085 (one new Badge family shape) and ADR 0052 (the typed fallback goes). Behind `crossingCrossword` and its parts `crosswordHint`, `crosswordSolveTime`, `crosswordSolvedScreen` and `crosswordBadgeStamp` (needs `badges`); off, the traced crossword of ADR 0073 stays.
 
 ## Decision
 
@@ -13,6 +13,7 @@ Owner decisions 07.11 (spec #1674, board 08): the traced grid of ADR 0073 gives 
 - **Progress.** The filled cells, the Words solved, `hinted`, the elapsed seconds, the date and the puzzle's fingerprint stay on the device; a new date or another puzzle starts empty; the trace is never kept. The time pauses when the screen leaves or the app goes to the background.
 - **Sync of the result.** The XP log record of the Daily Crossword's solve gains the solve time in seconds and whether a hint was used. It syncs by id like every other record, so the solved card and the share line are the same on every device. A record from before reads as no time and no hint; the card then shows «✓ Розв’язано» with no time line. The XP stays 15, once a day (ADR 0066). The 7-day run (`dailyCrosswordRun`) reads solves as before, hints included.
 - **Failure.** On `no-fill` the card is not shown that day. The typed crossword of ADR 0052 and its screen go; the Language Pack's recorded crossword days are no longer read by the app.
+- **What stays from ADR 0073.** The Daily Crossword card, the Share Card and the XP stay: the solve appends the Daily Crossword's XP once for the date, in the same write (ADR 0066). The crossword is not a Game (ADR 0052): it makes nothing Seen and changes no Knowledge Mark. Hidden Entries stay in the pool, because the grid is a puzzle, not a surface that shows the Word anew.
 - **Badge family shape.** ADR 0085's shapes gain `checker`: a tile with two cut corners (top-left, bottom-right), an ink frame, a cream inset and a 3×3 red and ink checker. The UA «Кросворд» family uses it.
 
 - **In the contracts.** The `daily-crossword` XP log record carries `solveSeconds` and `hinted`, both optional; left out, they read as no time and no hint. A Badge may carry a `stampKicker`, the line over its name on the full-screen stamp, such as «7 ПОСПІЛЬ» on the UA `crossword-7`.

@@ -1,5 +1,7 @@
 # The Daily Crossword is a traced letter grid
 
+**Superseded by ADR 0087 while `crossingCrossword` is on.** With it on, the crossing crossword of ADR 0087 replaces this grid's generation, play, progress and fallback; what both share (the card, the XP once a day, the Share Card, «not a Game», nothing Seen, no Knowledge Mark changed) is stated in ADR 0087. With `crossingCrossword` off, the traced grid below (`tracedCrossword`) is still the Daily Crossword.
+
 The Daily Crossword of ADR 0052 asks the reader to type letters into empty cells, which is slow and fiddly on a phone. Owner decision 03.11 (spec #1540): a 5×5 grid already full of letters, whose hidden Words the reader finds by dragging a finger across them. This ADR supersedes the crossword part of ADR 0052 (Generation and Play); the card, the XP, the Share Card and «not a Game» stay.
 
 **The puzzle.** Hidden Words tile all 25 cells: every letter belongs to exactly one hidden Word. Each Word's path is a self-avoiding walk over cells that touch by a side or a corner (8-adjacent), turns allowed, read from its first letter to its last. A hidden Word is a Word within the Rarity Ceiling whose Lemma is 3–8 lowercase letters (no space, hyphen or capital), each Lemma at most once a day; its primary Definition is the clue, and its stressed letters carry the Stress mark. Corrections no longer appear.

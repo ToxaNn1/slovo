@@ -1,5 +1,7 @@
 # Quotes are verified in CI, and every kind goroh carries is sourced by a command
 
+**Superseded by ADR 0095** (with ADR 0090). The quote check is a background job (ADR 0090, 0095); the matching rule and the `pnpm source:*` drafters are in ADR 0095; ADR 0094 still limits a quotation to one sentence. Kept for history.
+
 ADR 0080 let a content wave reach `main` without the owner reading the drafts, through `pnpm content check` and CI. Neither checked that a Definition really is the dictionary's words: in the 06.11 wave the coordinator ran a throw-away quote check by hand, and agents quoted Idioms, Corrections and Synonym Rows from goroh pages by hand with the wave's scripts as their only help (spec #1622). This amends ADR 0080.
 
 **Amended by ADR 0094.** A quoted text is at most one sentence of a dictionary article; the check stays word for word over what is quoted.
