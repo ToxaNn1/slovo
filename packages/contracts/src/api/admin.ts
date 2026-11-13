@@ -245,28 +245,34 @@ const contentProcedure = procedure.errors({
   NOT_IMPORTED: { status: 409, message: "The Edition's content is not imported" },
 });
 
+/** The data of a REFUSED write: each refusal names the content rule it breaks. */
+export const ContentRefusalsSchema = z.object({
+  refusals: z.array(
+    z.object({
+      rule: z.string(),
+      entryId: z.string().optional(),
+      field: z.string().optional(),
+      message: z.string(),
+    }),
+  ),
+});
+
+/** The data of a STALE write: the record's version now. */
+export const StaleWriteSchema = z.object({ currentVersion: z.number().int().positive() });
+
 /** What a write is refused with besides the common refusals. */
 const writeErrors = {
   /** The save breaks the content rules: each refusal names its rule. */
   REFUSED: {
     status: 422,
     message: 'The record breaks a content rule',
-    data: z.object({
-      refusals: z.array(
-        z.object({
-          rule: z.string(),
-          entryId: z.string().optional(),
-          field: z.string().optional(),
-          message: z.string(),
-        }),
-      ),
-    }),
+    data: ContentRefusalsSchema,
   },
   /** The record changed after the version the write saw. */
   STALE: {
     status: 409,
     message: 'The record changed since the version the write saw',
-    data: z.object({ currentVersion: z.number().int().positive() }),
+    data: StaleWriteSchema,
   },
 } as const;
 
