@@ -124,6 +124,13 @@ export function createAdminSignIn({
     now: clock.now(),
   });
 
+  /** Whether the TOTP is the user's, of a step newer than the last that signed in, which it spends. */
+  async function spendTotp(user: AdminUser, totp: string, at: Date): Promise<boolean> {
+    if (user.totp.state === 'none') return false;
+    const step = totpStep(hmacSha1, vault.open(user.totp.sealedSecret), totp, at);
+    return step !== undefined && (await store.spendTotpStep(user.id, step));
+  }
+
   /** Answers the refusal a wrong attempt, already taken, earns. */
   async function failed(email: string): Promise<SignInRefused> {
     const result = await attemptFailed(rateLimits, failuresKey(email), attemptLimit());
@@ -218,8 +225,7 @@ export function createAdminSignIn({
       const now = clock.now();
       const passed =
         factor.kind === 'totp'
-          ? user.totp.state !== 'none' &&
-            totpMatches(hmacSha1, vault.open(user.totp.sealedSecret), factor.totp, now)
+          ? await spendTotp(user, factor.totp, now)
           : user.totp.state === 'on' &&
             (await store.spendRecoveryCode(user.id, hash(factor.recoveryCode.trim()), now));
       if (!passed) return failed(email);
@@ -301,9 +307,9 @@ export function totpOf(hmacSha1: HmacSha1, secret: string, at: Date): string {
   return hotp(hmacSha1, secret, stepOf(at));
 }
 
-/** Whether the TOTP is the secret's at `at`, or one step either side for a slow clock. */
-function totpMatches(hmacSha1: HmacSha1, secret: string, totp: string, at: Date): boolean {
+/** The step whose TOTP the given one is, at `at` or one step either side for a slow clock. */
+function totpStep(hmacSha1: HmacSha1, secret: string, totp: string, at: Date): number | undefined {
   const step = stepOf(at);
   const given = totp.trim();
-  return [step - 1, step, step + 1].some((near) => hotp(hmacSha1, secret, near) === given);
+  return [step - 1, step, step + 1].find((near) => hotp(hmacSha1, secret, near) === given);
 }
