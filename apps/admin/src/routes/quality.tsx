@@ -4,6 +4,7 @@ import { createFileRoute, useSearch } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { adminApi } from '../api';
+import { qualityQuery } from '../queries';
 import { DEFAULT_PERIOD, qualityPeriod } from '../filters';
 
 export const Route = createFileRoute('/quality')({
@@ -40,11 +41,7 @@ function delta(value: number, yesterday: number) {
 function Quality() {
   const search = useSearch({ from: '__root__' });
   const period = qualityPeriod(search.period ?? DEFAULT_PERIOD);
-  const quality = useQuery({
-    queryKey: ['quality', search.edition, period],
-    queryFn: () => adminApi.quality({ editionId: search.edition, period }),
-    retry: false,
-  });
+  const quality = useQuery(qualityQuery({ editionId: search.edition, period }));
   const ci = useQuery({
     queryKey: ['ciHistory', period],
     queryFn: () => adminApi.ciHistory({ period }),

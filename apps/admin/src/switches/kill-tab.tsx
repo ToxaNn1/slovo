@@ -16,7 +16,7 @@ const segmentClass =
  * filter picks, or of every Edition, over every Rule.
  */
 export function KillTab() {
-  const { editions, loaded, picked, refetch } = useSwitches();
+  const { editions, editionsLoaded, loaded, picked, refetch } = useSwitches();
   const navigate = useNavigate();
   const [feature, setFeature] = useState<FeatureSwitch>(FEATURES[0] ?? 'game');
   const [confirming, setConfirming] = useState(false);
@@ -100,10 +100,11 @@ export function KillTab() {
         </p>
         <button
           type="button"
+          disabled={!editionsLoaded}
           onClick={() => {
             setConfirming(true);
           }}
-          className="rounded-[14px] bg-destructive p-4 text-base font-semibold text-white hover:bg-destructive/90 max-md:rounded-[18px] max-md:p-[18px] max-md:text-[17px]"
+          className="rounded-[14px] bg-destructive p-4 disabled:opacity-50 text-base font-semibold text-white hover:bg-destructive/90 max-md:rounded-[18px] max-md:p-[18px] max-md:text-[17px]"
         >
           Вимкнути зараз
         </button>
