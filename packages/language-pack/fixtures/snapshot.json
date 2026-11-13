@@ -142,7 +142,7 @@
       "explanation": "Тестове пояснення: так кажуть під впливом іншої мови.",
       "examplePair": {
         "nonStandard": "Він всігда приходить вчасно.",
-        "standard": "Він завжди приходить вчасно."
+        "standard": "**Він завжди приходить вчасно**."
       },
       "categoryId": "work",
       "sources": [
@@ -176,7 +176,7 @@
       "explanation": "Тестове пояснення.",
       "examplePair": {
         "nonStandard": "Який він разговорчивий!",
-        "standard": "Який він балакучий!"
+        "standard": "**Який він балакучий**!"
       },
       "categoryId": "work",
       "sources": [
@@ -196,7 +196,7 @@
       "explanation": "Тестове пояснення.",
       "examplePair": {
         "nonStandard": "За вікном мела метель.",
-        "standard": "За вікном мела заметіль."
+        "standard": "**За вікном мела заметіль**."
       },
       "categoryId": "shop",
       "sources": [
@@ -216,7 +216,7 @@
       "explanation": "Тестове пояснення.",
       "examplePair": {
         "nonStandard": "На сьогоднішній день план виконано.",
-        "standard": "Сьогодні план виконано."
+        "standard": "**Сьогодні план виконано**."
       },
       "categoryId": "work",
       "sources": [

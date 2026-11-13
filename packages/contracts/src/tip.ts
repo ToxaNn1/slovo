@@ -24,10 +24,23 @@ export const TipGameQuestionSchema = z.strictObject({
 export type TipGameQuestion = z.infer<typeof TipGameQuestionSchema>;
 
 /**
+ * Where a Tip's rule does not hold (ADR 0120): a short text in reading prose
+ * («Не ставимо перед «о»…») and the words it names, which its card shows in
+ * chips under the tab «Винятки».
+ */
+export const TipExceptionsSchema = z.strictObject({
+  explanation: EntryTextSchema.max(TIP_EXPLANATION_MAX_LENGTH),
+  words: z.array(EntryTextSchema).min(1),
+});
+
+export type TipExceptions = z.infer<typeof TipExceptionsSchema>;
+
+/**
  * A Tip as authored in an Edition's content and as returned by the Core: a
  * rule of good speech with a title («Котра година?»), its standard form, an
  * explanation of at most 300 characters, at least one source and its own Game
- * question; optionally the non-standard form it replaces and an example. A
+ * question; optionally the non-standard form it replaces, an example and its
+ * exceptions (ADR 0120). A
  * Tip with no non-standard form shows only the right way. It has no Category,
  * rarity or Pronunciation (ADR 0051).
  *
@@ -43,6 +56,7 @@ export const TipSchema = z.strictObject({
   standardForm: EntryTextSchema,
   explanation: EntryTextSchema.max(TIP_EXPLANATION_MAX_LENGTH),
   example: ExampleSchema.optional(),
+  exceptions: TipExceptionsSchema.optional(),
   sources: z.array(SourceSchema).min(1),
   gameQuestion: TipGameQuestionSchema,
   retired: z.boolean().default(false),

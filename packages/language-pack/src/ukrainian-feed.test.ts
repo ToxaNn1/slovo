@@ -1,4 +1,4 @@
-import { type Entry } from '@slovo/contracts';
+import { parseStandardExample, type Entry, type ExamplePair } from '@slovo/contracts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -185,8 +185,8 @@ const today = '2026-10-11T09:00:00+03:00';
 const WALK_TIMEOUT_MS = 20_000;
 
 describe('the Feed over the Ukrainian Language Pack', () => {
-  it('opens a pack the build writes in pack format 12 and shows its first card', async () => {
-    expect(await pack.metadata()).toMatchObject({ editionId: 'uk', packFormat: 12 });
+  it('opens a pack the build writes in pack format 13 and shows its first card', async () => {
+    expect(await pack.metadata()).toMatchObject({ editionId: 'uk', packFormat: 13 });
 
     const feed = await run(await seedUserState(), fakeClock(today).clock);
 
@@ -318,7 +318,7 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
       otherEquivalents: correction?.standardEquivalents.slice(1),
       correctionType: correction?.correctionType,
       explanation: correction?.explanation,
-      examplePair: correction?.examplePair,
+      examplePair: correction && cardExamplePairOf(correction.examplePair),
       sourceNames: correction?.sources.map((source) => source.shortName ?? source.title),
     });
   });
@@ -462,3 +462,13 @@ describe('the notification plan over the Ukrainian Language Pack', () => {
     }
   });
 });
+
+/** The example pair as the Core's card model gives it: without the marks, and in pieces. */
+function cardExamplePairOf({ nonStandard, standard }: ExamplePair) {
+  const parsed = parseStandardExample(standard);
+  return {
+    nonStandard,
+    standard: standard.replaceAll('**', ''),
+    standardSegments: parsed.kind === 'marked' ? parsed.segments : [],
+  };
+}

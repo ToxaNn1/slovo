@@ -417,6 +417,7 @@
     "moreExamples": "Ще приклади",
     "tabMore": "Детальніше",
     "tabLess": "Сховати",
+    "tabSource": "Джерело",
     "tabs": {
       "essence": "Суть",
       "example": "Приклад",
@@ -490,11 +491,13 @@
     "chip": "синоніми",
     "heading": "{dominant}, синонімічний ряд: {members}",
     "concealedHeading": "{dominant}, синонімічний ряд",
-    "source": "Джерело: {source}"
+    "source": "Джерело: {source}",
+    "page": "Ряд · {page}/{pages}"
   },
   "tipCard": {
     "chip": "порада",
-    "heading": "Порада: {title}"
+    "heading": "Порада: {title}",
+    "tabs": { "rule": "Правило", "exceptions": "Винятки" }
   },
   "favorites": {
     "title": "Улюблене",

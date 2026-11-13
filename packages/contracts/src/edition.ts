@@ -468,6 +468,10 @@ export const FeatureSwitchesSchema = z.strictObject({
   gesturesHintDemo: FeatureSwitchStateSchema,
   /** Word tabs: every Entry card in a fixed-height frame (ADR 0091), the Word of the Day's once it is open, with tabs under its head: a Word's «Суть», «Приклад», «Зв’язки» and «Історія», a Correction's «Як краще», «Чому» and «Приклади», an Idiom's «Суть», «Звідки» and «Приклад», a Tip's «Суть» and «Приклад»; a Synonym Row's in the same frame. Content too tall for the frame shrinks a font size at a time, then is clamped under «Детальніше», which opens it whole. The Word of the Day card is the red card while Self-check keeps it closed; the Feed's header draws no XP bar. Off, the cards are one column, the Word's with «Детальніше». */
   wordTabs: FeatureSwitchStateSchema,
+  /** The source tab: every tabbed Entry card's last tab «Джерело» names its sources, each on its own line, and the source line leaves the other tabs (ADR 0116). Off, the source line stays in its tab. Off while `wordTabs` is. */
+  sourceTab: FeatureSwitchStateSchema,
+  /** The Tip card's tab «Винятки»: a Tip with exceptions shows them after «Правило», their text and their words in chips (ADR 0120). Off, the card has «Правило» alone. Off while `wordTabs` is. */
+  tipExceptions: FeatureSwitchStateSchema,
   /** The Search button of the Feed's header, which opens the Search screen; Search itself stays under `search`. Off while `search` is. */
   searchButton: FeatureSwitchStateSchema,
   /** The Feed header's wordmark as a button that opens the Dashboard (ADR 0079). Off while `dashboard` is. */

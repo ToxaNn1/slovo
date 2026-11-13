@@ -138,6 +138,8 @@
     "wordOfTheDay": "on",
     "wordOfTheDayArchive": "on",
     "wordTabs": "on",
+    "sourceTab": "on",
+    "tipExceptions": "on",
     "xpLog": "on",
     "yesterday": "on"
   },

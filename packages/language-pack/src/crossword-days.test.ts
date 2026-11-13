@@ -174,11 +174,11 @@ describe('the crossword days the pack build keeps in the Edition', () => {
     expect(kept).toEqual(recorded.find((day) => day.date === '2027-06-15'));
   }, 60_000);
 
-  it('builds the recorded days into pack format 12', () => {
+  it('builds the recorded days into pack format 13', () => {
     const editionDir = recordedEdition();
     const outFile = join(editionDir, 'dist', 'language-pack.db');
     const result = buildLanguagePack({ editionDir, outFile });
-    expect(result.ok && result.metadata.packFormat).toBe(12);
+    expect(result.ok && result.metadata.packFormat).toBe(13);
     const db = new DatabaseSync(outFile, { readOnly: true });
     try {
       const wordsOf = (date: string) =>

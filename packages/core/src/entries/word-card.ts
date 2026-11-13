@@ -1,6 +1,7 @@
 import type { Example, Gender, PartOfSpeech, Register, Word } from '@slovo/contracts';
 
 import type { Entries } from './entries';
+import { sourceNamesOf } from './source-names';
 import { renderStress, stressedVowelsOf } from './stress';
 import { buildSynonymRowCard, type SynonymRowWordModel } from './synonym-row-card';
 
@@ -69,6 +70,8 @@ export interface WordCardModel {
   readonly linkedCorrections: readonly LinkedCorrection[];
   /** The first live Synonym Row that links the Word as a member; nothing for a Word in no row. */
   readonly synonymRow: WordCardSynonymRow | undefined;
+  /** The names of the Word's sources, for the card's «Джерело» tab (ADR 0116). */
+  readonly sourceNames: readonly string[];
 }
 
 /** The most Synonyms a Word card shows. */
@@ -112,6 +115,7 @@ export async function buildWordCard({
       nonStandardForm,
     })),
     synonymRow,
+    sourceNames: sourceNamesOf(word.sources),
   };
 }
 

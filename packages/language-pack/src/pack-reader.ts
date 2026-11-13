@@ -19,7 +19,7 @@ import {
 } from '@slovo/contracts';
 import type { ContentReadPort } from '@slovo/core';
 
-import { metadataOf, type MetadataRow } from './pack-layout';
+import { PACK_FORMAT, metadataOf, type MetadataRow } from './pack-layout';
 
 /** The pack format this reader reads, the one this package builds; the app asks for Content updates of it. */
 export { PACK_FORMAT } from './pack-layout';
@@ -131,6 +131,7 @@ interface TipRow {
   question_prompt: string;
   right_answer: string;
   retired: number;
+  exceptions_explanation: string | null;
 }
 
 interface SourceRow {
@@ -239,8 +240,9 @@ const synonymRowParts = (list: string) => ({
 
 /** The parts of the Tips of the ids, each row with the id of its Tip. */
 const tipParts = (list: string) => ({
-  tips: `SELECT id, title, non_standard_form, standard_form, explanation, example_text, example_author, question_prompt, right_answer, retired FROM tips WHERE id IN ${list} ORDER BY id`,
+  tips: `SELECT id, title, non_standard_form, standard_form, explanation, example_text, example_author, question_prompt, right_answer, retired, exceptions_explanation FROM tips WHERE id IN ${list} ORDER BY id`,
   wrongAnswers: `SELECT tip_id AS entry_id, text FROM tip_wrong_answers WHERE tip_id IN ${list} ORDER BY tip_id, position`,
+  exceptionWords: `SELECT tip_id AS entry_id, text FROM tip_exception_words WHERE tip_id IN ${list} ORDER BY tip_id, position`,
   sources: `SELECT entry_id, title, short_name, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
 });
 
@@ -486,14 +488,15 @@ export function createPackReader(db: PackDatabase): PackReader {
     return parts.flat();
   }
 
-  /** The Tips of the ids, each with all its parts, three queries per `IDS_PER_READ`. */
+  /** The Tips of the ids, each with all its parts, four queries per `IDS_PER_READ`. */
   async function readTips(ids: readonly string[]): Promise<Tip[]> {
     const parts = await Promise.all(
       inParts(ids).map(async ({ list, params }) => {
         const sql = tipParts(list);
-        const [tips, wrongAnswers, tipSources] = await Promise.all([
+        const [tips, wrongAnswers, exceptionWords, tipSources] = await Promise.all([
           db.getAllAsync<TipRow>(sql.tips, params),
           db.getAllAsync<WithEntryId<{ text: string }>>(sql.wrongAnswers, params).then(byEntry),
+          db.getAllAsync<WithEntryId<{ text: string }>>(sql.exceptionWords, params).then(byEntry),
           db.getAllAsync<WithEntryId<SourceRow>>(sql.sources, params).then(byEntry),
         ]);
         // Parsing checks the pack against the contracts and types the Tip.
@@ -511,6 +514,14 @@ export function createPackReader(db: PackDatabase): PackReader {
                     tip.example_author === null
                       ? { text: tip.example_text }
                       : { text: tip.example_text, author: tip.example_author },
+                }),
+            ...(tip.exceptions_explanation === null
+              ? {}
+              : {
+                  exceptions: {
+                    explanation: tip.exceptions_explanation,
+                    words: (exceptionWords.get(tip.id) ?? []).map(({ text }) => text),
+                  },
                 }),
             sources: (tipSources.get(tip.id) ?? []).map(sourceOf),
             gameQuestion: {
@@ -620,14 +631,21 @@ export type PackOpening =
 
 /**
  * Opens a compiled Language Pack for the running app, with the metadata it
- * read. It refuses when the native app, the JavaScript bundle and the pack
- * are not all of one Edition, e.g. a development client built for one Edition
- * that Metro serves another to, and throws when the pack's metadata is broken.
+ * read. It refuses a pack of another pack format than the one this app reads,
+ * and when the native app, the JavaScript bundle and the pack are not all of
+ * one Edition, e.g. a development client built for one Edition that Metro
+ * serves another to. It throws when the pack's metadata is broken.
  */
 export async function openPack(db: PackDatabase, app: AppEditions): Promise<PackOpening> {
   const reader = createPackReader(db);
   const metadata = await reader.metadata();
-  const { editionId } = metadata;
+  const { editionId, packFormat } = metadata;
+  if (packFormat !== PACK_FORMAT) {
+    return {
+      ok: false,
+      reason: `The Language Pack has pack format ${String(packFormat)}; this app reads pack format ${String(PACK_FORMAT)}. Rebuild the Language Pack.`,
+    };
+  }
   const { bundle, native } = app;
   if ([native, editionId].every((id) => id === undefined || id === bundle)) {
     return { ok: true, reader, metadata };

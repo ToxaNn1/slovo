@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { buildLanguagePack, openLanguagePack } from './index';
-import { openPack, type AppEditions, type PackDatabase } from './pack-reader';
+import { PACK_FORMAT, openPack, type AppEditions, type PackDatabase } from './pack-reader';
 import { nodePackDatabase } from './read-pack';
 
 // Opening a compiled pack the way the mobile shell does, over the Node driver.
@@ -63,7 +63,7 @@ describe('openPack', () => {
       editionId: 'fixture',
       contentVersion: 9,
       contentChecksum: recordedChecksum,
-      packFormat: 12,
+      packFormat: 13,
     };
     expect(opening.metadata).toEqual(metadata);
     expect(await opening.reader.metadata()).toEqual(metadata);
@@ -128,6 +128,19 @@ describe('openPack', () => {
     expect(opening).toMatchObject({
       ok: false,
       reason: expect.stringContaining('native app: "pl"') as string,
+    });
+  });
+
+  it('refuses a pack of another pack format, which the app cannot read', async () => {
+    const file = builtPack();
+    editMetadata(
+      file,
+      `UPDATE metadata SET value = '${String(PACK_FORMAT - 1)}' WHERE key = 'pack_format'`,
+    );
+
+    expect(await open(file, { bundle: 'fixture', native: 'fixture' })).toEqual({
+      ok: false,
+      reason: `The Language Pack has pack format ${String(PACK_FORMAT - 1)}; this app reads pack format ${String(PACK_FORMAT)}. Rebuild the Language Pack.`,
     });
   });
 
