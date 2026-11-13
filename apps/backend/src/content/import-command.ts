@@ -25,7 +25,7 @@ async function main(): Promise<number> {
     console.error('Usage: pnpm content import --edition <edition-id> [--override]');
     return 2;
   }
-  const { DATABASE_URL, EDITIONS_DIR } = readConfig(PublishConfigSchema, process.env);
+  const { DATABASE_URL, EDITIONS_DIR, ...telegram } = readConfig(PublishConfigSchema, process.env);
   const logger = createLogger();
   const database = createDatabase(DATABASE_URL, logger);
   try {
@@ -33,7 +33,7 @@ async function main(): Promise<number> {
       database,
       clock: systemClock,
       editions: readEditions(EDITIONS_DIR),
-      alerts: ownerAlertsOf(database, logger),
+      alerts: ownerAlertsOf(database, telegram, logger),
     });
     const store = createContentStore({ database, clock: systemClock, editions });
     const imported = await store.importEdition(editionId, join(EDITIONS_DIR, editionId), {

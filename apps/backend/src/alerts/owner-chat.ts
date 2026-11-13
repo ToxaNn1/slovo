@@ -9,9 +9,8 @@ import {
   type OwnerChat,
 } from '@slovo/server-core';
 import type { Logger } from 'pino';
-import type { z } from 'zod';
 
-import { readConfig, TelegramConfigSchema } from '../config';
+import type { TelegramConfig } from '../config';
 import type { Database } from '../database/database';
 import { createAlertStore } from './alert-store';
 import { createTelegramBot, type TelegramPort } from './telegram-bot';
@@ -111,7 +110,7 @@ export function createOwnerAlerts({
 
 /** The owner's chat over the bot the environment sets up, or none. */
 export function ownerChatOf(
-  { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID }: z.infer<typeof TelegramConfigSchema>,
+  { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID }: TelegramConfig,
   logger: Logger,
 ): OwnerChat {
   return createOwnerChat(
@@ -126,10 +125,14 @@ export function ownerChatOf(
 }
 
 /** The Alerts of the server and the commands: kept in the database, sent over the environment's bot. */
-export function ownerAlertsOf(database: Database, logger: Logger): Alerts {
+export function ownerAlertsOf(
+  database: Database,
+  telegram: TelegramConfig,
+  logger: Logger,
+): Alerts {
   return createOwnerAlerts({
     store: createAlertStore(database),
-    chat: ownerChatOf(readConfig(TelegramConfigSchema, process.env), logger),
+    chat: ownerChatOf(telegram, logger),
     clock: systemClock,
   });
 }
