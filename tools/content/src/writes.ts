@@ -87,6 +87,10 @@ export async function add(
     for (const problem of incoming.problems) io.problem(problem);
     return 1;
   }
+  if (incoming.records.length === 0) {
+    io.problem(`${path}: no records to add`);
+    return 1;
+  }
   const batchId = await openBatch(api, editionId, io);
   if (batchId === undefined) return 1;
   let refused = false;
@@ -104,8 +108,8 @@ export async function add(
 
 /**
  * Replaces a record's fields with the file's. The file names the record
- * version the edit was made from as `recordVersion`; without it the edit is
- * made from the current one.
+ * version the edit was made from as `recordVersion`, a whole number; without
+ * it the edit is made from the current one.
  */
 export async function edit(
   api: ApiClient,
@@ -118,6 +122,10 @@ export async function edit(
     return 1;
   }
   const { recordVersion: named, ...fields } = read.value;
+  if (named !== undefined && !Number.isInteger(named)) {
+    io.problem(`${file}: recordVersion is not a whole number`);
+    return 1;
+  }
   const recordVersion =
     typeof named === 'number' ? named : await currentVersion(api, { editionId, kind, id }, io);
   if (recordVersion === undefined) return 1;
