@@ -15,7 +15,7 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 
 | lane | folders | items | status |
 | ---- | ------- | ----- | ------ |
-| L1 | packages/core | 15 | running |
+| L1 | packages/core | 15 | DONE 10/15, R52 R54 R55 to do (relaunch) |
 | L2 | packages/content-rules, packages/language-pack | 17 | running |
 | L3a | packages/ui/src/{game,entries,primitives} | 27 | running |
 | L3b | rest of packages/ui | 25 | todo |
@@ -33,3 +33,12 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 - A fresh coordinator in a new container must redo the Setup notes (identity from .github/owner-email via shell snapshot; Postgres cluster) and recreate worktrees from the pushed lane branches.
 - 18:42Z L3a STUCK at 5/27 (R6 R10 R68 R69 R12 fixed, R11 skipped: Pressable sets accessibilityState.disabled); relaunched. Note: lane subagents hit ~120k after 5-10 items; expect relaunches.
 - 18:44Z L1 DONE 10/15 (R52 R54 R55 still to do: relaunch L1 when a slot frees; R153 R170 skipped ok). L5 STUCK 6/32 (R3 R34 R4 R117 R30 R119), relaunched incl. R79 contracts export. Running: L2 L3a L5 L6.
+- 2026-11-13 L2 STUCK 8/17 (R36 R40 R41 R122 R123 R144 R145 R146; R166 part), relaunched.
+## HANDOFF to the next coordinator (previous one near its context limit)
+Live implementers of the previous coordinator (in the old container) on: L2, L3a, L5, L6. Do NOT relaunch those lanes until their origin tip is a NEW `chore: DONE|STUCK <L>` commit dated after this line; a STUCK tip older than this line is already being continued.
+Your next steps:
+1. Setup notes above (identity via .github/owner-email exported in the shell snapshot, Postgres). Clone lane branches into worktrees /home/user/wt/<l>, `pnpm install --frozen-lockfile --offline`. Copy the lane brief and lane files: they are in this branch at review-1113/ (brief paths /home/user/wt/coord/... expect this branch checked out at /home/user/wt/coord).
+2. Relaunch L1 now on its branch for R52 R54 R55 (R54/R55 were skipped only for context, must be done; R52 needs a new Entries seam: build it). L1 tip is `chore: DONE L1`; new work goes on top, end with a new DONE L1.
+3. Launch L3b and L4 (branches not yet pushed: create fix/1113-code-review-l3b/l4 from origin/fix/1113-code-review). Max ~4 lanes at once.
+4. Merge every DONE lane (merger subagent, one at a time). Then LX (review-1113/lanes/LX.json, 14 items incl. R79 admin side using L5's export, plus R127 if contracts allow). Then code review of the integration diff, fixes, `git merge origin/main`, PR (body per the task), REPORT.md, STATUS: FINISHED, WAVES.md finished.
+Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STUCK body. Commit author is the noreply owner address: correct. L1 used one `perf(core)` commit (hook accepted it).
