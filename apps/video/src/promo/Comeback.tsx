@@ -154,7 +154,7 @@ export function Shout({ beats }: { beats: ShoutBeats }) {
               size={size}
               face={toGrey > 0 ? forgottenFace : light.accent}
               edge={toGrey > 0 ? light.tileEdge : light.accentEdge}
-              ink={toGrey > 0 ? greyInk : light.onAccent}
+              ink={toGrey > 0 ? greyInk : light.background}
             />
             <Crack seed={`shout-${i}`} size={size} progress={crack} stroke={light.background} />
           </div>

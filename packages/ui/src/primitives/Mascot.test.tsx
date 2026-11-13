@@ -149,7 +149,7 @@ describe('Mascot', () => {
     expect(drawn('eyes')?.[0]?.fill).toBe(argb(light.ink));
 
     await renderMascot('waits', { onRed: true });
-    expect(drawn('body')?.[0]?.fill).toBe(argb(light.onAccent));
+    expect(drawn('body')?.[0]?.fill).toBe(argb(light.background));
     expect(drawn('hat')?.[0]?.fill).toBe(argb(light.ink));
   });
 

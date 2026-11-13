@@ -115,11 +115,11 @@ describe('NarratorVoicePicker', () => {
     expect(onToggle).toHaveBeenCalledTimes(2);
   });
 
-  it('lights the stressed syllable in the colour on the accent, the others in the ink', async () => {
+  it('lights the stressed syllable in cream, the others in the ink', async () => {
     await draw();
 
-    const { ink, onAccent } = coreTokens.colors.light;
-    expect(screen.getByText('af')).toHaveStyle({ color: onAccent });
+    const { ink, background } = coreTokens.colors.light;
+    expect(screen.getByText('af')).toHaveStyle({ color: background });
     expect(screen.getByText('ter')).toHaveStyle({ color: ink });
     expect(screen.getByText('glow')).toHaveStyle({ color: ink });
   });

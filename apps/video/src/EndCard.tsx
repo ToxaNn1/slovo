@@ -116,7 +116,7 @@ export function EndCard({ line, orientation, qrUrl, store = 'appStore' }: EndCar
             fontSize: size.slogan * s,
             lineHeight: 1.05,
             letterSpacing: '-0.02em',
-            color: light.onAccent,
+            color: light.background,
             rotate: '-3deg',
             scale: String(at(endCardBeats.slogan)),
             transformOrigin: 'left center',

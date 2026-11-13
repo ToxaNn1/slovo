@@ -107,13 +107,14 @@ function Figure({
   width: number;
 }) {
   const { colors } = useTokens();
-  // The design's black on red is the light Theme's ink in both Themes.
-  const inkOnRed = useSchemeColors('light').ink;
+  // The design's black on red is the light Theme's ink in both Themes, its cream the light background.
+  const key = useSchemeColors('light');
+  const inkOnRed = key.ink;
   const { mascotAccessory } = useDecor();
   const hatOff = state === 'hatOff';
   // The design's hat-off figure is muted on any ground, its eyes cream.
   const paints: Paints = onRed
-    ? { body: hatOff ? colors.muted : colors.onAccent, ink: inkOnRed, accent: inkOnRed }
+    ? { body: hatOff ? colors.muted : key.background, ink: inkOnRed, accent: inkOnRed }
     : { body: hatOff ? colors.muted : colors.accent, ink: colors.ink, accent: colors.accent };
   const accessory = hatOff ? undefined : mascotAccessory;
   // An accessory worn instead of the hat is headwear: it drops as the hat does.

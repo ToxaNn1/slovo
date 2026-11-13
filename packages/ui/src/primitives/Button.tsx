@@ -67,7 +67,7 @@ export function Button({
   const labelColor = {
     primary: keyColors.ink,
     neutral: tokens.colors.ink,
-    onAccent: tokens.colors.onAccent,
+    onAccent: keyColors.background,
     ghost: tokens.colors.ink,
   }[variant];
   return (

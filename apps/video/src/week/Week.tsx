@@ -399,7 +399,7 @@ function DayTile({
         size={size}
         face={done ? light.accent : light.ink}
         edge={done ? light.accentEdge : softEdge}
-        ink={light.onAccent}
+        ink={light.background}
       />
       <div
         style={{
@@ -410,7 +410,7 @@ function DayTile({
           alignItems: 'center',
           justifyContent: 'center',
           gap: size * 0.04,
-          color: light.onAccent,
+          color: light.background,
           fontFamily: wordFont,
           fontWeight: 900,
           fontSize: size * (done ? 0.25 : 0.36),
@@ -423,7 +423,7 @@ function DayTile({
             <polyline
               points="6,20 19,32 44,6"
               fill="none"
-              stroke={light.onAccent}
+              stroke={light.background}
               strokeWidth={9}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -540,7 +540,7 @@ function WordOfDay({
                 size={tile}
                 face={isStressed ? light.ink : light.accent}
                 edge={isStressed ? softEdge : light.accentEdge}
-                ink={light.onAccent}
+                ink={light.background}
               />
             )}
             {isStressed && mark > 0 && (
@@ -666,7 +666,7 @@ function Stamp({ lines, safe, s }: { lines: readonly string[]; safe: Safe; s: nu
         borderRadius: 24 * s,
         background: light.ink,
         boxShadow: `0 ${9 * s}px 0 ${softEdge}`,
-        color: light.onAccent,
+        color: light.background,
         fontFamily: wordFont,
         fontWeight: 900,
         fontSize: 64 * s,
@@ -728,7 +728,7 @@ function Promise({ rowStep, safe, s }: { rowStep: number; safe: Safe; s: number 
           textAlign: 'center',
         }}
       >
-        <div style={{ fontSize: 56 * s, color: light.onAccent }}>{texts.promise[0]}</div>
+        <div style={{ fontSize: 56 * s, color: light.background }}>{texts.promise[0]}</div>
         <div style={{ marginTop: 14 * s, fontSize: 76 * s, color: light.accent }}>{texts.promise[1]}</div>
       </div>
     </div>

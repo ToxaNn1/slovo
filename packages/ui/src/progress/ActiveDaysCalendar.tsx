@@ -25,7 +25,8 @@ export function CalendarDayTile({
   const tokens = useTokens();
   const { colors } = tokens;
   // The number on red is the ink of the light Theme in both Themes, as on every red face.
-  const keyInk = useSchemeColors('light').ink;
+  const key = useSchemeColors('light');
+  const keyInk = key.ink;
   const { strings, voice } = useEdition();
   const words = strings.stats.calendar;
   const spoken = day.state === 'today' ? (day.active ? 'todayActive' : 'today') : day.state;
@@ -34,7 +35,7 @@ export function CalendarDayTile({
     today: { face: colors.ink, edge: colors.accent, number: colors.background },
     missed: { face: colors.tile, edge: colors.tileEdge, number: colors.muted },
     // Cream is the same in both Themes, so its number is the light Theme's ink.
-    frozen: { face: colors.onAccent, edge: colors.tileEdge, number: keyInk },
+    frozen: { face: key.background, edge: colors.tileEdge, number: keyInk },
     // Pressed in: no edge under it, the edge drawn inside its top instead.
     break: { face: colors.surfaceSunken, edge: undefined, number: colors.ink },
     future: { face: 'transparent', edge: undefined, number: colors.muted },

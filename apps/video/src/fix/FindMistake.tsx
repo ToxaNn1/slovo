@@ -337,7 +337,7 @@ function Scene({ episode }: { episode: Episode }) {
                   height={layout.plateHeight}
                   font={layout.font}
                   face={interpolateColors(blacken, [0, 1], [seen > 0 ? light.highlight : light.tile, light.ink])}
-                  ink={interpolateColors(blacken, [0, 1], [light.ink, light.onAccent])}
+                  ink={interpolateColors(blacken, [0, 1], [light.ink, light.background])}
                   s={s}
                 />
                 <CrackLine width={item.width} height={layout.plateHeight} s={s} />
@@ -390,7 +390,7 @@ function Scene({ episode }: { episode: Episode }) {
               transformOrigin: 'center bottom',
             }}
           >
-            <Tile letter={letter} size={layout.tile} face={light.accent} edge={light.accentEdge} ink={light.onAccent} />
+            <Tile letter={letter} size={layout.tile} face={light.accent} edge={light.accentEdge} ink={light.background} />
           </div>
         );
       })}
@@ -532,7 +532,7 @@ function Halves({
               transformOrigin: side === 0 ? '25% 50%' : '75% 50%',
             }}
           >
-            <Plate text={text} width={width} height={height} font={font} face={light.ink} ink={light.onAccent} s={s} />
+            <Plate text={text} width={width} height={height} font={font} face={light.ink} ink={light.background} s={s} />
           </div>
         );
       })}
@@ -571,7 +571,7 @@ function Title({ answer, safe, s }: { answer: string; safe: Safe; s: number }) {
           borderRadius: 20 * s,
           background: mended ? light.accent : light.ink,
           boxShadow: `0 ${9 * s}px 0 ${mended ? light.accentEdge : 'rgba(20, 12, 10, 0.28)'}`,
-          color: light.onAccent,
+          color: light.background,
           fontFamily: wordFont,
           fontWeight: 900,
           fontSize: font,
@@ -618,7 +618,7 @@ function Timer({ safe, s }: { safe: Safe; s: number }) {
         scale: `${pulse * leave} ${pulse * leave * flip}`,
       }}
     >
-      <Tile letter={String(digit)} size={size} face={light.ink} edge="rgba(20, 12, 10, 0.28)" ink={light.onAccent} />
+      <Tile letter={String(digit)} size={size} face={light.ink} edge="rgba(20, 12, 10, 0.28)" ink={light.background} />
     </div>
   );
 }

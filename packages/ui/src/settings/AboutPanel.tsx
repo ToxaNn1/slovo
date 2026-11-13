@@ -43,7 +43,7 @@ export function AboutPanel({
         accessibilityElementsHidden
         importantForAccessibility="no"
         allowFontScaling={false}
-        style={[typeStyle('aboutGiant', tokens), styles.giant, { color: light.onAccent }]}
+        style={[typeStyle('aboutGiant', tokens), styles.giant, { color: light.background }]}
       >
         {glyph}
       </Text>

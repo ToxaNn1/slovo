@@ -286,7 +286,7 @@ function Cell({ index, n, frame, width, height }: { index: number; n: number; fr
   const isStressed = settled && index === stressed;
   const face = isStressed ? light.ink : settled ? light.accent : dark.tile;
   const edge = isStressed ? dark.background : settled ? light.accentEdge : dark.tileEdge;
-  const ink = settled ? light.onAccent : dark.ink;
+  const ink = settled ? light.background : dark.ink;
   const half = (letter: string, part: 'top' | 'bottom', style?: CSSProperties) => (
     <div
       style={{

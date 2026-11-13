@@ -270,7 +270,7 @@ function LetterTile({ letter, index, size, frame }: { letter: string; index: num
         transformOrigin: 'center bottom',
       }}
     >
-      <Tile letter={letter} size={size} face={face} edge={edge} ink={light.onAccent} />
+      <Tile letter={letter} size={size} face={face} edge={edge} ink={light.background} />
     </div>
   );
 }

@@ -43,7 +43,7 @@ export function StoreBadge({
         borderRadius: height * 0.19,
         background: light.ink,
         border: `${Math.max(1, height * 0.012)}px solid rgba(255, 244, 230, 0.55)`,
-        color: light.onAccent,
+        color: light.background,
         fontFamily: uiFont,
         display: 'flex',
         flexDirection: 'column',

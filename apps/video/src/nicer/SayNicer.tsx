@@ -333,7 +333,7 @@ function Scene({ episode }: { episode: Episode }) {
                     fontWeight: 900,
                     fontSize: layout.tile * (piece.kind === 'apostrophe' ? 0.9 : 0.86),
                     lineHeight: 1,
-                    color: light.onAccent,
+                    color: light.background,
                   }}
                 >
                   {piece.text}
@@ -360,7 +360,7 @@ function Scene({ episode }: { episode: Episode }) {
               opacity: interpolate(frame, [tiles.stress - 6, tiles.stress + 2], [0, 1], clamp),
             }}
           >
-            <Line font={layout.tail.font} color={light.onAccent}>
+            <Line font={layout.tail.font} color={light.background}>
               {episode.tail}
             </Line>
           </div>
@@ -451,7 +451,7 @@ function Typed({ text, font, blow, s }: { text: string; font: number; blow: { x:
         fontWeight: 600,
         fontSize: font,
         lineHeight: 1.2,
-        color: light.onAccent,
+        color: light.background,
         whiteSpace: 'pre',
       }}
     >
@@ -471,7 +471,7 @@ function Typed({ text, font, blow, s }: { text: string; font: number; blow: { x:
               translate: `${blow.x * t * 1000 * s + side * t * 40 * s}px ${blow.y * t * 1000 * s - Math.sin(t * Math.PI) * 60 * s}px`,
               rotate: `${side * t * (220 + (i % 3) * 70)}deg`,
               // Cream on the bubble, ink once it is over the cream background.
-              color: interpolateColors(t, [0, 0.12], [light.onAccent, light.ink]),
+              color: interpolateColors(t, [0, 0.12], [light.background, light.ink]),
               opacity: interpolate(t, [0.8, 1], [1, 0], clamp),
             }}
           >
@@ -485,7 +485,7 @@ function Typed({ text, font, blow, s }: { text: string; font: number; blow: { x:
           height: font * 1.05,
           marginLeft: 9 * s,
           borderRadius: 3 * s,
-          background: light.onAccent,
+          background: light.background,
           opacity: blink ? 1 : 0,
         }}
       />
@@ -539,7 +539,7 @@ function StressMark({ left, top, tile, from, s }: { left: number; top: number; t
         width: markWidth,
         height: markHeight,
         borderRadius: markWidth / 2,
-        background: light.onAccent,
+        background: light.background,
         rotate: '35deg',
         scale: String(bump),
         opacity: interpolate(frame, [from, from + 2], [0, 1], clamp),
@@ -721,7 +721,7 @@ function Title({ safe, s }: { safe: Safe; s: number }) {
           borderRadius: 20 * s,
           background: light.ink,
           boxShadow: `0 ${9 * s}px 0 rgba(20, 12, 10, 0.28)`,
-          color: light.onAccent,
+          color: light.background,
           fontFamily: wordFont,
           fontWeight: 900,
           fontSize: 52 * s,
