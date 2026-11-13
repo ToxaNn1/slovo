@@ -28,15 +28,15 @@ export interface LaunchPack<R> {
  */
 export async function openLaunchPack<R>({
   edition,
-  bundledVersion,
+  bundledContentVersion,
   openPatched,
   replaceWithBundled,
   openContentUpdate,
   onError,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
-  /** The version of the pack bundled with the app. */
-  bundledVersion: () => Promise<PackVersion>;
+  /** The content version of the pack bundled with the app, which the build records. */
+  bundledContentVersion: number;
   /** Opens the patched pack; it rejects when there is none or it refuses the pack. */
   openPatched: () => Promise<OpenedPack<R>>;
   /** Copies the bundled pack over the patched one. */
@@ -44,9 +44,8 @@ export async function openLaunchPack<R>({
   openContentUpdate: (store: ContentStore) => ContentUpdate;
   onError: (error: unknown) => void;
 }): Promise<LaunchPack<R>> {
-  const bundled = await bundledVersion();
   let patched: OpenedPack<R> | undefined = await openPatched().catch(() => undefined);
-  if (patched !== undefined && patched.version.contentVersion < bundled.contentVersion) {
+  if (patched !== undefined && patched.version.contentVersion < bundledContentVersion) {
     await patched.close().catch(onError);
     patched = undefined;
   }

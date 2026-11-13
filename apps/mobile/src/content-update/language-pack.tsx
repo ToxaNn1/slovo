@@ -1,6 +1,11 @@
 import type { ContentStore } from '@slovo/core';
 import { openPack, type PackReader, type PackWriteDatabase } from '@slovo/language-pack/reader';
-import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
+import {
+  deleteDatabaseAsync,
+  importDatabaseFromAssetAsync,
+  openDatabaseAsync,
+  type SQLiteDatabase,
+} from 'expo-sqlite';
 
 import { nativeModules } from '../device/device-native-modules';
 import { logError } from '../diagnostics/log';
@@ -12,8 +17,8 @@ import { openDeviceContentUpdate } from './device-content-updates';
 import { openLaunchPack, type LaunchPack, type OpenedPack } from './launch-pack';
 import { openPackContentStore } from './pack-content-store';
 
-/** The pack bundled with the app, copied out of its asset on every launch. */
-const BUNDLED_NAME = 'language-pack.bundled.db';
+/** The copy of the bundled pack builds before made on every launch to read its version. */
+const OLD_BUNDLED_NAME = 'language-pack.bundled.db';
 /** The pack the app reads, which takes Patches (ADR 0090). */
 const PATCHED_NAME = 'language-pack.db';
 
@@ -59,17 +64,6 @@ async function open(name: string): Promise<OpenedPack<PackReader>> {
   }
 }
 
-/** The version of the bundled pack, copied out of its asset so it is the one this build shipped. */
-async function bundledVersion() {
-  await importDatabaseFromAssetAsync(BUNDLED_NAME, {
-    assetId: activeEditionFiles.languagePack,
-    forceOverwrite: true,
-  });
-  const bundled = await open(BUNDLED_NAME);
-  await bundled.close();
-  return bundled.version;
-}
-
 /** Copies the bundled pack over the patched one. */
 async function replaceWithBundled(): Promise<void> {
   await importDatabaseFromAssetAsync(PATCHED_NAME, {
@@ -79,11 +73,14 @@ async function replaceWithBundled(): Promise<void> {
 }
 
 /**
- * Throws away the folder of downloaded packs that content updates kept before
- * Patches (ADR 0090); none of it is read any more. Nothing on a binary
- * without the file-system module.
+ * Throws away what builds before kept and nothing reads any more: the copy of
+ * the bundled pack, gone after the first launch of this build (deleting it
+ * then fails, unheard), and the folder of downloaded packs that content
+ * updates kept before Patches (ADR 0090), not on a binary without the
+ * file-system module.
  */
-function removeDownloadedPacks(): void {
+function removeOldPacks(): void {
+  deleteDatabaseAsync(OLD_BUNDLED_NAME).catch(() => undefined);
   nativeModules.load('contentUpdates', () => {
     const { Directory, Paths } =
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -106,10 +103,10 @@ export function languagePackOpening({
 }): Opening<LaunchPack<PackReader>> {
   return openOnce(
     async () => {
-      removeDownloadedPacks();
+      removeOldPacks();
       return openLaunchPack({
         edition: (await remoteSwitches.opened()).edition,
-        bundledVersion,
+        bundledContentVersion: activeEditionFiles.bundledContentVersion,
         openPatched: () => open(PATCHED_NAME),
         replaceWithBundled,
         openContentUpdate: openDeviceContentUpdate,

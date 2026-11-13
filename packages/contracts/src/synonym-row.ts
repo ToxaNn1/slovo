@@ -1,15 +1,13 @@
 import { z } from 'zod';
 
-import { SourceOutputSchema, SourceSchema, EntryTextSchema } from './shared';
+import { SourceOutputSchema, SourceSchema, EntryTextSchema, recordIdSchema } from './shared';
 import { ExampleOutputSchema, ExampleSchema, WordIdSchema } from './word';
 
 /**
  * A Synonym Row id: opaque, assigned when the row is authored and never
  * reused. The `r_` prefix keeps it apart from the ids of other kinds of Entry.
  */
-export const SynonymRowIdSchema = z
-  .string()
-  .regex(/^r_[a-z0-9]+$/, 'Expected a Synonym Row id: r_ followed by lowercase letters and digits');
+export const SynonymRowIdSchema = recordIdSchema('synonymRow', 'a Synonym Row');
 
 /** The most a member's shade note may say (ADR 0051). */
 export const SHADE_NOTE_MAX_LENGTH = 60;

@@ -13,6 +13,7 @@ const { STARTER_MEDIA_DIR, starterMediaFiles, starterWordIds } = tsxRequire(
   '@slovo/language-pack/starter-media',
   __filename,
 );
+const { packMetadataOf } = tsxRequire('@slovo/language-pack', __filename);
 
 /**
  * The Editions the app bundles (ADR 0065), as the one module `slovo-editions`
@@ -86,6 +87,16 @@ function sounds(edition) {
   return `{\n${lines.join('\n')}\n    }`;
 }
 
+/**
+ * The content version of the Language Pack the build bundles, read from the
+ * built pack itself: at EAS the pack is built from the API's snapshot, whose
+ * version the Edition folder does not record. The app compares it with the
+ * patched pack at launch without copying the bundled one out of its asset.
+ */
+function bundledContentVersion(edition) {
+  return packMetadataOf(edition.path('languagePack')).contentVersion;
+}
+
 /** The files of one bundled Edition, which the app validates at startup. */
 function bundledEdition(edition) {
   const id = edition.config.id;
@@ -98,6 +109,7 @@ function bundledEdition(edition) {
     starterMedia: ${starterMedia(edition)},
     starterWords: ${JSON.stringify(starterWordIds(join(edition.dir, STARTER_MEDIA_DIR)))},
     languagePack: ${mandatory(edition, 'languagePack', `Run \`pnpm build:pack ${id}\` to build the Language Pack first.`)},
+    bundledContentVersion: ${String(bundledContentVersion(edition))},
   },`;
 }
 
