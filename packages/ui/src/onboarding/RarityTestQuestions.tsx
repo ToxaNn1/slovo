@@ -80,6 +80,8 @@ export function RarityTestQuestions({
   const [phase, setPhase] = useState<RarityTestPhase>({ kind: 'asking', answers: [] });
   /** Whether the answers are applied, so a second tap on the last Word applies nothing. */
   const applied = useRef(false);
+  /** The answers given so far, ahead of `phase` when two taps come before a redraw. */
+  const given = useRef<readonly { rarity: Rarity; known: boolean }[]>([]);
   /** «3 з 10» over the Word asked about. */
   const progressOf = (asked: number) =>
     fill(strings.rarityTest.progress, { n: String(asked + 1), total: String(words.length) });
@@ -99,10 +101,11 @@ export function RarityTestQuestions({
   }, [announcement]);
 
   const answer = (known: boolean) => {
-    if (phase.kind !== 'asking') return;
-    const word = words[phase.answers.length];
+    // Read from the ref, not the render: a second tap before the redraw answers the next Word.
+    const word = words[given.current.length];
     if (word === undefined) return;
-    const answers = [...phase.answers, { rarity: word.rarity, known }];
+    const answers = [...given.current, { rarity: word.rarity, known }];
+    given.current = answers;
     setPhase({ kind: 'asking', answers });
     if (answers.length < words.length || applied.current) return;
     applied.current = true;
