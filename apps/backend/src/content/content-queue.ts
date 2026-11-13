@@ -143,14 +143,19 @@ export function createContentQueue({ database, clock }: { database: Database; cl
 
   /** The open batch by id, locked, with its Edition's writes held. */
   async function heldBatch(tx: Tx, batchId: string) {
+    const [found] = await tx
+      .select({ editionId: contentBatches.editionId })
+      .from(contentBatches)
+      .where(eq(contentBatches.id, batchId));
+    if (found === undefined) return undefined;
+    // An Edition's writes run one at a time until the commit, as content-writes
+    // holds them: the Edition lock first, then the row, in a write's order.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${found.editionId}))`);
     const [batch] = await tx
       .select()
       .from(contentBatches)
       .where(and(openBatch, eq(contentBatches.id, batchId)))
       .for('update');
-    if (batch === undefined) return undefined;
-    // An Edition's writes run one at a time until the commit, as content-writes holds them.
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${batch.editionId}))`);
     return batch;
   }
 
@@ -374,19 +379,43 @@ export function createContentQueue({ database, clock }: { database: Database; cl
     decision: 'accept' | 'reject',
     reason: string,
   ) {
-    const open = (await flags()).find((flag) => flag.id === flagId);
-    if (open === undefined) return { ok: false } as const;
-    await db.insert(actionLog).values({
-      who: adminActor(email),
-      at: clock.now(),
-      what: `content.flag.${decision}`,
-      before: { flagId },
-      after: null,
-      reason,
-      editionId: open.editionId,
-      batchId: null,
+    return db.transaction(async (tx) => {
+      const [flag] = await tx
+        .select({ what: actionLog.what, after: actionLog.after, editionId: actionLog.editionId })
+        .from(actionLog)
+        .where(and(eq(actionLog.id, flagId), like(actionLog.what, 'content.%.flag')));
+      if (
+        flag === undefined ||
+        flag.editionId === null ||
+        !FlagWhatSchema.safeParse(flag.what).success ||
+        !FlagAfterSchema.safeParse(flag.after).success
+      ) {
+        return { ok: false } as const;
+      }
+      // One decision per flag: decisions on the Edition's flags run one at a time.
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${flag.editionId}))`);
+      const [resolved] = await tx
+        .select({ id: actionLog.id })
+        .from(actionLog)
+        .where(
+          and(
+            like(actionLog.what, 'content.flag.%'),
+            sql`${actionLog.before}->>'flagId' = ${String(flagId)}`,
+          ),
+        );
+      if (resolved !== undefined) return { ok: false } as const;
+      await tx.insert(actionLog).values({
+        who: adminActor(email),
+        at: clock.now(),
+        what: `content.flag.${decision}`,
+        before: { flagId },
+        after: null,
+        reason,
+        editionId: flag.editionId,
+        batchId: null,
+      });
+      return { ok: true } as const;
     });
-    return { ok: true } as const;
   }
 
   /** The Mistake Reports still to check, oldest first. */
