@@ -52,7 +52,10 @@ const synonymsKind: SourcingKind<RowRequest> = {
   folder: 'synonyms',
   idPrefix: 'r_',
   parseLine: parseRowLine,
-  start: (context) => (request) => draftRow(request, context),
+  start: (context) => {
+    const lemmas = lemmaIds(context.edition);
+    return (request) => draftRow(request, context, lemmas);
+  },
 };
 
 const MIN_MEMBERS = 5;
@@ -78,7 +81,14 @@ function parseRowLine(content: string): ParsedLine<RowRequest> {
   return { ok: true, text, request: { dominant, sense: Number(senseText) } };
 }
 
-async function draftRow(request: RowRequest, context: DraftContext): Promise<KindOutcome> {
+/** The Edition's Word ids by Lemma, read once per run. */
+type LemmaIds = ReadonlyMap<string, string | undefined>;
+
+async function draftRow(
+  request: RowRequest,
+  context: DraftContext,
+  lemmas: LemmaIds,
+): Promise<KindOutcome> {
   const { dominant, sense } = request;
   let page: string | undefined;
   try {
@@ -101,13 +111,17 @@ async function draftRow(request: RowRequest, context: DraftContext): Promise<Kin
           : `${url} has no article from a synonym dictionary for "${dominant}"`;
     return { drafts: [], flags: [{ kind: 'no-entry', message }] };
   }
-  return { drafts: [draftOf(article, url, context)], flags: [] };
+  return { drafts: [draftOf(article, url, context, lemmas)], flags: [] };
 }
 
-function draftOf(article: GorohSynonymArticle, url: string, context: DraftContext): KindDraft {
+function draftOf(
+  article: GorohSynonymArticle,
+  url: string,
+  context: DraftContext,
+  lemmas: LemmaIds,
+): KindDraft {
   const flags: Flag[] = [];
   const dominant = rowWord(article.headword, flags);
-  const lemmas = lemmaIds(context.edition);
   const seen = new Set([matchKey(dominant.text)]);
   const members: SynonymRowMember[] = [];
   for (const { headword, note } of article.members) {
@@ -171,7 +185,7 @@ function lemmaIds(edition: EditionFolder): Map<string, string | undefined> {
   return ids;
 }
 
-function wordIdOf(lemmas: Map<string, string | undefined>, text: string): { wordId?: string } {
+function wordIdOf(lemmas: LemmaIds, text: string): { wordId?: string } {
   const wordId = lemmas.get(text);
   return wordId === undefined ? {} : { wordId };
 }
