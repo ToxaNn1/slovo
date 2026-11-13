@@ -85,6 +85,13 @@ export interface EntryCardProps {
   tipExceptions?: boolean | undefined;
   /** A Word card's kicker, such as its place in a Category's Feed (ADR 0110); none in the Feed. */
   kicker?: string | undefined;
+  /**
+   * Lays the card out on its page, told whether it is a fixed frame the
+   * page's height (`tabs`, ADR 0091) or a card the page scrolls: the red
+   * card of the Word of the Day stays one Self-check keeps closed. None: the
+   * card alone.
+   */
+  page?: ((card: ReactNode, framed: boolean) => ReactNode) | undefined;
 }
 
 /**
@@ -145,8 +152,10 @@ export function EntryCard({
   sourceTab = false,
   tipExceptions = false,
   kicker,
+  page = (entry) => entry,
 }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
+  const framed = fixedFrame(card, tabs, concealed);
   const face = (
     <EntryCardFace
       card={card}
@@ -165,16 +174,17 @@ export function EntryCard({
       reveal={reveal}
     />
   );
-  if (slots?.slot !== 'corner' || slots.swipe === undefined) return face;
-  return (
+  if (slots?.slot !== 'corner' || slots.swipe === undefined) return page(face, framed);
+  return page(
     <SwipeMarks
       swipe={slots.swipe}
       concealed={concealed}
       correction={card.kind === 'correction'}
-      fill={fixedFrame(card, tabs, concealed)}
+      fill={framed}
     >
       {face}
-    </SwipeMarks>
+    </SwipeMarks>,
+    framed,
   );
 }
 

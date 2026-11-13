@@ -8,7 +8,7 @@ import {
   useTokens,
   type SavedTab,
 } from '@slovo/ui';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -26,6 +26,7 @@ import type { ListHeader } from '@/saved/list-header';
 import { useWordOfTheDayArchive } from '@/saved/word-of-the-day-archive';
 import { WordOfTheDayArchiveList } from '@/saved/word-of-the-day-archive-list';
 import { useShown } from '@/shown-in-effect';
+import { useQueryParam } from '@/route-params';
 
 const {
   favorites: favoriteStrings,
@@ -64,7 +65,7 @@ export default function SavedScreen() {
   const { count } = useEdition();
   const openScreen = useOpenScreen();
   const router = useRouter();
-  const { list } = useLocalSearchParams<{ list?: string }>();
+  const list = useQueryParam('list');
 
   const tab = (
     id: ListId,

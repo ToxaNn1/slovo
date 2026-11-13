@@ -1,38 +1,14 @@
-import { relativeTimeOf } from '@slovo/core/testing';
 import { localDayOf, type EntryRowModel, type HistoryEntry } from '@slovo/core';
 import { describe, expect, it } from 'vitest';
 
 import { historyText } from './history-text';
-import { count, fakeClock, strings as allStrings } from '../test-support';
+import { fakeClock, strings as allStrings } from '../test-support';
 
 const { history: strings, dates } = allStrings;
 
 describe('the History texts', () => {
   const time = fakeClock('2026-10-11T10:00:00+03:00');
-  const text = historyText({ strings, dates, count, clock: time.clock });
-  const relative = (instant: string) =>
-    text.relative(relativeTimeOf(new Date(instant), time.clock));
-
-  it('words how long ago an Entry was Seen, on screen and for VoiceOver', () => {
-    expect(relative('2026-10-11T09:59:40+03:00')).toEqual({ text: 'щойно', spoken: 'щойно' });
-    expect(relative('2026-10-11T09:55:00+03:00')).toEqual({
-      text: '5 хв тому',
-      spoken: '5 хвилин тому',
-    });
-    expect(relative('2026-10-11T09:59:00+03:00').spoken).toBe('1 хвилину тому');
-    expect(relative('2026-10-11T09:38:00+03:00').spoken).toBe('22 хвилини тому');
-    expect(relative('2026-10-11T08:02:00+03:00')).toEqual({
-      text: 'сьогодні, 08:02',
-      spoken: 'сьогодні, 08:02',
-    });
-    expect(relative('2026-10-10T21:40:00+03:00').text).toBe('вчора, 21:40');
-    expect(relative('2026-09-30T08:05:00+03:00')).toEqual({
-      text: '30 вер., 08:05',
-      spoken: '30 вересня, 08:05',
-    });
-    expect(relative('2025-12-31T12:00:00+02:00').text).toBe('31 груд. 2025, 12:00');
-  });
-
+  const text = historyText({ strings, dates, clock: time.clock });
   const heading = (instant: string) => text.dayHeading(localDayOf(new Date(instant), time.clock));
 
   it('heads a day «Сьогодні», «Учора» or its date, without the year in this year', () => {
@@ -44,7 +20,7 @@ describe('the History texts', () => {
 
   it('follows a time-zone change of the clock', () => {
     const late = fakeClock('2026-10-11T00:30:00+03:00');
-    const lateText = historyText({ strings, dates, count, clock: late.clock });
+    const lateText = historyText({ strings, dates, clock: late.clock });
     const headingOf = () =>
       lateText.dayHeading(localDayOf(new Date('2026-10-10T23:50:00+03:00'), late.clock));
     expect(headingOf()).toBe('Учора');

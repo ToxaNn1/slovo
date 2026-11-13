@@ -11,7 +11,7 @@ import {
   useTokens,
   useUndoToast,
 } from '@slovo/ui';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,6 +21,7 @@ import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
 import { MascotAs } from '@/mascot/mascot';
 import { useCollectionLinkPreview } from '@/saved/collection-link';
+import { useSegmentParam } from '@/route-params';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.link;
@@ -36,7 +37,7 @@ const strings = collectionStrings.link;
  * Links off says the link isn't available.
  */
 export default function CollectionLinkScreen() {
-  const { linkId } = useLocalSearchParams<{ linkId: string }>();
+  const linkId = useSegmentParam('linkId');
   const preview = useCollectionLinkPreview(linkId);
   const { colors } = useTokens();
   const router = useRouter();
