@@ -170,7 +170,14 @@ export function EnoughForTodayCard() {
       // Without the Feed's pager there is no next card to turn to, so no button.
       {...(turnToNext === undefined
         ? {}
-        : { action: { label: keepGoing, onPress: () => turnToNext() } })}
+        : {
+            action: {
+              label: keepGoing,
+              onPress: () => {
+                turnToNext();
+              },
+            },
+          })}
     />
   );
 }
