@@ -201,7 +201,11 @@ describe('the Patch read API', () => {
       size: 7000,
       durationMs: 900,
     });
-    await media.saveIllustration('uk', { wordId: WORD_ID, hash: hashOf('b'), size: 40_000 });
+    await media.saveIllustration(
+      'uk',
+      { wordId: WORD_ID, hash: hashOf('b'), size: 40_000 },
+      new Date(),
+    );
     const { editionId, contentVersion, mediaBase, needsNewRecording, ...kinds } =
       await snapshotOf(client);
     expect(needsNewRecording).toEqual([]);
@@ -244,7 +248,11 @@ describe('the Patch read API', () => {
       durationMs: 900,
     };
     await media.saveRecording('uk', recording);
-    await media.saveIllustration('uk', { wordId: WORD_ID, hash: hashOf('b'), size: 40_000 });
+    await media.saveIllustration(
+      'uk',
+      { wordId: WORD_ID, hash: hashOf('b'), size: 40_000 },
+      new Date(),
+    );
     const added = patchIn(await patchOf(client, before.contentVersion));
     expect(added).toEqual({
       editionId: 'uk',
@@ -284,10 +292,10 @@ describe('the Patch read API', () => {
   it('writes nothing for a media file the Word already has live', async () => {
     const { client, media } = await contentBackend();
     const illustration = { wordId: WORD_ID, hash: hashOf('b'), size: 40_000 };
-    await media.saveIllustration('uk', illustration);
+    await media.saveIllustration('uk', illustration, new Date());
     const { contentVersion } = await snapshotOf(client);
 
-    await media.saveIllustration('uk', illustration);
+    await media.saveIllustration('uk', illustration, new Date());
     expect(patchIn(await patchOf(client, contentVersion))).toMatchObject({
       contentVersion,
       illustrations: [],
@@ -304,13 +312,13 @@ describe('the Patch read API', () => {
       status: 200,
       body: { status: 'unsupported-format', patchFormat: PATCH_FORMAT },
     });
-    // The format before media rows: an app of it keeps its content.
-    expect(PATCH_FORMAT).toBe(2);
+    // The format before marks and Tip exceptions: an app of it keeps its content.
+    expect(PATCH_FORMAT).toBe(3);
     await expect(
-      client.content.patch({ params: { editionId: 'uk' }, query: { since: 0, patchFormat: 1 } }),
+      client.content.patch({ params: { editionId: 'uk' }, query: { since: 0, patchFormat: 2 } }),
     ).resolves.toMatchObject({
       status: 200,
-      body: { status: 'unsupported-format', patchFormat: 2 },
+      body: { status: 'unsupported-format', patchFormat: 3 },
     });
   });
 

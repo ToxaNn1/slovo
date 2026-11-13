@@ -4,8 +4,8 @@ import { dark } from '../look';
 import { tileSizeFor, useSafe } from '../safe';
 import { Tile } from '../Tile';
 import { Caption } from './Caption';
+import { clamp } from '../shared/motion';
 
-const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
 
 /** The word that opens the video, then the words around it, by their place. */
 export const mainWord = 'КРАКЕЛЮР';

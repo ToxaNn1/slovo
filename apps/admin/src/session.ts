@@ -1,4 +1,8 @@
-import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
+import {
+  SignInBlockedSchema,
+  WrongCodeSchema,
+  type AdminApiOutputs,
+} from '@slovo/contracts/admin-api';
 import { useQuery } from '@tanstack/react-query';
 
 import { adminApi } from './api';
@@ -67,26 +71,23 @@ export function codeOf(error: unknown): string | undefined {
     : undefined;
 }
 
-/** A number in the refusal's data, such as `attemptsLeft`. */
-export function dataOf(error: unknown, key: string): number | undefined {
-  if (typeof error !== 'object' || error === null || !('data' in error)) return undefined;
-  const { data } = error;
-  if (typeof data !== 'object' || data === null) return undefined;
-  const value: unknown = Object.getOwnPropertyDescriptor(data, key)?.value;
-  return typeof value === 'number' ? value : undefined;
+/** The data of a refusal, or undefined when the error carries none. */
+export function refusalData(error: unknown): unknown {
+  return typeof error === 'object' && error !== null && 'data' in error ? error.data : undefined;
 }
 
 /** What the owner reads of a refused sign-in step. */
 export function refusalText(error: unknown): string {
   switch (codeOf(error)) {
     case 'UNAUTHORIZED': {
-      const left = dataOf(error, 'attemptsLeft');
+      const left = WrongCodeSchema.safeParse(refusalData(error)).data?.attemptsLeft;
       return left === undefined
         ? 'Код неправильний або застарів.'
         : `Код неправильний або застарів. Спроб лишилося: ${String(left)}.`;
     }
     case 'TOO_MANY_REQUESTS': {
-      const seconds = dataOf(error, 'retryAfterSeconds') ?? 60;
+      const seconds =
+        SignInBlockedSchema.safeParse(refusalData(error)).data?.retryAfterSeconds ?? 60;
       return `Забагато невдалих спроб. Спробуйте за ${String(Math.ceil(seconds / 60))} хв.`;
     }
     default:

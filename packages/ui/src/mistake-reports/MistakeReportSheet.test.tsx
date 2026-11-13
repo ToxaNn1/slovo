@@ -15,6 +15,7 @@ const strings = testStrings({
     action: 'Report a mistake',
     types: { typo: 'Typo', stress: 'Stress', definition: 'Definition', other: 'Other' },
     comment: 'Comment (optional)',
+    commentCount: '{count} of {max} characters',
     send: 'Send',
     sent: 'Thanks!',
     tooMany: 'Too many today.',
@@ -88,19 +89,17 @@ describe('MistakeReportSheet', () => {
     expect(send()).toBeEnabled();
   });
 
-  it('counts the comment’s characters and stops at 500', async () => {
+  it('counts the comment’s characters in words for VoiceOver and stops at 500', async () => {
     const { onSend } = await renderSheet();
 
-    expect(screen.getByText('0/500')).toBeOnTheScreen();
+    expect(screen.getByText('0/500')).toHaveProp('accessibilityLabel', '0 of 500 characters');
     await fireEvent.changeText(screen.getByLabelText('Comment (optional)'), 'abc');
-    expect(screen.getByText('3/500')).toBeOnTheScreen();
+    expect(screen.getByText('3/500')).toHaveProp('accessibilityLabel', '3 of 500 characters');
+    expect(screen.getByLabelText('Comment (optional)')).toHaveProp('maxLength', 500);
 
-    await fireEvent.changeText(screen.getByLabelText('Comment (optional)'), 'a'.repeat(520));
-    expect(screen.getByText('500/500')).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('radio', { name: 'Definition' }));
     await fireEvent.press(send());
-
-    expect(onSend).toHaveBeenCalledWith({ type: 'definition', comment: 'a'.repeat(500) });
+    expect(onSend).toHaveBeenCalledWith({ type: 'definition', comment: 'abc' });
   });
 
   it('starts afresh after a report is sent', async () => {

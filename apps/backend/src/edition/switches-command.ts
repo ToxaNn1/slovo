@@ -54,14 +54,14 @@ export async function runSwitchesCommand(
 }
 
 async function main(): Promise<number> {
-  const { DATABASE_URL, EDITIONS_DIR } = readConfig(PublishConfigSchema, process.env);
+  const { DATABASE_URL, EDITIONS_DIR, ...telegram } = readConfig(PublishConfigSchema, process.env);
   const logger = createLogger();
   const database = createDatabase(DATABASE_URL, logger);
   try {
     const editions = createEditions({
       database,
       clock: systemClock,
-      alerts: ownerAlertsOf(database, logger),
+      alerts: ownerAlertsOf(database, telegram, logger),
       editions: readEditions(EDITIONS_DIR),
     });
     return await runSwitchesCommand(process.argv.slice(2), editions, {

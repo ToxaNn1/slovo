@@ -19,6 +19,7 @@ import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Mascot } from '../primitives/Mascot';
+import { bezierFn } from '../primitives/timing';
 import {
   capitalMarkRoom,
   roleAt,
@@ -26,7 +27,6 @@ import {
   splashMotion,
   typeRoles,
   typeStyle,
-  type Easing as Curve,
   type SplashStop,
 } from '../tokens';
 
@@ -59,9 +59,17 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 type Ease = (x: number) => number;
 
-function curve([x1, y1, x2, y2]: Curve): Ease {
-  return Easing.bezierFn(x1, y1, x2, y2);
-}
+/** Each track's easing, built once rather than on every render. */
+const eases = {
+  tagline: bezierFn(taglineMotion.easing),
+  logo: bezierFn(logo.easing),
+  wedge: bezierFn(wedge.easing),
+  s: bezierFn(s.easing),
+  letters: bezierFn(letters.easing),
+  mascot: bezierFn(mascot.easing),
+  shout: bezierFn(shout.easing),
+  wipe: bezierFn(wipe.easing),
+};
 
 /** A track's value at `t` of the cut, eased segment by segment between its keyframes. */
 function track(t: number, stops: readonly SplashStop[], ease: Ease): number {
@@ -159,7 +167,7 @@ export function SplashOverlay({
     };
   }, [reduceMotion]);
 
-  const taglineEase = curve(taglineMotion.easing);
+  const taglineEase = eases.tagline;
   const taglineStyle = useAnimatedStyle(() => ({
     opacity: track(progress.value, taglineMotion.opacity, taglineEase),
     transform: [{ translateY: track(progress.value, taglineMotion.rise, taglineEase) * scale }],
@@ -208,9 +216,9 @@ function Logo({ progress, fit }: { progress: SharedValue<number>; fit: Fit }) {
   const size = logo.size * fit.scale;
   // The wedge turns about its left edge, not its middle.
   const shift = ((wedge.originX - 50) / 100) * size;
-  const logoEase = curve(logo.easing);
-  const wedgeEase = curve(wedge.easing);
-  const sEase = curve(s.easing);
+  const logoEase = eases.logo;
+  const wedgeEase = eases.wedge;
+  const sEase = eases.s;
   const logoStyle = useAnimatedStyle(() => ({
     opacity: track(progress.value, logo.opacity, logoEase),
     transform: [
@@ -321,7 +329,7 @@ function Letter({
 }) {
   const tokens = useTokens();
   const { size, letterSpacing } = typeRoles.splashLetter;
-  const ease = curve(letters.easing);
+  const ease = eases.letters;
   const delay = index * letters.stagger;
   const style = useAnimatedStyle(() => {
     const t = progress.value - delay;
@@ -351,8 +359,8 @@ function Letter({
 /** The Mascot jumping in from under the screen, landing with a squash, and its shout lines. */
 function MascotJump({ progress, fit }: { progress: SharedValue<number>; fit: Fit }) {
   const { colors } = useTokens();
-  const ease = curve(mascot.easing);
-  const shoutEase = curve(shout.easing);
+  const ease = eases.mascot;
+  const shoutEase = eases.shout;
   const { scale } = fit;
   const jumpStyle = useAnimatedStyle(() => {
     const t = progress.value;
@@ -412,7 +420,7 @@ function MascotJump({ progress, fit }: { progress: SharedValue<number>; fit: Fit
 /** The red wedge that wipes the screen at the end of the cut. */
 function Wipe({ progress, fit }: { progress: SharedValue<number>; fit: Fit }) {
   const { colors } = useTokens();
-  const ease = curve(wipe.easing);
+  const ease = eases.wipe;
   const wipeWidth = wipe.width * fit.width;
   const style = useAnimatedStyle(() => ({
     transform: [

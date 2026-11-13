@@ -1,11 +1,19 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { Correction, CuratedCollection, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type {
+  Correction,
+  CuratedCollection,
+  EditionConfig,
+  Idiom,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
 import { WordIdSchema } from '@slovo/contracts';
 import type { ContentSnapshot } from '@slovo/contracts/api';
 
-import { checkContentSet, checksumOf, type Authored } from '@slovo/content-rules';
+import { checkContentSet, checksumOf, contentSetOf, type Authored } from '@slovo/content-rules';
 
 import { buildErrorsOf, type BuildError } from './build-error';
 import { categoryArtErrors } from './category-art';
@@ -47,6 +55,8 @@ export interface SnapshotSource {
     /** The content at the snapshot's content version. */
     readonly content: PackContent;
     readonly targets: ContentTargets;
+    /** The Edition's config, read once for the whole build. */
+    readonly config: EditionConfig;
   };
 }
 
@@ -106,7 +116,7 @@ export function readEditionWithSnapshot(
       ? {}
       : { needsNewRecording: snapshot.needsNewRecording }),
   };
-  return { errors, valid: { content, targets: checked.targets } };
+  return { errors, valid: { content, targets: checked.targets, config: checked.config } };
 }
 
 /** What the errors of a snapshot name as their file. */
@@ -125,7 +135,11 @@ function readWith(
   source: EditionSource;
   manifest?: ContentManifest;
   /** Set when there are no errors. */
-  checked?: { content: Omit<PackContent, 'contentVersion'>; targets: ContentTargets };
+  checked?: {
+    content: Omit<PackContent, 'contentVersion'>;
+    targets: ContentTargets;
+    config: EditionConfig;
+  };
 } {
   const folder = editionFiles(editionDir);
   const errors: BuildError[] = [];
@@ -244,22 +258,24 @@ function readWith(
       ? {}
       : { curatedCollections: sortedById(curatedCollections) }),
   };
-  return { ...read, checked: { content, targets } };
+  return { ...read, checked: { content, targets, config } };
 }
 
 /** The snapshot's records, each named by its kind and id in the errors. */
 function snapshotEntries(snapshot: ContentSnapshot): AuthoredContent {
-  const authored = <T extends { readonly id: string }>(kind: string, records: readonly T[]) =>
-    records.map((entry) => ({ file: `${SNAPSHOT_FILE}:${kind}/${entry.id}`, entry }));
-  return {
-    words: authored('words', snapshot.words),
-    corrections: authored('corrections', snapshot.corrections),
-    idioms: authored('idioms', snapshot.idioms),
-    synonymRows: authored('synonymRows', snapshot.synonymRows),
-    tips: authored('tips', snapshot.tips),
-    curatedCollections: authored('curatedCollections', snapshot.curatedCollections),
-    errors: [],
-  };
+  const { words, corrections, idioms, synonymRows, tips, curatedCollections } = contentSetOf(
+    {
+      word: snapshot.words,
+      correction: snapshot.corrections,
+      idiom: snapshot.idioms,
+      synonymRow: snapshot.synonymRows,
+      tip: snapshot.tips,
+      curatedCollection: snapshot.curatedCollections,
+      crosswordDay: snapshot.crosswordDays,
+    },
+    (kind, id) => `${SNAPSHOT_FILE}:${kind}/${id}`,
+  );
+  return { words, corrections, idioms, synonymRows, tips, curatedCollections, errors: [] };
 }
 
 function sortedById<T extends { readonly id: string }>(authored: readonly Authored<T>[]): T[] {

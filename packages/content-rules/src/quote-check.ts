@@ -3,10 +3,10 @@
  * source's page (ADR 0084). Pure; the caller fetches the page. The Content CLI's
  * `verify` and the backend's quote check job both match through it.
  */
+import { STRESS_MARK } from '@slovo/contracts';
 import { parse } from 'node-html-parser';
 
 const GOROH_HOST = 'goroh.pp.ua';
-const STRESS_MARK = '́';
 
 /** goroh's name for text a language model wrote; it is never quoted (ADR 0012). */
 export const LANGUAGE_MODEL = 'Велика мовна модель';
@@ -93,6 +93,9 @@ const ENTITIES: Readonly<Record<string, string>> = {
   shy: '',
 };
 
+/** The last Unicode code point; `String.fromCodePoint` throws past it. */
+const MAX_CODE_POINT = 0x10ffff;
+
 /** A page's text: no scripts, styles or tags, entities decoded. */
 export function plainText(html: string): string {
   return html
@@ -102,7 +105,8 @@ export function plainText(html: string): string {
       if (name.startsWith('#')) {
         const code =
           name[1] === 'x' || name[1] === 'X' ? parseInt(name.slice(2), 16) : Number(name.slice(1));
-        return String.fromCodePoint(code);
+        // Past the last code point the entity names no character: it stays as written.
+        return code <= MAX_CODE_POINT ? String.fromCodePoint(code) : entity;
       }
       return ENTITIES[name.toLowerCase()] ?? entity;
     });

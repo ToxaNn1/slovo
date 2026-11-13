@@ -86,10 +86,8 @@ export interface Sync {
   ): Promise<({ readonly ok: true } & SyncPage) | NotServing | TooManyRequests>;
 }
 
-/** Whether the Edition serves Sync: it serves the Account, and Sync on top of it. */
-async function servingSync(editions: EditionRegistry, editionId: string) {
-  const account = await editions.serving(editionId, 'account');
-  if (!account.ok) return account;
+/** Whether the Edition serves Sync; Sync stands on the Account, which `DEPENDS_ON` checks. */
+function servingSync(editions: EditionRegistry, editionId: string) {
   return editions.serving(editionId, 'sync');
 }
 

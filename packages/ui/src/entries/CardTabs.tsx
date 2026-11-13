@@ -166,7 +166,7 @@ const SOURCE_TAB = { key: 'source', own: undefined } as const;
  * `<testID>-tab-content` and, while clamped, `<testID>-tab-clip` and `<testID>-tab-more`, or once
  * opened, `<testID>-tab-scroll` and `<testID>-tab-less`.
  */
-export function FitPanel({
+function FitPanel({
   testID,
   fitKey,
   children,

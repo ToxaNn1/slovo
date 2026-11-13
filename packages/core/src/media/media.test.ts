@@ -87,7 +87,7 @@ async function device({
     recordings: [...starterRows.recordings, ...(rows.recordings ?? [])],
     illustrations: [...starterRows.illustrations, ...(rows.illustrations ?? [])],
   });
-  await store.apply(patch, '"uk.2.p2"');
+  await store.apply(patch, '"uk.2.p3"');
   const cache = createMemoryMediaCache();
   const fetcher = createFakeMediaFetcher();
   for (const row of patch.recordings)
@@ -130,7 +130,7 @@ describe('the media of a Word card', () => {
       ],
       illustrations: [illustration('starter', hashOf('t'), { retired: true })],
     });
-    await store.apply(patch, '"uk.3.p2"');
+    await store.apply(patch, '"uk.3.p3"');
     await media.patchApplied(patch);
 
     expect(await media.ofWord('starter', 'oksana')).toEqual({
@@ -364,7 +364,7 @@ describe('a Patch applied', () => {
         illustration('w1', hashOf('e')),
       ],
     });
-    await store.apply(patch, '"uk.3.p2"');
+    await store.apply(patch, '"uk.3.p3"');
 
     await media.patchApplied(patch);
 

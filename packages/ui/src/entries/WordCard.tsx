@@ -34,6 +34,7 @@ import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { RevealDetail, useFlyingText } from './reveal';
 import { capitalised } from './capitalised';
+import { NumberedDefinitions } from './NumberedDefinitions';
 import { CategoryChip } from './CategoryChip';
 
 /**
@@ -273,7 +274,7 @@ export function WordDefinition({ card }: { card: WordCardModel }) {
   const { voice } = useEdition();
   const turnActions = usePageTurnActions();
   return (
-    <Text
+    <WholeLinesText
       testID="word-definition"
       // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
       accessibilityLabel={withoutStress(card.primaryDefinition)}
@@ -282,7 +283,7 @@ export function WordDefinition({ card }: { card: WordCardModel }) {
       style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
     >
       {capitalised(card.primaryDefinition, voice.accessibilityLanguage)}
-    </Text>
+    </WholeLinesText>
   );
 }
 
@@ -510,17 +511,7 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
         <View testID="word-details" style={styles.details}>
           {details.extraDefinitions.length === 0 ? null : (
             <DetailSection title={strings.wordCard.extraDefinitions}>
-              {details.extraDefinitions.map((definition, index) => (
-                <Text
-                  key={index}
-                  accessibilityLabel={withoutStress(`${String(index + 2)}. ${definition}`)}
-                  {...voice}
-                  style={bodyText}
-                >
-                  {/* The primary Definition is the first; these number on from 2. */}
-                  {`${String(index + 2)}. ${capitalised(definition, voice.accessibilityLanguage)}`}
-                </Text>
-              ))}
+              <NumberedDefinitions definitions={details.extraDefinitions} style={bodyText} />
             </DetailSection>
           )}
           {details.examples.length === 0 ? null : (

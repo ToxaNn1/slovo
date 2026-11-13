@@ -1,15 +1,13 @@
 import { z } from 'zod';
 
-import { SourceSchema, EntryTextSchema } from './shared';
-import { ExampleSchema } from './word';
+import { SourceOutputSchema, SourceSchema, EntryTextSchema, recordIdSchema } from './shared';
+import { ExampleOutputSchema, ExampleSchema } from './word';
 
 /**
  * An Idiom id: opaque, assigned when the Idiom is authored and never reused.
  * The `i_` prefix keeps it apart from the ids of other kinds of Entry.
  */
-export const IdiomIdSchema = z
-  .string()
-  .regex(/^i_[a-z0-9]+$/, 'Expected an Idiom id: i_ followed by lowercase letters and digits');
+export const IdiomIdSchema = recordIdSchema('idiom', 'an Idiom');
 
 /**
  * What kind of fixed expression an Idiom is: an idiom proper («фразеологізм»),
@@ -19,6 +17,39 @@ export const IdiomIdSchema = z
 export const IdiomTypeSchema = z.enum(['idiom', 'placeName', 'proverb']);
 
 export type IdiomType = z.infer<typeof IdiomTypeSchema>;
+
+// The fields of an Idiom, with its nested schemas strict for content and open for outputs.
+const idiomShape = (
+  example: typeof ExampleSchema | typeof ExampleOutputSchema,
+  source: typeof SourceSchema | typeof SourceOutputSchema,
+) => ({
+  kind: z.literal('idiom').default('idiom'),
+  id: IdiomIdSchema,
+  expression: EntryTextSchema.refine(
+    (expression) => expression === expression.normalize('NFC'),
+    'Expected the expression in Unicode NFC, with every letter composed',
+  ),
+  idiomType: IdiomTypeSchema,
+  primaryDefinition: EntryTextSchema,
+  extraDefinitions: z.array(EntryTextSchema).default([]),
+  examples: z.array(example).default([]),
+  etymology: EntryTextSchema.optional(),
+  sources: z.array(source).min(1),
+  retired: z.boolean().default(false),
+});
+
+const idiomRules = (
+  idiom: z.output<z.ZodObject<ReturnType<typeof idiomShape>>>,
+  context: z.RefinementCtx,
+) => {
+  if (idiom.idiomType === 'placeName' && idiom.etymology === undefined) {
+    context.addIssue({
+      code: 'custom',
+      path: ['etymology'],
+      message: 'Required for a place name: its etymology tells the story of its name',
+    });
+  }
+};
 
 /**
  * An Idiom as authored in an Edition's content and as returned by the Core:
@@ -36,30 +67,13 @@ export type IdiomType = z.infer<typeof IdiomTypeSchema>;
  * like a Retired Word.
  */
 export const IdiomSchema = z
-  .strictObject({
-    kind: z.literal('idiom').default('idiom'),
-    id: IdiomIdSchema,
-    expression: EntryTextSchema.refine(
-      (expression) => expression === expression.normalize('NFC'),
-      'Expected the expression in Unicode NFC, with every letter composed',
-    ),
-    idiomType: IdiomTypeSchema,
-    primaryDefinition: EntryTextSchema,
-    extraDefinitions: z.array(EntryTextSchema).default([]),
-    examples: z.array(ExampleSchema).default([]),
-    etymology: EntryTextSchema.optional(),
-    sources: z.array(SourceSchema).min(1),
-    retired: z.boolean().default(false),
-  })
-  .superRefine((idiom, context) => {
-    if (idiom.idiomType === 'placeName' && idiom.etymology === undefined) {
-      context.addIssue({
-        code: 'custom',
-        path: ['etymology'],
-        message: 'Required for a place name: its etymology tells the story of its name',
-      });
-    }
-  });
+  .strictObject(idiomShape(ExampleSchema, SourceSchema))
+  .superRefine(idiomRules);
+
+/** An Idiom as an output carries it: open to fields a later backend adds (ADR 0031). */
+export const IdiomOutputSchema = z
+  .object(idiomShape(ExampleOutputSchema, SourceOutputSchema))
+  .superRefine(idiomRules);
 
 /** An Idiom with every default filled in, as the Core returns it. */
 export type Idiom = z.output<typeof IdiomSchema>;

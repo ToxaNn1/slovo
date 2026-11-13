@@ -102,6 +102,96 @@ export function PanelGround({ color }: { color: string }) {
   );
 }
 
+/**
+ * The red panel over a result: the ground, an eyebrow `kicker`, the title and
+ * its `line` read as one heading, and the Mascot beside them, or under them
+ * when `stacked` (the Lives-over poster, board 07, g9).
+ */
+export function ResultPanel({
+  kicker,
+  title,
+  line,
+  lineTestID,
+  mascot,
+  stacked = false,
+  testID,
+}: {
+  kicker?: string | undefined;
+  title: string;
+  line: string | undefined;
+  lineTestID?: string;
+  mascot: ReactNode;
+  stacked?: boolean;
+  /** The panel's foot, under the ground. */
+  testID?: string;
+}) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
+  const keyInk = useSchemeColors('light').ink;
+  return (
+    <View style={styles.panel}>
+      <PanelGround color={colors.accent} />
+      <View testID={testID} style={[styles.panelFoot, stacked ? styles.stacked : null]}>
+        <View
+          accessible
+          accessibilityRole="header"
+          {...voice}
+          style={stacked ? styles.stackedText : styles.text}
+        >
+          {kicker === undefined ? null : (
+            <Text
+              maxFontSizeMultiplier={fontScaleCap.text}
+              style={[typeStyle('eyebrow', tokens), { color: keyInk }]}
+            >
+              {kicker}
+            </Text>
+          )}
+          <WholeWordsText
+            text={title}
+            typeRole="resultTitle"
+            tracking={TITLE_TRACKING}
+            style={[typeStyle('resultTitle', tokens), { color: keyInk }]}
+          />
+          {line === undefined ? null : (
+            <Text
+              testID={lineTestID}
+              maxFontSizeMultiplier={fontScaleCap.text}
+              style={[typeStyle('resultLine', tokens), { color: keyInk }]}
+            >
+              {line}
+            </Text>
+          )}
+        </View>
+        <PanelMascot style={stacked ? styles.stackedMascot : undefined}>{mascot}</PanelMascot>
+      </View>
+    </View>
+  );
+}
+
+/** A result button: what it says and does, and how a test finds it. */
+interface ResultAction {
+  readonly testID: string;
+  readonly label: string;
+  readonly onPress: () => void;
+}
+
+/** The row under a result: the neutral way out, then the red way on, if any, side by side. */
+export function ResultButtons({ away, on }: { away: ResultAction; on: ResultAction | undefined }) {
+  return (
+    <View style={styles.buttons}>
+      <View style={styles.button}>
+        <Button variant="neutral" {...away} />
+      </View>
+      {on === undefined ? null : (
+        <View style={styles.button}>
+          <Button {...on} />
+        </View>
+      )}
+    </View>
+  );
+}
+
 /** One number of the result: a tile with the word that names it over the value, read as one. */
 export function ResultNumber({
   value,
@@ -174,7 +264,7 @@ export function GameResult({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { strings, voice, count } = useEdition();
+  const { strings, count } = useEdition();
   const words = strings.game;
   const { roundsPassed, roundLimit, lives } = game;
   // A Game in a mode with a time limit counts its right answers, as its Best
@@ -194,7 +284,6 @@ export function GameResult({
     // New haptics, after a change of Vibration, find the win already played.
   }, [won, gameHaptics]);
 
-  const keyInk = useSchemeColors('light').ink;
   const title = timed
     ? words.result.timeUp.title
     : won
@@ -212,27 +301,7 @@ export function GameResult({
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.screen}
     >
-      <View style={styles.panel}>
-        <PanelGround color={colors.accent} />
-        <View style={styles.panelFoot}>
-          <View accessible {...voice} style={styles.text}>
-            <WholeWordsText
-              text={title}
-              typeRole="resultTitle"
-              tracking={TITLE_TRACKING}
-              accessibilityRole="header"
-              style={[typeStyle('resultTitle', tokens), { color: keyInk }]}
-            />
-            <Text
-              maxFontSizeMultiplier={fontScaleCap.text}
-              style={[typeStyle('resultLine', tokens), { color: keyInk }]}
-            >
-              {line}
-            </Text>
-          </View>
-          <PanelMascot>{mascot}</PanelMascot>
-        </View>
-      </View>
+      <ResultPanel title={title} line={line} mascot={mascot} />
       <View style={styles.body}>
         <View style={styles.numbers}>
           {timed ? (
@@ -277,19 +346,10 @@ export function GameResult({
         {onOpenEntry === undefined ? null : (
           <GameReview rounds={game.played} onOpen={onOpenEntry} />
         )}
-        <View style={styles.buttons}>
-          <View style={styles.button}>
-            <Button
-              variant="neutral"
-              testID="game-home"
-              label={words.result.home}
-              onPress={onHome}
-            />
-          </View>
-          <View style={styles.button}>
-            <Button testID="game-again" label={words.result.again} onPress={onAgain} />
-          </View>
-        </View>
+        <ResultButtons
+          away={{ testID: 'game-home', label: words.result.home, onPress: onHome }}
+          on={{ testID: 'game-again', label: words.result.again, onPress: onAgain }}
+        />
       </View>
     </ScrollView>
   );
@@ -307,6 +367,11 @@ const styles = StyleSheet.create({
     paddingBottom: resultLayout.panelFootBottom,
   },
   text: { flex: 1, gap: space[2] - 2 },
+  // The Lives-over poster (board 07, g9): the title across the panel, the Mascot under it, its figure in line with the text.
+  stacked: { flexDirection: 'column', alignItems: 'flex-start', gap: 0 },
+  stackedText: { alignSelf: 'stretch', gap: space[2] - 2 },
+  // The figure in line with the text, past the padding the Mascot draws around it.
+  stackedMascot: { marginLeft: -space[4] },
   mascot: { maxWidth: MASCOT_COLUMN },
   body: { paddingHorizontal: space[5], gap: blockGap },
   numbers: { flexDirection: 'row', flexWrap: 'wrap', gap: resultLayout.numbersGap },

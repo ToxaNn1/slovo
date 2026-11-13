@@ -189,6 +189,9 @@ CREATE TABLE synonym_row_members (
   PRIMARY KEY (row_id, position)
 ) WITHOUT ROWID;
 
+-- The Synonym Rows of a Word card, found by the member's Word.
+CREATE INDEX synonym_row_members_by_word ON synonym_row_members (word_id);
+
 -- The Stress of a Synonym Row's words: member 0 is the dominant, member n
 -- the member at position n - 1.
 CREATE TABLE synonym_row_stress (
@@ -342,6 +345,14 @@ const METADATA_FIELDS = {
   packFormat: { key: 'pack_format', read: Number },
 } as const satisfies Record<keyof PackMetadata, { key: string; read: (text: string) => unknown }>;
 
+/** Every field of the pack metadata, once each: the table names each field as its own value. */
+const METADATA_KEYS: readonly (keyof PackMetadata)[] = Object.values({
+  editionId: 'editionId',
+  contentVersion: 'contentVersion',
+  contentChecksum: 'contentChecksum',
+  packFormat: 'packFormat',
+} satisfies { readonly [Field in keyof PackMetadata]: Field });
+
 /** One row of the `metadata` table. */
 export interface MetadataRow {
   readonly key: string;
@@ -350,10 +361,10 @@ export interface MetadataRow {
 
 /** The rows of the `metadata` table that record the metadata. */
 export function metadataRows(metadata: PackMetadata): MetadataRow[] {
-  return Object.entries(METADATA_FIELDS).map(([field, { key }]) => ({
-    key,
-    value: String(metadata[field as keyof PackMetadata]),
-  }));
+  return METADATA_KEYS.flatMap((field) => {
+    const value = metadata[field];
+    return value === undefined ? [] : [{ key: METADATA_FIELDS[field].key, value: String(value) }];
+  });
 }
 
 /** The metadata the rows record. Throws when a key is missing or a value is invalid. */

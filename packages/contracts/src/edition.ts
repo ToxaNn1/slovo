@@ -4,6 +4,7 @@ import { MixKindSchema } from './entry';
 import { NotificationSoundFileSchema } from './notification-sound';
 import { OriginLanguageSchema } from './origin-language';
 import {
+  hasNoRepeats,
   HexColorSchema,
   KebabCaseIdSchema,
   RaritySchema,
@@ -15,6 +16,25 @@ import {
 const LanguageTagSchema = z
   .string()
   .regex(/^[a-z]{2,3}(-[A-Z]{2})?$/, 'Expected a BCP 47 tag such as uk-UA');
+
+/**
+ * Adds an issue at each id seen before in the list and returns the ids seen,
+ * for the checks that follow.
+ */
+function reportRepeats(
+  context: z.RefinementCtx,
+  ids: readonly string[],
+  pathOf: (index: number) => PropertyKey[],
+  messageOf: (id: string) => string,
+): Set<string> {
+  const seen = new Set<string>();
+  ids.forEach((id, index) => {
+    if (seen.has(id))
+      context.addIssue({ code: 'custom', path: pathOf(index), message: messageOf(id) });
+    seen.add(id);
+  });
+  return seen;
+}
 
 const categoryFields = {
   id: KebabCaseIdSchema,
@@ -87,7 +107,7 @@ const LetterListSchema = z
     z
       .array(z.string())
       .min(1, 'Expected at least one letter')
-      .refine((letters) => new Set(letters).size === letters.length, 'Expected unique letters'),
+      .refine(hasNoRepeats, 'Expected unique letters'),
   );
 
 /**
@@ -210,16 +230,12 @@ export const NarratorVoicesSchema = z
     sample: NarratorVoiceSampleSchema,
   })
   .superRefine(({ default: chosen, voices }, context) => {
-    const ids = new Set<string>();
-    voices.forEach(({ id }, index) => {
-      if (ids.has(id))
-        context.addIssue({
-          code: 'custom',
-          path: ['voices', index, 'id'],
-          message: `Expected each Narrator Voice id once, got ${id} again`,
-        });
-      ids.add(id);
-    });
+    const ids = reportRepeats(
+      context,
+      voices.map(({ id }) => id),
+      (index) => ['voices', index, 'id'],
+      (id) => `Expected each Narrator Voice id once, got ${id} again`,
+    );
     if (!ids.has(chosen))
       context.addIssue({
         code: 'custom',
@@ -752,7 +768,7 @@ export const MAX_NOTIFICATION_TIMES = 10;
 export const NotificationTimesSchema = z
   .array(TimeOfDaySchema)
   .max(MAX_NOTIFICATION_TIMES)
-  .refine((times) => new Set(times).size === times.length, 'Expected unique times');
+  .refine(hasNoRepeats, 'Expected unique times');
 
 export const MixConfigSchema = z.strictObject({
   /** Either every Category of the Language Pack, also one a content update adds, or the listed Category ids. */
@@ -1006,16 +1022,13 @@ export const EditionConfigSchema = z
       .array(BadgeFamilySchema)
       .min(1)
       .refine(
-        (families) => new Set(families.map(({ id }) => id)).size === families.length,
+        (families) => hasNoRepeats(families.map(({ id }) => id)),
         'Expected each Badge family id once',
       ),
     /** The Badges, in their order, each id once, each of a declared family (ADR 0066, 0085). */
     badges: z
       .array(BadgeSchema)
-      .refine(
-        (badges) => new Set(badges.map(({ id }) => id)).size === badges.length,
-        'Expected each Badge id once',
-      ),
+      .refine((badges) => hasNoRepeats(badges.map(({ id }) => id)), 'Expected each Badge id once'),
     /** The Mascot's line for each moment it shows in. */
     mascot: MascotLinesSchema,
   })
@@ -1045,32 +1058,20 @@ export const EditionConfigSchema = z
           });
       });
       for (const question of [...QuestionnaireQuestionSchema.options, 'selfRating'] as const) {
-        const optionIds = new Set<string>();
-        questionnaire[question].forEach(({ id }, index) => {
-          if (optionIds.has(id)) {
-            context.addIssue({
-              code: 'custom',
-              path: ['questionnaire', question, index, 'id'],
-              message: `Duplicate option id "${id}"`,
-            });
-          }
-          optionIds.add(id);
-        });
+        reportRepeats(
+          context,
+          questionnaire[question].map(({ id }) => id),
+          (index) => ['questionnaire', question, index, 'id'],
+          (id) => `Duplicate option id "${id}"`,
+        );
       }
-      const idsOf = (list: readonly Category[], field: 'categories' | 'correctionCategories') => {
-        const ids = new Set<string>();
-        list.forEach(({ id }, index) => {
-          if (ids.has(id)) {
-            context.addIssue({
-              code: 'custom',
-              path: [field, index, 'id'],
-              message: `Duplicate Category id "${id}"`,
-            });
-          }
-          ids.add(id);
-        });
-        return ids;
-      };
+      const idsOf = (list: readonly Category[], field: 'categories' | 'correctionCategories') =>
+        reportRepeats(
+          context,
+          list.map(({ id }) => id),
+          (index) => [field, index, 'id'],
+          (id) => `Duplicate Category id "${id}"`,
+        );
       const known = {
         categories: idsOf(categories, 'categories'),
         correctionCategories: idsOf(correctionCategories, 'correctionCategories'),
@@ -1084,28 +1085,18 @@ export const EditionConfigSchema = z
           });
         }
       });
-      const codes = new Set<string>();
-      originLanguages.forEach(({ code }, index) => {
-        if (codes.has(code)) {
-          context.addIssue({
-            code: 'custom',
-            path: ['originLanguages', index, 'code'],
-            message: `Duplicate origin language code "${code}"`,
-          });
-        }
-        codes.add(code);
-      });
-      const moodIds = new Set<string>();
-      moods.forEach(({ id }, index) => {
-        if (moodIds.has(id)) {
-          context.addIssue({
-            code: 'custom',
-            path: ['moods', index, 'id'],
-            message: `Duplicate mood id "${id}"`,
-          });
-        }
-        moodIds.add(id);
-      });
+      reportRepeats(
+        context,
+        originLanguages.map(({ code }) => code),
+        (index) => ['originLanguages', index, 'code'],
+        (code) => `Duplicate origin language code "${code}"`,
+      );
+      const moodIds = reportRepeats(
+        context,
+        moods.map(({ id }) => id),
+        (index) => ['moods', index, 'id'],
+        (id) => `Duplicate mood id "${id}"`,
+      );
       const dashboardMoodIds = new Set<string>();
       dashboardMoods.forEach((id, index) => {
         if (!moodIds.has(id) || dashboardMoodIds.has(id)) {

@@ -9,7 +9,7 @@ import {
 } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
-import { Dimensions, StyleSheet, Text } from 'react-native';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
@@ -909,6 +909,27 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
     expect(screen.getByText('From the Greék.')).toHaveProp('accessibilityLabel', 'From the Greek.');
   });
 
+  it('numbers the other meanings in the History tab on from the primary Definition', async () => {
+    await render(
+      <EditionProvider
+        edition={{ locale: 'en' }}
+        strings={testStrings({
+          ...tabbedStrings,
+          wordCard: { ...tabbedStrings.wordCard, moreMeanings: { other: '{count} more' } },
+        })}
+      >
+        <EntryCard card={stressedWord} tabs />
+      </EditionProvider>,
+    );
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+
+    expect(
+      within(screen.getByTestId('word-meanings')).getByText('2. A handsome yóuth.', {
+        includeHiddenElements: true,
+      }),
+    ).toHaveProp('accessibilityLabel', '2. A handsome youth.');
+  });
+
   it('shows the Stress marks on an Idiom card and reads its texts without them', async () => {
     const stressedIdiom = idiomCard({
       expression: 'to beát the bushes',
@@ -1132,6 +1153,44 @@ describe('the frame of a tabbed Entry card (board XEntry2)', () => {
       });
     },
   );
+});
+
+describe('the page an Entry card lays itself out on', () => {
+  /** Draws the card inside a marker that names whether it is a fixed frame. */
+  const page = (entry: React.ReactNode, framed: boolean) => (
+    <View testID={framed ? 'framed-page' : 'scrolled-page'}>{entry}</View>
+  );
+  const wordOfTheDay = { ...wordWithEverything, wordOfTheDay: { year: 2026, month: 11, day: 5 } };
+  const wordOfTheDayStrings = {
+    ...tabbedStrings,
+    wordOfTheDay: { ...tabbedStrings.wordOfTheDay, kicker: 'Word of the day · {day}.{month}' },
+  };
+
+  it('is a fixed frame for a tabbed card', async () => {
+    await render(inEdition(<EntryCard card={wordCard} tabs page={page} />));
+
+    expect(within(screen.getByTestId('framed-page')).getByTestId('word-card')).toBeTruthy();
+  });
+
+  it('is no fixed frame for an untabbed card', async () => {
+    await render(inEdition(<EntryCard card={wordCard} page={page} />));
+
+    expect(screen.getByTestId('scrolled-page')).toBeTruthy();
+  });
+
+  it('scrolls the red Word of the Day card while Self-check keeps it closed, and frames it once revealed', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={wordOfTheDayStrings}>
+        <EntryCard card={wordOfTheDay} tabs selfCheck page={page} />
+      </EditionProvider>,
+    );
+
+    expect(screen.getByTestId('scrolled-page')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('word-reveal'));
+
+    expect(screen.getByTestId('framed-page')).toBeTruthy();
+  });
 });
 
 describe('the Source tab of a tabbed Entry card (ADR 0116)', () => {

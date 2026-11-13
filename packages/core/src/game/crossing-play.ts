@@ -57,6 +57,48 @@ export interface KeptCrossingPlay {
 export const crossingCellKey = ({ row, column }: PuzzlePlace): string =>
   `${String(row)},${String(column)}`;
 
+/**
+ * A cell of the crossing grid: a block, or a white cell with the puzzle's
+ * own letter there and the indexes of the Words through it, in the
+ * puzzle's order.
+ */
+export type CrossingSpot =
+  | { readonly kind: 'block' }
+  | {
+      readonly kind: 'white';
+      readonly answer: string;
+      readonly words: readonly number[];
+    };
+
+/**
+ * The puzzle's square grid, row by row, laid once from its blocks and
+ * Words. Every white cell is in a Word (ADR 0087), so a cell in none is a
+ * block.
+ */
+export function crossingGridOf(puzzle: CrossingPuzzle): CrossingSpot[][] {
+  const whites = new Map<string, { answer: string; words: number[] }>();
+  puzzle.words.forEach((word, i) => {
+    crossingPlacesOf(word).forEach((place, letter) => {
+      const key = crossingCellKey(place);
+      const white = whites.get(key);
+      if (white === undefined) whites.set(key, { answer: word.letters[letter] ?? '', words: [i] });
+      else white.words.push(i);
+    });
+  });
+  const size = Math.max(
+    0,
+    ...[...puzzle.blocks, ...puzzle.words.flatMap(crossingPlacesOf)].map(
+      ({ row, column }) => Math.max(row, column) + 1,
+    ),
+  );
+  return Array.from({ length: size }, (_, row) =>
+    Array.from({ length: size }, (__, column): CrossingSpot => {
+      const white = whites.get(crossingCellKey({ row, column }));
+      return white === undefined ? { kind: 'block' } : { kind: 'white', ...white };
+    }),
+  );
+}
+
 /** Whether every Word is solved. */
 export const isCrossingSolved = (state: CrossingPlay): boolean =>
   state.words.every((word) => word.kind === 'solved');
@@ -216,6 +258,12 @@ export function playCrossing(
       };
     }
     case 'tick':
-      return { ...state, seconds: state.seconds + action.seconds };
+      // Whole seconds, never back: the progress kept reads them as a count.
+      return {
+        ...state,
+        seconds:
+          state.seconds +
+          (Number.isFinite(action.seconds) ? Math.max(0, Math.round(action.seconds)) : 0),
+      };
   }
 }

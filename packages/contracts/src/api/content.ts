@@ -1,33 +1,37 @@
 import { z } from 'zod';
 
-import { CorrectionSchema } from '../correction';
-import { CrosswordDaySchema } from '../crossword';
-import { CuratedCollectionSchema } from '../curated-collection';
+import { CorrectionOutputSchema } from '../correction';
+import { CrosswordDayOutputSchema } from '../crossword';
+import { CuratedCollectionOutputSchema } from '../curated-collection';
 import { EditionIdSchema } from '../edition';
-import { IdiomSchema } from '../idiom';
+import { IdiomOutputSchema } from '../idiom';
 import { IllustrationRowSchema, RecordingRowSchema } from '../media';
-import { SynonymRowSchema } from '../synonym-row';
-import { TipSchema } from '../tip';
-import { WordIdSchema, WordSchema } from '../word';
+import { SynonymRowOutputSchema } from '../synonym-row';
+import { TipOutputSchema } from '../tip';
+import { WordIdSchema, WordOutputSchema } from '../word';
 import { PublishedPackSchema } from '../language-pack';
 import { procedure } from './procedure';
 
 /**
  * The Patch format the backend writes; an app refuses another one and keeps
- * its content (ADR 0090). Format 2 brought the media rows (ADR 0099).
+ * its content (ADR 0090). Format 2 brought the media rows (ADR 0099); format 3
+ * lets a Patch carry `**` standard-form marks and Tip exceptions (ADR 0121).
  */
-export const PATCH_FORMAT = 2;
+export const PATCH_FORMAT = 3;
 
-/** The seven kinds of content records, each in id order, the Retired ones included (ADR 0090). */
+/**
+ * The seven kinds of content records, each in id order, the Retired ones
+ * included (ADR 0090), open to fields a later backend adds (ADR 0031).
+ */
 const contentKinds = {
-  words: z.array(WordSchema),
-  idioms: z.array(IdiomSchema),
-  corrections: z.array(CorrectionSchema),
-  tips: z.array(TipSchema),
-  synonymRows: z.array(SynonymRowSchema),
-  curatedCollections: z.array(CuratedCollectionSchema),
+  words: z.array(WordOutputSchema),
+  idioms: z.array(IdiomOutputSchema),
+  corrections: z.array(CorrectionOutputSchema),
+  tips: z.array(TipOutputSchema),
+  synonymRows: z.array(SynonymRowOutputSchema),
+  curatedCollections: z.array(CuratedCollectionOutputSchema),
   /** In date order. */
-  crosswordDays: z.array(CrosswordDaySchema),
+  crosswordDays: z.array(CrosswordDayOutputSchema),
 };
 
 /**

@@ -1,45 +1,44 @@
-import type { AdminApiOutputs, AlertThresholdKey } from '@slovo/contracts/admin-api';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  AccessRefusalSchema,
+  type AdminApiOutputs,
+  type AlertThresholdKey,
+} from '@slovo/contracts/admin-api';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
 import { useState, type ReactNode, type SubmitEvent } from 'react';
+import type { z } from 'zod';
 
 import { adminApi } from '../api';
-import { ConfirmDialog } from '../components/confirm-dialog';
+import { useAdminWrite } from '../components/admin-write';
+import { ConfirmDialog, type PendingWrite } from '../components/confirm-dialog';
 import { Button } from '../components/ui/button';
-import { useSignedInAdmin } from '../session';
+import { refusalData, useSignedInAdmin } from '../session';
+import { formatMoment } from '../format';
 
 export const Route = createFileRoute('/security')({
   component: Security,
 });
 
 type Role = 'owner' | 'admin';
+type AccessRefusal = z.infer<typeof AccessRefusalSchema>;
 type Action = AdminApiOutputs['actions']['actions'][number];
 type AlertThreshold = AdminApiOutputs['alertThresholds']['thresholds'][number];
 
 const ROLE_LABELS: Readonly<Record<Role, string>> = { owner: 'Власник', admin: 'Адмін' };
 
-const REFUSALS: Readonly<Record<string, string>> = {
+const REFUSALS: Readonly<Record<AccessRefusal['refusal'], string>> = {
   taken: 'Ця пошта вже має доступ.',
   self: 'Свою роль і свій доступ змінює інший Власник.',
   unknown: 'Цього вже немає: оновіть сторінку.',
   'name-taken': 'Цю назву вже видано; оберіть іншу.',
 };
 
-const when = (iso: string) =>
-  new Date(iso).toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
-
 const inputClass = 'h-9 rounded-lg border border-border bg-background px-3 text-sm';
 
 /** What the Власник reads of a refused write. */
 function refusalOf(error: unknown): string {
-  if (typeof error === 'object' && error !== null && 'data' in error) {
-    const { data } = error;
-    if (typeof data === 'object' && data !== null && 'refusal' in data) {
-      const text = REFUSALS[String(data.refusal)];
-      if (text !== undefined) return text;
-    }
-  }
-  return 'Не вдалося. Спробуйте ще раз.';
+  const refused = AccessRefusalSchema.safeParse(refusalData(error)).data;
+  return refused === undefined ? 'Не вдалося. Спробуйте ще раз.' : REFUSALS[refused.refusal];
 }
 
 /** Who wrote a row of the Action log. */
@@ -56,24 +55,30 @@ function authorOf(who: Action['who']): string {
 
 const shown = (value: unknown) => (value === null ? '—' : JSON.stringify(value));
 
-function Block({ title, children }: { title: string; children: ReactNode }) {
+/** A block of Безпека; `failed` says its read did not load rather than leave it empty. */
+function Block({
+  title,
+  failed = false,
+  children,
+}: {
+  title: string;
+  failed?: boolean;
+  children: ReactNode;
+}) {
   return (
     <section aria-label={title} className="flex flex-col gap-3">
       <h2 className="font-display text-lg font-semibold">{title}</h2>
+      {failed ? (
+        <p role="alert" className="text-sm text-destructive">
+          Не вдалося завантажити.
+        </p>
+      ) : null}
       {children}
     </section>
   );
 }
 
-/** A write of Безпека: its confirmation stays open until the write ends. */
-interface SecurityWrite {
-  readonly title: string;
-  readonly confirm: string;
-  readonly danger?: boolean;
-  readonly run: (reason: string) => Promise<unknown>;
-}
-
-type Confirm = (write: SecurityWrite) => void;
+type Confirm = (write: PendingWrite) => void;
 
 /** Безпека: a Власник only; an Адмін reads why it stays closed. */
 function Security() {
@@ -89,7 +94,7 @@ function Security() {
 }
 
 function OwnerSecurity({ email }: { email: string }) {
-  const [pending, setPending] = useState<SecurityWrite | null>(null);
+  const [pending, setPending] = useState<PendingWrite | null>(null);
   return (
     <section aria-label="Безпека" className="flex flex-col gap-8">
       <div className="flex items-baseline justify-between gap-4">
@@ -122,27 +127,15 @@ function OwnerSecurity({ email }: { email: string }) {
   );
 }
 
-/** A write of Безпека that refreshes what it changed. */
-function useSecurityWrite<I, O>(write: (input: I) => Promise<O>, onDone?: (output: O) => void) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: write,
-    onSuccess: async (output) => {
-      onDone?.(output);
-      await queryClient.invalidateQueries();
-    },
-  });
-}
-
 function People({ self, confirm }: { self: string; confirm: Confirm }) {
-  const people = useQuery({ queryKey: ['people'], queryFn: () => adminApi.people() });
+  const people = useQuery({ queryKey: ['people'], queryFn: () => adminApi.people(), retry: false });
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>('admin');
-  const invite = useSecurityWrite(adminApi.invite, () => {
+  const invite = useAdminWrite(adminApi.invite, () => {
     setEmail('');
   });
-  const changeRole = useSecurityWrite(adminApi.setRole);
-  const remove = useSecurityWrite(adminApi.removePerson);
+  const changeRole = useAdminWrite(adminApi.setRole);
+  const remove = useAdminWrite(adminApi.removePerson);
 
   function onInvite(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -156,7 +149,7 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
   }
 
   return (
-    <Block title="Люди і доступ">
+    <Block title="Люди і доступ" failed={people.isError}>
       <ul
         aria-label="Люди"
         className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-surface shadow-panel"
@@ -250,15 +243,19 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
 }
 
 function AgentTokens({ confirm }: { confirm: Confirm }) {
-  const tokens = useQuery({ queryKey: ['agent-tokens'], queryFn: () => adminApi.agentTokens() });
+  const tokens = useQuery({
+    queryKey: ['agent-tokens'],
+    queryFn: () => adminApi.agentTokens(),
+    retry: false,
+  });
   const [name, setName] = useState('');
   // The one-time token lives here alone: once closed, only names render.
   const [issued, setIssued] = useState<{ name: string; token: string } | null>(null);
-  const issue = useSecurityWrite(adminApi.issueAgentToken, (output) => {
+  const issue = useAdminWrite(adminApi.issueAgentToken, (output) => {
     setIssued(output);
     setName('');
   });
-  const revoke = useSecurityWrite(adminApi.revokeAgentToken);
+  const revoke = useAdminWrite(adminApi.revokeAgentToken);
 
   function onIssue(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -272,7 +269,7 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
   }
 
   return (
-    <Block title="Токени Агентів">
+    <Block title="Токени Агентів" failed={tokens.isError}>
       {issued === null ? null : (
         <div role="status" className="flex flex-col gap-2 rounded-[14px] bg-sunk px-4 py-3 text-sm">
           <p>Токен Агента {issued.name}. Його видно лише зараз: скопіюйте і збережіть.</p>
@@ -309,8 +306,8 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
             className="flex flex-wrap items-center gap-3 px-[18px] py-3 text-[13px]"
           >
             <span className="grow">
-              {token.name} · видано {when(token.createdAt)}
-              {token.revokedAt === null ? '' : ` · відкликано ${when(token.revokedAt)}`}
+              {token.name} · видано {formatMoment(token.createdAt)}
+              {token.revokedAt === null ? '' : ` · відкликано ${formatMoment(token.revokedAt)}`}
             </span>
             {token.revokedAt === null ? (
               <Button
@@ -365,10 +362,11 @@ function AlertThresholds({ confirm }: { confirm: Confirm }) {
   const thresholds = useQuery({
     queryKey: ['alert-thresholds'],
     queryFn: () => adminApi.alertThresholds(),
+    retry: false,
   });
-  const change = useSecurityWrite(adminApi.setAlertThreshold);
+  const change = useAdminWrite(adminApi.setAlertThreshold);
   return (
-    <Block title="Пороги сповіщень">
+    <Block title="Пороги сповіщень" failed={thresholds.isError}>
       <ul className="flex flex-col gap-2">
         {(thresholds.data?.thresholds ?? []).map((threshold) => (
           // Keyed by value too: a changed threshold starts its field afresh.
@@ -437,9 +435,10 @@ function ActionLog() {
   const actions = useQuery({
     queryKey: ['actions', edition],
     queryFn: () => adminApi.actions(edition === undefined ? {} : { editionId: edition }),
+    retry: false,
   });
   return (
-    <Block title="Журнал дій">
+    <Block title="Журнал дій" failed={actions.isError}>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-[13px]">
           <thead className="text-xs text-subtle">
@@ -456,7 +455,7 @@ function ActionLog() {
             {(actions.data?.actions ?? []).map((row, index) => (
               <tr key={`${row.at}-${String(index)}`} className="border-t border-border">
                 <td className="px-2 py-[9px]">{authorOf(row.who)}</td>
-                <td className="px-2 py-[9px]">{when(row.at)}</td>
+                <td className="px-2 py-[9px]">{formatMoment(row.at)}</td>
                 <td className="px-2 py-[9px] font-mono">{row.what}</td>
                 <td className="px-2 py-[9px] font-mono">{shown(row.before)}</td>
                 <td className="px-2 py-[9px] font-mono">{shown(row.after)}</td>

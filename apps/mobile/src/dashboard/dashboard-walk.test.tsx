@@ -3,7 +3,9 @@ import type { Correction, Word } from '@slovo/contracts';
 import { loadEdition, openComposition, type Composition, type Haptics } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
-import { Slot } from 'expo-router';
+import { Slot, useRouter } from 'expo-router';
+import type { ReactElement } from 'react';
+import { Pressable } from 'react-native';
 import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -90,7 +92,7 @@ let composition: Composition;
  * yesterday's лагідний, the gestures hint has been shown, and the Edition turns the Curated Collections rail on,
  * which the UA Edition ships off till a content spec (ADR 0076).
  */
-async function renderApp() {
+async function renderApp(feedScreen: () => ReactElement = FeedScreen) {
   const shipped = loadEdition(config);
   const editionInEffect = {
     ...shipped,
@@ -165,7 +167,7 @@ async function renderApp() {
         </SafeAreaProvider>
       ),
       index: HomeScreen,
-      feed: FeedScreen,
+      feed: feedScreen,
       'search/[entryId]': EntryFromSearchScreen,
       'correction-type/[type]': CorrectionTypeScreen,
       'curated-collection/[collectionId]': CuratedCollectionScreen,
@@ -280,4 +282,32 @@ describe('the whole Dashboard', () => {
     expect(app.pathname()).toBe('/');
     // The whole app, walked screen by screen: longer than one screen's test on a busy machine.
   }, 20_000);
+});
+
+/** A Feed that never has today's Word of the Day card, so it never lands the ask. */
+function FeedWithoutTheCard() {
+  const router = useRouter();
+  return (
+    <Pressable
+      testID="feed-back"
+      onPress={() => {
+        router.back();
+      }}
+    />
+  );
+}
+
+describe('a landing on the Word of the Day card', () => {
+  it('opens the Feed once, so a return to the Dashboard stays there when the Feed lacks the card', async () => {
+    const app = await renderApp(FeedWithoutTheCard);
+    const onboarding = ['start', 'next', 'next', 'answer-good', 'later', 'done', 'time-20:30'];
+    for (const step of onboarding) await press(`onboarding-${step}`);
+    await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.reveal)));
+    await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));
+    expect(app.pathname()).toBe('/feed');
+    screenSettled();
+    await back('feed-back');
+    await settle();
+    expect(app.pathname()).toBe('/');
+  });
 });

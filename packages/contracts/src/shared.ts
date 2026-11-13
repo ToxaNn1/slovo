@@ -35,12 +35,20 @@ export const WebAddressSchema = z.url({ protocol: /^https?$/ });
  * copy. `shortName` names the source in the card's «Джерело:» line; a card
  * names a source without one by its `title`.
  */
-export const SourceSchema = z.strictObject({
+const sourceShape = {
   title: EntryTextSchema,
   shortName: EntryTextSchema.optional(),
   url: WebAddressSchema.optional(),
   archivedUrl: WebAddressSchema.optional(),
-});
+};
+
+export const SourceSchema = z.strictObject(sourceShape);
+
+/**
+ * A Source as an output carries it: open to fields a later backend adds,
+ * which the app strips (ADR 0031). Every record schema has such a twin.
+ */
+export const SourceOutputSchema = z.object(sourceShape);
 
 export type Source = z.infer<typeof SourceSchema>;
 
@@ -54,13 +62,32 @@ export const RaritySchema = z.literal(RARITIES, { error: 'Expected a whole numbe
 
 export type Rarity = z.infer<typeof RaritySchema>;
 
+/** The id prefix of each kind of authored record but a Crossword day, whose id is its date (ADR 0010). */
+export const ID_PREFIX = {
+  word: 'w_',
+  correction: 'c_',
+  idiom: 'i_',
+  synonymRow: 'r_',
+  tip: 't_',
+  curatedCollection: 'cc_',
+} as const;
+
+/** The id of a kind of record: its prefix followed by lowercase letters and digits. */
+export function recordIdSchema(kind: keyof typeof ID_PREFIX, name: string) {
+  const prefix = ID_PREFIX[kind];
+  return z
+    .string()
+    .regex(
+      new RegExp(`^${prefix}[a-z0-9]+$`),
+      `Expected ${name} id: ${prefix} followed by lowercase letters and digits`,
+    );
+}
+
 /**
  * A Word id: opaque, assigned when the Word is authored and never reused.
  * The `w_` prefix keeps it apart from the ids of other kinds of Entry.
  */
-export const WordIdSchema = z
-  .string()
-  .regex(/^w_[a-z0-9]+$/, 'Expected a Word id: w_ followed by lowercase letters and digits');
+export const WordIdSchema = recordIdSchema('word', 'a Word');
 
 /** A lowercase kebab-case id, e.g. `proto-slavic`. */
 export const KebabCaseIdSchema = z

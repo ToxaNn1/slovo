@@ -1027,6 +1027,8 @@ export const railScreen = {
   card: { radius: 18, padding: 16, gap: 12, wordGap: 8, edge: 4, labelGap: 6, line: 1 },
   /** The cards rise in one after another (the board's `slCasc`): each lasts `duration`, `stagger` after the one before. */
   cascade: { duration: 450, stagger: 70 },
+  /** The cards after the first `cascadeCap` rise in together, so a long list does not keep the last ones waiting. */
+  cascadeCap: 8,
   /** A Correction Type's cards start rising `cascadeDelay` ms after the screen opens (the board's `slCasc .45s ${.2+i*.07}s`). */
   cascadeDelay: 200,
   chip: { paddingHorizontal: 9, paddingVertical: 5, radius: 8 },

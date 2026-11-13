@@ -15,6 +15,7 @@ import { parse, type HTMLElement } from 'node-html-parser';
 import { errorMessage } from './error-message';
 import { fetchGoroh, gorohUrl, LANGUAGE_MODEL } from './goroh';
 import {
+  draftIssues,
   runSourcing,
   type DraftContext,
   type KindDraft,
@@ -132,6 +133,8 @@ function draftFrom(
   const [mainEquivalent, ...otherEquivalents] = article?.standardEquivalents ?? [];
   const standardEquivalents: CorrectionInput['standardEquivalents'] | undefined =
     mainEquivalent === undefined ? undefined : [mainEquivalent, ...otherEquivalents];
+  const examplePair =
+    article?.examplePair === undefined ? undefined : withStandardFormMarked(article.examplePair);
   const draft = {
     id: context.newId(),
     nonStandardForm: form,
@@ -140,9 +143,7 @@ function draftFrom(
     ...(article === undefined || article.explanation === ''
       ? {}
       : { explanation: article.explanation }),
-    ...(article?.examplePair === undefined
-      ? {}
-      : { examplePair: withStandardFormMarked(article.examplePair) }),
+    ...(examplePair === undefined ? {} : { examplePair }),
     categoryId: request.categoryId,
     sources: [
       article === undefined
@@ -154,7 +155,11 @@ function draftFrom(
     article === undefined
       ? [`goroh has no article about "${form}" on its page`]
       : [
-          ...(article.examplePair === undefined ? ['the article prints no example pair'] : []),
+          ...(article.examplePair === undefined
+            ? ['the article prints no example pair']
+            : examplePair === undefined
+              ? ['the example pair changes no word']
+              : []),
           ...(article.standardEquivalents.length === 0
             ? ['the article names no standard equivalent']
             : []),
@@ -175,15 +180,12 @@ function draftFrom(
 
 /** The schema's verdict, then the build's own checks against the Edition, as `field: message`. */
 function checkDraft(draft: Partial<CorrectionInput>, edition: EditionFolder): string[] {
-  const result = CorrectionSchema.safeParse(draft);
-  const issues = result.success
-    ? edition
-        .checkNewCorrections([result.data])
-        .map(({ field, message }) => `${field ?? '(correction)'}: ${message}`)
-    : result.error.issues.map(
-        (issue) => `${issue.path.join('.') || '(correction)'}: ${issue.message}`,
-      );
-  return [...new Set(issues)];
+  return draftIssues(
+    CorrectionSchema,
+    (valid) => edition.checkNewCorrections([valid]),
+    '(correction)',
+    draft,
+  );
 }
 
 /** The mark goroh puts in front of the standard forms in a short usage article. */
@@ -267,18 +269,58 @@ function namesForm(headword: string, form: string): boolean {
 
 /**
  * Marks the words the standard sentence changes, the draft's guess at its
- * standard form (ADR 0117); the author widens the marks to the whole phrase.
+ * standard form (ADR 0117): words compared without case, Stress and
+ * punctuation, each run of changed words marked on its own, its punctuation
+ * left outside the marks. The author widens the marks to the whole phrase.
+ * Undefined when the sentences change no word.
  */
-function withStandardFormMarked(pair: { readonly nonStandard: string; readonly standard: string }) {
-  const said = pair.nonStandard.split(' ');
+function withStandardFormMarked(pair: {
+  readonly nonStandard: string;
+  readonly standard: string;
+}): { readonly nonStandard: string; readonly standard: string } | undefined {
   const words = pair.standard.split(' ');
-  let start = 0;
-  while (start < words.length - 1 && words[start] === said[start]) start += 1;
-  let end = words.length;
-  while (end - 1 > start && words[end - 1] === said[said.length - words.length + end - 1]) end -= 1;
-  const marked = `**${words.slice(start, end).join(' ')}**`;
-  return {
-    nonStandard: pair.nonStandard,
-    standard: [...words.slice(0, start), marked, ...words.slice(end)].join(' '),
-  };
+  const kept = keptWords(words.map(wordKey), pair.nonStandard.split(' ').map(wordKey));
+  if (kept.every(Boolean)) return undefined;
+  const parts: string[] = [];
+  for (let start = 0; start < words.length;) {
+    let end = start + 1;
+    while (end < words.length && kept[end] === kept[start]) end += 1;
+    const run = words.slice(start, end).join(' ');
+    parts.push(kept[start] === true ? run : run.replace(/^(\P{L}*)(.*?)(\P{L}*)$/u, '$1**$2**$3'));
+    start = end;
+  }
+  return { nonStandard: pair.nonStandard, standard: parts.join(' ') };
+}
+
+/** A word as compared: lowercase, without Stress and punctuation. */
+function wordKey(word: string): string {
+  return unstressed(word)
+    .toLocaleLowerCase('uk')
+    .replace(/[^\p{L}'’ʼ-]+/gu, '');
+}
+
+/**
+ * Whether each word of `words` is kept from `said`: in a longest common
+ * subsequence of the two, or has no letter to change.
+ */
+function keptWords(words: readonly string[], said: readonly string[]): boolean[] {
+  const width = said.length + 1;
+  const longest = Array.from({ length: (words.length + 1) * width }, () => 0);
+  const at = (i: number, j: number) => longest[i * width + j] ?? 0;
+  for (let i = words.length - 1; i >= 0; i -= 1) {
+    for (let j = said.length - 1; j >= 0; j -= 1) {
+      longest[i * width + j] =
+        words[i] === said[j] ? at(i + 1, j + 1) + 1 : Math.max(at(i + 1, j), at(i, j + 1));
+    }
+  }
+  const kept = words.map((word) => !/\p{L}/u.test(word));
+  for (let i = 0, j = 0; i < words.length && j < said.length;) {
+    if (words[i] === said[j]) {
+      kept[i] = true;
+      i += 1;
+      j += 1;
+    } else if (at(i + 1, j) >= at(i, j + 1)) i += 1;
+    else j += 1;
+  }
+  return kept;
 }

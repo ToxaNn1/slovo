@@ -16,6 +16,9 @@ describe("a Correction's example pair", () => {
     ['an unclosed mark', 'Ми **беремо участь у конкурсі.'],
     ['an empty mark', 'Ми **** беремо участь.'],
     ['a stray asterisk', 'Ми **беремо участь** у конкурсі*.'],
+    ['a space inside a mark', 'Ми ** беремо участь** у конкурсі.'],
+    ['a space at the end of a mark', 'Ми **беремо участь ** у конкурсі.'],
+    ['two marks with nothing between', 'Ми **беремо****участь** у конкурсі.'],
   ])('refuses a standard sentence with %s, naming the field', (_, standard) => {
     const result = ExamplePairSchema.safeParse(pair(standard));
 

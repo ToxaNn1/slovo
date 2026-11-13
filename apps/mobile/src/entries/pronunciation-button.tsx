@@ -67,6 +67,26 @@ export function LemmaPronunciation({ lemma, entryId }: { lemma: string; entryId:
   ) : null;
 }
 
+/**
+ * Stops the Word with this id when «Звуки» go off, and when it leaves the
+ * screen, such as a card leaving the Feed, which also closes its message.
+ */
+function useStopsWhenGone(id: string, sounds: boolean) {
+  useEffect(() => {
+    soundsOn = sounds;
+    if (!sounds && pronunciation.stateOf(id) === 'playing') void pronunciation.stop();
+  }, [sounds, id]);
+
+  useEffect(
+    () => () => {
+      const left = pronunciation.stateOf(id);
+      if (left === 'playing') void pronunciation.stop();
+      if (left === 'no-voice') pronunciation.dismiss();
+    },
+    [id],
+  );
+}
+
 function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
   const shell = useShell();
   const composition = shell.composition;
@@ -74,20 +94,7 @@ function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
   const voice = useNarratorVoice();
   const state = useSyncExternalStore(subscribe, () => pronunciation.stateOf(entryId));
 
-  useEffect(() => {
-    soundsOn = sounds;
-    if (!sounds && pronunciation.stateOf(entryId) === 'playing') void pronunciation.stop();
-  }, [sounds, entryId]);
-
-  // A card that leaves the Feed stops its Word and closes its message.
-  useEffect(
-    () => () => {
-      const left = pronunciation.stateOf(entryId);
-      if (left === 'playing') void pronunciation.stop();
-      if (left === 'no-voice') pronunciation.dismiss();
-    },
-    [entryId],
-  );
+  useStopsWhenGone(entryId, sounds);
 
   const toggle = useCallback(() => {
     const opened = composition.state;
@@ -122,20 +129,7 @@ export function useSampleReading(): SampleReading {
   const { word, syllables } = edition.narratorVoiceSample;
   const state = useSyncExternalStore(subscribe, () => pronunciation.stateOf(word));
 
-  // «Звуки» going off stop the sample, as they stop a card's Word.
-  useEffect(() => {
-    soundsOn = sounds;
-    if (!sounds && pronunciation.stateOf(word) === 'playing') void pronunciation.stop();
-  }, [sounds, word]);
-
-  useEffect(
-    () => () => {
-      const left = pronunciation.stateOf(word);
-      if (left === 'playing') void pronunciation.stop();
-      if (left === 'no-voice') pronunciation.dismiss();
-    },
-    [word],
-  );
+  useStopsWhenGone(word, sounds);
 
   const read = useCallback(
     async (reader: string, fromStart: boolean) => {

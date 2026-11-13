@@ -119,7 +119,13 @@ export function createPronunciation({
         return;
       }
 
-      const recording = await recordingOf(id);
+      let recording: RecordingSource | undefined;
+      try {
+        recording = await recordingOf(id);
+      } catch (error) {
+        // The device voice reads a Word whose Recording cannot be found.
+        logError('Could not find the Recording for Pronunciation', error);
+      }
       // A later tap came while the Recording was found; it reads instead.
       if (latestTap !== tap) return;
       if (recording !== undefined) {
@@ -143,13 +149,20 @@ export function createPronunciation({
 
       const voice = voiceFor(locale, voices);
       if (voice === undefined) {
-        if (state?.state === 'playing') await silence();
+        if (state?.state === 'playing') {
+          await silence();
+          if (latestTap !== tap) return;
+        }
         set({ id, state: 'no-voice' });
         return;
       }
 
       // The engine would queue the new Lemma behind the one it is saying.
-      if (state?.state === 'playing') await silence();
+      if (state?.state === 'playing') {
+        await silence();
+        // A later tap came while the voice stopped; it reads instead.
+        if (latestTap !== tap) return;
+      }
       const finish = start(id);
       speech.speak(lemma.replace(STRESS_MARK, ''), {
         language: voice.language,

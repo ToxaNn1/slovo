@@ -30,6 +30,19 @@ describe.each([
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
+  it('reads its label in the language of the Edition', async () => {
+    await render(
+      <Edition>
+        <Subject label="Send the code" onPress={() => undefined} />
+      </Edition>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Send the code' })).toHaveProp(
+      'accessibilityLanguage',
+      'en',
+    );
+  });
+
   it('shows that it is busy and takes no press until its request is answered', async () => {
     const onPress = jest.fn();
     await render(

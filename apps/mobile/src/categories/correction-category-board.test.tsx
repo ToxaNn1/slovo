@@ -222,14 +222,14 @@ describe('the Category screen of Corrections', () => {
     await open();
     await renderCategory('everyday');
 
-    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'У МІКСІ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У МІКСІ' })));
     expect(hiddenIds()).toEqual(['everyday']);
-    expect(screen.getByRole('button', { name: 'ДОДАТИ' })).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })).toBeTruthy();
     expect(screen.getByText('„Щоденне“ прибрано з Міксу.')).toBeTruthy();
 
-    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'ДОДАТИ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })));
     expect(hiddenIds()).toEqual([]);
-    expect(screen.getByRole('button', { name: 'У МІКСІ' })).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
     expect(screen.getByText('„Щоденне“ тепер у твоєму Міксі.')).toBeTruthy();
   });
 
@@ -239,9 +239,9 @@ describe('the Category screen of Corrections', () => {
     await composition.mix.setCategory('empty', false, 'correction');
     await renderCategory('everyday');
 
-    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'У МІКСІ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У МІКСІ' })));
     expect(hiddenIds()).toEqual(['work', 'empty']);
-    expect(screen.getByRole('button', { name: 'У МІКСІ' })).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
     expect(screen.getByText(editionStrings.mix.corrections.lastCategoryHint)).toBeTruthy();
   });
 

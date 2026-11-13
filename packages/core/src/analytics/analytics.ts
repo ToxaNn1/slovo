@@ -201,6 +201,31 @@ function readerOf(edition: string, { installId, verdicts }: AnalyticsSwitches): 
  * so neither the Install id nor a Variant leaves the device. The Variants are
  * read at each event, so a Rule's change shows on the next one.
  */
+/**
+ * When the Visit under way began, while the app is in the foreground. One
+ * per app run: a composition reopened in a Visit (switches, a sync, a
+ * content patch) ends the Visit the one it replaced began.
+ */
+export interface Visit {
+  begin(at: Date): void;
+  /** Ends the Visit under way and gives when it began; none while no Visit is under way. */
+  end(): Date | undefined;
+}
+
+export function createVisit(): Visit {
+  let started: Date | undefined;
+  return {
+    begin: (at) => {
+      started = at;
+    },
+    end: () => {
+      const began = started;
+      started = undefined;
+      return began;
+    },
+  };
+}
+
 export function createAnalytics({
   edition,
   userState,
