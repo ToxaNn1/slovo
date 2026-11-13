@@ -5,17 +5,15 @@ import {
   type CategoryKind,
   type CategoryPlace,
   type Composition,
-  type EntryRowModel,
 } from '@slovo/core';
 import { useUndoToast, type RailBoardCard } from '@slovo/ui';
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
+import { useComposition, useCompositionRead } from '../composition';
 import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
+import { useKnownCards } from '../knowledge/marks';
 import { useMixState } from '../mix/mix';
-import { useSubscribed } from '../opening';
 import { useShown } from '../shown-in-effect';
 import { useOpenScreen } from '../use-open-screen';
 
@@ -34,6 +32,8 @@ export interface CategoryScreen {
    * `undefined` till the first read ends, so nothing counts the Entries before.
    */
   readonly cards: readonly RailBoardCard[] | undefined;
+  /** Set once the read failed: reads the Entries again. */
+  readonly retry: (() => void) | undefined;
   /** Whether the Category is in the Mix, which reads «У МІКСІ». */
   readonly inMix: boolean;
   /**
@@ -50,60 +50,38 @@ export interface CategoryScreen {
 
 /**
  * A Category's screen, of the Words' or the Corrections' list: its live
- * Entries as cards, read again on each Knowledge Mark, and its place in the
+ * Entries as cards, their «ЗНАЮ» following each Knowledge Mark, and its place in the
  * Mix through the Core Mix. Must sit under an `UndoToastProvider`.
  */
 export function useCategoryScreen(of: CategoryKind, category: Category): CategoryScreen {
-  const composition = useComposition();
-  const { knowledge, mix } = composition;
-  // Read again on every Knowledge Mark, so «ЗНАЮ» and the stamps follow at once.
-  useSubscribed(knowledge, (open) => open.state);
+  const { mix } = useComposition();
   const mixState = useMixState();
   const showToast = useUndoToast();
   const openScreen = useOpenScreen();
   const { categoryFeed, categoryKnownFirst } = useShown();
-  const [read, setRead] = useState<{
-    in: Composition;
-    key: string;
-    rows: readonly EntryRowModel[];
-  }>();
-  const key = `${of}:${category.id}`;
-  useEffect(() => {
-    let active = true;
-    composition.categoryEntries(of, category.id).then(
-      (entries) => {
-        if (active)
-          setRead({
-            in: composition,
-            key,
-            rows: entries.map(buildEntryRow),
-          });
-      },
-      (error: unknown) => {
-        logError('Could not read the Entries of a Category', error);
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [composition, of, category.id, key]);
-
-  // A read of a composition since reopened, or of another Category, is not shown.
-  const rows = read?.in === composition && read.key === key ? read.rows : undefined;
-  const cards = rows?.map((row) => ({
-    entryId: row.entryId,
-    row,
-    known: knowledge.isKnown(row.entryId),
-  }));
-  const listed =
-    cards && categoryKnownFirst
-      ? [...cards.filter((card) => card.known), ...cards.filter((card) => !card.known)]
-      : cards;
+  const read = useCallback(
+    async (open: Composition) =>
+      (await open.categoryEntries(of, category.id)).map((entry) => {
+        const row = buildEntryRow(entry);
+        return { entryId: row.entryId, row };
+      }),
+    [of, category.id],
+  );
+  const reading = useCompositionRead(read, 'Could not read the Entries of a Category');
+  const cards = useKnownCards(reading.status === 'ready' ? reading.value : undefined);
+  const listed = useMemo(
+    () =>
+      cards && categoryKnownFirst
+        ? [...cards.filter((card) => card.known), ...cards.filter((card) => !card.known)]
+        : cards,
+    [cards, categoryKnownFirst],
+  );
   const place: CategoryPlace = categoryPlace(mixState, of, category.id);
   const inMix = place === 'in' || place === 'last';
   const name = category.displayName;
   return {
     cards: listed,
+    retry: reading.status === 'failed' ? reading.retry : undefined,
     inMix,
     toggleMix: () => {
       void keep('the Mix', mix.setCategory(category.id, !inMix, of)).then((done) => {
