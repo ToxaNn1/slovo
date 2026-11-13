@@ -58,17 +58,18 @@ export function useCounterLine(
   shown: boolean,
   { mark, inFavorites }: { mark: KnowledgeMark | undefined; inFavorites: boolean },
 ): CounterLine | undefined {
-  const [line, setLine] = useState<CounterLine | undefined>();
+  // Kept with its Entry, so a card that turns to another Entry shows none of the last one's.
+  const [read, setRead] = useState<{ entryId: string; line: CounterLine | undefined }>();
   const reads = useShell().counterReads;
   useEffect(() => {
     if (!shown) return;
     let current = true;
     void lineOf(reads, entryId).then((read) => {
-      if (current) setLine(read);
+      if (current) setRead({ entryId, line: read });
     });
     return () => {
       current = false;
     };
   }, [reads, entryId, shown, mark, inFavorites]);
-  return line;
+  return read?.entryId === entryId ? read.line : undefined;
 }
