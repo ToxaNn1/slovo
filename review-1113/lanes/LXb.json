@@ -1,0 +1,153 @@
+[
+  {
+    "id": "R37",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/content-rules/src/quote-check.ts:105",
+      "apps/backend/src/content/quote-check.ts:207"
+    ],
+    "problem": "`String.fromCodePoint` throws RangeError on `&#x110000;`; the backend loop has no catch, so one bad page stops the whole check.",
+    "fix": "Skip code points over 0x10FFFF (keep the entity text).",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R59",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "apps/mobile/src/content-update/language-pack.tsx:63-74"
+    ],
+    "problem": "Every launch copies the whole bundled SQLite pack (`forceOverwrite`) just to read its version; `replaceWithBundled` copies again.",
+    "fix": "Ship the bundled content version as config.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R70",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/game/PairsGrid.tsx:23,165-180",
+      "packages/ui/src/game/VowelButtons.tsx:24,143-158"
+    ],
+    "problem": "Same answer pop/drop motion; `CELL_POP` equals `VOWEL_POP`.",
+    "fix": "`useAnswerMotion` in game/round-motion.ts.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R72",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/primitives/BottomSheet.tsx:58",
+      "packages/ui/src/primitives/UndoToast.tsx:56,62",
+      "packages/ui/src/primitives/Mascot.tsx:359",
+      "packages/ui/src/onboarding/SplashOverlay.tsx:62"
+    ],
+    "problem": "Token curve → `Easing.bezier` and the reduce-motion fade config written 4×.",
+    "fix": "One helper and constant next to tokens/motion in packages/ui.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R79",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "apps/admin/src/session.ts:71",
+      "apps/admin/src/switches/switch-state.ts:96",
+      "apps/admin/src/routes/security.tsx:34",
+      "tools/content/src/api.ts:48"
+    ],
+    "problem": "Four hand-rolled walkers of oRPC `error.data` (tools/content with an `as ORPCError` cast) while `SwitchRefusalSchema` exists in contracts (admin.ts:184).",
+    "fix": "Export refusal schemas from `@slovo/contracts/admin-api` and `safeParse` them in admin and tools/content.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R98",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/saved/CollectionNameField.tsx:50"
+    ],
+    "problem": "A save failure goes only to `console.error`.",
+    "fix": "Show and announce the refusal.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R107",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/mistake-reports/MistakeReportSheet.tsx:135"
+    ],
+    "problem": "Counter «12/500» has no words for VoiceOver; `slice` duplicates `maxLength`.",
+    "fix": "Label from the Edition; keep only `maxLength`.",
+    "verified": false,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R127",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/language-pack/src/apply-patch.ts:97"
+    ],
+    "problem": "A Patch raises `content_version` but keeps the old metadata `checksum`.",
+    "fix": "Update or drop the checksum on Patch.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R156",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/game/LetterWheel.tsx:99-150",
+      "packages/ui/src/game/TracedCrosswordGrid.tsx:105-167"
+    ],
+    "problem": "Same trace-drag shell; only `hit` differs.",
+    "fix": "`game/useTraceDrag.ts`.",
+    "verified": false,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R166",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/content-rules/src/quote-check.ts:9",
+      "packages/content-rules/src/parse-record.ts:37-44",
+      "packages/content-rules/src/crossword-days.ts:52-71,144-155"
+    ],
+    "problem": "Local `STRESS_MARK` and `ID_PREFIX` restate contracts; \"No Word or Correction\" check written twice.",
+    "fix": "Import from `@slovo/contracts`; one helper.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  }
+]
