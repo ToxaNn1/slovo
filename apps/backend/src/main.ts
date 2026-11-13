@@ -39,7 +39,7 @@ const app = createApp({
   app: appConfig,
   editions,
   mailer,
-  alerts: ownerAlertsOf(database, logger),
+  alerts: ownerAlertsOf(database, config, logger),
   posthog: config.posthog === undefined ? unavailablePostHog : createPostHogClient(config.posthog),
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
   apple: createAppleVerifier({ clock: systemClock }),
