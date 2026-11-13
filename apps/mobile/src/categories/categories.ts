@@ -1,4 +1,5 @@
 import type { Category } from '@slovo/contracts';
+import type { CategoryKind } from '@slovo/core';
 import { toneByPosition, type CategoryTone } from '@slovo/ui';
 
 import { useComposition } from '../composition';
@@ -7,30 +8,20 @@ import { useSubscribed } from '../opening';
 
 const none: readonly Category[] = [];
 
-/**
- * The Categories of Words in the Language Pack's order, as the Dashboard's
- * Categories block holds them: none with `categoryScreens` off, so its rail,
- * k1 and a Category's screen draw nothing then (spec #1604).
- */
-export function useCategories(): readonly Category[] {
-  const { dashboard } = useComposition();
-  return useSubscribed(
-    dashboard,
-    ({ blocks }) => blocks.find((block) => block.kind === 'categories')?.categories ?? none,
-  );
-}
+/** The Dashboard block that holds the Categories of each kind. */
+const blockOf = { word: 'categories', correction: 'correctionTypes' } as const;
 
 /**
- * The Categories of Corrections in the Language Pack's order, as the
- * Dashboard's Correction Types block carries them: none with
- * `correctionCategoryScreens` off, so k2 and a Category's screen of
- * Corrections draw nothing then (spec #1604).
+ * The Categories of Words, or of Corrections, in the Language Pack's order,
+ * as the Dashboard's Categories block, or its Correction Types block, holds
+ * them: none with `categoryScreens`, or `correctionCategoryScreens`, off, so
+ * its rail, k1 or k2 and a Category's screen draw nothing then (spec #1604).
  */
-export function useCorrectionCategories(): readonly Category[] {
+export function useBlockCategories(of: CategoryKind): readonly Category[] {
   const { dashboard } = useComposition();
   return useSubscribed(
     dashboard,
-    ({ blocks }) => blocks.find((block) => block.kind === 'correctionTypes')?.categories ?? none,
+    ({ blocks }) => blocks.find((block) => block.kind === blockOf[of])?.categories ?? none,
   );
 }
 

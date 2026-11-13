@@ -14,13 +14,14 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { useIsQuiet } from '@/categories/categories';
+import { useBlockCategories, useIsQuiet } from '@/categories/categories';
 import { useCategoryScreen } from '@/categories/category-screen';
 import { editionStrings } from '@/edition/edition';
 import { ReadFailed } from '@/read-failed';
+import { useSegmentParam } from '@/route-params';
 
 const { dashboard } = editionStrings;
 /** The kicker and its count of Entries, «КАТЕГОРІЯ · N слів» or «… виправлень», by the list. */
@@ -37,6 +38,20 @@ const backOf: Record<CategoryKind, string> = {
 };
 
 /**
+ * The route of a Category's screen, of Words from its tile on the rail or in
+ * k1, of Corrections from its tile in k2 (board 05.1). An id the Language
+ * Pack doesn't have, or the kind's Category screens off, returns to the Dashboard.
+ */
+export function CategoryRoute({ of }: { of: CategoryKind }) {
+  const categoryId = useSegmentParam('categoryId');
+  const categories = useBlockCategories(of);
+  const place = categories.findIndex(({ id }) => id === categoryId);
+  const category = categories[place];
+  if (category === undefined) return <Redirect href="/" />;
+  return <CategoryBoardScreen of={of} category={category} place={place} />;
+}
+
+/**
  * A Category's screen (board 05.1), of the Words' or the Corrections' list:
  * the red hero with the Category's shape, «КАТЕГОРІЯ · N …», its name and
  * description, «ЗНАЮ x З n» and «ДОДАТИ» / «У МІКСІ», its live Entries as
@@ -48,7 +63,7 @@ const backOf: Record<CategoryKind, string> = {
  * plain rows. k2 draws no quiet tile, so a Category of Corrections is never
  * quiet.
  */
-export function CategoryBoardScreen(props: {
+function CategoryBoardScreen(props: {
   of: CategoryKind;
   category: Category;
   place: number;
