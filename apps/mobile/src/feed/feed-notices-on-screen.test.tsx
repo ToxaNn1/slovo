@@ -368,6 +368,13 @@ describe('the Feed Notices on the Feed', () => {
         hidden,
       ),
     ).toBeTruthy();
-    expect(card.getByRole('button', { name: 'Гортати далі', ...hidden })).toBeTruthy();
+    // «Гортати далі» turns the pager, so it stands on the card the Feed is on.
+    await swipeTo(screen.getByTestId('feed-notice-enoughForToday', hidden));
+    expect(
+      within(screen.getByTestId('feed-notice-enoughForToday', hidden)).getByRole('button', {
+        name: 'Гортати далі',
+        ...hidden,
+      }),
+    ).toBeTruthy();
   });
 });
