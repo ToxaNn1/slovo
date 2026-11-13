@@ -1,8 +1,3 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { PACK_FORMAT } from '@slovo/language-pack';
 import { sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
@@ -12,6 +7,7 @@ import { createDatabase } from '../database/database';
 import { migrateDatabase } from '../database/migrate';
 import {
   createTestDatabase,
+  migrationsBefore,
   silentLogger,
   testApp,
   testDatabaseUrl,
@@ -93,32 +89,13 @@ describe('content.download', () => {
   });
 });
 
-const MIGRATIONS_DIR = fileURLToPath(new URL('../../migrations', import.meta.url));
-const JOURNAL = 'meta/_journal.json';
-
-/** The migrations folder as it was before the table of whole packs went. */
-function migrationsBeforeTheDrop(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'slovo-migrations-'));
-  onTestFinished(() => {
-    rmSync(dir, { recursive: true, force: true });
-  });
-  cpSync(MIGRATIONS_DIR, dir, { recursive: true });
-  const journal = JSON.parse(readFileSync(join(dir, JOURNAL), 'utf8')) as {
-    entries: { tag: string }[];
-  };
-  const drop = journal.entries.findIndex((entry) => entry.tag.endsWith('_drop_content_packs'));
-  const entries = journal.entries.slice(0, drop);
-  writeFileSync(join(dir, JOURNAL), JSON.stringify({ ...journal, entries }));
-  return dir;
-}
-
 describe('the migrations', () => {
   it('drop the table of whole packs from a database that kept one, and the backend starts on it', async () => {
     const own = await createTestDatabase(testDatabaseUrl(), { migrate: false });
     onTestFinished(() => own.drop());
     const database = createDatabase(own.url, silentLogger);
     onTestFinished(() => database.close());
-    await migrate(database.db, { migrationsFolder: migrationsBeforeTheDrop() });
+    await migrate(database.db, { migrationsFolder: migrationsBefore('_drop_content_packs') });
     await database.db.execute(sql`
       insert into content_packs
         (edition_id, content_version, pack_format, content_checksum, file_sha256, size, bytes, published_at)
