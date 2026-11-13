@@ -4,7 +4,7 @@
   "bundleId": "app.slovo.uk",
   "appleTeamId": "",
   "appStoreConnectAppId": "",
-  "domain": "slovo.example",
+  "domain": "slovoapp.org",
   "icon": "editions/uk/assets/icon.png",
   "splash": "editions/uk/decor/splash.json",
   "defaultEdition": "uk",

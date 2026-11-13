@@ -649,7 +649,7 @@ describe('app config', () => {
 
     expect(config.scheme).toBe('slovo');
     expect(config.ios?.entitlements?.['com.apple.developer.associated-domains']).toEqual([
-      'applinks:slovo.example',
+      'applinks:slovoapp.org',
     ]);
   });
 

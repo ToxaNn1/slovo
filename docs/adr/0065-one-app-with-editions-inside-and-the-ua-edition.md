@@ -14,7 +14,7 @@ ADR 0002 made every language its own App Store app, an Edition built from the sh
 
 **One subscription for every language,** priced per country through the store's price tiers; the details belong to the pricing decision, not here.
 
-**One domain for the app, named after SLOVO, with a path per Edition** (`/<edition>/`), for the legal pages, Collection Links and the backend. A market's own domain may come later, only as a redirect. Until the name is chosen the code keeps `slovo.example`.
+**One domain for the app, named after SLOVO, with a path per Edition** (`/<edition>/`), for the legal pages, Collection Links and the backend. A market's own domain may come later, only as a redirect. The domain is `slovoapp.org`; a release build still refuses the placeholder `slovo.example`.
 
 **The first Edition is the UA Edition; its id stays `uk`.** «UA» is the brand label people see and say, after the market. The id is the language code: ISO 639-1 has `uk` for Ukrainian, while `ua` is the country, and `Intl.PluralRules`, sorting and the `uk-UA` locale need the language. The id also names the Edition folder, the backend's data partition (ADR 0030), the Update channel (ADR 0062) and the user-state store, so renaming it would move live data for a label. Docs and code comments say «UA Edition».
 
