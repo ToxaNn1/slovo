@@ -13,7 +13,7 @@ import type {
 import { WordIdSchema } from '@slovo/contracts';
 import type { ContentSnapshot } from '@slovo/contracts/api';
 
-import { checkContentSet, checksumOf, type Authored } from '@slovo/content-rules';
+import { checkContentSet, checksumOf, contentSetOf, type Authored } from '@slovo/content-rules';
 
 import { buildErrorsOf, type BuildError } from './build-error';
 import { categoryArtErrors } from './category-art';
@@ -263,17 +263,19 @@ function readWith(
 
 /** The snapshot's records, each named by its kind and id in the errors. */
 function snapshotEntries(snapshot: ContentSnapshot): AuthoredContent {
-  const authored = <T extends { readonly id: string }>(kind: string, records: readonly T[]) =>
-    records.map((entry) => ({ file: `${SNAPSHOT_FILE}:${kind}/${entry.id}`, entry }));
-  return {
-    words: authored('words', snapshot.words),
-    corrections: authored('corrections', snapshot.corrections),
-    idioms: authored('idioms', snapshot.idioms),
-    synonymRows: authored('synonymRows', snapshot.synonymRows),
-    tips: authored('tips', snapshot.tips),
-    curatedCollections: authored('curatedCollections', snapshot.curatedCollections),
-    errors: [],
-  };
+  const { words, corrections, idioms, synonymRows, tips, curatedCollections } = contentSetOf(
+    {
+      word: snapshot.words,
+      correction: snapshot.corrections,
+      idiom: snapshot.idioms,
+      synonymRow: snapshot.synonymRows,
+      tip: snapshot.tips,
+      curatedCollection: snapshot.curatedCollections,
+      crosswordDay: snapshot.crosswordDays,
+    },
+    (kind, id) => `${SNAPSHOT_FILE}:${kind}/${id}`,
+  );
+  return { words, corrections, idioms, synonymRows, tips, curatedCollections, errors: [] };
 }
 
 function sortedById<T extends { readonly id: string }>(authored: readonly Authored<T>[]): T[] {
