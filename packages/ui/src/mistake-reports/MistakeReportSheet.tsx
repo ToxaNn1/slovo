@@ -15,7 +15,7 @@ import { BottomSheet } from '../primitives/BottomSheet';
 import { Button } from '../primitives/Button';
 import { ChoiceMark } from '../primitives/ChoiceMark';
 import { SheetTitle } from '../primitives/SheetParts';
-import { useEdition } from '../providers/EditionProvider';
+import { fill, useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import {
   minTouchTarget,
@@ -134,6 +134,11 @@ export function MistakeReportSheet({
             </Text>
             <Text
               testID={`${testID}-count`}
+              accessibilityLabel={fill(sheet.commentCount, {
+                count: String(comment.length),
+                max: String(REPORT_COMMENT_LENGTH),
+              })}
+              {...voice}
               style={[typeStyle('fieldLabel', tokens), { color: colors.muted }]}
             >
               {`${String(comment.length)}/${String(REPORT_COMMENT_LENGTH)}`}
@@ -144,9 +149,7 @@ export function MistakeReportSheet({
             accessibilityLabel={sheet.comment}
             {...voice}
             value={comment}
-            onChangeText={(text) => {
-              setComment(text.slice(0, REPORT_COMMENT_LENGTH));
-            }}
+            onChangeText={setComment}
             maxLength={REPORT_COMMENT_LENGTH}
             multiline
             numberOfLines={mistakeReportField.lines}
