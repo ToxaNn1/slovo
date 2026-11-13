@@ -15,14 +15,15 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 
 | lane | folders | items | status |
 | ---- | ------- | ----- | ------ |
-| L1 | packages/core | 15 | todo |
+| L1 | packages/core | 15 | running |
 | L2 | packages/content-rules, packages/language-pack | 17 | todo |
-| L3a | packages/ui/src/{game,entries,primitives} | 27 | todo |
+| L3a | packages/ui/src/{game,entries,primitives} | 27 | running |
 | L3b | rest of packages/ui | 25 | todo |
 | L4 | apps/mobile | 24 | todo |
-| L5 | apps/backend, packages/server-core, packages/contracts | 32 | todo |
-| L6 | apps/admin, apps/video, tools, scripts | 23 | todo |
+| L5 | apps/backend, packages/server-core, packages/contracts | 32 | running |
+| L6 | apps/admin, apps/video, tools, scripts | 23 | running |
 | LX | cross-folder items, after all lanes | 13 | todo |
 
 ## Log
 - 2026-11-13T18:31:04Z step 0: HANDOFF, lane files, WAVES.md on coord/safety-net
+- 2026-11-13T18:32:14Z launched L1 (Fable), L3a, L5, L6 (Opus) as background subagents in /home/user/wt/<l>; L2 L3b L4 queued
