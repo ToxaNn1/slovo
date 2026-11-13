@@ -82,3 +82,4 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 - 21:24Z One push: --force-with-lease=fix/1113-code-review:cf869fbd -> eacb04f0. No other force-push.
 - 21:40Z PR #1820 CI on eacb04f0: all 21 checks success (CI history, Deploy to Railway skipped). REPORT.md: perf question resolved by owner answer A.
 CI-FIX DONE: PR #1820 head eacb04f04e34c77a498edeffc8fce079a960902f, checks green
+- 21:42Z PATCH3: started; branch fix/1113-patch-format-3, PATCH_FORMAT 3, ADR 0121 written
