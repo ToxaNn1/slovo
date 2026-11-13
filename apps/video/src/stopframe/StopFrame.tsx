@@ -135,7 +135,10 @@ export function beatsFor(count: number) {
   };
 }
 
-export const beats = beatsFor(8);
+/** Every episode shows this many cards: the beats and the length are fixed for it. */
+const CARDS = 8;
+
+export const beats = beatsFor(CARDS);
 export const stopFrameLength = beats.length;
 const end = endCardFrom(beats.length);
 
@@ -243,11 +246,10 @@ function Scene({ episode }: { episode: Episode }) {
   const frame = useCurrentFrame();
   const { s, safe } = useSafe();
   const count = episode.cards.length;
+  if (count !== CARDS) throw new Error(`An episode has ${CARDS} cards, not ${count}`);
   const changes = changesFor(count);
-  const finalIndex = Math.max(
-    0,
-    episode.cards.findIndex((card) => card.word === episode.final),
-  );
+  const finalIndex = episode.cards.findIndex((card) => card.word === episode.final);
+  if (finalIndex === -1) throw new Error(`«${episode.final}» is not one of the episode's cards`);
   // The first card is chosen so that the last change lands on the final word.
   const first = (((finalIndex - (changes.length - 1)) % count) + count) % count;
   const change = changeAt(frame, changes);
