@@ -1,8 +1,9 @@
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { Redirect } from 'expo-router';
 
 import { useCategories } from '@/categories/categories';
 import { CategoryFeedScreen } from '@/categories/category-feed';
 import { useShown } from '@/shown-in-effect';
+import { useQueryParam, useSegmentParam } from '@/route-params';
 
 /**
  * A Category's Feed, from a tap on a Word of its screen (ADR 0110), opened
@@ -10,7 +11,8 @@ import { useShown } from '@/shown-in-effect';
  * `categoryFeed` off, returns to the Dashboard.
  */
 export default function CategoryFeedRoute() {
-  const { categoryId, from } = useLocalSearchParams<{ categoryId: string; from?: string }>();
+  const categoryId = useSegmentParam('categoryId');
+  const from = useQueryParam('from');
   const category = useCategories().find(({ id }) => id === categoryId);
   const { categoryFeed } = useShown();
   if (category === undefined || !categoryFeed) return <Redirect href="/" />;

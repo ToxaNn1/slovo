@@ -1,7 +1,8 @@
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { Redirect } from 'expo-router';
 
 import { CategoryBoardScreen } from '@/categories/category-board';
 import { useCategories } from '@/categories/categories';
+import { useSegmentParam } from '@/route-params';
 
 /**
  * A Category of Words' screen, from its tile on the rail or in k1 (board
@@ -9,7 +10,7 @@ import { useCategories } from '@/categories/categories';
  * returns to the Dashboard.
  */
 export default function CategoryRoute() {
-  const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
+  const categoryId = useSegmentParam('categoryId');
   const categories = useCategories();
   const place = categories.findIndex(({ id }) => id === categoryId);
   const category = categories[place];

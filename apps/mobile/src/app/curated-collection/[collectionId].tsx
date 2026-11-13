@@ -8,12 +8,13 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { useCuratedCollectionScreen } from '@/dashboard/curated-collection';
 import { editionStrings } from '@/edition/edition';
 import { ReadFailed } from '@/read-failed';
+import { useSegmentParam } from '@/route-params';
 
 const { curatedCollection: words, curatedCollectionCount } = editionStrings.dashboard;
 
@@ -24,7 +25,7 @@ const { curatedCollection: words, curatedCollectionCount } = editionStrings.dash
  * the error with its retry.
  */
 export default function CuratedCollectionRoute() {
-  const { collectionId } = useLocalSearchParams<{ collectionId: string }>();
+  const collectionId = useSegmentParam('collectionId');
   const { screen, retry, place, add, openEntry } = useCuratedCollectionScreen(collectionId);
   const { colors } = useTokens();
   const { count } = useEdition();
