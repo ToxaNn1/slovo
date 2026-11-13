@@ -142,6 +142,19 @@ describe('people and access', () => {
     });
   });
 
+  it('sends one invitation for two invites of the same email at once', async () => {
+    const backend = await ownerOn();
+    const email = newEmail();
+
+    const results = await Promise.allSettled([
+      backend.owner.client.admin.invite({ email, role: 'admin', reason: 'help' }),
+      backend.owner.client.admin.invite({ email, role: 'owner', reason: 'help' }),
+    ]);
+
+    expect(results.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
+    expect(backend.mailer.sent.filter((mail) => mail.to === email)).toHaveLength(1);
+  });
+
   it('grants no access when the invitation email is not sent, so the invite can be repeated', async () => {
     const backend = await ownerOn();
     const email = newEmail();
