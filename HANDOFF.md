@@ -15,13 +15,13 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 
 | lane | folders | items | status |
 | ---- | ------- | ----- | ------ |
-| L1 | packages/core | 15 | DONE 10/15, R52 R54 R55 to do (relaunch) |
+| L1 | packages/core | 15 | relaunched by coord 2 for R52 R54 R55 |
 | L2 | packages/content-rules, packages/language-pack | 17 | running |
 | L3a | packages/ui/src/{game,entries,primitives} | 27 | running |
-| L3b | rest of packages/ui | 25 | todo |
-| L4 | apps/mobile | 24 | todo |
-| L5 | apps/backend, packages/server-core, packages/contracts | 32 | running |
-| L6 | apps/admin, apps/video, tools, scripts | 23 | DONE 20, R134 R135 relaunched (coord 2) |
+| L3b | rest of packages/ui | 25 | running (coord 2) |
+| L4 | apps/mobile | 24 | running (coord 2) |
+| L5 | apps/backend, packages/server-core, packages/contracts | 32 | relaunched by coord 2 after STUCK 13 |
+| L6 | apps/admin, apps/video, tools, scripts | 23 | DONE 22, merged |
 | LX | cross-folder items, after all lanes | 14 (+R79 from L6) | todo |
 
 ## Log
@@ -45,3 +45,4 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 - 18:45Z coordinator (2) started as cloud session session_01VefVQUAKPt8Ak4bxrvvsRC; old container keeps its 4 live lane implementers (L2 L3a L5 L6) until they push a status commit.
 - 18:47Z coordinator (2): setup redone (Postgres, identity in snapshot); main repo on fix/1113-code-review, coord branch at /home/user/wt/coord; worktrees l1 l3b l4; launched L1 (R52 R54 R55, Fable), L3b, L4 (Opus). Old container still runs L2 L3a L5 L6. Wait script /tmp/claude-0/wait.sh <min> <since> <lanes>.
 - 18:51Z L6 DONE 20 fixed (old container); R134 R135 not attempted -> L6 relaunched here; merger merging L6 into integration.
+- 18:55Z L6 merged (tip 14d1403d) and DONE again with R134 R135 (22 fixed): second merge running. L5 STUCK (13 fixed + R38 part) -> relaunched HERE (coord 2, /home/user/wt/l5), migrations 0026-0028. Running here: L1 L3b L4 L5. Old container: L2 L3a. Author of commits is the noreply owner address from .github/owner-email (as noted): correct.
