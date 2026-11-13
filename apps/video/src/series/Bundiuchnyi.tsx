@@ -5,9 +5,8 @@ import { light, uiFont } from '../look';
 import { useSafe } from '../safe';
 import { Sfx, sfx } from '../sound';
 import { beats, Missing } from './Missing';
+import { clamp, pop } from '../shared/motion';
 
-const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
-const pop = Easing.bezier(0.34, 1.56, 0.64, 1);
 
 /** The boss in pixels of the 1080×1920 frame: where he sits, his size before he swells, the desk's top edge. */
 const boss = { x: 640, foot: 900, body: 260, swollen: 1.55, deskTop: 880 } as const;

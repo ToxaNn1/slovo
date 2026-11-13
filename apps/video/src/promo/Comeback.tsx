@@ -6,9 +6,8 @@ import { tileSizeFor, useSafe } from '../safe';
 import { Horn, hornLength, Knock, Sfx, sfx, Voice } from '../sound';
 import { Tile } from '../Tile';
 import { Crack, greyInk, mainWord } from './Forgotten';
+import { clamp, pop } from '../shared/motion';
 
-const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
-const pop = Easing.bezier(0.34, 1.56, 0.64, 1);
 
 /** A forgotten tile on cream: grey, its letter still readable. */
 const forgottenFace = '#D6C8B8';

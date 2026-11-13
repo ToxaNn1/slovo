@@ -8,9 +8,8 @@ import { Rupor } from '../Rupor';
 import { type Safe, tileSizeFor, useSafe } from '../safe';
 import { Bed, Horn, levels, Sfx, sfx, Voice } from '../sound';
 import { Tile } from '../Tile';
+import { clamp, pop } from '../shared/motion';
 
-const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
-const pop = Easing.bezier(0.34, 1.56, 0.64, 1);
 
 /** One card of the roulette. */
 export type Card = {

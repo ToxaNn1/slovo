@@ -8,9 +8,8 @@ import { type Safe, useSafe } from '../safe';
 import { Bed, Horn, Knock, levels, Sfx, sfx, Voice } from '../sound';
 import { Tile } from '../Tile';
 import { charInEm, onestInEm } from './onest';
+import { clamp, pop } from '../shared/motion';
 
-const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
-const pop = Easing.bezier(0.34, 1.56, 0.64, 1);
 
 /** One episode of «Скажи гарніше»: an everyday answer in a chat and the nicer word for it. */
 export type Episode = {
