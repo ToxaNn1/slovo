@@ -8,17 +8,18 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { useCorrectionTypeScreen } from '@/dashboard/correction-type';
 import { editionStrings } from '@/edition/edition';
+import { useSegmentParam } from '@/route-params';
 
 const words = editionStrings.dashboard.correctionTypes;
 
 /** A Correction Type's screen, from its tile on the Dashboard; an unknown type returns home. */
 export default function CorrectionTypeRoute() {
-  const parsed = CorrectionTypeSchema.safeParse(useLocalSearchParams<{ type: string }>().type);
+  const parsed = CorrectionTypeSchema.safeParse(useSegmentParam('type'));
   return parsed.success ? <CorrectionTypeScreen type={parsed.data} /> : <Redirect href="/" />;
 }
 

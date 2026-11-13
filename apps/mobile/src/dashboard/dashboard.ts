@@ -1,5 +1,5 @@
 import type { CorrectionType } from '@slovo/contracts';
-import type { DashboardBlock } from '@slovo/core';
+import type { DashboardBlock, LocalDate } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
 import { useEffect, useSyncExternalStore } from 'react';
 
@@ -18,6 +18,8 @@ export interface DashboardScreen {
   readonly reveal: () => void;
   /** «До картки →»: opens the Feed on the Word of the Day card. */
   readonly toCard: () => void;
+  /** Today, the Feed's local day, which turns at midnight with the app open. */
+  readonly today: LocalDate;
   /** A Mood tile: chooses today's Mood, or changes it. */
   readonly chooseMood: (moodId: string) => void;
   /** A row of «Попередні слова»: opens its Entry card as Search does, making nothing Seen. */
@@ -42,8 +44,9 @@ const previousWordsTitle = editionStrings.dashboard.previousWords.title;
  * over the Dashboard, where the Feed lands it (ADR 0076).
  */
 export function useDashboardScreen(): DashboardScreen {
-  const { dashboard, mood, curatedCollections } = useComposition();
+  const { dashboard, feed, mood, curatedCollections } = useComposition();
   const blocks = useSubscribed(dashboard, (source) => source.blocks);
+  const today = useSubscribed(feed, (source) => source.today);
   const openScreen = useOpenScreen();
   const focused = useIsFocused();
   const asked = useSyncExternalStore(wordOfTheDayLanding.subscribe, wordOfTheDayLanding.asked);
@@ -52,6 +55,7 @@ export function useDashboardScreen(): DashboardScreen {
   }, [focused, asked, openScreen]);
   return {
     blocks,
+    today,
     reveal: () => {
       void keep('the reveal of the Word of the Day', dashboard.reveal());
     },

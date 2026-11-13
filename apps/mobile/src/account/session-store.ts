@@ -1,4 +1,5 @@
 import { createMemorySessionStore, type KeptSession, type SessionStore } from '@slovo/core';
+import { z } from 'zod';
 
 /** The options `expo-secure-store` takes with each call: who may read the item, and when. */
 interface KeychainOptions {
@@ -17,17 +18,16 @@ export interface Keychain {
 /** The Keychain item that holds this device's Session. */
 const SESSION_KEY = 'slovo.session';
 
+/** A Session as the store writes it into its Keychain item. */
+const KeptSessionSchema = z.object({ token: z.string(), email: z.string() });
+
 /** The Session an item holds, or undefined when it holds none the store wrote. */
 function sessionIn(item: string): KeptSession | undefined {
-  let parsed: unknown;
   try {
-    parsed = JSON.parse(item);
+    return KeptSessionSchema.safeParse(JSON.parse(item)).data;
   } catch {
     return undefined;
   }
-  if (typeof parsed !== 'object' || parsed === null) return undefined;
-  const { token, email } = parsed as Partial<Record<keyof KeptSession, unknown>>;
-  return typeof token === 'string' && typeof email === 'string' ? { token, email } : undefined;
 }
 
 /**

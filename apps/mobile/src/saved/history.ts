@@ -1,5 +1,4 @@
 import { dateKeyOf, todayDate, type HistoryEntry } from '@slovo/core';
-import { useEdition } from '@slovo/ui';
 import { useIsFocused } from 'expo-router';
 import { useMemo } from 'react';
 
@@ -28,23 +27,21 @@ export function useClearHistory(): () => void {
 }
 
 /**
- * The words of History on the device's clock. A relative time reads the clock
- * as it renders, so a screen that comes back into focus renders again and the
- * times it shows are no older than that.
+ * The words of History on the device's clock. A day heading reads the clock
+ * as it renders, so a screen that comes back into focus renders again and its
+ * «Сьогодні» is no older than that.
  */
 function useHistoryText() {
-  const { count } = useEdition();
-  // Re-renders the screen when it gains or loses focus, so «щойно» does not go stale.
+  // Re-renders the screen when it gains or loses focus, so «Сьогодні» does not go stale.
   useIsFocused();
   return useMemo(
     () =>
       historyText({
         strings: editionStrings.history,
         dates: editionStrings.dates,
-        count,
         clock: deviceClock,
       }),
-    [count],
+    [],
   );
 }
 

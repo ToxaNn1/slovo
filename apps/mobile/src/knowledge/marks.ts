@@ -1,4 +1,6 @@
-import type { KnowledgeMark } from '@slovo/core';
+import type { EntryRowModel, KnowledgeMark } from '@slovo/core';
+import type { RailBoardCard } from '@slovo/ui';
+import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
 import { keep } from '../keep';
@@ -36,4 +38,21 @@ export function useKnowledgeMark(entryId: string): {
       undo('the Knowledge Mark', (open) => open.knowledge.undo());
     },
   };
+}
+
+/**
+ * A rail board's card per row, each with whether its Entry is Known for the
+ * «ЗНАЮ» stamp; built again only when the rows or the Knowledge Marks change.
+ */
+export function useKnownCards(
+  rows: readonly { readonly entryId: string; readonly row: EntryRowModel }[] | undefined,
+): readonly RailBoardCard[] | undefined {
+  const { knowledge } = useComposition();
+  // A Knowledge Mark makes a new state, which builds the cards again.
+  const state = useSubscribed(knowledge, (open) => open.state);
+  return useMemo(
+    () => rows?.map(({ entryId, row }) => ({ entryId, row, known: knowledge.isKnown(entryId) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `isKnown` reads `state`.
+    [rows, knowledge, state],
+  );
 }

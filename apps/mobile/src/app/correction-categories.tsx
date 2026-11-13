@@ -3,7 +3,7 @@ import { Redirect } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useCorrectionCategories } from '@/categories/categories';
+import { useBlockCategories } from '@/categories/categories';
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
 
@@ -13,7 +13,7 @@ import { useOpenScreen } from '@/use-open-screen';
  * a tile opening its Category. With none to show it returns to the Dashboard.
  */
 export default function CorrectionCategoriesRoute() {
-  const categories = useCorrectionCategories();
+  const categories = useBlockCategories('correction');
   const openScreen = useOpenScreen();
   const { colors } = useTokens();
   if (categories.length === 0) return <Redirect href="/" />;

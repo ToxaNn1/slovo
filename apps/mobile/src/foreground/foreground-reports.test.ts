@@ -126,11 +126,21 @@ describe('the foreground reports', () => {
     appState.change('inactive');
     appState.change('background');
     appState.change('active');
+    appState.change('inactive');
+    appState.change('background');
+    appState.change('active');
+
+    expect(heard).toEqual(['launch', 'background', 'return', 'background', 'return']);
+  });
+
+  it('tells no return when the app comes back from inactive without going to the background', async () => {
+    const { heard, appState } = await start();
+
     // The control centre, pulled down and put back.
     appState.change('inactive');
     appState.change('active');
 
-    expect(heard).toEqual(['launch', 'background', 'return', 'return']);
+    expect(heard).toEqual(['launch']);
   });
 
   it('tells the first move to the foreground of an app that launched out of it as a return', async () => {
