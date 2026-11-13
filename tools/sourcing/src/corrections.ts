@@ -15,6 +15,7 @@ import { parse, type HTMLElement } from 'node-html-parser';
 import { errorMessage } from './error-message';
 import { fetchGoroh, gorohUrl, LANGUAGE_MODEL } from './goroh';
 import {
+  draftIssues,
   runSourcing,
   type DraftContext,
   type KindDraft,
@@ -175,15 +176,12 @@ function draftFrom(
 
 /** The schema's verdict, then the build's own checks against the Edition, as `field: message`. */
 function checkDraft(draft: Partial<CorrectionInput>, edition: EditionFolder): string[] {
-  const result = CorrectionSchema.safeParse(draft);
-  const issues = result.success
-    ? edition
-        .checkNewCorrections([result.data])
-        .map(({ field, message }) => `${field ?? '(correction)'}: ${message}`)
-    : result.error.issues.map(
-        (issue) => `${issue.path.join('.') || '(correction)'}: ${issue.message}`,
-      );
-  return [...new Set(issues)];
+  return draftIssues(
+    CorrectionSchema,
+    (valid) => edition.checkNewCorrections([valid]),
+    '(correction)',
+    draft,
+  );
 }
 
 /** The mark goroh puts in front of the standard forms in a short usage article. */

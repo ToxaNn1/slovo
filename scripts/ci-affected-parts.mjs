@@ -15,7 +15,8 @@
  * or depending on a changed package.
  */
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, realpathSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 /** The packages a part of its own tests; "other packages" tests the rest. */
 const OWN_PARTS = {
@@ -107,7 +108,11 @@ function detect() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run as a script, also from a path with spaces or through a symlink.
+if (
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href
+) {
   const { reason, flags, otherFilters } = detect();
   const lines = [
     ...Object.entries(flags).map(([part, on]) => `${part}=${on}`),
