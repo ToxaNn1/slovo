@@ -1,17 +1,11 @@
-import {
-  dateKeyOf,
-  decorOf,
-  localDayOf,
-  parseLocalDate,
-  untilNextLocalDay,
-  type Clock,
-} from '@slovo/core';
+import { dateKeyOf, decorOf, localDayOf, parseLocalDate, type Clock } from '@slovo/core';
 import { DecorProvider } from '@slovo/ui';
-import { useSyncExternalStore, type ReactNode } from 'react';
+import { useCallback, useSyncExternalStore, type ReactNode } from 'react';
 
 import { editionDecor, seasonalMotifs } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useInForeground } from '../foreground/in-foreground';
+import { everyNextLocalDay } from '../foreground/next-local-day';
 import { useSettings } from '../settings/settings';
 
 /** Today's local date as its key, which stays the same string all day. */
@@ -24,22 +18,12 @@ const todayKeyOf = (clock: Clock) => dateKeyOf(localDayOf(clock.now(), clock).da
 function useToday(clock: Clock) {
   // Draws again on a return to the foreground, which reads the date anew.
   useInForeground();
-  const todayKey = useSyncExternalStore(
-    (onChange) => {
-      let timer: ReturnType<typeof setTimeout>;
-      const waitForTomorrow = () => {
-        timer = setTimeout(() => {
-          onChange();
-          waitForTomorrow();
-        }, untilNextLocalDay(clock));
-      };
-      waitForTomorrow();
-      return () => {
-        clearTimeout(timer);
-      };
-    },
-    () => todayKeyOf(clock),
+  // A stable subscription, so a draw does not start the timer again.
+  const subscribe = useCallback(
+    (onChange: () => void) => everyNextLocalDay(clock, onChange),
+    [clock],
   );
+  const todayKey = useSyncExternalStore(subscribe, () => todayKeyOf(clock));
   return parseLocalDate(todayKey);
 }
 

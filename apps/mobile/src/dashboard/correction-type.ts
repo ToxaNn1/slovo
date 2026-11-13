@@ -1,11 +1,13 @@
 import type { CorrectionType } from '@slovo/contracts';
 import type { Composition, CorrectionTypeRow } from '@slovo/core';
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
-import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
+import { useComposition, useCompositionRead } from '../composition';
 import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
+
+/** What tells of a change to a Correction Type's screen. */
+const changes = (open: Composition) => open.correctionTypes;
 
 /** What a Correction Type's screen draws and does. */
 export interface CorrectionTypeScreen {
@@ -27,36 +29,13 @@ export interface CorrectionTypeScreen {
  * shows its standard form.
  */
 export function useCorrectionTypeScreen(type: CorrectionType): CorrectionTypeScreen {
-  const composition = useComposition();
-  const { correctionTypes } = composition;
-  const [read, setRead] = useState<{
-    in: Composition;
-    type: CorrectionType;
-    rows: readonly CorrectionTypeRow[];
-  }>();
-  useEffect(() => {
-    let active = true;
-    // Only the latest read is shown: an earlier one that ends after it is dropped.
-    let latest = 0;
-    const reread = () => {
-      latest += 1;
-      const mine = latest;
-      correctionTypes.corrections(type).then(
-        (rows) => {
-          if (active && mine === latest) setRead({ in: composition, type, rows });
-        },
-        (error: unknown) => {
-          logError('Could not read the Corrections of a Correction Type', error);
-        },
-      );
-    };
-    reread();
-    const stop = correctionTypes.subscribe(reread);
-    return () => {
-      active = false;
-      stop();
-    };
-  }, [composition, correctionTypes, type]);
+  const { correctionTypes } = useComposition();
+  const read = useCallback((open: Composition) => open.correctionTypes.corrections(type), [type]);
+  const reading = useCompositionRead(
+    read,
+    'Could not read the Corrections of a Correction Type',
+    changes,
+  );
   return {
     title: editionStrings.dashboard.correctionTypes.tiles[type],
     description: editionStrings.dashboard.correctionTypes.descriptions[type],
@@ -64,8 +43,7 @@ export function useCorrectionTypeScreen(type: CorrectionType): CorrectionTypeScr
       0,
       correctionTypes.tiles.findIndex((tile) => tile.type === type),
     ),
-    // A read of a composition since reopened, or of another type, is not shown.
-    rows: read?.in === composition && read.type === type ? read.rows : undefined,
+    rows: reading.status === 'ready' ? reading.value : undefined,
     reveal: (correctionId) => {
       void keep('the revealed Corrections', correctionTypes.reveal(correctionId));
     },

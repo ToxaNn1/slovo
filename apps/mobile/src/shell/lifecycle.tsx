@@ -10,7 +10,7 @@ import { logError } from '../diagnostics/log';
 import { deviceSpotlight } from '../spotlight/device-spotlight';
 import { handOverSpotlight } from '../spotlight/spotlight-hand-over';
 import type { SpotlightIndex } from '../spotlight/spotlight-index';
-import { syncInBackground, reopenAfterSync } from '../sync/background-sync';
+import { reopenAfterSync, reopenComposition, syncInBackground } from '../sync/background-sync';
 import { deviceWidget, deviceWidgetLinkKey } from '../widget/device-widget';
 import { createWidgetSnapshotWriter } from '../widget/widget-snapshot';
 import { useShell, type Shell } from '../shell-value';
@@ -72,13 +72,8 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
   function logSwitchesError(error: unknown) {
     logError('Could not follow the remote Feature Switches', error);
   }
-  /** Reopens what read the old switches once an ask changed an effective value. */
-  async function reopenForSwitches() {
-    await composition.reopen();
-    // A reopen does what the launch did: the composition makes the plan as it opens.
-    const { state } = composition;
-    if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
-  }
+  /** Reopens what read the old switches once an ask changed an effective value, or the old records once a Patch came. */
+  const reopenOver = reopenComposition(composition, writeWidgetSnapshot);
   // The switches are asked at launch, on each return and every two minutes in the foreground (ADR 0089).
   let stopAsking: () => void = () => undefined;
   reports.listen(remoteSwitches, (switches, moment) => {
@@ -87,12 +82,12 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
     switches
       .ask()
       .then(async (changed) => {
-        if (changed) await reopenForSwitches();
+        if (changed) await reopenOver();
       })
       .catch(logSwitchesError);
     stopAsking();
     stopAsking = switches.start(() => {
-      reopenForSwitches().catch(logSwitchesError);
+      reopenOver().catch(logSwitchesError);
     });
   });
   const stopSpotlight = handOverSpotlight({
@@ -116,10 +111,7 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
     if (moment === 'launch') {
       // A Patch changed the records: the composition reopens over them, as after a remote switch.
       unsubscribePatches = contentUpdate.subscribe(() => {
-        void composition.reopen().then(() => {
-          const { state } = composition;
-          if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
-        });
+        void reopenOver();
       });
     }
     if (moment === 'background') {
