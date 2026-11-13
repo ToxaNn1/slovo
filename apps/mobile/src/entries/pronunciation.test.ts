@@ -349,7 +349,7 @@ describe('Pronunciation', () => {
     });
     await pronunciation.toggle(word(VEREMIIA));
     // The voice takes its time to stop.
-    const stopNow = fake.speech.stop;
+    const stopNow = fake.speech.stop.bind(fake.speech);
     let stopped: () => void = () => undefined;
     fake.speech.stop = () =>
       new Promise((resolve) => {
