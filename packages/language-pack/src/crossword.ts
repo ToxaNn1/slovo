@@ -35,19 +35,22 @@ const SEARCH_BUDGET = 500;
  * day as it is, and a later one with no word from fewer than
  * `CROSSWORD_REPEAT_DAYS` days before it. The same content and date always
  * give the same day.
- * It refuses when the content has errors or no grid can be made.
+ * It refuses when the content has errors on `today`, now by default, or no
+ * grid can be made.
  */
 export function generateDailyCrossword({
   editionDir,
   date,
+  today = new Date(),
 }: {
   editionDir: string;
   date: string;
+  today?: Date;
 }): CrosswordResult {
   if (!CrosswordDaySchema.shape.date.safeParse(date).success) {
     return { ok: false, errors: [{ file: 'content', message: `Not a calendar date: ${date}` }] };
   }
-  const source = readEdition(editionDir, { registryRequired: false, today: new Date() });
+  const source = readEdition(editionDir, { registryRequired: false, today });
   if (source.errors.length > 0 || source.valid === undefined) {
     return { ok: false, errors: source.errors };
   }
