@@ -187,3 +187,11 @@ test('a write keeps its confirmation open until it ends, and a refusal stays in 
   expect(screen.getByRole('dialog')).toBeDefined();
   expect(writes).toHaveLength(1);
 });
+
+test('a Безпека list that fails to load says so instead of reading empty', async () => {
+  server.use(http.get('*/admin/people', () => HttpResponse.json({}, { status: 502 })));
+  render(<Admin />);
+  const people = within(await screen.findByRole('region', { name: 'Люди і доступ' }));
+
+  expect(await people.findByText('Не вдалося завантажити.')).toBeDefined();
+});
