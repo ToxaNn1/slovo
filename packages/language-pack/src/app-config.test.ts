@@ -80,7 +80,9 @@ describe('the AppConfig', () => {
   });
 
   it('refuses the placeholder domain and an empty Team ID for a release build', () => {
-    const failure = failureOf(() => openAppConfig(repoWith(withPlaceholders), { build: 'release' }));
+    const failure = failureOf(() =>
+      openAppConfig(repoWith(withPlaceholders), { build: 'release' }),
+    );
 
     expect(fieldsOf(failure)).toEqual(['app/app.json › domain', 'app/app.json › appleTeamId']);
     expect(failure?.message).toMatch(/slovo\.example.*placeholder/s);
