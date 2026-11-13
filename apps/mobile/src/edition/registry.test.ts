@@ -13,6 +13,7 @@ const { editions } = vi.hoisted(() => {
     starterWords: [],
     sounds: {},
     languagePack: 1,
+    bundledContentVersion: 1,
   });
   return { editions: { uk: files('uk'), pl: files('pl') } };
 });

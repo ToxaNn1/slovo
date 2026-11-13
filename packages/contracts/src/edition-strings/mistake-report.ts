@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
+import { templateOf } from './shared';
 
 /** The texts of a Mistake Report: the card menu's action, the sheet and its toasts (ADR 0056). */
 export const MistakeReportStringsSchema = z.strictObject({
@@ -17,6 +18,8 @@ export const MistakeReportStringsSchema = z.strictObject({
   }),
   /** The label of the comment field, which says it is optional. */
   comment: TextSchema,
+  /** The comment's character count as VoiceOver reads it, such as «12 з 500 символів». Takes `{count}` and `{max}`. */
+  commentCount: templateOf('count', 'max'),
   /** The button that sends the report and closes the sheet. */
   send: TextSchema,
   /** The toast as soon as the report is sent, before the Core answers. */

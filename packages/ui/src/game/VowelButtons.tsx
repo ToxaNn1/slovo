@@ -2,26 +2,17 @@
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
 import type { RoundAnswer } from '@slovo/core';
-import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { PressedTile } from '../primitives/PressedTile';
-import { useReduceMotion } from '../providers/useReduceMotion';
 import { fontScaleCap, minTouchTarget, space, typeStyle, vowelButtonsLayout } from '../tokens';
-import { RIGHT_FILL, WRONG_FILL } from './round-motion';
+import { useAnswerMotion, type AnswerDrop } from './useAnswerMotion';
 
 /** How a wrong tap drops: down, tilted and faded, the board's `slDrop`. */
-const VOWEL_DROP = { translateY: 12, rotate: -6, opacity: 0.55 };
-/** How a right vowel pops, the board's `slPop`: its scale at the start, 60 % and the end. */
-const VOWEL_POP = [0.6, 1.12, 1];
+const VOWEL_DROP: AnswerDrop = { translateY: 12, rotate: -6, opacity: 0.55 };
 const VOWEL_SLOP = (minTouchTarget - vowelButtonsLayout.width) / 2;
 /** Whether a character is a letter, which counts for a vowel's place, unlike an apostrophe or a hyphen. */
 const LETTER = /\p{L}/u;
@@ -144,37 +135,7 @@ function Vowel({
   const { colors, radii } = tokens;
   const keyInk = useSchemeColors('light').ink;
   const { voice } = useEdition();
-  const reduceMotion = useReduceMotion();
-  /** 0 before the answer, 1 once the vowel has popped or dropped. */
-  const moved = useSharedValue(fill === undefined ? 0 : 1);
-  // Whether the vowel showed its fill before, so only the answer given now moves it.
-  const shownFill = useRef(fill !== undefined);
-
-  useEffect(() => {
-    if (fill === undefined || shownFill.current) return;
-    shownFill.current = true;
-    moved.value = 0;
-    moved.value = withTiming(1, fill === 'right' ? RIGHT_FILL : WRONG_FILL);
-    // The shared value is stable, so only the answer given moves the vowel.
-  }, [fill, moved]);
-
-  const still = reduceMotion || fill === undefined;
-  const motion = useAnimatedStyle(() => {
-    if (fill === 'wrong')
-      return {
-        opacity: 1 - (1 - VOWEL_DROP.opacity) * moved.value,
-        transform: still
-          ? []
-          : [
-              { translateY: VOWEL_DROP.translateY * moved.value },
-              { rotate: `${String(VOWEL_DROP.rotate * moved.value)}deg` },
-            ],
-      };
-    return {
-      opacity: 1,
-      transform: still ? [] : [{ scale: interpolate(moved.value, [0, 0.6, 1], VOWEL_POP) }],
-    };
-  });
+  const motion = useAnswerMotion(fill, VOWEL_DROP);
   return (
     <Animated.View testID={`${testID}-motion`} style={motion} {...voice}>
       <PressedTile

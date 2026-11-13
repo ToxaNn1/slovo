@@ -208,7 +208,7 @@ export {
   type MistakeType,
 } from './mistake-report';
 export { SYNC_BATCH_SIZE } from './sync';
-export { SourceSchema, type Source } from './shared';
+export { ID_PREFIX, SourceSchema, type Source } from './shared';
 export {
   ExampleSchema,
   GenderSchema,

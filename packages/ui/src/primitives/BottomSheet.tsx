@@ -48,12 +48,12 @@ import {
   scrim,
   sheetLayout,
   space,
-  type Easing as Easing4,
   type Wedge as WedgePoints,
 } from '../tokens';
 import { InvertedTokens, SchemeTokens, useTokens } from '../providers/TokensProvider';
 import { useRouteOnScreen } from '../providers/RouteProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
+import { bezier, REDUCED_FADE } from './timing';
 import { Wedge } from './Wedge';
 
 /** The slant over the sheet's top: the left edge lower than the right. */
@@ -65,15 +65,8 @@ const SLANT: WedgePoints = [
 
 /** `ReduceMotion.Never` on every timing: under Reduce Motion the sheet fades instead, and the system setting would skip the fade too. */
 const never = { reduceMotion: ReduceMotion.Never };
-const bezier = ([x1, y1, x2, y2]: Easing4) => Easing.bezier(x1, y1, x2, y2);
 /** The design's `slSheet`: up in 450 ms, a little past its place, then back. */
 const SLIDE_IN = { duration: motion.sheet.duration, easing: bezier(motion.sheet.easing), ...never };
-/** Under Reduce Motion the sheet fades in place, the design's `slRm`. */
-const FADE = {
-  duration: motion.reduceMotion.duration,
-  easing: bezier(motion.reduceMotion.easing),
-  ...never,
-};
 /** Leaving is quicker than arriving. */
 const SLIDE_OUT = { duration: 220, easing: Easing.in(Easing.quad), ...never };
 
@@ -161,7 +154,7 @@ export function BottomSheet({
       flick.current = undefined;
       drag.value = 0;
       progress.value = reduceMotion
-        ? withTiming(1, FADE)
+        ? withTiming(1, REDUCED_FADE)
         : withSequence(
             withTiming(1 + motion.sheet.overshoot.distance / height.value, {
               ...SLIDE_IN,

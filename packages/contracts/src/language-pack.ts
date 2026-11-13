@@ -19,7 +19,8 @@ const ContentChecksumSchema = z
 export const PackMetadataSchema = z.strictObject({
   editionId: EditionIdSchema,
   contentVersion: z.int().positive(),
-  contentChecksum: ContentChecksumSchema,
+  /** The checksum of the content a pack was built with; a Patch drops it, its content no longer the one checksummed. */
+  contentChecksum: ContentChecksumSchema.optional(),
   packFormat: z.int().positive(),
 });
 

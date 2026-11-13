@@ -5,7 +5,6 @@ import type { BadgeShape } from '@slovo/contracts';
 import { useEffect, type ReactNode } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  Easing,
   Extrapolation,
   interpolate,
   ReduceMotion,
@@ -22,20 +21,14 @@ import { useReduceMotion } from '../providers/useReduceMotion';
 import { badgeStamp, capitalMarkRoom, motion, typeStyle } from '../tokens';
 import { BadgeMark } from './BadgeMark';
 import { StampHalftone } from './StampHalftone';
+import { bezier, REDUCED_FADE } from '../primitives/timing';
 
 /** The five frames run once, after a short wait (board 10.7). */
 const FRAMES = {
   duration: motion.badgeStamp.duration,
-  easing: Easing.bezier(...motion.badgeStamp.easing),
+  easing: bezier(motion.badgeStamp.easing),
   reduceMotion: ReduceMotion.Never,
 };
-/** Under Reduce Motion the stamp fades in at rest. */
-const FADE = {
-  duration: motion.reduceMotion.duration,
-  easing: Easing.bezier(...motion.reduceMotion.easing),
-  reduceMotion: ReduceMotion.Never,
-};
-
 const { fly, blow, bounce, rest } = badgeStamp.frames;
 const turned = (degrees: number) => `${String(degrees)}deg`;
 
@@ -86,7 +79,7 @@ export function BadgeStamp({
   const t = useSharedValue(0);
   useEffect(() => {
     t.value = reduceMotion
-      ? withTiming(1, FADE)
+      ? withTiming(1, REDUCED_FADE)
       : withDelay(motion.badgeStamp.delay, withTiming(1, FRAMES));
   }, [t, reduceMotion]);
   const faded = useAnimatedStyle(() => ({ opacity: reduceMotion ? t.value : 1 }));
