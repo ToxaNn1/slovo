@@ -5,7 +5,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { wordOfTheDayLanding } from '../feed/word-of-the-day-landing';
+import { wordOfTheDayLanding, type LandingAsked } from '../feed/word-of-the-day-landing';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { useOpenScreen } from '../use-open-screen';
@@ -38,10 +38,15 @@ export interface DashboardScreen {
 
 const previousWordsTitle = editionStrings.dashboard.previousWords.title;
 
+/** The last ask that opened the Feed, kept across Dashboard mounts so each ask opens it once. */
+let feedOpenedFor: LandingAsked | undefined;
+
 /**
  * The Dashboard's blocks and actions. A landing on the Word of the Day card,
  * asked by «До картки →» or by the «Слово дня» App Intent, opens the Feed
- * over the Dashboard, where the Feed lands it (ADR 0076).
+ * over the Dashboard, where the Feed lands it (ADR 0076). Each ask opens the
+ * Feed once: it keeps waiting there for the card, such as on a cold start, so
+ * a return to the Dashboard while the Feed lacks the card stays on it.
  */
 export function useDashboardScreen(): DashboardScreen {
   const { dashboard, feed, mood, curatedCollections } = useComposition();
@@ -51,7 +56,9 @@ export function useDashboardScreen(): DashboardScreen {
   const focused = useIsFocused();
   const asked = useSyncExternalStore(wordOfTheDayLanding.subscribe, wordOfTheDayLanding.asked);
   useEffect(() => {
-    if (focused && asked !== undefined) openScreen('/feed');
+    if (!focused || asked === undefined || asked === feedOpenedFor) return;
+    feedOpenedFor = asked;
+    openScreen('/feed');
   }, [focused, asked, openScreen]);
   return {
     blocks,
