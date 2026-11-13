@@ -28,12 +28,11 @@ import {
   mascotPose,
   mascotSleepMarks,
   mascotWidth,
-  motion,
   space,
   typeStyle,
-  type Easing as Curve,
   type MascotFrame,
 } from '../tokens';
+import { bezier, REDUCED_FADE } from './timing';
 
 /** The colour of each paint role of the Mascot's vector. */
 type Paints = Readonly<Record<'body' | 'ink' | 'accent', string>>;
@@ -356,11 +355,6 @@ function Shape({ shape, paints, testID }: { shape: MascotShape; paints: Paints; 
   );
 }
 
-/** A design easing curve as Reanimated takes it. */
-function curve([x1, y1, x2, y2]: Curve) {
-  return Easing.bezier(x1, y1, x2, y2);
-}
-
 function paintOf(paint: string, paints: Paints): string {
   return paint === 'body' || paint === 'ink' || paint === 'accent' ? paints[paint] : paint;
 }
@@ -380,11 +374,7 @@ function useFigureMotion(state: MascotState) {
     progress.value = 0;
     if (reduceMotion) {
       shown.value = 0;
-      shown.value = withTiming(1, {
-        duration: motion.reduceMotion.duration,
-        easing: curve(motion.reduceMotion.easing),
-        reduceMotion: ReduceMotion.Never,
-      });
+      shown.value = withTiming(1, REDUCED_FADE);
       return;
     }
     shown.value = 1;
@@ -393,7 +383,7 @@ function useFigureMotion(state: MascotState) {
     const steps = plan.frames.slice(1).map((frame, index) =>
       withTiming(frame.at, {
         duration: (frame.at - (plan.frames[index]?.at ?? 0)) * plan.duration,
-        easing: curve(plan.easing),
+        easing: bezier(plan.easing),
         reduceMotion: ReduceMotion.Never,
       }),
     );

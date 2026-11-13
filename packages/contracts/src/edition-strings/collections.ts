@@ -103,6 +103,8 @@ export const CollectionsStringsSchema = z.strictObject({
     create: TextSchema,
     /** The button that closes the sheet; every checkbox has already applied. */
     done: TextSchema,
+    /** Shown and announced under a name field when keeping the name fails, such as on a storage error: the name stays to try again. */
+    nameFailed: TextSchema,
     /** Why a name is refused, one text for each reason the Core gives. */
     refusal: z.strictObject({
       empty: TextSchema,

@@ -5,6 +5,9 @@ import type {
   Rule,
   RuleTargets,
 } from '@slovo/contracts';
+import { SwitchRefusalSchema } from '@slovo/contracts/admin-api';
+
+import { refusalData } from '../session';
 
 /** What the admin API answers of an Edition's switches. */
 export interface EditionSwitchesAnswer {
@@ -92,19 +95,11 @@ export function withEveryone(rules: readonly Rule[], on: boolean) {
   ];
 }
 
-/** A string in the refusal's data, such as `feature`. */
-function textOf(error: unknown, key: string): string | undefined {
-  if (typeof error !== 'object' || error === null || !('data' in error)) return undefined;
-  const { data } = error;
-  if (typeof data !== 'object' || data === null) return undefined;
-  const value: unknown = Object.getOwnPropertyDescriptor(data, key)?.value;
-  return typeof value === 'string' ? value : undefined;
-}
-
 /** What the admin reads of a refused write of the switches. */
 export function switchRefusalText(error: unknown): string {
-  const feature = textOf(error, 'feature') ?? '';
-  switch (textOf(error, 'refusal')) {
+  const refused = SwitchRefusalSchema.safeParse(refusalData(error)).data;
+  const feature = refused?.feature ?? '';
+  switch (refused?.refusal) {
     case 'dependency-off': {
       return `Відхилено: світч «${feature}», від якого це залежить, вимкнено для всіх.`;
     }

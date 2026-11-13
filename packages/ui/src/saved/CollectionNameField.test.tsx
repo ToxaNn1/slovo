@@ -1,13 +1,17 @@
 import { CollectionNameField, EditionProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 
 import { testStrings } from '../test-strings';
 
 async function renderField(onSubmit: (name: string) => Promise<string | undefined>) {
   const onCancel = jest.fn();
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+    <EditionProvider
+      edition={{ locale: 'en' }}
+      strings={testStrings({ collections: { sheet: { nameFailed: 'Could not keep it' } } })}
+    >
       <CollectionNameField
         overline="Rename"
         placeholder="Name"
@@ -56,8 +60,11 @@ describe('CollectionNameField', () => {
     expect(screen.queryByText('Taken')).not.toBeOnTheScreen();
   });
 
-  it('leaves the name in the field to try again when keeping it fails', async () => {
+  it('leaves the name in the field and says it failed, to try again', async () => {
     const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const announce = jest
+      .spyOn(AccessibilityInfo, 'announceForAccessibility')
+      .mockImplementation(() => undefined);
     const onSubmit = jest.fn(() => Promise.reject(new Error('disk')));
     const { input } = await renderField(onSubmit);
 
@@ -65,6 +72,8 @@ describe('CollectionNameField', () => {
     await fireEvent(input, 'submitEditing');
     expect(onSubmit).toHaveBeenCalledTimes(2);
     expect(input).toHaveDisplayValue('Birds');
+    expect(screen.getByText('Could not keep it')).toBeOnTheScreen();
+    expect(announce).toHaveBeenCalledWith('Could not keep it');
     error.mockRestore();
   });
 });

@@ -1,18 +1,16 @@
 import { z } from 'zod';
 
 import { EntryIdSchema } from './entry';
-import { EntryTextSchema, hasNoRepeats } from './shared';
+import { EntryTextSchema, hasNoRepeats, recordIdSchema } from './shared';
 
 /**
  * A Curated Collection id: opaque, assigned when the collection is authored
  * and never reused. The `cc_` prefix keeps it apart from Entry ids.
  */
-export const CuratedCollectionIdSchema = z
-  .string()
-  .regex(
-    /^cc_[a-z0-9]+$/,
-    'Expected a Curated Collection id: cc_ followed by lowercase letters and digits',
-  );
+export const CuratedCollectionIdSchema = recordIdSchema(
+  'curatedCollection',
+  'a Curated Collection',
+);
 
 const curatedCollectionShape = {
   id: CuratedCollectionIdSchema,
