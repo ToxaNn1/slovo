@@ -70,7 +70,13 @@ async function open({
   quietCategories = true,
   categoryFeed = true,
   categoryKnownFirst = true,
-}: { quietCategories?: boolean; categoryFeed?: boolean; categoryKnownFirst?: boolean } = {}) {
+  wordTabs = false,
+}: {
+  quietCategories?: boolean;
+  categoryFeed?: boolean;
+  categoryKnownFirst?: boolean;
+  wordTabs?: boolean;
+} = {}) {
   const shipped = loadEdition(activeEditionFiles.config);
   editionInEffect = {
     ...shipped,
@@ -81,9 +87,11 @@ async function open({
           ? categoryFeed
           : feature === 'categoryKnownFirst'
             ? categoryKnownFirst
-            : feature === 'dashboard' ||
-              feature === 'categoryScreens' ||
-              shipped.isFeatureEnabled(feature),
+            : feature === 'wordTabs'
+              ? wordTabs
+              : feature === 'dashboard' ||
+                feature === 'categoryScreens' ||
+                shipped.isFeatureEnabled(feature),
   };
   const userState = await seedUserState(
     { onboardingFinished: '2026-09-01T09:00:00.000Z' },
@@ -384,6 +392,20 @@ describe("the Category's Feed", () => {
     await settle(() => jest.advanceTimersByTimeAsync(10_000));
 
     expect(composition.history.list).toEqual([]);
+  });
+
+  it('lays a tabbed card in a fixed frame: no page scroll around its tab bar (ADR 0113)', async () => {
+    await open({ wordTabs: true });
+    await renderCategory('emotions-character');
+    await settle(() => fireEvent.press(screen.getByTestId('category-entry-w_lahidnyi')));
+    await layOut();
+
+    const page = within(screen.getByTestId('category-feed-card-0'));
+    expect(page.getAllByRole('tab', { includeHiddenElements: true })).not.toEqual([]);
+    const scrolls: string[] = [];
+    for (let at = page.getByTestId('word-card-kicker').parent; at !== null; at = at.parent)
+      if (at.type === 'RCTScrollView') scrolls.push(String(at.props['testID']));
+    expect(scrolls).toEqual([]);
   });
 
   it('leads back to the Category screen by its back tile, named for the Category', async () => {
