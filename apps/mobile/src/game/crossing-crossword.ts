@@ -99,11 +99,10 @@ export function crossingMiniGrid(
   state: CrossingPlay,
 ): CrosswordMiniCell[][] {
   return crossingGridOf(puzzle).map((spots, row) =>
-    spots.map(
-      (spot, column): CrosswordMiniCell =>
-        spot.kind === 'block'
-          ? { kind: 'block' }
-          : { kind: 'cell', letter: letterAt(state, { row, column }) },
+    spots.map((spot, column): CrosswordMiniCell =>
+      spot.kind === 'block'
+        ? { kind: 'block' }
+        : { kind: 'cell', letter: letterAt(state, { row, column }) },
     ),
   );
 }
