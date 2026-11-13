@@ -154,6 +154,15 @@ describe('checkContentSet', () => {
         return fixtureSet({ t_fx0001: { gameQuestion: { ...gameQuestion, wrongAnswers } } });
       },
     ],
+    [
+      'unique-tip-exceptions',
+      () =>
+        fixtureSet({
+          t_fx0001: {
+            exceptions: { explanation: 'Слова поза правилом.', words: ['буряк', 'Буряк'] },
+          },
+        }),
+    ],
     ['word-category', () => fixtureSet({ w_fx0002: { categoryId: 'unknown' } })],
     ['correction-category', () => fixtureSet({ c_fx0001: { categoryId: 'unknown' } })],
     ['word-correction', () => fixtureSet({ w_fx0002: { correctionIds: ['c_zzzzzz'] } })],
@@ -219,6 +228,15 @@ describe('checkContentSet', () => {
   ])('refuses mixed scripts in %s', (_kind, id, changes) => {
     const refusals = checkContentSet(config, fixtureSet({ [id]: changes }), { today });
     expect(refusals.map(({ rule, entryId }) => [rule, entryId])).toEqual([['mixed-script', id]]);
+  });
+
+  it("refuses a Tip exception that is the Tip's own standard form", () => {
+    const { standardForm } = record('t_fx0001') as { standardForm: string };
+    const exceptions = { explanation: 'Слова поза правилом.', words: ['буряк', standardForm] };
+    const refusals = checkContentSet(config, fixtureSet({ t_fx0001: { exceptions } }), { today });
+    expect(refusals.map(({ rule, field }) => [rule, field])).toEqual([
+      ['unique-tip-exceptions', 'exceptions.words.1'],
+    ]);
   });
 
   it('refuses a Lemma that differs from another only in case', () => {
