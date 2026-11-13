@@ -10,6 +10,7 @@ import { errorMessage } from './error-message';
 import {
   fetchGoroh,
   gorohUrl,
+  isSynonymDictionary,
   readArticleBlocks,
   readSynonymArticles,
   type GorohSynonymArticle,
@@ -100,7 +101,9 @@ async function draftRow(
   if (page === undefined) {
     return { drafts: [], flags: [{ kind: 'no-entry', message: `goroh has no page ${url}` }] };
   }
-  const articles = readSynonymArticles(page, dominant);
+  const articles = readSynonymArticles(page, dominant).filter((article) =>
+    isSynonymDictionary(article.dictionary),
+  );
   const article = articles[sense - 1];
   if (article === undefined) {
     const message =

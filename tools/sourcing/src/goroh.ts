@@ -299,14 +299,6 @@ export function parseInflections(html: string, lemma: string): GorohInflection[]
     });
 }
 
-/** One group of Synonyms for one sense of the word. */
-export interface GorohSynonymGroup {
-  readonly sense?: string;
-  readonly synonyms: readonly string[];
-  /** The dictionary goroh took the group from. */
-  readonly dictionary?: string;
-}
-
 /**
  * The synonym dictionaries goroh draws on. Its other dictionaries list
  * replacements for foreign words or calques, often next to the forms to avoid.
@@ -318,28 +310,6 @@ const SYNONYM_DICTIONARIES = new Set([
 
 export function isSynonymDictionary(dictionary: string | undefined): boolean {
   return dictionary !== undefined && SYNONYM_DICTIONARIES.has(dictionary);
-}
-
-export function parseSynonymGroups(html: string, lemma: string): GorohSynonymGroup[] {
-  return parse(html)
-    .querySelectorAll('div.article-block')
-    .flatMap((block): GorohSynonymGroup[] => {
-      const headword = block.querySelector('h2 b');
-      if (headword === null || !isSameWord(headword.text, lemma)) return [];
-      const sense = squeeze(block.querySelector('h2 .short-interpret')?.text ?? '');
-      const dictionary = squeeze(block.querySelector('.source-info')?.text ?? '');
-      const synonyms = block
-        .querySelectorAll('.article-block__body .list-item')
-        .map((item) => squeeze(unstressed(item.querySelector('a')?.text ?? '')))
-        .filter((synonym) => synonym !== '');
-      return [
-        {
-          ...(sense === '' ? {} : { sense }),
-          synonyms,
-          ...(dictionary === '' ? {} : { dictionary }),
-        },
-      ];
-    });
 }
 
 /** One member of a goroh synonym article: its headword with Stress marks and its gloss, if any. */
@@ -357,7 +327,11 @@ export interface GorohSynonymArticle {
   readonly members: readonly GorohSynonymMember[];
 }
 
-/** The synonym articles of a «Синонімія» page whose headword is the lemma, from goroh's synonym dictionaries, in page order. */
+/**
+ * The synonym articles of a «Синонімія» page whose headword is the lemma, in
+ * page order, from every dictionary: `isSynonymDictionary` tells the synonym
+ * dictionaries' ones apart.
+ */
 export function readSynonymArticles(html: string, lemma: string): GorohSynonymArticle[] {
   return parse(html)
     .querySelectorAll('div.article-block')
@@ -366,7 +340,7 @@ export function readSynonymArticles(html: string, lemma: string): GorohSynonymAr
       const heading = block.querySelector('h2 b') ?? block.querySelector('h2 a');
       const headword = squeeze(heading?.text ?? '');
       const dictionary = squeeze(block.querySelector('.source-info')?.text ?? '');
-      if (!isSameWord(headword, lemma) || !isSynonymDictionary(dictionary)) return [];
+      if (!isSameWord(headword, lemma)) return [];
       const members = block
         .querySelectorAll('.article-block__body .list-item')
         .map((item) => ({
