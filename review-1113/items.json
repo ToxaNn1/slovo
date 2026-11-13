@@ -1,0 +1,2581 @@
+[
+ {
+  "id": "R1",
+  "sev": "high",
+  "kind": "bug",
+  "where": [
+   "packages/core/src/game/chips-form.ts:137-152"
+  ],
+  "problem": "`judge` accepts the same tile index twice and never checks the length of `chosen`: in «За буквами» with decoys, taps [0,1,0,1] pass «мама» and earn XP.",
+  "fix": "Return `undefined` when `chosen` repeats an index or (for `tiles`) its length differs from `expected.length`.",
+  "verified": true,
+  "part": [
+   1
+  ]
+ },
+ {
+  "id": "R2",
+  "sev": "high",
+  "kind": "bug",
+  "where": [
+   "apps/admin/src/components/content-queue/content-queue.tsx:90-92",
+   "apps/admin/src/components/content-editor/record-form.tsx:156,301-303"
+  ],
+  "problem": "Confirm dialogs fire the write (`mutate` / `void write()`) and resolve at once: the dialog closes before the write, a refusal never shows in it, double submit is not blocked.",
+  "fix": "`PendingWrite.run` returns a Promise (`mutateAsync` / `return write(...)`); `onConfirm` awaits it. See R80 for the shared `PendingWrite`.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R3",
+  "sev": "high",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/content/content-queue.ts:145-153",
+   "apps/backend/src/content/content-writes.ts:424"
+  ],
+  "problem": "`heldBatch` locks the batch row FOR UPDATE, then takes the Edition advisory lock; `write` takes the advisory lock first, then its FK insert needs KEY SHARE on the same row: deadlock between write and review/rollback.",
+  "fix": "Take the advisory lock before the batch row lock in `heldBatch`, same order as `heldVersion`.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R4",
+  "sev": "high",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/recordings/recordings.ts:184,301-316"
+  ],
+  "problem": "Any generator throw (non-zero exit, bad `results.json`, missing mp3) rejects the run before `markFailures`; the same Words are picked again, so one bad Word blocks the job (and the remaining Editions).",
+  "fix": "Catch per batch, mark those Words failed, carry on.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R5",
+  "sev": "high",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/shell/lifecycle.tsx:69-70",
+   "packages/core/src/composition.ts:431,822"
+  ],
+  "problem": "`visitStarted` lives in each composition; after any `composition.reopen()` (switches, sync, content patch) `sessionEnded` finds no start and sends nothing.",
+  "fix": "Keep the Visit start in the shell, or carry it across reopen.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R6",
+  "sev": "high",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/entries/WordCard.tsx:276",
+   "packages/ui/src/entries/WordTabs.tsx:94"
+  ],
+  "problem": "`WordDefinition` is a plain Text, so the clamped «Суть» tab gets no line reports from it; the whole-lines cut then shows nothing (cut 0) or slices a line (ADR 0091).",
+  "fix": "Render it through `WholeLinesText`.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R7",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/admin/src/switches/kill-tab.tsx:23-24,119",
+   "apps/admin/src/switches/switches-data.ts:38"
+  ],
+  "problem": "While Editions load or fail, «Вимкнути зараз» sends `editionId: undefined`, which means kill in every Edition.",
+  "fix": "Take the scope from `search.edition`, or disable the button until `editionsQuery.isSuccess`.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R8",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/core/src/notifications/notification-plan.ts:114-120,369-380"
+  ],
+  "problem": "With eveningNotification on, slots are capped by count over all times before filtering to earliest+latest time; with 5+ reminder times the plan covers fewer than 14 days and OS slots stay free (3-4 times are fine).",
+  "fix": "Filter slots to the earliest/latest times before the count cap.",
+  "verified": true,
+  "part": [
+   2
+  ]
+ },
+ {
+  "id": "R9",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/core/src/progress/active-days.ts:122-123"
+  ],
+  "problem": "Every `freezeUsed` event carries the same `freezesHeld` (the count after all the day's freezes); two freezes from 2 report 0 and 0, against analytics.ts:42.",
+  "fix": "Emit `freezesHeld + (toFreeze.length - 1 - i)` per event.",
+  "verified": true,
+  "part": [
+   2
+  ]
+ },
+ {
+  "id": "R10",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/entries/WordTabs.tsx:162",
+   "packages/ui/src/entries/WordCard.tsx:516",
+   "packages/ui/src/entries/IdiomCard.tsx:141,211"
+  ],
+  "problem": "Extra Definitions in the history tab are numbered from 1, while WordCard and IdiomCard number them from 2: a second «1.».",
+  "fix": "Use `index + 2`, or the shared `NumberedDefinitions` (R68).",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R11",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/game/VowelButtons.tsx:185"
+  ],
+  "problem": "`inert` without `accessibilityState.disabled`: VoiceOver still announces answered vowels as active.",
+  "fix": "Pass `disabled`, as OrderedChips/PairsGrid do.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R12",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/primitives/Button.tsx:98",
+   "packages/ui/src/game (5 grids using PressedTile)"
+  ],
+  "problem": "`voice` is spread on the inner Text, not on PressedTile's Pressable, so the Ukrainian label is read in the system language.",
+  "fix": "Spread `{...voice}` on PressedTile.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R13",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/game/GameRound.tsx:387"
+  ],
+  "problem": "The Quick Question tag shows `asked.label`, but VoiceOver reads the hidden `title` (label-in-name mismatch).",
+  "fix": "Read the visible text.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R14",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/primitives/SearchField.tsx:130"
+  ],
+  "problem": "Fixed `height: 50` and no font cap on the TextInput: large Dynamic Type clips the query.",
+  "fix": "`minHeight`, or `fontScaleCap.text`.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R15",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/providers/useReduceMotion.ts:17"
+  ],
+  "problem": "A late `isReduceMotionEnabled()` promise overwrites a newer value from the change event.",
+  "fix": "Ignore the promise once an event has arrived.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R16",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/onboarding/OnboardingStep.tsx:132"
+  ],
+  "problem": "Reduce Motion reads `false` until the system answers, so the full fly-in starts even with Reduce Motion on.",
+  "fix": "Use `useReduceMotionKnown`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R17",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/onboarding/RarityTestQuestions.tsx:101-105"
+  ],
+  "problem": "`answer` reads a stale `phase` closure: a double tap records the same Word twice / loses an answer.",
+  "fix": "Functional `setPhase(prev => ...)`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R18",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/dashboard/DashboardHero.tsx:64",
+   "apps/mobile/src/app/index.tsx:116"
+  ],
+  "problem": "`openedClosed` is frozen at mount and the hero has no key: on a new day the hero shows no animation.",
+  "fix": "Render the hero with `key={hero.date}`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R19",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/dashboard/DashboardHero.tsx:303"
+  ],
+  "problem": "`Math.max(...[])` is -Infinity when `lines` is empty, so the scale becomes -0 and the line disappears.",
+  "fix": "Skip empty `lines` (see R74 `useFitToRoom`).",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R20",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/feed/FeedHeader.tsx:78"
+  ],
+  "problem": "With `onLogo` the logo is a button with no `header` role, so the screen title is not announced as a heading.",
+  "fix": "Keep the heading separate from the button.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R21",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/foreground/foreground-reports.ts:68"
+  ],
+  "problem": "inactive→active reports `return`: a second `sessionStarted` without `sessionEnded`, an extra resume and sync.",
+  "fix": "Report `return` only after `background`.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R22",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/app/feed.tsx:293"
+  ],
+  "problem": "The wordTabs branch drops page scroll also for the red Self-check Word of the Day card (not a fixed frame): a tall card is cut off.",
+  "fix": "Keep `PagerScrollView` for cards that are not a fixed frame.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R23",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/categories/category-feed.tsx:158",
+   "packages/ui/src/entries/CardTabs.tsx:257"
+  ],
+  "problem": "Category feed still nests the tabbed card in the page `PagerScrollView` (ADR 0113: the page never scrolls); inner and outer scroll share `scrolls[index]`.",
+  "fix": "Use the same fixed frame as Feed/Entry.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R24",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/dashboard/dashboard.ts:51",
+   "packages/core/src/feed/feed.ts:145,151"
+  ],
+  "problem": "`wordOfTheDayLanding` is cleared only when Feed finds the card; if it is absent, every Dashboard return jumps to /feed.",
+  "fix": "Clear the landing whether or not the card is found.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R25",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/categories/category-screen.ts:83",
+   "apps/mobile/src/dashboard/curated-collection.ts"
+  ],
+  "problem": "A failed read only logs; the screen stays loading forever.",
+  "fix": "Use `useCompositionRead` and its failed state (see R77).",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R26",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/entries/pronunciation.ts:146,152"
+  ],
+  "problem": "After `await silence()` there is no `latestTap !== tap` check (the recording path has it at :128): two fast taps both speak.",
+  "fix": "Re-check `latestTap` after the await.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R27",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/entries/pronunciation.ts:122"
+  ],
+  "problem": "`await recordingOf(id)` is uncaught; a rejection escapes through `void pronunciation.toggle`.",
+  "fix": "try/catch and fall back to the device voice.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R28",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/community-counters/counter-line.ts:61"
+  ],
+  "problem": "Stored `line` is not keyed by `entryId`: a new Entry shows the old Entry's counters until its read lands.",
+  "fix": "Store `{entryId, line}` and return it only on a match.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R29",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/content/content-store.ts:141,180-188"
+  ],
+  "problem": "Override re-import re-inserts Words with `needsNewRecording: false` and never calls `retireRecordings`, so changed Words keep old Recordings.",
+  "fix": "Compare stored text on import and retire Recordings of changed Words.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R30",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/recordings/recordings.ts:201,249-269",
+   "apps/backend/src/content/media-rows.ts:179"
+  ],
+  "problem": "The file is put in the Media Store before its row is saved; `deleteRetired` can delete the same key in between and the save revives a row with no file.",
+  "fix": "Save row and file under the Edition lock, or skip keys of live rows in the sweep.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R31",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/account/authenticator.ts:185-207",
+   "apps/backend/src/schema.ts:94"
+  ],
+  "problem": "`signInWith` is check-then-create without a transaction: two first sign-ins with one email hit the `accounts.email` unique index → 500; no unique (provider, account id) index.",
+  "fix": "One transaction with `on conflict`; add the unique index.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R32",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/server-core/src/analytics/source-cache.ts:33-37"
+  ],
+  "problem": "The stale check sits after `await found`, so concurrent reads of a stale key each fetch.",
+  "fix": "Decide fresh/stale on the kept `fetchedAt` synchronously and set the new promise before any await.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R33",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/recordings/generator.ts:55-58"
+  ],
+  "problem": "`execFile` has no timeout; a hung generator outlives the lease.",
+  "fix": "Pass `timeout` below `RECORDING_LEASE_MS`.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R34",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/content/content-queue.ts:371-389"
+  ],
+  "problem": "`resolveFlag` reads all flags of every Edition and writes outside a transaction with no lock.",
+  "fix": "Filter by id in SQL inside a transaction with a row/advisory lock.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R35",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/server-core/src/admin/monitor.ts:145"
+  ],
+  "problem": "Activity average divides by 7 whatever `before.length` is.",
+  "fix": "Divide by the number of days in range that exist for the Edition.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R36",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/content-rules/src/entries.ts:88",
+   "packages/content-rules/src/check.ts:86-87"
+  ],
+  "problem": "The mixed-script check covers only Words, Corrections and Idioms; Tips (incl. `exceptions`) and Synonym Rows are never checked, so a Latin «i» ships.",
+  "fix": "Run the mixed-script rule over all five Entry kinds.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R37",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/content-rules/src/quote-check.ts:105",
+   "apps/backend/src/content/quote-check.ts:207"
+  ],
+  "problem": "`String.fromCodePoint` throws RangeError on `&#x110000;`; the backend loop has no catch, so one bad page stops the whole check.",
+  "fix": "Skip code points over 0x10FFFF (keep the entity text).",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R38",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/contracts/src/api/content.ts:22-30,46,63",
+   "packages/contracts/src/api/admin.ts:118-157"
+  ],
+  "problem": "Outputs use strict schemas against ADR 0031: Patch/Snapshot embed `z.strictObject` record schemas (a validating client refuses a Patch once a record gains a field); admin analytics/counters outputs call `.strict()`.",
+  "fix": "Use non-strict output variants of the record schemas; drop `.strict()` on outputs.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R39",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/contracts/src/api/breaking-changes.ts:118-156"
+  ],
+  "problem": "A new property under `additionalProperties: false` is never reported (only promised properties are walked).",
+  "fix": "Report added properties of a strict output object.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R40",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/language-pack/src/edition-folder.ts:331"
+  ],
+  "problem": "`checkNewSynonymRows` replaces `synonymRows` with the drafts instead of appending; other kinds append.",
+  "fix": "`[...set.synonymRows, ...authored(rows)]`.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R41",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/language-pack/src/pack-reader.ts:504,551"
+  ],
+  "problem": "One malformed row makes `Schema.parse` throw for the whole `getEntries` batch of all kinds.",
+  "fix": "Document fail-fast in the port, or `safeParse` per record.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R42",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/admin/src/components/content-editor/record-form.tsx:139"
+  ],
+  "problem": "The STALE branch re-reads the record inside `catch`; if that read fails, the rejection is swallowed by `void write()`.",
+  "fix": "try/catch the re-read and fall back to `setErrors([refusalText(e)])`.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R43",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/admin/src/switches/switches-data.ts:26",
+   "apps/admin/src/components/content-queue/content-queue.tsx:62-64",
+   "apps/admin/src/routes/security.tsx:138,253"
+  ],
+  "problem": "Load errors are never shown: failed queries render as empty lists, or the matrix stays not ready.",
+  "fix": "Expose `isError` and render a «Не вдалося» notice like quality.tsx.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R44",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "scripts/smoke-halves.mjs:120"
+  ],
+  "problem": "`spawn('maestro')` has no `error` listener: ENOENT throws, `finally` is skipped, `/tmp/slovo-maestro.lock` stays, every later Maestro run waits forever.",
+  "fix": "`child.on('error', ...)` resolving with code -1.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R45",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "scripts/content-wave/fetch-osvita.mjs:37",
+   "scripts/content-wave/fetch-article.mjs:18"
+  ],
+  "problem": "`curl -sSL` without `--fail`: a 404/5xx page is parsed as content and the script exits 0.",
+  "fix": "Use `-fsSL`.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R46",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/video/src/stopframe/StopFrame.tsx:247-250"
+  ],
+  "problem": "`Math.max(0, findIndex(...final))` silently stops on card 0 when `final` is missing.",
+  "fix": "Throw on -1, like FindMistake.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R47",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/video/src/stopframe/StopFrame.tsx:138-139,201,246"
+  ],
+  "problem": "`beatsFor(8)` / `stopFrameLength` are fixed at 8 cards while `changesFor(cards.length)` uses the real count. Latent: both episodes have 8 cards today.",
+  "fix": "Throw when `cards.length !== 8`, or compute beats per episode.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R48",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/primitives/WholeLines.tsx:110"
+  ],
+  "problem": "The `measureLayout` callback can re-report lines after cleanup removed its id, so stale lines from a bigger size step stay in `byId`. Only if the callback is async (Fabric calls it sync).",
+  "fix": "Guard with a cancelled flag in the effect.",
+  "verified": false,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R49",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/entries/EntryDetails.tsx:136"
+  ],
+  "problem": "With tabs the details are a fixed View (deliberate, ADR 0091/0113); at XL font the tab bar and «Детальніше» may be pushed off-screen. Needs a device check.",
+  "fix": "Let the head scroll, or cap it.",
+  "verified": false,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R50",
+  "sev": "med",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/app/index.tsx:79"
+  ],
+  "problem": "The Dashboard date is read with `todayDate(deviceClock)` at render; after midnight the header may show yesterday (a day-turn re-render probably hides it).",
+  "fix": "Take `today` from a subscribed source, as `useFeed` does.",
+  "verified": false,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R51",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "packages/core/src/game/crossing-crossword-progress.ts:153"
+  ],
+  "problem": "`analytics.track` is awaited inside `inTurn` on the final solve, so later `play`/`keep` wait on a network round trip; game.ts uses `void`.",
+  "fix": "`void analytics.track(...)` outside the turn.",
+  "verified": true,
+  "part": [
+   1
+  ]
+ },
+ {
+  "id": "R52",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "packages/core/src/feed/feed.ts:732-746"
+  ],
+  "problem": "`refreshLinks` re-reads and rebuilds every Word card of the session on each eligibility change (early exit removed on purpose in #1749).",
+  "fix": "Rebuild only cards whose linked ids changed eligibility.",
+  "verified": true,
+  "part": [
+   1
+  ]
+ },
+ {
+  "id": "R53",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "packages/core/src/sync/exchange.ts:226"
+  ],
+  "problem": "`apply()` awaits `mineOf(key)` (two userState reads) per pulled record, sequentially, inside merge's turn lock.",
+  "fix": "Read the page's keys in parallel (reading only page keys is deliberate, so do not list all user state).",
+  "verified": true,
+  "part": [
+   2
+  ]
+ },
+ {
+  "id": "R54",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "packages/core/src/progress/xp-log.ts:524-528"
+  ],
+  "problem": "Every append calls `change()`, rerunning `derive()` over the whole log.",
+  "fix": "Update derived state incrementally from the appended record.",
+  "verified": true,
+  "part": [
+   2
+  ]
+ },
+ {
+  "id": "R55",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "packages/core/src/progress/xp-log.ts:381-397",
+   "packages/core/src/notifications/notification-plan.ts:412"
+  ],
+  "problem": "`dayOf(date)` filters and sorts all records; the planner calls it per evening slot.",
+  "fix": "Index records by date once in `derive()`; make `dayOf` a lookup.",
+  "verified": true,
+  "part": [
+   2
+  ]
+ },
+ {
+  "id": "R56",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "packages/ui/src/primitives/BottomSheet.tsx:201,222"
+  ],
+  "problem": "Inline pan/tap gesture configs are not memoised, so the worklets are re-sent on every owner render (each keystroke); docs/react-native.md:30.",
+  "fix": "`useMemo` the configs.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R57",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "packages/ui/src/dashboard/RailScreenCard.tsx:43"
+  ],
+  "problem": "Unbounded stagger (index × 70 ms): card 30 waits about 2.1 s.",
+  "fix": "`Math.min(index, max) * stagger`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R58",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "packages/ui/src/onboarding/SplashOverlay.tsx:162,211-213,324,354-355,415"
+  ],
+  "problem": "`curve()` builds a bezier function on every render inside worklets.",
+  "fix": "Build the easings once as module constants (with R72).",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R59",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "apps/mobile/src/content-update/language-pack.tsx:63-74"
+  ],
+  "problem": "Every launch copies the whole bundled SQLite pack (`forceOverwrite`) just to read its version; `replaceWithBundled` copies again.",
+  "fix": "Ship the bundled content version as config.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R60",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "apps/backend/src/content/content-writes.ts:618,637-675"
+  ],
+  "problem": "Read-only `list`/`record` take the Edition advisory lock + FOR UPDATE and read all 7 record tables for one kind.",
+  "fix": "Read the one table without locks, as `report()` does.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R61",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "packages/server-core/src/edition/edition-registry.ts:203,249"
+  ],
+  "problem": "`serving()` runs per request but calls `switches()`, which also reads minimums and computes `off`.",
+  "fix": "Read only `switchStore.rules`.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R62",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "packages/server-core/src/sync/sync.ts:90-94",
+   "packages/server-core/src/counters/community-counters.ts:143-146"
+  ],
+  "problem": "Feature Switch checked twice where `DEPENDS_ON` already covers it (`account` then `sync`; `communityCounters` then `communityWord`): double DB reads.",
+  "fix": "Check only the dependent switch (`sync`, `communityWord`).",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R63",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "apps/backend/src/content/quote-check.ts:74-122,145"
+  ],
+  "problem": "`quoteCheckCounts` reads the full `fields` of five tables only to count.",
+  "fix": "Select ids, versions and `fields->sources->0->url` only (the url is needed).",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R64",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "packages/language-pack/src/crossword.ts:111-141"
+  ],
+  "problem": "`dayAfterDays` rebuilds `crosswordSupply` and filters all earlier days per day: O(D²) over about 400 days.",
+  "fix": "Build the supply once; use a sliding window.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R65",
+  "sev": "med",
+  "kind": "perf",
+  "where": [
+   "tools/sourcing/src/synonyms.ts:110,165"
+  ],
+  "problem": "`lemmaIds()` re-reads and re-parses every Entry of the Edition per Synonym Row draft.",
+  "fix": "Build the map once in `synonymsKind.start`.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R66",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "apps/mobile/src/app/curated-collection/[collectionId].tsx:37-64,88-100",
+   "apps/mobile/src/app/correction-type/[type].tsx:69-88",
+   "packages/ui/src/dashboard/RailBoard.tsx:53-83"
+  ],
+  "problem": "Two routes re-implement RailBoard (FlatList + RailScreenCard + hero); `done` recomputes `knownShare`.",
+  "fix": "Shared code lives in packages/ui: render `RailBoard` with `knownShare`/`shapeAt`, as category-board does.",
+  "verified": true,
+  "part": [
+   4,
+   5
+  ]
+ },
+ {
+  "id": "R67",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/game/GameResult.tsx:216-322",
+   "packages/ui/src/game/GameEndPoster.tsx:77-199",
+   "packages/ui/src/game/CrosswordSolvedPoster.tsx:61-163"
+  ],
+  "problem": "Same panel, title block, two-button row and StyleSheet three times.",
+  "fix": "One `ResultPanel` + `ResultButtons` beside PanelGround in GameResult.tsx.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R68",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/entries/WordCard.tsx:513",
+   "packages/ui/src/entries/IdiomCard.tsx:138,208",
+   "packages/ui/src/entries/WordTabs.tsx:159"
+  ],
+  "problem": "Numbered Definitions copied 4×; the copies already disagree (R10).",
+  "fix": "`NumberedDefinitions({definitions, from})` in entries/.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R69",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/entries/IdiomCard.tsx:267",
+   "packages/ui/src/entries/CorrectionCard.tsx:274",
+   "packages/ui/src/entries/SynonymRowCard.tsx:222",
+   "packages/ui/src/entries/TipCard.tsx:213"
+  ],
+  "problem": "Source line and its own `SOURCE_SEPARATOR` copied 4×.",
+  "fix": "`SourceLine` in entries/.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R70",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/game/PairsGrid.tsx:23,165-180",
+   "packages/ui/src/game/VowelButtons.tsx:24,143-158"
+  ],
+  "problem": "Same answer pop/drop motion; `CELL_POP` equals `VOWEL_POP`.",
+  "fix": "`useAnswerMotion` in game/round-motion.ts.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R71",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/game/GameRound.tsx:770-825",
+   "packages/ui/src/game/AnswerCard.tsx:31-73"
+  ],
+  "problem": "Verdict header, «Далі» button and styles copied.",
+  "fix": "Share `VerdictHeader` + `NextButton` from AnswerCard.tsx.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R72",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/primitives/BottomSheet.tsx:58",
+   "packages/ui/src/primitives/UndoToast.tsx:56,62",
+   "packages/ui/src/primitives/Mascot.tsx:359",
+   "packages/ui/src/onboarding/SplashOverlay.tsx:62"
+  ],
+  "problem": "Token curve → `Easing.bezier` and the reduce-motion fade config written 4×.",
+  "fix": "One helper and constant next to tokens/motion in packages/ui.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R73",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/saved/CollectionSheet.tsx:88",
+   "packages/ui/src/saved/CollectionNameField.tsx:41"
+  ],
+  "problem": "Submit logic (ref guard, try/catch/finally) copied from CollectionNameField.",
+  "fix": "Hook `useNameSubmit`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R74",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/dashboard/HeroReveal.tsx:40",
+   "packages/ui/src/dashboard/DashboardHero.tsx:271"
+  ],
+  "problem": "Same room/natural scale fit twice.",
+  "fix": "Hook `useFitToRoom` (fix R19 inside it).",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R75",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/dashboard/QuietScreenHero.tsx:37",
+   "packages/ui/src/dashboard/RailScreenHero.tsx:78"
+  ],
+  "problem": "Back button, safe-area shift and height state copied.",
+  "fix": "Primitive `HeroBack`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R76",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/progress/StreakFreezeCard.tsx:60",
+   "packages/ui/src/progress/ActiveDaysCalendar.tsx:70,130"
+  ],
+  "problem": "Day label (weekday + month) built 3×.",
+  "fix": "`dayLabel(strings, day)`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R77",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "apps/mobile/src/game/daily-crossword.ts:163",
+   "apps/mobile/src/categories/category-screen.ts:65",
+   "apps/mobile/src/dashboard/correction-type.ts:33",
+   "apps/mobile/src/dashboard/curated-collection.ts:32",
+   "apps/mobile/src/search/search.ts:90"
+  ],
+  "problem": "Hand-rolled `{in: composition}` + `active` read in 5 hooks.",
+  "fix": "Use `useCompositionRead` (composition.ts:90).",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R78",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "apps/mobile/src/entries/pronunciation-button.tsx:76-89,126-139"
+  ],
+  "problem": "`PlayingLemma` and `useSampleReading` carry the same two effects.",
+  "fix": "One `useStopsWhenGone(id, sounds)` hook.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R79",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "apps/admin/src/session.ts:71",
+   "apps/admin/src/switches/switch-state.ts:96",
+   "apps/admin/src/routes/security.tsx:34",
+   "tools/content/src/api.ts:48"
+  ],
+  "problem": "Four hand-rolled walkers of oRPC `error.data` (tools/content with an `as ORPCError` cast) while `SwitchRefusalSchema` exists in contracts (admin.ts:184).",
+  "fix": "Export refusal schemas from `@slovo/contracts/admin-api` and `safeParse` them in admin and tools/content.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R80",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "apps/admin/src/routes/security.tsx:69-73,126",
+   "apps/admin/src/components/confirm-dialog.tsx:7",
+   "apps/admin/src/components/content-queue/queries.ts:38"
+  ],
+  "problem": "`SecurityWrite`/`useSecurityWrite` duplicate `PendingWrite`/`useQueueWrite` (and have the right Promise shape).",
+  "fix": "One `PendingWrite` + `useAdminWrite` in components/ (fixes R2 shape).",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R81",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "tools/sourcing/src/goroh.ts:323,361"
+  ],
+  "problem": "`parseSynonymGroups` and `readSynonymArticles` parse the same «Синонімія» blocks twice.",
+  "fix": "Keep `readSynonymArticles`; filter by dictionary in source-words.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R82",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "tools/sourcing/src/source-words.ts:622",
+   "tools/sourcing/src/corrections.ts:181",
+   "tools/sourcing/src/idioms.ts:167",
+   "tools/sourcing/src/synonyms.ts:205"
+  ],
+  "problem": "Four copies of safeParse + `checkNewX` + format + dedupe.",
+  "fix": "Generic `draftIssues(schema, check, label)` in pipeline.ts.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R83",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "apps/video/src/(13 compositions)"
+  ],
+  "problem": "`clamp` and `pop` easing defined in each of 13 files.",
+  "fix": "`src/shared/motion.ts`.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R84",
+  "sev": "med",
+  "kind": "duplicate",
+  "where": [
+   "apps/video/src/FindMistake, SayNicer, OneWord, StopFrame, Missing, Stress, Comeback"
+  ],
+  "problem": "Shout `Rings` (4 functions), `Shouter` (6) and Rupor aim maths (4-5) copied across compositions.",
+  "fix": "`src/shared/Rings.tsx`, `Shouter.tsx`, `rupor.ts`.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R85",
+  "sev": "med",
+  "kind": "complexity",
+  "where": [
+   "apps/mobile/src/game/crossing-crossword.ts:36,233"
+  ],
+  "problem": "Grid model (`sizeOf`, `isBlock`, `answerAt`) is Core logic living in the app; `crossingCells` is O(cells×words×letters) on each render.",
+  "fix": "Move it to packages/core and index cells once in a Map.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R86",
+  "sev": "med",
+  "kind": "dead",
+  "where": [
+   "apps/mobile/src/game/progress-share-offers.tsx",
+   "apps/mobile/src/app/game/index.tsx:27,177"
+  ],
+  "problem": "Module has no importer; only commented-out uses remain.",
+  "fix": "Delete the module and the commented lines.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R87",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/core/src/game/crossing-crossword-progress.ts:134"
+  ],
+  "problem": "`tick` stores any number in `seconds` though the schema is `int().nonnegative()`; a bad tick makes the record fail to parse. Latent: the only caller floors and skips ≤ 0.",
+  "fix": "Clamp and round at `tick`: `Math.max(0, Math.round(delta))`.",
+  "verified": true,
+  "part": [
+   1
+  ]
+ },
+ {
+  "id": "R88",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/core/src/game/by-letters-mode.ts:27-31"
+  ],
+  "problem": "`tilesOf` never checks the alphabet has enough decoys; a short alphabet or long Word breaks the 4-column row or leaves no decoys.",
+  "fix": "Leave out such Words or cap tiles at a multiple of 4.",
+  "verified": true,
+  "part": [
+   1
+  ]
+ },
+ {
+  "id": "R89",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/game/RoundCard.tsx:96"
+  ],
+  "problem": "The stop before the Definition depends on whether `read` ends in punctuation, not the `instead` text, so the two run together.",
+  "fix": "Join label parts with a per-part stop.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R90",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/game/GameResult.tsx:223",
+   "packages/ui/src/game/GameEndPoster.tsx:51",
+   "packages/ui/src/game/CrosswordSolvedPoster.tsx:47"
+  ],
+  "problem": "`accessibilityRole=\"header\"` inside an `accessible` View is merged away.",
+  "fix": "Put the role on the accessible View.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R91",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/game/GameModeCard.tsx:65,110"
+  ],
+  "problem": "The label reads `line` and `refusal`, but only `refusal ?? line` is shown.",
+  "fix": "`sentences([title, refusal ?? line, best])`.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R92",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/game/CrosswordSolvedPoster.tsx:147"
+  ],
+  "problem": "Fixed `height` panel; the other posters use `minHeight`.",
+  "fix": "`minHeight`.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R93",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/primitives/VerticalPager.tsx:246,257,357,370"
+  ],
+  "problem": "Empty `items` clamps to -1, so `onIndexChange(-1)`.",
+  "fix": "Return early when length is 0.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R94",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/primitives/WholeLines.tsx:110"
+  ],
+  "problem": "Text that becomes empty keeps its old lines.",
+  "fix": "`report(id)` when lines are empty.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R95",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/primitives/UndoToast.tsx:182"
+  ],
+  "problem": "`isScreenReaderEnabled()` has no `.catch`; a rejection leaves the toast stuck.",
+  "fix": "`.catch(() => false)`.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R96",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/game/TracedCrosswordGrid.tsx:299,334"
+  ],
+  "problem": "Answer tile has no font cap; MissFade ignores Reduce Motion.",
+  "fix": "Add `fontScaleCap.number`; read `useReduceMotion`.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R97",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/primitives/BottomSheet.tsx:195-203"
+  ],
+  "problem": "A close-by-drag the owner refuses leaves the sheet shifted down.",
+  "fix": "Spring `drag` back while still visible.",
+  "verified": false,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R98",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/saved/CollectionNameField.tsx:50"
+  ],
+  "problem": "A save failure goes only to `console.error`.",
+  "fix": "Show and announce the refusal.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R99",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/share/ShareSheet.tsx:111"
+  ],
+  "problem": "A rejected `onShare` blocks the button forever.",
+  "fix": "`try/finally`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R100",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/settings/SettingsRows.tsx:49"
+  ],
+  "problem": "`key={index}` remounts rows.",
+  "fix": "Use `row.key`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R101",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/progress/BadgeGrid.tsx:28"
+  ],
+  "problem": "An unearned Badge with `current >= target` is drawn as `locked`.",
+  "fix": "Condition on `current > 0`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R102",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/progress/LevelCard.tsx:63"
+  ],
+  "problem": "`share` can go negative.",
+  "fix": "`Math.max(0, ...)`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R103",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/dashboard/RailScreenHero.tsx:214"
+  ],
+  "problem": "A toggle announces `selected`.",
+  "fix": "`togglebutton` + `checked`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R104",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/categories/CategoriesRail.tsx:36"
+  ],
+  "problem": "The tile's `accessibilityLabel` is lost.",
+  "fix": "`accessibilityLabel ?? name`.",
+  "verified": false,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R105",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/progress/BreakCard.tsx:38"
+  ],
+  "problem": "Empty week and a duplicate `'empty'` key.",
+  "fix": "Split into weeks, drop empty ones.",
+  "verified": false,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R106",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/feed/FeedNoticeCard.tsx:170"
+  ],
+  "problem": "Outside VerticalPager the action button does nothing.",
+  "fix": "Hide the action without the hook.",
+  "verified": false,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R107",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/ui/src/mistake-reports/MistakeReportSheet.tsx:135"
+  ],
+  "problem": "Counter «12/500» has no words for VoiceOver; `slice` duplicates `maxLength`.",
+  "fix": "Label from the Edition; keep only `maxLength`.",
+  "verified": false,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R108",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/account/session-store.ts:29"
+  ],
+  "problem": "`parsed as Partial<...>` cast and hand-written JSON parse at the storage edge.",
+  "fix": "zod schema, like widget-snapshot.ts:87.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R109",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/settings/settings.tsx:101-106"
+  ],
+  "problem": "`update` merges onto render-time `current`: two updates in one event lose the first.",
+  "fix": "Functional `setChanged(prev => ...)`.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R110",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/widget/widget-snapshot.ts:111-112",
+   "packages/core/src/ports.ts:288"
+  ],
+  "problem": "The \"unforgeable\" link key is drawn from `Math.random`.",
+  "fix": "Inject a CSPRNG (expo-crypto).",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R111",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/app/saved/collections/[collectionId]/index.tsx:92"
+  ],
+  "problem": "`canDismiss()` guards `back()`: check and action differ.",
+  "fix": "Pair `canGoBack()` with `back()`.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R112",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/mobile/src/app/c/[linkId].tsx:39"
+  ],
+  "problem": "`useLocalSearchParams<{x: string}>` unchecked in 7 routes (only correction-type parses).",
+  "fix": "Parse params once at the route edge.",
+  "verified": false,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R113",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/server-core/src/admin/admin-sign-in.ts:305-309"
+  ],
+  "problem": "TOTP accepts ±1 step and never stores the used step: a code is replayable for about 90 s (second factor only).",
+  "fix": "Keep the last accepted step per Admin; refuse ≤ it.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R114",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/server-core/src/admin/admin-access.ts:239-240"
+  ],
+  "problem": "`invite` sends the email before `addAdminUser`; concurrent invites send two mails, one with the wrong role.",
+  "fix": "Add the user first, announce after.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R115",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/app.ts:367-370"
+  ],
+  "problem": "Non-HTML `/:edition/c/:id` answers a link of any Edition; the HTML branch refuses it.",
+  "fix": "Check `link.edition` against the path in both.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R116",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/alerts/owner-chat.ts:79"
+  ],
+  "problem": "Without a bot, `logger.warn({message})` logs the whole Kill switch alert (which may hold the Admin's email).",
+  "fix": "Log the alert kind only.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R117",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/recordings/recordings.ts:192-205"
+  ],
+  "problem": "When a later slot fails, earlier slots stay in the store unsaved; skipped stale Words count as recorded.",
+  "fix": "Save per slot, or delete puts of failed Words.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R118",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/media/media-import.ts:127-133"
+  ],
+  "problem": "Imports files of retired Words too.",
+  "fix": "Filter `retired = false`.",
+  "verified": false,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R119",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/content/illustrations.ts:71-82"
+  ],
+  "problem": "The retired check is outside the Edition lock.",
+  "fix": "Re-check in the `saveMedia` transaction.",
+  "verified": false,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R120",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/backend/src/quality/sentry-api.ts:170-181"
+  ],
+  "problem": "`newIssues` caps silently at 100 (one page).",
+  "fix": "Follow the cursor, or show \"100+\".",
+  "verified": false,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R121",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/contracts/src/correction.ts:53-67"
+  ],
+  "problem": "`parseStandardExample` accepts bold marks with edge spaces and adjacent marks with empty text between.",
+  "fix": "Refuse marks with edge whitespace and empty text between marks.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R122",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/content-rules/src/entries.ts:17-18,115"
+  ],
+  "problem": "`unique-lemma` is case-sensitive while `unique-expression` lowercases.",
+  "fix": "Compare Lemmas in the Edition locale's lower case.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R123",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/content-rules/src/crossword-days.ts:77-86"
+  ],
+  "problem": "A day with a date gap returns early, so its repeated words show only after the gap is fixed.",
+  "fix": "Collect the gap error and fall through.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R124",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/contracts/src/api/admin.ts:115"
+  ],
+  "problem": "`DaySchema` regex accepts 2026-13-45.",
+  "fix": "`z.iso.date()`.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R125",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/contracts/src/api/admin.ts:599-857"
+  ],
+  "problem": "Admin queue/sign-in inputs under /v1 use `z.object`; ADR 0031 says inputs are strict, so typos drop silently.",
+  "fix": "`z.strictObject`.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R126",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/language-pack/src/edition-folder.ts:345",
+   "packages/language-pack/src/crossword.ts:50"
+  ],
+  "problem": "`new Date()` instead of injected time.",
+  "fix": "Take `today` from the caller.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R127",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/language-pack/src/apply-patch.ts:97"
+  ],
+  "problem": "A Patch raises `content_version` but keeps the old metadata `checksum`.",
+  "fix": "Update or drop the checksum on Patch.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R128",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/language-pack/src/edition-folder.ts:398"
+  ],
+  "problem": "`entryFile` maps any unknown id prefix to `content/corrections`.",
+  "fix": "Return undefined for unknown prefixes.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R129",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "packages/content-rules/src/tips.ts:11-38"
+  ],
+  "problem": "No rule against repeated `exceptions.words` or a word equal to `standardForm`.",
+  "fix": "New rule (owner decision).",
+  "verified": false,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R130",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "tools/sourcing/src/pipeline.ts:230"
+  ],
+  "problem": "A third duplicate is reported against the 2nd line, not the first.",
+  "fix": "`set` only when `firstLine === undefined`.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R131",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/admin/src/theme.ts:8,27"
+  ],
+  "problem": "Unguarded `localStorage` crashes the root layout when storage is blocked.",
+  "fix": "try/catch; fall back to the system theme.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R132",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "scripts/ci-history.mjs:143",
+   "scripts/ci-affected-parts.mjs:110"
+  ],
+  "problem": "Main guard `import.meta.url === file://argv[1]` fails on spaces/symlinks: silent exit 0, every part skipped.",
+  "fix": "`pathToFileURL(realpath(argv[1])).href`.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R133",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "apps/video/src/oneword/OneWord.tsx:86,261"
+  ],
+  "problem": "Shake cuts at 21% amplitude (`<12` vs `/14`); `solved=165` may be too early for 8+ letter words (unchecked).",
+  "fix": "Use one window; derive `solved` from the letter count.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R134",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "tools/sourcing/src/corrections.ts:276-279"
+  ],
+  "problem": "`withStandardFormMarked` bolds punctuation, marks a word when sentences match, and spans unchanged words (ADR 0117).",
+  "fix": "Compare unstressed words, mark parts, add tests.",
+  "verified": false,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R135",
+  "sev": "low",
+  "kind": "bug",
+  "where": [
+   "tools/content/src/writes.ts:85,114"
+  ],
+  "problem": "`add` with no records opens a batch and exits 0; `edit` ignores a non-numeric `recordVersion`.",
+  "fix": "Refuse both with exit 1.",
+  "verified": false,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R136",
+  "sev": "low",
+  "kind": "compat",
+  "where": [
+   "packages/contracts/src/api/content.ts:19"
+  ],
+  "problem": "PATCH_FORMAT stays 2 though Patches now carry `**` marks and Tip `exceptions`; old builds show raw `**`.",
+  "fix": "Owner decides on a bump.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R137",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "packages/ui/src/primitives/WholeLines.tsx:54"
+  ],
+  "problem": "`Object.values(byId).flat()` plus a FitPanel re-render per reported text (O(n²) per size step).",
+  "fix": "Memoise on `byId` and batch the reports.",
+  "verified": false,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R138",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "packages/ui/src/primitives/Mascot.tsx:280,407"
+  ],
+  "problem": "`bezierFn` and 5 arrays rebuilt every frame of endless loops.",
+  "fix": "Precompute outside the worklet.",
+  "verified": true,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R139",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "packages/ui/src/providers/EditionProvider.tsx:59"
+  ],
+  "problem": "memo keyed on the Edition object, not on `locale`.",
+  "fix": "Depend on `edition.locale`.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R140",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "packages/ui/src/categories/CategoryGrid.tsx:79"
+  ],
+  "problem": "`initialNumToRender` equals all tiles.",
+  "fix": "One screen's worth.",
+  "verified": true,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R141",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "apps/mobile/src/shell/decor-in-effect.tsx:27-28"
+  ],
+  "problem": "Inline `subscribe` to `useSyncExternalStore` resubscribes and re-arms the timer each render.",
+  "fix": "Stable `subscribe` via `useCallback([clock])`.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R142",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "apps/mobile/src/shown-in-effect.ts:10"
+  ],
+  "problem": "`useShown()` (32 callers) evaluates all switch checks and returns a new object per render.",
+  "fix": "`useMemo` on its inputs.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R143",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "apps/mobile/src/categories/category-screen.ts:93",
+   "apps/mobile/src/saved/collection-board.tsx:79"
+  ],
+  "problem": "`cards` map and filters rebuilt each render, new list `data`.",
+  "fix": "`useMemo`; shared `useKnownCards(rows)`.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R144",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "packages/content-rules/src/crossword-days.ts:88"
+  ],
+  "problem": "`days.slice(0, i).filter` per day: O(n²) on every build and checkRecord.",
+  "fix": "Look back only over the repeat window.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R145",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "packages/content-rules/src/check.ts:86-87"
+  ],
+  "problem": "Tip/Synonym Row checks take no `checksFile`, so checkRecord runs them over the whole set per save.",
+  "fix": "Pass `checksFile` like the other kinds.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R146",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "packages/language-pack/src/pack-layout.ts:183-190"
+  ],
+  "problem": "No index on `synonym_row_members.word_id`: full scan on every Word card.",
+  "fix": "Add the index.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R147",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "packages/language-pack/src/build.ts:122,145",
+   "packages/language-pack/src/read-edition.ts:144"
+  ],
+  "problem": "`edition.json` read and parsed up to three times per build.",
+  "fix": "Parse once and pass `config` down.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R148",
+  "sev": "low",
+  "kind": "perf",
+  "where": [
+   "packages/language-pack/src/edition-folder.ts:397"
+  ],
+  "problem": "`entryTexts` re-reads every Entry file per call.",
+  "fix": "Share one lazy `entries()` cache.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R149",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/core/src/test-support.ts:215-224",
+   "apps/mobile/src/test-support.ts:27-36"
+  ],
+  "problem": "`fakeClock` copied into mobile test-support (without `set`).",
+  "fix": "Keep it in Core test-support; mobile imports it from `@slovo/core`.",
+  "verified": true,
+  "part": [
+   2,
+   5
+  ]
+ },
+ {
+  "id": "R150",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "apps/mobile/jest.resolver.cjs:1-28",
+   "packages/ui/jest.resolver.cjs:1-28"
+  ],
+  "problem": "Identical Jest resolvers.",
+  "fix": "One shared file in `tools/`.",
+  "verified": false,
+  "part": [
+   4,
+   5
+  ]
+ },
+ {
+  "id": "R151",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/primitives/FlyingText.tsx:50-58",
+   "packages/ui/src/dashboard/HeroReveal.tsx:114-122"
+  ],
+  "problem": "Same fly-in transform worklet.",
+  "fix": "Export a `flyInStyle` worklet from FlyingText.tsx in packages/ui.",
+  "verified": false,
+  "part": [
+   3,
+   4
+  ]
+ },
+ {
+  "id": "R152",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/core/src/game/traced-crossword.ts:88-100",
+   "packages/core/src/game/crossing-crossword-progress.ts:77-89"
+  ],
+  "problem": "Both `open*Crossword` repeat the ports parameter block and the inline no-XP default.",
+  "fix": "`CrosswordPorts` type + `noXp` constant in `game/crossword-ports.ts`.",
+  "verified": true,
+  "part": [
+   1
+  ]
+ },
+ {
+  "id": "R153",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/core/src/edition/switch-evaluator.ts:141",
+   "packages/core/src/mix.ts"
+  ],
+  "problem": "Cast-based `Object.fromEntries(...) as Record<...>` record builder, copied in mix.ts.",
+  "fix": "One typed `recordOf(keys, fn)` helper in Core.",
+  "verified": true,
+  "part": [
+   2
+  ]
+ },
+ {
+  "id": "R154",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/core/src/progress/xp-log.ts:602-634"
+  ],
+  "problem": "`freeze()` and `earn()` share the same 15-line append body.",
+  "fix": "`appendAll(added)` in xp-log.ts.",
+  "verified": true,
+  "part": [
+   2
+  ]
+ },
+ {
+  "id": "R155",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/core/src/fakes/fake-apple-sign-in-sheet.ts:59-82",
+   "packages/core/src/fakes/fake-google-sign-in-sheet.ts:68-91"
+  ],
+  "problem": "Same signsIn/cancels/fails/holds/signIn body in both fakes.",
+  "fix": "Shared `fakeSignInSheet(tokenPrefix)` in src/fakes.",
+  "verified": true,
+  "part": [
+   2
+  ]
+ },
+ {
+  "id": "R156",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/game/LetterWheel.tsx:99-150",
+   "packages/ui/src/game/TracedCrosswordGrid.tsx:105-167"
+  ],
+  "problem": "Same trace-drag shell; only `hit` differs.",
+  "fix": "`game/useTraceDrag.ts`.",
+  "verified": false,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R157",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/feed/FeedStates.tsx:95"
+  ],
+  "problem": "Hand-made button instead of `Button`.",
+  "fix": "`<Button>`.",
+  "verified": false,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R158",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/ui/src/progress/StampHalftone.tsx:7",
+   "packages/ui/src/HalftoneGround.tsx:28"
+  ],
+  "problem": "Same halftone pattern twice.",
+  "fix": "Shared `HalftoneDots`.",
+  "verified": false,
+  "part": [
+   4
+  ]
+ },
+ {
+  "id": "R159",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "apps/mobile/src/shell/lifecycle.tsx:76,119",
+   "apps/mobile/src/sync/background-sync.ts:63"
+  ],
+  "problem": "`reopenForSwitches` exists (:76) but :119 and background-sync repeat its reopen + Widget Snapshot body.",
+  "fix": "Call `reopenForSwitches` from both.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R160",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "apps/mobile/src/foreground/foreground-reports.ts:54",
+   "apps/mobile/src/shell/decor-in-effect.tsx:34"
+  ],
+  "problem": "Next-local-day timer written twice.",
+  "fix": "One `everyNextLocalDay(clock, cb)`.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R161",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "apps/mobile/src/categories/categories.ts:15,29",
+   "apps/mobile/src/app/correction-category/[categoryId].tsx:11"
+  ],
+  "problem": "`useCategories`/`useCorrectionCategories` differ only by kind; the two category routes too.",
+  "fix": "`useBlockCategories(kind)`, one `CategoryRoute({of})`.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R162",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "apps/backend/src/recordings/recordings.ts:249-293",
+   "apps/backend/src/content/media-rows.ts:146-213",
+   "apps/backend/src/content/quote-check.ts:71-121"
+  ],
+  "problem": "Per-table copies: sweep loops, `saveRecordingRow`/`saveIllustrationRow`, five select blocks.",
+  "fix": "One helper over a table list.",
+  "verified": true,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R163",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/language-pack/src/read-edition.ts:251",
+   "packages/content-rules/src/check.ts:50"
+  ],
+  "problem": "`snapshotEntries` re-implements `contentSetOf`.",
+  "fix": "Export `contentSetOf` (with a file-label parameter) from content-rules.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R164",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/contracts/src/edition.ts:90,755,1009,1016"
+  ],
+  "problem": "`hasNoRepeats` re-implemented 4×; the \"Duplicate id\" addIssue loop written 5×.",
+  "fix": "Use `hasNoRepeats`; one `reportRepeats` helper.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R165",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/contracts/src/api/admin.ts:391,431,450,468"
+  ],
+  "problem": "Content-write reasons repeat `ReasonSchema` without its max(500).",
+  "fix": "Use `ReasonSchema`.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R166",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "packages/content-rules/src/quote-check.ts:9",
+   "packages/content-rules/src/parse-record.ts:37-44",
+   "packages/content-rules/src/crossword-days.ts:52-71,144-155"
+  ],
+  "problem": "Local `STRESS_MARK` and `ID_PREFIX` restate contracts; \"No Word or Correction\" check written twice.",
+  "fix": "Import from `@slovo/contracts`; one helper.",
+  "verified": true,
+  "part": [
+   7
+  ]
+ },
+ {
+  "id": "R167",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "apps/admin/src/components/filters-bar.tsx:20",
+   "apps/admin/src/routes/content.index.tsx:15",
+   "apps/admin/src/switches/switches-data.ts:26",
+   "apps/admin/src/routes/overview.tsx:116"
+  ],
+  "problem": "`['editions']` query written 5×; analytics/quality queries copied.",
+  "fix": "One `src/queries.ts` with `queryOptions`.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R168",
+  "sev": "low",
+  "kind": "duplicate",
+  "where": [
+   "apps/admin/src/components/content-queue/content-queue.tsx:23",
+   "apps/admin/src/routes/security.tsx:28",
+   "apps/admin/src/routes/sessions.tsx:12",
+   "apps/admin/src/routes/quality.tsx:30"
+  ],
+  "problem": "Date formatter copied 4× without `timeZone`; blocks/overview use Europe/Kyiv.",
+  "fix": "One `formatMoment` in `src/format.ts`.",
+  "verified": true,
+  "part": [
+   8
+  ]
+ },
+ {
+  "id": "R169",
+  "sev": "low",
+  "kind": "complexity",
+  "where": [
+   "packages/core/src/game/game.ts:506",
+   "packages/core/src/entries/entries.ts:426",
+   "packages/core/src/entries/entry-list.ts:75",
+   "packages/core/src/knowledge/knowledge.ts:185,189",
+   "packages/core/src/test-support.ts:404",
+   "packages/ui/src/test-strings.ts:16",
+   "apps/mobile/plugins/app-intents.ts:84,123",
+   "packages/contracts/src/api/breaking-changes.ts:18",
+   "packages/contracts/src/describe-command.ts:23",
+   "packages/contracts/src/api-description.ts:68",
+   "packages/contracts/src/api/test-support.ts:77",
+   "packages/language-pack/src/pack-layout.ts:358",
+   "packages/language-pack/src/edition-folder.ts:376",
+   "packages/language-pack/src/crossword.ts:329"
+  ],
+  "problem": "`as` casts against the house rule (CLAUDE.md), incl. `as unknown as` in knowledge.ts and test-support.ts.",
+  "fix": "Typed key lists (`RARITIES`, `ENTRY_KINDS` in Core), type guards, `satisfies`, full fakes.",
+  "verified": true,
+  "part": [
+   1,
+   2,
+   4,
+   5,
+   7
+  ]
+ },
+ {
+  "id": "R170",
+  "sev": "low",
+  "kind": "complexity",
+  "where": [
+   "packages/core/src/feed/feed.ts:404"
+  ],
+  "problem": "`for (;;)` retry after an unreadable Entry ends only because card-order ids come from filtered lists; nothing enforces it.",
+  "fix": "Bound the loop by the number of eligible ids.",
+  "verified": false,
+  "part": [
+   1
+  ]
+ },
+ {
+  "id": "R171",
+  "sev": "low",
+  "kind": "complexity",
+  "where": [
+   "apps/mobile/src/app/feed.tsx:253"
+  ],
+  "problem": "`sourceTab`/`tipExceptions` threaded by hand through 3 screens and 3 `SwipedEntryCard` branches.",
+  "fix": "Read them from `useShown()` inside `SwipedEntryCard`.",
+  "verified": false,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R172",
+  "sev": "low",
+  "kind": "complexity",
+  "where": [
+   "packages/server-core/src/analytics/source-cache.ts",
+   "apps/backend/src/sources/cached-source.ts"
+  ],
+  "problem": "Two caches for outside reads with different rules (in-flight sharing vs last-good fallback).",
+  "fix": "One cache with both behaviours.",
+  "verified": false,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R173",
+  "sev": "low",
+  "kind": "complexity",
+  "where": [
+   "apps/backend/src/config.ts:129-136,307-310",
+   "apps/backend/src/alerts/owner-chat.ts:127-133"
+  ],
+  "problem": "Empty-as-unset preprocess repeated; `ownerAlertsOf` parses `process.env` a second time.",
+  "fix": "One `emptyAsUnset` helper; pass parsed config in.",
+  "verified": false,
+  "part": [
+   6
+  ]
+ },
+ {
+  "id": "R174",
+  "sev": "low",
+  "kind": "dead",
+  "where": [
+   "packages/ui/src/entries/SwipeMarks.tsx:105-117,241-260,434-477,590"
+  ],
+  "problem": "About 70 lines of commented-out chip/nudge code. Check first whether it is a deliberate DESIGN-05 marker (see dropped P4#29).",
+  "fix": "Delete if not pending an owner decision.",
+  "verified": false,
+  "part": [
+   3
+  ]
+ },
+ {
+  "id": "R175",
+  "sev": "low",
+  "kind": "dead",
+  "where": [
+   "apps/mobile/src/saved/history-text.ts:65"
+  ],
+  "problem": "`relative` / `RelativeText` used only by its test. (Commented DESIGN-05 code nearby is deliberate.)",
+  "fix": "Delete.",
+  "verified": true,
+  "part": [
+   5
+  ]
+ },
+ {
+  "id": "R176",
+  "sev": "low",
+  "kind": "dead",
+  "where": [
+   "packages/ui/src/game/RoundCard.tsx:48",
+   "packages/ui/src/index.ts:69,142-197",
+   "apps/backend/src/content/media-rows.ts:79,143",
+   "apps/backend/src/quality/sentry-api.ts:11,25",
+   "apps/backend/src/alerts/owner-chat.ts:52,90",
+   "apps/backend/src/alerts/cron-command.ts:162",
+   "apps/backend/src/counters/community-counters.ts:231",
+   "packages/content-rules/src/index.ts:21"
+  ],
+  "problem": "Unused prop `labelShown` and exports used only in their own file or by tests (`FitPanel`, `MARK_SHARE`, `EntryMenuMarks`, `saveRecording`, `MediaRows`, `MAX_ILLUSTRATION_BYTES` ...).",
+  "fix": "Remove the prop; drop the exports.",
+  "verified": false,
+  "part": [
+   3,
+   4,
+   6,
+   7
+  ]
+ }
+]
