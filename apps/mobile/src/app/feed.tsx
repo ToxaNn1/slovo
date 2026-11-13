@@ -25,7 +25,7 @@ import {
   useGesturesDemo,
 } from '@slovo/ui';
 import type { FeedCard, FeedNoticeCard, WordCardModel } from '@slovo/core';
-import { memo, useCallback, useRef, type ComponentProps } from 'react';
+import { memo, useCallback, useRef, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -204,15 +204,7 @@ const FeedPage = memo(function FeedPage({
   onAnswerQuickQuestion: (position: number, option: number) => void;
 }) {
   const { top } = useSafeAreaInsets();
-  const {
-    selfCheck,
-    stressFall,
-    calligraphicLemma,
-    wordTabs,
-    sourceTab,
-    tipExceptions,
-    answerCard,
-  } = useShown();
+  const { stressFall, calligraphicLemma, answerCard } = useShown();
   const { toolsRow, topRow } = useHeaderRows();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
@@ -245,54 +237,12 @@ const FeedPage = memo(function FeedPage({
         {card.kind === 'end-of-cycle' ? <EndOfCycleCard /> : <NoticeCard card={card} />}
       </View>
     );
-  const entry = (
-    <>
-      {card.kind === 'notice' ? (
-        <YesterdayNotice word={card.word} />
-      ) : card.kind === 'tip' ? (
-        <SwipedEntryCard
-          card={card}
-          selfCheck={selfCheck}
-          tabs={wordTabs}
-          sourceTab={sourceTab}
-          tipExceptions={tipExceptions}
-        />
-      ) : card.kind === 'synonymRow' ? (
-        <SwipedEntryCard
-          card={card}
-          // A member opens its Word over the Feed, Hidden or out of the Mix alike.
-          onOpenWord={(wordId) => {
-            openScreen(`/entry/${wordId}`);
-          }}
-          selfCheck={selfCheck}
-          tabs={wordTabs}
-          sourceTab={sourceTab}
-        />
-      ) : (
-        <SwipedEntryCard
-          card={card}
-          onOpenCorrection={(correctionId) => {
-            onOpenCorrection(position, correctionId);
-          }}
-          // The row the Word is a member of opens over the Feed, as a member opens its Word.
-          onOpenSynonymRow={(synonymRowId) => {
-            openScreen(`/entry/${synonymRowId}`);
-          }}
-          selfCheck={selfCheck}
-          stressFalls={stressFall}
-          tabs={wordTabs}
-          sourceTab={sourceTab}
-          // Only here, on the Word of the Day card; in the Word font with the switch off.
-          wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
-        />
-      )}
-    </>
-  );
   // A tabbed card is a fixed frame the page's height: nothing around it scrolls, only
   // an opened tab inside it, so its frame and tab bar never move (ADR 0091, ADR 0113).
-  if (card.kind !== 'notice' && wordTabs)
-    return (
-      <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
+  // Any other card, the red one of the Word of the Day Self-check keeps closed among them, scrolls.
+  const page = (entry: ReactNode, framed: boolean) => (
+    <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
+      {framed ? (
         <View
           style={[
             styles.page,
@@ -303,22 +253,50 @@ const FeedPage = memo(function FeedPage({
         >
           {entry}
         </View>
-      </View>
+      ) : (
+        // The content scrolls under the top row but stops at the status bar.
+        <PagerScrollView
+          testID={`feed-card-${String(position)}-scroll`}
+          // The red card of the Word of the Day hangs from the top row, closer to the edges (board p1).
+          contentContainerStyle={
+            card.kind === 'word' && card.wordOfTheDay !== undefined
+              ? [styles.heroContent, { paddingTop: topRow + space[2] }]
+              : [styles.content, { paddingTop: topRow }]
+          }
+        >
+          {entry}
+        </PagerScrollView>
+      )}
+    </View>
+  );
+  if (card.kind === 'notice') return page(<YesterdayNotice word={card.word} />, false);
+  if (card.kind === 'tip') return <SwipedEntryCard card={card} page={page} />;
+  if (card.kind === 'synonymRow')
+    return (
+      <SwipedEntryCard
+        card={card}
+        // A member opens its Word over the Feed, Hidden or out of the Mix alike.
+        onOpenWord={(wordId) => {
+          openScreen(`/entry/${wordId}`);
+        }}
+        page={page}
+      />
     );
   return (
-    // The content scrolls under the top row but stops at the status bar.
-    <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
-      <PagerScrollView
-        // The red card of the Word of the Day hangs from the top row, closer to the edges (board p1).
-        contentContainerStyle={
-          card.kind === 'word' && card.wordOfTheDay !== undefined
-            ? [styles.heroContent, { paddingTop: topRow + space[2] }]
-            : [styles.content, { paddingTop: topRow }]
-        }
-      >
-        {entry}
-      </PagerScrollView>
-    </View>
+    <SwipedEntryCard
+      card={card}
+      onOpenCorrection={(correctionId) => {
+        onOpenCorrection(position, correctionId);
+      }}
+      // The row the Word is a member of opens over the Feed, as a member opens its Word.
+      onOpenSynonymRow={(synonymRowId) => {
+        openScreen(`/entry/${synonymRowId}`);
+      }}
+      stressFalls={stressFall}
+      // Only here, on the Word of the Day card; in the Word font with the switch off.
+      wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
+      page={page}
+    />
   );
 });
 
@@ -333,9 +311,27 @@ function useHeaderRows() {
   return { toolsRow, topRow: toolsRow ? TOP_ROW : LOGO_ROW };
 }
 
-/** An Entry's card in the Feed, with its action row or its corner and side swipes (ADR 0077). */
-function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'slots'>) {
-  return <EntryCard {...props} slots={useEntrySlots(props.card)} />;
+/**
+ * An Entry's card in the Feed, with its action row or its corner and side
+ * swipes (ADR 0077), under Self-check and the tabs as they are shown in effect.
+ */
+function SwipedEntryCard(
+  props: Omit<
+    ComponentProps<typeof EntryCard>,
+    'slots' | 'selfCheck' | 'tabs' | 'sourceTab' | 'tipExceptions'
+  >,
+) {
+  const { selfCheck, wordTabs, sourceTab, tipExceptions } = useShown();
+  return (
+    <EntryCard
+      {...props}
+      slots={useEntrySlots(props.card)}
+      selfCheck={selfCheck}
+      tabs={wordTabs}
+      sourceTab={sourceTab}
+      tipExceptions={tipExceptions}
+    />
+  );
 }
 
 /**
