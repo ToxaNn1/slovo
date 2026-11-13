@@ -365,8 +365,22 @@ export const FIXTURES: AdminApiOutputs = {
           { package: 'backend', lines: 78, branches: 70.4 },
         ],
         jobs: [
-          { name: 'test', seconds: 250 },
-          { name: 'lint', seconds: 60 },
+          {
+            name: 'test',
+            seconds: 250,
+            span: {
+              startedAt: '2026-11-08T08:50:00.000Z',
+              completedAt: '2026-11-08T08:54:10.000Z',
+            },
+          },
+          {
+            name: 'lint',
+            seconds: 60,
+            span: {
+              startedAt: '2026-11-08T08:50:05.000Z',
+              completedAt: '2026-11-08T08:51:05.000Z',
+            },
+          },
         ],
       },
     ],

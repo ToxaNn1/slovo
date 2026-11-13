@@ -138,16 +138,37 @@ function TileValue({
   );
 }
 
+/**
+ * How long the owner waited for the run: from the first job's start to the last
+ * job's end, as the jobs run side by side. `null` for a run kept before the
+ * jobs carried their times.
+ */
+function wallClockSeconds(jobs: CiRun['jobs']): number | null {
+  const spans = jobs.flatMap((job) => (job.span === undefined ? [] : [job.span]));
+  if (spans.length === 0) return null;
+  const start = Math.min(...spans.map((span) => Date.parse(span.startedAt)));
+  const end = Math.max(...spans.map((span) => Date.parse(span.completedAt)));
+  return Math.max(0, (end - start) / 1000);
+}
+
 /** «Покриття», «Нестабільні тести» and «Тривалість CI» of the CI runs of the period. */
 function CiCharts({ runs }: { readonly runs: readonly CiRun[] }) {
   const latest = runs.at(-1);
   const flaky = new Map<string, number>();
   for (const run of runs)
     for (const test of run.flakyTests) flaky.set(test, (flaky.get(test) ?? 0) + 1);
-  const durations = runs.map((run) => ({
-    label: `${run.sha.slice(0, 7)} · ${time(run.at)}`,
-    seconds: run.jobs.reduce((total, job) => total + job.seconds, 0),
-  }));
+  const durations = runs.flatMap((run) => {
+    const seconds = wallClockSeconds(run.jobs);
+    return seconds === null
+      ? []
+      : [
+          {
+            label: `${run.sha.slice(0, 7)} · ${time(run.at)}`,
+            seconds,
+            runnerSeconds: run.jobs.reduce((total, job) => total + job.seconds, 0),
+          },
+        ];
+  });
   const longest = Math.max(1, ...durations.map((run) => run.seconds));
 
   return (
@@ -186,7 +207,7 @@ function CiCharts({ runs }: { readonly runs: readonly CiRun[] }) {
               <BarRow
                 key={run.label}
                 label={run.label}
-                text={`${number(run.seconds / 60)} хв`}
+                text={`${number(run.seconds / 60)} хв · раннери ${number(run.runnerSeconds / 60)} хв`}
                 share={run.seconds / longest}
               />
             ))}

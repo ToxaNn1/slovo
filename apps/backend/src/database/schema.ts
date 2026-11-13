@@ -17,7 +17,7 @@ import type {
   Tip,
   Word,
 } from '@slovo/contracts';
-import type { Actor, Alert, Json } from '@slovo/server-core';
+import type { Actor, Alert, CiJob, Json } from '@slovo/server-core';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -553,7 +553,7 @@ export const ciRuns = pgTable(
     coverage: jsonb('coverage')
       .$type<{ package: string; lines: number; branches: number }[]>()
       .notNull(),
-    jobs: jsonb('jobs').$type<{ name: string; seconds: number }[]>().notNull(),
+    jobs: jsonb('jobs').$type<CiJob[]>().notNull(),
   },
   (table) => [index('ci_runs_at_idx').on(table.at)],
 );

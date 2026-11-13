@@ -44,8 +44,10 @@ test('Якість charts the coverage, the flaky tests and the CI durations of 
   const flaky = within(screen.getByRole('figure', { name: 'Нестабільні тести' }));
   expect(flaky.getByText('sync › retries a lost write · 1')).toBeDefined();
   const durations = within(screen.getByRole('figure', { name: 'Тривалість CI' }));
-  expect(durations.getAllByRole('listitem')).toHaveLength(2);
-  expect(durations.getByText(/^c6f01b8 · .* · 5,2 хв$/)).toBeDefined();
+  // The jobs run side by side: the bar is the wait, the runner time a note; a
+  // run kept before the jobs carried their times has no bar.
+  expect(durations.getAllByRole('listitem')).toHaveLength(1);
+  expect(durations.getByText(/^c6f01b8 · .* · 4,2 хв · раннери 5,2 хв$/)).toBeDefined();
 });
 
 test('Якість says which source is down: Sentry per number, GitHub for the CI history', async () => {
