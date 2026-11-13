@@ -327,8 +327,8 @@ function FormRound({
  * A Quick Question in the Feed, one card as board f3 draws it: its label on
  * an ink tag, the prompt asked as the Game asks it (a Tip's question under the
  * Tip's label, the non-standard form the Tip replaces under it, «замість
- * «…»»), and the four options with their keys. VoiceOver reads the title as
- * the card's heading, on the tag. Once
+ * «…»»), and the four options with their keys. VoiceOver reads the tag as
+ * the card's heading, its label and then the title. Once
  * answered, the options show the right one and the one picked, and the
  * Game's sheet after an answer explains it, right or wrong, until «Далі»
  * closes it; the reader turns on to the next card.
@@ -382,7 +382,8 @@ export function QuickQuestionRound({
           testID="quick-question-tag"
           accessible
           accessibilityRole="header"
-          accessibilityLabel={title}
+          // The tag's visible label first, so the name VoiceOver reads holds what it shows.
+          accessibilityLabel={`${asked.label}. ${title}`}
           style={[styles.quickQuestionTag, { backgroundColor: colors.ink }]}
         >
           <Text
