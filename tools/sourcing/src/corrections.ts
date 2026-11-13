@@ -282,7 +282,7 @@ function withStandardFormMarked(pair: {
   const kept = keptWords(words.map(wordKey), pair.nonStandard.split(' ').map(wordKey));
   if (kept.every(Boolean)) return undefined;
   const parts: string[] = [];
-  for (let start = 0; start < words.length; ) {
+  for (let start = 0; start < words.length;) {
     let end = start + 1;
     while (end < words.length && kept[end] === kept[start]) end += 1;
     const run = words.slice(start, end).join(' ');
@@ -314,7 +314,7 @@ function keptWords(words: readonly string[], said: readonly string[]): boolean[]
     }
   }
   const kept = words.map((word) => !/\p{L}/u.test(word));
-  for (let i = 0, j = 0; i < words.length && j < said.length; ) {
+  for (let i = 0, j = 0; i < words.length && j < said.length;) {
     if (words[i] === said[j]) {
       kept[i] = true;
       i += 1;
