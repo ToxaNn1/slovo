@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View, type DimensionValue } from 'react-native';
+import { StyleSheet, View, type DimensionValue } from 'react-native';
 
 import { PressedTile } from '../primitives/PressedTile';
+import { WholeWordsText } from '../primitives/WholeWordsText';
 import {
   shapeAt,
   TileShape,
@@ -114,14 +115,13 @@ export function CategoryTile({
       >
         <TileShape shape={big} color={look.big} place={box.big} />
         <TileShape shape={small} color={look.small} place={box.small} />
-        <Text
+        <WholeWordsText
           {...voice}
           testID={`${testID}-name`}
-          android_hyphenationFrequency="full"
+          text={name}
+          typeRole={box.name}
           style={[typeStyle(box.name, tokens), { color: look.text }]}
-        >
-          {name}
-        </Text>
+        />
       </PressedTile>
     </View>
   );

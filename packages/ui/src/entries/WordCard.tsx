@@ -9,6 +9,7 @@ import {
 } from '@slovo/core';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { WholeLinesText } from '../primitives/WholeLines';
 import Svg, { Path } from 'react-native-svg';
 
 import { fill, useEdition } from '../providers/EditionProvider';
@@ -32,6 +33,7 @@ import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPag
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { RevealDetail, useFlyingText } from './reveal';
+import { capitalised } from './capitalised';
 import { CategoryChip } from './CategoryChip';
 
 /**
@@ -91,14 +93,17 @@ export function WordHeadline({
         {...voice}
         style={[typeStyle('partOfSpeech', tokens), { color: colors.muted }]}
       >
-        {grammar('short')}
+        {capitalised(grammar('short'), voice.accessibilityLanguage)}
       </Text>
       {!concealed &&
         card.registers.map((register) => (
           <LabelChip
             key={register}
             testID={`word-register-${register}`}
-            text={registerText(strings, register, card.region, 'short')}
+            text={capitalised(
+              registerText(strings, register, card.region, 'short'),
+              voice.accessibilityLanguage,
+            )}
             accessibilityLabel={registerText(strings, register, card.region, 'full')}
             size="tight"
           />
@@ -111,7 +116,7 @@ export function WordHeadline({
       <View style={styles.headline}>
         <WholeWordsText
           flying={flying}
-          text={card.lemma}
+          text={capitalised(card.lemma, voice.accessibilityLanguage)}
           size={lemmaSize}
           typeRole="heroWord"
           testID="word-lemma"
@@ -121,10 +126,7 @@ export function WordHeadline({
           accessibilityLabel={stressLabel(strings, card.lemma, card.stressedVowels)}
           {...voice}
           {...turnActions}
-          // A long Lemma shrinks to fit rather than break inside a word.
-          numberOfLines={card.lemma.includes(' ') ? 2 : 1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.5}
+          lines={2}
           stressed={
             onAccent ? undefined : { mark: STRESS_MARK, style: { color: tokens.colors.accent } }
           }
@@ -217,7 +219,7 @@ export function WordSections({
                   style={[typeStyle('sub', tokens), { color: colors.ink }]}
                 >
                   <Text style={{ color: colors.muted }}>{words.length === 1 ? one : many}</Text>{' '}
-                  {words.join(', ')}
+                  {words.map((word) => capitalised(word, voice.accessibilityLanguage)).join(', ')}
                 </Text>
               ))}
             </View>
@@ -279,7 +281,7 @@ export function WordDefinition({ card }: { card: WordCardModel }) {
       {...turnActions}
       style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
     >
-      {card.primaryDefinition}
+      {capitalised(card.primaryDefinition, voice.accessibilityLanguage)}
     </Text>
   );
 }
@@ -340,7 +342,9 @@ export function OftenSaid({
             <Text
               style={[typeStyle('oftenSaidForm', tokens), styles.italic, { color: colors.ink }]}
             >
-              {index < card.linkedCorrections.length - 1 ? `${nonStandardForm},` : nonStandardForm}
+              {index < card.linkedCorrections.length - 1
+                ? `${capitalised(nonStandardForm, voice.accessibilityLanguage)},`
+                : capitalised(nonStandardForm, voice.accessibilityLanguage)}
             </Text>
           </Pressable>
         ))}
@@ -374,7 +378,7 @@ export function WordHistory({
         {...voice}
         style={[typeStyle('sectionText', tokens), { color: colors.ink }]}
       >
-        {history}
+        {capitalised(history, voice.accessibilityLanguage)}
       </Text>
     </DetailSection>
   );
@@ -414,7 +418,7 @@ export function SynonymRowLine({
       <Text style={[typeStyle('sub', tokens), { color: colors.muted }]}>
         {before}
         <Text style={[typeStyle('linkWord', tokens), { color: colors.accentText }]}>
-          {dominant.text}
+          {capitalised(dominant.text, voice.accessibilityLanguage)}
         </Text>
         {after}
       </Text>
@@ -454,13 +458,15 @@ export function ExampleText({
       accessibilityLabel={withoutStress(author === undefined ? text : `${text}, ${author}`)}
       {...voice}
     >
-      <Text style={[typeStyle('example', tokens), size, styles.italic, { color: colors.ink }]}>
-        {text}
-      </Text>
+      <WholeLinesText
+        style={[typeStyle('example', tokens), size, styles.italic, { color: colors.ink }]}
+      >
+        {capitalised(text, voice.accessibilityLanguage)}
+      </WholeLinesText>
       {author === undefined ? null : (
-        <Text style={[typeStyle('meta', tokens), styles.author, { color: colors.muted }]}>
-          {author}
-        </Text>
+        <WholeLinesText style={[typeStyle('meta', tokens), styles.author, { color: colors.muted }]}>
+          {capitalised(author, voice.accessibilityLanguage)}
+        </WholeLinesText>
       )}
     </View>
   );
@@ -512,7 +518,7 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
                   style={bodyText}
                 >
                   {/* The primary Definition is the first; these number on from 2. */}
-                  {`${String(index + 2)}. ${definition}`}
+                  {`${String(index + 2)}. ${capitalised(definition, voice.accessibilityLanguage)}`}
                 </Text>
               ))}
             </DetailSection>
@@ -531,7 +537,7 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
                 {...voice}
                 style={[typeStyle('sectionText', tokens), { color: colors.ink }]}
               >
-                {details.etymology}
+                {capitalised(details.etymology, voice.accessibilityLanguage)}
               </Text>
             </DetailSection>
           )}

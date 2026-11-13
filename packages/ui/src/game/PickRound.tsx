@@ -24,7 +24,14 @@ import { useReduceMotion } from '../providers/useReduceMotion';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { PressedTile } from '../primitives/PressedTile';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { answerOption, roundLayout, space, typeStyle, type TypeRole } from '../tokens';
+import {
+  answerOption,
+  quickQuestionCard,
+  roundLayout,
+  space,
+  typeStyle,
+  type TypeRole,
+} from '../tokens';
 import { RoundCard, type RoundFace } from './RoundCard';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
@@ -92,14 +99,18 @@ export function PickRound({
 
 /**
  * The options of a pick Round, one under another, as a Game's Round and a
- * Quick Question show them; a new set of options takes a new `key`.
+ * Quick Question show them; a new set of options takes a new `key`. In a
+ * Quick Question's card (board f3) a tile is lower and a Word on it smaller.
  */
 export function AnswerOptions({
   options,
   answer,
   onPick,
+  inQuickQuestion = false,
 }: {
   options: readonly RoundOption[];
+  /** Whether the options stand in a Quick Question's card; a Game's Round's if not. */
+  inQuickQuestion?: boolean;
   /** The option picked and the right one, once the Round is answered. */
   answer: Pick<PickAnswer, 'chosen' | 'correct'> | undefined;
   onPick: (option: number) => void;
@@ -114,6 +125,7 @@ export function AnswerOptions({
           place={place}
           optionKey={keys[place]}
           answer={answer}
+          inQuickQuestion={inQuickQuestion}
           onPress={() => {
             onPick(place);
           }}
@@ -136,9 +148,12 @@ function AnswerOption({
   place,
   optionKey,
   answer,
+  inQuickQuestion,
   onPress,
 }: {
   option: RoundOption;
+  /** Whether the option stands in a Quick Question's card. */
+  inQuickQuestion: boolean;
   /** Its place among the options. */
   place: number;
   /** Its key, such as «А»; none past the Edition's keys. */
@@ -189,7 +204,9 @@ function AnswerOption({
     };
   });
   const testID = `game-option-${String(place)}`;
-  const role = optionRole(option.text);
+  const shownRole = optionRole(option.text);
+  const role =
+    inQuickQuestion && shownRole === 'roundOptionWord' ? 'quickQuestionOptionWord' : shownRole;
   return (
     <Animated.View testID={`${testID}-motion`} style={optionMotion} {...voice}>
       <PressedTile
@@ -209,7 +226,11 @@ function AnswerOption({
         accessibilityState={{ disabled: look === 'dimmed' }}
         inert={answer !== undefined}
         onPress={onPress}
-        faceStyle={[styles.option, look === 'wrong' && { backgroundColor: colors.surfaceSunken }]}
+        faceStyle={[
+          styles.option,
+          inQuickQuestion && styles.quickQuestionOption,
+          look === 'wrong' && { backgroundColor: colors.surfaceSunken },
+        ]}
       >
         {optionKey !== undefined && (
           <View
@@ -266,6 +287,7 @@ const styles = StyleSheet.create({
     paddingLeft: answerOption.paddingLeft,
     paddingRight: answerOption.paddingRight,
   },
+  quickQuestionOption: { minHeight: quickQuestionCard.optionMinHeight },
   optionText: { flex: 1 },
   key: {
     width: answerOption.key.side,

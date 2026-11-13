@@ -76,7 +76,15 @@ const card: EntryFeedCard = {
     categoryId: 'everyday',
     categoryName: 'Everyday speech',
     explanation: 'Why join in is better.',
-    examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
+    examplePair: {
+      nonStandard: 'I take part.',
+      standard: 'I join in.',
+      standardSegments: [
+        { kind: 'text', text: 'I ' },
+        { kind: 'standardForm', text: 'join in' },
+        { kind: 'text', text: '.' },
+      ],
+    },
     sourceNames: [],
     literaryUses: [],
   },
@@ -252,6 +260,7 @@ function tipCard(overrides: Partial<TipCardModel> = {}): TipFeedCard {
     standardForm: 'What time is it?',
     explanation: 'Why the hour is asked so.',
     example: { text: 'What time is it, please?' },
+    exceptions: undefined,
     sourceNames: ['A style guide'],
     ...overrides,
   };

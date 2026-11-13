@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./entry-row-text": "./src/entries/entry-row-text.ts",
+    "./capitalised": "./src/entries/capitalised.ts",
     "./known-line": "./src/progress/known-line.ts",
     "./tip-tabs": "./src/entries/tip-tabs.ts",
     "./word-tabs": "./src/entries/word-tabs.ts",

@@ -45,6 +45,7 @@ const word: WordCardModel = {
   details: undefined,
   linkedCorrections: [],
   synonymRow: undefined,
+  sourceNames: [],
 };
 
 const haptics: Haptics = {
@@ -104,7 +105,7 @@ describe('the Yesterday card', () => {
     expect(screen.getByTestId('feed-notice-yesterday')).toBeTruthy();
     expect(screen.getByText('Remember yesterday’s word?')).toBeTruthy();
     expect(screen.getByLabelText('Remember yesterday’s word?')).toBeTruthy();
-    expect(screen.getByText('meek')).toBeTruthy();
+    expect(screen.getByText('Meek')).toBeTruthy();
     expect(screen.queryByText('Quiet and gentle.')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: true }));

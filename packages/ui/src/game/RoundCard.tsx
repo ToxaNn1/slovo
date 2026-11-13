@@ -12,6 +12,7 @@ import {
   roleSize,
   roundLayout,
   roundPromptLength,
+  quickQuestionCard,
   sizeForLength,
   space,
   typeStyle,
@@ -49,6 +50,7 @@ export function RoundCard({
   definition,
   face,
   labelShown = false,
+  quickQuestion,
   children,
 }: {
   label: string;
@@ -63,6 +65,12 @@ export function RoundCard({
   definition?: string | undefined;
   /** The restyled look of the card; the plain prompt if none. */
   face?: RoundFace | undefined;
+  /**
+   * Drawn in a Quick Question's own card (board f3): no card of its own and
+   * no label, which the Quick Question shows on its tag; the prompt bigger
+   * and under it the non-standard form the Tip replaces, if any. A Game's Round if none.
+   */
+  quickQuestion?: { readonly instead: string | undefined } | undefined;
   /** What the card shows for the prompt, the answer drawn in it; the prompt's text if nothing. */
   children?: ReactNode;
 }) {
@@ -82,6 +90,11 @@ export function RoundCard({
   const said = face?.look === 'instead' ? `${face.instead}. ` : '';
   const defined =
     definition === undefined ? '' : `${ENDS_IN_PUNCTUATION.test(read) ? '' : '.'} ${definition}`;
+  const insteadOfTip =
+    quickQuestion?.instead === undefined
+      ? ''
+      : `${ENDS_IN_PUNCTUATION.test(read) ? '' : '.'} ${quickQuestion.instead}`;
+  const promptRole = quickQuestion === undefined ? 'roundPrompt' : 'quickQuestionPrompt';
   return (
     <View
       testID="game-prompt"
@@ -89,7 +102,7 @@ export function RoundCard({
       accessibilityLabel={
         children === undefined
           ? [
-              `${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${said}${read}${defined}`,
+              `${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${said}${read}${insteadOfTip}${defined}`,
               marked,
             ]
               .filter(Boolean)
@@ -97,12 +110,20 @@ export function RoundCard({
           : undefined
       }
       {...voice}
-      style={[
-        styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
-      ]}
+      style={
+        quickQuestion === undefined
+          ? [
+              styles.card,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.line,
+                borderRadius: radii.card,
+              },
+            ]
+          : styles.inCard
+      }
     >
-      {labelShown && face?.look !== 'instead' && (
+      {labelShown && quickQuestion === undefined && face?.look !== 'instead' && (
         <Text
           maxFontSizeMultiplier={roundLayout.textMaxFontScale}
           {...voice}
@@ -137,10 +158,10 @@ export function RoundCard({
         ) : (
           <WholeWordsText
             text={prompt}
-            typeRole="roundPrompt"
+            typeRole={promptRole}
             // A long prompt takes a smaller size, the cards' one text scale (owner 08.11).
-            size={sizeForLength(roleSize('roundPrompt'), prompt, roundPromptLength)}
-            style={[typeStyle('roundPrompt', tokens), { color: colors.ink }]}
+            size={sizeForLength(roleSize(promptRole), prompt, roundPromptLength)}
+            style={[typeStyle(promptRole, tokens), { color: colors.ink }]}
             highlight={
               highlight === undefined
                 ? undefined
@@ -155,6 +176,16 @@ export function RoundCard({
             }
           />
         ))}
+      {quickQuestion?.instead !== undefined && (
+        <Text
+          testID="game-instead"
+          maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+          {...voice}
+          style={[typeStyle('quickQuestionInstead', tokens), { color: colors.muted }]}
+        >
+          {quickQuestion.instead}
+        </Text>
+      )}
       {definition !== undefined && (
         <Text
           testID="game-definition"
@@ -209,4 +240,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[6],
     borderWidth: 1,
   },
+  inCard: { gap: quickQuestionCard.gap },
 });

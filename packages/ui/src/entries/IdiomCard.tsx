@@ -1,30 +1,43 @@
 import type { ReactNode } from 'react';
 import { withoutStress, type IdiomCardModel } from '@slovo/core';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { WholeLinesText } from '../primitives/WholeLines';
+import { EntryKicker } from './EntryKicker';
 import { KickerRow } from './KickerRow';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
-import { LabelChip } from '../primitives/LabelChip';
-import { idiomExpressionLength, sizeForLength, space, typeStyle } from '../tokens';
+import { Wedge } from '../primitives/Wedge';
+import {
+  entryCardFrame,
+  exampleMark,
+  idiomExpressionLength,
+  roleAt,
+  sizeForLength,
+  space,
+  typeRoles,
+  typeStyle,
+  wedges,
+} from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
+import { capitalised } from './capitalised';
 import { CardTabs } from './CardTabs';
+import { ExampleMark } from './ExampleMark';
 import { useFlyingText } from './reveal';
 import { DetailSection, ExampleText } from './WordCard';
 import { idiomTabsOf, type IdiomTab } from './word-tabs';
 
 /**
- * The Idiom card's blocks inside the Entry card's frame: the expression at
- * the Lemma's size with the chip of its Idiom Type («фразеологізм» or
- * «топонім»), the primary Definition and the others, the Examples,
+ * The Idiom card's blocks inside the Entry card's frame: the red kicker of
+ * its Idiom Type («ФРАЗЕОЛОГІЗМ» or «ТОПОНІМ»), the expression at the
+ * Lemma's size over the red bar (board XEntry2 e7), the primary Definition and the others, the Examples,
  * «Походження» and, when the Idiom has sources, a line naming them. It draws
  * only the sections the Core put in the card. VoiceOver reads the expression
  * with its kind, then its Definition. Under Self-check it keeps the
- * expression and its chip; the Entry card draws the button that reveals the
- * rest under them. With `tabs` the expression is underlined in the accent and
- * the rest sits in the tabs «Суть», «Звідки» and «Приклад» (ADR 0091).
+ * kicker and the expression; the Entry card draws the button that reveals the
+ * rest under them. With `tabs` the rest sits in the tabs «Суть», «Звідки» and «Приклад» (ADR 0091).
  */
 export function IdiomCardBody({
   card,
@@ -32,16 +45,19 @@ export function IdiomCardBody({
   concealed,
   corner,
   tabs,
+  sourceTab,
 }: {
   card: IdiomCardModel;
   /** The Lemma's size at the user's font size, which the expression takes. */
   lemmaSize: TextSize;
-  /** Self-check: only the expression and its chip. */
+  /** Self-check: only the kicker and the expression. */
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
   /** The tabs under the expression in place of the one column, while `wordTabs` is on (ADR 0091). */
   tabs: boolean;
+  /** The last tab «Джерело» with the sources, which leave «Суть», while `sourceTab` is on (ADR 0116). */
+  sourceTab: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -55,10 +71,15 @@ export function IdiomCardBody({
   const flying = useFlyingText();
   const idiomType = strings.idiomTypes[card.idiomType];
   const bodyText = [typeStyle('example', tokens), sizes.example, { color: colors.ink }];
+  // A long expression takes a smaller size, the cards' one text scale (owner 08.11).
+  const { fontSize } = sizeForLength(lemmaSize, card.expression, idiomExpressionLength);
+  const { lineHeight } = roleAt('idiomExpression', fontSize);
 
   return (
     <>
-      <KickerRow testID="idiom-kicker-row" corner={corner} />
+      <KickerRow testID="idiom-kicker-row" corner={corner}>
+        <EntryKicker testID="idiom-type" label={idiomType} />
+      </KickerRow>
       <View
         accessible
         accessibilityRole="header"
@@ -72,43 +93,34 @@ export function IdiomCardBody({
       >
         <WholeWordsText
           flying={flying}
-          text={card.expression}
-          // A long expression takes a smaller size, the cards' one text scale (owner 08.11).
-          size={sizeForLength(lemmaSize, card.expression, idiomExpressionLength)}
-          typeRole="heroWord"
+          text={capitalised(card.expression, voice.accessibilityLanguage)}
+          size={{ fontSize, lineHeight }}
+          typeRole="idiomExpression"
           testID="idiom-expression"
-          // An expression wraps between its words and shrinks rather than break inside one.
-          numberOfLines={3}
-          adjustsFontSizeToFit
-          minimumFontScale={0.5}
-          style={[
-            typeStyle('heroWord', tokens),
-            { color: colors.ink },
-            // The tabbed card underlines the expression in red, as the board draws it.
-            tabs && [styles.underline, { textDecorationColor: colors.accent }],
-          ]}
+          lines={3}
+          style={[typeStyle('idiomExpression', tokens), { color: colors.ink }]}
         />
-        <View style={styles.chip}>
-          <LabelChip
-            testID="idiom-type"
-            text={idiomType}
-            accessibilityLabel={idiomType}
-            size="tight"
-          />
-        </View>
+        <Wedge
+          testID="idiom-rule"
+          points={wedges.slant}
+          color={colors.accent}
+          width={entryCardFrame.rule.width}
+          height={entryCardFrame.rule.height}
+        />
       </View>
       {tabs ? (
         <CardTabs
           testID="idiom"
           tabs={idiomTabsOf(card)}
           nameOf={({ key }) => strings.tabs[key]}
+          sources={sourceTab ? card.sourceNames : undefined}
           disabled={concealed}
         >
-          {(tab) => <IdiomTabContent tab={tab} />}
+          {(tab) => <IdiomTabContent tab={tab} sourceTab={sourceTab} />}
         </CardTabs>
       ) : concealed ? null : (
         <>
-          <Text
+          <WholeLinesText
             testID="idiom-definition"
             // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
             accessibilityLabel={withoutStress(card.primaryDefinition)}
@@ -116,23 +128,23 @@ export function IdiomCardBody({
             {...turnActions}
             style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
           >
-            {card.primaryDefinition}
-          </Text>
+            {capitalised(card.primaryDefinition, voice.accessibilityLanguage)}
+          </WholeLinesText>
           {card.extraDefinitions.length === 0 ? null : (
             <DetailSection
               testID="idiom-extra-definitions"
               title={edition.strings.wordCard.extraDefinitions}
             >
               {card.extraDefinitions.map((definition, index) => (
-                <Text
+                <WholeLinesText
                   key={index}
                   accessibilityLabel={withoutStress(`${String(index + 2)}. ${definition}`)}
                   {...voice}
                   style={bodyText}
                 >
                   {/* The primary Definition is the first; these number on from 2. */}
-                  {`${String(index + 2)}. ${definition}`}
-                </Text>
+                  {`${String(index + 2)}. ${capitalised(definition, voice.accessibilityLanguage)}`}
+                </WholeLinesText>
               ))}
             </DetailSection>
           )}
@@ -146,13 +158,13 @@ export function IdiomCardBody({
           ))}
           {card.etymology === undefined ? null : (
             <DetailSection testID="idiom-etymology" title={strings.etymology}>
-              <Text
+              <WholeLinesText
                 accessibilityLabel={withoutStress(card.etymology)}
                 {...voice}
                 style={[typeStyle('idiomEtymology', tokens), { color: colors.ink }]}
               >
-                {card.etymology}
-              </Text>
+                {capitalised(card.etymology, voice.accessibilityLanguage)}
+              </WholeLinesText>
             </DetailSection>
           )}
           <IdiomSources sourceNames={card.sourceNames} />
@@ -163,7 +175,7 @@ export function IdiomCardBody({
 }
 
 /** What the selected tab of an Idiom card shows (ADR 0091). */
-function IdiomTabContent({ tab }: { tab: IdiomTab }) {
+function IdiomTabContent({ tab, sourceTab }: { tab: IdiomTab; sourceTab: boolean }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const sizes = useWordTextSizes();
@@ -175,48 +187,65 @@ function IdiomTabContent({ tab }: { tab: IdiomTab }) {
     case 'essence':
       return (
         <>
-          <Text
+          <WholeLinesText
             testID="idiom-definition"
             accessibilityLabel={withoutStress(tab.definition)}
             {...voice}
             {...turnActions}
-            style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
+            style={[
+              typeStyle('idiomEssence', tokens),
+              // «Суть» is larger than a Definition, and grows with it at the user's font size.
+              roleAt(
+                'idiomEssence',
+                (sizes.definition.fontSize * typeRoles.idiomEssence.size) /
+                  typeRoles.definition.size,
+              ),
+              { color: colors.ink },
+            ]}
           >
-            {tab.definition}
-          </Text>
+            {capitalised(tab.definition, voice.accessibilityLanguage)}
+          </WholeLinesText>
           {tab.meanings.map((meaning, index) => (
-            <Text
+            <WholeLinesText
               key={index}
               accessibilityLabel={withoutStress(`${String(index + 2)}. ${meaning}`)}
               {...voice}
               style={body}
             >
               {/* The primary Definition is the first; these number on from 2. */}
-              {`${String(index + 2)}. ${meaning}`}
-            </Text>
+              {`${String(index + 2)}. ${capitalised(meaning, voice.accessibilityLanguage)}`}
+            </WholeLinesText>
           ))}
-          <IdiomSources sourceNames={tab.sourceNames} />
+          {sourceTab ? null : <IdiomSources sourceNames={tab.sourceNames} />}
         </>
       );
     case 'origin':
       return (
-        <Text
+        <WholeLinesText
           testID="idiom-etymology"
           accessibilityLabel={withoutStress(tab.etymology)}
           {...voice}
           style={[typeStyle('idiomEtymology', tokens), { color: colors.ink }]}
         >
-          {tab.etymology}
-        </Text>
+          {capitalised(tab.etymology, voice.accessibilityLanguage)}
+        </WholeLinesText>
       );
     case 'example': {
       const [first, ...rest] = tab.examples;
       return (
         <>
-          {/* The first Example is the tab's large quote. */}
-          <ExampleText testID="idiom-example" example={first} size={sizes.definition} />
+          <View style={styles.quote}>
+            <ExampleMark testID="idiom-example-mark" />
+            {/* The first Example is the tab's large quote. */}
+            <ExampleText
+              testID="idiom-example"
+              example={first}
+              size={sizes.definition}
+              quoted={false}
+            />
+          </View>
           {rest.map((example, index) => (
-            <ExampleText key={index} example={example} size={sizes.example} />
+            <ExampleText key={index} example={example} size={sizes.example} quoted={false} />
           ))}
         </>
       );
@@ -230,13 +259,13 @@ function IdiomSources({ sourceNames }: { sourceNames: readonly string[] }) {
   const edition = useEdition();
   if (sourceNames.length === 0) return null;
   return (
-    <Text
+    <WholeLinesText
       testID="idiom-source"
       {...edition.voice}
       style={[typeStyle('meta', tokens), { color: tokens.colors.muted }]}
     >
       {fill(edition.strings.idiomCard.source, { source: sourceNames.join(SOURCE_SEPARATOR) })}
-    </Text>
+    </WholeLinesText>
   );
 }
 
@@ -245,6 +274,5 @@ const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
   header: { gap: space[2] },
-  chip: { flexDirection: 'row' },
-  underline: { textDecorationLine: 'underline' },
+  quote: { gap: exampleMark.gap },
 });

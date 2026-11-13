@@ -10,6 +10,7 @@ import {
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { testStrings } from '../test-strings';
+import { typeRoles } from '../tokens';
 
 const tiles: GridTile[] = [
   { id: 'nature', name: 'Nature' },
@@ -71,5 +72,27 @@ describe('CategoriesRail with a quiet Category', () => {
     await fireEvent.press(screen.getByLabelText('Military affairs'));
 
     expect(onOpen).toHaveBeenCalledWith('war');
+  });
+});
+
+describe('CategoriesRail with a long name', () => {
+  it('draws the name small enough for its widest word to fit the tile, never splitting it', async () => {
+    await renderRail('light');
+    const name = screen.getByTestId('dashboard-category-war-name');
+    const line = name.parent;
+    if (line === null) throw new Error('The name has no line around it');
+    await fireEvent(line, 'layout', { nativeEvent: { layout: { width: 101 } } });
+    // «Military» measured at full size: twice as wide as the tile has room for, less a point.
+    const measured = screen
+      .getAllByText(/Military/, { includeHiddenElements: true })
+      .find((text) => text !== name);
+    if (measured === undefined) throw new Error('The name is not measured');
+    await fireEvent(measured, 'textLayout', {
+      nativeEvent: { lines: [{ width: 200 }, { width: 120 }] },
+    });
+
+    expect(name).toHaveTextContent('Military affairs');
+    expect(name).toHaveStyle({ fontSize: typeRoles.categoryName.size / 2 });
+    expect(name).not.toHaveStyle({ opacity: 0 });
   });
 });

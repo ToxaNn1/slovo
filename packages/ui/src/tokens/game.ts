@@ -88,6 +88,20 @@ export const roundHeader = {
 } as const;
 
 /**
+ * A Quick Question's one card in the Feed (board f3): its corners, padding
+ * and the gap between its parts; the ink tag of its label (padding and
+ * slant); and its options' least height.
+ */
+export const quickQuestionCard = {
+  radius: 24,
+  paddingVertical: 22,
+  paddingHorizontal: 20,
+  gap: 16,
+  tag: { paddingVertical: 7, paddingHorizontal: 10, skew: '-10deg' },
+  optionMinHeight: 64,
+} as const;
+
+/**
  * A pick Round's option, board 07's answer tile (owner decision G6): its
  * least height, corners and side padding; how much an answered Round's other options fade, how far
  * a wrong choice drops and how a right one pops (`slPop`: its scale at the

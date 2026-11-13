@@ -1,8 +1,9 @@
 import type { CorrectionType } from '@slovo/contracts';
 import type { CorrectionTypeTile } from '@slovo/core';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 
 import { PressedTile } from '../primitives/PressedTile';
+import { WholeWordsText } from '../primitives/WholeWordsText';
 import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
@@ -13,7 +14,7 @@ import { RailHeader } from './RailHeader';
  * The Correction Types rail of the Dashboard (ADR 0076): «Виправлення» with
  * the count of tiles over a horizontal row that runs to the screen's edges,
  * one tile per Correction Type with live Corrections, each its type's name
- * under a red glyph. A tile opens its type's screen. Given `categories`, the
+ * under a red glyph, drawn small enough to fit the tile whole, never split. A tile opens its type's screen. Given `categories`, the
  * header reads their number instead and is a button that opens the grid of
  * the Categories of Corrections, k2 (spec #1604); without, a plain title.
  */
@@ -69,9 +70,13 @@ export function CorrectionTypesRail({
                   style={styles.glyph}
                 />
               )}
-              <Text {...voice} style={[typeStyle('correctionName', tokens), { color: colors.ink }]}>
-                {words.tiles[type]}
-              </Text>
+              <WholeWordsText
+                {...voice}
+                testID={`dashboard-correction-type-${type}-name`}
+                text={words.tiles[type]}
+                typeRole="correctionName"
+                style={[typeStyle('correctionName', tokens), { color: colors.ink }]}
+              />
             </PressedTile>
           );
         })}

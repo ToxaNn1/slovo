@@ -7,6 +7,7 @@ import { testStrings } from '../test-strings';
 
 const strings = testStrings({
   wordCard: {
+    tabSource: 'Source',
     reveal: 'Show the meaning',
     example: '{text}',
     exampleAuthor: '— {author}',
@@ -18,6 +19,7 @@ const strings = testStrings({
     heading: '{dominant}, synonym row: {members}',
     concealedHeading: '{dominant}, synonym row',
     source: 'Source: {source}',
+    page: 'Row · {page}/{pages}',
   },
   knowledge: { known: 'Known', unknown: 'Unknown' },
 });
@@ -47,22 +49,23 @@ function inEdition(children: React.ReactNode) {
 }
 
 describe('the Synonym Row card', () => {
-  it('shows the dominant with its chip, the meaning, the members with their shades, the example and the sources', async () => {
+  it('shows the dominant with its kicker, the meaning, the members with their shades, the example and the sources', async () => {
     await render(inEdition(<EntryCard card={card} />));
 
     expect(screen.getByTestId('synonymRow-card')).toBeTruthy();
-    expect(screen.getByTestId('synonym-row-dominant')).toHaveTextContent('wálk');
-    expect(screen.getByTestId('synonym-row-chip')).toHaveTextContent('synonyms');
+    expect(screen.getByTestId('synonym-row-dominant')).toHaveTextContent('Wálk');
+    expect(screen.getByTestId('synonym-row-kicker')).toHaveTextContent('synonyms');
+    expect(screen.queryByTestId('synonym-row-chip')).toBeNull();
     expect(screen.getByTestId('synonym-row-meaning')).toHaveTextContent('To move on foot.');
-    const members = screen.getAllByTestId(/^synonym-row-member-/);
+    const members = screen.getAllByTestId(/^synonym-row-member-\d+$/);
     expect(members.map((member) => member.props['testID'] as string)).toEqual([
       'synonym-row-member-0',
       'synonym-row-member-1',
       'synonym-row-member-2',
     ]);
-    expect(members[0]).toHaveTextContent('stróll slowly');
-    expect(members[1]).toHaveTextContent('limp lamely');
-    expect(members[2]).toHaveTextContent('trámp');
+    expect(members[0]).toHaveTextContent(/Slowly$/);
+    expect(members[1]).toHaveTextContent(/^Limp.*Lamely$/);
+    expect(members[2]).toHaveTextContent('Trámp');
     expect(screen.getByTestId('synonym-row-example')).toHaveTextContent(
       'They walked to the river.',
     );
@@ -99,7 +102,7 @@ describe('the Synonym Row card', () => {
     const plain = screen.getByTestId('synonym-row-member-1');
     expect(plain).not.toHaveProp('accessibilityRole', 'button');
     expect(screen.queryByRole('button', { name: /^limp/ })).toBeNull();
-    await fireEvent.press(within(plain).getByText(/^limp/));
+    await fireEvent.press(within(plain).getByText(/^Limp/));
 
     expect(onOpenWord).not.toHaveBeenCalled();
   });
@@ -116,16 +119,37 @@ describe('the Synonym Row card', () => {
     );
   });
 
-  it('lets the members wrap and never shrinks or cuts their text at the largest font size on the SE', async () => {
+  it('sets the members one per row, a hairline between, the shade note upright at the right', async () => {
+    await render(inEdition(<EntryCard card={card} />));
+
+    expect(screen.getByTestId('synonym-row-member-0')).toHaveStyle({ borderTopWidth: 0 });
+    expect(screen.getByTestId('synonym-row-member-1')).toHaveStyle({
+      borderTopWidth: 1,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    });
+    expect(screen.getByTestId('synonym-row-member-0-shade')).toHaveTextContent('Slowly');
+    expect(screen.getByTestId('synonym-row-member-0-shade')).toHaveStyle({
+      fontStyle: 'normal',
+      fontSize: 14,
+    });
+  });
+
+  it('draws the red bar under the dominant', async () => {
+    await render(inEdition(<EntryCard card={card} />));
+
+    expect(screen.getByTestId('synonym-row-rule')).toBeTruthy();
+  });
+
+  it('never shrinks or cuts their text at the largest font size on the SE', async () => {
     const window = Dimensions.get('window');
     Dimensions.set({ window: { width: 375, height: 667, scale: 2, fontScale: 3.12 } });
 
     try {
       await render(inEdition(<EntryCard card={card} />));
 
-      expect(screen.getByTestId('synonym-row-members')).toHaveStyle({ flexWrap: 'wrap' });
       for (const text of [
-        within(screen.getByTestId('synonym-row-member-0')).getByText(/^stro\u0301ll/),
+        within(screen.getByTestId('synonym-row-member-0')).getByText(/^Stro\u0301ll/),
         screen.getByTestId('synonym-row-meaning'),
       ]) {
         expect(text).not.toHaveProp('numberOfLines');
@@ -134,6 +158,89 @@ describe('the Synonym Row card', () => {
     } finally {
       Dimensions.set({ window });
     }
+  });
+  it('starts every text it shows with a capital, whatever case the content has (owner decision 11)', async () => {
+    const lowercase: SynonymRowFeedCard = {
+      ...card,
+      model: { ...model, meaning: 'to move on foot.', example: { text: 'they walked.' } },
+    };
+    await render(inEdition(<EntryCard card={lowercase} />));
+
+    expect(screen.getByTestId('synonym-row-dominant')).toHaveTextContent(/^W/);
+    expect(screen.getByTestId('synonym-row-meaning')).toHaveTextContent('To move on foot.');
+    const members = screen.getAllByTestId(/^synonym-row-member-\d+$/);
+    expect(members[0]).toHaveTextContent(/^Str.*Slowly$/);
+    expect(members[1]).toHaveTextContent(/^Limp.*Lamely$/);
+    expect(members[2]).toHaveTextContent(/^Tr/);
+    expect(screen.getByTestId('synonym-row-example')).toHaveTextContent(/They walked\./);
+  });
+});
+
+describe('the tabbed Synonym Row card (board XEntry2 e8)', () => {
+  const members = ['stroll', 'limp', 'tramp', 'pace', 'trudge', 'march'].map((text) => ({
+    text,
+    stressedVowels: [],
+    wordId: undefined,
+    shadeNote: undefined,
+  }));
+
+  async function renderTabbed(shown: SynonymRowCardModel) {
+    await render(inEdition(<EntryCard card={{ ...card, model: shown }} tabs />));
+  }
+
+  it('pages the members four at a time, the meaning on the first page, the example and sources on the last', async () => {
+    await renderTabbed({ ...model, members });
+
+    expect(
+      screen.getAllByRole('tab').map((tab) => tab.props['accessibilityLabel'] as string),
+    ).toEqual(['Row · 1/2', 'Row · 2/2']);
+    expect(screen.getByTestId('synonym-row-meaning')).toBeTruthy();
+    expect(screen.getAllByTestId(/^synonym-row-member-\d+$/)).toHaveLength(4);
+    expect(screen.queryByTestId('synonym-row-example')).toBeNull();
+
+    await fireEvent.press(screen.getByTestId('synonymRow-tab-page-2'));
+
+    expect(screen.queryByTestId('synonym-row-meaning')).toBeNull();
+    expect(
+      screen.getAllByTestId(/^synonym-row-member-\d+$/).map((m) => m.props['testID'] as string),
+    ).toEqual(['synonym-row-member-4', 'synonym-row-member-5']);
+    expect(screen.getByTestId('synonym-row-example')).toBeTruthy();
+    expect(screen.getByTestId('synonym-row-source')).toBeTruthy();
+  });
+
+  it('with the Source tab, names the sources in a last tab after the pages, not on the last page', async () => {
+    await render(
+      inEdition(<EntryCard card={{ ...card, model: { ...model, members } }} tabs sourceTab />),
+    );
+
+    expect(
+      screen.getAllByRole('tab').map((tab) => tab.props['accessibilityLabel'] as string),
+    ).toEqual(['Row · 1/2', 'Row · 2/2', 'Source']);
+
+    await fireEvent.press(screen.getByTestId('synonymRow-tab-page-2'));
+
+    expect(screen.getByTestId('synonym-row-example')).toBeTruthy();
+    expect(screen.queryByTestId('synonym-row-source')).toBeNull();
+
+    await fireEvent.press(screen.getByTestId('synonymRow-tab-source'));
+
+    expect(screen.getByTestId('synonymRow-source-0')).toHaveTextContent(
+      'A dictionary of synonyms',
+      {
+        exact: true,
+      },
+    );
+    expect(screen.getByTestId('synonymRow-source-1')).toHaveTextContent('A style guide', {
+      exact: true,
+    });
+  });
+
+  it('draws no tab bar for a row of four members or fewer', async () => {
+    await renderTabbed(model);
+
+    expect(screen.queryAllByRole('tab')).toEqual([]);
+    expect(screen.getAllByTestId(/^synonym-row-member-\d+$/)).toHaveLength(3);
+    expect(screen.getByTestId('synonym-row-example')).toBeTruthy();
   });
 });
 
@@ -158,7 +265,7 @@ describe('Self-check on a Synonym Row card', () => {
     );
 
     expect(screen.getByRole('header', { name: 'walk, synonym row' })).toBeTruthy();
-    expect(screen.getByTestId('synonym-row-dominant')).toHaveTextContent('wálk');
+    expect(screen.getByTestId('synonym-row-dominant')).toHaveTextContent('Wálk');
     for (const concealed of [
       'synonym-row-meaning',
       'synonym-row-members',
@@ -173,7 +280,7 @@ describe('Self-check on a Synonym Row card', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
 
     expect(screen.getByTestId('synonym-row-meaning')).toHaveTextContent('To move on foot.');
-    expect(screen.getAllByTestId(/^synonym-row-member-/)).toHaveLength(3);
+    expect(screen.getAllByTestId(/^synonym-row-member-\d+$/)).toHaveLength(3);
     expect(screen.queryByRole('button', { name: 'Show the meaning' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: false }));
     expect(onMark).toHaveBeenCalledWith('known');

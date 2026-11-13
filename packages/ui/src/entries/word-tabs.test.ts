@@ -1,5 +1,10 @@
-import type { IdiomCardModel, WordCardModel } from '@slovo/core';
-import { etymologyParagraphs, idiomTabsOf, wordTabsOf } from '@slovo/ui/word-tabs';
+import type { IdiomCardModel, SynonymRowCardModel, WordCardModel } from '@slovo/core';
+import {
+  etymologyParagraphs,
+  idiomTabsOf,
+  synonymRowPagesOf,
+  wordTabsOf,
+} from '@slovo/ui/word-tabs';
 import { describe, expect, it } from 'vitest';
 
 const bare: WordCardModel = {
@@ -21,6 +26,7 @@ const bare: WordCardModel = {
   details: undefined,
   linkedCorrections: [],
   synonymRow: undefined,
+  sourceNames: [],
 };
 
 const full: WordCardModel = {
@@ -119,6 +125,46 @@ describe('idiomTabsOf', () => {
 
   it('leaves out origin and example when the Idiom has no origin and no Example', () => {
     expect(idiomTabsOf(bareIdiom).map(({ key }) => key)).toEqual(['essence']);
+  });
+});
+
+function row(count: number): SynonymRowCardModel {
+  return {
+    kind: 'synonymRow',
+    synonymRowId: 'r1',
+    dominant: { text: 'walk', stressedVowels: [], wordId: undefined },
+    meaning: 'To move on foot.',
+    members: Array.from({ length: count }, (_, index) => ({
+      text: `m${String(index)}`,
+      stressedVowels: [],
+      wordId: undefined,
+      shadeNote: undefined,
+    })),
+    example: undefined,
+    sourceNames: [],
+  };
+}
+
+describe('synonymRowPagesOf', () => {
+  it('splits the members into pages of four in the row order, numbered of the whole', () => {
+    const pages = synonymRowPagesOf(row(6));
+
+    expect(pages.map(({ key, number, pages: of }) => [key, number, of])).toEqual([
+      ['page-1', 1, 2],
+      ['page-2', 2, 2],
+    ]);
+    expect(pages.map(({ members }) => members.map(({ text }) => text))).toEqual([
+      ['m0', 'm1', 'm2', 'm3'],
+      ['m4', 'm5'],
+    ]);
+    expect(pages.map(({ firstIndex }) => firstIndex)).toEqual([0, 4]);
+  });
+
+  it('keeps four members or fewer on one page', () => {
+    expect(synonymRowPagesOf(row(4))).toHaveLength(1);
+    expect(synonymRowPagesOf(row(0))).toEqual([
+      { key: 'page-1', number: 1, pages: 1, members: [], firstIndex: 0 },
+    ]);
   });
 });
 

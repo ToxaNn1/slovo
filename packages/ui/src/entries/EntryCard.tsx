@@ -72,6 +72,17 @@ export interface EntryCardProps {
    * card with its kicker.
    */
   tabs?: boolean | undefined;
+  /**
+   * The tabbed card's last tab «Джерело» names the Entry's sources, which
+   * leave its other tabs, while the Edition's `sourceTab` is on in effect
+   * (ADR 0116). Only a tabbed card has it.
+   */
+  sourceTab?: boolean | undefined;
+  /**
+   * A tabbed Tip card with exceptions gets the tab «Винятки», while the
+   * Edition's `tipExceptions` is on in effect (ADR 0120).
+   */
+  tipExceptions?: boolean | undefined;
   /** A Word card's kicker, such as its place in a Category's Feed (ADR 0110); none in the Feed. */
   kicker?: string | undefined;
 }
@@ -102,6 +113,14 @@ const SPACING = {
   tip: { top: space[8], side: wordCardSide, bottom: wordCardSide, gap: blockGap },
 } as const;
 
+/** The padding and the space between blocks of a tabbed card, whatever its kind (board XEntry2). */
+const TABBED_SPACING = {
+  top: entryCardFrame.padding.top,
+  side: entryCardFrame.padding.side,
+  bottom: entryCardFrame.padding.bottom,
+  gap: entryCardFrame.gap,
+} as const;
+
 /**
  * The Entry card: a Word's, a Correction's, an Idiom's, a Synonym Row's or a Tip's card in the one card frame, at
  * the user's font size, with the compact layout on narrow screens, the Decor
@@ -123,6 +142,8 @@ export function EntryCard({
   stressFalls = false,
   wordOfTheDayFont,
   tabs = false,
+  sourceTab = false,
+  tipExceptions = false,
   kicker,
 }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
@@ -137,6 +158,8 @@ export function EntryCard({
       stressFalls={stressFalls}
       wordOfTheDayFont={wordOfTheDayFont}
       tabs={tabs}
+      sourceTab={sourceTab}
+      tipExceptions={tipExceptions}
       kicker={kicker}
       concealed={concealed}
       reveal={reveal}
@@ -166,6 +189,8 @@ function EntryCardFace({
   stressFalls = false,
   wordOfTheDayFont,
   tabs = false,
+  sourceTab = false,
+  tipExceptions = false,
   kicker,
   concealed,
   reveal,
@@ -175,7 +200,9 @@ function EntryCardFace({
   const lemmaSize = useLemmaSize();
   const compact = useCompactLayout();
   const padding = compact ? compactCardPadding : 1;
-  const spacing = SPACING[card.kind];
+  // The tabbed card takes the board's frame for every kind (XEntry2), the one-column card its kind's spacing.
+  const framed = fixedFrame(card, tabs, concealed);
+  const spacing = framed ? TABBED_SPACING : SPACING[card.kind];
   // A Word's raised tiles stand under its card; the icons of the other kinds sit in theirs (XActions a10).
   const actionsOf = (kind: typeof card.kind) =>
     slots?.slot === 'actions' && (
@@ -196,7 +223,7 @@ function EntryCardFace({
 
   // The Word of the Day is the red shout card, which draws its own reveal button;
   // with tabs, only while it is closed, and once open it is the tabbed card (board p1).
-  if (card.kind === 'word' && card.wordOfTheDay !== undefined && !fixedFrame(card, tabs, concealed))
+  if (card.kind === 'word' && card.wordOfTheDay !== undefined && !framed)
     return (
       <EntryReveal>
         <RevealFrame testID="word-card" style={styles.hero}>
@@ -229,7 +256,7 @@ function EntryCardFace({
           { borderColor: colors.line },
           // The tabbed card takes the page's height, whatever its tab holds (ADR 0091),
           // outlined in ink over the red offset shadow of board p1.
-          fixedFrame(card, tabs, concealed) && [
+          framed && [
             styles.fixed,
             {
               borderColor: colors.ink,
@@ -245,7 +272,7 @@ function EntryCardFace({
           ],
           {
             backgroundColor: colors.surface,
-            borderRadius: radii.card,
+            borderRadius: framed ? entryCardFrame.radius : radii.card,
             paddingTop: spacing.top * padding,
             paddingHorizontal: spacing.side * padding,
             paddingBottom: spacing.bottom * padding,
@@ -272,6 +299,7 @@ function EntryCardFace({
             wordOfTheDayFont={wordOfTheDayFont}
             corner={bodyCorner}
             tabs={tabs}
+            sourceTab={sourceTab}
             kicker={kicker}
           />
         ) : card.kind === 'correction' ? (
@@ -281,6 +309,7 @@ function EntryCardFace({
             concealed={concealed}
             corner={bodyCorner}
             tabs={tabs}
+            sourceTab={sourceTab}
           />
         ) : card.kind === 'idiom' ? (
           <IdiomCardBody
@@ -289,6 +318,7 @@ function EntryCardFace({
             concealed={concealed}
             corner={bodyCorner}
             tabs={tabs}
+            sourceTab={sourceTab}
           />
         ) : card.kind === 'synonymRow' ? (
           <SynonymRowCardBody
@@ -298,6 +328,7 @@ function EntryCardFace({
             onOpenWord={onOpenWord}
             corner={bodyCorner}
             tabs={tabs}
+            sourceTab={sourceTab}
           />
         ) : (
           <TipCardBody
@@ -306,6 +337,8 @@ function EntryCardFace({
             concealed={concealed}
             corner={bodyCorner}
             tabs={tabs}
+            sourceTab={sourceTab}
+            exceptionsTab={tipExceptions}
           />
         )}
         {concealed && (

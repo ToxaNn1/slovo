@@ -1,30 +1,16 @@
-'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
-
 import type { FontSize } from '@slovo/contracts';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
 import { FontSizeProvider, useWordTextSizes } from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
+import { PagerScrollView } from '../primitives/VerticalPager';
 import { Wedge } from '../primitives/Wedge';
-import {
-  blockGap,
-  entryCardFrame,
-  minTouchTarget,
-  motion,
-  space,
-  typeStyle,
-  wedges,
-} from '../tokens';
+import { useDrawnLines, WholeLinesText, WholeLinesView } from '../primitives/WholeLines';
+import { wholeLinesCut } from '../primitives/whole-lines-cut';
+import { blockGap, entryCardFrame, minTouchTarget, typeStyle, wedges } from '../tokens';
+import { capitalised } from './capitalised';
 
 /** The smallest font size content too tall for the card shrinks to (ADR 0091). */
 const FLOOR = 'S' satisfies FontSize;
@@ -43,21 +29,22 @@ const SMALLER: Readonly<Record<Exclude<FontSize, typeof FLOOR>, FontSize>> = {
  */
 type Fit = FontSize | 'clamped';
 
-/** How the room grows to a clamped tab's whole height once «Детальніше» is tapped. */
-const growEasing = Easing.bezier(...motion.collapse.easing);
-
 /**
  * An Entry card's tabs under its head (ADR 0091): the selected tab's content
  * in a `FitPanel`, and at the card's foot a `tablist` of `tab`s by their
  * names, a red slanted mark over the selected one (board p1), the first
  * selected on opening. A card with one tab draws no tab bar. Nothing moves between
  * tabs, so Reduce Motion has nothing to stop. Under Self-check the tabs are
- * there but disabled, and the panel shows nothing, until the reveal.
+ * there but disabled, and the panel shows nothing, until the reveal. Given
+ * `sources` (while `sourceTab` is on) that are not empty, the last tab is
+ * «Джерело», naming each source on its own line, `<testID>-source-<n>`
+ * (ADR 0116).
  */
 export function CardTabs<Tab extends { readonly key: string }>({
   testID,
-  tabs,
+  tabs: ownTabs,
   nameOf,
+  sources = [],
   disabled = false,
   children,
 }: {
@@ -66,6 +53,8 @@ export function CardTabs<Tab extends { readonly key: string }>({
   tabs: readonly [Tab, ...Tab[]];
   /** The tab's name from the Edition's strings. */
   nameOf: (tab: Tab) => string;
+  /** The names of the Entry's sources for the last tab «Джерело», given only while `sourceTab` is on (ADR 0116). */
+  sources?: readonly string[] | undefined;
   /** Self-check conceals the card: the tabs take no tap and the panel stays empty. */
   disabled?: boolean;
   /** What the selected tab shows. */
@@ -73,13 +62,35 @@ export function CardTabs<Tab extends { readonly key: string }>({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { voice } = useEdition();
+  const { voice, strings } = useEdition();
+  const [first, ...rest] = ownTabs;
+  const tabs: readonly [CardTab<Tab>, ...CardTab<Tab>[]] = [
+    { key: first.key, own: first },
+    ...rest.map((tab) => ({ key: tab.key, own: tab })),
+    ...(sources.length === 0 ? [] : [SOURCE_TAB]),
+  ];
   const [selectedKey, setSelectedKey] = useState(tabs[0].key);
   const selected = tabs.find((tab) => tab.key === selectedKey) ?? tabs[0];
+  const nameOfTab = (tab: CardTab<Tab>) =>
+    tab.own === undefined ? strings.wordCard.tabSource : nameOf(tab.own);
   return (
     <View style={styles.tabs}>
-      <FitPanel testID={testID} fitKey={selected.key}>
-        {disabled ? null : children(selected)}
+      {/* Another tab starts afresh: at the user's font size, not opened. */}
+      <FitPanel key={selected.key} testID={testID} fitKey={selected.key}>
+        {disabled
+          ? null
+          : selected.own === undefined
+            ? sources.map((source, index) => (
+                <WholeLinesText
+                  key={index}
+                  testID={`${testID}-source-${String(index)}`}
+                  {...voice}
+                  style={[typeStyle('meta', tokens), { color: colors.muted }]}
+                >
+                  {capitalised(source, voice.accessibilityLanguage)}
+                </WholeLinesText>
+              ))
+            : children(selected.own)}
       </FitPanel>
       {tabs.length === 1 ? null : (
         <View accessibilityRole="tablist" style={[styles.bar, { borderTopColor: colors.line }]}>
@@ -92,7 +103,7 @@ export function CardTabs<Tab extends { readonly key: string }>({
                 accessibilityRole="tab"
                 accessibilityState={{ selected: on, disabled }}
                 disabled={disabled}
-                accessibilityLabel={nameOf(tab)}
+                accessibilityLabel={nameOfTab(tab)}
                 {...voice}
                 onPress={() => {
                   setSelectedKey(tab.key);
@@ -111,11 +122,13 @@ export function CardTabs<Tab extends { readonly key: string }>({
                 )}
                 <Text
                   style={[
-                    typeStyle('chipLabel', tokens),
-                    { color: on && !disabled ? colors.ink : colors.muted },
+                    on && !disabled
+                      ? [typeStyle('cardTabSelected', tokens), { color: colors.ink }]
+                      : [typeStyle('cardTab', tokens), { color: colors.muted }],
+                    styles.name,
                   ]}
                 >
-                  {nameOf(tab)}
+                  {nameOfTab(tab)}
                 </Text>
               </Pressable>
             );
@@ -126,22 +139,32 @@ export function CardTabs<Tab extends { readonly key: string }>({
   );
 }
 
+/** One of the card's tabs: the kind's `own`, or with none the «Джерело» tab (ADR 0116). */
+type CardTab<Tab> = { readonly key: string; readonly own: Tab } | typeof SOURCE_TAB;
+
+/** The «Джерело» tab, which a kind's own tab keys never take. */
+const SOURCE_TAB = { key: 'source', own: undefined } as const;
+
 /**
  * Content that fills the rest of an Entry card's fixed frame (ADR 0091):
  * content too tall for it takes the font size a step smaller at a time down
  * to the floor, S, and content too tall even there stays at S, clamped to the
- * frame, with «Детальніше» under it. A tap on it grows the room to the whole
- * content, smoothly unless Reduce Motion is on, and the card grows with it,
- * so the page scrolls over the card; «Сховати» under the opened content clamps
- * it to the frame again at once. The card measures the
+ * frame at whole lines, never through one, with «Детальніше» a little under
+ * the last line shown (`entryCardFrame.moreGap`), inside the room: every `WholeLinesText` and `useWholeBlock` in it reports
+ * its lines, and the clip ends under the lowest that fits above the link
+ * (`wholeLinesCut`). A tap on it opens the whole content in a
+ * scroll inside the room, so the card keeps its frame and only the card
+ * scrolls, never the page (ADR 0113); «Сховати» takes «Детальніше»'s place
+ * in the room under the scroll, which fills the rest of the room, and clamps
+ * the content to the frame again at once. The card measures the
  * drawn height against the room once both are laid out, on the render after
  * they arrive, so two heights reported in one layout pass are both read. Each
  * size draws its content in a new view, which the device always lays out and
  * reports, even when the smaller size leaves the height as it was (text in a
  * fixed type role). A new `fitKey` (another tab) or font size starts at the
  * user's font size again, clamped. Its parts are `<testID>-tab-panel`,
- * `<testID>-tab-content` and, while clamped, `<testID>-tab-more`, or once
- * opened, `<testID>-tab-less`.
+ * `<testID>-tab-content` and, while clamped, `<testID>-tab-clip` and `<testID>-tab-more`, or once
+ * opened, `<testID>-tab-scroll` and `<testID>-tab-less`.
  */
 export function FitPanel({
   testID,
@@ -155,7 +178,6 @@ export function FitPanel({
 }) {
   const tokens = useTokens();
   const { strings, voice } = useEdition();
-  const reduceMotion = useReduceMotion();
   const { step } = useWordTextSizes();
   const [fit, setFit] = useState<{ key: string; step: FontSize; fit: Fit }>({
     key: fitKey,
@@ -174,88 +196,112 @@ export function FitPanel({
   // «Детальніше» opens the tab at the size it was tapped on, until «Сховати», another tab or font size.
   const [openAt, setOpenAt] = useState<string | undefined>(undefined);
   const open = fitNow === 'clamped' && openAt === drawnAt;
-  const height = useSharedValue(0);
-  // A style key once set stays until it is set again, so a closed room sets its least height back to 0.
-  const grown = useAnimatedStyle(() => ({ minHeight: open ? height.value : 0 }));
+  const clamped = fitNow === 'clamped' && !open;
+  // Clamped content shows whole lines only, «Детальніше» right under the last of them.
+  const { lines, report } = useDrawnLines();
+  const [linkHeight, setLinkHeight] = useState(0);
+  const cut =
+    room === undefined
+      ? undefined
+      : wholeLinesCut(room - linkHeight - entryCardFrame.moreGap, lines);
+  const content = (
+    <WholeLinesView
+      key={drawnAt}
+      report={report}
+      testID={`${testID}-tab-content`}
+      style={open ? styles.content : [styles.content, styles.overlay]}
+      onLayout={({ nativeEvent }) => {
+        setDrawn({ at: drawnAt, height: nativeEvent.layout.height });
+      }}
+    >
+      <FontSizeProvider fontSize={fitNow === 'clamped' ? FLOOR : fitNow}>
+        {children}
+      </FontSizeProvider>
+    </WholeLinesView>
+  );
+  // «Детальніше» and «Сховати» take only their line in the room, their touch target reaching past it.
+  const link = (name: 'more' | 'less', expanded: boolean, onPress: () => void) => (
+    <Pressable
+      testID={`${testID}-tab-${name}`}
+      accessibilityRole="button"
+      accessibilityState={{ expanded }}
+      {...voice}
+      hitSlop={{
+        top: Math.max(0, (minTouchTarget - linkHeight) / 2),
+        bottom: Math.max(0, (minTouchTarget - linkHeight) / 2),
+      }}
+      onLayout={({ nativeEvent }) => {
+        setLinkHeight(nativeEvent.layout.height);
+      }}
+      onPress={onPress}
+      style={styles.link}
+    >
+      <Text style={[typeStyle('textLink', tokens), { color: tokens.colors.accentText }]}>
+        {expanded ? strings.wordCard.tabLess : strings.wordCard.tabMore}
+      </Text>
+    </Pressable>
+  );
   return (
-    <>
-      <Animated.View
-        testID={`${testID}-tab-panel`}
-        style={[styles.room, grown]}
-        onLayout={({ nativeEvent }) => {
-          setRoom(nativeEvent.layout.height);
-        }}
-      >
-        <View
-          key={drawnAt}
-          testID={`${testID}-tab-content`}
-          style={[styles.content, styles.overlay]}
-          onLayout={({ nativeEvent }) => {
-            setDrawn({ at: drawnAt, height: nativeEvent.layout.height });
-          }}
-        >
-          <FontSizeProvider fontSize={fitNow === 'clamped' ? FLOOR : fitNow}>
-            {children}
-          </FontSizeProvider>
-        </View>
-      </Animated.View>
-      {fitNow === 'clamped' && !open && (
-        <Pressable
-          testID={`${testID}-tab-more`}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: false }}
-          {...voice}
-          onPress={() => {
-            const whole = drawn?.at === drawnAt ? drawn.height : (room ?? 0);
-            height.value = room ?? 0;
-            height.value = reduceMotion
-              ? whole
-              : withTiming(whole, { duration: motion.collapse.duration, easing: growEasing });
-            setOpenAt(drawnAt);
-          }}
-          style={styles.more}
-        >
-          <Text style={[typeStyle('textLink', tokens), { color: tokens.colors.accentText }]}>
-            {strings.wordCard.tabMore}
-          </Text>
-        </Pressable>
-      )}
-      {open && (
-        <Pressable
-          testID={`${testID}-tab-less`}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: true }}
-          {...voice}
-          onPress={() => {
+    <View
+      testID={`${testID}-tab-panel`}
+      style={fitNow === 'clamped' ? [styles.room, styles.linkRoom] : styles.room}
+      onLayout={({ nativeEvent }) => {
+        setRoom(nativeEvent.layout.height);
+      }}
+    >
+      {/* Only the card scrolls: the opened tab scrolls in the room, which keeps the frame's height
+          (ADR 0113); in the Feed a swipe scrolls it and turns the page at its ends. «Сховати» takes
+          «Детальніше»'s place under it, so the scroll fills the room down to the link (owner 13.11). */}
+      {open ? (
+        <>
+          <PagerScrollView testID={`${testID}-tab-scroll`}>{content}</PagerScrollView>
+          {link('less', true, () => {
             setOpenAt(undefined);
-          }}
-          style={styles.more}
-        >
-          <Text style={[typeStyle('textLink', tokens), { color: tokens.colors.accentText }]}>
-            {strings.wordCard.tabLess}
-          </Text>
-        </Pressable>
+          })}
+        </>
+      ) : clamped ? (
+        <>
+          <View testID={`${testID}-tab-clip`} style={[styles.clip, { height: cut }]}>
+            {content}
+          </View>
+          {link('more', false, () => {
+            setOpenAt(drawnAt);
+          })}
+        </>
+      ) : (
+        content
       )}
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   // The tabs fill what the head leaves of the card's frame.
   tabs: { flexGrow: 1, gap: blockGap },
-  // The tabs stand packed from the left, under a hairline (owner 08.11).
-  bar: { flexDirection: 'row', borderTopWidth: 1, gap: space[6] },
-  tab: { minHeight: minTouchTarget, justifyContent: 'center' },
-  // The mark lies over the hairline and reaches past the tab's name on both sides.
+  // The tabs share the bar's width in equal columns under its line (board XEntry2, owner 13.11).
+  bar: { flexDirection: 'row', borderTopWidth: entryCardFrame.tabBar.line },
+  tab: {
+    flex: 1,
+    height: entryCardFrame.tabBar.height,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  name: { textAlign: 'center' },
+  // The mark lies over the line, over the middle of its column.
   mark: {
     position: 'absolute',
-    top: -1,
-    left: -entryCardFrame.tabMark.overhang,
-    right: -entryCardFrame.tabMark.overhang,
+    top: entryCardFrame.tabMark.top,
+    left: entryCardFrame.tabMark.inset,
+    right: entryCardFrame.tabMark.inset,
   },
   room: { flexGrow: 1, flexBasis: 0, overflow: 'hidden' },
-  content: { gap: blockGap },
-  more: { minHeight: minTouchTarget, justifyContent: 'center', alignSelf: 'flex-start' },
+  // Clamped or opened, the clip or the scroll cuts the content, and the link's touch target may
+  // reach out of the room.
+  linkRoom: { overflow: 'visible' },
+  clip: { overflow: 'hidden' },
+  // A little air between the last whole line, or the scroll, and the link, both in the room (owner 13.11).
+  link: { alignSelf: 'flex-start', marginTop: entryCardFrame.moreGap },
+  content: { gap: entryCardFrame.panelGap },
   // While it fits, the content takes no room of its own, so the frame keeps its height.
   overlay: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

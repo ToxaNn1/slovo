@@ -1,30 +1,39 @@
 import type { ReactNode } from 'react';
 import { selfCheckTipCard, withoutStress, type TipCardModel } from '@slovo/core';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { WholeLinesText } from '../primitives/WholeLines';
+import { WholeWordsText } from '../primitives/WholeWordsText';
+import { EntryKicker } from './EntryKicker';
 import { KickerRow } from './KickerRow';
+import { LinkChips } from './LinkChips';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { useLemmaSize, useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
-import { LabelChip } from '../primitives/LabelChip';
-import { space, typeStyle } from '../tokens';
+import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
+import { Wedge } from '../primitives/Wedge';
+import { entryCardFrame, space, typeStyle, wedges } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { NonStandardForm, StandardForm } from './CorrectionCard';
 import { ExampleText } from './WordCard';
+import { capitalised } from './capitalised';
 import { CardTabs } from './CardTabs';
 import { tipTabsOf, type TipTab } from './tip-tabs';
 
 /**
- * The Tip card's blocks inside the Entry card's frame: the title, the rule in
- * a few words, with the chip «порада», the non-standard form under «Так часто
- * кажуть» when the Tip has one, the standard form under «Українською краще»,
- * both drawn as on a Correction card, the explanation, the Example and, when
- * the Tip has sources, a line naming them. A Tip with no non-standard form
- * shows only the right way. VoiceOver reads the title as «Порада: …», then
- * each form with its label. Under Self-check it keeps the title, its chip and
- * the non-standard form (ADR 0051); the Entry card draws the button that
- * reveals the rest under them. While `wordTabs` is on, the rest sits in the
- * Entry card's tabs, «Суть» and «Приклад» (ADR 0091).
+ * The Tip card's blocks inside the Entry card's frame (board XEntry2 e9): the
+ * red kicker «ПОРАДА», the title, the rule in a few words, over the red bar,
+ * the non-standard form under «Так часто кажуть» when the Tip has one (kept
+ * though the board has none, owner 13.11), then the rest. Without tabs the
+ * rest is the standard form under «Українською краще», drawn as on a
+ * Correction card, the explanation, the Example and the source line. With
+ * `tabs` it is the one tab «Правило» (ADR 0091), so no tab bar: the
+ * explanation, the standard form and the Example's text in chips, and the
+ * source line; with `sourceTab` the sources leave it for a last tab «Джерело»
+ * (ADR 0116), and with `exceptionsTab` a Tip with exceptions gets «Винятки»
+ * after it, their text and words in chips (ADR 0120). VoiceOver reads the title as «Порада: …», then each form with
+ * its label. Under Self-check it keeps the kicker, the title and the
+ * non-standard form (ADR 0051); the Entry card draws the button that reveals
+ * the rest under them.
  */
 export function TipCardBody({
   card,
@@ -32,16 +41,22 @@ export function TipCardBody({
   concealed,
   corner,
   tabs,
+  sourceTab,
+  exceptionsTab,
 }: {
   card: TipCardModel;
   /** The Lemma's size at the user's font size, a share of which the standard form takes. */
   lemmaSize: TextSize;
-  /** Self-check: only the title, its chip and the non-standard form. */
+  /** Self-check: only the kicker, the title and the non-standard form. */
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The rest under the title in tabs, «Суть» and «Приклад», while `wordTabs` is on (ADR 0091). */
+  /** The rest under the title in the tab «Правило», while `wordTabs` is on (ADR 0091). */
   tabs: boolean;
+  /** The last tab «Джерело» with the sources, which leave the tab «Правило», while `sourceTab` is on (ADR 0116). */
+  sourceTab: boolean;
+  /** The tab «Винятки» of a Tip with exceptions, while `tipExceptions` is on (ADR 0120). */
+  exceptionsTab: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -56,7 +71,9 @@ export function TipCardBody({
 
   return (
     <>
-      <KickerRow testID="tip-kicker-row" corner={corner} />
+      <KickerRow testID="tip-kicker-row" corner={corner}>
+        <EntryKicker testID="tip-kicker" label={strings.chip} />
+      </KickerRow>
       <View
         accessible
         accessibilityRole="header"
@@ -65,17 +82,20 @@ export function TipCardBody({
         {...turnActions}
         style={styles.header}
       >
-        <Text testID="tip-title" style={[typeStyle('tipTitle', tokens), { color: colors.ink }]}>
-          {card.title}
-        </Text>
-        <View style={styles.chip}>
-          <LabelChip
-            testID="tip-chip"
-            text={strings.chip}
-            accessibilityLabel={strings.chip}
-            size="tight"
-          />
-        </View>
+        <WholeWordsText
+          testID="tip-title"
+          text={capitalised(card.title, voice.accessibilityLanguage)}
+          typeRole="tipTitle"
+          lines={3}
+          style={[typeStyle('tipTitle', tokens), { color: colors.ink }]}
+        />
+        <Wedge
+          testID="tip-rule"
+          points={wedges.slant}
+          color={colors.accent}
+          width={entryCardFrame.rule.width}
+          height={entryCardFrame.rule.height}
+        />
       </View>
       {nonStandardForm === undefined ? null : (
         <NonStandardForm
@@ -87,11 +107,12 @@ export function TipCardBody({
       {tabs ? (
         <CardTabs
           testID="tip"
-          tabs={tipTabsOf(card)}
-          nameOf={({ key }) => edition.strings.wordCard.tabs[key]}
+          tabs={tipTabsOf(card, { exceptions: exceptionsTab })}
+          sources={sourceTab ? card.sourceNames : undefined}
+          nameOf={({ key }) => strings.tabs[key]}
           disabled={shown.concealed}
         >
-          {(tab) => <TipTabContent tab={tab} />}
+          {(tab) => <TipRule tab={tab} sourceLine={!sourceTab} />}
         </CardTabs>
       ) : shown.concealed ? null : (
         <>
@@ -110,20 +131,32 @@ export function TipCardBody({
   );
 }
 
-/** What the selected tab of a Tip shows, at the font size its frame gives (ADR 0091). */
-function TipTabContent({ tab }: { tab: TipTab }) {
-  const sizes = useWordTextSizes();
-  const lemmaSize = useLemmaSize();
-  return tab.key === 'essence' ? (
-    <TipEssence
-      standardForm={tab.standardForm}
-      explanation={tab.explanation}
-      sourceNames={tab.sourceNames}
-      size={lemmaSize}
-    />
-  ) : (
-    // The Example is the tab's large quote, as on a Word's «Приклад».
-    <ExampleText testID="tip-example" example={tab.example} size={sizes.definition} />
+/**
+ * A tab of board e9: «Правило», the explanation, the standard form and the
+ * Example's text in chips, and the source line unless the sources have
+ * their own tab «Джерело»; «Винятки» the same way, its text and its words in
+ * chips, with no source line.
+ */
+function TipRule({ tab, sourceLine }: { tab: TipTab; sourceLine: boolean }) {
+  const tokens = useTokens();
+  const { voice } = useEdition();
+  return (
+    <>
+      <WholeLinesText
+        testID={tab.key === 'rule' ? 'tip-explanation' : 'tip-exceptions'}
+        accessibilityLabel={withoutStress(tab.explanation)}
+        {...voice}
+        style={[typeStyle('tipRule', tokens), { color: tokens.colors.ink }]}
+      >
+        {capitalised(tab.explanation, voice.accessibilityLanguage)}
+      </WholeLinesText>
+      <LinkChips
+        testID={tab.key === 'rule' ? 'tip-word' : 'tip-exception-word'}
+        words={tab.chips}
+        byIndex
+      />
+      {tab.key === 'rule' && sourceLine ? <TipSource sourceNames={tab.sourceNames} /> : null}
+    </>
   );
 }
 
@@ -144,8 +177,7 @@ function TipEssence({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const edition = useEdition();
-  const { voice } = edition;
+  const { voice } = useEdition();
   return (
     <>
       <StandardForm
@@ -154,26 +186,33 @@ function TipEssence({
         spoken={withoutStress(standardForm)}
         size={size}
       />
-      <Text
+      <WholeLinesText
         testID="tip-explanation"
         accessibilityLabel={withoutStress(explanation)}
         {...voice}
         style={[typeStyle('explanation', tokens), { color: colors.ink }]}
       >
-        {explanation}
-      </Text>
-      {sourceNames.length === 0 ? null : (
-        <Text
-          testID="tip-source"
-          {...voice}
-          style={[typeStyle('meta', tokens), { color: colors.muted }]}
-        >
-          {fill(edition.strings.correctionCard.source, {
-            source: sourceNames.join(SOURCE_SEPARATOR),
-          })}
-        </Text>
-      )}
+        {capitalised(explanation, voice.accessibilityLanguage)}
+      </WholeLinesText>
+      <TipSource sourceNames={sourceNames} />
     </>
+  );
+}
+
+/** The line naming a Tip's sources, or nothing when it has none. */
+function TipSource({ sourceNames }: { sourceNames: readonly string[] }) {
+  const tokens = useTokens();
+  const edition = useEdition();
+  return sourceNames.length === 0 ? null : (
+    <WholeLinesText
+      testID="tip-source"
+      {...edition.voice}
+      style={[typeStyle('meta', tokens), { color: tokens.colors.muted }]}
+    >
+      {fill(edition.strings.correctionCard.source, {
+        source: sourceNames.join(SOURCE_SEPARATOR),
+      })}
+    </WholeLinesText>
   );
 }
 
@@ -182,5 +221,4 @@ const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
   header: { gap: space[2] },
-  chip: { flexDirection: 'row' },
 });

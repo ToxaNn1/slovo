@@ -1,4 +1,10 @@
-import type { Example, IdiomCardModel, WordCardModel } from '@slovo/core';
+import type {
+  Example,
+  IdiomCardModel,
+  SynonymRowCardModel,
+  SynonymRowMemberModel,
+  WordCardModel,
+} from '@slovo/core';
 
 /**
  * One tab of a Word's Entry card (ADR 0091), with what it shows: «Суть» the
@@ -146,4 +152,42 @@ export function idiomTabsOf(card: IdiomCardModel): readonly [IdiomTab, ...IdiomT
     },
     ...tabs,
   ];
+}
+
+/**
+ * One page of a Synonym Row's Entry card (ADR 0114), a tab «Ряд · 1/2»: up to
+ * `synonymRowMembersPerPage` members in the row's order, its number among the
+ * `pages`, and where its first member stands in the whole row.
+ */
+export interface SynonymRowPage {
+  readonly key: string;
+  readonly number: number;
+  readonly pages: number;
+  readonly members: readonly SynonymRowMemberModel[];
+  readonly firstIndex: number;
+}
+
+/** How many members one page of a Synonym Row's card holds (board XEntry2 e8). */
+export const synonymRowMembersPerPage = 4;
+
+/**
+ * The pages of a Synonym Row's card, in order: the members four at a time.
+ * There is always a first page, so it is the tab selected on opening; a row
+ * of four members or fewer is one page and draws no tab bar.
+ */
+export function synonymRowPagesOf(
+  card: SynonymRowCardModel,
+): readonly [SynonymRowPage, ...SynonymRowPage[]] {
+  const pages = Math.max(1, Math.ceil(card.members.length / synonymRowMembersPerPage));
+  const pageAt = (index: number): SynonymRowPage => {
+    const firstIndex = index * synonymRowMembersPerPage;
+    return {
+      key: `page-${String(index + 1)}`,
+      number: index + 1,
+      pages,
+      members: card.members.slice(firstIndex, firstIndex + synonymRowMembersPerPage),
+      firstIndex,
+    };
+  };
+  return [pageAt(0), ...Array.from({ length: pages - 1 }, (_, index) => pageAt(index + 1))];
 }

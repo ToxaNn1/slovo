@@ -30,6 +30,8 @@ export { YesterdayCard, type YesterdaySlots } from './feed/YesterdayCard';
 export { EntryCard, type EntryCardSlots } from './entries/EntryCard';
 export { RevealPace } from './entries/reveal';
 export { EntryDetails } from './entries/EntryDetails';
+export { EntryKicker } from './entries/EntryKicker';
+export { ExampleMark } from './entries/ExampleMark';
 export { ConfirmationDialog } from './primitives/ConfirmationDialog';
 export { EmptyState } from './primitives/EmptyState';
 export { EntryRow, type EntryRowAction } from './entries/EntryRow';

@@ -1,11 +1,15 @@
 import { withoutStress, type WordCardModel } from '@slovo/core';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { WholeLinesText } from '../primitives/WholeLines';
 import { useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes } from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { exampleMark, linkChip, space, typeStyle } from '../tokens';
+import { exampleMark, space, typeStyle } from '../tokens';
+import { capitalised } from './capitalised';
 import { CardTabs } from './CardTabs';
+import { LinkChips } from './LinkChips';
+import { ExampleMark } from './ExampleMark';
 import {
   DetailSection,
   ExampleText,
@@ -20,19 +24,23 @@ import { wordTabsOf, type WordTab } from './word-tabs';
 /**
  * The Word card's tabs under its Lemma (ADR 0091): «Суть», «Приклад»,
  * «Зв’язки» and «Історія», without the empty ones, «Суть» selected first, in
- * the Entry card's tabs (`CardTabs`).
+ * the Entry card's tabs (`CardTabs`), and while `sourceTab` is on «Джерело»
+ * last (ADR 0116).
  */
 export function WordTabs({
   card,
   onOpenCorrection,
   onOpenSynonymRow,
   onHistoryShown,
+  sources,
   disabled = false,
 }: {
   card: WordCardModel;
   onOpenCorrection: ((correctionId: string) => void) | undefined;
   onOpenSynonymRow: ((synonymRowId: string) => void) | undefined;
   onHistoryShown: (() => void) | undefined;
+  /** The names of the Word's sources for the «Джерело» tab, only while `sourceTab` is on (ADR 0116). */
+  sources: readonly string[] | undefined;
   /** Self-check conceals the card: the tabs are there but disabled until the reveal. */
   disabled?: boolean;
 }) {
@@ -42,6 +50,7 @@ export function WordTabs({
       testID="word"
       tabs={wordTabsOf(card)}
       nameOf={({ key }) => strings.wordCard.tabs[key]}
+      sources={sources}
       disabled={disabled}
     >
       {(tab) => (
@@ -84,13 +93,16 @@ function TabContent({
           <WordIllustration card={card} />
           <WordDefinition card={card} />
           {tab.moreMeanings === 0 ? null : (
-            <Text
+            <WholeLinesText
               testID="word-more-meanings"
               {...voice}
               style={[typeStyle('sub', tokens), { color: colors.muted }]}
             >
-              {count(strings.moreMeanings, tab.moreMeanings)}
-            </Text>
+              {capitalised(
+                count(strings.moreMeanings, tab.moreMeanings),
+                voice.accessibilityLanguage,
+              )}
+            </WholeLinesText>
           )}
           {card.synonymRow === undefined ? null : (
             <SynonymRowLine synonymRow={card.synonymRow} onOpen={onOpenSynonymRow} />
@@ -100,21 +112,10 @@ function TabContent({
       );
     case 'example': {
       const [first, ...rest] = tab.examples;
-      // The big red mark is the opening one of the Edition's quote around an Example.
-      const [mark = ''] = strings.example.split('{text}');
       return (
         <>
           <View style={styles.quote}>
-            {mark === '' ? null : (
-              <Text
-                testID="word-example-mark"
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-                style={[typeStyle('exampleMark', tokens), { color: colors.accent }]}
-              >
-                {mark}
-              </Text>
-            )}
+            <ExampleMark testID="word-example-mark" />
             {/* The first Example is the tab's large quote. */}
             <ExampleText
               testID="word-example"
@@ -139,39 +140,13 @@ function TabContent({
             .filter(({ words }) => words.length > 0)
             .map(({ key, words, one, many }) => (
               <View key={key} testID={`word-${key}`} style={styles.links}>
-                <Text style={[typeStyle('linksLabel', tokens), { color: colors.muted }]} {...voice}>
+                <WholeLinesText
+                  style={[typeStyle('linksLabel', tokens), { color: colors.muted }]}
+                  {...voice}
+                >
                   {words.length === 1 ? one : many}
-                </Text>
-                <View style={styles.chips}>
-                  {words.map((word) => (
-                    <View
-                      key={word}
-                      testID={`word-${key}-${word}`}
-                      accessible
-                      accessibilityLabel={withoutStress(word)}
-                      {...voice}
-                      style={[
-                        styles.chip,
-                        {
-                          backgroundColor: colors.tile,
-                          borderColor: colors.line,
-                          boxShadow: [
-                            {
-                              offsetX: 0,
-                              offsetY: linkChip.depth,
-                              blurRadius: 0,
-                              color: colors.tileEdge,
-                            },
-                          ],
-                        },
-                      ]}
-                    >
-                      <Text style={[typeStyle('linkChip', tokens), { color: colors.ink }]}>
-                        {word}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
+                </WholeLinesText>
+                <LinkChips testID={`word-${key}`} words={words} />
               </View>
             ))}
         </>
@@ -182,14 +157,14 @@ function TabContent({
           {tab.meanings.length === 0 ? null : (
             <DetailSection testID="word-meanings" title={strings.extraDefinitions}>
               {tab.meanings.map((meaning, index) => (
-                <Text
+                <WholeLinesText
                   key={index}
                   accessibilityLabel={withoutStress(`${String(index + 1)}. ${meaning}`)}
                   {...voice}
                   style={body}
                 >
-                  {`${String(index + 1)}. ${meaning}`}
-                </Text>
+                  {`${String(index + 1)}. ${capitalised(meaning, voice.accessibilityLanguage)}`}
+                </WholeLinesText>
               ))}
             </DetailSection>
           )}
@@ -198,14 +173,14 @@ function TabContent({
               {/* A paragraph per group of the dictionary's etymology, apart, so it reads as steps. */}
               <View style={styles.paragraphs}>
                 {tab.etymology.map((paragraph, index) => (
-                  <Text
+                  <WholeLinesText
                     key={index}
                     accessibilityLabel={withoutStress(paragraph)}
                     {...voice}
                     style={body}
                   >
-                    {paragraph}
-                  </Text>
+                    {capitalised(paragraph, voice.accessibilityLanguage)}
+                  </WholeLinesText>
                 ))}
               </View>
             </DetailSection>
@@ -222,11 +197,4 @@ const styles = StyleSheet.create({
   quote: { gap: exampleMark.gap },
   paragraphs: { gap: space[2] },
   links: { gap: space[2] },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  chip: {
-    paddingHorizontal: linkChip.padding.horizontal,
-    paddingVertical: linkChip.padding.vertical,
-    borderRadius: linkChip.radius,
-    borderWidth: 1,
-  },
 });

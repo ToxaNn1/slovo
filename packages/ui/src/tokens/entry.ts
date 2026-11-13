@@ -37,20 +37,38 @@ export interface RevealTimings {
 }
 
 /**
- * The frame of a tabbed Entry card (board p1): the width of its ink outline,
- * how far its red offset shadow falls to the right and below (the card keeps
- * that much room on those sides, so nothing clips it), the red rule under a
- * Word's Lemma, the slanted mark over the selected tab: its height and how
- * far it reaches past the tab's name on each side, and the red wedge of the
- * kicker over the Lemma of the Word of the Day with its gap to the text.
+ * The frame of a tabbed Entry card (boards p1, XEntry2): its corner radius,
+ * the width of its ink outline, how far its red offset shadow falls to the
+ * right and below (the card keeps that much room on those sides, so nothing
+ * clips it), its padding and the gap between its blocks, the red rule under a
+ * Word's Lemma, the tab bar of equal columns at its foot (the height of a tab
+ * and the line over them), the slanted mark over the selected tab (its
+ * height, how far it rises over the line and how far in from each side of the
+ * column it stops), the gap between the blocks of a tab's panel, the air
+ * between a clamped tab's last whole line and «Детальніше» under it (owner
+ * 13.11), and the red wedge of the kicker over the Lemma of the Word of the
+ * Day with its gap to the text.
  */
 export const entryCardFrame = {
-  outline: 2,
+  radius: 24,
+  outline: 2.5,
   shadow: 8,
+  padding: { top: 20, side: 22, bottom: 18 },
+  gap: 16,
   rule: { width: 140, height: 8 },
-  tabMark: { height: 5, overhang: 8 },
-  kicker: { wedge: { width: 14, height: 11 }, gap: 8 },
+  tabBar: { height: 50, line: 2 },
+  tabMark: { height: 5, top: -2, inset: '18%' },
+  panelGap: 14,
+  moreGap: 8,
+  kicker: { wedge: { width: 14, height: 12 }, gap: 8 },
 } as const;
+
+/**
+ * A Synonym Row's member list (board XEntry2 e8): the room above and below a
+ * member in its row, the hairline between rows (none over the first) and the
+ * gap between a member and its shade note.
+ */
+export const synonymRowList = { rowPadding: 13, line: 1, shadeGap: 12 } as const;
 
 /**
  * A Synonym's or an antonym's chip in the tabbed Word card's «Зв’язки» (board
@@ -129,10 +147,22 @@ export const entryPanel = {
 
 /**
  * The Correction card's padding over its content, off the 4-pt grid (the
- * design's 28; its sides are the Word card's and its bottom is `space[6]`),
- * and the side of the mark before each sentence of its example pair.
+ * design's 28; its sides are the Word card's and its bottom is `space[6]`).
  */
-export const correctionCardLayout = { paddingTop: 28, exampleMark: 18 } as const;
+export const correctionCardLayout = { paddingTop: 28 } as const;
+
+/**
+ * The red bar that strikes a Correction's non-standard form (board XEntry2
+ * e6): its thickness, how far it runs past the form on each side and its tilt.
+ */
+export const correctionStrike = { thickness: 5, overhang: 4, angle: '-4deg' } as const;
+
+/**
+ * The standard form in a Correction card's «Як краще» (board XEntry2 e6,
+ * 38 pt where the Lemma is 50): this share of the Lemma's size at the user's
+ * font size, so it keeps the card's one text scale.
+ */
+export const correctionStandardScale = 38 / 50;
 
 /**
  * The mark's wedge at the edge a swiped Entry card leaves (board 04, XSwipe):
