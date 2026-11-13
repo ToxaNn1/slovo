@@ -3,13 +3,13 @@ import { useId, useState, type ReactNode } from 'react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
 
-/** A write waiting for its confirmation: what it does, and how it runs with the reason. */
+/** A write waiting for its confirmation: what it does, and how it runs with the reason; the dialog stays open until `run` settles. */
 export interface PendingWrite {
   readonly title: string;
   readonly confirm: string;
   /** A write that takes something away or rolls it back: the dialog reads «небезпечна дія». */
   readonly danger?: boolean;
-  readonly run: (reason: string) => void;
+  readonly run: (reason: string) => Promise<unknown>;
 }
 
 /**

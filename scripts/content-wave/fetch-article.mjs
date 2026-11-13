@@ -15,7 +15,7 @@ if (!url) {
 }
 const LIMIT = 2000;
 
-const raw = execFileSync('curl', ['-sSL', '--max-time', '30', encodeURI(decodeURI(url))], {
+const raw = execFileSync('curl', ['-fsSL', '--max-time', '30', encodeURI(decodeURI(url))], {
   maxBuffer: 64 * 1024 * 1024,
 });
 const head = raw.subarray(0, 4096).toString('latin1').toLowerCase();

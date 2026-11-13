@@ -4,6 +4,7 @@ import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 
 import { adminApi } from '../api';
+import { editionsQuery } from '../queries';
 
 export const FEATURES: readonly FeatureSwitch[] = FeatureSwitchesSchema.keyof().options;
 
@@ -23,12 +24,13 @@ export interface Column {
 export function useSwitches() {
   const search = useSearch({ from: '__root__' });
   const queryClient = useQueryClient();
-  const editionsQuery = useQuery({ queryKey: ['editions'], queryFn: () => adminApi.editions() });
-  const editions = editionsQuery.data?.editions ?? [];
+  const editionsAnswer = useQuery(editionsQuery);
+  const editions = editionsAnswer.data?.editions ?? [];
   const answers = useQueries({
     queries: editions.map((edition) => ({
       queryKey: [...SWITCHES_KEY, edition.id],
       queryFn: () => adminApi.switches({ editionId: edition.id }),
+      retry: false,
     })),
   });
   const loaded: readonly Column[] = editions.flatMap((edition, index) => {
@@ -40,6 +42,10 @@ export function useSwitches() {
     loaded.find((column) => column.edition === edition)?.answer;
   return {
     editions,
+    /** The Editions answered, so an unpicked filter means every Edition and not «none known yet». */
+    editionsLoaded: editionsAnswer.isSuccess,
+    /** The Editions or a switches answer failed to load. */
+    failed: editionsAnswer.isError || answers.some((answer) => answer.isError),
     loaded,
     /** Every Edition answered. */
     ready: editions.length > 0 && loaded.length === editions.length,

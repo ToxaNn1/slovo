@@ -7,9 +7,8 @@ import { Rupor } from '../Rupor';
 import { tileSizeFor, useSafe } from '../safe';
 import { Bed, Horn, Knock, Sfx, sfx, Voice } from '../sound';
 import { Tile } from '../Tile';
+import { clamp, pop } from '../shared/motion';
 
-const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
-const pop = Easing.bezier(0.34, 1.56, 0.64, 1);
 
 /** The beats of «Де наголос?» in frames at 30 fps, 15 s in all. */
 const beats = {

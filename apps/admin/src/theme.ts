@@ -4,8 +4,17 @@ export type Theme = 'light' | 'dark';
 
 const KEY = 'slovo-admin-theme';
 
+/** The Theme kept in storage; none when storage is blocked. */
+function keptTheme(): string | null {
+  try {
+    return window.localStorage.getItem(KEY);
+  } catch {
+    return null;
+  }
+}
+
 function initialTheme(): Theme {
-  const kept = window.localStorage.getItem(KEY);
+  const kept = keptTheme();
   if (kept === 'light' || kept === 'dark') return kept;
   // jsdom has no matchMedia.
   const dark =
@@ -24,7 +33,11 @@ export function useTheme(): readonly [Theme, (theme: Theme) => void] {
     document.documentElement.dataset['theme'] = theme;
   }, [theme]);
   const pick = (next: Theme) => {
-    window.localStorage.setItem(KEY, next);
+    try {
+      window.localStorage.setItem(KEY, next);
+    } catch {
+      // Blocked storage only forgets the pick on the next visit.
+    }
     setTheme(next);
   };
   return [theme, pick];
