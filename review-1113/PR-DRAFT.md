@@ -13,8 +13,8 @@ Fixes the findings (R-ids) of the 13.11 code review, built in lanes L1, L2, L3a,
 - L4: R21, R26, R27, R28, R109, R111, R141, R160, R175, R25, R143, R77, R50, R78, R108, R112, R159, R22, R171, R161
 - L5: R3, R34, R4, R30, R117, R119, R33, R29, R31, R32, R35, R38, R39, R60, R61, R62, R63, R113, R114, R115, R116, R120, R121, R124, R164, R79 (contracts exports), R173, R162 (media sweep and slot retire)
 - L6: R44, R45, R132, R130, R65, R81, R82, R46, R47, R131, R2, R80, R42, R7, R43, R167, R168, R83, R84 (shared Rings), R133, R134, R135
-- LXa: pending
-- LXa: R5, R13, R18, R158, R24, R23, R66 (STUCK status so far; LXa is not DONE)
+- LXa: R5, R13, R18, R158, R24, R23, R66, R85, R149, R151, R169 (casts left only at documented boundaries), R176
+- RV (review of core and backend): RV1 migration 0026 drops later duplicate sign-in methods before the unique index; RV2 the media sweep stamps fileDeletedAt only after the file delete
 - LXb: R37, R166, R127, R79, R72, R98, R107, R70, R156, R59
 
 ## Skipped
@@ -39,8 +39,7 @@ Fixes the findings (R-ids) of the 13.11 code review, built in lanes L1, L2, L3a,
 - R84 (part) — Shouter and Rupor aim maths differ per composition; only identical Rings are shared
 - R110 — needs infra: expo-crypto is not a dependency of apps/mobile
 - R150 — needs infra: a shared tools/ jest resolver changes both jest configs
-- R85 — needs packages/core: grid index of the crossing crossword (plan written, not started)
-- R149, R151, R169, R176 — LXa: not looked at beyond mapping in its last status (R169 has a later commit on the branch; LXa pending)
+- RV3 — does not hold: server-core trims and lower-cases the provider email (AccountEmailSchema) before the authenticator
 
 ## Handbook pages to update
 
@@ -86,4 +85,5 @@ Fixes the findings (R-ids) of the 13.11 code review, built in lanes L1, L2, L3a,
 - R70, R156: new modules game/useAnswerMotion.ts and game/useTraceDrag.ts opt out in packages/ui/eslint.config.js and ADR 0059's list. Ok?
 - R13: reads the visible label first, then the title. Ok?
 - R24: last opened ask is kept at module level, so a Dashboard remount does not reopen the Feed. Ok?
-- Red outside the lane (L3a): apps/mobile/src/feed/word-tabs-on-screen.test.tsx:313 expects «1. Покірний.»; since R10/R68 it should read «2. Покірний.» (check it was fixed).
+- RV1: a later duplicate sign-in method is dropped even when it names another Account; that Account stays, reachable by its own email. Ok?
+- Commit messages: 032a3347c (R53), 45abddebc (R63), d9034973b (R138) use `perf(...)`, which commitlint refuses, so the «Commit messages» check is red. Rewording them needs a force-push of this branch, which this session may not do. Please reword them (to `refactor(...)`) or allow it.
