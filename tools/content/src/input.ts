@@ -1,7 +1,7 @@
 /**
  * The records a command sends: a JSON array of records, or a folder of
  * drafts, one JSON file per record. The backend issues the ids, so an id a
- * draft carries is left out.
+ * draft carries is left out; `verify` reads the drafts with their ids.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -54,17 +54,44 @@ function readArray(file: string, problems: string[]): Incoming[] {
 }
 
 function readDrafts(folder: string, problems: string[]): Incoming[] {
+  return draftsOf(jsonFilesIn(folder), problems).map(({ draft, file }) => ({
+    fields: withoutId(draft),
+    origin: file,
+  }));
+}
+
+/**
+ * The drafts of a folder, or the one draft of a file, as `verify` reads them:
+ * each with its file and the id it carries.
+ */
+export function readDraftFiles(
+  path: string,
+): { ok: true; drafts: Draft[] } | { ok: false; problems: string[] } {
+  const problems: string[] = [];
+  const drafts = draftsOf(isFolder(path) ? jsonFilesIn(path) : [path], problems);
+  return problems.length === 0 ? { ok: true, drafts } : { ok: false, problems };
+}
+
+export interface Draft {
+  readonly draft: Record<string, unknown>;
+  readonly file: string;
+}
+
+function jsonFilesIn(folder: string): string[] {
   return readdirSync(folder)
     .filter((name) => name.endsWith('.json'))
     .toSorted()
-    .flatMap((name) => {
-      const file = join(folder, name);
-      const draft = readJson(file, problems);
-      if (draft === undefined) return [];
-      if (isObject(draft)) return [{ fields: withoutId(draft), origin: file }];
-      problems.push(`${file}: Not a JSON object`);
-      return [];
-    });
+    .map((name) => join(folder, name));
+}
+
+function draftsOf(files: readonly string[], problems: string[]): Draft[] {
+  return files.flatMap((file) => {
+    const draft = readJson(file, problems);
+    if (draft === undefined) return [];
+    if (isObject(draft)) return [{ draft, file }];
+    problems.push(`${file}: Not a JSON object`);
+    return [];
+  });
 }
 
 function readJson(file: string, problems: string[]): unknown {

@@ -9,17 +9,18 @@
  *   pnpm content have --edition <id> [--kind <kind>]
  *   pnpm content counts --edition <id>
  *   pnpm content check <kind> <array.json | drafts folder> --edition <id>
- *   pnpm content verify <files, ids or folders> | --changed <ref> --edition <id> [--book <file>]
+ *   pnpm content verify <files, ids, folders or drafts> | --changed <ref> --edition <id> [--book <file>]
  *   pnpm content import --edition <id> [--override]   (the Edition folder into the backend's Postgres)
  *
  * `add`, `edit`, `retire` and `flag` open one batch per run and print the
  * API's answer for each record (./writes.ts). `have` and `counts` print the
  * content snapshot and the content report (./have.ts). `check` runs the
  * shared content rules on the input locally and sends nothing. `verify`
- * checks quotes against their source pages (./verify.ts). The CLI never
- * writes to the Edition folder; `check` and `verify` read its config.
- * `$SLOVO_EDITIONS_DIR` points the tool at another editions folder, as the
- * tests do.
+ * checks quotes against their source pages (./verify.ts); a file or folder
+ * outside the Edition folder is read as drafts, so a wave verifies them
+ * before `add`. The CLI never writes to the Edition folder; `check` and
+ * `verify` read its config. `$SLOVO_EDITIONS_DIR` points the tool at another
+ * editions folder, as the tests do.
  */
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -54,7 +55,7 @@ const USAGE = [
   `       pnpm content have --edition <id> [--kind ${KINDS}]`,
   '       pnpm content counts --edition <id>',
   `       pnpm content check ${KINDS} <array.json | drafts folder> --edition <id>`,
-  '       pnpm content verify <files, ids or folder> | --changed <ref> --edition <id> [--book <text file>] [--cache <dir>]',
+  '       pnpm content verify <files, ids, folder or drafts folder> | --changed <ref> --edition <id> [--book <text file>] [--cache <dir>]',
   '       pnpm content import --edition <id> [--override]',
 ].join('\n');
 

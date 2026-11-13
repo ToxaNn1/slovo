@@ -1,5 +1,13 @@
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -229,6 +237,55 @@ describe('verify', () => {
     expect(files.toSorted()).toEqual(
       tipFiles.map((name) => join('content', 'tips', name)).toSorted(),
     );
+  });
+
+  it('verifies the drafts of a folder outside the Edition, each as an Entry', async () => {
+    const drafts = join(workDir, 'review', 'words', 'drafts');
+    mkdirSync(drafts, { recursive: true });
+    const draft = (entry: { id: string }) => {
+      writeFileSync(join(drafts, `${entry.id}.json`), JSON.stringify(entry, null, 2));
+      return join('review', 'words', 'drafts', `${entry.id}.json`);
+    };
+    await seed({
+      [`${GOROH}перевірка006`]: { body: gorohPage([SUM, definition]) },
+      [`${GOROH}перевірка007`]: { body: gorohPage([SUM, definition]) },
+    });
+    const passing = draft(word('w_vrf006', definition, `${GOROH}перевірка006`));
+    const missing = draft(
+      word('w_vrf007', definition.replace('словнику', 'довіднику'), `${GOROH}перевірка007`),
+    );
+
+    const run = verify([join('review', 'words', 'drafts')], workDir);
+
+    expect(run.lines[0]).toBe(`ok\tw_vrf006\t${passing}`);
+    expect(run.lines[1]).toMatch(new RegExp(`^miss\tw_vrf007\t${missing}\t.*довіднику`));
+    expect(run.lines.at(-1)).toBe('1 ok, 1 miss');
+    expect(run.status).toBe(1);
+  });
+
+  it('verifies one draft file outside the Edition', async () => {
+    await seed({ [`${GOROH}перевірка008`]: { body: gorohPage([SUM, definition]) } });
+    writeFileSync(
+      join(workDir, 'w_vrf008.json'),
+      JSON.stringify(word('w_vrf008', definition, `${GOROH}перевірка008`)),
+    );
+
+    const run = verify(['w_vrf008.json'], workDir);
+
+    expect(run.lines).toEqual(['ok\tw_vrf008\tw_vrf008.json', '1 ok']);
+    expect(run.status).toBe(0);
+  });
+
+  it('refuses a draft that is no record of its kind', () => {
+    writeFileSync(join(workDir, 'w_vrf009.json'), JSON.stringify({ id: 'w_vrf009' }));
+    writeFileSync(join(workDir, 'nokind.json'), JSON.stringify({ lemma: 'слово' }));
+
+    const run = verify(['w_vrf009.json', 'nokind.json'], workDir);
+
+    expect(run.stderr).toContain('w_vrf009.json');
+    expect(run.stderr).toContain('nokind.json');
+    expect(run.lines).toEqual([]);
+    expect(run.status).toBe(2);
   });
 
   it('refuses a name that is no Entry of the Edition', () => {
