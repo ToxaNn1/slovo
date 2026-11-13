@@ -1,0 +1,229 @@
+[
+  {
+    "id": "R5",
+    "sev": "high",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/shell/lifecycle.tsx:69-70",
+      "packages/core/src/composition.ts:431,822"
+    ],
+    "problem": "`visitStarted` lives in each composition; after any `composition.reopen()` (switches, sync, content patch) `sessionEnded` finds no start and sends nothing.",
+    "fix": "Keep the Visit start in the shell, or carry it across reopen.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R18",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/dashboard/DashboardHero.tsx:64",
+      "apps/mobile/src/app/index.tsx:116"
+    ],
+    "problem": "`openedClosed` is frozen at mount and the hero has no key: on a new day the hero shows no animation.",
+    "fix": "Render the hero with `key={hero.date}`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R23",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/categories/category-feed.tsx:158",
+      "packages/ui/src/entries/CardTabs.tsx:257"
+    ],
+    "problem": "Category feed still nests the tabbed card in the page `PagerScrollView` (ADR 0113: the page never scrolls); inner and outer scroll share `scrolls[index]`.",
+    "fix": "Use the same fixed frame as Feed/Entry.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R24",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/dashboard/dashboard.ts:51",
+      "packages/core/src/feed/feed.ts:145,151"
+    ],
+    "problem": "`wordOfTheDayLanding` is cleared only when Feed finds the card; if it is absent, every Dashboard return jumps to /feed.",
+    "fix": "Clear the landing whether or not the card is found.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R37",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/content-rules/src/quote-check.ts:105",
+      "apps/backend/src/content/quote-check.ts:207"
+    ],
+    "problem": "`String.fromCodePoint` throws RangeError on `&#x110000;`; the backend loop has no catch, so one bad page stops the whole check.",
+    "fix": "Skip code points over 0x10FFFF (keep the entity text).",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R66",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "apps/mobile/src/app/curated-collection/[collectionId].tsx:37-64,88-100",
+      "apps/mobile/src/app/correction-type/[type].tsx:69-88",
+      "packages/ui/src/dashboard/RailBoard.tsx:53-83"
+    ],
+    "problem": "Two routes re-implement RailBoard (FlatList + RailScreenCard + hero); `done` recomputes `knownShare`.",
+    "fix": "Shared code lives in packages/ui: render `RailBoard` with `knownShare`/`shapeAt`, as category-board does.",
+    "verified": true,
+    "part": [
+      4,
+      5
+    ]
+  },
+  {
+    "id": "R72",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/primitives/BottomSheet.tsx:58",
+      "packages/ui/src/primitives/UndoToast.tsx:56,62",
+      "packages/ui/src/primitives/Mascot.tsx:359",
+      "packages/ui/src/onboarding/SplashOverlay.tsx:62"
+    ],
+    "problem": "Token curve → `Easing.bezier` and the reduce-motion fade config written 4×.",
+    "fix": "One helper and constant next to tokens/motion in packages/ui.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R110",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/widget/widget-snapshot.ts:111-112",
+      "packages/core/src/ports.ts:288"
+    ],
+    "problem": "The \"unforgeable\" link key is drawn from `Math.random`.",
+    "fix": "Inject a CSPRNG (expo-crypto).",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R149",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/core/src/test-support.ts:215-224",
+      "apps/mobile/src/test-support.ts:27-36"
+    ],
+    "problem": "`fakeClock` copied into mobile test-support (without `set`).",
+    "fix": "Keep it in Core test-support; mobile imports it from `@slovo/core`.",
+    "verified": true,
+    "part": [
+      2,
+      5
+    ]
+  },
+  {
+    "id": "R150",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "apps/mobile/jest.resolver.cjs:1-28",
+      "packages/ui/jest.resolver.cjs:1-28"
+    ],
+    "problem": "Identical Jest resolvers.",
+    "fix": "One shared file in `tools/`.",
+    "verified": false,
+    "part": [
+      4,
+      5
+    ]
+  },
+  {
+    "id": "R151",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/primitives/FlyingText.tsx:50-58",
+      "packages/ui/src/dashboard/HeroReveal.tsx:114-122"
+    ],
+    "problem": "Same fly-in transform worklet.",
+    "fix": "Export a `flyInStyle` worklet from FlyingText.tsx in packages/ui.",
+    "verified": false,
+    "part": [
+      3,
+      4
+    ]
+  },
+  {
+    "id": "R169",
+    "sev": "low",
+    "kind": "complexity",
+    "where": [
+      "packages/core/src/game/game.ts:506",
+      "packages/core/src/entries/entries.ts:426",
+      "packages/core/src/entries/entry-list.ts:75",
+      "packages/core/src/knowledge/knowledge.ts:185,189",
+      "packages/core/src/test-support.ts:404",
+      "packages/ui/src/test-strings.ts:16",
+      "apps/mobile/plugins/app-intents.ts:84,123",
+      "packages/contracts/src/api/breaking-changes.ts:18",
+      "packages/contracts/src/describe-command.ts:23",
+      "packages/contracts/src/api-description.ts:68",
+      "packages/contracts/src/api/test-support.ts:77",
+      "packages/language-pack/src/pack-layout.ts:358",
+      "packages/language-pack/src/edition-folder.ts:376",
+      "packages/language-pack/src/crossword.ts:329"
+    ],
+    "problem": "`as` casts against the house rule (CLAUDE.md), incl. `as unknown as` in knowledge.ts and test-support.ts.",
+    "fix": "Typed key lists (`RARITIES`, `ENTRY_KINDS` in Core), type guards, `satisfies`, full fakes.",
+    "verified": true,
+    "part": [
+      1,
+      2,
+      4,
+      5,
+      7
+    ]
+  },
+  {
+    "id": "R176",
+    "sev": "low",
+    "kind": "dead",
+    "where": [
+      "packages/ui/src/game/RoundCard.tsx:48",
+      "packages/ui/src/index.ts:69,142-197",
+      "apps/backend/src/content/media-rows.ts:79,143",
+      "apps/backend/src/quality/sentry-api.ts:11,25",
+      "apps/backend/src/alerts/owner-chat.ts:52,90",
+      "apps/backend/src/alerts/cron-command.ts:162",
+      "apps/backend/src/counters/community-counters.ts:231",
+      "packages/content-rules/src/index.ts:21"
+    ],
+    "problem": "Unused prop `labelShown` and exports used only in their own file or by tests (`FitPanel`, `MARK_SHARE`, `EntryMenuMarks`, `saveRecording`, `MediaRows`, `MAX_ILLUSTRATION_BYTES` ...).",
+    "fix": "Remove the prop; drop the exports.",
+    "verified": false,
+    "part": [
+      3,
+      4,
+      6,
+      7
+    ]
+  }
+]

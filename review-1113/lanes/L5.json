@@ -1,0 +1,459 @@
+[
+  {
+    "id": "R3",
+    "sev": "high",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/content/content-queue.ts:145-153",
+      "apps/backend/src/content/content-writes.ts:424"
+    ],
+    "problem": "`heldBatch` locks the batch row FOR UPDATE, then takes the Edition advisory lock; `write` takes the advisory lock first, then its FK insert needs KEY SHARE on the same row: deadlock between write and review/rollback.",
+    "fix": "Take the advisory lock before the batch row lock in `heldBatch`, same order as `heldVersion`.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R4",
+    "sev": "high",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/recordings/recordings.ts:184,301-316"
+    ],
+    "problem": "Any generator throw (non-zero exit, bad `results.json`, missing mp3) rejects the run before `markFailures`; the same Words are picked again, so one bad Word blocks the job (and the remaining Editions).",
+    "fix": "Catch per batch, mark those Words failed, carry on.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R29",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/content/content-store.ts:141,180-188"
+    ],
+    "problem": "Override re-import re-inserts Words with `needsNewRecording: false` and never calls `retireRecordings`, so changed Words keep old Recordings.",
+    "fix": "Compare stored text on import and retire Recordings of changed Words.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R30",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/recordings/recordings.ts:201,249-269",
+      "apps/backend/src/content/media-rows.ts:179"
+    ],
+    "problem": "The file is put in the Media Store before its row is saved; `deleteRetired` can delete the same key in between and the save revives a row with no file.",
+    "fix": "Save row and file under the Edition lock, or skip keys of live rows in the sweep.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R31",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/account/authenticator.ts:185-207",
+      "apps/backend/src/schema.ts:94"
+    ],
+    "problem": "`signInWith` is check-then-create without a transaction: two first sign-ins with one email hit the `accounts.email` unique index → 500; no unique (provider, account id) index.",
+    "fix": "One transaction with `on conflict`; add the unique index.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R32",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/server-core/src/analytics/source-cache.ts:33-37"
+    ],
+    "problem": "The stale check sits after `await found`, so concurrent reads of a stale key each fetch.",
+    "fix": "Decide fresh/stale on the kept `fetchedAt` synchronously and set the new promise before any await.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R33",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/recordings/generator.ts:55-58"
+    ],
+    "problem": "`execFile` has no timeout; a hung generator outlives the lease.",
+    "fix": "Pass `timeout` below `RECORDING_LEASE_MS`.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R34",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/content/content-queue.ts:371-389"
+    ],
+    "problem": "`resolveFlag` reads all flags of every Edition and writes outside a transaction with no lock.",
+    "fix": "Filter by id in SQL inside a transaction with a row/advisory lock.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R35",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/server-core/src/admin/monitor.ts:145"
+    ],
+    "problem": "Activity average divides by 7 whatever `before.length` is.",
+    "fix": "Divide by the number of days in range that exist for the Edition.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R38",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/contracts/src/api/content.ts:22-30,46,63",
+      "packages/contracts/src/api/admin.ts:118-157"
+    ],
+    "problem": "Outputs use strict schemas against ADR 0031: Patch/Snapshot embed `z.strictObject` record schemas (a validating client refuses a Patch once a record gains a field); admin analytics/counters outputs call `.strict()`.",
+    "fix": "Use non-strict output variants of the record schemas; drop `.strict()` on outputs.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R39",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/contracts/src/api/breaking-changes.ts:118-156"
+    ],
+    "problem": "A new property under `additionalProperties: false` is never reported (only promised properties are walked).",
+    "fix": "Report added properties of a strict output object.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R60",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "apps/backend/src/content/content-writes.ts:618,637-675"
+    ],
+    "problem": "Read-only `list`/`record` take the Edition advisory lock + FOR UPDATE and read all 7 record tables for one kind.",
+    "fix": "Read the one table without locks, as `report()` does.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R61",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "packages/server-core/src/edition/edition-registry.ts:203,249"
+    ],
+    "problem": "`serving()` runs per request but calls `switches()`, which also reads minimums and computes `off`.",
+    "fix": "Read only `switchStore.rules`.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R62",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "packages/server-core/src/sync/sync.ts:90-94",
+      "packages/server-core/src/counters/community-counters.ts:143-146"
+    ],
+    "problem": "Feature Switch checked twice where `DEPENDS_ON` already covers it (`account` then `sync`; `communityCounters` then `communityWord`): double DB reads.",
+    "fix": "Check only the dependent switch (`sync`, `communityWord`).",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R63",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "apps/backend/src/content/quote-check.ts:74-122,145"
+    ],
+    "problem": "`quoteCheckCounts` reads the full `fields` of five tables only to count.",
+    "fix": "Select ids, versions and `fields->sources->0->url` only (the url is needed).",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R113",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/server-core/src/admin/admin-sign-in.ts:305-309"
+    ],
+    "problem": "TOTP accepts ±1 step and never stores the used step: a code is replayable for about 90 s (second factor only).",
+    "fix": "Keep the last accepted step per Admin; refuse ≤ it.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R114",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/server-core/src/admin/admin-access.ts:239-240"
+    ],
+    "problem": "`invite` sends the email before `addAdminUser`; concurrent invites send two mails, one with the wrong role.",
+    "fix": "Add the user first, announce after.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R115",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/app.ts:367-370"
+    ],
+    "problem": "Non-HTML `/:edition/c/:id` answers a link of any Edition; the HTML branch refuses it.",
+    "fix": "Check `link.edition` against the path in both.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R116",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/alerts/owner-chat.ts:79"
+    ],
+    "problem": "Without a bot, `logger.warn({message})` logs the whole Kill switch alert (which may hold the Admin's email).",
+    "fix": "Log the alert kind only.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R117",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/recordings/recordings.ts:192-205"
+    ],
+    "problem": "When a later slot fails, earlier slots stay in the store unsaved; skipped stale Words count as recorded.",
+    "fix": "Save per slot, or delete puts of failed Words.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R118",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/media/media-import.ts:127-133"
+    ],
+    "problem": "Imports files of retired Words too.",
+    "fix": "Filter `retired = false`.",
+    "verified": false,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R119",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/content/illustrations.ts:71-82"
+    ],
+    "problem": "The retired check is outside the Edition lock.",
+    "fix": "Re-check in the `saveMedia` transaction.",
+    "verified": false,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R120",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/backend/src/quality/sentry-api.ts:170-181"
+    ],
+    "problem": "`newIssues` caps silently at 100 (one page).",
+    "fix": "Follow the cursor, or show \"100+\".",
+    "verified": false,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R121",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/contracts/src/correction.ts:53-67"
+    ],
+    "problem": "`parseStandardExample` accepts bold marks with edge spaces and adjacent marks with empty text between.",
+    "fix": "Refuse marks with edge whitespace and empty text between marks.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R124",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/contracts/src/api/admin.ts:115"
+    ],
+    "problem": "`DaySchema` regex accepts 2026-13-45.",
+    "fix": "`z.iso.date()`.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R125",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/contracts/src/api/admin.ts:599-857"
+    ],
+    "problem": "Admin queue/sign-in inputs under /v1 use `z.object`; ADR 0031 says inputs are strict, so typos drop silently.",
+    "fix": "`z.strictObject`.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R136",
+    "sev": "low",
+    "kind": "compat",
+    "where": [
+      "packages/contracts/src/api/content.ts:19"
+    ],
+    "problem": "PATCH_FORMAT stays 2 though Patches now carry `**` marks and Tip `exceptions`; old builds show raw `**`.",
+    "fix": "Owner decides on a bump.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R162",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "apps/backend/src/recordings/recordings.ts:249-293",
+      "apps/backend/src/content/media-rows.ts:146-213",
+      "apps/backend/src/content/quote-check.ts:71-121"
+    ],
+    "problem": "Per-table copies: sweep loops, `saveRecordingRow`/`saveIllustrationRow`, five select blocks.",
+    "fix": "One helper over a table list.",
+    "verified": true,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R164",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/contracts/src/edition.ts:90,755,1009,1016"
+    ],
+    "problem": "`hasNoRepeats` re-implemented 4×; the \"Duplicate id\" addIssue loop written 5×.",
+    "fix": "Use `hasNoRepeats`; one `reportRepeats` helper.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R165",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/contracts/src/api/admin.ts:391,431,450,468"
+    ],
+    "problem": "Content-write reasons repeat `ReasonSchema` without its max(500).",
+    "fix": "Use `ReasonSchema`.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R172",
+    "sev": "low",
+    "kind": "complexity",
+    "where": [
+      "packages/server-core/src/analytics/source-cache.ts",
+      "apps/backend/src/sources/cached-source.ts"
+    ],
+    "problem": "Two caches for outside reads with different rules (in-flight sharing vs last-good fallback).",
+    "fix": "One cache with both behaviours.",
+    "verified": false,
+    "part": [
+      6
+    ]
+  },
+  {
+    "id": "R173",
+    "sev": "low",
+    "kind": "complexity",
+    "where": [
+      "apps/backend/src/config.ts:129-136,307-310",
+      "apps/backend/src/alerts/owner-chat.ts:127-133"
+    ],
+    "problem": "Empty-as-unset preprocess repeated; `ownerAlertsOf` parses `process.env` a second time.",
+    "fix": "One `emptyAsUnset` helper; pass parsed config in.",
+    "verified": false,
+    "part": [
+      6
+    ]
+  }
+]

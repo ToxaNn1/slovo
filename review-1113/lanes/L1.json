@@ -1,0 +1,216 @@
+[
+  {
+    "id": "R1",
+    "sev": "high",
+    "kind": "bug",
+    "where": [
+      "packages/core/src/game/chips-form.ts:137-152"
+    ],
+    "problem": "`judge` accepts the same tile index twice and never checks the length of `chosen`: in «За буквами» with decoys, taps [0,1,0,1] pass «мама» and earn XP.",
+    "fix": "Return `undefined` when `chosen` repeats an index or (for `tiles`) its length differs from `expected.length`.",
+    "verified": true,
+    "part": [
+      1
+    ]
+  },
+  {
+    "id": "R8",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/core/src/notifications/notification-plan.ts:114-120,369-380"
+    ],
+    "problem": "With eveningNotification on, slots are capped by count over all times before filtering to earliest+latest time; with 5+ reminder times the plan covers fewer than 14 days and OS slots stay free (3-4 times are fine).",
+    "fix": "Filter slots to the earliest/latest times before the count cap.",
+    "verified": true,
+    "part": [
+      2
+    ]
+  },
+  {
+    "id": "R9",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/core/src/progress/active-days.ts:122-123"
+    ],
+    "problem": "Every `freezeUsed` event carries the same `freezesHeld` (the count after all the day's freezes); two freezes from 2 report 0 and 0, against analytics.ts:42.",
+    "fix": "Emit `freezesHeld + (toFreeze.length - 1 - i)` per event.",
+    "verified": true,
+    "part": [
+      2
+    ]
+  },
+  {
+    "id": "R51",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "packages/core/src/game/crossing-crossword-progress.ts:153"
+    ],
+    "problem": "`analytics.track` is awaited inside `inTurn` on the final solve, so later `play`/`keep` wait on a network round trip; game.ts uses `void`.",
+    "fix": "`void analytics.track(...)` outside the turn.",
+    "verified": true,
+    "part": [
+      1
+    ]
+  },
+  {
+    "id": "R52",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "packages/core/src/feed/feed.ts:732-746"
+    ],
+    "problem": "`refreshLinks` re-reads and rebuilds every Word card of the session on each eligibility change (early exit removed on purpose in #1749).",
+    "fix": "Rebuild only cards whose linked ids changed eligibility.",
+    "verified": true,
+    "part": [
+      1
+    ]
+  },
+  {
+    "id": "R53",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "packages/core/src/sync/exchange.ts:226"
+    ],
+    "problem": "`apply()` awaits `mineOf(key)` (two userState reads) per pulled record, sequentially, inside merge's turn lock.",
+    "fix": "Read the page's keys in parallel (reading only page keys is deliberate, so do not list all user state).",
+    "verified": true,
+    "part": [
+      2
+    ]
+  },
+  {
+    "id": "R54",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "packages/core/src/progress/xp-log.ts:524-528"
+    ],
+    "problem": "Every append calls `change()`, rerunning `derive()` over the whole log.",
+    "fix": "Update derived state incrementally from the appended record.",
+    "verified": true,
+    "part": [
+      2
+    ]
+  },
+  {
+    "id": "R55",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "packages/core/src/progress/xp-log.ts:381-397",
+      "packages/core/src/notifications/notification-plan.ts:412"
+    ],
+    "problem": "`dayOf(date)` filters and sorts all records; the planner calls it per evening slot.",
+    "fix": "Index records by date once in `derive()`; make `dayOf` a lookup.",
+    "verified": true,
+    "part": [
+      2
+    ]
+  },
+  {
+    "id": "R87",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/core/src/game/crossing-crossword-progress.ts:134"
+    ],
+    "problem": "`tick` stores any number in `seconds` though the schema is `int().nonnegative()`; a bad tick makes the record fail to parse. Latent: the only caller floors and skips ≤ 0.",
+    "fix": "Clamp and round at `tick`: `Math.max(0, Math.round(delta))`.",
+    "verified": true,
+    "part": [
+      1
+    ]
+  },
+  {
+    "id": "R88",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/core/src/game/by-letters-mode.ts:27-31"
+    ],
+    "problem": "`tilesOf` never checks the alphabet has enough decoys; a short alphabet or long Word breaks the 4-column row or leaves no decoys.",
+    "fix": "Leave out such Words or cap tiles at a multiple of 4.",
+    "verified": true,
+    "part": [
+      1
+    ]
+  },
+  {
+    "id": "R152",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/core/src/game/traced-crossword.ts:88-100",
+      "packages/core/src/game/crossing-crossword-progress.ts:77-89"
+    ],
+    "problem": "Both `open*Crossword` repeat the ports parameter block and the inline no-XP default.",
+    "fix": "`CrosswordPorts` type + `noXp` constant in `game/crossword-ports.ts`.",
+    "verified": true,
+    "part": [
+      1
+    ]
+  },
+  {
+    "id": "R153",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/core/src/edition/switch-evaluator.ts:141",
+      "packages/core/src/mix.ts"
+    ],
+    "problem": "Cast-based `Object.fromEntries(...) as Record<...>` record builder, copied in mix.ts.",
+    "fix": "One typed `recordOf(keys, fn)` helper in Core.",
+    "verified": true,
+    "part": [
+      2
+    ]
+  },
+  {
+    "id": "R154",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/core/src/progress/xp-log.ts:602-634"
+    ],
+    "problem": "`freeze()` and `earn()` share the same 15-line append body.",
+    "fix": "`appendAll(added)` in xp-log.ts.",
+    "verified": true,
+    "part": [
+      2
+    ]
+  },
+  {
+    "id": "R155",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/core/src/fakes/fake-apple-sign-in-sheet.ts:59-82",
+      "packages/core/src/fakes/fake-google-sign-in-sheet.ts:68-91"
+    ],
+    "problem": "Same signsIn/cancels/fails/holds/signIn body in both fakes.",
+    "fix": "Shared `fakeSignInSheet(tokenPrefix)` in src/fakes.",
+    "verified": true,
+    "part": [
+      2
+    ]
+  },
+  {
+    "id": "R170",
+    "sev": "low",
+    "kind": "complexity",
+    "where": [
+      "packages/core/src/feed/feed.ts:404"
+    ],
+    "problem": "`for (;;)` retry after an unreadable Entry ends only because card-order ids come from filtered lists; nothing enforces it.",
+    "fix": "Bound the loop by the number of eligible ids.",
+    "verified": false,
+    "part": [
+      1
+    ]
+  }
+]

@@ -1,0 +1,246 @@
+[
+  {
+    "id": "R36",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/content-rules/src/entries.ts:88",
+      "packages/content-rules/src/check.ts:86-87"
+    ],
+    "problem": "The mixed-script check covers only Words, Corrections and Idioms; Tips (incl. `exceptions`) and Synonym Rows are never checked, so a Latin «i» ships.",
+    "fix": "Run the mixed-script rule over all five Entry kinds.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R40",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/language-pack/src/edition-folder.ts:331"
+    ],
+    "problem": "`checkNewSynonymRows` replaces `synonymRows` with the drafts instead of appending; other kinds append.",
+    "fix": "`[...set.synonymRows, ...authored(rows)]`.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R41",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/language-pack/src/pack-reader.ts:504,551"
+    ],
+    "problem": "One malformed row makes `Schema.parse` throw for the whole `getEntries` batch of all kinds.",
+    "fix": "Document fail-fast in the port, or `safeParse` per record.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R64",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "packages/language-pack/src/crossword.ts:111-141"
+    ],
+    "problem": "`dayAfterDays` rebuilds `crosswordSupply` and filters all earlier days per day: O(D²) over about 400 days.",
+    "fix": "Build the supply once; use a sliding window.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R122",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/content-rules/src/entries.ts:17-18,115"
+    ],
+    "problem": "`unique-lemma` is case-sensitive while `unique-expression` lowercases.",
+    "fix": "Compare Lemmas in the Edition locale's lower case.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R123",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/content-rules/src/crossword-days.ts:77-86"
+    ],
+    "problem": "A day with a date gap returns early, so its repeated words show only after the gap is fixed.",
+    "fix": "Collect the gap error and fall through.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R126",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/language-pack/src/edition-folder.ts:345",
+      "packages/language-pack/src/crossword.ts:50"
+    ],
+    "problem": "`new Date()` instead of injected time.",
+    "fix": "Take `today` from the caller.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R127",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/language-pack/src/apply-patch.ts:97"
+    ],
+    "problem": "A Patch raises `content_version` but keeps the old metadata `checksum`.",
+    "fix": "Update or drop the checksum on Patch.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R128",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/language-pack/src/edition-folder.ts:398"
+    ],
+    "problem": "`entryFile` maps any unknown id prefix to `content/corrections`.",
+    "fix": "Return undefined for unknown prefixes.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R129",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/content-rules/src/tips.ts:11-38"
+    ],
+    "problem": "No rule against repeated `exceptions.words` or a word equal to `standardForm`.",
+    "fix": "New rule (owner decision).",
+    "verified": false,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R144",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "packages/content-rules/src/crossword-days.ts:88"
+    ],
+    "problem": "`days.slice(0, i).filter` per day: O(n²) on every build and checkRecord.",
+    "fix": "Look back only over the repeat window.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R145",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "packages/content-rules/src/check.ts:86-87"
+    ],
+    "problem": "Tip/Synonym Row checks take no `checksFile`, so checkRecord runs them over the whole set per save.",
+    "fix": "Pass `checksFile` like the other kinds.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R146",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "packages/language-pack/src/pack-layout.ts:183-190"
+    ],
+    "problem": "No index on `synonym_row_members.word_id`: full scan on every Word card.",
+    "fix": "Add the index.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R147",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "packages/language-pack/src/build.ts:122,145",
+      "packages/language-pack/src/read-edition.ts:144"
+    ],
+    "problem": "`edition.json` read and parsed up to three times per build.",
+    "fix": "Parse once and pass `config` down.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R148",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "packages/language-pack/src/edition-folder.ts:397"
+    ],
+    "problem": "`entryTexts` re-reads every Entry file per call.",
+    "fix": "Share one lazy `entries()` cache.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R163",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/language-pack/src/read-edition.ts:251",
+      "packages/content-rules/src/check.ts:50"
+    ],
+    "problem": "`snapshotEntries` re-implements `contentSetOf`.",
+    "fix": "Export `contentSetOf` (with a file-label parameter) from content-rules.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  },
+  {
+    "id": "R166",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/content-rules/src/quote-check.ts:9",
+      "packages/content-rules/src/parse-record.ts:37-44",
+      "packages/content-rules/src/crossword-days.ts:52-71,144-155"
+    ],
+    "problem": "Local `STRESS_MARK` and `ID_PREFIX` restate contracts; \"No Word or Correction\" check written twice.",
+    "fix": "Import from `@slovo/contracts`; one helper.",
+    "verified": true,
+    "part": [
+      7
+    ]
+  }
+]

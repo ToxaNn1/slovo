@@ -1,0 +1,396 @@
+[
+  {
+    "id": "R6",
+    "sev": "high",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/entries/WordCard.tsx:276",
+      "packages/ui/src/entries/WordTabs.tsx:94"
+    ],
+    "problem": "`WordDefinition` is a plain Text, so the clamped «Суть» tab gets no line reports from it; the whole-lines cut then shows nothing (cut 0) or slices a line (ADR 0091).",
+    "fix": "Render it through `WholeLinesText`.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R10",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/entries/WordTabs.tsx:162",
+      "packages/ui/src/entries/WordCard.tsx:516",
+      "packages/ui/src/entries/IdiomCard.tsx:141,211"
+    ],
+    "problem": "Extra Definitions in the history tab are numbered from 1, while WordCard and IdiomCard number them from 2: a second «1.».",
+    "fix": "Use `index + 2`, or the shared `NumberedDefinitions` (R68).",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R11",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/game/VowelButtons.tsx:185"
+    ],
+    "problem": "`inert` without `accessibilityState.disabled`: VoiceOver still announces answered vowels as active.",
+    "fix": "Pass `disabled`, as OrderedChips/PairsGrid do.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R12",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/primitives/Button.tsx:98",
+      "packages/ui/src/game (5 grids using PressedTile)"
+    ],
+    "problem": "`voice` is spread on the inner Text, not on PressedTile's Pressable, so the Ukrainian label is read in the system language.",
+    "fix": "Spread `{...voice}` on PressedTile.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R13",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/game/GameRound.tsx:387"
+    ],
+    "problem": "The Quick Question tag shows `asked.label`, but VoiceOver reads the hidden `title` (label-in-name mismatch).",
+    "fix": "Read the visible text.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R14",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/primitives/SearchField.tsx:130"
+    ],
+    "problem": "Fixed `height: 50` and no font cap on the TextInput: large Dynamic Type clips the query.",
+    "fix": "`minHeight`, or `fontScaleCap.text`.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R48",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/primitives/WholeLines.tsx:110"
+    ],
+    "problem": "The `measureLayout` callback can re-report lines after cleanup removed its id, so stale lines from a bigger size step stay in `byId`. Only if the callback is async (Fabric calls it sync).",
+    "fix": "Guard with a cancelled flag in the effect.",
+    "verified": false,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R49",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/entries/EntryDetails.tsx:136"
+    ],
+    "problem": "With tabs the details are a fixed View (deliberate, ADR 0091/0113); at XL font the tab bar and «Детальніше» may be pushed off-screen. Needs a device check.",
+    "fix": "Let the head scroll, or cap it.",
+    "verified": false,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R56",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "packages/ui/src/primitives/BottomSheet.tsx:201,222"
+    ],
+    "problem": "Inline pan/tap gesture configs are not memoised, so the worklets are re-sent on every owner render (each keystroke); docs/react-native.md:30.",
+    "fix": "`useMemo` the configs.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R67",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/game/GameResult.tsx:216-322",
+      "packages/ui/src/game/GameEndPoster.tsx:77-199",
+      "packages/ui/src/game/CrosswordSolvedPoster.tsx:61-163"
+    ],
+    "problem": "Same panel, title block, two-button row and StyleSheet three times.",
+    "fix": "One `ResultPanel` + `ResultButtons` beside PanelGround in GameResult.tsx.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R68",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/entries/WordCard.tsx:513",
+      "packages/ui/src/entries/IdiomCard.tsx:138,208",
+      "packages/ui/src/entries/WordTabs.tsx:159"
+    ],
+    "problem": "Numbered Definitions copied 4×; the copies already disagree (R10).",
+    "fix": "`NumberedDefinitions({definitions, from})` in entries/.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R69",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/entries/IdiomCard.tsx:267",
+      "packages/ui/src/entries/CorrectionCard.tsx:274",
+      "packages/ui/src/entries/SynonymRowCard.tsx:222",
+      "packages/ui/src/entries/TipCard.tsx:213"
+    ],
+    "problem": "Source line and its own `SOURCE_SEPARATOR` copied 4×.",
+    "fix": "`SourceLine` in entries/.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R70",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/game/PairsGrid.tsx:23,165-180",
+      "packages/ui/src/game/VowelButtons.tsx:24,143-158"
+    ],
+    "problem": "Same answer pop/drop motion; `CELL_POP` equals `VOWEL_POP`.",
+    "fix": "`useAnswerMotion` in game/round-motion.ts.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R71",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/game/GameRound.tsx:770-825",
+      "packages/ui/src/game/AnswerCard.tsx:31-73"
+    ],
+    "problem": "Verdict header, «Далі» button and styles copied.",
+    "fix": "Share `VerdictHeader` + `NextButton` from AnswerCard.tsx.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R89",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/game/RoundCard.tsx:96"
+    ],
+    "problem": "The stop before the Definition depends on whether `read` ends in punctuation, not the `instead` text, so the two run together.",
+    "fix": "Join label parts with a per-part stop.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R90",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/game/GameResult.tsx:223",
+      "packages/ui/src/game/GameEndPoster.tsx:51",
+      "packages/ui/src/game/CrosswordSolvedPoster.tsx:47"
+    ],
+    "problem": "`accessibilityRole=\"header\"` inside an `accessible` View is merged away.",
+    "fix": "Put the role on the accessible View.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R91",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/game/GameModeCard.tsx:65,110"
+    ],
+    "problem": "The label reads `line` and `refusal`, but only `refusal ?? line` is shown.",
+    "fix": "`sentences([title, refusal ?? line, best])`.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R92",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/game/CrosswordSolvedPoster.tsx:147"
+    ],
+    "problem": "Fixed `height` panel; the other posters use `minHeight`.",
+    "fix": "`minHeight`.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R93",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/primitives/VerticalPager.tsx:246,257,357,370"
+    ],
+    "problem": "Empty `items` clamps to -1, so `onIndexChange(-1)`.",
+    "fix": "Return early when length is 0.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R94",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/primitives/WholeLines.tsx:110"
+    ],
+    "problem": "Text that becomes empty keeps its old lines.",
+    "fix": "`report(id)` when lines are empty.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R95",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/primitives/UndoToast.tsx:182"
+    ],
+    "problem": "`isScreenReaderEnabled()` has no `.catch`; a rejection leaves the toast stuck.",
+    "fix": "`.catch(() => false)`.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R96",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/game/TracedCrosswordGrid.tsx:299,334"
+    ],
+    "problem": "Answer tile has no font cap; MissFade ignores Reduce Motion.",
+    "fix": "Add `fontScaleCap.number`; read `useReduceMotion`.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R97",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/primitives/BottomSheet.tsx:195-203"
+    ],
+    "problem": "A close-by-drag the owner refuses leaves the sheet shifted down.",
+    "fix": "Spring `drag` back while still visible.",
+    "verified": false,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R137",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "packages/ui/src/primitives/WholeLines.tsx:54"
+    ],
+    "problem": "`Object.values(byId).flat()` plus a FitPanel re-render per reported text (O(n²) per size step).",
+    "fix": "Memoise on `byId` and batch the reports.",
+    "verified": false,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R138",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "packages/ui/src/primitives/Mascot.tsx:280,407"
+    ],
+    "problem": "`bezierFn` and 5 arrays rebuilt every frame of endless loops.",
+    "fix": "Precompute outside the worklet.",
+    "verified": true,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R156",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/game/LetterWheel.tsx:99-150",
+      "packages/ui/src/game/TracedCrosswordGrid.tsx:105-167"
+    ],
+    "problem": "Same trace-drag shell; only `hit` differs.",
+    "fix": "`game/useTraceDrag.ts`.",
+    "verified": false,
+    "part": [
+      3
+    ]
+  },
+  {
+    "id": "R174",
+    "sev": "low",
+    "kind": "dead",
+    "where": [
+      "packages/ui/src/entries/SwipeMarks.tsx:105-117,241-260,434-477,590"
+    ],
+    "problem": "About 70 lines of commented-out chip/nudge code. Check first whether it is a deliberate DESIGN-05 marker (see dropped P4#29).",
+    "fix": "Delete if not pending an owner decision.",
+    "verified": false,
+    "part": [
+      3
+    ]
+  }
+]

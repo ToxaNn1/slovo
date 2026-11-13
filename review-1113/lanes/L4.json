@@ -1,0 +1,348 @@
+[
+  {
+    "id": "R21",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/foreground/foreground-reports.ts:68"
+    ],
+    "problem": "inactive→active reports `return`: a second `sessionStarted` without `sessionEnded`, an extra resume and sync.",
+    "fix": "Report `return` only after `background`.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R22",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/app/feed.tsx:293"
+    ],
+    "problem": "The wordTabs branch drops page scroll also for the red Self-check Word of the Day card (not a fixed frame): a tall card is cut off.",
+    "fix": "Keep `PagerScrollView` for cards that are not a fixed frame.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R25",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/categories/category-screen.ts:83",
+      "apps/mobile/src/dashboard/curated-collection.ts"
+    ],
+    "problem": "A failed read only logs; the screen stays loading forever.",
+    "fix": "Use `useCompositionRead` and its failed state (see R77).",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R26",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/entries/pronunciation.ts:146,152"
+    ],
+    "problem": "After `await silence()` there is no `latestTap !== tap` check (the recording path has it at :128): two fast taps both speak.",
+    "fix": "Re-check `latestTap` after the await.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R27",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/entries/pronunciation.ts:122"
+    ],
+    "problem": "`await recordingOf(id)` is uncaught; a rejection escapes through `void pronunciation.toggle`.",
+    "fix": "try/catch and fall back to the device voice.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R28",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/community-counters/counter-line.ts:61"
+    ],
+    "problem": "Stored `line` is not keyed by `entryId`: a new Entry shows the old Entry's counters until its read lands.",
+    "fix": "Store `{entryId, line}` and return it only on a match.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R50",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/app/index.tsx:79"
+    ],
+    "problem": "The Dashboard date is read with `todayDate(deviceClock)` at render; after midnight the header may show yesterday (a day-turn re-render probably hides it).",
+    "fix": "Take `today` from a subscribed source, as `useFeed` does.",
+    "verified": false,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R59",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "apps/mobile/src/content-update/language-pack.tsx:63-74"
+    ],
+    "problem": "Every launch copies the whole bundled SQLite pack (`forceOverwrite`) just to read its version; `replaceWithBundled` copies again.",
+    "fix": "Ship the bundled content version as config.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R77",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "apps/mobile/src/game/daily-crossword.ts:163",
+      "apps/mobile/src/categories/category-screen.ts:65",
+      "apps/mobile/src/dashboard/correction-type.ts:33",
+      "apps/mobile/src/dashboard/curated-collection.ts:32",
+      "apps/mobile/src/search/search.ts:90"
+    ],
+    "problem": "Hand-rolled `{in: composition}` + `active` read in 5 hooks.",
+    "fix": "Use `useCompositionRead` (composition.ts:90).",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R78",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "apps/mobile/src/entries/pronunciation-button.tsx:76-89,126-139"
+    ],
+    "problem": "`PlayingLemma` and `useSampleReading` carry the same two effects.",
+    "fix": "One `useStopsWhenGone(id, sounds)` hook.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R85",
+    "sev": "med",
+    "kind": "complexity",
+    "where": [
+      "apps/mobile/src/game/crossing-crossword.ts:36,233"
+    ],
+    "problem": "Grid model (`sizeOf`, `isBlock`, `answerAt`) is Core logic living in the app; `crossingCells` is O(cells×words×letters) on each render.",
+    "fix": "Move it to packages/core and index cells once in a Map.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R86",
+    "sev": "med",
+    "kind": "dead",
+    "where": [
+      "apps/mobile/src/game/progress-share-offers.tsx",
+      "apps/mobile/src/app/game/index.tsx:27,177"
+    ],
+    "problem": "Module has no importer; only commented-out uses remain.",
+    "fix": "Delete the module and the commented lines.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R108",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/account/session-store.ts:29"
+    ],
+    "problem": "`parsed as Partial<...>` cast and hand-written JSON parse at the storage edge.",
+    "fix": "zod schema, like widget-snapshot.ts:87.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R109",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/settings/settings.tsx:101-106"
+    ],
+    "problem": "`update` merges onto render-time `current`: two updates in one event lose the first.",
+    "fix": "Functional `setChanged(prev => ...)`.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R111",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/app/saved/collections/[collectionId]/index.tsx:92"
+    ],
+    "problem": "`canDismiss()` guards `back()`: check and action differ.",
+    "fix": "Pair `canGoBack()` with `back()`.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R112",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/mobile/src/app/c/[linkId].tsx:39"
+    ],
+    "problem": "`useLocalSearchParams<{x: string}>` unchecked in 7 routes (only correction-type parses).",
+    "fix": "Parse params once at the route edge.",
+    "verified": false,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R141",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "apps/mobile/src/shell/decor-in-effect.tsx:27-28"
+    ],
+    "problem": "Inline `subscribe` to `useSyncExternalStore` resubscribes and re-arms the timer each render.",
+    "fix": "Stable `subscribe` via `useCallback([clock])`.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R142",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "apps/mobile/src/shown-in-effect.ts:10"
+    ],
+    "problem": "`useShown()` (32 callers) evaluates all switch checks and returns a new object per render.",
+    "fix": "`useMemo` on its inputs.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R143",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "apps/mobile/src/categories/category-screen.ts:93",
+      "apps/mobile/src/saved/collection-board.tsx:79"
+    ],
+    "problem": "`cards` map and filters rebuilt each render, new list `data`.",
+    "fix": "`useMemo`; shared `useKnownCards(rows)`.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R159",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "apps/mobile/src/shell/lifecycle.tsx:76,119",
+      "apps/mobile/src/sync/background-sync.ts:63"
+    ],
+    "problem": "`reopenForSwitches` exists (:76) but :119 and background-sync repeat its reopen + Widget Snapshot body.",
+    "fix": "Call `reopenForSwitches` from both.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R160",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "apps/mobile/src/foreground/foreground-reports.ts:54",
+      "apps/mobile/src/shell/decor-in-effect.tsx:34"
+    ],
+    "problem": "Next-local-day timer written twice.",
+    "fix": "One `everyNextLocalDay(clock, cb)`.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R161",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "apps/mobile/src/categories/categories.ts:15,29",
+      "apps/mobile/src/app/correction-category/[categoryId].tsx:11"
+    ],
+    "problem": "`useCategories`/`useCorrectionCategories` differ only by kind; the two category routes too.",
+    "fix": "`useBlockCategories(kind)`, one `CategoryRoute({of})`.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R171",
+    "sev": "low",
+    "kind": "complexity",
+    "where": [
+      "apps/mobile/src/app/feed.tsx:253"
+    ],
+    "problem": "`sourceTab`/`tipExceptions` threaded by hand through 3 screens and 3 `SwipedEntryCard` branches.",
+    "fix": "Read them from `useShown()` inside `SwipedEntryCard`.",
+    "verified": false,
+    "part": [
+      5
+    ]
+  },
+  {
+    "id": "R175",
+    "sev": "low",
+    "kind": "dead",
+    "where": [
+      "apps/mobile/src/saved/history-text.ts:65"
+    ],
+    "problem": "`relative` / `RelativeText` used only by its test. (Commented DESIGN-05 code nearby is deliberate.)",
+    "fix": "Delete.",
+    "verified": true,
+    "part": [
+      5
+    ]
+  }
+]

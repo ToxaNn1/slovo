@@ -1,0 +1,344 @@
+[
+  {
+    "id": "R2",
+    "sev": "high",
+    "kind": "bug",
+    "where": [
+      "apps/admin/src/components/content-queue/content-queue.tsx:90-92",
+      "apps/admin/src/components/content-editor/record-form.tsx:156,301-303"
+    ],
+    "problem": "Confirm dialogs fire the write (`mutate` / `void write()`) and resolve at once: the dialog closes before the write, a refusal never shows in it, double submit is not blocked.",
+    "fix": "`PendingWrite.run` returns a Promise (`mutateAsync` / `return write(...)`); `onConfirm` awaits it. See R80 for the shared `PendingWrite`.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R7",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/admin/src/switches/kill-tab.tsx:23-24,119",
+      "apps/admin/src/switches/switches-data.ts:38"
+    ],
+    "problem": "While Editions load or fail, «Вимкнути зараз» sends `editionId: undefined`, which means kill in every Edition.",
+    "fix": "Take the scope from `search.edition`, or disable the button until `editionsQuery.isSuccess`.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R42",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/admin/src/components/content-editor/record-form.tsx:139"
+    ],
+    "problem": "The STALE branch re-reads the record inside `catch`; if that read fails, the rejection is swallowed by `void write()`.",
+    "fix": "try/catch the re-read and fall back to `setErrors([refusalText(e)])`.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R43",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/admin/src/switches/switches-data.ts:26",
+      "apps/admin/src/components/content-queue/content-queue.tsx:62-64",
+      "apps/admin/src/routes/security.tsx:138,253"
+    ],
+    "problem": "Load errors are never shown: failed queries render as empty lists, or the matrix stays not ready.",
+    "fix": "Expose `isError` and render a «Не вдалося» notice like quality.tsx.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R44",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "scripts/smoke-halves.mjs:120"
+    ],
+    "problem": "`spawn('maestro')` has no `error` listener: ENOENT throws, `finally` is skipped, `/tmp/slovo-maestro.lock` stays, every later Maestro run waits forever.",
+    "fix": "`child.on('error', ...)` resolving with code -1.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R45",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "scripts/content-wave/fetch-osvita.mjs:37",
+      "scripts/content-wave/fetch-article.mjs:18"
+    ],
+    "problem": "`curl -sSL` without `--fail`: a 404/5xx page is parsed as content and the script exits 0.",
+    "fix": "Use `-fsSL`.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R46",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/video/src/stopframe/StopFrame.tsx:247-250"
+    ],
+    "problem": "`Math.max(0, findIndex(...final))` silently stops on card 0 when `final` is missing.",
+    "fix": "Throw on -1, like FindMistake.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R47",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "apps/video/src/stopframe/StopFrame.tsx:138-139,201,246"
+    ],
+    "problem": "`beatsFor(8)` / `stopFrameLength` are fixed at 8 cards while `changesFor(cards.length)` uses the real count. Latent: both episodes have 8 cards today.",
+    "fix": "Throw when `cards.length !== 8`, or compute beats per episode.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R65",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "tools/sourcing/src/synonyms.ts:110,165"
+    ],
+    "problem": "`lemmaIds()` re-reads and re-parses every Entry of the Edition per Synonym Row draft.",
+    "fix": "Build the map once in `synonymsKind.start`.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R79",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "apps/admin/src/session.ts:71",
+      "apps/admin/src/switches/switch-state.ts:96",
+      "apps/admin/src/routes/security.tsx:34",
+      "tools/content/src/api.ts:48"
+    ],
+    "problem": "Four hand-rolled walkers of oRPC `error.data` (tools/content with an `as ORPCError` cast) while `SwitchRefusalSchema` exists in contracts (admin.ts:184).",
+    "fix": "Export refusal schemas from `@slovo/contracts/admin-api` and `safeParse` them in admin and tools/content.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R80",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "apps/admin/src/routes/security.tsx:69-73,126",
+      "apps/admin/src/components/confirm-dialog.tsx:7",
+      "apps/admin/src/components/content-queue/queries.ts:38"
+    ],
+    "problem": "`SecurityWrite`/`useSecurityWrite` duplicate `PendingWrite`/`useQueueWrite` (and have the right Promise shape).",
+    "fix": "One `PendingWrite` + `useAdminWrite` in components/ (fixes R2 shape).",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R81",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "tools/sourcing/src/goroh.ts:323,361"
+    ],
+    "problem": "`parseSynonymGroups` and `readSynonymArticles` parse the same «Синонімія» blocks twice.",
+    "fix": "Keep `readSynonymArticles`; filter by dictionary in source-words.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R82",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "tools/sourcing/src/source-words.ts:622",
+      "tools/sourcing/src/corrections.ts:181",
+      "tools/sourcing/src/idioms.ts:167",
+      "tools/sourcing/src/synonyms.ts:205"
+    ],
+    "problem": "Four copies of safeParse + `checkNewX` + format + dedupe.",
+    "fix": "Generic `draftIssues(schema, check, label)` in pipeline.ts.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R83",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "apps/video/src/(13 compositions)"
+    ],
+    "problem": "`clamp` and `pop` easing defined in each of 13 files.",
+    "fix": "`src/shared/motion.ts`.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R84",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "apps/video/src/FindMistake, SayNicer, OneWord, StopFrame, Missing, Stress, Comeback"
+    ],
+    "problem": "Shout `Rings` (4 functions), `Shouter` (6) and Rupor aim maths (4-5) copied across compositions.",
+    "fix": "`src/shared/Rings.tsx`, `Shouter.tsx`, `rupor.ts`.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R130",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "tools/sourcing/src/pipeline.ts:230"
+    ],
+    "problem": "A third duplicate is reported against the 2nd line, not the first.",
+    "fix": "`set` only when `firstLine === undefined`.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R131",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/admin/src/theme.ts:8,27"
+    ],
+    "problem": "Unguarded `localStorage` crashes the root layout when storage is blocked.",
+    "fix": "try/catch; fall back to the system theme.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R132",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "scripts/ci-history.mjs:143",
+      "scripts/ci-affected-parts.mjs:110"
+    ],
+    "problem": "Main guard `import.meta.url === file://argv[1]` fails on spaces/symlinks: silent exit 0, every part skipped.",
+    "fix": "`pathToFileURL(realpath(argv[1])).href`.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R133",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "apps/video/src/oneword/OneWord.tsx:86,261"
+    ],
+    "problem": "Shake cuts at 21% amplitude (`<12` vs `/14`); `solved=165` may be too early for 8+ letter words (unchecked).",
+    "fix": "Use one window; derive `solved` from the letter count.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R134",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "tools/sourcing/src/corrections.ts:276-279"
+    ],
+    "problem": "`withStandardFormMarked` bolds punctuation, marks a word when sentences match, and spans unchanged words (ADR 0117).",
+    "fix": "Compare unstressed words, mark parts, add tests.",
+    "verified": false,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R135",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "tools/content/src/writes.ts:85,114"
+    ],
+    "problem": "`add` with no records opens a batch and exits 0; `edit` ignores a non-numeric `recordVersion`.",
+    "fix": "Refuse both with exit 1.",
+    "verified": false,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R167",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "apps/admin/src/components/filters-bar.tsx:20",
+      "apps/admin/src/routes/content.index.tsx:15",
+      "apps/admin/src/switches/switches-data.ts:26",
+      "apps/admin/src/routes/overview.tsx:116"
+    ],
+    "problem": "`['editions']` query written 5×; analytics/quality queries copied.",
+    "fix": "One `src/queries.ts` with `queryOptions`.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  },
+  {
+    "id": "R168",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "apps/admin/src/components/content-queue/content-queue.tsx:23",
+      "apps/admin/src/routes/security.tsx:28",
+      "apps/admin/src/routes/sessions.tsx:12",
+      "apps/admin/src/routes/quality.tsx:30"
+    ],
+    "problem": "Date formatter copied 4× without `timeZone`; blocks/overview use Europe/Kyiv.",
+    "fix": "One `formatMoment` in `src/format.ts`.",
+    "verified": true,
+    "part": [
+      8
+    ]
+  }
+]

@@ -1,0 +1,357 @@
+[
+  {
+    "id": "R15",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/providers/useReduceMotion.ts:17"
+    ],
+    "problem": "A late `isReduceMotionEnabled()` promise overwrites a newer value from the change event.",
+    "fix": "Ignore the promise once an event has arrived.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R16",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/onboarding/OnboardingStep.tsx:132"
+    ],
+    "problem": "Reduce Motion reads `false` until the system answers, so the full fly-in starts even with Reduce Motion on.",
+    "fix": "Use `useReduceMotionKnown`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R17",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/onboarding/RarityTestQuestions.tsx:101-105"
+    ],
+    "problem": "`answer` reads a stale `phase` closure: a double tap records the same Word twice / loses an answer.",
+    "fix": "Functional `setPhase(prev => ...)`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R19",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/dashboard/DashboardHero.tsx:303"
+    ],
+    "problem": "`Math.max(...[])` is -Infinity when `lines` is empty, so the scale becomes -0 and the line disappears.",
+    "fix": "Skip empty `lines` (see R74 `useFitToRoom`).",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R20",
+    "sev": "med",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/feed/FeedHeader.tsx:78"
+    ],
+    "problem": "With `onLogo` the logo is a button with no `header` role, so the screen title is not announced as a heading.",
+    "fix": "Keep the heading separate from the button.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R57",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "packages/ui/src/dashboard/RailScreenCard.tsx:43"
+    ],
+    "problem": "Unbounded stagger (index × 70 ms): card 30 waits about 2.1 s.",
+    "fix": "`Math.min(index, max) * stagger`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R58",
+    "sev": "med",
+    "kind": "perf",
+    "where": [
+      "packages/ui/src/onboarding/SplashOverlay.tsx:162,211-213,324,354-355,415"
+    ],
+    "problem": "`curve()` builds a bezier function on every render inside worklets.",
+    "fix": "Build the easings once as module constants (with R72).",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R73",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/saved/CollectionSheet.tsx:88",
+      "packages/ui/src/saved/CollectionNameField.tsx:41"
+    ],
+    "problem": "Submit logic (ref guard, try/catch/finally) copied from CollectionNameField.",
+    "fix": "Hook `useNameSubmit`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R74",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/dashboard/HeroReveal.tsx:40",
+      "packages/ui/src/dashboard/DashboardHero.tsx:271"
+    ],
+    "problem": "Same room/natural scale fit twice.",
+    "fix": "Hook `useFitToRoom` (fix R19 inside it).",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R75",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/dashboard/QuietScreenHero.tsx:37",
+      "packages/ui/src/dashboard/RailScreenHero.tsx:78"
+    ],
+    "problem": "Back button, safe-area shift and height state copied.",
+    "fix": "Primitive `HeroBack`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R76",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/progress/StreakFreezeCard.tsx:60",
+      "packages/ui/src/progress/ActiveDaysCalendar.tsx:70,130"
+    ],
+    "problem": "Day label (weekday + month) built 3×.",
+    "fix": "`dayLabel(strings, day)`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R98",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/saved/CollectionNameField.tsx:50"
+    ],
+    "problem": "A save failure goes only to `console.error`.",
+    "fix": "Show and announce the refusal.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R99",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/share/ShareSheet.tsx:111"
+    ],
+    "problem": "A rejected `onShare` blocks the button forever.",
+    "fix": "`try/finally`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R100",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/settings/SettingsRows.tsx:49"
+    ],
+    "problem": "`key={index}` remounts rows.",
+    "fix": "Use `row.key`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R101",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/progress/BadgeGrid.tsx:28"
+    ],
+    "problem": "An unearned Badge with `current >= target` is drawn as `locked`.",
+    "fix": "Condition on `current > 0`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R102",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/progress/LevelCard.tsx:63"
+    ],
+    "problem": "`share` can go negative.",
+    "fix": "`Math.max(0, ...)`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R103",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/dashboard/RailScreenHero.tsx:214"
+    ],
+    "problem": "A toggle announces `selected`.",
+    "fix": "`togglebutton` + `checked`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R104",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/categories/CategoriesRail.tsx:36"
+    ],
+    "problem": "The tile's `accessibilityLabel` is lost.",
+    "fix": "`accessibilityLabel ?? name`.",
+    "verified": false,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R105",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/progress/BreakCard.tsx:38"
+    ],
+    "problem": "Empty week and a duplicate `'empty'` key.",
+    "fix": "Split into weeks, drop empty ones.",
+    "verified": false,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R106",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/feed/FeedNoticeCard.tsx:170"
+    ],
+    "problem": "Outside VerticalPager the action button does nothing.",
+    "fix": "Hide the action without the hook.",
+    "verified": false,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R107",
+    "sev": "low",
+    "kind": "bug",
+    "where": [
+      "packages/ui/src/mistake-reports/MistakeReportSheet.tsx:135"
+    ],
+    "problem": "Counter «12/500» has no words for VoiceOver; `slice` duplicates `maxLength`.",
+    "fix": "Label from the Edition; keep only `maxLength`.",
+    "verified": false,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R139",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "packages/ui/src/providers/EditionProvider.tsx:59"
+    ],
+    "problem": "memo keyed on the Edition object, not on `locale`.",
+    "fix": "Depend on `edition.locale`.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R140",
+    "sev": "low",
+    "kind": "perf",
+    "where": [
+      "packages/ui/src/categories/CategoryGrid.tsx:79"
+    ],
+    "problem": "`initialNumToRender` equals all tiles.",
+    "fix": "One screen's worth.",
+    "verified": true,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R157",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/feed/FeedStates.tsx:95"
+    ],
+    "problem": "Hand-made button instead of `Button`.",
+    "fix": "`<Button>`.",
+    "verified": false,
+    "part": [
+      4
+    ]
+  },
+  {
+    "id": "R158",
+    "sev": "low",
+    "kind": "duplicate",
+    "where": [
+      "packages/ui/src/progress/StampHalftone.tsx:7",
+      "packages/ui/src/HalftoneGround.tsx:28"
+    ],
+    "problem": "Same halftone pattern twice.",
+    "fix": "Shared `HalftoneDots`.",
+    "verified": false,
+    "part": [
+      4
+    ]
+  }
+]
