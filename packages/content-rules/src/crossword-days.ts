@@ -70,23 +70,27 @@ export function unknownCrosswordEntries(
   );
 }
 
-/** A gap between days, and a word that comes back within 20 days. */
+/** A gap between days, and a word that comes back within 20 days, each on its own. */
 function ruleErrors(days: readonly CrosswordDay[]): Refusal[] {
   return days.flatMap((day, i): Refusal[] => {
     const before = days[i - 1];
-    if (before !== undefined && day.date !== dateAfter(before.date, 1)) {
-      return [
-        {
-          rule: 'crossword-days-gap' as const,
-          file: CROSSWORD_DAYS_FILE,
-          field: `${String(i)}.date`,
-          message: `Expected ${dateAfter(before.date, 1)}, the day after the one before: the days run without a gap`,
-        },
-      ];
-    }
+    const gap: Refusal[] =
+      before !== undefined && day.date !== dateAfter(before.date, 1)
+        ? [
+            {
+              rule: 'crossword-days-gap' as const,
+              file: CROSSWORD_DAYS_FILE,
+              field: `${String(i)}.date`,
+              message: `Expected ${dateAfter(before.date, 1)}, the day after the one before: the days run without a gap`,
+            },
+          ]
+        : [];
     const since = dateAfter(day.date, 1 - CROSSWORD_REPEAT_DAYS);
-    const recent = days.slice(0, i).filter((other) => other.date >= since);
-    return day.words.flatMap(({ entryId }, word) => {
+    // The days run in date order, one a day, so the repeat window holds at most the days just before.
+    const recent = days
+      .slice(Math.max(0, i - CROSSWORD_REPEAT_DAYS), i)
+      .filter((other) => other.date >= since);
+    const repeats = day.words.flatMap(({ entryId }, word) => {
       const earlier = recent.find(({ words }) => words.some((other) => other.entryId === entryId));
       return earlier === undefined
         ? []
@@ -99,6 +103,7 @@ function ruleErrors(days: readonly CrosswordDay[]): Refusal[] {
             },
           ];
     });
+    return [...gap, ...repeats];
   });
 }
 

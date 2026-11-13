@@ -213,6 +213,33 @@ describe('checkContentSet', () => {
     expect(rules(checkContentSet(config, set(), { today }))).toEqual([rule]);
   });
 
+  it.each([
+    ['a Synonym Row', 'r_fx0001', { meaning: 'Який любить гoворити.' }],
+    ['a Tip', 't_fx0001', { explanation: 'Кажуть гoворити.' }],
+  ])('refuses mixed scripts in %s', (_kind, id, changes) => {
+    const refusals = checkContentSet(config, fixtureSet({ [id]: changes }), { today });
+    expect(refusals.map(({ rule, entryId }) => [rule, entryId])).toEqual([['mixed-script', id]]);
+  });
+
+  it('refuses a Lemma that differs from another only in case', () => {
+    const { lemma } = record('w_fx0002') as { lemma: string };
+    const capital = `${lemma.charAt(0).toLocaleUpperCase('uk')}${lemma.slice(1)}`;
+    const set = fixtureSet({}, [parsed(record('w_fx0002', { id: 'w_fx0009', lemma: capital }))]);
+    expect(rules(checkContentSet(config, set, { today }))).toEqual(['unique-lemma']);
+  });
+
+  it('refuses a repeated word in a day that follows a gap', () => {
+    const gap = [day('2026-11-01', ['w_fx0002']), day('2026-11-03', ['w_fx0002'])];
+    const set = fixtureSet({}, [], {
+      crosswordDays: gap,
+      recordedCrosswordDaysChecksum: checksumOf(gap),
+    });
+    expect(rules(checkContentSet(config, set, { today }))).toEqual([
+      'crossword-days-gap',
+      'crossword-days-repeat',
+    ]);
+  });
+
   it('refuses a fixture that breaks category-history, naming the rule', () => {
     const edition = { ...config, categoriesRequiringHistory: ['speech'] };
     expect(rules(checkContentSet(edition, fixtureSet(), { today }))).toEqual(['category-history']);

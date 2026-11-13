@@ -3,15 +3,21 @@ import type { EditionConfig, Tip } from '@slovo/contracts';
 import type { Authored, Refusal } from './refusal';
 
 /**
- * The check the schema can't make on a Tip alone: the answers of its Game
+ * The check the schema can't make on a Tip alone, on the Tips whose file
+ * `checksFile` takes: the answers of its Game
  * question differ, in lower case of the Edition's locale. The schema already
  * holds a Tip's shape: an explanation of at most 300 characters, a Game
  * question with one right and three wrong answers, at least one source.
  */
-export function checkTips(config: EditionConfig, tips: readonly Authored<Tip>[]): Refusal[] {
+export function checkTips(
+  config: EditionConfig,
+  tips: readonly Authored<Tip>[],
+  checksFile: (file: string) => boolean = () => true,
+): Refusal[] {
   const errors: Refusal[] = [];
 
   for (const { file, entry: tip } of tips) {
+    if (!checksFile(file)) continue;
     const { rightAnswer, wrongAnswers } = tip.gameQuestion;
     const answers = [
       { field: 'rightAnswer', text: rightAnswer },
