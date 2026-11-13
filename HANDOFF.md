@@ -84,3 +84,4 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 CI-FIX DONE: PR #1820 head eacb04f04e34c77a498edeffc8fce079a960902f, checks green
 - 21:42Z PATCH3: started; branch fix/1113-patch-format-3, PATCH_FORMAT 3, ADR 0121 written
 - 21:53Z PATCH3: lint/typecheck/test green locally; pushed 6f5d488; opened PR #1821; waiting for CI
+- 21:56Z PATCH3: CI all green (20 success, 2 skipped by design)
