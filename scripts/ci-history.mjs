@@ -84,7 +84,7 @@ export function readReports(folder) {
   return { tests, failedTests: [...new Set(failedTests)].slice(0, 1000), coverage };
 }
 
-/** How long each finished job of the run took, in seconds. */
+/** How long each finished job of the run took, in seconds, and when it ran. */
 async function jobsOf(repository, runId, token) {
   const response = await fetch(
     `https://api.github.com/repos/${repository}/actions/runs/${runId}/jobs?per_page=100`,
@@ -97,6 +97,10 @@ async function jobsOf(repository, runId, token) {
     .map((job) => ({
       name: job.name.slice(0, 200),
       seconds: Math.max(0, (Date.parse(job.completed_at) - Date.parse(job.started_at)) / 1000),
+      span: {
+        startedAt: new Date(job.started_at).toISOString(),
+        completedAt: new Date(job.completed_at).toISOString(),
+      },
     }))
     .slice(0, 100);
 }
