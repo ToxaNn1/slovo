@@ -48,7 +48,7 @@ export function alertText(alert: Alert): string {
 }
 
 /** The daily digest the owner reads at 09:00 Kyiv. */
-export function digestText(digest: Digest): string {
+function digestText(digest: Digest): string {
   const ci =
     digest.lastCi === null
       ? 'немає запусків за 7 днів'
@@ -88,7 +88,7 @@ export function createOwnerChat(
 }
 
 /** Alerts told at once, as the Kill switch's: kept for Огляд, then sent. */
-export function createOwnerAlerts({
+function createOwnerAlerts({
   store,
   chat,
   clock,

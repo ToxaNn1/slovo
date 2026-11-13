@@ -166,8 +166,6 @@ export function createMediaRows({ database, clock }: { database: Database; clock
   return { saveRecording, saveRecordings, saveIllustration, saveMedia };
 }
 
-export type MediaRows = ReturnType<typeof createMediaRows>;
-
 /** Whether a Word's Recordings, made from `read`, no longer read its fields (ADR 0083). */
 export function readsDifferently(
   fields: Pick<Word, 'lemma' | 'stress'>,

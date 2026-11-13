@@ -8,7 +8,7 @@ export { ResendButton } from './account/ResendButton';
 export { BackLink } from './primitives/BackLink';
 export { FeedError, FeedLoading } from './feed/FeedStates';
 export { GesturesHintSheet } from './feed/GesturesHintSheet';
-export { SwipeDemoStage, useGesturesDemo, type SwipeDemo } from './entries/swipe-demo';
+export { SwipeDemoStage, useGesturesDemo } from './entries/swipe-demo';
 export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
 export { NarratorVoicePicker } from './settings/NarratorVoicePicker';
@@ -53,12 +53,7 @@ export { OrderedChips } from './game/OrderedChips';
 export { PairsGrid } from './game/PairsGrid';
 export { GameTimer } from './game/GameTimer';
 export { TracedCrosswordGrid, type TracedMiss, type TracedWord } from './game/TracedCrosswordGrid';
-export {
-  CrossingClueBar,
-  CrossingGrid,
-  type CrossingGridCell,
-  type CrosswordPlace,
-} from './game/CrossingGrid';
+export { CrossingClueBar, CrossingGrid, type CrossingGridCell } from './game/CrossingGrid';
 export { LetterWheel, type WheelMiss } from './game/LetterWheel';
 export { HapticsProvider } from './providers/HapticsProvider';
 export { InterfaceSoundsProvider, useInterfaceSounds } from './providers/InterfaceSoundsProvider';
@@ -79,11 +74,11 @@ export {
   type RarityTestQuestion,
   type RarityTestScreen,
 } from './onboarding/RarityTestQuestions';
-export { Button, type ButtonVariant } from './primitives/Button';
-export { Icon, type IconName } from './primitives/Icon';
+export { Button } from './primitives/Button';
+export { type IconName } from './primitives/Icon';
 export { BackHeader } from './primitives/BackHeader';
 export { IconButton } from './primitives/IconButton';
-export { PressedTile, type TileTone } from './primitives/PressedTile';
+export { PressedTile } from './primitives/PressedTile';
 export { ScreenEnter } from './primitives/ScreenEnter';
 export { TabBarButton } from './primitives/TabBarButton';
 export { LabelChip } from './primitives/LabelChip';
@@ -127,7 +122,6 @@ export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
 export { BreakCard } from './progress/BreakCard';
 export { BadgeMark } from './progress/BadgeMark';
 export { DashboardHero } from './dashboard/DashboardHero';
-export { BlockTitle } from './dashboard/BlockTitle';
 export { MoodCheckIn } from './dashboard/MoodCheckIn';
 export { PreviousWords } from './dashboard/PreviousWords';
 export { CorrectionTypeRow } from './dashboard/CorrectionTypeRow';
@@ -142,32 +136,27 @@ export { CategoriesRail } from './categories/CategoriesRail';
 export { CategoryGrid, type GridTile } from './categories/CategoryGrid';
 export { CorrectionCategoryGrid } from './categories/CorrectionCategoryGrid';
 export {
-  CategoryTile,
   shapeAt,
   toneByPosition,
-  type CategoryShapes,
   type CategoryTileBox,
   type CategoryTone,
 } from './categories/CategoryTile';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
-export { BadgeSheet, type BadgeSheetBadge } from './progress/BadgeSheet';
+export { BadgeSheet } from './progress/BadgeSheet';
 export { BadgeStamp } from './progress/BadgeStamp';
 export { BadgeToast } from './progress/BadgeToast';
 export { NewLevelScreen } from './progress/NewLevelScreen';
 export { LevelCard } from './progress/LevelCard';
-export { LevelLadder, type LadderState, type LevelLadderRung } from './progress/LevelLadder';
+export { LevelLadder } from './progress/LevelLadder';
 export { StatsSheet } from './progress/StatsSheet';
 export { StreakFreezeCard } from './progress/StreakFreezeCard';
 export type { MoodDays } from './progress/mood-line';
 export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
 export {
-  cardSpace,
   categoryGrid,
   categoryGridBox,
-  categoryRailBox,
   correctionGrid,
-  correctionGridBox,
   categoryTile,
   collectionCard,
   coreTokens,
@@ -185,7 +174,6 @@ export {
   space,
   fontScaleCap,
   STACK_AT_FONT_SCALE,
-  roleSize,
   typeStyle,
   type ColorScheme,
   type DesignTokens,
@@ -203,11 +191,9 @@ export {
   type UndoToastContent,
 } from './primitives/UndoToast';
 export {
-  PageActionsProvider,
   PagerScrollView,
   usePageTurnActions,
   useTurnToNextPage,
-  useTurnToThisPage,
   VerticalPager,
   type VerticalPagerHandle,
 } from './primitives/VerticalPager';

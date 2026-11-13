@@ -51,9 +51,9 @@ export interface EntrySwipe {
  * The share of the card's width it goes before a release sets the mark (owner 06.11):
  * short of it the reader is only looking at the edge label, and the card springs back.
  */
-export const MARK_SHARE = 0.4;
+const MARK_SHARE = 0.4;
 /** How fast, in points per second, a fling the way the card goes sets the mark from any distance. */
-export const MARK_VELOCITY = 800;
+const MARK_VELOCITY = 800;
 
 /**
  * The card springs back to its place from the speed the finger let it go at,
