@@ -126,6 +126,23 @@ describe('the Cron service', () => {
     expect(below.alerts()).toEqual([{ kind: 'crash-free', percent: 99.4, threshold: 99.5 }]);
   });
 
+  it('averages the activity over the days PostHog has, for an Edition younger than a week', async () => {
+    const c = cron('2026-11-26T03:00:00Z');
+    c.posthog.answer('activeByDay', [
+      { key: '2026-11-23', count: 100 },
+      { key: '2026-11-24', count: 100 },
+      { key: '2026-11-25', count: 40 },
+    ]);
+    await c.run();
+    expect(c.alerts()).toContainEqual({
+      kind: 'activity-drop',
+      day: '2026-11-25',
+      active: 40,
+      average: 100,
+      threshold: 50,
+    });
+  });
+
   it('keeps the alerts of the other checks when one check throws, and logs it', async () => {
     const run = cron('2026-11-22T03:00:00Z');
     run.sentry('crashFree', 99.4);
