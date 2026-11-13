@@ -336,7 +336,10 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
       return checkNew(today, (set) => ({ ...set, idioms: [...set.idioms, ...authored(idioms)] }));
     },
     checkNewSynonymRows(rows, today = new Date()) {
-      return checkNew(today, (set) => ({ ...set, synonymRows: [...set.synonymRows, ...authored(rows)] }));
+      return checkNew(today, (set) => ({
+        ...set,
+        synonymRows: [...set.synonymRows, ...authored(rows)],
+      }));
     },
   };
 

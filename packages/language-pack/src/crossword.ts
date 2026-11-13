@@ -61,13 +61,7 @@ export function generateDailyCrossword({
   if (recorded !== undefined) return { ok: true, day: recorded };
   const last = days.at(-1)?.date;
   if (last === undefined || date < last) return dayAfterDays(supply, [], date, SEARCH_BUDGET);
-  const between = daysThrough(
-    supply,
-    days,
-    dateAfter(last, 1),
-    dateAfter(date, -1),
-    SEARCH_BUDGET,
-  );
+  const between = daysThrough(supply, days, dateAfter(last, 1), dateAfter(date, -1), SEARCH_BUDGET);
   return between.ok
     ? dayAfterDays(supply, [...days, ...between.days], date, SEARCH_BUDGET)
     : between;

@@ -138,10 +138,7 @@ export {
   type PuzzlePlace,
   type PuzzleState,
 } from './game/crossword-puzzle';
-export {
-  type CrossingPuzzle,
-  type CrossingWord,
-} from './game/crossing-crossword';
+export { type CrossingPuzzle, type CrossingWord } from './game/crossing-crossword';
 export {
   crossingCellKey,
   crossingGridOf,

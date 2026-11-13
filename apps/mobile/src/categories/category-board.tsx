@@ -63,11 +63,7 @@ export function CategoryRoute({ of }: { of: CategoryKind }) {
  * plain rows. k2 draws no quiet tile, so a Category of Corrections is never
  * quiet.
  */
-function CategoryBoardScreen(props: {
-  of: CategoryKind;
-  category: Category;
-  place: number;
-}) {
+function CategoryBoardScreen(props: { of: CategoryKind; category: Category; place: number }) {
   const isQuiet = useIsQuiet();
   const quiet = props.of === 'word' && isQuiet(props.category);
   return (

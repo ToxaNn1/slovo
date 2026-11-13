@@ -43,13 +43,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import {
-  motion,
-  scrim,
-  sheetLayout,
-  space,
-  type Wedge as WedgePoints,
-} from '../tokens';
+import { motion, scrim, sheetLayout, space, type Wedge as WedgePoints } from '../tokens';
 import { InvertedTokens, SchemeTokens, useTokens } from '../providers/TokensProvider';
 import { useRouteOnScreen } from '../providers/RouteProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';

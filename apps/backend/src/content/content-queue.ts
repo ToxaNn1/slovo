@@ -250,8 +250,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
               .from(contentWords)
               .where(where);
             // A Word's Recordings no longer read it once its Lemma or Stress changed (ADR 0083).
-            const textChanged =
-              word !== undefined && readsDifferently(word.fields, record.entry);
+            const textChanged = word !== undefined && readsDifferently(word.fields, record.entry);
             const needsNewRecording = word !== undefined && (word.needs || textChanged);
             if (textChanged)
               await retireRecordings(tx, { editionId, wordId: write.id, version: published, now });

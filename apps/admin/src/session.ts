@@ -86,7 +86,8 @@ export function refusalText(error: unknown): string {
         : `Код неправильний або застарів. Спроб лишилося: ${String(left)}.`;
     }
     case 'TOO_MANY_REQUESTS': {
-      const seconds = SignInBlockedSchema.safeParse(refusalData(error)).data?.retryAfterSeconds ?? 60;
+      const seconds =
+        SignInBlockedSchema.safeParse(refusalData(error)).data?.retryAfterSeconds ?? 60;
       return `Забагато невдалих спроб. Спробуйте за ${String(Math.ceil(seconds / 60))} хв.`;
     }
     default:
