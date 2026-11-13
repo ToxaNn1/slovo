@@ -1,15 +1,13 @@
 import { z } from 'zod';
 
-import { SourceOutputSchema, SourceSchema, EntryTextSchema } from './shared';
+import { SourceOutputSchema, SourceSchema, EntryTextSchema, recordIdSchema } from './shared';
 import { ExampleOutputSchema, ExampleSchema } from './word';
 
 /**
  * A Tip id: opaque, assigned when the Tip is authored and never reused. The
  * `t_` prefix keeps it apart from the ids of other kinds of Entry.
  */
-export const TipIdSchema = z
-  .string()
-  .regex(/^t_[a-z0-9]+$/, 'Expected a Tip id: t_ followed by lowercase letters and digits');
+export const TipIdSchema = recordIdSchema('tip', 'a Tip');
 
 /** The most characters a Tip's explanation may have. */
 export const TIP_EXPLANATION_MAX_LENGTH = 300;
