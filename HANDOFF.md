@@ -27,3 +27,4 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 ## Log
 - 2026-11-13T18:31:04Z step 0: HANDOFF, lane files, WAVES.md on coord/safety-net
 - 2026-11-13T18:32:14Z launched L1 (Fable), L3a, L5, L6 (Opus) as background subagents in /home/user/wt/<l>; L2 L3b L4 queued
+- WAITING until 20:02Z for L1 L3a L5 L6
