@@ -89,7 +89,7 @@ function CollectionListScreen({ collectionId }: { collectionId: string }) {
                 testID="collection-back"
                 label={collectionStrings.title}
                 onPress={() => {
-                  if (router.canDismiss()) router.back();
+                  if (router.canDismiss()) router.dismiss();
                   else router.replace('/saved/collections');
                 }}
               />
