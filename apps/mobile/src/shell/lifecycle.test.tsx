@@ -18,7 +18,7 @@ import { waitFor } from '@testing-library/react-native';
 import type { AppStateStatus } from 'react-native';
 
 import { edition } from '../edition/edition';
-import { openOnce, type Opening } from '../opening';
+import { openOnce, type Opening, type OpeningState } from '../opening';
 import { listen } from './lifecycle';
 import { opened, switchedTo, testShell } from './test-support';
 
@@ -158,12 +158,20 @@ describe('the lifecycle', () => {
       }),
     });
     let reopened = false;
+    const composition = await base.composition.opened();
+    let state: OpeningState<Composition> = { status: 'ready', value: composition };
     const shell = {
       ...base,
       composition: {
-        ...opened(await base.composition.opened()),
+        opened: () => Promise.resolve(composition),
+        subscribe: () => () => undefined,
+        get state() {
+          return state;
+        },
         reopen() {
           reopened = true;
+          // A composition opened anew over the switches.
+          state = { status: 'ready', value: composition };
           return Promise.resolve();
         },
       },

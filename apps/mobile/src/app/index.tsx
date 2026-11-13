@@ -11,14 +11,13 @@ import {
   UndoToastProvider,
   useTokens,
 } from '@slovo/ui';
-import { todayDate, type DashboardBlock } from '@slovo/core';
+import type { DashboardBlock } from '@slovo/core';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTonesOf } from '@/categories/categories';
 import { useDashboardScreen } from '@/dashboard/dashboard';
-import { deviceClock } from '@/device/device-clock';
 import { edition, editionStrings } from '@/edition/edition';
 import { todayText } from '@/feed/today-text';
 import { StatsPillAndSheet } from '@/progress/progress';
@@ -50,6 +49,7 @@ function DashboardScreen() {
 function DashboardBlocks() {
   const {
     blocks,
+    today,
     reveal,
     toCard,
     chooseMood,
@@ -76,7 +76,7 @@ function DashboardBlocks() {
           <FeedHeader
             logo="plate"
             wordmark={edition.displayName}
-            today={todayText(todayDate(deviceClock), editionStrings)}
+            today={todayText(today, editionStrings)}
             streak={<StatsPillAndSheet />}
             onLogo={
               shown.dailySplash

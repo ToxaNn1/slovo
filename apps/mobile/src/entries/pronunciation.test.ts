@@ -340,6 +340,34 @@ describe('Pronunciation', () => {
     });
   });
 
+  it('speaks only the last Lemma tapped while the one before it stops the voice', async () => {
+    const fake = fakeSpeech([ukrainian]);
+    const pronunciation = createPronunciation({
+      ...deviceVoiceOnly,
+      speech: fake.speech,
+      locale: 'uk-UA',
+    });
+    await pronunciation.toggle(word(VEREMIIA));
+    // The voice takes its time to stop.
+    const stopNow = fake.speech.stop.bind(fake.speech);
+    let stopped: () => void = () => undefined;
+    fake.speech.stop = () =>
+      new Promise((resolve) => {
+        stopped = () => {
+          void stopNow().then(resolve);
+        };
+      });
+
+    const first = pronunciation.toggle(word(SHPARKYI));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const last = pronunciation.toggle(word('загра́ва'));
+    stopped();
+    await Promise.all([first, last]);
+
+    expect(fake.spoken.map(({ text }) => text)).toEqual(['веремія', 'заграва']);
+    expect(pronunciation.stateOf('загра́ва')).toBe('playing');
+  });
+
   it('stays idle when the voice list cannot be read', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const fake = fakeSpeech([ukrainian]);
@@ -519,6 +547,19 @@ describe('Pronunciation', () => {
       expect(player.playing()).toBeUndefined();
       expect(fake.playing()).toBe('заграва');
       expect(pronunciation.stateOf('w_0001')).toBe('idle');
+    });
+
+    it('speaks with the device voice when the Recording cannot be found', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const { fake, player, pronunciation } = setUp({
+        recordingOf: () => Promise.reject(new Error('No media cache')),
+      });
+
+      await pronunciation.toggle(VEREMIIA_WORD);
+
+      expect(player.played).toEqual([]);
+      expect(fake.playing()).toBe('веремія');
+      expect(pronunciation.stateOf('w_0001')).toBe('playing');
     });
 
     it('stays silent with «Звуки» off, Recording or not', async () => {
