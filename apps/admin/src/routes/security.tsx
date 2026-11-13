@@ -1,13 +1,18 @@
-import type { AdminApiOutputs, AlertThresholdKey } from '@slovo/contracts/admin-api';
+import {
+  AccessRefusalSchema,
+  type AdminApiOutputs,
+  type AlertThresholdKey,
+} from '@slovo/contracts/admin-api';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
 import { useState, type ReactNode, type SubmitEvent } from 'react';
+import type { z } from 'zod';
 
 import { adminApi } from '../api';
 import { useAdminWrite } from '../components/admin-write';
 import { ConfirmDialog, type PendingWrite } from '../components/confirm-dialog';
 import { Button } from '../components/ui/button';
-import { useSignedInAdmin } from '../session';
+import { refusalData, useSignedInAdmin } from '../session';
 import { formatMoment } from '../format';
 
 export const Route = createFileRoute('/security')({
@@ -15,12 +20,13 @@ export const Route = createFileRoute('/security')({
 });
 
 type Role = 'owner' | 'admin';
+type AccessRefusal = z.infer<typeof AccessRefusalSchema>;
 type Action = AdminApiOutputs['actions']['actions'][number];
 type AlertThreshold = AdminApiOutputs['alertThresholds']['thresholds'][number];
 
 const ROLE_LABELS: Readonly<Record<Role, string>> = { owner: 'Власник', admin: 'Адмін' };
 
-const REFUSALS: Readonly<Record<string, string>> = {
+const REFUSALS: Readonly<Record<AccessRefusal['refusal'], string>> = {
   taken: 'Ця пошта вже має доступ.',
   self: 'Свою роль і свій доступ змінює інший Власник.',
   unknown: 'Цього вже немає: оновіть сторінку.',
@@ -31,14 +37,8 @@ const inputClass = 'h-9 rounded-lg border border-border bg-background px-3 text-
 
 /** What the Власник reads of a refused write. */
 function refusalOf(error: unknown): string {
-  if (typeof error === 'object' && error !== null && 'data' in error) {
-    const { data } = error;
-    if (typeof data === 'object' && data !== null && 'refusal' in data) {
-      const text = REFUSALS[String(data.refusal)];
-      if (text !== undefined) return text;
-    }
-  }
-  return 'Не вдалося. Спробуйте ще раз.';
+  const refused = AccessRefusalSchema.safeParse(refusalData(error)).data;
+  return refused === undefined ? 'Не вдалося. Спробуйте ще раз.' : REFUSALS[refused.refusal];
 }
 
 /** Who wrote a row of the Action log. */

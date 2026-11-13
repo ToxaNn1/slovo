@@ -4,9 +4,8 @@
  * `$SLOVO_AGENT_TOKEN` (ADR 0090). A run without a token still calls the
  * API, so it prints the API's own UNAUTHORIZED answer.
  */
+import { ContentRefusalsSchema, StaleWriteSchema } from '@slovo/contracts/admin-api';
 import { createApiClient, ORPCError, type ApiClient } from '@slovo/contracts/api';
-
-import { isObject } from './input';
 
 /** The kinds of record the write API writes, as the commands name them. */
 export const RECORD_KINDS = [
@@ -45,17 +44,17 @@ export function refusalLines(about: string, error: unknown): string[] {
   if (!(error instanceof ORPCError)) {
     return [`${about}: ${error instanceof Error ? error.message : String(error)}`];
   }
-  const { code, data } = error as ORPCError<string, unknown>;
-  if (code === 'STALE' && isObject(data) && typeof data['currentVersion'] === 'number') {
-    return [`${about}: STALE, the current record version is ${String(data['currentVersion'])}`];
+  const code: string = error.code;
+  const stale = StaleWriteSchema.safeParse(error.data).data;
+  if (code === 'STALE' && stale !== undefined) {
+    return [`${about}: STALE, the current record version is ${String(stale.currentVersion)}`];
   }
-  if (code === 'REFUSED' && isObject(data) && Array.isArray(data['refusals'])) {
-    return data['refusals'].filter(isObject).map((refusal) => {
-      const where = [refusal['entryId'], refusal['field']].filter(
-        (part) => typeof part === 'string',
-      );
+  const refused = ContentRefusalsSchema.safeParse(error.data).data;
+  if (code === 'REFUSED' && refused !== undefined) {
+    return refused.refusals.map((refusal) => {
+      const where = [refusal.entryId, refusal.field].filter((part) => part !== undefined);
       const at = where.length === 0 ? '' : ` (${where.join(' ')})`;
-      return `${about}: REFUSED ${String(refusal['rule'])}${at}: ${String(refusal['message'])}`;
+      return `${about}: REFUSED ${refusal.rule}${at}: ${refusal.message}`;
     });
   }
   return [`${about}: ${code}: ${error.message}`];
