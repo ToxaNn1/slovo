@@ -19,8 +19,8 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 | L2 | packages/content-rules, packages/language-pack | 17 | DONE 14, merged |
 | L3a | packages/ui/src/{game,entries,primitives} | 27 | DONE 19, merged |
 | L3b | rest of packages/ui | 25 | DONE 21, merged |
-| L4 | apps/mobile | 24 | relaunched after STUCK 11 |
-| L5 | apps/backend, packages/server-core, packages/contracts | 32 | DONE 30, merging |
+| L4 | apps/mobile | 24 | STUCK 17, relaunch for R22 R161 R171 |
+| L5 | apps/backend, packages/server-core, packages/contracts | 32 | DONE 30, merged |
 | L6 | apps/admin, apps/video, tools, scripts | 23 | DONE 22, merged |
 | LX | cross-folder items, after all lanes | 14 (+R79 from L6) | todo |
 
@@ -58,3 +58,4 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 - NEXT: when L4 L5 DONE: merge each; then LX (lanes/LX.json + LX-extra.md, one Opus implementer on branch fix/1113-code-review-lx, infra items last in it); then code-review of `git diff origin/main...fix/1113-code-review`, fix real findings; `git merge origin/main`; PR; REPORT.md; STATUS FINISHED; WAVES.md on coord/safety-net.
 - 19:30Z L3a+L3b merged (tip 53c36501; mobile tests adjusted: word-tabs numbering, togglebutton role, feed-notices scroll). L5 DONE 30 (skipped R118 R125 R165 R172; Question R136: PATCH_FORMAT stays 2, owner decides bump; R162 part) -> merger merging L5 (coord 2 subagent). L4 STUCK 11 -> relaunched (remaining R77 rest, R22 R50 R78 R108 R112 R142 R159 R161 R171). Skipped-needing-ADR add R165 (ADR 0031).
 - Coordinator 2 near its context soft limit: HANDS OFF after this line. Live in coord-2 container: L4 implementer and L5 merger (both push to origin). Next coordinator: wait for origin/fix/1113-code-review tip `chore: merge lane L5` (or later) AND L4 tip a new DONE/STUCK after this line; then continue NEXT above. Lane status bodies hold every Fixed/Skipped/Questions list for the PR and REPORT.md.
+- 19:44Z L5 merged (integration tip 10842587, all checks green). L4 STUCK 17 (f91fe72a; skipped R86 R59 R85 R142; remaining R22 R161 R171; R22 hide state lives in EntryCard in packages/ui). NOTHING LIVE now. Coordinator 3 next: setup notes; relaunch L4 for R22 R161 R171 (may touch packages/ui EntryCard for R22 since L3a/L3b are done), merge L4, then LX (lanes/LX.json + LX-extra.md), code review, merge origin/main, PR, REPORT, FINISHED.
