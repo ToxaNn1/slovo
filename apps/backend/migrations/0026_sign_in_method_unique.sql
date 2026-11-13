@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "sign_in_methods_provider_identity" ON "sign_in_methods" USING btree ("provider_id","provider_account_id");
