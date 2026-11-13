@@ -128,6 +128,20 @@ describe('UndoToast', () => {
     expect(screen.queryByTestId('undo-toast')).toBeNull();
   });
 
+  it('still comes in and leaves after 4 s when the screen reader check fails', async () => {
+    jest
+      .spyOn(AccessibilityInfo, 'isScreenReaderEnabled')
+      .mockRejectedValue(new Error('no answer'));
+    await renderOpeners({ message: 'Hidden', onUndo: jest.fn() });
+
+    await fireEvent.press(screen.getByTestId('open-Hidden'));
+    await passTime(1000);
+    expect(toastNow()).toEqual({ left: 0, opacity: 1 });
+    await passTime(3000);
+
+    expect(screen.queryByTestId('undo-toast')).toBeNull();
+  });
+
   it('leaves no timer behind when its screen goes away', async () => {
     await renderOpeners({ message: 'Hidden', onUndo: jest.fn() });
 

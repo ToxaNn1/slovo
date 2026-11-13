@@ -28,16 +28,19 @@ const savedPages: Record<string, string> = {
   прийшлось: 'usage-other-form.html',
 };
 
-function fakeNetwork() {
+/** Goroh as saved, with `pages` (form → page) served in place of the saved ones. */
+function fakeNetwork(pages: Record<string, string> = {}) {
   const requests: string[] = [];
   const fetch: Fetch = (url) => {
     const address = decodeURI(url);
     requests.push(address);
-    const saved = address.startsWith(USAGE) ? savedPages[address.slice(USAGE.length)] : undefined;
+    const form = address.startsWith(USAGE) ? address.slice(USAGE.length) : '';
+    const saved = savedPages[form];
+    const body = pages[form] ?? (saved === undefined ? undefined : readFixture(saved));
     return Promise.resolve(
-      saved === undefined
+      body === undefined
         ? { status: 404, body: readFixture('not-found.html') }
-        : { status: 200, body: readFixture(saved) },
+        : { status: 200, body },
     );
   };
   return { fetch, requests };
@@ -76,8 +79,8 @@ function editionWith(corrections: Record<string, unknown> = {}): EditionFolder {
   return edition;
 }
 
-function setup(list: string, edition = editionWith()) {
-  const net = fakeNetwork();
+function setup(list: string, edition = editionWith(), pages: Record<string, string> = {}) {
+  const net = fakeNetwork(pages);
   const workDir = mkdtempSync(join(tmpdir(), 'slovo-sourcing-'));
   const options: CorrectionSourcingOptions = {
     formList: list,
@@ -98,13 +101,67 @@ function readDrafts(outDir: string, folder: 'drafts' | 'incomplete'): unknown[] 
   );
 }
 
-async function run(list: string, edition?: EditionFolder) {
-  const { options, net } = setup(list, edition);
+async function run(list: string, edition?: EditionFolder, pages?: Record<string, string>) {
+  const { options, net } = setup(list, edition, pages);
   const result = await sourceCorrections(options);
   return { result, options, net };
 }
 
+/** The saved «співставляти» page with its example pair replaced by the given sentences. */
+function pageWithPair(nonStandard: string, standard: string): Record<string, string> {
+  const page = readFixture('usage-spivstavljaty.html')
+    .replace(/<td><em><span style="color: #ff0000;">.*<\/td>/, `<td>${nonStandard}</td>`)
+    .replace(/<td><em><span style="color: #008000;">.*<\/td>/, `<td>${standard}</td>`);
+  return { співставляти: page };
+}
+
+async function draftedPair(nonStandard: string, standard: string) {
+  const { options } = await run(
+    'співставляти calque school\n',
+    undefined,
+    pageWithPair(nonStandard, standard),
+  );
+  const [draft] = [
+    ...readDrafts(options.outDir, 'drafts'),
+    ...readDrafts(options.outDir, 'incomplete'),
+  ];
+  return draft;
+}
+
 describe('sourceCorrections', () => {
+  it('marks only the changed words of the standard sentence, in parts, without their punctuation', async () => {
+    expect(
+      await draftedPair('Прийміть наші поради до відома.', 'Візьміть наші поради до уваги.'),
+    ).toMatchObject({
+      examplePair: {
+        nonStandard: 'Прийміть наші поради до відома.',
+        standard: '**Візьміть** наші поради до **уваги**.',
+      },
+    });
+  });
+
+  it('treats words differing only in Stress as unchanged', async () => {
+    expect(
+      await draftedPair('Співста́вте ці два поняття.', 'Зіста́вте ці два поняття́.'),
+    ).toMatchObject({ examplePair: { standard: '**Зіста́вте** ці два поняття́.' } });
+  });
+
+  it('leaves out an example pair whose sentences do not differ, and says so', async () => {
+    const { result, options } = await run(
+      'співставляти calque school\n',
+      undefined,
+      pageWithPair('Зіставте ці два поняття.', 'Зіставте ці два поняття.'),
+    );
+    expect(readDrafts(options.outDir, 'drafts')).toEqual([]);
+    const [entry] = readDrafts(options.outDir, 'incomplete');
+    expect(entry).not.toHaveProperty('examplePair');
+    const [outcome] = result.ok ? result.report.lemmas : [];
+    expect(outcome?.drafts[0]?.flags).toContainEqual({
+      kind: 'missing-data',
+      message: 'the example pair changes no word',
+    });
+  });
+
   it('drafts a ready Correction from a goroh article with an example pair, word for word and cited', async () => {
     const { result, options } = await run('співставляти calque school\n');
 

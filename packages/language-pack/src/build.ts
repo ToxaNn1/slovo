@@ -105,7 +105,7 @@ export function buildFromSnapshot({
   if (source.errors.length > 0 || source.valid === undefined) {
     return { ok: false, errors: source.errors };
   }
-  const { content, targets } = source.valid;
+  const { content, targets, config } = source.valid;
   const metadata: PackMetadata = {
     editionId: content.editionId,
     contentVersion: content.contentVersion,
@@ -119,7 +119,7 @@ export function buildFromSnapshot({
     metadata,
     report,
     missedTargets: missedTargets(report, targets),
-    starterMedia: starterMediaOf(editionFiles(editionDir).read('config'), snapshot),
+    starterMedia: starterMediaOf(config, snapshot),
   };
 }
 

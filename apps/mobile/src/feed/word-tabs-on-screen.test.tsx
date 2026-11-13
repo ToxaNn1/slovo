@@ -310,8 +310,8 @@ describe('the tabs of a Word card in the Feed', () => {
     await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-history')));
 
     const card = wordCard();
-    expect(card.getByText('1. Покірний.', hidden)).toBeTruthy();
-    expect(card.getByText('2. Миролюбний.', hidden)).toBeTruthy();
+    expect(card.getByText('2. Покірний.', hidden)).toBeTruthy();
+    expect(card.getByText('3. Миролюбний.', hidden)).toBeTruthy();
   });
 
   it('clamps a very long Definition in a tab too short for it under «Детальніше», the corner still working', async () => {

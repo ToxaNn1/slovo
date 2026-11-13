@@ -11,7 +11,7 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,6 +21,7 @@ import { addedOn } from '@/saved/added-on';
 import { CollectionBoardScreen } from '@/saved/collection-board';
 import { useCollectionEntries } from '@/saved/collections';
 import { useOpenScreen } from '@/use-open-screen';
+import { useSegmentParam } from '@/route-params';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.entries;
@@ -30,7 +31,7 @@ const strings = collectionStrings.entries;
  * (ADR 0082), today's screen while it is off.
  */
 export default function CollectionScreen() {
-  const { collectionId } = useLocalSearchParams<{ collectionId: string }>();
+  const collectionId = useSegmentParam('collectionId');
   return useEditionInEffect().isFeatureEnabled('collectionBoardStyle') ? (
     <CollectionBoardScreen collectionId={collectionId} />
   ) : (
@@ -89,7 +90,7 @@ function CollectionListScreen({ collectionId }: { collectionId: string }) {
                 testID="collection-back"
                 label={collectionStrings.title}
                 onPress={() => {
-                  if (router.canDismiss()) router.back();
+                  if (router.canDismiss()) router.dismiss();
                   else router.replace('/saved/collections');
                 }}
               />

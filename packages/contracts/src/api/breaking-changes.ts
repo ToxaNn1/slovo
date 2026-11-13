@@ -14,8 +14,12 @@ const NOTES = ['description', 'summary', 'title', 'examples', 'deprecated'];
 /** The keys of a schema that hold other schemas; the rule walks them itself. */
 const NESTED = ['properties', 'required', 'additionalProperties', 'items', 'anyOf', 'oneOf'];
 
+function isPart(value: unknown): value is Part {
+  return typeof value === 'object' && value !== null;
+}
+
 function part(value: unknown): Part {
-  return typeof value === 'object' && value !== null ? (value as Part) : {};
+  return isPart(value) ? value : {};
 }
 
 function names(value: unknown): string[] {
@@ -129,6 +133,13 @@ function schemaChanges(
     changes.push(
       ...schemaChanges(part(schema), part(describedFields[name]), direction, `${at}.${name}`),
     );
+  }
+
+  // A strict output refuses a field it does not know, so an app would refuse a new one.
+  if (direction === 'output' && promised['additionalProperties'] === false) {
+    for (const name of Object.keys(describedFields)) {
+      if (!(name in promisedFields)) changes.push(`${at}.${name} is new in a strict object`);
+    }
   }
 
   const promisedRequired = names(promised['required']);

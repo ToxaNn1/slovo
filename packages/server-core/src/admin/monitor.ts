@@ -142,7 +142,8 @@ export function createMonitor({
         const active = await activeByDay(shiftDay(yesterday, -7), yesterday);
         if (active === null) return [];
         const before = [...active].filter(([key]) => key !== yesterday).map(([, count]) => count);
-        const average = before.reduce((sum, count) => sum + count, 0) / 7;
+        // Over the days PostHog has: an Edition younger than a week has fewer.
+        const average = before.reduce((sum, count) => sum + count, 0) / before.length;
         const people = active.get(yesterday) ?? 0;
         if (before.length === 0 || people >= (average * (100 - t.activityDrop)) / 100) return [];
         return [

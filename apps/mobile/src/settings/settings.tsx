@@ -99,10 +99,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const { settings } = opening.value;
   const current = changed?.over === settings ? changed.current : opening.value.current;
 
+  const opened = opening.value.current;
   function update(changes: Partial<UserSettings>) {
-    const next = { ...current, ...changes };
-    applyToNativeViews(next);
-    setChanged({ over: settings, current: next });
+    // Over the last change, so two updates in one event both hold; applying is idempotent.
+    setChanged((last) => {
+      const next = { ...(last?.over === settings ? last.current : opened), ...changes };
+      applyToNativeViews(next);
+      return { over: settings, current: next };
+    });
     void keep('the settings', settings.update(changes));
   }
 

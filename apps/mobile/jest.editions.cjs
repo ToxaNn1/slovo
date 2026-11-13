@@ -24,6 +24,7 @@ module.exports = {
       starterMedia: {},
       starterWords: [],
       languagePack: 1,
+      bundledContentVersion: 1,
     },
   },
 };

@@ -4,6 +4,7 @@ import { word } from '../test-support';
 import type { CrossingDirection, CrossingPuzzle, CrossingWord } from './crossing-crossword';
 import {
   crossingCellKey,
+  crossingGridOf,
   isCrossingSolved,
   playCrossing,
   startCrossingPlay,
@@ -321,5 +322,19 @@ describe('the crossing Daily Crossword play', () => {
         expect(play(state, action)).toBe(state);
       }
     });
+  });
+});
+
+describe('the crossing grid of a puzzle', () => {
+  it('lays the square grid once: blocks, and each white cell with its answer letter and the Words through it', () => {
+    const grid = crossingGridOf(puzzle);
+
+    expect(grid).toHaveLength(5);
+    expect(grid.every((row) => row.length === 5)).toBe(true);
+    expect(grid[0]?.[0]).toEqual({ kind: 'white', answer: 'c', words: [CAT, COW] });
+    expect(grid[1]?.[1]).toEqual({ kind: 'white', answer: 'n', words: [ANT] });
+    expect(grid[2]?.[2]).toEqual({ kind: 'white', answer: 'e', words: [TOE] });
+    expect(grid[0]?.[3]).toEqual({ kind: 'block' });
+    expect(grid[4]?.[0]).toEqual({ kind: 'block' });
   });
 });

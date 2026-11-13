@@ -4,6 +4,7 @@ import { Link, useSearch } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { adminApi } from '../../api';
+import { analyticsQuery, qualityQuery } from '../../queries';
 import { DEFAULT_PERIOD, periodDays, qualityPeriod } from '../../filters';
 import { useWide } from '../../screen-width';
 import { useSignedInAdmin } from '../../session';
@@ -113,16 +114,10 @@ export function Overview() {
   const owner = useSignedInAdmin()?.role === 'owner';
   const wide = useWide();
 
-  const analytics = useQuery({
-    queryKey: ['analytics', editionId, days],
-    queryFn: () => adminApi.analytics({ editionId, ...days }),
-    retry: false,
-  });
-  const quality = useQuery({
-    queryKey: ['quality', search.edition, qualityPeriod(period)],
-    queryFn: () => adminApi.quality({ editionId: search.edition, period: qualityPeriod(period) }),
-    retry: false,
-  });
+  const analytics = useQuery(analyticsQuery(editionId, days));
+  const quality = useQuery(
+    qualityQuery({ editionId: search.edition, period: qualityPeriod(period) }),
+  );
   const development = useQuery({
     queryKey: ['development'],
     queryFn: () => adminApi.development(),

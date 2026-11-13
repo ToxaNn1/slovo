@@ -1,14 +1,6 @@
 import type { Collection } from '@slovo/core';
-import { useRef, useState } from 'react';
-import {
-  AccessibilityInfo,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
 import { ChoiceMark } from '../primitives/ChoiceMark';
@@ -17,6 +9,7 @@ import { Button } from '../primitives/Button';
 import { SheetTitle } from '../primitives/SheetParts';
 import { minTouchTarget, sheetLayout, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+import { useNameSubmit } from './useNameSubmit';
 
 /**
  * The «До колекції» sheet (design 2c): the reader's Collections with a
@@ -81,27 +74,15 @@ function SheetContent({
   /** The keyboard rises for a field the reader asked for, not along with the sheet's own slide. */
   const [focusName, setFocusName] = useState(false);
   const [name, setName] = useState('');
-  const [refusal, setRefusal] = useState<string>();
-  /** A second tap while the first one is being made must not make a second Collection. */
-  const making = useRef(false);
+  const { refusal, clearRefusal, submit } = useNameSubmit(
+    onCreate,
+    'Could not make the Collection',
+  );
 
   async function create() {
-    if (making.current) return;
-    making.current = true;
-    try {
-      const reason = await onCreate(name);
-      setRefusal(reason);
-      if (reason === undefined) {
-        setName('');
-        setCreating(false);
-      } else {
-        AccessibilityInfo.announceForAccessibility(reason);
-      }
-    } catch (error) {
-      // Nothing was kept: the field stays as the reader typed it, to try again.
-      console.error('Could not make the Collection', error);
-    } finally {
-      making.current = false;
+    if (await submit(name)) {
+      setName('');
+      setCreating(false);
     }
   }
 
@@ -162,7 +143,7 @@ function SheetContent({
                 value={name}
                 onChangeText={(text) => {
                   setName(text);
-                  setRefusal(undefined);
+                  clearRefusal();
                 }}
                 onSubmitEditing={() => void create()}
                 placeholder={sheet.namePlaceholder}

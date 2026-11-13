@@ -3,25 +3,13 @@
 import type { BadgeShape, BadgeTone } from '@slovo/contracts';
 import { useEffect } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  ReduceMotion,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { badgeToast, motion, typeStyle } from '../tokens';
+import { badgeToast, typeStyle } from '../tokens';
 import { BadgeMark } from './BadgeMark';
-
-/** The toast fades in, with motion or without (board 10.7). */
-const FADE_IN = {
-  duration: motion.reduceMotion.duration,
-  easing: Easing.bezier(...motion.reduceMotion.easing),
-  reduceMotion: ReduceMotion.Never,
-};
+import { REDUCED_FADE } from '../primitives/timing';
 
 /**
  * A Badge earned during a Game (board 10.7, `badgeToast` on): an ink toast
@@ -53,7 +41,7 @@ export function BadgeToast({
   const key = useSchemeColors('light');
   const shown = useSharedValue(0);
   useEffect(() => {
-    shown.value = withTiming(1, FADE_IN);
+    shown.value = withTiming(1, REDUCED_FADE);
     AccessibilityInfo.announceForAccessibility(`${name}. ${line}`);
   }, [shown, name, line]);
   const faded = useAnimatedStyle(() => ({ opacity: shown.value }));

@@ -100,7 +100,7 @@ export { type HiddenEntry } from './mix/hidden-entries';
 export { type HidingChange } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
 export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
-export { groupByLocalDay, type RelativeTime } from './saved/history-time';
+export { groupByLocalDay } from './saved/history-time';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
 export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
 export {
@@ -111,6 +111,8 @@ export {
 export { openCounterSending } from './community-counters/counter-sending';
 export {
   createAnalytics,
+  createVisit,
+  type Visit,
   type AnalyticsEvent,
   type AnalyticsEvents,
   type AnalyticsPort,
@@ -136,13 +138,10 @@ export {
   type PuzzlePlace,
   type PuzzleState,
 } from './game/crossword-puzzle';
-export {
-  crossingPlacesOf,
-  type CrossingPuzzle,
-  type CrossingWord,
-} from './game/crossing-crossword';
+export { type CrossingPuzzle, type CrossingWord } from './game/crossing-crossword';
 export {
   crossingCellKey,
+  crossingGridOf,
   isCrossingSolved,
   type CrossingAction,
   type CrossingPlay,
@@ -242,7 +241,6 @@ export {
 export { type CorrectionTypeRow, type CorrectionTypeTile } from './dashboard/correction-types';
 export {
   type CuratedCollectionCard,
-  type CuratedCollectionEntry,
   type CuratedCollectionScreen,
 } from './dashboard/curated-collections';
 export {

@@ -497,14 +497,18 @@ export interface Game {
 }
 
 /** Whether two offers say the same, field by field, their Best results included. */
-const sameOffer = (one: GameModeOffer, other: GameModeOffer | undefined) =>
-  other !== undefined &&
-  Object.keys(one).length === Object.keys(other).length &&
-  Object.entries(one).every(([key, value]) =>
-    key === 'best'
-      ? one.best?.result === other.best?.result && one.best?.of === other.best?.of
-      : (other as Record<string, unknown>)[key] === value,
+const sameOffer = (one: GameModeOffer, other: GameModeOffer | undefined) => {
+  if (other === undefined) return false;
+  const theirs = new Map<string, unknown>(Object.entries(other));
+  return (
+    Object.keys(one).length === theirs.size &&
+    Object.entries(one).every(([key, value]) =>
+      key === 'best'
+        ? one.best?.result === other.best?.result && one.best?.of === other.best?.of
+        : theirs.get(key) === value,
+    )
   );
+};
 
 const sameOffers = (one: readonly GameModeOffer[], other: readonly GameModeOffer[]) =>
   one.length === other.length && one.every((offer, index) => sameOffer(offer, other[index]));

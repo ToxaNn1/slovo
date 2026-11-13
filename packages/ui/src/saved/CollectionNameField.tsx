@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
-import { AccessibilityInfo, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { cardSpace, minTouchTarget, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+import { useNameSubmit } from './useNameSubmit';
 
 /**
  * The card in which a Collection is named: one for a new Collection and one
@@ -34,24 +35,10 @@ export function CollectionNameField({
   const { colors, radii } = tokens;
   const { voice } = useEdition();
   const [name, setName] = useState(initialName);
-  const [refusal, setRefusal] = useState<string>();
-  /** A second return while the first is being kept must not keep a second name. */
-  const submitting = useRef(false);
-
-  async function submit() {
-    if (submitting.current) return;
-    submitting.current = true;
-    try {
-      const reason = await onSubmit(name);
-      setRefusal(reason);
-      if (reason !== undefined) AccessibilityInfo.announceForAccessibility(reason);
-    } catch (error) {
-      // Nothing was kept: the field stays as the reader typed it, to try again.
-      console.error('Could not keep the name of the Collection', error);
-    } finally {
-      submitting.current = false;
-    }
-  }
+  const { refusal, clearRefusal, submit, isSubmitting } = useNameSubmit(
+    onSubmit,
+    'Could not keep the name of the Collection',
+  );
 
   return (
     <View
@@ -77,12 +64,12 @@ export function CollectionNameField({
         value={name}
         onChangeText={(text) => {
           setName(text);
-          setRefusal(undefined);
+          clearRefusal();
         }}
-        onSubmitEditing={() => void submit()}
+        onSubmitEditing={() => void submit(name)}
         onBlur={() => {
           // A name being kept settles itself: it closes the field, or shows why it is refused.
-          if (!submitting.current) onCancel();
+          if (!isSubmitting()) onCancel();
         }}
         // Keeps the field focused after a return, so a refused name can be corrected.
         submitBehavior="submit"

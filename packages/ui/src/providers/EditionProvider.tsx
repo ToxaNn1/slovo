@@ -56,7 +56,7 @@ export function EditionProvider({
       Pronunciation: pronunciation,
       useIllustration,
     }),
-    [edition, strings, pronunciation, useIllustration],
+    [edition.locale, strings, pronunciation, useIllustration],
   );
   return <EditionContext value={value}>{children}</EditionContext>;
 }

@@ -112,49 +112,46 @@ export const ALL_EDITIONS = 'all';
 const AnalyticsEditionSchema = EditionIdSchema;
 
 /** A day as `YYYY-MM-DD`. */
-const DaySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD');
+const DaySchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD')
+  // A day of the calendar, checked past the description: a `date` format there would break /v1 (ADR 0031).
+  .refine((day) => z.iso.date().safeParse(day).success, 'Expected a day of the calendar');
 
 /** A count of one key (a day, a device, a version, a Variant): never a person or an id (ADR 0060). */
-export const AnalyticsCountSchema = z
-  .object({ key: z.string(), count: z.number().int().min(0) })
-  .strict();
+export const AnalyticsCountSchema = z.object({ key: z.string(), count: z.number().int().min(0) });
 export type AnalyticsCount = z.infer<typeof AnalyticsCountSchema>;
 
 /** When the oldest part of a PostHog read was read, as an ISO time. */
 const FetchedAtSchema = z.iso.datetime();
 
 /** The Аналітика of an Edition over a period, from PostHog: aggregates only. */
-export const AnalyticsOverviewSchema = z
-  .object({
-    activeByDay: z.array(AnalyticsCountSchema),
-    visitsByDay: z.array(AnalyticsCountSchema),
-    medianVisitSeconds: z.number().int().min(0),
-    devices: z.array(AnalyticsCountSchema),
-    appVersions: z.array(AnalyticsCountSchema),
-    fetchedAt: FetchedAtSchema,
-  })
-  .strict();
+export const AnalyticsOverviewSchema = z.object({
+  activeByDay: z.array(AnalyticsCountSchema),
+  visitsByDay: z.array(AnalyticsCountSchema),
+  medianVisitSeconds: z.number().int().min(0),
+  devices: z.array(AnalyticsCountSchema),
+  appVersions: z.array(AnalyticsCountSchema),
+  fetchedAt: FetchedAtSchema,
+});
 export type AnalyticsOverview = z.infer<typeof AnalyticsOverviewSchema>;
 
 /** People active in each Variant of an A/B Feature Switch. */
-export const VariantResultsSchema = z
-  .object({ variants: z.array(AnalyticsCountSchema), fetchedAt: FetchedAtSchema })
-  .strict();
+export const VariantResultsSchema = z.object({
+  variants: z.array(AnalyticsCountSchema),
+  fetchedAt: FetchedAtSchema,
+});
 export type VariantResults = z.infer<typeof VariantResultsSchema>;
 
 /** The Community Counters sums and the questionnaire counters of an Edition. */
-export const CountersSummarySchema = z
-  .object({
-    known: z.number().int().min(0),
-    unknown: z.number().int().min(0),
-    saved: z.number().int().min(0),
-    answers: z.array(
-      z
-        .object({ question: z.string(), answer: z.string(), count: z.number().int().min(0) })
-        .strict(),
-    ),
-  })
-  .strict();
+export const CountersSummarySchema = z.object({
+  known: z.number().int().min(0),
+  unknown: z.number().int().min(0),
+  saved: z.number().int().min(0),
+  answers: z.array(
+    z.object({ question: z.string(), answer: z.string(), count: z.number().int().min(0) }),
+  ),
+});
 export type CountersSummary = z.infer<typeof CountersSummarySchema>;
 
 /** A role of an Admin user: Власник (`owner`) or Адмін (`admin`). */
@@ -163,17 +160,20 @@ const AdminRoleSchema = z.enum(['owner', 'admin']);
 /** The signed-in Admin user. */
 const SignedInAdminSchema = z.object({ email: z.string(), role: AdminRoleSchema });
 
+/** The data of a wrong sign-in code: the attempts left. */
+export const WrongCodeSchema = z.object({ attemptsLeft: z.number().int().min(0) });
+
+/** The data of a blocked sign-in email: how long it stays blocked. */
+export const SignInBlockedSchema = z.object({ retryAfterSeconds: z.number().int().positive() });
+
 /** What a sign-in step may refuse with: a wrong code with the attempts left, or the email blocked. */
 const SIGN_IN_ERRORS = {
   NOT_FOUND: ADMIN_ERRORS.NOT_FOUND,
   FORBIDDEN: ADMIN_ERRORS.FORBIDDEN,
-  UNAUTHORIZED: {
-    message: 'The code is wrong or has expired',
-    data: z.object({ attemptsLeft: z.number().int().min(0) }),
-  },
+  UNAUTHORIZED: { message: 'The code is wrong or has expired', data: WrongCodeSchema },
   TOO_MANY_REQUESTS: {
     message: 'Too many failed attempts: the email is blocked for a while',
-    data: z.object({ retryAfterSeconds: z.number().int().positive() }),
+    data: SignInBlockedSchema,
   },
 } as const;
 
@@ -248,28 +248,34 @@ const contentProcedure = procedure.errors({
   NOT_IMPORTED: { status: 409, message: "The Edition's content is not imported" },
 });
 
+/** The data of a REFUSED write: each refusal names the content rule it breaks. */
+export const ContentRefusalsSchema = z.object({
+  refusals: z.array(
+    z.object({
+      rule: z.string(),
+      entryId: z.string().optional(),
+      field: z.string().optional(),
+      message: z.string(),
+    }),
+  ),
+});
+
+/** The data of a STALE write: the record's version now. */
+export const StaleWriteSchema = z.object({ currentVersion: z.number().int().positive() });
+
 /** What a write is refused with besides the common refusals. */
 const writeErrors = {
   /** The save breaks the content rules: each refusal names its rule. */
   REFUSED: {
     status: 422,
     message: 'The record breaks a content rule',
-    data: z.object({
-      refusals: z.array(
-        z.object({
-          rule: z.string(),
-          entryId: z.string().optional(),
-          field: z.string().optional(),
-          message: z.string(),
-        }),
-      ),
-    }),
+    data: ContentRefusalsSchema,
   },
   /** The record changed after the version the write saw. */
   STALE: {
     status: 409,
     message: 'The record changed since the version the write saw',
-    data: z.object({ currentVersion: z.number().int().positive() }),
+    data: StaleWriteSchema,
   },
 } as const;
 

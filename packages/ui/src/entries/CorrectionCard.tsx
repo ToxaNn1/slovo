@@ -24,6 +24,7 @@ import { EntryKicker } from './EntryKicker';
 import { KickerRow } from './KickerRow';
 import { DetailSection, ExampleText } from './WordCard';
 import { capitalised } from './capitalised';
+import { SourceLine } from './SourceLine';
 import { CardTabs } from './CardTabs';
 import { correctionTabs, type CorrectionTab } from './word-tabs';
 
@@ -265,14 +266,12 @@ function CorrectionBlock({
         </DetailSection>
       );
     case 'sources':
-      return card.sourceNames.length === 0 ? null : (
-        <WholeLinesText
+      return (
+        <SourceLine
           testID="correction-source"
-          {...voice}
-          style={[typeStyle('meta', tokens), { color: colors.muted }]}
-        >
-          {fill(strings.source, { source: card.sourceNames.join(SOURCE_SEPARATOR) })}
-        </WholeLinesText>
+          template={strings.source}
+          sourceNames={card.sourceNames}
+        />
       );
   }
 }
@@ -500,9 +499,6 @@ function literaryUseSource(
     ? fill(strings.literaryUseSource, { author, work })
     : fill(strings.literaryUseSourceWithYear, { author, work, year: String(workYear) });
 }
-
-/** What sits between the titles of a Correction's sources on the source line. */
-const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
   form: { gap: space[2] },

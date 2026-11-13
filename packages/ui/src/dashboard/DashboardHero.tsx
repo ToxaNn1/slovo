@@ -29,6 +29,7 @@ import {
 } from '../tokens';
 import { FlyingLemma, RisesIn } from './HeroReveal';
 import { HeroSparks } from './HeroSparks';
+import { useFitToRoom } from './useFitToRoom';
 
 const { hero: place } = dashboard;
 const { card } = place;
@@ -45,9 +46,15 @@ const RARITY_BARS = [1, 2, 3, 4, 5] as const;
  * Mascot shouts a moment, the Lemma flies in letter by letter and the card,
  * then the button, rise in. Opened already revealed, it stands still.
  * With `sparks`, the Mascot throws the board's sparks from its megaphone,
- * closed and open (ADR 0109).
+ * closed and open (ADR 0109). Each day's hero opens anew, so a new day's
+ * reveal plays though the day before stood revealed.
  */
-export function DashboardHero({
+export function DashboardHero(props: Parameters<typeof HeroOfTheDay>[0]) {
+  const { year, month, day } = props.hero.date;
+  return <HeroOfTheDay key={`${String(year)}-${String(month)}-${String(day)}`} {...props} />;
+}
+
+function HeroOfTheDay({
   hero,
   sparks,
   onReveal,
@@ -265,21 +272,11 @@ function WordLine({ text }: { text: string }) {
   const tokens = useTokens();
   const keyInk = useSchemeColors('light').ink;
   const { voice } = useEdition();
-  const [room, setRoom] = useState<number>();
-  const [natural, setNatural] = useState<number>();
-  // A point of slack, so rounding never pushes the line back over its room.
-  const scale =
-    room === undefined || natural === undefined ? undefined : Math.min(1, (room - 1) / natural);
+  const { scale, onRoomLayout, measured } = useFitToRoom();
   const full = roleSize('dashboardWordLine');
   const lineStyle = [typeStyle('dashboardWordLine', tokens), { color: keyInk }];
   return (
-    <View
-      style={styles.wordLine}
-      onLayout={(event) => {
-        // A view not laid out yet reports no width, which would scale the line away.
-        if (event.nativeEvent.layout.width > 0) setRoom(event.nativeEvent.layout.width);
-      }}
-    >
+    <View style={styles.wordLine} onLayout={onRoomLayout}>
       <Text
         {...voice}
         numberOfLines={1}
@@ -300,7 +297,7 @@ function WordLine({ text }: { text: string }) {
         <Text
           {...voice}
           onTextLayout={(event) => {
-            setNatural(Math.max(...event.nativeEvent.lines.map((line) => line.width)));
+            measured(Math.max(...event.nativeEvent.lines.map((line) => line.width)));
           }}
           style={lineStyle}
         >

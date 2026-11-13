@@ -36,7 +36,7 @@ export { createMemoryContentStore, type MemoryContentStore } from './fakes/memor
 export { createMemoryMediaCache } from './fakes/memory-media-cache';
 export { createFakeMediaFetcher, type FakeMediaFetcher } from './fakes/fake-media-fetcher';
 export type { MediaSource } from './media/media';
-export { testEdition, type TestEditionOverrides } from './test-support';
+export { fakeClock, testEdition, type TestEditionOverrides } from './test-support';
 // Core functions, models and constants that only tests of other packages use.
 export { buildCorrectionCard } from './entries/correction-card';
 export { wordGrammarText } from './entries/part-of-speech';

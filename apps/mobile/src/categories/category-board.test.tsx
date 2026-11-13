@@ -70,7 +70,13 @@ async function open({
   quietCategories = true,
   categoryFeed = true,
   categoryKnownFirst = true,
-}: { quietCategories?: boolean; categoryFeed?: boolean; categoryKnownFirst?: boolean } = {}) {
+  wordTabs = false,
+}: {
+  quietCategories?: boolean;
+  categoryFeed?: boolean;
+  categoryKnownFirst?: boolean;
+  wordTabs?: boolean;
+} = {}) {
   const shipped = loadEdition(activeEditionFiles.config);
   editionInEffect = {
     ...shipped,
@@ -81,9 +87,11 @@ async function open({
           ? categoryFeed
           : feature === 'categoryKnownFirst'
             ? categoryKnownFirst
-            : feature === 'dashboard' ||
-              feature === 'categoryScreens' ||
-              shipped.isFeatureEnabled(feature),
+            : feature === 'wordTabs'
+              ? wordTabs
+              : feature === 'dashboard' ||
+                feature === 'categoryScreens' ||
+                shipped.isFeatureEnabled(feature),
   };
   const userState = await seedUserState(
     { onboardingFinished: '2026-09-01T09:00:00.000Z' },
@@ -189,14 +197,14 @@ describe('the Category screen', () => {
     await composition.mix.setCategory('emotions-character', false);
     await renderCategory('emotions-character');
 
-    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'ДОДАТИ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })));
     expect(hiddenIds()).toEqual([]);
-    expect(screen.getByRole('button', { name: 'У МІКСІ' })).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
     expect(screen.getByText('„Емоції“ тепер у твоєму Міксі.')).toBeTruthy();
 
-    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'У МІКСІ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У МІКСІ' })));
     expect(hiddenIds()).toEqual(['emotions-character']);
-    expect(screen.getByRole('button', { name: 'ДОДАТИ' })).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })).toBeTruthy();
     expect(screen.getByText('„Емоції“ прибрано з Міксу.')).toBeTruthy();
   });
 
@@ -204,8 +212,8 @@ describe('the Category screen', () => {
     await open();
     await renderCategory('emotions-character');
 
-    expect(screen.getByRole('button', { name: 'У МІКСІ' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'ДОДАТИ' })).toBeNull();
+    expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
+    expect(screen.queryByRole('togglebutton', { name: 'ДОДАТИ' })).toBeNull();
   });
 
   it('keeps the last Category of the Mix in it and says why, as the Mix screen does', async () => {
@@ -215,9 +223,9 @@ describe('the Category screen', () => {
     await composition.mix.setCategory('war', false);
     await renderCategory('emotions-character');
 
-    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'У МІКСІ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У МІКСІ' })));
     expect(hiddenIds()).toEqual(['empty', 'nature', 'war']);
-    expect(screen.getByRole('button', { name: 'У МІКСІ' })).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
     expect(screen.getByText(editionStrings.mix.lastCategoryHint)).toBeTruthy();
   });
 
@@ -261,6 +269,20 @@ describe('the Category screen', () => {
     expect(screen.queryByTestId('category-hero')).toBeNull();
     expect(screen.getByText('Значення слова лагідний.')).toBeTruthy();
     expect(composition.history.list).toEqual([]);
+  });
+
+  it('shows the error with a retry when its read fails, and the retry reads the Words again', async () => {
+    await open();
+    jest.spyOn(composition, 'categoryEntries').mockRejectedValueOnce(new Error('The pack is busy'));
+    await renderCategory('emotions-character');
+
+    const error = screen.getByTestId('category-error');
+    expect(within(error).getByText(editionStrings.loadFailed.title)).toBeOnTheScreen();
+    expect(screen.queryAllByTestId(/^category-entry-/)).toEqual([]);
+
+    await settle(() => fireEvent.press(within(error).getByText(editionStrings.loadFailed.retry)));
+    expect(screen.queryByTestId('category-error')).not.toBeOnTheScreen();
+    expect(screen.getAllByText(/^Значення слова /)).toHaveLength(3);
   });
 
   it('shows the hero and no cards for an empty Category', async () => {
@@ -370,6 +392,20 @@ describe("the Category's Feed", () => {
     await settle(() => jest.advanceTimersByTimeAsync(10_000));
 
     expect(composition.history.list).toEqual([]);
+  });
+
+  it('lays a tabbed card in a fixed frame: no page scroll around its tab bar (ADR 0113)', async () => {
+    await open({ wordTabs: true });
+    await renderCategory('emotions-character');
+    await settle(() => fireEvent.press(screen.getByTestId('category-entry-w_lahidnyi')));
+    await layOut();
+
+    const page = within(screen.getByTestId('category-feed-card-0'));
+    expect(page.getAllByRole('tab', { includeHiddenElements: true })).not.toEqual([]);
+    const scrolls: string[] = [];
+    for (let at = page.getByTestId('word-card-kicker').parent; at !== null; at = at.parent)
+      if (at.type === 'RCTScrollView') scrolls.push(String(at.props['testID']));
+    expect(scrolls).toEqual([]);
   });
 
   it('leads back to the Category screen by its back tile, named for the Category', async () => {

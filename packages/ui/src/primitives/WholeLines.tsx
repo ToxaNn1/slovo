@@ -105,8 +105,13 @@ function measureIn(
   view: HostRef | null,
   lines: readonly DrawnRow[],
 ) {
+  // A text that became empty draws no lines, so it forgets the ones it drew before.
+  if (lines.length === 0) {
+    context?.report(id);
+    return;
+  }
   const content = context?.content.current;
-  if (content == null || view === null || lines.length === 0) return;
+  if (content == null || view === null) return;
   view.measureLayout(content, (_left, top) => {
     context?.report(
       id,

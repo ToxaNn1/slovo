@@ -10,7 +10,7 @@ import { createHash, randomUUID } from 'node:crypto';
 
 import { illustrationPath, recordingPath, type RecordingKind, type Word } from '@slovo/contracts';
 import type { Clock, Edition } from '@slovo/server-core';
-import { and, asc, eq, inArray, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, isNull, lt, lte, sql, type SQL } from 'drizzle-orm';
 
 import { createMediaRows, type NewRecording, type RecordedWord } from '../content/media-rows';
 import type { Database } from '../database/database';
@@ -21,7 +21,7 @@ import {
   recordingLeases,
 } from '../database/schema';
 import type { MediaStore } from '../media/media-store';
-import type { RecordingGenerator } from './generator';
+import type { RecordingGenerator, RecordingOutcome } from './generator';
 import { RECORDING_KINDS, RECORDING_TEXTS } from './recording-text';
 
 type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
@@ -181,30 +181,43 @@ export function createRecordings({
       })),
     );
     if (requests.length === 0) return { recorded: 0, failed: 0 };
-    const outcomes = await generator.record(requests.map(({ voice, text }) => ({ voice, text })));
+    const putSince = clock.now();
+    // A generator that throws fails the whole batch: its Words go to the back of the queue.
+    const outcomes: readonly (RecordingOutcome | undefined)[] = await generator
+      .record(requests.map(({ voice, text }) => ({ voice, text })))
+      .catch(() => requests.map(() => ({ ok: false }) satisfies RecordingOutcome));
     if (!(await renewLease(editionId, holder))) return { recorded: 0, failed: 0 };
-    const recorded: RecordedWord[] = [];
+    const made: RecordedWord[] = [];
     for (const word of words) {
       const own = requests.flatMap((request, index) =>
         request.word === word ? [{ ...request, outcome: outcomes[index] }] : [],
       );
-      const files: NewRecording[] = [];
+      const files: { file: NewRecording; bytes: Uint8Array }[] = [];
       for (const { slot, outcome } of own) {
         if (outcome?.ok !== true) break;
-        const file: NewRecording = {
-          wordId: word.id,
-          ...slot,
-          hash: createHash('sha256').update(outcome.bytes).digest('hex'),
-          size: outcome.bytes.byteLength,
-          durationMs: outcome.durationMs,
-        };
-        await store.put(recordingPath(file), outcome.bytes, 'audio/mpeg');
-        files.push(file);
+        files.push({
+          file: {
+            wordId: word.id,
+            ...slot,
+            hash: createHash('sha256').update(outcome.bytes).digest('hex'),
+            size: outcome.bytes.byteLength,
+            durationMs: outcome.durationMs,
+          },
+          bytes: outcome.bytes,
+        });
       }
+      // A Word puts nothing unless every slot of it was made.
       if (files.length < own.length) continue;
-      recorded.push({ wordId: word.id, read: readOf(word.fields), files });
+      for (const { file, bytes } of files)
+        await store.put(recordingPath(file), bytes, 'audio/mpeg');
+      made.push({
+        wordId: word.id,
+        read: readOf(word.fields),
+        files: files.map(({ file }) => file),
+      });
     }
-    await rows.saveRecordings(editionId, recorded);
+    const saved = await rows.saveRecordings(editionId, made, putSince);
+    const recorded = saved.ok ? saved.recorded : [];
     await markFailures(editionId, words, recorded);
     return { recorded: recorded.length, failed: words.length - recorded.length };
   }
@@ -213,9 +226,9 @@ export function createRecordings({
   async function markFailures(
     editionId: string,
     words: readonly { readonly id: string }[],
-    recorded: readonly RecordedWord[],
+    recorded: readonly string[],
   ) {
-    const done = new Set(recorded.map(({ wordId }) => wordId));
+    const done = new Set(recorded);
     const stamp = async (ids: string[], recordingFailedAt: Date | null) => {
       if (ids.length === 0) return;
       await db
@@ -245,51 +258,39 @@ export function createRecordings({
         await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${editionId}))`);
         return sweep(tx);
       });
+    // Under its Edition's lock, while the row is still due, deletes its file and
+    // then stamps the row: a time taken after the delete, so a save that put the
+    // same file before the delete landed finds it deleted since then.
+    const sweep = async (
+      table: typeof mediaRecordings | typeof mediaIllustrations,
+      row: { editionId: string; wordId: string; hash: string },
+      slot: SQL | undefined,
+      path: string,
+    ) =>
+      locked(row.editionId, async (tx) => {
+        const of = and(
+          eq(table.editionId, row.editionId),
+          eq(table.wordId, row.wordId),
+          eq(table.hash, row.hash),
+          slot,
+          dueOf(table),
+        );
+        const [due] = await tx.select({ hash: table.hash }).from(table).where(of);
+        if (due === undefined) return false;
+        await store.delete(path);
+        await tx.update(table).set({ fileDeletedAt: clock.now() }).where(of);
+        return true;
+      });
     let deleted = 0;
-    const recordings = await db.select().from(mediaRecordings).where(dueOf(mediaRecordings));
-    for (const row of recordings) {
-      const swept = await locked(row.editionId, async (tx) => {
-        const stamped = await tx
-          .update(mediaRecordings)
-          .set({ fileDeletedAt: clock.now() })
-          .where(
-            and(
-              eq(mediaRecordings.editionId, row.editionId),
-              eq(mediaRecordings.wordId, row.wordId),
-              eq(mediaRecordings.narratorVoice, row.narratorVoice),
-              eq(mediaRecordings.recordingKind, row.recordingKind),
-              eq(mediaRecordings.hash, row.hash),
-              dueOf(mediaRecordings),
-            ),
-          )
-          .returning({ hash: mediaRecordings.hash });
-        if (stamped.length > 0) await store.delete(recordingPath(row));
-        return stamped.length > 0;
-      });
-      if (swept) deleted += 1;
+    for (const row of await db.select().from(mediaRecordings).where(dueOf(mediaRecordings))) {
+      const slot = and(
+        eq(mediaRecordings.narratorVoice, row.narratorVoice),
+        eq(mediaRecordings.recordingKind, row.recordingKind),
+      );
+      if (await sweep(mediaRecordings, row, slot, recordingPath(row))) deleted += 1;
     }
-    const illustrations = await db
-      .select()
-      .from(mediaIllustrations)
-      .where(dueOf(mediaIllustrations));
-    for (const row of illustrations) {
-      const swept = await locked(row.editionId, async (tx) => {
-        const stamped = await tx
-          .update(mediaIllustrations)
-          .set({ fileDeletedAt: clock.now() })
-          .where(
-            and(
-              eq(mediaIllustrations.editionId, row.editionId),
-              eq(mediaIllustrations.wordId, row.wordId),
-              eq(mediaIllustrations.hash, row.hash),
-              dueOf(mediaIllustrations),
-            ),
-          )
-          .returning({ hash: mediaIllustrations.hash });
-        if (stamped.length > 0) await store.delete(illustrationPath(row));
-        return stamped.length > 0;
-      });
-      if (swept) deleted += 1;
+    for (const row of await db.select().from(mediaIllustrations).where(dueOf(mediaIllustrations))) {
+      if (await sweep(mediaIllustrations, row, undefined, illustrationPath(row))) deleted += 1;
     }
     return deleted;
   }

@@ -12,7 +12,7 @@ import { dashboard, feedHeader, fontScaleCap, space, typeStyle, wedges } from '.
  * start, today and the Streak pill (`streak`) at the end. VoiceOver reads the
  * wordmark as the screen's header. The Dashboard's header (`logo` `plate`)
  * sets the name in the background colour on a slanted ink plate instead.
- * Given `onLogo`, the logo is a button VoiceOver reads by its label: the
+ * Given `onLogo`, the logo is also a button VoiceOver reads by its label: the
  * Feed's leads to the Dashboard (ADR 0079), the Dashboard's plays the daily
  * splash (ADR 0105).
  */
@@ -76,18 +76,28 @@ export function FeedHeader({
           {mark}
         </View>
       ) : (
-        <Pressable
-          testID="feed-logo"
-          accessibilityRole="button"
-          accessibilityLabel={onLogo.label}
-          {...voice}
-          onPress={onLogo.onPress}
-          // The wordmark is shorter than a touch target; the tap area grows to it.
-          hitSlop={space[2]}
-          style={styles.logo}
-        >
-          {mark}
-        </Pressable>
+        <View>
+          {/* The title stays a heading apart from the button over the same mark. */}
+          <View
+            accessible
+            accessibilityRole="header"
+            accessibilityLabel={wordmark}
+            pointerEvents="none"
+            style={StyleSheet.absoluteFill}
+          />
+          <Pressable
+            testID="feed-logo"
+            accessibilityRole="button"
+            accessibilityLabel={onLogo.label}
+            {...voice}
+            onPress={onLogo.onPress}
+            // The wordmark is shorter than a touch target; the tap area grows to it.
+            hitSlop={space[2]}
+            style={styles.logo}
+          >
+            {mark}
+          </Pressable>
+        </View>
       )}
       <View style={styles.end}>
         <Text

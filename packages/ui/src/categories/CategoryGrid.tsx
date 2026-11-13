@@ -76,7 +76,6 @@ export function CategoryGrid({
       data={tiles}
       keyExtractor={({ id }) => id}
       numColumns={columns}
-      initialNumToRender={tiles.length}
       key={columns}
       ListHeaderComponent={
         <>

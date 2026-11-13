@@ -144,7 +144,7 @@ describe('openPack', () => {
     });
   });
 
-  it.each(['edition_id', 'content_version', 'checksum', 'pack_format'])(
+  it.each(['edition_id', 'content_version', 'pack_format'])(
     'fails on a pack whose metadata has no %s',
     async (key) => {
       const file = builtPack();
@@ -159,6 +159,18 @@ describe('openPack', () => {
       }
     },
   );
+
+  it('opens a pack whose metadata has no checksum, as a Patch leaves it', async () => {
+    const file = builtPack();
+    editMetadata(file, "DELETE FROM metadata WHERE key = 'checksum'");
+
+    const pack = openLanguagePack(file);
+    try {
+      expect((await pack.metadata()).contentChecksum).toBeUndefined();
+    } finally {
+      pack.close();
+    }
+  });
 
   it.each([
     ['content_version', 'three'],

@@ -1,12 +1,8 @@
 'use no memo';
 import { STRESS_MARK } from '@slovo/contracts';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
-import {
-  GestureDetector,
-  usePanGesture,
-  type PanGestureConfig,
-} from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -14,7 +10,6 @@ import Animated, {
   ReduceMotion,
 } from 'react-native-reanimated';
 import Svg, { Polyline } from 'react-native-svg';
-import { scheduleOnRN } from 'react-native-worklets';
 
 import { Button } from '../primitives/Button';
 import { PressedTile } from '../primitives/PressedTile';
@@ -23,6 +18,7 @@ import { useTokens } from '../providers/TokensProvider';
 import { crosswordLayout, fontScaleCap, tracedCrosswordLayout, typeStyle } from '../tokens';
 import type { CrosswordPlace } from './CrossingGrid';
 import { ease } from './round-motion';
+import { useTraceDrag, type TraceHit } from './useTraceDrag';
 
 /** A letter of the grid and whether it carries the Stress mark. */
 export interface TracedLetter {
@@ -100,72 +96,36 @@ export function TracedCrosswordGrid({
   // A row is a cell and its edge deep, a column a cell wide, so each has its own pitch.
   const columnStep = useSharedValue(0);
   const rowStep = useSharedValue(0);
-  const last = useSharedValue(-1);
   const gap = crosswordLayout.cellGap;
   const stepOf = (length: number) => (size === 0 ? 0 : (length + gap) / size);
-  const handlers = useRef({ onExtend, onRelease });
-  useEffect(() => {
-    handlers.current = { onExtend, onRelease };
-  });
-  const extend = useCallback((place: CrosswordPlace) => {
-    handlers.current.onExtend(place);
-  }, []);
-  const release = useCallback(() => {
-    handlers.current.onRelease();
-  }, []);
-
   const found = (place: CrosswordPlace) =>
     words.some((word) => word.kind === 'found' && word.path.some((at) => samePlace(at, place)));
   const traced = (place: CrosswordPlace) => trace.some((at) => samePlace(at, place));
 
-  // Gesture Handler asks for a memoised config: a new one on each render
-  // sends the gesture's worklets to the UI thread again, for every cell a trace
-  // crosses. A config built outside the hook's call is not workletized for us,
-  // so each callback says so.
-  const dragConfig = useMemo((): PanGestureConfig => {
-    const hit = (x: number, y: number) => {
+  const hit = useCallback(
+    (x: number, y: number): TraceHit<CrosswordPlace> | undefined => {
       'worklet';
       const across = columnStep.value;
       const down = rowStep.value;
-      if (across <= 0 || down <= 0) return;
+      if (across <= 0 || down <= 0) return undefined;
       const column = Math.floor(x / across);
       const row = Math.floor(y / down);
-      if (row < 0 || column < 0 || row >= size || column >= size) return;
+      if (row < 0 || column < 0 || row >= size || column >= size) return undefined;
       const cell = across - gap;
       const dx = x - (column * across + cell / 2);
       const dy = y - (row * down + cell / 2);
-      if (Math.hypot(dx, dy) > cell * tracedCrosswordLayout.hitRadius) return;
-      const index = row * size + column;
-      if (index === last.value) return;
-      last.value = index;
-      scheduleOnRN(extend, { row, column });
-    };
-    return {
-      enabled: !accessibleMode,
-      minDistance: 0,
-      onBegin: ({ x, y }) => {
-        'worklet';
-        last.value = -1;
-        hit(x, y);
-      },
-      onActivate: ({ x, y }) => {
-        'worklet';
-        hit(x, y);
-      },
-      onUpdate: ({ x, y }) => {
-        'worklet';
-        hit(x, y);
-      },
-      onFinalize: () => {
-        'worklet';
-        last.value = -1;
-        scheduleOnRN(release);
-      },
-      // How a component test finds the drag; Gesture Handler reads it in Jest only.
-      testID: `${testID}-trace`,
-    };
-  }, [accessibleMode, size, testID, gap, columnStep, rowStep, last, extend, release]);
-  const drag = usePanGesture(dragConfig);
+      if (Math.hypot(dx, dy) > cell * tracedCrosswordLayout.hitRadius) return undefined;
+      return { index: row * size + column, place: { row, column } };
+    },
+    [size, gap, columnStep, rowStep],
+  );
+  const drag = useTraceDrag({
+    hit,
+    enabled: !accessibleMode,
+    testID,
+    onExtend,
+    onRelease,
+  });
 
   const layout = ({ nativeEvent }: LayoutChangeEvent) => {
     const { width, height } = nativeEvent.layout;
@@ -296,7 +256,10 @@ export function TracedCrosswordGrid({
                       },
                     ]}
                   >
-                    <Text style={[typeStyle('crosswordClue', tokens), { color: colors.ink }]}>
+                    <Text
+                      maxFontSizeMultiplier={fontScaleCap.number}
+                      style={[typeStyle('crosswordClue', tokens), { color: colors.ink }]}
+                    >
                       {letter}
                     </Text>
                   </View>

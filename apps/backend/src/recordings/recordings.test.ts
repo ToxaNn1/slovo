@@ -2,6 +2,7 @@ import { cpSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { recordingPath } from '@slovo/contracts';
 import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
@@ -124,7 +125,7 @@ const importedDatabase = importedDatabases('uk', folder, (database) =>
 );
 
 /** The backend on a database of its own, the UA Edition imported and its backlog recorded. */
-async function recordingsBackend() {
+async function recordingsBackend(store = keptStore()) {
   const own = await importedDatabase();
   onTestFinished(() => own.drop());
   const database = createDatabase(own.url, silentLogger);
@@ -146,7 +147,6 @@ async function recordingsBackend() {
   if (token === undefined) throw new Error('no Агент token');
   const agent = backend.clientOf(token);
   const { batchId } = await agent.admin.content.openBatch({ editionId: 'uk' });
-  const store = keptStore();
   const run = (generator: RecordingGenerator, batch = 50) =>
     createRecordings({ database, clock: systemClock, store, generator, editions, batch }).run();
   return { ...backend, agent, batchId, store, run };
@@ -283,6 +283,16 @@ describe('the Recordings job', () => {
     ).toEqual(new Set([failed, recorded]));
   });
 
+  it('fails the batch when the generator throws, and records the next Word on a later run', async () => {
+    const { client, agent, batchId, run } = await recordingsBackend();
+    await createWord(client, agent, batchId, 'обручичок', 3);
+    await createWord(client, agent, batchId, 'ґудзичок', 1);
+    const throwing: RecordingGenerator = { record: () => Promise.reject(new Error('exit 1')) };
+
+    expect(await run(throwing, 1)).toMatchObject({ recorded: 0, failed: 1 });
+    expect(await run(fakeGenerator(), 1)).toMatchObject({ recorded: 1, failed: 0 });
+  });
+
   it('retires the Recordings of a Word whose Lemma changed, and records it anew', async () => {
     const { client, agent, batchId, run } = await recordingsBackend();
     const id = await createWord(client, agent, batchId, 'обручичок', 3);
@@ -364,5 +374,76 @@ describe('the Recordings job', () => {
     await run(fakeGenerator());
     expect(first.some((key) => store.keys.has(key))).toBe(false);
     expect(keysOf()).toHaveLength(4);
+  });
+
+  it('keeps a Recording retired when a run puts its file again while the sweep deletes it', async () => {
+    const store = keptStore();
+    let during: ((key: string) => Promise<void>) | undefined;
+    let onPut: ((key: string) => void) | undefined;
+    const raced: MediaStore & { readonly keys: Set<string> } = {
+      ...store,
+      async put(key, bytes, type) {
+        await store.put(key, bytes, type);
+        onPut?.(key);
+      },
+      async delete(key) {
+        const hook = during;
+        during = undefined;
+        await hook?.(key);
+        await store.delete(key);
+      },
+    };
+    const { client, agent, batchId, run } = await recordingsBackend(raced);
+    const id = await createWord(client, agent, batchId, 'обручичок', 3);
+    await run(fakeGenerator());
+    const before = await versionOf(client);
+    const word = (await client.content.snapshot({ editionId: 'uk' })).words.find(
+      (found) => found.id === id,
+    );
+    if (word === undefined) throw new Error('no Word');
+    const { id: _id, ...fields } = word;
+    const edit = (lemma: string, recordVersion: number) =>
+      agent.admin.content.edit({
+        editionId: 'uk',
+        kind: 'word',
+        id,
+        batchId,
+        recordVersion,
+        fields: { ...fields, lemma },
+      });
+    await edit('обручик', 1);
+    await run(fakeGenerator());
+    passTime(RETIRED_FILE_KEPT_MS + 1);
+    // Back to the first Lemma: a run would make the very files the sweep deletes.
+    await edit('обручичок', 2);
+
+    let other: Promise<unknown> | undefined;
+    during = async (key) => {
+      // The delete takes time; meanwhile another run makes the same file again.
+      passTime(1);
+      const put = new Promise<void>((resolve) => {
+        onPut = (putKey) => {
+          if (putKey === key) resolve();
+        };
+      });
+      other = run(fakeGenerator());
+      await put;
+    };
+    await run(fakeGenerator('обру'));
+    await other;
+
+    const live = (await patchSince(client, before)).recordings.filter(
+      (row) => row.wordId === id && !row.retired,
+    );
+    expect(live.every((row) => store.keys.has(recordingPath(row)))).toBe(true);
+
+    // A later run makes the files anew, and the Word is recorded.
+    passTime(1);
+    await run(fakeGenerator());
+    const after = (await patchSince(client, before)).recordings.filter(
+      (row) => row.wordId === id && !row.retired,
+    );
+    expect(after).toHaveLength(VOICES.length);
+    expect(after.every((row) => store.keys.has(recordingPath(row)))).toBe(true);
   });
 });

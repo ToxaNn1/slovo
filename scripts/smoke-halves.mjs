@@ -139,10 +139,16 @@ function runHalf(index, logDir) {
   child.stdout.on('data', collect);
   child.stderr.on('data', collect);
   return new Promise((resolve) => {
-    child.on('close', (code) => {
+    const done = (code) => {
       writeFileSync(log, output);
       resolve({ index, file, log, code, output, ms: Date.now() - started });
+    };
+    // Maestro missing from PATH fails the spawn: the half ends, the lock is released.
+    child.on('error', (error) => {
+      output += `${error.message}\n`;
+      done(-1);
     });
+    child.on('close', done);
   });
 }
 

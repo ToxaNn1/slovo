@@ -11,6 +11,7 @@ import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync }
 import { readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import type { HttpBindings } from '@hono/node-server';
 import { createApiClient } from '@slovo/contracts/api';
@@ -53,6 +54,7 @@ import { eq } from 'drizzle-orm';
 import pg from 'pg';
 import { pino, type Logger } from 'pino';
 import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
+import { z } from 'zod';
 
 import { keptSignInCode } from './account/authenticator';
 import type { CommandDeps } from './admin/admin-command';
@@ -196,6 +198,30 @@ beforeAll(async () => {
   fileDatabase = await createTestDatabase(process.env['DATABASE_URL'] ?? LOCAL_DATABASE_URL);
 });
 afterAll(() => fileDatabase?.drop());
+
+const MIGRATIONS_DIR = fileURLToPath(new URL('../migrations', import.meta.url));
+const JOURNAL_FILE = 'meta/_journal.json';
+const JOURNAL = z.looseObject({ entries: z.array(z.looseObject({ tag: z.string() })) });
+
+/**
+ * The migrations folder as it was before the migration whose name ends with
+ * `suffix`: a copy with the journal cut there, removed when the test finishes.
+ */
+export function migrationsBefore(suffix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), 'slovo-migrations-'));
+  onTestFinished(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+  cpSync(MIGRATIONS_DIR, dir, { recursive: true });
+  const journal = JOURNAL.parse(JSON.parse(readFileSync(join(dir, JOURNAL_FILE), 'utf8')));
+  const cut = journal.entries.findIndex((entry) => entry.tag.endsWith(suffix));
+  if (cut === -1) throw new Error(`no migration ends with ${suffix}`);
+  writeFileSync(
+    join(dir, JOURNAL_FILE),
+    JSON.stringify({ ...journal, entries: journal.entries.slice(0, cut) }),
+  );
+  return dir;
+}
 
 /** The URL of this test file's database, migrated. */
 export function testDatabaseUrl(): string {

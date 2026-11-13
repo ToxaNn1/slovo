@@ -62,7 +62,7 @@ export function GameModeCard({
     <Pressable
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={sentences([title, line, refusal, bestLabel])}
+      accessibilityLabel={sentences([title, refusal ?? line, bestLabel])}
       accessibilityState={{ disabled: unavailable }}
       {...voice}
       disabled={unavailable}

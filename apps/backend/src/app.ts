@@ -364,18 +364,17 @@ export function createApp({
     const id = c.req.param('id');
     const edition = editions.find(({ config }) => config.id === c.req.param('edition'));
     if (edition === undefined) return c.notFound();
+    const wellFormed = CollectionLinkIdSchema.safeParse(id).success;
+    const found = wellFormed ? await collectionLinks.read(id) : undefined;
+    const here = found?.ok === true && found.link.edition === edition.config.id;
     if (!(c.req.header('accept') ?? '').includes('text/html')) {
+      if (found?.ok === true && !here) return c.notFound();
       const url = new URL(`/v1/collection-links/${encodeURIComponent(id)}`, c.req.url);
       const { response } = await handleApi(new Request(url, c.req.raw), c.var);
       return response === undefined ? c.notFound() : c.newResponse(response.body, response);
     }
-    if (!CollectionLinkIdSchema.safeParse(id).success) {
-      return c.html(unavailablePage(edition), 400);
-    }
-    const found = await collectionLinks.read(id);
-    if (!found.ok || found.link.edition !== edition.config.id) {
-      return c.html(unavailablePage(edition), 404);
-    }
+    if (!wellFormed) return c.html(unavailablePage(edition), 400);
+    if (found?.ok !== true || !here) return c.html(unavailablePage(edition), 404);
     const entries = await contentStore.entries(found.link.edition, found.link.entryIds);
     return c.html(collectionPage(edition, appConfig.scheme, id, found.link, entries));
   });

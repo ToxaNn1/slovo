@@ -1,6 +1,6 @@
 'use no memo';
 import type { MascotFigure, MascotShape, MascotState } from '@slovo/contracts';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -28,12 +28,11 @@ import {
   mascotPose,
   mascotSleepMarks,
   mascotWidth,
-  motion,
   space,
   typeStyle,
-  type Easing as Curve,
   type MascotFrame,
 } from '../tokens';
+import { bezier, REDUCED_FADE } from './timing';
 
 /** The colour of each paint role of the Mascot's vector. */
 type Paints = Readonly<Record<'body' | 'ink' | 'accent', string>>;
@@ -245,6 +244,9 @@ function SleepMark({
   );
 }
 
+/** The sleep marks' easing, built once rather than on every frame of their endless drift. */
+const SLEEP_MARK_EASE = Easing.bezierFn(...mascotSleepMarks.easing);
+
 /**
  * The drift of the `index`-th sleep mark (`mascotSleepMarks`), `scale` points
  * to the vector's unit. Until its delay it stands still and whole, as the
@@ -254,7 +256,7 @@ function useSleepMarkDrift(index: number, scale: number) {
   const reduceMotion = useReduceMotion();
   // Below 0 the mark has not started.
   const cycle = useSharedValue(-1);
-  const { duration, delays, easing, from, to } = mascotSleepMarks;
+  const { duration, delays, from, to } = mascotSleepMarks;
   const delay = delays[index] ?? 0;
 
   useEffect(() => {
@@ -276,8 +278,7 @@ function useSleepMarkDrift(index: number, scale: number) {
   return useAnimatedStyle(() => {
     const t = cycle.value;
     if (t < 0) return { opacity: 1, transform: [] };
-    const [x1, y1, x2, y2] = easing;
-    const eased = Easing.bezierFn(x1, y1, x2, y2);
+    const eased = SLEEP_MARK_EASE;
     const opacity = t < 0.5 ? eased(t * 2) : 1 - eased((t - 0.5) * 2);
     const rise = eased(t);
     return {
@@ -354,11 +355,6 @@ function Shape({ shape, paints, testID }: { shape: MascotShape; paints: Paints; 
   );
 }
 
-/** A design easing curve as Reanimated takes it. */
-function curve([x1, y1, x2, y2]: Curve) {
-  return Easing.bezier(x1, y1, x2, y2);
-}
-
 function paintOf(paint: string, paints: Paints): string {
   return paint === 'body' || paint === 'ink' || paint === 'accent' ? paints[paint] : paint;
 }
@@ -378,11 +374,7 @@ function useFigureMotion(state: MascotState) {
     progress.value = 0;
     if (reduceMotion) {
       shown.value = 0;
-      shown.value = withTiming(1, {
-        duration: motion.reduceMotion.duration,
-        easing: curve(motion.reduceMotion.easing),
-        reduceMotion: ReduceMotion.Never,
-      });
+      shown.value = withTiming(1, REDUCED_FADE);
       return;
     }
     shown.value = 1;
@@ -391,7 +383,7 @@ function useFigureMotion(state: MascotState) {
     const steps = plan.frames.slice(1).map((frame, index) =>
       withTiming(frame.at, {
         duration: (frame.at - (plan.frames[index]?.at ?? 0)) * plan.duration,
-        easing: curve(plan.easing),
+        easing: bezier(plan.easing),
         reduceMotion: ReduceMotion.Never,
       }),
     );
@@ -402,18 +394,31 @@ function useFigureMotion(state: MascotState) {
       plan.repeat === 'once' ? cycle : withRepeat(cycle, -1, plan.repeat === 'alternate');
   }, [plan, progress, reduceMotion, shown]);
 
+  // The frames' channels, laid out once per plan rather than on every frame of an endless loop.
+  const channels = useMemo(
+    () =>
+      plan === undefined
+        ? undefined
+        : {
+            at: plan.frames.map((frame) => frame.at),
+            y: plan.frames.map((frame: MascotFrame) => frame.y ?? 0),
+            rotate: plan.frames.map((frame: MascotFrame) => frame.rotate ?? 0),
+            scaleX: plan.frames.map((frame: MascotFrame) => frame.scaleX ?? 1),
+            scaleY: plan.frames.map((frame: MascotFrame) => frame.scaleY ?? 1),
+          },
+    [plan],
+  );
+
   return useAnimatedStyle(() => {
-    if (plan === undefined) return { opacity: shown.value, transform: [] };
-    const at = plan.frames.map((frame) => frame.at);
-    const channel = (pick: (frame: MascotFrame) => number) =>
-      interpolate(progress.value, at, plan.frames.map(pick));
+    if (channels === undefined) return { opacity: shown.value, transform: [] };
+    const channel = (values: readonly number[]) => interpolate(progress.value, channels.at, values);
     return {
       opacity: shown.value,
       transform: [
-        { translateY: channel((frame) => frame.y ?? 0) },
-        { rotate: `${String(channel((frame) => frame.rotate ?? 0))}deg` },
-        { scaleX: channel((frame) => frame.scaleX ?? 1) },
-        { scaleY: channel((frame) => frame.scaleY ?? 1) },
+        { translateY: channel(channels.y) },
+        { rotate: `${String(channel(channels.rotate))}deg` },
+        { scaleX: channel(channels.scaleX) },
+        { scaleY: channel(channels.scaleY) },
       ],
     };
   });

@@ -13,6 +13,7 @@ import {
   type RecordKind,
   type Refusal,
   type RuleName,
+  plainText,
 } from './index';
 
 type Json = Record<string, unknown>;
@@ -154,6 +155,15 @@ describe('checkContentSet', () => {
         return fixtureSet({ t_fx0001: { gameQuestion: { ...gameQuestion, wrongAnswers } } });
       },
     ],
+    [
+      'unique-tip-exceptions',
+      () =>
+        fixtureSet({
+          t_fx0001: {
+            exceptions: { explanation: 'Слова поза правилом.', words: ['буряк', 'Буряк'] },
+          },
+        }),
+    ],
     ['word-category', () => fixtureSet({ w_fx0002: { categoryId: 'unknown' } })],
     ['correction-category', () => fixtureSet({ c_fx0001: { categoryId: 'unknown' } })],
     ['word-correction', () => fixtureSet({ w_fx0002: { correctionIds: ['c_zzzzzz'] } })],
@@ -211,6 +221,42 @@ describe('checkContentSet', () => {
 
   it.each(broken)('refuses a fixture that breaks %s, naming the rule', (rule, set) => {
     expect(rules(checkContentSet(config, set(), { today }))).toEqual([rule]);
+  });
+
+  it.each([
+    ['a Synonym Row', 'r_fx0001', { meaning: 'Який любить гoворити.' }],
+    ['a Tip', 't_fx0001', { explanation: 'Кажуть гoворити.' }],
+  ])('refuses mixed scripts in %s', (_kind, id, changes) => {
+    const refusals = checkContentSet(config, fixtureSet({ [id]: changes }), { today });
+    expect(refusals.map(({ rule, entryId }) => [rule, entryId])).toEqual([['mixed-script', id]]);
+  });
+
+  it("refuses a Tip exception that is the Tip's own standard form", () => {
+    const { standardForm } = record('t_fx0001') as { standardForm: string };
+    const exceptions = { explanation: 'Слова поза правилом.', words: ['буряк', standardForm] };
+    const refusals = checkContentSet(config, fixtureSet({ t_fx0001: { exceptions } }), { today });
+    expect(refusals.map(({ rule, field }) => [rule, field])).toEqual([
+      ['unique-tip-exceptions', 'exceptions.words.1'],
+    ]);
+  });
+
+  it('refuses a Lemma that differs from another only in case', () => {
+    const { lemma } = record('w_fx0002') as { lemma: string };
+    const capital = `${lemma.charAt(0).toLocaleUpperCase('uk')}${lemma.slice(1)}`;
+    const set = fixtureSet({}, [parsed(record('w_fx0002', { id: 'w_fx0009', lemma: capital }))]);
+    expect(rules(checkContentSet(config, set, { today }))).toEqual(['unique-lemma']);
+  });
+
+  it('refuses a repeated word in a day that follows a gap', () => {
+    const gap = [day('2026-11-01', ['w_fx0002']), day('2026-11-03', ['w_fx0002'])];
+    const set = fixtureSet({}, [], {
+      crosswordDays: gap,
+      recordedCrosswordDaysChecksum: checksumOf(gap),
+    });
+    expect(rules(checkContentSet(config, set, { today }))).toEqual([
+      'crossword-days-gap',
+      'crossword-days-repeat',
+    ]);
   });
 
   it('refuses a fixture that breaks category-history, naming the rule', () => {
@@ -299,5 +345,11 @@ describe('checkRecord', () => {
     const broken = fixtureSet({ w_fx0003: { categoryId: 'unknown' } });
     const edit = parsed(record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' }));
     expect(checkRecord(config, broken, edit, { today })).toEqual([]);
+  });
+});
+
+describe('plainText', () => {
+  it('keeps an entity past the last code point as it is written', () => {
+    expect(plainText('a &#x110000; b &#1114112; &#x441;')).toBe('a &#x110000; b &#1114112; с');
   });
 });

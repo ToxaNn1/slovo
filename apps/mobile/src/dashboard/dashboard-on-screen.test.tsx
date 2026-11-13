@@ -249,6 +249,16 @@ describe('the home', () => {
     expect(screen.queryByText('Значення слова сумирний.')).toBeNull();
   });
 
+  it('dates its header by the Feed\u2019s day, as the Feed header does', async () => {
+    await open(true);
+    // The device's clock a day on from the composition's: the header follows the Feed.
+    jest.setSystemTime(new Date('2026-10-29T09:00:00Z'));
+    await renderApp();
+
+    expect(screen.getByText('ср, 28 жовтня')).toBeTruthy();
+    expect(screen.queryByText('чт, 29 жовтня')).toBeNull();
+  });
+
   it('shows the Feed with `dashboard` off', async () => {
     await open(false);
     await renderApp();
@@ -533,7 +543,9 @@ describe('the Curated Collections rail', () => {
     expect(screen.getByText('Знаю 0 з 2')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_lahidnyi')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'ДОДАТИ' })).not.toBeSelected();
+    expect(
+      screen.getByRole('togglebutton', { name: 'ДОДАТИ' }).props['accessibilityState'],
+    ).toMatchObject({ checked: false });
   });
 
   it('a Known mark counts at once and shows on its row', async () => {
@@ -553,6 +565,24 @@ describe('the Curated Collections rail', () => {
     expect(
       within(screen.getByTestId('curated-collection-entry-w_lahidnyi')).queryByText(known),
     ).toBeNull();
+  });
+
+  it('shows the error with a retry when its read fails, and the retry reads it again', async () => {
+    await open(true);
+    await renderApp();
+    jest
+      .spyOn(composition.curatedCollections, 'screen')
+      .mockRejectedValueOnce(new Error('The pack is busy'));
+    await settle(() =>
+      fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
+    );
+
+    const error = screen.getByTestId('curated-collection-error');
+    expect(within(error).getByText(editionStrings.loadFailed.title)).toBeTruthy();
+
+    await settle(() => fireEvent.press(within(error).getByText(editionStrings.loadFailed.retry)));
+    expect(screen.queryByTestId('curated-collection-error')).toBeNull();
+    expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
   });
 
   it('a tap on a row opens its Entry without making it Seen', async () => {
@@ -575,10 +605,12 @@ describe('the Curated Collections rail', () => {
       fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
     );
 
-    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'ДОДАТИ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })));
 
     expect(screen.queryByText('ДОДАТИ')).toBeNull();
-    expect(screen.getByRole('button', { name: 'ДОДАНО' })).toBeSelected();
+    expect(
+      screen.getByRole('togglebutton', { name: 'ДОДАНО' }).props['accessibilityState'],
+    ).toMatchObject({ checked: true });
     expect(screen.getByTestId('curated-collection-add-icon')).toBeTruthy();
     expect(composition.curatedCollections.rail.map((card) => card.added)).toEqual([true]);
   });

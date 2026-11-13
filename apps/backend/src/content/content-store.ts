@@ -19,7 +19,7 @@ import {
   contentWords,
   quoteChecks,
 } from '../database/schema';
-import { readMediaRows } from './media-rows';
+import { readMediaRows, readsDifferently, retireRecordings } from './media-rows';
 
 /** How many records of each kind an import wrote. */
 export interface ImportCounts {
@@ -138,7 +138,34 @@ export function createContentStore({
           fields,
           retired: fields.retired ?? false,
         }));
-      const words = rowsOf(content.words).map((row) => ({ ...row, needsNewRecording: false }));
+      // A Word whose Lemma or Stress the folder changes no longer reads as
+      // its Recordings: they retire and it needs new ones (ADR 0083).
+      const stored = new Map(
+        (
+          await tx
+            .select({
+              id: contentWords.id,
+              fields: contentWords.fields,
+              needs: contentWords.needsNewRecording,
+            })
+            .from(contentWords)
+            .where(eq(contentWords.editionId, editionId))
+        ).map((word) => [word.id, word]),
+      );
+      const changed = new Set(
+        content.words
+          .filter((word) => {
+            const before = stored.get(word.id);
+            return before !== undefined && readsDifferently(before.fields, word);
+          })
+          .map(({ id }) => id),
+      );
+      for (const wordId of changed)
+        await retireRecordings(tx, { editionId, wordId, version: contentVersion, now });
+      const words = rowsOf(content.words).map((row) => ({
+        ...row,
+        needsNewRecording: changed.has(row.id) || stored.get(row.id)?.needs === true,
+      }));
       const crosswordDays = (content.crosswordDays ?? []).map((fields) => ({
         ...common,
         id: fields.date,

@@ -20,6 +20,8 @@ declare module 'slovo-editions' {
     readonly starterWords: readonly string[];
     /** The asset id of the compiled Language Pack. */
     readonly languagePack: number;
+    /** The content version of that Language Pack, which the build reads from the pack itself. */
+    readonly bundledContentVersion: number;
   }
   const bundled: {
     /** The Edition the build bundles as its default. */

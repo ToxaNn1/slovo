@@ -134,7 +134,10 @@ export const chipsForm: AnswerForm<ChipsContent, ChipsRound, ChipsGiven, ChipsAn
     layout,
     slots: expected.length,
   }),
-  judge({ chips, expected, sheet }, _shown, { chips: chosen }, comparison) {
+  judge({ chips, expected, sheet, layout = 'line' }, _shown, { chips: chosen }, comparison) {
+    // A chip is tapped once, and tiles fill every slot: fewer are no answer yet.
+    if (new Set(chosen).size !== chosen.length) return undefined;
+    if (layout === 'tiles' && chosen.length !== expected.length) return undefined;
     const tapped: string[] = [];
     for (const place of chosen) {
       const chip = chips[place];
