@@ -91,7 +91,11 @@ export const signInMethods = pgTable(
     createdAt: time('created_at'),
     updatedAt: time('updated_at'),
   },
-  (table) => [index().on(table.accountId)],
+  (table) => [
+    index().on(table.accountId),
+    // One Sign-in method per identity at a provider.
+    uniqueIndex('sign_in_methods_provider_identity').on(table.providerId, table.providerAccountId),
+  ],
 );
 
 /** Every Session: one device's sign-in to an Account. Ending a Session deletes its row. */
