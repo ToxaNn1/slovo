@@ -54,9 +54,7 @@ export function FlyingLemma({ text, style }: { text: string; style: StyleProp<Te
             letter={letter}
             index={index}
             style={style}
-            {...(index === letters.length - 1
-              ? { onEnd: measured }
-              : {})}
+            {...(index === letters.length - 1 ? { onEnd: measured } : {})}
           />
         ))}
       </View>
