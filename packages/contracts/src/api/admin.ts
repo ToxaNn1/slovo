@@ -1235,7 +1235,12 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.strictObject({ version: OwnerCheckVersionSchema, text: z.string().trim().min(1).max(2000) }))
+    .input(
+      z.strictObject({
+        version: OwnerCheckVersionSchema,
+        text: z.string().trim().min(1).max(2000),
+      }),
+    )
     .output(z.object({ check: OwnerCheckSchema })),
   quality: procedure
     .route({
