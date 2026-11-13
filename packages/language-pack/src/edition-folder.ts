@@ -248,7 +248,11 @@ export interface EditionFiles {
   entryFile(id: string): string;
 }
 
-/** An Edition opened by its id: its folder, with its config checked. */
+/**
+ * An Edition opened by its id: its folder, with its config checked. It reads
+ * its Entries once, on the first call that needs them, and every later call
+ * sees that reading.
+ */
 export interface EditionFolder extends EditionFiles {
   readonly id: string;
   readonly config: EditionConfig;
@@ -311,11 +315,14 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
       },
     ]);
   }
-  let content: AuthoredContent | undefined;
+  let read: AuthoredContent | undefined;
+  const entries = (): AuthoredContent => (read ??= files.entries());
   return {
     ...files,
     id: editionId,
     config,
+    entries,
+    entryTexts: () => entryTextsOf(entries()),
     checkNewWords(words, today = new Date()) {
       return checkNew(today, (set) => ({ ...set, words: [...set.words, ...authored(words)] }));
     },
@@ -335,7 +342,7 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
 
   /** The content rules' refusals, on `today`, of the new records that `withNew` adds to the authored content. */
   function checkNew(today: Date, withNew: (set: ContentSet) => ContentSet): BuildError[] {
-    content ??= files.entries();
+    const content = entries();
     const set = withNew(content);
     const old = new Set(
       [content.words, content.corrections, content.idioms, content.synonymRows].flat(),
