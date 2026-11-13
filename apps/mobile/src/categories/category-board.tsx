@@ -1,10 +1,8 @@
 import { fill, type Category } from '@slovo/contracts';
 import type { CategoryKind } from '@slovo/core';
 import {
-  BackLink,
   categoryGrid,
   correctionGrid,
-  FeedError,
   knownShare,
   QuietScreenHero,
   QuietScreenRow,
@@ -12,19 +10,17 @@ import {
   railScreen,
   RailScreenHero,
   shapeAt,
-  space,
   UndoToastProvider,
   useEdition,
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useIsQuiet } from '@/categories/categories';
 import { useCategoryScreen } from '@/categories/category-screen';
 import { editionStrings } from '@/edition/edition';
-import { ShippedMascot } from '@/mascot/mascot';
+import { ReadFailed } from '@/read-failed';
 
 const { dashboard } = editionStrings;
 /** The kicker and its count of Entries, «КАТЕГОРІЯ · N слів» or «… виправлень», by the list. */
@@ -74,7 +70,14 @@ function Board({ of, category, place }: { of: CategoryKind; category: Category; 
   const strings = dashboard.category;
   const { known, total, done } = knownShare(cards ?? []);
   const read = cards !== undefined;
-  if (retry !== undefined) return <ReadFailed of={of} onRetry={retry} />;
+  if (retry !== undefined)
+    return (
+      <ReadFailed
+        back={{ testID: 'category-back', label: backOf[of] }}
+        onRetry={retry}
+        testID="category-error"
+      />
+    );
   return (
     <RailBoard
       testID="category"
@@ -116,7 +119,14 @@ function QuietBoard({ of, category }: { of: CategoryKind; category: Category }) 
   const { cards, retry, openEntry } = useCategoryScreen(of, category);
   const { colors } = useTokens();
   const router = useRouter();
-  if (retry !== undefined) return <ReadFailed of={of} onRetry={retry} />;
+  if (retry !== undefined)
+    return (
+      <ReadFailed
+        back={{ testID: 'category-back', label: backOf[of] }}
+        onRetry={retry}
+        testID="category-error"
+      />
+    );
   return (
     <View testID="category" style={[styles.screen, { backgroundColor: colors.background }]}>
       <FlatList
@@ -154,45 +164,8 @@ function QuietBoard({ of, category }: { of: CategoryKind; category: Category }) 
   );
 }
 
-/**
- * The error state of a Category whose Entries could not be read: the way back
- * to its grid, then the error with its retry, which reads them again; the
- * Mascot cringes.
- */
-function ReadFailed({ of, onRetry }: { of: CategoryKind; onRetry: () => void }) {
-  const { colors } = useTokens();
-  const { top } = useSafeAreaInsets();
-  const router = useRouter();
-  const { title, message, retry } = editionStrings.loadFailed;
-  return (
-    <View
-      testID="category"
-      style={[styles.screen, { paddingTop: top, backgroundColor: colors.background }]}
-    >
-      <View style={styles.bar}>
-        <BackLink
-          testID="category-back"
-          label={backOf[of]}
-          onPress={() => {
-            router.back();
-          }}
-        />
-      </View>
-      <FeedError
-        title={title}
-        message={message}
-        retry={retry}
-        onRetry={onRetry}
-        mascot={<ShippedMascot state="cringes" />}
-        testID="category-error"
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  bar: { paddingLeft: space[3], paddingTop: space[2] },
   hero: { marginHorizontal: -railScreen.list.side, marginBottom: railScreen.list.top },
   content: { paddingHorizontal: railScreen.list.side, paddingBottom: railScreen.list.bottom },
 });
