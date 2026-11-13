@@ -77,3 +77,8 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 - Coordinator 3 stops (context limit). Nothing live. PR #1820 open, no auto-merge. Open: perf reword (needs a force-push grant), WAVES.md on coord/safety-net, CI of #1820 not watched.
 - 21:17Z PR #1820 CI on cf869fbd: «Commit messages» red (perf commits, expected) and «Lint» red (job 132174657365; local pnpm lint was green: find the CI lint step, e.g. format/markdown/commit-scope, and fix). Coordinator 3 at hard context limit, nothing live: next coordinator fixes Lint, watches #1820.
 - 21:19Z also red on cf869fbd: «Lint, typecheck, test and Language Pack» (job 132176011199). Next coordinator: read both failed job logs, fix, push.
+- 21:19Z CI-fix session: filter-branch --msg-filter over origin/main..fix/1113-code-review (224 commits, 22 merges kept): R53/R63/R138 subjects perf( -> refactor(; git diff cf869fbd..new tip empty; same authors, committers, dates, trees; no perf subject left.
+- 21:21Z Lint fix: tools/sourcing/src/corrections.ts:308 new Array(n).fill(0) -> Array.from({ length }, () => 0), commit fix(sourcing). Local pnpm lint also showed Prettier failing on 9 files: commit style: format nine files with Prettier. pnpm lint green, pnpm typecheck green, tools/sourcing tests 103 passed.
+- 21:24Z One push: --force-with-lease=fix/1113-code-review:cf869fbd -> eacb04f0. No other force-push.
+- 21:40Z PR #1820 CI on eacb04f0: all 21 checks success (CI history, Deploy to Railway skipped). REPORT.md: perf question resolved by owner answer A.
+CI-FIX DONE: PR #1820 head eacb04f04e34c77a498edeffc8fce079a960902f, checks green

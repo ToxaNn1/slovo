@@ -8,6 +8,6 @@ PR #1820: fix/1113-code-review -> main. Без merge і без auto-merge.
 - Сторінки handbook, які треба оновити, перелічено в PR: «За буквами», вечірнє сповіщення, freezeUsed, Tip exceptions, Колекції, Повідомлення про помилку.
 
 ## Questions
-- perf-коміти 032a3347c, 45abddebc, d9034973b: у review-1113/OWNER-ANSWERS.md є передана через інший сеанс відповідь «А» (один force-push, щоб перейменувати їх на refactor). Мій грант забороняв force-push, тому я цього не робив. Поки ці коміти не перейменовано, CI «Commit messages» на PR буде червоним.
+- perf-коміти 032a3347c, 45abddebc, d9034973b: питання закрито відповіддю власника «А» (review-1113/OWNER-ANSWERS.md). Один force-push fix/1113-code-review лише перейменував їх на refactor(<scope>) (fc3a91ab R53, 2b1a401e R63, a2252727 R138); дерева й автори без змін. «Commit messages» на PR #1820 зелений.
 - Решту питань до власника перелічено в розділі «Questions for the owner» у PR.
 - WAVES.md на coord/safety-net не оновлено, бо закінчувався контекст.
