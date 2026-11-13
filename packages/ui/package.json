@@ -22,6 +22,7 @@
     "@jest/globals": "30.5.2",
     "@react-native/jest-preset": "0.88.1",
     "@slovo/config": "workspace:*",
+    "@slovo/jest-resolver": "workspace:*",
     "@testing-library/react-native": "14.1.0",
     "@types/node": "^22.20.5",
     "@types/react": "~19.3.0",

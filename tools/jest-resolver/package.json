@@ -1,0 +1,7 @@
+{
+  "name": "@slovo/jest-resolver",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Jest resolver shared by the app and the UI package: React Native's, chained with Reanimated's.",
+  "main": "./index.cjs"
+}

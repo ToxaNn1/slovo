@@ -15,7 +15,7 @@ export default {
     '/node_modules/react-native-reanimated/plugin/',
     '/node_modules/@react-native/babel-preset/',
   ],
-  resolver: './jest.resolver.cjs',
+  resolver: '@slovo/jest-resolver',
   setupFiles: ['./jest.setup.js'],
   // Half the cores, beside Vitest and the other packages turbo runs at once, and a worker
   // past 1 GB is restarted between files, so a run on a loaded machine does not time out.

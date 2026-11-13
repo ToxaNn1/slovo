@@ -524,6 +524,9 @@ importers:
       '@slovo/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@slovo/jest-resolver':
+        specifier: workspace:*
+        version: link:../../tools/jest-resolver
       '@testing-library/react-native':
         specifier: 14.1.0
         version: 14.1.0(jest@30.5.2(@types/node@22.20.5)(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(test-renderer@1.3.1(@types/react@19.3.0)(react@19.3.0))
@@ -886,6 +889,9 @@ importers:
       '@slovo/config':
         specifier: workspace:*
         version: link:../config
+      '@slovo/jest-resolver':
+        specifier: workspace:*
+        version: link:../../tools/jest-resolver
       '@testing-library/react-native':
         specifier: 14.1.0
         version: 14.1.0(jest@30.5.2(@types/node@22.20.5)(supports-color@8.1.1))(react-native@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native/metro-config@0.88.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.3.0)(supports-color@8.1.1))(react@19.3.0)(test-renderer@1.3.1(@types/react@19.3.0)(react@19.3.0))
@@ -983,6 +989,8 @@ importers:
       vitest:
         specifier: ^5.1.0
         version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(@vitest/coverage-v8@5.1.0)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.5(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+
+  tools/jest-resolver: {}
 
   tools/sourcing:
     dependencies:
