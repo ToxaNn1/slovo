@@ -5,6 +5,7 @@ import Svg, { Line } from 'react-native-svg';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { calendarDay, freezeCard, space, typeStyle } from '../tokens';
+import { dayLabel } from './day-label';
 
 const { frost } = freezeCard;
 
@@ -41,7 +42,6 @@ function Day({ day }: { day: CalendarDay }) {
   // The number on red is the ink of the light Theme in both Themes, as on every red face.
   const keyInk = useSchemeColors('light').ink;
   const { strings, voice } = useEdition();
-  const spoken = day.state === 'today' ? (day.active ? 'todayActive' : 'today') : day.state;
   const look = {
     active: { face: colors.accent, number: keyInk },
     today: {
@@ -57,10 +57,7 @@ function Day({ day }: { day: CalendarDay }) {
     <View
       testID={`profile-freeze-card-${day.date}`}
       accessible
-      accessibilityLabel={fill(strings.stats.calendar.days[spoken], {
-        day: String(day.day),
-        month: strings.dates.months[day.month - 1] ?? '',
-      })}
+      accessibilityLabel={dayLabel(strings, day)}
       {...voice}
       style={[
         styles.day,

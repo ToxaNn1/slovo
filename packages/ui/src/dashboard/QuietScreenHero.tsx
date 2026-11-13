@@ -1,13 +1,11 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { Icon } from '../primitives/Icon';
 import { Mascot } from '../primitives/Mascot';
 import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { pressedFade, quietScreen as place, railScreen, space, typeStyle } from '../tokens';
+import { quietScreen as place, space, typeStyle } from '../tokens';
+import { HeroBack, useHeroRoom } from './HeroBack';
 
 /**
  * The hero of a quiet Category's screen (board 05.2 k3): the sunken surface
@@ -33,10 +31,7 @@ export function QuietScreenHero({
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
-  // The board measures from the screen's top under its status bar.
-  const shift = Math.max(0, useSafeAreaInsets().top - railScreen.statusBar);
-  // The board's height, or more when a long name or description needs it.
-  const [height, setHeight] = useState(place.height + shift);
+  const { shift, height, onLayout } = useHeroRoom(place.height);
   return (
     <View
       testID={id}
@@ -44,9 +39,7 @@ export function QuietScreenHero({
         styles.hero,
         { minHeight: place.height + shift, paddingTop: place.padding.top + shift },
       ]}
-      onLayout={(event) => {
-        setHeight(event.nativeEvent.layout.height);
-      }}
+      onLayout={onLayout}
     >
       <Wedge
         points={place.cut}
@@ -55,20 +48,14 @@ export function QuietScreenHero({
         height={height}
         style={StyleSheet.absoluteFill}
       />
-      <Pressable
-        testID={back.testID ?? `${id}-back`}
-        accessibilityRole="button"
-        accessibilityLabel={back.label}
-        {...voice}
-        onPress={back.onPress}
-        style={({ pressed }) => [
-          styles.back,
-          { top: place.back.top + shift, backgroundColor: colors.background },
-          pressed && styles.pressed,
-        ]}
-      >
-        <Icon name="back" size={place.back.icon} color={colors.ink} />
-      </Pressable>
+      <HeroBack
+        id={id}
+        back={back}
+        place={place.back}
+        shift={shift}
+        tile={colors.background}
+        ink={colors.ink}
+      />
       <Text
         {...voice}
         testID={`${id}-label`}
@@ -100,16 +87,6 @@ export function QuietScreenHero({
 
 const styles = StyleSheet.create({
   hero: { paddingHorizontal: place.padding.side, gap: place.gap },
-  back: {
-    position: 'absolute',
-    left: place.back.left,
-    width: place.back.side,
-    height: place.back.side,
-    borderRadius: place.back.radius,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pressed: { opacity: pressedFade },
   title: { maxWidth: place.titleWidth },
   description: { maxWidth: place.descriptionWidth },
   mascot: {
