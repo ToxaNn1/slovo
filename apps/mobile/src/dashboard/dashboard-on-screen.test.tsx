@@ -249,6 +249,16 @@ describe('the home', () => {
     expect(screen.queryByText('Значення слова сумирний.')).toBeNull();
   });
 
+  it('dates its header by the Feed\u2019s day, as the Feed header does', async () => {
+    await open(true);
+    // The device's clock a day on from the composition's: the header follows the Feed.
+    jest.setSystemTime(new Date('2026-10-29T09:00:00Z'));
+    await renderApp();
+
+    expect(screen.getByText('ср, 28 жовтня')).toBeTruthy();
+    expect(screen.queryByText('чт, 29 жовтня')).toBeNull();
+  });
+
   it('shows the Feed with `dashboard` off', async () => {
     await open(false);
     await renderApp();
