@@ -70,3 +70,4 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 - 20:20Z LXa STUCK 7 (+R24 R23 R66; Question R24 module-level last request) -> relaunched for R85 R149 R151 R169 R176 + check 2 mobile test failures. Running: LXa LXb.
 - 20:32Z LXb DONE 10 (c787ce28; R59 Metro reads bundled version via packMetadataOf, prints node:sqlite ExperimentalWarning) merged (tip after content lint fix); all touched packages green (backend test flaky in turbo, 549/549 alone). Running: LXa.
 - 20:35Z review (core+backend) -> review-1113/REVIEW-FINDINGS.md (3 backend findings); lane RV (branch fix/1113-code-review-rv, /home/user/wt/rv) fixing them; mobile/ui reviewer appending to the same file. PR body draft review-1113/PR-DRAFT.md (LXa pending). Running: LXa, RV, mobile/ui review.
+- 21:14Z safety net takeover (last commit 2026-11-13T20:55Z)
