@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'node:crypto';
 
 import type { AdminStore, AdminTotp, AdminUser, SecretVault } from '@slovo/server-core';
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, lt, or } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import {
@@ -75,7 +75,7 @@ export function createAdminStore({ db }: Database): AdminStore {
       await db.transaction(async (tx) => {
         await tx
           .update(adminUsers)
-          .set({ totpSecret: sealedSecret, totpConfirmedAt: null })
+          .set({ totpSecret: sealedSecret, totpConfirmedAt: null, totpLastStep: null })
           .where(eq(adminUsers.id, adminUserId));
         await tx.delete(recoveryCodes).where(eq(recoveryCodes.adminUserId, adminUserId));
         await tx
@@ -89,6 +89,20 @@ export function createAdminStore({ db }: Database): AdminStore {
         .update(adminUsers)
         .set({ totpConfirmedAt: at })
         .where(eq(adminUsers.id, adminUserId));
+    },
+
+    async spendTotpStep(adminUserId, step) {
+      const spent = await db
+        .update(adminUsers)
+        .set({ totpLastStep: step })
+        .where(
+          and(
+            eq(adminUsers.id, adminUserId),
+            or(isNull(adminUsers.totpLastStep), lt(adminUsers.totpLastStep, step)),
+          ),
+        )
+        .returning({ id: adminUsers.id });
+      return spent.length > 0;
     },
 
     async spendRecoveryCode(adminUserId, codeHash, at) {
@@ -172,7 +186,13 @@ export function createAdminStore({ db }: Database): AdminStore {
       return db.transaction(async (tx) => {
         const [user] = await tx
           .update(adminUsers)
-          .set({ state: 'active', role, totpSecret: null, totpConfirmedAt: null })
+          .set({
+            state: 'active',
+            role,
+            totpSecret: null,
+            totpConfirmedAt: null,
+            totpLastStep: null,
+          })
           .where(and(eq(adminUsers.email, email), eq(adminUsers.state, 'removed')))
           .returning({ id: adminUsers.id });
         if (user === undefined) return false;

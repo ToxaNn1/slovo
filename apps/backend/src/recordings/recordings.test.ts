@@ -283,6 +283,16 @@ describe('the Recordings job', () => {
     ).toEqual(new Set([failed, recorded]));
   });
 
+  it('fails the batch when the generator throws, and records the next Word on a later run', async () => {
+    const { client, agent, batchId, run } = await recordingsBackend();
+    await createWord(client, agent, batchId, 'обручичок', 3);
+    await createWord(client, agent, batchId, 'ґудзичок', 1);
+    const throwing: RecordingGenerator = { record: () => Promise.reject(new Error('exit 1')) };
+
+    expect(await run(throwing, 1)).toMatchObject({ recorded: 0, failed: 1 });
+    expect(await run(fakeGenerator(), 1)).toMatchObject({ recorded: 1, failed: 0 });
+  });
+
   it('retires the Recordings of a Word whose Lemma changed, and records it anew', async () => {
     const { client, agent, batchId, run } = await recordingsBackend();
     const id = await createWord(client, agent, batchId, 'обручичок', 3);

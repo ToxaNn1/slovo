@@ -188,6 +188,18 @@ describe('the Streak and its freezes', () => {
     expect(app.progress.state).toMatchObject({ streak: 0, bestStreak: 0, freezesHeld: 2 });
   });
 
+  it('emits «freeze used» for each of two missed days with the freezes held after that one', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 12));
+    const { app, events } = await openOn(records, '2026-10-15');
+
+    expect(app.progress.state).toMatchObject({ streak: 3, freezesHeld: 0 });
+    expect(frozenDays(records)).toEqual(['2026-10-13', '2026-10-14']);
+    expect(events).toEqual([
+      ['freezeUsed', { freezesHeld: 1 }],
+      ['freezeUsed', { freezesHeld: 0 }],
+    ]);
+  });
+
   it('covers a missed day with a held freeze, appends its record and emits «freeze used»', async () => {
     const records = earned(new Map<string, string>(), 5, ...october(10, 12));
     const { app, events } = await openOn(records, '2026-10-14');

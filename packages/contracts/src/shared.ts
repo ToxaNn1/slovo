@@ -35,12 +35,20 @@ export const WebAddressSchema = z.url({ protocol: /^https?$/ });
  * copy. `shortName` names the source in the card's «Джерело:» line; a card
  * names a source without one by its `title`.
  */
-export const SourceSchema = z.strictObject({
+const sourceShape = {
   title: EntryTextSchema,
   shortName: EntryTextSchema.optional(),
   url: WebAddressSchema.optional(),
   archivedUrl: WebAddressSchema.optional(),
-});
+};
+
+export const SourceSchema = z.strictObject(sourceShape);
+
+/**
+ * A Source as an output carries it: open to fields a later backend adds,
+ * which the app strips (ADR 0031). Every record schema has such a twin.
+ */
+export const SourceOutputSchema = z.object(sourceShape);
 
 export type Source = z.infer<typeof SourceSchema>;
 

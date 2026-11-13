@@ -41,11 +41,12 @@ export function CategoriesRail({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.rail}
       >
-        {tiles.map(({ id, name }, index) => (
+        {tiles.map(({ id, name, accessibilityLabel }, index) => (
           <CategoryTile
             key={id}
             testID={`dashboard-category-${id}`}
             name={name}
+            accessibilityLabel={accessibilityLabel ?? name}
             tone={toneAt(index)}
             shapes={shapeAt(categoryTile.shapes, index)}
             box={categoryRailBox}

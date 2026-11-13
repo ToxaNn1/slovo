@@ -1,7 +1,7 @@
 'use no memo';
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import {
   StyleSheet,
   Text,
@@ -22,6 +22,7 @@ import Animated, {
 import { useCascade } from '../primitives/useCascade';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { dashboard, entryReveal, motion } from '../tokens';
+import { useFitToRoom } from './useFitToRoom';
 
 const { reveal } = dashboard.hero;
 const flyEasing = Easing.bezier(...entryReveal.headlineEasing);
@@ -35,9 +36,7 @@ const fadeEasing = Easing.bezier(...motion.reduceMotion.easing);
  * drawn for the eye alone: VoiceOver reads the Lemma under it.
  */
 export function FlyingLemma({ text, style }: { text: string; style: StyleProp<TextStyle> }) {
-  const [room, setRoom] = useState<number>();
-  const [natural, setNatural] = useState<number>();
-  const scale = room === undefined || natural === undefined ? 1 : Math.min(1, (room - 1) / natural);
+  const { scale = 1, onRoomLayout, measured } = useFitToRoom();
   const letters = Array.from(text);
   return (
     <View
@@ -45,9 +44,7 @@ export function FlyingLemma({ text, style }: { text: string; style: StyleProp<Te
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       style={styles.over}
-      onLayout={(event) => {
-        if (event.nativeEvent.layout.width > 0) setRoom(event.nativeEvent.layout.width);
-      }}
+      onLayout={onRoomLayout}
     >
       <View style={[styles.row, { transform: [{ scale }] }]}>
         {letters.map((letter, index) => (
@@ -57,13 +54,7 @@ export function FlyingLemma({ text, style }: { text: string; style: StyleProp<Te
             letter={letter}
             index={index}
             style={style}
-            {...(index === letters.length - 1
-              ? {
-                  onEnd: (end: number) => {
-                    setNatural(end);
-                  },
-                }
-              : {})}
+            {...(index === letters.length - 1 ? { onEnd: measured } : {})}
           />
         ))}
       </View>

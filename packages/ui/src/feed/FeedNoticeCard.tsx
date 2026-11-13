@@ -167,7 +167,17 @@ export function EnoughForTodayCard() {
       mascot="sleeps"
       title={message}
       message={fill(body, { n: String(ENOUGH_FOR_TODAY_SEEN) })}
-      action={{ label: keepGoing, onPress: () => turnToNext?.() }}
+      // Without the Feed's pager there is no next card to turn to, so no button.
+      {...(turnToNext === undefined
+        ? {}
+        : {
+            action: {
+              label: keepGoing,
+              onPress: () => {
+                turnToNext();
+              },
+            },
+          })}
     />
   );
 }

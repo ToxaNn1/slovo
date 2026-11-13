@@ -19,8 +19,8 @@ const mediaRowFields = {
   retired: z.boolean(),
 };
 
-/** One Recording of a Word, as a snapshot and a Patch carry it (ADR 0099). */
-export const RecordingRowSchema = z.strictObject({
+/** One Recording of a Word, as a snapshot and a Patch carry it (ADR 0099); an output, so open (ADR 0031). */
+export const RecordingRowSchema = z.object({
   ...mediaRowFields,
   narratorVoice: NarratorVoiceSchema.shape.id,
   recordingKind: RecordingKindSchema,
@@ -30,7 +30,7 @@ export const RecordingRowSchema = z.strictObject({
 export type RecordingRow = z.infer<typeof RecordingRowSchema>;
 
 /** One Illustration of a Word, as a snapshot and a Patch carry it (ADR 0099). */
-export const IllustrationRowSchema = z.strictObject(mediaRowFields);
+export const IllustrationRowSchema = z.object(mediaRowFields);
 
 export type IllustrationRow = z.infer<typeof IllustrationRowSchema>;
 

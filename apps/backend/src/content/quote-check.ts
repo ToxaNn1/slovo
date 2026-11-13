@@ -12,7 +12,7 @@ import {
   type SourcePage,
 } from '@slovo/content-rules';
 import type { Clock } from '@slovo/server-core';
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq, ne, sql } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import {
@@ -61,13 +61,28 @@ interface Changed {
  * source page (a Tip quoting its book alone) has nothing to fetch: neither is
  * listed.
  */
-async function changedRecords(db: Db, editionId: string): Promise<Changed[]> {
+type Table = (typeof QUOTED_TABLES)[QuotedKind];
+
+const liveOf = (table: Table, editionId: string) =>
+  and(eq(table.editionId, editionId), eq(table.retired, false), ne(table.changedBy, 'import'));
+
+/** The check state of a record at its version, from the Edition's quote checks. */
+async function checkStateOf(db: Db, editionId: string) {
   const checks = await db.select().from(quoteChecks).where(eq(quoteChecks.editionId, editionId));
   const byRecord = new Map(checks.map((check) => [`${check.kind}:${check.id}`, check]));
-  const checkOf = (kind: QuotedKind, id: string) => byRecord.get(`${kind}:${id}`);
-  type Table = (typeof QUOTED_TABLES)[QuotedKind];
-  const live = (table: Table) =>
-    and(eq(table.editionId, editionId), eq(table.retired, false), ne(table.changedBy, 'import'));
+  return (kind: QuotedKind, id: string, recordVersion: number): Changed['check'] => {
+    const check = byRecord.get(`${kind}:${id}`);
+    return check?.recordVersion !== recordVersion
+      ? 'unverified'
+      : check.outcome === 'verified'
+        ? 'verified'
+        : 'failed';
+  };
+}
+
+async function changedRecords(db: Db, editionId: string): Promise<Changed[]> {
+  const checkOf = await checkStateOf(db, editionId);
+  const live = (table: Table) => liveOf(table, editionId);
   const rows = [
     ...(
       await db
@@ -123,31 +138,39 @@ async function changedRecords(db: Db, editionId: string): Promise<Changed[]> {
   return rows.flatMap(({ id, recordVersion, record }): Changed[] => {
     const url = record.fields.sources[0]?.url;
     if (url === undefined) return [];
-    const check = checkOf(record.kind, id);
-    return [
-      {
-        record,
-        id,
-        recordVersion,
-        url,
-        check:
-          check?.recordVersion !== recordVersion
-            ? 'unverified'
-            : check.outcome === 'verified'
-              ? 'verified'
-              : 'failed',
-      },
-    ];
+    return [{ record, id, recordVersion, url, check: checkOf(record.kind, id, recordVersion) }];
   });
 }
 
-/** The content report's quote check counts for the Edition. */
+/**
+ * The content report's quote check counts for the Edition. It reads only each
+ * record's id, version and first source url, not its fields.
+ */
 export async function quoteCheckCounts(db: Db, editionId: string) {
-  const changed = await changedRecords(db, editionId);
-  return {
-    unverified: changed.filter(({ check }) => check === 'unverified').length,
-    failed: changed.filter(({ check }) => check === 'failed').length,
-  };
+  const checkOf = await checkStateOf(db, editionId);
+  const counts = { unverified: 0, failed: 0 };
+  for (const [kind, table] of [
+    ['word', contentWords],
+    ['correction', contentCorrections],
+    ['idiom', contentIdioms],
+    ['synonymRow', contentSynonymRows],
+    ['tip', contentTips],
+  ] as const) {
+    const rows = await db
+      .select({
+        id: table.id,
+        recordVersion: table.recordVersion,
+        url: sql<string | null>`${table.fields}->'sources'->0->>'url'`,
+      })
+      .from(table)
+      .where(liveOf(table, editionId));
+    for (const { id, recordVersion, url } of rows) {
+      if (url === null) continue;
+      const check = checkOf(kind, id, recordVersion);
+      if (check !== 'verified') counts[check] += 1;
+    }
+  }
+  return counts;
 }
 
 export function createQuoteCheck({

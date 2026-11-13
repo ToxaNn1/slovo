@@ -543,7 +543,9 @@ describe('the Curated Collections rail', () => {
     expect(screen.getByText('Знаю 0 з 2')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_lahidnyi')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'ДОДАТИ' })).not.toBeSelected();
+    expect(
+      screen.getByRole('togglebutton', { name: 'ДОДАТИ' }).props['accessibilityState'],
+    ).toMatchObject({ checked: false });
   });
 
   it('a Known mark counts at once and shows on its row', async () => {
@@ -603,10 +605,12 @@ describe('the Curated Collections rail', () => {
       fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
     );
 
-    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'ДОДАТИ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })));
 
     expect(screen.queryByText('ДОДАТИ')).toBeNull();
-    expect(screen.getByRole('button', { name: 'ДОДАНО' })).toBeSelected();
+    expect(
+      screen.getByRole('togglebutton', { name: 'ДОДАНО' }).props['accessibilityState'],
+    ).toMatchObject({ checked: true });
     expect(screen.getByTestId('curated-collection-add-icon')).toBeTruthy();
     expect(composition.curatedCollections.rail.map((card) => card.added)).toEqual([true]);
   });

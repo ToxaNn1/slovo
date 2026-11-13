@@ -220,10 +220,12 @@ export function createMediaImport({
 
     if (problems.length > 0) return { ok: false, reason: 'refused', problems };
 
+    const putSince = clock.now();
     await upload(uploads);
     const saved = await mediaRows.saveMedia(editionId, {
       recorded: [...recorded.values()],
       illustrations,
+      putSince,
     });
     if (!saved.ok) return saved;
     return {

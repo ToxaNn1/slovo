@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import type { ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
+import { sql } from 'drizzle-orm';
 import { afterAll, describe, expect, it, onTestFinished } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
@@ -57,7 +58,7 @@ async function queueBackend() {
   if (token === undefined) throw new Error('no Агент token');
   const owner = (await signedInAdmin(backend, 'owner')).client;
   const adminUser = (await signedInAdmin(backend, 'admin')).client;
-  return { ...backend, token, agent: backend.clientOf(token), owner, adminUser };
+  return { ...backend, database, token, agent: backend.clientOf(token), owner, adminUser };
 }
 
 const snapshotOf = (client: ApiClient) => client.content.snapshot({ editionId: 'uk' });
@@ -152,6 +153,29 @@ describe('the Content queue', () => {
     expect((await adminUser.admin.contentQueue.batches({})).batches).toEqual([]);
   });
 
+  it('reviews a batch while a write holding the Edition lock reads the batch row, with no deadlock', async () => {
+    const { client, agent, adminUser, database } = await queueBackend();
+    const { batchId } = await agentBatch(client, agent);
+
+    const { review } = await database.db.transaction(async (tx) => {
+      // As a write does: the Edition lock first, then its row of the batch needs KEY SHARE.
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext('uk'))`);
+      const started = adminUser.admin.contentQueue.review({ batchId, reason: 'Переглянуто' });
+      for (;;) {
+        const waiting = await database.db.execute(
+          sql`select 1 from pg_locks where locktype = 'advisory' and not granted`,
+        );
+        if (waiting.rows.length > 0) break;
+      }
+      await tx.execute(sql`select id from content_batches where id = ${batchId} for key share`);
+      // Not awaited here: the review waits for this transaction's Edition lock.
+      return { review: started };
+    });
+
+    expect(await review).toEqual({ reviewed: true });
+    expect((await adminUser.admin.contentQueue.batches({})).batches).toEqual([]);
+  });
+
   it('keeps the reason of an accepted or rejected flag in the Action log, and the flag leaves the list', async () => {
     const { client, agent, owner } = await queueBackend();
     const { batchId, first, second } = await agentBatch(client, agent);
@@ -200,6 +224,30 @@ describe('the Content queue', () => {
         ['content.flag.reject', 'Хибна тривога'],
       ]),
     );
+  });
+
+  it('resolves a flag once when two decisions on it race', async () => {
+    const { client, agent, owner } = await queueBackend();
+    const { batchId, first } = await agentBatch(client, agent);
+    await agent.admin.content.flag({
+      editionId: 'uk',
+      kind: 'word',
+      id: first.id,
+      batchId,
+      reason: 'Сумнів',
+    });
+    const [flag] = (await owner.admin.contentQueue.flags({})).flags;
+    if (flag === undefined) throw new Error('no flag');
+
+    const answers = await Promise.allSettled(
+      (['accept', 'reject', 'accept', 'reject'] as const).map((decision) =>
+        owner.admin.contentQueue.resolveFlag({ id: flag.id, decision, reason: 'Рішення' }),
+      ),
+    );
+
+    expect(answers.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
+    const { actions } = await owner.admin.actions({ editionId: 'uk' });
+    expect(actions.filter(({ what }) => what.startsWith('content.flag.'))).toHaveLength(1);
   });
 
   it('deletes a Mistake Report marked «Вирішено», with its reason in the Action log', async () => {

@@ -31,16 +31,25 @@ const ResultsSchema = z.array(
 const run = promisify(execFile);
 
 /**
+ * How long one run of the script may take: 25 minutes, under the 30-minute
+ * lease (`RECORDING_LEASE_MS`), so a hung script never outlives its lease.
+ */
+export const GENERATOR_TIMEOUT_MS = 25 * 60 * 1000;
+
+/**
  * The generator `recordings/generate.py` (ADR 0083) in its `--out-dir`
  * mode: one run of the script for the whole batch, the engine loaded once.
  */
 export function scriptGenerator({
   command,
   modelDir,
+  timeoutMs = GENERATOR_TIMEOUT_MS,
 }: {
   /** The interpreter and the script, such as `[python, '-I', 'generate.py']`. */
   command: readonly [string, ...string[]];
   modelDir: string;
+  /** The run is killed after this long and the batch fails. */
+  timeoutMs?: number;
 }): RecordingGenerator {
   return {
     async record(requests) {
@@ -55,7 +64,7 @@ export function scriptGenerator({
         await run(
           program,
           [...args, '--model', modelDir, '--requests', requestsFile, '--out-dir', outDir],
-          { maxBuffer: 16 * 1024 * 1024 },
+          { maxBuffer: 16 * 1024 * 1024, timeout: timeoutMs, killSignal: 'SIGKILL' },
         );
         const results = ResultsSchema.parse(
           JSON.parse(await readFile(join(outDir, 'results.json'), 'utf8')),

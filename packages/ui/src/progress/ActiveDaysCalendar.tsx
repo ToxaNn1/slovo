@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { calendarDay, space, typeStyle } from '../tokens';
+import { dayDate, dayLabel } from './day-label';
 
 /**
  * One day of the grid as a tile over its edge: an Active Day red, today in
@@ -28,8 +29,6 @@ export function CalendarDayTile({
   const key = useSchemeColors('light');
   const keyInk = key.ink;
   const { strings, voice } = useEdition();
-  const words = strings.stats.calendar;
-  const spoken = day.state === 'today' ? (day.active ? 'todayActive' : 'today') : day.state;
   const look = {
     active: { face: colors.accent, edge: colors.accentEdge, number: keyInk },
     today: { face: colors.ink, edge: colors.accent, number: colors.background },
@@ -67,10 +66,7 @@ export function CalendarDayTile({
   const shared = {
     testID: `stats-calendar-${day.date}`,
     accessible: true,
-    accessibilityLabel: fill(words.days[spoken], {
-      day: String(day.day),
-      month: strings.dates.months[day.month - 1] ?? '',
-    }),
+    accessibilityLabel: dayLabel(strings, day),
     ...voice,
     style: styles.cell,
   };
@@ -127,7 +123,7 @@ export function ActiveDaysCalendar({
 
   /** The line a tap on the day shows, if it has one. */
   function lineOf(day: CalendarDay): string | undefined {
-    const date = { day: String(day.day), month: strings.dates.months[day.month - 1] ?? '' };
+    const date = dayDate(strings, day);
     switch (day.state) {
       case 'active':
         return fill(words.lines.active, date);

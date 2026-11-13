@@ -1,4 +1,4 @@
-import { EditionProvider, SearchField } from '@slovo/ui';
+import { EditionProvider, SearchField, fontScaleCap } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
@@ -33,5 +33,11 @@ describe('SearchField', () => {
 
     expect(screen.getByLabelText('Search')).toHaveDisplayValue('');
     expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull();
+  });
+
+  it('caps the query’s Dynamic Type so the box never clips it', async () => {
+    await render(<Search />);
+
+    expect(screen.getByLabelText('Search')).toHaveProp('maxFontSizeMultiplier', fontScaleCap.text);
   });
 });

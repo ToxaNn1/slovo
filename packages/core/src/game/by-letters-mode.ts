@@ -16,41 +16,46 @@ const TILES = { min: 8, columns: 4 } as const;
  * The letter tiles of a Word, in lower case by the Edition's locale: its letters plus decoys, letters
  * of the alphabet not in the Word, as many as make at least 8 tiles, rounded
  * up to a multiple of 4, so none for a Word of 8 or 12 letters; all shuffled
- * by the port, the first tiles never spelling the Word in its order.
+ * by the port, the first tiles never spelling the Word in its order. None
+ * when the alphabet has too few letters outside the Word to fill them.
  */
 function tilesOf(
   letters: readonly string[],
   alphabet: readonly string[],
   random: Random,
   comparison: TextComparison,
-): readonly string[] {
+): readonly string[] | undefined {
   const count = Math.max(TILES.min, Math.ceil(letters.length / TILES.columns) * TILES.columns);
-  const decoys = shuffled(
-    alphabet.filter((letter) => !letters.includes(letter)),
-    random,
-  ).slice(0, count - letters.length);
+  const others = alphabet.filter((letter) => !letters.includes(letter));
+  if (others.length < count - letters.length) return undefined;
+  const decoys = shuffled(others, random).slice(0, count - letters.length);
   return outOfOrder(letters, shuffled([...letters, ...decoys], random), comparison);
 }
 
-/** A Round of letter tiles: the Word's letters in lower case and decoys, tapped into a slot for each letter. */
+/**
+ * A Round of letter tiles: the Word's letters in lower case and decoys, tapped
+ * into a slot for each letter. None for a Word the alphabet cannot fill the tiles of.
+ */
 function tilesRound(
   { lemma, prompt, sheet }: { lemma: string; prompt: string; sheet: AnswerSheet },
   alphabet: readonly string[],
   random: Random,
   comparison: TextComparison,
-): RoundContent {
+): RoundContent | undefined {
   const letters: string[] = [];
   const fixed: FixedChip[] = [];
   for (const character of lemma) {
     if (staysInPlace(character, comparison)) fixed.push({ at: letters.length, text: character });
     else letters.push(comparison.lowerCase(character));
   }
+  const chips = tilesOf(letters, alphabet, random, comparison);
+  if (chips === undefined) return undefined;
   return {
     form: 'chips',
     chipKind: 'letter',
     layout: 'tiles',
     prompt,
-    chips: tilesOf(letters, alphabet, random, comparison),
+    chips,
     expected: letters,
     fixed,
     sheet,
@@ -65,7 +70,8 @@ function tilesRound(
  * letter and the reader types the Word, compared by its Comparison Key as a
  * typed answer; «Відкрити літеру» opens one letter at a time until one is
  * left, at no cost. A character the Edition reads as an apostrophe, or a
- * hyphen, stays in place and is no tile or blank; a Word with a space never plays. Its sheet shows
+ * hyphen, stays in place and is no tile or blank; a Word with a space never plays, nor, with tiles,
+ * one the alphabet has too few decoys for. Its sheet shows
  * the Lemma with its Stress and its first Example, if it has one.
  */
 export const byLettersMode: GameMode = {
