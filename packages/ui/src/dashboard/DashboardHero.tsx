@@ -29,6 +29,7 @@ import {
 } from '../tokens';
 import { FlyingLemma, RisesIn } from './HeroReveal';
 import { HeroSparks } from './HeroSparks';
+import { useFitToRoom } from './useFitToRoom';
 
 const { hero: place } = dashboard;
 const { card } = place;
@@ -265,20 +266,13 @@ function WordLine({ text }: { text: string }) {
   const tokens = useTokens();
   const keyInk = useSchemeColors('light').ink;
   const { voice } = useEdition();
-  const [room, setRoom] = useState<number>();
-  const [natural, setNatural] = useState<number>();
-  // A point of slack, so rounding never pushes the line back over its room.
-  const scale =
-    room === undefined || natural === undefined ? undefined : Math.min(1, (room - 1) / natural);
+  const { scale, onRoomLayout, measured } = useFitToRoom();
   const full = roleSize('dashboardWordLine');
   const lineStyle = [typeStyle('dashboardWordLine', tokens), { color: keyInk }];
   return (
     <View
       style={styles.wordLine}
-      onLayout={(event) => {
-        // A view not laid out yet reports no width, which would scale the line away.
-        if (event.nativeEvent.layout.width > 0) setRoom(event.nativeEvent.layout.width);
-      }}
+      onLayout={onRoomLayout}
     >
       <Text
         {...voice}
@@ -300,7 +294,7 @@ function WordLine({ text }: { text: string }) {
         <Text
           {...voice}
           onTextLayout={(event) => {
-            setNatural(Math.max(...event.nativeEvent.lines.map((line) => line.width)));
+            measured(Math.max(...event.nativeEvent.lines.map((line) => line.width)));
           }}
           style={lineStyle}
         >

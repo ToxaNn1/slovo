@@ -252,4 +252,19 @@ describe('DashboardHero', () => {
     expect(wordLine).not.toHaveStyle({ opacity: 0 });
     expect(screen.getAllByTestId('dashboard-hero-rarity-full')).toHaveLength(4);
   });
+  it('keeps the word line drawn while its measure reports no lines', async () => {
+    await renderHero(revealed);
+    const wordLine = screen.getByText('ha\u0301rbour · n., f.');
+    const room = wordLine.parent;
+    if (room === null) throw new Error('The word line has no room around it');
+    await fireEvent(room, 'layout', { nativeEvent: { layout: { width: 151 } } });
+    const measured = screen
+      .getAllByText('ha\u0301rbour · n., f.', { includeHiddenElements: true })
+      .find((text) => text !== wordLine);
+    if (measured === undefined) throw new Error('The word line is not measured');
+    await fireEvent(measured, 'textLayout', { nativeEvent: { lines: [] } });
+
+    expect(wordLine).not.toHaveStyle({ fontSize: -0 });
+    expect(wordLine).toHaveStyle({ fontSize: typeRoles.dashboardWordLine.size });
+  });
 });
