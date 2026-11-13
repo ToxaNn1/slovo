@@ -1,8 +1,9 @@
 import { StyleSheet } from 'react-native';
-import Svg, { Circle, ClipPath, Defs, G, Pattern, Polygon, Rect } from 'react-native-svg';
+import Svg, { ClipPath, Defs, G, Polygon, Rect } from 'react-native-svg';
 
 import { useTokens } from '../providers/TokensProvider';
-import { halftone, type Wedge } from '../tokens';
+import { type Wedge } from '../tokens';
+import { HalftoneDots } from './HalftoneDots';
 
 /**
  * The design's red ground under its halftone raster, over `width` × `height`
@@ -26,19 +27,7 @@ export function HalftoneGround({
   return (
     <Svg width={width} height={height} style={StyleSheet.absoluteFill} accessible={false}>
       <Defs>
-        <Pattern
-          id={`${id}-dots`}
-          width={halftone.cell}
-          height={halftone.cell}
-          patternUnits="userSpaceOnUse"
-        >
-          <Circle
-            cx={halftone.cell / 2}
-            cy={halftone.cell / 2}
-            r={halftone.radius}
-            fill={halftone.dot}
-          />
-        </Pattern>
+        <HalftoneDots id={`${id}-dots`} />
         {cut !== undefined && (
           <ClipPath id={`${id}-cut`}>
             <Polygon points={cut} />
