@@ -312,13 +312,13 @@ describe('the Patch read API', () => {
       status: 200,
       body: { status: 'unsupported-format', patchFormat: PATCH_FORMAT },
     });
-    // The format before media rows: an app of it keeps its content.
-    expect(PATCH_FORMAT).toBe(2);
+    // The format before marks and Tip exceptions: an app of it keeps its content.
+    expect(PATCH_FORMAT).toBe(3);
     await expect(
-      client.content.patch({ params: { editionId: 'uk' }, query: { since: 0, patchFormat: 1 } }),
+      client.content.patch({ params: { editionId: 'uk' }, query: { since: 0, patchFormat: 2 } }),
     ).resolves.toMatchObject({
       status: 200,
-      body: { status: 'unsupported-format', patchFormat: 2 },
+      body: { status: 'unsupported-format', patchFormat: 3 },
     });
   });
 

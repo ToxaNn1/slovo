@@ -14,9 +14,10 @@ import { procedure } from './procedure';
 
 /**
  * The Patch format the backend writes; an app refuses another one and keeps
- * its content (ADR 0090). Format 2 brought the media rows (ADR 0099).
+ * its content (ADR 0090). Format 2 brought the media rows (ADR 0099); format 3
+ * lets a Patch carry `**` standard-form marks and Tip exceptions (ADR 0121).
  */
-export const PATCH_FORMAT = 2;
+export const PATCH_FORMAT = 3;
 
 /**
  * The seven kinds of content records, each in id order, the Retired ones
