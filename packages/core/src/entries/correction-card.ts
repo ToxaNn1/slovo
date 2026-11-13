@@ -1,4 +1,11 @@
-import type { Correction, CorrectionType, ExamplePair, LiteraryUse } from '@slovo/contracts';
+import {
+  parseStandardExample,
+  type Correction,
+  type CorrectionType,
+  type ExamplePair,
+  type ExampleSegment,
+  type LiteraryUse,
+} from '@slovo/contracts';
 
 import type { Entries } from './entries';
 import { sourceNamesOf } from './source-names';
@@ -32,11 +39,40 @@ export interface CorrectionCardModel {
   /** The display name of the Correction's Category, from the Language Pack; nothing for one the pack doesn't have. */
   readonly categoryName: string | undefined;
   readonly explanation: string;
-  readonly examplePair: ExamplePair;
+  readonly examplePair: CorrectionCardExamplePair;
   /** The names of the Correction's sources, in their order: each one's short name, or its title without one; the card names them in a line. */
   readonly sourceNames: readonly string[];
   /** Real uses of the standard form in literature, in their order; empty when there are none. */
   readonly literaryUses: readonly LiteraryUse[];
+}
+
+/**
+ * The example pair as the card shows it: the non-standard sentence, and the
+ * standard one both as plain text (for VoiceOver and sharing) and in pieces,
+ * its standard form apart for the card to draw bold (ADR 0117).
+ */
+export interface CorrectionCardExamplePair {
+  readonly nonStandard: string;
+  /** The standard sentence without the marks around its standard form. */
+  readonly standard: string;
+  /** The standard sentence in order: its text, and its standard form drawn bold. */
+  readonly standardSegments: readonly ExampleSegment[];
+}
+
+/**
+ * Reads the marked standard form out of the example pair. The content's
+ * schema refused broken marks where the Correction entered; a sentence with
+ * none still shows, all plain.
+ */
+function cardExamplePair({ nonStandard, standard }: ExamplePair): CorrectionCardExamplePair {
+  const parsed = parseStandardExample(standard);
+  const standardSegments: readonly ExampleSegment[] =
+    parsed.kind === 'marked' ? parsed.segments : [{ kind: 'text', text: standard }];
+  return {
+    nonStandard,
+    standard: standardSegments.map(({ text }) => text).join(''),
+    standardSegments,
+  };
 }
 
 /** The Correction card of a Correction, naming the Category the Entries give for it. */
@@ -61,7 +97,7 @@ export async function buildCorrectionCard({
     categoryId: correction.categoryId,
     categoryName: categories.find(({ id }) => id === correction.categoryId)?.displayName,
     explanation: correction.explanation,
-    examplePair: correction.examplePair,
+    examplePair: cardExamplePair(correction.examplePair),
     sourceNames: sourceNamesOf(correction.sources),
     literaryUses: correction.literaryUses,
   };

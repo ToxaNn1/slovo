@@ -50,6 +50,8 @@ export const WordCardStringsSchema = z.strictObject({
   tabMore: TextSchema,
   /** The button under a tab opened by «Детальніше», which clamps it to the card's frame again (owner 08.11). */
   tabLess: TextSchema,
+  /** The name of the last tab of every tabbed Entry card, which names its sources (ADR 0116). */
+  tabSource: TextSchema,
   /** The names of the Word card's tabs (ADR 0091). */
   tabs: z.strictObject({
     essence: TextSchema,

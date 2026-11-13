@@ -26,6 +26,8 @@ const everything: Shown = {
   },
   stressFall: true,
   wordTabs: true,
+  sourceTab: true,
+  tipExceptions: true,
   calligraphicLemma: true,
   selfCheck: false,
   selfCheckSetting: true,
@@ -100,6 +102,14 @@ describe('what the reader is shown', () => {
       { off: ['stressAnimation'], shown: { stressFall: false } },
     ],
     ['the column Word card with the tabs off', { off: ['wordTabs'], shown: { wordTabs: false } }],
+    [
+      'the sources left in their tabs with the «Джерело» tab off',
+      { off: ['sourceTab'], shown: { sourceTab: false } },
+    ],
+    [
+      'a Tip card with «Правило» alone with its «Винятки» tab off',
+      { off: ['tipExceptions'], shown: { tipExceptions: false } },
+    ],
     [
       'the Word of the Day Lemma in the Word font with the calligraphic Lemma off',
       { off: ['calligraphy'], shown: { calligraphicLemma: false } },

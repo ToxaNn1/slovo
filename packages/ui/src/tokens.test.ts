@@ -65,27 +65,44 @@ describe('the UA Edition’s design tokens', () => {
     ),
   );
 
-  it('yields the design’s light palette', () => {
+  // Every colour variable of the boards' `[data-th]` blocks (docs/design/export,
+  // e.g. XFeed.dc.html), by the role that draws it: --bg, --ink, --sf, --sf2,
+  // --line, --mute, --tile, --edge, --hl, --sil, --bar, and the red with its edge.
+  it('yields every colour of the boards’ light Theme', () => {
     expect(tokens.colors.light).toMatchObject({
       background: '#FFF4E6',
-      surface: '#FFFBF5',
       ink: '#140C0A',
-      accent: '#FF3B2F',
-      accentEdge: '#C4271D',
+      surface: '#FFFBF5',
+      surfaceSunken: '#F5E4CF',
+      line: 'rgba(20, 12, 10, 0.13)',
+      muted: '#6B5D55',
       tile: '#FFFBF5',
       tileEdge: '#DCC2A6',
-      onAccent: '#FFF4E6',
+      highlight: '#F2D3AE',
+      silhouette: 'rgba(20, 12, 10, 0.14)',
+      tabBar: 'rgba(255, 244, 230, 0.94)',
+      accent: '#FF3B2F',
+      accentEdge: '#C4271D',
+      onAccent: '#140C0A',
     });
   });
 
-  it('yields the design’s dark palette', () => {
+  it('yields every colour of the boards’ dark Theme', () => {
     expect(tokens.colors.dark).toMatchObject({
       background: '#140C0A',
-      surface: '#221714',
       ink: '#FFF4E6',
-      accent: '#FF3B2F',
+      surface: '#221714',
+      surfaceSunken: '#2E201B',
+      line: 'rgba(255, 244, 230, 0.13)',
+      muted: '#BDAE9F',
       tile: '#33241F',
       tileEdge: '#050302',
+      highlight: '#5A3C33',
+      silhouette: 'rgba(255, 244, 230, 0.1)',
+      tabBar: 'rgba(20, 12, 10, 0.94)',
+      accent: '#FF3B2F',
+      accentEdge: '#C4271D',
+      onAccent: '#140C0A',
     });
   });
 

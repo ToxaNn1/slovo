@@ -102,7 +102,7 @@ function widgetBackgrounds({ config, tokens }: WidgetEdition): Record<string, Ap
       ink: light.ink,
       inkSecondary: light.ink,
       accent: light.ink,
-      mark: light.onAccent,
+      mark: light.background,
     }),
     Medium: { light: medium(light), dark: medium(dark) },
     Light: inBothAppearances(theme(light)),
@@ -159,16 +159,12 @@ function svgPaint(attribute: 'fill' | 'stroke', color: string, opacity = 1): str
  * The Mascot as the medium widget draws it on its red wedge, as an SVG
  * document, waiting or, once the Word of the Day is Seen, asleep with its
  * sleep marks, as the design's boards draw it, in the on-red variant
- * the app draws in one Theme (ADR 0070): the body in the on-accent colour, its
- * ink and accent in the light Theme's ink, which the design keeps on red.
+ * the app draws in one Theme (ADR 0070): the body in cream and its ink and
+ * accent in ink, both taken from `key`, the light Theme, which the design
+ * keeps on red.
  */
-function mascotSvg(
-  mascot: MascotFigure,
-  state: 'waits' | 'sleeps',
-  colors: ColorTokens,
-  inkOnRed: string,
-): string {
-  const paints = { body: colors.onAccent, ink: inkOnRed, accent: inkOnRed };
+function mascotSvg(mascot: MascotFigure, state: 'waits' | 'sleeps', key: ColorTokens): string {
+  const paints = { body: key.background, ink: key.ink, accent: key.ink };
   const paintOf = (paint: string) =>
     paint === 'body' || paint === 'ink' || paint === 'accent' ? paints[paint] : paint;
   const path = (shape: MascotShape) =>
@@ -222,7 +218,7 @@ export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string
   }
 
   if (mascot !== undefined) {
-    const { light, dark } = tokens.colors;
+    const { light } = tokens.colors;
     // The waiting Mascot as `mascot`, the sleeping one, for a Seen Word of the Day, as `mascotSleeps`.
     for (const [name, state] of [
       ['mascot', 'waits'],
@@ -239,9 +235,10 @@ export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string
           properties: { 'preserves-vector-representation': true },
         }),
       );
-      const svg = (colors: ColorTokens) => mascotSvg(mascot, state, colors, light.ink);
-      files.set(`${assets}/${name}.imageset/${name}-light.svg`, svg(light));
-      files.set(`${assets}/${name}.imageset/${name}-dark.svg`, svg(dark));
+      // On red the Mascot looks the same in both appearances, in the light Theme's colours.
+      const svg = mascotSvg(mascot, state, light);
+      files.set(`${assets}/${name}.imageset/${name}-light.svg`, svg);
+      files.set(`${assets}/${name}.imageset/${name}-dark.svg`, svg);
     }
   }
 

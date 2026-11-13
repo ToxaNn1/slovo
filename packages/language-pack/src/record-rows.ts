@@ -92,17 +92,18 @@ const SQL = {
   tip: `
     INSERT INTO tips (
       id, title, non_standard_form, standard_form, explanation, example_text, example_author,
-      question_prompt, right_answer, retired
+      question_prompt, right_answer, retired, exceptions_explanation
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (id) DO UPDATE SET
       title = excluded.title, non_standard_form = excluded.non_standard_form,
       standard_form = excluded.standard_form, explanation = excluded.explanation,
       example_text = excluded.example_text, example_author = excluded.example_author,
       question_prompt = excluded.question_prompt, right_answer = excluded.right_answer,
-      retired = excluded.retired
+      retired = excluded.retired, exceptions_explanation = excluded.exceptions_explanation
   `,
   wrongAnswer: 'INSERT INTO tip_wrong_answers (tip_id, position, text) VALUES (?, ?, ?)',
+  exceptionWord: 'INSERT INTO tip_exception_words (tip_id, position, text) VALUES (?, ?, ?)',
   crosswordWord: `
     INSERT INTO crossword_words (date, position, entry_id, answer, clue, start_row, start_column, direction)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -146,6 +147,7 @@ const CHILD_TABLES = {
   ],
   tip: [
     ['tip_wrong_answers', 'tip_id'],
+    ['tip_exception_words', 'tip_id'],
     ['sources', 'entry_id'],
   ],
   crosswordDay: [['crossword_words', 'date']],
@@ -315,9 +317,13 @@ export function tipRows(tip: Tip): Statement[] {
       tip.gameQuestion.prompt,
       tip.gameQuestion.rightAnswer,
       tip.retired ? 1 : 0,
+      tip.exceptions?.explanation ?? null,
     ),
     ...tip.gameQuestion.wrongAnswers.map((text, position) =>
       statement(SQL.wrongAnswer, tip.id, position, text),
+    ),
+    ...(tip.exceptions?.words ?? []).map((text, position) =>
+      statement(SQL.exceptionWord, tip.id, position, text),
     ),
     ...sourceRows(tip),
   ];

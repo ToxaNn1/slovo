@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { coreTokens, typeStyle } from '../tokens';
 import { WholeWordsText } from './WholeWordsText';
@@ -32,5 +32,60 @@ describe('WholeWordsText', () => {
       />,
     );
     expect(screen.getByTestId('word')).toHaveStyle({ paddingTop: 0, marginTop: 0 });
+  });
+
+  it('keeps a phrase to its lines and a single word to one, shrinking rather than breaking', async () => {
+    await render(
+      <>
+        <WholeWordsText
+          testID="phrase"
+          text="Take part"
+          typeRole="heroWord"
+          lines={3}
+          style={typeStyle('heroWord', coreTokens)}
+        />
+        <WholeWordsText
+          testID="word"
+          text="Hedgehog"
+          typeRole="heroWord"
+          lines={3}
+          style={typeStyle('heroWord', coreTokens)}
+        />
+      </>,
+    );
+    expect(screen.getByTestId('phrase').props).toMatchObject({
+      numberOfLines: 3,
+      adjustsFontSizeToFit: true,
+      minimumFontScale: 0.5,
+    });
+    expect(screen.getByTestId('word').props).toMatchObject({
+      numberOfLines: 1,
+      adjustsFontSizeToFit: true,
+      minimumFontScale: 0.5,
+    });
+  });
+
+  // A view that hugs its text, as the struck form's does, is as wide as the word:
+  // shrinking it there would narrow the view and shrink the word again, to nothing.
+  it('keeps its size when the widest word fits the line exactly', async () => {
+    await render(
+      <WholeWordsText
+        testID="word"
+        text="Hedgehog"
+        typeRole="heroWord"
+        style={typeStyle('heroWord', coreTokens)}
+      />,
+    );
+    const shown = screen.getByTestId('word');
+    const line = shown.parent;
+    if (line === null) throw new Error('The word has no line around it');
+    await fireEvent(line, 'layout', { nativeEvent: { layout: { width: 240 } } });
+    const measured = screen
+      .getAllByText('Hedgehog', { includeHiddenElements: true })
+      .find((element) => element !== shown);
+    if (measured === undefined) throw new Error('The word is not measured');
+    await fireEvent(measured, 'textLayout', { nativeEvent: { lines: [{ width: 240 }] } });
+
+    expect(screen.getByTestId('word')).toHaveStyle({ fontSize: 50 });
   });
 });

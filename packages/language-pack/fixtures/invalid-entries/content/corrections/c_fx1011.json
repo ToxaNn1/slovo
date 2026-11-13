@@ -6,7 +6,7 @@
   "explanation": "Тестове пояснення.",
   "examplePair": {
     "nonStandard": "Тестове речення з тоже.",
-    "standard": "Тестове речення з теж."
+    "standard": "**Тестове речення з теж**."
   },
   "sources": [
     {

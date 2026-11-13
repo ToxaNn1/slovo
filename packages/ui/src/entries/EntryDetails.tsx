@@ -39,6 +39,7 @@ export function EntryDetails({
   onWordHistoryShown,
   slots,
   tabs = false,
+  sourceTab = false,
 }: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont'> & {
   /** The name of the screen the back tile returns to, which VoiceOver reads. */
   back: string;
@@ -57,84 +58,95 @@ export function EntryDetails({
   // The tab bar stands at the screen's foot (owner 08.11): under it only the docked
   // action row, or the room the swipe's stamp keeps, which takes in the home indicator.
   const foot = docked ? 0 : Math.max(0, bottomInset - (swipe ? swipeStampLayout.room : 0));
+  const body = (
+    <Swiped swipe={swipe} correction={card.kind === 'correction'} fill={tabs}>
+      <AccentGround
+        id="entry-panel"
+        testID="entry-panel"
+        letter={word === undefined ? '' : firstLetter(word.model.lemma)}
+        letterRole="panelLetter"
+        letterAt={entryPanel.letter}
+        points={wedges.panel}
+        letterStopsAt={entryPanel.cutAt}
+        style={[styles.panel, { paddingTop: topInset + space[3] }]}
+      >
+        <BackTile label={back} onPress={onBack} />
+        {word !== undefined && slots?.slot === 'corner' && (
+          <View style={[styles.corner, { top: topInset + space[3] }]} testID="word-corner">
+            {slots.corner}
+          </View>
+        )}
+        {word !== undefined && (
+          <View style={styles.panelText}>
+            {word.wordOfTheDay !== undefined && <WordOfTheDayBadge day={word.wordOfTheDay} />}
+            <WordHeadline
+              card={word.model}
+              lemmaSize={lemmaSize}
+              concealed={false}
+              stressFalls={stressFalls}
+              lemmaFont={undefined}
+              tabbed={false}
+            />
+          </View>
+        )}
+      </AccentGround>
+      {word === undefined ? (
+        <View style={[styles.otherKind, tabs && styles.fill]}>
+          <EntryCard
+            card={card}
+            onOpenCorrection={onOpenCorrection}
+            onOpenWord={onOpenWord}
+            onOpenSynonymRow={onOpenSynonymRow}
+            onWordHistoryShown={onWordHistoryShown}
+            // The swipes take the whole of Entry details, so the card keeps only its corner.
+            slots={slots?.slot === 'corner' ? { ...slots, swipe: undefined } : slots}
+            stressFalls={stressFalls}
+            tabs={tabs}
+            sourceTab={sourceTab}
+          />
+        </View>
+      ) : (
+        <View testID="word-card" style={[styles.body, tabs && styles.tabbed]}>
+          {tabs ? (
+            <WordTabs
+              card={word.model}
+              onOpenCorrection={onOpenCorrection}
+              onOpenSynonymRow={onOpenSynonymRow}
+              onHistoryShown={onWordHistoryShown}
+              sources={sourceTab ? word.model.sourceNames : undefined}
+            />
+          ) : (
+            <WordSections
+              card={word.model}
+              compact={compact}
+              onOpenCorrection={onOpenCorrection}
+              onOpenSynonymRow={onOpenSynonymRow}
+              onHistoryShown={onWordHistoryShown}
+            />
+          )}
+        </View>
+      )}
+    </Swiped>
+  );
   return (
     <EntryReveal>
-      <ScrollView
-        testID="entry-scroll"
-        style={styles.scroll}
-        // The tabs fill the rest of the screen under the panel (ADR 0091).
-        contentContainerStyle={tabs ? [styles.fill, { paddingBottom: foot }] : undefined}
-        // The sheet of the action row is a child in React's tree, so a tap in its
-        // name field must not be swallowed to put the keyboard away.
-        keyboardShouldPersistTaps="handled"
-      >
-        <Swiped swipe={swipe} correction={card.kind === 'correction'} fill={tabs}>
-          <AccentGround
-            id="entry-panel"
-            testID="entry-panel"
-            letter={word === undefined ? '' : firstLetter(word.model.lemma)}
-            letterRole="panelLetter"
-            letterAt={entryPanel.letter}
-            points={wedges.panel}
-            letterStopsAt={entryPanel.cutAt}
-            style={[styles.panel, { paddingTop: topInset + space[3] }]}
-          >
-            <BackTile label={back} onPress={onBack} />
-            {word !== undefined && slots?.slot === 'corner' && (
-              <View style={[styles.corner, { top: topInset + space[3] }]} testID="word-corner">
-                {slots.corner}
-              </View>
-            )}
-            {word !== undefined && (
-              <View style={styles.panelText}>
-                {word.wordOfTheDay !== undefined && <WordOfTheDayBadge day={word.wordOfTheDay} />}
-                <WordHeadline
-                  card={word.model}
-                  lemmaSize={lemmaSize}
-                  concealed={false}
-                  stressFalls={stressFalls}
-                  lemmaFont={undefined}
-                  tabbed={false}
-                />
-              </View>
-            )}
-          </AccentGround>
-          {word === undefined ? (
-            <View style={[styles.otherKind, tabs && styles.fill]}>
-              <EntryCard
-                card={card}
-                onOpenCorrection={onOpenCorrection}
-                onOpenWord={onOpenWord}
-                onOpenSynonymRow={onOpenSynonymRow}
-                onWordHistoryShown={onWordHistoryShown}
-                // The swipes take the whole of Entry details, so the card keeps only its corner.
-                slots={slots?.slot === 'corner' ? { ...slots, swipe: undefined } : slots}
-                stressFalls={stressFalls}
-                tabs={tabs}
-              />
-            </View>
-          ) : (
-            <View testID="word-card" style={[styles.body, tabs && styles.tabbed]}>
-              {tabs ? (
-                <WordTabs
-                  card={word.model}
-                  onOpenCorrection={onOpenCorrection}
-                  onOpenSynonymRow={onOpenSynonymRow}
-                  onHistoryShown={onWordHistoryShown}
-                />
-              ) : (
-                <WordSections
-                  card={word.model}
-                  compact={compact}
-                  onOpenCorrection={onOpenCorrection}
-                  onOpenSynonymRow={onOpenSynonymRow}
-                  onHistoryShown={onWordHistoryShown}
-                />
-              )}
-            </View>
-          )}
-        </Swiped>
-      </ScrollView>
+      {tabs ? (
+        // A tabbed card is a fixed frame the rest of the screen's height: nothing around it
+        // scrolls, only an opened tab inside it (ADR 0091, ADR 0113).
+        <View testID="entry-frame" style={[styles.scroll, { paddingBottom: foot }]}>
+          {body}
+        </View>
+      ) : (
+        <ScrollView
+          testID="entry-scroll"
+          style={styles.scroll}
+          // The sheet of the action row is a child in React's tree, so a tap in its
+          // name field must not be swallowed to put the keyboard away.
+          keyboardShouldPersistTaps="handled"
+        >
+          {body}
+        </ScrollView>
+      )}
       {word !== undefined && slots?.slot === 'actions' && (
         <View
           style={[

@@ -6,7 +6,7 @@
   "explanation": "Тестове пояснення.",
   "examplePair": {
     "nonStandard": "За вікном мела метель.",
-    "standard": "За вікном мела заметіль."
+    "standard": "**За вікном мела заметіль**."
   },
   "categoryId": "shop",
   "sources": [

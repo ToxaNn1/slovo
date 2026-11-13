@@ -9,7 +9,7 @@ import {
 } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
-import { Dimensions, Text } from 'react-native';
+import { Dimensions, StyleSheet, Text } from 'react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
@@ -87,7 +87,15 @@ const correctionCard: CorrectionCardModel = {
   categoryId: 'everyday',
   categoryName: 'Everyday speech',
   explanation: 'A long explanation.',
-  examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
+  examplePair: {
+    nonStandard: 'I take part.',
+    standard: 'I join in.',
+    standardSegments: [
+      { kind: 'text', text: 'I ' },
+      { kind: 'standardForm', text: 'join in' },
+      { kind: 'text', text: '.' },
+    ],
+  },
   sourceNames: [],
   literaryUses: [],
 };
@@ -106,7 +114,15 @@ const stressTrap: EntryFeedCard = {
     mainEquivalent: 'catalo\u0301g',
     mainEquivalentStressedVowels: ['o'],
     explanation: 'Say catalo\u0301g, as in dialo\u0301g.',
-    examplePair: { nonStandard: 'Open the ca\u0301talog.', standard: 'Open the catalo\u0301g.' },
+    examplePair: {
+      nonStandard: 'Open the ca\u0301talog.',
+      standard: 'Open the catalo\u0301g.',
+      standardSegments: [
+        { kind: 'text', text: 'Open the ' },
+        { kind: 'standardForm', text: 'catalo\u0301g' },
+        { kind: 'text', text: '.' },
+      ],
+    },
   },
 };
 
@@ -124,6 +140,11 @@ const paronym: EntryFeedCard = {
     examplePair: {
       nonStandard: 'She wore an effective dress.',
       standard: 'She wore an effectual dress.',
+      standardSegments: [
+        { kind: 'text', text: 'She wore an ' },
+        { kind: 'standardForm', text: 'effectual' },
+        { kind: 'text', text: ' dress.' },
+      ],
     },
   },
 };
@@ -155,6 +176,7 @@ const wordCard: WordFeedCard = {
     details: undefined,
     linkedCorrections: [],
     synonymRow: undefined,
+    sourceNames: [],
   },
 };
 
@@ -202,8 +224,8 @@ describe('EntryCard', () => {
 
     expect(screen.getByText('paronyms')).toBeTruthy();
     expect(screen.getByLabelText('Type: paronyms')).toBeTruthy();
-    expect(screen.getByText('an effective dress')).toBeTruthy();
-    expect(screen.getByText('an effectual dress')).toBeTruthy();
+    expect(screen.getByText('An effective dress')).toBeTruthy();
+    expect(screen.getByText('An effectual dress')).toBeTruthy();
   });
 
   it('names the sources of a Correction in a line under the example pair', async () => {
@@ -297,7 +319,7 @@ describe('EntryCard', () => {
         </EditionProvider>,
       );
 
-      expect(screen.getByTestId('word-lemma')).toHaveTextContent(longestWordOfTheDay.model.lemma);
+      expect(screen.getByTestId('word-lemma')).toHaveTextContent('Lightninggua\u0301rds');
       expect(screen.getByLabelText('Category: Engineering')).toBeTruthy();
       await fireEvent.press(screen.getByRole('button', { name: 'Pronounce' }));
       expect(speak).toHaveBeenCalledTimes(1);
@@ -394,7 +416,7 @@ describe('the region of a dialect Word', () => {
   it('follows the dialectal register label on the card and in its VoiceOver label', async () => {
     await render(inEdition(<EntryCard card={dialectWord} />));
 
-    expect(screen.getByTestId('word-register-dialectal')).toHaveTextContent('dial., Hutsulshchyna');
+    expect(screen.getByTestId('word-register-dialectal')).toHaveTextContent('Dial., Hutsulshchyna');
     expect(screen.getByLabelText('dialectal, Hutsulshchyna')).toBeTruthy();
   });
 
@@ -404,7 +426,7 @@ describe('the region of a dialect Word', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
 
-    expect(screen.getByTestId('word-register-dialectal')).toHaveTextContent('dial., Hutsulshchyna');
+    expect(screen.getByTestId('word-register-dialectal')).toHaveTextContent('Dial., Hutsulshchyna');
     expect(screen.getByLabelText('dialectal, Hutsulshchyna')).toBeTruthy();
   });
 });
@@ -471,7 +493,7 @@ describe('the Synonym Row line on a Word card', () => {
 
     const line = within(screen.getByTestId('word-synonym-row'));
     expect(line.getByText(/^In the synonym row: /)).toBeTruthy();
-    expect(line.getByText('go\u0301')).toBeTruthy();
+    expect(line.getByText('Go\u0301')).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'In the synonym row: go, stress on o' }),
     ).toBeTruthy();
@@ -509,8 +531,8 @@ describe('Self-check on a Word card', () => {
   it('shows only the Lemma, part of speech and Category until revealed', async () => {
     await render(inEdition(<EntryCard card={wordWithEverything} selfCheck />));
 
-    expect(screen.getByTestId('word-lemma')).toHaveTextContent('lemma');
-    expect(screen.getByTestId('word-part-of-speech')).toHaveTextContent('n.');
+    expect(screen.getByTestId('word-lemma')).toHaveTextContent('Lemma');
+    expect(screen.getByTestId('word-part-of-speech')).toHaveTextContent('N.');
     expect(screen.getByTestId('word-category')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Show the meaning' })).toBeTruthy();
     for (const concealedPart of ['word-definition', 'word-example', 'word-synonyms']) {
@@ -557,7 +579,7 @@ describe('Self-check on a Correction card', () => {
     await render(inEdition(<EntryCard card={correctionWithEverything()} selfCheck />));
 
     expect(screen.getByTestId('correction-non-standard')).toBeTruthy();
-    expect(screen.getByText('take part')).toBeTruthy();
+    expect(screen.getByText('Take part')).toBeTruthy();
     expect(screen.getByText('How to say it?')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Show' })).toBeTruthy();
     for (const concealedPart of [
@@ -571,7 +593,7 @@ describe('Self-check on a Correction card', () => {
     ]) {
       expect(screen.queryByTestId(concealedPart)).toBeNull();
     }
-    expect(screen.queryByText('join in')).toBeNull();
+    expect(screen.queryByText('Join in')).toBeNull();
   });
 
   it('shows the right form and the explanation once the reader taps «Show»', async () => {
@@ -591,9 +613,9 @@ describe('the standard form on a Correction card', () => {
   it('sets the main equivalent at the board size of a standard form, not at the Lemma size', async () => {
     await render(inEdition(<EntryCard card={card} />));
 
-    const form = within(screen.getByTestId('correction-standard')).getByText('join in');
-    // Board С2.6: «Українською краще» at 30 pt, where the Lemma at step M is 50 (owner 08.11).
-    expect(form).toHaveStyle({ fontSize: 30 });
+    const form = within(screen.getByTestId('correction-standard')).getByText('Join in');
+    // Board XEntry2 e6: «Українською краще» at 38 pt, where the Lemma at step M is 50.
+    expect(form).toHaveStyle({ fontSize: 38 });
   });
 });
 
@@ -672,7 +694,7 @@ describe('VoiceOver on a stress trap', () => {
 
     expect(screen.getByTestId('correction-non-standard')).toHaveProp(
       'accessibilityLabel',
-      'Non-standard: catalog, stress on a',
+      'Non-standard, stress: catalog, stress on a',
     );
     expect(screen.getByTestId('correction-standard')).toHaveProp(
       'accessibilityLabel',
@@ -703,7 +725,7 @@ describe('VoiceOver on a stress trap', () => {
   it('reads the forms of another Correction Type as written', async () => {
     await render(inEdition(<EntryCard card={card} />));
 
-    expect(screen.getByLabelText('Non-standard: take part')).toBeTruthy();
+    expect(screen.getByLabelText('Non-standard, calque: take part')).toBeTruthy();
     expect(screen.getByLabelText('Standard: join in')).toBeTruthy();
   });
 });
@@ -753,7 +775,7 @@ describe('the Idiom card', () => {
       inEdition(<EntryCard card={{ kind: 'idiom', entryId: 'i1', model: idiomCard() }} />),
     );
 
-    expect(screen.getByTestId('idiom-expression')).toHaveTextContent('to beat the bushes');
+    expect(screen.getByTestId('idiom-expression')).toHaveTextContent('To beat the bushes');
     expect(screen.getByTestId('idiom-type')).toHaveTextContent('idiom');
     expect(screen.getByTestId('idiom-definition')).toHaveTextContent('To idle about.');
     expect(screen.getByTestId('idiom-extra-definitions')).toHaveTextContent(
@@ -788,7 +810,7 @@ describe('the Idiom card', () => {
     await render(inEdition(<EntryCard card={{ kind: 'idiom', entryId: 'i3', model: proverb }} />));
 
     expect(screen.getByTestId('idiom-expression')).toHaveTextContent(
-      'the early bird catches the worm',
+      'The early bird catches the worm',
     );
     expect(screen.getByTestId('idiom-type')).toHaveTextContent('proverb');
     expect(screen.getByTestId('idiom-definition')).toHaveTextContent('Who starts early, wins.');
@@ -955,21 +977,17 @@ describe('the corner of an Entry card', () => {
     expect(within(row).queryByTestId('word-lemma')).toBeNull();
   });
 
-  it('keeps the Correction kicker whole on one line beside the corner, its type chip going under it when short of room', async () => {
+  it('keeps the Correction kicker whole on one line beside the corner', async () => {
     await render(
       inEdition(
         <EntryCard card={card} slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }} />,
       ),
     );
 
-    // Squeezed by the chip and the corner tiles, the kicker shrinks to fit rather than break inside its word.
+    // Squeezed by the corner tiles, the kicker shrinks to fit rather than break inside its word.
     const title = within(screen.getByTestId('correction-kicker-row')).getByText('Correction');
     expect(title).toHaveProp('numberOfLines', 1);
     expect(title).toHaveProp('adjustsFontSizeToFit', true);
-    expect(screen.getByTestId('correction-kicker')).toHaveStyle({ flexWrap: 'wrap' });
-    expect(
-      within(screen.getByTestId('correction-kicker')).getByTestId('correction-type'),
-    ).toBeOnTheScreen();
   });
 
   it.each<[string, EntryFeedCard, string | null]>([
@@ -1056,11 +1074,149 @@ describe("a Word card's kicker", () => {
 
     await render(inEdition(<EntryCard card={wordCard} kicker={kicker} tabs />));
     expect(screen.getByTestId('word-card-kicker')).toHaveTextContent(kicker);
+    // Level with the corner tiles' middle, as the board's CSS centres it (EntryKicker).
+    expect(StyleSheet.flatten(screen.getByTestId('word-card-kicker').props['style'])).toMatchObject(
+      {
+        transform: [{ translateY: 1.32 }],
+      },
+    );
   });
 
   it('is left out of a Word card in the Feed', async () => {
     await render(inEdition(<EntryCard card={wordCard} />));
 
     expect(screen.queryByTestId('word-card-kicker')).toBeNull();
+  });
+});
+
+/** The file's strings with the names of each kind's tabs. */
+const tabbedStrings = testStrings({
+  ...strings,
+  wordCard: {
+    ...strings.wordCard,
+    tabs: { essence: 'Essence', example: 'Example', links: 'Links', history: 'History' },
+    tabMore: 'More',
+    tabLess: 'Less',
+  },
+  correctionCard: {
+    ...strings.correctionCard,
+    tabs: { better: 'Better', why: 'Why', examples: 'Examples' },
+  },
+  idiomCard: {
+    ...strings.idiomCard,
+    tabs: { essence: 'Essence', origin: 'Origin', example: 'Example' },
+  },
+});
+
+describe('the frame of a tabbed Entry card (board XEntry2)', () => {
+  it.each([
+    ['word', wordCard],
+    ['correction', card],
+    ['idiom', { kind: 'idiom', entryId: 'i1', model: placeName }],
+  ] as const)(
+    'draws a %s card at radius 24, outlined 2.5, padded 20/22/18, blocks 16 apart',
+    async (kind, entry) => {
+      await render(
+        <EditionProvider edition={{ locale: 'en' }} strings={tabbedStrings}>
+          <EntryCard card={entry} tabs />
+        </EditionProvider>,
+      );
+
+      expect(screen.getByTestId(`${kind}-card`)).toHaveStyle({
+        borderRadius: 24,
+        borderWidth: 2.5,
+        paddingTop: 20,
+        paddingHorizontal: 22,
+        paddingBottom: 18,
+        gap: 16,
+      });
+    },
+  );
+});
+
+describe('the Source tab of a tabbed Entry card (ADR 0116)', () => {
+  const sourceStrings = testStrings({
+    ...tabbedStrings,
+    wordCard: { ...tabbedStrings.wordCard, tabSource: 'Source' },
+  });
+  const sourced = ['A dictionary', 'A book of proverbs'];
+  const cases = [
+    ['word', { ...wordCard, model: { ...wordCard.model, sourceNames: sourced } }],
+    ['correction', cardWithSources(sourced)],
+    ['idiom', { kind: 'idiom', entryId: 'i1', model: idiomCard({ sourceNames: sourced }) }],
+  ] as const;
+
+  /** The source line of the kind's own tabs, in any of them. */
+  async function sourceLineInOwnTabs(kind: string): Promise<boolean> {
+    let found = false;
+    for (const tab of screen.getAllByRole('tab')) {
+      if (tab.props['testID'] === `${kind}-tab-source`) continue;
+      await fireEvent.press(tab);
+      if (screen.queryByTestId(`${kind}-source`) !== null) found = true;
+    }
+    return found;
+  }
+
+  it.each(cases)(
+    'is the last tab of a %s card, each source on its own line, and the other tabs lose the source line',
+    async (kind, entry) => {
+      await render(
+        <EditionProvider edition={{ locale: 'en' }} strings={sourceStrings}>
+          <EntryCard card={entry} tabs sourceTab />
+        </EditionProvider>,
+      );
+
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs.at(-1)).toBe(screen.getByTestId(`${kind}-tab-source`));
+      expect(screen.getByTestId(`${kind}-tab-source`)).toHaveProp('accessibilityLabel', 'Source');
+      expect(await sourceLineInOwnTabs(kind)).toBe(false);
+
+      await fireEvent.press(screen.getByTestId(`${kind}-tab-source`));
+
+      expect(screen.getByTestId(`${kind}-source-0`)).toHaveTextContent('A dictionary', {
+        exact: true,
+      });
+      expect(screen.getByTestId(`${kind}-source-1`)).toHaveTextContent('A book of proverbs', {
+        exact: true,
+      });
+    },
+  );
+
+  it.each(cases.filter(([kind]) => kind !== 'word'))(
+    'is not there while the switch is off: a %s card keeps its source line in its tab',
+    async (kind, entry) => {
+      await render(
+        <EditionProvider edition={{ locale: 'en' }} strings={sourceStrings}>
+          <EntryCard card={entry} tabs />
+        </EditionProvider>,
+      );
+
+      expect(screen.queryByTestId(`${kind}-tab-source`)).toBeNull();
+      expect(await sourceLineInOwnTabs(kind)).toBe(true);
+    },
+  );
+});
+
+describe('the texts of a Word card', () => {
+  it('start with a capital, whatever case the content has (owner decision 11)', async () => {
+    const lowercase: WordFeedCard = {
+      ...wordCard,
+      model: {
+        ...wordCard.model,
+        primaryDefinition: 'what it means.',
+        example: { text: 'an example.' },
+        synonyms: ['alike'],
+        history: 'a story.',
+        categoryName: 'rare',
+      },
+    };
+    await render(inEdition(<EntryCard card={lowercase} />));
+
+    expect(screen.getByTestId('word-lemma')).toHaveTextContent(/^Lemma$/);
+    expect(screen.getByTestId('word-definition')).toHaveTextContent('What it means.');
+    expect(screen.getByTestId('word-category')).toHaveTextContent('Rare');
+    expect(screen.getByTestId('word-example')).toHaveTextContent(/An example\./);
+    expect(screen.getByTestId('word-synonyms')).toHaveTextContent(/Alike$/);
+    expect(screen.getByTestId('word-history')).toHaveTextContent(/A story\./);
   });
 });

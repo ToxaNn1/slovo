@@ -244,6 +244,14 @@ export const typeRoles = {
   roundAsk: role('word', '900', 24, 30),
   /** The form a «Впиши слово» Round asks to replace, under its ask (board 07 g3): «замість «вірогідно»». */
   roundInstead: role('ui', '500', 16, 22),
+  /** A Quick Question's label on its ink tag (board f3), such as «ПОРАДА». */
+  quickQuestionTag: role('word', '800', 11, 11, 1, 'uppercase'),
+  /** A Quick Question's prompt on its card (board f3), such as «Як правильно?». */
+  quickQuestionPrompt: role('word', '900', 26, 28.6),
+  /** The non-standard form a Quick Question's Tip replaces, under its prompt (board f3): «замість «скіко»». */
+  quickQuestionInstead: role('ui', '500', 15, 21),
+  /** A Quick Question's option on its tile when it is a Word (board f3). */
+  quickQuestionOptionWord: role('word', '800', 16, 20),
   /** A Round's option on its tile when it is a Word. */
   roundOptionWord: role('word', '800', 18, 22),
   /** A Round's option on its tile when it is a sentence. */
@@ -280,8 +288,16 @@ export const typeRoles = {
   widgetLemma: role('word', '500', 24, 29),
   /** The short line under the Lemma on the drawing's medium widget. */
   widgetLine: role('word', '500', 12, 15),
-  /** An Idiom's «Походження». */
-  idiomEtymology: role('ui', '400', 14, 20),
+  /** An Idiom's «Походження», the tab «Звідки» (XEntry2 e7). */
+  idiomEtymology: role('ui', '500', 18, 27),
+  /** An Idiom's expression, at the size its length gives (XEntry2 e7: 40/1.02, tracking −1). */
+  idiomExpression: role('word', '900', 40, 40.8, -1),
+  /** An Idiom's primary Definition in the tab «Суть», at the user's font size (XEntry2 e7). */
+  idiomEssence: role('ui', '500', 22, 31),
+  /** A Synonym Row's dominant, on one line (XEntry2 e8: 49/1). */
+  synonymDominant: role('word', '900', 49, 49, -1.5),
+  /** A Synonym Row's member, one per row, at the user's font size (XEntry2 e8). */
+  synonymMember: role('word', '800', 19, 20.9),
   /** The name of a hidden category on the Hidden screen. */
   hiddenName: role('ui', '700', 15, 18),
   /** The count beside a Collection's title. */
@@ -310,8 +326,8 @@ export const typeRoles = {
   collectionCardName: role('word', '800', 14, 17),
   /** How many Entries a Collection holds, under its name on its card. */
   collectionCardCount: role('ui', '600', 12, 12),
-  /** A Synonym Row member's shade note, in italics after it. */
-  shadeNote: role('ui', '400', 13, 17),
+  /** A Synonym Row member's shade note, upright at the right end of its row (XEntry2 e8). */
+  shadeNote: role('ui', '500', 14, 18.2),
   /** `Lemma, hero`: the onboarding welcome's Lemma. */
   heroLemma: role('word', '900', 76, 76),
   /** A quiet text button of the onboarding, such as «Пропустити» and «Пізніше». */
@@ -350,6 +366,14 @@ export const typeRoles = {
   splashTagline: role('ui', '500', 17, 17),
   /** The Category's name on its filled chip of a Word card. */
   categoryChip: role('ui', '600', 12.5, 15),
+  /** The name of an unselected tab in an Entry card's tab bar (board XEntry2). */
+  cardTab: role('ui', '600', 15, 15),
+  /**
+   * The name of the selected tab in an Entry card's tab bar. The board sets
+   * it in Onest 800, which the Edition does not ship (400 to 700), so it takes
+   * the heaviest Onest there is.
+   */
+  cardTabSelected: role('ui', '700', 15, 15),
   /** A chip's label: a Category of the Mix, a tab of the Saved screen. */
   chipLabel: role('ui', '700', 14, 17),
   /** The count beside a chip's label. */
@@ -390,8 +414,10 @@ export const typeRoles = {
   errorTitle: role('word', '500', 28, 34),
   /** What went wrong, under the title of the Feed's error state. */
   errorText: role('ui', '400', 15, 24),
-  /** A Tip's title. */
-  tipTitle: role('word', '900', 22, 25),
+  /** A Tip's title (board XEntry2 e9: 30/1.1). */
+  tipTitle: role('word', '900', 30, 33, -0.5),
+  /** A Tip's rule on its card's «Правило» tab (board XEntry2 e9). */
+  tipRule: role('ui', '500', 20, 28),
   /** What leads a list row's Lemma, such as a Collection's name, in the Lemma's size. */
   listLeading: role('ui', '500', 17, 20),
   /** The trailing text of a list row, such as when it was saved. */
@@ -510,8 +536,23 @@ export const typeRoles = {
   heroShout: role('word', '900', 40, 38, -1.5, 'uppercase'),
   /** The kicker over the Lemma of the Word of the Day on a red ground, such as «СЛОВО ДНЯ · 3 ЛИСТОПАДА». */
   heroKicker: role('word', '800', 11, 11, 2, 'uppercase'),
-  /** The kicker over the Lemma on the tabbed card of the Word of the Day, «СЛОВО ДНЯ · 7.11» (board p1). */
+  /** The kicker of a tabbed Entry card, «СЛОВО ДНЯ · 7.11», «ВИПРАВЛЕННЯ» (boards p1, XEntry2). */
   cardKicker: role('word', '800', 11, 11, 1.5, 'uppercase'),
+  /** The label over a form on a Correction card: «Так часто кажуть · калька», «Українською краще» (XEntry2 e6). */
+  correctionFormLabel: role('ui', '700', 12, 12),
+  /** A Correction's non-standard form on its card, under the red strike (XEntry2 e6). */
+  correctionStruck: role('word', '800', 26, 28.6),
+  /** A Correction's standard form in «Як краще»; drawn at a share of the Lemma's size (XEntry2 e6). */
+  correctionStandard: role('word', '900', 38, 39.9, -1),
+  /** A Correction's explanation in «Чому» (XEntry2 e6). */
+  correctionWhy: role('ui', '500', 20, 29),
+  /** A sentence of a Correction's example pair in «Приклади» (XEntry2 e6). */
+  correctionExample: role('ui', '500', 17, 25),
+  /**
+   * The marked standard form in the standard sentence of «Приклади»
+   * (ADR 0117). The board sets it in bold; the Edition ships Onest up to 700.
+   */
+  correctionExampleStrong: role('ui', '700', 17, 25),
   /** The big red opening quote mark over the Example in the tabbed Word card's «Приклад» (board p1). */
   exampleMark: role('word', '900', 54, 26),
   /** The small label over the chips in the tabbed Word card's «Зв’язки», «Синоніми» (board p1). */
@@ -617,6 +658,23 @@ export type TypeRole = keyof typeof typeRoles;
  */
 const WORD_CAPITAL_MARK_TOP = 1.01;
 const WORD_DESCENT = 0.245;
+/** The word family's ascent in em (Unbounded's hhea and typo ascender, 995 of 1000). */
+const WORD_ASCENT = 0.995;
+
+/**
+ * How far iOS draws a word role's line above where the boards' CSS draws it.
+ * CSS centres the font's ascent and descent in a line set tighter than the
+ * font; iOS lays it from the line's foot, keeping the whole descent there, so
+ * the glyphs ride half the difference high: «ВИПРАВЛЕННЯ» sat a point and a
+ * third over the middle of the corner tiles beside it. A text that must sit
+ * level with something beside it moves down by this much on iOS.
+ */
+export function tightLineDrop(name: TypeRole): number {
+  const { family, size, lineHeight } = typeRoles[name];
+  if (family !== 'word') return 0;
+  const drop = ((WORD_ASCENT + WORD_DESCENT) * size - lineHeight) / 2;
+  return drop > 0 ? Math.round(drop * 100) / 100 : 0;
+}
 
 /** The size a type role is drawn at: its font size and line height. */
 export interface DrawnSize {

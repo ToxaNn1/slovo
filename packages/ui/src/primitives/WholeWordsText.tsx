@@ -9,6 +9,7 @@ import {
   type TextStyle,
 } from 'react-native';
 
+import { WholeLinesText } from './WholeLines';
 import type { TextSize } from '../providers/FontSizeProvider';
 import { clearMarks, FallingMarks, withMarks, type FallingMarksOf } from './FallingMarks';
 import { FlyingText, type FlyingTextOf } from './FlyingText';
@@ -21,6 +22,9 @@ import { capitalMarkRoom, roleSize, typeRoles, type TypeRole } from '../tokens';
  * keeps its size and the word splits. Here the widest word is measured at
  * `size` first, and the text is drawn small enough for that word to fit on a
  * line; `numberOfLines` and `adjustsFontSizeToFit` still apply on top.
+ * `lines` is the rule for an Entry card's title: a phrase takes at most that
+ * many lines, a single word one, and either shrinks, down to half its size,
+ * rather than run past them.
  * A `highlight` draws one stretch of the text in a style of its own, or
  * `falling` lets the text's marks fall into place over it, and `stressed`
  * sets the letters a mark sits on, with the mark, in a style of their own. `flying` lets it
@@ -38,9 +42,12 @@ export function WholeWordsText({
   falling,
   stressed,
   flying,
-  ...props
+  lines,
+  ...given
 }: Omit<TextProps, 'children' | 'style'> & {
   text: string;
+  /** The most lines a phrase takes, shrinking to fit; a single word takes one. */
+  lines?: number | undefined;
   /** The type role the text is set in. */
   typeRole: TypeRole;
   /** The size to draw at when every word fits on a line: the role's own unless given. */
@@ -66,13 +73,26 @@ export function WholeWordsText({
         stressed?: { readonly mark: string; readonly style: StyleProp<TextStyle> } | undefined;
       }
   )) {
+  const props =
+    lines === undefined
+      ? given
+      : {
+          ...given,
+          numberOfLines: text.includes(' ') ? lines : 1,
+          adjustsFontSizeToFit: true,
+          minimumFontScale: 0.5,
+        };
   const [lineWidth, setLineWidth] = useState<number>();
   const [widestWord, setWidestWord] = useState<number>();
-  // A point of slack, so rounding never pushes the widest word back over the edge.
+  // A word that fits keeps the size: in a view that hugs the text, shrinking it would narrow
+  // the view and shrink it again. One that does not fit gets a point of slack, so rounding
+  // never pushes it back over the edge.
   const scale =
     lineWidth === undefined || widestWord === undefined
       ? undefined
-      : Math.min(1, (lineWidth - 1) / widestWord);
+      : widestWord <= lineWidth
+        ? 1
+        : (lineWidth - 1) / widestWord;
   const sized = (ratio: number) => {
     const drawn = { fontSize: size.fontSize * ratio, lineHeight: size.lineHeight * ratio };
     const room = capitalMarkRoom(typeRole, drawn);
@@ -119,9 +139,12 @@ export function WholeWordsText({
         if (event.nativeEvent.layout.width > 0) setLineWidth(event.nativeEvent.layout.width);
       }}
     >
-      <Text {...props} style={flying === undefined ? textStyle : [textStyle, styles.clear]}>
+      <WholeLinesText
+        {...props}
+        style={flying === undefined ? textStyle : [textStyle, styles.clear]}
+      >
         {shown}
-      </Text>
+      </WholeLinesText>
       {falling === undefined ? null : (
         <FallingMarks
           text={text}

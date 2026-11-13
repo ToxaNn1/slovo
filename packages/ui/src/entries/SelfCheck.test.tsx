@@ -66,6 +66,7 @@ function wordCard(lemma: string): EntryFeedCard {
       details: undefined,
       linkedCorrections: [],
       synonymRow: undefined,
+      sourceNames: [],
     },
   };
 }
@@ -85,7 +86,15 @@ const correctionCard: EntryFeedCard = {
     categoryId: 'everyday',
     categoryName: 'Everyday speech',
     explanation: 'Why join in is better.',
-    examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
+    examplePair: {
+      nonStandard: 'I take part.',
+      standard: 'I join in.',
+      standardSegments: [
+        { kind: 'text', text: 'I ' },
+        { kind: 'standardForm', text: 'join in' },
+        { kind: 'text', text: '.' },
+      ],
+    },
     sourceNames: [],
     literaryUses: [],
   },
@@ -189,8 +198,8 @@ describe('Self-check', () => {
     await renderFeed(true);
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
 
-    await turn('first', 'next');
-    await turn('second', 'previous');
+    await turn('First', 'next');
+    await turn('Second', 'previous');
 
     expect(screen.queryByText('What first means.')).toBeNull();
     expect(screen.getByRole('button', { name: 'Show the meaning' })).toBeTruthy();
@@ -200,7 +209,7 @@ describe('Self-check', () => {
     await renderFeed(true);
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
 
-    await fireEvent(screen.getByText('first'), 'accessibilityAction', {
+    await fireEvent(screen.getByText('First'), 'accessibilityAction', {
       nativeEvent: { actionName: 'next' },
     });
 
@@ -246,7 +255,7 @@ describe('Self-check', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
 
     await turn('take part', 'next');
-    await turn('second', 'previous');
+    await turn('Second', 'previous');
 
     expect(screen.queryByText('Why join in is better.')).toBeNull();
     expect(screen.getByRole('button', { name: 'Show' })).toBeTruthy();
@@ -278,7 +287,7 @@ describe('Self-check', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
 
     await turn('to beat the bushes', 'next');
-    await turn('second', 'previous');
+    await turn('Second', 'previous');
 
     expect(screen.queryByText('To idle about.')).toBeNull();
     expect(screen.getByRole('button', { name: 'Show the meaning' })).toBeTruthy();

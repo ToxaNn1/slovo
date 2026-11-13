@@ -35,6 +35,7 @@ import { Button } from '../primitives/Button';
 import {
   capitalMarkRoom,
   minTouchTarget,
+  quickQuestionCard,
   roundHeader,
   roundLayout,
   roundProgress,
@@ -215,7 +216,7 @@ export function GameRound({
  * meaning as «{word}» — це…, any other Round's prompt under the mode's label.
  */
 function askedAs(
-  { labelKind, prompt }: Round,
+  { labelKind = 'mode', prompt }: Pick<RoundContent, 'labelKind' | 'prompt'>,
   label: string,
   strings: EditionStrings['game']['round'],
 ): { label: string; prompt: string } {
@@ -325,8 +326,11 @@ function FormRound({
 }
 
 /**
- * A Quick Question in the Feed: its title, then one pick Round as the Game
- * draws it, the prompt under the mode's label and the four options. Once
+ * A Quick Question in the Feed, one card as board f3 draws it: its label on
+ * an ink tag, the prompt asked as the Game asks it (a Tip's question under the
+ * Tip's label, the non-standard form the Tip replaces under it, «замість
+ * «…»»), and the four options with their keys. VoiceOver reads the title as
+ * the card's heading, on the tag. Once
  * answered, the options show the right one and the one picked, and the
  * Game's sheet after an answer explains it, right or wrong, until «Далі»
  * closes it; the reader turns on to the next card.
@@ -344,7 +348,7 @@ export function QuickQuestionRound({
   round: Extract<RoundContent, { readonly form: 'pick' }>;
   /** The Entry asked about, whose Definition the answer card explains the answer with. */
   entry: AskableEntry;
-  /** The Game Mode's label over the prompt. */
+  /** The Game Mode's label, over the prompt of a Round asked under the mode's label. */
   label: string;
   /** The option the reader picked; none yet. */
   answered: number | undefined;
@@ -352,6 +356,14 @@ export function QuickQuestionRound({
   feedback: 'sheet' | 'card';
   onAnswer: (option: number) => void;
 }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { strings, voice } = useEdition();
+  const asked = askedAs(round, label, strings.game.round);
+  const instead =
+    entry.kind === 'tip' && entry.nonStandardForm !== undefined
+      ? fill(strings.game.round.prompts.instead, { wrong: entry.nonStandardForm })
+      : undefined;
   const gameHaptics = useGameHaptics();
   const answer = answered === undefined ? undefined : { chosen: answered, correct: round.correct };
   // The sheet explains the answer picked on this card, not one kept from an earlier visit.
@@ -361,26 +373,48 @@ export function QuickQuestionRound({
       ? { form: 'pick', ...answer, right: answer.chosen === answer.correct, sheet: round.sheet }
       : undefined;
   return (
-    <View testID="quick-question" style={styles.round}>
-      <RoundLabel label={title} />
-      <RoundCard
-        label={label}
-        prompt={round.prompt}
-        highlight={round.highlight}
-        gap={undefined}
-        definition={round.definition}
-        labelShown
-      />
-      <AnswerOptions
-        options={round.options}
-        answer={answer}
-        onPick={(option) => {
-          if (option === round.correct) gameHaptics.rightAnswer();
-          else gameHaptics.wrongAnswer();
-          setExplaining(true);
-          onAnswer(option);
-        }}
-      />
+    <View testID="quick-question" style={styles.quickQuestion}>
+      <View
+        style={[
+          styles.quickQuestionCard,
+          { backgroundColor: colors.surface, borderColor: colors.line },
+        ]}
+      >
+        <View
+          testID="quick-question-tag"
+          accessible
+          accessibilityRole="header"
+          accessibilityLabel={title}
+          style={[styles.quickQuestionTag, { backgroundColor: colors.ink }]}
+        >
+          <Text
+            maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+            {...voice}
+            style={[typeStyle('quickQuestionTag', tokens), { color: colors.background }]}
+          >
+            {asked.label}
+          </Text>
+        </View>
+        <RoundCard
+          label={asked.label}
+          prompt={asked.prompt}
+          highlight={round.highlight}
+          gap={undefined}
+          definition={round.definition}
+          quickQuestion={{ instead }}
+        />
+        <AnswerOptions
+          options={round.options}
+          answer={answer}
+          inQuickQuestion
+          onPick={(option) => {
+            if (option === round.correct) gameHaptics.rightAnswer();
+            else gameHaptics.wrongAnswer();
+            setExplaining(true);
+            onAnswer(option);
+          }}
+        />
+      </View>
       <AnswerSheet
         answer={explained}
         line={cardLine(round.sheet, entry)}
@@ -674,25 +708,6 @@ function RoundHead({
 }
 
 /**
- * A title over a Quick Question's card, which VoiceOver reads as its heading.
- */
-function RoundLabel({ label }: { label: string }) {
-  const tokens = useTokens();
-  const { voice } = useEdition();
-  return (
-    <Text
-      testID="game-prompt"
-      accessibilityRole="header"
-      maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-      {...voice}
-      style={[typeStyle('roundLabel', tokens), styles.label, { color: tokens.colors.muted }]}
-    >
-      {label}
-    </Text>
-  );
-}
-
-/**
  * The answer card's line: the sheet's explanation, such as a Correction's,
  * else the primary Definition of the Entry the Round asked about, if it has one.
  */
@@ -854,6 +869,21 @@ const styles = StyleSheet.create({
   streakLine: { flexShrink: 1 },
   screen: { flex: 1 },
   round: { gap: space[5], padding: space[6] },
+  // The Feed's page pads the Quick Question's card as board f3 does its cards.
+  quickQuestion: { padding: space[3] },
+  quickQuestionCard: {
+    gap: quickQuestionCard.gap,
+    paddingVertical: quickQuestionCard.paddingVertical,
+    paddingHorizontal: quickQuestionCard.paddingHorizontal,
+    borderRadius: quickQuestionCard.radius,
+    borderWidth: 1,
+  },
+  quickQuestionTag: {
+    alignSelf: 'flex-start',
+    paddingVertical: quickQuestionCard.tag.paddingVertical,
+    paddingHorizontal: quickQuestionCard.tag.paddingHorizontal,
+    transform: [{ skewX: quickQuestionCard.tag.skew }],
+  },
   // A Round of a form without options keeps one gap more under its content than a pick Round.
   roundWithoutOptions: { paddingBottom: space[6] + space[5] },
   // Room under the header, so a scrolled Round slides away clear of it, not against it.
@@ -870,7 +900,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  label: { marginHorizontal: space[1] },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   // The board's banner title sits clear of the slant over the sheet, not on its low edge.
   sheetTitle: { marginTop: space[3] - capitalMarkRoom('roundVerdict') },

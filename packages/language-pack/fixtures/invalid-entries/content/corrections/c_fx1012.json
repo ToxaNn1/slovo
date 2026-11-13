@@ -6,7 +6,7 @@
   "explanation": "Тестове пояснення.",
   "examplePair": {
     "nonStandard": "Тестове речення з вдруг.",
-    "standard": "Тестове речення з раптом."
+    "standard": "**Тестове речення з раптом**."
   },
   "categoryId": "speech",
   "sources": [

@@ -86,8 +86,8 @@ export function NarratorVoicePicker({
               text={syllable}
               index={index}
               moving={moving}
-              color={index === sample.stressed ? colors.onAccent : light.ink}
-              lit={colors.onAccent}
+              color={index === sample.stressed ? light.background : light.ink}
+              lit={light.background}
             />
           ))}
         </View>
@@ -106,7 +106,7 @@ export function NarratorVoicePicker({
           >
             <Icon
               name={playing ? 'pause' : 'play'}
-              color={colors.onAccent}
+              color={light.background}
               size={drawing.playIcon}
             />
           </PressedTile>

@@ -105,7 +105,7 @@ describe('ShareCard', () => {
     const lightCard = await renderCard(word, 'story', 'light');
     expect(lightCard).toHaveStyle({ backgroundColor: light.accent });
     expect(within(lightCard).getByTestId('share-card-giant')).toHaveStyle({
-      color: light.onAccent,
+      color: light.background,
     });
 
     const darkCard = await renderCard(word, 'square', 'dark');

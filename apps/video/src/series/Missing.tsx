@@ -282,7 +282,7 @@ function WordCard({ word, reply, meaning, target }: Pick<MissingProps, 'word' | 
               size={size}
               face={stressed && landed ? light.ink : light.accent}
               edge={stressed && landed ? dark.background : light.accentEdge}
-              ink={light.onAccent}
+              ink={light.background}
             />
             {stressed && <Acute size={size} frame={frame} falls={stressFalls(letters.length)} />}
           </div>

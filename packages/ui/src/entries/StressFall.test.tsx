@@ -67,6 +67,7 @@ const word: WordFeedCard = {
     details: undefined,
     linkedCorrections: [],
     synonymRow: undefined,
+    sourceNames: [],
   },
 };
 
@@ -120,11 +121,13 @@ function wordOf(lemma: string): WordFeedCard {
 
 /** Where the falling Stress marks of the Lemma are: their height above their vowels and their opacity. */
 function marks(lemma = word.model.lemma): { above: number; opacity: number } {
+  // The card shows the Lemma starting with a capital (owner decision 11).
+  const shown = lemma.charAt(0).toUpperCase() + lemma.slice(1);
   const layer = screen
     .getAllByTestId('word-lemma-falling', { includeHiddenElements: true })
     .find((falling) =>
       screen
-        .getAllByText(lemma, { includeHiddenElements: true })
+        .getAllByText(shown, { includeHiddenElements: true })
         .some((text) => falling.children.includes(text)),
     );
   if (layer === undefined) throw new Error(`No Stress of ${lemma} falls.`);
@@ -257,7 +260,7 @@ describe('The falling Stress', () => {
     await settle();
 
     expect(screen.queryByTestId('word-lemma-falling', { includeHiddenElements: true })).toBeNull();
-    expect(screen.getByTestId('word-lemma')).toHaveTextContent('catálog');
+    expect(screen.getByTestId('word-lemma')).toHaveTextContent('Catálog');
     expect(screen.getByRole('header')).toHaveAccessibleName('catalog, stress on a');
   });
 
@@ -266,7 +269,7 @@ describe('The falling Stress', () => {
     await settle();
 
     expect(screen.queryByTestId('word-lemma-falling', { includeHiddenElements: true })).toBeNull();
-    expect(screen.getByTestId('word-lemma')).toHaveTextContent('catálog');
+    expect(screen.getByTestId('word-lemma')).toHaveTextContent('Catálog');
   });
 
   it('stays still in a list row', async () => {

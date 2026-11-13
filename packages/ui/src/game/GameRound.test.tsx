@@ -1,4 +1,5 @@
 import { type PlayingGame } from '@slovo/core/testing';
+import type { Tip } from '@slovo/contracts';
 import type {
   GivenAnswer,
   Haptics,
@@ -10,9 +11,11 @@ import type {
 import {
   coreTokens,
   EditionProvider,
+  fill,
   GameRound,
   HapticsProvider,
   InterfaceSoundsProvider,
+  QuickQuestionRound,
   TokensProvider,
   typeStyle,
   type ColorScheme,
@@ -1395,4 +1398,77 @@ describe('the answer sheet', () => {
       });
     },
   );
+});
+
+describe('QuickQuestionRound', () => {
+  const tip: Tip = {
+    kind: 'tip',
+    id: 't_frank',
+    title: 'Frank or candid?',
+    standardForm: 'candid',
+    explanation: 'Say «candid» of a friend who says what they think.',
+    sources: [],
+    gameQuestion: {
+      prompt: 'Which word describes a friend who always says what they think?',
+      rightAnswer: 'candid',
+      wrongAnswers: ['ardent', 'brittle', 'dour'],
+    },
+    retired: false,
+  };
+
+  const renderTip = (asked: Tip) =>
+    render(
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <HapticsProvider haptics={haptics}>
+          <QuickQuestionRound
+            title="Quick question"
+            round={{
+              form: 'pick',
+              prompt: asked.gameQuestion.prompt,
+              labelKind: 'tip',
+              options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
+              correct: CORRECT,
+              sheet: { answer: { text: OPTIONS[CORRECT], stressedVowels: [] }, example: undefined },
+            }}
+            entry={asked}
+            label="Definition"
+            answered={undefined}
+            feedback="sheet"
+            onAnswer={jest.fn()}
+          />
+        </HapticsProvider>
+      </EditionProvider>,
+    );
+
+  it('asks a Tip its own question under the Tip’s label, not the mode’s', async () => {
+    await renderTip(tip);
+
+    expect(screen.getByText(strings.game.round.tip.label)).toBeOnTheScreen();
+    expect(screen.queryByText('Definition')).not.toBeOnTheScreen();
+    expect(screen.getByText(tip.gameQuestion.prompt)).toBeOnTheScreen();
+  });
+
+  it('shows one label, the Tip’s, and keeps its title as the heading VoiceOver reads', async () => {
+    await renderTip(tip);
+
+    expect(screen.getAllByText(strings.game.round.tip.label)).toHaveLength(1);
+    expect(screen.queryByText('Quick question')).not.toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Quick question' })).toBeOnTheScreen();
+  });
+
+  it('names the non-standard form a Tip replaces under its question', async () => {
+    await renderTip({ ...tip, nonStandardForm: 'frank' });
+
+    const instead = fill(strings.game.round.prompts.instead, { wrong: 'frank' });
+    expect(screen.getByTestId('game-instead')).toHaveTextContent(instead);
+    expect(String(screen.getByTestId('game-prompt').props['accessibilityLabel'])).toContain(
+      instead,
+    );
+  });
+
+  it('shows no «instead» line for a Tip with no non-standard form', async () => {
+    await renderTip(tip);
+
+    expect(screen.queryByTestId('game-instead')).not.toBeOnTheScreen();
+  });
 });

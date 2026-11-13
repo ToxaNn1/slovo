@@ -12,7 +12,7 @@ import Animated, {
 
 import { useEdition } from '../providers/EditionProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { useTokens } from '../providers/TokensProvider';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { disabledOpacity, minTouchTarget, motion, switchDrawing } from '../tokens';
 
 /** How far the knob travels from off to on. */
@@ -49,6 +49,8 @@ export function Switch({
   testID?: string | undefined;
 }) {
   const { colors } = useTokens();
+  // The design's knob is cream in both Themes: the light Theme's background.
+  const cream = useSchemeColors('light').background;
   const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
   const position = useSharedValue(value ? 1 : 0);
@@ -95,7 +97,7 @@ export function Switch({
       <Animated.View style={[styles.track, track]}>
         <Animated.View
           testID={testID === undefined ? undefined : `${testID}-knob`}
-          style={[styles.knob, { backgroundColor: colors.onAccent }, knob]}
+          style={[styles.knob, { backgroundColor: cream }, knob]}
         />
       </Animated.View>
     </Pressable>

@@ -208,11 +208,20 @@ CREATE TABLE tips (
   example_author TEXT,
   question_prompt TEXT NOT NULL,
   right_answer TEXT NOT NULL,
-  retired INTEGER NOT NULL
+  retired INTEGER NOT NULL,
+  exceptions_explanation TEXT
 ) WITHOUT ROWID;
 
 -- The wrong answers of a Tip's Game question, in order.
 CREATE TABLE tip_wrong_answers (
+  tip_id TEXT NOT NULL REFERENCES tips (id),
+  position INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  PRIMARY KEY (tip_id, position)
+) WITHOUT ROWID;
+
+-- The words of a Tip's exceptions, in order; a Tip with exceptions has at least one (ADR 0120).
+CREATE TABLE tip_exception_words (
   tip_id TEXT NOT NULL REFERENCES tips (id),
   position INTEGER NOT NULL,
   text TEXT NOT NULL,
@@ -315,9 +324,11 @@ CREATE TABLE media_illustrations (
  * (spec #1604), and later the Word's `needs_new_recording` column, which no
  * app reads, so the format stays (spec #1708); format 12 adds the media
  * tables `media_recordings` and `media_illustrations` and the metadata key
- * `media_base` (ADR 0099).
+ * `media_base` (ADR 0099); format 13 adds the Tip's `exceptions_explanation`
+ * column and the table `tip_exception_words`, the «Винятки» tab of a Tip
+ * (ADR 0120).
  */
-export const PACK_FORMAT = 12;
+export const PACK_FORMAT = 13;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how

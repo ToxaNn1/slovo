@@ -370,7 +370,7 @@ function Hint({ safe, s }: { safe: Safe; s: number }) {
           borderRadius: (box.hint.height / 2) * s,
           background: light.accent,
           boxShadow: `0 ${7 * s}px 0 ${light.accentEdge}`,
-          color: light.onAccent,
+          color: light.background,
           fontFamily: uiFont,
           fontWeight: 600,
           fontSize: 50 * s,
@@ -391,7 +391,7 @@ function Hint({ safe, s }: { safe: Safe; s: number }) {
 
 /** Two bars: what the tap does. */
 function PauseSign({ size }: { size: number }) {
-  const bar = { width: size * 0.3, height: size, borderRadius: size * 0.08, background: light.onAccent };
+  const bar = { width: size * 0.3, height: size, borderRadius: size * 0.08, background: light.background };
   return (
     <div style={{ display: 'flex', gap: size * 0.26 }}>
       <div style={bar} />
@@ -464,7 +464,7 @@ function WordCard({
               size={tile}
               face={i === stressed ? light.ink : light.accent}
               edge={i === stressed ? light.muted : light.accentEdge}
-              ink={light.onAccent}
+              ink={light.background}
             />
             {i === stressed && (
               <div

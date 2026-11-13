@@ -29,10 +29,54 @@ export const CorrectionTypeSchema = z.enum([
 
 export type CorrectionType = z.infer<typeof CorrectionTypeSchema>;
 
-/** The same sentence said the common, non-standard way and the standard way. */
+/** The mark around the standard form in a standard example sentence (ADR 0117). */
+const STANDARD_FORM_MARK = '**';
+
+/**
+ * A piece of a standard example sentence: plain text, or the standard form
+ * the card shows bold, such as «беремо участь» in «Ми беремо участь у конкурсі.».
+ */
+export type ExampleSegment =
+  | { readonly kind: 'text'; readonly text: string }
+  | { readonly kind: 'standardForm'; readonly text: string };
+
+/** A standard example sentence read for its marked standard form: its pieces in order, or why the marks are broken. */
+export type ParsedStandardExample =
+  | { readonly kind: 'marked'; readonly segments: readonly ExampleSegment[] }
+  | { readonly kind: 'broken'; readonly problem: string };
+
+/**
+ * Reads the standard form out of a standard example sentence, where the
+ * Edition's content marks it `**like this**` (ADR 0117). A standard form
+ * split by other words is marked in parts: «**Взяти** це **до уваги**».
+ */
+export function parseStandardExample(text: string): ParsedStandardExample {
+  const parts = text.split(STANDARD_FORM_MARK);
+  const broken = (problem: string): ParsedStandardExample => ({ kind: 'broken', problem });
+  if (parts.length === 1) return broken('Mark the standard form with ** on both sides');
+  if (parts.length % 2 === 0) return broken('Close every ** mark around the standard form');
+  if (parts.some((part) => part.includes('*'))) return broken('Write * only in ** marks');
+  const segments: ExampleSegment[] = [];
+  for (const [index, part] of parts.entries()) {
+    const standardForm = index % 2 === 1;
+    if (standardForm && part.trim() === '')
+      return broken('Put the standard form between the ** marks');
+    if (part !== '') segments.push({ kind: standardForm ? 'standardForm' : 'text', text: part });
+  }
+  return { kind: 'marked', segments };
+}
+
+/**
+ * The same sentence said the common, non-standard way and the standard way.
+ * The standard sentence marks its standard form `**like this**`, the part the
+ * card shows bold (ADR 0117); the marks stay in the text wherever it is kept.
+ */
 export const ExamplePairSchema = z.strictObject({
   nonStandard: EntryTextSchema,
-  standard: EntryTextSchema,
+  standard: EntryTextSchema.superRefine((text, context) => {
+    const parsed = parseStandardExample(text);
+    if (parsed.kind === 'broken') context.addIssue({ code: 'custom', message: parsed.problem });
+  }),
 });
 
 export type ExamplePair = z.infer<typeof ExamplePairSchema>;

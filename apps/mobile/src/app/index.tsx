@@ -112,18 +112,9 @@ function DashboardBlocks() {
   function blockOf(block: DashboardBlock) {
     switch (block.kind) {
       case 'wordOfTheDay':
-        // TEMP owner test 12.11, NOT FOR COMMIT: a long Lemma in the revealed hero.
         return (
           <DashboardHero
-            hero={
-              block.hero.state === 'revealed'
-                ? {
-                    ...block.hero,
-                    lemmaWithStress: 'високопревосходи́тельство',
-                    stressedVowels: ['и'],
-                  }
-                : block.hero
-            }
+            hero={block.hero}
             sparks={shown.heroSparks}
             onReveal={reveal}
             onToCard={toCard}

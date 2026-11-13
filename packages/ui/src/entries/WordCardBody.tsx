@@ -6,6 +6,7 @@ import type { TextSize } from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { typeStyle } from '../tokens';
 import { CategoryChip } from './CategoryChip';
+import { kickerLevel } from './EntryKicker';
 import { KickerRow } from './KickerRow';
 import { WordHeadline, WordSections } from './WordCard';
 import { WordOfTheDayBadge, WordOfTheDayKicker } from './WordOfTheDayBadge';
@@ -35,6 +36,7 @@ export function WordCardBody({
   wordOfTheDayFont,
   corner,
   tabs,
+  sourceTab,
   kicker,
 }: {
   card: WordCardModel;
@@ -58,6 +60,8 @@ export function WordCardBody({
   corner: ReactNode | undefined;
   /** The tabs under the Lemma in place of the one column, while `wordTabs` is on (ADR 0091). */
   tabs: boolean;
+  /** The last tab «Джерело» with the sources, which leave the other tabs, while `sourceTab` is on (ADR 0116). */
+  sourceTab: boolean;
   /** The card's kicker beside its corner, such as its place in a Category's Feed (ADR 0110). */
   kicker?: string | undefined;
 }) {
@@ -91,6 +95,7 @@ export function WordCardBody({
           onOpenCorrection={onOpenCorrection}
           onOpenSynonymRow={onOpenSynonymRow}
           onHistoryShown={onHistoryShown}
+          sources={sourceTab ? card.sourceNames : undefined}
           disabled={concealed}
         />
       ) : concealed ? null : (
@@ -112,7 +117,12 @@ function CardKicker({ text }: { text: string }) {
   return (
     <Text
       testID="word-card-kicker"
-      style={[typeStyle('cardKicker', tokens), styles.kicker, { color: tokens.colors.ink }]}
+      style={[
+        typeStyle('cardKicker', tokens),
+        styles.kicker,
+        kickerLevel,
+        { color: tokens.colors.ink },
+      ]}
     >
       {text}
     </Text>

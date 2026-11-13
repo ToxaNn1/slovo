@@ -1,4 +1,4 @@
-import type { Example, Tip } from '@slovo/contracts';
+import type { Example, Tip, TipExceptions } from '@slovo/contracts';
 
 import { sourceNamesOf } from './source-names';
 
@@ -21,6 +21,8 @@ export interface TipCardModel {
   readonly standardForm: string;
   readonly explanation: string;
   readonly example: Example | undefined;
+  /** Where the rule does not hold, for the tab «Винятки» (ADR 0120); nothing for a Tip without. */
+  readonly exceptions: TipExceptions | undefined;
   /** The names of the Tip's sources, in their order: each one's short name, or its title without one; the card names them in a line. */
   readonly sourceNames: readonly string[];
 }
@@ -35,6 +37,7 @@ export function buildTipCard({ tip }: { tip: Tip }): TipCardModel {
     standardForm: tip.standardForm,
     explanation: tip.explanation,
     example: tip.example,
+    exceptions: tip.exceptions,
     sourceNames: sourceNamesOf(tip.sources),
   };
 }

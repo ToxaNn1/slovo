@@ -51,6 +51,7 @@ const card: WordFeedCard = {
     details: undefined,
     linkedCorrections: [],
     synonymRow: undefined,
+    sourceNames: [],
   },
 };
 
@@ -150,7 +151,7 @@ describe('the Entry card reveal', () => {
 
     await wait(300);
     expect(styleOf('word-card').opacity).toBeCloseTo(1);
-    expect(screen.getByText('lemma')).toBeTruthy();
+    expect(screen.getByText('Lemma')).toBeTruthy();
   });
 
   it('under Reduce Motion fades in once at either pace', async () => {
@@ -317,7 +318,11 @@ async function flickUp() {
 
 /** How a part of the card with `lemma` looks: its headline, or its action row. */
 function cardPart(lemma: string, part: 'word-lemma-flying' | 'word-actions') {
-  const text = part === 'word-actions' ? `Actions of ${lemma}` : lemma;
+  // The headline shows the Lemma starting with a capital (owner decision 11).
+  const text =
+    part === 'word-actions'
+      ? `Actions of ${lemma}`
+      : lemma.charAt(0).toUpperCase() + lemma.slice(1);
   const node = screen
     .getAllByTestId(part, hidden)
     .find((candidate) => within(candidate).queryAllByText(text, hidden).length > 0);

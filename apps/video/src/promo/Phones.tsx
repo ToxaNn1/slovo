@@ -53,7 +53,7 @@ export const steps = {
 export const phonesLength = (list: readonly PhoneStep[]) => list.reduce((sum, step) => sum + step.frames, 0);
 
 const tones = {
-  red: { background: light.accent, caption: light.onAccent, kicker: light.ink, frame: light.ink },
+  red: { background: light.accent, caption: light.background, kicker: light.ink, frame: light.ink },
   cream: { background: light.background, caption: light.ink, kicker: light.accent, frame: light.ink },
   dark: { background: dark.background, caption: dark.ink, kicker: light.accent, frame: light.accent },
 } as const;

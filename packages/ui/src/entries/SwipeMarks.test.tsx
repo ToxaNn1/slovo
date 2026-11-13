@@ -81,7 +81,15 @@ const correction: EntryFeedCard = {
     categoryId: 'everyday',
     categoryName: 'Everyday speech',
     explanation: 'A long explanation.',
-    examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
+    examplePair: {
+      nonStandard: 'I take part.',
+      standard: 'I join in.',
+      standardSegments: [
+        { kind: 'text', text: 'I ' },
+        { kind: 'standardForm', text: 'join in' },
+        { kind: 'text', text: '.' },
+      ],
+    },
     sourceNames: [],
     literaryUses: [],
   },

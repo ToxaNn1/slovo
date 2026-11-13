@@ -6,7 +6,7 @@
   "explanation": "Слово «зря» запозичене з російської. Українською кажуть «даремно» або «марно».",
   "examplePair": {
     "nonStandard": "Ми зря гаяли час.",
-    "standard": "Ми даремно гаяли час."
+    "standard": "Ми **даремно** гаяли час."
   },
   "categoryId": "conversation",
   "sources": [

@@ -16,7 +16,7 @@ import Svg, { Path, Polygon } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
-import { useTokens } from '../providers/TokensProvider';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Mascot } from '../primitives/Mascot';
 import {
@@ -203,6 +203,8 @@ export function SplashOverlay({
 /** The mark: the red wedge unfolding from its left edge, and the S drawn over it. */
 function Logo({ progress, fit }: { progress: SharedValue<number>; fit: Fit }) {
   const { colors } = useTokens();
+  // The S is cream in both Themes: the light Theme's background.
+  const cream = useSchemeColors('light').background;
   const size = logo.size * fit.scale;
   // The wedge turns about its left edge, not its middle.
   const shift = ((wedge.originX - 50) / 100) * size;
@@ -254,7 +256,7 @@ function Logo({ progress, fit }: { progress: SharedValue<number>; fit: Fit }) {
         <AnimatedPath
           d={s.path}
           fill="none"
-          stroke={colors.onAccent}
+          stroke={cream}
           strokeWidth={s.stroke}
           strokeDasharray={s.dash}
           animatedProps={sProps}

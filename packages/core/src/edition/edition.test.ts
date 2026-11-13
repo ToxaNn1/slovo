@@ -131,6 +131,8 @@ const validConfig = {
     swipeMarks: 'on',
     gesturesHintDemo: 'on',
     wordTabs: 'on',
+    sourceTab: 'on',
+    tipExceptions: 'on',
     searchButton: 'on',
     dashboardWordmark: 'on',
     dailySplash: 'on',

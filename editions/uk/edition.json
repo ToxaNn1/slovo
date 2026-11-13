@@ -127,6 +127,8 @@
     "swipeMarks": "on",
     "gesturesHintDemo": "on",
     "wordTabs": "on",
+    "sourceTab": "on",
+    "tipExceptions": "on",
     "searchButton": "off",
     "dashboardWordmark": "on",
     "dailySplash": "on",

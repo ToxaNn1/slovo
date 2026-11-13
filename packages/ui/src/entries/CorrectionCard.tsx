@@ -2,27 +2,38 @@ import { stressLabel, withoutStress, type CorrectionCardModel } from '@slovo/cor
 import type { EditionStrings, LiteraryUse } from '@slovo/contracts';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
+import { WholeLinesText } from '../primitives/WholeLines';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
-import { SectionLabel } from '../primitives/headings';
-import { LabelChip } from '../primitives/LabelChip';
-import { correctionCardLayout, space, standardFormScale, typeStyle, withAlpha } from '../tokens';
+import {
+  correctionStandardScale,
+  correctionStrike,
+  entryCardFrame,
+  space,
+  standardFormScale,
+  typeRoles,
+  typeStyle,
+  withAlpha,
+} from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { CategoryChip } from './CategoryChip';
+import { EntryKicker } from './EntryKicker';
 import { KickerRow } from './KickerRow';
 import { DetailSection, ExampleText } from './WordCard';
+import { capitalised } from './capitalised';
 import { CardTabs } from './CardTabs';
 import { correctionTabs, type CorrectionTab } from './word-tabs';
 
 /**
- * The Correction card's blocks inside the Entry card's frame: the Correction
- * Type, the non-standard form muted and struck through, the main standard
- * equivalent at a share of the Lemma's size with the others under it, the explanation,
- * the example pair, the Category chip as on the Word card, the Correction's
+ * The Correction card's blocks inside the Entry card's frame (board XEntry2
+ * e6): the red kicker, the Correction Type in the line over the non-standard
+ * form, which is muted and struck with a tilted red bar, the main standard
+ * equivalent at a share of the Lemma's size with the others under it, the
+ * explanation, the example pair as plain lines, the wrong one struck and the
+ * standard form the content marks in the right one bold (ADR 0117), the Category chip as on the Word card, the Correction's
  * literary uses under their heading, each like a Word's Example with its
  * author, work and year, and, when the Correction has sources, a line naming them.
  * Nothing on the card reads as an error. A stress trap's texts carry their
@@ -38,6 +49,7 @@ export function CorrectionCardBody({
   concealed,
   corner,
   tabs,
+  sourceTab,
 }: {
   card: CorrectionCardModel;
   /** The Lemma's size at the user's font size, a share of which the main standard equivalent takes. */
@@ -48,6 +60,8 @@ export function CorrectionCardBody({
   corner: ReactNode | undefined;
   /** The tabs under the non-standard form in place of the one column, while `wordTabs` is on (ADR 0091). */
   tabs: boolean;
+  /** The last tab «Джерело» with the sources, which leave the other tabs, while `sourceTab` is on (ADR 0116). */
+  sourceTab: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -59,29 +73,16 @@ export function CorrectionCardBody({
   return (
     <>
       <KickerRow testID="correction-kicker-row" corner={corner}>
-        {/* The kicker never breaks inside its word: it keeps one line, and the chip goes under it when short of room. */}
-        <View testID="correction-kicker" style={styles.header}>
-          <SectionLabel oneLine style={styles.title}>
-            {strings.title}
-          </SectionLabel>
-          {concealed ? null : (
-            <LabelChip
-              testID="correction-type"
-              text={correctionType}
-              accessibilityLabel={fill(strings.correctionType, { type: correctionType })}
-              size="roomy"
-            />
-          )}
-        </View>
+        <EntryKicker testID="correction-kicker" label={strings.title} />
       </KickerRow>
-      <NonStandardForm
-        testID="correction-non-standard"
+      <StruckForm
         form={card.nonStandardForm}
         spoken={stressLabel(
           edition.strings.wordCard,
           card.nonStandardForm,
           card.nonStandardStressedVowels,
         )}
+        correctionType={concealed ? undefined : correctionType}
       />
       {concealed && (
         <Text
@@ -97,9 +98,12 @@ export function CorrectionCardBody({
           testID="correction"
           tabs={correctionTabs}
           nameOf={({ key }) => strings.tabs[key]}
+          sources={sourceTab ? card.sourceNames : undefined}
           disabled={concealed}
         >
-          {(tab) => <CorrectionTabContent tab={tab} card={card} mainSize={mainSize} />}
+          {(tab) => (
+            <CorrectionTabContent tab={tab} card={card} mainSize={mainSize} sourceTab={sourceTab} />
+          )}
         </CardTabs>
       ) : concealed ? null : (
         <>
@@ -118,22 +122,27 @@ export function CorrectionCardBody({
 /**
  * What a Correction card's selected tab shows (ADR 0091): «Як краще» the
  * standard equivalents and the Category chip, «Чому» the explanation and its
- * sources, «Приклади» the example pair and the literary uses.
+ * sources, «Приклади» the example pair and the literary uses. While
+ * `sourceTab` is on, the sources are in their own tab (ADR 0116).
  */
 function CorrectionTabContent({
   tab,
   card,
   mainSize,
+  sourceTab,
 }: {
   tab: CorrectionTab;
   card: CorrectionCardModel;
   mainSize: TextSize;
+  sourceTab: boolean;
 }) {
   const blocks: readonly Block[] =
     tab.key === 'better'
       ? ['standard', 'category']
       : tab.key === 'why'
-        ? ['explanation', 'sources']
+        ? sourceTab
+          ? ['explanation']
+          : ['explanation', 'sources']
         : ['examplePair', 'literaryUses'];
   return (
     <>
@@ -158,7 +167,7 @@ function CorrectionBlock({
   mainSize: TextSize;
 }) {
   const tokens = useTokens();
-  const { colors, radii } = tokens;
+  const { colors } = tokens;
   const sizes = useWordTextSizes();
   const edition = useEdition();
   const { voice } = edition;
@@ -166,19 +175,18 @@ function CorrectionBlock({
   // The voices skip the Stress mark, so VoiceOver also says where it falls.
   const formLabel = (form: string, stressedVowels: readonly string[]) =>
     stressLabel(edition.strings.wordCard, form, stressedVowels);
-  const sentence = [typeStyle('example', tokens), sizes.example];
+  const sentence = [typeStyle('correctionExample', tokens), sizes.example];
   switch (block) {
     case 'standard':
       return (
         <View style={styles.form}>
-          <StandardForm
-            testID="correction-standard"
+          <CorrectionStandard
             form={card.mainEquivalent}
             spoken={formLabel(card.mainEquivalent, card.mainEquivalentStressedVowels)}
             size={mainSize}
           />
           {card.otherEquivalents.length === 0 ? null : (
-            <Text
+            <WholeLinesText
               testID="correction-other-equivalents"
               accessibilityLabel={withoutStress(
                 fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') }),
@@ -186,66 +194,58 @@ function CorrectionBlock({
               {...voice}
               style={[typeStyle('sub', tokens), { color: colors.ink }]}
             >
-              {fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') })}
-            </Text>
+              {capitalised(
+                fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') }),
+                voice.accessibilityLanguage,
+              )}
+            </WholeLinesText>
           )}
         </View>
       );
     case 'explanation':
       return (
-        <Text
+        <WholeLinesText
           testID="correction-explanation"
           accessibilityLabel={withoutStress(card.explanation)}
           {...voice}
-          style={[typeStyle('explanation', tokens), { color: colors.ink }]}
+          style={[typeStyle('correctionWhy', tokens), { color: colors.ink }]}
         >
-          {card.explanation}
-        </Text>
+          {capitalised(card.explanation, voice.accessibilityLanguage)}
+        </WholeLinesText>
       );
     case 'examplePair':
       return (
-        <View
-          testID="correction-example-pair"
-          style={[
-            styles.examplePair,
-            { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip },
-          ]}
-        >
-          <View
-            accessible
+        <View testID="correction-example-pair" style={styles.examplePair}>
+          <WholeLinesText
             accessibilityLabel={fill(strings.exampleNonStandard, {
               text: withoutStress(card.examplePair.nonStandard),
             })}
             {...voice}
-            style={styles.exampleRow}
+            style={[sentence, styles.wrongSentence, { color: colors.muted }]}
           >
-            <Mark lineHeight={sizes.example.lineHeight}>
-              <Path d="M7 12h10" stroke={colors.muted} strokeWidth={1.8} />
-            </Mark>
-            <Text style={[styles.sentence, sentence, { color: colors.muted }]}>
-              {card.examplePair.nonStandard}
-            </Text>
-          </View>
-          <View
-            accessible
+            {capitalised(card.examplePair.nonStandard, voice.accessibilityLanguage)}
+          </WholeLinesText>
+          <WholeLinesText
+            testID="correction-example-standard"
             accessibilityLabel={fill(strings.exampleStandard, {
               text: withoutStress(card.examplePair.standard),
             })}
             {...voice}
-            style={styles.exampleRow}
+            style={[sentence, { color: colors.ink }]}
           >
-            <Mark lineHeight={sizes.example.lineHeight}>
-              <Path
-                d="M5 12.5l4.5 4.5L19 7.5"
-                fill="none"
-                stroke={colors.correct}
-                strokeWidth={2.2}
-              />
-            </Mark>
-            <Text style={[styles.sentence, sentence, { color: colors.ink }]}>
-              {card.examplePair.standard}
-            </Text>
-          </View>
+            {card.examplePair.standardSegments.map((segment, index) => {
+              // The sentence starts with a capital, so its first segment does.
+              const text =
+                index === 0 ? capitalised(segment.text, voice.accessibilityLanguage) : segment.text;
+              return segment.kind === 'standardForm' ? (
+                <Text key={index} style={typeStyle('correctionExampleStrong', tokens)}>
+                  {text}
+                </Text>
+              ) : (
+                text
+              );
+            })}
+          </WholeLinesText>
         </View>
       );
     case 'category':
@@ -266,13 +266,13 @@ function CorrectionBlock({
       );
     case 'sources':
       return card.sourceNames.length === 0 ? null : (
-        <Text
+        <WholeLinesText
           testID="correction-source"
           {...voice}
           style={[typeStyle('meta', tokens), { color: colors.muted }]}
         >
           {fill(strings.source, { source: card.sourceNames.join(SOURCE_SEPARATOR) })}
-        </Text>
+        </WholeLinesText>
       );
   }
 }
@@ -306,10 +306,13 @@ export function NonStandardForm({
       {...turnActions}
       style={styles.form}
     >
-      <Text style={[typeStyle('formLabel', tokens), { color: colors.muted }]}>
+      <WholeLinesText style={[typeStyle('formLabel', tokens), { color: colors.muted }]}>
         {strings.correctionCard.nonStandard}
-      </Text>
-      <Text
+      </WholeLinesText>
+      <WholeWordsText
+        text={capitalised(form, voice.accessibilityLanguage)}
+        typeRole="nonStandardForm"
+        lines={3}
         style={[
           typeStyle('nonStandardForm', tokens),
           styles.nonStandardForm,
@@ -318,9 +321,7 @@ export function NonStandardForm({
             textDecorationColor: withAlpha(colors.accent, 0.55),
           },
         ]}
-      >
-        {form}
-      </Text>
+      />
     </View>
   );
 }
@@ -356,26 +357,139 @@ export function StandardForm({
       {...turnActions}
       style={styles.form}
     >
-      <Text style={[typeStyle('formLabel', tokens), { color: colors.accentText }]}>
+      <WholeLinesText style={[typeStyle('formLabel', tokens), { color: colors.accentText }]}>
         {strings.correctionCard.standard}
-      </Text>
+      </WholeLinesText>
       <WholeWordsText
-        text={form}
+        text={capitalised(form, voice.accessibilityLanguage)}
         typeRole="heroWord"
         size={{
           fontSize: size.fontSize * standardFormScale,
           lineHeight: size.lineHeight * standardFormScale,
         }}
         tracking={-0.01}
-        // A phrase wraps; a single word shrinks to fit rather than break.
-        numberOfLines={form.includes(' ') ? 3 : 1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.5}
+        lines={3}
         style={[typeStyle('heroWord', tokens), { color: colors.ink }]}
       />
     </View>
   );
 }
+
+/**
+ * A Correction's non-standard form on its card (board XEntry2 e6): the line
+ * «Так часто кажуть · калька» naming its Correction Type, which Self-check
+ * leaves out, over the form, muted and struck with a tilted red bar, as one
+ * element VoiceOver reads with its label and type.
+ */
+function StruckForm({
+  form,
+  spoken,
+  correctionType,
+}: {
+  form: string;
+  /** What VoiceOver reads for the form, such as with where its Stress falls. */
+  spoken: string;
+  /** The Edition's name of the Correction Type; none under Self-check. */
+  correctionType: string | undefined;
+}) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { strings, voice } = useEdition();
+  const { nonStandard, correctionType: typeLabel } = strings.correctionCard;
+  // In the Feed, VoiceOver turns to the next or previous card from the forms.
+  const turnActions = usePageTurnActions();
+  return (
+    <View
+      testID="correction-non-standard"
+      accessible
+      accessibilityLabel={
+        correctionType === undefined
+          ? `${nonStandard}: ${spoken}`
+          : `${nonStandard}, ${correctionType}: ${spoken}`
+      }
+      {...voice}
+      {...turnActions}
+      style={styles.struckForm}
+    >
+      <WholeLinesText style={[typeStyle('correctionFormLabel', tokens), { color: colors.muted }]}>
+        {nonStandard}
+        {correctionType === undefined ? null : (
+          <>
+            {TYPE_SEPARATOR}
+            <Text
+              testID="correction-type"
+              accessibilityLabel={fill(typeLabel, { type: correctionType })}
+            >
+              {correctionType}
+            </Text>
+          </>
+        )}
+      </WholeLinesText>
+      <View style={styles.struck}>
+        <WholeWordsText
+          text={capitalised(form, voice.accessibilityLanguage)}
+          typeRole="correctionStruck"
+          lines={3}
+          style={[typeStyle('correctionStruck', tokens), { color: colors.muted }]}
+        />
+        <View
+          testID="correction-non-standard-strike"
+          style={[styles.strike, { backgroundColor: colors.accent }]}
+        />
+      </View>
+    </View>
+  );
+}
+
+/**
+ * A Correction's main standard equivalent in «Як краще» (board XEntry2 e6):
+ * the red label «Українською краще» over the form at a share of the Lemma's
+ * size (`correctionStandardScale`), as one element VoiceOver reads with its label.
+ */
+function CorrectionStandard({
+  form,
+  spoken,
+  size,
+}: {
+  form: string;
+  /** What VoiceOver reads for the form, such as with where its Stress falls. */
+  spoken: string;
+  /** The Lemma's size at the user's font size. */
+  size: TextSize;
+}) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { strings, voice } = useEdition();
+  const turnActions = usePageTurnActions();
+  const { size: roleSize, lineHeight } = typeRoles.correctionStandard;
+  const fontSize = size.fontSize * correctionStandardScale;
+  return (
+    <View
+      testID="correction-standard"
+      accessible
+      accessibilityLabel={`${strings.correctionCard.standard}: ${spoken}`}
+      {...voice}
+      {...turnActions}
+      style={styles.standard}
+    >
+      <WholeLinesText
+        style={[typeStyle('correctionFormLabel', tokens), { color: colors.accentText }]}
+      >
+        {strings.correctionCard.standard}
+      </WholeLinesText>
+      <WholeWordsText
+        text={capitalised(form, voice.accessibilityLanguage)}
+        typeRole="correctionStandard"
+        size={{ fontSize, lineHeight: (fontSize * lineHeight) / roleSize }}
+        lines={3}
+        style={[typeStyle('correctionStandard', tokens), { color: colors.ink }]}
+      />
+    </View>
+  );
+}
+
+/** What sits between «Так часто кажуть» and the Correction Type. */
+const TYPE_SEPARATOR = ' · ';
 
 /** The line naming a literary use's author and work, with the work's year when it is known. */
 function literaryUseSource(
@@ -387,37 +501,23 @@ function literaryUseSource(
     : fill(strings.literaryUseSourceWithYear, { author, work, year: String(workYear) });
 }
 
-/** The mark before a sentence of the example pair, centred on its first line. */
-function Mark({ lineHeight, children }: { lineHeight: number; children: ReactNode }) {
-  return (
-    <View style={[styles.mark, { height: lineHeight }]}>
-      <Svg
-        width={correctionCardLayout.exampleMark}
-        height={correctionCardLayout.exampleMark}
-        viewBox="0 0 24 24"
-      >
-        {children}
-      </Svg>
-    </View>
-  );
-}
-
 /** What sits between the titles of a Correction's sources on the source line. */
 const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space[3],
-  },
-  title: { flexShrink: 1 },
   form: { gap: space[2] },
   nonStandardForm: { textDecorationLine: 'line-through' },
-  examplePair: { gap: space[3], paddingVertical: space[4], paddingHorizontal: space[4] },
-  exampleRow: { flexDirection: 'row', gap: space[3] },
-  mark: { width: correctionCardLayout.exampleMark, justifyContent: 'center' },
-  sentence: { flex: 1 },
+  struckForm: { gap: space[2] },
+  struck: { alignSelf: 'flex-start' },
+  strike: {
+    position: 'absolute',
+    top: '50%',
+    left: -correctionStrike.overhang,
+    right: -correctionStrike.overhang,
+    height: correctionStrike.thickness,
+    transform: [{ rotate: correctionStrike.angle }],
+  },
+  standard: { gap: entryCardFrame.panelGap },
+  examplePair: { gap: entryCardFrame.panelGap },
+  wrongSentence: { textDecorationLine: 'line-through' },
 });

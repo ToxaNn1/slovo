@@ -238,42 +238,42 @@ function membersOf(card: Awaited<ReturnType<typeof cardOf>>) {
 }
 
 describe('the Tip card in the fixed frame', () => {
-  it('shows «Суть» selected with the standard form and the explanation, and «Приклад»', async () => {
+  it('opens on the board look: the kicker «ПОРАДА», the title over its red bar, «Так часто кажуть» kept', async () => {
+    await open({ tips: [tip] });
+    await renderApp();
+
+    const card = await cardOf('tip');
+    expect(card.getByTestId('tip-kicker', hidden)).toHaveTextContent(editionStrings.tipCard.chip);
+    expect(card.getByTestId('tip-title', hidden)).toHaveTextContent('Котра година?');
+    expect(card.getByTestId('tip-rule', hidden)).toBeTruthy();
+    expect(card.queryByTestId('tip-chip', hidden)).toBeNull();
+    expect(card.getByTestId('tip-non-standard', hidden)).toHaveProp(
+      'accessibilityLabel',
+      `${editionStrings.correctionCard.nonStandard}: Скільки часу?`,
+    );
+  });
+
+  it('shows «Правило» and «Джерело», no «Винятки»: the explanation and the chips of the standard form and the Example, the source on its own tab', async () => {
     await open({ tips: [tip] });
     await renderApp();
 
     const card = await cardOf('tip');
     expect(tabsOf(card)).toEqual([
-      { name: 'Суть', selected: true },
-      { name: 'Приклад', selected: false },
+      { name: 'Правило', selected: true },
+      { name: 'Джерело', selected: false },
     ]);
-    expect(card.getByText('Скільки часу?', hidden)).toBeTruthy();
-    expect(card.getByText('Час не рахують, а питають, котра година.', hidden)).toBeTruthy();
-    expect(card.queryByText(/Котра година, пане\?/, hidden)).toBeNull();
     expect(card.queryByText('Винятки', hidden)).toBeNull();
-  });
-
-  it('shows the Example and its author on «Приклад», the title kept above the tabs', async () => {
-    await open({ tips: [tip] });
-    await renderApp();
-
-    const card = await cardOf('tip');
-    await settle(() => fireEvent.press(card.getByTestId('tip-tab-example')));
-
-    expect(tabsOf(card).find(({ selected }) => selected)?.name).toBe('Приклад');
-    expect(card.getByText(/Котра година, пане\?/, hidden)).toBeTruthy();
-    expect(card.getByText(/Леся Українка/, hidden)).toBeTruthy();
-    expect(card.queryByText('Час не рахують, а питають, котра година.', hidden)).toBeNull();
-    expect(card.getByTestId('tip-title', hidden)).toBeTruthy();
-  });
-
-  it('draws no tab bar for a Tip without an Example', async () => {
-    await open({ tips: [{ ...tip, example: undefined }] });
-    await renderApp();
-
-    const card = await cardOf('tip');
-    expect(tabsOf(card)).toEqual([]);
     expect(card.getByText('Час не рахують, а питають, котра година.', hidden)).toBeTruthy();
+    expect(
+      card
+        .getAllByTestId(/^tip-word-/, hidden)
+        .map((chip) => String(chip.props['accessibilityLabel'])),
+    ).toEqual(['Котра година?', 'Котра година, пане?']);
+    expect(card.queryByTestId('tip-source', hidden)).toBeNull();
+
+    await settle(() => fireEvent.press(card.getByTestId('tip-tab-source')));
+
+    expect(card.getByTestId('tip-source-0', hidden)).toHaveTextContent(/Антоненко-Давидович/);
   });
 
   it('clamps a Tip too long for the frame under «Детальніше», which opens it whole (owner 08.11)', async () => {
@@ -311,14 +311,44 @@ describe('the Tip card in the fixed frame', () => {
 });
 
 describe('the Synonym Row card in the fixed frame', () => {
-  it('shows the meaning and every member, with no tab bar and no pages', async () => {
+  it('shows the members four to a page, the meaning on the first page, the Example on the last and the source on «Джерело»', async () => {
     await open({ synonymRows: [row] });
     await renderApp();
 
     const card = await cardOf('synonymRow');
-    expect(tabsOf(card)).toEqual([]);
+    expect(tabsOf(card)).toEqual([
+      { name: 'Ряд · 1/2', selected: true },
+      { name: 'Ряд · 2/2', selected: false },
+      { name: 'Джерело', selected: false },
+    ]);
     expect(card.getByText('Рухатися пішки.', hidden)).toBeTruthy();
-    expect(membersOf(card)).toEqual(members);
+    expect(membersOf(card)).toEqual(members.slice(0, 4));
+    expect(card.queryByTestId('synonym-row-source', hidden)).toBeNull();
+
+    await settle(() => fireEvent.press(card.getByTestId('synonymRow-tab-page-2')));
+
+    expect(tabsOf(card).find(({ selected }) => selected)?.name).toBe('Ряд · 2/2');
+    expect(membersOf(card)).toEqual(members.slice(4));
+    expect(card.queryByText('Рухатися пішки.', hidden)).toBeNull();
+    expect(card.queryByTestId('synonym-row-source', hidden)).toBeNull();
+
+    await settle(() => fireEvent.press(card.getByTestId('synonymRow-tab-source')));
+
+    expect(card.getByTestId('synonymRow-source-0', hidden)).toHaveTextContent('Словник синонімів', {
+      exact: true,
+    });
+  });
+
+  it('draws one page and «Джерело» for a row of four members', async () => {
+    await open({ synonymRows: [{ ...row, members: row.members.slice(0, 4) }] });
+    await renderApp();
+
+    const card = await cardOf('synonymRow');
+    expect(tabsOf(card)).toEqual([
+      { name: 'Ряд · 1/1', selected: true },
+      { name: 'Джерело', selected: false },
+    ]);
+    expect(membersOf(card)).toEqual(members.slice(0, 4));
     expect(card.getByTestId('synonymRow-tab-panel', hidden)).toBeTruthy();
   });
 

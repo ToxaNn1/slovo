@@ -146,7 +146,7 @@ function CategoryFeedPageView({
   position: number;
   name: string;
 }) {
-  const { selfCheck, stressFall, wordTabs } = useShown();
+  const { selfCheck, stressFall, wordTabs, sourceTab, tipExceptions } = useShown();
   const slots = useEntrySlots(card);
   const kicker = fill(editionStrings.dashboard.category.feedKicker, {
     name,
@@ -163,6 +163,8 @@ function CategoryFeedPageView({
           selfCheck={selfCheck}
           stressFalls={stressFall}
           tabs={wordTabs}
+          sourceTab={sourceTab}
+          tipExceptions={tipExceptions}
         />
       </PagerScrollView>
     </View>

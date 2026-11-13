@@ -40,6 +40,7 @@ const yesterdaysWord: WordCardModel = {
   details: undefined,
   linkedCorrections: [],
   synonymRow: undefined,
+  sourceNames: [],
 };
 
 const synonymRows: readonly SynonymRow[] = Array.from({ length: 3 }, (_, index) => ({

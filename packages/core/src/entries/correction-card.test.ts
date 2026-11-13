@@ -17,7 +17,7 @@ function correction(overrides: Partial<Correction> = {}): Correction {
     explanation: 'Протяг — це рух повітря.',
     examplePair: {
       nonStandard: 'Ремонт тривав на протязі року.',
-      standard: 'Ремонт тривав протягом року.',
+      standard: 'Ремонт тривав **протягом року**.',
     },
     categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
@@ -56,6 +56,11 @@ describe('the Correction card', () => {
       examplePair: {
         nonStandard: 'Ремонт тривав на протязі року.',
         standard: 'Ремонт тривав протягом року.',
+        standardSegments: [
+          { kind: 'text', text: 'Ремонт тривав ' },
+          { kind: 'standardForm', text: 'протягом року' },
+          { kind: 'text', text: '.' },
+        ],
       },
       categoryId: 'everyday',
       categoryName: 'Побут',
@@ -92,6 +97,20 @@ describe('the Correction card', () => {
     );
 
     expect(card.sourceNames).toEqual(['Горох', 'Антоненко-Давидович']);
+  });
+
+  it('gives the standard example sentence without its marks and in pieces, the standard form apart', async () => {
+    const card = await build(correction());
+
+    expect(card.examplePair).toEqual({
+      nonStandard: 'Ремонт тривав на протязі року.',
+      standard: 'Ремонт тривав протягом року.',
+      standardSegments: [
+        { kind: 'text', text: 'Ремонт тривав ' },
+        { kind: 'standardForm', text: 'протягом року' },
+        { kind: 'text', text: '.' },
+      ],
+    });
   });
 
   it('puts the first standard equivalent first and the others after it, in their order', async () => {

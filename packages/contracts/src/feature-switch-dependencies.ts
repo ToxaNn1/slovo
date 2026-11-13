@@ -91,6 +91,10 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   swipeMarks: ['knowledge'],
   // The demo plays the side swipes on the Feed's card (ADR 0112).
   gesturesHintDemo: ['swipeMarks'],
+  // The source tab is the last of the Entry card's tabs (ADR 0116).
+  sourceTab: ['wordTabs'],
+  // «Винятки» is a tab of the Tip card's tabs (ADR 0120).
+  tipExceptions: ['wordTabs'],
   // The Feed header's Search button opens the Search screen.
   searchButton: ['search'],
   // The wordmark leads to the Dashboard (ADR 0079).

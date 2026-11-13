@@ -140,11 +140,14 @@ export {
   CorrectionSchema,
   CorrectionTypeSchema,
   ExamplePairSchema,
+  parseStandardExample,
   type Correction,
   type CorrectionInput,
   type CorrectionType,
   type ExamplePair,
+  type ExampleSegment,
   type LiteraryUse,
+  type ParsedStandardExample,
 } from './correction';
 export {
   IdiomIdSchema,
@@ -169,8 +172,10 @@ export {
   TIP_EXPLANATION_MAX_LENGTH,
   TipGameQuestionSchema,
   TipIdSchema,
+  TipExceptionsSchema,
   TipSchema,
   type Tip,
+  type TipExceptions,
   type TipGameQuestion,
   type TipInput,
 } from './tip';

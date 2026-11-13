@@ -55,7 +55,7 @@ function correction(id: string, retired = false): Correction {
     correctionType: 'surzhyk',
     standardEquivalents: [id.slice(2)],
     explanation: 'An explanation.',
-    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
+    examplePair: { nonStandard: 'People say this.', standard: '**Better say this**.' },
     categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
     literaryUses: [],

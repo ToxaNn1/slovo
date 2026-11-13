@@ -332,7 +332,7 @@ function Scene({ episode }: { episode: Episode }) {
               size={size}
               face={stressed ? light.ink : light.accent}
               edge={stressed ? blackEdge : light.accentEdge}
-              ink={light.onAccent}
+              ink={light.background}
             />
             {stressed && <Acute size={size} />}
           </div>
@@ -364,7 +364,7 @@ function Scene({ episode }: { episode: Episode }) {
               opacity: interpolate(t, [0.8, 1], [1, 0.2], clamp),
             }}
           >
-            <Tile letter={item.letter} size={layout.tile} face={light.ink} edge={blackEdge} ink={light.onAccent} />
+            <Tile letter={item.letter} size={layout.tile} face={light.ink} edge={blackEdge} ink={light.background} />
           </div>
         );
       })}
@@ -440,7 +440,7 @@ function Hint({ letter, size, at: start, s }: { letter: string; size: number; at
         opacity: Math.min(1, (1 - fall) * 4 + 0.4),
       }}
     >
-      <Tile letter={letter} size={size} face={light.accent} edge={light.accentEdge} ink={light.onAccent} />
+      <Tile letter={letter} size={size} face={light.accent} edge={light.accentEdge} ink={light.background} />
     </div>
   );
 }
@@ -513,7 +513,7 @@ function Counter({ words, safe, s }: { words: number; safe: Safe; s: number }) {
         borderRadius: 20 * s,
         background: light.ink,
         boxShadow: `0 ${9 * s}px 0 ${blackEdge}`,
-        color: light.onAccent,
+        color: light.background,
         fontFamily: wordFont,
         fontWeight: 900,
         fontSize: 58 * s,

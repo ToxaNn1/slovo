@@ -38,7 +38,7 @@ function correction(id: string, nonStandardForm: string, retired = false): Corre
     correctionType: 'russianism',
     standardEquivalents: ['протягом'],
     explanation: 'An explanation.',
-    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
+    examplePair: { nonStandard: 'People say this.', standard: '**Better say this**.' },
     categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
     literaryUses: [],
@@ -125,7 +125,20 @@ describe('the Word card', () => {
       details: undefined,
       linkedCorrections: [],
       synonymRow: undefined,
+      sourceNames: ['Test source'],
     });
+  });
+
+  it('names each source by its short name, or its title without one, in their order', async () => {
+    const card = await build(
+      word({
+        sources: [
+          { title: 'Словник української мови', shortName: 'СУМ-11' },
+          { title: 'Грінченко' },
+        ],
+      }),
+    );
+    expect(card.sourceNames).toEqual(['СУМ-11', 'Грінченко']);
   });
 
   it('names no Category the Language Pack does not have', async () => {

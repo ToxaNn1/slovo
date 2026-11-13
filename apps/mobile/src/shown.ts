@@ -39,6 +39,10 @@ export interface Shown {
   readonly stressFall: boolean;
   /** Whether the Entry cards of Words, Corrections, Idioms, Tips and Synonym Rows, in the Feed and on the Entry screen, are fixed-height cards with tabs (ADR 0091); the Word of the Day card is the red card while Self-check keeps it closed, and the Feed's header draws no XP bar. */
   readonly wordTabs: boolean;
+  /** Whether those tabbed cards give the Entry's sources their own last tab «Джерело», out of the other tabs (ADR 0116); on only with `wordTabs`. */
+  readonly sourceTab: boolean;
+  /** Whether a tabbed Tip card with exceptions shows them in a tab «Винятки» after «Правило» (ADR 0120); on only with `wordTabs`. */
+  readonly tipExceptions: boolean;
   /** Whether the Lemma on the Word of the Day card in the Feed is set in the Edition's calligraphic font. */
   readonly calligraphicLemma: boolean;
   /** Whether an Entry card is in Self-check. */
@@ -197,6 +201,8 @@ export function shownOf({
     },
     stressFall: on('stressAnimation'),
     wordTabs: on('wordTabs'),
+    sourceTab: on('sourceTab'),
+    tipExceptions: on('tipExceptions'),
     calligraphicLemma: on('calligraphy'),
     selfCheck: on('selfCheck') && settings.selfCheck,
     selfCheckSetting: on('selfCheck'),

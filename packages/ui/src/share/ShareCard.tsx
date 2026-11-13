@@ -92,12 +92,12 @@ function usePaint(): Paint {
       ground: colors.accent,
       ink: colors.ink,
       mark: colors.ink,
-      giant: colors.onAccent,
+      giant: colors.background,
       dot: halftone.dot,
-      chip: withAlpha(colors.onAccent, shareCardDrawing.chipAlpha.light),
-      closedCell: withAlpha(colors.onAccent, shareCardDrawing.closedCellAlpha.light),
+      chip: withAlpha(colors.background, shareCardDrawing.chipAlpha.light),
+      closedCell: withAlpha(colors.background, shareCardDrawing.closedCellAlpha.light),
       footer: colors.ink,
-      onFooter: colors.onAccent,
+      onFooter: colors.background,
       onRed: true,
     };
   }
