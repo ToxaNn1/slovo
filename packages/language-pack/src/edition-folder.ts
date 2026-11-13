@@ -328,7 +328,7 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
       return checkNew((set) => ({ ...set, idioms: [...set.idioms, ...authored(idioms)] }));
     },
     checkNewSynonymRows(rows) {
-      return checkNew((set) => ({ ...set, synonymRows: authored(rows) }));
+      return checkNew((set) => ({ ...set, synonymRows: [...set.synonymRows, ...authored(rows)] }));
     },
   };
 
