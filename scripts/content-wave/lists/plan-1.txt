@@ -1,0 +1,6 @@
+wave content/1113-wave 90
+content/1113-words-a words scripts/content-wave/lists/words-a.txt 15
+content/1113-words-b words scripts/content-wave/lists/words-b.txt 15
+content/1113-words-c words scripts/content-wave/lists/words-c.txt 14
+content/1113-words-d words scripts/content-wave/lists/words-d.txt 14
+content/1113-words-e words scripts/content-wave/lists/words-e.txt 14

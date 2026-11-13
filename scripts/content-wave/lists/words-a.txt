@@ -1,0 +1,21 @@
+# lemma category rarity (content/1113-wave)
+ледащо witty-insults r4
+пустомеля witty-insults r4
+тюхтія witty-insults r5
+рогожник old-crafts r4
+килимар old-crafts r5
+ряст folk-names r3
+сон-трава folk-names r3
+куколиця folk-names r5
+надпліччя human-body r5
+гіроскоп technology r3
+шків technology r5
+мезон science r5
+повідь nature-weather r1
+барбакан military r4
+кулеврина military r4
+аквафорта arts-culture r4
+вирник history-antiquity r4
+курултай history-antiquity r4
+гіпонім language-speech r3
+улесливість emotions-character r1

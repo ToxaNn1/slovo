@@ -1,0 +1,21 @@
+# lemma category rarity (content/1113-wave)
+харцизяка witty-insults r4
+мурло witty-insults r4
+ласун witty-insults r5
+валюшник old-crafts r4
+вуглярство old-crafts r5
+ласкавець folk-names r3
+ранник folk-names r5
+сухожилля human-body r3
+шестерня technology r3
+зубчатка technology r5
+алель science r3
+зірниця nature-weather r1
+терниця household-crafts r3
+габіон military r4
+поножі military r4
+зернь arts-culture r4
+рядович history-antiquity r4
+апосіопеза language-speech r3
+апокопа language-speech r3
+полохливість emotions-character r1

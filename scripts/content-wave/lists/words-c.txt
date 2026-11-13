@@ -1,0 +1,21 @@
+# lemma category rarity (content/1113-wave)
+розтелепа witty-insults r4
+базікало witty-insults r4
+шелихвіст witty-insults r5
+бурлак old-crafts r4
+млинар old-crafts r5
+купальниця folk-names r3
+очиток folk-names r5
+піднебіння human-body r3
+підпахвина human-body r5
+храповик technology r5
+мітохондрія science r3
+віхола nature-weather r1
+кужіль household-crafts r3
+шанець military r4
+наруччя military r4
+скань arts-culture r4
+смерд history-antiquity r4
+тумен history-antiquity r4
+логогриф language-speech r3
+сором'язливість emotions-character r1

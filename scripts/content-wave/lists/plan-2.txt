@@ -1,0 +1,6 @@
+wave content/1113-wave 90
+content/1113-words-f words scripts/content-wave/lists/words-f.txt 14
+content/1113-words-g words scripts/content-wave/lists/words-g.txt 14
+content/1113-idioms-a idioms scripts/content-wave/lists/idioms-a.txt 13
+content/1113-idioms-b idioms scripts/content-wave/lists/idioms-b.txt 12
+content/1113-corrections-a corrections scripts/content-wave/lists/corrections-a.txt 13

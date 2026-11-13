@@ -1,0 +1,21 @@
+# lemma category rarity (content/1113-wave)
+нечупара witty-insults r4
+верзун witty-insults r4
+приблуда witty-insults r5
+золотар old-crafts r4
+римарство old-crafts r5
+жовтозілля folk-names r3
+костриця folk-names r5
+дрочок folk-names r5
+чоло human-body r5
+кулачок technology r5
+ензим science r3
+ізохора science r5
+водополля nature-weather r1
+бойниця military r4
+ратище military r4
+інкрустація arts-culture r4
+мечник history-antiquity r4
+улус history-antiquity r4
+акростих language-speech r3
+підлабузництво emotions-character r1

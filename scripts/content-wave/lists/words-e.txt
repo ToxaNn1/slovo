@@ -1,0 +1,21 @@
+# lemma category rarity (content/1113-wave)
+ґава witty-insults r4
+ґелґота witty-insults r4
+мазун witty-insults r5
+лучник old-crafts r4
+ґонтарство old-crafts r5
+оман folk-names r3
+комонник folk-names r5
+мочка human-body r3
+шпиндель technology r3
+стопор technology r5
+адрон science r5
+перекат nature-weather r1
+тіпачка household-crafts r3
+гласис military r4
+бехтерець military r4
+пілястра arts-culture r4
+ногата history-antiquity r4
+дисфемізм language-speech r3
+анаколут language-speech r1
+відлюдькуватість emotions-character r1

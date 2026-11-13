@@ -1,0 +1,20 @@
+# lemma category rarity (content/1113-wave)
+обертас witty-insults r4
+ненажера witty-insults r5
+скляр old-crafts r4
+кожушник old-crafts r5
+воскобійник old-crafts r5
+шавлія folk-names r3
+білоус folk-names r5
+бакенбарди human-body r3
+маховик technology r3
+шпонка technology r5
+лептон science r5
+приморозок nature-weather r1
+ночовки household-crafts r5
+аркебуза military r4
+литаври military r4
+баптистерій arts-culture r4
+клевець history-antiquity r4
+гіперонім language-speech r3
+зрадливість emotions-character r1

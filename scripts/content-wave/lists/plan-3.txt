@@ -1,0 +1,4 @@
+wave content/1113-wave 90
+content/1113-corrections-b corrections scripts/content-wave/lists/corrections-b.txt 12
+content/1113-synonyms-a synonyms scripts/content-wave/lists/synonyms-a.txt 13
+content/1113-synonyms-b synonyms scripts/content-wave/lists/synonyms-b.txt 12
