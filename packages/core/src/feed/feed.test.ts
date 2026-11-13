@@ -1253,6 +1253,50 @@ describe('Corrections in the Feed', () => {
       });
     });
 
+    it('reads again only the Words whose links a change of eligibility touches', async () => {
+      const pack = createMemoryContentPort({ words, corrections: linkedCorrections });
+      const read: string[] = [];
+      const content: ContentReadPort = {
+        ...pack,
+        getEntries(ids) {
+          read.push(...ids);
+          return pack.getEntries(ids);
+        },
+      };
+      const app = await runApp({ content });
+      const { feed } = app;
+      while (!feed.cards.some((card) => card.entryId === linked.id)) await feed.next();
+      await feed.next();
+      const position = feed.cards.findIndex((card) => card.entryId === linked.id);
+      const others = new Set(
+        feed.cards.flatMap((card) =>
+          card.kind === 'word' && card.entryId !== linked.id ? [card.entryId] : [],
+        ),
+      );
+      expect(others.size).toBeGreaterThan(0);
+      const othersRead = () => read.filter((id) => others.has(id));
+
+      read.length = 0;
+      await app.hide({ kind: 'entry', entryId: 'c_protiazi' });
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([]);
+      expect(othersRead()).toEqual([]);
+
+      await app.hiddenEntries.restore('c_protiazi');
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([
+        { correctionId: 'c_protiazi', nonStandardForm: 'not protiazi' },
+      ]);
+      expect(othersRead()).toEqual([]);
+
+      // A Correction no Word links: no Word is read again.
+      const unlinked = liveCorrections[0]?.id ?? '';
+      const before = feed.cards.filter((card) => card.kind === 'word');
+      read.length = 0;
+      await app.hide({ kind: 'entry', entryId: unlinked });
+      await app.hiddenEntries.restore(unlinked);
+      expect(read.filter((id) => id.startsWith('w_'))).toEqual([]);
+      expect(feed.cards.filter((card) => card.kind === 'word')).toEqual(before);
+    });
+
     it('links no Correction the Language Pack lists under no kind, by the one rule the Cycle covers Corrections, and opens none', async () => {
       const pack = createMemoryContentPort({ words, corrections: linkedCorrections });
       const content: ContentReadPort = {

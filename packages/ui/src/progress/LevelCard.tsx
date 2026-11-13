@@ -60,7 +60,7 @@ export function LevelCard({
   const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
   // The top Level has nothing left to reach, so its ring is full.
-  const share = toNext > 0 ? Math.min(progress / toNext, 1) : 1;
+  const share = toNext > 0 ? Math.min(Math.max(0, progress / toNext), 1) : 1;
   const filled = useSharedValue(reduceMotion ? share : 0);
   useEffect(() => {
     filled.value = reduceMotion

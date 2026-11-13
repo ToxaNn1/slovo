@@ -3,10 +3,10 @@
  * source's page (ADR 0084). Pure; the caller fetches the page. The Content CLI's
  * `verify` and the backend's quote check job both match through it.
  */
+import { STRESS_MARK } from '@slovo/contracts';
 import { parse } from 'node-html-parser';
 
 const GOROH_HOST = 'goroh.pp.ua';
-const STRESS_MARK = '́';
 
 /** goroh's name for text a language model wrote; it is never quoted (ADR 0012). */
 export const LANGUAGE_MODEL = 'Велика мовна модель';

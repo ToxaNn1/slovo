@@ -196,3 +196,12 @@ test('the Rule editor saves over a Kill switch written since it opened, never un
     expect(sent).toMatchObject([{ rules: [{ verdict: 'off', targets: {} }], reason: 'reorder' }]);
   });
 });
+
+test('while the Editions fail to load, the Kill switch stays off and the screen says so', async () => {
+  server.use(http.get('*/admin/editions', () => HttpResponse.json({}, { status: 502 })));
+  window.history.replaceState(null, '', '/admin/switches/kill');
+  render(<Admin />);
+
+  expect(await screen.findByText('Не вдалося завантажити свічі.')).toBeDefined();
+  expect(screen.getByRole('button', { name: 'Вимкнути зараз' })).toHaveProperty('disabled', true);
+});

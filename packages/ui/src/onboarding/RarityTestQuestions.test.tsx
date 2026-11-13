@@ -6,7 +6,7 @@ import {
   type RarityTestScreen,
 } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import type { ComponentProps } from 'react';
 import { AccessibilityInfo, View } from 'react-native';
 import { testStrings } from '../test-strings';
@@ -64,6 +64,23 @@ describe('RarityTestQuestions', () => {
     expect(screen.getByText('2 of 2')).toBeTruthy();
     expect(screen.getByLabelText('second word')).toBeTruthy();
     expect(onApply).not.toHaveBeenCalled();
+  });
+
+  it('takes two taps before the screen redraws as answers to two Words', async () => {
+    const { onApply } = await renderTest(2);
+    const unknown = screen.getByRole('button', { name: 'Unknown' });
+    const known = screen.getByRole('button', { name: 'Known' });
+
+    await act(async () => {
+      void fireEvent.press(unknown);
+      void fireEvent.press(known);
+      await Promise.resolve();
+    });
+
+    expect(onApply).toHaveBeenCalledWith([
+      { rarity: 1, known: false },
+      { rarity: 3, known: true },
+    ]);
   });
 
   it("announces each next Word to VoiceOver with where the test is, in the Edition's words", async () => {

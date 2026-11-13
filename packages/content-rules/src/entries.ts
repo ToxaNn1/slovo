@@ -85,13 +85,6 @@ export function checkEntries(
   // with the same Lemma and primary Definition are one Word authored twice.
   const wordByLemmaAndDefinition = new Map<string, Authored<Word>>();
 
-  for (const { file, entry } of [...words, ...corrections, ...idioms]) {
-    if (!checksFile(file)) continue;
-    for (const [field, message] of mixedScriptWords(entry)) {
-      errors.push({ rule: 'mixed-script', file, entryId: entry.id, field, message });
-    }
-  }
-
   for (const { file, entry: word } of words) {
     const fail = (rule: RuleName, field: string, message: string) => {
       errors.push({ rule, file, entryId: word.id, field, message });
@@ -112,7 +105,7 @@ export function checkEntries(
     }
 
     if (!word.retired) {
-      const key = wordKey(word.lemma, word.primaryDefinition);
+      const key = wordKey(word.lemma.toLocaleLowerCase(config.locale), word.primaryDefinition);
       const first = wordByLemmaAndDefinition.get(key);
       if (first === undefined) {
         wordByLemmaAndDefinition.set(key, { file, entry: word });
@@ -316,6 +309,24 @@ const UNCHECKED_SCRIPT_FIELDS = new Set(['lemma', 'expression', 'etymology']);
  * "i" copied into a Cyrillic word: they look right but break search and screen
  * readers. Each comes as its dotted field and the message.
  */
+/** The mixed-script words of the records whose file `checksFile` takes: Entries of every kind. */
+export function checkMixedScript(
+  records: readonly Authored<Entry>[],
+  checksFile: (file: string) => boolean,
+): Refusal[] {
+  return records.flatMap(({ file, entry }) =>
+    checksFile(file)
+      ? mixedScriptWords(entry).map(([field, message]) => ({
+          rule: 'mixed-script' as const,
+          file,
+          entryId: entry.id,
+          field,
+          message,
+        }))
+      : [],
+  );
+}
+
 function mixedScriptWords(entry: Entry): [field: string, message: string][] {
   const found: [string, string][] = [];
   const visit = (value: unknown, field: string) => {

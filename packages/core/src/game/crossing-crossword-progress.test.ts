@@ -1,3 +1,4 @@
+import type { Analytics } from '../analytics/analytics';
 import { describe, expect, it } from 'vitest';
 
 import { openComposition } from '../composition';
@@ -37,12 +38,14 @@ async function open({
   under = vocabulary,
   on = ['game', 'dailyCrossword', 'crossingCrossword', 'crosswordSolveTime'],
   xp,
+  analytics,
 }: {
   records?: Map<string, string>;
   start?: string;
   under?: readonly Word[];
   on?: readonly FeatureSwitch[];
   xp?: GameXp;
+  analytics?: Pick<Analytics, 'track'>;
 } = {}) {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   return openCrossingCrossword({
@@ -54,6 +57,7 @@ async function open({
       languageTraits: testEdition().languageTraits,
     },
     ...(xp ? { xp } : {}),
+    ...(analytics ? { analytics } : {}),
   });
 }
 
@@ -154,6 +158,36 @@ describe('the crossing Daily Crossword', () => {
     await crossword.play({ type: 'tick', seconds: 4 });
 
     expect((await opened({ records })).state.seconds).toBe(3);
+  });
+
+  it('counts a tick in whole seconds and never back, so the progress kept still reads', async () => {
+    const records = new Map<string, string>();
+    const crossword = await opened({ records });
+    await crossword.play({ type: 'tick', seconds: 2.6 });
+    await crossword.play({ type: 'tick', seconds: -9 });
+    await crossword.play({ type: 'tick', seconds: Number.NaN });
+    await crossword.keep();
+
+    expect(crossword.state.seconds).toBe(3);
+    const again = await opened({ records, start: '2026-11-04T20:00:00Z' });
+    expect(again.state.seconds).toBe(3);
+  });
+
+  it('tells analytics of the solve without holding the next play back', async () => {
+    const tracked: unknown[] = [];
+    const analytics: Pick<Analytics, 'track'> = {
+      // The network never answers.
+      track: (...event) => {
+        tracked.push(event);
+        return new Promise<void>(() => undefined);
+      },
+    };
+    const crossword = await opened({ analytics });
+    for (let i = 0; i < crossword.puzzle.words.length; i += 1) await solve(crossword, i);
+    await crossword.keep();
+
+    expect(crossword.state.words.every(({ kind }) => kind === 'solved')).toBe(true);
+    expect(tracked).toEqual([['dailyCrosswordSolved', { date: '2026-11-04' }]]);
   });
 
   it('starts empty on a new date', async () => {

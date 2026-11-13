@@ -721,6 +721,14 @@ export async function openFeed({
     await Promise.all([kept, keepNextCardReady()]);
   }
 
+  /** The Corrections and the Synonym Rows the Cycle covers: those a Word card may link. */
+  function linkable(): ReadonlySet<string> {
+    const { corrections, synonymRows } = cycle.order();
+    return new Set([...corrections, ...synonymRows]);
+  }
+  /** What the Cycle covered of them when the links were last followed. */
+  let linkableBefore = linkable();
+
   /**
    * Builds the Word cards of the session again once eligibility changed: a
    * Word card links no Correction that is Hidden, of a Category out of the
@@ -728,11 +736,21 @@ export async function openFeed({
    * out of the Mix, so the links follow the Hidden Entries and the Mix as
    * the Cycle does. Each card keeps its place, and so does the reader; only
    * a card whose links changed is replaced, and nobody is told when none did.
+   *
+   * Only the Words the change touches are read again: a card that links an
+   * Entry the Cycle no longer covers, and the Words that link an Entry the
+   * Cycle covers again, which the Entries name.
    */
   async function refreshLinks(): Promise<void> {
+    const now = linkable();
+    const back = [...now].filter((id) => !linkableBefore.has(id));
+    linkableBefore = now;
+    const linking = await entries.wordsLinking(back);
     const pairs = await Promise.all(
       session.all.map(async (card): Promise<readonly [FeedCard, FeedCard] | undefined> => {
         if (card.kind !== 'word') return undefined;
+        if (!linking.has(card.entryId) && linkedIds(card.model).every((id) => now.has(id)))
+          return undefined;
         const entry = await entries.get(card.entryId);
         if (entry?.kind !== 'word') return undefined;
         const fresh = await buildEntryCard(entries, entry, card.wordOfTheDay);
@@ -865,6 +883,12 @@ export async function openFeed({
         : inTurnTellingSeen(() => markOpenedSeen(chosen.wordId, new Map()));
     },
   };
+}
+
+/** The ids of the Corrections and the Synonym Row a Word card links. */
+function linkedIds({ linkedCorrections, synonymRow }: WordCardModel): readonly string[] {
+  const corrections = linkedCorrections.map(({ correctionId }) => correctionId);
+  return synonymRow === undefined ? corrections : [...corrections, synonymRow.synonymRowId];
 }
 
 /** Whether two Word cards link the same Corrections and the same Synonym Row. */

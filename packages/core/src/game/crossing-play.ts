@@ -216,6 +216,12 @@ export function playCrossing(
       };
     }
     case 'tick':
-      return { ...state, seconds: state.seconds + action.seconds };
+      // Whole seconds, never back: the progress kept reads them as a count.
+      return {
+        ...state,
+        seconds:
+          state.seconds +
+          (Number.isFinite(action.seconds) ? Math.max(0, Math.round(action.seconds)) : 0),
+      };
   }
 }

@@ -1,13 +1,12 @@
-import { AbsoluteFill, Easing, interpolate, Sequence, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, interpolate, Sequence, useCurrentFrame, useVideoConfig } from 'remotion';
 
 import { light, uiFont, wordFont } from './look';
 import { Rupor } from './Rupor';
 import { safeFor } from './safe';
 import { levels, Sfx, sfx } from './sound';
 import { type Store, StoreBadge } from './StoreBadge';
+import { clamp, pop } from './shared/motion';
 
-const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
-const pop = Easing.bezier(0.34, 1.56, 0.64, 1);
 
 /** The brand's one slogan and its descriptor: the same on every video's end card. */
 export const slogan = 'Тримай слово.';

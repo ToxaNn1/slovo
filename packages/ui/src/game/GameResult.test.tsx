@@ -105,7 +105,10 @@ describe('GameResult', () => {
       </EditionProvider>,
     );
 
-    expect(screen.getByRole('header', { name: 'Time is up' })).toBeOnTheScreen();
+    // The title and its line are read as one heading.
+    const heading = screen.getByRole('header');
+    expect(heading).toHaveTextContent('Time is up', { exact: false });
+    expect(heading).toHaveTextContent(strings.game.result.timeUp.line, { exact: false });
     expect(screen.getByTestId('game-result-right')).toHaveTextContent('1', { exact: false });
     expect(screen.queryByTestId('game-result-rounds')).toBeNull();
   });

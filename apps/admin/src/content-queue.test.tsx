@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test } from 'vitest';
@@ -128,4 +128,43 @@ test('the Контент link counts the open batches of the Edition filter', as
 
   expect(await nav.findByRole('link', { name: 'Контент 1' })).toBeDefined();
   expect(asked.some((search) => search.includes('uk'))).toBe(true);
+});
+
+test('a queue write keeps its confirmation open until it ends, and a refusal stays in it', async () => {
+  let answer: (response: Response) => void = () => undefined;
+  const received: unknown[] = [];
+  server.use(
+    http.post('*/admin/content-queue/*', async ({ request }) => {
+      received.push(await request.json());
+      return new Promise<Response>((resolve) => {
+        answer = resolve;
+      });
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  const batches = within(await screen.findByRole('region', { name: 'Пачки Агентів' }));
+
+  await user.click(await batches.findByRole('button', { name: 'Позначити перевіреним' }));
+  await confirmWith('checked', 'Позначити перевіреним');
+
+  const dialog = within(screen.getByRole('dialog'));
+  await waitFor(() => {
+    expect(received).toHaveLength(1);
+  });
+  expect(dialog.getByRole('button', { name: 'Позначити перевіреним' })).toHaveProperty(
+    'disabled',
+    true,
+  );
+  answer(HttpResponse.json({ code: 'INTERNAL_SERVER_ERROR', status: 500 }, { status: 500 }));
+
+  expect(await dialog.findByRole('alert')).toBeDefined();
+  expect(screen.getByRole('dialog')).toBeDefined();
+});
+
+test('a queue that fails to load says so', async () => {
+  server.use(http.get('*/admin/content-queue/*', () => HttpResponse.json({}, { status: 502 })));
+  render(<Admin />);
+
+  expect(await screen.findByText('Не вдалося завантажити чергу.')).toBeDefined();
 });

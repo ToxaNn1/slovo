@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useSearch } from '@tanstack/react-router';
 
 import { adminApi } from '../api';
+import { analyticsQuery } from '../queries';
 import { BarList } from '../components/bar-list';
 import { VariantResult } from '../components/variant-result';
 import { DEFAULT_PERIOD, periodDays } from '../filters';
@@ -47,12 +48,7 @@ function Analytics() {
   const search = useSearch({ from: '__root__' });
   const editionId = search.edition ?? ALL_EDITIONS;
   const days = periodDays(search.period ?? DEFAULT_PERIOD, new Date());
-  const overview = useQuery({
-    queryKey: ['analytics', editionId, days],
-    queryFn: () => adminApi.analytics({ editionId, ...days }),
-    // PostHog down answers at once: the backend queues and caches its reads already.
-    retry: false,
-  });
+  const overview = useQuery(analyticsQuery(editionId, days));
   const counters = useQuery({
     queryKey: ['counters', editionId],
     queryFn: () => adminApi.counters({ editionId }),

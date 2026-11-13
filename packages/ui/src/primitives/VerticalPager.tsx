@@ -204,7 +204,9 @@ export function VerticalPager<Item>({
    */
   const settled = useSharedValue(initialIndex);
   const pageHeight = useSharedValue(0);
-  const lastIndex = useSharedValue(items.length - 1);
+  /** The last page; with no pages, the first, so nothing turns to a page before it. */
+  const lastPage = Math.max(items.length - 1, 0);
+  const lastIndex = useSharedValue(lastPage);
   const dragStart = useSharedValue(0);
   const drag = useSharedValue<number>(DRAG.undecided);
   /** The drag's translation when it started to turn the page. */
@@ -213,8 +215,8 @@ export function VerticalPager<Item>({
   const turning = useSharedValue(false);
 
   useEffect(() => {
-    lastIndex.value = items.length - 1;
-  }, [items.length, lastIndex]);
+    lastIndex.value = lastPage;
+  }, [lastPage, lastIndex]);
 
   useAnimatedReaction(
     () => Math.round(position.value),
@@ -243,25 +245,25 @@ export function VerticalPager<Item>({
 
   const turnTo = useCallback(
     (target: number) => {
-      const clamped = Math.min(Math.max(target, 0), items.length - 1);
+      const clamped = Math.min(Math.max(target, 0), lastPage);
       if (clamped === index) return;
       turnedTo.value = clamped;
       turn(clamped);
       position.value = withTiming(clamped, motion);
     },
-    [index, items.length, motion, position, turn, turnedTo],
+    [index, lastPage, motion, position, turn, turnedTo],
   );
 
   const showPage = useCallback(
     (target: number) => {
-      const clamped = Math.min(Math.max(target, 0), items.length - 1);
+      const clamped = Math.min(Math.max(target, 0), lastPage);
       if (clamped === index) return;
       turnedTo.value = clamped;
       setIndex(clamped);
       setNearest(clamped);
       position.value = clamped;
     },
-    [index, items.length, position, turnedTo],
+    [index, lastPage, position, turnedTo],
   );
 
   useImperativeHandle(ref, () => ({ turnTo, showPage }));
