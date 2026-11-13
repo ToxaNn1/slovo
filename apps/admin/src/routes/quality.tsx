@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { adminApi } from '../api';
 import { qualityQuery } from '../queries';
 import { DEFAULT_PERIOD, qualityPeriod } from '../filters';
+import { formatMoment } from '../format';
 
 export const Route = createFileRoute('/quality')({
   component: Quality,
@@ -27,9 +28,6 @@ const TILES: readonly { key: keyof Kpis; title: string; unit: string }[] = [
 const NO_DATA = 'Немає даних';
 
 const number = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
-
-const time = (iso: string) =>
-  new Date(iso).toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
 
 /** The change against the day before, signed. */
 function delta(value: number, yesterday: number) {
@@ -53,7 +51,7 @@ function Quality() {
     <section aria-label="Якість" className="flex flex-col gap-6">
       {quality.isError ? <Notice>Sentry недоступний</Notice> : null}
       {fetched === undefined ? null : (
-        <p className="text-sm text-muted-foreground">Останні дані за {time(fetched)}</p>
+        <p className="text-sm text-muted-foreground">Останні дані за {formatMoment(fetched)}</p>
       )}
       {quality.data ? (
         <ul aria-label="Показники" className="grid grid-cols-2 gap-4 md:grid-cols-3">
@@ -160,7 +158,7 @@ function CiCharts({ runs }: { readonly runs: readonly CiRun[] }) {
       ? []
       : [
           {
-            label: `${run.sha.slice(0, 7)} · ${time(run.at)}`,
+            label: `${run.sha.slice(0, 7)} · ${formatMoment(run.at)}`,
             seconds,
             runnerSeconds: run.jobs.reduce((total, job) => total + job.seconds, 0),
           },

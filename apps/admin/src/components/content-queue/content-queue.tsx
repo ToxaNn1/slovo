@@ -6,6 +6,7 @@ import { cn } from '../../lib/utils';
 import { ConfirmDialog, type PendingWrite } from '../confirm-dialog';
 import { useAdminWrite } from '../admin-write';
 import { Button } from '../ui/button';
+import { formatMoment } from '../../format';
 import { useQueueBatches, useQueueFlags, useQueueReports } from './queries';
 
 type Batch = AdminApiOutputs['contentQueue']['batches']['batches'][number];
@@ -19,9 +20,6 @@ const MISTAKE_TYPES: Readonly<Record<Report['type'], string>> = {
   definition: 'визначення',
   other: 'інше',
 };
-
-const when = (iso: string) =>
-  new Date(iso).toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
 
 const RECORDS = new Intl.PluralRules('uk-UA');
 const RECORD_FORMS: Readonly<Partial<Record<Intl.LDMLPluralRule, string>>> = {
@@ -127,7 +125,7 @@ function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Con
           <li key={batch.id} className={itemClass}>
             <span className="flex grow flex-wrap items-center gap-2 text-[12.5px] text-subtle">
               <AgentTag author={batch.author} />
-              <span>{when(batch.createdAt)}</span>
+              <span>{formatMoment(batch.createdAt)}</span>
               <span>
                 +{batch.added} нових · {batch.changed} змінено
               </span>
@@ -190,7 +188,7 @@ function Flags({ flags, confirm }: { flags: readonly Flag[]; confirm: Confirm })
               <span className="text-muted-foreground">{flag.explanation}</span>
               <span className="flex flex-wrap items-center gap-2 text-xs text-subtle">
                 <AgentTag author={flag.author} />
-                {when(flag.at)}
+                {formatMoment(flag.at)}
               </span>
             </span>
             <Button size="sm" onClick={decide(flag, 'accept', 'Прийняти')}>
@@ -222,7 +220,7 @@ function Reports({ reports, confirm }: { reports: readonly Report[]; confirm: Co
             <span className="flex min-w-[200px] grow flex-col gap-0.5">
               <span>{report.comment}</span>
               <span className="text-xs text-subtle">
-                {MISTAKE_TYPES[report.type]} · {when(report.receivedAt)} · версія застосунку{' '}
+                {MISTAKE_TYPES[report.type]} · {formatMoment(report.receivedAt)} · версія застосунку{' '}
                 {report.appVersion} · версія контенту {report.contentVersion}
               </span>
             </span>

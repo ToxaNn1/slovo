@@ -8,6 +8,7 @@ import { useAdminWrite } from '../components/admin-write';
 import { ConfirmDialog, type PendingWrite } from '../components/confirm-dialog';
 import { Button } from '../components/ui/button';
 import { useSignedInAdmin } from '../session';
+import { formatMoment } from '../format';
 
 export const Route = createFileRoute('/security')({
   component: Security,
@@ -25,9 +26,6 @@ const REFUSALS: Readonly<Record<string, string>> = {
   unknown: 'Цього вже немає: оновіть сторінку.',
   'name-taken': 'Цю назву вже видано; оберіть іншу.',
 };
-
-const when = (iso: string) =>
-  new Date(iso).toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
 
 const inputClass = 'h-9 rounded-lg border border-border bg-background px-3 text-sm';
 
@@ -308,8 +306,8 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
             className="flex flex-wrap items-center gap-3 px-[18px] py-3 text-[13px]"
           >
             <span className="grow">
-              {token.name} · видано {when(token.createdAt)}
-              {token.revokedAt === null ? '' : ` · відкликано ${when(token.revokedAt)}`}
+              {token.name} · видано {formatMoment(token.createdAt)}
+              {token.revokedAt === null ? '' : ` · відкликано ${formatMoment(token.revokedAt)}`}
             </span>
             {token.revokedAt === null ? (
               <Button
@@ -457,7 +455,7 @@ function ActionLog() {
             {(actions.data?.actions ?? []).map((row, index) => (
               <tr key={`${row.at}-${String(index)}`} className="border-t border-border">
                 <td className="px-2 py-[9px]">{authorOf(row.who)}</td>
-                <td className="px-2 py-[9px]">{when(row.at)}</td>
+                <td className="px-2 py-[9px]">{formatMoment(row.at)}</td>
                 <td className="px-2 py-[9px] font-mono">{row.what}</td>
                 <td className="px-2 py-[9px] font-mono">{shown(row.before)}</td>
                 <td className="px-2 py-[9px] font-mono">{shown(row.after)}</td>
