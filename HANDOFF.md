@@ -15,10 +15,10 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 
 | lane | folders | items | status |
 | ---- | ------- | ----- | ------ |
-| L1 | packages/core | 15 | relaunched by coord 2 for R52 R54 R55 |
-| L2 | packages/content-rules, packages/language-pack | 17 | running |
+| L1 | packages/core | 15 | DONE 13, merging |
+| L2 | packages/content-rules, packages/language-pack | 17 | DONE 14, merging |
 | L3a | packages/ui/src/{game,entries,primitives} | 27 | relaunched by coord 2 after STUCK 14 |
-| L3b | rest of packages/ui | 25 | running (coord 2) |
+| L3b | rest of packages/ui | 25 | relaunched after STUCK 14 |
 | L4 | apps/mobile | 24 | running (coord 2) |
 | L5 | apps/backend, packages/server-core, packages/contracts | 32 | relaunched by coord 2 after STUCK 13 |
 | L6 | apps/admin, apps/video, tools, scripts | 23 | DONE 22, merged |
@@ -52,3 +52,4 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
   - L6 DONE but R134 (withStandardFormMarked: compare words without stress marks) and R135 (tools/content writes.ts: `add` with no records opens a batch; `edit` ignores non-numeric recordVersion) NOT done: relaunch L6 for those two. R84 only partly (Shouter differs per composition). Default taken: failed admin queries no longer retry.
   - L5 STUCK again: fixed R3 R34 R4 R117 R30 R119 R33 R29 R31 R32 R35 R39, R38 partly (Patch/Snapshot strict schemas still need non-strict output twins). Migration 0026_sign_in_method_unique.sql added: check no clash. Not started: R60-R63 R113-R116 R118 R120 R121 R124 R125 R136 R162 R164 R165 R172 R173 + R79 contracts export. Relaunch from STUCK body.
   - L3a STUCK: fixed R6 R10 R68 R69 R12 R14 R56 R67 R71 R90-R94; skipped R11 (Pressable sets disabled), R48 (RN 0.88 new arch: measureLayout sync); R13 needs mobile test quick-question-on-screen.test.tsx:182 changed -> LX; R70 needs packages/ui/eslint.config.js Reanimated opt-out list (+ADR 0059 list) -> infra lane. Not started: R49 R89 R95 R96 R97 R137 R138 R156 R174. Breaks mobile test apps/mobile/src/feed/word-tabs-on-screen.test.tsx:313 (expects «1. Покірний.», now «2. Покірний.»): fix in L4 or at merge.
+- 18:59Z L1 DONE 13/15 (R52 new seam Entries.wordsLinking; Question: hide+restore of one Entry within one Cycle read can leave a card without the link until next change). L2 DONE. Merger merging L1 then L2. L3b STUCK 14 -> relaunched here (remaining R20 R57 R58 R73 R75 R76 R105 R157; skipped R98 R107 need Edition string -> LX/infra, R158 in L3a folder -> LX). LX/infra adds: R70 (packages/ui/eslint.config.js Reanimated opt-out), R13, R98, R107, R158, R127, R166 ID_PREFIX export. Note: R106 commit message has a Ukrainian button name (pushed, left).
