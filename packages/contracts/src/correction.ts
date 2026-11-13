@@ -67,6 +67,9 @@ export function parseStandardExample(text: string): ParsedStandardExample {
     const standardForm = index % 2 === 1;
     if (standardForm && part.trim() === '')
       return broken('Put the standard form between the ** marks');
+    if (standardForm && part.trim() !== part) return broken('Put no space just inside a ** mark');
+    if (!standardForm && part === '' && index > 0 && index < parts.length - 1)
+      return broken('Join two ** marks with nothing between them into one');
     if (part !== '') segments.push({ kind: standardForm ? 'standardForm' : 'text', text: part });
   }
   return { kind: 'marked', segments };
