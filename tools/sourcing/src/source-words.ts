@@ -26,6 +26,7 @@ import {
 } from './goroh';
 import { errorMessage } from './error-message';
 import {
+  draftIssues,
   runSourcing,
   type DraftContext,
   type KindDraft,
@@ -634,13 +635,7 @@ function draftEtymology(
  * schema, so they run once it does.
  */
 function checkDraft(word: WordDraft, edition: EditionFolder): string[] {
-  const result = WordSchema.safeParse(word);
-  const issues = result.success
-    ? edition
-        .checkNewWords([result.data])
-        .map(({ field, message }) => `${field ?? '(word)'}: ${message}`)
-    : result.error.issues.map((issue) => `${issue.path.join('.') || '(word)'}: ${issue.message}`);
-  return unique(issues);
+  return draftIssues(WordSchema, (valid) => edition.checkNewWords([valid]), '(word)', word);
 }
 
 /** СУМ-11 spells ґ as г, so its headwords are matched with the two letters merged. */

@@ -16,6 +16,7 @@ import {
   type GorohSynonymArticle,
 } from './goroh';
 import {
+  draftIssues,
   runSourcing,
   type DraftContext,
   type KindDraft,
@@ -216,11 +217,10 @@ function sentence(sense: string): string {
 }
 
 function issuesOf(row: SynonymRowInput, edition: EditionFolder): string[] {
-  const result = SynonymRowSchema.safeParse(row);
-  const issues = result.success
-    ? edition
-        .checkNewSynonymRows([result.data])
-        .map(({ field, message }) => `${field ?? '(row)'}: ${message}`)
-    : result.error.issues.map((issue) => `${issue.path.join('.') || '(row)'}: ${issue.message}`);
-  return [...new Set(issues)];
+  return draftIssues(
+    SynonymRowSchema,
+    (valid) => edition.checkNewSynonymRows([valid]),
+    '(row)',
+    row,
+  );
 }
