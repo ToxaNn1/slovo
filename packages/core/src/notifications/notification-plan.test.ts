@@ -1055,6 +1055,17 @@ describe('the evening notification', () => {
     });
   });
 
+  it('covers 14 days with 5 times set: only the earliest and the latest take a slot', async () => {
+    const { app, scheduler } = await run({ evening: true, records: new Map([goalSet]) });
+    await app.notifications.keepTime('11:00');
+    await app.notifications.keepTime('15:00');
+
+    const plan = planOf(scheduler);
+    expect(plan).toHaveLength(28);
+    expect(new Set(plan.map(({ time }) => time))).toEqual(new Set(['09:00', '19:00']));
+    expect(new Set(plan.map(({ date }) => date)).size).toBeGreaterThanOrEqual(14);
+  });
+
   it('warns of the Streak while it is 7 or more, today is below 5 XP and no freeze is held', async () => {
     const records = new Map([goalSet, ...activeOn(sevenDays), xpOn('2026-10-14', 4)]);
     const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });

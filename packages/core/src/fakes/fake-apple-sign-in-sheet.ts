@@ -1,6 +1,5 @@
 import type { AppleSignInSheet } from '../ports';
-
-type SheetAnswer = Awaited<ReturnType<AppleSignInSheet['signIn']>>;
+import { createFakeSignInSheet } from './fake-sign-in-sheet';
 
 /** The identity a fake Apple identity token names: its email and whether the token still holds. */
 export interface FakeAppleIdentity {
@@ -46,38 +45,17 @@ export interface FakeAppleSignInSheet extends AppleSignInSheet {
 }
 
 export function createFakeAppleSignInSheet(): FakeAppleSignInSheet {
-  const answers: SheetAnswer[] = [];
-  let shown = 0;
-  let held: Promise<void> | undefined;
+  const sheet = createFakeSignInSheet();
   return {
     get shown() {
-      return shown;
+      return sheet.shown;
     },
     signsIn(email, { expired = false } = {}) {
-      answers.push({
-        ok: true,
-        idToken: `${TOKEN_PREFIX}${email}${expired ? EXPIRED_SUFFIX : ''}`,
-      });
+      sheet.handsOut(`${TOKEN_PREFIX}${email}${expired ? EXPIRED_SUFFIX : ''}`);
     },
-    cancels() {
-      answers.push({ ok: false, reason: 'cancelled' });
-    },
-    fails(reason) {
-      answers.push({ ok: false, reason });
-    },
-    holds() {
-      let release: () => void = () => undefined;
-      held = new Promise<void>((resolve) => {
-        release = resolve;
-      });
-      return release;
-    },
-    async signIn() {
-      shown += 1;
-      const up = held;
-      held = undefined;
-      await up;
-      return answers.shift() ?? { ok: false, reason: 'cancelled' };
-    },
+    cancels: sheet.cancels,
+    fails: sheet.fails,
+    holds: sheet.holds,
+    signIn: sheet.signIn,
   };
 }

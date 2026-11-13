@@ -174,6 +174,14 @@ export interface Entries {
    * of the Mix (ADR 0051). Derived from the rows: nothing on the Word names it.
    */
   linkingSynonymRow(word: Word): Promise<SynonymRow | undefined>;
+  /**
+   * The ids of the live Words that link any of the Entries of the ids: a
+   * Correction a Word is the standard form for, a Synonym Row a Word is a
+   * member of. So a change in which of them are eligible names the Words
+   * whose cards it touches, and no other Word is read for it. An id of
+   * another kind, or one the Language Pack doesn't have, links no Word.
+   */
+  wordsLinking(ids: readonly string[]): Promise<ReadonlySet<string>>;
 }
 
 /**
@@ -463,6 +471,26 @@ export function createEntries({
       if (first === undefined) return undefined;
       const [row] = await content.getEntries([first]);
       return row?.kind === 'synonymRow' ? row : undefined;
+    },
+    async wordsLinking(ids) {
+      const linking = new Set<string>();
+      if (ids.length === 0) return linking;
+      const linked = new Set(ids);
+      const [words, rowIds] = await Promise.all([live.word(), listIds.synonymRow()]);
+      // Only the Synonym Rows are read: a Correction is linked from the Word.
+      const liveRows = new Set(rowIds);
+      const entries = await content.getEntries(ids.filter((id) => liveRows.has(id)));
+      for (const word of words.values()) {
+        if (word.kind === 'word' && word.correctionIds.some((id) => linked.has(id)))
+          linking.add(word.id);
+      }
+      for (const entry of entries) {
+        if (entry.kind !== 'synonymRow') continue;
+        for (const { wordId } of entry.members) {
+          if (wordId !== undefined && words.has(wordId)) linking.add(wordId);
+        }
+      }
+      return linking;
     },
   };
 }

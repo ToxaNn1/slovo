@@ -365,19 +365,21 @@ export function createNotificationPlanner({
     evenings: Slot[];
     farewell: Slot | undefined;
   } {
-    const { slots, farewell } = edition.isFeatureEnabled('politePause')
-      ? slotsUntilPause(times, clock)
-      : { slots: slotsAhead(times, clock), farewell: undefined };
-    const shown = edition.isFeatureEnabled('notificationFarewell') ? farewell : undefined;
     const [earliest] = times;
     const latest = times.at(-1);
-    if (!edition.isFeatureEnabled('eveningNotification') || earliest === undefined) {
-      return { slots, evenings: [], farewell: shown };
-    }
+    const twoADay = edition.isFeatureEnabled('eveningNotification') && earliest !== undefined;
+    // Narrowed before the slots are counted, so the times that take none use up no days of the plan.
+    const taking =
+      twoADay && latest !== undefined && times.length > 1 ? [earliest, latest] : times.slice(0, 1);
+    const { slots, farewell } = edition.isFeatureEnabled('politePause')
+      ? slotsUntilPause(twoADay ? taking : times, clock)
+      : { slots: slotsAhead(twoADay ? taking : times, clock), farewell: undefined };
+    const shown = edition.isFeatureEnabled('notificationFarewell') ? farewell : undefined;
+    if (!twoADay) return { slots, evenings: [], farewell: shown };
     const at = (time: TimeOfDay) => (slot: Slot) => compareTimesOfDay(slot.time, time) === 0;
     return {
       slots: slots.filter(at(earliest)),
-      evenings: latest === undefined || times.length < 2 ? [] : slots.filter(at(latest)),
+      evenings: taking.length < 2 ? [] : slots.filter(at(taking[1] ?? earliest)),
       farewell: shown,
     };
   }
