@@ -97,6 +97,8 @@ export async function applyPatch(db: PackWriteDatabase, patch: Patch, etag: stri
         sql: "UPDATE metadata SET value = ? WHERE key = 'content_version'",
         params: [String(patch.contentVersion)],
       },
+      // The checksum named the built content; a patched pack has none (ADR 0090).
+      { sql: "DELETE FROM metadata WHERE key = 'checksum'", params: [] },
       {
         sql: 'INSERT INTO metadata (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value',
         params: [PATCH_ETAG, etag],
