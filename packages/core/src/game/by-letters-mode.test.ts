@@ -497,6 +497,42 @@ describe('«За буквами» with letter tiles', () => {
     expect(current(app)).toMatchObject({ round: { answer: { right: true } } });
   });
 
+  it('takes no answer that taps one tile twice or fills another count of slots', async () => {
+    const app = await run({ off: [] });
+    await app.game.start('by-letters');
+    // A Word with a letter twice, so one tile tapped twice would spell it.
+    while (
+      new Set(lettersOf(lemmaOf(tilesOf(app)))).size === lettersOf(lemmaOf(tilesOf(app))).length
+    ) {
+      const round = tilesOf(app);
+      await app.game.answer({
+        form: 'chips',
+        chips: placesOf(round.chips, lettersOf(lemmaOf(round))),
+      });
+      await app.game.next();
+    }
+    const round = tilesOf(app);
+    const letters = lettersOf(lemmaOf(round));
+    const right = placesOf(round.chips, letters);
+    const lives = current(app).lives;
+
+    await app.game.answer({
+      form: 'chips',
+      chips: letters.map((letter) => round.chips.indexOf(letter)),
+    });
+    expect(current(app)).toMatchObject({ status: 'playing', lives });
+
+    await app.game.answer({ form: 'chips', chips: right.slice(0, -1) });
+    expect(current(app)).toMatchObject({ status: 'playing', lives });
+
+    const decoy = round.chips.findIndex((_, place) => !right.includes(place));
+    await app.game.answer({ form: 'chips', chips: [...right, decoy] });
+    expect(current(app)).toMatchObject({ status: 'playing', lives });
+
+    await app.game.answer({ form: 'chips', chips: right });
+    expect(current(app)).toMatchObject({ status: 'answered', round: { answer: { right: true } } });
+  });
+
   it('types the Word with letter tiles off', async () => {
     const app = await run({ off: ['letterTiles'] });
     await app.game.start('by-letters');
