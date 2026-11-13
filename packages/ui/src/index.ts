@@ -134,7 +134,7 @@ export { CorrectionTypeRow } from './dashboard/CorrectionTypeRow';
 export { CorrectionTypesRail } from './dashboard/CorrectionTypesRail';
 export { QuietScreenHero } from './dashboard/QuietScreenHero';
 export { QuietScreenRow } from './dashboard/QuietScreenRow';
-export { RailBoard, knownShare, type RailBoardCard } from './dashboard/RailBoard';
+export { RailBoard, RailList, knownShare, type RailBoardCard } from './dashboard/RailBoard';
 export { RailScreenCard } from './dashboard/RailScreenCard';
 export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
 export { RailScreenHero } from './dashboard/RailScreenHero';

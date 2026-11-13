@@ -1,5 +1,6 @@
 import type { EntryRowModel } from '@slovo/core';
 import type { ReactElement } from 'react';
+import type { ListRenderItem } from 'react-native';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { useTokens } from '../providers/TokensProvider';
@@ -46,26 +47,58 @@ export function RailBoard({
   cards: readonly RailBoardCard[];
   onOpen: (entryId: string) => void;
 }) {
+  return (
+    <RailList
+      testID={testID}
+      hero={hero}
+      items={cards}
+      keyOf={({ entryId }) => entryId}
+      renderItem={({ item: { entryId, row, known }, index }) => (
+        <RailScreenCard
+          testID={`${testID}-entry-${entryId}`}
+          row={row}
+          known={known}
+          index={index}
+          onPress={() => {
+            onOpen(entryId);
+          }}
+        />
+      )}
+      gap={place.list.wordGap}
+    />
+  );
+}
+
+/**
+ * The frame of a board-style screen with rows of its own, such as a
+ * Correction Type's Corrections: the `hero` across the top, then one row per
+ * item, `gap` apart.
+ */
+export function RailList<Item>({
+  testID,
+  hero,
+  items,
+  keyOf,
+  renderItem,
+  gap,
+}: {
+  testID: string;
+  hero: ReactElement;
+  items: readonly Item[];
+  keyOf: (item: Item) => string;
+  renderItem: ListRenderItem<Item>;
+  gap: number;
+}) {
   const { colors } = useTokens();
   return (
     <View testID={testID} style={[styles.screen, { backgroundColor: colors.background }]}>
       <FlatList
-        data={cards}
-        keyExtractor={({ entryId }) => entryId}
-        renderItem={({ item: { entryId, row, known }, index }) => (
-          <RailScreenCard
-            testID={`${testID}-entry-${entryId}`}
-            row={row}
-            known={known}
-            index={index}
-            onPress={() => {
-              onOpen(entryId);
-            }}
-          />
-        )}
+        data={items}
+        keyExtractor={keyOf}
+        renderItem={renderItem}
         ListHeaderComponent={hero}
         ListHeaderComponentStyle={styles.hero}
-        ItemSeparatorComponent={Gap}
+        ItemSeparatorComponent={() => <View style={{ height: gap }} />}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.content}
@@ -74,13 +107,8 @@ export function RailBoard({
   );
 }
 
-function Gap() {
-  return <View style={styles.gap} />;
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   hero: { marginHorizontal: -place.list.side, marginBottom: place.list.top },
   content: { paddingHorizontal: place.list.side, paddingBottom: place.list.bottom },
-  gap: { height: place.list.wordGap },
 });
