@@ -82,7 +82,7 @@ export const beats = {
   /** The cells turn over into the word, left to right. */
   flips: 141,
   flipStep: 3,
-  /** The word is whole. */
+  /** The word is whole, at the earliest: a long word waits for its last flip (`solvedAt`). */
   solved: 165,
   /** The word has grown and stands in the middle. */
   settled: 180,
@@ -103,6 +103,8 @@ export const oneWordLength = beats.length;
 
 /** The frame cell `i` starts to turn over on; it shows its letter three frames later. */
 const flipAt = (i: number) => beats.flips + i * beats.flipStep;
+/** The word is whole once its last cell has turned over (a flip is 6 frames), never before `beats.solved`, and in time to settle. */
+const solvedAt = (count: number) => Math.min(beats.settled - 8, Math.max(beats.solved, flipAt(count - 1) + 6));
 
 /** Where everything stands, in layout units (pixels of the 1080×1920 frame). */
 const at = {
@@ -219,9 +221,9 @@ export function OneWordSound({ episode }: { episode: Episode }) {
       {letters.map((_, i) => (
         <Sfx key={i} src={sfx.flap} at={flipAt(i) + 2} volume={0.6} />
       ))}
-      <Sfx src={sfx.chime} at={beats.solved} volume={0.5} />
+      <Sfx src={sfx.chime} at={solvedAt(letters.length)} volume={0.5} />
       {/* «Рупор вимовляє слово»: nothing is recorded yet (SOUNDS.md). */}
-      <Voice src={episode.voice} at={beats.solved} />
+      <Voice src={episode.voice} at={solvedAt(letters.length)} />
       <Sfx src={sfx.stamp} at={beats.counter} volume={0.6} />
       <Sfx src={sfx.pluck} at={beats.stress} volume={levels.stress} />
       {ticks.map((frame) => (
@@ -258,7 +260,8 @@ function Scene({ episode }: { episode: Episode }) {
 
   // The description shakes under the shout, then every tile flies into its cell.
   const since = frame - beats.shout;
-  const shake = since >= 0 && since < 12 ? Math.sin(since * 2.6) * 9 * s * (1 - since / 14) : 0;
+  const shakeFor = 14;
+  const shake = since >= 0 && since < shakeFor ? Math.sin(since * 2.6) * 9 * s * (1 - since / shakeFor) : 0;
   const flight = beats.flips - beats.fly - beats.rowLag * (layout.rows.length - 1);
 
   // The cells swell as the tiles pour in.
@@ -319,7 +322,7 @@ function Scene({ episode }: { episode: Episode }) {
           );
         }
         // The word leaves the cells' row, grows and stands in the middle.
-        const move = interpolate(frame, [beats.solved, beats.settled], [0, 1], { ...clamp, easing: Easing.inOut(Easing.cubic) });
+        const move = interpolate(frame, [solvedAt(layout.letters.length), beats.settled], [0, 1], { ...clamp, easing: Easing.inOut(Easing.cubic) });
         const size = layout.cell + (layout.wordTile - layout.cell) * move;
         const left = cellLeft(i) + (safe.left + i * layout.wordStep - cellLeft(i)) * move;
         const top = cellsTop + (at.wordTop * s - cellsTop) * move;
