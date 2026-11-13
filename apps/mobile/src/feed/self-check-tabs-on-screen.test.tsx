@@ -382,3 +382,18 @@ describe('Self-check on the tabs of an Entry card in the Feed', () => {
     expect(cardOf('synonymRow').getByText('Рухатися пішки.', hidden)).toBeTruthy();
   });
 });
+
+describe('The page of the Word of the Day under Self-check with the tabbed cards', () => {
+  it('scrolls the red card while Self-check keeps it closed, and holds the tabbed frame once revealed', async () => {
+    await open({ words: [fullWord] }, true);
+    await renderApp();
+    const page = () => within(screen.getByTestId('feed-card-0', hidden));
+
+    expect(page().getByTestId('feed-card-0-scroll', hidden)).toBeTruthy();
+
+    await settle(() => fireEvent.press(page().getByTestId('word-reveal', hidden)));
+
+    expect(page().queryByTestId('feed-card-0-scroll', hidden)).toBeNull();
+    expect(page().getAllByRole('tab', hidden).length).toBeGreaterThan(0);
+  });
+});
