@@ -6,7 +6,7 @@
   "explanation": "Слово «тоже» запозичене з російської. Українською кажуть «теж» або «також».",
   "examplePair": {
     "nonStandard": "Я тоже піду на концерт.",
-    "standard": "Я теж піду на концерт."
+    "standard": "Я **теж** піду на концерт."
   },
   "categoryId": "conversation",
   "sources": [
