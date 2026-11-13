@@ -345,6 +345,37 @@ jobs:
             echo "Deploying $service"
             railway up --ci --service "$service"
           done
+      # A content schema can tighten while Postgres still holds records the
+      # old rule let through: the Patch and the snapshot then fail their output
+      # validation and answer 500 (#1819). After the new backend has had its
+      # health check time to roll out, ask for every Edition's snapshot, which
+      # the CDN never caches; a red deploy reaches the owner's alerts.
+      - name: Check every Edition's snapshot
+        shell: bash
+        env:
+          SLOVO_BACKEND_URL: ${{ secrets.SLOVO_BACKEND_URL }}
+        run: |
+          if [ -z "$SLOVO_BACKEND_URL" ]; then
+            echo 'SLOVO_BACKEND_URL is not set: the snapshot is not checked.'
+            exit 0
+          fi
+          sleep 150
+          failed=0
+          for folder in editions/*/; do
+            edition=$(basename "$folder")
+            url="${SLOVO_BACKEND_URL%/}/v1/editions/$edition/content/snapshot"
+            for attempt in 1 2 3; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$url")
+              [ "$code" = 200 ] && break
+              sleep 20
+            done
+            echo "$edition snapshot: $code"
+            if [ "$code" != 200 ]; then
+              echo "::error::The $edition snapshot answers $code: re-import the Edition's content (docs/deploy.md, Importing an Edition's content)"
+              failed=1
+            fi
+          done
+          exit "$failed"
 
   backend:
     name: Backend

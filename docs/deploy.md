@@ -93,7 +93,8 @@ CI deploys (ADR 0104): on every push to `main`, once the check "Lint, typecheck,
 
 1. installs the Railway CLI at the version the job pins (`@railway/cli`; the root `railway` package is only the SDK the file imports);
 2. runs `railway config apply --yes`, which brings the project to `.railway/railway.ts`; an apply that would delete a resource fails the job instead, since it has no `--confirm-destructive`;
-3. runs `railway up --ci --service <name>` for `backend`, `alerts` and `quote-check`, and for `recordings` once `recordings.Dockerfile` exists.
+3. runs `railway up --ci --service <name>` for `backend`, `alerts` and `quote-check`, and for `recordings` once `recordings.Dockerfile` exists;
+4. waits for the backend to roll out, then asks for `GET /v1/editions/<edition>/content/snapshot` of every Edition folder and fails on anything but 200 ([Importing an Edition's content](#importing-an-editions-content)).
 
 It signs in with the GitHub Actions secret `RAILWAY_TOKEN`, a Railway project token of the `production` environment (project `slovo` → Settings → Tokens); to rotate it, make a new token there and set the secret to it. A pull request never deploys, and the concurrency group `railway-deploy` keeps deploys from overlapping: a newer push waits for the running deploy. To deploy by hand, set `RAILWAY_TOKEN` in the shell to that token and run the same commands from the repository root.
 
@@ -106,6 +107,8 @@ DATABASE_URL='<the Neon connection string>' pnpm content import --edition uk
 ```
 
 The command checks every content rule first and writes nothing when one refuses a record; it prints the count of each kind of record and the content version it wrote. A second import writes nothing and says so, because the database is the live content from then on; `--override` imports the folder again over the database and raises the content version.
+
+A change that tightens a content rule (a contracts schema the records must pass) also fixes the Edition folder, and once it reaches `main` the folder is imported again with `--override`: the records Postgres already holds passed only the old rule, and the Patch and the snapshot refuse to answer with them (500). The last step of "Deploy to Railway" asks for each Edition's snapshot (the secret `SLOVO_BACKEND_URL`) and fails the job on anything but 200.
 
 ## Importing an Edition's media
 
