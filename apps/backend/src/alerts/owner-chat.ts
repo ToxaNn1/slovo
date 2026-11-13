@@ -76,7 +76,9 @@ export function createOwnerChat(
     async send(message) {
       const text = message.kind === 'alert' ? alertText(message.alert) : digestText(message.digest);
       if (bot === undefined) {
-        logger.warn({ message }, 'owner chat: the Telegram bot is not set up');
+        const kind = message.kind === 'alert' ? message.alert.kind : message.kind;
+        // The kind alone: an alert can name the Admin user who turned a switch off.
+        logger.warn({ kind }, 'owner chat: the Telegram bot is not set up');
         return false;
       }
       const result = await bot.telegram.sendMessage(bot.chatId, text);
