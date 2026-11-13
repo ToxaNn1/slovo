@@ -1,10 +1,6 @@
-import type { Analytics } from '../analytics/analytics';
-import type { Edition } from '../edition/edition';
-import type { Entries } from '../entries/entries';
 import { createInTurn } from '../in-turn';
 import { todayKey } from '../local-date';
-import type { Clock, Random } from '../ports';
-import type { UserState } from '../user-state/user-state';
+import type { Random } from '../ports';
 import { userStateRecords } from '../user-state-schema';
 import {
   foundIds,
@@ -16,7 +12,7 @@ import {
   type PuzzleAction,
   type PuzzleState,
 } from './crossword-puzzle';
-import type { GameXp } from './game-xp';
+import { noXp, type CrosswordPorts } from './crossword-ports';
 
 const { tracedCrosswordProgress } = userStateRecords;
 
@@ -91,19 +87,9 @@ export async function openTracedCrossword({
   clock,
   edition,
   seeded = seededRandomOf,
-  xp = { award: () => ({ changes: new Map(), amount: 0, commit: () => undefined }) },
+  xp = noXp,
   analytics,
-}: {
-  entries: Pick<Entries, 'wordsUnderRarityCeiling'>;
-  userState: UserState;
-  clock: Clock;
-  edition: Pick<Edition, 'isFeatureEnabled'>;
-  /** The seeded random port of a seed; the Core's own by default. */
-  seeded?: (seed: string) => Random;
-  /** The XP log, which solving the day earns XP in; without it, none. */
-  xp?: GameXp;
-  analytics?: Pick<Analytics, 'track'>;
-}): Promise<TracedCrosswordOpening> {
+}: CrosswordPorts): Promise<TracedCrosswordOpening> {
   if (!edition.isFeatureEnabled('tracedCrossword')) return { kind: 'off' };
   const date = todayKey(clock);
   const words = await entries.wordsUnderRarityCeiling();
@@ -141,7 +127,8 @@ export async function openTracedCrossword({
         );
         award?.commit();
         state = next;
-        if (solves) await analytics?.track('dailyCrosswordSolved', { date }).catch(() => undefined);
+        // Out of turn: the next play never waits for the network.
+        if (solves) void analytics?.track('dailyCrosswordSolved', { date }).catch(() => undefined);
         return state;
       }),
   };
