@@ -12,6 +12,32 @@ export interface FlyingTextOf {
   readonly landed: SharedValue<number>;
 }
 
+/** Where a flying text starts from: points across and down, its scale and its turn in degrees. */
+export interface FlyFrom {
+  readonly x: number;
+  readonly y: number;
+  readonly scale: number;
+  readonly rotate: number;
+}
+
+/**
+ * The style of a text flying in, `landed` of the way from `from` to its
+ * place: fading in as it comes, growing and turning straight.
+ */
+export function flyInStyle(landed: number, from: FlyFrom) {
+  'worklet';
+  const away = 1 - landed;
+  return {
+    opacity: Math.min(1, Math.max(0, landed)),
+    transform: [
+      { translateX: away * from.x },
+      { translateY: away * from.y },
+      { scale: from.scale + (1 - from.scale) * landed },
+      { rotate: `${String(away * from.rotate)}deg` },
+    ],
+  };
+}
+
 /**
  * A text laid out as the text under it, flying in from below, small and
  * turned, as one layer. The text under it is drawn clear meanwhile, so it
@@ -42,18 +68,7 @@ export function FlyingText({
 }) {
   const { landed } = flying;
   const { from } = entryReveal;
-  const fly = useAnimatedStyle(() => {
-    const away = 1 - landed.value;
-    return {
-      opacity: Math.min(1, Math.max(0, landed.value)),
-      transform: [
-        { translateX: away * from.x },
-        { translateY: away * from.y },
-        { scale: from.scale + (1 - from.scale) * landed.value },
-        { rotate: `${String(away * from.rotate)}deg` },
-      ],
-    };
-  });
+  const fly = useAnimatedStyle(() => flyInStyle(landed.value, from));
   return (
     <Animated.View
       testID={testID}

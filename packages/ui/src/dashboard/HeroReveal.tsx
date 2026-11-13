@@ -19,6 +19,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { flyInStyle } from '../primitives/FlyingText';
 import { useCascade } from '../primitives/useCascade';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { dashboard, entryReveal, motion } from '../tokens';
@@ -94,21 +95,10 @@ function FlyingLetter({
           ReduceMotion.Never,
         );
   }, [landed, index, reduceMotion]);
-  const { from } = entryReveal;
-  const fromX = from.x - index * reveal.letters.shift;
-  const fly = useAnimatedStyle(() => {
-    if (reduceMotion) return { opacity: landed.value };
-    const away = 1 - landed.value;
-    return {
-      opacity: Math.min(1, Math.max(0, landed.value)),
-      transform: [
-        { translateX: away * fromX },
-        { translateY: away * from.y },
-        { scale: from.scale + (1 - from.scale) * landed.value },
-        { rotate: `${String(away * from.rotate)}deg` },
-      ],
-    };
-  });
+  const from = { ...entryReveal.from, x: entryReveal.from.x - index * reveal.letters.shift };
+  const fly = useAnimatedStyle(() =>
+    reduceMotion ? { opacity: landed.value } : flyInStyle(landed.value, from),
+  );
   return (
     <Animated.View
       style={fly}
