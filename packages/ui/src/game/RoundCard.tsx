@@ -113,9 +113,7 @@ export function RoundCard({
       testID="game-prompt"
       accessible={children === undefined}
       accessibilityLabel={
-        children === undefined
-          ? [spoken, marked].filter(Boolean).join(' ')
-          : undefined
+        children === undefined ? [spoken, marked].filter(Boolean).join(' ') : undefined
       }
       {...voice}
       style={
