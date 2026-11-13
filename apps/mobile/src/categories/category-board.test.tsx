@@ -189,14 +189,14 @@ describe('the Category screen', () => {
     await composition.mix.setCategory('emotions-character', false);
     await renderCategory('emotions-character');
 
-    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'ДОДАТИ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })));
     expect(hiddenIds()).toEqual([]);
-    expect(screen.getByRole('button', { name: 'У МІКСІ' })).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
     expect(screen.getByText('„Емоції“ тепер у твоєму Міксі.')).toBeTruthy();
 
-    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'У МІКСІ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У МІКСІ' })));
     expect(hiddenIds()).toEqual(['emotions-character']);
-    expect(screen.getByRole('button', { name: 'ДОДАТИ' })).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })).toBeTruthy();
     expect(screen.getByText('„Емоції“ прибрано з Міксу.')).toBeTruthy();
   });
 
@@ -204,8 +204,8 @@ describe('the Category screen', () => {
     await open();
     await renderCategory('emotions-character');
 
-    expect(screen.getByRole('button', { name: 'У МІКСІ' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'ДОДАТИ' })).toBeNull();
+    expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
+    expect(screen.queryByRole('togglebutton', { name: 'ДОДАТИ' })).toBeNull();
   });
 
   it('keeps the last Category of the Mix in it and says why, as the Mix screen does', async () => {
@@ -215,9 +215,9 @@ describe('the Category screen', () => {
     await composition.mix.setCategory('war', false);
     await renderCategory('emotions-character');
 
-    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'У МІКСІ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У МІКСІ' })));
     expect(hiddenIds()).toEqual(['empty', 'nature', 'war']);
-    expect(screen.getByRole('button', { name: 'У МІКСІ' })).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
     expect(screen.getByText(editionStrings.mix.lastCategoryHint)).toBeTruthy();
   });
 
