@@ -44,7 +44,7 @@ export function refusalLines(about: string, error: unknown): string[] {
   if (!(error instanceof ORPCError)) {
     return [`${about}: ${error instanceof Error ? error.message : String(error)}`];
   }
-  const code: string = error.code;
+  const code = String(error.code);
   const stale = StaleWriteSchema.safeParse(error.data).data;
   if (code === 'STALE' && stale !== undefined) {
     return [`${about}: STALE, the current record version is ${String(stale.currentVersion)}`];
