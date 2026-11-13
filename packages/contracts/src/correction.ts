@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import { hasNoRepeats, SourceSchema, EntryTextSchema, WebAddressSchema } from './shared';
+import {
+  hasNoRepeats,
+  SourceOutputSchema,
+  SourceSchema,
+  EntryTextSchema,
+  WebAddressSchema,
+} from './shared';
 
 /**
  * A Correction id: opaque, assigned when the Correction is authored and never
@@ -71,13 +77,17 @@ export function parseStandardExample(text: string): ParsedStandardExample {
  * The standard sentence marks its standard form `**like this**`, the part the
  * card shows bold (ADR 0117); the marks stay in the text wherever it is kept.
  */
-export const ExamplePairSchema = z.strictObject({
+const examplePairShape = {
   nonStandard: EntryTextSchema,
   standard: EntryTextSchema.superRefine((text, context) => {
     const parsed = parseStandardExample(text);
     if (parsed.kind === 'broken') context.addIssue({ code: 'custom', message: parsed.problem });
   }),
-});
+};
+
+export const ExamplePairSchema = z.strictObject(examplePairShape);
+
+const ExamplePairOutputSchema = z.object(examplePairShape);
 
 export type ExamplePair = z.infer<typeof ExamplePairSchema>;
 
@@ -86,7 +96,7 @@ export type ExamplePair = z.infer<typeof ExamplePairSchema>;
  * author and work. Only public-domain texts: the build refuses one before
  * 1 January of the 71st year after the author's death (ADR 0045).
  */
-export const LiteraryUseSchema = z.strictObject({
+const literaryUseShape = {
   text: EntryTextSchema,
   author: EntryTextSchema,
   work: EntryTextSchema,
@@ -96,20 +106,20 @@ export const LiteraryUseSchema = z.strictObject({
   workYear: z.int().optional(),
   /** Where the text can be read. */
   url: WebAddressSchema.optional(),
-});
+};
+
+export const LiteraryUseSchema = z.strictObject(literaryUseShape);
+
+const LiteraryUseOutputSchema = z.object(literaryUseShape);
 
 export type LiteraryUse = z.infer<typeof LiteraryUseSchema>;
 
-/**
- * A Correction as authored in an Edition's content and as returned by the
- * Core: a non-standard form people commonly use, paired with its standard
- * equivalents (the main one first) and a short neutral explanation.
- *
- * `kind` tells Entries apart. Authored files may leave it out, because the
- * folder already says what they hold. `retired` defaults to false; a Retired
- * Correction stays reachable by id but is left out like a Retired Word.
- */
-export const CorrectionSchema = z.strictObject({
+// The fields of a Correction, with its nested schemas strict for content and open for outputs.
+const correctionShape = (
+  examplePair: typeof ExamplePairSchema | typeof ExamplePairOutputSchema,
+  literaryUse: typeof LiteraryUseSchema | typeof LiteraryUseOutputSchema,
+  source: typeof SourceSchema | typeof SourceOutputSchema,
+) => ({
   kind: z.literal('correction').default('correction'),
   id: CorrectionIdSchema,
   nonStandardForm: EntryTextSchema,
@@ -122,14 +132,32 @@ export const CorrectionSchema = z.strictObject({
     .pipe(z.tuple([EntryTextSchema], EntryTextSchema))
     .refine(hasNoRepeats, 'Standard equivalents must not repeat'),
   explanation: EntryTextSchema,
-  examplePair: ExamplePairSchema,
+  examplePair,
   /** One of the Edition's Categories of Corrections, a list apart from the Words' (ADR 0033). */
   categoryId: z.string().min(1),
-  sources: z.array(SourceSchema).min(1),
+  sources: z.array(source).min(1),
   /** Real uses of the standard form in literature, in the order the card shows them. */
-  literaryUses: z.array(LiteraryUseSchema).max(3).default([]),
+  literaryUses: z.array(literaryUse).max(3).default([]),
   retired: z.boolean().default(false),
 });
+
+/**
+ * A Correction as authored in an Edition's content and as returned by the
+ * Core: a non-standard form people commonly use, paired with its standard
+ * equivalents (the main one first) and a short neutral explanation.
+ *
+ * `kind` tells Entries apart. Authored files may leave it out, because the
+ * folder already says what they hold. `retired` defaults to false; a Retired
+ * Correction stays reachable by id but is left out like a Retired Word.
+ */
+export const CorrectionSchema = z.strictObject(
+  correctionShape(ExamplePairSchema, LiteraryUseSchema, SourceSchema),
+);
+
+/** A Correction as an output carries it: open to fields a later backend adds (ADR 0031). */
+export const CorrectionOutputSchema = z.object(
+  correctionShape(ExamplePairOutputSchema, LiteraryUseOutputSchema, SourceOutputSchema),
+);
 
 /** A Correction with every default filled in, as the Core returns it. */
 export type Correction = z.output<typeof CorrectionSchema>;

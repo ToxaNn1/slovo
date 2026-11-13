@@ -26169,8 +26169,7 @@
                                       },
                                       "required": [
                                         "text"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     },
                                     "default": []
                                   },
@@ -26261,8 +26260,7 @@
                                       },
                                       "required": [
                                         "title"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     }
                                   },
                                   "correctionIds": {
@@ -26286,8 +26284,7 @@
                                   "categoryId",
                                   "rarity",
                                   "sources"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             },
                             "idioms": {
@@ -26343,8 +26340,7 @@
                                       },
                                       "required": [
                                         "text"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     },
                                     "default": []
                                   },
@@ -26377,8 +26373,7 @@
                                       },
                                       "required": [
                                         "title"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     }
                                   },
                                   "retired": {
@@ -26392,8 +26387,7 @@
                                   "idiomType",
                                   "primaryDefinition",
                                   "sources"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             },
                             "corrections": {
@@ -26458,8 +26452,7 @@
                                     "required": [
                                       "nonStandard",
                                       "standard"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   },
                                   "categoryId": {
                                     "type": "string",
@@ -26490,8 +26483,7 @@
                                       },
                                       "required": [
                                         "title"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     }
                                   },
                                   "literaryUses": {
@@ -26532,8 +26524,7 @@
                                         "author",
                                         "work",
                                         "authorDeathYear"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     },
                                     "default": []
                                   },
@@ -26551,8 +26542,7 @@
                                   "examplePair",
                                   "categoryId",
                                   "sources"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             },
                             "tips": {
@@ -26599,8 +26589,7 @@
                                     },
                                     "required": [
                                       "text"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   },
                                   "exceptions": {
                                     "type": "object",
@@ -26622,8 +26611,7 @@
                                     "required": [
                                       "explanation",
                                       "words"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   },
                                   "sources": {
                                     "type": "array",
@@ -26650,8 +26638,7 @@
                                       },
                                       "required": [
                                         "title"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     }
                                   },
                                   "gameQuestion": {
@@ -26688,8 +26675,7 @@
                                       "prompt",
                                       "rightAnswer",
                                       "wrongAnswers"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   },
                                   "retired": {
                                     "type": "boolean",
@@ -26703,8 +26689,7 @@
                                   "explanation",
                                   "sources",
                                   "gameQuestion"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             },
                             "synonymRows": {
@@ -26744,8 +26729,7 @@
                                     "required": [
                                       "text",
                                       "stress"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   },
                                   "meaning": {
                                     "type": "string",
@@ -26784,8 +26768,7 @@
                                       "required": [
                                         "text",
                                         "stress"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     }
                                   },
                                   "example": {
@@ -26802,8 +26785,7 @@
                                     },
                                     "required": [
                                       "text"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   },
                                   "sources": {
                                     "type": "array",
@@ -26830,8 +26812,7 @@
                                       },
                                       "required": [
                                         "title"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     }
                                   },
                                   "retired": {
@@ -26845,8 +26826,7 @@
                                   "meaning",
                                   "members",
                                   "sources"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             },
                             "curatedCollections": {
@@ -26905,8 +26885,7 @@
                                   "description",
                                   "publishedOn",
                                   "entryIds"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             },
                             "crosswordDays": {
@@ -26970,8 +26949,7 @@
                                         "row",
                                         "column",
                                         "direction"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     }
                                   },
                                   "retired": {
@@ -26981,8 +26959,7 @@
                                 "required": [
                                   "date",
                                   "words"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             },
                             "mediaBase": {
@@ -27036,8 +27013,7 @@
                                   "narratorVoice",
                                   "recordingKind",
                                   "durationMs"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             },
                             "illustrations": {
@@ -27068,8 +27044,7 @@
                                   "hash",
                                   "size",
                                   "retired"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             }
                           },
@@ -27374,8 +27349,7 @@
                               },
                               "required": [
                                 "text"
-                              ],
-                              "additionalProperties": false
+                              ]
                             },
                             "default": []
                           },
@@ -27466,8 +27440,7 @@
                               },
                               "required": [
                                 "title"
-                              ],
-                              "additionalProperties": false
+                              ]
                             }
                           },
                           "correctionIds": {
@@ -27491,8 +27464,7 @@
                           "categoryId",
                           "rarity",
                           "sources"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "idioms": {
@@ -27548,8 +27520,7 @@
                               },
                               "required": [
                                 "text"
-                              ],
-                              "additionalProperties": false
+                              ]
                             },
                             "default": []
                           },
@@ -27582,8 +27553,7 @@
                               },
                               "required": [
                                 "title"
-                              ],
-                              "additionalProperties": false
+                              ]
                             }
                           },
                           "retired": {
@@ -27597,8 +27567,7 @@
                           "idiomType",
                           "primaryDefinition",
                           "sources"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "corrections": {
@@ -27663,8 +27632,7 @@
                             "required": [
                               "nonStandard",
                               "standard"
-                            ],
-                            "additionalProperties": false
+                            ]
                           },
                           "categoryId": {
                             "type": "string",
@@ -27695,8 +27663,7 @@
                               },
                               "required": [
                                 "title"
-                              ],
-                              "additionalProperties": false
+                              ]
                             }
                           },
                           "literaryUses": {
@@ -27737,8 +27704,7 @@
                                 "author",
                                 "work",
                                 "authorDeathYear"
-                              ],
-                              "additionalProperties": false
+                              ]
                             },
                             "default": []
                           },
@@ -27756,8 +27722,7 @@
                           "examplePair",
                           "categoryId",
                           "sources"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "tips": {
@@ -27804,8 +27769,7 @@
                             },
                             "required": [
                               "text"
-                            ],
-                            "additionalProperties": false
+                            ]
                           },
                           "exceptions": {
                             "type": "object",
@@ -27827,8 +27791,7 @@
                             "required": [
                               "explanation",
                               "words"
-                            ],
-                            "additionalProperties": false
+                            ]
                           },
                           "sources": {
                             "type": "array",
@@ -27855,8 +27818,7 @@
                               },
                               "required": [
                                 "title"
-                              ],
-                              "additionalProperties": false
+                              ]
                             }
                           },
                           "gameQuestion": {
@@ -27893,8 +27855,7 @@
                               "prompt",
                               "rightAnswer",
                               "wrongAnswers"
-                            ],
-                            "additionalProperties": false
+                            ]
                           },
                           "retired": {
                             "type": "boolean",
@@ -27908,8 +27869,7 @@
                           "explanation",
                           "sources",
                           "gameQuestion"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "synonymRows": {
@@ -27949,8 +27909,7 @@
                             "required": [
                               "text",
                               "stress"
-                            ],
-                            "additionalProperties": false
+                            ]
                           },
                           "meaning": {
                             "type": "string",
@@ -27989,8 +27948,7 @@
                               "required": [
                                 "text",
                                 "stress"
-                              ],
-                              "additionalProperties": false
+                              ]
                             }
                           },
                           "example": {
@@ -28007,8 +27965,7 @@
                             },
                             "required": [
                               "text"
-                            ],
-                            "additionalProperties": false
+                            ]
                           },
                           "sources": {
                             "type": "array",
@@ -28035,8 +27992,7 @@
                               },
                               "required": [
                                 "title"
-                              ],
-                              "additionalProperties": false
+                              ]
                             }
                           },
                           "retired": {
@@ -28050,8 +28006,7 @@
                           "meaning",
                           "members",
                           "sources"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "curatedCollections": {
@@ -28110,8 +28065,7 @@
                           "description",
                           "publishedOn",
                           "entryIds"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "crosswordDays": {
@@ -28175,8 +28129,7 @@
                                 "row",
                                 "column",
                                 "direction"
-                              ],
-                              "additionalProperties": false
+                              ]
                             }
                           },
                           "retired": {
@@ -28186,8 +28139,7 @@
                         "required": [
                           "date",
                           "words"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "mediaBase": {
@@ -28241,8 +28193,7 @@
                           "narratorVoice",
                           "recordingKind",
                           "durationMs"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "illustrations": {
@@ -28273,8 +28224,7 @@
                           "hash",
                           "size",
                           "retired"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "needsNewRecording": {
