@@ -8,9 +8,9 @@ import type {
 } from '@slovo/core';
 import type { CrosswordDayCardState, CrosswordMiniCell, DailyCrosswordCard } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState, type ComponentProps } from 'react';
+import { useCallback, useState, type ComponentProps } from 'react';
 
-import { useComposition } from '../composition';
+import { useComposition, useCompositionRead } from '../composition';
 import { edition, editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { crossingMiniGrid, crossingProgress, crossingSolveOf } from './crossing-crossword';
@@ -137,6 +137,8 @@ type CardState =
   | ({ readonly kind: 'traced' } & TracedCardState);
 
 /** What the card shows of the Daily Crossword the Core opened today: none when it opens none. */
+const openDailyCrossword = (composition: Composition) => composition.openDailyCrossword();
+
 async function cardState(composition: Composition): Promise<CardState | undefined> {
   const opening = await composition.openDailyCrossword();
   if (opening.kind === 'none') return undefined;
@@ -159,24 +161,9 @@ async function cardState(composition: Composition): Promise<CardState | undefine
  * opens. An opening that fails is logged and opens none.
  */
 export function useDailyCrossword(): DailyCrosswordOpening | undefined {
-  const composition = useComposition();
-  const [read, setRead] = useState<{ in: Composition; opening: DailyCrosswordOpening }>();
-  useEffect(() => {
-    let active = true;
-    composition.openDailyCrossword().then(
-      (opening) => {
-        if (active) setRead({ in: composition, opening });
-      },
-      (error: unknown) => {
-        logError('Could not open the Daily Crossword', error);
-        if (active) setRead({ in: composition, opening: { kind: 'none' } });
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [composition]);
-  return read?.in === composition ? read.opening : undefined;
+  const reading = useCompositionRead(openDailyCrossword, 'Could not open the Daily Crossword');
+  if (reading.status === 'loading') return undefined;
+  return reading.status === 'ready' ? reading.value : { kind: 'none' };
 }
 
 /**
