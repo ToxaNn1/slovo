@@ -10,7 +10,7 @@ import { createHash, randomUUID } from 'node:crypto';
 
 import { illustrationPath, recordingPath, type RecordingKind, type Word } from '@slovo/contracts';
 import type { Clock, Edition } from '@slovo/server-core';
-import { and, asc, eq, inArray, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, isNull, lt, lte, sql, type SQL } from 'drizzle-orm';
 
 import { createMediaRows, type NewRecording, type RecordedWord } from '../content/media-rows';
 import type { Database } from '../database/database';
@@ -258,51 +258,40 @@ export function createRecordings({
         await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${editionId}))`);
         return sweep(tx);
       });
+    // Stamps the row under its Edition's lock while it is still due, then deletes its file.
+    const sweep = async (
+      table: typeof mediaRecordings | typeof mediaIllustrations,
+      row: { editionId: string; wordId: string; hash: string },
+      slot: SQL | undefined,
+      path: string,
+    ) =>
+      locked(row.editionId, async (tx) => {
+        const stamped = await tx
+          .update(table)
+          .set({ fileDeletedAt: clock.now() })
+          .where(
+            and(
+              eq(table.editionId, row.editionId),
+              eq(table.wordId, row.wordId),
+              eq(table.hash, row.hash),
+              slot,
+              dueOf(table),
+            ),
+          )
+          .returning({ hash: table.hash });
+        if (stamped.length > 0) await store.delete(path);
+        return stamped.length > 0;
+      });
     let deleted = 0;
-    const recordings = await db.select().from(mediaRecordings).where(dueOf(mediaRecordings));
-    for (const row of recordings) {
-      const swept = await locked(row.editionId, async (tx) => {
-        const stamped = await tx
-          .update(mediaRecordings)
-          .set({ fileDeletedAt: clock.now() })
-          .where(
-            and(
-              eq(mediaRecordings.editionId, row.editionId),
-              eq(mediaRecordings.wordId, row.wordId),
-              eq(mediaRecordings.narratorVoice, row.narratorVoice),
-              eq(mediaRecordings.recordingKind, row.recordingKind),
-              eq(mediaRecordings.hash, row.hash),
-              dueOf(mediaRecordings),
-            ),
-          )
-          .returning({ hash: mediaRecordings.hash });
-        if (stamped.length > 0) await store.delete(recordingPath(row));
-        return stamped.length > 0;
-      });
-      if (swept) deleted += 1;
+    for (const row of await db.select().from(mediaRecordings).where(dueOf(mediaRecordings))) {
+      const slot = and(
+        eq(mediaRecordings.narratorVoice, row.narratorVoice),
+        eq(mediaRecordings.recordingKind, row.recordingKind),
+      );
+      if (await sweep(mediaRecordings, row, slot, recordingPath(row))) deleted += 1;
     }
-    const illustrations = await db
-      .select()
-      .from(mediaIllustrations)
-      .where(dueOf(mediaIllustrations));
-    for (const row of illustrations) {
-      const swept = await locked(row.editionId, async (tx) => {
-        const stamped = await tx
-          .update(mediaIllustrations)
-          .set({ fileDeletedAt: clock.now() })
-          .where(
-            and(
-              eq(mediaIllustrations.editionId, row.editionId),
-              eq(mediaIllustrations.wordId, row.wordId),
-              eq(mediaIllustrations.hash, row.hash),
-              dueOf(mediaIllustrations),
-            ),
-          )
-          .returning({ hash: mediaIllustrations.hash });
-        if (stamped.length > 0) await store.delete(illustrationPath(row));
-        return stamped.length > 0;
-      });
-      if (swept) deleted += 1;
+    for (const row of await db.select().from(mediaIllustrations).where(dueOf(mediaIllustrations))) {
+      if (await sweep(mediaIllustrations, row, undefined, illustrationPath(row))) deleted += 1;
     }
     return deleted;
   }

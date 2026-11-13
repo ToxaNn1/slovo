@@ -1,6 +1,6 @@
 import type { IllustrationRow, RecordingKind, RecordingRow, Word } from '@slovo/contracts';
 import type { Clock } from '@slovo/server-core';
-import { and, asc, eq, gt, gte, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, isNull, or, sql, type SQL } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import {
@@ -205,6 +205,23 @@ async function anyDeletedSince(
   return deleted !== undefined;
 }
 
+/**
+ * Retires the live row of the slot at the version unless it is the file's
+ * already; false when it is, and the file needs no row.
+ */
+async function retireLiveRow(
+  tx: Transaction,
+  table: typeof mediaRecordings | typeof mediaIllustrations,
+  slot: SQL | undefined,
+  { hash, version, now }: { hash: string; version: number; now: Date },
+): Promise<boolean> {
+  const live = and(slot, isNull(table.retiredAt));
+  const [current] = await tx.select({ hash: table.hash }).from(table).where(live);
+  if (current?.hash === hash) return false;
+  await tx.update(table).set({ retiredAt: now, contentVersion: version }).where(live);
+  return true;
+}
+
 /** Makes the file the live row of its slot, retiring the one it replaces; false when it already is. */
 async function saveRecordingRow(
   tx: Transaction,
@@ -219,15 +236,9 @@ async function saveRecordingRow(
     eq(mediaRecordings.narratorVoice, file.narratorVoice),
     eq(mediaRecordings.recordingKind, file.recordingKind),
   );
-  const [live] = await tx
-    .select({ hash: mediaRecordings.hash })
-    .from(mediaRecordings)
-    .where(and(slot, isNull(mediaRecordings.retiredAt)));
-  if (live?.hash === file.hash) return false;
-  await tx
-    .update(mediaRecordings)
-    .set({ retiredAt: now, contentVersion: version })
-    .where(and(slot, isNull(mediaRecordings.retiredAt)));
+  if (!(await retireLiveRow(tx, mediaRecordings, slot, { hash: file.hash, version, now }))) {
+    return false;
+  }
   await tx
     .insert(mediaRecordings)
     .values({ editionId, ...file, createdAt: now, retiredAt: null, contentVersion: version })
@@ -256,15 +267,9 @@ async function saveIllustrationRow(
     eq(mediaIllustrations.editionId, editionId),
     eq(mediaIllustrations.wordId, file.wordId),
   );
-  const [live] = await tx
-    .select({ hash: mediaIllustrations.hash })
-    .from(mediaIllustrations)
-    .where(and(slot, isNull(mediaIllustrations.retiredAt)));
-  if (live?.hash === file.hash) return false;
-  await tx
-    .update(mediaIllustrations)
-    .set({ retiredAt: now, contentVersion: version })
-    .where(and(slot, isNull(mediaIllustrations.retiredAt)));
+  if (!(await retireLiveRow(tx, mediaIllustrations, slot, { hash: file.hash, version, now }))) {
+    return false;
+  }
   await tx
     .insert(mediaIllustrations)
     .values({ editionId, ...file, createdAt: now, retiredAt: null, contentVersion: version })
