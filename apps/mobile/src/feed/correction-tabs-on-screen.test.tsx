@@ -217,17 +217,18 @@ function tabsOf(card: ReturnType<typeof correctionCard>) {
 }
 
 describe('the tabs of a Correction card in the Feed', () => {
-  it('shows the struck form above «Як краще», «Чому» and «Приклади», «Як краще» selected', async () => {
+  it('shows the struck form above «Як краще», «Чому», «Приклади» and «Джерело», «Як краще» selected', async () => {
     await open();
     await renderApp();
     await swipeUp();
 
     const card = correctionCard();
-    expect(card.getByText('слідуючий', hidden)).toBeTruthy();
+    expect(card.getByTestId('correction-non-standard', hidden)).toHaveTextContent(/Слідуючий/);
     expect(tabsOf(card)).toEqual([
       { name: 'Як краще', selected: true },
       { name: 'Чому', selected: false },
       { name: 'Приклади', selected: false },
+      { name: 'Джерело', selected: false },
     ]);
     expect(card.getByTestId('correction-standard', hidden)).toBeTruthy();
     expect(card.getByText(/другий/, hidden)).toBeTruthy();
@@ -238,7 +239,7 @@ describe('the tabs of a Correction card in the Feed', () => {
     expect(card.queryByText('Наступний тиждень.', hidden)).toBeNull();
   });
 
-  it('shows the reason in place on «Чому», the struck form kept', async () => {
+  it('shows the reason in place on «Чому», the struck form kept and the sources left to «Джерело»', async () => {
     await open();
     await renderApp();
     await swipeUp();
@@ -250,9 +251,26 @@ describe('the tabs of a Correction card in the Feed', () => {
     expect(
       card.getByText('Дієприкметник на -учий не властивий українській мові.', hidden),
     ).toBeTruthy();
-    expect(card.getByText('Джерело: Словник', hidden)).toBeTruthy();
+    expect(card.queryByText('Джерело: Словник', hidden)).toBeNull();
     expect(card.queryByTestId('correction-standard', hidden)).toBeNull();
-    expect(card.getByText('слідуючий', hidden)).toBeTruthy();
+    expect(card.getByTestId('correction-non-standard', hidden)).toHaveTextContent(/Слідуючий/);
+  });
+
+  it('names the sources one to a line on «Джерело», with no «Джерело:» before them (ADR 0116)', async () => {
+    await open();
+    await renderApp();
+    await swipeUp();
+
+    await settle(() => fireEvent.press(correctionCard().getByTestId('correction-tab-source')));
+
+    const card = correctionCard();
+    expect(tabsOf(card).find(({ selected }) => selected)?.name).toBe('Джерело');
+    expect(card.getByTestId('correction-source-0', hidden)).toHaveTextContent('Словник', {
+      exact: true,
+    });
+    expect(
+      card.queryByText('Дієприкметник на -учий не властивий українській мові.', hidden),
+    ).toBeNull();
   });
 
   it('shows the example pair on «Приклади»', async () => {

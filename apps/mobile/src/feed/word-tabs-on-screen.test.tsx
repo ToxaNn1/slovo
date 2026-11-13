@@ -16,7 +16,6 @@ import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
 import { State } from 'react-native-gesture-handler';
-import { getAnimatedStyle } from 'react-native-reanimated';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
 import HomeScreen from '../app/feed';
@@ -215,6 +214,14 @@ function wordCard() {
   return within(card);
 }
 
+/** The scroll views that hold `element`, from the nearest out. */
+function scrollsAround(element: ReturnType<typeof screen.getByTestId>) {
+  const found: string[] = [];
+  for (let at = element.parent; at !== null; at = at.parent)
+    if (at.type === 'RCTScrollView') found.push(String(at.props['testID']));
+  return found;
+}
+
 /** The tabs of the Word card, by their names, with whether each is selected. */
 function tabsOf(card: ReturnType<typeof wordCard>) {
   const selected = card.queryAllByRole('tab', { ...hidden, selected: true });
@@ -244,6 +251,7 @@ describe('the tabs of a Word card in the Feed', () => {
       { name: 'Приклад', selected: false },
       { name: 'Зв’язки', selected: false },
       { name: 'Історія', selected: false },
+      { name: 'Джерело', selected: false },
     ]);
     expect(card.getByText('Значення слова сумирний.', hidden)).toBeTruthy();
     expect(card.queryByText('Сумирний кінь стояв тихо.', hidden)).toBeNull();
@@ -273,15 +281,23 @@ describe('the tabs of a Word card in the Feed', () => {
     await open({ ...fullWord, synonyms: [], antonyms: [] });
     await renderApp();
 
-    expect(tabsOf(wordCard()).map(({ name }) => name)).toEqual(['Суть', 'Приклад', 'Історія']);
+    expect(tabsOf(wordCard()).map(({ name }) => name)).toEqual([
+      'Суть',
+      'Приклад',
+      'Історія',
+      'Джерело',
+    ]);
   });
 
-  it('draws no tab bar when «Суть» is the only tab with anything in it', async () => {
+  it('draws only «Суть» and «Джерело» when «Суть» is the only other tab with anything in it', async () => {
     await open(word('w_sumyrnyi', 'сумирний'));
     await renderApp();
 
     const card = wordCard();
-    expect(tabsOf(card)).toEqual([]);
+    expect(tabsOf(card)).toEqual([
+      { name: 'Суть', selected: true },
+      { name: 'Джерело', selected: false },
+    ]);
     expect(card.getByText('Значення слова сумирний.', hidden)).toBeTruthy();
   });
 
@@ -377,7 +393,7 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(clamped()).toBe(true);
   });
 
-  it('opens a clamped tab whole under «Детальніше», the card growing to it, and clamps it again on another tab', async () => {
+  it('opens a clamped tab whole under «Детальніше» in a scroll inside the card, which keeps its frame, and clamps it again on another tab', async () => {
     const long = `${'Дуже довге значення слова, яке не вміщається в картку. '.repeat(40)}Кінець.`;
     await open({ ...fullWord, primaryDefinition: long });
     await renderApp();
@@ -401,15 +417,20 @@ describe('the tabs of a Word card in the Feed', () => {
 
     await act(() => jest.advanceTimersByTimeAsync(500));
 
-    // The room grows to the whole tab, so the page scrolls over the card (ADR 0091).
-    const room = () => getAnimatedStyle(wordCard().getByTestId('word-tab-panel', hidden));
+    // Only the card scrolls: the opened tab scrolls in the room, which keeps the frame's height, so the page never scrolls (ADR 0113).
+    const panel = wordCard().getByTestId('word-tab-panel', hidden);
+    const scroll = within(panel).getByTestId('word-tab-scroll', hidden);
     expect(wordCard().queryByTestId('word-tab-more', hidden)).toBeNull();
-    expect(room()).toMatchObject({ minHeight: 2000 });
-    expect(wordCard().getByText(long, hidden)).toBeTruthy();
+    expect(within(scroll).getByText(long, hidden)).toBeTruthy();
+    expect(scroll.props['showsVerticalScrollIndicator']).not.toBe(false);
+    expect(StyleSheet.flatten(panel.props['style'])).not.toHaveProperty('minHeight');
+    // Nothing around the card scrolls, so its frame and tab bar never move (ADR 0113).
+    expect(scrollsAround(panel)).toEqual([]);
 
     await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-example')));
     await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-essence')));
-    expect(room()).toMatchObject({ minHeight: 0 });
+    expect(wordCard().queryByTestId('word-tab-scroll', hidden)).toBeNull();
+    expect(wordCard().queryByTestId('word-tab-less', hidden)).toBeNull();
   });
 
   it('hides an opened tab again under «Сховати», which gives «Детальніше» back (owner 08.11)', async () => {
@@ -433,8 +454,7 @@ describe('the tabs of a Word card in the Feed', () => {
     await layout('word-tab-content', 2000);
     await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-more', hidden)));
     await act(() => jest.advanceTimersByTimeAsync(500));
-    const room = () => getAnimatedStyle(wordCard().getByTestId('word-tab-panel', hidden));
-    expect(room()).toMatchObject({ minHeight: 2000 });
+    expect(wordCard().getByTestId('word-tab-scroll', hidden)).toBeTruthy();
 
     const less = wordCard().getByTestId('word-tab-less', hidden);
     expect(less).toHaveTextContent('Сховати');
@@ -442,7 +462,7 @@ describe('the tabs of a Word card in the Feed', () => {
     await settle(() => fireEvent.press(less));
     await act(() => jest.advanceTimersByTimeAsync(500));
 
-    expect(room()).toMatchObject({ minHeight: 0 });
+    expect(wordCard().queryByTestId('word-tab-scroll', hidden)).toBeNull();
     expect(wordCard().queryByTestId('word-tab-less', hidden)).toBeNull();
     expect(wordCard().getByTestId('word-tab-more', hidden)).toHaveTextContent('Детальніше');
   });
@@ -745,6 +765,7 @@ describe('the tabs of an Idiom card in the Feed', () => {
       { name: 'Суть', selected: true },
       { name: 'Звідки', selected: false },
       { name: 'Приклад', selected: false },
+      { name: 'Джерело', selected: false },
     ]);
     expect(card.getByText('Ледарювати.', hidden)).toBeTruthy();
     expect(card.getByText('2. Гаяти час.', hidden)).toBeTruthy();
@@ -783,7 +804,7 @@ describe('the tabs of an Idiom card in the Feed', () => {
     await renderApp();
     await swipeUp();
 
-    expect(tabsOf(idiomCard()).map(({ name }) => name)).toEqual(['Суть', 'Приклад']);
+    expect(tabsOf(idiomCard()).map(({ name }) => name)).toEqual(['Суть', 'Приклад', 'Джерело']);
   });
 
   it('keeps the column with «Походження» with `wordTabs` off', async () => {

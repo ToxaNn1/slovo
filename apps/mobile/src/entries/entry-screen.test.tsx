@@ -5,7 +5,6 @@ import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { StyleSheet } from 'react-native';
 import { renderRoutes } from '../shell/test-render';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
@@ -264,11 +263,19 @@ describe('the Entry screen and the Word History', () => {
   });
 });
 
+/** The scroll views that hold `element`, from the nearest out. */
+function scrollsAround(element: ReturnType<typeof screen.getByTestId>) {
+  const found: string[] = [];
+  for (let at = element.parent; at !== null; at = at.parent)
+    if (at.type === 'RCTScrollView') found.push(String(at.props['testID']));
+  return found;
+}
+
 describe('the Entry screen of a Word', () => {
-  it('keeps the action row docked under the text, out of the scroll, as long as the text runs', async () => {
+  it("keeps the action row docked under the text, out of the card's frame", async () => {
     await renderEntry('w_sumyrnyi');
 
-    const scroll = screen.getByTestId('entry-scroll');
+    const scroll = screen.getByTestId('entry-frame');
     expect(within(scroll).getByTestId('word-definition')).toBeOnTheScreen();
     expect(screen.getByTestId('entry-actions')).toBeOnTheScreen();
     expect(within(scroll).queryByTestId('entry-actions')).not.toBeOnTheScreen();
@@ -276,7 +283,7 @@ describe('the Entry screen of a Word', () => {
 });
 
 describe('a tab too long for the Entry screen', () => {
-  it("is clamped under «Детальніше», which opens it whole in the screen's scroll (ADR 0091)", async () => {
+  it('is clamped under «Детальніше», which opens it whole in a scroll inside the card, and nothing around the card scrolls (ADR 0113)', async () => {
     await renderEntry('w_sumyrnyi');
     await fireEvent.press(screen.getByTestId('word-tab-history'));
     await settle();
@@ -291,13 +298,16 @@ describe('a tab too long for the Entry screen', () => {
     }
 
     expect(
-      within(screen.getByTestId('entry-scroll')).getByTestId('word-tab-more'),
+      within(screen.getByTestId('entry-frame')).getByTestId('word-tab-more'),
     ).toBeOnTheScreen();
     await fireEvent.press(screen.getByTestId('word-tab-more'));
     await settle();
 
     expect(screen.queryByTestId('word-tab-more')).not.toBeOnTheScreen();
-    expect(screen.getByTestId('word-history')).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('word-tab-scroll')).getByTestId('word-history'),
+    ).toBeOnTheScreen();
+    expect(scrollsAround(screen.getByTestId('word-tab-panel'))).toEqual([]);
   });
 });
 
@@ -365,13 +375,24 @@ describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
     expect(screen.getByTestId('word-definition')).toBeOnTheScreen();
   });
 
-  it('shows a Correction with «Як краще», «Чому» and «Приклади», «Як краще» selected', async () => {
+  it("ends a Word's tabs with «Джерело», which names its sources (ADR 0116)", async () => {
+    await renderEntry('w_sumyrnyi');
+
+    expect(tabsOnScreen().at(-1)).toEqual({ name: 'Джерело', selected: false });
+
+    await fireEvent.press(screen.getByTestId('word-tab-source'));
+
+    expect(screen.getByTestId('word-source-0')).toBeOnTheScreen();
+  });
+
+  it('shows a Correction with «Як краще», «Чому», «Приклади» and «Джерело», «Як краще» selected', async () => {
     await renderEntry('c_vezhlyvyi');
 
     expect(tabsOnScreen()).toEqual([
       { name: 'Як краще', selected: true },
       { name: 'Чому', selected: false },
       { name: 'Приклади', selected: false },
+      { name: 'Джерело', selected: false },
     ]);
     expect(screen.getByTestId('correction-tab-panel')).toBeOnTheScreen();
   });
@@ -386,11 +407,9 @@ describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
       await renderEntry('w_sumyrnyi');
 
       // Under the tab bar: the docked action row, or the room for the swipe's stamp,
-      // which takes in the home indicator; the scroll adds nothing of its own.
+      // which takes in the home indicator; the frame adds nothing of its own.
       expect(screen.getByTestId('word-card')).toHaveStyle({ paddingBottom: 0 });
-      const scroll = screen.getByTestId('entry-scroll');
-      const content: unknown = StyleSheet.flatten(scroll.props['contentContainerStyle']);
-      expect(content).toMatchObject({ flexGrow: 1, paddingBottom: 0 });
+      expect(screen.getByTestId('entry-frame')).toHaveStyle({ flex: 1, paddingBottom: 0 });
     },
   );
 

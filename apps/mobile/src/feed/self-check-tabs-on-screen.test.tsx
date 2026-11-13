@@ -105,7 +105,7 @@ const idiom: Idiom = {
   retired: false,
 };
 
-/** A Tip with an Example, so it has «Суть» and «Приклад». */
+/** A Tip with an Example: one tab, «Правило», so its card draws no tab bar (ADR 0119). */
 const tip: Tip = {
   kind: 'tip',
   id: 't_hour',
@@ -311,25 +311,25 @@ const cases: readonly {
   {
     kind: 'word',
     content: { words: [fullWord] },
-    names: ['Суть', 'Приклад', 'Зв’язки', 'Історія'],
+    names: ['Суть', 'Приклад', 'Зв’язки', 'Історія', 'Джерело'],
     answer: 'Значення слова сумирний.',
   },
   {
     kind: 'correction',
     content: { corrections: [correction] },
-    names: ['Як краще', 'Чому', 'Приклади'],
+    names: ['Як краще', 'Чому', 'Приклади', 'Джерело'],
     answer: 'наступний',
   },
   {
     kind: 'idiom',
     content: { idioms: [idiom] },
-    names: ['Суть', 'Звідки', 'Приклад'],
+    names: ['Суть', 'Звідки', 'Приклад', 'Джерело'],
     answer: 'Ледарювати.',
   },
   {
     kind: 'tip',
     content: { tips: [tip] },
-    names: ['Суть', 'Приклад'],
+    names: ['Правило', 'Джерело'],
     answer: 'Час не рахують, а питають, котра година.',
   },
 ];
@@ -366,7 +366,7 @@ describe('Self-check on the tabs of an Entry card in the Feed', () => {
     },
   );
 
-  it('draws no tabs on a Synonym Row card, before the reveal or after it', async () => {
+  it('draws no tabs on a Synonym Row card before the reveal, its page and «Джерело» after it', async () => {
     await open({ synonymRows: [row] }, true);
     await renderApp();
     await swipeUp();
@@ -378,7 +378,7 @@ describe('Self-check on the tabs of an Entry card in the Feed', () => {
       fireEvent.press(cardOf('synonymRow').getByTestId('synonymRow-reveal', hidden)),
     );
 
-    expect(tabsOf(cardOf('synonymRow'))).toEqual([]);
+    expect(tabsOf(cardOf('synonymRow'))).toEqual(tabs(['Ряд · 1/1', 'Джерело'], false));
     expect(cardOf('synonymRow').getByText('Рухатися пішки.', hidden)).toBeTruthy();
   });
 });

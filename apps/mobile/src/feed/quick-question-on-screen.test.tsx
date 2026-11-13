@@ -179,7 +179,11 @@ describe('the Quick Question on the Feed', () => {
     await renderApp();
 
     const card = screen.getByTestId('quick-question', hidden);
-    expect(within(card).getByText(editionStrings.feed.quickQuestion, hidden)).toBeTruthy();
+    // The title is the card's heading VoiceOver reads; its tag shows the Round's one label.
+    expect(within(card).getByTestId('quick-question-tag', hidden)).toHaveProp(
+      'accessibilityLabel',
+      editionStrings.feed.quickQuestion,
+    );
     expect(within(card).getAllByText(asked.round.prompt, hidden).length).toBeGreaterThan(0);
     await settle(() =>
       fireEvent.press(

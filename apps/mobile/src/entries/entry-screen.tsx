@@ -50,7 +50,7 @@ export function EntryScreen({
   // The stack's Entry route, such as `/saved/favorites`: this screen's path without its Entry.
   const pathname = usePathname();
   const route = pathname.slice(0, pathname.lastIndexOf('/'));
-  const { stressFall, wordTabs } = useShown();
+  const { stressFall, wordTabs, sourceTab, tipExceptions } = useShown();
   // `null` once read for an id the Language Pack doesn't have.
   const read = useCallback(
     async (open: Composition) => (await openEntry(open, entryId, openedFrom)) ?? null,
@@ -103,6 +103,8 @@ export function EntryScreen({
             onWordHistoryShown={onWordHistoryShown}
             stressFalls={stressFall}
             tabs={wordTabs}
+            sourceTab={sourceTab}
+            tipExceptions={tipExceptions}
           />
         )}
         {/* Scrolled, the content passes under a red band behind the status bar. */}

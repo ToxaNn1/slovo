@@ -204,7 +204,15 @@ const FeedPage = memo(function FeedPage({
   onAnswerQuickQuestion: (position: number, option: number) => void;
 }) {
   const { top } = useSafeAreaInsets();
-  const { selfCheck, stressFall, calligraphicLemma, wordTabs, answerCard } = useShown();
+  const {
+    selfCheck,
+    stressFall,
+    calligraphicLemma,
+    wordTabs,
+    sourceTab,
+    tipExceptions,
+    answerCard,
+  } = useShown();
   const { toolsRow, topRow } = useHeaderRows();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
@@ -237,54 +245,78 @@ const FeedPage = memo(function FeedPage({
         {card.kind === 'end-of-cycle' ? <EndOfCycleCard /> : <NoticeCard card={card} />}
       </View>
     );
+  const entry = (
+    <>
+      {card.kind === 'notice' ? (
+        <YesterdayNotice word={card.word} />
+      ) : card.kind === 'tip' ? (
+        <SwipedEntryCard
+          card={card}
+          selfCheck={selfCheck}
+          tabs={wordTabs}
+          sourceTab={sourceTab}
+          tipExceptions={tipExceptions}
+        />
+      ) : card.kind === 'synonymRow' ? (
+        <SwipedEntryCard
+          card={card}
+          // A member opens its Word over the Feed, Hidden or out of the Mix alike.
+          onOpenWord={(wordId) => {
+            openScreen(`/entry/${wordId}`);
+          }}
+          selfCheck={selfCheck}
+          tabs={wordTabs}
+          sourceTab={sourceTab}
+        />
+      ) : (
+        <SwipedEntryCard
+          card={card}
+          onOpenCorrection={(correctionId) => {
+            onOpenCorrection(position, correctionId);
+          }}
+          // The row the Word is a member of opens over the Feed, as a member opens its Word.
+          onOpenSynonymRow={(synonymRowId) => {
+            openScreen(`/entry/${synonymRowId}`);
+          }}
+          selfCheck={selfCheck}
+          stressFalls={stressFall}
+          tabs={wordTabs}
+          sourceTab={sourceTab}
+          // Only here, on the Word of the Day card; in the Word font with the switch off.
+          wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
+        />
+      )}
+    </>
+  );
+  // A tabbed card is a fixed frame the page's height: nothing around it scrolls, only
+  // an opened tab inside it, so its frame and tab bar never move (ADR 0091, ADR 0113).
+  if (card.kind !== 'notice' && wordTabs)
+    return (
+      <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
+        <View
+          style={[
+            styles.page,
+            styles.heroContent,
+            // Under the logo row alone the card starts where the header ends.
+            { paddingTop: toolsRow ? topRow + space[2] : topRow },
+          ]}
+        >
+          {entry}
+        </View>
+      </View>
+    );
   return (
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView
-        // A tabbed card fills the page at least, and grows past it when «Детальніше» opens a tab (ADR 0091).
-        // The red card of the Word of the Day and every tabbed card hang from the top row, closer to the edges (board p1).
+        // The red card of the Word of the Day hangs from the top row, closer to the edges (board p1).
         contentContainerStyle={
-          card.kind !== 'notice' &&
-          (wordTabs || (card.kind === 'word' && card.wordOfTheDay !== undefined))
-            ? [
-                styles.heroContent,
-                // Under the logo row alone the card starts where the header ends.
-                { paddingTop: toolsRow ? topRow + space[2] : topRow },
-              ]
+          card.kind === 'word' && card.wordOfTheDay !== undefined
+            ? [styles.heroContent, { paddingTop: topRow + space[2] }]
             : [styles.content, { paddingTop: topRow }]
         }
       >
-        {card.kind === 'notice' ? (
-          <YesterdayNotice word={card.word} />
-        ) : card.kind === 'tip' ? (
-          <SwipedEntryCard card={card} selfCheck={selfCheck} tabs={wordTabs} />
-        ) : card.kind === 'synonymRow' ? (
-          <SwipedEntryCard
-            card={card}
-            // A member opens its Word over the Feed, Hidden or out of the Mix alike.
-            onOpenWord={(wordId) => {
-              openScreen(`/entry/${wordId}`);
-            }}
-            selfCheck={selfCheck}
-            tabs={wordTabs}
-          />
-        ) : (
-          <SwipedEntryCard
-            card={card}
-            onOpenCorrection={(correctionId) => {
-              onOpenCorrection(position, correctionId);
-            }}
-            // The row the Word is a member of opens over the Feed, as a member opens its Word.
-            onOpenSynonymRow={(synonymRowId) => {
-              openScreen(`/entry/${synonymRowId}`);
-            }}
-            selfCheck={selfCheck}
-            stressFalls={stressFall}
-            tabs={wordTabs}
-            // Only here, on the Word of the Day card; in the Word font with the switch off.
-            wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
-          />
-        )}
+        {entry}
       </PagerScrollView>
     </View>
   );

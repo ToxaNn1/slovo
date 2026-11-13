@@ -305,9 +305,10 @@ describe.each([
   it('files it in a new Collection from the «До колекції» sheet, titled with it', async () => {
     await renderCard(entryId);
 
-    const onCard = screen.getAllByText(title).length;
+    // The card may show the title starting with a capital (owner decision 11).
+    const onCard = screen.queryAllByText(title).length;
     await fireEvent.press(screen.getByTestId('collection-button'));
-    // The sheet leads with the Entry, under the card that does too.
+    // The sheet leads with the Entry's title as it is, under the card.
     expect(screen.getAllByText(title)).toHaveLength(onCard + 1);
     await fireEvent.changeText(screen.getByTestId('collection-name'), 'Мої');
     await fireEvent.press(screen.getByTestId('collection-create'));
