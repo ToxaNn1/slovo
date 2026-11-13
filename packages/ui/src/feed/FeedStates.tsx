@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { feedStateButtonHeight, space, typeStyle } from '../tokens';
+import { space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+import { Button } from '../primitives/Button';
 import { WedgeLoader } from '../primitives/WedgeLoader';
 
 /**
@@ -72,7 +73,7 @@ export function FeedError({
   testID?: string;
 }) {
   const tokens = useTokens();
-  const { colors, radii } = tokens;
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <View testID={testID} style={styles.error}>
@@ -92,20 +93,9 @@ export function FeedError({
           {message}
         </Text>
       </View>
-      <Pressable
-        testID={`${testID}-retry`}
-        accessibilityRole="button"
-        {...voice}
-        onPress={onRetry}
-        style={({ pressed }) => [
-          styles.button,
-          { backgroundColor: colors.ink, borderRadius: radii.button, opacity: pressed ? 0.8 : 1 },
-        ]}
-      >
-        <Text style={[typeStyle('buttonLabel', tokens), { color: colors.background }]}>
-          {retry}
-        </Text>
-      </Pressable>
+      <View style={styles.button}>
+        <Button variant="inverse" label={retry} onPress={onRetry} testID={`${testID}-retry`} />
+      </View>
     </View>
   );
 }
@@ -123,11 +113,5 @@ const styles = StyleSheet.create({
   illustration: { marginBottom: space[6] },
   center: { textAlign: 'center' },
   errorMessage: { marginTop: space[3], textAlign: 'center' },
-  button: {
-    alignSelf: 'stretch',
-    minHeight: feedStateButtonHeight,
-    marginTop: space[8],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  button: { alignSelf: 'stretch', marginTop: space[8] },
 });

@@ -6,9 +6,6 @@ export const xpBarPadding = 14;
 /** The XP bar's height, the Search button's beside it. */
 export const xpBarHeight = 40;
 
-/** The height of the button under the Feed's loading and error states. */
-export const feedStateButtonHeight = 54;
-
 /**
  * The gestures hint's demo (board XSwipeV): how long one round takes, how far
  * the card and the finger travel to a side and how far the card tilts there,
