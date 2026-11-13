@@ -16,15 +16,18 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 | lane | folders | items | status |
 | ---- | ------- | ----- | ------ |
 | L1 | packages/core | 15 | running |
-| L2 | packages/content-rules, packages/language-pack | 17 | todo |
+| L2 | packages/content-rules, packages/language-pack | 17 | running |
 | L3a | packages/ui/src/{game,entries,primitives} | 27 | running |
 | L3b | rest of packages/ui | 25 | todo |
 | L4 | apps/mobile | 24 | todo |
 | L5 | apps/backend, packages/server-core, packages/contracts | 32 | running |
-| L6 | apps/admin, apps/video, tools, scripts | 23 | running |
-| LX | cross-folder items, after all lanes | 13 | todo |
+| L6 | apps/admin, apps/video, tools, scripts | 23 | running (2nd session, after STUCK) |
+| LX | cross-folder items, after all lanes | 14 (+R79 from L6) | todo |
 
 ## Log
 - 2026-11-13T18:31:04Z step 0: HANDOFF, lane files, WAVES.md on coord/safety-net
 - 2026-11-13T18:32:14Z launched L1 (Fable), L3a, L5, L6 (Opus) as background subagents in /home/user/wt/<l>; L2 L3b L4 queued
 - WAITING until 20:02Z for L1 L3a L5 L6
+- L6 STUCK after 10 fixed (R44 R45 R132 R130 R65 R81 R82 R46 R47 R131); R79 moved to LX (needs SwitchRefusalSchema/AccessRefusalSchema exported from @slovo/contracts/admin-api). L6 relaunched on its branch; L2 launched.
+- Coordinator how-to: lane subagents are background Agents in worktrees /home/user/wt/<l> (deps installed). Wait with /tmp/claude-0/wait.sh <min> <lanes> (polls origin lane tips for DONE/STUCK). On DONE: merger subagent merges origin/fix/1113-code-review-<l> into fix/1113-code-review (--no-ff, `chore: merge lane <L>`), runs checks of the lane's packages, pushes. Queue: L3b, L4 (worktrees ready), then LX, then code review, merge origin/main, PR.
+- A fresh coordinator in a new container must redo the Setup notes (identity from .github/owner-email via shell snapshot; Postgres cluster) and recreate worktrees from the pushed lane branches.

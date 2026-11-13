@@ -225,5 +225,22 @@
       6,
       7
     ]
+  },
+  {
+    "id": "R79",
+    "sev": "med",
+    "kind": "duplicate",
+    "where": [
+      "apps/admin/src/session.ts:71",
+      "apps/admin/src/switches/switch-state.ts:96",
+      "apps/admin/src/routes/security.tsx:34",
+      "tools/content/src/api.ts:48"
+    ],
+    "problem": "Four hand-rolled walkers of oRPC `error.data` (tools/content with an `as ORPCError` cast) while `SwitchRefusalSchema` exists in contracts (admin.ts:184).",
+    "fix": "Export refusal schemas from `@slovo/contracts/admin-api` and `safeParse` them in admin and tools/content.",
+    "verified": true,
+    "part": [
+      8
+    ]
   }
 ]
