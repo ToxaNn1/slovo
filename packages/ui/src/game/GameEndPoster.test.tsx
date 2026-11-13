@@ -69,7 +69,10 @@ describe('GameEndPoster', () => {
   it('stacks the Lives-over poster as the board does: the mode and score over the title, the Mascot under them', async () => {
     await renderPoster();
 
-    expect(screen.getByRole('header', { name: 'Out of lives' })).toBeOnTheScreen();
+    // The mode and score and the title are read as one heading.
+    const heading = screen.getByRole('header');
+    expect(heading).toHaveTextContent('SURVIVAL · 2/5', { exact: false });
+    expect(heading).toHaveTextContent('Out of lives', { exact: false });
     expect(screen.getByText('SURVIVAL · 2/5')).toBeOnTheScreen();
     // The mode and score lead the title, as on board g9.
     const drawn = JSON.stringify(screen.toJSON());
