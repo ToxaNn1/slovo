@@ -68,8 +68,8 @@ describe('RailScreenHero', () => {
     const onPress = jest.fn();
     await renderHero({ action: { kind: 'toggle', label: 'Add', on: false, onPress } });
 
-    const add = screen.getByRole('button', { name: 'Add' });
-    expect(add).not.toBeSelected();
+    const add = screen.getByRole('togglebutton', { name: 'Add' });
+    expect(add.props['accessibilityState']).toMatchObject({ checked: false });
     // The board's hard shadow lies below the button, outside its face.
     expect(screen.getByTestId('hero-action-edge')).toBeOnTheScreen();
     expect(add).not.toHaveStyle({ borderBottomWidth: 3 });
@@ -84,7 +84,9 @@ describe('RailScreenHero', () => {
       action: { kind: 'toggle', label: 'In the mix', on: true, onPress: jest.fn() },
     });
 
-    expect(screen.getByRole('button', { name: 'In the mix' })).toBeSelected();
+    expect(
+      screen.getByRole('togglebutton', { name: 'In the mix' }).props['accessibilityState'],
+    ).toMatchObject({ checked: true });
     expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
     expect(screen.queryByTestId('hero-action-edge')).toBeNull();
   });
@@ -120,7 +122,9 @@ describe('RailScreenHero', () => {
     it('pops in once the toggle turns on, and comes to rest', async () => {
       await toggleOn(false);
 
-      expect(screen.getByRole('button', { name: 'Added' })).toBeSelected();
+      expect(
+        screen.getByRole('togglebutton', { name: 'Added' }).props['accessibilityState'],
+      ).toMatchObject({ checked: true });
       expect(iconScale()).not.toBe(1);
       await act(() => {
         jest.advanceTimersByTime(1000);
@@ -131,7 +135,9 @@ describe('RailScreenHero', () => {
     it('stays still with Reduce Motion', async () => {
       await toggleOn(true);
 
-      expect(screen.getByRole('button', { name: 'Added' })).toBeSelected();
+      expect(
+        screen.getByRole('togglebutton', { name: 'Added' }).props['accessibilityState'],
+      ).toMatchObject({ checked: true });
       expect(iconScale()).toBe(1);
     });
 

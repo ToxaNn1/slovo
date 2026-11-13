@@ -48,6 +48,15 @@ describe('GameModeCard', () => {
     expect(screen.getByText('★ 23')).toBeTruthy();
   });
 
+  it('reads the reason a mode cannot start in place of its line, as it shows', async () => {
+    await render(<Card bestLabel="Best: 23" refusal="Too few words." />);
+
+    expect(screen.queryByText('Read a Definition, pick a word')).toBeNull();
+    expect(screen.getByRole('button').props['accessibilityLabel']).toBe(
+      'Guess the word. Too few words. Best: 23',
+    );
+  });
+
   it('shows a dash before the first finished Game and does not read it', async () => {
     await render(<Card />);
 

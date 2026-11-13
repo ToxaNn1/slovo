@@ -118,8 +118,13 @@ export async function openActiveDays({
       commit() {
         if (record) recorded.add(today);
         freeze.commit();
-        toFreeze.forEach(() => {
-          emit(analytics.track('freezeUsed', { freezesHeld }));
+        // Each event carries the freezes held once its own freeze was used.
+        toFreeze.forEach((_, used) => {
+          emit(
+            analytics.track('freezeUsed', {
+              freezesHeld: freezesHeld + (toFreeze.length - 1 - used),
+            }),
+          );
         });
         if (report !== undefined) {
           reported = report.lastDay;

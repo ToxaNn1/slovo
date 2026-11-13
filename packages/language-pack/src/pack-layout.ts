@@ -189,6 +189,9 @@ CREATE TABLE synonym_row_members (
   PRIMARY KEY (row_id, position)
 ) WITHOUT ROWID;
 
+-- The Synonym Rows of a Word card, found by the member's Word.
+CREATE INDEX synonym_row_members_by_word ON synonym_row_members (word_id);
+
 -- The Stress of a Synonym Row's words: member 0 is the dominant, member n
 -- the member at position n - 1.
 CREATE TABLE synonym_row_stress (

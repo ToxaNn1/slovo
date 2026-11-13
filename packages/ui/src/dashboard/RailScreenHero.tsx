@@ -2,7 +2,7 @@
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
 import type { MascotState } from '@slovo/contracts';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
@@ -12,7 +12,6 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OnAccentProvider } from '../entries/on-accent';
 import { HalftoneGround } from '../primitives/HalftoneGround';
@@ -31,6 +30,7 @@ import {
   withAlpha,
   type Wedge as WedgePoints,
 } from '../tokens';
+import { HeroBack, useHeroRoom } from './HeroBack';
 
 /**
  * The hero of a screen a Dashboard rail's tile opens (board `SlovoApp`,
@@ -74,10 +74,7 @@ export function RailScreenHero({
   const { ink: keyInk, background: cream } = useSchemeColors('light');
   const { voice } = useEdition();
   const { width } = useWindowDimensions();
-  // The board measures from the screen's top under a 54-point status bar.
-  const shift = Math.max(0, useSafeAreaInsets().top - place.statusBar);
-  // The board's height, or more when a long title or description pushes the bar down.
-  const [height, setHeight] = useState(place.height + shift);
+  const { shift, height, onLayout } = useHeroRoom(place.height);
   const text = (role: Parameters<typeof typeStyle>[0]) => [
     typeStyle(role, tokens),
     { color: keyInk },
@@ -86,26 +83,11 @@ export function RailScreenHero({
     <View
       testID={id}
       style={{ minHeight: place.height + shift, paddingTop: place.column.top + shift }}
-      onLayout={(event) => {
-        setHeight(event.nativeEvent.layout.height);
-      }}
+      onLayout={onLayout}
     >
       <HalftoneGround id={id} width={width} height={height} points={place.cut} />
       <OnAccentProvider value>
-        <Pressable
-          testID={back.testID ?? `${id}-back`}
-          accessibilityRole="button"
-          accessibilityLabel={back.label}
-          {...voice}
-          onPress={back.onPress}
-          style={({ pressed }) => [
-            styles.back,
-            { top: place.back.top + shift, backgroundColor: keyInk },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Icon name="back" size={place.back.icon} color={cream} />
-        </Pressable>
+        <HeroBack id={id} back={back} place={place.back} shift={shift} tile={keyInk} ink={cream} />
         {action !== undefined && (
           <HeroActionButton id={id} action={action} top={place.add.top + shift} />
         )}
@@ -211,7 +193,8 @@ function HeroActionButton({ id, action, top }: { id: string; action: HeroAction;
       )}
       <Pressable
         {...common}
-        accessibilityState={{ selected: on }}
+        accessibilityRole="togglebutton"
+        accessibilityState={{ checked: on }}
         style={({ pressed }) => [
           styles.add,
           { backgroundColor: on ? keyInk : cream },
@@ -273,15 +256,6 @@ function ToggleIcon({ testID, on, color }: { testID: string; on: boolean; color:
 }
 
 const styles = StyleSheet.create({
-  back: {
-    position: 'absolute',
-    left: place.back.left,
-    width: place.back.side,
-    height: place.back.side,
-    borderRadius: place.back.radius,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   addPlace: { position: 'absolute', right: place.add.right },
   addEdge: {
     position: 'absolute',

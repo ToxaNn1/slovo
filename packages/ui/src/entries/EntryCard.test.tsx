@@ -909,6 +909,27 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
     expect(screen.getByText('From the Greék.')).toHaveProp('accessibilityLabel', 'From the Greek.');
   });
 
+  it('numbers the other meanings in the History tab on from the primary Definition', async () => {
+    await render(
+      <EditionProvider
+        edition={{ locale: 'en' }}
+        strings={testStrings({
+          ...tabbedStrings,
+          wordCard: { ...tabbedStrings.wordCard, moreMeanings: { other: '{count} more' } },
+        })}
+      >
+        <EntryCard card={stressedWord} tabs />
+      </EditionProvider>,
+    );
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+
+    expect(
+      within(screen.getByTestId('word-meanings')).getByText('2. A handsome yóuth.', {
+        includeHiddenElements: true,
+      }),
+    ).toHaveProp('accessibilityLabel', '2. A handsome youth.');
+  });
+
   it('shows the Stress marks on an Idiom card and reads its texts without them', async () => {
     const stressedIdiom = idiomCard({
       expression: 'to beát the bushes',

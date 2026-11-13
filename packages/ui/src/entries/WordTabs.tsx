@@ -7,6 +7,7 @@ import { useWordTextSizes } from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { exampleMark, space, typeStyle } from '../tokens';
 import { capitalised } from './capitalised';
+import { NumberedDefinitions } from './NumberedDefinitions';
 import { CardTabs } from './CardTabs';
 import { LinkChips } from './LinkChips';
 import { ExampleMark } from './ExampleMark';
@@ -156,16 +157,7 @@ function TabContent({
         <>
           {tab.meanings.length === 0 ? null : (
             <DetailSection testID="word-meanings" title={strings.extraDefinitions}>
-              {tab.meanings.map((meaning, index) => (
-                <WholeLinesText
-                  key={index}
-                  accessibilityLabel={withoutStress(`${String(index + 1)}. ${meaning}`)}
-                  {...voice}
-                  style={body}
-                >
-                  {`${String(index + 1)}. ${capitalised(meaning, voice.accessibilityLanguage)}`}
-                </WholeLinesText>
-              ))}
+              <NumberedDefinitions definitions={tab.meanings} style={body} />
             </DetailSection>
           )}
           {tab.etymology.length === 0 ? null : (

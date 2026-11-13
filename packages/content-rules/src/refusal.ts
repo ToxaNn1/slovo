@@ -12,6 +12,7 @@ export type RuleName =
   | 'wrong-stress'
   | 'public-domain'
   | 'unique-tip-answers'
+  | 'unique-tip-exceptions'
   | 'word-category'
   | 'correction-category'
   | 'word-correction'

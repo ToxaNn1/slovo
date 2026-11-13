@@ -1,4 +1,4 @@
-import { Children, Fragment, type ReactNode } from 'react';
+import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Polygon } from 'react-native-svg';
 
@@ -46,7 +46,8 @@ export function SettingsGroup({ title, children }: { title?: string; children: R
         ]}
       >
         {Children.toArray(children).map((row, index) => (
-          <Fragment key={index}>
+          // `toArray` keys each row by its own key, so a row shown or hidden keeps the others mounted.
+          <Fragment key={isValidElement(row) ? row.key : index}>
             {index > 0 && <View style={[styles.divider, { backgroundColor: colors.line }]} />}
             {row}
           </Fragment>

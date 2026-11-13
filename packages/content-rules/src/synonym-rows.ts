@@ -14,11 +14,14 @@ export function checkSynonymRows(
   config: EditionConfig,
   words: readonly Authored<Word>[],
   synonymRows: readonly Authored<SynonymRow>[],
+  checksFile: (file: string) => boolean = () => true,
 ): Refusal[] {
   const errors: Refusal[] = [];
   const wordIds = new Set(words.map(({ entry }) => entry.id));
 
   for (const { file, entry: row } of synonymRows) {
+    // Every rule here is a rule of one row alone.
+    if (!checksFile(file)) continue;
     const fail = (rule: RuleName, field: string, message: string) => {
       errors.push({ rule, file, entryId: row.id, field, message });
     };

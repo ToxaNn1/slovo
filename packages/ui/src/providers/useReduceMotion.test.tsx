@@ -47,3 +47,31 @@ describe('useReduceMotion', () => {
     expect(screen.getByTestId('probe').props['children']).toBe('reduced');
   });
 });
+
+describe('useReduceMotion and a late answer', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('keeps a change the system announced over its later answer to the first question', async () => {
+    let answer: (enabled: boolean) => void = () => undefined;
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockReturnValue(
+      new Promise<boolean>((resolve) => {
+        answer = resolve;
+      }),
+    );
+    let changed: (enabled: boolean) => void = () => undefined;
+    jest.spyOn(AccessibilityInfo, 'addEventListener').mockImplementation((_event, handler) => {
+      changed = handler;
+      return { remove: () => undefined };
+    });
+    await render(<Probe />);
+    await act(async () => {
+      changed(true);
+      answer(false);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId('probe').props['children']).toBe('reduced');
+  });
+});

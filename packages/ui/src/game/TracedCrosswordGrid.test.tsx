@@ -2,7 +2,7 @@ import { playPuzzle, startPuzzle } from '@slovo/core/testing';
 import { type CrosswordPuzzle, type PuzzleAction } from '@slovo/core';
 import type { Word } from '@slovo/contracts';
 import { describe, expect, it } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { useState } from 'react';
 import { GestureHandlerRootView, State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
@@ -14,7 +14,7 @@ import {
   type TracedMiss,
 } from '@slovo/ui';
 import { testStrings } from '../test-strings';
-import { disabledOpacity } from '../tokens';
+import { disabledOpacity, fontScaleCap } from '../tokens';
 
 /**
  * A 3 × 3 puzzle of three hidden Words, one per row:
@@ -166,6 +166,19 @@ describe('the traced Daily Crossword grid (ADR 0073)', () => {
     // Tracing takes no tap, but no cell is dimmed, a found one included.
     for (const cell of ['grid-0-0', 'grid-1-0'])
       expect(screen.getByTestId(cell)).not.toHaveStyle({ opacity: disabledOpacity });
+  });
+
+  it('caps the text size of a found Word’s answer tiles, so its letters keep their tiles', async () => {
+    await renderGrid();
+    await trace([
+      [1, 0],
+      [1, 1],
+      [1, 2],
+    ]);
+    for (const letter of ['d', 'o', 'g'])
+      expect(within(clue(1)).getByText(letter).props['maxFontSizeMultiplier']).toBe(
+        fontScaleCap.number,
+      );
   });
 
   it('clears a wrong trace and locks nothing', async () => {

@@ -24,7 +24,7 @@ const cascade: Cascade = { variant: 'rise', ...place.cascade };
  * label without bars; and its Definition. A Correction, which the board leaves
  * out, takes the same slots: its non-standard form, its Correction Type's
  * name and its standard forms, « · » between several. The cards rise in one after another
- * by `index`; under Reduce Motion each only fades in. A tap opens the Entry.
+ * by `index`, those from `railScreen.cascadeCap` on together; under Reduce Motion each only fades in. A tap opens the Entry.
  */
 export function RailScreenCard({
   row,
@@ -40,7 +40,7 @@ export function RailScreenCard({
   onPress: () => void;
   testID?: string;
 }) {
-  const shown = useCascade(index, cascade);
+  const shown = useCascade(Math.min(index, place.cascadeCap), cascade);
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();

@@ -35,7 +35,9 @@ export function BreakCard({
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
-  const weeks = [strip.slice(0, 7), strip.slice(7)];
+  const weeks = Array.from({ length: Math.ceil(strip.length / 7) }, (_, week) =>
+    strip.slice(week * 7, week * 7 + 7),
+  );
   return (
     <View testID={testID} style={styles.block}>
       <View style={[styles.card, { backgroundColor: colors.surfaceSunken }]}>
@@ -71,8 +73,8 @@ export function BreakCard({
         </Text>
       </View>
       <View style={[styles.strip, { backgroundColor: colors.surface, borderColor: colors.line }]}>
-        {weeks.map((week) => (
-          <View key={week[0]?.date ?? 'empty'} style={styles.week}>
+        {weeks.map((week, index) => (
+          <View key={week[0]?.date ?? index} style={styles.week}>
             {week.map((day) => (
               <CalendarDayTile key={day.date} day={day} onPress={undefined} />
             ))}

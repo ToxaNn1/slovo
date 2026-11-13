@@ -248,7 +248,11 @@ export interface EditionFiles {
   entryFile(id: string): string;
 }
 
-/** An Edition opened by its id: its folder, with its config checked. */
+/**
+ * An Edition opened by its id: its folder, with its config checked. It reads
+ * its Entries once, on the first call that needs them, and every later call
+ * sees that reading.
+ */
 export interface EditionFolder extends EditionFiles {
   readonly id: string;
   readonly config: EditionConfig;
@@ -258,15 +262,16 @@ export interface EditionFolder extends EditionFiles {
    * errors that belong to the new Words. The Words must have passed the Word
    * schema. Each is located in the file it would be authored in, so an error
    * reads as the build would print it. The errors of the existing content are
-   * left out: `pnpm build:pack` reports those.
+   * left out: `pnpm build:pack` reports those. Literary uses are judged
+   * against the public domain on `today`, now by default.
    */
-  checkNewWords(words: readonly Word[]): BuildError[];
+  checkNewWords(words: readonly Word[], today?: Date): BuildError[];
   /** Checks new Idioms the way `checkNewWords` checks new Words. The Idioms must have passed the Idiom schema. */
-  checkNewIdioms(idioms: readonly Idiom[]): BuildError[];
+  checkNewIdioms(idioms: readonly Idiom[], today?: Date): BuildError[];
   /** Checks Corrections that are not in the Edition yet, as `checkNewWords` checks Words. */
-  checkNewCorrections(corrections: readonly Correction[]): BuildError[];
+  checkNewCorrections(corrections: readonly Correction[], today?: Date): BuildError[];
   /** Checks new Synonym Rows the way `checkNewWords` checks new Words. The rows must have passed the Synonym Row schema. */
-  checkNewSynonymRows(rows: readonly SynonymRow[]): BuildError[];
+  checkNewSynonymRows(rows: readonly SynonymRow[], today?: Date): BuildError[];
 }
 
 /** The ids of the Editions in an editions folder: each sub-folder holding an Edition config, in code-unit order. */
@@ -310,31 +315,34 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
       },
     ]);
   }
-  let content: AuthoredContent | undefined;
+  let read: AuthoredContent | undefined;
+  const entries = (): AuthoredContent => (read ??= files.entries());
   return {
     ...files,
     id: editionId,
     config,
-    checkNewWords(words) {
-      return checkNew((set) => ({ ...set, words: [...set.words, ...authored(words)] }));
+    entries,
+    entryTexts: () => entryTextsOf(entries()),
+    checkNewWords(words, today = new Date()) {
+      return checkNew(today, (set) => ({ ...set, words: [...set.words, ...authored(words)] }));
     },
-    checkNewCorrections(corrections) {
-      return checkNew((set) => ({
+    checkNewCorrections(corrections, today = new Date()) {
+      return checkNew(today, (set) => ({
         ...set,
         corrections: [...set.corrections, ...authored(corrections)],
       }));
     },
-    checkNewIdioms(idioms) {
-      return checkNew((set) => ({ ...set, idioms: [...set.idioms, ...authored(idioms)] }));
+    checkNewIdioms(idioms, today = new Date()) {
+      return checkNew(today, (set) => ({ ...set, idioms: [...set.idioms, ...authored(idioms)] }));
     },
-    checkNewSynonymRows(rows) {
-      return checkNew((set) => ({ ...set, synonymRows: authored(rows) }));
+    checkNewSynonymRows(rows, today = new Date()) {
+      return checkNew(today, (set) => ({ ...set, synonymRows: [...set.synonymRows, ...authored(rows)] }));
     },
   };
 
-  /** The content rules' refusals of the new records that `withNew` adds to the authored content. */
-  function checkNew(withNew: (set: ContentSet) => ContentSet): BuildError[] {
-    content ??= files.entries();
+  /** The content rules' refusals, on `today`, of the new records that `withNew` adds to the authored content. */
+  function checkNew(today: Date, withNew: (set: ContentSet) => ContentSet): BuildError[] {
+    const content = entries();
     const set = withNew(content);
     const old = new Set(
       [content.words, content.corrections, content.idioms, content.synonymRows].flat(),
@@ -342,7 +350,7 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
     const drafts = [set.words, set.corrections, set.idioms, set.synonymRows]
       .flat()
       .filter((r) => !old.has(r));
-    return onlyIn(drafts, buildErrorsOf(checkContentSet(config, set, { today: new Date() })));
+    return onlyIn(drafts, buildErrorsOf(checkContentSet(config, set, { today })));
   }
 
   /** New Entries, each located in the file it would be authored in. */
