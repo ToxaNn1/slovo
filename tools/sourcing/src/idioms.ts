@@ -10,6 +10,7 @@ import type { EditionFolder } from '@slovo/language-pack/edition';
 import { errorMessage } from './error-message';
 import { fetchGoroh, gorohUrl, parsePhraseology, type GorohPhraseologism } from './goroh';
 import {
+  draftIssues,
   runSourcing,
   type DraftContext,
   type KindDraft,
@@ -161,11 +162,5 @@ function draftIdiom(
 
 /** The schema's verdict, then the build's own checks against the Edition, as `field: message`. */
 function checkDraft(idiom: IdiomDraft, edition: EditionFolder): string[] {
-  const result = IdiomSchema.safeParse(idiom);
-  const issues = result.success
-    ? edition
-        .checkNewIdioms([result.data])
-        .map(({ field, message }) => `${field ?? '(idiom)'}: ${message}`)
-    : result.error.issues.map((issue) => `${issue.path.join('.') || '(idiom)'}: ${issue.message}`);
-  return [...new Set(issues)];
+  return draftIssues(IdiomSchema, (valid) => edition.checkNewIdioms([valid]), '(idiom)', idiom);
 }

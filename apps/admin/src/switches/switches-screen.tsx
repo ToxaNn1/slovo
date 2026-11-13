@@ -29,8 +29,14 @@ const tabClass =
  */
 export function SwitchesScreen() {
   const wide = useWide();
+  const { failed } = useSwitches();
   return (
     <section aria-label="Свічі" className="flex flex-1 flex-col gap-6">
+      {failed ? (
+        <p role="alert" className="text-sm text-destructive">
+          Не вдалося завантажити свічі.
+        </p>
+      ) : null}
       {wide ? (
         <nav
           aria-label="Свічі"
