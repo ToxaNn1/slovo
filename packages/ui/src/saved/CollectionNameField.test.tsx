@@ -62,7 +62,9 @@ describe('CollectionNameField', () => {
 
   it('leaves the name in the field and says it failed, to try again', async () => {
     const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => undefined);
+    const announce = jest
+      .spyOn(AccessibilityInfo, 'announceForAccessibility')
+      .mockImplementation(() => undefined);
     const onSubmit = jest.fn(() => Promise.reject(new Error('disk')));
     const { input } = await renderField(onSubmit);
 
@@ -71,7 +73,7 @@ describe('CollectionNameField', () => {
     expect(onSubmit).toHaveBeenCalledTimes(2);
     expect(input).toHaveDisplayValue('Birds');
     expect(screen.getByText('Could not keep it')).toBeOnTheScreen();
-    expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith('Could not keep it');
+    expect(announce).toHaveBeenCalledWith('Could not keep it');
     error.mockRestore();
   });
 });
