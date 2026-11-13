@@ -258,7 +258,9 @@ export function createRecordings({
         await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${editionId}))`);
         return sweep(tx);
       });
-    // Stamps the row under its Edition's lock while it is still due, then deletes its file.
+    // Under its Edition's lock, while the row is still due, deletes its file and
+    // then stamps the row: a time taken after the delete, so a save that put the
+    // same file before the delete landed finds it deleted since then.
     const sweep = async (
       table: typeof mediaRecordings | typeof mediaIllustrations,
       row: { editionId: string; wordId: string; hash: string },
@@ -266,21 +268,18 @@ export function createRecordings({
       path: string,
     ) =>
       locked(row.editionId, async (tx) => {
-        const stamped = await tx
-          .update(table)
-          .set({ fileDeletedAt: clock.now() })
-          .where(
-            and(
-              eq(table.editionId, row.editionId),
-              eq(table.wordId, row.wordId),
-              eq(table.hash, row.hash),
-              slot,
-              dueOf(table),
-            ),
-          )
-          .returning({ hash: table.hash });
-        if (stamped.length > 0) await store.delete(path);
-        return stamped.length > 0;
+        const of = and(
+          eq(table.editionId, row.editionId),
+          eq(table.wordId, row.wordId),
+          eq(table.hash, row.hash),
+          slot,
+          dueOf(table),
+        );
+        const [due] = await tx.select({ hash: table.hash }).from(table).where(of);
+        if (due === undefined) return false;
+        await store.delete(path);
+        await tx.update(table).set({ fileDeletedAt: clock.now() }).where(of);
+        return true;
       });
     let deleted = 0;
     for (const row of await db.select().from(mediaRecordings).where(dueOf(mediaRecordings))) {
