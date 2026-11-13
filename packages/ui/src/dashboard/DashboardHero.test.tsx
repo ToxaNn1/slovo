@@ -159,6 +159,18 @@ describe('DashboardHero', () => {
     );
   });
 
+  it('on a new day, revealed again, flies the new Lemma in though it opened revealed', async () => {
+    const { show } = await renderHero(revealed);
+    const tomorrow: WordOfTheDayHero = { ...unrevealed, date: { ...date, day: date.day + 1 } };
+
+    await show(tomorrow);
+    await show({ ...revealed, date: tomorrow.date });
+
+    expect(
+      screen.getAllByTestId('dashboard-hero-flying-letter', { includeHiddenElements: true }),
+    ).not.toHaveLength(0);
+  });
+
   it('opened already revealed, shows the Lemma still, with no letters flying', async () => {
     await renderHero(revealed);
 
