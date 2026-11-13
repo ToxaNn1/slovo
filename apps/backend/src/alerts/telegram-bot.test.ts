@@ -1,3 +1,4 @@
+import { pino } from 'pino';
 import { describe, expect, it } from 'vitest';
 
 import { silentLogger } from '../test-support';
@@ -54,5 +55,29 @@ describe('the Telegram bot', () => {
     const astray = createOwnerChat({ telegram, chatId: '654321' }, silentLogger);
     expect(await astray.send({ kind: 'alert', alert: { kind: 'backend-down' } })).toBe(false);
     expect(requests).toHaveLength(1);
+  });
+
+  it("logs only the alert's kind while the bot is not set up, never who turned a switch off", async () => {
+    const lines: string[] = [];
+    const chat = createOwnerChat(
+      undefined,
+      pino({}, { write: (line: string) => lines.push(line) }),
+    );
+
+    const sent = await chat.send({
+      kind: 'alert',
+      alert: {
+        kind: 'kill-switch',
+        feature: 'sync',
+        editionIds: ['uk'],
+        who: { kind: 'admin-user', email: 'owner@example.com' },
+        reason: 'a broken release',
+      },
+    });
+
+    expect(sent).toBe(false);
+    expect(lines.join('')).toContain('kill-switch');
+    expect(lines.join('')).not.toContain('owner@example.com');
+    expect(lines.join('')).not.toContain('a broken release');
   });
 });
