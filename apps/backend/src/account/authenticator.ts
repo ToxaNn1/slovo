@@ -6,7 +6,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { bearer, emailOTP } from 'better-auth/plugins';
-import { and, desc, eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import type { Logger } from 'pino';
 
 import type { Database } from '../database/database';
@@ -182,29 +182,37 @@ export function createAuthenticator(
     { subject, email }: { readonly subject: string; readonly email: string },
   ) {
     const { internalAdapter, secret } = await auth.$context;
-    const found = await internalAdapter.findUserByEmail(email);
-    // SLOVO asks for no name; the email is the provider's.
-    const user =
-      found?.user ??
-      (await internalAdapter.createUser(
-        { email, emailVerified: true, name: '' },
-        { method: 'oauth', oauth: { providerId } },
-      ));
-    // By the table: with the renamed fields (ADR 0030) better-auth reads a
-    // Sign-in method back with the Account's id where the subject should be.
-    const [linked] = await database.db
-      .select({ id: signInMethods.id })
-      .from(signInMethods)
-      .where(
-        and(
-          eq(signInMethods.accountId, user.id),
-          eq(signInMethods.providerId, providerId),
-          eq(signInMethods.providerAccountId, subject),
-        ),
-      );
-    if (linked === undefined) {
-      await internalAdapter.linkAccount({ userId: user.id, providerId, accountId: subject });
-    }
+    // By the tables, in one transaction with `on conflict`, so two first
+    // sign-ins with one email meet on one Account and one Sign-in method:
+    // with the renamed fields (ADR 0030) better-auth reads a Sign-in method
+    // back with the Account's id where the subject should be. SLOVO asks for
+    // no name; the email is the provider's, kept as better-auth keeps it.
+    const user = await database.db.transaction(async (tx) => {
+      const now = new Date();
+      const kept = email.toLowerCase();
+      await tx
+        .insert(accounts)
+        .values({ email: kept, name: '', emailVerified: true, createdAt: now, updatedAt: now })
+        .onConflictDoNothing({ target: accounts.email });
+      const [account] = await tx
+        .select({ id: accounts.id, email: accounts.email, createdAt: accounts.createdAt })
+        .from(accounts)
+        .where(eq(accounts.email, kept));
+      if (account === undefined) throw new Error('the Account of the sign-in was not written');
+      await tx
+        .insert(signInMethods)
+        .values({
+          accountId: account.id,
+          providerId,
+          providerAccountId: subject,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .onConflictDoNothing({
+          target: [signInMethods.providerId, signInMethods.providerAccountId],
+        });
+      return account;
+    });
     const session = await internalAdapter.createSession(user.id);
     return { token: signedToken(session.token, secret), account: accountRecord(user) };
   }

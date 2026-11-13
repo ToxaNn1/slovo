@@ -21,16 +21,46 @@ const CellIndexSchema = z
  * Correction's explanation, as they read when the day was made), the cell of
  * its first letter and the way it reads.
  */
-export const CrosswordWordSchema = z.strictObject({
+const crosswordWordShape = {
   entryId: z.union([WordIdSchema, CorrectionIdSchema]),
   answer: z.string().regex(/^\p{Ll}{3,5}$/u, 'Expected 3–5 lowercase letters'),
   clue: TextSchema,
   row: CellIndexSchema,
   column: CellIndexSchema,
   direction: z.enum(['across', 'down']),
-});
+};
+
+export const CrosswordWordSchema = z.strictObject(crosswordWordShape);
+
+const CrosswordWordOutputSchema = z.object(crosswordWordShape);
 
 export type CrosswordWord = z.infer<typeof CrosswordWordSchema>;
+
+// The fields of a crossword day, with its words strict for content and open for outputs.
+const crosswordDayShape = (
+  word: typeof CrosswordWordSchema | typeof CrosswordWordOutputSchema,
+) => ({
+  date: z.iso.date(),
+  words: z.array(word).min(CROSSWORD_WORDS.min).max(CROSSWORD_WORDS.max),
+  retired: z.boolean().optional(),
+});
+
+const crosswordDayRules = (
+  { words }: z.output<z.ZodObject<ReturnType<typeof crosswordDayShape>>>,
+  context: z.RefinementCtx,
+) => {
+  words.forEach(({ entryId }, i) => {
+    if (words.findIndex((other) => other.entryId === entryId) < i) {
+      context.addIssue({
+        code: 'custom',
+        path: ['words', i, 'entryId'],
+        message: `${entryId} is already a word of the day`,
+      });
+    }
+  });
+  for (const problem of crosswordGridProblems(words))
+    context.addIssue({ code: 'custom', ...problem });
+};
 
 /**
  * The Daily Crossword of one date, `YYYY-MM-DD`: 4–6 words on a 5 × 5 grid,
@@ -41,24 +71,13 @@ export type CrosswordWord = z.infer<typeof CrosswordWordSchema>;
  * longer played; a day not Retired leaves the flag out.
  */
 export const CrosswordDaySchema = z
-  .strictObject({
-    date: z.iso.date(),
-    words: z.array(CrosswordWordSchema).min(CROSSWORD_WORDS.min).max(CROSSWORD_WORDS.max),
-    retired: z.boolean().optional(),
-  })
-  .superRefine(({ words }, context) => {
-    words.forEach(({ entryId }, i) => {
-      if (words.findIndex((other) => other.entryId === entryId) < i) {
-        context.addIssue({
-          code: 'custom',
-          path: ['words', i, 'entryId'],
-          message: `${entryId} is already a word of the day`,
-        });
-      }
-    });
-    for (const problem of crosswordGridProblems(words))
-      context.addIssue({ code: 'custom', ...problem });
-  });
+  .strictObject(crosswordDayShape(CrosswordWordSchema))
+  .superRefine(crosswordDayRules);
+
+/** A crossword day as an output carries it: open to fields a later backend adds (ADR 0031). */
+export const CrosswordDayOutputSchema = z
+  .object(crosswordDayShape(CrosswordWordOutputSchema))
+  .superRefine(crosswordDayRules);
 
 export type CrosswordDay = z.infer<typeof CrosswordDaySchema>;
 

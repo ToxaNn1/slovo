@@ -1,6 +1,6 @@
 import type { IllustrationRow, RecordingKind, RecordingRow, Word } from '@slovo/contracts';
 import type { Clock } from '@slovo/server-core';
-import { and, asc, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, isNull, or, sql, type SQL } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import {
@@ -37,8 +37,26 @@ export interface NewIllustration {
 }
 
 export type MediaWrite =
-  | { readonly ok: true; readonly contentVersion: number }
+  | {
+      readonly ok: true;
+      readonly contentVersion: number;
+      /** The Words whose Recordings were saved. */
+      readonly recorded: readonly string[];
+      /** The Words whose Illustration was saved. */
+      readonly illustrated: readonly string[];
+    }
   | { readonly ok: false; readonly reason: 'not-imported' };
+
+/**
+ * The files to save, put in the Media Store from `putSince` on. A file whose
+ * row had its file deleted since then is gone from the store again, so its
+ * row is not made live: its Word is not saved.
+ */
+export interface MediaFiles {
+  readonly recorded: readonly RecordedWord[];
+  readonly illustrations: readonly NewIllustration[];
+  readonly putSince: Date;
+}
 
 /**
  * The Edition's media rows (ADR 0099): a saved file becomes its Word's live
@@ -54,7 +72,11 @@ export function createMediaRows({ database, clock }: { database: Database; clock
    */
   function write(
     editionId: string,
-    change: (tx: Transaction, version: number, now: Date) => Promise<boolean>,
+    change: (
+      tx: Transaction,
+      version: number,
+      now: Date,
+    ) => Promise<{ recorded: string[]; illustrated: string[]; changed: boolean }>,
   ): Promise<MediaWrite> {
     return db.transaction(async (tx) => {
       await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${editionId}))`);
@@ -66,20 +88,23 @@ export function createMediaRows({ database, clock }: { database: Database; clock
       if (held === undefined) return { ok: false, reason: 'not-imported' } as const;
       const now = clock.now();
       const next = held.contentVersion + 1;
-      if (!(await change(tx, next, now))) return { ok: true, contentVersion: held.contentVersion };
+      const { changed, recorded, illustrated } = await change(tx, next, now);
+      if (!changed) return { ok: true, contentVersion: held.contentVersion, recorded, illustrated };
       await tx
         .update(contentVersions)
         .set({ contentVersion: next, updatedAt: now })
         .where(eq(contentVersions.editionId, editionId));
-      return { ok: true, contentVersion: next };
+      return { ok: true, contentVersion: next, recorded, illustrated };
     });
   }
 
   /** Makes the file the live Recording of its Word, voice and Kind. */
   function saveRecording(editionId: string, file: NewRecording) {
-    return write(editionId, (tx, version, now) =>
-      saveRecordingRow(tx, editionId, file, version, now),
-    );
+    return write(editionId, async (tx, version, now) => ({
+      recorded: [file.wordId],
+      illustrated: [],
+      changed: await saveRecordingRow(tx, editionId, file, version, now),
+    }));
   }
 
   /**
@@ -88,40 +113,38 @@ export function createMediaRows({ database, clock }: { database: Database; clock
    * whose Lemma or Stress changed since the files were made, or that was
    * retired meanwhile, keeps what it has: the next run records it again.
    */
-  function saveRecordings(editionId: string, words: readonly RecordedWord[]) {
-    return saveMedia(editionId, { recorded: words, illustrations: [] });
+  function saveRecordings(editionId: string, words: readonly RecordedWord[], putSince: Date) {
+    return saveMedia(editionId, { recorded: words, illustrations: [], putSince });
   }
 
-  /** Makes the file the live Illustration of its Word. */
-  function saveIllustration(editionId: string, file: NewIllustration) {
-    return saveMedia(editionId, { recorded: [], illustrations: [file] });
+  /** Makes the file the live Illustration of its Word, unless the Word is retired or gone. */
+  function saveIllustration(editionId: string, file: NewIllustration, putSince: Date) {
+    return saveMedia(editionId, { recorded: [], illustrations: [file], putSince });
   }
 
   /**
    * Saves Recordings as `saveRecordings` does and makes each Illustration its
    * Word's live one, raising the content version once for them all.
    */
-  function saveMedia(
-    editionId: string,
-    {
-      recorded,
-      illustrations,
-    }: { recorded: readonly RecordedWord[]; illustrations: readonly NewIllustration[] },
-  ) {
+  function saveMedia(editionId: string, { recorded, illustrations, putSince }: MediaFiles) {
     return write(editionId, async (tx, version, now) => {
       let changed = false;
-      for (const word of recorded) {
+      const saved: { recorded: string[]; illustrated: string[] } = {
+        recorded: [],
+        illustrated: [],
+      };
+      const liveWord = async (wordId: string) => {
         const [current] = await tx
           .select({ fields: contentWords.fields, retired: contentWords.retired })
           .from(contentWords)
-          .where(and(eq(contentWords.editionId, editionId), eq(contentWords.id, word.wordId)));
-        if (
-          current === undefined ||
-          current.retired ||
-          current.fields.lemma !== word.read.lemma ||
-          JSON.stringify(current.fields.stress) !== JSON.stringify(word.read.stress)
-        )
-          continue;
+          .where(and(eq(contentWords.editionId, editionId), eq(contentWords.id, wordId)));
+        return current === undefined || current.retired ? undefined : current.fields;
+      };
+      for (const word of recorded) {
+        const fields = await liveWord(word.wordId);
+        if (fields === undefined || readsDifferently(fields, word.read)) continue;
+        if (await anyDeletedSince(tx, mediaRecordings, editionId, word.files, putSince)) continue;
+        saved.recorded.push(word.wordId);
         for (const file of word.files) {
           if (await saveRecordingRow(tx, editionId, file, version, now)) changed = true;
         }
@@ -131,9 +154,12 @@ export function createMediaRows({ database, clock }: { database: Database; clock
           .where(and(eq(contentWords.editionId, editionId), eq(contentWords.id, word.wordId)));
       }
       for (const file of illustrations) {
+        if ((await liveWord(file.wordId)) === undefined) continue;
+        if (await anyDeletedSince(tx, mediaIllustrations, editionId, [file], putSince)) continue;
+        saved.illustrated.push(file.wordId);
         if (await saveIllustrationRow(tx, editionId, file, version, now)) changed = true;
       }
-      return changed;
+      return { ...saved, changed };
     });
   }
 
@@ -141,6 +167,60 @@ export function createMediaRows({ database, clock }: { database: Database; clock
 }
 
 export type MediaRows = ReturnType<typeof createMediaRows>;
+
+/** Whether a Word's Recordings, made from `read`, no longer read its fields (ADR 0083). */
+export function readsDifferently(
+  fields: Pick<Word, 'lemma' | 'stress'>,
+  read: Pick<Word, 'lemma' | 'stress'>,
+): boolean {
+  return (
+    fields.lemma !== read.lemma || JSON.stringify(fields.stress) !== JSON.stringify(read.stress)
+  );
+}
+
+/**
+ * Whether a row of one of the files had its file deleted from `since` on:
+ * the sweep removed the key after the file was put, and a save that made the
+ * row live again would point at nothing.
+ */
+async function anyDeletedSince(
+  tx: Transaction,
+  table: typeof mediaRecordings | typeof mediaIllustrations,
+  editionId: string,
+  files: readonly { readonly wordId: string; readonly hash: string }[],
+  since: Date,
+): Promise<boolean> {
+  if (files.length === 0) return false;
+  const [deleted] = await tx
+    .select({ hash: table.hash })
+    .from(table)
+    .where(
+      and(
+        eq(table.editionId, editionId),
+        gte(table.fileDeletedAt, since),
+        or(...files.map((file) => and(eq(table.wordId, file.wordId), eq(table.hash, file.hash)))),
+      ),
+    )
+    .limit(1);
+  return deleted !== undefined;
+}
+
+/**
+ * Retires the live row of the slot at the version unless it is the file's
+ * already; false when it is, and the file needs no row.
+ */
+async function retireLiveRow(
+  tx: Transaction,
+  table: typeof mediaRecordings | typeof mediaIllustrations,
+  slot: SQL | undefined,
+  { hash, version, now }: { hash: string; version: number; now: Date },
+): Promise<boolean> {
+  const live = and(slot, isNull(table.retiredAt));
+  const [current] = await tx.select({ hash: table.hash }).from(table).where(live);
+  if (current?.hash === hash) return false;
+  await tx.update(table).set({ retiredAt: now, contentVersion: version }).where(live);
+  return true;
+}
 
 /** Makes the file the live row of its slot, retiring the one it replaces; false when it already is. */
 async function saveRecordingRow(
@@ -156,15 +236,9 @@ async function saveRecordingRow(
     eq(mediaRecordings.narratorVoice, file.narratorVoice),
     eq(mediaRecordings.recordingKind, file.recordingKind),
   );
-  const [live] = await tx
-    .select({ hash: mediaRecordings.hash })
-    .from(mediaRecordings)
-    .where(and(slot, isNull(mediaRecordings.retiredAt)));
-  if (live?.hash === file.hash) return false;
-  await tx
-    .update(mediaRecordings)
-    .set({ retiredAt: now, contentVersion: version })
-    .where(and(slot, isNull(mediaRecordings.retiredAt)));
+  if (!(await retireLiveRow(tx, mediaRecordings, slot, { hash: file.hash, version, now }))) {
+    return false;
+  }
   await tx
     .insert(mediaRecordings)
     .values({ editionId, ...file, createdAt: now, retiredAt: null, contentVersion: version })
@@ -193,15 +267,9 @@ async function saveIllustrationRow(
     eq(mediaIllustrations.editionId, editionId),
     eq(mediaIllustrations.wordId, file.wordId),
   );
-  const [live] = await tx
-    .select({ hash: mediaIllustrations.hash })
-    .from(mediaIllustrations)
-    .where(and(slot, isNull(mediaIllustrations.retiredAt)));
-  if (live?.hash === file.hash) return false;
-  await tx
-    .update(mediaIllustrations)
-    .set({ retiredAt: now, contentVersion: version })
-    .where(and(slot, isNull(mediaIllustrations.retiredAt)));
+  if (!(await retireLiveRow(tx, mediaIllustrations, slot, { hash: file.hash, version, now }))) {
+    return false;
+  }
   await tx
     .insert(mediaIllustrations)
     .values({ editionId, ...file, createdAt: now, retiredAt: null, contentVersion: version })
