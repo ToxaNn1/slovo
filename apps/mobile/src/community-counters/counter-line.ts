@@ -64,8 +64,8 @@ export function useCounterLine(
   useEffect(() => {
     if (!shown) return;
     let current = true;
-    void lineOf(reads, entryId).then((read) => {
-      if (current) setRead({ entryId, line: read });
+    void lineOf(reads, entryId).then((line) => {
+      if (current) setRead({ entryId, line });
     });
     return () => {
       current = false;
