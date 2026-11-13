@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:
 import { join } from 'node:path';
 
 import type { EntryKind } from '@slovo/contracts';
-import { formatBuildError } from '@slovo/language-pack';
+import { formatBuildError, type BuildError } from '@slovo/language-pack';
 import {
   EditionFolderError,
   wordKey,
@@ -14,6 +14,7 @@ import { POLITE_INTERVAL_MS, PoliteClient, type Clock, type Fetch } from './poli
 import { formatReviewReport } from './report';
 import type { DraftOutcome, DraftSummary, Flag, LemmaOutcome, ReviewReport } from './review-report';
 import { matchKey, SOURCE_LANGUAGE } from './text';
+import type { z } from 'zod';
 
 /** What every sourcing run takes, whatever kind of Entry it drafts. */
 export interface PipelineOptions {
@@ -92,6 +93,24 @@ export interface SourcingKind<R> {
   parseLine(content: string, edition: EditionFolder): ParsedLine<R>;
   /** Starts drafting for a run; the drafter is called once per line, in list order. */
   start(context: DraftContext): (request: R) => Promise<KindOutcome>;
+}
+
+/**
+ * A draft's issues as `field: message`: the schema's verdict, then the build's
+ * own checks against the Edition, which need a draft that passed the schema.
+ * `label` names the draft where no field is at fault.
+ */
+export function draftIssues<T>(
+  schema: z.ZodType<T>,
+  check: (valid: T) => readonly BuildError[],
+  label: string,
+  draft: unknown,
+): string[] {
+  const result = schema.safeParse(draft);
+  const issues = result.success
+    ? check(result.data).map(({ field, message }) => `${field ?? label}: ${message}`)
+    : result.error.issues.map((issue) => `${issue.path.join('.') || label}: ${issue.message}`);
+  return [...new Set(issues)];
 }
 
 export const REPORT_FILE = 'review-report.md';
@@ -226,8 +245,9 @@ function parseList<R>(
       const firstLine = lineOf.get(key);
       if (firstLine !== undefined) {
         lineErrors.push(`"${parsed.text}" is already listed on line ${String(firstLine)}`);
+      } else {
+        lineOf.set(key, line);
       }
-      lineOf.set(key, line);
     }
     errors.push(...lineErrors.map((message) => `Line ${String(line)}: ${message}`));
     if (parsed.ok) lines.push({ text: parsed.text, line, request: parsed.request });

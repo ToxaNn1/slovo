@@ -4,7 +4,9 @@ import { createFileRoute, useSearch } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { adminApi } from '../api';
+import { qualityQuery } from '../queries';
 import { DEFAULT_PERIOD, qualityPeriod } from '../filters';
+import { formatMoment } from '../format';
 
 export const Route = createFileRoute('/quality')({
   component: Quality,
@@ -27,9 +29,6 @@ const NO_DATA = 'Немає даних';
 
 const number = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
 
-const time = (iso: string) =>
-  new Date(iso).toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
-
 /** The change against the day before, signed. */
 function delta(value: number, yesterday: number) {
   const change = value - yesterday;
@@ -40,11 +39,7 @@ function delta(value: number, yesterday: number) {
 function Quality() {
   const search = useSearch({ from: '__root__' });
   const period = qualityPeriod(search.period ?? DEFAULT_PERIOD);
-  const quality = useQuery({
-    queryKey: ['quality', search.edition, period],
-    queryFn: () => adminApi.quality({ editionId: search.edition, period }),
-    retry: false,
-  });
+  const quality = useQuery(qualityQuery({ editionId: search.edition, period }));
   const ci = useQuery({
     queryKey: ['ciHistory', period],
     queryFn: () => adminApi.ciHistory({ period }),
@@ -56,7 +51,7 @@ function Quality() {
     <section aria-label="Якість" className="flex flex-col gap-6">
       {quality.isError ? <Notice>Sentry недоступний</Notice> : null}
       {fetched === undefined ? null : (
-        <p className="text-sm text-muted-foreground">Останні дані за {time(fetched)}</p>
+        <p className="text-sm text-muted-foreground">Останні дані за {formatMoment(fetched)}</p>
       )}
       {quality.data ? (
         <ul aria-label="Показники" className="grid grid-cols-2 gap-4 md:grid-cols-3">
@@ -163,7 +158,7 @@ function CiCharts({ runs }: { readonly runs: readonly CiRun[] }) {
       ? []
       : [
           {
-            label: `${run.sha.slice(0, 7)} · ${time(run.at)}`,
+            label: `${run.sha.slice(0, 7)} · ${formatMoment(run.at)}`,
             seconds,
             runnerSeconds: run.jobs.reduce((total, job) => total + job.seconds, 0),
           },
