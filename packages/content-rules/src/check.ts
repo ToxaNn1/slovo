@@ -11,7 +11,7 @@ import type {
 
 import { checkCrosswordDay, checkCrosswordDays, unknownCrosswordEntries } from './crossword-days';
 import { checkCuratedCollections } from './curated-collections';
-import { checkEntries } from './entries';
+import { checkEntries, checkMixedScript } from './entries';
 import type { AuthoredRecord, RecordKind } from './parse-record';
 import { protectedLiteraryUses } from './public-domain';
 import type { Authored, Refusal } from './refusal';
@@ -83,8 +83,9 @@ function checkSet(
   const { words, corrections, idioms, synonymRows, tips, curatedCollections } = set;
   return [
     ...checkEntries(config, words, corrections, idioms, checksFile),
-    ...checkSynonymRows(config, words, synonymRows),
-    ...checkTips(config, tips),
+    ...checkMixedScript([...words, ...corrections, ...idioms, ...synonymRows, ...tips], checksFile),
+    ...checkSynonymRows(config, words, synonymRows, checksFile),
+    ...checkTips(config, tips, checksFile),
     ...checkCuratedCollections(curatedCollections, [
       ...words,
       ...corrections,
