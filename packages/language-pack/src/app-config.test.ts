@@ -66,15 +66,21 @@ describe('the AppConfig', () => {
     ]);
   });
 
+  const withPlaceholders = (config: Json): Json => ({
+    ...config,
+    domain: 'slovo.example',
+    appleTeamId: '',
+  });
+
   it('keeps the placeholder domain and an empty Team ID for a development build', () => {
-    expect(openAppConfig(repoWith()).config).toMatchObject({
+    expect(openAppConfig(repoWith(withPlaceholders)).config).toMatchObject({
       domain: 'slovo.example',
       appleTeamId: '',
     });
   });
 
   it('refuses the placeholder domain and an empty Team ID for a release build', () => {
-    const failure = failureOf(() => openAppConfig(repoWith(), { build: 'release' }));
+    const failure = failureOf(() => openAppConfig(repoWith(withPlaceholders), { build: 'release' }));
 
     expect(fieldsOf(failure)).toEqual(['app/app.json › domain', 'app/app.json › appleTeamId']);
     expect(failure?.message).toMatch(/slovo\.example.*placeholder/s);
