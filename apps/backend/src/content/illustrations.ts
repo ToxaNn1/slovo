@@ -74,13 +74,20 @@ export function createIllustrations({
       .where(and(eq(contentWords.editionId, editionId), eq(contentWords.id, wordId)));
     if (word === undefined || word.retired) return { ok: false, reason: 'not-found' };
     const hash = createHash('sha256').update(bytes).digest('hex');
+    const putSince = clock.now();
     await mediaStore.put(illustrationPath({ wordId, hash }), bytes, 'image/png');
-    const saved = await mediaRows.saveIllustration(editionId, {
-      wordId,
-      hash,
-      size: bytes.byteLength,
-    });
+    const saved = await mediaRows.saveIllustration(
+      editionId,
+      {
+        wordId,
+        hash,
+        size: bytes.byteLength,
+      },
+      putSince,
+    );
     if (!saved.ok) return saved;
+    // Retired meanwhile, or its file swept since the put: the Word keeps what it has.
+    if (saved.illustrated.length === 0) return { ok: false, reason: 'not-found' };
     return { ok: true, contentVersion: saved.contentVersion, illustration: liveOf(wordId, hash) };
   }
 

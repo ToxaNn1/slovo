@@ -21,7 +21,7 @@ import {
   recordingLeases,
 } from '../database/schema';
 import type { MediaStore } from '../media/media-store';
-import type { RecordingGenerator } from './generator';
+import type { RecordingGenerator, RecordingOutcome } from './generator';
 import { RECORDING_KINDS, RECORDING_TEXTS } from './recording-text';
 
 type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
@@ -181,30 +181,43 @@ export function createRecordings({
       })),
     );
     if (requests.length === 0) return { recorded: 0, failed: 0 };
-    const outcomes = await generator.record(requests.map(({ voice, text }) => ({ voice, text })));
+    const putSince = clock.now();
+    // A generator that throws fails the whole batch: its Words go to the back of the queue.
+    const outcomes: readonly (RecordingOutcome | undefined)[] = await generator
+      .record(requests.map(({ voice, text }) => ({ voice, text })))
+      .catch(() => requests.map(() => ({ ok: false }) satisfies RecordingOutcome));
     if (!(await renewLease(editionId, holder))) return { recorded: 0, failed: 0 };
-    const recorded: RecordedWord[] = [];
+    const made: RecordedWord[] = [];
     for (const word of words) {
       const own = requests.flatMap((request, index) =>
         request.word === word ? [{ ...request, outcome: outcomes[index] }] : [],
       );
-      const files: NewRecording[] = [];
+      const files: { file: NewRecording; bytes: Uint8Array }[] = [];
       for (const { slot, outcome } of own) {
         if (outcome?.ok !== true) break;
-        const file: NewRecording = {
-          wordId: word.id,
-          ...slot,
-          hash: createHash('sha256').update(outcome.bytes).digest('hex'),
-          size: outcome.bytes.byteLength,
-          durationMs: outcome.durationMs,
-        };
-        await store.put(recordingPath(file), outcome.bytes, 'audio/mpeg');
-        files.push(file);
+        files.push({
+          file: {
+            wordId: word.id,
+            ...slot,
+            hash: createHash('sha256').update(outcome.bytes).digest('hex'),
+            size: outcome.bytes.byteLength,
+            durationMs: outcome.durationMs,
+          },
+          bytes: outcome.bytes,
+        });
       }
+      // A Word puts nothing unless every slot of it was made.
       if (files.length < own.length) continue;
-      recorded.push({ wordId: word.id, read: readOf(word.fields), files });
+      for (const { file, bytes } of files)
+        await store.put(recordingPath(file), bytes, 'audio/mpeg');
+      made.push({
+        wordId: word.id,
+        read: readOf(word.fields),
+        files: files.map(({ file }) => file),
+      });
     }
-    await rows.saveRecordings(editionId, recorded);
+    const saved = await rows.saveRecordings(editionId, made, putSince);
+    const recorded = saved.ok ? saved.recorded : [];
     await markFailures(editionId, words, recorded);
     return { recorded: recorded.length, failed: words.length - recorded.length };
   }
@@ -213,9 +226,9 @@ export function createRecordings({
   async function markFailures(
     editionId: string,
     words: readonly { readonly id: string }[],
-    recorded: readonly RecordedWord[],
+    recorded: readonly string[],
   ) {
-    const done = new Set(recorded.map(({ wordId }) => wordId));
+    const done = new Set(recorded);
     const stamp = async (ids: string[], recordingFailedAt: Date | null) => {
       if (ids.length === 0) return;
       await db
