@@ -62,13 +62,10 @@ export function RoundCard({
   gap,
   definition,
   face,
-  labelShown = false,
   quickQuestion,
   children,
 }: {
   label: string;
-  /** Whether the card shows its label over the prompt, as in the Feed; a Game's Round shows it in its head. */
-  labelShown?: boolean;
   prompt: string;
   /** The part of the prompt to mark; nothing to mark. */
   highlight: TextRange | undefined;
@@ -129,15 +126,6 @@ export function RoundCard({
           : styles.inCard
       }
     >
-      {labelShown && quickQuestion === undefined && face?.look !== 'instead' && (
-        <Text
-          maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-          {...voice}
-          style={[typeStyle('roundLabel', tokens), { color: colors.muted }]}
-        >
-          {label}
-        </Text>
-      )}
       {face?.look === 'instead' && (
         <Text
           testID="game-ask"

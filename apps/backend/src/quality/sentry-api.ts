@@ -22,7 +22,7 @@ export interface SentryApiOptions {
 }
 
 /** Answers `unavailable` to every read: Sentry is not set up. */
-export const unsetSentry: SentryReader = {
+const unsetSentry: SentryReader = {
   read: () => Promise.resolve({ ok: false, reason: 'unavailable' }),
 };
 
