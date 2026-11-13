@@ -13,7 +13,7 @@ const patch = {
   editionId: 'uk',
   since: 0,
   contentVersion: 1,
-  patchFormat: 2,
+  patchFormat: 3,
   words: [
     {
       id: 'w_1',
