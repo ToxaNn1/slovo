@@ -13,15 +13,17 @@ export function useReduceMotionKnown(): boolean | undefined {
   const setting = useContext(ReduceMotionSettingContext);
   const [reduceMotion, setReduceMotion] = useState<boolean>();
   useEffect(() => {
-    let active = true;
+    // The first answer counts until the system announces a change, which is newer.
+    let answered = false;
     void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (active) setReduceMotion(enabled);
+      if (!answered) setReduceMotion(enabled);
     });
     const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', (enabled) => {
+      answered = true;
       setReduceMotion(enabled);
     });
     return () => {
-      active = false;
+      answered = true;
       subscription.remove();
     };
   }, []);
