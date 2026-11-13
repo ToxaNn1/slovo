@@ -220,10 +220,15 @@ export function createSyncExchange({
     await userState.merge(async () => {
       const untracked = new Map<string, string | undefined>(syncCursor.change(cursor));
       const tracked = new Map<string, string | undefined>();
-      for (const { key, value, changedAt } of records) {
-        const mark = syncMarkOf(key);
-        if (mark === 'device-only') continue;
-        const { mine, waiting } = await mineOf(key);
+      // Read at once: the turn holds every other change back while the page is read.
+      const read = await Promise.all(
+        records.flatMap((record) => {
+          const mark = syncMarkOf(record.key);
+          if (mark === 'device-only') return [];
+          return [mineOf(record.key).then((kept) => ({ ...record, ...kept, mark }))];
+        }),
+      );
+      for (const { key, value, changedAt, mark, mine, waiting } of read) {
         const theirs = value ?? undefined;
         if (mark === 'union' && theirs === undefined) continue;
         if (mark === 'highest' && higher(mine, theirs)) {
