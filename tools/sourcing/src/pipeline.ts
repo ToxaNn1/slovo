@@ -226,8 +226,9 @@ function parseList<R>(
       const firstLine = lineOf.get(key);
       if (firstLine !== undefined) {
         lineErrors.push(`"${parsed.text}" is already listed on line ${String(firstLine)}`);
+      } else {
+        lineOf.set(key, line);
       }
-      lineOf.set(key, line);
     }
     errors.push(...lineErrors.map((message) => `Line ${String(line)}: ${message}`));
     if (parsed.ok) lines.push({ text: parsed.text, line, request: parsed.request });
