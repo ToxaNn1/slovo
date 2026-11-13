@@ -5,6 +5,7 @@ import { FeatureSwitchesSchema } from '@slovo/contracts';
 import {
   createAnalytics,
   createSettings,
+  createVisit,
   evaluateSwitches,
   openComposition,
   readInstallId,
@@ -322,6 +323,17 @@ describe('Analytics for the admin', () => {
     const edition = testEdition({ isFeatureEnabled: (feature) => on.includes(feature) });
     const userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
     const time = fakeClock('2026-10-31T09:00:00.000Z');
+    const visit = createVisit();
+    const reopen = () =>
+      openComposition({
+        content,
+        edition,
+        userState,
+        clock: time.clock,
+        random: { next: () => 0.25 },
+        analytics: analyticsInto(fake.port),
+        visit,
+      });
     const app = await openComposition({
       content,
       edition,
@@ -329,6 +341,7 @@ describe('Analytics for the admin', () => {
       clock: time.clock,
       random: { next: () => 0.25 },
       analytics: analyticsInto(fake.port),
+      visit,
       scheduling: {
         scheduler: createFakeNotificationScheduler({ permission: 'not-asked', answer: 'denied' }),
         ellipsis: '…',
@@ -339,7 +352,7 @@ describe('Analytics for the admin', () => {
       },
     });
     const analytics = createAnalytics({ edition, userState, sink: analyticsInto(fake.port) });
-    return { app, analytics, time, ...fake };
+    return { app, analytics, time, reopen, ...fake };
   }
 
   /** Every new event, through the seams the app uses. */
@@ -385,5 +398,19 @@ describe('Analytics for the admin', () => {
     await settle();
 
     expect(running.events).toEqual([['screenViewed', { screen: '/entry/[entryId]' }]]);
+  });
+
+  it('ends a Visit begun before the composition reopened', async () => {
+    const running = await runWith(['analytics', ...eventSwitches]);
+    await running.app.analytics.sessionStarted();
+    running.time.advance(90 * SECOND);
+    const reopened = await running.reopen();
+    await reopened.analytics.sessionEnded();
+    await settle();
+
+    expect(running.events).toEqual([
+      ['sessionStarted', {}],
+      ['sessionEnded', { durationSeconds: 90 }],
+    ]);
   });
 });

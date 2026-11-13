@@ -111,6 +111,8 @@ export {
 export { openCounterSending } from './community-counters/counter-sending';
 export {
   createAnalytics,
+  createVisit,
+  type Visit,
   type AnalyticsEvent,
   type AnalyticsEvents,
   type AnalyticsPort,
