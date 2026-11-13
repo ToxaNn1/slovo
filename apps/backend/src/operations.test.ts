@@ -309,11 +309,11 @@ describe('the server', { timeout: 30_000 }, () => {
     expect(server.output().stderr).toContain('AUTH_SECRET: is the example value');
   });
 
-  it('refuses to start in production without its SMTP settings and sender, naming each', async () => {
+  it('refuses to start in production without its ZeptoMail token and sender, naming each', async () => {
     const server = runServer({ ...VALID_ENV, NODE_ENV: 'production' });
 
     expect(await server.exited).toBe(1);
-    for (const name of ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'MAIL_FROM']) {
+    for (const name of ['ZEPTOMAIL_TOKEN', 'MAIL_FROM']) {
       expect(server.output().stderr).toContain(`${name}: is not set`);
     }
   });
@@ -341,17 +341,13 @@ describe('the server', { timeout: 30_000 }, () => {
     expect(server.output().stderr).not.toContain('R2_BUCKET');
   });
 
-  it('starts in production with its SMTP settings, sender and Media Store', async () => {
+  it('starts in production with its ZeptoMail token, sender and Media Store', async () => {
     const server = runServer({
       ...VALID_ENV,
       DATABASE_URL: testDatabaseUrl(),
       PORT: '0',
       NODE_ENV: 'production',
-      SMTP_HOST: 'smtp.example.com',
-      SMTP_PORT: '465',
-      SMTP_USER: 'slovo',
-      SMTP_PASSWORD: 'a-password',
-      SMTP_TLS: 'true',
+      ZEPTOMAIL_TOKEN: 'a-send-mail-token',
       MAIL_FROM: 'no-reply@example.com',
       MEDIA_BASE: 'https://media.example.com',
       R2_ACCOUNT_ID: 'account',
@@ -363,11 +359,14 @@ describe('the server', { timeout: 30_000 }, () => {
     await server.listening;
   });
 
-  it('refuses to start with an SMTP_USER but no SMTP_PASSWORD, naming it', async () => {
-    const server = runServer({ ...VALID_ENV, SMTP_USER: 'slovo' });
+  it('refuses to start with an http:// ZEPTOMAIL_API_URL, which would send the token in the clear, naming it', async () => {
+    const server = runServer({
+      ...VALID_ENV,
+      ZEPTOMAIL_API_URL: 'http://api.zeptomail.eu/v1.1/email',
+    });
 
     expect(await server.exited).toBe(1);
-    expect(server.output().stderr).toContain('SMTP_PASSWORD: is not set');
+    expect(server.output().stderr).toContain('ZEPTOMAIL_API_URL: must be an https:// URL');
   });
 
   it('starts with no SENTRY_DSN, as .env.example gives it, and then reports nothing', async () => {

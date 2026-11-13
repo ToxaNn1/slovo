@@ -5,7 +5,7 @@ All Editions share one backend deployment and one Postgres database, with data p
 The backend has two parts, like the app's Core and mobile shell (ADR 0006, 0018):
 
 - **The server Core**, `packages/server-core`, holds the backend's rules and declares the ports they need, such as the `Clock`. It imports only `@slovo/contracts` and Zod: no Hono, no SQL, no better-auth, no Node and no language. Its modules follow the app's Core: factory functions over an object of dependencies, expected outcomes as discriminated unions (`{ ok: true, … } | { ok: false, reason }`), exceptions only for broken invariants, time from the `Clock`.
-- **The backend**, `apps/backend`, is the shell: the HTTP routes and oRPC procedures, the adapters of the server Core's ports (Drizzle over Postgres, better-auth, SMTP) and one composition root, `createApp`, which builds the whole backend from its dependencies.
+- **The backend**, `apps/backend`, is the shell: the HTTP routes and oRPC procedures, the adapters of the server Core's ports (Drizzle over Postgres, better-auth, the ZeptoMail mail client) and one composition root, `createApp`, which builds the whole backend from its dependencies.
 - **The same domain folders on both sides** (ADR 0027): `account`, `content`, `edition` and `sync`. The backend's own layer is `database/`: the pool, the schema and the migrate command.
 
 dependency-cruiser holds the boundaries in CI (`pnpm deps`): the server Core imports only the contracts and Zod; the backend imports neither the app's Core, the UI nor React; the mobile app imports neither the server Core nor the backend. What both sides share lives in `contracts`.

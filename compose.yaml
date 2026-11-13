@@ -25,11 +25,11 @@ services:
       timeout: 5s
       retries: 15
 
-  # Catches every email the backend sends; read them at http://localhost:8025.
+  # Catches every email the backend sends over its send API (ADR 0115); read
+  # them at http://localhost:8025.
   mailpit:
     image: axllent/mailpit:v1.31
     ports:
-      - '${SLOVO_SMTP_PORT:-1025}:1025'
       - '${SLOVO_MAILPIT_PORT:-8025}:8025'
 
 volumes:

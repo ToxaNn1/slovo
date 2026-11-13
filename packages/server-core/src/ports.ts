@@ -165,7 +165,7 @@ export interface Mail {
   readonly text: string;
 }
 
-/** Sends emails (SMTP in the backend). */
+/** Sends emails (ZeptoMail's HTTPS API in the backend, ADR 0115). */
 export interface Mailer {
   send(mail: Mail): Promise<void>;
 }
