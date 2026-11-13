@@ -2,7 +2,14 @@ import { z } from 'zod';
 
 import { CorrectionIdSchema } from './correction';
 import { OriginLanguageSchema } from './origin-language';
-import { hasNoRepeats, RaritySchema, SourceSchema, EntryTextSchema, WordIdSchema } from './shared';
+import {
+  hasNoRepeats,
+  RaritySchema,
+  SourceOutputSchema,
+  SourceSchema,
+  EntryTextSchema,
+  WordIdSchema,
+} from './shared';
 
 /**
  * Language-agnostic part-of-speech codes. Editions supply the display labels.
@@ -39,15 +46,86 @@ export type Register = z.infer<typeof RegisterSchema>;
 export { WordIdSchema };
 
 /** A sentence showing the Word in use, with its author when the source names one. */
-export const ExampleSchema = z.strictObject({
+const exampleShape = {
   text: EntryTextSchema,
   author: EntryTextSchema.optional(),
-});
+};
+
+export const ExampleSchema = z.strictObject(exampleShape);
+
+/** An Example as an output carries it, open to later fields (ADR 0031). */
+export const ExampleOutputSchema = z.object(exampleShape);
 
 export type Example = z.infer<typeof ExampleSchema>;
 
 // The rarities live with the shared schemas, so the Edition's default Mix can name them.
 export { RARITIES, RaritySchema, type Rarity } from './shared';
+
+// The fields of a Word, with its nested schemas strict for content and open for outputs.
+const wordShape = (
+  example: typeof ExampleSchema | typeof ExampleOutputSchema,
+  source: typeof SourceSchema | typeof SourceOutputSchema,
+) => ({
+  kind: z.literal('word').default('word'),
+  id: WordIdSchema,
+  lemma: EntryTextSchema.refine(
+    (lemma) => lemma === lemma.normalize('NFC'),
+    'Expected the Lemma in Unicode NFC, with every letter composed',
+  ),
+  stress: z
+    .array(z.int().nonnegative())
+    .refine(
+      (positions) => positions.every((position, i) => position > (positions[i - 1] ?? -1)),
+      'Expected Stress positions in ascending order without repeats',
+    )
+    .default([]),
+  partOfSpeech: PartOfSpeechSchema,
+  gender: GenderSchema.optional(),
+  primaryDefinition: EntryTextSchema,
+  extraDefinitions: z.array(EntryTextSchema).default([]),
+  examples: z.array(example).default([]),
+  synonyms: z.array(EntryTextSchema).default([]),
+  antonyms: z.array(EntryTextSchema).default([]),
+  etymology: EntryTextSchema.optional(),
+  registers: z
+    .array(RegisterSchema)
+    .refine(hasNoRepeats, 'Register labels must not repeat')
+    .default([]),
+  region: EntryTextSchema.optional(),
+  history: EntryTextSchema.optional(),
+  origin: OriginLanguageSchema.shape.code.optional(),
+  illustration: z
+    .string()
+    .regex(/^[^./\\][^/\\]*$/, 'Expected a file name in the illustrations, not a path')
+    .optional(),
+  categoryId: z.string().min(1),
+  rarity: RaritySchema,
+  sources: z.array(source).min(1),
+  correctionIds: z
+    .array(CorrectionIdSchema)
+    .refine(hasNoRepeats, 'Linked Correction ids must not repeat')
+    .default([]),
+  retired: z.boolean().default(false),
+});
+
+const wordRules = (
+  word: z.output<z.ZodObject<ReturnType<typeof wordShape>>>,
+  context: z.RefinementCtx,
+) => {
+  if (word.partOfSpeech === 'noun' && word.gender === undefined) {
+    context.addIssue({ code: 'custom', path: ['gender'], message: 'Required for a noun' });
+  }
+  if (word.partOfSpeech !== 'noun' && word.gender !== undefined) {
+    context.addIssue({ code: 'custom', path: ['gender'], message: 'Only nouns carry a gender' });
+  }
+  if (word.region !== undefined && !word.registers.includes('dialectal')) {
+    context.addIssue({
+      code: 'custom',
+      path: ['region'],
+      message: 'Only a dialect Word, with the dialectal register label, carries a region',
+    });
+  }
+};
 
 /**
  * A Word as authored in an Edition's content and as returned by the Core.
@@ -82,63 +160,13 @@ export { RARITIES, RaritySchema, type Rarity } from './shared';
  * hold.
  */
 export const WordSchema = z
-  .strictObject({
-    kind: z.literal('word').default('word'),
-    id: WordIdSchema,
-    lemma: EntryTextSchema.refine(
-      (lemma) => lemma === lemma.normalize('NFC'),
-      'Expected the Lemma in Unicode NFC, with every letter composed',
-    ),
-    stress: z
-      .array(z.int().nonnegative())
-      .refine(
-        (positions) => positions.every((position, i) => position > (positions[i - 1] ?? -1)),
-        'Expected Stress positions in ascending order without repeats',
-      )
-      .default([]),
-    partOfSpeech: PartOfSpeechSchema,
-    gender: GenderSchema.optional(),
-    primaryDefinition: EntryTextSchema,
-    extraDefinitions: z.array(EntryTextSchema).default([]),
-    examples: z.array(ExampleSchema).default([]),
-    synonyms: z.array(EntryTextSchema).default([]),
-    antonyms: z.array(EntryTextSchema).default([]),
-    etymology: EntryTextSchema.optional(),
-    registers: z
-      .array(RegisterSchema)
-      .refine(hasNoRepeats, 'Register labels must not repeat')
-      .default([]),
-    region: EntryTextSchema.optional(),
-    history: EntryTextSchema.optional(),
-    origin: OriginLanguageSchema.shape.code.optional(),
-    illustration: z
-      .string()
-      .regex(/^[^./\\][^/\\]*$/, 'Expected a file name in the illustrations, not a path')
-      .optional(),
-    categoryId: z.string().min(1),
-    rarity: RaritySchema,
-    sources: z.array(SourceSchema).min(1),
-    correctionIds: z
-      .array(CorrectionIdSchema)
-      .refine(hasNoRepeats, 'Linked Correction ids must not repeat')
-      .default([]),
-    retired: z.boolean().default(false),
-  })
-  .superRefine((word, context) => {
-    if (word.partOfSpeech === 'noun' && word.gender === undefined) {
-      context.addIssue({ code: 'custom', path: ['gender'], message: 'Required for a noun' });
-    }
-    if (word.partOfSpeech !== 'noun' && word.gender !== undefined) {
-      context.addIssue({ code: 'custom', path: ['gender'], message: 'Only nouns carry a gender' });
-    }
-    if (word.region !== undefined && !word.registers.includes('dialectal')) {
-      context.addIssue({
-        code: 'custom',
-        path: ['region'],
-        message: 'Only a dialect Word, with the dialectal register label, carries a region',
-      });
-    }
-  });
+  .strictObject(wordShape(ExampleSchema, SourceSchema))
+  .superRefine(wordRules);
+
+/** A Word as an output carries it: open to fields a later backend adds (ADR 0031). */
+export const WordOutputSchema = z
+  .object(wordShape(ExampleOutputSchema, SourceOutputSchema))
+  .superRefine(wordRules);
 
 /** A Word with every default filled in, as the Core returns it. */
 export type Word = z.output<typeof WordSchema>;
