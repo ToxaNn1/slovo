@@ -6,7 +6,7 @@
   "explanation": "Тестове пояснення.",
   "examplePair": {
     "nonStandard": "На сьогоднішній день план виконано.",
-    "standard": "Сьогодні план виконано."
+    "standard": "**Сьогодні план виконано**."
   },
   "categoryId": "work",
   "sources": [

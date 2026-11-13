@@ -6,7 +6,7 @@
   "explanation": "Тестове пояснення.",
   "examplePair": {
     "nonStandard": "Тестове речення з кат́алог.",
-    "standard": "Тестове речення з катало́г."
+    "standard": "**Тестове речення з катало́г**."
   },
   "categoryId": "work",
   "sources": [

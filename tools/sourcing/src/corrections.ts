@@ -140,7 +140,9 @@ function draftFrom(
     ...(article === undefined || article.explanation === ''
       ? {}
       : { explanation: article.explanation }),
-    ...(article?.examplePair === undefined ? {} : { examplePair: article.examplePair }),
+    ...(article?.examplePair === undefined
+      ? {}
+      : { examplePair: withStandardFormMarked(article.examplePair) }),
     categoryId: request.categoryId,
     sources: [
       article === undefined
@@ -261,4 +263,22 @@ function namesForm(headword: string, form: string): boolean {
         .replace(/[^\p{L}'’ʼ-]+/gu, ' '),
     )} `;
   return words(headword).includes(words(form));
+}
+
+/**
+ * Marks the words the standard sentence changes, the draft's guess at its
+ * standard form (ADR 0117); the author widens the marks to the whole phrase.
+ */
+function withStandardFormMarked(pair: { readonly nonStandard: string; readonly standard: string }) {
+  const said = pair.nonStandard.split(' ');
+  const words = pair.standard.split(' ');
+  let start = 0;
+  while (start < words.length - 1 && words[start] === said[start]) start += 1;
+  let end = words.length;
+  while (end - 1 > start && words[end - 1] === said[said.length - words.length + end - 1]) end -= 1;
+  const marked = `**${words.slice(start, end).join(' ')}**`;
+  return {
+    nonStandard: pair.nonStandard,
+    standard: [...words.slice(0, start), marked, ...words.slice(end)].join(' '),
+  };
 }

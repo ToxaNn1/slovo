@@ -6,7 +6,7 @@
   "explanation": "Тестове пояснення.",
   "examplePair": {
     "nonStandard": "Який він разговорчивий!",
-    "standard": "Який він балакучий!"
+    "standard": "**Який він балакучий**!"
   },
   "categoryId": "work",
   "sources": [

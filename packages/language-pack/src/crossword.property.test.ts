@@ -100,7 +100,7 @@ function correctionOf(
     correctionType: 'surzhyk',
     standardEquivalents: [form],
     explanation: clueNaming(form),
-    examplePair: { nonStandard: `Він каже не${lemma}.`, standard: `Він каже ${form}.` },
+    examplePair: { nonStandard: `Він каже не${lemma}.`, standard: `Він каже **${form}**.` },
     categoryId: 'work',
     sources: [{ title: 'Тестове джерело' }],
     retired,

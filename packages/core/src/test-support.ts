@@ -301,7 +301,7 @@ export function correction(id: string, overrides: Partial<Correction> = {}): Cor
     correctionType: 'calque',
     standardEquivalents: [id.slice(2), `also ${id.slice(2)}`],
     explanation: 'An explanation.',
-    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
+    examplePair: { nonStandard: 'People say this.', standard: '**Better say this**.' },
     categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
     literaryUses: [],

@@ -6,7 +6,7 @@
   "explanation": "Тестове пояснення.",
   "examplePair": {
     "nonStandard": "Він всігда приходить вчасно.",
-    "standard": "Він завжди приходить вчасно."
+    "standard": "**Він завжди приходить вчасно**."
   },
   "categoryId": "work",
   "sources": [
