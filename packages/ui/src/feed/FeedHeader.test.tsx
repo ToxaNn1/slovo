@@ -60,9 +60,14 @@ describe('FeedHeader', () => {
   it('opens the Dashboard from the wordmark when it is given a way there', async () => {
     const onPress = jest.fn();
     await renderHeader({ onLogo: { label: 'SLOVO, home', onPress } });
-    expect(screen.queryByRole('header', { name: 'SLOVO' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'SLOVO, home' }));
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the wordmark a header beside the button that opens the Dashboard', async () => {
+    await renderHeader({ onLogo: { label: 'SLOVO, home', onPress: jest.fn() } });
+    expect(screen.getByRole('header', { name: 'SLOVO' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'SLOVO, home' })).toBeTruthy();
   });
 
   it("plays the daily splash from the Dashboard's logo on its plate", async () => {
