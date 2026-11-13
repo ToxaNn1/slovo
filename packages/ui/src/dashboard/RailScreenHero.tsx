@@ -211,7 +211,8 @@ function HeroActionButton({ id, action, top }: { id: string; action: HeroAction;
       )}
       <Pressable
         {...common}
-        accessibilityState={{ selected: on }}
+        accessibilityRole="togglebutton"
+        accessibilityState={{ checked: on }}
         style={({ pressed }) => [
           styles.add,
           { backgroundColor: on ? keyInk : cream },
