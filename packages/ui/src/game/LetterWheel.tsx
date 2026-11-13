@@ -1,11 +1,7 @@
 'use no memo';
-import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import {
-  GestureDetector,
-  usePanGesture,
-  type PanGestureConfig,
-} from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
   ReduceMotion,
@@ -16,7 +12,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Polyline } from 'react-native-svg';
-import { scheduleOnRN } from 'react-native-worklets';
 
 import { Button } from '../primitives/Button';
 import { PressedTile } from '../primitives/PressedTile';
@@ -25,6 +20,7 @@ import { useReduceMotion } from '../providers/useReduceMotion';
 import { useTokens } from '../providers/TokensProvider';
 import { crossingCrosswordLayout, fontScaleCap, typeStyle } from '../tokens';
 import { ease } from './round-motion';
+import { useTraceDrag, type TraceHit } from './useTraceDrag';
 
 /** A trace that spelled no Word: its letters show in ink and the chips shake; a new `key` plays it again. */
 export interface WheelMiss {
@@ -96,59 +92,26 @@ export function LetterWheel({
   const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
   const centres = useMemo(() => centresOf(letters.length), [letters.length]);
-  const last = useSharedValue(-1);
-  const handlers = useRef({ onExtend, onRelease });
-  useEffect(() => {
-    handlers.current = { onExtend, onRelease };
-  });
-  const extend = useCallback((index: number) => {
-    handlers.current.onExtend(index);
-  }, []);
-  const release = useCallback(() => {
-    handlers.current.onRelease();
-  }, []);
-
-  // A memoised config, as Gesture Handler asks; each callback says it is a worklet.
-  const dragConfig = useMemo((): PanGestureConfig => {
-    const reach = tile * crossingCrosswordLayout.hitRadius;
-    const hit = (x: number, y: number) => {
+  const hit = useCallback(
+    (x: number, y: number): TraceHit<number> | undefined => {
       'worklet';
+      const reach = tile * crossingCrosswordLayout.hitRadius;
       for (let i = 0; i < centres.length; i += 1) {
         const centre = centres[i];
         if (centre === undefined) continue;
-        if (Math.hypot(x - centre.x, y - centre.y) > reach) continue;
-        if (i === last.value) return;
-        last.value = i;
-        scheduleOnRN(extend, i);
-        return;
+        if (Math.hypot(x - centre.x, y - centre.y) <= reach) return { index: i, place: i };
       }
-    };
-    return {
-      enabled: !accessibleMode,
-      minDistance: 0,
-      onBegin: ({ x, y }) => {
-        'worklet';
-        last.value = -1;
-        hit(x, y);
-      },
-      onActivate: ({ x, y }) => {
-        'worklet';
-        hit(x, y);
-      },
-      onUpdate: ({ x, y }) => {
-        'worklet';
-        hit(x, y);
-      },
-      onFinalize: () => {
-        'worklet';
-        last.value = -1;
-        scheduleOnRN(release);
-      },
-      // How a component test finds the drag; Gesture Handler reads it in Jest only.
-      testID: `${testID}-trace`,
-    };
-  }, [accessibleMode, centres, testID, last, extend, release]);
-  const drag = usePanGesture(dragConfig);
+      return undefined;
+    },
+    [centres],
+  );
+  const drag = useTraceDrag({
+    hit,
+    enabled: !accessibleMode,
+    testID,
+    onExtend,
+    onRelease,
+  });
 
   const shake = useSharedValue(0);
   useEffect(() => {
