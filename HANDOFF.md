@@ -66,3 +66,4 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 - 20:06Z L4 DONE 20 (0b883571; R22 adds EntryCard prop `page`; Question R171 moved selfCheck/wordTabs into SwipedEntryCard) merged by coord 3 (tip 240b1d97, mobile+ui green). Running: LXa LXb.
 - 20:07Z LXa STUCK 4 (R5 R13 R18 R158; skipped R110 needs infra apps/mobile/package.json expo-crypto, R150 needs infra jest configs) -> relaunched for R24 R23 R66 R85 R149 R151 R169 R176 after merging integration. Running: LXa LXb.
 - 20:15Z LXb STUCK 7 (R37 R166 R127 R79 R72 R98 R107; handbook Колекції, Повідомлення про помилку) -> relaunched for R70 R156 R59. Running: LXa LXb.
+- 20:20Z LXa STUCK 7 (+R24 R23 R66; Question R24 module-level last request) -> relaunched for R85 R149 R151 R169 R176 + check 2 mobile test failures. Running: LXa LXb.
