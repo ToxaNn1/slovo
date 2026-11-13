@@ -230,13 +230,13 @@ jobs:
             pnpm describe:api "$RUNNER_TEMP/promised.json"
           fi
       # The Edition folder's content, imported into an empty database, served
-      # by the backend. The SMTP settings are placeholders: no email is sent.
+      # by the backend. No email is sent: without ZEPTOMAIL_TOKEN they would go to Mailpit.
       - name: Import the Ukrainian content and start the backend
         shell: bash
         run: |
           pnpm --filter @slovo/backend db:migrate
           pnpm --silent content import --edition uk
-          AUTH_SECRET="$(openssl rand -base64 32)" SMTP_HOST=localhost SMTP_PORT=1025 \
+          AUTH_SECRET="$(openssl rand -base64 32)" \
             nohup pnpm --filter @slovo/backend start > "$RUNNER_TEMP/backend.log" 2>&1 &
           for _ in $(seq 60); do curl -fs "http://localhost:$PORT/health" && exit 0; sleep 1; done
           cat "$RUNNER_TEMP/backend.log"
@@ -414,18 +414,15 @@ jobs:
           docker run --rm slovo-backend sh -c \
             '! ls /app/node_modules/.pnpm | grep -E "^(expo|react-native)@"'
       # As on Railway: the release command first, then the server, which must
-      # answer /health. The SMTP settings are placeholders: production refuses
-      # to start without them, and nothing is sent here.
+      # answer /health. The ZeptoMail token is a placeholder: production refuses
+      # to start without one, and nothing is sent here.
       - name: Migrate and start the image against Postgres
         shell: bash
         run: |
           cat > "$RUNNER_TEMP/backend.env" <<EOF
           DATABASE_URL=postgres://slovo:slovo@localhost:5432/slovo
           AUTH_SECRET=$(openssl rand -base64 32)
-          SMTP_HOST=localhost
-          SMTP_PORT=1025
-          SMTP_USER=ci
-          SMTP_PASSWORD=ci
+          ZEPTOMAIL_TOKEN=ci
           MAIL_FROM=no-reply@example.com
           TRUSTED_PROXY_HOPS=1
           R2_ACCOUNT_ID=ci

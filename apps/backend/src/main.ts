@@ -7,7 +7,7 @@ import { systemClock } from '@slovo/server-core';
 
 import { createAppleVerifier } from './account/apple-verifier';
 import { createGoogleVerifier } from './account/google-verifier';
-import { createSmtpMailer } from './account/smtp-mailer';
+import { createMailer } from './account/mailer';
 import { ownerAlertsOf } from './alerts/owner-chat';
 import { createApp } from './app';
 import { readConfig, ServerConfigSchema } from './config';
@@ -28,7 +28,7 @@ const logger = createLogger();
 const database = createDatabase(config.DATABASE_URL, logger);
 const editions = readEditions(config.EDITIONS_DIR);
 const appConfig = openAppConfig(REPO_DIR).config;
-const mailer = createSmtpMailer(config.smtp);
+const mailer = createMailer(config.mail);
 // The owner admin app as `pnpm --filter @slovo/admin build` leaves it; `pnpm dev:admin` serves it in Vite.
 const adminDist = join(REPO_DIR, 'apps/admin/dist');
 const app = createApp({

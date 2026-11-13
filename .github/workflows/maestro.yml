@@ -23,9 +23,8 @@ env:
   # The first start of Maestro's driver on a new simulator is slow on a runner.
   MAESTRO_DRIVER_STARTUP_TIMEOUT: 240000
   DATABASE_URL: postgres://slovo:slovo@localhost:5432/slovo
-  # Nothing listens there: the flow signs in to no Account, so no email is sent.
-  SMTP_HOST: localhost
-  SMTP_PORT: 1025
+  # No ZEPTOMAIL_TOKEN: the emails would go to a Mailpit nothing runs, but the
+  # flow signs in to no Account, so no email is sent.
   PORT: 8787
   EXPO_PUBLIC_SLOVO_API_URL: http://localhost:8787
   METRO_PORT: 8081

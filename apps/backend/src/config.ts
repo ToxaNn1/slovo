@@ -1,6 +1,8 @@
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { z } from 'zod';
 
+import type { MailTransport } from './account/mailer';
+
 /**
  * The `AUTH_SECRET` of `.env.example`, which anyone can read: a backend that
  * signed its Sessions with it would sign them with no secret (ADR 0030).
@@ -13,31 +15,26 @@ function unsetWhenEmpty<Schema extends z.ZodType>(schema: Schema) {
 }
 
 /**
- * The SMTP settings and sender a production backend must be given: their
- * development defaults are Mailpit's (`compose.yaml`), which a host lacks.
+ * The ZeptoMail token and sender a production backend must be given: without
+ * the token the emails go to Mailpit (`compose.yaml`), which a host lacks.
  */
-const PRODUCTION_MAIL_VARIABLES = [
-  'SMTP_HOST',
-  'SMTP_PORT',
-  'SMTP_USER',
-  'SMTP_PASSWORD',
-  'MAIL_FROM',
-] as const;
+const PRODUCTION_MAIL_VARIABLES = ['ZEPTOMAIL_TOKEN', 'MAIL_FROM'] as const;
 
 /** Every variable the server reads at start. `.env.example` lists them. */
 const ServerVariablesSchema = z.object({
-  // `production` on a host: the server then refuses Mailpit's defaults.
+  // `production` on a host: the server then refuses to send to Mailpit.
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/, error: 'must be a postgres:// URL' }),
-  // Where the sign-in emails go; unset, Mailpit's localhost:1025.
-  SMTP_HOST: unsetWhenEmpty(z.string()),
-  SMTP_PORT: unsetWhenEmpty(z.coerce.number().int().min(1).max(65535)),
-  // The login at the SMTP server, both or neither; unset, none (Mailpit).
-  SMTP_USER: unsetWhenEmpty(z.string()),
-  SMTP_PASSWORD: unsetWhenEmpty(z.string()),
-  // `true` speaks TLS from the first byte (port 465, usually); otherwise the
-  // client upgrades with STARTTLS, required when there is a login (Mailpit has none).
-  SMTP_TLS: z.stringbool({ error: 'must be true or false' }).default(false),
+  // The sign-in emails go over ZeptoMail's HTTPS API (ADR 0115): its email
+  // endpoint, https:// only, in the EU data centre by default, and the Send
+  // Mail token of its Agent. No token sends them to Mailpit instead.
+  ZEPTOMAIL_API_URL: unsetWhenEmpty(
+    z.url({ protocol: /^https$/, error: 'must be an https:// URL' }),
+  ),
+  ZEPTOMAIL_TOKEN: unsetWhenEmpty(z.string().min(1)),
+  // Mailpit's web address, whose send API takes the emails while
+  // ZEPTOMAIL_TOKEN is unset; unset, http://localhost:8025.
+  MAILPIT_URL: unsetWhenEmpty(z.url({ error: 'must be a URL' })),
   AUTH_SECRET: z
     .string()
     .min(32, 'must be at least 32 characters')
@@ -199,40 +196,48 @@ function posthogOf({
       };
 }
 
+/** Where the emails go: ZeptoMail with a token, otherwise Mailpit. */
+function mailOf({
+  ZEPTOMAIL_API_URL,
+  ZEPTOMAIL_TOKEN,
+  MAILPIT_URL,
+  MAIL_FROM,
+}: {
+  ZEPTOMAIL_API_URL?: string | undefined;
+  ZEPTOMAIL_TOKEN?: string | undefined;
+  MAILPIT_URL?: string | undefined;
+  MAIL_FROM?: string | undefined;
+}): MailTransport {
+  const from = MAIL_FROM ?? 'no-reply@slovo.app';
+  return ZEPTOMAIL_TOKEN === undefined
+    ? { kind: 'mailpit', url: MAILPIT_URL ?? 'http://localhost:8025', from }
+    : {
+        kind: 'zeptomail',
+        apiUrl: ZEPTOMAIL_API_URL ?? 'https://api.zeptomail.eu/v1.1/email',
+        token: ZEPTOMAIL_TOKEN,
+        from,
+      };
+}
+
 /**
- * The environment the server reads at start, with the SMTP settings gathered
- * into the options of the SMTP client.
+ * The environment the server reads at start, with the mail settings gathered
+ * into the transport of the mail client.
  */
 export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, context) => {
-  const login = variables.SMTP_USER !== undefined || variables.SMTP_PASSWORD !== undefined;
-  const [required, message] =
-    variables.NODE_ENV === 'production'
-      ? [PRODUCTION_MAIL_VARIABLES, 'must be set in production']
-      : login
-        ? [
-            ['SMTP_USER', 'SMTP_PASSWORD'] as const,
-            'must be set with the other of SMTP_USER and SMTP_PASSWORD',
-          ]
-        : [[], ''];
-  for (const name of required) {
-    if (variables[name] === undefined) context.addIssue({ code: 'custom', path: [name], message });
-  }
-  if (variables.NODE_ENV === 'production' && variables.MEDIA_BASE === undefined) {
-    context.addIssue({
-      code: 'custom',
-      path: ['MEDIA_BASE'],
-      message: 'must be set in production',
-    });
+  if (variables.NODE_ENV === 'production') {
+    for (const name of [...PRODUCTION_MAIL_VARIABLES, 'MEDIA_BASE'] as const) {
+      if (variables[name] === undefined) {
+        context.addIssue({ code: 'custom', path: [name], message: 'must be set in production' });
+      }
+    }
   }
   refineR2(variables, context);
 }).transform(
   ({
     NODE_ENV: _environment,
-    SMTP_HOST,
-    SMTP_PORT,
-    SMTP_USER,
-    SMTP_PASSWORD,
-    SMTP_TLS,
+    ZEPTOMAIL_API_URL,
+    ZEPTOMAIL_TOKEN,
+    MAILPIT_URL,
     MAIL_FROM,
     POSTHOG_PERSONAL_API_KEY,
     POSTHOG_PROJECT_ID,
@@ -248,16 +253,7 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
     mediaBase: MEDIA_BASE ?? DEVELOPMENT_MEDIA_BASE,
     r2: r2Of({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY }),
-    smtp: {
-      host: SMTP_HOST ?? 'localhost',
-      port: SMTP_PORT ?? 1025,
-      tls: SMTP_TLS,
-      credentials:
-        SMTP_USER === undefined || SMTP_PASSWORD === undefined
-          ? undefined
-          : { user: SMTP_USER, password: SMTP_PASSWORD },
-      from: MAIL_FROM ?? 'no-reply@slovo.app',
-    },
+    mail: mailOf({ ZEPTOMAIL_API_URL, ZEPTOMAIL_TOKEN, MAILPIT_URL, MAIL_FROM }),
   }),
 );
 

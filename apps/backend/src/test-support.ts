@@ -222,7 +222,7 @@ interface FakeMailer extends Mailer {
   readonly sent: readonly Mail[];
   /** The six digits of the newest email to the address. Throws when none was sent. */
   codeSentTo(email: string): string;
-  /** Makes the next email fail to send, as an SMTP server that refuses it. */
+  /** Makes the next email fail to send, as ZeptoMail refusing it. */
   failNext(): void;
 }
 
@@ -237,7 +237,7 @@ function createFakeMailer(): FakeMailer {
     send: (mail) => {
       if (failing) {
         failing = false;
-        return Promise.reject(new Error('the email was not sent (SMTP 554)'));
+        return Promise.reject(new Error('the email was not sent (ZeptoMail 500)'));
       }
       sent.push(mail);
       return Promise.resolve();
