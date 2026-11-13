@@ -10,8 +10,13 @@ import type { MailTransport } from './account/mailer';
 const EXAMPLE_AUTH_SECRET = 'replace-with-at-least-32-random-characters';
 
 /** An empty variable, as a host's form may leave it, counts as unset. */
+function emptyAsUnset<Schema extends z.ZodType>(schema: Schema) {
+  return z.preprocess((value) => (value === '' ? undefined : value), schema);
+}
+
+/** A variable that may stay unset, an empty one included. */
 function unsetWhenEmpty<Schema extends z.ZodType>(schema: Schema) {
-  return z.preprocess((value) => (value === '' ? undefined : value), schema.optional());
+  return emptyAsUnset(schema.optional());
 }
 
 /**
@@ -126,14 +131,8 @@ const ServerVariablesSchema = z.object({
   R2_SECRET_ACCESS_KEY: unsetWhenEmpty(z.string().min(1)),
   // The Python and the model the Recording generator runs; the defaults are
   // where recordings.Dockerfile puts them.
-  RECORDINGS_PYTHON: z.preprocess(
-    (value) => (value === '' ? undefined : value),
-    z.string().min(1).default('/opt/recordings/venv/bin/python'),
-  ),
-  RECORDINGS_MODEL_DIR: z.preprocess(
-    (value) => (value === '' ? undefined : value),
-    z.string().min(1).default('/opt/recordings/model'),
-  ),
+  RECORDINGS_PYTHON: emptyAsUnset(z.string().min(1).default('/opt/recordings/venv/bin/python')),
+  RECORDINGS_MODEL_DIR: emptyAsUnset(z.string().min(1).default('/opt/recordings/model')),
 });
 
 const R2_VARIABLES = [
@@ -266,6 +265,8 @@ export const TelegramConfigSchema = ServerVariablesSchema.pick({
   TELEGRAM_CHAT_ID: true,
 });
 
+export type TelegramConfig = z.infer<typeof TelegramConfigSchema>;
+
 /** The environment the Cron service's `pnpm cron` reads. */
 export const CronConfigSchema = ServerVariablesSchema.pick({
   DATABASE_URL: true,
@@ -304,8 +305,7 @@ export const RecordingsConfigSchema = ServerVariablesSchema.pick({
   }));
 
 /** An R2 variable the media import can't run without. */
-const requiredR2 = z.preprocess(
-  (value) => (value === '' ? undefined : value),
+const requiredR2 = emptyAsUnset(
   z.string({ error: 'is required: the media import puts the files in R2' }).min(1),
 );
 
@@ -337,6 +337,8 @@ export const MediaImportConfigSchema = ServerVariablesSchema.pick({
 export const PublishConfigSchema = ServerVariablesSchema.pick({
   DATABASE_URL: true,
   EDITIONS_DIR: true,
+  TELEGRAM_BOT_TOKEN: true,
+  TELEGRAM_CHAT_ID: true,
 });
 
 /**

@@ -11,7 +11,7 @@ import type {
 
 import { checkCrosswordDay, checkCrosswordDays, unknownCrosswordEntries } from './crossword-days';
 import { checkCuratedCollections } from './curated-collections';
-import { checkEntries } from './entries';
+import { checkEntries, checkMixedScript } from './entries';
 import type { AuthoredRecord, RecordKind } from './parse-record';
 import { protectedLiteraryUses } from './public-domain';
 import type { Authored, Refusal } from './refusal';
@@ -46,10 +46,16 @@ export interface ContentRecords {
 /** Where a record is located in a refusal: `<kind>/<id>`. */
 export const recordFileOf = (kind: RecordKind, id: string): string => `${kind}/${id}`;
 
-/** The content set of the records, each located by `recordFileOf`, as a save is checked against it. */
-export function contentSetOf(records: ContentRecords): ContentSet {
+/**
+ * The content set of the records, each located by `fileOf`, `recordFileOf`
+ * by default, as a save is checked against it.
+ */
+export function contentSetOf(
+  records: ContentRecords,
+  fileOf: (kind: RecordKind, id: string) => string = recordFileOf,
+): ContentSet {
   const authored = <T extends { readonly id: string }>(kind: RecordKind, entries: readonly T[]) =>
-    entries.map((entry) => ({ file: recordFileOf(kind, entry.id), entry }));
+    entries.map((entry) => ({ file: fileOf(kind, entry.id), entry }));
   return {
     words: authored('word', records.word),
     corrections: authored('correction', records.correction),
@@ -83,8 +89,9 @@ function checkSet(
   const { words, corrections, idioms, synonymRows, tips, curatedCollections } = set;
   return [
     ...checkEntries(config, words, corrections, idioms, checksFile),
-    ...checkSynonymRows(config, words, synonymRows),
-    ...checkTips(config, tips),
+    ...checkMixedScript([...words, ...corrections, ...idioms, ...synonymRows, ...tips], checksFile),
+    ...checkSynonymRows(config, words, synonymRows, checksFile),
+    ...checkTips(config, tips, checksFile),
     ...checkCuratedCollections(curatedCollections, [
       ...words,
       ...corrections,

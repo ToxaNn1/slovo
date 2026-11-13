@@ -31,9 +31,7 @@ import { BottomSheet } from '../primitives/BottomSheet';
 import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Wedge } from '../primitives/Wedge';
-import { Button } from '../primitives/Button';
 import {
-  capitalMarkRoom,
   minTouchTarget,
   quickQuestionCard,
   roundHeader,
@@ -48,7 +46,7 @@ import { ease } from './round-motion';
 import { ChipsRound } from './ChipsRound';
 import { GameTimer } from './GameTimer';
 import { PairsRound } from './PairsRound';
-import { AnswerCard } from './AnswerCard';
+import { AnswerCard, NextButton, VerdictTitle } from './AnswerCard';
 import { AnswerOptions, PickRound } from './PickRound';
 import { RoundCard, type RoundFace } from './RoundCard';
 import { TypedRound } from './TypedRound';
@@ -766,15 +764,11 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
   const { example, explanation } = answer.sheet;
   return (
     <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetContent}>
-      <Text
+      <VerdictTitle
         testID="game-sheet-title"
-        accessibilityRole="header"
-        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-        {...voice}
-        style={[typeStyle('roundVerdict', tokens), styles.sheetTitle, { color: colors.ink }]}
-      >
-        {right ? strings.game.sheet.correct : strings.game.sheet.wrong}
-      </Text>
+        typeRole="roundVerdict"
+        text={right ? strings.game.sheet.correct : strings.game.sheet.wrong}
+      />
       <WholeWordsText
         text={answer.sheet.answer.text}
         typeRole="roundAnswer"
@@ -814,14 +808,7 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
           {explanation}
         </Text>
       )}
-      <View style={styles.next}>
-        <Button
-          testID="game-next"
-          label={strings.game.sheet.next}
-          variant={right ? 'onAccent' : 'primary'}
-          onPress={onNext}
-        />
-      </View>
+      <NextButton label={strings.game.sheet.next} right={right} onPress={onNext} />
     </ScrollView>
   );
 }
@@ -902,9 +889,7 @@ const styles = StyleSheet.create({
   },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   // The board's banner title sits clear of the slant over the sheet, not on its low edge.
-  sheetTitle: { marginTop: space[3] - capitalMarkRoom('roundVerdict') },
   sheetContent: { gap: roundLayout.sheetGap, paddingHorizontal: space[1], paddingBottom: space[2] },
   example: { fontStyle: 'italic' },
   author: { marginTop: space[1] },
-  next: { marginTop: roundLayout.tightGap },
 });

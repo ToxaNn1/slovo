@@ -549,7 +549,8 @@ export function createPackReader(db: PackDatabase): PackReader {
   /**
    * The Entries of the ids, whatever their kind: the `entries` table says
    * each id's kind in one query per `IDS_PER_READ`, then each kind present is
-   * read at once.
+   * read at once. A row the contracts refuse throws for the whole call: a
+   * pack that breaks its format is broken, not partly readable.
    */
   async function readEntries(ids: readonly string[]): Promise<Entry[]> {
     const kinds = await Promise.all(

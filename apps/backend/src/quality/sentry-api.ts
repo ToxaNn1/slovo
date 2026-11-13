@@ -84,6 +84,13 @@ export function sentryOf(
  * 0048), so every read covers every Edition, and p95 and app start answer
  * `null` until tracing is on.
  */
+/** The cursor of the next page a Sentry `Link` header names, or none when it holds no results. */
+function nextCursor(link: string | null): string | null {
+  const next = link?.split(',').find((part) => part.includes('rel="next"'));
+  if (next?.includes('results="true"') !== true) return null;
+  return /cursor="([^"]+)"/.exec(next)?.[1] ?? null;
+}
+
 export function createSentryApi({
   token,
   org,
@@ -97,7 +104,7 @@ export function createSentryApi({
     path: string,
     params: Record<string, string>,
     schema: z.ZodType<T>,
-  ): Promise<{ readonly ok: true; readonly body: T } | Failure> {
+  ): Promise<{ readonly ok: true; readonly body: T; readonly next: string | null } | Failure> {
     const url = new URL(`/api/0/organizations/${encodeURIComponent(org)}/${path}/`, baseUrl);
     for (const [name, value] of Object.entries(params)) url.searchParams.set(name, value);
     try {
@@ -120,7 +127,7 @@ export function createSentryApi({
       if (!response.ok) return { ok: false, reason: 'unavailable' };
       const parsed = schema.safeParse(await response.json());
       return parsed.success
-        ? { ok: true, body: parsed.data }
+        ? { ok: true, body: parsed.data, next: nextCursor(response.headers.get('link')) }
         : { ok: false, reason: 'unavailable' };
     } catch {
       return { ok: false, reason: 'unavailable' };
@@ -167,18 +174,23 @@ export function createSentryApi({
     return { ok: true, value: field.startsWith('crash_free') ? value * 100 : value };
   }
 
+  /** The app issues first seen in the window, a page of 100 at a time. */
   async function newIssues(window: Window): Promise<SentryAnswer> {
-    const answer = await get(
-      'issues',
-      {
-        project: appProject,
-        query: `firstSeen:>=${window.start} firstSeen:<=${window.end}`,
-        limit: '100',
-      },
-      IssuesSchema,
-    );
-    if (!answer.ok) return answer;
-    return { ok: true, value: answer.body.length };
+    const params = {
+      project: appProject,
+      query: `firstSeen:>=${window.start} firstSeen:<=${window.end}`,
+      limit: '100',
+    };
+    const page = (cursor: string | null) =>
+      get('issues', cursor === null ? params : { ...params, cursor }, IssuesSchema);
+    let answer = await page(null);
+    let count = 0;
+    while (answer.ok) {
+      count += answer.body.length;
+      if (answer.next === null) return { ok: true, value: count };
+      answer = await page(answer.next);
+    }
+    return answer;
   }
 
   /** The most events of an app issue first seen in the window. */

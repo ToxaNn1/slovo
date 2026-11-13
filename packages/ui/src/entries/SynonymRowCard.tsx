@@ -30,6 +30,7 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useFlyingText } from './reveal';
 import { ExampleText } from './WordCard';
 import { capitalised } from './capitalised';
+import { SourceLine } from './SourceLine';
 import { CardTabs } from './CardTabs';
 import { synonymRowPagesOf, type SynonymRowPage } from './word-tabs';
 
@@ -213,14 +214,12 @@ function SynonymRowContent({
       {!last || card.example === undefined ? null : (
         <ExampleText testID="synonym-row-example" example={card.example} size={sizes.example} />
       )}
-      {!last || !sourceLine || card.sourceNames.length === 0 ? null : (
-        <WholeLinesText
+      {!last || !sourceLine ? null : (
+        <SourceLine
           testID="synonym-row-source"
-          {...voice}
-          style={[typeStyle('meta', tokens), { color: colors.muted }]}
-        >
-          {fill(strings.source, { source: card.sourceNames.join(SOURCE_SEPARATOR) })}
-        </WholeLinesText>
+          template={strings.source}
+          sourceNames={card.sourceNames}
+        />
       )}
     </>
   );
@@ -297,9 +296,6 @@ function Member({
     </Pressable>
   );
 }
-
-/** What sits between the titles of a row's sources on the source line. */
-const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
   header: { gap: space[2] },

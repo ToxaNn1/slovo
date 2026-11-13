@@ -70,18 +70,21 @@ async function run({
   words = content,
   random = seededRandom(seed),
   apostrophes = ['ʼ', "'", '’'],
+  alphabet,
 }: {
   seed?: number;
   off?: readonly string[];
   words?: ContentReadPort;
   random?: Random;
   apostrophes?: string[];
+  /** The Edition's alphabet, its own unless named. */
+  alphabet?: string[];
 } = {}): Promise<Composition> {
   const app = await openComposition({
     content: words,
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      languageTraits: { apostrophes },
+      languageTraits: { apostrophes, ...(alphabet === undefined ? {} : { alphabet }) },
       userSettingDefaults: { mix: { categoryIds: ['test', 'crafts'] } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
@@ -495,6 +498,61 @@ describe('«За буквами» with letter tiles', () => {
       chips: placesOf(next.chips, lettersOf(lemmaOf(next))),
     });
     expect(current(app)).toMatchObject({ round: { answer: { right: true } } });
+  });
+
+  it('takes no answer that taps one tile twice or fills another count of slots', async () => {
+    const app = await run({ off: [] });
+    await app.game.start('by-letters');
+    // A Word with a letter twice, so one tile tapped twice would spell it.
+    while (
+      new Set(lettersOf(lemmaOf(tilesOf(app)))).size === lettersOf(lemmaOf(tilesOf(app))).length
+    ) {
+      const round = tilesOf(app);
+      await app.game.answer({
+        form: 'chips',
+        chips: placesOf(round.chips, lettersOf(lemmaOf(round))),
+      });
+      await app.game.next();
+    }
+    const round = tilesOf(app);
+    const letters = lettersOf(lemmaOf(round));
+    const right = placesOf(round.chips, letters);
+    const lives = current(app).lives;
+
+    await app.game.answer({
+      form: 'chips',
+      chips: letters.map((letter) => round.chips.indexOf(letter)),
+    });
+    expect(current(app)).toMatchObject({ status: 'playing', lives });
+
+    await app.game.answer({ form: 'chips', chips: right.slice(0, -1) });
+    expect(current(app)).toMatchObject({ status: 'playing', lives });
+
+    const decoy = round.chips.findIndex((_, place) => !right.includes(place));
+    await app.game.answer({ form: 'chips', chips: [...right, decoy] });
+    expect(current(app)).toMatchObject({ status: 'playing', lives });
+
+    await app.game.answer({ form: 'chips', chips: right });
+    expect(current(app)).toMatchObject({ status: 'answered', round: { answer: { right: true } } });
+  });
+
+  it('leaves out a Word the alphabet has too few decoys for, so the tiles always fill their rows', async () => {
+    // 3 decoys fill 8 tiles for a Word of 5 letters or more; «пірʼя» has 4 and needs 4.
+    for (let seed = 1; seed <= 12; seed += 1) {
+      const rounds = await playTiles(await run({ off: [], seed, alphabet: ['x', 'y', 'z'] }));
+
+      expect(rounds).toHaveLength(GAME_ROUNDS);
+      for (const round of rounds) {
+        expect(lemmaOf(round)).not.toBe('пірʼя');
+        expect(round.form === 'chips' && round.chips.length % 4).toBe(0);
+      }
+    }
+  });
+
+  it("can't start when the alphabet leaves too few Words their decoys", async () => {
+    const app = await run({ off: [], alphabet: ['x', 'y'] });
+
+    expect(byLettersOffer(app)).toMatchObject({ canStart: false, refusal: 'too-few-entries' });
   });
 
   it('types the Word with letter tiles off', async () => {

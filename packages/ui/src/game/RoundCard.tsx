@@ -18,8 +18,21 @@ import {
   typeStyle,
 } from '../tokens';
 
-/** Whether a label ends in punctuation of its own, such as «?», so VoiceOver needs no full stop after it. */
-const ENDS_IN_PUNCTUATION = /\p{P}$/u;
+/**
+ * Whether a part ends in a stop of its own, such as «?», maybe inside a closing quote or bracket,
+ * so VoiceOver needs no full stop after it. A closing quote alone is no stop.
+ */
+const ENDS_IN_STOP = /[.!?…:;,][\p{Pe}\p{Pf}"']*$/u;
+
+/** Joins the parts VoiceOver reads, giving each a stop unless it ends in punctuation. */
+function joinStopped(parts: readonly (string | undefined)[]): string {
+  return parts
+    .flatMap((part) => (part === undefined || part === '' ? [] : [part]))
+    .map((part, index, kept) =>
+      index === kept.length - 1 || ENDS_IN_STOP.test(part) ? part : `${part}.`,
+    )
+    .join(' ');
+}
 
 /**
  * How a restyled Round's card looks (board 07, spec #1674): a «Впиши слово»
@@ -87,27 +100,20 @@ export function RoundCard({
       : fill(strings.game.round.highlight, {
           text: prompt.slice(highlight.start, highlight.end),
         });
-  const said = face?.look === 'instead' ? `${face.instead}. ` : '';
-  const defined =
-    definition === undefined ? '' : `${ENDS_IN_PUNCTUATION.test(read) ? '' : '.'} ${definition}`;
-  const insteadOfTip =
-    quickQuestion?.instead === undefined
-      ? ''
-      : `${ENDS_IN_PUNCTUATION.test(read) ? '' : '.'} ${quickQuestion.instead}`;
+  const spoken = joinStopped([
+    label,
+    face?.look === 'instead' ? face.instead : undefined,
+    read,
+    quickQuestion?.instead,
+    definition,
+  ]);
   const promptRole = quickQuestion === undefined ? 'roundPrompt' : 'quickQuestionPrompt';
   return (
     <View
       testID="game-prompt"
       accessible={children === undefined}
       accessibilityLabel={
-        children === undefined
-          ? [
-              `${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${said}${read}${insteadOfTip}${defined}`,
-              marked,
-            ]
-              .filter(Boolean)
-              .join(' ')
-          : undefined
+        children === undefined ? [spoken, marked].filter(Boolean).join(' ') : undefined
       }
       {...voice}
       style={

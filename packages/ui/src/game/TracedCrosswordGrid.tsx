@@ -296,7 +296,10 @@ export function TracedCrosswordGrid({
                       },
                     ]}
                   >
-                    <Text style={[typeStyle('crosswordClue', tokens), { color: colors.ink }]}>
+                    <Text
+                      maxFontSizeMultiplier={fontScaleCap.number}
+                      style={[typeStyle('crosswordClue', tokens), { color: colors.ink }]}
+                    >
                       {letter}
                     </Text>
                   </View>

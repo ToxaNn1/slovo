@@ -79,6 +79,15 @@ describe('a change of the contract', () => {
     ]);
   });
 
+  it('breaks a field added to a strict output, which an app would refuse', async () => {
+    const before = thingContract({ output: z.strictObject({ id: z.string() }) });
+    const after = thingContract({ output: z.strictObject({ id: z.string(), size: z.number() }) });
+
+    expect(await changesFrom(before, after)).toEqual([
+      'POST /v1/things: 200 body.size is new in a strict object',
+    ]);
+  });
+
   it('breaks an output field that may now be missing or null', async () => {
     const after = thingContract({
       output: z.object({ id: z.string().optional(), size: z.number().nullable() }),

@@ -23,6 +23,8 @@ import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { capitalised } from './capitalised';
+import { SourceLine } from './SourceLine';
+import { NumberedDefinitions } from './NumberedDefinitions';
 import { CardTabs } from './CardTabs';
 import { ExampleMark } from './ExampleMark';
 import { useFlyingText } from './reveal';
@@ -135,17 +137,7 @@ export function IdiomCardBody({
               testID="idiom-extra-definitions"
               title={edition.strings.wordCard.extraDefinitions}
             >
-              {card.extraDefinitions.map((definition, index) => (
-                <WholeLinesText
-                  key={index}
-                  accessibilityLabel={withoutStress(`${String(index + 2)}. ${definition}`)}
-                  {...voice}
-                  style={bodyText}
-                >
-                  {/* The primary Definition is the first; these number on from 2. */}
-                  {`${String(index + 2)}. ${capitalised(definition, voice.accessibilityLanguage)}`}
-                </WholeLinesText>
-              ))}
+              <NumberedDefinitions definitions={card.extraDefinitions} style={bodyText} />
             </DetailSection>
           )}
           {card.examples.map((example, index) => (
@@ -167,7 +159,11 @@ export function IdiomCardBody({
               </WholeLinesText>
             </DetailSection>
           )}
-          <IdiomSources sourceNames={card.sourceNames} />
+          <SourceLine
+            testID="idiom-source"
+            template={edition.strings.idiomCard.source}
+            sourceNames={card.sourceNames}
+          />
         </>
       )}
     </>
@@ -179,7 +175,7 @@ function IdiomTabContent({ tab, sourceTab }: { tab: IdiomTab; sourceTab: boolean
   const tokens = useTokens();
   const { colors } = tokens;
   const sizes = useWordTextSizes();
-  const { voice } = useEdition();
+  const { voice, strings: editionStrings } = useEdition();
   // In the Feed, VoiceOver turns to the next or previous card from the Definition too.
   const turnActions = usePageTurnActions();
   const body = [typeStyle('sectionText', tokens), { color: colors.ink }];
@@ -205,18 +201,14 @@ function IdiomTabContent({ tab, sourceTab }: { tab: IdiomTab; sourceTab: boolean
           >
             {capitalised(tab.definition, voice.accessibilityLanguage)}
           </WholeLinesText>
-          {tab.meanings.map((meaning, index) => (
-            <WholeLinesText
-              key={index}
-              accessibilityLabel={withoutStress(`${String(index + 2)}. ${meaning}`)}
-              {...voice}
-              style={body}
-            >
-              {/* The primary Definition is the first; these number on from 2. */}
-              {`${String(index + 2)}. ${capitalised(meaning, voice.accessibilityLanguage)}`}
-            </WholeLinesText>
-          ))}
-          {sourceTab ? null : <IdiomSources sourceNames={tab.sourceNames} />}
+          <NumberedDefinitions definitions={tab.meanings} style={body} />
+          {sourceTab ? null : (
+            <SourceLine
+              testID="idiom-source"
+              template={editionStrings.idiomCard.source}
+              sourceNames={tab.sourceNames}
+            />
+          )}
         </>
       );
     case 'origin':
@@ -252,25 +244,6 @@ function IdiomTabContent({ tab, sourceTab }: { tab: IdiomTab; sourceTab: boolean
     }
   }
 }
-
-/** The line naming an Idiom's sources, when it has any. */
-function IdiomSources({ sourceNames }: { sourceNames: readonly string[] }) {
-  const tokens = useTokens();
-  const edition = useEdition();
-  if (sourceNames.length === 0) return null;
-  return (
-    <WholeLinesText
-      testID="idiom-source"
-      {...edition.voice}
-      style={[typeStyle('meta', tokens), { color: tokens.colors.muted }]}
-    >
-      {fill(edition.strings.idiomCard.source, { source: sourceNames.join(SOURCE_SEPARATOR) })}
-    </WholeLinesText>
-  );
-}
-
-/** What sits between the titles of an Idiom's sources on the source line. */
-const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
   header: { gap: space[2] },

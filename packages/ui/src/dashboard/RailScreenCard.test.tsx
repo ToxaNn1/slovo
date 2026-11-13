@@ -181,6 +181,13 @@ describe('RailScreenCard', () => {
     expect(cascade()).toEqual({ opacity: 1, rise: 0 });
   });
 
+  it('rises in a far card together with the ninth one', async () => {
+    await renderRow(word, false, { index: 30 });
+
+    await wait(8 * 70 + 450);
+    expect(cascade()).toEqual({ opacity: 1, rise: 0 });
+  });
+
   it('only fades in under Reduce Motion, at once and without rising', async () => {
     await renderRow(word, false, { index: 2, reduceMotion: true });
 

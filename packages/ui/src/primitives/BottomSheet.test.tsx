@@ -1,6 +1,7 @@
 import { BottomSheet, EditionProvider, RouteProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { useState } from 'react';
 import { AccessibilityInfo, Text } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
@@ -25,14 +26,51 @@ function sheet(visible: boolean, onClose: () => void, onDismissed: () => void) {
   );
 }
 
-async function renderSheet() {
+/**
+ * The sheet's owner: `visible` from the test, and, when it `closesOnAsk`, closed
+ * at once by its own `onClose`, as an owner that agrees to close.
+ */
+function Owner({
+  visible,
+  closesOnAsk,
+  onClose,
+  onDismissed,
+}: {
+  visible: boolean;
+  closesOnAsk: boolean;
+  onClose: () => void;
+  onDismissed: () => void;
+}) {
+  const [closed, setClosed] = useState(false);
+  return sheet(
+    visible && !closed,
+    () => {
+      onClose();
+      if (closesOnAsk) setClosed(true);
+    },
+    onDismissed,
+  );
+}
+
+async function renderSheet({ closesOnAsk = false }: { closesOnAsk?: boolean } = {}) {
   const onClose = jest.fn();
   const onDismissed = jest.fn();
-  await render(sheet(true, onClose, onDismissed));
+  const owner = (visible: boolean) => (
+    <Owner
+      visible={visible}
+      closesOnAsk={closesOnAsk}
+      onClose={onClose}
+      onDismissed={onDismissed}
+    />
+  );
+  await render(owner(true));
   const close = async () => {
-    await screen.rerender(sheet(false, onClose, onDismissed));
+    await screen.rerender(owner(false));
   };
-  return { onClose, onDismissed, close };
+  const open = async () => {
+    await screen.rerender(owner(true));
+  };
+  return { onClose, onDismissed, close, open };
 }
 
 /** Where the sheet is: how far down from its place, and how opaque. */
@@ -151,13 +189,12 @@ describe('BottomSheet', () => {
   });
 
   it('carries on down from where a flick leaves it, then is gone', async () => {
-    const { onClose, onDismissed, close } = await renderSheet();
+    const { onClose, onDismissed } = await renderSheet({ closesOnAsk: true });
     await pass(300);
     await drag(40, 1500);
 
     expect(onClose).toHaveBeenCalledTimes(1);
 
-    await close();
     await pass(50);
 
     expect(sheetNow().down).toBeGreaterThan(40);
@@ -169,14 +206,36 @@ describe('BottomSheet', () => {
     expect(onDismissed).toHaveBeenCalledTimes(1);
   });
 
-  it('slides up again in 450 ms when opened after a flick closed it', async () => {
-    const { onClose, onDismissed } = await renderSheet();
+  it('springs back in place when its owner keeps it open after a flick', async () => {
+    const { onClose } = await renderSheet();
     await pass(300);
     await drag(40, 1500);
-    await screen.rerender(sheet(false, onClose, onDismissed));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    await pass(400);
+
+    expect(sheetNow().down).toBeCloseTo(0, 0);
+    expect(screen.getByText('Content')).toBeOnTheScreen();
+  });
+
+  it('is back in place at once when its owner keeps it open after a flick, with Reduce Motion', async () => {
+    reduceMotion(true);
+    await renderSheet();
+    await pass(300);
+    await drag(40, 1500);
+
+    expect(sheetNow()).toEqual({ down: 0, opacity: 1 });
+  });
+
+  it('slides up again in 450 ms when opened after a flick closed it', async () => {
+    const { close, open } = await renderSheet();
+    await pass(300);
+    await drag(40, 1500);
+    await close();
     await pass(500);
 
-    await screen.rerender(sheet(true, onClose, onDismissed));
+    await open();
     await pass(150);
 
     expect(sheetNow().down).toBeGreaterThan(0);
@@ -188,10 +247,9 @@ describe('BottomSheet', () => {
 
   it('fades out where a flick leaves it, with Reduce Motion', async () => {
     reduceMotion(true);
-    const { onDismissed, close } = await renderSheet();
+    const { onDismissed } = await renderSheet({ closesOnAsk: true });
     await pass(300);
     await drag(40, 1500);
-    await close();
     await pass(110);
 
     expect(sheetNow().down).toBe(40);
