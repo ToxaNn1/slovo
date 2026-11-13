@@ -4,7 +4,7 @@ import { loadEdition, openComposition, type Composition, type Haptics } from '@s
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot, useRouter } from 'expo-router';
-import type { ComponentType } from 'react';
+import type { ReactElement } from 'react';
 import { Pressable } from 'react-native';
 import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
@@ -92,7 +92,7 @@ let composition: Composition;
  * yesterday's лагідний, the gestures hint has been shown, and the Edition turns the Curated Collections rail on,
  * which the UA Edition ships off till a content spec (ADR 0076).
  */
-async function renderApp(feedScreen: ComponentType = FeedScreen) {
+async function renderApp(feedScreen: () => ReactElement = FeedScreen) {
   const shipped = loadEdition(config);
   const editionInEffect = {
     ...shipped,
@@ -287,7 +287,14 @@ describe('the whole Dashboard', () => {
 /** A Feed that never has today's Word of the Day card, so it never lands the ask. */
 function FeedWithoutTheCard() {
   const router = useRouter();
-  return <Pressable testID="feed-back" onPress={() => router.back()} />;
+  return (
+    <Pressable
+      testID="feed-back"
+      onPress={() => {
+        router.back();
+      }}
+    />
+  );
 }
 
 describe('a landing on the Word of the Day card', () => {
