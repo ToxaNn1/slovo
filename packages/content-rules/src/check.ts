@@ -46,10 +46,16 @@ export interface ContentRecords {
 /** Where a record is located in a refusal: `<kind>/<id>`. */
 export const recordFileOf = (kind: RecordKind, id: string): string => `${kind}/${id}`;
 
-/** The content set of the records, each located by `recordFileOf`, as a save is checked against it. */
-export function contentSetOf(records: ContentRecords): ContentSet {
+/**
+ * The content set of the records, each located by `fileOf`, `recordFileOf`
+ * by default, as a save is checked against it.
+ */
+export function contentSetOf(
+  records: ContentRecords,
+  fileOf: (kind: RecordKind, id: string) => string = recordFileOf,
+): ContentSet {
   const authored = <T extends { readonly id: string }>(kind: RecordKind, entries: readonly T[]) =>
-    entries.map((entry) => ({ file: recordFileOf(kind, entry.id), entry }));
+    entries.map((entry) => ({ file: fileOf(kind, entry.id), entry }));
   return {
     words: authored('word', records.word),
     corrections: authored('correction', records.correction),
