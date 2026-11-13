@@ -1,6 +1,5 @@
 import type { GoogleSignInSheet } from '../ports';
-
-type SheetAnswer = Awaited<ReturnType<GoogleSignInSheet['signIn']>>;
+import { createFakeSignInSheet } from './fake-sign-in-sheet';
 
 /** The identity a fake Google identity token names: its email and whether Google has verified it. */
 export interface FakeGoogleIdentity {
@@ -52,42 +51,21 @@ export interface FakeGoogleSignInSheet extends GoogleSignInSheet {
 }
 
 export function createFakeGoogleSignInSheet(): FakeGoogleSignInSheet {
-  const answers: SheetAnswer[] = [];
+  const sheet = createFakeSignInSheet();
   const forgotten: { revoke: boolean }[] = [];
   let forgetFails = false;
-  let shown = 0;
-  let held: Promise<void> | undefined;
   return {
     get shown() {
-      return shown;
+      return sheet.shown;
     },
     forgotten,
     signsIn(email, { verified = true } = {}) {
-      answers.push({
-        ok: true,
-        idToken: `${TOKEN_PREFIX}${email}${verified ? '' : UNVERIFIED_SUFFIX}`,
-      });
+      sheet.handsOut(`${TOKEN_PREFIX}${email}${verified ? '' : UNVERIFIED_SUFFIX}`);
     },
-    cancels() {
-      answers.push({ ok: false, reason: 'cancelled' });
-    },
-    fails(reason) {
-      answers.push({ ok: false, reason });
-    },
-    holds() {
-      let release: () => void = () => undefined;
-      held = new Promise<void>((resolve) => {
-        release = resolve;
-      });
-      return release;
-    },
-    async signIn() {
-      shown += 1;
-      const up = held;
-      held = undefined;
-      await up;
-      return answers.shift() ?? { ok: false, reason: 'cancelled' };
-    },
+    cancels: sheet.cancels,
+    fails: sheet.fails,
+    holds: sheet.holds,
+    signIn: sheet.signIn,
     failsToForget() {
       forgetFails = true;
     },
