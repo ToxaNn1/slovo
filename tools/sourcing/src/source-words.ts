@@ -19,10 +19,10 @@ import {
   parseDefinitions,
   parseEtymologies,
   parseInflections,
-  parseSynonymGroups,
+  readSynonymArticles,
   type GorohEtymology,
   type GorohInflection,
-  type GorohSynonymGroup,
+  type GorohSynonymArticle,
 } from './goroh';
 import { errorMessage } from './error-message';
 import {
@@ -120,6 +120,23 @@ interface Context extends DraftContext {
 type WordDraft = Omit<WordInput, 'partOfSpeech' | 'primaryDefinition'> &
   Partial<Pick<WordInput, 'partOfSpeech' | 'primaryDefinition'>>;
 
+/** One group of Synonyms for one sense of the word. */
+interface GorohSynonymGroup {
+  readonly sense?: string;
+  readonly synonyms: readonly string[];
+  /** The dictionary goroh took the group from. */
+  readonly dictionary?: string;
+}
+
+/** A goroh synonym article as a group of unstressed Synonyms. */
+function groupOf({ sense, dictionary, members }: GorohSynonymArticle): GorohSynonymGroup {
+  return {
+    ...(sense === '' ? {} : { sense }),
+    synonyms: members.map((member) => unstressed(member.headword)),
+    ...(dictionary === '' ? {} : { dictionary }),
+  };
+}
+
 /** What goroh says about a Lemma; each part is empty when goroh has no page. */
 interface GorohEntry {
   readonly inflections: readonly GorohInflection[];
@@ -182,7 +199,8 @@ async function draftLemma(request: WordRequest, context: Context): Promise<KindO
     const etymology = await fetchGoroh(context.client, 'Етимологія', lemma);
     goroh = {
       inflections: inflection === undefined ? [] : parseInflections(inflection, lemma),
-      synonymGroups: synonyms === undefined ? [] : parseSynonymGroups(synonyms, lemma),
+      synonymGroups:
+        synonyms === undefined ? [] : readSynonymArticles(synonyms, lemma).map(groupOf),
       etymologies: etymology === undefined ? [] : parseEtymologies(etymology),
     };
     if (needsInflections && goroh.inflections.length === 0) {
