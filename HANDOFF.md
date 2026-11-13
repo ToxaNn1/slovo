@@ -22,7 +22,8 @@ Items per lane: review-1113/lanes/<lane>.json. Lane branch fix/1113-code-review-
 | L4 | apps/mobile | 24 | DONE 20, merged |
 | L5 | apps/backend, packages/server-core, packages/contracts | 32 | DONE 30, merged |
 | L6 | apps/admin, apps/video, tools, scripts | 23 | DONE 22, merged |
-| LX | cross-folder items, after all lanes | 14 (+R79 from L6) | todo |
+| LXa | cross-folder (lanes/LXa.json) | 14 | running |
+| LXb | cross-folder+infra (lanes/LXb.json) | 10 | DONE 10, merged |
 
 ## Log
 - 2026-11-13T18:31:04Z step 0: HANDOFF, lane files, WAVES.md on coord/safety-net
@@ -67,3 +68,4 @@ Notes: lane subagents reach ~130k after 5-10 items; always relaunch from the STU
 - 20:07Z LXa STUCK 4 (R5 R13 R18 R158; skipped R110 needs infra apps/mobile/package.json expo-crypto, R150 needs infra jest configs) -> relaunched for R24 R23 R66 R85 R149 R151 R169 R176 after merging integration. Running: LXa LXb.
 - 20:15Z LXb STUCK 7 (R37 R166 R127 R79 R72 R98 R107; handbook Колекції, Повідомлення про помилку) -> relaunched for R70 R156 R59. Running: LXa LXb.
 - 20:20Z LXa STUCK 7 (+R24 R23 R66; Question R24 module-level last request) -> relaunched for R85 R149 R151 R169 R176 + check 2 mobile test failures. Running: LXa LXb.
+- 20:32Z LXb DONE 10 (c787ce28; R59 Metro reads bundled version via packMetadataOf, prints node:sqlite ExperimentalWarning) merged (tip after content lint fix); all touched packages green (backend test flaky in turbo, 549/549 alone). Running: LXa.
