@@ -7,9 +7,8 @@ import { type Safe, useSafe } from '../safe';
 import { Bed, Horn, Knock, Sfx, sfx, Voice } from '../sound';
 import { Tile } from '../Tile';
 import { widthInEm } from './advance';
+import { clamp, pop } from '../shared/motion';
 
-const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
-const pop = Easing.bezier(0.34, 1.56, 0.64, 1);
 
 /** One episode of «Знайди помилку»: a phrase everyone hears, with one calque in it. */
 export type Episode = {

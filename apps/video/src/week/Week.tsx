@@ -13,9 +13,8 @@ import { Rupor } from '../Rupor';
 import { type Safe, tileSizeFor, useSafe } from '../safe';
 import { Bed, levels, Sfx, sfx } from '../sound';
 import { Tile } from '../Tile';
+import { clamp, pop } from '../shared/motion';
 
-const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
-const pop = Easing.bezier(0.34, 1.56, 0.64, 1);
 const softEdge = 'rgba(20, 12, 10, 0.28)';
 
 /** One day of the week: the app's Entry and the meaning as the video words it. */
