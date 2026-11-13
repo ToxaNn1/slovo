@@ -75,6 +75,17 @@ const changed = (word: Word): Word => ({
 });
 
 describe('applying a Patch', () => {
+  it('drops the content checksum of the built pack, which no longer names its content', async () => {
+    const pack = writablePack();
+    expect((await pack.metadata()).contentChecksum).toBeDefined();
+
+    await applyPatch(pack.writer, patchOf({ words: [changed(first)] }), '"next"');
+
+    const metadata = await pack.metadata();
+    expect(metadata.contentVersion).toBe(snapshot.contentVersion + 1);
+    expect(metadata.contentChecksum).toBeUndefined();
+  });
+
   it('replaces a changed Word, its child rows too, and moves the content version and ETag on', async () => {
     const pack = writablePack();
 

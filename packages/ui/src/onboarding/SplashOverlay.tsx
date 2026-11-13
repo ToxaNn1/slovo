@@ -19,6 +19,7 @@ import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Mascot } from '../primitives/Mascot';
+import { bezierFn } from '../primitives/timing';
 import {
   capitalMarkRoom,
   roleAt,
@@ -26,7 +27,6 @@ import {
   splashMotion,
   typeRoles,
   typeStyle,
-  type Easing as Curve,
   type SplashStop,
 } from '../tokens';
 
@@ -59,20 +59,16 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 type Ease = (x: number) => number;
 
-function curve([x1, y1, x2, y2]: Curve): Ease {
-  return Easing.bezierFn(x1, y1, x2, y2);
-}
-
 /** Each track's easing, built once rather than on every render. */
 const eases = {
-  tagline: curve(taglineMotion.easing),
-  logo: curve(logo.easing),
-  wedge: curve(wedge.easing),
-  s: curve(s.easing),
-  letters: curve(letters.easing),
-  mascot: curve(mascot.easing),
-  shout: curve(shout.easing),
-  wipe: curve(wipe.easing),
+  tagline: bezierFn(taglineMotion.easing),
+  logo: bezierFn(logo.easing),
+  wedge: bezierFn(wedge.easing),
+  s: bezierFn(s.easing),
+  letters: bezierFn(letters.easing),
+  mascot: bezierFn(mascot.easing),
+  shout: bezierFn(shout.easing),
+  wipe: bezierFn(wipe.easing),
 };
 
 /** A track's value at `t` of the cut, eased segment by segment between its keyframes. */

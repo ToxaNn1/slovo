@@ -1,15 +1,13 @@
 import { z } from 'zod';
 
-import { SourceOutputSchema, SourceSchema, EntryTextSchema } from './shared';
+import { SourceOutputSchema, SourceSchema, EntryTextSchema, recordIdSchema } from './shared';
 import { ExampleOutputSchema, ExampleSchema } from './word';
 
 /**
  * An Idiom id: opaque, assigned when the Idiom is authored and never reused.
  * The `i_` prefix keeps it apart from the ids of other kinds of Entry.
  */
-export const IdiomIdSchema = z
-  .string()
-  .regex(/^i_[a-z0-9]+$/, 'Expected an Idiom id: i_ followed by lowercase letters and digits');
+export const IdiomIdSchema = recordIdSchema('idiom', 'an Idiom');
 
 /**
  * What kind of fixed expression an Idiom is: an idiom proper («фразеологізм»),

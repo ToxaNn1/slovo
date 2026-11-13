@@ -22,7 +22,6 @@ import {
   type HostInstance,
 } from 'react-native';
 import Animated, {
-  Easing,
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
@@ -43,6 +42,7 @@ import {
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Wedge } from './Wedge';
+import { bezier, REDUCED_FADE } from './timing';
 
 /** How long the toast stays, from the design. */
 const TOAST_MS = 4000;
@@ -53,13 +53,7 @@ const BRIEF_TOAST_MS = 2200;
 /** The design's `slToast`: in from the left, straightening as it comes. */
 const SLIDE_IN = {
   duration: motion.toast.duration,
-  easing: Easing.bezier(...motion.toast.easing),
-  reduceMotion: ReduceMotion.Never,
-};
-/** Under Reduce Motion the toast fades in place, the design's `slRm`. */
-const FADE_IN = {
-  duration: motion.reduceMotion.duration,
-  easing: Easing.bezier(...motion.reduceMotion.easing),
+  easing: bezier(motion.toast.easing),
   reduceMotion: ReduceMotion.Never,
 };
 /** The share of its width the toast's right edge slants in by at the bottom. */
@@ -170,7 +164,7 @@ function UndoToast({
   const timeOut = useEffectEvent(close);
   // Read when the toast comes in; a later change of Reduce Motion moves nothing.
   const comeIn = useEffectEvent(() => {
-    shown.value = withTiming(1, reduceMotion ? FADE_IN : SLIDE_IN);
+    shown.value = withTiming(1, reduceMotion ? REDUCED_FADE : SLIDE_IN);
   });
   const hasUndo = 'onUndo' in content;
   const lasts = 'brief' in content ? BRIEF_TOAST_MS : TOAST_MS;

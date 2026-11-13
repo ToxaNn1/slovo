@@ -143,7 +143,9 @@ async function main(): Promise<number> {
   console.log(`  file:            ${displayPath(outFile)}`);
   console.log(`  content version: ${String(metadata.contentVersion)}`);
   console.log(`  pack format:     ${String(metadata.packFormat)}`);
-  console.log(`  checksum:        ${metadata.contentChecksum}`);
+  if (metadata.contentChecksum !== undefined) {
+    console.log(`  checksum:        ${metadata.contentChecksum}`);
+  }
   console.log('');
   console.log(formatContentReport(report));
   console.log('');

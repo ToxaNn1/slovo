@@ -23,7 +23,9 @@ export const ContentManifestSchema = z.strictObject({
 export type ContentManifest = z.infer<typeof ContentManifestSchema>;
 
 /** A manifest that records content: its version and the checksum of the pack built at it. */
-export type RecordedManifest = Pick<PackMetadata, 'contentVersion' | 'contentChecksum'>;
+export type RecordedManifest = Pick<PackMetadata, 'contentVersion'> & {
+  readonly contentChecksum: string;
+};
 
 /** Whether the manifest records the content as it is. */
 export type ContentVersionCheck =

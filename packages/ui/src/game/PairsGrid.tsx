@@ -2,25 +2,17 @@
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
 import { stressLabel, type GridCell, type RoundAnswer, type RoundOption } from '@slovo/core';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { PressedTile, type TileTone } from '../primitives/PressedTile';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
 import { fontScaleCap, pairsGridLayout, space, typeStyle } from '../tokens';
-import { RIGHT_FILL, WRONG_FILL } from './round-motion';
+import { useAnswerMotion } from './useAnswerMotion';
 
-/** How a right pair pops: from small, past its size, back. */
-const CELL_POP = [0.6, 1.12, 1];
 /** How far a wrong pair's cells turn (a Word left, a Definition right), how much it fades. */
 const CELL_TURN = 3;
 const WRONG_OPACITY = 0.6;
@@ -169,36 +161,10 @@ function Cell({
 }) {
   const { colors } = useTokens();
   const { voice } = useEdition();
-  const reduceMotion = useReduceMotion();
-  const judged = look === 'right' || look === 'wrong';
-  /** 0 before the answer, 1 once the cell has popped or dropped. */
-  const moved = useSharedValue(judged ? 1 : 0);
-  // Whether the cell showed its answer before, so only the answer given now moves it.
-  const shownJudged = useRef(judged);
-
-  useEffect(() => {
-    if (!judged || shownJudged.current) return;
-    shownJudged.current = true;
-    moved.value = withTiming(1, look === 'right' ? RIGHT_FILL : WRONG_FILL);
-    // The shared value is stable, so only the answer given moves the cell.
-  }, [judged, look, moved]);
-
-  const still = reduceMotion || !judged;
-  const motion = useAnimatedStyle(() => {
-    if (look === 'wrong')
-      return {
-        opacity: 1 - (1 - WRONG_OPACITY) * moved.value,
-        transform: still
-          ? []
-          : [
-              { translateY: pairsGridLayout.cellDrop * moved.value },
-              { rotate: `${String(turn * moved.value)}deg` },
-            ],
-      };
-    return {
-      opacity: 1,
-      transform: still ? [] : [{ scale: interpolate(moved.value, [0, 0.6, 1], CELL_POP) }],
-    };
+  const motion = useAnswerMotion(look === 'right' || look === 'wrong' ? look : undefined, {
+    translateY: pairsGridLayout.cellDrop,
+    rotate: turn,
+    opacity: WRONG_OPACITY,
   });
   return (
     <View

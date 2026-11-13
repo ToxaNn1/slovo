@@ -160,17 +160,20 @@ const AdminRoleSchema = z.enum(['owner', 'admin']);
 /** The signed-in Admin user. */
 const SignedInAdminSchema = z.object({ email: z.string(), role: AdminRoleSchema });
 
+/** The data of a wrong sign-in code: the attempts left. */
+export const WrongCodeSchema = z.object({ attemptsLeft: z.number().int().min(0) });
+
+/** The data of a blocked sign-in email: how long it stays blocked. */
+export const SignInBlockedSchema = z.object({ retryAfterSeconds: z.number().int().positive() });
+
 /** What a sign-in step may refuse with: a wrong code with the attempts left, or the email blocked. */
 const SIGN_IN_ERRORS = {
   NOT_FOUND: ADMIN_ERRORS.NOT_FOUND,
   FORBIDDEN: ADMIN_ERRORS.FORBIDDEN,
-  UNAUTHORIZED: {
-    message: 'The code is wrong or has expired',
-    data: z.object({ attemptsLeft: z.number().int().min(0) }),
-  },
+  UNAUTHORIZED: { message: 'The code is wrong or has expired', data: WrongCodeSchema },
   TOO_MANY_REQUESTS: {
     message: 'Too many failed attempts: the email is blocked for a while',
-    data: z.object({ retryAfterSeconds: z.number().int().positive() }),
+    data: SignInBlockedSchema,
   },
 } as const;
 

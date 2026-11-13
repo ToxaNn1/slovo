@@ -6,15 +6,14 @@ import {
   SourceSchema,
   EntryTextSchema,
   WebAddressSchema,
+  recordIdSchema,
 } from './shared';
 
 /**
  * A Correction id: opaque, assigned when the Correction is authored and never
  * reused. The `c_` prefix keeps it apart from the ids of other kinds of Entry.
  */
-export const CorrectionIdSchema = z
-  .string()
-  .regex(/^c_[a-z0-9]+$/, 'Expected a Correction id: c_ followed by lowercase letters and digits');
+export const CorrectionIdSchema = recordIdSchema('correction', 'a Correction');
 
 /**
  * Why a form is non-standard. A `wrongStress` Correction, a stress trap,
