@@ -1,10 +1,5 @@
-import type { Analytics } from '../analytics/analytics';
-import type { Edition } from '../edition/edition';
-import type { Entries } from '../entries/entries';
 import { createInTurn } from '../in-turn';
 import { todayKey } from '../local-date';
-import type { Clock, Random } from '../ports';
-import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import { generateCrossingCrossword, type CrossingPuzzle } from './crossing-crossword';
 import {
@@ -16,7 +11,7 @@ import {
   type CrossingAction,
   type CrossingPlay,
 } from './crossing-play';
-import type { GameXp } from './game-xp';
+import { noXp, type CrosswordPorts } from './crossword-ports';
 import { seededRandomOf } from './traced-crossword';
 
 const { crossingCrosswordProgress } = userStateRecords;
@@ -80,19 +75,9 @@ export async function openCrossingCrossword({
   clock,
   edition,
   seeded = seededRandomOf,
-  xp = { award: () => ({ changes: new Map(), amount: 0, commit: () => undefined }) },
+  xp = noXp,
   analytics,
-}: {
-  entries: Pick<Entries, 'wordsUnderRarityCeiling'>;
-  userState: UserState;
-  clock: Clock;
-  edition: Pick<Edition, 'isFeatureEnabled' | 'languageTraits'>;
-  /** The seeded random port of a seed; the Core's own by default. */
-  seeded?: (seed: string) => Random;
-  /** The XP log, which solving the day earns XP in; without it, none. */
-  xp?: GameXp;
-  analytics?: Pick<Analytics, 'track'>;
-}): Promise<CrossingCrosswordOpening> {
+}: CrosswordPorts<'languageTraits'>): Promise<CrossingCrosswordOpening> {
   if (!edition.isFeatureEnabled('crossingCrossword')) return { kind: 'off' };
   const timed = edition.isFeatureEnabled('crosswordSolveTime');
   const date = todayKey(clock);
@@ -150,7 +135,8 @@ export async function openCrossingCrossword({
         await userState.write(new Map([...progressOf(next), ...(award?.changes ?? [])]));
         award?.commit();
         state = next;
-        if (solves) await analytics?.track('dailyCrosswordSolved', { date }).catch(() => undefined);
+        // Out of turn: the next play never waits for the network.
+        if (solves) void analytics?.track('dailyCrosswordSolved', { date }).catch(() => undefined);
         return state;
       }),
     keep: () => inTurn(() => userState.write(new Map(progressOf(state)))),
