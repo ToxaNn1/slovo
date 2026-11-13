@@ -119,6 +119,18 @@ describe('a sourcing run', () => {
       /No free t_ id/,
     );
   });
+
+  it('reports every repeat of a line against its first line', async () => {
+    const result = await runSourcing('один\nОдин\nодин\n', options(), tipsKind(oneDraft));
+
+    expect(result).toEqual({
+      ok: false,
+      errors: [
+        'Line 2: "Один" is already listed on line 1',
+        'Line 3: "один" is already listed on line 1',
+      ],
+    });
+  });
 });
 
 describe('printSummary', () => {
