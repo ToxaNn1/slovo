@@ -144,7 +144,7 @@ export function CrosswordSolvedPoster({
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, paddingBottom: space[8] + space[2] },
-  panel: { height: resultLayout.panelHeight, justifyContent: 'flex-end' },
+  panel: { minHeight: resultLayout.panelHeight, justifyContent: 'flex-end' },
   panelFoot: {
     flexDirection: 'row',
     alignItems: 'flex-end',
