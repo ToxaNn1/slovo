@@ -6,3 +6,4 @@ Ticket branches: feat/<n>-<slug>; status commit `chore: DONE|FAILED|STUCK #n` is
 Grants: commits, pushes, one PR from the integration branch, auto-merge squash to main on green. No branch deletion.
 ## Log
 - 14.11 coord #7: prep commit d2c561b19 (board+notes). Launched cloud #1851 (feat/1851-board09-hot-files), #1859 (feat/1859-dev-clock-shift).
+- 14.11 ~19:10: #1859 and #1851 DONE, merged into the integration branch and pushed. Launched cloud #1852 (feat/1852-sheet-toast), #1853 (feat/1853-saved-header), #1854 (feat/1854-saved-lists). Draft PR not yet opened (the gh pr create was interrupted); handbook pages from #1851 not yet written.
