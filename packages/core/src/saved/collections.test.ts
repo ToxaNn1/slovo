@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   COLLECTION_NAME_MAX_LENGTH,
+  COLLECTION_UNDO_MS,
   collectionNameLength,
   openComposition,
   type Clock,
@@ -659,6 +660,109 @@ describe('Collections', () => {
 
       expect(namesOf(app)).toEqual(['Safe']);
       expect(app.collections.has(id, 'w_one')).toBe(true);
+    });
+  });
+
+  describe('undoing a delete', () => {
+    it('brings back the same Collection: id, name, time, source, Entries and their order', async () => {
+      const time = fakeClock();
+      const records = new Map<string, string>();
+      const app = await run({ records, clock: time.clock });
+      const copy = await app.collections.createCopy('Copy', ['w_one', 'w_two'], 'abc123defg');
+      time.advance(MINUTE);
+      await app.collections.add(copy.id, 'c_one');
+      await create(app, 'Newer', 'w_three');
+      records.set(`collectionEntries.${copy.id}.w_gone`, JSON.stringify('2026-10-11T07:00:00.000Z'));
+      const before = new Map([...records].filter(([key]) => key.includes(copy.id)));
+      const list = app.collections.list;
+      const entries = app.collections.entries(copy.id);
+
+      const deleted = await app.collections.delete(copy.id);
+      time.advance(COLLECTION_UNDO_MS - 1);
+      const restored = await deleted?.restore();
+
+      expect(restored).toEqual(list.find((collection) => collection.id === copy.id));
+      expect(app.collections.list).toEqual(list);
+      expect(app.collections.entries(copy.id)).toEqual(entries);
+      expect(app.collections.of('c_one').map((collection) => collection.id)).toEqual([copy.id]);
+      expect(new Map([...records].filter(([key]) => key.includes(copy.id)))).toEqual(before);
+      const reopened = await run({ records, clock: time.clock });
+      expect(reopened.collections.list).toEqual(list);
+      expect(reopened.collections.entries(copy.id)).toEqual(entries);
+    });
+
+    it('tells the subscribers once and writes the records back in one write', async () => {
+      const records = new Map<string, string>();
+      const writes: number[] = [];
+      const port = createMemoryUserStatePort(records);
+      const app = await openComposition({
+        content,
+        edition: testEdition({ isFeatureEnabled: () => true }),
+        userState: await openUserState({
+          port: {
+            ...port,
+            write(changes) {
+              writes.push(changes.size);
+              return port.write(changes);
+            },
+          },
+        }),
+        clock: fakeClock().clock,
+        random: steppingRandom(),
+      });
+      const { id } = await create(app, 'Back', 'w_one');
+      await app.collections.add(id, 'w_two');
+      const deleted = await app.collections.delete(id);
+      let told = 0;
+      app.collections.subscribe(() => {
+        told += 1;
+      });
+      writes.length = 0;
+
+      await deleted?.restore();
+
+      expect(told).toBe(1);
+      expect(writes).toEqual([3]);
+    });
+
+    it('is refused once the undo time is over, and changes nothing', async () => {
+      const time = fakeClock();
+      const records = new Map<string, string>();
+      const app = await run({ records, clock: time.clock });
+      const { id } = await create(app, 'Late', 'w_one');
+      const deleted = await app.collections.delete(id);
+      time.advance(COLLECTION_UNDO_MS);
+
+      expect(await deleted?.restore()).toBeUndefined();
+      expect(app.collections.list).toEqual([]);
+      expect([...records.keys()].filter((key) => key.startsWith('collection'))).toEqual([]);
+    });
+
+    it('brings it back once only', async () => {
+      const app = await run();
+      const { id } = await create(app, 'Once', 'w_one');
+      const deleted = await app.collections.delete(id);
+
+      expect((await deleted?.restore())?.id).toBe(id);
+      await app.collections.delete(id);
+      expect(await deleted?.restore()).toBeUndefined();
+      expect(app.collections.list).toEqual([]);
+    });
+
+    it('is refused when a Collection of that name was made meanwhile', async () => {
+      const app = await run();
+      const { id } = await create(app, 'Taken', 'w_one');
+      const deleted = await app.collections.delete(id);
+      const other = await create(app, 'taken');
+
+      expect(await deleted?.restore()).toBeUndefined();
+      expect(app.collections.list).toEqual([other]);
+    });
+
+    it('is nothing for a Collection that does not exist', async () => {
+      const app = await run();
+
+      expect(await app.collections.delete('k_gone')).toBeUndefined();
     });
   });
 
