@@ -11,12 +11,8 @@ import {
   createEntries,
   EVERYTHING_IN,
 } from '@slovo/core/testing';
-import {
-  buildFromSnapshot,
-  openLanguagePack,
-  readEdition,
-  type NodeLanguagePack,
-} from '@slovo/language-pack';
+import { buildFromSnapshot, openLanguagePack, type NodeLanguagePack } from '@slovo/language-pack';
+import { ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { fakeClock, ukrainian, ukrainianFolder } from '../test-support';
@@ -25,9 +21,8 @@ import { openPackContentStore } from './pack-content-store';
 // Patches the app fetches and applies to the UA Language Pack open on the device (ADR 0090).
 
 const today = new Date('2026-11-08T09:00:00Z');
-const read = readEdition(ukrainianFolder.dir, { registryRequired: true, today }).valid;
-if (read === undefined) throw new Error('The Ukrainian Edition does not read');
-const { content } = read;
+// The UA Edition's seed snapshot: the content of the pack open on the device.
+const content = ukrainianSnapshot();
 
 let dir: string;
 let builtFile: string;
@@ -39,15 +34,7 @@ beforeAll(() => {
   const built = buildFromSnapshot({
     editionDir: ukrainianFolder.dir,
     snapshot: {
-      editionId: content.editionId,
-      contentVersion: content.contentVersion,
-      words: [...content.words],
-      idioms: [...content.idioms],
-      corrections: [...content.corrections],
-      tips: [...content.tips],
-      synonymRows: [...content.synonymRows],
-      curatedCollections: [...(content.curatedCollections ?? [])],
-      crosswordDays: [...(content.crosswordDays ?? [])],
+      ...content,
       mediaBase: 'https://media.slovo.test',
       recordings: [],
       illustrations: [],

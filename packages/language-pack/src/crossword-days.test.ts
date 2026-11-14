@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -8,13 +8,13 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import type { CrosswordDay } from '@slovo/contracts';
 
-import { EDITIONS_DIR } from './edition-folder';
 import {
   buildLanguagePack,
   formatBuildError,
   generateDailyCrossword,
   recordContent,
 } from './index';
+import { ukrainianSeedFolder } from './test-support';
 
 const fixtureDir = fileURLToPath(new URL('../fixtures/valid', import.meta.url));
 const DAYS_FILE = 'content/crossword-days.json';
@@ -270,10 +270,7 @@ describe("the crossword days of the UA Edition's content", () => {
   it('reach 400 days ahead with --record, no word coming back within 20 days', () => {
     const dir = mkdtempSync(join(tmpdir(), 'slovo-crossword-uk-'));
     workDirs.push(dir);
-    const editionDir = join(dir, 'uk');
-    cpSync(join(EDITIONS_DIR, 'uk'), editionDir, { recursive: true });
-    if (!existsSync(join(editionDir, DAYS_FILE)))
-      writeFileSync(join(editionDir, DAYS_FILE), '[]\n');
+    const editionDir = ukrainianSeedFolder(dir);
 
     // Half a year past the recorded days' start, so --record writes new days too.
     record(editionDir, '2027-06-01');

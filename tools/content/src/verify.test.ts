@@ -1,19 +1,12 @@
 import { spawnSync } from 'node:child_process';
-import {
-  cpSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, relative } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
+import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import { PoliteClient } from '@slovo/sourcing';
 
 import { verifyEntries } from './verify';
@@ -60,12 +53,9 @@ let cacheDir: string;
 
 beforeEach(() => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-verify-'));
-  editionDir = join(workDir, 'editions', 'uk');
+  // The UA Edition folder, its content written from the seed snapshot.
+  editionDir = ukrainianSeedFolder(join(workDir, 'editions'));
   cacheDir = join(workDir, 'cache');
-  cpSync(ukrainian.dir, editionDir, {
-    recursive: true,
-    filter: (source) => !relative(ukrainian.dir, source).startsWith('dist'),
-  });
 });
 
 afterEach(() => {
@@ -353,7 +343,7 @@ describe('verify', () => {
     git('init', '-q');
     git('add', '.');
     git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base');
-    const existing = ukrainian.entries().words[0];
+    const existing = openEdition(join(workDir, 'editions'), 'uk').entries().words[0];
     if (existing === undefined) throw new Error('The UA Edition has no Word');
     const changedWord = { ...existing.entry, primaryDefinition: definition };
     const url = existing.entry.sources[0]?.url ?? '';
