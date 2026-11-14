@@ -102,18 +102,6 @@ function flyFrom(remaining: number, speed: number) {
     reduceMotion: ReduceMotion.Never,
   };
 }
-// hidden: not on board 04, owner 05.11. The «ВГОРУ — НАСТУПНЕ» chip's fade and the card's nudge.
-// /** Under Reduce Motion the chip comes in as the one short fade of ADR 0055. */
-// const CHIP_FADE = {
-//   duration: motion.reduceMotion.duration,
-//   easing: Easing.bezier(...motion.reduceMotion.easing),
-//   reduceMotion: ReduceMotion.Never,
-// };
-// const NUDGE_STEP = {
-//   duration: 275,
-//   easing: Easing.inOut(Easing.quad),
-//   reduceMotion: ReduceMotion.Never,
-// };
 
 /**
  * Wraps an Entry card in its side swipes: right marks the Entry Known, left
@@ -172,9 +160,6 @@ export function SwipeMarks({
   const knownWidth = useSharedValue(0);
   const unknownWidth = useSharedValue(0);
   const stamp = useSharedValue(mark === undefined ? 0 : 1);
-  // hidden: not on board 04, owner 05.11. The nudge's lift and the page the chip shows on.
-  // const lift = useSharedValue(0);
-  // const [markedOn, setMarkedOn] = useState<(() => void) | undefined>(undefined);
   const latest = useRef({ mark, onMark, onUndo, turnToNext, turnBackHere });
   latest.current = { mark, onMark, onUndo, turnToNext, turnBackHere };
   /** The mark whose toast waits for the next Entry to come in. */
@@ -244,20 +229,6 @@ export function SwipeMarks({
       if (current.mark === to) return;
       haptics.selection();
       current.onMark(to);
-      // hidden: not on board 04, owner 05.11. While a next Entry waits, the card nudged up once and the chip showed.
-      // if (current.turnToNext !== undefined) {
-      //   setMarkedOn(() => current.turnToNext);
-      //   if (!reduceMotion)
-      //     lift.value = withDelay(
-      //       550,
-      //       withSequence(
-      //         withTiming(-22, NUDGE_STEP),
-      //         withTiming(0, NUDGE_STEP),
-      //         withTiming(-9, NUDGE_STEP),
-      //         withTiming(0, NUDGE_STEP),
-      //       ),
-      //     );
-      // }
       if (turnsOn) toastAfterTurn.current = to;
       else showMarkToast(to);
     },
@@ -359,7 +330,6 @@ export function SwipeMarks({
     return {
       transform: [
         { translateX: offset.value },
-        // hidden: not on board 04, owner 05.11. The nudge added `+ lift.value` here.
         { translateY: Math.abs(offset.value) * 0.04 },
         { rotate: `${String(offset.value / 16)}deg` },
       ],
@@ -513,48 +483,10 @@ export function SwipeMarks({
             )}
           </Animated.View>
         </GestureDetector>
-        {/* hidden: not on board 04, owner 05.11. The «ВГОРУ — НАСТУПНЕ» chip under the card.
-        {markedOn !== undefined && markedOn === turnToNext && (
-          <ChipFade fades={reduceMotion}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={texts.next}
-              testID="swipe-next-chip"
-              hitSlop={(minTouchTarget - 32) / 2}
-              onPress={turnToNext}
-              style={({ pressed }) => [
-                styles.chip,
-                {
-                  backgroundColor: colors.ink,
-                  borderRadius: radii.chip,
-                  opacity: pressed ? 0.7 : 1,
-                },
-              ]}
-            >
-              <Text style={[typeStyle('toastAction', tokens), { color: colors.background }]}>
-                {texts.next}
-              </Text>
-            </Pressable>
-          </ChipFade>
-        )} */}
       </View>
     </PageActionsProvider>
   );
 }
-
-// hidden: not on board 04, owner 05.11. The «ВГОРУ — НАСТУПНЕ» chip, which faded in under Reduce Motion.
-// function ChipFade({ fades, children }: { fades: boolean; children: ReactNode }) {
-//   const shown = useSharedValue(fades ? 0 : 1);
-//   useEffect(() => {
-//     if (fades) shown.value = withTiming(1, CHIP_FADE);
-//   }, [fades, shown]);
-//   const style = useAnimatedStyle(() => ({ opacity: shown.value }));
-//   return (
-//     <Animated.View testID="swipe-next-chip-fade" style={[styles.chipFade, style]}>
-//       {children}
-//     </Animated.View>
-//   );
-// }
 
 const styles = StyleSheet.create({
   frame: { flexShrink: 1 },
@@ -590,13 +522,4 @@ const styles = StyleSheet.create({
     paddingVertical: swipeStampLayout.paddingVertical,
     paddingHorizontal: swipeStampLayout.paddingHorizontal,
   },
-  // hidden: not on board 04, owner 05.11. The «ВГОРУ — НАСТУПНЕ» chip's styles.
-  // chipFade: { alignSelf: 'center' },
-  // chip: {
-  //   alignSelf: 'center',
-  //   marginTop: space[3],
-  //   minHeight: space[8],
-  //   justifyContent: 'center',
-  //   paddingHorizontal: space[4],
-  // },
 });

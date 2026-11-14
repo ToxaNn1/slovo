@@ -1815,7 +1815,8 @@
                 },
                 "required": [
                   "email"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -2050,7 +2051,8 @@
                 "required": [
                   "email",
                   "code"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -2475,7 +2477,8 @@
                         "required": [
                           "kind",
                           "totp"
-                        ]
+                        ],
+                        "additionalProperties": false
                       },
                       {
                         "type": "object",
@@ -2492,7 +2495,8 @@
                         "required": [
                           "kind",
                           "recoveryCode"
-                        ]
+                        ],
+                        "additionalProperties": false
                       }
                     ]
                   }
@@ -2501,7 +2505,8 @@
                   "email",
                   "code",
                   "factor"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -4852,7 +4857,8 @@
                   "email",
                   "role",
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -5238,7 +5244,8 @@
                 "required": [
                   "role",
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -5616,7 +5623,8 @@
                 },
                 "required": [
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -6282,7 +6290,8 @@
                 "required": [
                   "name",
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -6664,7 +6673,8 @@
                 },
                 "required": [
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -9049,7 +9059,8 @@
                 "required": [
                   "rules",
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -10738,7 +10749,8 @@
                 "required": [
                   "minimum",
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -12405,7 +12417,8 @@
                 },
                 "required": [
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -14982,7 +14995,8 @@
                   },
                   "reason": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "maxLength": 500
                   }
                 },
                 "required": [
@@ -16437,7 +16451,8 @@
                   },
                   "reason": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "maxLength": 500
                   }
                 },
                 "required": [
@@ -17383,7 +17398,8 @@
                   },
                   "reason": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "maxLength": 500
                   }
                 },
                 "required": [
@@ -17925,7 +17941,8 @@
                   },
                   "reason": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "maxLength": 500
                   }
                 },
                 "required": [
@@ -19290,7 +19307,8 @@
                 },
                 "required": [
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -19591,7 +19609,8 @@
                 },
                 "required": [
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -20253,7 +20272,8 @@
                 "required": [
                   "decision",
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -20882,7 +20902,8 @@
                 },
                 "required": [
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -22079,7 +22100,8 @@
                 "required": [
                   "version",
                   "text"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -23899,7 +23921,8 @@
                   "failedTests",
                   "coverage",
                   "jobs"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -24508,7 +24531,8 @@
                 "required": [
                   "value",
                   "reason"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }

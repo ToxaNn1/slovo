@@ -10,15 +10,17 @@ import { PressedTile, type TileTone } from './PressedTile';
 /**
  * The design's buttons, each a pressed tile: `primary` is the red with an
  * ink label (the main action, and a destructive one), `neutral` the cream
- * tile, `onAccent` the ink tile with a cream label for a red surface, and
+ * tile, `onAccent` the ink tile with a cream label for a red surface,
+ * `inverse` the Theme's ink tile with a label of the Theme's background, and
  * `ghost` a label with no tile.
  */
-export type ButtonVariant = 'primary' | 'neutral' | 'onAccent' | 'ghost';
+export type ButtonVariant = 'primary' | 'neutral' | 'onAccent' | 'inverse' | 'ghost';
 
 const tones: Record<ButtonVariant, TileTone> = {
   primary: 'accent',
   neutral: 'tile',
   onAccent: 'ink',
+  inverse: 'inverse',
   ghost: 'none',
 };
 
@@ -68,6 +70,7 @@ export function Button({
     primary: keyColors.ink,
     neutral: tokens.colors.ink,
     onAccent: keyColors.background,
+    inverse: tokens.colors.background,
     ghost: tokens.colors.ink,
   }[variant];
   return (

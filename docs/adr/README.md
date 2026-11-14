@@ -32,7 +32,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0028](0028-maestro-runs-only-on-the-owners-command.md) Maestro runs only on the owner's command; a ticket's PR touches no flow, one visual pass per version does.
 - [0029](0029-ui-components-are-tested-in-jest-with-jest-expo.md) UI components and app routes are tested in Jest with `jest-expo`; everything else in Vitest.
 - [0030](0030-the-backend-is-a-factory-too.md) One backend deployment for every Edition: a server Core plus an HTTP edge, data partitioned by Edition, Sessions, limits and the client address.
-- [0031](0031-the-api-only-grows-within-a-version.md) The API is one oRPC contract that only grows within `/v1`, held by a committed description.
+- [0031](0031-the-api-only-grows-within-a-version.md) The API is one oRPC contract that only grows within `/v1`, held by a committed description; amended by 0122: admin inputs are strict and may narrow.
 - 0032: superseded by 0090.
 - [0033](0033-the-language-pack-is-the-runtime-source-of-categories.md) The app reads Categories only from the Language Pack; Corrections have a list of Categories of their own. Amended by 0081.
 - 0034: unused.
@@ -123,3 +123,4 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0119](0119-a-tips-card-shows-its-rule-in-chips.md) Amended by 0120. Behind `wordTabs` a Tip card has one tab «Правило»: the explanation (Onest 500 20/28), the standard form and the Example's text in chips, the source line; «Винятки» only with exceptions in the data, so no tab bar; kicker «ПОРАДА», title 30/33 over the red bar; the non-standard form and Self-check unchanged; amends 0091
 - [0120](0120-a-tips-card-shows-its-exceptions.md) A Tip may have `exceptions` (explanation ≤ 300, at least one word); behind `tipExceptions` (needs `wordTabs`) such a Tip card gets «Винятки» after «Правило»: the text and the words in chips, no source line; pack format 13 (`exceptions_explanation`, `tip_exception_words`), and `openPack` refuses a pack of another format; amends 0119
 - [0121](0121-patch-format-3-carries-marks-and-tip-exceptions.md) `PATCH_FORMAT` 3: a Patch may carry `**` standard-form marks (0117) and Tip `exceptions` (0120); the backend answers a format-2 request `unsupported-format` and such an app keeps its content until updated
+- [0122](0122-admin-inputs-are-strict-and-may-narrow.md) Every `/v1/admin/` input is strict (`z.strictObject`) and every admin reason is `ReasonSchema` (1–500); the admin ships with the backend, so its request may narrow within `/v1` and the breaking-change check skips it; admin outputs stay held (amends 0031 for admin routes only)

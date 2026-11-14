@@ -394,7 +394,7 @@ const contentWriteContract = {
         batchId: BatchIdSchema,
         /** The record's fields without its id. */
         fields: z.record(z.string(), z.unknown()),
-        reason: z.string().trim().min(1).optional(),
+        reason: ReasonSchema.optional(),
       }),
     )
     .output(WrittenSchema),
@@ -434,7 +434,7 @@ const contentWriteContract = {
         /** The record version the edit was made from. */
         recordVersion: z.number().int().positive(),
         fields: z.record(z.string(), z.unknown()),
-        reason: z.string().trim().min(1).optional(),
+        reason: ReasonSchema.optional(),
       }),
     )
     .output(WrittenSchema),
@@ -453,7 +453,7 @@ const contentWriteContract = {
         id: z.string(),
         batchId: BatchIdSchema,
         recordVersion: z.number().int().positive(),
-        reason: z.string().trim().min(1).optional(),
+        reason: ReasonSchema.optional(),
       }),
     )
     .output(WrittenSchema),
@@ -471,7 +471,7 @@ const contentWriteContract = {
         kind: FlaggableKindSchema,
         id: z.string(),
         batchId: BatchIdSchema,
-        reason: z.string().trim().min(1),
+        reason: ReasonSchema,
       }),
     )
     .output(z.object({ id: z.string(), batchId: z.string() })),
@@ -602,7 +602,7 @@ const contentQueueContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ editionId: EditionIdSchema.optional() }))
+    .input(z.strictObject({ editionId: EditionIdSchema.optional() }))
     .output(z.object({ batches: z.array(QueueBatchSchema) })),
   review: procedure
     .route({
@@ -612,7 +612,7 @@ const contentQueueContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ batchId: BatchIdSchema, reason: ReasonSchema }))
+    .input(z.strictObject({ batchId: BatchIdSchema, reason: ReasonSchema }))
     .output(z.object({ reviewed: z.literal(true) })),
   rollback: procedure
     .route({
@@ -624,7 +624,7 @@ const contentQueueContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ batchId: BatchIdSchema, reason: ReasonSchema }))
+    .input(z.strictObject({ batchId: BatchIdSchema, reason: ReasonSchema }))
     .output(
       z.object({
         contentVersion: z.number().int().positive(),
@@ -641,7 +641,7 @@ const contentQueueContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ editionId: EditionIdSchema.optional() }))
+    .input(z.strictObject({ editionId: EditionIdSchema.optional() }))
     .output(z.object({ flags: z.array(QueueFlagSchema) })),
   resolveFlag: procedure
     .route({
@@ -652,7 +652,7 @@ const contentQueueContract = {
     })
     .errors(ADMIN_ERRORS)
     .input(
-      z.object({
+      z.strictObject({
         id: z.coerce.number().int().positive(),
         decision: z.enum(['accept', 'reject']),
         reason: ReasonSchema,
@@ -667,7 +667,7 @@ const contentQueueContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ editionId: EditionIdSchema.optional() }))
+    .input(z.strictObject({ editionId: EditionIdSchema.optional() }))
     .output(z.object({ reports: z.array(QueueReportSchema) })),
   resolveReport: procedure
     .route({
@@ -677,7 +677,7 @@ const contentQueueContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ id: z.uuid(), reason: ReasonSchema }))
+    .input(z.strictObject({ id: z.uuid(), reason: ReasonSchema }))
     .output(z.object({ resolved: z.literal(true) })),
 };
 
@@ -823,7 +823,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors({ NOT_FOUND: ADMIN_ERRORS.NOT_FOUND, FORBIDDEN: ADMIN_ERRORS.FORBIDDEN })
-    .input(z.object({ email: EmailSchema }))
+    .input(z.strictObject({ email: EmailSchema }))
     .output(z.object({ sent: z.literal(true) })),
 
   verifyCode: procedure
@@ -836,7 +836,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(SIGN_IN_ERRORS)
-    .input(z.object({ email: EmailSchema, code: CodeSchema }))
+    .input(z.strictObject({ email: EmailSchema, code: CodeSchema }))
     .output(
       z.discriminatedUnion('next', [
         z.object({ next: z.literal('totp') }),
@@ -860,12 +860,12 @@ export const adminContract = {
     })
     .errors(SIGN_IN_ERRORS)
     .input(
-      z.object({
+      z.strictObject({
         email: EmailSchema,
         code: CodeSchema,
         factor: z.discriminatedUnion('kind', [
-          z.object({ kind: z.literal('totp'), totp: CodeSchema }),
-          z.object({ kind: z.literal('recovery'), recoveryCode: CodeSchema }),
+          z.strictObject({ kind: z.literal('totp'), totp: CodeSchema }),
+          z.strictObject({ kind: z.literal('recovery'), recoveryCode: CodeSchema }),
         ]),
       }),
     )
@@ -929,7 +929,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ editionId: EditionIdSchema.optional() }))
+    .input(z.strictObject({ editionId: EditionIdSchema.optional() }))
     .output(
       z.object({
         actions: z.array(
@@ -977,7 +977,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ACCESS_WRITE_ERRORS)
-    .input(z.object({ email: EmailSchema, role: AdminRoleSchema, reason: ReasonSchema }))
+    .input(z.strictObject({ email: EmailSchema, role: AdminRoleSchema, reason: ReasonSchema }))
     .output(z.object({ invited: z.literal(true) })),
 
   setRole: procedure
@@ -989,7 +989,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ACCESS_WRITE_ERRORS)
-    .input(z.object({ email: EmailSchema, role: AdminRoleSchema, reason: ReasonSchema }))
+    .input(z.strictObject({ email: EmailSchema, role: AdminRoleSchema, reason: ReasonSchema }))
     .output(z.object({ changed: z.literal(true) })),
 
   removePerson: procedure
@@ -1001,7 +1001,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ACCESS_WRITE_ERRORS)
-    .input(z.object({ email: EmailSchema, reason: ReasonSchema }))
+    .input(z.strictObject({ email: EmailSchema, reason: ReasonSchema }))
     .output(z.object({ removed: z.literal(true) })),
 
   agentTokens: procedure
@@ -1030,7 +1030,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ACCESS_WRITE_ERRORS)
-    .input(z.object({ name: AgentNameSchema, reason: ReasonSchema }))
+    .input(z.strictObject({ name: AgentNameSchema, reason: ReasonSchema }))
     .output(z.object({ name: z.string(), token: z.string() })),
 
   revokeAgentToken: procedure
@@ -1042,7 +1042,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ACCESS_WRITE_ERRORS)
-    .input(z.object({ name: AgentNameSchema, reason: ReasonSchema }))
+    .input(z.strictObject({ name: AgentNameSchema, reason: ReasonSchema }))
     .output(z.object({ revoked: z.literal(true) })),
 
   status: procedure
@@ -1064,7 +1064,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ editionId: EditionIdSchema }))
+    .input(z.strictObject({ editionId: EditionIdSchema }))
     .output(SwitchesOfEditionSchema),
 
   setRules: procedure
@@ -1078,7 +1078,7 @@ export const adminContract = {
     })
     .errors(SWITCH_WRITE_ERRORS)
     .input(
-      z.object({
+      z.strictObject({
         editionId: EditionIdSchema,
         feature: z.string().min(1),
         rules: z.array(
@@ -1103,7 +1103,7 @@ export const adminContract = {
     })
     .errors(SWITCH_WRITE_ERRORS)
     .input(
-      z.object({
+      z.strictObject({
         editionId: EditionIdSchema,
         platform: PlatformSchema,
         minimum: ForceUpdateMinimumSchema,
@@ -1123,7 +1123,7 @@ export const adminContract = {
     })
     .errors(SWITCH_WRITE_ERRORS)
     .input(
-      z.object({
+      z.strictObject({
         feature: z.string().min(1),
         editionId: EditionIdSchema.optional(),
         reason: ReasonSchema,
@@ -1161,7 +1161,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ANALYTICS_ERRORS)
-    .input(z.object({ editionId: AnalyticsEditionSchema, from: DaySchema, to: DaySchema }))
+    .input(z.strictObject({ editionId: AnalyticsEditionSchema, from: DaySchema, to: DaySchema }))
     .output(AnalyticsOverviewSchema),
 
   variantResults: procedure
@@ -1172,7 +1172,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ANALYTICS_ERRORS)
-    .input(z.object({ editionId: AnalyticsEditionSchema, feature: z.string().min(1) }))
+    .input(z.strictObject({ editionId: AnalyticsEditionSchema, feature: z.string().min(1) }))
     .output(VariantResultsSchema),
 
   counters: procedure
@@ -1184,7 +1184,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ editionId: AnalyticsEditionSchema }))
+    .input(z.strictObject({ editionId: AnalyticsEditionSchema }))
     .output(CountersSummarySchema),
   content: contentWriteContract,
   contentQueue: contentQueueContract,
@@ -1206,7 +1206,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ version: OwnerCheckVersionSchema.optional() }))
+    .input(z.strictObject({ version: OwnerCheckVersionSchema.optional() }))
     .output(
       z.object({
         checks: z.array(OwnerCheckSchema),
@@ -1224,7 +1224,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ id: z.coerce.number<number>().int().positive() }))
+    .input(z.strictObject({ id: z.coerce.number<number>().int().positive() }))
     .output(z.object({ check: OwnerCheckSchema })),
 
   addOwnerCheck: procedure
@@ -1235,7 +1235,12 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ version: OwnerCheckVersionSchema, text: z.string().trim().min(1).max(2000) }))
+    .input(
+      z.strictObject({
+        version: OwnerCheckVersionSchema,
+        text: z.string().trim().min(1).max(2000),
+      }),
+    )
     .output(z.object({ check: OwnerCheckSchema })),
   quality: procedure
     .route({
@@ -1247,7 +1252,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ editionId: EditionIdSchema.optional(), period: AdminPeriodSchema }))
+    .input(z.strictObject({ editionId: EditionIdSchema.optional(), period: AdminPeriodSchema }))
     .output(
       z.object({
         capped: z.boolean(),
@@ -1274,7 +1279,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.object({ period: AdminPeriodSchema }))
+    .input(z.strictObject({ period: AdminPeriodSchema }))
     .output(
       z.object({
         runs: z.array(CiRunSchema.extend({ flakyTests: z.array(z.string()) })),
@@ -1291,7 +1296,7 @@ export const adminContract = {
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(CiRunSchema)
+    .input(z.strictObject(CiRunSchema.shape))
     .output(z.object({ kept: z.literal(true) })),
 
   alertThresholds: procedure
@@ -1315,7 +1320,7 @@ export const adminContract = {
     })
     .errors(ADMIN_ERRORS)
     .input(
-      z.object({
+      z.strictObject({
         key: AlertThresholdKeySchema,
         value: z.number().min(0).max(100_000),
         reason: ReasonSchema,

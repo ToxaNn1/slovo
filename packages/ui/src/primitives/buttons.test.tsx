@@ -1,4 +1,11 @@
-import { Button, EditionProvider, GoogleSignInButton, InterfaceSoundsProvider } from '@slovo/ui';
+import {
+  Button,
+  coreTokens,
+  EditionProvider,
+  GoogleSignInButton,
+  InterfaceSoundsProvider,
+  TokensProvider,
+} from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -127,5 +134,20 @@ describe('Button with a capital mark in its label', () => {
       0.987 * fontSize,
     );
     expect(Number(paddingTop) + Number(marginTop)).toBe(0);
+  });
+});
+
+describe('Button of the inverse variant', () => {
+  it("draws the Theme's background on its label, so it turns with the Theme", async () => {
+    await render(
+      <TokensProvider tokens={coreTokens} colorScheme="dark">
+        <Edition>
+          <Button variant="inverse" label="Try again" onPress={jest.fn()} />
+        </Edition>
+      </TokensProvider>,
+    );
+
+    const style = StyleSheet.flatten(screen.getByText('Try again').props['style']) as TextStyle;
+    expect(style.color).toBe(coreTokens.colors.dark.background);
   });
 });

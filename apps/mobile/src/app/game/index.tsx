@@ -23,8 +23,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
 import { useDailyCrosswordCard } from '@/game/daily-crossword';
-// DESIGN-06: no progress share offers on the board's hub, kept for the owner
-// import { ProgressShareOffers } from '@/game/progress-share-offers';
 import {
   useGameActions,
   useGameState,
@@ -173,8 +171,6 @@ function ModeScreen({
           <GamesTitle>{strings.title}</GamesTitle>
           <TotalXp />
         </View>
-        {/* DESIGN-06: no progress share offers on the board's hub, kept for the owner */}
-        {/* <ProgressShareOffers /> */}
         {crossword === undefined ? null : crossword.kind === 'crossing' ? (
           <CrosswordDayCard
             testID="daily-crossword"
