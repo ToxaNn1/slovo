@@ -672,7 +672,10 @@ describe('Collections', () => {
       time.advance(MINUTE);
       await app.collections.add(copy.id, 'c_one');
       await create(app, 'Newer', 'w_three');
-      records.set(`collectionEntries.${copy.id}.w_gone`, JSON.stringify('2026-10-11T07:00:00.000Z'));
+      records.set(
+        `collectionEntries.${copy.id}.w_gone`,
+        JSON.stringify('2026-10-11T07:00:00.000Z'),
+      );
       const before = new Map([...records].filter(([key]) => key.includes(copy.id)));
       const list = app.collections.list;
       const entries = app.collections.entries(copy.id);

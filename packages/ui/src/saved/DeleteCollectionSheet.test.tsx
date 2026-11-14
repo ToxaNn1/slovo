@@ -40,7 +40,7 @@ describe('DeleteCollectionSheet', () => {
   it('deletes on its button', async () => {
     const { onDelete, onCancel } = await renderSheet('Nature');
 
-    fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
 
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onCancel).not.toHaveBeenCalled();
@@ -49,7 +49,7 @@ describe('DeleteCollectionSheet', () => {
   it('cancels on the cancel button', async () => {
     const { onDelete, onCancel } = await renderSheet('Nature');
 
-    fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onDelete).not.toHaveBeenCalled();

@@ -466,7 +466,6 @@ export async function openCollections({
     change({ ...collection, filed });
   }
 
-
   return {
     get list() {
       return list;

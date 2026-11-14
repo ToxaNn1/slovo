@@ -19,7 +19,10 @@ const copy = {
 
 const URL = 'https://slovoapp.org/uk/c/abc123defg';
 
-async function renderSheet({ canCopy = true, url = URL }: { canCopy?: boolean; url?: string } = {}) {
+async function renderSheet({
+  canCopy = true,
+  url = URL,
+}: { canCopy?: boolean; url?: string } = {}) {
   const onCopy = jest.fn();
   const onShare = jest.fn();
   const onClose = jest.fn();
@@ -51,7 +54,7 @@ describe('CollectionShareSheet', () => {
   it('copies on its copy button', async () => {
     const { onCopy, onShare } = await renderSheet();
 
-    fireEvent.press(screen.getByRole('button', { name: 'Copy the link' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Copy the link' }));
 
     expect(onCopy).toHaveBeenCalledTimes(1);
     expect(onShare).not.toHaveBeenCalled();
@@ -60,7 +63,7 @@ describe('CollectionShareSheet', () => {
   it('opens the system Share on its second button', async () => {
     const { onCopy, onShare } = await renderSheet();
 
-    fireEvent.press(screen.getByRole('button', { name: 'Share' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Share' }));
 
     expect(onShare).toHaveBeenCalledTimes(1);
     expect(onCopy).not.toHaveBeenCalled();
@@ -76,7 +79,7 @@ describe('CollectionShareSheet', () => {
   it('closes on the cancel button', async () => {
     const { onClose } = await renderSheet();
 
-    fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
