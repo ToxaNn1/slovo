@@ -52,6 +52,7 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   profileGameBest: ['profile', 'game'],
   dailyGoal: ['xpLog'],
   seenWordXp: ['xpLog', 'dailyGoal'],
+  goalReachedCard: ['xpLog', 'dailyGoal'],
   progressShareCards: ['shareCards', 'xpLog'],
   dailyCrosswordShare: ['shareCards', 'dailyCrossword'],
   tracedCrossword: ['dailyCrossword'],

@@ -8623,6 +8623,14 @@
                           ],
                           "type": "string"
                         },
+                        "goalReachedCard": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "questionnaire": {
                           "enum": [
                             "on",
@@ -9142,6 +9150,7 @@
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
+                        "goalReachedCard",
                         "questionnaire",
                         "badges",
                         "levelLadder",
@@ -10390,6 +10399,14 @@
                           ],
                           "type": "string"
                         },
+                        "goalReachedCard": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "questionnaire": {
                           "enum": [
                             "on",
@@ -10909,6 +10926,7 @@
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
+                        "goalReachedCard",
                         "questionnaire",
                         "badges",
                         "levelLadder",
@@ -12088,6 +12106,14 @@
                           ],
                           "type": "string"
                         },
+                        "goalReachedCard": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "questionnaire": {
                           "enum": [
                             "on",
@@ -12607,6 +12633,7 @@
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
+                        "goalReachedCard",
                         "questionnaire",
                         "badges",
                         "levelLadder",

@@ -47,6 +47,28 @@ export const FeedNoticesStringsSchema = z.strictObject({
     /** Hides the card until tomorrow. */
     keepGoing: TextSchema,
   }),
+  /** «Ціль дня виконано!», once the reader meets the day's Daily Goal (ADR 0128). */
+  goalReached: z.strictObject({
+    /** Over the card, beside the plate. */
+    label: TextSchema,
+    /** The slanted plate: the Words Seen of the goal, «{count} / {count} слів». */
+    plate: pluralOf(),
+    title: TextSchema,
+    message: TextSchema,
+    /** Over the Words Seen today. */
+    collected: TextSchema,
+    /** The plate after the first two Words of a goal over three: «+ ще {count} слів». */
+    more: pluralOf(),
+    /** Under the Streak's number: «дні поспіль», in the form the number takes. */
+    streak: z.strictObject({
+      one: TextSchema.optional(),
+      few: TextSchema.optional(),
+      many: TextSchema.optional(),
+      other: TextSchema,
+    }),
+    /** Turns to the next card. */
+    next: TextSchema,
+  }),
   /** The pre-permission explainer, after the first met Daily Goal and by day 3; «Так» asks the device (ADR 0067). */
   notificationExplainer: z.strictObject({
     title: TextSchema,
