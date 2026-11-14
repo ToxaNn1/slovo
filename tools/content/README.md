@@ -65,7 +65,7 @@ It prints one line per Entry, `<outcome>\t<id>\t<file>[\t<detail>]`, then the co
 ## Import the Edition folder: `import --edition`
 
 ```sh
-pnpm content import --edition uk [--override]
+pnpm content import --edition uk [--snapshot <file>] [--override]
 ```
 
-Imports the Edition folder into the backend's Postgres through the backend's own command, which reads `DATABASE_URL` and `EDITIONS_DIR`.
+Imports the Edition folder into the backend's Postgres through the backend's own command, which reads `DATABASE_URL` and `EDITIONS_DIR`. With `--snapshot <file>` it imports a content snapshot saved to a file instead, through the same content rules: CI, Maestro and `pnpm dev` seed an empty database from `editions/uk/seed-snapshot.json`.

@@ -10,7 +10,7 @@
  *   pnpm content counts --edition <id>
  *   pnpm content check <kind> <array.json | drafts folder> --edition <id>
  *   pnpm content verify <files, ids, folders or drafts> | --changed <ref> --edition <id> [--book <file>]
- *   pnpm content import --edition <id> [--override]   (the Edition folder into the backend's Postgres)
+ *   pnpm content import --edition <id> [--snapshot <file>] [--override]   (the Edition folder, or a saved snapshot, into the backend's Postgres)
  *
  * `add`, `edit`, `retire` and `flag` open one batch per run and print the
  * API's answer for each record (./writes.ts). `have` and `counts` print the
@@ -56,7 +56,7 @@ const USAGE = [
   '       pnpm content counts --edition <id>',
   `       pnpm content check ${KINDS} <array.json | drafts folder> --edition <id>`,
   '       pnpm content verify <files, ids, folder or drafts folder> | --changed <ref> --edition <id> [--book <text file>] [--cache <dir>]',
-  '       pnpm content import --edition <id> [--override]',
+  '       pnpm content import --edition <id> [--snapshot <file>] [--override]',
 ].join('\n');
 
 const terminal: Io = {
@@ -69,15 +69,20 @@ const terminal: Io = {
 };
 
 /**
- * Imports the Edition folder into the content tables through the backend's
- * own command, which reads DATABASE_URL and EDITIONS_DIR (ADR 0090): the
- * import is the backend's, the CLI only names it.
+ * Imports the Edition folder, or a content snapshot saved to a file, into the
+ * content tables through the backend's own command, which reads DATABASE_URL
+ * and EDITIONS_DIR (ADR 0090): the import is the backend's, the CLI only names it.
  */
-function importIntoDatabase(editionId: string, override: boolean): number {
+function importIntoDatabase(
+  editionId: string,
+  { override, snapshot }: { override: boolean; snapshot: string | undefined },
+): number {
   const args = ['--silent', '--filter', '@slovo/backend', 'import-content', '--edition', editionId];
-  const { status } = spawnSync('pnpm', override ? [...args, '--override'] : args, {
-    stdio: 'inherit',
-  });
+  // The backend's command runs in its package: name the file from where pnpm ran.
+  const cwd = process.env['INIT_CWD'] ?? process.cwd();
+  if (snapshot !== undefined) args.push('--snapshot', resolve(cwd, snapshot));
+  if (override) args.push('--override');
+  const { status } = spawnSync('pnpm', args, { stdio: 'inherit' });
   return status ?? 1;
 }
 
@@ -92,6 +97,7 @@ async function main(): Promise<number> {
       book: { type: 'string' },
       cache: { type: 'string' },
       override: { type: 'boolean' },
+      snapshot: { type: 'string' },
     },
   });
   const [command, ...rest] = positionals;
@@ -101,7 +107,10 @@ async function main(): Promise<number> {
     return 2;
   }
   if (command === 'import' && rest.length === 0) {
-    return importIntoDatabase(editionId, values.override === true);
+    return importIntoDatabase(editionId, {
+      override: values.override === true,
+      snapshot: values.snapshot,
+    });
   }
   if (command === 'verify' && rest.length > 0 !== (values.changed !== undefined)) {
     const edition = openedEdition(editionId);

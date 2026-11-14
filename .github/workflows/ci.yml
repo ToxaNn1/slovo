@@ -229,13 +229,13 @@ jobs:
             git show "FETCH_HEAD:$promised" > "$RUNNER_TEMP/promised.json"
             pnpm describe:api "$RUNNER_TEMP/promised.json"
           fi
-      # The Edition folder's content, imported into an empty database, served
+      # The committed seed snapshot, imported into an empty database, served
       # by the backend. No email is sent: without ZEPTOMAIL_TOKEN they would go to Mailpit.
-      - name: Import the Ukrainian content and start the backend
+      - name: Import the Ukrainian seed snapshot and start the backend
         shell: bash
         run: |
           pnpm --filter @slovo/backend db:migrate
-          pnpm --silent content import --edition uk
+          pnpm --silent content import --edition uk --snapshot editions/uk/seed-snapshot.json
           AUTH_SECRET="$(openssl rand -base64 32)" \
             nohup pnpm --filter @slovo/backend start > "$RUNNER_TEMP/backend.log" 2>&1 &
           for _ in $(seq 60); do curl -fs "http://localhost:$PORT/health" && exit 0; sleep 1; done
