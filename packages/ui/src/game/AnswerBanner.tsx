@@ -3,7 +3,7 @@
 
 import type { CurrentGame } from '@slovo/core';
 import { type ReactNode, useEffect, useState } from 'react';
-import { AccessibilityInfo, Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, Platform, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import Animated, {
   ReduceMotion,
   useAnimatedStyle,
@@ -58,7 +58,7 @@ export function AnswerBanner({
     answered.kind === 'right'
       ? answered.xp === undefined
         ? undefined
-        : fill(texts.xp, { count: answered.xp })
+        : fill(texts.xp, { count: String(answered.xp) })
       : fill(texts.answer, { answer: answered.answer });
   const announcement = line === undefined ? title : `${title} ${line}`;
 
