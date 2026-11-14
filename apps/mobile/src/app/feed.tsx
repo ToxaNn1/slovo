@@ -1,5 +1,6 @@
 import {
   EnoughForTodayCard,
+  GoalReachedCard,
   NotificationAskCard,
   LevelMilestoneCard,
   SaveProgressCard,
@@ -356,6 +357,8 @@ function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterd
   if (card.notice === 'levelMilestone')
     return <LevelMilestoneCard level={card.level} name={card.name} />;
   if (card.notice === 'enoughForToday') return <EnoughForTodayCard />;
+  if (card.notice === 'goalReached')
+    return <GoalReachedCard goal={card.goal} words={card.words} streak={streak} />;
   if (card.notice === 'saveProgress')
     return (
       <SaveProgressCard
