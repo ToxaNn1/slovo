@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import { loadEdition, type AnalyticsPort, type Edition, type FeatureSwitch } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
-import { fireEvent, screen, waitFor } from 'expo-router/testing-library';
+import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import PrivacyScreen from '../app/settings/privacy';
@@ -123,6 +123,36 @@ describe('Settings › «Конфіденційність»', () => {
       edition: edition.id,
       reader: { name: null },
     });
+  });
+
+  it('hands one file to the share window when the export is tapped again while its sheet is up', async () => {
+    const files: SharedFile[] = [];
+    let closed = () => {};
+    const sheet = new Promise<'shared'>((resolve) => {
+      closed = () => {
+        resolve('shared');
+      };
+    });
+    // The share sheet stays up until closed; a second sheet would be refused.
+    const share: ShareFile = (file) => {
+      files.push(file);
+      return files.length === 1 ? sheet : Promise.reject(new Error('A sheet is already up'));
+    };
+    await renderPrivacy({ shareFile: share });
+
+    const row = () => screen.getByRole('button', { name: 'Експортувати мої дані' });
+    await fireEvent.press(row());
+    await waitFor(() => {
+      expect(files).toHaveLength(1);
+    });
+    await fireEvent.press(row());
+    await act(async () => {
+      closed();
+      await sheet;
+    });
+
+    expect(files).toHaveLength(1);
+    expect(screen.queryByText('Не вдалося зібрати файл. Спробуй ще раз.')).not.toBeOnTheScreen();
   });
 
   it('says so when the file could not be made', async () => {

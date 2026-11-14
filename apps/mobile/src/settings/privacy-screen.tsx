@@ -8,7 +8,7 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -57,8 +57,12 @@ export function PrivacyScreen() {
   const { current, update } = useSettings();
   const composition = useComposition();
   const [failed, setFailed] = useState(false);
+  // One export at a time: a second share sheet while one is up is refused.
+  const exporting = useRef(false);
 
   function exportData(share: ShareFile) {
+    if (exporting.current) return;
+    exporting.current = true;
     setFailed(false);
     composition
       .dataExport()
@@ -71,6 +75,9 @@ export function PrivacyScreen() {
       )
       .catch(() => {
         setFailed(true);
+      })
+      .finally(() => {
+        exporting.current = false;
       });
   }
 
