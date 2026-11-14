@@ -14,6 +14,9 @@ export const roundPromptLength: LengthSteps = {
   longer: 18 / 24,
 };
 
+/** The Mascot's width beside a Round's question on the ground (board «slogo game last», D5). */
+export const roundMascotWidth = 88;
+
 /**
  * A Game Mode's row on the mode screen, from the design: its tile's side,
  * corner and edge, the gap to its texts and the row's padding; the red mark

@@ -31,7 +31,7 @@ import {
   useWidgetHintShown,
 } from '@/game/game';
 import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
-import { MascotIn } from '@/mascot/mascot';
+import { MascotAs, MascotIn } from '@/mascot/mascot';
 import { useXpLogState } from '@/progress/xp-log';
 import { useShown } from '@/shown-in-effect';
 
@@ -45,6 +45,8 @@ const { game: strings, widget: widgetStrings, settings: settingsStrings } = edit
  * sheet over it, until the reader closes it. A timed Game's timer ticks, and stops while the app is in the
  * background. The Game stays in the Core composition, so another tab and back,
  * or an Entry the Game Review opens and back, finds it where it was.
+ * A Round's question stands on the ground and the Mascot beside it while
+ * their switches are on (ADR 0139).
  */
 export default function GameScreen() {
   // Turned off remotely while the reader is on it: its tab goes, and so does the screen.
@@ -57,7 +59,14 @@ function Game() {
   const actions = useGameActions();
   const router = useRouter();
   const openScreen = useOpenScreen();
-  const { gameReview, finishPoster, survivalStreak, answerCard } = useShown();
+  const {
+    gameReview,
+    finishPoster,
+    survivalStreak,
+    answerCard,
+    gameQuestionOnGround,
+    gameRoundMascot,
+  } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
   /** Whether the reader closed the widget hint, which is offered once ever. */
@@ -143,6 +152,12 @@ function Game() {
           onLeave={actions.leave}
           onOpenLetter={actions.openLetter}
           feedback={answerCard ? 'card' : 'sheet'}
+          onGround={gameQuestionOnGround}
+          mascot={
+            gameRoundMascot
+              ? ({ state, width }) => <MascotAs state={state} width={width} />
+              : undefined
+          }
         />
       )}
     </SafeAreaView>

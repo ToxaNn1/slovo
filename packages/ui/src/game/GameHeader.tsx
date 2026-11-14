@@ -56,6 +56,9 @@ const LIFE_FADE = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Neve
  * pass towards the limit, or with no limit the Rounds passed, and in a timed
  * Game the timer under them. The flags alone show the Lives, which VoiceOver
  * reads as «Життів: 4 з 5». A mode without Lives shows no flags.
+ * On the ground (ADR 0139) the title is the mode's name alone and
+ * «Життів: 4 з 5» stands visible under the bar, counting down at once while
+ * the lost flag pops; a mode without Lives shows neither.
  */
 export function GameHeader({
   title,
@@ -68,6 +71,7 @@ export function GameHeader({
   streak,
   time,
   onExit,
+  onGround = false,
 }: {
   title: string;
   /** Which Round of the Game is in play, from 1. */
@@ -86,6 +90,8 @@ export function GameHeader({
   /** The play time left of a timed Game and its whole time, in milliseconds; none in another Game. */
   time: { left: number; limit: number } | undefined;
   onExit: () => void;
+  /** Whether the Round's question stands on the ground: the name alone and the visible Lives line. */
+  onGround?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -93,7 +99,7 @@ export function GameHeader({
   const words = strings.game.round;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
   const heading =
-    roundLimit === undefined
+    roundLimit === undefined || onGround
       ? title
       : fill(words.header, { mode: title, n: String(number), total: String(roundLimit) });
   const filled =
@@ -101,6 +107,7 @@ export function GameHeader({
       ? 0
       : Math.floor((Math.min(roundsPassed, roundLimit) * roundProgress.segments) / roundLimit);
   const hasLives = lives !== undefined && livesAtStart !== undefined;
+  const livesText = fill(words.lives, { count: String(lives), total: String(livesAtStart) });
   return (
     <View style={styles.header}>
       <View style={styles.headerRow}>
@@ -120,11 +127,13 @@ export function GameHeader({
         {hasLives && (
           <View
             testID="game-lives"
-            accessible
-            accessibilityLabel={fill(words.lives, {
-              count: String(lives),
-              total: String(livesAtStart),
-            })}
+            // On the ground the visible line reads the Lives; the flags are only drawn.
+            {...(onGround
+              ? {
+                  accessibilityElementsHidden: true,
+                  importantForAccessibility: 'no-hide-descendants',
+                }
+              : { accessible: true, accessibilityLabel: livesText })}
             {...voice}
             style={styles.lives}
           >
@@ -172,6 +181,16 @@ export function GameHeader({
             />
           ))}
         </View>
+      )}
+      {onGround && hasLives && (
+        <Text
+          testID="game-lives-line"
+          maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+          {...voice}
+          style={[typeStyle('roundLives', tokens), { color: colors.accentText }]}
+        >
+          {livesText}
+        </Text>
       )}
       {time !== undefined && (
         <GameTimer

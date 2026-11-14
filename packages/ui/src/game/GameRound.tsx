@@ -7,20 +7,22 @@ import type {
   RoundContent,
   Streak,
 } from '@slovo/core';
-import { useEffect, useRef, useState } from 'react';
+import type { MascotState } from '@slovo/contracts';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { quickQuestionCard, roundLayout, space, typeStyle } from '../tokens';
+import { quickQuestionCard, roundLayout, roundMascotWidth, space, typeStyle } from '../tokens';
 import { AnswerSheet, cardLine } from './AnswerSheet';
 import { ChipsRound } from './ChipsRound';
 import { GameHeader } from './GameHeader';
 import { PairsRound } from './PairsRound';
 import { AnswerOptions, PickRound } from './PickRound';
 import { RoundCard } from './RoundCard';
+import { RoundLookContext } from './round-look';
 import { askedAs, cardOf, RoundHead, type CardText } from './RoundPrompt';
 import { TypedRound } from './TypedRound';
 import { useGameHaptics } from './useGameHaptics';
@@ -40,6 +42,10 @@ import { VowelRound } from './VowelRound';
  * own question, each under its kind's label rather than the mode's.
  * The ✕ asks first, with the SLOVO confirmation dialog, as «Очистити Історію?»
  * does; «Грати далі» leaves the Round as it was.
+ * On the ground (ADR 0139) the question stands on the background with no
+ * card, its label without the Round's number and none in the modes the board
+ * heads in ink, the options at the bottom; the Mascot, when given, stands
+ * beside the question, waiting, glad, wincing or sad at the last Life lost.
  */
 export function GameRound({
   game,
@@ -52,6 +58,8 @@ export function GameRound({
   timeLeft,
   streak,
   feedback = 'sheet',
+  onGround = false,
+  mascot,
 }: {
   game: CurrentGame;
   /** The streak of «Виживання» and its record, which the header shows in place of the Rounds passed; none in another mode or with the streak switched off. */
@@ -70,6 +78,10 @@ export function GameRound({
   timeLeft?: number | undefined;
   /** What the sheet after an answer shows: the answer with its Example, or the answer card (`gameAnswerCard`, spec #1674). */
   feedback?: 'sheet' | 'card';
+  /** Whether the question stands on the background (`gameQuestionOnGround`); on its card, as in spec #1674, if not. */
+  onGround?: boolean;
+  /** Draws the Mascot beside the question in a state at a width (`gameRoundMascot`); no Mascot if none. */
+  mascot?: ((look: { state: MascotState; width: number }) => ReactNode) | undefined;
 }) {
   const { strings } = useEdition();
   const { round } = game;
@@ -95,6 +107,12 @@ export function GameRound({
   const exit = strings.game.exit;
   const asked = askedAs(round, label, strings.game.round);
   const card = cardOf(game.modeId, round, asked.prompt, strings.game.round.prompts);
+  const look = {
+    onGround,
+    textFace: TEXT_FACED.has(game.modeId),
+    mascot: mascot?.({ state: mascotState(answer, game.lives), width: roundMascotWidth }),
+  };
+  const labelShown = !onGround || !INK_HEADED.has(game.modeId);
 
   return (
     <View testID="game-round" style={styles.screen}>
@@ -107,6 +125,7 @@ export function GameRound({
         livesAtStart={game.livesAtStart}
         lifeLostAfter={round.lifeLostAfter}
         streak={streak}
+        onGround={onGround}
         time={
           game.time === undefined || game.timeLimit === undefined
             ? undefined
@@ -117,22 +136,30 @@ export function GameRound({
         }}
       />
       <ScrollView
-        contentContainerStyle={[styles.round, round.form !== 'pick' && styles.roundWithoutOptions]}
+        contentContainerStyle={[
+          styles.round,
+          round.form !== 'pick' && styles.roundWithoutOptions,
+          onGround && styles.roundOnGround,
+        ]}
       >
-        <RoundHead
-          label={round.form === 'pairs' ? strings.game.round.pairsHint : asked.label}
-          number={round.number}
-          roundLimit={game.roundLimit}
-          heading={round.form === 'vowel' || round.form === 'pairs'}
-          testID={round.form === 'pairs' ? 'game-prompt' : undefined}
-        />
-        <FormRound
-          round={round}
-          label={asked.label}
-          card={card}
-          onAnswer={onAnswer}
-          onOpenLetter={onOpenLetter}
-        />
+        {labelShown && (
+          <RoundHead
+            label={round.form === 'pairs' ? strings.game.round.pairsHint : asked.label}
+            number={round.number}
+            roundLimit={onGround ? undefined : game.roundLimit}
+            heading={round.form === 'vowel' || round.form === 'pairs'}
+            testID={round.form === 'pairs' ? 'game-prompt' : undefined}
+          />
+        )}
+        <RoundLookContext.Provider value={look}>
+          <FormRound
+            round={round}
+            label={asked.label}
+            card={card}
+            onAnswer={onAnswer}
+            onOpenLetter={onOpenLetter}
+          />
+        </RoundLookContext.Provider>
       </ScrollView>
       <AnswerSheet
         answer={answer}
@@ -157,6 +184,31 @@ export function GameRound({
       />
     </View>
   );
+}
+
+/**
+ * The Game Modes the board heads with an ink heading of their own, which
+ * draw no red label on the ground: «Впиши слово», «Звідки слово», «Склади
+ * вислів» and «Виживання».
+ */
+const INK_HEADED: ReadonlySet<string> = new Set(['type-word', 'origin', 'build-idiom', 'survival']);
+
+/**
+ * The Game Modes whose question the board sets in the text face on the
+ * ground whatever its length: the Definition in «За літерами», the sentence
+ * in «Англіцизми», the meaning in «Склади вислів».
+ */
+const TEXT_FACED: ReadonlySet<string> = new Set(['by-letters', 'anglicism', 'build-idiom']);
+
+/**
+ * The Mascot's state beside the question (ADR 0070): waiting while the
+ * reader thinks, glad at a right answer, wincing at a wrong one, sad at the
+ * wrong one that took the last Life.
+ */
+function mascotState(answer: RoundAnswer | undefined, lives: number | undefined): MascotState {
+  if (answer === undefined) return 'waits';
+  if (answer.right) return 'happy';
+  return lives === 0 ? 'sad' : 'cringes';
 }
 
 /**
@@ -324,4 +376,6 @@ const styles = StyleSheet.create({
   },
   // A Round of a form without options keeps one gap more under its content than a pick Round.
   roundWithoutOptions: { paddingBottom: space[6] + space[5] },
+  // On the ground the Round fills the screen, so its options sit at the bottom.
+  roundOnGround: { flexGrow: 1 },
 });
