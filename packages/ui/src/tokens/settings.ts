@@ -60,6 +60,9 @@ export const widgetDrawing = {
   widgetRadius: 22,
   /** The medium widget's width over its height, from the design's 364 × 170. */
   mediumAspectRatio: 364 / 170,
+  /** The lock-screen widget's width over its height and its corner radius, from the board's 160 × 64 and 18. */
+  lockScreenAspectRatio: 160 / 64,
+  lockScreenRadius: 18,
 } as const;
 
 /**
