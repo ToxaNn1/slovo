@@ -125,7 +125,22 @@ export default function SettingsScreen() {
                 }}
               />
             )}
-            {/* The S…XL row while the three-step text size is off; its own screen comes with it (ADR 0134). */}
+            {/* The S…XL row while the three-step text size is off, the row of its own screen while it is on (ADR 0134). */}
+            {shown.textSizeSteps && (
+              <SettingsRow
+                testID="settings-row-text-size"
+                icon="square"
+                label={strings.rows.textSize}
+                subtitle={subtitles.textSize}
+                end={{
+                  kind: 'chevron',
+                  value: strings.textSize.sizes[current.textSize],
+                  onPress: () => {
+                    openScreen('/settings/text-size');
+                  },
+                }}
+              />
+            )}
             {!shown.textSizeSteps && (
               <ChoiceRow
                 icon="square"

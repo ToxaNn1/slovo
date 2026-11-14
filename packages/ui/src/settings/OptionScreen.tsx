@@ -3,7 +3,9 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BackHeader } from '../primitives/BackHeader';
 import { ChoiceMark } from '../primitives/ChoiceMark';
+import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useEdition } from '../providers/EditionProvider';
+import { useLemmaSize, useWordTextSizes } from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { minTouchTarget, optionScreenDrawing as drawing, space, typeStyle } from '../tokens';
 import { SettingsGroup } from './SettingsRows';
@@ -93,6 +95,34 @@ export function OptionSampleNumber({ value }: { value: string }) {
   );
 }
 
+/**
+ * The large sample of an option screen drawn as a Word, its Lemma over its
+ * Definition at the Word text sizes in effect, such as «Заграва» on
+ * «Шрифт і розмір»: the caller sets the size it shows with a `FontSizeProvider`.
+ */
+export function OptionSampleWord({ lemma, definition }: { lemma: string; definition: string }) {
+  const tokens = useTokens();
+  const lemmaSize = useLemmaSize();
+  const { definition: definitionSize } = useWordTextSizes();
+  return (
+    <View style={styles.word}>
+      <WholeWordsText
+        testID="option-sample-lemma"
+        text={lemma}
+        size={lemmaSize}
+        typeRole="heroWord"
+        style={[typeStyle('heroWord', tokens), { color: tokens.colors.ink }]}
+      />
+      <Text
+        testID="option-sample-definition"
+        style={[typeStyle('definition', tokens), definitionSize, { color: tokens.colors.ink }]}
+      >
+        {definition}
+      </Text>
+    </View>
+  );
+}
+
 /** An option's row: its label in the middle and its mark at the end, read by VoiceOver as a radio. */
 function Option({
   label,
@@ -136,6 +166,8 @@ const styles = StyleSheet.create({
     padding: drawing.samplePadding,
   },
   explanation: { flex: 1, minWidth: drawing.explanationMinWidth },
+  // A Word sample takes the card's whole width, so the explaining line drops under it.
+  word: { width: '100%', gap: space[2] },
   option: {
     minHeight: minTouchTarget,
     flexDirection: 'row',

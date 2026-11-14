@@ -11,9 +11,11 @@ import { Stack } from 'expo-router';
 import { fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StyleSheet } from 'react-native';
 
 import SettingsScreen from '../app/settings';
 import DailyGoalScreen from '../app/settings/daily-goal';
+import TextSizeScreen from '../app/settings/text-size';
 import NarratorVoiceScreen from '../app/settings/narrator-voice';
 import PrivacyScreen from '../app/settings/privacy';
 import WidgetGuideScreen from '../app/settings/widgets';
@@ -150,6 +152,7 @@ async function renderSettings(
       'settings/widgets': WidgetGuideScreen,
       'settings/narrator-voice': NarratorVoiceScreen,
       'settings/daily-goal': DailyGoalScreen,
+      'settings/text-size': TextSizeScreen,
       'settings/privacy': PrivacyScreen,
     },
     { initialUrl: '/settings' },
@@ -263,11 +266,67 @@ describe('Settings › the text size (ADR 0134)', () => {
     expect(await settings.read()).toMatchObject({ fontSize: 'XL', textSize: 'system' });
   });
 
+  it('keeps no screen of its own while the three-step text size is off', async () => {
+    await renderSettings({ textSizeSteps: false });
+
+    expect(screen.queryByTestId('settings-row-text-size')).not.toBeOnTheScreen();
+  });
+
   it('has no S…XL row while the three-step text size is on', async () => {
     await renderSettings({ textSizeSteps: true });
 
     expect(screen.getByTestId('settings-theme-light')).toBeOnTheScreen();
     expect(screen.queryByTestId('settings-font-size-M')).toBeNull();
+  });
+
+  it('opens «Шрифт і розмір» from its row: the sample «Заграва» and the three sizes, «Як у системі» chosen', async () => {
+    await renderSettings({ textSizeSteps: true });
+    await fireEvent.press(screen.getByRole('button', { name: 'Шрифт і розмір, Як у системі' }));
+
+    const sizeScreen = await screen.findByTestId('text-size-screen');
+    expect(within(sizeScreen).getByRole('header', { name: 'Шрифт і розмір' })).toBeOnTheScreen();
+    const sample = within(sizeScreen).getByTestId('text-size-sample');
+    expect(within(sample).getByTestId('option-sample-lemma')).toHaveTextContent('Загра́ва');
+    expect(within(sample).getByTestId('option-sample-definition')).toHaveTextContent(
+      'Червоний відсвіт на небі від вогню чи сонця.',
+    );
+    expect(within(sample).getByText('Як у налаштуваннях телефона.')).toBeOnTheScreen();
+    const options = ['Як у системі', 'Більший', 'Найбільший'].map((name) =>
+      within(sizeScreen).getByRole('radio', { name }),
+    );
+    expect(within(sizeScreen).getAllByRole('radio')).toEqual(options);
+    expect(options[0]).toBeSelected();
+  });
+
+  it('keeps the size chosen on the screen, draws the sample at it and names it on the row', async () => {
+    const settings = await renderSettings({ textSizeSteps: true });
+    await fireEvent.press(screen.getByTestId('settings-row-text-size'));
+    const definitionSize = (): number => {
+      const style: unknown = StyleSheet.flatten(
+        screen.getByTestId('option-sample-definition').props['style'],
+      );
+      return typeof style === 'object' &&
+        style !== null &&
+        'fontSize' in style &&
+        typeof style.fontSize === 'number'
+        ? style.fontSize
+        : Number.NaN;
+    };
+    const systemSize = definitionSize();
+
+    await fireEvent.press(await screen.findByRole('radio', { name: 'Найбільший' }));
+
+    expect(screen.getByRole('radio', { name: 'Найбільший' })).toBeSelected();
+    expect(definitionSize()).toBeGreaterThan(systemSize);
+    expect(
+      screen.getByText('Найбільший текст. Довге ховається під «Детальніше».'),
+    ).toBeOnTheScreen();
+    expect(await settings.read()).toMatchObject({ textSize: 'largest' });
+    await fireEvent.press(screen.getByTestId('text-size-back'));
+
+    expect(
+      await screen.findByRole('button', { name: 'Шрифт і розмір, Найбільший' }),
+    ).toBeOnTheScreen();
   });
 });
 
