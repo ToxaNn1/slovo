@@ -57,7 +57,7 @@ function Game() {
   const actions = useGameActions();
   const router = useRouter();
   const openScreen = useOpenScreen();
-  const { gameReview, finishPoster, survivalStreak, answerCard } = useShown();
+  const { gameReview, finishPoster, survivalStreak, answerCard, gameAnswerBanner } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
   /** Whether the reader closed the widget hint, which is offered once ever. */
@@ -143,6 +143,8 @@ function Game() {
           onLeave={actions.leave}
           onOpenLetter={actions.openLetter}
           feedback={answerCard ? 'card' : 'sheet'}
+          banner={gameAnswerBanner}
+          onWaitFor={actions.waitFor}
         />
       )}
     </SafeAreaView>

@@ -15,6 +15,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { quickQuestionCard, roundLayout, space, typeStyle } from '../tokens';
+import { AnswerBanner } from './AnswerBanner';
 import { AnswerSheet, cardLine } from './AnswerSheet';
 import { ChipsRound } from './ChipsRound';
 import { GameHeader } from './GameHeader';
@@ -28,7 +29,9 @@ import { VowelRound } from './VowelRound';
 
 /**
  * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
- * prompt under its label, the four options and, once answered, the sheet.
+ * prompt under its label, the four options and, once answered, the sheet,
+ * or with the answer banner on (`gameAnswerBanner`) the banner, but after a
+ * pairs grid, which keeps the sheet.
  * It plays the pick form, the vowel form, whose Word stands in the card
  * with each vowel a button, and the pairs form, whose grid stands under the
  * mode's label in place of the card and the options, the chips form, whose
@@ -52,6 +55,8 @@ export function GameRound({
   timeLeft,
   streak,
   feedback = 'sheet',
+  banner = false,
+  onWaitFor = noWait,
 }: {
   game: CurrentGame;
   /** The streak of «Виживання» and its record, which the header shows in place of the Rounds passed; none in another mode or with the streak switched off. */
@@ -70,6 +75,10 @@ export function GameRound({
   timeLeft?: number | undefined;
   /** What the sheet after an answer shows: the answer with its Example, or the answer card (`gameAnswerCard`, spec #1674). */
   feedback?: 'sheet' | 'card';
+  /** Whether the answer banner shows after an answer in place of the sheet, and the Game moves on by itself (`gameAnswerBanner`). */
+  banner?: boolean;
+  /** Hands the Game what the banner waits for besides its delay: VoiceOver reading it. */
+  onWaitFor?: (done: Promise<unknown>) => void;
 }) {
   const { strings } = useEdition();
   const { round } = game;
@@ -134,12 +143,25 @@ export function GameRound({
           onOpenLetter={onOpenLetter}
         />
       </ScrollView>
-      <AnswerSheet
-        answer={answer}
-        line={answer === undefined ? undefined : cardLine(answer.sheet, game.played.at(-1)?.entry)}
-        feedback={feedback}
-        onNext={onNext}
-      />
+      {banner && round.form !== 'pairs' ? (
+        game.status === 'answered' ? (
+          <AnswerBanner
+            key={round.number}
+            answered={game.answered}
+            praise={game.played.filter(({ right }) => right).length - 1}
+            onWaitFor={onWaitFor}
+          />
+        ) : null
+      ) : (
+        <AnswerSheet
+          answer={answer}
+          line={
+            answer === undefined ? undefined : cardLine(answer.sheet, game.played.at(-1)?.entry)
+          }
+          feedback={feedback}
+          onNext={onNext}
+        />
+      )}
       <ConfirmationDialog
         visible={asking}
         title={exit.title}
@@ -157,6 +179,11 @@ export function GameRound({
       />
     </View>
   );
+}
+
+/** Waits for nothing besides the banner's delay. */
+function noWait(): void {
+  // Nothing to wait for.
 }
 
 /**
