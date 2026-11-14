@@ -1,4 +1,4 @@
-STATUS: WAITING owner phone test (Metro 8082). Review fixes merged (4aff78f01), handbook + PR #1860 body done, CI green. No cloud session running. #1860 on merge-hold until the phone test.
+STATUS: FINISHED — PR #1860 merged to main 44e4f260f (14.11, owner: «зливай без тесту»). Board 11 decisions D1–D49 all recorded in ~/Downloads/WORD/plans/board11-owner-decisions.md.
 # Wave #1850 (board 09 Saved/Search) — coordinator #10 handoff (rewrite whole, never append)
 Owner ran /mattpocock-skills:implement-spec on #1850, «роби максимум в хмарі», wants SPEED. Follow that SKILL.md + docs/agents/waves.md «Steps».
 Grants: ~/.slovo-coord/grant-saved-1114.md (commit, push, PR, auto-merge squash to main on green, this branch only, after End steps). Force-push USED UP. No branch deletion (ask).
