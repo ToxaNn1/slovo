@@ -34,7 +34,7 @@ import { renderStress } from '../entries/stress';
 import { SEEN_DWELL_MS } from '../feed/feed';
 import { type GameMode } from './game-mode';
 import { type UserStateChanges } from '../ports';
-import { GAME_LIVES, streakOf } from './game';
+import { streakOf } from './game';
 import { createMemoryContentPort } from '../testing';
 import {
   fakeClock,
@@ -47,6 +47,9 @@ import {
 } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
+
+/** The Lives a Game starts with here, where `gameThreeLives` is off like every switch not named. */
+const LIVES_SWITCHED_OFF = 5;
 
 function word(
   id: string,
@@ -438,8 +441,8 @@ describe('a Round of «Вгадай слово»', () => {
       modeId: 'guess-word',
       roundsPassed: 0,
       roundLimit: GAME_ROUNDS,
-      lives: GAME_LIVES,
-      livesAtStart: GAME_LIVES,
+      lives: LIVES_SWITCHED_OFF,
+      livesAtStart: LIVES_SWITCHED_OFF,
       status: 'playing',
     });
     expect(game.round).toMatchObject({ number: 1, answer: undefined });
@@ -1370,7 +1373,7 @@ describe('the rules of a Game', () => {
     expect(writes).toEqual([]);
     expect(current(app)).toMatchObject({
       roundsPassed: 0,
-      lives: GAME_LIVES,
+      lives: LIVES_SWITCHED_OFF,
       status: 'playing',
       round: { number: 1, answer: undefined },
     });
@@ -2172,7 +2175,11 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
       await right(app);
     }
 
-    expect(current(app)).toMatchObject({ roundsPassed: 10, lives: GAME_LIVES, status: 'won' });
+    expect(current(app)).toMatchObject({
+      roundsPassed: 10,
+      lives: LIVES_SWITCHED_OFF,
+      status: 'won',
+    });
     expect(new Set(prompts).size).toBe(10);
   });
 
@@ -2790,7 +2797,7 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
       expect(round).toMatchObject({ number, form: 'typed', blanks: undefined });
       expect(round.highlight).toBeUndefined();
       await app.game.answer({ form: 'typed', text: renderStress(asked).toUpperCase() });
-      expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES });
+      expect(current(app)).toMatchObject({ status: 'answered', lives: LIVES_SWITCHED_OFF });
       expect(current(app).round.answer).toMatchObject({
         form: 'typed',
         right: true,
@@ -2808,7 +2815,7 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
 
     await app.game.answer({ form: 'typed', text: asked.lemma.slice(1) });
 
-    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES - 1 });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: LIVES_SWITCHED_OFF - 1 });
     expect(current(app).round.answer).toMatchObject({
       form: 'typed',
       typed: asked.lemma.slice(1),

@@ -261,7 +261,7 @@ describe('a Round of «Анаграми»', () => {
     await app.game.answer({ form: 'chips', chips: wrong });
 
     expect(current(app).round.answer).toMatchObject({ form: 'chips', chosen: wrong, right: false });
-    expect(current(app).lives).toBe(4);
+    expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(idOf(asked))).toBe('unknown');
     const tapped = [...lettersOf(asked).slice(1), ...lettersOf(asked).slice(0, 1)];
     /** The letters tapped, the characters that stay in place in their places. */

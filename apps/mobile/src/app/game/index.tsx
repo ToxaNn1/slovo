@@ -66,6 +66,7 @@ function Game() {
     answerCard,
     gameQuestionOnGround,
     gameRoundMascot,
+    timedTwentySeconds,
   } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
@@ -105,6 +106,7 @@ function Game() {
               : undefined
           }
           mascot={<MascotIn state="gameEnd" onRed />}
+          timeUpToFinish={timedTwentySeconds}
         />
       ) : result ? (
         <>

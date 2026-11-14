@@ -289,7 +289,7 @@ describe('a Round of «Наголос»', () => {
     await app.game.answer({ form: 'vowel', position: wrong });
 
     expect(current(app).round.answer).toMatchObject({ form: 'vowel', chosen: wrong, right: false });
-    expect(current(app).lives).toBe(4);
+    expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(idOf(asked.lemma))).toBe('unknown');
     expect(buildGameReview(current(app).played)[0]).toMatchObject({
       entryId: idOf(asked.lemma),
@@ -364,7 +364,7 @@ describe('a stress trap in «Наголос»', () => {
       await app.game.answer({ form: 'vowel', position: wrong });
 
       expect(current(app).round.answer).toMatchObject({ chosen: wrong, right: false });
-      expect(current(app).lives).toBe(4);
+      expect(current(app).lives).toBe(2);
       expect(app.knowledge.state.shown.get(trap.id)).toBe('unknown');
       return;
     }

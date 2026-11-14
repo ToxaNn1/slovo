@@ -237,7 +237,7 @@ describe('the grids of «Пари»', () => {
       correct: right,
       right: false,
     });
-    expect(game.lives).toBe(4);
+    expect(game.lives).toBe(2);
     const tapped = game.played[0]?.entry.id ?? '';
     expect(wordsShownAs(grid.words[0]?.shown.text ?? '').map(({ id }) => id)).toContain(tapped);
     expect(app.knowledge.state.shown.get(tapped)).toBe('unknown');

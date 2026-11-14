@@ -194,7 +194,7 @@ describe('a Round of «Англіцизми»', () => {
         expect(optionsOf(round)).toHaveLength(4);
         for (const { text } of optionsOf(round)) expect(standards.has(text)).toBe(true);
       }
-      expect(current(app)).toMatchObject({ lives: 5, status: 'won' });
+      expect(current(app)).toMatchObject({ lives: 3, status: 'won' });
     }
   });
 
@@ -206,7 +206,7 @@ describe('a Round of «Англіцизми»', () => {
 
     await app.game.answer({ form: 'pick', option: (rightOf(round) + 1) % optionsOf(round).length });
 
-    expect(current(app).lives).toBe(4);
+    expect(current(app).lives).toBe(2);
     expect(current(app).round.answer).toMatchObject({
       right: false,
       sheet: {
