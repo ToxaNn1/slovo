@@ -25,3 +25,5 @@
 - 14.11 owner: «рев'ю коду можеш зробити… ревью UI буду робити сам» = keep the code-review step; no UI verification, screenshots or simulators from the wave; the owner checks the UI himself.
 - #1832 DONE, merged into feat/1831-word-meaning; draft PR #1838. #1833 implementer (Fable, worktree) launched.
 - WAITING until 2026-11-14T14:03:18Z: #1833 implementer
+- #1833 STUCK (new switch broke admin output strictObject vs API breaking check); decision: admin output states plain object per ADR 0031 + precedent f42322e6; continuation implementer launched in the same worktree.
+- WAITING until 2026-11-14T14:14:23Z: #1833 continuation
