@@ -146,6 +146,13 @@ describe('a Quick Question answered', () => {
     expect(card.round.options[card.round.correct]).toBeDefined();
   });
 
+  it('says it came from the Game Mode whose Round it asks', async () => {
+    const { app } = await run();
+    const { card } = await firstQuestion(app);
+
+    expect(card.source).toEqual({ kind: 'game-mode', modeId: 'guess-word' });
+  });
+
   it('right earns 2 XP and confirms its Entry', async () => {
     const { app, events } = await run();
     const { card, position } = await firstQuestion(app);

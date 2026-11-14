@@ -218,7 +218,11 @@ const FeedPage = memo(function FeedPage({
             title={feedStrings.quickQuestion}
             round={card.round}
             entry={card.entry}
-            label={gameModeStrings(editionStrings.game.modes, card.modeId).roundLabel}
+            label={
+              card.source.kind === 'game-mode'
+                ? gameModeStrings(editionStrings.game.modes, card.source.modeId).roundLabel
+                : feedStrings.quickQuestion
+            }
             answered={card.answered}
             feedback={answerCard ? 'card' : 'sheet'}
             onAnswer={(option) => {
