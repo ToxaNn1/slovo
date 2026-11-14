@@ -595,8 +595,10 @@ describe('the side swipes of an Entry card (ADR 0077)', () => {
     expect(composition.knowledge.state.shown.get(word.id)).toBe('known');
     expect(screen.getByTestId('swipe-stamp')).toBeOnTheScreen();
     await fireEvent.press(screen.getByTestId('undo-toast-undo'));
-    await settle();
-    expect(composition.knowledge.state.shown.get(word.id)).toBeUndefined();
+    // The mark goes back once the card is home again.
+    await waitFor(() => {
+      expect(composition.knowledge.state.shown.get(word.id)).toBeUndefined();
+    });
   });
 
   it('mark the Word Unknown on a swipe left', async () => {
