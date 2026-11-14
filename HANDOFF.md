@@ -1,3 +1,4 @@
+STATUS: FINISHED
 # Wave #1861 (board 11 Settings) — coordinator handoff (rewrite whole, never append)
 Follow implement-spec SKILL.md + docs/agents/waves.md. Grants: ~/.slovo-coord/grant-settings-1861.md + ~/.slovo-coord/grant-settings-1861-night.md (owner asleep: commits, pushes, PR merges incl. #1879 to main after wave+review+fixer+green CI; no force-push, no branch deletion, no EAS; no idle).
 Coordinator #2 = mcp:launch:7e792e9d30bc6026beab563942447df4b640b92903e06093a936e3c3e5a9537a.
@@ -22,3 +23,4 @@ WAITING until 2026-11-14T23:59Z: #1876 UI-part implementer (subagent in safety-n
 WAITING until 2026-11-15T00:09Z: review fixer (subagent, branch fix/1861-review)
 - 23:34Z review fixes merged (Should 1,2 + Nit 1-5; Should 3 already covered by #1876), pushed; next: PR body, wait CI (draft stays, no main merge per WAVES brief)
 - 23:34Z PR #1879 body updated (questions, owner checks, handbook). WAITING until 2026-11-15T00:24Z: CI on #1879
+- 23:39Z CI on #1879 all green; draft PR complete (#1862–#1877, review fixed). Left draft: WAVES brief says NO merge to main. #1878 waits for the owner.
