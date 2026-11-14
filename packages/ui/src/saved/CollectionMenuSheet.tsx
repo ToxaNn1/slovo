@@ -1,19 +1,32 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { BottomSheet } from '../primitives/BottomSheet';
-import { Button } from '../primitives/Button';
-import { space } from '../tokens';
+import { useEdition } from '../providers/EditionProvider';
+import { useTokens } from '../providers/TokensProvider';
+import { TitledSheet } from '../primitives/TitledSheet';
+import { collectionMenu, disabledOpacity, typeStyle } from '../tokens';
+
+/** One row of the menu's group. */
+interface MenuRow {
+  readonly key: 'share' | 'rename' | 'delete';
+  readonly label: string;
+  readonly onPress: () => void;
+  readonly disabled?: boolean;
+  readonly hint?: string | undefined;
+}
 
 /**
- * The menu a Collection's «…» button opens: a bottom sheet with «rename» and
- * «delete» and the cancel row last, and «share a link» first when it is given
- * one, dimmed while it is disabled, when VoiceOver reads why after its label. A tap on a row asks for its action; the
- * cancel row, a tap on the scrim, a drag on its top and VoiceOver's escape
- * gesture ask `onCancel`. The caller turns `visible` off in all three callbacks;
- * `onDismissed` runs once the sheet has slid away.
+ * The menu a Collection's «⋯» opens (board 09): the bottom sheet with the
+ * Collection's name on the ink plate, one bordered group of rows, «share a
+ * link» first when it is given one (dimmed while it is disabled, when
+ * VoiceOver reads why after its label), «rename» and «delete» in red, and the
+ * cancel button last. A tap on a row asks for its action; the cancel button,
+ * a tap on the scrim, a drag on its top and VoiceOver's escape gesture ask
+ * `onCancel`. The caller turns `visible` off in all of them; `onDismissed`
+ * runs once the sheet has slid away.
  */
 export function CollectionMenuSheet({
   visible,
+  title,
   copy,
   share,
   onRename,
@@ -23,6 +36,8 @@ export function CollectionMenuSheet({
   testID = 'collection-menu',
 }: {
   visible: boolean;
+  /** The Collection's name, on the plate. */
+  title: string;
   copy: { rename: string; delete: string; cancel: string };
   /** The row that shares the Collection by a link, when the menu offers it. */
   share?:
@@ -40,37 +55,73 @@ export function CollectionMenuSheet({
   onDismissed?: (() => void) | undefined;
   testID?: string;
 }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
+  const rows: readonly MenuRow[] = [
+    ...(share === undefined
+      ? []
+      : [
+          {
+            key: 'share' as const,
+            label: share.label,
+            onPress: share.onPress,
+            disabled: share.disabled,
+            hint: share.disabled ? share.disabledHint : undefined,
+          },
+        ]),
+    { key: 'rename', label: copy.rename, onPress: onRename },
+    { key: 'delete', label: copy.delete, onPress: onDelete },
+  ];
   return (
-    <BottomSheet visible={visible} onClose={onCancel} onDismissed={onDismissed} testID={testID}>
-      <View style={styles.rows}>
-        {share !== undefined && (
-          <Button
-            variant="neutral"
-            label={share.label}
-            onPress={share.onPress}
-            disabled={share.disabled}
-            accessibilityHint={share.disabled ? share.disabledHint : undefined}
-            testID={`${testID}-share`}
-          />
-        )}
-        <Button
-          variant="neutral"
-          label={copy.rename}
-          onPress={onRename}
-          testID={`${testID}-rename`}
-        />
-        <Button label={copy.delete} onPress={onDelete} testID={`${testID}-delete`} />
-        <Button
-          variant="neutral"
-          label={copy.cancel}
-          onPress={onCancel}
-          testID={`${testID}-cancel`}
-        />
+    <TitledSheet
+      visible={visible}
+      title={title}
+      cancelLabel={copy.cancel}
+      onClose={onCancel}
+      onDismissed={onDismissed}
+      testID={testID}
+    >
+      <View style={[styles.group, { borderColor: colors.line }]}>
+        {rows.map((row, index) => (
+          <Pressable
+            key={row.key}
+            testID={`${testID}-${row.key}`}
+            accessibilityRole="button"
+            accessibilityLabel={row.label}
+            accessibilityHint={row.hint}
+            accessibilityState={{ disabled: row.disabled === true }}
+            {...voice}
+            disabled={row.disabled}
+            onPress={row.onPress}
+            style={({ pressed }) => [
+              styles.row,
+              index > 0 && [styles.divided, { borderTopColor: colors.line }],
+              pressed && { backgroundColor: colors.surfaceSunken },
+              row.disabled === true && styles.disabled,
+            ]}
+          >
+            <Text
+              style={[
+                typeStyle('rowLabel', tokens),
+                { color: row.key === 'delete' ? colors.accentText : colors.ink },
+              ]}
+            >
+              {row.label}
+            </Text>
+          </Pressable>
+        ))}
       </View>
-    </BottomSheet>
+    </TitledSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  rows: { gap: space[2] },
+  group: { borderWidth: 1, borderRadius: collectionMenu.radius, overflow: 'hidden' },
+  row: {
+    paddingVertical: collectionMenu.rowPaddingVertical,
+    paddingHorizontal: collectionMenu.rowPaddingHorizontal,
+  },
+  divided: { borderTopWidth: 1 },
+  disabled: { opacity: disabledOpacity },
 });

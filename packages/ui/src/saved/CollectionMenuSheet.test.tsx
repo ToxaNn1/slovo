@@ -23,6 +23,7 @@ async function renderMenu(
       <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
         <CollectionMenuSheet
           visible={visible}
+          title="Nature"
           copy={copy}
           share={share}
           onRename={onRename}
@@ -36,9 +37,10 @@ async function renderMenu(
 }
 
 describe('CollectionMenuSheet', () => {
-  it('offers rename and delete, and the cancel row last', async () => {
+  it('offers rename and delete under the Collection name on the plate, and the cancel row last', async () => {
     await renderMenu();
 
+    expect(screen.getByText('Nature')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Rename' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeOnTheScreen();
@@ -141,6 +143,7 @@ describe('CollectionMenuSheet dismissal', () => {
         <EditionProvider edition={{ locale: 'en' }} strings={strings}>
           <CollectionMenuSheet
             visible={visible}
+            title="Nature"
             copy={copy}
             onRename={jest.fn()}
             onDelete={jest.fn()}

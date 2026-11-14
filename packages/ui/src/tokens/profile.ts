@@ -176,9 +176,39 @@ export const cardSpace = {
   collectionPadding: 18,
 } as const;
 
+/** The Collection menu's group of rows (board 09): its corner and the padding of a row. */
+export const collectionMenu = {
+  radius: 16,
+  rowPaddingVertical: 17,
+  rowPaddingHorizontal: 16,
+} as const;
+
+/**
+ * The name sheet of a Collection (board 09): the field's height, corner,
+ * border and side padding, the gap between the input and the counter, the
+ * inset of the refusal and the shake of a refused name.
+ */
+export const collectionNameField = {
+  height: 60,
+  radius: 16,
+  border: 2,
+  paddingHorizontal: 16,
+  gap: 10,
+  /** The refusal under the field sits in this far. */
+  refusalInset: 4,
+  shake: [-8, 7, -4, 3, 0],
+  shakeDuration: 400,
+} as const;
+
 /** A Collection's card on the Collections screen (design `SlovoApp`, the Collections tab). */
 export const collectionCard = {
   height: 150,
+  /** The corner of a card and of the dashed «Нова колекція» card (board 09). */
+  radius: 18,
+  /** The dashed outline of the «Нова колекція» card. */
+  newBorder: 2.5,
+  /** The red «+» tile of the «Нова колекція» card: its side, its corner, the depth of its edge and its glyph. */
+  plus: { side: 40, radius: 12, depth: 4, glyph: 18 },
   padding: 14,
   /** Between the cards, across and down. */
   gap: 12,

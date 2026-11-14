@@ -8,6 +8,8 @@ export type { Example, FeatureSwitch } from '@slovo/contracts';
 export { openAccount, type Account, type AccountState } from './account/account';
 export { openComposition, type Composition } from './composition';
 export {
+  COLLECTION_NAME_MAX_LENGTH,
+  collectionNameLength,
   type Collection,
   type CollectionEntry,
   type CollectionNameRefusal,
