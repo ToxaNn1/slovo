@@ -25,7 +25,7 @@ import {
   wedges,
 } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { GameReview } from './GameReview';
+import { GameReviewOf, type ResultReview } from './GameReview';
 import { useGameHaptics } from './useGameHaptics';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 
@@ -114,6 +114,8 @@ export function ResultPanel({
   lineTestID,
   mascot,
   stacked = false,
+  banner,
+  beside,
   testID,
 }: {
   kicker?: string | undefined;
@@ -122,6 +124,10 @@ export function ResultPanel({
   lineTestID?: string;
   mascot: ReactNode;
   stacked?: boolean;
+  /** What the panel shows over its title, such as the huge «ФІНІШ». */
+  banner?: ReactNode;
+  /** What stands right of the Mascot under a stacked title, such as the count of «Розминка!». */
+  beside?: ReactNode;
   /** The panel's foot, under the ground. */
   testID?: string;
 }) {
@@ -132,6 +138,7 @@ export function ResultPanel({
   return (
     <View style={styles.panel}>
       <PanelGround color={colors.accent} />
+      {banner}
       <View testID={testID} style={[styles.panelFoot, stacked ? styles.stacked : null]}>
         <View
           accessible
@@ -163,7 +170,14 @@ export function ResultPanel({
             </Text>
           )}
         </View>
-        <PanelMascot style={stacked ? styles.stackedMascot : undefined}>{mascot}</PanelMascot>
+        {beside === undefined ? (
+          <PanelMascot style={stacked ? styles.stackedMascot : undefined}>{mascot}</PanelMascot>
+        ) : (
+          <View style={styles.beside}>
+            <PanelMascot style={styles.stackedMascot}>{mascot}</PanelMascot>
+            {beside}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -248,7 +262,7 @@ export function GameResult({
   bestResult,
   onAgain,
   onHome,
-  onOpenEntry,
+  review,
   mascot,
 }: {
   /** The Game just over, won, lost or with its time up. */
@@ -257,8 +271,8 @@ export function GameResult({
   bestResult: number | undefined;
   onAgain: () => void;
   onHome: () => void;
-  /** Opens the Entry a Round of the Game Review asked about; without it, there is no Game Review. */
-  onOpenEntry: ((entryId: string) => void) | undefined;
+  /** The Game Review under the result. */
+  review: ResultReview;
   /** The Mascot at the Game's end, drawn for the red panel; none without it. */
   mascot?: ReactNode;
 }) {
@@ -343,9 +357,7 @@ export function GameResult({
             />
           )}
         </View>
-        {onOpenEntry === undefined ? null : (
-          <GameReview rounds={game.played} onOpen={onOpenEntry} />
-        )}
+        <GameReviewOf rounds={game.played} review={review} />
         <ResultButtons
           away={{ testID: 'game-home', label: words.result.home, onPress: onHome }}
           on={{ testID: 'game-again', label: words.result.again, onPress: onAgain }}
@@ -372,6 +384,8 @@ const styles = StyleSheet.create({
   stackedText: { alignSelf: 'stretch', gap: space[2] - 2 },
   // The figure in line with the text, past the padding the Mascot draws around it.
   stackedMascot: { marginLeft: -space[4] },
+  // The Mascot at the left, what stands beside it at the right (board g9).
+  beside: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
   mascot: { maxWidth: MASCOT_COLUMN },
   body: { paddingHorizontal: space[5], gap: blockGap },
   numbers: { flexDirection: 'row', flexWrap: 'wrap', gap: resultLayout.numbersGap },

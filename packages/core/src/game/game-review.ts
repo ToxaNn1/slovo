@@ -152,5 +152,9 @@ export interface PlainGameReviewRow {
 
 /** The plain Game Review of the Rounds played: one row for each, in their order. */
 export function buildPlainGameReview(rounds: readonly PlayedRound[]): PlainGameReviewRow[] {
-  return rounds.map((round) => ({ number: round.number, right: round.right, word: titleOf(round) }));
+  return rounds.map((round) => ({
+    number: round.number,
+    right: round.right,
+    word: titleOf(round),
+  }));
 }

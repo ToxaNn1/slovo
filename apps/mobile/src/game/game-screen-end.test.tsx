@@ -3,6 +3,7 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-
 import { editionStrings } from '../edition/edition';
 import {
   composition,
+  mockRouted,
   open,
   renderScreen,
   answerSurvivalRound,
@@ -12,9 +13,24 @@ import {
 
 beforeEach(resetGameScreen);
 
+/** Plays «Виживання» to its third mistake, two of its five Rounds right, from its card unless the Game is in play. */
+async function loseSurvival({ fromCard = true } = {}) {
+  if (fromCard) await fireEvent.press(screen.getByTestId('game-mode-survival'));
+  for (const right of [false, true, true, false, false]) {
+    await waitFor(() => {
+      expect(screen.getByTestId('game-lives')).toBeOnTheScreen();
+    });
+    await answerSurvivalRound(right);
+    await fireEvent.press(screen.getByTestId('game-next'));
+  }
+  await waitFor(() => {
+    expect(screen.getByTestId('game-end-lives-over')).toBeOnTheScreen();
+  });
+}
+
 describe('the Game screen', () => {
   describe('the end posters', () => {
-    it('ends a whole «Наголос» on the «Фініш» poster, «Влучно!», with its XP and a new record, and «До ігор» opens the Games hub', async () => {
+    it('ends a whole «Наголос» on «ФІНІШ», «ВЛУЧНО!», with its XP, the new record stamp and the glad Mascot, and «До ігор» opens the Games hub', async () => {
       await open({ switchedOn: ['finishPoster'] });
       await renderScreen();
 
@@ -30,42 +46,96 @@ describe('the Game screen', () => {
       await waitFor(() => {
         expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
       });
-      expect(screen.getByText('Фініш')).toBeOnTheScreen();
-      expect(screen.getByText('Влучно!')).toBeOnTheScreen();
+      expect(screen.getByText('ФІНІШ')).toBeOnTheScreen();
+      expect(screen.getByText('ВЛУЧНО!')).toBeOnTheScreen();
       expect(screen.getByText('15 з 15 влучань')).toBeOnTheScreen();
-      expect(screen.getByTestId('game-end-new-best')).toHaveTextContent('Новий рекорд!');
+      expect(screen.getByTestId('game-end-new-best')).toHaveTextContent('НОВИЙ РЕКОРД!');
       expect(screen.getByTestId('game-end-xp')).toHaveTextContent(/^Досвід\+\d+ XP$/);
+      expect(screen.getByTestId('mascot-happy')).toBeTruthy();
       expect(screen.queryByTestId('game-end-time-up')).toBeNull();
       expect(screen.getByTestId('game-end-best')).toHaveTextContent('Рекорд15');
       expect(screen.queryByText('Перемога!')).toBeNull();
       expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+      // Off `gameEndToFeed` and `plainGameReview`, the two buttons and the Game Review of #1674 stay.
+      expect(screen.queryByTestId('game-to-feed')).toBeNull();
+      expect(screen.getByRole('header', { name: 'Твої раунди' })).toBeOnTheScreen();
 
       await fireEvent.press(screen.getByTestId('game-to-games'));
 
       expect(screen.getByTestId('game-modes')).toBeOnTheScreen();
+      expect(mockRouted).toEqual([]);
     });
 
-    it('ends «Виживання» on its third mistake on the Lives-over poster, with the mode and the score', async () => {
+    it('ends «Виживання» on its third mistake on the Lives-over poster of #1674 while `livesOverWarmup` is off', async () => {
       await open({ corrections: 15, switchedOn: ['finishPoster'] });
       await renderScreen();
 
-      await fireEvent.press(screen.getByTestId('game-mode-survival'));
-      for (const right of [false, true, true, false, false]) {
-        await waitFor(() => {
-          expect(screen.getByTestId('game-lives')).toBeOnTheScreen();
-        });
-        await answerSurvivalRound(right);
-        await fireEvent.press(screen.getByTestId('game-next'));
-      }
+      await loseSurvival();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('game-end-lives-over')).toBeOnTheScreen();
-      });
       expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
       expect(screen.getByText('ВИЖИВАННЯ · 2/5')).toBeOnTheScreen();
+      expect(screen.getByTestId('mascot-gameEnd')).toBeTruthy();
+      expect(screen.queryByText('Розминка!')).toBeNull();
       expect(screen.queryByTestId('game-end-xp')).toBeNull();
       expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз');
       expect(screen.getByTestId('game-to-games')).toHaveTextContent('До ігор');
+    });
+
+    it('ends «Виживання» with its Lives over on «Розминка!», the count of right answers and the sad Mascot', async () => {
+      await open({ corrections: 15, switchedOn: ['finishPoster', 'livesOverWarmup'] });
+      await renderScreen();
+
+      await loseSurvival();
+
+      expect(screen.getByText('ВИЖИВАННЯ · 2/5')).toBeOnTheScreen();
+      expect(screen.getByText('Розминка!')).toBeOnTheScreen();
+      expect(screen.getByText('Майже. Наступне вийде.')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-hits')).toHaveTextContent('2/5ВЛУЧНИХ');
+      expect(screen.getByTestId('mascot-sad')).toBeTruthy();
+      expect(screen.queryByText('Життя закінчилися')).toBeNull();
+      expect(screen.queryByTestId('game-end-xp')).toBeNull();
+    });
+
+    it('offers «Ще раз», «До ігор» and «До стрічки», each leading where it says', async () => {
+      await open({ corrections: 15, switchedOn: ['finishPoster', 'gameEndToFeed'] });
+      await renderScreen();
+      await loseSurvival();
+      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз');
+      expect(screen.getByTestId('game-to-games')).toHaveTextContent('До ігор');
+      expect(screen.getByTestId('game-to-feed')).toHaveTextContent('До стрічки');
+
+      await fireEvent.press(screen.getByTestId('game-again'));
+      await waitFor(() => {
+        expect(screen.getByRole('header', { name: 'Виживання' })).toBeOnTheScreen();
+      });
+      expect(screen.queryByTestId('game-end-lives-over')).toBeNull();
+
+      await loseSurvival({ fromCard: false });
+      await fireEvent.press(screen.getByTestId('game-to-feed'));
+
+      expect(mockRouted).toEqual(['navigate /']);
+      expect(screen.getByTestId('game-modes')).toBeOnTheScreen();
+    });
+
+    it('lists «Огляд раундів», a plain row for each Round whose tap does nothing', async () => {
+      await open({ corrections: 15, switchedOn: ['finishPoster', 'plainGameReview'] });
+      await renderScreen();
+      await loseSurvival();
+
+      expect(screen.getByRole('header', { name: 'Огляд раундів' })).toBeOnTheScreen();
+      expect(screen.queryByRole('header', { name: 'Твої раунди' })).toBeNull();
+      const rows = screen.getAllByTestId(/^game-review-row-/);
+      expect(rows.map((row) => String(row.props['accessibilityLabel']).split(', ').at(-1))).toEqual(
+        ['помилка', 'правильно', 'правильно', 'помилка', 'помилка'],
+      );
+      const [first] = rows;
+      if (first === undefined) throw new Error('No row');
+      const before = screen.toJSON();
+
+      await fireEvent.press(first);
+
+      expect(screen.toJSON()).toEqual(before);
+      expect(mockRouted).toEqual([]);
     });
   });
 

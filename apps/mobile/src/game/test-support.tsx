@@ -84,9 +84,19 @@ export async function moveApp(to: 'background' | 'foreground') {
   });
 }
 
+/** Where the screen led the reader, as `navigate` or `push` with its href, in order; emptied for each test. */
+export const mockRouted: string[] = [];
+
 jest.mock('expo-router', () => ({
   Redirect: () => null,
-  useRouter: () => ({ navigate: () => undefined, push: () => undefined }),
+  useRouter: () => ({
+    navigate: (href: string) => {
+      mockRouted.push(`navigate ${href}`);
+    },
+    push: (href: string) => {
+      mockRouted.push(`push ${href}`);
+    },
+  }),
   // The screen comes into view as it renders, as a tab's first screen does.
   useFocusEffect: (effect: () => () => void) => {
     jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]);
@@ -474,5 +484,6 @@ export async function winStress({ fromCard = true } = {}) {
 export async function resetGameScreen() {
   mockInForeground = true;
   events = [];
+  mockRouted.length = 0;
   await open();
 }

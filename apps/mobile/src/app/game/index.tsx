@@ -9,6 +9,7 @@ import {
   GameRound,
   GameModeGroupTitle,
   GamesTitle,
+  type ResultReview,
   rowPadding,
   space,
   useTokens,
@@ -31,7 +32,7 @@ import {
   useWidgetHintShown,
 } from '@/game/game';
 import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
-import { MascotIn } from '@/mascot/mascot';
+import { MascotAs, MascotIn } from '@/mascot/mascot';
 import { useXpLogState } from '@/progress/xp-log';
 import { useShown } from '@/shown-in-effect';
 
@@ -57,7 +58,15 @@ function Game() {
   const actions = useGameActions();
   const router = useRouter();
   const openScreen = useOpenScreen();
-  const { gameReview, finishPoster, survivalStreak, answerCard } = useShown();
+  const {
+    gameReview,
+    finishPoster,
+    survivalStreak,
+    answerCard,
+    livesOverWarmup,
+    gameEndToFeed,
+    plainGameReview,
+  } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
   /** Whether the reader closed the widget hint, which is offered once ever. */
@@ -70,6 +79,16 @@ function Game() {
   useWidgetHintShown(hintShown);
 
   const timeLeft = useTimeLeft(current?.time);
+  const review: ResultReview = !gameReview
+    ? { kind: 'none' }
+    : plainGameReview
+      ? { kind: 'plain' }
+      : {
+          kind: 'opening',
+          onOpen: (entryId) => {
+            openScreen(`/game/${entryId}`);
+          },
+        };
   return (
     <SafeAreaView
       testID="game"
@@ -84,18 +103,31 @@ function Game() {
           end={poster}
           modeName={gameModeStrings(strings.modes, current.modeId).title}
           bestResult={state.bestResults[current.modeId]}
+          warmup={livesOverWarmup}
           onAgain={() => {
             actions.start(current.modeId);
           }}
           onToGames={actions.leave}
-          onOpenEntry={
-            gameReview
-              ? (entryId) => {
-                  openScreen(`/game/${entryId}`);
+          onToFeed={
+            gameEndToFeed
+              ? () => {
+                  actions.leave();
+                  router.navigate('/');
                 }
               : undefined
           }
-          mascot={<MascotIn state="gameEnd" onRed />}
+          review={review}
+          mascot={
+            poster.kind === 'lives-over' && !livesOverWarmup ? (
+              <MascotIn state="gameEnd" onRed />
+            ) : (
+              // The board's Mascot: glad for «ВЛУЧНО!», sad for «ЩЕ РАУНД!» and «Розминка!».
+              <MascotAs
+                state={poster.kind !== 'lives-over' && poster.onTarget ? 'happy' : 'sad'}
+                onRed
+              />
+            )
+          }
         />
       ) : result ? (
         <>
@@ -109,13 +141,7 @@ function Game() {
               actions.leave();
               router.navigate('/');
             }}
-            onOpenEntry={
-              gameReview
-                ? (entryId) => {
-                    openScreen(`/game/${entryId}`);
-                  }
-                : undefined
-            }
+            review={review}
             mascot={<MascotIn state="gameEnd" onRed />}
           />
           <WidgetGuideSheet
