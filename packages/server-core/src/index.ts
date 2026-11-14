@@ -46,6 +46,8 @@ export { createSync, type Sync, type SyncChange, type SyncPage } from './sync/sy
 export {
   systemClock,
   type AccountRecord,
+  type ReaderAccount,
+  type RecordedSignInMethod,
   type AnalyticsAnswer,
   type AnalyticsPeriod,
   type AnalyticsQuery,

@@ -10,6 +10,7 @@ import type {
   GoogleVerifier,
   Mailer,
   RateLimits,
+  ReaderAccount,
   SignedIn,
 } from '../ports';
 import type { TooManyRequests } from '../rate-limit';
@@ -123,6 +124,18 @@ export interface Accounts {
    * new, empty Account.
    */
   delete(session: Session): Promise<void>;
+  /**
+   * The Account of the email, for the owner admin alone (ADR 0127), which
+   * names an Account by email instead of by its Session; none when the email
+   * has no Account or is not an email.
+   */
+  find(email: string): Promise<ReaderAccount | undefined>;
+  /**
+   * Deletes the email's Account as `delete` does a Session's, for the owner
+   * admin alone (ADR 0127), and answers the Account deleted; none, and
+   * nothing changes, when the email has no Account.
+   */
+  deleteByEmail(email: string): Promise<AccountRecord | undefined>;
 }
 
 /** The email as the backend keeps it, by `AccountEmailSchema`; none when it is not an email. */
@@ -156,6 +169,10 @@ export function createAccounts({
   clock: Clock;
 }): Accounts {
   const limits = createSignInLimits({ rateLimits, clock });
+  const find = async (email: string) => {
+    const normal = normalised(email);
+    return normal === undefined ? undefined : authenticator.accountOf(normal);
+  };
   return {
     async requestCode(typedEmail, editionId, ip) {
       const email = normalised(typedEmail);
@@ -228,5 +245,14 @@ export function createAccounts({
     signOutEverywhere: ({ account }) => authenticator.revokeAll(account.id),
 
     delete: ({ account }) => authenticator.delete(account),
+
+    find,
+
+    async deleteByEmail(email) {
+      const found = await find(email);
+      if (found === undefined) return undefined;
+      await authenticator.delete(found.account);
+      return found.account;
+    },
   };
 }
