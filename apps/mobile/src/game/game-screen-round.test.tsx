@@ -9,7 +9,7 @@ import {
   theNumberOfThePrompt,
   theOption,
   resetGameScreen,
-} from './game-screen.test-support';
+} from './test-support';
 
 beforeEach(resetGameScreen);
 

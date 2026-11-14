@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react-native';
-import { open, renderScreen, resetGameScreen } from './game-screen.test-support';
+import { open, renderScreen, resetGameScreen } from './test-support';
 
 beforeEach(resetGameScreen);
 

@@ -23,7 +23,7 @@ import {
   timerLabel,
   pass,
   resetGameScreen,
-} from './game-screen.test-support';
+} from './test-support';
 
 beforeEach(resetGameScreen);
 
