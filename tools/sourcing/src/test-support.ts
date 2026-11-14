@@ -1,9 +1,10 @@
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { onTestFinished } from 'vitest';
 
 import { ContentSnapshotSchema, type ContentSnapshot } from '@slovo/contracts/api';
-import { readSnapshotFile } from '@slovo/language-pack';
+import { ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import {
   EDITIONS_DIR,
   editionFiles,
@@ -20,14 +21,11 @@ export function seededRandom(seed = 7): () => number {
   };
 }
 
-/** The UA Edition's seed snapshot: the content an empty database starts from. */
-export const UK_SEED_SNAPSHOT = join(EDITIONS_DIR, 'uk', 'seed-snapshot.json');
-
 let seed: ContentSnapshot | undefined;
 
 /** The UA Edition's seed snapshot, read once. */
 export function ukSeedSnapshot(): ContentSnapshot {
-  return (seed ??= readSnapshotFile(UK_SEED_SNAPSHOT));
+  return (seed ??= ukrainianSnapshot());
 }
 
 /** The UA Edition, its records from its seed snapshot. */
@@ -74,13 +72,17 @@ export function snapshotWith(records: Record<string, unknown> = {}): ContentSnap
 
 /**
  * A copy of the UA Edition in a temporary editions folder, with the given
- * config (the UA one by default) and the given records as its snapshot.
+ * config (the UA one by default) and the given records as its snapshot. The
+ * folder is removed when the test finishes.
  */
 export function editionWithSnapshot(
   records: Record<string, unknown> = {},
   config: string = readFileSync(UK_CONFIG_FILE, 'utf8'),
 ): EditionFolder {
   const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
+  onTestFinished(() => {
+    rmSync(editionsDir, { recursive: true, force: true });
+  });
   mkdirSync(join(editionsDir, 'uk'));
   writeFileSync(editionFiles(join(editionsDir, 'uk')).path('config'), config);
   return openEditionWithSnapshot(editionsDir, 'uk', snapshotWith(records));

@@ -1,14 +1,20 @@
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
+
+import { UK_SEED_SNAPSHOT } from '@slovo/language-pack/test-support';
 
 import { prepareRun } from './cli-common';
-import { UK_SEED_SNAPSHOT, ukSeedSnapshot } from './test-support';
+import { ukSeedSnapshot } from './test-support';
 
 function listFile(): string {
-  const file = join(mkdtempSync(join(tmpdir(), 'slovo-list-')), 'list.txt');
+  const dir = mkdtempSync(join(tmpdir(), 'slovo-list-'));
+  onTestFinished(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+  const file = join(dir, 'list.txt');
   writeFileSync(file, 'мжичка\n');
   return file;
 }

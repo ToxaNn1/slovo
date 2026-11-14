@@ -25,11 +25,15 @@ export const ukrainian = loadEdition(
 );
 
 /**
- * The UA Edition's seed snapshot: the committed slice of the backend's
- * snapshot an empty database is seeded from, read as the import reads it.
+ * The UA Edition's seed snapshot file: the committed slice of the backend's
+ * snapshot an empty database is seeded from. Tests across the repo read it,
+ * here and in the content tools.
  */
+export const UK_SEED_SNAPSHOT = join(ukrainianFolder.dir, 'seed-snapshot.json');
+
+/** The UA Edition's seed snapshot, read fresh as the import reads it. */
 export function ukrainianSnapshot(): ContentSnapshot {
-  return readSnapshotFile(join(ukrainianFolder.dir, 'seed-snapshot.json'));
+  return readSnapshotFile(UK_SEED_SNAPSHOT);
 }
 
 /** Builds the UA Language Pack as the app build does: the folder's config and assets, the seed snapshot's records. */
@@ -42,14 +46,14 @@ export function buildUkrainianPack(outFile: string): BuildResult {
 }
 
 /** The folder of an Edition's content each kind of record of a snapshot is authored in. */
-const CONTENT_FOLDERS = {
-  words: 'content/words',
-  idioms: 'content/idioms',
-  corrections: 'content/corrections',
-  tips: 'content/tips',
-  synonymRows: 'content/synonym-rows',
-  curatedCollections: 'content/curated-collections',
-} as const;
+const CONTENT_FOLDERS = [
+  ['words', 'content/words'],
+  ['idioms', 'content/idioms'],
+  ['corrections', 'content/corrections'],
+  ['tips', 'content/tips'],
+  ['synonymRows', 'content/synonym-rows'],
+  ['curatedCollections', 'content/curated-collections'],
+] as const;
 
 /**
  * A copy of the UA Edition's folder under `dir` whose content folder holds the
@@ -71,9 +75,9 @@ export function ukrainianSeedFolder(dir: string): string {
     writeFileSync(join(editionDir, file), `${JSON.stringify(value, null, 2)}\n`);
   };
   const ids: string[] = [];
-  for (const [kind, folder] of Object.entries(CONTENT_FOLDERS)) {
+  for (const [kind, folder] of CONTENT_FOLDERS) {
     mkdirSync(join(editionDir, folder), { recursive: true });
-    for (const record of snapshot[kind as keyof typeof CONTENT_FOLDERS]) {
+    for (const record of snapshot[kind]) {
       // A content file names no kind: its folder does.
       const file = Object.fromEntries(Object.entries(record).filter(([key]) => key !== 'kind'));
       writeJson(join(folder, `${record.id}.json`), file);

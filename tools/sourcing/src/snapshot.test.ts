@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-import { UK_SEED_SNAPSHOT } from './test-support';
+import { UK_SEED_SNAPSHOT } from '@slovo/language-pack/test-support';
 import { contentSnapshot } from './snapshot';
 
 const seed = readFileSync(UK_SEED_SNAPSHOT, 'utf8');

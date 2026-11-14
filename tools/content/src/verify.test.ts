@@ -12,14 +12,14 @@ import {
   openEditionWithSnapshot,
   type EditionFolder,
 } from '@slovo/language-pack/edition';
+import { ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import { PoliteClient } from '@slovo/sourcing';
 
 import { verifyEntries } from './verify';
 
 const toolDir = fileURLToPath(new URL('../', import.meta.url));
 /** The UA Edition's seed snapshot: the records every run starts from. */
-const SEED_FILE = join(EDITIONS_DIR, 'uk', 'seed-snapshot.json');
-const seedSnapshot = readSnapshotFile(SEED_FILE);
+const seedSnapshot = ukrainianSnapshot();
 const ukrainian = openEditionWithSnapshot(EDITIONS_DIR, 'uk', seedSnapshot);
 const categoryId = ukrainian.config.categories[0]?.id ?? '';
 
