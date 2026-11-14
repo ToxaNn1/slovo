@@ -217,3 +217,15 @@ export const onboardingLayout = {
   bottom: 40,
   goalTile: { height: 78, gap: 10, radius: 16, lineGap: 2 },
 } as const;
+
+/** The Rarity Test's bars and result (board 11, screens 92–93). */
+export const rarityTestLayout = {
+  /** The bar of one segment per Word over the question. */
+  progressBar: { height: 6, gap: 4 },
+  /** The five rarity bars of the result, lit up to the Rarity Ceiling. */
+  rarityBars: { height: 14, gap: 5 },
+  /** How skewed every segment is. */
+  skew: '-20deg',
+  /** How wide the result's line and bars run beside the big number. */
+  resultWidth: 220,
+} as const;

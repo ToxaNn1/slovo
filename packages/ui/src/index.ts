@@ -76,6 +76,7 @@ export { OnboardingWelcome, type HeroWord } from './onboarding/OnboardingWelcome
 export {
   RarityTestQuestions,
   type RarityTestQuestion,
+  type RarityTestResult,
   type RarityTestScreen,
 } from './onboarding/RarityTestQuestions';
 export { Button } from './primitives/Button';
