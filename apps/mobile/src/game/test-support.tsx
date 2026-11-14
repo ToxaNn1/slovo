@@ -15,7 +15,6 @@ import {
 import { createMemoryContentPort, seedUserState, type XpRecord } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
-import { createElement } from 'react';
 import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import GameScreen from '../app/game';
@@ -295,22 +294,17 @@ export async function renderScreen({
   });
   await renderInGestureRoot(
     // The screen inside the providers it reads; a `.ts` module, so no JSX.
-    createElement(SafeAreaProvider, {
-      initialMetrics: metrics,
-      children: createElement(ShellProvider, {
-        shell,
-        children: createElement(EditionProvider, {
-          edition,
-          strings: editionStrings,
-          children: createElement(HapticsProvider, {
-            haptics,
-            children: createElement(SettingsProvider, {
-              children: createElement(GameScreen),
-            }),
-          }),
-        }),
-      }),
-    }),
+    <SafeAreaProvider initialMetrics={metrics}>
+      <ShellProvider shell={shell}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <HapticsProvider haptics={haptics}>
+            <SettingsProvider>
+              <GameScreen />
+            </SettingsProvider>
+          </HapticsProvider>
+        </EditionProvider>
+      </ShellProvider>
+    </SafeAreaProvider>,
   );
   // The Game plans its offers once the composition is open.
   await waitFor(() => {
