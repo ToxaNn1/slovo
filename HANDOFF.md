@@ -1,26 +1,21 @@
 # Wave #1861 (board 11 Settings) — coordinator handoff (rewrite whole, never append)
 Owner ran /mattpocock-skills:implement-spec on #1861. Follow that SKILL.md + docs/agents/waves.md «Steps» + docs/agents/ticket-brief.md. Grant: ~/.slovo-coord/grant-settings-1861.md (no main merge, no force-push, no branch deletion, no EAS). Coordinator #1 = mcp:launch:e793f6f70aaea0584c1ff33a7cccbf20dbd2b3f2b41c7fb24e1940b7810ab6e7.
 
-## State (14.11 ~21:30Z)
-- main = 44e4f260f. Integration feat/1861-settings-board = f90ec5b5a (pushed): #1862 merged whole (A: ADRs 0133–0136, glossary; B: switches, user-state records, strings; report reports/1862B.md). Draft PR #1879 (Closes #1862–#1877), linked to this thread.
-- Running in cloud (briefs in briefs/, logs cloud-<n>.log, waiter = wait.sh <n> <branch>, background):
-  #1864 feat/1864-settings-rows session_01VefVQV6XUUracx7ipuNvp3
+## State (14.11 ~22:45Z)
+- main = 44e4f260f. Integration feat/1861-settings-board = 6cf817d16 (pushed). Merged: #1862 (A+B), #1866, #1867, #1864, #1868 (token conflict in packages/ui/src/tokens/settings.ts resolved keeping both). #1863 handbook DONE (outside repo). Reports in reports/<n>.md (commit bodies). ui+mobile typecheck/test green after merges.
+- Draft PR #1879 (Closes #1862–#1877), linked to this thread.
+- Running in cloud (briefs/, cloud-<n>.log, waiter wait.sh <n> <branch>, background):
   #1865 feat/1865-text-size-steps session_01VefVQRniKeRykcU7Gg5nSA
-  #1866 feat/1866-widget-previews session_01VefVQQztHq5ow1hhU9fdVv
-  #1867 feat/1867-mix-tiles session_01VefVQU28XNdv3NUrq789AM
-- #1863 handbook: laptop Sonnet background subagent (writes ~/Downloads/WORD/handbook/ only).
-- Owner questions for the PR body: reports/1862B.md «Питання власнику» 1–5 (Видалити акаунт; анкети vs опитування; Break rule line; legal/privacy.md; Maestro flows).
-- Metro stopped by owner request.
+  #1874 feat/1874-daily-goal-screen session_01VefVQV3HFkdAazzkFFAjXm
+  #1869 feat/1869-hidden-list session_01VefVQTNfH2bGj1XvpykEqM
+  #1870 feat/1870-questionnaire-retake session_01VefVQV8JdXMjJaCKVLEHMx
+  #1871 feat/1871-rarity-test-result session_01VefVQTS3B43E8ajwVefSAL
+- origin/chore/1862-board11-switches (ecb28d0d1, STUCK) is a safety-net duplicate of #1862B: ignore, not merged, not deleted.
+- Metro running on 8082 (owner asked; reuse, never restart). Owner tests on phone.
+- Owner asked status every 5 min (session cron 0c7d117a).
+- Owner questions for the PR body: «Питання» sections of reports 1862B, 1864, 1866, 1867, 1868.
 
-## Graph
-Next frontier: #1868–#1873 (start as slots free, ≤5 at once; brief template = briefs/1867.txt with its own extra line). After #1864: #1874, #1875 (Core then screen), #1876 (Core then sheet). #1877 after #1864 #1865 #1874. #1878 waits for owner «заграва» Recordings.
-#1864 owns the Settings list/row primitive; #1874–#1876 each touch one row → merge in order.
-
-## On DONE
-`git fetch origin <b> && git merge --no-ff -m 'chore: merge #n: <title>' origin/<b>` in the main folder (integration branch checked out), changed packages' checks, push; push this handoff to coord/settings-1861 (plumbing commit-tree -p origin/coord/settings-1861). STUCK/FAILED: relaunch from its STUCK body on the same branch.
-
-## End
-All merged → code-review → one fixer → handbook check → PR body (Questions, Owner checks, new texts) → mark ready; main merge only on owner word. Then WAVES.md status finished.
-
-2026-11-14T21:18:35Z safety net stood down: laptop coordinator alive; its cloud relaunch of #1862B (session_01VefVQU2d3a5xfXTB7nrLvh) interrupted, nothing of it to merge.
-2026-11-14T21:18:44Z note: origin/chore/1862-board11-switches (ecb28d0d1, STUCK) is the safety net duplicate of #1862B, not merged; ignore it (not deleted).
+## Next
+Remaining: #1872, #1873, #1875 (Core then screen), #1876 (Core then sheet), #1877 (after #1865 #1874). #1878 waits for owner «заграва» Recordings. Brief template: briefs/1869.txt (sed branch + number + last line of seams).
+On DONE: `git fetch origin <b>; git merge --no-ff -m 'chore: merge #n: <title>' origin/<b>`, `pnpm turbo run typecheck test --filter=<pkgs> --output-logs=errors-only`, push; save body to reports/<n>.md.
+End: all merged → code-review → one fixer → PR body (Questions, Owner checks, new texts) → mark ready; main merge only on owner word. Then WAVES.md status finished.
