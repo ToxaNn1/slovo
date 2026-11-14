@@ -86,6 +86,7 @@ export { TabBarButton } from './primitives/TabBarButton';
 export { LabelChip } from './primitives/LabelChip';
 export { GoogleSignInButton } from './primitives/GoogleSignInButton';
 export { LearningRow } from './saved/Learning';
+export { DueQuizCard, DueQuizSheet } from './saved/DueQuiz';
 export { CollectionButton } from './saved/CollectionButton';
 export { CollectionEntryRow } from './saved/CollectionEntryRow';
 export { SavedTabs, type SavedTab } from './saved/SavedTabs';
