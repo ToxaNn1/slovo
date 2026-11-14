@@ -94,6 +94,7 @@ export { CollectionNameField, NewCollectionButton } from './saved/CollectionName
 export { CollectionSheet } from './saved/CollectionSheet';
 export { BottomSheet } from './primitives/BottomSheet';
 export { SheetTitle } from './primitives/SheetParts';
+export { TitledSheet } from './primitives/TitledSheet';
 export { Mascot } from './primitives/Mascot';
 export { Placeholder } from './primitives/Placeholder';
 export { PronunciationButton } from './entries/PronunciationButton';
@@ -190,6 +191,8 @@ export {
   UndoToastProvider,
   useCloseUndoToast,
   useUndoToast,
+  type PlateToastContent,
+  type ToastContent,
   type UndoToastContent,
 } from './primitives/UndoToast';
 export {
