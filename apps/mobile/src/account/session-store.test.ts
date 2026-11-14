@@ -11,6 +11,7 @@ const installed: NativeModuleProbes = {
   widget: () => true,
   shareCapture: () => true,
   contentUpdates: () => true,
+  dataExport: () => true,
   keychain: () => true,
   googleSignIn: () => true,
   appleSignIn: () => true,

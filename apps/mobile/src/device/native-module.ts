@@ -14,6 +14,7 @@ export type NativeModuleName =
   | 'widget'
   | 'shareCapture'
   | 'contentUpdates'
+  | 'dataExport'
   | 'keychain'
   | 'googleSignIn'
   | 'appleSignIn'

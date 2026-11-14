@@ -73,6 +73,16 @@ export type ShareCard = (
   onShared: () => void,
 ) => Promise<ShareSheetOutcome>;
 
+/** A file handed to the system share window: its name, its text and the title the window shows. */
+export interface SharedFile {
+  readonly name: string;
+  readonly text: string;
+  readonly title: string;
+}
+
+/** Writes the file to the cache and hands it to the system share window (ADR 0135). */
+export type ShareFile = (file: SharedFile) => Promise<'shared' | 'cancelled'>;
+
 /**
  * What the shell opens once per app run and every screen shares (ADR 0036):
  * each resource as its Opening, and the device's Share Card capture. One
@@ -95,6 +105,8 @@ export interface Shell {
   readonly counterSending: Opening<CounterSending>;
   /** Undefined when the binary can't capture a view, so no share button shows. */
   readonly shareCard: ShareCard | undefined;
+  /** Undefined when the binary has no file module, so no Data export row shows. */
+  readonly shareFile: ShareFile | undefined;
 }
 
 const ShellContext = createContext<Shell | undefined>(undefined);

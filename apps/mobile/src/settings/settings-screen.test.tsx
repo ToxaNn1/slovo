@@ -15,18 +15,12 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SettingsScreen from '../app/settings';
 import DailyGoalScreen from '../app/settings/daily-goal';
 import NarratorVoiceScreen from '../app/settings/narrator-voice';
+import PrivacyScreen from '../app/settings/privacy';
 import WidgetGuideScreen from '../app/settings/widgets';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { screenSettled } from '../use-open-screen';
-import {
-  opened,
-  packWithMedia,
-  recordedAnalytics,
-  settingsAt,
-  switchedTo,
-  testShell,
-} from '../shell/test-support';
+import { opened, packWithMedia, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { SettingsProvider } from './settings';
 
 const { config } = activeEditionFiles;
@@ -156,6 +150,7 @@ async function renderSettings(
       'settings/widgets': WidgetGuideScreen,
       'settings/narrator-voice': NarratorVoiceScreen,
       'settings/daily-goal': DailyGoalScreen,
+      'settings/privacy': PrivacyScreen,
     },
     { initialUrl: '/settings' },
   );
@@ -204,7 +199,7 @@ describe('Settings, as the board', () => {
         'settings-self-check',
         'settings-row-hidden',
       ],
-      account: ['settings-share-counters', 'settings-row-about'],
+      account: ['settings-row-privacy', 'settings-row-about'],
     };
     for (const [key, rows] of Object.entries(groups)) {
       const group = screen.getByTestId(`settings-group-${key}`);
@@ -463,73 +458,35 @@ describe('Settings › «Менше руху»', () => {
   });
 });
 
-describe('Settings › «Ділитися анонімною статистикою»', () => {
-  it('shows its switch while the Community Counters are on and Analytics is off', async () => {
-    await renderSettings({ communityCounters: true, analytics: false });
-
-    expect(
-      screen.getByTestId('settings-share-counters', { includeHiddenElements: true }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' }),
-    ).toBeOnTheScreen();
-  });
-
-  it('shows its switch while Analytics is on and the Community Counters are off', async () => {
-    await renderSettings({ communityCounters: false, analytics: true });
-
-    expect(
-      screen.getByTestId('settings-share-counters', { includeHiddenElements: true }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' }),
-    ).toBeOnTheScreen();
-  });
-
-  it('turns sharing off from its switch, which stops Analytics and tells it nothing more', async () => {
-    const analytics = recordedAnalytics();
-    const settings = await renderSettings({}, analytics.port);
-
-    await fireEvent.press(screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' }));
-
-    expect((await settings.read()).shareCounters).toBe(false);
-    expect(analytics.stopped()).toBe(true);
-    expect(analytics.events).toEqual([]);
-  });
-
-  it('turns sharing the Community Counters off from its switch, which explains what it shares', async () => {
-    const settings = await renderSettings();
-
-    const row = screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' });
-    expect(row).toBeChecked();
-    const explanation =
-      'Анонімні лічильники слів і відповідей анкети та анонімна статистика використання. Без акаунта, пошти й ідентифікатора пристрою.';
-    expect(screen.getByText(explanation, { includeHiddenElements: true })).toBeOnTheScreen();
-    // VoiceOver reads the row once, at its switch, with the explanation as its hint.
-    expect(screen.getByHintText(explanation)).toBe(row);
-    expect(screen.queryByText(explanation)).not.toBeOnTheScreen();
-
-    await fireEvent.press(row);
-
-    expect((await settings.read()).shareCounters).toBe(false);
-  });
-
-  it('leaves the privacy policy to «Про застосунок», with no link under the switch', async () => {
+describe('Settings › «Конфіденційність»', () => {
+  it('replaces the privacy switch with a row that opens the privacy screen', async () => {
     await renderSettings();
-
-    expect(
-      screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' }),
-    ).toBeOnTheScreen();
-    expect(screen.queryByRole('button', { name: 'Політика приватності' })).not.toBeOnTheScreen();
-  });
-
-  it('has no switch while the Edition turns Community Counters and Analytics off', async () => {
-    await renderSettings({ communityCounters: false, analytics: false });
 
     expect(
       screen.queryByRole('switch', { name: 'Ділитися анонімною статистикою' }),
     ).not.toBeOnTheScreen();
-    expect(screen.queryByRole('button', { name: 'Політика приватності' })).not.toBeOnTheScreen();
+    const row = screen.getByTestId('settings-row-privacy');
+    expect(within(row).getByText('Конфіденційність', { includeHiddenElements: true })).toBeTruthy();
+    expect(
+      within(row).getByText('Дані та статистика', { includeHiddenElements: true }),
+    ).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Конфіденційність' }));
+
+    expect(await screen.findByTestId('privacy')).toBeTruthy();
+    expect(screen.getByRole('switch', { name: 'Анонімна статистика' })).toBeOnTheScreen();
+  });
+
+  it('shows its row with the Data export alone on', async () => {
+    await renderSettings({ communityCounters: false, analytics: false, dataExport: true });
+
+    expect(screen.getByTestId('settings-row-privacy')).toBeTruthy();
+  });
+
+  it('has no row while the Edition turns the Community Counters, Analytics and the Data export off', async () => {
+    await renderSettings({ communityCounters: false, analytics: false, dataExport: false });
+
+    expect(screen.queryByTestId('settings-row-privacy')).not.toBeOnTheScreen();
   });
 });
 

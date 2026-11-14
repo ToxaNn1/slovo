@@ -25,7 +25,7 @@ import { activeEditionId, edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
 import { settingsOpening } from '../settings/settings';
 import { deviceAnalytics } from '../analytics/posthog-analytics';
-import { shareCardOnDevice } from '../share/device-share';
+import { shareCardOnDevice, shareFileOnDevice } from '../share/device-share';
 import { storedUserStateOpening } from '../user-state/stored-user-state';
 import type { DevicePorts, DeviceSources, EditionSwitches, Shell } from '../shell-value';
 
@@ -175,6 +175,7 @@ export function createShell(
       openCounterSending,
     ),
     shareCard: shareCardOnDevice,
+    shareFile: shareFileOnDevice,
   };
 }
 

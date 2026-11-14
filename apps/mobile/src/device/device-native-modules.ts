@@ -11,7 +11,7 @@ import { createNativeModules } from './native-module';
  * container and the Apple targets' storage module, which asks WidgetKit to
  * reload. Sharing needs the view capture, with `expo-file-system` to move
  * its image into the cache. Content updates need `expo-file-system` to keep
- * a downloaded Language Pack, and the Session needs `expo-secure-store`, the
+ * a downloaded Language Pack, the Data export to write its file, and the Session needs `expo-secure-store`, the
  * Keychain. Google sign-in needs Google's SDK, a module of the registry, and
  * Sign in with Apple Expo's Apple authentication module. About reports the
  * installed build with `expo-application` and the update it runs with
@@ -30,6 +30,7 @@ export const nativeModules = createNativeModules({
     TurboModuleRegistry.get('RNViewShot') !== null &&
     requireOptionalNativeModule('FileSystem') !== null,
   contentUpdates: () => requireOptionalNativeModule('FileSystem') !== null,
+  dataExport: () => requireOptionalNativeModule('FileSystem') !== null,
   keychain: () => requireOptionalNativeModule('ExpoSecureStore') !== null,
   googleSignIn: () => TurboModuleRegistry.get('RNGoogleSignin') !== null,
   appleSignIn: () => requireOptionalNativeModule('ExpoAppleAuthentication') !== null,

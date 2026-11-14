@@ -4,6 +4,7 @@ import {
 } from './collection-links/copy-collection';
 import { openCollectionSharing, type CollectionSharing } from './collection-links/share-collection';
 import { openCollections, type Collections } from './saved/collections';
+import { buildDataExport, type DataExport } from './data-export/data-export';
 import { anagramMode } from './game/anagram-mode';
 import { anglicismMode } from './game/anglicism-mode';
 import { buildIdiomMode } from './game/build-idiom-mode';
@@ -113,6 +114,8 @@ export interface Composition extends Hiding {
   readonly collectionSharing: CollectionSharing;
   /** History, which the Feed records in the same write as Seen. */
   readonly history: History;
+  /** Builds the reader's Data export of this Edition from the user state, at the Clock's now (ADR 0135). */
+  readonly dataExport: () => Promise<DataExport>;
   /**
    * The Word of the Day archive «Слова дня», the days whose Word of the Day's
    * card was Seen, read afresh on each call (ADR 0054). Opening a Word from it
@@ -767,6 +770,7 @@ export async function openComposition({
       random,
     }),
     history,
+    dataExport: () => buildDataExport({ userState, clock, edition, rows }),
     wordOfTheDayArchive,
     hiddenEntries,
     mix,
