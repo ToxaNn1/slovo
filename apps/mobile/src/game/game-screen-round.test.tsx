@@ -128,10 +128,12 @@ describe('the Game screen', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Вийти з гри' }));
     expect(screen.getByText('Вийти з гри?')).toBeOnTheScreen();
-    expect(screen.getByText('Прогрес буде втрачено.')).toBeOnTheScreen();
+    expect(screen.getByText('Пройдені раунди пропадуть, а рекорд не оновиться.')).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Грати далі' }));
     await waitFor(() => {
-      expect(screen.queryByText('Прогрес буде втрачено.')).not.toBeOnTheScreen();
+      expect(
+        screen.queryByText('Пройдені раунди пропадуть, а рекорд не оновиться.'),
+      ).not.toBeOnTheScreen();
     });
     expect(screen.getByTestId('game-round')).toBeOnTheScreen();
 

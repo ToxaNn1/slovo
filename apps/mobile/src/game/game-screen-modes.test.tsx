@@ -167,7 +167,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
   });
 
-  it('starts «За буквами» from its card and plays a whole Game, typing each Word, to the result screen', async () => {
+  it('starts «За літерами» from its card and plays a whole Game, typing each Word, to the result screen', async () => {
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
@@ -196,7 +196,7 @@ describe('the Game screen', () => {
     });
   });
 
-  it('opens the letters of «За буквами» one at a time, at no cost, and takes a Life for a wrong Word', async () => {
+  it('opens the letters of «За літерами» one at a time, at no cost, and takes a Life for a wrong Word', async () => {
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
@@ -219,7 +219,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
   });
 
-  it('plays «За буквами» as letter tiles in rows of 4 with letterTiles on, no text field', async () => {
+  it('plays «За літерами» as letter tiles in rows of 4 with letterTiles on, no text field', async () => {
     await open({ switchedOn: ['letterTiles'] });
     await renderScreen();
 
@@ -241,7 +241,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
   });
 
-  it('keeps the text field of «За буквами» with letterTiles off', async () => {
+  it('keeps the text field of «За літерами» with letterTiles off', async () => {
     await open({ switchedOff: ['letterTiles'] });
     await renderScreen();
 

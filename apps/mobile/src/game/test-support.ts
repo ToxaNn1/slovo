@@ -433,7 +433,7 @@ export function theNumberOfThePrompt(): number {
 export const theOption = (text: string) =>
   screen.getByRole('button', { name: new RegExp(`^${text}(,|$)`) });
 
-/** The Word a Round of «За буквами» or «Анаграми» asks about: «слово{n}», its Definition «The meaning of test{n}.». */
+/** The Word a Round of «За літерами» or «Анаграми» asks about: «слово{n}», its Definition «The meaning of test{n}.». */
 export function theWordOfThePrompt(): string {
   const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
   return `слово${/\d+/.exec(prompt)?.[0] ?? ''}`;

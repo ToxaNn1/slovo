@@ -316,7 +316,7 @@ function answeredPair(game: PlayingGame, word: number, definition: number): Play
   };
 }
 
-/** A Round of «За буквами»: «well-read» to type, its hyphen in place from the start. */
+/** A Round of «За літерами»: «well-read» to type, its hyphen in place from the start. */
 const TYPED = 'well-read';
 const typedRound: PlayingGame = {
   ...first,

@@ -22,6 +22,36 @@ export interface Shown {
   readonly finishPoster: boolean;
   /** The streak counter of «Виживання» and its record, in place of the Rounds passed (spec #1674). */
   readonly survivalStreak: boolean;
+  /** The answer banner and the Game moving on by itself, in place of the answer card (ADR 0138). */
+  readonly gameAnswerBanner: boolean;
+  /** 3 Lives by default in place of 5 (ADR 0137). */
+  readonly gameThreeLives: boolean;
+  /** 1 Life in «Виживання» in place of 3 (ADR 0137). */
+  readonly survivalOneLife: boolean;
+  /** 20 seconds in «На час» and no time-up poster, in place of 60 seconds and «Час!» (ADR 0137). */
+  readonly timedTwentySeconds: boolean;
+  /** The Mascot beside the question of a Round (ADR 0139). */
+  readonly gameRoundMascot: boolean;
+  /** The question on the background, labels without numbers and the visible Lives line (ADR 0139). */
+  readonly gameQuestionOnGround: boolean;
+  /** The board's options: short ones without a key, the stamp, the ✓ key, the crossed-out text (ADR 0139). */
+  readonly gameOptionStamp: boolean;
+  /** Found pairs of «Пари» stay, with captions and no pause (ADR 0139). */
+  readonly pairsStay: boolean;
+  /** Decoy fragments in «Склади вислів» and its «Перевірити» (ADR 0139). */
+  readonly buildIdiomCheck: boolean;
+  /** «Розминка!» with the count and the sad Mascot once the Lives run out (ADR 0139). */
+  readonly livesOverWarmup: boolean;
+  /** The third end button «До стрічки» (ADR 0139). */
+  readonly gameEndToFeed: boolean;
+  /** The plain Game Review: rows that neither expand nor open the Entry (ADR 0139). */
+  readonly plainGameReview: boolean;
+  /** The Games hub in five groups (ADR 0139). */
+  readonly gameHubGroups: boolean;
+  /** «Рекорд: N з M» or «Ще жодної гри» and the board's line in a Games hub row (ADR 0139). */
+  readonly gameHubRecord: boolean;
+  /** The toast on a tap of a Game Mode that cannot be played (ADR 0139). */
+  readonly gameModeToast: boolean;
   /** The inline answer card under a Round's options in place of the bottom sheet (spec #1674). */
   readonly answerCard: boolean;
   /** The switchable buttons of an Entry card, wherever the card appears. */
@@ -198,6 +228,21 @@ export function shownOf({
     gameReview: on('gameReview'),
     finishPoster: on('finishPoster'),
     survivalStreak: on('survivalStreak'),
+    gameAnswerBanner: on('gameAnswerBanner'),
+    gameThreeLives: on('gameThreeLives'),
+    survivalOneLife: on('survivalOneLife'),
+    timedTwentySeconds: on('timedTwentySeconds'),
+    gameRoundMascot: on('gameRoundMascot'),
+    gameQuestionOnGround: on('gameQuestionOnGround'),
+    gameOptionStamp: on('gameOptionStamp'),
+    pairsStay: on('pairsStay'),
+    buildIdiomCheck: on('buildIdiomCheck'),
+    livesOverWarmup: on('livesOverWarmup'),
+    gameEndToFeed: on('gameEndToFeed'),
+    plainGameReview: on('plainGameReview'),
+    gameHubGroups: on('gameHubGroups'),
+    gameHubRecord: on('gameHubRecord'),
+    gameModeToast: on('gameModeToast'),
     answerCard: on('gameAnswerCard'),
     entryButtons: {
       shareCard: on('shareCards'),

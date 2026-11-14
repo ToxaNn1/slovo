@@ -136,7 +136,7 @@ function lemmaOf({ prompt }: Round): string {
   return asked;
 }
 
-/** Starts «За буквами» and plays it to its end, typing what `type` makes of each Word, keeping each answered Round. */
+/** Starts «За літерами» and plays it to its end, typing what `type` makes of each Word, keeping each answered Round. */
 async function playGame(
   app: Composition,
   type: (lemma: string) => string = (lemma) => lemma,
@@ -151,7 +151,7 @@ async function playGame(
   return rounds;
 }
 
-/** Starts «За буквами» with seeds until its first Round asks about the Word. */
+/** Starts «За літерами» with seeds until its first Round asks about the Word. */
 async function startAt(lemma: string): Promise<Composition> {
   for (let seed = 1; seed < 200; seed += 1) {
     const app = await run({ seed });
@@ -161,7 +161,7 @@ async function startAt(lemma: string): Promise<Composition> {
   throw new Error(`No Game starts with «${lemma}»`);
 }
 
-describe('«За буквами» on offer', () => {
+describe('«За літерами» on offer', () => {
   it('is offered when the Edition turns the mode on', async () => {
     const app = await run();
 
@@ -209,7 +209,7 @@ describe('«За буквами» on offer', () => {
   });
 });
 
-describe('a Round of «За буквами»', () => {
+describe('a Round of «За літерами»', () => {
   it('shows the primary Definition and a blank for each letter, and takes the Word typed', async () => {
     const app = await run();
     const rounds = await playGame(app);
@@ -326,7 +326,7 @@ describe('a Round of «За буквами»', () => {
   });
 });
 
-describe('«Відкрити літеру» in «За буквами»', () => {
+describe('«Відкрити літеру» in «За літерами»', () => {
   it('opens one letter at a time from the start, until one is left, at no cost', async () => {
     const app = await startAt('пірʼя');
     const blanks = () => blanksOf(app);
@@ -394,7 +394,7 @@ function placesOf(chips: readonly string[], letters: readonly string[]): number[
   });
 }
 
-/** Starts «За буквами» with letter tiles and plays it to its end, keeping each Round before its answer. */
+/** Starts «За літерами» with letter tiles and plays it to its end, keeping each Round before its answer. */
 async function playTiles(app: Composition): Promise<Round[]> {
   await app.game.start('by-letters');
   const rounds: Round[] = [];
@@ -408,7 +408,7 @@ async function playTiles(app: Composition): Promise<Round[]> {
   return rounds;
 }
 
-describe('«За буквами» with letter tiles', () => {
+describe('«За літерами» with letter tiles', () => {
   it("shows the Word's letters plus decoys from the alphabet, at least 8 tiles in a multiple of 4", async () => {
     const rounds = await playTiles(await run({ off: [] }));
 

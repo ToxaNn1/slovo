@@ -34,7 +34,7 @@ describe('the Game screen', () => {
       expect(screen.getByText('Влучно!')).toBeOnTheScreen();
       expect(screen.getByText('15 з 15 влучань')).toBeOnTheScreen();
       expect(screen.getByTestId('game-end-new-best')).toHaveTextContent('Новий рекорд!');
-      expect(screen.getByTestId('game-end-xp')).toHaveTextContent(/^Досвід\d+ XP$/);
+      expect(screen.getByTestId('game-end-xp')).toHaveTextContent(/^Досвід\+\d+ XP$/);
       expect(screen.queryByTestId('game-end-time-up')).toBeNull();
       expect(screen.getByTestId('game-end-best')).toHaveTextContent('Рекорд15');
       expect(screen.queryByText('Перемога!')).toBeNull();
@@ -64,7 +64,7 @@ describe('the Game screen', () => {
       expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
       expect(screen.getByText('ВИЖИВАННЯ · 2/5')).toBeOnTheScreen();
       expect(screen.queryByTestId('game-end-xp')).toBeNull();
-      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз!');
+      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз');
       expect(screen.getByTestId('game-to-games')).toHaveTextContent('До ігор');
     });
   });

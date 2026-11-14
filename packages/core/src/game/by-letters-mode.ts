@@ -63,7 +63,7 @@ function tilesRound(
 }
 
 /**
- * «За буквами», the Core's letters mode (ADR 0052): a Round shows a Word's
+ * «За літерами», the Core's letters mode (ADR 0052): a Round shows a Word's
  * primary Definition. With `letterTiles` on (board 07), the reader taps
  * letter tiles, the Word's letters plus decoys from the Edition's alphabet,
  * into a red slot for each letter. With it off, a blank stands for each

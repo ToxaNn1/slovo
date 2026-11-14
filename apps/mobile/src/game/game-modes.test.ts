@@ -90,7 +90,7 @@ const cardsOf = ({ game }: Composition) =>
   game.state.modes.map((offer) => gameModeCard(offer, strings));
 
 const guessWordCard = {
-  glyph: '?',
+  glyph: 'Д?',
   title: 'Вгадай слово',
   line: 'Обери слово за визначенням',
 };
