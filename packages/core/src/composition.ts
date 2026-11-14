@@ -61,6 +61,7 @@ import type { Backend, Clock, ContentReadPort, NotificationKind, Random, Schedul
 import { openActiveDays } from './progress/active-days';
 import { openXpLog, type XpLog } from './progress/xp-log';
 import { openStreakBreak, type StreakBreak } from './progress/streak-break';
+import { openReaderName, type ReaderName } from './settings/reader-name';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
 import { createRarityTest, type RarityTest } from './mix/rarity-test';
@@ -144,6 +145,8 @@ export interface Composition extends Hiding {
   readonly badges: Badges;
   /** The Break: a pause of the Streak the reader starts, up to 7 days, once every 30 days (ADR 0066). */
   readonly streakBreak: StreakBreak;
+  /** The reader's optional name on the Profile (ADR 0136), which syncs and reaches no Analytics. */
+  readonly readerName: ReaderName;
   /** The Weekly Recap, whose numbers its Feed Notice shows on a local Monday (ADR 0054). */
   readonly weeklyRecap: WeeklyRecap;
   /** The progress Share Cards on offer today: a Level reached, a Badge earned, a Streak milestone. */
@@ -447,6 +450,7 @@ export async function openComposition({
     history,
     isFirstCycle: () => cycle.isFirst(),
   });
+  const readerName = await openReaderName({ userState });
   const activeDays = await openActiveDays({ edition, userState, clock, xpLog, analytics });
   const day = createDayChange({
     clock,
@@ -781,6 +785,7 @@ export async function openComposition({
     xpLog,
     badges,
     streakBreak: openStreakBreak({ edition, userState, clock, xpLog, analytics }),
+    readerName,
     weeklyRecap,
     progressShareCards: openProgressShareCards({ edition, clock, xpLog, badges, activeDays }),
     resume: () => day.resume(),
