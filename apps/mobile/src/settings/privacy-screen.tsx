@@ -22,10 +22,10 @@ const strings = editionStrings.settings;
 const privacy = strings.privacy;
 
 /** The rows «Конфіденційність» draws: the share window is undefined while no export row shows. */
-export type PrivacyRows = {
+export interface PrivacyRows {
   readonly shareCounters: boolean;
   readonly dataExport: ShareFile | undefined;
-};
+}
 
 /**
  * What «Конфіденційність» can draw: the switch while its feature is on in

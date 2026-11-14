@@ -173,7 +173,7 @@ describe('Settings › «Пройти опитування ще раз»', () =>
     await render();
     screenSettled();
     const write = composition.questionnaire.answer.bind(composition.questionnaire);
-    let written = () => {};
+    let written: () => void = () => undefined;
     const held = new Promise<void>((resolve) => {
       written = resolve;
     });

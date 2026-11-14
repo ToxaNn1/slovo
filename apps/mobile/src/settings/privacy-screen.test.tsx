@@ -127,7 +127,7 @@ describe('Settings › «Конфіденційність»', () => {
 
   it('hands one file to the share window when the export is tapped again while its sheet is up', async () => {
     const files: SharedFile[] = [];
-    let closed = () => {};
+    let closed: () => void = () => undefined;
     const sheet = new Promise<'shared'>((resolve) => {
       closed = () => {
         resolve('shared');
