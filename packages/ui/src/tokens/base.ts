@@ -200,6 +200,20 @@ export const typeRoles = {
   yesterdayOption: role('ui', '600', 15, 19),
   /** «Влучно!» or «Майже. Наступне вийде.» under the options of Yesterday's quiz (board f5). */
   yesterdayVerdict: role('word', '800', 15, 15),
+  /** The Due Quiz card's big count behind its text (board 09, screen 73). */
+  dueQuizCount: role('word', '900', 140, 140),
+  /** The Due Quiz card's title, «Перевір себе» (board 09). */
+  dueQuizTitle: role('word', '900', 18, 19.8),
+  /** The Due Quiz card's line, «2 слова на сьогодні» (board 09). */
+  dueQuizLine: role('ui', '600', 13, 13),
+  /** The Due Quiz sheet's place, «1 з 2» (board 09). */
+  dueQuizProgress: role('word', '700', 12, 12, 1.5, 'uppercase'),
+  /** The Lemma on the Due Quiz sheet (board 09). */
+  dueQuizLemma: role('word', '900', 28, 28, -0.5),
+  /** «Що це означає?» on the Due Quiz sheet (board 09). */
+  dueQuizQuestion: role('ui', '500', 15, 19.5),
+  /** The mark of a meaning on the Due Quiz sheet, «А», «Б», «В» (board 09). */
+  dueQuizMark: role('word', '900', 14, 14),
   /** The Word of the Community Word card. */
   communityWord: role('word', '900', 30, 30, -0.5),
   /** The Definition under the Word of the Community Word card. */
@@ -1231,6 +1245,25 @@ export const rowPadding = 14;
 
 /** The gap between the blocks of a Word card, a result or an empty state, off the 4-pt grid (the design's 18). */
 export const blockGap = 18;
+
+/**
+ * A meaning's tile in a quiz of three meanings, Yesterday's (board f5) and
+ * the Due Quiz's (board 09): its height, radius, padding, gap and border,
+ * the check and the cross, the opacity of a faded one, the pop of the right
+ * one (from, peak and when it peaks) and the sink and shake of a wrong pick.
+ */
+export const quizOption = {
+  height: 50,
+  radius: 14,
+  padding: 16,
+  gap: 10,
+  border: 1,
+  check: { width: 16, height: 14 },
+  cross: 13,
+  dimmedOpacity: 0.5,
+  pop: { duration: 350, from: 0.6, peak: 1.12, peakAt: 0.6 },
+  wrong: { sink: 3, shake: [-8, 7, -4, 3, 0], duration: 400 },
+} as const;
 
 /**
  * The empty state (board 09): the Mascot's width, the gap between its blocks,
