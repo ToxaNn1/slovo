@@ -22,6 +22,7 @@ const FIRST: SampleWidgetSize = 'medium';
  * (`${testID}-widget-small`).
  */
 export function WidgetPreviews({
+  accessibilityLabel,
   names,
   lockScreen,
   mode,
@@ -29,6 +30,8 @@ export function WidgetPreviews({
   definition,
   testID,
 }: {
+  /** What VoiceOver calls the switcher before the preview's name, e.g. «Віджети». */
+  accessibilityLabel: string;
   names: Readonly<Record<SampleWidgetSize, string>>;
   /** Whether the lock-screen preview is offered. */
   lockScreen: boolean;
@@ -65,7 +68,7 @@ export function WidgetPreviews({
         </InvertedTokens>
       </View>
       <SegmentedControl
-        accessibilityLabel={sizes.map((value) => names[value]).join(', ')}
+        accessibilityLabel={accessibilityLabel}
         segments={sizes.map((value) => ({
           value,
           label: names[value],

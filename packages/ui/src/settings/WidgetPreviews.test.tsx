@@ -15,6 +15,7 @@ async function renderPreviews(lockScreen: boolean) {
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <WidgetPreviews
         testID="previews"
+        accessibilityLabel="Widgets"
         names={NAMES}
         lockScreen={lockScreen}
         mode="ALL WORDS"

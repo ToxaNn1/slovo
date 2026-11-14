@@ -175,7 +175,9 @@ describe('Settings › Віджети', () => {
 
     const guide = await screen.findByTestId('widget-guide');
     // Beside its back tile at the size of every screen a Settings row opens, as the board has it (owner 08.11).
-    expect(within(guide).getByRole('header', { name: 'Слово на головному екрані' })).toHaveStyle({
+    expect(
+      within(guide).getByRole('header', { name: editionStrings.settings.widgets.title }),
+    ).toHaveStyle({
       fontSize: 20,
       textTransform: 'none',
     });
