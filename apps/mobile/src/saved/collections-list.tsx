@@ -9,9 +9,11 @@ import {
   CollectionNameField,
   DeleteCollectionDialog,
   EmptyState,
+  type GridTile,
   NewCollectionButton,
   space,
   UndoToastProvider,
+  useListScroll,
 } from '@slovo/ui';
 import { memo, useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
@@ -24,6 +26,7 @@ import { useCollectionChanges, useCollectionRows } from '@/saved/collections';
 import type { CollectionRowModel } from '@/saved/collections-screen';
 import type { ListHeader } from '@/saved/list-header';
 import { createMenuFollowUp } from '@/saved/menu-follow-up';
+import { ListTopButton } from '@/shell/list-top';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.screen;
@@ -53,6 +56,10 @@ export function CollectionsList({ header }: { header: ListHeader }) {
 
 function Collections({ header }: { header: ListHeader }) {
   const rows = useCollectionRows();
+  // One scroll per look: the grid and the cards are different lists.
+  const gridScroll = useListScroll<FlatList<GridTile>>();
+  const cardsScroll = useListScroll<FlatList<CollectionRowModel>>();
+  const { list: cardsRef, onScroll: onCardsScroll } = cardsScroll;
   const boardStyle = useEditionInEffect().isFeatureEnabled('collectionBoardStyle');
   const { create, rename, remove } = useCollectionChanges();
   const { available: sharingAvailable, share } = useCollectionSharing();
@@ -181,9 +188,12 @@ function Collections({ header }: { header: ListHeader }) {
           header={listHeader}
           empty={listEmpty}
           onOpen={openCollection}
+          scroll={gridScroll}
         />
       ) : (
         <FlatList
+          ref={cardsRef}
+          onScroll={onCardsScroll}
           testID="collections"
           data={rows}
           keyExtractor={(collection) => collection.id}
@@ -208,6 +218,11 @@ function Collections({ header }: { header: ListHeader }) {
           ListEmptyComponent={listEmpty}
           contentContainerStyle={styles.content}
         />
+      )}
+      {boardStyle ? (
+        <ListTopButton scroll={gridScroll} overTabBar />
+      ) : (
+        <ListTopButton scroll={cardsScroll} overTabBar />
       )}
       <CollectionMenuSheet
         testID="collections-menu"

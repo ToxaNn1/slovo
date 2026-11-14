@@ -13,6 +13,7 @@ import {
   UndoToastProvider,
   useEdition,
   useTokens,
+  useListScroll,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
@@ -21,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
 import { useHiddenChanges, useHiddenScreenModel } from '@/mix/hidden';
+import { ListTopButton } from '@/shell/list-top';
 import type { HiddenEntryModel, HiddenScreenModel } from '@/mix/hidden-screen';
 
 const strings = editionStrings.hidden;
@@ -48,6 +50,8 @@ function HiddenList() {
   const { restoreEntry, turnCategoryOn, turnKindOn } = useHiddenChanges();
   const { colors } = useTokens();
   const router = useRouter();
+  const scroll = useListScroll<SectionList<HiddenEntryModel, HiddenSection>>();
+  const { list: listRef, onScroll: onListScroll } = scroll;
 
   return (
     <SafeAreaView
@@ -56,6 +60,8 @@ function HiddenList() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <SectionList<HiddenEntryModel, HiddenSection>
+        ref={listRef}
+        onScroll={onListScroll}
         contentContainerStyle={styles.content}
         sections={sections}
         keyExtractor={({ entryId }) => entryId}
@@ -103,6 +109,7 @@ function HiddenList() {
           ) : undefined
         }
       />
+      <ListTopButton scroll={scroll} />
     </SafeAreaView>
   );
 }

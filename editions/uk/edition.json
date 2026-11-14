@@ -121,6 +121,7 @@
     "sounds": "off",
     "reduceMotion": "on",
     "forceUpdate": "on",
+    "scrollToTop": "on",
     "fastReveal": "on",
     "dashboard": "on",
     "mood": "on",

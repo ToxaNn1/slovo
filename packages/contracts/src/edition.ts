@@ -519,6 +519,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   profileGameBest: FeatureSwitchStateSchema,
   /** Force update: the banner below the soft minimum and the blocking screen below the hard minimum of the app version (ADR 0089); off, neither shows. */
   forceUpdate: FeatureSwitchStateSchema,
+  /** «Нагору»: the round arrow-up button over a long list once the reader has scrolled down, which scrolls the list gently back to its top; off, no button. */
+  scrollToTop: FeatureSwitchStateSchema,
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

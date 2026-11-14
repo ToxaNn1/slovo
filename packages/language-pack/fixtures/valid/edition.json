@@ -142,7 +142,8 @@
     "correctionTypes": "on",
     "profileConfirmedByRarity": "on",
     "profileGameBest": "on",
-    "forceUpdate": "on"
+    "forceUpdate": "on",
+    "scrollToTop": "on"
   },
   "userSettingDefaults": {
     "theme": "system",

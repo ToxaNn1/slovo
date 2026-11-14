@@ -78,6 +78,7 @@ export { Button } from './primitives/Button';
 export { type IconName } from './primitives/Icon';
 export { BackHeader } from './primitives/BackHeader';
 export { IconButton } from './primitives/IconButton';
+export { ScrollToTopButton, useListScroll, type ListScroll } from './primitives/ScrollToTop';
 export { PressedTile } from './primitives/PressedTile';
 export { ScreenEnter } from './primitives/ScreenEnter';
 export { TabBarButton } from './primitives/TabBarButton';

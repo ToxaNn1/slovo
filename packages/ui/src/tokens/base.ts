@@ -1001,6 +1001,11 @@ export const motion = {
   sweep: { duration: 500, easing: [0.6, 0, 0.3, 1] },
   /** The Mood check-in folds to today's line, or opens its chips again, and the new part rises in. */
   collapse: { duration: 250, easing: ease, rise: 8 },
+  /**
+   * «Нагору»: a long list glides back to its top, slow enough to read the rows
+   * passing by, easing in and out; the button fades in and out with `pop`.
+   */
+  scrollToTop: { duration: 650, easing: [0.45, 0, 0.25, 1] },
   /** Under Reduce Motion every motion is this one fade. */
   reduceMotion: { duration: 300, easing: ease },
 } as const satisfies Record<

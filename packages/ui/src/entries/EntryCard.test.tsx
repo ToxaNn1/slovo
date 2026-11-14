@@ -698,7 +698,7 @@ describe('VoiceOver on a stress trap', () => {
     );
     expect(screen.getByTestId('correction-standard')).toHaveProp(
       'accessibilityLabel',
-      'Standard: catalog, stress on o',
+      'Standard: catalog, stress on o. Category: Everyday speech',
     );
   });
 
@@ -726,7 +726,7 @@ describe('VoiceOver on a stress trap', () => {
     await render(inEdition(<EntryCard card={card} />));
 
     expect(screen.getByLabelText('Non-standard, calque: take part')).toBeTruthy();
-    expect(screen.getByLabelText('Standard: join in')).toBeTruthy();
+    expect(screen.getByLabelText('Standard: join in. Category: Everyday speech')).toBeTruthy();
   });
 });
 

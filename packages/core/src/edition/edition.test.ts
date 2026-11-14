@@ -148,6 +148,7 @@ const validConfig = {
     profileConfirmedByRarity: 'on',
     profileGameBest: 'on',
     forceUpdate: 'on',
+    scrollToTop: 'on',
   },
   userSettingDefaults: {
     theme: 'system',

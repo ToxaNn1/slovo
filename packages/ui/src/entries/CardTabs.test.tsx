@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { EditionProvider } from '@slovo/ui';
@@ -146,6 +146,10 @@ describe("an Entry card's clamped tab (owner 13.11)", () => {
     expect(less).toHaveStyle({ marginTop: entryCardFrame.moreGap });
     expect(less).not.toHaveStyle({ minHeight: 44 });
     expect(less).toHaveProp('hitSlop', { top: 14, bottom: 14 });
+    // The text keeps clear of the scroll bar at the right edge (owner 14.11).
+    expect(StyleSheet.flatten(scroll.props['contentContainerStyle'])).toMatchObject({
+      paddingRight: entryCardFrame.scrollGutter,
+    });
   });
 });
 

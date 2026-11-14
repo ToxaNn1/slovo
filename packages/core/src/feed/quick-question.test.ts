@@ -443,3 +443,38 @@ describe('the Word Meaning question', () => {
     ]);
   });
 });
+
+describe('a Quick Question prompt', () => {
+  /** Words whose Definitions run past what a Feed card holds, all but those in `short`. */
+  function overLong(short: readonly string[]): readonly Word[] {
+    return words.map((each) =>
+      short.includes(each.id)
+        ? each
+        : {
+            ...each,
+            primaryDefinition: `The meaning of ${each.lemma}. ${'More of it. '.repeat(11)}`,
+          },
+    );
+  }
+
+  it('is never longer than 140 characters: a longer Entry is not asked', async () => {
+    const { app } = await run({ of: overLong(['w_05']) });
+    await app.mix.setQuickQuestionEvery(6);
+
+    const asked = (await cardsOf(app, 24)).flatMap((card) =>
+      card.kind === 'quick-question' ? [card] : [],
+    );
+
+    expect(asked.length).toBeGreaterThan(0);
+    for (const card of asked) {
+      expect(card.entry.id).toBe('w_05');
+      expect(card.round.prompt.length).toBeLessThanOrEqual(140);
+    }
+  });
+
+  it('gives no Quick Question when no Entry fits', async () => {
+    const { app } = await run({ of: overLong([]) });
+
+    expect(await askedAt(app, 25)).toEqual([]);
+  });
+});

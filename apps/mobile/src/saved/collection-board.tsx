@@ -7,21 +7,24 @@ import {
   DeleteCollectionDialog,
   knownShare,
   RailBoard,
+  type RailBoardCard,
   railScreen,
   RailScreenHero,
   shapeAt,
   UndoToastProvider,
   useEdition,
+  useListScroll,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type FlatList } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
 import { useKnownCards } from '@/knowledge/marks';
 import { useCollectionChanges, useCollectionEntries } from '@/saved/collections';
 import { useCollectionSharing } from '@/saved/collection-sharing';
 import { createMenuFollowUp } from '@/saved/menu-follow-up';
+import { ListTopButton } from '@/shell/list-top';
 import { useOpenScreen } from '@/use-open-screen';
 
 const { collections: collectionStrings } = editionStrings;
@@ -71,6 +74,7 @@ function Board({ collectionId }: { collectionId: string }) {
   );
 
   const name = collection?.name ?? '';
+  const scroll = useListScroll<FlatList<RailBoardCard>>();
   const cards = useKnownCards(collection === undefined ? undefined : entries) ?? [];
   // DESIGN-05: not on the board, owner decides — the swipe (and its VoiceOver action) that takes
   // the Entry out of this Collection, and the kind and the date added, «слово · 3 лист.». A card
@@ -96,6 +100,8 @@ function Board({ collectionId }: { collectionId: string }) {
       <RailBoard
         testID="collection"
         cards={cards}
+        scroll={scroll}
+        corner={<ListTopButton scroll={scroll} />}
         onOpen={(entryId) => {
           openScreen(`/saved/collections/${collectionId}/${entryId}`);
         }}

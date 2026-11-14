@@ -254,7 +254,9 @@ function FitPanel({
           «Детальніше»'s place under it, so the scroll fills the room down to the link (owner 13.11). */}
       {open ? (
         <>
-          <PagerScrollView testID={`${testID}-tab-scroll`}>{content}</PagerScrollView>
+          <PagerScrollView testID={`${testID}-tab-scroll`} contentContainerStyle={styles.scrolled}>
+            {content}
+          </PagerScrollView>
           {link('less', true, () => {
             setOpenAt(undefined);
           })}
@@ -302,6 +304,8 @@ const styles = StyleSheet.create({
   // A little air between the last whole line, or the scroll, and the link, both in the room (owner 13.11).
   link: { alignSelf: 'flex-start', marginTop: entryCardFrame.moreGap },
   content: { gap: entryCardFrame.panelGap },
+  // The opened tab's text keeps clear of the scroll bar at the room's right edge (owner 14.11).
+  scrolled: { paddingRight: entryCardFrame.scrollGutter },
   // While it fits, the content takes no room of its own, so the frame keeps its height.
   overlay: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

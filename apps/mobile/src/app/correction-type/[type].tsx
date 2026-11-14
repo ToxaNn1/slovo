@@ -1,4 +1,5 @@
 import { CorrectionTypeSchema, fill, type CorrectionType } from '@slovo/contracts';
+import type { CorrectionTypeRow as CorrectionTypeRowEntry } from '@slovo/core';
 import {
   correctionTile,
   CorrectionTypeRow,
@@ -6,12 +7,15 @@ import {
   railScreen,
   RailScreenHero,
   useEdition,
+  useListScroll,
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
+import type { FlatList } from 'react-native';
 
 import { useCorrectionTypeScreen } from '@/dashboard/correction-type';
 import { editionStrings } from '@/edition/edition';
 import { useSegmentParam } from '@/route-params';
+import { ListTopButton } from '@/shell/list-top';
 
 const words = editionStrings.dashboard.correctionTypes;
 
@@ -29,6 +33,7 @@ function CorrectionTypeScreen({ type }: { type: CorrectionType }) {
   const { title, description, place, rows, reveal } = useCorrectionTypeScreen(type);
   const { count } = useEdition();
   const router = useRouter();
+  const scroll = useListScroll<FlatList<CorrectionTypeRowEntry>>();
   const total = rows?.length ?? 0;
   const done = rows?.filter(({ workedThrough }) => workedThrough).length ?? 0;
   const glyph =
@@ -49,6 +54,8 @@ function CorrectionTypeScreen({ type }: { type: CorrectionType }) {
         />
       )}
       gap={railScreen.list.gap}
+      scroll={scroll}
+      corner={<ListTopButton scroll={scroll} />}
       hero={
         <RailScreenHero
           id="correction-type-hero"

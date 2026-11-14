@@ -31,6 +31,12 @@ export const quickQuestionSourceId = (source: QuickQuestionSource): string =>
   source.kind === 'game-mode' ? source.modeId : WORD_MEANING_ID;
 
 /**
+ * The most characters a Quick Question prompt may hold: a Feed card fits no
+ * longer one, so an Entry whose prompt runs past it is not asked.
+ */
+export const QUICK_QUESTION_PROMPT_LIMIT = 140;
+
+/**
  * The Quick Question (CONTEXT.md): it builds one Round from an enabled Game
  * Mode or a Word Meaning question over an Eligible Entry, and keeps the
  * reader's answer. A right answer earns its XP and confirms the Entry (ADR
@@ -41,7 +47,8 @@ export interface QuickQuestion {
    * A Round of a Game Mode on offer or of the Word Meaning question while its
    * Feature Switch is on (ADR 0128), tried in one random order so each has
    * the same chance, over a random Eligible Entry other than `avoid`; only a
-   * mode whose Round is a pick of options can give one. Nothing when none can.
+   * mode whose Round is a pick of options with a prompt of at most
+   * `QUICK_QUESTION_PROMPT_LIMIT` characters can give one. Nothing when none can.
    */
   build(avoid?: string): Promise<QuickQuestionContent | undefined>;
   /** Keeps the option the reader picked and resolves whether it is right. */
@@ -74,32 +81,30 @@ export function createQuickQuestion({
   /** Tells of the reader's answer to the question, right or not; it never throws. */
   answered?: (content: QuickQuestionContent, right: boolean) => Promise<void>;
 }): QuickQuestion {
-  /** One of the Entries other than `avoid`, drawn from the random source. */
-  const oneOf = <E extends { readonly id: string }>(of: readonly E[], avoid?: string) => {
-    const answers = of.filter(({ id }) => id !== avoid);
-    return answers[Math.floor(random.next() * answers.length)];
-  };
-
   const ofMode =
     (mode: GameMode): Candidate =>
     async (avoid) => {
       const eligible = await entries.eligibleOfKind(mode.entryKind, mode.alsoAsks);
       if ('refusal' in eligible) return undefined;
-      const answer = oneOf(eligible.entries, avoid);
-      if (answer === undefined) return undefined;
-      const round = mode.buildRound({
-        answer,
-        eligible: eligible.entries,
-        next: [],
-        upTo: 1,
-        round: 1,
+      for (const answer of shuffled(
+        eligible.entries.filter(({ id }) => id !== avoid),
         random,
-        edition,
-        comparison,
-      });
-      return round?.form === 'pick'
-        ? { entry: answer, source: { kind: 'game-mode', modeId: mode.id }, round }
-        : undefined;
+      )) {
+        const round = mode.buildRound({
+          answer,
+          eligible: eligible.entries,
+          next: [],
+          upTo: 1,
+          round: 1,
+          random,
+          edition,
+          comparison,
+        });
+        if (round?.form !== 'pick') return undefined;
+        if (round.prompt.length <= QUICK_QUESTION_PROMPT_LIMIT)
+          return { entry: answer, source: { kind: 'game-mode', modeId: mode.id }, round };
+      }
+      return undefined;
     };
 
   const wordMeaning: Candidate = async (avoid) => {

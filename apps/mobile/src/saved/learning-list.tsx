@@ -1,11 +1,20 @@
 import { MascotIn } from '@/mascot/mascot';
-import { EmptyState, LearningRow, space, typeStyle, useEdition, useTokens } from '@slovo/ui';
+import {
+  EmptyState,
+  LearningRow,
+  space,
+  typeStyle,
+  useEdition,
+  useListScroll,
+  useTokens,
+} from '@slovo/ui';
 import { FlatList, StyleSheet, Text } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
 import type { ListHeader } from '@/saved/list-header';
 import { useLearningList } from '@/saved/learning';
+import { ListTopButton } from '@/shell/list-top';
 
 const { learning: strings } = editionStrings;
 
@@ -20,41 +29,48 @@ export function LearningList({ header }: { header: ListHeader }) {
   const tokens = useTokens();
   const { voice } = useEdition();
   const openScreen = useOpenScreen();
+  const scroll = useListScroll<FlatList<(typeof list)[number]>>();
+  const { list: listRef, onScroll: onListScroll } = scroll;
 
   return (
-    <FlatList
-      testID="learning"
-      data={list}
-      keyExtractor={(entry) => entry.entryId}
-      renderItem={({ item: entry }) => (
-        <LearningRow
-          entry={entry}
-          onPress={() => {
-            openScreen(`/saved/learning/${entry.entryId}`);
-          }}
-        />
-      )}
-      ListHeaderComponent={header(null)}
-      ListFooterComponent={
-        list.length > 0 ? (
-          <Text
-            {...voice}
-            style={[typeStyle('meta', tokens), styles.footer, { color: tokens.colors.muted }]}
-          >
-            {strings.footer}
-          </Text>
-        ) : undefined
-      }
-      ListEmptyComponent={
-        <EmptyState
-          mascot={<MascotIn state="empty" />}
-          testID="learning-empty"
-          title={strings.empty.title}
-          message={strings.empty.message}
-        />
-      }
-      contentContainerStyle={styles.content}
-    />
+    <>
+      <FlatList
+        ref={listRef}
+        onScroll={onListScroll}
+        testID="learning"
+        data={list}
+        keyExtractor={(entry) => entry.entryId}
+        renderItem={({ item: entry }) => (
+          <LearningRow
+            entry={entry}
+            onPress={() => {
+              openScreen(`/saved/learning/${entry.entryId}`);
+            }}
+          />
+        )}
+        ListHeaderComponent={header(null)}
+        ListFooterComponent={
+          list.length > 0 ? (
+            <Text
+              {...voice}
+              style={[typeStyle('meta', tokens), styles.footer, { color: tokens.colors.muted }]}
+            >
+              {strings.footer}
+            </Text>
+          ) : undefined
+        }
+        ListEmptyComponent={
+          <EmptyState
+            mascot={<MascotIn state="empty" />}
+            testID="learning-empty"
+            title={strings.empty.title}
+            message={strings.empty.message}
+          />
+        }
+        contentContainerStyle={styles.content}
+      />
+      <ListTopButton scroll={scroll} overTabBar />
+    </>
   );
 }
 

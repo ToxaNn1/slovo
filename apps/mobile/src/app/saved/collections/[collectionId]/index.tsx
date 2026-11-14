@@ -9,6 +9,7 @@ import {
   space,
   typeStyle,
   useEdition,
+  useListScroll,
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
@@ -22,6 +23,7 @@ import { CollectionBoardScreen } from '@/saved/collection-board';
 import { useCollectionEntries } from '@/saved/collections';
 import { useOpenScreen } from '@/use-open-screen';
 import { useSegmentParam } from '@/route-params';
+import { ListTopButton } from '@/shell/list-top';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.entries;
@@ -56,6 +58,8 @@ function CollectionListScreen({ collectionId }: { collectionId: string }) {
   const openScreen = useOpenScreen();
 
   const name = collection?.name ?? '';
+  const scroll = useListScroll<FlatList<CollectionEntry>>();
+  const { list: listRef, onScroll: onListScroll } = scroll;
 
   function renderEntry(entry: CollectionEntry) {
     return (
@@ -80,6 +84,8 @@ function CollectionListScreen({ collectionId }: { collectionId: string }) {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <FlatList
+        ref={listRef}
+        onScroll={onListScroll}
         data={collection === undefined ? [] : entries}
         keyExtractor={(entry) => entry.entryId}
         renderItem={({ item }) => renderEntry(item)}
@@ -139,6 +145,7 @@ function CollectionListScreen({ collectionId }: { collectionId: string }) {
         }
         contentContainerStyle={styles.content}
       />
+      <ListTopButton scroll={scroll} />
     </SafeAreaView>
   );
 }

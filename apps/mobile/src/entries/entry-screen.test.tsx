@@ -6,6 +6,7 @@ import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
+import { StyleSheet } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -410,6 +411,14 @@ describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
       // which takes in the home indicator; the frame adds nothing of its own.
       expect(screen.getByTestId('word-card')).toHaveStyle({ paddingBottom: 0 });
       expect(screen.getByTestId('entry-frame')).toHaveStyle({ flex: 1, paddingBottom: 0 });
+      // Off the dock the bar stands 12 points lower, into the stamp's room (owner 14.11);
+      // on the dock it keeps on the action row.
+      const frame: unknown = StyleSheet.flatten(screen.getByTestId('entry-frame').props['style']);
+      expect(frame).toEqual(
+        swiped
+          ? expect.objectContaining({ marginBottom: -12 })
+          : expect.not.objectContaining({ marginBottom: expect.anything() }),
+      );
     },
   );
 
