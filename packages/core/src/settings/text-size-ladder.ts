@@ -11,10 +11,10 @@ export const TEXT_SIZE_LADDER = [
   'largest',
 ] as const satisfies readonly TextSize[];
 
-/** The ladder's lowest step: a text too tall here is clamped, never drawn smaller. */
-export const TEXT_SIZE_FLOOR = TEXT_SIZE_LADDER[0];
-
-/** The step under a text size on the ladder, or nothing at the floor. */
+/**
+ * The step under a text size on the ladder, or nothing at the floor, its
+ * lowest step: a text too tall there is clamped, never drawn smaller.
+ */
 export function smallerTextSize(size: TextSize): TextSize | undefined {
   return TEXT_SIZE_LADDER[TEXT_SIZE_LADDER.indexOf(size) - 1];
 }

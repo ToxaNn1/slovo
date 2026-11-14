@@ -7,9 +7,8 @@ import {
   openAccount,
   openSync,
   smallerTextSize,
-  TEXT_SIZE_FLOOR,
-  TEXT_SIZE_LADDER,
 } from '../index';
+import { TEXT_SIZE_LADDER } from './text-size-ladder';
 import { fakeClock, randomOf, testSchedule } from '../test-support';
 import {
   createFakeAppleSignInSheet,
@@ -646,7 +645,6 @@ describe('settings: the three-step text size (ADR 0134)', () => {
 
   it('steps down the ladder one step at a time to the floor, and no further', () => {
     expect(TEXT_SIZE_LADDER).toEqual(['system', 'larger', 'largest']);
-    expect(TEXT_SIZE_FLOOR).toBe('system');
     expect(smallerTextSize('largest')).toBe('larger');
     expect(smallerTextSize('larger')).toBe('system');
     expect(smallerTextSize('system')).toBeUndefined();
