@@ -118,7 +118,7 @@ describe('«Англіцизми» on offer', () => {
     expect(anglicismOffer(app)).toEqual({
       modeId: 'anglicism',
       entryKind: 'correction',
-      group: 'corrections',
+      group: 'new',
       canStart: true,
     });
   });
@@ -142,7 +142,7 @@ describe('«Англіцизми» on offer', () => {
     expect(anglicismOffer(app)).toEqual({
       modeId: 'anglicism',
       entryKind: 'correction',
-      group: 'corrections',
+      group: 'new',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -161,7 +161,7 @@ describe('«Англіцизми» on offer', () => {
     expect(anglicismOffer(app)).toEqual({
       modeId: 'anglicism',
       entryKind: 'correction',
-      group: 'corrections',
+      group: 'new',
       canStart: false,
       refusal: 'corrections-out-of-mix',
     });

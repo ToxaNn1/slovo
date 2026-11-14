@@ -160,7 +160,7 @@ describe('«Анаграми» on offer', () => {
     expect(anagramOffer(app)).toEqual({
       modeId: 'anagram',
       entryKind: 'word',
-      group: 'words',
+      group: 'letters',
       canStart: true,
     });
   });
@@ -180,7 +180,7 @@ describe('«Анаграми» on offer', () => {
     expect(anagramOffer(app)).toEqual({
       modeId: 'anagram',
       entryKind: 'word',
-      group: 'words',
+      group: 'letters',
       canStart: false,
       refusal: 'too-few-entries',
     });

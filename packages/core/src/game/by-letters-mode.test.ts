@@ -168,7 +168,7 @@ describe('«За літерами» on offer', () => {
     expect(byLettersOffer(app)).toEqual({
       modeId: 'by-letters',
       entryKind: 'word',
-      group: 'words',
+      group: 'new',
       canStart: true,
     });
   });
@@ -187,7 +187,7 @@ describe('«За літерами» on offer', () => {
     expect(byLettersOffer(app)).toEqual({
       modeId: 'by-letters',
       entryKind: 'word',
-      group: 'words',
+      group: 'new',
       canStart: false,
       refusal: 'too-few-entries',
     });

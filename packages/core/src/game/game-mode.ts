@@ -22,13 +22,23 @@ export type GameEdition = Pick<Edition, 'isFeatureEnabled'> &
   };
 
 /**
- * The groups of the mode screen, in their agreed order: what a mode trains,
- * then the modes with a Lives, Round or time challenge of their own.
+ * The groups of the mode screen of spec #1674, in their agreed order, while
+ * `gameHubGroups` is off: what a mode trains, then the modes with a Lives,
+ * Round or time challenge of their own.
  */
 export const GAME_MODE_GROUPS = ['words', 'corrections', 'idioms', 'challenge'] as const;
 
-/** The group of the mode screen a Game Mode's card stands in. */
+/** The group of the mode screen of spec #1674 a Game Mode's card stands in. */
 export type GameModeGroup = (typeof GAME_MODE_GROUPS)[number];
+
+/** The board's five groups of the mode screen, in the board's order, behind `gameHubGroups` (ADR 0139). */
+export const GAME_HUB_GROUPS = ['sound', 'meaning', 'letters', 'speed', 'new'] as const;
+
+/** The board's group of the mode screen a Game Mode's card stands in behind `gameHubGroups`. */
+export type GameHubGroup = (typeof GAME_HUB_GROUPS)[number];
+
+/** The group a Game Mode's offer names: one of the board's five, or of the four of spec #1674 while `gameHubGroups` is off. */
+export type OfferedGroup = GameHubGroup | GameModeGroup;
 
 /**
  * Which label a Round shows over its prompt: the Game Mode's, a Synonym
@@ -101,8 +111,10 @@ export interface GameMode {
   readonly id: string;
   /** The kind of Entry its Rounds ask about, which its card names and whose refusal it gives. */
   readonly entryKind: ShownKind;
-  /** The group of the mode screen its card stands in. */
+  /** The group of the mode screen its card stands in while `gameHubGroups` is off. */
   readonly group: GameModeGroup;
+  /** The board's group its card stands in behind `gameHubGroups`: `new` when left out. */
+  readonly hubGroup?: GameHubGroup;
   /**
    * Other kinds of Entry its Rounds may ask about, such as idioms and
    * Synonym Rows in «Вгадай слово»; a kind with no eligible Entry, such as

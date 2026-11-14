@@ -15,6 +15,7 @@ const isAnglicism = (entry: AskableEntry): boolean =>
 export const anglicismMode: GameMode = {
   id: 'anglicism',
   group: 'corrections',
+  hubGroup: 'new',
   entryKind: 'correction',
   isOn: (edition) => edition.isFeatureEnabled('gameAnglicism'),
   buildRound(input) {

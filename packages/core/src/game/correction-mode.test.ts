@@ -219,11 +219,11 @@ describe('«Обери правильне» on offer', () => {
       {
         modeId: 'guess-word',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: false,
         refusal: 'too-few-entries',
       },
-      { modeId: 'correction', entryKind: 'correction', group: 'corrections', canStart: true },
+      { modeId: 'correction', entryKind: 'correction', group: 'meaning', canStart: true },
     ]);
   });
 
@@ -245,7 +245,7 @@ describe('«Обери правильне» on offer', () => {
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'correction',
       entryKind: 'correction',
-      group: 'corrections',
+      group: 'meaning',
       canStart: false,
       refusal: 'corrections-out-of-mix',
     });
@@ -260,7 +260,7 @@ describe('«Обери правильне» on offer', () => {
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'correction',
       entryKind: 'correction',
-      group: 'corrections',
+      group: 'meaning',
       canStart: true,
     });
   });
@@ -292,7 +292,7 @@ describe('«Обери правильне» on offer', () => {
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'correction',
       entryKind: 'correction',
-      group: 'corrections',
+      group: 'meaning',
       canStart: false,
       refusal: 'too-few-entries',
     });

@@ -191,7 +191,7 @@ describe('«Наголос» on offer', () => {
     expect(stressOffer(app)).toEqual({
       modeId: 'stress',
       entryKind: 'word',
-      group: 'words',
+      group: 'sound',
       canStart: true,
     });
   });
@@ -216,7 +216,7 @@ describe('«Наголос» on offer', () => {
     expect(stressOffer(app)).toEqual({
       modeId: 'stress',
       entryKind: 'word',
-      group: 'words',
+      group: 'sound',
       canStart: false,
       refusal: 'too-few-entries',
     });

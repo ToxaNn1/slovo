@@ -160,7 +160,7 @@ describe('«Звідки слово» on offer', () => {
     expect(originOffer(app)).toEqual({
       modeId: 'origin',
       entryKind: 'word',
-      group: 'words',
+      group: 'new',
       canStart: true,
     });
   });
@@ -191,7 +191,7 @@ describe('«Звідки слово» on offer', () => {
     expect(originOffer(app)).toEqual({
       modeId: 'origin',
       entryKind: 'word',
-      group: 'words',
+      group: 'new',
       canStart: false,
       refusal: 'too-few-entries',
     });

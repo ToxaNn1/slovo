@@ -185,7 +185,7 @@ describe('«Склади вислів» on offer', () => {
     expect(buildIdiomOffer(app)).toEqual({
       modeId: 'build-idiom',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'new',
       canStart: true,
     });
   });
@@ -204,7 +204,7 @@ describe('«Склади вислів» on offer', () => {
     expect(buildIdiomOffer(app)).toEqual({
       modeId: 'build-idiom',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'new',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -220,7 +220,7 @@ describe('«Склади вислів» on offer', () => {
     expect(buildIdiomOffer(app)).toEqual({
       modeId: 'build-idiom',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'new',
       canStart: false,
       refusal: 'idioms-out-of-mix',
     });

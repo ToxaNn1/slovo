@@ -130,7 +130,7 @@ describe('«Пари» on offer', () => {
     expect(pairsOffer(app)).toEqual({
       modeId: 'pairs',
       entryKind: 'word',
-      group: 'words',
+      group: 'meaning',
       canStart: true,
     });
   });
@@ -150,7 +150,7 @@ describe('«Пари» on offer', () => {
     expect(pairsOffer(app)).toEqual({
       modeId: 'pairs',
       entryKind: 'word',
-      group: 'words',
+      group: 'meaning',
       canStart: false,
       refusal: 'too-few-entries',
     });

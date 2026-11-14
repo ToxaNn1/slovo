@@ -77,6 +77,7 @@ function tilesRound(
 export const byLettersMode: GameMode = {
   id: 'by-letters',
   group: 'words',
+  hubGroup: 'new',
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gameByLetters'),
   buildRound({ answer, edition, random, comparison }) {

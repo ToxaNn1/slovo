@@ -14,6 +14,7 @@ import { guessWord } from './guess-word';
 export const survivalMode: GameMode = {
   id: 'survival',
   group: 'challenge',
+  hubGroup: 'new',
   entryKind: 'correction',
   alsoAsks: ['word'],
   lives: 3,

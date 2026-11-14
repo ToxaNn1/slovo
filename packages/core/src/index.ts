@@ -78,7 +78,9 @@ export {
   type RoundBlank,
 } from './game/game';
 export {
+  GAME_HUB_GROUPS,
   GAME_MODE_GROUPS,
+  type OfferedGroup,
   type AnswerSheet,
   type ChipLayout,
   type FixedChip,
