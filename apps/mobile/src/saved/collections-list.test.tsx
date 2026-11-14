@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionsScreen from '../app/saved/collections/index';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
+import { handDeleteUndo } from './collection-undo';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
@@ -265,6 +266,49 @@ describe('Collections in the board style', () => {
     expect(screen.getByText('Пізня осінь')).toBeOnTheScreen();
     expect(screen.getByText(editionStrings.collections.toasts.renamed)).toBeOnTheScreen();
     expect(composition.collections.list.map(({ name }) => name)).toEqual(['Пізня осінь']);
+  });
+
+  it('deletes from the menu after the delete sheet, and its undo brings the Collection back', async () => {
+    const autumn = await collection('Осінь');
+    await composition.collections.add(autumn, 'w_kvasha');
+    const before = composition.collections.list;
+    await renderScreen();
+
+    await longPress(autumn);
+    await fireEvent.press(screen.getByTestId('collections-menu-delete'));
+    await settle();
+    expect(screen.getByText(strings.confirmDelete.message)).toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('collections-delete-confirm'));
+    await settle();
+
+    expect(composition.collections.list).toEqual([]);
+    expect(screen.getByText(editionStrings.collections.toasts.deleted)).toBeOnTheScreen();
+    await fireEvent.press(
+      screen.getByRole('button', { name: editionStrings.collections.toasts.undo }),
+    );
+    await settle();
+
+    expect(composition.collections.list).toEqual(before);
+    expect(composition.collections.has(autumn, 'w_kvasha')).toBe(true);
+    expect(card(autumn)).toBeOnTheScreen();
+  });
+
+  it('offers the undo of a Collection deleted on its own screen', async () => {
+    const autumn = await collection('Осінь');
+    await renderScreen();
+
+    await act(async () => {
+      const deleted = await composition.collections.delete(autumn);
+      if (deleted !== undefined) handDeleteUndo(deleted);
+    });
+    await settle();
+    await fireEvent.press(
+      screen.getByRole('button', { name: editionStrings.collections.toasts.undo }),
+    );
+    await settle();
+
+    expect(composition.collections.list.map(({ id }) => id)).toEqual([autumn]);
+    expect(mockPush).toHaveBeenCalledWith(`/saved/collections/${autumn}`);
   });
 
   it('shows the empty state with no Collections, whose button makes the first one', async () => {
