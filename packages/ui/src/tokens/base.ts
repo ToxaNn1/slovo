@@ -82,7 +82,7 @@ export const coreTokens: DesignTokens = {
     },
   },
   fontFamilies: { word: undefined, ui: undefined },
-  radii: { tile: 14, card: 22, chip: 14, button: 14, sheet: 22 },
+  radii: { tile: 14, card: 22, chip: 11, button: 14, sheet: 22 },
 };
 
 /** The Edition's tokens over the Core's neutral ones, group by group. */
