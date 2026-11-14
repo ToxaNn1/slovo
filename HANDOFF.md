@@ -1,5 +1,4 @@
 STATUS: RUNNING
-WAITING until 13:07Z for #1845 DONE commit
 # Coordinator handoff — Feed f5 wave, spec #1842
 
 ## Grant
@@ -13,7 +12,8 @@ Implementers: Opus subagents (Agent tool, worktree), each pushes its ticket bran
 ## State
 - #1843: DONE, merged into feat/1842-weekly-board, core checks green. Report: commit body of origin/feat/1843-feed-f5-core tip. Owner identity: .github/owner-email via scratchpad og.sh (gmail push is refused by GitHub email privacy).
 - #1844: DONE, merged. Report: tip body of origin/feat/1844-feed-f5-week. Known red: mobile swipe-marks-on-screen «leave Yesterday» test, handed to #1845.
-- #1845: implementer running on feat/1845-feed-f5-yesterday-quiz.
+- #1845: DONE, merged; all lane checks green (core, ui, mobile, contracts, deps, prettier).
+- Code review: reviewer running on feat/1842-weekly-board vs origin/main; then one fixer on feat/1842-review-fixes.
 
 ## Next
 On each DONE: fetch, merge --no-ff into feat/1842-weekly-board, run package checks, push, launch next.
