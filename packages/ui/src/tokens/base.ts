@@ -565,6 +565,10 @@ export const typeRoles = {
   settingsTitle: role('word', '800', 22, 22),
   /** The title of a screen that a Settings row opens, beside its back tile. */
   settingsSubTitle: role('word', '800', 20, 22),
+  /** The number between a stepper's − and + (board 11, 90). */
+  stepperValue: role('word', '900', 64, 64, -2),
+  /** The − or + on a stepper's tile. */
+  stepperGlyph: role('word', '900', 28, 28),
   /** The hero Word's Definition under its Lemma on the onboarding welcome. */
   heroDefinition: role('word', '500', 22, 29),
   /** A weekday's letters over a column of the Active Days calendar. */

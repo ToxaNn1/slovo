@@ -108,3 +108,6 @@ export const narratorVoiceDrawing = {
   tileLineGap: 5,
   descriptionOpacity: 0.75,
 } as const;
+
+/** A stepper's drawing (board 11, 90): the sunken track's padding and corner, and the − and + tiles. */
+export const stepperDrawing = { padding: 10, radius: 20, tile: 64, tileRadius: 16 } as const;

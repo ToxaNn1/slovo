@@ -108,6 +108,7 @@ export { Mascot } from './primitives/Mascot';
 export { Placeholder } from './primitives/Placeholder';
 export { PronunciationButton } from './entries/PronunciationButton';
 export { SegmentedControl } from './primitives/SegmentedControl';
+export { Stepper } from './primitives/Stepper';
 export { Switch } from './primitives/Switch';
 export { SearchField, SearchLink } from './primitives/SearchField';
 export { ProblemLine, TextField } from './primitives/TextField';
