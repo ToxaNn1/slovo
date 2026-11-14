@@ -129,6 +129,12 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   widgetHint: ['widget'],
   // The reader's choice of voice only changes what Pronunciation plays (ADR 0083).
   narratorVoice: ['pronunciation'],
+  // A Progress reset is a marker in the XP log (ADR 0133).
+  progressReset: ['xpLog'],
+  // The reader's name sits in the Profile's header (ADR 0136).
+  readerName: ['profile'],
+  // The widget previews show the widget the reader can add.
+  widgetPreviews: ['widget'],
 };
 
 /**

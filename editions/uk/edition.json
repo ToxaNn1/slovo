@@ -2,7 +2,7 @@
   "id": "uk",
   "locale": "uk-UA",
   "displayName": "SLOVO",
-  "accountName": "Акаунт SLOVO",
+  "accountName": "Акаунт",
   "languageTraits": {
     "stress": { "marked": true, "vowels": "а е є и і ї о у ю я" },
     "alphabet": "а б в г ґ д е є ж з и і ї й к л м н о п р с т у ф х ц ч ш щ ь ю я",
@@ -125,6 +125,11 @@
     "reduceMotion": "on",
     "forceUpdate": "on",
     "scrollToTop": "on",
+    "progressReset": "off",
+    "dataExport": "off",
+    "readerName": "off",
+    "widgetPreviews": "off",
+    "textSizeSteps": "off",
     "fastReveal": "on",
     "dashboard": "on",
     "mood": "on",
@@ -153,6 +158,7 @@
   "userSettingDefaults": {
     "theme": "system",
     "fontSize": "M",
+    "textSize": "system",
     "vibration": true,
     "notificationTimes": ["09:00", "13:00", "19:00"],
     "rarityCeiling": 5,

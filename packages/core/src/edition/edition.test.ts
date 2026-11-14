@@ -152,10 +152,16 @@ const validConfig = {
     profileGameBest: 'on',
     forceUpdate: 'on',
     scrollToTop: 'on',
+    progressReset: 'on',
+    dataExport: 'on',
+    readerName: 'on',
+    widgetPreviews: 'on',
+    textSizeSteps: 'on',
   },
   userSettingDefaults: {
     theme: 'system',
     fontSize: 'M',
+    textSize: 'system',
     vibration: true,
     notificationTimes: ['09:00'],
     mix: {
@@ -426,6 +432,7 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults).toEqual({
       theme: 'system',
       fontSize: 'M',
+      textSize: 'system',
       vibration: true,
       narratorVoice: 'anna',
       notificationTimes: ['09:00'],
@@ -685,6 +692,32 @@ describe('loadEdition', () => {
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
+  });
+
+  it.each([
+    'progressReset',
+    'dataExport',
+    'readerName',
+    'widgetPreviews',
+    'textSizeSteps',
+  ] as const)('refuses an Edition without the board 11 Feature Switch %s', (feature) => {
+    const { [feature]: _dropped, ...switches } = validConfig.featureSwitches;
+    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
+      InvalidEditionConfigError,
+    );
+  });
+
+  it('reports the three-step text size beside the S…XL font size it keeps for the old scale (ADR 0134)', () => {
+    const edition = loadEdition({
+      ...validConfig,
+      userSettingDefaults: {
+        ...validConfig.userSettingDefaults,
+        fontSize: 'L',
+        textSize: 'larger',
+      },
+    });
+
+    expect(edition.userSettingDefaults).toMatchObject({ fontSize: 'L', textSize: 'larger' });
   });
 
   it('refuses an Edition without the badges Feature Switch', () => {
@@ -1141,6 +1174,16 @@ describe('loadEdition', () => {
       'userSettingDefaults.fontSize',
     ],
     [
+      'an old font size as the three-step text size',
+      { userSettingDefaults: { ...userSettingDefaults, textSize: 'M' } },
+      'userSettingDefaults.textSize',
+    ],
+    [
+      'a missing three-step text size',
+      { userSettingDefaults: { ...userSettingDefaults, textSize: undefined } },
+      'userSettingDefaults.textSize',
+    ],
+    [
       'a missing Vibration default',
       { userSettingDefaults: { ...userSettingDefaults, vibration: undefined } },
       'userSettingDefaults.vibration',
@@ -1480,6 +1523,9 @@ describe('loadEdition', () => {
 
 /** Each Feature Switch that depends on others, with the switches it needs on. */
 const dependentSwitches = [
+  ['progressReset', ['xpLog']],
+  ['readerName', ['profile', 'xpLog']],
+  ['widgetPreviews', ['widget']],
   ['streakBreak', ['xpLog']],
   ['badges', ['xpLog']],
   ['levelLadder', ['xpLog']],

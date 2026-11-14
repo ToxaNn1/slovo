@@ -527,6 +527,16 @@ export const FeatureSwitchesSchema = z.strictObject({
   forceUpdate: FeatureSwitchStateSchema,
   /** «Нагору»: the round arrow-up button over a long list once the reader has scrolled down, which scrolls the list gently back to its top; off, no button. */
   scrollToTop: FeatureSwitchStateSchema,
+  /** «Скинути прогрес»: the button at the foot of Settings that writes a reset marker into the XP log (ADR 0133); off while `xpLog` is, and off there is no button. */
+  progressReset: FeatureSwitchStateSchema,
+  /** «Експортувати мої дані»: the row on «Конфіденційність» that builds the Data export on the device (ADR 0135); off, the row is absent and the screen still shows the privacy switch. */
+  dataExport: FeatureSwitchStateSchema,
+  /** The reader's name on the Profile: its header name and the «Ім’я» row (ADR 0136); off while `profile` is, and off the header shows the Level alone. */
+  readerName: FeatureSwitchStateSchema,
+  /** The widget previews «Малий», «Середній», «Екран блокування» over the widget steps; off while `widget` is, and off the screen shows the steps only. */
+  widgetPreviews: FeatureSwitchStateSchema,
+  /** The three-step Text size «Як у системі», «Більший», «Найбільший» and its screen «Шрифт і розмір» (ADR 0134); off, the S…XL scale and its row work as before. */
+  textSizeSteps: FeatureSwitchStateSchema,
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -722,6 +732,14 @@ export const FontSizeSchema = z.enum(['S', 'M', 'L', 'XL']);
 export type FontSize = z.infer<typeof FontSizeSchema>;
 
 /**
+ * The three-step Text size (ADR 0134): «Як у системі» follows the phone's
+ * text size within a cap, «Більший» and «Найбільший» sit above it.
+ */
+export const TextSizeSchema = z.enum(['system', 'larger', 'largest']);
+
+export type TextSize = z.infer<typeof TextSizeSchema>;
+
+/**
  * The Daily Goal (ADR 0074): the Words the reader aims to see on a local day.
  * It replaces the Daily Limit of ADR 0054.
  */
@@ -809,7 +827,10 @@ export type MixConfig = z.infer<typeof MixConfigSchema>;
 /** The settings a new user starts with. */
 export const UserSettingDefaultsConfigSchema = z.strictObject({
   theme: ThemeSchema,
+  /** The font size of the S…XL scale, in force while `textSizeSteps` is off (ADR 0134). */
   fontSize: FontSizeSchema,
+  /** The three-step Text size a new user starts with, in force while `textSizeSteps` is on (ADR 0134). */
+  textSize: TextSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),
   /** The default notification times, kept in time order. */
