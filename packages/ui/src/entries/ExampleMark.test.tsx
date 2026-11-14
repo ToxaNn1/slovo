@@ -8,10 +8,10 @@ import { typeRoles } from '../tokens';
 
 const hidden = { includeHiddenElements: true };
 
-async function renderMark(example: string) {
+async function renderMark(example: string, edge: 'open' | 'close' = 'open') {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={testStrings({ wordCard: { example } })}>
-      <ExampleMark testID="mark" />
+      <ExampleMark testID="mark" edge={edge} />
     </EditionProvider>,
   );
 }
@@ -39,6 +39,27 @@ describe("the big red quote mark over a card's first Example (boards p1 and XEnt
 
   it('draws nothing when the Edition quotes an Example without an opening mark', async () => {
     await renderMark('{text}');
+
+    expect(screen.queryByTestId('mark', hidden)).toBeNull();
+    expect(screen.queryByTestId('mark-box', hidden)).toBeNull();
+  });
+
+  it("closes the quote with the Edition's closing mark in the same style, at the right (owner 14.11)", async () => {
+    await renderMark('«{text}»', 'close');
+
+    const mark = screen.getByTestId('mark', hidden);
+    expect(mark).toHaveTextContent('»');
+    expect(mark).toHaveStyle({
+      fontSize: typeRoles.exampleMark.size,
+      fontWeight: typeRoles.exampleMark.weight,
+      position: 'absolute',
+      right: 0,
+    });
+    expect(mark).not.toHaveStyle({ left: 0 });
+  });
+
+  it('draws no closing mark when the Edition quotes an Example without one', async () => {
+    await renderMark('— {text}', 'close');
 
     expect(screen.queryByTestId('mark', hidden)).toBeNull();
     expect(screen.queryByTestId('mark-box', hidden)).toBeNull();

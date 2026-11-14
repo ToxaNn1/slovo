@@ -116,14 +116,15 @@ function TabContent({
       return (
         <>
           <View style={styles.quote}>
-            <ExampleMark testID="word-example-mark" />
-            {/* The first Example is the tab's large quote. */}
+            <ExampleMark testID="word-example-mark" edge="open" />
+            {/* The first Example is the tab's large quote, closed by a mark like the one over it (owner 14.11). */}
             <ExampleText
               testID="word-example"
               example={first}
               size={sizes.definition}
               quoted={false}
             />
+            <ExampleMark testID="word-example-close-mark" edge="close" />
           </View>
           {rest.map((example, index) => (
             <ExampleText key={index} example={example} size={sizes.example} quoted={false} />

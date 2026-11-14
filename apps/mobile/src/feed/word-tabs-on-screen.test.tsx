@@ -639,7 +639,7 @@ describe('the look of a tabbed Word card in the Feed (board p1)', () => {
     expect(grammar().getByTestId('word-category', hidden)).toBeTruthy();
   });
 
-  it('quotes the Example under a big red opening mark, not wrapped in the marks', async () => {
+  it('quotes the Example between a big red opening and closing mark, not wrapped in the marks', async () => {
     await open(fullWord);
     await renderApp();
     await swipeUp();
@@ -648,6 +648,9 @@ describe('the look of a tabbed Word card in the Feed (board p1)', () => {
 
     const card = wordCard();
     expect(card.getByTestId('word-example-mark', hidden)).toHaveStyle({ color: accent });
+    // The closing mark ends the quote in the same style (owner 14.11).
+    expect(card.getByTestId('word-example-close-mark', hidden)).toHaveStyle({ color: accent });
+    expect(card.getByTestId('word-example-close-mark', hidden)).toHaveTextContent('»');
     expect(card.getByText('Сумирний кінь стояв тихо.', hidden)).toBeTruthy();
     expect(card.queryByText('«Сумирний кінь стояв тихо.»', hidden)).toBeNull();
   });
