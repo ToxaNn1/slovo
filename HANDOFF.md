@@ -19,3 +19,4 @@ Coordinator #2 = mcp:launch:7e792e9d30bc6026beab563942447df4b640b92903e06093a936
 WAITING until 2026-11-14T23:59Z: #1876 UI-part implementer (subagent in safety-net session)
 - 23:05Z review-1 done (0 blocker, 3 should, 6 nit; #3 = reset marker, lands with #1876); PR body drafted; fixer after #1876 merge
 - 23:16Z #1876 DONE (UI part in this session) merged, core+ui+mobile green, pushed; next: fixer fix/1861-review
+WAITING until 2026-11-15T00:09Z: review fixer (subagent, branch fix/1861-review)
