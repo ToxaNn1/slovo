@@ -4,7 +4,7 @@ import { loadEdition, openComposition, systemRandom, type Composition } from '@s
 import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Tabs } from 'expo-router';
-import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -17,7 +17,6 @@ import { screenSettled } from '../use-open-screen';
 
 const { config } = activeEditionFiles;
 const { collections: strings } = editionStrings;
-const { known: knownText } = editionStrings.dashboard.category;
 const menuLabel = fill(strings.screen.moreLabel, { name: 'Осінь' });
 const count = pluralCount(edition.locale);
 
@@ -103,7 +102,7 @@ async function collectionOf(entryIds: readonly string[]): Promise<string> {
 }
 
 /** The Saved tab's Collection screen of `collectionId`, with the board style as a test leaves it. */
-async function renderCollection(collectionId: string) {
+async function renderCollection(collectionId: string, query = '') {
   const editionInEffect: typeof edition = {
     ...edition,
     isFeatureEnabled: (feature) =>
@@ -125,6 +124,7 @@ async function renderCollection(collectionId: string) {
                 <Tabs.Screen name="index" />
                 <Tabs.Screen name="saved/collections/index" />
                 <Tabs.Screen name="saved/collections/[collectionId]/index" />
+                <Tabs.Screen name="saved/collections/[collectionId]/[entryId]" />
               </Tabs>
             </EditionProvider>
           </ShellProvider>
@@ -133,41 +133,70 @@ async function renderCollection(collectionId: string) {
       index: () => <Text>Feed</Text>,
       'saved/collections/index': () => <Text>Collections</Text>,
       'saved/collections/[collectionId]/index': CollectionScreen,
+      'saved/collections/[collectionId]/[entryId]': () => <Text>Entry</Text>,
     },
-    { initialUrl: `/saved/collections/${collectionId}` },
+    { initialUrl: `/saved/collections/${collectionId}${query}` },
   );
   await settle();
   return { pathname: () => app.getPathname() };
 }
 
-const kicker = (amount: number) =>
-  fill(strings.screen.kicker, { count: count(strings.screen.wordCount, amount) });
-const known = (x: number, n: number) => fill(knownText, { x: String(x), n: String(n) });
+const wordCount = (amount: number) => count(strings.screen.wordCount, amount);
 
 describe('a Collection in the board style', () => {
-  it('reads «КОЛЕКЦІЯ · N слів», its name and no description, and «ЗНАЮ x З n» of its Entries', async () => {
-    const id = await collectionOf(['w_one', 'w_two', 'i_idle']);
-    await composition.knowledge.set('w_one', 'known');
+  it('reads its name and «N слів» over its Entries as rows, each with its meaning', async () => {
+    const id = await collectionOf(['w_one', 'i_idle']);
     await renderCollection(id);
 
-    expect(screen.getByTestId('collection-hero-kicker')).toHaveTextContent(kicker(3));
     expect(screen.getByRole('header', { name: 'Осінь' })).toBeOnTheScreen();
-    expect(screen.queryByTestId('collection-hero-description')).not.toBeOnTheScreen();
-    expect(screen.getByTestId('collection-hero-progress')).toHaveTextContent(known(1, 3));
+    expect(screen.getByTestId('collection-count')).toHaveTextContent(wordCount(2));
+    expect(screen.getByTestId('collection-row-w_one-open')).toHaveTextContent(/тихий/);
+    expect(screen.getByTestId('collection-row-i_idle-open')).toHaveTextContent(/Ледарювати\./);
+    expect(screen.queryByTestId('collection-hero-kicker')).not.toBeOnTheScreen();
   });
 
-  it('opens the Collection menu with rename, share and delete', async () => {
+  it('opens an Entry from its row', async () => {
+    const id = await collectionOf(['w_one']);
+    const app = await renderCollection(id);
+
+    await settle(() => fireEvent.press(screen.getByTestId('collection-row-w_one-open')));
+
+    expect(app.pathname()).toBe(`/saved/collections/${id}/w_one`);
+  });
+
+  it('takes an Entry out of the Collection on a swipe', async () => {
+    const id = await collectionOf(['w_one']);
+    await renderCollection(id);
+
+    await settle(() =>
+      fireEvent(screen.getByTestId('collection-row-w_one-open'), 'accessibilityAction', {
+        nativeEvent: { actionName: 'remove' },
+      }),
+    );
+
+    expect(composition.collections.entries(id)).toHaveLength(0);
+  });
+
+  it('shares the link from the foot of a Collection with Entries', async () => {
+    const id = await collectionOf(['w_one']);
+    await renderCollection(id);
+
+    expect(screen.getByRole('button', { name: strings.link.share })).toBeOnTheScreen();
+  });
+
+  it('opens the Collection menu under its name with share, rename and delete', async () => {
     const id = await collectionOf(['w_one']);
     await renderCollection(id);
 
     await settle(() => fireEvent.press(screen.getByRole('button', { name: menuLabel })));
 
+    expect(within(screen.getByTestId('collection-menu')).getByText('Осінь')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: strings.screen.menu.rename })).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: strings.link.share })).toBeOnTheScreen();
+    expect(screen.getAllByRole('button', { name: strings.link.share })).toHaveLength(2);
     expect(screen.getByRole('button', { name: strings.screen.menu.delete })).toBeOnTheScreen();
   });
 
-  it('renames the Collection from its menu', async () => {
+  it('renames the Collection in the name sheet and says so', async () => {
     const id = await collectionOf(['w_one']);
     await renderCollection(id);
 
@@ -176,9 +205,29 @@ describe('a Collection in the board style', () => {
     // The menu slides away first, then what it chose opens.
     await settle();
     await settle(() => fireEvent.changeText(screen.getByDisplayValue('Осінь'), 'Зима'));
-    await settle(() => fireEvent(screen.getByDisplayValue('Зима'), 'submitEditing'));
+    await settle(() =>
+      fireEvent.press(screen.getByRole('button', { name: strings.nameSheet.save })),
+    );
 
     expect(screen.getByRole('header', { name: 'Зима' })).toBeOnTheScreen();
+    expect(screen.getByText(strings.toasts.renamed)).toBeOnTheScreen();
+  });
+
+  it('keeps the name sheet open with why a name is refused', async () => {
+    const id = await collectionOf(['w_one']);
+    await composition.collections.create('Зима');
+    await renderCollection(id);
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: menuLabel })));
+    await settle(() => fireEvent.press(screen.getByTestId('collection-menu-rename')));
+    await settle();
+    await settle(() => fireEvent.changeText(screen.getByDisplayValue('Осінь'), 'зима'));
+    await settle(() =>
+      fireEvent.press(screen.getByRole('button', { name: strings.nameSheet.save })),
+    );
+
+    expect(screen.getByText(strings.sheet.refusal.duplicate)).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Осінь' })).toBeOnTheScreen();
   });
 
   it('deletes the Collection from its menu and goes back to Collections', async () => {
@@ -197,55 +246,22 @@ describe('a Collection in the board style', () => {
     expect(app.pathname()).toBe('/saved/collections');
   });
 
-  it('draws a Word card with bars and an Idiom card with its meaning and no bars', async () => {
-    const id = await collectionOf(['w_one', 'i_idle']);
-    await renderCollection(id);
-
-    expect(screen.getAllByTestId(/^collection-entry-w_one-bar-/)).toHaveLength(5);
-    expect(screen.getByTestId('collection-entry-i_idle')).toHaveTextContent(/Ледарювати\./);
-    expect(screen.queryAllByTestId(/^collection-entry-i_idle-bar-/)).toHaveLength(0);
-  });
-
-  it('shows the hero and no cards for an empty Collection', async () => {
+  it('says an empty Collection is empty, with no share at the foot', async () => {
     const id = await collectionOf([]);
     await renderCollection(id);
 
-    expect(screen.getByTestId('collection-hero-kicker')).toHaveTextContent(kicker(0));
-    expect(screen.getByTestId('collection-hero-progress')).toHaveTextContent(known(0, 0));
-    expect(screen.queryAllByTestId(/^collection-entry-/)).toHaveLength(0);
-    expect(screen.queryByTestId('collection-empty')).not.toBeOnTheScreen();
-  });
-
-  // DESIGN-05: not on the board, owner decides
-  it.skip('closes the list with «Найновіші — першими…»', async () => {
-    const id = await collectionOf(['w_one']);
-    await renderCollection(id);
-
-    expect(screen.getByText(strings.entries.footer)).toBeOnTheScreen();
-  });
-
-  // DESIGN-05: not on the board, owner decides
-  it.skip('takes an Entry out of the Collection on a swipe', async () => {
-    const id = await collectionOf(['w_one']);
-    await renderCollection(id);
-
-    await settle(() =>
-      fireEvent.press(
-        screen.getByRole('button', {
-          name: fill(strings.entries.removeLabel, { title: 'тихий', name: 'Осінь' }),
-        }),
-      ),
+    expect(screen.getByTestId('collection-count')).toHaveTextContent(wordCount(0));
+    expect(screen.getByTestId('collection-empty')).toHaveTextContent(
+      new RegExp(strings.entries.empty.title),
     );
-
-    expect(composition.collections.entries(id)).toHaveLength(0);
+    expect(screen.queryByTestId('collection-share')).not.toBeOnTheScreen();
   });
 
-  // DESIGN-05: not on the board, owner decides
-  it.skip('shows each Entry’s kind and when it was added, «слово · 3 лист.»', async () => {
-    const id = await collectionOf(['w_one']);
-    await renderCollection(id);
+  it('says the Collection just made is made', async () => {
+    const id = await collectionOf([]);
+    await renderCollection(id, '?created=1');
 
-    expect(screen.getByTestId('collection-entry-w_one')).toHaveTextContent(/29 жовт\./);
+    expect(screen.getByText(fill(strings.toasts.created, { name: 'Осінь' }))).toBeOnTheScreen();
   });
 });
 
