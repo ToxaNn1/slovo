@@ -149,6 +149,11 @@ describe('the Search screen', () => {
     expect(screen.queryByTestId('search-nothing-found')).not.toBeOnTheScreen();
     expect(screen.getByRole('header', { name: strings.keepTyping })).toBeOnTheScreen();
 
+    // A Stress mark is no letter, as «За значенням» counts them.
+    await type('жж́');
+    expect(screen.queryByTestId('search-nothing-found')).not.toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: strings.keepTyping })).toBeOnTheScreen();
+
     await type('ж');
     expect(screen.queryByTestId('search-nothing-found')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('search-group-words')).not.toBeOnTheScreen();

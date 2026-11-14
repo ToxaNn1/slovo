@@ -67,9 +67,16 @@ export interface Search {
   /**
    * Whether Search answers the query: 2 letters of its Comparison Key at least,
    * while the Edition turns Search on. A query it answers with no Entry found
-   * is «Нічого не знайдено»; one it doesn't answer, nothing yet.
+   * is «Нічого не знайдено» once it answers «За значенням» too; one it doesn't
+   * answer, nothing yet.
    */
   answers(query: string): boolean;
+  /**
+   * Whether «За значенням» answers the query too: 3 letters of its Comparison
+   * Key at least, while the Edition turns Search on. Below it, a query that
+   * found nothing reads «Продовжуй вводити» (ADR 0054).
+   */
+  answersByMeaning(query: string): boolean;
 }
 
 const NOTHING: SearchResults = {
@@ -185,11 +192,14 @@ export function createSearch({
     tip: readKeyedOnce(entriesOf('tip')),
   } satisfies Record<MixKind, unknown>;
 
-  const answers = (query: string) =>
-    edition.isFeatureEnabled('search') && Array.from(keyOf(query)).length >= SHORTEST_QUERY;
+  const answersFrom = (shortest: number) => (query: string) =>
+    edition.isFeatureEnabled('search') && Array.from(keyOf(query)).length >= shortest;
+  const answers = answersFrom(SHORTEST_QUERY);
+  const answersByMeaning = answersFrom(SHORTEST_MEANING_QUERY);
 
   return {
     answers,
+    answersByMeaning,
     async search(query) {
       if (!answers(query)) return NOTHING;
       const wanted = keyOf(query);
@@ -211,7 +221,7 @@ export function createSearch({
         hidden: ReadonlyMap<string, string>,
         listed: ReadonlySet<string>,
       ) =>
-        Array.from(wanted).length < SHORTEST_MEANING_QUERY
+        !answersByMeaning(query)
           ? []
           : keyed
               .filter(
@@ -271,6 +281,7 @@ function found(results: SearchResults): number {
 export function withNoResultEvent(search: Search, analytics: Pick<Analytics, 'track'>): Search {
   return {
     answers: (query) => search.answers(query),
+    answersByMeaning: (query) => search.answersByMeaning(query),
     async search(query) {
       const results = await search.search(query);
       if (search.answers(query) && found(results) === 0)
