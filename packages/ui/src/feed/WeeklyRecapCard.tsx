@@ -365,7 +365,10 @@ function usePop(index: number) {
       withTiming(to, { duration, easing: popEasing, reduceMotion: ReduceMotion.Never });
     scale.value = withDelay(
       pop.delay + index * pop.stagger,
-      withSequence(leg(pop.peak, pop.duration * pop.peakAt), leg(1, pop.duration * (1 - pop.peakAt))),
+      withSequence(
+        leg(pop.peak, pop.duration * pop.peakAt),
+        leg(1, pop.duration * (1 - pop.peakAt)),
+      ),
       ReduceMotion.Never,
     );
   }, [scale, index, reduceMotion]);
