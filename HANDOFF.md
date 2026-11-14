@@ -18,3 +18,5 @@ Owner ran /mattpocock-skills:implement-spec on #1861. Follow that SKILL.md + doc
 3. All merged → code-review → one fixer → handbook check → PR ready; main merge only on owner word.
 
 2026-11-14T21:04:23Z safety net takeover (last commit 2026-11-14T20:38:42Z)
+2026-11-14T21:05:35Z safety net: laptop #1862B lost (never pushed); relaunched in cloud session_01VefVQREFCbF3Sv6M6B6ifH on chore/1862-board11-switches. Cloud env git email is rejected by GitHub (email privacy): briefs must export the noreply address. Cloud setup (Postgres) failed at session start.
+WAITING until 2026-11-14T22:35:35Z: #1862B DONE commit on chore/1862-board11-switches
