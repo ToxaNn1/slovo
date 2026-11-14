@@ -9,7 +9,7 @@ Dev-only tooling, never shipped in an app. It turns a list of Lemmas into draft 
   - «Етимологія»: etymology from ЕСУМ.
 - **СУМ-11** on [sum.in.ua](https://sum.in.ua), or the newest copy in the [Wayback Machine](https://web.archive.org): a fallback for Lemmas goroh has no explanatory article for. Both addresses go into the sources (`url` and `archivedUrl`). Each host gets one quick try per run; once it refuses or times out, it is skipped for the rest of the run.
 
-The dictionaries are Ukrainian, so the tool refuses an Edition in any other language. Every field comes from one of these sources. What they leave open stays empty and is flagged. A human or an agent takes the ready drafts and moves them into `editions/uk/content/words/`; since ADR 0080 a content wave reaches `main` through `pnpm content check` and CI without the owner reading the drafts.
+Every command checks its drafts against the Edition's existing records, read from its content snapshot (ADR 0090): `--snapshot <file>`, else the backend's at `$SLOVO_API_URL` (`GET /v1/editions/{id}/content/snapshot`); with neither it exits 2 and drafts nothing, never against an empty Edition, and it never reads the Edition folder's content files. The dictionaries are Ukrainian, so the tool refuses an Edition in any other language. Every field comes from one of these sources. What they leave open stays empty and is flagged. A human or an agent takes the ready drafts and moves them into `editions/uk/content/words/`; since ADR 0080 a content wave reaches `main` through `pnpm content check` and CI without the owner reading the drafts.
 
 ## Run it
 
