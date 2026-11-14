@@ -23,3 +23,5 @@
 - 14.11 cloud coordinator: started; implement-spec plugin absent in cloud, ran by docs/agents/waves.md; integration feat/1831-word-meaning = main a1a3d6e6; ADR 0127 free; lane packages/core, apps/mobile, packages/ui, editions/uk, packages/contracts, CONTEXT.md, docs/adr; #1832 implementer (Opus, worktree) launched.
 - WAITING until 2026-11-14T13:42:38Z: #1832 implementer (polling in 20 min blocks)
 - 14.11 owner: «рев'ю коду можеш зробити… ревью UI буду робити сам» = keep the code-review step; no UI verification, screenshots or simulators from the wave; the owner checks the UI himself.
+- #1832 DONE, merged into feat/1831-word-meaning; draft PR #1838. #1833 implementer (Fable, worktree) launched.
+- WAITING until 2026-11-14T14:03:18Z: #1833 implementer
