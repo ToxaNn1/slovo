@@ -20,3 +20,4 @@
 
 ## Log
 - 14.11 local coordinator: spec, tickets, grant, this handoff; cloud coordinator launched.
+- 14.11 cloud coordinator: started; implement-spec plugin absent in cloud, ran by docs/agents/waves.md; integration feat/1831-word-meaning = main a1a3d6e6; ADR 0127 free; lane packages/core, apps/mobile, packages/ui, editions/uk, packages/contracts, CONTEXT.md, docs/adr; #1832 implementer (Opus, worktree) launched.
