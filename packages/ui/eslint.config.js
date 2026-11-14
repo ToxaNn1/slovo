@@ -54,7 +54,7 @@ export default [
       'src/dashboard/RailScreenCard.tsx',
       'src/dashboard/RailScreenHero.tsx',
       'src/categories/CategoryGrid.tsx',
-      'src/saved/CollectionNameSheet.tsx',
+      'src/primitives/NameSheet.tsx',
       'src/entries/CardTabs.tsx',
       'src/entries/SwipeMarks.tsx',
       'src/entries/reveal.tsx',

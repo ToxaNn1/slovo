@@ -9,7 +9,7 @@ import { Button } from '../primitives/Button';
 import { SheetTitle } from '../primitives/SheetParts';
 import { minTouchTarget, sheetLayout, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { useNameSubmit } from './useNameSubmit';
+import { useNameSubmit } from '../primitives/useNameSubmit';
 
 /**
  * The «До колекції» sheet (design 2c): the reader's Collections with a

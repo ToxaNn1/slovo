@@ -53,6 +53,7 @@ const everything: Shown = {
   crosswordSolvedScreen: true,
   crosswordSolveTime: true,
   profile: true,
+  readerName: true,
   profileConfirmedByRarity: true,
   profileGameBest: true,
   quickQuestion: true,
@@ -338,6 +339,7 @@ describe('what the reader is shown', () => {
       { off: ['streakFreezes'], shown: { streakFreezeCard: false } },
     ],
     ['no Badges with their switch off', { off: ['badges'], shown: { badges: false } }],
+    ['no reader name with its switch off', { off: ['readerName'], shown: { readerName: false } }],
     ['no Profile with its switch off', { off: ['profile'], shown: { profile: false } }],
     [
       'no confirmed Entries by rarity on the Profile with their switch off',

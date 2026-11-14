@@ -41,6 +41,17 @@ export const collectionMarks = [
 ] as const satisfies readonly Wedge[];
 
 /** The Profile's Level card, from the design: an ink card with a red wedge and the XP ring. */
+/** The Profile's header (board 11, t8): the avatar, the reader's name and the Level. */
+export const profileHeader = {
+  padding: 16,
+  radius: 20,
+  gap: 14,
+  /** The square avatar with the name's first letter, or the neutral mark. */
+  avatar: { side: 58, radius: 16, mark: 28 },
+  /** Between the name and the Level under it. */
+  lines: 5,
+};
+
 export const levelCard = {
   padding: 20,
   radius: 24,
