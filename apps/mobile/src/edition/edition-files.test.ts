@@ -1036,9 +1036,9 @@ describe('the board 11 strings', () => {
     expect(parsed.account).toMatchObject({
       orByEmail: 'або поштою',
       codeSent: 'Код надіслано на {email}',
-      sync: expect.objectContaining({ syncedToday: 'Синхронізовано сьогодні, {time}' }),
-      delete: expect.objectContaining({ button: 'Видалити акаунт' }),
     });
+    expect(parsed.account.sync.syncedToday).toBe('Синхронізовано сьогодні, {time}');
+    expect(parsed.account.delete.button).toBe('Видалити акаунт');
   });
 
   it('the UA Edition names its Account «Акаунт», and the sign-in email names SLOVO', () => {
