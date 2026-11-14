@@ -33,7 +33,6 @@ export default function RarityTestScreen() {
   const [round, setRound] = useState(0);
   useEffect(() => {
     let open = true;
-    setWords(undefined);
     rarityTest
       .draw()
       .then((drawn) => {
@@ -73,6 +72,7 @@ export default function RarityTestScreen() {
       onApply={applyRarityTest}
       onDone={back}
       onAgain={() => {
+        setWords(undefined);
         setRound((started) => started + 1);
       }}
       frame={frame}

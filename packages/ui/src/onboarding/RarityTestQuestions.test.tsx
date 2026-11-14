@@ -41,10 +41,7 @@ function frame({ testID, footer, children }: RarityTestScreen) {
   );
 }
 
-async function renderTest(
-  result: RarityTestResult | undefined,
-  onAgain?: () => void,
-) {
+async function renderTest(result: RarityTestResult | undefined, onAgain?: () => void) {
   const handlers = {
     onApply: jest.fn<ComponentProps<typeof RarityTestQuestions>['onApply']>(() =>
       Promise.resolve(result),
