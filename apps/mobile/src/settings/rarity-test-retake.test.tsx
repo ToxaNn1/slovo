@@ -187,13 +187,34 @@ describe('Settings › «Пройти тест ще раз»', () => {
     }
     await settle();
 
-    expect(screen.getByRole('header', { name: 'Твоя рідкість: до 2' })).toBeOnTheScreen();
-    await fireEvent.press(screen.getByRole('button', { name: editionStrings.rarityTest.next }));
+    expect(
+      screen.getByRole('header', {
+        name: 'Твоя рідкість — до 2. Стрічка бере незнайоме, рідші почекають.',
+      }),
+    ).toBeOnTheScreen();
+    expect(screen.getByText('9 з 10 слів знайомі.')).toBeOnTheScreen();
+    expect(screen.queryByText(/від \d до/)).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: rarityTest.done }));
     await settle();
     expect(screen.getByRole('header', { name: editionStrings.settings.title })).toBeOnTheScreen();
 
     expect(screen.getByTestId('settings-rarity-2')).toBeSelected();
     expect(screen.getByTestId('settings-rarity-4')).not.toBeSelected();
+  });
+
+  it('offers the Rarity Test again from its result, drawn anew', async () => {
+    await renderSettings();
+    await open(rarityTest.retake);
+    for (let asked = 0; asked < 10; asked++) {
+      await fireEvent.press(screen.getByRole('button', { name: knowledge.known }));
+    }
+    await settle();
+
+    await fireEvent.press(screen.getByRole('button', { name: rarityTest.again }));
+    await settle();
+
+    expect(screen.getByText('1 з 10')).toBeOnTheScreen();
+    expect(screen.getByText(rarityTest.question)).toBeOnTheScreen();
   });
 
   it('leaves the Rarity Ceiling as it was when the reader goes back halfway', async () => {

@@ -18,9 +18,10 @@ import { rarityTestQuestionOf, useApplyRarityTest } from '@/mix/rarity-test';
 
 /**
  * Settings › «Пройти тест ще раз»: the Rarity Test of the onboarding, drawn
- * afresh from the Mix. Its result overwrites the Rarity Ceiling (ADR 0072), and
- * «Далі» goes back to Settings; going back before the last answer sets
- * nothing. A draw with no Word goes back at once.
+ * afresh from the Mix. Its result overwrites the Rarity Ceiling (ADR 0072);
+ * «ГОТОВО» goes back to Settings and «Перевірити рівень ще раз» draws a new
+ * test at once. Going back before the last answer sets nothing. A draw with
+ * no Word goes back at once.
  */
 export default function RarityTestScreen() {
   const { colors } = useTokens();
@@ -28,8 +29,11 @@ export default function RarityTestScreen() {
   const { rarityTest } = useComposition();
   const applyRarityTest = useApplyRarityTest();
   const [words, setWords] = useState<readonly RarityTestQuestion[]>();
+  /** How many times the test was started here, so «Перевірити рівень ще раз» draws anew. */
+  const [round, setRound] = useState(0);
   useEffect(() => {
     let open = true;
+    setWords(undefined);
     rarityTest
       .draw()
       .then((drawn) => {
@@ -44,7 +48,7 @@ export default function RarityTestScreen() {
     return () => {
       open = false;
     };
-  }, [rarityTest, router]);
+  }, [rarityTest, router, round]);
 
   const back = () => {
     router.back();
@@ -63,10 +67,14 @@ export default function RarityTestScreen() {
     return frame({ testID: 'settings-rarity', footer: null, children: null });
   return (
     <RarityTestQuestions
+      key={round}
       testID="settings-rarity"
       words={words}
       onApply={applyRarityTest}
       onDone={back}
+      onAgain={() => {
+        setRound((started) => started + 1);
+      }}
       frame={frame}
     />
   );

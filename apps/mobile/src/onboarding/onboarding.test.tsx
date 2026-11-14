@@ -189,6 +189,10 @@ describe('the onboarding', () => {
     while (screen.queryByTestId('onboarding-rarity-question') !== null) {
       await press('onboarding-rarity-known');
     }
+    // One button goes on: no «ГОТОВО» and no test again, as from Settings.
+    expect(await screen.findByText(/^(\d+) з \1 слів знайомі\.$/)).toBeTruthy();
+    expect(screen.queryByText(editionStrings.rarityTest.again)).toBeNull();
+    expect(screen.queryByText(editionStrings.rarityTest.done)).toBeNull();
     await press('onboarding-rarity-next');
 
     expect(composition.rarityCeiling.state).toBe(5);
