@@ -145,21 +145,24 @@ export default function SettingsScreen() {
                 }}
               />
             )}
-            <ChoiceRow
-              icon="square"
-              label={strings.fontSize}
-              segments={fontSizeSegments}
-              selected={current.fontSize}
-              onSelect={(fontSize) => {
-                update({ fontSize });
-              }}
-            >
-              <FontSizePreview
-                testID="settings-font-size-preview"
-                lemma={strings.fontSizePreview.lemma}
-                definition={strings.fontSizePreview.definition}
-              />
-            </ChoiceRow>
+            {/* The S…XL row while the three-step text size is off; its own screen comes with it (ADR 0134). */}
+            {!shown.textSizeSteps && (
+              <ChoiceRow
+                icon="square"
+                label={strings.fontSize}
+                segments={fontSizeSegments}
+                selected={current.fontSize}
+                onSelect={(fontSize) => {
+                  update({ fontSize });
+                }}
+              >
+                <FontSizePreview
+                  testID="settings-font-size-preview"
+                  lemma={strings.fontSizePreview.lemma}
+                  definition={strings.fontSizePreview.definition}
+                />
+              </ChoiceRow>
+            )}
           </SettingsGroup>
         </View>
         <View testID="settings-group-sound" style={styles.section}>

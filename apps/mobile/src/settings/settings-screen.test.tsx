@@ -146,7 +146,7 @@ describe('Settings, as the board', () => {
   });
 
   it('keeps every row of the app under the group the board gives it', async () => {
-    await renderSettings();
+    await renderSettings({ textSizeSteps: false });
 
     const groups: Record<string, string[]> = {
       look: ['settings-theme-light', 'settings-font-size-M'],
@@ -163,6 +163,23 @@ describe('Settings, as the board', () => {
       const group = screen.getByTestId(`settings-group-${key}`);
       for (const row of rows) expect(within(group).getByTestId(row)).toBeOnTheScreen();
     }
+  });
+});
+
+describe('Settings › the text size (ADR 0134)', () => {
+  it('keeps the S…XL row while the three-step text size is off, and it changes the font size', async () => {
+    const settings = await renderSettings({ textSizeSteps: false });
+
+    await fireEvent.press(screen.getByTestId('settings-font-size-XL'));
+
+    expect(await settings.read()).toMatchObject({ fontSize: 'XL', textSize: 'system' });
+  });
+
+  it('has no S…XL row while the three-step text size is on', async () => {
+    await renderSettings({ textSizeSteps: true });
+
+    expect(screen.getByTestId('settings-theme-light')).toBeOnTheScreen();
+    expect(screen.queryByTestId('settings-font-size-M')).toBeNull();
   });
 });
 
