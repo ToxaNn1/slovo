@@ -239,7 +239,9 @@ describe('Settings, as the board', () => {
     });
 
     const rows = [
-      ...screen.getAllByRole('button').filter((row) => /^settings-row-/.test(row.props['testID'])),
+      ...screen
+        .getAllByRole('button')
+        .filter((row) => String(row.props['testID']).startsWith('settings-row-')),
       ...screen.getAllByRole('switch'),
     ];
     expect(rows.length).toBeGreaterThan(10);
