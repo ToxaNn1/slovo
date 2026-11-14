@@ -31,11 +31,11 @@ interface TransformWorker {
 }
 
 /**
- * The links module as Metro transforms it into an iOS bundle. The app's
+ * A module, the links module unless named, as Metro transforms it into an iOS bundle. The app's
  * `metro.config.cjs` adds modules to resolve but keeps Expo's transformer,
  * which this takes from Expo's default config, so no Language Pack is needed.
  */
-async function transformed(dev: boolean): Promise<Transformed> {
+async function transformed(dev: boolean, file = LINKS): Promise<Transformed> {
   const appRequire = createRequire(join(APP_DIR, 'package.json'));
   const expoMetro = appRequire('expo/metro-config') as {
     getDefaultConfig: (projectRoot: string) => MetroConfig;
@@ -43,7 +43,7 @@ async function transformed(dev: boolean): Promise<Transformed> {
   const config = expoMetro.getDefaultConfig(APP_DIR);
   const workerRequire = createRequire(appRequire.resolve('expo/metro-config'));
   const worker = workerRequire(config.transformerPath) as TransformWorker;
-  return worker.transform(config.transformer, APP_DIR, LINKS, readFileSync(join(APP_DIR, LINKS)), {
+  return worker.transform(config.transformer, APP_DIR, file, readFileSync(join(APP_DIR, file)), {
     dev,
     minify: false,
     platform: 'ios',
@@ -73,5 +73,29 @@ describe('the test state link (spec #1551)', () => {
 
   it('is not in a production bundle: neither the link nor the module of the states', async () => {
     expect(testStatesIn(await transformed(false))).toEqual([]);
+  }, 60_000);
+});
+
+/** The device clock, which a test state link's `?day=` shifts (#1859). */
+const DEVICE_CLOCK = 'src/device/device-clock.ts';
+
+/** Whether the transformed device clock tells the system time, and whether a shift can move it. */
+async function clockIn(dev: boolean) {
+  const code = (await transformed(dev, DEVICE_CLOCK)).output
+    .map(({ data }) => data.code)
+    .join('\n');
+  return {
+    systemTimeOnly: code.includes('now: () => _core.systemClock.now(),'),
+    shiftTaken: !/function shiftDeviceClock\(ms\) \{\s*return;/.test(code),
+  };
+}
+
+describe('the day shift of a test state link (#1859)', () => {
+  it('moves the device clock in a development bundle', async () => {
+    expect(await clockIn(true)).toEqual({ systemTimeOnly: false, shiftTaken: true });
+  }, 60_000);
+
+  it('leaves the device clock on the system time in a production bundle', async () => {
+    expect(await clockIn(false)).toEqual({ systemTimeOnly: true, shiftTaken: false });
   }, 60_000);
 });
