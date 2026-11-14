@@ -1,4 +1,5 @@
 STATUS: RUNNING
+WAITING until 12:33Z for #1843 DONE commit
 # Coordinator handoff — Feed f5 wave, spec #1842
 
 ## Grant
@@ -10,7 +11,7 @@ Lane: packages/core/src/feed/, packages/ui/src/feed/, apps/mobile/src/app/feed.t
 Implementers: Opus subagents (Agent tool, worktree), each pushes its ticket branch; coordinator merges into feat/1842-weekly-board.
 
 ## State
-- #1843: launching implementer on feat/1843-feed-f5-core.
+- #1843: implementer running on feat/1843-feed-f5-core (launched 12:2x UTC).
 - #1844: waiting on #1843.
 - #1845: waiting on #1844.
 
