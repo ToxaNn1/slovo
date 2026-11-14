@@ -57,8 +57,10 @@ export interface Shown {
   readonly seasonalDecorSetting: boolean;
   /** The Settings switch «Менше руху», which joins the system's Reduce Motion. */
   readonly reduceMotionSetting: boolean;
-  /** The Settings switch «Ділитися анонімною статистикою», with its privacy policy link (ADR 0060). */
+  /** The switch «Анонімна статистика» on the privacy screen (ADR 0060, 0135). */
   readonly shareCountersSetting: boolean;
+  /** «Експортувати мої дані» on the privacy screen (ADR 0135). */
+  readonly dataExport: boolean;
   /**
    * The Settings switch of the counters: «Без лічильників» while its Feature
    * Switch is on; else «Приховати Серію» of 0.9 while the statistics are on;
@@ -211,6 +213,7 @@ export function shownOf({
     seasonalDecorSetting: on('seasonalDecor'),
     reduceMotionSetting: on('reduceMotion'),
     shareCountersSetting: on('communityCounters') || on('analytics'),
+    dataExport: on('dataExport'),
     countersSetting: on('noCounters') ? 'noCounters' : on('statistics') ? 'hideStreak' : undefined,
     learning: knowledge,
     stats: on('statistics')

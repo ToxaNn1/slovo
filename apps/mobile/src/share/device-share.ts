@@ -1,7 +1,7 @@
 import { PixelRatio, Share } from 'react-native';
 
 import { nativeModules } from '../device/device-native-modules';
-import type { ShareCard } from '../shell-value';
+import type { ShareCard, ShareFile } from '../shell-value';
 import { shareCardImage } from './share-card';
 
 /**
@@ -55,4 +55,23 @@ export const shareCardOnDevice: ShareCard | undefined =
           format,
           onShared,
         );
+      };
+
+/** `expo-file-system`, or undefined when the installed binary has none, so no Data export row shows. */
+const fileModules = nativeModules.load('dataExport', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  fileSystem: require('expo-file-system') as typeof import('expo-file-system'),
+}));
+
+/** Writes a file to the cache and hands it to the iOS share sheet: the Data export's only way off the device (ADR 0135). */
+export const shareFileOnDevice: ShareFile | undefined =
+  fileModules === undefined
+    ? undefined
+    : async ({ name, text, title }) => {
+        const { fileSystem } = fileModules;
+        const file = new fileSystem.File(fileSystem.Paths.cache, name);
+        file.create({ overwrite: true });
+        await file.write(text);
+        const { action } = await Share.share({ url: file.uri, title });
+        return action === Share.sharedAction ? 'shared' : 'cancelled';
       };

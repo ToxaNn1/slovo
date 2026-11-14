@@ -36,6 +36,7 @@ const everything: Shown = {
   seasonalDecorSetting: true,
   reduceMotionSetting: true,
   shareCountersSetting: true,
+  dataExport: true,
   countersSetting: 'noCounters',
   learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
@@ -170,6 +171,10 @@ describe('what the reader is shown', () => {
     [
       'the «Ділитися анонімною статистикою» switch with Analytics on alone',
       { off: ['communityCounters'], shown: { shareCountersSetting: true } },
+    ],
+    [
+      'no «Експортувати мої дані» row with the Data export off',
+      { off: ['dataExport'], shown: { dataExport: false } },
     ],
     [
       'no «Слова дня» card with the Word of the Day archive off',

@@ -1,0 +1,142 @@
+import { describe, expect, it } from '@jest/globals';
+import { loadEdition, type AnalyticsPort, type Edition, type FeatureSwitch } from '@slovo/core';
+import { EditionProvider } from '@slovo/ui';
+import { Stack } from 'expo-router';
+import { fireEvent, screen, waitFor } from 'expo-router/testing-library';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import PrivacyScreen from '../app/settings/privacy';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
+import { ShellProvider, type ShareFile, type SharedFile } from '../shell-value';
+import { renderRoutes } from '../shell/test-render';
+import {
+  opened,
+  recordedAnalytics,
+  settingsAt,
+  switchedTo,
+  testShell,
+} from '../shell/test-support';
+import { SettingsProvider } from './settings';
+
+const { config } = activeEditionFiles;
+
+/** The UA Edition as it ships, with the Feature Switches named set as given. */
+function editionWith(switches: Partial<Record<FeatureSwitch, boolean>>): Edition {
+  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
+  const states = Object.fromEntries(
+    Object.entries(switches).map(([name, on]) => [name, on ? 'on' : 'off']),
+  );
+  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...states } });
+}
+
+const metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 0, left: 0, right: 0, bottom: 0 },
+};
+
+/** A share window that keeps every file handed to it and is sent each one. */
+function recordedShareWindow() {
+  const files: SharedFile[] = [];
+  const share: ShareFile = (file) => {
+    files.push(file);
+    return Promise.resolve('shared');
+  };
+  return { files, share };
+}
+
+/**
+ * «Конфіденційність» as the app routes to it, over the Edition in effect with
+ * the switches named set as given, signed out, with the share window given.
+ * Gives the settings, which tell `analytics` of a change when a test gives a port.
+ */
+async function renderPrivacy({
+  switches = {},
+  analytics,
+  shareFile = recordedShareWindow().share,
+}: {
+  switches?: Partial<Record<FeatureSwitch, boolean>>;
+  analytics?: AnalyticsPort;
+  shareFile?: ShareFile;
+} = {}) {
+  const settings = await settingsAt({}, analytics);
+  const shell = testShell({
+    composition: opened(await testShell().composition.opened()),
+    remoteSwitches: switchedTo(editionWith(switches)),
+    settings,
+    account: undefined,
+    shareFile,
+  });
+  await renderRoutes(
+    {
+      _layout: () => (
+        <SafeAreaProvider initialMetrics={metrics}>
+          <ShellProvider shell={shell}>
+            <EditionProvider edition={edition} strings={editionStrings}>
+              <SettingsProvider>
+                <Stack screenOptions={{ headerShown: false }} />
+              </SettingsProvider>
+            </EditionProvider>
+          </ShellProvider>
+        </SafeAreaProvider>
+      ),
+      'settings/privacy': PrivacyScreen,
+    },
+    { initialUrl: '/settings/privacy' },
+  );
+  return (await settings.opened()).settings;
+}
+
+const statsSwitch = () => screen.getByRole('switch', { name: 'Анонімна статистика' });
+
+describe('Settings › «Конфіденційність»', () => {
+  it('turns sharing off from its one switch, which stops Analytics and the Community Counters', async () => {
+    const analytics = recordedAnalytics();
+    const settings = await renderPrivacy({ analytics: analytics.port });
+
+    expect(statsSwitch()).toBeChecked();
+    expect(screen.getByHintText(editionStrings.settings.anonymousStats.explanation)).toBe(
+      statsSwitch(),
+    );
+
+    await fireEvent.press(statsSwitch());
+
+    expect((await settings.read()).shareCounters).toBe(false);
+    expect(analytics.stopped()).toBe(true);
+    expect(analytics.events).toEqual([]);
+  });
+
+  it('hands the Data export, built without an Account, to the share window as one JSON file', async () => {
+    const window = recordedShareWindow();
+    await renderPrivacy({ shareFile: window.share });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Експортувати мої дані' }));
+
+    await waitFor(() => {
+      expect(window.files).toHaveLength(1);
+    });
+    const [file] = window.files;
+    expect(file?.title).toBe('Мої дані SLOVO');
+    expect(file?.name).toBe(`slovo-${edition.id}-data.json`);
+    expect(JSON.parse(file?.text ?? '')).toMatchObject({
+      format: 'slovo-data-export',
+      version: 1,
+      edition: edition.id,
+      reader: { name: null },
+    });
+  });
+
+  it('says so when the file could not be made', async () => {
+    await renderPrivacy({ shareFile: () => Promise.reject(new Error('No space left')) });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Експортувати мої дані' }));
+
+    expect(await screen.findByText('Не вдалося зібрати файл. Спробуй ще раз.')).toBeOnTheScreen();
+  });
+
+  it('has no export row with the Data export off, and still shows the switch', async () => {
+    await renderPrivacy({ switches: { dataExport: false } });
+
+    expect(statsSwitch()).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Експортувати мої дані' })).not.toBeOnTheScreen();
+  });
+});

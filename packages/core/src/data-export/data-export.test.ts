@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { DATA_EXPORT_VERSION, openComposition } from '../index';
+import { openComposition } from '../index';
+import { DATA_EXPORT_VERSION } from './data-export';
 import { createFakeNotificationScheduler, createMemoryContentPort } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';

@@ -72,9 +72,9 @@ const rarityCeilingSegments = RARITIES.map((rarity) => ({
  * the board's order. Each row is shown while its feature is on in effect: the
  * Account, «Менше руху», «Звуки», «Голос диктора», the Daily Goal, the Rarity
  * Ceiling (ADR 0072), «Пройти тест ще раз», «Відзнаки», «Пройти опитування
- * ще раз», «Перерва», the counters, «Самоперевірка» and
- * «Ділитися анонімною статистикою» (the privacy policy link lives in
- * «Про SLOVO»). Seasonal Decor has no row (ADR 0055).
+ * ще раз», «Перерва», the counters, «Самоперевірка» and «Конфіденційність»,
+ * which holds the privacy switch and the Data export (ADR 0135; the privacy
+ * policy link lives in «Про SLOVO»). Seasonal Decor has no row (ADR 0055).
  */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
@@ -399,17 +399,16 @@ export default function SettingsScreen() {
           <SettingsGroup title={strings.groups.account}>
             {accountOpening !== undefined && <AccountRow opening={accountOpening} />}
             {/* One condition per row: the group draws its hairlines between its children, and a fragment is one child. */}
-            {shown.shareCountersSetting && (
+            {(shown.shareCountersSetting || shown.dataExport) && (
               <SettingsRow
-                testID="settings-share-counters"
+                testID="settings-row-privacy"
                 icon="diamond"
-                label={strings.anonymousStats.title}
-                subtitle={strings.anonymousStats.explanation}
+                label={strings.rows.privacy}
+                subtitle={subtitles.privacy}
                 end={{
-                  kind: 'switch',
-                  value: current.shareCounters,
-                  onChange: (shareCounters) => {
-                    update({ shareCounters });
+                  kind: 'chevron',
+                  onPress: () => {
+                    openScreen('/settings/privacy');
                   },
                 }}
               />
