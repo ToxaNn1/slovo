@@ -237,7 +237,11 @@ const FeedPage = memo(function FeedPage({
     return (
       <View
         testID={`feed-card-${String(position)}`}
-        style={[styles.page, styles.centred, { paddingTop: top + topRow }]}
+        style={[
+          styles.page,
+          card.kind === 'notice' && card.notice === 'goalReached' ? styles.goal : styles.centred,
+          { paddingTop: top + topRow },
+        ]}
       >
         {card.kind === 'end-of-cycle' ? <EndOfCycleCard /> : <NoticeCard card={card} />}
       </View>
@@ -409,4 +413,6 @@ const styles = StyleSheet.create({
   },
   // The end-of-Cycle card and a Feed Notice but Yesterday sit in the middle of the page, under the top row.
   centred: { paddingHorizontal: space[6], paddingBottom: space[6] },
+  // The goal-reached card fills its page to the board's 12 points from its sides (XFeed f4).
+  goal: { paddingHorizontal: space[3], paddingBottom: space[3] },
 });
