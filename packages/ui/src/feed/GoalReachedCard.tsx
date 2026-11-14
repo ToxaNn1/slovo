@@ -2,7 +2,7 @@
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -16,7 +16,7 @@ import Svg, { Path, Polygon } from 'react-native-svg';
 import { useEdition } from '../providers/EditionProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { goalReachedCard as card, motion, typeStyle } from '../tokens';
+import { goalReachedCard as card, motion, tightLineDrop, typeStyle } from '../tokens';
 import { HalftoneGround } from '../primitives/HalftoneGround';
 import { Mascot } from '../primitives/Mascot';
 import { REDUCED_FADE, bezierFn } from '../primitives/timing';
@@ -114,7 +114,7 @@ function useRise(clock: SharedValue<number>, wait: number) {
 /**
  * «Ціль дня виконано!» (ADR 0129): the red card of the day's Daily Goal met,
  * its plate with the goal, the first Words Seen today, the celebrating
- * Mascot and the Streak, or no Streak while the reader doesn't see it. The
+ * Mascot and the Streak, or no Streak while the reader doesn't see it or it is 0. The
  * button turns to the next card as a swipe would, and so closes the card.
  * It keeps the design's colours in both schemes, as the design draws it.
  */
@@ -127,7 +127,7 @@ export function GoalReachedCard({
   goal: number;
   /** The Lemmas of the first Words Seen today, in the order Seen. */
   words: readonly string[];
-  /** The Streak, or undefined while the reader doesn't see it. */
+  /** The Streak, or undefined while the reader doesn't see it; a Streak of 0 shows nothing. */
   streak: number | undefined;
 }) {
   const { strings, count, voice } = useEdition();
@@ -302,7 +302,7 @@ export function GoalReachedCard({
                 <Animated.View testID="goal-reached-mascot" style={mascotStyle}>
                   <Mascot state="celebrates" onRed width={card.mascot} />
                 </Animated.View>
-                {streak !== undefined && (
+                {streak !== undefined && streak > 0 && (
                   <Animated.View testID="goal-reached-streak" style={[styles.streak, streakStyle]}>
                     <View style={styles.streakNumber}>
                       <Svg
@@ -354,7 +354,9 @@ export function GoalReachedCard({
                     },
                   ]}
                 >
-                  <Text style={[typeStyle('goalReachedButton', tokens), { color: cream }]}>
+                  <Text
+                    style={[typeStyle('goalReachedButton', tokens), labelLevel, { color: cream }]}
+                  >
                     {next}
                   </Text>
                   <Svg
@@ -519,6 +521,13 @@ function Shard({
     </Animated.View>
   );
 }
+
+/**
+ * Moves the button's tight label line down on iOS to where the board's CSS
+ * draws it, so its capitals sit level with the arrow beside them.
+ */
+const labelLevel =
+  Platform.OS === 'ios' ? { transform: [{ translateY: tightLineDrop('goalReachedButton') }] } : {};
 
 const styles = StyleSheet.create({
   card: { flex: 1, alignSelf: 'stretch' },

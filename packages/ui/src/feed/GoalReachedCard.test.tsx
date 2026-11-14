@@ -169,6 +169,13 @@ describe('the goal-reached card', () => {
     expect(screen.queryByTestId('goal-reached-streak')).toBeNull();
   });
 
+  it('names no Streak while the Streak is 0', async () => {
+    await renderFeed({ goal: 3, words: ['dawn'], streak: 0 });
+    expect(screen.queryByTestId('goal-reached-streak')).toBeNull();
+    expect(screen.queryByText('DAYS IN A ROW')).toBeNull();
+    expect(screen.getByTestId('goal-reached-mascot')).toBeTruthy();
+  });
+
   it('turns to the next card on its button, as a swipe would, so it leaves the screen', async () => {
     const onIndexChange = jest.fn();
     await renderFeed({ goal: 3, words: ['dawn'], streak: 2 }, onIndexChange);
@@ -176,6 +183,15 @@ describe('the goal-reached card', () => {
     expect(onIndexChange).toHaveBeenCalledWith(1);
     expect(screen.getByText('Next')).toBeTruthy();
     expect(screen.queryByTestId('goal-reached')).toBeNull();
+  });
+
+  it('sets its label level with the arrow on iOS, where the board’s CSS centres the tight line', async () => {
+    await renderFeed({ goal: 3, words: ['dawn'], streak: 2 });
+    const label = StyleSheet.flatten(screen.getByText('SCROLL ON').props['style']) as {
+      transform?: { translateY?: number }[];
+    };
+    // Unbounded's ascent and descent, 1.24 em, centred in its 15 pt line: 1.8 pt.
+    expect(label.transform).toEqual([{ translateY: 1.8 }]);
   });
 
   it('enters as the board draws it: the card rises in, then its title, each Word after the one before and the Mascot', async () => {
