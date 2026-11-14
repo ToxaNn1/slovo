@@ -1,14 +1,6 @@
-import { MascotIn } from '@/mascot/mascot';
-import {
-  EmptyState,
-  LearningRow,
-  space,
-  typeStyle,
-  useEdition,
-  useListScroll,
-  useTokens,
-} from '@slovo/ui';
-import { FlatList, StyleSheet, Text } from 'react-native';
+import { MascotAs } from '@/mascot/mascot';
+import { EmptyState, LearningRow, space, useListScroll } from '@slovo/ui';
+import { FlatList, StyleSheet } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
@@ -20,14 +12,12 @@ const { learning: strings } = editionStrings;
 
 /**
  * The «Вчу» list: every Entry the reader is learning, the next Review first,
- * each row with its Review day. A tap opens the Entry screen. The list is the
+ * each row with its meaning and its Review day on a chip (board 09). A tap opens the Entry screen. The list is the
  * Core's own: it has no rename, delete or swipe action, and an Entry leaves it
  * once it is Learned or its mark is removed.
  */
 export function LearningList({ header }: { header: ListHeader }) {
   const list = useLearningList();
-  const tokens = useTokens();
-  const { voice } = useEdition();
   const openScreen = useOpenScreen();
   const scroll = useListScroll<FlatList<(typeof list)[number]>>();
   const { list: listRef, onScroll: onListScroll } = scroll;
@@ -49,19 +39,9 @@ export function LearningList({ header }: { header: ListHeader }) {
           />
         )}
         ListHeaderComponent={header(null)}
-        ListFooterComponent={
-          list.length > 0 ? (
-            <Text
-              {...voice}
-              style={[typeStyle('meta', tokens), styles.footer, { color: tokens.colors.muted }]}
-            >
-              {strings.footer}
-            </Text>
-          ) : undefined
-        }
         ListEmptyComponent={
           <EmptyState
-            mascot={<MascotIn state="empty" />}
+            mascot={(width) => <MascotAs state="sleeps" width={width} />}
             testID="learning-empty"
             title={strings.empty.title}
             message={strings.empty.message}
@@ -75,6 +55,6 @@ export function LearningList({ header }: { header: ListHeader }) {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: space[8] },
-  footer: { marginHorizontal: space[6], marginTop: space[4] },
+  // The list grows to the screen, so an empty state sits in the middle of it.
+  content: { flexGrow: 1, paddingBottom: space[8] },
 });

@@ -1,4 +1,4 @@
-import { MascotIn } from '@/mascot/mascot';
+import { MascotAs } from '@/mascot/mascot';
 import type { CollectionEntry } from '@slovo/core';
 import {
   BackLink,
@@ -136,7 +136,7 @@ function CollectionListScreen({ collectionId }: { collectionId: string }) {
         ListEmptyComponent={
           collection === undefined ? undefined : (
             <EmptyState
-              mascot={<MascotIn state="empty" />}
+              mascot={(width) => <MascotAs state="waits" width={width} />}
               testID="collection-empty"
               title={strings.empty.title}
               message={strings.empty.message}

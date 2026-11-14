@@ -18,35 +18,39 @@ import { useTokens } from '../providers/TokensProvider';
 /** An action of an Entry row. */
 export type EntryRowAction = RowAction;
 
+/** The day on a row's chip: when it was added, Seen or is due, today's in the accent colour. */
+export interface EntryRowDay {
+  readonly label: string;
+  readonly today: boolean;
+}
+
 /**
  * One Entry in a list (Favorites, Collections, History, Hidden and «Вчу»),
  * built from the Core's Entry row: its title over its second line, in the
  * Edition's words (a Correction's «замість …»), on one line. The trailing
- * text is what the screen puts on the right (a date, a kind, a time). A tap
- * opens the Entry; the actions slide out from the right and are VoiceOver
- * actions too.
+ * text is what the screen puts on the right (a kind, a time). A row of the
+ * Saved lists carries its `day` on a chip on the right instead (board 09),
+ * and its second line wraps. A tap opens the Entry; the actions slide out
+ * from the right and are VoiceOver actions too.
  *
- * A screen can put its own text before the title (`leading`, the date of the
- * Word of the Day archive's «26 жовтня · сумирний»), its own line under the
- * title (`subtitle`) and a button
+ * A screen can put its own line under the title (`subtitle`) and a button
  * after the text (`accessory`, the Hidden screen's «Повернути»). A row with no
  * `onPress` is read, not opened. Needs a `GestureHandlerRootView` above it.
  */
 export function EntryRow({
   row,
-  leading,
+  day,
   trailing,
   subtitle: ownSubtitle,
   accessibilityLabel: ownAccessibilityLabel,
   accessory,
   onPress,
   actions = [],
-  compact = false,
   testID = `entry-row-${row.entryId}`,
 }: {
   row: EntryRowModel;
-  /** The text before the title, a dot between them, read first. */
-  leading?: string;
+  /** The day on a chip on the right, read last; the second line then wraps. */
+  day?: EntryRowDay;
   trailing?: string;
   /** The line under the title, in place of the row's second line. */
   subtitle?: string;
@@ -56,30 +60,24 @@ export function EntryRow({
   accessory?: ReactNode;
   onPress?: () => void;
   actions?: readonly EntryRowAction[];
-  /**
-   * Only the title and the trailing text, on a tighter row whose separator is
-   * inset to the text, as History draws its rows.
-   */
-  compact?: boolean;
   testID?: string;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();
   const { fontScale } = useWindowDimensions();
-  const subtitle =
-    ownSubtitle ?? (compact ? undefined : entryRowSubtitle(strings.correctionCard, row));
+  const subtitle = ownSubtitle ?? entryRowSubtitle(strings.correctionCard, row);
   // The voices break a word at the Stress mark, so VoiceOver reads the row without it.
   const accessibilityLabel = withoutStress(
     ownAccessibilityLabel ??
-      [leading, row.title, subtitle, trailing]
+      [row.title, subtitle, trailing, day?.label]
         .filter((part) => part !== undefined && part !== '')
         .join(', '),
   );
   const hasAccessory = accessory !== undefined;
   const stacked = hasAccessory && fontScale > STACK_AT_FONT_SCALE;
 
-  const text = (
+  const lines = (
     <>
       <View style={styles.titleLine}>
         <Text
@@ -87,11 +85,6 @@ export function EntryRow({
           maxFontSizeMultiplier={hasAccessory ? fontScaleCap.number : undefined}
           style={[typeStyle('listWord', tokens), styles.title, { color: colors.ink }]}
         >
-          {leading !== undefined && (
-            <Text style={[typeStyle('listLeading', tokens), { color: colors.muted }]}>
-              {leading} ·{' '}
-            </Text>
-          )}
           {row.title}
         </Text>
         {trailing !== undefined && (
@@ -102,19 +95,41 @@ export function EntryRow({
           </Text>
         )}
       </View>
-      {subtitle !== undefined && (
-        <Text
-          style={[typeStyle('rowSub', tokens), { color: colors.muted }]}
-          numberOfLines={hasAccessory ? undefined : 1}
-        >
-          {subtitle}
-        </Text>
-      )}
+      <Text
+        style={[typeStyle('rowSub', tokens), { color: colors.muted }]}
+        numberOfLines={hasAccessory || day !== undefined ? undefined : 1}
+      >
+        {subtitle}
+      </Text>
     </>
   );
+  const text =
+    day === undefined ? (
+      lines
+    ) : (
+      <View style={styles.withDay}>
+        <View style={styles.lines}>{lines}</View>
+        <View
+          testID={`${testID}-day`}
+          style={[
+            styles.day,
+            { backgroundColor: day.today ? colors.accent : colors.surfaceSunken },
+          ]}
+        >
+          <Text
+            maxFontSizeMultiplier={fontScaleCap.number}
+            style={[
+              typeStyle('rowTrailing', tokens),
+              { color: day.today ? colors.onAccent : colors.ink },
+            ]}
+          >
+            {day.label}
+          </Text>
+        </View>
+      </View>
+    );
   const textStyle = [
     styles.row,
-    compact && styles.rowCompact,
     hasAccessory && styles.rowBesideAccessory,
     stacked && styles.rowAboveAccessory,
   ];
@@ -123,11 +138,7 @@ export function EntryRow({
     <SwipeableRow
       testID={testID}
       actions={actions}
-      containerStyle={[
-        styles.container,
-        { borderColor: colors.line },
-        compact && styles.containerCompact,
-      ]}
+      containerStyle={[styles.container, { borderColor: colors.line }]}
     >
       <View
         style={[
@@ -172,18 +183,12 @@ export function EntryRow({
 const styles = StyleSheet.create({
   // The design's word rows sit in from the screen's edge, a hairline under each.
   container: { borderBottomWidth: 1, marginHorizontal: space[5] },
-  containerCompact: { marginHorizontal: space[6] },
   pressed: { opacity: entryRow.pressedOpacity },
   row: {
     minHeight: entryRow.minHeight,
     paddingVertical: rowPadding,
     paddingHorizontal: entryRow.inset,
     gap: entryRow.lineGap,
-  },
-  rowCompact: {
-    minHeight: entryRow.compactMinHeight,
-    paddingVertical: space[3],
-    paddingHorizontal: 0,
   },
   // The button takes the right edge, so the text stops short of it and the row's padding moves out.
   withAccessory: {
@@ -210,5 +215,15 @@ const styles = StyleSheet.create({
     columnGap: entryRow.titleGap,
   },
   title: { flexShrink: 1 },
+  // The day's chip keeps its width; the lines take the rest and wrap.
+  withDay: { flexDirection: 'row', alignItems: 'center', gap: entryRow.dayGap },
+  lines: { flex: 1, gap: entryRow.lineGap },
+  day: {
+    flexShrink: 0,
+    minHeight: entryRow.day.height,
+    paddingHorizontal: entryRow.day.paddingHorizontal,
+    borderRadius: entryRow.day.radius,
+    justifyContent: 'center',
+  },
   trailing: { flexShrink: 0 },
 });

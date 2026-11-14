@@ -1,6 +1,5 @@
 import type { LearningEntry } from '@slovo/core';
 
-import { entryLabelBeside } from '../entries/entry-row-text';
 import { EntryRow } from '../entries/EntryRow';
 import { useEdition } from '../providers/EditionProvider';
 
@@ -16,18 +15,20 @@ function useReviewDayText(): (daysUntilReview: number) => string {
 }
 
 /**
- * A row of the «Вчу» list: the Entry with its kind and its next Review day on
- * the right. A tap opens the Entry; the list is the Core's own, so the row has
+ * A row of the «Вчу» list: the Entry with its meaning and its next Review day
+ * on a chip on the right, today's in the accent colour. A tap opens the Entry; the list is the Core's own, so the row has
  * no action to rename, delete or take the Entry out.
  */
 export function LearningRow({ entry, onPress }: { entry: LearningEntry; onPress: () => void }) {
-  const { strings } = useEdition();
   const reviewDayText = useReviewDayText();
   return (
     <EntryRow
       testID={`learning-row-${entry.entryId}`}
       row={entry.row}
-      trailing={entryLabelBeside(strings.history, entry.row, reviewDayText(entry.daysUntilReview))}
+      day={{
+        label: reviewDayText(entry.daysUntilReview),
+        today: entry.daysUntilReview <= 0,
+      }}
       onPress={onPress}
     />
   );
