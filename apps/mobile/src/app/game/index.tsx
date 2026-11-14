@@ -57,7 +57,7 @@ function Game() {
   const actions = useGameActions();
   const router = useRouter();
   const openScreen = useOpenScreen();
-  const { gameReview, finishPoster, survivalStreak, answerCard } = useShown();
+  const { gameReview, finishPoster, survivalStreak, answerCard, timedTwentySeconds } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
   /** Whether the reader closed the widget hint, which is offered once ever. */
@@ -96,6 +96,7 @@ function Game() {
               : undefined
           }
           mascot={<MascotIn state="gameEnd" onRed />}
+          timeUpToFinish={timedTwentySeconds}
         />
       ) : result ? (
         <>

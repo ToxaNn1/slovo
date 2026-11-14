@@ -12,7 +12,7 @@ import { useGameHaptics } from './useGameHaptics';
 /**
  * The end poster of a Game (spec #1674), over the red panel of the result
  * screen. A finished Game and a time-up get the «Фініш» poster, headed «Час!»
- * for a time-up: «Влучно!» for at least half the answers right, else «Ще
+ * for a time-up unless it goes straight to «Фініш» (ADR 0137): «Влучно!» for at least half the answers right, else «Ще
  * раунд!»; the right answers out of those played; the XP and Best result
  * tiles; «Новий рекорд!» once the Game beat the record. A Game that lost its
  * last Life gets the Lives-over poster: «Життя закінчилися» over the mode's name and
@@ -28,6 +28,7 @@ export function GameEndPoster({
   onToGames,
   onOpenEntry,
   mascot,
+  timeUpToFinish = false,
 }: {
   /** The Game just over. */
   game: CurrentGame;
@@ -44,6 +45,8 @@ export function GameEndPoster({
   onOpenEntry: ((entryId: string) => void) | undefined;
   /** The Mascot at the Game's end, drawn for the red panel; none without it. */
   mascot?: ReactNode;
+  /** Whether a time-up is headed «Фініш» like a finished Game, not «Час!». */
+  timeUpToFinish?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -73,7 +76,7 @@ export function GameEndPoster({
         line: undefined,
       }
     : {
-        kicker: end.kind === 'time-up' ? finish.timeUp : finish.title,
+        kicker: end.kind === 'time-up' && !timeUpToFinish ? finish.timeUp : finish.title,
         title: end.onTarget ? finish.won : finish.more,
         line: fill(count(finish.hits, end.right), { total: String(end.played) }),
       };
