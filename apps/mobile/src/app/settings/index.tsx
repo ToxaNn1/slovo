@@ -1,4 +1,4 @@
-import { FontSizeSchema, RARITIES, fill, type DailyGoal, type Theme } from '@slovo/contracts';
+import { FontSizeSchema, RARITIES, fill, type Theme } from '@slovo/contracts';
 import {
   ChoiceRow,
   FontSizePreview,
@@ -24,7 +24,7 @@ import { useShown } from '@/shown-in-effect';
 import { installedBuild } from '@/settings/installed-build';
 import { useSettings } from '@/settings/settings';
 import { useOpenScreen } from '@/use-open-screen';
-import { useSetDailyGoal, useXpLogState } from '@/progress/xp-log';
+import { useXpLogState } from '@/progress/xp-log';
 
 const strings = editionStrings.settings;
 const subtitles = strings.rowSubtitles;
@@ -43,21 +43,6 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
   label: strings.fontSizes[fontSize],
   testID: `settings-font-size-${fontSize}`,
 }));
-
-/** The segment of «Без цілі», which turns the Daily Goal off from today (ADR 0074). */
-const NO_DAILY_GOAL = 'none';
-
-// A segment's value is text, so each Daily Goal is drawn by its number of Words, and «Без цілі» comes last.
-function dailyGoalSegments(dailyGoals: readonly DailyGoal[]) {
-  return [
-    ...dailyGoals.map((dailyGoal) => ({
-      value: String(dailyGoal),
-      label: String(dailyGoal),
-      testID: `settings-daily-goal-${String(dailyGoal)}`,
-    })),
-    { value: NO_DAILY_GOAL, label: strings.dailyGoal.none, testID: 'settings-daily-goal-none' },
-  ];
-}
 
 // «до 1» to «до 5», each Rarity Ceiling by its rarity.
 const rarityCeilingSegments = RARITIES.map((rarity) => ({
@@ -81,9 +66,7 @@ export default function SettingsScreen() {
   const { colors } = useTokens();
   const openScreen = useOpenScreen();
   const edition = useEditionInEffect();
-  const dailyGoals = edition.dailyGoals.options;
   const { dailyGoal } = useXpLogState();
-  const setDailyGoal = useSetDailyGoal();
   const { ceiling, setCeiling } = useRarityCeiling();
   const mixSummary = useMixSummary();
   const hiddenSummary = useHiddenSummary();
@@ -235,21 +218,18 @@ export default function SettingsScreen() {
         <View testID="settings-group-learning" style={styles.section}>
           <SettingsGroup title={strings.groups.learning}>
             {shown.dailyGoal && edition.isFeatureEnabled('xpLog') && (
-              <ChoiceRow
-                testID="settings-daily-goal"
+              <SettingsRow
+                testID="settings-row-daily-goal"
                 icon="wedge"
                 label={strings.dailyGoal.title}
                 subtitle={subtitles.dailyGoal}
-                segments={dailyGoalSegments(dailyGoals)}
-                // «Без цілі» is selected while today has no Daily Goal.
-                selected={dailyGoal === null ? NO_DAILY_GOAL : String(dailyGoal.goal)}
-                onSelect={(value) => {
-                  const goal =
-                    value === NO_DAILY_GOAL
-                      ? null
-                      : dailyGoals.find((option) => String(option) === value);
-                  if (goal === undefined) return;
-                  setDailyGoal(goal);
+                end={{
+                  kind: 'chevron',
+                  // «Без цілі» while today has no Daily Goal.
+                  value: dailyGoal === null ? strings.dailyGoal.none : String(dailyGoal.goal),
+                  onPress: () => {
+                    openScreen('/settings/daily-goal');
+                  },
                 }}
               />
             )}

@@ -54,6 +54,7 @@ export function OptionScreen<T extends string>({
         {subtitle}
       </Text>
       <View
+        testID={testID === undefined ? undefined : `${testID}-sample`}
         style={[styles.card, { backgroundColor: colors.surfaceSunken, borderRadius: radii.card }]}
       >
         {sample}

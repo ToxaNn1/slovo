@@ -12,7 +12,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import SettingsScreen from '../app/settings/index';
+import DailyGoalScreen from '../app/settings/daily-goal';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
@@ -38,7 +38,11 @@ let userState: Awaited<ReturnType<typeof seedUserState>>;
 /** The composition the screen reads, opened afresh for each test. */
 let composition: Composition;
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: () => undefined }) }));
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ back: () => undefined }),
+  // With the Daily Goal off the screen leads back to Settings and draws nothing of its own.
+  Redirect: () => null,
+}));
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -69,7 +73,7 @@ beforeEach(async () => {
   composition = await openOver(editionInEffect);
 });
 
-async function renderSettings() {
+async function renderDailyGoal() {
   await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
@@ -81,15 +85,24 @@ async function renderSettings() {
       >
         <EditionProvider edition={edition} strings={editionStrings}>
           <SettingsProvider>
-            <SettingsScreen />
+            <DailyGoalScreen />
           </SettingsProvider>
         </EditionProvider>
       </ShellProvider>
     </SafeAreaProvider>,
   );
+  await settle();
+}
+
+async function settle() {
   await act(async () => {
     await Promise.resolve();
   });
+}
+
+async function choose(name: string) {
+  await fireEvent.press(screen.getByRole('radio', { name }));
+  await settle();
 }
 
 /** The Daily Goal as the XP log keeps it, read by a composition opened afresh over the user state. */
@@ -97,64 +110,49 @@ async function keptDailyGoal() {
   return (await openOver(editionInEffect)).xpLog.state.dailyGoal?.goal;
 }
 
-// Tickets #1369 and #1557, ADR 0074: the Daily Goal picker of Settings.
-describe('the Daily Goal setting', () => {
-  it('offers the Edition’s 10, 25 and 50 and «Без цілі» under «Денна ціль», «Без цілі» chosen to start with', async () => {
-    await renderSettings();
+// Tickets #1369, #1557 and #1874, ADR 0074: «Ціль дня», screen 85 of board 11.
+describe('the Daily Goal screen', () => {
+  it('offers the Edition’s 10, 25 and 50 and «Без цілі», «Без цілі» chosen to start with', async () => {
+    await renderDailyGoal();
 
-    expect(screen.getByText(strings.title)).toBeOnTheScreen();
-    for (const label of ['10', '25', '50']) {
-      const option = screen.getByRole('button', { name: `${strings.title}: ${label}` });
-      expect(option).toBeOnTheScreen();
-      expect(option).not.toBeSelected();
+    for (const name of ['10', '25', '50']) {
+      expect(screen.getByRole('radio', { name })).not.toBeSelected();
     }
-    expect(
-      screen.getByRole('button', { name: `${strings.title}: ${strings.none}` }),
-    ).toBeSelected();
+    expect(screen.getByRole('radio', { name: strings.none })).toBeSelected();
+    expect(screen.getByText(strings.explanations.none)).toBeOnTheScreen();
   });
 
-  it('keeps the goal the reader chooses in the XP log', async () => {
-    await renderSettings();
+  it('keeps the goal the reader chooses in the XP log, and explains it', async () => {
+    await renderDailyGoal();
 
-    await fireEvent.press(screen.getByRole('button', { name: `${strings.title}: 25` }));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await choose('25');
 
-    expect(screen.getByRole('button', { name: `${strings.title}: 25` })).toBeSelected();
+    expect(screen.getByRole('radio', { name: '25' })).toBeSelected();
+    expect(screen.getByText(strings.explanations['25'])).toBeOnTheScreen();
     expect(await keptDailyGoal()).toBe(25);
   });
 
   it('turns the goal off from today with «Без цілі», and on again with a number', async () => {
-    await renderSettings();
-    const none = `${strings.title}: ${strings.none}`;
+    await renderDailyGoal();
 
-    await fireEvent.press(screen.getByRole('button', { name: `${strings.title}: 10` }));
-    await act(async () => {
-      await Promise.resolve();
-    });
-    await fireEvent.press(screen.getByRole('button', { name: none }));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await choose('10');
+    await choose(strings.none);
 
-    expect(screen.getByRole('button', { name: none })).toBeSelected();
+    expect(screen.getByRole('radio', { name: strings.none })).toBeSelected();
     expect(await keptDailyGoal()).toBeUndefined();
 
-    await fireEvent.press(screen.getByRole('button', { name: `${strings.title}: 50` }));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await choose('50');
 
-    expect(screen.getByRole('button', { name: none })).not.toBeSelected();
+    expect(screen.getByRole('radio', { name: strings.none })).not.toBeSelected();
+    expect(screen.getByText(strings.explanations['50'])).toBeOnTheScreen();
     expect(await keptDailyGoal()).toBe(50);
   });
 
-  it('is left out while the Daily Goal is off in effect', async () => {
+  it('leads back to Settings while the Daily Goal is off in effect', async () => {
     editionInEffect = editionWith({ dailyGoal: false });
     composition = await openOver(editionInEffect);
-    await renderSettings();
+    await renderDailyGoal();
 
-    expect(screen.queryByText(strings.title)).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('daily-goal-screen')).not.toBeOnTheScreen();
   });
 });

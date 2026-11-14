@@ -1,5 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { loadEdition, type AnalyticsPort, type Edition, type FeatureSwitch } from '@slovo/core';
+import {
+  loadEdition,
+  type AnalyticsPort,
+  type Composition,
+  type Edition,
+  type FeatureSwitch,
+} from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { fireEvent, screen, within } from 'expo-router/testing-library';
@@ -7,6 +13,7 @@ import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SettingsScreen from '../app/settings';
+import DailyGoalScreen from '../app/settings/daily-goal';
 import NarratorVoiceScreen from '../app/settings/narrator-voice';
 import WidgetGuideScreen from '../app/settings/widgets';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
@@ -121,12 +128,13 @@ const metrics = {
 async function renderSettings(
   switches: Partial<Record<FeatureSwitch, boolean>> = {},
   analytics?: AnalyticsPort,
+  composition?: Composition,
 ) {
   // A screen an earlier test opened would hold back the next tap's.
   screenSettled();
   const settings = await settingsAt({}, analytics);
   const shell = testShell({
-    composition: opened(await testShell().composition.opened()),
+    composition: opened(composition ?? (await testShell().composition.opened())),
     languagePack: samplePack(),
     remoteSwitches: switchedTo(editionWith(switches)),
     settings,
@@ -147,6 +155,7 @@ async function renderSettings(
       'settings/index': SettingsScreen,
       'settings/widgets': WidgetGuideScreen,
       'settings/narrator-voice': NarratorVoiceScreen,
+      'settings/daily-goal': DailyGoalScreen,
     },
     { initialUrl: '/settings' },
   );
@@ -183,7 +192,7 @@ describe('Settings, as the board', () => {
         'settings-row-widgets',
       ],
       learning: [
-        'settings-daily-goal',
+        'settings-row-daily-goal',
         'settings-rarity',
         'settings-row-my-mix',
         'settings-row-rarity-test',
@@ -293,6 +302,49 @@ describe('Settings › ЗВУК І СПОВІЩЕННЯ', () => {
     await fireEvent.press(screen.getByRole('switch', { name: 'Вібрація' }));
 
     expect((await settings.read()).vibration).toBe(false);
+  });
+});
+
+describe('Settings › «Ціль дня»', () => {
+  it('opens the screen of the Daily Goal from its row: the number, the explaining line and four options', async () => {
+    await renderSettings({ dailyGoal: true });
+    await fireEvent.press(screen.getByTestId('settings-row-daily-goal'));
+
+    const goalScreen = await screen.findByTestId('daily-goal-screen');
+    expect(within(goalScreen).getByRole('header', { name: 'Ціль дня' })).toBeOnTheScreen();
+    expect(within(goalScreen).getByText('Скільки нових слів відкривати щодня.')).toBeOnTheScreen();
+    const options = ['10', '25', '50', 'Без цілі'].map((name) =>
+      within(goalScreen).getByRole('radio', { name }),
+    );
+    expect(within(goalScreen).getAllByRole('radio')).toEqual(options);
+  });
+
+  it('keeps the goal chosen on the screen and names it on the row', async () => {
+    const composition = await testShell().composition.opened();
+    await renderSettings({ dailyGoal: true }, undefined, composition);
+    await fireEvent.press(screen.getByTestId('settings-row-daily-goal'));
+
+    await fireEvent.press(await screen.findByTestId('daily-goal-25'));
+    expect(screen.getByTestId('daily-goal-25')).toBeSelected();
+    expect(screen.getByTestId('daily-goal-sample')).toHaveTextContent(
+      '25Двадцять п’ять слів — золота середина.',
+    );
+    expect(composition.xpLog.state.dailyGoal?.goal).toBe(25);
+
+    await fireEvent.press(screen.getByTestId('daily-goal-none'));
+    expect(screen.getByTestId('daily-goal-sample')).toHaveTextContent(
+      '—Без цілі — гортай у власному темпі.',
+    );
+    expect(composition.xpLog.state.dailyGoal).toBeNull();
+    await fireEvent.press(screen.getByTestId('daily-goal-back'));
+
+    expect(await screen.findByRole('button', { name: 'Ціль дня, Без цілі' })).toBeOnTheScreen();
+  });
+
+  it('leaves the row out while its Feature Switch is off', async () => {
+    await renderSettings({ dailyGoal: false });
+
+    expect(screen.queryByTestId('settings-row-daily-goal')).not.toBeOnTheScreen();
   });
 });
 
