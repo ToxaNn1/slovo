@@ -68,7 +68,7 @@ brief:
 You are the review-fixes-1113 coordinator, in the cloud; the previous one stopped. Read HANDOFF.md on origin/coord/review-fixes-1113 and continue from the log tail. Grants: commits, pushes, one PR to main from fix/1113-code-review; no main merge, no auto-merge, no force-push, no tickets.
 
 ## wave word-meaning-1831
-status: active
+status: finished
 coord: coord/word-meaning-1831
 branches: ^origin/(coord/word-meaning-1831|feat/1831-word-meaning|(feat|chore|fix|test|refactor|docs)/183[1-4]-)
 brief:
