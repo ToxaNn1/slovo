@@ -200,6 +200,21 @@ export const collectionNameField = {
   shakeDuration: 400,
 } as const;
 
+/**
+ * A Collection's screen (board 09): the chevron that ends a row, the gap
+ * between the header's tiles and the title, between the title and its count,
+ * the space around the «Поділитися посиланням» button at the foot and its
+ * red wedge.
+ */
+export const collectionScreen = {
+  chevron: { width: 10, height: 16 },
+  titleTop: 18,
+  countGap: 6,
+  footerPadding: 20,
+  /** The red wedge before the button's label. */
+  mark: { width: 12, height: 14 },
+} as const;
+
 /** A Collection's card on the Collections screen (design `SlovoApp`, the Collections tab). */
 export const collectionCard = {
   height: 150,

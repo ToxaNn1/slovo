@@ -2,7 +2,7 @@
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 import { COLLECTION_NAME_MAX_LENGTH, collectionNameLength } from '@slovo/core';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput } from 'react-native';
 import Animated, {
   ReduceMotion,
   useAnimatedStyle,

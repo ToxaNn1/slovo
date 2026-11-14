@@ -370,6 +370,9 @@ export const typeRoles = {
   oftenSaidForm: role('word', '400', 14, 18),
   /** A Collection's name on its card of the Collections screen. */
   collectionCardName: role('word', '800', 14, 17),
+  /** A Collection's name over its rows, and its count of Words under it (board 09). */
+  collectionTitle: role('word', '900', 30, 30, -1),
+  collectionWordCount: role('ui', '500', 14, 17),
   /** How many Entries a Collection holds, under its name on its card. */
   collectionCardCount: role('ui', '600', 12, 12),
   /** A Synonym Row member's shade note, upright at the right end of its row (XEntry2 e8). */
