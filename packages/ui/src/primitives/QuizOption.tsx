@@ -40,6 +40,7 @@ export function QuizOption({
   picked,
   mark,
   minHeight = quizOption.height,
+  inert = false,
   accessibilityLabel,
   onPress,
   testID,
@@ -51,6 +52,8 @@ export function QuizOption({
   /** What stands on its right before a pick or once faded, such as «А». */
   mark?: string | undefined;
   minHeight?: number;
+  /** Whether it takes no press, as an option of a question answered for good: VoiceOver reads it dimmed. */
+  inert?: boolean;
   /** What VoiceOver reads, in the Edition's language. */
   accessibilityLabel: string;
   onPress: () => void;
@@ -98,6 +101,7 @@ export function QuizOption({
           radius={quizOption.radius}
           accessibilityLabel={accessibilityLabel}
           accessibilityState={{ selected: picked }}
+          inert={inert}
           onPress={onPress}
           faceStyle={[
             styles.option,
