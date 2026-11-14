@@ -1,10 +1,11 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
+import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
 import { afterAll, describe, expect, it, onTestFinished } from 'vitest';
 
@@ -21,10 +22,10 @@ import {
   testDatabaseUrl,
 } from '../test-support';
 
-/** A scratch folder of the file's own: a copy of the UA Edition folder and the CLI's input files. */
+/** A scratch folder of the file's own: the UA Edition folder written from the seed snapshot and the CLI's input files. */
 const scratch = (() => {
   const dir = mkdtempSync(join(tmpdir(), 'slovo-content-cli-'));
-  cpSync(join(EDITIONS_DIR, 'uk'), join(dir, 'editions', 'uk'), { recursive: true });
+  ukrainianSeedFolder(join(dir, 'editions'));
   afterAll(() => {
     rmSync(dir, { recursive: true, force: true });
   });

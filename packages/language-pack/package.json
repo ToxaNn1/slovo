@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./edition": "./src/edition-folder.ts",
     "./reader": "./src/pack-reader.ts",
-    "./starter-media": "./src/starter-media.ts"
+    "./starter-media": "./src/starter-media.ts",
+    "./test-support": "./src/test-support.ts"
   },
   "scripts": {
     "build-pack": "tsx --disable-warning=ExperimentalWarning src/cli.ts",

@@ -43,7 +43,8 @@ export const promoSocialBeats = {
  */
 export function PromoSocial() {
   const at = promoSocialBeats;
-  if (at.phones + phonesLength(phones) !== at.end) throw new Error('PromoSocial: the phones must end where the end card starts');
+  if (at.phones + phonesLength(phones) !== at.end)
+    throw new Error('PromoSocial: the phones must end where the end card starts');
   return (
     <AbsoluteFill>
       <Sequence durationInFrames={at.phones + 10} name="Shout">

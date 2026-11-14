@@ -1,6 +1,12 @@
-import { AbsoluteFill, Easing, interpolate, interpolateColors, Sequence, useCurrentFrame } from 'remotion';
+import {
+  AbsoluteFill,
+  Easing,
+  interpolate,
+  interpolateColors,
+  Sequence,
+  useCurrentFrame,
+} from 'remotion';
 
-import word from '../../../../editions/uk/content/words/w_lu00tl.json';
 import { EndCardAt } from '../EndCard';
 import { dark, light, uiFont, wordFont } from '../look';
 import { Rupor } from '../Rupor';
@@ -8,7 +14,9 @@ import { tileSizeFor, useSafe } from '../safe';
 import { Bed, Horn, Knock, Sfx, sfx, Voice } from '../sound';
 import { Tile } from '../Tile';
 import { clamp, pop } from '../shared/motion';
+import { word as snapshotWord } from '../words';
 
+const word = snapshotWord('w_lu00tl');
 
 /** The beats of «Де наголос?» in frames at 30 fps, 15 s in all. */
 const beats = {
@@ -112,10 +120,18 @@ function Row() {
   const guess =
     interpolate(frame, [beats.guess, beats.guess + 10], [0, 1], { ...clamp, easing: pop }) *
     interpolate(frame, [beats.shout, beats.shout + 6], [1, 0], clamp);
-  const answer = interpolate(frame, [beats.answer, beats.answer + 10], [0, 1], { ...clamp, easing: pop });
+  const answer = interpolate(frame, [beats.answer, beats.answer + 10], [0, 1], {
+    ...clamp,
+    easing: pop,
+  });
   const wrong = interpolate(frame, [beats.wrong, beats.wrong + 8], [0, 1], clamp);
   const define = interpolate(frame, [beats.define, beats.define + 10], [0, 1], clamp);
-  const column = { position: 'absolute', left: safe.left, width: safe.width, textAlign: 'center' } as const;
+  const column = {
+    position: 'absolute',
+    left: safe.left,
+    width: safe.width,
+    textAlign: 'center',
+  } as const;
   return (
     <AbsoluteFill>
       <div
@@ -134,7 +150,15 @@ function Row() {
       >
         Де наголос?
       </div>
-      <div style={{ position: 'absolute', left: safe.centerX - total / 2, top, display: 'flex', gap: size * gap }}>
+      <div
+        style={{
+          position: 'absolute',
+          left: safe.centerX - total / 2,
+          top,
+          display: 'flex',
+          gap: size * gap,
+        }}
+      >
         {letters.map((letter, i) => (
           <LetterTile key={i} letter={letter} index={i} size={size} frame={frame} />
         ))}
@@ -239,17 +263,36 @@ function Accented({ text, at, color }: { text: string; at: number; color: string
 }
 
 /** One tile: it lands, shakes and greys when the mark misses on it, turns ink when the mark hits it. */
-function LetterTile({ letter, index, size, frame }: { letter: string; index: number; size: number; frame: number }) {
+function LetterTile({
+  letter,
+  index,
+  size,
+  frame,
+}: {
+  letter: string;
+  index: number;
+  size: number;
+  frame: number;
+}) {
   const { s } = useSafe();
-  const land = interpolate(frame, [landAt(index) - 8, landAt(index)], [0, 1], { ...clamp, easing: pop });
+  const land = interpolate(frame, [landAt(index) - 8, landAt(index)], [0, 1], {
+    ...clamp,
+    easing: pop,
+  });
   const missAt = beats.misses[missed.findIndex((tile) => tile === index)];
-  const shakeFor = (since: number) => (since >= 0 && since < 14 ? Math.sin(since * 2.5) * 12 * s * (1 - since / 14) : 0);
+  const shakeFor = (since: number) =>
+    since >= 0 && since < 14 ? Math.sin(since * 2.5) * 12 * s * (1 - since / 14) : 0;
   let face = light.accent;
   let edge = light.accentEdge;
   let shake = 0;
   let squash = 1;
   if (missAt !== undefined) {
-    const grey = interpolate(frame, [missAt, missAt + 3, missAt + 14, missAt + 22], [0, 1, 1, 0], clamp);
+    const grey = interpolate(
+      frame,
+      [missAt, missAt + 3, missAt + 14, missAt + 22],
+      [0, 1, 1, 0],
+      clamp,
+    );
     face = interpolateColors(grey, [0, 1], [light.accent, light.muted]);
     edge = interpolateColors(grey, [0, 1], [light.accentEdge, light.ink]);
     shake = shakeFor(frame - missAt);
@@ -279,12 +322,21 @@ function LetterTile({ letter, index, size, frame }: { letter: string; index: num
  * it hops along `path` like a dulcimer hammer and rests over the stressed tile.
  */
 function Mark({ size, step, frame }: { size: number; step: number; frame: number }) {
-  const over = interpolate(frame, path.frames, path.over, { ...clamp, easing: Easing.inOut(Easing.sin) });
-  const lift = interpolate(frame, path.frames, path.lift, { ...clamp, easing: Easing.inOut(Easing.quad) });
+  const over = interpolate(frame, path.frames, path.over, {
+    ...clamp,
+    easing: Easing.inOut(Easing.sin),
+  });
+  const lift = interpolate(frame, path.frames, path.lift, {
+    ...clamp,
+    easing: Easing.inOut(Easing.quad),
+  });
   const hovering = frame < 88 || (frame > 146 && frame < 186);
   const bob = hovering ? Math.sin(frame / 5) * 0.05 : 0;
   const swing = hovering ? Math.sin(frame / 6) * 10 : 0;
-  const appear = interpolate(frame, [beats.markIn, beats.markIn + 8], [0, 1], { ...clamp, easing: pop });
+  const appear = interpolate(frame, [beats.markIn, beats.markIn + 8], [0, 1], {
+    ...clamp,
+    easing: pop,
+  });
   const markWidth = size * 0.38;
   const markHeight = size * 1.08;
   return (

@@ -1,13 +1,18 @@
 /**
  * What every sourcing command shares: reading the list and opening the
- * Edition, the real fetch and clock, the shared cache, and the summary it
+ * Edition with the records of its content snapshot (ADR 0090), the real fetch
+ * and clock, the shared cache, and the summary it
  * prints after the run.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { EDITIONS_DIR, EditionFolderError, openEdition } from '@slovo/language-pack/edition';
+import {
+  EDITIONS_DIR,
+  EditionFolderError,
+  openEditionWithSnapshot,
+} from '@slovo/language-pack/edition';
 
 import {
   defaultCacheDir,
@@ -16,6 +21,7 @@ import {
   type PipelineOptions,
   type SourcingResult,
 } from './index';
+import { contentSnapshot } from './snapshot';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const toolDir = fileURLToPath(new URL('../', import.meta.url));
@@ -25,22 +31,39 @@ export interface CliInput {
   readonly edition: string;
   readonly out: string | undefined;
   readonly cache: string | undefined;
+  /** The `--snapshot <file>` the existing records are read from, if named. */
+  readonly snapshot: string | undefined;
+  /** The backend asked for the snapshot when no file is named: `$SLOVO_API_URL`. */
+  readonly apiUrl: string | undefined;
 }
 
 export type CliRun =
   | { readonly ok: true; readonly list: string; readonly options: PipelineOptions }
   | { readonly ok: false; readonly exitCode: number };
 
-/** Reads the list and opens the Edition; prints why and gives the exit code when either fails. */
-export function prepareRun(input: CliInput): CliRun {
+/**
+ * Reads the list and opens the Edition with the records of its content
+ * snapshot, so every draft is checked against the Edition's real records;
+ * prints why and gives the exit code when any of them fails.
+ */
+export async function prepareRun(input: CliInput): Promise<CliRun> {
   const cwd = process.env['INIT_CWD'] ?? process.cwd();
   const listPath = resolve(cwd, input.listFile);
   if (!existsSync(listPath)) {
     console.error(`No list at ${listPath}`);
     return { ok: false, exitCode: 2 };
   }
+  const snapshot = await contentSnapshot({
+    editionId: input.edition,
+    file: input.snapshot === undefined ? undefined : resolve(cwd, input.snapshot),
+    apiUrl: input.apiUrl,
+  });
+  if (!snapshot.ok) {
+    console.error(snapshot.error);
+    return { ok: false, exitCode: 2 };
+  }
   try {
-    const edition = openEdition(EDITIONS_DIR, input.edition);
+    const edition = openEditionWithSnapshot(EDITIONS_DIR, input.edition, snapshot.snapshot);
     return {
       ok: true,
       list: readFileSync(listPath, 'utf8'),

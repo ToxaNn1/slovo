@@ -1,9 +1,9 @@
-import { cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { buildFromSnapshot, buildLanguagePack } from '@slovo/language-pack';
-import { EDITIONS_DIR } from '@slovo/language-pack/edition';
+import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { testApp } from '../test-support';
@@ -12,8 +12,7 @@ const dir = mkdtempSync(join(tmpdir(), 'slovo-snapshot-pack-'));
 afterAll(() => {
   rmSync(dir, { recursive: true, force: true });
 });
-const folder = join(dir, 'uk');
-cpSync(join(EDITIONS_DIR, 'uk'), folder, { recursive: true });
+const folder = ukrainianSeedFolder(dir);
 const today = new Date('2026-11-08T12:00:00Z');
 
 describe('the Language Pack built from the snapshot of the local backend', () => {

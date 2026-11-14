@@ -54,7 +54,14 @@ export function StoreBadge({
       }}
     >
       <div style={{ fontWeight: 500, fontSize: height * 0.2, lineHeight: 1.1 }}>{text.small}</div>
-      <div style={{ fontWeight: 600, fontSize: height * 0.4, lineHeight: 1.1, letterSpacing: '-0.01em' }}>
+      <div
+        style={{
+          fontWeight: 600,
+          fontSize: height * 0.4,
+          lineHeight: 1.1,
+          letterSpacing: '-0.01em',
+        }}
+      >
         {text.big}
       </div>
     </div>

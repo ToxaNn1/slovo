@@ -31,8 +31,11 @@ import {
 } from '@slovo/contracts';
 import { z } from 'zod';
 
+import type { ContentSnapshot } from '@slovo/contracts/api';
+
 import {
   checkContentSet,
+  contentSetOf,
   CROSSWORD_DAYS_FILE,
   parseAgainst,
   type Authored,
@@ -292,6 +295,51 @@ export type EditionBuild = 'development' | 'release';
  * look the Edition up by it. Throws an EditionFolderError otherwise.
  */
 export function openEdition(editionsDir: string, editionId: string): EditionFolder {
+  return open(editionsDir, editionId, (files) => files.entries());
+}
+
+/**
+ * Opens an Edition as `openEdition` does, but takes its records from a
+ * snapshot of the backend (ADR 0090) instead of its folder's content files:
+ * the config, assets and every other file still come from the folder. Throws
+ * an EditionFolderError when the snapshot is of another Edition.
+ */
+export function openEditionWithSnapshot(
+  editionsDir: string,
+  editionId: string,
+  snapshot: ContentSnapshot,
+): EditionFolder {
+  if (snapshot.editionId !== editionId) {
+    const message = `The snapshot is of Edition ${snapshot.editionId}, not ${editionId}`;
+    throw new EditionFolderError('invalid', editionId, [{ file: SNAPSHOT_FILE, message }], message);
+  }
+  return open(editionsDir, editionId, () => snapshotEntries(snapshot));
+}
+
+/**
+ * Opens the Edition with the given id for its config and files alone, with no
+ * records, for a caller that reads none, such as a check of drafts. Throws as
+ * `openEdition` does.
+ */
+export function openEditionWithoutRecords(editionsDir: string, editionId: string): EditionFolder {
+  return open(editionsDir, editionId, () => NO_RECORDS);
+}
+
+const NO_RECORDS: AuthoredContent = {
+  words: [],
+  corrections: [],
+  idioms: [],
+  synonymRows: [],
+  tips: [],
+  curatedCollections: [],
+  errors: [],
+};
+
+function open(
+  editionsDir: string,
+  editionId: string,
+  recordsOf: (files: EditionFiles) => AuthoredContent,
+): EditionFolder {
   const known = listEditions(editionsDir);
   if (!known.includes(editionId)) {
     throw new EditionFolderError(
@@ -313,7 +361,7 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
     ]);
   }
   let read: AuthoredContent | undefined;
-  const entries = (): AuthoredContent => (read ??= files.entries());
+  const entries = (): AuthoredContent => (read ??= recordsOf(files));
   return {
     ...files,
     id: editionId,
@@ -357,6 +405,26 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
   function authored<E extends { readonly id: string }>(entries: readonly E[]): Authored<E>[] {
     return entries.map((entry) => ({ file: files.entryFile(entry.id), entry }));
   }
+}
+
+/** What the errors of a snapshot name as their file. */
+export const SNAPSHOT_FILE = 'snapshot';
+
+/** A snapshot's records, each named `snapshot:<kind>/<id>` as its file. */
+export function snapshotEntries(snapshot: ContentSnapshot): AuthoredContent {
+  const { words, corrections, idioms, synonymRows, tips, curatedCollections } = contentSetOf(
+    {
+      word: snapshot.words,
+      correction: snapshot.corrections,
+      idiom: snapshot.idioms,
+      synonymRow: snapshot.synonymRows,
+      tip: snapshot.tips,
+      curatedCollection: snapshot.curatedCollections,
+      crosswordDay: snapshot.crosswordDays,
+    },
+    (kind, id) => `${SNAPSHOT_FILE}:${kind}/${id}`,
+  );
+  return { words, corrections, idioms, synonymRows, tips, curatedCollections, errors: [] };
 }
 
 /** The errors that belong to the given Entries' files. */

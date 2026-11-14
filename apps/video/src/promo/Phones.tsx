@@ -5,7 +5,6 @@ import { useSafe } from '../safe';
 import { Knock, Sfx, sfx } from '../sound';
 import { clamp, pop } from '../shared/motion';
 
-
 /** How long a step's background takes to wipe over the one before it. */
 const wipe = 8;
 
@@ -38,9 +37,24 @@ export const screens = {
 
 /** The steps every promo cuts from: the three main screens, then the calendar and the reward as a pair. */
 export const steps = {
-  feed: { caption: 'Гортай слова,\nяк стрічку', screens: [screens.feed], tone: 'red', sound: 'feed' },
-  stress: { caption: 'Вгадай,\nде наголос', screens: [screens.stress], tone: 'cream', sound: 'stress' },
-  crossword: { caption: 'Кросворд\nщодня', screens: [screens.crossword], tone: 'red', sound: 'crossword' },
+  feed: {
+    caption: 'Гортай слова,\nяк стрічку',
+    screens: [screens.feed],
+    tone: 'red',
+    sound: 'feed',
+  },
+  stress: {
+    caption: 'Вгадай,\nде наголос',
+    screens: [screens.stress],
+    tone: 'cream',
+    sound: 'stress',
+  },
+  crossword: {
+    caption: 'Кросворд\nщодня',
+    screens: [screens.crossword],
+    tone: 'red',
+    sound: 'crossword',
+  },
   streak: {
     caption: 'Серія днів\nі нагороди',
     screens: [screens.calendar, screens.reward],
@@ -49,12 +63,23 @@ export const steps = {
   },
 } as const satisfies Record<string, Omit<PhoneStep, 'frames'>>;
 
-export const phonesLength = (list: readonly PhoneStep[]) => list.reduce((sum, step) => sum + step.frames, 0);
+export const phonesLength = (list: readonly PhoneStep[]) =>
+  list.reduce((sum, step) => sum + step.frames, 0);
 
 const tones = {
   red: { background: light.accent, caption: light.background, kicker: light.ink, frame: light.ink },
-  cream: { background: light.background, caption: light.ink, kicker: light.accent, frame: light.ink },
-  dark: { background: dark.background, caption: dark.ink, kicker: light.accent, frame: light.accent },
+  cream: {
+    background: light.background,
+    caption: light.ink,
+    kicker: light.accent,
+    frame: light.ink,
+  },
+  dark: {
+    background: dark.background,
+    caption: dark.ink,
+    kicker: light.accent,
+    frame: light.accent,
+  },
 } as const;
 
 /** The cut through the app: each step wipes in over the one before it. */
@@ -68,7 +93,12 @@ export function Phones({ steps: list }: { steps: readonly PhoneStep[] }) {
         const last = index === list.length - 1;
         return (
           // A step stays under the next one's wipe.
-          <Sequence key={index} from={start} durationInFrames={step.frames + (last ? 0 : wipe)} name={step.caption}>
+          <Sequence
+            key={index}
+            from={start}
+            durationInFrames={step.frames + (last ? 0 : wipe)}
+            name={step.caption}
+          >
             <Step step={step} next={list[index + 1]} />
           </Sequence>
         );
@@ -81,7 +111,10 @@ function Step({ step, next }: { step: PhoneStep; next?: PhoneStep }) {
   const frame = useCurrentFrame();
   const { width, portrait, s, safe } = useSafe();
   const tone = tones[step.tone];
-  const cover = interpolate(frame, [0, wipe], [100, 0], { ...clamp, easing: Easing.out(Easing.cubic) });
+  const cover = interpolate(frame, [0, wipe], [100, 0], {
+    ...clamp,
+    easing: Easing.out(Easing.cubic),
+  });
   const lines = step.caption.split('\n');
   const captionSize = (portrait ? 80 : 94) * s;
   const lineHeight = 1.1;
@@ -167,12 +200,21 @@ function Step({ step, next }: { step: PhoneStep; next?: PhoneStep }) {
             rotate: '4deg',
           }}
         >
-          <Phone screen={next.screens[0]} width={phoneW * 0.82} height={phoneH * 0.82} frameColor={tone.frame} s={s} />
+          <Phone
+            screen={next.screens[0]}
+            width={phoneW * 0.82}
+            height={phoneH * 0.82}
+            frameColor={tone.frame}
+            s={s}
+          />
         </div>
       )}
       {step.screens.map((screen, i) => {
         const at = 1 + i * 6;
-        const enter = interpolate(frame, [at, at + 10], [1, 0], { ...clamp, easing: Easing.out(Easing.cubic) });
+        const enter = interpolate(frame, [at, at + 10], [1, 0], {
+          ...clamp,
+          easing: Easing.out(Easing.cubic),
+        });
         const tilt = pair ? (i === 0 ? -2 : 2) : -1.5;
         return (
           <div
@@ -230,11 +272,28 @@ function Phone({
         <Img src={screen.shot} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       ) : (
         <>
-          <div style={{ fontFamily: wordFont, fontWeight: 900, fontSize: titleSize, color: light.ink, rotate: '-4deg' }}>
+          <div
+            style={{
+              fontFamily: wordFont,
+              fontWeight: 900,
+              fontSize: titleSize,
+              color: light.ink,
+              rotate: '-4deg',
+            }}
+          >
             {screen.title}
           </div>
-          <div style={{ fontFamily: uiFont, fontSize: titleSize * 0.45, color: light.muted }}>{screen.line}</div>
-          <div style={{ fontFamily: uiFont, fontSize: titleSize * 0.35, color: light.muted, marginTop: width * 0.08 }}>
+          <div style={{ fontFamily: uiFont, fontSize: titleSize * 0.45, color: light.muted }}>
+            {screen.line}
+          </div>
+          <div
+            style={{
+              fontFamily: uiFont,
+              fontSize: titleSize * 0.35,
+              color: light.muted,
+              marginTop: width * 0.08,
+            }}
+          >
             місце для скріншота
           </div>
         </>

@@ -1,7 +1,7 @@
 /**
  * Drafts Words for a list of Lemmas, for human review:
  *
- *   pnpm source:words <lemma-list> --edition <id> [--out <dir>] [--cache <dir>]
+ *   pnpm source:words <lemma-list> --edition <id> [--snapshot <file>] [--out <dir>] [--cache <dir>]
  *                     [--sum auto|direct|wayback|off]
  *
  * The list has one Lemma per line, `<lemma> <category id> <rarity>`, with
@@ -18,7 +18,7 @@ import { prepareRun, printSummary } from './cli-common';
 import { sourceWords, type SumAccess } from './index';
 
 const USAGE =
-  'Usage: pnpm source:words <lemma-list> --edition <id> [--out <dir>] [--cache <dir>] [--sum auto|direct|wayback|off]';
+  'Usage: pnpm source:words <lemma-list> --edition <id> [--snapshot <file>] [--out <dir>] [--cache <dir>] [--sum auto|direct|wayback|off]';
 const SUM_ACCESS: readonly SumAccess[] = ['auto', 'direct', 'wayback', 'off'];
 
 async function main(): Promise<number> {
@@ -28,6 +28,7 @@ async function main(): Promise<number> {
       edition: { type: 'string' },
       out: { type: 'string' },
       cache: { type: 'string' },
+      snapshot: { type: 'string' },
       sum: { type: 'string', default: 'auto' },
     },
   });
@@ -43,7 +44,14 @@ async function main(): Promise<number> {
     console.error(USAGE);
     return 2;
   }
-  const run = prepareRun({ listFile, edition, out: values.out, cache: values.cache });
+  const run = await prepareRun({
+    listFile,
+    edition,
+    out: values.out,
+    cache: values.cache,
+    snapshot: values.snapshot,
+    apiUrl: process.env['SLOVO_API_URL'],
+  });
   if (!run.ok) return run.exitCode;
   return printSummary(await sourceWords({ ...run.options, lemmaList: run.list, sumAccess }));
 }
