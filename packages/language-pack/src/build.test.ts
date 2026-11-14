@@ -33,11 +33,13 @@ import {
   checkLanguagePack,
   formatBuildError,
   formatContentReport,
+  missedTargets as missedTargetsOf,
   openLanguagePack,
   recordContent,
   SnapshotUnreachableError,
   type BuildError,
 } from './index';
+import { editionFiles } from './edition-folder';
 import { fontWith } from './test-support';
 
 const fixture = (name: string) => fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
@@ -1996,14 +1998,14 @@ describe('the sample Word of the voice screen', () => {
 });
 
 describe('checkLanguagePack', () => {
-  it('passes valid content with the targets it misses, as the build does', () => {
+  it('passes valid content whatever content targets it misses, which block nothing', () => {
     const editionDir = copyFixture('valid');
-    writeFileSync(join(editionDir, 'content/targets.json'), JSON.stringify({ minWords: 3 }));
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      contentTargets: { minWords: 900 },
+    }));
 
-    expect(checkLanguagePack({ editionDir })).toEqual({
-      ok: true,
-      missedTargets: [{ target: 'minWords', message: '2 Words, below the target of 3' }],
-    });
+    expect(checkLanguagePack({ editionDir })).toEqual({ ok: true });
   });
 
   it('refuses what the build refuses and writes no pack', () => {
@@ -2623,16 +2625,17 @@ describe('recordContent', () => {
 
 describe('content targets', () => {
   /** A copy of the valid fixture: 2 live Words (rarity 1 and 3, both in "speech"), 4 Corrections, 2 Idioms. */
-  function editionWithTargets(targets: Json): string {
+  function editionWithTargets(contentTargets: Json): string {
     const editionDir = copyFixture('valid');
-    writeFileSync(join(editionDir, 'content/targets.json'), JSON.stringify(targets));
+    editJson(editionDir, 'edition.json', (config) => ({ ...config, contentTargets }));
     return editionDir;
   }
 
   function missedTargets(editionDir: string) {
     const result = buildLanguagePack({ editionDir, outFile: packPath() });
     if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-    return result.missedTargets;
+    const { contentTargets } = editionFiles(editionDir).read('config');
+    return missedTargetsOf(result.report, contentTargets ?? {});
   }
 
   it('misses nothing when the content meets every target the Edition declares', () => {
@@ -2772,17 +2775,17 @@ describe('content targets', () => {
     ]);
   });
 
-  it('declares no targets when the Edition has no targets file', () => {
+  it('declares no targets when the Edition config names none', () => {
     expect(missedTargets(fixture('valid'))).toEqual([]);
   });
 
-  it('rejects a targets file it cannot read, so a typo never switches a target off', () => {
+  it('rejects content targets it cannot read, so a typo never switches a target off', () => {
     const editionDir = editionWithTargets({ minWords: 2, minWordz: 900 });
 
     expect(buildErrors(editionDir)).toEqual([
       expect.objectContaining({
-        file: 'content/targets.json',
-        field: 'minWordz',
+        file: 'edition.json',
+        field: 'contentTargets.minWordz',
         message: expect.stringMatching(/unknown field/i) as string,
       }),
     ]);

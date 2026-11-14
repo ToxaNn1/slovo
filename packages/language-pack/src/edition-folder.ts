@@ -41,7 +41,6 @@ import {
 
 import { buildErrorsOf, formatBuildError, type BuildError } from './build-error';
 import { ContentManifestSchema, MANIFEST_FILE } from './content-manifest';
-import { ContentTargetsSchema } from './content-targets';
 import { ID_REGISTRY_FILE, IdRegistrySchema } from './id-registry';
 
 /** The editions folder of this repo, which holds one folder per Edition. */
@@ -65,7 +64,6 @@ const FILES = {
   widgetSnapshotExample: 'widget-snapshot.example.json',
   idRegistry: ID_REGISTRY_FILE,
   manifest: MANIFEST_FILE,
-  targets: 'content/targets.json',
   crosswordDays: CROSSWORD_DAYS_FILE,
   languagePack: 'dist/language-pack.db',
 } as const;
@@ -102,7 +100,6 @@ const SCHEMAS = {
   widgetSnapshotExample: WidgetSnapshotSchema,
   idRegistry: IdRegistrySchema,
   manifest: ContentManifestSchema,
-  targets: ContentTargetsSchema,
   crosswordDays: CrosswordDaysSchema,
 } satisfies Partial<Record<EditionFile, z.ZodType>>;
 

@@ -241,8 +241,9 @@ jobs:
           for _ in $(seq 60); do curl -fs "http://localhost:$PORT/health" && exit 0; sleep 1; done
           cat "$RUNNER_TEMP/backend.log"
           echo "::error::The backend did not answer /health in 60 s"; exit 1
-      # Fails on invalid content and on any missed content target of the Edition.
-      - name: Build the Ukrainian Language Pack and check its content targets
+      # Fails on invalid content; it lists the missed content targets and blocks
+      # on none of them (ADR 0123).
+      - name: Build the Ukrainian Language Pack
         id: pack
         shell: bash
         run: pnpm build:pack uk 2>&1 | tee "$RUNNER_TEMP/content-report.txt"

@@ -24,9 +24,9 @@ FROM base AS install
 COPY . .
 RUN pnpm install --frozen-lockfile --prod \
       --filter @slovo/backend... --filter '!@slovo/config'
-# Content lives in Postgres (ADR 0090): of an Edition's content folder the
-# image keeps only the content targets the backend reads at start.
-RUN find editions -path '*/content/*' -type f ! -name targets.json -delete
+# Content lives in Postgres (ADR 0090): the image keeps none of an Edition's
+# content folder.
+RUN find editions -path '*/content/*' -type f -delete
 
 # The owner admin (ADR 0088), built by Vite with the development dependencies
 # it needs; the image keeps its dist alone, which the backend serves at /admin.

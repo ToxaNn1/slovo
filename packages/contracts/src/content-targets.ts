@@ -1,9 +1,10 @@
 import { z } from 'zod';
 
 /**
- * The floor an Edition's content must reach before it ships, declared by the
- * Edition in `content/targets.json`. Every target is optional; a missing one
- * is not checked. The counts leave Retired Entries out, as the report does.
+ * The floors an Edition's content should reach, declared by the Edition in
+ * `contentTargets` of `edition.json` (ADR 0123). The admin shows the misses
+ * as a check that blocks nothing. Every target is optional; a missing one is
+ * not checked. The counts leave Retired Entries out, as the report does.
  */
 export const ContentTargetsSchema = z.strictObject({
   minWords: z.int().nonnegative().optional(),
