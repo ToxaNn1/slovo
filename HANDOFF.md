@@ -1,14 +1,13 @@
 # Wave #1850 (board 09 Saved/Search) — coordinator #8 handoff (rewrite whole, never append)
 Owner ran /mattpocock-skills:implement-spec on #1850, «роби максимум в хмарі». Follow that SKILL.md + docs/agents/waves.md «Steps» + docs/agents/ticket-brief.md.
 Grants: ~/.slovo-coord/grant-saved-1114.md (commit, push, PR, auto-merge squash to main on green, this branch only). Force-push grant ~/.slovo-coord/grant-force-push-saved-1114.md is USED UP: never force-push again. No branch deletion.
-Integration branch feat/1114-saved-search-design (main checkout on it, pushed). Draft PR #1860 (Closes #1851 #1859 so far; add #1852 #1853 #1854 and each next ticket to its body).
+Integration branch feat/1114-saved-search-design (main checkout on it, pushed). Draft PR #1860 (Closes #1851 #1852 #1853 #1854 #1858 #1859; add each next ticket to its body). CI green after 12864fd39 (admin screen tests testTimeout 15 s; the 5 s flake also hit main).
 
 ## State
-- Merged: #1859, #1851, #1852, #1853, #1854 (coord fixed #1854's STUCK: test reads groupByLocalDay from its module; barrel exports dropped). groupByLocalDay is now used only by its tests: raise in the final code-review.
+- Merged: #1859, #1851, #1852, #1853, #1854, #1858 (report reports/1858.txt: questions = ADR 0059 line for search/RecentQueries.tsx to enable the cascade; ADR 0054 «Нічого не знайдено» now from 3 letters) (coord fixed #1854's STUCK: test reads groupByLocalDay from its module; barrel exports dropped). groupByLocalDay is now used only by its tests: raise in the final code-review.
 - Running cloud (briefs in wave/briefs/<n>.txt):
-  - #1855 feat/1855-due-quiz session_01VefVQSQztGPy3y3tUS8xL7
+  - #1855 feat/1855-due-quiz: 1st session STUCK at context limit (report reports/1855-stuck1.txt); 2nd session_01VefVQVYNVLabavon1QUFPE (brief briefs/1855b.txt), waiter skips old tip 7aaf511fc
   - #1856 feat/1856-collections-screens session_01VefVQTrTs1Ao4x4jvTMFFq. Its brief wrongly said «push only feat/1852-sheet-toast»: look for the `#1856` status commit on BOTH branches.
-  - #1858 feat/1858-search-screen session_01VefVQSUvXjpAJDBQAtZyc3
 - Left: #1857 (after #1856; it writes the undo mechanism into ADR 0132). Build its brief from wave/briefs/1855.txt with sed using `|` as the delimiter (branch names hold `/`).
 
 ## How to merge a cloud ticket (author fix)
