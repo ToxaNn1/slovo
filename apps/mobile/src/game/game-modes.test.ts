@@ -9,7 +9,7 @@ import {
 } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
-import { gameModeCard, gameModeGroups, gameModeStrings } from './game-modes';
+import { gameModeCard, gameModeGroups, gameModeStrings, gameModeToast } from './game-modes';
 import { strings as allStrings } from '../test-support';
 
 const { game: strings } = allStrings;
@@ -64,8 +64,11 @@ async function open({
   correctionsInMix = true,
   gameModes,
   switchedOff = [],
+  marksStress = false,
 }: {
   words: number;
+  /** Whether the Edition's language marks Stress, which «Наголос» needs. */
+  marksStress?: boolean;
   correctionsInMix?: boolean;
   gameModes?: readonly GameMode[];
   /** The Feature Switches turned off; every other one is on. */
@@ -76,6 +79,7 @@ async function open({
     edition: testEdition({
       isFeatureEnabled: (feature) => !switchedOff.includes(feature),
       userSettingDefaults: { mix: { kinds: { correction: correctionsInMix } } },
+      ...(marksStress ? { languageTraits: { stress: { marked: true, vowels: ['e'] } } } : {}),
     }),
     userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-15T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
@@ -170,6 +174,42 @@ describe('the card of each Game Mode on offer', () => {
     expect(card.bestLabel).toBe(label);
   });
 
+  it.each([
+    [{ result: 12, of: 15 }, 'Рекорд: 12 з 15'],
+    [{ result: 23 }, 'Рекорд: 23'],
+    [undefined, 'Ще жодної гри'],
+  ])('with the hub record, shows the Best result %j as «%s», read the same', (best, text) => {
+    const card = gameModeCard(
+      {
+        modeId: 'stress',
+        entryKind: 'word',
+        group: 'sound',
+        canStart: true,
+        ...(best === undefined ? {} : { best }),
+      },
+      strings,
+      { record: true },
+    );
+
+    expect(card).toEqual({
+      glyph: 'А́',
+      title: 'Наголос',
+      line: 'Торкнись наголошеної голосної',
+      canStart: true,
+      refusal: undefined,
+      best: text,
+      bestLabel: text,
+    });
+  });
+
+  it("with the toast, draws a mode that can't start as one that can, with no refusal", async () => {
+    const [guessWord] = (await open({ words: 14 })).game.state.modes.map((offer) =>
+      gameModeCard(offer, strings, { toast: true }),
+    );
+
+    expect(guessWord).toMatchObject({ ...guessWordCard, canStart: true, refusal: undefined });
+  });
+
   it('fails loudly for a registered mode the Edition gives no strings', async () => {
     const app = await open({ words: 15, gameModes: [unnamedMode] });
 
@@ -216,6 +256,43 @@ const offer = (modeId: string, group: GameModeGroup = 'words'): GameModeOffer =>
 const shapeOf = (groups: ReturnType<typeof gameModeGroups>) =>
   groups.map(({ title, offers }) => [title, offers.map(({ modeId }) => modeId)]);
 
+describe("the toast on a mode that can't start", () => {
+  const stuck = { ...offer('pairs', 'meaning'), canStart: false };
+
+  it('sends the reader to «Наголос» while it can start', () => {
+    const offers = [offer('guess-word', 'new'), offer('stress', 'sound'), stuck];
+
+    expect(gameModeToast(stuck, offers, strings)).toBe(
+      '«Пари» ще розминається. Влучай поки в «Наголос»!',
+    );
+  });
+
+  it('sends the reader to the first mode that can start while «Наголос» cannot', () => {
+    const offers = [
+      { ...offer('stress', 'sound'), canStart: false },
+      stuck,
+      offer('anagram', 'letters'),
+      offer('timed', 'speed'),
+    ];
+
+    expect(gameModeToast(stuck, offers, strings)).toBe(
+      '«Пари» ще розминається. Влучай поки в «Анаграми»!',
+    );
+  });
+});
+
+/** The board's five groups with every mode in its own, as ADR 0139 lists them. */
+const HUB_GROUPS = [
+  ['Звук', ['stress']],
+  ['Значення', ['correction', 'pairs', 'idiom-meaning']],
+  ['Букви', ['anagram']],
+  ['Швидкість', ['timed']],
+  [
+    'Нове',
+    ['guess-word', 'by-letters', 'type-word', 'origin', 'anglicism', 'build-idiom', 'survival'],
+  ],
+];
+
 describe('the groups of the modes on offer', () => {
   it('puts every mode in the group it declares, the groups in the agreed order and the modes in the order offered', () => {
     const offers = [
@@ -237,8 +314,14 @@ describe('the groups of the modes on offer', () => {
     ]);
   });
 
+  it('puts every mode on offer in the board\'s five groups, in the board\'s order', async () => {
+    const app = await open({ words: 15, marksStress: true });
+
+    expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual(HUB_GROUPS);
+  });
+
   it('lists only the modes the Core offers, and no group without one', async () => {
-    const app = await open({ words: 15 });
+    const app = await open({ words: 15, switchedOff: ['gameHubGroups'] });
 
     expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
       ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters', 'type-word', 'origin']],
@@ -249,7 +332,7 @@ describe('the groups of the modes on offer', () => {
   });
 
   it('leaves out a mode the Edition switches off', async () => {
-    const app = await open({ words: 15, switchedOff: ['corrections'] });
+    const app = await open({ words: 15, switchedOff: ['corrections', 'gameHubGroups'] });
 
     expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
       ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters', 'origin']],
