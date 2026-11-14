@@ -1,5 +1,7 @@
 # Content reaches main through automatic gates, without the owner's review
 
+**Superseded by ADR 0090.** Agent content no longer reaches `main`; the route, the gates and the review are in ADR 0090. The drafters and the quoting rule that stayed live are in ADR 0095. Kept for history.
+
 Until now a human checked every draft Word before it moved into `editions/uk/content/words/`. On 2026-11-06 the owner waived that review for agent-sourced content: a content wave of new Entries may reach `main` once automatic gates pass, without the owner reading the drafts.
 
 **Amended by ADR 0090.** Agent-sourced content no longer reaches `main` at all: `pnpm content add|edit|flag` writes it to the Deployment's Postgres through the admin API with an Агент token, the fast rules of `content check` run on the backend at every save, the quote check runs as a background job, and the owner reviews each batch afterwards in the Content queue with a one-click rollback. The quoting rule of ADR 0012 and the drafting commands stay; the pull request, the coordinator, `build:pack --record`, `ids.json` and `manifest.json` go with the repo content files.

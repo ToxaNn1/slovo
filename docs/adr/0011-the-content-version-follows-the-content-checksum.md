@@ -1,5 +1,7 @@
 # The content version follows the content checksum
 
+**Superseded by ADR 0090.** The manifest, the content checksum and `--record` are gone; the rule that two different contents never share one version lives in ADR 0090 (the database counter). Kept for history.
+
 `content/manifest.json` records the content version together with the content checksum (`contentChecksum`) of the pack built at that version. The Language Pack build fails when the content checksum no longer matches, so a content change that leaves the version behind fails CI, and two different packs never share one version. `pnpm build:pack <edition-id> --record` raises the version by one and records the new checksum; it leaves both alone when the content is unchanged. For an Edition that keeps crossword days, the manifest also records their checksum, `crosswordDaysChecksum`, which marks them published (ADR 0052).
 
 **Amended by ADR 0090.** Content lives in the Deployment's Postgres and the content version is a per-Edition counter the database raises on every publish; `content/manifest.json`, the content checksum and `--record` go with the repo content files. The one rule stays: two different contents never share a version.

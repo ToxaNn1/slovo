@@ -4,7 +4,7 @@ The app's version, `version` in `apps/mobile/app.config.ts`, is the version of t
 
 The build number is EAS's (`appVersionSource: remote` in `eas.json`): the TestFlight profile raises it on every build (`autoIncrement`), since App Store Connect refuses an upload whose build number it has seen, and the version stays the app config's.
 
-The rule covers the app version only. The content version of a Language Pack follows its content checksum (ADR 0011). The `version` fields of the workspace `package.json` files are not published and stay `0.0.0`.
+The rule covers the app version only. The content version of a Language Pack is a per-Edition database counter (ADR 0090). The `version` fields of the workspace `package.json` files are not published and stay `0.0.0`.
 
 ## Considered Options
 
