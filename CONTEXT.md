@@ -26,6 +26,14 @@ _Avoid_: Delta, diff (that is what the editor shows on a version conflict), OTA
 A per-Edition number the Deployment's database raises on every publish, a rollback included; it only grows, and two different contents never share one (ADR 0090). A record version is the per-record counter a save names and the server checks, refusing a save over a newer one.
 _Avoid_: Pack version, checksum, revision
 
+**Content snapshot**:
+Every published record of one Edition at one content version, as the backend's `GET /v1/editions/<edition>/content/snapshot` answers it; the EAS build builds the bundled Language Pack from it, and the content tools check drafts against it (ADR 0090). A build with the backend down fails rather than ships an old pack.
+_Avoid_: Dump, export, content folder
+
+**Seed snapshot**:
+A saved slice of an Edition's content snapshot, `editions/<edition>/seed-snapshot.json`, that seeds the empty database of CI, Maestro and `pnpm dev` through `pnpm content import --snapshot`; tests name some of its records by id, so a change to it keeps those ids or updates those tests (ADR 0090). It is a fixture, never the live content.
+_Avoid_: Fixture database, sample content
+
 **Update channel**:
 An Edition's stream of signed OTA updates to the app's JavaScript, named after the Edition id and bound to its builds; an update reaches only the builds whose native code it was made for, and the owner publishes one deliberately, to a share of readers first (ADR 0062).
 _Avoid_: Release, release channel, branch
