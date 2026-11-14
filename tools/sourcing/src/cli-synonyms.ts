@@ -14,7 +14,8 @@ import { parseArgs } from 'node:util';
 import { prepareRun, printSummary } from './cli-common';
 import { sourceSynonyms } from './index';
 
-const USAGE = 'Usage: pnpm source:synonyms <list> --edition <id> [--out <dir>] [--cache <dir>]';
+const USAGE =
+  'Usage: pnpm source:synonyms <list> --edition <id> [--snapshot <file>] [--out <dir>] [--cache <dir>]';
 
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({

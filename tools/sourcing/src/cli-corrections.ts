@@ -15,7 +15,7 @@ import { prepareRun, printSummary } from './cli-common';
 import { sourceCorrections } from './index';
 
 const USAGE =
-  'Usage: pnpm source:corrections <form-list> --edition <id> [--out <dir>] [--cache <dir>]';
+  'Usage: pnpm source:corrections <form-list> --edition <id> [--snapshot <file>] [--out <dir>] [--cache <dir>]';
 
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
