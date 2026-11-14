@@ -1117,3 +1117,43 @@ export const correctionGridBox = {
   small: correctionGrid.small,
   name: 'gridTileName',
 } as const;
+
+/**
+ * The goal-reached card, from the design: the card's margins on its page,
+ * corner radius and padding; the darker band across its foot (its height,
+ * how far it reaches past the sides and below, its turn); the gaps between
+ * its parts; the plate's skew; each Word plate's turn and left step, the
+ * Mascot's width, the flame's box and the button's height and radius.
+ */
+export const goalReachedCard = {
+  margin: { top: 104, bottom: 96, horizontal: 12 },
+  radius: 28,
+  padding: { top: 26, horizontal: 22, bottom: 22 },
+  band: { height: 300, outside: 40, below: 60, turn: '-9deg' },
+  titleGap: 22,
+  textGap: 14,
+  wordsGap: 22,
+  wordGap: 8,
+  buttonGap: 16,
+  plate: { padding: { vertical: 7, horizontal: 10 }, skew: '-10deg' },
+  word: {
+    padding: { vertical: 10, horizontal: 16 },
+    turns: ['-3deg', '2deg', '-1.5deg'],
+    steps: [0, 14, 4],
+    shadow: 4,
+    shadowColor: 'rgba(20, 12, 10, 0.35)',
+  },
+  textWidth: 260,
+  mascot: 150,
+  flame: { width: 26, height: 32, gap: 8 },
+  streakGap: 6,
+  footGap: 12,
+  button: {
+    height: 60,
+    radius: 16,
+    shadow: 5,
+    shadowColor: 'rgba(20, 12, 10, 0.45)',
+    gap: 10,
+    arrow: { width: 14, height: 18 },
+  },
+} as const;
