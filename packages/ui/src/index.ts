@@ -214,5 +214,6 @@ export {
   type VerticalPagerHandle,
 } from './primitives/VerticalPager';
 export { VowelButtons } from './game/VowelButtons';
-export { WidgetGuide } from './settings/WidgetGuide';
+export { WidgetGuide, WidgetGuideSteps } from './settings/WidgetGuide';
+export { WidgetPreviews } from './settings/WidgetPreviews';
 export { WidgetGuideSheet } from './settings/WidgetGuideSheet';
