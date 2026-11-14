@@ -9094,6 +9094,46 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "progressReset": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "dataExport": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "readerName": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "widgetPreviews": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "textSizeSteps": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -9232,7 +9272,12 @@
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate",
-                        "scrollToTop"
+                        "scrollToTop",
+                        "progressReset",
+                        "dataExport",
+                        "readerName",
+                        "widgetPreviews",
+                        "textSizeSteps"
                       ]
                     },
                     "rules": {
@@ -10897,6 +10942,46 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "progressReset": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "dataExport": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "readerName": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "widgetPreviews": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "textSizeSteps": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -11035,7 +11120,12 @@
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate",
-                        "scrollToTop"
+                        "scrollToTop",
+                        "progressReset",
+                        "dataExport",
+                        "readerName",
+                        "widgetPreviews",
+                        "textSizeSteps"
                       ]
                     },
                     "rules": {
@@ -12631,6 +12721,46 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "progressReset": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "dataExport": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "readerName": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "widgetPreviews": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "textSizeSteps": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -12769,7 +12899,12 @@
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate",
-                        "scrollToTop"
+                        "scrollToTop",
+                        "progressReset",
+                        "dataExport",
+                        "readerName",
+                        "widgetPreviews",
+                        "textSizeSteps"
                       ]
                     },
                     "rules": {

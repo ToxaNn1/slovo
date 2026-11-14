@@ -50,6 +50,10 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   profile: ['xpLog'],
   profileConfirmedByRarity: ['profile', 'confirmedEntries'],
   profileGameBest: ['profile', 'game'],
+  // The board 11 parts (spec #1861).
+  progressReset: ['xpLog'],
+  readerName: ['profile'],
+  widgetPreviews: ['widget'],
   dailyGoal: ['xpLog'],
   seenWordXp: ['xpLog', 'dailyGoal'],
   goalReachedCard: ['xpLog', 'dailyGoal'],

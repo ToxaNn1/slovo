@@ -527,6 +527,16 @@ export const FeatureSwitchesSchema = z.strictObject({
   forceUpdate: FeatureSwitchStateSchema,
   /** «Нагору»: the round arrow-up button over a long list once the reader has scrolled down, which scrolls the list gently back to its top; off, no button. */
   scrollToTop: FeatureSwitchStateSchema,
+  /** «Скинути прогрес»: the reset marker in the XP log, after which every progress value counts from zero (ADR 0133); off, no button. Off while `xpLog` is. */
+  progressReset: FeatureSwitchStateSchema,
+  /** «Експортувати мої дані»: one file of the reader's user state, built on the device and handed to the system share window (ADR 0135); off, the row is absent. */
+  dataExport: FeatureSwitchStateSchema,
+  /** The reader's name on the Profile: its header and its «Ім’я» row (ADR 0136); off, the header shows the Level alone. Off while `profile` is. */
+  readerName: FeatureSwitchStateSchema,
+  /** The widget previews «Малий», «Середній» and «Екран блокування» on the Widgets screen, drawn from the Widget Snapshot; off, the steps alone. Off while `widget` is. */
+  widgetPreviews: FeatureSwitchStateSchema,
+  /** The three-step text size «Як у системі», «Більший», «Найбільший» and its screen (ADR 0134); off, the S…XL scale and its row. */
+  textSizeSteps: FeatureSwitchStateSchema,
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -721,6 +731,11 @@ export const FontSizeSchema = z.enum(['S', 'M', 'L', 'XL']);
 
 export type FontSize = z.infer<typeof FontSizeSchema>;
 
+/** The three-step text size, in ladder order: «Як у системі», «Більший», «Найбільший» (ADR 0134). */
+export const TextSizeSchema = z.enum(['system', 'larger', 'largest']);
+
+export type TextSize = z.infer<typeof TextSizeSchema>;
+
 /**
  * The Daily Goal (ADR 0074): the Words the reader aims to see on a local day.
  * It replaces the Daily Limit of ADR 0054.
@@ -809,7 +824,10 @@ export type MixConfig = z.infer<typeof MixConfigSchema>;
 /** The settings a new user starts with. */
 export const UserSettingDefaultsConfigSchema = z.strictObject({
   theme: ThemeSchema,
+  /** The S…XL font size, while `textSizeSteps` is off. */
   fontSize: FontSizeSchema,
+  /** The three-step text size, while `textSizeSteps` is on (ADR 0134). */
+  textSize: TextSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),
   /** The default notification times, kept in time order. */
