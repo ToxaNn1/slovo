@@ -147,3 +147,9 @@ export const optionScreenDrawing = {
   explanationMinWidth: 140,
   optionPaddingVertical: 17,
 } as const;
+
+/** A code cell's drawing (board 11, 96): its height, corner and ring. */
+export const codeCellDrawing = { height: 62, radius: 13, border: 2 } as const;
+
+/** The Account card of the signed-in Account screen (board 11, 97): its corner. */
+export const accountCardRadius = 20;

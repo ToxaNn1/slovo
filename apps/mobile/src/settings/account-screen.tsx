@@ -1,7 +1,9 @@
 import { SIGN_IN_CODE_DIGITS } from '@slovo/contracts';
 import type { Account, AccountState } from '@slovo/core';
 import {
+  accountCardRadius,
   BackLink,
+  CodeCells,
   DeleteAccountButton,
   disabledOpacity,
   fill,
@@ -108,7 +110,9 @@ function AccountContent({
           }}
         />
         <View style={styles.header}>
-          <ScreenTitle>{edition.accountName}</ScreenTitle>
+          <ScreenTitle>
+            {state.status === 'code-sent' ? strings.codeLabel : edition.accountName}
+          </ScreenTitle>
         </View>
         {state.status === 'signed-in' ? (
           <SignedIn account={account} state={state} problem={problem} />
@@ -135,10 +139,11 @@ function AccountContent({
 type StateOf<S extends AccountState['status']> = Extract<AccountState, { status: S }>;
 
 /**
- * Signed out: «Увійти через Google», then «Увійти через Apple», each when it
- * is offered, then the email field and «Надіслати код». Once the code is
- * sent, the email stays over the code field, which signs in as soon as it
- * holds the code, with «Надіслати ще раз» and «Змінити пошту» under it.
+ * Signed out: «Увійти через Apple», then «Увійти через Google», each when it
+ * is offered, the divider «або поштою» under them, then the email field and
+ * «Надіслати код». Once the code is sent, «Код надіслано на <email>» stands
+ * over the code's six cells, which sign in as soon as they hold the code,
+ * with «Надіслати ще раз» and «Змінити пошту» under them.
  */
 function SignIn({
   account,
@@ -157,6 +162,8 @@ function SignIn({
 }) {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
+  const tokens = useTokens();
+  const { voice } = useEdition();
 
   if (state.status === 'signed-out') {
     const send = () => {
@@ -164,17 +171,6 @@ function SignIn({
     };
     return (
       <View style={styles.form}>
-        {withGoogle && (
-          <GoogleSignInButton
-            testID="account-google"
-            label={strings.signInWithGoogle}
-            busy={state.inFlight === 'signInWithGoogle'}
-            disabled={state.inFlight !== undefined}
-            onPress={() => {
-              void keep('the Account', account.signInWithGoogle());
-            }}
-          />
-        )}
         {withApple && (
           <AppleSignInButton
             testID="account-apple"
@@ -186,6 +182,18 @@ function SignIn({
             }}
           />
         )}
+        {withGoogle && (
+          <GoogleSignInButton
+            testID="account-google"
+            label={strings.signInWithGoogle}
+            busy={state.inFlight === 'signInWithGoogle'}
+            disabled={state.inFlight !== undefined}
+            onPress={() => {
+              void keep('the Account', account.signInWithGoogle());
+            }}
+          />
+        )}
+        {(withApple || withGoogle) && <OrByEmail />}
         <TextField
           testID="account-email"
           label={strings.emailLabel}
@@ -211,31 +219,24 @@ function SignIn({
 
   return (
     <View style={styles.form}>
-      <TextField
-        testID="account-email"
-        label={strings.emailLabel}
-        value={state.email}
-        onChangeText={setEmail}
-        editable={false}
-      />
-      <TextField
+      <Text {...voice} style={[typeStyle('sub', tokens), { color: tokens.colors.muted }]}>
+        {fill(strings.codeSent, { email: state.email })}
+      </Text>
+      <CodeCells
         testID="account-code"
         label={strings.codeLabel}
+        digits={SIGN_IN_CODE_DIGITS}
         value={code}
         onChangeText={(typed) => {
           setCode(typed);
           // The Account sends only a code of six digits.
           void keep('the Account', account.verifyCode(typed));
         }}
-        problem={problem}
-        problemCause={state}
+        problem={problem !== undefined}
         busy={state.inFlight === 'verifyCode'}
-        keyboardType="number-pad"
-        textContentType="oneTimeCode"
-        autoComplete="one-time-code"
-        maxLength={SIGN_IN_CODE_DIGITS}
         autoFocus
       />
+      <ProblemLine testID="account-code-problem" problem={problem} cause={state} />
       <ResendButton
         testID="account-resend"
         resendAt={state.resendAt}
@@ -256,6 +257,23 @@ function SignIn({
           account.changeEmail();
         }}
       />
+    </View>
+  );
+}
+
+/** The divider «або поштою» between the sign-in buttons and the email field. */
+function OrByEmail() {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
+  const line = [styles.dividerLine, { backgroundColor: colors.line }];
+  return (
+    <View style={styles.divider}>
+      <View style={line} />
+      <Text {...voice} style={[typeStyle('meta', tokens), { color: colors.muted }]}>
+        {strings.orByEmail}
+      </Text>
+      <View style={line} />
     </View>
   );
 }
@@ -313,9 +331,10 @@ function AppleSignInButton({
 }
 
 /**
- * Signed in: the email, «Вийти», «Вийти на всіх пристроях» and the destructive
- * «Видалити SLOVO ID», which the SLOVO confirmation dialog confirms. Signing out works at
- * once, even offline.
+ * Signed in: a card of «Твій акаунт», the email and the sync line, then
+ * «Вийти», the red «Вийти на всіх пристроях» and, below them, the destructive
+ * «Видалити акаунт», which the SLOVO confirmation dialog confirms; this
+ * screen is the only way to it. Signing out works at once, even offline.
  */
 function SignedIn({
   account,
@@ -333,17 +352,17 @@ function SignedIn({
 
   return (
     <View style={styles.form}>
-      <View style={styles.signedInAs}>
-        <Text {...voice} style={[typeStyle('fieldLabel', tokens), { color: colors.muted }]}>
+      <View accessible style={[styles.card, { backgroundColor: colors.surfaceSunken }]}>
+        <Text {...voice} style={[typeStyle('meta', tokens), { color: colors.muted }]}>
           {strings.signedInAs}
         </Text>
         <Text
           testID="account-signed-in-email"
-          style={[typeStyle('rowLabel', tokens), { color: colors.ink }]}
+          style={[typeStyle('heading', tokens), { color: colors.ink }]}
         >
           {state.email}
-          <SyncStatusLine />
         </Text>
+        <SyncStatusLine />
       </View>
       <Button
         variant="neutral"
@@ -354,7 +373,6 @@ function SignedIn({
         }}
       />
       <Button
-        variant="neutral"
         testID="account-sign-out-everywhere"
         label={strings.signOutEverywhere}
         busy={state.inFlight === 'signOutEverywhere'}
@@ -389,5 +407,12 @@ const styles = StyleSheet.create({
   header: { paddingTop: space[2], paddingBottom: space[5] },
   form: { gap: space[4] },
   appleButton: { height: signInButtonHeight },
-  signedInAs: { gap: space[1], marginBottom: space[2] },
+  card: {
+    gap: space[2],
+    padding: space[4],
+    borderRadius: accountCardRadius,
+    marginBottom: space[2],
+  },
+  divider: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginVertical: space[2] },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
 });
