@@ -12,14 +12,14 @@ import {
   openEditionWithSnapshot,
   type EditionFolder,
 } from '@slovo/language-pack/edition';
+import { ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import { PoliteClient } from '@slovo/sourcing';
 
 import { verifyEntries } from './verify';
 
 const toolDir = fileURLToPath(new URL('../', import.meta.url));
 /** The UA Edition's seed snapshot: the records every run starts from. */
-const SEED_FILE = join(EDITIONS_DIR, 'uk', 'seed-snapshot.json');
-const seedSnapshot = readSnapshotFile(SEED_FILE);
+const seedSnapshot = ukrainianSnapshot();
 const ukrainian = openEditionWithSnapshot(EDITIONS_DIR, 'uk', seedSnapshot);
 const categoryId = ukrainian.config.categories[0]?.id ?? '';
 
@@ -116,7 +116,7 @@ function edition(): EditionFolder {
 }
 
 /** Runs `pnpm content verify` over the copy; nothing may reach the network. */
-function verify(args: string[], cwd = editionDir) {
+function verify(args: string[], cwd = editionDir, { snapshot = true } = {}) {
   const run = spawnSync(
     join(toolDir, 'node_modules/.bin/tsx'),
     [
@@ -126,8 +126,7 @@ function verify(args: string[], cwd = editionDir) {
       ...args,
       '--edition',
       'uk',
-      '--snapshot',
-      saveSnapshot(),
+      ...(snapshot ? ['--snapshot', saveSnapshot()] : []),
       '--cache',
       cacheDir,
     ],
@@ -246,7 +245,7 @@ describe('verify', () => {
     expect(verify(['w_vrf001']).lines).toEqual([`ok\tw_vrf001\t${file}`, '1 ok']);
   });
 
-  it('verifies the drafts of a folder outside the Edition, each as an Entry', async () => {
+  it('verifies the drafts of a folder, each as an Entry', async () => {
     const drafts = join(workDir, 'review', 'words', 'drafts');
     mkdirSync(drafts, { recursive: true });
     const draft = (entry: { id: string }) => {
@@ -270,7 +269,7 @@ describe('verify', () => {
     expect(run.status).toBe(1);
   });
 
-  it('verifies one draft file outside the Edition', async () => {
+  it('verifies one draft file', async () => {
     await seed({ [`${GOROH}перевірка008`]: { body: gorohPage([SUM, definition]) } });
     writeFileSync(
       join(workDir, 'w_vrf008.json'),
@@ -280,6 +279,19 @@ describe('verify', () => {
     const run = verify(['w_vrf008.json'], workDir);
 
     expect(run.lines).toEqual(['ok\tw_vrf008\tw_vrf008.json', '1 ok']);
+    expect(run.status).toBe(0);
+  });
+
+  it('verifies drafts alone from the Edition config, with no snapshot', async () => {
+    await seed({ [`${GOROH}перевірка009`]: { body: gorohPage([SUM, definition]) } });
+    writeFileSync(
+      join(workDir, 'w_vrf009.json'),
+      JSON.stringify(word('w_vrf009', definition, `${GOROH}перевірка009`)),
+    );
+
+    const run = verify(['w_vrf009.json'], workDir, { snapshot: false });
+
+    expect(run.lines).toEqual(['ok\tw_vrf009\tw_vrf009.json', '1 ok']);
     expect(run.status).toBe(0);
   });
 
@@ -371,6 +383,17 @@ describe('verify', () => {
     );
     const now = saveSnapshot('now.json');
     expect(verify(['--changed', now]).lines).toEqual([`No Entry differs from ${now}`]);
+  });
+
+  it('with --changed, refuses an earlier snapshot of another Edition', () => {
+    const earlier = join(workDir, 'other.json');
+    writeFileSync(earlier, JSON.stringify({ ...seedSnapshot, editionId: 'pl' }));
+
+    const run = verify(['--changed', earlier]);
+
+    expect(run.stderr).toContain('The snapshot is of Edition pl, not uk');
+    expect(run.lines).toEqual([]);
+    expect(run.status).toBe(2);
   });
 
   it('fails loudly, never verifying nothing, when no snapshot is given', () => {

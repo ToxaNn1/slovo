@@ -77,7 +77,7 @@ brief() { # <branch> <kind> <list> <count>
 SLOVO cloud content implementer, wave ${wave}, branch ${b}: ${count} ${2} from ${list}. Follow docs/agents/content-wave.md («Implementer»).
 First: git fetch origin; git checkout -b ${b} origin/${wave} (if on origin: check it out, go on from its last commit body).
 Grant: push ONLY ${b}, with the report commit alone; no commit of content, no PR, no merge, no EAS.
-Steps: pnpm install --frozen-lockfile; pnpm ${cmd} ${list} --edition uk; tail ${review}/review-report.md; keep at most ${count} files in ${review}/drafts, never take incomplete/; pnpm content verify ${review}/drafts --edition uk; pnpm content check ${ikind} ${review}/drafts --edition uk; pnpm content add ${ikind} ${review}/drafts --edition uk (SLOVO_AGENT_TOKEN, SLOVO_API_URL).
+Steps: pnpm install --frozen-lockfile; pnpm ${cmd} ${list} --edition uk (snapshot: SLOVO_API_URL or --snapshot <file>); tail ${review}/review-report.md; keep at most ${count} files in ${review}/drafts, never take incomplete/; pnpm content verify ${review}/drafts --edition uk; pnpm content check ${ikind} ${review}/drafts --edition uk; pnpm content add ${ikind} ${review}/drafts --edition uk (SLOVO_AGENT_TOKEN, SLOVO_API_URL).
 Rules: every text quoted word for word (ADR 0012, 0080); no article goroh marks «Велика мовна модель»; never write the Edition folder; pages only through the sourcing tool and its cache, no curl loops.
 Context: <=10 lookups (grep -n, sed -n), output through tail -20, never print a content folder; STUCK at ~140k.
 Finish: one empty commit «chore: DONE ${b}» (or FAILED/STUCK), body: report in Ukrainian, <=25 lines: added (add's lines), refused, dropped and why, problems. Owner's identity; no Co-Authored-By, no AI attribution.

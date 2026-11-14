@@ -871,6 +871,37 @@ describe('sourceWords', () => {
     expect(word.id).toMatch(/^w_[a-z0-9]{6}$/);
   });
 
+  it('never issues an id a record of the snapshot holds, a Retired one of another Lemma included', async () => {
+    // A source of randomness that always draws 0 spells w_aaaaaa first.
+    const edition = editionWith((config) => config, {
+      w_aaaaaa: {
+        id: 'w_aaaaaa',
+        lemma: 'коса',
+        stress: [2],
+        partOfSpeech: 'noun',
+        gender: 'feminine',
+        primaryDefinition: 'Заплетене волосся.',
+        categoryId: 'nature-weather',
+        rarity: 2,
+        sources: [{ title: 'Тестове джерело' }],
+        retired: true,
+      },
+    });
+    let draws = 0;
+    const next = seededRandom();
+    const { options } = setup({
+      lemmaList: 'мжичка nature-weather 2\n',
+      edition,
+      random: () => (draws++ < 6 ? 0 : next()),
+    });
+
+    await sourceWords(options);
+
+    const word = WordSchema.parse(readDrafts(options.outDir)[0]);
+    expect(word.id).not.toBe('w_aaaaaa');
+    expect(word.id).toMatch(/^w_[a-z0-9]{6}$/);
+  });
+
   it('refuses an Edition whose id registry is invalid, before fetching', async () => {
     const edition = editionWith((config) => config, {}, ['w_aaaaaa', 'w_aaaaaa']);
     const { options, net } = setup({ lemmaList: 'мжичка nature-weather 2\n', edition });
