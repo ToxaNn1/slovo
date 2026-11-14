@@ -65,6 +65,7 @@ export default [
       'src/entries/swipe-demo.tsx',
       'src/game/ChipsRound.tsx',
       'src/game/CrossingGrid.tsx',
+      'src/game/GameModeCard.tsx',
       'src/game/GameRound.tsx',
       'src/game/LetterWheel.tsx',
       'src/game/OrderedChips.tsx',

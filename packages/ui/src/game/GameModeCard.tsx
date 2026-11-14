@@ -1,6 +1,12 @@
-import { sentences } from '@slovo/core';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+'use no memo';
+// Reanimated code: the React Compiler skips this module (ADR 0059).
 
+import { sentences } from '@slovo/core';
+import type { ReactNode } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+
+import { useCascade, type Cascade } from '../primitives/useCascade';
 import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
@@ -14,6 +20,9 @@ import {
   wedges,
 } from '../tokens';
 
+/** How the rows of board 06 «Хаб ігор» rise in, one after another. */
+const HUB_CASCADE: Cascade = { variant: 'rise', duration: 300, stagger: 50 };
+
 /** How much a mode that can't start fades, like an answered Round's other options. */
 const UNAVAILABLE_OPACITY = 0.45;
 
@@ -24,7 +33,9 @@ const UNAVAILABLE_OPACITY = 0.45;
  * over a hairline. A tap starts a Game. A mode that
  * can't start shows its glyph on the neutral tile, fades and takes no tap;
  * once it knows why, it says so in place of its line. VoiceOver reads the
- * row as one button, with the Best result in words and no dash.
+ * row as one button, with the Best result in words and no dash. Given its
+ * place on the screen, the row rises in after the rows before it (board 06);
+ * under Reduce Motion it fades in instead.
  */
 export function GameModeCard({
   glyph,
@@ -36,6 +47,7 @@ export function GameModeCard({
   bestLabel,
   onPress,
   testID,
+  cascadeIndex,
 }: {
   /** The few characters on the mode's tile, such as «АЯ». */
   glyph: string;
@@ -52,13 +64,15 @@ export function GameModeCard({
   bestLabel: string | undefined;
   onPress: () => void;
   testID?: string;
+  /** The row's place among the rows that cascade in; it shows at once without one. */
+  cascadeIndex?: number;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const keyInk = useSchemeColors('light').ink;
   const { voice } = useEdition();
   const unavailable = !canStart;
-  return (
+  const row = (
     <Pressable
       testID={testID}
       accessibilityRole="button"
@@ -118,6 +132,13 @@ export function GameModeCard({
       </Text>
     </Pressable>
   );
+  return cascadeIndex === undefined ? row : <CascadeIn index={cascadeIndex}>{row}</CascadeIn>;
+}
+
+/** A hub row rising in at its place in the cascade. */
+function CascadeIn({ index, children }: { index: number; children: ReactNode }) {
+  const entered = useCascade(index, HUB_CASCADE);
+  return <Animated.View style={entered}>{children}</Animated.View>;
 }
 
 /** The Games screen's big title. */

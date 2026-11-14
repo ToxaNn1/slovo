@@ -1,6 +1,6 @@
 import { coreTokens, EditionProvider, GameModeCard } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
 function Card({
@@ -8,11 +8,15 @@ function Card({
   bestLabel,
   refusal,
   line = 'Read a Definition, pick a word',
+  cascadeIndex,
+  onPress = jest.fn(),
 }: {
   best?: string;
   bestLabel?: string;
   refusal?: string;
   line?: string;
+  cascadeIndex?: number;
+  onPress?: () => void;
 }) {
   return (
     <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
@@ -24,14 +28,30 @@ function Card({
         refusal={refusal}
         best={best}
         bestLabel={bestLabel}
-        onPress={jest.fn()}
+        onPress={onPress}
         testID="card"
+        {...(cascadeIndex === undefined ? {} : { cascadeIndex })}
       />
     </EditionProvider>
   );
 }
 
 describe('GameModeCard', () => {
+  it('cascades in as the third row and still reads and takes a tap as one', async () => {
+    jest.useFakeTimers();
+    const onPress = jest.fn();
+    await render(<Card cascadeIndex={2} best="★ 12" bestLabel="Best: 12 of 15" onPress={onPress} />);
+    jest.advanceTimersByTime(1000);
+
+    fireEvent.press(screen.getByRole('button'));
+
+    expect(screen.getByRole('button').props['accessibilityLabel']).toBe(
+      'Guess the word. Read a Definition, pick a word. Best: 12 of 15',
+    );
+    expect(onPress).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
+  });
+
   it('shows the Best result and reads it last, in words', async () => {
     await render(<Card best="★ 12" bestLabel="Best: 12 of 15" />);
 
