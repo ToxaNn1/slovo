@@ -162,6 +162,19 @@ describe('settings', () => {
     });
   });
 
+  it.each([
+    ['system', 'M'],
+    ['larger', 'L'],
+    ['largest', 'XL'],
+  ] as const)(
+    'reads a stored three-step text size %s as the font size %s of the old scale (ADR 0134)',
+    async (stored, fontSize) => {
+      const settings = await settingsOver(new Map([['settings.fontSize', stored]]));
+
+      expect((await settings.read()).fontSize).toBe(fontSize);
+    },
+  );
+
   it("falls back to the Edition's default when the stored font size is not one the Core knows", async () => {
     const settings = await settingsOver(
       new Map([

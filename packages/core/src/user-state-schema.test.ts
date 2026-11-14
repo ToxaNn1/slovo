@@ -326,6 +326,7 @@ const storedIn1_0: readonly (readonly [
     '{"kind":"break","date":"2026-10-31","at":"2026-10-30T08:15:00.000Z","days":3}',
   ],
   ['streakBrokenReported', undefined, 'progress.streakBrokenReported', '"2026-10-20"'],
+  ['readerName', undefined, 'profile.name', '"Олена"'],
   ['notificationTimes', undefined, 'notifications.times', '["09:00","20:30"]'],
   ['notificationSound', undefined, 'notifications.sound', 'false'],
   ['notificationPlan', '2026-10-31T09:00', 'notifications.plan.2026-10-31T09:00', '"w-5"'],
@@ -412,5 +413,35 @@ describe('a user state kept by 1.0', () => {
     expect(new Set(storedIn1_0.map(([name]) => name))).toEqual(
       new Set(Object.keys(userStateRecords)),
     );
+  });
+});
+
+// Spec #1861, ticket #1862: the user state board 11 adds.
+describe('the board 11 user-state records', () => {
+  const { xpLog, fontSize, readerName } = userStateRecords;
+
+  it('reads a reset marker in the XP log, with its local date and instant (ADR 0133)', () => {
+    const marker = { kind: 'reset', date: '2026-11-14', at: '2026-11-14T09:00:00.000Z' };
+
+    expect(xpLog.record('reset-1').decode(JSON.stringify(marker))).toEqual(marker);
+    expect(
+      xpLog.record('reset-1').decode(JSON.stringify({ ...marker, date: '14.11.2026' })),
+    ).toBeUndefined();
+  });
+
+  it('reads the reader’s name trimmed, at most 24 characters, and refuses an empty one (ADR 0136)', () => {
+    expect(readerName.key).toBe('profile.name');
+    expect(readerName.decode('"  Олена "')).toBe('Олена');
+    expect(readerName.decode(JSON.stringify('я'.repeat(24)))).toBe('я'.repeat(24));
+    expect(readerName.decode(JSON.stringify('я'.repeat(25)))).toBeUndefined();
+    expect(readerName.decode('"   "')).toBeUndefined();
+    expect(syncMarkOf('profile.name')).toBe('last-write-wins');
+  });
+
+  it('reads a text size of either scale: S…XL and the three steps (ADR 0134)', () => {
+    for (const size of ['S', 'M', 'L', 'XL', 'system', 'larger', 'largest']) {
+      expect(fontSize.decode(JSON.stringify(size)), size).toBe(size);
+    }
+    expect(fontSize.decode('"XXL"')).toBeUndefined();
   });
 });

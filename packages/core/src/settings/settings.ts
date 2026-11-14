@@ -1,9 +1,23 @@
-import type { FontSize, Theme } from '@slovo/contracts';
+import type { FontSize, TextSize, Theme } from '@slovo/contracts';
 
 import type { Analytics } from '../analytics/analytics';
 import { forgetUnsentCounters } from '../community-counters/counter-deltas';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
+
+/** A stored text size as the S…XL scale reads it: each of the three steps as the size it sits on (ADR 0134). */
+function fontSizeOf(stored: FontSize | TextSize | undefined): FontSize | undefined {
+  switch (stored) {
+    case 'system':
+      return 'M';
+    case 'larger':
+      return 'L';
+    case 'largest':
+      return 'XL';
+    default:
+      return stored;
+  }
+}
 
 /** The user settings in effect. */
 export interface UserSettings {
@@ -103,7 +117,7 @@ export function createSettings({
   async function read(): Promise<UserSettings> {
     return {
       theme: (await userState.read(userStateRecords.theme)) ?? all.theme,
-      fontSize: (await userState.read(userStateRecords.fontSize)) ?? all.fontSize,
+      fontSize: fontSizeOf(await userState.read(userStateRecords.fontSize)) ?? all.fontSize,
       vibration: (await userState.read(userStateRecords.vibration)) ?? all.vibration,
       sounds: (await userState.read(userStateRecords.sounds)) ?? all.sounds,
       noCounters: (await userState.read(userStateRecords.noCounters)) ?? all.noCounters,

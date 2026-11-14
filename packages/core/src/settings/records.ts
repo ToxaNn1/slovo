@@ -1,4 +1,4 @@
-import { FontSizeSchema, RaritySchema, ThemeSchema } from '@slovo/contracts';
+import { FontSizeSchema, RaritySchema, TextSizeSchema, ThemeSchema } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { declareRecord } from '../user-state/user-state-record';
@@ -7,8 +7,13 @@ import { declareRecord } from '../user-state/user-state-record';
 export const settingsRecords = {
   /** The user's Theme. */
   theme: declareRecord('settings.theme', ThemeSchema),
-  /** The user's font size. */
-  fontSize: declareRecord('settings.fontSize', FontSizeSchema),
+  /**
+   * The user's text size: a font size of the S…XL scale, or one of the
+   * three steps of ADR 0134, read side by side so either scale opens
+   * what the other wrote. The one migration to the three steps comes
+   * with their scale (ADR 0134).
+   */
+  fontSize: declareRecord('settings.fontSize', z.union([FontSizeSchema, TextSizeSchema])),
   /** Whether the user has haptics on. It stays on the device, which may have no haptics. */
   vibration: declareRecord('settings.vibration', z.boolean(), { sync: 'device-only' }),
   /** Whether the user has «Звуки» on. It stays on the device, like Vibration. */

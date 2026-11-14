@@ -14,6 +14,7 @@ import { mixKindRecords, mixRecords } from './mix/records';
 import { moodRecords } from './mood/records';
 import { notificationRecords } from './notifications/records';
 import { onboardingRecords } from './onboarding/records';
+import { profileRecords } from './profile/records';
 import { progressRecords } from './progress/records';
 import { questionnaireRecords } from './questionnaire/records';
 import { savedRecords } from './saved/records';
@@ -101,6 +102,7 @@ const domains = [
   mixRecords,
   knowledgeRecords,
   progressRecords,
+  profileRecords,
   notificationRecords,
   onboardingRecords,
   questionnaireRecords,
@@ -127,6 +129,7 @@ export const userStateRecords = {
   ...mixRecords,
   ...knowledgeRecords,
   ...progressRecords,
+  ...profileRecords,
   ...notificationRecords,
   ...onboardingRecords,
   ...questionnaireRecords,

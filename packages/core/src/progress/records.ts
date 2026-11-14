@@ -92,6 +92,8 @@ const StoredXpRecordSchema = z.discriminatedUnion('kind', [
     at: InstantSchema,
     badge: z.string(),
   }),
+  /** A Progress reset: the derived values count only the records after the latest marker (ADR 0133). */
+  z.object({ kind: z.literal('reset'), date: LocalDateKeySchema, at: InstantSchema }),
   /** A Game Round answered wrong in its Game Mode, which earns no XP and breaks a run of right answers (ADR 0085). */
   z.object({
     kind: z.literal('wrong-answer'),

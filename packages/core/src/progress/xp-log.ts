@@ -509,6 +509,9 @@ export async function openXpLog({
         case 'badge-opened':
           opened.add(record.badge);
           break;
+        case 'reset':
+          // Folding only the records after the latest marker comes with the Progress reset (ADR 0133).
+          break;
         case 'xp': {
           switch (record.source) {
             case 'game-finished': {
