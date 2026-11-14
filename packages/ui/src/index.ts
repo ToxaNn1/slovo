@@ -24,7 +24,7 @@ export {
   LevelMilestoneCard,
   SaveProgressCard,
 } from './feed/FeedNoticeCard';
-export { WeeklyRecapCard } from './feed/WeeklyRecapCard';
+export { UnderWeeklyRecap, WeeklyRecapCard } from './feed/WeeklyRecapCard';
 export { CommunityWordCard } from './feed/CommunityWordCard';
 export { YesterdayCard, type YesterdaySlots } from './feed/YesterdayCard';
 export { EntryCard, type EntryCardSlots } from './entries/EntryCard';

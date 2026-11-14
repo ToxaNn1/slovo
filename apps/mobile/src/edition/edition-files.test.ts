@@ -264,8 +264,12 @@ describe('the 0.8.13 strings', () => {
         title: 'Твій тиждень',
         seen: 'переглянуто',
         saved: 'збережено',
-        known: 'знаю',
+        known: '«Знаю»',
         streak: 'серія',
+        goalDays: 'ціль виконано',
+        done: 'Готово',
+        folded: 'Підсумок прийде знову в понеділок.',
+        restore: 'Повернути',
       },
       yesterday: { title: 'Пам’ятаєш вчорашнє слово?' },
       enoughForToday: {

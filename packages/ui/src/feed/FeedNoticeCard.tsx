@@ -42,6 +42,7 @@ export function FeedNoticeCard({
   tone = 'surface',
   mascot,
   titleKind = 'title',
+  gap = noticeCard.gap,
 }: {
   notice: FeedNotice;
   title?: string | undefined;
@@ -57,6 +58,8 @@ export function FeedNoticeCard({
   mascot?: MascotState | undefined;
   /** `eyebrow` names the card over what it shows; `marked` puts the notification mark before it. */
   titleKind?: 'title' | 'eyebrow' | 'marked';
+  /** The gap between the card's parts, when the notice's design gives another. */
+  gap?: number;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -84,7 +87,7 @@ export function FeedNoticeCard({
     </Text>
   );
   return (
-    <View testID={`feed-notice-${notice}`} style={[styles.card, ground]}>
+    <View testID={`feed-notice-${notice}`} style={[styles.card, ground, { gap }]}>
       {mascot !== undefined && (
         <View style={styles.mascot}>
           <Mascot state={mascot} />
