@@ -20,7 +20,7 @@ import NarratorVoiceScreen from '../app/settings/narrator-voice';
 import PrivacyScreen from '../app/settings/privacy';
 import WidgetGuideScreen from '../app/settings/widgets';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
+import { ShellProvider, type ShareFile } from '../shell-value';
 import { screenSettled } from '../use-open-screen';
 import { opened, packWithMedia, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { SettingsProvider } from './settings';
@@ -125,6 +125,7 @@ async function renderSettings(
   switches: Partial<Record<FeatureSwitch, boolean>> = {},
   analytics?: AnalyticsPort,
   composition?: Composition,
+  shareFile?: ShareFile,
 ) {
   // A screen an earlier test opened would hold back the next tap's.
   screenSettled();
@@ -134,6 +135,7 @@ async function renderSettings(
     languagePack: samplePack(),
     remoteSwitches: switchedTo(editionWith(switches)),
     settings,
+    shareFile,
   });
   await renderRoutes(
     {
@@ -537,9 +539,21 @@ describe('Settings › «Конфіденційність»', () => {
   });
 
   it('shows its row with the Data export alone on', async () => {
-    await renderSettings({ communityCounters: false, analytics: false, dataExport: true });
+    const share: ShareFile = () => Promise.resolve('shared');
+    await renderSettings(
+      { communityCounters: false, analytics: false, dataExport: true },
+      undefined,
+      undefined,
+      share,
+    );
 
     expect(screen.getByTestId('settings-row-privacy')).toBeTruthy();
+  });
+
+  it('has no row with the Data export alone on in a binary without the file module', async () => {
+    await renderSettings({ communityCounters: false, analytics: false, dataExport: true });
+
+    expect(screen.queryByTestId('settings-row-privacy')).not.toBeOnTheScreen();
   });
 
   it('has no row while the Edition turns the Community Counters, Analytics and the Data export off', async () => {
