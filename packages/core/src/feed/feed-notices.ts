@@ -11,11 +11,10 @@ import type { HiddenEntries } from '../mix/hidden-entries';
 import type { ActiveDays } from '../progress/active-days';
 import { LEVEL_MILESTONES, nameOf, totalFor, type LevelMilestone } from '../progress/levels';
 import type { XpLog } from '../progress/xp-log';
-import type { Clock, UserStateChanges } from '../ports';
+import type { Clock, Random, UserStateChanges } from '../ports';
 import type { History } from '../saved/history';
 import type { TextComparison } from '../text/text-comparison';
 import { seededRandomOf } from '../game/traced-crossword';
-import type { Random } from '../ports';
 import { shuffled } from '../shuffled';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -57,20 +56,33 @@ export interface WeeklyRecapContent {
  * also its day of the first week; Yesterday, the card of the day before's
  * Word of the Day and its quiz; the Community Word, the card of its Entry and
  * how many readers added it; a level milestone, its Level and the Edition's
- * name for it.
+ * name for it; «Ціль дня виконано!», the Daily Goal met and the Lemmas of the
+ * first Words Seen today.
  */
 export type FeedNoticeContent =
   | {
       readonly notice: Exclude<
         FeedNotice,
-        'weeklyRecap' | 'firstWeek' | 'yesterday' | 'communityWord' | 'levelMilestone'
+        | 'weeklyRecap'
+        | 'firstWeek'
+        | 'yesterday'
+        | 'communityWord'
+        | 'levelMilestone'
+        | 'goalReached'
       >;
     }
   | WeeklyRecapContent
   | { readonly notice: 'firstWeek'; readonly firstWeekDay: FirstWeekDay }
   | YesterdayContent
   | { readonly notice: 'communityWord'; readonly card: AnyEntryCard; readonly adds: number }
-  | { readonly notice: 'levelMilestone'; readonly level: LevelMilestone; readonly name: string };
+  | { readonly notice: 'levelMilestone'; readonly level: LevelMilestone; readonly name: string }
+  | {
+      readonly notice: 'goalReached';
+      /** The Words Seen the day's Daily Goal asked for. */
+      readonly goal: number;
+      /** The Lemmas of the first Words Seen today, in the order Seen, at most `GOAL_REACHED_WORDS`. */
+      readonly words: readonly string[];
+    };
 
 /** The Feed Notices a page shows: its own, and the Yesterday under a Weekly Recap. */
 export function noticesOf(content: FeedNoticeContent): readonly FeedNotice[] {
@@ -186,6 +198,9 @@ export const ENOUGH_FOR_TODAY_SEEN = 50;
 const FIRST_WEEK_DAYS = 7;
 
 const isFirstWeekDay = (day: number): day is FirstWeekDay => day >= 1 && day <= FIRST_WEEK_DAYS;
+
+/** The most Words «Ціль дня виконано!» names. */
+export const GOAL_REACHED_WORDS = 3;
 
 /** The most days the save-progress Feed Notice comes on. */
 const SAVE_PROGRESS_MOST_DAYS = 2;
@@ -396,12 +411,41 @@ export function openFeedNotices({
     );
   };
 
+  /**
+   * «Ціль дня виконано!» (ADR 0129): once today's Daily Goal is met, or is
+   * met by the Word the card follows, which the reader leaves to reach it;
+   * closed, it is gone for the day, and the goal is met once a day.
+   */
+  const goalReached: NoticeRule = async (day, after) => {
+    const goal = xpLog.state.dailyGoal;
+    if (!on('goalReachedCard') || goal === null) return undefined;
+    const date = dateKeyOf(day);
+    const today = history.list
+      .filter(({ seenAt }) => dateKeyOf(localDayOf(seenAt, clock).date) === date)
+      .toSorted((one, other) => one.seenAt.getTime() - other.seenAt.getTime())
+      .map(({ entryId }) => entryId);
+    const next = after === undefined || today.includes(after) ? undefined : after;
+    const metNext =
+      next !== undefined &&
+      goal.seen + 1 >= goal.goal &&
+      (await entries.get(next))?.kind === 'word';
+    if (!goal.met && !metNext) return undefined;
+    const words: string[] = [];
+    for (const id of next === undefined ? today : [...today, next]) {
+      if (words.length === GOAL_REACHED_WORDS) break;
+      const entry = await entries.get(id);
+      if (entry?.kind === 'word') words.push(entry.lemma);
+    }
+    return { notice: 'goalReached', goal: goal.goal, words };
+  };
+
   const rules = [
     weeklyRecapRule,
     firstWeek,
     yesterday,
     levelMilestone,
     saveProgress,
+    goalReached,
     enoughForToday,
   ];
 

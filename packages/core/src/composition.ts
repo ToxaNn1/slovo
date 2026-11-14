@@ -27,7 +27,7 @@ import { noFeedNotices, openFeedNotices, type FeedNotices } from './feed/feed-no
 import { createNotificationExplainer } from './notifications/notification-explainer';
 import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
-import { createQuickQuestion } from './game/quick-question';
+import { createQuickQuestion, quickQuestionSourceId } from './game/quick-question';
 import type { GameMode } from './game/game-mode';
 import { guessWord } from './game/guess-word';
 import { idiomMeaningMode } from './game/idiom-meaning-mode';
@@ -600,9 +600,13 @@ export async function openComposition({
       userState,
       random,
       modes: [...coreGameModes, ...gameModes],
-      answered: (askedId, right) =>
-        withEntryProperties(askedId, (properties) =>
-          analytics.track('quickQuestionAnswered', { ...properties, right }),
+      answered: ({ entry, source }, right) =>
+        withEntryProperties(entry.id, (properties) =>
+          analytics.track('quickQuestionAnswered', {
+            ...properties,
+            right,
+            mode: quickQuestionSourceId(source),
+          }),
         ),
     }),
   });

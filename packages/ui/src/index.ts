@@ -16,6 +16,7 @@ export { FontSizeProvider } from './providers/FontSizeProvider';
 export { DecorProvider } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
 export { EndOfCycleCard } from './feed/EndOfCycleCard';
+export { GoalReachedCard } from './feed/GoalReachedCard';
 export {
   EnoughForTodayCard,
   NotificationAskCard,
@@ -78,6 +79,7 @@ export { Button } from './primitives/Button';
 export { type IconName } from './primitives/Icon';
 export { BackHeader } from './primitives/BackHeader';
 export { IconButton } from './primitives/IconButton';
+export { ScrollToTopButton, useListScroll, type ListScroll } from './primitives/ScrollToTop';
 export { PressedTile } from './primitives/PressedTile';
 export { ScreenEnter } from './primitives/ScreenEnter';
 export { TabBarButton } from './primitives/TabBarButton';

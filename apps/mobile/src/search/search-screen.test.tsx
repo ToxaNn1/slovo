@@ -12,7 +12,7 @@ import SearchScreen from '../app/search/index';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 
 const { config } = activeEditionFiles;
 
@@ -88,7 +88,9 @@ async function settle() {
 async function renderSearch() {
   await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+      <ShellProvider
+        shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) })}
+      >
         <EditionProvider edition={edition} strings={editionStrings}>
           <SearchScreen />
         </EditionProvider>

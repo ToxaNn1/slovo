@@ -8567,6 +8567,14 @@
                           ],
                           "type": "string"
                         },
+                        "quickQuestionWordMeaning": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "playStep": {
                           "enum": [
                             "on",
@@ -8608,6 +8616,14 @@
                           "type": "string"
                         },
                         "enoughForToday": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "goalReachedCard": {
                           "enum": [
                             "on",
                             "off",
@@ -9054,6 +9070,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "scrollToTop": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -9127,12 +9151,14 @@
                         "streakFreezes",
                         "streakBreak",
                         "quickQuestion",
+                        "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
                         "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
+                        "goalReachedCard",
                         "questionnaire",
                         "badges",
                         "levelLadder",
@@ -9187,7 +9213,8 @@
                         "collectionBoardStyle",
                         "profileConfirmedByRarity",
                         "profileGameBest",
-                        "forceUpdate"
+                        "forceUpdate",
+                        "scrollToTop"
                       ]
                     },
                     "rules": {
@@ -10325,6 +10352,14 @@
                           ],
                           "type": "string"
                         },
+                        "quickQuestionWordMeaning": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "playStep": {
                           "enum": [
                             "on",
@@ -10366,6 +10401,14 @@
                           "type": "string"
                         },
                         "enoughForToday": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "goalReachedCard": {
                           "enum": [
                             "on",
                             "off",
@@ -10812,6 +10855,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "scrollToTop": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -10885,12 +10936,14 @@
                         "streakFreezes",
                         "streakBreak",
                         "quickQuestion",
+                        "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
                         "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
+                        "goalReachedCard",
                         "questionnaire",
                         "badges",
                         "levelLadder",
@@ -10945,7 +10998,8 @@
                         "collectionBoardStyle",
                         "profileConfirmedByRarity",
                         "profileGameBest",
-                        "forceUpdate"
+                        "forceUpdate",
+                        "scrollToTop"
                       ]
                     },
                     "rules": {
@@ -12014,6 +12068,14 @@
                           ],
                           "type": "string"
                         },
+                        "quickQuestionWordMeaning": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "playStep": {
                           "enum": [
                             "on",
@@ -12055,6 +12117,14 @@
                           "type": "string"
                         },
                         "enoughForToday": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "goalReachedCard": {
                           "enum": [
                             "on",
                             "off",
@@ -12501,6 +12571,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "scrollToTop": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -12574,12 +12652,14 @@
                         "streakFreezes",
                         "streakBreak",
                         "quickQuestion",
+                        "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
                         "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
+                        "goalReachedCard",
                         "questionnaire",
                         "badges",
                         "levelLadder",
@@ -12634,7 +12714,8 @@
                         "collectionBoardStyle",
                         "profileConfirmedByRarity",
                         "profileGameBest",
-                        "forceUpdate"
+                        "forceUpdate",
+                        "scrollToTop"
                       ]
                     },
                     "rules": {

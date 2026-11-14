@@ -206,6 +206,22 @@ export const typeRoles = {
   communityDefinition: role('ui', '500', 16, 22),
   /** The title of the end-of-Cycle card. */
   endOfCycleTitle: role('word', '900', 26, 29),
+  /** «Денна ціль» over the goal-reached card. */
+  goalReachedLabel: role('word', '800', 12, 12, 2),
+  /** The slanted plate of the goal-reached card, «3 / 3 слова». */
+  goalReachedPlate: role('word', '800', 11, 11, 1),
+  /** «Ціль дня виконано!». */
+  goalReachedTitle: role('word', '900', 44, 42, -1.8, 'uppercase'),
+  /** The line under the goal-reached card's title. */
+  goalReachedText: role('ui', '600', 17, 23),
+  /** «Сьогодні ви зібрали» and the label under the Streak on the goal-reached card. */
+  goalReachedCaption: role('word', '800', 11, 13, 1.5),
+  /** A Word Seen today on its plate of the goal-reached card. */
+  goalReachedWord: role('word', '900', 20, 20, -0.4),
+  /** The Streak's number on the goal-reached card. */
+  goalReachedStreak: role('word', '900', 44, 44),
+  /** The goal-reached card's button. */
+  goalReachedButton: role('word', '900', 15, 15),
   /** The Games screen's title. */
   gamesTitle: role('word', '900', 36, 36, -1, 'uppercase'),
   /** The title of a group of Game Modes, after its red mark. */
@@ -1013,6 +1029,11 @@ export const motion = {
   sweep: { duration: 500, easing: [0.6, 0, 0.3, 1] },
   /** The Mood check-in folds to today's line, or opens its chips again, and the new part rises in. */
   collapse: { duration: 250, easing: ease, rise: 8 },
+  /**
+   * «Нагору»: a long list glides back to its top, slow enough to read the rows
+   * passing by, easing in and out; the button fades in and out with `pop`.
+   */
+  scrollToTop: { duration: 650, easing: [0.45, 0, 0.25, 1] },
   /** Under Reduce Motion every motion is this one fade. */
   reduceMotion: { duration: 300, easing: ease },
 } as const satisfies Record<

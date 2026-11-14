@@ -15,4 +15,6 @@ export const appStringsShape = {
     /** The button that tries to open the Language Pack again. */
     retry: TextSchema,
   }),
+  /** The VoiceOver label of the round button that glides a long list back to its top, e.g. "Нагору". */
+  scrollToTop: TextSchema,
 };

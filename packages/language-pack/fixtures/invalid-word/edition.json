@@ -78,12 +78,14 @@
     "streakFreezes": "on",
     "streakBreak": "on",
     "quickQuestion": "on",
+    "quickQuestionWordMeaning": "on",
     "playStep": "on",
     "seenWordXp": "on",
     "levels": "on",
     "noCounters": "on",
     "dailyGoal": "on",
     "enoughForToday": "on",
+    "goalReachedCard": "on",
     "widgetGoalRing": "on",
     "lockScreenWidget": "on",
     "questionnaire": "on",
@@ -140,7 +142,8 @@
     "correctionTypes": "on",
     "profileConfirmedByRarity": "on",
     "profileGameBest": "on",
-    "forceUpdate": "on"
+    "forceUpdate": "on",
+    "scrollToTop": "on"
   },
   "userSettingDefaults": {
     "theme": "system",

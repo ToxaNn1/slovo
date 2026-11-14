@@ -7,6 +7,8 @@ import {
   QuietScreenHero,
   QuietScreenRow,
   RailBoard,
+  type RailBoardCard,
+  useListScroll,
   railScreen,
   RailScreenHero,
   shapeAt,
@@ -21,6 +23,7 @@ import { useBlockCategories, useIsQuiet } from '@/categories/categories';
 import { useCategoryScreen } from '@/categories/category-screen';
 import { editionStrings } from '@/edition/edition';
 import { ReadFailed } from '@/read-failed';
+import { ListTopButton } from '@/shell/list-top';
 import { useSegmentParam } from '@/route-params';
 
 const { dashboard } = editionStrings;
@@ -75,6 +78,7 @@ function CategoryBoardScreen(props: { of: CategoryKind; category: Category; plac
 
 function Board({ of, category, place }: { of: CategoryKind; category: Category; place: number }) {
   const { cards, retry, inMix, toggleMix, openEntry } = useCategoryScreen(of, category);
+  const scroll = useListScroll<FlatList<RailBoardCard>>();
   const { count } = useEdition();
   const router = useRouter();
   const [glyph] = shapeAt(shapesOf[of], place);
@@ -94,6 +98,8 @@ function Board({ of, category, place }: { of: CategoryKind; category: Category; 
       testID="category"
       cards={cards ?? []}
       onOpen={openEntry}
+      scroll={scroll}
+      corner={<ListTopButton scroll={scroll} />}
       hero={
         <RailScreenHero
           id="category-hero"
@@ -128,6 +134,8 @@ function Board({ of, category, place }: { of: CategoryKind; category: Category; 
 
 function QuietBoard({ of, category }: { of: CategoryKind; category: Category }) {
   const { cards, retry, openEntry } = useCategoryScreen(of, category);
+  const scroll = useListScroll<FlatList<RailBoardCard>>();
+  const { list: listRef, onScroll: onListScroll } = scroll;
   const { colors } = useTokens();
   const router = useRouter();
   if (retry !== undefined)
@@ -141,6 +149,8 @@ function QuietBoard({ of, category }: { of: CategoryKind; category: Category }) 
   return (
     <View testID="category" style={[styles.screen, { backgroundColor: colors.background }]}>
       <FlatList
+        ref={listRef}
+        onScroll={onListScroll}
         data={cards ?? []}
         keyExtractor={({ entryId }) => entryId}
         renderItem={({ item: { entryId, row }, index }) => (
@@ -171,6 +181,7 @@ function QuietBoard({ of, category }: { of: CategoryKind; category: Category }) 
         ListHeaderComponentStyle={styles.hero}
         contentContainerStyle={styles.content}
       />
+      <ListTopButton scroll={scroll} />
     </View>
   );
 }

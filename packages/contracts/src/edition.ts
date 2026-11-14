@@ -395,6 +395,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   streakBreak: FeatureSwitchStateSchema,
   /** The Quick Question: every Nth Feed card asks one Round from an enabled Game Mode over an Eligible Entry; off, the Feed of 0.9. */
   quickQuestion: FeatureSwitchStateSchema,
+  /** The Word Meaning question: the Quick Question may ask what an Eligible Word means, with four Definitions to pick from; off while `quickQuestion` is (ADR 0128). */
+  quickQuestionWordMeaning: FeatureSwitchStateSchema,
   /** The onboarding step «ГРАЙ!» after the first Word, which shows the Games; off while `game` is (ADR 0067). */
   playStep: FeatureSwitchStateSchema,
   /** Levels: the Level derived from total XP, its Edition name and the level-milestone Feed Notices (ADR 0066). */
@@ -407,6 +409,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   seenWordXp: FeatureSwitchStateSchema,
   /** The Feed Notice «Може, на сьогодні досить?» once a local day after 50 distinct Seen Entries (ADR 0066). */
   enoughForToday: FeatureSwitchStateSchema,
+  /** The Feed Notice «Ціль дня виконано!» once the reader meets the day's Daily Goal (ADR 0129). */
+  goalReachedCard: FeatureSwitchStateSchema,
   /** The onboarding questions «Як добре ти знаєш мову?» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
   questionnaire: FeatureSwitchStateSchema,
   /** Badges: kept milestones from the Core's catalogue of conditions, chosen and named by the Edition (ADR 0066). */
@@ -517,6 +521,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   profileGameBest: FeatureSwitchStateSchema,
   /** Force update: the banner below the soft minimum and the blocking screen below the hard minimum of the app version (ADR 0089); off, neither shows. */
   forceUpdate: FeatureSwitchStateSchema,
+  /** «Нагору»: the round arrow-up button over a long list once the reader has scrolled down, which scrolls the list gently back to its top; off, no button. */
+  scrollToTop: FeatureSwitchStateSchema,
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

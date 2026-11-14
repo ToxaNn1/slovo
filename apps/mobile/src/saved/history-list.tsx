@@ -5,6 +5,7 @@ import {
   EntryRow,
   SectionLabel,
   space,
+  useListScroll,
   useTokens,
 } from '@slovo/ui';
 import { SectionList, StyleSheet } from 'react-native';
@@ -14,6 +15,7 @@ import { useOpenScreen } from '@/use-open-screen';
 import { useClearHistory, useHistorySections } from '@/saved/history';
 import type { HistoryEntryModel, HistorySection } from '@/saved/history-screen';
 import type { ListHeader } from '@/saved/list-header';
+import { ListTopButton } from '@/shell/list-top';
 
 const { history: strings } = editionStrings;
 
@@ -29,44 +31,51 @@ export function HistoryList({ header }: { header: ListHeader }) {
   const clear = useClearHistory();
   const { colors } = useTokens();
   const openScreen = useOpenScreen();
+  const scroll = useListScroll<SectionList<HistoryEntryModel, HistorySection>>();
+  const { list: listRef, onScroll: onListScroll } = scroll;
 
   return (
-    <SectionList<HistoryEntryModel, HistorySection>
-      testID="history"
-      sections={sections}
-      keyExtractor={(entry) => entry.entryId}
-      stickySectionHeadersEnabled={false}
-      renderSectionHeader={({ section }) => (
-        <SectionLabel style={[styles.day, { color: colors.accentText }]}>
-          {section.title}
-        </SectionLabel>
-      )}
-      renderItem={({ item }) => (
-        <EntryRow
-          compact
-          row={item.row}
-          trailing={item.label}
-          onPress={() => {
-            openScreen(`/saved/history/${item.entryId}`);
-          }}
-          testID={`history-row-${item.entryId}`}
-        />
-      )}
-      ListHeaderComponent={header(
-        sections.length > 0 ? (
-          <ClearHistoryButton testID="history-clear" copy={strings.clear} onClear={clear} />
-        ) : null,
-      )}
-      ListEmptyComponent={
-        <EmptyState
-          mascot={<MascotIn state="empty" />}
-          testID="history-empty"
-          title={strings.empty.title}
-          message={strings.empty.message}
-        />
-      }
-      contentContainerStyle={styles.content}
-    />
+    <>
+      <SectionList<HistoryEntryModel, HistorySection>
+        ref={listRef}
+        onScroll={onListScroll}
+        testID="history"
+        sections={sections}
+        keyExtractor={(entry) => entry.entryId}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section }) => (
+          <SectionLabel style={[styles.day, { color: colors.accentText }]}>
+            {section.title}
+          </SectionLabel>
+        )}
+        renderItem={({ item }) => (
+          <EntryRow
+            compact
+            row={item.row}
+            trailing={item.label}
+            onPress={() => {
+              openScreen(`/saved/history/${item.entryId}`);
+            }}
+            testID={`history-row-${item.entryId}`}
+          />
+        )}
+        ListHeaderComponent={header(
+          sections.length > 0 ? (
+            <ClearHistoryButton testID="history-clear" copy={strings.clear} onClear={clear} />
+          ) : null,
+        )}
+        ListEmptyComponent={
+          <EmptyState
+            mascot={<MascotIn state="empty" />}
+            testID="history-empty"
+            title={strings.empty.title}
+            message={strings.empty.message}
+          />
+        }
+        contentContainerStyle={styles.content}
+      />
+      <ListTopButton scroll={scroll} overTabBar />
+    </>
   );
 }
 

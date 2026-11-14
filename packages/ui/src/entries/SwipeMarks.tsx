@@ -112,7 +112,8 @@ function flyFrom(remaining: number, speed: number) {
  * to the next Entry, elsewhere it springs back, as it does on anything less,
  * a drag brought back short of the threshold or flicked back towards the
  * middle included (ADR 0078). The undo toast shows for 4 s; its undo turns
- * back to the card and brings it in from its side. A marked card carries its
+ * back to the card and brings it in from its side, and puts the mark back once
+ * the card is home. A marked card carries its
  * stamp on its bottom edge. A swipe to the mark the card already shows
  * changes nothing. Concealed under Self-check, the card takes no side swipe.
  * Under Reduce Motion the card stays in place, the wedges and stamp only fade
@@ -193,30 +194,48 @@ export function SwipeMarks({
     [correction],
   );
 
+  /** An undo taken from the toast whose mark goes back once the card is home. */
+  const undoPending = useRef(false);
+  /** Puts the mark back, if an undo is waiting for the card to come home. */
+  const settleUndo = useCallback(() => {
+    if (!undoPending.current) return;
+    undoPending.current = false;
+    latest.current.onUndo();
+  }, []);
+  // A card that leaves before it is home still puts its mark back.
+  useEffect(() => settleUndo, [settleUndo]);
+
   const showMarkToast = useCallback(
     (to: KnowledgeMark) => {
       showToast({
         message: textOf(texts.toasts, to),
         undoLabel: texts.undo,
         onUndo: () => {
-          const { turnBackHere: turnBack, onUndo: undo } = latest.current;
-          turnBack?.();
+          latest.current.turnBackHere?.();
           flying.value = false;
           drag.value = 0;
-          offset.value = reduceMotion
-            ? 0
-            : withSequence(
-                withTiming(
-                  to === 'known' ? swipeMarkLayout.offScreen : -swipeMarkLayout.offScreen,
-                  { duration: 0 },
-                ),
-                withSpring(0, BACK),
-              );
-          undo();
+          undoPending.current = true;
+          if (reduceMotion) {
+            offset.value = 0;
+            settleUndo();
+            return;
+          }
+          // The reverse of the fly: the card comes in from its side as the pager turns back.
+          // The mark goes back once it is home, so the render the change sets off lands
+          // on a card at rest rather than freezing it half way in.
+          offset.value = withSequence(
+            withTiming(to === 'known' ? swipeMarkLayout.offScreen : -swipeMarkLayout.offScreen, {
+              duration: 0,
+            }),
+            withSpring(0, BACK, () => {
+              'worklet';
+              scheduleOnRN(settleUndo);
+            }),
+          );
         },
       });
     },
-    [drag, flying, offset, reduceMotion, showToast, textOf, texts],
+    [drag, flying, offset, reduceMotion, settleUndo, showToast, textOf, texts],
   );
 
   /**
@@ -225,6 +244,8 @@ export function SwipeMarks({
    */
   const setMark = useCallback(
     (to: KnowledgeMark, turnsOn: boolean) => {
+      // An undo still on its way home goes first, so it never takes back this mark.
+      settleUndo();
       const current = latest.current;
       if (current.mark === to) return;
       haptics.selection();
@@ -232,7 +253,7 @@ export function SwipeMarks({
       if (turnsOn) toastAfterTurn.current = to;
       else showMarkToast(to);
     },
-    [haptics, showMarkToast],
+    [haptics, settleUndo, showMarkToast],
   );
 
   /** Shows the toast that waited for the next Entry to come in. */

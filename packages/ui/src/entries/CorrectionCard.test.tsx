@@ -89,20 +89,59 @@ describe('a Correction card (board XEntry2 e6)', () => {
     expect(styleOf(screen.getByText(/^People say/))).toMatchObject(role('correctionFormLabel'));
   });
 
-  it('strikes the non-standard form with a red bar tilted over its middle, not a text line', async () => {
+  // Owner shot 14.11: one bar ran across a two-line form, between its lines and past them.
+  it('strikes every line of the non-standard form with a tilted red bar whose top edge sits at the middle of that line, as wide as it (board e6: top 50%)', async () => {
     await renderCard();
 
     expect(textStyle('Take part')).toMatchObject(role('correctionStruck'));
     expect(textStyle('Take part')).not.toHaveProperty('textDecorationLine');
-    expect(styleOf(screen.getByTestId('correction-non-standard-strike'))).toMatchObject({
-      position: 'absolute',
-      top: '50%',
-      left: -correctionStrike.overhang,
-      right: -correctionStrike.overhang,
-      height: correctionStrike.thickness,
-      transform: [{ rotate: correctionStrike.angle }],
+    // No bar before the text is laid out, so none is drawn where no line is.
+    expect(screen.queryAllByTestId('correction-non-standard-strike')).toHaveLength(0);
+
+    await fireEvent(screen.getByText('Take part', { exact: true }), 'textLayout', {
+      nativeEvent: {
+        lines: [
+          { x: 0, y: 0, width: 120, height: 30 },
+          { x: 2, y: 30, width: 70, height: 30 },
+        ],
+      },
     });
+
+    const bars = screen.getAllByTestId('correction-non-standard-strike');
+    expect(bars.map(styleOf)).toEqual([
+      expect.objectContaining({
+        position: 'absolute',
+        left: -correctionStrike.overhang,
+        width: 120 + 2 * correctionStrike.overhang,
+        top: 15,
+        height: correctionStrike.thickness,
+        transform: [{ rotate: correctionStrike.angle }],
+      }),
+      expect.objectContaining({
+        left: 2 - correctionStrike.overhang,
+        width: 70 + 2 * correctionStrike.overhang,
+        top: 45,
+      }),
+    ]);
     expect(correctionStrike).toEqual({ thickness: 5, overhang: 4, angle: '-4deg' });
+  });
+
+  // Owner shot 14.11: the chip sat on its own row under the standard form.
+  it('sets the Category chip at the right of the label «Better say», in one row over the standard form', async () => {
+    await renderCard();
+
+    const row = screen.getByTestId('correction-standard-label-row');
+    expect(within(row).getByText('Better say', { exact: true })).toBeTruthy();
+    expect(within(row).getByTestId('correction-category')).toHaveTextContent('Everyday speech');
+    expect(styleOf(row)).toMatchObject({
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    });
+    expect(screen.getByTestId('correction-standard')).toHaveProp(
+      'accessibilityLabel',
+      'Better say: join in. Category: Everyday speech',
+    );
   });
 
   it('shows the standard form under its red label in the better tab, with the Category chip', async () => {
@@ -111,7 +150,7 @@ describe('a Correction card (board XEntry2 e6)', () => {
     expect(textStyle('Better say')).toMatchObject(role('correctionFormLabel'));
     expect(screen.getByTestId('correction-standard')).toHaveProp(
       'accessibilityLabel',
-      'Better say: join in',
+      'Better say: join in. Category: Everyday speech',
     );
     expect(textStyle('Join in')).toMatchObject({ fontWeight: '900' });
     expect(screen.getByTestId('correction-category')).toBeTruthy();

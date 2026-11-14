@@ -76,7 +76,7 @@ describe('the tabbed Idiom card (board XEntry2 e7)', () => {
     });
   });
 
-  it('opens the Example tab with the big red quote mark and the Example without quotes', async () => {
+  it('opens the Example tab with the big red quote marks around the Example without quotes', async () => {
     await renderTabbed();
 
     await fireEvent.press(screen.getByTestId('idiom-tab-example'));
@@ -84,6 +84,9 @@ describe('the tabbed Idiom card (board XEntry2 e7)', () => {
     expect(
       screen.getByTestId('idiom-example-mark', { includeHiddenElements: true }),
     ).toHaveTextContent('«');
+    expect(
+      screen.getByTestId('idiom-example-close-mark', { includeHiddenElements: true }),
+    ).toHaveTextContent('»');
     expect(screen.getByTestId('idiom-example')).toHaveTextContent('He beat the bushes all day.');
     expect(screen.getByTestId('idiom-example')).not.toHaveTextContent(/«/);
   });

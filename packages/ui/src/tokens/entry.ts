@@ -60,6 +60,8 @@ export const entryCardFrame = {
   tabMark: { height: 5, top: -2, inset: '18%' },
   panelGap: 14,
   moreGap: 8,
+  /** The air between an opened tab's text and its scroll bar (owner 14.11). */
+  scrollGutter: 12,
   kicker: { wedge: { width: 14, height: 12 }, gap: 8 },
 } as const;
 
@@ -80,7 +82,7 @@ export const linkChip = {
   depth: 3,
 } as const;
 
-/** The gap between the big opening quote mark, the Example and its author's line in the tabbed Word card's «Приклад» (board p1). */
+/** The gap between the big quote marks, the Example and its author's line in the tabbed Word card's «Приклад» (board p1). */
 export const exampleMark = { gap: 10 } as const;
 
 /** The Word card's side and bottom padding (the design's 26); the feed's skeleton keeps the same shape. */
@@ -143,6 +145,12 @@ export const entryPanel = {
   paddingBottom: 56,
   kickerGap: 24,
   bodyGap: 14,
+  /**
+   * How far a tabbed card's tab bar sits lower than the room under it would
+   * stand it, into the home indicator's band or the swipe stamp's room
+   * (owner 14.11); a docked action row keeps it on its top.
+   */
+  tabBarDrop: 12,
 } as const;
 
 /**

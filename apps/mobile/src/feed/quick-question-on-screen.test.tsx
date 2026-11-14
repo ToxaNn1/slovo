@@ -7,6 +7,7 @@ import {
   type TrackedUserState,
   type Edition,
   type Haptics,
+  type Random,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, type UserStateFacts } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
@@ -20,6 +21,7 @@ import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
+import { fill } from '@slovo/contracts';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
@@ -59,14 +61,14 @@ const metrics = {
 };
 
 /** A Word of the Edition's first Category, with the Stress on its second letter. */
-function word(id: string, lemma: string): Word {
+function word(id: string, lemma: string, primaryDefinition = `Значення слова ${lemma}.`): Word {
   return {
     kind: 'word',
     id,
     lemma,
     stress: [1],
     partOfSpeech: 'adjective',
-    primaryDefinition: `Значення слова ${lemma}.`,
+    primaryDefinition,
     extraDefinitions: [],
     examples: [],
     synonyms: [],
@@ -84,7 +86,13 @@ function word(id: string, lemma: string): Word {
  * Opens the composition over 14 Words for a reader who finished the
  * onboarding with the facts given, on 2026-10-28 in Kyiv.
  */
-async function open(facts: UserStateFacts) {
+async function open(
+  facts: UserStateFacts,
+  {
+    definition,
+    random = { next: () => 0 },
+  }: { definition?: (index: number) => string; random?: Random } = {},
+) {
   // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
   // the sheet is open, which settling every timer would never finish. It has its own test.
   userState = await seedUserState({ ...facts, gesturesHintShown: true }, { clock });
@@ -94,14 +102,14 @@ async function open(facts: UserStateFacts) {
         { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
       ],
       words: Array.from({ length: 14 }, (_, index) =>
-        word(`w_${String(index)}`, `слово${String(index)}`),
+        word(`w_${String(index)}`, `слово${String(index)}`, definition?.(index)),
       ),
     }),
     edition: shippedEdition,
     userState: userState,
     clock,
-    // The first Word in each draw, so each opening shows the same Word of the Day.
-    random: { next: () => 0 },
+    // The first Word in each draw unless given, so each opening shows the same Word of the Day.
+    random,
   });
 }
 
@@ -230,5 +238,59 @@ describe('the Quick Question on the Feed', () => {
     await settle(() => fireEvent.press(screen.getByTestId('game-next', hidden)));
     await act(() => jest.advanceTimersByTimeAsync(1000));
     expect(screen.queryByTestId('game-answer-card', hidden)).toBeNull();
+  });
+
+  // Spec #1831, ticket #1834: real Definitions run to 236 characters, and four of them fit the card.
+  it('asks the Word Meaning question with four long Definitions shown whole', async () => {
+    const longest = 236;
+    // A Definition of exactly 236 characters, its own for each Word.
+    const definition = (index: number) =>
+      `${String(index)} `
+        .concat('Той, хто довго й уважно добирає слова. '.repeat(7))
+        .slice(0, longest);
+    // A draw that walks through the Quick Question's sources rather than always taking the first.
+    let draws = 0;
+    const random = { next: () => ((draws += 1) * 0.37) % 1 };
+    await open(
+      { onboardingFinished: '2026-09-01T09:00:00Z', mixQuickQuestion: 6 },
+      { definition, random },
+    );
+    const isWordMeaning = () =>
+      composition.feed.cards.findIndex(
+        (card) => card.kind === 'quick-question' && card.source.kind === 'word-meaning',
+      );
+    for (let card = 0; isWordMeaning() === -1; card += 1) {
+      if (card > 40 || (await composition.feed.next()) === undefined)
+        throw new Error('No Word Meaning');
+    }
+    const position = isWordMeaning();
+    const asked = composition.feed.cards[position];
+    if (asked?.kind !== 'quick-question') throw new Error('No Word Meaning');
+    await composition.feed.show(position);
+    await renderApp();
+
+    const card = screen.getByTestId('quick-question', hidden);
+    // The kicker is the Feed's «Швидке питання», drawn in capitals, over «„{word}“ — це…».
+    expect(within(card).getByTestId('quick-question-tag', hidden)).toHaveTextContent(
+      editionStrings.feed.quickQuestion,
+    );
+    expect(
+      within(card).getAllByText(
+        fill(editionStrings.game.round.prompts.meaning, { word: asked.round.prompt }),
+        hidden,
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(asked.round.options).toHaveLength(4);
+    for (const [place, option] of asked.round.options.entries()) {
+      expect(Array.from(option.text)).toHaveLength(longest);
+      const button = within(card).getByTestId(`game-option-${String(place)}`, hidden);
+      // Whole: every character on the button, on as many lines as it takes, never cut or shrunk.
+      const texts = within(button).getAllByText(option.text, hidden);
+      expect(texts.length).toBeGreaterThan(0);
+      for (const text of texts) {
+        expect(text).not.toHaveProp('numberOfLines', expect.anything());
+        expect(text).not.toHaveProp('adjustsFontSizeToFit', true);
+      }
+    }
   });
 });

@@ -3,16 +3,20 @@ import {
   categoryTile,
   knownShare,
   RailBoard,
+  type RailBoardCard,
   RailScreenHero,
   shapeAt,
   useEdition,
+  useListScroll,
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
+import type { FlatList } from 'react-native';
 
 import { useCuratedCollectionScreen } from '@/dashboard/curated-collection';
 import { editionStrings } from '@/edition/edition';
 import { ReadFailed } from '@/read-failed';
 import { useSegmentParam } from '@/route-params';
+import { ListTopButton } from '@/shell/list-top';
 
 const { curatedCollection: words, curatedCollectionCount } = editionStrings.dashboard;
 
@@ -27,6 +31,7 @@ export default function CuratedCollectionRoute() {
   const { screen, retry, place, add, openEntry } = useCuratedCollectionScreen(collectionId);
   const { count } = useEdition();
   const router = useRouter();
+  const scroll = useListScroll<FlatList<RailBoardCard>>();
   if (screen === null) return <Redirect href="/" />;
   if (retry !== undefined)
     return (
@@ -43,6 +48,8 @@ export default function CuratedCollectionRoute() {
       testID="curated-collection"
       cards={screen?.entries ?? []}
       onOpen={openEntry}
+      scroll={scroll}
+      corner={<ListTopButton scroll={scroll} />}
       hero={
         <RailScreenHero
           id="curated-collection-hero"

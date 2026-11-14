@@ -57,7 +57,11 @@ export function EntryDetails({
   const docked = word !== undefined && slots?.slot === 'actions';
   // The tab bar stands at the screen's foot (owner 08.11): under it only the docked
   // action row, or the room the swipe's stamp keeps, which takes in the home indicator.
-  const foot = docked ? 0 : Math.max(0, bottomInset - (swipe ? swipeStampLayout.room : 0));
+  const stampRoom = swipe ? swipeStampLayout.room : 0;
+  const foot = docked ? 0 : Math.max(0, bottomInset - stampRoom);
+  // Off the dock the frame runs a little past the screen's foot, into the room under the
+  // bar, so the bar stands lower (owner 14.11).
+  const drop = docked ? 0 : Math.min(entryPanel.tabBarDrop, Math.max(bottomInset, stampRoom));
   const body = (
     <Swiped swipe={swipe} correction={card.kind === 'correction'} fill={tabs}>
       <AccentGround
@@ -133,7 +137,10 @@ export function EntryDetails({
       {tabs ? (
         // A tabbed card is a fixed frame the rest of the screen's height: nothing around it
         // scrolls, only an opened tab inside it (ADR 0091, ADR 0113).
-        <View testID="entry-frame" style={[styles.scroll, { paddingBottom: foot }]}>
+        <View
+          testID="entry-frame"
+          style={[styles.scroll, { paddingBottom: foot }, drop > 0 && { marginBottom: -drop }]}
+        >
           {body}
         </View>
       ) : (
