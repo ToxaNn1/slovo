@@ -9,17 +9,17 @@
  *   pnpm content have --edition <id> [--kind <kind>]
  *   pnpm content counts --edition <id>
  *   pnpm content check <kind> <array.json | drafts folder> --edition <id>
- *   pnpm content verify <files, ids, folders or drafts> | --changed <ref> --edition <id> [--book <file>]
+ *   pnpm content verify <ids or drafts> | --changed <earlier snapshot file> --edition <id> [--snapshot <file>] [--book <file>]
  *   pnpm content import --edition <id> [--snapshot <file>] [--override]   (the Edition folder, or a saved snapshot, into the backend's Postgres)
  *
  * `add`, `edit`, `retire` and `flag` open one batch per run and print the
  * API's answer for each record (./writes.ts). `have` and `counts` print the
  * content snapshot and the content report (./have.ts). `check` runs the
  * shared content rules on the input locally and sends nothing. `verify`
- * checks quotes against their source pages (./verify.ts); a file or folder
- * outside the Edition folder is read as drafts, so a wave verifies them
- * before `add`. The CLI never writes to the Edition folder; `check` and
- * `verify` read its config. `$SLOVO_EDITIONS_DIR` points the tool at another
+ * checks quotes against their source pages (./verify.ts): the records of the
+ * content snapshot (`--snapshot <file>`, else the backend's), or drafts, so a
+ * wave verifies them before `add`. The CLI never writes to the Edition folder
+ * and reads only its config. `$SLOVO_EDITIONS_DIR` points the tool at another
  * editions folder, as the tests do.
  */
 import { spawnSync } from 'node:child_process';
@@ -30,9 +30,13 @@ import {
   EDITIONS_DIR,
   EditionFolderError,
   openEdition,
+  openEditionWithSnapshot,
   type EditionFolder,
 } from '@slovo/language-pack/edition';
+import type { ContentSnapshot } from '@slovo/contracts/api';
+import { readSnapshotFile } from '@slovo/language-pack';
 import {
+  contentSnapshot,
   defaultCacheDir,
   fetchPage,
   POLITE_INTERVAL_MS,
@@ -55,7 +59,7 @@ const USAGE = [
   `       pnpm content have --edition <id> [--kind ${KINDS}]`,
   '       pnpm content counts --edition <id>',
   `       pnpm content check ${KINDS} <array.json | drafts folder> --edition <id>`,
-  '       pnpm content verify <files, ids, folder or drafts folder> | --changed <ref> --edition <id> [--book <text file>] [--cache <dir>]',
+  '       pnpm content verify <ids, drafts or drafts folder> | --changed <earlier snapshot file> --edition <id> [--snapshot <file>] [--book <text file>] [--cache <dir>]',
   '       pnpm content import --edition <id> [--snapshot <file>] [--override]',
 ].join('\n');
 
@@ -113,15 +117,17 @@ async function main(): Promise<number> {
     });
   }
   if (command === 'verify' && rest.length > 0 !== (values.changed !== undefined)) {
-    const edition = openedEdition(editionId);
-    if (typeof edition === 'number') return edition;
     const cwd = process.env['INIT_CWD'] ?? process.cwd();
+    const edition = await editionWithSnapshot(editionId, values.snapshot, cwd);
+    if (typeof edition === 'number') return edition;
+    const since = values.changed === undefined ? undefined : earlierSnapshot(values.changed, cwd);
+    if (since === null) return 2;
     return verifyEntries({
       edition,
       targets:
-        values.changed === undefined
+        since === undefined || values.changed === undefined
           ? { kind: 'named', names: rest }
-          : { kind: 'changed', ref: values.changed },
+          : { kind: 'changed', since, name: values.changed },
       bookFile: values.book === undefined ? undefined : resolve(cwd, values.book),
       client: new PoliteClient(
         fetchPage,
@@ -200,14 +206,57 @@ function usage(): number {
   return 2;
 }
 
-/** The Edition folder, read only; the exit code when it does not open. */
+/** The Edition folder, for its config alone; the exit code when it does not open. */
 function openedEdition(editionId: string): EditionFolder | number {
+  return opened(() => openEdition(process.env['SLOVO_EDITIONS_DIR'] ?? EDITIONS_DIR, editionId));
+}
+
+/**
+ * The Edition with the records of its content snapshot: the `--snapshot`
+ * file, else the backend's at `$SLOVO_API_URL` (ADR 0090); the exit code when
+ * neither gives one or the Edition does not open.
+ */
+async function editionWithSnapshot(
+  editionId: string,
+  file: string | undefined,
+  cwd: string,
+): Promise<EditionFolder | number> {
+  const snapshot = await contentSnapshot({
+    editionId,
+    file: file === undefined ? undefined : resolve(cwd, file),
+    apiUrl: process.env['SLOVO_API_URL'],
+  });
+  if (!snapshot.ok) {
+    console.error(snapshot.error);
+    return 2;
+  }
+  return opened(() =>
+    openEditionWithSnapshot(
+      process.env['SLOVO_EDITIONS_DIR'] ?? EDITIONS_DIR,
+      editionId,
+      snapshot.snapshot,
+    ),
+  );
+}
+
+/** The Edition `open` opens; the exit code, said why, when it does not open. */
+function opened(open: () => EditionFolder): EditionFolder | number {
   try {
-    return openEdition(process.env['SLOVO_EDITIONS_DIR'] ?? EDITIONS_DIR, editionId);
+    return open();
   } catch (error) {
     if (!(error instanceof EditionFolderError)) throw error;
     console.error(error.message);
     return error.reason === 'unknown' ? 2 : 1;
+  }
+}
+
+/** The earlier snapshot `--changed` names; null, said why, when it is none. */
+function earlierSnapshot(file: string, cwd: string): ContentSnapshot | null {
+  try {
+    return readSnapshotFile(resolve(cwd, file));
+  } catch (error) {
+    console.error(`${file}: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
   }
 }
 

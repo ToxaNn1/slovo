@@ -1,4 +1,11 @@
-import { AbsoluteFill, Easing, interpolate, interpolateColors, Sequence, useCurrentFrame } from 'remotion';
+import {
+  AbsoluteFill,
+  Easing,
+  interpolate,
+  interpolateColors,
+  Sequence,
+  useCurrentFrame,
+} from 'remotion';
 
 import { EndCardAt, endCardFrom } from '../EndCard';
 import { light, uiFont, wordFont } from '../look';
@@ -27,7 +34,7 @@ export type Episode = {
 };
 
 /**
- * The episodes. Each word is an Entry of the app (editions/uk/content/words)
+ * The episodes. Each word is an Entry of the app (apps/video/src/snapshot.json)
  * and the description is its definition there, shortened, not bent: the video
  * and the app must say the same.
  */
@@ -62,9 +69,11 @@ export const texts = {
 } as const;
 
 /** «4 слова», «5 слів»: the description's length for the counter. */
-const wordsOf = (count: number) => `${count} ${count >= 2 && count <= 4 ? 'слова' : count === 1 ? 'слово' : 'слів'}`;
+const wordsOf = (count: number) =>
+  `${count} ${count >= 2 && count <= 4 ? 'слова' : count === 1 ? 'слово' : 'слів'}`;
 /** «6 літер», «4 літери»: the word's length under the empty cells. */
-const lettersOf = (count: number) => `${count} ${count >= 2 && count <= 4 ? 'літери' : count === 1 ? 'літера' : 'літер'}`;
+const lettersOf = (count: number) =>
+  `${count} ${count >= 2 && count <= 4 ? 'літери' : count === 1 ? 'літера' : 'літер'}`;
 
 /** The beats in frames at 30 fps, 15 s in all; the bed's beat falls on every 15th frame. */
 export const beats = {
@@ -104,7 +113,8 @@ export const oneWordLength = beats.length;
 /** The frame cell `i` starts to turn over on; it shows its letter three frames later. */
 const flipAt = (i: number) => beats.flips + i * beats.flipStep;
 /** The word is whole once its last cell has turned over (a flip is 6 frames), never before `beats.solved`, and in time to settle. */
-const solvedAt = (count: number) => Math.min(beats.settled - 8, Math.max(beats.solved, flipAt(count - 1) + 6));
+const solvedAt = (count: number) =>
+  Math.min(beats.settled - 8, Math.max(beats.solved, flipAt(count - 1) + 6));
 
 /** Where everything stands, in layout units (pixels of the 1080×1920 frame). */
 const at = {
@@ -141,14 +151,20 @@ function layoutFor(episode: Episode, safe: Safe, s: number) {
   const rows = episode.description.map((word) => [...word.toUpperCase()]);
   const longest = Math.max(...rows.map((row) => row.length));
   if (rows.length < 3 || rows.length > 5 || longest > 9) {
-    throw new Error(`«${episode.description.join(' ')}»: three to five words, nine letters each at most`);
+    throw new Error(
+      `«${episode.description.join(' ')}»: three to five words, nine letters each at most`,
+    );
   }
 
   // The description: one word per row, as big as the band's height and the safe row let it be.
   const gap = 0.1;
   const rowGap = 16 * s;
   const band = (at.description.bottom - at.description.top) * s;
-  const tile = Math.min(104 * s, tileSizeFor(longest, safe.rowWidth, gap), (band - rowGap * (rows.length - 1)) / rows.length / 1.08);
+  const tile = Math.min(
+    104 * s,
+    tileSizeFor(longest, safe.rowWidth, gap),
+    (band - rowGap * (rows.length - 1)) / rows.length / 1.08,
+  );
   const rowStep = tile * 1.08 + rowGap;
   const blockTop = at.description.top * s + (band - (rowStep * rows.length - rowGap)) / 2;
 
@@ -205,7 +221,10 @@ export function OneWord({ episode = 0 }: OneWordProps) {
 /** The sounds: the bed and its beat from the first frame, the pulses, the hints, the shout, the flips, the voice. */
 export function OneWordSound({ episode }: { episode: Episode }) {
   const { letters } = parseWord(episode.word);
-  const ticks = Array.from({ length: Math.floor((beats.exampleTyped - beats.example) / 6) }, (_, i) => beats.example + i * 6);
+  const ticks = Array.from(
+    { length: Math.floor((beats.exampleTyped - beats.example) / 6) },
+    (_, i) => beats.example + i * 6,
+  );
   return (
     <>
       <Bed beatFrom={0} />
@@ -245,7 +264,10 @@ function Scene({ episode }: { episode: Episode }) {
   const ruporHeight = (ruporWidth * 112) / 150;
   const rupor = { left: safe.left + 10 * s, top: safe.rupor.bottom - ruporHeight - 8 * s };
   const center = { x: rupor.left + ruporWidth / 2, y: rupor.top + ruporHeight / 2 };
-  const target = { x: safe.left + safe.width * 0.45, y: ((at.description.top + at.description.bottom) / 2) * s };
+  const target = {
+    x: safe.left + safe.width * 0.45,
+    y: ((at.description.top + at.description.bottom) / 2) * s,
+  };
   const aim = Math.max(-40, (Math.atan2(target.y - center.y, target.x - center.x) * 180) / Math.PI);
   const angle = (aim * Math.PI) / 180;
   const dx = ruporWidth * 0.49;
@@ -261,7 +283,8 @@ function Scene({ episode }: { episode: Episode }) {
   // The description shakes under the shout, then every tile flies into its cell.
   const since = frame - beats.shout;
   const shakeFor = 14;
-  const shake = since >= 0 && since < shakeFor ? Math.sin(since * 2.6) * 9 * s * (1 - since / shakeFor) : 0;
+  const shake =
+    since >= 0 && since < shakeFor ? Math.sin(since * 2.6) * 9 * s * (1 - since / shakeFor) : 0;
   const flight = beats.flips - beats.fly - beats.rowLag * (layout.rows.length - 1);
 
   // The cells swell as the tiles pour in.
@@ -274,7 +297,12 @@ function Scene({ episode }: { episode: Episode }) {
       <Rings mouth={mouth} target={target} s={s} at={beats.shout} life={22} grow={5} />
       <Shouter rupor={rupor} width={ruporWidth} height={ruporHeight} aim={aim} s={s} />
 
-      <Count text={lettersOf(count)} left={rupor.left + ruporWidth + 46 * s} top={cellsTop + layout.cell + 56 * s} s={s} />
+      <Count
+        text={lettersOf(count)}
+        left={rupor.left + ruporWidth + 46 * s}
+        top={cellsTop + layout.cell + 56 * s}
+        s={s}
+      />
       <Counter words={layout.rows.length} safe={safe} s={s} />
       <Example lines={episode.example} lemma={layout.lemma} safe={safe} s={s} />
       <Ask safe={safe} s={s} />
@@ -314,22 +342,39 @@ function Scene({ episode }: { episode: Episode }) {
                   boxSizing: 'border-box',
                   borderRadius: layout.cell * 0.14,
                   border: `${7 * s}px solid ${light.accent}`,
-                  background: interpolateColors(Math.max(lit * 0.6, filling), [0, 1], [light.tile, light.highlight]),
+                  background: interpolateColors(
+                    Math.max(lit * 0.6, filling),
+                    [0, 1],
+                    [light.tile, light.highlight],
+                  ),
                 }}
               />
-              {hintAt !== undefined && frame >= hintAt && <Hint letter={letter} size={layout.cell} at={hintAt} s={s} />}
+              {hintAt !== undefined && frame >= hintAt && (
+                <Hint letter={letter} size={layout.cell} at={hintAt} s={s} />
+              )}
             </div>
           );
         }
         // The word leaves the cells' row, grows and stands in the middle.
-        const move = interpolate(frame, [solvedAt(layout.letters.length), beats.settled], [0, 1], { ...clamp, easing: Easing.inOut(Easing.cubic) });
+        const move = interpolate(frame, [solvedAt(layout.letters.length), beats.settled], [0, 1], {
+          ...clamp,
+          easing: Easing.inOut(Easing.cubic),
+        });
         const size = layout.cell + (layout.wordTile - layout.cell) * move;
         const left = cellLeft(i) + (safe.left + i * layout.wordStep - cellLeft(i)) * move;
         const top = cellsTop + (at.wordTop * s - cellsTop) * move;
         const stressed = i === layout.stress;
-        const bump = interpolate(frame, [beats.settled, beats.settled + 3, beats.settled + 9], [1, 1.05, 1], clamp);
+        const bump = interpolate(
+          frame,
+          [beats.settled, beats.settled + 3, beats.settled + 9],
+          [1, 1.05, 1],
+          clamp,
+        );
         return (
-          <div key={i} style={{ position: 'absolute', left, top, scale: `${bump} ${bump * scaleY}` }}>
+          <div
+            key={i}
+            style={{ position: 'absolute', left, top, scale: `${bump} ${bump * scaleY}` }}
+          >
             <Tile
               letter={letter}
               size={size}
@@ -346,7 +391,10 @@ function Scene({ episode }: { episode: Episode }) {
       {layout.flying.map((item, k) => {
         const start = beats.fly + item.row * beats.rowLag;
         if (frame >= start + flight) return null;
-        const t = interpolate(frame, [start, start + flight], [0, 1], { ...clamp, easing: Easing.in(Easing.cubic) });
+        const t = interpolate(frame, [start, start + flight], [0, 1], {
+          ...clamp,
+          easing: Easing.in(Easing.cubic),
+        });
         const to = {
           x: cellLeft(item.cell) + (layout.cell - layout.tile) / 2,
           y: cellsTop + (layout.cell - layout.tile) / 2,
@@ -367,7 +415,13 @@ function Scene({ episode }: { episode: Episode }) {
               opacity: interpolate(t, [0.8, 1], [1, 0.2], clamp),
             }}
           >
-            <Tile letter={item.letter} size={layout.tile} face={light.ink} edge={blackEdge} ink={light.background} />
+            <Tile
+              letter={item.letter}
+              size={layout.tile}
+              face={light.ink}
+              edge={blackEdge}
+              ink={light.background}
+            />
           </div>
         );
       })}
@@ -425,11 +479,30 @@ function Title({ safe, s }: { safe: Safe; s: number }) {
 }
 
 /** A given letter: a red tile dropping into its cell from above, with a bounce. */
-function Hint({ letter, size, at: start, s }: { letter: string; size: number; at: number; s: number }) {
+function Hint({
+  letter,
+  size,
+  at: start,
+  s,
+}: {
+  letter: string;
+  size: number;
+  at: number;
+  s: number;
+}) {
   const frame = useCurrentFrame();
   const land = start + 6;
-  const fall = interpolate(frame, [start, land], [1, 0], { ...clamp, easing: Easing.in(Easing.quad) });
-  const bounce = frame >= land ? Math.abs(Math.sin(((frame - land) / 8) * Math.PI)) * 26 * s * Math.max(0, 1 - (frame - land) / 12) : 0;
+  const fall = interpolate(frame, [start, land], [1, 0], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
+  const bounce =
+    frame >= land
+      ? Math.abs(Math.sin(((frame - land) / 8) * Math.PI)) *
+        26 *
+        s *
+        Math.max(0, 1 - (frame - land) / 12)
+      : 0;
   const squash = interpolate(frame, [land, land + 2, land + 6], [1, 0.84, 1], clamp);
   return (
     <div
@@ -443,7 +516,13 @@ function Hint({ letter, size, at: start, s }: { letter: string; size: number; at
         opacity: Math.min(1, (1 - fall) * 4 + 0.4),
       }}
     >
-      <Tile letter={letter} size={size} face={light.accent} edge={light.accentEdge} ink={light.background} />
+      <Tile
+        letter={letter}
+        size={size}
+        face={light.accent}
+        edge={light.accentEdge}
+        ink={light.background}
+      />
     </div>
   );
 }
@@ -453,8 +532,16 @@ function Acute({ size }: { size: number }) {
   const frame = useCurrentFrame();
   const falls = beats.stress - 8;
   if (frame < falls) return null;
-  const t = interpolate(frame, [falls, beats.stress], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
-  const squash = interpolate(frame, [beats.stress, beats.stress + 2, beats.stress + 7], [1, 0.8, 1], clamp);
+  const t = interpolate(frame, [falls, beats.stress], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
+  const squash = interpolate(
+    frame,
+    [beats.stress, beats.stress + 2, beats.stress + 7],
+    [1, 0.8, 1],
+    clamp,
+  );
   return (
     <div
       style={{
@@ -503,7 +590,10 @@ function Count({ text, left, top, s }: { text: string; left: number; top: number
 function Counter({ words, safe, s }: { words: number; safe: Safe; s: number }) {
   const frame = useCurrentFrame();
   if (frame < beats.counter) return null;
-  const hit = interpolate(frame, [beats.counter, beats.counter + 5], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+  const hit = interpolate(frame, [beats.counter, beats.counter + 5], [0, 1], {
+    ...clamp,
+    easing: Easing.out(Easing.cubic),
+  });
   const arrow = 74 * s;
   return (
     <div
@@ -534,7 +624,14 @@ function Counter({ words, safe, s }: { words: number; safe: Safe; s: number }) {
       <span>{wordsOf(words)}</span>
       {/* The arrow is drawn: Unbounded has no «→». */}
       <svg width={arrow} height={arrow * 0.6} viewBox="0 0 50 30">
-        <path d="M3 15 H43 M31 4 L44 15 L31 26" fill="none" stroke={light.accent} strokeWidth={7} strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M3 15 H43 M31 4 L44 15 L31 26"
+          fill="none"
+          stroke={light.accent}
+          strokeWidth={7}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
       <span style={{ color: light.accent, fontSize: 76 * s }}>1</span>
     </div>
@@ -542,7 +639,17 @@ function Counter({ words, safe, s }: { words: number; safe: Safe; s: number }) {
 }
 
 /** The example typing in under the word, the word itself in red. */
-function Example({ lines, lemma, safe, s }: { lines: readonly string[]; lemma: string; safe: Safe; s: number }) {
+function Example({
+  lines,
+  lemma,
+  safe,
+  s,
+}: {
+  lines: readonly string[];
+  lemma: string;
+  safe: Safe;
+  s: number;
+}) {
   const frame = useCurrentFrame();
   if (frame < beats.example) return null;
   const total = lines.reduce((sum, line) => sum + [...line].length, 0);
@@ -576,7 +683,8 @@ function Example({ lines, lemma, safe, s }: { lines: readonly string[]; lemma: s
                 style={{
                   // Untyped letters keep their room, so the line doesn't jump as it types.
                   opacity: offset + c < typed ? 1 : 0,
-                  color: found >= 0 && c >= found && c < found + lemma.length ? light.accent : light.ink,
+                  color:
+                    found >= 0 && c >= found && c < found + lemma.length ? light.accent : light.ink,
                 }}
               >
                 {char}
@@ -595,7 +703,10 @@ function Ask({ safe, s }: { safe: Safe; s: number }) {
   if (frame < beats.ask) return null;
   const [first, second] = texts.ask;
   const one = interpolate(frame, [beats.ask, beats.ask + 9], [0, 1], { ...clamp, easing: pop });
-  const two = interpolate(frame, [beats.ask + 5, beats.ask + 14], [0, 1], { ...clamp, easing: pop });
+  const two = interpolate(frame, [beats.ask + 5, beats.ask + 14], [0, 1], {
+    ...clamp,
+    easing: pop,
+  });
   return (
     <div
       style={{
@@ -615,8 +726,12 @@ function Ask({ safe, s }: { safe: Safe; s: number }) {
         whiteSpace: 'nowrap',
       }}
     >
-      <div style={{ color: light.ink, scale: String(one), transformOrigin: 'left center' }}>{first}</div>
-      <div style={{ color: light.accent, scale: String(two), transformOrigin: 'left center' }}>{second}</div>
+      <div style={{ color: light.ink, scale: String(one), transformOrigin: 'left center' }}>
+        {first}
+      </div>
+      <div style={{ color: light.accent, scale: String(two), transformOrigin: 'left center' }}>
+        {second}
+      </div>
     </div>
   );
 }
@@ -645,11 +760,22 @@ function Shouter({
         ? interpolate(frame, [beats.inhale, beats.shout - 2], [idle, 10], clamp)
         : frame < beats.flips
           ? interpolate(frame, [beats.shout, beats.shout + 3], [10, aim], { ...clamp, easing: pop })
-          : interpolate(frame, [beats.flips, beats.flips + 10], [aim, glad], { ...clamp, easing: Easing.out(Easing.cubic) });
-  const squeeze = interpolate(frame, [beats.inhale, beats.shout - 1, beats.shout + 3], [1, 0.9, 1], clamp);
+          : interpolate(frame, [beats.flips, beats.flips + 10], [aim, glad], {
+              ...clamp,
+              easing: Easing.out(Easing.cubic),
+            });
+  const squeeze = interpolate(
+    frame,
+    [beats.inhale, beats.shout - 1, beats.shout + 3],
+    [1, 0.9, 1],
+    clamp,
+  );
   const shake = frame >= beats.shout && frame < beats.flips ? Math.sin(frame * 2.2) * 7 * s : 0;
   const sinceAsk = frame - beats.ask;
-  const hop = sinceAsk >= 0 && sinceAsk < 24 ? -Math.abs(Math.sin((sinceAsk / 12) * Math.PI)) * 34 * s * (1 - sinceAsk / 24) : 0;
+  const hop =
+    sinceAsk >= 0 && sinceAsk < 24
+      ? -Math.abs(Math.sin((sinceAsk / 12) * Math.PI)) * 34 * s * (1 - sinceAsk / 24)
+      : 0;
   const state = frame < beats.shout ? 'waits' : frame < beats.flips ? 'shouts' : 'happy';
   return (
     <div

@@ -1,33 +1,42 @@
 import type { CSSProperties } from 'react';
-import { AbsoluteFill, Easing, interpolate, interpolateColors, random, Sequence, useCurrentFrame } from 'remotion';
+import {
+  AbsoluteFill,
+  Easing,
+  interpolate,
+  interpolateColors,
+  random,
+  Sequence,
+  useCurrentFrame,
+} from 'remotion';
 
-import word from '../../../../editions/uk/content/words/w_00g2ap.json';
-import w02 from '../../../../editions/uk/content/words/w_0wpdmz.json';
-import w03 from '../../../../editions/uk/content/words/w_1kz86u.json';
-import w04 from '../../../../editions/uk/content/words/w_2xoekh.json';
-import w05 from '../../../../editions/uk/content/words/w_6j81py.json';
-import w06 from '../../../../editions/uk/content/words/w_7vjavt.json';
-import w07 from '../../../../editions/uk/content/words/w_9kbijt.json';
-import w08 from '../../../../editions/uk/content/words/w_eypjwd.json';
-import w09 from '../../../../editions/uk/content/words/w_jc3n25.json';
-import w10 from '../../../../editions/uk/content/words/w_k30ezx.json';
-import w11 from '../../../../editions/uk/content/words/w_ls5omp.json';
-import w12 from '../../../../editions/uk/content/words/w_olmlqv.json';
-import w13 from '../../../../editions/uk/content/words/w_oqxz04.json';
-import w14 from '../../../../editions/uk/content/words/w_q517pa.json';
-import w15 from '../../../../editions/uk/content/words/w_tl74ue.json';
-import w16 from '../../../../editions/uk/content/words/w_ua5aqz.json';
-import w17 from '../../../../editions/uk/content/words/w_v25i3l.json';
-import w18 from '../../../../editions/uk/content/words/w_v8rapd.json';
-import w19 from '../../../../editions/uk/content/words/w_wjgw3w.json';
-import w20 from '../../../../editions/uk/content/words/w_x5jbf2.json';
-import w01 from '../../../../editions/uk/content/words/w_wn96s9.json';
 import { EndCardAt } from '../EndCard';
 import { dark, light, uiFont, wordFont } from '../look';
 import { useSafe } from '../safe';
 import { Bed, Knock, levels, Sfx, sfx, Voice } from '../sound';
 import { clamp, pop } from '../shared/motion';
+import { word as snapshotWord } from '../words';
 
+const word = snapshotWord('w_00g2ap');
+const w02 = snapshotWord('w_0wpdmz');
+const w03 = snapshotWord('w_1kz86u');
+const w04 = snapshotWord('w_2xoekh');
+const w05 = snapshotWord('w_6j81py');
+const w06 = snapshotWord('w_7vjavt');
+const w07 = snapshotWord('w_9kbijt');
+const w08 = snapshotWord('w_eypjwd');
+const w09 = snapshotWord('w_jc3n25');
+const w10 = snapshotWord('w_k30ezx');
+const w11 = snapshotWord('w_ls5omp');
+const w12 = snapshotWord('w_olmlqv');
+const w13 = snapshotWord('w_oqxz04');
+const w14 = snapshotWord('w_q517pa');
+const w15 = snapshotWord('w_tl74ue');
+const w16 = snapshotWord('w_ua5aqz');
+const w17 = snapshotWord('w_v25i3l');
+const w18 = snapshotWord('w_v8rapd');
+const w19 = snapshotWord('w_wjgw3w');
+const w20 = snapshotWord('w_x5jbf2');
+const w01 = snapshotWord('w_wn96s9');
 
 /** The board's cells: as many as the word of the day has letters. */
 const target = [...word.lemma.toUpperCase()];
@@ -38,10 +47,34 @@ const stressed = word.stress[0] ?? 0;
  * The definition as the video words it: the advert's own short line, not
  * the Entry's dictionary one (the app's Entry stays as it is).
  */
-const definition = { portrait: 'Тонкі тріщинки\nна старих картинах.', landscape: 'Тонкі тріщинки на старих картинах.' };
+const definition = {
+  portrait: 'Тонкі тріщинки\nна старих картинах.',
+  landscape: 'Тонкі тріщинки на старих картинах.',
+};
 
 /** The rare words the board flips through, none longer than the board. */
-const pool = [w01, w02, w03, w04, w05, w06, w07, w08, w09, w10, w11, w12, w13, w14, w15, w16, w17, w18, w19, w20]
+const pool = [
+  w01,
+  w02,
+  w03,
+  w04,
+  w05,
+  w06,
+  w07,
+  w08,
+  w09,
+  w10,
+  w11,
+  w12,
+  w13,
+  w14,
+  w15,
+  w16,
+  w17,
+  w18,
+  w19,
+  w20,
+]
   .map((entry) => entry.lemma.toUpperCase())
   .filter((lemma) => lemma.length <= cells);
 
@@ -115,7 +148,8 @@ const shown: readonly string[] = (() => {
       words.push(flip.stop);
       return;
     }
-    const pick = (last + 1 + Math.floor(random(`board-${n}`) * (others.length - 1))) % others.length;
+    const pick =
+      (last + 1 + Math.floor(random(`board-${n}`) * (others.length - 1))) % others.length;
     words.push(others[pick] ?? '');
     last = pick;
   });
@@ -147,7 +181,12 @@ export function Board() {
       <Sfx src={sfx.pop} at={beats.caption} volume={0.5} />
       {flips.map(({ at, stop }, n) => (
         // No two flaps alike in level, so a fast run doesn't drone; a stop lands a little harder.
-        <Sfx key={at} src={sfx.flap} at={at} volume={stop === undefined ? 0.25 + random(`flap-${n}`) * 0.15 : 0.5} />
+        <Sfx
+          key={at}
+          src={sfx.flap}
+          at={at}
+          volume={stop === undefined ? 0.25 + random(`flap-${n}`) * 0.15 : 0.5}
+        />
       ))}
       {target.map((_, i) => (
         <Knock key={i} index={i} at={settleAt(i)} volume={1} />
@@ -178,8 +217,14 @@ function Scene() {
   const boardHeight = cellHeight + pad * 2;
   const boardLeft = (portrait ? safe.centerX : width / 2) - boardWidth / 2;
   const boardTop = portrait ? safe.centerY - 20 * s : height * 0.4;
-  const caption = interpolate(frame, [beats.caption, beats.caption + 10], [0, 1], { ...clamp, easing: pop });
-  const stamp = interpolate(frame, [beats.stamp - 6, beats.stamp], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
+  const caption = interpolate(frame, [beats.caption, beats.caption + 10], [0, 1], {
+    ...clamp,
+    easing: pop,
+  });
+  const stamp = interpolate(frame, [beats.stamp - 6, beats.stamp], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
   // The flip shown now: the last one at or before this frame.
   const n = flips.filter(({ at }) => at <= frame).length - 1;
   const text = portrait ? definition.portrait : definition.landscape;
@@ -215,7 +260,11 @@ function Scene() {
           padding: pad,
           borderRadius: size * 0.2,
           // The panel melts into the page once the board settles, so the ink tile reads on cream.
-          background: interpolateColors(frame, [settleAt(stressed), settleAt(stressed) + 8], [light.ink, light.background]),
+          background: interpolateColors(
+            frame,
+            [settleAt(stressed), settleAt(stressed) + 8],
+            [light.ink, light.background],
+          ),
           display: 'flex',
           gap: size * gap,
         }}
@@ -275,7 +324,19 @@ function Scene() {
  * and the bottom half of the new one unfolds over it. A settled cell is red,
  * the stressed one ink, as the word card draws them.
  */
-function Cell({ index, n, frame, width, height }: { index: number; n: number; frame: number; width: number; height: number }) {
+function Cell({
+  index,
+  n,
+  frame,
+  width,
+  height,
+}: {
+  index: number;
+  n: number;
+  frame: number;
+  width: number;
+  height: number;
+}) {
   const now = letterAt(index, n);
   const before = letterAt(index, n - 1);
   const at = flips[n]?.at ?? 0;
@@ -296,7 +357,10 @@ function Cell({ index, n, frame, width, height }: { index: number; n: number; fr
         top: part === 'top' ? 0 : height / 2,
         overflow: 'hidden',
         background: face,
-        borderRadius: part === 'top' ? `${width * 0.12}px ${width * 0.12}px 0 0` : `0 0 ${width * 0.12}px ${width * 0.12}px`,
+        borderRadius:
+          part === 'top'
+            ? `${width * 0.12}px ${width * 0.12}px 0 0`
+            : `0 0 ${width * 0.12}px ${width * 0.12}px`,
         backfaceVisibility: 'hidden',
         ...style,
       }}
@@ -319,7 +383,10 @@ function Cell({ index, n, frame, width, height }: { index: number; n: number; fr
       </div>
     </div>
   );
-  const land = interpolate(frame, [settleAt(index), settleAt(index) + 6], [0.9, 1], { ...clamp, easing: pop });
+  const land = interpolate(frame, [settleAt(index), settleAt(index) + 6], [0.9, 1], {
+    ...clamp,
+    easing: pop,
+  });
   return (
     <div
       style={{
@@ -334,8 +401,11 @@ function Cell({ index, n, frame, width, height }: { index: number; n: number; fr
     >
       {half(now, 'top')}
       {half(p < 1 ? before : now, 'bottom')}
-      {p < 0.5 && half(before, 'top', { rotate: `x ${-p * 180}deg`, transformOrigin: 'center bottom' })}
-      {p >= 0.5 && p < 1 && half(now, 'bottom', { rotate: `x ${(1 - p) * 180}deg`, transformOrigin: 'center top' })}
+      {p < 0.5 &&
+        half(before, 'top', { rotate: `x ${-p * 180}deg`, transformOrigin: 'center bottom' })}
+      {p >= 0.5 &&
+        p < 1 &&
+        half(now, 'bottom', { rotate: `x ${(1 - p) * 180}deg`, transformOrigin: 'center top' })}
       <div
         style={{
           position: 'absolute',
@@ -354,8 +424,16 @@ function Cell({ index, n, frame, width, height }: { index: number; n: number; fr
 
 /** The Stress mark falling onto the stressed cell once the board has settled; the pluck sounds as it lands. */
 function Acute({ size, frame }: { size: number; frame: number }) {
-  const t = interpolate(frame, [stressFalls, stressLands], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
-  const squash = interpolate(frame, [stressLands, stressLands + 2, stressLands + 7], [1, 0.8, 1], clamp);
+  const t = interpolate(frame, [stressFalls, stressLands], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
+  const squash = interpolate(
+    frame,
+    [stressLands, stressLands + 2, stressLands + 7],
+    [1, 0.8, 1],
+    clamp,
+  );
   return (
     <div
       style={{

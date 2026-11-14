@@ -9,7 +9,6 @@ import { Bed, Horn, hornLength, Knock, levels, Sfx, sfx, Voice } from '../sound'
 import { Tile } from '../Tile';
 import { clamp, pop } from '../shared/motion';
 
-
 /** The beats of an episode in frames at 30 fps, 15 s in all; an episode's scene times itself by them. */
 export const beats = {
   /** The situation plays; its caption is there from the first frame. */
@@ -52,7 +51,12 @@ function typedAt(text: string, frame: number) {
   return frame < 0 ? 0 : shown;
 }
 const typedLength = (text: string) =>
-  Math.ceil([...text].reduce((sum, letter) => sum + typing.perLetter + (letter === '…' ? typing.pause : 0), 0));
+  Math.ceil(
+    [...text].reduce(
+      (sum, letter) => sum + typing.perLetter + (letter === '…' ? typing.pause : 0),
+      0,
+    ),
+  );
 
 /** The part of an Edition Word an episode shows, as the words JSON writes it. */
 export type Word = {
@@ -86,7 +90,16 @@ export type MissingProps = {
  * into a row; under it the line with the word found and its meaning; the
  * shared end card. Everything stays in the 9:16 safe zone, Рупор in his band.
  */
-export function Missing({ word, setup, hesitation, reply, meaning, target, Scene, voice }: MissingProps) {
+export function Missing({
+  word,
+  setup,
+  hesitation,
+  reply,
+  meaning,
+  target,
+  Scene,
+  voice,
+}: MissingProps) {
   const letters = [...word.lemma];
   const typed = typedLength(hesitation);
   return (
@@ -188,13 +201,21 @@ function Shouter() {
   const { s } = useSafe();
   const { width, left, top, tilt, mouth } = useRupor();
   if (frame < beats.ruporIn) return null;
-  const enter = interpolate(frame, [beats.ruporIn, beats.shout], [-700 * s, 0], { ...clamp, easing: pop });
+  const enter = interpolate(frame, [beats.ruporIn, beats.shout], [-700 * s, 0], {
+    ...clamp,
+    easing: pop,
+  });
   const shake = frame > beats.shout && frame < beats.shout + 24 ? Math.sin(frame * 2.2) * 8 * s : 0;
   const calm = frame >= beats.word;
   return (
     <AbsoluteFill>
       {[0, 1, 2].map((ring) => {
-        const t = interpolate(frame, [beats.shout + ring * 6, beats.shout + 30 + ring * 6], [0, 1], clamp);
+        const t = interpolate(
+          frame,
+          [beats.shout + ring * 6, beats.shout + 30 + ring * 6],
+          [0, 1],
+          clamp,
+        );
         return (
           <div
             key={ring}
@@ -232,7 +253,12 @@ function Shouter() {
  * into a row, the Stress mark falls on its vowel; under the row the line
  * with the word found and, smaller, its meaning.
  */
-function WordCard({ word, reply, meaning, target }: Pick<MissingProps, 'word' | 'reply' | 'meaning' | 'target'>) {
+function WordCard({
+  word,
+  reply,
+  meaning,
+  target,
+}: Pick<MissingProps, 'word' | 'reply' | 'meaning' | 'target'>) {
   const frame = useCurrentFrame();
   const { s, safe } = useSafe();
   const { mouth } = useRupor();
@@ -242,7 +268,10 @@ function WordCard({ word, reply, meaning, target }: Pick<MissingProps, 'word' | 
   const total = letters.length * size + (letters.length - 1) * size * gap;
   const rowLeft = safe.centerX - total / 2;
   const rowTop = safe.top + 190 * s;
-  const line = interpolate(frame, [beats.word + 4, beats.word + 14], [0, 1], { ...clamp, easing: pop });
+  const line = interpolate(frame, [beats.word + 4, beats.word + 14], [0, 1], {
+    ...clamp,
+    easing: pop,
+  });
   const small = interpolate(frame, [beats.word + 16, beats.word + 26], [0, 1], clamp);
   return (
     <AbsoluteFill>
@@ -254,10 +283,17 @@ function WordCard({ word, reply, meaning, target }: Pick<MissingProps, 'word' | 
           y: target.y * s + (((i * 7) % 5) - 2) * 26 * s - size / 2,
         };
         const slot = { x: rowLeft + i * size * (1 + gap), y: rowTop };
-        const fly = interpolate(frame, [leaveAt(i), hitAt(i)], [0, 1], { ...clamp, easing: Easing.out(Easing.quad) });
-        const back = interpolate(frame, [hitAt(i), landAt(i)], [0, 1], { ...clamp, easing: Easing.inOut(Easing.quad) });
+        const fly = interpolate(frame, [leaveAt(i), hitAt(i)], [0, 1], {
+          ...clamp,
+          easing: Easing.out(Easing.quad),
+        });
+        const back = interpolate(frame, [hitAt(i), landAt(i)], [0, 1], {
+          ...clamp,
+          easing: Easing.inOut(Easing.quad),
+        });
         const from = { x: mouth.x - size / 2, y: mouth.y - size / 2 };
-        const x = back === 0 ? from.x + (strike.x - from.x) * fly : strike.x + (slot.x - strike.x) * back;
+        const x =
+          back === 0 ? from.x + (strike.x - from.x) * fly : strike.x + (slot.x - strike.x) * back;
         const y =
           back === 0
             ? from.y + (strike.y - from.y) * fly
@@ -333,7 +369,10 @@ function WordCard({ word, reply, meaning, target }: Pick<MissingProps, 'word' | 
 
 /** The Stress mark falling onto the stressed tile from frame `falls`; the pluck sounds as it lands. */
 function Acute({ size, frame, falls }: { size: number; frame: number; falls: number }) {
-  const t = interpolate(frame, [falls, falls + 8], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
+  const t = interpolate(frame, [falls, falls + 8], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
   const squash = interpolate(frame, [falls + 8, falls + 10, falls + 15], [1, 0.8, 1], clamp);
   if (frame < falls) return null;
   return (

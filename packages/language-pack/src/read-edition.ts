@@ -13,12 +13,12 @@ import type {
 import { WordIdSchema } from '@slovo/contracts';
 import type { ContentSnapshot } from '@slovo/contracts/api';
 
-import { checkContentSet, checksumOf, contentSetOf, type Authored } from '@slovo/content-rules';
+import { checkContentSet, checksumOf, type Authored } from '@slovo/content-rules';
 
 import { buildErrorsOf, type BuildError } from './build-error';
 import { categoryArtErrors } from './category-art';
 import type { ContentManifest } from './content-manifest';
-import { editionFiles, EditionFolderError, type AuthoredContent } from './edition-folder';
+import { editionFiles, EditionFolderError, SNAPSHOT_FILE, snapshotEntries } from './edition-folder';
 import { sampleWordErrors } from './recordings';
 import { missingEntryErrors } from './id-registry';
 import type { PackContent } from './pack-layout';
@@ -115,9 +115,6 @@ export function readEditionWithSnapshot(
   };
   return { errors, valid: { content, config: checked.config } };
 }
-
-/** What the errors of a snapshot name as their file. */
-const SNAPSHOT_FILE = 'snapshot';
 
 /** Where the records come from: the Edition folder's content files or a snapshot of the backend. */
 type RecordsFrom =
@@ -254,23 +251,6 @@ function readWith(
       : { curatedCollections: sortedById(curatedCollections) }),
   };
   return { ...read, checked: { content, config } };
-}
-
-/** The snapshot's records, each named by its kind and id in the errors. */
-function snapshotEntries(snapshot: ContentSnapshot): AuthoredContent {
-  const { words, corrections, idioms, synonymRows, tips, curatedCollections } = contentSetOf(
-    {
-      word: snapshot.words,
-      correction: snapshot.corrections,
-      idiom: snapshot.idioms,
-      synonymRow: snapshot.synonymRows,
-      tip: snapshot.tips,
-      curatedCollection: snapshot.curatedCollections,
-      crosswordDay: snapshot.crosswordDays,
-    },
-    (kind, id) => `${SNAPSHOT_FILE}:${kind}/${id}`,
-  );
-  return { words, corrections, idioms, synonymRows, tips, curatedCollections, errors: [] };
 }
 
 function sortedById<T extends { readonly id: string }>(authored: readonly Authored<T>[]): T[] {

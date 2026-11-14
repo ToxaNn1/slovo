@@ -1,24 +1,17 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { CorrectionSchema, IdiomSchema } from '@slovo/contracts';
-import {
-  EDITIONS_DIR,
-  editionFiles,
-  openEdition,
-  type EditionFolder,
-} from '@slovo/language-pack/edition';
+import { type EditionFolder } from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { sourceIdioms, type Fetch, type IdiomSourcingOptions, type SourcingResult } from './index';
-import { seededRandom } from './test-support';
+import { seededRandom, editionWithSnapshot, seedRecord } from './test-support';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
-const ukrainian = openEdition(EDITIONS_DIR, 'uk');
-const ukrainianConfigFile = ukrainian.path('config');
 const PHRASEOLOGY = 'https://goroh.pp.ua/Фразеологія/';
 const EFIMOVA = "Словник прислів'їв та приказок з поясненнями. / Єфімова І. В., 2011";
 
@@ -59,19 +52,7 @@ function fakeClock() {
 
 /** The UA Edition's config with the given Idioms as its only content. */
 function editionWith(idioms: Record<string, unknown> = {}): EditionFolder {
-  const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
-  mkdirSync(join(editionsDir, 'uk'));
-  writeFileSync(
-    editionFiles(join(editionsDir, 'uk')).path('config'),
-    readFileSync(ukrainianConfigFile, 'utf8'),
-  );
-  const edition = openEdition(editionsDir, 'uk');
-  for (const [id, idiom] of Object.entries(idioms)) {
-    const file = join(edition.dir, edition.entryFile(id));
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, JSON.stringify(idiom));
-  }
-  return edition;
+  return editionWithSnapshot(idioms);
 }
 
 function run(idiomList: string, overrides: Partial<IdiomSourcingOptions> = {}) {
@@ -272,9 +253,7 @@ describe('sourceIdioms', () => {
   });
 
   it('sends an expression an Entry of another kind has to incomplete', async () => {
-    const correction = JSON.parse(
-      readFileSync(join(ukrainian.dir, ukrainian.entryFile('c_0bppof')), 'utf8'),
-    ) as unknown;
+    const correction = seedRecord('c_0bppof');
     const edition = editionWith({
       c_0bppof: { ...CorrectionSchema.parse(correction), nonStandardForm: 'лити воду' },
     });

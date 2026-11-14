@@ -1,11 +1,17 @@
-import { AbsoluteFill, Easing, interpolate, interpolateColors, random, useCurrentFrame } from 'remotion';
+import {
+  AbsoluteFill,
+  Easing,
+  interpolate,
+  interpolateColors,
+  random,
+  useCurrentFrame,
+} from 'remotion';
 
 import { dark } from '../look';
 import { tileSizeFor, useSafe } from '../safe';
 import { Tile } from '../Tile';
 import { Caption } from './Caption';
 import { clamp } from '../shared/motion';
-
 
 /** The word that opens the video, then the words around it, by their place. */
 export const mainWord = 'КРАКЕЛЮР';
@@ -62,7 +68,10 @@ export function Forgotten() {
   const frame = useCurrentFrame();
   const { height, portrait, s, safe } = useSafe();
   const zoomTo = portrait ? 0.75 : 0.7;
-  const zoom = interpolate(frame, [...b.pull], [1, zoomTo], { ...clamp, easing: Easing.bezier(0.65, 0, 0.35, 1) });
+  const zoom = interpolate(frame, [...b.pull], [1, zoomTo], {
+    ...clamp,
+    easing: Easing.bezier(0.65, 0, 0.35, 1),
+  });
   const fade = interpolate(frame, [...b.fade], [1, 0], clamp);
   const center = { x: safe.centerX, y: portrait ? safe.centerY : height / 2 - 40 * s };
   const mainSize = portrait ? tileSizeFor(mainWord.length, safe.rowWidth) : 132 * s;
@@ -145,7 +154,9 @@ function Word({
   const crack = interpolate(frame, [b.crack, b.crack + 14], [0, 1], clamp);
 
   return (
-    <div style={{ position: 'absolute', left: x - total / 2, top: y - size / 2, display: 'flex', gap }}>
+    <div
+      style={{ position: 'absolute', left: x - total / 2, top: y - size / 2, display: 'flex', gap }}
+    >
       {[...word].map((letter, i) => {
         const at = appear + i * 3;
         const pop = interpolate(frame, [at, at + 8], [0, 1], {
@@ -153,11 +164,22 @@ function Word({
           easing: Easing.bezier(0.34, 1.56, 0.64, 1),
         });
         const fallAt = b.fall + random(`fall-${index}-${i}`) * b.fallSpread;
-        const fall = interpolate(frame, [fallAt, fallAt + 26], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
+        const fall = interpolate(frame, [fallAt, fallAt + 26], [0, 1], {
+          ...clamp,
+          easing: Easing.in(Easing.quad),
+        });
         const spin = (random(`spin-${index}-${i}`) - 0.5) * 80;
         // Far enough to leave the frame from the top row, the camera pulled back.
         const down = fall * height * 1.8;
-        const opacity = fadeAt === undefined ? 1 : interpolate(down, [Math.max(0, fadeAt - size * 2), Math.max(size, fadeAt)], [1, 0], clamp);
+        const opacity =
+          fadeAt === undefined
+            ? 1
+            : interpolate(
+                down,
+                [Math.max(0, fadeAt - size * 2), Math.max(size, fadeAt)],
+                [1, 0],
+                clamp,
+              );
         return (
           <div
             key={i}
@@ -205,7 +227,12 @@ export function Crack({
   const d = `M${point(1)} 0 L${point(2)} 35 L${point(3)} 60 L${point(4)} 100 M${point(2)} 35 L100 ${point(5)} M${point(3)} 60 L0 ${point(6)}`;
   if (progress <= 0) return null;
   return (
-    <svg viewBox="0 0 100 100" width={size} height={size} style={{ position: 'absolute', inset: 0 }}>
+    <svg
+      viewBox="0 0 100 100"
+      width={size}
+      height={size}
+      style={{ position: 'absolute', inset: 0 }}
+    >
       <path
         d={d}
         fill="none"
@@ -239,7 +266,10 @@ function Heap({ floor }: { floor: number }) {
         const x = random(`hx-${i}`);
         const mound = Math.sin(x * Math.PI) * (0.4 + random(`hh-${i}`) * 0.6);
         const landAt = b.fall + 10 + random(`ht-${i}`) * (b.fallSpread + 8);
-        const drop = interpolate(frame, [landAt - 10, landAt], [1, 0], { ...clamp, easing: Easing.in(Easing.quad) });
+        const drop = interpolate(frame, [landAt - 10, landAt], [1, 0], {
+          ...clamp,
+          easing: Easing.in(Easing.quad),
+        });
         if (frame < landAt - 10) return null;
         return (
           <div

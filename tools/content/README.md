@@ -42,13 +42,13 @@ pnpm content counts --edition uk
 <!-- #1626 -->
 
 ```sh
-pnpm content verify w_k3x9qa content/words/w_m2p7rd.json --edition uk
-pnpm content verify content/tips --edition uk
-pnpm content verify --changed origin/main --edition uk
-pnpm content verify content/tips --book osvita.txt --edition uk
+pnpm content verify w_k3x9qa w_m2p7rd --edition uk --snapshot snapshot.json
+pnpm content verify tools/sourcing/review/words/drafts --edition uk
+pnpm content verify --changed earlier-snapshot.json --edition uk
+pnpm content verify t_4hq2zb --book osvita.txt --edition uk
 ```
 
-Checks that the quoted text of each Entry is on the page its first source cites (ADR 0012, 0080): a Word's or an Idiom's primary definition, a Correction's explanation, a Synonym Row's meaning, a Tip's explanation. Name Entries by id, by Entry file or by a folder of them; `--changed <ref>` takes every Entry file that differs from the ref or is new to git. A goroh page is read block by block as the sourcing tool reads it; any other page is its plain text. Pages come through the sourcing tool's polite client and its cache folder (`--cache` names another), so a page is fetched once across runs. The comparison ignores case, spaces, quotation marks, apostrophes and dashes.
+Checks that the quoted text of each Entry is on the page its first source cites (ADR 0012, 0080): a Word's or an Idiom's primary definition, a Correction's explanation, a Synonym Row's meaning, a Tip's explanation. The Entries are the records of the content snapshot (ADR 0090): the `--snapshot <file>` named, else the backend's at `$SLOVO_API_URL`; with neither it exits 2 and verifies nothing. Name Entries by id, or name a file or folder of drafts; `--changed <earlier snapshot file>` takes every Entry whose quote differs from, or is new to, that earlier snapshot. A goroh page is read block by block as the sourcing tool reads it; any other page is its plain text. Pages come through the sourcing tool's polite client and its cache folder (`--cache` names another), so a page is fetched once across runs. The comparison ignores case, spaces, quotation marks, apostrophes and dashes.
 
 It prints one line per Entry, `<outcome>\t<id>\t<file>[\t<detail>]`, then the count per outcome, such as `158 ok, 2 miss`:
 

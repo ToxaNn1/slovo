@@ -10,7 +10,6 @@ import { Bed, Horn, levels, Sfx, sfx, Voice } from '../sound';
 import { Tile } from '../Tile';
 import { clamp, pop } from '../shared/motion';
 
-
 /** One card of the roulette. */
 export type Card = {
   /** The lemma with its Stress mark as a combining acute (U+0301) after the stressed vowel. */
@@ -37,7 +36,7 @@ export type Episode = {
 };
 
 /**
- * The episodes. Every word is an Entry of the UA Edition (editions/uk/content/words),
+ * The episodes. Every word is an Entry of the UA Edition (apps/video/src/snapshot.json),
  * the Stress is the Entry's own, and the glosses shorten the Entry's first
  * definition without changing it: the video and the app must say the same.
  */
@@ -313,10 +312,24 @@ function Title({ episode, safe, s }: { episode: Episode; safe: Safe; s: number }
   const lines = answered ? episode.result : episode.title;
   const widest = Math.max(...lines.map((line) => widthInEm(line)));
   const lineHeight = 1.08;
-  const font = Math.min(96 * s, safe.width / widest, (box.title.height * s) / (lines.length * lineHeight));
+  const font = Math.min(
+    96 * s,
+    safe.width / widest,
+    (box.title.height * s) / (lines.length * lineHeight),
+  );
   const stamp = interpolate(frame, [0, 6], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
-  const flip = interpolate(frame, [beats.stop, beats.stop + 4, beats.stop + 8], [1, 0.04, 1], clamp);
-  const bump = interpolate(frame, [beats.stop + 8, beats.stop + 11, beats.stop + 16], [1, 1.05, 1], clamp);
+  const flip = interpolate(
+    frame,
+    [beats.stop, beats.stop + 4, beats.stop + 8],
+    [1, 0.04, 1],
+    clamp,
+  );
+  const bump = interpolate(
+    frame,
+    [beats.stop + 8, beats.stop + 11, beats.stop + 16],
+    [1, 1.05, 1],
+    clamp,
+  );
   const press = 1 + (1 - stamp) * 0.03;
   return (
     <div
@@ -392,7 +405,12 @@ function Hint({ safe, s }: { safe: Safe; s: number }) {
 
 /** Two bars: what the tap does. */
 function PauseSign({ size }: { size: number }) {
-  const bar = { width: size * 0.3, height: size, borderRadius: size * 0.08, background: light.background };
+  const bar = {
+    width: size * 0.3,
+    height: size,
+    borderRadius: size * 0.08,
+    background: light.background,
+  };
   return (
     <div style={{ display: 'flex', gap: size * 0.26 }}>
       <div style={bar} />
@@ -510,10 +528,21 @@ function WordCard({
 }
 
 /** The call to the comments under the card, and the second try next to Рупор. */
-function Ask({ episode, safe, s, ruporRight }: { episode: Episode; safe: Safe; s: number; ruporRight: number }) {
+function Ask({
+  episode,
+  safe,
+  s,
+  ruporRight,
+}: {
+  episode: Episode;
+  safe: Safe;
+  s: number;
+  ruporRight: number;
+}) {
   const frame = useCurrentFrame();
   if (frame < beats.ask) return null;
-  const at = (start: number) => interpolate(frame, [start, start + 9], [0, 1], { ...clamp, easing: pop });
+  const at = (start: number) =>
+    interpolate(frame, [start, start + 9], [0, 1], { ...clamp, easing: pop });
   return (
     <>
       <div
@@ -532,7 +561,9 @@ function Ask({ episode, safe, s, ruporRight }: { episode: Episode; safe: Safe; s
           whiteSpace: 'nowrap',
         }}
       >
-        <div style={{ fontSize: 92 * s, color: light.ink, scale: String(at(beats.ask)) }}>{episode.ask}</div>
+        <div style={{ fontSize: 92 * s, color: light.ink, scale: String(at(beats.ask)) }}>
+          {episode.ask}
+        </div>
         <div
           style={{
             marginTop: 10 * s,
@@ -568,7 +599,15 @@ function Ask({ episode, safe, s, ruporRight }: { episode: Episode; safe: Safe; s
 }
 
 /** The rings of the shout: they leave the megaphone towards the card for as long as the roulette runs at full speed. */
-function Rings({ mouth, target, s }: { mouth: { x: number; y: number }; target: { x: number; y: number }; s: number }) {
+function Rings({
+  mouth,
+  target,
+  s,
+}: {
+  mouth: { x: number; y: number };
+  target: { x: number; y: number };
+  s: number;
+}) {
   const frame = useCurrentFrame();
   const every = 12;
   const life = 26;
@@ -617,17 +656,32 @@ function Shouter({
 }) {
   const frame = useCurrentFrame();
   const state =
-    frame < beats.slow ? 'shouts' : frame < beats.stop ? 'surprised' : frame < beats.ask ? 'celebrates' : 'happy';
+    frame < beats.slow
+      ? 'shouts'
+      : frame < beats.stop
+        ? 'surprised'
+        : frame < beats.ask
+          ? 'celebrates'
+          : 'happy';
   const glad = -5 + Math.sin(frame / 8) * 3;
   const rotate =
     frame < beats.slow
       ? aim
       : frame < beats.stop
         ? interpolate(frame, [beats.slow, beats.slow + 6], [aim, aim + 8], clamp)
-        : interpolate(frame, [beats.stop, beats.stop + 8], [aim + 8, glad], { ...clamp, easing: Easing.out(Easing.cubic) });
-  const tremble = frame < beats.slow ? { x: Math.sin(frame * 2.2) * 5 * s, y: Math.cos(frame * 1.7) * 3 * s } : { x: 0, y: 0 };
+        : interpolate(frame, [beats.stop, beats.stop + 8], [aim + 8, glad], {
+            ...clamp,
+            easing: Easing.out(Easing.cubic),
+          });
+  const tremble =
+    frame < beats.slow
+      ? { x: Math.sin(frame * 2.2) * 5 * s, y: Math.cos(frame * 1.7) * 3 * s }
+      : { x: 0, y: 0 };
   const since = frame - beats.stop;
-  const hop = since >= 0 && since < 36 ? -Math.abs(Math.sin((since / 12) * Math.PI)) * 40 * s * (1 - since / 36) : 0;
+  const hop =
+    since >= 0 && since < 36
+      ? -Math.abs(Math.sin((since / 12) * Math.PI)) * 40 * s * (1 - since / 36)
+      : 0;
   return (
     <div
       style={{
