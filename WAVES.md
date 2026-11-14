@@ -89,7 +89,7 @@ brief:
 You are the coordinator of the board 09 «Збережене і пошук» wave (spec #1850, tickets #1851–#1859), in the cloud; the laptop coordinator stopped. Read HANDOFF.md on origin/coord/saved-1114 and continue from its log tail, following docs/agents/waves.md «Steps» and the skill mattpocock-skills:implement-spec. Integration branch feat/1114-saved-search-design. Grants: commits, pushes, PR from the integration branch, auto-merge squash to main on green. Never delete branches. Never end your turn while work remains; wait with one blocking command. When the PR is green with auto-merge on: `STATUS: FINISHED` first line of HANDOFF.md.
 
 ## wave settings-1861
-status: active
+status: finished
 coord: coord/settings-1861
 branches: ^origin/(feat/1861-settings-board|coord/settings-1861|(feat|chore|fix|docs)/18(6[2-9]|7[0-8])-)
 brief:
