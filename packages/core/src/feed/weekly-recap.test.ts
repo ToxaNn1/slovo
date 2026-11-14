@@ -139,6 +139,8 @@ describe('the Weekly Recap', () => {
     expect(cards[1]).toEqual({
       kind: 'notice',
       notice: 'weeklyRecap',
+      folded: false,
+      yesterday: undefined,
       day: { year: 2026, month: 10, day: 26 },
     });
     expect(await app.weeklyRecap.of({ year: 2026, month: 10, day: 26 })).toEqual({
