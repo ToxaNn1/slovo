@@ -131,3 +131,6 @@ export const mixTileDrawing = {
   /** The space between the tiles of the two-column grid. */
   gridGap: 8,
 } as const;
+
+/** A stepper's drawing (board 11, 90): the sunken track's padding and corner, and the − and + tiles. */
+export const stepperDrawing = { padding: 10, radius: 20, tile: 64, tileRadius: 16 } as const;
