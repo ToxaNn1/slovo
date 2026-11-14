@@ -1,26 +1,27 @@
+import { MascotAs } from '@/mascot/mascot';
 import { fill } from '@slovo/contracts';
-import type { Collection } from '@slovo/core';
+import type { Collection, CollectionEntry } from '@slovo/core';
 import {
-  categoryTile,
+  CollectionHeader,
   CollectionMenuSheet,
-  CollectionNameField,
+  CollectionNameSheet,
+  CollectionShareButton,
+  CollectionWordRow,
   DeleteCollectionDialog,
-  knownShare,
-  RailBoard,
-  type RailBoardCard,
-  railScreen,
-  RailScreenHero,
-  shapeAt,
+  EmptyState,
+  space,
   UndoToastProvider,
   useEdition,
   useListScroll,
+  useTokens,
+  useUndoToast,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View, type FlatList } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { FlatList, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
-import { useKnownCards } from '@/knowledge/marks';
 import { useCollectionChanges, useCollectionEntries } from '@/saved/collections';
 import { useCollectionSharing } from '@/saved/collection-sharing';
 import { createMenuFollowUp } from '@/saved/menu-follow-up';
@@ -29,30 +30,40 @@ import { useOpenScreen } from '@/use-open-screen';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.screen;
-const { known: knownText } = editionStrings.dashboard.category;
-const [glyph] = shapeAt(categoryTile.shapes, 0);
+const { toasts } = collectionStrings;
 
 /**
- * A Collection in the board style (board 05.1, ADR 0082): the red hero with
- * «КОЛЕКЦІЯ · N слів», the Collection's name, «ЗНАЮ x З n» of its Entries and
- * the Collection menu (rename, share, delete) in its right slot; its Entries
- * newest first as cards under it, a Word with its rarity bars. An empty
- * Collection shows the hero alone. A tap on a card opens the Entry screen,
- * where the Entry's Collections sheet takes it out of this one.
+ * A Collection in the board style (board 09, ADR 0132): the back tile and
+ * «⋯» over the Collection's name and «N слів», its Entries newest first as
+ * rows with a chevron, and «Поділитися посиланням» at the foot while
+ * Collection Links are on and the Collection holds an Entry. «⋯» opens the
+ * Collection menu (share, rename in the name sheet, delete after the
+ * confirmation); a rename says so in a toast, and so does the Collection just
+ * made (`created`). A tap on a row opens the Entry screen; a swipe takes the
+ * Entry out of this Collection only. An empty Collection says so.
  */
-export function CollectionBoardScreen({ collectionId }: { collectionId: string }) {
+export function CollectionBoardScreen({
+  collectionId,
+  created,
+}: {
+  collectionId: string;
+  /** The Collection was just made: the screen says so in a toast. */
+  created: boolean;
+}) {
   return (
     <UndoToastProvider>
-      <Board collectionId={collectionId} />
+      <Board collectionId={collectionId} created={created} />
     </UndoToastProvider>
   );
 }
 
-function Board({ collectionId }: { collectionId: string }) {
-  const { collection, entries } = useCollectionEntries(collectionId);
+function Board({ collectionId, created }: { collectionId: string; created: boolean }) {
+  const { collection, entries, remove: removeEntry } = useCollectionEntries(collectionId);
   const { rename, remove } = useCollectionChanges();
   const { available: sharingAvailable, share } = useCollectionSharing();
+  const { colors } = useTokens();
   const { count } = useEdition();
+  const showToast = useUndoToast();
   const router = useRouter();
   const openScreen = useOpenScreen();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -72,20 +83,18 @@ function Board({ collectionId }: { collectionId: string }) {
       },
     }),
   );
+  /** Whether the toast of the Collection just made is still to show. */
+  const toAnnounce = useRef(created);
+  useEffect(() => {
+    if (!toAnnounce.current || collection === undefined) return;
+    toAnnounce.current = false;
+    showToast({ look: 'plate', message: fill(toasts.created, { name: collection.name }) });
+  }, [collection, showToast]);
 
   const name = collection?.name ?? '';
-  const scroll = useListScroll<FlatList<RailBoardCard>>();
-  const cards = useKnownCards(collection === undefined ? undefined : entries) ?? [];
-  // DESIGN-05: not on the board, owner decides — the swipe (and its VoiceOver action) that takes
-  // the Entry out of this Collection, and the kind and the date added, «слово · 3 лист.». A card
-  // would carry both, with `const { collection, entries, remove: removeEntry } =
-  // useCollectionEntries(collectionId)` above, `import { addedOn } from '@/saved/added-on'`, and
-  // RailBoard passing `added` and `onRemove` on to RailScreenCard, which gains the two props:
-  // entries.map(({ entryId, row, addedAt }) => ({
-  //   entryId, row, known: knowledge.isKnown(entryId),
-  //   added: addedOn(addedAt), onRemove: () => { removeEntry(entryId); },
-  // }))
-  const { known, total, done } = knownShare(cards);
+  const shown = collection === undefined ? [] : entries;
+  const scroll = useListScroll<FlatList<CollectionEntry>>();
+  const { list: listRef, onScroll } = scroll;
   const leave = () => {
     if (router.canDismiss()) router.back();
     else router.replace('/saved/collections');
@@ -96,75 +105,81 @@ function Board({ collectionId }: { collectionId: string }) {
   };
 
   return (
-    <>
-      <RailBoard
-        testID="collection"
-        cards={cards}
-        scroll={scroll}
-        corner={<ListTopButton scroll={scroll} />}
-        onOpen={(entryId) => {
-          openScreen(`/saved/collections/${collectionId}/${entryId}`);
-        }}
-        // DESIGN-05: not on the board, owner decides — the footer «Найновіші — першими. Тап
-        // відкриває повну картку.», which RailBoard would take as a `footer` for its list:
-        // footer={cards.length > 0 ? <Text>{collectionStrings.entries.footer}</Text> : null}
-        hero={
-          <>
-            <RailScreenHero
-              id="collection-hero"
-              glyph={glyph}
-              kicker={fill(strings.kicker, { count: count(strings.wordCount, total) })}
-              title={name}
-              progress={fill(knownText, { x: String(known), n: String(total) })}
-              done={done}
-              mascot="waits"
-              back={{
-                testID: 'collection-back',
-                label: collectionStrings.title,
-                onPress: leave,
-              }}
-              {...(collection !== undefined && {
-                action: {
-                  kind: 'menu',
-                  testID: 'collection-menu-button',
-                  label: fill(strings.moreLabel, { name }),
-                  onPress: () => {
-                    afterMenu.opened();
-                    setMenuOpen(true);
-                  },
-                },
-              })}
-            />
-            {renaming && collection !== undefined && (
-              <View style={styles.field}>
-                <CollectionNameField
-                  testID="collection-rename"
-                  overline={strings.renameOverline}
-                  placeholder={collectionStrings.sheet.namePlaceholder}
-                  initialName={name}
-                  onSubmit={async (renamed) => {
-                    const refusal = await rename(collectionId, renamed);
-                    if (refusal === undefined) setRenaming(false);
-                    return refusal;
-                  }}
-                  onCancel={() => {
-                    setRenaming(false);
-                  }}
-                />
-              </View>
-            )}
-          </>
+    <SafeAreaView
+      testID="collection"
+      edges={['top', 'bottom']}
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
+      <FlatList
+        ref={listRef}
+        onScroll={onScroll}
+        data={shown}
+        keyExtractor={(entry) => entry.entryId}
+        renderItem={({ item }) => (
+          <CollectionWordRow
+            entry={item}
+            collectionName={name}
+            onPress={() => {
+              openScreen(`/saved/collections/${collectionId}/${item.entryId}`);
+            }}
+            onRemove={() => {
+              removeEntry(item.entryId);
+            }}
+          />
+        )}
+        ListHeaderComponent={
+          <CollectionHeader
+            name={name}
+            count={count(strings.wordCount, shown.length)}
+            back={{ testID: 'collection-back', label: collectionStrings.title, onPress: leave }}
+            menu={
+              collection === undefined
+                ? undefined
+                : {
+                    testID: 'collection-menu-button',
+                    label: fill(strings.moreLabel, { name }),
+                    open: menuOpen,
+                    onPress: () => {
+                      afterMenu.opened();
+                      setMenuOpen(true);
+                    },
+                  }
+            }
+          />
         }
+        ListEmptyComponent={
+          collection === undefined ? undefined : (
+            <EmptyState
+              mascot={(width) => <MascotAs state="waits" width={width} />}
+              testID="collection-empty"
+              title={collectionStrings.entries.empty.title}
+              message={collectionStrings.entries.empty.message}
+            />
+          )
+        }
+        contentContainerStyle={styles.content}
       />
+      <ListTopButton scroll={scroll} />
+      {sharingAvailable && shown.length > 0 && collection !== undefined && (
+        // The Collection's share sheet (board 09) takes this button over; until then it shares as the menu does.
+        <CollectionShareButton
+          testID="collection-share"
+          label={collectionStrings.link.share}
+          onPress={() => {
+            share(collection.id);
+          }}
+        />
+      )}
       <CollectionMenuSheet
         testID="collection-menu"
         visible={menuOpen}
+        title={name}
         copy={strings.menu}
         share={
           sharingAvailable
             ? {
                 label: collectionStrings.link.share,
-                disabled: total === 0,
+                disabled: shown.length === 0,
                 disabledHint: collectionStrings.entries.empty.title,
                 onPress: choose(afterMenu.chooseShare),
               }
@@ -176,6 +191,23 @@ function Board({ collectionId }: { collectionId: string }) {
           setMenuOpen(false);
         }}
         onDismissed={afterMenu.dismissed}
+      />
+      <CollectionNameSheet
+        testID="collection-rename"
+        visible={renaming && collection !== undefined}
+        kind="rename"
+        initialName={name}
+        onSubmit={async (renamed) => {
+          const refusal = await rename(collectionId, renamed);
+          if (refusal === undefined) {
+            setRenaming(false);
+            showToast({ look: 'plate', message: toasts.renamed });
+          }
+          return refusal;
+        }}
+        onClose={() => {
+          setRenaming(false);
+        }}
       />
       <DeleteCollectionDialog
         testID="collection-delete"
@@ -190,10 +222,11 @@ function Board({ collectionId }: { collectionId: string }) {
           setDeleting(false);
         }}
       />
-    </>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  field: { marginBottom: railScreen.list.top },
+  screen: { flex: 1 },
+  content: { flexGrow: 1, paddingBottom: space[8] },
 });

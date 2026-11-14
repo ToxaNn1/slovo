@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { openComposition, type Clock, type Composition, type Random } from '../index';
+import {
+  COLLECTION_NAME_MAX_LENGTH,
+  collectionNameLength,
+  openComposition,
+  type Clock,
+  type Composition,
+  type Random,
+} from '../index';
 import { SEEN_DWELL_MS } from '../feed/feed';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, steppingRandom, testEdition, word } from '../test-support';
@@ -66,6 +73,13 @@ describe('Collections', () => {
   });
 
   describe('the name rules', () => {
+    it('counts a name as the rules do, so a counter can show it: characters once trimmed', () => {
+      expect(COLLECTION_NAME_MAX_LENGTH).toBe(40);
+      expect(collectionNameLength('  Для есе  ')).toBe(7);
+      expect(collectionNameLength('😀а')).toBe(2);
+      expect(collectionNameLength('   ')).toBe(0);
+    });
+
     it('refuses an empty name, or one of spaces only', async () => {
       const app = await run();
 

@@ -213,49 +213,73 @@ describe('Collections in the board style', () => {
     boardStyleOn = true;
   });
 
-  it('shows the Collections as the grid, titled with their number, a tile for each', async () => {
-    await collection('Осінь');
-    await collection('Зима');
+  it('shows the dashed «Нова колекція» card first, then a card for each Collection', async () => {
+    const autumn = await collection('Осінь');
+    const winter = await collection('Зима');
     await renderScreen();
 
-    expect(
-      screen.getByRole('header', { name: `${editionStrings.collections.title}, 2` }),
-    ).toBeOnTheScreen();
+    expect(screen.getByTestId('collections-add')).toBeOnTheScreen();
+    expect(card(winter)).toBeOnTheScreen();
+    expect(card(autumn)).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Зима, 0 записів' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Осінь, 0 записів' })).toBeOnTheScreen();
-    expect(screen.queryByText('0 записів')).not.toBeOnTheScreen();
   });
 
-  it('opens the Collection from its tile', async () => {
+  it('opens the Collection from its card', async () => {
     const autumn = await collection('Осінь');
     await renderScreen();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Осінь, 0 записів' }));
+    await fireEvent.press(card(autumn));
 
     expect(mockPush).toHaveBeenCalledWith(`/saved/collections/${autumn}`);
   });
 
-  it('still makes a new Collection with «+», which joins the grid', async () => {
+  it('makes a new Collection in the name sheet «Нова колекція» opens, and opens it', async () => {
     await collection('Осінь');
     await renderScreen();
 
-    await fireEvent.press(screen.getByRole('button', { name: strings.add }));
+    await fireEvent.press(screen.getByTestId('collections-add'));
     await settle();
-    const input = screen.getByTestId('collections-new-input');
-    await fireEvent.changeText(input, 'Весна');
-    await fireEvent(input, 'submitEditing');
+    await fireEvent.changeText(screen.getByTestId('collections-name-input'), 'Весна');
+    await fireEvent.press(screen.getByTestId('collections-name-submit'));
     await settle();
 
-    expect(screen.getByRole('button', { name: 'Весна, 0 записів' })).toBeOnTheScreen();
-    expect(
-      screen.getByRole('header', { name: `${editionStrings.collections.title}, 2` }),
-    ).toBeOnTheScreen();
+    const spring = composition.collections.list.find(({ name }) => name === 'Весна');
+    if (spring === undefined) throw new Error('«Весна» was not made');
+    expect(mockPush).toHaveBeenCalledWith(`/saved/collections/${spring.id}?created=1`);
   });
 
-  it('shows the empty state with no Collections', async () => {
+  it('renames from the menu a long press opens, with a toast', async () => {
+    const autumn = await collection('Осінь');
+    await renderScreen();
+
+    await longPress(autumn);
+    await fireEvent.press(screen.getByTestId('collections-menu-rename'));
+    await settle();
+    const input = screen.getByTestId('collections-name-input');
+    expect(input).toHaveDisplayValue('Осінь');
+    await fireEvent.changeText(input, 'Пізня осінь');
+    await fireEvent.press(screen.getByTestId('collections-name-submit'));
+    await settle();
+
+    expect(screen.getByText('Пізня осінь')).toBeOnTheScreen();
+    expect(screen.getByText(editionStrings.collections.toasts.renamed)).toBeOnTheScreen();
+    expect(composition.collections.list.map(({ name }) => name)).toEqual(['Пізня осінь']);
+  });
+
+  it('shows the empty state with no Collections, whose button makes the first one', async () => {
     await renderScreen();
 
     expect(screen.getByTestId('collections-empty')).toBeOnTheScreen();
+    expect(screen.queryByTestId('collections-add')).not.toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByTestId('collections-empty-create'));
+    await settle();
+    await fireEvent.changeText(screen.getByTestId('collections-name-input'), 'Весна');
+    await fireEvent.press(screen.getByTestId('collections-name-submit'));
+    await settle();
+
+    expect(composition.collections.list.map(({ name }) => name)).toEqual(['Весна']);
   });
 });
 

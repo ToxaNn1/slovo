@@ -1,15 +1,11 @@
 import { MascotAs } from '@/mascot/mascot';
 import {
-  CategoryGrid,
-  categoryGrid,
-  categoryGridBox,
   CollectionCard,
   collectionCard,
   CollectionMenuSheet,
   CollectionNameField,
   DeleteCollectionDialog,
   EmptyState,
-  type GridTile,
   NewCollectionButton,
   space,
   UndoToastProvider,
@@ -23,6 +19,7 @@ import { useEditionInEffect } from '@/edition/remote-switches';
 import { useOpenScreen } from '@/use-open-screen';
 import { useCollectionSharing } from '@/saved/collection-sharing';
 import { useCollectionChanges, useCollectionRows } from '@/saved/collections';
+import { CollectionsBoard } from '@/saved/collections-board';
 import type { CollectionRowModel } from '@/saved/collections-screen';
 import type { ListHeader } from '@/saved/list-header';
 import { createMenuFollowUp } from '@/saved/menu-follow-up';
@@ -42,25 +39,22 @@ type Editing = { readonly kind: 'new' } | { readonly kind: 'rename'; readonly id
  * dialog that says the Entries stay), and the same actions go to VoiceOver. The
  * list's tool is «+». The menu also offers «Поділитися посиланням» while Collection Links
  * are on, disabled for an empty Collection; a share that fails says why in a toast.
- * With `collectionBoardStyle` on (ADR 0082) the Collections are the k1 grid of
- * the Categories instead: «Колекції» with their number, three columns of tiles
- * in the tones by position, a tile opening its Collection; «+» stays.
+ * With `collectionBoardStyle` on (ADR 0132) the Collections are the grid of
+ * board 09 instead (`CollectionsBoard`).
  */
 export function CollectionsList({ header }: { header: ListHeader }) {
+  const boardStyle = useEditionInEffect().isFeatureEnabled('collectionBoardStyle');
   return (
     <UndoToastProvider>
-      <Collections header={header} />
+      {boardStyle ? <CollectionsBoard header={header} /> : <Collections header={header} />}
     </UndoToastProvider>
   );
 }
 
 function Collections({ header }: { header: ListHeader }) {
   const rows = useCollectionRows();
-  // One scroll per look: the grid and the cards are different lists.
-  const gridScroll = useListScroll<FlatList<GridTile>>();
   const cardsScroll = useListScroll<FlatList<CollectionRowModel>>();
   const { list: cardsRef, onScroll: onCardsScroll } = cardsScroll;
-  const boardStyle = useEditionInEffect().isFeatureEnabled('collectionBoardStyle');
   const { create, rename, remove } = useCollectionChanges();
   const { available: sharingAvailable, share } = useCollectionSharing();
   const openScreen = useOpenScreen();
@@ -145,7 +139,9 @@ function Collections({ header }: { header: ListHeader }) {
             testID="collections-new"
             overline={strings.newOverline}
             placeholder={collectionStrings.sheet.namePlaceholder}
-            onSubmit={(name) => keepName(create(name))}
+            onSubmit={(name) =>
+              keepName(create(name).then((created) => (created.ok ? undefined : created.refusal)))
+            }
             onCancel={stopEditing}
           />
         </View>
@@ -171,62 +167,38 @@ function Collections({ header }: { header: ListHeader }) {
 
   return (
     <>
-      {boardStyle ? (
-        // DESIGN-05: not on the board, owner decides — a Collection's card in the old list
-        // carries its count of Entries, its first Lemmas and its actions (the «⋯» menu,
-        // rename and delete through `onMenu`, `onRename`, `onDelete`); the board's tile
-        // shows the name alone, so the grid leaves them out. The Collection's screen keeps
-        // the menu with rename, share and delete.
-        <CategoryGrid
-          testID="collections"
-          title={collectionStrings.title}
-          count={String(rows.length)}
-          tiles={rows.map(({ id, name, accessibilityLabel }) => ({ id, name, accessibilityLabel }))}
-          columns={3}
-          box={categoryGridBox}
-          shapes={categoryGrid.shapes}
-          header={listHeader}
-          empty={listEmpty}
-          onOpen={openCollection}
-          scroll={gridScroll}
-        />
-      ) : (
-        <FlatList
-          ref={cardsRef}
-          onScroll={onCardsScroll}
-          testID="collections"
-          data={rows}
-          keyExtractor={(collection) => collection.id}
-          numColumns={2}
-          columnWrapperStyle={styles.cardsRow}
-          renderItem={({ item, index }) => (
-            <View style={[styles.cell, index % 2 === 0 ? styles.leftCell : styles.rightCell]}>
-              <Card
-                index={index}
-                collection={item}
-                onOpen={openCollection}
-                onRename={startRename}
-                onDelete={confirmDelete}
-                onMenu={openMenu}
-              />
-            </View>
-          )}
-          ItemSeparatorComponent={Separator}
-          keyboardShouldPersistTaps="handled"
-          automaticallyAdjustKeyboardInsets
-          ListHeaderComponent={listHeader}
-          ListEmptyComponent={listEmpty}
-          contentContainerStyle={styles.content}
-        />
-      )}
-      {boardStyle ? (
-        <ListTopButton scroll={gridScroll} overTabBar />
-      ) : (
-        <ListTopButton scroll={cardsScroll} overTabBar />
-      )}
+      <FlatList
+        ref={cardsRef}
+        onScroll={onCardsScroll}
+        testID="collections"
+        data={rows}
+        keyExtractor={(collection) => collection.id}
+        numColumns={2}
+        columnWrapperStyle={styles.cardsRow}
+        renderItem={({ item, index }) => (
+          <View style={[styles.cell, index % 2 === 0 ? styles.leftCell : styles.rightCell]}>
+            <Card
+              index={index}
+              collection={item}
+              onOpen={openCollection}
+              onRename={startRename}
+              onDelete={confirmDelete}
+              onMenu={openMenu}
+            />
+          </View>
+        )}
+        ItemSeparatorComponent={Separator}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        contentContainerStyle={styles.content}
+      />
+      <ListTopButton scroll={cardsScroll} overTabBar />
       <CollectionMenuSheet
         testID="collections-menu"
         visible={menu !== undefined}
+        title={menu?.name ?? ''}
         copy={strings.menu}
         share={
           sharingAvailable

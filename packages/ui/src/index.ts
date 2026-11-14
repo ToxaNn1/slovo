@@ -89,9 +89,15 @@ export { LearningRow } from './saved/Learning';
 export { DueQuizCard, DueQuizSheet } from './saved/DueQuiz';
 export { CollectionButton } from './saved/CollectionButton';
 export { CollectionEntryRow } from './saved/CollectionEntryRow';
+export {
+  CollectionHeader,
+  CollectionShareButton,
+  CollectionWordRow,
+} from './saved/CollectionScreenParts';
 export { SavedTabs, type SavedTab } from './saved/SavedTabs';
-export { CollectionCard } from './saved/CollectionCard';
+export { CollectionCard, NewCollectionCard } from './saved/CollectionCard';
 export { CollectionNameField, NewCollectionButton } from './saved/CollectionNameField';
+export { CollectionNameSheet } from './saved/CollectionNameSheet';
 export { CollectionSheet } from './saved/CollectionSheet';
 export { BottomSheet } from './primitives/BottomSheet';
 export { SheetTitle } from './primitives/SheetParts';

@@ -176,9 +176,54 @@ export const cardSpace = {
   collectionPadding: 18,
 } as const;
 
+/** The Collection menu's group of rows (board 09): its corner and the padding of a row. */
+export const collectionMenu = {
+  radius: 16,
+  rowPaddingVertical: 17,
+  rowPaddingHorizontal: 16,
+} as const;
+
+/**
+ * The name sheet of a Collection (board 09): the field's height, corner,
+ * border and side padding, the gap between the input and the counter, the
+ * inset of the refusal and the shake of a refused name.
+ */
+export const collectionNameField = {
+  height: 60,
+  radius: 16,
+  border: 2,
+  paddingHorizontal: 16,
+  gap: 10,
+  /** The refusal under the field sits in this far. */
+  refusalInset: 4,
+  shake: [-8, 7, -4, 3, 0],
+  shakeDuration: 400,
+} as const;
+
+/**
+ * A Collection's screen (board 09): the chevron that ends a row, the gap
+ * between the header's tiles and the title, between the title and its count,
+ * the space around the «Поділитися посиланням» button at the foot and its
+ * red wedge.
+ */
+export const collectionScreen = {
+  chevron: { width: 10, height: 16 },
+  titleTop: 18,
+  countGap: 6,
+  footerPadding: 20,
+  /** The red wedge before the button's label. */
+  mark: { width: 12, height: 14 },
+} as const;
+
 /** A Collection's card on the Collections screen (design `SlovoApp`, the Collections tab). */
 export const collectionCard = {
   height: 150,
+  /** The corner of a card and of the dashed «Нова колекція» card (board 09). */
+  radius: 18,
+  /** The dashed outline of the «Нова колекція» card. */
+  newBorder: 2.5,
+  /** The red «+» tile of the «Нова колекція» card: its side, its corner, the depth of its edge and its glyph. */
+  plus: { side: 40, radius: 12, depth: 4, glyph: 18 },
   padding: 14,
   /** Between the cards, across and down. */
   gap: 12,

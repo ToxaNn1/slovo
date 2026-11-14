@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-na
 import Svg, { Polygon } from 'react-native-svg';
 
 import { fill, useEdition } from '../providers/EditionProvider';
+import { RowChevron } from '../primitives/RowChevron';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
 import { SegmentedControl, type Segment } from '../primitives/SegmentedControl';
 import { Switch } from '../primitives/Switch';
@@ -13,7 +14,6 @@ import {
   space,
   STACK_AT_FONT_SCALE,
   typeStyle,
-  wedges,
 } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
@@ -107,25 +107,6 @@ function useRowLook() {
   };
 }
 
-/** The chevron's points on its 10 × 16 box. */
-const chevronPoints = wedges.chevron
-  .map(([x, y]) => `${String(x * 10)},${String(y * 16)}`)
-  .join(' ');
-
-/** The design's slanted chevron, in the muted colour. */
-function Chevron() {
-  const { colors } = useTokens();
-  return (
-    <Svg
-      width={settingsRowDrawing.chevronWidth}
-      height={settingsRowDrawing.chevronHeight}
-      viewBox="0 0 10 16"
-    >
-      <Polygon points={chevronPoints} fill={colors.muted} />
-    </Svg>
-  );
-}
-
 /**
  * A row that opens a screen, with the setting's value on its right and an
  * optional line of muted text under its label, which VoiceOver reads as the
@@ -168,7 +149,7 @@ export function NavigationRow({
           {value !== undefined && <Text style={[look.value, styles.trailing]}>{value}</Text>}
         </>
       )}
-      <Chevron />
+      <RowChevron />
     </Pressable>
   );
 }
@@ -317,7 +298,7 @@ export function TimeRow({
         >
           {time}
         </Text>
-        <Chevron />
+        <RowChevron />
       </Pressable>
     </SwipeableRow>
   );
