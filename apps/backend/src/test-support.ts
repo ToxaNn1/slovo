@@ -27,7 +27,6 @@ import {
   openEdition,
   REPO_DIR,
 } from '@slovo/language-pack/edition';
-import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import {
   createOwnerChecks,
   systemClock,
@@ -54,7 +53,7 @@ import {
 import { eq } from 'drizzle-orm';
 import pg from 'pg';
 import { pino, type Logger } from 'pino';
-import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, inject, onTestFinished, vi } from 'vitest';
 import { z } from 'zod';
 
 import { keptSignInCode } from './account/authenticator';
@@ -458,24 +457,10 @@ export function createFakeApple(): FakeApple {
   };
 }
 
-// The UA Edition written from the seed snapshot, once per test file that asks for it.
-let seed: { dir: string; editionDir: string } | undefined;
-afterAll(() => {
-  if (seed !== undefined) rmSync(seed.dir, { recursive: true, force: true });
-});
-/** The UA Edition folder written from the seed snapshot: the content the test Editions copy. */
-function ukrainianSeed(): string {
-  if (seed === undefined) {
-    const dir = mkdtempSync(join(tmpdir(), 'slovo-seed-'));
-    seed = { dir, editionDir: ukrainianSeedFolder(dir) };
-  }
-  return seed.editionDir;
-}
-
 /**
  * An editions folder made for one test, with an Edition for each id: a copy of
  * the UA Edition's config and strings under its own id, and the seed
- * snapshot's content.
+ * snapshot's content, recorded once per run (`src/seed-setup.ts`).
  * `change` changes each config. Copying and recording the content takes a
  * while, so an Edition gets it when a test first imports or corrects it.
  */
@@ -502,7 +487,9 @@ export function testEditions(
   const contentOf = (id: string) => {
     const { dir: editionDir } = editionFiles(join(dir, id));
     if (!withContent.has(id)) {
-      cpSync(join(ukrainianSeed(), 'content'), join(editionDir, 'content'), { recursive: true });
+      cpSync(join(inject('ukrainianSeed'), 'content'), join(editionDir, 'content'), {
+        recursive: true,
+      });
       // The Edition check reads the font of the Word of the Day the config names.
       cpSync(join(ukrainian.dir, FONTS_DIR), join(editionDir, FONTS_DIR), { recursive: true });
       // The content checksum takes in the Edition, so the copy is recorded under its own id.
