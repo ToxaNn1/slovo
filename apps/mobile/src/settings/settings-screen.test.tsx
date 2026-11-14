@@ -301,14 +301,23 @@ describe('Settings › the text size (ADR 0134)', () => {
   it('keeps the size chosen on the screen, draws the sample at it and names it on the row', async () => {
     const settings = await renderSettings({ textSizeSteps: true });
     await fireEvent.press(screen.getByTestId('settings-row-text-size'));
-    const definitionSize = () =>
-      StyleSheet.flatten(screen.getByTestId('option-sample-definition').props['style']).fontSize;
+    const definitionSize = (): number => {
+      const style: unknown = StyleSheet.flatten(
+        screen.getByTestId('option-sample-definition').props['style'],
+      );
+      return typeof style === 'object' &&
+        style !== null &&
+        'fontSize' in style &&
+        typeof style.fontSize === 'number'
+        ? style.fontSize
+        : Number.NaN;
+    };
     const systemSize = definitionSize();
 
     await fireEvent.press(await screen.findByRole('radio', { name: 'Найбільший' }));
 
     expect(screen.getByRole('radio', { name: 'Найбільший' })).toBeSelected();
-    expect(definitionSize()).toBeGreaterThan(systemSize ?? Infinity);
+    expect(definitionSize()).toBeGreaterThan(systemSize);
     expect(
       screen.getByText('Найбільший текст. Довге ховається під «Детальніше».'),
     ).toBeOnTheScreen();
