@@ -99,7 +99,6 @@ export { type HiddenEntry } from './mix/hidden-entries';
 export { type HidingChange } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
 export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
-export { groupByLocalDay } from './saved/history-time';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
 export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
 export {
@@ -128,7 +127,6 @@ export {
   todayDate,
   untilNextLocalDay,
   type LocalDate,
-  type LocalDay,
 } from './local-date';
 export {
   isSolved,

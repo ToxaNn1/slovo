@@ -1,22 +1,12 @@
-import { MascotIn } from '@/mascot/mascot';
+import { MascotAs } from '@/mascot/mascot';
 import { withoutStress, type Favorite } from '@slovo/core';
-import {
-  EmptyState,
-  EntryRow,
-  fill,
-  space,
-  typeStyle,
-  useEdition,
-  useListScroll,
-  useTokens,
-} from '@slovo/ui';
-import { entryLabelBeside } from '@slovo/ui/entry-row-text';
+import { EmptyState, EntryRow, fill, space, useListScroll } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { FlatList, StyleSheet, Text } from 'react-native';
+import { FlatList, StyleSheet } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
-import { addedOn } from '@/saved/added-on';
+import { dayChip } from '@/saved/added-on';
 import { useFavorite, useFavoriteList } from '@/saved/favorites';
 import type { ListHeader } from '@/saved/list-header';
 import { ListTopButton } from '@/shell/list-top';
@@ -30,7 +20,7 @@ function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favori
   return (
     <EntryRow
       row={row}
-      trailing={entryLabelBeside(editionStrings.history, row, addedOn(addedAt))}
+      day={dayChip(addedAt)}
       onPress={() => {
         openScreen(`/saved/favorites/${entryId}`);
       }}
@@ -48,15 +38,13 @@ function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favori
 }
 
 /**
- * Favorites: every Entry the reader keeps, newest first, each row with when
- * it was added, a Synonym Row's and a Tip's with its kind too. A tap opens the
+ * Favorites (board 09): every Entry the reader keeps, newest first, each row
+ * with its meaning and the day it was added on a chip. A tap opens the
  * Entry screen; a swipe (or the VoiceOver action) takes the Entry out. An
  * empty list leads back to the Feed.
  */
 export function FavoritesList({ header }: { header: ListHeader }) {
   const list = useFavoriteList();
-  const tokens = useTokens();
-  const { voice } = useEdition();
   const router = useRouter();
   const scroll = useListScroll<FlatList<Favorite>>();
   const { list: listRef, onScroll: onListScroll } = scroll;
@@ -71,19 +59,9 @@ export function FavoritesList({ header }: { header: ListHeader }) {
         keyExtractor={(favorite) => favorite.entryId}
         renderItem={({ item }) => <FavoriteRow favorite={item} />}
         ListHeaderComponent={header(null)}
-        ListFooterComponent={
-          list.length > 0 ? (
-            <Text
-              {...voice}
-              style={[typeStyle('meta', tokens), styles.footer, { color: tokens.colors.muted }]}
-            >
-              {strings.footer}
-            </Text>
-          ) : undefined
-        }
         ListEmptyComponent={
           <EmptyState
-            mascot={<MascotIn state="empty" />}
+            mascot={(width) => <MascotAs state="sleeps" width={width} />}
             testID="favorites-empty"
             title={strings.empty.title}
             message={strings.empty.message}
@@ -104,6 +82,6 @@ export function FavoritesList({ header }: { header: ListHeader }) {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: space[8] },
-  footer: { marginHorizontal: space[6], marginTop: space[4] },
+  // The list grows to the screen, so an empty state sits in the middle of it.
+  content: { flexGrow: 1, paddingBottom: space[8] },
 });

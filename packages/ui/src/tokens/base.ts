@@ -334,8 +334,8 @@ export const typeRoles = {
   recentQuery: role('ui', '600', 16, 19),
   /** The text button that clears the recent queries of Search. */
   recentClear: role('ui', '600', 15, 18),
-  /** The text button that clears the history of the Saved screen. */
-  historyClear: role('ui', '600', 17, 20),
+  /** The text button that clears the history of the Saved screen, smaller than a title (board 09). */
+  historyClear: role('ui', '600', 14, 17),
   /** The line on a solved Daily Crossword. */
   crosswordSolved: role('word', '500', 28, 32),
   /** A segment's label in a segmented control. */
@@ -446,8 +446,6 @@ export const typeRoles = {
   tipTitle: role('word', '900', 30, 33, -0.5),
   /** A Tip's rule on its card's «Правило» tab (board XEntry2 e9). */
   tipRule: role('ui', '500', 20, 28),
-  /** What leads a list row's Lemma, such as a Collection's name, in the Lemma's size. */
-  listLeading: role('ui', '500', 17, 20),
   /** The trailing text of a list row, such as when it was saved. */
   rowTrailing: role('ui', '700', 12, 12),
   /** The title on the red panel of the Game's result. */
@@ -1234,8 +1232,17 @@ export const rowPadding = 14;
 /** The gap between the blocks of a Word card, a result or an empty state, off the 4-pt grid (the design's 18). */
 export const blockGap = 18;
 
-/** The empty state's space over its content. */
-export const emptyStatePaddingTop = 80;
+/**
+ * The empty state (board 09): the Mascot's width, the gap between its blocks,
+ * and the space over and under it in the list's room, more under so it sits
+ * a little above the middle.
+ */
+export const emptyState = {
+  mascotWidth: 140,
+  gap: 16,
+  paddingTop: 40,
+  paddingBottom: 120,
+} as const;
 
 /**
  * How far the largest text sizes of iOS may scale a text
