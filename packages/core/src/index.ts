@@ -53,7 +53,7 @@ export {
 } from './feed/feed-card';
 export { entryCardTitle } from './feed/entry-feed-card';
 export { type FeedNotice, type LaterQuestion } from './feed-notice';
-export { ENOUGH_FOR_TODAY_SEEN, type FirstWeekDay } from './feed/feed-notices';
+export { ENOUGH_FOR_TODAY_SEEN, type FirstWeekDay, type YesterdayQuiz } from './feed/feed-notices';
 export {
   countsAsWon,
   streakOf,

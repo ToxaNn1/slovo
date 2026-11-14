@@ -192,6 +192,14 @@ export const typeRoles = {
   recapDates: role('ui', '500', 13, 13),
   /** The Weekly Recap's «Готово». */
   recapDone: role('word', '900', 14, 14, 0, 'uppercase'),
+  /** The title of Yesterday's quiz, «Пам’ятаєш учорашнє слово?» (board f5). */
+  yesterdayTitle: role('word', '900', 19, 22),
+  /** The red Lemma of Yesterday's quiz (board f5). */
+  yesterdayLemma: role('word', '800', 26, 26),
+  /** A meaning on its option of Yesterday's quiz (board f5). */
+  yesterdayOption: role('ui', '600', 15, 19),
+  /** «Влучно!» or «Майже. Наступне вийде.» under the options of Yesterday's quiz (board f5). */
+  yesterdayVerdict: role('word', '800', 15, 15),
   /** The Word of the Community Word card. */
   communityWord: role('word', '900', 30, 30, -0.5),
   /** The Definition under the Word of the Community Word card. */

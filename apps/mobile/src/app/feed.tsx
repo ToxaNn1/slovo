@@ -24,13 +24,13 @@ import {
   type VerticalPagerHandle,
   useGesturesDemo,
 } from '@slovo/ui';
-import type { FeedCard, FeedNoticeCard, WordCardModel } from '@slovo/core';
+import type { FeedCard, FeedNoticeCard } from '@slovo/core';
 import { memo, useCallback, useRef, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
-import { useEntrySlots, useYesterdaySlots } from '@/entries/entry-actions';
+import { useEntrySlots } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/use-open-screen';
 import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
@@ -84,6 +84,7 @@ function FeedScreen() {
     onCardChange,
     openCorrection,
     answerQuickQuestion,
+    answerYesterday,
     foldWeeklyRecap,
     restoreWeeklyRecap,
   } = feed;
@@ -99,11 +100,12 @@ function FeedScreen() {
         position={position}
         onOpenCorrection={openCorrection}
         onAnswerQuickQuestion={answerQuickQuestion}
+        onAnswerYesterday={answerYesterday}
         onFoldWeeklyRecap={foldWeeklyRecap}
         onRestoreWeeklyRecap={restoreWeeklyRecap}
       />
     ),
-    [openCorrection, answerQuickQuestion, foldWeeklyRecap, restoreWeeklyRecap],
+    [openCorrection, answerQuickQuestion, answerYesterday, foldWeeklyRecap, restoreWeeklyRecap],
   );
   const onIndexChange = useCallback(
     (position: number) => {
@@ -204,6 +206,7 @@ const FeedPage = memo(function FeedPage({
   position,
   onOpenCorrection,
   onAnswerQuickQuestion,
+  onAnswerYesterday,
   onFoldWeeklyRecap,
   onRestoreWeeklyRecap,
 }: {
@@ -213,6 +216,8 @@ const FeedPage = memo(function FeedPage({
   onOpenCorrection: (position: number, correctionId: string) => void;
   /** Keeps the option picked on the Quick Question at `position`. */
   onAnswerQuickQuestion: (position: number, option: number) => void;
+  /** Keeps the meaning picked first on the Yesterday quiz at `position`. */
+  onAnswerYesterday: (position: number, option: number) => void;
   /** «Готово» on the Weekly Recap at `position`. */
   onFoldWeeklyRecap: (position: number) => void;
   /** «Повернути» of the Weekly Recap folded at `position`. */
@@ -253,7 +258,13 @@ const FeedPage = memo(function FeedPage({
             folded={card.folded}
             yesterday={
               card.yesterday === undefined ? undefined : (
-                <YesterdayNotice word={card.yesterday.word} />
+                <YesterdayCard
+                  word={card.yesterday.word}
+                  quiz={card.yesterday.quiz}
+                  onAnswer={(option) => {
+                    onAnswerYesterday(position, option);
+                  }}
+                />
               )
             }
             onFold={() => {
@@ -307,7 +318,17 @@ const FeedPage = memo(function FeedPage({
       )}
     </View>
   );
-  if (card.kind === 'notice') return page(<YesterdayNotice word={card.word} />, false);
+  if (card.kind === 'notice')
+    return page(
+      <YesterdayCard
+        word={card.word}
+        quiz={card.quiz}
+        onAnswer={(option) => {
+          onAnswerYesterday(position, option);
+        }}
+      />,
+      false,
+    );
   if (card.kind === 'tip') return <SwipedEntryCard card={card} page={page} />;
   if (card.kind === 'synonymRow')
     return (
@@ -405,11 +426,6 @@ function NoticeCard({
   ) : (
     <LaterQuestionNotice question={card.notice} />
   );
-}
-
-/** Yesterday's Word in Self-check style, with its Knowledge Marks as on any card. */
-function YesterdayNotice({ word }: { word: WordCardModel }) {
-  return <YesterdayCard word={word} slots={useYesterdaySlots(word)} />;
 }
 
 const styles = StyleSheet.create({

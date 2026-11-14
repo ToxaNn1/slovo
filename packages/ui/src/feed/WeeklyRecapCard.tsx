@@ -178,18 +178,12 @@ export function WeeklyRecapCard({
 }
 
 /**
- * What sits under «Твій тиждень» on its page, Yesterday: it rises in a
- * little after the card, and once the card is `folded` away it slides up
- * into its place (the board's `ywUp`). Under Reduce Motion it only fades in.
+ * What sits under «Твій тиждень» on its page, Yesterday, which enters on its
+ * own: once the card is `folded` away it slides up into its place (the
+ * board's `ywUp`). Under Reduce Motion it stays.
  */
 export function UnderWeeklyRecap({ folded, children }: { folded: boolean; children: ReactNode }) {
   const reduceMotion = useReduceMotion();
-  const entered = useCascade(0, {
-    variant: 'rise',
-    stagger: 0,
-    duration: below.duration,
-    delay: below.delay,
-  });
   const lift = useSharedValue(0);
   useEffect(() => {
     if (!folded || reduceMotion) return;
@@ -203,11 +197,7 @@ export function UnderWeeklyRecap({ folded, children }: { folded: boolean; childr
     );
   }, [folded, reduceMotion, lift]);
   const lifted = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
-  return (
-    <Animated.View style={lifted}>
-      <Animated.View style={entered}>{children}</Animated.View>
-    </Animated.View>
-  );
+  return <Animated.View style={lifted}>{children}</Animated.View>;
 }
 
 /** The week's dates, «26.10–1.11»: each day and its month as numbers, the month in two digits. */

@@ -78,9 +78,8 @@ export const noticeCard = {
  * `pop.duration`, the first `pop.delay` in, each next `pop.stagger` after).
  * «Готово» folds it (`wkOut`): in the first `fold.share` of `fold.duration`
  * it fades, rises by `fold.rise`, turns by `fold.turn` degrees and shrinks to
- * `fold.scale`, then its room closes; the Yesterday under it enters
- * `below.delay` after the card, and once the card is folded away slides up
- * from `below.rise` lower (`ywUp`).
+ * `fold.scale`, then its room closes; once it is folded away, the Yesterday
+ * under it slides up from `below.rise` lower (`ywUp`).
  */
 export const weeklyRecapPage = {
   gap: 16,
@@ -98,12 +97,40 @@ export const weeklyRecapPage = {
     scale: 0.96,
   },
   below: {
-    delay: 250,
-    duration: 400,
     rise: 60,
     riseDuration: 450,
     easing: [0.2, 0.9, 0.3, 1],
   },
+} as const;
+
+/**
+ * Yesterday's quiz «Пам’ятаєш учорашнє слово?» (board f5): the gap between
+ * its options, each at least `option.height` tall with `option.radius`
+ * corners, an `option.border` hairline and `option.padding` at its sides, its
+ * check and cross at their sizes; the room the verdict under them
+ * keeps. A right pick pops (`slPop`: from `pop.from` of its size to
+ * `pop.peak` at `pop.peakAt` of `pop.duration`). A wrong pick sits
+ * `wrong.sink` lower and shakes (`slShake`: to each of `wrong.shake` in turn
+ * over `wrong.duration`); the right one lights `wrong.lightDelay` later; the
+ * rest fade to `dimmedOpacity`. It enters as the board's `slCasc`, `enter`.
+ */
+export const yesterdayCard = {
+  gap: 14,
+  optionGap: 8,
+  option: {
+    height: 50,
+    radius: 14,
+    padding: 16,
+    gap: 10,
+    border: 1,
+    check: { width: 16, height: 14 },
+    cross: 13,
+  },
+  verdictHeight: 15,
+  dimmedOpacity: 0.5,
+  pop: { duration: 350, from: 0.6, peak: 1.12, peakAt: 0.6 },
+  wrong: { sink: 3, shake: [-8, 7, -4, 3, 0], duration: 400, lightDelay: 400 },
+  enter: { delay: 250, duration: 400 },
 } as const;
 
 /**

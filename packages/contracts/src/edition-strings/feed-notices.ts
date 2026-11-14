@@ -47,8 +47,15 @@ export const FeedNoticesStringsSchema = z.strictObject({
       goalDays: pluralOf(),
     }),
   }),
-  /** Asks about yesterday's Word of the Day. */
-  yesterday: z.strictObject({ title: TextSchema }),
+  /** Asks about yesterday's Word of the Day: which of three meanings is its own (ADR 0130). */
+  yesterday: z.strictObject({
+    /** «Пам’ятаєш учорашнє слово?» */
+    title: TextSchema,
+    /** Under the options once the right meaning is picked, e.g. «Влучно!». */
+    right: TextSchema,
+    /** Under the options once a wrong meaning is picked, e.g. «Майже. Наступне вийде.». */
+    wrong: TextSchema,
+  }),
   /** «Може, на сьогодні досить?», after 50 distinct Seen Entries on a local day. */
   enoughForToday: z.strictObject({
     message: TextSchema,
