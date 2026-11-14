@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { HttpBindings } from '@hono/node-server';
-import { createApiClient } from '@slovo/contracts/api';
+import { createApiClient, type ContentSnapshot } from '@slovo/contracts/api';
 import type { EasBuild, MainCi, Milestone, PullRequest, Release } from '@slovo/contracts/admin-api';
 import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER } from '@slovo/contracts/admin-api';
 import type { AppConfig, EditionConfig } from '@slovo/contracts';
@@ -817,6 +817,18 @@ export function testApp({
         clock: systemClock,
         editions: createEditions({ database, clock: systemClock, editions, alerts }),
       }).importEdition(editionId, editionDir, options),
+    /** Imports a content snapshot into the content tables, as `import --snapshot` does. */
+    importSnapshot: (
+      editionId: string,
+      editionDir: string,
+      snapshot: ContentSnapshot,
+      options?: { override?: boolean },
+    ) =>
+      createContentStore({
+        database,
+        clock: systemClock,
+        editions: createEditions({ database, clock: systemClock, editions, alerts }),
+      }).importSnapshot(editionId, editionDir, snapshot, options),
     /** The lines the reports list command prints of the reports the backend keeps. */
     listReports: (filter?: ReportFilter) => listReports(database, filter),
     /** What the reports resolve command prints and exits with for the id. */

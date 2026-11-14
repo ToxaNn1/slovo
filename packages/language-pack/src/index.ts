@@ -21,7 +21,7 @@ export type { ContentTarget, ContentTargets, MissedTarget } from './content-targ
 export { PACK_FORMAT } from './pack-layout';
 export { applyPatch, patchStateOf, type PackWriteDatabase } from './apply-patch';
 export { openLanguagePack, packMetadataOf, type NodeLanguagePack } from './read-pack';
-export { readEdition, type EditionSource } from './read-edition';
+export { readEdition, readEditionWithSnapshot, type EditionSource } from './read-edition';
 export { recordContent, type RecordResult } from './record';
 export { contentReport, formatContentReport, type ContentReport } from './report';
 export { fetchSnapshot, readSnapshotFile, SnapshotUnreachableError } from './snapshot-source';
