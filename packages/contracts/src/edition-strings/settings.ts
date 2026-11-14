@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { FontSizeSchema, ThemeSchema } from '../edition';
+import { FontSizeSchema, TextSizeSchema, ThemeSchema } from '../edition';
 import { TextSchema } from '../shared';
 import { PluralSchema, pluralOf, templateOf } from './shared';
 
@@ -38,7 +38,19 @@ export const SettingsStringsSchema = z.strictObject({
   /** The switch that shares the Community Counters, and the explanation under it. */
   anonymousStats: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The Daily Goal choice, its numbers of Words drawn as they are, and «Без цілі», which turns the Daily Goal off from today (ADR 0074). */
-  dailyGoal: z.strictObject({ title: TextSchema, none: TextSchema }),
+  dailyGoal: z.strictObject({
+    title: TextSchema,
+    none: TextSchema,
+    /** The line under the Daily Goal screen's title. */
+    subtitle: TextSchema,
+    /** The explaining line under the big number, for each goal of Words Seen and for «Без цілі». */
+    explanations: z.strictObject({
+      '10': TextSchema,
+      '25': TextSchema,
+      '50': TextSchema,
+      none: TextSchema,
+    }),
+  }),
   /**
    * «Рідкість», the Rarity Ceiling row (ADR 0072): its label, the line under
    * it, and a ceiling's segment, which takes `{rarity}`, e.g. «до 3».
@@ -75,7 +87,79 @@ export const SettingsStringsSchema = z.strictObject({
     questionnaire: TextSchema,
     /** The row that opens the Profile, e.g. «Профіль». */
     profile: TextSchema,
+    /** The row that opens the text-size screen, e.g. «Шрифт і розмір». */
+    textSize: TextSchema,
+    /** The row that opens the Widgets screen, e.g. «Віджети». */
+    widgets: TextSchema,
+    /** The row that opens the Account screen, e.g. «Акаунт і синхронізація». */
+    account: TextSchema,
+    /** The row that opens the privacy screen, e.g. «Конфіденційність». */
+    privacy: TextSchema,
   }),
+  /** The line under each Settings row's title, as board 11 draws it; a row the board does not draw has one of its own. */
+  rowSubtitles: z.strictObject({
+    theme: TextSchema,
+    sounds: TextSchema,
+    vibration: TextSchema,
+    notifications: TextSchema,
+    widgets: TextSchema,
+    textSize: TextSchema,
+    dailyGoal: TextSchema,
+    hideStreak: TextSchema,
+    selfCheck: TextSchema,
+    myMix: TextSchema,
+    hidden: TextSchema,
+    streakBreak: TextSchema,
+    badges: TextSchema,
+    questionnaire: TextSchema,
+    profile: TextSchema,
+    privacy: TextSchema,
+    /** The Account row while signed out. */
+    signedOut: TextSchema,
+    /** The Account row while signed in. */
+    signedIn: TextSchema,
+    /** The About row. Takes `{version}` and `{build}`, e.g. «Версія 1.0 (312)» (ADR 0044). */
+    about: templateOf('version', 'build'),
+  }),
+  /** The three-step text size screen (ADR 0134): its title, the line under it, the sample and each step's name and explaining line. */
+  textSize: z.strictObject({
+    title: TextSchema,
+    subtitle: TextSchema,
+    sizes: z.record(TextSizeSchema, TextSchema),
+    explanations: z.record(TextSizeSchema, TextSchema),
+    /** The sample Word, drawn at the size chosen. */
+    preview: z.strictObject({ lemma: TextSchema, definition: TextSchema }),
+  }),
+  /** The Widgets screen: its title, the line under it and the names of the view-only previews. */
+  widgets: z.strictObject({
+    title: TextSchema,
+    subtitle: TextSchema,
+    previews: z.strictObject({ small: TextSchema, medium: TextSchema, lockScreen: TextSchema }),
+  }),
+  /** The privacy screen «Конфіденційність» (ADR 0135): the one switch of ADR 0068 and the Data export. */
+  privacy: z.strictObject({
+    title: TextSchema,
+    /** The switch that gates Analytics and the Community Counters; `anonymousStats.explanation` stays under it. */
+    statsTitle: TextSchema,
+    /** «Експортувати мої дані»: its row, the line under it, the title of the file handed to the share window, and a failure. */
+    dataExport: z.strictObject({
+      title: TextSchema,
+      subtitle: TextSchema,
+      fileTitle: TextSchema,
+      failed: TextSchema,
+    }),
+  }),
+  /** «Скинути прогрес» (ADR 0133): the button at the bottom of Settings, its sheet and the toast after it. */
+  progressReset: z.strictObject({
+    button: TextSchema,
+    title: TextSchema,
+    message: TextSchema,
+    cancel: TextSchema,
+    confirm: TextSchema,
+    done: TextSchema,
+  }),
+  /** The Questionnaire retake screen: its title and the one button that applies the answers. */
+  questionnaireRetake: z.strictObject({ title: TextSchema, done: TextSchema }),
   /** The Badges screen: the Badges in a grid by family, each earned with its date, or its progress (ADR 0066). */
   badges: z.strictObject({
     title: TextSchema,
@@ -123,6 +207,20 @@ export const SettingsStringsSchema = z.strictObject({
   /** The Profile: the reader's whole progress, with its Badges as the Badges screen words them. */
   profile: z.strictObject({
     title: TextSchema,
+    /** The header's line under the name. Takes `{level}` and `{name}`, e.g. «Рівень 3 — Знавець». */
+    headerLevel: templateOf('level', 'name'),
+    /** The reader's name (ADR 0136): its row, the row's value without a name, the sheet, and the line when it is too long. */
+    readerName: z.strictObject({
+      row: TextSchema,
+      empty: TextSchema,
+      title: TextSchema,
+      placeholder: TextSchema,
+      save: TextSchema,
+      /** Takes `{count}` and `{max}`, e.g. «5 / 24». */
+      counter: templateOf('count', 'max'),
+      /** Takes `{max}`. */
+      tooLong: templateOf('max'),
+    }),
     /** The word under the Level's number in its ring, e.g. «Рівень». */
     levelLabel: TextSchema,
     /** The XP towards the next Level, e.g. «40 з 120 XP до наступного рівня». */
@@ -221,6 +319,9 @@ export const SettingsStringsSchema = z.strictObject({
     length: TextSchema,
     /** The button that starts the Break of the length chosen. */
     start: TextSchema,
+    /** What VoiceOver reads for the stepper's − and + buttons. */
+    fewerDays: TextSchema,
+    moreDays: TextSchema,
     /** While a Break runs. Takes `{date}`, its last day, e.g. «20.10». */
     running: templateOf('date'),
     /** While the next Break waits. Takes `{date}`, the first day it can start, e.g. «13.11». */

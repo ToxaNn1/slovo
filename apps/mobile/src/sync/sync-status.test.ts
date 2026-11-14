@@ -31,7 +31,7 @@ describe('the status line of the SLOVO ID screen', () => {
   it('gives the local time of a sync made today', () => {
     // 09:05 UTC is 12:05 in Kyiv in October.
     expect(lineOf({ syncedAt: new Date('2026-10-18T09:05:00Z') })).toBe(
-      'Синхронізовано сьогодні о 12:05',
+      'Синхронізовано сьогодні, 12:05',
     );
   });
 
@@ -48,7 +48,7 @@ describe('the status line of the SLOVO ID screen', () => {
   it('follows the local day, not the UTC one', () => {
     // 22:30 UTC on the 17th is already the 18th in Kyiv.
     expect(lineOf({ syncedAt: new Date('2026-10-17T22:30:00Z') })).toBe(
-      'Синхронізовано сьогодні о 01:30',
+      'Синхронізовано сьогодні, 01:30',
     );
   });
 
