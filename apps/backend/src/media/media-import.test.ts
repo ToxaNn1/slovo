@@ -6,8 +6,9 @@ import { join } from 'node:path';
 import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
 import type { Word } from '@slovo/contracts';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
+import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import { systemClock } from '@slovo/server-core';
-import { beforeAll, describe, expect, it, onTestFinished } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, onTestFinished } from 'vitest';
 
 import { createDatabase } from '../database/database';
 import { readEditions } from '../edition/edition-folders';
@@ -23,7 +24,12 @@ const edition = (() => {
   return found;
 })();
 
-const importedDatabase = importedDatabases('uk', join(EDITIONS_DIR, 'uk'));
+/** The UA Edition folder written from the seed snapshot, removed after the file. */
+const seedDir = mkdtempSync(join(tmpdir(), 'slovo-media-import-'));
+afterAll(() => {
+  rmSync(seedDir, { recursive: true, force: true });
+});
+const importedDatabase = importedDatabases('uk', ukrainianSeedFolder(seedDir));
 
 /** A Media Store that keeps what it was given. */
 function keptStore(): MediaStore & { readonly files: Map<string, string> } {

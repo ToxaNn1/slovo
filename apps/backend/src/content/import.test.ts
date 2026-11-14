@@ -1,23 +1,22 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { readEdition } from '@slovo/language-pack';
-import { EDITIONS_DIR } from '@slovo/language-pack/edition';
+import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import { systemClock } from '@slovo/server-core';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { TEST_MEDIA_BASE, testApp } from '../test-support';
 import { createMediaRows } from './media-rows';
 
-/** A copy of the UA Edition folder the test may change, removed after the file. */
+/** The UA Edition folder written from the seed snapshot, which the test may change, removed after the file. */
 function copyOfUkrainian(): string {
-  const dir = join(mkdtempSync(join(tmpdir(), 'slovo-import-')), 'uk');
-  cpSync(join(EDITIONS_DIR, 'uk'), dir, { recursive: true });
+  const dir = mkdtempSync(join(tmpdir(), 'slovo-import-'));
   afterAll(() => {
     rmSync(dir, { recursive: true, force: true });
   });
-  return dir;
+  return ukrainianSeedFolder(dir);
 }
 
 const folder = copyOfUkrainian();

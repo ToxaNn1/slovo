@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 
 import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
+import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
 import { afterAll, describe, expect, it, onTestFinished } from 'vitest';
 
@@ -26,14 +27,13 @@ import {
 } from '../test-support';
 import { createMediaRows } from './media-rows';
 
-/** A copy of the UA Edition folder, removed after the file. */
+/** The UA Edition folder written from the seed snapshot, removed after the file. */
 const folder = (() => {
-  const dir = join(mkdtempSync(join(tmpdir(), 'slovo-editor-')), 'uk');
-  cpSync(join(EDITIONS_DIR, 'uk'), dir, { recursive: true });
+  const dir = mkdtempSync(join(tmpdir(), 'slovo-editor-'));
   afterAll(() => {
     rmSync(dir, { recursive: true, force: true });
   });
-  return dir;
+  return ukrainianSeedFolder(dir);
 })();
 
 /** The backend with a Власник, an Агент and the UA Edition imported. */
