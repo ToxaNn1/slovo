@@ -34,6 +34,7 @@ Several specs may build at once, at most 3, when they cannot conflict:
    - Start every ticket the merge put on the frontier.
 5. **Each batch PR and the end:** `code-review` on the batch; one implementer fixes the findings. PR body: Checks, «Questions for the owner», «Owner checks», new reader-visible texts. The coordinator adds each Owner check to the database with `pnpm admin check add <version> "<text>"` (`docs/deploy.md`). Mark it ready and `gh pr merge --auto --squash`, unless prominent copy waits for «текст ок». Red CI: one implementer fixes it. The last batch PR `Closes` the spec.
 6. Remove the implementer worktrees and the pushed ticket branches.
+7. **End of a version:** when the spec's milestone has no open tickets left, open the ADR cleanup PR (`docs/agents/domain.md`, «ADR cleanup at the end of a version»).
 
 ## Unchanged
 
