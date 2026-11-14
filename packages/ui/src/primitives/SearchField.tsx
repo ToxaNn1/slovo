@@ -9,18 +9,21 @@ import { fontScaleCap, minTouchTarget, searchFieldDrawing, typeStyle } from '../
 const CLEAR_HIT_SLOP = (minTouchTarget - searchFieldDrawing.clear) / 2;
 
 /**
- * The search field: a sunken box with a magnifier, the query, and while there
- * is a query a button that clears it. VoiceOver names the field by `label`,
- * which also shows as its placeholder.
+ * The search field of the Search screen (board 09, screen 78): a sunken box
+ * with an ink border, a magnifier, the query with a red caret, and while there
+ * is a query a button that clears it. VoiceOver names the field by `label`;
+ * the empty box shows `placeholder`.
  */
 export function SearchField({
   label,
+  placeholder,
   value,
   onChangeText,
   testID,
   ...input
 }: {
   label: string;
+  placeholder: string;
   value: string;
   onChangeText: (text: string) => void;
   testID: string;
@@ -29,8 +32,14 @@ export function SearchField({
   const { colors } = tokens;
   const { strings, voice } = useEdition();
   return (
-    <View style={[styles.box, { backgroundColor: colors.surfaceSunken }]}>
-      <Magnifier color={colors.ink} />
+    <View
+      style={[
+        styles.box,
+        styles.field,
+        { backgroundColor: colors.surfaceSunken, borderColor: colors.ink },
+      ]}
+    >
+      <FieldMagnifier color={colors.ink} />
       <TextInput
         testID={testID}
         accessibilityLabel={label}
@@ -40,13 +49,14 @@ export function SearchField({
         {...input}
         value={value}
         onChangeText={onChangeText}
-        placeholder={label}
+        placeholder={placeholder}
         placeholderTextColor={colors.muted}
         autoCapitalize="none"
         autoCorrect={false}
         spellCheck={false}
         selectionColor={colors.accent}
-        style={[typeStyle('fieldText', tokens), styles.input, { color: colors.ink }]}
+        cursorColor={colors.accent}
+        style={[typeStyle('searchText', tokens), styles.input, { color: colors.ink }]}
       />
       {value.length > 0 && (
         <Pressable
@@ -128,6 +138,22 @@ function Magnifier({ color }: { color: string }) {
   );
 }
 
+/** The Search screen field's magnifier, smaller and finer than the link's (board 09, screen 78). */
+function FieldMagnifier({ color }: { color: string }) {
+  return (
+    <Svg
+      width={searchFieldDrawing.fieldIcon}
+      height={searchFieldDrawing.fieldIcon}
+      viewBox="0 0 18 18"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Circle cx={7.5} cy={7.5} r={5.5} fill="none" stroke={color} strokeWidth={2.5} />
+      <Polygon points="11,13 13,11 18,16 16,18" fill={color} />
+    </Svg>
+  );
+}
+
 const styles = StyleSheet.create({
   box: {
     height: searchFieldDrawing.height,
@@ -137,6 +163,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: searchFieldDrawing.paddingHorizontal,
     borderRadius: searchFieldDrawing.radius,
   },
+  field: { borderWidth: searchFieldDrawing.border },
   input: {
     flex: 1,
     minWidth: 0,

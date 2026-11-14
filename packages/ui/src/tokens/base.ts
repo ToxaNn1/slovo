@@ -332,8 +332,12 @@ export const typeRoles = {
   collectionCount: role('word', '500', 22, 22),
   /** A recent query of Search. */
   recentQuery: role('ui', '600', 16, 19),
-  /** The text button that clears the recent queries of Search. */
-  recentClear: role('ui', '600', 15, 18),
+  /** The text button that clears the recent queries of Search, smaller than the label beside it (board 09). */
+  recentClear: role('ui', '600', 14, 17),
+  /** What the reader types in the Search field (board 09, screen 78). */
+  searchText: role('ui', '600', 16, 20),
+  /** «Скасувати» beside the Search field, which closes Search (board 09, screen 78). */
+  searchCancel: role('ui', '600', 15, 18),
   /** The text button that clears the history of the Saved screen, smaller than a title (board 09). */
   historyClear: role('ui', '600', 14, 17),
   /** The line on a solved Daily Crossword. */
