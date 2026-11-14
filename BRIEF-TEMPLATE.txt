@@ -1,0 +1,7 @@
+Implement ticket #NUM (gh issue view NUM -R ToxaNn1/slovo) of spec #1880, repo ToxaNn1/slovo. Follow docs/agents/ticket-brief.md.
+Base: integration branch feat/1880-games-board. git fetch origin; git checkout -b BRANCH origin/feat/1880-games-board; confirm HEAD = origin/feat/1880-games-board tip.
+Build it with the Skill mattpocock-skills:tdd. Testing Decisions and Feature Switch table: git show origin/coord/games-1880:TESTING.md. Board decisions are already in the ticket.
+Lane: touch only packages/core/src/game*, packages/ui/src/game, apps/mobile/src/game, editions/uk/strings.json game keys, and files the ticket names; anything else: STUCK naming it. No new ADR (0137–0139 are #1881's).
+Grant: commit and push only BRANCH; no PR, no merge of other branches, no force-push, no EAS. Commit with plain git commit; never a command holding the owner's email; no & or nohup; no AI attribution; batch pushes.
+Before the end: git merge origin/feat/1880-games-board, rerun lint, typecheck and test of touched packages (tail output), pnpm format.
+End with an empty commit pushed to BRANCH, subject «chore: DONE #NUM» (or FAILED/STUCK), body = report: what changed, checks run, Owner checks on phone, new reader-visible texts, decisions you took. Never end your turn while work remains.
