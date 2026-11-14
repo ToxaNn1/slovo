@@ -1653,7 +1653,9 @@ describe('the Game screen', () => {
     expect(screen.getByText('Пройдені раунди пропадуть, а рекорд не оновиться.')).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Грати далі' }));
     await waitFor(() => {
-      expect(screen.queryByText('Пройдені раунди пропадуть, а рекорд не оновиться.')).not.toBeOnTheScreen();
+      expect(
+        screen.queryByText('Пройдені раунди пропадуть, а рекорд не оновиться.'),
+      ).not.toBeOnTheScreen();
     });
     expect(screen.getByTestId('game-round')).toBeOnTheScreen();
 

@@ -668,8 +668,9 @@ describe('loadEdition', () => {
     'gameHubRecord',
     'gameModeToast',
   ] as const)('refuses an Edition without the %s Feature Switch (spec #1880)', (feature) => {
-    const switches: Record<string, string> = { ...validConfig.featureSwitches };
-    delete switches[feature];
+    const switches = Object.fromEntries(
+      Object.entries(validConfig.featureSwitches).filter(([name]) => name !== feature),
+    );
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       `featureSwitches.${feature}`,
     );

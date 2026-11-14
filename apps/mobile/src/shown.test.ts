@@ -232,10 +232,7 @@ describe('what the reader is shown', () => {
       'the spec #1674 Game with gameOptionStamp off',
       { off: ['gameOptionStamp'], shown: { gameOptionStamp: false } },
     ],
-    [
-      'the spec #1674 Game with pairsStay off',
-      { off: ['pairsStay'], shown: { pairsStay: false } },
-    ],
+    ['the spec #1674 Game with pairsStay off', { off: ['pairsStay'], shown: { pairsStay: false } }],
     [
       'the spec #1674 Game with buildIdiomCheck off',
       { off: ['buildIdiomCheck'], shown: { buildIdiomCheck: false } },
