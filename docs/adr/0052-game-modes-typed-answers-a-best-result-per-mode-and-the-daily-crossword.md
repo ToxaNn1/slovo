@@ -20,7 +20,7 @@ The Game has thirteen Game Modes with answer forms of their own, typed answers, 
 
 **Amended by ADR 0101.** The comparison judges a typed answer by its Comparison Key, built from the Edition's Language Traits: case is folded with the Edition's locale, and the apostrophes are the characters the Edition lists as `apostrophes` (ʼ ' ’ in the UA Edition).
 
-**Amended by ADR 0127.** A Quick Question's Round may also come from the Word Meaning question, a round type of the Quick Question that is not a Game Mode.
+**Amended by ADR 0128.** A Quick Question's Round may also come from the Word Meaning question, a round type of the Quick Question that is not a Game Mode.
 
 **The modes.**
 

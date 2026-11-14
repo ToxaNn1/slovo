@@ -65,7 +65,7 @@ export interface AnalyticsEvents {
   /**
    * The reader answered a Quick Question in the Feed, right or not, about the
    * Entry it asked: `mode` is the id of the Game Mode its Round came from, or
-   * `word-meaning` for the Word Meaning question (ADR 0127).
+   * `word-meaning` for the Word Meaning question (ADR 0128).
    */
   readonly quickQuestionAnswered: EntryEventProperties & {
     readonly right: boolean;

@@ -13,7 +13,7 @@
 [data-slovo][data-th="light"]{--bg:#FFF4E6;--ink:#140C0A;--sf:#FFFBF5;--sf2:#F5E4CF;--line:rgba(20,12,10,.13);--mute:#6B5D55;--tile:#FFFBF5;--edge:#DCC2A6;--hl:#F2D3AE;--sil:rgba(20,12,10,.14);--bar:rgba(255,244,230,.94)}
 [data-slovo][data-th="dark"]{--bg:#140C0A;--ink:#FFF4E6;--sf:#221714;--sf2:#2E201B;--line:rgba(255,244,230,.13);--mute:#BDAE9F;--tile:#33241F;--edge:#050302;--hl:#5A3C33;--sil:rgba(255,244,230,.1);--bar:rgba(20,12,10,.94)}
 [data-slovo] *{box-sizing:border-box}
-[data-slovo] button{font:inherit;border:0;cursor:pointer;color:inherit;background:none;padding:0;text-align:inherit}
+[data-slovo] button{font:inherit;border:0;cursor:pointer;color:inherit;background:none;padding:0;text-align:inherit;outline:none;-webkit-tap-highlight-color:transparent}
 [data-rm="1"] *{animation-name:slRm!important;animation-duration:.3s!important;animation-delay:0s!important;animation-iteration-count:1!important;animation-timing-function:ease!important}
 @keyframes slRm{from{opacity:0}}
 @keyframes slScr{from{clip-path:polygon(100% 0,140% 0,140% 100%,125% 100%);transform:translateX(30px)}to{clip-path:polygon(-40% 0,140% 0,140% 100%,-25% 100%);transform:none}}
@@ -25,10 +25,23 @@
 @keyframes slSlash{from{clip-path:inset(0 100% 0 0)}}
 @keyframes slGrow{from{transform:scaleX(0)}}
 @keyframes slStamp{0%{opacity:0;transform:scale(3) rotate(-26deg)}70%{opacity:1;transform:scale(.92) rotate(-8deg)}100%{transform:scale(1) rotate(-8deg)}}
+@keyframes slShake{0%,100%{transform:translateY(3px)}20%{transform:translate(-8px,3px)}40%{transform:translate(7px,3px)}60%{transform:translate(-4px,3px)}80%{transform:translate(3px,3px)}}
+@keyframes fgIn{0%{clip-path:polygon(0 100%,100% 88%,100% 100%,0 100%);transform:translateY(40px)}60%{transform:translateY(-6px)}100%{clip-path:polygon(0 -10%,100% -10%,100% 110%,0 110%);transform:none}}
+@keyframes fgBand{from{transform:rotate(-9deg) translateY(160px)}}
+@keyframes fgTitle{0%{opacity:0;transform:scale(1.6) rotate(-4deg)}100%{opacity:1;transform:none}}
+@keyframes fgWord{0%{opacity:0;transform:translateX(-120%) rotate(-14deg)}100%{opacity:1;transform:rotate(var(--r))}}
+@keyframes fgMascot{0%{opacity:0;transform:translateY(60px) rotate(-10deg)}100%{opacity:1;transform:none}}
+@keyframes fgShard{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(var(--bx),var(--by)) rotate(var(--br)) scale(1)}}
+@keyframes wkOut{0%{opacity:1;transform:none;max-height:420px}40%{opacity:0;transform:translateY(-30px) rotate(-2deg) scale(.96);max-height:420px}100%{opacity:0;max-height:0;margin-bottom:-14px;padding-top:0;padding-bottom:0}}
+@keyframes ywUp{from{transform:translateY(60px)}}
+@keyframes ntPop{from{opacity:0;transform:scale(1.15)}}
+@keyframes shDown{to{transform:translateY(105%)}}
+@keyframes shUndim{to{opacity:0}}
+@keyframes tsOut{to{transform:translateX(-120%) skewX(-12deg)}}
 </style>
 </helmet>
-<div data-slovo="1" data-th="{{ th }}" data-rm="{{ rmAttr }}" style="width:406px;height:860px;padding:8px;background:#0B0706;border-radius:62px;box-shadow:0 0 0 1.5px #3A2C27,0 30px 70px rgba(20,12,10,.35);font-family:'Onest',sans-serif;flex:none">
-<div style="position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;background:var(--bg,#FFF4E6);color:var(--ink,#140C0A)">
+<div data-slovo="1" data-th="{{ th }}" data-rm="{{ rmAttr }}" style="width:{{ oW }};height:{{ oH }};padding:{{ oP }};background:{{ oBg }};border-radius:{{ oR }};box-shadow:{{ oSh }};font-family:'Onest',sans-serif;flex:none">
+<div style="position:relative;width:{{ iW }};height:{{ iH }};border-radius:{{ iR }};overflow:hidden;background:var(--bg,#FFF4E6);color:var(--ink,#140C0A)">
 
 <sc-if value="{{ feedHead }}" hint-placeholder-val="{{ true }}">
   <div style="position:absolute;left:0;right:0;top:54px;display:flex;align-items:center;justify-content:space-between;padding:8px 20px 14px;z-index:2">
@@ -83,43 +96,68 @@
     <span style="font:900 26px/1.1 Unbounded,sans-serif">Як правильно?</span>
     <span style="font:500 15px/1.4 Onest;color:var(--mute)">замість «скіко»</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button style="height:64px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:800 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--edge)">скільки</button>
-      <button style="height:64px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:800 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--edge)">скільки ж</button>
+      <sc-for list="{{ fxOpts }}" as="o" hint-placeholder-count="2">
+        <button onClick="{{ o.onClick }}" style="position:relative;height:64px;border-radius:16px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};border:{{ o.bd }};transform:{{ o.tf }};font:800 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;animation:{{ o.anim }};transition:background .2s,box-shadow .12s,transform .12s">
+          <span style="text-decoration:{{ o.td }};text-decoration-thickness:2px">{{ o.t }}</span>
+          <sc-if value="{{ o.v }}" hint-placeholder-val="{{ false }}"><svg width="16" height="14" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="currentColor"></polygon></svg></sc-if>
+          <sc-if value="{{ o.x }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 20 20"><polygon points="3,0 10,7 17,0 20,3 13,10 20,17 17,20 10,13 3,20 0,17 7,10 0,3" fill="currentColor"></polygon></svg></sc-if>
+        </button>
+      </sc-for>
     </div>
-    <button style="height:56px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px)">ВІДПОВІДЬ</button>
+    <button onClick="{{ fxBtn }}" style="height:56px;border-radius:16px;background:{{ fxBBg }};color:{{ fxBFg }};box-shadow:{{ fxBSh }};opacity:{{ fxBOp }};font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,opacity .2s" style-active="transform:translateY(4px)">{{ fxBT }}</button>
   </div>
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:slCasc .4s .25s both">
     <span style="align-self:flex-start;padding:7px 10px;background:var(--ink);color:var(--bg);font:800 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:skewX(-10deg)">ШВИДКЕ ПИТАННЯ</span>
     <span style="font:800 19px/1.25 Unbounded,sans-serif">«Видноколо» — це…</span>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <div style="height:54px;border-radius:14px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font:700 16px/1 Onest;animation:slPop .35s .4s both">обрій<svg width="18" height="15" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#140C0A"></polygon></svg></div>
-      <div style="height:54px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 18px;font:700 16px/1 Onest;opacity:.55">кругле вікно</div>
+      <sc-for list="{{ qqOpts }}" as="o" hint-placeholder-count="2">
+        <button onClick="{{ o.onClick }}" style="height:54px;border-radius:14px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};border:{{ o.bd }};transform:{{ o.tf }};opacity:{{ o.op }};display:flex;align-items:center;justify-content:space-between;padding:0 18px;font:700 16px/1 Onest;text-align:left;animation:{{ o.anim }};transition:background .2s,box-shadow .15s,transform .15s">
+          <span style="text-decoration:{{ o.td }};text-decoration-thickness:2px">{{ o.t }}</span>
+          <sc-if value="{{ o.v }}" hint-placeholder-val="{{ false }}"><svg width="18" height="15" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="currentColor"></polygon></svg></sc-if>
+          <sc-if value="{{ o.x }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 20 20"><polygon points="3,0 10,7 17,0 20,3 13,10 20,17 17,20 10,13 3,20 0,17 7,10 0,3" fill="currentColor"></polygon></svg></sc-if>
+        </button>
+      </sc-for>
     </div>
-    <span style="font:800 15px/1 Unbounded,sans-serif;color:#FF3B2F">Влучно!</span>
+    <span style="min-height:15px;font:800 15px/1 Unbounded,sans-serif;color:{{ qqMsgC }}">{{ qqMsg }}</span>
   </div>
 </div>
 </sc-if>
 
 <sc-if value="{{ is_f4 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <div style="position:relative;height:380px;border-radius:28px 28px 0 0;background:#FF3B2F;color:#140C0A;clip-path:polygon(0 0,100% 0,100% 90%,0 100%);overflow:hidden;padding:24px 22px;display:flex;flex-direction:column;gap:12px;animation:slCasc .4s .05s both">
+<div style="position:absolute;inset:0;padding:104px 12px 96px;display:flex;flex-direction:column">
+  <div style="position:relative;flex:1;border-radius:28px;background:#FF3B2F;color:#140C0A;overflow:hidden;padding:26px 22px 22px;display:flex;flex-direction:column;animation:fgIn .7s cubic-bezier(.2,.9,.25,1) both">
     <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
-    <div style="position:absolute;right:-10px;top:-60px;font:900 380px/1 Unbounded,sans-serif;color:#FFF4E6">3</div>
-    <span style="position:relative;font:800 12px/1 Unbounded,sans-serif;letter-spacing:2px">ДЕННА ЦІЛЬ</span>
-    <span style="position:relative;font:900 38px/.98 Unbounded,sans-serif;letter-spacing:-1.5px;width:240px">Ціль дня виконано! Завтра нова — і серія росте.</span>
-    <div style="position:relative;display:flex;align-items:center;gap:10px;width:220px"><div style="flex:1;height:12px;background:rgba(20,12,10,.2);transform:skewX(-20deg)"><div style="height:100%;background:#140C0A;transform-origin:left;animation:slGrow .8s .4s cubic-bezier(.2,.8,.2,1) both"></div></div><span style="font:800 13px/1 Unbounded,sans-serif">3/3 слова</span></div>
-    <div style="position:absolute;left:18px;bottom:44px"><dc-import name="Rupor" state="celebrate" on-red="{{ true }}" size="{{ 130 }}" hint-size="130px,98px"></dc-import></div>
-    <button style="position:absolute;right:20px;bottom:56px;height:54px;padding:0 22px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ГОРТАТИ ДАЛІ</button>
-  </div>
-  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:18px 20px;display:flex;flex-direction:column;gap:6px;animation:slCasc .4s .3s both;opacity:.7">
-    <span style="font:600 12px/1 Onest;color:var(--mute)">Наступна картка</span><span style="font:800 20px/1.1 Unbounded,sans-serif">Лелітка</span>
+    <div style="position:absolute;left:-40px;right:-40px;bottom:-60px;height:300px;background:#C4271D;transform:rotate(-9deg);transform-origin:left top;animation:fgBand .8s .25s cubic-bezier(.2,.9,.25,1) both"></div>
+    <span style="position:absolute;left:50%;top:44%;width:22px;height:12px;background:#FFF4E6;clip-path:polygon(0 0,100% 30%,70% 100%);--bx:-150px;--by:-120px;--br:-180deg;animation:fgShard .9s 0.55s cubic-bezier(.15,.8,.3,1) both;pointer-events:none"></span><span style="position:absolute;left:50%;top:44%;width:14px;height:22px;background:#FFF4E6;clip-path:polygon(0 0,100% 30%,70% 100%);--bx:140px;--by:-140px;--br:150deg;animation:fgShard .9s 0.58s cubic-bezier(.15,.8,.3,1) both;pointer-events:none"></span><span style="position:absolute;left:50%;top:44%;width:22px;height:12px;background:#FFF4E6;clip-path:polygon(0 0,100% 30%,70% 100%);--bx:170px;--by:30px;--br:360deg;animation:fgShard .9s 0.61s cubic-bezier(.15,.8,.3,1) both;pointer-events:none"></span><span style="position:absolute;left:50%;top:44%;width:14px;height:22px;background:#FFF4E6;clip-path:polygon(0 0,100% 30%,70% 100%);--bx:-170px;--by:40px;--br:-300deg;animation:fgShard .9s 0.64s cubic-bezier(.15,.8,.3,1) both;pointer-events:none"></span><span style="position:absolute;left:50%;top:44%;width:22px;height:12px;background:#FFF4E6;clip-path:polygon(0 0,100% 30%,70% 100%);--bx:-60px;--by:-190px;--br:60deg;animation:fgShard .9s 0.67s cubic-bezier(.15,.8,.3,1) both;pointer-events:none"></span><span style="position:absolute;left:50%;top:44%;width:14px;height:22px;background:#FFF4E6;clip-path:polygon(0 0,100% 30%,70% 100%);--bx:90px;--by:-200px;--br:-90deg;animation:fgShard .9s 0.70s cubic-bezier(.15,.8,.3,1) both;pointer-events:none"></span>
+    <div style="position:relative;display:flex;align-items:center;justify-content:space-between;animation:slCasc .4s .3s both">
+      <span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:2px">ДЕННА ЦІЛЬ</span>
+      <span style="padding:7px 10px;background:#140C0A;color:#FFF4E6;font:800 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:skewX(-10deg)">{{ gChip }}</span>
+    </div>
+    <span style="position:relative;margin-top:22px;font:900 44px/.96 Unbounded,sans-serif;letter-spacing:-1.8px;text-transform:uppercase;transform-origin:left center;animation:fgTitle .6s .4s cubic-bezier(.3,1.4,.5,1) both">Ціль дня<br>виконано!</span>
+    <span style="position:relative;margin-top:14px;font:600 17px/1.35 Onest;max-width:260px;text-wrap:pretty;animation:slCasc .4s .6s both">Завтра нова — і серія росте.</span>
+    <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:22px">
+      <span style="font:800 11px/1 Unbounded,sans-serif;letter-spacing:1.5px;animation:slCasc .4s .7s both">СЬОГОДНІ ВИ ЗІБРАЛИ</span>
+      <sc-for list="{{ gWords }}" as="w" hint-placeholder-count="3">
+        <span style="margin-left:{{ w.ml }};padding:10px 16px;background:{{ w.bg }};color:{{ w.fg }};box-shadow:0 4px 0 rgba(20,12,10,.35);font:900 20px/1 Unbounded,sans-serif;letter-spacing:-.4px;transform:rotate({{ w.r }});clip-path:polygon(0 0,100% 6%,98% 100%,2% 94%);animation:{{ w.anim }};--r:{{ w.r }}">{{ w.t }}</span>
+      </sc-for>
+    </div>
+    <div style="flex:1"></div>
+    <div style="position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+      <div style="flex:none;animation:fgMascot .7s 1.2s cubic-bezier(.3,1.5,.5,1) both"><dc-import name="Rupor" state="celebrate" on-red="{{ true }}" size="{{ 150 }}" hint-size="150px,113px"></dc-import></div>
+      <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-bottom:6px;animation:slCasc .4s 1.35s both">
+        <span style="display:flex;align-items:center;gap:8px;color:#FFF4E6"><svg width="26" height="32" viewBox="0 0 20 26"><path d="M10 0c1 5 7 8 7 15a7 7 0 0 1-14 0c0-4 2-6 4-8 0 3 1 4 3 5-1-4 0-8 0-12z" fill="currentColor"></path></svg><span style="font:900 44px/1 Unbounded,sans-serif">24</span></span>
+        <span style="font:800 11px/1.2 Unbounded,sans-serif;letter-spacing:1.5px;color:#FFF4E6;text-align:right">ДНІ ПОСПІЛЬ</span>
+      </div>
+    </div>
+    <button onClick="{{ f4Next }}" style="position:relative;margin-top:16px;height:60px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;animation:slCasc .4s 1.5s both" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(20,12,10,.45)">ГОРТАТИ ДАЛІ<svg width="14" height="18" viewBox="0 0 14 18"><polygon points="7,0 14,7 10,7 10,18 4,18 4,7 0,7" fill="currentColor"></polygon></svg></button>
   </div>
 </div>
 </sc-if>
 
 <sc-if value="{{ is_f5 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:16px;animation:slCasc .4s .1s both">
+  <sc-if value="{{ wkOn }}" hint-placeholder-val="{{ true }}">
+  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:16px;animation:{{ wkAnim }};transform-origin:top center">
     <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:900 22px/1 Unbounded,sans-serif">Твій тиждень</span><span style="font:500 13px/1 Onest;color:var(--mute)">26.10–1.11</span></div>
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
       <div style="padding:12px 10px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:6px;animation:slPop .35s .2s both"><span style="font:900 24px/1 Unbounded,sans-serif">48</span><span style="font:500 12px/1.2 Onest;color:var(--mute)">переглянуто</span></div>
@@ -129,104 +167,149 @@
       <div style="padding:12px 10px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:6px;animation:slPop .35s .44s both"><span style="font:900 24px/1 Unbounded,sans-serif">340</span><span style="font:500 12px/1.2 Onest;color:var(--mute)">XP</span></div>
       <div style="padding:12px 10px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:6px;animation:slPop .35s .5s both"><span style="font:900 24px/1 Unbounded,sans-serif">5/7</span><span style="font:500 12px/1.2 Onest;color:var(--mute)">ціль виконано</span></div>
     </div>
-    <button style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОТОВО</button>
+    <button onClick="{{ wkDone }}" style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.35)">ГОТОВО</button>
   </div>
-  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:slCasc .4s .25s both">
+  </sc-if>
+  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:{{ ywAnim }}">
     <span style="font:900 19px/1.15 Unbounded,sans-serif">Пам’ятаєш учорашнє слово?</span>
     <span style="font:800 26px/1 Unbounded,sans-serif;color:#FF3B2F">Оболонь</span>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <div style="height:50px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 16px;font:600 15px/1 Onest">низький луг біля річки</div>
-      <div style="height:50px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 16px;font:600 15px/1 Onest">хмара перед грозою</div>
-      <div style="height:50px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;align-items:center;padding:0 16px;font:600 15px/1 Onest">старовинна монета</div>
+      <sc-for list="{{ ywOpts }}" as="o" hint-placeholder-count="3">
+        <button onClick="{{ o.onClick }}" style="height:50px;border-radius:14px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};border:{{ o.bd }};transform:{{ o.tf }};opacity:{{ o.op }};display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 16px;font:600 15px/1 Onest;text-align:left;animation:{{ o.anim }};transition:background .2s,box-shadow .12s,transform .12s">
+          <span style="text-decoration:{{ o.td }};text-decoration-thickness:2px">{{ o.t }}</span>
+          <sc-if value="{{ o.v }}" hint-placeholder-val="{{ false }}"><svg width="16" height="14" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="currentColor"></polygon></svg></sc-if>
+          <sc-if value="{{ o.x }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 20 20"><polygon points="3,0 10,7 17,0 20,3 13,10 20,17 17,20 10,13 3,20 0,17 7,10 0,3" fill="currentColor"></polygon></svg></sc-if>
+        </button>
+      </sc-for>
     </div>
+    <span style="min-height:15px;font:800 15px/1 Unbounded,sans-serif;color:{{ ywMsgC }}">{{ ywMsg }}</span>
   </div>
+  <sc-if value="{{ wkToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:12px;right:12px;bottom:100px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:16px;background:#140C0A;color:#FFF4E6;animation:slToast .4s cubic-bezier(.2,.9,.3,1) both"><span style="font:600 14px/1.3 Onest">Підсумок прийде знову в неділю.</span><button onClick="{{ wkBack }}" style="flex:none;font:800 12px/1 Unbounded,sans-serif;color:#FF3B2F">ПОВЕРНУТИ</button></div>
+  </sc-if>
 </div>
 </sc-if>
 
 <sc-if value="{{ is_f6 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <div style="border-radius:24px;background:var(--sf2);padding:24px 20px 20px;display:flex;flex-direction:column;gap:14px;animation:slCasc .4s .1s both">
-    <dc-import name="Rupor" state="sleep" size="{{ 110 }}" hint-size="110px,83px"></dc-import>
+  <sc-if value="{{ mdOn }}" hint-placeholder-val="{{ true }}">
+  <div style="border-radius:24px;background:var(--sf2);padding:24px 20px 20px;display:flex;flex-direction:column;gap:14px;animation:{{ mdAnim }};transform-origin:top center">
+    <dc-import name="Rupor" state="{{ mdM }}" size="{{ 110 }}" hint-size="110px,83px"></dc-import>
     <span style="font:900 24px/1.1 Unbounded,sans-serif">Може, на сьогодні досить?</span>
     <span style="font:400 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">Уже 40 карток позаду. Рідкісні слова краще засвоюються невеликими порціями.</span>
-    <button style="height:54px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ЩЕ ОДНЕ СЛОВО</button>
+    <button onClick="{{ mdMore }}" style="height:54px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(3px);box-shadow:0 1px 0 var(--edge)">ЩЕ ОДНЕ СЛОВО</button>
   </div>
-  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:12px;animation:slCasc .4s .25s both">
+  </sc-if>
+  <sc-if value="{{ ntOn }}" hint-placeholder-val="{{ true }}">
+  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:12px;animation:{{ ntAnim }};transform-origin:top center">
     <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:40px;height:40px;border-radius:11px;background:#FF3B2F;display:flex;align-items:center;justify-content:center;overflow:hidden"><svg width="100%" height="100%" viewBox="0 0 100 100" style="display:block;flex:none"><polygon points="10,27 90,9 90,91 10,73" fill="#140C0A"></polygon><path d="M65.5,40 C65.5,33.5 59.5,30.5 52.5,30.5 C45.5,30.5 40,33.5 40,39.5 C40,46 47,47.2 53,48.8 C59.5,50.5 66,52.5 66,59.8 C66,66.5 60,69.5 52.5,69.5 C44.5,69.5 39,66.2 39,59.5" fill="none" stroke="#FF3B2F" stroke-width="11.5" stroke-linecap="butt"></path></svg></span><span style="font:900 19px/1.15 Unbounded,sans-serif">Слово дня само прийде</span></div>
     <span style="font:400 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">Зранку слово дня, увечері коротке нагадування. Не більше двох сповіщень на день.</span>
+    <sc-if value="{{ ntAsk }}" hint-placeholder-val="{{ true }}">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button style="height:52px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ПІЗНІШЕ</button>
-      <button style="height:52px;border-radius:14px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ВІДКРИТИ</button>
+      <button onClick="{{ ntLater }}" style="height:52px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(3px);box-shadow:0 1px 0 var(--edge)">ПІЗНІШЕ</button>
+      <button onClick="{{ ntOpen }}" style="height:52px;border-radius:14px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(3px);box-shadow:0 1px 0 #C4271D">ВІДКРИТИ</button>
     </div>
+    </sc-if>
+    <sc-if value="{{ ntYes }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:#FF3B2F;color:#140C0A;animation:slPop .4s both"><svg width="20" height="17" viewBox="0 0 26 22" style="flex:none"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="currentColor"></polygon></svg><span style="display:flex;flex-direction:column;gap:3px"><span style="font:900 14px/1.1 Unbounded,sans-serif">Сповіщення увімкнено</span><span style="font:600 13px/1.2 Onest">Слово дня о 09:00 · нагадування о 19:00</span></span></div>
+    </sc-if>
   </div>
+  </sc-if>
+  <sc-if value="{{ ntSys }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;background:rgba(20,12,10,.45);display:flex;align-items:center;justify-content:center;animation:slFade .25s both">
+      <div style="width:270px;border-radius:16px;background:rgba(245,240,234,.96);color:#140C0A;overflow:hidden;text-align:center;font-family:-apple-system,system-ui,sans-serif;animation:ntPop .3s cubic-bezier(.2,1.2,.4,1) both">
+        <div style="padding:20px 16px 16px;display:flex;flex-direction:column;gap:6px"><span style="font:600 17px/1.25 -apple-system,system-ui,sans-serif">«SLOVO» хоче надсилати вам сповіщення</span><span style="font:400 13px/1.35 -apple-system,system-ui,sans-serif">Сповіщення можуть містити повідомлення, звуки та позначки на значках.</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-top:.5px solid rgba(60,60,67,.3)">
+          <button onClick="{{ ntDeny }}" style="height:44px;font:400 17px/1 -apple-system,system-ui,sans-serif;color:#007AFF;border-right:.5px solid rgba(60,60,67,.3)">Не дозволяти</button>
+          <button onClick="{{ ntAllow }}" style="height:44px;font:600 17px/1 -apple-system,system-ui,sans-serif;color:#007AFF">Дозволити</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ f6Toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:12px;right:12px;bottom:100px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:16px;background:#140C0A;color:#FFF4E6;animation:slToast .4s cubic-bezier(.2,.9,.3,1) both"><span style="font:600 14px/1.3 Onest">{{ f6Toast }}</span><button onClick="{{ f6Back }}" style="flex:none;font:800 12px/1 Unbounded,sans-serif;color:#FF3B2F">ПОВЕРНУТИ</button></div>
+  </sc-if>
 </div>
 </sc-if>
 
 <sc-if value="{{ is_f7 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <div style="position:relative;border-radius:24px;background:var(--ink);color:var(--bg);padding:22px 20px;overflow:hidden;display:flex;flex-direction:column;gap:10px;animation:slCasc .4s .1s both">
+  <sc-if value="{{ d7a.on }}" hint-placeholder-val="{{ true }}">
+  <div style="position:relative;border-radius:24px;background:var(--ink);color:var(--bg);padding:22px 20px;overflow:hidden;display:flex;flex-direction:column;gap:10px;animation:{{ d7a.anim }};transform-origin:top center">
     <div style="position:absolute;right:-20px;top:-50px;font:900 200px/1 Unbounded,sans-serif;color:#FF3B2F;animation:slPop .5s .2s both">3</div>
     <span style="position:relative;font:800 12px/1 Unbounded,sans-serif;letter-spacing:2px;opacity:.7">НОВИЙ РІВЕНЬ</span>
     <span style="position:relative;font:900 26px/1.05 Unbounded,sans-serif;width:220px">Рівень 3 — Знавець</span>
     <span style="position:relative;font:400 15px/1.4 Onest;opacity:.8;width:230px">Новий рівень! Так тримати.</span>
-    <button style="position:relative;align-self:flex-start;height:48px;padding:0 20px;border-radius:14px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ГОТОВО</button>
+    <button onClick="{{ d7a.close }}" style="position:relative;align-self:flex-start;height:48px;padding:0 20px;border-radius:14px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ГОТОВО</button>
   </div>
-  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:slCasc .4s .25s both">
+  </sc-if>
+  <sc-if value="{{ d7b.on }}" hint-placeholder-val="{{ true }}">
+  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:{{ d7b.anim }};transform-origin:top center">
     <span style="font:900 20px/1.1 Unbounded,sans-serif">Твоя денна ціль</span>
     <span style="font:400 15px/1.45 Onest;color:var(--mute)">Ціль тримає серію: виконаєш її — день зараховано. Обери свою.</span>
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
-      <div style="height:64px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font:900 20px/1 Unbounded,sans-serif">1</span><span style="font:500 11px/1 Onest;color:var(--mute)">слово</span></div>
-      <div style="height:64px;border-radius:14px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;animation:slPop .35s .4s both"><span style="font:900 20px/1 Unbounded,sans-serif">3</span><span style="font:600 11px/1 Onest">слова</span></div>
-      <div style="height:64px;border-radius:14px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font:900 20px/1 Unbounded,sans-serif">5</span><span style="font:500 11px/1 Onest;color:var(--mute)">слів</span></div>
+      <sc-for list="{{ goalOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="height:64px;border-radius:14px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};border:{{ o.bd }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;animation:{{ o.anim }};transition:background .2s,box-shadow .15s"><span style="font:900 20px/1 Unbounded,sans-serif">{{ o.n }}</span><span style="font:600 11px/1 Onest">{{ o.l }}</span></button></sc-for>
     </div>
-    <button style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОТОВО</button>
+    <button onClick="{{ d7b.close }}" style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(3px);box-shadow:none">ГОТОВО</button>
   </div>
+  </sc-if>
 </div>
 </sc-if>
 
 <sc-if value="{{ is_f8 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:slCasc .4s .1s both">
+  <sc-if value="{{ d8a.on }}" hint-placeholder-val="{{ true }}">
+  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;animation:{{ d8a.anim }};transform-origin:top center">
     <span style="font:900 20px/1.1 Unbounded,sans-serif">Що тобі цікаво?</span>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">
-      <span style="padding:12px 14px;border-radius:12px;background:var(--ink);color:var(--bg);font:600 14px/1 Onest">Навчаюсь</span>
-      <span style="padding:12px 14px;border-radius:12px;background:var(--sf2);font:600 14px/1 Onest">Працюю</span>
-      <span style="padding:12px 14px;border-radius:12px;background:var(--sf2);font:600 14px/1 Onest">Мовний гурман</span>
-    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ who }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="padding:12px 14px;border-radius:12px;background:{{ c.bg }};color:{{ c.fg }};font:600 14px/1 Onest;animation:{{ c.anim }};transition:background .2s">{{ c.t }}</button></sc-for></div>
     <div style="height:1px;background:var(--line)"></div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">
-      <span style="padding:12px 14px;border-radius:12px;background:var(--sf2);font:600 14px/1 Onest">Писати без помилок</span>
-      <span style="padding:12px 14px;border-radius:12px;background:#FF3B2F;color:#140C0A;font:600 14px/1 Onest;animation:slPop .3s .4s both">Знати рідкісні слова</span>
-      <span style="padding:12px 14px;border-radius:12px;background:var(--sf2);font:600 14px/1 Onest">Грати зі словами</span>
-    </div>
-    <button style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОТОВО</button>
+    <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ why }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="padding:12px 14px;border-radius:12px;background:{{ c.bg }};color:{{ c.fg }};font:600 14px/1 Onest;animation:{{ c.anim }};transition:background .2s">{{ c.t }}</button></sc-for></div>
+    <button onClick="{{ d8a.close }}" style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(3px);box-shadow:none">ГОТОВО</button>
   </div>
+  </sc-if>
   <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:12px;animation:slCasc .4s .25s both">
     <span style="font:900 20px/1.1 Unbounded,sans-serif">Який у тебе словниковий запас?</span>
-    <div style="display:flex;flex-direction:column;border-radius:14px;border:1px solid var(--line);overflow:hidden">
-      <div style="display:flex;align-items:center;gap:12px;padding:15px 14px;font:600 15px/1.2 Onest"><span style="flex:none;width:22px;height:22px;border-radius:50%;border:2.5px solid var(--mute)"></span>Поки небагато</div>
-      <div style="display:flex;align-items:center;gap:12px;padding:15px 14px;border-top:1px solid var(--line);font:600 15px/1.2 Onest;background:var(--sf2)"><span style="flex:none;width:22px;height:22px;border-radius:50%;border:7px solid #FF3B2F"></span>Знаю чимало</div>
-    </div>
+    <div style="display:flex;flex-direction:column;border-radius:14px;border:1px solid var(--line);overflow:hidden"><sc-for list="{{ vocab }}" as="r" hint-placeholder-count="2"><button onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:12px;padding:15px 14px;border-top:{{ r.bt }};font:600 15px/1.2 Onest;background:{{ r.bg }};text-align:left;width:100%;transition:background .2s"><span style="flex:none;width:22px;height:22px;border-radius:50%;border:{{ r.ring }};transition:border .2s"></span>{{ r.t }}</button></sc-for></div>
   </div>
 </div>
 </sc-if>
 
 <sc-if value="{{ is_f9 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:12px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <div style="border-radius:22px;background:var(--sf);border:1px solid var(--line);padding:18px 20px;display:flex;align-items:center;gap:14px;animation:slCasc .4s .1s both">
+  <sc-if value="{{ d9a.on }}" hint-placeholder-val="{{ true }}">
+  <div style="border-radius:22px;background:var(--sf);border:1px solid var(--line);padding:18px 20px;display:flex;align-items:center;gap:14px;animation:{{ d9a.anim }};transform-origin:top center">
     <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 17px/1.15 Unbounded,sans-serif">Перевір свій рівень</span><span style="font:400 14px/1.35 Onest;color:var(--mute)">10 слів, хвилина, лише «Знаю» чи «Не знаю» — і Стрічка підбере рідкість саме для тебе.</span></div>
-    <button style="flex:none;height:46px;padding:0 16px;border-radius:13px;background:var(--ink);color:var(--bg);font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ЗАРАЗ</button>
+    <button onClick="{{ d9a.close }}" style="flex:none;height:46px;padding:0 16px;border-radius:13px;background:var(--ink);color:var(--bg);font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center" style-active="transform:scale(.94)">ЗАРАЗ</button>
   </div>
-  <div style="border-radius:22px;background:var(--sf);border:1px solid var(--line);padding:18px 20px;display:flex;align-items:center;gap:14px;animation:slCasc .4s .2s both">
+  </sc-if>
+  <sc-if value="{{ d9b.on }}" hint-placeholder-val="{{ true }}">
+  <div style="border-radius:22px;background:var(--sf);border:1px solid var(--line);padding:18px 20px;display:flex;align-items:center;gap:14px;animation:{{ d9b.anim }};transform-origin:top center">
     <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 17px/1.15 Unbounded,sans-serif">Переглянь свій Мікс</span><span style="font:400 14px/1.35 Onest;color:var(--mute)">Налаштуй, що показувати у Стрічці: категорії слів, Виправлення, Фразеологізми, Синонімічні ряди, Поради.</span></div>
-    <button style="flex:none;height:46px;padding:0 16px;border-radius:13px;background:var(--ink);color:var(--bg);font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ЗАРАЗ</button>
+    <button onClick="{{ d9b.close }}" style="flex:none;height:46px;padding:0 16px;border-radius:13px;background:var(--ink);color:var(--bg);font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center" style-active="transform:scale(.94)">ЗАРАЗ</button>
   </div>
-  <div style="border-radius:24px;background:#FF3B2F;color:#140C0A;padding:22px 20px;display:flex;flex-direction:column;gap:12px;animation:slCasc .4s .3s both">
+  </sc-if>
+  <sc-if value="{{ d9c.on }}" hint-placeholder-val="{{ true }}">
+  <div style="border-radius:24px;background:#FF3B2F;color:#140C0A;padding:22px 20px;display:flex;flex-direction:column;gap:12px;animation:{{ d9c.anim }};transform-origin:top center">
     <span style="font:900 22px/1.1 Unbounded,sans-serif">Збережи свій прогрес</span>
     <span style="font:500 15px/1.45 Onest;text-wrap:pretty">Увійди, щоб серія, рівень і збережені слова не загубилися, якщо зміниш телефон.</span>
-    <button style="height:56px;border-radius:15px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ЗБЕРЕГТИ ПРОГРЕС</button>
-    <button style="height:40px;font:700 14px/1 Onest;display:flex;align-items:center;justify-content:center">Пізніше</button>
+    <sc-if value="{{ svAsk }}" hint-placeholder-val="{{ true }}">
+    <button onClick="{{ svOpen }}" style="height:56px;border-radius:15px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(20,12,10,.45)">ЗБЕРЕГТИ ПРОГРЕС</button>
+    <button onClick="{{ d9c.close }}" style="height:40px;font:700 14px/1 Onest;display:flex;align-items:center;justify-content:center">Пізніше</button>
+    </sc-if>
+    <sc-if value="{{ svDone }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:#140C0A;color:#FFF4E6;animation:slPop .4s both"><svg width="20" height="17" viewBox="0 0 26 22" style="flex:none"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#FF3B2F"></polygon></svg><span style="display:flex;flex-direction:column;gap:3px"><span style="font:900 14px/1.1 Unbounded,sans-serif">Ви увійшли як</span><span style="font:600 13px/1.2 Onest;opacity:.8">{{ svWho }}</span></span></div>
+    </sc-if>
   </div>
+  </sc-if>
+  <sc-if value="{{ svSheet }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ svClose }}" style="position:absolute;inset:0;z-index:80;background:rgba(20,12,10,.55);animation:slFade .25s both"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;z-index:81;padding:62px 16px 34px;background:var(--sf);clip-path:polygon(0 30px,100% 0,100% 100%,0 100%);animation:slSheet .45s cubic-bezier(.2,.9,.3,1) both;display:flex;flex-direction:column;gap:10px">
+    <div style="position:absolute;left:18px;top:30px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 18px/1 Unbounded,sans-serif;transform:rotate(-4.4deg);transform-origin:left">ЗБЕРЕГТИ ПРОГРЕС</div>
+    <div style="height:10px"></div>
+    <sc-for list="{{ svWays }}" as="w" hint-placeholder-count="3"><button onClick="{{ w.onClick }}" style="height:56px;border-radius:16px;background:{{ w.bg }};color:{{ w.fg }};box-shadow:{{ w.sh }};border:{{ w.bd }};font:800 14px/1 Onest;display:flex;align-items:center;justify-content:center;transition:transform .08s" style-active="transform:translateY(3px)">{{ w.t }}</button></sc-for>
+    <button onClick="{{ svClose }}" style="height:56px;border-radius:16px;font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">СКАСУВАТИ</button>
+  </div>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -244,7 +327,7 @@
     <span style="font:900 30px/1 Unbounded,sans-serif;letter-spacing:-.5px">Лелітка</span>
     <span style="font:500 16px/1.4 Onest">Блискітка, що мерехтить на світлі.</span>
     <div style="display:flex;gap:16px;font:600 13px/1 Onest;color:var(--mute)"><span>«Знаю» — 412 з 3 910 читачів</span><span>до Улюбленого додали 1 208 читачів</span></div>
-    <button style="height:50px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ВІДКРИТИ</button>
+    <button onClick="{{ f10Open }}" style="height:50px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 13px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(3px);box-shadow:none">ВІДКРИТИ</button>
   </div>
 </div>
 </sc-if>
@@ -283,44 +366,51 @@
 </sc-if>
 
 <sc-if value="{{ is_w2 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;z-index:80;background:rgba(20,12,10,.55);animation:slFade .25s both"></div>
-<div style="position:absolute;left:0;right:0;bottom:0;z-index:81;padding:62px 16px 34px;background:var(--sf);clip-path:polygon(0 30px,100% 0,100% 100%,0 100%);animation:slSheet .45s cubic-bezier(.2,.9,.3,1) both;display:flex;flex-direction:column;gap:12px">
+<sc-if value="{{ shIsOpen }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ shCancel }}" style="position:absolute;inset:0;z-index:80;background:rgba(20,12,10,.55);animation:{{ shDim }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:81;padding:62px 16px 34px;background:var(--sf);clip-path:polygon(0 30px,100% 0,100% 100%,0 100%);animation:{{ shAnim }};display:flex;flex-direction:column;gap:12px">
   <div style="position:absolute;left:18px;top:30px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 18px/1 Unbounded,sans-serif;transform:rotate(-4.4deg);transform-origin:left">НЕ ПОКАЗУВАТИ</div>
   <div style="height:12px"></div>
   <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden">
-    <div style="padding:16px;font:600 15px/1.2 Onest">Не показувати цей запис</div>
-    <div style="padding:16px;border-top:1px solid var(--line);font:600 15px/1.2 Onest">Не показувати категорію «Природа»</div>
-    <div style="padding:16px;border-top:1px solid var(--line);font:600 15px/1.2 Onest">Не показувати Виправлення</div>
-    <div style="padding:16px;border-top:1px solid var(--line);font:600 15px/1.2 Onest">Не показувати Фразеологізми</div>
-    <div style="padding:16px;border-top:1px solid var(--line);font:600 15px/1.2 Onest">Не показувати Синонімічні ряди</div>
-    <div style="padding:16px;border-top:1px solid var(--line);font:600 15px/1.2 Onest">Не показувати Поради</div>
+    <sc-for list="{{ hideRows }}" as="r" hint-placeholder-count="6"><button onClick="{{ r.onClick }}" style="padding:16px;border-top:{{ r.bt }};font:600 15px/1.2 Onest;text-align:left;width:100%" style-active="background:var(--sf2)">{{ r.t }}</button></sc-for>
   </div>
-  <button style="height:60px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">СКАСУВАТИ</button>
+  <button onClick="{{ shCancel }}" style="height:60px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--edge)">СКАСУВАТИ</button>
 </div>
+</sc-if>
+<sc-if value="{{ shClosed }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ shOpen }}" style="position:absolute;left:50%;top:50%;z-index:20;transform:translate(-50%,-50%);height:52px;padding:0 20px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 13px/1 Unbounded,sans-serif;animation:slFade .3s both">НЕ ПОКАЗУВАТИ…</button>
+</sc-if>
 </sc-if>
 
 <sc-if value="{{ is_w3 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;left:14px;right:14px;bottom:40px;z-index:70;display:flex;align-items:center;gap:12px;padding:12px 12px 12px 14px;background:var(--ink);color:var(--bg);clip-path:polygon(0 0,100% 0,97% 100%,0 100%);border-radius:14px 0 0 14px;animation:slToast .35s cubic-bezier(.2,.9,.3,1.1) both">
+<sc-if value="{{ shIsOpen }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:14px;right:14px;bottom:40px;z-index:70;display:flex;align-items:center;gap:12px;padding:12px 12px 12px 14px;background:var(--ink);color:var(--bg);clip-path:polygon(0 0,100% 0,97% 100%,0 100%);border-radius:14px 0 0 14px;animation:{{ tsAnim }}">
   <span style="flex:none;width:12px;height:22px;background:#FF3B2F;clip-path:polygon(0 0,100% 25%,100% 100%,0 75%)"></span>
   <span style="flex:1;font:600 14px/1.35 Onest;min-width:0">Фразеологізми приховано</span>
-  <button style="flex:none;height:38px;padding:0 18px 0 12px;border-radius:10px;background:#FF3B2F;color:#140C0A;font:800 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">СКАСУВАТИ</button>
+  <button onClick="{{ shCancel }}" style="flex:none;height:38px;padding:0 18px 0 12px;border-radius:10px;background:#FF3B2F;color:#140C0A;font:800 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">СКАСУВАТИ</button>
 </div>
+</sc-if>
+<sc-if value="{{ shClosed }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ shOpen }}" style="position:absolute;left:50%;top:50%;z-index:20;transform:translate(-50%,-50%);height:52px;padding:0 20px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 13px/1 Unbounded,sans-serif;animation:slFade .3s both">ПОКАЗАТИ ТОСТ ЗНОВУ</button>
+</sc-if>
 </sc-if>
 
 <sc-if value="{{ is_w4 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;z-index:80;background:rgba(20,12,10,.55);animation:slFade .25s both"></div>
-<div style="position:absolute;left:0;right:0;bottom:0;z-index:81;padding:62px 18px 34px;background:var(--sf);clip-path:polygon(0 30px,100% 0,100% 100%,0 100%);animation:slSheet .45s cubic-bezier(.2,.9,.3,1) both;display:flex;flex-direction:column;gap:14px">
+<sc-if value="{{ shIsOpen }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ shCancel }}" style="position:absolute;inset:0;z-index:80;background:rgba(20,12,10,.55);animation:{{ shDim }}"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:81;padding:62px 18px 34px;background:var(--sf);clip-path:polygon(0 30px,100% 0,100% 100%,0 100%);animation:{{ shAnim }};display:flex;flex-direction:column;gap:14px">
   <div style="position:absolute;left:18px;top:30px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 17px/1 Unbounded,sans-serif;transform:rotate(-4.4deg);transform-origin:left">ПОВІДОМИТИ ПРО ПОМИЛКУ</div>
   <div style="height:12px"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-    <span style="height:48px;border-radius:12px;background:var(--sf2);display:flex;align-items:center;justify-content:center;font:600 14px/1 Onest">Друкарська помилка</span>
-    <span style="height:48px;border-radius:12px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;font:600 14px/1 Onest">Наголос</span>
-    <span style="height:48px;border-radius:12px;background:var(--sf2);display:flex;align-items:center;justify-content:center;font:600 14px/1 Onest">Визначення</span>
-    <span style="height:48px;border-radius:12px;background:var(--sf2);display:flex;align-items:center;justify-content:center;font:600 14px/1 Onest">Інше</span>
+    <sc-for list="{{ repOpts }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.onClick }}" style="height:48px;border-radius:12px;background:{{ o.bg }};color:{{ o.fg }};display:flex;align-items:center;justify-content:center;font:600 14px/1 Onest;transition:background .2s">{{ o.t }}</button></sc-for>
   </div>
   <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px/1 Onest;color:var(--mute)">Коментар (необов’язково)</span><div style="height:92px;border-radius:14px;border:2px solid var(--line);background:var(--bg);padding:12px 14px;font:400 15px/1.4 Onest">Наголос на другому складі<span style="display:inline-block;width:2px;height:18px;background:#FF3B2F;vertical-align:-3px;margin-left:1px"></span></div></div>
-  <button style="height:60px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">НАДІСЛАТИ</button>
+  <button onClick="{{ repSend }}" style="height:60px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px)">НАДІСЛАТИ</button>
 </div>
+</sc-if>
+<sc-if value="{{ shClosed }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ shOpen }}" style="position:absolute;left:50%;top:50%;z-index:20;transform:translate(-50%,-50%);height:52px;padding:0 20px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 13px/1 Unbounded,sans-serif;animation:slFade .3s both">ПОВІДОМИТИ ПРО ПОМИЛКУ</button>
+</sc-if>
 </sc-if>
 
 <sc-if value="{{ is_w5 }}" hint-placeholder-val="{{ false }}">
@@ -328,6 +418,10 @@
   <svg width="18" height="15" viewBox="0 0 26 22" style="flex:none"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#FF3B2F"></polygon></svg>
   <span style="font:600 14px/1.35 Onest">Дякуємо! Ми перевіримо.</span>
 </div>
+</sc-if>
+
+<sc-if value="{{ gtOn }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:12px;right:12px;bottom:{{ gtBottom }};z-index:90;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:16px;background:#140C0A;color:#FFF4E6;animation:slToast .4s cubic-bezier(.2,.9,.3,1) both"><span style="font:600 14px/1.3 Onest">{{ gtText }}</span><button onClick="{{ gtBack }}" style="flex:none;font:800 12px/1 Unbounded,sans-serif;color:#FF3B2F">{{ gtBtn }}</button></div>
 </sc-if>
 
 <sc-if value="{{ showTabs }}" hint-placeholder-val="{{ true }}">
@@ -342,24 +436,105 @@
 </div>
 </sc-if>
 
+<sc-if value="{{ notBare }}" hint-placeholder-val="{{ true }}">
 <div style="position:absolute;top:0;left:0;right:0;height:50px;z-index:99;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 44px;pointer-events:none;color:{{ sbc }}">
   <span style="font:600 16px/1 Onest,sans-serif">20:30</span>
   <div style="display:flex;align-items:center;gap:6px"><svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" fill="currentColor"></rect><rect x="5" y="5.5" width="3" height="6.5" fill="currentColor"></rect><rect x="10" y="3" width="3" height="9" fill="currentColor"></rect><rect x="15" y="0" width="3" height="12" fill="currentColor"></rect></svg><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".75" y=".75" width="21.5" height="10.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"></rect><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="currentColor"></rect></svg></div>
 </div>
 <div style="position:absolute;top:11px;left:50%;margin-left:-62px;width:124px;height:36px;border-radius:20px;background:#000;z-index:100"></div>
+</sc-if>
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;f1&quot;,&quot;f2&quot;,&quot;f3&quot;,&quot;f4&quot;,&quot;f5&quot;,&quot;f6&quot;,&quot;f7&quot;,&quot;f8&quot;,&quot;f9&quot;,&quot;f10&quot;,&quot;f11&quot;,&quot;w1&quot;,&quot;w2&quot;,&quot;w3&quot;,&quot;w4&quot;,&quot;w5&quot;],&quot;default&quot;:&quot;f1&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;f1&quot;,&quot;f2&quot;,&quot;f3&quot;,&quot;f4&quot;,&quot;f5&quot;,&quot;f6&quot;,&quot;f7&quot;,&quot;f8&quot;,&quot;f9&quot;,&quot;f10&quot;,&quot;f11&quot;,&quot;w1&quot;,&quot;w2&quot;,&quot;w3&quot;,&quot;w4&quot;,&quot;w5&quot;],&quot;default&quot;:&quot;f1&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;goal&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;1&quot;,&quot;3&quot;,&quot;5&quot;,&quot;10&quot;,&quot;25&quot;,&quot;50&quot;],&quot;default&quot;:&quot;3&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
 const TABI={feed:'polygon(0 10%,100% 0,100% 38%,0 46%,0 56%,100% 50%,100% 100%,0 100%)',games:'polygon(50% 0,100% 50%,50% 100%,0 50%,22% 50%,50% 78%,78% 50%,50% 22%,22% 50%,0 50%)',saved:'polygon(12% 8%,88% 0,88% 100%,50% 74%,12% 100%)',profile:'polygon(30% 0,70% 0,74% 40%,50% 48%,26% 40%,30% 0,30% 0,0 100%,8% 58%,92% 54%,100% 100%,0 100%)'};
 const WORD=['w1','w2','w3','w4','w5'];
 class Component extends DCLogic {
+  state={qq:null,fp:null,fs:false};
   renderVals(){
     const s=this.props.screen||'f1';
     const v={th:this.props.theme||'light',rmAttr:this.props.reduceMotion?'1':'0',sbc:WORD.includes(s)?'#140C0A':'var(--ink)'};
     v['is_'+s]=true;
     v.wordHead=WORD.includes(s);v.feedHead=!v.wordHead;v.showTabs=!v.wordHead;
+    {const bare=!!this.props.bare;v.notBare=!bare;if(bare)v.showTabs=false;
+     Object.assign(v,bare?{oW:'100%',oH:'100%',oP:'0',oBg:'transparent',oR:'0',oSh:'none',iW:'100%',iH:'100%',iR:'0'}:{oW:'406px',oH:'860px',oP:'8px',oBg:'#0B0706',oR:'62px',oSh:'0 0 0 1.5px #3A2C27,0 30px 70px rgba(20,12,10,.35)',iW:'390px',iH:'844px',iR:'54px'});}
     v.tabs=[['feed','Стрічка'],['games','Ігри'],['saved','Збережене'],['profile','Профіль']].map(([id,n])=>({n,ic:TABI[id],c:id==='feed'?'var(--ink)':'var(--mute)',on:id==='feed'?1:0}));
+    {const n=+(this.props.goal||3),POOL=['Заграва','Лелітка','Видноколо','Мжичка','Паморозь','Оболонь'],pl=(k)=>{const m10=k%10,m100=k%100;return m10===1&&m100!==11?'СЛОВО':m10>=2&&m10<=4&&(m100<12||m100>14)?'СЛОВА':'СЛІВ';};
+     const shown=n<=3?POOL.slice(0,n).map(t=>({t})):[...POOL.slice(0,2).map(t=>({t})),{t:'+ ще '+(n-2)+' '+pl(n-2).toLowerCase(),more:true}];
+     const R=[-3,2,-1.5],ML=[0,14,4];
+     v.gWords=shown.map((w,i)=>{const last=i===shown.length-1;return {t:w.t,r:R[i]+'deg',ml:ML[i]+'px',bg:last?'#140C0A':'#FFF4E6',fg:last?'#FFF4E6':'#140C0A',anim:'fgWord .5s '+(.8+i*.16).toFixed(2)+'s cubic-bezier(.3,1.5,.5,1) both'};});
+     v.gChip=n+' / '+n+' '+pl(n);v.gXP='+'+(n*5);}
+    {const st=this.state,ph=st.wk||'on',y=st.yw;
+     v.wkOn=ph!=='gone';v.wkAnim=ph==='out'?'wkOut .5s cubic-bezier(.4,0,.2,1) both':'slCasc .4s .1s both';v.wkToast=ph==='gone';
+     v.wkDone=()=>{if(ph!=='on')return;this.setState({wk:'out'});clearTimeout(this._wkT);this._wkT=setTimeout(()=>this.setState({wk:'gone'}),480);};
+     v.wkBack=()=>{clearTimeout(this._wkT);this.setState({wk:'on'});};
+     v.ywAnim=ph==='gone'?'ywUp .45s cubic-bezier(.2,.9,.3,1) both':'slCasc .4s .25s both';
+     const RD={bg:'#FF3B2F',fg:'#140C0A',sh:'0 4px 0 #C4271D',bd:'0',tf:'none',op:1,td:'none',v:true,x:false},BD={bg:'var(--ink)',fg:'var(--bg)',sh:'inset 0 3px 0 rgba(0,0,0,.3)',bd:'0',tf:'translateY(3px)',op:1,td:'line-through',v:false,x:true,anim:'slShake .4s both'},ID={bg:'var(--tile)',fg:'var(--ink)',sh:'0 4px 0 var(--edge)',bd:'1px solid var(--line)',tf:'none',op:1,td:'none',v:false,x:false,anim:'none'};
+     v.ywOpts=['низький луг біля річки','хмара перед грозою','старовинна монета'].map((t,i)=>{const tap=()=>this.setState({yw:y===i?null:i});
+       if(y==null)return {...ID,t,onClick:tap};if(i===0)return {...RD,t,anim:'slPop .35s '+(y===0?'0s':'.4s')+' both',onClick:tap};if(y===i)return {...BD,t,onClick:tap};return {...ID,op:.5,t,onClick:tap};});
+     v.ywMsg=y==null?'':y===0?'Влучно!':'Майже. Наступне вийде.';v.ywMsgC=y===0?'#FF3B2F':'var(--ink)';}
+    {const st=this.state,md=st.md||'on',nt=st.nt||'ask';
+     const out='wkOut .5s cubic-bezier(.4,0,.2,1) both';
+     v.mdOn=md!=='gone';v.mdAnim=md==='out'?out:'slCasc .4s .1s both';v.mdM=md==='out'?'happy':'sleep';
+     v.mdMore=()=>{if(md!=='on')return;this.setState({md:'out'});clearTimeout(this._mdT);this._mdT=setTimeout(()=>this.setState({md:'gone',f6t:'Гаразд! Ще одне слово — і на сьогодні все.'}),480);};
+     v.ntOn=nt!=='gone';v.ntAnim=nt==='out'?out:'slCasc .4s .25s both';v.ntAsk=nt==='ask'||nt==='sys';v.ntYes=nt==='yes';v.ntSys=nt==='sys';
+     const close=(t)=>{this.setState({nt:'out'});clearTimeout(this._ntT);this._ntT=setTimeout(()=>this.setState({nt:'gone',f6t:t}),480);};
+     v.ntLater=()=>{if(nt==='ask')close('Нагадаємо завтра. Або увімкніть у Налаштуваннях.');};
+     v.ntOpen=()=>{if(nt==='ask')this.setState({nt:'sys'});};
+     v.ntAllow=()=>this.setState({nt:'yes'});
+     v.ntDeny=()=>close('Добре, без сповіщень. Увімкнути можна в Налаштуваннях.');
+     v.f6Toast=st.f6t||'';v.f6Back=()=>{clearTimeout(this._mdT);clearTimeout(this._ntT);this.setState({md:'on',nt:'ask',f6t:null});};}
+    {const st=this.state,D=st.dz||{},OUT='wkOut .5s cubic-bezier(.4,0,.2,1) both',me=this;
+     const toast=(t,btn)=>this.setState({gt:{t,btn:btn||'ПОВЕРНУТИ'}});
+     const dz=(k,base,msg)=>({on:D[k]!=='gone',anim:D[k]==='out'?OUT:base,close:()=>{if(D[k])return;me.setState(x=>({dz:{...(x.dz||{}),[k]:'out'}}));clearTimeout(me['_d'+k]);me['_d'+k]=setTimeout(()=>{me.setState(x=>({dz:{...(x.dz||{}),[k]:'gone'}}));toast(typeof msg==='function'?msg():msg);},480);}});
+     const g=st.g7??1,GL=[['1','слово'],['3','слова'],['5','слів']];
+     v.d7a=dz('d7a','slCasc .4s .1s both','Рівень 3 — Знавець. Усі рівні — у Профілі.');
+     v.d7b=dz('d7b','slCasc .4s .25s both',()=>'Ціль: '+GL[g][0]+' '+GL[g][1]+' на день. Змінити можна в Налаштуваннях.');
+     v.goalOpts=GL.map(([n,l],i)=>{const on=i===g;return {n,l,bg:on?'#FF3B2F':'var(--tile)',fg:on?'#140C0A':'var(--ink)',sh:on?'0 4px 0 #C4271D':'0 4px 0 var(--edge)',bd:on?'0':'1px solid var(--line)',anim:on?'slPop .35s both':'none',onClick:()=>this.setState({g7:i})};});
+     const wh=st.who??0,wy=st.why||{1:1},vc=st.voc??1;
+     v.d8a=dz('d8a','slCasc .4s .1s both','Дякуємо! Стрічка підлаштується під вас.');
+     v.who=['Навчаюсь','Працюю','Мовний гурман'].map((t,i)=>({t,bg:i===wh?'var(--ink)':'var(--sf2)',fg:i===wh?'var(--bg)':'var(--ink)',anim:i===wh?'slPop .3s both':'none',onClick:()=>this.setState({who:i})}));
+     v.why=['Писати без помилок','Знати рідкісні слова','Грати зі словами'].map((t,i)=>({t,bg:wy[i]?'#FF3B2F':'var(--sf2)',fg:wy[i]?'#140C0A':'var(--ink)',anim:wy[i]?'slPop .3s both':'none',onClick:()=>this.setState(x=>{const w={...(x.why||{1:1})};if(w[i])delete w[i];else w[i]=1;return {why:w};})}));
+     v.vocab=['Поки небагато','Знаю чимало'].map((t,i)=>({t,bt:i?'1px solid var(--line)':'0',bg:i===vc?'var(--sf2)':'transparent',ring:i===vc?'7px solid #FF3B2F':'2.5px solid var(--mute)',onClick:()=>this.setState({voc:i})}));
+     v.d9a=dz('d9a','slCasc .4s .1s both','Відкриваю Тест рідкості: 10 слів.');
+     v.d9b=dz('d9b','slCasc .4s .2s both','Відкриваю Мій Мікс.');
+     v.d9c=dz('d9c','slCasc .4s .3s both','Нагадаємо пізніше.');
+     const sv=st.sv||'ask';v.svAsk=sv!=='done';v.svDone=sv==='done';v.svSheet=sv==='sheet';v.svWho=st.svWho||'';
+     v.svOpen=()=>this.setState({sv:'sheet'});v.svClose=()=>this.setState({sv:'ask'});
+     v.svWays=[['Увійти через Apple','#140C0A','#FFF4E6','0 4px 0 rgba(0,0,0,.35)','0','olena@icloud.com'],['Увійти через Google','var(--tile)','var(--ink)','0 4px 0 var(--edge)','1px solid var(--line)','olena@gmail.com'],['Увійти поштою','var(--tile)','var(--ink)','0 4px 0 var(--edge)','1px solid var(--line)','olena@ukr.net']].map(([t,bg,fg,sh,bd,who])=>({t,bg,fg,sh,bd,onClick:()=>this.setState({sv:'done',svWho:who})}));
+     v.f4Next=()=>{if(this.props.onNext)this.props.onNext();else toast('Далі — наступна картка Стрічки.','ОК');};
+     v.f10Open=()=>{if(this.props.onOpenWord)this.props.onOpenWord('Лелітка');else toast('Відкриваю «Лелітка».','ОК');};
+     const sh=st.sh||'open';v.shIsOpen=sh!=='closed';v.shClosed=sh==='closed';
+     v.shAnim=sh==='closing'?'shDown .35s cubic-bezier(.4,0,.6,1) both':'slSheet .45s cubic-bezier(.2,.9,.3,1) both';v.shDim=sh==='closing'?'shUndim .35s both':'slFade .25s both';
+     v.tsAnim=sh==='closing'?'tsOut .35s cubic-bezier(.4,0,.6,1) both':'slToast .35s cubic-bezier(.2,.9,.3,1.1) both';
+     const closeSh=(msg,btn)=>{if(sh!=='open')return;this.setState({sh:'closing'});clearTimeout(this._shT);this._shT=setTimeout(()=>{this.setState({sh:'closed'});if(msg)toast(msg,btn);},340);};
+     v.shCancel=()=>closeSh(null);v.shOpen=()=>this.setState({sh:'open',gt:null});
+     v.hideRows=['Не показувати цей запис','Не показувати категорію «Природа»','Не показувати Виправлення','Не показувати Фразеологізми','Не показувати Синонімічні ряди','Не показувати Поради'].map((t,i)=>({t,bt:i?'1px solid var(--line)':'0',onClick:()=>closeSh((i===0?'Запис':i===1?'Категорію «Природа»':t.replace('Не показувати ',''))+' приховано','СКАСУВАТИ')}));
+     const rp=st.rp??1;v.repOpts=['Друкарська помилка','Наголос','Визначення','Інше'].map((t,i)=>({t,bg:i===rp?'var(--ink)':'var(--sf2)',fg:i===rp?'var(--bg)':'var(--ink)',onClick:()=>this.setState({rp:i})}));
+     v.repSend=()=>closeSh('Дякуємо! Ми перевіримо.','ОК');
+     v.gtOn=!!st.gt;v.gtText=st.gt?st.gt.t:'';v.gtBtn=st.gt?st.gt.btn:'';v.gtBottom=this.props.bare||!v.showTabs?'40px':'100px';
+     v.gtBack=()=>{['d7a','d7b','d8a','d9a','d9b','d9c'].forEach(k=>clearTimeout(this['_d'+k]));clearTimeout(this._shT);this.setState({gt:null,dz:{},sv:'ask',sh:'open'});};}
+    const RED={bg:'#FF3B2F',fg:'#140C0A',sh:'0 4px 0 #C4271D',bd:'0',tf:'none',op:1,td:'none',v:true,x:false};
+    const BAD={bg:'var(--ink)',fg:'var(--bg)',sh:'inset 0 3px 0 rgba(0,0,0,.3)',bd:'0',tf:'translateY(3px)',op:1,td:'line-through',v:false,x:true,anim:'slShake .4s both'};
+    const IDLE={bg:'var(--tile)',fg:'var(--ink)',sh:'0 4px 0 var(--edge)',bd:'1px solid var(--line)',tf:'none',op:1,td:'none',v:false,x:false,anim:'none'};
+    {const st=this.state,q=st.qq,set=x=>this.setState({qq:x});
+     v.qqOpts=[['обрій',true],['кругле вікно',false]].map(([t,right],i)=>{const tap=()=>set(q===i?null:i);
+       if(q==null)return {...IDLE,t,onClick:tap};
+       if(right)return {...RED,t,anim:'slPop .35s '+(q===i?'0s':'.4s')+' both',onClick:tap};
+       if(q===i)return {...BAD,t,onClick:tap};
+       return {...IDLE,op:.55,t,onClick:tap};});
+     v.qqMsg=q==null?'':q===0?'Влучно!':'Майже. Наступне вийде.';v.qqMsgC=q===0?'#FF3B2F':'var(--ink)';}
+    {const st=this.state,p=st.fp,sh=st.fs,RIGHT=0;
+     v.fxOpts=['скільки','скільки ж'].map((t,i)=>{const pick=()=>{if(!sh)this.setState({fp:p===i?null:i});};
+       const base={...IDLE,sh:'0 5px 0 var(--edge)',t,onClick:pick};
+       if(!sh)return p===i?{...base,bg:'var(--sf2)',sh:'0 1px 0 var(--edge)',tf:'translateY(4px)',bd:'2px solid var(--ink)'}:base;
+       if(i===RIGHT)return {...RED,sh:'0 5px 0 #C4271D',t,anim:'slPop .35s '+(p===i?'0s':'.4s')+' both',onClick:pick};
+       if(p===i)return {...BAD,t,onClick:pick};
+       return {...base,op:.55};});
+     const win=sh&&p===RIGHT;
+     v.fxBT=!sh?'ВІДПОВІДЬ':win?'ВЛУЧНО! · ЩЕ РАЗ':'МАЙЖЕ · ЩЕ РАЗ';
+     v.fxBBg=win?'#FF3B2F':'var(--ink)';v.fxBFg=win?'#140C0A':'var(--bg)';v.fxBSh=win?'0 5px 0 #C4271D':'0 5px 0 rgba(0,0,0,.35)';v.fxBOp=!sh&&p==null?.4:1;
+     v.fxBtn=()=>{if(sh)this.setState({fs:false,fp:null});else if(p!=null)this.setState({fs:true});};}
     return v;
   }
 }

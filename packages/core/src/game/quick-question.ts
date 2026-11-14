@@ -39,7 +39,7 @@ export const quickQuestionSourceId = (source: QuickQuestionSource): string =>
 export interface QuickQuestion {
   /**
    * A Round of a Game Mode on offer or of the Word Meaning question while its
-   * Feature Switch is on (ADR 0127), tried in one random order so each has
+   * Feature Switch is on (ADR 0128), tried in one random order so each has
    * the same chance, over a random Eligible Entry other than `avoid`; only a
    * mode whose Round is a pick of options can give one. Nothing when none can.
    */

@@ -19,7 +19,7 @@ export const asksWordMeaning = (word: Word, comparison: TextComparison): boolean
   comparison.find(word.primaryDefinition, word.lemma) === undefined;
 
 /**
- * The Round of the Word Meaning question (CONTEXT.md, ADR 0127): the Word's
+ * The Round of the Word Meaning question (CONTEXT.md, ADR 0128): the Word's
  * Lemma, asked by its meaning (`labelKind` `meaning`), and four Definitions,
  * whole, its primary Definition among them. The three Distractors are the
  * primary Definitions of other Eligible Words, of the same part of speech

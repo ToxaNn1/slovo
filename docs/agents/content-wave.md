@@ -40,7 +40,7 @@ What the brief points at; the brief itself carries the grant, the branch and the
 - `pnpm content add <kind> <drafts> --edition uk` writes the drafts through the write API in one batch, with `SLOVO_AGENT_TOKEN` and `SLOVO_API_URL` from the cloud environment, and prints each id, record version and content version, or the rule that refused it.
 - Every text quoted word for word, never written; no article goroh marks «Велика мовна модель». The CLI never writes the Edition folder; no content commit, no version bump, no PR.
 - Pages only through the sourcing tool, which keeps one request per host every two seconds through the shared cache. For a page by hand, the helpers: `scripts/content-wave/fetch-article.mjs <url> [filter] [skip]` prints an article's text, at most 2 KB, with language-model blocks hidden; `scripts/content-wave/fetch-osvita.mjs <book url> <last page> <out.txt>` writes an osvita book one paragraph per line with its page, the file `verify --book` reads.
-- Context: at most 10 mapping lookups (`grep -n`, `sed -n`), every output through `tail -20`, never print a content folder; commit and push after each step; at ~140k end with `STUCK`.
+- Context: at most 10 mapping lookups (`grep -n`, `sed -n`), every output through `tail -20`, never print a content folder; commit and push after each step; at ~180k end with `STUCK`.
 - Finish: one empty commit `chore: DONE <branch>` (or `FAILED` / `STUCK`) whose body is the report in Ukrainian, at most 25 lines: Entries added (the lines `add` printed), refused, dropped and why, problems. The owner's identity; no `Co-Authored-By`, no AI attribution.
 
 ## After the wave

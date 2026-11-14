@@ -217,7 +217,7 @@ describe('a Quick Question answered', () => {
   });
 });
 
-// Spec #1831, ticket #1833, ADR 0127: the Word Meaning question.
+// Spec #1831, ticket #1833, ADR 0128: the Word Meaning question.
 
 /** The Quick Question with the Word Meaning question alone: no Game Mode whose Round is a pick is on. */
 const WORD_MEANING_ONLY: readonly FeatureSwitch[] = [

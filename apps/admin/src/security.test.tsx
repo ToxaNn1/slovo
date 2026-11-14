@@ -195,3 +195,44 @@ test('a Безпека list that fails to load says so instead of reading empty'
 
   expect(await people.findByText('Не вдалося завантажити.')).toBeDefined();
 });
+
+test('a Власник finds a reader Account by email and deletes it with a reason', async () => {
+  const deleted: unknown[] = [];
+  server.use(
+    http.get('*/admin/accounts/:email', ({ params }) =>
+      HttpResponse.json({
+        account:
+          params['email'] === 'reader@example.com'
+            ? {
+                email: 'reader@example.com',
+                createdAt: '2026-10-01T09:00:00.000Z',
+                signInMethods: ['google'],
+              }
+            : null,
+      }),
+    ),
+    http.post('*/admin/accounts/:email/delete', async ({ params, request }) => {
+      deleted.push({ email: params['email'], ...Object(await request.json()) });
+      return HttpResponse.json({ deleted: true });
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  const block = within(await screen.findByRole('region', { name: 'Акаунт читача' }));
+
+  await user.type(block.getByLabelText('Пошта читача'), 'nobody@example.com');
+  await user.click(block.getByRole('button', { name: 'Знайти' }));
+  expect(await block.findByText('Не знайдено.')).toBeDefined();
+  expect(block.queryByRole('button', { name: 'Видалити акаунт' })).toBeNull();
+
+  await user.clear(block.getByLabelText('Пошта читача'));
+  await user.type(block.getByLabelText('Пошта читача'), 'reader@example.com');
+  await user.click(block.getByRole('button', { name: 'Знайти' }));
+  expect(await block.findByText(/Код з листа, Google/)).toBeDefined();
+  await user.click(block.getByRole('button', { name: 'Видалити акаунт' }));
+  expect(within(await screen.findByRole('dialog')).getByText('небезпечна дія')).toBeDefined();
+  await confirmWith('spam Account', 'Видалити акаунт');
+
+  expect(await block.findByText('Акаунт reader@example.com видалено.')).toBeDefined();
+  expect(deleted).toEqual([{ email: 'reader@example.com', reason: 'spam Account' }]);
+});

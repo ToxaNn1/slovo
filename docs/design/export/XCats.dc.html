@@ -168,12 +168,12 @@ class Component extends DCLogic {
     v.sbc=red?(s==='r3'||s==='r5'?'#FFF4E6':'#140C0A'):'var(--ink)';
     v.clock=s==='r5'?'09:00':s==='r3'?'23:40':'20:30';
     if(s==='k1'){
-      v.gTitle='Категорії';v.gCount='16';v.cols=3;v.tileH='112px';v.bigS='58px';v.smR='38px';v.smT='34px';
+      v.gTitle='КАТЕГОРІЇ';v.gCount='16';v.cols=3;v.tileH='112px';v.bigS='58px';v.smR='38px';v.smT='34px';
       v.tiles=CATS.map((n,i)=>{const shot=n==='Розстріляна лексика';const loud=!shot&&i%3===0;return {n,bg:shot?'var(--sf2)':loud?'#FF3B2F':i%3===1?'var(--ink)':'var(--tile)',fg:shot?'var(--mute)':loud?'#140C0A':i%3===1?'var(--bg)':'var(--ink)',p1:shot?'var(--mute)':loud?'#FFF4E6':'#FF3B2F',p2:shot?'var(--mute)':loud?'#140C0A':i%3===1?'var(--bg)':'var(--ink)',s1:CS[i][0],s2:CS[i][1],anim:'slCasc .3s '+(i*.025)+'s both'};});
       v.tiles=[...v.tiles,{n:'',bg:'transparent',fg:'',p1:'transparent',p2:'transparent',s1:'',s2:'',anim:'none'},{n:'',bg:'transparent',p1:'transparent',p2:'transparent',anim:'none'}];
     }
     if(s==='k2'){
-      v.gTitle='Виправлення';v.gCount='7';v.cols=2;v.tileH='150px';v.bigS='84px';v.smR='60px';v.smT='60px';
+      v.gTitle='ВИПРАВЛЕННЯ';v.gCount='7';v.cols=2;v.tileH='150px';v.bigS='84px';v.smR='60px';v.smT='60px';
       v.tiles=FIX.map((n,i)=>({n,bg:i===0?'#FF3B2F':'var(--sf2)',fg:i===0?'#140C0A':'var(--ink)',p1:i===0?'#FFF4E6':'#FF3B2F',p2:i===0?'#140C0A':'var(--ink)',s1:FS[i][0],s2:FS[i][1],anim:'slCasc .3s '+(i*.04)+'s both'}));
     }
     v.shot=[['Летовище','аеродром'],['Часопис','журнал'],['Мапа','карта'],['Слоїк','банка'],['Гасло','лозунг']].map(([w,m],i)=>({w,m,anim:'slFade .6s '+(.3+i*.12)+'s both'}));

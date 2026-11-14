@@ -1049,6 +1049,42 @@ export const adminContract = {
     .input(z.strictObject({ name: AgentNameSchema, reason: ReasonSchema }))
     .output(z.object({ revoked: z.literal(true) })),
 
+  findAccount: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/accounts/{email}',
+      summary: "Finds a reader's Account by email",
+      description:
+        'A Безпека procedure: a Власник only (ADR 0127). Answers the date the Account was made and its Google and Apple sign-in methods, nothing more; `null` for an email with no Account.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.strictObject({ email: EmailSchema }))
+    .output(
+      z.object({
+        account: z
+          .object({
+            email: z.string(),
+            createdAt: z.string(),
+            signInMethods: z.array(z.enum(['google', 'apple'])),
+          })
+          .nullable(),
+      }),
+    ),
+
+  deleteAccount: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/accounts/{email}/delete',
+      summary: "Deletes a reader's Account for good, as the app's own deletion does",
+      description:
+        'A Власник only (ADR 0127). Its Sessions, sign-in methods and Sync records go with it. Refused with `unknown` for an email with no Account.',
+      tags: ['admin'],
+    })
+    .errors(ACCESS_WRITE_ERRORS)
+    .input(z.strictObject({ email: EmailSchema, reason: ReasonSchema }))
+    .output(z.object({ deleted: z.literal(true) })),
+
   status: procedure
     .route({
       method: 'GET',

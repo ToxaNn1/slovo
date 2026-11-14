@@ -23,6 +23,7 @@ type Role = 'owner' | 'admin';
 type AccessRefusal = z.infer<typeof AccessRefusalSchema>;
 type Action = AdminApiOutputs['actions']['actions'][number];
 type AlertThreshold = AdminApiOutputs['alertThresholds']['thresholds'][number];
+type SignInMethod = NonNullable<AdminApiOutputs['findAccount']['account']>['signInMethods'][number];
 
 const ROLE_LABELS: Readonly<Record<Role, string>> = { owner: 'Власник', admin: 'Адмін' };
 
@@ -107,6 +108,7 @@ function OwnerSecurity({ email }: { email: string }) {
       </div>
       <People self={email} confirm={setPending} />
       <AgentTokens confirm={setPending} />
+      <ReaderAccount confirm={setPending} />
       <AlertThresholds confirm={setPending} />
       <ActionLog />
       {pending === null ? null : (
@@ -343,6 +345,93 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
           Видати токен
         </Button>
       </form>
+    </Block>
+  );
+}
+
+/** How a reader's recorded Sign-in methods read; a Sign-in code reaches every Account. */
+const SIGN_IN_METHOD_LABELS: Readonly<Record<SignInMethod, string>> = {
+  google: 'Google',
+  apple: 'Apple',
+};
+
+/** A reader's Account, found by email and deleted with a reason (ADR 0127). */
+function ReaderAccount({ confirm }: { confirm: Confirm }) {
+  const [draft, setDraft] = useState('');
+  const [email, setEmail] = useState<string | null>(null);
+  const [deleted, setDeleted] = useState<string | null>(null);
+  const found = useQuery({
+    queryKey: ['reader-account', email],
+    queryFn: () => adminApi.findAccount({ email: email ?? '' }),
+    enabled: email !== null,
+    retry: false,
+  });
+  const remove = useAdminWrite(adminApi.deleteAccount);
+
+  function onFind(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const typed = draft.trim();
+    if (typed === '') return;
+    setDeleted(null);
+    setEmail(typed);
+  }
+
+  const account = email === null ? undefined : found.data?.account;
+  return (
+    <Block title="Акаунт читача" failed={found.isError}>
+      <form onSubmit={onFind} className="flex flex-wrap items-end gap-2">
+        <label className="flex flex-col gap-1 text-sm">
+          Пошта читача
+          <input
+            type="email"
+            className={inputClass}
+            value={draft}
+            onChange={(event) => {
+              setDraft(event.target.value);
+            }}
+          />
+        </label>
+        <Button type="submit" variant="secondary" disabled={found.isFetching}>
+          Знайти
+        </Button>
+      </form>
+      {deleted === null ? null : (
+        <p role="status" className="text-sm">
+          Акаунт {deleted} видалено.
+        </p>
+      )}
+      {account === null ? <p className="text-sm text-muted-foreground">Не знайдено.</p> : null}
+      {account === undefined || account === null ? null : (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface px-[18px] py-3 text-[13px] shadow-panel">
+          <span className="grow">
+            {account.email} · створено {formatMoment(account.createdAt)} · входи:{' '}
+            {[
+              'Код з листа',
+              ...account.signInMethods.map((method) => SIGN_IN_METHOD_LABELS[method]),
+            ].join(', ')}
+          </span>
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => {
+              const target = account.email;
+              confirm({
+                title: `Видалити акаунт ${target} назавжди? Слова, прогрес і входи читача зникнуть.`,
+                confirm: 'Видалити акаунт',
+                danger: true,
+                run: async (reason) => {
+                  await remove.mutateAsync({ email: target, reason });
+                  setEmail(null);
+                  setDraft('');
+                  setDeleted(target);
+                },
+              });
+            }}
+          >
+            Видалити акаунт
+          </Button>
+        </div>
+      )}
     </Block>
   );
 }

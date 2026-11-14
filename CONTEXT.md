@@ -366,7 +366,7 @@ A Feed slot that shows one Round over an Eligible Entry: a Round of an enabled G
 _Avoid_: Pop quiz, Feed Game
 
 **Word Meaning question**:
-A round type of the Quick Question, not a Game Mode: the Lemma of a Word that is an Eligible Entry («„{word}“ — це…») and four Definitions shown whole, its primary Definition among them. The Distractors are primary Definitions of other such Words, of the same part of speech first. A Word whose Definition holds its Lemma is never asked. It has its own Feature Switch (ADR 0127).
+A round type of the Quick Question, not a Game Mode: the Lemma of a Word that is an Eligible Entry («„{word}“ — це…») and four Definitions shown whole, its primary Definition among them. The Distractors are primary Definitions of other such Words, of the same part of speech first. A Word whose Definition holds its Lemma is never asked. It has its own Feature Switch (ADR 0128).
 _Avoid_: Definition mode, meaning Game
 
 **Questionnaire**:

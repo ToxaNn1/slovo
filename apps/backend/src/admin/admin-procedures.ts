@@ -13,6 +13,7 @@ import {
 } from '@slovo/contracts/admin-api';
 import { ALERT_THRESHOLD_DEFAULTS } from '@slovo/server-core';
 import type {
+  Accounts,
   AlertSettings,
   AlertStore,
   AccessResult,
@@ -118,7 +119,10 @@ export function adminProcedures(
     ciToken,
     alertSettings,
     alertStore,
+    accounts,
   }: {
+    /** The readers' Accounts, which a Власник finds and deletes by email (ADR 0127). */
+    readonly accounts: Accounts;
     readonly quality: Quality;
     readonly ciToken: string | undefined;
     readonly alertSettings: AlertSettings;
@@ -428,6 +432,37 @@ export function adminProcedures(
         throw errors.CONFLICT({ data: { refusal: 'unknown' } });
       }
       return { revoked: true as const };
+    }),
+
+    findAccount: os.findAccount.handler(async ({ context, input, errors }) => {
+      await admit(context.headers, errors, { security: true });
+      const found = await accounts.find(input.email);
+      if (found === undefined) return { account: null };
+      const { account, signInMethods } = found;
+      return {
+        account: {
+          email: account.email,
+          createdAt: account.createdAt.toISOString(),
+          signInMethods: [...signInMethods],
+        },
+      };
+    }),
+
+    // The app's own deletion path (ADR 0127): the Account goes as «Видалити SLOVO ID» deletes it.
+    deleteAccount: os.deleteAccount.handler(async ({ context, input, errors }) => {
+      const { who, reason } = await securityWrite(context.headers, errors, input.reason);
+      const deleted = await accounts.deleteByEmail(input.email);
+      if (deleted === undefined) throw errors.CONFLICT({ data: { refusal: 'unknown' } });
+      await admin.log({
+        who,
+        what: 'account.delete',
+        before: { email: deleted.email, createdAt: deleted.createdAt.toISOString() },
+        after: null,
+        reason,
+        editionId: null,
+        batchId: null,
+      });
+      return { deleted: true as const };
     }),
 
     alertThresholds: os.alertThresholds.handler(async ({ context, errors }) => {
