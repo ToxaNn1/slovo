@@ -109,7 +109,10 @@ async function renderScreen({
   switchedOn,
   seed = {},
   shareCard,
+  name,
 }: {
+  /** The reader's name, set before the Profile opens. */
+  name?: string;
   withAccount?: boolean;
   rounds?: number;
   noCounters?: boolean;
@@ -143,6 +146,7 @@ async function renderScreen({
       .award({ source: 'game-round', mode: 'guess-word', rarity: undefined })
       .commit();
   }
+  if (name !== undefined) await composition.readerName.change(name);
   await new Promise((resolve) => setTimeout(resolve, 0));
   const account = withAccount ? await signedOutAccount() : undefined;
   await renderInGestureRoot(
@@ -578,5 +582,110 @@ describe('the Profile', () => {
 
     expect(screen.queryByTestId('profile-break')).not.toBeOnTheScreen();
     expect(screen.getByTestId('profile-streak')).toBeOnTheScreen();
+  });
+});
+
+// ADR 0136: the Profile's header with the reader's optional name.
+describe("the Profile's header", () => {
+  const nameStrings = strings.readerName;
+
+  /** Types `name` into the name sheet's field. */
+  async function typeName(name: string) {
+    await act(async () => {
+      await fireEvent.changeText(screen.getByTestId('reader-name-input'), name);
+      await Promise.resolve();
+    });
+  }
+
+  /** Keeps the typed name, the sheet gone once it is kept. */
+  async function submitName() {
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('reader-name-submit'));
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    });
+  }
+
+  /** Opens the name sheet from the «Ім’я» row. */
+  async function openNameSheet() {
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('profile-reader-name'));
+      await Promise.resolve();
+    });
+  }
+
+  it('shows the name, its first letter and the Level', async () => {
+    await renderScreen({ name: 'олена' });
+
+    const header = screen.getByTestId('profile-header');
+    expect(within(header).getByTestId('profile-name')).toHaveTextContent('олена');
+    expect(within(header).getByTestId('profile-avatar-letter')).toHaveTextContent('О');
+    expect(within(header).getByTestId('profile-header-level')).toHaveTextContent(/^Рівень 0 — \S/);
+    expect(screen.getByTestId('profile-reader-name')).toHaveTextContent(/олена/);
+  });
+
+  it('without a name, shows the neutral avatar and the invitation', async () => {
+    await renderScreen();
+
+    const header = screen.getByTestId('profile-header');
+    expect(within(header).getByTestId('profile-avatar-neutral')).toBeOnTheScreen();
+    expect(within(header).queryByTestId('profile-avatar-letter')).toBeNull();
+    expect(within(header).getByTestId('profile-invitation')).toHaveTextContent(
+      nameStrings.placeholder,
+    );
+    expect(screen.getByTestId('profile-reader-name')).toHaveTextContent(
+      new RegExp(nameStrings.empty),
+    );
+  });
+
+  it('sets the name on the name sheet, then changes it, trimmed', async () => {
+    await renderScreen();
+
+    await openNameSheet();
+    expect(screen.getByTestId('reader-name-input')).toBeOnTheScreen();
+    await typeName('  Тарас ');
+    await submitName();
+    expect(screen.getByTestId('profile-name')).toHaveTextContent('Тарас');
+    expect(screen.getByTestId('profile-avatar-letter')).toHaveTextContent('Т');
+
+    await openNameSheet();
+    expect(screen.getByTestId('reader-name-input')).toHaveDisplayValue('Тарас');
+    await typeName('Остап');
+    await submitName();
+    expect(screen.getByTestId('profile-name')).toHaveTextContent('Остап');
+  });
+
+  it('refuses a name too long with its reason, the counter past the limit, the name kept', async () => {
+    await renderScreen({ name: 'Остап' });
+
+    await openNameSheet();
+    await typeName('я'.repeat(25));
+    expect(screen.getByTestId('reader-name-counter')).toHaveTextContent('25 / 24');
+    await submitName();
+    expect(screen.getByTestId('reader-name-refusal')).toHaveTextContent(
+      fill(nameStrings.tooLong, { max: '24' }),
+    );
+    expect(screen.getByTestId('profile-name')).toHaveTextContent('Остап');
+  });
+
+  it("keeps today's progress under it, with no Questionnaire rows", async () => {
+    await renderScreen({ name: 'Олена' });
+
+    expect(screen.getByTestId('profile-level')).toBeOnTheScreen();
+    expect(screen.getByTestId('profile-streak')).toBeOnTheScreen();
+    expect(screen.getByTestId('profile-badges-count')).toBeOnTheScreen();
+    for (const row of ['Хто ти', 'Навіщо', 'Самооцінка'])
+      expect(screen.queryByText(row)).toBeNull();
+  });
+
+  it('with the reader name switched off, shows the Level alone and no «Ім’я» row', async () => {
+    await renderScreen({ name: 'Олена', switchedOff: 'readerName' });
+
+    const header = screen.getByTestId('profile-header');
+    expect(within(header).getByTestId('profile-header-level')).toHaveTextContent(/^Рівень 0 — /);
+    expect(within(header).queryByTestId('profile-name')).toBeNull();
+    expect(within(header).queryByTestId('profile-avatar-letter')).toBeNull();
+    expect(within(header).queryByTestId('profile-invitation')).toBeNull();
+    expect(screen.queryByTestId('profile-reader-name')).toBeNull();
+    expect(screen.queryByText(nameStrings.row)).toBeNull();
   });
 });

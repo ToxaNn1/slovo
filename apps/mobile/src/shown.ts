@@ -116,6 +116,8 @@ export interface Shown {
   readonly crosswordSolveTime: boolean;
   /** The Settings row that opens the Profile, with the reader's whole progress. */
   readonly profile: boolean;
+  /** Whether the Profile greets the reader by an optional name, with its «Ім’я» row (ADR 0136). */
+  readonly readerName: boolean;
   /** The Profile's confirmed Entries by rarity. */
   readonly profileConfirmedByRarity: boolean;
   /** The Profile's Best result of each Game Mode. */
@@ -232,6 +234,7 @@ export function shownOf({
     crosswordSolvedScreen: on('crosswordSolvedScreen'),
     crosswordSolveTime: on('crosswordSolveTime'),
     profile: on('profile'),
+    readerName: on('readerName'),
     profileConfirmedByRarity: on('profileConfirmedByRarity'),
     profileGameBest: on('profileGameBest'),
     quickQuestion: on('quickQuestion'),

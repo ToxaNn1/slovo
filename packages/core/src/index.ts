@@ -164,12 +164,7 @@ export {
   type SettingsDefaults,
   type UserSettings,
 } from './settings/settings';
-export {
-  READER_NAME_AT_MOST,
-  readerNameOf,
-  type ReaderName,
-  type ReaderNameChoice,
-} from './settings/reader-name';
+export { READER_NAME_AT_MOST } from './settings/reader-name';
 export { STRESS_MARK, withoutStress } from './entries/stress';
 export { createGesturesHint, type GesturesHint } from './feed/gestures-hint';
 export { type WordCardModel } from './entries/word-card';
