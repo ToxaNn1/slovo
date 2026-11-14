@@ -7,8 +7,8 @@ import {
   VerticalPager,
 } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import { AccessibilityInfo, Text } from 'react-native';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
+import { AccessibilityInfo, StyleSheet, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 
 import { testStrings } from '../test-strings';
@@ -91,6 +91,28 @@ function pose(testID: string) {
 }
 
 const AT_REST = { opacity: 1, x: 0, y: 0, scale: 1 };
+
+/** The board's goal-reached card is 382 points wide (XFeed f4). */
+const BOARD_WIDTH = 382;
+/** The card's padding over and under its content, from the board. */
+const PADDING = 26 + 22;
+
+async function layOut(testID: string, width: number, height: number) {
+  await fireEvent(screen.getByTestId(testID), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width, height } },
+  });
+}
+
+/** The card's content as drawn: its laid-out size and the scale it is drawn at. */
+function drawnContent() {
+  const style = StyleSheet.flatten(screen.getByTestId('goal-reached-layout').props['style']) as {
+    width: number;
+    height: number;
+    transform: { scale: number }[];
+  };
+  const scale = style.transform.find((one) => 'scale' in one)?.scale ?? 1;
+  return { width: style.width, height: style.height, scale };
+}
 
 async function wait(ms: number) {
   await act(() => {
@@ -182,6 +204,51 @@ describe('the goal-reached card', () => {
     for (const part of ['word-2', 'mascot', 'streak', 'button']) {
       expect(pose(`goal-reached-${part}`)).toEqual(AT_REST);
     }
+  });
+
+  // A Feed page's card is the screen less its top safe area, the header rows
+  // with the XP bar (80), the tab bar (56), its bottom safe area and the
+  // page's room around the card (12 a side). Its head and foot are measured
+  // as the board draws them with three Words and the Streak.
+  it.each([
+    ['a small phone (375×667)', 375 - 24, 667 - 20 - 80 - 56 - 12],
+    ['a phone of 393×852', 393 - 24, 852 - 59 - 80 - 56 - 34 - 12],
+  ])(
+    'draws its whole content inside the Feed page of %s, laid out as the board’s card',
+    async (_, width, height) => {
+      await renderFeed({ goal: 3, words: ['dawn', 'spark', 'drizzle'], streak: 24 });
+      await layOut('goal-reached', width, height);
+      await layOut('goal-reached-head', BOARD_WIDTH - 44, 347);
+      await layOut('goal-reached-foot', BOARD_WIDTH - 44, 189);
+
+      const content = drawnContent();
+      // Each word of the title breaks as on the board: never on a narrower card.
+      expect(content.width).toBeGreaterThanOrEqual(BOARD_WIDTH);
+      // The Mascot, the Streak and the button stand inside the page.
+      expect(content.height).toBeGreaterThanOrEqual(PADDING + 347 + 189);
+      expect(content.width * content.scale).toBeCloseTo(width);
+      expect(content.height * content.scale).toBeCloseTo(height);
+    },
+  );
+
+  it('uncovers the card under a slanted edge that straightens as it reaches the top (fgIn)', async () => {
+    await renderFeed({ goal: 3, words: ['dawn'], streak: 4 });
+    await layOut('goal-reached', 351, 487);
+    const cut = () =>
+      (getAnimatedStyle(screen.getByTestId('goal-reached-cut')) as { height: number }).height;
+    await wait(100);
+    expect(cut()).toBeGreaterThan(0);
+
+    await wait(1000);
+    expect(cut()).toBe(0);
+  });
+
+  it('throws its shards over the card’s edges, outside the clipped card', async () => {
+    await renderFeed({ goal: 3, words: ['dawn'], streak: 4 });
+    expect(screen.getByTestId('goal-reached-shard-0')).toBeTruthy();
+    expect(
+      within(screen.getByTestId('goal-reached-enter')).queryByTestId('goal-reached-shard-0'),
+    ).toBeNull();
   });
 
   it('throws shards out from its middle that fade away', async () => {

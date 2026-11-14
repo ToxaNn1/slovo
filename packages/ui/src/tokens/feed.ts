@@ -1122,8 +1122,8 @@ export const correctionGridBox = {
  * The goal-reached card's entrance (board XFeed f4), each part's wait from the
  * card's mount and its length in milliseconds and its curve. The card rises
  * `rise` points with an `overshoot` past its place at `turn` of its motion as
- * it is uncovered from its foot up, from `edge` of its height to `top`, past
- * its top (`fgIn`); the band rises `rise` points into its place (`fgBand`); the title
+ * it is uncovered from its foot up, its cut edge from `edge` of its height,
+ * lower at its left than at its right, to `top`, past its top (`fgIn`); the band rises `rise` points into its place (`fgBand`); the title
  * settles from `scale` times its size and a `turn` of degrees (`fgTitle`); each
  * Word plate, one `stagger` after the one before, slides in from `behind` times
  * its width to its left with a `turn` of degrees (`fgWord`); the Mascot rises
@@ -1143,7 +1143,7 @@ const goalReachedEnter = {
     rise: 40,
     overshoot: 6,
     turn: 0.6,
-    edge: 0.94,
+    edge: { left: 1, right: 0.88 },
     top: -0.1,
   },
   band: { delay: 250, duration: 800, easing: [0.2, 0.9, 0.25, 1], rise: 160 },
@@ -1183,15 +1183,17 @@ const goalReachedEnter = {
 } as const;
 
 /**
- * The goal-reached card, from the design: the card's margins on its page,
- * corner radius and padding; the darker band across its foot (its height,
+ * The goal-reached card, from the design: the width of the board's card,
+ * which the card lays its content out at and scales to its page, so its
+ * words break and its parts sit as the board draws them; its corner radius
+ * and padding; the darker band across its foot (its height,
  * how far it reaches past the sides and below, its turn); the gaps between
  * its parts; the plate's skew; each Word plate's turn, left step and cut, the
  * Mascot's width, the flame's box, the button's height and radius, and the
  * card's entrance.
  */
 export const goalReachedCard = {
-  margin: { top: 104, bottom: 96, horizontal: 12 },
+  width: 382,
   radius: 28,
   padding: { top: 26, horizontal: 22, bottom: 22 },
   band: { height: 300, outside: 40, below: 60, turn: '-9deg' },

@@ -53,11 +53,16 @@ function through(clock: number, delay: number, duration: number) {
   return Math.min(Math.max((clock - delay) / duration, 0), 1);
 }
 
-/** The share of the card still covered from its top, `clock` ms in (`fgIn`). */
-function covered(clock: number) {
+/**
+ * The share of the card still covered from its top at its `side`, `clock` ms
+ * in (`fgIn`): the cut edge runs from its left to its right and straightens
+ * as it reaches past the top.
+ */
+function covered(clock: number, side: 'left' | 'right' = 'right') {
   'worklet';
   const { delay, duration, edge, top } = enter.card;
-  return Math.max(edge + (top - edge) * cardEase(through(clock, delay, duration)), 0);
+  const from = edge[side];
+  return Math.max(from + (top - from) * cardEase(through(clock, delay, duration)), 0);
 }
 
 /**
@@ -140,8 +145,22 @@ export function GoalReachedCard({
   } = strings.feedNotices.goalReached;
   const turnToNext = useTurnToNextPage();
   const [size, setSize] = useState<{ width: number; height: number }>();
+  const [head, setHead] = useState<number>();
+  const [foot, setFoot] = useState<number>();
   const { clock, shown, still } = useEntranceClock();
   const height = size?.height ?? 0;
+  const scale = fitScale(size, head, foot);
+  // The content is laid out at the board's card width, or wider on a page
+  // taller than the board's, and drawn at the scale that fits it to the page.
+  const drawn =
+    size === undefined
+      ? styles.unsized
+      : {
+          width: size.width / scale,
+          height: size.height / scale,
+          transform: [{ scale }],
+        };
+  const corners = { borderRadius: card.radius * scale };
   // The card rises past its place and settles, each leg on the curve, as it
   // is uncovered from its foot up: the frame drops by the hidden part and its
   // inside lifts by as much, so only the uncovered part shows.
@@ -160,6 +179,10 @@ export function GoalReachedCard({
       transform: [{ translateY: shift + covered(clock.value) * height }],
     };
   });
+  // Over the frame's straight top, a wedge of the page's colour cuts its edge slanted.
+  const cutStyle = useAnimatedStyle(() => ({
+    height: (covered(clock.value, 'left') - covered(clock.value)) * height,
+  }));
   const bandStyle = useAnimatedStyle(() => {
     const eased = bandEase(through(clock.value, enter.band.delay, enter.band.duration));
     return {
@@ -206,125 +229,190 @@ export function GoalReachedCard({
         setSize({ width: layout.width, height: layout.height });
       }}
     >
-      <Animated.View testID="goal-reached-enter" style={[styles.frame, frameStyle]}>
-        <Animated.View style={[styles.inside, insideStyle]}>
+      <Animated.View testID="goal-reached-enter" style={[styles.frame, corners, frameStyle]}>
+        <Animated.View style={[styles.inside, corners, insideStyle]}>
           {size !== undefined && (
             <HalftoneGround id="goal-reached" width={size.width} height={size.height} />
           )}
-          <Animated.View style={[styles.band, { backgroundColor: accentEdge }, bandStyle]} />
-          {!still &&
-            enter.shards.flights.map((flight, index) => (
-              <Shard key={index} index={index} flight={flight} clock={clock} color={cream} />
-            ))}
-          <Animated.View testID="goal-reached-top" style={[styles.top, topStyle]}>
-            <Text style={[typeStyle('goalReachedLabel', tokens), { color: ink }]}>{label}</Text>
-            <View style={[styles.plate, { backgroundColor: ink }]}>
-              <Text style={[typeStyle('goalReachedPlate', tokens), { color: cream }]}>
-                {count(plate, goal)}
-              </Text>
-            </View>
-          </Animated.View>
-          <Animated.View testID="goal-reached-title" style={[styles.title, titleStyle]}>
-            <Text
-              accessibilityRole="header"
-              style={[typeStyle('goalReachedTitle', tokens), { color: ink }]}
+          <View testID="goal-reached-layout" style={[styles.layer, styles.padded, drawn]}>
+            <Animated.View style={[styles.band, { backgroundColor: accentEdge }, bandStyle]} />
+            <View
+              testID="goal-reached-head"
+              onLayout={({ nativeEvent: { layout } }) => {
+                setHead(layout.height);
+              }}
             >
-              {title}
-            </Text>
-          </Animated.View>
-          <Animated.View style={[styles.text, messageStyle]}>
-            <Text style={[typeStyle('goalReachedText', tokens), { color: ink }]}>{message}</Text>
-          </Animated.View>
-          {plates.length > 0 && (
-            <View style={styles.words}>
-              <Animated.View style={captionStyle}>
-                <Text style={[typeStyle('goalReachedCaption', tokens), { color: ink }]}>
-                  {collected}
-                </Text>
-              </Animated.View>
-              {plates.map(({ text, word }, index) => {
-                const last = index === plates.length - 1;
-                return (
-                  <WordPlate key={text} index={index} clock={clock} ground={last ? ink : cream}>
-                    <Text
-                      {...(word ? voice : {})}
-                      style={[typeStyle('goalReachedWord', tokens), { color: last ? cream : ink }]}
-                    >
-                      {text}
-                    </Text>
-                  </WordPlate>
-                );
-              })}
-            </View>
-          )}
-          <View style={styles.fill} />
-          <View style={styles.foot}>
-            <Animated.View testID="goal-reached-mascot" style={mascotStyle}>
-              <Mascot state="celebrates" onRed width={card.mascot} />
-            </Animated.View>
-            {streak !== undefined && (
-              <Animated.View testID="goal-reached-streak" style={[styles.streak, streakStyle]}>
-                <View style={styles.streakNumber}>
-                  <Svg
-                    width={card.flame.width}
-                    height={card.flame.height}
-                    viewBox="0 0 20 26"
-                    accessible={false}
-                  >
-                    <Path
-                      d="M10 0c1 5 7 8 7 15a7 7 0 0 1-14 0c0-4 2-6 4-8 0 3 1 4 3 5-1-4 0-8 0-12z"
-                      fill={cream}
-                    />
-                  </Svg>
-                  <Text style={[typeStyle('goalReachedStreak', tokens), { color: cream }]}>
-                    {streak}
+              <Animated.View testID="goal-reached-top" style={[styles.top, topStyle]}>
+                <Text style={[typeStyle('goalReachedLabel', tokens), { color: ink }]}>{label}</Text>
+                <View style={[styles.plate, { backgroundColor: ink }]}>
+                  <Text style={[typeStyle('goalReachedPlate', tokens), { color: cream }]}>
+                    {count(plate, goal)}
                   </Text>
                 </View>
+              </Animated.View>
+              <Animated.View testID="goal-reached-title" style={[styles.title, titleStyle]}>
                 <Text
-                  style={[typeStyle('goalReachedCaption', tokens), styles.right, { color: cream }]}
+                  accessibilityRole="header"
+                  numberOfLines={2}
+                  adjustsFontSizeToFit
+                  style={[typeStyle('goalReachedTitle', tokens), { color: ink }]}
                 >
-                  {count(streakLabel, streak)}
+                  {title}
                 </Text>
               </Animated.View>
-            )}
-          </View>
-          <Animated.View testID="goal-reached-button" style={[styles.buttonPlace, buttonStyle]}>
-            <Pressable
-              testID="goal-reached-next"
-              accessibilityRole="button"
-              accessibilityLabel={next}
-              onPress={() => turnToNext?.()}
-              style={({ pressed }) => [
-                styles.button,
-                {
-                  backgroundColor: ink,
-                  boxShadow: [
-                    {
-                      offsetX: 0,
-                      offsetY: pressed ? 1 : card.button.shadow,
-                      blurRadius: 0,
-                      color: card.button.shadowColor,
-                    },
-                  ],
-                  transform: [{ translateY: pressed ? card.button.shadow - 1 : 0 }],
-                },
-              ]}
+              <Animated.View style={[styles.text, messageStyle]}>
+                <Text style={[typeStyle('goalReachedText', tokens), { color: ink }]}>
+                  {message}
+                </Text>
+              </Animated.View>
+              {plates.length > 0 && (
+                <View style={styles.words}>
+                  <Animated.View style={captionStyle}>
+                    <Text style={[typeStyle('goalReachedCaption', tokens), { color: ink }]}>
+                      {collected}
+                    </Text>
+                  </Animated.View>
+                  {plates.map(({ text, word }, index) => {
+                    const last = index === plates.length - 1;
+                    return (
+                      <WordPlate key={text} index={index} clock={clock} ground={last ? ink : cream}>
+                        <Text
+                          {...(word ? voice : {})}
+                          style={[
+                            typeStyle('goalReachedWord', tokens),
+                            { color: last ? cream : ink },
+                          ]}
+                        >
+                          {text}
+                        </Text>
+                      </WordPlate>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+            <View style={styles.fill} />
+            <View
+              testID="goal-reached-foot"
+              onLayout={({ nativeEvent: { layout } }) => {
+                setFoot(layout.height);
+              }}
             >
-              <Text style={[typeStyle('goalReachedButton', tokens), { color: cream }]}>{next}</Text>
-              <Svg
-                width={card.button.arrow.width}
-                height={card.button.arrow.height}
-                viewBox="0 0 14 18"
-                accessible={false}
-              >
-                <Polygon points="7,0 14,7 10,7 10,18 4,18 4,7 0,7" fill={cream} />
-              </Svg>
-            </Pressable>
-          </Animated.View>
+              <View style={styles.foot}>
+                <Animated.View testID="goal-reached-mascot" style={mascotStyle}>
+                  <Mascot state="celebrates" onRed width={card.mascot} />
+                </Animated.View>
+                {streak !== undefined && (
+                  <Animated.View testID="goal-reached-streak" style={[styles.streak, streakStyle]}>
+                    <View style={styles.streakNumber}>
+                      <Svg
+                        width={card.flame.width}
+                        height={card.flame.height}
+                        viewBox="0 0 20 26"
+                        accessible={false}
+                      >
+                        <Path
+                          d="M10 0c1 5 7 8 7 15a7 7 0 0 1-14 0c0-4 2-6 4-8 0 3 1 4 3 5-1-4 0-8 0-12z"
+                          fill={cream}
+                        />
+                      </Svg>
+                      <Text style={[typeStyle('goalReachedStreak', tokens), { color: cream }]}>
+                        {streak}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        typeStyle('goalReachedCaption', tokens),
+                        styles.right,
+                        { color: cream },
+                      ]}
+                    >
+                      {count(streakLabel, streak)}
+                    </Text>
+                  </Animated.View>
+                )}
+              </View>
+              <Animated.View testID="goal-reached-button" style={[styles.buttonPlace, buttonStyle]}>
+                <Pressable
+                  testID="goal-reached-next"
+                  accessibilityRole="button"
+                  accessibilityLabel={next}
+                  onPress={() => turnToNext?.()}
+                  style={({ pressed }) => [
+                    styles.button,
+                    {
+                      backgroundColor: ink,
+                      boxShadow: [
+                        {
+                          offsetX: 0,
+                          offsetY: pressed ? 1 : card.button.shadow,
+                          blurRadius: 0,
+                          color: card.button.shadowColor,
+                        },
+                      ],
+                      transform: [{ translateY: pressed ? card.button.shadow - 1 : 0 }],
+                    },
+                  ]}
+                >
+                  <Text style={[typeStyle('goalReachedButton', tokens), { color: cream }]}>
+                    {next}
+                  </Text>
+                  <Svg
+                    width={card.button.arrow.width}
+                    height={card.button.arrow.height}
+                    viewBox="0 0 14 18"
+                    accessible={false}
+                  >
+                    <Polygon points="7,0 14,7 10,7 10,18 4,18 4,7 0,7" fill={cream} />
+                  </Svg>
+                </Pressable>
+              </Animated.View>
+            </View>
+          </View>
+        </Animated.View>
+        <Animated.View
+          testID="goal-reached-cut"
+          pointerEvents="none"
+          style={[styles.cut, cutStyle]}
+        >
+          <Svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 1 1"
+            preserveAspectRatio="none"
+            accessible={false}
+          >
+            <Polygon points="0,0 1,0 0,1" fill={tokens.colors.background} />
+          </Svg>
         </Animated.View>
       </Animated.View>
+      {!still && (
+        <View pointerEvents="none" style={[styles.layer, drawn]}>
+          {enter.shards.flights.map((flight, index) => (
+            <Shard key={index} index={index} flight={flight} clock={clock} color={cream} />
+          ))}
+        </View>
+      )}
     </View>
   );
+}
+
+/**
+ * The scale the card's content is drawn at on a card of `size`: no larger
+ * than the board's, no wider than the card, and its measured head and foot
+ * with the padding no taller than the card.
+ */
+function fitScale(
+  size: { width: number; height: number } | undefined,
+  head: number | undefined,
+  foot: number | undefined,
+) {
+  if (size === undefined) return 1;
+  const natural =
+    head === undefined || foot === undefined
+      ? 0
+      : card.padding.top + head + foot + card.padding.bottom;
+  return Math.min(1, size.width / card.width, natural > 0 ? size.height / natural : 1);
 }
 
 /**
@@ -433,18 +521,13 @@ function Shard({
 }
 
 const styles = StyleSheet.create({
-  card: {
-    flex: 1,
-    alignSelf: 'stretch',
-    marginTop: card.margin.top,
-    marginBottom: card.margin.bottom,
-    marginHorizontal: card.margin.horizontal,
-  },
-  frame: { flex: 1, borderRadius: card.radius, overflow: 'hidden' },
-  inside: {
-    flex: 1,
-    borderRadius: card.radius,
-    overflow: 'hidden',
+  card: { flex: 1, alignSelf: 'stretch' },
+  frame: { flex: 1, overflow: 'hidden' },
+  inside: { flex: 1, overflow: 'hidden' },
+  layer: { position: 'absolute', left: 0, top: 0, transformOrigin: 'left top' },
+  unsized: { right: 0, bottom: 0 },
+  cut: { position: 'absolute', left: 0, right: 0, top: 0 },
+  padded: {
     paddingTop: card.padding.top,
     paddingHorizontal: card.padding.horizontal,
     paddingBottom: card.padding.bottom,
@@ -464,7 +547,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: card.plate.padding.horizontal,
     transform: [{ skewX: card.plate.skew }],
   },
-  title: { marginTop: card.titleGap, transformOrigin: 'left center' },
+  title: {
+    marginTop: card.titleGap,
+    maxWidth: card.width - 2 * card.padding.horizontal,
+    transformOrigin: 'left center',
+  },
   text: { marginTop: card.textGap, maxWidth: card.textWidth },
   words: { marginTop: card.wordsGap, alignItems: 'flex-start', gap: card.wordGap },
   word: {
