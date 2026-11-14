@@ -5,15 +5,20 @@
  * block holds is refused; any other page is its plain text. Pages come through
  * the sourcing tool's polite client, so a page is fetched once across runs.
  * An Entry whose first source has no page is unverified, unless a book
- * verifies it. A file or folder outside the Edition folder holds drafts, one
- * JSON file per record, each verified as the Entry it would become, before
- * `add` sends it.
+ * verifies it. The Entries are the records of the Edition's content snapshot
+ * (ADR 0090), never its folder's files. A name that is no id is a file or
+ * folder of drafts, one JSON file per record, each verified as the Entry it
+ * would become, before `add` sends it.
  */
-import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
-import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { relative, resolve } from 'node:path';
 
-import type { EditionFolder } from '@slovo/language-pack/edition';
+import type { ContentSnapshot } from '@slovo/contracts/api';
+import {
+  snapshotEntries,
+  type AuthoredContent,
+  type EditionFolder,
+} from '@slovo/language-pack/edition';
 import {
   ID_PREFIX,
   parseRecord,
@@ -27,10 +32,13 @@ import type { PoliteClient } from '@slovo/sourcing';
 
 import { readDraftFiles } from './input';
 
-/** Which Entries to verify: named on the command line, or those that differ from a git ref. */
+/**
+ * Which Entries to verify: named on the command line, or those whose quote
+ * differs from, or is new to, an earlier snapshot (`name` is where it was read).
+ */
 export type VerifyTargets =
   | { readonly kind: 'named'; readonly names: readonly string[] }
-  | { readonly kind: 'changed'; readonly ref: string };
+  | { readonly kind: 'changed'; readonly since: ContentSnapshot; readonly name: string };
 
 export interface VerifyRequest {
   readonly edition: EditionFolder;
@@ -62,14 +70,14 @@ interface Quoted {
 /** Verifies the Entries and prints one line each, then the count per outcome. */
 export async function verifyEntries(request: VerifyRequest): Promise<number> {
   const { edition, targets, print, problem } = request;
-  const all = quotedEntries(edition);
+  const all = quotedEntries(edition.entries());
   const selected = select(all, request);
   if (!selected.ok) {
     problem(selected.error);
     return 2;
   }
   if (selected.entries.length === 0 && targets.kind === 'changed') {
-    print(`No Entry differs from ${targets.ref}`);
+    print(`No Entry differs from ${targets.name}`);
     return 0;
   }
   const book = request.bookFile === undefined ? undefined : readBook(request.bookFile);
@@ -96,9 +104,8 @@ export async function verifyEntries(request: VerifyRequest): Promise<number> {
   return failed ? 1 : 0;
 }
 
-/** The Entries of the Edition, each with its quoted field. */
-function quotedEntries(edition: EditionFolder): Quoted[] {
-  const content = edition.entries();
+/** The Entries of the content, each with its quoted field. */
+function quotedEntries(content: AuthoredContent): Quoted[] {
   return [
     ...content.words.map((authored) => quotedOf({ kind: 'word', ...authored })),
     ...content.corrections.map((authored) => quotedOf({ kind: 'correction', ...authored })),
@@ -147,11 +154,12 @@ function quotedOf(record: AuthoredRecord): Quoted | undefined {
 type Selection = { ok: true; entries: Quoted[] } | { ok: false; error: string };
 
 function select(all: readonly Quoted[], request: VerifyRequest): Selection {
-  const { edition, targets } = request;
+  const { targets } = request;
   if (targets.kind === 'changed') {
-    const files = changedFiles(edition.dir, targets.ref);
-    if (!files.ok) return files;
-    return { ok: true, entries: all.filter((entry) => files.files.has(entry.file)) };
+    const before = new Map(
+      quotedEntries(snapshotEntries(targets.since)).map((entry) => [entry.id, quoteKey(entry)]),
+    );
+    return { ok: true, entries: all.filter((entry) => before.get(entry.id) !== quoteKey(entry)) };
   }
   const picked = new Set<Quoted>();
   const problems: string[] = [];
@@ -165,23 +173,18 @@ function select(all: readonly Quoted[], request: VerifyRequest): Selection {
     : { ok: false, error: problems.join('\n') };
 }
 
-/**
- * The Entries a name stands for: an id, an Entry file, or a folder of them;
- * a file or folder outside the Edition folder holds drafts.
- */
+/** What a check of an Entry reads: its page, its quoted text and its book fields. */
+function quoteKey({ url, text, bookFields }: Quoted): string {
+  return JSON.stringify([url, text, bookFields]);
+}
+
+/** The Entries a name stands for: an id, or a file or folder of drafts. */
 function matching(all: readonly Quoted[], name: string, request: VerifyRequest): Selection {
   const byId = all.filter((entry) => entry.id === name);
   if (byId.length > 0) return { ok: true, entries: byId };
   const path = resolve(request.cwd, name);
   const none = { ok: false, error: `No Entry of the Edition is ${name}` } as const;
-  if (!existsSync(path)) return none;
-  // Both sides resolved through symlinks: macOS's /var is /private/var.
-  const inEdition = relative(realpathSync(request.edition.dir), realpathSync(path));
-  if (inEdition.startsWith('..') || isAbsolute(inEdition)) return drafts(path, request.cwd);
-  const entries = statSync(path).isDirectory()
-    ? all.filter((entry) => entry.file.startsWith(inEdition === '' ? '' : `${inEdition}${sep}`))
-    : all.filter((entry) => entry.file === inEdition);
-  return entries.length === 0 ? none : { ok: true, entries };
+  return existsSync(path) ? drafts(path, request.cwd) : none;
 }
 
 /** The drafts of a file or folder, each read as the Entry its id prefix names (ADR 0010). */
@@ -210,30 +213,6 @@ function drafts(path: string, cwd: string): Selection {
   return entries.length === 0
     ? { ok: false, error: `No draft is in ${relative(cwd, path)}` }
     : { ok: true, entries };
-}
-
-/** The Edition's files, relative to its folder, that differ from the ref or are new to git. */
-function changedFiles(
-  editionDir: string,
-  ref: string,
-): { ok: true; files: Set<string> } | { ok: false; error: string } {
-  const git = (...args: string[]) =>
-    execFileSync('git', args, { cwd: editionDir, encoding: 'utf8', stdio: 'pipe' })
-      .split('\n')
-      .filter((line) => line !== '');
-  try {
-    return {
-      ok: true,
-      files: new Set([
-        ...git('diff', '--name-only', '--relative', '--diff-filter=d', ref, '--', '.'),
-        ...git('ls-files', '--others', '--exclude-standard', '--', '.'),
-      ]),
-    };
-  } catch (error) {
-    const reason =
-      error instanceof Error && 'stderr' in error ? String(error.stderr) : String(error);
-    return { ok: false, error: `git could not compare the Edition with ${ref}: ${reason.trim()}` };
-  }
 }
 
 /** Whether the quote is on the page, read through the polite client. */

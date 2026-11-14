@@ -1,25 +1,26 @@
 import { spawnSync } from 'node:child_process';
-import {
-  cpSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, relative } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
+import { readSnapshotFile } from '@slovo/language-pack';
+import {
+  EDITIONS_DIR,
+  editionFiles,
+  openEditionWithSnapshot,
+  type EditionFolder,
+} from '@slovo/language-pack/edition';
 import { PoliteClient } from '@slovo/sourcing';
 
 import { verifyEntries } from './verify';
 
 const toolDir = fileURLToPath(new URL('../', import.meta.url));
-const ukrainian = openEdition(EDITIONS_DIR, 'uk');
+/** The UA Edition's seed snapshot: the records every run starts from. */
+const SEED_FILE = join(EDITIONS_DIR, 'uk', 'seed-snapshot.json');
+const seedSnapshot = readSnapshotFile(SEED_FILE);
+const ukrainian = openEditionWithSnapshot(EDITIONS_DIR, 'uk', seedSnapshot);
 const categoryId = ukrainian.config.categories[0]?.id ?? '';
 
 const GOROH = 'https://goroh.pp.ua/Тлумачення/';
@@ -57,15 +58,19 @@ const { INIT_CWD: _initCwd, ...withoutInitCwd } = process.env;
 let workDir: string;
 let editionDir: string;
 let cacheDir: string;
+/** The Words written over the seed snapshot's, by id. */
+let words: Map<string, { id: string }>;
 
 beforeEach(() => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-verify-'));
   editionDir = join(workDir, 'editions', 'uk');
   cacheDir = join(workDir, 'cache');
-  cpSync(ukrainian.dir, editionDir, {
-    recursive: true,
-    filter: (source) => !relative(ukrainian.dir, source).startsWith('dist'),
-  });
+  words = new Map();
+  mkdirSync(editionDir, { recursive: true });
+  writeFileSync(
+    editionFiles(editionDir).path('config'),
+    readFileSync(ukrainian.path('config'), 'utf8'),
+  );
 });
 
 afterEach(() => {
@@ -86,10 +91,28 @@ async function seed(pages: Record<string, { status?: number; body: string }>) {
   for (const address of Object.keys(pages)) await client.get(encodeURI(address));
 }
 
-function writeEntry(entry: { id: string }, folder = 'words'): string {
-  const file = join('content', folder, `${entry.id}.json`);
-  writeFileSync(join(editionDir, file), JSON.stringify(entry, null, 2));
+/** Writes a Word into the snapshot the next run reads; gives what the run names it. */
+function writeEntry(entry: { id: string }): string {
+  words.set(entry.id, entry);
+  return `snapshot:word/${entry.id}`;
+}
+
+/** The id of the record a run names `snapshot:<kind>/<id>`. */
+function id(file: string): string {
+  return file.slice(file.lastIndexOf('/') + 1);
+}
+
+/** Saves the seed snapshot with the written Words over it; gives its file. */
+function saveSnapshot(name = 'snapshot.json'): string {
+  const file = join(workDir, name);
+  const kept = seedSnapshot.words.filter(({ id }) => !words.has(id));
+  writeFileSync(file, JSON.stringify({ ...seedSnapshot, words: [...kept, ...words.values()] }));
   return file;
+}
+
+/** The Edition of the copy, its records from the saved snapshot. */
+function edition(): EditionFolder {
+  return openEditionWithSnapshot(join(workDir, 'editions'), 'uk', readSnapshotFile(saveSnapshot()));
 }
 
 /** Runs `pnpm content verify` over the copy; nothing may reach the network. */
@@ -103,13 +126,19 @@ function verify(args: string[], cwd = editionDir) {
       ...args,
       '--edition',
       'uk',
+      '--snapshot',
+      saveSnapshot(),
       '--cache',
       cacheDir,
     ],
     {
       cwd,
       encoding: 'utf8',
-      env: { ...withoutInitCwd, SLOVO_EDITIONS_DIR: join(workDir, 'editions') },
+      env: {
+        ...withoutInitCwd,
+        SLOVO_EDITIONS_DIR: join(workDir, 'editions'),
+        SLOVO_API_URL: '',
+      },
     },
   );
   const lines = run.stdout.split('\n').filter((line) => line !== '');
@@ -123,7 +152,7 @@ describe('verify', () => {
     await seed({ [`${GOROH}перевірка001`]: { body: gorohPage([SUM, definition]) } });
     const file = writeEntry(word('w_vrf001', definition, `${GOROH}перевірка001`));
 
-    const run = verify([file]);
+    const run = verify([id(file)]);
 
     expect(run.lines).toEqual([`ok\tw_vrf001\t${file}`, '1 ok']);
     expect(run.status).toBe(0);
@@ -134,7 +163,7 @@ describe('verify', () => {
     await seed({ [`${GOROH}перевірка003`]: { body: gorohPage([SUM, page]) } });
     const file = writeEntry(word('w_vrf003', 'Лютий (див. лю́тий).', `${GOROH}перевірка003`));
 
-    const run = verify([file]);
+    const run = verify([id(file)]);
 
     expect(run.lines).toEqual([`ok\tw_vrf003\t${file}`, '1 ok']);
     expect(run.status).toBe(0);
@@ -145,7 +174,7 @@ describe('verify', () => {
     const changed = definition.replace('словнику', 'довіднику');
     const file = writeEntry(word('w_vrf002', changed, `${GOROH}перевірка002`));
 
-    const run = verify([file]);
+    const run = verify([id(file)]);
 
     expect(run.lines[0]).toMatch(new RegExp(`^miss\tw_vrf002\t${file}\t.*довіднику`));
     expect(run.lines.at(-1)).toBe('1 miss');
@@ -160,7 +189,7 @@ describe('verify', () => {
     });
     const file = writeEntry(word('w_vrf003', definition, `${GOROH}перевірка003`));
 
-    const run = verify([file]);
+    const run = verify([id(file)]);
 
     expect(run.lines).toEqual([`llm\tw_vrf003\t${file}`, '1 llm']);
     expect(run.status).toBe(1);
@@ -175,7 +204,7 @@ describe('verify', () => {
     });
     const file = writeEntry(word('w_vrf004', definition, url));
 
-    expect(verify([file]).lines).toEqual([`ok\tw_vrf004\t${file}`, '1 ok']);
+    expect(verify([id(file)]).lines).toEqual([`ok\tw_vrf004\t${file}`, '1 ok']);
   });
 
   it('fails an Entry whose page could not be fetched, and asks again on a re-run', async () => {
@@ -187,8 +216,8 @@ describe('verify', () => {
     const run = async () => {
       const lines: string[] = [];
       const status = await verifyEntries({
-        edition: openEdition(join(workDir, 'editions'), 'uk'),
-        targets: { kind: 'named', names: [file] },
+        edition: edition(),
+        targets: { kind: 'named', names: ['w_vrf005'] },
         bookFile: undefined,
         client: new PoliteClient(
           () => Promise.resolve(answers.shift() ?? { status: 500, body: '' }),
@@ -215,28 +244,6 @@ describe('verify', () => {
     const file = writeEntry(word('w_vrf001', definition, `${GOROH}перевірка001`));
 
     expect(verify(['w_vrf001']).lines).toEqual([`ok\tw_vrf001\t${file}`, '1 ok']);
-  });
-
-  it('picks every Entry of a folder, and no Entry outside it', async () => {
-    const tipsDir = join(editionDir, 'content', 'tips');
-    const tipFiles = readdirSync(tipsDir).filter((name) => name.endsWith('.json'));
-    const pages: Record<string, { body: string }> = {};
-    for (const name of tipFiles) {
-      const tip = JSON.parse(readFileSync(join(tipsDir, name), 'utf8')) as {
-        sources: { url?: string }[];
-      };
-      const url = tip.sources[0]?.url;
-      if (url !== undefined) pages[decodeURI(url)] = { body: '' };
-    }
-    await seed(pages);
-
-    const files = verify([join('content', 'tips')])
-      .lines.slice(0, -1)
-      .map((line) => line.split('\t')[2]);
-
-    expect(files.toSorted()).toEqual(
-      tipFiles.map((name) => join('content', 'tips', name)).toSorted(),
-    );
   });
 
   it('verifies the drafts of a folder outside the Edition, each as an Entry', async () => {
@@ -344,34 +351,43 @@ describe('verify', () => {
     });
   });
 
-  it('with --changed, verifies only the Entry files that differ from the ref', async () => {
-    const git = (...args: string[]) =>
-      spawnSync('git', ['-c', 'core.hooksPath=/dev/null', ...args], {
-        cwd: workDir,
-        encoding: 'utf8',
-      });
-    git('init', '-q');
-    git('add', '.');
-    git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base');
+  it('with --changed, verifies only the Entries whose quote differs from the earlier snapshot', async () => {
+    const earlier = saveSnapshot('earlier.json');
     const existing = ukrainian.entries().words[0];
     if (existing === undefined) throw new Error('The UA Edition has no Word');
-    const changedWord = { ...existing.entry, primaryDefinition: definition };
     const url = existing.entry.sources[0]?.url ?? '';
     await seed({
       [url]: { body: gorohPage([SUM, definition]) },
       [`${GOROH}перевірка001`]: { body: gorohPage([SUM, definition]) },
     });
-    writeEntry(changedWord);
+    const changedWord = { ...existing.entry, primaryDefinition: definition };
+    const changed = writeEntry(changedWord);
     const added = writeEntry(word('w_vrf001', definition, `${GOROH}перевірка001`));
 
-    const run = verify(['--changed', 'HEAD']);
+    const run = verify(['--changed', earlier]);
 
     expect(run.lines.toSorted()).toEqual(
-      [`ok\t${existing.entry.id}\t${existing.file}`, `ok\tw_vrf001\t${added}`, '2 ok'].toSorted(),
+      [`ok\t${existing.entry.id}\t${changed}`, `ok\tw_vrf001\t${added}`, '2 ok'].toSorted(),
     );
-    expect(verify(['--changed', 'HEAD'], workDir).lines).toHaveLength(3);
-    git('add', '.');
-    git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'wave');
-    expect(verify(['--changed', 'HEAD']).lines).toEqual(['No Entry differs from HEAD']);
+    const now = saveSnapshot('now.json');
+    expect(verify(['--changed', now]).lines).toEqual([`No Entry differs from ${now}`]);
+  });
+
+  it('fails loudly, never verifying nothing, when no snapshot is given', () => {
+    const run = spawnSync(
+      join(toolDir, 'node_modules/.bin/tsx'),
+      [
+        '--disable-warning=ExperimentalWarning',
+        join(toolDir, 'src/cli.ts'),
+        'verify',
+        'w_x',
+        '--edition',
+        'uk',
+      ],
+      { cwd: workDir, encoding: 'utf8', env: { ...withoutInitCwd, SLOVO_API_URL: '' } },
+    );
+
+    expect(run.stderr).toContain('--snapshot <file>');
+    expect(run.status).toBe(2);
   });
 });
