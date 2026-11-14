@@ -21,3 +21,4 @@ WAITING until 2026-11-14T23:59Z: #1876 UI-part implementer (subagent in safety-n
 - 23:16Z #1876 DONE (UI part in this session) merged, core+ui+mobile green, pushed; next: fixer fix/1861-review
 WAITING until 2026-11-15T00:09Z: review fixer (subagent, branch fix/1861-review)
 - 23:34Z review fixes merged (Should 1,2 + Nit 1-5; Should 3 already covered by #1876), pushed; next: PR body, wait CI (draft stays, no main merge per WAVES brief)
+- 23:34Z PR #1879 body updated (questions, owner checks, handbook). WAITING until 2026-11-15T00:24Z: CI on #1879
