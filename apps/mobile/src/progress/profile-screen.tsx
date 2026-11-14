@@ -1,5 +1,11 @@
 import { RARITIES } from '@slovo/contracts';
-import { dateKeyOf, READER_NAME_AT_MOST, type Account, type LevelState } from '@slovo/core';
+import {
+  dateKeyOf,
+  READER_NAME_AT_MOST,
+  readerNameLength,
+  type Account,
+  type LevelState,
+} from '@slovo/core';
 import {
   ActiveDaysCalendar,
   IconButton,
@@ -361,7 +367,7 @@ function ReaderNameHead({ level }: { level: string | undefined }) {
         cancelLabel={editionStrings.collections.nameSheet.cancel}
         counter={nameStrings.counter}
         max={READER_NAME_AT_MOST}
-        lengthOf={(typed) => typed.trim().length}
+        lengthOf={(typed) => readerNameLength(typed.trim())}
         initialName={name}
         onSubmit={async (typed) => {
           const { kind } = await composition.readerName.change(typed);
