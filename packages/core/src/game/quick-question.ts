@@ -106,10 +106,11 @@ export function createQuickQuestion({
     const eligible = await entries.eligibleOfKind('word');
     if ('refusal' in eligible) return undefined;
     const words = eligible.entries.filter((entry) => entry.kind === 'word');
-    const answer = oneOf(
-      words.filter((word) => asksWordMeaning(word, comparison)),
-      avoid,
-    );
+    // The first that may be asked of a shuffle: the check reads a Definition, so not every Word pays it.
+    const answer = shuffled(
+      words.filter(({ id }) => id !== avoid),
+      random,
+    ).find((word) => asksWordMeaning(word, comparison));
     if (answer === undefined) return undefined;
     const round = wordMeaningRound({ answer, eligible: words, random, comparison });
     return round && { entry: answer, source: { kind: 'word-meaning' }, round };
