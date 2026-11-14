@@ -112,6 +112,12 @@ export const signInButtonHeight = 50;
 /** A toast's corner radius, from the design; layout, not an Edition token. */
 export const toastRadius = 6;
 
+/**
+ * The plate toast of board 09 (XSaved): an ink plate of `radius` that rises
+ * `rise` points as it fades in and hides after `lasts` milliseconds.
+ */
+export const plateToast = { rise: 30, radius: 16, lasts: 3200 } as const;
+
 /** `elev.toast`: `0 10 30 rgba(0, 0, 0, .4)`. */
 export const toastElevation = {
   shadowColor,
