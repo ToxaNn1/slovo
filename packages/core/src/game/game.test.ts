@@ -2175,7 +2175,11 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
       await right(app);
     }
 
-    expect(current(app)).toMatchObject({ roundsPassed: 10, lives: LIVES_SWITCHED_OFF, status: 'won' });
+    expect(current(app)).toMatchObject({
+      roundsPassed: 10,
+      lives: LIVES_SWITCHED_OFF,
+      status: 'won',
+    });
     expect(new Set(prompts).size).toBe(10);
   });
 
