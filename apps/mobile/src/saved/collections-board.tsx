@@ -4,7 +4,8 @@ import {
   collectionCard,
   CollectionMenuSheet,
   CollectionNameSheet,
-  DeleteCollectionDialog,
+  CollectionShareSheet,
+  DeleteCollectionSheet,
   EmptyState,
   NewCollectionCard,
   space,
@@ -16,7 +17,8 @@ import { FlatList, StyleSheet, View } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
-import { useCollectionSharing } from '@/saved/collection-sharing';
+import { useCollectionShareSheet } from '@/saved/collection-sharing';
+import { useDeleteUndoToast, useHandedDeleteUndo } from '@/saved/collection-undo';
 import { useCollectionChanges, useCollectionRows } from '@/saved/collections';
 import type { CollectionRowModel } from '@/saved/collections-screen';
 import type { ListHeader } from '@/saved/list-header';
@@ -39,7 +41,8 @@ type Cell =
  * the dashed «Нова колекція» first, then the Collections newest first in the
  * tones by position. A tap opens a Collection; a long press (or VoiceOver's
  * action) opens its menu: share while Collection Links are on, rename in the
- * name sheet (with a toast), delete after the confirmation. «Нова колекція»
+ * name sheet (with a toast), delete after the delete sheet, with the undo
+ * toast, also of a Collection deleted on its own screen. «Нова колекція»
  * opens the name sheet; the Collection it makes opens, empty, with a toast. No
  * Collections: the empty state, whose button opens the name sheet too. Needs
  * an `UndoToastProvider` above it.
@@ -49,8 +52,10 @@ export function CollectionsBoard({ header }: { header: ListHeader }) {
   const scroll = useListScroll<FlatList<Cell>>();
   const { list: listRef, onScroll } = scroll;
   const { create, rename, remove } = useCollectionChanges();
-  const { available: sharingAvailable, share } = useCollectionSharing();
+  const { available: sharingAvailable, share, sheet: shareSheet } = useCollectionShareSheet();
   const showToast = useUndoToast();
+  const showUndo = useDeleteUndoToast();
+  useHandedDeleteUndo();
   const openScreen = useOpenScreen();
   const [naming, setNaming] = useState<Naming>();
   const [menu, setMenu] = useState<CollectionRowModel>();
@@ -192,18 +197,23 @@ export function CollectionsBoard({ header }: { header: ListHeader }) {
           setNaming(undefined);
         }}
       />
-      <DeleteCollectionDialog
+      <DeleteCollectionSheet
         testID="collections-delete"
         name={deleting?.name}
         copy={strings.confirmDelete}
         onDelete={() => {
-          if (deleting !== undefined) remove(deleting.id);
+          if (deleting !== undefined) {
+            void remove(deleting.id).then((deleted) => {
+              if (deleted !== undefined) showUndo(deleted);
+            });
+          }
           setDeleting(undefined);
         }}
         onCancel={() => {
           setDeleting(undefined);
         }}
       />
+      <CollectionShareSheet testID="collections-share-sheet" {...shareSheet} />
     </>
   );
 }
