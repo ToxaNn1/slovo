@@ -338,6 +338,7 @@ describe('SwipeMarks', () => {
     await sideSwipe(160);
 
     await fireEvent.press(screen.getByText('Undo'));
+    await pass(600);
 
     expect(onUndo).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('swipe-stamp')).toBeNull();
@@ -577,6 +578,52 @@ describe('SwipeMarks in a VerticalPager', () => {
     expect(coming).toBeGreaterThan(0);
     expect(cardX()).toBe(0);
     expect(screen.queryByTestId('swipe-stamp')).toBeNull();
+  });
+
+  it('puts the mark back on undo only once the card is home', async () => {
+    const { onUndo } = await renderPaged();
+    await sideSwipe(-160);
+    await pass(400);
+
+    await fireEvent.press(screen.getByText('Undo'));
+    await pass(48);
+    // Still coming in from its side: the mark's change waits, so its render can't stall the motion.
+    expect(cardX()).toBeLessThan(0);
+    expect(onUndo).not.toHaveBeenCalled();
+    await pass(600);
+
+    expect(cardX()).toBe(0);
+    expect(onUndo).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts back a mark still coming home before a new swipe sets one', async () => {
+    const { onMark, onUndo } = await renderPaged();
+    await sideSwipe(-160);
+    await pass(400);
+    await fireEvent.press(screen.getByText('Undo'));
+    await pass(48);
+
+    await sideSwipe(160);
+
+    expect(onUndo).toHaveBeenCalledTimes(1);
+    expect(onMark.mock.calls).toEqual([['unknown'], ['known']]);
+    expect(onUndo.mock.invocationCallOrder[0]).toBeLessThan(
+      onMark.mock.invocationCallOrder[1] ?? 0,
+    );
+  });
+
+  it('puts the mark back at once on undo under Reduce Motion, the card still', async () => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    const { onUndo, onIndexChange } = await renderPaged();
+    await pass(0);
+    await sideSwipe(160, 0, { settle: false });
+    await pass(400);
+
+    await fireEvent.press(screen.getByText('Undo'));
+
+    expect(onUndo).toHaveBeenCalledTimes(1);
+    expect(onIndexChange.mock.calls).toEqual([[1], [0]]);
+    expect(cardX()).toBe(0);
   });
 
   it("brings a place name's expression back in sight on undo", async () => {
