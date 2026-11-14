@@ -82,7 +82,7 @@ brief:
 You are the Feed f5 wave coordinator (spec #1842, tickets #1843–#1845), in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/weekly-1842 (grant, order, log) and continue from the log tail. Grants: commits and pushes on the wave branches only; NO PR to main, NO main merge. Never write the owner's email anywhere. When done: `STATUS: FINISHED` first line of HANDOFF.md and an empty `chore: DONE #1842` commit on feat/1842-weekly-board.
 
 ## wave saved-1850
-status: active
+status: finished
 coord: coord/saved-1114
 branches: ^origin/(feat/1114-saved-search-design|coord/saved-1114|feat/18(5[1-9])-)
 brief:
