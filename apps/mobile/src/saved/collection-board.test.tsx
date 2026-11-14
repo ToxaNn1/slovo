@@ -6,7 +6,8 @@ import { EditionProvider } from '@slovo/ui';
 import { Tabs } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
-import { Text } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { Share, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionScreen from '../app/saved/collections/[collectionId]';
@@ -24,6 +25,12 @@ const count = pluralCount(edition.locale);
 let composition: Composition;
 /** Whether the Collection board style is on in effect, as a remote switch leaves it. */
 let boardStyleOn: boolean;
+/** Whether «Скопіювати посилання» is on in effect, as a remote switch leaves it. */
+let linkCopyOn: boolean;
+
+jest.mock('expo-clipboard', () => ({
+  setStringAsync: jest.fn(() => Promise.resolve(true)),
+}));
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -65,6 +72,7 @@ const idiom: Idiom = {
 beforeEach(async () => {
   jest.useFakeTimers();
   boardStyleOn = true;
+  linkCopyOn = true;
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
@@ -106,7 +114,11 @@ async function renderCollection(collectionId: string, query = '') {
   const editionInEffect: typeof edition = {
     ...edition,
     isFeatureEnabled: (feature) =>
-      feature === 'collectionBoardStyle' ? boardStyleOn : edition.isFeatureEnabled(feature),
+      feature === 'collectionBoardStyle'
+        ? boardStyleOn
+        : feature === 'collectionLinkCopy'
+          ? linkCopyOn
+          : edition.isFeatureEnabled(feature),
   };
   const app = await renderRoutes(
     {
@@ -182,6 +194,57 @@ describe('a Collection in the board style', () => {
     await renderCollection(id);
 
     expect(screen.getByRole('button', { name: strings.link.share })).toBeOnTheScreen();
+  });
+
+  it('opens the share sheet from the foot with the Collection Link, and copies it', async () => {
+    const id = await collectionOf(['w_one']);
+    await renderCollection(id);
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: strings.link.share })));
+
+    const sheet = screen.getByTestId('collection-share-sheet');
+    expect(within(sheet).getByText(strings.shareSheet.snapshot)).toBeOnTheScreen();
+    const link = within(sheet).getByTestId('collection-share-sheet-link');
+    expect(link).toHaveTextContent(/\/uk\/c\/[A-Za-z0-9]+$/);
+    await settle(() =>
+      fireEvent.press(screen.getByRole('button', { name: strings.shareSheet.copy })),
+    );
+
+    expect(Clipboard.setStringAsync).toHaveBeenCalledWith(
+      expect.stringMatching(/^https:\/\/.+\/uk\/c\/[A-Za-z0-9]+$/),
+    );
+    expect(screen.getByText(strings.toasts.copied)).toBeOnTheScreen();
+  });
+
+  it('opens the system Share from the share sheet once the sheet has slid away', async () => {
+    const share = jest
+      .spyOn(Share, 'share')
+      .mockResolvedValue({ action: Share.sharedAction, activityType: undefined });
+    const id = await collectionOf(['w_one']);
+    await renderCollection(id);
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: strings.link.share })));
+    await settle(() =>
+      fireEvent.press(screen.getByRole('button', { name: strings.shareSheet.share })),
+    );
+    // The share sheet slides away first, then the system Share opens.
+    await settle();
+
+    expect(share).toHaveBeenCalledWith({
+      message: expect.stringContaining('Колекція «Осінь» у SLOVO: https://'),
+    });
+    share.mockRestore();
+  });
+
+  it('keeps the system Share alone on the share sheet while copying is off', async () => {
+    linkCopyOn = false;
+    const id = await collectionOf(['w_one']);
+    await renderCollection(id);
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: strings.link.share })));
+
+    expect(screen.queryByRole('button', { name: strings.shareSheet.copy })).toBeNull();
+    expect(screen.getByRole('button', { name: strings.shareSheet.share })).toBeOnTheScreen();
   });
 
   it('opens the Collection menu under its name with share, rename and delete', async () => {

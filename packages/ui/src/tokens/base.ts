@@ -375,6 +375,12 @@ export const typeRoles = {
   collectionWordCount: role('ui', '500', 14, 17),
   /** How many Entries a Collection holds, under its name on its card. */
   collectionCardCount: role('ui', '600', 12, 12),
+  /** The line under the plate of a Collection's delete sheet (board 09). */
+  collectionSheetMessage: role('ui', '500', 16, 23),
+  /** The muted line of a Collection's share sheet (board 09). */
+  collectionSheetNote: role('ui', '500', 15, 22),
+  /** The Collection Link in its box on the share sheet (board 09). */
+  collectionLink: role('ui', '600', 15, 15),
   /** A Synonym Row member's shade note, upright at the right end of its row (XEntry2 e8). */
   shadeNote: role('ui', '500', 14, 18.2),
   /** `Lemma, hero`: the onboarding welcome's Lemma. */
