@@ -9,7 +9,6 @@ export { openAccount, type Account, type AccountState } from './account/account'
 export { openComposition, type Composition } from './composition';
 export {
   COLLECTION_NAME_MAX_LENGTH,
-  COLLECTION_UNDO_MS,
   collectionNameLength,
   type Collection,
   type CollectionEntry,

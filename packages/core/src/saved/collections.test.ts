@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   COLLECTION_NAME_MAX_LENGTH,
-  COLLECTION_UNDO_MS,
   collectionNameLength,
   openComposition,
   type Clock,
@@ -10,6 +9,7 @@ import {
   type Random,
 } from '../index';
 import { SEEN_DWELL_MS } from '../feed/feed';
+import { COLLECTION_UNDO_MS } from './collections';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, steppingRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
