@@ -10,11 +10,18 @@ import type { TextComparison } from '../text/text-comparison';
 /** A Round the reader answers by picking one of its options. */
 export type PickRound = Extract<RoundContent, { readonly form: 'pick' }>;
 
-/** What a Quick Question asks: one pick Round of a Game Mode over an Eligible Entry. */
+/**
+ * Where a Quick Question's Round came from: a Game Mode on offer, named by
+ * its id, or the Word Meaning question, which is no Game Mode.
+ */
+export type QuickQuestionSource =
+  { readonly kind: 'game-mode'; readonly modeId: string } | { readonly kind: 'word-meaning' };
+
+/** What a Quick Question asks: one pick Round over an Eligible Entry, and where it came from. */
 export interface QuickQuestionContent {
   /** The Entry the Round asks about, which its answer marks and whose Definition the answer card explains it with, as the Game's does. */
   readonly entry: AskableEntry;
-  readonly modeId: string;
+  readonly source: QuickQuestionSource;
   readonly round: PickRound;
 }
 
@@ -77,7 +84,8 @@ export function createQuickQuestion({
         edition,
         comparison,
       });
-      if (round?.form === 'pick') return { entry: answer, modeId: mode.id, round };
+      if (round?.form === 'pick')
+        return { entry: answer, source: { kind: 'game-mode', modeId: mode.id }, round };
     }
     return undefined;
   }
