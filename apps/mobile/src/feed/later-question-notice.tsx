@@ -175,8 +175,7 @@ function InterestsQuestion({
 /**
  * The interests: a chip for every Word Category, those in the Mix picked,
  * and «Готово», which hides every Category not picked. The last picked chip
- * can't be unpicked, as on the Mix screen. For the Feed Notice and the
- * retake in Settings.
+ * can't be unpicked, as on the Mix screen. For the Feed Notice.
  */
 export function InterestsChoice({
   testIDPrefix,
@@ -185,27 +184,11 @@ export function InterestsChoice({
   testIDPrefix: string;
   onDone: (categoryIds: readonly string[]) => void;
 }) {
-  const { allCategories, categoryIds } = useMixState();
+  const { categoryIds } = useMixState();
   const [picked, setPicked] = useState<readonly string[]>(categoryIds);
   return (
     <>
-      <View style={styles.chips}>
-        {allCategories.map(({ id, displayName }) => {
-          const on = picked.includes(id);
-          return (
-            <Chip
-              key={id}
-              testID={`${testIDPrefix}-interest-${id}`}
-              label={displayName}
-              on={on}
-              disabled={on && picked.length === 1}
-              onPress={() => {
-                setPicked(on ? picked.filter((other) => other !== id) : [...picked, id]);
-              }}
-            />
-          );
-        })}
-      </View>
+      <InterestChips testIDPrefix={testIDPrefix} picked={picked} onChange={setPicked} />
       <Button
         testID={`${testIDPrefix}-interests-done`}
         label={strings.done}
@@ -214,6 +197,41 @@ export function InterestsChoice({
         }}
       />
     </>
+  );
+}
+
+/**
+ * A chip for every Word Category, those in `picked` on; the last one on can't
+ * be turned off. For the Feed Notice and the retake in Settings.
+ */
+export function InterestChips({
+  testIDPrefix,
+  picked,
+  onChange,
+}: {
+  testIDPrefix: string;
+  picked: readonly string[];
+  onChange: (categoryIds: readonly string[]) => void;
+}) {
+  const { allCategories } = useMixState();
+  return (
+    <View style={styles.chips}>
+      {allCategories.map(({ id, displayName }) => {
+        const on = picked.includes(id);
+        return (
+          <Chip
+            key={id}
+            testID={`${testIDPrefix}-interest-${id}`}
+            label={displayName}
+            on={on}
+            disabled={on && picked.length === 1}
+            onPress={() => {
+              onChange(on ? picked.filter((other) => other !== id) : [...picked, id]);
+            }}
+          />
+        );
+      })}
+    </View>
   );
 }
 
