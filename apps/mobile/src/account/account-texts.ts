@@ -3,16 +3,25 @@ import type { AccountState } from '@slovo/core';
 
 type AccountStrings = EditionStrings['account'];
 
+/** What the Account row of Settings says: its line and the value beside its chevron. */
+export interface AccountRowSummary {
+  readonly subtitle: string | undefined;
+  readonly value: string | undefined;
+}
+
 /**
- * The value of the «SLOVO ID» row of Settings: «Увійти», or the email once
- * signed in; nothing while the Account opens.
+ * The Account row of Settings (board 11, screen 83): «Без входу» while signed
+ * out; «Слова синхронізуються» and the email once signed in; nothing while
+ * the Account opens.
  */
 export function accountSummary(
   state: AccountState | undefined,
-  strings: AccountStrings,
-): string | undefined {
-  if (state === undefined) return undefined;
-  return state.status === 'signed-in' ? state.email : strings.signedOut;
+  strings: EditionStrings['settings']['rowSubtitles'],
+): AccountRowSummary {
+  if (state === undefined) return { subtitle: undefined, value: undefined };
+  return state.status === 'signed-in'
+    ? { subtitle: strings.signedIn, value: state.email }
+    : { subtitle: strings.signedOut, value: undefined };
 }
 
 /** The line under the field of the SLOVO ID screen for the last request's problem, if any. */

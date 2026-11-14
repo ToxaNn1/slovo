@@ -1,4 +1,4 @@
-import { openComposition, systemRandom, type Composition, type Edition } from '@slovo/core';
+import { openComposition, systemRandom, type Composition } from '@slovo/core';
 import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
@@ -8,7 +8,7 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import { notificationsSummary } from './notifications-summary';
-import { count, strings, ukrainian } from '../test-support';
+import { strings, ukrainian } from '../test-support';
 
 async function open(
   scheduler: FakeNotificationScheduler = createFakeNotificationScheduler(),
@@ -30,46 +30,25 @@ async function open(
   });
 }
 
-/** The UA Edition with the evening notification off: every time takes a Word. */
-const withoutEvening: Pick<Edition, 'isFeatureEnabled'> = {
-  isFeatureEnabled: (feature) =>
-    feature !== 'eveningNotification' && ukrainian.isFeatureEnabled(feature),
-};
-
-const summaryOf = (
-  { notifications }: Composition,
-  edition: Pick<Edition, 'isFeatureEnabled'> = ukrainian,
-) =>
-  notificationsSummary({
-    notifications: notifications.state,
-    edition,
-    strings: strings.notifications,
-    count,
-  });
+const summaryOf = ({ notifications }: Composition) =>
+  notificationsSummary({ notifications: notifications.state, strings: strings.notifications });
 
 describe('the «Сповіщення» row of Settings', () => {
-  it("counts what the Edition's default times bring: the Word of the Day and the evening one (story 57)", async () => {
+  it("shows the first of the Edition's default times", async () => {
     const composition = await open();
 
     expect(composition.notifications.state.times).toEqual(['09:00', '13:00', '19:00']);
-    expect(ukrainian.isFeatureEnabled('eveningNotification')).toBe(true);
-    expect(summaryOf(composition)).toBe('2 на день');
-  });
-
-  it('counts every time with the evening notification off, as each takes a Word', async () => {
-    const composition = await open();
-
-    expect(summaryOf(composition, withoutEvening)).toBe('3 на день');
+    expect(summaryOf(composition)).toBe('09:00');
   });
 
   it('follows the list as times are removed, and reads «Вимкнено» with none left', async () => {
     const composition = await open();
 
-    await composition.notifications.removeTime('13:00');
-    expect(summaryOf(composition)).toBe('2 на день');
-
     await composition.notifications.removeTime('09:00');
-    expect(summaryOf(composition)).toBe('1 на день');
+    expect(summaryOf(composition)).toBe('13:00');
+
+    await composition.notifications.removeTime('13:00');
+    expect(summaryOf(composition)).toBe('19:00');
 
     await composition.notifications.removeTime('19:00');
     expect(summaryOf(composition)).toBe('Вимкнено');
@@ -84,7 +63,7 @@ describe('the «Сповіщення» row of Settings', () => {
 
     scheduler.setPermission('allowed');
     await composition.resume();
-    expect(summaryOf(composition)).toBe('2 на день');
+    expect(summaryOf(composition)).toBe('09:00');
   });
 
   it('reads «Вимкнено» while permission is not asked yet, and the times once the reader allows them', async () => {
@@ -93,6 +72,6 @@ describe('the «Сповіщення» row of Settings', () => {
     expect(summaryOf(composition)).toBe('Вимкнено');
 
     await composition.notifications.askPermission();
-    expect(summaryOf(composition)).toBe('2 на день');
+    expect(summaryOf(composition)).toBe('09:00');
   });
 });

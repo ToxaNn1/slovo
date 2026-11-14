@@ -1,10 +1,8 @@
 import type { NotificationsState, NotificationTimeRefusal } from '@slovo/core';
-import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { useEditionInEffect } from '../edition/remote-switches';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { notificationsSummary } from './notifications-summary';
@@ -14,20 +12,12 @@ export function useNotificationsState(): NotificationsState {
   return useSubscribed(useComposition().notifications, ({ state }) => state);
 }
 
-/** The value of the «Сповіщення» row of Settings, counted as the Edition in effect plans a day. */
+/** The value of the «Сповіщення» row of Settings: the first Notification time, or «Вимкнено». */
 export function useNotificationsSummary(): string {
   const state = useNotificationsState();
-  const edition = useEditionInEffect();
-  const { count } = useEdition();
   return useMemo(
-    () =>
-      notificationsSummary({
-        notifications: state,
-        edition,
-        strings: editionStrings.notifications,
-        count,
-      }),
-    [state, edition, count],
+    () => notificationsSummary({ notifications: state, strings: editionStrings.notifications }),
+    [state],
   );
 }
 

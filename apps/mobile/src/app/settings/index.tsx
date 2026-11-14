@@ -1,11 +1,10 @@
-import { FontSizeSchema, RARITIES, ThemeSchema, fill, type DailyGoal } from '@slovo/contracts';
+import { FontSizeSchema, RARITIES, fill, type DailyGoal, type Theme } from '@slovo/contracts';
 import {
   ChoiceRow,
   FontSizePreview,
-  NavigationRow,
   BackHeader,
   SettingsGroup,
-  SwitchRow,
+  SettingsRow,
   space,
   useTokens,
 } from '@slovo/ui';
@@ -22,13 +21,18 @@ import { useMixSummary } from '@/mix/mix';
 import { useRarityCeiling } from '@/mix/rarity-ceiling';
 import { useNotificationsSummary } from '@/notifications/notifications';
 import { useShown } from '@/shown-in-effect';
+import { installedBuild } from '@/settings/installed-build';
 import { useSettings } from '@/settings/settings';
 import { useOpenScreen } from '@/use-open-screen';
 import { useSetDailyGoal, useXpLogState } from '@/progress/xp-log';
 
 const strings = editionStrings.settings;
+const subtitles = strings.rowSubtitles;
 
-const themeSegments = ThemeSchema.options.map((theme) => ({
+/** The Themes in the board's order, Світла · Темна · Системна; the stored values and the default stay as they are. */
+const THEME_ORDER = ['light', 'dark', 'system'] as const satisfies readonly Theme[];
+
+const themeSegments = THEME_ORDER.map((theme) => ({
   value: theme,
   label: strings.themes[theme],
   testID: `settings-theme-${theme}`,
@@ -63,14 +67,14 @@ const rarityCeilingSegments = RARITIES.map((rarity) => ({
 }));
 
 /**
- * Settings: the Account when the Account is on in effect, the Theme, the font
- * size, the Daily Goal while it is on in effect, «Рідкість», the Rarity
- * Ceiling, while its Feature Switch is (ADR 0072), «Пройти тест ще раз» while
- * the Rarity Test is, «Менше руху» under the Theme while its Feature Switch is,
- * «Пройти опитування ще раз» while the later questions are, «Сезонний декор»
- * and «Звуки» while their Feature Switches are,
- * «Ділитися анонімною статистикою» while the Community Counters are (the
- * privacy policy link lives in «Про застосунок»), and the rows of the design.
+ * Settings, as screen 83 of board 11: every row with its icon and its line,
+ * a row that opens a screen with its value beside the chevron, the groups in
+ * the board's order. Each row is shown while its feature is on in effect: the
+ * Account, «Менше руху», «Звуки», «Голос диктора», the Daily Goal, the Rarity
+ * Ceiling (ADR 0072), «Пройти тест ще раз», «Відзнаки», «Пройти опитування
+ * ще раз», «Перерва», the counters, «Самоперевірка» and
+ * «Ділитися анонімною статистикою» (the privacy policy link lives in
+ * «Про SLOVO»). Seasonal Decor has no row (ADR 0055).
  */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
@@ -87,6 +91,7 @@ export default function SettingsScreen() {
   const accountOpening = useAccountInEffect();
   const shown = useShown();
   const router = useRouter();
+  const build = installedBuild();
   return (
     <SafeAreaView
       testID="settings"
@@ -115,6 +120,7 @@ export default function SettingsScreen() {
             <ChoiceRow
               icon="hex"
               label={strings.theme}
+              subtitle={subtitles.theme}
               segments={themeSegments}
               selected={current.theme}
               onSelect={(theme) => {
@@ -122,32 +128,24 @@ export default function SettingsScreen() {
               }}
             />
             {shown.reduceMotionSetting && (
-              <SwitchRow
+              <SettingsRow
                 testID="settings-reduce-motion"
-                icon="wedge"
+                icon="bar"
                 label={strings.reduceMotion.title}
                 subtitle={strings.reduceMotion.explanation}
-                value={current.reduceMotion}
-                onChange={(reduceMotion) => {
-                  update({ reduceMotion });
-                }}
-              />
-            )}
-            {shown.seasonalDecorSetting && (
-              <SwitchRow
-                testID="settings-seasonal-decor"
-                icon="wedge"
-                label={strings.seasonalDecor.title}
-                subtitle={strings.seasonalDecor.explanation}
-                value={current.seasonalDecor}
-                onChange={(seasonalDecor) => {
-                  update({ seasonalDecor });
+                end={{
+                  kind: 'switch',
+                  value: current.reduceMotion,
+                  onChange: (reduceMotion) => {
+                    update({ reduceMotion });
+                  },
                 }}
               />
             )}
             <ChoiceRow
               icon="square"
-              label={strings.fontSize}
+              label={strings.rows.textSize}
+              subtitle={subtitles.textSize}
               segments={fontSizeSegments}
               selected={current.fontSize}
               onSelect={(fontSize) => {
@@ -165,52 +163,71 @@ export default function SettingsScreen() {
         <View testID="settings-group-sound" style={styles.section}>
           <SettingsGroup title={strings.groups.sound}>
             {shown.soundsSetting && (
-              <SwitchRow
+              <SettingsRow
                 testID="settings-sounds"
                 icon="triangle"
                 label={strings.sounds.sounds}
-                value={current.sounds}
-                onChange={(sounds) => {
-                  update({ sounds });
+                subtitle={subtitles.sounds}
+                end={{
+                  kind: 'switch',
+                  value: current.sounds,
+                  onChange: (sounds) => {
+                    update({ sounds });
+                  },
                 }}
               />
             )}
             {shown.narratorVoiceSetting && (
-              <NavigationRow
+              <SettingsRow
                 testID="settings-row-narrator-voice"
-                icon="bar"
+                icon="triangle"
                 label={strings.narratorVoice.row}
                 subtitle={strings.narratorVoice.rowSub}
-                value={edition.narratorVoiceOf(current.narratorVoice).name}
-                onPress={() => {
-                  openScreen('/settings/narrator-voice');
+                end={{
+                  kind: 'chevron',
+                  value: edition.narratorVoiceOf(current.narratorVoice).name,
+                  onPress: () => {
+                    openScreen('/settings/narrator-voice');
+                  },
                 }}
               />
             )}
-            <SwitchRow
+            <SettingsRow
               testID="settings-vibration"
               icon="wedge"
               label={strings.sounds.vibration}
-              value={current.vibration}
-              onChange={(vibration) => {
-                update({ vibration });
+              subtitle={subtitles.vibration}
+              end={{
+                kind: 'switch',
+                value: current.vibration,
+                onChange: (vibration) => {
+                  update({ vibration });
+                },
               }}
             />
-            <NavigationRow
+            <SettingsRow
               testID="settings-row-notifications"
-              icon="triangle"
+              icon="diamond"
               label={strings.rows.notifications}
-              value={notificationsSummary}
-              onPress={() => {
-                openScreen('/settings/notifications');
+              subtitle={subtitles.notifications}
+              end={{
+                kind: 'chevron',
+                value: notificationsSummary,
+                onPress: () => {
+                  openScreen('/settings/notifications');
+                },
               }}
             />
-            <NavigationRow
+            <SettingsRow
               testID="settings-row-widgets"
               icon="square"
-              label={strings.howToAddWidget}
-              onPress={() => {
-                openScreen('/settings/widgets');
+              label={strings.rows.widgets}
+              subtitle={subtitles.widgets}
+              end={{
+                kind: 'chevron',
+                onPress: () => {
+                  openScreen('/settings/widgets');
+                },
               }}
             />
           </SettingsGroup>
@@ -219,8 +236,10 @@ export default function SettingsScreen() {
           <SettingsGroup title={strings.groups.learning}>
             {shown.dailyGoal && edition.isFeatureEnabled('xpLog') && (
               <ChoiceRow
-                icon="triangle"
+                testID="settings-daily-goal"
+                icon="wedge"
                 label={strings.dailyGoal.title}
+                subtitle={subtitles.dailyGoal}
                 segments={dailyGoalSegments(dailyGoals)}
                 // «Без цілі» is selected while today has no Daily Goal.
                 selected={dailyGoal === null ? NO_DAILY_GOAL : String(dailyGoal.goal)}
@@ -247,96 +266,131 @@ export default function SettingsScreen() {
                 }}
               />
             )}
-            <NavigationRow
+            <SettingsRow
               testID="settings-row-my-mix"
               icon="diamond"
               label={strings.rows.myMix}
-              value={mixSummary}
-              onPress={() => {
-                openScreen('/settings/mix');
+              subtitle={subtitles.myMix}
+              end={{
+                kind: 'chevron',
+                value: mixSummary,
+                onPress: () => {
+                  openScreen('/settings/mix');
+                },
               }}
             />
             {shown.rarityTest && (
-              <NavigationRow
+              <SettingsRow
                 testID="settings-row-rarity-test"
                 icon="bar"
                 label={editionStrings.rarityTest.retake}
-                onPress={() => {
-                  openScreen('/settings/rarity-test');
+                subtitle={editionStrings.rarityTest.subtitle}
+                end={{
+                  kind: 'chevron',
+                  onPress: () => {
+                    openScreen('/settings/rarity-test');
+                  },
                 }}
               />
             )}
             {shown.badges && (
-              <NavigationRow
+              <SettingsRow
                 testID="settings-row-badges"
                 icon="diamond"
                 label={strings.rows.badges}
-                onPress={() => {
-                  openScreen('/settings/badges');
+                subtitle={subtitles.badges}
+                end={{
+                  kind: 'chevron',
+                  onPress: () => {
+                    openScreen('/settings/badges');
+                  },
                 }}
               />
             )}
             {shown.questionnaire !== undefined && (
-              <NavigationRow
+              <SettingsRow
                 testID="settings-row-questionnaire"
                 icon="square"
                 label={strings.rows.questionnaire}
-                onPress={() => {
-                  openScreen('/settings/questionnaire');
+                subtitle={subtitles.questionnaire}
+                end={{
+                  kind: 'chevron',
+                  onPress: () => {
+                    openScreen('/settings/questionnaire');
+                  },
                 }}
               />
             )}
             {shown.streakBreak && (
-              <NavigationRow
+              <SettingsRow
                 testID="settings-row-streak-break"
                 icon="bar"
                 label={strings.rows.streakBreak}
-                onPress={() => {
-                  openScreen('/settings/streak-break');
+                subtitle={subtitles.streakBreak}
+                end={{
+                  kind: 'chevron',
+                  onPress: () => {
+                    openScreen('/settings/streak-break');
+                  },
                 }}
               />
             )}
             {shown.countersSetting === 'noCounters' && (
-              <SwitchRow
+              <SettingsRow
                 testID="settings-no-counters"
                 icon="bar"
                 label={strings.noCounters.title}
                 subtitle={strings.noCounters.explanation}
-                value={current.noCounters}
-                onChange={(noCounters) => {
-                  update({ noCounters });
+                end={{
+                  kind: 'switch',
+                  value: current.noCounters,
+                  onChange: (noCounters) => {
+                    update({ noCounters });
+                  },
                 }}
               />
             )}
             {shown.countersSetting === 'hideStreak' && (
-              <SwitchRow
+              <SettingsRow
                 testID="settings-hide-streak"
                 icon="bar"
                 label={strings.hideStreak}
-                value={current.noCounters}
-                onChange={(noCounters) => {
-                  update({ noCounters });
+                subtitle={subtitles.hideStreak}
+                end={{
+                  kind: 'switch',
+                  value: current.noCounters,
+                  onChange: (noCounters) => {
+                    update({ noCounters });
+                  },
                 }}
               />
             )}
             {shown.selfCheckSetting && (
-              <SwitchRow
+              <SettingsRow
                 testID="settings-self-check"
                 icon="diamond"
                 label={strings.selfCheck}
-                value={current.selfCheck}
-                onChange={(selfCheck) => {
-                  update({ selfCheck });
+                subtitle={subtitles.selfCheck}
+                end={{
+                  kind: 'switch',
+                  value: current.selfCheck,
+                  onChange: (selfCheck) => {
+                    update({ selfCheck });
+                  },
                 }}
               />
             )}
-            <NavigationRow
+            <SettingsRow
               testID="settings-row-hidden"
               icon="square"
               label={strings.rows.hidden}
-              value={hiddenSummary}
-              onPress={() => {
-                openScreen('/settings/hidden');
+              subtitle={subtitles.hidden}
+              end={{
+                kind: 'chevron',
+                value: hiddenSummary,
+                onPress: () => {
+                  openScreen('/settings/hidden');
+                },
               }}
             />
           </SettingsGroup>
@@ -346,23 +400,35 @@ export default function SettingsScreen() {
             {accountOpening !== undefined && <AccountRow opening={accountOpening} />}
             {/* One condition per row: the group draws its hairlines between its children, and a fragment is one child. */}
             {shown.shareCountersSetting && (
-              <SwitchRow
+              <SettingsRow
                 testID="settings-share-counters"
-                icon="bar"
+                icon="diamond"
                 label={strings.anonymousStats.title}
                 subtitle={strings.anonymousStats.explanation}
-                value={current.shareCounters}
-                onChange={(shareCounters) => {
-                  update({ shareCounters });
+                end={{
+                  kind: 'switch',
+                  value: current.shareCounters,
+                  onChange: (shareCounters) => {
+                    update({ shareCounters });
+                  },
                 }}
               />
             )}
-            <NavigationRow
+            <SettingsRow
               testID="settings-row-about"
-              icon="hex"
+              icon="triangle"
               label={strings.rows.about}
-              onPress={() => {
-                openScreen('/settings/about');
+              // «Версія <version> (<build>)» (ADR 0044), unknown to a binary without `expo-application`.
+              subtitle={
+                build === undefined
+                  ? undefined
+                  : fill(subtitles.about, { version: build.version, build: build.build })
+              }
+              end={{
+                kind: 'chevron',
+                onPress: () => {
+                  openScreen('/settings/about');
+                },
               }}
             />
           </SettingsGroup>

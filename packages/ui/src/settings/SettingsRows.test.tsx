@@ -1,4 +1,11 @@
-import { ChoiceRow, EditionProvider, NavigationRow, SettingsGroup, SwitchRow } from '@slovo/ui';
+import {
+  ChoiceRow,
+  EditionProvider,
+  NavigationRow,
+  SettingsGroup,
+  SettingsRow,
+  SwitchRow,
+} from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useState, type ReactNode } from 'react';
@@ -88,5 +95,70 @@ describe('Settings rows', () => {
 
     expect(onSelect).toHaveBeenCalledWith('dark');
     expect(screen.getByRole('button', { name: 'Theme: Dark' })).toBeSelected();
+  });
+});
+
+describe('Settings row', () => {
+  it('opens a screen from its chevron end, read with its value and its subtitle as the hint', async () => {
+    const onPress = jest.fn();
+    await render(
+      <Providers>
+        <SettingsRow
+          testID="row"
+          icon="diamond"
+          label="Notifications"
+          subtitle="Word of the day reminder"
+          end={{ kind: 'chevron', value: '09:00', onPress }}
+        />
+      </Providers>,
+    );
+
+    const row = screen.getByRole('button', { name: 'Notifications, 09:00' });
+    expect(row).toHaveProp('accessibilityHint', 'Word of the day reminder');
+    expect(screen.getByText('09:00')).toBeOnTheScreen();
+    expect(screen.getByTestId('row-chevron')).toBeOnTheScreen();
+    await fireEvent.press(row);
+
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('turns its switch end on, read once at the switch with its subtitle as the hint', async () => {
+    const onChange = jest.fn();
+    await render(
+      <Providers>
+        <SettingsRow
+          icon="triangle"
+          label="Sounds"
+          subtitle="A shout on the reveal"
+          end={{ kind: 'switch', value: false, onChange }}
+        />
+      </Providers>,
+    );
+
+    const toggle = screen.getByRole('switch', { name: 'Sounds' });
+    expect(toggle).toHaveProp('accessibilityHint', 'A shout on the reveal');
+    await fireEvent.press(toggle);
+
+    expect(onChange).toHaveBeenCalledWith(true);
+  });
+
+  it('runs its plain action end, with no value and no chevron', async () => {
+    const onPress = jest.fn();
+    await render(
+      <Providers>
+        <SettingsRow
+          testID="row"
+          icon="bar"
+          label="Retake the test"
+          subtitle="Ten words"
+          end={{ kind: 'action', onPress }}
+        />
+      </Providers>,
+    );
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Retake the test' }));
+
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('row-chevron')).toBeNull();
   });
 });
