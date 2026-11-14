@@ -1,13 +1,13 @@
-STATUS: WAITING #1856 (successor running), then #1857, review, End steps. Do NOT auto-merge #1860 yet: board 09 port unfinished.
+STATUS: WAITING #1857 (cloud, 19:08Z); #1856 merged fe868ba12. Then End steps. #1860 on merge-hold until End.
 # Wave #1850 (board 09 Saved/Search) — coordinator #9 handoff (rewrite whole, never append)
 Owner ran /mattpocock-skills:implement-spec on #1850, «роби максимум в хмарі». Follow that SKILL.md + docs/agents/waves.md «Steps» + docs/agents/ticket-brief.md.
 Grants: ~/.slovo-coord/grant-saved-1114.md (commit, push, PR, auto-merge squash to main on green, this branch only). Force-push USED UP. No branch deletion (ask).
 Integration branch feat/1114-saved-search-design (main checkout, pushed, tip 9df1d5d0f + text commit). Draft PR #1860 Closes #1851 #1852 #1853 #1854 #1855 #1858 #1859; add each next ticket. CI green at last check. Do NOT enable auto-merge before the End steps (watchdog keeps asking; answer that the wave is unfinished).
 
 ## State
-- Merged: #1859 #1851 #1852 #1853 #1854 #1858 #1855. Reports in wave/reports/.
-- Running cloud: #1856 successor session_01VefVQQrcTSHbzy1aYkeqYx (18:35Z, brief 1856b.txt) continues from STUCK 7eeb81c72 (old session worked 1 h, pushed all at the end; backup ref refs/backup/1856-stuck). Redundant session_01VefVQRmd5zLuqagEdg5uKc STOPPED by owner 14.11. Waiter: SKIP=7eeb81c72 wait.sh 1856 feat/1856-collections-screens. PR #1860 NOT merged: grant = only after End steps.
-- Left: #1857 after #1856: brief ready wave/briefs/1857.txt (1490 B). Launch: `script -q /tmp/cloud-1857.log claude --cloud "$(cat …/briefs/1857.txt)" </dev/null >/dev/null`.
+- Merged: #1859 #1851 #1852 #1853 #1854 #1858 #1855 #1856 (fe868ba12, 3 sessions). Reports in wave/reports/.
+- Running cloud: #1857 session_01VefVQRxcPoDBdpyFdQ516H (19:08Z, brief 1857.txt). Waiter: wait.sh 1857 feat/1857-collection-delete-share. PR #1860 body has Closes #1856; add #1857.
+- Left: after #1857 only the End steps.
 - Waiter script ~/.slovo-coord/saved-compare/wave/wait.sh <n> <branch>...: checks `git log -1 --format=%s FETCH_HEAD` for (DONE|FAILED|STUCK) + #n per branch, 3 h deadline; env SKIP=<sha> ignores an old status tip. Run one per waiter in sequence (they share FETCH_HEAD).
 - A STUCK commit whose successor is running: add its full sha to ~/.slovo-coord/watchdog/handled.
 
@@ -27,3 +27,4 @@ Open for owner: docs PR so waves.md tells cloud to commit with the owner identit
 Done this session: ~/.zshrc now follows .nvmrc on start/cd (T3 Code passed an old Node PATH); backup ~/.zshrc.bak-1114.
 Thread titles: yours «🟢 🧭 Координатор · дошка 09»; rename predecessor mcp:launch:a13421ec9b3cd6221ed9207bf7e92a3f06f8565ae8512ebeeb959ccf7f10a82c to «💤 старий · Координатор · дошка 09».
 - Silent-implementer guard: after every cloud launch run `plan-guard.sh <branch> 15` in the background; NO PUSH = relaunch at once (PLAN commit is the first step of every brief).
+- PR 1860 is in ~/.slovo-coord/watchdog/merge-hold (stops the CLEAN-unmerged nudge). REMOVE that line at End, right before `gh pr merge 1860 --auto --squash`.
