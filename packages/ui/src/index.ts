@@ -172,6 +172,7 @@ export {
   onboardingLayout,
   railScreen,
   rowPadding,
+  savedHeader,
   signInButtonHeight,
   space,
   fontScaleCap,
