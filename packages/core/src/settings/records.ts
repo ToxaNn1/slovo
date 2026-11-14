@@ -1,14 +1,37 @@
-import { FontSizeSchema, RaritySchema, ThemeSchema } from '@slovo/contracts';
+import { FontSizeSchema, RaritySchema, TextSizeSchema, ThemeSchema } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { declareRecord } from '../user-state/user-state-record';
+
+/** The most characters the reader's name holds (ADR 0136). */
+export const READER_NAME_AT_MOST = 24;
+
+/** The reader's name as stored: already trimmed, never empty, at most {@link READER_NAME_AT_MOST} characters. */
+const ReaderNameSchema = z
+  .string()
+  .min(1)
+  .max(READER_NAME_AT_MOST)
+  .refine((name) => name === name.trim());
 
 /** The records of the Settings. */
 export const settingsRecords = {
   /** The user's Theme. */
   theme: declareRecord('settings.theme', ThemeSchema),
-  /** The user's font size. */
+  /** The user's S…XL font size, read while `textSizeSteps` is off. */
   fontSize: declareRecord('settings.fontSize', FontSizeSchema),
+  /**
+   * The user's three-step text size, read while `textSizeSteps` is on (ADR
+   * 0134). A new encoding takes a new key (ADR 0013), so the S…XL one stays
+   * readable and turning the switch off again breaks nothing. It syncs last
+   * write wins like the Theme (ADR 0041); without it, the Edition's default.
+   */
+  textSize: declareRecord('settings.textSize', TextSizeSchema),
+  /**
+   * The reader's name on the Profile (ADR 0136): trimmed, 1 to
+   * {@link READER_NAME_AT_MOST} characters. It syncs last write wins like the
+   * Theme (ADR 0041); without it, the reader has no name.
+   */
+  readerName: declareRecord('settings.readerName', ReaderNameSchema),
   /** Whether the user has haptics on. It stays on the device, which may have no haptics. */
   vibration: declareRecord('settings.vibration', z.boolean(), { sync: 'device-only' }),
   /** Whether the user has «Звуки» on. It stays on the device, like Vibration. */
