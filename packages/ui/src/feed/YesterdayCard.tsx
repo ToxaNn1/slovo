@@ -4,33 +4,17 @@
 import { stressLabel, type WordCardModel, type YesterdayQuiz } from '@slovo/core';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  ReduceMotion,
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
-import Svg, { Polygon } from 'react-native-svg';
+import Animated from 'react-native-reanimated';
 
 import { capitalised } from '../entries/capitalised';
 import { useGameHaptics } from '../game/useGameHaptics';
 import { useEdition } from '../providers/EditionProvider';
-import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
-import { PressedTile } from '../primitives/PressedTile';
-import { bezier } from '../primitives/timing';
+import { useTokens } from '../providers/TokensProvider';
+import { QuizOption, type QuizOptionLook } from '../primitives/QuizOption';
 import { useCascade } from '../primitives/useCascade';
 import { usePageTurnActions } from '../primitives/VerticalPager';
-import { motion, typeStyle, yesterdayCard } from '../tokens';
+import { typeStyle, yesterdayCard } from '../tokens';
 import { FeedNoticeCard } from './FeedNoticeCard';
-
-const { option: optionSize, pop, wrong } = yesterdayCard;
-const popEasing = bezier(motion.pop.easing);
-const still = { reduceMotion: ReduceMotion.Never } as const;
-
-/** How an option looks: before a pick, the right one lit red, the wrong one picked, or another faded. */
-type OptionLook = 'rest' | 'right' | 'wrong' | 'dimmed';
 
 /**
  * Yesterday «Пам’ятаєш учорашнє слово?» (board f5): the day before's Word of
@@ -87,17 +71,28 @@ export function YesterdayCard({
       gameHaptics.wrongAnswer();
       timer.current = setTimeout(() => {
         setLitFor(next);
-      }, wrong.lightDelay);
+      }, yesterdayCard.lightDelay);
     }
     if (answered.current) return;
     answered.current = true;
     onAnswer(next);
   };
-  const lookOf = (place: number): OptionLook => {
+  const lookOf = (place: number): QuizOptionLook => {
     if (chosen === undefined) return 'rest';
     if (place === quiz.right) return chosen === quiz.right || litFor === chosen ? 'right' : 'rest';
     return place === chosen ? 'wrong' : 'dimmed';
   };
+  const optionLabel = (meaning: string, look: QuizOptionLook) =>
+    [
+      meaning,
+      look === 'right'
+        ? strings.game.round.correct
+        : look === 'wrong'
+          ? strings.game.round.chosen
+          : undefined,
+    ]
+      .filter(Boolean)
+      .join(', ');
   const title = strings.feedNotices.yesterday.title;
   const verdict =
     chosen === undefined
@@ -127,9 +122,10 @@ export function YesterdayCard({
           {quiz.meanings.map((meaning, place) => (
             <QuizOption
               key={String(place)}
+              testID={`yesterday-option-${String(place)}`}
               meaning={meaning}
-              place={place}
               look={lookOf(place)}
+              accessibilityLabel={optionLabel(meaning, lookOf(place))}
               picked={place === chosen}
               onPress={() => {
                 choose(place);
@@ -154,138 +150,7 @@ export function YesterdayCard({
   );
 }
 
-/**
- * One meaning of the quiz on its tile, as `look` says; a look it turns to
- * plays its motion once: the right one pops, the wrong one shakes.
- */
-function QuizOption({
-  meaning,
-  place,
-  look,
-  picked,
-  onPress,
-}: {
-  meaning: string;
-  place: number;
-  look: OptionLook;
-  /** Whether the reader picked it: VoiceOver reads only the pick as selected. */
-  picked: boolean;
-  onPress: () => void;
-}) {
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const keyInk = useSchemeColors('light').ink;
-  const { strings, voice } = useEdition();
-  const reduceMotion = useReduceMotion();
-  const scale = useSharedValue(1);
-  const shake = useSharedValue(0);
-  const shown = useRef(look);
-  useEffect(() => {
-    if (shown.current === look) return;
-    shown.current = look;
-    if (reduceMotion) return;
-    if (look === 'right')
-      scale.value = withSequence(
-        withTiming(pop.from, { duration: 0, ...still }),
-        withTiming(pop.peak, { duration: pop.duration * pop.peakAt, easing: popEasing, ...still }),
-        withTiming(1, { duration: pop.duration * (1 - pop.peakAt), easing: popEasing, ...still }),
-      );
-    if (look === 'wrong')
-      shake.value = withSequence(
-        ...wrong.shake.map((to) =>
-          withTiming(to, { duration: wrong.duration / wrong.shake.length, ...still }),
-        ),
-      );
-  }, [look, reduceMotion, scale, shake]);
-  const optionMotion = useAnimatedStyle(() => ({
-    transform: [{ translateX: shake.value }, { scale: scale.value }],
-  }));
-  const ink = look === 'right' ? keyInk : look === 'wrong' ? colors.background : colors.ink;
-  const testID = `yesterday-option-${String(place)}`;
-  return (
-    <View
-      testID={`${testID}-place`}
-      style={[look === 'dimmed' && styles.dimmed, look === 'wrong' && styles.sunk]}
-    >
-      <Animated.View testID={`${testID}-motion`} style={optionMotion}>
-        <PressedTile
-          testID={testID}
-          tone={look === 'right' ? 'accent' : look === 'wrong' ? 'none' : 'tile'}
-          radius={optionSize.radius}
-          accessibilityLabel={[
-            meaning,
-            look === 'right'
-              ? strings.game.round.correct
-              : look === 'wrong'
-                ? strings.game.round.chosen
-                : undefined,
-          ]
-            .filter(Boolean)
-            .join(', ')}
-          accessibilityState={{ selected: picked }}
-          onPress={onPress}
-          faceStyle={[
-            styles.option,
-            {
-              borderColor: look === 'rest' || look === 'dimmed' ? colors.line : 'transparent',
-            },
-            look === 'wrong' && { backgroundColor: colors.ink },
-          ]}
-        >
-          <Text
-            {...voice}
-            style={[
-              typeStyle('yesterdayOption', tokens),
-              styles.meaning,
-              { color: ink },
-              look === 'wrong' && styles.struck,
-            ]}
-          >
-            {meaning}
-          </Text>
-          {look === 'right' && (
-            <Svg
-              testID={`${testID}-check`}
-              width={optionSize.check.width}
-              height={optionSize.check.height}
-              viewBox="0 0 26 22"
-            >
-              <Polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill={ink} />
-            </Svg>
-          )}
-          {look === 'wrong' && (
-            <Svg
-              testID={`${testID}-cross`}
-              width={optionSize.cross}
-              height={optionSize.cross}
-              viewBox="0 0 20 20"
-            >
-              <Polygon
-                points="3,0 10,7 17,0 20,3 13,10 20,17 17,20 10,13 3,20 0,17 7,10 0,3"
-                fill={ink}
-              />
-            </Svg>
-          )}
-        </PressedTile>
-      </Animated.View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   options: { gap: yesterdayCard.optionGap },
-  option: {
-    minHeight: optionSize.height,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: optionSize.gap,
-    paddingHorizontal: optionSize.padding,
-    borderWidth: optionSize.border,
-  },
-  meaning: { flexShrink: 1 },
-  struck: { textDecorationLine: 'line-through' },
-  dimmed: { opacity: yesterdayCard.dimmedOpacity },
-  sunk: { transform: [{ translateY: wrong.sink }] },
   verdict: { minHeight: yesterdayCard.verdictHeight },
 });
