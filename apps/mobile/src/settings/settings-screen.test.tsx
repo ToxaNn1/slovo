@@ -171,6 +171,7 @@ describe('Settings, as the board', () => {
       sounds: true,
       rarityCeiling: true,
       selfCheck: true,
+      textSizeSteps: false,
     });
 
     const groups: Record<string, string[]> = {
@@ -246,6 +247,23 @@ describe('Settings, as the board', () => {
     ];
     expect(rows.length).toBeGreaterThan(10);
     for (const row of rows) expect(row.props['accessibilityHint']).toEqual(expect.any(String));
+  });
+});
+
+describe('Settings › the text size (ADR 0134)', () => {
+  it('keeps the S…XL row while the three-step text size is off, and it changes the font size', async () => {
+    const settings = await renderSettings({ textSizeSteps: false });
+
+    await fireEvent.press(screen.getByTestId('settings-font-size-XL'));
+
+    expect(await settings.read()).toMatchObject({ fontSize: 'XL', textSize: 'system' });
+  });
+
+  it('has no S…XL row while the three-step text size is on', async () => {
+    await renderSettings({ textSizeSteps: true });
+
+    expect(screen.getByTestId('settings-theme-light')).toBeOnTheScreen();
+    expect(screen.queryByTestId('settings-font-size-M')).toBeNull();
   });
 });
 

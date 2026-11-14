@@ -165,6 +165,7 @@ export {
   type UserSettings,
 } from './settings/settings';
 export { READER_NAME_AT_MOST } from './settings/reader-name';
+export { smallerTextSize } from './settings/text-size-ladder';
 export { STRESS_MARK, withoutStress } from './entries/stress';
 export { createGesturesHint, type GesturesHint } from './feed/gestures-hint';
 export { type WordCardModel } from './entries/word-card';

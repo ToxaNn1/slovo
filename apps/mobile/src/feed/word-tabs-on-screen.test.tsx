@@ -160,7 +160,7 @@ async function renderApp(fontSize: FontSize = 'M') {
               <EditionProvider edition={edition} strings={editionStrings}>
                 <HapticsProvider haptics={haptics}>
                   <SettingsProvider>
-                    <FontSizeProvider fontSize={fontSize}>
+                    <FontSizeProvider size={{ scale: 'fontSize', step: fontSize }}>
                       <Slot />
                     </FontSizeProvider>
                   </SettingsProvider>

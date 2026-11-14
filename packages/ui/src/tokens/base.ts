@@ -1,4 +1,4 @@
-import type { ColorTokens, EditionTokens, FontSize, MascotState } from '@slovo/contracts';
+import type { ColorTokens, EditionTokens, FontSize, MascotState, TextSize } from '@slovo/contracts';
 
 /**
  * The design tokens from `docs/design/README.md`. The Core names every
@@ -1253,6 +1253,23 @@ export const fontSizeSteps: Readonly<
   M: { lemma: 50, definition: 19, example: 17 },
   L: { lemma: 58, definition: 22, example: 20 },
   XL: { lemma: 65, definition: 25, example: 22 },
+};
+
+/**
+ * The Word card's type sizes at each step of the three-step text size ladder
+ * (ADR 0134), before the OS text size: «Як у системі» at the base step,
+ * «Більший» and «Найбільший» at the design's two steps above it. The OS text
+ * size scales them within `fontScaleCap.text`.
+ */
+export const textSizeSteps: Readonly<
+  Record<
+    TextSize,
+    { readonly lemma: number; readonly definition: number; readonly example: number }
+  >
+> = {
+  system: fontSizeSteps.M,
+  larger: fontSizeSteps.L,
+  largest: fontSizeSteps.XL,
 };
 
 /**

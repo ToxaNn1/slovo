@@ -3,8 +3,9 @@ import { fireEvent, render, screen, within } from '@testing-library/react-native
 import { StyleSheet, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { EditionProvider } from '@slovo/ui';
+import { EditionProvider, FontSizeProvider } from '@slovo/ui';
 import { CardTabs } from './CardTabs';
+import { useWordTextSizes } from '../providers/FontSizeProvider';
 import { testStrings } from '../test-strings';
 import { entryCardFrame, typeRoles } from '../tokens';
 
@@ -91,6 +92,56 @@ describe("an Entry card's tab bar (board XEntry2)", () => {
     });
     expect(entryCardFrame.tabMark).toMatchObject({ top: -2, inset: '18%' });
     expect(screen.queryByTestId('word-tab-example-bar')).toBeNull();
+  });
+});
+
+/** Names the text size it is drawn at. */
+function DrawnAt() {
+  const { size } = useWordTextSizes();
+  return <Text testID="drawn-at">{`${size.scale} ${size.step}`}</Text>;
+}
+
+describe("an Entry card's tab on the three-step ladder (ADR 0134)", () => {
+  it('steps down one step at a time to the system step, then keeps the frame and offers More', async () => {
+    await render(
+      <GestureHandlerRootView>
+        <EditionProvider
+          edition={{ locale: 'en' }}
+          strings={testStrings({
+            wordCard: { tabMore: 'More', tabLess: 'Less', tabSource: 'Source' },
+          })}
+        >
+          <FontSizeProvider size={{ scale: 'ladder', step: 'largest' }}>
+            <CardTabs testID="word" tabs={tabs} nameOf={(tab) => names[tab.key]}>
+              {() => <DrawnAt />}
+            </CardTabs>
+          </FontSizeProvider>
+        </EditionProvider>
+      </GestureHandlerRootView>,
+    );
+    const layout = async (testID: string, height: number) => {
+      await fireEvent(screen.getByTestId(testID), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 358, height } },
+      });
+    };
+    await layout('word-tab-panel', 200);
+    expect(screen.getByTestId('drawn-at')).toHaveTextContent('ladder largest');
+
+    // Too tall at every step: each layout takes the next step down, until the floor clamps.
+    for (const step of ['larger', 'system', 'system']) {
+      await layout('word-tab-content', 2000);
+      expect(screen.getByTestId('drawn-at')).toHaveTextContent(`ladder ${step}`);
+    }
+    await layout('word-tab-more', 16);
+
+    expect(screen.getByTestId('word-tab-more')).toBeOnTheScreen();
+    expect(screen.getByTestId('word-tab-clip')).toHaveStyle({
+      overflow: 'hidden',
+      height: 200 - 16 - entryCardFrame.moreGap,
+    });
+    // At the floor it goes no further down.
+    await layout('word-tab-content', 2000);
+    expect(screen.getByTestId('drawn-at')).toHaveTextContent('ladder system');
   });
 });
 
