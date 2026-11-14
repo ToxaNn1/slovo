@@ -276,3 +276,17 @@ export const badgeSheet = {
   barSkew: -14,
   doneTop: 22,
 } as const;
+
+/**
+ * The Due Quiz «Перевір себе» of the «Вчу» list (board 09, screen 73): the
+ * red card's padding (more on the left), the gap between its text and its
+ * button, the big count's place from the card's right and top edges and its
+ * opacity; the sheet's segments (one per Word, slanted), the gap between
+ * them, and an option's height.
+ */
+export const dueQuiz = {
+  card: { padding: 18, paddingLeft: 20, gap: 14, textGap: 6 },
+  count: { right: 90, top: -30, opacity: 0.85 },
+  segment: { width: 26, height: 6, gap: 4, skew: '-20deg' },
+  optionHeight: 54,
+} as const;
