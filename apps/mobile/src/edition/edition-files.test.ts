@@ -1097,6 +1097,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
     });
     expect(parsed.hubRow).toMatchObject({
       record: 'Рекорд: {n} з {total}',
+      recordCount: 'Рекорд: {n}',
       never: 'Ще жодної гри',
     });
     expect(parsed.hubToast).toBe('«{mode}» ще розминається. Влучай поки в «{other}»!');
@@ -1130,6 +1131,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
 
   it.each([
     ['hubRow.record', { hubRow: { ...(game['hubRow'] as object), record: 'Рекорд: {n}' } }],
+    ['hubRow.recordCount', { hubRow: { ...(game['hubRow'] as object), recordCount: 'Рекорд' } }],
     ['hubToast', { hubToast: '«{mode}» ще розминається.' }],
     [
       'round.banner.answer',

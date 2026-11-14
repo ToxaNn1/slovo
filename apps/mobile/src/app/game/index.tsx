@@ -11,7 +11,9 @@ import {
   GamesTitle,
   rowPadding,
   space,
+  UndoToastProvider,
   useTokens,
+  useUndoToast,
   WidgetGuideSheet,
   XpPill,
 } from '@slovo/ui';
@@ -30,7 +32,7 @@ import {
   useTimeLeft,
   useWidgetHintShown,
 } from '@/game/game';
-import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
+import { gameModeCard, gameModeGroups, gameModeStrings, gameModeToast } from '@/game/game-modes';
 import { MascotIn } from '@/mascot/mascot';
 import { useXpLogState } from '@/progress/xp-log';
 import { useShown } from '@/shown-in-effect';
@@ -77,7 +79,9 @@ function Game() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       {current === undefined ? (
-        <ModeScreen modes={state.modes} onStart={actions.start} />
+        <UndoToastProvider>
+          <ModeScreen modes={state.modes} onStart={actions.start} />
+        </UndoToastProvider>
       ) : result && poster !== undefined ? (
         <GameEndPoster
           game={current}
@@ -154,6 +158,9 @@ function Game() {
  * Crossword's red card while it is on, which opens its screen, and a row per
  * mode on offer, with its one line and «★ n» or «—», under the titles of
  * their groups, each after a red mark. No progress share offers (DESIGN-06).
+ * Behind the switches of board 06 «Хаб ігор»: its five groups, whose rows
+ * cascade in, each row's hub line and record, and a mode that can't start
+ * keeping its look and showing a toast on a tap instead of starting.
  */
 function ModeScreen({
   modes,
@@ -164,6 +171,9 @@ function ModeScreen({
 }) {
   const crossword = useDailyCrosswordCard();
   const openScreen = useOpenScreen();
+  const showToast = useUndoToast();
+  const { gameHubGroups, gameHubRecord, gameModeToast: toast } = useShown();
+  let place = 0;
   return (
     <View testID="game-modes" style={styles.screen}>
       <ScrollView contentContainerStyle={styles.modes}>
@@ -198,8 +208,13 @@ function ModeScreen({
               <GameModeCard
                 key={offer.modeId}
                 testID={`game-mode-${offer.modeId}`}
-                {...gameModeCard(offer, strings)}
+                {...gameModeCard(offer, strings, { record: gameHubRecord, toast })}
+                {...(gameHubGroups ? { cascadeIndex: place++ } : {})}
                 onPress={() => {
+                  if (toast && !offer.canStart) {
+                    showToast({ message: gameModeToast(offer, modes, strings), brief: true });
+                    return;
+                  }
                   onStart(offer.modeId);
                 }}
               />

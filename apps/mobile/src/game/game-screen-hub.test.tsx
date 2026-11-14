@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { screen, within } from '@testing-library/react-native';
+import { fireEvent, screen, within } from '@testing-library/react-native';
 import { solveCrossingWord } from './crossing-crossword.test-support';
 import {
   composition,
@@ -107,6 +107,72 @@ describe('the Game screen', () => {
       'game-mode-timed',
     ]);
     expect(screen.queryByText('Виправлення')).toBeNull();
+  });
+
+  describe('as board 06 «Хаб ігор»', () => {
+    const HUB = ['gameHubGroups', 'gameHubRecord', 'gameModeToast'];
+
+    it('lists the modes on offer under the board\'s five groups, in the board\'s order', async () => {
+      await open({ switchedOn: ['gameHubGroups'] });
+      await renderScreen();
+
+      expect(shape()).toEqual([
+        'Ігри',
+        'Звук',
+        'game-mode-stress',
+        'Значення',
+        'game-mode-correction',
+        'game-mode-pairs',
+        'game-mode-idiom-meaning',
+        'Букви',
+        'game-mode-anagram',
+        'Швидкість',
+        'game-mode-timed',
+        'Нове',
+        'game-mode-guess-word',
+        'game-mode-by-letters',
+        'game-mode-type-word',
+        'game-mode-origin',
+        'game-mode-anglicism',
+        'game-mode-build-idiom',
+        'game-mode-survival',
+      ]);
+    });
+
+    it('shows each row\'s hub line and «Рекорд: N з M», «Рекорд: N» or «Ще жодної гри», read as it shows', async () => {
+      await open({ best: { 'guess-word': 12, survival: 23 }, switchedOn: ['gameHubRecord'] });
+      await renderScreen();
+
+      const guessWord = within(screen.getByTestId('game-mode-guess-word'));
+      expect(guessWord.getByText('Визначення є. Яке це слово?')).toBeTruthy();
+      expect(guessWord.getByText('Рекорд: 12 з 15')).toBeTruthy();
+      expect(within(screen.getByTestId('game-mode-survival')).getByText('Рекорд: 23')).toBeTruthy();
+      expect(screen.getByTestId('game-mode-stress')).toHaveAccessibleName(
+        'Наголос. Торкнись наголошеної голосної. Ще жодної гри',
+      );
+      expect(screen.queryByText(/★/)).toBeNull();
+    });
+
+    it('shows the toast on a tap of a mode that cannot be played, and starts nothing', async () => {
+      await open({ switchedOn: HUB });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-correction'));
+
+      expect(
+        screen.getByText('«Обери правильне» ще розминається. Влучай поки в «Наголос»!'),
+      ).toBeTruthy();
+      expect(screen.getByTestId('game-modes')).toBeTruthy();
+      expect(composition.game.state.current).toBeUndefined();
+    });
+
+    it('keeps the look of a mode that cannot be played, with no reason in place of its line', async () => {
+      await open({ switchedOn: HUB });
+      await renderScreen();
+
+      expect(screen.getByTestId('game-mode-correction')).not.toBeDisabled();
+      expect(screen.queryByText(/Замало виправлень/)).toBeNull();
+    });
   });
 
   /** Today's crossing Daily Crossword, as the composition opens it. */
