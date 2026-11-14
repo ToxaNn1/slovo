@@ -30,3 +30,5 @@
 - #1833 DONE (perf commit reworded to fix), merged a290db6c. /v1 base check fails until admin states output is plain on main: prerequisite PR #1840 (same commit b75f816e, auto-merge squash). #1834 implementer (Opus, worktree) launched; no screenshot per owner note.
 - WAITING until 2026-11-14T13:32:11Z: #1834 implementer and PR #1840
 - #1834 DONE (buttons already grew; on-screen test extended), merged. PR #1840 merged to main; main merged into integration; main took ADR 0127, ours renumbered to 0128. Next: code review.
+- Code review (medium) DONE: homonym Distractor fixed, merged. PR #1838 body final, ready, auto-merge squash on. Owner checks not added to the database (no DATABASE_URL in the cloud): they are in the PR body.
+- WAITING until 2026-11-14T13:39:10Z: CI of PR #1838 and its auto-merge
