@@ -24,6 +24,8 @@
 @keyframes slStamp{0%{opacity:0;transform:scale(3) rotate(-26deg)}70%{opacity:1;transform:scale(.92) rotate(-8deg)}100%{transform:scale(1) rotate(-8deg)}}
 @keyframes slBlink{50%{opacity:0}}
 @keyframes slFrost{from{clip-path:inset(0 0 100% 0)}}
+@keyframes slToast{from{opacity:0;transform:translateY(30px)}}
+@keyframes slShake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
 </style>
 </helmet>
 <div data-slovo="1" data-th="{{ th }}" data-rm="{{ rmAttr }}" style="width:406px;height:860px;padding:8px;background:#0B0706;border-radius:62px;box-shadow:0 0 0 1.5px #3A2C27,0 30px 70px rgba(20,12,10,.35);font-family:'Onest',sans-serif;flex:none">
@@ -32,9 +34,9 @@
 <sc-if value="{{ savedHead }}" hint-placeholder-val="{{ true }}">
   <div style="position:absolute;left:0;right:0;top:56px;z-index:2;display:flex;flex-direction:column;gap:12px;padding:6px 0 0">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px"><span style="font:900 30px/1 Unbounded,sans-serif;letter-spacing:-1px">ЗБЕРЕЖЕНЕ</span></div>
-    <div style="margin:0 20px;display:flex;align-items:center;gap:10px;height:50px;padding:0 14px;border-radius:14px;background:var(--sf2)"><svg width="18" height="18" viewBox="0 0 24 24" style="flex:none"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="3.5"></circle><polygon points="15,17 18,14 24,20 21,23" fill="currentColor"></polygon></svg><span style="font:500 16px/1 Onest;color:var(--mute)">Пошук слова чи значення</span></div>
-    <div style="display:flex;gap:8px;overflow:hidden;padding:0 20px">
-      <sc-for list="{{ stabs }}" as="t" hint-placeholder-count="5"><span style="flex:none;height:38px;padding:0 14px;border-radius:11px;background:{{ t.bg }};color:{{ t.fg }};display:flex;align-items:center;font:700 14px/1 Onest">{{ t.n }}</span></sc-for>
+    <div onClick="{{ goSearch }}" style="margin:0 20px;display:flex;align-items:center;gap:10px;height:50px;padding:0 14px;border-radius:14px;background:var(--sf2);cursor:text"><svg width="18" height="18" viewBox="0 0 24 24" style="flex:none"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="3.5"></circle><polygon points="15,17 18,14 24,20 21,23" fill="currentColor"></polygon></svg><span style="font:500 16px/1 Onest;color:var(--mute)">Пошук слова чи значення</span></div>
+    <div style="display:flex;gap:8px;overflow:hidden;margin:0 20px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)">
+      <sc-for list="{{ stabs }}" as="t" hint-placeholder-count="5"><span onClick="{{ t.onClick }}" style="cursor:pointer;transition:background .2s;flex:none;height:38px;padding:0 14px;border-radius:11px;background:{{ t.bg }};color:{{ t.fg }};display:flex;align-items:center;gap:6px;font:700 14px/1 Onest;white-space:nowrap">{{ t.n }}<span style="font:600 12px/1 Onest;opacity:.7">{{ t.c }}</span></span></sc-for>
     </div>
   </div>
 </sc-if>
@@ -42,14 +44,14 @@
 <sc-if value="{{ is_s1 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:234px 16px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="position:relative;border-radius:22px;background:#FF3B2F;color:#140C0A;padding:18px 18px 18px 20px;display:flex;align-items:center;gap:14px;overflow:hidden">
-    <div style="position:absolute;right:90px;top:-30px;font:900 140px/1 Unbounded,sans-serif;color:#FFF4E6;opacity:.85">6</div>
-    <div style="position:relative;flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 18px/1.1 Unbounded,sans-serif">Перевір себе</span><span style="font:600 13px/1 Onest">6 слів на сьогодні</span></div>
-    <button style="position:relative;flex:none;height:48px;padding:0 18px;border-radius:14px;background:#140C0A;color:#FFF4E6;box-shadow:0 4px 0 rgba(20,12,10,.45);font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">ПОЧАТИ</button>
+    <div style="position:absolute;right:90px;top:-30px;font:900 140px/1 Unbounded,sans-serif;color:#FFF4E6;opacity:.85">2</div>
+    <div style="position:relative;flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 18px/1.1 Unbounded,sans-serif">Перевір себе</span><span style="font:600 13px/1 Onest">2 слова на сьогодні</span></div>
+    <button onClick="{{ rvStart }}" style="position:relative;flex:none;height:48px;padding:0 18px;border-radius:14px;background:#140C0A;color:#FFF4E6;box-shadow:0 4px 0 rgba(20,12,10,.45);font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center" style-active="transform:translateY(3px);box-shadow:0 1px 0 rgba(20,12,10,.45)">ПОЧАТИ</button>
   </div>
   <div style="display:flex;flex-direction:column">
     <sc-for list="{{ learn }}" as="r" hint-placeholder-count="6">
-      <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);animation:{{ r.anim }}">
-        <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:800 17px/1.1 Unbounded,sans-serif">{{ r.w }}</span><span style="font:400 13px/1.3 Onest;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.m }}</span></span>
+      <div onClick="{{ r.onClick }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);animation:{{ r.anim }}" style-active="opacity:.6">
+        <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:800 17px/1.1 Unbounded,sans-serif">{{ r.w }}</span><span style="font:400 13px/1.3 Onest;color:var(--mute);text-wrap:pretty">{{ r.m }}</span></span>
         <span style="flex:none;height:28px;padding:0 10px;border-radius:8px;background:{{ r.bg }};color:{{ r.fg }};display:flex;align-items:center;font:700 12px/1 Onest">{{ r.d }}</span>
       </div>
     </sc-for>
@@ -62,13 +64,13 @@
   <dc-import name="Rupor" state="{{ emptyM }}" size="{{ 140 }}" hint-size="140px,105px"></dc-import>
   <span style="font:900 22px/1.15 Unbounded,sans-serif;text-wrap:balance">{{ emptyT }}</span>
   <span style="font:400 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">{{ emptyS }}</span>
-  <sc-if value="{{ emptyBtn }}" hint-placeholder-val="{{ false }}"><button style="margin-top:6px;height:56px;padding:0 26px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">{{ emptyBtn }}</button></sc-if>
+  <sc-if value="{{ emptyBtn }}" hint-placeholder-val="{{ false }}"><button onClick="{{ emptyAct }}" style-active="transform:translateY(3px)" style="margin-top:6px;height:56px;padding:0 26px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center">{{ emptyBtn }}</button></sc-if>
 </div>
 </sc-if>
 
 <sc-if value="{{ colHead }}" hint-placeholder-val="{{ false }}">
   <div style="position:absolute;left:0;right:0;top:56px;z-index:2;padding:6px 16px 0;display:flex;flex-direction:column;gap:14px">
-    <div style="display:flex;align-items:center;justify-content:space-between"><span style="width:40px;height:40px;border-radius:12px;background:var(--sf2);display:flex;align-items:center;justify-content:center"><svg width="10" height="16" viewBox="0 0 10 16"><polygon points="10,0 6,0 0,8 6,16 10,16 4,8" fill="currentColor"></polygon></svg></span><span style="width:40px;height:40px;border-radius:12px;background:var(--sf2);display:flex;align-items:center;justify-content:center;gap:3px"><span style="width:4px;height:4px;background:currentColor"></span><span style="width:4px;height:4px;background:currentColor"></span><span style="width:4px;height:4px;background:currentColor"></span></span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between"><span onClick="{{ colBack }}" style="cursor:pointer;width:40px;height:40px;border-radius:12px;background:var(--sf2);display:flex;align-items:center;justify-content:center"><svg width="10" height="16" viewBox="0 0 10 16"><polygon points="10,0 6,0 0,8 6,16 10,16 4,8" fill="currentColor"></polygon></svg></span><span onClick="{{ colMenu }}" style="cursor:pointer;width:40px;height:40px;border-radius:12px;background:{{ dotsBg }};color:{{ dotsFg }};display:flex;align-items:center;justify-content:center;gap:3px;transition:background .2s"><span style="width:4px;height:4px;background:currentColor"></span><span style="width:4px;height:4px;background:currentColor"></span><span style="width:4px;height:4px;background:currentColor"></span></span></div>
     <div style="display:flex;flex-direction:column;gap:6px;padding:0 4px"><span style="font:900 30px/1 Unbounded,sans-serif;letter-spacing:-1px">{{ colName }}</span><span style="font:500 14px/1 Onest;color:var(--mute)">{{ colCount }}</span></div>
   </div>
 </sc-if>
@@ -77,29 +79,103 @@
 <div style="position:absolute;inset:0;padding:190px 16px 40px;display:flex;flex-direction:column;gap:12px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="display:flex;flex-direction:column">
     <sc-for list="{{ colWords }}" as="r" hint-placeholder-count="5">
-      <div style="display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--line);animation:{{ r.anim }}"><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:800 17px/1.1 Unbounded,sans-serif">{{ r.w }}</span><span style="font:400 13px/1.3 Onest;color:var(--mute)">{{ r.m }}</span></span><svg width="10" height="16" viewBox="0 0 10 16"><polygon points="0,0 4,0 10,8 4,16 0,16 6,8" fill="currentColor"></polygon></svg></div>
+      <div onClick="{{ r.onClick }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--line);animation:{{ r.anim }}" style-active="opacity:.6"><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:800 17px/1.1 Unbounded,sans-serif">{{ r.w }}</span><span style="font:400 13px/1.3 Onest;color:var(--mute)">{{ r.m }}</span></span><svg width="10" height="16" viewBox="0 0 10 16"><polygon points="0,0 4,0 10,8 4,16 0,16 6,8" fill="currentColor"></polygon></svg></div>
     </sc-for>
   </div>
   <div style="flex:1"></div>
-  <button style="height:60px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px"><span style="width:10px;height:16px;background:#FF3B2F;clip-path:polygon(0 0,100% 25%,100% 75%,0 100%)"></span>ПОДІЛИТИСЯ ПОСИЛАННЯМ</button>
+  <button onClick="{{ shareOpen }}" style="height:60px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)"><span style="width:10px;height:16px;background:#FF3B2F;clip-path:polygon(0 0,100% 25%,100% 75%,0 100%)"></span>ПОДІЛИТИСЯ ПОСИЛАННЯМ</button>
 </div>
 </sc-if>
 
 <sc-if value="{{ searchHead }}" hint-placeholder-val="{{ false }}">
   <div style="position:absolute;left:0;right:0;top:58px;z-index:2;padding:4px 16px 0;display:flex;align-items:center;gap:10px">
-    <div style="flex:1;height:50px;border-radius:14px;background:var(--sf2);border:2.5px solid var(--ink);display:flex;align-items:center;gap:10px;padding:0 14px"><svg width="16" height="16" viewBox="0 0 18 18"><circle cx="7.5" cy="7.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2.5"></circle><polygon points="11,13 13,11 18,16 16,18" fill="currentColor"></polygon></svg><span style="font:600 16px/1 Onest;color:{{ qColor }}">{{ q }}</span><span style="width:2px;height:20px;background:#FF3B2F;margin-left:-6px;animation:slBlink 1s steps(1) infinite"></span></div>
-    <span style="font:600 15px/1 Onest">Скасувати</span>
+    <div onClick="{{ goTypeSearch }}" style="flex:1;height:50px;border-radius:14px;background:var(--sf2);border:2.5px solid var(--ink);display:flex;align-items:center;gap:10px;padding:0 14px;cursor:text"><svg width="16" height="16" viewBox="0 0 18 18"><circle cx="7.5" cy="7.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2.5"></circle><polygon points="11,13 13,11 18,16 16,18" fill="currentColor"></polygon></svg><span style="font:600 16px/1 Onest;color:{{ qColor }}">{{ q }}</span><span style="width:2px;height:20px;background:#FF3B2F;margin-left:-6px;animation:slBlink 1s steps(1) infinite"></span></div>
+    <span onClick="{{ searchCancel }}" style="cursor:pointer;font:600 15px/1 Onest">Скасувати</span>
   </div>
 </sc-if>
 
 <sc-if value="{{ is_s6 }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;padding:134px 20px 300px;display:flex;flex-direction:column;gap:12px;animation:slFade .3s both">
-  <span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px;color:var(--mute)">НЕЩОДАВНО</span>
-  <sc-for list="{{ recentQ }}" as="r" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:12px;padding:6px 0;font:600 16px/1.2 Onest;animation:{{ r.anim }}"><svg width="14" height="14" viewBox="0 0 14 14" style="color:var(--mute)"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="2"></circle><polygon points="6,3 8,3 8,7 10,9 9,10 6,7.5" fill="currentColor"></polygon></svg>{{ r.q }}</div></sc-for>
+  <span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px;color:var(--mute)">{{ s6Title }}</span>
+  <sc-for list="{{ recentQ }}" as="r" hint-placeholder-count="4"><div onClick="{{ r.onClick }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:6px 0;font:600 16px/1.2 Onest;animation:{{ r.anim }}"><svg width="14" height="14" viewBox="0 0 14 14" style="color:var(--mute)"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="2"></circle><polygon points="6,3 8,3 8,7 10,9 9,10 6,7.5" fill="currentColor"></polygon></svg>{{ r.q }}</div></sc-for>
 </div>
 <div style="position:absolute;left:0;right:0;bottom:0;height:290px;background:var(--sf2);padding:12px 4px 34px;display:flex;flex-direction:column;gap:10px">
-  <sc-for list="{{ kb }}" as="row" hint-placeholder-count="3"><div style="display:flex;justify-content:center;gap:5px"><sc-for list="{{ row }}" as="k" hint-placeholder-count="10"><span style="width:31px;height:46px;border-radius:7px;background:var(--tile);box-shadow:0 2px 0 var(--edge);display:flex;align-items:center;justify-content:center;font:500 17px/1 Onest">{{ k }}</span></sc-for></div></sc-for>
+  <sc-for list="{{ kb }}" as="row" hint-placeholder-count="3"><div style="display:flex;justify-content:center;gap:5px"><sc-for list="{{ row }}" as="k" hint-placeholder-count="10"><span onClick="{{ k.onClick }}" style="cursor:pointer;width:{{ k.w }};height:46px;border-radius:7px;background:var(--tile);box-shadow:0 2px 0 var(--edge);display:flex;align-items:center;justify-content:center;font:500 17px/1 Onest;user-select:none" style-active="transform:translateY(2px);box-shadow:none;background:var(--sf2)">{{ k.k }}</span></sc-for></div></sc-for>
 </div>
+</sc-if>
+
+<sc-if value="{{ is_lst }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:234px 16px 100px;overflow-y:auto;display:flex;flex-direction:column;animation:slFade .25s both">
+  <sc-for list="{{ lst }}" as="r" hint-placeholder-count="5">
+    <div onClick="{{ r.onClick }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);animation:{{ r.anim }}" style-active="opacity:.6">
+      <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:800 17px/1.1 Unbounded,sans-serif">{{ r.w }}</span><span style="font:400 13px/1.3 Onest;color:var(--mute);text-wrap:pretty">{{ r.m }}</span></span>
+      <sc-if value="{{ r.hasD }}" hint-placeholder-val="{{ false }}"><span style="flex:none;height:28px;padding:0 10px;border-radius:8px;background:var(--sf2);display:flex;align-items:center;font:700 12px/1 Onest">{{ r.d }}</span></sc-if>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_cols }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:234px 16px 100px;overflow-y:auto;animation:slFade .25s both">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px">
+    <div onClick="{{ ncOpen }}" style="cursor:pointer;min-width:0;height:150px;border-radius:18px;border:2.5px dashed var(--ink);padding:14px;display:flex;flex-direction:column;justify-content:space-between" style-active="transform:scale(.97)">
+      <span style="width:40px;height:40px;border-radius:12px;background:#FF3B2F;color:#140C0A;box-shadow:0 4px 0 #C4271D;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 26 26"><polygon points="11,0 15,0 15,11 26,11 26,15 15,15 15,26 11,26 11,15 0,15 0,11 11,11" fill="currentColor"></polygon></svg></span>
+      <span style="font:800 14px/1.2 Unbounded,sans-serif">Нова колекція</span>
+    </div>
+    <sc-for list="{{ colsGrid }}" as="c" hint-placeholder-count="4">
+      <div onClick="{{ c.onClick }}" style="cursor:pointer;min-width:0;height:150px;border-radius:18px;background:{{ c.bg }};color:{{ c.fg }};padding:14px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;animation:{{ c.anim }}" style-active="transform:scale(.97)">
+        <span style="width:34px;height:34px;background:{{ c.p }};clip-path:{{ c.s }}"></span>
+        <span style="display:flex;flex-direction:column;gap:6px;min-width:0"><span style="font:800 14px/1.2 Unbounded,sans-serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ c.n }}</span><span style="font:600 12px/1 Onest;opacity:.85">{{ c.c }}</span></span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeSheet }}" style="position:absolute;inset:0;z-index:80;background:rgba(20,12,10,.55);animation:slFade .25s both"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:81;padding:66px 16px 34px;background:var(--sf);clip-path:polygon(0 30px,100% 0,100% 100%,0 100%);animation:slSheet .45s cubic-bezier(.2,.9,.3,1) both;display:flex;flex-direction:column;gap:12px">
+  <div style="position:absolute;left:18px;top:30px;max-width:340px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 17px/1.1 Unbounded,sans-serif;transform:rotate(-4.4deg);transform-origin:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ shTitle }}</div>
+  <div style="height:8px"></div>
+  <sc-if value="{{ shIsMenu }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden">
+      <sc-for list="{{ menuRows }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" style="padding:17px 16px;border-top:{{ m.bt }};font:600 16px/1.2 Onest;color:{{ m.c }};text-align:left;width:100%" style-active="background:var(--sf2)">{{ m.n }}</button></sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ shIsName }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;gap:10px;height:60px;padding:0 16px;border-radius:16px;background:var(--tile);border:2px solid {{ nmBd }};transition:border-color .2s;animation:{{ nmShake }}">
+      <input value="{{ nm }}" onChange="{{ nmInput }}" onKeyDown="{{ nmKey }}" placeholder="Назва колекції" style="flex:1;min-width:0;border:0;outline:none;background:transparent;color:var(--ink);font:600 17px/1 Onest">
+      <span style="flex:none;font:600 12px/1 Onest;color:{{ nmCntC }}">{{ nmCnt }}</span>
+    </div>
+    <sc-if value="{{ nmErrOn }}" hint-placeholder-val="{{ false }}"><span style="padding:0 4px;font:600 14px/1.3 Onest;color:#C4271D">{{ nmErr }}</span></sc-if>
+    <button onClick="{{ nmSave }}" style="height:64px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)">{{ nmBtn }}</button>
+  </sc-if>
+  <sc-if value="{{ shIsDel }}" hint-placeholder-val="{{ false }}">
+    <span style="font:500 16px/1.45 Onest;text-wrap:pretty">Самі записи нікуди не зникнуть.</span>
+    <button onClick="{{ delYes }}" style="height:64px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 #C4271D">ВИДАЛИТИ</button>
+  </sc-if>
+  <sc-if value="{{ shIsShare }}" hint-placeholder-val="{{ false }}">
+    <span style="font:500 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">Колекція така, якою була, коли нею поділилися.</span>
+    <div style="display:flex;align-items:center;gap:10px;height:56px;padding:0 16px;border-radius:14px;background:var(--sf2);font:600 15px/1 Onest;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">slovo.app/c/{{ slug }}</div>
+    <button onClick="{{ copyLink }}" style="height:64px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)">СКОПІЮВАТИ ПОСИЛАННЯ</button>
+  </sc-if>
+  <sc-if value="{{ shIsReview }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 12px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:var(--mute)">{{ rvPos }}</span><span style="display:flex;gap:4px"><sc-for list="{{ rvSegs }}" as="g" hint-placeholder-count="2"><span style="width:26px;height:6px;background:{{ g.bg }};transform:skewX(-20deg)"></span></sc-for></span></div>
+    <span style="font:900 28px/1 Unbounded,sans-serif;letter-spacing:-.5px">{{ rvWord }}</span>
+    <span style="font:500 15px/1.3 Onest;color:var(--mute)">Що це означає?</span>
+    <sc-for list="{{ rvOpts }}" as="o" hint-placeholder-count="3">
+      <button onClick="{{ o.onClick }}" style="min-height:54px;border-radius:14px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};border:{{ o.bd }};transform:{{ o.tf }};opacity:{{ o.op }};padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;font:600 15px/1.3 Onest;text-align:left;animation:{{ o.anim }};transition:background .2s,transform .12s">
+        <span style="text-decoration:{{ o.td }};text-decoration-thickness:2px">{{ o.t }}</span><span style="flex:none;font:900 14px/1 Unbounded,sans-serif">{{ o.k }}</span>
+      </button>
+    </sc-for>
+    <sc-if value="{{ rvDone }}" hint-placeholder-val="{{ false }}"><button onClick="{{ rvNext }}" style="height:60px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;animation:slFade .25s both" style-active="transform:translateY(4px)">{{ rvNextT }}</button></sc-if>
+  </sc-if>
+  <button onClick="{{ closeSheet }}" style="height:56px;border-radius:16px;font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">СКАСУВАТИ</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:12px;right:12px;bottom:{{ toastB }};z-index:90;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:16px;background:#140C0A;color:#FFF4E6;animation:slToast .4s cubic-bezier(.2,.9,.3,1) both"><span style="font:600 14px/1.3 Onest">{{ toastT }}</span><sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toastUndo }}" style="flex:none;font:800 12px/1 Unbounded,sans-serif;color:#FF3B2F">СКАСУВАТИ</button></sc-if></div>
 </sc-if>
 
 <sc-if value="{{ profHead }}" hint-placeholder-val="{{ false }}">
@@ -152,7 +228,7 @@
 <sc-if value="{{ redOn }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;background:#FF3B2F;color:#140C0A;overflow:hidden;animation:slFade .2s both;display:flex;flex-direction:column;align-items:center;padding:120px 28px 40px">
   <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
-  <div style="position:absolute;left:-30px;top:66px;font:900 120px/.9 Unbounded,sans-serif;letter-spacing:-6px;color:#FFF4E6;transform:rotate(-8deg);white-space:nowrap">{{ redBig }}</div>
+  <div style="position:absolute;left:20px;top:92px;font:900 44px/.9 Unbounded,sans-serif;letter-spacing:-1.5px;color:#FFF4E6;transform:rotate(-8deg);transform-origin:left center;white-space:nowrap">{{ redBig }}</div>
   <sc-if value="{{ is_p5 }}" hint-placeholder-val="{{ false }}">
     <div style="position:relative;margin-top:110px;width:190px;height:190px;animation:slStamp .6s .2s cubic-bezier(.3,1.4,.5,1) both;filter:drop-shadow(0 8px 0 #140C0A)"><div style="position:absolute;inset:0;border-radius:50%;background:#140C0A"></div><div style="position:absolute;inset:7%;border-radius:50%;background:#FFF4E6;display:flex;align-items:center;justify-content:center"><span style="font:900 72px/1 Unbounded,sans-serif;color:#140C0A">Á</span></div></div>
   </sc-if>
@@ -162,7 +238,7 @@
   <span style="position:relative;margin-top:30px;font:900 26px/1.1 Unbounded,sans-serif;text-align:center">{{ redT }}</span>
   <span style="position:relative;margin-top:12px;font:600 16px/1.4 Onest;text-align:center">{{ redS }}</span>
   <div style="flex:1"></div>
-  <div style="position:relative;align-self:flex-start;margin-bottom:-6px"><dc-import name="Rupor" state="celebrate" on-red="{{ true }}" size="{{ 120 }}" hint-size="120px,90px"></dc-import></div>
+  <div style="position:relative;align-self:flex-start;margin-bottom:22px"><dc-import name="Rupor" state="celebrate" on-red="{{ true }}" size="{{ 120 }}" hint-size="120px,90px"></dc-import></div>
   <button style="position:relative;width:100%;height:62px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОТОВО</button>
 </div>
 </sc-if>
@@ -194,26 +270,77 @@ const EMPTY={
  s4:{top:'170px',m:'wait',t:'Колекція порожня',s:'Тут поки порожньо, але це ненадовго.'},
  s5:{top:'150px',m:'wait',t:'Колекцій ще немає',s:'Створи першу — і складай у неї слова кнопкою закладки під карткою.',b:'НОВА КОЛЕКЦІЯ'},
  s7:{top:'120px',m:'sleep',t:'Нічого не знайдено',s:'Спробуй інше написання. Пошук за значенням працює від трьох літер. Бракує слова? Запропонуй його в Налаштуваннях, у пункті «Про застосунок і відгук».'}};
+const WL=[['Заграва','Червоне світло на небі під час сходу чи заходу сонця.'],['Видноколо','Лінія, де небо ніби торкається землі; обрій.'],['Оболонь','Низинний луг біля річки, який навесні заливає повінь.'],['Лелітка','Блискітка; дрібна прикраса, що мерехтить.'],['Веремія','Метушня, безлад, гамір.'],['Хурделиця','Сильна заметіль, снігова буря з вітром.'],['Мжичка','Дрібний густий дощ, що ніби висить у повітрі.'],['Паморозь','Іній на гілках і дротах після туману.'],['Бамбетель','Лава-скриня, на якій можна спати.']];
+const COLS0=[{n:'Осінні слова',c:'5 слів'},{n:'Для листа колезі',c:'12 слів'},{n:'Карпатські діалекти',c:'14 слів'},{n:'Смішні',c:'3 слова'}];
+const CSH=['polygon(0 0,100% 0,100% 100%)','polygon(0 0,100% 20%,100% 100%,0 80%)','polygon(50% 0,100% 100%,0 100%)','polygon(0 0,100% 0,70% 100%,0 100%)'];
+const RV=[['Оболонь',['низький луг біля річки','стара назва човна','гірський струмок'],0],['Веремія',['свято врожаю','метушня, безлад','вид вишивки'],1]];
 class Component extends DCLogic {
+  state={};
+  componentDidUpdate(pp){if(pp.screen!==this.props.screen)this.setState({scr:null,tab:null,q:null,sheet:null,toast:null,colName:null});}
+  componentWillUnmount(){clearTimeout(this._tt);}
+  toast(t,undo){clearTimeout(this._tt);this.setState({toast:{t,undo}});this._tt=setTimeout(()=>this.setState({toast:null}),3200);}
   renderVals(){
-    const s=this.props.screen||'s1';
+    const st=this.state,P=this.props.screen||'s1',isS=P[0]==='s';
+    const s=(isS&&st.scr)||P;
     const v={th:this.props.theme||'light',rmAttr:this.props.reduceMotion?'1':'0'};
     v['is_'+s]=true;
     const red=['p5','p6'].includes(s);
     v.sbc=red?'#140C0A':'var(--ink)';
-    v.savedHead=['s1','s2','s5'].includes(s);
-    const act=s==='s5'?'Колекції':'Вчу';
-    v.stabs=['Вчу','Улюблене','Історія','Колекції','Слова дня'].map(n=>({n,bg:n===act?'var(--ink)':'var(--sf2)',fg:n===act?'var(--bg)':'var(--ink)'}));
-    v.learn=[['Оболонь','низький луг біля річки','сьогодні',1],['Веремія','метушня, безлад','сьогодні',1],['Лелітка','блискітка','завтра',0],['Хурделиця','снігова буря','завтра',0],['Видноколо','обрій','через 3 дні',0],['Заграва','червоне світло на небі','через 7 днів',0]].map(([w,m,d,t],i)=>({w,m,d,bg:t?'#FF3B2F':'var(--sf2)',fg:t?'#140C0A':'var(--ink)',anim:'slCasc .35s '+(.1+i*.05)+'s both'}));
+    const act=st.tab||(s==='s5'||s==='cols'?'Колекції':'Вчу');v.savedHead=['s1','s2','s5','lst','cols'].includes(s);
+    v.stabs=[['Вчу',6],['Улюблене',3],['Історія',9],['Колекції',4],['Слова дня',6]].map(([n,c])=>({n,c,bg:n===act?'var(--ink)':'var(--sf2)',fg:n===act?'var(--bg)':'var(--ink)',onClick:()=>{if(!isS)return;const m={'Вчу':P==='s2'?'s2':'s1','Колекції':(st.myCols||COLS0).length?'cols':'s5'}[n]||'lst';this.setState({tab:n,scr:m});}}));
+    v.learnRaw=[['Оболонь','Низинний луг біля річки, який навесні заливає повінь.','сьогодні',1],['Веремія','Метушня, безлад, гамір.','сьогодні',1],['Лелітка','Блискітка; дрібна прикраса, що мерехтить.','завтра',0],['Хурделиця','Сильна заметіль, снігова буря з вітром.','завтра',0],['Видноколо','Лінія, де небо ніби торкається землі; обрій.','через 3 дні',0],['Заграва','Червоне світло на небі під час сходу чи заходу сонця.','через 7 днів',0]].map(([w,m,d,t],i)=>({w,m,d,bg:t?'#FF3B2F':'var(--sf2)',fg:t?'#140C0A':'var(--ink)',anim:'slCasc .35s '+(.1+i*.05)+'s both'}));
+    v.learn=v.learnRaw.map(r=>({...r,onClick:()=>this.toast('Відкриваю картку «'+r.w+'».')}));
     const e=EMPTY[s];v.emptyOn=!!e;
     if(e){v.emptyTop=e.top;v.emptyM=e.m;v.emptyT=e.t;v.emptyS=e.s;v.emptyBtn=e.b||'';}
+    const open=(sheet,extra)=>this.setState({sheet,nm:'',nmErr:'',...(extra||{})});
+    v.emptyAct=()=>open('new');
+    v.goSearch=()=>{if(isS)this.setState({scr:'s6',q:''});};
+    v.goTypeSearch=()=>{if(s==='s7')this.setState({scr:'s6',q:st.q??'квітчастий'});};
+    v.searchCancel=()=>this.setState({scr:'s1',q:null,tab:'Вчу'});
+    // lists
+    const LS={'Улюблене':WL.slice(0,3).map(([w,m])=>[w,m,'']),'Історія':WL.map(([w,m],i)=>[w,m,(30-i)+' жов']),'Слова дня':WL.slice(0,6).map(([w,m],i)=>[w,m,(2-i>0?2-i+' лист':(31+2-i)+' жов')])};
+    v.is_lst=s==='lst';v.lst=(LS[act]||[]).map(([w,m,d],i)=>({w,m,d,hasD:!!d,anim:'slCasc .3s '+(.05+i*.04)+'s both',onClick:()=>this.toast('Відкриваю картку «'+w+'».')}));
+    const cols=st.myCols||COLS0;
+    v.is_cols=s==='cols';v.colsGrid=cols.map((c,i)=>{const t=i%3;return {...c,bg:t===0?'#FF3B2F':t===1?'var(--ink)':'var(--sf2)',fg:t===0?'#140C0A':t===1?'var(--bg)':'var(--ink)',p:t===0?'#140C0A':'#FF3B2F',s:CSH[i%4],anim:'slCasc .35s '+(.05+i*.05)+'s both',onClick:()=>this.setState({scr:c.c.startsWith('0')?'s4':'s3',colName:c.n})};});
+    v.ncOpen=()=>open('new');
     v.colHead=['s3','s4'].includes(s);
-    v.colName=s==='s3'?'Осінні слова':'Для есе';v.colCount=s==='s3'?'5 слів':'0 слів';
-    v.colWords=[['Заграва','червоне світло на небі'],['Хурделиця','снігова буря'],['Лелітка','блискітка'],['Оболонь','низький луг біля річки'],['Видноколо','обрій']].map(([w,m],i)=>({w,m,anim:'slCasc .35s '+(.1+i*.05)+'s both'}));
+    v.colName=st.colName||(s==='s3'?'Осінні слова':'Для есе');
+    v.colBack=()=>{if(isS)this.setState({scr:'cols',tab:'Колекції'});};v.colMenu=()=>open('menu');v.dotsBg=st.sheet==='menu'?'#FF3B2F':'var(--sf2)';v.dotsFg=st.sheet==='menu'?'#140C0A':'var(--ink)';v.shareOpen=()=>open('share');v.colCount=s==='s3'?'5 слів':'0 слів';
+    v.colWords=[['Заграва','червоне світло на небі'],['Хурделиця','снігова буря'],['Лелітка','блискітка'],['Оболонь','низький луг біля річки'],['Видноколо','обрій']].map(([w,m],i)=>({w,m,onClick:()=>this.toast('Відкриваю картку «'+w+'».'),anim:'slCasc .35s '+(.1+i*.05)+'s both'}));
     v.searchHead=['s6','s7'].includes(s);
-    v.q=s==='s7'?'квітчастий':'Шукати слово';v.qColor=s==='s7'?'var(--ink)':'var(--mute)';
-    v.recentQ=['заграва','бити байдики','оболонь','скільки'].map((q,i)=>({q,anim:'slCasc .3s '+(.05+i*.05)+'s both'}));
-    v.kb=[['й','ц','у','к','е','н','г','ш','щ','з','х'],['ф','і','в','а','п','р','о','л','д','ж','є'],['я','ч','с','м','и','т','ь','б','ю','ї']];
+    const q=st.q??(s==='s7'?'квітчастий':'');v.q=q||'Шукати слово';v.qColor=q?'var(--ink)':'var(--mute)';
+    const ql=q.toLowerCase(),hits=ql?WL.filter(([w,m])=>w.toLowerCase().includes(ql)||(ql.length>=3&&m.toLowerCase().includes(ql))):[];
+    const setQ=nq=>{const l=nq.toLowerCase(),h=l?WL.filter(([w,m])=>w.toLowerCase().includes(l)||(l.length>=3&&m.toLowerCase().includes(l))):[];this.setState({q:nq,scr:l&&!h.length&&l.length>=3?'s7':'s6'});};
+    v.s6Title=q?(hits.length?'ЗНАЙДЕНО':'ПРОДОВЖУЙТЕ ВВОДИТИ'):'НЕЩОДАВНО';
+    v.recentQ=q?hits.map(([w],i)=>({q:w,anim:'slCasc .25s '+(i*.04)+'s both',onClick:()=>this.toast('Відкриваю картку «'+w+'».')})):['заграва','бити байдики','оболонь','скільки'].map((r,i)=>({q:r,anim:'slCasc .3s '+(.05+i*.05)+'s both',onClick:()=>setQ(r)}));
+    v.kb=[['й','ц','у','к','е','н','г','ш','щ','з','х'],['ф','і','в','а','п','р','о','л','д','ж','є'],['я','ч','с','м','и','т','ь','б','ю','ї','⌫']].map(row=>row.map(k=>({k,w:k==='⌫'?'40px':'31px',onClick:()=>setQ(k==='⌫'?q.slice(0,-1):q+k)})));
+    // sheets
+    const sh=st.sheet,cn=v.colName,close=()=>this.setState({sheet:null});v.closeSheet=close;
+    v.sheetOn=!!sh;v.shIsMenu=sh==='menu';v.shIsName=sh==='new'||sh==='rename';v.shIsDel=sh==='del';v.shIsShare=sh==='share';v.shIsReview=sh==='review';
+    v.shTitle={menu:cn,new:'НОВА КОЛЕКЦІЯ',rename:'ПЕРЕЙМЕНУВАТИ',del:'Видалити колекцію «'+cn+'»?',share:'ПОДІЛИТИСЯ ПОСИЛАННЯМ',review:'ПЕРЕВІР СЕБЕ'}[sh]||'';
+    v.menuRows=[['Поділитися посиланням','share'],['Перейменувати','rename'],['Видалити колекцію','del']].map(([n,k],i)=>({n,bt:i?'1px solid var(--line)':'0',c:k==='del'?'#C4271D':'var(--ink)',onClick:()=>open(k,k==='rename'?{nm:cn}:null)}));
+    const nm=st.nm??'',len=nm.trim().length,err=st.nmErr||'';
+    v.nm=nm;v.nmCnt=len+'/40';v.nmCntC=len>40?'#C4271D':'var(--mute)';v.nmErr=err;v.nmErrOn=!!err;v.nmBd=err?'#C4271D':'var(--line)';v.nmShake=err?'slShake .4s both':'none';v.nmBtn=sh==='rename'?'ЗБЕРЕГТИ':'СТВОРИТИ';
+    v.nmInput=e=>this.setState({nm:e.target.value,nmErr:''});
+    const save=()=>{const t=nm.trim();const others=cols.filter(c=>sh!=='rename'||c.n!==cn);
+      const er=!t?'Дайте колекції назву.':t.length>40?'Назва задовга: не більше 40 символів.':others.some(c=>c.n.toLowerCase()===t.toLowerCase())?'Колекція з такою назвою вже є.':'';
+      if(er){this.setState({nmErr:''},()=>this.setState({nmErr:er}));return;}
+      if(sh==='rename'){this.setState({sheet:null,colName:t,myCols:cols.map(c=>c.n===cn?{...c,n:t}:c)});this.toast('Колекцію перейменовано.');}
+      else{this.setState({sheet:null,myCols:[{n:t,c:'0 слів'},...cols],scr:'s4',colName:t,tab:'Колекції'});this.toast('Колекцію «'+t+'» створено.');}};
+    v.nmSave=save;v.nmKey=e=>{if(e.key==='Enter')save();};
+    v.delYes=()=>{const prev=cols;const left=cols.filter(c=>c.n!==cn);this.setState({sheet:null,myCols:left,scr:left.length?'cols':'s5',tab:'Колекції'});this.toast('Колекцію видалено.',()=>this.setState({myCols:prev,scr:'s3',toast:null}));};
+    v.slug=cn.toLowerCase().replace(/[^a-zа-яіїєґ0-9]+/gi,'-').replace(/^-|-$/g,'');
+    v.copyLink=()=>{close();this.toast('Посилання скопійовано.');};
+    // review
+    const ri=st.ri||0,rp=st.rp,cur=RV[Math.min(ri,RV.length-1)],done=rp!=null;
+    v.rvStart=()=>open('review',{ri:0,rp:null,rok:0});
+    v.rvPos=(ri+1)+' З '+RV.length;v.rvSegs=RV.map((_,i)=>({bg:i<ri?'#FF3B2F':i===ri?'var(--ink)':'var(--sil)'}));v.rvWord=cur[0];
+    v.rvOpts=cur[1].map((t,i)=>{const ok=i===cur[2],me=i===rp;const base={t,k:['А','Б','В'][i],bg:'var(--tile)',fg:'var(--ink)',sh:'0 4px 0 var(--edge)',bd:'1px solid var(--line)',tf:'none',op:1,td:'none',anim:'none',onClick:()=>{if(!done)this.setState(x=>({rp:i,rok:(x.rok||0)+(i===cur[2]?1:0)}));}};
+      if(!done)return base;if(ok)return {...base,k:'✓',bg:'#FF3B2F',fg:'#140C0A',sh:'0 4px 0 #C4271D',bd:'0',anim:'slPop .35s '+(me?'0s':'.35s')+' both'};
+      if(me)return {...base,k:'✕',bg:'var(--ink)',fg:'var(--bg)',sh:'inset 0 3px 0 rgba(0,0,0,.3)',bd:'0',tf:'translateY(3px)',td:'line-through',anim:'slShake .4s both'};return {...base,op:.5};});
+    v.rvDone=done;const last=ri>=RV.length-1;v.rvNextT=last?'ГОТОВО':'ДАЛІ';
+    v.rvNext=()=>{if(last){const ok=st.rok||0;close();this.toast(ok===RV.length?'Влучно! Обидва слова повторено.':'Перевірено: '+ok+' з '+RV.length+'. Решта повториться завтра.');}else this.setState({ri:ri+1,rp:null});};
+    v.toastOn=!!st.toast;v.toastT=st.toast?st.toast.t:'';v.toastUndo=st.toast&&st.toast.undo?()=>{clearTimeout(this._tt);st.toast.undo();}:null;
     v.profHead=['p1','p2'].includes(s);
     v.pauseCal=Array.from({length:14},(_,i)=>{const d=27+i,n=d>31?d-31:d,past=i<6,pause=i>=6&&i<13;return {n:String(n),bg:past?'#FF3B2F':pause?'var(--sf2)':'var(--tile)',fg:past?'#140C0A':'var(--ink)',sh:past?'0 3px 0 #C4271D':pause?'inset 0 3px 0 var(--edge)':'0 3px 0 var(--edge)'};});
     v.freezeCal=[27,28,29,30,31,1,2].map((n,i)=>({n:String(n),bg:i===4?'#FFF4E6':'#FF3B2F',fg:'#140C0A',ice:i===4}));
@@ -223,7 +350,7 @@ class Component extends DCLogic {
     v.redOn=red;
     if(s==='p5'){v.redBig='ВІДЗНАКА';v.redT='Перша перемога в наголосі';v.redS='Нова відзнака — тепер вона твоя назавжди.';}
     if(s==='p6'){v.redBig='РІВЕНЬ';v.redT='Рівень 4 — Книжник';v.redS='Новий рівень! Так тримати.';}
-    v.showTabs=!red&&!['s3','s4','s6','s7'].includes(s);
+    v.showTabs=!red&&!['s3','s4','s6','s7'].includes(s);v.toastB=v.showTabs?'100px':'40px';
     const tab=s[0]==='p'?'profile':'saved';
     v.tabs=[['feed','Стрічка'],['games','Ігри'],['saved','Збережене'],['profile','Профіль']].map(([id,n])=>({n,ic:TABI[id],c:id===tab?'var(--ink)':'var(--mute)',on:id===tab?1:0}));
     return v;
