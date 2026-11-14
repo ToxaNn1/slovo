@@ -2,6 +2,7 @@ import { coreTokens, EditionProvider, SavedTabs, TokensProvider } from '@slovo/u
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
+import { savedHeader } from '../tokens';
 
 const tabs = [
   { id: 'favorites', label: 'Favorites', count: 3, accessibilityLabel: 'Favorites, 3 entries' },
@@ -20,14 +21,28 @@ async function renderTabs(active: 'favorites' | 'history', onSelect = jest.fn())
 }
 
 describe('SavedTabs', () => {
-  it('marks the active tab selected, with the red bar under it alone', async () => {
+  it('marks the active tab selected, with no bar under it', async () => {
     await renderTabs('history');
 
     expect(screen.getByRole('button', { name: 'History, 0 entries' })).toBeSelected();
     expect(screen.getByRole('button', { name: 'Favorites, 3 entries' })).not.toBeSelected();
-    expect(screen.getAllByTestId('saved-indicator')).toHaveLength(1);
-    expect(screen.getByTestId('saved-indicator')).toHaveStyle({
-      backgroundColor: coreTokens.colors.light.accent,
+    expect(screen.queryByTestId('saved-indicator')).toBeNull();
+  });
+
+  it('shows the count of each tab beside its label', async () => {
+    await renderTabs('favorites');
+
+    expect(screen.getByTestId('saved-favorites')).toHaveTextContent('Favorites3');
+    expect(screen.getByTestId('saved-history')).toHaveTextContent('History0');
+  });
+
+  it('fades the row out at its right edge into the background', async () => {
+    await renderTabs('favorites');
+
+    expect(screen.getByTestId('saved-fade')).toHaveStyle({
+      position: 'absolute',
+      right: 0,
+      width: savedHeader.fade,
     });
   });
 

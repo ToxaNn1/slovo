@@ -8,11 +8,14 @@ export type { Example, FeatureSwitch } from '@slovo/contracts';
 export { openAccount, type Account, type AccountState } from './account/account';
 export { openComposition, type Composition } from './composition';
 export {
+  COLLECTION_NAME_MAX_LENGTH,
+  collectionNameLength,
   type Collection,
   type CollectionEntry,
   type CollectionNameRefusal,
   type CollectionResult,
   type Collections,
+  type DeletedCollection,
 } from './saved/collections';
 export { type CollectionLinkPreview } from './collection-links/copy-collection';
 export { type CorrectionCardModel } from './entries/correction-card';
@@ -99,9 +102,9 @@ export { type HiddenEntry } from './mix/hidden-entries';
 export { type HidingChange } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
 export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
-export { groupByLocalDay } from './saved/history-time';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
 export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
+export type { DueQuestion } from './knowledge/due-quiz';
 export {
   openCounterReads,
   type CounterLine,
@@ -128,7 +131,6 @@ export {
   todayDate,
   untilNextLocalDay,
   type LocalDate,
-  type LocalDay,
 } from './local-date';
 export {
   isSolved,

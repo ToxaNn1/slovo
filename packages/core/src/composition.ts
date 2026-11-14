@@ -43,7 +43,9 @@ import {
   createWordOfTheDayArchiveRecorder,
   type WordOfTheDayArchive,
 } from './saved/word-of-the-day-archive';
+import { openDueQuiz, type DueQuiz } from './knowledge/due-quiz';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
+import { seededRandomOf } from './game/traced-crossword';
 import { openBadges, type Badges } from './progress/badges';
 import { openCommunityCounters, type CommunityCounters } from './community-counters/counter-deltas';
 import type { HiddenEntries } from './mix/hidden-entries';
@@ -122,6 +124,8 @@ export interface Composition extends Hiding {
   readonly mix: Mix;
   /** The Knowledge Marks, which an Entry card's «Знаю» and «Не знаю» change (ADR 0043). */
   readonly knowledge: Knowledge;
+  /** The Due Quiz «Перевір себе» on the «Вчу» list (ADR 0131); no questions with `dueQuiz` off. */
+  readonly dueQuiz: DueQuiz;
   /** The Community Counters, which the reader's own Knowledge Marks and Favorites change (ADR 0060). */
   readonly communityCounters: CommunityCounters;
   /**
@@ -763,6 +767,15 @@ export async function openComposition({
     hiddenEntries,
     mix,
     knowledge,
+    dueQuiz: openDueQuiz({
+      edition,
+      knowledge,
+      entries,
+      hiddenEntries,
+      comparison,
+      clock,
+      seeded: seededRandomOf,
+    }),
     communityCounters,
     progress,
     xpLog,

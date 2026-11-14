@@ -788,6 +788,42 @@ describe('the Active Day with a Daily Goal', () => {
 
     expect(app.xpLog.days.active).toEqual(new Set(['2026-10-12', '2026-10-13']));
   });
+
+  it('keeps a Streak of 24 days counted by 5 XP once today’s goal, set today, is met', async () => {
+    // The owner's phone, 14.11: 6 XP on each of 24 local days up to today, across the change of the clocks.
+    const time = fakeClock('2026-11-14T18:00:00+02:00');
+    const now = time.clock.now().getTime();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const daysAgo = Array.from({ length: 24 }, (_, days) => days);
+    const records = new Map(
+      daysAgo.flatMap((days) =>
+        [1, 2, 3].map((n) => {
+          const date = new Date(Date.UTC(2026, 10, 14 - days)).toISOString().slice(0, 10);
+          const at = new Date(now - days * dayMs).toISOString();
+          return [
+            `xp.dev-${date}-${String(n)}`,
+            JSON.stringify({ kind: 'xp', date, at, source: 'quick-question', amount: 2 }),
+          ] as const;
+        }),
+      ),
+    );
+    const { app } = await run({ on: [...on, 'seenWordXp', 'streakFreezes'], time, records });
+    expect(app.progress.state.streak).toBe(24);
+
+    await app.xpLog.setDailyGoal(10);
+    // Today has a goal not met yet: the Streak counts back from yesterday.
+    expect(app.progress.state.streak).toBe(23);
+    for (let looks = 0; looks < 30 && app.xpLog.state.dailyGoal?.met !== true; looks += 1) {
+      await look(app, time);
+    }
+
+    expect(app.xpLog.state.dailyGoal).toMatchObject({ goal: 10, met: true });
+    expect(app.progress.state.streak).toBe(24);
+    expect(
+      (await run({ on: [...on, 'seenWordXp', 'streakFreezes'], time, records })).app.progress.state
+        .streak,
+    ).toBe(24);
+  });
 });
 
 // Ticket #1555: 1 XP for every Word Seen for the first time, up to the Daily Goal.

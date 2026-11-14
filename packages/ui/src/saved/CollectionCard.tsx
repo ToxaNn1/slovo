@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Polygon } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
@@ -65,7 +66,6 @@ export function CollectionCard({
   testID?: string;
 }) {
   const tokens = useTokens();
-  const { radii } = tokens;
   const { voice } = useEdition();
   const paint = useCollectionPaint(index);
   const mark = collectionMarks[index % collectionMarks.length] ?? collectionMarks[0];
@@ -80,7 +80,7 @@ export function CollectionCard({
       onLongPress={onLongPress}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: paint.ground, borderRadius: radii.card },
+        { backgroundColor: paint.ground },
         pressed && styles.pressed,
       ]}
     >
@@ -108,14 +108,81 @@ export function CollectionCard({
   );
 }
 
+/** The board's «+»: two bars crossing, in a 26 box. */
+const PLUS = '11,0 15,0 15,11 26,11 26,15 15,15 15,26 11,26 11,15 0,15 0,11 11,11';
+
+/**
+ * The first card of the Collections grid (board 09): a dashed outline as tall
+ * as a Collection's card, the red «+» tile at the top and «Нова колекція» at
+ * the foot. A tap asks for a new Collection.
+ */
+export function NewCollectionCard({
+  label,
+  onPress,
+  testID,
+}: {
+  /** «Нова колекція», in the Edition's language. */
+  label: string;
+  onPress: () => void;
+  testID?: string;
+}) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
+  const { plus } = collectionCard;
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      {...voice}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        styles.newCard,
+        { borderColor: colors.ink },
+        pressed && styles.pressed,
+      ]}
+    >
+      <View style={[styles.plusEdge, { backgroundColor: colors.accentEdge }]}>
+        <View style={[styles.plus, { backgroundColor: colors.accent }]}>
+          <Svg width={plus.glyph} height={plus.glyph} viewBox="0 0 26 26">
+            <Polygon points={PLUS} fill={colors.onAccent} />
+          </Svg>
+        </View>
+      </View>
+      <Text
+        numberOfLines={2}
+        style={[typeStyle('collectionCardName', tokens), { color: colors.ink }]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
+    borderRadius: collectionCard.radius,
     flex: 1,
     minWidth: 0,
     height: collectionCard.height,
     padding: collectionCard.padding,
     justifyContent: 'space-between',
     overflow: 'hidden',
+  },
+  newCard: { borderWidth: collectionCard.newBorder, borderStyle: 'dashed' },
+  plusEdge: {
+    alignSelf: 'flex-start',
+    borderRadius: collectionCard.plus.radius,
+    paddingBottom: collectionCard.plus.depth,
+  },
+  plus: {
+    width: collectionCard.plus.side,
+    height: collectionCard.plus.side,
+    borderRadius: collectionCard.plus.radius,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pressed: { opacity: entryRow.pressedOpacity },
   text: { gap: collectionCard.textGap },

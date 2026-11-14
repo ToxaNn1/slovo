@@ -1,4 +1,4 @@
-import { MascotIn } from '@/mascot/mascot';
+import { MascotAs } from '@/mascot/mascot';
 import type { CollectionEntry } from '@slovo/core';
 import {
   BackLink,
@@ -22,7 +22,7 @@ import { addedOn } from '@/saved/added-on';
 import { CollectionBoardScreen } from '@/saved/collection-board';
 import { useCollectionEntries } from '@/saved/collections';
 import { useOpenScreen } from '@/use-open-screen';
-import { useSegmentParam } from '@/route-params';
+import { useQueryParam, useSegmentParam } from '@/route-params';
 import { ListTopButton } from '@/shell/list-top';
 
 const { collections: collectionStrings } = editionStrings;
@@ -30,12 +30,14 @@ const strings = collectionStrings.entries;
 
 /**
  * A Collection: in the board style while `collectionBoardStyle` is on
- * (ADR 0082), today's screen while it is off.
+ * (ADR 0132), today's screen while it is off. `?created=1` marks the
+ * Collection just made from the Collections grid.
  */
 export default function CollectionScreen() {
   const collectionId = useSegmentParam('collectionId');
+  const created = useQueryParam('created') === '1';
   return useEditionInEffect().isFeatureEnabled('collectionBoardStyle') ? (
-    <CollectionBoardScreen collectionId={collectionId} />
+    <CollectionBoardScreen collectionId={collectionId} created={created} />
   ) : (
     <CollectionListScreen collectionId={collectionId} />
   );
@@ -136,7 +138,7 @@ function CollectionListScreen({ collectionId }: { collectionId: string }) {
         ListEmptyComponent={
           collection === undefined ? undefined : (
             <EmptyState
-              mascot={<MascotIn state="empty" />}
+              mascot={(width) => <MascotAs state="waits" width={width} />}
               testID="collection-empty"
               title={strings.empty.title}
               message={strings.empty.message}

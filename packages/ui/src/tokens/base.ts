@@ -82,7 +82,7 @@ export const coreTokens: DesignTokens = {
     },
   },
   fontFamilies: { word: undefined, ui: undefined },
-  radii: { tile: 14, card: 22, chip: 14, button: 14, sheet: 22 },
+  radii: { tile: 14, card: 22, chip: 11, button: 14, sheet: 22 },
 };
 
 /** The Edition's tokens over the Core's neutral ones, group by group. */
@@ -200,6 +200,20 @@ export const typeRoles = {
   yesterdayOption: role('ui', '600', 15, 19),
   /** «Влучно!» or «Майже. Наступне вийде.» under the options of Yesterday's quiz (board f5). */
   yesterdayVerdict: role('word', '800', 15, 15),
+  /** The Due Quiz card's big count behind its text (board 09, screen 73). */
+  dueQuizCount: role('word', '900', 140, 140),
+  /** The Due Quiz card's title, «Перевір себе» (board 09). */
+  dueQuizTitle: role('word', '900', 18, 19.8),
+  /** The Due Quiz card's line, «2 слова на сьогодні» (board 09). */
+  dueQuizLine: role('ui', '600', 13, 13),
+  /** The Due Quiz sheet's place, «1 з 2» (board 09). */
+  dueQuizProgress: role('word', '700', 12, 12, 1.5, 'uppercase'),
+  /** The Lemma on the Due Quiz sheet (board 09). */
+  dueQuizLemma: role('word', '900', 28, 28, -0.5),
+  /** «Що це означає?» on the Due Quiz sheet (board 09). */
+  dueQuizQuestion: role('ui', '500', 15, 19.5),
+  /** The mark of a meaning on the Due Quiz sheet, «А», «Б», «В» (board 09). */
+  dueQuizMark: role('word', '900', 14, 14),
   /** The Word of the Community Word card. */
   communityWord: role('word', '900', 30, 30, -0.5),
   /** The Definition under the Word of the Community Word card. */
@@ -332,10 +346,14 @@ export const typeRoles = {
   collectionCount: role('word', '500', 22, 22),
   /** A recent query of Search. */
   recentQuery: role('ui', '600', 16, 19),
-  /** The text button that clears the recent queries of Search. */
-  recentClear: role('ui', '600', 15, 18),
-  /** The text button that clears the history of the Saved screen. */
-  historyClear: role('ui', '600', 17, 20),
+  /** The text button that clears the recent queries of Search, smaller than the label beside it (board 09). */
+  recentClear: role('ui', '600', 14, 17),
+  /** What the reader types in the Search field (board 09, screen 78). */
+  searchText: role('ui', '600', 16, 20),
+  /** «Скасувати» beside the Search field, which closes Search (board 09, screen 78). */
+  searchCancel: role('ui', '600', 15, 18),
+  /** The text button that clears the history of the Saved screen, smaller than a title (board 09). */
+  historyClear: role('ui', '600', 14, 17),
   /** The line on a solved Daily Crossword. */
   crosswordSolved: role('word', '500', 28, 32),
   /** A segment's label in a segmented control. */
@@ -352,8 +370,17 @@ export const typeRoles = {
   oftenSaidForm: role('word', '400', 14, 18),
   /** A Collection's name on its card of the Collections screen. */
   collectionCardName: role('word', '800', 14, 17),
+  /** A Collection's name over its rows, and its count of Words under it (board 09). */
+  collectionTitle: role('word', '900', 30, 30, -1),
+  collectionWordCount: role('ui', '500', 14, 17),
   /** How many Entries a Collection holds, under its name on its card. */
   collectionCardCount: role('ui', '600', 12, 12),
+  /** The line under the plate of a Collection's delete sheet (board 09). */
+  collectionSheetMessage: role('ui', '500', 16, 23),
+  /** The muted line of a Collection's share sheet (board 09). */
+  collectionSheetNote: role('ui', '500', 15, 22),
+  /** The Collection Link in its box on the share sheet (board 09). */
+  collectionLink: role('ui', '600', 15, 15),
   /** A Synonym Row member's shade note, upright at the right end of its row (XEntry2 e8). */
   shadeNote: role('ui', '500', 14, 18.2),
   /** `Lemma, hero`: the onboarding welcome's Lemma. */
@@ -446,8 +473,6 @@ export const typeRoles = {
   tipTitle: role('word', '900', 30, 33, -0.5),
   /** A Tip's rule on its card's «Правило» tab (board XEntry2 e9). */
   tipRule: role('ui', '500', 20, 28),
-  /** What leads a list row's Lemma, such as a Collection's name, in the Lemma's size. */
-  listLeading: role('ui', '500', 17, 20),
   /** The trailing text of a list row, such as when it was saved. */
   rowTrailing: role('ui', '700', 12, 12),
   /** The title on the red panel of the Game's result. */
@@ -999,6 +1024,8 @@ export const motion = {
   screen: { duration: 500, easing: [0.2, 0.8, 0.2, 1] },
   fly: { duration: 600, easing: [0.2, 0.9, 0.25, 1.15] },
   toast: { duration: 350, easing: [0.2, 0.9, 0.3, 1.1] },
+  /** The design's `slToast` of board 09 (XSaved): the plate toast rises in 400 ms. */
+  plateToast: { duration: 400, easing: [0.2, 0.9, 0.3, 1] },
   stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
   /** The five frames of a Badge's stamp (board 10.7), after a short wait. */
   badgeStamp: { duration: 550, easing: ease, delay: 150 },
@@ -1232,8 +1259,36 @@ export const rowPadding = 14;
 /** The gap between the blocks of a Word card, a result or an empty state, off the 4-pt grid (the design's 18). */
 export const blockGap = 18;
 
-/** The empty state's space over its content. */
-export const emptyStatePaddingTop = 80;
+/**
+ * A meaning's tile in a quiz of three meanings, Yesterday's (board f5) and
+ * the Due Quiz's (board 09): its height, radius, padding, gap and border,
+ * the check and the cross, the opacity of a faded one, the pop of the right
+ * one (from, peak and when it peaks) and the sink and shake of a wrong pick.
+ */
+export const quizOption = {
+  height: 50,
+  radius: 14,
+  padding: 16,
+  gap: 10,
+  border: 1,
+  check: { width: 16, height: 14 },
+  cross: 13,
+  dimmedOpacity: 0.5,
+  pop: { duration: 350, from: 0.6, peak: 1.12, peakAt: 0.6 },
+  wrong: { sink: 3, shake: [-8, 7, -4, 3, 0], duration: 400 },
+} as const;
+
+/**
+ * The empty state (board 09): the Mascot's width, the gap between its blocks,
+ * and the space over and under it in the list's room, more under so it sits
+ * a little above the middle.
+ */
+export const emptyState = {
+  mascotWidth: 140,
+  gap: 16,
+  paddingTop: 40,
+  paddingBottom: 120,
+} as const;
 
 /**
  * How far the largest text sizes of iOS may scale a text
@@ -1258,8 +1313,8 @@ export const disabledOpacity = 0.5;
 /** The opacity a pressed tile fades to where its face does not sink: under Reduce Motion, or with no edge. */
 export const pressedFade = 0.7;
 
-/** The heights of a button's face: the design's 58 pt main button, and a small one as tall as a tap area. */
-export const buttonHeight = { large: 58, small: 44 } as const;
+/** The heights of a button's face: the design's 58 pt main button, a 48 pt one on a card (the Due Quiz's «ПОЧАТИ»), and a small one as tall as a tap area. */
+export const buttonHeight = { large: 58, medium: 48, small: 44 } as const;
 
 /** The side of the design's square icon button, and of the icon inside it. */
 export const iconButton = { side: 44, icon: 20 } as const;

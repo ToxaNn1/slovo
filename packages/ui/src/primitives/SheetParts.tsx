@@ -14,9 +14,16 @@ const TITLE_TURN = '-4.4deg';
 /**
  * The title of a bottom sheet, the first thing in it: the design's black band
  * turned along the slanted top, cream capitals in the word family on the key
- * ink in both Themes, read as a header.
+ * ink in both Themes, read as a header. With `numberOfLines` it cuts the
+ * last line short with an ellipsis, as board 09 keeps its plate on one line.
  */
-export function SheetTitle({ children }: { children: ReactNode }) {
+export function SheetTitle({
+  children,
+  numberOfLines,
+}: {
+  children: ReactNode;
+  numberOfLines?: number | undefined;
+}) {
   const tokens = useTokens();
   const key = useSchemeColors('light');
   const { voice } = useEdition();
@@ -24,6 +31,8 @@ export function SheetTitle({ children }: { children: ReactNode }) {
     <Text
       accessibilityRole="header"
       {...voice}
+      numberOfLines={numberOfLines}
+      ellipsizeMode="tail"
       maxFontSizeMultiplier={fontScaleCap.number}
       style={[
         typeStyle('sheetTitle', tokens),

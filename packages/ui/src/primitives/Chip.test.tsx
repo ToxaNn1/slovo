@@ -1,4 +1,4 @@
-import { Chip, EditionProvider } from '@slovo/ui';
+import { Chip, coreTokens, EditionProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
@@ -61,6 +61,16 @@ describe('Chip', () => {
     await fireEvent.press(chip);
 
     expect(chip).toBeSelected();
+  });
+
+  it('fills ink when turned on', async () => {
+    await render(<Tab />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Words, 12' }));
+
+    expect(screen.getByTestId('tab-face')).toHaveStyle({
+      backgroundColor: coreTokens.colors.light.ink,
+    });
   });
 
   it('shrinks while pressed and comes back when let go', async () => {

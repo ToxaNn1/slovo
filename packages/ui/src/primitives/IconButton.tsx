@@ -7,27 +7,33 @@ import { Icon, type IconName } from './Icon';
 
 /**
  * The design's 44-point icon button: an icon of the set on a sunken square
- * of `radius.tile`, or on the ink for a loud one. A press dims it; disabled,
+ * of `radius.tile`, on the ink for a loud one, or on the accent while what it
+ * opens is open (board 09's «⋯»). A press dims it; disabled,
  * it is dimmed and takes no press.
  */
 export function IconButton({
   icon,
   accessibilityLabel,
   onPress,
-  ink = false,
+  fill = 'sunken',
   disabled = false,
   testID,
 }: {
   icon: IconName;
   accessibilityLabel: string;
   onPress: () => void;
-  /** Drawn on the ink with a background-coloured icon, as the Entry's back and share. */
-  ink?: boolean;
+  /** The square's fill; on the ink and the accent the icon takes the colour that reads on it. */
+  fill?: 'sunken' | 'ink' | 'accent';
   disabled?: boolean;
   testID?: string | undefined;
 }) {
   const { colors, radii } = useTokens();
   const { voice } = useEdition();
+  const paint = {
+    sunken: { ground: colors.surfaceSunken, icon: colors.ink },
+    ink: { ground: colors.ink, icon: colors.background },
+    accent: { ground: colors.accent, icon: colors.onAccent },
+  };
   return (
     <Pressable
       testID={testID}
@@ -41,12 +47,12 @@ export function IconButton({
         styles.button,
         {
           borderRadius: radii.tile,
-          backgroundColor: ink ? colors.ink : colors.surfaceSunken,
+          backgroundColor: paint[fill].ground,
           opacity: disabled ? disabledOpacity : pressed ? pressedFade : 1,
         },
       ]}
     >
-      <Icon name={icon} size={iconButton.icon} color={ink ? colors.background : colors.ink} />
+      <Icon name={icon} size={iconButton.icon} color={paint[fill].icon} />
     </Pressable>
   );
 }

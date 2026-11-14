@@ -65,6 +65,18 @@ export const chipDrawing = {
   countOpacity: 0.7,
   /** The chip's scale while it is pressed. */
   pressedScale: 0.95,
+  /** How long, in ms, the fill takes to change colour when the chip turns on or off. */
+  fillDuration: 200,
+} as const;
+
+/** The Saved screen's header (board 09, screen 72): title, search field and tabs. */
+export const savedHeader = {
+  /** The space over the title, under the status bar. */
+  top: 6,
+  /** The gap between the title, the search field and the tabs. */
+  gap: 12,
+  /** How wide the tab row fades out at its right edge. */
+  fade: 28,
 } as const;
 
 /** The search field's drawing (design `SlovoApp`): a sunken box, a magnifier and a clear button. */
@@ -77,6 +89,21 @@ export const searchFieldDrawing = {
   clear: 28,
   clearRadius: 8,
   clearIcon: 10,
+  /** The ink border of the Search screen's field (board 09, screen 78); the link to Search has none. */
+  border: 2.5,
+  /** The Search screen field's magnifier (board 09, screen 78). */
+  fieldIcon: 16,
+} as const;
+
+/**
+ * A recent query's row of Search (board 09, screen 78): its clock, the space
+ * above and below it, and how the rows rise in (`slCasc`), the first 50 ms
+ * in, each next 50 ms after the one before.
+ */
+export const recentQueryDrawing = {
+  clock: 14,
+  paddingVertical: 6,
+  cascade: { variant: 'rise', duration: 300, delay: 50, stagger: 50 },
 } as const;
 
 /** The text field's drawing (design `XSettings`): its box, and the border a problem draws. */
@@ -111,6 +138,12 @@ export const signInButtonHeight = 50;
 
 /** A toast's corner radius, from the design; layout, not an Edition token. */
 export const toastRadius = 6;
+
+/**
+ * The plate toast of board 09 (XSaved): an ink plate of `radius` that rises
+ * `rise` points as it fades in and hides after `lasts` milliseconds.
+ */
+export const plateToast = { rise: 30, radius: 16, lasts: 3200 } as const;
 
 /** `elev.toast`: `0 10 30 rgba(0, 0, 0, .4)`. */
 export const toastElevation = {

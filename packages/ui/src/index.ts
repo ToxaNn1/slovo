@@ -40,6 +40,8 @@ export { FavoriteButton } from './saved/FavoriteButton';
 export { ClearHistoryButton } from './saved/ClearHistoryButton';
 export { CollectionMenuSheet } from './saved/CollectionMenuSheet';
 export { DeleteCollectionDialog } from './saved/DeleteCollectionDialog';
+export { DeleteCollectionSheet } from './saved/DeleteCollectionSheet';
+export { CollectionShareSheet } from './saved/CollectionShareSheet';
 export { DailyCrosswordCard, type CrosswordMiniCell } from './game/DailyCrosswordCard';
 export { CrosswordDayCard, type CrosswordDayCardState } from './game/CrosswordDayCard';
 export { GameModeCard, GameModeGroupTitle, GamesTitle } from './game/GameModeCard';
@@ -86,14 +88,22 @@ export { TabBarButton } from './primitives/TabBarButton';
 export { LabelChip } from './primitives/LabelChip';
 export { GoogleSignInButton } from './primitives/GoogleSignInButton';
 export { LearningRow } from './saved/Learning';
+export { DueQuizCard, DueQuizSheet } from './saved/DueQuiz';
 export { CollectionButton } from './saved/CollectionButton';
 export { CollectionEntryRow } from './saved/CollectionEntryRow';
+export {
+  CollectionHeader,
+  CollectionShareButton,
+  CollectionWordRow,
+} from './saved/CollectionScreenParts';
 export { SavedTabs, type SavedTab } from './saved/SavedTabs';
-export { CollectionCard } from './saved/CollectionCard';
+export { CollectionCard, NewCollectionCard } from './saved/CollectionCard';
 export { CollectionNameField, NewCollectionButton } from './saved/CollectionNameField';
+export { CollectionNameSheet } from './saved/CollectionNameSheet';
 export { CollectionSheet } from './saved/CollectionSheet';
 export { BottomSheet } from './primitives/BottomSheet';
 export { SheetTitle } from './primitives/SheetParts';
+export { TitledSheet } from './primitives/TitledSheet';
 export { Mascot } from './primitives/Mascot';
 export { Placeholder } from './primitives/Placeholder';
 export { PronunciationButton } from './entries/PronunciationButton';
@@ -116,6 +126,7 @@ export {
 export { SplashOverlay } from './onboarding/SplashOverlay';
 export { SearchButton } from './search/SearchButton';
 export { RecentQueries } from './search/RecentQueries';
+export { SearchLabel } from './search/SearchLabel';
 export { StatsPill } from './progress/StatsPill';
 export { XpPill } from './progress/XpPill';
 export { FeedHeader } from './feed/FeedHeader';
@@ -172,6 +183,7 @@ export {
   onboardingLayout,
   railScreen,
   rowPadding,
+  savedHeader,
   signInButtonHeight,
   space,
   fontScaleCap,
@@ -190,6 +202,8 @@ export {
   UndoToastProvider,
   useCloseUndoToast,
   useUndoToast,
+  type PlateToastContent,
+  type ToastContent,
   type UndoToastContent,
 } from './primitives/UndoToast';
 export {

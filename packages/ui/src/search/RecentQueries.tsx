@@ -1,85 +1,87 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+'use no memo';
+// Reanimated code: the React Compiler skips this module (ADR 0059).
+
+import { Pressable, StyleSheet, Text } from 'react-native';
+import Animated from 'react-native-reanimated';
+import Svg, { Circle, Polygon } from 'react-native-svg';
+
+import { useCascade } from '../primitives/useCascade';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, space, typeStyle } from '../tokens';
+import { minTouchTarget, recentQueryDrawing, space, typeStyle } from '../tokens';
 
 /**
- * The recent queries of Search, under its empty field: «Нещодавно» in small
- * capitals with «Очистити» on the right, then one row a query, newest first. A tap on a query runs it again.
+ * The recent queries of Search, under its empty field and its «Нещодавно»
+ * label (board 09, screen 78): one row a query, newest first, each after a
+ * muted clock, rising in one after another. A tap on a query runs it again.
  */
 export function RecentQueries({
   queries,
   onRun,
-  onClear,
 }: {
   queries: readonly string[];
   onRun: (query: string) => void;
-  onClear: () => void;
 }) {
+  return queries.map((query, index) => (
+    <RecentQuery
+      key={query}
+      query={query}
+      index={index}
+      onRun={() => {
+        onRun(query);
+      }}
+    />
+  ));
+}
+
+function RecentQuery({ query, index, onRun }: { query: string; index: number; onRun: () => void }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { strings, voice } = useEdition();
+  const { voice } = useEdition();
+  const entered = useCascade(index, recentQueryDrawing.cascade);
+  const testID = `search-recent-${String(index)}`;
   return (
-    <View testID="search-recent">
-      <View style={styles.header}>
-        <Text
-          accessibilityRole="header"
-          {...voice}
-          style={[typeStyle('eyebrow', tokens), styles.eyebrow, { color: colors.muted }]}
-        >
-          {strings.search.recent}
+    <Animated.View testID={`${testID}-cascade`} style={entered}>
+      <Pressable
+        testID={testID}
+        accessibilityRole="button"
+        accessibilityLabel={query}
+        {...voice}
+        onPress={onRun}
+        style={styles.row}
+      >
+        <Clock color={colors.muted} />
+        <Text style={[typeStyle('recentQuery', tokens), styles.query, { color: colors.ink }]}>
+          {query}
         </Text>
-        <Pressable
-          testID="search-recent-clear"
-          accessibilityRole="button"
-          accessibilityLabel={strings.search.clear}
-          {...voice}
-          onPress={onClear}
-          style={styles.clear}
-        >
-          <Text style={[typeStyle('recentClear', tokens), { color: colors.accentText }]}>
-            {strings.search.clear}
-          </Text>
-        </Pressable>
-      </View>
-      {queries.map((query, index) => (
-        <Pressable
-          key={query}
-          testID={`search-recent-${String(index)}`}
-          accessibilityRole="button"
-          accessibilityLabel={query}
-          {...voice}
-          onPress={() => {
-            onRun(query);
-          }}
-          style={[styles.row, { borderBottomColor: colors.line }]}
-        >
-          <Text style={[typeStyle('recentQuery', tokens), { color: colors.ink }]}>{query}</Text>
-        </Pressable>
-      ))}
-    </View>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function Clock({ color }: { color: string }) {
+  return (
+    <Svg
+      width={recentQueryDrawing.clock}
+      height={recentQueryDrawing.clock}
+      viewBox="0 0 14 14"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Circle cx={7} cy={7} r={5.5} fill="none" stroke={color} strokeWidth={2} />
+      <Polygon points="6,3 8,3 8,7 10,9 9,10 6,7.5" fill={color} />
+    </Svg>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    columnGap: space[3],
-  },
-  eyebrow: { flexShrink: 1 },
-  clear: {
-    minHeight: minTouchTarget,
-    minWidth: minTouchTarget,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
   row: {
     minHeight: minTouchTarget,
-    justifyContent: 'center',
-    paddingVertical: space[2],
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: space[3],
+    paddingVertical: recentQueryDrawing.paddingVertical,
   },
+  query: { flexShrink: 1 },
 });

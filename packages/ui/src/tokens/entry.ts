@@ -91,10 +91,12 @@ export const wordCardSide = 26;
 /** The spacing inside an Entry's row in a list, off the 4-pt grid. */
 export const entryRow = {
   minHeight: 60,
-  compactMinHeight: 52,
   /** The design's 4 between the word and its line. */
   lineGap: 4,
   titleGap: 10,
+  /** The gap before a Saved row's day chip and the chip itself (board 09): 28 high, radius 8. */
+  dayGap: 12,
+  day: { height: 28, paddingHorizontal: 10, radius: 8 },
   /** How far the text sits in from the row's hairline (design `SlovoApp`, the Saved list). */
   inset: 4,
   /** The row's opacity while it is pressed. */

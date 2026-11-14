@@ -1,8 +1,9 @@
-import { MascotIn } from '@/mascot/mascot';
-import { dateKeyOf, type WordOfTheDayArchiveDay } from '@slovo/core';
+import { MascotAs } from '@/mascot/mascot';
+import { dateKeyOf, todayDate, type WordOfTheDayArchiveDay } from '@slovo/core';
 import { EmptyState, EntryRow, space, useListScroll } from '@slovo/ui';
 import { FlatList, StyleSheet } from 'react-native';
 
+import { deviceClock } from '@/device/device-clock';
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
 import type { ListHeader } from '@/saved/list-header';
@@ -12,13 +13,15 @@ import { ListTopButton } from '@/shell/list-top';
 const { wordOfTheDayArchive: strings } = editionStrings;
 
 /**
- * «Слова дня»: each day the reader saw the Word of the Day's card, newest
- * first, as «26 жовтня · сумирний»; a Retired Word stays. A tap opens the
- * Entry screen without making it Seen (ADR 0054).
+ * «Слова дня» (board 09): each day the reader saw the Word of the Day's card,
+ * newest first, the Word with its meaning and the day («26 жовтня») on a
+ * chip, today's marked; a Retired Word stays. A tap opens the Entry screen
+ * without making it Seen (ADR 0054).
  */
 export function WordOfTheDayArchiveList({ header }: { header: ListHeader }) {
   const days = useWordOfTheDayArchive();
   const openScreen = useOpenScreen();
+  const today = dateKeyOf(todayDate(deviceClock));
   const scroll = useListScroll<FlatList<WordOfTheDayArchiveDay>>();
   const { list: listRef, onScroll: onListScroll } = scroll;
 
@@ -32,9 +35,8 @@ export function WordOfTheDayArchiveList({ header }: { header: ListHeader }) {
         keyExtractor={({ date }) => dateKeyOf(date)}
         renderItem={({ item }) => (
           <EntryRow
-            compact
             row={item.row}
-            leading={item.dateLabel}
+            day={{ label: item.dateLabel, today: dateKeyOf(item.date) === today }}
             onPress={() => {
               openScreen(`/saved/words-of-the-day/${item.row.entryId}`);
             }}
@@ -45,7 +47,7 @@ export function WordOfTheDayArchiveList({ header }: { header: ListHeader }) {
         ListEmptyComponent={
           days === undefined ? undefined : (
             <EmptyState
-              mascot={<MascotIn state="empty" />}
+              mascot={(width) => <MascotAs state="sleeps" width={width} />}
               testID="words-of-the-day-empty"
               title={strings.empty.title}
               message={strings.empty.message}
@@ -60,5 +62,6 @@ export function WordOfTheDayArchiveList({ header }: { header: ListHeader }) {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: space[8] },
+  // The list grows to the screen, so an empty state sits in the middle of it.
+  content: { flexGrow: 1, paddingBottom: space[8] },
 });

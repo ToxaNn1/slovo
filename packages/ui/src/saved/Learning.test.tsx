@@ -111,7 +111,7 @@ describe('LearningRow', () => {
     [3, 'in 3 days'],
     [7, 'in 7 days'],
   ])(
-    'shows the Entry, its kind and its next Review day %i days away as «%s»',
+    'shows the Entry, its meaning and its next Review day %i days away as «%s» on its chip',
     async (days, label) => {
       await renderInEdition(
         <LearningRow entry={learning(word('w1', 'river'), days)} onPress={jest.fn()} />,
@@ -119,18 +119,31 @@ describe('LearningRow', () => {
 
       expect(screen.getByText('river')).toBeTruthy();
       expect(screen.getByText('what river means')).toBeTruthy();
-      expect(screen.getByText(`word · ${label}`)).toBeTruthy();
+      expect(screen.getByTestId('learning-row-w1-day')).toHaveTextContent(label);
       expect(
-        screen.getByRole('button', { name: `river, what river means, word · ${label}` }),
+        screen.getByRole('button', { name: `river, what river means, ${label}` }),
       ).toBeTruthy();
     },
   );
 
-  it('names an Idiom’s kind beside its next Review day', async () => {
+  it('names no kind beside an Idiom’s Review day', async () => {
     await renderInEdition(<LearningRow entry={learning(idiom, 1)} onPress={jest.fn()} />);
 
     expect(screen.getByText('spill the beans')).toBeTruthy();
-    expect(screen.getByText('idiom · tomorrow')).toBeTruthy();
+    expect(screen.getByText('tomorrow')).toBeTruthy();
+    expect(screen.queryByText(/idiom/)).toBeNull();
+  });
+
+  it('draws the chip of an Entry due today in the accent colour, a later one sunken', async () => {
+    await renderInEdition(
+      <LearningRow entry={learning(word('w1', 'river'), 0)} onPress={jest.fn()} />,
+    );
+    expect(screen.getByTestId('learning-row-w1-day')).toHaveStyle({ backgroundColor: '#161616' });
+
+    await renderInEdition(
+      <LearningRow entry={learning(word('w1', 'river'), 1)} onPress={jest.fn()} />,
+    );
+    expect(screen.getByTestId('learning-row-w1-day')).toHaveStyle({ backgroundColor: '#EFEFEC' });
   });
 
   it.each([
@@ -143,15 +156,13 @@ describe('LearningRow', () => {
       { locale: 'uk', learning: ukStrings },
     );
 
-    expect(screen.getByText(`word · ${label}`)).toBeTruthy();
+    expect(screen.getByText(label)).toBeTruthy();
   });
 
   it('shows a Correction with the form it replaces', async () => {
     await renderInEdition(<LearningRow entry={learning(correction, 1)} onPress={jest.fn()} />);
 
-    expect(
-      screen.getByRole('button', { name: 'right, instead of wrong, correction · tomorrow' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'right, instead of wrong, tomorrow' })).toBeTruthy();
   });
 
   it('opens the Entry on a tap', async () => {

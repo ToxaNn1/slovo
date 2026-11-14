@@ -1,4 +1,10 @@
-import type { Collection, CollectionEntry, CollectionResult, Collections } from '@slovo/core';
+import type {
+  Collection,
+  CollectionEntry,
+  CollectionResult,
+  Collections,
+  DeletedCollection,
+} from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
 
@@ -45,7 +51,7 @@ export function useEntryCollections(entryId: string): {
         filed ? collections.add(collectionId, entryId) : collections.remove(collectionId, entryId),
       );
     },
-    // A Collection that could not be kept rejects: the sheet keeps its name field open.
+    // A refused name resolves to its refusal, never rejects: the sheet keeps its name field open.
     create: (name) => collections.create(name, entryId),
   };
 }
@@ -59,25 +65,39 @@ async function refusalOf(
   return refusalText(editionStrings.collections.sheet.refusal, kept.reason);
 }
 
+/** A new Collection once it is kept, or why its name is refused, in the Edition's words. */
+export type CreatedCollection =
+  | { readonly ok: true; readonly collection: Collection }
+  | { readonly ok: false; readonly refusal: string };
+
 /** The calls of the Collections screen that change a Collection. */
 export function useCollectionChanges(): {
-  /** Makes an empty Collection; resolves to why its name is refused, or to nothing once it is kept. */
-  create: (name: string) => Promise<string | undefined>;
+  /** Makes an empty Collection; resolves to it once it is kept, or to why its name is refused. */
+  create: (name: string) => Promise<CreatedCollection>;
   /** Renames a Collection; resolves to why the name is refused, or to nothing once it is kept. */
   rename: (collectionId: string, name: string) => Promise<string | undefined>;
-  /** Deletes a Collection with its Entry records; the Entries stay wherever else they are kept. */
-  remove: (collectionId: string) => void;
+  /**
+   * Deletes a Collection with its Entry records; the Entries stay wherever
+   * else they are kept. Resolves to its undo once it is kept, or to nothing.
+   */
+  remove: (collectionId: string) => Promise<DeletedCollection | undefined>;
 } {
   const { collections } = useComposition();
   // Kept from render to render, so the rows of the Collections screen re-render only when the list changes.
   return useMemo(
     () => ({
-      // A name that could not be kept rejects: the field stays open with the name as typed.
-      create: (name) => refusalOf(collections.create(name)),
-      rename: (collectionId, name) => refusalOf(collections.rename(collectionId, name)),
-      remove(collectionId) {
-        void keep('Collections', collections.delete(collectionId));
+      // A refused name resolves to its refusal, never rejects: the field stays open with the name as typed.
+      async create(name) {
+        const kept = await collections.create(name);
+        return kept.ok
+          ? kept
+          : {
+              ok: false,
+              refusal: refusalText(editionStrings.collections.sheet.refusal, kept.reason),
+            };
       },
+      rename: (collectionId, name) => refusalOf(collections.rename(collectionId, name)),
+      remove: (collectionId) => keep('Collections', collections.delete(collectionId)),
     }),
     [collections],
   );

@@ -18,13 +18,18 @@ export interface SearchGroup {
   readonly data: readonly EntryRowModel[];
 }
 
-/** What the Search screen shows for a query. */
-export interface SearchScreenModel {
-  /** The groups that found anything, in the order of the kinds, «За значенням» last. */
-  readonly groups: readonly SearchGroup[];
-  /** Whether Search answered the query and found nothing: «Нічого не знайдено». */
-  readonly nothingFound: boolean;
-}
+/**
+ * What the Search screen shows for a query (board 09, screens 78 and 79):
+ * nothing while it searches; «Продовжуй вводити» for a query Search does not
+ * answer, or one too short for «За значенням» that found nothing; under
+ * «Знайдено» the groups that found anything, in the order of the kinds,
+ * «За значенням» last; «Нічого не знайдено» for a longer query that found nothing.
+ */
+export type SearchScreenModel =
+  | { readonly state: 'searching' }
+  | { readonly state: 'keepTyping' }
+  | { readonly state: 'found'; readonly groups: readonly SearchGroup[] }
+  | { readonly state: 'nothingFound' };
 
 /** The groups in the order the screen shows them. */
 const groupOrder: readonly SearchGroupName[] = [
@@ -52,7 +57,8 @@ export function resultLabel(row: EntryRowModel): string {
   return fill(label, { kind: groups[groupOfKind[row.kind]], text: row.title });
 }
 
-const nothingYet: SearchScreenModel = { groups: [], nothingFound: false };
+const searching: SearchScreenModel = { state: 'searching' };
+const keepTyping: SearchScreenModel = { state: 'keepTyping' };
 
 /**
  * The screen's model for a query: each kind's results, then «За значенням»,
@@ -62,7 +68,7 @@ async function searchScreenModel(
   composition: Composition,
   query: string,
 ): Promise<SearchScreenModel> {
-  if (!composition.search.answers(query)) return nothingYet;
+  if (!composition.search.answers(query)) return keepTyping;
   const results = await composition.search.search(query);
   const groups = await Promise.all(
     groupOrder.map(async (name) => {
@@ -75,7 +81,9 @@ async function searchScreenModel(
     }),
   );
   const found = groups.filter(({ data }) => data.length > 0);
-  return { groups: found, nothingFound: found.length === 0 };
+  if (found.length > 0) return { state: 'found', groups: found };
+  // «Нічого не знайдено» once «За значенням» searches too, as its hint says.
+  return composition.search.answersByMeaning(query) ? { state: 'nothingFound' } : keepTyping;
 }
 
 /**
@@ -90,7 +98,7 @@ export function useSearchScreen(query: string): SearchScreenModel {
   );
   const reading = useCompositionRead(read, 'Could not search');
   // The results of an earlier query are not those of one that failed.
-  return reading.status === 'ready' ? reading.value : nothingYet;
+  return reading.status === 'ready' ? reading.value : searching;
 }
 
 /**

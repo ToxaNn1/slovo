@@ -1,9 +1,11 @@
 import {
-  BackLink,
+  EmptyState,
   EntryRow,
   LabelChip,
   RecentQueries,
   SearchField,
+  SearchLabel,
+  minTouchTarget,
   space,
   typeStyle,
   useEdition,
@@ -12,10 +14,11 @@ import {
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, SectionList, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
+import { MascotAs } from '@/mascot/mascot';
 import { ListTopButton } from '@/shell/list-top';
 import {
   resultLabel,
@@ -23,20 +26,25 @@ import {
   useRecentQueries,
   useSearchScreen,
   type SearchGroup,
+  type SearchScreenModel,
 } from '@/search/search';
 
 const strings = editionStrings.search;
 
 /**
- * Search («Пошук»), from the magnifier of the «Стрічка» header: a field and,
- * from 2 letters, what it finds, each kind in its group under its chip and
- * from 3 «За значенням», or «Нічого не знайдено». A result opens its Entry
- * card, which makes nothing Seen, and keeps the query among the recent ones,
- * which the empty field lists with «Очистити»; a tap on one runs it again.
+ * Search («Пошук»), from the magnifier of the «Стрічка» header (board 09,
+ * screens 78 and 79): the field with «Скасувати», which closes Search, and
+ * under a label what it shows. The empty field lists the recent queries under
+ * «Нещодавно» with «Очистити»; a tap on one runs it again. A query too short
+ * reads «Продовжуй вводити»; what it finds comes under «Знайдено», each kind
+ * in its group under its chip, «За значенням» last; from 3 letters a query
+ * that finds nothing reads «Нічого не знайдено» with the sleeping Rupor. A
+ * result opens its Entry card, which makes nothing Seen, and keeps the query
+ * among the recent ones.
  */
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
-  const { groups, nothingFound } = useSearchScreen(query);
+  const model = useSearchScreen(query);
   const openResult = useOpenSearchResult(query);
   const fieldEmpty = query.trim() === '';
   const recent = useRecentQueries(fieldEmpty);
@@ -57,7 +65,7 @@ export default function SearchScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        sections={groups}
+        sections={!fieldEmpty && model.state === 'found' ? model.groups : []}
         keyExtractor={({ entryId }) => entryId}
         stickySectionHeadersEnabled={false}
         renderSectionHeader={({ section: { name, title } }) => (
@@ -86,78 +94,120 @@ export default function SearchScreen() {
             <SearchHeader
               query={query}
               onQueryChange={setQuery}
-              onBack={() => {
+              onCancel={() => {
                 router.back();
               }}
             />
-            {fieldEmpty && recent.queries.length > 0 && (
-              <View style={styles.recent}>
-                <RecentQueries queries={recent.queries} onRun={setQuery} onClear={recent.clear} />
-              </View>
+            {fieldEmpty ? (
+              recent.queries.length > 0 && (
+                <View style={styles.label}>
+                  <SearchLabel testID="search-label" text={strings.recent} onClear={recent.clear} />
+                  <RecentQueries queries={recent.queries} onRun={setQuery} />
+                </View>
+              )
+            ) : (
+              <StateLabel model={model} />
             )}
           </>
         }
-        ListEmptyComponent={nothingFound ? <NothingFound /> : undefined}
+        ListEmptyComponent={
+          !fieldEmpty && model.state === 'nothingFound' ? <NothingFound /> : undefined
+        }
       />
       <ListTopButton scroll={scroll} />
     </SafeAreaView>
   );
 }
 
-/** Above the results: the link back to «Стрічка» and the field. */
+/** Above the results: the field and «Скасувати», which closes Search. */
 function SearchHeader({
   query,
   onQueryChange,
-  onBack,
+  onCancel,
 }: {
   query: string;
   onQueryChange: (query: string) => void;
-  onBack: () => void;
+  onCancel: () => void;
 }) {
+  const tokens = useTokens();
+  const { voice } = useEdition();
   return (
     <View style={styles.header}>
-      <BackLink testID="search-back" label={editionStrings.tabs.home} onPress={onBack} />
-      <SearchField
-        testID="search-field"
-        label={strings.title}
-        value={query}
-        onChangeText={onQueryChange}
-        autoFocus
-        returnKeyType="search"
-      />
+      <View style={styles.field}>
+        <SearchField
+          testID="search-field"
+          label={strings.title}
+          placeholder={strings.inputPlaceholder}
+          value={query}
+          onChangeText={onQueryChange}
+          autoFocus
+          returnKeyType="search"
+        />
+      </View>
+      <Pressable
+        testID="search-cancel"
+        accessibilityRole="button"
+        accessibilityLabel={strings.cancel}
+        {...voice}
+        onPress={onCancel}
+        style={styles.cancel}
+      >
+        <Text style={[typeStyle('searchCancel', tokens), { color: tokens.colors.ink }]}>
+          {strings.cancel}
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+/** The label over a typed query: «Продовжуй вводити» or «Знайдено»; none while searching or for nothing found. */
+function StateLabel({ model }: { model: SearchScreenModel }) {
+  const text =
+    model.state === 'keepTyping'
+      ? strings.keepTyping
+      : model.state === 'found'
+        ? strings.found
+        : undefined;
+  if (text === undefined) return null;
+  return (
+    <View style={styles.label}>
+      <SearchLabel testID="search-label" text={text} />
     </View>
   );
 }
 
 /**
- * «Нічого не знайдено», for a query Search answered with no Entry. VoiceOver
- * stays in the field while the reader types, so the screen says it aloud.
+ * «Нічого не знайдено» with the sleeping Rupor and the hint, for a query of 3
+ * letters or more that found no Entry. VoiceOver stays in the field while the
+ * reader types, so the screen says it aloud.
  */
 function NothingFound() {
-  const tokens = useTokens();
-  const { voice } = useEdition();
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(strings.nothingFound);
   }, []);
   return (
-    <Text
+    <EmptyState
       testID="search-nothing-found"
-      {...voice}
-      style={[typeStyle('sub', tokens), styles.nothingFound, { color: tokens.colors.muted }]}
-    >
-      {strings.nothingFound}
-    </Text>
+      mascot={(width) => <MascotAs state="sleeps" width={width} />}
+      title={strings.nothingFound}
+      message={strings.nothingFoundHint}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingBottom: space[8] },
-  header: { gap: space[3], paddingHorizontal: space[5], paddingTop: space[2] },
-  recent: { marginHorizontal: space[5], marginTop: space[2] },
-  group: { flexDirection: 'row', marginHorizontal: space[6], marginTop: space[4] },
-  nothingFound: {
-    marginHorizontal: space[5],
-    marginTop: space[6],
+  // The list grows to the screen, so «Нічого не знайдено» sits in the middle of it.
+  content: { flexGrow: 1, paddingBottom: space[8] },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: space[3],
+    paddingHorizontal: space[4],
+    paddingTop: space[1],
   },
+  field: { flex: 1, minWidth: 0 },
+  cancel: { minHeight: minTouchTarget, justifyContent: 'center' },
+  label: { marginHorizontal: space[5], marginTop: space[3] },
+  group: { flexDirection: 'row', marginHorizontal: space[6], marginTop: space[4] },
 });
