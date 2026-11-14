@@ -12,7 +12,11 @@ Graph: 1881,1882 → 1883(1881) 1884(1881,1882) 1885(1881,1882) 1886(1881) 1892(
 Batches to main: after 3–5 merged tickets run Skill code-review on the batch, one implementer fixes, PR ready, gh pr merge --auto --squash; then merge origin/main back. Draft PR opens after the first merge.
 Never end your turn while work remains; wait with one blocking command; push a `WAITING until <UTC>` line here before any wait >10 min. At the very end: `STATUS: FINISHED` first line.
 ## State
-- #1882: cloud session_01VefVQUULN8q6pRKMn53P9H working on chore/1882-split-game-round; it ends with a `chore: DONE #1882` (or FAILED/STUCK) commit on that branch — wait for it (git ls-remote/fetch loop), then merge.
-- #1881: NOT started in the cloud yet. Partial uncommitted laptop work saved as WIP commit 8a61a6885 on origin/chore/1881-rules-first (switches declared in contracts, fixtures, edition.json, openapi, shown.ts — unverified). Launch an implementer on that branch to finish the ticket (ADRs 0137–0139, ADR 0052, CONTEXT.md, strings, tests). START IT FIRST.
+WAITING until 2026-11-14T23:40Z: #1881 implementer (subagent in this session, branch chore/1881-rules-first) and #1882 cloud session_01VefVQUULN8q6pRKMn53P9H (chore/1882-split-game-round, ends with a chore: DONE #1882 commit).
+- Authorship: CI commitlint wants author = .github/owner-email (noreply); this env's GIT_AUTHOR_EMAIL differs. Commit with E=$(cat .github/owner-email); GIT_AUTHOR_EMAIL=$E GIT_COMMITTER_EMAIL=$E git commit. Told #1882 session and the #1881 brief.
+- gh issue view is GraphQL (blocked): use gh api repos/ToxaNn1/slovo/issues/N.
+- Cloud setup hook failed at start (cluster 18 missing): pg_createcluster 18 main --port 5432, then rerun .claude/hooks/cloud-setup.sh.
+- Integration PR will also carry draft PR #1879 (board 11 Settings) commits until it merges.
 ## Log
 - 15.11 00:20 owner night grant; 00:35 moved to the cloud.
+- 14.11 22:40Z cloud coordinator up; #1881 implementer launched on the WIP branch.
