@@ -21,8 +21,9 @@ const PRESS = { duration: motion.press.duration, easing: Easing.bezier(...motion
 /**
  * A chip that turns a choice on and off: a Category of the Mix, «Усі», a tab
  * of the Saved screen with its count. On is filled ink, off is the sunken
- * fill; a `feature` chip fills with the accent while on. It shrinks a little
- * while pressed, and stays still under Reduce Motion. A disabled chip is
+ * fill; a `feature` chip fills with the accent while on. The fill eases from
+ * one colour to the other, and it shrinks a little while pressed; under Reduce
+ * Motion it does neither. A disabled chip is
  * dimmed and reads its hint to VoiceOver. VoiceOver reads the chip by its
  * `label` unless `accessibilityLabel` names it otherwise.
  */
@@ -80,7 +81,16 @@ export function Chip({
     >
       <Animated.View
         testID={testID === undefined ? undefined : `${testID}-face`}
-        style={[styles.chip, { backgroundColor: fill, borderRadius: radii.chip }, pressed]}
+        style={[
+          styles.chip,
+          {
+            backgroundColor: fill,
+            borderRadius: radii.chip,
+            transitionProperty: 'backgroundColor',
+            transitionDuration: reduceMotion ? 0 : chipDrawing.fillDuration,
+          },
+          pressed,
+        ]}
       >
         <Text style={[typeStyle('chipLabel', tokens), text]}>{label}</Text>
         {count === undefined ? null : (

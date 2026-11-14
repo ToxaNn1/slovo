@@ -65,6 +65,18 @@ export const chipDrawing = {
   countOpacity: 0.7,
   /** The chip's scale while it is pressed. */
   pressedScale: 0.95,
+  /** How long, in ms, the fill takes to change colour when the chip turns on or off. */
+  fillDuration: 200,
+} as const;
+
+/** The Saved screen's header (board 09, screen 72): title, search field and tabs. */
+export const savedHeader = {
+  /** The space over the title, under the status bar. */
+  top: 6,
+  /** The gap between the title, the search field and the tabs. */
+  gap: 12,
+  /** How wide the tab row fades out at its right edge. */
+  fade: 28,
 } as const;
 
 /** The search field's drawing (design `SlovoApp`): a sunken box, a magnifier and a clear button. */
