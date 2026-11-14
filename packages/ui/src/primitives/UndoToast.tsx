@@ -21,6 +21,7 @@ import {
   View,
   type HostInstance,
 } from 'react-native';
+import type { Schedule } from '@slovo/core';
 import Animated, {
   ReduceMotion,
   useAnimatedStyle,
@@ -33,12 +34,14 @@ import {
   fontScaleCap,
   minTouchTarget,
   motion,
+  plateToast,
   pressedFade,
   space,
   typeStyle,
   undoToast,
   wedges,
 } from '../tokens';
+import { systemSchedule } from '../providers/system-schedule';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Wedge } from './Wedge';
@@ -54,6 +57,12 @@ const BRIEF_TOAST_MS = 2200;
 const SLIDE_IN = {
   duration: motion.toast.duration,
   easing: bezier(motion.toast.easing),
+  reduceMotion: ReduceMotion.Never,
+};
+/** The design's `slToast` of board 09: up from below as it fades in. */
+const PLATE_IN = {
+  duration: motion.plateToast.duration,
+  easing: bezier(motion.plateToast.easing),
   reduceMotion: ReduceMotion.Never,
 };
 /** The share of its width the toast's right edge slants in by at the bottom. */
@@ -76,8 +85,24 @@ export interface MessageToastContent {
   readonly brief?: true;
 }
 
-/** What one toast says: with an undo, or a message alone. */
-export type ToastContent = UndoToastContent | MessageToastContent;
+/**
+ * A toast of board 09 (XSaved), such as «Колекцію видалено.»: the rounded ink
+ * plate that rises from below for 3.2 s, with an action after the message
+ * when it has one, such as an undo.
+ */
+export interface PlateToastContent {
+  readonly look: 'plate';
+  /** What just happened, in the Edition's language. */
+  readonly message: string;
+  readonly action?: {
+    /** The button's label, in the Edition's language. */
+    readonly label: string;
+    readonly onPress: () => void;
+  };
+}
+
+/** What one toast says: with an undo, a message alone, or on the plate of board 09. */
+export type ToastContent = UndoToastContent | MessageToastContent | PlateToastContent;
 
 const UndoToastContext = createContext<((toast: ToastContent) => void) | undefined>(undefined);
 const CloseUndoToastContext = createContext<(() => void) | undefined>(undefined);
@@ -85,9 +110,16 @@ const CloseUndoToastContext = createContext<(() => void) | undefined>(undefined)
 /**
  * Shows toasts at the bottom of the screen it wraps, one at a time: a new
  * toast takes the place of the one before. The toasts live here, not in what
- * opened them, so a toast stays when the card it came from leaves.
+ * opened them, so a toast stays when the card it came from leaves. Each hides
+ * by the `schedule` it is given, the system clock unless a test injects one.
  */
-export function UndoToastProvider({ children }: { children: ReactNode }) {
+export function UndoToastProvider({
+  children,
+  schedule = systemSchedule,
+}: {
+  children: ReactNode;
+  schedule?: Schedule;
+}) {
   const [toast, setToast] = useState<{ readonly id: number; readonly content: ToastContent }>();
   const lastId = useRef(0);
   const show = useCallback((content: ToastContent) => {
@@ -106,7 +138,13 @@ export function UndoToastProvider({ children }: { children: ReactNode }) {
         <View style={styles.fill}>
           {children}
           {toast !== undefined && (
-            <UndoToast key={toast.id} id={toast.id} content={toast.content} onDismiss={dismiss} />
+            <UndoToast
+              key={toast.id}
+              id={toast.id}
+              content={toast.content}
+              onDismiss={dismiss}
+              schedule={schedule}
+            />
           )}
         </View>
       </CloseUndoToastContext>
@@ -136,19 +174,22 @@ function noClose() {
 /**
  * The ink wedge toast from the design, for 4 s: a red mark, the message in
  * the background colour on the ink, the left corners round and the right edge
- * slanting in. It comes in from the left, straightening as it comes; with
- * Reduce Motion it fades in place. With VoiceOver on, VoiceOver moves to it and reads it, and a toast with
- * an undo stays until the reader takes the undo or dismisses it with the
- * escape gesture, so the undo is always in reach; one without leaves after 4 s.
+ * slanting in. It comes in from the left, straightening as it comes. The
+ * plate toast of board 09 rises 30 pt from below as it fades in, for 3.2 s.
+ * With Reduce Motion either fades in place. With VoiceOver on, VoiceOver moves to it and reads it, and a toast with
+ * an undo or an action stays until the reader takes it or dismisses the toast with the
+ * escape gesture, so the action is always in reach; one without leaves on time.
  */
 function UndoToast({
   id,
   content,
   onDismiss,
+  schedule,
 }: {
   id: number;
   content: ToastContent;
   onDismiss: (id: number) => void;
+  schedule: Schedule;
 }) {
   const { width: windowWidth } = useWindowDimensions();
   // Each toast mounts afresh, so it waits for the system's answer before it comes in.
@@ -163,23 +204,24 @@ function UndoToast({
   }
   const timeOut = useEffectEvent(close);
   // Read when the toast comes in; a later change of Reduce Motion moves nothing.
+  const plate = 'look' in content;
   const comeIn = useEffectEvent(() => {
-    shown.value = withTiming(1, reduceMotion ? REDUCED_FADE : SLIDE_IN);
+    shown.value = withTiming(1, reduceMotion ? REDUCED_FADE : plate ? PLATE_IN : SLIDE_IN);
   });
-  const hasUndo = 'onUndo' in content;
-  const lasts = 'brief' in content ? BRIEF_TOAST_MS : TOAST_MS;
+  const hasAction = 'onUndo' in content || (plate && content.action !== undefined);
+  const lasts = plate ? plateToast.lasts : 'brief' in content ? BRIEF_TOAST_MS : TOAST_MS;
 
   useEffect(() => {
     if (!ready) return;
     let active = true;
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancel: (() => void) | undefined;
     // A check that fails counts as no screen reader, so the toast still comes in and leaves.
     void AccessibilityInfo.isScreenReaderEnabled()
       .catch(() => false)
       .then((screenReader) => {
         if (!active) return;
-        if (!screenReader || !hasUndo) {
-          timer = setTimeout(() => {
+        if (!screenReader || !hasAction) {
+          cancel = schedule(() => {
             timeOut();
           }, lasts);
         }
@@ -194,13 +236,17 @@ function UndoToast({
       });
     return () => {
       active = false;
-      clearTimeout(timer);
+      cancel?.();
     };
-  }, [ready, shown, hasUndo, lasts]);
+  }, [ready, shown, hasAction, lasts, schedule]);
 
   const inStyle = useAnimatedStyle(() => {
-    // Under Reduce Motion it fades in place; otherwise it slides, fully opaque.
+    // Under Reduce Motion it fades in place; otherwise it slides, fully opaque,
+    // or, on the plate, rises as it fades in.
     const away = reduceMotion ? 0 : 1 - shown.value;
+    if (plate) {
+      return { opacity: shown.value, transform: [{ translateY: away * plateToast.rise }] };
+    }
     return {
       opacity: reduceMotion ? shown.value : 1,
       transform: [
@@ -216,9 +262,13 @@ function UndoToast({
       onAccessibilityEscape={close}
       style={[styles.place, inStyle]}
     >
-      <ToastFace message={content.message} messageRef={messageRef}>
-        {'onUndo' in content && <UndoButton {...content} onPress={close} />}
-      </ToastFace>
+      {plate ? (
+        <PlateFace content={content} messageRef={messageRef} onAction={close} />
+      ) : (
+        <ToastFace message={content.message} messageRef={messageRef}>
+          {'onUndo' in content && <UndoButton {...content} onPress={close} />}
+        </ToastFace>
+      )}
     </Animated.View>
   );
 }
@@ -271,6 +321,60 @@ export function ToastFace({
         {message}
       </Text>
       {children}
+    </View>
+  );
+}
+
+/**
+ * The face of the plate toast (XSaved): the key ink plate with its corners
+ * round in both Themes, the message in the key cream, and the action, if any,
+ * in red capitals at the end; the action runs, then the toast closes.
+ */
+function PlateFace({
+  content,
+  messageRef,
+  onAction,
+}: {
+  content: PlateToastContent;
+  messageRef: Ref<HostInstance>;
+  onAction: () => void;
+}) {
+  const tokens = useTokens();
+  const key = useSchemeColors('light');
+  const { voice } = useEdition();
+  const { action } = content;
+  return (
+    <View style={[styles.plate, { backgroundColor: key.ink }]}>
+      <Text
+        ref={messageRef}
+        testID="undo-toast-message"
+        {...voice}
+        maxFontSizeMultiplier={fontScaleCap.number}
+        style={[styles.message, typeStyle('toast', tokens), { color: key.background }]}
+      >
+        {content.message}
+      </Text>
+      {action !== undefined && (
+        <Pressable
+          testID="undo-toast-action"
+          accessibilityRole="button"
+          accessibilityLabel={action.label}
+          {...voice}
+          onPress={() => {
+            action.onPress();
+            onAction();
+          }}
+          hitSlop={space[3]}
+          style={({ pressed }) => ({ opacity: pressed ? pressedFade : 1 })}
+        >
+          <Text
+            maxFontSizeMultiplier={fontScaleCap.number}
+            style={[typeStyle('toastAction', tokens), { color: key.accent }]}
+          >
+            {action.label}
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -336,6 +440,15 @@ const styles = StyleSheet.create({
   body: { position: 'absolute', top: 0, bottom: 0, left: 0, right: TAIL },
   tail: { position: 'absolute', top: 0, right: 0 },
   message: { flex: 1 },
+  plate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space[3],
+    paddingHorizontal: space[4],
+    paddingVertical: space[3] + 2,
+    borderRadius: plateToast.radius,
+  },
   undo: {
     height: undoToast.undoHeight,
     paddingLeft: space[3],
