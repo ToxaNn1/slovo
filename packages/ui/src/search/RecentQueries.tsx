@@ -1,5 +1,11 @@
+'use no memo';
+// Reanimated code: the React Compiler skips this module (ADR 0059).
+
 import { Pressable, StyleSheet, Text } from 'react-native';
+import Animated from 'react-native-reanimated';
 import Svg, { Circle, Polygon } from 'react-native-svg';
+
+import { useCascade } from '../primitives/useCascade';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
@@ -8,7 +14,7 @@ import { minTouchTarget, recentQueryDrawing, space, typeStyle } from '../tokens'
 /**
  * The recent queries of Search, under its empty field and its «Нещодавно»
  * label (board 09, screen 78): one row a query, newest first, each after a
- * muted clock. A tap on a query runs it again.
+ * muted clock, rising in one after another. A tap on a query runs it again.
  */
 export function RecentQueries({
   queries,
@@ -17,27 +23,41 @@ export function RecentQueries({
   queries: readonly string[];
   onRun: (query: string) => void;
 }) {
+  return queries.map((query, index) => (
+    <RecentQuery
+      key={query}
+      query={query}
+      index={index}
+      onRun={() => {
+        onRun(query);
+      }}
+    />
+  ));
+}
+
+function RecentQuery({ query, index, onRun }: { query: string; index: number; onRun: () => void }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
-  return queries.map((query, index) => (
-    <Pressable
-      key={query}
-      testID={`search-recent-${String(index)}`}
-      accessibilityRole="button"
-      accessibilityLabel={query}
-      {...voice}
-      onPress={() => {
-        onRun(query);
-      }}
-      style={styles.row}
-    >
-      <Clock color={colors.muted} />
-      <Text style={[typeStyle('recentQuery', tokens), styles.query, { color: colors.ink }]}>
-        {query}
-      </Text>
-    </Pressable>
-  ));
+  const entered = useCascade(index, recentQueryDrawing.cascade);
+  const testID = `search-recent-${String(index)}`;
+  return (
+    <Animated.View testID={`${testID}-cascade`} style={entered}>
+      <Pressable
+        testID={testID}
+        accessibilityRole="button"
+        accessibilityLabel={query}
+        {...voice}
+        onPress={onRun}
+        style={styles.row}
+      >
+        <Clock color={colors.muted} />
+        <Text style={[typeStyle('recentQuery', tokens), styles.query, { color: colors.ink }]}>
+          {query}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
 }
 
 function Clock({ color }: { color: string }) {

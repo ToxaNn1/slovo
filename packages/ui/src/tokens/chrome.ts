@@ -95,10 +95,15 @@ export const searchFieldDrawing = {
   fieldIcon: 16,
 } as const;
 
-/** A recent query's row of Search (board 09, screen 78): its clock and the space above and below it. */
+/**
+ * A recent query's row of Search (board 09, screen 78): its clock, the space
+ * above and below it, and how the rows rise in (`slCasc`), the first 50 ms
+ * in, each next 50 ms after the one before.
+ */
 export const recentQueryDrawing = {
   clock: 14,
   paddingVertical: 6,
+  cascade: { variant: 'rise', duration: 300, delay: 50, stagger: 50 },
 } as const;
 
 /** The text field's drawing (design `XSettings`): its box, and the border a problem draws. */

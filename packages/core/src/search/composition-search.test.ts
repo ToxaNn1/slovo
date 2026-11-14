@@ -77,6 +77,22 @@ describe("the composition's Search", () => {
     expect((await run(['search'])).search.answers('сум')).toBe(false);
   });
 
+  it('answers «За значенням» from 3 letters, Stress marks and spaces aside, while Search is on', async () => {
+    const app = await run();
+
+    expect(['сум', ' гра ', 'до́м'].map((query) => app.search.answersByMeaning(query))).toEqual([
+      true,
+      true,
+      true,
+    ]);
+    expect(['су', ' гр ', 'до́'].map((query) => app.search.answersByMeaning(query))).toEqual([
+      false,
+      false,
+      false,
+    ]);
+    expect((await run(['search'])).search.answersByMeaning('сум')).toBe(false);
+  });
+
   it('finds nothing while the Edition turns Search off', async () => {
     const app = await run(['search']);
 

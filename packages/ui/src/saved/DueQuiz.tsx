@@ -50,7 +50,7 @@ export function DueQuizCard({ count, onStart }: { count: number; onStart: () => 
       </View>
       <Button
         variant="onAccent"
-        size="small"
+        size="medium"
         label={texts.start}
         onPress={onStart}
         testID="due-quiz-start"
@@ -129,6 +129,13 @@ export function DueQuizSheet({
     setPlace(place + 1);
     setPicked(undefined);
   };
+  /** An option as VoiceOver reads it, with the right one and the pick told once answered. */
+  const optionLabel = (label: string, look: QuizOptionLook) =>
+    look === 'right'
+      ? `${label}, ${strings.game.round.correct}`
+      : look === 'wrong'
+        ? `${label}, ${strings.game.round.chosen}`
+        : label;
   const lookOf = (option: number): QuizOptionLook => {
     if (question === undefined || picked === undefined) return 'rest';
     if (option === question.right) return 'right';
@@ -193,10 +200,11 @@ export function DueQuizSheet({
                 picked={option === picked}
                 mark={marks[option]}
                 minHeight={dueQuiz.optionHeight}
-                accessibilityLabel={fill(texts.optionLabel, {
-                  option: marks[option] ?? '',
-                  meaning,
-                })}
+                inert={picked !== undefined}
+                accessibilityLabel={optionLabel(
+                  fill(texts.optionLabel, { option: marks[option] ?? '', meaning }),
+                  lookOf(option),
+                )}
                 onPress={() => {
                   pick(option);
                 }}

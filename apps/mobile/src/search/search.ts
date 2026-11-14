@@ -31,12 +31,6 @@ export type SearchScreenModel =
   | { readonly state: 'found'; readonly groups: readonly SearchGroup[] }
   | { readonly state: 'nothingFound' };
 
-/**
- * The shortest query, in letters, that reads «Нічого не знайдено» when it finds
- * nothing: from it on «За значенням» searches too, as the state's hint says.
- */
-const SHORTEST_NOTHING_FOUND = 3;
-
 /** The groups in the order the screen shows them. */
 const groupOrder: readonly SearchGroupName[] = [
   'words',
@@ -88,9 +82,8 @@ async function searchScreenModel(
   );
   const found = groups.filter(({ data }) => data.length > 0);
   if (found.length > 0) return { state: 'found', groups: found };
-  return Array.from(query.trim()).length < SHORTEST_NOTHING_FOUND
-    ? keepTyping
-    : { state: 'nothingFound' };
+  // «Нічого не знайдено» once «За значенням» searches too, as its hint says.
+  return composition.search.answersByMeaning(query) ? { state: 'nothingFound' } : keepTyping;
 }
 
 /**

@@ -31,6 +31,7 @@ const strings = testStrings({
       },
     },
   },
+  game: { round: { correct: 'Right one', chosen: 'Your pick' } },
 });
 
 const metrics = {
@@ -87,6 +88,12 @@ describe('DueQuizCard', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
     expect(onStart).toHaveBeenCalledTimes(1);
   });
+
+  it('stands «Start» 48 tall, as the board does', async () => {
+    await renderInEdition(<DueQuizCard count={3} onStart={jest.fn()} />);
+
+    expect(screen.getByTestId('due-quiz-start-face')).toHaveStyle({ minHeight: 48 });
+  });
 });
 
 describe('DueQuizSheet', () => {
@@ -122,6 +129,20 @@ describe('DueQuizSheet', () => {
     expect(onAnswer).toHaveBeenCalledWith(questions[0], 0);
     expect(screen.getByTestId('due-quiz-option-0-cross')).toBeTruthy();
     expect(screen.getByTestId('due-quiz-option-1-check')).toBeTruthy();
+  });
+
+  it('keeps the answer in the options for VoiceOver, each disabled once picked', async () => {
+    await renderSheet();
+
+    await fireEvent.press(screen.getByLabelText('A, A cloud.'));
+
+    expect(screen.getByTestId('due-quiz-option-0')).toHaveAccessibleName('A, A cloud., Your pick');
+    expect(screen.getByTestId('due-quiz-option-1')).toHaveAccessibleName(
+      'B, Quiet and gentle., Right one',
+    );
+    expect(screen.getByTestId('due-quiz-option-2')).toHaveAccessibleName('C, A coin.');
+    for (const option of [0, 1, 2])
+      expect(screen.getByTestId(`due-quiz-option-${String(option)}`)).toBeDisabled();
   });
 
   it('moves on with «Next» and ends with «Done», telling how many were right', async () => {
