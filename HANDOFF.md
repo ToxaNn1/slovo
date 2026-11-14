@@ -27,3 +27,5 @@
 - WAITING until 2026-11-14T14:03:18Z: #1833 implementer
 - #1833 STUCK (new switch broke admin output strictObject vs API breaking check); decision: admin output states plain object per ADR 0031 + precedent f42322e6; continuation implementer launched in the same worktree.
 - WAITING until 2026-11-14T14:14:23Z: #1833 continuation
+- #1833 DONE (perf commit reworded to fix), merged a290db6c. /v1 base check fails until admin states output is plain on main: prerequisite PR #1840 (same commit b75f816e, auto-merge squash). #1834 implementer (Opus, worktree) launched; no screenshot per owner note.
+- WAITING until 2026-11-14T13:32:11Z: #1834 implementer and PR #1840
