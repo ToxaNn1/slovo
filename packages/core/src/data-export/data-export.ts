@@ -35,7 +35,8 @@ export interface ExportedEntry {
  * - `favorites`, `collections` (each with its Entries), `history`: the
  *   reader's words, with the instant each was added or Seen.
  * - `knowledgeMarks`: each marked Entry's Knowledge Mark, whether it is
- *   Learned, its next Review day and when it was marked.
+ *   Learned, its next Review day and when it was marked; a mark kept before
+ *   its instant was recorded has none and comes first.
  * - `progress`: the Active Days, the XP log as kept (ADR 0066, 0133), the
  *   confirmed Entries and the best result of each Game Mode.
  */
@@ -161,13 +162,15 @@ export async function buildDataExport({
     history: inTimeOrder(history, ({ seenAt }) => seenAt).map(
       ([entryId, { seenAt, wordOfTheDay }]) => ({ ...entry(entryId), seenAt, wordOfTheDay }),
     ),
-    knowledgeMarks: inTimeOrder(knowledge, () => '').map(([entryId, record]) => ({
-      ...entry(entryId),
-      mark: record.mark,
-      learned: record.learned,
-      reviewDay: record.reviewDay,
-      markedAt: record.markedAt ?? null,
-    })),
+    knowledgeMarks: inTimeOrder(knowledge, ({ markedAt }) => markedAt ?? '').map(
+      ([entryId, record]) => ({
+        ...entry(entryId),
+        mark: record.mark,
+        learned: record.learned,
+        reviewDay: record.reviewDay,
+        markedAt: record.markedAt ?? null,
+      }),
+    ),
     progress: {
       activeDays: [...activeDays.keys()].sort(byId),
       xpLog: inTimeOrder(xpLog, ({ at }) => at).map(([id, record]) => ({ id, ...record })),

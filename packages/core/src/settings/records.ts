@@ -6,11 +6,16 @@ import { declareRecord } from '../user-state/user-state-record';
 /** The most characters the reader's name holds (ADR 0136). */
 export const READER_NAME_AT_MOST = 24;
 
+/** How many characters a name holds: code points, so an emoji or another astral character is one. */
+export function readerNameLength(name: string): number {
+  return Array.from(name).length;
+}
+
 /** The reader's name as stored: already trimmed, never empty, at most {@link READER_NAME_AT_MOST} characters. */
 const ReaderNameSchema = z
   .string()
   .min(1)
-  .max(READER_NAME_AT_MOST)
+  .refine((name) => readerNameLength(name) <= READER_NAME_AT_MOST)
   .refine((name) => name === name.trim());
 
 /** The records of the Settings. */

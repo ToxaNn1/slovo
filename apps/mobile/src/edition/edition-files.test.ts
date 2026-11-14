@@ -339,7 +339,7 @@ describe('the 0.8.13 strings', () => {
   it('the UA Edition carries the agreed texts of Settings, «Збережене» and the widget', () => {
     expect(parsed.settings.dailyGoal).toMatchObject({ title: 'Ціль дня', none: 'Без цілі' });
     expect(parsed.wordOfTheDayArchive.title).toBe('Слова дня');
-    expect(parsed.settings.howToAddWidget).toBe('Як додати віджет');
+    expect(parsed.settings.rows.widgets).toBe('Віджети');
   });
 
   it.each(['search', 'rarityTest', 'feedNotices', 'wordOfTheDayArchive'])(

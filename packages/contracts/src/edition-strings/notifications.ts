@@ -11,8 +11,6 @@ import { PluralSchema, templateOf } from './shared';
 export const NotificationsStringsSchema = z.strictObject({
   /** The screen's title; the name of the Settings row. */
   title: TextSchema,
-  /** The Settings row's value: how many times a day. Takes `{count}`. */
-  perDay: PluralSchema,
   /** The Settings row's value with no times, or while permission is denied or not asked yet. */
   off: TextSchema,
   /** Adds a time. */

@@ -1,7 +1,7 @@
 import type { UserState } from '../user-state/user-state';
-import { READER_NAME_AT_MOST, settingsRecords } from './records';
+import { READER_NAME_AT_MOST, readerNameLength, settingsRecords } from './records';
 
-export { READER_NAME_AT_MOST };
+export { READER_NAME_AT_MOST, readerNameLength };
 
 /** What a typed name keeps (ADR 0136): the name trimmed, no name for a blank one, or nothing past the limit. */
 export type ReaderNameChoice =
@@ -13,7 +13,7 @@ export type ReaderNameChoice =
 export function readerNameOf(typed: string): ReaderNameChoice {
   const name = typed.trim();
   if (name === '') return { kind: 'none' };
-  if (name.length > READER_NAME_AT_MOST) return { kind: 'tooLong' };
+  if (readerNameLength(name) > READER_NAME_AT_MOST) return { kind: 'tooLong' };
   return { kind: 'name', name };
 }
 

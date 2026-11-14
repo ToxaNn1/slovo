@@ -34,6 +34,14 @@ describe('the reader name', () => {
     expect(name.state).toBe('Олена');
   });
 
+  it(`counts characters, not UTF-16 units: ${String(READER_NAME_AT_MOST)} emoji are kept and read back`, async () => {
+    const { name, userState } = await opened();
+    const longest = '🦊'.repeat(READER_NAME_AT_MOST);
+    expect(await name.change(longest)).toEqual({ kind: 'name', name: longest });
+    expect(await userState.read(userStateRecords.readerName)).toBe(longest);
+    expect(await name.change(`${longest}🦊`)).toEqual({ kind: 'tooLong' });
+  });
+
   it('forgets the name for an empty or blank one', async () => {
     const { name, userState } = await opened();
     await name.change('Олена');

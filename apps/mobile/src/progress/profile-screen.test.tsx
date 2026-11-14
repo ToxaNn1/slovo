@@ -667,6 +667,16 @@ describe("the Profile's header", () => {
     expect(screen.getByTestId('profile-name')).toHaveTextContent('Остап');
   });
 
+  it('counts each emoji of a name as one character', async () => {
+    await renderScreen();
+
+    await openNameSheet();
+    await typeName('🦊'.repeat(13));
+    expect(screen.getByTestId('reader-name-counter')).toHaveTextContent('13 / 24');
+    await submitName();
+    expect(screen.getByTestId('profile-name')).toHaveTextContent('🦊'.repeat(13));
+  });
+
   it("keeps today's progress under it, with no Questionnaire rows", async () => {
     await renderScreen({ name: 'Олена' });
 

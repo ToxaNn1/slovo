@@ -24,6 +24,7 @@ import { useHiddenSummary } from '@/mix/hidden';
 import { useMixSummary } from '@/mix/mix';
 import { useRarityCeiling } from '@/mix/rarity-ceiling';
 import { useNotificationsSummary } from '@/notifications/notifications';
+import { usePrivacyRows } from '@/settings/privacy-screen';
 import { useShown } from '@/shown-in-effect';
 import { installedBuild } from '@/settings/installed-build';
 import { useSettings } from '@/settings/settings';
@@ -88,6 +89,7 @@ function SettingsList() {
   const notificationsSummary = useNotificationsSummary();
   const accountOpening = useAccountInEffect();
   const shown = useShown();
+  const privacyRows = usePrivacyRows();
   const router = useRouter();
   const build = installedBuild();
   const resetProgress = useResetProgress();
@@ -414,7 +416,7 @@ function SettingsList() {
           <SettingsGroup title={strings.groups.account}>
             {accountOpening !== undefined && <AccountRow opening={accountOpening} />}
             {/* One condition per row: the group draws its hairlines between its children, and a fragment is one child. */}
-            {(shown.shareCountersSetting || shown.dataExport) && (
+            {(privacyRows.shareCounters || privacyRows.dataExport !== undefined) && (
               <SettingsRow
                 testID="settings-row-privacy"
                 icon="diamond"

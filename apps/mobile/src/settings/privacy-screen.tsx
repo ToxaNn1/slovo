@@ -8,18 +8,38 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { useShell } from '../shell-value';
+import { useShell, type ShareFile } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { useSettings } from './settings';
 
 const strings = editionStrings.settings;
 const privacy = strings.privacy;
+
+/** The rows «Конфіденційність» draws: the share window is undefined while no export row shows. */
+export interface PrivacyRows {
+  readonly shareCounters: boolean;
+  readonly dataExport: ShareFile | undefined;
+}
+
+/**
+ * What «Конфіденційність» can draw: the switch while its feature is on in
+ * effect, the export while its feature is on and the binary has the file
+ * module. Settings shows the row to the screen only while one of them shows.
+ */
+export function usePrivacyRows(): PrivacyRows {
+  const shown = useShown();
+  const { shareFile } = useShell();
+  return {
+    shareCounters: shown.shareCountersSetting,
+    dataExport: shown.dataExport ? shareFile : undefined,
+  };
+}
 
 /**
  * «Конфіденційність» (ADR 0135): the one switch «Анонімна статистика», which
@@ -33,13 +53,16 @@ export function PrivacyScreen() {
   const { colors } = tokens;
   const { voice } = useEdition();
   const router = useRouter();
-  const shown = useShown();
+  const { shareCounters, dataExport } = usePrivacyRows();
   const { current, update } = useSettings();
   const composition = useComposition();
-  const { shareFile } = useShell();
   const [failed, setFailed] = useState(false);
+  // One export at a time: a second share sheet while one is up is refused.
+  const exporting = useRef(false);
 
-  function exportData(share: NonNullable<typeof shareFile>) {
+  function exportData(share: ShareFile) {
+    if (exporting.current) return;
+    exporting.current = true;
     setFailed(false);
     composition
       .dataExport()
@@ -52,6 +75,9 @@ export function PrivacyScreen() {
       )
       .catch(() => {
         setFailed(true);
+      })
+      .finally(() => {
+        exporting.current = false;
       });
   }
 
@@ -75,7 +101,7 @@ export function PrivacyScreen() {
         />
         <View style={styles.section}>
           <SettingsGroup>
-            {shown.shareCountersSetting && (
+            {shareCounters && (
               <SettingsRow
                 testID="privacy-share-counters"
                 icon="diamond"
@@ -90,7 +116,7 @@ export function PrivacyScreen() {
                 }}
               />
             )}
-            {shown.dataExport && shareFile !== undefined && (
+            {dataExport !== undefined && (
               <SettingsRow
                 testID="privacy-data-export"
                 icon="bar"
@@ -99,7 +125,7 @@ export function PrivacyScreen() {
                 end={{
                   kind: 'action',
                   onPress: () => {
-                    exportData(shareFile);
+                    exportData(dataExport);
                   },
                 }}
               />
