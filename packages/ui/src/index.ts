@@ -12,6 +12,8 @@ export { SwipeDemoStage, useGesturesDemo } from './entries/swipe-demo';
 export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
 export { NarratorVoicePicker } from './settings/NarratorVoicePicker';
+export { OptionSampleNumber, OptionScreen } from './settings/OptionScreen';
+export type { OptionScreenOption } from './settings/OptionScreen';
 export { FontSizeProvider, type TextSizeStep } from './providers/FontSizeProvider';
 export { DecorProvider } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
