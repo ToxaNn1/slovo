@@ -1,6 +1,6 @@
-import { BackLink, ScreenTitle, space, typeStyle, useEdition, useTokens } from '@slovo/ui';
+import { BackLink, ScreenTitle, space, useTokens } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
@@ -9,16 +9,15 @@ import { MixChoices } from '@/mix/mix-choices';
 const strings = editionStrings.mix;
 
 /**
- * Settings › Мій Мікс: a chip for every Category of the Edition and «Усі»,
- * the Rarity Ceiling choice while its switch is on (ADR 0072), and the switches of
- * Corrections, Idioms, Synonym Rows and Tips, each when the Edition turns it on. A change
- * applies at once (the Core's Mix, ADR 0019). The last Category's chip is
- * disabled, with a hint why.
+ * Settings › Мій Мікс (board 11, screen 87), with no line under the title: a
+ * tile for every Category of the Edition under «N з M обрано» and «Усі», and
+ * the switches of Corrections, Idioms, Synonym Rows and Tips, each when the
+ * Edition turns it on. The Rarity Ceiling stays a Settings row of its own
+ * (ADR 0072). A change applies at once (the Core's Mix, ADR 0019). The last
+ * Category's tile is disabled, with a hint why.
  */
 export default function MixScreen() {
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const { voice } = useEdition();
+  const { colors } = useTokens();
   const router = useRouter();
 
   return (
@@ -37,9 +36,6 @@ export default function MixScreen() {
         />
         <View style={styles.header}>
           <ScreenTitle>{strings.title}</ScreenTitle>
-          <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
-            {strings.subtitle}
-          </Text>
         </View>
         <MixChoices />
       </ScrollView>
@@ -50,5 +46,5 @@ export default function MixScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
-  header: { gap: space[2], paddingTop: space[2], paddingBottom: space[5] },
+  header: { paddingTop: space[2], paddingBottom: space[5] },
 });

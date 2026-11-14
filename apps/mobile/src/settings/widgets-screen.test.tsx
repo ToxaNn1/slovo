@@ -1,0 +1,127 @@
+import { describe, expect, it, jest } from '@jest/globals';
+import { loadEdition, type Edition, type FeatureSwitch } from '@slovo/core';
+import { seedUserState } from '@slovo/core/testing';
+import { EditionProvider } from '@slovo/ui';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import WidgetsScreen from '../app/settings/widgets';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { renderInGestureRoot } from '../shell/test-render';
+import { opened, switchedTo, testShell } from '../shell/test-support';
+
+jest.mock('expo-router', () => ({ useRouter: () => ({ back: () => undefined }) }));
+
+const { config } = activeEditionFiles;
+
+/** A preview's segment as VoiceOver names it, e.g. «Віджети: Малий». */
+const preview = (name: string) => `${editionStrings.settings.widgets.title}: ${name}`;
+const strings = editionStrings.settings.widgets;
+
+/** The drawing is a picture VoiceOver skips, so its queries look among hidden elements. */
+const HIDDEN = { includeHiddenElements: true };
+
+/** The UA Edition as it ships, with the Feature Switches named set as given. */
+function editionWith(switches: Partial<Record<FeatureSwitch, boolean>>): Edition {
+  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
+  const states = Object.fromEntries(
+    Object.entries(switches).map(([name, on]) => [name, on ? 'on' : 'off']),
+  );
+  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...states } });
+}
+
+const metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 0, left: 0, right: 0, bottom: 0 },
+};
+
+/** Lets the composition's reads and the renders after them finish. */
+async function settle() {
+  await act(async () => {
+    await Promise.resolve();
+  });
+}
+
+/**
+ * The Widgets screen over the Edition in effect with the switches named set
+ * as given. Gives how many writes the user state has taken so far.
+ */
+async function renderWidgets(switches: Partial<Record<FeatureSwitch, boolean>> = {}) {
+  const seeded = await seedUserState();
+  let writes = 0;
+  const userState: typeof seeded = {
+    ...seeded,
+    write: (changes) => {
+      writes += 1;
+      return seeded.write(changes);
+    },
+  };
+  const opening = testShell({
+    userState: opened(userState),
+    remoteSwitches: switchedTo(editionWith(switches)),
+  });
+  // The screen is drawn under the gate of the composition's opening.
+  const shell = { ...opening, composition: opened(await opening.composition.opened()) };
+  await renderInGestureRoot(
+    <SafeAreaProvider initialMetrics={metrics}>
+      <ShellProvider shell={shell}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <WidgetsScreen />
+        </EditionProvider>
+      </ShellProvider>
+    </SafeAreaProvider>,
+  );
+  await settle();
+  await settle();
+  return { writes: () => writes };
+}
+
+describe('Settings › Віджети', () => {
+  it('shows the board title and subtitle over three previews to flip through, none with a ✓', async () => {
+    await renderWidgets();
+    expect(screen.getByRole('header', { name: strings.title })).toBeOnTheScreen();
+    expect(screen.getByText(strings.subtitle)).toBeOnTheScreen();
+    for (const name of Object.values(strings.previews)) {
+      expect(screen.getByRole('button', { name: preview(name) })).toBeOnTheScreen();
+    }
+    await fireEvent.press(
+      screen.getByRole('button', { name: preview(strings.previews.lockScreen) }),
+    );
+    expect(screen.getByTestId('widget-previews-widget-lockScreen', HIDDEN)).toBeOnTheScreen();
+    expect(screen.queryByText('✓')).toBeNull();
+    // The three steps to add a widget stay under the previews (ADR 0054).
+    for (const [index, step] of editionStrings.widget.guide.steps.entries()) {
+      expect(screen.getByTestId(`widget-guide-step-${String(index + 1)}`)).toHaveTextContent(
+        `${String(index + 1)}${step.title}${step.hint}`,
+      );
+    }
+  });
+
+  it('offers no lock-screen preview while the lock-screen widget is off', async () => {
+    await renderWidgets({ lockScreenWidget: false });
+    expect(
+      screen.getByRole('button', { name: preview(strings.previews.medium) }),
+    ).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: preview(strings.previews.lockScreen) })).toBeNull();
+  });
+
+  it('shows the steps alone while the widget previews are off', async () => {
+    await renderWidgets({ widgetPreviews: false });
+    expect(screen.queryByRole('button', { name: preview(strings.previews.small) })).toBeNull();
+    expect(screen.queryByTestId('widget-previews-widget-medium', HIDDEN)).toBeNull();
+    expect(screen.getByTestId('widget-guide-step-3')).toBeOnTheScreen();
+  });
+
+  it('keeps nothing when a preview is chosen', async () => {
+    const { writes } = await renderWidgets();
+    const before = writes();
+    await fireEvent.press(screen.getByRole('button', { name: preview(strings.previews.small) }));
+    await fireEvent.press(
+      screen.getByRole('button', { name: preview(strings.previews.lockScreen) }),
+    );
+    await settle();
+    expect(screen.getByTestId('widget-previews-widget-lockScreen', HIDDEN)).toBeOnTheScreen();
+    expect(writes()).toBe(before);
+  });
+});

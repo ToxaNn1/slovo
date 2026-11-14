@@ -483,6 +483,8 @@ export const typeRoles = {
   sectionLabel: role('word', '800', 13, 13, 1, 'uppercase'),
   /** How far a run of questions has come, such as «4 з 10» of the Rarity Test. */
   progressCount: role('ui', '600', 13, 13),
+  /** A Category's name on its tile of the Mix. */
+  mixTileName: role('ui', '600', 13, 15.6),
   /** A Badge's date or progress under its mark on the Badges screen. */
   badgeProgress: role('ui', '500', 11, 13),
   /** A Badge's name under its title on the stamp of a newly earned Badge. */
