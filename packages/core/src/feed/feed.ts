@@ -117,21 +117,24 @@ export interface Feed {
    * Answers the Yesterday quiz at `position`, alone or under the Weekly
    * Recap, with the meaning `option`: the right one sets Known, as «Знаю»
    * does, any other Unknown, as «Не знаю» does, which starts a Review (ADR
-   * 0130). Resolves the mark set; its card then carries the option. Nothing
+   * 0130). Yesterday is closed for the day with it, so it comes no more that
+   * day. Resolves the mark set; its card then carries the option. Nothing
    * when no Yesterday quiz not answered yet is there.
    */
   answerYesterday(position: number, option: number): Promise<KnowledgeMark | undefined>;
   /**
    * «Готово»: folds the Weekly Recap at `position` away for its week, and
-   * its card then says so. Resolves whether it did: not when no Weekly Recap
-   * not folded is there.
+   * its card then says so. With no Yesterday under it, its page has nothing
+   * left to show, so it leaves the Feed, as a dropped card does, until
+   * «Повернути». Resolves whether it did: not when no Weekly Recap not
+   * folded is there.
    */
   foldWeeklyRecap(position: number): Promise<boolean>;
   /**
-   * «Повернути»: brings the Weekly Recap folded at `position` back. Resolves
-   * whether it did: not when no folded Weekly Recap is there.
+   * «Повернути»: brings back the Weekly Recap folded this session, to its
+   * place. Resolves whether it did: not when no folded Weekly Recap is there.
    */
-  restoreWeeklyRecap(position: number): Promise<boolean>;
+  restoreWeeklyRecap(): Promise<boolean>;
   /**
    * Makes today's Word of the Day Seen through the Feed's own Seen, as a
    * dwell on its card would: History, the archive and the Seen subscribers
@@ -548,6 +551,10 @@ export async function openFeed({
     const { quiz, word } = yesterday;
     if (!Number.isInteger(option) || option < 0 || option >= quiz.meanings.length) return undefined;
     const mark: KnowledgeMark = option === quiz.right ? 'known' : 'unknown';
+    // Closed first: the reader answers once, also after a relaunch. A Feed
+    // Notice of a day before, left open over midnight, is closed already.
+    const date = dateKeyOf(card.day);
+    if (date === todayKey(clock)) await userState.write(await notices.close(yesterday, date));
     await knowledge.set(word.wordId, mark);
     const answered = { ...yesterday, quiz: { ...quiz, answered: option } };
     // Yesterday alone, or under the Weekly Recap.
@@ -560,16 +567,29 @@ export async function openFeed({
     return mark;
   }
 
-  /** Folds the Weekly Recap at `position` away, or brings it back, when it is not so already. */
-  async function foldWeeklyRecap(position: number, folded: boolean): Promise<boolean> {
-    const card = session.cards[position];
+  /**
+   * Folds the Weekly Recap `card` away, or brings it back, when it is one not
+   * so already. Resolves whether it did.
+   */
+  async function foldWeeklyRecap(card: FeedCard | undefined, folded: boolean): Promise<boolean> {
     if (card?.kind !== 'notice' || card.notice !== 'weeklyRecap' || card.folded === folded)
       return false;
     const date = dateKeyOf(card.day);
-    await userState.write(await (folded ? notices.fold(date) : notices.restore(date)));
+    // Left open over midnight, its day is over: only the page changes.
+    if (date === todayKey(clock))
+      await userState.write(await (folded ? notices.fold(date) : notices.restore(date)));
     const renewed: FeedCard = { ...card, folded };
     session.renew((each) => (each === card ? renewed : each));
     subscribers.tell();
+    return true;
+  }
+
+  /** Folds or brings back the Weekly Recap `find` gives, in turn, then keeps the next card ready. */
+  async function refold(find: () => FeedCard | undefined, folded: boolean): Promise<boolean> {
+    if (!(await inTurn(() => foldWeeklyRecap(find(), folded)))) return false;
+    // Its page drops or comes back as the cards the Cycle covers do.
+    await inTurnTellingSeen(followCovered);
+    await keepNextCardReady();
     return true;
   }
 
@@ -840,12 +860,15 @@ export async function openFeed({
   }
 
   /**
-   * Drops and puts back the cards by what the Cycle covers. Returns the Entry
-   * of the card that left the screen this way, if it became Seen.
+   * Drops and puts back the cards by what the Cycle covers, and the page of
+   * a Weekly Recap folded with no Yesterday under it, which shows nothing.
+   * Returns the Entry of the card that left the screen this way, if it
+   * became Seen.
    */
   async function followCovered(): Promise<string | undefined> {
     const out = new Set(
       session.all.filter((card) => {
+        if (isEmptyPage(card)) return true;
         const entryId = card.entryId;
         return entryId !== undefined && !cycle.covers(entryId);
       }),
@@ -937,8 +960,9 @@ export async function openFeed({
       inTurn(() => insertLinkedCorrection(position, correctionId)),
     answerQuickQuestion: (position, option) => inTurn(() => answerQuickQuestion(position, option)),
     answerYesterday: (position, option) => inTurn(() => answerYesterday(position, option)),
-    foldWeeklyRecap: (position) => inTurn(() => foldWeeklyRecap(position, true)),
-    restoreWeeklyRecap: (position) => inTurn(() => foldWeeklyRecap(position, false)),
+    foldWeeklyRecap: (position) => refold(() => session.cards[position], true),
+    restoreWeeklyRecap: () =>
+      refold(() => session.all.findLast((card) => isFoldedWeeklyRecap(card)), false),
     wordOfTheDay: () => inTurn(() => chooseWordOfTheDay()),
     seeWordOfTheDay: () => {
       const chosen = wordOfTheDay.chosen();
@@ -948,6 +972,17 @@ export async function openFeed({
     },
   };
 }
+
+/** Whether the card is a Weekly Recap folded away («Готово»). */
+const isFoldedWeeklyRecap = (card: FeedCard) =>
+  card.kind === 'notice' && card.notice === 'weeklyRecap' && card.folded;
+
+/** Whether the card's page shows nothing: a Weekly Recap folded with no Yesterday under it. */
+const isEmptyPage = (card: FeedCard) =>
+  card.kind === 'notice' &&
+  card.notice === 'weeklyRecap' &&
+  card.folded &&
+  card.yesterday === undefined;
 
 /** The ids of the Corrections and the Synonym Row a Word card links. */
 function linkedIds({ linkedCorrections, synonymRow }: WordCardModel): readonly string[] {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { FeatureSwitch, Word } from '@slovo/contracts';
 
-import { openComposition, type Composition, type FeedCard } from '../index';
+import { openComposition, type Composition, type ContentReadPort, type FeedCard } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -46,9 +46,11 @@ async function run(
   kept: Map<string, string>,
   on: string,
   content: readonly Word[] = words,
-): Promise<Composition> {
-  return openComposition({
-    content: createMemoryContentPort({ words: content }),
+  port: (memory: ContentReadPort) => ContentReadPort = (memory) => memory,
+): Promise<Composition & { advance: (ms: number) => void }> {
+  const { clock, advance } = fakeClock(`${on}T09:00:00+02:00`);
+  const app = await openComposition({
+    content: port(createMemoryContentPort({ words: content })),
     edition: testEdition({
       isFeatureEnabled: (feature) => everySwitch.includes(feature),
       userSettingDefaults: {
@@ -56,10 +58,13 @@ async function run(
       },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(kept) }),
-    clock: fakeClock(`${on}T09:00:00+02:00`).clock,
+    clock,
     random: randomOf(0.25),
   });
+  return Object.assign(app, { advance });
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** The Feed's first three cards: the Word of the Day, the day's Feed Notice page and a Word. */
 async function firstCards(app: Composition): Promise<readonly FeedCard[]> {
@@ -154,7 +159,35 @@ describe('the Yesterday quiz', () => {
     const kept = records();
     const first = await quizOf(await run(kept, monday));
 
+    expect(first?.meanings).toHaveLength(3);
     expect(await quizOf(await run(kept, monday))).toEqual(first);
+  });
+
+  // ADR 0101: meanings are told apart by their Comparison Key for a Definition.
+  it('takes meanings that differ only in case or spacing as one', async () => {
+    const shouted = word('w_07', { primaryDefinition: yesterdays.primaryDefinition.toUpperCase() });
+    const spaced = word('w_12', {
+      primaryDefinition: ` ${noun.primaryDefinition.replace(' ', '   ')}`,
+    });
+
+    expect(
+      await pageOf(
+        await run(records({ recap: false }), monday, [yesterdays, shouted, noun, spaced]),
+      ),
+    ).toBeUndefined();
+  });
+
+  it('makes the quiz again once a read of the Words failed', async () => {
+    let failing = true;
+    const app = await run(records({ recap: false }), monday, words, (memory) => ({
+      ...memory,
+      listWords: () =>
+        failing ? Promise.reject(new Error('The Language Pack is busy')) : memory.listWords(),
+    }));
+    await firstCards(app).catch(() => undefined);
+    failing = false;
+
+    expect((await quizOf(app))?.meanings).toHaveLength(3);
   });
 
   it('orders the meanings by the day’s randomness: the right one is not always in one place', async () => {
@@ -213,6 +246,31 @@ describe('the Yesterday quiz', () => {
     expect(app.knowledge.state.shown.get(yesterdays.id)).toBe('known');
   });
 
+  it('comes no more that day once answered, also after a relaunch', async () => {
+    const kept = records({ recap: false });
+    const app = await run(kept, monday);
+    const quiz = await quizOf(app);
+    if (quiz === undefined) throw new Error('No quiz');
+
+    await app.feed.answerYesterday(1, quiz.right);
+
+    expect(await pageOf(await run(kept, monday))).toBeUndefined();
+  });
+
+  it('answered under the Weekly Recap, leaves the week to come again without it', async () => {
+    const kept = records();
+    const app = await run(kept, monday);
+    const quiz = await quizOf(app);
+    if (quiz === undefined) throw new Error('No quiz');
+
+    await app.feed.answerYesterday(1, quiz.right);
+
+    expect(await pageOf(await run(kept, monday))).toMatchObject({
+      notice: 'weeklyRecap',
+      yesterday: undefined,
+    });
+  });
+
   it('answers nothing on a card that is no Yesterday', async () => {
     const app = await run(records(), monday);
     await firstCards(app);
@@ -240,7 +298,7 @@ describe('«Готово» on the Weekly Recap', () => {
     await firstCards(app);
     await app.feed.foldWeeklyRecap(1);
 
-    expect(await app.feed.restoreWeeklyRecap(1)).toBe(true);
+    expect(await app.feed.restoreWeeklyRecap()).toBe(true);
 
     expect(app.feed.cards[1]).toMatchObject({ notice: 'weeklyRecap', folded: false });
     expect(await pageOf(await run(kept, monday))).toMatchObject({
@@ -249,11 +307,49 @@ describe('«Готово» on the Weekly Recap', () => {
     });
   });
 
+  it('folded with no Yesterday under it, leaves the Feed until «Повернути» brings it back', async () => {
+    const app = await run(records({ yesterday: false }), monday);
+    const cards = await firstCards(app);
+    await app.feed.show(1);
+
+    expect(await app.feed.foldWeeklyRecap(1)).toBe(true);
+
+    expect(app.feed.cards).not.toContainEqual(expect.objectContaining({ notice: 'weeklyRecap' }));
+    expect(app.feed.cards[1]).toBe(cards[2]);
+
+    expect(await app.feed.restoreWeeklyRecap()).toBe(true);
+
+    expect(app.feed.cards[1]).toMatchObject({ notice: 'weeklyRecap', folded: false });
+    expect(app.feed.position).toBe(1);
+  });
+
+  it('folded after midnight, keeps the new day’s closed Feed Notices', async () => {
+    const kept = new Map([
+      ...records(),
+      ['wordOfTheDayArchive.2026-10-26', JSON.stringify(yesterdays.id)],
+    ]);
+    const stale = await run(kept, monday);
+    await firstCards(stale);
+    // The next morning, another run swipes past Tuesday's Yesterday.
+    const next = await run(kept, tuesday);
+    expect(await pageOf(next)).toMatchObject({ notice: 'yesterday' });
+    await next.feed.show(0);
+    await next.feed.show(1);
+    await next.feed.show(2);
+    stale.advance(DAY_MS);
+
+    expect(await stale.feed.foldWeeklyRecap(1)).toBe(true);
+
+    expect(stale.feed.cards[1]).toMatchObject({ notice: 'weeklyRecap', folded: true });
+    const cards = await firstCards(await run(kept, tuesday));
+    expect(cards.filter((card) => card.kind === 'notice')).toEqual([]);
+  });
+
   it('restores only a folded Weekly Recap, and folds only one shown', async () => {
     const app = await run(records(), monday);
     await firstCards(app);
 
-    expect(await app.feed.restoreWeeklyRecap(1)).toBe(false);
+    expect(await app.feed.restoreWeeklyRecap()).toBe(false);
     expect(await app.feed.foldWeeklyRecap(0)).toBe(false);
     await app.feed.foldWeeklyRecap(1);
     expect(await app.feed.foldWeeklyRecap(1)).toBe(false);

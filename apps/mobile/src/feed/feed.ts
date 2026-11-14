@@ -35,8 +35,8 @@ export interface FeedState {
   readonly answerYesterday: (position: number, option: number) => void;
   /** «Готово»: folds the Weekly Recap at `position` away for its week. */
   readonly foldWeeklyRecap: (position: number) => void;
-  /** «Повернути»: brings the Weekly Recap folded at `position` back. */
-  readonly restoreWeeklyRecap: (position: number) => void;
+  /** «Повернути»: brings back the Weekly Recap folded this session, also when its page left the Feed. */
+  readonly restoreWeeklyRecap: () => void;
 }
 
 /**
@@ -110,12 +110,9 @@ export function useFeed(
     },
     [feed],
   );
-  const restoreWeeklyRecap = useCallback(
-    (position: number) => {
-      void keep('the Weekly Recap brought back', feed.restoreWeeklyRecap(position));
-    },
-    [feed],
-  );
+  const restoreWeeklyRecap = useCallback(() => {
+    void keep('the Weekly Recap brought back', feed.restoreWeeklyRecap());
+  }, [feed]);
 
   // A new position goes straight to the Feed, which takes the card that left
   // off the screen itself; only the Feed going out of sight reports none. The

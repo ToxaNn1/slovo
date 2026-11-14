@@ -263,12 +263,15 @@ async function swipeTo(element: ReturnType<typeof screen.getByTestId>) {
 
 const words = editionStrings.feedNotices.weeklyRecap;
 
-/** A reader past the first week, active last week, whose Word of the Day yesterday was «лагідний». */
-async function openMonday() {
+/**
+ * A reader past the first week, active last week, whose Word of the Day
+ * yesterday was «лагідний», unless they had none.
+ */
+async function openMonday({ yesterday = true }: { yesterday?: boolean } = {}) {
   await open(
     {
       onboardingFinished: '2026-09-01T09:00:00Z',
-      wordOfTheDayArchive: { '2026-11-01': 'w_lahidnyi' },
+      wordOfTheDayArchive: yesterday ? { '2026-11-01': 'w_lahidnyi' } : {},
     },
     {
       edition: withoutLaterQuestions,
@@ -279,8 +282,8 @@ async function openMonday() {
 }
 
 /** Opens the Feed on the Weekly Recap's page. */
-async function onWeeklyRecap(reduceMotion = false) {
-  await openMonday();
+async function onWeeklyRecap(reduceMotion = false, yesterday = true) {
+  await openMonday({ yesterday });
   await renderApp(reduceMotion);
   await swipeTo(screen.getByTestId('feed-notice-weeklyRecap', hidden));
 }
@@ -312,6 +315,34 @@ describe('«Твій тиждень» on the Feed', () => {
 
     expect(screen.getByTestId('feed-notice-weeklyRecap')).toBeOnTheScreen();
     expect(screen.getByTestId('feed-notice-yesterday')).toBeOnTheScreen();
+  });
+
+  it('folded with no Yesterday under it, its page leaves the Feed while «Повернути» brings it back', async () => {
+    await onWeeklyRecap(true, false);
+    const page = pageOf(screen.getByTestId('feed-notice-weeklyRecap'));
+    const next = screen.getByTestId(`feed-card-${String(page + 1)}`, hidden);
+    const meaningAfter = ['сумирний', 'лагідний', 'тихий']
+      .map((lemma) => `Значення слова ${lemma}.`)
+      .find((meaning) => within(next).queryByText(meaning, hidden) !== null);
+    if (meaningAfter === undefined) throw new Error('No Word after the Weekly Recap');
+
+    await fireEvent.press(screen.getByRole('button', { name: words.done }));
+    // Well within the toast's 4 s.
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(100);
+    });
+
+    expect(screen.queryByTestId('feed-notice-weeklyRecap', hidden)).toBeNull();
+    // The next Word's card takes the page's place.
+    const there = screen.getByTestId(`feed-card-${String(page)}`);
+    expect(within(there).getByText(meaningAfter)).toBeOnTheScreen();
+    expect(screen.getByText(words.folded)).toBeOnTheScreen();
+
+    await settle(() => fireEvent.press(screen.getByText(words.restore)));
+
+    const week = screen.getByTestId('feed-notice-weeklyRecap');
+    expect(week).toBeOnTheScreen();
+    expect(pageOf(week)).toBe(page);
   });
 
   it('folds the week away at once under Reduce Motion', async () => {

@@ -566,6 +566,7 @@ export async function openComposition({
       // first, which none asks for before the composition opens.
       weeklyRecap: () => weeklyRecap,
       signedIn,
+      comparison,
       sources: [
         feedNotices,
         backend === undefined

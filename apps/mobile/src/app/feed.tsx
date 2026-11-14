@@ -220,8 +220,8 @@ const FeedPage = memo(function FeedPage({
   onAnswerYesterday: (position: number, option: number) => void;
   /** «Готово» on the Weekly Recap at `position`. */
   onFoldWeeklyRecap: (position: number) => void;
-  /** «Повернути» of the Weekly Recap folded at `position`. */
-  onRestoreWeeklyRecap: (position: number) => void;
+  /** «Повернути» of the Weekly Recap folded this session. */
+  onRestoreWeeklyRecap: () => void;
 }) {
   const { top } = useSafeAreaInsets();
   const { stressFall, calligraphicLemma, answerCard } = useShown();
@@ -270,9 +270,7 @@ const FeedPage = memo(function FeedPage({
             onFold={() => {
               onFoldWeeklyRecap(position);
             }}
-            onRestore={() => {
-              onRestoreWeeklyRecap(position);
-            }}
+            onRestore={onRestoreWeeklyRecap}
           />
         </PagerScrollView>
       </View>

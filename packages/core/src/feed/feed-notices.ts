@@ -13,6 +13,7 @@ import { LEVEL_MILESTONES, nameOf, totalFor, type LevelMilestone } from '../prog
 import type { XpLog } from '../progress/xp-log';
 import type { Clock, UserStateChanges } from '../ports';
 import type { History } from '../saved/history';
+import type { TextComparison } from '../text/text-comparison';
 import { seededRandomOf } from '../game/traced-crossword';
 import type { Random } from '../ports';
 import { shuffled } from '../shuffled';
@@ -100,18 +101,25 @@ const distractorOrder = (answer: Word, others: readonly Word[], random: Random):
  * The Yesterday quiz of `word` over the `others` Words, in the order `random`
  * gives: its meaning and the first two distinct meanings of other Words,
  * those of its part of speech first; a homonym's never, since the card shows
- * the one Lemma. Nothing when the others have no two such meanings.
+ * the one Lemma. Meanings are distinct by their Comparison Key for a
+ * Definition (ADR 0101). Nothing when the others have no two such meanings.
  */
 function yesterdayQuiz(
   word: Word,
   others: readonly Word[],
   random: Random,
+  comparison: Pick<TextComparison, 'key'>,
 ): YesterdayQuiz | undefined {
+  const keyOf = (meaning: string) => comparison.key(meaning, 'definition');
   const meanings = [word.primaryDefinition];
+  const keys = new Set([keyOf(word.primaryDefinition)]);
   const candidates = others.filter((other) => other.lemma !== word.lemma);
   for (const other of distractorOrder(word, candidates, random)) {
     if (meanings.length === QUIZ_MEANINGS) break;
-    if (!meanings.includes(other.primaryDefinition)) meanings.push(other.primaryDefinition);
+    const key = keyOf(other.primaryDefinition);
+    if (keys.has(key)) continue;
+    keys.add(key);
+    meanings.push(other.primaryDefinition);
   }
   if (meanings.length < QUIZ_MEANINGS) return undefined;
   const order = shuffled(meanings, random);
@@ -232,6 +240,7 @@ export function openFeedNotices({
   weeklyRecap,
   signedIn,
   sources,
+  comparison,
   seeded = seededRandomOf,
 }: {
   edition: Pick<Edition, 'levels' | 'isFeatureEnabled'>;
@@ -247,6 +256,8 @@ export function openFeedNotices({
   signedIn: (() => boolean) | undefined;
   /** The Feed Notices other features make. */
   sources: readonly FeedNotices[];
+  /** The Edition's text comparison, which tells the meanings of a Yesterday quiz apart. */
+  comparison: Pick<TextComparison, 'key'>;
   /** The random port of a seed, which orders a Yesterday quiz the same all its day. */
   seeded?: (seed: string) => Random;
 }): FeedNoticeQueue {
@@ -275,12 +286,15 @@ export function openFeedNotices({
   };
 
   /** The last Yesterday quiz made, by its day and Word: one order all the day, made once. */
-  let lastQuiz: { readonly key: string; readonly quiz: Promise<YesterdayQuiz | undefined> } = {
-    key: '',
-    quiz: Promise.resolve(undefined),
-  };
+  const noQuiz = { key: '', quiz: Promise.resolve(undefined) };
+  let lastQuiz: { readonly key: string; readonly quiz: Promise<YesterdayQuiz | undefined> } =
+    noQuiz;
 
-  /** The Yesterday quiz of `word`, the Word of the Day of `dayBefore`, over the Words within the Rarity Ceiling not Hidden. */
+  /**
+   * The Yesterday quiz of `word`, the Word of the Day of `dayBefore`, over
+   * the Words within the Rarity Ceiling not Hidden. A read that fails is
+   * tried again on the next call.
+   */
   function quizOf(word: Word, dayBefore: string): Promise<YesterdayQuiz | undefined> {
     const key = `${dayBefore}:${word.id}`;
     if (lastQuiz.key !== key) {
@@ -289,9 +303,14 @@ export function openFeedNotices({
           word,
           words.filter((other) => other.id !== word.id && !hiddenEntries.has(other.id)),
           seeded(`yesterday:${key}`),
+          comparison,
         ),
       );
-      lastQuiz = { key, quiz };
+      const made = { key, quiz };
+      lastQuiz = made;
+      quiz.catch(() => {
+        if (lastQuiz === made) lastQuiz = noQuiz;
+      });
     }
     return lastQuiz.quiz;
   }
