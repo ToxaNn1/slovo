@@ -137,6 +137,29 @@ describe('the Data export', () => {
     ]);
   });
 
+  it('lists the Knowledge Marks by when they were marked, one with no instant first', async () => {
+    const mark = (markedAt?: string) => ({
+      mark: 'known',
+      step: 1,
+      reviewDay: '2026-11-17',
+      learned: false,
+      ...(markedAt === undefined ? {} : { markedAt }),
+    });
+    const exported = await exportOf(
+      kept({
+        'knowledge.w_ava': mark('2026-11-05T10:00:00.000Z'),
+        'knowledge.w_bura': mark(),
+        'knowledge.w_vyr': mark('2026-11-03T10:00:00.000Z'),
+      }),
+    );
+
+    expect(exported.knowledgeMarks.map(({ entryId }) => entryId)).toEqual([
+      'w_bura',
+      'w_vyr',
+      'w_ava',
+    ]);
+  });
+
   it('of a fresh install is a valid, nearly empty JSON document', async () => {
     const exported = await exportOf(new Map());
 
