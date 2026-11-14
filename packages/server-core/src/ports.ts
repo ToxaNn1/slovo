@@ -153,6 +153,20 @@ export interface Authenticator {
    * email, all at once.
    */
   delete(account: AccountRecord): Promise<void>;
+  /**
+   * The Account of the email, normalised already, with the Google and Apple
+   * sign-in methods recorded for it; none when the email has no Account.
+   */
+  accountOf(email: string): Promise<ReaderAccount | undefined>;
+}
+
+/** A Sign-in method an Account keeps a record of; a Sign-in code reaches every Account. */
+export type RecordedSignInMethod = 'google' | 'apple';
+
+/** An Account as the owner admin finds it by email (ADR 0127). */
+export interface ReaderAccount {
+  readonly account: AccountRecord;
+  readonly signInMethods: readonly RecordedSignInMethod[];
 }
 
 /** An email to one reader, in plain text. */

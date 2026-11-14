@@ -1,7 +1,12 @@
 import { createHmac } from 'node:crypto';
 
 import { SIGN_IN_CODE_DIGITS } from '@slovo/contracts';
-import type { AccountRecord, Authenticator, CodeCheck } from '@slovo/server-core';
+import type {
+  AccountRecord,
+  Authenticator,
+  CodeCheck,
+  RecordedSignInMethod,
+} from '@slovo/server-core';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
@@ -31,6 +36,7 @@ const SESSION_SECONDS = 90 * 24 * 60 * 60;
 /** How better-auth names Google and Apple among the Sign-in methods. */
 const GOOGLE = 'google';
 const APPLE = 'apple';
+const RECORDED: readonly RecordedSignInMethod[] = [GOOGLE, APPLE];
 
 /** The kind of Sign-in code: better-auth's email OTP also has others SLOVO never uses. */
 const SIGN_IN = 'sign-in';
@@ -292,6 +298,21 @@ export function createAuthenticator(
         await tx.delete(signInCodes).where(eq(signInCodes.identifier, codeIdentifier(email)));
         await tx.delete(accounts).where(eq(accounts.id, id));
       });
+    },
+
+    async accountOf(email) {
+      const [account] = await database.db.select().from(accounts).where(eq(accounts.email, email));
+      if (account === undefined) return undefined;
+      const methods = await database.db
+        .select({ providerId: signInMethods.providerId })
+        .from(signInMethods)
+        .where(eq(signInMethods.accountId, account.id));
+      return {
+        account: accountRecord(account),
+        signInMethods: RECORDED.filter((method) =>
+          methods.some(({ providerId }) => providerId === method),
+        ),
+      };
     },
   };
 }
