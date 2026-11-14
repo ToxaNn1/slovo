@@ -1658,6 +1658,7 @@
       "best": "★ {n}",
       "none": "—",
       "record": "Рекорд: {n} з {total}",
+      "recordCount": "Рекорд: {n}",
       "never": "Ще жодної гри"
     },
     "hubToast": "«{mode}» ще розминається. Влучай поки в «{other}»!",
