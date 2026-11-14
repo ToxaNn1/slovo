@@ -571,6 +571,10 @@ export const typeRoles = {
   stepperValue: role('word', '900', 64, 64, -2),
   /** The − or + on a stepper's tile. */
   stepperGlyph: role('word', '900', 28, 28),
+  /** The large sample of an option screen, such as the Daily Goal's number (board 11, 85). */
+  optionSample: role('word', '900', 56, 56),
+  /** An option's label in the list of an option screen. */
+  optionLabel: role('ui', '600', 16, 16),
   /** The hero Word's Definition under its Lemma on the onboarding welcome. */
   heroDefinition: role('word', '500', 22, 29),
   /** A weekday's letters over a column of the Active Days calendar. */

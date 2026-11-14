@@ -134,3 +134,16 @@ export const mixTileDrawing = {
 
 /** A stepper's drawing (board 11, 90): the sunken track's padding and corner, and the − and + tiles. */
 export const stepperDrawing = { padding: 10, radius: 20, tile: 64, tileRadius: 16 } as const;
+
+/**
+ * An option screen's drawing (board 11, 85): the padding of the card that
+ * holds the sample and its explaining line, the gap between the two, the
+ * narrowest the line gets beside the sample before it drops under it, and
+ * the padding of an option's row.
+ */
+export const optionScreenDrawing = {
+  samplePadding: 18,
+  sampleGap: 16,
+  explanationMinWidth: 140,
+  optionPaddingVertical: 17,
+} as const;
