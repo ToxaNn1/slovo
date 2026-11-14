@@ -8799,6 +8799,126 @@
                           ],
                           "type": "string"
                         },
+                        "gameAnswerBanner": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameThreeLives": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "survivalOneLife": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "timedTwentySeconds": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameRoundMascot": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameQuestionOnGround": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameOptionStamp": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "pairsStay": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "buildIdiomCheck": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "livesOverWarmup": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameEndToFeed": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "plainGameReview": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameHubGroups": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameHubRecord": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameModeToast": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "eveningNotification": {
                           "enum": [
                             "on",
@@ -9236,6 +9356,21 @@
                         "letterTiles",
                         "survivalStreak",
                         "finishPoster",
+                        "gameAnswerBanner",
+                        "gameThreeLives",
+                        "survivalOneLife",
+                        "timedTwentySeconds",
+                        "gameRoundMascot",
+                        "gameQuestionOnGround",
+                        "gameOptionStamp",
+                        "pairsStay",
+                        "buildIdiomCheck",
+                        "livesOverWarmup",
+                        "gameEndToFeed",
+                        "plainGameReview",
+                        "gameHubGroups",
+                        "gameHubRecord",
+                        "gameModeToast",
                         "eveningNotification",
                         "notificationFarewell",
                         "notificationExplainer",
@@ -10647,6 +10782,126 @@
                           ],
                           "type": "string"
                         },
+                        "gameAnswerBanner": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameThreeLives": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "survivalOneLife": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "timedTwentySeconds": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameRoundMascot": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameQuestionOnGround": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameOptionStamp": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "pairsStay": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "buildIdiomCheck": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "livesOverWarmup": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameEndToFeed": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "plainGameReview": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameHubGroups": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameHubRecord": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameModeToast": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "eveningNotification": {
                           "enum": [
                             "on",
@@ -11084,6 +11339,21 @@
                         "letterTiles",
                         "survivalStreak",
                         "finishPoster",
+                        "gameAnswerBanner",
+                        "gameThreeLives",
+                        "survivalOneLife",
+                        "timedTwentySeconds",
+                        "gameRoundMascot",
+                        "gameQuestionOnGround",
+                        "gameOptionStamp",
+                        "pairsStay",
+                        "buildIdiomCheck",
+                        "livesOverWarmup",
+                        "gameEndToFeed",
+                        "plainGameReview",
+                        "gameHubGroups",
+                        "gameHubRecord",
+                        "gameModeToast",
                         "eveningNotification",
                         "notificationFarewell",
                         "notificationExplainer",
@@ -12426,6 +12696,126 @@
                           ],
                           "type": "string"
                         },
+                        "gameAnswerBanner": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameThreeLives": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "survivalOneLife": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "timedTwentySeconds": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameRoundMascot": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameQuestionOnGround": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameOptionStamp": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "pairsStay": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "buildIdiomCheck": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "livesOverWarmup": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameEndToFeed": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "plainGameReview": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameHubGroups": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameHubRecord": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "gameModeToast": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "eveningNotification": {
                           "enum": [
                             "on",
@@ -12863,6 +13253,21 @@
                         "letterTiles",
                         "survivalStreak",
                         "finishPoster",
+                        "gameAnswerBanner",
+                        "gameThreeLives",
+                        "survivalOneLife",
+                        "timedTwentySeconds",
+                        "gameRoundMascot",
+                        "gameQuestionOnGround",
+                        "gameOptionStamp",
+                        "pairsStay",
+                        "buildIdiomCheck",
+                        "livesOverWarmup",
+                        "gameEndToFeed",
+                        "plainGameReview",
+                        "gameHubGroups",
+                        "gameHubRecord",
+                        "gameModeToast",
                         "eveningNotification",
                         "notificationFarewell",
                         "notificationExplainer",

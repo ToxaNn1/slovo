@@ -22,6 +22,21 @@ export interface Shown {
   readonly finishPoster: boolean;
   /** The streak counter of «Виживання» and its record, in place of the Rounds passed (spec #1674). */
   readonly survivalStreak: boolean;
+  readonly gameAnswerBanner: boolean;
+  readonly gameThreeLives: boolean;
+  readonly survivalOneLife: boolean;
+  readonly timedTwentySeconds: boolean;
+  readonly gameRoundMascot: boolean;
+  readonly gameQuestionOnGround: boolean;
+  readonly gameOptionStamp: boolean;
+  readonly pairsStay: boolean;
+  readonly buildIdiomCheck: boolean;
+  readonly livesOverWarmup: boolean;
+  readonly gameEndToFeed: boolean;
+  readonly plainGameReview: boolean;
+  readonly gameHubGroups: boolean;
+  readonly gameHubRecord: boolean;
+  readonly gameModeToast: boolean;
   /** The inline answer card under a Round's options in place of the bottom sheet (spec #1674). */
   readonly answerCard: boolean;
   /** The switchable buttons of an Entry card, wherever the card appears. */
@@ -198,6 +213,21 @@ export function shownOf({
     gameReview: on('gameReview'),
     finishPoster: on('finishPoster'),
     survivalStreak: on('survivalStreak'),
+    gameAnswerBanner: on('gameAnswerBanner'),
+    gameThreeLives: on('gameThreeLives'),
+    survivalOneLife: on('survivalOneLife'),
+    timedTwentySeconds: on('timedTwentySeconds'),
+    gameRoundMascot: on('gameRoundMascot'),
+    gameQuestionOnGround: on('gameQuestionOnGround'),
+    gameOptionStamp: on('gameOptionStamp'),
+    pairsStay: on('pairsStay'),
+    buildIdiomCheck: on('buildIdiomCheck'),
+    livesOverWarmup: on('livesOverWarmup'),
+    gameEndToFeed: on('gameEndToFeed'),
+    plainGameReview: on('plainGameReview'),
+    gameHubGroups: on('gameHubGroups'),
+    gameHubRecord: on('gameHubRecord'),
+    gameModeToast: on('gameModeToast'),
     answerCard: on('gameAnswerCard'),
     entryButtons: {
       shareCard: on('shareCards'),
