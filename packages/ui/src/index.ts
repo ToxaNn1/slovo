@@ -189,6 +189,7 @@ export {
   railScreen,
   rowPadding,
   savedHeader,
+  accountCardRadius,
   signInButtonHeight,
   space,
   fontScaleCap,

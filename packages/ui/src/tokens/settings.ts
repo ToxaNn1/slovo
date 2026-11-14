@@ -134,3 +134,9 @@ export const mixTileDrawing = {
 
 /** A stepper's drawing (board 11, 90): the sunken track's padding and corner, and the − and + tiles. */
 export const stepperDrawing = { padding: 10, radius: 20, tile: 64, tileRadius: 16 } as const;
+
+/** A code cell's drawing (board 11, 96): its height, corner and ring. */
+export const codeCellDrawing = { height: 62, radius: 13, border: 2 } as const;
+
+/** The Account card of the signed-in Account screen (board 11, 97): its corner. */
+export const accountCardRadius = 20;

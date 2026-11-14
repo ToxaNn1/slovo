@@ -3,10 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-nati
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { fontScaleCap, space, typeStyle } from '../tokens';
-
-/** How tall a cell is drawn, as on the board. */
-const cellHeight = 62;
+import { codeCellDrawing, fontScaleCap, space, typeStyle } from '../tokens';
 
 /**
  * A code of a few digits in as many cells, drawn over one hidden field that
@@ -67,7 +64,7 @@ export function CodeCells({
             ]}
           >
             <Text
-              testID={`${testID}-cell-${index}`}
+              testID={`${testID}-cell-${String(index)}`}
               maxFontSizeMultiplier={fontScaleCap.number}
               style={[typeStyle('goalNumber', tokens), { color: colors.ink }]}
             >
@@ -109,9 +106,9 @@ const styles = StyleSheet.create({
   cells: { flexDirection: 'row', gap: space[2] },
   cell: {
     flex: 1,
-    height: cellHeight,
-    borderRadius: 13,
-    borderWidth: 2,
+    height: codeCellDrawing.height,
+    borderRadius: codeCellDrawing.radius,
+    borderWidth: codeCellDrawing.border,
     alignItems: 'center',
     justifyContent: 'center',
   },

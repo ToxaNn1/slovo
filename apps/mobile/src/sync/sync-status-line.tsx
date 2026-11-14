@@ -1,6 +1,7 @@
 import type { Sync } from '@slovo/core';
-import { typeStyle, useTokens } from '@slovo/ui';
-import { Text } from 'react-native';
+import { space, typeStyle, useTokens } from '@slovo/ui';
+import { StyleSheet, Text, View } from 'react-native';
+import Svg, { Polygon } from 'react-native-svg';
 
 import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
@@ -10,8 +11,9 @@ import { useShown } from '../shown-in-effect';
 import { syncStatusLine } from './sync-status';
 
 /**
- * The status line under the email of the SLOVO ID screen, as Sync stands. It
- * is part of the email's text, so VoiceOver reads the two together. Nothing
+ * The status line under the email of the Account screen, as Sync stands, with
+ * a red ✓ once the words are synced. The card around it is one element, so
+ * VoiceOver reads the email and the line together. Nothing
  * while Sync opens, when the Edition has none or it is turned off remotely, or
  * before a first sync has gone through.
  */
@@ -36,7 +38,19 @@ function Line({ sync }: { sync: Sync }) {
     clock: deviceClock,
   });
   if (line === undefined) return null;
+  const synced = !state.running && !state.offline;
   return (
-    <Text style={[typeStyle('rowSub', tokens), { color: tokens.colors.muted }]}>{`\n${line}`}</Text>
+    <View testID="account-sync-line" style={styles.line}>
+      {synced && (
+        <Svg testID="account-sync-check" width={13} height={11} viewBox="0 0 26 22">
+          <Polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill={tokens.colors.accent} />
+        </Svg>
+      )}
+      <Text style={[typeStyle('meta', tokens), { color: tokens.colors.muted }]}>{line}</Text>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  line: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
+});

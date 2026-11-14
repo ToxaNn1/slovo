@@ -22,8 +22,14 @@ function Code({ onCode = () => undefined }: { onCode?: (code: string) => void })
   );
 }
 
-const cells = () =>
-  Array.from({ length: 6 }, (_, i) => screen.getByTestId(`code-cell-${i}`, { includeHiddenElements: true }).props.children);
+const cells = (): unknown[] =>
+  Array.from(
+    { length: 6 },
+    (_, i): unknown =>
+      screen.getByTestId(`code-cell-${String(i)}`, { includeHiddenElements: true }).props[
+        'children'
+      ],
+  );
 
 describe('CodeCells', () => {
   it('fills all six cells from one pasted code', async () => {
@@ -40,8 +46,8 @@ describe('CodeCells', () => {
     await render(<Code />);
 
     const field = screen.getByLabelText('Code from the email');
-    expect(field.props.textContentType).toBe('oneTimeCode');
-    expect(field.props.autoComplete).toBe('one-time-code');
+    expect(field).toHaveProp('textContentType', 'oneTimeCode');
+    expect(field).toHaveProp('autoComplete', 'one-time-code');
   });
 
   it('takes no more digits than its cells', async () => {

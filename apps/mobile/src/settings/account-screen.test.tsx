@@ -14,7 +14,7 @@ import {
   createFakeGoogleSignInSheet,
   seedUserState,
 } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
+import { EditionProvider, fill } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { Platform } from 'react-native';
@@ -242,14 +242,15 @@ describe('«Увійти через Google» on the SLOVO ID screen', () => {
 });
 
 describe('«Увійти через Apple» on the SLOVO ID screen', () => {
-  it('shows on iOS after «Увійти через Google» and before the email field, with the switch on', async () => {
+  it('shows on iOS before «Увійти через Google» and the email field, with the switch on', async () => {
     await renderScreen();
 
     expect(appleButton()).toBeOnTheScreen();
     const buttons = screen.getAllByRole('button');
     const google = screen.getByRole('button', { name: strings.signInWithGoogle });
     const apple = screen.getByRole('button', { name: strings.signInWithApple });
-    expect(buttons.indexOf(google)).toBeLessThan(buttons.indexOf(apple));
+    expect(buttons.indexOf(apple)).toBeLessThan(buttons.indexOf(google));
+    expect(screen.getByText(strings.orByEmail)).toBeOnTheScreen();
     expect(screen.getByTestId('account-email')).toBeOnTheScreen();
   });
 
@@ -333,5 +334,42 @@ describe('«Увійти через Apple» on the SLOVO ID screen', () => {
     expect(screen.getByText(problems.refused)).toBeOnTheScreen();
     expect(appleButton()).toBeOnTheScreen();
     expect(screen.queryByTestId('account-signed-in-email')).not.toBeOnTheScreen();
+  });
+});
+
+describe('signing in with a Sign-in code on the Account screen', () => {
+  it('fills six cells from one pasted code and signs in, with the delete button below', async () => {
+    const { backend, account } = createFakeBackend();
+    await renderScreen({ backend });
+
+    await fireEvent.changeText(screen.getByTestId('account-email'), 'olena@ukr.net');
+    await settle(() => fireEvent.press(screen.getByTestId('account-send-code')));
+
+    expect(screen.getByText(fill(strings.codeSent, { email: 'olena@ukr.net' }))).toBeOnTheScreen();
+    const code = account.sentCodes[0]?.code ?? '';
+    await settle(() => fireEvent.changeText(screen.getByLabelText(strings.codeLabel), code));
+
+    expect(screen.getByTestId('account-signed-in-email')).toHaveTextContent('olena@ukr.net');
+    const buttons = screen.getAllByRole('button');
+    const signOutEverywhere = screen.getByRole('button', { name: strings.signOutEverywhere });
+    const deletion = screen.getByRole('button', { name: strings.delete.button });
+    expect(buttons.indexOf(signOutEverywhere)).toBeLessThan(buttons.indexOf(deletion));
+  });
+
+  it('draws the code typed so far in six cells', async () => {
+    await renderScreen();
+
+    await fireEvent.changeText(screen.getByTestId('account-email'), 'olena@ukr.net');
+    await settle(() => fireEvent.press(screen.getByTestId('account-send-code')));
+    await settle(() => fireEvent.changeText(screen.getByLabelText(strings.codeLabel), '12 3'));
+
+    const cells = Array.from(
+      { length: 6 },
+      (_, i): unknown =>
+        screen.getByTestId(`account-code-cell-${String(i)}`, { includeHiddenElements: true }).props[
+          'children'
+        ],
+    );
+    expect(cells).toEqual(['1', '2', '3', '', '', '']);
   });
 });
