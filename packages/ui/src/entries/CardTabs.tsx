@@ -1,9 +1,14 @@
-import type { FontSize } from '@slovo/contracts';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { FontSizeProvider, useWordTextSizes } from '../providers/FontSizeProvider';
+import {
+  FontSizeProvider,
+  smallerTextSizeStep,
+  textSizeStepKey,
+  useWordTextSizes,
+  type TextSizeStep,
+} from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { PagerScrollView } from '../primitives/VerticalPager';
 import { Wedge } from '../primitives/Wedge';
@@ -12,22 +17,15 @@ import { wholeLinesCut } from '../primitives/whole-lines-cut';
 import { blockGap, entryCardFrame, minTouchTarget, typeStyle, wedges } from '../tokens';
 import { capitalised } from './capitalised';
 
-/** The smallest font size content too tall for the card shrinks to (ADR 0091). */
-const FLOOR = 'S' satisfies FontSize;
-
-/** The step below each font size above the floor, which content too tall for the card takes. */
-const SMALLER: Readonly<Record<Exclude<FontSize, typeof FLOOR>, FontSize>> = {
-  M: 'S',
-  L: 'M',
-  XL: 'L',
-};
-
 /**
- * How content sits in the card's fixed frame: whole at a font size from the
- * user's down to the floor, or at the floor clamped to the frame under
- * «Детальніше» (ADR 0091).
+ * How content sits in the card's fixed frame: whole at a size from the
+ * user's down to the floor of its scale, or at the floor clamped to the frame
+ * under «Детальніше» (ADR 0091, 0134).
  */
-type Fit = FontSize | 'clamped';
+interface Fit {
+  readonly size: TextSizeStep;
+  readonly clamped: boolean;
+}
 
 /**
  * An Entry card's tabs under its head (ADR 0091): the selected tab's content
@@ -147,8 +145,9 @@ const SOURCE_TAB = { key: 'source', own: undefined } as const;
 
 /**
  * Content that fills the rest of an Entry card's fixed frame (ADR 0091):
- * content too tall for it takes the font size a step smaller at a time down
- * to the floor, S, and content too tall even there stays at S, clamped to the
+ * content too tall for it takes the text size a step smaller at a time down
+ * the scale in effect to its floor (S of S…XL, «Як у системі» on the ladder of
+ * ADR 0134), and content too tall even there stays at the floor, clamped to the
  * frame at whole lines, never through one, with «Детальніше» a little under
  * the last line shown (`entryCardFrame.moreGap`), inside the room: every `WholeLinesText` and `useWholeBlock` in it reports
  * its lines, and the clip ends under the lowest that fits above the link
@@ -161,8 +160,8 @@ const SOURCE_TAB = { key: 'source', own: undefined } as const;
  * they arrive, so two heights reported in one layout pass are both read. Each
  * size draws its content in a new view, which the device always lays out and
  * reports, even when the smaller size leaves the height as it was (text in a
- * fixed type role). A new `fitKey` (another tab) or font size starts at the
- * user's font size again, clamped. Its parts are `<testID>-tab-panel`,
+ * fixed type role). A new `fitKey` (another tab) or text size starts at the
+ * user's text size again, clamped. Its parts are `<testID>-tab-panel`,
  * `<testID>-tab-content` and, while clamped, `<testID>-tab-clip` and `<testID>-tab-more`, or once
  * opened, `<testID>-tab-scroll` and `<testID>-tab-less`.
  */
@@ -178,25 +177,34 @@ function FitPanel({
 }) {
   const tokens = useTokens();
   const { strings, voice } = useEdition();
-  const { step } = useWordTextSizes();
-  const [fit, setFit] = useState<{ key: string; step: FontSize; fit: Fit }>({
+  const { size } = useWordTextSizes();
+  const from = textSizeStepKey(size);
+  const [fit, setFit] = useState<{ key: string; from: string; fit: Fit }>({
     key: fitKey,
-    step,
-    fit: step,
+    from,
+    fit: { size, clamped: false },
   });
-  const fitNow = fit.key === fitKey && fit.step === step ? fit.fit : step;
+  const fitNow: Fit = fit.key === fitKey && fit.from === from ? fit.fit : { size, clamped: false };
   const [room, setRoom] = useState<number | undefined>(undefined);
-  // The drawn height counts only for the tab and font size it was drawn at.
-  const drawnAt = `${fitKey} ${step} ${fitNow}`;
+  // The drawn height counts only for the tab and text size it was drawn at.
+  const drawnAt = `${fitKey} ${from} ${textSizeStepKey(fitNow.size)}${fitNow.clamped ? ' clamped' : ''}`;
   const [drawn, setDrawn] = useState<{ at: string; height: number } | undefined>(undefined);
   // Content too tall for the room takes the next smaller size, or is clamped at the floor.
-  if (fitNow !== 'clamped' && room !== undefined && drawn?.at === drawnAt && drawn.height > room) {
-    setFit({ key: fitKey, step, fit: fitNow === FLOOR ? 'clamped' : SMALLER[fitNow] });
+  if (!fitNow.clamped && room !== undefined && drawn?.at === drawnAt && drawn.height > room) {
+    const smaller = smallerTextSizeStep(fitNow.size);
+    setFit({
+      key: fitKey,
+      from,
+      fit:
+        smaller === undefined
+          ? { size: fitNow.size, clamped: true }
+          : { size: smaller, clamped: false },
+    });
   }
   // «Детальніше» opens the tab at the size it was tapped on, until «Сховати», another tab or font size.
   const [openAt, setOpenAt] = useState<string | undefined>(undefined);
-  const open = fitNow === 'clamped' && openAt === drawnAt;
-  const clamped = fitNow === 'clamped' && !open;
+  const open = fitNow.clamped && openAt === drawnAt;
+  const clamped = fitNow.clamped && !open;
   // Clamped content shows whole lines only, «Детальніше» right under the last of them.
   const { lines, report } = useDrawnLines();
   const [linkHeight, setLinkHeight] = useState(0);
@@ -214,9 +222,7 @@ function FitPanel({
         setDrawn({ at: drawnAt, height: nativeEvent.layout.height });
       }}
     >
-      <FontSizeProvider fontSize={fitNow === 'clamped' ? FLOOR : fitNow}>
-        {children}
-      </FontSizeProvider>
+      <FontSizeProvider size={fitNow.size}>{children}</FontSizeProvider>
     </WholeLinesView>
   );
   // «Детальніше» and «Сховати» take only their line in the room, their touch target reaching past it.
@@ -244,7 +250,7 @@ function FitPanel({
   return (
     <View
       testID={`${testID}-tab-panel`}
-      style={fitNow === 'clamped' ? [styles.room, styles.linkRoom] : styles.room}
+      style={fitNow.clamped ? [styles.room, styles.linkRoom] : styles.room}
       onLayout={({ nativeEvent }) => {
         setRoom(nativeEvent.layout.height);
       }}

@@ -12,7 +12,7 @@ export { SwipeDemoStage, useGesturesDemo } from './entries/swipe-demo';
 export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
 export { NarratorVoicePicker } from './settings/NarratorVoicePicker';
-export { FontSizeProvider } from './providers/FontSizeProvider';
+export { FontSizeProvider, type TextSizeStep } from './providers/FontSizeProvider';
 export { DecorProvider } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
 export { EndOfCycleCard } from './feed/EndOfCycleCard';
