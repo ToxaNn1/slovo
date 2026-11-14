@@ -2,7 +2,7 @@ import { systemClock } from '@slovo/core';
 import { getCalendars } from 'expo-localization';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { deviceClock } from './device-clock';
+import { deviceClock, shiftDeviceClock } from './device-clock';
 
 vi.mock('expo-localization', () => ({ getCalendars: vi.fn() }));
 
@@ -67,5 +67,41 @@ describe('the device clock', () => {
   it('tells the time as the system does', () => {
     at(12345);
     expect(deviceClock.now().getTime()).toBe(Date.now());
+  });
+
+  describe('shifted by a test state link (#1859)', () => {
+    const threeDays = 3 * 24 * 60 * 60 * 1000;
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    beforeEach(() => {
+      warn.mockClear();
+    });
+    afterEach(() => {
+      shiftDeviceClock(0);
+    });
+
+    it('tells the time moved by the shift, in the same time zone', () => {
+      calendars('Europe/Kyiv');
+      shiftDeviceClock(threeDays);
+
+      expect(deviceClock.now().getTime()).toBe(Date.now() + threeDays);
+      expect(deviceClock.timeZone()).toBe('Europe/Kyiv');
+    });
+
+    it('warns that Sync may write shifted times', () => {
+      shiftDeviceClock(threeDays);
+
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0]?.[0])).toContain('shifted');
+      expect(JSON.stringify(warn.mock.calls[0])).toContain('Sync');
+    });
+
+    it('tells the system time again, with no warning, once the shift is taken back', () => {
+      shiftDeviceClock(threeDays);
+      warn.mockClear();
+      shiftDeviceClock(0);
+
+      expect(deviceClock.now().getTime()).toBe(Date.now());
+      expect(warn).not.toHaveBeenCalled();
+    });
   });
 });
