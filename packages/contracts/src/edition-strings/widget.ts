@@ -61,7 +61,7 @@ export const WidgetStringsSchema = z.strictObject({
   backgroundParchment: TextSchema,
   /** The deep blue background of the Edition's widget palette. */
   backgroundBlue: TextSchema,
-  /** The widget guide that Settings › «Як додати віджет» opens and the widget hint shows. */
+  /** The widget guide that Settings › «Віджети» opens and the widget hint shows. */
   guide: z.strictObject({
     /** The title of the screen and of the widget hint's sheet. */
     title: TextSchema,

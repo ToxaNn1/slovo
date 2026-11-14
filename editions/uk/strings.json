@@ -128,7 +128,6 @@
       "learning": "НАВЧАННЯ",
       "account": "АКАУНТ"
     },
-    "howToAddWidget": "Як додати віджет",
     "rows": {
       "notifications": "Сповіщення",
       "myMix": "Мій Мікс",
@@ -1264,12 +1263,6 @@
   },
   "notifications": {
     "title": "Сповіщення",
-    "perDay": {
-      "one": "{count} на день",
-      "few": "{count} на день",
-      "many": "{count} на день",
-      "other": "{count} на день"
-    },
     "off": "Вимкнено",
     "addTime": "+ Додати час",
     "limitHint": {
