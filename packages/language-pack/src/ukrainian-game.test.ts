@@ -258,7 +258,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
 
     expect(asked).toHaveLength(GAME_ROUNDS);
     expect(new Set(asked.map(({ answer }) => answer.id)).size).toBe(GAME_ROUNDS);
-    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 5, status: 'won' });
+    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 3, status: 'won' });
   });
 
   it("offers three Distractors of the answer's part of speech, none with the answer's Lemma", async () => {
@@ -468,7 +468,7 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     const rounds = await playCorrections(app);
 
     expect(new Set(rounds.map((round) => askedOf(round).id)).size).toBe(GAME_ROUNDS);
-    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 5, status: 'won' });
+    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 3, status: 'won' });
   });
 
   it('highlights the non-standard form where the sentence holds it as written, and nothing where it is inflected', async () => {

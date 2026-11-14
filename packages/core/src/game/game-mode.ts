@@ -110,10 +110,11 @@ export interface GameMode {
    */
   readonly alsoAsks?: readonly AskableKind[];
   /**
-   * The Lives a Game in the mode starts with: `GAME_LIVES` when left out,
-   * or none, so that a mistake never ends the Game.
+   * The Lives a Game in the mode starts with, or what reads them from the
+   * Edition at the start of a Game: the default Lives (`gameLives`) when
+   * left out, or none, so that a mistake never ends the Game.
    */
-  readonly lives?: number | 'none';
+  readonly lives?: number | 'none' | ((edition: GameEdition) => number);
   /**
    * How many Rounds a Game in the mode has, which it also needs eligible
    * Entries for: `GAME_ROUNDS` when left out, or none, so that the Game goes
@@ -127,11 +128,11 @@ export interface GameMode {
    */
   readonly takesTurns?: boolean;
   /**
-   * How long a Game in the mode lasts, in milliseconds of play: it ends when
-   * they run out, the time in the background left out. No time limit when
-   * left out.
+   * How long a Game in the mode lasts, in milliseconds of play, or what
+   * reads it from the Edition at the start of a Game: it ends when they run
+   * out, the time in the background left out. No time limit when left out.
    */
-  readonly timeLimit?: number;
+  readonly timeLimit?: number | ((edition: GameEdition) => number);
   /**
    * Whether an answer moves on to the next Round at once, with no answer
    * sheet and no «Далі»; when left out, the Round waits for «Далі».

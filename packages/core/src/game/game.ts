@@ -44,12 +44,23 @@ export type { RoundBlank } from './typed-form';
 export type { GivenAnswer, RoundAnswer } from './answer-forms';
 export type { GridCell } from './pairs-form';
 
-/** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own. */
-export const GAME_LIVES = 5;
+/** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own (ADR 0137). */
+export const GAME_LIVES = 3;
 
-/** The Lives a Game in the mode starts with; none in a mode without Lives. */
-const livesOf = ({ lives = GAME_LIVES }: GameMode): number | undefined =>
-  lives === 'none' ? undefined : lives;
+/** The default Lives with `gameThreeLives` off, as before the Games boards. */
+const GAME_LIVES_SWITCHED_OFF = 5;
+
+/** The Lives a Game in the mode starts with, read at its start; none in a mode without Lives. */
+function livesOf({ lives }: GameMode, edition: GameEdition): number | undefined {
+  if (lives === 'none') return undefined;
+  if (typeof lives === 'function') return lives(edition);
+  if (lives !== undefined) return lives;
+  return edition.isFeatureEnabled('gameThreeLives') ? GAME_LIVES : GAME_LIVES_SWITCHED_OFF;
+}
+
+/** The time limit of a Game in the mode, read at its start; none in a mode without one. */
+const timeLimitOf = ({ timeLimit }: GameMode, edition: GameEdition): number | undefined =>
+  typeof timeLimit === 'function' ? timeLimit(edition) : timeLimit;
 
 /**
  * A Round as the reader plays it, in its answer form, the right answer kept
@@ -154,7 +165,7 @@ interface GameRounds {
   readonly roundsPassed: number;
   /** The mode's Round limit (`GAME_ROUNDS` by default); none in a mode without one. */
   readonly roundLimit: number | undefined;
-  /** The Lives left, from the mode's Lives (`GAME_LIVES` by default) to 0; none in a mode without Lives. */
+  /** The Lives left, from the Lives the Game started with to 0; none in a mode without Lives. */
   readonly lives: number | undefined;
   /** The mode's Lives, which the Game starts with; none in a mode without Lives. */
   readonly livesAtStart: number | undefined;
@@ -253,12 +264,15 @@ function roundOf(
  */
 function createGameInPlay({
   mode,
+  lives,
   rounds: planned,
   planRounds,
   eligible: eligibleAtStart,
   comparison,
 }: {
   mode: GameMode;
+  /** The Lives the Game starts with, which it keeps however the Edition changes; none without Lives. */
+  lives: number | undefined;
   /** The Rounds the Game starts over, as the mode planned them. */
   rounds: readonly PlannedRound[];
   planRounds: RoundPlanner;
@@ -321,8 +335,8 @@ function createGameInPlay({
       round: roundOf(first, 1, [], 0),
       roundsPassed: 0,
       roundLimit,
-      lives: livesOf(mode),
-      livesAtStart: livesOf(mode),
+      lives,
+      livesAtStart: lives,
       played: [],
       status: 'playing',
     },
@@ -756,12 +770,20 @@ export async function openGame({
     const modesNow = sameOffers(offers, state.modes) ? state.modes : offers;
     played =
       'rounds' in plan
-        ? createGameInPlay({ mode, rounds: plan.rounds, planRounds, eligible, comparison })
+        ? createGameInPlay({
+            mode,
+            lives: livesOf(mode, edition),
+            rounds: plan.rounds,
+            planRounds,
+            eligible,
+            comparison,
+          })
         : undefined;
     stopTime();
+    const timeLimit = timeLimitOf(mode, edition);
     const first =
-      played && mode.timeLimit !== undefined
-        ? { ...played.first, timeLimit: mode.timeLimit, time: runTime(mode.timeLimit) }
+      played && timeLimit !== undefined
+        ? { ...played.first, timeLimit, time: runTime(timeLimit) }
         : played?.first;
     change({ ...state, modes: modesNow, current: first, widgetHint: false });
     if (first === undefined) return;

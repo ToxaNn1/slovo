@@ -224,7 +224,7 @@ describe('a Round of «За літерами»', () => {
       });
       expect(round.answer).toMatchObject({ form: 'typed', expected: lemma, right: true });
     }
-    expect(current(app)).toMatchObject({ lives: 5, status: 'won' });
+    expect(current(app)).toMatchObject({ lives: 3, status: 'won' });
   });
 
   it('keeps an apostrophe and a hyphen in place, never a blank', async () => {
@@ -292,7 +292,7 @@ describe('a Round of «За літерами»', () => {
     await app.game.answer({ form: 'typed', text: ' ПІ́Р’Я ' });
 
     expect(current(app).round.answer).toMatchObject({ right: true });
-    expect(current(app).lives).toBe(5);
+    expect(current(app).lives).toBe(3);
   });
 
   it('costs a Life for a wrong Word, marks it «Не знаю», moves no Review and lists the text typed', async () => {
@@ -306,7 +306,7 @@ describe('a Round of «За літерами»', () => {
       expected: 'кобза',
       right: false,
     });
-    expect(current(app).lives).toBe(4);
+    expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(idOf('кобза'))).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
     expect(buildGameReview(current(app).played)[0]).toMatchObject({
@@ -352,7 +352,7 @@ describe('«Відкрити літеру» in «За літерами»', () =>
 
     await app.game.answer({ form: 'typed', text: 'пірʼя' });
     expect(current(app).round.answer).toMatchObject({ right: true });
-    expect(current(app).lives).toBe(5);
+    expect(current(app).lives).toBe(3);
     expect(buildGameReview(current(app).played)[0]).toMatchObject({ right: true });
   });
 

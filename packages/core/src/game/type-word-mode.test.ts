@@ -234,7 +234,7 @@ describe('a Round of «Впиши слово»', () => {
         right: true,
       });
     }
-    expect(current(app)).toMatchObject({ lives: 5, status: 'won' });
+    expect(current(app)).toMatchObject({ lives: 3, status: 'won' });
   });
 
   it('marks the non-standard form where the sentence holds it in other case', async () => {
@@ -259,7 +259,7 @@ describe('a Round of «Впиши слово»', () => {
     await app.game.answer({ form: 'typed', text: ' ПІ́Р’Я ' });
 
     expect(current(app).round.answer).toMatchObject({ right: true });
-    expect(current(app).lives).toBe(5);
+    expect(current(app).lives).toBe(3);
   });
 
   it('costs a Life for a wrong form and shows the standard form with the explanation', async () => {
@@ -278,7 +278,7 @@ describe('a Round of «Впиши слово»', () => {
         explanation: 'Why surzhyk01 reads better.',
       },
     });
-    expect(current(app).lives).toBe(4);
+    expect(current(app).lives).toBe(2);
   });
 
   it('marks the Correction of a wrong form «Не знаю», moves no Review and lists the text typed', async () => {

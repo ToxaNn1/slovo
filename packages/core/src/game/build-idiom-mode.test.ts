@@ -289,7 +289,7 @@ describe('a Round of «Склади вислів»', () => {
     await app.game.answer({ form: 'chips', chips: wrong });
 
     expect(current(app).round.answer).toMatchObject({ form: 'chips', chosen: wrong, right: false });
-    expect(current(app).lives).toBe(4);
+    expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(idOf(asked))).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
     const tapped = wrong.map((place) => chipsOf(current(app).round)[place]).join(' ');

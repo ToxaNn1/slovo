@@ -179,9 +179,31 @@ describe('«На час» on offer', () => {
 });
 
 describe('a Game of «На час»', () => {
-  it('lasts 60 seconds of play, with no Lives, and asks Definition picks of Words', async () => {
+  it('lasts 20 seconds of play and ends `time-up` after them', async () => {
     const time = handTime();
     const app = await run({ time });
+    await app.game.start('timed');
+
+    expect(current(app)).toMatchObject({
+      status: 'playing',
+      timeLimit: 20_000,
+      time: { left: 20_000, endsAt: new Date(time.clock.now().getTime() + 20_000) },
+    });
+
+    await pick(app, true);
+    await pass(app, time, 19_999);
+
+    expect(current(app).status).toBe('playing');
+
+    await pass(app, time, 1);
+
+    expect(current(app)).toMatchObject({ status: 'time-up', time: { left: 0, endsAt: undefined } });
+    expect(app.game.state.current?.end).toMatchObject({ kind: 'time-up', right: 1, played: 1 });
+  });
+
+  it('lasts 60 seconds of play with timedTwentySeconds off, with no Lives, and asks Definition picks of Words', async () => {
+    const time = handTime();
+    const app = await run({ time, off: ['timedTwentySeconds'] });
     await app.game.start('timed');
 
     expect(current(app)).toMatchObject({
@@ -240,7 +262,7 @@ describe('a Game of «На час»', () => {
 
   it('stops its clock while paused in the background and runs it again on resume', async () => {
     const time = handTime();
-    const app = await run({ time });
+    const app = await run({ time, off: ['timedTwentySeconds'] });
     await app.game.start('timed');
     await pass(app, time, 20_000);
 

@@ -80,7 +80,11 @@ const never = { subscribe: () => () => undefined };
  * The Game opened over the mode and the eligible Words, with `eligibleNow`
  * to change them as a hide, a restore or a Mix change does.
  */
-async function open(gameMode: GameMode, eligibleAtStart: readonly Word[] = words) {
+async function open(
+  gameMode: GameMode,
+  eligibleAtStart: readonly Word[] = words,
+  edition = testEdition(),
+) {
   let eligible: EligibleOfKind<AskableEntry> = { entries: eligibleAtStart };
   const eligibility = createSubject<undefined>();
   const time = fakeClock();
@@ -97,7 +101,7 @@ async function open(gameMode: GameMode, eligibleAtStart: readonly Word[] = words
     });
   }
   const game = await openGame({
-    edition: testEdition(),
+    edition,
     comparison: testComparison,
     entries: { eligibleOfKind },
     history: { list: [] },
@@ -208,6 +212,46 @@ describe('the Rounds of a Game in play', () => {
     });
   });
 
+  it('starts with 3 Lives and ends on the third wrong answer', async () => {
+    const { game } = await start(pick);
+
+    expect(now(game)).toMatchObject({ lives: 3, livesAtStart: 3 });
+
+    const { over } = await playOut(game, [2, 4, 7]);
+
+    expect(over).toMatchObject({ roundsPassed: 6, lives: 0, status: 'lost' });
+  });
+
+  it('starts with 5 Lives with gameThreeLives off', async () => {
+    const edition = testEdition({ isFeatureEnabled: (feature) => feature !== 'gameThreeLives' });
+    const { game } = await open(mode(pick), words, edition);
+    await game.start('test');
+
+    expect(now(game)).toMatchObject({ lives: 5, livesAtStart: 5 });
+
+    const { over } = await playOut(game, [1, 2, 3, 4]);
+
+    expect(over).toMatchObject({ roundsPassed: GAME_ROUNDS, lives: 1, status: 'won' });
+  });
+
+  it('keeps the Lives it started with when gameThreeLives turns off in play', async () => {
+    let threeLives = true;
+    const edition = testEdition({
+      isFeatureEnabled: (feature) => feature !== 'gameThreeLives' || threeLives,
+    });
+    const { game } = await open(mode(pick), words, edition);
+    await game.start('test');
+
+    threeLives = false;
+    const { over } = await playOut(game, [1, 2, 3]);
+
+    expect(over).toMatchObject({ roundsPassed: 2, lives: 0, livesAtStart: 3, status: 'lost' });
+
+    await game.start('test');
+
+    expect(now(game)).toMatchObject({ lives: 5, livesAtStart: 5 });
+  });
+
   it('starts no Game when the mode makes fewer Rounds than a Game has, and its offer says why', async () => {
     const { game } = await open(mode(pick), words.slice(0, GAME_ROUNDS - 1));
 
@@ -264,15 +308,15 @@ describe('the Rounds of a Game in play', () => {
 
   it('is won after the 15th Round with mistakes, as long as a Life is left', async () => {
     const { game } = await start(pick);
-    const { over } = await playOut(game, [2, 6, 7, 15]);
+    const { over } = await playOut(game, [7, 15]);
 
     expect(over).toMatchObject({ roundsPassed: 15, lives: 1, status: 'won' });
   });
 
-  it.each([5, 9, 15])(
-    'is lost when the fifth Life goes in Round %i, which is not counted as passed',
+  it.each([3, 9, 15])(
+    'is lost when the third Life goes in Round %i, which is not counted as passed',
     async (lastRound) => {
-      const wrong = [4, 3, 2, 1, 0].map((before) => lastRound - before);
+      const wrong = [2, 1, 0].map((before) => lastRound - before);
       const { game } = await start(pick);
 
       const { over, rounds } = await playOut(game, wrong);
@@ -282,14 +326,14 @@ describe('the Rounds of a Game in play', () => {
     },
   );
 
-  it('ends a Game that lost its fifth Life only on «Далі»: the answered Round stays until then', async () => {
+  it('ends a Game that lost its third Life only on «Далі»: the answered Round stays until then', async () => {
     const { game } = await start(pick);
-    for (let round = 1; round <= 4; round += 1) await play(game, false);
+    for (let round = 1; round <= 2; round += 1) await play(game, false);
 
     const answered = await answer(game, pickAnswer(false));
 
-    expect(answered).toMatchObject({ lives: 0, roundsPassed: 4, status: 'answered' });
-    expect(await next(game)).toMatchObject({ lives: 0, roundsPassed: 4, status: 'lost' });
+    expect(answered).toMatchObject({ lives: 0, roundsPassed: 2, status: 'answered' });
+    expect(await next(game)).toMatchObject({ lives: 0, roundsPassed: 2, status: 'lost' });
   });
 
   it('takes no answer and no «Далі» once the Game is over', async () => {
@@ -318,15 +362,13 @@ describe('the Rounds of a Game in play', () => {
 
   it('lists the Round that cost the last Life as the last played Round of a lost Game', async () => {
     const { game } = await start(pick);
-    const { over } = await playOut(game, [1, 2, 3, 4, 5]);
+    const { over } = await playOut(game, [1, 2, 3]);
 
     expect(over.status).toBe('lost');
     expect(over.played.map(({ number, right }) => [number, right])).toEqual([
       [1, false],
       [2, false],
       [3, false],
-      [4, false],
-      [5, false],
     ]);
   });
 
