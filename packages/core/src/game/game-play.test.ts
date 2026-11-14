@@ -109,6 +109,8 @@ async function open(gameMode: GameMode, eligibleAtStart: readonly Word[] = words
     xp: {
       award: () => ({ changes: new Map(), amount: 0, commit: () => undefined }),
       answeredWrong: () => ({ changes: new Map(), commit: () => undefined }),
+      resetMarker: undefined,
+      subscribe: () => () => undefined,
     },
     userState: { read: () => Promise.resolve(undefined), write: () => Promise.resolve() },
     clock: time.clock,

@@ -9,6 +9,7 @@ import { SegmentedControl, type Segment } from '../primitives/SegmentedControl';
 import { Switch } from '../primitives/Switch';
 import {
   minTouchTarget,
+  onFill,
   settingsRowDrawing,
   sliderDrawing,
   space,
@@ -407,6 +408,55 @@ export function SoonRow({
 }
 
 /** A slider's track and thumb, drawn only, for the row that waits for its version. */
+/** The cross on a destructive card's tile (design `SlovoApp`, the reset button), on a 20 × 20 box. */
+const CROSS = '0,3 3,0 10,7 17,0 20,3 13,10 20,17 17,20 10,13 3,20 0,17 7,10';
+
+/**
+ * A card of its own for a single destructive action, under the groups: a
+ * cross on a destructive tile and the label, centred.
+ */
+export function SettingsActionCard({
+  label,
+  testID,
+  onPress,
+}: {
+  label: string;
+  testID?: string;
+  onPress: () => void;
+}) {
+  const look = useRowLook();
+  const { colors, radii } = look.tokens;
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      {...look.voice}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.row,
+        styles.actionCard,
+        {
+          backgroundColor: pressed ? colors.surfaceSunken : colors.surface,
+          borderColor: colors.line,
+          borderRadius: radii.card,
+        },
+      ]}
+    >
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={[styles.iconTile, { backgroundColor: colors.destructive }]}
+      >
+        <Svg width={settingsRowDrawing.icon} height={settingsRowDrawing.icon} viewBox="0 0 20 20">
+          <Polygon points={CROSS} fill={onFill} />
+        </Svg>
+      </View>
+      <Text style={look.label}>{label}</Text>
+    </Pressable>
+  );
+}
+
 function SliderTrack() {
   const { colors } = useTokens();
   return (
@@ -451,6 +501,7 @@ const styles = StyleSheet.create({
     gap: space[2],
   },
   soonLine: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  actionCard: { justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth },
   grow: { flex: 1 },
   trailing: { flexShrink: 1, textAlign: 'right' },
   soonText: { flex: 1 },

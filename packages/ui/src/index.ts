@@ -125,6 +125,7 @@ export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
 export {
   ChoiceRow,
   NavigationRow,
+  SettingsActionCard,
   SettingsGroup,
   SettingsRow,
   SoonRow,

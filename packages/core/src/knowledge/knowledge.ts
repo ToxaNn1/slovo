@@ -167,6 +167,8 @@ export interface Knowledge {
    */
   confirm(entryId: string): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
+  /** The confirmed Entries counted in `state`, confirmed after the instant: what a Badge counts after a Progress reset (ADR 0133). */
+  confirmedAfter(at: string): number;
   subscribe(listener: () => void): () => void;
 }
 
@@ -235,8 +237,8 @@ export async function openKnowledge({
 }): Promise<Knowledge> {
   const { knowledge, confirmed: confirmedRecords, reviewAnswered: reviewDays } = userStateRecords;
   let records: ReadonlyMap<string, KnowledgeRecord> = await userState.list(knowledge);
-  /** The confirmed Entries' ids; the instant of each is kept for the Badges' dates. */
-  let confirmed: ReadonlySet<string> = new Set((await userState.list(confirmedRecords)).keys());
+  /** The confirmed Entries' ids, each with the instant it was confirmed, which the Badges count after a Progress reset. */
+  let confirmed: ReadonlyMap<string, string> = await userState.list(confirmedRecords);
   const inTurn = createInTurn();
   /** The last set, while it can be undone: the Entry, its record before and whether the set confirmed it. */
   let undoable:
@@ -245,7 +247,7 @@ export async function openKnowledge({
   let reviewedOn: ReadonlyMap<string, string> = await userState.list(reviewDays);
   const subscribers = createSubscribers();
   /** The row of each marked or confirmed Entry the Language Pack has, so the state needs no read. */
-  const rowOf = new Map(await rows.rows([...records.keys(), ...confirmed]));
+  const rowOf = new Map(await rows.rows([...records.keys(), ...confirmed.keys()]));
 
   /** Reads the Entry's row, once. */
   async function readRow(entryId: string): Promise<void> {
@@ -258,7 +260,7 @@ export async function openKnowledge({
   function confirmedOf(had: ConfirmedCounts): ConfirmedCounts {
     let total = 0;
     const byRarity: Record<Rarity, number> = { ...noneConfirmed.byRarity };
-    for (const entryId of confirmed) {
+    for (const entryId of confirmed.keys()) {
       const row = rowOf.get(entryId);
       if (row === undefined) continue;
       total += 1;
@@ -361,8 +363,10 @@ export async function openKnowledge({
     if (record === undefined) changed.delete(entryId);
     else changed.set(entryId, record);
     records = changed;
-    if (confirming === 'add') confirmed = new Set([...confirmed, entryId]);
-    if (confirming === 'remove') confirmed = new Set([...confirmed].filter((id) => id !== entryId));
+    if (confirming === 'add')
+      confirmed = new Map([...confirmed, [entryId, clock.now().toISOString()]]);
+    if (confirming === 'remove')
+      confirmed = new Map([...confirmed].filter(([id]) => id !== entryId));
     follow();
   }
 
@@ -426,7 +430,7 @@ export async function openKnowledge({
       await readRow(entryId);
       await userState.write(confirmation(entryId));
       undoable = undefined;
-      confirmed = new Set([...confirmed, entryId]);
+      confirmed = new Map([...confirmed, [entryId, clock.now().toISOString()]]);
       follow();
     });
 
@@ -485,6 +489,12 @@ export async function openKnowledge({
         canUndo: false,
       }),
     confirm,
+    confirmedAfter(at) {
+      if (!edition.isFeatureEnabled('confirmedEntries')) return 0;
+      let total = 0;
+      for (const [entryId, when] of confirmed) if (when > at && rowOf.has(entryId)) total += 1;
+      return total;
+    },
     subscribe: subscribers.subscribe,
   };
 }

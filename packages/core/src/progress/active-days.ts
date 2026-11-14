@@ -72,7 +72,7 @@ export async function openActiveDays({
   edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: UserState;
   clock: Clock;
-  xpLog: Pick<XpLog, 'days' | 'freeze' | 'subscribe'>;
+  xpLog: Pick<XpLog, 'days' | 'freeze' | 'subscribe' | 'resetMarker'>;
   analytics: Pick<Analytics, 'track'>;
 }): Promise<ActiveDays> {
   const xpOn = edition.isFeatureEnabled('xpLog');
@@ -82,7 +82,9 @@ export async function openActiveDays({
   const inTurn = createInTurn();
 
   function daysOf(): ReadonlySet<string> {
-    const days = new Set(recorded);
+    // A day recorded on or before the latest Progress reset counts no more (ADR 0133).
+    const resetOn = xpLog.resetMarker?.date;
+    const days = new Set([...recorded].filter((date) => resetOn === undefined || date > resetOn));
     for (const date of xpLog.days.active) days.add(date);
     return days;
   }

@@ -590,3 +590,44 @@ describe('Settings › Значки', () => {
     expect(screen.queryByTestId('settings-row-badges')).not.toBeOnTheScreen();
   });
 });
+
+describe('Settings › «Скинути прогрес»', () => {
+  const reset = editionStrings.settings.progressReset;
+
+  /** Settings over a composition whose XP log holds the XP of one Daily Crossword. */
+  async function renderWithXp() {
+    const composition = await testShell().composition.opened();
+    composition.xpLog.award({ source: 'daily-crossword', date: '2026-10-13' }).commit();
+    expect(composition.xpLog.state.total).toBeGreaterThan(0);
+    await renderSettings({ progressReset: true }, undefined, composition);
+    return composition;
+  }
+
+  it('resets the progress from «СКИНУТИ» in its sheet and says that the words are kept', async () => {
+    const composition = await renderWithXp();
+
+    await fireEvent.press(screen.getByRole('button', { name: reset.button }));
+    expect(screen.getByText(reset.title)).toBeOnTheScreen();
+    expect(screen.getByText(reset.message)).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: reset.confirm }));
+
+    expect(await screen.findByText(reset.done)).toBeOnTheScreen();
+    expect(composition.xpLog.state.total).toBe(0);
+  });
+
+  it('changes nothing from «СКАСУВАТИ»', async () => {
+    const composition = await renderWithXp();
+    const total = composition.xpLog.state.total;
+
+    await fireEvent.press(screen.getByRole('button', { name: reset.button }));
+    await fireEvent.press(screen.getByRole('button', { name: reset.cancel }));
+
+    expect(composition.xpLog.state.total).toBe(total);
+  });
+
+  it('has no button while the Edition turns the Progress reset off', async () => {
+    await renderSettings({ progressReset: false });
+
+    expect(screen.queryByRole('button', { name: reset.button })).toBeNull();
+  });
+});
