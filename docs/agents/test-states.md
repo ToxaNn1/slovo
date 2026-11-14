@@ -24,7 +24,16 @@ Each state is built from the declared user-state records of the Core (`changesOf
 | `crossword-solved`     | `slovo://dev/state/crossword-solved`     | Today's Daily Crossword solved.                                                                |
 | `crossword-7-in-a-row` | `slovo://dev/state/crossword-7-in-a-row` | Daily Crosswords solved the last 7 days in a row, today included.                              |
 
+## Shifting the day
+
+`?day=` on a test state link moves the device clock's local day before the state is built, keeping the time of day, so a day-bound screen (the Weekly Recap on a Monday) shows on any day (#1859):
+
+- `?day=<weekday>`, such as `slovo://dev/state/weekly-recap?day=monday`: the next such weekday, today included.
+- `?day=<YYYY-MM-DD>`, such as `slovo://dev/state/fresh?day=2026-12-31`: that date, past or future.
+
+Every test state link without `?day=` takes the shift back to the system day; a day that is neither form logs a warning and shifts nothing. The bare `slovo://dev/state?day=monday` shifts the day and loads no state. While shifted, a warning says Sync may write shifted times: shifted records reach the Account when signed in. The shift lives in memory and is set again from the link the app reopens with after the reload; a cold start without the link runs on the system day. A production build ignores the parameter: its device clock tells the system time (`apps/mobile/src/user-state/test-state-bundle.test.ts`). Code: `dayShiftOf` in `apps/mobile/src/user-state/test-states.ts`, `shiftDeviceClock` in `apps/mobile/src/device/device-clock.ts`.
+
 Limits:
 
-- `weekly-recap`: the Weekly Recap shows on a local Monday only (ADR 0054); on another day the state holds last week but no Recap shows.
+- `weekly-recap`: the Weekly Recap shows on a local Monday only (ADR 0054); on another day the state holds last week but no Recap shows, unless the link adds `?day=monday`.
 - `crossword-solved`, `crossword-7-in-a-row`: the solves are XP log records only, so the crossing Daily Crossword's card (ADR 0087) reads solved while its grid opens empty; the traced Daily Crossword (ADR 0073) starts with no Word found.

@@ -4,6 +4,9 @@ import {
   dateKeyOf,
   localDateAfter,
   localDayOf,
+  localTimeOf,
+  parseLocalDate,
+  todayDate,
   totalFor,
   type Clock,
   type ContentReadPort,
@@ -71,6 +74,55 @@ type KnowledgeRecord = UserStateFact<'knowledge'>[string];
 
 const ENTRY_KINDS: readonly EntryKind[] = ['word', 'correction', 'idiom', 'synonymRow', 'tip'];
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const MINUTES_IN_DAY = 24 * 60;
+
+/** The minute of the local day an instant falls on, in the clock's time zone. */
+function minuteOfDay(instant: Date, clock: Clock): number {
+  const { hour, minute } = localTimeOf(instant, clock);
+  return hour * 60 + minute;
+}
+
+/** The local days from today to the `?day=` value, or undefined for a value that is no day. */
+function daysTo(day: string, clock: Clock): number | undefined {
+  const today = todayDate(clock);
+  const weekday = WEEKDAYS.indexOf(day.toLowerCase());
+  if (weekday !== -1) {
+    const todayWeekday = new Date(Date.UTC(today.year, today.month - 1, today.day)).getUTCDay();
+    return (weekday - todayWeekday + 7) % 7;
+  }
+  const date = parseLocalDate(day);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || dateKeyOf(localDateAfter(date, 0)) !== day) {
+    return undefined;
+  }
+  const dayOf = ({ year, month, day }: typeof date) => Date.UTC(year, month - 1, day) / DAY_MS;
+  return dayOf(date) - dayOf(today);
+}
+
+/**
+ * The shift, in milliseconds, a test state link's `?day=` asks of the
+ * device clock (#1859): to the next such weekday, today included
+ * (`?day=monday`), or to a date (`?day=2026-12-31`). The local day moves
+ * and the time of day stays, across a change of the clocks too. Unknown
+ * for a value that is neither; undefined without the parameter.
+ */
+export function dayShiftOf(
+  link: string,
+  clock: Clock,
+): { readonly shift: number } | 'unknown' | undefined {
+  const value = /\?(?:[^#]*&)?day=([^&#]*)/.exec(link)?.[1];
+  if (value === undefined) return undefined;
+  const days = daysTo(value, clock);
+  if (days === undefined) return 'unknown';
+  const now = clock.now();
+  const byDays = days * DAY_MS;
+  // A change of the clocks between the two days moves the time of day; this takes it back.
+  let drift = minuteOfDay(now, clock) - minuteOfDay(new Date(now.getTime() + byDays), clock);
+  if (drift > MINUTES_IN_DAY / 2) drift -= MINUTES_IN_DAY;
+  if (drift < -MINUTES_IN_DAY / 2) drift += MINUTES_IN_DAY;
+  return { shift: byDays + drift * 60 * 1000 };
+}
 
 /** The days, instants and record builders of one test state, all from the clock. */
 function calendarOf(clock: Clock) {
