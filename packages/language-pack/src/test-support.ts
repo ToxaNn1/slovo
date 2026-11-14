@@ -1,11 +1,17 @@
-import { readFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+
+import { checksumOf } from '@slovo/content-rules';
 
 import type { ContentSnapshot } from '@slovo/contracts/api';
 import { loadEdition } from '@slovo/core';
 
 import { buildFromSnapshot, type BuildResult } from './build';
-import { EDITIONS_DIR, openEdition } from './edition-folder';
+import { crosswordDaysChecksum } from './crossword-days';
+import { CROSSWORD_DAYS_FILE, EDITIONS_DIR, openEdition } from './edition-folder';
+import { MANIFEST_FILE } from './content-manifest';
+import { ID_REGISTRY_FILE } from './id-registry';
+import { readEditionWithSnapshot } from './read-edition';
 import { readSnapshotFile } from './snapshot-source';
 
 // Helpers the Language Pack tests share. No module of the package imports them.
@@ -33,6 +39,57 @@ export function buildUkrainianPack(outFile: string): BuildResult {
     snapshot: ukrainianSnapshot(),
     outFile,
   });
+}
+
+/** The folder of an Edition's content each kind of record of a snapshot is authored in. */
+const CONTENT_FOLDERS = {
+  words: 'content/words',
+  idioms: 'content/idioms',
+  corrections: 'content/corrections',
+  tips: 'content/tips',
+  synonymRows: 'content/synonym-rows',
+  curatedCollections: 'content/curated-collections',
+} as const;
+
+/**
+ * A copy of the UA Edition's folder under `dir` whose content folder holds the
+ * seed snapshot's records and crossword days, recorded at its content
+ * version: for the tests of what still reads an Edition folder (`--record`,
+ * the Daily Crossword), so that none reads the Edition's own content folder.
+ */
+export function ukrainianSeedFolder(dir: string): string {
+  const editionDir = join(dir, 'uk');
+  const skipped = new Set(
+    ['content', 'dist', 'seed-snapshot.json'].map((name) => join(ukrainianFolder.dir, name)),
+  );
+  cpSync(ukrainianFolder.dir, editionDir, {
+    recursive: true,
+    filter: (from) => !skipped.has(from),
+  });
+  const snapshot = ukrainianSnapshot();
+  const writeJson = (file: string, value: unknown) => {
+    writeFileSync(join(editionDir, file), `${JSON.stringify(value, null, 2)}\n`);
+  };
+  const ids: string[] = [];
+  for (const [kind, folder] of Object.entries(CONTENT_FOLDERS)) {
+    mkdirSync(join(editionDir, folder), { recursive: true });
+    for (const record of snapshot[kind as keyof typeof CONTENT_FOLDERS]) {
+      // A content file names no kind: its folder does.
+      const file = Object.fromEntries(Object.entries(record).filter(([key]) => key !== 'kind'));
+      writeJson(join(folder, `${record.id}.json`), file);
+      ids.push(record.id);
+    }
+  }
+  writeJson(CROSSWORD_DAYS_FILE, snapshot.crosswordDays);
+  writeJson(ID_REGISTRY_FILE, ids.toSorted());
+  const read = readEditionWithSnapshot(editionDir, snapshot, { today: new Date() });
+  if (read.valid === undefined) throw new Error('The seed snapshot does not read');
+  writeJson(MANIFEST_FILE, {
+    contentVersion: snapshot.contentVersion,
+    contentChecksum: checksumOf(read.valid.content),
+    crosswordDaysChecksum: crosswordDaysChecksum(snapshot.crosswordDays),
+  });
+  return editionDir;
 }
 
 /**
