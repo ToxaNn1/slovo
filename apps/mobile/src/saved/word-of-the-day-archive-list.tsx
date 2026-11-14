@@ -1,12 +1,13 @@
 import { MascotIn } from '@/mascot/mascot';
 import { dateKeyOf, type WordOfTheDayArchiveDay } from '@slovo/core';
-import { EmptyState, EntryRow, space } from '@slovo/ui';
+import { EmptyState, EntryRow, space, useListScroll } from '@slovo/ui';
 import { FlatList, StyleSheet } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
 import type { ListHeader } from '@/saved/list-header';
 import { useWordOfTheDayArchive } from '@/saved/word-of-the-day-archive';
+import { ListTopButton } from '@/shell/list-top';
 
 const { wordOfTheDayArchive: strings } = editionStrings;
 
@@ -18,36 +19,43 @@ const { wordOfTheDayArchive: strings } = editionStrings;
 export function WordOfTheDayArchiveList({ header }: { header: ListHeader }) {
   const days = useWordOfTheDayArchive();
   const openScreen = useOpenScreen();
+  const scroll = useListScroll<FlatList<WordOfTheDayArchiveDay>>();
+  const { list: listRef, onScroll: onListScroll } = scroll;
 
   return (
-    <FlatList<WordOfTheDayArchiveDay>
-      testID="words-of-the-day"
-      data={days}
-      keyExtractor={({ date }) => dateKeyOf(date)}
-      renderItem={({ item }) => (
-        <EntryRow
-          compact
-          row={item.row}
-          leading={item.dateLabel}
-          onPress={() => {
-            openScreen(`/saved/words-of-the-day/${item.row.entryId}`);
-          }}
-          testID={`words-of-the-day-row-${dateKeyOf(item.date)}`}
-        />
-      )}
-      ListHeaderComponent={header(null)}
-      ListEmptyComponent={
-        days === undefined ? undefined : (
-          <EmptyState
-            mascot={<MascotIn state="empty" />}
-            testID="words-of-the-day-empty"
-            title={strings.empty.title}
-            message={strings.empty.message}
+    <>
+      <FlatList<WordOfTheDayArchiveDay>
+        ref={listRef}
+        onScroll={onListScroll}
+        testID="words-of-the-day"
+        data={days}
+        keyExtractor={({ date }) => dateKeyOf(date)}
+        renderItem={({ item }) => (
+          <EntryRow
+            compact
+            row={item.row}
+            leading={item.dateLabel}
+            onPress={() => {
+              openScreen(`/saved/words-of-the-day/${item.row.entryId}`);
+            }}
+            testID={`words-of-the-day-row-${dateKeyOf(item.date)}`}
           />
-        )
-      }
-      contentContainerStyle={styles.content}
-    />
+        )}
+        ListHeaderComponent={header(null)}
+        ListEmptyComponent={
+          days === undefined ? undefined : (
+            <EmptyState
+              mascot={<MascotIn state="empty" />}
+              testID="words-of-the-day-empty"
+              title={strings.empty.title}
+              message={strings.empty.message}
+            />
+          )
+        }
+        contentContainerStyle={styles.content}
+      />
+      <ListTopButton scroll={scroll} overTabBar />
+    </>
   );
 }
 

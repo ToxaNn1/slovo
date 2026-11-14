@@ -5,6 +5,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import type { ListScroll } from '../primitives/ScrollToTop';
 import { useCascade } from '../primitives/useCascade';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
@@ -47,6 +48,7 @@ export function CategoryGrid({
   header,
   empty,
   onOpen,
+  scroll,
   testID,
 }: {
   title: string;
@@ -64,6 +66,8 @@ export function CategoryGrid({
   /** What shows while there are no tiles. */
   empty?: ReactElement | undefined;
   onOpen: (id: string) => void;
+  /** The grid's scroll, for its «Нагору» button. */
+  scroll?: ListScroll<FlatList<GridTile>> | undefined;
   testID: string;
 }) {
   const tokens = useTokens();
@@ -72,6 +76,8 @@ export function CategoryGrid({
   const width = columnWidth[columns];
   return (
     <FlatList<GridTile>
+      ref={scroll?.list}
+      onScroll={scroll?.onScroll}
       testID={testID}
       data={tiles}
       keyExtractor={({ id }) => id}

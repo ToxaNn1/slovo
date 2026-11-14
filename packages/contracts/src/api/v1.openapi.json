@@ -9062,6 +9062,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "scrollToTop": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -9196,7 +9204,8 @@
                         "collectionBoardStyle",
                         "profileConfirmedByRarity",
                         "profileGameBest",
-                        "forceUpdate"
+                        "forceUpdate",
+                        "scrollToTop"
                       ]
                     },
                     "rules": {
@@ -10829,6 +10838,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "scrollToTop": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -10963,7 +10980,8 @@
                         "collectionBoardStyle",
                         "profileConfirmedByRarity",
                         "profileGameBest",
-                        "forceUpdate"
+                        "forceUpdate",
+                        "scrollToTop"
                       ]
                     },
                     "rules": {
@@ -12527,6 +12545,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "scrollToTop": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -12661,7 +12687,8 @@
                         "collectionBoardStyle",
                         "profileConfirmedByRarity",
                         "profileGameBest",
-                        "forceUpdate"
+                        "forceUpdate",
+                        "scrollToTop"
                       ]
                     },
                     "rules": {

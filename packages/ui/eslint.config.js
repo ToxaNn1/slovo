@@ -87,6 +87,8 @@ export default [
       'src/primitives/FlyingText.tsx',
       'src/primitives/Mascot.tsx',
       'src/primitives/ScreenEnter.tsx',
+      'src/primitives/ScrollToTop.tsx',
+      'src/primitives/ScrollToTop.test.tsx',
       'src/primitives/PressedTile.tsx',
       'src/primitives/SwipeableRow.tsx',
       'src/primitives/Switch.tsx',

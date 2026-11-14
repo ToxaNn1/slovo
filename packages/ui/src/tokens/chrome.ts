@@ -14,6 +14,20 @@ export const tabBar = {
   indicator: { width: 34, height: 6, top: -9, skewX: '-24deg' },
 } as const;
 
+/**
+ * The «Нагору» button over a long list: an ink tile like the board's back
+ * tile, `right` and `bottom` points from the list's corner (above the tab bar
+ * or the home indicator), shown once the list is `showAfter` points down.
+ */
+export const scrollToTopButton = {
+  side: 48,
+  radius: 14,
+  icon: 20,
+  right: 16,
+  bottom: 16,
+  showAfter: 600,
+} as const;
+
 /** The padding of a label chip, by density. */
 export const labelChipPadding = {
   tight: { horizontal: 7, vertical: 3 },

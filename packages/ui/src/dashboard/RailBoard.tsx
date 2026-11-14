@@ -1,8 +1,9 @@
 import type { EntryRowModel } from '@slovo/core';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import type { ListRenderItem } from 'react-native';
 import { FlatList, StyleSheet, View } from 'react-native';
 
+import type { ListScroll } from '../primitives/ScrollToTop';
 import { useTokens } from '../providers/TokensProvider';
 import { railScreen as place } from '../tokens';
 import { RailScreenCard } from './RailScreenCard';
@@ -40,12 +41,18 @@ export function RailBoard({
   hero,
   cards,
   onOpen,
+  scroll,
+  corner,
 }: {
   /** The screen's; a card's is `${testID}-entry-${entryId}`. */
   testID: string;
   hero: ReactElement;
   cards: readonly RailBoardCard[];
   onOpen: (entryId: string) => void;
+  /** The list's scroll, for its «Нагору» button. */
+  scroll?: ListScroll<FlatList<RailBoardCard>> | undefined;
+  /** What lies over the list in the screen's corner, such as its «Нагору» button. */
+  corner?: ReactNode;
 }) {
   return (
     <RailList
@@ -65,6 +72,8 @@ export function RailBoard({
         />
       )}
       gap={place.list.wordGap}
+      scroll={scroll}
+      corner={corner}
     />
   );
 }
@@ -81,6 +90,8 @@ export function RailList<Item>({
   keyOf,
   renderItem,
   gap,
+  scroll,
+  corner,
 }: {
   testID: string;
   hero: ReactElement;
@@ -88,11 +99,17 @@ export function RailList<Item>({
   keyOf: (item: Item) => string;
   renderItem: ListRenderItem<Item>;
   gap: number;
+  /** The list's scroll, for its «Нагору» button. */
+  scroll?: ListScroll<FlatList<Item>> | undefined;
+  /** What lies over the list in the screen's corner, such as its «Нагору» button. */
+  corner?: ReactNode;
 }) {
   const { colors } = useTokens();
   return (
     <View testID={testID} style={[styles.screen, { backgroundColor: colors.background }]}>
       <FlatList
+        ref={scroll?.list}
+        onScroll={scroll?.onScroll}
         data={items}
         keyExtractor={keyOf}
         renderItem={renderItem}
@@ -103,6 +120,7 @@ export function RailList<Item>({
         automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.content}
       />
+      {corner}
     </View>
   );
 }

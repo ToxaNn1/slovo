@@ -8,6 +8,7 @@ import {
   typeStyle,
   useEdition,
   useTokens,
+  useListScroll,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -15,6 +16,7 @@ import { AccessibilityInfo, SectionList, StyleSheet, Text, View } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
+import { ListTopButton } from '@/shell/list-top';
 import {
   resultLabel,
   useOpenSearchResult,
@@ -40,6 +42,8 @@ export default function SearchScreen() {
   const recent = useRecentQueries(fieldEmpty);
   const { colors } = useTokens();
   const router = useRouter();
+  const scroll = useListScroll<SectionList<SearchGroup['data'][number], SearchGroup>>();
+  const { list: listRef, onScroll: onListScroll } = scroll;
 
   return (
     <SafeAreaView
@@ -48,6 +52,8 @@ export default function SearchScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <SectionList<SearchGroup['data'][number], SearchGroup>
+        ref={listRef}
+        onScroll={onListScroll}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -93,6 +99,7 @@ export default function SearchScreen() {
         }
         ListEmptyComponent={nothingFound ? <NothingFound /> : undefined}
       />
+      <ListTopButton scroll={scroll} />
     </SafeAreaView>
   );
 }

@@ -59,6 +59,7 @@
     "finishPoster": "off",
     "firstWeek": "on",
     "forceUpdate": "on",
+    "scrollToTop": "on",
     "game": "on",
     "gameAnagram": "on",
     "gameAnglicism": "on",
