@@ -357,6 +357,10 @@ _Avoid_: Mastered
 A setting («Перевір себе», off by default) that hides the answer on an Entry card until the reader taps: a Word card shows only the Lemma with Stress, part of speech and Category, a Correction card only the non-standard form, an Idiom card only the expression and the chip of its Idiom Type, a Synonym Row card only its dominant («іти → ?»), a Tip card only its title and its non-standard form (only the title when it has none). The Knowledge Mark buttons work only after the reveal. It applies to the Feed, the Word of the Day included, and not to the widget or Share Cards.
 _Avoid_: Quiz mode, test mode
 
+**Due Quiz**:
+The quiz «Перевір себе» on the «Вчу» list over the Words Due for Review today: for each, its Lemma and three meanings, as Yesterday asks them; the right meaning sets Known, any other Unknown (ADR 0131). It shares its UI name with the Self-check setting and is not it: the Self-check hides the answer on Entry cards, the Due Quiz asks the Words due today.
+_Avoid_: Self-check (for this quiz), Review quiz, flashcards
+
 **Mix**:
 The set of Categories of Words, plus Corrections as a whole with their own Categories under it, plus Idioms, Synonym Rows and Tips each as a whole, that the reader chose to see in the Feed, notifications, widgets and the Game. At least one Category of each list always stays in the Mix. The Mix also holds the Mix kind weights and the frequency of the Quick Question; rarity is the Rarity Ceiling, a setting of its own.
 _Avoid_: Filter, preferences
