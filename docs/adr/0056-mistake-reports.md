@@ -2,13 +2,15 @@
 
 Until 0.8.14 a reader who spotted a wrong Stress or a typo in a Definition couldn't say so, and the mistake stayed until the owner happened to find it. Spec #886 adds the Mistake Report («Повідомлення про помилку»): a reader reports a mistake from an Entry's card, anonymously, and the owner works through the reports with a backend script. The decisions come from the owner's grilling of 2026-10-25 and 2026-10-26.
 
-**Feature Switch.** `mistakeReports` is required of every Edition and on in the UA Edition. While it is off in effect the card menu has no «Повідомити про помилку» and nothing is sent; reports already queued stay until it is on again. The backend answers an Edition with the switch off as one it doesn't find (`NOT_FOUND`), as content does (ADR 0032). A remote switch only turns it off (ADR 0040).
+**Amended by ADR 0075 and 0088.** The reports the owner still has to check are part of the Content queue in the Owner admin, with Resolve there (ADR 0088); the two scripts below stay for a shell. The texts address the reader with «ти» (ADR 0075).
+
+**Feature Switch.** `mistakeReports` is required of every Edition and on in the UA Edition. While it is off in effect the card menu has no «Повідомити про помилку» and nothing is sent; reports already queued stay until it is on again. The backend answers an Edition with the switch off as one it doesn't find (`NOT_FOUND`), as content does (ADR 0090). A remote Rule turns it on or off (ADR 0089).
 
 **On the card.** «Повідомити про помилку» is an item of the card menu on cards of all five kinds of Entry: Word, Correction, Idiom, Synonym Row and Tip. The card menu is the action row under the card (ADR 0017): the item is a flag in its last slot, which VoiceOver reads as «Повідомити про помилку», so it takes no new text and the actions stay one tap away. It opens a sheet:
 
 - **The type**, required, one of «Друкарська помилка» (`typo`), «Наголос» (`stress`), «Визначення» (`definition`) and «Інше» (`other`).
 - **«Коментар (необов'язково)»**, at most 500 characters, with a counter. «Інше» needs a comment, since the owner can't guess what it means.
-- **«Надіслати»** closes the sheet with «Дякуємо! Ми перевіримо.», online or not; over the daily limit it shows «Забагато повідомлень сьогодні. Спробуйте завтра.» instead.
+- **«Надіслати»** closes the sheet with «Дякуємо! Ми перевіримо.», online or not; over the daily limit it shows «Забагато повідомлень сьогодні. Спробуй завтра.» instead.
 
 **The request.** `POST /v1/reports` is a procedure of the API contract like the others (ADR 0031), so the contract only grows and the committed description changes with it (`pnpm describe:api`). Its body carries the Edition, the Entry id, the type, the comment (trimmed, at most 500 characters, empty when there is none; non-empty for `other`), the app version (ADR 0044) and the content version of the open Language Pack. The backend checks the shape, not whether the Entry is in a pack, and answers `202` with no body; a body it refuses answers `400`.
 
@@ -19,10 +21,10 @@ Until 0.8.14 a reader who spotted a wrong Stress or a typo in a Definition could
 **The device queue.** «Надіслати» puts the report in a `device-only` queue of at most 20 unsent reports and tries to send it at once; a 21st unsent report pushes out the oldest. The queue sends through the one retry rule (ADR 0037), oldest first and one report at a time, again at launch, on each return to the foreground and after a report the backend took, so a report written offline goes out later and is never lost to a dropped connection. The sheet's answer waits for the tries of the report just written.
 
 - **`202`** takes the report off the queue.
-- **`429`** on the report just written shows «Забагато повідомлень сьогодні. Спробуйте завтра.» and takes it off the queue, since the reader was told to try tomorrow; a queued report that meets a 429 later waits for `Retry-After`, as Sync does (ADR 0041).
+- **`429`** on the report just written shows «Забагато повідомлень сьогодні. Спробуй завтра.» and takes it off the queue, since the reader was told to try tomorrow; a queued report that meets a 429 later waits for `Retry-After`, as Sync does (ADR 0041).
 - **Any other 4xx** takes the report off the queue: sending it again would be refused again.
 
-**The owner's scripts.** Two backend scripts work on the database directly, like `switch-off` (ADR 0040), and no API route reads reports:
+**The owner's scripts.** Two backend scripts work on the database directly, like `switches off` (the Kill switch from a shell, ADR 0089), and no API route reads reports:
 
 - **`reports list`** prints the kept reports, newest first, each with its id, time, Edition, Entry id, type, comment, app version and content version; `--edition <id>` keeps one Edition's and `--since <date>` those received from that date on.
 - **`reports resolve <id>`** deletes the report once the owner has checked it and fixed what needs fixing. A report is kept only until then: the database holds the reports still to check, and nothing else.
@@ -38,4 +40,4 @@ Until 0.8.14 a reader who spotted a wrong Stress or a typo in a Definition could
 - **Send at once, with no queue**: rejected. A reader on a train would lose their report.
 - **An unbounded queue**: rejected. Twenty reports cover any honest reader; the cap keeps a stuck queue from growing without end.
 - **Keep resolved reports**: rejected. A checked report has done its job, and deleting it keeps the comments readers wrote no longer than needed.
-- **A web dashboard for reports**: rejected for now. One owner reads them; a script is enough.
+- **A web page for reports**: rejected then, since one owner read them and a script was enough; the Owner admin's Content queue took them later (ADR 0088).

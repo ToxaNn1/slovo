@@ -2,7 +2,7 @@
 
 One set of rules governs every animation of the app, Decor follows the Season and the Edition's Holidays, a Word's Stress falls into place and a Word may carry an Illustration; the decisions come from spec #886 and the owner's grilling of 2026-10-25.
 
-**Feature Switches.** `seasonalDecor`, `stressAnimation` and `illustrations` are required of every Edition and all on in the UA Edition. A feature whose switch is off is absent: plain Edition Decor and no «Сезонний декор» row, a still Stress mark, no Illustration. A remote switch only turns a feature off (ADR 0040).
+**Feature Switches.** `seasonalDecor`, `stressAnimation` and `illustrations` are required of every Edition and all on in the UA Edition. A feature whose switch is off is absent: plain Edition Decor and no «Сезонний декор» row, a still Stress mark, no Illustration. A remote Rule turns a feature on or off (ADR 0089).
 
 **Motion.** Every animation of the app follows four rules.
 

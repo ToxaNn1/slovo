@@ -3,7 +3,9 @@
 The Core is not versioned or published. Every Edition always builds from the Core on `main`. Each Edition is controlled separately in two ways:
 
 - every behaviour change ships behind a Feature Switch that is turned on per Edition;
-- remote switches on our backend act as an emergency off button.
+- a remote Rule on our backend turns a Feature Switch on or off for the readers it targets, and the Kill switch turns a feature off for everyone at once (ADR 0089).
+
+**Amended by ADR 0089.** Until then the remote switches were only an emergency off button.
 
 The Editions live inside one app (ADR 0065), so a native change ships as one store build of the app, from one build profile per platform, and an OTA update reaches every Edition at once on the app's one Update channel, with staged rollout (ADR 0062). No build or update names an Edition: every build bundles the AppConfig's default Edition.
 

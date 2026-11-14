@@ -2,6 +2,8 @@
 
 The Maestro flows in `apps/mobile/maestro/` drive the development client on a simulator, and that client is a native build. Native builds go through EAS (ADR 0004) and are rare by the owner's policy. The PR checks in CI (`lint`, `typecheck`, `test`, `deps`, `knip`) cannot tell that a change broke a screen beyond what the Jest component tests (ADR 0029) cover.
 
+**Superseded by ADR 0126.** A ticket that changes a screen now carries one screenshot of it against its board, and the smoke runs against one Metro; the rest of the rule moved there. Kept for history.
+
 The rule:
 
 - **Maestro runs only on the owner's command**: any flow, the full smoke, and the manual CI workflow `maestro.yml`, which runs `launch.yaml` on a macOS runner (ADR 0004). Normally that is once per spec, at its end, on `main`.

@@ -1,17 +1,16 @@
 // `pnpm smoke:halves`: the full Maestro smoke as two halves at once, on two
-// simulators (ticket #452, ADR 0028). Half 1 is `smoke-1.yaml`, half 2
-// `smoke-2.yaml`; each runs on its own simulator against its own Metro, and
-// both against one backend. It ends with a pass/fail list per half.
+// simulators (ticket #452, ADR 0126). Half 1 is `smoke-1.yaml`, half 2
+// `smoke-2.yaml`; each runs on its own simulator, both against the one Metro
+// and one backend. It ends with a pass/fail list per half.
 //
 //   pnpm smoke:halves --device <udid> --device <udid> \
-//     --metro <port> --metro <port> --api <port> [--half 1|2]
+//     --api <port> [--metro <port>] [--half 1|2]
 //
-// --half runs only that half, on its own device and Metro of the pairs below
-// (a rerun of one half after a failure).
+// --half runs only that half, on its own device (a rerun of one half after a
+// failure). --metro is the port of the one Metro, 8082 when left out.
 //
-// The first --device and --metro are half 1, the second half 2. The simulators
-// must be booted, with the development client installed and a Metro running on
-// each port. The backend (Postgres and Mailpit too) serves `account.yaml` and
+// The first --device is half 1, the second half 2. The simulators must be
+// booted, with the development client installed, and the Metro running. The backend (Postgres and Mailpit too) serves `account.yaml` and
 // `sync.yaml`, which are both in half 2. The script boots and shuts down no
 // simulator, Metro or backend.
 //
@@ -33,7 +32,7 @@ const LOCK = '/tmp/slovo-maestro.lock';
 const JAVA_HOME = '/usr/local/opt/openjdk@17';
 
 const USAGE =
-  'Usage: pnpm smoke:halves --device <udid> --device <udid> --metro <port> --metro <port> --api <port> [--half 1|2]';
+  'Usage: pnpm smoke:halves --device <udid> --device <udid> --api <port> [--metro <port>] [--half 1|2]';
 
 function fail(message) {
   console.error(`${message}\n${USAGE}`);
@@ -43,19 +42,17 @@ function fail(message) {
 const { values } = parseArgs({
   options: {
     device: { type: 'string', multiple: true },
-    metro: { type: 'string', multiple: true },
+    metro: { type: 'string', default: '8082' },
     api: { type: 'string' },
     half: { type: 'string' },
   },
   strict: false,
 });
 const devices = values.device ?? [];
-const metros = values.metro ?? [];
 if (devices.length !== 2 || new Set(devices).size !== 2) fail('Give two different --device UDIDs.');
-if (metros.length !== 2 || new Set(metros).size !== 2) fail('Give two different --metro ports.');
 if (values.half !== undefined && !['1', '2'].includes(values.half)) fail('--half is 1 or 2.');
 const halves = values.half === undefined ? [0, 1] : [Number(values.half) - 1];
-for (const port of [...metros, values.api]) {
+for (const port of [values.metro, values.api]) {
   if (!/^\d{2,5}$/.test(port ?? '')) fail(`"${port}" is not a port.`);
 }
 
@@ -126,7 +123,7 @@ function runHalf(index, logDir) {
       '--no-ansi',
       `maestro/${file}`,
       '-e',
-      `METRO_URL=http://localhost:${metros[index]}`,
+      `METRO_URL=http://localhost:${values.metro}`,
       '-e',
       `API_URL=http://localhost:${values.api}`,
     ],

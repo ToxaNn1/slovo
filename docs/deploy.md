@@ -72,6 +72,8 @@ Every variable the server reads at start, with the value it takes in the Deploym
 
 The Patch route answers `cache-control: public, max-age=0, s-maxage=60` with its ETag (ADR 0099): the CDN keeps each Patch for a minute under its URL (the Edition, `since` and `patchFormat`), so most devices never reach the database, and the device revalidates it by its ETag and gets 304. An edit reaches every device within that minute; nothing needs a purge. Every other route stays uncached. The Media Store's R2 variables are listed with the Recording generation service.
 
+**The app's domain is split by path (ADR 0125).** The zone of the app's domain is proxied and sends `/<edition>/c/*` (the Collection Link pages) and `/.well-known/*` (`apple-app-site-association`) to the Railway service's domain, and everything else to GitHub Pages. Cloudflare's free plan routes by path with a Worker on the two routes; an Origin Rule with a host override does the same where the plan allows it. Check after a change: `/.well-known/apple-app-site-association` answers the backend's JSON with no redirect, a Collection Link opens its page, and the landing and `/uk/privacy` still answer from Pages.
+
 ## The Railway project file
 
 `.railway/railway.ts` replaces the Config as Code files (`railway.json` and one per Cron service), which Railway no longer takes for new services and stops reading on 2026-12-01 (ADR 0103). It uses the `railway` package's `railway/iac`, pinned in the root `package.json`; `pnpm typecheck` checks it. It declares:

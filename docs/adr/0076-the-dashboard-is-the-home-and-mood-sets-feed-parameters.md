@@ -22,7 +22,7 @@ Spec #1564 (owner decisions of 2026-11-04). The app opened straight into the Fee
 
 **Tab bar.** Стрічка · Ігри (absent with `game` off) · Збережене · Профіль. It is shell only, with no Core change and no switch.
 
-**Feature Switches** (required of every Edition, ADR 0040): `dashboard` (needs `wordOfTheDay`), `mood`, `previousWords` (also `wordOfTheDayArchive`), `curatedCollections` and `correctionTypes` (also `corrections`); the last four need `dashboard`. The UA Edition has all on but `curatedCollections`.
+**Feature Switches** (required of every Edition, ADR 0089): `dashboard` (needs `wordOfTheDay`), `mood`, `previousWords` (also `wordOfTheDayArchive`), `curatedCollections` and `correctionTypes` (also `corrections`); the last four need `dashboard`. The UA Edition has all on but `curatedCollections`.
 
 ## Considered Options
 

@@ -10,7 +10,7 @@ Spec #1604 ports board 05.1 (05.11). Until now a Category was only a filter of t
 
 **The Dashboard rails (amends ADR 0076).** The Dashboard shows the «Категорії» rail of the Categories of Words; the Curated Collections rail is titled «Добірки»; the Correction Types rail keeps its tiles and its header opens k2.
 
-**Feature Switches** (required of every Edition, ADR 0040): `categoryScreens` (needs `dashboard`): the «Категорії» rail, k1 and the Category screen of Words; `correctionCategoryScreens` (needs `dashboard` and `corrections`): k2 and the Category screen of Corrections, off a plain «Виправлення» header; `quietCategories` (needs `categoryScreens`): k3 and the muted tile, off a quiet Category draws loud. The UA Edition has all three on.
+**Feature Switches** (required of every Edition, ADR 0089): `categoryScreens` (needs `dashboard`): the «Категорії» rail, k1 and the Category screen of Words; `correctionCategoryScreens` (needs `dashboard` and `corrections`): k2 and the Category screen of Corrections, off a plain «Виправлення» header; `quietCategories` (needs `categoryScreens`): k3 and the muted tile, off a quiet Category draws loud. The UA Edition has all three on.
 
 ## Considered options
 
