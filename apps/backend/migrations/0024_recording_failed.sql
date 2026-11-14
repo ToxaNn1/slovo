@@ -1,1 +1,0 @@
-ALTER TABLE "content_words" ADD COLUMN "recording_failed_at" timestamp with time zone;

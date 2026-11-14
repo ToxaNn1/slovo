@@ -1,1 +1,0 @@
-CREATE INDEX "mistake_reports_received_at_index" ON "mistake_reports" USING btree ("received_at");
