@@ -93,6 +93,52 @@ async function renderChoices() {
   await settle();
 }
 
+const mixStrings = editionStrings.mix;
+
+/** «N з M обрано» above the Category tiles. */
+const selected = (count: number) =>
+  fill(mixStrings.selectedOf, { selected: String(count), total: '2' });
+
+describe('the Category tiles on the Мій Мікс screen', () => {
+  it('shows a tile for each Category, every one chosen, under «N з M обрано» and no subtitle', async () => {
+    await renderChoices();
+    expect(screen.getByRole('button', { name: 'Природа' })).toBeSelected();
+    expect(screen.getByRole('button', { name: 'Ремесла' })).toBeSelected();
+    expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(2));
+    expect(screen.getByText(mixStrings.groups.categories)).toBeOnTheScreen();
+    expect(screen.queryByText(mixStrings.subtitle)).toBeNull();
+  });
+
+  it('counts the choice as a tile turns off and on', async () => {
+    await renderChoices();
+    await press('mix-chip-crafts');
+    expect(screen.getByRole('button', { name: 'Ремесла' })).not.toBeSelected();
+    expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(1));
+    await press('mix-chip-crafts');
+    expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(2));
+  });
+
+  it('keeps the last Category in the Mix and says why', async () => {
+    await renderChoices();
+    await press('mix-chip-crafts');
+    const last = screen.getByRole('button', { name: 'Природа' });
+    expect(last).toBeDisabled();
+    expect(
+      screen.getByTestId('mix-last-category-hint', { includeHiddenElements: true }),
+    ).toHaveTextContent(mixStrings.lastCategoryHint);
+    await press('mix-chip-nature');
+    expect(last).toBeSelected();
+    expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(1));
+  });
+
+  it('turns every Category back on with «Усі»', async () => {
+    await renderChoices();
+    await press('mix-chip-crafts');
+    await press('mix-chip-all');
+    expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(2));
+  });
+});
+
 const chipOf = (id: string) => screen.getByTestId(`mix-correction-chip-${id}`);
 
 describe('the Categories of Corrections on the Мій Мікс screen', () => {
