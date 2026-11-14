@@ -141,7 +141,7 @@ describe('the 0.8.12 Game strings', () => {
   const parsed = EditionStringsSchema.parse(strings).game;
 
   it('the UA Edition carries the agreed texts verbatim', () => {
-    expect(parsed.groups).toEqual({
+    expect(parsed.groups).toMatchObject({
       words: 'Слова',
       corrections: 'Виправлення',
       idioms: 'Вислови',
@@ -168,7 +168,7 @@ describe('the 0.8.12 Game strings', () => {
       stress: 'Наголос',
       pairs: 'Пари',
       anagram: 'Анаграми',
-      'by-letters': 'За буквами',
+      'by-letters': 'За літерами',
       'type-word': 'Впиши слово',
       origin: 'Звідки слово',
       correction: 'Обери правильне',
@@ -1045,6 +1045,110 @@ describe('the board 11 strings', () => {
     expect(EditionConfigSchema.parse(readJson('uk', 'config')).accountName).toBe('Акаунт');
     expect(parsed.email.subject).not.toContain('{name}');
     expect(parsed.email.body).not.toContain('{name}');
+  });
+});
+
+describe('the board «slogo game last» strings (spec #1880)', () => {
+  const strings = readJson('uk', 'strings') as Record<string, unknown>;
+  const game = strings['game'] as Record<string, unknown>;
+  const round = game['round'] as Record<string, unknown>;
+  const parsed = EditionStringsSchema.parse(strings).game;
+
+  it('the UA Edition carries the answer banner, the Round and the end texts of the board', () => {
+    expect(parsed.round.banner).toEqual({
+      right: ['Влучив!', 'В яблучко!', 'Точно!'],
+      xp: '+{count} XP',
+      wrong: 'Мимо',
+      lastLife: 'Життя все',
+      answer: 'Майже. Ось як правильно: {answer}',
+    });
+    expect(parsed.round.lives).toBe('Життів: {count} з {total}');
+    expect(parsed.round.pairsCaptions).toEqual({ word: 'Слово', meaning: 'Значення' });
+    expect(parsed.round.survival).toEqual({ streak: 'поспіль', best: 'рекорд {best}' });
+    expect(parsed.round.typed.submit).toBe('Перевірити');
+    expect(parsed.warmup).toEqual({
+      title: 'Розминка!',
+      line: 'Майже. Наступне вийде.',
+      hits: 'влучних',
+    });
+    expect(parsed.finals).toMatchObject({
+      again: 'Ще раз',
+      toGames: 'До ігор',
+      toFeed: 'До стрічки',
+      review: 'Огляд раундів',
+    });
+    expect(parsed.finish).toMatchObject({
+      title: 'Фініш',
+      won: 'Влучно!',
+      more: 'Ще раунд!',
+      newBest: 'Новий рекорд!',
+      xpCount: '+{count} XP',
+    });
+    expect(parsed.exit.message).toBe('Пройдені раунди пропадуть, а рекорд не оновиться.');
+  });
+
+  it('the UA Edition carries the Games hub texts of the board', () => {
+    expect(parsed.groups).toMatchObject({
+      sound: 'Звук',
+      meaning: 'Значення',
+      letters: 'Букви',
+      speed: 'Швидкість',
+      new: 'Нове',
+    });
+    expect(parsed.hubRow).toMatchObject({
+      record: 'Рекорд: {n} з {total}',
+      never: 'Ще жодної гри',
+    });
+    expect(parsed.hubToast).toBe('«{mode}» ще розминається. Влучай поки в «{other}»!');
+    expect(
+      Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.hubLine])),
+    ).toEqual({
+      'guess-word': 'Визначення є. Яке це слово?',
+      stress: 'Торкнись наголошеної голосної',
+      pairs: 'Чотири слова й чотири визначення — з’єднуєш їх у пари.',
+      anagram: 'Склади слово з перемішаних літер',
+      'by-letters': 'Збери слово літера за літерою',
+      'type-word': 'У реченні — помилка, яку часто чуєш. Впиши, як сказати краще.',
+      origin: 'З якої мови прийшло слово?',
+      correction: 'Як кажуть українською',
+      anglicism: 'Заміни англіцизм українським',
+      'idiom-meaning': 'Вгадай, що означає вислів',
+      'build-idiom': 'Читаєш значення — складаєш вислів слово за словом.',
+      survival: undefined,
+      timed: undefined,
+    });
+    expect(
+      Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.glyph])),
+    ).toMatchObject({
+      'guess-word': 'Д?',
+      'by-letters': 'А…',
+      'type-word': 'Аб|',
+      origin: '→А',
+      'build-idiom': '«…»',
+    });
+  });
+
+  it.each([
+    ['hubRow.record', { hubRow: { ...(game['hubRow'] as object), record: 'Рекорд: {n}' } }],
+    ['hubToast', { hubToast: '«{mode}» ще розминається.' }],
+    [
+      'round.banner.answer',
+      { round: { ...round, banner: { ...(round['banner'] as object), answer: 'Майже.' } } },
+    ],
+    [
+      'round.banner.right',
+      { round: { ...round, banner: { ...(round['banner'] as object), right: [] } } },
+    ],
+    [
+      'round.survival.best',
+      { round: { ...round, survival: { streak: 'поспіль', best: 'рекорд' } } },
+    ],
+  ])('the UA Edition refuses %s without its placeholders or texts', (path, changed) => {
+    const result = EditionStringsSchema.safeParse({ ...strings, game: { ...game, ...changed } });
+
+    expect(result.error?.issues.map((issue) => `game.${issue.path.slice(1).join('.')}`)).toEqual([
+      `game.${path}`,
+    ]);
   });
 });
 

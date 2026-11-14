@@ -426,7 +426,7 @@ function theNumberOfThePrompt(): number {
 const theOption = (text: string) =>
   screen.getByRole('button', { name: new RegExp(`^${text}(,|$)`) });
 
-/** The Word a Round of «За буквами» or «Анаграми» asks about: «слово{n}», its Definition «The meaning of test{n}.». */
+/** The Word a Round of «За літерами» or «Анаграми» asks about: «слово{n}», its Definition «The meaning of test{n}.». */
 function theWordOfThePrompt(): string {
   const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
   return `слово${/\d+/.exec(prompt)?.[0] ?? ''}`;
@@ -882,7 +882,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
   });
 
-  it('starts «За буквами» from its card and plays a whole Game, typing each Word, to the result screen', async () => {
+  it('starts «За літерами» from its card and plays a whole Game, typing each Word, to the result screen', async () => {
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
@@ -911,7 +911,7 @@ describe('the Game screen', () => {
     });
   });
 
-  it('opens the letters of «За буквами» one at a time, at no cost, and takes a Life for a wrong Word', async () => {
+  it('opens the letters of «За літерами» one at a time, at no cost, and takes a Life for a wrong Word', async () => {
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
@@ -934,7 +934,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
   });
 
-  it('plays «За буквами» as letter tiles in rows of 4 with letterTiles on, no text field', async () => {
+  it('plays «За літерами» as letter tiles in rows of 4 with letterTiles on, no text field', async () => {
     await open({ switchedOn: ['letterTiles'] });
     await renderScreen();
 
@@ -956,7 +956,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
   });
 
-  it('keeps the text field of «За буквами» with letterTiles off', async () => {
+  it('keeps the text field of «За літерами» with letterTiles off', async () => {
     await open({ switchedOff: ['letterTiles'] });
     await renderScreen();
 
@@ -1446,7 +1446,7 @@ describe('the Game screen', () => {
       expect(screen.getByText('Влучно!')).toBeOnTheScreen();
       expect(screen.getByText('15 з 15 влучань')).toBeOnTheScreen();
       expect(screen.getByTestId('game-end-new-best')).toHaveTextContent('Новий рекорд!');
-      expect(screen.getByTestId('game-end-xp')).toHaveTextContent(/^Досвід\d+ XP$/);
+      expect(screen.getByTestId('game-end-xp')).toHaveTextContent(/^Досвід\+\d+ XP$/);
       expect(screen.queryByTestId('game-end-time-up')).toBeNull();
       expect(screen.getByTestId('game-end-best')).toHaveTextContent('Рекорд15');
       expect(screen.queryByText('Перемога!')).toBeNull();
@@ -1476,7 +1476,7 @@ describe('the Game screen', () => {
       expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
       expect(screen.getByText('ВИЖИВАННЯ · 2/5')).toBeOnTheScreen();
       expect(screen.queryByTestId('game-end-xp')).toBeNull();
-      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз!');
+      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз');
       expect(screen.getByTestId('game-to-games')).toHaveTextContent('До ігор');
     });
   });
@@ -1650,10 +1650,10 @@ describe('the Game screen', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Вийти з гри' }));
     expect(screen.getByText('Вийти з гри?')).toBeOnTheScreen();
-    expect(screen.getByText('Прогрес буде втрачено.')).toBeOnTheScreen();
+    expect(screen.getByText('Пройдені раунди пропадуть, а рекорд не оновиться.')).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Грати далі' }));
     await waitFor(() => {
-      expect(screen.queryByText('Прогрес буде втрачено.')).not.toBeOnTheScreen();
+      expect(screen.queryByText('Пройдені раунди пропадуть, а рекорд не оновиться.')).not.toBeOnTheScreen();
     });
     expect(screen.getByTestId('game-round')).toBeOnTheScreen();
 
