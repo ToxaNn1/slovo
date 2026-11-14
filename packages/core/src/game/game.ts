@@ -129,7 +129,8 @@ export interface GameTime {
  * its time limit ran out, `lives-over` with its last Life lost. Each says the
  * Rounds played, the right answers, the XP the Game earned and whether it
  * beat the mode's Best result; a finished Game and a time-up also say whether
- * at least half the answers were right, «Влучно!» rather than «Ще раунд!».
+ * at least 60% of the answers were right, «Влучно!» rather than «Ще раунд!»
+ * (spec #1880, as the board computes it).
  */
 export type GameEnd = (
   | { readonly kind: 'finished' | 'time-up'; readonly onTarget: boolean }
@@ -550,11 +551,11 @@ export function streakOf({ current, bestResults }: GameState): Streak | undefine
 
 /**
  * How a Game just over ended, by its status: its last Life lost, its time up,
- * or its Round limit reached; at least half the answers right is on target.
+ * or its Round limit reached; at least 60% of the answers right is on target.
  */
 function endOf(ended: EndedGame, counts: Omit<GameEnd, 'kind' | 'onTarget'>): GameEnd {
   if (!countsAsWon(ended)) return { kind: 'lives-over', ...counts };
-  const onTarget = counts.played > 0 && counts.right * 2 >= counts.played;
+  const onTarget = counts.played > 0 && counts.right * 5 >= counts.played * 3;
   return { kind: ended.status === 'time-up' ? 'time-up' : 'finished', onTarget, ...counts };
 }
 

@@ -14,6 +14,7 @@ import type {
 
 import {
   buildGameReview,
+  buildPlainGameReview,
   createGameHaptics,
   createHaptics,
   GAME_ROUNDS,
@@ -3069,5 +3070,22 @@ describe('the end of a Game', () => {
       right: 0,
       newBest: false,
     });
+  });
+});
+
+// Spec #1880, D11: the plain Game Review, «Огляд раундів».
+describe('the plain Game Review', () => {
+  it('has one row per Round played, in order: whether it was right and its word', async () => {
+    const app = await run();
+
+    const rounds = await playGame(app, [3, 7]);
+
+    const rows = buildPlainGameReview(current(app).played);
+    expect(rows.map(({ number, right }) => [number, right])).toEqual(
+      rounds.map(({ number }) => [number, number !== 3 && number !== 7]),
+    );
+    expect(rows.map(({ word }) => withoutStress(word.text))).toEqual(
+      current(app).played.map(({ entry }) => (entry.kind === 'word' ? entry.lemma : '')),
+    );
   });
 });

@@ -136,3 +136,21 @@ export function buildGameReview(rounds: readonly PlayedRound[]): GameReviewItem[
     details: detailsOf(round),
   }));
 }
+
+/**
+ * A row of the plain Game Review, «Огляд раундів» (spec #1880, D11): a Round
+ * played, ✓ or ✗ and its word. A row neither expands nor opens the Entry.
+ */
+export interface PlainGameReviewRow {
+  /** Which Round of the Game it was; each pair of «Пари» is a Round of its own. */
+  readonly number: number;
+  /** Whether the reader answered right. */
+  readonly right: boolean;
+  /** What the row leads with, as a Game Review item's title: a Word's Lemma with its Stress, an idiom's expression. */
+  readonly word: RoundOption;
+}
+
+/** The plain Game Review of the Rounds played: one row for each, in their order. */
+export function buildPlainGameReview(rounds: readonly PlayedRound[]): PlainGameReviewRow[] {
+  return rounds.map((round) => ({ number: round.number, right: round.right, word: titleOf(round) }));
+}
