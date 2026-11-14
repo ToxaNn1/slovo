@@ -1,5 +1,6 @@
 import {
   fill,
+  savedHeader,
   SavedTabs,
   ScreenTitle,
   SearchLink,
@@ -103,26 +104,28 @@ export default function SavedScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <View style={styles.title}>
-        <ScreenTitle>{editionStrings.tabs.saved}</ScreenTitle>
-      </View>
-      <View style={styles.search}>
-        <SearchLink
-          testID="saved-search"
-          label={editionStrings.search.placeholder}
-          onPress={() => {
-            openScreen('/search');
+      <View style={styles.header}>
+        <View style={styles.inset}>
+          <ScreenTitle>{editionStrings.tabs.saved}</ScreenTitle>
+        </View>
+        <View style={styles.inset}>
+          <SearchLink
+            testID="saved-search"
+            label={editionStrings.search.placeholder}
+            onPress={() => {
+              openScreen('/search');
+            }}
+          />
+        </View>
+        <SavedTabs
+          testID="saved"
+          tabs={tabs}
+          active={active}
+          onSelect={(id) => {
+            router.setParams({ list: id });
           }}
         />
       </View>
-      <SavedTabs
-        testID="saved"
-        tabs={tabs}
-        active={active}
-        onSelect={(id) => {
-          router.setParams({ list: id });
-        }}
-      />
       <List key={active} header={header} />
     </SafeAreaView>
   );
@@ -130,7 +133,7 @@ export default function SavedScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  title: { paddingHorizontal: space[5], paddingTop: space[6], paddingBottom: space[4] },
-  search: { paddingHorizontal: space[5] },
+  header: { gap: savedHeader.gap, paddingTop: savedHeader.top, paddingBottom: space[2] },
+  inset: { paddingHorizontal: space[5] },
   tool: { alignItems: 'flex-end', paddingHorizontal: space[5] },
 });
