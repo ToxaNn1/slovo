@@ -40,6 +40,8 @@ export { FavoriteButton } from './saved/FavoriteButton';
 export { ClearHistoryButton } from './saved/ClearHistoryButton';
 export { CollectionMenuSheet } from './saved/CollectionMenuSheet';
 export { DeleteCollectionDialog } from './saved/DeleteCollectionDialog';
+export { DeleteCollectionSheet } from './saved/DeleteCollectionSheet';
+export { CollectionShareSheet } from './saved/CollectionShareSheet';
 export { DailyCrosswordCard, type CrosswordMiniCell } from './game/DailyCrosswordCard';
 export { CrosswordDayCard, type CrosswordDayCardState } from './game/CrosswordDayCard';
 export { GameModeCard, GameModeGroupTitle, GamesTitle } from './game/GameModeCard';
