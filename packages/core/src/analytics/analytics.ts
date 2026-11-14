@@ -62,8 +62,15 @@ export interface AnalyticsEvents {
   readonly dailyCrosswordSolved: { readonly date: string };
   /** The reader answered an Entry due for Review. */
   readonly reviewAnswered: EntryEventProperties & { readonly mark: 'known' | 'unknown' };
-  /** The reader answered a Quick Question in the Feed, right or not, about the Entry it asked. */
-  readonly quickQuestionAnswered: EntryEventProperties & { readonly right: boolean };
+  /**
+   * The reader answered a Quick Question in the Feed, right or not, about the
+   * Entry it asked: `mode` is the id of the Game Mode its Round came from, or
+   * `word-meaning` for the Word Meaning question (ADR 0128).
+   */
+  readonly quickQuestionAnswered: EntryEventProperties & {
+    readonly right: boolean;
+    readonly mode: string;
+  };
   /** The reader chose a Mood in the Dashboard's Mood check-in, or changed it (ADR 0076). */
   readonly moodChosen: { readonly mood: string };
   /** The reader skipped the Mood check-in with «Не сьогодні». */

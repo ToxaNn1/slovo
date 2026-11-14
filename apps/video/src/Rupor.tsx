@@ -22,8 +22,7 @@ export function Rupor({
   const paints = onRed
     ? { body: light.background, ink: light.ink, accent: light.ink }
     : { body: light.accent, ink: light.ink, accent: light.accent };
-  const paint = (role: string) =>
-    role in paints ? paints[role as keyof typeof paints] : role;
+  const paint = (role: string) => (role in paints ? paints[role as keyof typeof paints] : role);
   const shapes = (list: readonly Shape[]) =>
     list.map((shape, index) =>
       shape.fill !== undefined ? (

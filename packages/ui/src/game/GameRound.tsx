@@ -382,8 +382,9 @@ export function QuickQuestionRound({
           testID="quick-question-tag"
           accessible
           accessibilityRole="header"
-          // The tag's visible label first, so the name VoiceOver reads holds what it shows.
-          accessibilityLabel={`${asked.label}. ${title}`}
+          // The tag's visible label first, so the name VoiceOver reads holds what it shows;
+          // a label that is the title itself, the Word Meaning question's, is read once.
+          accessibilityLabel={asked.label === title ? title : `${asked.label}. ${title}`}
           style={[styles.quickQuestionTag, { backgroundColor: colors.ink }]}
         >
           <Text

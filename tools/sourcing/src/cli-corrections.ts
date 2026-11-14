@@ -1,7 +1,7 @@
 /**
  * Drafts Corrections for a list of non-standard forms, for human review:
  *
- *   pnpm source:corrections <form-list> --edition <id> [--out <dir>] [--cache <dir>]
+ *   pnpm source:corrections <form-list> --edition <id> [--snapshot <file>] [--out <dir>] [--cache <dir>]
  *
  * The list has one form per line, `<non-standard form> <correction type>
  * <category id>`, with `#` comments. Drafts, incomplete drafts and
@@ -15,7 +15,7 @@ import { prepareRun, printSummary } from './cli-common';
 import { sourceCorrections } from './index';
 
 const USAGE =
-  'Usage: pnpm source:corrections <form-list> --edition <id> [--out <dir>] [--cache <dir>]';
+  'Usage: pnpm source:corrections <form-list> --edition <id> [--snapshot <file>] [--out <dir>] [--cache <dir>]';
 
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
@@ -24,6 +24,7 @@ async function main(): Promise<number> {
       edition: { type: 'string' },
       out: { type: 'string' },
       cache: { type: 'string' },
+      snapshot: { type: 'string' },
     },
   });
   const [listFile] = positionals;
@@ -32,7 +33,14 @@ async function main(): Promise<number> {
     console.error(USAGE);
     return 2;
   }
-  const run = prepareRun({ listFile, edition, out: values.out, cache: values.cache });
+  const run = await prepareRun({
+    listFile,
+    edition,
+    out: values.out,
+    cache: values.cache,
+    snapshot: values.snapshot,
+    apiUrl: process.env['SLOVO_API_URL'],
+  });
   if (!run.ok) return run.exitCode;
   return printSummary(await sourceCorrections({ ...run.options, formList: run.list }));
 }

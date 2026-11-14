@@ -91,7 +91,15 @@ export function Horn({ at, volume = levels.horn }: { at: number; volume?: number
  * here with the frame the word should be heard on: right after the shout
  * (about `hornLength` frames after `Horn`), under the tiles landing.
  */
-export function Voice({ src, at, volume = levels.voice }: { src?: string; at: number; volume?: number }) {
+export function Voice({
+  src,
+  at,
+  volume = levels.voice,
+}: {
+  src?: string;
+  at: number;
+  volume?: number;
+}) {
   if (src === undefined) return null;
   return (
     <Sequence from={at} name="Voice" layout="none">
@@ -114,10 +122,16 @@ export function Bed({ beatFrom, volume = 1 }: { beatFrom: number; volume?: numbe
       extrapolateLeft: 'clamp',
       extrapolateRight: 'clamp',
     });
-  const fadeIn = (frame: number) => interpolate(frame, [0, fps * 0.5], [0, 1], { extrapolateRight: 'clamp' });
+  const fadeIn = (frame: number) =>
+    interpolate(frame, [0, fps * 0.5], [0, 1], { extrapolateRight: 'clamp' });
   return (
     <>
-      <Audio src={pad} loop volume={(f) => fadeIn(f) * fadeOut(f, 0) * levels.pad * volume} name="Bed: pad" />
+      <Audio
+        src={pad}
+        loop
+        volume={(f) => fadeIn(f) * fadeOut(f, 0) * levels.pad * volume}
+        name="Bed: pad"
+      />
       <Sequence from={beatFrom} name="Bed: beat" layout="none">
         <Audio src={beat} loop volume={(f) => fadeOut(f, beatFrom) * levels.beat * volume} />
       </Sequence>

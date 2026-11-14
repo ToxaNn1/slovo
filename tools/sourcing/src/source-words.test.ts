@@ -11,12 +11,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { SourceSchema, WordSchema } from '@slovo/contracts';
-import {
-  EDITIONS_DIR,
-  editionFiles,
-  openEdition,
-  type EditionFolder,
-} from '@slovo/language-pack/edition';
+import { type EditionFolder } from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -28,10 +23,9 @@ import {
   type SourcingOptions,
   type SourcingResult,
 } from './index';
-import { seededRandom } from './test-support';
+import { seededRandom, editionWithSnapshot, UK_CONFIG_FILE } from './test-support';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
-const ukrainianConfigFile = openEdition(EDITIONS_DIR, 'uk').path('config');
 
 const CDX = 'https://web.archive.org/cdx/search/cdx?url=sum.in.ua/s/';
 const CDX_FIELDS = '&filter=statuscode:200&fl=timestamp,original';
@@ -208,16 +202,8 @@ function editionWith(
   words: Record<string, unknown> = {},
   registry?: unknown,
 ): EditionFolder {
-  const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
-  const config = FieldsSchema.parse(JSON.parse(readFileSync(ukrainianConfigFile, 'utf8')));
-  mkdirSync(join(editionsDir, 'uk'));
-  writeFileSync(editionFiles(join(editionsDir, 'uk')).path('config'), JSON.stringify(edit(config)));
-  const edition = openEdition(editionsDir, 'uk');
-  for (const [id, word] of Object.entries(words)) {
-    const file = join(edition.dir, edition.entryFile(id));
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, JSON.stringify(word));
-  }
+  const config = FieldsSchema.parse(JSON.parse(readFileSync(UK_CONFIG_FILE, 'utf8')));
+  const edition = editionWithSnapshot(words, JSON.stringify(edit(config)));
   if (registry !== undefined) {
     const file = edition.path('idRegistry');
     mkdirSync(dirname(file), { recursive: true });
@@ -397,7 +383,7 @@ describe('sourceWords', () => {
 
       expect(readDrafts(options.outDir)).toEqual([]);
       expect(lemmaOutcome(result, 'завжди').drafts[0]?.issues).toEqual([
-        'primaryDefinition: Same Lemma and primary Definition as w_exist1 in content/words/w_exist1.json: author it once, or retire one of them',
+        'primaryDefinition: Same Lemma and primary Definition as w_exist1 in snapshot:word/w_exist1: author it once, or retire one of them',
       ]);
     });
   });
@@ -882,6 +868,37 @@ describe('sourceWords', () => {
 
     const word = WordSchema.parse(readDrafts(options.outDir)[0]);
     expect(word.id).not.toBe(`w_${taken}`);
+    expect(word.id).toMatch(/^w_[a-z0-9]{6}$/);
+  });
+
+  it('never issues an id a record of the snapshot holds, a Retired one of another Lemma included', async () => {
+    // A source of randomness that always draws 0 spells w_aaaaaa first.
+    const edition = editionWith((config) => config, {
+      w_aaaaaa: {
+        id: 'w_aaaaaa',
+        lemma: 'коса',
+        stress: [2],
+        partOfSpeech: 'noun',
+        gender: 'feminine',
+        primaryDefinition: 'Заплетене волосся.',
+        categoryId: 'nature-weather',
+        rarity: 2,
+        sources: [{ title: 'Тестове джерело' }],
+        retired: true,
+      },
+    });
+    let draws = 0;
+    const next = seededRandom();
+    const { options } = setup({
+      lemmaList: 'мжичка nature-weather 2\n',
+      edition,
+      random: () => (draws++ < 6 ? 0 : next()),
+    });
+
+    await sourceWords(options);
+
+    const word = WordSchema.parse(readDrafts(options.outDir)[0]);
+    expect(word.id).not.toBe('w_aaaaaa');
     expect(word.id).toMatch(/^w_[a-z0-9]{6}$/);
   });
 

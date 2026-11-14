@@ -255,12 +255,24 @@ function parseList<R>(
   return errors.length > 0 ? { ok: false, errors } : { ok: true, lines };
 }
 
-/** The ids the Edition's id registry lists; none when it has no registry yet. */
+/**
+ * The ids already taken in the Edition: every record its content holds, of
+ * every kind and Retired ones too, and every id its id registry lists.
+ */
 function readTakenIds(
   edition: EditionFolder,
 ): { ok: true; ids: Set<string> } | { ok: false; errors: string[] } {
   try {
-    return { ok: true, ids: new Set(edition.readIfPresent('idRegistry')) };
+    const { words, corrections, idioms, synonymRows, tips, curatedCollections } = edition.entries();
+    const ids = [
+      ...words,
+      ...corrections,
+      ...idioms,
+      ...synonymRows,
+      ...tips,
+      ...curatedCollections,
+    ].map(({ entry }) => entry.id);
+    return { ok: true, ids: new Set([...ids, ...(edition.readIfPresent('idRegistry') ?? [])]) };
   } catch (error) {
     if (!(error instanceof EditionFolderError)) throw error;
     return { ok: false, errors: error.errors.map(formatBuildError) };
@@ -271,7 +283,7 @@ function readTakenIds(
 const ID_ATTEMPTS = 1000;
 
 /**
- * New opaque ids that the Edition's id registry doesn't list, and no draft of
+ * New opaque ids that no record of the Edition, its id registry or a draft of
  * this run has; throws when `random` keeps drawing taken ones.
  */
 function idMaker(prefix: string, random: () => number, takenIds: Set<string>): () => string {

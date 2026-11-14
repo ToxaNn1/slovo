@@ -235,6 +235,8 @@ export default {
           SHARED_CONFIG,
           '^packages/[^/]+/package\\.json$',
           '^packages/[^/]+/src/(index|testing|tokens/index|fonts|entries/part-of-speech|entries/entry-row-text|progress/known-line|pack-reader|edition-folder|api|admin-api|api-description|api/test-support)\\.ts$',
+          // The UA Edition written from the seed snapshot, for the tests of other parts (ADR 0090).
+          '^packages/language-pack/src/test-support\\.ts$',
         ],
       },
     },

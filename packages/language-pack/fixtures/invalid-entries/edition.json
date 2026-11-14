@@ -78,6 +78,7 @@
     "streakFreezes": "on",
     "streakBreak": "on",
     "quickQuestion": "on",
+    "quickQuestionWordMeaning": "on",
     "playStep": "on",
     "seenWordXp": "on",
     "levels": "on",

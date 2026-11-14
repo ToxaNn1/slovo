@@ -1,18 +1,19 @@
 import { spawn } from 'node:child_process';
-import { cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { readEdition } from '@slovo/language-pack';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
+import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import { systemClock } from '@slovo/server-core';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { testDatabaseUrl } from '../test-support';
 
-// A copy of the Editions folder holding only the UA Edition.
+// An Editions folder holding only the UA Edition, written from the seed snapshot.
 const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-import-command-'));
-cpSync(join(EDITIONS_DIR, 'uk'), join(editionsDir, 'uk'), { recursive: true });
+ukrainianSeedFolder(editionsDir);
 afterAll(() => {
   rmSync(editionsDir, { recursive: true, force: true });
 });

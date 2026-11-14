@@ -1,22 +1,17 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { CorrectionSchema } from '@slovo/contracts';
-import {
-  EDITIONS_DIR,
-  editionFiles,
-  openEdition,
-  type EditionFolder,
-} from '@slovo/language-pack/edition';
+import { type EditionFolder } from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';
 
 import { sourceCorrections, type CorrectionSourcingOptions, type Fetch } from './index';
-import { seededRandom } from './test-support';
+import { seededRandom, editionWithSnapshot, seedRecord, ukrainianEdition } from './test-support';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
-const ukrainian = openEdition(EDITIONS_DIR, 'uk');
+const ukrainian = ukrainianEdition();
 const USAGE = 'https://goroh.pp.ua/Слововживання/';
 
 /** The saved «Слововживання» page of each form; any other goroh page is goroh's "not found". */
@@ -64,19 +59,7 @@ function fakeClock() {
 
 /** A copy of the UA Edition's config with the given Corrections as its only content. */
 function editionWith(corrections: Record<string, unknown> = {}): EditionFolder {
-  const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
-  mkdirSync(join(editionsDir, 'uk'));
-  writeFileSync(
-    editionFiles(join(editionsDir, 'uk')).path('config'),
-    readFileSync(ukrainian.path('config'), 'utf8'),
-  );
-  const edition = openEdition(editionsDir, 'uk');
-  for (const [id, correction] of Object.entries(corrections)) {
-    const file = join(edition.dir, edition.entryFile(id));
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, JSON.stringify(correction));
-  }
-  return edition;
+  return editionWithSnapshot(corrections);
 }
 
 function setup(list: string, edition = editionWith(), pages: Record<string, string> = {}) {
@@ -228,9 +211,7 @@ describe('sourceCorrections', () => {
   });
 
   it('puts a form the Edition already has in incomplete', async () => {
-    const existing = JSON.parse(
-      readFileSync(join(ukrainian.dir, ukrainian.entryFile('c_0bppof')), 'utf8'),
-    ) as unknown;
+    const existing = seedRecord('c_0bppof');
     const { result, options } = await run(
       'співставляти calque school\n',
       editionWith({ c_0bppof: existing }),

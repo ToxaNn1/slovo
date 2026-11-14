@@ -1,4 +1,11 @@
-import { AbsoluteFill, Easing, interpolate, interpolateColors, Sequence, useCurrentFrame } from 'remotion';
+import {
+  AbsoluteFill,
+  Easing,
+  interpolate,
+  interpolateColors,
+  Sequence,
+  useCurrentFrame,
+} from 'remotion';
 
 import { EndCardAt, endCardFrom } from '../EndCard';
 import { light, uiFont, wordFont } from '../look';
@@ -9,7 +16,6 @@ import { Tile } from '../Tile';
 import { widthInEm } from './advance';
 import { clamp, pop } from '../shared/motion';
 import { Rings } from '../shared/Rings';
-
 
 /** One episode of «Знайди помилку»: a phrase everyone hears, with one calque in it. */
 export type Episode = {
@@ -29,7 +35,7 @@ export type Episode = {
 
 /**
  * The episodes. Each pair is a settled norm that the app's own Corrections
- * give too (editions/uk/content/corrections): the video and the app must say the same.
+ * give too (the Corrections of the content snapshot): the video and the app must say the same.
  */
 export const episodes: readonly Episode[] = [
   {
@@ -140,22 +146,29 @@ function layoutFor(episode: Episode, safe: Safe, s: number) {
       ...words(after.slice(mark.length)),
     ];
   });
-  if (!found) throw new Error(`«${episode.wrong}» is not in the phrase «${episode.phrase.join(' ')}»`);
+  if (!found)
+    throw new Error(`«${episode.wrong}» is not in the phrase «${episode.phrase.join(' ')}»`);
 
   const emOf = (item: { kind: Item['kind']; text: string }) =>
     item.kind === 'mark' ? widthInEm(item.text) : widthInEm(item.text) + 2 * pad;
-  const gapOf = (kind: Item['kind'], index: number) => (index === 0 ? 0 : kind === 'mark' ? 0.05 : gap);
+  const gapOf = (kind: Item['kind'], index: number) =>
+    index === 0 ? 0 : kind === 'mark' ? 0.05 : gap;
   const rowEm = (row: (typeof parsed)[number]) =>
     row.reduce((sum, item, i) => sum + emOf(item) + gapOf(item.kind, i), 0);
   const font = Math.min(92 * s, safe.rowWidth / Math.max(...parsed.map(rowEm)));
-  if (font < smallest * s) throw new Error(`«${episode.phrase.join(' ')}» is too long: its type would be ${font}px`);
+  if (font < smallest * s)
+    throw new Error(`«${episode.phrase.join(' ')}» is too long: its type would be ${font}px`);
 
   const plateHeight = font * 1.42;
   const rowStep = plateHeight + 28 * s;
   const blockTop = 666 * s - (rowStep * parsed.length - 28 * s) / 2;
   const rows: Row[] = parsed.map((row, r) => ({
     top: blockTop + r * rowStep,
-    items: row.map((item, i) => ({ ...item, width: emOf(item) * font, gap: gapOf(item.kind, i) * font })),
+    items: row.map((item, i) => ({
+      ...item,
+      width: emOf(item) * font,
+      gap: gapOf(item.kind, i) * font,
+    })),
   }));
 
   // The red tiles: as high as a plate, smaller if their row would be wider than the safe row.
@@ -170,7 +183,15 @@ function layoutFor(episode: Episode, safe: Safe, s: number) {
   const tile = Math.min(plateHeight, (safe.rowWidth - others) / units);
   if (tile * 0.56 < smallest * s) throw new Error(`«${episode.right}» is too long for its row`);
 
-  return { rows, font, plateHeight, letters, tile, tileStep: tile * (1 + tileGap), rightWidth: units * tile };
+  return {
+    rows,
+    font,
+    plateHeight,
+    letters,
+    tile,
+    tileStep: tile * (1 + tileGap),
+    rightWidth: units * tile,
+  };
 }
 
 /** The left edge of every item of a row centred on `centerX`, with the slot `slotWidth` wide. */
@@ -249,15 +270,23 @@ function Scene({ episode }: { episode: Episode }) {
   const layout = layoutFor(episode, safe, s);
   const tiles = tileBeats(layout.letters.length);
 
-  const slotRowIndex = layout.rows.findIndex((row) => row.items.some((item) => item.kind === 'slot'));
+  const slotRowIndex = layout.rows.findIndex((row) =>
+    row.items.some((item) => item.kind === 'slot'),
+  );
   const slotRow = layout.rows[slotRowIndex];
   const slotIndex = slotRow?.items.findIndex((item) => item.kind === 'slot') ?? 0;
   const wrongWidth = slotRow?.items[slotIndex]?.width ?? 0;
-  const slotWidth = interpolate(frame, [beats.close, beats.close + 10], [wrongWidth, layout.rightWidth], {
-    ...clamp,
-    easing: Easing.inOut(Easing.cubic),
-  });
-  const slotLeftAt = (width: number) => (slotRow === undefined ? 0 : (place(slotRow, safe.centerX, width)[slotIndex] ?? 0));
+  const slotWidth = interpolate(
+    frame,
+    [beats.close, beats.close + 10],
+    [wrongWidth, layout.rightWidth],
+    {
+      ...clamp,
+      easing: Easing.inOut(Easing.cubic),
+    },
+  );
+  const slotLeftAt = (width: number) =>
+    slotRow === undefined ? 0 : (place(slotRow, safe.centerX, width)[slotIndex] ?? 0);
   const slotTop = slotRow?.top ?? 0;
 
   // Рупор stands at the left of his band and aims the megaphone up at the calque.
@@ -265,7 +294,10 @@ function Scene({ episode }: { episode: Episode }) {
   const ruporHeight = (ruporWidth * 112) / 150;
   const rupor = { left: safe.left + 10 * s, top: safe.rupor.bottom - ruporHeight - 8 * s };
   const center = { x: rupor.left + ruporWidth / 2, y: rupor.top + ruporHeight / 2 };
-  const target = { x: slotLeftAt(wrongWidth) + wrongWidth / 2, y: slotTop + layout.plateHeight / 2 };
+  const target = {
+    x: slotLeftAt(wrongWidth) + wrongWidth / 2,
+    y: slotTop + layout.plateHeight / 2,
+  };
   const aim = Math.max(-40, (Math.atan2(target.y - center.y, target.x - center.x) * 180) / Math.PI);
   const mouthAt = (degrees: number) => {
     const angle = (degrees * Math.PI) / 180;
@@ -281,7 +313,8 @@ function Scene({ episode }: { episode: Episode }) {
   // The countdown's look runs over the plates, as if Рупор went through them word by word.
   const looking = frame >= 12 && frame < beats.inhale;
   let plateCount = 0;
-  for (const row of layout.rows) plateCount += row.items.filter((item) => item.kind !== 'mark').length;
+  for (const row of layout.rows)
+    plateCount += row.items.filter((item) => item.kind !== 'mark').length;
   const look = looking ? ((frame - 12) / 9) % plateCount : -1;
 
   const shaking = frame >= beats.shout && frame < beats.fall;
@@ -291,7 +324,14 @@ function Scene({ episode }: { episode: Episode }) {
   return (
     <AbsoluteFill>
       <Rings mouth={mouth} target={target} s={s} at={beats.shout} life={24} grow={6} />
-      <Shouter rupor={rupor} width={ruporWidth} height={ruporHeight} aim={aim} solved={tiles.solved} s={s} />
+      <Shouter
+        rupor={rupor}
+        width={ruporWidth}
+        height={ruporHeight}
+        aim={aim}
+        solved={tiles.solved}
+        s={s}
+      />
       <Title answer={episode.answer} safe={safe} s={s} />
 
       {layout.rows.map((row, r) => {
@@ -321,7 +361,10 @@ function Scene({ episode }: { episode: Episode }) {
             );
           }
           plateIndex += 1;
-          const seen = look >= plateIndex && look < plateIndex + 1 ? Math.sin((look - plateIndex) * Math.PI) : 0;
+          const seen =
+            look >= plateIndex && look < plateIndex + 1
+              ? Math.sin((look - plateIndex) * Math.PI)
+              : 0;
           if (item.kind === 'slot') {
             if (frame >= beats.fall) return null;
             const since = frame - beats.shout;
@@ -329,14 +372,23 @@ function Scene({ episode }: { episode: Episode }) {
             return (
               <div
                 key={`${r}-${i}`}
-                style={{ position: 'absolute', left, top: row.top, translate: `${shake}px ${-seen * 8 * s}px` }}
+                style={{
+                  position: 'absolute',
+                  left,
+                  top: row.top,
+                  translate: `${shake}px ${-seen * 8 * s}px`,
+                }}
               >
                 <Plate
                   text={item.text}
                   width={item.width}
                   height={layout.plateHeight}
                   font={layout.font}
-                  face={interpolateColors(blacken, [0, 1], [seen > 0 ? light.highlight : light.tile, light.ink])}
+                  face={interpolateColors(
+                    blacken,
+                    [0, 1],
+                    [seen > 0 ? light.highlight : light.tile, light.ink],
+                  )}
                   ink={interpolateColors(blacken, [0, 1], [light.ink, light.background])}
                   s={s}
                 />
@@ -347,7 +399,12 @@ function Scene({ episode }: { episode: Episode }) {
           return (
             <div
               key={`${r}-${i}`}
-              style={{ position: 'absolute', left, top: row.top, translate: `0px ${-seen * 8 * s}px` }}
+              style={{
+                position: 'absolute',
+                left,
+                top: row.top,
+                translate: `0px ${-seen * 8 * s}px`,
+              }}
             >
               <Plate
                 text={item.text}
@@ -371,7 +428,10 @@ function Scene({ episode }: { episode: Episode }) {
         const launch = tiles.launch(i);
         const land = tiles.land(i);
         if (frame < launch) return null;
-        const t = interpolate(frame, [launch, land], [0, 1], { ...clamp, easing: Easing.out(Easing.quad) });
+        const t = interpolate(frame, [launch, land], [0, 1], {
+          ...clamp,
+          easing: Easing.out(Easing.quad),
+        });
         const to = {
           x: slotLeftAt(layout.rightWidth) + i * layout.tileStep,
           y: slotTop + (layout.plateHeight - layout.tile) / 2,
@@ -390,7 +450,13 @@ function Scene({ episode }: { episode: Episode }) {
               transformOrigin: 'center bottom',
             }}
           >
-            <Tile letter={letter} size={layout.tile} face={light.accent} edge={light.accentEdge} ink={light.background} />
+            <Tile
+              letter={letter}
+              size={layout.tile}
+              face={light.accent}
+              edge={light.accentEdge}
+              ink={light.background}
+            />
           </div>
         );
       })}
@@ -532,7 +598,15 @@ function Halves({
               transformOrigin: side === 0 ? '25% 50%' : '75% 50%',
             }}
           >
-            <Plate text={text} width={width} height={height} font={font} face={light.ink} ink={light.background} s={s} />
+            <Plate
+              text={text}
+              width={width}
+              height={height}
+              font={font}
+              face={light.ink}
+              ink={light.background}
+              s={s}
+            />
           </div>
         );
       })}
@@ -546,13 +620,26 @@ function Title({ answer, safe, s }: { answer: string; safe: Safe; s: number }) {
   const mended = frame >= beats.reveal + 4;
   const text = (mended ? answer : texts.title).toUpperCase();
   const padding = 30 * s;
-  const font = Math.min((mended ? 72 : 60) * s, (safe.rowWidth - 2 * padding - 24 * s) / widthInEm(text));
+  const font = Math.min(
+    (mended ? 72 : 60) * s,
+    (safe.rowWidth - 2 * padding - 24 * s) / widthInEm(text),
+  );
   // The stamp is already down on the first frame, inside the safe zone, and settles in six.
   const stamp = interpolate(frame, [0, 6], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
   const tilt = -3 - (1 - stamp) * 1.5;
   const press = 1 + (1 - stamp) * 0.02;
-  const flip = interpolate(frame, [beats.reveal, beats.reveal + 4, beats.reveal + 8], [1, 0.04, 1], clamp);
-  const bump = interpolate(frame, [beats.reveal + 8, beats.reveal + 11, beats.reveal + 16], [1, 1.06, 1], clamp);
+  const flip = interpolate(
+    frame,
+    [beats.reveal, beats.reveal + 4, beats.reveal + 8],
+    [1, 0.04, 1],
+    clamp,
+  );
+  const bump = interpolate(
+    frame,
+    [beats.reveal + 8, beats.reveal + 11, beats.reveal + 16],
+    [1, 1.06, 1],
+    clamp,
+  );
   return (
     <div
       style={{
@@ -618,7 +705,13 @@ function Timer({ safe, s }: { safe: Safe; s: number }) {
         scale: `${pulse * leave} ${pulse * leave * flip}`,
       }}
     >
-      <Tile letter={String(digit)} size={size} face={light.ink} edge="rgba(20, 12, 10, 0.28)" ink={light.background} />
+      <Tile
+        letter={String(digit)}
+        size={size}
+        face={light.ink}
+        edge="rgba(20, 12, 10, 0.28)"
+        ink={light.background}
+      />
     </div>
   );
 }
@@ -627,7 +720,10 @@ function Timer({ safe, s }: { safe: Safe; s: number }) {
 function Rule({ text, safe, s }: { text: string; safe: Safe; s: number }) {
   const frame = useCurrentFrame();
   if (frame < beats.rule || frame >= beats.ask) return null;
-  const come = interpolate(frame, [beats.rule, beats.rule + 8], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+  const come = interpolate(frame, [beats.rule, beats.rule + 8], [0, 1], {
+    ...clamp,
+    easing: Easing.out(Easing.cubic),
+  });
   const go = interpolate(frame, [beats.ask - 5, beats.ask], [1, 0], clamp);
   return (
     <div
@@ -661,7 +757,10 @@ function Ask({ safe, s }: { safe: Safe; s: number }) {
   const frame = useCurrentFrame();
   if (frame < beats.ask) return null;
   const ask = interpolate(frame, [beats.ask, beats.ask + 9], [0, 1], { ...clamp, easing: pop });
-  const honest = interpolate(frame, [beats.honest, beats.honest + 8], [0, 1], { ...clamp, easing: pop });
+  const honest = interpolate(frame, [beats.honest, beats.honest + 8], [0, 1], {
+    ...clamp,
+    easing: pop,
+  });
   return (
     <div
       style={{
@@ -722,11 +821,23 @@ function Shouter({
         ? interpolate(frame, [beats.inhale, beats.shout - 2], [idle, 10], clamp)
         : frame < solved
           ? interpolate(frame, [beats.shout, beats.shout + 3], [10, aim], { ...clamp, easing: pop })
-          : interpolate(frame, [solved, solved + 8], [aim, glad], { ...clamp, easing: Easing.out(Easing.cubic) });
-  const squeeze = interpolate(frame, [beats.inhale, beats.shout - 1, beats.shout + 3], [1, 0.9, 1], clamp);
-  const shake = frame >= beats.shout && frame < beats.shout + 22 ? Math.sin(frame * 2.2) * 7 * s : 0;
+          : interpolate(frame, [solved, solved + 8], [aim, glad], {
+              ...clamp,
+              easing: Easing.out(Easing.cubic),
+            });
+  const squeeze = interpolate(
+    frame,
+    [beats.inhale, beats.shout - 1, beats.shout + 3],
+    [1, 0.9, 1],
+    clamp,
+  );
+  const shake =
+    frame >= beats.shout && frame < beats.shout + 22 ? Math.sin(frame * 2.2) * 7 * s : 0;
   const sinceAsk = frame - beats.ask;
-  const hop = sinceAsk >= 0 && sinceAsk < 24 ? -Math.abs(Math.sin((sinceAsk / 12) * Math.PI)) * 34 * s * (1 - sinceAsk / 24) : 0;
+  const hop =
+    sinceAsk >= 0 && sinceAsk < 24
+      ? -Math.abs(Math.sin((sinceAsk / 12) * Math.PI)) * 34 * s * (1 - sinceAsk / 24)
+      : 0;
   const state = frame < beats.shout ? 'waits' : frame < solved ? 'shouts' : 'happy';
   return (
     <div

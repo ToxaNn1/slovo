@@ -1,12 +1,5 @@
 import { AbsoluteFill, Audio, Easing, interpolate, Sequence, useCurrentFrame } from 'remotion';
 
-import w5 from '../../../../editions/uk/content/words/w_bcutlw.json';
-import w6 from '../../../../editions/uk/content/words/w_8juf5j.json';
-import w4 from '../../../../editions/uk/content/words/w_b7lkj1.json';
-import w1 from '../../../../editions/uk/content/words/w_olmlqv.json';
-import w3 from '../../../../editions/uk/content/words/w_b2az8s.json';
-import w2 from '../../../../editions/uk/content/words/w_q8ot2t.json';
-import w7 from '../../../../editions/uk/content/words/w_zhv9i4.json';
 import { EndCardAt, endCardFrom } from '../EndCard';
 import { light, uiFont, wordFont } from '../look';
 import { Rupor } from '../Rupor';
@@ -14,6 +7,15 @@ import { type Safe, tileSizeFor, useSafe } from '../safe';
 import { Bed, levels, Sfx, sfx } from '../sound';
 import { Tile } from '../Tile';
 import { clamp, pop } from '../shared/motion';
+import { word as snapshotWord } from '../words';
+
+const w5 = snapshotWord('w_bcutlw');
+const w6 = snapshotWord('w_8juf5j');
+const w4 = snapshotWord('w_b7lkj1');
+const w1 = snapshotWord('w_olmlqv');
+const w3 = snapshotWord('w_b2az8s');
+const w2 = snapshotWord('w_q8ot2t');
+const w7 = snapshotWord('w_zhv9i4');
 
 const softEdge = 'rgba(20, 12, 10, 0.28)';
 
@@ -24,7 +26,7 @@ type Day = { entry: { lemma: string; stress: number[] }; meaning: string };
 export type Episode = { theme: string; days: readonly Day[] };
 
 /**
- * The episodes. Every word is an Entry of the app (editions/uk/content/words):
+ * The episodes. Every word is an Entry of the app (apps/video/src/snapshot.json):
  * the lemma and its Stress are read from the Entry, so the video and the app
  * say the same. The meaning is the advert's own short line, six words at
  * most, cut from the Entry's definition and never saying more than it does.
@@ -48,7 +50,8 @@ const dayNames = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'НД'] as con
 
 /** The texts every episode shares; `count` is 7 for the whole week, 5 for the weekdays' cut. */
 export const texts = {
-  title: (count: number) => [count === 5 ? '5 буднів.' : `${count} днів.`, `${count} слів.`] as const,
+  title: (count: number) =>
+    [count === 5 ? '5 буднів.' : `${count} днів.`, `${count} слів.`] as const,
   stamp: (count: number) => [`${count} ДНІВ`, 'ПОСПІЛЬ'] as const,
   promise: ['Одне слово на день.', 'Хвилина часу.'],
   endLine: 'Почни свій тиждень сьогодні.',
@@ -150,7 +153,10 @@ export function WeekSound({ count }: { count: number }) {
       <Sfx src={sfx.stamp} at={beats.stamp} volume={0.75} />
       {/* Рупор is glad: his shout, cut short and under the level the other videos shout at. */}
       <Sequence from={beats.stamp + 4} durationInFrames={16} layout="none" name="Short horn">
-        <Audio src={sfx.horn} volume={(f) => interpolate(f, [0, 8, 16], [0.7, 0.7, 0], clamp) * levels.horn} />
+        <Audio
+          src={sfx.horn}
+          volume={(f) => interpolate(f, [0, 8, 16], [0.7, 0.7, 0], clamp) * levels.horn}
+        />
       </Sequence>
       <Sfx src={sfx.swish} at={beats.promise - 2} volume={0.4} />
     </>
@@ -180,7 +186,10 @@ function Scene({ theme, days }: { theme: string; days: readonly Day[] }) {
   const tileStep = tile * 1.12;
   const rowLeft = safe.centerX - (count * tileStep - tile * 0.12) / 2;
   const rowTop = interpolate(up, [0, 1], [at.row.hookTop, at.row.top]) * s;
-  const dayCenter = (d: number) => ({ x: rowLeft + d * tileStep + tile / 2, y: at.row.top * s + tile / 2 });
+  const dayCenter = (d: number) => ({
+    x: rowLeft + d * tileStep + tile / 2,
+    y: at.row.top * s + tile / 2,
+  });
 
   // The list: small under the word of the day, then up and bigger once the week is done.
   const finalStep = Math.min(at.list.maxStep, at.list.finalHeight / count);
@@ -267,7 +276,15 @@ function Scene({ theme, days }: { theme: string; days: readonly Day[] }) {
           >
             {title[0]} <span style={{ color: light.accent }}>{title[1]}</span>
           </div>
-          <div style={{ fontFamily: uiFont, fontWeight: 600, fontSize: 36 * s, lineHeight: 1, color: light.muted }}>
+          <div
+            style={{
+              fontFamily: uiFont,
+              fontWeight: 600,
+              fontSize: 36 * s,
+              lineHeight: 1,
+              color: light.muted,
+            }}
+          >
             {theme}
           </div>
         </div>
@@ -323,9 +340,21 @@ function Scene({ theme, days }: { theme: string; days: readonly Day[] }) {
                   color: light.ink,
                 }}
               >
-                <Accented text={lemmaOf(day.entry)} at={day.entry.stress[0] ?? 0} color={light.accent} />
+                <Accented
+                  text={lemmaOf(day.entry)}
+                  at={day.entry.stress[0] ?? 0}
+                  color={light.accent}
+                />
               </div>
-              <div style={{ fontFamily: uiFont, fontWeight: 600, fontSize: 38 * s, lineHeight: 1, color: light.ink }}>
+              <div
+                style={{
+                  fontFamily: uiFont,
+                  fontWeight: 600,
+                  fontSize: 38 * s,
+                  lineHeight: 1,
+                  color: light.ink,
+                }}
+              >
                 {day.meaning}
               </div>
             </div>
@@ -345,7 +374,10 @@ function Scene({ theme, days }: { theme: string; days: readonly Day[] }) {
             from={from}
             until={until}
             source={dayCenter(d)}
-            rowAt={{ x: safe.left + (at.list.word / 2) * s * listScale, y: rowY(d, 0) + (daysStep / 2) * s }}
+            rowAt={{
+              x: safe.left + (at.list.word / 2) * s * listScale,
+              y: rowY(d, 0) + (daysStep / 2) * s,
+            }}
             safe={safe}
             s={s}
           />
@@ -377,7 +409,12 @@ function DayTile({
 }) {
   const frame = useCurrentFrame();
   const done = frame >= from + 3;
-  const click = interpolate(frame, [beats.click, beats.click + 3, beats.click + 6], [1, 0.08, 1], clamp);
+  const click = interpolate(
+    frame,
+    [beats.click, beats.click + 3, beats.click + 6],
+    [1, 0.08, 1],
+    clamp,
+  );
   const flip = interpolate(frame, [from, from + 3, from + 6], [1, 0.06, 1], clamp);
   // The day whose word is on screen stands a little higher than the rest.
   const now =
@@ -462,7 +499,8 @@ function WordOfDay({
   // An apostrophe is no tile: it stands between two tiles, in a narrow place of its own.
   const gap = 0.1;
   const widthOf = (letter: string) => (letter === '’' ? 0.34 : 1);
-  const units = letters.reduce((sum, letter) => sum + widthOf(letter), 0) + (letters.length - 1) * gap;
+  const units =
+    letters.reduce((sum, letter) => sum + widthOf(letter), 0) + (letters.length - 1) * gap;
   const tile = Math.min(at.stage.maxTile * s, safe.rowWidth / units);
   const total = units * tile;
   const lefts: number[] = [];
@@ -478,7 +516,10 @@ function WordOfDay({
   const gone = interpolate(frame, [until, until + beats.leave], [0, 1], clamp);
   const leave = Easing.out(Easing.cubic)(gone);
   const center = { x: safe.centerX, y: top + tile * 0.9 };
-  const meaning = interpolate(frame, [from + 5, from + 11], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+  const meaning = interpolate(frame, [from + 5, from + 11], [0, 1], {
+    ...clamp,
+    easing: Easing.out(Easing.cubic),
+  });
   const mark = interpolate(frame, [from + 12, from + 17], [0, 1], { ...clamp, easing: pop });
 
   return (
@@ -626,10 +667,19 @@ function Mascot({ safe, s }: { safe: Safe; s: number }) {
   const width = (waiting ? 380 : 330) * s;
   const height = (width * 112) / 150;
   const top = safe.rupor.bottom - height - 8 * s;
-  const duck = interpolate(frame, [beats.shrink, beats.shrink + 10], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
-  const back = interpolate(frame, [beats.full + 2, beats.full + 12], [0, 1], { ...clamp, easing: pop });
+  const duck = interpolate(frame, [beats.shrink, beats.shrink + 10], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
+  const back = interpolate(frame, [beats.full + 2, beats.full + 12], [0, 1], {
+    ...clamp,
+    easing: pop,
+  });
   const since = frame - beats.stamp;
-  const hop = since >= 0 && since < 24 ? -Math.abs(Math.sin((since / 12) * Math.PI)) * 30 * s * (1 - since / 24) : 0;
+  const hop =
+    since >= 0 && since < 24
+      ? -Math.abs(Math.sin((since / 12) * Math.PI)) * 30 * s * (1 - since / 24)
+      : 0;
   return (
     <div
       style={{
@@ -653,8 +703,16 @@ function Mascot({ safe, s }: { safe: Safe; s: number }) {
 function Stamp({ lines, safe, s }: { lines: readonly string[]; safe: Safe; s: number }) {
   const frame = useCurrentFrame();
   if (frame < beats.stamp) return null;
-  const hit = interpolate(frame, [beats.stamp, beats.stamp + 4], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
-  const bump = interpolate(frame, [beats.stamp + 4, beats.stamp + 7, beats.stamp + 12], [1, 0.94, 1], clamp);
+  const hit = interpolate(frame, [beats.stamp, beats.stamp + 4], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
+  const bump = interpolate(
+    frame,
+    [beats.stamp + 4, beats.stamp + 7, beats.stamp + 12],
+    [1, 0.94, 1],
+    clamp,
+  );
   return (
     <div
       style={{
@@ -693,7 +751,10 @@ function Stamp({ lines, safe, s }: { lines: readonly string[]; safe: Safe; s: nu
 function Promise({ rowStep, safe, s }: { rowStep: number; safe: Safe; s: number }) {
   const frame = useCurrentFrame();
   if (frame < beats.promise) return null;
-  const come = interpolate(frame, [beats.promise, beats.promise + 8], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+  const come = interpolate(frame, [beats.promise, beats.promise + 8], [0, 1], {
+    ...clamp,
+    easing: Easing.out(Easing.cubic),
+  });
   return (
     <div
       style={{
@@ -728,7 +789,9 @@ function Promise({ rowStep, safe, s }: { rowStep: number; safe: Safe; s: number 
         }}
       >
         <div style={{ fontSize: 56 * s, color: light.background }}>{texts.promise[0]}</div>
-        <div style={{ marginTop: 14 * s, fontSize: 76 * s, color: light.accent }}>{texts.promise[1]}</div>
+        <div style={{ marginTop: 14 * s, fontSize: 76 * s, color: light.accent }}>
+          {texts.promise[1]}
+        </div>
       </div>
     </div>
   );

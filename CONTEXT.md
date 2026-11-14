@@ -26,6 +26,14 @@ _Avoid_: Delta, diff (that is what the editor shows on a version conflict), OTA
 A per-Edition number the Deployment's database raises on every publish, a rollback included; it only grows, and two different contents never share one (ADR 0090). A record version is the per-record counter a save names and the server checks, refusing a save over a newer one.
 _Avoid_: Pack version, checksum, revision
 
+**Content snapshot**:
+Every published record of one Edition at one content version, as the backend's `GET /v1/editions/<edition>/content/snapshot` answers it; the EAS build builds the bundled Language Pack from it, and the content tools check drafts against it (ADR 0090). A build with the backend down fails rather than ships an old pack.
+_Avoid_: Dump, export, content folder
+
+**Seed snapshot**:
+A saved slice of an Edition's content snapshot, `editions/<edition>/seed-snapshot.json`, that seeds the empty database of CI, Maestro and `pnpm dev` through `pnpm content import --snapshot`; tests name some of its records by id, so a change to it keeps those ids or updates those tests (ADR 0090). It is a fixture, never the live content.
+_Avoid_: Fixture database, sample content
+
 **Update channel**:
 An Edition's stream of signed OTA updates to the app's JavaScript, named after the Edition id and bound to its builds; an update reaches only the builds whose native code it was made for, and the owner publishes one deliberately, to a share of readers first (ADR 0062).
 _Avoid_: Release, release channel, branch
@@ -362,8 +370,12 @@ _Avoid_: Rarity Floor, difficulty, level, maximum difficulty
 _Avoid_: Ratio, priority
 
 **Quick Question**:
-A Feed slot that shows one Round from an enabled Game Mode over an Eligible Entry. The Mix sets its frequency: off, every 20th, every 10th (default) or every 6th card. A right answer earns 2 XP; a wrong one marks the Entry Unknown. It makes nothing Seen beyond its Entry's own rules.
+A Feed slot that shows one Round over an Eligible Entry: a Round of an enabled Game Mode or a Word Meaning question, each with the same chance. The Mix sets its frequency: off, every 20th, every 10th (default) or every 6th card. A right answer earns 2 XP; a wrong one marks the Entry Unknown. It makes nothing Seen beyond its Entry's own rules.
 _Avoid_: Pop quiz, Feed Game
+
+**Word Meaning question**:
+A round type of the Quick Question, not a Game Mode: the Lemma of a Word that is an Eligible Entry («„{word}“ — це…») and four Definitions shown whole, its primary Definition among them. The Distractors are primary Definitions of other such Words, of the same part of speech first. A Word whose Definition holds its Lemma is never asked. It has its own Feature Switch (ADR 0128).
+_Avoid_: Definition mode, meaning Game
 
 **Questionnaire**:
 The questions that tune the Feed to the reader. Onboarding asks two: «Рівень», how well the reader knows the language (sets the Rarity Ceiling, «Тільки починаю» «до 2» to «Мовний гурман» «до 5»; «Не знаю» opens the Rarity Test, whose result sets it) and «Навіщо» (sets the Mix kind weights); skipping them keeps the defaults. The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (decides whether to offer the Rarity Test) and the Mix review come later through Feed Notices. The reader can retake it from Settings, «Рівень» there without «Не знаю». Its answers reach the owner only as anonymous counters and as properties of the anonymous Analytics id.

@@ -53,7 +53,7 @@ import {
 import { eq } from 'drizzle-orm';
 import pg from 'pg';
 import { pino, type Logger } from 'pino';
-import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, inject, onTestFinished, vi } from 'vitest';
 import { z } from 'zod';
 
 import { keptSignInCode } from './account/authenticator';
@@ -459,7 +459,8 @@ export function createFakeApple(): FakeApple {
 
 /**
  * An editions folder made for one test, with an Edition for each id: a copy of
- * the UA Edition's config, strings and content under its own id.
+ * the UA Edition's config and strings under its own id, and the seed
+ * snapshot's content, recorded once per run (`src/seed-setup.ts`).
  * `change` changes each config. Copying and recording the content takes a
  * while, so an Edition gets it when a test first imports or corrects it.
  */
@@ -486,7 +487,9 @@ export function testEditions(
   const contentOf = (id: string) => {
     const { dir: editionDir } = editionFiles(join(dir, id));
     if (!withContent.has(id)) {
-      cpSync(join(ukrainian.dir, 'content'), join(editionDir, 'content'), { recursive: true });
+      cpSync(join(inject('ukrainianSeed'), 'content'), join(editionDir, 'content'), {
+        recursive: true,
+      });
       // The Edition check reads the font of the Word of the Day the config names.
       cpSync(join(ukrainian.dir, FONTS_DIR), join(editionDir, FONTS_DIR), { recursive: true });
       // The content checksum takes in the Edition, so the copy is recorded under its own id.
