@@ -80,3 +80,10 @@ coord: coord/weekly-1842
 branches: ^origin/(coord/weekly-1842|feat/1842-weekly-board|(feat|chore|fix|test|refactor|docs)/184[3-5]-)
 brief:
 You are the Feed f5 wave coordinator (spec #1842, tickets #1843–#1845), in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/weekly-1842 (grant, order, log) and continue from the log tail. Grants: commits and pushes on the wave branches only; NO PR to main, NO main merge. Never write the owner's email anywhere. When done: `STATUS: FINISHED` first line of HANDOFF.md and an empty `chore: DONE #1842` commit on feat/1842-weekly-board.
+
+## wave saved-1850
+status: active
+coord: coord/saved-1114
+branches: ^origin/(feat/1114-saved-search-design|coord/saved-1114|feat/18(5[1-9])-)
+brief:
+You are the coordinator of the board 09 «Збережене і пошук» wave (spec #1850, tickets #1851–#1859), in the cloud; the laptop coordinator stopped. Read HANDOFF.md on origin/coord/saved-1114 and continue from its log tail, following docs/agents/waves.md «Steps» and the skill mattpocock-skills:implement-spec. Integration branch feat/1114-saved-search-design. Grants: commits, pushes, PR from the integration branch, auto-merge squash to main on green. Never delete branches. Never end your turn while work remains; wait with one blocking command. When the PR is green with auto-merge on: `STATUS: FINISHED` first line of HANDOFF.md.
