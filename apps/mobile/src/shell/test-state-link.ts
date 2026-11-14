@@ -1,12 +1,13 @@
 import { reloadAppAsync } from 'expo';
 import { openDatabaseAsync } from 'expo-sqlite';
 
-import { deviceClock } from '../device/device-clock';
+import { deviceClock, shiftDeviceClock } from '../device/device-clock';
 import { logError, logWarning } from '../diagnostics/log';
 import { activeEditionId } from '../edition/edition';
 import { appShell } from './app-shell';
 import { userStateDatabaseName } from '../user-state/stored-user-state';
 import {
+  dayShiftOf,
   loadTestState,
   reopenedByTestState,
   testStateNames,
@@ -52,13 +53,29 @@ async function open(name: TestStateName, initial: boolean): Promise<void> {
 }
 
 /**
- * Handles a test state link: loads the state and reloads the app, or warns
- * with the names on offer. Gives the path to open meanwhile, the Feed, or
+ * Shifts the device clock to the link's `?day=`, from the system time, or
+ * takes any shift back when the link has none (#1859). Runs on the link the
+ * app reopens with too, so the shift outlasts the reload.
+ */
+function shiftToDayOf(link: string): void {
+  shiftDeviceClock(0);
+  const shift = dayShiftOf(link, deviceClock);
+  if (shift === 'unknown') {
+    logWarning('No such day', 'Days: ?day=<weekday>, such as monday, or ?day=<YYYY-MM-DD>');
+  } else if (shift !== undefined) {
+    shiftDeviceClock(shift.shift);
+  }
+}
+
+/**
+ * Handles a test state link: shifts the day to its `?day=`, then loads the
+ * state and reloads the app, or warns with the names on offer. Gives the path to open meanwhile, the Feed, or
  * nothing for a link that is no test state link.
  */
 export function openTestStateLink(link: { path: string; initial: boolean }): string | undefined {
   const named = testStateOf(link.path);
   if (named === undefined) return undefined;
+  shiftToDayOf(link.path);
   if (named === 'unknown') {
     logWarning('No such test state', `Test states: ${testStateNames.join(', ')}`);
     return '/';
