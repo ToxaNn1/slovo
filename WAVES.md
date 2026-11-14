@@ -66,3 +66,10 @@ coord: coord/review-fixes-1113
 branches: ^origin/(coord/review-fixes-1113|fix/1113-code-review.*)
 brief:
 You are the review-fixes-1113 coordinator, in the cloud; the previous one stopped. Read HANDOFF.md on origin/coord/review-fixes-1113 and continue from the log tail. Grants: commits, pushes, one PR to main from fix/1113-code-review; no main merge, no auto-merge, no force-push, no tickets.
+
+## wave word-meaning-1831
+status: active
+coord: coord/word-meaning-1831
+branches: ^origin/(coord/word-meaning-1831|feat/1831-word-meaning|(feat|chore|fix|test|refactor|docs)/183[1-4]-)
+brief:
+You are the Word Meaning question wave coordinator (spec #1831), in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/word-meaning-1831 (grant, rules, log) and continue from the log tail. Grants: commits, pushes, one PR to main with squash auto-merge on green after code review.
