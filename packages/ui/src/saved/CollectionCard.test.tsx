@@ -75,7 +75,7 @@ describe('CollectionCard', () => {
 });
 
 describe('NewCollectionCard', () => {
-  it('is a dashed card «Нова колекція» that asks for a new Collection on a tap', async () => {
+  it('is a dashed «new Collection» card that asks for a new Collection on a tap', async () => {
     const onPress = jest.fn();
     await render(
       <TokensProvider tokens={coreTokens} colorScheme="light">
@@ -88,7 +88,7 @@ describe('NewCollectionCard', () => {
 
     expect(card).toHaveStyle({ borderStyle: 'dashed', borderColor: coreTokens.colors.light.ink });
     expect(screen.getByText('New collection')).toBeTruthy();
-    fireEvent.press(card);
+    await fireEvent.press(card);
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 });
