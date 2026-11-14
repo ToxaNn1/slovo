@@ -7,8 +7,24 @@ import { StopFrame, stopFrameLength } from './StopFrame';
 export function StopFrameCompositions() {
   return (
     <>
-      <Composition id="StopFrame" component={StopFrame} defaultProps={{ episode: 0 }} durationInFrames={stopFrameLength} fps={30} width={1080} height={1920} />
-      <Composition id="StopFrame2" component={StopFrame} defaultProps={{ episode: 1 }} durationInFrames={stopFrameLength} fps={30} width={1080} height={1920} />
+      <Composition
+        id="StopFrame"
+        component={StopFrame}
+        defaultProps={{ episode: 0 }}
+        durationInFrames={stopFrameLength}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="StopFrame2"
+        component={StopFrame}
+        defaultProps={{ episode: 1 }}
+        durationInFrames={stopFrameLength}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
     </>
   );
 }

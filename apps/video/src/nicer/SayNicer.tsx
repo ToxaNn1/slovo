@@ -1,5 +1,12 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { AbsoluteFill, Easing, interpolate, interpolateColors, Sequence, useCurrentFrame } from 'remotion';
+import {
+  AbsoluteFill,
+  Easing,
+  interpolate,
+  interpolateColors,
+  Sequence,
+  useCurrentFrame,
+} from 'remotion';
 
 import { EndCardAt, endCardFrom } from '../EndCard';
 import { light, uiFont, wordFont } from '../look';
@@ -10,7 +17,6 @@ import { Tile } from '../Tile';
 import { charInEm, onestInEm } from './onest';
 import { clamp, pop } from '../shared/motion';
 import { Rings } from '../shared/Rings';
-
 
 /** One episode of «Скажи гарніше»: an everyday answer in a chat and the nicer word for it. */
 export type Episode = {
@@ -38,7 +44,7 @@ export type Episode = {
  * The episodes. Every pair is «usual → nicer», never «wrong → right»: both
  * words are the norm (СУМ), the second is only rarer. None of the three is an
  * Entry of the app yet; «навзаєм» and «залюбки» stand in its Examples
- * (editions/uk/content/words: w_ymz0oh, w_643f33, w_kn3ikr).
+ * (apps/video/src/snapshot.json: w_ymz0oh, w_643f33, w_kn3ikr).
  */
 export const episodes: readonly Episode[] = [
   {
@@ -125,7 +131,11 @@ function layoutFor(episode: Episode, safe: Safe, s: number) {
   const cursor = 16 * s;
   const wasFont = Math.min(60 * s, (safe.width - 2 * padX - cursor) / onestInEm(episode.was));
   if (wasFont < 44 * s) throw new Error(`«${episode.was}» is too long for its bubble`);
-  const was = { font: wasFont, width: onestInEm(episode.was) * wasFont + cursor + 2 * padX, height: 150 * s };
+  const was = {
+    font: wasFont,
+    width: onestInEm(episode.was) * wasFont + cursor + 2 * padX,
+    height: 150 * s,
+  };
 
   // The nicer word in tiles; the apostrophe and the punctuation are marks between and after them.
   const chars = [...episode.nicer.toUpperCase()];
@@ -216,7 +226,8 @@ export function SayNicer({ episode = 0 }: SayNicerProps) {
 }
 
 /** How many tiles and marks the word lands as. */
-const pieceCount = (episode: Episode) => [...episode.nicer].length + (episode.mark === undefined ? 0 : 1);
+const pieceCount = (episode: Episode) =>
+  [...episode.nicer].length + (episode.mark === undefined ? 0 : 1);
 
 /** The sounds: the bed, the bubble's pop, the shout that blows the answer away, the tiles, the Stress mark, the call. */
 export function SayNicerSound({ episode }: { episode: Episode }) {
@@ -256,14 +267,20 @@ function Scene({ episode }: { episode: Episode }) {
   const height = layout.was.height + (layout.nicer.height - layout.was.height) * grow;
   const answerLeft = layout.left(width);
   const jump = interpolate(frame, [0, 5], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
-  const shake = frame >= beats.shout && frame < beats.shout + 16 ? Math.sin(frame * 2.4) * 7 * s * (1 - (frame - beats.shout) / 16) : 0;
+  const shake =
+    frame >= beats.shout && frame < beats.shout + 16
+      ? Math.sin(frame * 2.4) * 7 * s * (1 - (frame - beats.shout) / 16)
+      : 0;
 
   // Рупор stands at the left of his band and aims the megaphone up at the answer.
   const ruporWidth = 340 * s;
   const ruporHeight = (ruporWidth * 112) / 150;
   const rupor = { left: safe.left + 10 * s, top: safe.rupor.bottom - ruporHeight - 8 * s };
   const center = { x: rupor.left + ruporWidth / 2, y: rupor.top + ruporHeight / 2 };
-  const target = { x: layout.left(layout.was.width) + layout.was.width / 2, y: layout.answerTop + layout.was.height / 2 };
+  const target = {
+    x: layout.left(layout.was.width) + layout.was.width / 2,
+    y: layout.answerTop + layout.was.height / 2,
+  };
   const aim = Math.max(-40, (Math.atan2(target.y - center.y, target.x - center.x) * 180) / Math.PI);
   const angle = (aim * Math.PI) / 180;
   const dx = ruporWidth * 0.49;
@@ -281,19 +298,48 @@ function Scene({ episode }: { episode: Episode }) {
   return (
     <AbsoluteFill>
       <Title safe={safe} s={s} />
-      <Shouter rupor={rupor} width={ruporWidth} height={ruporHeight} aim={aim} solved={tiles.solved} s={s} />
+      <Shouter
+        rupor={rupor}
+        width={ruporWidth}
+        height={ruporHeight}
+        aim={aim}
+        solved={tiles.solved}
+        s={s}
+      />
 
       <AbsoluteFill style={{ opacity: dim }}>
         <Rings mouth={mouth} target={target} s={s} at={beats.shout} life={24} grow={5} />
 
-        <Bubble side="left" left={safe.left} top={layout.ask.top} height={layout.ask.height} padX={layout.padX} s={s}>
+        <Bubble
+          side="left"
+          left={safe.left}
+          top={layout.ask.top}
+          height={layout.ask.height}
+          padX={layout.padX}
+          s={s}
+        >
           <Line font={layout.ask.font} color={light.ink}>
             {episode.ask}
           </Line>
         </Bubble>
 
-        <div style={{ position: 'absolute', left: 0, top: 0, translate: `${shake}px ${(1 - jump) * 46 * s}px` }}>
-          <Bubble side="right" left={answerLeft} top={layout.answerTop} width={width} height={height} padX={layout.padX} s={s}>
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            translate: `${shake}px ${(1 - jump) * 46 * s}px`,
+          }}
+        >
+          <Bubble
+            side="right"
+            left={answerLeft}
+            top={layout.answerTop}
+            width={width}
+            height={height}
+            padX={layout.padX}
+            s={s}
+          >
             <Typed text={episode.was} font={layout.was.font} blow={blow} s={s} />
           </Bubble>
         </div>
@@ -303,7 +349,10 @@ function Scene({ episode }: { episode: Episode }) {
           const launch = tiles.launch(i);
           const land = tiles.land(i);
           if (frame < launch) return null;
-          const t = interpolate(frame, [launch, land], [0, 1], { ...clamp, easing: Easing.out(Easing.quad) });
+          const t = interpolate(frame, [launch, land], [0, 1], {
+            ...clamp,
+            easing: Easing.out(Easing.quad),
+          });
           const to = { x: layout.row.left + piece.left, y: layout.row.top };
           const from = { x: mouth.x - piece.width / 2, y: mouth.y - layout.tile / 2 };
           const squash = interpolate(frame, [land, land + 2, land + 7], [1, 0.84, 1], clamp);
@@ -320,7 +369,13 @@ function Scene({ episode }: { episode: Episode }) {
               }}
             >
               {piece.kind === 'tile' ? (
-                <Tile letter={piece.text} size={layout.tile} face={light.tile} edge={light.accentEdge} ink={light.accent} />
+                <Tile
+                  letter={piece.text}
+                  size={layout.tile}
+                  face={light.tile}
+                  edge={light.accentEdge}
+                  ink={light.accent}
+                />
               ) : (
                 <div
                   style={{
@@ -366,8 +421,25 @@ function Scene({ episode }: { episode: Episode }) {
           </div>
         )}
 
-        <Praise text={episode.praise} top={layout.praise.top} height={layout.praise.height} font={layout.praise.font} padX={layout.padX} from={tiles.praise} safe={safe} s={s} />
-        <Meaning episode={episode} left={rupor.left + ruporWidth + 28 * s} top={rupor.top} height={ruporHeight} from={tiles.praise + 6} safe={safe} s={s} />
+        <Praise
+          text={episode.praise}
+          top={layout.praise.top}
+          height={layout.praise.height}
+          font={layout.praise.font}
+          padX={layout.padX}
+          from={tiles.praise}
+          safe={safe}
+          s={s}
+        />
+        <Meaning
+          episode={episode}
+          left={rupor.left + ruporWidth + 28 * s}
+          top={rupor.top}
+          height={ruporHeight}
+          from={tiles.praise + 6}
+          safe={safe}
+          s={s}
+        />
       </AbsoluteFill>
 
       <Call safe={safe} s={s} />
@@ -378,7 +450,16 @@ function Scene({ episode }: { episode: Episode }) {
 /** One line of chat text. */
 function Line({ font, color, children }: { font: number; color: string; children: ReactNode }) {
   return (
-    <div style={{ fontFamily: uiFont, fontWeight: 600, fontSize: font, lineHeight: 1.2, whiteSpace: 'nowrap', color }}>
+    <div
+      style={{
+        fontFamily: uiFont,
+        fontWeight: 600,
+        fontSize: font,
+        lineHeight: 1.2,
+        whiteSpace: 'nowrap',
+        color,
+      }}
+    >
       {children}
     </div>
   );
@@ -422,7 +503,9 @@ function Bubble({
         height,
         boxSizing: 'border-box',
         padding: `0 ${padX}px`,
-        borderRadius: ours ? `${round}px ${round}px ${tight}px ${round}px` : `${round}px ${round}px ${round}px ${tight}px`,
+        borderRadius: ours
+          ? `${round}px ${round}px ${tight}px ${round}px`
+          : `${round}px ${round}px ${round}px ${tight}px`,
         background: ours ? light.accent : light.surface,
         border: ours ? undefined : `${5 * s}px solid ${light.ink}`,
         boxShadow: `0 ${9 * s}px 0 ${ours ? light.accentEdge : light.ink}`,
@@ -438,7 +521,17 @@ function Bubble({
 }
 
 /** The everyday answer, letter by letter, with the cursor after it; the shout blows the letters out of the frame. */
-function Typed({ text, font, blow, s }: { text: string; font: number; blow: { x: number; y: number }; s: number }) {
+function Typed({
+  text,
+  font,
+  blow,
+  s,
+}: {
+  text: string;
+  font: number;
+  blow: { x: number; y: number };
+  s: number;
+}) {
   const frame = useCurrentFrame();
   const letters = [...text];
   const blink = frame < beats.shout && frame % 20 < 12;
@@ -458,7 +551,10 @@ function Typed({ text, font, blow, s }: { text: string; font: number; blow: { x:
       {letters.map((letter, i) => {
         // The letters next to Рупор go first.
         const start = beats.shout + 1 + (i / letters.length) * 6;
-        const t = interpolate(frame, [start, start + 17], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
+        const t = interpolate(frame, [start, start + 17], [0, 1], {
+          ...clamp,
+          easing: Easing.in(Easing.quad),
+        });
         if (t === 1) return <span key={i} style={{ width: charInEm(letter) * font }} />;
         const side = i % 2 === 0 ? 1 : -1;
         return (
@@ -522,10 +618,25 @@ function Doubt({ top, safe, s }: { top: number; safe: Safe; s: number }) {
 }
 
 /** The Stress mark: it falls on the stressed tile last, once the word is whole. */
-function StressMark({ left, top, tile, from, s }: { left: number; top: number; tile: number; from: number; s: number }) {
+function StressMark({
+  left,
+  top,
+  tile,
+  from,
+  s,
+}: {
+  left: number;
+  top: number;
+  tile: number;
+  from: number;
+  s: number;
+}) {
   const frame = useCurrentFrame();
   if (frame < from) return null;
-  const fall = interpolate(frame, [from, from + 6], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
+  const fall = interpolate(frame, [from, from + 6], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
   const bump = interpolate(frame, [from + 6, from + 9, from + 14], [1, 1.25, 1], clamp);
   const markWidth = tile * 0.17;
   const markHeight = tile * 0.5;
@@ -572,7 +683,15 @@ function Praise({
   if (frame < from) return null;
   const come = interpolate(frame, [from, from + 8], [0, 1], { ...clamp, easing: pop });
   return (
-    <Bubble side="left" left={safe.left} top={top} height={height} padX={padX} s={s} style={{ scale: String(come), transformOrigin: 'left bottom' }}>
+    <Bubble
+      side="left"
+      left={safe.left}
+      top={top}
+      height={height}
+      padX={padX}
+      s={s}
+      style={{ scale: String(come), transformOrigin: 'left bottom' }}
+    >
       <Line font={font} color={light.ink}>
         {text}
       </Line>
@@ -600,7 +719,10 @@ function Meaning({
 }) {
   const frame = useCurrentFrame();
   if (frame < from) return null;
-  const come = interpolate(frame, [from, from + 8], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+  const come = interpolate(frame, [from, from + 8], [0, 1], {
+    ...clamp,
+    easing: Easing.out(Easing.cubic),
+  });
   // One line: as big as the room right of Рупор lets it be.
   const font = Math.min(46 * s, ((safe.right - left) * 0.99) / onestInEm(episode.meaning));
   if (font < 40 * s) throw new Error(`«${episode.meaning}» is too long for one line`);
@@ -619,7 +741,15 @@ function Meaning({
         translate: `0px ${(1 - come) * 20 * s}px`,
       }}
     >
-      <div style={{ fontFamily: wordFont, fontWeight: 800, fontSize: 64 * s, lineHeight: 1.25, color: light.accent }}>
+      <div
+        style={{
+          fontFamily: wordFont,
+          fontWeight: 800,
+          fontSize: 64 * s,
+          lineHeight: 1.25,
+          color: light.accent,
+        }}
+      >
         <Accented text={episode.nicer} at={episode.stress} />
       </div>
       <div
@@ -690,7 +820,10 @@ function Call({ safe, s }: { safe: Safe; s: number }) {
     >
       {texts.call.map((line, i) => {
         const start = beats.call + i * 4;
-        const come = interpolate(frame, [start, start + 9], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+        const come = interpolate(frame, [start, start + 9], [0, 1], {
+          ...clamp,
+          easing: Easing.out(Easing.cubic),
+        });
         return (
           <div
             key={line}
@@ -758,10 +891,15 @@ function Shouter({
 }) {
   const frame = useCurrentFrame();
   if (frame < beats.doubt - 6) return null;
-  const enter = interpolate(frame, [beats.doubt - 6, beats.doubt + 20], [-(rupor.left + width), 0], {
-    ...clamp,
-    easing: Easing.out(Easing.cubic),
-  });
+  const enter = interpolate(
+    frame,
+    [beats.doubt - 6, beats.doubt + 20],
+    [-(rupor.left + width), 0],
+    {
+      ...clamp,
+      easing: Easing.out(Easing.cubic),
+    },
+  );
   const idle = -6 + Math.sin(frame / 9) * 2.5;
   const glad = -4 + Math.sin(frame / 8) * 3;
   const rotate =
@@ -771,12 +909,31 @@ function Shouter({
         ? interpolate(frame, [beats.inhale, beats.shout - 2], [idle, 10], clamp)
         : frame < solved
           ? interpolate(frame, [beats.shout, beats.shout + 3], [10, aim], { ...clamp, easing: pop })
-          : interpolate(frame, [solved, solved + 8], [aim, glad], { ...clamp, easing: Easing.out(Easing.cubic) });
-  const squeeze = interpolate(frame, [beats.inhale, beats.shout - 1, beats.shout + 3], [1, 0.9, 1], clamp);
-  const shake = frame >= beats.shout && frame < beats.shout + 22 ? Math.sin(frame * 2.2) * 7 * s : 0;
+          : interpolate(frame, [solved, solved + 8], [aim, glad], {
+              ...clamp,
+              easing: Easing.out(Easing.cubic),
+            });
+  const squeeze = interpolate(
+    frame,
+    [beats.inhale, beats.shout - 1, beats.shout + 3],
+    [1, 0.9, 1],
+    clamp,
+  );
+  const shake =
+    frame >= beats.shout && frame < beats.shout + 22 ? Math.sin(frame * 2.2) * 7 * s : 0;
   const sinceCall = frame - beats.call;
-  const hop = sinceCall >= 0 && sinceCall < 24 ? -Math.abs(Math.sin((sinceCall / 12) * Math.PI)) * 34 * s * (1 - sinceCall / 24) : 0;
-  const state = frame < beats.inhale ? 'surprised' : frame < beats.shout ? 'waits' : frame < solved ? 'shouts' : 'happy';
+  const hop =
+    sinceCall >= 0 && sinceCall < 24
+      ? -Math.abs(Math.sin((sinceCall / 12) * Math.PI)) * 34 * s * (1 - sinceCall / 24)
+      : 0;
+  const state =
+    frame < beats.inhale
+      ? 'surprised'
+      : frame < beats.shout
+        ? 'waits'
+        : frame < solved
+          ? 'shouts'
+          : 'happy';
   return (
     <div
       style={{

@@ -8,7 +8,6 @@ import { Tile } from '../Tile';
 import { Crack, greyInk, mainWord } from './Forgotten';
 import { clamp, pop } from '../shared/motion';
 
-
 /** A forgotten tile on cream: grey, its letter still readable. */
 const forgottenFace = '#D6C8B8';
 
@@ -71,7 +70,10 @@ export function Shout({ beats }: { beats: ShoutBeats }) {
       ? 0
       : interpolate(frame, [beats.enter, beats.shout], [-700 * s, 0], { ...clamp, easing: pop });
   const shake = frame > beats.shout && frame < beats.shout + 24 ? Math.sin(frame * 2.2) * 6 * s : 0;
-  const hit = frame >= beats.stamp && frame < beats.stamp + 6 ? Math.sin((frame - beats.stamp) * 2.6) * 5 * s : 0;
+  const hit =
+    frame >= beats.stamp && frame < beats.stamp + 6
+      ? Math.sin((frame - beats.stamp) * 2.6) * 5 * s
+      : 0;
 
   const size = portrait ? tileSizeFor(mainWord.length, safe.rowWidth, 0.12, 112 * s) : 132 * s;
   const gap = size * 0.12;
@@ -87,26 +89,41 @@ export function Shout({ beats }: { beats: ShoutBeats }) {
   const wordTop = portrait ? safe.top + 180 * s : height * 0.36;
   const lineTop = wordTop + size * 1.5;
 
-  const forgotten = beats.forgotten !== undefined && frame >= beats.forgotten && frame < beats.stamp;
+  const forgotten =
+    beats.forgotten !== undefined && frame >= beats.forgotten && frame < beats.stamp;
   const toGrey =
     beats.forgotten === undefined
       ? 0
-      : interpolate(frame, [beats.forgotten, beats.forgotten + 6], [0, 1], clamp) * (frame < beats.stamp ? 1 : 0);
+      : interpolate(frame, [beats.forgotten, beats.forgotten + 6], [0, 1], clamp) *
+        (frame < beats.stamp ? 1 : 0);
   const crack =
     beats.forgotten === undefined || frame >= beats.stamp
       ? 0
       : interpolate(frame, [beats.forgotten + 2, beats.forgotten + 12], [0, 1], clamp);
 
   // The stamp: «SLOVO повертає.» drops from big to its place in 5 frames and lands on the beat.
-  const drop = interpolate(frame, [beats.stamp - 5, beats.stamp], [0, 1], { ...clamp, easing: Easing.in(Easing.cubic) });
-  const settle = interpolate(frame, [beats.stamp, beats.stamp + 3, beats.stamp + 8], [0.94, 1.03, 1], clamp);
+  const drop = interpolate(frame, [beats.stamp - 5, beats.stamp], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.cubic),
+  });
+  const settle = interpolate(
+    frame,
+    [beats.stamp, beats.stamp + 3, beats.stamp + 8],
+    [0.94, 1.03, 1],
+    clamp,
+  );
   const stampScale = frame < beats.stamp ? 2.6 - 1.6 * drop : settle;
   const stampSize = (portrait ? 124 : 112) * s;
 
   return (
     <AbsoluteFill style={{ background: light.background, translate: `0px ${hit}px` }}>
       {[0, 1, 2].map((ring) => {
-        const t = interpolate(frame, [beats.shout + ring * 6, beats.shout + 30 + ring * 6], [0, 1], clamp);
+        const t = interpolate(
+          frame,
+          [beats.shout + ring * 6, beats.shout + 30 + ring * 6],
+          [0, 1],
+          clamp,
+        );
         return (
           <div
             key={ring}
@@ -124,18 +141,32 @@ export function Shout({ beats }: { beats: ShoutBeats }) {
           />
         );
       })}
-      <div style={{ position: 'absolute', left: rupor.left, top: rupor.top, translate: `${enter + shake}px 0px` }}>
+      <div
+        style={{
+          position: 'absolute',
+          left: rupor.left,
+          top: rupor.top,
+          translate: `${enter + shake}px 0px`,
+        }}
+      >
         <Rupor state={forgotten ? 'sad' : 'shouts'} width={ruporWidth} />
       </div>
       {[...mainWord].map((letter, i) => {
         const at = beats.tiles + i * beats.tileStep;
         const landed = at + beats.tileFlight;
-        const t = interpolate(frame, [at, landed], [0, 1], { ...clamp, easing: Easing.bezier(0.2, 0.8, 0.3, 1.15) });
+        const t = interpolate(frame, [at, landed], [0, 1], {
+          ...clamp,
+          easing: Easing.bezier(0.2, 0.8, 0.3, 1.15),
+        });
         const x = wordLeft + i * (size + gap);
         const land = frame >= landed && frame < landed + 4 ? 0.92 : 1;
         // The stamp makes the row jump, a letter after a letter.
         const jump =
-          Math.sin(interpolate(frame, [beats.stamp + i, beats.stamp + i + 8], [0, Math.PI], clamp)) * 22 * s;
+          Math.sin(
+            interpolate(frame, [beats.stamp + i, beats.stamp + i + 8], [0, Math.PI], clamp),
+          ) *
+          22 *
+          s;
         return (
           <div
             key={i}
@@ -207,7 +238,15 @@ export function Shout({ beats }: { beats: ShoutBeats }) {
  * for the spoken word right after it, a knock per tile landing, a crack as
  * the word is forgotten and the stamp on «SLOVO повертає.».
  */
-export function ShoutSound({ at, beats, voice }: { at: number; beats: ShoutBeats; voice?: string }) {
+export function ShoutSound({
+  at,
+  beats,
+  voice,
+}: {
+  at: number;
+  beats: ShoutBeats;
+  voice?: string;
+}) {
   return (
     <>
       <Horn at={at + beats.shout} />
@@ -218,7 +257,9 @@ export function ShoutSound({ at, beats, voice }: { at: number; beats: ShoutBeats
         // A tile that landed before the video's first frame makes no sound.
         return landed < 0 ? null : <Knock key={i} index={i} at={landed} />;
       })}
-      {beats.forgotten !== undefined && <Sfx src={sfx.crack} at={at + beats.forgotten} volume={0.7} />}
+      {beats.forgotten !== undefined && (
+        <Sfx src={sfx.crack} at={at + beats.forgotten} volume={0.7} />
+      )}
       <Sfx src={sfx.stamp} at={at + beats.stamp} volume={0.75} />
     </>
   );

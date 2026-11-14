@@ -7,7 +7,6 @@ import { levels, Sfx, sfx } from './sound';
 import { type Store, StoreBadge } from './StoreBadge';
 import { clamp, pop } from './shared/motion';
 
-
 /** The brand's one slogan and its descriptor: the same on every video's end card. */
 export const slogan = 'Тримай слово.';
 export const descriptor = 'Рідкісні українські слова — щодня в кишені';
@@ -54,13 +53,31 @@ export function EndCard({ line, orientation, qrUrl, store = 'appStore' }: EndCar
   const portrait = orientation === undefined ? height > width : orientation === 'portrait';
   const s = width / (portrait ? 1080 : 1920);
   const safe = safeFor(portrait, width);
-  const at = (start: number) => interpolate(frame, [start, start + 10], [0, 1], { ...clamp, easing: pop });
+  const at = (start: number) =>
+    interpolate(frame, [start, start + 10], [0, 1], { ...clamp, easing: pop });
   const fade = (start: number) => interpolate(frame, [start, start + 8], [0, 1], clamp);
-  const ownLine = line !== undefined && line.trim() !== '' && line.trim() !== slogan ? line : undefined;
+  const ownLine =
+    line !== undefined && line.trim() !== '' && line.trim() !== slogan ? line : undefined;
 
   const size = portrait
-    ? { line: 52, slogan: 150, brand: 96, descriptor: 42, badge: 120, rupor: 460, column: safe.width }
-    : { line: 48, slogan: 132, brand: 110, descriptor: 40, badge: 100, rupor: 560, column: 1080 * s };
+    ? {
+        line: 52,
+        slogan: 150,
+        brand: 96,
+        descriptor: 42,
+        badge: 120,
+        rupor: 460,
+        column: safe.width,
+      }
+    : {
+        line: 48,
+        slogan: 132,
+        brand: 110,
+        descriptor: 40,
+        badge: 100,
+        rupor: 560,
+        column: 1080 * s,
+      };
   const ruporHeight = (size.rupor * s * 112) / 150;
   // Portrait: the badge and Рупор share the bottom row, Рупор inside his band.
   // Landscape: Рупор stands right of the words, in the middle of the safe height.

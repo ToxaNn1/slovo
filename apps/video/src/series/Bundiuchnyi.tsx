@@ -1,12 +1,13 @@
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from 'remotion';
 
-import word from '../../../../editions/uk/content/words/w_ft35h4.json';
 import { light, uiFont } from '../look';
 import { useSafe } from '../safe';
 import { Sfx, sfx } from '../sound';
 import { beats, Missing } from './Missing';
 import { clamp, pop } from '../shared/motion';
+import { word as snapshotWord } from '../words';
 
+const word = snapshotWord('w_ft35h4');
 
 /** The boss in pixels of the 1080×1920 frame: where he sits, his size before he swells, the desk's top edge. */
 const boss = { x: 640, foot: 900, body: 260, swollen: 1.55, deskTop: 880 } as const;
@@ -38,7 +39,10 @@ function BossBalloon() {
     easing: Easing.inOut(Easing.quad),
   });
   // The first tile hits: he jolts, the air goes out, and he zigzags up and away like a let-go balloon.
-  const out = interpolate(frame, [beats.hit, beats.word - 4], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
+  const out = interpolate(frame, [beats.hit, beats.word - 4], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
   const jolt = interpolate(frame, [beats.hit - 1, beats.hit + 1, beats.hit + 5], [0, 1, 0], clamp);
   const scale = swell * (1 - out * 0.7) * (1 - jolt * 0.12);
   const bob = Math.sin(frame / 9) * 8 * s * (1 - out);
@@ -46,7 +50,10 @@ function BossBalloon() {
   const fly = -out * out * 1500 * s;
   const deflated = frame >= beats.hit;
   const body = boss.body * s;
-  const desk = interpolate(frame, [beats.hit + 14, beats.word - 2], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
+  const desk = interpolate(frame, [beats.hit + 14, beats.word - 2], [0, 1], {
+    ...clamp,
+    easing: Easing.in(Easing.quad),
+  });
 
   return (
     <AbsoluteFill>
@@ -126,18 +133,52 @@ function Boss({ deflated, size }: { deflated: boolean; size: number }) {
         </>
       ) : (
         <>
-          <path d="M28 40 Q36 34 44 40" fill="none" stroke={ink} strokeWidth={5} strokeLinecap="round" />
-          <path d="M56 40 Q64 34 72 40" fill="none" stroke={ink} strokeWidth={5} strokeLinecap="round" />
-          <path d="M38 60 Q50 54 62 60" fill="none" stroke={ink} strokeWidth={5} strokeLinecap="round" />
+          <path
+            d="M28 40 Q36 34 44 40"
+            fill="none"
+            stroke={ink}
+            strokeWidth={5}
+            strokeLinecap="round"
+          />
+          <path
+            d="M56 40 Q64 34 72 40"
+            fill="none"
+            stroke={ink}
+            strokeWidth={5}
+            strokeLinecap="round"
+          />
+          <path
+            d="M38 60 Q50 54 62 60"
+            fill="none"
+            stroke={ink}
+            strokeWidth={5}
+            strokeLinecap="round"
+          />
         </>
       )}
-      <path d="M50 78 L43 98 L50 104 L57 98 Z" fill={light.accent} stroke={ink} strokeWidth={4} strokeLinejoin="round" />
+      <path
+        d="M50 78 L43 98 L50 104 L57 98 Z"
+        fill={light.accent}
+        stroke={ink}
+        strokeWidth={4}
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
 /** «Я тут головний!» popping out of the swelling boss, left of him, until the hesitation. */
-function Bubble({ frame, right, bottom, s }: { frame: number; right: number; bottom: number; s: number }) {
+function Bubble({
+  frame,
+  right,
+  bottom,
+  s,
+}: {
+  frame: number;
+  right: number;
+  bottom: number;
+  s: number;
+}) {
   const { width, height } = useSafe();
   const t =
     interpolate(frame, [bubbleAt, bubbleAt + 10], [0, 1], { ...clamp, easing: pop }) *

@@ -14,7 +14,14 @@ export const promoLength = 900;
 export const promoLine = 'Мова багатша, ніж ти думаєш.';
 
 /** Act 3, counted from its first frame: the wedge, Рупор lands and shouts, the stamp 4 beats after the shout. */
-const shout: ShoutBeats = { enter: 4, shout: 16, tiles: 22, tileStep: 4, tileFlight: 14, stamp: 16 + 4 * beatFrames };
+const shout: ShoutBeats = {
+  enter: 4,
+  shout: 16,
+  tiles: 22,
+  tileStep: 4,
+  tileFlight: 14,
+  stamp: 16 + 4 * beatFrames,
+};
 
 /** The app: three main screens 3 s each, the calendar and the reward as a pair. Every cut is on a beat. */
 const phones: PhoneStep[] = [
@@ -46,7 +53,11 @@ export function Promo() {
       <Sequence durationInFrames={forgottenLength} name="Acts 1–2: forgotten">
         <Forgotten />
       </Sequence>
-      <Sequence from={at.comeback} durationInFrames={at.phones - at.comeback + 10} name="Act 3: comeback">
+      <Sequence
+        from={at.comeback}
+        durationInFrames={at.phones - at.comeback + 10}
+        name="Act 3: comeback"
+      >
         <Shout beats={shout} />
         <Wedge />
       </Sequence>
@@ -65,11 +76,21 @@ export function Promo() {
       <Ticks at={dim.grey} text={captions.second} />
       {/* The camera pulls back: the other words appear. */}
       {Array.from({ length: 4 }, (_, i) => (
-        <Sfx key={`sky-${i}`} src={sfx.pop} at={dim.others + (i + 1) * dim.othersStep} volume={0.22} />
+        <Sfx
+          key={`sky-${i}`}
+          src={sfx.pop}
+          at={dim.others + (i + 1) * dim.othersStep}
+          volume={0.22}
+        />
       ))}
       {/* Act 2: a low, duller pop as each word goes grey, the main word last and lowest. */}
       {Array.from({ length: 4 }, (_, i) => (
-        <Low key={`grey-${i}`} at={dim.grey + i * dim.greyStep} rate={0.7 - i * 0.05} volume={0.4} />
+        <Low
+          key={`grey-${i}`}
+          at={dim.grey + i * dim.greyStep}
+          rate={0.7 - i * 0.05}
+          volume={0.4}
+        />
       ))}
       <Low at={dim.greyMain} rate={0.45} volume={0.55} />
       {/* The cracks run over the tiles, then the letters fall into a heap. */}
