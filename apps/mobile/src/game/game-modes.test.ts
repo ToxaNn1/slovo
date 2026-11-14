@@ -1,11 +1,16 @@
 import type { Word } from '@slovo/contracts';
-import { openComposition, systemRandom, type Composition, type GameModeOffer } from '@slovo/core';
+import {
+  openComposition,
+  systemRandom,
+  type Composition,
+  type GameModeOffer,
+  type OfferedGroup,
+} from '@slovo/core';
 import {
   createMemoryContentPort,
   testEdition,
   seedUserState,
   type GameMode,
-  type GameModeGroup,
 } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
@@ -244,8 +249,17 @@ describe('the label over a Round', () => {
   });
 });
 
+/** An offer of the mode in the group that can't start, for too few Entries in the Mix. */
+const stuckOffer = (modeId: string, group: OfferedGroup): GameModeOffer => ({
+  modeId,
+  entryKind: 'word',
+  group,
+  canStart: false,
+  refusal: 'too-few-entries',
+});
+
 /** An offer of the mode in the group that can start, with nothing else on it. */
-const offer = (modeId: string, group: GameModeGroup = 'words'): GameModeOffer => ({
+const offer = (modeId: string, group: OfferedGroup = 'words'): GameModeOffer => ({
   modeId,
   entryKind: 'word',
   group,
@@ -257,7 +271,7 @@ const shapeOf = (groups: ReturnType<typeof gameModeGroups>) =>
   groups.map(({ title, offers }) => [title, offers.map(({ modeId }) => modeId)]);
 
 describe("the toast on a mode that can't start", () => {
-  const stuck = { ...offer('pairs', 'meaning'), canStart: false };
+  const stuck = stuckOffer('pairs', 'meaning');
 
   it('sends the reader to «Наголос» while it can start', () => {
     const offers = [offer('guess-word', 'new'), offer('stress', 'sound'), stuck];
@@ -269,7 +283,7 @@ describe("the toast on a mode that can't start", () => {
 
   it('sends the reader to the first mode that can start while «Наголос» cannot', () => {
     const offers = [
-      { ...offer('stress', 'sound'), canStart: false },
+      stuckOffer('stress', 'sound'),
       stuck,
       offer('anagram', 'letters'),
       offer('timed', 'speed'),
@@ -314,7 +328,7 @@ describe('the groups of the modes on offer', () => {
     ]);
   });
 
-  it('puts every mode on offer in the board\'s five groups, in the board\'s order', async () => {
+  it("puts every mode on offer in the board's five groups, in the board's order", async () => {
     const app = await open({ words: 15, marksStress: true });
 
     expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual(HUB_GROUPS);

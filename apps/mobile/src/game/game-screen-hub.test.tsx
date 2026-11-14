@@ -112,7 +112,7 @@ describe('the Game screen', () => {
   describe('as board 06 «Хаб ігор»', () => {
     const HUB = ['gameHubGroups', 'gameHubRecord', 'gameModeToast'];
 
-    it('lists the modes on offer under the board\'s five groups, in the board\'s order', async () => {
+    it("lists the modes on offer under the board's five groups, in the board's order", async () => {
       await open({ switchedOn: ['gameHubGroups'] });
       await renderScreen();
 
@@ -139,7 +139,7 @@ describe('the Game screen', () => {
       ]);
     });
 
-    it('shows each row\'s hub line and «Рекорд: N з M», «Рекорд: N» or «Ще жодної гри», read as it shows', async () => {
+    it("shows each row's hub line and «Рекорд: N з M», «Рекорд: N» or «Ще жодної гри», read as it shows", async () => {
       await open({ best: { 'guess-word': 12, survival: 23 }, switchedOn: ['gameHubRecord'] });
       await renderScreen();
 

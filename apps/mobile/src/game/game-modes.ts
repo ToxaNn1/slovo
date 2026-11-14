@@ -4,6 +4,7 @@ import {
   GAME_MODE_GROUPS,
   type GameModeOffer,
   type OfferedBest,
+  type OfferedGroup,
 } from '@slovo/core';
 import type { GameModeCard } from '@slovo/ui';
 import type { ComponentProps } from 'react';
@@ -66,7 +67,9 @@ export function gameModeCard(
     );
   }
   const { best } = offer;
-  const look = toast ? { canStart: true, refusal: undefined } : { canStart: offer.canStart, refusal };
+  const look = toast
+    ? { canStart: true, refusal: undefined }
+    : { canStart: offer.canStart, refusal };
   if (record) {
     const mark = recordText(best, strings.hubRow);
     return { glyph, title, line: hubLine ?? oneLiner, ...look, best: mark, bestLabel: mark };
@@ -123,6 +126,9 @@ export function bestText({ result, of }: OfferedBest, texts: GameStrings['modeBe
   return of === undefined ? fill(texts.count, { n }) : fill(texts.outOf, { n, total: String(of) });
 }
 
+/** Every group an offer can name, in the order the mode screen shows them. */
+const MODE_SCREEN_GROUPS: readonly OfferedGroup[] = [...GAME_HUB_GROUPS, ...GAME_MODE_GROUPS];
+
 /** A group of the mode screen: its title in the Edition's texts and its modes on offer. */
 export interface GameModeGroup {
   readonly title: string;
@@ -131,14 +137,15 @@ export interface GameModeGroup {
 
 /**
  * The modes on offer in the mode screen's groups, each under the group its
- * offer names, the board's five first and then the four of spec #1674, each in their agreed order and the modes in the order
- * they register; a group with no mode on offer is left out.
+ * offer names, the board's five first and then the four of spec #1674, each
+ * in their agreed order, and the modes in the order they register; a group
+ * with no mode on offer is left out.
  */
 export function gameModeGroups(
   offers: readonly GameModeOffer[],
   strings: GameStrings,
 ): GameModeGroup[] {
-  return [...GAME_HUB_GROUPS, ...GAME_MODE_GROUPS].map((group) => ({
+  return MODE_SCREEN_GROUPS.map((group) => ({
     title: strings.groups[group],
     offers: offers.filter((offer) => offer.group === group),
   })).filter(({ offers: inGroup }) => inGroup.length > 0);

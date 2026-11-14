@@ -40,10 +40,12 @@ describe('GameModeCard', () => {
   it('cascades in as the third row and still reads and takes a tap as one', async () => {
     jest.useFakeTimers();
     const onPress = jest.fn();
-    await render(<Card cascadeIndex={2} best="★ 12" bestLabel="Best: 12 of 15" onPress={onPress} />);
+    await render(
+      <Card cascadeIndex={2} best="★ 12" bestLabel="Best: 12 of 15" onPress={onPress} />,
+    );
     jest.advanceTimersByTime(1000);
 
-    fireEvent.press(screen.getByRole('button'));
+    await fireEvent.press(screen.getByRole('button'));
 
     expect(screen.getByRole('button').props['accessibilityLabel']).toBe(
       'Guess the word. Read a Definition, pick a word. Best: 12 of 15',

@@ -417,7 +417,10 @@ describe('the Game Modes on offer', () => {
     app.game.state.modes.map(({ modeId, group }) => [modeId, group]);
 
   it('puts every mode in the board’s five groups, in the board’s order, with `gameHubGroups` on (ADR 0139)', async () => {
-    const app = await run({ marksStress: true, on: ['rarityCeiling', 'knowledge', 'corrections', 'idioms', ...everyMode, 'gameHubGroups'] });
+    const app = await run({
+      marksStress: true,
+      on: ['rarityCeiling', 'knowledge', 'corrections', 'idioms', ...everyMode, 'gameHubGroups'],
+    });
 
     expect(groupsOf(app)).toEqual([
       ['guess-word', 'new'],
@@ -437,7 +440,10 @@ describe('the Game Modes on offer', () => {
   });
 
   it('keeps the four groups of spec #1674 with `gameHubGroups` off', async () => {
-    const app = await run({ marksStress: true, on: ['rarityCeiling', 'knowledge', 'corrections', 'idioms', ...everyMode] });
+    const app = await run({
+      marksStress: true,
+      on: ['rarityCeiling', 'knowledge', 'corrections', 'idioms', ...everyMode],
+    });
 
     expect(groupsOf(app)).toEqual([
       ['guess-word', 'words'],
