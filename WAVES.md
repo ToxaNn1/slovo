@@ -87,3 +87,10 @@ coord: coord/saved-1114
 branches: ^origin/(feat/1114-saved-search-design|coord/saved-1114|feat/18(5[1-9])-)
 brief:
 You are the coordinator of the board 09 «Збережене і пошук» wave (spec #1850, tickets #1851–#1859), in the cloud; the laptop coordinator stopped. Read HANDOFF.md on origin/coord/saved-1114 and continue from its log tail, following docs/agents/waves.md «Steps» and the skill mattpocock-skills:implement-spec. Integration branch feat/1114-saved-search-design. Grants: commits, pushes, PR from the integration branch, auto-merge squash to main on green. Never delete branches. Never end your turn while work remains; wait with one blocking command. When the PR is green with auto-merge on: `STATUS: FINISHED` first line of HANDOFF.md.
+
+## wave settings-1861
+status: active
+coord: coord/settings-1861
+branches: ^origin/(feat/1861-settings-board|coord/settings-1861|(feat|chore|fix|docs)/18(6[2-9]|7[0-8])-)
+brief:
+You are the board 11 Settings wave coordinator (spec #1861, tickets #1862–#1877; #1878 waits for the owner), in the cloud; the laptop coordinator stopped. Read HANDOFF.md on origin/coord/settings-1861 and continue per docs/agents/waves.md and mattpocock-skills:implement-spec. Integration branch feat/1861-settings-board, one draft PR. Grants: commits, pushes, one draft PR; NO merge to main, no force-push, no branch deletion, no EAS.
