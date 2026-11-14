@@ -6,7 +6,7 @@ import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed, type Opening, type Source } from '../opening';
 import { useShell } from '../shell-value';
 import { googleClientId, hasAppleSignIn } from './device-account';
-import { accountProblemLine, accountSummary } from './account-texts';
+import { accountProblemLine, accountSummary, type AccountRowSummary } from './account-texts';
 
 /**
  * The opening of the Account while its switch is on in effect, so its row and
@@ -45,8 +45,8 @@ function useAccountStateOf(opening: Opening<Account>): AccountState | undefined 
 }
 
 /** The value of the Account row of Settings: «Увійти» or the email, nothing while it opens. */
-export function useAccountSummary(opening: Opening<Account>): string | undefined {
-  return accountSummary(useAccountStateOf(opening), editionStrings.account);
+export function useAccountSummary(opening: Opening<Account>): AccountRowSummary {
+  return accountSummary(useAccountStateOf(opening), editionStrings.settings.rowSubtitles);
 }
 
 /** Whether no one is signed in to the Account; false while it opens, so no offer to save comes too early. */

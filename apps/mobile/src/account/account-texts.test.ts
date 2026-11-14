@@ -33,19 +33,26 @@ const problemOf = ({ state }: Account) =>
   accountProblemLine({ state, strings: strings.account, count });
 
 describe('the Account row of Settings', () => {
-  it('reads «Увійти» while signed out, and the email once signed in', async () => {
+  it('reads «Без входу» while signed out, and «Слова синхронізуються» with the email once signed in', async () => {
     const { account, api } = await open();
-    expect(accountSummary(account.state, strings.account)).toBe('Увійти');
+    const signedOut = { subtitle: 'Без входу', value: undefined };
+    expect(accountSummary(account.state, strings.settings.rowSubtitles)).toEqual(signedOut);
 
     await account.requestCode('anna@mail.com');
-    expect(accountSummary(account.state, strings.account)).toBe('Увійти');
+    expect(accountSummary(account.state, strings.settings.rowSubtitles)).toEqual(signedOut);
     await account.verifyCode(api.account.sentCodes[0]?.code ?? '');
 
-    expect(accountSummary(account.state, strings.account)).toBe('anna@mail.com');
+    expect(accountSummary(account.state, strings.settings.rowSubtitles)).toEqual({
+      subtitle: 'Слова синхронізуються',
+      value: 'anna@mail.com',
+    });
   });
 
   it('reads nothing while the Account opens', () => {
-    expect(accountSummary(undefined, strings.account)).toBeUndefined();
+    expect(accountSummary(undefined, strings.settings.rowSubtitles)).toEqual({
+      subtitle: undefined,
+      value: undefined,
+    });
   });
 });
 

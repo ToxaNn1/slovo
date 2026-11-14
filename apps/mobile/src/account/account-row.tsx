@@ -1,21 +1,21 @@
 import type { Account } from '@slovo/core';
-import { NavigationRow } from '@slovo/ui';
+import { SettingsRow } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 
 import { useOpenScreen } from '../use-open-screen';
 import { keep } from '../keep';
-import { edition } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
 import type { Opening } from '../opening';
 import { useAccountSummary } from './account';
 
 /**
- * The Account row of Settings, with «Увійти» or the email, which opens the
- * Account screen. Each time Settings opens, the Account is checked.
+ * The «Акаунт і синхронізація» row of Settings, with «Без входу» or the
+ * email, which opens the Account screen. Each time Settings opens, the Account is checked.
  */
 export function AccountRow({ opening }: { opening: Opening<Account> }) {
   const openScreen = useOpenScreen();
-  const summary = useAccountSummary(opening);
+  const { subtitle, value } = useAccountSummary(opening);
   useFocusEffect(
     useCallback(() => {
       // The Account checks its Session with the server at most once an hour.
@@ -26,12 +26,17 @@ export function AccountRow({ opening }: { opening: Opening<Account> }) {
     }, [opening]),
   );
   return (
-    <NavigationRow
+    <SettingsRow
       testID="settings-row-account"
-      label={edition.accountName}
-      value={summary}
-      onPress={() => {
-        openScreen('/settings/account');
+      icon="hex"
+      label={editionStrings.settings.rows.account}
+      subtitle={subtitle}
+      end={{
+        kind: 'chevron',
+        value,
+        onPress: () => {
+          openScreen('/settings/account');
+        },
       }}
     />
   );
