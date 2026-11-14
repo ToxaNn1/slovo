@@ -31,6 +31,12 @@ export interface FeedState {
   readonly openCorrection: (position: number, correctionId: string) => void;
   /** Keeps the option the reader picked on the Quick Question at `position`. */
   readonly answerQuickQuestion: (position: number, option: number) => void;
+  /** Keeps the meaning the reader picked first on the Yesterday quiz at `position` (ADR 0130). */
+  readonly answerYesterday: (position: number, option: number) => void;
+  /** «Готово»: folds the Weekly Recap at `position` away for its week. */
+  readonly foldWeeklyRecap: (position: number) => void;
+  /** «Повернути»: brings back the Weekly Recap folded this session, also when its page left the Feed. */
+  readonly restoreWeeklyRecap: () => void;
 }
 
 /**
@@ -90,6 +96,23 @@ export function useFeed(
     },
     [feed],
   );
+
+  const answerYesterday = useCallback(
+    (position: number, option: number) => {
+      void keep('the answer to Yesterday', feed.answerYesterday(position, option));
+    },
+    [feed],
+  );
+
+  const foldWeeklyRecap = useCallback(
+    (position: number) => {
+      void keep('the folded Weekly Recap', feed.foldWeeklyRecap(position));
+    },
+    [feed],
+  );
+  const restoreWeeklyRecap = useCallback(() => {
+    void keep('the Weekly Recap brought back', feed.restoreWeeklyRecap());
+  }, [feed]);
 
   // A new position goes straight to the Feed, which takes the card that left
   // off the screen itself; only the Feed going out of sight reports none. The
@@ -160,5 +183,8 @@ export function useFeed(
     onCardChange,
     openCorrection,
     answerQuickQuestion,
+    answerYesterday,
+    foldWeeklyRecap,
+    restoreWeeklyRecap,
   };
 }

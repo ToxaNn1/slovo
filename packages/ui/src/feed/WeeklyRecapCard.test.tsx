@@ -1,19 +1,24 @@
 import type { WeeklyRecapModel } from '@slovo/core';
-import { EditionProvider, WeeklyRecapCard } from '@slovo/ui';
+import { EditionProvider, ReduceMotionProvider, WeeklyRecapCard } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
   feedNotices: {
     weeklyRecap: {
       title: 'Your week',
+      dates: '{fromDay}.{fromMonth}–{toDay}.{toMonth}',
       seen: 'seen',
       saved: 'saved',
       known: 'known',
       streak: 'streak',
       xp: 'XP',
       goalDays: 'goal days',
+      goalDaysOfWeek: '{count}/7',
+      done: 'Done',
+      folded: 'The recap comes again on Monday.',
+      restore: 'Restore',
       spoken: {
         seen: { one: '{count} entry seen', other: '{count} entries seen' },
         saved: { one: '{count} entry saved', other: '{count} entries saved' },
@@ -36,11 +41,16 @@ const recap: WeeklyRecapModel = {
   streak: 6,
 };
 
-async function renderCard(props: Parameters<typeof WeeklyRecapCard>[0]) {
+async function renderCard(
+  props: Parameters<typeof WeeklyRecapCard>[0],
+  { reduceMotion = false } = {},
+) {
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <WeeklyRecapCard {...props} />
-    </EditionProvider>,
+    <ReduceMotionProvider reduceMotion={reduceMotion}>
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <WeeklyRecapCard {...props} />
+      </EditionProvider>
+    </ReduceMotionProvider>,
   );
 }
 
@@ -78,6 +88,7 @@ describe('the Weekly Recap card', () => {
 
     expect(screen.getByLabelText('140 XP this week')).toBeTruthy();
     expect(screen.getByLabelText('goal met on 3 days')).toBeTruthy();
+    expect(screen.getByText('3/7')).toBeTruthy();
   });
 
   it('leaves XP and goal days out when the recap has none', async () => {
@@ -116,5 +127,54 @@ describe('the Weekly Recap card', () => {
 
     await renderCard({ recap: undefined, onShare: jest.fn() });
     expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+  });
+
+  it("shows the week's dates beside its title, each day and month as numbers", async () => {
+    await renderCard({ recap: { ...recap, lastDay: { year: 2026, month: 11, day: 1 } } });
+
+    expect(screen.getByText('19.10–1.11')).toBeTruthy();
+    expect(screen.getByLabelText('Your week. 19.10–1.11')).toBeTruthy();
+  });
+
+  it('«Done» plays the fold before it folds the card away', async () => {
+    jest.useFakeTimers();
+    const onDone = jest.fn();
+    await renderCard({ recap, onDone });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    expect(onDone).not.toHaveBeenCalled();
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+
+    expect(onDone).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
+  });
+
+  it('«Done» folds the card away at once under Reduce Motion', async () => {
+    const onDone = jest.fn();
+    await renderCard({ recap, onDone }, { reduceMotion: true });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('«Done» folds the card away once under Reduce Motion, also on a double tap', async () => {
+    const onDone = jest.fn();
+    await renderCard({ recap, onDone }, { reduceMotion: true });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('has no «Done» without a way to fold it, or while its numbers are not read', async () => {
+    await renderCard({ recap });
+    expect(screen.queryByRole('button', { name: 'Done' })).toBeNull();
+
+    await renderCard({ recap: undefined, onDone: jest.fn() });
+    expect(screen.queryByRole('button', { name: 'Done' })).toBeNull();
   });
 });

@@ -87,7 +87,9 @@ const fakeNotices = (notices: readonly FeedNotice[]): FeedNotices => ({
  */
 const contentOf = (notice: FeedNotice): FeedNoticeContent => {
   if (notice === 'firstWeek') return { notice, firstWeekDay: 1 };
-  if (notice === 'yesterday') return { notice, word: yesterdaysWord };
+  if (notice === 'weeklyRecap') return { notice, folded: false, yesterday: undefined };
+  if (notice === 'yesterday')
+    return { notice, word: yesterdaysWord, quiz: { meanings: ['a', 'b', 'c'], right: 0 } };
   if (notice === 'communityWord')
     return { notice, card: { kind: 'word', entryId: 'w_00', model: yesterdaysWord }, adds: 3 };
   if (notice === 'levelMilestone') return { notice, level: 5, name: 'Sprout' };
@@ -167,7 +169,7 @@ describe('Feed Notices', () => {
     expect(cards.some((card) => 'review' in card && card.review === true)).toBe(true);
   });
 
-  it('take a card each in the order Weekly Recap, Community Word, first-week card, Yesterday, then «Може, на сьогодні досить?»', async () => {
+  it('take a card each in the order Weekly Recap, Community Word, first-week card, then «Може, на сьогодні досить?», Yesterday on the Weekly Recap’s page', async () => {
     const feedNotices = fakeNotices([
       'enoughForToday',
       'yesterday',
@@ -178,17 +180,17 @@ describe('Feed Notices', () => {
 
     const cards = await firstCards(
       (await run({ records: new Map(), at: dayOne, feedNotices })).feed,
-      7,
+      6,
     );
 
-    expect(shownBy(cards.slice(1, 6))).toEqual([
+    expect(shownBy(cards.slice(1, 5))).toEqual([
       'weeklyRecap',
       'communityWord',
       'firstWeek',
-      'yesterday',
       'enoughForToday',
     ]);
-    expect(cards[6]?.kind).toBe('word');
+    expect(cards[1]).toMatchObject({ yesterday: { notice: 'yesterday' } });
+    expect(cards[5]?.kind).toBe('word');
   });
 
   it('give the Word of the Day the first card and the three notices of the day cards 2, 3 and 4, and «Може, на сьогодні досить?» the card after the limit', async () => {
@@ -200,7 +202,7 @@ describe('Feed Notices', () => {
           (
             [
               'yesterday',
-              'weeklyRecap',
+              'communityWord',
               'firstWeek',
               ...(new Set([
                 ...(opened.history?.list ?? []).map(({ entryId }) => entryId),
@@ -226,7 +228,7 @@ describe('Feed Notices', () => {
 
     const cards = app.feed.cards;
     expect(cards[0]?.kind === 'word' && cards[0].wordOfTheDay !== undefined).toBe(true);
-    expect(shownBy(cards.slice(1, 4))).toEqual(['weeklyRecap', 'firstWeek', 'yesterday']);
+    expect(shownBy(cards.slice(1, 4))).toEqual(['communityWord', 'firstWeek', 'yesterday']);
     expect(onScreenAtLimit).toBeDefined();
     expect(
       cards.findIndex((card) => card.kind === 'notice' && card.notice === 'enoughForToday'),
@@ -250,7 +252,7 @@ describe('Feed Notices', () => {
 
   it('close for the local day once swiped past, and come again the next day', async () => {
     const records = new Map<string, string>();
-    const feedNotices = fakeNotices(['weeklyRecap', 'yesterday']);
+    const feedNotices = fakeNotices(['firstWeek', 'yesterday']);
     const app = await run({ records, at: dayOne, feedNotices });
     await firstCards(app.feed, 3);
 
@@ -262,7 +264,7 @@ describe('Feed Notices', () => {
     const later = await firstCards((await run({ records, at: dayOne, feedNotices })).feed, 4);
     expect(shownBy(later).filter((shown) => !shown?.startsWith('w_'))).toEqual(['yesterday']);
     const tomorrow = await firstCards((await run({ records, at: dayTwo, feedNotices })).feed, 3);
-    expect(shownBy(tomorrow.slice(1, 3))).toEqual(['weeklyRecap', 'yesterday']);
+    expect(shownBy(tomorrow.slice(1, 3))).toEqual(['firstWeek', 'yesterday']);
   });
 
   it('stay open when the app goes to the background on one', async () => {

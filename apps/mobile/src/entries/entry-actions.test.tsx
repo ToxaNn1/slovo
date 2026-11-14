@@ -18,13 +18,7 @@ import {
   type FakeBackend,
   seedUserState,
 } from '@slovo/core/testing';
-import {
-  EditionProvider,
-  EntryCard,
-  HapticsProvider,
-  UndoToastProvider,
-  YesterdayCard,
-} from '@slovo/ui';
+import { EditionProvider, EntryCard, HapticsProvider, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { State } from 'react-native-gesture-handler';
@@ -35,7 +29,7 @@ import { activeEditionFiles, edition, editionStrings } from '../edition/edition'
 import { ShellProvider } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
-import { useEntrySlots, useYesterdaySlots } from './entry-actions';
+import { useEntrySlots } from './entry-actions';
 
 const { config } = activeEditionFiles;
 
@@ -808,41 +802,5 @@ describe('the corner of an Entry card while marks are swiped', () => {
     expect(menu.getByRole('button', { name: 'Поділитися' })).toBeOnTheScreen();
     expect(menu.queryByRole('button', { name: 'Знаю' })).toBeNull();
     expect(menu.queryByRole('button', { name: 'Не знаю' })).toBeNull();
-  });
-});
-
-describe('Yesterday’s Word', () => {
-  /** Yesterday's card with the slots the feed gives it. */
-  function Yesterday({ card }: { card: AnyEntryCard }) {
-    if (card.kind !== 'word') throw new Error('Yesterday’s card is a Word');
-    return <YesterdayCard word={card.model} slots={useYesterdaySlots(card.model)} />;
-  }
-
-  async function renderYesterday() {
-    const card = await composition.entryCard('w_test');
-    if (card === undefined) throw new Error('No card for w_test');
-    await renderInGestureRoot(underShell(<Yesterday card={card} />));
-  }
-
-  it('has «Знаю» and «Не знаю» while marks are not swiped', async () => {
-    await renderYesterday();
-
-    expect(screen.getByTestId('knowledge-known')).toBeOnTheScreen();
-    expect(screen.queryByRole('button', { name: 'Більше дій' })).toBeNull();
-  });
-
-  it('has the «⋯» button alone while marks are swiped, and marks it from the sheet', async () => {
-    swipeMarksOn = true;
-    await renderYesterday();
-
-    expect(screen.queryByTestId('knowledge-known')).toBeNull();
-    expect(screen.queryByTestId('favorite-button')).toBeNull();
-    await fireEvent.press(screen.getByTestId('word-reveal'));
-    await openMenu();
-    const menu = within(screen.getByTestId('entry-menu'));
-    expect(menu.queryByRole('button', { name: 'Поділитися' })).toBeNull();
-    await pressItem('Не знаю');
-
-    expect(composition.knowledge.state.shown.get('w_test')).toBe('unknown');
   });
 });

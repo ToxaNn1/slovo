@@ -8,9 +8,11 @@ const FirstWeekCardSchema = z.strictObject({ title: TextSchema, text: TextSchema
 
 /** The Feed Notices: Feed cards that are not Entries. */
 export const FeedNoticesStringsSchema = z.strictObject({
-  /** The Weekly Recap card: its title and the labels of its four numbers, which its Share Card takes too. */
+  /** The Weekly Recap card: its title, dates and «Готово», and the labels of its numbers, which its Share Card takes too. */
   weeklyRecap: z.strictObject({
     title: TextSchema,
+    /** The week's dates beside the title, «26.10–1.11»: each day and its month as a number. */
+    dates: templateOf('fromDay', 'fromMonth', 'toDay', 'toMonth'),
     /** The label of the Entries Seen in the week. */
     seen: TextSchema,
     /** The label of the Favorites added in the week. */
@@ -23,6 +25,14 @@ export const FeedNoticesStringsSchema = z.strictObject({
     xp: TextSchema,
     /** The label of the days of the week that met their Daily Goal. */
     goalDays: TextSchema,
+    /** The number on the goal days' tile, the days of the week that met their Daily Goal out of 7. */
+    goalDaysOfWeek: templateOf('count'),
+    /** «Готово», which folds the card away for its week (ADR 0130). */
+    done: TextSchema,
+    /** The toast once the card is folded away. */
+    folded: TextSchema,
+    /** The toast's button that brings the folded card back. */
+    restore: TextSchema,
     /**
      * What VoiceOver reads for each number, in every plural form the
      * Edition's language has. Takes `{count}`. The Share Card of the recap
@@ -37,8 +47,15 @@ export const FeedNoticesStringsSchema = z.strictObject({
       goalDays: pluralOf(),
     }),
   }),
-  /** Asks about yesterday's Word of the Day. */
-  yesterday: z.strictObject({ title: TextSchema }),
+  /** Asks about yesterday's Word of the Day: which of three meanings is its own (ADR 0130). */
+  yesterday: z.strictObject({
+    /** «Пам’ятаєш учорашнє слово?» */
+    title: TextSchema,
+    /** Under the options once the right meaning is picked, e.g. «Влучно!». */
+    right: TextSchema,
+    /** Under the options once a wrong meaning is picked, e.g. «Майже. Наступне вийде.». */
+    wrong: TextSchema,
+  }),
   /** «Може, на сьогодні досить?», after 50 distinct Seen Entries on a local day. */
   enoughForToday: z.strictObject({
     message: TextSchema,

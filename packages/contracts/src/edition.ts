@@ -337,7 +337,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   rarityTest: FeatureSwitchStateSchema,
   /** The Weekly Recap «Твій тиждень»: the Monday Feed Notice about the week before (ADR 0054). */
   weeklyRecap: FeatureSwitchStateSchema,
-  /** Yesterday: the Feed Notice «Пам'ятаєш вчорашнє слово?» (ADR 0054). */
+  /** Yesterday: the Feed Notice «Пам’ятаєш учорашнє слово?» (ADR 0054). */
   yesterday: FeatureSwitchStateSchema,
   /** The Word of the Day archive «Слова дня» in Saved (ADR 0054). */
   wordOfTheDayArchive: FeatureSwitchStateSchema,

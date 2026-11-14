@@ -59,6 +59,7 @@ export default [
       'src/entries/reveal.tsx',
       'src/feed/GesturesHintSheet.tsx',
       'src/feed/GoalReachedCard.tsx',
+      'src/feed/WeeklyRecapCard.tsx',
       'src/entries/swipe-demo.tsx',
       'src/game/ChipsRound.tsx',
       'src/game/CrossingGrid.tsx',

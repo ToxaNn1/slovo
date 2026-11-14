@@ -1164,12 +1164,17 @@
   "feedNotices": {
     "weeklyRecap": {
       "title": "Твій тиждень",
+      "dates": "{fromDay}.{fromMonth}–{toDay}.{toMonth}",
       "seen": "переглянуто",
       "saved": "збережено",
-      "known": "знаю",
+      "known": "«Знаю»",
       "streak": "серія",
       "xp": "XP",
-      "goalDays": "дні з ціллю",
+      "goalDays": "ціль виконано",
+      "goalDaysOfWeek": "{count}/7",
+      "done": "Готово",
+      "folded": "Підсумок прийде знову в понеділок.",
+      "restore": "Повернути",
       "spoken": {
         "seen": {
           "one": "переглянуто {count} запис",
@@ -1210,7 +1215,9 @@
       }
     },
     "yesterday": {
-      "title": "Пам’ятаєш вчорашнє слово?"
+      "title": "Пам’ятаєш учорашнє слово?",
+      "right": "Влучно!",
+      "wrong": "Майже. Наступне вийде."
     },
     "enoughForToday": {
       "message": "Може, на сьогодні досить?",

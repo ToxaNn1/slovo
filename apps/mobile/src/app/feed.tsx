@@ -25,13 +25,13 @@ import {
   type VerticalPagerHandle,
   useGesturesDemo,
 } from '@slovo/ui';
-import type { FeedCard, FeedNoticeCard, WordCardModel } from '@slovo/core';
+import type { FeedCard, FeedNoticeCard } from '@slovo/core';
 import { memo, useCallback, useRef, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
-import { useEntrySlots, useYesterdaySlots } from '@/entries/entry-actions';
+import { useEntrySlots } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/use-open-screen';
 import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
@@ -46,7 +46,7 @@ import { XpBarToGame } from '@/progress/xp-bar';
 import { useShown } from '@/shown-in-effect';
 import { useGesturesHint } from '@/feed/gestures-hint';
 import { todayText } from '@/feed/today-text';
-import { WeeklyRecapNotice } from '@/feed/weekly-recap-notice';
+import { WeeklyRecapPage } from '@/feed/weekly-recap-notice';
 import { CommunityWordNotice } from '@/feed/community-word-notice';
 import { useNotificationsChanges } from '@/notifications/notifications';
 import { LaterQuestionNotice } from '@/feed/later-question-notice';
@@ -80,7 +80,15 @@ function FeedScreen() {
   const gesturesDemo = useGesturesDemo(gesturesHint.visible && shown.gesturesHintDemo);
   const openScreen = useOpenScreen();
 
-  const { cards, onCardChange, openCorrection, answerQuickQuestion } = feed;
+  const {
+    cards,
+    onCardChange,
+    openCorrection,
+    answerQuickQuestion,
+    answerYesterday,
+    foldWeeklyRecap,
+    restoreWeeklyRecap,
+  } = feed;
   const closeUndoToast = useCloseUndoToast();
   // Kept from render to render: a swipe re-renders the pager, and its pages
   // re-render only when their card changes.
@@ -93,9 +101,12 @@ function FeedScreen() {
         position={position}
         onOpenCorrection={openCorrection}
         onAnswerQuickQuestion={answerQuickQuestion}
+        onAnswerYesterday={answerYesterday}
+        onFoldWeeklyRecap={foldWeeklyRecap}
+        onRestoreWeeklyRecap={restoreWeeklyRecap}
       />
     ),
-    [openCorrection, answerQuickQuestion],
+    [openCorrection, answerQuickQuestion, answerYesterday, foldWeeklyRecap, restoreWeeklyRecap],
   );
   const onIndexChange = useCallback(
     (position: number) => {
@@ -196,6 +207,9 @@ const FeedPage = memo(function FeedPage({
   position,
   onOpenCorrection,
   onAnswerQuickQuestion,
+  onAnswerYesterday,
+  onFoldWeeklyRecap,
+  onRestoreWeeklyRecap,
 }: {
   card: FeedCard;
   position: number;
@@ -203,6 +217,12 @@ const FeedPage = memo(function FeedPage({
   onOpenCorrection: (position: number, correctionId: string) => void;
   /** Keeps the option picked on the Quick Question at `position`. */
   onAnswerQuickQuestion: (position: number, option: number) => void;
+  /** Keeps the meaning picked first on the Yesterday quiz at `position`. */
+  onAnswerYesterday: (position: number, option: number) => void;
+  /** «Готово» on the Weekly Recap at `position`. */
+  onFoldWeeklyRecap: (position: number) => void;
+  /** «Повернути» of the Weekly Recap folded this session. */
+  onRestoreWeeklyRecap: () => void;
 }) {
   const { top } = useSafeAreaInsets();
   const { stressFall, calligraphicLemma, answerCard } = useShown();
@@ -229,6 +249,33 @@ const FeedPage = memo(function FeedPage({
             onAnswer={(option) => {
               onAnswerQuickQuestion(position, option);
             }}
+          />
+        </PagerScrollView>
+      </View>
+    );
+  // The week on top under the header, Yesterday under it (board f5, ADR 0130).
+  if (card.kind === 'notice' && card.notice === 'weeklyRecap')
+    return (
+      <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
+        <PagerScrollView contentContainerStyle={[styles.stack, { paddingTop: topRow }]}>
+          <WeeklyRecapPage
+            day={card.day}
+            folded={card.folded}
+            yesterday={
+              card.yesterday === undefined ? undefined : (
+                <YesterdayCard
+                  word={card.yesterday.word}
+                  quiz={card.yesterday.quiz}
+                  onAnswer={(option) => {
+                    onAnswerYesterday(position, option);
+                  }}
+                />
+              )
+            }
+            onFold={() => {
+              onFoldWeeklyRecap(position);
+            }}
+            onRestore={onRestoreWeeklyRecap}
           />
         </PagerScrollView>
       </View>
@@ -278,7 +325,17 @@ const FeedPage = memo(function FeedPage({
       )}
     </View>
   );
-  if (card.kind === 'notice') return page(<YesterdayNotice word={card.word} />, false);
+  if (card.kind === 'notice')
+    return page(
+      <YesterdayCard
+        word={card.word}
+        quiz={card.quiz}
+        onAnswer={(option) => {
+          onAnswerYesterday(position, option);
+        }}
+      />,
+      false,
+    );
   if (card.kind === 'tip') return <SwipedEntryCard card={card} page={page} />;
   if (card.kind === 'synonymRow')
     return (
@@ -344,18 +401,20 @@ function SwipedEntryCard(
 }
 
 /**
- * A Feed Notice that sits in the middle of its page: the Weekly Recap, the
- * Community Word, the first-week card, a level milestone, a later question
+ * A Feed Notice that sits in the middle of its page: the Community Word, the first-week card, a level milestone, a later question
  * of the questionnaire, the offer to save progress, «Може, на сьогодні
  * досить?» or the notification explainer and its re-ask.
  */
-function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterday' }> }) {
+function NoticeCard({
+  card,
+}: {
+  card: Exclude<FeedNoticeCard, { notice: 'yesterday' | 'weeklyRecap' }>;
+}) {
   const streak = useFirstWeekStreak();
   const openScreen = useOpenScreen();
   const { askPermission } = useNotificationsChanges();
   if (card.notice === 'notificationExplainer' || card.notice === 'notificationReask')
     return <NotificationAskCard notice={card.notice} onYes={askPermission} />;
-  if (card.notice === 'weeklyRecap') return <WeeklyRecapNotice day={card.day} />;
   if (card.notice === 'communityWord')
     return <CommunityWordNotice entryId={card.card.entryId} adds={card.adds} />;
   if (card.notice === 'levelMilestone')
@@ -376,11 +435,6 @@ function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterd
   ) : (
     <LaterQuestionNotice question={card.notice} />
   );
-}
-
-/** Yesterday's Word in Self-check style, with its Knowledge Marks as on any card. */
-function YesterdayNotice({ word }: { word: WordCardModel }) {
-  return <YesterdayCard word={word} slots={useYesterdaySlots(word)} />;
 }
 
 const styles = StyleSheet.create({
@@ -404,6 +458,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: space[6],
+    paddingBottom: space[6],
+  },
+  // The Weekly Recap's page starts under the top row, closer to the edges (board f5).
+  stack: {
+    flexGrow: 1,
+    paddingHorizontal: space[3],
     paddingBottom: space[6],
   },
   heroContent: {

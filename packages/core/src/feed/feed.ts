@@ -14,12 +14,13 @@ import {
   type FeedCard,
   type WordFeedCard,
 } from './feed-card';
-import type { FeedNoticeQueue } from './feed-notices';
+import { noticesOf, type FeedNoticeQueue, type YesterdayContent } from './feed-notices';
 import { createFeedSession } from './feed-session';
 import type { HistoryRecorder, Seen } from '../saved/history';
 import type { WordOfTheDayArchiveRecorder } from '../saved/word-of-the-day-archive';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Knowledge } from '../knowledge/knowledge';
+import type { KnowledgeMark } from '../knowledge/knowledge-record';
 import type { Subject } from '../subject';
 import type { OpenedEntry } from './day-change';
 import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
@@ -112,6 +113,28 @@ export interface Feed {
    * Nothing when no Quick Question not answered yet is there.
    */
   answerQuickQuestion(position: number, option: number): Promise<boolean | undefined>;
+  /**
+   * Answers the Yesterday quiz at `position`, alone or under the Weekly
+   * Recap, with the meaning `option`: the right one sets Known, as «Знаю»
+   * does, any other Unknown, as «Не знаю» does, which starts a Review (ADR
+   * 0130). Yesterday is closed for the day with it, so it comes no more that
+   * day. Resolves the mark set; its card then carries the option. Nothing
+   * when no Yesterday quiz not answered yet is there.
+   */
+  answerYesterday(position: number, option: number): Promise<KnowledgeMark | undefined>;
+  /**
+   * «Готово»: folds the Weekly Recap at `position` away for its week, and
+   * its card then says so. With no Yesterday under it, its page has nothing
+   * left to show, so it leaves the Feed, as a dropped card does, until
+   * «Повернути». Resolves whether it did: not when no Weekly Recap not
+   * folded is there.
+   */
+  foldWeeklyRecap(position: number): Promise<boolean>;
+  /**
+   * «Повернути»: brings back the Weekly Recap folded this session, to its
+   * place. Resolves whether it did: not when no folded Weekly Recap is there.
+   */
+  restoreWeeklyRecap(): Promise<boolean>;
   /**
    * Makes today's Word of the Day Seen through the Feed's own Seen, as a
    * dwell on its card would: History, the archive and the Seen subscribers
@@ -283,7 +306,7 @@ export async function openFeed({
   userState: UserState;
   clock: Clock;
   cycle: Cycle;
-  knowledge: Pick<Knowledge, 'state'>;
+  knowledge: Pick<Knowledge, 'state' | 'set'>;
   wordOfTheDay: WordOfTheDay;
   history: HistoryRecorder;
   archive: WordOfTheDayArchiveRecorder;
@@ -359,7 +382,7 @@ export async function openFeed({
     const date = dateKeyOf(day);
     const inSession = new Set(
       session.all.flatMap((card) =>
-        card.kind === 'notice' && dateKeyOf(card.day) === date ? [card.notice] : [],
+        card.kind === 'notice' && dateKeyOf(card.day) === date ? noticesOf(card) : [],
       ),
     );
     const content = await notices.nextFor(day, session.cards.at(-1)?.entryId, inSession);
@@ -510,6 +533,64 @@ export async function openFeed({
     session.renew((each) => (each === card ? answered : each));
     subscribers.tell();
     return right;
+  }
+
+  async function answerYesterday(
+    position: number,
+    option: number,
+  ): Promise<KnowledgeMark | undefined> {
+    const card = session.cards[position];
+    if (card?.kind !== 'notice') return undefined;
+    const yesterday: YesterdayContent | undefined =
+      card.notice === 'yesterday'
+        ? card
+        : card.notice === 'weeklyRecap'
+          ? card.yesterday
+          : undefined;
+    if (yesterday === undefined || yesterday.quiz.answered !== undefined) return undefined;
+    const { quiz, word } = yesterday;
+    if (!Number.isInteger(option) || option < 0 || option >= quiz.meanings.length) return undefined;
+    const mark: KnowledgeMark = option === quiz.right ? 'known' : 'unknown';
+    // Closed first: the reader answers once, also after a relaunch. A Feed
+    // Notice of a day before, left open over midnight, is closed already.
+    const date = dateKeyOf(card.day);
+    if (date === todayKey(clock)) await userState.write(await notices.close(yesterday, date));
+    await knowledge.set(word.wordId, mark);
+    const answered = { ...yesterday, quiz: { ...quiz, answered: option } };
+    // Yesterday alone, or under the Weekly Recap.
+    const renewed: FeedCard =
+      card.notice === 'weeklyRecap'
+        ? { ...card, yesterday: answered }
+        : { ...answered, kind: 'notice', day: card.day };
+    session.renew((each) => (each === card ? renewed : each));
+    subscribers.tell();
+    return mark;
+  }
+
+  /**
+   * Folds the Weekly Recap `card` away, or brings it back, when it is one not
+   * so already. Resolves whether it did.
+   */
+  async function foldWeeklyRecap(card: FeedCard | undefined, folded: boolean): Promise<boolean> {
+    if (card?.kind !== 'notice' || card.notice !== 'weeklyRecap' || card.folded === folded)
+      return false;
+    const date = dateKeyOf(card.day);
+    // Left open over midnight, its day is over: only the page changes.
+    if (date === todayKey(clock))
+      await userState.write(await (folded ? notices.fold(date) : notices.restore(date)));
+    const renewed: FeedCard = { ...card, folded };
+    session.renew((each) => (each === card ? renewed : each));
+    subscribers.tell();
+    return true;
+  }
+
+  /** Folds or brings back the Weekly Recap `find` gives, in turn, then keeps the next card ready. */
+  async function refold(find: () => FeedCard | undefined, folded: boolean): Promise<boolean> {
+    if (!(await inTurn(() => foldWeeklyRecap(find(), folded)))) return false;
+    // Its page drops or comes back as the cards the Cycle covers do.
+    await inTurnTellingSeen(followCovered);
+    await keepNextCardReady();
+    return true;
   }
 
   async function insertLinkedCorrection(
@@ -779,12 +860,15 @@ export async function openFeed({
   }
 
   /**
-   * Drops and puts back the cards by what the Cycle covers. Returns the Entry
-   * of the card that left the screen this way, if it became Seen.
+   * Drops and puts back the cards by what the Cycle covers, and the page of
+   * a Weekly Recap folded with no Yesterday under it, which shows nothing.
+   * Returns the Entry of the card that left the screen this way, if it
+   * became Seen.
    */
   async function followCovered(): Promise<string | undefined> {
     const out = new Set(
       session.all.filter((card) => {
+        if (isEmptyPage(card)) return true;
         const entryId = card.entryId;
         return entryId !== undefined && !cycle.covers(entryId);
       }),
@@ -875,6 +959,10 @@ export async function openFeed({
     openLinkedCorrection: (position, correctionId) =>
       inTurn(() => insertLinkedCorrection(position, correctionId)),
     answerQuickQuestion: (position, option) => inTurn(() => answerQuickQuestion(position, option)),
+    answerYesterday: (position, option) => inTurn(() => answerYesterday(position, option)),
+    foldWeeklyRecap: (position) => refold(() => session.cards[position], true),
+    restoreWeeklyRecap: () =>
+      refold(() => session.all.findLast((card) => isFoldedWeeklyRecap(card)), false),
     wordOfTheDay: () => inTurn(() => chooseWordOfTheDay()),
     seeWordOfTheDay: () => {
       const chosen = wordOfTheDay.chosen();
@@ -884,6 +972,17 @@ export async function openFeed({
     },
   };
 }
+
+/** Whether the card is a Weekly Recap folded away («Готово»). */
+const isFoldedWeeklyRecap = (card: FeedCard) =>
+  card.kind === 'notice' && card.notice === 'weeklyRecap' && card.folded;
+
+/** Whether the card's page shows nothing: a Weekly Recap folded with no Yesterday under it. */
+const isEmptyPage = (card: FeedCard) =>
+  card.kind === 'notice' &&
+  card.notice === 'weeklyRecap' &&
+  card.folded &&
+  card.yesterday === undefined;
 
 /** The ids of the Corrections and the Synonym Row a Word card links. */
 function linkedIds({ linkedCorrections, synonymRow }: WordCardModel): readonly string[] {

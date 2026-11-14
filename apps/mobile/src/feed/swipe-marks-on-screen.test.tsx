@@ -85,7 +85,10 @@ function word(id: string, lemma: string): Word {
   };
 }
 
-/** Opens the composition over two Words, «лагідний» kept as yesterday's Word of the Day. */
+/**
+ * Opens the composition over three Words, «лагідний» kept as yesterday's Word
+ * of the Day, the other two the meanings its Yesterday quiz offers beside its own.
+ */
 async function open(swipeMarks: boolean) {
   editionInEffect = editionWith(swipeMarks);
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
@@ -106,7 +109,11 @@ async function reopen() {
       categories: [
         { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
       ],
-      words: [word('w_sumyrnyi', 'сумирний'), word('w_lahidnyi', 'лагідний')],
+      words: [
+        word('w_sumyrnyi', 'сумирний'),
+        word('w_lahidnyi', 'лагідний'),
+        word('w_tykhyi', 'тихий'),
+      ],
     }),
     edition: editionInEffect,
     userState: userState,
@@ -187,7 +194,7 @@ function swipedPages() {
 /** The Feed page of Yesterday's Word, found by its title. */
 function yesterdayPage() {
   let node: ReturnType<typeof screen.getByText> | null = screen.getByText(
-    'Пам’ятаєш вчорашнє слово?',
+    editionStrings.feedNotices.yesterday.title,
     hidden,
   );
   for (; node !== null; node = node.parent)

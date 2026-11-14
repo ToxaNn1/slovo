@@ -9,7 +9,7 @@ The app and `@slovo/ui` memoise by hand with `useMemo`, `useCallback` and `React
 - `categories/CategoryGrid.tsx`
 - `dashboard/CorrectionTypeRow.tsx`, `dashboard/HeroReveal.tsx`, `dashboard/HeroSparks.tsx`, `dashboard/MoodCheckIn.tsx`, `dashboard/PreviousWords.tsx`, `dashboard/QuietScreenRow.tsx`, `dashboard/RailScreenCard.tsx`, `dashboard/RailScreenHero.tsx`
 - `entries/CardTabs.tsx`, `entries/SwipeMarks.tsx`, `entries/reveal.tsx`
-- `feed/GesturesHintSheet.tsx`, `feed/GoalReachedCard.tsx`, `entries/swipe-demo.tsx`
+- `feed/GesturesHintSheet.tsx`, `feed/GoalReachedCard.tsx`, `feed/WeeklyRecapCard.tsx`, `entries/swipe-demo.tsx`
 - `game/ChipsRound.tsx`, `game/CrossingGrid.tsx`, `game/GameRound.tsx`, `game/LetterWheel.tsx`, `game/OrderedChips.tsx`, `game/PairsGrid.tsx`, `game/PairsRound.tsx`, `game/PickRound.tsx`, `game/RoundCard.tsx`, `game/TracedCrosswordGrid.tsx`, `game/TypedRound.tsx`, `game/VowelButtons.tsx`, `game/VowelRound.tsx`, `game/useAnswerMotion.ts`, `game/useTraceDrag.ts` (the Game Round's form modules, split from `GameRound.tsx`, keep its opt-out)
 - `onboarding/OnboardingStep.tsx`, `onboarding/SplashOverlay.tsx`
 - `progress/ActiveDaysCalendar.tsx`, `progress/BadgeStamp.tsx`, `progress/BadgeToast.tsx`, `progress/NewLevelScreen.tsx`, `progress/LevelCard.tsx`

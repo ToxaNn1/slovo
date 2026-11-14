@@ -1,4 +1,4 @@
-import type { FeatureSwitch } from '@slovo/contracts';
+import type { FeatureSwitch, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
@@ -11,8 +11,11 @@ import type { HiddenEntries } from '../mix/hidden-entries';
 import type { ActiveDays } from '../progress/active-days';
 import { LEVEL_MILESTONES, nameOf, totalFor, type LevelMilestone } from '../progress/levels';
 import type { XpLog } from '../progress/xp-log';
-import type { Clock, UserStateChanges } from '../ports';
+import type { Clock, Random, UserStateChanges } from '../ports';
 import type { History } from '../saved/history';
+import type { TextComparison } from '../text/text-comparison';
+import { seededRandomOf } from '../game/traced-crossword';
+import { shuffled } from '../shuffled';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -20,22 +23,57 @@ import { userStateRecords } from '../user-state-schema';
 export type FirstWeekDay = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 /**
- * What a Feed Notice shows: the first-week card, also its day of the first
- * week; Yesterday, the card of the day before's Word of the Day, which the
- * shell shows in Self-check style with the Knowledge Marks of its Word; the
- * Community Word, the card of its Entry and how many readers added it; a
- * level milestone, its Level and the Edition's name for it; «Ціль дня
- * виконано!», the Daily Goal met and the Lemmas of the first Words Seen today.
+ * The Yesterday quiz (ADR 0130): three distinct meanings, the Word's own
+ * primary Definition and two of other Words, in the order the card shows
+ * them; `answered` is the meaning the reader picked, once they did.
+ */
+export interface YesterdayQuiz {
+  readonly meanings: readonly string[];
+  /** The place of the Word's own meaning among `meanings`. */
+  readonly right: number;
+  readonly answered?: number;
+}
+
+/** Yesterday: the card of the day before's Word of the Day and its quiz. */
+export interface YesterdayContent {
+  readonly notice: 'yesterday';
+  readonly word: WordCardModel;
+  readonly quiz: YesterdayQuiz;
+}
+
+/**
+ * The Weekly Recap's page (ADR 0130): `folded` once the reader tapped
+ * «Готово», and the day's Yesterday under it when both are due.
+ */
+export interface WeeklyRecapContent {
+  readonly notice: 'weeklyRecap';
+  readonly folded: boolean;
+  readonly yesterday: YesterdayContent | undefined;
+}
+
+/**
+ * What a Feed Notice shows: the Weekly Recap, its page; the first-week card,
+ * also its day of the first week; Yesterday, the card of the day before's
+ * Word of the Day and its quiz; the Community Word, the card of its Entry and
+ * how many readers added it; a level milestone, its Level and the Edition's
+ * name for it; «Ціль дня виконано!», the Daily Goal met and the Lemmas of the
+ * first Words Seen today.
  */
 export type FeedNoticeContent =
   | {
       readonly notice: Exclude<
         FeedNotice,
-        'firstWeek' | 'yesterday' | 'communityWord' | 'levelMilestone' | 'goalReached'
+        | 'weeklyRecap'
+        | 'firstWeek'
+        | 'yesterday'
+        | 'communityWord'
+        | 'levelMilestone'
+        | 'goalReached'
       >;
     }
+  | WeeklyRecapContent
   | { readonly notice: 'firstWeek'; readonly firstWeekDay: FirstWeekDay }
-  | { readonly notice: 'yesterday'; readonly word: WordCardModel }
+  | YesterdayContent
   | { readonly notice: 'communityWord'; readonly card: AnyEntryCard; readonly adds: number }
   | { readonly notice: 'levelMilestone'; readonly level: LevelMilestone; readonly name: string }
   | {
@@ -45,6 +83,60 @@ export type FeedNoticeContent =
       /** The Lemmas of the first Words Seen today, in the order Seen, at most `GOAL_REACHED_WORDS`. */
       readonly words: readonly string[];
     };
+
+/** The Feed Notices a page shows: its own, and the Yesterday under a Weekly Recap. */
+export function noticesOf(content: FeedNoticeContent): readonly FeedNotice[] {
+  return content.notice === 'weeklyRecap' && content.yesterday !== undefined
+    ? ['weeklyRecap', 'yesterday']
+    : [content.notice];
+}
+
+/** The meanings of the Yesterday quiz. */
+const QUIZ_MEANINGS = 3;
+
+/**
+ * The Words a Distractor may be, best first: the Words of the answer's part
+ * of speech in a random order, then the others in a random order (ADR 0101).
+ */
+const distractorOrder = (answer: Word, others: readonly Word[], random: Random): Word[] => [
+  ...shuffled(
+    others.filter((other) => other.partOfSpeech === answer.partOfSpeech),
+    random,
+  ),
+  ...shuffled(
+    others.filter((other) => other.partOfSpeech !== answer.partOfSpeech),
+    random,
+  ),
+];
+
+/**
+ * The Yesterday quiz of `word` over the `others` Words, in the order `random`
+ * gives: its meaning and the first two distinct meanings of other Words,
+ * those of its part of speech first; a homonym's never, since the card shows
+ * the one Lemma. Meanings are distinct by their Comparison Key for a
+ * Definition (ADR 0101). Nothing when the others have no two such meanings.
+ */
+function yesterdayQuiz(
+  word: Word,
+  others: readonly Word[],
+  random: Random,
+  comparison: Pick<TextComparison, 'key'>,
+): YesterdayQuiz | undefined {
+  const keyOf = (meaning: string) => comparison.key(meaning, 'definition');
+  const meanings = [word.primaryDefinition];
+  const keys = new Set([keyOf(word.primaryDefinition)]);
+  const candidates = others.filter((other) => other.lemma !== word.lemma);
+  for (const other of distractorOrder(word, candidates, random)) {
+    if (meanings.length === QUIZ_MEANINGS) break;
+    const key = keyOf(other.primaryDefinition);
+    if (keys.has(key)) continue;
+    keys.add(key);
+    meanings.push(other.primaryDefinition);
+  }
+  if (meanings.length < QUIZ_MEANINGS) return undefined;
+  const order = shuffled(meanings, random);
+  return { meanings: order, right: order.indexOf(word.primaryDefinition) };
+}
 
 /**
  * What gives the Feed Notices another feature makes for a local day, in any
@@ -78,9 +170,17 @@ export interface FeedNoticeQueue {
   shown(content: FeedNoticeContent, day: LocalDate): Promise<void>;
   /**
    * The change that closes `content` for the local day `date`
-   * (`YYYY-MM-DD`); a level milestone it closes for good, so it comes once.
+   * (`YYYY-MM-DD`), the Yesterday under a Weekly Recap too; a level milestone
+   * it closes for good, so it comes once.
    */
   close(content: FeedNoticeContent, date: string): Promise<UserStateChanges>;
+  /**
+   * The change that folds the Weekly Recap of the local day `date` away
+   * («Готово»): it is closed for that Monday, the only day it comes (ADR 0130).
+   */
+  fold(date: string): Promise<UserStateChanges>;
+  /** The change that brings the Weekly Recap folded on the local day `date` back («Повернути»). */
+  restore(date: string): Promise<UserStateChanges>;
 }
 
 const {
@@ -111,15 +211,27 @@ type NoticeRule = (
   after: string | undefined,
 ) => Promise<FeedNoticeContent | undefined>;
 
+/** The change that keeps the Feed Notices closed on the local day `date` as `update` leaves them. */
+async function closedChange(
+  userState: Pick<UserState, 'read'>,
+  date: string,
+  update: (notices: Set<FeedNotice>) => void,
+): Promise<UserStateChanges> {
+  const closed = await userState.read(feedNoticesClosed);
+  const notices = new Set(closed?.date === date ? closed.notices : []);
+  update(notices);
+  return feedNoticesClosed.change({ date, notices: [...notices] });
+}
+
 /** The change that closes the Feed Notice for the local day `date` (`YYYY-MM-DD`), as `FeedNoticeQueue.close`. */
 export async function closeNotice(
   userState: Pick<UserState, 'read'>,
   content: FeedNoticeContent,
   date: string,
 ): Promise<UserStateChanges> {
-  const closed = await userState.read(feedNoticesClosed);
-  const notices = new Set(closed?.date === date ? closed.notices : []);
-  const change = feedNoticesClosed.change({ date, notices: [...notices.add(content.notice)] });
+  const change = await closedChange(userState, date, (notices) => {
+    for (const notice of noticesOf(content)) notices.add(notice);
+  });
   if (content.notice !== 'levelMilestone') return change;
   const levels = new Set((await userState.read(levelMilestonesClosed)) ?? []);
   return new Map([...change, ...levelMilestonesClosed.change([...levels.add(content.level)])]);
@@ -143,6 +255,8 @@ export function openFeedNotices({
   weeklyRecap,
   signedIn,
   sources,
+  comparison,
+  seeded = seededRandomOf,
 }: {
   edition: Pick<Edition, 'levels' | 'isFeatureEnabled'>;
   userState: UserState;
@@ -157,12 +271,18 @@ export function openFeedNotices({
   signedIn: (() => boolean) | undefined;
   /** The Feed Notices other features make. */
   sources: readonly FeedNotices[];
+  /** The Edition's text comparison, which tells the meanings of a Yesterday quiz apart. */
+  comparison: Pick<TextComparison, 'key'>;
+  /** The random port of a seed, which orders a Yesterday quiz the same all its day. */
+  seeded?: (seed: string) => Random;
 }): FeedNoticeQueue {
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
 
   /** «Твій тиждень» on the first open of a local Monday, when the week before has one (ADR 0054). */
   const weeklyRecapRule: NoticeRule = async (day) =>
-    (await weeklyRecap().of(day)) === undefined ? undefined : { notice: 'weeklyRecap' };
+    (await weeklyRecap().of(day)) === undefined
+      ? undefined
+      : { notice: 'weeklyRecap', folded: false, yesterday: undefined };
 
   /**
    * The first week: on each of the first 7 Active Days from the day the reader
@@ -180,12 +300,43 @@ export function openFeedNotices({
     return isFirstWeekDay(firstWeekDay) ? { notice: 'firstWeek', firstWeekDay } : undefined;
   };
 
+  /** The last Yesterday quiz made, by its day and Word: one order all the day, made once. */
+  const noQuiz = { key: '', quiz: Promise.resolve(undefined) };
+  let lastQuiz: { readonly key: string; readonly quiz: Promise<YesterdayQuiz | undefined> } =
+    noQuiz;
+
   /**
-   * Yesterday («Пам'ятаєш вчорашнє слово?»): the card of the Word of the Day
+   * The Yesterday quiz of `word`, the Word of the Day of `dayBefore`, over
+   * the Words within the Rarity Ceiling not Hidden. A read that fails is
+   * tried again on the next call.
+   */
+  function quizOf(word: Word, dayBefore: string): Promise<YesterdayQuiz | undefined> {
+    const key = `${dayBefore}:${word.id}`;
+    if (lastQuiz.key !== key) {
+      const quiz = entries.wordsUnderRarityCeiling().then((words) =>
+        yesterdayQuiz(
+          word,
+          words.filter((other) => other.id !== word.id && !hiddenEntries.has(other.id)),
+          seeded(`yesterday:${key}`),
+          comparison,
+        ),
+      );
+      const made = { key, quiz };
+      lastQuiz = made;
+      quiz.catch(() => {
+        if (lastQuiz === made) lastQuiz = noQuiz;
+      });
+    }
+    return lastQuiz.quiz;
+  }
+
+  /**
+   * Yesterday («Пам’ятаєш учорашнє слово?»): the card of the Word of the Day
    * the archive keeps for the day before, while that Word is neither Hidden
-   * nor Retired. The archive keeps a Word only once its card was Seen. It
-   * reads the archive, so it needs the Feature Switches `yesterday` and
-   * `wordOfTheDayArchive` both on (ADR 0054).
+   * nor Retired, and its quiz, while the other Words give two more meanings.
+   * The archive keeps a Word only once its card was Seen. It reads the
+   * archive, so it needs the Feature Switches `yesterday` and
+   * `wordOfTheDayArchive` both on (ADR 0054, 0130).
    */
   const yesterday: NoticeRule = async (day) => {
     if (!on('yesterday') || !on('wordOfTheDayArchive')) return undefined;
@@ -194,7 +345,9 @@ export function openFeedNotices({
     if (wordId === undefined || hiddenEntries.has(wordId)) return undefined;
     const word = await entries.get(wordId);
     if (word?.kind !== 'word' || word.retired) return undefined;
-    return { notice: 'yesterday', word: await buildWordCard({ word, entries }) };
+    const quiz = await quizOf(word, dayBefore);
+    if (quiz === undefined) return undefined;
+    return { notice: 'yesterday', word: await buildWordCard({ word, entries }), quiz };
   };
 
   /**
@@ -309,11 +462,16 @@ export function openFeedNotices({
         ...made.flatMap((each) => (each === undefined ? [] : [each])),
         ...given.flat(),
       ];
-      return FEED_NOTICES.flatMap((notice) =>
+      const due = FEED_NOTICES.flatMap((notice) =>
         closedToday.has(notice) || inSession.has(notice)
           ? []
           : contents.filter((each) => each.notice === notice),
-      )[0];
+      );
+      const first = due[0];
+      if (first?.notice !== 'weeklyRecap') return first;
+      // The Weekly Recap and Yesterday share one page, the week first (ADR 0130).
+      const yesterday = due.find((each): each is YesterdayContent => each.notice === 'yesterday');
+      return { ...first, yesterday };
     },
     async shown(content, day) {
       if (content.notice !== 'saveProgress') return;
@@ -323,5 +481,7 @@ export function openFeedNotices({
         await userState.write(saveProgressOffered.change([...offered, date]));
     },
     close: (content, date) => closeNotice(userState, content, date),
+    fold: (date) => closedChange(userState, date, (notices) => notices.add('weeklyRecap')),
+    restore: (date) => closedChange(userState, date, (notices) => notices.delete('weeklyRecap')),
   };
 }
