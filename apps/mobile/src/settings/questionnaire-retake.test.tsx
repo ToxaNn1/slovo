@@ -169,6 +169,31 @@ describe('Settings › «Пройти опитування ще раз»', () =>
     expect(screen.queryByTestId('questionnaire')).toBeNull();
   });
 
+  it('applies the answers once when «ГОТОВО» is tapped twice before they are written', async () => {
+    await render();
+    screenSettled();
+    const write = composition.questionnaire.answer.bind(composition.questionnaire);
+    let written = () => {};
+    const held = new Promise<void>((resolve) => {
+      written = resolve;
+    });
+    // The write is held until both taps are in.
+    const answer = jest
+      .spyOn(composition.questionnaire, 'answer')
+      .mockImplementation((question, answerId) => held.then(() => write(question, answerId)));
+
+    await press(settings.rows.questionnaire);
+    await press('Знаю дуже багато');
+    const done = screen.getByTestId('questionnaire-done');
+    await fireEvent.press(done);
+    await fireEvent.press(done);
+    written();
+    await settle();
+
+    expect(answer).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('questionnaire')).toBeNull();
+  });
+
   it('has no «Рівень» and «Навіщо» while the questionnaire is off, and the self-rating still', async () => {
     await openWith(editionWithout('questionnaire'));
     await render();
