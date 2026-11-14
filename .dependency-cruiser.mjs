@@ -275,6 +275,7 @@ export default {
           '\\.d\\.c?ts$',
           '(^|/)[^/]+\\.config\\.(js|cjs|mjs|ts)$',
           '(^|/)jest\\.(setup|resolver|glass-effect|language-pack|fonts)\\.(js|cjs)$',
+          '^tools/jest-resolver/index\\.cjs$',
           '^apps/mobile/src/app/',
           '^apps/mobile/maestro/',
           '^apps/site/src/components/[^/]+\\.tsx$',

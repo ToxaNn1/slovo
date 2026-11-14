@@ -33,7 +33,7 @@ export default {
     '^slovo-app/config$': '<rootDir>/../../app/app.json',
     '^slovo-app/splash$': `${EDITION}/decor/splash.json`,
   },
-  resolver: './jest.resolver.cjs',
+  resolver: '@slovo/jest-resolver',
   setupFiles: ['./jest.setup.js'],
   // Half the cores, beside Vitest and the other packages turbo runs at once, and a worker
   // past 1 GB is restarted between files, so a run on a loaded machine does not time out.

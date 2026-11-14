@@ -10,13 +10,23 @@
 // each of Expo's modules), which would send every such package to its web
 // build. So their checks see the path with the store's folder names hidden,
 // while the file itself resolves from the real one.
-const reactNative = require('@react-native/jest-preset/jest/resolver');
-const reanimated = require('react-native-reanimated/jest/resolver');
+//
+// Both resolvers are dependencies of the package that runs the tests, so they
+// load from its Jest root, not from this folder.
+const fromHost = (rootDir, name) => require(require.resolve(name, { paths: [rootDir] }));
 
 const storeFolder = /\/\.pnpm\/[^/]+\//g;
 
-module.exports = (request, options) =>
-  reanimated(request, {
+module.exports = (request, options) => {
+  const reactNative = fromHost(
+    options.rootDir ?? options.basedir,
+    '@react-native/jest-preset/jest/resolver',
+  );
+  const reanimated = fromHost(
+    options.rootDir ?? options.basedir,
+    'react-native-reanimated/jest/resolver',
+  );
+  return reanimated(request, {
     ...options,
     basedir: options.basedir.replace(storeFolder, '/.pnpm/store/'),
     defaultResolver: (path, own) =>
@@ -26,3 +36,4 @@ module.exports = (request, options) =>
         defaultResolver: options.defaultResolver,
       }),
   });
+};
