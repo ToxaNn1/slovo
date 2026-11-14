@@ -422,7 +422,7 @@ export function openFeedNotices({
     const date = dateKeyOf(day);
     const today = history.list
       .filter(({ seenAt }) => dateKeyOf(localDayOf(seenAt, clock).date) === date)
-      .toSorted((one, other) => one.seenAt.getTime() - other.seenAt.getTime())
+      .sort((one, other) => one.seenAt.getTime() - other.seenAt.getTime())
       .map(({ entryId }) => entryId);
     const next = after === undefined || today.includes(after) ? undefined : after;
     const metNext =

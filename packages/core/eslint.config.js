@@ -65,6 +65,13 @@ export default [
             'Literal[value=/[\\u0400-\\u04FF]/], TemplateElement[value.raw=/[\\u0400-\\u04FF]/]',
           message: 'The Core must not contain language-specific text; read it from the Edition.',
         },
+        {
+          // Hermes, the app's JavaScript engine, has no copying array methods (ES2023).
+          selector:
+            'CallExpression > MemberExpression.callee > Identifier.property[name=/^(toSorted|toReversed|toSpliced)$/]',
+          message:
+            'Hermes has no toSorted, toReversed or toSpliced; copy the array and use sort, reverse or splice.',
+        },
       ],
     },
   },
