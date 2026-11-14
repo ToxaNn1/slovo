@@ -385,6 +385,8 @@ export const typeRoles = {
   shadeNote: role('ui', '500', 14, 18.2),
   /** `Lemma, hero`: the onboarding welcome's Lemma. */
   heroLemma: role('word', '900', 76, 76),
+  /** The Rarity Ceiling's big number behind the Rarity Test's result (board 11, screen 93). */
+  rarityTestNumber: role('word', '900', 200, 200),
   /** A quiet text button of the onboarding, such as «Пропустити» and «Пізніше». */
   quietAction: role('ui', '700', 14, 17),
   /** A Word on its cell of the Pairs Game. */
