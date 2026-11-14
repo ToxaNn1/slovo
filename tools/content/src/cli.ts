@@ -129,7 +129,7 @@ async function main(): Promise<number> {
         )
       : await editionWithSnapshot(editionId, values.snapshot, cwd);
     if (typeof edition === 'number') return edition;
-    const targets = verifyTargets(values.changed, rest, cwd);
+    const targets = verifyTargets(values.changed, rest, editionId, cwd);
     if (targets === null) return 2;
     return verifyEntries({
       edition,
@@ -260,17 +260,21 @@ function opened(open: () => EditionFolder): EditionFolder | number {
 function verifyTargets(
   changed: string | undefined,
   names: readonly string[],
+  editionId: string,
   cwd: string,
 ): VerifyTargets | null {
   if (changed === undefined) return { kind: 'named', names };
-  const since = earlierSnapshot(changed, cwd);
+  const since = earlierSnapshot(changed, editionId, cwd);
   return since === null ? null : { kind: 'changed', since, name: changed };
 }
 
-/** The earlier snapshot `--changed` names; null, said why, when it is none. */
-function earlierSnapshot(file: string, cwd: string): ContentSnapshot | null {
+/** The earlier snapshot of the Edition `--changed` names; null, said why, when it is none. */
+function earlierSnapshot(file: string, editionId: string, cwd: string): ContentSnapshot | null {
   try {
-    return readSnapshotFile(resolve(cwd, file));
+    const snapshot = readSnapshotFile(resolve(cwd, file));
+    if (snapshot.editionId === editionId) return snapshot;
+    console.error(`${file}: The snapshot is of Edition ${snapshot.editionId}, not ${editionId}`);
+    return null;
   } catch (error) {
     console.error(`${file}: ${error instanceof Error ? error.message : String(error)}`);
     return null;

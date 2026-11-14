@@ -385,6 +385,17 @@ describe('verify', () => {
     expect(verify(['--changed', now]).lines).toEqual([`No Entry differs from ${now}`]);
   });
 
+  it('with --changed, refuses an earlier snapshot of another Edition', () => {
+    const earlier = join(workDir, 'other.json');
+    writeFileSync(earlier, JSON.stringify({ ...seedSnapshot, editionId: 'pl' }));
+
+    const run = verify(['--changed', earlier]);
+
+    expect(run.stderr).toContain('The snapshot is of Edition pl, not uk');
+    expect(run.lines).toEqual([]);
+    expect(run.status).toBe(2);
+  });
+
   it('fails loudly, never verifying nothing, when no snapshot is given', () => {
     const run = spawnSync(
       join(toolDir, 'node_modules/.bin/tsx'),
