@@ -119,10 +119,12 @@ export {
   ChoiceRow,
   NavigationRow,
   SettingsGroup,
+  SettingsRow,
   SoonRow,
   SwitchRow,
   TimeRow,
 } from './settings/SettingsRows';
+export type { SettingsRowEnd } from './settings/SettingsRows';
 export { SplashOverlay } from './onboarding/SplashOverlay';
 export { SearchButton } from './search/SearchButton';
 export { RecentQueries } from './search/RecentQueries';
