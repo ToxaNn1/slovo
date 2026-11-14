@@ -9,3 +9,7 @@ Graph: 1881,1882 → 1883(1881) 1884(1881,1882) 1885(1881,1882) 1886(1881) 1892(
 ## Log
 - 15.11 00:20: owner night grant (~/.slovo-coord/grant-games-board-night-1115.md): commits, pushes, PRs, PR merges to main (squash auto-merge on green), no owner questions, no idle. #1894 waits «текст ок» (default).
 - 15.11: #1881 laptop, #1882 cloud launched.
+WAITING until 2026-11-15T00:17Z (laptop coordinator alive; #1881 laptop subagent works unpushed in a local worktree, #1882 cloud session_01VefVQUULN8q6pRKMn53P9H on chore/1882-split-game-round)
+## Next steps
+- On DONE: merger merges ticket branch into feat/1880-games-board (--no-ff, 'chore: merge #n: <title>'), checks, push; open draft PR to main after the first merge; launch new frontier (cloud brief template ~/.slovo-coord/games-board-1115/brief-cloud.tpl on the laptop; in the cloud write it from waves.md).
+- Every 3–5 merged tickets: code-review, PR ready, gh pr merge --auto --squash, then merge origin/main back.
