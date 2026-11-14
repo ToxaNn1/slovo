@@ -340,8 +340,10 @@ export const typeRoles = {
   synonymDominant: role('word', '900', 49, 49, -1.5),
   /** A Synonym Row's member, one per row, at the user's font size (XEntry2 e8). */
   synonymMember: role('word', '800', 19, 20.9),
-  /** The name of a hidden category on the Hidden screen. */
+  /** The name of a row on the Hidden screen. */
   hiddenName: role('ui', '700', 15, 18),
+  /** The kind label under a name on the Hidden screen: «запис», «категорія», «тип карток». */
+  hiddenKind: role('ui', '500', 12, 12),
   /** The count beside a Collection's title. */
   collectionCount: role('word', '500', 22, 22),
   /** A recent query of Search. */

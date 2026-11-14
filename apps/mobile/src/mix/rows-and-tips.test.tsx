@@ -207,35 +207,38 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
     expect(screen.queryByTestId(`mix-${feature}-weight-normal`)).toBeNull();
   });
 
-  it('show a hidden one in their own section of the Hidden screen until it is put back', async () => {
+  it('show a hidden one as an Entry on the Hidden screen until it is shown again', async () => {
     await hideFromCard(entry.id, 'entry');
     expect(composition.hiddenEntries.has(entry.id)).toBe(true);
 
     await renderInApp(<HiddenScreen />);
-    expect(screen.getByTestId(`hidden-section-${feature}`)).toHaveTextContent(title, {
-      exact: false,
-    });
-    expect(screen.queryByTestId('hidden-entries')).toBeNull();
+    expect(screen.getByTestId(`hidden-entry-${entry.id}`)).toHaveTextContent(
+      editionStrings.hidden.kinds.entry,
+      { exact: false },
+    );
 
-    await fireEvent.press(screen.getByTestId(`hidden-entry-${entry.id}-restore`));
+    await fireEvent.press(screen.getByTestId(`hidden-entry-${entry.id}-show`));
     await waitFor(() => {
       expect(screen.queryByTestId(`hidden-entry-${entry.id}`)).toBeNull();
     });
     expect(composition.hiddenEntries.has(entry.id)).toBe(false);
-    expect(screen.queryByTestId(`hidden-section-${feature}`)).toBeNull();
     expect(screen.getByText(editionStrings.hidden.empty)).toBeOnTheScreen();
   });
 
-  it('as a whole, hidden from a card, wait on the Hidden screen to be turned on', async () => {
+  it('as a whole, hidden from a card, wait on the Hidden screen to be shown', async () => {
     await hideFromCard(entry.id, 'whole-kind');
     expect(composition.mix.state.kinds[kind]).toBe(false);
     expect(screen.getByText(`${title} приховано`)).toBeOnTheScreen();
 
     await renderInApp(<HiddenScreen />);
-    const turnOn = screen.getByTestId(`hidden-${feature}-turn-on`);
-    expect(turnOn).toHaveAccessibleName(`Увімкнути ${title}`);
+    expect(screen.getByTestId(`hidden-${feature}`)).toHaveTextContent(
+      editionStrings.hidden.kinds.kind,
+      { exact: false },
+    );
+    const show = screen.getByTestId(`hidden-${feature}-show`);
+    expect(show).toHaveAccessibleName(`Показати «${title}»`);
 
-    await fireEvent.press(turnOn);
+    await fireEvent.press(show);
     await waitFor(() => {
       expect(screen.queryByTestId(`hidden-${feature}`)).toBeNull();
     });
@@ -251,7 +254,6 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
     expect(screen.queryByTestId(`mix-${feature}`)).toBeNull();
 
     await renderInApp(<HiddenScreen />);
-    expect(screen.queryByTestId(`hidden-section-${feature}`)).toBeNull();
     expect(screen.queryByTestId(`hidden-${feature}`)).toBeNull();
     expect(screen.queryByTestId(`hidden-entry-${entry.id}`)).toBeNull();
   });
