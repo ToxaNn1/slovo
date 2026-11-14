@@ -2,7 +2,6 @@ import {
   DEPENDS_ON,
   FeatureSwitchesSchema,
   switchedOn,
-  type ContentTargets,
   type EditionConfig,
   type EditionStrings,
   type FeatureSwitch,
@@ -19,12 +18,10 @@ import type { ActionEntry, Actor } from '../admin/admin-access';
 import type { Alerts } from '../admin/alerts';
 import type { Clock, Json, SwitchRuleStore } from '../ports';
 
-/** An Edition as the backend serves it: its config, strings and content targets, read from its folder. */
+/** An Edition as the backend serves it: its config, content targets included, and strings, read from its folder. */
 export interface Edition {
   readonly config: EditionConfig;
   readonly strings: EditionStrings;
-  /** The floors the Edition's content must reach; none checked when the Edition declares none. */
-  readonly targets: ContentTargets;
 }
 
 /** What a request for an Edition the backend didn't find gets. */

@@ -18,7 +18,6 @@ import { checkContentSet, checksumOf, contentSetOf, type Authored } from '@slovo
 import { buildErrorsOf, type BuildError } from './build-error';
 import { categoryArtErrors } from './category-art';
 import type { ContentManifest } from './content-manifest';
-import type { ContentTargets } from './content-targets';
 import { editionFiles, EditionFolderError, type AuthoredContent } from './edition-folder';
 import { sampleWordErrors } from './recordings';
 import { missingEntryErrors } from './id-registry';
@@ -43,7 +42,6 @@ export interface EditionSource {
     /** The content at the version the manifest records. */
     readonly content: PackContent;
     readonly manifest: ContentManifest;
-    readonly targets: ContentTargets;
   };
 }
 
@@ -54,7 +52,6 @@ export interface SnapshotSource {
   readonly valid?: {
     /** The content at the snapshot's content version. */
     readonly content: PackContent;
-    readonly targets: ContentTargets;
     /** The Edition's config, read once for the whole build. */
     readonly config: EditionConfig;
   };
@@ -83,7 +80,7 @@ export function readEdition(
   });
   if (checked === undefined || manifest === undefined) return source;
   const content = { ...checked.content, contentVersion: manifest.contentVersion };
-  return { ...source, valid: { content, manifest, targets: checked.targets } };
+  return { ...source, valid: { content, manifest } };
 }
 
 /**
@@ -116,7 +113,7 @@ export function readEditionWithSnapshot(
       ? {}
       : { needsNewRecording: snapshot.needsNewRecording }),
   };
-  return { errors, valid: { content, targets: checked.targets, config: checked.config } };
+  return { errors, valid: { content, config: checked.config } };
 }
 
 /** What the errors of a snapshot name as their file. */
@@ -137,7 +134,6 @@ function readWith(
   /** Set when there are no errors. */
   checked?: {
     content: Omit<PackContent, 'contentVersion'>;
-    targets: ContentTargets;
     config: EditionConfig;
   };
 } {
@@ -168,7 +164,6 @@ function readWith(
     errors: entryErrors,
   } = fromFolder ? folder.entries() : snapshotEntries(records.snapshot);
   errors.push(...entryErrors);
-  const targets = readOrCollect(() => folder.readIfPresent('targets') ?? {});
   const crosswordDays = fromFolder
     ? readOrCollect(() => folder.readIfPresent('crosswordDays'))
     : records.snapshot.crosswordDays.length === 0
@@ -243,7 +238,7 @@ function readWith(
     ...(registry === undefined ? {} : { registry }),
   };
   const read = { source, ...(manifest === undefined ? {} : { manifest }) };
-  if (errors.length > 0 || config === undefined || targets === undefined) return read;
+  if (errors.length > 0 || config === undefined) return read;
   const content = {
     editionId: config.id,
     categories: config.categories,
@@ -258,7 +253,7 @@ function readWith(
       ? {}
       : { curatedCollections: sortedById(curatedCollections) }),
   };
-  return { ...read, checked: { content, targets, config } };
+  return { ...read, checked: { content, config } };
 }
 
 /** The snapshot's records, each named by its kind and id in the errors. */

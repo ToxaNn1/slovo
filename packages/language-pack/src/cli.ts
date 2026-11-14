@@ -13,9 +13,9 @@
  * The pack goes to `editions/<edition-id>/dist/language-pack.db` unless
  * `--out` says otherwise. It downloads the Starter Media the app bundles
  * (ADR 0099) to `editions/<edition-id>/starter-media/`, which git ignores.
- * Prints the content report after every successful build. Exits non-zero, listing every error, when the content is invalid,
- * and listing every miss when the content falls short of the Edition's
- * content targets (`content/targets.json`); the pack is still written then.
+ * Prints the content report after every successful build. Exits non-zero,
+ * listing every error, when the content is invalid. Content targets block
+ * nothing: the admin shows their misses (ADR 0123).
  *
  * After editing the content files, `--record` appends the new ids to the id
  * registry (`content/ids.json`) and, when the content changed, raises the
@@ -132,7 +132,7 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  const { metadata, report, missedTargets, starterMedia } = result;
+  const { metadata, report, starterMedia } = result;
   const starterDir = join(editionDir, STARTER_MEDIA_DIR);
   await downloadStarterMedia(starterMedia, starterDir, async (url) => {
     const response = await fetch(url);
@@ -152,14 +152,7 @@ async function main(): Promise<number> {
   console.log(
     `Starter Media: ${String(starterMedia.files.length)} files in ${displayPath(starterDir)}`,
   );
-  console.log('');
-  if (missedTargets.length === 0) {
-    console.log('Content targets: none missed');
-    return 0;
-  }
-  console.error(`Content targets: ${String(missedTargets.length)} missed`);
-  for (const { target, message } of missedTargets) console.error(`  ${target}: ${message}`);
-  return 1;
+  return 0;
 }
 
 /** A path relative to the repo root when it lies inside the repo, absolute otherwise. */

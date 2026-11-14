@@ -17,7 +17,7 @@ FROM base AS install
 COPY . .
 RUN pnpm install --frozen-lockfile --prod \
       --filter @slovo/backend... --filter '!@slovo/config'
-RUN find editions -path '*/content/*' -type f ! -name targets.json -delete
+RUN find editions -path '*/content/*' -type f -delete
 
 # The generator's build: uv, the environment of requirements.lock and the
 # model files of the upstream v6.0.0 release, each checked by SHA256. Three

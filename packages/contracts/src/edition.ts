@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { ContentTargetsSchema } from './content-targets';
 import { MixKindSchema } from './entry';
 import { NotificationSoundFileSchema } from './notification-sound';
 import { OriginLanguageSchema } from './origin-language';
@@ -1031,6 +1032,8 @@ export const EditionConfigSchema = z
       .refine((badges) => hasNoRepeats(badges.map(({ id }) => id)), 'Expected each Badge id once'),
     /** The Mascot's line for each moment it shows in. */
     mascot: MascotLinesSchema,
+    /** The floors the Edition's content should reach; the admin shows a miss and nothing blocks on it (ADR 0123). */
+    contentTargets: ContentTargetsSchema.optional(),
   })
   .superRefine(
     (
