@@ -8498,8 +8498,7 @@
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     "rules": {
                       "type": "array",
@@ -10257,8 +10256,7 @@
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     "rules": {
                       "type": "array",
@@ -11947,8 +11945,7 @@
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     "rules": {
                       "type": "array",
