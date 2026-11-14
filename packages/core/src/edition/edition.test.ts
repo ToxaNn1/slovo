@@ -91,6 +91,7 @@ const validConfig = {
     noCounters: 'on',
     dailyGoal: 'on',
     enoughForToday: 'on',
+    goalReachedCard: 'on',
     widgetGoalRing: 'on',
     lockScreenWidget: 'on',
     questionnaire: 'on',

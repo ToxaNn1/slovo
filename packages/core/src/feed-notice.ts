@@ -36,9 +36,10 @@ export function withoutRetired<T extends string>(
 /**
  * The Feed Notices, in the order the Feed shows those of one day: the Weekly
  * Recap, the Community Word, the first-week card, Yesterday, a level
- * milestone, a later question, the offer to save progress, «Може, на
- * сьогодні досить?» after 50 Seen Entries, and the notification explainer
- * and its one re-ask (ADR 0054, 0060, 0066, 0067).
+ * milestone, a later question, the offer to save progress, «Ціль дня
+ * виконано!» once the Daily Goal is met, «Може, на сьогодні досить?» after
+ * 50 Seen Entries, and the notification explainer and its one re-ask (ADR
+ * 0054, 0060, 0066, 0067, 0128).
  */
 export const FEED_NOTICES = [
   'weeklyRecap',
@@ -48,6 +49,7 @@ export const FEED_NOTICES = [
   'levelMilestone',
   ...LATER_QUESTIONS,
   'saveProgress',
+  'goalReached',
   'enoughForToday',
   'notificationExplainer',
   'notificationReask',
