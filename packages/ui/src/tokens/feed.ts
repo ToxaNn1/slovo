@@ -1117,3 +1117,120 @@ export const correctionGridBox = {
   small: correctionGrid.small,
   name: 'gridTileName',
 } as const;
+
+/**
+ * The goal-reached card's entrance (board XFeed f4), each part's wait from the
+ * card's mount and its length in milliseconds and its curve. The card rises
+ * `rise` points with an `overshoot` past its place at `turn` of its motion as
+ * it is uncovered from its foot up, its cut edge from `edge` of its height,
+ * lower at its left than at its right, to `top`, past its top (`fgIn`); the band rises `rise` points into its place (`fgBand`); the title
+ * settles from `scale` times its size and a `turn` of degrees (`fgTitle`); each
+ * Word plate, one `stagger` after the one before, slides in from `behind` times
+ * its width to its left with a `turn` of degrees (`fgWord`); the Mascot rises
+ * `rise` points with a `turn` of degrees (`fgMascot`); the other parts rise in
+ * as a cascade (`slCasc`, `motion.cascade`) each after its `cascade` wait.
+ * The shards leave from `origin` (shares of the card), each one `stagger`
+ * after the one before, grow from `scale`, show in the first `peak` of their
+ * flight and fade by its end, flying to `x`, `y` points with a `turn` of
+ * degrees (`fgShard`); each is a triangle of `width` by `height` points,
+ * its corners `shape` as shares of its box. Under Reduce Motion nothing moves.
+ */
+const goalReachedEnter = {
+  card: {
+    delay: 0,
+    duration: 700,
+    easing: [0.2, 0.9, 0.25, 1],
+    rise: 40,
+    overshoot: 6,
+    turn: 0.6,
+    edge: { left: 1, right: 0.88 },
+    top: -0.1,
+  },
+  band: { delay: 250, duration: 800, easing: [0.2, 0.9, 0.25, 1], rise: 160 },
+  title: { delay: 400, duration: 600, easing: [0.3, 1.4, 0.5, 1], scale: 1.6, turn: -4 },
+  words: {
+    delay: 800,
+    stagger: 160,
+    duration: 500,
+    easing: [0.3, 1.5, 0.5, 1],
+    behind: 1.2,
+    turn: -14,
+  },
+  mascot: { delay: 1200, duration: 700, easing: [0.3, 1.5, 0.5, 1], rise: 60, turn: -10 },
+  cascade: { top: 300, message: 600, caption: 700, streak: 1350, button: 1500 },
+  shards: {
+    delay: 550,
+    stagger: 30,
+    duration: 900,
+    easing: [0.15, 0.8, 0.3, 1],
+    origin: { x: 0.5, y: 0.44 },
+    scale: 0.4,
+    peak: 0.2,
+    shape: [
+      [0, 0],
+      [1, 0.3],
+      [0.7, 1],
+    ],
+    flights: [
+      { width: 22, height: 12, x: -150, y: -120, turn: -180 },
+      { width: 14, height: 22, x: 140, y: -140, turn: 150 },
+      { width: 22, height: 12, x: 170, y: 30, turn: 360 },
+      { width: 14, height: 22, x: -170, y: 40, turn: -300 },
+      { width: 22, height: 12, x: -60, y: -190, turn: 60 },
+      { width: 14, height: 22, x: 90, y: -200, turn: -90 },
+    ],
+  },
+} as const;
+
+/**
+ * The goal-reached card, from the design: the width of the board's card,
+ * which the card lays its content out at and scales to its page, so its
+ * words break and its parts sit as the board draws them; its corner radius
+ * and padding; the darker band across its foot (its height,
+ * how far it reaches past the sides and below, its turn); the gaps between
+ * its parts; the plate's skew; each Word plate's turn, left step and cut, the
+ * Mascot's width, the flame's box, the button's height and radius, and the
+ * card's entrance.
+ */
+export const goalReachedCard = {
+  width: 382,
+  radius: 28,
+  padding: { top: 26, horizontal: 22, bottom: 22 },
+  band: { height: 300, outside: 40, below: 60, turn: '-9deg' },
+  titleGap: 22,
+  textGap: 14,
+  wordsGap: 22,
+  wordGap: 8,
+  buttonGap: 16,
+  plate: { padding: { vertical: 7, horizontal: 10 }, skew: '-10deg' },
+  word: {
+    padding: { vertical: 10, horizontal: 16 },
+    /** Each plate's turn, in degrees. */
+    turns: [-3, 2, -1.5],
+    steps: [0, 14, 4],
+    /**
+     * The plate's cut corners, its outline as shares of its width and height,
+     * clockwise from the top left. The cut also hides the design's shadow.
+     */
+    cut: [
+      [0, 0],
+      [1, 0.06],
+      [0.98, 1],
+      [0.02, 0.94],
+    ],
+  },
+  textWidth: 260,
+  mascot: 150,
+  flame: { width: 26, height: 32, gap: 8 },
+  streakGap: 6,
+  footGap: 12,
+  button: {
+    height: 60,
+    radius: 16,
+    shadow: 5,
+    shadowColor: 'rgba(20, 12, 10, 0.45)',
+    gap: 10,
+    arrow: { width: 14, height: 18 },
+  },
+  enter: goalReachedEnter,
+} as const;

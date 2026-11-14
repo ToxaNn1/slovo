@@ -82,7 +82,8 @@ const fakeNotices = (notices: readonly FeedNotice[]): FeedNotices => ({
 
 /**
  * What the Feed Notice shows; a first-week card, that of day 1; Yesterday,
- * the card of `w_00`; the Community Word, the card of `w_00` with 3 adds.
+ * the card of `w_00`; the Community Word, the card of `w_00` with 3 adds;
+ * «Ціль дня виконано!», a goal of 10 with `w_00`.
  */
 const contentOf = (notice: FeedNotice): FeedNoticeContent => {
   if (notice === 'firstWeek') return { notice, firstWeekDay: 1 };
@@ -90,6 +91,7 @@ const contentOf = (notice: FeedNotice): FeedNoticeContent => {
   if (notice === 'communityWord')
     return { notice, card: { kind: 'word', entryId: 'w_00', model: yesterdaysWord }, adds: 3 };
   if (notice === 'levelMilestone') return { notice, level: 5, name: 'Sprout' };
+  if (notice === 'goalReached') return { notice, goal: 10, words: ['00'] };
   return { notice };
 };
 

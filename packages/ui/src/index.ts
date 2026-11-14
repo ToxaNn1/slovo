@@ -16,6 +16,7 @@ export { FontSizeProvider } from './providers/FontSizeProvider';
 export { DecorProvider } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
 export { EndOfCycleCard } from './feed/EndOfCycleCard';
+export { GoalReachedCard } from './feed/GoalReachedCard';
 export {
   EnoughForTodayCard,
   NotificationAskCard,
