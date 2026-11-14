@@ -118,6 +118,7 @@ export {
 export { SplashOverlay } from './onboarding/SplashOverlay';
 export { SearchButton } from './search/SearchButton';
 export { RecentQueries } from './search/RecentQueries';
+export { SearchLabel } from './search/SearchLabel';
 export { StatsPill } from './progress/StatsPill';
 export { XpPill } from './progress/XpPill';
 export { FeedHeader } from './feed/FeedHeader';

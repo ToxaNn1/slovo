@@ -89,6 +89,16 @@ export const searchFieldDrawing = {
   clear: 28,
   clearRadius: 8,
   clearIcon: 10,
+  /** The ink border of the Search screen's field (board 09, screen 78); the link to Search has none. */
+  border: 2.5,
+  /** The Search screen field's magnifier (board 09, screen 78). */
+  fieldIcon: 16,
+} as const;
+
+/** A recent query's row of Search (board 09, screen 78): its clock and the space above and below it. */
+export const recentQueryDrawing = {
+  clock: 14,
+  paddingVertical: 6,
 } as const;
 
 /** The text field's drawing (design `XSettings`): its box, and the border a problem draws. */

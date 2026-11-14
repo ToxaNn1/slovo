@@ -11,7 +11,13 @@ function Search() {
       edition={{ locale: 'en' }}
       strings={testStrings({ search: { clear: 'Clear' } })}
     >
-      <SearchField testID="search" label="Search" value={query} onChangeText={setQuery} />
+      <SearchField
+        testID="search"
+        label="Search"
+        placeholder="Search a word"
+        value={query}
+        onChangeText={setQuery}
+      />
     </EditionProvider>
   );
 }
@@ -22,6 +28,12 @@ describe('SearchField', () => {
 
     expect(screen.getByLabelText('Search')).toHaveDisplayValue('');
     expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull();
+  });
+
+  it('shows its placeholder while empty, apart from the name VoiceOver reads', async () => {
+    await render(<Search />);
+
+    expect(screen.getByPlaceholderText('Search a word')).toHaveAccessibleName('Search');
   });
 
   it('clears the query with its clear button', async () => {

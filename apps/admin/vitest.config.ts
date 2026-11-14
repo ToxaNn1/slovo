@@ -15,6 +15,8 @@ export default defineConfig({
           environment: 'jsdom',
           environmentOptions: { jsdom: { url: 'http://localhost:5173/admin/' } },
           setupFiles: ['src/test-setup.ts'],
+          // Whole user flows in jsdom run 3–4× slower on CI runners than locally.
+          testTimeout: 15_000,
         },
       },
       // `pnpm dev:admin` as a process, with no MSW in the test itself.

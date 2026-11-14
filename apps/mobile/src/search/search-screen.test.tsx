@@ -22,9 +22,14 @@ let composition: Composition;
 /** The screens the screen pushed, in order. */
 const mockPushed: string[] = [];
 
+/** How many times the screen went back. */
+let mockBacks = 0;
+
 jest.mock('expo-router', () => ({
   useRouter: () => ({
-    back: () => undefined,
+    back: () => {
+      mockBacks += 1;
+    },
     push: (href: string) => {
       mockPushed.push(href);
     },
@@ -131,15 +136,44 @@ describe('the Search screen', () => {
     expect(screen.getByTestId('search-result-w_quiet')).toHaveAccessibleName('Слова: сумирний');
   });
 
-  it('says «Нічого не знайдено» when nothing matches, and nothing for one letter', async () => {
+  it('says «Нічого не знайдено» with its hint from 3 letters, and to keep typing below', async () => {
     await renderSearch();
 
     await type('жжж');
-    expect(screen.getByTestId('search-nothing-found')).toHaveTextContent(strings.nothingFound);
+    expect(screen.getByTestId('search-nothing-found')).toHaveTextContent(
+      `${strings.nothingFound}${strings.nothingFoundHint}`,
+    );
+    expect(screen.queryByTestId('search-label')).not.toBeOnTheScreen();
+
+    await type('жж');
+    expect(screen.queryByTestId('search-nothing-found')).not.toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: strings.keepTyping })).toBeOnTheScreen();
 
     await type('ж');
     expect(screen.queryByTestId('search-nothing-found')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('search-group-words')).not.toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: strings.keepTyping })).toBeOnTheScreen();
+  });
+
+  it('labels what the query finds «Знайдено»', async () => {
+    await renderSearch();
+
+    await type('сум');
+
+    expect(screen.getByRole('header', { name: strings.found })).toBeOnTheScreen();
+    expect(screen.queryByRole('header', { name: strings.keepTyping })).not.toBeOnTheScreen();
+  });
+
+  it('closes Search with «Скасувати», the field showing «Шукати слово» while empty', async () => {
+    mockBacks = 0;
+    await renderSearch();
+
+    expect(screen.getByPlaceholderText(strings.inputPlaceholder)).toHaveAccessibleName(
+      strings.title,
+    );
+    await fireEvent.press(screen.getByRole('button', { name: strings.cancel }));
+
+    expect(mockBacks).toBe(1);
   });
 
   it('announces «Нічого не знайдено» to VoiceOver, which stays in the field while typing', async () => {
@@ -189,7 +223,8 @@ describe('the Search screen', () => {
     await type('of');
 
     expect(screen.queryByTestId('search-group-byMeaning')).not.toBeOnTheScreen();
-    expect(screen.getByTestId('search-nothing-found')).toBeOnTheScreen();
+    expect(screen.queryByTestId('search-nothing-found')).not.toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: strings.keepTyping })).toBeOnTheScreen();
   });
 
   it('shows the recent queries, newest first, while the field is empty', async () => {
@@ -199,12 +234,12 @@ describe('the Search screen', () => {
 
     expect(screen.getByTestId('search-recent-0')).toHaveAccessibleName('гре');
     expect(screen.getByTestId('search-recent-1')).toHaveAccessibleName('сум');
-    expect(screen.getByTestId('search-recent-clear')).toHaveTextContent(strings.clear);
+    expect(screen.getByTestId('search-label-clear')).toHaveTextContent(strings.clear);
     expect(screen.getByRole('header', { name: strings.recent })).toBeOnTheScreen();
 
     await type('сум');
     expect(screen.queryByTestId('search-recent-0')).not.toBeOnTheScreen();
-    expect(screen.queryByTestId('search-recent-clear')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('search-label-clear')).not.toBeOnTheScreen();
   });
 
   it('runs a recent query on a tap', async () => {
@@ -222,11 +257,11 @@ describe('the Search screen', () => {
     await composition.recentQueries.resultOpened('сум');
     await renderSearch();
 
-    await fireEvent.press(screen.getByTestId('search-recent-clear'));
+    await fireEvent.press(screen.getByTestId('search-label-clear'));
     await settle();
 
     expect(screen.queryByTestId('search-recent-0')).not.toBeOnTheScreen();
-    expect(screen.queryByTestId('search-recent-clear')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('search-label-clear')).not.toBeOnTheScreen();
     expect(await composition.recentQueries.list()).toEqual([]);
   });
 
