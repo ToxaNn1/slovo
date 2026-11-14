@@ -129,22 +129,44 @@ beforeEach(async () => {
 });
 
 describe('Settings › «Пройти опитування ще раз»', () => {
-  it('retakes «Рівень», with no «Не знаю», the self-rating and the interests, each applied to the Mix', async () => {
+  it('is the board’s one screen: «Рівень» with no «Не знаю», «Навіщо», the self-rating and the interests', async () => {
     await render();
     screenSettled();
     await press(settings.rows.questionnaire);
 
+    expect(screen.getByText(settings.questionnaireRetake.title)).toBeTruthy();
     expect(screen.getByTestId('questionnaire-level-good')).toBeTruthy();
     expect(screen.queryByTestId('questionnaire-level-dont-know')).toBeNull();
     expect(screen.getByTestId('questionnaire-why-rare-words')).toBeTruthy();
+    expect(screen.getByTestId('questionnaire-selfRating-many')).toBeTruthy();
+    expect(screen.getByTestId('questionnaire-interest-food')).toBeTruthy();
+  });
+
+  it('writes the answers on «ГОТОВО» and nothing when left without it', async () => {
+    await render();
+    screenSettled();
+    const ceiling = composition.rarityCeiling.state;
+    const categoryIds = composition.mix.state.categoryIds;
+
+    await press(settings.rows.questionnaire);
+    await press('Знаю дуже багато');
+    await fireEvent.press(screen.getByTestId('questionnaire-interest-food'));
+    await settle();
+    await fireEvent.press(screen.getByTestId('questionnaire-back'));
+    await settle();
+    expect(composition.rarityCeiling.state).toBe(ceiling);
+    expect(composition.mix.state.categoryIds).toEqual(categoryIds);
+
+    screenSettled();
+    await press(settings.rows.questionnaire);
     // The self-rating only decides whether to offer the Rarity Test (ADR 0072).
     await press('Знаю дуже багато');
-    expect(composition.rarityCeiling.state).toBe(5);
-
     await fireEvent.press(screen.getByTestId('questionnaire-interest-food'));
-    await press(feedNotices.laterQuestions.done);
+    await press(settings.questionnaireRetake.done);
+    expect(composition.rarityCeiling.state).toBe(5);
     expect(composition.mix.state.categoryIds).toEqual(['nature']);
     expect(composition.mix.state.hiddenCategories.map(({ id }) => id)).toEqual(['food']);
+    expect(screen.queryByTestId('questionnaire')).toBeNull();
   });
 
   it('has no «Рівень» and «Навіщо» while the questionnaire is off, and the self-rating still', async () => {
