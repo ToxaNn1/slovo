@@ -409,7 +409,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   seenWordXp: FeatureSwitchStateSchema,
   /** The Feed Notice «Може, на сьогодні досить?» once a local day after 50 distinct Seen Entries (ADR 0066). */
   enoughForToday: FeatureSwitchStateSchema,
-  /** The Feed Notice «Ціль дня виконано!» once the reader meets the day's Daily Goal (ADR 0128). */
+  /** The Feed Notice «Ціль дня виконано!» once the reader meets the day's Daily Goal (ADR 0129). */
   goalReachedCard: FeatureSwitchStateSchema,
   /** The onboarding questions «Як добре ти знаєш мову?» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
   questionnaire: FeatureSwitchStateSchema,

@@ -259,7 +259,7 @@ export function openFeedNotices({
   };
 
   /**
-   * «Ціль дня виконано!» (ADR 0128): once today's Daily Goal is met, or is
+   * «Ціль дня виконано!» (ADR 0129): once today's Daily Goal is met, or is
    * met by the Word the card follows, which the reader leaves to reach it;
    * closed, it is gone for the day, and the goal is met once a day.
    */

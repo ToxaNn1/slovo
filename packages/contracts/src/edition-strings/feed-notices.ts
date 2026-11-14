@@ -47,7 +47,7 @@ export const FeedNoticesStringsSchema = z.strictObject({
     /** Hides the card until tomorrow. */
     keepGoing: TextSchema,
   }),
-  /** «Ціль дня виконано!», once the reader meets the day's Daily Goal (ADR 0128). */
+  /** «Ціль дня виконано!», once the reader meets the day's Daily Goal (ADR 0129). */
   goalReached: z.strictObject({
     /** Over the card, beside the plate. */
     label: TextSchema,

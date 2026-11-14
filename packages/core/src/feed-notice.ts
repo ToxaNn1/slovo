@@ -39,7 +39,7 @@ export function withoutRetired<T extends string>(
  * milestone, a later question, the offer to save progress, «Ціль дня
  * виконано!» once the Daily Goal is met, «Може, на сьогодні досить?» after
  * 50 Seen Entries, and the notification explainer and its one re-ask (ADR
- * 0054, 0060, 0066, 0067, 0128).
+ * 0054, 0060, 0066, 0067, 0129).
  */
 export const FEED_NOTICES = [
   'weeklyRecap',

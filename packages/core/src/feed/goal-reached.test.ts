@@ -57,7 +57,7 @@ const lemmasOf = (app: App, from: number, to: number) =>
     .slice(from, to)
     .flatMap((card) => (card.kind === 'word' ? [card.entryId.slice(2)] : []));
 
-// Owner 14.11, ADR 0128: «Ціль дня виконано!», a Feed Notice once the Daily Goal is met.
+// Owner 14.11, ADR 0129: «Ціль дня виконано!», a Feed Notice once the Daily Goal is met.
 describe('«Ціль дня виконано!»', () => {
   it('comes as the card after the Word that meets the Daily Goal, with the goal and the first Words Seen today', async () => {
     const app = await run({ at: dayOne });
