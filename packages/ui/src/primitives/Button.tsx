@@ -45,8 +45,8 @@ export function Button({
   testID,
 }: {
   variant?: ButtonVariant;
-  /** `small` is as tall as a tap area, for a button in a row or a pair. */
-  size?: 'large' | 'small';
+  /** `small` is as tall as a tap area, for a button in a row or a pair; `medium` a little taller, as on a card. */
+  size?: keyof typeof buttonHeight;
   label: string;
   /** What VoiceOver reads, where it differs from the label. */
   accessibilityLabel?: string;

@@ -1307,8 +1307,8 @@ export const disabledOpacity = 0.5;
 /** The opacity a pressed tile fades to where its face does not sink: under Reduce Motion, or with no edge. */
 export const pressedFade = 0.7;
 
-/** The heights of a button's face: the design's 58 pt main button, and a small one as tall as a tap area. */
-export const buttonHeight = { large: 58, small: 44 } as const;
+/** The heights of a button's face: the design's 58 pt main button, a 48 pt one on a card (the Due Quiz's «ПОЧАТИ»), and a small one as tall as a tap area. */
+export const buttonHeight = { large: 58, medium: 48, small: 44 } as const;
 
 /** The side of the design's square icon button, and of the icon inside it. */
 export const iconButton = { side: 44, icon: 20 } as const;
