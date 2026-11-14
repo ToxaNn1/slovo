@@ -8,20 +8,16 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-// A cloud session (Claude Code on the web) is an implementer with no coordinator to hand off to mid-step: it gets more room.
-const CLOUD = process.env.CLAUDE_CODE_REMOTE === 'true';
-const LIMITS = {
-  coordinator: { soft: 120_000, hard: 160_000 },
-  session: CLOUD ? { soft: 150_000, hard: 180_000 } : { soft: 120_000, hard: 160_000 },
-  subagent: { soft: 120_000, hard: 160_000 },
-};
+// One limit for every role, local and cloud (owner 14.11): hand off near the soft limit, between tasks.
+const LIMIT = { soft: 180_000, hard: 200_000 };
+const LIMITS = { coordinator: LIMIT, session: LIMIT, subagent: LIMIT };
 const FORK_MAX = 60_000;
 const BIG_FILE = 40_000;
 const NOTICE_STEP = 20_000;
 const COORDINATOR = /coordinator-prompt|coordinator chat|координатор/i;
 
 const RULES = `SLOVO token budget (enforced by .claude/hooks/token-budget.mjs, local and cloud):
-- Context limits: every session, the coordinator included, and every subagent 120k soft / 160k hard; a cloud session 150k soft / 180k hard. At the hard limit every tool except git and writing a handoff file is blocked: hand off, do not push on.
+- Context limits: every session, the coordinator included, and every subagent, local and cloud, 180k soft / 200k hard. Hand off near the soft limit, between tasks, never mid-task. At the hard limit every tool except git and writing a handoff file is blocked: hand off, do not push on.
 - Subagents: a fresh agent with a brief of at most 1.5 KB; never a fork once the context is over 60k. Long results go to a file; return 5-10 lines.
 - Models: code on Opus; Fable only for Core logic, sync, architecture, specs, the version review and proofreading; the coordinator and questions on Opus.
 - Output: read in parts; never print README.md, CONTEXT.md or any file over 40 KB whole; tests and CI logs through tail or grep; a text snapshot before a screenshot.
@@ -29,7 +25,7 @@ const RULES = `SLOVO token budget (enforced by .claude/hooks/token-budget.mjs, l
 
 const HANDOFF = `Do only this, then stop:
 1. Commit and push finished work on your branch if your permission allows it (git commands still run).
-2. Write a handoff of at most 2 KB (goal; what is done, with PR and issue links; what is open and its state; the next 1-3 steps; the owner's permissions verbatim) to a file whose path contains "handoff" (locally ~/.slovo-coord/handoff-<date>-<topic>.md, in the cloud /tmp/handoff.md), and print it as your final message.
+2. Write a handoff of at most 2 KB, rewritten whole (current state only, never appended history) (goal; what is done, with PR and issue links; what is open and its state; the next 1-3 steps; the owner's permissions verbatim) to a file whose path contains "handoff" (locally ~/.slovo-coord/handoff-<date>-<topic>.md, in the cloud /tmp/handoff.md), and print it as your final message.
 3. End the turn. A fresh session continues from the handoff. Never /compact.`;
 
 function readJson(text) {
