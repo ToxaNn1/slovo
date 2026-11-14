@@ -326,3 +326,74 @@ describe('«Твій тиждень» on the Feed', () => {
     expect(screen.getByText(words.folded)).toBeOnTheScreen();
   });
 });
+
+describe('«Пам’ятаєш учорашнє слово?» on the Feed (ADR 0130)', () => {
+  const yesterday = editionStrings.feedNotices.yesterday;
+  const { chosen, correct } = editionStrings.game.round;
+  const right = 'Значення слова лагідний.';
+  const wrong = 'Значення слова тихий.';
+  const verdict = () => screen.getByTestId('yesterday-verdict');
+  /** Whether yesterday's Word is being learned: marked «Не знаю», its Review started. */
+  const inReview = () =>
+    composition.knowledge.state.learning.some(({ entryId }) => entryId === 'w_lahidnyi');
+
+  it('asks about yesterday’s Word with three meanings, its own among them', async () => {
+    await onWeeklyRecap();
+
+    const card = within(screen.getByTestId('feed-notice-yesterday'));
+    expect(card.getByRole('header', { name: yesterday.title })).toBeOnTheScreen();
+    for (const meaning of [right, wrong, 'Значення слова сумирний.'])
+      expect(card.getByRole('button', { name: meaning })).toBeOnTheScreen();
+  });
+
+  it('marks the Word «Знаю» on the right meaning, with «Влучно!»', async () => {
+    await onWeeklyRecap();
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: right })));
+
+    expect(verdict()).toHaveTextContent(yesterday.right);
+    expect(screen.getByRole('button', { name: `${right}, ${correct}` })).toBeOnTheScreen();
+    expect(composition.knowledge.isKnown('w_lahidnyi')).toBe(true);
+    expect(inReview()).toBe(false);
+  });
+
+  it('starts the Word’s Review on a wrong meaning, and lights the right one', async () => {
+    await onWeeklyRecap();
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: wrong })));
+
+    expect(verdict()).toHaveTextContent(yesterday.wrong);
+    expect(screen.getByRole('button', { name: `${wrong}, ${chosen}` })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: `${right}, ${correct}` })).toBeOnTheScreen();
+    expect(inReview()).toBe(true);
+    expect(composition.knowledge.isKnown('w_lahidnyi')).toBe(false);
+  });
+
+  it('clears the pick on a second tap; another pick changes only the look', async () => {
+    await onWeeklyRecap();
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: wrong })));
+    await settle(() =>
+      fireEvent.press(screen.getByRole('button', { name: `${wrong}, ${chosen}` })),
+    );
+
+    expect(verdict()).toHaveTextContent('');
+    expect(screen.getByRole('button', { name: wrong })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: right })).toBeOnTheScreen();
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: right })));
+
+    expect(verdict()).toHaveTextContent(yesterday.right);
+    expect(inReview()).toBe(true);
+  });
+
+  it('takes the answer under Reduce Motion too', async () => {
+    await onWeeklyRecap(true);
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: wrong })));
+
+    expect(verdict()).toHaveTextContent(yesterday.wrong);
+    expect(screen.getByRole('button', { name: `${right}, ${correct}` })).toBeOnTheScreen();
+    expect(inReview()).toBe(true);
+  });
+});

@@ -26,7 +26,7 @@ export {
 } from './feed/FeedNoticeCard';
 export { UnderWeeklyRecap, WeeklyRecapCard } from './feed/WeeklyRecapCard';
 export { CommunityWordCard } from './feed/CommunityWordCard';
-export { YesterdayCard, type YesterdaySlots } from './feed/YesterdayCard';
+export { YesterdayCard } from './feed/YesterdayCard';
 export { EntryCard, type EntryCardSlots } from './entries/EntryCard';
 export { RevealPace } from './entries/reveal';
 export { EntryDetails } from './entries/EntryDetails';

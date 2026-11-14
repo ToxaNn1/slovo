@@ -31,6 +31,8 @@ export interface FeedState {
   readonly openCorrection: (position: number, correctionId: string) => void;
   /** Keeps the option the reader picked on the Quick Question at `position`. */
   readonly answerQuickQuestion: (position: number, option: number) => void;
+  /** Keeps the meaning the reader picked first on the Yesterday quiz at `position` (ADR 0130). */
+  readonly answerYesterday: (position: number, option: number) => void;
   /** «Готово»: folds the Weekly Recap at `position` away for its week. */
   readonly foldWeeklyRecap: (position: number) => void;
   /** «Повернути»: brings the Weekly Recap folded at `position` back. */
@@ -91,6 +93,13 @@ export function useFeed(
   const answerQuickQuestion = useCallback(
     (position: number, option: number) => {
       void keep('the answer to the Quick Question', feed.answerQuickQuestion(position, option));
+    },
+    [feed],
+  );
+
+  const answerYesterday = useCallback(
+    (position: number, option: number) => {
+      void keep('the answer to Yesterday', feed.answerYesterday(position, option));
     },
     [feed],
   );
@@ -177,6 +186,7 @@ export function useFeed(
     onCardChange,
     openCorrection,
     answerQuickQuestion,
+    answerYesterday,
     foldWeeklyRecap,
     restoreWeeklyRecap,
   };

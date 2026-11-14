@@ -3,7 +3,6 @@ import {
   entryCardTitle,
   type AnyEntryCard,
   type CounterLine,
-  type WordCardModel,
 } from '@slovo/core';
 import {
   ActionRow,
@@ -22,7 +21,6 @@ import {
   ShareSheet,
   type EntryCardSlots,
   type EntrySwipe,
-  type YesterdaySlots,
   useEdition,
   useUndoToast,
 } from '@slovo/ui';
@@ -156,27 +154,6 @@ export function useEntrySlots(
         swipe: entrySwipe(actions.marks),
       }
     : { slot: 'actions', actions: <EntryActions actions={actions} place={place} /> };
-}
-
-/**
- * The «Знаю» and «Не знаю» buttons of Yesterday's Word, or while marks are
- * swiped its corner: the «⋯» button alone, whose sheet has the mark items.
- */
-export function useYesterdaySlots(word: WordCardModel): YesterdaySlots | undefined {
-  const marks = useEntryMarks(word.wordId);
-  const { inFavorites } = useFavorite(word.wordId);
-  const line = useEntryCounterLine(word.wordId, marks, inFavorites);
-  if (marks.swiped)
-    return {
-      slot: 'corner',
-      corner: <MenuCorner title={word.lemma} entryKind="word" knowledge={marks.knowledge} />,
-    };
-  return marks.knowledge === undefined
-    ? undefined
-    : {
-        slot: 'marks',
-        marks: <MarkButtons entryKind="word" knowledge={marks.knowledge} line={line} />,
-      };
 }
 
 /**
