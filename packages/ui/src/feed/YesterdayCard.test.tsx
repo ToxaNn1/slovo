@@ -182,6 +182,29 @@ describe('the Yesterday card', () => {
     expect(onAnswer).toHaveBeenCalledTimes(1);
   });
 
+  it('lights the right one a moment after the wrong pick again, once the pick was cleared', async () => {
+    await renderFeed();
+    await fireEvent.press(option('A storm cloud.'));
+    await pass(400);
+    await fireEvent.press(option('A storm cloud., Your pick'));
+
+    await fireEvent.press(option('A storm cloud.'));
+
+    expect(screen.queryByTestId('yesterday-option-1-check')).toBeNull();
+    await pass(400);
+    expect(screen.getByTestId('yesterday-option-1-check')).toBeTruthy();
+  });
+
+  it('VoiceOver reads only the pick as selected, not the right one it lights', async () => {
+    await renderFeed();
+
+    await fireEvent.press(option('A storm cloud.'));
+    await pass(400);
+
+    expect(screen.getByRole('button', { name: 'A storm cloud., Your pick' })).toBeSelected();
+    expect(screen.getByRole('button', { name: 'Quiet and gentle., Right' })).not.toBeSelected();
+  });
+
   it('shows the pick an answered quiz keeps, and gives no answer again', async () => {
     const { onAnswer } = await renderFeed({ given: { ...quiz, answered: 2 } });
 

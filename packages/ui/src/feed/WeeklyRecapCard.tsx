@@ -221,6 +221,8 @@ function useFold(onDone: (() => void) | undefined) {
   const progress = useSharedValue(0);
   const height = useSharedValue(0);
   const [started, setStarted] = useState(false);
+  // Set at once on the first tap, so a double tap folds the card once.
+  const tapped = useRef(false);
   const done = useRef(onDone);
   useEffect(() => {
     done.current = onDone;
@@ -258,7 +260,8 @@ function useFold(onDone: (() => void) | undefined) {
       if (progress.value === 0) height.value = nativeEvent.layout.height;
     },
     start: () => {
-      if (started) return;
+      if (tapped.current) return;
+      tapped.current = true;
       if (reduceMotion) {
         onDone?.();
         return;

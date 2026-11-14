@@ -78,6 +78,8 @@ export function YesterdayCard({
   const choose = (place: number) => {
     const next = chosen === place ? undefined : place;
     setChosen(next);
+    // Each pick lights the right one afresh, a moment after it.
+    setLitFor(undefined);
     clearTimeout(timer.current);
     if (next === undefined) return;
     if (next === quiz.right) gameHaptics.rightAnswer();
@@ -128,6 +130,7 @@ export function YesterdayCard({
               meaning={meaning}
               place={place}
               look={lookOf(place)}
+              picked={place === chosen}
               onPress={() => {
                 choose(place);
               }}
@@ -159,11 +162,14 @@ function QuizOption({
   meaning,
   place,
   look,
+  picked,
   onPress,
 }: {
   meaning: string;
   place: number;
   look: OptionLook;
+  /** Whether the reader picked it: VoiceOver reads only the pick as selected. */
+  picked: boolean;
   onPress: () => void;
 }) {
   const tokens = useTokens();
@@ -216,7 +222,7 @@ function QuizOption({
           ]
             .filter(Boolean)
             .join(', ')}
-          accessibilityState={{ selected: look === 'wrong' || look === 'right' }}
+          accessibilityState={{ selected: picked }}
           onPress={onPress}
           faceStyle={[
             styles.option,

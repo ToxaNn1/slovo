@@ -160,6 +160,16 @@ describe('the Weekly Recap card', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
+  it('«Done» folds the card away once under Reduce Motion, also on a double tap', async () => {
+    const onDone = jest.fn();
+    await renderCard({ recap, onDone }, { reduceMotion: true });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
   it('has no «Done» without a way to fold it, or while its numbers are not read', async () => {
     await renderCard({ recap });
     expect(screen.queryByRole('button', { name: 'Done' })).toBeNull();
