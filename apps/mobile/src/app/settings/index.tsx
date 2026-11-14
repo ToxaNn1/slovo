@@ -1,13 +1,17 @@
 import { FontSizeSchema, RARITIES, fill, type Theme } from '@slovo/contracts';
 import {
   ChoiceRow,
+  ConfirmationDialog,
   FontSizePreview,
   BackHeader,
+  SettingsActionCard,
   SettingsGroup,
   SettingsRow,
   space,
+  UndoToastProvider,
   useTokens,
 } from '@slovo/ui';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -24,7 +28,7 @@ import { useShown } from '@/shown-in-effect';
 import { installedBuild } from '@/settings/installed-build';
 import { useSettings } from '@/settings/settings';
 import { useOpenScreen } from '@/use-open-screen';
-import { useXpLogState } from '@/progress/xp-log';
+import { useResetProgress, useXpLogState } from '@/progress/xp-log';
 
 const strings = editionStrings.settings;
 const subtitles = strings.rowSubtitles;
@@ -60,8 +64,19 @@ const rarityCeilingSegments = RARITIES.map((rarity) => ({
  * ще раз», «Перерва», the counters, «Самоперевірка» and «Конфіденційність»,
  * which holds the privacy switch and the Data export (ADR 0135; the privacy
  * policy link lives in «Про SLOVO»). Seasonal Decor has no row (ADR 0055).
+ * Under the groups, «Скинути прогрес» asks in its sheet and starts the
+ * progress over (ADR 0133).
  */
 export default function SettingsScreen() {
+  // The toast after the Progress reset shows on this screen.
+  return (
+    <UndoToastProvider>
+      <SettingsList />
+    </UndoToastProvider>
+  );
+}
+
+function SettingsList() {
   const { current, update } = useSettings();
   const { colors } = useTokens();
   const openScreen = useOpenScreen();
@@ -75,6 +90,8 @@ export default function SettingsScreen() {
   const shown = useShown();
   const router = useRouter();
   const build = installedBuild();
+  const resetProgress = useResetProgress();
+  const [askingReset, setAskingReset] = useState(false);
   return (
     <SafeAreaView
       testID="settings"
@@ -415,7 +432,33 @@ export default function SettingsScreen() {
             />
           </SettingsGroup>
         </View>
+        {edition.isFeatureEnabled('progressReset') && (
+          <View style={styles.section}>
+            <SettingsActionCard
+              testID="settings-reset"
+              label={strings.progressReset.button}
+              onPress={() => {
+                setAskingReset(true);
+              }}
+            />
+          </View>
+        )}
       </ScrollView>
+      <ConfirmationDialog
+        visible={askingReset}
+        testID="settings-reset-dialog"
+        title={strings.progressReset.title}
+        message={strings.progressReset.message}
+        destructiveLabel={strings.progressReset.confirm}
+        cancelLabel={strings.progressReset.cancel}
+        onDestructive={() => {
+          setAskingReset(false);
+          resetProgress();
+        }}
+        onCancel={() => {
+          setAskingReset(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
