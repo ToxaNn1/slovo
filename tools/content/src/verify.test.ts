@@ -116,7 +116,7 @@ function edition(): EditionFolder {
 }
 
 /** Runs `pnpm content verify` over the copy; nothing may reach the network. */
-function verify(args: string[], cwd = editionDir) {
+function verify(args: string[], cwd = editionDir, { snapshot = true } = {}) {
   const run = spawnSync(
     join(toolDir, 'node_modules/.bin/tsx'),
     [
@@ -126,8 +126,7 @@ function verify(args: string[], cwd = editionDir) {
       ...args,
       '--edition',
       'uk',
-      '--snapshot',
-      saveSnapshot(),
+      ...(snapshot ? ['--snapshot', saveSnapshot()] : []),
       '--cache',
       cacheDir,
     ],
@@ -246,7 +245,7 @@ describe('verify', () => {
     expect(verify(['w_vrf001']).lines).toEqual([`ok\tw_vrf001\t${file}`, '1 ok']);
   });
 
-  it('verifies the drafts of a folder outside the Edition, each as an Entry', async () => {
+  it('verifies the drafts of a folder, each as an Entry', async () => {
     const drafts = join(workDir, 'review', 'words', 'drafts');
     mkdirSync(drafts, { recursive: true });
     const draft = (entry: { id: string }) => {
@@ -270,7 +269,7 @@ describe('verify', () => {
     expect(run.status).toBe(1);
   });
 
-  it('verifies one draft file outside the Edition', async () => {
+  it('verifies one draft file', async () => {
     await seed({ [`${GOROH}перевірка008`]: { body: gorohPage([SUM, definition]) } });
     writeFileSync(
       join(workDir, 'w_vrf008.json'),
@@ -280,6 +279,19 @@ describe('verify', () => {
     const run = verify(['w_vrf008.json'], workDir);
 
     expect(run.lines).toEqual(['ok\tw_vrf008\tw_vrf008.json', '1 ok']);
+    expect(run.status).toBe(0);
+  });
+
+  it('verifies drafts alone from the Edition config, with no snapshot', async () => {
+    await seed({ [`${GOROH}перевірка009`]: { body: gorohPage([SUM, definition]) } });
+    writeFileSync(
+      join(workDir, 'w_vrf009.json'),
+      JSON.stringify(word('w_vrf009', definition, `${GOROH}перевірка009`)),
+    );
+
+    const run = verify(['w_vrf009.json'], workDir, { snapshot: false });
+
+    expect(run.lines).toEqual(['ok\tw_vrf009\tw_vrf009.json', '1 ok']);
     expect(run.status).toBe(0);
   });
 

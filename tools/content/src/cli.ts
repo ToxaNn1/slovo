@@ -18,11 +18,12 @@
  * shared content rules on the input locally and sends nothing. `verify`
  * checks quotes against their source pages (./verify.ts): the records of the
  * content snapshot (`--snapshot <file>`, else the backend's), or drafts, so a
- * wave verifies them before `add`. The CLI never writes to the Edition folder
+ * wave verifies them before `add`; drafts alone need no snapshot. The CLI never writes to the Edition folder
  * and reads only its config. `$SLOVO_EDITIONS_DIR` points the tool at another
  * editions folder, as the tests do.
  */
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -31,6 +32,7 @@ import {
   EditionFolderError,
   openEdition,
   openEditionWithSnapshot,
+  openEditionWithoutRecords,
   type EditionFolder,
 } from '@slovo/language-pack/edition';
 import type { ContentSnapshot } from '@slovo/contracts/api';
@@ -46,7 +48,7 @@ import {
 
 import { apiFromEnv, RECORD_KINDS, recordKind } from './api';
 import { counts, have } from './have';
-import { verifyEntries } from './verify';
+import { verifyEntries, type VerifyTargets } from './verify';
 import { add, check, edit, flag, retire, type Io } from './writes';
 
 const KINDS = RECORD_KINDS.join('|');
@@ -118,16 +120,20 @@ async function main(): Promise<number> {
   }
   if (command === 'verify' && rest.length > 0 !== (values.changed !== undefined)) {
     const cwd = process.env['INIT_CWD'] ?? process.cwd();
-    const edition = await editionWithSnapshot(editionId, values.snapshot, cwd);
+    // Drafts alone need no records: the Edition opens from its config, with no snapshot.
+    const draftsOnly =
+      values.changed === undefined && rest.every((name) => existsSync(resolve(cwd, name)));
+    const edition = draftsOnly
+      ? opened(() =>
+          openEditionWithoutRecords(process.env['SLOVO_EDITIONS_DIR'] ?? EDITIONS_DIR, editionId),
+        )
+      : await editionWithSnapshot(editionId, values.snapshot, cwd);
     if (typeof edition === 'number') return edition;
-    const since = values.changed === undefined ? undefined : earlierSnapshot(values.changed, cwd);
-    if (since === null) return 2;
+    const targets = verifyTargets(values.changed, rest, cwd);
+    if (targets === null) return 2;
     return verifyEntries({
       edition,
-      targets:
-        since === undefined || values.changed === undefined
-          ? { kind: 'named', names: rest }
-          : { kind: 'changed', since, name: values.changed },
+      targets,
       bookFile: values.book === undefined ? undefined : resolve(cwd, values.book),
       client: new PoliteClient(
         fetchPage,
@@ -248,6 +254,17 @@ function opened(open: () => EditionFolder): EditionFolder | number {
     console.error(error.message);
     return error.reason === 'unknown' ? 2 : 1;
   }
+}
+
+/** The Entries `verify` checks: those named, or those changed since an earlier snapshot. */
+function verifyTargets(
+  changed: string | undefined,
+  names: readonly string[],
+  cwd: string,
+): VerifyTargets | null {
+  if (changed === undefined) return { kind: 'named', names };
+  const since = earlierSnapshot(changed, cwd);
+  return since === null ? null : { kind: 'changed', since, name: changed };
 }
 
 /** The earlier snapshot `--changed` names; null, said why, when it is none. */

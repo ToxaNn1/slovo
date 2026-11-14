@@ -316,6 +316,25 @@ export function openEditionWithSnapshot(
   return open(editionsDir, editionId, () => snapshotEntries(snapshot));
 }
 
+/**
+ * Opens the Edition with the given id for its config and files alone, with no
+ * records, for a caller that reads none, such as a check of drafts. Throws as
+ * `openEdition` does.
+ */
+export function openEditionWithoutRecords(editionsDir: string, editionId: string): EditionFolder {
+  return open(editionsDir, editionId, () => NO_RECORDS);
+}
+
+const NO_RECORDS: AuthoredContent = {
+  words: [],
+  corrections: [],
+  idioms: [],
+  synonymRows: [],
+  tips: [],
+  curatedCollections: [],
+  errors: [],
+};
+
 function open(
   editionsDir: string,
   editionId: string,
