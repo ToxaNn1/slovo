@@ -105,31 +105,16 @@ export const weeklyRecapPage = {
 
 /**
  * Yesterday's quiz «Пам’ятаєш учорашнє слово?» (board f5): the gap between
- * its options, each at least `option.height` tall with `option.radius`
- * corners, an `option.border` hairline and `option.padding` at its sides, its
- * check and cross at their sizes; the room the verdict under them
- * keeps. A right pick pops (`slPop`: from `pop.from` of its size to
- * `pop.peak` at `pop.peakAt` of `pop.duration`). A wrong pick sits
- * `wrong.sink` lower and shakes (`slShake`: to each of `wrong.shake` in turn
- * over `wrong.duration`); the right one lights `wrong.lightDelay` later; the
- * rest fade to `dimmedOpacity`. It enters as the board's `slCasc`, `enter`.
+ * its parts and between its options (each a `quizOption`), the room the
+ * verdict under them keeps, how long after a wrong pick the right one
+ * lights, and its entrance as the board's `slCasc`, `enter`.
  */
 export const yesterdayCard = {
   gap: 14,
   optionGap: 8,
-  option: {
-    height: 50,
-    radius: 14,
-    padding: 16,
-    gap: 10,
-    border: 1,
-    check: { width: 16, height: 14 },
-    cross: 13,
-  },
   verdictHeight: 15,
-  dimmedOpacity: 0.5,
-  pop: { duration: 350, from: 0.6, peak: 1.12, peakAt: 0.6 },
-  wrong: { sink: 3, shake: [-8, 7, -4, 3, 0], duration: 400, lightDelay: 400 },
+  /** The right meaning lights this long after a wrong pick. */
+  lightDelay: 400,
   enter: { delay: 250, duration: 400 },
 } as const;
 
