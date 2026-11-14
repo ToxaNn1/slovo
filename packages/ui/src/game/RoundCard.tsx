@@ -8,6 +8,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { WholeWordsText } from '../primitives/WholeWordsText';
+import { useRoundLook } from './round-look';
 import {
   roleSize,
   roundLayout,
@@ -16,7 +17,11 @@ import {
   sizeForLength,
   space,
   typeStyle,
+  type TypeRole,
 } from '../tokens';
+
+/** The longest question the board sets in the large display face on the ground; a longer one takes the text face. */
+const DISPLAY_MOST = 40;
 
 /**
  * Whether a part ends in a stop of its own, such as «?», maybe inside a closing quote or bracket,
@@ -54,6 +59,10 @@ export type RoundFace =
  * and VoiceOver reads it after the prompt.
  * An answer drawn in the prompt's place, such as the vowel buttons, stands in
  * for the prompt, and VoiceOver reads the label, then each of its buttons.
+ * In a Round on the ground (ADR 0139) the prompt stands on the background
+ * with no card, in the large display face up to 40 characters and the text
+ * face past that or where the Round asks for it; the Mascot, if any, stands
+ * beside it.
  */
 export function RoundCard({
   label,
@@ -87,6 +96,8 @@ export function RoundCard({
   const tokens = useTokens();
   const { colors, radii } = tokens;
   const { strings, voice } = useEdition();
+  const look = useRoundLook();
+  const onGround = quickQuestion === undefined && look.onGround;
   const read =
     gap === undefined
       ? prompt
@@ -104,8 +115,15 @@ export function RoundCard({
     quickQuestion?.instead,
     definition,
   ]);
-  const promptRole = quickQuestion === undefined ? 'roundPrompt' : 'quickQuestionPrompt';
-  return (
+  const promptRole: TypeRole =
+    quickQuestion !== undefined
+      ? 'quickQuestionPrompt'
+      : !onGround
+        ? 'roundPrompt'
+        : look.textFace || Array.from(prompt).length > DISPLAY_MOST
+          ? 'roundExplanation'
+          : 'roundAsk';
+  const card = (
     <View
       testID="game-prompt"
       accessible={children === undefined}
@@ -114,16 +132,18 @@ export function RoundCard({
       }
       {...voice}
       style={
-        quickQuestion === undefined
-          ? [
-              styles.card,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.line,
-                borderRadius: radii.card,
-              },
-            ]
-          : styles.inCard
+        onGround
+          ? styles.onGround
+          : quickQuestion === undefined
+            ? [
+                styles.card,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.line,
+                  borderRadius: radii.card,
+                },
+              ]
+            : styles.inCard
       }
     >
       {face?.look === 'instead' && (
@@ -153,8 +173,13 @@ export function RoundCard({
           <WholeWordsText
             text={prompt}
             typeRole={promptRole}
-            // A long prompt takes a smaller size, the cards' one text scale (owner 08.11).
-            size={sizeForLength(roleSize(promptRole), prompt, roundPromptLength)}
+            // A long prompt takes a smaller size, the cards' one text scale (owner 08.11);
+            // on the ground the text face already sets a long one.
+            size={
+              promptRole === 'roundExplanation'
+                ? undefined
+                : sizeForLength(roleSize(promptRole), prompt, roundPromptLength)
+            }
             style={[typeStyle(promptRole, tokens), { color: colors.ink }]}
             highlight={
               highlight === undefined
@@ -190,6 +215,13 @@ export function RoundCard({
           {definition}
         </Text>
       )}
+    </View>
+  );
+  if (quickQuestion !== undefined || look.mascot === undefined) return card;
+  return (
+    <View style={styles.besideMascot}>
+      <View style={styles.question}>{card}</View>
+      {look.mascot}
     </View>
   );
 }
@@ -235,4 +267,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   inCard: { gap: quickQuestionCard.gap },
+  onGround: { gap: space[4] },
+  besideMascot: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+  question: { flex: 1 },
 });

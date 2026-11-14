@@ -6,6 +6,7 @@ import {
   open,
   renderScreen,
   answerSurvivalRound,
+  pickTheWordOfThePrompt,
   theNumberOfThePrompt,
   theOption,
   resetGameScreen,
@@ -180,6 +181,128 @@ describe('the Game screen', () => {
 
       await answerSurvivalRound(true);
       expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      expect(screen.queryByTestId(/^mascot-/)).toBeNull();
+    });
+  });
+
+  describe('the Round on the ground (gameQuestionOnGround, gameRoundMascot)', () => {
+    const BOARD = ['gameQuestionOnGround', 'gameRoundMascot'];
+    const HIDDEN = { includeHiddenElements: true };
+    const livesLine = () => String(screen.getByTestId('game-lives-line').props['children']);
+
+    /** Picks a wrong option in a Round of «Вгадай слово». */
+    async function pickAWrongWord() {
+      const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
+      const n = /\d+/.exec(prompt)?.[0] ?? '';
+      const wrong = screen
+        .getAllByRole('button', { name: /^слово\d+,/ })
+        .find((one) => !String(one.props['accessibilityLabel']).startsWith(`слово${n},`));
+      if (wrong === undefined) throw new Error(`No wrong option for «${prompt}»`);
+      await fireEvent.press(wrong);
+    }
+
+    it('heads a Round with the mode’s name alone and shows «Життів: n з N» under the bar, one less after a wrong answer', async () => {
+      await open({ switchedOn: BOARD });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
+      await waitFor(() => {
+        expect(screen.getByRole('header', { name: 'Вгадай слово' })).toBeOnTheScreen();
+      });
+      expect(screen.queryByText(/Вгадай слово · /)).toBeNull();
+      const [, before = '', total = ''] = /^Життів: (\d+) з (\d+)$/.exec(livesLine()) ?? [];
+      expect(before).toBe(total);
+      expect(screen.getByText(`Життів: ${total} з ${total}`)).toBeOnTheScreen();
+
+      await pickAWrongWord();
+
+      expect(livesLine()).toBe(`Життів: ${String(Number(total) - 1)} з ${total}`);
+    });
+
+    it('shows no Lives line in «На час», which has no Lives', async () => {
+      await open({ switchedOn: BOARD });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-timed'));
+      await waitFor(() => {
+        expect(screen.getByRole('header', { name: 'На час' })).toBeOnTheScreen();
+      });
+      expect(screen.queryByTestId('game-lives-line')).toBeNull();
+      expect(screen.queryByText(/Життів/)).toBeNull();
+    });
+
+    it('labels the question without the Round’s number', async () => {
+      await open({ switchedOn: BOARD });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
+      await waitFor(() => {
+        expect(screen.getByText('Визначення', HIDDEN)).toBeOnTheScreen();
+      });
+      expect(screen.queryByText(/ · \d+ \/ \d+$/, HIDDEN)).toBeNull();
+    });
+
+    it('draws no red label over the question of «Звідки слово», which the board heads in ink', async () => {
+      await open({ origins: 15, switchedOn: BOARD });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-origin'));
+      await waitFor(() => {
+        expect(screen.getByTestId('game-prompt')).toBeOnTheScreen();
+      });
+      expect(screen.queryByText(/Звідки це слово\?/, HIDDEN)).toBeNull();
+    });
+
+    it('keeps the #1674 Round with its switch off: the number in the header and the label, no Lives line', async () => {
+      await open({ origins: 15, switchedOn: ['gameRoundMascot'] });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-origin'));
+      await waitFor(() => {
+        expect(screen.getByRole('header', { name: /^Звідки слово · 1\/\d+$/ })).toBeOnTheScreen();
+      });
+      expect(screen.getByText(/^Звідки це слово\? · 1 \/ \d+$/, HIDDEN)).toBeOnTheScreen();
+      expect(screen.queryByTestId('game-lives-line')).toBeNull();
+    });
+
+    it('sets the Mascot beside the question: waiting, glad at a right answer, wincing at a wrong one', async () => {
+      await open({ switchedOn: BOARD });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
+      await waitFor(() => {
+        expect(screen.getByTestId('mascot-waits')).toBeOnTheScreen();
+      });
+
+      await pickTheWordOfThePrompt();
+      expect(screen.getByTestId('mascot-happy')).toBeOnTheScreen();
+      expect(screen.queryByTestId('mascot-waits')).toBeNull();
+      await fireEvent.press(screen.getByTestId('game-next'));
+      await waitFor(() => {
+        expect(screen.getByTestId('mascot-waits')).toBeOnTheScreen();
+      });
+
+      await pickAWrongWord();
+      expect(screen.getByTestId('mascot-cringes')).toBeOnTheScreen();
+    });
+
+    it('makes the Mascot sad when the last Life is lost', async () => {
+      await open({ corrections: 15, switchedOn: BOARD });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-survival'));
+      for (;;) {
+        await waitFor(() => {
+          expect(screen.getByTestId('game-prompt')).toBeTruthy();
+        });
+        await answerSurvivalRound(false);
+        if (livesLine().startsWith('Життів: 0 ')) break;
+        expect(screen.getByTestId('mascot-cringes')).toBeOnTheScreen();
+        await fireEvent.press(screen.getByTestId('game-next'));
+      }
+      expect(screen.getByTestId('mascot-sad')).toBeOnTheScreen();
+    });
+
+    it('keeps the Mascot out of the Round with its switch off', async () => {
+      await open({ switchedOn: ['gameQuestionOnGround'] });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
+      await waitFor(() => {
+        expect(screen.getByTestId('game-prompt')).toBeOnTheScreen();
+      });
       expect(screen.queryByTestId(/^mascot-/)).toBeNull();
     });
   });

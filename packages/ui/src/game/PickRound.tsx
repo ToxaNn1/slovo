@@ -13,6 +13,7 @@ import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import Animated, {
+  FadeInUp,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
@@ -26,6 +27,7 @@ import { PressedTile } from '../primitives/PressedTile';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import {
   answerOption,
+  motion,
   quickQuestionCard,
   roundLayout,
   space,
@@ -33,10 +35,14 @@ import {
   type TypeRole,
 } from '../tokens';
 import { RoundCard, type RoundFace } from './RoundCard';
+import { useRoundLook } from './round-look';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** The answer to a Round of the pick form. */
 type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
+
+/** How far apart the options of a Round on the ground cascade in, in milliseconds. */
+const OPTION_STAGGER = 50;
 
 /** The ✕ on a wrong pick's key in place of its letter, drawn on a 14-unit square as the Round's exit glyph, so it sits in the key's centre whatever the font. */
 const WRONG_MARK = 'M0 2L2 0L7 5L12 0L14 2L9 7L14 12L12 14L7 9L2 14L0 12L5 7Z';
@@ -101,6 +107,8 @@ export function PickRound({
  * The options of a pick Round, one under another, as a Game's Round and a
  * Quick Question show them; a new set of options takes a new `key`. In a
  * Quick Question's card (board f3) a tile is lower and a Word on it smaller.
+ * In a Round on the ground (ADR 0139) they sit at the bottom of the screen
+ * and rise in one after another, at once with Reduce Motion.
  */
 export function AnswerOptions({
   options,
@@ -116,20 +124,29 @@ export function AnswerOptions({
   onPick: (option: number) => void;
 }) {
   const keys = Array.from(useEdition().strings.game.round.optionKeys);
+  const { onGround } = useRoundLook();
+  const reduceMotion = useReduceMotion();
+  const cascade = onGround && !reduceMotion;
   return (
-    <View style={styles.options}>
+    <View style={[styles.options, onGround && styles.optionsAtBottom]}>
       {options.map((option, place) => (
-        <AnswerOption
+        <Animated.View
           key={String(place)}
-          option={option}
-          place={place}
-          optionKey={keys[place]}
-          answer={answer}
-          inQuickQuestion={inQuickQuestion}
-          onPress={() => {
-            onPick(place);
-          }}
-        />
+          {...(cascade && {
+            entering: FadeInUp.duration(motion.cascade.duration).delay(place * OPTION_STAGGER),
+          })}
+        >
+          <AnswerOption
+            option={option}
+            place={place}
+            optionKey={keys[place]}
+            answer={answer}
+            inQuickQuestion={inQuickQuestion}
+            onPress={() => {
+              onPick(place);
+            }}
+          />
+        </Animated.View>
       ))}
     </View>
   );
@@ -278,6 +295,7 @@ function AnswerOption({
 
 const styles = StyleSheet.create({
   options: { gap: roundLayout.gap },
+  optionsAtBottom: { marginTop: 'auto' },
   option: {
     minHeight: answerOption.minHeight,
     flexDirection: 'row',
