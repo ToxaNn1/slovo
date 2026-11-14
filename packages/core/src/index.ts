@@ -152,6 +152,11 @@ export { type TracedCrossword } from './game/traced-crossword';
 export { type DailyCrosswordOpening } from './game/daily-crossword';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
 export { loadEdition, type Edition } from './edition/edition';
+export {
+  DATA_EXPORT_VERSION,
+  type DataExport,
+  type ExportedEntry,
+} from './data-export/data-export';
 export { openRemoteSwitches, type ReaderFacts } from './edition/remote-switches';
 export { evaluateSwitches } from './edition/switch-evaluator';
 export { forceUpdateOf, type ForceUpdate, type ForceUpdateFacts } from './edition/force-update';
