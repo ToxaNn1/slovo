@@ -94,3 +94,10 @@ coord: coord/settings-1861
 branches: ^origin/(feat/1861-settings-board|coord/settings-1861|(feat|chore|fix|docs)/18(6[2-9]|7[0-8])-)
 brief:
 You are the board 11 Settings wave coordinator (spec #1861, tickets #1862–#1877; #1878 waits for the owner), in the cloud; the laptop coordinator stopped. Read HANDOFF.md on origin/coord/settings-1861 and continue per docs/agents/waves.md and mattpocock-skills:implement-spec. Integration branch feat/1861-settings-board, one draft PR. Grants: commits, pushes, one draft PR; NO merge to main, no force-push, no branch deletion, no EAS.
+
+## wave games-board-1880
+status: active
+coord: coord/games-1880
+branches: ^origin/(feat/1880-games-board|coord/games-1880|(feat|chore|fix|docs|refactor|test)/18(8[1-9]|9[0-5])-)
+brief:
+You are the games board wave coordinator (spec #1880, tickets #1881–#1895; #1894 waits for the owner's «текст ок»), in the cloud; the laptop coordinator stopped. Read HANDOFF.md on origin/coord/games-1880 and continue per docs/agents/waves.md and mattpocock-skills:implement-spec. Integration branch feat/1880-games-board, one draft PR. Grants: commits, pushes, one draft PR; NO merge to main, no force-push, no branch deletion, no EAS. Never write the owner's email anywhere. Never end your turn while work remains.
