@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import type { ContentSnapshot } from '@slovo/contracts/api';
 import { loadEdition } from '@slovo/core';
 
 import { buildFromSnapshot, type BuildResult } from './build';
 import { EDITIONS_DIR, openEdition } from './edition-folder';
-import { readEdition } from './read-edition';
+import { readSnapshotFile } from './snapshot-source';
 
 // Helpers the Language Pack tests share. No module of the package imports them.
 
@@ -18,33 +19,14 @@ export const ukrainian = loadEdition(
 );
 
 /**
- * The UA Edition's content as the backend's snapshot answers it after the
- * one-time import of its folder: every record, at the manifest's content
- * version, none needing a new Recording. The backend's own tests hold its
- * snapshot to this one.
+ * The UA Edition's seed snapshot: the committed slice of the backend's
+ * snapshot an empty database is seeded from, read as the import reads it.
  */
 export function ukrainianSnapshot(): ContentSnapshot {
-  const { valid } = readEdition(ukrainianFolder.dir, { registryRequired: true, today: new Date() });
-  if (valid === undefined) throw new Error('The Ukrainian Edition does not read');
-  const { content } = valid;
-  return {
-    editionId: content.editionId,
-    contentVersion: content.contentVersion,
-    words: [...content.words],
-    idioms: [...content.idioms],
-    corrections: [...content.corrections],
-    tips: [...content.tips],
-    synonymRows: [...content.synonymRows],
-    curatedCollections: [...(content.curatedCollections ?? [])],
-    crosswordDays: [...(content.crosswordDays ?? [])],
-    mediaBase: 'https://media.slovo.test',
-    recordings: [],
-    illustrations: [],
-    needsNewRecording: [],
-  };
+  return readSnapshotFile(join(ukrainianFolder.dir, 'seed-snapshot.json'));
 }
 
-/** Builds the UA Language Pack as the app build does: the folder's config and assets, the snapshot's records. */
+/** Builds the UA Language Pack as the app build does: the folder's config and assets, the seed snapshot's records. */
 export function buildUkrainianPack(outFile: string): BuildResult {
   return buildFromSnapshot({
     editionDir: ukrainianFolder.dir,
