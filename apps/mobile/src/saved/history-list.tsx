@@ -1,58 +1,40 @@
-import { MascotIn } from '@/mascot/mascot';
-import {
-  ClearHistoryButton,
-  EmptyState,
-  EntryRow,
-  SectionLabel,
-  space,
-  useListScroll,
-  useTokens,
-} from '@slovo/ui';
-import { SectionList, StyleSheet } from 'react-native';
+import { MascotAs } from '@/mascot/mascot';
+import { ClearHistoryButton, EmptyState, EntryRow, space, useListScroll } from '@slovo/ui';
+import { FlatList, StyleSheet } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
-import { useClearHistory, useHistorySections } from '@/saved/history';
-import type { HistoryEntryModel, HistorySection } from '@/saved/history-screen';
+import { useClearHistory, useHistoryRows, type HistoryRow } from '@/saved/history';
 import type { ListHeader } from '@/saved/list-header';
 import { ListTopButton } from '@/shell/list-top';
 
 const { history: strings } = editionStrings;
 
 /**
- * History: the Entries the reader has Seen, newest first, grouped under the
- * day they were Seen («СЬОГОДНІ», «УЧОРА», then dates), each row saying
- * whether it was a Word, a Correction or the Word of the Day. A tap opens the
- * Entry screen without making it Seen again. Its tool, «Очистити», asks
- * first, with the SLOVO confirmation dialog, and clears History only.
+ * History (board 09): the Entries the reader has Seen in one list, newest
+ * first, each row with its meaning and the day it was Seen on a chip. A tap
+ * opens the Entry screen without making it Seen again. Its tool, «Очистити»,
+ * asks first, with the SLOVO confirmation dialog, and clears History only.
  */
 export function HistoryList({ header }: { header: ListHeader }) {
-  const sections = useHistorySections();
+  const rows = useHistoryRows();
   const clear = useClearHistory();
-  const { colors } = useTokens();
   const openScreen = useOpenScreen();
-  const scroll = useListScroll<SectionList<HistoryEntryModel, HistorySection>>();
+  const scroll = useListScroll<FlatList<HistoryRow>>();
   const { list: listRef, onScroll: onListScroll } = scroll;
 
   return (
     <>
-      <SectionList<HistoryEntryModel, HistorySection>
+      <FlatList<HistoryRow>
         ref={listRef}
         onScroll={onListScroll}
         testID="history"
-        sections={sections}
+        data={rows}
         keyExtractor={(entry) => entry.entryId}
-        stickySectionHeadersEnabled={false}
-        renderSectionHeader={({ section }) => (
-          <SectionLabel style={[styles.day, { color: colors.accentText }]}>
-            {section.title}
-          </SectionLabel>
-        )}
         renderItem={({ item }) => (
           <EntryRow
-            compact
             row={item.row}
-            trailing={item.label}
+            day={item.day}
             onPress={() => {
               openScreen(`/saved/history/${item.entryId}`);
             }}
@@ -60,13 +42,13 @@ export function HistoryList({ header }: { header: ListHeader }) {
           />
         )}
         ListHeaderComponent={header(
-          sections.length > 0 ? (
+          rows.length > 0 ? (
             <ClearHistoryButton testID="history-clear" copy={strings.clear} onClear={clear} />
           ) : null,
         )}
         ListEmptyComponent={
           <EmptyState
-            mascot={<MascotIn state="empty" />}
+            mascot={(width) => <MascotAs state="sleeps" width={width} />}
             testID="history-empty"
             title={strings.empty.title}
             message={strings.empty.message}
@@ -80,7 +62,6 @@ export function HistoryList({ header }: { header: ListHeader }) {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: space[8] },
-  // The day's own top padding holds the capitals' marks, so it takes none of the label's room.
-  day: { paddingHorizontal: space[6], paddingTop: space[5], paddingBottom: space[1], marginTop: 0 },
+  // The list grows to the screen, so an empty state sits in the middle of it.
+  content: { flexGrow: 1, paddingBottom: space[8] },
 });

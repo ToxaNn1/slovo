@@ -1,14 +1,10 @@
-import { dateKeyOf, todayDate, type HistoryEntry } from '@slovo/core';
+import type { EntryRowModel, HistoryEntry } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
-import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
-import { deviceClock } from '../device/device-clock';
-import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
-import { historySections, type HistorySection } from './history-screen';
-import { historyText } from './history-text';
+import { dayChip } from './added-on';
 
 /** The Entries in History, newest first, kept up to date. */
 function useHistoryList(): readonly HistoryEntry[] {
@@ -26,41 +22,24 @@ export function useClearHistory(): () => void {
   };
 }
 
-/**
- * The words of History on the device's clock. A day heading reads the clock
- * as it renders, so a screen that comes back into focus renders again and its
- * «Сьогодні» is no older than that.
- */
-function useHistoryText() {
-  // Re-renders the screen when it gains or loses focus, so «Сьогодні» does not go stale.
-  useIsFocused();
-  return useMemo(
-    () =>
-      historyText({
-        strings: editionStrings.history,
-        dates: editionStrings.dates,
-        clock: deviceClock,
-      }),
-    [],
-  );
+/** An Entry's row on the History screen: the Entry and the day it was Seen, on its chip. */
+export interface HistoryRow {
+  readonly entryId: string;
+  readonly row: EntryRowModel;
+  readonly day: ReturnType<typeof dayChip>;
 }
 
 /**
- * The sections of the History screen: the Entries in History under the day
- * they were Seen on the device's clock, kept up to date. Today's local day is
+ * The rows of the History screen (board 09): one list, newest first, each
+ * with the day it was Seen on the device's clock, kept up to date. The day is
  * read on each render, focus included, so a screen that comes back on a new
- * day heads yesterday's Entries «Учора».
+ * day says «вчора» for yesterday's Entries.
  */
-export function useHistorySections(): readonly HistorySection[] {
+export function useHistoryRows(): readonly HistoryRow[] {
   const list = useHistoryList();
-  const text = useHistoryText();
-  const today = dateKeyOf(todayDate(deviceClock));
-  // The sections carry the day they were built on, so a new local day builds them again.
-  const built = useMemo(
-    () => ({ today, sections: historySections({ history: list, text, clock: deviceClock }) }),
-    [list, text, today],
-  );
-  return built.sections;
+  // Re-renders the screen when it gains or loses focus, so «сьогодні» does not go stale.
+  useIsFocused();
+  return list.map(({ entryId, row, seenAt }) => ({ entryId, row, day: dayChip(seenAt) }));
 }
 
 /** How many Entries History holds, kept up to date. */

@@ -1,4 +1,4 @@
-import { MascotIn } from '@/mascot/mascot';
+import { MascotAs } from '@/mascot/mascot';
 import {
   CategoryGrid,
   categoryGrid,
@@ -155,7 +155,7 @@ function Collections({ header }: { header: ListHeader }) {
   const listEmpty =
     editing?.kind !== 'new' ? (
       <EmptyState
-        mascot={<MascotIn state="empty" />}
+        mascot={(width) => <MascotAs state="waits" width={width} />}
         testID="collections-empty"
         title={strings.empty.title}
         message={strings.empty.message}

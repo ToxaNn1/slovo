@@ -124,6 +124,41 @@ describe('History', () => {
     expect(screen.queryByTestId('history-empty')).not.toBeOnTheScreen();
   });
 
+  it('lists every day in one list, newest first, each row with its meaning and its day on a chip', async () => {
+    jest.setSystemTime(new Date('2026-10-29T10:00:00Z'));
+    composition = await openComposition({
+      content: createMemoryContentPort({
+        categories: [
+          { id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' },
+        ],
+        words: [word('w_tykhyi', 'тихий'), word('w_lahidnyi', 'лагідний')],
+      }),
+      edition: shippedEdition,
+      userState: await seedUserState({
+        history: {
+          w_tykhyi: { seenAt: '2026-10-20T08:00:00.000Z', wordOfTheDay: false },
+          w_lahidnyi: { seenAt: '2026-10-29T08:00:00.000Z', wordOfTheDay: true },
+        },
+      }),
+      clock: { now: () => new Date('2026-10-29T10:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+      random: { next: () => 0 },
+    });
+
+    await renderHistory(compositionOver(() => Promise.resolve()));
+
+    const rows = screen.getAllByTestId(/^history-row-\w+-open$/);
+    expect(rows.map((row) => String(row.props['accessibilityLabel']))).toEqual([
+      'лагідний, Значення слова лагідний., сьогодні',
+      'тихий, Значення слова тихий., 20 жовт.',
+    ]);
+    // No day headings and no kind label: the chip says the day.
+    expect(screen.queryByText(editionStrings.history.days.today)).not.toBeOnTheScreen();
+    expect(screen.queryByText(new RegExp(editionStrings.history.kinds.wordOfTheDay))).toBeNull();
+    expect(screen.getByTestId('history-row-w_lahidnyi-day')).toHaveStyle({
+      backgroundColor: editionTokens.colors.light.accent,
+    });
+  });
+
   it('shows the empty state when nothing is Seen yet', async () => {
     await renderHistory(compositionOver(() => Promise.resolve()));
 

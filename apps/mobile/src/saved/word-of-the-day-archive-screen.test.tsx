@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import type { Word } from '@slovo/contracts';
 import { createMemoryContentPort, type UserStateFacts, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
+import { coreTokens, EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -107,22 +107,33 @@ beforeEach(() => {
 });
 
 describe('the Word of the Day archive screen «Слова дня»', () => {
-  it('lists each day newest first as «26 жовтня · сумирний», a Retired Word in its place, read date first', async () => {
+  it('lists each day newest first, the Word with its meaning and the date on a chip, a Retired Word in its place', async () => {
+    jest.useFakeTimers({ advanceTimers: true, now: new Date('2026-10-27T09:00:00Z') });
     await open(kept({ '2026-10-25': 'w_gentle', '2026-10-27': 'w_quiet', '2026-10-26': 'w_old' }));
 
     await renderArchive();
 
     expect(screen.getByText(strings.title)).toBeOnTheScreen();
     const rows = screen.getAllByTestId(/^words-of-the-day-row-[\d-]+-open$/);
-    expect(rows.map((row) => String(row.props['accessibilityLabel']))).toEqual([
-      '27 жовтня, сумирний',
-      '26 жовтня, стародавній',
-      '25 жовтня, лагідний',
+    expect(
+      rows.map((row) => {
+        const parts = String(row.props['accessibilityLabel']).split(', ');
+        return [parts[0], parts.at(-1)];
+      }),
+    ).toEqual([
+      ['сумирний', '27 жовтня'],
+      ['стародавній', '26 жовтня'],
+      ['лагідний', '25 жовтня'],
     ]);
-    expect(screen.getByTestId('words-of-the-day-row-2026-10-27-open')).toHaveTextContent(
-      '27 жовтня · суми́рний',
-    );
+    // Today's chip is marked in the accent colour, an earlier day's is sunken.
+    expect(screen.getByTestId('words-of-the-day-row-2026-10-27-day')).toHaveStyle({
+      backgroundColor: coreTokens.colors.light.accent,
+    });
+    expect(screen.getByTestId('words-of-the-day-row-2026-10-26-day')).toHaveStyle({
+      backgroundColor: coreTokens.colors.light.surfaceSunken,
+    });
     expect(screen.queryByTestId('words-of-the-day-empty')).not.toBeOnTheScreen();
+    jest.useRealTimers();
   });
 
   it('opens the Entry of a tapped day', async () => {
@@ -141,9 +152,9 @@ describe('the Word of the Day archive screen «Слова дня»', () => {
     await renderArchive();
 
     expect(screen.getByTestId('words-of-the-day-empty')).toHaveTextContent(
-      `${edition.mascot.empty}${strings.empty.title}${strings.empty.message}`,
+      `${strings.empty.title}${strings.empty.message}`,
     );
-    expect(screen.getByTestId('mascot-empty')).toBeOnTheScreen();
+    expect(screen.getByTestId('mascot-sleeps')).toBeOnTheScreen();
     expect(screen.queryAllByTestId(/^words-of-the-day-row-/)).toEqual([]);
   });
 });

@@ -55,12 +55,16 @@ async function renderRow({
   row: shown = row,
   ...props
 }: Partial<
-  Pick<ComponentProps<typeof EntryRow>, 'row' | 'onPress' | 'actions' | 'leading' | 'compact'>
+  Pick<ComponentProps<typeof EntryRow>, 'row' | 'onPress' | 'actions' | 'day' | 'trailing'>
 > = {}) {
   await render(
     <GestureHandlerRootView>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <EntryRow row={shown} trailing="12:30" {...props} />
+        <EntryRow
+          row={shown}
+          {...(props.day === undefined ? { trailing: '12:30' } : {})}
+          {...props}
+        />
       </EditionProvider>
     </GestureHandlerRootView>,
   );
@@ -76,12 +80,27 @@ describe('EntryRow', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it('puts the leading text before the title, a dot between, and reads it first', async () => {
-    await renderRow({ leading: '26 October', compact: true });
+  it('puts the day on a chip on the right and reads it after the meaning', async () => {
+    await renderRow({ day: { label: 'yesterday', today: false } });
 
-    expect(screen.getByLabelText('26 October, lemma, 12:30')).toHaveTextContent(
-      '26 October · lemma12:30',
+    expect(screen.getByLabelText('lemma, what it means, yesterday')).toHaveTextContent(
+      'lemmawhat it meansyesterday',
     );
+  });
+
+  it('draws today’s chip in the accent colour and any other day’s sunken', async () => {
+    await renderRow({ day: { label: 'today', today: true } });
+    expect(screen.getByTestId('entry-row-w1-day')).toHaveStyle({ backgroundColor: '#161616' });
+    expect(screen.getByText('today')).toHaveStyle({ color: '#FFFFFF' });
+
+    await renderRow({ day: { label: '30 Oct', today: false } });
+    expect(screen.getByTestId('entry-row-w1-day')).toHaveStyle({ backgroundColor: '#EFEFEC' });
+  });
+
+  it('lets the meaning wrap beside a day chip', async () => {
+    await renderRow({ day: { label: 'today', today: true } });
+
+    expect(screen.getByText('what it means').props['numberOfLines']).toBeUndefined();
   });
 
   it('puts the form a Correction replaces under its standard equivalent', async () => {
