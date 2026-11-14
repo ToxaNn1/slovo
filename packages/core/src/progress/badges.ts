@@ -109,8 +109,8 @@ export async function openBadges({
   edition: Pick<Edition, 'isFeatureEnabled' | 'badges'>;
   userState: Pick<UserState, 'write'>;
   clock: Clock;
-  xpLog: Pick<XpLog, 'state' | 'milestones' | 'earn' | 'open' | 'subscribe'>;
-  knowledge: Pick<Knowledge, 'state' | 'subscribe'>;
+  xpLog: Pick<XpLog, 'state' | 'milestones' | 'earn' | 'open' | 'subscribe' | 'resetMarker'>;
+  knowledge: Pick<Knowledge, 'state' | 'confirmedAfter' | 'subscribe'>;
   activeDays: Pick<ActiveDays, 'streak' | 'subscribe'>;
   analytics: Pick<Analytics, 'track'>;
 }): Promise<Badges> {
@@ -128,7 +128,12 @@ export async function openBadges({
         return { current: streak, best: bestStreak, target: condition.days };
       }
       case 'confirmedEntries': {
-        const { total } = knowledge.state.confirmed;
+        // After a Progress reset only the Entries confirmed since count (ADR 0133).
+        const marker = xpLog.resetMarker;
+        const total =
+          marker === undefined
+            ? knowledge.state.confirmed.total
+            : knowledge.confirmedAfter(marker.at);
         return { current: total, best: total, target: condition.entries };
       }
       case 'gameWin':

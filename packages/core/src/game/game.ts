@@ -883,7 +883,7 @@ export async function openGame({
     ];
     await writeAwards(
       [...(roundXp === undefined ? [] : [roundXp]), ...awards],
-      beaten ? gameBest.record(ended.modeId).change(result) : new Map(),
+      beaten ? gameBest.record(bestIdOf(ended.modeId)).change(result) : new Map(),
     );
     const over: GameOver = {
       ...ended,
@@ -936,17 +936,48 @@ export async function openGame({
     changeCurrent({ ...game, time: runTime(time.left) });
   }
 
+  /**
+   * The record id of a mode's Best result: one per reset marker, so after a
+   * Progress reset the mode has none until a Game after it (ADR 0133).
+   */
+  function bestIdOf(modeId: string): string {
+    const marker = xp.resetMarker;
+    return marker === undefined ? modeId : `${modeId}~${marker.id}`;
+  }
+
+  /** After a Progress reset, reads each mode's Best result again, which is none until a Game after it. */
+  let resetFollowed = xp.resetMarker?.id;
+  async function followReset(): Promise<void> {
+    if (xp.resetMarker?.id === resetFollowed) return;
+    resetFollowed = xp.resetMarker?.id;
+    const bestResults = await bestResultsOf(modes);
+    change({
+      ...state,
+      bestResults,
+      modes: state.modes.map((offer) => {
+        const mode = modes.find(({ id }) => id === offer.modeId);
+        if (mode === undefined) return offer;
+        const next = { ...offer, ...offeredMode(mode, bestResults[mode.id]) };
+        if (bestResults[mode.id] === undefined) delete next.best;
+        return next;
+      }),
+    });
+  }
+
   /** The Best result of each mode, read from the user state; a mode with none is left out. */
   async function bestResultsOf(
     on: readonly GameMode[],
   ): Promise<Readonly<Partial<Record<string, number>>>> {
     const read = await Promise.all(
-      on.map(async ({ id }) => [id, await userState.read(gameBest.record(id))] as const),
+      on.map(async ({ id }) => [id, await userState.read(gameBest.record(bestIdOf(id)))] as const),
     );
     return Object.fromEntries(read.filter(([, best]) => best !== undefined));
   }
 
   eligibility.subscribe(() => inTurn(followEligibility));
+  xp.subscribe(() => {
+    inTurn(followReset).catch(() => undefined);
+  });
   dayTurned.subscribe(planOffers);
   returned.subscribe(planOffers);
 

@@ -97,7 +97,14 @@ export interface XpLogMilestones {
  * (`daily-goal-set`), which may make today an Active Day but is no learning
  * action, or anything else (`other`).
  */
-export type XpLogChange = 'daily-goal-set' | 'other';
+export type XpLogChange = 'daily-goal-set' | 'progress-reset' | 'other';
+
+/** The latest reset marker of a Progress reset (ADR 0133): the fold counts only the records after its instant. */
+export interface ResetMarker {
+  readonly id: string;
+  readonly date: string;
+  readonly at: string;
+}
 
 /** Records to append for another write, and the step that makes them in memory once written. */
 export interface XpLogAppend {
@@ -188,6 +195,14 @@ export interface XpLog {
    * stops it.
    */
   onLevelReached(listener: (level: LevelState) => void): () => void;
+  /** The latest reset marker, after which every progress value counts; none before the first Progress reset. */
+  readonly resetMarker: ResetMarker | undefined;
+  /**
+   * The Progress reset (ADR 0133): writes a reset marker and the Daily Goal in
+   * force after it, so every progress value counts from zero and the goal
+   * stays. Nothing with the `progressReset` switch off.
+   */
+  reset(): Promise<void>;
 }
 
 /** The award of an action that earns nothing: no change to write, nothing to make in memory. */
@@ -295,6 +310,29 @@ export async function openXpLog({
   const goalOn = edition.isFeatureEnabled('dailyGoal');
   const seenWordOn = edition.isFeatureEnabled('seenWordXp');
   const records = new Map<string, XpRecord>(on ? await userState.list(xpRecords) : []);
+  /** The latest reset marker by instant, then by id, so every device picks the same one. */
+  function latestMarker(): ResetMarker | undefined {
+    let latest: ResetMarker | undefined;
+    for (const [id, record] of records) {
+      if (record.kind !== 'reset') continue;
+      if (
+        latest === undefined ||
+        record.at > latest.at ||
+        (record.at === latest.at && id > latest.id)
+      )
+        latest = { id, date: record.date, at: record.at };
+    }
+    return latest;
+  }
+  let marker = latestMarker();
+  /** Whether a record counts: it comes after the latest reset marker, or there is none. */
+  const counts = (record: XpRecord) => marker === undefined || record.at > marker.at;
+  /**
+   * The id of a record kept once per Badge, per day or per date range, made
+   * anew after each reset marker, so a Badge is earned again and a day is met
+   * again after a Progress reset.
+   */
+  const scoped = (id: string) => (marker === undefined ? id : `${id}~${marker.id}`);
   /** The `word-goal` records by date and instant, so a goal is looked up among them and not in the whole log; made anew after one is added. */
   let wordGoals: WordGoalRecord[] | undefined;
   function wordGoalsInOrder(): readonly WordGoalRecord[] {
@@ -313,13 +351,14 @@ export async function openXpLog({
    * id already kept takes another's place, so either folds the log anew.
    */
   function keep(id: string, record: XpRecord): void {
-    const anew = records.has(id) || record.kind === 'word-goal';
+    const anew = records.has(id) || record.kind === 'word-goal' || record.kind === 'reset';
     records.set(id, record);
     if (!anew) {
-      folded.add(id, record);
+      if (counts(record)) folded.add(id, record);
       return;
     }
     wordGoals = undefined;
+    marker = latestMarker();
     folded = foldAll();
   }
   const subscribers = createSubscribers<XpLogChange>();
@@ -374,7 +413,7 @@ export async function openXpLog({
     return last?.goal ?? undefined;
   }
 
-  const metId = (date: string) => `goal-met-${date}`;
+  const metId = (date: string) => scoped(`goal-met-${date}`);
 
   function dailyGoalOf(date: string): DailyGoalState | null {
     const goal = goalOf(date);
@@ -570,7 +609,7 @@ export async function openXpLog({
   /** The fold of every record kept, in the order kept. */
   function foldAll(): ReturnType<typeof fold> {
     const all = fold();
-    for (const [id, record] of records) all.add(id, record);
+    for (const [id, record] of records) if (counts(record)) all.add(id, record);
     return all;
   }
   let folded = foldAll();
@@ -639,7 +678,7 @@ export async function openXpLog({
     const { count } = counter();
     const inTime = [...records.values()].sort((a, b) => a.at.localeCompare(b.at));
     for (const record of inTime) {
-      if (record.kind !== 'xp') continue;
+      if (record.kind !== 'xp' || !counts(record)) continue;
       sum += count(record);
       if (sum >= total) return record.date;
     }
@@ -696,7 +735,7 @@ export async function openXpLog({
   function freeze(dates: readonly string[]): XpLogAppend {
     const at = clock.now().toISOString();
     return appendAll(
-      new Map(dates.map((date) => [`freeze-${date}`, { kind: 'freeze', date, at }])),
+      new Map(dates.map((date) => [scoped(`freeze-${date}`), { kind: 'freeze', date, at }])),
     );
   }
 
@@ -704,7 +743,9 @@ export async function openXpLog({
     const date = todayKey(clock);
     const at = clock.now().toISOString();
     return appendAll(
-      new Map(badges.map((badge) => [`badge-${badge}`, { kind: 'badge', date, at, badge }])),
+      new Map(
+        badges.map((badge) => [scoped(`badge-${badge}`), { kind: 'badge', date, at, badge }]),
+      ),
     );
   }
 
@@ -730,7 +771,7 @@ export async function openXpLog({
   }
 
   function open(badge: string): XpLogAppend {
-    const id = `badge-opened-${badge}`;
+    const id = scoped(`badge-opened-${badge}`);
     const record: XpRecord = {
       kind: 'badge-opened',
       date: todayKey(clock),
@@ -748,7 +789,7 @@ export async function openXpLog({
 
   function startBreak(days: number): XpLogAppend {
     const date = todayKey(clock);
-    const id = `break-${date}`;
+    const id = scoped(`break-${date}`);
     const record: XpRecord = { kind: 'break', date, at: clock.now().toISOString(), days };
     return {
       changes: xpRecords.record(id).change(record),
@@ -788,6 +829,20 @@ export async function openXpLog({
     };
     await write(new Map([[newId(at), record], ...metToday(goal ?? undefined)]), 'daily-goal-set');
     await analytics.track('dailyGoalChanged', { goal }).catch(() => undefined);
+  }
+
+  async function reset(): Promise<void> {
+    // Off while `xpLog` is (DEPENDS_ON).
+    if (!edition.isFeatureEnabled('progressReset')) return;
+    const at = clock.now();
+    const date = todayKey(clock);
+    const added = new Map<string, XpRecord>([
+      [newId(at), { kind: 'reset', date, at: at.toISOString() }],
+    ]);
+    const inForce = wordGoalsInOrder().findLast((record) => record.date <= date);
+    if (goalOn && inForce !== undefined)
+      added.set(newId(at), { kind: 'word-goal', date, at: at.toISOString(), goal: inForce.goal });
+    await write(added, 'progress-reset');
   }
 
   /** The Entries in History so far, also those cleared since: a Word among them is not Seen for the first time. */
@@ -892,5 +947,9 @@ export async function openXpLog({
     setDailyGoal,
     subscribeGoalMet: goalMetSubscribers.subscribe,
     onLevelReached: levelReachedSubscribers.subscribe,
+    get resetMarker() {
+      return marker;
+    },
+    reset,
   };
 }
