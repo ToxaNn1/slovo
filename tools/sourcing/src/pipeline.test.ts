@@ -1,8 +1,7 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { EDITIONS_DIR, editionFiles, openEdition } from '@slovo/language-pack/edition';
 import { describe, expect, it, vi } from 'vitest';
 
 import { printSummary } from './cli-common';
@@ -14,15 +13,11 @@ import {
   type ReviewReport,
   type SourcingKind,
 } from './index';
-import { seededRandom } from './test-support';
+import { seededRandom, editionWithSnapshot } from './test-support';
 
 /** An Edition with the UA Edition's config and no content. */
 function emptyEdition() {
-  const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
-  mkdirSync(join(editionsDir, 'uk'));
-  const config = readFileSync(openEdition(EDITIONS_DIR, 'uk').path('config'), 'utf8');
-  writeFileSync(editionFiles(join(editionsDir, 'uk')).path('config'), config);
-  return openEdition(editionsDir, 'uk');
+  return editionWithSnapshot();
 }
 
 function options(overrides: Partial<PipelineOptions> = {}): PipelineOptions {

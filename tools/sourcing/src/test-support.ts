@@ -85,3 +85,13 @@ export function editionWithSnapshot(
   writeFileSync(editionFiles(join(editionsDir, 'uk')).path('config'), config);
   return openEditionWithSnapshot(editionsDir, 'uk', snapshotWith(records));
 }
+
+/** The record with the given id in the UA Edition's seed snapshot. */
+export function seedRecord(id: string): unknown {
+  const { words, corrections, idioms, synonymRows, tips } = ukSeedSnapshot();
+  const record = [...words, ...corrections, ...idioms, ...synonymRows, ...tips].find(
+    (each) => each.id === id,
+  );
+  if (record === undefined) throw new Error(`No record ${id} in the seed snapshot`);
+  return record;
+}

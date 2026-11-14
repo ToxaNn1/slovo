@@ -1,22 +1,16 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { SynonymRowSchema } from '@slovo/contracts';
-import {
-  EDITIONS_DIR,
-  editionFiles,
-  openEdition,
-  type EditionFolder,
-} from '@slovo/language-pack/edition';
+import { type EditionFolder } from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';
 
 import { sourceSynonyms, type Fetch, type LemmaOutcome, type SourcingResult } from './index';
-import { seededRandom } from './test-support';
+import { seededRandom, editionWithSnapshot } from './test-support';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
-const ukrainianConfigFile = openEdition(EDITIONS_DIR, 'uk').path('config');
 const SYNONYMS = 'https://goroh.pp.ua/Синонімія/';
 
 /** Saved goroh «Синонімія» pages; any other address is goroh's "not found" page. */
@@ -59,19 +53,7 @@ function fakeClock() {
 
 /** A copy of the UA Edition's config with the given Entries as its content. */
 function editionWith(entries: Record<string, unknown> = {}): EditionFolder {
-  const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
-  mkdirSync(join(editionsDir, 'uk'));
-  writeFileSync(
-    editionFiles(join(editionsDir, 'uk')).path('config'),
-    readFileSync(ukrainianConfigFile, 'utf8'),
-  );
-  const edition = openEdition(editionsDir, 'uk');
-  for (const [id, entry] of Object.entries(entries)) {
-    const file = join(edition.dir, edition.entryFile(id));
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, JSON.stringify(entry));
-  }
-  return edition;
+  return editionWithSnapshot(entries);
 }
 
 const mrjaka = {
