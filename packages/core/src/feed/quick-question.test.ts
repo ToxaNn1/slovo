@@ -340,6 +340,25 @@ describe('the Word Meaning question', () => {
     }
   });
 
+  it("never offers a homonym's Definition, which would be right too", async () => {
+    // Seven pairs of homonyms, each pair one Lemma with two meanings.
+    const homonyms = Array.from({ length: 14 }, (_, index) =>
+      meant(index, { lemma: `lemma${numbered(index % 7)}` }),
+    );
+    const { app } = await run({ on: WORD_MEANING_ONLY, of: homonyms });
+
+    const questions = await questionsOf(app, 48);
+
+    expect(questions).toHaveLength(8);
+    for (const card of questions) {
+      const asked = homonyms.find(({ id }) => id === card.entry.id);
+      const lemmas = textsOf(card).map(
+        (text) => homonyms.find(({ primaryDefinition }) => primaryDefinition === text)?.lemma,
+      );
+      expect(lemmas.filter((lemma) => lemma === asked?.lemma)).toHaveLength(1);
+    }
+  });
+
   it('never asks a Word whose Definition holds its Lemma', async () => {
     const plain = [meant(0), meant(1), meant(2)];
     const named = Array.from({ length: 11 }, (_, index) => selfNamed(index + 3));
