@@ -515,6 +515,10 @@ export const FeatureSwitchesSchema = z.strictObject({
   quietCategories: FeatureSwitchStateSchema,
   /** The board style of the Collections: their list as the Category grid and a Collection's screen as a Category screen (ADR 0082); off, today's list and screen. */
   collectionBoardStyle: FeatureSwitchStateSchema,
+  /** «Скопіювати посилання» on the share sheet of a Collection, which copies its Collection Link with `expo-clipboard` (ADR 0132); off until the EAS build with that module is out, and off the sheet keeps the system Share alone. Off while `collectionLinks` is. */
+  collectionLinkCopy: FeatureSwitchStateSchema,
+  /** The Due Quiz «Перевір себе» on «Вчу»: three meanings for each Word due for Review today, right sets Known and wrong Unknown (ADR 0131); off, «Вчу» has no card. Off while `knowledge` is. */
+  dueQuiz: FeatureSwitchStateSchema,
   /** The Profile's confirmed Entries by rarity («Підтверджені записи за рідкістю»); off while `profile` or `confirmedEntries` is. */
   profileConfirmedByRarity: FeatureSwitchStateSchema,
   /** The Profile's Best result of each Game Mode («Найкраще в грі»); off while `profile` or `game` is. */

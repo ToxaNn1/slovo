@@ -53,7 +53,7 @@ export const CollectionsStringsSchema = z.strictObject({
     deleteLabel: templateOf('name'),
     /** The «…» button of a row, as VoiceOver reads it. Takes `{name}`. */
     moreLabel: templateOf('name'),
-    /** The menu the «…» button opens: the same two actions as the swipe, and the cancel row. */
+    /** The menu the «…» button opens: rename, delete and the cancel row; the share row is `link.share` (ADR 0132). */
     menu: z.strictObject({
       rename: TextSchema,
       delete: TextSchema,
@@ -111,6 +111,45 @@ export const CollectionsStringsSchema = z.strictObject({
       tooLong: TextSchema,
       duplicate: TextSchema,
     }),
+  }),
+  /** The bottom sheet that names a new Collection or renames one (ADR 0132); its field takes `sheet.namePlaceholder` and its refusals `sheet.refusal`. */
+  nameSheet: z.strictObject({
+    /** The sheet's title for a new Collection. */
+    newTitle: TextSchema,
+    /** The sheet's title for a rename. */
+    renameTitle: TextSchema,
+    /** The counter under the field. Takes `{count}`, the name's characters, and `{max}`, the most a name holds. */
+    counter: templateOf('count', 'max'),
+    /** The button that makes the new Collection. */
+    create: TextSchema,
+    /** The button that keeps the new name. */
+    save: TextSchema,
+    /** The button that closes the sheet. */
+    cancel: TextSchema,
+  }),
+  /** The bottom sheet that shares a Collection Link (ADR 0132). */
+  shareSheet: z.strictObject({
+    /** The sheet's title. */
+    title: TextSchema,
+    /** The line on what the link holds. */
+    snapshot: TextSchema,
+    /** The button that copies the link. */
+    copy: TextSchema,
+    /** The button that opens the system share sheet. */
+    share: TextSchema,
+    /** The button that closes the sheet. */
+    cancel: TextSchema,
+  }),
+  /** The toasts after a Collection action (ADR 0132). */
+  toasts: z.strictObject({
+    /** Takes `{name}`, the new Collection's. */
+    created: templateOf('name'),
+    renamed: TextSchema,
+    deleted: TextSchema,
+    /** The action of the `deleted` toast that brings the Collection back. */
+    undo: TextSchema,
+    /** The link is on the clipboard. */
+    copied: TextSchema,
   }),
   /** Collection Links: sharing a Collection and the recipient's sheet that copies it (ADR 0058). */
   link: z.strictObject({

@@ -25,6 +25,16 @@ export const SearchStringsSchema = z.strictObject({
   }),
   /** Shown when no group has a result. */
   nothingFound: TextSchema,
+  /** The hint under «Нічого не знайдено»: another spelling, meaning search from three letters, and where to suggest a missing Word (board 09). */
+  nothingFoundHint: TextSchema,
+  /** The placeholder of the field on the Search screen (board 09). */
+  inputPlaceholder: TextSchema,
+  /** The button beside the field that closes the Search screen (board 09, ADR 0054). */
+  cancel: TextSchema,
+  /** The small capitals over the results while the query finds some (board 09). */
+  found: TextSchema,
+  /** The small capitals while the query is too short to search by meaning and finds nothing yet (board 09). */
+  keepTyping: TextSchema,
   /** What VoiceOver reads for a result. Takes `{kind}` and `{text}`. */
   resultLabel: templateOf('kind', 'text'),
 });
