@@ -164,6 +164,7 @@ export {
   type SettingsDefaults,
   type UserSettings,
 } from './settings/settings';
+export { smallerTextSize, TEXT_SIZE_FLOOR, TEXT_SIZE_LADDER } from './settings/text-size-ladder';
 export { STRESS_MARK, withoutStress } from './entries/stress';
 export { createGesturesHint, type GesturesHint } from './feed/gestures-hint';
 export { type WordCardModel } from './entries/word-card';

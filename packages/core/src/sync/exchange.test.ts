@@ -57,7 +57,13 @@ function account(start = '2026-10-18T09:00:00.000Z') {
         openComposition({ content, edition, userState, clock: time.clock, random: randomOf(0.25) }),
       settings: createSettings({
         userState,
-        defaults: { theme: 'system', fontSize: 'M', vibration: true, narratorVoice: 'anna' },
+        defaults: {
+          theme: 'system',
+          fontSize: 'M',
+          textSize: 'system',
+          vibration: true,
+          narratorVoice: 'anna',
+        },
       }),
       write: (changes: UserStateChanges) => userState.write(changes),
     };
@@ -523,7 +529,7 @@ describe('two devices of one Account', () => {
 
     expect(server.sync.records.has('notifications.sound')).toBe(false);
     expect((await tablet.settings.read()).vibration).toBe(true);
-    expect(tablet.records.get('schema.version')).toBe('7');
+    expect(tablet.records.get('schema.version')).toBe('8');
     expect(await tablet.userState.pendingChanges()).toEqual(new Map());
     expect(await tablet.userState.cursor()).not.toBe(999);
   });
