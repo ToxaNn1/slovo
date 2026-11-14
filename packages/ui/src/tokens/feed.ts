@@ -70,6 +70,43 @@ export const noticeCard = {
 } as const;
 
 /**
+ * «Твій тиждень» on its Feed page (board f5): the gap between the card's
+ * parts and between the title and its dates and Share; the gap to the
+ * Yesterday under it; «Готово»'s height. It enters as the board's `slCasc`
+ * (`enter`, after `enter.delay`), its tiles pop in one after another
+ * (`slPop`: from `pop.from` of their size to `pop.peak` at `pop.peakAt` of
+ * `pop.duration`, the first `pop.delay` in, each next `pop.stagger` after).
+ * «Готово» folds it (`wkOut`): in the first `fold.share` of `fold.duration`
+ * it fades, rises by `fold.rise`, turns by `fold.turn` degrees and shrinks to
+ * `fold.scale`, then its room closes; the Yesterday under it enters
+ * `below.delay` after the card, and once the card is folded away slides up
+ * from `below.rise` lower (`ywUp`).
+ */
+export const weeklyRecapPage = {
+  gap: 16,
+  titleGap: 10,
+  pageGap: 14,
+  doneHeight: 52,
+  enter: { delay: 100, duration: 400 },
+  pop: { delay: 200, stagger: 60, duration: 350, from: 0.6, peak: 1.12, peakAt: 0.6 },
+  fold: {
+    duration: 500,
+    easing: [0.4, 0, 0.2, 1],
+    share: 0.4,
+    rise: -30,
+    turn: -2,
+    scale: 0.96,
+  },
+  below: {
+    delay: 250,
+    duration: 400,
+    rise: 60,
+    riseDuration: 450,
+    easing: [0.2, 0.9, 0.3, 1],
+  },
+} as const;
+
+/**
  * The end-of-Cycle card, from the design: the ∞ behind it (its size and how
  * far it reaches past the left edge and below the top), the gap between its
  * parts and the chevrons' box.

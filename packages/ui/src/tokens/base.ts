@@ -188,6 +188,10 @@ export const typeRoles = {
   recapNumber: role('word', '900', 24, 24),
   /** The label under a number of the Weekly Recap. */
   recapLabel: role('ui', '500', 12, 14),
+  /** The week's dates beside the Weekly Recap's title, «26.10–1.11». */
+  recapDates: role('ui', '500', 13, 13),
+  /** The Weekly Recap's «Готово». */
+  recapDone: role('word', '900', 14, 14, 0, 'uppercase'),
   /** The Word of the Community Word card. */
   communityWord: role('word', '900', 30, 30, -0.5),
   /** The Definition under the Word of the Community Word card. */
