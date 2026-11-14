@@ -16,3 +16,5 @@ Owner ran /mattpocock-skills:implement-spec on #1861. Follow that SKILL.md + doc
 1. On DONE #1862: merger subagent merges chore/1862-… into feat/1861-settings-board (--no-ff, 'chore: merge #1862: …'), checks, push; open draft PR «feat: board 11 Settings» with Closes #1862…#1877.
 2. Launch frontier in cloud (briefs ≤1.5 KB; cloud-context-rules memory; never owner email), one waiter per ticket.
 3. All merged → code-review → one fixer → handbook check → PR ready; main merge only on owner word.
+
+2026-11-14T21:04:23Z safety net takeover (last commit 2026-11-14T20:38:42Z)
