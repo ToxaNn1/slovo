@@ -7,6 +7,12 @@ import type { GameEdition, GameMode, RoundContent } from './game-mode';
 import type { GameXp } from './game-xp';
 import type { TextComparison } from '../text/text-comparison';
 
+/**
+ * The most characters a Quick Question prompt may hold: a Feed card fits no
+ * longer one, so an Entry whose prompt runs past it is not asked.
+ */
+export const QUICK_QUESTION_PROMPT_LIMIT = 140;
+
 /** A Round the reader answers by picking one of its options. */
 export type PickRound = Extract<RoundContent, { readonly form: 'pick' }>;
 
@@ -28,7 +34,8 @@ export interface QuickQuestion {
   /**
    * A Round of a Game Mode on offer, the modes tried in a random order, over
    * a random Eligible Entry other than `avoid`; only a mode whose Round is a
-   * pick of options can give one. Nothing when no mode can.
+   * pick of options with a prompt of at most `QUICK_QUESTION_PROMPT_LIMIT`
+   * characters can give one. Nothing when no mode can.
    */
   build(avoid?: string): Promise<QuickQuestionContent | undefined>;
   /** Keeps the option the reader picked and resolves whether it is right. */
@@ -65,19 +72,22 @@ export function createQuickQuestion({
       const eligible = await entries.eligibleOfKind(mode.entryKind, mode.alsoAsks);
       if ('refusal' in eligible) continue;
       const answers = eligible.entries.filter(({ id }) => id !== avoid);
-      const answer = answers[Math.floor(random.next() * answers.length)];
-      if (answer === undefined) continue;
-      const round = mode.buildRound({
-        answer,
-        eligible: eligible.entries,
-        next: [],
-        upTo: 1,
-        round: 1,
-        random,
-        edition,
-        comparison,
-      });
-      if (round?.form === 'pick') return { entry: answer, modeId: mode.id, round };
+      for (const answer of shuffled(answers, random)) {
+        const round = mode.buildRound({
+          answer,
+          eligible: eligible.entries,
+          next: [],
+          upTo: 1,
+          round: 1,
+          random,
+          edition,
+          comparison,
+        });
+        if (round === undefined) continue;
+        if (round.form !== 'pick') break;
+        if (round.prompt.length <= QUICK_QUESTION_PROMPT_LIMIT)
+          return { entry: answer, modeId: mode.id, round };
+      }
     }
     return undefined;
   }

@@ -29,7 +29,12 @@ const ALL_ON: readonly FeatureSwitch[] = [
 async function run({
   records = new Map<string, string>(),
   on = ALL_ON,
-}: { records?: Map<string, string>; on?: readonly FeatureSwitch[] } = {}) {
+  over = content,
+}: {
+  records?: Map<string, string>;
+  on?: readonly FeatureSwitch[];
+  over?: typeof content;
+} = {}) {
   const events: [string, unknown][] = [];
   const analytics: AnalyticsPort = {
     // The onboarding, which opens on a fresh user state, has events of its own.
@@ -40,7 +45,7 @@ async function run({
   };
   const time = fakeClock('2026-10-14T08:00:00+03:00');
   const app = await openComposition({
-    content,
+    content: over,
     edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature) }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: time.clock,
@@ -198,5 +203,43 @@ describe('a Quick Question answered', () => {
     await app.feed.show(position + 1);
 
     expect(events.filter(([event]) => event === 'seen').length).toBe(seenBefore);
+  });
+});
+
+describe('a Quick Question prompt', () => {
+  /** Words whose Definitions run past what a Feed card holds, all but those in `short`. */
+  function overLong(short: readonly string[]) {
+    return createMemoryContentPort({
+      categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
+      words: words.map((each) =>
+        short.includes(each.id)
+          ? each
+          : {
+              ...each,
+              primaryDefinition: `The meaning of ${each.lemma}. ${'More of it. '.repeat(11)}`,
+            },
+      ),
+    });
+  }
+
+  it('is never longer than 140 characters: a longer Entry is not asked', async () => {
+    const { app } = await run({ over: overLong(['w_05']) });
+    await app.mix.setQuickQuestionEvery(6);
+
+    const asked = (await cardsOf(app, 24)).flatMap((card) =>
+      card.kind === 'quick-question' ? [card] : [],
+    );
+
+    expect(asked.length).toBeGreaterThan(0);
+    for (const card of asked) {
+      expect(card.entry.id).toBe('w_05');
+      expect(card.round.prompt.length).toBeLessThanOrEqual(140);
+    }
+  });
+
+  it('gives no Quick Question when no Entry fits', async () => {
+    const { app } = await run({ over: overLong([]) });
+
+    expect(await askedAt(app, 25)).toEqual([]);
   });
 });
