@@ -6,7 +6,7 @@ import { RARITIES, type Rarity } from '@slovo/contracts';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { fontScaleCap, minTouchTarget, space, typeStyle } from '../tokens';
+import { fontScaleCap, minTouchTarget, rarityTestLayout, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** A Word the Rarity Test asks about. */
@@ -190,7 +190,7 @@ export function RarityTestQuestions({
                 ? colors.muted
                 : colors.silhouette
           }
-          style={styles.progressBar}
+          style={rarityTestLayout.progressBar}
         />
         <View style={styles.askLine}>
           {[progressOf(phase.answers.length), '·', strings.rarityTest.question].map(
@@ -275,7 +275,7 @@ function RarityTestOutcome({ result }: { result: RarityTestResult }) {
           count={RARITIES.length}
           // Rarities 1…5 in order: those up to the ceiling are lit.
           colorOf={(index) => (index < result.ceiling ? colors.accent : colors.silhouette)}
-          style={styles.rarityBars}
+          style={rarityTestLayout.rarityBars}
         />
         <Text
           {...voice}
@@ -323,19 +323,14 @@ function QuietButton({
   );
 }
 
-/** The board's bars: 6 high under the question, 14 high in the result, both skewed. */
-const SEGMENT_SKEW = '-20deg';
-
 const styles = StyleSheet.create({
   pair: { flexDirection: 'row', gap: space[3] },
   askLine: { flexDirection: 'row', flexWrap: 'wrap', gap: space[1] },
   half: { flex: 1 },
   segments: { flexDirection: 'row', alignSelf: 'stretch' },
-  segment: { flex: 1, transform: [{ skewX: SEGMENT_SKEW }] },
-  progressBar: { height: 6, gap: 4 },
-  rarityBars: { height: 14, gap: 5 },
+  segment: { flex: 1, transform: [{ skewX: rarityTestLayout.skew }] },
   outcome: { alignSelf: 'stretch' },
   number: { position: 'absolute', right: -space[3], top: -(space[8] + space[2]) },
-  outcomeText: { gap: space[4], maxWidth: 220 },
+  outcomeText: { gap: space[4], maxWidth: rarityTestLayout.resultWidth },
   quiet: { minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' },
 });

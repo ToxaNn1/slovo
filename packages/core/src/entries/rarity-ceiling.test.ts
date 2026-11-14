@@ -159,7 +159,7 @@ describe('the Rarity Ceiling', () => {
   it('is set by the Rarity Test to the lowest rarity the reader does not know', async () => {
     const app = await open();
 
-    expect(await app.rarityTest.apply(await answer(app, [4, 5]))).toBe(4);
+    expect((await app.rarityTest.apply(await answer(app, [4, 5])))?.ceiling).toBe(4);
 
     expect(app.rarityCeiling.state).toBe(4);
     expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3, 4]));
@@ -168,7 +168,7 @@ describe('the Rarity Ceiling', () => {
   it('is set to «до 5» by a Rarity Test the reader knows every Word of', async () => {
     const app = await open({ ceiling: 2 });
 
-    expect(await app.rarityTest.apply(await answer(app, []))).toBe(5);
+    expect((await app.rarityTest.apply(await answer(app, [])))?.ceiling).toBe(5);
 
     expect(app.rarityCeiling.state).toBe(5);
   });

@@ -43,7 +43,7 @@ function frame({ testID, footer, children }: RarityTestScreen) {
 
 async function renderTest(
   result: RarityTestResult | undefined,
-  onAgain: (() => void) | undefined = undefined,
+  onAgain?: () => void,
 ) {
   const handlers = {
     onApply: jest.fn<ComponentProps<typeof RarityTestQuestions>['onApply']>(() =>
@@ -112,8 +112,10 @@ describe('RarityTestQuestions', () => {
   it('asks with «Unknown» before «Known», as the board has them', async () => {
     await renderTest({ ceiling: 2, known: 1, total: 2 });
 
-    const labels = screen.getAllByRole('button').map((button) => button.props.accessibilityLabel);
-    expect(labels).toEqual(['Unknown', 'Known']);
+    expect(screen.getAllByRole('button')).toEqual([
+      screen.getByRole('button', { name: 'Unknown' }),
+      screen.getByRole('button', { name: 'Known' }),
+    ]);
   });
 
   it('applies all the answers on the last one and shows the Rarity Ceiling they set', async () => {
