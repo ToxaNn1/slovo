@@ -14,7 +14,11 @@ describe('FontSizePreview', () => {
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <FontSizePreview lemma="sprightly" definition="Quick and lively." />
       </EditionProvider>,
-      { wrapper: ({ children }) => <FontSizeProvider fontSize="XL">{children}</FontSizeProvider> },
+      {
+        wrapper: ({ children }) => (
+          <FontSizeProvider size={{ scale: 'fontSize', step: 'XL' }}>{children}</FontSizeProvider>
+        ),
+      },
     );
     const lemma = screen.getByTestId('font-size-preview-lemma');
     const line = lemma.parent;

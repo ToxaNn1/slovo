@@ -8,6 +8,7 @@ import {
   DecorProvider,
   EditionProvider,
   FontSizeProvider,
+  type TextSizeStep,
   HapticsProvider,
   ReduceMotionProvider,
   RouteProvider,
@@ -73,7 +74,7 @@ export default function RootLayout() {
 function ThemedTabs() {
   const { languagePack, composition } = useShell();
   const colorScheme = useColorSchemeInEffect();
-  const { fontSize, vibration } = useSettings().current;
+  const { vibration } = useSettings().current;
   const haptics = useMemo(
     () => createHaptics({ engine: hapticEngine, vibration: () => vibration }),
     [vibration],
@@ -100,18 +101,18 @@ function ThemedTabs() {
   return (
     <TokensProvider tokens={editionTokens} colorScheme={colorScheme}>
       <ThemeProvider value={navigationTheme}>
-        <FontSizeProvider fontSize={fontSize}>
-          <HapticsProvider haptics={haptics}>
-            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-            {/* Outside the gates: each of its listeners waits for its own opening (ADR 0036, 0037). */}
-            <Lifecycle />
-            <ScreenViews />
-            {/* Below the hard minimum no screen mounts: the force update waits for the remote switches alone (ADR 0089). */}
-            <ForceUpdateGate device={deviceFacts}>
-              {/* Every screen draws over the open Language Pack and composition. */}
-              <Opened opening={languagePack} failedTestID="language-pack-failed">
-                <Opened opening={composition} failedTestID="feed-error">
-                  {/* The screens' background and divider follow the local date (ADR 0055). */}
+        <HapticsProvider haptics={haptics}>
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          {/* Outside the gates: each of its listeners waits for its own opening (ADR 0036, 0037). */}
+          <Lifecycle />
+          <ScreenViews />
+          {/* Below the hard minimum no screen mounts: the force update waits for the remote switches alone (ADR 0089). */}
+          <ForceUpdateGate device={deviceFacts}>
+            {/* Every screen draws over the open Language Pack and composition. */}
+            <Opened opening={languagePack} failedTestID="language-pack-failed">
+              <Opened opening={composition} failedTestID="feed-error">
+                {/* The screens' background and divider follow the local date (ADR 0055). */}
+                <TextSizeInEffect>
                   <ReduceMotionInEffect>
                     <RouteInEffect>
                       <InterfaceSoundsInEffect engine={soundEngine}>
@@ -141,11 +142,11 @@ function ThemedTabs() {
                       </InterfaceSoundsInEffect>
                     </RouteInEffect>
                   </ReduceMotionInEffect>
-                </Opened>
+                </TextSizeInEffect>
               </Opened>
-            </ForceUpdateGate>
-          </HapticsProvider>
-        </FontSizeProvider>
+            </Opened>
+          </ForceUpdateGate>
+        </HapticsProvider>
         <LaunchSplash />
       </ThemeProvider>
     </TokensProvider>
@@ -164,6 +165,22 @@ function ReduceMotionInEffect({ children }: { children: ReactNode }) {
       {children}
     </ReduceMotionProvider>
   );
+}
+
+/**
+ * Gives the Word cards the reader's text size on the scale in effect: the
+ * three-step ladder while `textSizeSteps` is on, the S…XL font size while it
+ * is off (ADR 0134).
+ */
+function TextSizeInEffect({ children }: { children: ReactNode }) {
+  const { textSizeSteps } = useShown();
+  const { fontSize, textSize } = useSettings().current;
+  const size = useMemo<TextSizeStep>(
+    () =>
+      textSizeSteps ? { scale: 'ladder', step: textSize } : { scale: 'fontSize', step: fontSize },
+    [textSizeSteps, textSize, fontSize],
+  );
+  return <FontSizeProvider size={size}>{children}</FontSizeProvider>;
 }
 
 /** The route on screen for every sheet below, so a sheet closes when another route comes on screen. */

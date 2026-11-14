@@ -250,7 +250,7 @@ const storedIn1_0: readonly (readonly [
   string,
   string,
 ])[] = [
-  ['schemaVersion', undefined, 'schema.version', '7'],
+  ['schemaVersion', undefined, 'schema.version', '8'],
   ['installed', undefined, 'app.installed', 'true'],
   ['theme', undefined, 'settings.theme', '"dark"'],
   ['fontSize', undefined, 'settings.fontSize', '"L"'],

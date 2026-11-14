@@ -291,6 +291,31 @@ export const userStateMigrations: readonly UserStateMigration[] = [
       return changes;
     },
   },
+  // 1.0: the text size in three steps on one ladder (ADR 0134). The S…XL font
+  // size opens as its step: S and M as system, L as larger, XL as largest,
+  // under the new key `settings.textSize`, with a pending change from the
+  // first-sign-in time so the Account gets it too. `settings.fontSize` stays,
+  // read while the `textSizeSteps` switch is off; one that does not read
+  // brings nothing, and the Edition's default holds.
+  {
+    version: 8,
+    async migrate({ get }) {
+      const text = await get('settings.fontSize');
+      const fontSize = z
+        .enum(['S', 'M', 'L', 'XL'])
+        .safeParse(text === undefined ? undefined : parseJson(text));
+      if (!fontSize.success || (await get('settings.textSize')) !== undefined) return new Map();
+      const steps = { S: 'system', M: 'system', L: 'larger', XL: 'largest' } as const;
+      const value = JSON.stringify(steps[fontSize.data]);
+      return new Map([
+        ['settings.textSize', value],
+        [
+          'sync.pending.settings.textSize',
+          JSON.stringify({ changedAt: new Date(0).toISOString(), value }),
+        ],
+      ]);
+    },
+  },
 ];
 
 /** The Mix record of each kind of Entry beside Words, by kind. */
