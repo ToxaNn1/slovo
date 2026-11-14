@@ -1,8 +1,8 @@
 'use no memo';
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
-import { useEffect } from 'react';
-import {
+import { type ReactNode, useEffect } from 'react';
+import Animated, {
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
@@ -22,7 +22,7 @@ const TURN = -6;
  * The style of the huge «ФІНІШ» (board 06): turned, flying in from the right
  * as the poster arrives. With Reduce Motion it stands turned in place.
  */
-export function useFlyIn() {
+function useFlyIn() {
   const reduceMotion = useReduceMotion();
   /** 0 off the panel, 1 in place. */
   const flown = useSharedValue(reduceMotion ? 1 : 0);
@@ -40,4 +40,9 @@ export function useFlyIn() {
   return useAnimatedStyle(() => ({
     transform: [{ translateX: FLY.from * (1 - flown.value) }, { rotate: `${String(TURN)}deg` }],
   }));
+}
+
+/** Its children turned, flying in from the right as they arrive (board 06). */
+export function FlyIn({ children }: { children: ReactNode }) {
+  return <Animated.View style={useFlyIn()}>{children}</Animated.View>;
 }

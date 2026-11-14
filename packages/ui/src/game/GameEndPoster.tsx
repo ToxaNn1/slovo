@@ -1,7 +1,6 @@
 import type { CurrentGame, GameEnd } from '@slovo/core';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
@@ -9,7 +8,7 @@ import { blockGap, fontScaleCap, resultLayout, space, typeRoles, typeStyle } fro
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { ResultButtons, ResultNumber, ResultPanel } from './GameResult';
 import { GameReviewOf, type ResultReview } from './GameReview';
-import { useFlyIn } from './useFlyIn';
+import { FlyIn } from './FlyIn';
 import { useGameHaptics } from './useGameHaptics';
 
 /** The huge «ФІНІШ» on the red panel (board 06): the result title's face, over twice its size. */
@@ -66,7 +65,6 @@ export function GameEndPoster({
   const words = strings.game;
   const onTarget = end.kind !== 'lives-over' && end.onTarget;
   const gameHaptics = useGameHaptics();
-  const flyIn = useFlyIn();
   // Whether the success has played, so only the poster's arrival plays it.
   const played = useRef(false);
 
@@ -134,15 +132,17 @@ export function GameEndPoster({
         mascot={mascot}
         banner={
           <View style={styles.banner}>
-            <Animated.Text
-              {...voice}
-              maxFontSizeMultiplier={fontScaleCap.number}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              style={[typeStyle('resultTitle', tokens), styles.finish, { color: keyInk }, flyIn]}
-            >
-              {upper(end.kind === 'time-up' ? finish.timeUp : finish.title)}
-            </Animated.Text>
+            <FlyIn>
+              <Text
+                {...voice}
+                maxFontSizeMultiplier={fontScaleCap.number}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={[typeStyle('resultTitle', tokens), styles.finish, { color: keyInk }]}
+              >
+                {upper(end.kind === 'time-up' ? finish.timeUp : finish.title)}
+              </Text>
+            </FlyIn>
             {end.newBest ? (
               <View testID="game-end-new-best" style={[styles.stamp, { borderColor: keyInk }]}>
                 <Text

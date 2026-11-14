@@ -90,7 +90,6 @@ export {
   buildGameReview,
   buildPlainGameReview,
   type GameReviewItem,
-  type PlainGameReviewRow,
 } from './game/game-review';
 export { GAME_ROUNDS } from './game/round-plan';
 export { type SearchResults } from './search/search';

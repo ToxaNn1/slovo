@@ -656,8 +656,8 @@ describe('the Game screen', () => {
       await waitFor(() => {
         expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
       });
-      expect(screen.getByText('Час!')).toBeOnTheScreen();
-      expect(screen.getByText('Ще раунд!')).toBeOnTheScreen();
+      expect(screen.getByText('ЧАС!')).toBeOnTheScreen();
+      expect(screen.getByText('ЩЕ РАУНД!')).toBeOnTheScreen();
       expect(screen.getByText('1 з 3 влучання')).toBeOnTheScreen();
       expect(screen.queryByText('Час вийшов!')).toBeNull();
     });
