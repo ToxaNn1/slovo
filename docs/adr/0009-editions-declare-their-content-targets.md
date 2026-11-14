@@ -1,6 +1,6 @@
 # Each Edition declares its content targets, and the pack build enforces them
 
-**Superseded by ADR 0123.** The targets live in `contentTargets` of `edition.json`, `content/targets.json` is gone, and a miss blocks nothing: the admin shows it and the pack build neither reads nor enforces the targets. Kept for history.
+**Superseded by ADR 0123.** The targets live in `contentTargets` of `edition.json`, `content/targets.json` is gone, and a miss blocks nothing: the admin shows it, and the pack build prints it and never fails on it. Kept for history.
 
 An Edition may declare the floor its content must reach in `content/targets.json`: a minimum number of Words, of Corrections (`minCorrections`), of Idioms (`minIdioms`), of Words per Category and of Corrections per Category of Corrections (`minCorrectionsPerCategory`, ADR 0033), every rarity present, and every Word with a Stress. The Language Pack build checks the content report against those targets. A missed target does not stop the pack from being written, but `pnpm build:pack` exits non-zero and lists every miss, so CI fails. Counts leave Retired Entries out, as the content report does.
 
