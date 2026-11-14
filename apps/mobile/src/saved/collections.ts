@@ -45,7 +45,7 @@ export function useEntryCollections(entryId: string): {
         filed ? collections.add(collectionId, entryId) : collections.remove(collectionId, entryId),
       );
     },
-    // A Collection that could not be kept rejects: the sheet keeps its name field open.
+    // A refused name resolves to its refusal, never rejects: the sheet keeps its name field open.
     create: (name) => collections.create(name, entryId),
   };
 }
@@ -77,7 +77,7 @@ export function useCollectionChanges(): {
   // Kept from render to render, so the rows of the Collections screen re-render only when the list changes.
   return useMemo(
     () => ({
-      // A name that could not be kept rejects: the field stays open with the name as typed.
+      // A refused name resolves to its refusal, never rejects: the field stays open with the name as typed.
       async create(name) {
         const kept = await collections.create(name);
         return kept.ok
