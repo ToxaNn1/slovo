@@ -68,9 +68,7 @@ describe('the Collections hooks', () => {
     const [collection] = hook.result.current.list;
     if (collection === undefined) throw new Error('No Collection was made.');
 
-    await settled(() => {
-      hook.result.current.changes.remove(collection.id);
-    });
+    await settled(() => hook.result.current.changes.remove(collection.id));
 
     expect(hook.result.current.list).toEqual([]);
   });
