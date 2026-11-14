@@ -90,7 +90,7 @@ describe('a Correction card (board XEntry2 e6)', () => {
   });
 
   // Owner shot 14.11: one bar ran across a two-line form, between its lines and past them.
-  it('strikes every line of the non-standard form through its own middle with a tilted red bar, as wide as that line', async () => {
+  it('strikes every line of the non-standard form with a tilted red bar whose top edge sits at the middle of that line, as wide as it (board e6: top 50%)', async () => {
     await renderCard();
 
     expect(textStyle('Take part')).toMatchObject(role('correctionStruck'));
@@ -113,14 +113,14 @@ describe('a Correction card (board XEntry2 e6)', () => {
         position: 'absolute',
         left: -correctionStrike.overhang,
         width: 120 + 2 * correctionStrike.overhang,
-        top: 15 - correctionStrike.thickness / 2,
+        top: 15,
         height: correctionStrike.thickness,
         transform: [{ rotate: correctionStrike.angle }],
       }),
       expect.objectContaining({
         left: 2 - correctionStrike.overhang,
         width: 70 + 2 * correctionStrike.overhang,
-        top: 45 - correctionStrike.thickness / 2,
+        top: 45,
       }),
     ]);
     expect(correctionStrike).toEqual({ thickness: 5, overhang: 4, angle: '-4deg' });

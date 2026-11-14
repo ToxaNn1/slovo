@@ -374,8 +374,8 @@ export function StandardForm({
 /**
  * A Correction's non-standard form on its card (board XEntry2 e6): the line
  * «Так часто кажуть · калька» naming its Correction Type, which Self-check
- * leaves out, over the form, muted and struck with a tilted red bar through
- * the middle of each line it is drawn in, as wide as that line, as one
+ * leaves out, over the form, muted and struck with a tilted red bar whose top
+ * edge sits at the middle of each line it is drawn in, as wide as that line, as one
  * element VoiceOver reads with its label and type.
  */
 function StruckForm({
@@ -441,9 +441,11 @@ function StruckForm({
             style={[
               styles.strike,
               {
-                // The text's room for capital marks is padding inside its view, which
-                // starts that much above this one, so its lines sit right where it says.
-                top: line.y + (line.height - correctionStrike.thickness) / 2,
+                // The bar's top edge at the middle of the line, as the board's top: 50%,
+                // so it runs a little under the centre. The text's room for capital marks
+                // is padding inside its view, which starts that much above this one, so
+                // its lines sit right where it says.
+                top: line.y + line.height / 2,
                 left: line.x - correctionStrike.overhang,
                 width: line.width + 2 * correctionStrike.overhang,
                 backgroundColor: colors.accent,
