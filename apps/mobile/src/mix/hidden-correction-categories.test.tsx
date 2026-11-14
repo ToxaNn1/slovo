@@ -145,7 +145,7 @@ async function openHideChoice(entryId: string) {
 }
 
 describe('a Category of Corrections hidden from its card', () => {
-  it('is offered on the Correction card, hides there, and shows on the Hidden screen until it is put back', async () => {
+  it('is offered on the Correction card, hides there, and shows on the Hidden screen until «Показати», which its undo toast takes back', async () => {
     const app = await openHideChoice('c_work');
     expect(screen.getByTestId('hide-choice-category')).toHaveTextContent(
       `Не показувати категорію «${work.displayName}»`,
@@ -164,12 +164,22 @@ describe('a Category of Corrections hidden from its card', () => {
       { exact: false },
     );
 
-    await fireEvent.press(screen.getByTestId(`hidden-correction-category-${work.id}-turn-on`));
+    await fireEvent.press(screen.getByTestId(`hidden-correction-category-${work.id}-show`));
     await waitFor(() => {
       expect(screen.queryByTestId(`hidden-correction-category-${work.id}`)).toBeNull();
     });
     expect(composition.mix.state.correctionCategories.categoryIds).toEqual([work.id, shop.id]);
     expect(screen.getByText(editionStrings.hidden.empty)).toBeOnTheScreen();
+
+    // The undo toast takes «Показати» back: the Category is out of the Mix and listed again.
+    expect(
+      screen.getByText(`«Виправлення: ${work.displayName}» знову у Стрічці`),
+    ).toBeOnTheScreen();
+    await fireEvent.press(screen.getByText(editionStrings.hidden.undo));
+    await waitFor(() => {
+      expect(screen.getByTestId(`hidden-correction-category-${work.id}`)).toBeOnTheScreen();
+    });
+    expect(composition.mix.state.correctionCategories.categoryIds).toEqual([shop.id]);
   });
 
   it('is offered disabled, saying why, while it is the last Category of Corrections in the Mix', async () => {

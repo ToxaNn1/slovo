@@ -365,7 +365,7 @@ describe('the undo of a toast', () => {
     const after = await reopen(before);
     before.time.advance(60 * SECOND);
 
-    await restored?.undo?.(after);
+    await restored?.undo(after);
 
     expect(kept(before.records)).toEqual(keptBefore);
     expect(after.hiddenEntries.list).toEqual(hiddenList);
