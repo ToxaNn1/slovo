@@ -91,6 +91,8 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   curatedCollections: ['dashboard'],
   // A swipe sets a Knowledge Mark.
   swipeMarks: ['knowledge'],
+  dueQuiz: ['knowledge'],
+  collectionLinkCopy: ['collectionLinks'],
   // The demo plays the side swipes on the Feed's card (ADR 0112).
   gesturesHintDemo: ['swipeMarks'],
   // The source tab is the last of the Entry card's tabs (ADR 0116).

@@ -66,6 +66,8 @@
     "spotlight": "on",
     "appIntents": "on",
     "collectionLinks": "on",
+    "collectionLinkCopy": "on",
+    "dueQuiz": "on",
     "replaceOpenEntry": "on",
     "mixKindWeights": "on",
     "analytics": "on",

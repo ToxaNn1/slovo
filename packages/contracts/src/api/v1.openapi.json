@@ -9047,6 +9047,22 @@
                           ],
                           "type": "string"
                         },
+                        "collectionLinkCopy": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "dueQuiz": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "profileConfirmedByRarity": {
                           "enum": [
                             "on",
@@ -9211,6 +9227,8 @@
                         "categoryKnownFirst",
                         "quietCategories",
                         "collectionBoardStyle",
+                        "collectionLinkCopy",
+                        "dueQuiz",
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate",
@@ -10832,6 +10850,22 @@
                           ],
                           "type": "string"
                         },
+                        "collectionLinkCopy": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "dueQuiz": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "profileConfirmedByRarity": {
                           "enum": [
                             "on",
@@ -10996,6 +11030,8 @@
                         "categoryKnownFirst",
                         "quietCategories",
                         "collectionBoardStyle",
+                        "collectionLinkCopy",
+                        "dueQuiz",
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate",
@@ -12548,6 +12584,22 @@
                           ],
                           "type": "string"
                         },
+                        "collectionLinkCopy": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "dueQuiz": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "profileConfirmedByRarity": {
                           "enum": [
                             "on",
@@ -12712,6 +12764,8 @@
                         "categoryKnownFirst",
                         "quietCategories",
                         "collectionBoardStyle",
+                        "collectionLinkCopy",
+                        "dueQuiz",
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate",
