@@ -20,6 +20,8 @@ The Game has thirteen Game Modes with answer forms of their own, typed answers, 
 
 **Amended by ADR 0101.** The comparison judges a typed answer by its Comparison Key, built from the Edition's Language Traits: case is folded with the Edition's locale, and the apostrophes are the characters the Edition lists as `apostrophes` (ʼ ' ’ in the UA Edition).
 
+**Amended by ADR 0128.** A Quick Question's Round may also come from the Word Meaning question, a round type of the Quick Question that is not a Game Mode.
+
 **The modes.**
 
 - **«Вгадай слово» (`guess-word`) gets harder as it goes**, always: Rounds 1–5 give a Definition → pick of four; Rounds 6–10 an Example with the Word replaced by a gap → pick of four, only when an Example contains the Lemma as written (Stress and case set aside), otherwise a Definition Round; Rounds 11–15 a Definition → type the Word, judged by the one typed-answer comparison, unless another eligible Word has the same primary Definition, which makes it a Definition pick so the Round keeps one right answer. Idioms, Synonym Rows and Tips stay four-option picks at every stage.

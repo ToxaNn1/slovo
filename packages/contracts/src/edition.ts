@@ -395,6 +395,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   streakBreak: FeatureSwitchStateSchema,
   /** The Quick Question: every Nth Feed card asks one Round from an enabled Game Mode over an Eligible Entry; off, the Feed of 0.9. */
   quickQuestion: FeatureSwitchStateSchema,
+  /** The Word Meaning question: the Quick Question may ask what an Eligible Word means, with four Definitions to pick from; off while `quickQuestion` is (ADR 0128). */
+  quickQuestionWordMeaning: FeatureSwitchStateSchema,
   /** The onboarding step «ГРАЙ!» after the first Word, which shows the Games; off while `game` is (ADR 0067). */
   playStep: FeatureSwitchStateSchema,
   /** Levels: the Level derived from total XP, its Edition name and the level-milestone Feed Notices (ADR 0066). */

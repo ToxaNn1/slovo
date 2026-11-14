@@ -370,8 +370,12 @@ _Avoid_: Rarity Floor, difficulty, level, maximum difficulty
 _Avoid_: Ratio, priority
 
 **Quick Question**:
-A Feed slot that shows one Round from an enabled Game Mode over an Eligible Entry. The Mix sets its frequency: off, every 20th, every 10th (default) or every 6th card. A right answer earns 2 XP; a wrong one marks the Entry Unknown. It makes nothing Seen beyond its Entry's own rules.
+A Feed slot that shows one Round over an Eligible Entry: a Round of an enabled Game Mode or a Word Meaning question, each with the same chance. The Mix sets its frequency: off, every 20th, every 10th (default) or every 6th card. A right answer earns 2 XP; a wrong one marks the Entry Unknown. It makes nothing Seen beyond its Entry's own rules.
 _Avoid_: Pop quiz, Feed Game
+
+**Word Meaning question**:
+A round type of the Quick Question, not a Game Mode: the Lemma of a Word that is an Eligible Entry («„{word}“ — це…») and four Definitions shown whole, its primary Definition among them. The Distractors are primary Definitions of other such Words, of the same part of speech first. A Word whose Definition holds its Lemma is never asked. It has its own Feature Switch (ADR 0128).
+_Avoid_: Definition mode, meaning Game
 
 **Questionnaire**:
 The questions that tune the Feed to the reader. Onboarding asks two: «Рівень», how well the reader knows the language (sets the Rarity Ceiling, «Тільки починаю» «до 2» to «Мовний гурман» «до 5»; «Не знаю» opens the Rarity Test, whose result sets it) and «Навіщо» (sets the Mix kind weights); skipping them keeps the defaults. The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (decides whether to offer the Rarity Test) and the Mix review come later through Feed Notices. The reader can retake it from Settings, «Рівень» there without «Не знаю». Its answers reach the owner only as anonymous counters and as properties of the anonymous Analytics id.

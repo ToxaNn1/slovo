@@ -25,7 +25,7 @@ import type { TextComparison } from '../text/text-comparison';
  * The Words a Distractor may be, best first: the Words of the answer's part
  * of speech in a random order, then the others in a random order.
  */
-const distractorOrder = (answer: Word, others: readonly Word[], random: Random): Word[] => [
+export const distractorOrder = (answer: Word, others: readonly Word[], random: Random): Word[] => [
   ...shuffled(
     others.filter((word) => word.partOfSpeech === answer.partOfSpeech),
     random,
@@ -43,7 +43,7 @@ const distractorOrder = (answer: Word, others: readonly Word[], random: Random):
 const definitions = new WeakMap<TextComparison, WeakMap<Word | Idiom, string>>();
 
 /** A primary Definition as the reader tells it apart: its Comparison Key as a Definition. */
-function definitionOfEntry(comparison: TextComparison, entry: Word | Idiom): string {
+export function definitionOfEntry(comparison: TextComparison, entry: Word | Idiom): string {
   let keys = definitions.get(comparison);
   if (keys === undefined) {
     keys = new WeakMap();
