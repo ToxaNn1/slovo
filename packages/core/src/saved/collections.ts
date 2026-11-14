@@ -23,6 +23,25 @@ export interface Collection {
   readonly source?: string;
 }
 
+/**
+ * How long a delete can be undone, in milliseconds: a little longer than the
+ * toast that offers it stays (ADR 0132).
+ */
+export const COLLECTION_UNDO_MS = 4000;
+
+/** The undo of one delete of a Collection. */
+export interface DeletedCollection {
+  /**
+   * Brings the Collection back as it was: writes again, in one write, the
+   * very records the delete removed (same id, name, time, source and Entry
+   * records), so sync and Collection Links see the same Collection. Resolves
+   * to it, or to nothing once `COLLECTION_UNDO_MS` have passed since the
+   * delete, after it was brought back once, or when a Collection of that name
+   * was made meanwhile.
+   */
+  restore(): Promise<Collection | undefined>;
+}
+
 /** The longest name a Collection may have, in characters. */
 export const COLLECTION_NAME_MAX_LENGTH = 40;
 
@@ -103,10 +122,11 @@ export interface Collections {
   rename(collectionId: string, name: string): Promise<CollectionResult | undefined>;
   /**
    * Deletes the Collection, its record and the records of its Entries in one
-   * write. The Entries stay wherever else they are kept (Favorites, History,
-   * other Collections). A Collection that doesn't exist is skipped.
+   * write, and resolves to its undo. The Entries stay wherever else they are
+   * kept (Favorites, History, other Collections). A Collection that doesn't
+   * exist is skipped and resolves to nothing.
    */
-  delete(collectionId: string): Promise<void>;
+  delete(collectionId: string): Promise<DeletedCollection | undefined>;
   /**
    * Adds the Entry to the Collection, as of now. An Entry already in it keeps
    * the time it was added; an Entry the Language Pack doesn't have, and a
@@ -225,6 +245,7 @@ export async function openCollections({
   }
 
   const write = (changes: UserStateChanges) => userState.write(changes);
+  const inTurn = createInTurn();
 
   let list: readonly Collection[] = NONE;
   /** The Entries of each Collection, made when asked for and dropped when that Collection changes. */
@@ -376,17 +397,19 @@ export async function openCollections({
     return { ok: true, collection: change({ ...collection, name }) };
   }
 
-  async function deleteCollection(collectionId: string): Promise<void> {
-    if (!collections.has(collectionId)) return;
+  async function deleteCollection(collectionId: string): Promise<DeletedCollection | undefined> {
+    const collection = collections.get(collectionId);
+    if (collection === undefined) return undefined;
     // Every record of its Entries, also one of an Entry the Language Pack no longer has.
     const prefix = `${collectionId}.`;
+    const entryRecords = [...(await userState.list(collectionEntryRecords))].filter(([key]) =>
+      key.startsWith(prefix),
+    );
     const changes = new Map<string, string | undefined>(
       collectionRecords.record(collectionId).change(undefined),
     );
-    for (const key of (await userState.list(collectionEntryRecords)).keys()) {
-      if (key.startsWith(prefix)) {
-        mergeInto(changes, collectionEntryRecords.record(key).change(undefined));
-      }
+    for (const [key] of entryRecords) {
+      mergeInto(changes, collectionEntryRecords.record(key).change(undefined));
     }
     await write(changes);
     collections.delete(collectionId);
@@ -394,6 +417,34 @@ export async function openCollections({
     entriesOf.delete(collectionId);
     remake();
     subscribers.tell();
+    const deletedAt = clock.now().getTime();
+    let restored = false;
+    return {
+      restore: () =>
+        inTurn(async () => {
+          if (
+            restored ||
+            clock.now().getTime() - deletedAt >= COLLECTION_UNDO_MS ||
+            collections.has(collectionId) ||
+            refusalOf(collection.name) !== undefined
+          ) {
+            return undefined;
+          }
+          const back = new Map<string, string | undefined>(
+            collectionRecords.record(collectionId).change({
+              name: collection.name,
+              createdAt: collection.createdAt.toISOString(),
+              ...(collection.source === undefined ? {} : { source: collection.source }),
+            }),
+          );
+          for (const [key, added] of entryRecords) {
+            mergeInto(back, collectionEntryRecords.record(key).change(added));
+          }
+          await write(back);
+          restored = true;
+          return change(collection);
+        }),
+    };
   }
 
   async function add(collectionId: string, entryId: string): Promise<void> {
@@ -415,7 +466,6 @@ export async function openCollections({
     change({ ...collection, filed });
   }
 
-  const inTurn = createInTurn();
 
   return {
     get list() {
