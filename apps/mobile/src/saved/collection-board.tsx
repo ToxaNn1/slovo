@@ -7,7 +7,8 @@ import {
   CollectionNameSheet,
   CollectionShareButton,
   CollectionWordRow,
-  DeleteCollectionDialog,
+  CollectionShareSheet,
+  DeleteCollectionSheet,
   EmptyState,
   space,
   UndoToastProvider,
@@ -23,7 +24,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
 import { useCollectionChanges, useCollectionEntries } from '@/saved/collections';
-import { useCollectionSharing } from '@/saved/collection-sharing';
+import { useCollectionShareSheet } from '@/saved/collection-sharing';
+import { handDeleteUndo } from '@/saved/collection-undo';
 import { createMenuFollowUp } from '@/saved/menu-follow-up';
 import { ListTopButton } from '@/shell/list-top';
 import { useOpenScreen } from '@/use-open-screen';
@@ -37,8 +39,9 @@ const { toasts } = collectionStrings;
  * «⋯» over the Collection's name and «N слів», its Entries newest first as
  * rows with a chevron, and «Поділитися посиланням» at the foot while
  * Collection Links are on and the Collection holds an Entry. «⋯» opens the
- * Collection menu (share, rename in the name sheet, delete after the
- * confirmation); a rename says so in a toast, and so does the Collection just
+ * Collection menu (share in the share sheet, rename in the name sheet,
+ * delete after the delete sheet, which goes back to Collections, where the
+ * toast offers the undo); a rename says so in a toast, and so does the Collection just
  * made (`created`). A tap on a row opens the Entry screen; a swipe takes the
  * Entry out of this Collection only. An empty Collection says so.
  */
@@ -60,7 +63,7 @@ export function CollectionBoardScreen({
 function Board({ collectionId, created }: { collectionId: string; created: boolean }) {
   const { collection, entries, remove: removeEntry } = useCollectionEntries(collectionId);
   const { rename, remove } = useCollectionChanges();
-  const { available: sharingAvailable, share } = useCollectionSharing();
+  const { available: sharingAvailable, share, sheet: shareSheet } = useCollectionShareSheet();
   const { colors } = useTokens();
   const { count } = useEdition();
   const showToast = useUndoToast();
@@ -161,7 +164,6 @@ function Board({ collectionId, created }: { collectionId: string; created: boole
       />
       <ListTopButton scroll={scroll} />
       {sharingAvailable && shown.length > 0 && collection !== undefined && (
-        // The Collection's share sheet (board 09) takes this button over; until then it shares as the menu does.
         <CollectionShareButton
           testID="collection-share"
           label={collectionStrings.link.share}
@@ -209,19 +211,22 @@ function Board({ collectionId, created }: { collectionId: string; created: boole
           setRenaming(false);
         }}
       />
-      <DeleteCollectionDialog
+      <DeleteCollectionSheet
         testID="collection-delete"
         name={deleting ? name : undefined}
         copy={strings.confirmDelete}
         onDelete={() => {
           setDeleting(false);
-          remove(collectionId);
+          void remove(collectionId).then((deleted) => {
+            if (deleted !== undefined) handDeleteUndo(deleted);
+          });
           leave();
         }}
         onCancel={() => {
           setDeleting(false);
         }}
       />
+      <CollectionShareSheet testID="collection-share-sheet" {...shareSheet} />
     </SafeAreaView>
   );
 }

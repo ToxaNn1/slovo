@@ -15,6 +15,7 @@ export {
   type CollectionNameRefusal,
   type CollectionResult,
   type Collections,
+  type DeletedCollection,
 } from './saved/collections';
 export { type CollectionLinkPreview } from './collection-links/copy-collection';
 export { type CorrectionCardModel } from './entries/correction-card';

@@ -231,7 +231,7 @@ function Collections({ header }: { header: ListHeader }) {
         name={deleting?.name}
         copy={strings.confirmDelete}
         onDelete={() => {
-          if (deleting !== undefined) remove(deleting.id);
+          if (deleting !== undefined) void remove(deleting.id);
           setDeleting(undefined);
         }}
         onCancel={() => {

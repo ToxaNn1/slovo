@@ -183,6 +183,13 @@ export const collectionMenu = {
   rowPaddingHorizontal: 16,
 } as const;
 
+/** The box of the Collection Link on its share sheet (board 09): height, corner, side padding. */
+export const collectionLinkBox = {
+  height: 56,
+  radius: 14,
+  paddingHorizontal: 16,
+} as const;
+
 /**
  * The name sheet of a Collection (board 09): the field's height, corner,
  * border and side padding, the gap between the input and the counter, the

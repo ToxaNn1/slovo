@@ -1,4 +1,10 @@
-import type { Collection, CollectionEntry, CollectionResult, Collections } from '@slovo/core';
+import type {
+  Collection,
+  CollectionEntry,
+  CollectionResult,
+  Collections,
+  DeletedCollection,
+} from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
 
@@ -70,8 +76,11 @@ export function useCollectionChanges(): {
   create: (name: string) => Promise<CreatedCollection>;
   /** Renames a Collection; resolves to why the name is refused, or to nothing once it is kept. */
   rename: (collectionId: string, name: string) => Promise<string | undefined>;
-  /** Deletes a Collection with its Entry records; the Entries stay wherever else they are kept. */
-  remove: (collectionId: string) => void;
+  /**
+   * Deletes a Collection with its Entry records; the Entries stay wherever
+   * else they are kept. Resolves to its undo once it is kept, or to nothing.
+   */
+  remove: (collectionId: string) => Promise<DeletedCollection | undefined>;
 } {
   const { collections } = useComposition();
   // Kept from render to render, so the rows of the Collections screen re-render only when the list changes.
@@ -88,9 +97,7 @@ export function useCollectionChanges(): {
             };
       },
       rename: (collectionId, name) => refusalOf(collections.rename(collectionId, name)),
-      remove(collectionId) {
-        void keep('Collections', collections.delete(collectionId));
-      },
+      remove: (collectionId) => keep('Collections', collections.delete(collectionId)),
     }),
     [collections],
   );
