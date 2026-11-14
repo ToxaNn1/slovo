@@ -2,7 +2,6 @@ import type { PackMetadata } from '@slovo/contracts';
 
 import type { BuildError } from './build-error';
 import { checkContentVersion } from './content-manifest';
-import { missedTargets, type MissedTarget } from './content-targets';
 import { unregisteredEntries } from './id-registry';
 import { PACK_FORMAT, type PackContent } from './pack-layout';
 import { readEdition, readEditionWithSnapshot } from './read-edition';
@@ -18,10 +17,8 @@ export type BuildResult =
   | {
       readonly ok: true;
       readonly metadata: PackMetadata;
-      /** The counts, Retired Words and Retired Corrections left out (ADR 0009). */
+      /** The counts, Retired Words and Retired Corrections left out (ADR 0123). */
       readonly report: ContentReport;
-      /** The content targets the Edition declares and the content misses. */
-      readonly missedTargets: readonly MissedTarget[];
     }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
 
@@ -31,17 +28,11 @@ export type SnapshotBuildResult =
   | Extract<BuildResult, { ok: false }>;
 
 export type CheckResult =
-  | {
-      readonly ok: true;
-      /** The content targets the Edition declares and the content misses. */
-      readonly missedTargets: readonly MissedTarget[];
-    }
-  | { readonly ok: false; readonly errors: readonly BuildError[] };
+  { readonly ok: true } | { readonly ok: false; readonly errors: readonly BuildError[] };
 
 /**
  * Checks an Edition's content with the build's own rules and writes nothing:
- * it refuses exactly what `buildLanguagePack` refuses, and reports the
- * content targets the content misses.
+ * it refuses exactly what `buildLanguagePack` refuses.
  */
 export function checkLanguagePack({
   editionDir,
@@ -53,16 +44,15 @@ export function checkLanguagePack({
 }): CheckResult {
   const checked = checkEdition(editionDir, today);
   if (!checked.ok) return checked;
-  return { ok: true, missedTargets: checked.missedTargets };
+  return { ok: true };
 }
 
 /**
  * Validates an Edition's config and content, Entry by Entry, across Entries
  * and against the id registry and the content manifest, and compiles them
- * into a SQLite Language Pack at `outFile` with a content report, checked
- * against the content targets the Edition declares. It refuses a literary use
- * not yet in the public domain on `today`. Nothing is written when
- * there are errors; missed targets are not errors.
+ * into a SQLite Language Pack at `outFile` with a content report. It refuses
+ * a literary use not yet in the public domain on `today`. Nothing is written
+ * when there are errors.
  */
 export function buildLanguagePack({
   editionDir,
@@ -76,9 +66,9 @@ export function buildLanguagePack({
 }): BuildResult {
   const checked = checkEdition(editionDir, today);
   if (!checked.ok) return checked;
-  const { content, metadata, report, missedTargets } = checked;
+  const { content, metadata, report } = checked;
   writePack(outFile, content, metadata);
-  return { ok: true, metadata, report, missedTargets };
+  return { ok: true, metadata, report };
 }
 
 /**
@@ -87,7 +77,7 @@ export function buildLanguagePack({
  * backend, which gives every record, its retired flag and the Words that
  * need a new Recording at the snapshot's content version. It checks the
  * records with the build's own rules and writes nothing when there are
- * errors; missed targets are not errors.
+ * errors.
  */
 export function buildFromSnapshot({
   editionDir,
@@ -105,7 +95,7 @@ export function buildFromSnapshot({
   if (source.errors.length > 0 || source.valid === undefined) {
     return { ok: false, errors: source.errors };
   }
-  const { content, targets, config } = source.valid;
+  const { content, config } = source.valid;
   const metadata: PackMetadata = {
     editionId: content.editionId,
     contentVersion: content.contentVersion,
@@ -113,12 +103,10 @@ export function buildFromSnapshot({
     packFormat: PACK_FORMAT,
   };
   writePack(outFile, content, metadata, snapshot);
-  const report = contentReport(content);
   return {
     ok: true,
     metadata,
-    report,
-    missedTargets: missedTargets(report, targets),
+    report: contentReport(content),
     starterMedia: starterMediaOf(config, snapshot),
   };
 }
@@ -160,7 +148,6 @@ function checkEdition(
       content: PackContent;
       metadata: PackMetadata;
       report: ContentReport;
-      missedTargets: MissedTarget[];
     }
   | { ok: false; errors: readonly BuildError[] } {
   const source = readEdition(editionDir, { registryRequired: true, today });
@@ -189,7 +176,7 @@ function checkEdition(
   ];
   if (errors.length > 0 || source.valid === undefined) return { ok: false, errors };
 
-  const { content, manifest, targets } = source.valid;
+  const { content, manifest } = source.valid;
   const check = checkContentVersion(content, manifest);
   if (!check.recorded) return { ok: false, errors: [check.error] };
   const metadata: PackMetadata = {
@@ -198,12 +185,5 @@ function checkEdition(
     packFormat: PACK_FORMAT,
   };
 
-  const report = contentReport(content);
-  return {
-    ok: true,
-    content,
-    metadata,
-    report,
-    missedTargets: missedTargets(report, targets),
-  };
+  return { ok: true, content, metadata, report: contentReport(content) };
 }

@@ -1,8 +1,8 @@
 import type { Entry } from '@slovo/contracts';
-import type { BuildError } from '@slovo/language-pack';
-import { readEdition } from '@slovo/language-pack';
+import type { BuildError, EditionSource } from '@slovo/language-pack';
+import { readEdition, readEditionWithSnapshot } from '@slovo/language-pack';
 import type { Clock, EditionRegistry } from '@slovo/server-core';
-import type { Patch } from '@slovo/contracts/api';
+import type { ContentSnapshot, Patch } from '@slovo/contracts/api';
 import { and, eq, gt, inArray, notInArray, sql } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
@@ -37,6 +37,9 @@ export type ImportResult =
   | { readonly ok: false; readonly reason: 'unknown-edition' | 'already-imported' }
   /** The folder breaks a content rule or does not read; each refusal names its rule when a rule refused it. */
   | { readonly ok: false; readonly reason: 'refused'; readonly refusals: readonly BuildError[] };
+
+/** The content an import writes, checked by the shared content rules. */
+type ImportedContent = NonNullable<EditionSource['valid']>['content'];
 
 /** Rows a single insert sends, well inside Postgres's limit of parameters. */
 const ROWS_PER_INSERT = 500;
@@ -106,7 +109,48 @@ export function createContentStore({
     }
     const { valid, registry = [] } = source;
     if (valid === undefined) return { ok: false, reason: 'refused', refusals: source.errors };
-    const { content } = valid;
+    return writeContent(editionId, valid.content, registry, override, now);
+  }
+
+  /**
+   * Imports a content snapshot, as the backend answers it, through the same
+   * content rules and the same writes as the folder's import: an empty
+   * database of CI, Maestro or `pnpm dev` starts from a committed one. The
+   * Edition's folder gives the config the rules check against; the snapshot
+   * gives the ids and the content version. Its media rows are not imported:
+   * their files live in the Media Store (ADR 0099).
+   */
+  async function importSnapshot(
+    editionId: string,
+    editionDir: string,
+    snapshot: ContentSnapshot,
+    { override = false }: { readonly override?: boolean } = {},
+  ): Promise<ImportResult> {
+    if (editions.find(editionId) === undefined || snapshot.editionId !== editionId) {
+      return { ok: false, reason: 'unknown-edition' };
+    }
+    const now = clock.now();
+    const { valid, errors } = readEditionWithSnapshot(editionDir, snapshot, { today: now });
+    if (valid === undefined) return { ok: false, reason: 'refused', refusals: errors };
+    const registry = [
+      snapshot.words,
+      snapshot.idioms,
+      snapshot.corrections,
+      snapshot.tips,
+      snapshot.synonymRows,
+      snapshot.curatedCollections,
+    ].flatMap((records) => records.map(({ id }) => id));
+    return writeContent(editionId, valid.content, registry, override, now);
+  }
+
+  /** Writes checked content into the content tables in one transaction, as an import does. */
+  function writeContent(
+    editionId: string,
+    content: ImportedContent,
+    registry: readonly string[],
+    override: boolean,
+    now: Date,
+  ): Promise<ImportResult> {
     return db.transaction(async (tx) => {
       const [held] = await tx
         .select()
@@ -162,9 +206,12 @@ export function createContentStore({
       );
       for (const wordId of changed)
         await retireRecordings(tx, { editionId, wordId, version: contentVersion, now });
+      // A snapshot names the Words that already wait for new Recordings.
+      const waiting = new Set(content.needsNewRecording);
       const words = rowsOf(content.words).map((row) => ({
         ...row,
-        needsNewRecording: changed.has(row.id) || stored.get(row.id)?.needs === true,
+        needsNewRecording:
+          changed.has(row.id) || waiting.has(row.id) || stored.get(row.id)?.needs === true,
       }));
       const crosswordDays = (content.crosswordDays ?? []).map((fields) => ({
         ...common,
@@ -419,7 +466,7 @@ export function createContentStore({
     );
   }
 
-  return { importEdition, snapshot, patch, entries };
+  return { importEdition, importSnapshot, snapshot, patch, entries };
 }
 
 export type ContentStore = ReturnType<typeof createContentStore>;

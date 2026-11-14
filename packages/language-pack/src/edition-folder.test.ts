@@ -227,7 +227,6 @@ describe('an Edition folder', () => {
 
     expect(edition.readIfPresent('tokens')).toBeUndefined();
     expect(edition.readIfPresent('decor')).toBeUndefined();
-    expect(edition.readIfPresent('targets')).toBeUndefined();
   });
 
   it('reads a missing id registry as absent, so the caller decides whether it may be', () => {

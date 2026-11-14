@@ -38,9 +38,10 @@ makeEnvFile();
 step('Running the backend migrations');
 run('pnpm', ['--filter', '@slovo/backend', 'db:migrate']);
 const { defaultEdition } = JSON.parse(readFileSync(`${root}app/app.json`, 'utf8'));
-step(`Importing the content of the default Edition "${defaultEdition}" into Postgres`);
+step(`Importing the seed snapshot of the default Edition "${defaultEdition}" into Postgres`);
 // An earlier run's import stays: the database keeps what it has.
-run('pnpm', ['--silent', 'content', 'import', '--edition', defaultEdition]);
+const seed = `editions/${defaultEdition}/seed-snapshot.json`;
+run('pnpm', ['--silent', 'content', 'import', '--edition', defaultEdition, '--snapshot', seed]);
 
 const apiPort = await freePortFrom(Number(process.env.PORT ?? 8787));
 const metroPort = await freePortFrom(Number(process.env.SLOVO_METRO_PORT ?? 8081));

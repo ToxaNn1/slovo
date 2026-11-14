@@ -13,9 +13,10 @@
  * The pack goes to `editions/<edition-id>/dist/language-pack.db` unless
  * `--out` says otherwise. It downloads the Starter Media the app bundles
  * (ADR 0099) to `editions/<edition-id>/starter-media/`, which git ignores.
- * Prints the content report after every successful build. Exits non-zero, listing every error, when the content is invalid,
- * and listing every miss when the content falls short of the Edition's
- * content targets (`content/targets.json`); the pack is still written then.
+ * Prints the content report after every successful build. Exits non-zero,
+ * listing every error, when the content is invalid. It lists every content
+ * target of `contentTargets` in `edition.json` the content misses and still
+ * exits zero: the targets block nothing (ADR 0123).
  *
  * After editing the content files, `--record` appends the new ids to the id
  * registry (`content/ids.json`) and, when the content changed, raises the
@@ -29,6 +30,7 @@ import { parseArgs } from 'node:util';
 
 import { buildFromBackend, buildFromSnapshot, type SnapshotBuildResult } from './build';
 import { formatBuildError } from './build-error';
+import { missedTargets } from './content-targets';
 import {
   EDITIONS_DIR,
   EditionFolderError,
@@ -132,7 +134,7 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  const { metadata, report, missedTargets, starterMedia } = result;
+  const { metadata, report, starterMedia } = result;
   const starterDir = join(editionDir, STARTER_MEDIA_DIR);
   await downloadStarterMedia(starterMedia, starterDir, async (url) => {
     const response = await fetch(url);
@@ -149,17 +151,18 @@ async function main(): Promise<number> {
   console.log('');
   console.log(formatContentReport(report));
   console.log('');
+  const missed = missedTargets(report, edition.config.contentTargets ?? {});
+  console.log(
+    missed.length === 0
+      ? 'Content targets: none missed'
+      : `Content targets: ${String(missed.length)} missed, which blocks nothing`,
+  );
+  for (const { target, message } of missed) console.log(`  ${target}: ${message}`);
+  console.log('');
   console.log(
     `Starter Media: ${String(starterMedia.files.length)} files in ${displayPath(starterDir)}`,
   );
-  console.log('');
-  if (missedTargets.length === 0) {
-    console.log('Content targets: none missed');
-    return 0;
-  }
-  console.error(`Content targets: ${String(missedTargets.length)} missed`);
-  for (const { target, message } of missedTargets) console.error(`  ${target}: ${message}`);
-  return 1;
+  return 0;
 }
 
 /** A path relative to the repo root when it lies inside the repo, absolute otherwise. */

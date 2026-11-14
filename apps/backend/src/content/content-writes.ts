@@ -602,6 +602,7 @@ export function createContentWrites({
   async function report(editionId: string) {
     const edition = editions.find(editionId);
     if (edition === undefined) return { ok: false, reason: 'not-found' } as const;
+    const contentTargets = edition.config.contentTargets ?? {};
     return db.transaction(async (tx) => {
       const contentVersion = await importedVersion(tx, editionId);
       if (contentVersion === undefined) return { ok: false, reason: 'not-imported' } as const;
@@ -631,8 +632,8 @@ export function createContentWrites({
             voices: edition.config.narratorVoices.voices.map(({ id }) => id),
           }),
         },
-        targets: edition.targets,
-        missed: missedTargets(counted, edition.targets),
+        targets: contentTargets,
+        missed: missedTargets(counted, contentTargets),
         quoteCheck: await quoteCheckCounts(tx, editionId),
       };
     }, readOnly);

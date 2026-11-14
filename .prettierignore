@@ -3,6 +3,9 @@ pnpm-lock.yaml
 # Saved pages from the dictionary sites, kept byte for byte
 tools/sourcing/fixtures/
 
+# The seed snapshot an empty database imports, a saved answer of the snapshot endpoint
+editions/*/seed-snapshot.json
+
 # Id registries, appended to one id per line by `pnpm build:pack <edition-id> --record`
 **/content/ids.json
 
