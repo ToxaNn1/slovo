@@ -4,6 +4,7 @@ import type { Random } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { shuffled } from '../shuffled';
 import type { GameEdition, GameMode, RoundContent } from './game-mode';
+import { WORD_MEANING_ID, asksWordMeaning, wordMeaningRound } from './word-meaning';
 import type { GameXp } from './game-xp';
 import type { TextComparison } from '../text/text-comparison';
 
@@ -25,22 +26,30 @@ export interface QuickQuestionContent {
   readonly round: PickRound;
 }
 
+/** The stable id of where a Quick Question came from: the Game Mode's own, or the Word Meaning question's. */
+export const quickQuestionSourceId = (source: QuickQuestionSource): string =>
+  source.kind === 'game-mode' ? source.modeId : WORD_MEANING_ID;
+
 /**
  * The Quick Question (CONTEXT.md): it builds one Round from an enabled Game
- * Mode over an Eligible Entry, and keeps the reader's answer. A right answer
- * earns its XP and confirms the Entry (ADR 0043, 0066); a wrong one marks
- * the Entry Unknown.
+ * Mode or a Word Meaning question over an Eligible Entry, and keeps the
+ * reader's answer. A right answer earns its XP and confirms the Entry (ADR
+ * 0043, 0066); a wrong one marks the Entry Unknown.
  */
 export interface QuickQuestion {
   /**
-   * A Round of a Game Mode on offer, the modes tried in a random order, over
-   * a random Eligible Entry other than `avoid`; only a mode whose Round is a
-   * pick of options can give one. Nothing when no mode can.
+   * A Round of a Game Mode on offer or of the Word Meaning question while its
+   * Feature Switch is on (ADR 0127), tried in one random order so each has
+   * the same chance, over a random Eligible Entry other than `avoid`; only a
+   * mode whose Round is a pick of options can give one. Nothing when none can.
    */
   build(avoid?: string): Promise<QuickQuestionContent | undefined>;
   /** Keeps the option the reader picked and resolves whether it is right. */
   answer(content: QuickQuestionContent, option: number): Promise<boolean>;
 }
+
+/** What may give a Quick Question: its Round over an Entry other than `avoid`, or nothing. */
+type Candidate = (avoid?: string) => Promise<QuickQuestionContent | undefined>;
 
 export function createQuickQuestion({
   edition,
@@ -62,18 +71,22 @@ export function createQuickQuestion({
   userState: Pick<UserState, 'write'>;
   random: Random;
   modes: readonly GameMode[];
-  /** Tells of the reader's answer about the asked Entry, right or not; it never throws. */
-  answered?: (askedId: string, right: boolean) => Promise<void>;
+  /** Tells of the reader's answer to the question, right or not; it never throws. */
+  answered?: (content: QuickQuestionContent, right: boolean) => Promise<void>;
 }): QuickQuestion {
-  const modes = registered.filter((mode) => mode.isOn(edition));
+  /** One of the Entries other than `avoid`, drawn from the random source. */
+  const oneOf = <E extends { readonly id: string }>(of: readonly E[], avoid?: string) => {
+    const answers = of.filter(({ id }) => id !== avoid);
+    return answers[Math.floor(random.next() * answers.length)];
+  };
 
-  async function build(avoid?: string): Promise<QuickQuestionContent | undefined> {
-    for (const mode of shuffled(modes, random)) {
+  const ofMode =
+    (mode: GameMode): Candidate =>
+    async (avoid) => {
       const eligible = await entries.eligibleOfKind(mode.entryKind, mode.alsoAsks);
-      if ('refusal' in eligible) continue;
-      const answers = eligible.entries.filter(({ id }) => id !== avoid);
-      const answer = answers[Math.floor(random.next() * answers.length)];
-      if (answer === undefined) continue;
+      if ('refusal' in eligible) return undefined;
+      const answer = oneOf(eligible.entries, avoid);
+      if (answer === undefined) return undefined;
       const round = mode.buildRound({
         answer,
         eligible: eligible.entries,
@@ -84,8 +97,34 @@ export function createQuickQuestion({
         edition,
         comparison,
       });
-      if (round?.form === 'pick')
-        return { entry: answer, source: { kind: 'game-mode', modeId: mode.id }, round };
+      return round?.form === 'pick'
+        ? { entry: answer, source: { kind: 'game-mode', modeId: mode.id }, round }
+        : undefined;
+    };
+
+  const wordMeaning: Candidate = async (avoid) => {
+    const eligible = await entries.eligibleOfKind('word');
+    if ('refusal' in eligible) return undefined;
+    const words = eligible.entries.filter((entry) => entry.kind === 'word');
+    // The first that may be asked of a shuffle: the check reads a Definition, so not every Word pays it.
+    const answer = shuffled(
+      words.filter(({ id }) => id !== avoid),
+      random,
+    ).find((word) => asksWordMeaning(word, comparison));
+    if (answer === undefined) return undefined;
+    const round = wordMeaningRound({ answer, eligible: words, random, comparison });
+    return round && { entry: answer, source: { kind: 'word-meaning' }, round };
+  };
+
+  const candidates: readonly Candidate[] = [
+    ...registered.filter((mode) => mode.isOn(edition)).map(ofMode),
+    ...(edition.isFeatureEnabled('quickQuestionWordMeaning') ? [wordMeaning] : []),
+  ];
+
+  async function build(avoid?: string): Promise<QuickQuestionContent | undefined> {
+    for (const candidate of shuffled(candidates, random)) {
+      const content = await candidate(avoid);
+      if (content !== undefined) return content;
     }
     return undefined;
   }
@@ -98,7 +137,7 @@ export function createQuickQuestion({
       award.commit();
       await knowledge.confirm(content.entry.id);
     } else await knowledge.answer(content.entry.id, 'unknown');
-    await answered?.(content.entry.id, right);
+    await answered?.(content, right);
     return right;
   }
 

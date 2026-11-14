@@ -213,9 +213,13 @@ const AgentNameSchema = z
   .trim()
   .regex(/^[a-z0-9-]{1,40}$/);
 
-/** What an Edition declares of each feature, its Rules and its force-update minimums. */
+/**
+ * What an Edition declares of each feature, its Rules and its force-update
+ * minimums. An output, so `states` is a plain object that stays open to a new
+ * Feature Switch (ADR 0031).
+ */
 const SwitchesOfEditionSchema = z.object({
-  states: FeatureSwitchesSchema,
+  states: z.object(FeatureSwitchesSchema.shape),
   rules: z.array(RuleSchema),
   minimums: ForceUpdateMinimumsSchema,
 });

@@ -67,6 +67,7 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   survivalStreak: ['gameSurvival'],
   finishPoster: ['game'],
   quickQuestion: ['game'],
+  quickQuestionWordMeaning: ['quickQuestion'],
   playStep: ['game'],
   // The events of the admin's Аналітика go only with Analytics (spec #1709).
   analyticsSessions: ['analytics'],

@@ -7877,6 +7877,14 @@
                           ],
                           "type": "string"
                         },
+                        "quickQuestionWordMeaning": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "playStep": {
                           "enum": [
                             "on",
@@ -8437,6 +8445,7 @@
                         "streakFreezes",
                         "streakBreak",
                         "quickQuestion",
+                        "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
                         "noCounters",
@@ -8498,8 +8507,7 @@
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     "rules": {
                       "type": "array",
@@ -9636,6 +9644,14 @@
                           ],
                           "type": "string"
                         },
+                        "quickQuestionWordMeaning": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "playStep": {
                           "enum": [
                             "on",
@@ -10196,6 +10212,7 @@
                         "streakFreezes",
                         "streakBreak",
                         "quickQuestion",
+                        "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
                         "noCounters",
@@ -10257,8 +10274,7 @@
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     "rules": {
                       "type": "array",
@@ -11326,6 +11342,14 @@
                           ],
                           "type": "string"
                         },
+                        "quickQuestionWordMeaning": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "playStep": {
                           "enum": [
                             "on",
@@ -11886,6 +11910,7 @@
                         "streakFreezes",
                         "streakBreak",
                         "quickQuestion",
+                        "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
                         "noCounters",
@@ -11947,8 +11972,7 @@
                         "profileConfirmedByRarity",
                         "profileGameBest",
                         "forceUpdate"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     "rules": {
                       "type": "array",

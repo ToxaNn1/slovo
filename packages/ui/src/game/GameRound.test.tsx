@@ -1498,4 +1498,31 @@ describe('QuickQuestionRound', () => {
 
     expect(screen.queryByTestId('game-instead')).not.toBeOnTheScreen();
   });
+
+  it('reads the heading once when the label is the Quick Question’s own title', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <HapticsProvider haptics={haptics}>
+          <QuickQuestionRound
+            title="Quick question"
+            round={{
+              form: 'pick',
+              prompt: 'candid',
+              labelKind: 'meaning',
+              options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
+              correct: CORRECT,
+              sheet: { answer: { text: OPTIONS[CORRECT], stressedVowels: [] }, example: undefined },
+            }}
+            entry={tip}
+            label="Quick question"
+            answered={undefined}
+            feedback="sheet"
+            onAnswer={jest.fn()}
+          />
+        </HapticsProvider>
+      </EditionProvider>,
+    );
+
+    expect(screen.getByRole('header', { name: 'Quick question' })).toBeOnTheScreen();
+  });
 });
