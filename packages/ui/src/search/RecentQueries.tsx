@@ -35,15 +35,7 @@ export function RecentQueries({
   ));
 }
 
-function RecentQuery({
-  query,
-  index,
-  onRun,
-}: {
-  query: string;
-  index: number;
-  onRun: () => void;
-}) {
+function RecentQuery({ query, index, onRun }: { query: string; index: number; onRun: () => void }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
