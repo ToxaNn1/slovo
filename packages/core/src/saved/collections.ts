@@ -23,6 +23,14 @@ export interface Collection {
   readonly source?: string;
 }
 
+/** The longest name a Collection may have, in characters. */
+export const COLLECTION_NAME_MAX_LENGTH = 40;
+
+/** How long a name is as the name rules count it: its characters once trimmed, not its UTF-16 code units. */
+export function collectionNameLength(name: string): number {
+  return Array.from(name.trim()).length;
+}
+
 /** Why a name is refused, for the UI to say in the Edition's words. */
 export type CollectionNameRefusal =
   /** Nothing is left of the name once it is trimmed. */
@@ -114,8 +122,6 @@ export interface Collections {
 const { collections: collectionRecords, collectionEntries: collectionEntryRecords } =
   userStateRecords;
 
-/** The longest name a Collection may have, in characters. */
-const NAME_MAX_LENGTH = 40;
 /** How many Lemmas a Collection shows of its newest Entries. */
 const NEWEST_LEMMAS = 3;
 const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
@@ -268,8 +274,7 @@ export async function openCollections({
   /** Why the name is refused for the Collection (a new one, or the one of `ownId`), if it is. */
   function refusalOf(name: string, ownId?: string): CollectionNameRefusal | undefined {
     if (name === '') return 'empty';
-    // Count characters, not UTF-16 code units.
-    if (Array.from(name).length > NAME_MAX_LENGTH) return 'too-long';
+    if (collectionNameLength(name) > COLLECTION_NAME_MAX_LENGTH) return 'too-long';
     const key = nameKey(name);
     return list.some((collection) => collection.id !== ownId && nameKey(collection.name) === key)
       ? 'duplicate'
@@ -313,7 +318,7 @@ export async function openCollections({
       const suffix = number === 1 ? '' : ` (${String(number)})`;
       // Count characters, not UTF-16 code units.
       const cut = Array.from(name)
-        .slice(0, NAME_MAX_LENGTH - suffix.length)
+        .slice(0, COLLECTION_NAME_MAX_LENGTH - suffix.length)
         .join('')
         .trimEnd();
       if (!taken.has(nameKey(`${cut}${suffix}`))) return `${cut}${suffix}`;
