@@ -8,6 +8,7 @@ import type { WeeklyRecap } from './weekly-recap';
 import { FEED_NOTICES, type FeedNotice } from '../feed-notice';
 import { dateKeyOf, localDateAfter, localDayOf, type LocalDate } from '../local-date';
 import type { HiddenEntries } from '../mix/hidden-entries';
+import { meaningQuiz, type MeaningQuiz } from '../knowledge/meaning-quiz';
 import type { ActiveDays } from '../progress/active-days';
 import { LEVEL_MILESTONES, nameOf, totalFor, type LevelMilestone } from '../progress/levels';
 import type { XpLog } from '../progress/xp-log';
@@ -15,7 +16,6 @@ import type { Clock, Random, UserStateChanges } from '../ports';
 import type { History } from '../saved/history';
 import type { TextComparison } from '../text/text-comparison';
 import { seededRandomOf } from '../game/traced-crossword';
-import { shuffled } from '../shuffled';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -27,10 +27,7 @@ export type FirstWeekDay = 1 | 2 | 3 | 4 | 5 | 6 | 7;
  * primary Definition and two of other Words, in the order the card shows
  * them; `answered` is the meaning the reader picked, once they did.
  */
-export interface YesterdayQuiz {
-  readonly meanings: readonly string[];
-  /** The place of the Word's own meaning among `meanings`. */
-  readonly right: number;
+export interface YesterdayQuiz extends MeaningQuiz {
   readonly answered?: number;
 }
 
@@ -89,53 +86,6 @@ export function noticesOf(content: FeedNoticeContent): readonly FeedNotice[] {
   return content.notice === 'weeklyRecap' && content.yesterday !== undefined
     ? ['weeklyRecap', 'yesterday']
     : [content.notice];
-}
-
-/** The meanings of the Yesterday quiz. */
-const QUIZ_MEANINGS = 3;
-
-/**
- * The Words a Distractor may be, best first: the Words of the answer's part
- * of speech in a random order, then the others in a random order (ADR 0101).
- */
-const distractorOrder = (answer: Word, others: readonly Word[], random: Random): Word[] => [
-  ...shuffled(
-    others.filter((other) => other.partOfSpeech === answer.partOfSpeech),
-    random,
-  ),
-  ...shuffled(
-    others.filter((other) => other.partOfSpeech !== answer.partOfSpeech),
-    random,
-  ),
-];
-
-/**
- * The Yesterday quiz of `word` over the `others` Words, in the order `random`
- * gives: its meaning and the first two distinct meanings of other Words,
- * those of its part of speech first; a homonym's never, since the card shows
- * the one Lemma. Meanings are distinct by their Comparison Key for a
- * Definition (ADR 0101). Nothing when the others have no two such meanings.
- */
-function yesterdayQuiz(
-  word: Word,
-  others: readonly Word[],
-  random: Random,
-  comparison: Pick<TextComparison, 'key'>,
-): YesterdayQuiz | undefined {
-  const keyOf = (meaning: string) => comparison.key(meaning, 'definition');
-  const meanings = [word.primaryDefinition];
-  const keys = new Set([keyOf(word.primaryDefinition)]);
-  const candidates = others.filter((other) => other.lemma !== word.lemma);
-  for (const other of distractorOrder(word, candidates, random)) {
-    if (meanings.length === QUIZ_MEANINGS) break;
-    const key = keyOf(other.primaryDefinition);
-    if (keys.has(key)) continue;
-    keys.add(key);
-    meanings.push(other.primaryDefinition);
-  }
-  if (meanings.length < QUIZ_MEANINGS) return undefined;
-  const order = shuffled(meanings, random);
-  return { meanings: order, right: order.indexOf(word.primaryDefinition) };
 }
 
 /**
@@ -314,7 +264,7 @@ export function openFeedNotices({
     const key = `${dayBefore}:${word.id}`;
     if (lastQuiz.key !== key) {
       const quiz = entries.wordsUnderRarityCeiling().then((words) =>
-        yesterdayQuiz(
+        meaningQuiz(
           word,
           words.filter((other) => other.id !== word.id && !hiddenEntries.has(other.id)),
           seeded(`yesterday:${key}`),
