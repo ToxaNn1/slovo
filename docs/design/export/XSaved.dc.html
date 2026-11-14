@@ -31,7 +31,8 @@
 
 <sc-if value="{{ savedHead }}" hint-placeholder-val="{{ true }}">
   <div style="position:absolute;left:0;right:0;top:56px;z-index:2;display:flex;flex-direction:column;gap:12px;padding:6px 0 0">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px"><span style="font:900 30px/1 Unbounded,sans-serif;letter-spacing:-1px">Збережене</span><span style="width:42px;height:42px;border-radius:12px;background:var(--sf2);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 18 18"><circle cx="7.5" cy="7.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2.5"></circle><polygon points="11,13 13,11 18,16 16,18" fill="currentColor"></polygon></svg></span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px"><span style="font:900 30px/1 Unbounded,sans-serif;letter-spacing:-1px">ЗБЕРЕЖЕНЕ</span></div>
+    <div style="margin:0 20px;display:flex;align-items:center;gap:10px;height:50px;padding:0 14px;border-radius:14px;background:var(--sf2)"><svg width="18" height="18" viewBox="0 0 24 24" style="flex:none"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="3.5"></circle><polygon points="15,17 18,14 24,20 21,23" fill="currentColor"></polygon></svg><span style="font:500 16px/1 Onest;color:var(--mute)">Пошук слова чи значення</span></div>
     <div style="display:flex;gap:8px;overflow:hidden;padding:0 20px">
       <sc-for list="{{ stabs }}" as="t" hint-placeholder-count="5"><span style="flex:none;height:38px;padding:0 14px;border-radius:11px;background:{{ t.bg }};color:{{ t.fg }};display:flex;align-items:center;font:700 14px/1 Onest">{{ t.n }}</span></sc-for>
     </div>
@@ -39,7 +40,7 @@
 </sc-if>
 
 <sc-if value="{{ is_s1 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;padding:172px 16px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+<div style="position:absolute;inset:0;padding:234px 16px 100px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="position:relative;border-radius:22px;background:#FF3B2F;color:#140C0A;padding:18px 18px 18px 20px;display:flex;align-items:center;gap:14px;overflow:hidden">
     <div style="position:absolute;right:90px;top:-30px;font:900 140px/1 Unbounded,sans-serif;color:#FFF4E6;opacity:.85">6</div>
     <div style="position:relative;flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 18px/1.1 Unbounded,sans-serif">Перевір себе</span><span style="font:600 13px/1 Onest">6 слів на сьогодні</span></div>
@@ -102,7 +103,7 @@
 </sc-if>
 
 <sc-if value="{{ profHead }}" hint-placeholder-val="{{ false }}">
-  <div style="position:absolute;left:0;right:0;top:56px;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:10px 20px"><span style="font:900 30px/1 Unbounded,sans-serif;letter-spacing:-1px">Профіль</span></div>
+  <div style="position:absolute;left:0;right:0;top:56px;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:10px 20px"><span style="font:900 30px/1 Unbounded,sans-serif;letter-spacing:-1px">ПРОФІЛЬ</span></div>
 </sc-if>
 
 <sc-if value="{{ is_p1 }}" hint-placeholder-val="{{ false }}">

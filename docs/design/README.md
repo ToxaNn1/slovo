@@ -1,6 +1,6 @@
 # Design: «Клин 2.0: Рупор»
 
-The app's design (ADR 0070). `export/` is the owner's Claude Design export «SLOVO interactive design system» of 2026-11-12 (first imported 2026-11-02), kept byte for byte; Prettier, oxlint and knip skip it. It is static HTML that doubles as data: **never open it in a browser or run it**, read it with `grep` and `sed -n`. Where a board and `CONTEXT.md` or an ADR disagree, the glossary and the ADRs win.
+The app's design (ADR 0070). `export/` is the owner's Claude Design export «SLOVO interactive design system» of 2026-11-14 (first imported 2026-11-02), kept byte for byte; Prettier, oxlint and knip skip it. It is static HTML that doubles as data: **never open it in a browser or run it**, read it with `grep` and `sed -n`. Where a board and `CONTEXT.md` or an ADR disagree, the glossary and the ADRs win.
 
 ## The boards
 
