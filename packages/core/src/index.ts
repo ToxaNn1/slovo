@@ -101,7 +101,7 @@ export { HISTORY_CAP, type HistoryEntry } from './saved/history';
 export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
 export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
-export type { DueQuestion, DueQuiz } from './knowledge/due-quiz';
+export type { DueQuestion } from './knowledge/due-quiz';
 export {
   openCounterReads,
   type CounterLine,

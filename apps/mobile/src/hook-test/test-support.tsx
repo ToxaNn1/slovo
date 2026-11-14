@@ -29,6 +29,7 @@ export const crafts: Category = {
 /** The Words of the test Language Pack: `w_one` in nature, the rest in crafts. */
 export const wordIds = ['w_one', 'w_two', 'w_three'] as const;
 
+/** Each Word with a meaning of its own, so the Due Quiz can ask it. */
 const content = createMemoryContentPort({
   categories: [nature, crafts],
   words: wordIds.map((id, index) => ({
@@ -37,7 +38,7 @@ const content = createMemoryContentPort({
     lemma: id.slice(2),
     stress: [],
     partOfSpeech: 'adverb' as const,
-    primaryDefinition: 'A meaning.',
+    primaryDefinition: `The meaning of ${id.slice(2)}.`,
     extraDefinitions: [],
     examples: [],
     synonyms: [],
