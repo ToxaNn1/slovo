@@ -51,7 +51,7 @@ The launch message names the owner's permission and the tickets it covers; work 
 
 The launch message says how this ticket is verified. In general:
 
-- No Maestro and no screenshots in tickets (ADR 0028): a ticket writes, updates and runs no flow and boots no simulator. Screens verify with Jest component tests. One visual pass per version, at its end, takes the screenshots and updates the flows; a look the Result asks to see goes to «Owner checks».
+- No Maestro in tickets (ADR 0126): a ticket writes, updates and runs no flow. Screens verify with Jest component tests, and a ticket that changes a screen carries one screenshot of that screen against its board: a text snapshot first, one screenshot, and the report says what matches and what does not. Where there is no simulator (a cloud session), name the screen and its board in the report for the coordinator to take it. One visual pass per version, at its end, updates the flows; any other look the Result asks to see goes to «Owner checks».
 
 ## 4. Before the report
 

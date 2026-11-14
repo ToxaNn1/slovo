@@ -6,7 +6,7 @@ Spec #1604 ports board 05.1 (05.11). The Curated Collection screen, the Correcti
 
 **The Collections list.** In the board style the reader's Collections list is the k1 grid, tones by position and no quiet tile; the «+» for a new Collection stays where it is.
 
-**Feature Switch** `collectionBoardStyle` (required of every Edition, ADR 0040, no dependency): the grid of Collections and the 05.1 screen of a Collection; off, today's list and screen. The UA Edition has it on.
+**Feature Switch** `collectionBoardStyle` (required of every Edition, ADR 0089, no dependency): the grid of Collections and the 05.1 screen of a Collection; off, today's list and screen. The UA Edition has it on.
 
 ## Considered options
 

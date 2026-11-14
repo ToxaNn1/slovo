@@ -18,7 +18,7 @@ Until 1.0 an Active Day was a day on which the app was opened, so scrolling alon
 
 **Sync.** XP log records merge as a set union by id, like Knowledge Marks (ADR 0041), across devices and on first sign-in, so totals never double. The backend stores them per Account per Edition (ADR 0030). The contract and the server Core gain the record shape; there is no new sync mechanism. Offline, everything is computed on the device.
 
-**Switches.** Each part has its own Feature Switch, required of every Edition and off or on remotely only downward (ADR 0006, 0040). «Без лічильників» (it replaced «Приховати Серію») hides XP, Level, Streak, celebrations and in-Game XP feedback while counting goes on.
+**Switches.** Each part has its own Feature Switch, required of every Edition and turned on or off remotely by Rules (ADR 0006, 0089). «Без лічильників» (it replaced «Приховати Серію») hides XP, Level, Streak, celebrations and in-Game XP feedback while counting goes on.
 
 ## Considered Options
 

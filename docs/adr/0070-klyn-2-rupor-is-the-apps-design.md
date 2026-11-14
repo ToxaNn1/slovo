@@ -15,7 +15,7 @@ The owner chose «Клин 2.0: Рупор» for the whole app after the design 
 
 **The Mascot.** Rupor is the UA Edition's Mascot. The Edition supplies its vector; the Core draws its states (sleeps, waits, shouts, happy, surprised, cringes, sad, celebrates) plus the quiet hat-off state, each with its motion, and an on-red variant. The Decor accessory of the Season or Holiday is a layer on the figure and never changes the palette; the design draws no other Decor (ADR 0014). The Mascot stays silent (`CONTEXT.md`).
 
-**Sounds.** Four short interface sounds (a shout, a right answer, a wrong answer, a tap) play behind a Feature Switch `sounds`, declared by the Edition, and the «Звуки» setting. They are interface sounds, not the Mascot's voice. A remote switch only turns the feature off (ADR 0040).
+**Sounds.** Four short interface sounds (a shout, a right answer, a wrong answer, a tap) play behind a Feature Switch `sounds`, declared by the Edition, and the «Звуки» setting. They are interface sounds, not the Mascot's voice. A remote Rule turns the feature on or off (ADR 0089).
 
 **Motion and haptics.** ADR 0055 allows the design's peaks to run longer than 300 ms and sets one short fade under Reduce Motion. Nothing shakes; the Game keeps its haptics (ADR 0025).
 

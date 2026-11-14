@@ -2,11 +2,13 @@
 
 All Editions share one backend deployment and one Postgres database, with data partitioned by Edition. That is what lets one Account (SLOVO ID) work across Editions with a single deployment, migration and bill, and because every deployment runs the same code, an Edition that ever needs isolation can get its own copy of the server without a rewrite. Inside, the backend is built like the app: a second Edition must get sign-in in its own language and its own content updates from the same deployment without a line of server code changing.
 
+**Amended by ADR 0088 and 0089.** The Owner admin's users are kept apart from Accounts, with roles and sessions of their own (ADR 0088). A remote Feature Switch is a Rule that turns a feature on or off, no longer an off switch (ADR 0089). The domain folders have grown past the first four.
+
 The backend has two parts, like the app's Core and mobile shell (ADR 0006, 0018):
 
 - **The server Core**, `packages/server-core`, holds the backend's rules and declares the ports they need, such as the `Clock`. It imports only `@slovo/contracts` and Zod: no Hono, no SQL, no better-auth, no Node and no language. Its modules follow the app's Core: factory functions over an object of dependencies, expected outcomes as discriminated unions (`{ ok: true, … } | { ok: false, reason }`), exceptions only for broken invariants, time from the `Clock`.
 - **The backend**, `apps/backend`, is the shell: the HTTP routes and oRPC procedures, the adapters of the server Core's ports (Drizzle over Postgres, better-auth, the ZeptoMail mail client) and one composition root, `createApp`, which builds the whole backend from its dependencies.
-- **The same domain folders on both sides** (ADR 0027): `account`, `content`, `edition` and `sync`. The backend's own layer is `database/`: the pool, the schema and the migrate command.
+- **The same domain folders on both sides** (ADR 0027), such as `account`, `edition`, `reports` and `sync`; a domain whose rules need no port (`content`, `media`) has a folder in the backend alone. The backend's own layer is `database/`: the pool, the schema and the migrate command.
 
 dependency-cruiser holds the boundaries in CI (`pnpm deps`): the server Core imports only the contracts and Zod; the backend imports neither the app's Core, the UI nor React; the mobile app imports neither the server Core nor the backend. What both sides share lives in `contracts`.
 
@@ -16,7 +18,7 @@ dependency-cruiser holds the boundaries in CI (`pnpm deps`): the server Core imp
 
 - **Editions come from the Edition folders.** At start the backend reads every Edition through `@slovo/language-pack/edition` (ADR 0035), so a new Edition folder is enough for the backend to serve it. Editions are not a table. An Edition id the backend didn't find is refused.
 - **Edition text comes from the Edition's strings.** What the server writes to a reader, such as the sign-in email, is a string group of the Edition. The server Core carries the same Cyrillic tripwire as the app's Core.
-- **Feature Switches come from the Edition config, then the remote switches** (ADR 0040). The Edition registry answers `serving(editionId, feature)`: the Edition when the backend found it and its switch is on, or why not (`unknown-edition`, `switched-off`). The Account, content, sync, Mistake Report and Community Counters procedures ask it with their feature and answer both refusals as `NOT_FOUND`, so a new feature behind a switch gets the rule by naming its switch. Publishing a pack asks only that the Edition was found. The backend builds the registry in one place, over the Edition folders and the `remote_switches` table.
+- **Feature Switches come from the Edition config, then the remote Rules** (ADR 0089). The Edition registry answers `serving(editionId, feature)`: the Edition when the backend found it and its switch is on for anyone by the Edition's state and its Rules, or why not (`unknown-edition`, `switched-off`). The Account, content, sync, Mistake Report and Community Counters procedures ask it with their feature and answer both refusals as `NOT_FOUND`, so a new feature behind a switch gets the rule by naming its switch. Publishing a pack asks only that the Edition was found. The backend builds the registry in one place, over the Edition folders and the `switch_rules` table.
 - **Data is partitioned by `edition_id`.** A table of data that belongs to one Edition, such as `user_records` (ADR 0041), carries an `edition_id` column. Data of the Account is shared: one Account works in every Edition.
 - **No server-side Extension Point yet.** One is added only when an Edition needs its own server behaviour (ADR 0006).
 

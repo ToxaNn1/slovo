@@ -10,7 +10,7 @@ ADR 0002 made every language its own App Store app, an Edition built from the sh
 
 **The device-language Edition ships in the app; the others download on choice.** The bundled Edition is `defaultEdition` in the AppConfig (`app/app.json`), today the UA Edition: every build of the app bundles it, from one build profile per platform, and no build, Update or CI run names an Edition. After its download an Edition works fully offline, like the bundled one. Each Edition's configuration ships with its content; how is decided when the download is built.
 
-**Feature Switches stay per Edition.** An Edition still turns Core features on and off for itself, and a remote switch still only turns one off (ADR 0040).
+**Feature Switches stay per Edition.** An Edition still turns Core features on and off for itself, and a remote Rule turns one on or off for the readers it targets (ADR 0089).
 
 **One subscription for every language,** priced per country through the store's price tiers; the details belong to the pricing decision, not here.
 

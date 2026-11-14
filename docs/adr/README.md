@@ -2,13 +2,13 @@
 
 Every ADR number in order, one line each, with the decision in force. Read the line first and open the ADR only when you need its detail. Numbers are never reused: a gap is marked unused, and an ADR merged into another is marked with its new home.
 
-- [0001](0001-react-native-expo-with-native-widget.md) React Native and Expo on a development build; the widget is SwiftUI over an App Group.
+- [0001](0001-react-native-expo-with-native-widget.md) React Native and Expo; the JavaScript side also runs in Expo Go, the native targets only in the development build; the widget is SwiftUI over an App Group.
 - 0002: superseded by 0065.
 - [0003](0003-own-backend-instead-of-baas.md) Our own TypeScript backend on Postgres, not a BaaS.
 - [0004](0004-native-builds-in-eas-cloud.md) Native builds run in EAS; a manual CI macOS runner builds the simulator app for Maestro.
 - 0005: merged into 0041.
 - [0006](0006-editions-extend-core-only-through-extension-points.md) An Edition changes the Core only through Feature Switches, Extension Points and Decor; its config names its assets (fonts, widget palette, notification sound); it brings its own fonts, the Core names none.
-- [0007](0007-editions-live-at-head.md) Every Edition builds from `main`; per-Edition control is switches; one build and one Update channel for the one app.
+- [0007](0007-editions-live-at-head.md) Every Edition builds from `main`; per-Edition control is switches, turned on or off remotely by Rules (amended by 0089); one build and one Update channel for the one app.
 - 0008: merged into 0030.
 - [0009](0009-editions-declare-their-content-targets.md) An Edition's content floors live in `content/targets.json`; the pack build fails on a miss.
 - [0010](0010-each-edition-keeps-an-append-only-id-registry.md) `content/ids.json` lists every Entry id ever issued; ids are never reused, a Word that goes is Retired.
@@ -29,9 +29,9 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0025](0025-the-core-turns-a-game-change-into-its-haptic-sequence.md) `createGameHaptics` in the Core turns each Game change into its haptic sequence.
 - [0026](0026-the-widget-reads-a-widget-snapshot-the-core-builds.md) The Core builds the Widget Snapshot, the app writes it into the App Group, the widget only reads it.
 - [0027](0027-source-folders-group-modules-by-glossary-domain.md) One folder per glossary domain, the same name in every package; folders import one way; routes import through `@/` (amended by 0101: the main entry exports only what non-test code outside the Core imports).
-- [0028](0028-maestro-runs-only-on-the-owners-command.md) Maestro runs only on the owner's command; a ticket's PR touches no flow, one visual pass per version does.
+- [0028](0028-maestro-runs-only-on-the-owners-command.md) Superseded by 0126 (Maestro still runs only on the owner's command; a UI ticket now carries one screenshot).
 - [0029](0029-ui-components-are-tested-in-jest-with-jest-expo.md) UI components and app routes are tested in Jest with `jest-expo`; everything else in Vitest.
-- [0030](0030-the-backend-is-a-factory-too.md) One backend deployment for every Edition: a server Core plus an HTTP edge, data partitioned by Edition, Sessions, limits and the client address.
+- [0030](0030-the-backend-is-a-factory-too.md) One backend deployment for every Edition: a server Core plus an HTTP edge, data partitioned by Edition, Sessions, limits and the client address. Amended by 0088, 0089.
 - [0031](0031-the-api-only-grows-within-a-version.md) The API is one oRPC contract that only grows within `/v1`, held by a committed description; amended by 0122: admin inputs are strict and may narrow.
 - 0032: superseded by 0090.
 - [0033](0033-the-language-pack-is-the-runtime-source-of-categories.md) The app reads Categories only from the Language Pack; Corrections have a list of Categories of their own. Amended by 0081.
@@ -50,21 +50,21 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0046](0046-an-idiom-is-the-third-kind-of-entry.md) An Idiom is a kind of Entry with an Idiom Type (idiom, place name, proverb), not a Word.
 - [0047](0047-one-account-per-email-whatever-the-sign-in-method.md) One Account per email; the backend verifies Google's and Apple's tokens itself.
 - [0048](0048-crash-reports-go-to-sentry-with-no-personal-data.md) Crash reports go to Sentry only with a DSN from the environment and carry no personal data.
-- [0049](0049-each-edition-publishes-its-legal-pages.md) An Edition's legal pages are Markdown in its folder, published on GitHub Pages at `/<edition>/` on the app's domain.
+- [0049](0049-each-edition-publishes-its-legal-pages.md) An Edition's legal pages are Markdown in its folder, published on GitHub Pages at `/<edition>/` on the app's domain. Amended by 0125.
 - 0050: merged into 0033.
-- [0051](0051-synonym-row-and-tip-are-the-fourth-and-fifth-kinds-of-entry.md) A Synonym Row and a Tip are full kinds of Entry with Feed turns and Mix switches of their own; notifications stay Words.
+- [0051](0051-synonym-row-and-tip-are-the-fourth-and-fifth-kinds-of-entry.md) A Synonym Row and a Tip are full kinds of Entry with Feed turns and Mix switches of their own; notifications stay Words. Amended by 0089, 0090: the database issues the ids.
 - [0052](0052-game-modes-typed-answers-a-best-result-per-mode-and-the-daily-crossword.md) Thirteen Game Modes with their own Lives, limits and answer forms, one typed-answer comparison by the Comparison Key, a Best result per mode; the Daily Crossword is not a Game and its Words are within the Rarity Ceiling. Amended by 0072, 0087, 0101.
 - 0053: merged into 0027.
 - [0054](0054-learning-and-habit-search-the-rarity-test-feed-notices-the-daily-limit-and-mood.md) Search, the Rarity Test, the Feed Notices, the Word of the Day archive, the Active Days calendar, the polite pause, the first week and the widget hint; the Daily Goal (0066, 0074) takes the place of the Daily Limit and Mood is 0076. Amended by 0072, 0076, 0101.
 - [0055](0055-motion-seasons-and-holidays-the-falling-stress-and-illustrations.md) Animations last 200–300 ms (the Рупор design's peaks may run longer) on the UI thread and become one short fade under Reduce Motion; Decor follows the Season or Holiday (paused in 1.0); the falling Stress; Illustrations. Media location: 0099.
-- [0056](0056-mistake-reports.md) «Повідомити про помилку» sends an anonymous report to `POST /v1/reports`; the owner reads and resolves them with scripts.
+- [0056](0056-mistake-reports.md) «Повідомити про помилку» sends an anonymous report to `POST /v1/reports`; the owner reads and resolves them in the Content queue of the Owner admin, or with scripts from a shell (amended by 0075, 0088).
 - [0057](0057-spotlight-and-app-intents-read-what-the-core-decides.md) The Core builds the Spotlight Snapshot; Swift only writes it; App Intents only open the app.
-- [0058](0058-a-shared-collection-is-a-server-snapshot-behind-a-link.md) A Collection Link is an immutable server snapshot at `https://<domain>/<edition>/c/<id>`, with a web page and universal links.
+- [0058](0058-a-shared-collection-is-a-server-snapshot-behind-a-link.md) A Collection Link is an immutable server snapshot at `https://<domain>/<edition>/c/<id>`, with a web page and universal links. Amended by 0125.
 - [0059](0059-react-compiler-runs-on-code-without-animation.md) The React Compiler is on; animated modules opt out with `'use no memo'`.
 - [0060](0060-anonymous-community-counters.md) Community Counters are anonymous deltas aggregated per Entry; the Community Word is the week's most saved; one switch covers them and Analytics (0068).
 - 0061: merged into 0006.
 - [0062](0062-ota-updates-are-signed-and-ship-per-edition-channel.md) OTA updates are signed, bound to the native fingerprint, on the app's one channel from the AppConfig, published by hand.
-- [0063](0063-the-backend-runs-as-one-container-on-railway-behind-the-editions-domain.md) The backend runs as one container on Railway behind the app's domain; migrations in the release step, one trusted proxy hop, HTTPS only.
+- [0063](0063-the-backend-runs-as-one-container-on-railway-behind-the-editions-domain.md) The backend runs as one container on Railway behind the app's domain; migrations in the release step, one trusted proxy hop (two behind Cloudflare), HTTPS only; amended by 0125: at the app's domain it answers only the Collection Link and `/.well-known/` paths.
 - [0064](0064-one-backend-port-shaped-by-the-api-contract.md) The Core reaches the backend through one port, the contract's client; `answerOf` and the retry rule live in the Core; tests serve the contract in process.
 - [0065](0065-one-app-with-editions-inside-and-the-ua-edition.md) One app per platform with the Editions inside, one active at a time (a switch restarts the app), the others downloaded on choice; the first is the UA Edition, id `uk`.
 - [0066](0066-the-xp-log-derives-the-streak-the-active-day-freezes-and-the-break.md) An append-only XP log derives XP, Level, Active Day (≥5 XP), Streak, freezes and Break, merged by id; the Daily Goal replaces the Daily Limit (amends 0054). Amended by 0074, 0085.
@@ -72,7 +72,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0068](0068-analytics-go-through-one-port-and-questionnaire-counters-carry-no-id.md) Analytics go through one Core port behind the one privacy switch; questionnaire counters carry no reader id (amends 0060; amended by 0089: the anonymous id is the Install id).
 - 0069: superseded by 0088.
 - [0070](0070-klyn-2-rupor-is-the-apps-design.md) Amended by 0118. «Клин 2.0: Рупор» is the app's design: palette and fonts are Edition tokens, shapes, type, motion and the Mascot's states are Core; four interface sounds behind the `sounds` switch; Game haptics stay.
-- [0071](0071-the-domain-root-is-the-ua-editions-landing.md) The domain root is the UA Edition's landing: the Astro site `apps/site`, built from the Edition's tokens and Mascot, that `pages.yml` publishes beside the legal pages; placeholders stay visible until decided.
+- [0071](0071-the-domain-root-is-the-ua-editions-landing.md) The domain root is the UA Edition's landing: the Astro site `apps/site`, built from the Edition's tokens and Mascot, that `pages.yml` publishes beside the legal pages; placeholders stay visible until decided. Amended by 0125.
 - [0072](0072-one-rarity-ceiling-for-every-surface.md) One Rarity Ceiling, «до 1»…«до 5», a setting of its own that every surface obeys, the Daily Crossword included; the Rarity Floor is removed (amends 0015, 0040, 0052, 0054, 0067).
 - [0073](0073-the-daily-crossword-is-a-traced-letter-grid.md) The traced 5×5 letter grid behind `tracedCrossword`, the Daily Crossword only while `crossingCrossword` is off; superseded by 0087 while it is on.
 - [0074](0074-the-daily-goal-counts-words-seen.md) The Daily Goal is a number of Words Seen per local day (10 / 25 / 50 from the Edition, none when skipped), met once by a `goal-met` record; a day with a goal is an Active Day only when met, one without at 5 XP; onboarding order СЛОВО → ПЕРШЕ → ГРАЙ! → РІВЕНЬ? → НАВІЩО? → ЦІЛЬ → НАГАДУВАННЯ → Feed, with the three Notification times from the Edition; Seen-Word XP up to the goal; each part behind its own Feature Switch. Amends 0066, 0067.
@@ -124,3 +124,5 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0120](0120-a-tips-card-shows-its-exceptions.md) A Tip may have `exceptions` (explanation ≤ 300, at least one word); behind `tipExceptions` (needs `wordTabs`) such a Tip card gets «Винятки» after «Правило»: the text and the words in chips, no source line; pack format 13 (`exceptions_explanation`, `tip_exception_words`), and `openPack` refuses a pack of another format; amends 0119
 - [0121](0121-patch-format-3-carries-marks-and-tip-exceptions.md) `PATCH_FORMAT` 3: a Patch may carry `**` standard-form marks (0117) and Tip `exceptions` (0120); the backend answers a format-2 request `unsupported-format` and such an app keeps its content until updated
 - [0122](0122-admin-inputs-are-strict-and-may-narrow.md) Every `/v1/admin/` input is strict (`z.strictObject`) and every admin reason is `ReasonSchema` (1–500); the admin ships with the backend, so its request may narrow within `/v1` and the breaking-change check skips it; admin outputs stay held (amends 0031 for admin routes only)
+- [0125](0125-cloudflare-splits-the-apps-domain-by-path.md) The app's domain is one proxied Cloudflare zone split by path: `/<edition>/c/*` and `/.well-known/*` go to the Deployment, everything else to GitHub Pages; the API and the Owner admin stay at the Deployment's own address; the rule lives in Cloudflare and `docs/deploy.md` records it; amends 0049, 0058, 0063, 0071
+- [0126](0126-a-ui-ticket-carries-one-screenshot-against-the-board.md) A ticket that changes a screen carries one screenshot of it against its board (text snapshot first); Maestro runs only on the owner's command and tickets touch no flow; the version's visual pass updates the flows; the smoke runs against the one Metro on port 8082; supersedes 0028

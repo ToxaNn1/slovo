@@ -2,7 +2,7 @@
 
 Until 0.8.15 a Collection couldn't leave the phone: a teacher who built «Осінь» for a class had no way to hand it to anyone. Spec #937 adds the Collection Link: «Поділитися посиланням» stores a snapshot of the Collection on the server and shares `https://<domain>/<edition>/c/<id>`; whoever opens it sees a preview and «Додати собі» makes their own copy. Most readers have no Account and many recipients are pupils without one, so neither side may need it. The decisions come from the owner's grilling of 2026-10-25 and 2026-10-26; spec #1293 gives the link its real domain and a web page.
 
-**Feature Switch.** `collectionLinks` is required of every Edition and on in the UA Edition. A remote switch only turns it off (ADR 0040), so the owner can stop sharing at once. While it is off in effect the Collection menu has no «Поділитися посиланням», a link that opens the app says it isn't available, and the backend answers both requests for that Edition as for an Edition it doesn't find (`NOT_FOUND`), as the Mistake Reports do (ADR 0056).
+**Feature Switch.** `collectionLinks` is required of every Edition and on in the UA Edition. A remote Rule turns it on or off (ADR 0089), so the owner can stop sharing at once. While it is off in effect the Collection menu has no «Поділитися посиланням», a link that opens the app says it isn't available, and the backend answers both requests for that Edition as for an Edition it doesn't find (`NOT_FOUND`), as the Mistake Reports do (ADR 0056).
 
 **A snapshot, not a live list.** A Collection Link holds the Collection as it was when it was shared: its name and its Entry ids in the Collection's order. It is immutable: later edits to the Collection never reach it, and neither its author nor anyone else can edit it through the API. Sharing again makes a new link with the current contents. It never expires; only the owner deletes one.
 
@@ -17,7 +17,7 @@ Until 0.8.15 a Collection couldn't leave the phone: a teacher who built «Осі
 
 **The address is not Edition-scoped.** Sync and content live under `/v1/editions/{edition}/…`; `/v1/collection-links` follows the owner's choice for 0.8.14's endpoints (ADR 0056, ADR 0060) and carries the Edition in its body. The link's id alone finds it, so the shared URL stays short and holds no Edition; the backend keeps links per Edition like all its data (ADR 0030), and a link of another Edition opens in this app as not available.
 
-**The link domain is the app's.** The AppConfig names `domain`, which the Deployment serves (ADR 0063); the Edition config names none. A placeholder domain is refused for a release build. The app config turns it into the associated domains entitlement (`applinks:<domain>`), and the backend builds each link's URL from the domain and the Edition of the link.
+**The link domain is the app's.** The AppConfig names `domain`, where Cloudflare sends `/<edition>/c/*` and `/.well-known/*` to the Deployment and the rest to GitHub Pages (ADR 0125, amending this ADR); the Edition config names none. A placeholder domain is refused for a release build. The app config turns it into the associated domains entitlement (`applinks:<domain>`), and the backend builds each link's URL from the domain and the Edition of the link.
 
 **Universal links.** The backend serves `/.well-known/apple-app-site-association` at the app's domain, listing the app for `/<edition>/c/*`, once per Edition, with the Apple Developer Team ID and the bundle id from the AppConfig (`appleTeamId`); while the Team ID is still empty, the path answers `404`, never from the Core or the repository's code (ADR 0006). The app opens `https://<domain>/<edition>/c/<id>` and `slovo://c/<id>?edition=<edition>` the same way: both reach the app through `app/+native-intent.tsx` like every link from outside (ADR 0026) and open the recipient sheet. A link that names another Edition than the active one (the `edition=` parameter or the web path) opens the active Edition's Feed instead. A web address of any host but `<domain>` opens nothing. The scheme's link lets the flow be checked on a simulator without the domain.
 
@@ -37,7 +37,7 @@ Until 0.8.15 a Collection couldn't leave the phone: a teacher who built «Осі
 
 **A channel apart from Sync.** Sync (ADR 0041) keeps an Account's own records behind a Session; a Collection Link is a public snapshot that anyone with its id may read, made by readers with or without an Account. It is not a synced record, shares nothing of the author's user state beyond the name and Entry ids, and the copy it makes enters Sync only as the recipient's own Collection.
 
-**The owner's script.** `collection-links delete <id>` deletes one link from the database directly, like `switch-off` (ADR 0040) and `reports resolve` (ADR 0056), so the owner can take down an abusive name. No API route deletes or lists links.
+**The owner's script.** `collection-links delete <id>` deletes one link from the database directly, like `switches off` (ADR 0089) and `reports resolve` (ADR 0056), so the owner can take down an abusive name. No API route deletes or lists links.
 
 **The privacy policy** (ADR 0049) says what a Collection Link stores (the Collection's name and its Entry ids, with no Account or device data), that anyone with the link can see it, and that it stays until the owner deletes it.
 
