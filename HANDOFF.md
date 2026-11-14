@@ -32,3 +32,5 @@
 - #1834 DONE (buttons already grew; on-screen test extended), merged. PR #1840 merged to main; main merged into integration; main took ADR 0127, ours renumbered to 0128. Next: code review.
 - Code review (medium) DONE: homonym Distractor fixed, merged. PR #1838 body final, ready, auto-merge squash on. Owner checks not added to the database (no DATABASE_URL in the cloud): they are in the PR body.
 - WAITING until 2026-11-14T13:39:10Z: CI of PR #1838 and its auto-merge
+- PR #1838 green (one admin test timed out on a slow runner, 1.2 s locally; failed job re-run) and squash-merged; #1840 merged before it. Worktrees and ticket branches removed. ADR 0127 not used by this wave (main took it); 0128 used.
+STATUS: FINISHED
