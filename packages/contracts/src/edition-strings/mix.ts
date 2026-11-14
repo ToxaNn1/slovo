@@ -55,4 +55,8 @@ export const MixStringsSchema = z.strictObject({
   }),
   /** The line that says why the last Category's chip can't be turned off. VoiceOver reads it as that chip's hint. */
   lastCategoryHint: TextSchema,
+  /** The count above the Category grid. Takes `{selected}` and `{total}`, e.g. «9 з 16 обрано». */
+  selectedOf: templateOf('selected', 'total'),
+  /** The labels over the Mix's parts, as board 11 draws them. */
+  groups: z.strictObject({ rarity: TextSchema, categories: TextSchema, kinds: TextSchema }),
 });

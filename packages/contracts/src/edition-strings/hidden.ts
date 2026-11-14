@@ -43,4 +43,10 @@ export const HiddenStringsSchema = z.strictObject({
   undo: TextSchema,
   /** Shown when nothing is hidden. */
   empty: TextSchema,
+  /** The one action of every row of the one list, whatever is hidden. */
+  show: TextSchema,
+  /** What VoiceOver reads for it. Takes `{title}`, the row's name. */
+  showLabel: templateOf('title'),
+  /** The kind label under a row's name in the one list. */
+  kinds: z.strictObject({ entry: TextSchema, category: TextSchema, kind: TextSchema }),
 });

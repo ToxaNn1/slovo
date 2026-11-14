@@ -152,10 +152,16 @@ const validConfig = {
     profileGameBest: 'on',
     forceUpdate: 'on',
     scrollToTop: 'on',
+    progressReset: 'on',
+    dataExport: 'on',
+    readerName: 'on',
+    widgetPreviews: 'on',
+    textSizeSteps: 'on',
   },
   userSettingDefaults: {
     theme: 'system',
     fontSize: 'M',
+    textSize: 'system',
     vibration: true,
     notificationTimes: ['09:00'],
     mix: {
@@ -401,6 +407,11 @@ describe('loadEdition', () => {
     'fastReveal',
     'dashboard',
     'correctionTypes',
+    'progressReset',
+    'dataExport',
+    'readerName',
+    'widgetPreviews',
+    'textSizeSteps',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
     const off = loadEdition({
@@ -410,6 +421,53 @@ describe('loadEdition', () => {
 
     expect(on.isFeatureEnabled(feature)).toBe(true);
     expect(off.isFeatureEnabled(feature)).toBe(false);
+  });
+
+  it.each([
+    ['progressReset', 'xpLog'],
+    ['readerName', 'profile'],
+    ['widgetPreviews', 'widget'],
+  ] as const)('turns %s off while %s is off', (feature, needed) => {
+    const edition = loadEdition({
+      ...validConfig,
+      featureSwitches: { ...validConfig.featureSwitches, [needed]: 'off' },
+    });
+
+    expect(edition.isFeatureEnabled(feature)).toBe(false);
+  });
+
+  it('keeps the Data export and the three-step text size on whatever else is off', () => {
+    const edition = loadEdition({
+      ...validConfig,
+      featureSwitches: { ...validConfig.featureSwitches, xpLog: 'off', profile: 'off' },
+    });
+
+    expect(edition.isFeatureEnabled('dataExport')).toBe(true);
+    expect(edition.isFeatureEnabled('textSizeSteps')).toBe(true);
+  });
+
+  it.each(['system', 'larger', 'largest'] as const)(
+    'reports the three-step default text size %s beside the S…XL one',
+    (textSize) => {
+      const edition = loadEdition({
+        ...validConfig,
+        userSettingDefaults: { ...validConfig.userSettingDefaults, textSize },
+      });
+
+      expect(edition.userSettingDefaults.textSize).toBe(textSize);
+      expect(edition.userSettingDefaults.fontSize).toBe('M');
+    },
+  );
+
+  it('refuses a default text size off the three steps, an S…XL one included', () => {
+    for (const textSize of ['M', 'huge', undefined]) {
+      expect(() =>
+        loadEdition({
+          ...validConfig,
+          userSettingDefaults: { ...validConfig.userSettingDefaults, textSize },
+        }),
+      ).toThrow(InvalidEditionConfigError);
+    }
   });
 
   it('reports the language traits', () => {
@@ -426,6 +484,7 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults).toEqual({
       theme: 'system',
       fontSize: 'M',
+      textSize: 'system',
       vibration: true,
       narratorVoice: 'anna',
       notificationTimes: ['09:00'],
