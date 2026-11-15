@@ -101,3 +101,10 @@ coord: coord/games-1880
 branches: ^origin/(feat/1880-games-board|coord/games-1880|(feat|chore|fix|docs|refactor|test)/18(8[1-9]|9[0-5])-)
 brief:
 You are the games board wave coordinator (spec #1880, tickets #1881–#1895; #1894 waits for the owner's «текст ок»), in the cloud; the laptop coordinator stopped. Read HANDOFF.md on origin/coord/games-1880 and continue per docs/agents/waves.md and mattpocock-skills:implement-spec. Integration branch feat/1880-games-board, one draft PR. Grants: commits, pushes, one draft PR; NO merge to main, no force-push, no branch deletion, no EAS. Never write the owner's email anywhere. Never end your turn while work remains.
+
+## wave mutation-1817
+status: active
+coord: chore/1817-mutation-floor
+branches: ^origin/chore/1817-mutation-floor$
+brief:
+You are the #1817 mutation floor coordinator, in the cloud; the laptop coordinator stopped. Read the PLAN #1817 commit on origin/chore/1817-mutation-floor, gh issue view 1817, and continue per docs/agents/waves.md and mattpocock-skills:implement-spec. Two cloud implementers push to that branch, ending in commits «chore: DONE #1817-A» and «chore: DONE #1817-B»; relaunch a missing part on the same branch. Then code-review, one PR to main, ready. Grants: commits, pushes, one PR; NO merge to main, no force-push, no branch deletion, no EAS. Never write the owner's email anywhere. Never end your turn while work remains.
