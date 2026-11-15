@@ -27,6 +27,7 @@ import { PressedTile } from '../primitives/PressedTile';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import {
   answerOption,
+  answerOptionStamp,
   motion,
   quickQuestionCard,
   roundLayout,
@@ -47,13 +48,17 @@ const OPTION_STAGGER = 50;
 /** The ✕ on a wrong pick's key in place of its letter, drawn on a 14-unit square as the Round's exit glyph, so it sits in the key's centre whatever the font. */
 const WRONG_MARK = 'M0 2L2 0L7 5L12 0L14 2L9 7L14 12L12 14L7 9L2 14L0 12L5 7Z';
 
+/** The ✓ of a right option in the board's look, on the same 14-unit square, stroked. */
+const RIGHT_MARK = 'M2 7.5L5.5 11L12 3.5';
+
 /**
  * The type role an option's text takes, its tier: a Word is one word, a
  * sentence runs to `answerOption.sentenceMost` characters, a long text past
- * that.
+ * that. In the board's look a short option takes the word tier and any
+ * other a sentence's or a long text's.
  */
-function optionRole(text: string): TypeRole {
-  if (!/\s/u.test(text.trim())) return 'roundOptionWord';
+function optionRole(text: string, short: boolean | undefined): TypeRole {
+  if (short === true || (short === undefined && !/\s/u.test(text.trim()))) return 'roundOptionWord';
   return Array.from(text).length <= answerOption.sentenceMost
     ? 'roundOptionSentence'
     : 'roundOptionLong';
@@ -159,6 +164,12 @@ export function AnswerOptions({
  * its key; the others fade. Under Reduce Motion nothing pops or drops.
  * Nothing shakes. VoiceOver reads the option with its Stress, then
  * «Правильно» or «Твій вибір», and the faded ones as dimmed.
+ *
+ * In the board's look (D6, `gameOptionStamp`) a short option has no key and
+ * takes the large word tier, and a right one gets a round ✓ stamp; a longer
+ * one keeps its key on a filled square with no frame, ✓ or ✕ on an ink key
+ * once answered. The wrong text is crossed out in red, the choice drops less
+ * and the others fade further.
  */
 function AnswerOption({
   option,
@@ -182,7 +193,12 @@ function AnswerOption({
   const tokens = useTokens();
   const { colors } = tokens;
   const keyInk = useSchemeColors('light').ink;
+  const keyPaper = useSchemeColors('light').tile;
   const { strings, voice } = useEdition();
+  const { optionStamp } = useRoundLook();
+  const short = optionStamp && Array.from(option.text).length <= answerOptionStamp.shortMost;
+  const keyShown = optionKey !== undefined && !short;
+  const { dimmedOpacity, drop } = optionStamp ? answerOptionStamp : answerOption;
   const look =
     answer === undefined
       ? 'rest'
@@ -207,11 +223,11 @@ function AnswerOption({
   const still = reduceMotion || look === 'rest';
   const optionMotion = useAnimatedStyle(() => {
     if (look === 'dimmed')
-      return { opacity: 1 - (1 - answerOption.dimmedOpacity) * answered.value, transform: [] };
+      return { opacity: 1 - (1 - dimmedOpacity) * answered.value, transform: [] };
     if (look === 'wrong')
       return {
         opacity: 1,
-        transform: still ? [] : [{ translateY: answerOption.drop * answered.value }],
+        transform: still ? [] : [{ translateY: drop * answered.value }],
       };
     return {
       opacity: 1,
@@ -221,7 +237,7 @@ function AnswerOption({
     };
   });
   const testID = `game-option-${String(place)}`;
-  const shownRole = optionRole(option.text);
+  const shownRole = optionRole(option.text, optionStamp ? short : undefined);
   const role =
     inQuickQuestion && shownRole === 'roundOptionWord' ? 'quickQuestionOptionWord' : shownRole;
   return (
@@ -249,12 +265,23 @@ function AnswerOption({
           look === 'wrong' && { backgroundColor: colors.surfaceSunken },
         ]}
       >
-        {optionKey !== undefined && (
+        {keyShown && (
           <View
             style={[
               styles.key,
-              { borderColor: look === 'right' ? keyInk : colors.ink },
-              look === 'wrong' && { backgroundColor: colors.accent, borderColor: colors.accent },
+              optionStamp
+                ? {
+                    borderWidth: 0,
+                    backgroundColor:
+                      look === 'right'
+                        ? keyInk
+                        : look === 'wrong'
+                          ? colors.ink
+                          : colors.surfaceSunken,
+                  }
+                : { borderColor: look === 'right' ? keyInk : colors.ink },
+              !optionStamp &&
+                look === 'wrong' && { backgroundColor: colors.accent, borderColor: colors.accent },
             ]}
           >
             {look === 'wrong' ? (
@@ -264,7 +291,16 @@ function AnswerOption({
                 height={answerOption.key.wrongMark}
                 viewBox="0 0 14 14"
               >
-                <Path d={WRONG_MARK} fill={colors.onAccent} />
+                <Path d={WRONG_MARK} fill={optionStamp ? colors.tile : colors.onAccent} />
+              </Svg>
+            ) : look === 'right' && optionStamp ? (
+              <Svg
+                testID={`${testID}-right-mark`}
+                width={answerOptionStamp.rightMark}
+                height={answerOptionStamp.rightMark}
+                viewBox="0 0 14 14"
+              >
+                <RightMarkPath color={keyPaper} />
               </Svg>
             ) : (
               <Text
@@ -285,11 +321,41 @@ function AnswerOption({
             style={[
               typeStyle(role, tokens),
               { color: look === 'right' ? keyInk : look === 'wrong' ? colors.muted : colors.ink },
+              optionStamp &&
+                look === 'wrong' && {
+                  textDecorationLine: 'line-through',
+                  textDecorationColor: colors.accent,
+                },
             ]}
           />
         </View>
+        {short && look === 'right' && (
+          <View testID={`${testID}-stamp`} style={[styles.stamp, { borderColor: keyInk }]}>
+            <Svg
+              width={answerOptionStamp.stamp.mark}
+              height={answerOptionStamp.stamp.mark}
+              viewBox="0 0 14 14"
+            >
+              <RightMarkPath color={keyInk} />
+            </Svg>
+          </View>
+        )}
       </PressedTile>
     </Animated.View>
+  );
+}
+
+/** The stroked ✓ of a right option, in a colour. */
+function RightMarkPath({ color }: { color: string }) {
+  return (
+    <Path
+      d={RIGHT_MARK}
+      stroke={color}
+      strokeWidth={2.4}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+    />
   );
 }
 
@@ -312,6 +378,14 @@ const styles = StyleSheet.create({
     height: answerOption.key.side,
     borderRadius: answerOption.key.radius,
     borderWidth: answerOption.key.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stamp: {
+    width: answerOptionStamp.stamp.side,
+    height: answerOptionStamp.stamp.side,
+    borderRadius: answerOptionStamp.stamp.side / 2,
+    borderWidth: answerOptionStamp.stamp.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
