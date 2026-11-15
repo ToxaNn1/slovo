@@ -40,6 +40,24 @@ export const collectionMarks = [
   ],
 ] as const satisfies readonly Wedge[];
 
+/**
+ * The spacing of the Profile's blocks above the reader's name (`SlovoApp`
+ * profile): the head's top and bottom, how far the cards reach past the 20
+ * of the rest (a card stands 16 from the edge), the Streak's top, the lift of
+ * the words beside it, the calendar's top, the Badges' top and the gap from
+ * their heading to the first family.
+ */
+export const profileScreen = {
+  headTop: 10,
+  headBottom: 16,
+  cardOutdent: 4,
+  streakTop: 24,
+  streakWordsLift: 4,
+  calendarTop: 16,
+  badgesTop: 28,
+  badgesGap: 14,
+} as const;
+
 /** The Profile's Level card, from the design: an ink card with a red wedge and the XP ring. */
 /** The Profile's header (board 11, t8): the avatar, the reader's name and the Level. */
 export const profileHeader = {
@@ -60,6 +78,8 @@ export const levelCard = {
   ring: { box: 124, radius: 54, stroke: 12, track: 'rgba(127, 127, 127, 0.3)' },
   /** The red wedge in the bottom right corner, past the card's edges. */
   wedge: { side: 170, right: -30, bottom: -40, opacity: 0.95 },
+  /** The opacity of the lines under the XP line, such as «Знавець: ще 292 XP». */
+  quietOpacity: 0.8,
   /** The wedge's slant: from 40% along the top to the bottom left corner. */
   wedgeShape: [
     [0.4, 0],
@@ -71,75 +91,138 @@ export const levelCard = {
 } as const;
 
 /**
- * The Badge stamp, from board 10.7: under the giant cream kicker the earned
- * Badge's mark lands on red in five frames, Підліт (it flies in), Удар (an
- * ink burst and a light shake), Відскок (it springs to `bounce`), Відбиток
- * (it rests at `turn`), then the ribbon and the button.
+ * The Badge stamp, from board XBadges «Штамп» (decision 13): under the giant
+ * cream kicker the earned Badge's mark in its family's shape lands on red.
+ * It flies in from `from`, presses to `press` at the blow, under a dotted
+ * ink ring and a light shake, springs to `bounce` and rests at `turn`: the
+ * hit, about 0.7 s. Then the ribbon flies in from the left and the button
+ * comes in, and the stamp rests, about 1.1 s.
  */
 export const badgeStamp = {
-  markSide: 210,
+  markSide: 120,
   /** The mark flies in from this scale and turn. */
-  from: { scale: 3, turn: -26 },
+  from: { scale: 2.6, turn: -26 },
+  /** The scale of the mark at the blow. */
+  press: 0.9,
   /** The turn of the kicker and of the mark at rest. */
   turn: -8,
   bounce: 1.06,
-  /** The ink burst behind the mark at the blow grows to this share of the mark's side. */
-  burst: 1.5,
-  /** The light shake at the blow, in points. */
-  shake: 6,
-  /** Where each frame ends, as a share of the motion; the ribbon and the button come in after `rest`. */
-  frames: { fly: 0.35, blow: 0.5, bounce: 0.7, rest: 0.85 },
+  /** The dotted ink ring round the mark: it grows from `from` to 1 at the blow, then to `to` as it fades. */
+  ring: { side: 180, width: 6, from: 0.6, to: 1.35 },
+  /** The light shake at the blow, in points, one step per `frames.shake` share. */
+  shake: { x: [0, -3, 3, -1, 0], y: [0, 2, -2, 1, 0] },
+  /**
+   * Where each frame ends, as a share of the motion: the mark lands pressed
+   * at `fly`, springs at `bounce` and rests at `rest`, which ends the hit;
+   * the ribbon and the button are in by `ribbon`; the rest of the motion is
+   * the stamp at rest.
+   */
+  frames: {
+    fly: 0.21,
+    bounce: 0.3,
+    rest: 0.39,
+    ribbon: 0.51,
+    ring: { in: 0.18, blow: 0.27, out: 0.63 },
+    shake: [0.19, 0.22, 0.25, 0.28, 0.33],
+  },
   /** The depth of the hard ink edge under the stamped mark. */
-  drop: 8,
+  drop: 6,
   padding: { top: 90, horizontal: 28, bottom: 40 },
-  /** The mark overlaps the giant word's foot. */
+  /** The ring round the mark overlaps the giant word's foot. */
   markTop: -18,
   nameTop: 16,
   lineTop: 6,
-  ribbon: { top: 18, turn: -3, padding: { vertical: 6, horizontal: 18 } },
+  /** The ink ribbon at the bottom left, over the button: it flies in from `from` points to the left. */
+  ribbon: { top: 18, turn: -6, from: -30, padding: { vertical: 7, horizontal: 10 } },
 } as const;
 
-/** The toast of a Badge earned during a Game: the mark, its name and the stamp's line on ink. */
+/** The toast of a Badge earned during a Game: the mark, its name and the stamp's line, on the Theme's ink. */
 export const badgeToast = {
   markSide: 40,
   gap: 12,
   padding: 12,
   radius: 16,
+  /** The toast is this wide at most, with `horizontal` free on each side. */
+  width: 340,
   /** Over the bottom of the screen, clear of the Game's buttons. */
   bottom: 96,
   horizontal: 16,
+  /** The space between the name and the line. */
+  linesGap: 4,
+  /** The line is a little quieter than the name. */
+  lineOpacity: 0.85,
+  /** A hard shadow under the toast. */
+  shadow: '0 6px 0 rgba(0, 0, 0, 0.3)',
 } as const;
 
 /** The Badge's mark on its Share Card, as on the poster. */
 export const badgeShareMark = { side: 28 } as const;
 
 /**
- * The Badge grid, from the design (board 10): marks in rows of their Badge
- * family under its name, five to a row of the Profile (`side`), larger on
- * the Badges screen (`screenSide`) with each Badge's condition and date or
- * progress under its mark.
+ * The Badge grid: marks in rows of their Badge family under its name, five
+ * to a row of the Profile (`side`), a card for each Badge on the Badges
+ * screen (`card`, ADR 0145).
  */
 export const badgeGrid = {
   side: 48,
   columns: 5,
   gap: 10,
-  screenSide: 72,
-  /** The Badges screen's cell: the mark with its condition and its date or progress under it. */
-  screenCell: 100,
-  screenGap: 12,
-  captionGap: 6,
   familyGap: 14,
   headGap: 10,
   pressedScale: 0.88,
+  /**
+   * A Badge's card on the Badges screen (`XBadges` all): the mark at `mark`
+   * over the name, condition and status, two to a row up to `width` wide,
+   * each at least `basis` of the row.
+   */
+  card: {
+    width: 176,
+    basis: '45%',
+    mark: 96,
+    paddingTop: 20,
+    paddingX: 14,
+    paddingBottom: 18,
+    radius: 20,
+    gap: 12,
+    border: 1,
+    edge: 4,
+  },
+  /** The Badges screen's spacing: between families, a family's head and its cards, the cards, and a family's name and count. */
+  screen: { familyGap: 30, headGap: 14, cardGap: 14, headNameGap: 12 },
 } as const;
 
 /**
- * An earned Badge's mark, from the design (board 10): the family's shape in
- * its tone's ring, the face set inside it by `ring` of the side, over a drop
- * shadow `drop.large` deep above `drop.over` and `drop.small` at it and below.
+ * The Badge families overview heading the Badges screen (`XBadges` fams): a
+ * card of `width` for each family in a row that scrolls sideways, its mark
+ * at `mark` beside the name and count, the description, and the shape under
+ * a rule.
+ */
+export const badgeFamilies = {
+  width: 260,
+  mark: 96,
+  padding: 22,
+  radius: 22,
+  gap: 18,
+  headGap: 18,
+  nameGap: 6,
+  shapeGap: 10,
+  shapeTop: 14,
+  rule: 1,
+  edge: 5,
+  cardGap: 14,
+} as const;
+
+/**
+ * A Badge's mark (`XBadges`): the family's shape in its tone's ring, the face
+ * set inside it by `ring` of the side, over a drop shadow `drop.large` deep
+ * above `drop.over` and `drop.small` at it and below. A locked face is the
+ * ring's grey at `lockedFace`; a Badge in progress fills its face in red at
+ * `progress`.
  */
 export const badgeMark = {
-  ring: 0.09,
+  ring: 0.07,
+  lockedFace: 0.5,
+  progress: 0.38,
   drop: { over: 40, large: 4, small: 2 },
 } as const;
 
@@ -155,14 +238,22 @@ export const badgeTile = [
   [0, 0.14],
 ] as const satisfies Wedge;
 
-/** The checker tile shape of a Badge family, two corners cut: top left and bottom right (ADR 0087). */
+/** The checker tile shape of a Badge family, two corners cut by 10% of the side: top left and bottom right (ADR 0087, 0145). */
 export const badgeChecker = [
-  [0.2, 0],
+  [0.1, 0],
   [1, 0],
-  [1, 0.8],
-  [0.8, 1],
+  [1, 0.9],
+  [0.9, 1],
   [0, 1],
-  [0, 0.2],
+  [0, 0.1],
+] as const satisfies Wedge;
+
+/** The wedge shape of the Рівні Badge family (ADR 0145): its left edge short, its right edge full height. */
+export const badgeWedge = [
+  [0, 0.18],
+  [1, 0],
+  [1, 1],
+  [0, 0.82],
 ] as const satisfies Wedge;
 
 /**
@@ -171,14 +262,15 @@ export const badgeChecker = [
  */
 export const badgeCheckerFace = { cells: 3, side: 0.48 } as const;
 
-/** The «НОВА» tag over an earned Badge's top right corner, turned as on board 10.5. */
+/** The «НОВА» tag over an earned Badge's top right corner, turned as on `XBadges`. */
 export const badgeNewTag = {
   turn: 8,
-  top: -4,
-  right: -8,
-  paddingHorizontal: 5,
-  paddingVertical: 2,
-  radius: 3,
+  top: -6,
+  right: -18,
+  /** How far left of the mark the tag may spread, so it never wraps over a small mark. */
+  reach: 60,
+  paddingHorizontal: 9,
+  paddingVertical: 6,
 } as const;
 
 /** Spacing the design draws between the steps of the 4-pt grid on the field that names a Collection. */
@@ -262,6 +354,8 @@ export const calendarDay = {
   gap: 7,
   edge: 4,
   futureBorder: 2,
+  /** A square day of the Break card's strip (`XSaved` p1): its corner and its edge. */
+  square: { radius: 9, edge: 3 },
   /** The frost over a frozen day: diagonal stripes this wide, this far apart, in this ink. */
   frost: { stripe: 2, step: 7, color: 'rgba(20, 12, 10, 0.25)' },
 } as const;
@@ -285,17 +379,20 @@ export const breakCard = {
   nextInset: 4,
 } as const;
 
-/** The Profile's Streak freeze card (p2), an ink card: its chip, its 7-day strip and the frost on a frozen day. */
+/**
+ * The Profile's Streak freeze card (p2): an ink card with its chip and its
+ * 7-day strip of square days, and under it a row of two sunken tiles.
+ */
 export const freezeCard = {
   padding: 20,
   radius: 24,
   gap: 14,
-  chip: { paddingX: 10, paddingY: 4, radius: 999 },
-  tilesGap: 10,
-  tilePadding: 12,
-  tileRadius: 16,
-  /** The frost mark of a frozen day: its box and its stroke. */
-  frost: { box: 14, stroke: 1.6 },
+  chip: { height: 30, paddingX: 10, radius: 9 },
+  strip: { gap: 6 },
+  day: { radius: 9 },
+  /** The card's line under its title, a little faded. */
+  textOpacity: 0.8,
+  tiles: { gap: 12, padding: 16, radius: 20, inside: 8 },
 } as const;
 
 /**
@@ -307,38 +404,63 @@ export const newLevelStamp = {
   padding: { top: 120, horizontal: 28, bottom: 40 },
   /** The cream kicker sits in the top corner, turned on its left edge. */
   kicker: { left: 20, top: 92 },
-  /** The number lands from this scale and turn to its rest; the kicker keeps the rest's turn. */
-  from: { scale: 3, turn: -26 },
+  /**
+   * The number lands as the design's `slStamp`: hidden until `delay`, then over
+   * `duration` from 3× at −26° through .92× at −8° (70 %, fully shown) to rest,
+   * each step on `easing`. The kicker keeps the rest's `turn`.
+   */
+  land: {
+    delay: 200,
+    duration: 600,
+    easing: [0.3, 1.4, 0.5, 1],
+    from: { scale: 3, turn: -26 },
+    press: { at: 0.7, scale: 0.92 },
+  },
   turn: -8,
   numberTop: 96,
   titleTop: 30,
   lineTop: 12,
   mascotBottom: 22,
+  mascotWidth: 120,
 } as const;
 
 /** The Profile's Level ladder, from board 10.8: a card per Level name in two columns, and the bar to the next name. */
 export const levelLadder = {
   gap: 10,
-  card: { padding: 14, radius: 16, border: 2, gap: 4 },
-  /** The wedge mark in a card's top right corner, one of the Collection marks in turn. */
-  mark: { side: 26, top: 12, right: 12 },
-  bar: { padding: 16, radius: 16, gap: 4 },
+  /** The six cards in one row, each `width` wide; the row scrolls when the screen is narrower. */
+  card: { width: 112, padding: 12, radius: 16, border: 1, gap: 8 },
+  /** The Level wedge holding a range's first Level (ADR 0145), its fill inset by `inset` of the side. */
+  wedge: {
+    width: 56,
+    height: 44,
+    inset: 0.07,
+    shape: [
+      [0, 0.18],
+      [1, 0],
+      [1, 1],
+      [0, 0.82],
+    ] as const satisfies Wedge,
+  },
+  /** The bar under the row to the next name, slanted by `skew` degrees. */
+  bar: { height: 14, skew: -20, gap: 10 },
 } as const;
 
 /**
- * The Badge sheet, from the design (board 10 p3/p4): the mark at `markSide`
- * under the kicker, the name and the date or progress under it, and while
- * not earned a bar slanted by `barSkew` degrees, `barHeight` tall.
+ * The Badge sheet, from the design (`XSaved` p3/p4): the mark at `markSide`
+ * under the «ВІДЗНАКА» plate, the name, the condition and the date or
+ * progress under it, and while not earned a bar slanted by `barSkew`
+ * degrees, `barHeight` tall, over the button; the board's gap is 14.
  */
 export const badgeSheet = {
-  markSide: 120,
-  markTop: 14,
+  markSide: 150,
+  markTop: 20,
   nameTop: 14,
+  conditionTop: 14,
   statusTop: 6,
   barTop: 14,
   barHeight: 10,
-  barSkew: -14,
-  doneTop: 22,
+  barSkew: -20,
+  doneTop: 14,
 } as const;
 
 /**

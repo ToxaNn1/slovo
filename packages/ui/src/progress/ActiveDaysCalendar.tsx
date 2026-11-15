@@ -1,12 +1,12 @@
 'use no memo';
 import type { CalendarDay, CalendarWeek } from '@slovo/core';
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { calendarDay, space, typeStyle } from '../tokens';
 import { dayDate, dayLabel } from './day-label';
+import { Frost } from './Frost';
 
 /**
  * One day of the grid as a tile over its edge: an Active Day red, today in
@@ -14,14 +14,17 @@ import { dayDate, dayLabel } from './day-label';
  * Break day sunken, pressed into its place with the edge inside its top, and
  * a day to come no tile, only a dashed outline (board 10). With `onPress` it
  * is a button whose tile presses down onto its edge. The Break card's strip
- * draws its days with it too.
+ * draws its days with it too, `square` as `XSaved` p1: square tiles with a
+ * smaller corner and edge and the strip's plain numbers.
  */
 export function CalendarDayTile({
   day,
   onPress,
+  square = false,
 }: {
   day: CalendarDay;
   onPress: (() => void) | undefined;
+  square?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -42,24 +45,35 @@ export function CalendarDayTile({
   const tile = (pressed: boolean) => (
     <>
       {look.edge !== undefined && (
-        <View style={[styles.tile, styles.edge, { backgroundColor: look.edge }]} />
+        <View
+          style={[
+            styles.tile,
+            styles.edge,
+            square && [styles.squareTile, styles.squareEdge],
+            { backgroundColor: look.edge },
+          ]}
+        />
       )}
       <View
         testID={`stats-calendar-${day.date}-face`}
         style={[
           styles.tile,
+          square && styles.squareTile,
           { backgroundColor: look.face },
           day.state === 'future' && [styles.future, { borderColor: colors.line }],
           day.state === 'break' && [
-            styles.pressed,
-            styles.sunken,
+            square ? styles.squareSunken : [styles.pressed, styles.sunken],
             { borderTopColor: colors.tileEdge },
           ],
           pressed && styles.pressed,
         ]}
       >
         {day.state === 'frozen' && <Frost />}
-        <Text style={[typeStyle('calendarDay', tokens), { color: look.number }]}>{day.day}</Text>
+        <Text
+          style={[typeStyle(square ? 'freezeDay' : 'calendarDay', tokens), { color: look.number }]}
+        >
+          {day.day}
+        </Text>
       </View>
     </>
   );
@@ -68,7 +82,7 @@ export function CalendarDayTile({
     accessible: true,
     accessibilityLabel: dayLabel(strings, day),
     ...voice,
-    style: styles.cell,
+    style: square ? styles.squareCell : styles.cell,
   };
   return onPress === undefined ? (
     <View {...shared}>{tile(false)}</View>
@@ -79,50 +93,34 @@ export function CalendarDayTile({
   );
 }
 
-/** The frost over a frozen day: diagonal stripes across the tile, as board 10 draws it. */
-function Frost() {
-  const count = Math.ceil((calendarDay.height * 3) / calendarDay.frost.step);
-  return (
-    <View style={styles.frost} pointerEvents="none">
-      {Array.from({ length: count }, (_, index) => (
-        <View
-          key={index}
-          style={[styles.stripe, { left: index * calendarDay.frost.step - calendarDay.height }]}
-        />
-      ))}
-    </View>
-  );
-}
-
 /**
  * The Active Days calendar: the 35 days ending with the current week, five
  * rows Monday first under the weekday names, across months (ADR 0085). Each
- * day reads its date and state. With `lines` on, a tap on a day shows its line
- * under the grid: an Active Day, today once active with the Word `todayWord`
- * opened, a day missed, a day to come; a Break day, a frozen day and today
- * without its Word have none. With no weeks, as with its Feature Switch off,
- * it draws nothing.
+ * day reads its date and state. With `onDayText`, a tap on a day hands its
+ * text to the caller to show in a toast (board `SlovoApp` profile): an Active
+ * Day, a day missed and a day to come by the board's texts, today with its
+ * Word `todayWord` once kept, and a Break day, a frozen day and today before
+ * its Word by their date and state. With no weeks, as with its Feature Switch
+ * off, it draws nothing.
  */
 export function ActiveDaysCalendar({
   weeks,
-  lines = false,
+  onDayText,
   todayWord,
 }: {
   weeks: readonly CalendarWeek[];
-  /** Whether a tap on a day shows its line: the `calendarDayLines` Feature Switch. */
-  lines?: boolean;
-  /** The Lemma of today's Word of the Day, once the reader opened it. */
+  /** Shows the text of the day tapped; without it the days are not buttons. */
+  onDayText?: ((text: string) => void) | undefined;
+  /** The Lemma of today's Word of the Day, once the archive keeps it. */
   todayWord?: string | undefined;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();
-  const [picked, setPicked] = useState<string | undefined>(undefined);
   if (weeks.length === 0) return null;
   const words = strings.stats.calendar;
-
-  /** The line a tap on the day shows, if it has one. */
-  function lineOf(day: CalendarDay): string | undefined {
+  /** The text a tap on the day shows. */
+  function textOf(day: CalendarDay): string {
     const date = dayDate(strings, day);
     switch (day.state) {
       case 'active':
@@ -132,17 +130,19 @@ export function ActiveDaysCalendar({
       case 'future':
         return words.lines.future;
       case 'today':
-        return day.active && todayWord !== undefined
-          ? fill(words.lines.today, { word: todayWord })
-          : undefined;
+        return todayWord === undefined
+          ? dayLabel(strings, day)
+          : // The Word opens a sentence: its first letter capital.
+            fill(words.lines.today, {
+              word:
+                todayWord.charAt(0).toLocaleUpperCase(voice.accessibilityLanguage) +
+                todayWord.slice(1),
+            });
       case 'break':
       case 'frozen':
-        return undefined;
+        return dayLabel(strings, day);
     }
   }
-  const pickedDay = weeks.flat().find(({ date }) => date === picked);
-  const line = lines && pickedDay !== undefined ? lineOf(pickedDay) : undefined;
-
   return (
     <View testID="stats-calendar" accessibilityLabel={words.label} style={styles.calendar}>
       {/* Each day reads its own date, so VoiceOver skips the weekday names. */}
@@ -160,39 +160,33 @@ export function ActiveDaysCalendar({
           </Text>
         ))}
       </View>
-      {weeks.map((week) => (
-        <View key={week[0]?.date} style={styles.week}>
-          {week.map((day) => (
-            <CalendarDayTile
-              key={day.date}
-              day={day}
-              onPress={
-                lines
-                  ? () => {
-                      setPicked(day.date);
-                    }
-                  : undefined
-              }
-            />
-          ))}
-        </View>
-      ))}
-      {line !== undefined && (
-        <Text
-          testID="stats-calendar-line"
-          accessibilityLiveRegion="polite"
-          {...voice}
-          style={[typeStyle('profileText', tokens), styles.line, { color: colors.ink }]}
-        >
-          {line}
-        </Text>
-      )}
+      <View style={styles.weeks}>
+        {weeks.map((week) => (
+          <View key={week[0]?.date} style={styles.week}>
+            {week.map((day) => (
+              <CalendarDayTile
+                key={day.date}
+                day={day}
+                onPress={
+                  onDayText === undefined
+                    ? undefined
+                    : () => {
+                        onDayText(textOf(day));
+                      }
+                }
+              />
+            ))}
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  calendar: { marginTop: space[6], gap: space[2] },
+  calendar: { gap: space[2] },
+  // A week steps by its tile and the board's gap: the tile's edge sinks into that gap.
+  weeks: { gap: calendarDay.gap - calendarDay.edge },
   week: { flexDirection: 'row', gap: calendarDay.gap },
   weekday: {
     flex: 1,
@@ -210,17 +204,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   edge: { top: calendarDay.edge },
+  // The Break card's square day: the cell is the tile, its edge hangs into the strip's gap.
+  squareCell: { flex: 1, aspectRatio: 1 },
+  squareTile: { height: '100%', borderRadius: calendarDay.square.radius },
+  squareEdge: { top: calendarDay.square.edge },
+  squareSunken: { borderTopWidth: calendarDay.square.edge, overflow: 'hidden' },
   pressed: { top: calendarDay.edge },
   sunken: { borderTopWidth: calendarDay.edge, overflow: 'hidden' },
-  frost: { ...StyleSheet.absoluteFill, overflow: 'hidden', borderRadius: calendarDay.radius },
-  stripe: {
-    position: 'absolute',
-    top: -calendarDay.height,
-    width: calendarDay.frost.stripe,
-    height: calendarDay.height * 3,
-    backgroundColor: calendarDay.frost.color,
-    transform: [{ rotate: '45deg' }],
-  },
   future: { borderWidth: calendarDay.futureBorder, borderStyle: 'dashed' },
-  line: { marginTop: space[1] },
 });

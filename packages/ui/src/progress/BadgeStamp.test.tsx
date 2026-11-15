@@ -39,14 +39,35 @@ describe('BadgeStamp', () => {
     },
   );
 
-  it('strikes with an ink burst', async () => {
+  it('strikes with a dotted ink ring and a shake, then the ribbon flies in', async () => {
     await draw(false, () => undefined);
-    expect(screen.getByTestId('badge-stamp-burst')).toBeOnTheScreen();
+    expect(screen.getByTestId('badge-stamp-ring')).toBeOnTheScreen();
+    expect(screen.getByTestId('badge-stamp-shake')).toBeOnTheScreen();
+    expect(screen.getByTestId('badge-stamp-ribbon-flight')).toHaveTextContent('YOURS NOW');
   });
 
-  it('under Reduce Motion only fades in, with no burst', async () => {
+  it('under Reduce Motion only fades in: no ring, no shake, no ribbon flight', async () => {
     await draw(true, () => undefined);
-    expect(screen.queryByTestId('badge-stamp-burst')).toBeNull();
+    expect(screen.queryByTestId('badge-stamp-ring')).toBeNull();
+    expect(screen.queryByTestId('badge-stamp-shake')).toBeNull();
+    expect(screen.queryByTestId('badge-stamp-ribbon-flight')).toBeNull();
+    expect(screen.getByText('YOURS NOW')).toBeOnTheScreen();
+  });
+
+  it('draws the mark in its family’s shape', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+        <BadgeStamp
+          shape="checker"
+          symbol="7"
+          name="A week"
+          line="A new Badge, yours for good."
+          doneLabel="DONE"
+          onClose={() => undefined}
+        />
+      </EditionProvider>,
+    );
+    expect(screen.getByTestId('badge-stamp-mark-checker')).toBeOnTheScreen();
   });
 
   it('stamps with no kicker, Mascot or ribbon when they are left out', async () => {

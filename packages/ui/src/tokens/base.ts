@@ -127,7 +127,7 @@ export const typeRoles = {
   screenTitle: role('word', '900', 30, 30, -1, 'uppercase'),
   heading: role('word', '800', 18, 20, 0.5),
   eyebrow: role('word', '700', 11, 13, 2, 'uppercase'),
-  buttonLabel: role('word', '900', 16, 16, 0, 'uppercase'),
+  buttonLabel: role('word', '900', 15, 15, 0, 'uppercase'),
   listWord: role('word', '800', 17, 20),
   /** Reading text: a Definition. */
   definition: role('ui', '500', 19, 27),
@@ -454,7 +454,7 @@ export const typeRoles = {
   /** A Badge's symbol on its mark, at a 156-wide mark; the mark scales it to a third of its side. */
   badgeSymbol: role('word', '900', 52, 62),
   /** The «НОВА» tag on an earned Badge the reader has not opened (ADR 0085). */
-  badgeNewTag: role('word', '800', 9, 11, 1, 'uppercase'),
+  badgeNewTag: role('word', '900', 11, 11, 1, 'uppercase'),
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
   /** The ✓ or ✗ on a Round's mark in the Game Review. */
@@ -501,8 +501,30 @@ export const typeRoles = {
   badgeProgress: role('ui', '500', 11, 13),
   /** A Badge's name under its title on the stamp of a newly earned Badge. */
   stampName: role('ui', '500', 16, 21),
-  /** The name over a Badge family's row of marks. */
-  badgeFamily: role('word', '800', 12, 14, 1),
+  /** The ink ribbon of a Badge's stamp, «ТЕПЕР ТВОЯ». */
+  stampRibbon: role('word', '900', 11, 11, 1, 'uppercase'),
+  /** The name of a Badge on its toast, as written. */
+  badgeToastName: role('word', '900', 13, 14),
+  /** The line of a Badge's toast. */
+  badgeToastLine: role('ui', '500', 13, 17),
+  /** A Badge family's name over its cards on the Badges screen. */
+  badgeScreenFamily: role('word', '900', 20, 20),
+  /** A Badge's name on its card of the Badges screen. */
+  badgeCardName: role('word', '800', 13, 16),
+  /** A Badge's condition on its card of the Badges screen. */
+  badgeCardCondition: role('ui', '500', 12, 16),
+  /** A Badge's status on its card, «Отримано» or «Ще ні · 77%». */
+  badgeCardStatus: role('ui', '600', 12, 14),
+  /** A Badge family's name on its card of the families overview. */
+  badgeFamilyName: role('word', '900', 18, 20),
+  /** A Badge family's description on its card of the families overview. */
+  badgeFamilyText: role('ui', '500', 14, 20),
+  /** The «ФОРМА» label before a Badge family's shape in the families overview. */
+  badgeFamilyLabel: role('word', '700', 10, 10, 1.5),
+  /** A Badge's name under its mark in the Badge sheet (`XSaved` p3/p4). */
+  badgeSheetName: role('word', '900', 24, 26.4),
+  /** The name and the count over a Badge family's row of marks on the Profile (`SlovoApp` profile). */
+  badgeFamily: role('ui', '600', 12, 12),
   /** The first letter of the reader's name in the Profile header's avatar. */
   profileAvatarLetter: role('word', '900', 24, 24),
   /** The reader's name, or the invitation to add one, in the Profile header. */
@@ -527,8 +549,18 @@ export const typeRoles = {
   levelName: role('word', '900', 21, 23),
   /** The XP towards the next Level on the Profile's Level card. */
   levelXp: role('ui', '600', 14, 18),
-  /** The Profile's giant red Streak. */
-  profileStreak: role('word', '900', 60, 60, -2),
+  /** The first Level of a range in the wedge of a card in the Profile's Levels row. */
+  ladderNumber: role('word', '900', 24, 24),
+  /** A Level name on a card in the Profile's Levels row. */
+  ladderName: role('word', '900', 14, 16),
+  /** A range of Levels on a card in the Profile's Levels row, such as «Рівні 5–9». */
+  ladderCaption: role('ui', '600', 12, 14),
+  /** The Level and the XP to the next name under the Profile's Levels row. */
+  ladderLine: role('word', '700', 11, 13, 1.5, 'uppercase'),
+  /** The Profile's giant red Streak, set solid as on `SlovoApp` profile (60/.9). */
+  profileStreak: role('word', '900', 60, 54, -2),
+  /** «Відзнаки» over the Profile's Badges (`SlovoApp` profile). */
+  profileBadgesHeading: role('word', '800', 15, 15),
   /** The words beside the Profile's giant Streak. */
   profileStreakLabel: role('word', '800', 16, 18),
   /** The paused Streak's ghost number in the corner of the Profile's Break card (p1). */
@@ -541,6 +573,18 @@ export const typeRoles = {
   breakUntil: role('ui', '500', 15, 21),
   /** The next Break's date under the Break card's strip. */
   breakNext: role('ui', '500', 13, 18),
+  /** «Заморозка серії» over the Streak freeze card (p2). */
+  freezeTitle: role('word', '900', 20, 22),
+  /** The cream chip of the freezes held on the Streak freeze card. */
+  freezeChip: role('word', '800', 12, 12),
+  /** What a freeze does, on the Streak freeze card. */
+  freezeText: role('ui', '400', 15, 22),
+  /** The number of a day in the Streak freeze card's strip. */
+  freezeDay: role('ui', '700', 13, 16),
+  /** The big number of a tile under the Streak freeze card. */
+  freezeNumber: role('word', '900', 34, 34),
+  /** The caption under a tile's big number, declined by it. */
+  freezeCaption: role('ui', '500', 13, 16),
   /** The name of the screen before, beside the back tile that returns to it. */
   backLink: role('ui', '500', 14, 17),
   /** The label of an action a list row's swipe shows. */
@@ -1078,9 +1122,12 @@ export const motion = {
   toast: { duration: 350, easing: [0.2, 0.9, 0.3, 1.1] },
   /** The design's `slToast` of board 09 (XSaved): the plate toast rises in 400 ms. */
   plateToast: { duration: 400, easing: [0.2, 0.9, 0.3, 1] },
-  stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
-  /** The five frames of a Badge's stamp (board 10.7), after a short wait. */
-  badgeStamp: { duration: 550, easing: ease, delay: 150 },
+  /**
+   * A Badge's stamp (XBadges «Штамп»), once, after a short wait: the hit,
+   * about 0.7 s, then the rest, about 1.1 s. The frames carry their own
+   * spring, so the time runs even.
+   */
+  badgeStamp: { duration: 1800, easing: [0, 0, 1, 1], delay: 150 },
   /** The Level ring fills to the reader's progress. */
   ring: { duration: 1100, easing: [0.2, 0.8, 0.2, 1] },
   /**
@@ -1382,8 +1429,11 @@ export const disabledOpacity = 0.5;
 /** The opacity a pressed tile fades to where its face does not sink: under Reduce Motion, or with no edge. */
 export const pressedFade = 0.7;
 
-/** The heights of a button's face: the design's 58 pt main button, a 48 pt one on a card (the Due Quiz's «ПОЧАТИ»), and a small one as tall as a tap area. */
-export const buttonHeight = { large: 58, medium: 48, small: 44 } as const;
+/** The heights of a button's face: the boards' 62 pt main button (ADR 0145), a 48 pt one on a card (the Due Quiz's «ПОЧАТИ»), and a small one as tall as a tap area. */
+export const buttonHeight = { large: 62, medium: 48, small: 44 } as const;
+
+/** The main button's height inside a sheet, a little lower than on a screen (ADR 0145). */
+export const buttonHeightInSheet = 60;
 
 /** The side of the design's square icon button, and of the icon inside it. */
 export const iconButton = { side: 44, icon: 20 } as const;

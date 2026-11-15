@@ -423,6 +423,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   badgeSheet: FeatureSwitchStateSchema,
   /** The Badge toast: a Badge earned during a Game shows a toast in place of the stamp (ADR 0085); off while `xpLog` or `badges` is. */
   badgeToast: FeatureSwitchStateSchema,
+  /** The Badge families overview heading the Badges screen: each family's mark, name, count, description and shape (ADR 0145); off while `xpLog` or `badges` is. */
+  badgeFamiliesOverview: FeatureSwitchStateSchema,
   /** The Streak freeze card of the Profile: the freezes held, the last 7 days and the days saved (ADR 0085); off while `xpLog` is. */
   streakFreezeCard: FeatureSwitchStateSchema,
   /** The Break card of the Profile while a Break runs: its dates, a 14-day strip and the next Break's date (ADR 0085); off while `xpLog` is. */
@@ -703,8 +705,9 @@ export type BadgeFamily = z.infer<typeof BadgeFamilySchema>;
 /**
  * A Badge the Edition chooses (ADR 0066): its id, its name, the short symbol
  * its mark shows (at most three characters), the id of its Badge family
- * (ADR 0085), its condition from the catalogue and, optionally, its stamp's
- * kicker (ADR 0087).
+ * (ADR 0085), its condition from the catalogue, the short line that words
+ * that condition for the reader and, optionally, its stamp's kicker
+ * (ADR 0087).
  */
 export const BadgeSchema = z.strictObject({
   id: KebabCaseIdSchema,
@@ -712,6 +715,8 @@ export const BadgeSchema = z.strictObject({
   symbol: TextSchema.max(3),
   family: KebabCaseIdSchema,
   condition: BadgeConditionSchema,
+  /** What its condition asks, in a few words under its mark and in its sheet, e.g. «Виграй «Наголос»». */
+  conditionText: TextSchema,
   /** The line over the Badge's name on its full-screen stamp, e.g. «7 ПОСПІЛЬ»; left out, none (ADR 0087). */
   stampKicker: TextSchema.optional(),
 });

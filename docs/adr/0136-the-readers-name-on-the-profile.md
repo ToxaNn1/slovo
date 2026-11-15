@@ -1,5 +1,7 @@
 # The reader's name on the Profile
 
+**Amended by ADR 0145.** The Profile's header sits below the Badges, with the other extra blocks.
+
 Status: accepted (owner, 14.11)
 
 ## Context

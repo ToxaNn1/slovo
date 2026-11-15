@@ -1,4 +1,5 @@
 import type { BadgeFamily } from '@slovo/contracts';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
@@ -31,16 +32,16 @@ export function markStateOf(badge: BadgeGridItem): BadgeMarkState {
 }
 
 /**
- * The Badges as marks in rows, one row for each of the Edition's `families`
- * in its order, each Badge in its order, under the family's name and how
- * many of it are earned («3 з 5»); a family with no Badge shown is left out.
- * A mark takes its family's shape and tone; one not yet earned is a
- * silhouette, filled by its progress; an earned one not yet opened carries
- * «НОВА». A mark is announced by the Badge's name, with `statusOf` as its
- * value, and pressing it calls `onPress`. The marks take the Profile's size,
- * five to a row, or the larger one of the Badges screen, where `conditionOf`
- * and `statusOf` are also written under each mark (`badge-<id>-condition`,
- * `badge-<id>-status`).
+ * The Badges in rows, one row for each of the Edition's `families` in its
+ * order, each Badge in its order, under the family's name and how many of it
+ * are earned («3 з 5»); a family with no Badge shown is left out. A mark
+ * takes its family's shape and tone; one not yet earned is a silhouette,
+ * filled by its progress; an earned one not yet opened carries «НОВА». A
+ * Badge is announced by its name, with `statusOf` as its value, and pressing
+ * it calls `onPress`. On the Profile the marks stand five to a row; on the
+ * Badges screen each Badge is a card (ADR 0145): its mark at 96 over its
+ * name, `conditionOf` and `statusOf` (`badge-<id>-name`,
+ * `badge-<id>-condition`, `badge-<id>-status`).
  * The marks carry the test IDs `badge-<id>-mark`, a family's count
  * `badge-family-<family>-count`.
  */
@@ -61,7 +62,14 @@ export function BadgeGrid<B extends BadgeGridItem>({
   conditionOf?: (badge: B) => string;
   size?: 'profile' | 'screen';
 }) {
-  const side = size === 'profile' ? badgeGrid.side : badgeGrid.screenSide;
+  const screen = size === 'screen';
+  // The Profile's marks fill five columns of the grid's width, as the board's
+  // `repeat(5, 1fr)`; until the grid is measured they take the plain side.
+  const [width, setWidth] = useState(0);
+  const side =
+    width > 0
+      ? Math.floor((width - (badgeGrid.columns - 1) * badgeGrid.gap) / badgeGrid.columns)
+      : badgeGrid.side;
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();
@@ -71,21 +79,36 @@ export function BadgeGrid<B extends BadgeGridItem>({
     return members.length === 0 ? [] : [{ family, members }];
   });
   return (
-    <View style={styles.grid}>
+    <View
+      style={screen ? styles.screenGrid : styles.grid}
+      onLayout={
+        screen
+          ? undefined
+          : ({ nativeEvent }) => {
+              setWidth(nativeEvent.layout.width);
+            }
+      }
+    >
       {rows.map(({ family, members }) => (
-        <View key={family.id} style={styles.family}>
-          <View style={styles.head}>
+        <View key={family.id} style={screen ? styles.screenFamily : styles.family}>
+          <View style={screen ? styles.screenHead : styles.head}>
             <Text
               accessibilityRole="header"
               {...voice}
-              style={[typeStyle('badgeFamily', tokens), { color: colors.ink }]}
+              style={[
+                typeStyle(screen ? 'badgeScreenFamily' : 'badgeFamily', tokens),
+                { color: screen ? colors.ink : colors.muted },
+              ]}
             >
               {family.name}
             </Text>
             <Text
               testID={`badge-family-${family.id}-count`}
               {...voice}
-              style={[typeStyle('progressCount', tokens), { color: colors.muted }]}
+              style={[
+                typeStyle(screen ? 'progressCount' : 'badgeFamily', tokens),
+                { color: colors.muted },
+              ]}
             >
               {fill(words.earnedOf, {
                 earned: String(members.filter(({ earned }) => earned).length),
@@ -93,7 +116,7 @@ export function BadgeGrid<B extends BadgeGridItem>({
               })}
             </Text>
           </View>
-          <View style={size === 'profile' ? styles.marks : styles.screenMarks}>
+          <View style={screen ? styles.cards : styles.marks}>
             {members.map((badge) => (
               <Pressable
                 key={badge.id}
@@ -106,7 +129,14 @@ export function BadgeGrid<B extends BadgeGridItem>({
                   onPress(badge);
                 }}
                 style={({ pressed }) => [
-                  size === 'screen' && styles.cell,
+                  screen && [
+                    styles.card,
+                    {
+                      backgroundColor: colors.tile,
+                      borderColor: colors.line,
+                      boxShadow: `0 ${String(badgeGrid.card.edge)}px 0 ${colors.tileEdge}`,
+                    },
+                  ],
                   pressed && styles.pressed,
                 ]}
               >
@@ -116,27 +146,40 @@ export function BadgeGrid<B extends BadgeGridItem>({
                   tone={family.tone}
                   symbol={badge.symbol}
                   state={markStateOf(badge)}
-                  size={side}
+                  size={screen ? badgeGrid.card.mark : side}
                 />
-                {size === 'screen' && conditionOf !== undefined && (
+                {screen && (
+                  <Text
+                    testID={`badge-${badge.id}-name`}
+                    {...voice}
+                    style={[
+                      typeStyle('badgeCardName', tokens),
+                      styles.caption,
+                      { color: colors.ink },
+                    ]}
+                  >
+                    {badge.name}
+                  </Text>
+                )}
+                {screen && conditionOf !== undefined && (
                   <Text
                     testID={`badge-${badge.id}-condition`}
                     {...voice}
                     style={[
-                      typeStyle('badgeProgress', tokens),
+                      typeStyle('badgeCardCondition', tokens),
                       styles.caption,
-                      { color: colors.ink },
+                      { color: colors.muted },
                     ]}
                   >
                     {conditionOf(badge)}
                   </Text>
                 )}
-                {size === 'screen' && statusOf !== undefined && (
+                {screen && statusOf !== undefined && (
                   <Text
                     testID={`badge-${badge.id}-status`}
                     {...voice}
                     style={[
-                      typeStyle('badgeProgress', tokens),
+                      typeStyle('badgeCardStatus', tokens),
                       styles.caption,
                       { color: badge.earned ? colors.ink : colors.muted },
                     ]}
@@ -157,14 +200,27 @@ const styles = StyleSheet.create({
   grid: { gap: badgeGrid.familyGap },
   family: { gap: badgeGrid.headGap },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  screenHead: { flexDirection: 'row', alignItems: 'baseline', gap: badgeGrid.screen.headNameGap },
   marks: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: badgeGrid.gap,
-    maxWidth: badgeGrid.columns * badgeGrid.side + (badgeGrid.columns - 1) * badgeGrid.gap,
   },
-  screenMarks: { flexDirection: 'row', flexWrap: 'wrap', gap: badgeGrid.screenGap },
-  cell: { width: badgeGrid.screenCell, alignItems: 'center', gap: badgeGrid.captionGap },
+  screenGrid: { gap: badgeGrid.screen.familyGap },
+  screenFamily: { gap: badgeGrid.screen.headGap },
+  cards: { flexDirection: 'row', flexWrap: 'wrap', gap: badgeGrid.screen.cardGap },
+  card: {
+    flexBasis: badgeGrid.card.basis,
+    flexGrow: 1,
+    maxWidth: badgeGrid.card.width,
+    alignItems: 'center',
+    gap: badgeGrid.card.gap,
+    paddingTop: badgeGrid.card.paddingTop,
+    paddingHorizontal: badgeGrid.card.paddingX,
+    paddingBottom: badgeGrid.card.paddingBottom,
+    borderRadius: badgeGrid.card.radius,
+    borderWidth: badgeGrid.card.border,
+  },
   caption: { textAlign: 'center' },
   pressed: { transform: [{ scale: badgeGrid.pressedScale }] },
 });

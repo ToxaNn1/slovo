@@ -1,5 +1,7 @@
 # Badge families, two new Badge kinds, the `badge-opened` record and a rolling calendar
 
+**Amended by ADR 0145.** The walkthrough boards override board 10.x: the Badges screen heads with the «Родини» overview over a card for each Badge (status «Отримано» or «Ще ні · N%»), the stamp opens only for an earned Badge not yet opened, and a Badge's mark takes its family's shape everywhere.
+
 Board 10 «Профіль і відзнаки» groups Badges in six families with their own shape and tone, marks a new Badge «НОВА» until the reader opens it, draws Break and frozen days in the Active Days calendar and shows that calendar as a run of days across months (spec #1641). ADR 0066 has none of this: its Badges carry no family, its catalogue has no Badge for a clean Game or a run of right answers, and its calendar is a month. This amends ADR 0066; the Level curve and every other number of 0066 stay.
 
 - **Badge families are Edition config.** An Edition declares an ordered list of Badge families, each with an id, a name, a description, a shape (`hexagon`, `shield`, `circle`, `tile`, `wedge`, `diamond`) and a tone (`red`, `ink`, `cream`), and every Badge names one of them. Loading refuses a Badge whose family is not declared. The UA Edition declares the board's six: Серія, Підтверджені, Перші перемоги, Кросворд, Рівні, Майстерність.

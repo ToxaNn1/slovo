@@ -296,6 +296,10 @@ _Avoid_: Achievement, trophy, medal
 A group of Badges an Edition declares, with a name, a description, a shape and a tone that every Badge in it is drawn with. The shapes are `hexagon`, `shield`, `circle`, `tile`, `wedge`, `diamond` and `checker` (ADR 0087). The UA Edition has six. A Badge earned but never opened is new and carries «НОВА».
 _Avoid_: Badge category, Badge group, tier
 
+**Badge families overview**:
+The head of the Badges screen: a card for each Badge family with its mark, name, how many Badges it holds, its description and its shape («ФОРМА · Шестикутник»), above a card for each Badge with its mark, name, condition and status, «Отримано» or «Ще ні · N%»; the date and the exact progress show in the Badge sheet. Its own Feature Switch, `badgeFamiliesOverview`, needs `badges` (ADR 0145).
+_Avoid_: families screen, family list
+
 **Profile**:
 The screen of the reader's whole progress: Level and progress to the next, Streak, Best Streak, the Active Days calendar (the last 35 days across months, with Break and frozen days), confirmed learned Entries by rarity, Badges with progress, the Best result of each Game Mode and a button to share the Level; the reader's earlier numbers (Seen, Favorites, Known, Game results) stay available. Without an Account it offers to save the progress. Its header shows the avatar (the first letter of the reader's name, a neutral mark without one), the name and «Рівень N — назва»; the name is optional, trimmed, at most 24 characters, synced through the Account and never sent with Analytics or any counter (ADR 0136).
 _Avoid_: Account (the identity that syncs), dashboard, stats screen

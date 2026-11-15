@@ -16,6 +16,10 @@ const familyOf = ({ family }: BadgeState) => edition.badgeFamilies.find(({ id })
 /** The shape of a Badge's family. */
 export const shapeOf = (badge: BadgeState) => familyOf(badge)?.shape ?? 'circle';
 
+/** What a Badge's condition asks, in the Edition's short words (ADR 0085). */
+export const conditionOf = ({ id }: BadgeState) =>
+  edition.badges.find((badge) => badge.id === id)?.conditionText ?? '';
+
 /** The progress forms of an unearned Badge's condition; none for a condition of one first time. */
 function progressForms({ condition }: BadgeState) {
   switch (condition.kind) {
@@ -37,16 +41,21 @@ function progressForms({ condition }: BadgeState) {
 }
 
 /**
- * What a Badge's mark says under it and to VoiceOver: the day it was earned
- * («Отримано 13 жовтня»), how far its condition has come («1 з 3 днів»), or,
- * for a condition of one first time, «Ще не отримано».
+ * What a Badge's card says under its mark and to VoiceOver (ADR 0145):
+ * «Отримано», or while not earned how far its condition has come, rounded
+ * down so it never reads the whole («Ще ні · 77%»); and the sheet's line,
+ * which keeps the date («Отримано 13 жовтня») and the exact progress
+ * («Ще ні · 23 з 30 днів», or «Ще не отримано» for a condition of one first
+ * time).
  */
 export function useBadgeStatus() {
   const { count } = useEdition();
   return {
     statusOf: (badge: BadgeState) => {
-      if (badge.earned) return fill(strings.earned, { date: dayText(badge.date) });
-      return progressOf(badge) ?? strings.notYet;
+      if (badge.earned) return strings.cardEarned;
+      const { current, target } = badge.progress;
+      const percent = Math.floor((100 * Math.min(current, target)) / target);
+      return fill(strings.cardNotYet, { percent: String(percent) });
     },
     /** The sheet's line: the date, or «Ще ні · 1 з 3 днів» while not earned. */
     sheetStatusOf: (badge: BadgeState) => {
@@ -70,11 +79,12 @@ type Opened =
   | { readonly kind: 'stamp'; readonly badge: BadgeState & { earned: true } };
 
 /**
- * A tap on a Badge's mark, for the screens that show the Badges. With the
- * `badgeSheet` switch on, every tap opens the Badge's sheet (board 10
- * p3/p4) and opens the Badge, which ends its «НОВА» mark (ADR 0085), an
- * earned one with the shout. With it off, only an earned Badge answers,
- * stamped on red. Draw `opening` on the screen.
+ * A tap on a Badge's mark, for the screens that show the Badges (decision 5,
+ * ADR 0145). An earned Badge with no `badge-opened` record yet is stamped on
+ * red with the shout, and taking the stamp writes that record, which ends its
+ * «НОВА» mark on every device (ADR 0085). Every other Badge opens its sheet
+ * (`XSaved` p3/p4) behind the `badgeSheet` switch; with it off, only an
+ * earned Badge answers, stamped. Draw `opening` on the screen.
  */
 export function useBadgeOpening(): {
   onPress: (badge: BadgeState) => void;
@@ -90,17 +100,19 @@ export function useBadgeOpening(): {
   const close = () => {
     setOpened(undefined);
   };
+  const take = (badge: BadgeState) => {
+    close();
+    void badges.open(badge.id).catch(() => undefined);
+  };
 
   const onPress = (badge: BadgeState) => {
-    if (sheetShown) {
+    if (badge.earned && (badge.isNew || !sheetShown)) {
+      setOpened({ kind: 'stamp', badge });
+      if (badge.isNew) sounds.play('shout');
+    } else if (sheetShown) {
       setOpened({ kind: 'sheet', badge });
       setSheeted(badge);
-      if (badge.earned) sounds.play('shout');
-    } else {
-      if (!badge.earned) return;
-      setOpened({ kind: 'stamp', badge });
     }
-    void badges.open(badge.id).catch(() => undefined);
   };
 
   const family = sheeted === undefined ? undefined : familyOf(sheeted);
@@ -116,6 +128,7 @@ export function useBadgeOpening(): {
                 ...sheeted,
                 shape: family?.shape ?? 'circle',
                 tone: family?.tone ?? 'ink',
+                condition: conditionOf(sheeted),
                 status: sheetStatusOf(sheeted),
               }
         }
@@ -134,7 +147,9 @@ export function useBadgeOpening(): {
           doneLabel={stamp.done}
           mascot={<MascotAs state="celebrates" onRed />}
           isNew={opened.badge.isNew}
-          onClose={close}
+          onClose={() => {
+            take(opened.badge);
+          }}
         />
       )}
     </>

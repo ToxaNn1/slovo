@@ -1,7 +1,6 @@
-import type { Plural } from '@slovo/contracts';
-import type { BadgeState } from '@slovo/core';
 import {
   BackLink,
+  BadgeFamilies,
   BadgeGrid,
   fill,
   ScreenTitle,
@@ -15,59 +14,36 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
-import { useBadgeOpening, useBadgeStatus } from './badge-opening';
+import { conditionOf, useBadgeOpening, useBadgeStatus } from './badge-opening';
 import { edition, editionStrings } from '../edition/edition';
+import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed } from '../opening';
 
 const strings = editionStrings.settings.badges;
 
-/** The names of `modes`, joined by the list's commas. */
-const modeNames = (modes: readonly string[]) =>
-  modes.map((mode) => editionStrings.game.modes[mode]?.title ?? mode).join(', ');
-
-/** What a Badge's condition asks, in the Edition's words (ADR 0085). */
-function conditionText({ condition }: BadgeState, count: (forms: Plural, n: number) => string) {
-  const words = strings.conditions;
-  switch (condition.kind) {
-    case 'streak':
-      return count(words.streak, condition.days);
-    case 'confirmedEntries':
-      return count(words.confirmedEntries, condition.entries);
-    case 'gameWin':
-      return fill(words.gameWin, { modes: modeNames(condition.modes) });
-    case 'dailyCrosswordRun':
-      return count(words.dailyCrosswordRun, condition.days);
-    case 'rightAnswers':
-      return fill(count(words.rightAnswers, condition.count), {
-        modes: modeNames(condition.modes),
-      });
-    case 'rightOnRarity':
-      return fill(words.rightOnRarity, { rarity: String(condition.rarity) });
-    case 'level':
-      return fill(words.level, { level: String(condition.level) });
-    case 'flawlessGame':
-      return fill(words.flawlessGame, { modes: modeNames(condition.modes) });
-    case 'rightRun':
-      return fill(count(words.rightRun, condition.count), { modes: modeNames(condition.modes) });
-  }
-}
-
 /**
- * Every Badge of the Edition as its mark, in a grid by the Edition's Badge
- * families under how many of all are earned; each shows its condition and
- * shows, and VoiceOver reads, its date or, while not earned, how far its
- * condition has come. A tap opens it (`useBadgeOpening`).
+ * The Badge families overview, while its Feature Switch is on, then every
+ * Badge of the Edition as a card, by the Edition's Badge families, under how
+ * many of all are earned; each card shows its name, its condition and its
+ * status, «Отримано» or «Ще ні · N%» (ADR 0145). A tap opens it
+ * (`useBadgeOpening`).
  */
 function Badges() {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { voice, count } = useEdition();
+  const { voice } = useEdition();
   const badges = useSubscribed(useComposition().badges, ({ state }) => state);
   const { statusOf } = useBadgeStatus();
   const { onPress, opening } = useBadgeOpening();
+  const familiesShown = useEditionInEffect().isFeatureEnabled('badgeFamiliesOverview');
 
   return (
     <>
+      {familiesShown && (
+        <View style={styles.families}>
+          <BadgeFamilies families={edition.badgeFamilies} badges={badges} />
+        </View>
+      )}
       <Text
         {...voice}
         testID="badges-count"
@@ -83,7 +59,7 @@ function Badges() {
         badges={badges}
         size="screen"
         statusOf={statusOf}
-        conditionOf={(badge) => conditionText(badge, count)}
+        conditionOf={conditionOf}
         onPress={onPress}
       />
       {opening}
@@ -91,7 +67,7 @@ function Badges() {
   );
 }
 
-/** Settings › Відзнаки (ADR 0066), as the board: the Badges in a grid by family under its title. */
+/** Settings › Відзнаки (ADR 0066, 0145), as `XBadges`: the Badge families, then the Badges' cards by family. */
 export function BadgesScreen() {
   const { colors } = useTokens();
   const router = useRouter();
@@ -123,5 +99,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[8] },
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[2] },
+  families: { paddingBottom: space[6] },
   count: { paddingBottom: space[4] },
 });

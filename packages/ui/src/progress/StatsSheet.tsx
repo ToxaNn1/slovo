@@ -181,13 +181,18 @@ export function StatsSheet({
             {moods}
           </Text>
         )}
-        <ActiveDaysCalendar weeks={calendar} />
+        {calendar.length > 0 && (
+          <View style={styles.calendar}>
+            <ActiveDaysCalendar weeks={calendar} />
+          </View>
+        )}
       </ScrollView>
     </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
+  calendar: { marginTop: space[6] },
   scroll: { flexGrow: 0, flexShrink: 1 },
   content: { paddingHorizontal: space[1], paddingTop: space[4], paddingBottom: space[4] },
   streakRow: {

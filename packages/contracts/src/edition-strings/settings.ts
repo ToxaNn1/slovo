@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { FontSizeSchema, TextSizeSchema, ThemeSchema } from '../edition';
 import { TextSchema } from '../shared';
-import { PluralSchema, pluralOf, templateOf } from './shared';
+import { PluralLabelSchema, PluralSchema, pluralOf, templateOf } from './shared';
 
 export const SettingsStringsSchema = z.strictObject({
   /** The Settings screen title. */
@@ -174,24 +174,29 @@ export const SettingsStringsSchema = z.strictObject({
       rightAnswers: pluralOf('current'),
       level: pluralOf('current'),
     }),
+    /** A card's status on the Badges screen, earned, e.g. «Отримано»; the date shows in the sheet (ADR 0145). */
+    cardEarned: TextSchema,
+    /** A card's status while not earned, e.g. «Ще ні · 77%». Takes `{percent}`, how far its condition has come. */
+    cardNotYet: templateOf('percent'),
+    /** The Badge families overview heading the Badges screen (ADR 0145). */
+    families: z.strictObject({
+      /** How many Badges a family holds, e.g. «5 відзнак». */
+      count: PluralSchema,
+      /** The label before a family's shape, e.g. «ФОРМА». */
+      shape: TextSchema,
+      /** The name of each Badge shape, e.g. «Шестикутник». */
+      shapes: z.strictObject({
+        hexagon: TextSchema,
+        shield: TextSchema,
+        circle: TextSchema,
+        tile: TextSchema,
+        wedge: TextSchema,
+        diamond: TextSchema,
+        checker: TextSchema,
+      }),
+    }),
     /** The ink tag on an earned Badge the reader has not opened yet, e.g. «НОВА» (ADR 0085). */
     newTag: TextSchema,
-    /**
-     * Each Badge's condition under its mark on the Badges screen, by the kind
-     * of its condition (ADR 0085). `{modes}` is the names of its Game Modes,
-     * joined by the list's commas.
-     */
-    conditions: z.strictObject({
-      streak: PluralSchema,
-      confirmedEntries: PluralSchema,
-      gameWin: templateOf('modes'),
-      dailyCrosswordRun: PluralSchema,
-      rightAnswers: pluralOf('modes'),
-      rightOnRarity: templateOf('rarity'),
-      level: templateOf('level'),
-      flawlessGame: templateOf('modes'),
-      rightRun: pluralOf('modes'),
-    }),
     /** The sheet a tap on any Badge opens (p3, p4). */
     sheet: z.strictObject({
       /** The kicker over the mark, e.g. «ВІДЗНАКА». */
@@ -277,7 +282,7 @@ export const SettingsStringsSchema = z.strictObject({
     breakCard: z.strictObject({
       /** The kicker, e.g. «ПЕРЕРВА». */
       kicker: TextSchema,
-      /** The paused Streak, e.g. «Серія 12 на паузі». */
+      /** The paused Streak, e.g. «Серія на паузі: 12». */
       paused: templateOf('count'),
       /** The Break's last day, e.g. «Перерва триває до 12 листопада включно.» */
       until: templateOf('date'),
@@ -291,10 +296,10 @@ export const SettingsStringsSchema = z.strictObject({
       held: templateOf('count'),
       /** What a freeze does. */
       explanation: TextSchema,
-      /** The Streak tile, e.g. «12 днів поспіль». */
-      streakDays: PluralSchema,
-      /** The days the freezes saved in the current Streak, e.g. «1 день врятовано». */
-      saved: PluralSchema,
+      /** The caption under the Streak tile's big number, e.g. «днів поспіль». */
+      streakDays: PluralLabelSchema,
+      /** The caption under the big number of days the freezes saved, e.g. «заморозка врятувала день». */
+      saved: PluralLabelSchema,
     }),
     /** An earned Badge stamped on red (board 10.7). */
     badgeStamp: z.strictObject({

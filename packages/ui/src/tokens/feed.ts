@@ -189,6 +189,7 @@ export const dashboard = {
       bottom: 76,
       /** The closed hero's «Розкрий слово», higher (ADR 0105). */
       revealBottom: 132,
+      /** The hero's own ink button, 58 as the walkthrough board draws it, not the shared Button's height. */
       height: 58,
       paddingHorizontal: 24,
       toCardPaddingHorizontal: 22,
@@ -1090,6 +1091,7 @@ export const railScreen = {
    * (23.4 − 22.95) / 2 + ⅔ · 17.46 ≈ 11.9 points, a share of 0.508.
    */
   strike: { thickness: 3, at: 0.508 },
+  /** The card's own ink button, 52 as its board draws it on the card, not the shared Button's height. */
   button: { height: 52, radius: 14, paddingHorizontal: 18 },
   /** The revealed block: red, its top falling 8 points to the left, a little wider than the card. */
   revealed: {
@@ -1278,6 +1280,7 @@ export const goalReachedCard = {
   flame: { width: 26, height: 32, gap: 8 },
   streakGap: 6,
   footGap: 12,
+  /** The card's own button, drawn at the board's 60 and scaled with the card, not the shared Button. */
   button: {
     height: 60,
     radius: 16,

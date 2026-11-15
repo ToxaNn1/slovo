@@ -47,6 +47,7 @@ import { motion, scrim, sheetLayout, space, type Wedge as WedgePoints } from '..
 import { InvertedTokens, SchemeTokens, useTokens } from '../providers/TokensProvider';
 import { useRouteOnScreen } from '../providers/RouteProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
+import { ButtonsInSheet } from './Button';
 import { bezier, REDUCED_FADE } from './timing';
 import { Wedge } from './Wedge';
 
@@ -279,7 +280,7 @@ export function BottomSheet({
       strip={strip}
       tone={tone}
     >
-      {children}
+      <ButtonsInSheet>{children}</ButtonsInSheet>
     </SheetPanel>
   );
   return (

@@ -1120,6 +1120,7 @@ const FIRST_WIN: Edition['badges'] = [
     name: 'First win',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'gameWin', modes: ['guess-word'] },
   },
 ];
@@ -1191,6 +1192,7 @@ describe('the Progress reset', () => {
         name: 'One',
         symbol: '1',
         family: 'f',
+        conditionText: 'A condition',
         condition: { kind: 'confirmedEntries', entries: 1 },
       },
     ];
