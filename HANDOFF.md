@@ -1,4 +1,4 @@
-STATUS: ACTIVE (second coordinator session_01VefVQUE6s4zBMtrY3h9SGA takes PR #1896 to main: review, fix, ready, auto-merge)
+STATUS: WAITING-OWNER #1894
 # Games board wave #1880 — coordinator handoff
 Coordinator: session_01VefVQUE6s4zBMtrY3h9SGA (cloud, from 15.11 02:56Z; brief: main merge with squash auto-merge after code review IS granted). Before: safety-net CLOUD session since 15.11 01:24Z (brief in WAVES.md: one draft PR, NO main merge, NO auto-merge — overrides the wider GRANT.md for the safety net). Earlier: session_01VefVQUUP6Lq9nRKxM2WCHR (moved from the laptop 15.11 ~00:35 on the owner's «можеш усю роботу в хмару перекинути і працювати там без мене»). Laptop coordinator mcp:launch:cb3440f7 retired.
 Grant (GRANT.md): commits, pushes, PRs, PR merges to main (batch PRs, squash auto-merge on green), no owner questions (coordinator defaults in the PR body), NO idle. NOT: force-push, branch deletion, EAS builds. #1894 waits for the owner's «текст ок» (default; build everything else).
@@ -42,3 +42,4 @@ No work running. The previous cloud coordinator (session_01VefVQUUP6Lq9nRKxM2WCH
 - 2026-11-15T03:01Z #1895 merged (9a4bc722e); PR #1896 body updated (14 Closes, owner Qs); CI all green; PR stays DRAFT, no auto-merge. Left: #1894 waits for the owner's «текст ок» (incl. old «×3»/«60с»/«Хвилина» strings). WAVE FINISHED.
 - 2026-11-15T03:01Z second review: REVIEW-1896-b.md, 1 finding (pairsStay pop/drop never plays). Fixer on fix/1880-review-b. WAITING until 2026-11-15T03:41Z: fixer. Then merge it, PR body (drop the draft line), ready, auto-merge squash.
 - 2026-11-15T03:12Z fix 04f9ba2f (pairs pop/drop) fast-forwarded into feat/1880-games-board, pushed. PR #1896 ready, squash auto-merge on, body updated. WAITING until 2026-11-15T03:57Z: CI and merge. Then: merge origin/main back, STATUS: WAITING-OWNER #1894.
+- 2026-11-15T03:18Z PR #1896 merged to main (squash 1f2139a6), all CI green; #1881–#1893, #1895 closed. origin/main merged back into feat/1880-games-board (tree = main), pushed. Left: #1894 waits for the owner's «текст ок» (incl. old «×3»/«60с»/«Хвилина» strings, spec open question 6); then implementer on feat/1880-games-board → new PR.
