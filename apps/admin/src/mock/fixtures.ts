@@ -230,6 +230,8 @@ export const FIXTURES: AdminApiOutputs = {
       records: [{ id: 'w_a1', label: 'обруч', retired: false, recordVersion: 1 }],
       total: 1,
     },
+    unchecked: { total: 1, record: { id: 'w_a1', fields: WORD_FIELDS, recordVersion: 1 } },
+    check: { id: 'w_a1', recordVersion: 1 },
     report: {
       contentVersion: 1,
       report: {
