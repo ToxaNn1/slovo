@@ -172,9 +172,13 @@ async function playGame(app: Composition, swapEqual = false): Promise<Round[]> {
 }
 
 /** Every Round of one Game per seed, each answered right. */
-async function roundsOf(seeds: readonly number[], swapEqual = false): Promise<Round[]> {
+async function roundsOf(
+  seeds: readonly number[],
+  swapEqual = false,
+  off: readonly string[] = [],
+): Promise<Round[]> {
   const rounds: Round[] = [];
-  for (const seed of seeds) rounds.push(...(await playGame(await run({ seed }), swapEqual)));
+  for (const seed of seeds) rounds.push(...(await playGame(await run({ seed, off }), swapEqual)));
   return rounds;
 }
 
@@ -185,7 +189,7 @@ describe('«Склади вислів» on offer', () => {
     expect(buildIdiomOffer(app)).toEqual({
       modeId: 'build-idiom',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'new',
       canStart: true,
     });
   });
@@ -204,7 +208,7 @@ describe('«Склади вислів» on offer', () => {
     expect(buildIdiomOffer(app)).toEqual({
       modeId: 'build-idiom',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'new',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -220,21 +224,109 @@ describe('«Склади вислів» on offer', () => {
     expect(buildIdiomOffer(app)).toEqual({
       modeId: 'build-idiom',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'new',
       canStart: false,
       refusal: 'idioms-out-of-mix',
     });
   });
 });
 
-describe('a Round of «Склади вислів»', () => {
-  it("shows the expression's meaning and its words as shuffled chips, the words in order right", async () => {
+/** Every word of the expressions but the place name, case ignored: where decoys come from. */
+const playingWords = new Set(
+  [...playing, notPlaying[0], notPlaying[1]].flatMap((expression) => folded(wordsOf(expression))),
+);
+
+/** The chips of a Round that are no word of its expression, each word of it taken once. */
+function decoysOf(round: Round): string[] {
+  const left = folded(wordsOf(expressionOf(round)));
+  return chipsOf(round).filter((chip) => {
+    const at = left.indexOf(chip.toLowerCase());
+    if (at < 0) return true;
+    left.splice(at, 1);
+    return false;
+  });
+}
+
+describe('a Round of «Склади вислів» with decoys and the check', () => {
+  it("holds the expression's words and three decoy words of other expressions, none like one of its own", async () => {
     const rounds = await roundsOf([1, 2, 3]);
 
     expect(rounds).toHaveLength(3 * GAME_ROUNDS);
     for (const round of rounds) {
+      const own = new Set(folded(wordsOf(expressionOf(round))));
+      const decoys = decoysOf(round);
+      expect(round).toMatchObject({ form: 'chips', chipKind: 'word', layout: 'field' });
+      expect(chipsOf(round)).toHaveLength(wordsOf(expressionOf(round)).length + 3);
+      expect(decoys).toHaveLength(3);
+      expect(new Set(folded(decoys)).size).toBe(3);
+      for (const decoy of folded(decoys)) {
+        expect(playingWords.has(decoy)).toBe(true);
+        expect(own.has(decoy)).toBe(false);
+      }
+      expect(round.answer).toMatchObject({ right: true });
+    }
+  });
+
+  it('draws the decoys from the random port: the same seed the same chips, other seeds others', async () => {
+    const chipsBySeed = async (seed: number) =>
+      new Map((await roundsOf([seed])).map((round) => [expressionOf(round), chipsOf(round)]));
+    const first = await chipsBySeed(4);
+
+    expect(await chipsBySeed(4)).toEqual(first);
+    const others = await Promise.all([5, 6, 7].map(chipsBySeed));
+    const changed = [...first].filter(([expression, chips]) =>
+      others.some((other) => JSON.stringify(other.get(expression)) !== JSON.stringify(chips)),
+    );
+    expect(changed.length).toBeGreaterThan(0);
+  });
+
+  it('gives no answer before the check, and none on a check with no word placed', async () => {
+    const app = await run();
+    await app.game.start('build-idiom');
+
+    expect(current(app)).toMatchObject({ status: 'playing', lives: 3 });
+    expect(current(app).round.answer).toBeUndefined();
+
+    await app.game.answer({ form: 'chips', chips: [] });
+
+    expect(current(app)).toMatchObject({ status: 'playing', lives: 3 });
+    expect(current(app).round.answer).toBeUndefined();
+  });
+
+  it('judges the words placed on the check: too few or a decoy among them is wrong', async () => {
+    for (const given of ['short', 'decoy'] as const) {
+      const app = await run();
+      await app.game.start('build-idiom');
+      const { round } = current(app);
+      const taps = tapsFor(round);
+      const decoy = chipsOf(round).findIndex((chip) => decoysOf(round).includes(chip));
+      const chips = given === 'short' ? taps.slice(0, -1) : [...taps, decoy];
+
+      await app.game.answer({ form: 'chips', chips });
+
+      expect(current(app).round.answer).toMatchObject({
+        form: 'chips',
+        chosen: chips,
+        right: false,
+      });
+      expect(current(app).lives).toBe(2);
+    }
+  });
+});
+
+describe('a Round of «Склади вислів»', () => {
+  it("shows the expression's meaning and its words as shuffled chips, the words in order right, with the check switched off as in spec #1674", async () => {
+    const rounds = await roundsOf([1, 2, 3], false, ['buildIdiomCheck']);
+
+    expect(rounds).toHaveLength(3 * GAME_ROUNDS);
+    for (const round of rounds) {
       const words = wordsOf(expressionOf(round));
-      expect(round).toMatchObject({ form: 'chips', highlight: undefined, fixed: [] });
+      expect(round).toMatchObject({
+        form: 'chips',
+        highlight: undefined,
+        fixed: [],
+        layout: 'line',
+      });
       expect([...chipsOf(round)].sort()).toEqual([...words].sort());
       expect(folded(chipsOf(round))).not.toEqual(folded(words));
       expect(round.answer).toMatchObject({ form: 'chips', expected: words, right: true });
@@ -252,7 +344,7 @@ describe('a Round of «Склади вислів»', () => {
   });
 
   it('drops a comma or a dash and keeps a hyphen inside a word', async () => {
-    const rounds = await roundsOf([1, 2, 3]);
+    const rounds = await roundsOf([1, 2, 3], false, ['buildIdiomCheck']);
     const chipsOfExpression = (expression: string) => {
       const round = rounds.find((played) => expressionOf(played) === expression);
       if (round === undefined) throw new Error(`No Round asked about «${expression}»`);
@@ -289,7 +381,7 @@ describe('a Round of «Склади вислів»', () => {
     await app.game.answer({ form: 'chips', chips: wrong });
 
     expect(current(app).round.answer).toMatchObject({ form: 'chips', chosen: wrong, right: false });
-    expect(current(app).lives).toBe(4);
+    expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(idOf(asked))).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
     const tapped = wrong.map((place) => chipsOf(current(app).round)[place]).join(' ');

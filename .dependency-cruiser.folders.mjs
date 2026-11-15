@@ -26,7 +26,7 @@ export default {
   options: {
     ...boundaries.options,
     exclude: {
-      path: [...boundaries.options.exclude.path, '\\.test\\.tsx?$', '(^|/)test-support\\.ts$'],
+      path: [...boundaries.options.exclude.path, '\\.test\\.tsx?$', '(^|/)test-support\\.tsx?$'],
     },
   },
 };

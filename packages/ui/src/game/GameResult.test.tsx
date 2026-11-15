@@ -99,7 +99,7 @@ describe('GameResult', () => {
             bestResult={1}
             onAgain={jest.fn()}
             onHome={jest.fn()}
-            onOpenEntry={undefined}
+            review={{ kind: 'none' }}
           />
         </HapticsProvider>
       </EditionProvider>,

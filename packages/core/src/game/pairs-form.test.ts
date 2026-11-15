@@ -26,15 +26,20 @@ const content: PairsContent = {
 const fresh = pairsForm.shown(content, []);
 
 describe('the pairs form', () => {
-  it('shows the Words and Definitions in their orders, none gone', () => {
+  it('shows the Words and Definitions in their orders, all open', () => {
     expect(fresh).toEqual({
       form: 'pairs',
-      words: [коса.word, вирій.word, плай.word].map((shown) => ({ shown, gone: false })),
+      words: [коса.word, вирій.word, плай.word].map((shown) => ({ shown, state: 'open' })),
       definitions: [плай, коса, вирій].map(({ definition }) => ({
         shown: definition,
-        gone: false,
+        state: 'open',
       })),
+      stays: false,
     });
+  });
+
+  it('shows the found pairs staying when the content says so', () => {
+    expect(pairsForm.shown({ ...content, stays: true }, [])).toMatchObject({ stays: true });
   });
 
   it('spans one Round per pair and asks about every pair Entry', () => {
@@ -58,7 +63,7 @@ describe('the pairs form', () => {
     ).toMatchObject({ right: false, correct: 2 });
   });
 
-  it('takes the pairs answered in the grid, right or wrong, out of the grid', () => {
+  it('marks a pair matched wrong missed in the grid, so it takes no more taps', () => {
     const wrong = pairsForm.judge(
       content,
       fresh,
@@ -67,8 +72,8 @@ describe('the pairs form', () => {
     );
     if (wrong === undefined) throw new Error('The answer was not judged');
     const after = pairsForm.shown(content, [wrong.answer]);
-    expect(after.words.map(({ gone }) => gone)).toEqual([false, true, false]);
-    expect(after.definitions.map(({ gone }) => gone)).toEqual([false, false, true]);
+    expect(after.words.map(({ state }) => state)).toEqual(['open', 'missed', 'open']);
+    expect(after.definitions.map(({ state }) => state)).toEqual(['open', 'open', 'missed']);
     expect(
       pairsForm.judge(content, after, { form: 'pairs', word: 1, definition: 1 }, testComparison),
     ).toBe(undefined);

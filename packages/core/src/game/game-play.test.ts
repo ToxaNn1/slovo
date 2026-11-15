@@ -9,7 +9,7 @@ import { fakeClock, testComparison, testEdition, testSchedule, word } from '../t
 import { buildGameReview } from './game-review';
 import { LIFE_LOST_DELAY } from './game-haptics';
 import { GAME_LIVES, openGame, type CurrentGame, type Game, type GivenAnswer } from './game';
-import type { GameMode, RoundContent, RoundInput, RoundOption } from './game-mode';
+import type { GameEdition, GameMode, RoundContent, RoundInput, RoundOption } from './game-mode';
 import { GAME_ROUNDS } from './round-plan';
 
 // The play of a Game through `openGame` (ADR 0052): the Rounds a Game Mode
@@ -80,10 +80,23 @@ const never = { subscribe: () => () => undefined };
  * The Game opened over the mode and the eligible Words, with `eligibleNow`
  * to change them as a hide, a restore or a Mix change does.
  */
-async function open(gameMode: GameMode, eligibleAtStart: readonly Word[] = words) {
+async function open(
+  gameMode: GameMode,
+  eligibleAtStart: readonly Word[] = words,
+  {
+    banner = true,
+    roundXp = 0,
+    edition = testEdition(
+      banner ? {} : { isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' },
+    ),
+    write = () => Promise.resolve(),
+    scheduled = true,
+  }: OpenOptions = {},
+) {
   let eligible: EligibleOfKind<AskableEntry> = { entries: eligibleAtStart };
   const eligibility = createSubject<undefined>();
   const time = fakeClock();
+  const later = testSchedule(time);
   function eligibleOfKind<Also extends AskableKind = never>(
     kind: ShownKind,
     alsoOf: readonly Also[] = [],
@@ -97,7 +110,7 @@ async function open(gameMode: GameMode, eligibleAtStart: readonly Word[] = words
     });
   }
   const game = await openGame({
-    edition: testEdition(),
+    edition,
     comparison: testComparison,
     entries: { eligibleOfKind },
     history: { list: [] },
@@ -107,15 +120,19 @@ async function open(gameMode: GameMode, eligibleAtStart: readonly Word[] = words
       confirm: () => Promise.resolve(),
     },
     xp: {
-      award: () => ({ changes: new Map(), amount: 0, commit: () => undefined }),
+      award: ({ source }) => ({
+        changes: new Map(),
+        amount: source === 'game-round' ? roundXp : 0,
+        commit: () => undefined,
+      }),
       answeredWrong: () => ({ changes: new Map(), commit: () => undefined }),
       resetMarker: undefined,
       subscribe: () => () => undefined,
     },
-    userState: { read: () => Promise.resolve(undefined), write: () => Promise.resolve() },
+    userState: { read: () => Promise.resolve(undefined), write },
     clock: time.clock,
     random: inOrder,
-    schedule: testSchedule(time).schedule,
+    ...(scheduled ? { schedule: later.schedule } : {}),
     modes: [gameMode],
     eligibility,
     dayTurned: never,
@@ -123,12 +140,33 @@ async function open(gameMode: GameMode, eligibleAtStart: readonly Word[] = words
   });
   return {
     game,
+    /** Moves the clock on by `ms`, running what the Game scheduled. */
+    advance: later.advance,
     eligibleNow: async (now: EligibleOfKind<AskableEntry>) => {
       eligible = now;
       await eligibility.publish(undefined);
     },
   };
 }
+
+/** How a test opens the Game: with the answer banner switched on or off, the XP a right Round earns, and its Edition. */
+interface OpenOptions {
+  /** Whether `gameAnswerBanner` is on; on by default, as every switch of the test Edition. */
+  banner?: boolean;
+  /** The XP the XP log records for a right Round; 0 by default. */
+  roundXp?: number;
+  /** The Edition the Game opens in; the test Edition with `banner` by default. */
+  edition?: GameEdition;
+  /** How the user state writes; every write keeps by default. */
+  write?: () => Promise<void>;
+  /** Whether the Game has a schedule to move on by; it has by default. */
+  scheduled?: boolean;
+}
+
+/** The test Edition with `pairsStay` off: a pair of «Пари» answered waits, as in spec #1674. */
+const pairsPausing: OpenOptions = {
+  edition: testEdition({ isFeatureEnabled: (feature) => feature !== 'pairsStay' }),
+};
 
 /** The Game in play or just over; fails the test on the mode screen. */
 function now(game: Game): CurrentGame {
@@ -138,8 +176,13 @@ function now(game: Game): CurrentGame {
 }
 
 /** The Game started in the mode; fails the test when none starts. */
-async function start(build: Build, rest: Partial<GameMode> = {}, eligible?: readonly Word[]) {
-  const opened = await open(mode(build, rest), eligible);
+async function start(
+  build: Build,
+  rest: Partial<GameMode> = {},
+  eligible?: readonly Word[],
+  options?: OpenOptions,
+) {
+  const opened = await open(mode(build, rest), eligible, options);
   await opened.game.start('test');
   now(opened.game);
   return opened;
@@ -210,6 +253,46 @@ describe('the Rounds of a Game in play', () => {
     });
   });
 
+  it('starts with 3 Lives and ends on the third wrong answer', async () => {
+    const { game } = await start(pick);
+
+    expect(now(game)).toMatchObject({ lives: 3, livesAtStart: 3 });
+
+    const { over } = await playOut(game, [2, 4, 7]);
+
+    expect(over).toMatchObject({ roundsPassed: 6, lives: 0, status: 'lost' });
+  });
+
+  it('starts with 5 Lives with gameThreeLives off', async () => {
+    const edition = testEdition({ isFeatureEnabled: (feature) => feature !== 'gameThreeLives' });
+    const { game } = await open(mode(pick), words, { edition });
+    await game.start('test');
+
+    expect(now(game)).toMatchObject({ lives: 5, livesAtStart: 5 });
+
+    const { over } = await playOut(game, [1, 2, 3, 4]);
+
+    expect(over).toMatchObject({ roundsPassed: GAME_ROUNDS, lives: 1, status: 'won' });
+  });
+
+  it('keeps the Lives it started with when gameThreeLives turns off in play', async () => {
+    let threeLives = true;
+    const edition = testEdition({
+      isFeatureEnabled: (feature) => feature !== 'gameThreeLives' || threeLives,
+    });
+    const { game } = await open(mode(pick), words, { edition });
+    await game.start('test');
+
+    threeLives = false;
+    const { over } = await playOut(game, [1, 2, 3]);
+
+    expect(over).toMatchObject({ roundsPassed: 2, lives: 0, livesAtStart: 3, status: 'lost' });
+
+    await game.start('test');
+
+    expect(now(game)).toMatchObject({ lives: 5, livesAtStart: 5 });
+  });
+
   it('starts no Game when the mode makes fewer Rounds than a Game has, and its offer says why', async () => {
     const { game } = await open(mode(pick), words.slice(0, GAME_ROUNDS - 1));
 
@@ -266,15 +349,15 @@ describe('the Rounds of a Game in play', () => {
 
   it('is won after the 15th Round with mistakes, as long as a Life is left', async () => {
     const { game } = await start(pick);
-    const { over } = await playOut(game, [2, 6, 7, 15]);
+    const { over } = await playOut(game, [7, 15]);
 
     expect(over).toMatchObject({ roundsPassed: 15, lives: 1, status: 'won' });
   });
 
-  it.each([5, 9, 15])(
-    'is lost when the fifth Life goes in Round %i, which is not counted as passed',
+  it.each([3, 9, 15])(
+    'is lost when the third Life goes in Round %i, which is not counted as passed',
     async (lastRound) => {
-      const wrong = [4, 3, 2, 1, 0].map((before) => lastRound - before);
+      const wrong = [2, 1, 0].map((before) => lastRound - before);
       const { game } = await start(pick);
 
       const { over, rounds } = await playOut(game, wrong);
@@ -284,14 +367,14 @@ describe('the Rounds of a Game in play', () => {
     },
   );
 
-  it('ends a Game that lost its fifth Life only on «Далі»: the answered Round stays until then', async () => {
+  it('ends a Game that lost its third Life only on «Далі»: the answered Round stays until then', async () => {
     const { game } = await start(pick);
-    for (let round = 1; round <= 4; round += 1) await play(game, false);
+    for (let round = 1; round <= 2; round += 1) await play(game, false);
 
     const answered = await answer(game, pickAnswer(false));
 
-    expect(answered).toMatchObject({ lives: 0, roundsPassed: 4, status: 'answered' });
-    expect(await next(game)).toMatchObject({ lives: 0, roundsPassed: 4, status: 'lost' });
+    expect(answered).toMatchObject({ lives: 0, roundsPassed: 2, status: 'answered' });
+    expect(await next(game)).toMatchObject({ lives: 0, roundsPassed: 2, status: 'lost' });
   });
 
   it('takes no answer and no «Далі» once the Game is over', async () => {
@@ -320,15 +403,13 @@ describe('the Rounds of a Game in play', () => {
 
   it('lists the Round that cost the last Life as the last played Round of a lost Game', async () => {
     const { game } = await start(pick);
-    const { over } = await playOut(game, [1, 2, 3, 4, 5]);
+    const { over } = await playOut(game, [1, 2, 3]);
 
     expect(over.status).toBe('lost');
     expect(over.played.map(({ number, right }) => [number, right])).toEqual([
       [1, false],
       [2, false],
       [3, false],
-      [4, false],
-      [5, false],
     ]);
   });
 
@@ -417,7 +498,9 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
   });
 
   it('moves on at once in a mode that moves on: the answer counts and the next Round comes with no «Далі»', async () => {
-    const { game } = await start(pick, { lives: 'none', movesOn: true });
+    const { game } = await start(pick, { lives: 'none', movesOn: true }, undefined, {
+      banner: false,
+    });
 
     const second = await answer(game, pickAnswer(false));
 
@@ -425,6 +508,250 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
     expect(second.round).toMatchObject({ number: 2, answer: undefined });
     expect(second.played.map(({ number, right }) => [number, right])).toEqual([[1, false]]);
     await noMove(game, () => game.next());
+  });
+});
+
+describe('the answer banner behind `gameAnswerBanner` (ADR 0138)', () => {
+  it('holds a right answer in the answered state with the XP the XP log records for it', async () => {
+    const { game } = await start(pick, {}, undefined, { roundXp: 10 });
+
+    expect(await answer(game, pickAnswer(true))).toMatchObject({
+      status: 'answered',
+      answered: { kind: 'right', xp: 10 },
+    });
+  });
+
+  it('holds a right answer with no XP when the XP log records none for it', async () => {
+    const { game } = await start(pick);
+
+    const answered = await answer(game, pickAnswer(true));
+
+    expect(answered).toMatchObject({ status: 'answered', answered: { kind: 'right' } });
+    expect(answered.status === 'answered' && answered.answered).toEqual({
+      kind: 'right',
+      xp: undefined,
+    });
+  });
+
+  it("holds a wrong answer with the right answer's text, a Life left", async () => {
+    const { game } = await start(pick);
+
+    expect(await answer(game, pickAnswer(false))).toMatchObject({
+      status: 'answered',
+      lives: GAME_LIVES - 1,
+      answered: { kind: 'wrong', answer: wordAt(0).lemma, lastLife: false },
+    });
+  });
+
+  it('says a wrong answer took the last Life, and the Game is lost when it moves on', async () => {
+    const { game, advance } = await start(pick, { lives: 1 });
+
+    expect(await answer(game, pickAnswer(false))).toMatchObject({
+      status: 'answered',
+      lives: 0,
+      answered: { kind: 'wrong', lastLife: true },
+    });
+    await advance(1600);
+
+    expect(now(game)).toMatchObject({ status: 'lost', roundsPassed: 0 });
+  });
+
+  it('never says the last Life in a mode without Lives', async () => {
+    const { game } = await start(pick, { lives: 'none' });
+
+    expect(await answer(game, pickAnswer(false))).toMatchObject({
+      answered: { kind: 'wrong', lastLife: false },
+    });
+  });
+
+  it('moves on by itself 950 ms after a right answer, and not before', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(true));
+
+    await advance(949);
+    expect(now(game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
+    await advance(1);
+
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1, round: { number: 2 } });
+    expect(now(game)).not.toHaveProperty('answered');
+  });
+
+  it('moves on by itself 1600 ms after a wrong answer, and not before', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(false));
+
+    await advance(1599);
+    expect(now(game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
+    await advance(1);
+
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1, round: { number: 2 } });
+  });
+
+  it('is won when it moves on after the last Round', async () => {
+    const { game, advance } = await start(pick, { roundLimit: 1 });
+    await game.answer(pickAnswer(true));
+
+    await advance(950);
+
+    expect(now(game)).toMatchObject({ status: 'won', roundsPassed: 1 });
+  });
+
+  it('moves on once after «Далі» came first', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(true));
+    await game.next();
+
+    await advance(950);
+
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1 });
+  });
+
+  it('moves on in a mode with a time limit after 550 ms right and 900 ms wrong, its clock running under the banner', async () => {
+    const { game, advance } = await start(pick, {
+      lives: 'none',
+      roundLimit: 'none',
+      timeLimit: 20_000,
+      movesOn: true,
+    });
+    const endsAt = now(game).time?.endsAt;
+
+    expect(await answer(game, pickAnswer(true))).toMatchObject({
+      status: 'answered',
+      answered: { kind: 'right' },
+    });
+    expect(now(game).time?.endsAt).toBe(endsAt);
+    await advance(549);
+    expect(now(game).status).toBe('answered');
+    await advance(1);
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1 });
+
+    await game.answer(pickAnswer(false));
+    await advance(899);
+    expect(now(game).status).toBe('answered');
+    await advance(1);
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 2 });
+    expect(now(game).time?.endsAt).toBe(endsAt);
+  });
+
+  it('ends a timed Game whose time is up under the banner', async () => {
+    const { game, advance } = await start(pick, {
+      lives: 'none',
+      roundLimit: 'none',
+      timeLimit: 20_000,
+      movesOn: true,
+    });
+    await advance(19_800);
+    await game.answer(pickAnswer(false));
+
+    await advance(200);
+
+    expect(now(game)).toMatchObject({ status: 'time-up' });
+    await advance(1000);
+    expect(now(game)).toMatchObject({ status: 'time-up', roundsPassed: 0 });
+  });
+
+  it('waits for what the screen waits for, such as VoiceOver reading the banner, when it takes longer than the delay', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(true));
+    let read: (() => void) | undefined;
+    game.waitFor(
+      new Promise<void>((resolve) => {
+        read = resolve;
+      }),
+    );
+
+    await advance(5000);
+    expect(now(game).status).toBe('answered');
+    read?.();
+    await advance(0);
+
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1 });
+  });
+
+  it('waits for the delay when what the screen waits for comes sooner', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(true));
+    game.waitFor(Promise.resolve());
+
+    await advance(949);
+    expect(now(game).status).toBe('answered');
+    await advance(1);
+
+    expect(now(game).status).toBe('playing');
+  });
+
+  it('shows the banner as its switch says when the Game starts, not when the Game opened', async () => {
+    let switchedOn = false;
+    const edition = testEdition({
+      isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' || switchedOn,
+    });
+    const opened = await open(mode(pick), words, { edition });
+    switchedOn = true;
+    await opened.game.start('test');
+
+    expect(await answer(opened.game, pickAnswer(true))).toMatchObject({ banner: true });
+    await opened.advance(950);
+    expect(now(opened.game)).toMatchObject({ status: 'playing', roundsPassed: 1 });
+
+    switchedOn = false;
+    expect(await answer(opened.game, pickAnswer(true))).toMatchObject({ banner: true });
+    opened.game.leave();
+    await opened.game.start('test');
+    expect(await answer(opened.game, pickAnswer(true))).toMatchObject({ banner: false });
+    await opened.advance(5000);
+    expect(now(opened.game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
+  });
+
+  it('shows no banner without a schedule to move on by, so «Далі» moves on', async () => {
+    const { game } = await start(pick, {}, undefined, { scheduled: false });
+
+    expect(await answer(game, pickAnswer(true))).toMatchObject({
+      status: 'answered',
+      banner: false,
+    });
+  });
+
+  it('takes the banner down after a move on that failed to write, so «Далі» tries again', async () => {
+    let fails = true;
+    const write = () => (fails ? Promise.reject(new Error('disk full')) : Promise.resolve());
+    const { game, advance } = await start(pick, { roundLimit: 1 }, undefined, { write });
+    await game.answer(pickAnswer(true));
+
+    await advance(950);
+    expect(now(game)).toMatchObject({ status: 'answered', banner: false, roundsPassed: 0 });
+
+    fails = false;
+    expect(await next(game)).toMatchObject({ status: 'won', roundsPassed: 1 });
+  });
+
+  it('does not move on after the Game is left', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(true));
+    game.leave();
+
+    await advance(950);
+
+    expect(game.state.current).toBeUndefined();
+  });
+
+  it('waits for «Далі» with its switch off, and a mode that moves on moves on at once', async () => {
+    const waiting = await start(pick, {}, undefined, { banner: false });
+    await waiting.game.answer(pickAnswer(true));
+    await waiting.advance(5000);
+    expect(now(waiting.game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
+
+    const timed = await start(
+      pick,
+      { lives: 'none', timeLimit: 20_000, movesOn: true },
+      undefined,
+      {
+        banner: false,
+      },
+    );
+    expect(await answer(timed.game, pickAnswer(true))).toMatchObject({
+      status: 'playing',
+      roundsPassed: 1,
+    });
   });
 });
 
@@ -464,7 +791,7 @@ describe('the answer forms of a Round', () => {
    * Definitions shown in the reverse order; a Word shows by its id, which
    * tells homonyms apart.
    */
-  const grid: Build = (of, { next: after }) => {
+  const grid: Build = (of, { next: after, edition }) => {
     const pairs = [of, ...after.slice(0, 3)].map((entry) => ({
       entry,
       word: option(entry.id.slice(2)),
@@ -478,6 +805,7 @@ describe('the answer forms of a Round', () => {
       pairs,
       wordOrder: places,
       definitionOrder: [...places].reverse(),
+      stays: edition.isFeatureEnabled('pairsStay'),
     };
   };
 
@@ -564,8 +892,8 @@ describe('the answer forms of a Round', () => {
     });
   });
 
-  it('plays the four pairs of a pairs grid as four Rounds, a wrong pair costing a Life, then the next grid', async () => {
-    const { game } = await start(grid, { roundLimit: 8 });
+  it('plays the four pairs of a pairs grid as four Rounds, a wrong pair costing a Life, then the next grid, `pairsStay` off', async () => {
+    const { game } = await start(grid, { roundLimit: 8 }, undefined, pairsPausing);
     const first = now(game).round;
     if (first.form !== 'pairs') throw new Error('Not a pairs grid');
     expect(first.words.map(({ shown }) => shown.text)).toEqual([
@@ -587,10 +915,15 @@ describe('the answer forms of a Round', () => {
     expect(two).toMatchObject({ roundsPassed: 1, status: 'playing' });
     expect(two.round.number).toBe(2);
     if (two.round.form !== 'pairs') throw new Error('Not a pairs grid');
-    expect(two.round.words.map(({ gone }) => gone)).toEqual([true, false, false, false]);
-    expect(two.round.definitions.map(({ gone }) => gone)).toEqual([false, false, false, true]);
+    expect(two.round.words.map(({ state }) => state)).toEqual(['found', 'open', 'open', 'open']);
+    expect(two.round.definitions.map(({ state }) => state)).toEqual([
+      'open',
+      'open',
+      'open',
+      'found',
+    ]);
 
-    // A pair already gone takes no answer; the second Word matched to the wrong Definition.
+    // A pair already answered takes no answer; the second Word matched to the wrong Definition.
     await noMove(game, () => game.answer({ form: 'pairs', word: 0, definition: 2 }));
     await noMove(game, () => game.answer({ form: 'pairs', word: 1, definition: 3 }));
     const wrong = await answer(game, { form: 'pairs', word: 1, definition: 1 });
@@ -605,8 +938,18 @@ describe('the answer forms of a Round', () => {
     expect(wrong.played[1]?.entry).toBe(wordAt(1));
     const three = await next(game);
     if (three.round.form !== 'pairs') throw new Error('Not a pairs grid');
-    expect(three.round.words.map(({ gone }) => gone)).toEqual([true, true, false, false]);
-    expect(three.round.definitions.map(({ gone }) => gone)).toEqual([false, false, true, true]);
+    expect(three.round.words.map(({ state }) => state)).toEqual([
+      'found',
+      'missed',
+      'open',
+      'open',
+    ]);
+    expect(three.round.definitions.map(({ state }) => state)).toEqual([
+      'open',
+      'open',
+      'missed',
+      'found',
+    ]);
 
     await game.answer({ form: 'pairs', word: 2, definition: 1 });
     await game.next();
@@ -615,7 +958,7 @@ describe('the answer forms of a Round', () => {
     expect(nextGrid).toMatchObject({ roundsPassed: 4, lives: GAME_LIVES - 1, status: 'playing' });
     if (nextGrid.round.form !== 'pairs') throw new Error('Not a pairs grid');
     expect(nextGrid.round.number).toBe(5);
-    expect(nextGrid.round.words.every(({ gone }) => !gone)).toBe(true);
+    expect(nextGrid.round.words.every(({ state }) => state === 'open')).toBe(true);
     expect(nextGrid.round.words.map(({ shown }) => shown.text)).toEqual([
       'word05',
       'word06',
@@ -629,6 +972,90 @@ describe('the answer forms of a Round', () => {
     }
     expect(now(game)).toMatchObject({ roundsPassed: 8, status: 'won' });
     expect(now(game).played).toHaveLength(8);
+  });
+
+  it('keeps a pair of a pairs grid answered until «Далі», the answer banner on and `pairsStay` off', async () => {
+    const { game, advance } = await start(grid, { roundLimit: 8 }, undefined, pairsPausing);
+    await game.answer({ form: 'pairs', word: 0, definition: 3 });
+
+    await advance(5000);
+
+    expect(now(game)).toMatchObject({ status: 'answered', banner: false, roundsPassed: 0 });
+  });
+
+  it('plays a pairs grid with no answered state after a pair, `pairsStay` on: a found pair stays, a wrong one costs a Life', async () => {
+    const { game, advance } = await start(grid, { roundLimit: 8 });
+
+    const one = await answer(game, { form: 'pairs', word: 0, definition: 3 });
+    expect(one).toMatchObject({ status: 'playing', roundsPassed: 1, lives: GAME_LIVES });
+    expect(one).not.toHaveProperty('answered');
+    expect(one.round).toMatchObject({ number: 2, answer: undefined });
+    expect(one.played[0]).toMatchObject({ entry: wordAt(0), right: true });
+    if (one.round.form !== 'pairs') throw new Error('Not a pairs grid');
+    expect(one.round.words.map(({ state }) => state)).toEqual(['found', 'open', 'open', 'open']);
+    expect(one.round.definitions.map(({ state }) => state)).toEqual([
+      'open',
+      'open',
+      'open',
+      'found',
+    ]);
+
+    // A found pair takes no answer; a wrong pair costs a Life and the next pair is playable at once.
+    await noMove(game, () => game.answer({ form: 'pairs', word: 0, definition: 2 }));
+    const wrong = await answer(game, { form: 'pairs', word: 1, definition: 1 });
+    expect(wrong).toMatchObject({ status: 'playing', roundsPassed: 2, lives: GAME_LIVES - 1 });
+    expect(wrong).not.toHaveProperty('answered');
+    expect(wrong.played[1]).toMatchObject({ entry: wordAt(1), right: false });
+
+    await advance(5000);
+    expect(now(game)).toBe(wrong);
+
+    await game.answer({ form: 'pairs', word: 2, definition: 1 });
+    const nextGrid = await answer(game, { form: 'pairs', word: 3, definition: 0 });
+    expect(nextGrid).toMatchObject({ status: 'playing', roundsPassed: 4, round: { number: 5 } });
+    if (nextGrid.round.form !== 'pairs') throw new Error('Not a pairs grid');
+    expect(nextGrid.round.words.map(({ shown }) => shown.text)).toEqual([
+      'word05',
+      'word06',
+      'word07',
+      'word08',
+    ]);
+
+    for (let pair = 0; pair < 4; pair += 1)
+      await game.answer({ form: 'pairs', word: pair, definition: 3 - pair });
+    expect(now(game)).toMatchObject({ roundsPassed: 8, status: 'won' });
+  });
+
+  it('keeps found pairs as `pairsStay` says when the Game starts, not when the Game opened', async () => {
+    let switchedOn = false;
+    const edition = testEdition({
+      isFeatureEnabled: (feature) => feature !== 'pairsStay' || switchedOn,
+    });
+    const opened = await open(mode(grid, { roundLimit: 8 }), words, { edition });
+    switchedOn = true;
+    await opened.game.start('test');
+    expect(now(opened.game).round).toMatchObject({ form: 'pairs', stays: true });
+
+    expect(await answer(opened.game, { form: 'pairs', word: 0, definition: 3 })).toMatchObject({
+      status: 'playing',
+      roundsPassed: 1,
+    });
+    switchedOn = false;
+    opened.game.leave();
+    await opened.game.start('test');
+    expect(now(opened.game).round).toMatchObject({ form: 'pairs', stays: false });
+    expect(await answer(opened.game, { form: 'pairs', word: 0, definition: 3 })).toMatchObject({
+      status: 'answered',
+      roundsPassed: 0,
+    });
+  });
+
+  it('ends a pairs Game on the pair that takes the last Life, `pairsStay` on', async () => {
+    const { game } = await start(grid, { roundLimit: 8, lives: 1 });
+
+    const over = await answer(game, { form: 'pairs', word: 0, definition: 0 });
+
+    expect(over).toMatchObject({ status: 'lost', lives: 0, end: { kind: 'lives-over' } });
   });
 
   it('takes no answer of another form than the Round has', async () => {

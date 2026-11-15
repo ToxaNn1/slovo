@@ -227,38 +227,38 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
   it('offers the mode to a new reader and plays a full Game of 15 different Words', async () => {
     const app = await runWords(7);
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
-      { modeId: 'correction', entryKind: 'correction', group: 'corrections', canStart: true },
-      { modeId: 'stress', entryKind: 'word', group: 'words', canStart: true },
-      { modeId: 'pairs', entryKind: 'word', group: 'words', canStart: true },
-      { modeId: 'anagram', entryKind: 'word', group: 'words', canStart: true },
-      { modeId: 'by-letters', entryKind: 'word', group: 'words', canStart: true },
-      { modeId: 'type-word', entryKind: 'correction', group: 'words', canStart: true },
-      { modeId: 'anglicism', entryKind: 'correction', group: 'corrections', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
+      { modeId: 'correction', entryKind: 'correction', group: 'meaning', canStart: true },
+      { modeId: 'stress', entryKind: 'word', group: 'sound', canStart: true },
+      { modeId: 'pairs', entryKind: 'word', group: 'meaning', canStart: true },
+      { modeId: 'anagram', entryKind: 'word', group: 'letters', canStart: true },
+      { modeId: 'by-letters', entryKind: 'word', group: 'new', canStart: true },
+      { modeId: 'type-word', entryKind: 'correction', group: 'new', canStart: true },
+      { modeId: 'origin', entryKind: 'word', group: 'new', canStart: true },
+      { modeId: 'anglicism', entryKind: 'correction', group: 'new', canStart: true },
       {
         modeId: 'idiom-meaning',
         entryKind: 'idiom',
-        group: 'idioms',
+        group: 'meaning',
         canStart: false,
         refusal: 'idioms-out-of-mix',
       },
       {
         modeId: 'build-idiom',
         entryKind: 'idiom',
-        group: 'idioms',
+        group: 'new',
         canStart: false,
         refusal: 'idioms-out-of-mix',
       },
-      { modeId: 'survival', entryKind: 'correction', group: 'challenge', canStart: true },
-      { modeId: 'timed', entryKind: 'word', group: 'challenge', canStart: true },
-      { modeId: 'origin', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'survival', entryKind: 'correction', group: 'new', canStart: true },
+      { modeId: 'timed', entryKind: 'word', group: 'speed', canStart: true },
     ]);
 
     const asked = await playGame(app);
 
     expect(asked).toHaveLength(GAME_ROUNDS);
     expect(new Set(asked.map(({ answer }) => answer.id)).size).toBe(GAME_ROUNDS);
-    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 5, status: 'won' });
+    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 3, status: 'won' });
   });
 
   it("offers three Distractors of the answer's part of speech, none with the answer's Lemma", async () => {
@@ -468,7 +468,7 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     const rounds = await playCorrections(app);
 
     expect(new Set(rounds.map((round) => askedOf(round).id)).size).toBe(GAME_ROUNDS);
-    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 5, status: 'won' });
+    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 3, status: 'won' });
   });
 
   it('highlights the non-standard form where the sentence holds it as written, and nothing where it is inflected', async () => {
@@ -579,7 +579,7 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     expect(app.game.state.modes).toContainEqual({
       modeId: 'correction',
       entryKind: 'correction',
-      group: 'corrections',
+      group: 'meaning',
       canStart: true,
     });
 

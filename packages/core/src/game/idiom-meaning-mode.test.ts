@@ -128,7 +128,7 @@ describe('«Фразеологізми» on offer', () => {
     expect(idiomMeaningOffer(app)).toEqual({
       modeId: 'idiom-meaning',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'meaning',
       canStart: true,
     });
   });
@@ -152,7 +152,7 @@ describe('«Фразеологізми» on offer', () => {
     expect(idiomMeaningOffer(app)).toEqual({
       modeId: 'idiom-meaning',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'meaning',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -168,7 +168,7 @@ describe('«Фразеологізми» on offer', () => {
     expect(idiomMeaningOffer(app)).toEqual({
       modeId: 'idiom-meaning',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'meaning',
       canStart: false,
       refusal: 'idioms-out-of-mix',
     });
@@ -201,7 +201,7 @@ describe('a Round of «Фразеологізми»', () => {
       for (const text of texts) expect(meaningsThatPlay.has(text)).toBe(true);
       expect(round.answer).toMatchObject({ form: 'pick', right: true });
     }
-    expect(current(app)).toMatchObject({ lives: 5, status: 'won' });
+    expect(current(app)).toMatchObject({ lives: 3, status: 'won' });
   });
 
   it('asks about idioms and proverbs and never about a place name, nor offers its meaning', async () => {
@@ -228,7 +228,7 @@ describe('a Round of «Фразеологізми»', () => {
 
     await app.game.answer({ form: 'pick', option: wrong });
 
-    expect(current(app).lives).toBe(4);
+    expect(current(app).lives).toBe(2);
     expect(current(app).round.answer).toMatchObject({
       right: false,
       sheet: {

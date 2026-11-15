@@ -54,7 +54,7 @@ function handTime() {
   };
 }
 
-/** The Core composition of one app run, every Feature Switch on but those turned off. */
+/** The Core composition of one app run, every Feature Switch on but the answer banner and those turned off. */
 async function run({
   seed = 7,
   off = [],
@@ -71,7 +71,8 @@ async function run({
   const app = await openComposition({
     content: createMemoryContentPort({ words: [...words] }),
     edition: testEdition({
-      isFeatureEnabled: (feature) => !off.includes(feature),
+      // The answer banner's shorter delays are tested in `game-play.test.ts`; here «На час» moves on at once, as with it off.
+      isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' && !off.includes(feature),
       userSettingDefaults: { mix: { categoryIds: [...categoryIds] } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
@@ -136,7 +137,7 @@ describe('«На час» on offer', () => {
     expect(timedOffer(app)).toEqual({
       modeId: 'timed',
       entryKind: 'word',
-      group: 'challenge',
+      group: 'speed',
       canStart: true,
     });
   });
@@ -153,7 +154,7 @@ describe('«На час» on offer', () => {
     expect(timedOffer(app)).toEqual({
       modeId: 'timed',
       entryKind: 'word',
-      group: 'challenge',
+      group: 'speed',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -179,9 +180,31 @@ describe('«На час» on offer', () => {
 });
 
 describe('a Game of «На час»', () => {
-  it('lasts 60 seconds of play, with no Lives, and asks Definition picks of Words', async () => {
+  it('lasts 20 seconds of play and ends `time-up` after them', async () => {
     const time = handTime();
     const app = await run({ time });
+    await app.game.start('timed');
+
+    expect(current(app)).toMatchObject({
+      status: 'playing',
+      timeLimit: 20_000,
+      time: { left: 20_000, endsAt: new Date(time.clock.now().getTime() + 20_000) },
+    });
+
+    await pick(app, true);
+    await pass(app, time, 19_999);
+
+    expect(current(app).status).toBe('playing');
+
+    await pass(app, time, 1);
+
+    expect(current(app)).toMatchObject({ status: 'time-up', time: { left: 0, endsAt: undefined } });
+    expect(app.game.state.current?.end).toMatchObject({ kind: 'time-up', right: 1, played: 1 });
+  });
+
+  it('lasts 60 seconds of play with timedTwentySeconds off, with no Lives, and asks Definition picks of Words', async () => {
+    const time = handTime();
+    const app = await run({ time, off: ['timedTwentySeconds'] });
     await app.game.start('timed');
 
     expect(current(app)).toMatchObject({
@@ -240,7 +263,7 @@ describe('a Game of «На час»', () => {
 
   it('stops its clock while paused in the background and runs it again on resume', async () => {
     const time = handTime();
-    const app = await run({ time });
+    const app = await run({ time, off: ['timedTwentySeconds'] });
     await app.game.start('timed');
     await pass(app, time, 20_000);
 
@@ -293,7 +316,7 @@ describe('a Game of «На час»', () => {
     expect(timedOffer(app)).toEqual({
       modeId: 'timed',
       entryKind: 'word',
-      group: 'challenge',
+      group: 'speed',
       best: { result: 4 },
       canStart: true,
     });
@@ -319,7 +342,7 @@ describe('a Game of «На час»', () => {
     expect(timedOffer(app)).toEqual({
       modeId: 'timed',
       entryKind: 'word',
-      group: 'challenge',
+      group: 'speed',
       canStart: true,
     });
   });
@@ -354,9 +377,25 @@ describe('a Game of «На час»', () => {
   });
 });
 
-// Spec #1674, «End of a Game»: «Час!» heads a time-up, «Влучно!» at least half right.
+// Spec #1674, «End of a Game»: «Час!» heads a time-up; spec #1880: «ВЛУЧНО!» at 60% right or more.
 describe('the end of «На час»', () => {
-  it('is `time-up` once its time runs out, on target with at least half the answers right', async () => {
+  it('is `time-up` once its time runs out, on target with 60% of the answers right', async () => {
+    const time = handTime();
+    const app = await run({ time });
+    await app.game.start('timed');
+    for (const right of [true, false, true, false, true]) await pick(app, right);
+    await pass(app, time, 60_000);
+
+    expect(current(app).end).toMatchObject({
+      kind: 'time-up',
+      played: 5,
+      right: 3,
+      newBest: true,
+      onTarget: true,
+    });
+  });
+
+  it('is off target with fewer than 60% of the answers right, half of them included', async () => {
     const time = handTime();
     const app = await run({ time });
     await app.game.start('timed');
@@ -367,22 +406,6 @@ describe('the end of «На час»', () => {
       kind: 'time-up',
       played: 6,
       right: 3,
-      newBest: true,
-      onTarget: true,
-    });
-  });
-
-  it('is off target with fewer than half the answers right', async () => {
-    const time = handTime();
-    const app = await run({ time });
-    await app.game.start('timed');
-    for (const right of [true, false, true, false, false]) await pick(app, right);
-    await pass(app, time, 60_000);
-
-    expect(current(app).end).toMatchObject({
-      kind: 'time-up',
-      played: 5,
-      right: 2,
       onTarget: false,
     });
   });

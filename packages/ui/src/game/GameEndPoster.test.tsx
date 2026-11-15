@@ -57,7 +57,9 @@ async function renderPoster() {
           bestResult={undefined}
           onAgain={jest.fn()}
           onToGames={jest.fn()}
-          onOpenEntry={undefined}
+          onToFeed={undefined}
+          warmup={false}
+          review={{ kind: 'none' }}
           mascot={<Text>Game over. Nice warm-up! A line far wider than any Mascot figure.</Text>}
         />
       </HapticsProvider>

@@ -34,7 +34,8 @@ async function open() {
   let waiting: { at: number; run: () => void }[] = [];
   const app = await openComposition({
     content: createMemoryContentPort({ words: [...words] }),
-    edition: testEdition({ isFeatureEnabled: () => true }),
+    // The answer banner's move on is tested in `game-play.test.ts`; here a timed Game moves on at once.
+    edition: testEdition({ isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' }),
     userState: await seedUserState({}, { port: createMemoryUserStatePort(records) }),
     clock: time.clock,
     schedule: (run, delay) => {

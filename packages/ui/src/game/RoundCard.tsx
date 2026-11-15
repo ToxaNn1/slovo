@@ -8,6 +8,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { WholeWordsText } from '../primitives/WholeWordsText';
+import { useRoundLook } from './round-look';
 import {
   roleSize,
   roundLayout,
@@ -16,7 +17,11 @@ import {
   sizeForLength,
   space,
   typeStyle,
+  type TypeRole,
 } from '../tokens';
+
+/** The longest question the board sets in the large display face on the ground; a longer one takes the text face. */
+const DISPLAY_MOST = 40;
 
 /**
  * Whether a part ends in a stop of its own, such as «?», maybe inside a closing quote or bracket,
@@ -38,9 +43,15 @@ function joinStopped(parts: readonly (string | undefined)[]): string {
  * How a restyled Round's card looks (board 07, spec #1674): a «Впиши слово»
  * Round names the wrong form it asks to replace, «замість «вірогідно»», over
  * its sentence; a «Звідки слово» Round shows its Word big on a sunken tile.
+ * On the ground (spec #1880) «Склади вислів» shows its label as an ink
+ * heading over the meaning in grey (`heading`), and «Англіцизми» draws its
+ * anglicism in red in the sentence (`redMark`).
  */
 export type RoundFace =
-  { readonly look: 'instead'; readonly instead: string } | { readonly look: 'word' };
+  | { readonly look: 'instead'; readonly instead: string }
+  | { readonly look: 'word' }
+  | { readonly look: 'heading' }
+  | { readonly look: 'redMark' };
 
 /**
  * The Round's prompt (`game-round-dark`, `game-round-correction-answered-light`):
@@ -54,6 +65,13 @@ export type RoundFace =
  * and VoiceOver reads it after the prompt.
  * An answer drawn in the prompt's place, such as the vowel buttons, stands in
  * for the prompt, and VoiceOver reads the label, then each of its buttons.
+ * In a Round on the ground (ADR 0139) the prompt stands on the background
+ * with no card, in the large display face up to 40 characters and the text
+ * face past that, or in the one face the Round asks for, a long question in
+ * the display face sized down; the Mascot, if any, stands beside it.
+ * An ink-headed Round on the ground (board g3, g4) shows only its ask and
+ * its face: «Впиши слово» the wrong form with no sentence, «Звідки слово»
+ * the Word whole on a full-width tile with no Definition.
  */
 export function RoundCard({
   label,
@@ -87,6 +105,14 @@ export function RoundCard({
   const tokens = useTokens();
   const { colors, radii } = tokens;
   const { strings, voice } = useEdition();
+  const look = useRoundLook();
+  const onGround = quickQuestion === undefined && look.onGround;
+  // The board's ink-headed faces show their ask and nothing of the Round besides.
+  const bare =
+    quickQuestion === undefined &&
+    look.inkHeaded &&
+    (face?.look === 'instead' || face?.look === 'word');
+  const asks = face?.look === 'instead' || face?.look === 'heading' || bare;
   const read =
     gap === undefined
       ? prompt
@@ -100,42 +126,45 @@ export function RoundCard({
   const spoken = joinStopped([
     label,
     face?.look === 'instead' ? face.instead : undefined,
-    read,
+    bare && face.look === 'instead' ? undefined : read,
     quickQuestion?.instead,
-    definition,
+    bare ? undefined : definition,
   ]);
-  const promptRole = quickQuestion === undefined ? 'roundPrompt' : 'quickQuestionPrompt';
-  return (
+  const promptRole: TypeRole =
+    quickQuestion !== undefined
+      ? 'quickQuestionPrompt'
+      : !onGround
+        ? 'roundPrompt'
+        : look.questionFace === 'text' ||
+            (look.questionFace === 'byLength' && Array.from(prompt).length > DISPLAY_MOST)
+          ? 'roundExplanation'
+          : 'roundAsk';
+  const card = (
     <View
       testID="game-prompt"
       accessible={children === undefined}
       accessibilityLabel={
-        children === undefined ? [spoken, marked].filter(Boolean).join(' ') : undefined
+        children === undefined
+          ? [spoken, bare ? undefined : marked].filter(Boolean).join(' ')
+          : undefined
       }
       {...voice}
       style={
-        quickQuestion === undefined
-          ? [
-              styles.card,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.line,
-                borderRadius: radii.card,
-              },
-            ]
-          : styles.inCard
+        onGround
+          ? styles.onGround
+          : quickQuestion === undefined
+            ? [
+                styles.card,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.line,
+                  borderRadius: radii.card,
+                },
+              ]
+            : styles.inCard
       }
     >
-      {face?.look === 'instead' && (
-        <Text
-          testID="game-ask"
-          maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-          {...voice}
-          style={[typeStyle('roundAsk', tokens), { color: colors.ink }]}
-        >
-          {label}
-        </Text>
-      )}
+      {asks && <RoundAsk ask={label} heading={false} />}
       {face?.look === 'instead' && (
         <Text
           testID="game-instead"
@@ -148,24 +177,35 @@ export function RoundCard({
       )}
       {children ??
         (face?.look === 'word' ? (
-          <WordTile word={prompt} />
-        ) : (
+          <WordTile word={prompt} whole={bare} />
+        ) : bare ? null : (
           <WholeWordsText
             text={prompt}
             typeRole={promptRole}
-            // A long prompt takes a smaller size, the cards' one text scale (owner 08.11).
-            size={sizeForLength(roleSize(promptRole), prompt, roundPromptLength)}
-            style={[typeStyle(promptRole, tokens), { color: colors.ink }]}
+            // A long prompt takes a smaller size, the cards' one text scale (owner 08.11);
+            // on the ground the text face already sets a long one.
+            size={
+              promptRole === 'roundExplanation'
+                ? undefined
+                : sizeForLength(roleSize(promptRole), prompt, roundPromptLength)
+            }
+            style={[
+              typeStyle(promptRole, tokens),
+              { color: face?.look === 'heading' ? colors.muted : colors.ink },
+            ]}
             highlight={
               highlight === undefined
                 ? undefined
                 : {
                     range: highlight,
-                    style: {
-                      backgroundColor: colors.surfaceSunken,
-                      textDecorationLine: 'underline',
-                      textDecorationColor: colors.accent,
-                    },
+                    style:
+                      face?.look === 'redMark'
+                        ? { color: colors.accent }
+                        : {
+                            backgroundColor: colors.surfaceSunken,
+                            textDecorationLine: 'underline',
+                            textDecorationColor: colors.accent,
+                          },
                   }
             }
           />
@@ -180,7 +220,7 @@ export function RoundCard({
           {quickQuestion.instead}
         </Text>
       )}
-      {definition !== undefined && (
+      {definition !== undefined && !bare && (
         <Text
           testID="game-definition"
           maxFontSizeMultiplier={roundLayout.textMaxFontScale}
@@ -192,13 +232,43 @@ export function RoundCard({
       )}
     </View>
   );
+  if (quickQuestion !== undefined || look.mascot === undefined) return card;
+  return (
+    <View style={styles.besideMascot}>
+      <View style={styles.question}>{card}</View>
+      {look.mascot}
+    </View>
+  );
 }
 
 /**
- * The Word of a «Звідки слово» Round (board 07 g4): big on a sunken tile, its
- * first letter faded. The card reads the whole Word as one, never its letters apart.
+ * A restyled Round's ask in ink over its face (board 06 «Наголос», g3, g4),
+ * such as «Як сказати краще?» or «Де наголос?»; VoiceOver reads it as the
+ * Round's heading where the card does not read it, as over the vowel buttons.
  */
-function WordTile({ word }: { word: string }) {
+export function RoundAsk({ ask, heading }: { ask: string; heading: boolean }) {
+  const tokens = useTokens();
+  const { voice } = useEdition();
+  return (
+    <Text
+      testID="game-ask"
+      maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+      {...(heading ? { accessibilityRole: 'header' as const } : {})}
+      {...voice}
+      style={[typeStyle('roundAsk', tokens), { color: tokens.colors.ink }]}
+    >
+      {ask}
+    </Text>
+  );
+}
+
+/**
+ * The Word of a «Звідки слово» Round: big on a sunken tile, its first letter
+ * faded (board 07 g4, spec #1674), or whole at the foot of a full-width tile
+ * (board g4 on the ground). The card reads the whole Word as one, never its
+ * letters apart.
+ */
+function WordTile({ word, whole }: { word: string; whole: boolean }) {
   const tokens = useTokens();
   const { colors, radii } = tokens;
   const { voice } = useEdition();
@@ -206,15 +276,24 @@ function WordTile({ word }: { word: string }) {
   return (
     <View
       testID="game-word"
-      style={[styles.tile, { backgroundColor: colors.surfaceSunken, borderRadius: radii.card }]}
+      style={[
+        whole ? styles.wholeTile : styles.tile,
+        { backgroundColor: colors.surfaceSunken, borderRadius: radii.card },
+      ]}
     >
       <Text
         maxFontSizeMultiplier={roundLayout.textMaxFontScale}
         {...voice}
-        style={[typeStyle('roundAsk', tokens), { color: colors.ink }]}
+        style={[typeStyle(whole ? 'roundOriginWord' : 'roundAsk', tokens), { color: colors.ink }]}
       >
-        <Text style={{ color: colors.muted }}>{first}</Text>
-        {rest.join('')}
+        {whole ? (
+          word
+        ) : (
+          <>
+            <Text style={{ color: colors.muted }}>{first}</Text>
+            {rest.join('')}
+          </>
+        )}
       </Text>
     </View>
   );
@@ -226,6 +305,12 @@ const styles = StyleSheet.create({
     paddingVertical: space[4],
     paddingHorizontal: space[6],
   },
+  wholeTile: {
+    alignSelf: 'stretch',
+    justifyContent: 'flex-end',
+    minHeight: roundLayout.originTileMinHeight,
+    padding: space[4],
+  },
   card: {
     minHeight: roundLayout.cardMinHeight,
     justifyContent: 'center',
@@ -235,4 +320,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   inCard: { gap: quickQuestionCard.gap },
+  onGround: { gap: space[4] },
+  besideMascot: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+  question: { flex: 1 },
 });

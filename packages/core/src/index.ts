@@ -72,13 +72,16 @@ export {
   type GameTime,
   type GivenAnswer,
   type GridCell,
+  type GridCellState,
   type PlayedRound,
   type Round,
   type RoundAnswer,
   type RoundBlank,
 } from './game/game';
 export {
+  GAME_HUB_GROUPS,
   GAME_MODE_GROUPS,
+  type OfferedGroup,
   type AnswerSheet,
   type ChipLayout,
   type FixedChip,
@@ -86,7 +89,7 @@ export {
   type RoundOption,
   type TextRange,
 } from './game/game-mode';
-export { buildGameReview, type GameReviewItem } from './game/game-review';
+export { buildGameReview, buildPlainGameReview, type GameReviewItem } from './game/game-review';
 export { GAME_ROUNDS } from './game/round-plan';
 export { type SearchResults } from './search/search';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';

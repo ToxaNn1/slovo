@@ -6,7 +6,8 @@ import type { TextComparison } from '../text/text-comparison';
 import type { AskableEntry, AskableKind, KindRefusal, ShownKind } from '../entries/entries';
 import type { Random } from '../ports';
 
-export { ROUND_OPTIONS, type AnswerSheet, type RoundOption } from './answer-form';
+import type { TextRange } from './answer-form';
+export { ROUND_OPTIONS, type AnswerSheet, type RoundOption, type TextRange } from './answer-form';
 export type { ChipKind, ChipLayout, FixedChip } from './chips-form';
 
 /**
@@ -22,13 +23,23 @@ export type GameEdition = Pick<Edition, 'isFeatureEnabled'> &
   };
 
 /**
- * The groups of the mode screen, in their agreed order: what a mode trains,
- * then the modes with a Lives, Round or time challenge of their own.
+ * The groups of the mode screen of spec #1674, in their agreed order, while
+ * `gameHubGroups` is off: what a mode trains, then the modes with a Lives,
+ * Round or time challenge of their own.
  */
 export const GAME_MODE_GROUPS = ['words', 'corrections', 'idioms', 'challenge'] as const;
 
-/** The group of the mode screen a Game Mode's card stands in. */
+/** The group of the mode screen of spec #1674 a Game Mode's card stands in. */
 export type GameModeGroup = (typeof GAME_MODE_GROUPS)[number];
+
+/** The board's five groups of the mode screen, in the board's order, behind `gameHubGroups` (ADR 0139). */
+export const GAME_HUB_GROUPS = ['sound', 'meaning', 'letters', 'speed', 'new'] as const;
+
+/** The board's group of the mode screen a Game Mode's card stands in behind `gameHubGroups`. */
+export type GameHubGroup = (typeof GAME_HUB_GROUPS)[number];
+
+/** The group a Game Mode's offer names: one of the board's five, or of the four of spec #1674 while `gameHubGroups` is off. */
+export type OfferedGroup = GameHubGroup | GameModeGroup;
 
 /**
  * Which label a Round shows over its prompt: the Game Mode's, a Synonym
@@ -37,12 +48,6 @@ export type GameModeGroup = (typeof GAME_MODE_GROUPS)[number];
  * shell asks as the Edition's «{word}» — це… (spec #1674).
  */
 export type RoundLabelKind = 'mode' | 'synonymRow' | 'tip' | 'gap' | 'meaning';
-
-/** A stretch of a text, from the character at `start` up to the one at `end`, which it leaves out. */
-export interface TextRange {
-  readonly start: number;
-  readonly end: number;
-}
 
 /**
  * The form of a Round's answer, which the Game Mode decides (ADR 0052): a
@@ -101,8 +106,10 @@ export interface GameMode {
   readonly id: string;
   /** The kind of Entry its Rounds ask about, which its card names and whose refusal it gives. */
   readonly entryKind: ShownKind;
-  /** The group of the mode screen its card stands in. */
+  /** The group of the mode screen its card stands in while `gameHubGroups` is off. */
   readonly group: GameModeGroup;
+  /** The board's group its card stands in behind `gameHubGroups`: `new` when left out. */
+  readonly hubGroup?: GameHubGroup;
   /**
    * Other kinds of Entry its Rounds may ask about, such as idioms and
    * Synonym Rows in «Вгадай слово»; a kind with no eligible Entry, such as
@@ -110,10 +117,11 @@ export interface GameMode {
    */
   readonly alsoAsks?: readonly AskableKind[];
   /**
-   * The Lives a Game in the mode starts with: `GAME_LIVES` when left out,
-   * or none, so that a mistake never ends the Game.
+   * The Lives a Game in the mode starts with, or what reads them from the
+   * Edition at the start of a Game: the default Lives (`gameLives`) when
+   * left out, or none, so that a mistake never ends the Game.
    */
-  readonly lives?: number | 'none';
+  readonly lives?: number | 'none' | ((edition: GameEdition) => number);
   /**
    * How many Rounds a Game in the mode has, which it also needs eligible
    * Entries for: `GAME_ROUNDS` when left out, or none, so that the Game goes
@@ -127,11 +135,11 @@ export interface GameMode {
    */
   readonly takesTurns?: boolean;
   /**
-   * How long a Game in the mode lasts, in milliseconds of play: it ends when
-   * they run out, the time in the background left out. No time limit when
-   * left out.
+   * How long a Game in the mode lasts, in milliseconds of play, or what
+   * reads it from the Edition at the start of a Game: it ends when they run
+   * out, the time in the background left out. No time limit when left out.
    */
-  readonly timeLimit?: number;
+  readonly timeLimit?: number | ((edition: GameEdition) => number);
   /**
    * Whether an answer moves on to the next Round at once, with no answer
    * sheet and no «Далі»; when left out, the Round waits for «Далі».

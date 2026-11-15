@@ -20,17 +20,22 @@ export interface AnswerDrop {
 /**
  * The style of an answer as it is judged: a right one pops, a wrong one drops.
  * Only the answer given now moves; one shown judged from the start stays put.
+ * An answer gone back to nothing moves again when it is judged anew.
  * With Reduce Motion the fade alone shows a wrong answer.
  */
 export function useAnswerMotion(answer: 'right' | 'wrong' | undefined, drop: AnswerDrop) {
   const reduceMotion = useReduceMotion();
   /** 0 before the answer, 1 once it has popped or dropped. */
   const moved = useSharedValue(answer === undefined ? 0 : 1);
-  // Whether the answer showed before, so only the answer given now moves it.
+  // Whether the answer shows already, so only the answer given now moves it.
   const shown = useRef(answer !== undefined);
 
   useEffect(() => {
-    if (answer === undefined || shown.current) return;
+    if (answer === undefined) {
+      shown.current = false;
+      return;
+    }
+    if (shown.current) return;
     shown.current = true;
     moved.value = 0;
     moved.value = withTiming(1, answer === 'right' ? RIGHT_FILL : WRONG_FILL);

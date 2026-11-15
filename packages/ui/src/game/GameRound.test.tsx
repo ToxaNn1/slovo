@@ -24,7 +24,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { useState } from 'react';
-import { AccessibilityInfo, StyleSheet, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, Platform, StyleSheet, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
@@ -35,13 +35,22 @@ const strings = testStrings({
     round: {
       header: '{mode} · {n}/{total}',
       answerCard: { right: 'Spot on!', wrong: 'Close. Next one will land.', next: 'Next →' },
+      banner: {
+        right: ['Spot on!'],
+        xp: '+{count} XP',
+        wrong: 'Miss',
+        lastLife: 'No Lives left',
+        answer: 'Close. The right one: {answer}',
+      },
       pairsHint: 'Match each word to its meaning',
+      pairsCaptions: { word: 'Word', meaning: 'Meaning' },
       stressHint: 'Tap the stressed vowel',
       progress: '{passed} / {total}',
       progressLabel: 'Rounds passed: {passed} of {total}',
       passed: 'Passed: {passed}',
       passedLabel: 'Rounds passed: {passed}',
       survivalStreak: '{n} in a row · best {best}',
+      survival: { streak: 'in a row', best: 'best {best}' },
       lives: 'Lives: {count} of {total}',
       highlight: 'Marked: {text}',
       gap: { label: 'Which word is missing?', voiceOver: 'gap' },
@@ -127,6 +136,11 @@ const first: PlayingGame = {
 };
 
 /** The Game with its Round answered as given, as the Game in play answers it. */
+/** What the answered state tells the banner; no Round here shows the right answer's text. */
+function answeredAs(right: boolean): Extract<PlayingGame, { status: 'answered' }>['answered'] {
+  return right ? { kind: 'right', xp: undefined } : { kind: 'wrong', answer: '', lastLife: false };
+}
+
 function answered(game: PlayingGame, given: GivenAnswer): PlayingGame {
   if (given.form === 'vowel') return answeredVowel(game, given.position);
   if (given.form === 'pairs') return answeredPair(game, given.word, given.definition);
@@ -152,6 +166,8 @@ function answeredPick(game: PlayingGame, given: GivenAnswer): PlayingGame {
     },
     lives: chosen === CORRECT || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
+    answered: answeredAs(chosen === CORRECT),
+    banner: false,
   };
 }
 
@@ -223,6 +239,8 @@ function answeredVowel(game: PlayingGame, chosen: number): PlayingGame {
     round: { ...round, answer: { form: 'vowel', chosen, right, ...held } },
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
+    answered: answeredAs(right),
+    banner: false,
   };
 }
 
@@ -285,8 +303,9 @@ const pairsRound: PlayingGame = {
     labelKind: 'mode',
     lifeLostAfter: 200,
     form: 'pairs',
-    words: PAIR_WORDS.map((text) => ({ shown: { text, stressedVowels: [] }, gone: false })),
-    definitions: PAIR_DEFINITIONS.map((shown) => ({ shown, gone: false })),
+    words: PAIR_WORDS.map((text) => ({ shown: { text, stressedVowels: [] }, state: 'open' })),
+    definitions: PAIR_DEFINITIONS.map((shown) => ({ shown, state: 'open' })),
+    stays: false,
     answer: undefined,
   },
 };
@@ -313,10 +332,12 @@ function answeredPair(game: PlayingGame, word: number, definition: number): Play
     },
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
+    answered: answeredAs(right),
+    banner: false,
   };
 }
 
-/** A Round of «За буквами»: «well-read» to type, its hyphen in place from the start. */
+/** A Round of «За літерами»: «well-read» to type, its hyphen in place from the start. */
 const TYPED = 'well-read';
 const typedRound: PlayingGame = {
   ...first,
@@ -356,6 +377,8 @@ function answeredTyped(game: PlayingGame, typed: string): PlayingGame {
     },
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
+    answered: answeredAs(right),
+    banner: false,
   };
 }
 
@@ -416,6 +439,8 @@ function answeredChips(game: PlayingGame, chosen: readonly number[]): PlayingGam
     },
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
+    answered: answeredAs(right),
+    banner: false,
   };
 }
 
@@ -584,7 +609,7 @@ describe('GameRound', () => {
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 2 of 3');
   });
 
-  it('shows the streak, a big counter of the Rounds passed and its line with the record, in place of the passed line', async () => {
+  it('shows the streak at the top of the body, a big counter and «in a row» and the record under each other, in place of the passed line', async () => {
     const survival: PlayingGame = {
       ...first,
       modeId: 'survival',
@@ -595,9 +620,11 @@ describe('GameRound', () => {
     };
     await renderRound(jest.fn(), jest.fn(), survival, jest.fn(), { rounds: 4, record: 9 });
 
-    expect(screen.getByTestId('game-streak-rounds')).toHaveTextContent('4');
-    expect(screen.getByTestId('game-streak-line')).toHaveTextContent('4 in a row · best 9');
-    expect(screen.getByTestId('game-streak')).toHaveAccessibleName('4 in a row · best 9');
+    const streak = screen.getByTestId('game-streak');
+    expect(within(streak).getByTestId('game-streak-rounds')).toHaveTextContent('4');
+    expect(within(streak).getByText('in a row')).toBeTruthy();
+    expect(within(streak).getByText('best 9')).toBeTruthy();
+    expect(streak).toHaveAccessibleName('4 in a row · best 9');
     expect(screen.queryByText('Passed: 4')).toBeNull();
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 2 of 3');
   });
@@ -910,6 +937,19 @@ describe('GameRound', () => {
       expect(
         screen.getAllByRole('button').map((button): unknown => button.props['accessibilityLabel']),
       ).toEqual(['Leave the Game', 'ardent', 'candid', 'open and honest', 'full of passion']);
+    });
+
+    it('keeps found pairs under the two captions when the Round says its pairs stay, and not otherwise', async () => {
+      await renderRound(jest.fn(), jest.fn(), pairsRound);
+      expect(screen.queryByText('WORD')).toBeNull();
+
+      const { round } = pairsRound;
+      if (round.form !== 'pairs') throw new Error('Not a pairs grid');
+      await renderRound(jest.fn(), jest.fn(), { ...pairsRound, round: { ...round, stays: true } });
+
+      expect(screen.getByText('WORD')).toBeOnTheScreen();
+      expect(screen.getByText('MEANING')).toBeOnTheScreen();
+      expect(screen.getByRole('header', { name: 'Match each word to its meaning' })).toBeTruthy();
     });
 
     it('answers with the Word, then the Definition tapped, and shows the Word with its Example', async () => {
@@ -1242,6 +1282,91 @@ describe('GameRound', () => {
         }
         expect(styleOf(lifeFill(4)).opacity).toBe(0);
       });
+    });
+  });
+
+  describe('the answered Round', () => {
+    it('shows the answer banner, with no sheet and its button, when the Core says it moves on by itself', async () => {
+      const shown = answeredPick(first, { form: 'pick', option: CORRECT });
+      if (shown.status !== 'answered') throw new Error('Not answered');
+      await renderRound(jest.fn(), jest.fn(), { ...shown, banner: true });
+
+      expect(screen.getByTestId('game-answer-banner')).toBeOnTheScreen();
+      expect(screen.queryByTestId('game-sheet')).toBeNull();
+    });
+
+    it('shows the sheet and its button to the next Round when the Core says the Round waits for it', async () => {
+      await renderRound(
+        jest.fn(),
+        jest.fn(),
+        answeredPick(first, { form: 'pick', option: CORRECT }),
+      );
+
+      expect(screen.queryByTestId('game-answer-banner')).toBeNull();
+      expect(screen.getByTestId('game-sheet')).toBeOnTheScreen();
+    });
+  });
+
+  describe('VoiceOver reading the answer banner', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('holds the Round until VoiceOver has finished reading this banner, not another announcement', async () => {
+      jest.replaceProperty(Platform, 'OS', 'ios');
+      jest.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(true);
+      jest.spyOn(AccessibilityInfo, 'announceForAccessibilityWithOptions').mockReturnValue();
+      const finished: ((announcement: string) => void)[] = [];
+      jest.spyOn(AccessibilityInfo, 'addEventListener').mockImplementation((event, handler) => {
+        if (event === 'announcementFinished') {
+          finished.push((announcement) => {
+            handler({ announcement, success: true });
+          });
+        }
+        return { remove: () => undefined };
+      });
+      const shown = answeredPick(first, { form: 'pick', option: CORRECT });
+      if (shown.status !== 'answered') throw new Error('Not answered');
+      let read = false;
+      await render(
+        <SafeAreaProvider initialMetrics={metrics}>
+          <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+            <HapticsProvider haptics={haptics}>
+              <InterfaceSoundsProvider sounds={{ play }}>
+                <GameRound
+                  game={{ ...shown, banner: true }}
+                  title="Definitions"
+                  label="Definition"
+                  onAnswer={jest.fn()}
+                  onNext={jest.fn()}
+                  onLeave={jest.fn()}
+                  onOpenLetter={jest.fn()}
+                  onWaitFor={(done) => {
+                    void done.then(() => {
+                      read = true;
+                    });
+                  }}
+                />
+              </InterfaceSoundsProvider>
+            </HapticsProvider>
+          </EditionProvider>
+        </SafeAreaProvider>,
+      );
+      await waitFor(() => {
+        expect(finished).toHaveLength(1);
+      });
+
+      await act(async () => {
+        finished[0]?.('Miss Close. The right one: banana');
+        await Promise.resolve();
+      });
+      expect(read).toBe(false);
+
+      await act(async () => {
+        finished[0]?.('Spot on!');
+        await Promise.resolve();
+      });
+      expect(read).toBe(true);
     });
   });
 

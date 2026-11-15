@@ -13,7 +13,8 @@ export function useGameState(): GameState {
 }
 
 /**
- * What the Game screens do: start a Game, answer, «Відкрити літеру», «Далі» and leave. A start
+ * What the Game screens do: start a Game, answer, «Відкрити літеру», «Далі», hold an answered
+ * Round for what its banner waits for, and leave. A start
  * or a «Далі» that fails is logged and leaves the Game as it was. A «Не знаю»
  * mark of a wrong answer that fails to write is logged too, and the Game goes on.
  */
@@ -31,6 +32,9 @@ export function useGameActions() {
     },
     next: () => {
       void keep('the next Round', game.next());
+    },
+    waitFor: (done: Promise<unknown>) => {
+      game.waitFor(done);
     },
     leave: () => {
       game.leave();
