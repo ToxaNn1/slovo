@@ -110,7 +110,7 @@ brief:
 You are the #1817 mutation floor coordinator, in the cloud; the laptop coordinator stopped. Read the PLAN #1817 commit on origin/chore/1817-mutation-floor, gh issue view 1817, and continue per docs/agents/waves.md and mattpocock-skills:implement-spec. Two cloud implementers push to that branch, ending in commits «chore: DONE #1817-A» and «chore: DONE #1817-B»; relaunch a missing part on the same branch. Then code-review, one PR to main, ready. Grants: commits, pushes, one PR; NO merge to main, no force-push, no branch deletion, no EAS. Never write the owner's email anywhere. Never end your turn while work remains.
 
 ## wave profile-1909
-status: active
+status: finished
 coord: coord/profile-1909
 branches: ^origin/(feat/1909-profile-walkthrough|coord/profile-1909|(feat|chore|fix|docs|refactor|test)/19(1[0-9]|2[01])-)
 brief:
