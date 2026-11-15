@@ -3,20 +3,22 @@
 
 import type { GivenAnswer, Round } from '@slovo/core';
 
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { roundLayout, typeStyle } from '../tokens';
 import { letterLabel } from './letter-label';
-import { RoundCard } from './RoundCard';
+import { useRoundLook } from './round-look';
+import { RoundAsk, RoundCard } from './RoundCard';
 import { VowelButtons } from './VowelButtons';
 
 /**
  * A Round of the vowel form: its Word stands in the card with each vowel a
  * button, which VoiceOver reads by its place among the letters. The
  * Edition's hint stands under the card, e.g. «Торкнись голосної, на яку
- * падає наголос».
+ * падає наголос». On the ground (board 06 «Наголос») the label, «Де
+ * наголос?», heads the Word in ink and the hint takes the board's size.
  */
 export function VowelRound({
   round,
@@ -32,9 +34,11 @@ export function VowelRound({
 }) {
   const { strings, voice } = useEdition();
   const tokens = useTokens();
+  const { inkHeaded } = useRoundLook();
   return (
     <>
       <RoundCard label={label} prompt={prompt} highlight={undefined} gap={undefined}>
+        {inkHeaded && <RoundAsk ask={label} heading />}
         <VowelButtons
           key={round.number}
           text={round.prompt}
@@ -55,10 +59,16 @@ export function VowelRound({
         testID="game-stress-hint"
         maxFontSizeMultiplier={roundLayout.textMaxFontScale}
         {...voice}
-        style={[typeStyle('roundExplanation', tokens), { color: tokens.colors.muted }]}
+        style={[
+          typeStyle(inkHeaded ? 'roundHint' : 'roundExplanation', tokens),
+          inkHeaded && styles.hint,
+          { color: tokens.colors.muted },
+        ]}
       >
         {strings.game.round.stressHint}
       </Text>
     </>
   );
 }
+
+const styles = StyleSheet.create({ hint: { textAlign: 'center' } });

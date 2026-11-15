@@ -68,6 +68,8 @@ export const roundLayout = {
   cardPaddingVertical: 30,
   cardMinHeight: 220,
   textMaxFontScale: 1.5,
+  /** The full-width tile of the Word in «Звідки слово» on the ground (board g4). */
+  originTileMinHeight: 110,
 } as const;
 
 /**
@@ -285,7 +287,13 @@ export const pairsGridLayout = {
  * long Word fits the SE (its hit slop makes up the rest), and its height,
  * the board's; the gap between the Word's letters, which leaves the buttons apart.
  */
-export const vowelButtonsLayout = { width: 38, height: 62, letterGap: 2 } as const;
+export const vowelButtonsLayout = {
+  width: 38,
+  height: 62,
+  letterGap: 2,
+  /** The red stress mark over a stressed vowel (board 06 «Наголос»): its bar, slant, rise over the tile and flight in. */
+  mark: { width: 6, height: 20, skew: -15, rise: 4, flyX: 10, flyY: -30, duration: 400 },
+} as const;
 
 /**
  * The Game timer: the height of its skewed bar, from the design, and the
@@ -294,4 +302,9 @@ export const vowelButtonsLayout = { width: 38, height: 62, letterGap: 2 } as con
 export const gameTimerLayout = { barHeight: 10, secondsWidth: 40 } as const;
 
 /** A blank of the typed answer: its width and the thickness of the line it stands on. */
-export const typedAnswerLayout = { blankWidth: 28, blankLine: 2 } as const;
+export const typedAnswerLayout = {
+  blankWidth: 28,
+  blankLine: 2,
+  /** The field's thick ink frame on the ground (board g3). */
+  frame: 2.5,
+} as const;

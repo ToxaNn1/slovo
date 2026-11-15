@@ -129,10 +129,11 @@ export function GameRound({
     onGround,
     optionStamp,
     questionFace: questionFaceOf(game.modeId),
+    inkHeaded: onGround && INK_HEADED.has(game.modeId),
     mascot: mascot?.({ state: mascotState(answer, game.lives), width: roundMascotWidth }),
   };
   // The streak of «Виживання» heads its body alone (board g7), as an ink-headed mode does on the ground.
-  const labelShown = streak === undefined && (!onGround || !INK_HEADED.has(game.modeId));
+  const labelShown = streak === undefined && !look.inkHeaded;
 
   return (
     <View testID="game-round" style={styles.screen}>
@@ -238,10 +239,16 @@ function noWait(): void {
 
 /**
  * The Game Modes the board heads with an ink heading of their own, which
- * draw no red label on the ground: «Впиши слово», «Звідки слово», «Склади
- * вислів» and «Виживання».
+ * draw no red label on the ground: «Наголос», «Впиши слово», «Звідки
+ * слово», «Склади вислів» and «Виживання».
  */
-const INK_HEADED: ReadonlySet<string> = new Set(['type-word', 'origin', 'build-idiom', 'survival']);
+const INK_HEADED: ReadonlySet<string> = new Set([
+  'stress',
+  'type-word',
+  'origin',
+  'build-idiom',
+  'survival',
+]);
 
 /**
  * The Game Modes whose question the board sets in the text face on the
