@@ -242,7 +242,7 @@ describe('the Profile', () => {
     expect(screen.getByText(strings.title)).toBeOnTheScreen();
     expect(screen.getByTestId('profile-streak')).toHaveTextContent('0');
     expect(screen.getByTestId('profile-streak-words')).toHaveTextContent('днів поспіль');
-    expect(screen.getByTestId('profile-best-streak')).toHaveTextContent('найкраща серія — 0');
+    expect(screen.getByTestId('profile-best-streak')).toHaveTextContent('найдовша 0 днів');
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('0');
     expect(screen.getByText(strings.levelLabel)).toBeOnTheScreen();
     expect(screen.getByTestId('profile-level-name')).toHaveTextContent('Початківець');

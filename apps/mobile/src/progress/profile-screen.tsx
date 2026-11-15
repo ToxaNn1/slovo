@@ -31,6 +31,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useEffect, useReducer, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { profileScreen } from '@slovo/ui/tokens';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAccountInEffect, useSignedOut } from '../account/account';
@@ -123,7 +124,7 @@ function ProfileBlocks() {
     >
       <ScrollView contentContainerStyle={styles.content}>
         {/* The Profile tab's head, as the board: the title, and the tile that opens Settings. */}
-        <View style={[styles.section, styles.head]}>
+        <View style={styles.head}>
           <ScreenTitle>{strings.title}</ScreenTitle>
           <IconButton
             testID="profile-settings"
@@ -135,7 +136,7 @@ function ProfileBlocks() {
           />
         </View>
         {shown.xpBar && level !== undefined && (
-          <View style={styles.section}>
+          <View style={styles.card}>
             <LevelCard
               testID="profile-level"
               level={level.level}
@@ -177,7 +178,7 @@ function ProfileBlocks() {
           </View>
         )}
         {streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />}
-        <View style={styles.section}>
+        <View style={styles.calendar}>
           <ActiveDaysCalendar
             weeks={weeks}
             onDayText={
@@ -190,12 +191,12 @@ function ProfileBlocks() {
             todayWord={todayWord}
           />
         </View>
-        <View style={styles.section}>
+        <View style={styles.badges}>
           <View style={styles.badgesHead}>
             <Text
               accessibilityRole="header"
               {...voice}
-              style={[typeStyle('heading', tokens), { color: colors.ink }]}
+              style={[typeStyle('profileBadgesHeading', tokens), { color: colors.ink }]}
             >
               {strings.badges}
             </Text>
@@ -243,7 +244,7 @@ function ProfileBlocks() {
           </View>
         )}
         {shown.breakCard && streakBreak.kind === 'running' && (
-          <View style={styles.section}>
+          <View style={[styles.section, styles.card]}>
             <BreakCard
               testID="profile-break"
               streak={progress.streak}
@@ -256,7 +257,7 @@ function ProfileBlocks() {
           </View>
         )}
         {shown.streakFreezeCard && (
-          <View style={styles.section}>
+          <View style={[styles.section, styles.card]}>
             <StreakFreezeCard
               testID="profile-freeze-card"
               held={progress.freezesHeld}
@@ -317,7 +318,7 @@ function StreakLine({ streak, bestStreak }: { streak: number; bestStreak: number
   const { voice, count } = useEdition();
   const words = editionStrings.stats;
   return (
-    <View style={[styles.section, styles.streak]}>
+    <View style={styles.streak}>
       <Text
         testID="profile-streak"
         maxFontSizeMultiplier={1}
@@ -330,17 +331,22 @@ function StreakLine({ streak, bestStreak }: { streak: number; bestStreak: number
         testID="profile-streak-words"
         style={[typeStyle('profileStreakLabel', tokens), styles.streakWords, { color: colors.ink }]}
       >
-        {count(words.streak, streak)}
+        {onTwoLines(count(words.streak, streak))}
       </Text>
       <Text
         {...voice}
         testID="profile-best-streak"
         style={[typeStyle('meta', tokens), styles.best, { color: colors.muted }]}
       >
-        {fill(words.bestStreak, { count: String(bestStreak) })}
+        {onTwoLines(count(strings.bestStreak, bestStreak))}
       </Text>
     </View>
   );
+}
+
+/** Breaks a short line after its first word, as the board sets «дні / поспіль» and «найдовша / 31 день». */
+function onTwoLines(text: string): string {
+  return text.replace(' ', '\n');
 }
 
 const nameStrings = strings.readerName;
@@ -456,13 +462,31 @@ function ProfileLadder({ level }: { level: LevelState }) {
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  streak: { flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
-  streakWords: { flexShrink: 1 },
-  best: { flex: 1, textAlign: 'right' },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    paddingTop: profileScreen.headTop,
+    paddingBottom: profileScreen.headBottom,
+  },
+  card: { marginHorizontal: -profileScreen.cardOutdent },
+  streak: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: space[3],
+    paddingTop: profileScreen.streakTop,
+  },
+  streakWords: { flexShrink: 1, paddingBottom: profileScreen.streakWordsLift },
+  best: { flex: 1, textAlign: 'right', paddingBottom: profileScreen.streakWordsLift },
+  calendar: { paddingTop: profileScreen.calendarTop },
+  badges: {
+    gap: profileScreen.badgesGap,
+    paddingTop: profileScreen.badgesTop,
+    paddingBottom: space[5],
+  },
   badgesHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   row: { paddingHorizontal: space[4], paddingVertical: space[3] },
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
+  content: { paddingHorizontal: space[5], paddingBottom: space[8] },
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[5] },
 });

@@ -510,9 +510,9 @@ export const typeRoles = {
   /** A Badge family's name over its cards on the Badges screen. */
   badgeScreenFamily: role('word', '900', 20, 20),
   /** A Badge's name on its card of the Badges screen. */
-  badgeCardName: role('word', '900', 14, 17),
+  badgeCardName: role('word', '800', 13, 16),
   /** A Badge's condition on its card of the Badges screen. */
-  badgeCardCondition: role('ui', '500', 13, 17),
+  badgeCardCondition: role('ui', '500', 12, 16),
   /** A Badge's status on its card, «Отримано» or «Ще ні · 77%». */
   badgeCardStatus: role('ui', '600', 12, 14),
   /** A Badge family's name on its card of the families overview. */
@@ -523,8 +523,8 @@ export const typeRoles = {
   badgeFamilyLabel: role('word', '700', 10, 10, 1.5),
   /** A Badge's name under its mark in the Badge sheet (`XSaved` p3/p4). */
   badgeSheetName: role('word', '900', 24, 26.4),
-  /** The name over a Badge family's row of marks. */
-  badgeFamily: role('word', '800', 12, 14, 1),
+  /** The name and the count over a Badge family's row of marks on the Profile (`SlovoApp` profile). */
+  badgeFamily: role('ui', '600', 12, 12),
   /** The first letter of the reader's name in the Profile header's avatar. */
   profileAvatarLetter: role('word', '900', 24, 24),
   /** The reader's name, or the invitation to add one, in the Profile header. */
@@ -557,8 +557,10 @@ export const typeRoles = {
   ladderCaption: role('ui', '600', 12, 14),
   /** The Level and the XP to the next name under the Profile's Levels row. */
   ladderLine: role('word', '700', 11, 13, 1.5, 'uppercase'),
-  /** The Profile's giant red Streak. */
-  profileStreak: role('word', '900', 60, 60, -2),
+  /** The Profile's giant red Streak, set solid as on `SlovoApp` profile (60/.9). */
+  profileStreak: role('word', '900', 60, 54, -2),
+  /** «Відзнаки» over the Profile's Badges (`SlovoApp` profile). */
+  profileBadgesHeading: role('word', '800', 15, 15),
   /** The words beside the Profile's giant Streak. */
   profileStreakLabel: role('word', '800', 16, 18),
   /** The paused Streak's ghost number in the corner of the Profile's Break card (p1). */

@@ -138,6 +138,7 @@ export function LevelCard({
             style={[
               index === 0 ? typeStyle('levelXp', tokens) : typeStyle('meta', tokens),
               { color: ink },
+              index > 0 && styles.quiet,
             ]}
           >
             {line.text}
@@ -168,4 +169,5 @@ const styles = StyleSheet.create({
   turned: { transform: [{ rotate: '-90deg' }] },
   centre: { alignItems: 'center', justifyContent: 'center' },
   lines: { flex: 1, minWidth: 0, gap: levelCard.linesGap },
+  quiet: { opacity: levelCard.quietOpacity },
 });

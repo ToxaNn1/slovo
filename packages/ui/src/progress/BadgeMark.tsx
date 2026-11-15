@@ -271,19 +271,23 @@ export function BadgeMark({
         </View>
       )}
       {state.isNew && (
-        <Text
-          testID={part('new')}
-          {...voice}
-          style={[
-            typeStyle('badgeNewTag', tokens),
-            styles.tag,
-            onRed
-              ? { backgroundColor: key.background, color: keyInk }
-              : { backgroundColor: colors.ink, color: colors.background },
-          ]}
-        >
-          {strings.settings.badges.newTag}
-        </Text>
+        // The span reaches left past a small mark, so the tag keeps one line.
+        <View style={styles.tagSpan} pointerEvents="none">
+          <Text
+            testID={part('new')}
+            {...voice}
+            numberOfLines={1}
+            style={[
+              typeStyle('badgeNewTag', tokens),
+              styles.tag,
+              onRed
+                ? { backgroundColor: key.background, color: keyInk }
+                : { backgroundColor: colors.ink, color: colors.background },
+            ]}
+          >
+            {strings.settings.badges.newTag}
+          </Text>
+        </View>
       )}
     </View>
   );
@@ -294,10 +298,14 @@ const styles = StyleSheet.create({
   layer: { position: 'absolute', left: 0, top: 0 },
   fill: { position: 'absolute', overflow: 'hidden' },
   symbol: { position: 'absolute', left: 0, top: 0, alignItems: 'center', justifyContent: 'center' },
-  tag: {
+  tagSpan: {
     position: 'absolute',
     top: badgeNewTag.top,
     right: badgeNewTag.right,
+    left: -badgeNewTag.reach,
+    alignItems: 'flex-end',
+  },
+  tag: {
     paddingHorizontal: badgeNewTag.paddingHorizontal,
     paddingVertical: badgeNewTag.paddingVertical,
     transform: [{ rotate: `${String(badgeNewTag.turn)}deg` }],
