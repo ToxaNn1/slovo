@@ -19,7 +19,8 @@ const strings = testStrings({
   },
   stats: {
     calendar: {
-      days: { active: '{day}, active', todayActive: '{day}, today', frozen: '{day}, frozen' } },
+      days: { active: '{day}, active', todayActive: '{day}, today', frozen: '{day}, frozen' },
+    },
   },
   dates: {
     months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -57,10 +58,10 @@ describe('StreakFreezeCard', () => {
     async (number, streak, saved) => {
       await renderCard(number, number);
 
-      const streakTile = within(screen.getByLabelText(`${number} ${streak}`));
+      const streakTile = within(screen.getByLabelText(`${String(number)} ${streak}`));
       expect(streakTile.getByText(String(number))).toBeOnTheScreen();
       expect(streakTile.getByText(streak)).toBeOnTheScreen();
-      const savedTile = within(screen.getByLabelText(`${number} ${saved}`));
+      const savedTile = within(screen.getByLabelText(`${String(number)} ${saved}`));
       expect(savedTile.getByText(String(number))).toBeOnTheScreen();
       expect(savedTile.getByText(saved)).toBeOnTheScreen();
     },
