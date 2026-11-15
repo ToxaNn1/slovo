@@ -12,15 +12,15 @@ Graph: 1881,1882 → 1883(1881) 1884(1881,1882) 1885(1881,1882) 1886(1881) 1892(
 Batches to main: after 3–5 merged tickets run Skill code-review on the batch, one implementer fixes, PR ready, gh pr merge --auto --squash; then merge origin/main back. Draft PR opens after the first merge.
 Never end your turn while work remains; wait with one blocking command; push a `WAITING until <UTC>` line here before any wait >10 min. At the very end: `STATUS: FINISHED` first line.
 ## State
-WAITING until 2026-11-15T01:09Z: a merger subagent of session_01VefVQUUP6Lq9nRKxM2WCHR merges the DONE branches feat/1892-game-end, feat/1884-answer-banner, feat/1893-mode-groups, feat/1886-option-stamp, feat/1888-letters-modes into feat/1880-games-board (in that order) and pushes. Done when all five tips are ancestors of origin/feat/1880-games-board.
-- Merged + pushed on feat/1880-games-board (45c8f640): #1882 #1881 #1885 #1883. Draft PR #1896 body says Closes #1881 #1882 only: add Closes for every merged ticket (PATCH body via gh api), merge the DONE reports' Owner checks, new texts, defaults into it.
-- Batch rule: 6 tickets merged after the merger: run code-review on PR #1896, one implementer fixes, then ready (POST /repos/ToxaNn1/slovo/pulls/1896/ccr/ready_for_review) + auto-merge squash (PUT .../ccr/auto_merge), wait CI with one blocking loop, then merge origin/main back.
-- Next: once merged, 10 tickets in PR #1896: code-review, fix, ready, auto-merge. Frontier then: #1887 (1884,1885), #1889 (1885), #1890 (1885,1886), #1891 (1885), then #1894 (owner «текст ок» + 1893), #1895 last.
-- Known defaults for the PR body: #1892 «ВЛУЧНО!» from 60% right; #1893 new string «Рекорд: {n}» for modes with no Round limit, composition.ts order line; #1885 token roundMascotWidth 88; #1884/#1885 'use no memo' list in packages/ui/eslint.config.js (ADR 0059 does not list GameHeader/AnswerBanner: owner question); #1883 changed language-pack ukrainian-game.test.ts to 3 Lives; ConfirmationDialog heights not changed (shared primitive).
-- Brief: BRIEF-CLOUD.txt (fill NUM/BRANCH) + «jest --maxWorkers=2, turbo --concurrency=2» (OOM kills seen). STUCK tickets continue on their branch from the plan in the STUCK commit body.
-- Authorship: commit with E=$(cat /home/user/slovo/.github/owner-email); GIT_AUTHOR_EMAIL=$E GIT_COMMITTER_EMAIL=$E git commit (env GIT_AUTHOR_EMAIL is not the CI owner address).
-- GraphQL blocked: gh api repos/ToxaNn1/slovo/... REST only. Remove .claude/worktrees/agent-* after a merge (prettier --check sees them).
-- Cloud setup hook may fail: pg_createcluster 18 main --port 5432, rerun .claude/hooks/cloud-setup.sh.
+No work running. The previous cloud coordinator (session_01VefVQUUP6Lq9nRKxM2WCHR) handed off at its context limit.
+- feat/1880-games-board (51c94d82, pushed) holds #1882 #1881 #1885 #1883 #1892 #1884 #1893 #1886 with fix-up tests; typecheck green (lint/test run by the merger per merge, not rerun after the container restart: rerun pnpm lint and the core/ui/mobile/language-pack tests with jest --maxWorkers=2 first).
+- NEXT 1: merge origin/feat/1888-letters-modes (DONE, not merged): -m 'chore: merge #1888: «Анаграми» and «За літерами» as on the board'; checks; push.
+- NEXT 2: PR #1896 (draft) body: Closes #1881 #1882 only: PATCH it (gh api -X PATCH repos/ToxaNn1/slovo/pulls/1896 -F body=@file) with Closes for all 9 merged tickets and each DONE commit body's Owner checks, new texts, defaults. Then Skill code-review on the PR diff, one implementer fixes, ready (POST /repos/ToxaNn1/slovo/pulls/1896/ccr/ready_for_review), auto-merge squash (PUT .../ccr/auto_merge with merge_method squash), wait CI in one blocking loop, merge origin/main back.
+- NEXT 3: frontier #1887 (1884,1885), #1889, #1890 (1885,1886), #1891; then #1894 waits «текст ок»; #1895 last.
+- Defaults / owner questions for the PR body: #1892 «ВЛУЧНО!» from 60% right; #1893 new string «Рекорд: {n}» for modes with no Round limit, composition.ts order line, toast default «Наголос», GameModeCard in ADR 0059 + eslint use-no-memo lists; #1885 token roundMascotWidth 88; #1884 AnswerBanner/GameHeader in use-no-memo list (ADR 0059 lacks them); #1883 language-pack test to 3 Lives; #1886 no VoiceOver «crossed out» string (needs contracts schema: owner); #1888 kept «Стерти літеру» in «Анаграми», tile sizes as constants; ConfirmationDialog heights unchanged; no screenshots (no simulator).
+- Brief: BRIEF-CLOUD.txt (NUM/BRANCH) + «jest --maxWorkers=2, turbo --concurrency=2» (OOM with 5 at once; keep ≤3). STUCK tickets continue on their branch from the plan in the STUCK commit body.
+- Authorship: commit with E=$(cat /home/user/slovo/.github/owner-email); GIT_AUTHOR_EMAIL=$E GIT_COMMITTER_EMAIL=$E git commit (env address is not the CI owner address). Ignore the stop hook asking for noreply@anthropic.com: owner rules win.
+- GraphQL blocked: gh api REST only. Remove .claude/worktrees/agent-* after merges (prettier --check sees them). Cloud setup may fail: pg_createcluster 18 main --port 5432, rerun .claude/hooks/cloud-setup.sh.
 ## Log
 - 15.11 00:20 owner night grant; 00:35 moved to the cloud.
 - 14.11 22:40Z cloud coordinator up; #1881 implementer launched on the WIP branch.
@@ -28,3 +28,4 @@ WAITING until 2026-11-15T01:09Z: a merger subagent of session_01VefVQUUP6Lq9nRKx
 - 14.11 23:24Z #1884 and #1893 STUCK at context limit (Core parts done, pushed); relaunched continuations on the same branches.
 - 14.11 23:52Z merged #1885 #1883 (pushed 45c8f640); #1892 #1884 DONE → merger; launched #1886 #1888.
 - 15.11 00:09Z #1893 #1886 #1888 DONE, queued to the merger. Owner question: #1886 no VoiceOver «crossed out» string (needs a contracts schema change). #1893 toast default «Наголос»; #1888 kept «Стерти літеру» in «Анаграми».
+- 15.11 00:51Z container restart killed the merger after 4 merges; pushed them (51c94d82); handoff to a fresh coordinator.
