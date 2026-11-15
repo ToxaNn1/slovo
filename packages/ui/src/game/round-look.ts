@@ -24,6 +24,12 @@ export interface RoundLook {
    * a long one, as the Definition of «Анаграми» (`display`).
    */
   readonly questionFace: QuestionFace;
+  /**
+   * Whether the question stands under its label as an ink heading of its own
+   * on the ground (board 06 «Наголос», g3, g4), such as «Де наголос?», in
+   * place of the red label, showing only what the board shows under it.
+   */
+  readonly inkHeaded: boolean;
   /** The Mascot beside the question; none. */
   readonly mascot: ReactNode;
 }
@@ -32,6 +38,7 @@ export const RoundLookContext = createContext<RoundLook>({
   onGround: false,
   optionStamp: false,
   questionFace: 'byLength',
+  inkHeaded: false,
   mascot: undefined,
 });
 

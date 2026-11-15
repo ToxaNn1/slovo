@@ -286,6 +286,10 @@ export const typeRoles = {
   roundAsk: role('word', '900', 24, 30),
   /** The form a «Впиши слово» Round asks to replace, under its ask (board 07 g3): «замість «вірогідно»». */
   roundInstead: role('ui', '500', 16, 22),
+  /** The Word of a «Звідки слово» Round whole on its full-width tile (board g4). */
+  roundOriginWord: role('word', '900', 34, 34, -1),
+  /** The hint under the vowel buttons of «Наголос» (board 06): «Торкнись голосної, на яку падає наголос». */
+  roundHint: role('ui', '500', 14, 19.6),
   /** A Quick Question's label on its ink tag (board f3), such as «ПОРАДА». */
   quickQuestionTag: role('word', '800', 11, 11, 1, 'uppercase'),
   /** A Quick Question's prompt on its card (board f3), such as «Як правильно?». */
