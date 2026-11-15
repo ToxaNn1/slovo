@@ -326,7 +326,21 @@ describe('the Profile', () => {
   );
 
   it('under the last name reads the XP to the next Level and draws no line to a next name', async () => {
-    await renderScreen({ rounds: 2598 });
+    // 2598 XP in one seeded record: awarding 2598 Rounds one by one outran the test timeout on CI.
+    const at = '2026-10-12T09:00:00.000Z';
+    await renderScreen({
+      seed: {
+        xpLog: {
+          'seeded-xp': {
+            kind: 'xp',
+            date: '2026-10-12',
+            at,
+            source: 'daily-crossword',
+            amount: 2598,
+          },
+        },
+      },
+    });
 
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('25');
     expect(screen.getByTestId('profile-level-left')).toHaveTextContent('ще 120 XP до рівня 26');
