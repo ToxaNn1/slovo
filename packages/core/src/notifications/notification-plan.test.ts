@@ -1291,3 +1291,68 @@ describe('the farewell of the 1.0 plan', () => {
     expect(plan.some(({ date }) => date > '2026-10-28')).toBe(false);
   });
 });
+
+describe('the next morning notification', () => {
+  it("is the earliest time's notification this morning while it is ahead, as the plan holds it", async () => {
+    const { app, scheduler } = await run();
+
+    const morning = await app.notifications.nextMorning();
+
+    const planned = planOf(scheduler).find(
+      ({ date, time }) => date === '2026-10-14' && time === '09:00',
+    );
+    expect(planned?.kind).toBe('word');
+    expect(morning).toEqual({
+      wordId: wordIdOf(planned),
+      body: planned?.body,
+      time: { hour: 9, minute: 0 },
+    });
+    expect(morning?.wordId).toBe(wordsOfTheDayIn(app).get('2026-10-14'));
+  });
+
+  it("is the next day's once this morning's time has passed", async () => {
+    const { app, scheduler } = await run({ clock: fakeClock('2026-10-14T10:00:00+03:00').clock });
+
+    const morning = await app.notifications.nextMorning();
+
+    expect(morning).toMatchObject({
+      wordId: wordAt(planOf(scheduler), '2026-10-15T09:00'),
+      time: { hour: 9, minute: 0 },
+    });
+  });
+
+  it('is the same while the device does not let the app notify, and plans nothing', async () => {
+    const allowed = await run();
+    const scheduler = createFakeNotificationScheduler({ permission: 'not-asked' });
+    const notAsked = await run({ scheduler });
+
+    expect(await notAsked.app.notifications.nextMorning()).toEqual(
+      await allowed.app.notifications.nextMorning(),
+    );
+    expect(scheduler.plan ?? []).toEqual([]);
+  });
+
+  it("is today's Word of the Day with no time while no time is left, and nothing once it is Seen", async () => {
+    const time = fakeClock(start);
+    const { app } = await run({ clock: time.clock });
+    for (const kept of defaultTimes) await app.notifications.removeTime(kept);
+
+    const today = wordsOfTheDayIn(app).get('2026-10-14');
+    if (today === undefined) throw new Error('No Word of the Day');
+    expect(await app.notifications.nextMorning()).toEqual({
+      wordId: today,
+      body: `The meaning of ${today.slice(2)}.`,
+      time: undefined,
+    });
+
+    await readTo(app, time, 1);
+
+    expect(await app.notifications.nextMorning()).toBeUndefined();
+  });
+
+  it('is nothing with notifications switched off', async () => {
+    const { app } = await run({ switchedOff: ['notifications'] });
+
+    expect(await app.notifications.nextMorning()).toBeUndefined();
+  });
+});
