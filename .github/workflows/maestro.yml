@@ -6,6 +6,12 @@ name: Maestro
 # values; the backend's AUTH_SECRET is made fresh on each run.
 on:
   workflow_dispatch:
+    inputs:
+      run:
+        description: launch.yaml alone, or every flow of the smoke halves one by one with a video of each
+        type: choice
+        default: launch
+        options: [launch, all-flows]
 
 permissions:
   contents: read
@@ -32,9 +38,9 @@ env:
 
 jobs:
   launch:
-    name: Simulator build and launch.yaml
+    name: "Simulator build and ${{ inputs.run == 'all-flows' && 'every flow' || 'launch.yaml' }}"
     runs-on: macos-26
-    timeout-minutes: 75
+    timeout-minutes: ${{ inputs.run == 'all-flows' && 300 || 75 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -156,6 +162,7 @@ jobs:
           unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/maestro/bin" >> "$GITHUB_PATH"
       - name: Run launch.yaml
+        if: ${{ inputs.run != 'all-flows' }}
         working-directory: apps/mobile
         run: |
           maestro test maestro/launch.yaml --udid "$UDID" \
@@ -164,6 +171,39 @@ jobs:
             --test-output-dir "$ARTIFACTS/maestro" \
             --debug-output "$ARTIFACTS/maestro" --flatten-debug-output
 
+      # Every flow of the smoke halves, in their order, each in a run of its own
+      # behind the halves' opening of the development client, so one failure
+      # does not stop the rest. The simulator's screen is recorded per flow.
+      - name: Run every flow
+        if: ${{ inputs.run == 'all-flows' }}
+        working-directory: apps/mobile
+        run: |
+          mkdir -p "$ARTIFACTS/videos" "$ARTIFACTS/maestro"
+          flows="$(grep -h -o 'flows/[a-z-]*\.yaml' maestro/smoke-1.yaml maestro/smoke-2.yaml)"
+          prelude="$(sed -n '1,/^- runFlow: flows\//p' maestro/smoke-1.yaml | sed '$d')"
+          failed=0
+          for flow in $flows; do
+            name="$(basename "$flow" .yaml)"
+            { echo "$prelude"; echo "- runFlow: $flow"; } > "maestro/_one.yaml"
+            xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$ARTIFACTS/videos/$name.mp4" &
+            video=$!
+            sleep 1
+            if maestro test maestro/_one.yaml --udid "$UDID" \
+              -e METRO_URL="http://localhost:$METRO_PORT" \
+              --format junit --output "$ARTIFACTS/maestro/$name.xml" \
+              --test-output-dir "$ARTIFACTS/maestro/$name" \
+              --debug-output "$ARTIFACTS/maestro/$name" --flatten-debug-output \
+              > "$ARTIFACTS/maestro/$name.log" 2>&1; then
+              echo "PASS $name" | tee -a "$ARTIFACTS/summary.txt"
+            else
+              echo "FAIL $name" | tee -a "$ARTIFACTS/summary.txt"
+              tail -15 "$ARTIFACTS/maestro/$name.log"
+              failed=$((failed + 1))
+            fi
+            kill -INT "$video"; wait "$video" || true
+          done
+          echo "$failed failed" | tee -a "$ARTIFACTS/summary.txt"
+
       - name: Take a screenshot of the simulator
         if: ${{ !cancelled() && env.UDID != '' }}
         run: xcrun simctl io "$UDID" screenshot "$ARTIFACTS/simulator.png" || true
@@ -171,6 +211,6 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: maestro-launch
+          name: maestro-${{ inputs.run || 'launch' }}
           path: maestro-artifacts
           retention-days: 14
