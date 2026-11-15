@@ -6,12 +6,20 @@ import type { TextComparison } from '../text/text-comparison';
 /** How many options a Round offers, exactly one of them correct. */
 export const ROUND_OPTIONS = 4;
 
+/** A stretch of a text, from the character at `start` up to the one at `end`, which it leaves out. */
+export interface TextRange {
+  readonly start: number;
+  readonly end: number;
+}
+
 /** One option of a Round, or the answer its sheet names. */
 export interface RoundOption {
   /** The text as shown, such as a Lemma with its Stress marks. */
   readonly text: string;
   /** The stressed vowels of the text, in order, which VoiceOver names; empty without Stress. */
   readonly stressedVowels: readonly string[];
+  /** The part of the text to mark, such as the replacement an option of «Англіцизми» puts in its sentence; none when left out. */
+  readonly highlight?: TextRange;
 }
 
 /**

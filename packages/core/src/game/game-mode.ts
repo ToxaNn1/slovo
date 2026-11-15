@@ -6,7 +6,8 @@ import type { TextComparison } from '../text/text-comparison';
 import type { AskableEntry, AskableKind, KindRefusal, ShownKind } from '../entries/entries';
 import type { Random } from '../ports';
 
-export { ROUND_OPTIONS, type AnswerSheet, type RoundOption } from './answer-form';
+import type { TextRange } from './answer-form';
+export { ROUND_OPTIONS, type AnswerSheet, type RoundOption, type TextRange } from './answer-form';
 export type { ChipKind, ChipLayout, FixedChip } from './chips-form';
 
 /**
@@ -48,11 +49,6 @@ export type OfferedGroup = GameHubGroup | GameModeGroup;
  */
 export type RoundLabelKind = 'mode' | 'synonymRow' | 'tip' | 'gap' | 'meaning';
 
-/** A stretch of a text, from the character at `start` up to the one at `end`, which it leaves out. */
-export interface TextRange {
-  readonly start: number;
-  readonly end: number;
-}
 
 /**
  * The form of a Round's answer, which the Game Mode decides (ADR 0052): a
