@@ -1099,7 +1099,7 @@ export async function openGame({
       modes: state.modes.map((offer) => {
         const mode = modes.find(({ id }) => id === offer.modeId);
         if (mode === undefined) return offer;
-        const next = { ...offer, ...offeredMode(mode, bestResults[mode.id]) };
+        const next = { ...offer, ...offeredMode(mode, edition, bestResults[mode.id]) };
         if (bestResults[mode.id] === undefined) delete next.best;
         return next;
       }),
