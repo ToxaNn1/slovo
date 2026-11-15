@@ -96,13 +96,16 @@ function recordText(best: OfferedBest | undefined, texts: GameStrings['hubRow'])
     : fill(texts.record, { n, total: String(best.of) });
 }
 
-/** The mode a toast sends the reader to: «Наголос» while it can start, else the first mode that can. */
+/** The mode a toast sends the reader to while it can start. */
 const TOAST_MODE = 'stress';
+/** The mode the toast sends the reader to while «Наголос» itself cannot start. */
+const FALLBACK_TOAST_MODE = 'pairs';
 
 /**
  * The toast on a tap of a mode that can't start, such as «Пари» ще
  * розминається. Влучай поки в «Наголос»!: it names «Наголос» while it can
- * start, else the first mode on offer that can (still «Наголос» when none can).
+ * start; else, in its own words («Спробуй поки „Пари“!»), «Пари» while it can,
+ * else the first mode on offer that can (still «Пари» when none can).
  */
 export function gameModeToast(
   offer: GameModeOffer,
@@ -110,14 +113,16 @@ export function gameModeToast(
   strings: GameStrings,
 ): string {
   const startable = offers.filter(({ canStart }) => canStart);
+  const titleOf = (modeId: string) => gameModeStrings(strings.modes, modeId).title;
+  const mode = titleOf(offer.modeId);
+  if (startable.some(({ modeId }) => modeId === TOAST_MODE)) {
+    return fill(strings.hubToast, { mode, other: titleOf(TOAST_MODE) });
+  }
   const other =
-    startable.find(({ modeId }) => modeId === TOAST_MODE)?.modeId ??
+    startable.find(({ modeId }) => modeId === FALLBACK_TOAST_MODE)?.modeId ??
     startable[0]?.modeId ??
-    TOAST_MODE;
-  return fill(strings.hubToast, {
-    mode: gameModeStrings(strings.modes, offer.modeId).title,
-    other: gameModeStrings(strings.modes, other).title,
-  });
+    FALLBACK_TOAST_MODE;
+  return fill(strings.hubToastFallback, { mode, other: titleOf(other) });
 }
 
 /** A mode's Best result: out of its Round limit («Найкраще: 12 з 15»), or bare without one («Найкраще: 23»). */
