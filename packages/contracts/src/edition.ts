@@ -519,6 +519,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   swipeMarks: FeatureSwitchStateSchema,
   /** The gestures hint's demo: while «ГОРТАЙ ПАЛЬЦЕМ» is open, the Feed's card plays the swipes right, left and up in a loop, its edge labels sliding in, with a finger over it and each row of the sheet lit in turn (ADR 0112); off, the sheet stands still. Off while `swipeMarks` is. */
   gesturesHintDemo: FeatureSwitchStateSchema,
+  /** Saved without swipes (owner 15.11): an Entry opened from any tab of «Збережене» takes no side swipes, its Knowledge Mark set from the «⋯» sheet. Off, it is swiped as anywhere else. Off while `swipeMarks` is. */
+  savedSwipesOff: FeatureSwitchStateSchema,
   /** Word tabs: every Entry card in a fixed-height frame (ADR 0091), the Word of the Day's once it is open, with tabs under its head: a Word's «Суть», «Приклад», «Зв’язки» and «Історія», a Correction's «Як краще», «Чому» and «Приклади», an Idiom's «Суть», «Звідки» and «Приклад», a Tip's «Суть» and «Приклад»; a Synonym Row's in the same frame. Content too tall for the frame shrinks a font size at a time, then is clamped under «Детальніше», which opens it whole. The Word of the Day card is the red card while Self-check keeps it closed; the Feed's header draws no XP bar. Off, the cards are one column, the Word's with «Детальніше». */
   wordTabs: FeatureSwitchStateSchema,
   /** The source tab: every tabbed Entry card's last tab «Джерело» names its sources, each on its own line, and the source line leaves the other tabs (ADR 0116). Off, the source line stays in its tab. Off while `wordTabs` is. */
