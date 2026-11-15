@@ -19700,7 +19700,7 @@
       "get": {
         "operationId": "admin.content.unchecked",
         "summary": "The next live record of a kind not checked yet, for «Перегляд», with the count of them all",
-        "description": "Records whose last change came in the newest batch come first. A record is checked at the record version an Admin user marked; any later write leaves it unchecked again (ADR 0142).",
+        "description": "Records whose last change came in the newest batch come first. A record is checked at the record version an Admin user marked; any later write leaves it unchecked again (ADR 0143).",
         "tags": [
           "admin"
         ],
@@ -20086,7 +20086,7 @@
       "post": {
         "operationId": "admin.content.check",
         "summary": "Mark a record checked at its record version: no content changes, an Action log row",
-        "description": "An Admin user only, with no reason; an Агент token is refused (ADR 0142).",
+        "description": "An Admin user only, with no reason; an Агент token is refused (ADR 0143).",
         "tags": [
           "admin"
         ],

@@ -715,7 +715,7 @@ export function createContentWrites({
     }, readOnly);
   }
 
-  /** A live record not checked at its record version: of no check, or of a write since (ADR 0142). */
+  /** A live record not checked at its record version: of no check, or of a write since (ADR 0143). */
   const uncheckedOf = (kind: RecordKind, editionId: string) => {
     const table = TABLES[kind];
     return and(
@@ -760,7 +760,7 @@ export function createContentWrites({
 
   /**
    * An Admin user marks a record checked at its record version: the content
-   * stays as it is, the Action log keeps a row (ADR 0142).
+   * stays as it is, the Action log keeps a row (ADR 0143).
    */
   async function check(
     email: string,

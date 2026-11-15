@@ -366,7 +366,7 @@ function contentColumns<Fields>() {
     /**
      * The record version an Admin user last marked checked in «Перегляд»; none
      * while never checked. The record is checked while it equals `recordVersion`,
-     * so any later write leaves it unchecked again (ADR 0142).
+     * so any later write leaves it unchecked again (ADR 0143).
      */
     checkedVersion: integer('checked_version'),
     changedBy: text('changed_by').$type<ContentAuthor>().notNull(),

@@ -20,7 +20,7 @@ type Mode = 'keys' | 'retire' | 'edit';
 
 /**
  * «Перегляд»: per kind, the records no Admin user has checked since their last
- * change, one at a time as a card to read (ADR 0142). «Так» (key 1) checks it,
+ * change, one at a time as a card to read (ADR 0143). «Так» (key 1) checks it,
  * «Ні» (key 2) retires it with an optional reason, «Редагувати» (key 3) opens
  * the record form, whose save checks it at its new version; each shows the next.
  */

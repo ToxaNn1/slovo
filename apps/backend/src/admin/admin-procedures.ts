@@ -665,7 +665,7 @@ export function adminProcedures(
       }),
       check: content.check.handler(async ({ context, input, errors }) => {
         const writer = await writerOf(context.headers, errors);
-        // Only a person checks a record; an Агент's eye is not a check (ADR 0142).
+        // Only a person checks a record; an Агент's eye is not a check (ADR 0143).
         if (writer.kind !== 'admin-user') throw errors.FORBIDDEN();
         const checked = await contentWrites.check(writer.email, input);
         if (!checked.ok) throw refusalOf(checked, errors);
