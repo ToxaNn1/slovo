@@ -235,9 +235,51 @@ describe('the Game screen', () => {
     }
     expect(screen.queryByLabelText('Твоя відповідь')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Відкрити літеру' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '← Стерти літеру' })).toBeNull();
 
-    await assemble(word);
+    await assemble(word.toLocaleUpperCase('uk'));
 
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+  });
+
+  it('draws the letter tiles of «За літерами» in capitals', async () => {
+    await open({ switchedOn: ['letterTiles'] });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
+    await waitFor(() => {
+      expect(screen.getByTestId('chips')).toBeOnTheScreen();
+    });
+
+    // Each tile shows its letter in capitals, as VoiceOver reads it.
+    const letters = screen
+      .getAllByTestId(/^chips-\d+$/)
+      .map((tile) => String(within(tile).getByText(/./).props['children']));
+    expect(letters).toEqual(
+      expect.arrayContaining(Array.from(theWordOfThePrompt().toLocaleUpperCase('uk'))),
+    );
+    expect(letters.filter((letter) => /\p{Ll}/u.test(letter))).toEqual([]);
+  });
+
+  it('gives a letter of «За літерами» back at a tap on its slot, then takes the Word', async () => {
+    await open({ switchedOn: ['letterTiles'] });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
+    await waitFor(() => {
+      expect(screen.getByTestId('chips')).toBeOnTheScreen();
+    });
+    const word = theWordOfThePrompt().toLocaleUpperCase('uk');
+    // A wrong letter for the second, given back before the slots are full.
+    await assemble(`${word.charAt(0)}${word.charAt(word.length - 1)}`);
+    expect(screen.getByTestId('chips-line')).toHaveTextContent(
+      `${word.charAt(0)}${word.charAt(word.length - 1)}`,
+    );
+
+    await fireEvent.press(screen.getByTestId('chips-line-1'));
+
+    expect(screen.getByTestId('chips-line')).toHaveTextContent(word.charAt(0));
+    await assemble(word.slice(1));
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
   });
 
@@ -316,6 +358,8 @@ describe('the Game screen', () => {
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
+    // The slots show the right Word in place of the one assembled.
+    expect(screen.getByTestId('chips-line')).toHaveTextContent(word);
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
   });
 

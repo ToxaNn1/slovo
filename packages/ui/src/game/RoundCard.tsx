@@ -61,8 +61,8 @@ export type RoundFace =
  * for the prompt, and VoiceOver reads the label, then each of its buttons.
  * In a Round on the ground (ADR 0139) the prompt stands on the background
  * with no card, in the large display face up to 40 characters and the text
- * face past that or where the Round asks for it; the Mascot, if any, stands
- * beside it.
+ * face past that, or in the one face the Round asks for, a long question in
+ * the display face sized down; the Mascot, if any, stands beside it.
  */
 export function RoundCard({
   label,
@@ -120,7 +120,8 @@ export function RoundCard({
       ? 'quickQuestionPrompt'
       : !onGround
         ? 'roundPrompt'
-        : look.textFace || Array.from(prompt).length > DISPLAY_MOST
+        : look.questionFace === 'text' ||
+            (look.questionFace === 'byLength' && Array.from(prompt).length > DISPLAY_MOST)
           ? 'roundExplanation'
           : 'roundAsk';
   const card = (

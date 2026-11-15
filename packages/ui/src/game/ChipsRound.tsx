@@ -9,8 +9,10 @@ import { RoundCard } from './RoundCard';
 
 /**
  * A Round of the chips form: its chips, a Word's letters or an expression's
- * words, stand under the card in place of the options. A Word's letters
- * take «← Стерти літеру», which takes back the last letter placed.
+ * words, stand under the card in place of the options. A Word's letters in
+ * a line, as «Анаграми» shows them, take «← Стерти літеру», which takes back
+ * the last letter placed, and a wrong Word shows the right one in its line
+ * (board 06); letter tiles take a letter back at a tap on its slot.
  */
 export function ChipsRound({
   round,
@@ -25,6 +27,7 @@ export function ChipsRound({
   onAnswer: (given: Extract<GivenAnswer, { form: 'chips' }>) => void;
 }) {
   const { strings } = useEdition();
+  const lettersInLine = round.chipKind === 'letter' && round.layout === 'line';
   return (
     <>
       <RoundCard
@@ -41,7 +44,8 @@ export function ChipsRound({
         fixed={round.fixed}
         layout={round.layout}
         slots={round.slots}
-        eraseLabel={round.chipKind === 'letter' ? strings.game.round.eraseLetter : undefined}
+        eraseLabel={lettersInLine ? strings.game.round.eraseLetter : undefined}
+        showsRight={lettersInLine}
         answer={round.answer?.form === 'chips' ? round.answer : undefined}
         onAnswer={(chips) => {
           onAnswer({ form: 'chips', chips });
