@@ -39,11 +39,11 @@ function Grid({ onAnswer }: { onAnswer: (word: number, definition: number) => vo
   const [answer, setAnswer] = useState<PairsAnswer>();
   const words: GridCell<RoundOption>[] = WORDS.map((shown, word) => ({
     shown,
-    gone: gone.includes(word),
+    state: gone.includes(word) ? 'found' : 'open',
   }));
   const definitions: GridCell<string>[] = DEFINITIONS.map((shown, definition) => ({
     shown,
-    gone: gone.some((word) => OWN_DEFINITION[word] === definition),
+    state: gone.some((word) => OWN_DEFINITION[word] === definition) ? 'found' : 'open',
   }));
   return (
     <>

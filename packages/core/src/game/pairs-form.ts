@@ -21,16 +21,23 @@ export interface PairsContent {
   readonly definitionOrder: readonly number[];
 }
 
-/** A cell of a pairs grid as the reader sees it: a Word or a Definition; one of a pair answered is gone. */
+/**
+ * Where a cell of a pairs grid stands: `open`, its pair still to match;
+ * `found`, its pair matched right; `missed`, its pair matched wrong: the
+ * Word tapped and its own Definition. Only an open cell takes a tap.
+ */
+export type GridCellState = 'open' | 'found' | 'missed';
+
+/** A cell of a pairs grid as the reader sees it: a Word or a Definition, and where its pair stands. */
 export interface GridCell<T> {
   readonly shown: T;
-  readonly gone: boolean;
+  readonly state: GridCellState;
 }
 
 /** A pairs grid as the reader sees it. */
 export interface PairsRound {
   readonly form: 'pairs';
-  /** The grid's Words in the order shown, then its Definitions; a pair answered is gone from both. */
+  /** The grid's Words in the order shown, then its Definitions; a pair answered is found or missed in both. */
   readonly words: readonly GridCell<RoundOption>[];
   readonly definitions: readonly GridCell<string>[];
 }
@@ -55,13 +62,16 @@ export interface PairsAnswer {
   readonly sheet: AnswerSheet;
 }
 
+/** Where the cells of a pair answered stand. */
+const stateOf = (right: boolean): GridCellState => (right ? 'found' : 'missed');
+
 /** The places of the pairs, sorted, as an order of them names them. */
 const sortedPlaces = (order: readonly number[]) => [...order].sort().join();
 
 /**
  * A Word matched with a Definition in a grid of pairs: each pair is a Round
  * of its own, the Word tapped the Entry it is about, and a pair answered,
- * right or wrong, is gone from the grid.
+ * right or wrong, is found or missed and takes no more taps.
  */
 export const pairsForm: AnswerForm<PairsContent, PairsRound, PairsGiven, PairsAnswer> = {
   wellFormed({ pairs, wordOrder, definitionOrder }) {
@@ -76,8 +86,10 @@ export const pairsForm: AnswerForm<PairsContent, PairsRound, PairsGiven, PairsAn
   roundsIn: ({ pairs }) => pairs.length,
   entriesIn: ({ pairs }) => pairs.map(({ entry }) => entry.id),
   shown({ pairs, wordOrder, definitionOrder }, answered) {
-    const goneWords = new Set(answered.map(({ word }) => word));
-    const goneDefinitions = new Set(answered.map(({ correct }) => correct));
+    const wordStates = new Map(answered.map(({ word, right }) => [word, stateOf(right)]));
+    const definitionStates = new Map(
+      answered.map(({ correct, right }) => [correct, stateOf(right)]),
+    );
     const pairAt = (place: number) => {
       const pair = pairs[place];
       if (pair === undefined) throw new Error(`The pairs grid has no pair at ${String(place)}`);
@@ -87,11 +99,11 @@ export const pairsForm: AnswerForm<PairsContent, PairsRound, PairsGiven, PairsAn
       form: 'pairs',
       words: wordOrder.map((pair, place) => ({
         shown: pairAt(pair).word,
-        gone: goneWords.has(place),
+        state: wordStates.get(place) ?? 'open',
       })),
       definitions: definitionOrder.map((pair, place) => ({
         shown: pairAt(pair).definition,
-        gone: goneDefinitions.has(place),
+        state: definitionStates.get(place) ?? 'open',
       })),
     };
   },
@@ -99,7 +111,7 @@ export const pairsForm: AnswerForm<PairsContent, PairsRound, PairsGiven, PairsAn
     const wordCell = words[word];
     const definitionCell = definitions[definition];
     if (wordCell === undefined || definitionCell === undefined) return undefined;
-    if (wordCell.gone || definitionCell.gone) return undefined;
+    if (wordCell.state !== 'open' || definitionCell.state !== 'open') return undefined;
     const pairPlace = wordOrder[word];
     const pair = pairPlace === undefined ? undefined : pairs[pairPlace];
     if (pairPlace === undefined || pair === undefined) return undefined;

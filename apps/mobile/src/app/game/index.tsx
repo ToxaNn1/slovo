@@ -75,6 +75,7 @@ function Game() {
     gameEndToFeed,
     plainGameReview,
     gameAnswerBanner,
+    pairsStay,
   } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
@@ -189,6 +190,7 @@ function Game() {
               : undefined
           }
           banner={gameAnswerBanner}
+          pairsStay={pairsStay}
           onWaitFor={actions.waitFor}
         />
       )}

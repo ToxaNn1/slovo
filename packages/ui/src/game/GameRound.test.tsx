@@ -293,8 +293,8 @@ const pairsRound: PlayingGame = {
     labelKind: 'mode',
     lifeLostAfter: 200,
     form: 'pairs',
-    words: PAIR_WORDS.map((text) => ({ shown: { text, stressedVowels: [] }, gone: false })),
-    definitions: PAIR_DEFINITIONS.map((shown) => ({ shown, gone: false })),
+    words: PAIR_WORDS.map((text) => ({ shown: { text, stressedVowels: [] }, state: 'open' })),
+    definitions: PAIR_DEFINITIONS.map((shown) => ({ shown, state: 'open' })),
     answer: undefined,
   },
 };

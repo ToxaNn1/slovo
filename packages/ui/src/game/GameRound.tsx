@@ -34,7 +34,8 @@ import { VowelRound } from './VowelRound';
  * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
  * prompt under its label, the four options and, once answered, the sheet,
  * or with the answer banner on (`gameAnswerBanner`) the banner, but after a
- * pairs grid, which keeps the sheet.
+ * pairs grid, which keeps the sheet; a grid whose found pairs stay
+ * (`pairsStay`) shows its large question and no answered state at all.
  * It plays the pick form, the vowel form, whose Word stands in the card
  * with each vowel a button, and the pairs form, whose grid stands under the
  * mode's label in place of the card and the options, the chips form, whose
@@ -66,6 +67,7 @@ export function GameRound({
   optionStamp = false,
   mascot,
   banner = false,
+  pairsStay = false,
   onWaitFor = noWait,
 }: {
   game: CurrentGame;
@@ -93,16 +95,20 @@ export function GameRound({
   mascot?: ((look: { state: MascotState; width: number }) => ReactNode) | undefined;
   /** Whether the answer banner shows after an answer in place of the sheet, and the Game moves on by itself (`gameAnswerBanner`). */
   banner?: boolean;
+  /** Whether found pairs of «Пари» stay, under the large question and the captions, with no pause after a pair (`pairsStay`). */
+  pairsStay?: boolean;
   /** Hands the Game what the banner waits for besides its delay: VoiceOver reading it. */
   onWaitFor?: (done: Promise<unknown>) => void;
 }) {
-  const { strings } = useEdition();
+  const { strings, voice } = useEdition();
+  const tokens = useTokens();
   const { round } = game;
   const { answer } = round;
   const gameHaptics = useGameHaptics();
   const sounds = useInterfaceSounds();
-  // The answer just given: the Round's, or in a timed Game, which moves on at once, the last Round's.
-  const given = game.time === undefined ? answer : game.played.at(-1)?.answer;
+  // The answer just given: the Round's, or in a timed Game and a grid that stays, which move on at once, the last Round's.
+  const stays = pairsStay && round.form === 'pairs';
+  const given = game.time === undefined && !stays ? answer : game.played.at(-1)?.answer;
   // The answer shown before, so only the answer given now plays.
   const shownAnswer = useRef(given);
 
@@ -160,20 +166,33 @@ export function GameRound({
         ]}
       >
         {streak !== undefined && <SurvivalStreak streak={streak} />}
-        {labelShown && (
-          <RoundHead
-            label={round.form === 'pairs' ? strings.game.round.pairsHint : asked.label}
-            number={round.number}
-            roundLimit={onGround ? undefined : game.roundLimit}
-            heading={round.form === 'vowel' || round.form === 'pairs'}
-            testID={round.form === 'pairs' ? 'game-prompt' : undefined}
-          />
+        {stays ? (
+          <Text
+            testID="game-prompt"
+            accessibilityRole="header"
+            maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+            {...voice}
+            style={[typeStyle('roundAsk', tokens), { color: tokens.colors.ink }]}
+          >
+            {strings.game.round.pairsHint}
+          </Text>
+        ) : (
+          labelShown && (
+            <RoundHead
+              label={round.form === 'pairs' ? strings.game.round.pairsHint : asked.label}
+              number={round.number}
+              roundLimit={onGround ? undefined : game.roundLimit}
+              heading={round.form === 'vowel' || round.form === 'pairs'}
+              testID={round.form === 'pairs' ? 'game-prompt' : undefined}
+            />
+          )
         )}
         <RoundLookContext.Provider value={look}>
           <FormRound
             round={round}
             label={asked.label}
             card={card}
+            pairsStay={pairsStay}
             onAnswer={onAnswer}
             onOpenLetter={onOpenLetter}
           />
@@ -262,12 +281,14 @@ function FormRound({
   round,
   label,
   card,
+  pairsStay,
   onAnswer,
   onOpenLetter,
 }: {
   round: Round;
   label: string;
   card: CardText;
+  pairsStay: boolean;
   onAnswer: (given: GivenAnswer) => void;
   onOpenLetter: () => void;
 }) {
@@ -278,7 +299,7 @@ function FormRound({
     case 'vowel':
       return <VowelRound round={round} label={label} prompt={prompt} onAnswer={onAnswer} />;
     case 'pairs':
-      return <PairsRound round={round} onAnswer={onAnswer} />;
+      return <PairsRound round={round} stay={pairsStay} onAnswer={onAnswer} />;
     case 'chips':
       return <ChipsRound round={round} label={label} prompt={prompt} onAnswer={onAnswer} />;
     case 'typed':

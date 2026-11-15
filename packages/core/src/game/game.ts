@@ -42,7 +42,7 @@ import type { TextComparison } from '../text/text-comparison';
 
 export type { RoundBlank } from './typed-form';
 export type { GivenAnswer, RoundAnswer } from './answer-forms';
-export type { GridCell } from './pairs-form';
+export type { GridCell, GridCellState } from './pairs-form';
 
 /** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own (ADR 0137). */
 export const GAME_LIVES = 3;
@@ -295,12 +295,15 @@ function createGameInPlay({
   eligible: eligibleAtStart,
   comparison,
   banner,
+  pairsStay,
 }: {
   mode: GameMode;
   /** The Lives the Game starts with, which it keeps however the Edition changes; none without Lives. */
   lives: number | undefined;
   /** Whether the answer banner is on (`gameAnswerBanner`), so a mode that moves on waits for it too. */
   banner: boolean;
+  /** Whether a pair of a pairs grid leaves no answered state (`pairsStay`), the Game going on to the next Round at once. */
+  pairsStay: boolean;
   /** The Rounds the Game starts over, as the mode planned them. */
   rounds: readonly PlannedRound[];
   planRounds: RoundPlanner;
@@ -388,7 +391,8 @@ function createGameInPlay({
           ? { kind: 'right', xp: undefined }
           : { kind: 'wrong', answer: answer.sheet.answer.text, lastLife: lives === 0 },
       };
-      return mode.movesOn === true && !banner ? next(answered) : answered;
+      const movesOn = (mode.movesOn === true && !banner) || (pairsStay && answer.form === 'pairs');
+      return movesOn ? next(answered) : answered;
     },
     next,
     openLetter(game) {
@@ -501,7 +505,7 @@ export interface Game {
    * Answers the current Round in its form: an option picked, a vowel tapped,
    * a pair matched, chips in order or typed text. A wrong answer costs a Life
    * at once and marks the Round's Entry «Не знаю» in the background, before
-   * the next «Далі» goes on. In a mode that moves on, the next Round comes at
+   * the next «Далі» goes on. In a mode that moves on, and after a pair with `pairsStay` on, the next Round comes at
    * once. Once the play time of a timed Game is up, the answer counts for
    * nothing and the Game ends, should its schedule not have ended it yet.
    * Resolves once the mark is written; a mark that fails to write rejects,
@@ -708,6 +712,7 @@ export async function openGame({
   }
   const gameOn = edition.isFeatureEnabled('game');
   const banner = edition.isFeatureEnabled('gameAnswerBanner');
+  const pairsStay = edition.isFeatureEnabled('pairsStay');
   const modes = gameOn ? registered.filter((mode) => mode.isOn(edition)) : [];
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
@@ -836,6 +841,7 @@ export async function openGame({
             eligible,
             comparison,
             banner,
+            pairsStay,
           })
         : undefined;
     stopTime();
@@ -878,8 +884,8 @@ export async function openGame({
   /**
    * With the answer banner on, moves the Game on from the answered Round by
    * itself once its delay has passed and what the screen waits for has come,
-   * unless the Game moved on, ended or was left since. A pairs grid waits for
-   * «Далі» still.
+   * unless the Game moved on, ended or was left since. A pair of a pairs grid
+   * waits for «Далі» still, unless it leaves no answered state (`pairsStay`).
    */
   function moveOnLater(shown: PlayingGame): void {
     if (!banner || schedule === undefined || shown.status !== 'answered') return;

@@ -2669,8 +2669,8 @@ describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
     while (current(app).status === 'playing') {
       const { round } = current(app);
       if (round.form !== 'pairs') throw new Error('Not a pairs grid');
-      if (round.words.every(({ gone }) => !gone)) grids.push(round.words.length);
-      const word = round.words.findIndex(({ gone }) => !gone);
+      if (round.words.every(({ state }) => state === 'open')) grids.push(round.words.length);
+      const word = round.words.findIndex(({ state }) => state === 'open');
       await app.game.answer({ form: 'pairs', word, definition: round.words.length - 1 - word });
       await app.game.next();
     }
