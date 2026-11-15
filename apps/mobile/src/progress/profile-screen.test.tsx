@@ -5,6 +5,7 @@ import {
   openAccount,
   systemRandom,
   type FeatureSwitch,
+  type UserStateFact,
 } from '@slovo/core';
 import {
   createFakeAppleSignInSheet,
@@ -98,12 +99,24 @@ type Seed = Parameters<typeof seedUserState>[0];
 /**
  * The Profile over the Core's composition of a test Shell, as the UA Edition
  * ships it unless a switch is turned off or on, after `rounds` right Game
- * Rounds of 1 XP each, with the counters hidden or not, over the user state
- * `seed` and a Language Pack of «сумирний».
+ * Rounds of 1 XP each plus `xp` seeded in one XP log record (fast for high
+ * Levels, where awarding Rounds one by one outruns the test timeout), with the
+ * counters hidden or not, over the user state `seed` and a Language Pack of
+ * «сумирний».
  */
+/** One XP log record of `amount` XP, earned the day before the test's today. */
+const seededXp = (amount: number): UserStateFact<'xpLog'>[string] => ({
+  kind: 'xp',
+  date: '2026-10-12',
+  at: '2026-10-12T09:00:00.000Z',
+  source: 'daily-crossword',
+  amount,
+});
+
 async function renderScreen({
   withAccount = false,
   rounds = 0,
+  xp = 0,
   noCounters = false,
   switchedOff,
   switchedOn,
@@ -115,6 +128,8 @@ async function renderScreen({
   name?: string;
   withAccount?: boolean;
   rounds?: number;
+  /** XP seeded as one record the day before the test's today. */
+  xp?: number;
   noCounters?: boolean;
   switchedOff?: FeatureSwitch;
   switchedOn?: FeatureSwitch;
@@ -122,9 +137,12 @@ async function renderScreen({
   shareCard?: ShareCard;
 } = {}) {
   const userState = opened(
-    await seedUserState(seed, {
-      clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
-    }),
+    await seedUserState(
+      xp === 0 ? seed : { ...seed, xpLog: { ...seed.xpLog, 'seeded-xp': seededXp(xp) } },
+      {
+        clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+      },
+    ),
   );
   const languagePack = opened({
     reader: {
@@ -314,8 +332,8 @@ describe('the Profile', () => {
     [20, 1998, 'Мовознавець: ще 600 XP'],
   ])(
     'at Level %i reads «<next name>: ще N XP» on the card and under the row',
-    async (level, rounds, line) => {
-      await renderScreen({ rounds });
+    async (level, xp, line) => {
+      await renderScreen({ xp });
 
       expect(screen.getByTestId('profile-level-number')).toHaveTextContent(String(level));
       expect(screen.getByTestId('profile-level-left')).toHaveTextContent(line);
@@ -326,21 +344,7 @@ describe('the Profile', () => {
   );
 
   it('under the last name reads the XP to the next Level and draws no line to a next name', async () => {
-    // 2598 XP in one seeded record: awarding 2598 Rounds one by one outran the test timeout on CI.
-    const at = '2026-10-12T09:00:00.000Z';
-    await renderScreen({
-      seed: {
-        xpLog: {
-          'seeded-xp': {
-            kind: 'xp',
-            date: '2026-10-12',
-            at,
-            source: 'daily-crossword',
-            amount: 2598,
-          },
-        },
-      },
-    });
+    await renderScreen({ xp: 2598 });
 
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('25');
     expect(screen.getByTestId('profile-level-left')).toHaveTextContent('ще 120 XP до рівня 26');
