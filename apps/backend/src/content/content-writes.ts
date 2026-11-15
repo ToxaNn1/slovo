@@ -12,7 +12,7 @@ import {
 import { CONTENT_PAGE_SIZE } from '@slovo/contracts/admin-api';
 import { contentReport, missedTargets } from '@slovo/language-pack';
 import type { Clock, EditionRegistry, Json, Random } from '@slovo/server-core';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import type { Database } from '../database/database';
@@ -32,6 +32,17 @@ import {
   contentWords,
   type ContentAuthor,
 } from '../database/schema';
+
+/** The table of each kind of record. */
+const TABLES = {
+  word: contentWords,
+  correction: contentCorrections,
+  idiom: contentIdioms,
+  synonymRow: contentSynonymRows,
+  tip: contentTips,
+  curatedCollection: contentCuratedCollections,
+  crosswordDay: contentCrosswordDays,
+} as const satisfies Record<RecordKind, unknown>;
 
 const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
 const ID_LENGTH = 6;
@@ -704,7 +715,95 @@ export function createContentWrites({
     }, readOnly);
   }
 
-  return { openBatch, write, flag, report, record, list };
+  /** A live record not checked at its record version: of no check, or of a write since (ADR 0142). */
+  const uncheckedOf = (kind: RecordKind, editionId: string) => {
+    const table = TABLES[kind];
+    return and(
+      eq(table.editionId, editionId),
+      eq(table.retired, false),
+      sql`${table.checkedVersion} is distinct from ${table.recordVersion}`,
+    );
+  };
+
+  /**
+   * The records of a kind «Перегляд» shows: the count of the live records not
+   * checked, and the first of them, the newest change first.
+   */
+  async function unchecked(editionId: string, kind: RecordKind) {
+    if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
+    return db.transaction(async (tx) => {
+      if ((await importedVersion(tx, editionId)) === undefined) {
+        return { ok: false, reason: 'not-imported' } as const;
+      }
+      const table = TABLES[kind];
+      const where = uncheckedOf(kind, editionId);
+      const [counted] = await tx
+        .select({ total: sql<number>`count(*)::int` })
+        .from(table)
+        .where(where);
+      const [first] = await tx
+        .select({ id: table.id, fields: table.fields, recordVersion: table.recordVersion })
+        .from(table)
+        .where(where)
+        .orderBy(desc(table.contentVersion), asc(table.id))
+        .limit(1);
+      const total = counted?.total ?? 0;
+      if (first === undefined) return { ok: true, total } as const;
+      const fields: Readonly<Record<string, unknown>> = first.fields;
+      return {
+        ok: true,
+        total,
+        record: { id: first.id, fields, recordVersion: first.recordVersion },
+      } as const;
+    }, readOnly);
+  }
+
+  /**
+   * An Admin user marks a record checked at its record version: the content
+   * stays as it is, the Action log keeps a row (ADR 0142).
+   */
+  async function check(
+    email: string,
+    {
+      editionId,
+      kind,
+      id,
+      recordVersion,
+    }: { editionId: string; kind: RecordKind; id: string; recordVersion: number },
+  ) {
+    if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
+    return db.transaction(async (tx) => {
+      if ((await heldVersion(tx, editionId)) === undefined) {
+        return { ok: false, reason: 'not-imported' } as const;
+      }
+      const table = TABLES[kind];
+      const [current] = await tx
+        .select({ recordVersion: table.recordVersion })
+        .from(table)
+        .where(and(eq(table.editionId, editionId), eq(table.id, id)));
+      if (current === undefined) return { ok: false, reason: 'not-found' } as const;
+      if (current.recordVersion !== recordVersion) {
+        return { ok: false, reason: 'stale', currentVersion: current.recordVersion } as const;
+      }
+      await tx
+        .update(table)
+        .set({ checkedVersion: recordVersion })
+        .where(and(eq(table.editionId, editionId), eq(table.id, id)));
+      await tx.insert(actionLog).values({
+        who: { kind: 'admin-user', email },
+        at: clock.now(),
+        what: `content.${kind}.check`,
+        before: null,
+        after: { id, recordVersion },
+        reason: null,
+        editionId,
+        batchId: null,
+      });
+      return { ok: true, checked: { id, recordVersion } } as const;
+    });
+  }
+
+  return { openBatch, write, flag, report, record, list, unchecked, check };
 }
 
 export type ContentWrites = ReturnType<typeof createContentWrites>;

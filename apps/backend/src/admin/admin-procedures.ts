@@ -656,6 +656,21 @@ export function adminProcedures(
         if (!listed.ok) throw refusalOf(listed, errors);
         return { records: listed.records, total: listed.total };
       }),
+      unchecked: content.unchecked.handler(async ({ context, input, errors }) => {
+        await writerOf(context.headers, errors, { writes: false });
+        const found = await contentWrites.unchecked(input.editionId, input.kind);
+        if (!found.ok) throw refusalOf(found, errors);
+        const { ok: _ok, ...answer } = found;
+        return answer;
+      }),
+      check: content.check.handler(async ({ context, input, errors }) => {
+        const writer = await writerOf(context.headers, errors);
+        // Only a person checks a record; an Агент's eye is not a check (ADR 0142).
+        if (writer.kind !== 'admin-user') throw errors.FORBIDDEN();
+        const checked = await contentWrites.check(writer.email, input);
+        if (!checked.ok) throw refusalOf(checked, errors);
+        return checked.checked;
+      }),
     },
     contentQueue: {
       batches: queue.batches.handler(async ({ context, input, errors }) => {
