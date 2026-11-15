@@ -448,7 +448,7 @@ function ProfileLadder({ level }: { level: LevelState }) {
               text: upper(
                 fill(ladder.toNext, { name: level.next.name, xp: String(level.next.xp) }),
               ),
-              share: 1 - level.next.xp / level.next.span,
+              share: 1 - level.next.xp / level.next.nameXp,
             }
       }
     />

@@ -6,6 +6,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { calendarDay, space, typeStyle } from '../tokens';
 import { dayDate, dayLabel } from './day-label';
+import { Frost } from './Frost';
 
 /**
  * One day of the grid as a tile over its edge: an Active Day red, today in
@@ -75,24 +76,6 @@ export function CalendarDayTile({
     <Pressable {...shared} accessibilityRole="button" onPress={onPress}>
       {({ pressed }) => tile(pressed)}
     </Pressable>
-  );
-}
-
-/**
- * The frost over a frozen day: diagonal stripes across the tile, as board 10
- * draws it; the Streak freeze card's strip lays it over its frozen day too.
- */
-export function Frost() {
-  const count = Math.ceil((calendarDay.height * 3) / calendarDay.frost.step);
-  return (
-    <View style={styles.frost} pointerEvents="none">
-      {Array.from({ length: count }, (_, index) => (
-        <View
-          key={index}
-          style={[styles.stripe, { left: index * calendarDay.frost.step - calendarDay.height }]}
-        />
-      ))}
-    </View>
   );
 }
 
@@ -205,14 +188,5 @@ const styles = StyleSheet.create({
   edge: { top: calendarDay.edge },
   pressed: { top: calendarDay.edge },
   sunken: { borderTopWidth: calendarDay.edge, overflow: 'hidden' },
-  frost: { ...StyleSheet.absoluteFill, overflow: 'hidden', borderRadius: calendarDay.radius },
-  stripe: {
-    position: 'absolute',
-    top: -calendarDay.height,
-    width: calendarDay.frost.stripe,
-    height: calendarDay.height * 3,
-    backgroundColor: calendarDay.frost.color,
-    transform: [{ rotate: '45deg' }],
-  },
   future: { borderWidth: calendarDay.futureBorder, borderStyle: 'dashed' },
 });
