@@ -935,7 +935,7 @@ describe('the answer forms of a Round', () => {
 
     const one = await answer(game, { form: 'pairs', word: 0, definition: 3 });
     expect(one).toMatchObject({ status: 'playing', roundsPassed: 1, lives: GAME_LIVES });
-    expect(one.answered).toBeUndefined();
+    expect(one).not.toHaveProperty('answered');
     expect(one.round).toMatchObject({ number: 2, answer: undefined });
     expect(one.played[0]).toMatchObject({ entry: wordAt(0), right: true });
     if (one.round.form !== 'pairs') throw new Error('Not a pairs grid');
@@ -951,7 +951,7 @@ describe('the answer forms of a Round', () => {
     await noMove(game, () => game.answer({ form: 'pairs', word: 0, definition: 2 }));
     const wrong = await answer(game, { form: 'pairs', word: 1, definition: 1 });
     expect(wrong).toMatchObject({ status: 'playing', roundsPassed: 2, lives: GAME_LIVES - 1 });
-    expect(wrong.answered).toBeUndefined();
+    expect(wrong).not.toHaveProperty('answered');
     expect(wrong.played[1]).toMatchObject({ entry: wordAt(1), right: false });
 
     await advance(5000);

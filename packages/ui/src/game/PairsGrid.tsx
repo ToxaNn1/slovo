@@ -23,14 +23,8 @@ import { useAnswerMotion } from './useAnswerMotion';
 const CELL_TURN = 3;
 const WRONG_OPACITY = 0.6;
 
-/**
- * A grid that stays, as the board draws it: a row's cell height, the gap
- * between its two halves and the diamond over it, and the lines a Word and a
- * Definition take at most.
- */
-const STAY_CELL_HEIGHT = 64;
-const HALF_GAP = 6;
-const DIAMOND = 8;
+/** The lines a Word and a Definition take at most in a grid that stays, as the board sets them. */
+const { stayCellHeight: STAY_CELL_HEIGHT, halfGap: HALF_GAP, diamond: DIAMOND } = pairsGridLayout;
 const WORD_LINES = 2;
 const DEFINITION_LINES = 3;
 

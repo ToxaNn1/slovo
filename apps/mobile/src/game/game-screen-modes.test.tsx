@@ -29,7 +29,10 @@ import {
 beforeEach(resetGameScreen);
 
 /** A pair of a grid: the place of its Word and of its own Definition. */
-type Pair = { word: number; definition: number };
+interface Pair {
+  word: number;
+  definition: number;
+}
 
 describe('the Game screen', () => {
   it('starts «Наголос» from its card and plays a whole Game to the result screen', async () => {
