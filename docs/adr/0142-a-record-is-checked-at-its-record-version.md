@@ -12,7 +12,7 @@ The Content queue reviews whole batches (ADR 0090): an import or an agent run of
 - `content.unchecked` answers, per kind, the count of live (not retired) records not checked and the first of them, the newest change (the highest content version) first, then by id.
 - `content.check` marks one record checked at the record version it was read at; an older version is refused as `STALE`. It changes no content, publishes no Patch and raises no version. It needs no reason and no confirmation dialog, like an owner-check tick (ADR 0088); the Action log keeps a row `content.<kind>.check` with `after: {id, recordVersion}`.
 - Only an Admin user (Власник or Адмін) checks; an Агент token is refused with `FORBIDDEN`.
-- The tab «Перегляд» under Контент shows one unchecked record as a readable card with three keys: «Так» checks it, «Ні» retires it with an optional reason, «Редагувати» opens the record form inline and saves; each moves to the next record, with the counter «N з M».
+- The tab «Перегляд» under Контент shows one unchecked record as a readable card with three keys: «Так» checks it, «Ні» retires it with an optional reason, «Редагувати» opens the record form inline, and its save checks the record at its new version, since the Admin user read it to edit it; each moves to the next record, with the counter «N з M». The keys 1, 2 and 3 do the same as the three buttons.
 - The batch review of the Content queue stays as it is: a batch reviewed there checks no record.
 
 ## Why
