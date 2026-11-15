@@ -156,3 +156,84 @@ test('says so when every record of the kind is checked', async () => {
 
   expect(await screen.findByText('Усе переглянуто')).toBeTruthy();
 });
+
+test('the card reads a choice by its label and the stress in the word', async () => {
+  unchecked(word('w_a1', 'обруч', 'Зігнута кільцем смуга.'));
+  render(<Admin />);
+
+  const shown = await card();
+  expect(within(shown).getByText('іменник')).toBeTruthy();
+  expect(within(shown).getByText('чоловічий')).toBeTruthy();
+  expect(within(shown).getByText('обру́ч')).toBeTruthy();
+});
+
+test('«Редагувати» puts the record form in the place of the card', async () => {
+  unchecked(word('w_a1', 'обруч', 'Зігнута кільцем смуга.'));
+  const user = userEvent.setup();
+  render(<Admin />);
+  await card();
+
+  await user.click(screen.getByRole('button', { name: /Редагувати/ }));
+
+  expect(await screen.findByLabelText('Лема')).toBeTruthy();
+  expect(screen.queryByRole('article', { name: 'Запис на перегляді' })).toBeNull();
+});
+
+test('«Назад» shows the record just checked again, and «Далі» returns to the queue', async () => {
+  unchecked(
+    word('w_a1', 'обруч', 'Зігнута кільцем смуга.'),
+    word('w_a2', 'жупан', 'Старовинний одяг.'),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await card();
+  expect(screen.getByRole('button', { name: '← Назад' })).toHaveProperty('disabled', true);
+
+  await user.click(screen.getByRole('button', { name: /Так/ }));
+  expect(await within(await card()).findByText('жупан')).toBeTruthy();
+
+  await user.click(screen.getByRole('button', { name: '← Назад' }));
+  expect(await within(await card()).findByText('обруч')).toBeTruthy();
+  expect(await screen.findByText('Уже переглянуто: перевірено')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /Так/ })).toBeNull();
+
+  await user.keyboard('{ArrowRight}');
+  expect(await within(await card()).findByText('жупан')).toBeTruthy();
+  expect(screen.getByText('2 з 2')).toBeTruthy();
+});
+
+test('a record retired here comes back into use from «Назад»', async () => {
+  unchecked(
+    word('w_a1', 'обруч', 'Зігнута кільцем смуга.'),
+    word('w_a2', 'жупан', 'Старовинний одяг.'),
+  );
+  const rollbacks: unknown[] = [];
+  server.use(
+    http.get('*/admin/content/:editionId/records/:kind/:id', () =>
+      HttpResponse.json({ ...FIXTURES.content.record, retired: rollbacks.length === 0 }),
+    ),
+    http.post('*/admin/content-queue/batches/:batchId/rollback', async ({ request, params }) => {
+      const body: unknown = await request.json();
+      rollbacks.push({ batchId: params['batchId'], body });
+      return HttpResponse.json(FIXTURES.contentQueue.rollback);
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await card();
+
+  await user.click(screen.getByRole('button', { name: /Ні/ }));
+  await user.click(screen.getByRole('button', { name: 'Вивести з ужитку' }));
+  expect(await within(await card()).findByText('жупан')).toBeTruthy();
+  await user.keyboard('{ArrowLeft}');
+  expect(await screen.findByText('Уже переглянуто: виведено з ужитку')).toBeTruthy();
+
+  await user.click(screen.getByRole('button', { name: 'Повернути в ужиток' }));
+
+  await waitFor(() => {
+    expect(rollbacks).toEqual([
+      { batchId: FIXTURES.content.openBatch.batchId, body: { reason: 'Повернуто з перегляду' } },
+    ]);
+  });
+  expect(await screen.findByText('Уже переглянуто: повернуто в ужиток')).toBeTruthy();
+});
