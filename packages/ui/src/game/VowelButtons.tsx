@@ -2,13 +2,21 @@
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
 import type { RoundAnswer } from '@slovo/core';
+import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { PressedTile } from '../primitives/PressedTile';
+import { useReduceMotion } from '../providers/useReduceMotion';
 import { fontScaleCap, minTouchTarget, space, typeStyle, vowelButtonsLayout } from '../tokens';
+import { useRoundLook } from './round-look';
 import { useAnswerMotion, type AnswerDrop } from './useAnswerMotion';
 
 /** How a wrong tap drops: down, tilted and faded, the board's `slDrop`. */
@@ -29,6 +37,9 @@ type VowelAnswer = Extract<RoundAnswer, { form: 'vowel' }>;
  * plays the answer's haptic. VoiceOver reads a vowel
  * with its place among the letters («а, третя літера»), then its tag. Key it
  * by the Round, so a new Round starts unanswered.
+ * On the ground (board 06 «Наголос») the other letters take the heavy face
+ * in grey and a red stress mark flies onto each stressed vowel once answered;
+ * under Reduce Motion it stands there still.
  */
 export function VowelButtons({
   text,
@@ -59,10 +70,15 @@ export function VowelButtons({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const letterStyle = [typeStyle('vowelWordLetter', tokens), styles.letter];
+  const { onGround } = useRoundLook();
+  const letterStyle = [
+    typeStyle(onGround ? 'vowelButton' : 'vowelWordLetter', tokens),
+    styles.letter,
+    { color: onGround ? colors.muted : colors.ink },
+  ];
   let place = 0;
   return (
-    <View testID={testID} style={styles.word}>
+    <View testID={testID} style={[styles.word, onGround && styles.wordWithMarks]}>
       {Array.from(text, (letter, position) => {
         const letterPlace = place;
         if (LETTER.test(letter)) place += 1;
@@ -73,7 +89,7 @@ export function VowelButtons({
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
               maxFontSizeMultiplier={fontScaleCap.number}
-              style={[letterStyle, { color: colors.ink }]}
+              style={letterStyle}
             >
               {letter}
             </Text>
@@ -98,6 +114,7 @@ export function VowelButtons({
               .filter(Boolean)
               .join(', ')}
             fill={fill}
+            marked={onGround && fill === 'right'}
             disabled={answer !== undefined}
             onPress={() => {
               onAnswer(position);
@@ -120,6 +137,7 @@ function Vowel({
   letter,
   label,
   fill,
+  marked,
   disabled,
   onPress,
 }: {
@@ -128,6 +146,8 @@ function Vowel({
   label: string;
   /** How the judged answer fills it; nothing before the answer or for a vowel neither stressed nor tapped. */
   fill: 'right' | 'wrong' | undefined;
+  /** Whether the red stress mark stands over it (board 06 «Наголос»). */
+  marked: boolean;
   disabled: boolean;
   onPress: () => void;
 }) {
@@ -161,9 +181,50 @@ function Vowel({
           {letter}
         </Text>
       </PressedTile>
+      {marked && <StressMark testID={`${testID}-mark`} />}
     </Animated.View>
   );
 }
+
+const MARK = vowelButtonsLayout.mark;
+
+/**
+ * The red stress mark over a stressed vowel (board 06 «Наголос»): a slanted
+ * bar that flies in from above and to the right as it lands, the board's
+ * `slFly`, or stands still under Reduce Motion. VoiceOver skips it: the
+ * vowel reads «Правильно».
+ */
+function StressMark({ testID }: { testID: string }) {
+  const { colors } = useTokens();
+  const reduceMotion = useReduceMotion();
+  const landed = useSharedValue(reduceMotion ? 1 : 0);
+  useEffect(() => {
+    if (!reduceMotion) landed.value = withTiming(1, { duration: MARK.duration });
+    // The shared value is stable; the mark flies once, as it appears.
+  }, [landed, reduceMotion]);
+  const flight = useAnimatedStyle(() => ({
+    opacity: landed.value,
+    transform: [
+      { translateX: interpolate(landed.value, [0, 1], [MARK.flyX, 0]) },
+      { translateY: interpolate(landed.value, [0, 1], [MARK.flyY, 0]) },
+      { scale: interpolate(landed.value, [0, 1], [0.15, 1]) },
+      { rotate: `${String(interpolate(landed.value, [0, 1], [-30, 0]))}deg` },
+      { skewX: `${String(MARK.skew)}deg` },
+    ],
+  }));
+  return (
+    <Animated.View
+      testID={testID}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.mark, { backgroundColor: colors.accent }, flight]}
+    />
+  );
+}
+
+/** The room over the vowels for the stress mark to land in. */
+const MARK_ROOM = vowelButtonsLayout.mark.height + vowelButtonsLayout.mark.rise;
 
 const styles = StyleSheet.create({
   word: {
@@ -174,7 +235,16 @@ const styles = StyleSheet.create({
     gap: vowelButtonsLayout.letterGap,
     paddingVertical: space[2],
   },
+  wordWithMarks: { paddingTop: MARK_ROOM },
   letter: { textAlign: 'center' },
+  mark: {
+    position: 'absolute',
+    bottom: '100%',
+    left: (vowelButtonsLayout.width - MARK.width) / 2,
+    width: MARK.width,
+    height: MARK.height,
+    marginBottom: MARK.rise,
+  },
   vowel: {
     minHeight: vowelButtonsLayout.height,
     minWidth: vowelButtonsLayout.width,

@@ -253,14 +253,50 @@ describe('the Game screen', () => {
       expect(screen.queryByText(/ · \d+ \/ \d+$/, HIDDEN)).toBeNull();
     });
 
-    it('draws no red label over the question of «Звідки слово», which the board heads in ink', async () => {
+    it('heads «Наголос» with «Де наголос?» alone, over the Word’s vowels and the hint', async () => {
+      await open({ switchedOn: BOARD });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-stress'));
+      await waitFor(() => {
+        expect(screen.getByRole('header', { name: 'Де наголос?' })).toBeOnTheScreen();
+      });
+      expect(screen.getAllByText(/Де наголос\?/, HIDDEN)).toHaveLength(1);
+      expect(screen.getByTestId('game-vowels')).toBeOnTheScreen();
+      expect(screen.getByText('Торкнись голосної, на яку падає наголос')).toBeOnTheScreen();
+
+      await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
+      expect(screen.getByRole('button', { name: 'о, третя літера, Правильно' })).toBeTruthy();
+    });
+
+    it('asks «Впиши слово» as «Як сказати краще?» over the wrong form alone, with no sentence', async () => {
+      await open({ corrections: 15, switchedOn: BOARD });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-type-word'));
+      await waitFor(() => {
+        expect(screen.getByTestId('game-instead')).toHaveTextContent(/^замість «хибне\d+»$/);
+      });
+      expect(screen.getAllByText('Як сказати краще?', HIDDEN)).toHaveLength(1);
+      expect(screen.queryByText(/Речення/, HIDDEN)).toBeNull();
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+        /^Як сказати краще\? замість «хибне\d+»$/,
+      );
+      expect(screen.getByRole('button', { name: 'Перевірити' })).toBeOnTheScreen();
+    });
+
+    it('asks «Звідки слово» as «Звідки це слово?» over the Word alone, with no Definition', async () => {
       await open({ origins: 15, switchedOn: BOARD });
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-origin'));
       await waitFor(() => {
-        expect(screen.getByTestId('game-prompt')).toBeOnTheScreen();
+        expect(screen.getByTestId('game-word')).toHaveTextContent(/^сло́?во\d+$/);
       });
-      expect(screen.queryByText(/Звідки це слово\?/, HIDDEN)).toBeNull();
+      expect(screen.getAllByText('Звідки це слово?', HIDDEN)).toHaveLength(1);
+      expect(screen.queryByText(/ · \d+ \/ \d+$/, HIDDEN)).toBeNull();
+      expect(screen.queryByTestId('game-definition')).toBeNull();
+      expect(screen.queryByText(/The meaning of/, HIDDEN)).toBeNull();
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+        /^Звідки це слово\? сло́?во\d+$/,
+      );
     });
 
     it('keeps the #1674 Round with its switch off: the number in the header and the label, no Lives line', async () => {
