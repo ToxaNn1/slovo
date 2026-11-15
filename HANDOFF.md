@@ -18,3 +18,4 @@ Never end your turn while work remains; push a `WAITING until <UTC>` line here b
 - 15.11 ~16:35Z #1910 merged (ADR renumbered 0145), PR #1923 draft; launched #1911 #1913 #1915 #1919.
 - 15.11 ~16:25Z #1912 merged 0ca3056ce (checks green). ~16:35Z merger on #1911 #1913 #1915 #1919.
 - 15.11 ~16:55Z merged #1911 #1913 #1915 #1919 (26f06f5b2, checks green); launched #1914 #1916 #1917 #1920.
+- 2026-11-15T17:14:23Z safety net takeover (last commit 2026-11-15T16:55:20Z)
