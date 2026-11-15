@@ -425,6 +425,8 @@ describe('the notification plan', () => {
       true,
     );
     expect(used.slice(1).every((template, index) => template !== used[index])).toBe(true);
+    // 0.25 of 10 templates is the third; of the 9 others, the one after it, then back.
+    expect(used.slice(0, 4)).toEqual(['Шаблон 2', 'Шаблон 3', 'Шаблон 2', 'Шаблон 3']);
     expect(plan.map(({ body }) => body)).toEqual(
       plan.map(
         (notification) => words.find(({ id }) => id === wordIdOf(notification))?.primaryDefinition,
@@ -1053,6 +1055,16 @@ describe('the evening notification', () => {
       body: goalNotMet,
       editionId: 'test',
     });
+  });
+
+  it('plans one notification a day when only one time is set', async () => {
+    const records = new Map([goalSet, ['notifications.times', JSON.stringify(['09:00'])]]);
+    const { scheduler } = await run({ evening: true, records });
+
+    const plan = planOf(scheduler);
+    expect(plan.length).toBeGreaterThan(1);
+    expect(new Set(plan.map(({ date }) => date)).size).toBe(plan.length);
+    expect(plan.every(({ time }) => time === '09:00')).toBe(true);
   });
 
   it('covers 14 days with 5 times set: only the earliest and the latest take a slot', async () => {
