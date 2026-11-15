@@ -134,12 +134,16 @@ export const badgeGrid = {
 } as const;
 
 /**
- * An earned Badge's mark, from the design (board 10): the family's shape in
- * its tone's ring, the face set inside it by `ring` of the side, over a drop
- * shadow `drop.large` deep above `drop.over` and `drop.small` at it and below.
+ * A Badge's mark (`XBadges`): the family's shape in its tone's ring, the face
+ * set inside it by `ring` of the side, over a drop shadow `drop.large` deep
+ * above `drop.over` and `drop.small` at it and below. A locked face is the
+ * ring's grey at `lockedFace`; a Badge in progress fills its face in red at
+ * `progress`.
  */
 export const badgeMark = {
-  ring: 0.09,
+  ring: 0.07,
+  lockedFace: 0.5,
+  progress: 0.38,
   drop: { over: 40, large: 4, small: 2 },
 } as const;
 
@@ -155,14 +159,22 @@ export const badgeTile = [
   [0, 0.14],
 ] as const satisfies Wedge;
 
-/** The checker tile shape of a Badge family, two corners cut: top left and bottom right (ADR 0087). */
+/** The checker tile shape of a Badge family, two corners cut by 10% of the side: top left and bottom right (ADR 0087, 0145). */
 export const badgeChecker = [
-  [0.2, 0],
+  [0.1, 0],
   [1, 0],
-  [1, 0.8],
-  [0.8, 1],
+  [1, 0.9],
+  [0.9, 1],
   [0, 1],
-  [0, 0.2],
+  [0, 0.1],
+] as const satisfies Wedge;
+
+/** The wedge shape of the Рівні Badge family (ADR 0145): its left edge short, its right edge full height. */
+export const badgeWedge = [
+  [0, 0.18],
+  [1, 0],
+  [1, 1],
+  [0, 0.82],
 ] as const satisfies Wedge;
 
 /**
@@ -171,14 +183,13 @@ export const badgeChecker = [
  */
 export const badgeCheckerFace = { cells: 3, side: 0.48 } as const;
 
-/** The «НОВА» tag over an earned Badge's top right corner, turned as on board 10.5. */
+/** The «НОВА» tag over an earned Badge's top right corner, turned as on `XBadges`. */
 export const badgeNewTag = {
   turn: 8,
-  top: -4,
-  right: -8,
-  paddingHorizontal: 5,
-  paddingVertical: 2,
-  radius: 3,
+  top: -6,
+  right: -18,
+  paddingHorizontal: 9,
+  paddingVertical: 6,
 } as const;
 
 /** Spacing the design draws between the steps of the 4-pt grid on the field that names a Collection. */
