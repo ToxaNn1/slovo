@@ -100,6 +100,7 @@ const validConfig = {
     newLevelScreen: 'on',
     badgeSheet: 'on',
     badgeToast: 'on',
+    badgeFamiliesOverview: 'on',
     streakFreezeCard: 'on',
     breakCard: 'on',
     calendarDayLines: 'on',
@@ -446,6 +447,7 @@ describe('loadEdition', () => {
     'progressReset',
     'dataExport',
     'readerName',
+    'badgeFamiliesOverview',
     'widgetPreviews',
     'textSizeSteps',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {

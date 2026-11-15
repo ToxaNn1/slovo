@@ -84,10 +84,42 @@ const nameOf = (id: string) => edition.badges.find((badge) => badge.id === id)?.
 const strings = editionStrings.settings.badges;
 
 describe('the Badges screen', () => {
-  it("shows every UA Edition Badge in a grid by family, the unearned ones with their condition's progress", async () => {
+  it('heads the screen with the six Badge families, each with its count, description and shape', async () => {
+    await renderScreen();
+
+    const overview = screen.getByTestId('badge-families');
+    const heads = within(overview).getAllByRole('header');
+    expect(heads).toHaveLength(6);
+    edition.badgeFamilies.forEach(({ id, name, description, shape }, index) => {
+      expect(heads[index]).toHaveTextContent(name);
+      const members = edition.badges.filter(({ family }) => family === id).length;
+      expect(screen.getByTestId(`badge-families-${id}-count`)).toHaveTextContent(
+        new RegExp(`^${String(members)} відзнак`),
+      );
+      expect(screen.getByTestId(`badge-families-${id}-description`)).toHaveTextContent(description);
+      expect(screen.getByTestId(`badge-families-${id}-shape`)).toHaveTextContent(
+        `${strings.families.shape}${strings.families.shapes[shape]}`,
+      );
+    });
+    expect(screen.getByTestId('badge-families-streak-shape')).toHaveTextContent('ФОРМАШестикутник');
+    expect(screen.getByTestId('badge-families-streak-count')).toHaveTextContent('5 відзнак');
+    // The families come before the Badges' cards.
+    const beforeCards = screen.getAllByRole('header').slice(0, -edition.badgeFamilies.length);
+    expect(beforeCards).toEqual(expect.arrayContaining(heads));
+  });
+
+  it('leaves the families out with their Feature Switch off', async () => {
+    await renderScreen({ switchedOff: 'badgeFamiliesOverview' });
+
+    expect(screen.queryByTestId('badge-families')).not.toBeOnTheScreen();
+    for (const { name } of edition.badges) expect(screen.getByLabelText(name)).toBeOnTheScreen();
+  });
+
+  it("shows a card for each of the 21 Badges by family with its name and status, the unearned ones by their condition's share", async () => {
     await renderScreen();
 
     expect(screen.getByText(strings.title)).toBeOnTheScreen();
+    expect(edition.badges).toHaveLength(21);
     expect(screen.getByTestId('badges-count')).toHaveTextContent(
       `0 з ${String(edition.badges.length)}`,
     );
@@ -101,21 +133,22 @@ describe('the Badges screen', () => {
         `0 з ${String(members)}`,
       );
     }
-    for (const { name } of edition.badges) expect(screen.getByLabelText(name)).toBeOnTheScreen();
-    expect(screen.getByTestId('badge-streak-3')).toHaveAccessibilityValue({ text: '0 з 3 днів' });
-    expect(screen.getByTestId('badge-confirmed-10')).toHaveAccessibilityValue({
-      text: '0 з 10 записів',
-    });
-    expect(screen.getByTestId('badge-true-stress')).toHaveAccessibilityValue({
-      text: '0 з 10 правильних відповідей',
-    });
-    expect(screen.getByTestId('badge-win-stress')).toHaveAccessibilityValue({
-      text: 'Ще не отримано',
-    });
-    // Not only to VoiceOver: each mark shows how far its condition has come.
-    expect(screen.getByTestId('badge-streak-3-status')).toHaveTextContent('0 з 3 днів');
+    for (const { id, name } of edition.badges) {
+      expect(screen.getByLabelText(name)).toBeOnTheScreen();
+      expect(screen.getByTestId(`badge-${id}-name`)).toHaveTextContent(name);
+    }
+    expect(screen.getByTestId('badge-streak-3-status')).toHaveTextContent('Ще ні · 0%');
     expect(screen.getByTestId('badge-streak-3-status')).toBeVisible();
-    expect(screen.getByTestId('badge-win-stress-status')).toHaveTextContent('Ще не отримано');
+    expect(screen.getByTestId('badge-win-stress-status')).toHaveTextContent('Ще ні · 0%');
+  });
+
+  it('rounds a share down: six of the seven Daily Crosswords in a row read 85%', async () => {
+    await renderScreen({ xpLog: sixCrosswords });
+
+    expect(screen.getByTestId('badge-crossword-7-status')).toHaveTextContent('Ще ні · 85%');
+    expect(screen.getByTestId('badge-crossword-7')).toHaveAccessibilityValue({
+      text: 'Ще ні · 85%',
+    });
   });
 
   it("writes each Badge's condition under its mark in the Edition's words", async () => {
@@ -144,12 +177,10 @@ describe('the Badges screen', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    expect(screen.getByTestId('badge-win-words')).toHaveAccessibilityValue({
-      text: 'Отримано 13 жовтня',
-    });
-    expect(screen.getByTestId('badge-win-words-status')).toHaveTextContent('Отримано 13 жовтня');
+    expect(screen.getByTestId('badge-win-words')).toHaveAccessibilityValue({ text: 'Отримано' });
+    expect(screen.getByTestId('badge-win-words-status')).toHaveTextContent('Отримано');
     expect(screen.getByTestId('badge-win-words-mark-symbol')).toHaveTextContent('Сл');
-    expect(screen.getByTestId('badge-win-stress-status')).not.toHaveTextContent(/Отримано/);
+    expect(screen.getByTestId('badge-win-stress-status')).toHaveTextContent('Ще ні · 0%');
     expect(screen.getByTestId('badges-count')).toHaveTextContent(
       `1 з ${String(edition.badges.length)}`,
     );
@@ -256,10 +287,10 @@ describe('the Badges screen', () => {
         .commit();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(screen.getByTestId('badge-streak-3')).toHaveAccessibilityValue({ text: '1 з 3 днів' });
+    expect(screen.getByTestId('badge-streak-3')).toHaveAccessibilityValue({ text: 'Ще ні · 33%' });
     expect(screen.queryByTestId('badge-streak-3-mark-symbol')).toBeNull();
     expect(screen.queryByTestId('badge-streak-3-mark-new')).toBeNull();
-    expect(screen.getByTestId('badge-win-stress-status')).not.toHaveTextContent(/Отримано/);
+    expect(screen.getByTestId('badge-win-stress-status')).toHaveTextContent('Ще ні · 0%');
   });
 
   it('draws no checker on a «Кросворд» Badge before it is earned, nor after one Daily Crossword', async () => {
@@ -271,7 +302,9 @@ describe('the Badges screen', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    expect(screen.getByTestId('badge-crossword-7')).toHaveAccessibilityValue({ text: '1 з 7 днів' });
+    expect(screen.getByTestId('badge-crossword-7')).toHaveAccessibilityValue({
+      text: 'Ще ні · 14%',
+    });
     expect(screen.queryByTestId('badge-crossword-7-mark-checker')).toBeNull();
     expect(screen.queryByTestId('badge-crossword-7-mark-symbol')).toBeNull();
   });

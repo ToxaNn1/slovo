@@ -1,5 +1,6 @@
 import {
   BackLink,
+  BadgeFamilies,
   BadgeGrid,
   fill,
   ScreenTitle,
@@ -15,15 +16,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useComposition } from '../composition';
 import { conditionOf, useBadgeOpening, useBadgeStatus } from './badge-opening';
 import { edition, editionStrings } from '../edition/edition';
+import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed } from '../opening';
 
 const strings = editionStrings.settings.badges;
 
 /**
- * Every Badge of the Edition as its mark, in a grid by the Edition's Badge
- * families under how many of all are earned; each shows its condition and
- * shows, and VoiceOver reads, its date or, while not earned, how far its
- * condition has come. A tap opens it (`useBadgeOpening`).
+ * The Badge families overview, while its Feature Switch is on, then every
+ * Badge of the Edition as a card, by the Edition's Badge families, under how
+ * many of all are earned; each card shows its name, its condition and its
+ * status, «Отримано» or «Ще ні · N%» (ADR 0145). A tap opens it
+ * (`useBadgeOpening`).
  */
 function Badges() {
   const tokens = useTokens();
@@ -32,9 +35,15 @@ function Badges() {
   const badges = useSubscribed(useComposition().badges, ({ state }) => state);
   const { statusOf } = useBadgeStatus();
   const { onPress, opening } = useBadgeOpening();
+  const { isFeatureEnabled } = useEditionInEffect();
 
   return (
     <>
+      {isFeatureEnabled('badgeFamiliesOverview') && (
+        <View style={styles.families}>
+          <BadgeFamilies families={edition.badgeFamilies} badges={badges} />
+        </View>
+      )}
       <Text
         {...voice}
         testID="badges-count"
@@ -58,7 +67,7 @@ function Badges() {
   );
 }
 
-/** Settings › Відзнаки (ADR 0066), as the board: the Badges in a grid by family under its title. */
+/** Settings › Відзнаки (ADR 0066, 0145), as `XBadges`: the Badge families, then the Badges' cards by family. */
 export function BadgesScreen() {
   const { colors } = useTokens();
   const router = useRouter();
@@ -90,5 +99,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[8] },
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[2] },
+  families: { paddingBottom: space[6] },
   count: { paddingBottom: space[4] },
 });

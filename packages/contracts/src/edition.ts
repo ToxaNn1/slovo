@@ -423,6 +423,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   badgeSheet: FeatureSwitchStateSchema,
   /** The Badge toast: a Badge earned during a Game shows a toast in place of the stamp (ADR 0085); off while `xpLog` or `badges` is. */
   badgeToast: FeatureSwitchStateSchema,
+  /** The Badge families overview heading the Badges screen: each family's mark, name, count, description and shape (ADR 0145); off while `xpLog` or `badges` is. */
+  badgeFamiliesOverview: FeatureSwitchStateSchema,
   /** The Streak freeze card of the Profile: the freezes held, the last 7 days and the days saved (ADR 0085); off while `xpLog` is. */
   streakFreezeCard: FeatureSwitchStateSchema,
   /** The Break card of the Profile while a Break runs: its dates, a 14-day strip and the next Break's date (ADR 0085); off while `xpLog` is. */

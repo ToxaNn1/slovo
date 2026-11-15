@@ -8679,6 +8679,14 @@
                           ],
                           "type": "string"
                         },
+                        "badgeFamiliesOverview": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "streakFreezeCard": {
                           "enum": [
                             "on",
@@ -9373,6 +9381,7 @@
                         "newLevelScreen",
                         "badgeSheet",
                         "badgeToast",
+                        "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",
                         "calendarDayLines",
@@ -10698,6 +10707,14 @@
                           ],
                           "type": "string"
                         },
+                        "badgeFamiliesOverview": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "streakFreezeCard": {
                           "enum": [
                             "on",
@@ -11392,6 +11409,7 @@
                         "newLevelScreen",
                         "badgeSheet",
                         "badgeToast",
+                        "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",
                         "calendarDayLines",
@@ -12648,6 +12666,14 @@
                           ],
                           "type": "string"
                         },
+                        "badgeFamiliesOverview": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "streakFreezeCard": {
                           "enum": [
                             "on",
@@ -13342,6 +13368,7 @@
                         "newLevelScreen",
                         "badgeSheet",
                         "badgeToast",
+                        "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",
                         "calendarDayLines",

@@ -114,23 +114,57 @@ export const badgeToast = {
 export const badgeShareMark = { side: 28 } as const;
 
 /**
- * The Badge grid, from the design (board 10): marks in rows of their Badge
- * family under its name, five to a row of the Profile (`side`), larger on
- * the Badges screen (`screenSide`) with each Badge's condition and date or
- * progress under its mark.
+ * The Badge grid: marks in rows of their Badge family under its name, five
+ * to a row of the Profile (`side`), a card for each Badge on the Badges
+ * screen (`card`, ADR 0145).
  */
 export const badgeGrid = {
   side: 48,
   columns: 5,
   gap: 10,
-  screenSide: 72,
-  /** The Badges screen's cell: the mark with its condition and its date or progress under it. */
-  screenCell: 100,
-  screenGap: 12,
-  captionGap: 6,
   familyGap: 14,
   headGap: 10,
   pressedScale: 0.88,
+  /**
+   * A Badge's card on the Badges screen (`XBadges` all): the mark at `mark`
+   * over the name, condition and status, two to a row up to `width` wide,
+   * each at least `basis` of the row.
+   */
+  card: {
+    width: 176,
+    basis: '45%',
+    mark: 96,
+    paddingTop: 20,
+    paddingX: 14,
+    paddingBottom: 18,
+    radius: 20,
+    gap: 8,
+    border: 1,
+    edge: 4,
+  },
+  /** The Badges screen's spacing: between families, a family's head and its cards, and the cards. */
+  screen: { familyGap: 30, headGap: 14, cardGap: 14 },
+} as const;
+
+/**
+ * The Badge families overview heading the Badges screen (`XBadges` fams): a
+ * card of `width` for each family in a row that scrolls sideways, its mark
+ * at `mark` beside the name and count, the description, and the shape under
+ * a rule.
+ */
+export const badgeFamilies = {
+  width: 260,
+  mark: 96,
+  padding: 22,
+  radius: 22,
+  gap: 18,
+  headGap: 18,
+  nameGap: 6,
+  shapeGap: 10,
+  shapeTop: 14,
+  rule: 1,
+  edge: 5,
+  cardGap: 14,
 } as const;
 
 /**

@@ -258,6 +258,26 @@
           "other": "Рівень {current} з {count}"
         }
       },
+      "cardEarned": "Отримано",
+      "cardNotYet": "Ще ні · {percent}%",
+      "families": {
+        "count": {
+          "one": "{count} відзнака",
+          "few": "{count} відзнаки",
+          "many": "{count} відзнак",
+          "other": "{count} відзнаки"
+        },
+        "shape": "ФОРМА",
+        "shapes": {
+          "hexagon": "Шестикутник",
+          "shield": "Щит",
+          "circle": "Коло",
+          "tile": "Кахля",
+          "wedge": "Клин",
+          "diamond": "Ромб",
+          "checker": "Шахівниця"
+        }
+      },
       "newTag": "НОВА",
       "sheet": {
         "kicker": "ВІДЗНАКА",
