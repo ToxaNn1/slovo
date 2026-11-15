@@ -49,11 +49,10 @@ interface Judged {
   readonly right: boolean;
 }
 
-/** A pair the reader gave in a grid that stays, and how many came before it in the grid, so that each plays its look anew. */
+/** A pair the reader gave in a grid that stays. */
 interface Given {
   readonly word: number;
   readonly definition: number;
-  readonly tries: number;
 }
 
 /** The pair given last, judged once the grid tells where its Word stands; nothing while it is still open. */
@@ -129,11 +128,6 @@ export function PairsGrid({
     stay ? state === 'missed' && look !== 'wrong' : state !== 'open';
   /** Whether a cell takes no tap: in a Round answered, or in a grid that stays, of a pair answered. */
   const inertOf = (state: GridCellState) => (stay ? state !== 'open' : answer !== undefined);
-  /** The key of a cell, new for the pair given last, so its look plays anew. */
-  const keyOf = (place: number, givenPlace: number | undefined) =>
-    given !== undefined && place === givenPlace
-      ? `${String(place)}-${String(given.tries)}`
-      : String(place);
 
   const wordCell = (place: number) => {
     const cell = words[place];
@@ -143,7 +137,7 @@ export function PairsGrid({
     const look = lookOf(place, judged?.word, on, state);
     return (
       <Cell
-        key={keyOf(place, given?.word)}
+        key={place}
         testID={`pairs-word-${String(place)}`}
         label={stressLabel(strings.wordCard, shown.text, shown.stressedVowels)}
         look={look}
@@ -173,7 +167,7 @@ export function PairsGrid({
     const look = lookOf(place, judged?.definition, false, state);
     return (
       <Cell
-        key={keyOf(place, given?.definition)}
+        key={place}
         testID={`pairs-definition-${String(place)}`}
         label={shown}
         look={look}
@@ -184,7 +178,7 @@ export function PairsGrid({
         onPress={() => {
           if (selected === undefined) return;
           setSelected(undefined);
-          if (stay) setGiven({ word: selected, definition: place, tries: (given?.tries ?? 0) + 1 });
+          if (stay) setGiven({ word: selected, definition: place });
           onAnswer(selected, place);
         }}
       >
