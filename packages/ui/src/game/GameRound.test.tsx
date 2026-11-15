@@ -42,6 +42,7 @@ const strings = testStrings({
       passed: 'Passed: {passed}',
       passedLabel: 'Rounds passed: {passed}',
       survivalStreak: '{n} in a row · best {best}',
+      survival: { streak: 'in a row', best: 'best {best}' },
       lives: 'Lives: {count} of {total}',
       highlight: 'Marked: {text}',
       gap: { label: 'Which word is missing?', voiceOver: 'gap' },
@@ -594,7 +595,7 @@ describe('GameRound', () => {
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 2 of 3');
   });
 
-  it('shows the streak, a big counter of the Rounds passed and its line with the record, in place of the passed line', async () => {
+  it('shows the streak at the top of the body, a big counter and «in a row» and the record under each other, in place of the passed line', async () => {
     const survival: PlayingGame = {
       ...first,
       modeId: 'survival',
@@ -605,9 +606,11 @@ describe('GameRound', () => {
     };
     await renderRound(jest.fn(), jest.fn(), survival, jest.fn(), { rounds: 4, record: 9 });
 
-    expect(screen.getByTestId('game-streak-rounds')).toHaveTextContent('4');
-    expect(screen.getByTestId('game-streak-line')).toHaveTextContent('4 in a row · best 9');
-    expect(screen.getByTestId('game-streak')).toHaveAccessibleName('4 in a row · best 9');
+    const streak = screen.getByTestId('game-streak');
+    expect(within(streak).getByTestId('game-streak-rounds')).toHaveTextContent('4');
+    expect(within(streak).getByText('in a row')).toBeTruthy();
+    expect(within(streak).getByText('best 9')).toBeTruthy();
+    expect(streak).toHaveAccessibleName('4 in a row · best 9');
     expect(screen.queryByText('Passed: 4')).toBeNull();
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 2 of 3');
   });
