@@ -57,9 +57,7 @@ const LIFE_FADE = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Neve
  * «Виживання» with its streak one solid red bar (board g7), and in a timed
  * Game the timer under them. The flags alone show the Lives, which VoiceOver
  * reads as «Життів: 4 з 5». A mode without Lives shows no flags.
- * On the ground (ADR 0139) the title is the mode's name alone and
- * «Життів: 4 з 5» stands visible under the bar, counting down at once while
- * the lost flag pops; a mode without Lives shows neither.
+ * On the ground (ADR 0139) the title is the mode's name alone.
  */
 export function GameHeader({
   title,
@@ -91,7 +89,7 @@ export function GameHeader({
   /** The play time left of a timed Game and its whole time, in milliseconds; none in another Game. */
   time: { left: number; limit: number } | undefined;
   onExit: () => void;
-  /** Whether the Round's question stands on the ground: the name alone and the visible Lives line. */
+  /** Whether the Round's question stands on the ground: the name alone. */
   onGround?: boolean;
 }) {
   const tokens = useTokens();
@@ -128,13 +126,8 @@ export function GameHeader({
         {hasLives && (
           <View
             testID="game-lives"
-            // On the ground the visible line reads the Lives; the flags are only drawn.
-            {...(onGround
-              ? {
-                  accessibilityElementsHidden: true,
-                  importantForAccessibility: 'no-hide-descendants',
-                }
-              : { accessible: true, accessibilityLabel: livesText })}
+            accessible
+            accessibilityLabel={livesText}
             {...voice}
             style={styles.lives}
           >
@@ -187,16 +180,6 @@ export function GameHeader({
             />
           ))}
         </View>
-      )}
-      {onGround && hasLives && (
-        <Text
-          testID="game-lives-line"
-          maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-          {...voice}
-          style={[typeStyle('roundLives', tokens), { color: colors.accentText }]}
-        >
-          {livesText}
-        </Text>
       )}
       {time !== undefined && (
         <GameTimer

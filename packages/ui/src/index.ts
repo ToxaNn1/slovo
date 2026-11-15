@@ -156,7 +156,8 @@ export { RailScreenCard } from './dashboard/RailScreenCard';
 export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
 export { RailScreenHero } from './dashboard/RailScreenHero';
 export { CategoriesRail } from './categories/CategoriesRail';
-export { CategoryGrid, type GridTile } from './categories/CategoryGrid';
+export { CategoryGrid, GridTitle, type GridTile } from './categories/CategoryGrid';
+export { CorrectionTypeGrid } from './categories/CorrectionTypeGrid';
 export { CorrectionCategoryGrid } from './categories/CorrectionCategoryGrid';
 export {
   shapeAt,

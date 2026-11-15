@@ -71,6 +71,8 @@ function Board({ collectionId, created }: { collectionId: string; created: boole
   const openScreen = useOpenScreen();
   const [menuOpen, setMenuOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  /** Whether the rename's toast waits for the name sheet to slide away, which would cover it (owner 15.11). */
+  const toastAfterRename = useRef(false);
   const [deleting, setDeleting] = useState(false);
   /** What the menu chose runs once the menu has slid away: two modals do not show together. */
   const [afterMenu] = useState(() =>
@@ -202,13 +204,18 @@ function Board({ collectionId, created }: { collectionId: string; created: boole
         onSubmit={async (renamed) => {
           const refusal = await rename(collectionId, renamed);
           if (refusal === undefined) {
+            toastAfterRename.current = true;
             setRenaming(false);
-            showToast({ look: 'plate', message: toasts.renamed });
           }
           return refusal;
         }}
         onClose={() => {
           setRenaming(false);
+        }}
+        onDismissed={() => {
+          if (!toastAfterRename.current) return;
+          toastAfterRename.current = false;
+          showToast({ look: 'plate', message: toasts.renamed });
         }}
       />
       <DeleteCollectionSheet

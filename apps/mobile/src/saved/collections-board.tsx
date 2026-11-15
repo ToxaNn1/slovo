@@ -12,7 +12,7 @@ import {
   useListScroll,
   useUndoToast,
 } from '@slovo/ui';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
@@ -41,9 +41,10 @@ type Cell =
  * the dashed «Нова колекція» first, then the Collections newest first in the
  * tones by position. A tap opens a Collection; a long press (or VoiceOver's
  * action) opens its menu: share while Collection Links are on, rename in the
- * name sheet (with a toast), delete after the delete sheet, with the undo
+ * name sheet (with a toast once the sheet has slid away), delete after the delete sheet, with the undo
  * toast, also of a Collection deleted on its own screen. «Нова колекція»
- * opens the name sheet; the Collection it makes opens, empty, with a toast. No
+ * opens the name sheet; the Collection it makes opens, empty, with a toast,
+ * once the sheet has slid away. No
  * Collections: the empty state, whose button opens the name sheet too. Needs
  * an `UndoToastProvider` above it.
  */
@@ -60,6 +61,11 @@ export function CollectionsBoard({ header }: { header: ListHeader }) {
   const [naming, setNaming] = useState<Naming>();
   const [menu, setMenu] = useState<CollectionRowModel>();
   const [deleting, setDeleting] = useState<CollectionRowModel>();
+  /**
+   * What follows a kept name, run once the name sheet has slid away: while the
+   * sheet and its keyboard leave, they would cover the toast (owner 15.11).
+   */
+  const afterName = useRef<() => void>(undefined);
 
   // Kept from render to render, so the cards re-render only when the list changes.
   const openCollection = useCallback(
@@ -69,6 +75,7 @@ export function CollectionsBoard({ header }: { header: ListHeader }) {
     [openScreen],
   );
   const startNew = useCallback(() => {
+    afterName.current = undefined;
     setNaming({ kind: 'new' });
   }, []);
   /** What the menu chose runs once the menu has slid away: two modals do not show together. */
@@ -103,15 +110,20 @@ export function CollectionsBoard({ header }: { header: ListHeader }) {
     if (renaming !== undefined) {
       const refusal = await rename(renaming.id, name);
       if (refusal === undefined) {
+        afterName.current = () => {
+          showToast({ look: 'plate', message: collectionStrings.toasts.renamed });
+        };
         setNaming(undefined);
-        showToast({ look: 'plate', message: collectionStrings.toasts.renamed });
       }
       return refusal;
     }
     const created = await create(name);
     if (!created.ok) return created.refusal;
+    const { id } = created.collection;
+    afterName.current = () => {
+      openScreen(`/saved/collections/${id}?created=1`);
+    };
     setNaming(undefined);
-    openScreen(`/saved/collections/${created.collection.id}?created=1`);
     return undefined;
   };
 
@@ -195,6 +207,11 @@ export function CollectionsBoard({ header }: { header: ListHeader }) {
         onSubmit={keepName}
         onClose={() => {
           setNaming(undefined);
+        }}
+        onDismissed={() => {
+          const after = afterName.current;
+          afterName.current = undefined;
+          after?.();
         }}
       />
       <DeleteCollectionSheet

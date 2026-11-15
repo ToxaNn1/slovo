@@ -29,6 +29,17 @@ export function handDeleteUndo(deleted: DeletedCollection): void {
 }
 
 /**
+ * Takes the handed undo, once. It lives outside the hook on purpose: inside
+ * it, the React Compiler read `handed` again after clearing it, in place of
+ * the copy taken before.
+ */
+function takeHanded(): Offer | undefined {
+  const offer = handed;
+  handed = undefined;
+  return offer;
+}
+
+/**
  * The toast «Колекцію видалено.» with «Скасувати» (board 09): the undo
  * brings the Collection back through the Collection store, and opens it again
  * when it was deleted on its own screen. It needs an `UndoToastProvider`
@@ -61,9 +72,8 @@ export function useHandedDeleteUndo(): void {
   const showUndo = useDeleteUndoToast();
   useEffect(() => {
     const take = () => {
-      const offer = handed;
+      const offer = takeHanded();
       if (offer === undefined) return;
-      handed = undefined;
       showUndo(offer.deleted, offer.reopen);
     };
     take();

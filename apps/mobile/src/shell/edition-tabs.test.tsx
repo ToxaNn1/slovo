@@ -55,6 +55,7 @@ async function renderTabs(url: string, editionInEffect: Edition = edition) {
       'entry/[entryId]': () => <Text>Entry</Text>,
       'search/_layout': () => <ScreenStack />,
       'search/index': () => <Text>Search</Text>,
+      'search/[entryId]': () => <Text>Entry from Search</Text>,
       'correction-type/[type]': () => <Text>Correction Type</Text>,
       'curated-collection/[collectionId]': () => <Text>Curated Collection</Text>,
       categories: () => <Text>Categories</Text>,
@@ -225,6 +226,70 @@ describe('the «Стрічка» tab', () => {
 });
 
 /** How far a tab's screen still stands off its place as it enters. */
+/** Opens each of `hrefs` in turn, as a tap on a tile or a card pushes it. */
+async function openInTurn(...hrefs: string[]) {
+  for (const href of hrefs) {
+    await settle(() => {
+      router.push(href);
+    });
+  }
+}
+
+describe('the way back from a screen no tab leads to (owner 15.11)', () => {
+  it('leads from a Word of a Category back to the Category, not to the Dashboard', async () => {
+    await renderTabs('/');
+    await openInTurn('/category/arts', '/category-feed/arts?from=w_1');
+    await settle(() => {
+      router.back();
+    });
+
+    expect(screen.getByText('Category')).toBeVisible();
+  });
+
+  it('leads from a Correction of a Category back to the Category', async () => {
+    await renderTabs('/');
+    await openInTurn('/correction-category/grammar', '/search/c_1?back=Grammar');
+    await settle(() => {
+      router.back();
+    });
+
+    expect(screen.getByText('Correction Category')).toBeVisible();
+  });
+
+  it('leads from a Category back to the Categories it was opened from', async () => {
+    await renderTabs('/');
+    await openInTurn('/categories', '/category/arts');
+    await settle(() => {
+      router.back();
+    });
+
+    expect(screen.getByText('Categories')).toBeVisible();
+  });
+
+  it('leads from Search back to the Feed it was opened from', async () => {
+    await renderTabs('/');
+    await openInTurn('/feed', '/search');
+    await settle(() => {
+      router.back();
+    });
+
+    expect(screen.getByText('Feed opened')).toBeVisible();
+  });
+
+  it('leads back from a screen of another tab to the Dashboard last', async () => {
+    await renderTabs('/');
+    await openInTurn('/category/arts', '/category-feed/arts?from=w_1');
+    await settle(() => {
+      router.back();
+    });
+    await settle(() => {
+      router.back();
+    });
+
+    expect(screen.getByText('Feed')).toBeVisible();
+  });
+});
+
 function shiftOf(tab: string) {
   return (
     getAnimatedStyle(screen.getByTestId(`${tab}-enter-content`)) as {

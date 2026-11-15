@@ -43,6 +43,7 @@ export function FeedNoticeCard({
   mascot,
   titleKind = 'title',
   gap = noticeCard.gap,
+  fill = false,
 }: {
   notice: FeedNotice;
   title?: string | undefined;
@@ -60,6 +61,8 @@ export function FeedNoticeCard({
   titleKind?: 'title' | 'eyebrow' | 'marked';
   /** The gap between the card's parts, when the notice's design gives another. */
   gap?: number;
+  /** The card fills the height its page gives it, its parts in the middle (owner 15.11). */
+  fill?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -87,7 +90,10 @@ export function FeedNoticeCard({
     </Text>
   );
   return (
-    <View testID={`feed-notice-${notice}`} style={[styles.card, ground, { gap }]}>
+    <View
+      testID={`feed-notice-${notice}`}
+      style={[styles.card, ground, { gap }, fill && styles.fill]}
+    >
       {mascot !== undefined && (
         <View style={styles.mascot}>
           <Mascot state={mascot} />
@@ -306,6 +312,7 @@ const styles = StyleSheet.create({
     padding: noticeCard.padding,
     gap: noticeCard.gap,
   },
+  fill: { flexGrow: 1, justifyContent: 'center' },
   mascot: { alignSelf: 'flex-start' },
   texts: { gap: noticeCard.gap },
   markRow: { flexDirection: 'row', alignItems: 'center', gap: noticeCard.gap },

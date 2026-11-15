@@ -325,16 +325,25 @@ const FeedPage = memo(function FeedPage({
       )}
     </View>
   );
+  // Yesterday on its own page fills it, edge to edge as the Word cards (owner 15.11), and
+  // scrolls when its meanings run longer.
   if (card.kind === 'notice')
-    return page(
-      <YesterdayCard
-        word={card.word}
-        quiz={card.quiz}
-        onAnswer={(option) => {
-          onAnswerYesterday(position, option);
-        }}
-      />,
-      false,
+    return (
+      <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
+        <PagerScrollView
+          testID={`feed-card-${String(position)}-scroll`}
+          contentContainerStyle={[styles.heroContent, { paddingTop: topRow + space[2] }]}
+        >
+          <YesterdayCard
+            word={card.word}
+            quiz={card.quiz}
+            fill
+            onAnswer={(option) => {
+              onAnswerYesterday(position, option);
+            }}
+          />
+        </PagerScrollView>
+      </View>
     );
   if (card.kind === 'tip') return <SwipedEntryCard card={card} page={page} />;
   if (card.kind === 'synonymRow')

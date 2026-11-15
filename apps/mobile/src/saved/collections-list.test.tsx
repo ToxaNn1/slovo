@@ -235,7 +235,7 @@ describe('Collections in the board style', () => {
     expect(mockPush).toHaveBeenCalledWith(`/saved/collections/${autumn}`);
   });
 
-  it('makes a new Collection in the name sheet «Нова колекція» opens, and opens it', async () => {
+  it('makes a new Collection in the name sheet «Нова колекція» opens, and opens it once the sheet has slid away', async () => {
     await collection('Осінь');
     await renderScreen();
 
@@ -243,6 +243,12 @@ describe('Collections in the board style', () => {
     await settle();
     await fireEvent.changeText(screen.getByTestId('collections-name-input'), 'Весна');
     await fireEvent.press(screen.getByTestId('collections-name-submit'));
+    // The sheet and its keyboard are still leaving: the Collection's screen, with its toast, waits.
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(50);
+    });
+    expect(composition.collections.list.map(({ name }) => name)).toContain('Весна');
+    expect(mockPush).not.toHaveBeenCalled();
     await settle();
 
     const spring = composition.collections.list.find(({ name }) => name === 'Весна');
@@ -250,17 +256,24 @@ describe('Collections in the board style', () => {
     expect(mockPush).toHaveBeenCalledWith(`/saved/collections/${spring.id}?created=1`);
   });
 
-  it('renames from the menu a long press opens, with a toast', async () => {
+  it('renames from the menu a long press opens, with a toast once the sheet has slid away', async () => {
     const autumn = await collection('Осінь');
     await renderScreen();
 
     await longPress(autumn);
     await fireEvent.press(screen.getByTestId('collections-menu-rename'));
+    // The menu slides away first, then the name sheet slides in.
+    await settle();
     await settle();
     const input = screen.getByTestId('collections-name-input');
     expect(input).toHaveDisplayValue('Осінь');
     await fireEvent.changeText(input, 'Пізня осінь');
     await fireEvent.press(screen.getByTestId('collections-name-submit'));
+    // The sheet and its keyboard are still leaving: the toast waits.
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(50);
+    });
+    expect(screen.queryByText(editionStrings.collections.toasts.renamed)).not.toBeOnTheScreen();
     await settle();
 
     expect(screen.getByText('Пізня осінь')).toBeOnTheScreen();

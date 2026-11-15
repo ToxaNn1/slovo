@@ -44,7 +44,6 @@ export function TextField({
 } & Pick<
   TextInputProps,
   | 'autoComplete'
-  | 'autoFocus'
   | 'keyboardType'
   | 'maxLength'
   | 'onSubmitEditing'

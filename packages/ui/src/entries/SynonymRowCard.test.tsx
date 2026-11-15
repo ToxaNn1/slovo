@@ -65,7 +65,7 @@ describe('the Synonym Row card', () => {
     ]);
     expect(members[0]).toHaveTextContent(/Slowly$/);
     expect(members[1]).toHaveTextContent(/^Limp.*Lamely$/);
-    expect(members[2]).toHaveTextContent('Trámp');
+    expect(screen.getByTestId('synonym-row-member-2-text')).toHaveTextContent('Trámp');
     expect(screen.getByTestId('synonym-row-example')).toHaveTextContent(
       'They walked to the river.',
     );

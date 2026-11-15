@@ -72,6 +72,9 @@ export type RoundFace =
  * An ink-headed Round on the ground (board g3, g4) shows only its ask and
  * its face: «Впиши слово» the wrong form with no sentence, «Звідки слово»
  * the Word whole on a full-width tile with no Definition.
+ * A head over the answer, such as «Де наголос?», stands alone beside the
+ * Mascot and the answer under it takes the full width, so a long Word keeps
+ * to one line.
  */
 export function RoundCard({
   label,
@@ -82,6 +85,7 @@ export function RoundCard({
   face,
   quickQuestion,
   children,
+  head,
 }: {
   label: string;
   prompt: string;
@@ -101,6 +105,11 @@ export function RoundCard({
   quickQuestion?: { readonly instead: string | undefined } | undefined;
   /** What the card shows for the prompt, the answer drawn in it; the prompt's text if nothing. */
   children?: ReactNode;
+  /**
+   * The ask over the answer drawn in the prompt's place, such as «Де наголос?»;
+   * beside the Mascot it stands alone, so the answer under it keeps the full width.
+   */
+  head?: ReactNode;
 }) {
   const tokens = useTokens();
   const { colors, radii } = tokens;
@@ -139,6 +148,8 @@ export function RoundCard({
             (look.questionFace === 'byLength' && Array.from(prompt).length > DISPLAY_MOST)
           ? 'roundExplanation'
           : 'roundAsk';
+  const headBesideMascot =
+    head !== undefined && quickQuestion === undefined && look.mascot !== undefined;
   const card = (
     <View
       testID="game-prompt"
@@ -164,6 +175,7 @@ export function RoundCard({
             : styles.inCard
       }
     >
+      {!headBesideMascot && head}
       {asks && <RoundAsk ask={label} heading={false} />}
       {face?.look === 'instead' && (
         <Text
@@ -233,6 +245,16 @@ export function RoundCard({
     </View>
   );
   if (quickQuestion !== undefined || look.mascot === undefined) return card;
+  if (headBesideMascot)
+    return (
+      <View style={styles.onGround}>
+        <View style={styles.besideMascot}>
+          <View style={styles.question}>{head}</View>
+          {look.mascot}
+        </View>
+        {card}
+      </View>
+    );
   return (
     <View style={styles.besideMascot}>
       <View style={styles.question}>{card}</View>

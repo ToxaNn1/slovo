@@ -62,7 +62,7 @@ export function CategoryGrid({
   /** How long after the one before a tile starts to rise in, in ms. */
   stagger?: number;
   /** What goes over the title, such as the screen's back link and its tool. */
-  header?: ReactElement;
+  header?: ReactElement | undefined;
   /** What shows while there are no tiles. */
   empty?: ReactElement | undefined;
   onOpen: (id: string) => void;
@@ -70,9 +70,7 @@ export function CategoryGrid({
   scroll?: ListScroll<FlatList<GridTile>> | undefined;
   testID: string;
 }) {
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const { voice } = useEdition();
+  const { colors } = useTokens();
   const width = columnWidth[columns];
   return (
     <FlatList<GridTile>
@@ -86,21 +84,7 @@ export function CategoryGrid({
       ListHeaderComponent={
         <>
           {header !== undefined && <View style={styles.header}>{header}</View>}
-          <View
-            testID={`${testID}-title`}
-            accessible
-            accessibilityRole="header"
-            accessibilityLabel={`${title}, ${count}`}
-            accessibilityLanguage={voice.accessibilityLanguage}
-            style={styles.title}
-          >
-            <Text {...voice} style={[typeStyle('gridTitle', tokens), { color: colors.ink }]}>
-              {title}
-            </Text>
-            <Text {...voice} style={[typeStyle('gridCount', tokens), { color: colors.muted }]}>
-              {count}
-            </Text>
-          </View>
+          <GridTitle testID={`${testID}-title`} title={title} count={count} />
         </>
       }
       ListEmptyComponent={empty}
@@ -126,6 +110,44 @@ export function CategoryGrid({
       contentContainerStyle={styles.content}
       style={{ backgroundColor: colors.background }}
     />
+  );
+}
+
+/**
+ * A grid screen's title with its count on one baseline (board 05.2), read
+ * as one header, «title, count».
+ */
+export function GridTitle({
+  title,
+  count,
+  testID,
+}: {
+  title: string;
+  count: string;
+  testID: string;
+}) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
+  return (
+    <View
+      testID={testID}
+      accessible
+      accessibilityRole="header"
+      accessibilityLabel={`${title}, ${count}`}
+      accessibilityLanguage={voice.accessibilityLanguage}
+      style={styles.title}
+    >
+      <Text
+        {...voice}
+        style={[typeStyle('gridTitle', tokens), styles.titleText, { color: colors.ink }]}
+      >
+        {title}
+      </Text>
+      <Text {...voice} style={[typeStyle('gridCount', tokens), { color: colors.muted }]}>
+        {count}
+      </Text>
+    </View>
   );
 }
 
@@ -174,6 +196,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: place.gap / 2,
     paddingBottom: place.titleGap,
   },
+  // Room for the last letter's overhang, pulled back so the count keeps its place.
+  titleText: { paddingRight: place.titleTail, marginRight: -place.titleTail },
   cell: { padding: place.gap / 2 },
   // Out of the grid's own padding: a header spans the screen as over a list.
   header: {

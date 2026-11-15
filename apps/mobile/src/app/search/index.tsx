@@ -140,7 +140,6 @@ function SearchHeader({
           placeholder={strings.inputPlaceholder}
           value={query}
           onChangeText={onQueryChange}
-          autoFocus
           returnKeyType="search"
         />
       </View>

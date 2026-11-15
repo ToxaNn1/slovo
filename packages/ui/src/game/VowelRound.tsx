@@ -37,8 +37,13 @@ export function VowelRound({
   const { inkHeaded } = useRoundLook();
   return (
     <>
-      <RoundCard label={label} prompt={prompt} highlight={undefined} gap={undefined}>
-        {inkHeaded && <RoundAsk ask={label} heading />}
+      <RoundCard
+        label={label}
+        prompt={prompt}
+        highlight={undefined}
+        gap={undefined}
+        head={inkHeaded ? <RoundAsk ask={label} heading /> : undefined}
+      >
         <VowelButtons
           key={round.number}
           text={round.prompt}

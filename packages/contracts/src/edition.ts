@@ -493,6 +493,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   notificationTimeStep: FeatureSwitchStateSchema,
   /** The later questions through Feed Notices (the interests, the self-rating, the Mix review, the Rarity Test offer and, for an existing reader, the Daily Goal) and the questionnaire retake in Settings (ADR 0067). */
   laterQuestions: FeatureSwitchStateSchema,
+  /** «Що тобі цікаво?», the interests among the later questions; off, the Feed skips it and asks the next one (owner 15.11). */
+  interestsQuestion: FeatureSwitchStateSchema,
   /** The Profile: the screen of the reader's whole progress and the save-progress Feed Notice (ADR 0066). */
   profile: FeatureSwitchStateSchema,
   /** The Mascot: the Edition's silent figure with its short lines (CONTEXT.md, Mascot). */
@@ -537,6 +539,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   categoryScreens: FeatureSwitchStateSchema,
   /** The grid of the Categories of Corrections behind the «Виправлення» rail header and each one's screen (ADR 0081); off, the header is a plain title. Off while `dashboard` or `corrections` is. */
   correctionCategoryScreens: FeatureSwitchStateSchema,
+  /** The «Виправлення» rail's header counts its Correction Types and opens their grid, k2 «Категорії» under it (ADR 0140, owner 15.11). */
+  correctionTypeGrid: FeatureSwitchStateSchema,
   /** The Category's Feed: a tap on a Word of a Category's screen opens a Feed of that Category's Words alone, from the tapped one in Language Pack order and round again after the last (ADR 0110); off, the tap opens the Word's card as Search does. Off while `categoryScreens` is. */
   categoryFeed: FeatureSwitchStateSchema,
   /** Known first on a Category's screen: its Known Entries, stamped «ЗНАЮ», come before the rest, each group in Language Pack order (ADR 0111); off, all in Language Pack order as the board draws. Off while `categoryScreens` is. */

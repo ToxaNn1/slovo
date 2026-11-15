@@ -15,6 +15,7 @@ async function renderField(onSubmit: (name: string) => Promise<string | undefine
       <CollectionNameField
         overline="Rename"
         placeholder="Name"
+        cancelLabel="Cancel"
         initialName="Birds"
         onSubmit={onSubmit}
         onCancel={onCancel}
@@ -26,6 +27,17 @@ async function renderField(onSubmit: (name: string) => Promise<string | undefine
 }
 
 describe('CollectionNameField', () => {
+  it('waits for a tap on the field before the keyboard rises, and its cancel button drops the change', async () => {
+    const onSubmit = jest.fn(() => Promise.resolve(undefined));
+    const { onCancel, input } = await renderField(onSubmit);
+
+    expect(input.props['autoFocus']).not.toBe(true);
+    await fireEvent.press(screen.getByTestId('name-cancel'));
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it('keeps one name for a second return while the first is being kept', async () => {
     let settle: (reason: string | undefined) => void = () => undefined;
     const onSubmit = jest.fn(
