@@ -127,7 +127,7 @@ export const typeRoles = {
   screenTitle: role('word', '900', 30, 30, -1, 'uppercase'),
   heading: role('word', '800', 18, 20, 0.5),
   eyebrow: role('word', '700', 11, 13, 2, 'uppercase'),
-  buttonLabel: role('word', '900', 16, 16, 0, 'uppercase'),
+  buttonLabel: role('word', '900', 15, 15, 0, 'uppercase'),
   listWord: role('word', '800', 17, 20),
   /** Reading text: a Definition. */
   definition: role('ui', '500', 19, 27),
@@ -1382,8 +1382,11 @@ export const disabledOpacity = 0.5;
 /** The opacity a pressed tile fades to where its face does not sink: under Reduce Motion, or with no edge. */
 export const pressedFade = 0.7;
 
-/** The heights of a button's face: the design's 58 pt main button, a 48 pt one on a card (the Due Quiz's «ПОЧАТИ»), and a small one as tall as a tap area. */
-export const buttonHeight = { large: 58, medium: 48, small: 44 } as const;
+/** The heights of a button's face: the boards' 62 pt main button (ADR 0145), a 48 pt one on a card (the Due Quiz's «ПОЧАТИ»), and a small one as tall as a tap area. */
+export const buttonHeight = { large: 62, medium: 48, small: 44 } as const;
+
+/** The main button's height inside a sheet, a little lower than on a screen (ADR 0145). */
+export const buttonHeightInSheet = 60;
 
 /** The side of the design's square icon button, and of the icon inside it. */
 export const iconButton = { side: 44, icon: 20 } as const;

@@ -133,7 +133,7 @@ export const googleSignInButton = {
   logo: { blue: '#4285F4', green: '#34A853', yellow: '#FBBC05', red: '#EA4335' },
 } as const;
 
-/** The height of the provider sign-in buttons, Google's and Apple's, like the secondary button's. */
+/** The height of the provider sign-in buttons, Google's and Apple's: drawn to the providers' own button rules, not the shared Button's height. */
 export const signInButtonHeight = 50;
 
 /** A toast's corner radius, from the design; layout, not an Edition token. */
