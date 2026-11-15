@@ -49,6 +49,13 @@ const ogImage = new URL('/og.png', Astro.site).href;
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <slot name="head" />
+    <!-- Cloudflare Web Analytics: cookieless visits (ADR 0147). The token is public. -->
+    <script
+      is:inline
+      type="module"
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "16c43b5d7a574645a3632769bc7e0084"}'
+    ></script>
     <script is:inline>
       document.documentElement.dataset.th = matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark'
