@@ -33,3 +33,6 @@ WAITING until 2026-11-15T19:35:00Z: #1921 still editing locally (last file chang
 - 15.11 18:50Z CI red on 531afe1eb: Profile Level 20 test timeout → renderScreen gained `xp` (one seeded record), Level tests use it; 63bddefb7 pushed. #1921 alive: own Metro on 8082 (pid 89898, 12 min), 11 files edited, no commits/shots yet.
 WAITING until 2026-11-15T19:51:00Z: #1921 visual pass; CI on 63bddefb7.
 - 15.11 19:05Z main moved (483576f2f, #1924 switch groups in admin) → merged into the integration branch; badgeFamiliesOverview added to apps/admin switch-groups.ts (progress); 9f7839477 pushed.
+- 15.11 19:20Z #1921 merged 187dee106 (its implementer could not commit; coordinator committed ef13d6a1a). All 12 tickets merged. PR body: Closes all + #1909, visual pass section, stamp crash on simulator as owner check FIRST.
+Next: CI green on 187dee106 → gh pr ready 1923; WAVES.md status finished; report to the owner. No main merge.
+WAITING until 2026-11-15T20:15:00Z: CI on 187dee106 (PR watched by the laptop thread).
