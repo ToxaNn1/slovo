@@ -384,19 +384,21 @@ export const levelLadder = {
 } as const;
 
 /**
- * The Badge sheet, from the design (board 10 p3/p4): the mark at `markSide`
- * under the kicker, the name and the date or progress under it, and while
- * not earned a bar slanted by `barSkew` degrees, `barHeight` tall.
+ * The Badge sheet, from the design (`XSaved` p3/p4): the mark at `markSide`
+ * under the «ВІДЗНАКА» plate, the name, the condition and the date or
+ * progress under it, and while not earned a bar slanted by `barSkew`
+ * degrees, `barHeight` tall, over the button; the board's gap is 14.
  */
 export const badgeSheet = {
-  markSide: 120,
-  markTop: 14,
+  markSide: 150,
+  markTop: 20,
   nameTop: 14,
+  conditionTop: 14,
   statusTop: 6,
   barTop: 14,
   barHeight: 10,
-  barSkew: -14,
-  doneTop: 22,
+  barSkew: -20,
+  doneTop: 14,
 } as const;
 
 /**

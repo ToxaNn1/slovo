@@ -515,6 +515,8 @@ export const typeRoles = {
   badgeFamilyText: role('ui', '500', 14, 20),
   /** The «ФОРМА» label before a Badge family's shape in the families overview. */
   badgeFamilyLabel: role('word', '700', 10, 10, 1.5),
+  /** A Badge's name under its mark in the Badge sheet (`XSaved` p3/p4). */
+  badgeSheetName: role('word', '900', 24, 26.4),
   /** The name over a Badge family's row of marks. */
   badgeFamily: role('word', '800', 12, 14, 1),
   /** The first letter of the reader's name in the Profile header's avatar. */

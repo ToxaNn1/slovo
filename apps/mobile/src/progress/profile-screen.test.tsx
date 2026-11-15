@@ -442,11 +442,46 @@ describe('the Profile', () => {
     await fireEvent.press(screen.getByLabelText(badge?.name ?? ''));
 
     const sheet = screen.getByTestId('badge-sheet');
-    expect(within(sheet).getByText(badges.sheet.kicker)).toBeOnTheScreen();
-    expect(within(sheet).getByRole('header')).toHaveTextContent(badge?.name ?? '');
+    const [plate, name] = within(sheet).getAllByRole('header');
+    expect(plate).toHaveTextContent(badges.sheet.kicker);
+    expect(name).toHaveTextContent(badge?.name ?? '');
     expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent(/^Ще ні · /);
     // The sheet's status says it is not earned yet; no toast over it (run 10).
     expect(screen.queryByText(/не твоя/)).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-stamp')).not.toBeOnTheScreen();
+  });
+
+  it('stamps an unopened Badge, and ends its «НОВА» once the stamp is taken', async () => {
+    await renderScreen({
+      seed: {
+        xpLog: {
+          won: {
+            kind: 'xp',
+            date: '2026-10-13',
+            at: '2026-10-13T08:00:00.000Z',
+            source: 'game-finished',
+            amount: 5,
+            mode: 'guess-word',
+            right: 10,
+            played: 10,
+          },
+        },
+      },
+    });
+    expect(screen.getByTestId('badge-win-words-mark-new')).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByTestId('badge-win-words'));
+    expect(screen.getByTestId('badge-stamp')).toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-sheet')).not.toBeOnTheScreen();
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('badge-stamp-done'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(screen.queryByTestId('badge-win-words-mark-new')).toBeNull();
+
+    await fireEvent.press(screen.getByTestId('badge-win-words'));
+    expect(screen.getByTestId('badge-sheet')).toBeOnTheScreen();
     expect(screen.queryByTestId('badge-stamp')).not.toBeOnTheScreen();
   });
 
