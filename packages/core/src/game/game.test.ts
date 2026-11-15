@@ -497,6 +497,17 @@ describe('the Game Modes on offer', () => {
       { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
     ]);
   });
+  it('keeps the same offers while hiding a Word leaves what they say unchanged', async () => {
+    const app = await run();
+    const before = app.game.state.modes;
+    await app.hide({ kind: 'entry', entryId: 'w_nnoun01' });
+    expect(app.game.state.modes).toBe(before);
+    await app.hide({ kind: 'category', categoryId: 'speech' });
+    await app.hide({ kind: 'category', categoryId: 'crafts' });
+    await app.hide({ kind: 'entry', entryId: 'w_nnoun02' });
+    await app.hide({ kind: 'entry', entryId: 'w_nnoun03' });
+    expect(app.game.state.modes).not.toBe(before);
+  });
 });
 
 describe('a Round of «Вгадай слово»', () => {

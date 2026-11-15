@@ -425,6 +425,8 @@ describe('the notification plan', () => {
       true,
     );
     expect(used.slice(1).every((template, index) => template !== used[index])).toBe(true);
+    // 0.25 of 10 templates is the third; of the 9 others, the one after it, then back.
+    expect(used.slice(0, 4)).toEqual(['Шаблон 2', 'Шаблон 3', 'Шаблон 2', 'Шаблон 3']);
     expect(plan.map(({ body }) => body)).toEqual(
       plan.map(
         (notification) => words.find(({ id }) => id === wordIdOf(notification))?.primaryDefinition,
@@ -1055,6 +1057,16 @@ describe('the evening notification', () => {
     });
   });
 
+  it('plans one notification a day when only one time is set', async () => {
+    const records = new Map([goalSet, ['notifications.times', JSON.stringify(['09:00'])]]);
+    const { scheduler } = await run({ evening: true, records });
+
+    const plan = planOf(scheduler);
+    expect(plan.length).toBeGreaterThan(1);
+    expect(new Set(plan.map(({ date }) => date)).size).toBe(plan.length);
+    expect(plan.every(({ time }) => time === '09:00')).toBe(true);
+  });
+
   it('covers 14 days with 5 times set: only the earliest and the latest take a slot', async () => {
     const { app, scheduler } = await run({ evening: true, records: new Map([goalSet]) });
     await app.notifications.keepTime('11:00');
@@ -1277,5 +1289,97 @@ describe('the farewell of the 1.0 plan', () => {
     expect(plan.filter(({ kind }) => kind === 'farewell')).toEqual([]);
     expect(plan.at(-1)?.date).toBe('2026-10-28');
     expect(plan.some(({ date }) => date > '2026-10-28')).toBe(false);
+  });
+});
+
+describe('the next morning notification', () => {
+  it("is the earliest time's notification this morning while it is ahead, as the plan holds it", async () => {
+    const { app, scheduler } = await run();
+
+    const morning = await app.notifications.nextMorning();
+
+    const planned = planOf(scheduler).find(
+      ({ date, time }) => date === '2026-10-14' && time === '09:00',
+    );
+    expect(planned?.kind).toBe('word');
+    expect(morning).toEqual({
+      wordId: wordIdOf(planned),
+      body: planned?.body,
+      time: { hour: 9, minute: 0 },
+    });
+    expect(morning?.wordId).toBe(wordsOfTheDayIn(app).get('2026-10-14'));
+  });
+
+  it("is the next day's once this morning's time has passed", async () => {
+    const { app, scheduler } = await run({ clock: fakeClock('2026-10-14T10:00:00+03:00').clock });
+
+    const morning = await app.notifications.nextMorning();
+
+    expect(morning).toMatchObject({
+      wordId: wordAt(planOf(scheduler), '2026-10-15T09:00'),
+      time: { hour: 9, minute: 0 },
+    });
+  });
+
+  it('is the same while the device does not let the app notify, and plans nothing', async () => {
+    const allowed = await run();
+    const scheduler = createFakeNotificationScheduler({ permission: 'not-asked' });
+    const notAsked = await run({ scheduler });
+
+    expect(await notAsked.app.notifications.nextMorning()).toEqual(
+      await allowed.app.notifications.nextMorning(),
+    );
+    expect(scheduler.plan ?? []).toEqual([]);
+  });
+
+  it("is today's Word of the Day with no time while no time is left, and nothing once it is Seen", async () => {
+    const time = fakeClock(start);
+    const { app } = await run({ clock: time.clock });
+    for (const kept of defaultTimes) await app.notifications.removeTime(kept);
+
+    const today = wordsOfTheDayIn(app).get('2026-10-14');
+    if (today === undefined) throw new Error('No Word of the Day');
+    expect(await app.notifications.nextMorning()).toEqual({
+      wordId: today,
+      body: `The meaning of ${today.slice(2)}.`,
+      time: undefined,
+    });
+
+    await readTo(app, time, 1);
+
+    expect(await app.notifications.nextMorning()).toBeUndefined();
+  });
+
+  it('is nothing with notifications switched off', async () => {
+    const { app } = await run({ switchedOff: ['notifications'] });
+
+    expect(await app.notifications.nextMorning()).toBeUndefined();
+  });
+});
+
+describe('the plan made again', () => {
+  it('gives a new time the Words after the furthest planned, not the Word of a notification passed unopened', async () => {
+    const time = fakeClock(start);
+    const { app, scheduler } = await run({ clock: time.clock });
+    const passed = wordAt(planOf(scheduler), '2026-10-14T13:00');
+
+    time.set('2026-10-14T13:30:00+03:00');
+    await app.notifications.keepTime('07:00');
+
+    const plan = planOf(scheduler);
+    expect(plan.map(wordIdOf)).not.toContain(passed);
+    expect(wordAt(plan, '2026-10-15T07:00')).not.toBe(passed);
+  });
+
+  it('titles every notification with the one template of an Edition with one, and alternates two', async () => {
+    const one = await run({ titles: ['Одне: {word}'] });
+    const two = await run({ titles: ['А: {word}', 'Б: {word}'] });
+
+    expect(new Set(planOf(one.scheduler).map((n) => templateOf(titleOf(n))))).toEqual(
+      new Set(['Одне']),
+    );
+    const used = planOf(two.scheduler).map((n) => templateOf(titleOf(n)));
+    expect(used.slice(0, 4)).toEqual(['А', 'Б', 'А', 'Б']);
+    expect(used.slice(1).every((template, index) => template !== used[index])).toBe(true);
   });
 });

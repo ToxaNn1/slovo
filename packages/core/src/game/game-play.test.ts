@@ -1365,3 +1365,66 @@ describe('the Rounds a Game Mode builds', () => {
     expect(game.state.current).toBeUndefined();
   });
 });
+
+describe('the clock of a Game with a time limit', () => {
+  const timed: Partial<GameMode> = {
+    lives: 'none',
+    roundLimit: 'none',
+    timeLimit: 20_000,
+    movesOn: true,
+  };
+
+  it('pauses once: a second pause and a resume of a running clock change nothing', async () => {
+    const { game } = await start(pick, timed);
+    await noMove(game, () => game.resume());
+
+    await game.pause();
+
+    expect(now(game).time).toEqual({ left: 20_000, endsAt: undefined });
+    await noMove(game, () => game.pause());
+  });
+
+  it('takes an answer while paused', async () => {
+    const { game } = await start(pick, timed);
+    await game.pause();
+
+    expect(await answer(game, pickAnswer(true))).toMatchObject({ status: 'answered' });
+    expect(now(game).played).toHaveLength(1);
+  });
+
+  it('pauses and resumes nothing in a Game with no time limit', async () => {
+    const { game } = await start(pick);
+
+    await noMove(game, () => game.pause());
+    await noMove(game, () => game.resume());
+  });
+
+  it('resumes no Game that ended while paused', async () => {
+    const { game, advance } = await start(pick, { ...timed, lives: 1 });
+    await game.pause();
+    await game.answer(pickAnswer(false));
+    await advance(1_600);
+    expect(now(game)).toMatchObject({ status: 'lost', time: { endsAt: undefined } });
+
+    await noMove(game, () => game.resume());
+  });
+
+  it('pauses no Game that ended before its time ran out', async () => {
+    const { game, advance } = await start(pick, { ...timed, lives: 1 });
+    await game.answer(pickAnswer(false));
+    await advance(1_600);
+    expect(now(game).status).toBe('lost');
+
+    await noMove(game, () => game.pause());
+  });
+
+  it('moves on from nothing before a Game starts', async () => {
+    const { game } = await open(mode(pick));
+
+    await game.next();
+    await game.pause();
+    await game.resume();
+
+    expect(game.state.current).toBeUndefined();
+  });
+});

@@ -144,12 +144,28 @@ describe('two devices of one Account', () => {
     await tablet.sync();
     time.advance(HOUR);
 
+    const before = server.calls.length;
     await phone.sync();
+    // The lost change has nothing left to send.
+    expect(server.calls.slice(before)).toEqual(['sync.pull']);
     await tablet.sync();
 
     expect((await phone.settings.read()).theme).toBe('light');
     expect((await tablet.settings.read()).theme).toBe('light');
     expect(server.sync.records.get('settings.theme')?.value).toBe('light');
+  });
+
+  it('let the Account’s change win over one made at the same time', async () => {
+    const { device } = account();
+    const phone = await device();
+    const tablet = await device();
+    await phone.settings.update({ theme: 'dark' });
+    await tablet.settings.update({ theme: 'light' });
+    await tablet.sync();
+
+    await phone.sync();
+
+    expect((await phone.settings.read()).theme).toBe('light');
   });
 
   it('let the newer choice to hide the Streak win, on either device', async () => {
@@ -663,6 +679,18 @@ describe('the first sign-in', () => {
     );
   });
 
+  it('applies the rule at the first sync only: the next with no change pulls and pushes nothing', async () => {
+    const { device, server } = account();
+    const tablet = await device();
+    await tablet.settings.update({ theme: 'dark' });
+    await tablet.sync();
+    await tablet.sync();
+    const before = server.calls.length;
+
+    expect(await tablet.sync()).toEqual({ ok: true, changed: false });
+    expect(server.calls.slice(before)).toEqual(['sync.pull']);
+  });
+
   it('starts again with the rule when a device forgets its cursor', async () => {
     const { device, server } = account();
     const records = new Map<string, string>();
@@ -806,6 +834,23 @@ describe('an interrupted sync', () => {
     // Only the tablet's record joined the Account, once.
     expect(server.sync.records.size).toBe(kept + 1);
     expect(await tablet.userState.pendingChanges()).toEqual(new Map());
+  });
+
+  it.each([
+    ['sync.pull', 'unauthorized'],
+    ['sync.pull', 'not-found'],
+    ['sync.push', 'unauthorized'],
+    ['sync.push', 'not-found'],
+    ['sync.push', 'too-many-records'],
+  ] as const)('answers a refusal of %s as %s', async (procedure, reason) => {
+    const { device, server } = account();
+    const tablet = await device();
+    await tablet.sync();
+    await tablet.settings.update({ theme: 'dark' });
+    server.failNext({ procedure, reason });
+
+    expect(await tablet.sync()).toEqual({ ok: false, reason, changed: false });
+    expect([...(await tablet.userState.pendingChanges()).keys()]).toEqual(['settings.theme']);
   });
 
   it('writes nothing of a pull that fails, and pushes nothing', async () => {

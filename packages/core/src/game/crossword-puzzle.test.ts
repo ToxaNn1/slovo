@@ -8,7 +8,13 @@ import {
   type PuzzlePlace,
   type PuzzleState,
 } from '../index';
-import { generateCrosswordPuzzle, playPuzzle, startPuzzle } from './crossword-puzzle';
+import {
+  foundIds,
+  generateCrosswordPuzzle,
+  playPuzzle,
+  shuffled,
+  startPuzzle,
+} from './crossword-puzzle';
 import { seededRandom, word } from '../test-support';
 
 /** Twelve Words of 3–7 letters, a stressed one among them, and two that cannot hide: a phrase and a capital. */
@@ -185,9 +191,103 @@ describe('playing the puzzle', () => {
     expect(play([{ type: 'extend', place: { row: 0, column: 0 } }], solved)).toBe(solved);
   });
 
+  it('starts no trace on a cell off the grid', () => {
+    for (const place of [
+      { row: -1, column: 0 },
+      { row: 0, column: -1 },
+      { row: 5, column: 0 },
+      { row: 0, column: 5 },
+      { row: 0.5, column: 0 },
+      { row: 0, column: 0.5 },
+    ])
+      expect(play([{ type: 'extend', place }]).trace).toEqual([]);
+  });
+
+  it('keeps the same play for a step back or a release with no trace', () => {
+    const state = startPuzzle(puzzle);
+    expect(playPuzzle(puzzle, state, { type: 'stepBack' })).toBe(state);
+    expect(playPuzzle(puzzle, state, { type: 'release' })).toBe(state);
+  });
+
+  it('steps back one cell of a longer trace', () => {
+    const traced = play([
+      { type: 'extend', place: { row: 0, column: 0 } },
+      { type: 'extend', place: { row: 0, column: 1 } },
+      { type: 'extend', place: { row: 0, column: 2 } },
+      { type: 'stepBack' },
+    ]);
+    expect(traced.trace).toEqual([
+      { row: 0, column: 0 },
+      { row: 0, column: 1 },
+    ]);
+  });
+
+  it('keeps a Word found while the next is locked', () => {
+    const state = play([
+      ...trace(first.path),
+      { type: 'release' },
+      ...trace(second.path),
+      { type: 'release' },
+    ]);
+    expect(state.words.slice(0, 2)).toEqual([{ kind: 'found' }, { kind: 'found' }]);
+    expect(foundIds(puzzle, state)).toEqual([first.word.id, second.word.id]);
+  });
+
+  it('takes no action once solved, even with a trace left', () => {
+    const solved: PuzzleState = {
+      words: puzzle.words.map(() => ({ kind: 'found' })),
+      trace: [{ row: 0, column: 0 }],
+    };
+    expect(playPuzzle(puzzle, solved, { type: 'stepBack' })).toBe(solved);
+    expect(playPuzzle(puzzle, solved, { type: 'release' })).toBe(solved);
+  });
+
   it('restores the Words found', () => {
     const state = startPuzzle(puzzle, [second.word.id]);
     expect(state.words[1]).toEqual({ kind: 'found' });
     expect(state.words.filter((hidden) => hidden.kind === 'found')).toHaveLength(1);
+  });
+});
+
+describe('the shuffle', () => {
+  const constant = (value: number) => ({ next: () => value });
+
+  it('draws each place from the random port, the first item last for a draw of 0', () => {
+    expect(shuffled(['a', 'b', 'c', 'd'], constant(0))).toEqual(['b', 'c', 'd', 'a']);
+  });
+
+  it('keeps the order for a draw just under 1, and leaves the items it was given alone', () => {
+    const items = ['a', 'b', 'c', 'd'];
+    expect(shuffled(items, constant(0.999))).toEqual(['a', 'b', 'c', 'd']);
+    expect(shuffled(items, constant(0))).not.toBe(items);
+    expect(items).toEqual(['a', 'b', 'c', 'd']);
+  });
+});
+
+describe('the Words the generator can hide', () => {
+  const generation = (lemmas: readonly string[]) =>
+    generateCrosswordPuzzle({
+      date: '2026-11-04',
+      words: lemmas.map((lemma, i) => word(`w_${String(i)}`, { lemma })),
+      random: seededRandom(3),
+    });
+  const hidden = (lemmas: readonly string[]) => {
+    const result = generation(lemmas);
+    return result.kind === 'puzzle' ? result.puzzle.words.map(({ word: { lemma } }) => lemma) : [];
+  };
+  const fives = ['річка', 'весна', 'вітер', 'сонце'];
+
+  it('hides Words of 3 and of 8 letters', () => {
+    expect(hidden(['веселкаа', 'абрикоса', 'кіт', 'дім', 'ліс']).sort()).toEqual(
+      ['абрикоса', 'веселкаа', 'дім', 'кіт', 'ліс'].sort(),
+    );
+  });
+
+  it('leaves out Words of 2 or 9 letters, with a capital, or with a lemma already taken', () => {
+    expect(generation([...fives, 'ок', 'кіт']).kind).toBe('no-tiling');
+    expect(generation(['абрикосик', 'веселкаа', 'абрикоса']).kind).toBe('no-tiling');
+    expect(generation([...fives, 'Книга']).kind).toBe('no-tiling');
+    expect(generation([...fives, 'весна']).kind).toBe('no-tiling');
+    expect(generation([...fives, 'книга']).kind).toBe('puzzle');
   });
 });

@@ -6,6 +6,7 @@ import { MISTAKE_REPORT_QUEUE_SIZE } from './records';
 import { type MistakeReportDraft } from './mistake-reports';
 import { createFakeBackend } from '../testing';
 import { fakeClock, randomOf, settle, testSchedule } from '../test-support';
+import type { UserStatePort } from '../ports';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const HOUR = 60 * 60_000;
@@ -29,10 +30,19 @@ async function device({ off = [] }: { off?: FeatureSwitch[] } = {}) {
   const api = createFakeBackend();
   const records = new Map<string, string>();
   const switchedOff = new Set<FeatureSwitch>(off);
+  const storage = { failing: false };
+  const memory = createMemoryUserStatePort(records);
+  const port: UserStatePort = {
+    ...memory,
+    get: (key) =>
+      storage.failing ? Promise.reject(new Error('The disk failed')) : memory.get(key),
+    write: (changes) =>
+      storage.failing ? Promise.reject(new Error('The disk is full')) : memory.write(changes),
+  };
 
   async function launch() {
     return openMistakeReports({
-      userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+      userState: await openUserState({ port }),
       backend: api.backend,
       edition: { id: 'uk', isFeatureEnabled: (feature) => !switchedOff.has(feature) },
       appVersion: '0.8.14',
@@ -49,6 +59,7 @@ async function device({ off = [] }: { off?: FeatureSwitch[] } = {}) {
     api,
     time,
     switchedOff,
+    storage,
     relaunch: launch,
     advance: timers.advance,
     /** Reports and lets every try and wait of it run. */
@@ -138,6 +149,18 @@ describe('reporting a mistake offline', () => {
     expect(app.received()).toEqual(['w_first', 'w_second']);
   });
 
+  it('sends every queued report on one return to the foreground', async () => {
+    const app = await device();
+    app.api.online = false;
+    for (const id of ['first', 'second', 'third']) await app.report(typoIn(id));
+
+    app.api.online = true;
+    app.reports.foreground();
+    await app.advance(ALL_TRIES);
+
+    expect(app.received()).toEqual(['w_first', 'w_second', 'w_third']);
+  });
+
   it('keeps the queue while the backend stays out of reach', async () => {
     const app = await device();
     app.api.online = false;
@@ -150,6 +173,50 @@ describe('reporting a mistake offline', () => {
     await app.advance(ALL_TRIES);
 
     expect(app.received()).toEqual(['w_first']);
+  });
+
+  it('sends the queued reports after a new report goes out, with no return to the foreground', async () => {
+    const app = await device();
+    app.api.online = false;
+    await app.report(typoIn('queued'));
+
+    app.api.online = true;
+    expect(await app.report(typoIn('new'))).toBe('thanked');
+
+    expect(app.received()).toEqual(['w_new', 'w_queued']);
+  });
+
+  it('tries a queued report by the one rule once per return while out of reach', async () => {
+    const app = await device();
+    app.api.online = false;
+    await app.report(typoIn('first'));
+
+    app.reports.foreground();
+    await app.advance(3 * ALL_TRIES);
+
+    // Four tries of the report, four more of the return (ADR 0037).
+    expect(app.api.calls).toHaveLength(8);
+  });
+
+  it('drains once more after a return that came during a drain', async () => {
+    const app = await device();
+    app.api.online = false;
+    await app.report(typoIn('first'));
+
+    app.reports.foreground();
+    await app.advance(1);
+    app.reports.foreground();
+    await app.advance(3 * ALL_TRIES);
+
+    expect(app.api.calls).toHaveLength(12);
+  });
+
+  it('thanks for and sends a report while the queue fails to be read or kept', async () => {
+    const app = await device();
+    app.storage.failing = true;
+
+    expect(await app.report()).toBe('thanked');
+    expect(app.received()).toEqual(['w_kvasha']);
   });
 
   it('sends a queued report and a new one each once when both go out together', async () => {
@@ -206,6 +273,18 @@ describe('too many reports today', () => {
     expect(app.api.calls).toHaveLength(1);
 
     await app.advance(HOUR);
+    expect(await app.report(typoIn('later'))).toBe('thanked');
+    expect(app.received()).toEqual(['w_later']);
+  });
+
+  it('sends a report again at the very end of `Retry-After`', async () => {
+    const app = await device();
+    app.api.failNext({ reason: 'too-many-requests', retryAfter: 3_600 });
+    await app.report();
+
+    await app.advance(HOUR - ALL_TRIES - 1);
+    expect(await app.reports.report(typoIn('held'))).toBe('too-many-requests');
+    await app.advance(1);
     expect(await app.report(typoIn('later'))).toBe('thanked');
     expect(app.received()).toEqual(['w_later']);
   });
@@ -291,7 +370,7 @@ describe('too many reports today', () => {
 });
 
 describe('a report the backend refuses', () => {
-  it('drops a queued report refused with any other 4xx, since it would be refused again, and sends the next', async () => {
+  it('drops a queued report refused with any other 4xx, since it would be refused again, and sends the next on the same return', async () => {
     const app = await device();
     app.api.online = false;
     await app.report(typoIn('refused'));
@@ -299,8 +378,6 @@ describe('a report the backend refuses', () => {
 
     app.api.online = true;
     app.api.failNext('not-found');
-    app.reports.foreground();
-    await app.advance(ALL_TRIES);
     app.reports.foreground();
     await app.advance(ALL_TRIES);
 

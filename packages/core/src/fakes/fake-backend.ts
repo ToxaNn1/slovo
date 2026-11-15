@@ -140,8 +140,8 @@ export interface FakeBackend {
     /** The query and `if-none-match` of each `content.patch` request, in order, failed ones included. */
     readonly patchesAsked: readonly FakePatchAsk[];
     /**
-     * Publishes a Patch, which `content.patch` answers to a device at its
-     * `since`, with the ETag `"<contentVersion>"`, or as an unsupported format
+     * Publishes a Patch, which `content.patch` answers to a device of its
+     * Edition at its `since`, with the ETag `"<contentVersion>"`, or as an unsupported format
      * when the device asks for a lower one than its `patchFormat`. A device
      * with no Patch at its content version, or naming its ETag, gets 304.
      */
@@ -429,7 +429,10 @@ export function createFakeBackend({
           ...(ifNoneMatch === undefined ? {} : { ifNoneMatch }),
         });
         await arrive('content.patch', context);
-        const patch = patches.findLast((published) => published.since === since);
+        const patch = patches.findLast(
+          (published) =>
+            published.editionId === input.params.editionId && published.since === since,
+        );
         const etag = `"${String(patch?.contentVersion ?? since)}"`;
         const headers = { etag, 'cache-control': 'no-cache' } as const;
         if (patch === undefined || ifNoneMatch === etag) return { status: 304, headers };
