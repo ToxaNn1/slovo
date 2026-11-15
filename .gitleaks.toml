@@ -1,8 +1,9 @@
 # Gitleaks config for the "Secret scanning" job: the default rules, plus the
-# values that are public by design.
+# values that are public by design. CI runs gitleaks 8.24, which reads the
+# single [allowlist] table, not [[allowlists]].
 [extend]
 useDefault = true
 
-[[allowlists]]
+[allowlist]
 description = "Cloudflare Web Analytics beacon token: public, every visitor's page carries it (ADR 0147)"
 regexes = ['''16c43b5d7a574645a3632769bc7e0084''']
