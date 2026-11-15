@@ -46,7 +46,8 @@ export interface CardText {
  * The card a Round shows by its Game Mode (board 07 g3, g4, spec #1674):
  * «Впиши слово» names the wrong form over its sentence, «замість «вірогідно»»;
  * «Англіцизм» asks «Чим замінити «{word}»: «{sentence}»?» with the
- * anglicism still marked in the sentence; «Звідки слово» shows its Word on a
+ * anglicism still marked in the sentence, or on the ground (board g5) the
+ * sentence alone, the anglicism in red; «Звідки слово» shows its Word on a
  * sunken tile. Any other Round shows its prompt as it is.
  */
 export function cardOf(
@@ -54,6 +55,7 @@ export function cardOf(
   round: Round,
   prompt: string,
   prompts: { readonly instead: string; readonly replace: string },
+  onGround = false,
 ): CardText {
   const highlight = round.form === 'pick' || round.form === 'typed' ? round.highlight : undefined;
   const plain = { prompt, highlight, face: undefined };
@@ -68,6 +70,9 @@ export function cardOf(
       highlight,
       face: { look: 'instead', instead: fill(prompts.instead, { wrong: marked }) },
     };
+  }
+  if (modeId === 'anglicism' && round.form === 'pick' && onGround) {
+    return { prompt, highlight, face: { look: 'redMark' } };
   }
   if (modeId === 'anglicism' && round.form === 'pick') {
     const asked = fill(prompts.replace, { word: marked, sentence: prompt });
