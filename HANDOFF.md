@@ -1,6 +1,6 @@
 # Games board wave #1880 — coordinator handoff
 STATUS: ACTIVE
-Coordinator: CLOUD session_01VefVQUUP6Lq9nRKxM2WCHR (moved from the laptop 15.11 ~00:35 on the owner's «можеш усю роботу в хмару перекинути і працювати там без мене»). Laptop coordinator mcp:launch:cb3440f7 retired.
+Coordinator: safety-net CLOUD session since 15.11 01:24Z (brief in WAVES.md: one draft PR, NO main merge, NO auto-merge — overrides the wider GRANT.md for the safety net). Earlier: session_01VefVQUUP6Lq9nRKxM2WCHR (moved from the laptop 15.11 ~00:35 on the owner's «можеш усю роботу в хмару перекинути і працювати там без мене»). Laptop coordinator mcp:launch:cb3440f7 retired.
 Grant (GRANT.md): commits, pushes, PRs, PR merges to main (batch PRs, squash auto-merge on green), no owner questions (coordinator defaults in the PR body), NO idle. NOT: force-push, branch deletion, EAS builds. #1894 waits for the owner's «текст ок» (default; build everything else).
 Scheme: skill mattpocock-skills:implement-spec + docs/agents/waves.md. Implementers = background subagents in your session, each in its own worktree on its ticket branch, brief = BRIEF-TEMPLATE.txt (fill NUM/BRANCH), model opus; merges via a merger subagent; push the integration branch after each merge. At most 5 implementers at once; never two on the same hot file (strings.json, edition.json, CONTEXT.md, ADR index).
 All tickets in the cloud now, #1889 and #1895 too: no simulator/screenshots; #1895 = code-level pass against the spec + the phone check list in the PR body «Owner checks».
@@ -30,3 +30,4 @@ No work running. The previous cloud coordinator (session_01VefVQUUP6Lq9nRKxM2WCH
 - 15.11 00:09Z #1893 #1886 #1888 DONE, queued to the merger. Owner question: #1886 no VoiceOver «crossed out» string (needs a contracts schema change). #1893 toast default «Наголос»; #1888 kept «Стерти літеру» in «Анаграми».
 - 15.11 00:51Z container restart killed the merger after 4 merges; pushed them (51c94d82); handoff to a fresh coordinator.
 - 2026-11-15T01:24Z safety net takeover (last commit 2026-11-15T00:51Z)
+- 2026-11-15T01:34Z merged #1888 (6d3e0cc57; round-look conflict: optionStamp + questionFace); lint/typecheck/core/ui/mobile/language-pack green. Launched #1887 #1890 #1891 (feat/1887-pairs-no-pause, feat/1890-anglicism-build-idiom, feat/1891-survival-timed-screens). Cloud setup fixed (pg cluster 18).
