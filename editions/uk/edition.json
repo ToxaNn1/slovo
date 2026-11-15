@@ -99,6 +99,7 @@
     "newLevelScreen": "on",
     "badgeSheet": "on",
     "badgeToast": "on",
+    "badgeFamiliesOverview": "on",
     "streakFreezeCard": "on",
     "breakCard": "on",
     "calendarDayLines": "on",

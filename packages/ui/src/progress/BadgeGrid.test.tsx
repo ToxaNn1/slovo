@@ -86,4 +86,30 @@ describe('BadgeGrid', () => {
     await fireEvent.press(screen.getByLabelText('Level five'));
     expect(onPress).toHaveBeenCalledWith(levelFive);
   });
+
+  it('draws a card for each Badge on the Badges screen with its name, condition and status', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <BadgeGrid
+          families={families}
+          badges={badges}
+          size="screen"
+          statusOf={(badge) => (badge.earned ? 'Earned' : 'Not yet')}
+          conditionOf={(badge) => `Condition of ${badge.id}`}
+          onPress={() => undefined}
+        />
+      </EditionProvider>,
+    );
+    for (const { id, name } of badges) {
+      expect(screen.getByTestId(`badge-${id}-name`)).toHaveTextContent(name);
+      expect(screen.getByTestId(`badge-${id}-condition`)).toHaveTextContent(`Condition of ${id}`);
+    }
+    expect(screen.getByTestId('badge-streak-3-status')).toHaveTextContent('Earned');
+    expect(screen.getByTestId('badge-level-5-status')).toHaveTextContent('Not yet');
+  });
+
+  it('writes no name under the marks of the Profile', async () => {
+    await draw(() => undefined);
+    expect(screen.queryByTestId('badge-streak-3-name')).toBeNull();
+  });
 });

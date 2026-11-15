@@ -41,16 +41,21 @@ function progressForms({ condition }: BadgeState) {
 }
 
 /**
- * What a Badge's mark says under it and to VoiceOver: the day it was earned
- * («Отримано 13 жовтня»), how far its condition has come («1 з 3 днів»), or,
- * for a condition of one first time, «Ще не отримано».
+ * What a Badge's card says under its mark and to VoiceOver (ADR 0145):
+ * «Отримано», or while not earned how far its condition has come, rounded
+ * down so it never reads the whole («Ще ні · 77%»); and the sheet's line,
+ * which keeps the date («Отримано 13 жовтня») and the exact progress
+ * («Ще ні · 23 з 30 днів», or «Ще не отримано» for a condition of one first
+ * time).
  */
 export function useBadgeStatus() {
   const { count } = useEdition();
   return {
     statusOf: (badge: BadgeState) => {
-      if (badge.earned) return fill(strings.earned, { date: dayText(badge.date) });
-      return progressOf(badge) ?? strings.notYet;
+      if (badge.earned) return strings.cardEarned;
+      const { current, target } = badge.progress;
+      const percent = Math.floor((100 * Math.min(current, target)) / target);
+      return fill(strings.cardNotYet, { percent: String(percent) });
     },
     /** The sheet's line: the date, or «Ще ні · 1 з 3 днів» while not earned. */
     sheetStatusOf: (badge: BadgeState) => {

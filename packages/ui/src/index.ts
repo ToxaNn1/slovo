@@ -165,6 +165,7 @@ export {
   type CategoryTileBox,
   type CategoryTone,
 } from './categories/CategoryTile';
+export { BadgeFamilies } from './progress/BadgeFamilies';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeSheet } from './progress/BadgeSheet';
 export { BadgeStamp } from './progress/BadgeStamp';

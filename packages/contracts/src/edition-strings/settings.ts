@@ -174,6 +174,27 @@ export const SettingsStringsSchema = z.strictObject({
       rightAnswers: pluralOf('current'),
       level: pluralOf('current'),
     }),
+    /** A card's status on the Badges screen, earned, e.g. «Отримано»; the date shows in the sheet (ADR 0145). */
+    cardEarned: TextSchema,
+    /** A card's status while not earned, e.g. «Ще ні · 77%». Takes `{percent}`, how far its condition has come. */
+    cardNotYet: templateOf('percent'),
+    /** The Badge families overview heading the Badges screen (ADR 0145). */
+    families: z.strictObject({
+      /** How many Badges a family holds, e.g. «5 відзнак». */
+      count: PluralSchema,
+      /** The label before a family's shape, e.g. «ФОРМА». */
+      shape: TextSchema,
+      /** The name of each Badge shape, e.g. «Шестикутник». */
+      shapes: z.strictObject({
+        hexagon: TextSchema,
+        shield: TextSchema,
+        circle: TextSchema,
+        tile: TextSchema,
+        wedge: TextSchema,
+        diamond: TextSchema,
+        checker: TextSchema,
+      }),
+    }),
     /** The ink tag on an earned Badge the reader has not opened yet, e.g. «НОВА» (ADR 0085). */
     newTag: TextSchema,
     /** The sheet a tap on any Badge opens (p3, p4). */

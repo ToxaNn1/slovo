@@ -501,6 +501,20 @@ export const typeRoles = {
   badgeProgress: role('ui', '500', 11, 13),
   /** A Badge's name under its title on the stamp of a newly earned Badge. */
   stampName: role('ui', '500', 16, 21),
+  /** A Badge family's name over its cards on the Badges screen. */
+  badgeScreenFamily: role('word', '900', 20, 20),
+  /** A Badge's name on its card of the Badges screen. */
+  badgeCardName: role('word', '900', 14, 17),
+  /** A Badge's condition on its card of the Badges screen. */
+  badgeCardCondition: role('ui', '500', 13, 17),
+  /** A Badge's status on its card, «Отримано» or «Ще ні · 77%». */
+  badgeCardStatus: role('ui', '600', 12, 14),
+  /** A Badge family's name on its card of the families overview. */
+  badgeFamilyName: role('word', '900', 18, 20),
+  /** A Badge family's description on its card of the families overview. */
+  badgeFamilyText: role('ui', '500', 14, 20),
+  /** The «ФОРМА» label before a Badge family's shape in the families overview. */
+  badgeFamilyLabel: role('word', '700', 10, 10, 1.5),
   /** The name over a Badge family's row of marks. */
   badgeFamily: role('word', '800', 12, 14, 1),
   /** The first letter of the reader's name in the Profile header's avatar. */

@@ -97,6 +97,7 @@
     "newLevelScreen": "off",
     "badgeSheet": "off",
     "badgeToast": "off",
+    "badgeFamiliesOverview": "off",
     "streakFreezeCard": "off",
     "breakCard": "off",
     "calendarDayLines": "off",

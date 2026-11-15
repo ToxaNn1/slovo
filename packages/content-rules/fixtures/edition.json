@@ -23,6 +23,7 @@
     "appIntents": "on",
     "badgeSheet": "off",
     "badgeToast": "off",
+    "badgeFamiliesOverview": "off",
     "badges": "on",
     "breakCard": "off",
     "calendarDayLines": "off",
