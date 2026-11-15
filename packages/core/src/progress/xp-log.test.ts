@@ -175,6 +175,16 @@ describe('the XP log and the Game', () => {
     expect(kindsOf(records)).toEqual(['xp', 'wrong-answer', 'xp']);
   });
 
+  it('keeps the Rarity of the Word a Round answered right asked about', async () => {
+    const { app } = await run();
+    await app.game.start('guess-word');
+    const { rarity } = answerOf(current(app).round);
+
+    await play(app, true);
+
+    expect(app.xpLog.milestones.rightRarities).toEqual(new Set([rarity]));
+  });
+
   it('adds 5 XP for a finished Game with half its answers right and 5 for its first Best result', async () => {
     const { app } = await run();
 
