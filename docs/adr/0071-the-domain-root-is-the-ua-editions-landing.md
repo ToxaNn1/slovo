@@ -1,5 +1,7 @@
 # The domain root is the UA Edition's landing
 
+**Amended by ADR 0148.** The site is rebuilt daily from the content snapshot: the counter shows the live Words, Слово дня changes every day, and every live Word has a page.
+
 1.0 needs a public page that says what SLOVO is and sends readers to the App Store: the store listing's marketing URL, the address in shares and posts. The owner designed it in «Клин 2.0: Рупор» (ADR 0070): hero with the Mascot and the App Store button, the site's one Слово дня, what is inside, screens, the mission («Навіщо») with the goal of a million confirmed Entries, FAQ, a final call and a footer with support and the legal pages.
 
 **The root of the app's domain is the landing of the UA Edition** (Ukrainian, Edition id `uk` today). It is not a factory page that lists Editions or redirects to one: there is one Edition, and its readers should land on its page at the shortest address. The Edition's legal pages keep their paths under `/<id>/` (ADR 0049), and the landing links them relatively (`uk/privacy`), so it works both at the domain root and at the `github.io/<repo>/` address before the domain is set. At the domain Cloudflare sends everything to GitHub Pages but `/<edition>/c/*` and `/.well-known/*`, which the Deployment answers (ADR 0125, amending this ADR).
