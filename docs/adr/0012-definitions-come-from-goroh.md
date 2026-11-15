@@ -1,5 +1,7 @@
 # Ukrainian Definitions and Examples come from goroh «Тлумачення»
 
+**Superseded by ADR 0146.** An Entry's text is now the Edition's own; nothing is copied from goroh or СУМ. Kept for history.
+
 The UA Edition takes its Definitions and Examples from the «Тлумачення» pages of goroh.pp.ua, and only from the explanatory dictionary each page cites: СУМ-20 (vols 1–15, А to П'ЯТЬ) for the Lemmas it already covers, and СУМ-11 for the rest. The specs named СУМ-11 on sum.in.ua as the source. While the content was being sourced, sum.in.ua stopped answering, and the Wayback Machine started refusing this machine after parallel use, so neither could supply about 500 Words. The owner was told and agreed to the switch.
 
 **Amended by ADR 0094.** A quotation is at most one sentence and is still copied word for word; the Edition's own wording replaces the rest of an article. Current content does not meet this yet, and a content ticket trims it.
