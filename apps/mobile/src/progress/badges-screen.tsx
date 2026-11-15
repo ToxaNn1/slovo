@@ -35,11 +35,11 @@ function Badges() {
   const badges = useSubscribed(useComposition().badges, ({ state }) => state);
   const { statusOf } = useBadgeStatus();
   const { onPress, opening } = useBadgeOpening();
-  const { isFeatureEnabled } = useEditionInEffect();
+  const familiesShown = useEditionInEffect().isFeatureEnabled('badgeFamiliesOverview');
 
   return (
     <>
-      {isFeatureEnabled('badgeFamiliesOverview') && (
+      {familiesShown && (
         <View style={styles.families}>
           <BadgeFamilies families={edition.badgeFamilies} badges={badges} />
         </View>
