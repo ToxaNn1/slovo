@@ -19,6 +19,8 @@ export interface PairsContent {
   readonly wordOrder: readonly number[];
   /** The places of the pairs whose Definitions show, in the order shown. */
   readonly definitionOrder: readonly number[];
+  /** Whether found pairs stay and a pair leaves no answered state (`pairsStay`, ADR 0139); not by default. */
+  readonly stays?: boolean;
 }
 
 /**
@@ -40,6 +42,8 @@ export interface PairsRound {
   /** The grid's Words in the order shown, then its Definitions; a pair answered is found or missed in both. */
   readonly words: readonly GridCell<RoundOption>[];
   readonly definitions: readonly GridCell<string>[];
+  /** Whether found pairs stay, with the captions, and the Game goes on to the next pair at once (`pairsStay`, ADR 0139). */
+  readonly stays: boolean;
 }
 
 /** The Word and the Definition the reader taps. */
@@ -85,7 +89,7 @@ export const pairsForm: AnswerForm<PairsContent, PairsRound, PairsGiven, PairsAn
   },
   roundsIn: ({ pairs }) => pairs.length,
   entriesIn: ({ pairs }) => pairs.map(({ entry }) => entry.id),
-  shown({ pairs, wordOrder, definitionOrder }, answered) {
+  shown({ pairs, wordOrder, definitionOrder, stays = false }, answered) {
     const wordStates = new Map(answered.map(({ word, right }) => [word, stateOf(right)]));
     const definitionStates = new Map(
       answered.map(({ correct, right }) => [correct, stateOf(right)]),
@@ -105,6 +109,7 @@ export const pairsForm: AnswerForm<PairsContent, PairsRound, PairsGiven, PairsAn
         shown: pairAt(pair).definition,
         state: definitionStates.get(place) ?? 'open',
       })),
+      stays,
     };
   },
   judge({ pairs, wordOrder, definitionOrder }, { words, definitions }, { word, definition }) {

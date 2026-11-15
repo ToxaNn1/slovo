@@ -789,7 +789,7 @@ describe('the answer forms of a Round', () => {
    * Definitions shown in the reverse order; a Word shows by its id, which
    * tells homonyms apart.
    */
-  const grid: Build = (of, { next: after }) => {
+  const grid: Build = (of, { next: after, edition }) => {
     const pairs = [of, ...after.slice(0, 3)].map((entry) => ({
       entry,
       word: option(entry.id.slice(2)),
@@ -803,6 +803,7 @@ describe('the answer forms of a Round', () => {
       pairs,
       wordOrder: places,
       definitionOrder: [...places].reverse(),
+      stays: edition.isFeatureEnabled('pairsStay'),
     };
   };
 
@@ -1021,6 +1022,30 @@ describe('the answer forms of a Round', () => {
     for (let pair = 0; pair < 4; pair += 1)
       await game.answer({ form: 'pairs', word: pair, definition: 3 - pair });
     expect(now(game)).toMatchObject({ roundsPassed: 8, status: 'won' });
+  });
+
+  it('keeps found pairs as `pairsStay` says when the Game starts, not when the Game opened', async () => {
+    let switchedOn = false;
+    const edition = testEdition({
+      isFeatureEnabled: (feature) => feature !== 'pairsStay' || switchedOn,
+    });
+    const opened = await open(mode(grid, { roundLimit: 8 }), words, { edition });
+    switchedOn = true;
+    await opened.game.start('test');
+    expect(now(opened.game).round).toMatchObject({ form: 'pairs', stays: true });
+
+    expect(await answer(opened.game, { form: 'pairs', word: 0, definition: 3 })).toMatchObject({
+      status: 'playing',
+      roundsPassed: 1,
+    });
+    switchedOn = false;
+    opened.game.leave();
+    await opened.game.start('test');
+    expect(now(opened.game).round).toMatchObject({ form: 'pairs', stays: false });
+    expect(await answer(opened.game, { form: 'pairs', word: 0, definition: 3 })).toMatchObject({
+      status: 'answered',
+      roundsPassed: 0,
+    });
   });
 
   it('ends a pairs Game on the pair that takes the last Life, `pairsStay` on', async () => {

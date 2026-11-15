@@ -305,15 +305,12 @@ function createGameInPlay({
   eligible: eligibleAtStart,
   comparison,
   banner,
-  pairsStay,
 }: {
   mode: GameMode;
   /** The Lives the Game starts with, which it keeps however the Edition changes; none without Lives. */
   lives: number | undefined;
   /** Whether the Game shows the answer banner, as `gameAnswerBanner` said when it started, so a mode that moves on waits for it too. */
   banner: boolean;
-  /** Whether a pair of a pairs grid leaves no answered state (`pairsStay`), the Game going on to the next Round at once. */
-  pairsStay: boolean;
   /** The Rounds the Game starts over, as the mode planned them. */
   rounds: readonly PlannedRound[];
   planRounds: RoundPlanner;
@@ -402,7 +399,9 @@ function createGameInPlay({
           : { kind: 'wrong', answer: answer.sheet.answer.text, lastLife: lives === 0 },
         banner: banner && answer.form !== 'pairs',
       };
-      const movesOn = (mode.movesOn === true && !banner) || (pairsStay && answer.form === 'pairs');
+      // A grid whose found pairs stay goes on to its next pair at once.
+      const stays = game.round.form === 'pairs' && game.round.stays;
+      const movesOn = (mode.movesOn === true && !banner) || stays;
       return movesOn ? next(answered) : answered;
     },
     next,
@@ -722,7 +721,6 @@ export async function openGame({
     ids.add(id);
   }
   const gameOn = edition.isFeatureEnabled('game');
-  const pairsStay = edition.isFeatureEnabled('pairsStay');
   const modes = gameOn ? registered.filter((mode) => mode.isOn(edition)) : [];
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
@@ -852,7 +850,6 @@ export async function openGame({
             comparison,
             // Read as the Game starts, as its Lives and time limit are; with no schedule, nothing moves it on.
             banner: edition.isFeatureEnabled('gameAnswerBanner') && schedule !== undefined,
-            pairsStay,
           })
         : undefined;
     stopTime();
