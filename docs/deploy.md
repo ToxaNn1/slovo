@@ -74,7 +74,7 @@ The Patch route answers `cache-control: public, max-age=0, s-maxage=60` with its
 
 **The app's domain is split by path (ADR 0125).** The zone of the app's domain is proxied and sends `/<edition>/c/*` (the Collection Link pages) and `/.well-known/*` (`apple-app-site-association`) to the Railway service's domain, and everything else to GitHub Pages. Cloudflare's free plan routes by path with a Worker on the two routes; an Origin Rule with a host override does the same where the plan allows it. Check after a change: `/.well-known/apple-app-site-association` answers the backend's JSON with no redirect, a Collection Link opens its page, and the landing and `/uk/privacy` still answer from Pages.
 
-**Site analytics and search (ADR 0147).** In the zone of the app's domain: Analytics & Logs → Web Analytics → add the domain with the automatic setup; Cloudflare injects the cookieless beacon, the site carries no code. In Google Search Console: add a Domain property for the app's domain, verify it with the DNS record (Cloudflare can add it in one click), then submit `https://<domain>/sitemap.xml`.
+**Site analytics and search (ADR 0147).** In the zone of the app's domain: Analytics & Logs → Web Analytics → the site `slovoapp.org` with the JS snippet setup; its token sits in `apps/site/src/layouts/Base.astro`, so a new token is a one-line change there. In Google Search Console: add a Domain property for the app's domain, verify it with the DNS record (Cloudflare can add it in one click), then submit `https://<domain>/sitemap.xml`.
 
 ## The Railway project file
 

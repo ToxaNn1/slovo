@@ -8,11 +8,11 @@ The owner wants to see how many people visit the landing and where they come fro
 
 ## Decision
 
-- **Visits:** Cloudflare Web Analytics with its automatic setup on the proxied zone. Cloudflare injects its cookieless beacon at the edge; the site carries no analytics code, token or variable. Only visits through the app's domain count, not the github.io address.
+- **Visits:** Cloudflare Web Analytics through its JS snippet in `Base.astro`, on every page: a cookieless beacon whose token is public. The domain's records are DNS-only (GitHub Pages answers directly), so Cloudflare's automatic setup, which injects the beacon at the edge of a proxied zone, never reaches the pages. Visits through the github.io address count too.
 - **Search:** Google Search Console, a Domain property verified by a DNS record in the Cloudflare zone. The site publishes `robots.txt` and `sitemap.xml` (the landing and every Edition's legal pages) for it.
 - **Every page** names the app's domain as its canonical address and carries `og:image` (`public/og.png`, 1200×630 from the design) with Open Graph and Twitter card tags; the landing carries Organization and WebSite structured data. `astro.config.mjs` sets `site` to the app's domain.
 - No Google Analytics, no cookies, no consent banner.
 
 ## Consequences
 
-Turning either tool on or off is a dashboard step recorded in `docs/deploy.md`, not a code change. A second Edition with its own domain needs its own `site` and sitemap.
+Search Console is a dashboard step recorded in `docs/deploy.md`; the beacon is one tag in `Base.astro`. A second Edition with its own domain needs its own `site` and sitemap.
