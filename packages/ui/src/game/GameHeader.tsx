@@ -53,7 +53,8 @@ const LIFE_FADE = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Neve
  * The Round's header (board 07), one for every Game Mode: a row of the ✕,
  * the mode's title in caps with the Round in play out of the Round limit,
  * and the Lives as flags; under it the 10 segments that fill as the Rounds
- * pass towards the limit, or with no limit the Rounds passed, and in a timed
+ * pass towards the limit, or with no limit the Rounds passed, in
+ * «Виживання» with its streak one solid red bar (board g7), and in a timed
  * Game the timer under them. The flags alone show the Lives, which VoiceOver
  * reads as «Життів: 4 з 5». A mode without Lives shows no flags.
  * On the ground (ADR 0139) the title is the mode's name alone and
@@ -85,7 +86,7 @@ export function GameHeader({
   livesAtStart: number | undefined;
   /** How long after a wrong answer its Life is lost, in milliseconds. */
   lifeLostAfter: number;
-  /** The streak and its record, shown in place of the Rounds passed in a mode with no Round limit. */
+  /** The streak of «Виживання», whose one solid bar (board g7) stands in place of the Rounds passed in a mode with no Round limit; the body shows the streak itself. */
   streak: Streak | undefined;
   /** The play time left of a timed Game and its whole time, in milliseconds; none in another Game. */
   time: { left: number; limit: number } | undefined;
@@ -144,7 +145,12 @@ export function GameHeader({
         )}
       </View>
       {roundLimit === undefined && streak !== undefined ? (
-        <StreakCounter streak={streak} />
+        <View
+          testID="game-streak-bar"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={[styles.segment, { backgroundColor: colors.accent }]}
+        />
       ) : roundLimit === undefined ? (
         <Text
           testID="game-progress"
@@ -301,47 +307,7 @@ function Life({
   );
 }
 
-/**
- * The streak of «Виживання» (spec #1674): a big counter of the Rounds passed
- * and «{n} поспіль · рекорд {best}» beside it, read by VoiceOver as that line.
- */
-function StreakCounter({ streak }: { streak: Streak }) {
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const { strings, voice } = useEdition();
-  const line = fill(strings.game.round.survivalStreak, {
-    n: String(streak.rounds),
-    best: String(streak.record),
-  });
-  return (
-    <View
-      testID="game-streak"
-      accessible
-      accessibilityLabel={line}
-      {...voice}
-      style={styles.streak}
-    >
-      <Text
-        testID="game-streak-rounds"
-        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-        style={[typeStyle('roundStreak', tokens), { color: colors.accent }]}
-      >
-        {streak.rounds}
-      </Text>
-      <Text
-        testID="game-streak-line"
-        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-        style={[typeStyle('roundStreakLine', tokens), styles.streakLine, { color: colors.ink }]}
-      >
-        {line}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  streak: { flexDirection: 'row', alignItems: 'baseline', gap: roundLayout.gap },
-  streakLine: { flexShrink: 1 },
   // Room under the header, so a scrolled Round slides away clear of it, not against it.
   header: { gap: roundHeader.gap, paddingHorizontal: space[4], paddingBottom: space[3] },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: roundHeader.rowGap },

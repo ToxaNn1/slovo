@@ -93,30 +93,44 @@ describe('the Game screen', () => {
     },
   );
 
-  it('shows the streak of «Виживання» with its switch on, a big counter and «{n} поспіль · рекорд {best}» from the Best result, in place of the Rounds passed', async () => {
+  it('shows the streak of «Виживання» with its switch on as board g7: the right answers in a row as a big number in the body, «поспіль» and «рекорд {best}» under each other, no label over the question', async () => {
     await open({ corrections: 15, best: { survival: 2 }, switchedOn: ['survivalStreak'] });
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('game-mode-survival'));
 
-    const lines: string[] = [];
+    const shown: string[][] = [];
+    const read: string[] = [];
     for (let round = 1; round <= 4; round += 1) {
       await waitFor(() => {
         expect(screen.getByTestId('game-streak-rounds')).toHaveTextContent(String(round - 1));
       });
-      lines.push(String(screen.getByTestId('game-streak').props['accessibilityLabel']));
+      const streak = screen.getByTestId('game-streak');
+      shown.push([
+        String(within(streak).getByTestId('game-streak-rounds').props['children']),
+        String(within(streak).getByText('поспіль').props['children']),
+        String(within(streak).getByText(/^рекорд \d+$/).props['children']),
+      ]);
+      read.push(String(streak.props['accessibilityLabel']));
+      expect(within(screen.getByTestId('game-round')).getAllByText('Виживання')).toHaveLength(1);
       expect(screen.queryByTestId('game-progress')).toBeNull();
       await answerSurvivalRound(round !== 2);
       await fireEvent.press(screen.getByTestId('game-next'));
     }
 
-    expect(lines).toEqual([
+    expect(shown).toEqual([
+      ['0', 'поспіль', 'рекорд 2'],
+      ['1', 'поспіль', 'рекорд 2'],
+      ['2', 'поспіль', 'рекорд 2'],
+      ['3', 'поспіль', 'рекорд 3'],
+    ]);
+    expect(read).toEqual([
       '0 поспіль · рекорд 2',
       '1 поспіль · рекорд 2',
       '2 поспіль · рекорд 2',
       '3 поспіль · рекорд 3',
     ]);
-    expect(screen.getByTestId('game-streak-line')).toHaveTextContent('4 поспіль · рекорд 4');
+    expect(screen.getByTestId('game-streak')).toHaveAccessibleName('4 поспіль · рекорд 4');
   });
 
   it('asks before leaving a Game in the Edition’s words: «Грати далі» plays on, «Вийти» leaves', async () => {

@@ -74,8 +74,12 @@ describe('the Games boards’ Lives and time (ADR 0137)', () => {
       await waitFor(() => {
         expect(timerLabel()).toBe('лишилось 20 секунд');
       });
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('20 с');
       await pickTheWordOfThePrompt();
-      await pass(19_000);
+      await pass(5_000);
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('15 с');
+      expect(timerLabel()).toBe('лишилось 15 секунд');
+      await pass(14_000);
 
       expect(screen.getByTestId('game-round')).toBeOnTheScreen();
 

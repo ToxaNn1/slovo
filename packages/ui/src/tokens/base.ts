@@ -272,9 +272,9 @@ export const typeRoles = {
   roundTitle: role('word', '800', 14, 14, 1, 'uppercase'),
   /** «Життів: 4 з 5» in its red label under the Round's header (board 07). */
   roundLives: role('ui', '600', 13, 13),
-  /** The big streak counter of «Виживання» under the Round's header (spec #1674), the Rounds passed. */
-  roundStreak: role('word', '800', 48, 52),
-  /** «4 поспіль · рекорд 9» beside the big streak counter of «Виживання» (spec #1674). */
+  /** The huge red streak of «Виживання» at the top of the Round's body (board g7), the right answers in a row. */
+  roundStreak: role('word', '900', 80, 68, -3),
+  /** «поспіль» and «рекорд 9», each a line beside the streak of «Виживання» (board g7). */
   roundStreakLine: role('ui', '600', 13, 17),
   /** The label over a Round's prompt, and a Quick Question's title. */
   roundLabel: role('word', '800', 12, 12, 1.5, 'uppercase'),
