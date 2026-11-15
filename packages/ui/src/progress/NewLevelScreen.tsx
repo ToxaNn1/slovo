@@ -4,9 +4,11 @@
 import { useEffect, type ReactNode } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import Animated, {
+  Easing,
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -14,21 +16,23 @@ import { Button } from '../primitives/Button';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { capitalMarkRoom, motion, newLevelStamp, typeStyle } from '../tokens';
+import { capitalMarkRoom, newLevelStamp, typeStyle } from '../tokens';
 import { StampHalftone } from './StampHalftone';
-import { bezier, REDUCED_FADE } from '../primitives/timing';
+import { bezierFn, REDUCED_FADE } from '../primitives/timing';
 
-/** The number lands with the design's `slStamp`. */
-const LAND = {
-  duration: motion.stamp.duration,
-  easing: bezier(motion.stamp.easing),
-  reduceMotion: ReduceMotion.Never,
-};
+/**
+ * The number lands with the design's `slStamp`: the clock runs evenly and each
+ * of its two steps, to the press and to rest, takes the curve on its own, as a
+ * CSS keyframe's timing function does.
+ */
+const { land } = newLevelStamp;
+const landEase = bezierFn(land.easing);
+const LAND = { duration: land.duration, easing: Easing.linear, reduceMotion: ReduceMotion.Never };
 /**
  * A new Level on red, over the whole screen (board 10, p6): the small cream
  * `kicker` turned in the top corner, the giant `level` stamped under it,
- * `title` and `line` under the number, the `mascot` and a button labelled
- * `doneLabel` that closes it. Under Reduce Motion the number fades in at rest.
+ * `title` and `line` under the number, the `mascot` drawn at the width it is
+ * given and a button labelled `doneLabel` that closes it. Under Reduce Motion the number fades in at rest.
  */
 export function NewLevelScreen({
   level,
@@ -45,7 +49,7 @@ export function NewLevelScreen({
   title: string;
   line: string;
   doneLabel: string;
-  mascot?: ReactNode;
+  mascot?: (width: number) => ReactNode;
   onClose: () => void;
   testID?: string;
 }) {
@@ -56,19 +60,30 @@ export function NewLevelScreen({
   const reduceMotion = useReduceMotion();
   const landed = useSharedValue(0);
   useEffect(() => {
-    landed.value = withTiming(1, reduceMotion ? REDUCED_FADE : LAND);
+    landed.value = reduceMotion
+      ? withTiming(1, REDUCED_FADE)
+      : withDelay(land.delay, withTiming(1, LAND));
   }, [landed, reduceMotion]);
   const numberStyle = useAnimatedStyle(() => {
     const t = landed.value;
     if (reduceMotion)
       return { opacity: t, transform: [{ rotate: `${String(newLevelStamp.turn)}deg` }] };
-    const { scale, turn } = newLevelStamp.from;
+    const { from, press } = land;
+    const rest = newLevelStamp.turn;
+    if (t < press.at) {
+      const u = landEase(t / press.at);
+      return {
+        opacity: Math.min(Math.max(u, 0), 1),
+        transform: [
+          { scale: from.scale + (press.scale - from.scale) * u },
+          { rotate: `${String(from.turn + (rest - from.turn) * u)}deg` },
+        ],
+      };
+    }
+    const u = landEase((t - press.at) / (1 - press.at));
     return {
-      opacity: Math.min(t * 2, 1),
-      transform: [
-        { scale: scale + (1 - scale) * t },
-        { rotate: `${String(turn + (newLevelStamp.turn - turn) * t)}deg` },
-      ],
+      opacity: 1,
+      transform: [{ scale: press.scale + (1 - press.scale) * u }, { rotate: `${String(rest)}deg` }],
     };
   });
 
@@ -83,7 +98,7 @@ export function NewLevelScreen({
         >
           {kicker}
         </Text>
-        <Animated.View style={[styles.number, numberStyle]}>
+        <Animated.View testID={`${testID}-number`} style={[styles.number, numberStyle]}>
           <Text style={[typeStyle('newLevelNumber', tokens), { color: key.ink }]}>
             {String(level)}
           </Text>
@@ -103,7 +118,9 @@ export function NewLevelScreen({
           {line}
         </Text>
         <View style={styles.spring} />
-        {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
+        {mascot !== undefined && (
+          <View style={styles.mascot}>{mascot(newLevelStamp.mascotWidth)}</View>
+        )}
         <View style={styles.done}>
           <Button
             variant="onAccent"

@@ -1098,7 +1098,6 @@ export const motion = {
   toast: { duration: 350, easing: [0.2, 0.9, 0.3, 1.1] },
   /** The design's `slToast` of board 09 (XSaved): the plate toast rises in 400 ms. */
   plateToast: { duration: 400, easing: [0.2, 0.9, 0.3, 1] },
-  stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
   /** The five frames of a Badge's stamp (board 10.7), after a short wait. */
   badgeStamp: { duration: 550, easing: ease, delay: 150 },
   /** The Level ring fills to the reader's progress. */
