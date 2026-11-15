@@ -1,10 +1,10 @@
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { buttonHeight, fontScaleCap, space, typeStyle } from '../tokens';
+import { buttonHeight, buttonHeightInSheet, fontScaleCap, space, typeStyle } from '../tokens';
 import { PressedTile, type TileTone } from './PressedTile';
 
 /**
@@ -24,12 +24,20 @@ const tones: Record<ButtonVariant, TileTone> = {
   ghost: 'none',
 };
 
+const InSheetContext = createContext(false);
+
+/** Marks its content as a sheet's, so a `large` Button in it takes the sheet's height (ADR 0145). */
+export function ButtonsInSheet({ children }: { children: ReactNode }) {
+  return <InSheetContext.Provider value>{children}</InSheetContext.Provider>;
+}
+
 /**
  * A button of the design (`docs/design/README.md`): the label in the
  * `buttonLabel` type role on a pressed tile of `radius.button`. A mark, such
  * as SLOVO ID's, goes before the label, and VoiceOver skips it. While its
  * request is on the way it shows a spinner beside the label and takes no
- * press; disabled, it is dimmed and takes none either.
+ * press; disabled, it is dimmed and takes none either. Its height is the
+ * boards' on every screen (ADR 0145), a little lower inside a sheet.
  */
 export function Button({
   variant = 'primary',
@@ -69,6 +77,8 @@ export function Button({
   const sounds = useInterfaceSounds();
   const keyColors = useSchemeColors('light');
   const { voice } = useEdition();
+  const inSheet = useContext(InSheetContext);
+  const height = size === 'large' && inSheet ? buttonHeightInSheet : buttonHeight[size];
   const labelColor = {
     primary: keyColors.ink,
     neutral: tokens.colors.ink,
@@ -90,7 +100,7 @@ export function Button({
       accessibilityState={{ busy, selected }}
       faceStyle={[
         styles.face,
-        { minHeight: buttonHeight[size] },
+        { minHeight: height },
         variant === 'neutral' && {
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: tokens.colors.line,

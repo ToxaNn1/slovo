@@ -185,12 +185,12 @@ describe('the Core’s shape, type and motion roles', () => {
     expect(roleAt('definition', 57)).toEqual({ fontSize: 57, lineHeight: 81 });
   });
 
-  it('keeps the button label’s 16-point line on the board', () => {
+  it('keeps the button label’s 15-point line on the board', () => {
     expect(typeStyle('buttonLabel', coreTokens)).toMatchObject({
-      fontSize: 16,
-      lineHeight: 16,
-      paddingTop: 5,
-      marginTop: -5,
+      fontSize: 15,
+      lineHeight: 15,
+      paddingTop: 4,
+      marginTop: -4,
     });
   });
 

@@ -174,6 +174,7 @@ export const crosswordDayCard = {
   gap: 14,
   lineGap: 6,
   barGap: 8,
+  /** The card's own small button, 46 as its board draws it on the card, not the shared Button's height. */
   button: { height: 46, paddingHorizontal: 18, depth: 4 },
   bar: { height: 8, skew: '-20deg' },
   mini: { cell: 22, radius: 5, gap: 3 },
