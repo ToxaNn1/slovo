@@ -93,11 +93,11 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     line: 'Режим, де з частин треба скласти цілий вислів.',
   },
   gameTypeWord: { name: 'Гра «Впиши слово»', line: 'Режим, де слово треба вписати самому.' },
-  gameAnagram: { name: 'Гра «Анаграми»', line: 'Режим, де із змішаних літер треба скласти слово.' },
+  gameAnagram: { name: 'Гра «Анаграми»', line: 'Режим, де зі змішаних літер треба скласти слово.' },
   gameByLetters: { name: 'Гра «За літерами»', line: 'Режим, де слово складають із наданих літер.' },
   gameOrigin: { name: 'Гра «Звідки слово»', line: 'Режим, де треба вгадати походження слова.' },
   dailyCrossword: { name: 'Щоденний кросворд', line: 'Новий кросворд щодня серед ігор.' },
-  search: { name: 'Пошук', line: 'Кнопка і екран пошуку по всіх записах.' },
+  search: { name: 'Пошук', line: 'Кнопка й екран пошуку по всіх записах.' },
   rarityTest: {
     name: 'Тест рідкісності',
     line: 'Короткий тест, що підбирає читачеві межу рідкісності слів.',
@@ -170,9 +170,9 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   },
   analyticsNps: {
     name: 'Аналітика: оцінка застосунку',
-    line: 'Рахується оцінка застосунку від 0 до 10, коли її питатимуть.',
+    line: 'Рахується оцінка застосунку від 0 до 10, коли застосунок про неї питає.',
   },
-  analyticsGames: { name: 'Аналітика: ігри', line: 'Рахуються початки й кінці ігор.' },
+  analyticsGames: { name: 'Аналітика: ігри', line: 'Рахується, коли гру почали й закінчили.' },
   calligraphy: {
     name: 'Каліграфічне слово',
     line: 'Слово дня в стрічці написане каліграфічним шрифтом видання.',
@@ -325,7 +325,7 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   },
   timedTwentySeconds: {
     name: '20 секунд на час',
-    line: 'У «На час» дається 20 секунд замість 60.',
+    line: 'У грі «На час» дають 20 секунд замість 60.',
   },
   gameRoundMascot: {
     name: 'Талісман у грі',
@@ -349,7 +349,7 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   },
   livesOverWarmup: {
     name: 'Екран «Розминка!»',
-    line: 'Коли життя скінчилися, показують «Розминка!» і кількість правильних.',
+    line: 'Коли життя скінчилися, показують екран «Розминка!» і кількість правильних відповідей.',
   },
   gameEndToFeed: {
     name: 'Кнопка «До стрічки»',
@@ -395,7 +395,7 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Запитання «Що тобі цікаво?»',
     line: 'Стрічка питає читача про його інтереси.',
   },
-  profile: { name: 'Профіль', line: 'Екран із усім прогресом читача.' },
+  profile: { name: 'Профіль', line: 'Екран з усім прогресом читача.' },
   mascot: { name: 'Талісман', line: 'Мовчазна постать видання з короткими репліками.' },
   sounds: { name: 'Звуки', line: 'Звуки інтерфейсу й налаштування «Звуки».' },
   reduceMotion: { name: 'Менше руху', line: 'Налаштування, що робить усі анімації спокійнішими.' },
@@ -477,7 +477,7 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   },
   collectionBoardStyle: {
     name: 'Добірки плитками',
-    line: 'Список добірок виглядає як сітка категорій.',
+    line: 'Список добірок має вигляд сітки категорій.',
   },
   collectionLinkCopy: {
     name: 'Копіювання посилання',
@@ -514,10 +514,10 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   readerName: { name: 'Ім’я читача', line: 'У профілі є ім’я читача в шапці та рядок «Ім’я».' },
   widgetPreviews: {
     name: 'Перегляд віджетів',
-    line: 'На екрані віджетів видно, як виглядатимуть малий, середній і блокування.',
+    line: 'На екрані віджетів видно, який вигляд матимуть малий, середній і на екрані блокування.',
   },
   textSizeSteps: {
     name: 'Розмір тексту',
-    line: 'Три розміри тексту: як у системі, більший й найбільший.',
+    line: 'Три розміри тексту: як у системі, більший і найбільший.',
   },
 };

@@ -19,6 +19,7 @@ import {
   type Cell,
 } from './switch-state';
 import { FEATURES, useSwitches } from './switches-data';
+import { SWITCH_TEXTS } from './switch-texts';
 
 const tabClass =
   'rounded-lg px-3.5 py-[7px] text-[13px] text-muted-foreground no-underline hover:text-foreground data-[status=active]:bg-surface data-[status=active]:font-semibold data-[status=active]:text-foreground data-[status=active]:shadow-panel';
@@ -140,8 +141,12 @@ export function SwitchesMatrix() {
                   }));
                   return (
                     <tr key={feature} className="border-b border-border last:border-0">
-                      <th scope="row" className="px-4 py-2 text-left font-mono text-xs font-normal">
-                        {feature}
+                      <th scope="row" className="px-4 py-2 text-left font-normal">
+                        <span className="block font-semibold">{SWITCH_TEXTS[feature].name}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {SWITCH_TEXTS[feature].line}
+                        </span>{' '}
+                        <span className="block font-mono text-[11px] text-subtle">{feature}</span>
                       </th>
                       {picked === undefined ? (
                         <td className="px-2.5 py-2">

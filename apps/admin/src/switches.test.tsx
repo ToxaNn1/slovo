@@ -6,6 +6,7 @@ import { expect, test, vi } from 'vitest';
 
 import { server } from './mock/server';
 import { Admin } from './router';
+import { SWITCH_TEXTS } from './switches/switch-texts';
 
 /** The admin API's refusal as the backend answers it. */
 const refusal = (status: number, code: string, data?: object) =>
@@ -60,11 +61,32 @@ function threeEditions() {
 
 /** The row of the feature in the matrix. */
 async function rowOf(feature: string) {
-  const header = await screen.findByRole('rowheader', { name: feature });
+  const header = await screen.findByRole('rowheader', { name: new RegExp(` ${feature}$`) });
   const row = header.closest('tr');
   if (row === null) throw new Error(`no row of ${feature}`);
   return within(row);
 }
+
+test('every row of the matrix names its feature in Ukrainian, with one line and the id', async () => {
+  threeEditions();
+  window.history.replaceState(null, '', '/admin/switches');
+  render(<Admin />);
+
+  await rowOf('game');
+  const headers = screen.getAllByRole('rowheader');
+  const features = FeatureSwitchesSchema.keyof().options;
+  expect(headers.length).toBe(features.length);
+  features.forEach((feature, index) => {
+    const { name, line } = SWITCH_TEXTS[feature];
+    const [shownName, shownLine, shownId] = Array.from(headers[index]?.children ?? []);
+    expect([shownName?.textContent, shownLine?.textContent, shownId?.textContent]).toEqual([
+      name,
+      line,
+      feature,
+    ]);
+    expect(shownId?.className).toContain('text-subtle');
+  });
+});
 
 test('the matrix counts a feature on in some Editions, and shows the exact state of one', async () => {
   threeEditions();
