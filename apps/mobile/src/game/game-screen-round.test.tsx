@@ -306,4 +306,76 @@ describe('the Game screen', () => {
       expect(screen.queryByTestId(/^mascot-/)).toBeNull();
     });
   });
+
+  describe('the board’s options (gameOptionStamp)', () => {
+    const KEYS = ['А', 'Б', 'В', 'Г'];
+    const optionsShown = () => screen.getAllByTestId(/^game-option-\d+$/);
+    const labelOf = (option: ReturnType<typeof optionsShown>[number]) =>
+      String(option.props['accessibilityLabel']);
+
+    async function play(mode: string) {
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId(mode));
+      await waitFor(() => {
+        expect(optionsShown()).toHaveLength(4);
+      });
+    }
+
+    it('draws a short option large and without a key, and stamps the right one with ✓', async () => {
+      await open({ anglicisms: 15, switchedOn: ['gameOptionStamp'] });
+      await play('game-mode-anglicism');
+
+      const { fontSize } = typeStyle('roundOptionWord', coreTokens);
+      optionsShown().forEach((option) => {
+        KEYS.forEach((key) => {
+          expect(within(option).queryByText(key)).toBeNull();
+        });
+        expect(within(option).getByText(labelOf(option))).toHaveStyle({ fontSize });
+      });
+      expect(screen.queryByTestId(/^game-option-\d+-stamp$/)).toBeNull();
+
+      const standard = `добре${String(theNumberOfThePrompt())}`;
+      const right = optionsShown().findIndex((option) => labelOf(option) === standard);
+      await fireEvent.press(screen.getByTestId(`game-option-${String(right)}`));
+
+      expect(theOption(`${standard}, Правильно`)).toBeTruthy();
+      expect(screen.getAllByTestId(/^game-option-\d+-stamp$/)).toHaveLength(1);
+      expect(screen.getByTestId(`game-option-${String(right)}-stamp`)).toBeTruthy();
+      expect(screen.queryByTestId(/^game-option-\d+-(right|wrong)-mark$/)).toBeNull();
+    });
+
+    it('keys a long option А–Г and, after a wrong pick, puts ✓ in the right one’s key, and crosses the wrong one out with ✕ in its key', async () => {
+      await open({ idioms: 15, switchedOn: ['gameOptionStamp'] });
+      await play('game-mode-idiom-meaning');
+
+      optionsShown().forEach((option, place) => {
+        expect(within(option).getByText(KEYS[place] ?? '')).toBeTruthy();
+      });
+      const standard = `The sense of idiom${String(theNumberOfThePrompt())}.`;
+      const right = optionsShown().findIndex((option) => labelOf(option) === standard);
+      const wrong = optionsShown().findIndex((option) => labelOf(option) !== standard);
+      const picked = optionsShown()[wrong];
+      if (picked === undefined) throw new Error('No wrong option');
+      await fireEvent.press(picked);
+
+      expect(screen.getByTestId(`game-option-${String(right)}-right-mark`)).toBeTruthy();
+      expect(screen.getByTestId(`game-option-${String(wrong)}-wrong-mark`)).toBeTruthy();
+      expect(screen.queryByTestId(/^game-option-\d+-stamp$/)).toBeNull();
+      expect(labelOf(picked)).toMatch(/, Твій вибір$/);
+      expect(within(picked).getByText(labelOf(picked).replace(/, Твій вибір$/, ''))).toHaveStyle({
+        textDecorationLine: 'line-through',
+      });
+    });
+
+    it('keys every option А–Г as in #1674 with its switch off', async () => {
+      await open({});
+      await play('game-mode-guess-word');
+
+      optionsShown().forEach((option, place) => {
+        expect(within(option).getByText(KEYS[place] ?? '')).toBeTruthy();
+      });
+      await fireEvent.press(screen.getByTestId('game-option-0'));
+      expect(screen.queryByTestId(/^game-option-\d+-(stamp|right-mark)$/)).toBeNull();
+    });
+  });
 });

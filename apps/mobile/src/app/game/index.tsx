@@ -66,6 +66,7 @@ function Game() {
     answerCard,
     gameQuestionOnGround,
     gameRoundMascot,
+    gameOptionStamp,
     timedTwentySeconds,
   } = useShown();
   const { colors } = useTokens();
@@ -155,6 +156,7 @@ function Game() {
           onOpenLetter={actions.openLetter}
           feedback={answerCard ? 'card' : 'sheet'}
           onGround={gameQuestionOnGround}
+          optionStamp={gameOptionStamp}
           mascot={
             gameRoundMascot
               ? ({ state, width }) => <MascotAs state={state} width={width} />

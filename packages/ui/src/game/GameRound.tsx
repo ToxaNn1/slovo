@@ -59,6 +59,7 @@ export function GameRound({
   streak,
   feedback = 'sheet',
   onGround = false,
+  optionStamp = false,
   mascot,
 }: {
   game: CurrentGame;
@@ -80,6 +81,8 @@ export function GameRound({
   feedback?: 'sheet' | 'card';
   /** Whether the question stands on the background (`gameQuestionOnGround`); on its card, as in spec #1674, if not. */
   onGround?: boolean;
+  /** Whether the options take the board's look (`gameOptionStamp`): short ones keyless with a ✓ stamp, ✓ and ✕ keys, the wrong text crossed out; keyed as in spec #1674 if not. */
+  optionStamp?: boolean;
   /** Draws the Mascot beside the question in a state at a width (`gameRoundMascot`); no Mascot if none. */
   mascot?: ((look: { state: MascotState; width: number }) => ReactNode) | undefined;
 }) {
@@ -109,6 +112,7 @@ export function GameRound({
   const card = cardOf(game.modeId, round, asked.prompt, strings.game.round.prompts);
   const look = {
     onGround,
+    optionStamp,
     textFace: TEXT_FACED.has(game.modeId),
     mascot: mascot?.({ state: mascotState(answer, game.lives), width: roundMascotWidth }),
   };

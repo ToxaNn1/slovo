@@ -125,6 +125,21 @@ export const answerOption = {
 } as const;
 
 /**
+ * A pick Round's option in the board's look (D6, `gameOptionStamp`): the
+ * most characters a short, keyless option has; how much the options left
+ * out of the answer fade and how far a wrong choice drops; and the round ✓
+ * stamp on a right short option (its side, border and the side of its ✓) and
+ * the side of the ✓ on a right long option's key.
+ */
+export const answerOptionStamp = {
+  shortMost: 14,
+  dimmedOpacity: 0.45,
+  drop: 3,
+  stamp: { side: 30, border: 2, mark: 14 },
+  rightMark: 14,
+} as const;
+
+/**
  * The Daily Crossword's red card on the mode screen, from the design: its
  * padding, the gap between its grid and its lines and between its lines, the
  * gap over the state, and the small grid's cell (side, corner, edge) and gap.
