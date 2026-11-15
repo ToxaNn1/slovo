@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { FeatureSwitch, InterfaceSound, UserStateFact } from '@slovo/core';
 import { seedUserState } from '@slovo/core/testing';
-import { EditionProvider, InterfaceSoundsProvider } from '@slovo/ui';
+import { EditionProvider, InterfaceSoundsProvider, ReduceMotionProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -29,7 +29,12 @@ let played: InterfaceSound[] = [];
 async function renderScreen({
   switchedOff,
   xpLog,
-}: { switchedOff?: FeatureSwitch; xpLog?: UserStateFact<'xpLog'> } = {}) {
+  reduceMotion = false,
+}: {
+  switchedOff?: FeatureSwitch;
+  xpLog?: UserStateFact<'xpLog'>;
+  reduceMotion?: boolean;
+} = {}) {
   played = [];
   const composition = await testShell(
     xpLog === undefined ? {} : { userState: opened(await seedUserState({ xpLog })) },
@@ -47,9 +52,11 @@ async function renderScreen({
         })}
       >
         <EditionProvider edition={edition} strings={editionStrings}>
-          <InterfaceSoundsProvider sounds={{ play: (sound) => played.push(sound) }}>
-            <BadgesScreen />
-          </InterfaceSoundsProvider>
+          <ReduceMotionProvider reduceMotion={reduceMotion}>
+            <InterfaceSoundsProvider sounds={{ play: (sound) => played.push(sound) }}>
+              <BadgesScreen />
+            </InterfaceSoundsProvider>
+          </ReduceMotionProvider>
         </EditionProvider>
       </ShellProvider>
     </SafeAreaProvider>,
@@ -249,6 +256,27 @@ describe('the Badges screen', () => {
     expect(screen.queryByTestId('badge-win-words-mark-new')).toBeNull();
     expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.line)).toBeNull();
   });
+
+  // Ticket #1918: decision 13, the stamp of XBadges «Штамп»; Reduce Motion fades it in only.
+  it.each([false, true])(
+    'stamps the ribbon «ТЕПЕР ТВОЯ», shaking and flying only without Reduce Motion (%s)',
+    async (reduceMotion) => {
+      const composition = await renderScreen({ reduceMotion });
+      await earnWinWords(composition);
+      await act(async () => {
+        await fireEvent.press(screen.getByTestId('badge-win-words'));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      const { ribbon } = editionStrings.settings.profile.badgeStamp;
+      expect(screen.getByText(ribbon)).toBeOnTheScreen();
+      const moving = ['badge-stamp-shake', 'badge-stamp-ribbon-flight', 'badge-stamp-ring'];
+      for (const id of moving) {
+        if (reduceMotion) expect(screen.queryByTestId(id)).toBeNull();
+        else expect(screen.getByTestId(id)).toBeOnTheScreen();
+      }
+    },
+  );
 
   it('opens the sheet with its date, and no stamp, toast or shout, at a tap on an opened Badge', async () => {
     const composition = await renderScreen();
