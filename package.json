@@ -37,11 +37,11 @@
     "@commitlint/config-conventional": "^21.2.4",
     "@slovo/config": "workspace:*",
     "dependency-cruiser": "^18.7.2",
-    "knip": "^6.44.1",
-    "oxlint": "~1.91.0",
-    "prettier": "^3.9.10",
+    "knip": "^6.45.1",
+    "oxlint": "~1.93.0",
+    "prettier": "^3.10.1",
     "railway": "3.16.0",
-    "turbo": "^2.11.10",
+    "turbo": "^2.11.11",
     "typescript": "~6.0.3"
   }
 }
