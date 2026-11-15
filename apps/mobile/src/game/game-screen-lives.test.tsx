@@ -84,8 +84,8 @@ describe('the Games boards’ Lives and time (ADR 0137)', () => {
       await waitFor(() => {
         expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
       });
-      expect(screen.getByText('Фініш')).toBeOnTheScreen();
-      expect(screen.queryByText('Час!')).toBeNull();
+      expect(screen.getByText('ФІНІШ')).toBeOnTheScreen();
+      expect(screen.queryByText('ЧАС!')).toBeNull();
       expect(screen.getByText('1 з 1 влучання')).toBeOnTheScreen();
     });
 
@@ -99,8 +99,8 @@ describe('the Games boards’ Lives and time (ADR 0137)', () => {
       await waitFor(() => {
         expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
       });
-      expect(screen.getByText('Час!')).toBeOnTheScreen();
-      expect(screen.queryByText('Фініш')).toBeNull();
+      expect(screen.getByText('ЧАС!')).toBeOnTheScreen();
+      expect(screen.queryByText('ФІНІШ')).toBeNull();
     });
   });
 });
