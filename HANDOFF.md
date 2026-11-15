@@ -8,12 +8,13 @@ Graph: 1910,1912 → 1911(1910) 1913(1910) 1915(1910) 1919(1910) → 1914(1912,1
 Inputs: reports/ (owner decisions 1–24 + comparison reports), HANDBOOK-profil.md (owner's handbook page copy).
 Never end your turn while work remains; push a `WAITING until <UTC>` line here before any wait >10 min. At the very end: `STATUS: FINISHED` first line.
 ## State
-- feat/1909-profile-walkthrough 0ca3056ce: origin/main 1468a3269, #1910, #1912 merged. Draft PR #1923.
-- 16:14–16:20Z DONE #1911 #1915 #1919, STUCK #1913 (ui done; two app tests in badges-screen.test.tsx expected old symbol/checker): one merger merges all four (authors fixed, local tips 578849d2 5293321 221e1d5f cef23e80) and fixes those two tests.
-- Next after that merge: launch #1914 #1916 #1917 #1920 (briefs ready on the laptop), then #1918 (1917), then #1921 (local).
+- feat/1909-profile-walkthrough 26f06f5b2 (pushed): main 1468a3269, #1910 #1912 #1911 #1913 #1915 #1919 merged (+ test fix for #1913). Draft PR #1923, body has Closes + checks + texts.
+- Running in the cloud (16:55Z): #1914 feat/1914-badges-families (alone on edition.json/contracts switch/CONTEXT.md), #1916 feat/1916-profile-order, #1917 feat/1917-badge-tap-routing, #1920 feat/1920-new-level-screen.
+- Next: #1918 after #1917; #1921 (laptop visual pass + handbook + owner checks) after all; then code-review, one fixer, PR ready (no main merge).
 - Cloud merge commits came with a foreign email: replay with ~/.slovo-coord/profile-1909/fix-authors.sh <integration> <ticket tip> (commit-tree, same trees; no force-push), merge the printed tip.
 - Handbook page профіль-і-бейджі: updated in #1921 from all merged reports (copy HANDBOOK-profil.md).
 ## Log
 - 15.11 ~16:05Z wave started; #1910 #1912 launched in the cloud.
 - 15.11 ~16:35Z #1910 merged (ADR renumbered 0145), PR #1923 draft; launched #1911 #1913 #1915 #1919.
 - 15.11 ~16:25Z #1912 merged 0ca3056ce (checks green). ~16:35Z merger on #1911 #1913 #1915 #1919.
+- 15.11 ~16:55Z merged #1911 #1913 #1915 #1919 (26f06f5b2, checks green); launched #1914 #1916 #1917 #1920.
