@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test } from 'vitest';
 
 import { CONTENT_KINDS } from './components/content-editor/kinds';
 import { FIXTURES, WORD_FIELDS } from './mock/fixtures';
@@ -440,4 +440,34 @@ test('a stale answer whose re-read fails says the save did not go through', asyn
 
   await user.click(screen.getByRole('button', { name: 'Зберегти' }));
   expect(await screen.findByText('Не вдалося. Спробуйте ще раз.')).toBeDefined();
+});
+
+afterEach(() => {
+  Reflect.deleteProperty(window, 'matchMedia');
+  Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+});
+
+test('on a narrow screen the open record sits under the list, and opening one scrolls to it', async () => {
+  const scrolled: Element[] = [];
+  // A desk-wide screen, narrower than the editor's side by side.
+  window.matchMedia = (media: string) =>
+    Object.assign(new EventTarget(), {
+      matches: !media.includes('1280px'),
+      media,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+    });
+  Element.prototype.scrollIntoView = function (this: Element) {
+    scrolled.push(this);
+  };
+  const user = userEvent.setup();
+  render(<Admin />);
+  expect(await screen.findByText('Оберіть запис у списку або натисніть «Додати».')).toBeTruthy();
+
+  await user.click(await screen.findByRole('button', { name: 'обруч' }));
+
+  const form = await screen.findByLabelText('Лема');
+  expect(scrolled).toHaveLength(1);
+  expect(scrolled[0]?.contains(form)).toBe(true);
 });

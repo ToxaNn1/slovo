@@ -18,7 +18,8 @@ import {
   withEveryone,
   type Cell,
 } from './switch-state';
-import { FEATURES, useSwitches } from './switches-data';
+import { GROUPED_FEATURES, SWITCH_GROUPS } from './switch-groups';
+import { useSwitches } from './switches-data';
 import { SWITCH_TEXTS } from './switch-texts';
 
 const tabClass =
@@ -131,51 +132,62 @@ export function SwitchesMatrix() {
               ))}
             </tr>
           </thead>
-          <tbody>
-            {!ready || editions.length === 0
-              ? null
-              : FEATURES.map((feature) => {
-                  const cells = columns.map(({ edition, answer }) => ({
-                    edition,
-                    cell: cellOf(answer, feature),
-                  }));
-                  return (
-                    <tr key={feature} className="border-b border-border last:border-0">
-                      <th scope="row" className="px-4 py-2 text-left font-normal">
-                        <span className="block font-semibold">{SWITCH_TEXTS[feature].name}</span>
-                        <span className="block text-xs text-muted-foreground">
-                          {SWITCH_TEXTS[feature].line}
-                        </span>{' '}
-                        <span className="block font-mono text-[11px] text-subtle">{feature}</span>
-                      </th>
-                      {picked === undefined ? (
-                        <td className="px-2.5 py-2">
-                          <SummaryPill cells={cells.map(({ cell }) => cell)} />
-                        </td>
-                      ) : null}
-                      {cells.map(({ edition, cell }) => (
-                        <td key={edition.id} className="px-2.5 py-2">
-                          <CellView
-                            feature={feature}
-                            edition={edition}
-                            cell={cell}
-                            exact={picked !== undefined}
-                            onToggle={(on) => {
-                              setPending({ feature, edition, on });
-                            }}
-                            onRules={() => {
-                              void navigate({
-                                to: '/switches/rule',
-                                search: (previous) => ({ ...previous, feature }),
-                              });
-                            }}
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-          </tbody>
+          {!ready || editions.length === 0
+            ? null
+            : GROUPED_FEATURES.map(({ group, features }) => (
+                <tbody key={group}>
+                  <tr className="border-b border-border bg-sunk">
+                    <th
+                      scope="colgroup"
+                      colSpan={columns.length + (picked === undefined ? 2 : 1)}
+                      className="px-4 py-2 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                    >
+                      {`${SWITCH_GROUPS[group]} · ${String(features.length)}`}
+                    </th>
+                  </tr>
+                  {features.map((feature) => {
+                    const cells = columns.map(({ edition, answer }) => ({
+                      edition,
+                      cell: cellOf(answer, feature),
+                    }));
+                    return (
+                      <tr key={feature} className="border-b border-border last:border-0">
+                        <th scope="row" className="px-4 py-2 text-left font-normal">
+                          <span className="block font-semibold">{SWITCH_TEXTS[feature].name}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            {SWITCH_TEXTS[feature].line}
+                          </span>{' '}
+                          <span className="block font-mono text-[11px] text-subtle">{feature}</span>
+                        </th>
+                        {picked === undefined ? (
+                          <td className="px-2.5 py-2">
+                            <SummaryPill cells={cells.map(({ cell }) => cell)} />
+                          </td>
+                        ) : null}
+                        {cells.map(({ edition, cell }) => (
+                          <td key={edition.id} className="px-2.5 py-2">
+                            <CellView
+                              feature={feature}
+                              edition={edition}
+                              cell={cell}
+                              exact={picked !== undefined}
+                              onToggle={(on) => {
+                                setPending({ feature, edition, on });
+                              }}
+                              onRules={() => {
+                                void navigate({
+                                  to: '/switches/rule',
+                                  search: (previous) => ({ ...previous, feature }),
+                                });
+                              }}
+                            />
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              ))}
         </table>
       </div>
       <span className="text-[12.5px] text-subtle">
