@@ -106,25 +106,13 @@ describe('the Badges screen', () => {
     for (const { id } of edition.badges)
       expect(screen.getByTestId(`badge-${id}-condition`)).toBeVisible();
     expect(screen.getByTestId('badge-streak-7-condition')).toHaveTextContent('7 днів поспіль');
-    expect(screen.getByTestId('badge-confirmed-50-condition')).toHaveTextContent(
-      '50 підтверджених записів',
-    );
-    expect(screen.getByTestId('badge-crossword-7-condition')).toHaveTextContent(
-      '7 щоденних кросвордів поспіль',
-    );
-    expect(screen.getByTestId('badge-level-10-condition')).toHaveTextContent('Рівень 10');
-    expect(screen.getByTestId('badge-rarity-5-condition')).toHaveTextContent(
-      'Правильна відповідь на слово рідкості 5',
-    );
-    const title = (mode: string) => editionStrings.game.modes[mode]?.title ?? '';
+    expect(screen.getByTestId('badge-confirmed-50-condition')).toHaveTextContent('50 слів «Знаю»');
     expect(screen.getByTestId('badge-win-corrections-condition')).toHaveTextContent(
-      `Перша перемога: ${title('correction')}, ${title('anglicism')}`,
+      'Виграй гру з виправлень',
     );
-    expect(screen.getByTestId('badge-clean-language-condition')).toHaveTextContent(
-      `Гра без жодної помилки: ${title('correction')}, ${title('anglicism')}`,
-    );
+    expect(screen.getByTestId('badge-level-10-condition')).toHaveTextContent('Досягни рівня 10');
     expect(screen.getByTestId('badge-true-stress-condition')).toHaveTextContent(
-      `10 правильних відповідей поспіль: ${title('stress')}`,
+      '10 наголосів поспіль без помилок',
     );
   });
 
@@ -172,6 +160,7 @@ describe('the Badges screen', () => {
     const sheet = screen.getByTestId('badge-sheet');
     expect(within(sheet).getByText(strings.sheet.kicker)).toBeOnTheScreen();
     expect(within(sheet).getByRole('header')).toHaveTextContent(nameOf('streak-3'));
+    expect(screen.getByTestId('badge-sheet-condition')).toHaveTextContent('3 дні поспіль');
     expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent('Ще ні · 0 з 3 днів');
     expect(screen.queryByText(/не твоя/)).not.toBeOnTheScreen();
     expect(played).toEqual([]);
@@ -194,6 +183,7 @@ describe('the Badges screen', () => {
 
     const sheet = screen.getByTestId('badge-sheet');
     expect(within(sheet).getByRole('header')).toHaveTextContent(nameOf('win-words'));
+    expect(screen.getByTestId('badge-sheet-condition')).toHaveTextContent('Виграй гру зі словами');
     expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent('Отримано 13 жовтня');
     expect(screen.getByTestId('badge-sheet-mark-symbol')).toHaveTextContent('Сл');
     expect(played).toEqual(['shout']);

@@ -575,42 +575,42 @@
     {
       "id": "streak",
       "name": "Серія",
-      "description": "Дні поспіль, коли слово відкрито й ціль виконано.",
+      "description": "Дні поспіль, коли ціль дня виконано.",
       "shape": "hexagon",
       "tone": "red"
     },
     {
       "id": "confirmed",
       "name": "Підтверджені",
-      "description": "Слова й вислови, які ви довели, що знаєте.",
+      "description": "Слова й вислови, які ти точно знаєш.",
       "shape": "shield",
       "tone": "ink"
     },
     {
       "id": "first-wins",
       "name": "Перші перемоги",
-      "description": "Перша виграна гра в кожному виді.",
+      "description": "Перша виграна гра в словах, виправленнях, висловах, наголосі й виживанні.",
       "shape": "circle",
       "tone": "red"
     },
     {
       "id": "crossword",
       "name": "Кросворд",
-      "description": "Щоденні кросворди без пропусків.",
+      "description": "Кросворд дня, розв’язаний кілька днів поспіль.",
       "shape": "checker",
       "tone": "cream"
     },
     {
       "id": "levels",
       "name": "Рівні",
-      "description": "Рівні, до яких ви дійшли.",
+      "description": "Рівні, які вже позаду.",
       "shape": "wedge",
       "tone": "ink"
     },
     {
       "id": "mastery",
       "name": "Майстерність",
-      "description": "Влучність, чистота й рідкісні слова.",
+      "description": "Особливі влучання, не пов’язані з кількістю.",
       "shape": "diamond",
       "tone": "red"
     }
@@ -624,7 +624,8 @@
       "condition": {
         "kind": "streak",
         "days": 3
-      }
+      },
+      "conditionText": "3 дні поспіль"
     },
     {
       "id": "streak-7",
@@ -634,7 +635,8 @@
       "condition": {
         "kind": "streak",
         "days": 7
-      }
+      },
+      "conditionText": "7 днів поспіль"
     },
     {
       "id": "streak-30",
@@ -644,7 +646,8 @@
       "condition": {
         "kind": "streak",
         "days": 30
-      }
+      },
+      "conditionText": "30 днів поспіль"
     },
     {
       "id": "streak-100",
@@ -654,7 +657,8 @@
       "condition": {
         "kind": "streak",
         "days": 100
-      }
+      },
+      "conditionText": "100 днів поспіль"
     },
     {
       "id": "streak-365",
@@ -664,7 +668,8 @@
       "condition": {
         "kind": "streak",
         "days": 365
-      }
+      },
+      "conditionText": "365 днів поспіль"
     },
     {
       "id": "confirmed-10",
@@ -674,7 +679,8 @@
       "condition": {
         "kind": "confirmedEntries",
         "entries": 10
-      }
+      },
+      "conditionText": "10 слів «Знаю»"
     },
     {
       "id": "confirmed-50",
@@ -684,7 +690,8 @@
       "condition": {
         "kind": "confirmedEntries",
         "entries": 50
-      }
+      },
+      "conditionText": "50 слів «Знаю»"
     },
     {
       "id": "confirmed-100",
@@ -694,7 +701,8 @@
       "condition": {
         "kind": "confirmedEntries",
         "entries": 100
-      }
+      },
+      "conditionText": "100 слів «Знаю»"
     },
     {
       "id": "confirmed-500",
@@ -704,7 +712,8 @@
       "condition": {
         "kind": "confirmedEntries",
         "entries": 500
-      }
+      },
+      "conditionText": "500 слів «Знаю»"
     },
     {
       "id": "win-words",
@@ -714,47 +723,52 @@
       "condition": {
         "kind": "gameWin",
         "modes": ["guess-word", "type-word", "by-letters", "anagram", "origin", "pairs"]
-      }
+      },
+      "conditionText": "Виграй гру зі словами"
     },
     {
       "id": "win-corrections",
-      "name": "Перша перемога в суржику",
-      "symbol": "Сж",
+      "name": "Перша перемога у виправленнях",
+      "symbol": "Вп",
       "family": "first-wins",
       "condition": {
         "kind": "gameWin",
         "modes": ["correction", "anglicism"]
-      }
+      },
+      "conditionText": "Виграй гру з виправлень"
     },
     {
       "id": "win-idioms",
-      "name": "Перша перемога у фразеологізмах",
-      "symbol": "Фр",
+      "name": "Перша перемога у висловах",
+      "symbol": "Вс",
       "family": "first-wins",
       "condition": {
         "kind": "gameWin",
         "modes": ["build-idiom"]
-      }
+      },
+      "conditionText": "Виграй «Склади вислів»"
     },
     {
       "id": "win-stress",
-      "name": "Перша перемога в наголосах",
+      "name": "Перша перемога в наголосі",
       "symbol": "А́",
       "family": "first-wins",
       "condition": {
         "kind": "gameWin",
         "modes": ["stress"]
-      }
+      },
+      "conditionText": "Виграй «Наголос»"
     },
     {
       "id": "win-challenge",
-      "name": "Перша перемога у випробуваннях",
+      "name": "Перша перемога у виживанні",
       "symbol": "!",
       "family": "first-wins",
       "condition": {
         "kind": "gameWin",
         "modes": ["survival"]
-      }
+      },
+      "conditionText": "Пройди «Виживання»"
     },
     {
       "id": "crossword-7",
@@ -765,7 +779,8 @@
       "condition": {
         "kind": "dailyCrosswordRun",
         "days": 7
-      }
+      },
+      "conditionText": "Кросворд дня 7 днів поспіль"
     },
     {
       "id": "rarity-5",
@@ -775,7 +790,8 @@
       "condition": {
         "kind": "rightOnRarity",
         "rarity": 5
-      }
+      },
+      "conditionText": "Слово з рідкістю 5/5"
     },
     {
       "id": "level-5",
@@ -785,7 +801,8 @@
       "condition": {
         "kind": "level",
         "level": 5
-      }
+      },
+      "conditionText": "Досягни рівня 5"
     },
     {
       "id": "level-10",
@@ -795,7 +812,8 @@
       "condition": {
         "kind": "level",
         "level": 10
-      }
+      },
+      "conditionText": "Досягни рівня 10"
     },
     {
       "id": "level-20",
@@ -805,7 +823,8 @@
       "condition": {
         "kind": "level",
         "level": 20
-      }
+      },
+      "conditionText": "Досягни рівня 20"
     },
     {
       "id": "clean-language",
@@ -815,7 +834,8 @@
       "condition": {
         "kind": "flawlessGame",
         "modes": ["correction", "anglicism"]
-      }
+      },
+      "conditionText": "Гра з виправлень без помилок"
     },
     {
       "id": "true-stress",
@@ -826,7 +846,8 @@
         "kind": "rightRun",
         "modes": ["stress"],
         "count": 10
-      }
+      },
+      "conditionText": "10 наголосів поспіль без помилок"
     }
   ],
   "mascot": {

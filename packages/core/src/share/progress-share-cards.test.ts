@@ -31,6 +31,7 @@ const badges: readonly Badge[] = [
     name: 'Three days',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'streak', days: 3 },
   },
 ];

@@ -1,5 +1,3 @@
-import type { Plural } from '@slovo/contracts';
-import type { BadgeState } from '@slovo/core';
 import {
   BackLink,
   BadgeGrid,
@@ -15,42 +13,11 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
-import { useBadgeOpening, useBadgeStatus } from './badge-opening';
+import { conditionOf, useBadgeOpening, useBadgeStatus } from './badge-opening';
 import { edition, editionStrings } from '../edition/edition';
 import { useSubscribed } from '../opening';
 
 const strings = editionStrings.settings.badges;
-
-/** The names of `modes`, joined by the list's commas. */
-const modeNames = (modes: readonly string[]) =>
-  modes.map((mode) => editionStrings.game.modes[mode]?.title ?? mode).join(', ');
-
-/** What a Badge's condition asks, in the Edition's words (ADR 0085). */
-function conditionText({ condition }: BadgeState, count: (forms: Plural, n: number) => string) {
-  const words = strings.conditions;
-  switch (condition.kind) {
-    case 'streak':
-      return count(words.streak, condition.days);
-    case 'confirmedEntries':
-      return count(words.confirmedEntries, condition.entries);
-    case 'gameWin':
-      return fill(words.gameWin, { modes: modeNames(condition.modes) });
-    case 'dailyCrosswordRun':
-      return count(words.dailyCrosswordRun, condition.days);
-    case 'rightAnswers':
-      return fill(count(words.rightAnswers, condition.count), {
-        modes: modeNames(condition.modes),
-      });
-    case 'rightOnRarity':
-      return fill(words.rightOnRarity, { rarity: String(condition.rarity) });
-    case 'level':
-      return fill(words.level, { level: String(condition.level) });
-    case 'flawlessGame':
-      return fill(words.flawlessGame, { modes: modeNames(condition.modes) });
-    case 'rightRun':
-      return fill(count(words.rightRun, condition.count), { modes: modeNames(condition.modes) });
-  }
-}
 
 /**
  * Every Badge of the Edition as its mark, in a grid by the Edition's Badge
@@ -61,7 +28,7 @@ function conditionText({ condition }: BadgeState, count: (forms: Plural, n: numb
 function Badges() {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { voice, count } = useEdition();
+  const { voice } = useEdition();
   const badges = useSubscribed(useComposition().badges, ({ state }) => state);
   const { statusOf } = useBadgeStatus();
   const { onPress, opening } = useBadgeOpening();
@@ -83,7 +50,7 @@ function Badges() {
         badges={badges}
         size="screen"
         statusOf={statusOf}
-        conditionOf={(badge) => conditionText(badge, count)}
+        conditionOf={conditionOf}
         onPress={onPress}
       />
       {opening}

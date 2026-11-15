@@ -703,8 +703,9 @@ export type BadgeFamily = z.infer<typeof BadgeFamilySchema>;
 /**
  * A Badge the Edition chooses (ADR 0066): its id, its name, the short symbol
  * its mark shows (at most three characters), the id of its Badge family
- * (ADR 0085), its condition from the catalogue and, optionally, its stamp's
- * kicker (ADR 0087).
+ * (ADR 0085), its condition from the catalogue, the short line that words
+ * that condition for the reader and, optionally, its stamp's kicker
+ * (ADR 0087).
  */
 export const BadgeSchema = z.strictObject({
   id: KebabCaseIdSchema,
@@ -712,6 +713,8 @@ export const BadgeSchema = z.strictObject({
   symbol: TextSchema.max(3),
   family: KebabCaseIdSchema,
   condition: BadgeConditionSchema,
+  /** What its condition asks, in a few words under its mark and in its sheet, e.g. «Виграй «Наголос»». */
+  conditionText: TextSchema,
   /** The line over the Badge's name on its full-screen stamp, e.g. «7 ПОСПІЛЬ»; left out, none (ADR 0087). */
   stampKicker: TextSchema.optional(),
 });

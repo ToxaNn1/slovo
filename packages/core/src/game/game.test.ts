@@ -3055,6 +3055,7 @@ describe('the Game and the Badges', () => {
     name: 'Flawless',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'flawlessGame', modes: ['guess-word'] },
   };
   const run14: Badge = {
@@ -3062,6 +3063,7 @@ describe('the Game and the Badges', () => {
     name: 'Fourteen in a row',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'rightRun', modes: ['guess-word'], count: 14 },
   };
   /** A clock a second on at each reading, so the answers come in order. */

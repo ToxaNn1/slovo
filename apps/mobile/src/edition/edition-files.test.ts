@@ -1200,6 +1200,27 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
     expect(texts.filter(([, text]) => vy.test(text))).toEqual([]);
   });
 
+  it('has no «ви» form in its Badge texts or the stamp ribbon', () => {
+    const config = EditionConfigSchema.parse(readJson('uk', 'config'));
+    const strings = EditionStringsSchema.parse(readJson('uk', 'strings'));
+    const texts: [string, string][] = [
+      ...textsOf(config.badgeFamilies, 'badgeFamilies'),
+      ...textsOf(config.badges, 'badges'),
+      ['settings.profile.badgeStamp.ribbon', strings.settings.profile.badgeStamp.ribbon],
+    ];
+
+    expect(texts.map(([path]) => path)).toEqual(
+      expect.arrayContaining([
+        'badgeFamilies.1.description',
+        'badges.0.conditionText',
+        'settings.profile.badgeStamp.ribbon',
+      ]),
+    );
+    expect(texts.filter(([, text]) => vy.test(text))).toEqual([]);
+    expect(vy.test('Слова й вислови, які ви довели, що знаєте.')).toBe(true);
+    expect(vy.test('ТЕПЕР ВАША')).toBe(true);
+  });
+
   it('tells a «ви» form from a «ти» one', () => {
     const vyTexts = ['Оберіть колекцію', 'Чи знаєте ви?', 'Ваш!', 'Торкніться', 'коли торкнетеся'];
     const tyTexts = ['Обери колекцію', 'Чи знаєш ти?', 'Твій!', 'Торкнися', 'навіть відкрите'];
@@ -2093,3 +2114,91 @@ function contrast(first: Rgb, second: Rgb): number {
   const [light, dark] = [luminance(first), luminance(second)].sort((a, b) => b - a);
   return ((light ?? 0) + 0.05) / ((dark ?? 0) + 0.05);
 }
+
+describe('the Badge texts', () => {
+  it.each(editions)('the %s Edition gives every Badge its short condition', (edition) => {
+    const config = readJson(edition, 'config') as { badges: Record<string, unknown>[] };
+    const [first, ...rest] = config.badges;
+    if (first === undefined) return;
+    const { conditionText: _removed, ...without } = first;
+
+    expect(
+      EditionConfigSchema.safeParse({ ...config, badges: [without, ...rest] }).error?.issues.map(
+        (issue) => issue.path.join('.'),
+      ),
+    ).toEqual(['badges.0.conditionText']);
+  });
+
+  it('the UA Edition words every condition as the board does', () => {
+    const { badges } = EditionConfigSchema.parse(readJson('uk', 'config'));
+
+    expect(Object.fromEntries(badges.map(({ id, conditionText }) => [id, conditionText]))).toEqual({
+      'streak-3': '3 дні поспіль',
+      'streak-7': '7 днів поспіль',
+      'streak-30': '30 днів поспіль',
+      'streak-100': '100 днів поспіль',
+      'streak-365': '365 днів поспіль',
+      'confirmed-10': '10 слів «Знаю»',
+      'confirmed-50': '50 слів «Знаю»',
+      'confirmed-100': '100 слів «Знаю»',
+      'confirmed-500': '500 слів «Знаю»',
+      'win-words': 'Виграй гру зі словами',
+      'win-corrections': 'Виграй гру з виправлень',
+      'win-idioms': 'Виграй «Склади вислів»',
+      'win-stress': 'Виграй «Наголос»',
+      'win-challenge': 'Пройди «Виживання»',
+      'crossword-7': 'Кросворд дня 7 днів поспіль',
+      'rarity-5': 'Слово з рідкістю 5/5',
+      'level-5': 'Досягни рівня 5',
+      'level-10': 'Досягни рівня 10',
+      'level-20': 'Досягни рівня 20',
+      'clean-language': 'Гра з виправлень без помилок',
+      'true-stress': '10 наголосів поспіль без помилок',
+    });
+  });
+
+  it('the UA Edition names the first wins as agreed and keeps their Game Modes', () => {
+    const { badges } = EditionConfigSchema.parse(readJson('uk', 'config'));
+
+    expect(
+      badges
+        .filter(({ family }) => family === 'first-wins')
+        .map(({ id, name, symbol, condition }) => ({ id, name, symbol, condition })),
+    ).toEqual([
+      {
+        id: 'win-words',
+        name: 'Перша перемога в словах',
+        symbol: 'Сл',
+        condition: {
+          kind: 'gameWin',
+          modes: ['guess-word', 'type-word', 'by-letters', 'anagram', 'origin', 'pairs'],
+        },
+      },
+      {
+        id: 'win-corrections',
+        name: 'Перша перемога у виправленнях',
+        symbol: 'Вп',
+        condition: { kind: 'gameWin', modes: ['correction', 'anglicism'] },
+      },
+      {
+        id: 'win-idioms',
+        name: 'Перша перемога у висловах',
+        symbol: 'Вс',
+        condition: { kind: 'gameWin', modes: ['build-idiom'] },
+      },
+      {
+        id: 'win-stress',
+        name: 'Перша перемога в наголосі',
+        // The Cyrillic А with a combining acute, not the Latin Á.
+        symbol: 'А́',
+        condition: { kind: 'gameWin', modes: ['stress'] },
+      },
+      {
+        id: 'win-challenge',
+        name: 'Перша перемога у виживанні',
+        symbol: '!',
+        condition: { kind: 'gameWin', modes: ['survival'] },
+      },
+    ]);
+  });
+});

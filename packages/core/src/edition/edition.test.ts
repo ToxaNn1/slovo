@@ -260,6 +260,7 @@ const validConfig = {
       name: 'Week',
       symbol: '1',
       family: 'run',
+      conditionText: '7 days in a row',
       condition: { kind: 'streak', days: 7 },
     },
     {
@@ -267,6 +268,7 @@ const validConfig = {
       name: 'Sharp stress',
       symbol: '1',
       family: 'skill',
+      conditionText: '100 right stresses',
       condition: { kind: 'rightAnswers', modes: ['stress'], count: 100 },
     },
   ],

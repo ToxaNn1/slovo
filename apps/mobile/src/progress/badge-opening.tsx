@@ -16,6 +16,10 @@ const familyOf = ({ family }: BadgeState) => edition.badgeFamilies.find(({ id })
 /** The shape of a Badge's family. */
 export const shapeOf = (badge: BadgeState) => familyOf(badge)?.shape ?? 'circle';
 
+/** What a Badge's condition asks, in the Edition's short words (ADR 0085). */
+export const conditionOf = ({ id }: BadgeState) =>
+  edition.badges.find((badge) => badge.id === id)?.conditionText ?? '';
+
 /** The progress forms of an unearned Badge's condition; none for a condition of one first time. */
 function progressForms({ condition }: BadgeState) {
   switch (condition.kind) {
@@ -116,6 +120,7 @@ export function useBadgeOpening(): {
                 ...sheeted,
                 shape: family?.shape ?? 'circle',
                 tone: family?.tone ?? 'ink',
+                condition: conditionOf(sheeted),
                 status: sheetStatusOf(sheeted),
               }
         }
