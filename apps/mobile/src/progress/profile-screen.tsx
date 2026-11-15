@@ -23,8 +23,10 @@ import {
   Button,
   space,
   typeStyle,
+  UndoToastProvider,
   useEdition,
   useTokens,
+  useUndoToast,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useEffect, useReducer, useState } from 'react';
@@ -46,20 +48,30 @@ import { dayText } from './day-text';
 const strings = editionStrings.settings.profile;
 
 /**
- * The Profile tab, as the board: the reader's whole progress in one place:
- * the Level card (its ring, its name, the XP to the next and all XP), the
- * giant Streak and the Best Streak, the Active Days calendar, the Badges as
- * marks by family (each opened at a tap), the confirmed
- * Entries by rarity and each Game Mode's Best result while their Feature
- * Switches are, with a button that
- * shares the Level. A reader with an Account to offer and none signed in sees
- * the offer to save progress at the top.
+ * The Profile tab, as the board (ADR 0145): the title, the Level card (its
+ * ring, its name, the XP to the next), the giant Streak and the Best Streak,
+ * the Active Days calendar, whose day tapped shows its text in a toast, and
+ * the Badges as marks by family (each opened at a tap). Below them the blocks
+ * the board does not draw, each behind its Feature Switch: the reader's name
+ * header, the Level ladder, the share of the Level, the Break card while a
+ * Break runs, the Streak freeze card, the offer to save progress while no one
+ * is signed in, the confirmed Entries by rarity and each Game Mode's Best.
  */
 export function ProfileScreen() {
+  return (
+    <UndoToastProvider>
+      <ProfileBlocks />
+    </UndoToastProvider>
+  );
+}
+
+/** The Profile's blocks, over the toasts their taps show. */
+function ProfileBlocks() {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
   const router = useRouter();
+  const toast = useUndoToast();
   const composition = useComposition();
   const xp = useSubscribed(composition.xpLog, ({ state }) => state);
   const streakBreak = useSubscribed(composition.streakBreak, ({ state }) => state);
@@ -122,28 +134,13 @@ export function ProfileScreen() {
             }}
           />
         </View>
-        {account !== undefined && (
-          <SaveProgressOffer
-            opening={account}
-            onSave={() => {
-              router.push('/settings/account');
-            }}
-          />
-        )}
-        <ReaderNameHead
-          level={
-            shown.xpBar && level !== undefined
-              ? fill(strings.headerLevel, { level: String(level.level), name: level.name })
-              : undefined
-          }
-        />
         {shown.xpBar && level !== undefined && (
           <View style={styles.section}>
             <LevelCard
               testID="profile-level"
               level={level.level}
               label={strings.levelLabel}
-              name={fill(strings.level, { level: String(level.level), name: level.name })}
+              name={level.name}
               progress={level.progress}
               toNext={level.toNext}
               lines={[
@@ -170,30 +167,6 @@ export function ProfileScreen() {
                 },
               ]}
             />
-            {shown.levelLadder && <ProfileLadder level={level} />}
-            {share !== undefined && reachedOn !== undefined && (
-              <>
-                <Button
-                  variant="neutral"
-                  testID="profile-share-level"
-                  label={strings.shareLevel}
-                  onPress={() => {
-                    setSharing(true);
-                  }}
-                />
-                {sharing && (
-                  <ShareCardSheet
-                    subject={{ level, date: reachedOn }}
-                    kind="level"
-                    share={share}
-                    visible
-                    onClose={() => {
-                      setSharing(false);
-                    }}
-                  />
-                )}
-              </>
-            )}
           </View>
         )}
         {shown.xpBar && level === undefined && (
@@ -203,35 +176,19 @@ export function ProfileScreen() {
             </Text>
           </View>
         )}
-        {/* While a Break runs, its card (p1) stands in place of the Streak line. */}
-        {shown.breakCard && streakBreak.kind === 'running' ? (
-          <View style={styles.section}>
-            <BreakCard
-              testID="profile-break"
-              streak={progress.streak}
-              kicker={strings.breakCard.kicker}
-              paused={fill(strings.breakCard.paused, { count: String(progress.streak) })}
-              until={fill(strings.breakCard.until, { date: dayText(streakBreak.lastDay) })}
-              strip={streakBreak.strip}
-              next={fill(strings.breakCard.next, { date: dayText(streakBreak.nextStart) })}
-            />
-          </View>
-        ) : (
-          streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />
-        )}
-        {shown.streakFreezeCard && (
-          <View style={styles.section}>
-            <StreakFreezeCard
-              testID="profile-freeze-card"
-              held={progress.freezesHeld}
-              streak={progress.streak}
-              saved={progress.freezesUsed}
-              days={composition.progress.lastWeek()}
-            />
-          </View>
-        )}
+        {streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />}
         <View style={styles.section}>
-          <ActiveDaysCalendar weeks={weeks} lines={shown.calendarDayLines} todayWord={todayWord} />
+          <ActiveDaysCalendar
+            weeks={weeks}
+            onDayText={
+              shown.calendarDayLines
+                ? (message) => {
+                    toast({ message });
+                  }
+                : undefined
+            }
+            todayWord={todayWord}
+          />
         </View>
         <View style={styles.section}>
           <View style={styles.badgesHead}>
@@ -256,6 +213,67 @@ export function ProfileScreen() {
           <BadgeGrid families={edition.badgeFamilies} badges={badges} onPress={onPress} />
           {opening}
         </View>
+        <ReaderNameHead />
+        {shown.xpBar && level !== undefined && shown.levelLadder && (
+          <View style={styles.section}>
+            <ProfileLadder level={level} />
+          </View>
+        )}
+        {shown.xpBar && level !== undefined && share !== undefined && reachedOn !== undefined && (
+          <View style={styles.section}>
+            <Button
+              variant="neutral"
+              testID="profile-share-level"
+              label={strings.shareLevel}
+              onPress={() => {
+                setSharing(true);
+              }}
+            />
+            {sharing && (
+              <ShareCardSheet
+                subject={{ level, date: reachedOn }}
+                kind="level"
+                share={share}
+                visible
+                onClose={() => {
+                  setSharing(false);
+                }}
+              />
+            )}
+          </View>
+        )}
+        {shown.breakCard && streakBreak.kind === 'running' && (
+          <View style={styles.section}>
+            <BreakCard
+              testID="profile-break"
+              streak={progress.streak}
+              kicker={strings.breakCard.kicker}
+              paused={fill(strings.breakCard.paused, { count: String(progress.streak) })}
+              until={fill(strings.breakCard.until, { date: dayText(streakBreak.lastDay) })}
+              strip={streakBreak.strip}
+              next={fill(strings.breakCard.next, { date: dayText(streakBreak.nextStart) })}
+            />
+          </View>
+        )}
+        {shown.streakFreezeCard && (
+          <View style={styles.section}>
+            <StreakFreezeCard
+              testID="profile-freeze-card"
+              held={progress.freezesHeld}
+              streak={progress.streak}
+              saved={progress.freezesUsed}
+              days={composition.progress.lastWeek()}
+            />
+          </View>
+        )}
+        {account !== undefined && (
+          <SaveProgressOffer
+            opening={account}
+            onSave={() => {
+              router.push('/settings/account');
+            }}
+          />
+        )}
         {shown.profileConfirmedByRarity && (
           <View style={styles.section}>
             <SettingsGroup title={strings.confirmed}>
@@ -328,24 +346,17 @@ function StreakLine({ streak, bestStreak }: { streak: number; bestStreak: number
 const nameStrings = strings.readerName;
 
 /**
- * The Profile's header above the progress (ADR 0136): the reader's name with
- * its avatar letter, or the neutral avatar and the invitation, over `level`,
- * and the «Ім’я» row that opens the name sheet. With the reader's name
- * switched off, the Level alone and no row; nothing while the Level is hidden too.
+ * The Profile's header below the Badges (ADR 0136, 0145): the reader's name
+ * with its avatar letter, or the neutral avatar and the invitation, and the
+ * «Ім’я» row that opens the name sheet. The Level stays on its card alone, so
+ * with the reader's name switched off there is no header.
  */
-function ReaderNameHead({ level }: { level: string | undefined }) {
+function ReaderNameHead() {
   const composition = useComposition();
   const shown = useShown();
   const name = useSubscribed(composition.readerName, ({ state }) => state);
   const [naming, setNaming] = useState(false);
-  if (!shown.readerName)
-    return (
-      level !== undefined && (
-        <View style={styles.section}>
-          <ProfileHeader level={level} />
-        </View>
-      )
-    );
+  if (!shown.readerName) return null;
   return (
     <View style={styles.section}>
       <ProfileHeader
@@ -354,7 +365,6 @@ function ReaderNameHead({ level }: { level: string | undefined }) {
             ? { kind: 'unnamed', invitation: nameStrings.placeholder }
             : { kind: 'named', name }
         }
-        level={level}
       />
       <SettingsGroup>
         <NavigationRow
