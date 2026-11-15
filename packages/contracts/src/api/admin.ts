@@ -525,6 +525,49 @@ const contentWriteContract = {
         total: z.number().int().nonnegative(),
       }),
     ),
+  unchecked: contentProcedure
+    .route({
+      method: 'GET',
+      path: '/admin/content/{editionId}/unchecked/{kind}',
+      summary:
+        'The next live record of a kind not checked yet, for «Перегляд», with the count of them all',
+      description:
+        'Records whose last change came in the newest batch come first. A record is checked at the record version an Admin user marked; any later write leaves it unchecked again (ADR 0142).',
+      tags: ['admin'],
+    })
+    .input(z.strictObject({ editionId: EditionIdSchema, kind: ContentRecordKindSchema }))
+    .output(
+      z.object({
+        /** How many live records of the kind are not checked. */
+        total: z.number().int().nonnegative(),
+        /** The first of them; none when every record is checked. */
+        record: z
+          .object({
+            id: z.string(),
+            fields: z.record(z.string(), z.unknown()),
+            recordVersion: z.number().int().positive(),
+          })
+          .optional(),
+      }),
+    ),
+  check: contentProcedure
+    .route({
+      method: 'POST',
+      path: `${recordPath}/{id}/check`,
+      summary: 'Mark a record checked at its record version: no content changes, an Action log row',
+      description: 'An Admin user only, with no reason; an Агент token is refused (ADR 0142).',
+      tags: ['admin'],
+    })
+    .errors({ STALE: writeErrors.STALE })
+    .input(
+      z.strictObject({
+        editionId: EditionIdSchema,
+        kind: ContentRecordKindSchema,
+        id: z.string(),
+        recordVersion: z.number().int().positive(),
+      }),
+    )
+    .output(z.object({ id: z.string(), recordVersion: z.number().int().positive() })),
   report: contentProcedure
     .route({
       method: 'GET',
