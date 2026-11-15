@@ -14,14 +14,17 @@ import { Frost } from './Frost';
  * Break day sunken, pressed into its place with the edge inside its top, and
  * a day to come no tile, only a dashed outline (board 10). With `onPress` it
  * is a button whose tile presses down onto its edge. The Break card's strip
- * draws its days with it too.
+ * draws its days with it too, `square` as `XSaved` p1: square tiles with a
+ * smaller corner and edge and the strip's plain numbers.
  */
 export function CalendarDayTile({
   day,
   onPress,
+  square = false,
 }: {
   day: CalendarDay;
   onPress: (() => void) | undefined;
+  square?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -42,24 +45,35 @@ export function CalendarDayTile({
   const tile = (pressed: boolean) => (
     <>
       {look.edge !== undefined && (
-        <View style={[styles.tile, styles.edge, { backgroundColor: look.edge }]} />
+        <View
+          style={[
+            styles.tile,
+            styles.edge,
+            square && [styles.squareTile, styles.squareEdge],
+            { backgroundColor: look.edge },
+          ]}
+        />
       )}
       <View
         testID={`stats-calendar-${day.date}-face`}
         style={[
           styles.tile,
+          square && styles.squareTile,
           { backgroundColor: look.face },
           day.state === 'future' && [styles.future, { borderColor: colors.line }],
           day.state === 'break' && [
-            styles.pressed,
-            styles.sunken,
+            square ? styles.squareSunken : [styles.pressed, styles.sunken],
             { borderTopColor: colors.tileEdge },
           ],
           pressed && styles.pressed,
         ]}
       >
         {day.state === 'frozen' && <Frost />}
-        <Text style={[typeStyle('calendarDay', tokens), { color: look.number }]}>{day.day}</Text>
+        <Text
+          style={[typeStyle(square ? 'freezeDay' : 'calendarDay', tokens), { color: look.number }]}
+        >
+          {day.day}
+        </Text>
       </View>
     </>
   );
@@ -68,7 +82,7 @@ export function CalendarDayTile({
     accessible: true,
     accessibilityLabel: dayLabel(strings, day),
     ...voice,
-    style: styles.cell,
+    style: square ? styles.squareCell : styles.cell,
   };
   return onPress === undefined ? (
     <View {...shared}>{tile(false)}</View>
@@ -146,29 +160,33 @@ export function ActiveDaysCalendar({
           </Text>
         ))}
       </View>
-      {weeks.map((week) => (
-        <View key={week[0]?.date} style={styles.week}>
-          {week.map((day) => (
-            <CalendarDayTile
-              key={day.date}
-              day={day}
-              onPress={
-                onDayText === undefined
-                  ? undefined
-                  : () => {
-                      onDayText(textOf(day));
-                    }
-              }
-            />
-          ))}
-        </View>
-      ))}
+      <View style={styles.weeks}>
+        {weeks.map((week) => (
+          <View key={week[0]?.date} style={styles.week}>
+            {week.map((day) => (
+              <CalendarDayTile
+                key={day.date}
+                day={day}
+                onPress={
+                  onDayText === undefined
+                    ? undefined
+                    : () => {
+                        onDayText(textOf(day));
+                      }
+                }
+              />
+            ))}
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  calendar: { marginTop: space[6], gap: space[2] },
+  calendar: { gap: space[2] },
+  // A week steps by its tile and the board's gap: the tile's edge sinks into that gap.
+  weeks: { gap: calendarDay.gap - calendarDay.edge },
   week: { flexDirection: 'row', gap: calendarDay.gap },
   weekday: {
     flex: 1,
@@ -186,6 +204,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   edge: { top: calendarDay.edge },
+  // The Break card's square day: the cell is the tile, its edge hangs into the strip's gap.
+  squareCell: { flex: 1, aspectRatio: 1 },
+  squareTile: { height: '100%', borderRadius: calendarDay.square.radius },
+  squareEdge: { top: calendarDay.square.edge },
+  squareSunken: { borderTopWidth: calendarDay.square.edge, overflow: 'hidden' },
   pressed: { top: calendarDay.edge },
   sunken: { borderTopWidth: calendarDay.edge, overflow: 'hidden' },
   future: { borderWidth: calendarDay.futureBorder, borderStyle: 'dashed' },

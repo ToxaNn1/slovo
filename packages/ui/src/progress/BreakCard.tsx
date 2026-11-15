@@ -76,7 +76,7 @@ export function BreakCard({
         {weeks.map((week, index) => (
           <View key={week[0]?.date ?? index} style={styles.week}>
             {week.map((day) => (
-              <CalendarDayTile key={day.date} day={day} onPress={undefined} />
+              <CalendarDayTile key={day.date} day={day} onPress={undefined} square />
             ))}
           </View>
         ))}

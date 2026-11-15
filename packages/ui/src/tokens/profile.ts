@@ -40,6 +40,24 @@ export const collectionMarks = [
   ],
 ] as const satisfies readonly Wedge[];
 
+/**
+ * The spacing of the Profile's blocks above the reader's name (`SlovoApp`
+ * profile): the head's top and bottom, how far the cards reach past the 20
+ * of the rest (a card stands 16 from the edge), the Streak's top, the lift of
+ * the words beside it, the calendar's top, the Badges' top and the gap from
+ * their heading to the first family.
+ */
+export const profileScreen = {
+  headTop: 10,
+  headBottom: 16,
+  cardOutdent: 4,
+  streakTop: 24,
+  streakWordsLift: 4,
+  calendarTop: 16,
+  badgesTop: 28,
+  badgesGap: 14,
+} as const;
+
 /** The Profile's Level card, from the design: an ink card with a red wedge and the XP ring. */
 /** The Profile's header (board 11, t8): the avatar, the reader's name and the Level. */
 export const profileHeader = {
@@ -60,6 +78,8 @@ export const levelCard = {
   ring: { box: 124, radius: 54, stroke: 12, track: 'rgba(127, 127, 127, 0.3)' },
   /** The red wedge in the bottom right corner, past the card's edges. */
   wedge: { side: 170, right: -30, bottom: -40, opacity: 0.95 },
+  /** The opacity of the lines under the XP line, such as «Знавець: ще 292 XP». */
+  quietOpacity: 0.8,
   /** The wedge's slant: from 40% along the top to the bottom left corner. */
   wedgeShape: [
     [0.4, 0],
@@ -163,12 +183,12 @@ export const badgeGrid = {
     paddingX: 14,
     paddingBottom: 18,
     radius: 20,
-    gap: 8,
+    gap: 12,
     border: 1,
     edge: 4,
   },
-  /** The Badges screen's spacing: between families, a family's head and its cards, and the cards. */
-  screen: { familyGap: 30, headGap: 14, cardGap: 14 },
+  /** The Badges screen's spacing: between families, a family's head and its cards, the cards, and a family's name and count. */
+  screen: { familyGap: 30, headGap: 14, cardGap: 14, headNameGap: 12 },
 } as const;
 
 /**
@@ -247,6 +267,8 @@ export const badgeNewTag = {
   turn: 8,
   top: -6,
   right: -18,
+  /** How far left of the mark the tag may spread, so it never wraps over a small mark. */
+  reach: 60,
   paddingHorizontal: 9,
   paddingVertical: 6,
 } as const;
@@ -332,6 +354,8 @@ export const calendarDay = {
   gap: 7,
   edge: 4,
   futureBorder: 2,
+  /** A square day of the Break card's strip (`XSaved` p1): its corner and its edge. */
+  square: { radius: 9, edge: 3 },
   /** The frost over a frozen day: diagonal stripes this wide, this far apart, in this ink. */
   frost: { stripe: 2, step: 7, color: 'rgba(20, 12, 10, 0.25)' },
 } as const;
