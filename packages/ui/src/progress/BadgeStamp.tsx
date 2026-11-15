@@ -23,24 +23,26 @@ import { BadgeMark } from './BadgeMark';
 import { StampHalftone } from './StampHalftone';
 import { bezier, REDUCED_FADE } from '../primitives/timing';
 
-/** The five frames run once, after a short wait (board 10.7). */
+/** The stamp runs once, after a short wait (XBadges «Штамп»). */
 const FRAMES = {
   duration: motion.badgeStamp.duration,
   easing: bezier(motion.badgeStamp.easing),
   reduceMotion: ReduceMotion.Never,
 };
-const { fly, blow, bounce, rest } = badgeStamp.frames;
+const { fly, bounce, rest, ribbon: ribbonIn, ring, shake } = badgeStamp.frames;
 const turned = (degrees: number) => `${String(degrees)}deg`;
 
 /**
- * An earned Badge stamped on red, over the whole screen (board 10.7): the
- * giant cream `kicker` turned, the Badge's mark in its ring, its `name`, the
- * `line`, the `mascot`, then the `ribbon` and a button labelled `doneLabel`
- * that closes it. The mark flies in, strikes with an ink burst and a light
- * shake, springs back and rests turned; then the ribbon and the button come
- * in. Under Reduce Motion the whole stamp fades in at rest, with no burst.
- * The kicker, the Mascot and the ribbon are each left out when not given,
- * as on the stamp after the Daily Crossword (board 08.2).
+ * An earned Badge stamped on red, over the whole screen (XBadges «Штамп»,
+ * decision 13): the giant cream `kicker` turned, the Badge's mark in its
+ * family's shape, its `name`, the `line`, the `mascot`, then the `ribbon`
+ * and a button labelled `doneLabel` that closes it. The mark flies in,
+ * presses at the blow under a dotted ink ring and a light shake, springs
+ * back and rests turned; then the ribbon flies in from the left and the
+ * button comes in. Under Reduce Motion the whole stamp fades in at rest,
+ * with no ring, shake or ribbon flight. The kicker, the Mascot and the
+ * ribbon are each left out when not given, as on the stamp after the Daily
+ * Crossword (board 08.2).
  */
 export function BadgeStamp({
   shape,
@@ -83,34 +85,23 @@ export function BadgeStamp({
       : withDelay(motion.badgeStamp.delay, withTiming(1, FRAMES));
   }, [t, reduceMotion]);
   const faded = useAnimatedStyle(() => ({ opacity: reduceMotion ? t.value : 1 }));
-  const shaken = useAnimatedStyle(() => {
-    if (reduceMotion) return {};
-    const step = (blow - fly) / 3;
-    const { shake } = badgeStamp;
-    return {
-      transform: [
-        {
-          translateX: interpolate(
-            t.value,
-            [fly, fly + step, fly + 2 * step, blow],
-            [0, shake, -shake, 0],
-            Extrapolation.CLAMP,
-          ),
-        },
-      ],
-    };
-  });
+  const shaken = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: interpolate(t.value, shake, badgeStamp.shake.x, Extrapolation.CLAMP) },
+      { translateY: interpolate(t.value, shake, badgeStamp.shake.y, Extrapolation.CLAMP) },
+    ],
+  }));
   const markStyle = useAnimatedStyle(() => {
     if (reduceMotion) return { transform: [{ rotate: turned(badgeStamp.turn) }] };
     const { from } = badgeStamp;
     return {
-      opacity: interpolate(t.value, [0, fly / 2], [0, 1], Extrapolation.CLAMP),
+      opacity: interpolate(t.value, [0, fly], [0, 1], Extrapolation.CLAMP),
       transform: [
         {
           scale: interpolate(
             t.value,
-            [0, fly, blow, bounce, rest],
-            [from.scale, 1, 1, badgeStamp.bounce, 1],
+            [0, fly, bounce, rest],
+            [from.scale, badgeStamp.press, badgeStamp.bounce, 1],
             Extrapolation.CLAMP,
           ),
         },
@@ -122,15 +113,103 @@ export function BadgeStamp({
       ],
     };
   });
-  const burstStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(t.value, [fly, (fly + blow) / 2, bounce], [0, 1, 0], Extrapolation.CLAMP),
+  const ringStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(t.value, [ring.in, ring.blow, ring.out], [0, 1, 0], Extrapolation.CLAMP),
     transform: [
-      { scale: interpolate(t.value, [fly, bounce], [0.6, badgeStamp.burst], Extrapolation.CLAMP) },
+      {
+        scale: interpolate(
+          t.value,
+          [ring.in, ring.blow, ring.out],
+          [badgeStamp.ring.from, 1, badgeStamp.ring.to],
+          Extrapolation.CLAMP,
+        ),
+      },
+    ],
+  }));
+  const flight = useAnimatedStyle(() => ({
+    opacity: interpolate(t.value, [rest, ribbonIn], [0, 1], Extrapolation.CLAMP),
+    transform: [
+      {
+        translateX: interpolate(
+          t.value,
+          [rest, ribbonIn],
+          [badgeStamp.ribbon.from, 0],
+          Extrapolation.CLAMP,
+        ),
+      },
     ],
   }));
   const lastFrame = useAnimatedStyle(() => ({
-    opacity: reduceMotion ? 1 : interpolate(t.value, [rest, 1], [0, 1], Extrapolation.CLAMP),
+    opacity: reduceMotion ? 1 : interpolate(t.value, [rest, ribbonIn], [0, 1], Extrapolation.CLAMP),
   }));
+
+  const content = (
+    <>
+      {kicker !== undefined && (
+        <Text
+          {...voice}
+          adjustsFontSizeToFit
+          numberOfLines={1}
+          style={[typeStyle('shout', tokens), styles.kicker, { color: key.background }]}
+        >
+          {kicker}
+        </Text>
+      )}
+      <View style={styles.mark}>
+        {!reduceMotion && (
+          <Animated.View
+            testID={`${testID}-ring`}
+            pointerEvents="none"
+            style={[styles.ring, { borderColor: key.ink }, ringStyle]}
+          />
+        )}
+        <Animated.View style={markStyle}>
+          <BadgeMark
+            testID={`${testID}-mark`}
+            shape={shape}
+            tone="cream"
+            symbol={symbol}
+            state={{ kind: 'earned', isNew }}
+            onRed
+            size={badgeStamp.markSide}
+          />
+        </Animated.View>
+      </View>
+      <Text
+        {...voice}
+        accessibilityRole="header"
+        style={[typeStyle('screenTitle', tokens), styles.name, { color: key.ink }]}
+      >
+        {name}
+      </Text>
+      <Text {...voice} style={[typeStyle('stampName', tokens), styles.line, { color: key.ink }]}>
+        {line}
+      </Text>
+      <View style={styles.spring} />
+      {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
+      {ribbon !== undefined &&
+        (reduceMotion ? (
+          <View style={styles.ribbonPlace}>{ribbonView(ribbon)}</View>
+        ) : (
+          <Animated.View testID={`${testID}-ribbon-flight`} style={[styles.ribbonPlace, flight]}>
+            {ribbonView(ribbon)}
+          </Animated.View>
+        ))}
+      <Animated.View style={[styles.done, lastFrame]}>
+        <Button variant="onAccent" testID={`${testID}-done`} label={doneLabel} onPress={onClose} />
+      </Animated.View>
+    </>
+  );
+
+  function ribbonView(text: string) {
+    return (
+      <View style={[styles.ribbon, { backgroundColor: key.ink }]}>
+        <Text {...voice} style={[typeStyle('stampRibbon', tokens), { color: key.background }]}>
+          {text}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <Modal transparent animationType="fade" onRequestClose={onClose}>
@@ -139,73 +218,13 @@ export function BadgeStamp({
         style={[styles.ground, { backgroundColor: tokens.colors.accent }, faded]}
       >
         <StampHalftone id={`${testID}-halftone`} />
-        <Animated.View style={[styles.content, shaken]}>
-          {kicker !== undefined && (
-            <Text
-              {...voice}
-              adjustsFontSizeToFit
-              numberOfLines={1}
-              style={[typeStyle('shout', tokens), styles.kicker, { color: key.background }]}
-            >
-              {kicker}
-            </Text>
-          )}
-          <View style={styles.mark}>
-            {!reduceMotion && (
-              <Animated.View
-                testID={`${testID}-burst`}
-                pointerEvents="none"
-                style={[styles.burst, { backgroundColor: key.ink }, burstStyle]}
-              />
-            )}
-            <Animated.View style={markStyle}>
-              <BadgeMark
-                testID={`${testID}-mark`}
-                shape={shape}
-                tone="cream"
-                symbol={symbol}
-                state={{ kind: 'earned', isNew }}
-                onRed
-                size={badgeStamp.markSide}
-              />
-            </Animated.View>
-          </View>
-          <Text
-            {...voice}
-            accessibilityRole="header"
-            style={[typeStyle('screenTitle', tokens), styles.name, { color: key.ink }]}
-          >
-            {name}
-          </Text>
-          <Text
-            {...voice}
-            style={[typeStyle('stampName', tokens), styles.line, { color: key.ink }]}
-          >
-            {line}
-          </Text>
-          <View style={styles.spring} />
-          {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
-          <Animated.View style={[styles.last, lastFrame]}>
-            {ribbon !== undefined && (
-              <View style={[styles.ribbon, { backgroundColor: key.ink }]}>
-                <Text
-                  {...voice}
-                  style={[typeStyle('sectionLabel', tokens), { color: key.background }]}
-                >
-                  {ribbon}
-                </Text>
-              </View>
-            )}
-            <View style={styles.done}>
-              <Button
-                variant="onAccent"
-                testID={`${testID}-done`}
-                label={doneLabel}
-                onPress={onClose}
-              />
-            </View>
+        {reduceMotion ? (
+          <View style={styles.content}>{content}</View>
+        ) : (
+          <Animated.View testID={`${testID}-shake`} style={[styles.content, shaken]}>
+            {content}
           </Animated.View>
-        </Animated.View>
+        )}
       </Animated.View>
     </Modal>
   );
@@ -225,12 +244,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     transform: [{ rotate: turned(badgeStamp.turn) }],
   },
-  mark: { marginTop: badgeStamp.markTop, alignItems: 'center', justifyContent: 'center' },
-  burst: {
+  mark: {
+    marginTop: badgeStamp.markTop,
+    width: badgeStamp.ring.side,
+    height: badgeStamp.ring.side,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ring: {
     position: 'absolute',
-    width: badgeStamp.markSide,
-    height: badgeStamp.markSide,
-    borderRadius: badgeStamp.markSide / 2,
+    width: badgeStamp.ring.side,
+    height: badgeStamp.ring.side,
+    borderRadius: badgeStamp.ring.side / 2,
+    borderWidth: badgeStamp.ring.width,
+    borderStyle: 'dotted',
   },
   name: {
     marginTop: badgeStamp.nameTop - capitalMarkRoom('screenTitle'),
@@ -240,7 +267,7 @@ const styles = StyleSheet.create({
   line: { marginTop: badgeStamp.lineTop, textAlign: 'center' },
   spring: { flex: 1 },
   mascot: { alignSelf: 'flex-start' },
-  last: { alignSelf: 'stretch', alignItems: 'center' },
+  ribbonPlace: { alignSelf: 'flex-start', marginTop: badgeStamp.ribbon.top },
   ribbon: {
     paddingVertical: badgeStamp.ribbon.padding.vertical,
     paddingHorizontal: badgeStamp.ribbon.padding.horizontal,
