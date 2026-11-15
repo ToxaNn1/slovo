@@ -103,7 +103,7 @@ brief:
 You are the games board wave coordinator (spec #1880, tickets #1881–#1895; #1894 waits for the owner's «текст ок»), in the cloud; the laptop coordinator stopped. Read HANDOFF.md on origin/coord/games-1880 and continue per docs/agents/waves.md and mattpocock-skills:implement-spec. Integration branch feat/1880-games-board, one draft PR. Grants: commits, pushes, one draft PR; NO merge to main, no force-push, no branch deletion, no EAS. Never write the owner's email anywhere. Never end your turn while work remains.
 
 ## wave mutation-1817
-status: active
+status: finished
 coord: chore/1817-mutation-floor
 branches: ^origin/chore/1817-mutation-floor$
 brief:
