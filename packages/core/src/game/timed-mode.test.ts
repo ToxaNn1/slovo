@@ -54,7 +54,7 @@ function handTime() {
   };
 }
 
-/** The Core composition of one app run, every Feature Switch on but those turned off. */
+/** The Core composition of one app run, every Feature Switch on but the answer banner and those turned off. */
 async function run({
   seed = 7,
   off = [],
@@ -71,7 +71,8 @@ async function run({
   const app = await openComposition({
     content: createMemoryContentPort({ words: [...words] }),
     edition: testEdition({
-      isFeatureEnabled: (feature) => !off.includes(feature),
+      // The answer banner's shorter delays are tested in `game-play.test.ts`; here «На час» moves on at once, as with it off.
+      isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' && !off.includes(feature),
       userSettingDefaults: { mix: { categoryIds: [...categoryIds] } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),

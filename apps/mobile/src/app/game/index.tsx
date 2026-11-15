@@ -71,6 +71,7 @@ function Game() {
     livesOverWarmup,
     gameEndToFeed,
     plainGameReview,
+    gameAnswerBanner,
   } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
@@ -181,6 +182,8 @@ function Game() {
               ? ({ state, width }) => <MascotAs state={state} width={width} />
               : undefined
           }
+          banner={gameAnswerBanner}
+          onWaitFor={actions.waitFor}
         />
       )}
     </SafeAreaView>

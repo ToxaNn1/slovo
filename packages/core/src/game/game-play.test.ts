@@ -9,7 +9,7 @@ import { fakeClock, testComparison, testEdition, testSchedule, word } from '../t
 import { buildGameReview } from './game-review';
 import { LIFE_LOST_DELAY } from './game-haptics';
 import { GAME_LIVES, openGame, type CurrentGame, type Game, type GivenAnswer } from './game';
-import type { GameMode, RoundContent, RoundInput, RoundOption } from './game-mode';
+import type { GameEdition, GameMode, RoundContent, RoundInput, RoundOption } from './game-mode';
 import { GAME_ROUNDS } from './round-plan';
 
 // The play of a Game through `openGame` (ADR 0052): the Rounds a Game Mode
@@ -83,11 +83,18 @@ const never = { subscribe: () => () => undefined };
 async function open(
   gameMode: GameMode,
   eligibleAtStart: readonly Word[] = words,
-  edition = testEdition(),
+  {
+    banner = true,
+    roundXp = 0,
+    edition = testEdition(
+      banner ? {} : { isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' },
+    ),
+  }: OpenOptions = {},
 ) {
   let eligible: EligibleOfKind<AskableEntry> = { entries: eligibleAtStart };
   const eligibility = createSubject<undefined>();
   const time = fakeClock();
+  const later = testSchedule(time);
   function eligibleOfKind<Also extends AskableKind = never>(
     kind: ShownKind,
     alsoOf: readonly Also[] = [],
@@ -111,13 +118,17 @@ async function open(
       confirm: () => Promise.resolve(),
     },
     xp: {
-      award: () => ({ changes: new Map(), amount: 0, commit: () => undefined }),
+      award: ({ source }) => ({
+        changes: new Map(),
+        amount: source === 'game-round' ? roundXp : 0,
+        commit: () => undefined,
+      }),
       answeredWrong: () => ({ changes: new Map(), commit: () => undefined }),
     },
     userState: { read: () => Promise.resolve(undefined), write: () => Promise.resolve() },
     clock: time.clock,
     random: inOrder,
-    schedule: testSchedule(time).schedule,
+    schedule: later.schedule,
     modes: [gameMode],
     eligibility,
     dayTurned: never,
@@ -125,11 +136,23 @@ async function open(
   });
   return {
     game,
+    /** Moves the clock on by `ms`, running what the Game scheduled. */
+    advance: later.advance,
     eligibleNow: async (now: EligibleOfKind<AskableEntry>) => {
       eligible = now;
       await eligibility.publish(undefined);
     },
   };
+}
+
+/** How a test opens the Game: with the answer banner switched on or off, the XP a right Round earns, and its Edition. */
+interface OpenOptions {
+  /** Whether `gameAnswerBanner` is on; on by default, as every switch of the test Edition. */
+  banner?: boolean;
+  /** The XP the XP log records for a right Round; 0 by default. */
+  roundXp?: number;
+  /** The Edition the Game opens in; the test Edition with `banner` by default. */
+  edition?: GameEdition;
 }
 
 /** The Game in play or just over; fails the test on the mode screen. */
@@ -140,8 +163,13 @@ function now(game: Game): CurrentGame {
 }
 
 /** The Game started in the mode; fails the test when none starts. */
-async function start(build: Build, rest: Partial<GameMode> = {}, eligible?: readonly Word[]) {
-  const opened = await open(mode(build, rest), eligible);
+async function start(
+  build: Build,
+  rest: Partial<GameMode> = {},
+  eligible?: readonly Word[],
+  options?: OpenOptions,
+) {
+  const opened = await open(mode(build, rest), eligible, options);
   await opened.game.start('test');
   now(opened.game);
   return opened;
@@ -224,7 +252,7 @@ describe('the Rounds of a Game in play', () => {
 
   it('starts with 5 Lives with gameThreeLives off', async () => {
     const edition = testEdition({ isFeatureEnabled: (feature) => feature !== 'gameThreeLives' });
-    const { game } = await open(mode(pick), words, edition);
+    const { game } = await open(mode(pick), words, { edition });
     await game.start('test');
 
     expect(now(game)).toMatchObject({ lives: 5, livesAtStart: 5 });
@@ -239,7 +267,7 @@ describe('the Rounds of a Game in play', () => {
     const edition = testEdition({
       isFeatureEnabled: (feature) => feature !== 'gameThreeLives' || threeLives,
     });
-    const { game } = await open(mode(pick), words, edition);
+    const { game } = await open(mode(pick), words, { edition });
     await game.start('test');
 
     threeLives = false;
@@ -457,7 +485,9 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
   });
 
   it('moves on at once in a mode that moves on: the answer counts and the next Round comes with no «Далі»', async () => {
-    const { game } = await start(pick, { lives: 'none', movesOn: true });
+    const { game } = await start(pick, { lives: 'none', movesOn: true }, undefined, {
+      banner: false,
+    });
 
     const second = await answer(game, pickAnswer(false));
 
@@ -465,6 +495,206 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
     expect(second.round).toMatchObject({ number: 2, answer: undefined });
     expect(second.played.map(({ number, right }) => [number, right])).toEqual([[1, false]]);
     await noMove(game, () => game.next());
+  });
+});
+
+describe('the answer banner behind `gameAnswerBanner` (ADR 0138)', () => {
+  it('holds a right answer in the answered state with the XP the XP log records for it', async () => {
+    const { game } = await start(pick, {}, undefined, { roundXp: 10 });
+
+    expect(await answer(game, pickAnswer(true))).toMatchObject({
+      status: 'answered',
+      answered: { kind: 'right', xp: 10 },
+    });
+  });
+
+  it('holds a right answer with no XP when the XP log records none for it', async () => {
+    const { game } = await start(pick);
+
+    const answered = await answer(game, pickAnswer(true));
+
+    expect(answered).toMatchObject({ status: 'answered', answered: { kind: 'right' } });
+    expect(answered.status === 'answered' && answered.answered).toEqual({
+      kind: 'right',
+      xp: undefined,
+    });
+  });
+
+  it("holds a wrong answer with the right answer's text, a Life left", async () => {
+    const { game } = await start(pick);
+
+    expect(await answer(game, pickAnswer(false))).toMatchObject({
+      status: 'answered',
+      lives: GAME_LIVES - 1,
+      answered: { kind: 'wrong', answer: wordAt(0).lemma, lastLife: false },
+    });
+  });
+
+  it('says a wrong answer took the last Life, and the Game is lost when it moves on', async () => {
+    const { game, advance } = await start(pick, { lives: 1 });
+
+    expect(await answer(game, pickAnswer(false))).toMatchObject({
+      status: 'answered',
+      lives: 0,
+      answered: { kind: 'wrong', lastLife: true },
+    });
+    await advance(1600);
+
+    expect(now(game)).toMatchObject({ status: 'lost', roundsPassed: 0 });
+  });
+
+  it('never says the last Life in a mode without Lives', async () => {
+    const { game } = await start(pick, { lives: 'none' });
+
+    expect(await answer(game, pickAnswer(false))).toMatchObject({
+      answered: { kind: 'wrong', lastLife: false },
+    });
+  });
+
+  it('moves on by itself 950 ms after a right answer, and not before', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(true));
+
+    await advance(949);
+    expect(now(game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
+    await advance(1);
+
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1, round: { number: 2 } });
+    expect(now(game)).not.toHaveProperty('answered');
+  });
+
+  it('moves on by itself 1600 ms after a wrong answer, and not before', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(false));
+
+    await advance(1599);
+    expect(now(game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
+    await advance(1);
+
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1, round: { number: 2 } });
+  });
+
+  it('is won when it moves on after the last Round', async () => {
+    const { game, advance } = await start(pick, { roundLimit: 1 });
+    await game.answer(pickAnswer(true));
+
+    await advance(950);
+
+    expect(now(game)).toMatchObject({ status: 'won', roundsPassed: 1 });
+  });
+
+  it('moves on once after «Далі» came first', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(true));
+    await game.next();
+
+    await advance(950);
+
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1 });
+  });
+
+  it('moves on in a mode with a time limit after 550 ms right and 900 ms wrong, its clock running under the banner', async () => {
+    const { game, advance } = await start(pick, {
+      lives: 'none',
+      roundLimit: 'none',
+      timeLimit: 20_000,
+      movesOn: true,
+    });
+    const endsAt = now(game).time?.endsAt;
+
+    expect(await answer(game, pickAnswer(true))).toMatchObject({
+      status: 'answered',
+      answered: { kind: 'right' },
+    });
+    expect(now(game).time?.endsAt).toBe(endsAt);
+    await advance(549);
+    expect(now(game).status).toBe('answered');
+    await advance(1);
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1 });
+
+    await game.answer(pickAnswer(false));
+    await advance(899);
+    expect(now(game).status).toBe('answered');
+    await advance(1);
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 2 });
+    expect(now(game).time?.endsAt).toBe(endsAt);
+  });
+
+  it('ends a timed Game whose time is up under the banner', async () => {
+    const { game, advance } = await start(pick, {
+      lives: 'none',
+      roundLimit: 'none',
+      timeLimit: 20_000,
+      movesOn: true,
+    });
+    await advance(19_800);
+    await game.answer(pickAnswer(false));
+
+    await advance(200);
+
+    expect(now(game)).toMatchObject({ status: 'time-up' });
+    await advance(1000);
+    expect(now(game)).toMatchObject({ status: 'time-up', roundsPassed: 0 });
+  });
+
+  it('waits for what the screen waits for, such as VoiceOver reading the banner, when it takes longer than the delay', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(true));
+    let read: (() => void) | undefined;
+    game.waitFor(
+      new Promise<void>((resolve) => {
+        read = resolve;
+      }),
+    );
+
+    await advance(5000);
+    expect(now(game).status).toBe('answered');
+    read?.();
+    await advance(0);
+
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1 });
+  });
+
+  it('waits for the delay when what the screen waits for comes sooner', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(true));
+    game.waitFor(Promise.resolve());
+
+    await advance(949);
+    expect(now(game).status).toBe('answered');
+    await advance(1);
+
+    expect(now(game).status).toBe('playing');
+  });
+
+  it('does not move on after the Game is left', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(true));
+    game.leave();
+
+    await advance(950);
+
+    expect(game.state.current).toBeUndefined();
+  });
+
+  it('waits for «Далі» with its switch off, and a mode that moves on moves on at once', async () => {
+    const waiting = await start(pick, {}, undefined, { banner: false });
+    await waiting.game.answer(pickAnswer(true));
+    await waiting.advance(5000);
+    expect(now(waiting.game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
+
+    const timed = await start(
+      pick,
+      { lives: 'none', timeLimit: 20_000, movesOn: true },
+      undefined,
+      {
+        banner: false,
+      },
+    );
+    expect(await answer(timed.game, pickAnswer(true))).toMatchObject({
+      status: 'playing',
+      roundsPassed: 1,
+    });
   });
 });
 
@@ -669,6 +899,15 @@ describe('the answer forms of a Round', () => {
     }
     expect(now(game)).toMatchObject({ roundsPassed: 8, status: 'won' });
     expect(now(game).played).toHaveLength(8);
+  });
+
+  it('keeps a pair of a pairs grid answered until «Далі», the answer banner on', async () => {
+    const { game, advance } = await start(grid, { roundLimit: 8 });
+    await game.answer({ form: 'pairs', word: 0, definition: 3 });
+
+    await advance(5000);
+
+    expect(now(game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
   });
 
   it('takes no answer of another form than the Round has', async () => {

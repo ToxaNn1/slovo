@@ -127,6 +127,11 @@ const first: PlayingGame = {
 };
 
 /** The Game with its Round answered as given, as the Game in play answers it. */
+/** What the answered state tells the banner; no Round here shows the right answer's text. */
+function answeredAs(right: boolean): Extract<PlayingGame, { status: 'answered' }>['answered'] {
+  return right ? { kind: 'right', xp: undefined } : { kind: 'wrong', answer: '', lastLife: false };
+}
+
 function answered(game: PlayingGame, given: GivenAnswer): PlayingGame {
   if (given.form === 'vowel') return answeredVowel(game, given.position);
   if (given.form === 'pairs') return answeredPair(game, given.word, given.definition);
@@ -152,6 +157,7 @@ function answeredPick(game: PlayingGame, given: GivenAnswer): PlayingGame {
     },
     lives: chosen === CORRECT || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
+    answered: answeredAs(chosen === CORRECT),
   };
 }
 
@@ -223,6 +229,7 @@ function answeredVowel(game: PlayingGame, chosen: number): PlayingGame {
     round: { ...round, answer: { form: 'vowel', chosen, right, ...held } },
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
+    answered: answeredAs(right),
   };
 }
 
@@ -313,6 +320,7 @@ function answeredPair(game: PlayingGame, word: number, definition: number): Play
     },
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
+    answered: answeredAs(right),
   };
 }
 
@@ -356,6 +364,7 @@ function answeredTyped(game: PlayingGame, typed: string): PlayingGame {
     },
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
+    answered: answeredAs(right),
   };
 }
 
@@ -416,6 +425,7 @@ function answeredChips(game: PlayingGame, chosen: readonly number[]): PlayingGam
     },
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
+    answered: answeredAs(right),
   };
 }
 
