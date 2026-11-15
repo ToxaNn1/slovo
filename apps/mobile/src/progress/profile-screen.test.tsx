@@ -180,6 +180,30 @@ async function renderScreen({
   });
 }
 
+/** The Profile's blocks, as the reader meets them from the top. */
+const BLOCKS = [
+  'profile-settings',
+  'profile-level',
+  'profile-streak',
+  'stats-calendar',
+  'profile-badges-count',
+  'profile-header',
+  'profile-ladder',
+  'profile-share-level',
+  'profile-break',
+  'profile-freeze-card',
+  'profile-save-progress',
+];
+
+/** The test IDs of the blocks on the screen, in the order they render. */
+function blockOrder(): string[] {
+  const drawn = JSON.stringify(screen.toJSON());
+  return BLOCKS.map((id) => ({ id, at: drawn.indexOf(`"testID":"${id}"`) }))
+    .filter(({ at }) => at >= 0)
+    .sort((a, b) => a.at - b.at)
+    .map(({ id }) => id);
+}
+
 /** The lines of the counters «Без лічильників» hides. */
 const counterLines = [
   'profile-level',
@@ -203,7 +227,7 @@ describe('the Profile', () => {
     expect(screen.getByTestId('profile-best-streak')).toHaveTextContent('найкраща серія — 0');
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('0');
     expect(screen.getByText(strings.levelLabel)).toBeOnTheScreen();
-    expect(screen.getByTestId('profile-level-name')).toHaveTextContent('0 · Початківець');
+    expect(screen.getByTestId('profile-level-name')).toHaveTextContent('Початківець');
     expect(screen.getByTestId('stats-calendar')).toBeOnTheScreen();
     expect(screen.getByTestId('profile-badges-count')).toHaveTextContent(
       `0 з ${String(edition.badges.length)}`,
@@ -220,6 +244,25 @@ describe('the Profile', () => {
         `0 з ${String(members)}`,
       );
     }
+  });
+
+  // ADR 0145: the board's blocks first, then the blocks the board does not draw.
+  it('renders the title, Level card, Streak, calendar and Badges, then the name header, ladder, share, freeze card and the offer to save progress', async () => {
+    await renderScreen({ rounds: 50, withAccount: true, shareCard: sendingShareCard });
+
+    expect(blockOrder()).toEqual([
+      'profile-settings',
+      'profile-level',
+      'profile-streak',
+      'stats-calendar',
+      'profile-badges-count',
+      'profile-header',
+      'profile-ladder',
+      'profile-share-level',
+      'profile-freeze-card',
+      'profile-save-progress',
+    ]);
+    expect(screen.queryByTestId('profile-header-level')).toBeNull();
   });
 
   it('shows the confirmed Entries by rarity while their Feature Switch is on', async () => {
@@ -251,11 +294,13 @@ describe('the Profile', () => {
     expect(screen.queryByTestId('profile-best-guess-word')).not.toBeOnTheScreen();
   });
 
-  it('reads the Level card as «N · name», its XP in the Level and the XP left to the next name', async () => {
+  // ADR 0145: the Level appears once, its number in the ring and its name beside it.
+  it('reads the Level card as its number and name, its XP in the Level and the XP left to the next name', async () => {
     await renderScreen({ rounds: 60 });
 
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('1');
-    expect(screen.getByTestId('profile-level-name')).toHaveTextContent('1 · Початківець');
+    expect(screen.getByTestId('profile-level-name')).toHaveTextContent(/^Початківець$/);
+    expect(screen.queryByText(/Рівень 1/)).toBeNull();
     expect(screen.getByTestId('profile-level-progress')).toHaveTextContent('10 / 55 XP');
     expect(screen.getByTestId('profile-level-left')).toHaveTextContent('Читач: ще 246 XP');
   });
@@ -479,57 +524,99 @@ describe('the Profile', () => {
     });
   });
 
-  describe('with the calendar day lines on', () => {
+  // Owner decision 17: a tap on a day shows its text in a toast over the screen.
+  describe('with the calendar day texts on', () => {
     const months = editionStrings.dates.months;
-    const lines = editionStrings.stats.calendar.lines;
+    const calendar = editionStrings.stats.calendar;
+    const october = (day: string) => ({ day, month: months[9] ?? '' });
+    const xpOn = (date: string) => ({
+      kind: 'xp' as const,
+      date,
+      at: `${date}T05:00:00.000Z`,
+      source: 'game-round' as const,
+      amount: 5,
+    });
     /** Yesterday an Active Day; today, active after 5 XP, with «сумирний» kept as its Word of the Day. */
     const seed: Seed = {
-      xpLog: {
-        yesterday: {
-          kind: 'xp',
-          date: '2026-10-12',
-          at: '2026-10-12T05:00:00.000Z',
-          source: 'game-round',
-          amount: 5,
-        },
-      },
+      xpLog: { yesterday: xpOn('2026-10-12') },
       wordOfTheDayArchive: { '2026-10-13': 'w_sumyrnyi' },
     };
-    const tapped = async (date: string) => {
-      await renderScreen({ switchedOn: 'calendarDayLines', rounds: 5, seed });
-      await fireEvent.press(screen.getByTestId(`stats-calendar-${date}`));
+    /** The toast a tap on `date` shows, over the user state `over`. */
+    const tapped = async (date: string, over: Seed = seed, rounds = 5) => {
+      await renderScreen({ switchedOn: 'calendarDayLines', rounds, seed: over });
+      // The Break card's strip draws its days too: the tap is on the calendar's.
+      await fireEvent.press(
+        within(screen.getByTestId('stats-calendar')).getByTestId(`stats-calendar-${date}`),
+      );
       // The Word of the Day archive is read as the screen comes into view.
-      return screen.findByTestId('stats-calendar-line');
+      return screen.findByTestId('undo-toast-message');
     };
 
-    it('shows the line of an Active Day at a tap on it', async () => {
+    it('shows the text of a goal day in a toast at a tap on it, and no line under the grid', async () => {
       expect(await tapped('2026-10-12')).toHaveTextContent(
-        fill(lines.active, { day: '12', month: months[9] ?? '' }),
+        fill(calendar.lines.active, october('12')),
       );
+      expect(screen.queryByTestId('stats-calendar-line')).toBeNull();
     });
 
     // The Lemma reads as its row in «Слова дня» does, with its Stress mark.
-    it('shows today with its Word of the Day once today is active', async () => {
-      expect(await tapped('2026-10-13')).toHaveTextContent(fill(lines.today, { word: 'су́мирний' }));
+    it('shows today with its Word of the Day', async () => {
+      expect(await tapped('2026-10-13')).toHaveTextContent('Сьогодні. Су́мирний — уже твоє слово!');
     });
 
-    it('shows the line of a day missed', async () => {
-      expect(await tapped('2026-10-11')).toHaveTextContent(
-        fill(lines.missed, { day: '11', month: months[9] ?? '' }),
+    it('shows today by its date before its Word of the Day is kept', async () => {
+      expect(await tapped('2026-10-13', {}, 0)).toHaveTextContent(
+        fill(calendar.days.today, october('13')),
       );
     });
 
-    it('shows the line of a day to come', async () => {
-      expect(await tapped('2026-10-18')).toHaveTextContent(lines.future);
+    it('shows the text of a Break day', async () => {
+      const onBreak: Seed = {
+        xpLog: {
+          breakRecord: {
+            kind: 'break',
+            date: '2026-10-12',
+            at: '2026-10-12T05:00:00.000Z',
+            days: 3,
+          },
+        },
+      };
+      expect(await tapped('2026-10-12', onBreak)).toHaveTextContent(
+        fill(calendar.days.break, october('12')),
+      );
+    });
+
+    it('shows the text of a frozen day', async () => {
+      const frozen: Seed = {
+        xpLog: {
+          a: xpOn('2026-10-10'),
+          b: xpOn('2026-10-11'),
+          freeze: { kind: 'freeze', date: '2026-10-12', at: '2026-10-12T21:30:00.000Z' },
+        },
+      };
+      expect(await tapped('2026-10-12', frozen)).toHaveTextContent(
+        fill(calendar.days.frozen, october('12')),
+      );
+    });
+
+    it('shows the text of a day missed', async () => {
+      expect(await tapped('2026-10-11')).toHaveTextContent(
+        '11 жовтня: тут серія спіткнулась. Але ж нова починається з будь-якого дня!',
+      );
+    });
+
+    it('shows the text of a day to come', async () => {
+      expect(await tapped('2026-10-18')).toHaveTextContent(calendar.lines.future);
     });
   });
 
-  it('shows no line at a tap on a day with the calendar day lines off, the calendar still there', async () => {
+  it('shows no toast at a tap on a day with the calendar day texts off, the calendar still there', async () => {
     await renderScreen({ switchedOff: 'calendarDayLines', rounds: 1 });
     await fireEvent.press(screen.getByTestId('stats-calendar-2026-10-11'));
     expect(screen.getByTestId('stats-calendar')).toBeOnTheScreen();
-    expect(screen.queryByTestId('stats-calendar-line')).toBeNull();
+    expect(screen.queryByTestId('undo-toast-message')).toBeNull();
   });
+
   describe('with the Break card on', () => {
     const months = editionStrings.dates.months;
     const words = strings.breakCard;
@@ -580,8 +667,16 @@ describe('the Profile', () => {
       for (const day of [12, 13, 14])
         expect(card.getByLabelText(label('break', day))).toBeOnTheScreen();
       expect(card.getByLabelText(label('future', 15))).toBeOnTheScreen();
-      // The card stands in place of the Streak line, and the Best Streak with it.
-      expect(screen.queryByTestId('profile-streak')).not.toBeOnTheScreen();
+    });
+
+    // ADR 0145: the Break card is one of the blocks below the Badges.
+    it('shows the card below the Badges while a Break runs, the Streak still in its place', async () => {
+      await renderScreen({ switchedOn: 'breakCard', seed: running });
+
+      const order = blockOrder();
+      expect(order.indexOf('profile-streak')).toBeLessThan(order.indexOf('stats-calendar'));
+      expect(order.indexOf('profile-break')).toBeGreaterThan(order.indexOf('profile-badges-count'));
+      expect(order.indexOf('profile-break')).toBeGreaterThan(order.indexOf('profile-header'));
     });
 
     it('shows no card while no Break runs, the Streak line in its place', async () => {
@@ -646,13 +741,14 @@ describe("the Profile's header", () => {
     });
   }
 
-  it('shows the name, its first letter and the Level', async () => {
+  // ADR 0145: the Level appears once, on the Level card.
+  it('shows the name and its first letter, and no Level', async () => {
     await renderScreen({ name: 'олена' });
 
     const header = screen.getByTestId('profile-header');
     expect(within(header).getByTestId('profile-name')).toHaveTextContent('олена');
     expect(within(header).getByTestId('profile-avatar-letter')).toHaveTextContent('О');
-    expect(within(header).getByTestId('profile-header-level')).toHaveTextContent(/^Рівень 0 — \S/);
+    expect(within(header).queryByTestId('profile-header-level')).toBeNull();
     expect(screen.getByTestId('profile-reader-name')).toHaveTextContent(/олена/);
   });
 
@@ -720,14 +816,11 @@ describe("the Profile's header", () => {
       expect(screen.queryByText(row)).toBeNull();
   });
 
-  it('with the reader name switched off, shows the Level alone and no «Ім’я» row', async () => {
+  it('with the reader name switched off, shows no header and no «Ім’я» row, the Level card still there', async () => {
     await renderScreen({ name: 'Олена', switchedOff: 'readerName' });
 
-    const header = screen.getByTestId('profile-header');
-    expect(within(header).getByTestId('profile-header-level')).toHaveTextContent(/^Рівень 0 — /);
-    expect(within(header).queryByTestId('profile-name')).toBeNull();
-    expect(within(header).queryByTestId('profile-avatar-letter')).toBeNull();
-    expect(within(header).queryByTestId('profile-invitation')).toBeNull();
+    expect(screen.queryByTestId('profile-header')).toBeNull();
+    expect(screen.getByTestId('profile-level-name')).toBeOnTheScreen();
     expect(screen.queryByTestId('profile-reader-name')).toBeNull();
     expect(screen.queryByText(nameStrings.row)).toBeNull();
   });

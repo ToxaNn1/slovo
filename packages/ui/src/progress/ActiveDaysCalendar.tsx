@@ -1,6 +1,5 @@
 'use no memo';
 import type { CalendarDay, CalendarWeek } from '@slovo/core';
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
@@ -100,32 +99,31 @@ export function Frost() {
 /**
  * The Active Days calendar: the 35 days ending with the current week, five
  * rows Monday first under the weekday names, across months (ADR 0085). Each
- * day reads its date and state. With `lines` on, a tap on a day shows its line
- * under the grid: an Active Day, today once active with the Word `todayWord`
- * opened, a day missed, a day to come; a Break day, a frozen day and today
- * without its Word have none. With no weeks, as with its Feature Switch off,
- * it draws nothing.
+ * day reads its date and state. With `onDayText`, a tap on a day hands its
+ * text to the caller to show in a toast (board `SlovoApp` profile): an Active
+ * Day, a day missed and a day to come by the board's texts, today with its
+ * Word `todayWord` once kept, and a Break day, a frozen day and today before
+ * its Word by their date and state. With no weeks, as with its Feature Switch
+ * off, it draws nothing.
  */
 export function ActiveDaysCalendar({
   weeks,
-  lines = false,
+  onDayText,
   todayWord,
 }: {
   weeks: readonly CalendarWeek[];
-  /** Whether a tap on a day shows its line: the `calendarDayLines` Feature Switch. */
-  lines?: boolean;
-  /** The Lemma of today's Word of the Day, once the reader opened it. */
+  /** Shows the text of the day tapped; without it the days are not buttons. */
+  onDayText?: ((text: string) => void) | undefined;
+  /** The Lemma of today's Word of the Day, once the archive keeps it. */
   todayWord?: string | undefined;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();
-  const [picked, setPicked] = useState<string | undefined>(undefined);
   if (weeks.length === 0) return null;
   const words = strings.stats.calendar;
-
-  /** The line a tap on the day shows, if it has one. */
-  function lineOf(day: CalendarDay): string | undefined {
+  /** The text a tap on the day shows. */
+  function textOf(day: CalendarDay): string {
     const date = dayDate(strings, day);
     switch (day.state) {
       case 'active':
@@ -135,17 +133,19 @@ export function ActiveDaysCalendar({
       case 'future':
         return words.lines.future;
       case 'today':
-        return day.active && todayWord !== undefined
-          ? fill(words.lines.today, { word: todayWord })
-          : undefined;
+        return todayWord === undefined
+          ? dayLabel(strings, day)
+          : // The Word opens a sentence: its first letter capital.
+            fill(words.lines.today, {
+              word:
+                todayWord.charAt(0).toLocaleUpperCase(voice.accessibilityLanguage) +
+                todayWord.slice(1),
+            });
       case 'break':
       case 'frozen':
-        return undefined;
+        return dayLabel(strings, day);
     }
   }
-  const pickedDay = weeks.flat().find(({ date }) => date === picked);
-  const line = lines && pickedDay !== undefined ? lineOf(pickedDay) : undefined;
-
   return (
     <View testID="stats-calendar" accessibilityLabel={words.label} style={styles.calendar}>
       {/* Each day reads its own date, so VoiceOver skips the weekday names. */}
@@ -170,26 +170,16 @@ export function ActiveDaysCalendar({
               key={day.date}
               day={day}
               onPress={
-                lines
-                  ? () => {
-                      setPicked(day.date);
+                onDayText === undefined
+                  ? undefined
+                  : () => {
+                      onDayText(textOf(day));
                     }
-                  : undefined
               }
             />
           ))}
         </View>
       ))}
-      {line !== undefined && (
-        <Text
-          testID="stats-calendar-line"
-          accessibilityLiveRegion="polite"
-          {...voice}
-          style={[typeStyle('profileText', tokens), styles.line, { color: colors.ink }]}
-        >
-          {line}
-        </Text>
-      )}
     </View>
   );
 }
@@ -225,5 +215,4 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '45deg' }],
   },
   future: { borderWidth: calendarDay.futureBorder, borderStyle: 'dashed' },
-  line: { marginTop: space[1] },
 });
