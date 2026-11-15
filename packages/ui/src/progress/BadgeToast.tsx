@@ -65,7 +65,10 @@ export function BadgeToast({
         size={badgeToast.markSide}
       />
       <View style={styles.texts}>
-        <Text {...voice} style={[typeStyle('badgeToastName', tokens), { color: colors.background }]}>
+        <Text
+          {...voice}
+          style={[typeStyle('badgeToastName', tokens), { color: colors.background }]}
+        >
           {name}
         </Text>
         <Text

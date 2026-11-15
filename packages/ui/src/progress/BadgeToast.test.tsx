@@ -1,4 +1,10 @@
-import { BadgeToast, coreTokens, EditionProvider, ReduceMotionProvider, TokensProvider } from '@slovo/ui';
+import {
+  BadgeToast,
+  coreTokens,
+  EditionProvider,
+  ReduceMotionProvider,
+  TokensProvider,
+} from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
