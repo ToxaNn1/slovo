@@ -454,7 +454,7 @@ export const typeRoles = {
   /** A Badge's symbol on its mark, at a 156-wide mark; the mark scales it to a third of its side. */
   badgeSymbol: role('word', '900', 52, 62),
   /** The «НОВА» tag on an earned Badge the reader has not opened (ADR 0085). */
-  badgeNewTag: role('word', '800', 9, 11, 1, 'uppercase'),
+  badgeNewTag: role('word', '900', 11, 11, 1, 'uppercase'),
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
   /** The ✓ or ✗ on a Round's mark in the Game Review. */
