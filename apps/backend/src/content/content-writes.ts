@@ -11,12 +11,13 @@ import {
 } from '@slovo/content-rules';
 import { CONTENT_PAGE_SIZE } from '@slovo/contracts/admin-api';
 import { contentReport, missedTargets } from '@slovo/language-pack';
+import type { Word } from '@slovo/contracts';
 import type { Clock, EditionRegistry, Json, Random } from '@slovo/server-core';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import type { Database } from '../database/database';
-import { mediaGaps, retireRecordings } from './media-rows';
+import { mediaGaps, readsDifferently, retireRecordings } from './media-rows';
 import { quoteCheckCounts } from './quote-check';
 import {
   actionLog,
@@ -275,6 +276,60 @@ export function createContentWrites({
     };
   }
 
+  /** The rows of every record, without what changes with no new content version (a Word's «needs new recording»). */
+  const keptOf = (read: Awaited<ReturnType<typeof recordsOf>>) => ({
+    ...read,
+    word: read.word.map(({ id, fields, recordVersion }) => ({ id, fields, recordVersion })),
+  });
+  type Kept = ReturnType<typeof keptOf>;
+  /** A write published, with the Edition's records after it. */
+  interface Published {
+    readonly ok: true;
+    readonly written: Written;
+    readonly records: Kept;
+  }
+
+  /**
+   * The Edition's records at each content version last seen (ADR 0148): every
+   * change of a record raises the content version, so the records of one
+   * version are read once and kept, not read again by every write and report.
+   */
+  const kept = new Map<string, { readonly contentVersion: number; readonly records: Kept }>();
+
+  /** Every record of the Edition at the content version the caller holds or reads at. */
+  async function recordsAt(tx: Tx, editionId: string, contentVersion: number): Promise<Kept> {
+    const found = kept.get(editionId);
+    if (found?.contentVersion === contentVersion) return found.records;
+    const records = keptOf(await recordsOf(tx, editionId));
+    kept.set(editionId, { contentVersion, records });
+    return records;
+  }
+
+  /** The records with the saved one in place of the row of its id, or added. */
+  function withSaved(records: Kept, record: AuthoredRecord, recordVersion: number): Kept {
+    const id = recordIdOf(record);
+    const put = <F>(
+      rows: readonly { id: string; fields: F; recordVersion: number }[],
+      fields: F,
+    ) => [...rows.filter((row) => row.id !== id), { id, fields, recordVersion }];
+    switch (record.kind) {
+      case 'word':
+        return { ...records, word: put(records.word, record.entry) };
+      case 'correction':
+        return { ...records, correction: put(records.correction, record.entry) };
+      case 'idiom':
+        return { ...records, idiom: put(records.idiom, record.entry) };
+      case 'synonymRow':
+        return { ...records, synonymRow: put(records.synonymRow, record.entry) };
+      case 'tip':
+        return { ...records, tip: put(records.tip, record.entry) };
+      case 'curatedCollection':
+        return { ...records, curatedCollection: put(records.curatedCollection, record.entry) };
+      case 'crosswordDay':
+        return { ...records, crosswordDay: put(records.crosswordDay, record.entry) };
+    }
+  }
+
   /** The Edition's content version as a read sees it, without a lock; none while it is not imported. */
   async function importedVersion(tx: Tx, editionId: string) {
     const [imported] = await tx
@@ -464,16 +519,19 @@ export function createContentWrites({
     const edition = editions.find(editionId);
     if (edition === undefined) return { ok: false, reason: 'not-found' };
     try {
-      return await db.transaction(async (tx): Promise<WriteResult> => {
+      const result = await db.transaction(async (tx): Promise<WriteRefusal | Published> => {
         const contentVersion = await heldVersion(tx, editionId);
         if (contentVersion === undefined) return { ok: false, reason: 'not-imported' };
         if (!(await ownBatch(tx, writer, editionId, batchId))) {
           return { ok: false, reason: 'not-found' };
         }
-        const records = await recordsOf(tx, editionId);
+        const records = await recordsAt(tx, editionId, contentVersion);
         let current: StoredRecord | undefined;
+        let wordBefore: { readonly fields: Word; readonly needsNewRecording: boolean } | undefined;
         if (change.op !== 'create') {
-          current = records[kind].find(({ id }) => id === change.id);
+          const [row] = await readersOf(tx, editionId, change.id)[kind]();
+          current = row;
+          if (row !== undefined && 'needsNewRecording' in row) wordBefore = row;
           if (current === undefined) return { ok: false, reason: 'not-found' };
           if (current.recordVersion !== change.recordVersion) {
             return { ok: false, reason: 'stale', currentVersion: current.recordVersion };
@@ -515,12 +573,10 @@ export function createContentWrites({
         const recordVersion = (current?.recordVersion ?? 0) + 1;
         const published = contentVersion + 1;
         // A Word's Recordings no longer read it once its Lemma or Stress changed (ADR 0083).
-        const wordBefore = records.word.find((row) => row.id === id);
         const textChanged =
           record.kind === 'word' &&
           wordBefore !== undefined &&
-          (wordBefore.fields.lemma !== record.entry.lemma ||
-            JSON.stringify(wordBefore.fields.stress) !== JSON.stringify(record.entry.stress));
+          readsDifferently(wordBefore.fields, record.entry);
         const needsNewRecording =
           record.kind === 'word' &&
           wordBefore !== undefined &&
@@ -566,8 +622,16 @@ export function createContentWrites({
             batchId,
             ...(kind === 'word' ? { needsNewRecording } : {}),
           },
+          records: withSaved(records, record, recordVersion),
         };
       });
+      if (!result.ok) return result;
+      // Kept once committed: a version rolled back is never kept as published.
+      kept.set(editionId, {
+        contentVersion: result.written.contentVersion,
+        records: result.records,
+      });
+      return { ok: true, written: result.written };
     } catch (error) {
       if (error instanceof Refused) return error.refusal;
       throw error;
@@ -617,7 +681,7 @@ export function createContentWrites({
     return db.transaction(async (tx) => {
       const contentVersion = await importedVersion(tx, editionId);
       if (contentVersion === undefined) return { ok: false, reason: 'not-imported' } as const;
-      const records = await recordsOf(tx, editionId);
+      const records = await recordsAt(tx, editionId, contentVersion);
       const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
         rows.map((row) => row.fields);
       const counted = contentReport({
@@ -689,11 +753,10 @@ export function createContentWrites({
   ) {
     if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
     return db.transaction(async (tx) => {
-      if ((await importedVersion(tx, editionId)) === undefined) {
-        return { ok: false, reason: 'not-imported' } as const;
-      }
+      const contentVersion = await importedVersion(tx, editionId);
+      if (contentVersion === undefined) return { ok: false, reason: 'not-imported' } as const;
       const needle = query.trim().toLocaleLowerCase();
-      const records = (await readersOf(tx, editionId)[kind]())
+      const records = (await recordsAt(tx, editionId, contentVersion))[kind]
         .map((row) => {
           const fields: Readonly<Record<string, unknown>> = row.fields;
           return {

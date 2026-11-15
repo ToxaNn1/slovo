@@ -60,6 +60,9 @@ const ResolvedSchema = z.object({ flagId: z.number().int() });
 
 const kindOf = (what: string): RecordKind => RecordKindSchema.parse(what.split('.')[1]);
 
+/** The pattern of a content write's Action log row, as `WriteWhatSchema` takes it. */
+const WRITE_WHAT = `^content\\.(${RecordKindSchema.options.join('|')})\\.(create|edit|retire)$`;
+
 /** The Агент batches «не перевірено»: an Агент's, not reviewed yet. */
 const openBatch = and(like(contentBatches.changedBy, 'agent:%'), isNull(contentBatches.reviewedAt));
 
@@ -75,41 +78,65 @@ export function createContentQueue({ database, clock }: { database: Database; cl
   const { db } = database;
   type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-  /** Each record a batch wrote, by kind and id, with the batch's first write of it. */
-  async function writesOf(tx: Tx | typeof db, batchIds: readonly string[]) {
-    if (batchIds.length === 0) return [];
+  /**
+   * Each record the batch wrote, by kind and id, with the batch's first write
+   * of it and the record as it was before that write.
+   */
+  async function writesOf(tx: Tx, batchId: string) {
     const rows = await tx
-      .select({
-        batchId: actionLog.batchId,
-        what: actionLog.what,
-        before: actionLog.before,
-        after: actionLog.after,
-      })
+      .select({ what: actionLog.what, before: actionLog.before, after: actionLog.after })
       .from(actionLog)
-      .where(and(inArray(actionLog.batchId, [...batchIds]), like(actionLog.what, 'content.%')))
+      .where(and(eq(actionLog.batchId, batchId), like(actionLog.what, 'content.%')))
       .orderBy(asc(actionLog.id));
     const first = new Map<
       string,
-      {
-        batchId: string;
-        kind: RecordKind;
-        id: string;
-        op: 'create' | 'edit' | 'retire';
-        before: Json;
-      }
+      { kind: RecordKind; id: string; op: 'create' | 'edit' | 'retire'; before: Json }
     >();
     for (const row of rows) {
       const what = WriteWhatSchema.safeParse(row.what);
-      if (!what.success || row.batchId === null) continue;
+      if (!what.success) continue;
       const kind = kindOf(what.data);
       const { fields } = StoredSchema.parse(row.after);
       const id = fields.id ?? fields.date ?? '';
-      const key = `${row.batchId} ${kind} ${id}`;
+      const key = `${kind} ${id}`;
       if (first.has(key)) continue;
       const op = z.enum(['create', 'edit', 'retire']).parse(what.data.split('.')[2]);
-      first.set(key, { batchId: row.batchId, kind, id, op, before: row.before });
+      first.set(key, { kind, id, op, before: row.before });
     }
     return [...first.values()];
+  }
+
+  /**
+   * By batch, the records each wrote and those of them its first write of
+   * created, counted in the database: the list of batches and the alert read
+   * two numbers a batch, not the fields its writes logged.
+   */
+  async function countsOf(batchIds: readonly string[]) {
+    if (batchIds.length === 0) return new Map<string, { records: number; added: number }>();
+    const kind = sql`split_part(${actionLog.what}, '.', 2)`;
+    const id = sql`coalesce(${actionLog.after}->'fields'->>'id', ${actionLog.after}->'fields'->>'date', '')`;
+    const firsts = db
+      .selectDistinctOn([actionLog.batchId, kind, id], {
+        batchId: actionLog.batchId,
+        op: sql<string>`split_part(${actionLog.what}, '.', 3)`.as('op'),
+      })
+      .from(actionLog)
+      .where(and(inArray(actionLog.batchId, [...batchIds]), sql`${actionLog.what} ~ ${WRITE_WHAT}`))
+      .orderBy(actionLog.batchId, kind, id, asc(actionLog.id))
+      .as('firsts');
+    const rows = await db
+      .select({
+        batchId: firsts.batchId,
+        records: sql<number>`count(*)::int`,
+        added: sql<number>`(count(*) filter (where ${firsts.op} = 'create'))::int`,
+      })
+      .from(firsts)
+      .groupBy(firsts.batchId);
+    return new Map(
+      rows.flatMap(({ batchId, records, added }) =>
+        batchId === null ? [] : [[batchId, { records, added }] as const],
+      ),
+    );
   }
 
   /** The open batches, oldest first, with the records each added and changed. */
@@ -123,20 +150,16 @@ export function createContentQueue({ database, clock }: { database: Database; cl
           : and(openBatch, eq(contentBatches.editionId, editionId)),
       )
       .orderBy(asc(contentBatches.createdAt));
-    const writes = await writesOf(
-      db,
-      open.map(({ id }) => id),
-    );
+    const counts = await countsOf(open.map(({ id }) => id));
     return open.map((batch) => {
-      const own = writes.filter((write) => write.batchId === batch.id);
-      const added = own.filter((write) => write.op === 'create').length;
+      const { records, added } = counts.get(batch.id) ?? { records: 0, added: 0 };
       return {
         id: batch.id,
         editionId: batch.editionId,
         author: batch.changedBy.replace(/^agent:/, ''),
         createdAt: batch.createdAt.toISOString(),
         added,
-        changed: own.length - added,
+        changed: records - added,
       };
     });
   }
@@ -210,7 +233,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
       const retired: string[] = [];
       const restored: string[] = [];
       const skipped: string[] = [];
-      for (const write of await writesOf(tx, [batchId])) {
+      for (const write of await writesOf(tx, batchId)) {
         const table = TABLES[write.kind];
         const [current] = await tx
           .select({
