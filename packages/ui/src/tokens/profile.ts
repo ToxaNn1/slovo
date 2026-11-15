@@ -353,13 +353,24 @@ export const newLevelStamp = {
   padding: { top: 120, horizontal: 28, bottom: 40 },
   /** The cream kicker sits in the top corner, turned on its left edge. */
   kicker: { left: 20, top: 92 },
-  /** The number lands from this scale and turn to its rest; the kicker keeps the rest's turn. */
-  from: { scale: 3, turn: -26 },
+  /**
+   * The number lands as the design's `slStamp`: hidden until `delay`, then over
+   * `duration` from 3× at −26° through .92× at −8° (70 %, fully shown) to rest,
+   * each step on `easing`. The kicker keeps the rest's `turn`.
+   */
+  land: {
+    delay: 200,
+    duration: 600,
+    easing: [0.3, 1.4, 0.5, 1],
+    from: { scale: 3, turn: -26 },
+    press: { at: 0.7, scale: 0.92 },
+  },
   turn: -8,
   numberTop: 96,
   titleTop: 30,
   lineTop: 12,
   mascotBottom: 22,
+  mascotWidth: 120,
 } as const;
 
 /** The Profile's Level ladder, from board 10.8: a card per Level name in two columns, and the bar to the next name. */
