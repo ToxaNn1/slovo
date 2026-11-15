@@ -182,12 +182,75 @@ test('a stale answer shows the diff and the save asks again over the current ver
   expect(bodies.map((body) => body['recordVersion'])).toEqual([1, 4]);
 });
 
+test('the Word form has no JSON: vowels, labelled choices, rows with + and ×, rarity buttons', async () => {
+  const bodies = edits(() => HttpResponse.json(FIXTURES.content.edit));
+  const user = await openWord();
+  expect(screen.queryByText(/JSON/)).toBeNull();
+
+  const stress = within(screen.getByRole('group', { name: 'Наголос' }));
+  expect(stress.getByRole('button', { name: 'у' }).getAttribute('aria-pressed')).toBe('true');
+  expect(stress.queryByRole('button', { name: 'б' })).toBeNull();
+  await user.click(stress.getByRole('button', { name: 'у' }));
+  await user.click(stress.getByRole('button', { name: 'о' }));
+
+  expect(screen.getByRole('option', { name: 'іменник' })).toBeDefined();
+  await user.selectOptions(screen.getByLabelText('Рід'), 'жіночий');
+  const registers = within(screen.getByRole('group', { name: 'Регістри' }));
+  await user.click(registers.getByRole('button', { name: 'розмовне' }));
+
+  const synonyms = within(screen.getByRole('group', { name: 'Синоніми' }));
+  await user.click(synonyms.getByRole('button', { name: '+ Додати' }));
+  await user.type(synonyms.getByLabelText('Синоніми 1'), 'коло');
+
+  const sources = within(screen.getByRole('group', { name: 'Джерела' }));
+  await user.click(sources.getByRole('button', { name: 'Прибрати 1' }));
+  await user.click(sources.getByRole('button', { name: '+ Додати' }));
+  await user.type(sources.getByLabelText('Назва'), 'ВТССУМ');
+
+  const examples = within(screen.getByRole('group', { name: 'Приклади' }));
+  await user.click(examples.getByRole('button', { name: '+ Додати' }));
+  await user.type(examples.getByLabelText('Текст'), 'Котив обруч.');
+  await user.type(examples.getByLabelText('Автор'), 'Леся Українка');
+
+  const rarity = within(screen.getByRole('group', { name: 'Рідкісність' }));
+  expect(rarity.getByRole('button', { name: /^3/ }).getAttribute('aria-pressed')).toBe('true');
+  await user.click(rarity.getByRole('button', { name: '5 майже ніхто не знає' }));
+
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  await screen.findByText('Опубліковано, версія контенту 2');
+  expect(bodies[0]?.['fields']).toMatchObject({
+    lemma: 'обруч',
+    stress: [0],
+    partOfSpeech: 'noun',
+    gender: 'feminine',
+    registers: ['colloquial'],
+    synonyms: ['коло'],
+    sources: [{ title: 'ВТССУМ' }],
+    examples: [{ text: 'Котив обруч.', author: 'Леся Українка' }],
+    rarity: 5,
+    categoryId: 'old-crafts',
+  });
+});
+
+test('a number sub-field that is not a number is named at its field, and nothing is sent', async () => {
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Кросворди дня' }));
+  await user.click(await screen.findByRole('button', { name: 'Додати' }));
+  const words = within(await screen.findByRole('group', { name: 'Слова кросворду' }));
+  await user.click(words.getByRole('button', { name: '+ Додати' }));
+  await user.type(words.getByLabelText('Рядок'), 'два');
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+  expect(await screen.findByText('Тут має бути число')).toBeDefined();
+  expect(screen.queryByRole('dialog')).toBeNull();
+});
+
 test('after a Word Stress change the record shows «потребує нового запису»', async () => {
   edits(() => HttpResponse.json({ ...FIXTURES.content.edit, needsNewRecording: true }));
   const user = await openWord();
-  const stress = screen.getByLabelText('Наголос');
-  await user.clear(stress);
-  await user.type(stress, '[[1]');
+  const stress = within(screen.getByRole('group', { name: 'Наголос' }));
+  await user.click(stress.getByRole('button', { name: 'о' }));
 
   await user.click(screen.getByRole('button', { name: 'Зберегти' }));
   expect(await screen.findByText('потребує нового запису')).toBeDefined();
@@ -238,12 +301,14 @@ test('a new Crossword day sends its date and words to the crosswordDay kind', as
   await user.click(await screen.findByRole('tab', { name: 'Кросворди дня' }));
   await user.click(await screen.findByRole('button', { name: 'Додати' }));
   await user.type(await screen.findByLabelText('Дата'), '2026-12-01');
-  const words = screen.getByLabelText('Слова кросворду');
-  await user.clear(words);
-  await user.click(words);
-  await user.paste(
-    '[{"entryId":"w_a1","answer":"обруч","clue":"обід колеса","row":0,"column":0,"direction":"across"}]',
-  );
+  const words = within(screen.getByRole('group', { name: 'Слова кросворду' }));
+  await user.click(words.getByRole('button', { name: '+ Додати' }));
+  await user.type(words.getByLabelText('Запис'), 'w_a1');
+  await user.type(words.getByLabelText('Відповідь'), 'обруч');
+  await user.type(words.getByLabelText('Підказка'), 'обід колеса');
+  await user.type(words.getByLabelText('Рядок'), '0');
+  await user.type(words.getByLabelText('Стовпець'), '0');
+  await user.selectOptions(words.getByLabelText('Напрямок'), 'по горизонталі');
   await user.click(screen.getByRole('button', { name: 'Зберегти' }));
   const dialog = within(await screen.findByRole('dialog'));
   await user.type(dialog.getByLabelText('Причина'), 'новий день');
