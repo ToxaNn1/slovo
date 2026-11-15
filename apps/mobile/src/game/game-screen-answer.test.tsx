@@ -105,7 +105,8 @@ describe('the Game screen', () => {
       jest.spyOn(AccessibilityInfo, 'addEventListener').mockImplementation((event, handler) => {
         if (event === 'announcementFinished') {
           finished.push(() => {
-            handler({ announcement: '', success: true });
+            const [read] = announce.mock.calls.at(-1) ?? [''];
+            handler({ announcement: read, success: true });
           });
         }
         return { remove: () => undefined };

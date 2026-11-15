@@ -24,7 +24,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { useState } from 'react';
-import { AccessibilityInfo, StyleSheet, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, Platform, StyleSheet, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
@@ -1289,6 +1289,69 @@ describe('GameRound', () => {
 
       expect(screen.queryByTestId('game-answer-banner')).toBeNull();
       expect(screen.getByTestId('game-sheet')).toBeOnTheScreen();
+    });
+  });
+
+  describe('VoiceOver reading the answer banner', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('holds the Round until VoiceOver has finished reading this banner, not another announcement', async () => {
+      jest.replaceProperty(Platform, 'OS', 'ios');
+      jest.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(true);
+      jest.spyOn(AccessibilityInfo, 'announceForAccessibilityWithOptions').mockReturnValue();
+      const finished: ((announcement: string) => void)[] = [];
+      jest.spyOn(AccessibilityInfo, 'addEventListener').mockImplementation((event, handler) => {
+        if (event === 'announcementFinished') {
+          finished.push((announcement) => {
+            handler({ announcement, success: true });
+          });
+        }
+        return { remove: () => undefined };
+      });
+      const shown = answeredPick(first, { form: 'pick', option: CORRECT });
+      if (shown.status !== 'answered') throw new Error('Not answered');
+      let read = false;
+      await render(
+        <SafeAreaProvider initialMetrics={metrics}>
+          <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+            <HapticsProvider haptics={haptics}>
+              <InterfaceSoundsProvider sounds={{ play }}>
+                <GameRound
+                  game={{ ...shown, banner: true }}
+                  title="Definitions"
+                  label="Definition"
+                  onAnswer={jest.fn()}
+                  onNext={jest.fn()}
+                  onLeave={jest.fn()}
+                  onOpenLetter={jest.fn()}
+                  onWaitFor={(done) => {
+                    void done.then(() => {
+                      read = true;
+                    });
+                  }}
+                />
+              </InterfaceSoundsProvider>
+            </HapticsProvider>
+          </EditionProvider>
+        </SafeAreaProvider>,
+      );
+      await waitFor(() => {
+        expect(finished).toHaveLength(1);
+      });
+
+      await act(async () => {
+        finished[0]?.('Miss Close. The right one: banana');
+        await Promise.resolve();
+      });
+      expect(read).toBe(false);
+
+      await act(async () => {
+        finished[0]?.('Spot on!');
+        await Promise.resolve();
+      });
+      expect(read).toBe(true);
     });
   });
 

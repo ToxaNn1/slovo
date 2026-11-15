@@ -136,8 +136,9 @@ function BannerLine({ text }: { text: string }) {
 
 /**
  * Has VoiceOver read `text` after what it is reading, and settles once it has
- * finished, or at the latest after `ANNOUNCEMENT_LIMIT`. Only iOS tells when
- * an announcement has finished; elsewhere it settles at once.
+ * finished reading `text`, not another announcement, or at the latest after
+ * `ANNOUNCEMENT_LIMIT`. Only iOS tells when an announcement has finished;
+ * elsewhere it settles at once.
  */
 function announced(text: string): Promise<void> {
   if (Platform.OS !== 'ios') {
@@ -145,7 +146,12 @@ function announced(text: string): Promise<void> {
     return Promise.resolve();
   }
   return new Promise((resolve) => {
-    const finished = AccessibilityInfo.addEventListener('announcementFinished', done);
+    const finished = AccessibilityInfo.addEventListener(
+      'announcementFinished',
+      ({ announcement }) => {
+        if (announcement === text) done();
+      },
+    );
     const limit = setTimeout(done, ANNOUNCEMENT_LIMIT);
     function done() {
       finished.remove();
