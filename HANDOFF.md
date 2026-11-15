@@ -30,3 +30,5 @@ WAITING until 2026-11-15T20:19:00Z: #1921 local visual pass on the laptop (no pu
 WAITING until 2026-11-15T19:43:00Z: 18:13Z check — #1921 (Metro 8082 from its worktree, SLOVO-60 booted, 9 files edited) and the review fixer fix/1909-review (10 files edited) both working locally, uncommitted; laptop coordinator alive.
 - 15.11 18:30Z review fixes merged 531afe1eb (fixer could not commit: coordinator committed its staged work); PR body has the review section.
 WAITING until 2026-11-15T19:35:00Z: #1921 still editing locally (last file change 18:29Z); CI on 531afe1eb running.
+- 15.11 18:50Z CI red on 531afe1eb: Profile Level 20 test timeout → renderScreen gained `xp` (one seeded record), Level tests use it; 63bddefb7 pushed. #1921 alive: own Metro on 8082 (pid 89898, 12 min), 11 files edited, no commits/shots yet.
+WAITING until 2026-11-15T19:51:00Z: #1921 visual pass; CI on 63bddefb7.
