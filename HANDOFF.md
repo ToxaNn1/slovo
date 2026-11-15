@@ -8,9 +8,9 @@ Graph: 1910,1912 → 1911(1910) 1913(1910) 1915(1910) 1919(1910) → 1914(1912,1
 Inputs: reports/ (owner decisions 1–24 + comparison reports), HANDBOOK-profil.md (owner's handbook page copy).
 Never end your turn while work remains; push a `WAITING until <UTC>` line here before any wait >10 min. At the very end: `STATUS: FINISHED` first line.
 ## State
-- feat/1909-profile-walkthrough f247f9594 (pushed): + #1914 #1916 #1917 #1920 merged (21/21 checks green locally). Draft PR #1923.
-- Running in the cloud (17:24Z): #1918 feat/1918-badge-stamp-toast (session_01VefVQVTpdWTnN35seqGGUU).
-- Next: merge #1918 on DONE; #1921 (laptop visual pass + handbook + owner checks); then code-review, one fixer, PR ready (no main merge). PR #1923 body: add Closes #1914 #1916 #1917 #1920.
+- feat/1909-profile-walkthrough 0eb917e8b: all tickets but #1921 merged (#1918 merged twice by laptop + safety net, harmless). CI fix 64fb94ed0 (Profile Level 25 test timeout).
+- Running on the laptop: #1921 visual pass (background subagent, worktree, branch chore/1921-profile-visual-pass, local only; Metro 8082 from its worktree).
+- Next: merge #1921; Skill code-review on the integration branch; one fixer; PR #1923 ready (no main merge); WAVES.md status finished.
 - Cloud merge commits came with a foreign email: replay with ~/.slovo-coord/profile-1909/fix-authors.sh <integration> <ticket tip> (commit-tree, same trees; no force-push), merge the printed tip.
 - Handbook page профіль-і-бейджі: updated in #1921 from all merged reports (copy HANDBOOK-profil.md).
 ## Log
@@ -25,3 +25,4 @@ Never end your turn while work remains; push a `WAITING until <UTC>` line here b
 WAITING until 2026-11-15T18:10:20Z: #1918 DONE commit on feat/1918-badge-stamp-toast
 - 15.11 17:40Z laptop coordinator back after a T3 restart: CI red on f247f9594 was profile-screen.test.tsx Level 25 test timing out (2598 awards one by one) → seeded in one XP record, 64fb94ed0 pushed. Laptop also waits for #1918 (a second merge of the same tip is a no-op).
 - 15.11 ~17:42Z safety net: #1918 DONE, merged into integration (6754de954, on top of 64fb94ed0; ui+mobile 10/10 green). Laptop coordinator is back: safety net hands the wave back and stops. Next for laptop: #1921, code-review, fixer, PR ready (no main merge).
+- 15.11 17:45Z #1918 merged (0eb917e8b); laptop launched #1921.
