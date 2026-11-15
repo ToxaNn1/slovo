@@ -32,3 +32,4 @@ WAITING until 2026-11-15T19:43:00Z: 18:13Z check — #1921 (Metro 8082 from its 
 WAITING until 2026-11-15T19:35:00Z: #1921 still editing locally (last file change 18:29Z); CI on 531afe1eb running.
 - 15.11 18:50Z CI red on 531afe1eb: Profile Level 20 test timeout → renderScreen gained `xp` (one seeded record), Level tests use it; 63bddefb7 pushed. #1921 alive: own Metro on 8082 (pid 89898, 12 min), 11 files edited, no commits/shots yet.
 WAITING until 2026-11-15T19:51:00Z: #1921 visual pass; CI on 63bddefb7.
+- 15.11 19:05Z main moved (483576f2f, #1924 switch groups in admin) → merged into the integration branch; badgeFamiliesOverview added to apps/admin switch-groups.ts (progress); 9f7839477 pushed.
