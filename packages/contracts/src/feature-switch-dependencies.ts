@@ -116,6 +116,8 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   collectionLinkCopy: ['collectionLinks'],
   // The demo plays the side swipes on the Feed's card (ADR 0112).
   gesturesHintDemo: ['swipeMarks'],
+  // Only the side swipes are taken off an Entry opened from Saved.
+  savedSwipesOff: ['swipeMarks'],
   // The source tab is the last of the Entry card's tabs (ADR 0116).
   sourceTab: ['wordTabs'],
   // «Винятки» is a tab of the Tip card's tabs (ADR 0120).

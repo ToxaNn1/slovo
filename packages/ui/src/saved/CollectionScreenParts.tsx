@@ -113,10 +113,13 @@ export function CollectionWordRow({
 export function CollectionShareButton({
   label,
   onPress,
+  busy = false,
   testID,
 }: {
   label: string;
   onPress: () => void;
+  /** Whether the link is on the way from the backend: a spinner, and no tap. */
+  busy?: boolean;
   testID?: string;
 }) {
   const { colors } = useTokens();
@@ -135,6 +138,8 @@ export function CollectionShareButton({
           />
         }
         onPress={onPress}
+        busy={busy}
+        oneLine
       />
     </View>
   );
