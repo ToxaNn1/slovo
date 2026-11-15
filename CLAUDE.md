@@ -41,6 +41,11 @@ GitHub issues in STAR form, specs as parents of their tickets. See `docs/agents/
 
 Single-context: `CONTEXT.md` is the glossary (skills that say `GLOSSARY.md` mean it), decisions in `docs/adr/`. See `docs/agents/domain.md`.
 
+## Content
+
+- Every Entry's text is the Edition's own and nothing is written to the content database before the owner's yes on a «БУЛО / СТАЛО» or a candidate list: ADR 0146 holds the rules per kind.
+- A Word's `rarity` starts from the Zipf of its Lemma in `wordfreq` (`uk`) on bands of our collection: ≥ 2.5 → 1, 1.93–2.5 → 2, 1.48–1.93 → 3, above 0 → 4, absent → 5; `archaic` or `dialectal` adds 1 (at most 5). The editor may move it ±1 with a reason in the report. Never leave an absent Word on 5 blindly: if an ordinary speaker knows it (дзвонар, худорлявий), lower it 1–2 steps and say why.
+
 ## Language
 
 Write everything in the repo in English: code, comments, tests, docs, commit messages, PR text. Ukrainian appears only as Edition content and UI strings.

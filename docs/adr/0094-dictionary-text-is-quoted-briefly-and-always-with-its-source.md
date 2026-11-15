@@ -1,5 +1,7 @@
 # Dictionary text is quoted briefly and always with its source
 
+**Amended by ADR 0146.** An Entry quotes no dictionary; these rules bind Entries not yet rewritten.
+
 Owner decision of 2026-11-08 (global review, content-H6). ADR 0012 has Definitions quoted word for word from goroh and cited, ADR 0084 sources every goroh kind, and ADR 0045 limits Literary Uses to the public domain. Nothing records why the dictionary text and the Examples by modern authors may be shipped: the dictionaries (СУМ-20, ЕСУМ, Караванський, Пономарів, Антоненко-Давидович, Єфімова and the like) are protected works, and a rights holder who objected after release would find no stated basis. This ADR amends 0012 and 0084: a quotation is still copied word for word, but only one sentence of it, and the Edition's own wording replaces the rest of an article.
 
 **Decision.** Text taken from a dictionary or a reference work is a quotation, and the basis is the right to quote a published work. Four rules follow.
