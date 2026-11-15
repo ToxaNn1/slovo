@@ -23,6 +23,7 @@ import {
 } from '@slovo/language-pack/edition';
 import { coreTokens } from '@slovo/ui/tokens';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 const editions = listEditions(EDITIONS_DIR);
 const pathOf = (edition: string, file: EditionJsonFile) =>
@@ -2117,7 +2118,9 @@ function contrast(first: Rgb, second: Rgb): number {
 
 describe('the Badge texts', () => {
   it.each(editions)('the %s Edition gives every Badge its short condition', (edition) => {
-    const config = readJson(edition, 'config') as { badges: Record<string, unknown>[] };
+    const config = z
+      .looseObject({ badges: z.array(z.record(z.string(), z.unknown())) })
+      .parse(readJson(edition, 'config'));
     const [first, ...rest] = config.badges;
     if (first === undefined) return;
     const { conditionText: _removed, ...without } = first;

@@ -21,7 +21,8 @@ Spec #1909 rebuilds the Profile and the Badges from the walkthrough boards: `Slo
 ## Consequences
 
 - The Button height token rises from 58 to 62 and its label from 16 to 15 across the app; every screen with a Button changes look and is compared with its board in the version's visual pass.
-- The Badge shape tokens change (checker cut 20% to 10%, a Level wedge of its own); no content or contract changes.
+- The Badge shape tokens change (checker cut 20% to 10%, a Level wedge of its own).
+- The Edition contract gains a required `conditionText` on every Badge (its short condition, kept in the Edition) and the `badgeFamiliesOverview` Feature Switch, which needs `xpLog` and `badges`; the OpenAPI file and every fixture Edition follow.
 
 ## Considered Options
 
