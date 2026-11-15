@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import type { FeatureSwitch, InterfaceSound } from '@slovo/core';
+import type { FeatureSwitch, InterfaceSound, UserStateFact } from '@slovo/core';
+import { seedUserState } from '@slovo/core/testing';
 import { EditionProvider, InterfaceSoundsProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
@@ -22,11 +23,17 @@ let played: InterfaceSound[] = [];
 
 /**
  * The Badges screen over the Core's composition of a test Shell, as the UA
- * Edition ships it, or with one Feature Switch off.
+ * Edition ships it, or with one Feature Switch off, over the XP records kept
+ * from before.
  */
-async function renderScreen({ switchedOff }: { switchedOff?: FeatureSwitch } = {}) {
+async function renderScreen({
+  switchedOff,
+  xpLog,
+}: { switchedOff?: FeatureSwitch; xpLog?: UserStateFact<'xpLog'> } = {}) {
   played = [];
-  const composition = await testShell().composition.opened();
+  const composition = await testShell(
+    xpLog === undefined ? {} : { userState: opened(await seedUserState({ xpLog })) },
+  ).composition.opened();
   await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
@@ -59,6 +66,17 @@ async function earnWinWords(composition: Awaited<ReturnType<typeof renderScreen>
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
 }
+
+/** The XP records of the Daily Crossword solved on each of the six days before the test's today. */
+const sixCrosswords: UserStateFact<'xpLog'> = Object.fromEntries(
+  ['07', '08', '09', '10', '11', '12'].map((day) => {
+    const date = `2026-10-${day}`;
+    return [
+      `seeded-crossword-${date}`,
+      { kind: 'xp', date, at: `${date}T09:00:00.000Z`, source: 'daily-crossword', amount: 15 },
+    ];
+  }),
+);
 
 /** The name of the UA Edition's Badge `id`. */
 const nameOf = (id: string) => edition.badges.find((badge) => badge.id === id)?.name ?? id;
@@ -230,7 +248,7 @@ describe('the Badges screen', () => {
     expect(screen.queryByTestId('badge-stamp-mark-new')).toBeNull();
   });
 
-  it('shows the symbol of a Badge in progress and none of one not started', async () => {
+  it('shows no symbol on a Badge in progress, nor on one not started', async () => {
     const composition = await renderScreen();
     await act(async () => {
       composition.xpLog
@@ -239,14 +257,28 @@ describe('the Badges screen', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(screen.getByTestId('badge-streak-3')).toHaveAccessibilityValue({ text: '1 з 3 днів' });
-    expect(screen.getByTestId('badge-streak-3-mark-symbol')).toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-streak-3-mark-symbol')).toBeNull();
     expect(screen.queryByTestId('badge-streak-3-mark-new')).toBeNull();
     expect(screen.getByTestId('badge-win-stress-status')).not.toHaveTextContent(/Отримано/);
   });
 
-  it('draws a «Кросворд» Badge as the checker under its name, and other families with their symbol', async () => {
+  it('draws no checker on a «Кросворд» Badge before it is earned, nor after one Daily Crossword', async () => {
     const composition = await renderScreen();
-    expect(screen.getByTestId('badge-crossword-7-mark-checker')).toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-crossword-7-mark-checker')).toBeNull();
+
+    await act(async () => {
+      composition.xpLog.award({ source: 'daily-crossword', date: '2026-10-13' }).commit();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(screen.getByTestId('badge-crossword-7')).toHaveAccessibilityValue({ text: '1 з 7 днів' });
+    expect(screen.queryByTestId('badge-crossword-7-mark-checker')).toBeNull();
+    expect(screen.queryByTestId('badge-crossword-7-mark-symbol')).toBeNull();
+  });
+
+  it('draws an earned «Кросворд» Badge as the checker under its name, and other families with their symbol', async () => {
+    const composition = await renderScreen({ xpLog: sixCrosswords });
+    expect(screen.queryByTestId('badge-crossword-7-mark-checker')).toBeNull();
 
     await act(async () => {
       composition.xpLog.award({ source: 'daily-crossword', date: '2026-10-13' }).commit();
