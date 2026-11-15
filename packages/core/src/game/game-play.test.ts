@@ -709,6 +709,19 @@ describe('the answer banner behind `gameAnswerBanner` (ADR 0138)', () => {
     });
   });
 
+  it('takes the banner down after a move on that failed to write, so «Далі» tries again', async () => {
+    let fails = true;
+    const write = () => (fails ? Promise.reject(new Error('disk full')) : Promise.resolve());
+    const { game, advance } = await start(pick, { roundLimit: 1 }, undefined, { write });
+    await game.answer(pickAnswer(true));
+
+    await advance(950);
+    expect(now(game)).toMatchObject({ status: 'answered', banner: false, roundsPassed: 0 });
+
+    fails = false;
+    expect(await next(game)).toMatchObject({ status: 'won', roundsPassed: 1 });
+  });
+
   it('does not move on after the Game is left', async () => {
     const { game, advance } = await start(pick);
     await game.answer(pickAnswer(true));

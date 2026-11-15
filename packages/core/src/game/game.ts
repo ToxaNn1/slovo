@@ -896,7 +896,9 @@ export async function openGame({
    * With the answer banner on, moves the Game on from the answered Round by
    * itself once its delay has passed and what the screen waits for has come,
    * unless the Game moved on, ended or was left since. A Round answered
-   * with no banner, such as a pair of a pairs grid, waits for «Далі».
+   * with no banner, such as a pair of a pairs grid, waits for «Далі». A move
+   * on that fails to write takes the banner down, so the sheet's «Далі»
+   * tries again.
    */
   function moveOnLater(shown: PlayingGame): void {
     if (schedule === undefined || shown.status !== 'answered' || !shown.banner) return;
@@ -910,10 +912,15 @@ export async function openGame({
         .then(() =>
           inTurn(async () => {
             const game = state.current;
-            if (game?.status === 'answered' && game.round === shown.round) await next();
+            if (game?.status !== 'answered' || game.round !== shown.round) return;
+            try {
+              await next();
+            } catch {
+              // The write failed and the Round stays answered: «Далі» tries again.
+              changeCurrent({ ...game, banner: false });
+            }
           }),
         )
-        // A write that fails leaves the Round answered, for «Далі» to try again.
         .catch(() => undefined);
     }, delays[shown.answered.kind]);
   }
