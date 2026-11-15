@@ -248,7 +248,7 @@ describe('the Badges screen', () => {
     expect(composition.xpLog.milestones.opened.has('win-words')).toBe(false);
 
     await act(async () => {
-      await fireEvent.press(screen.getByTestId('badge-stamp-done'));
+      await fireEvent.press(screen.getByRole('button', { name: 'ЗАБРАТИ' }));
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
@@ -286,7 +286,7 @@ describe('the Badges screen', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     await act(async () => {
-      await fireEvent.press(screen.getByTestId('badge-stamp-done'));
+      await fireEvent.press(screen.getByRole('button', { name: 'ЗАБРАТИ' }));
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     played = [];
@@ -337,7 +337,7 @@ describe('the Badges screen', () => {
     expect(screen.getByTestId('badge-stamp-mark-new')).toHaveTextContent(strings.newTag);
 
     await act(async () => {
-      await fireEvent.press(screen.getByTestId('badge-stamp-done'));
+      await fireEvent.press(screen.getByRole('button', { name: 'ЗАБРАТИ' }));
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(screen.queryByTestId('badge-win-words-mark-new')).toBeNull();
@@ -358,6 +358,7 @@ describe('the Badges screen', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(screen.getByTestId('badge-streak-3')).toHaveAccessibilityValue({ text: 'Ще ні · 33%' });
+    expect(screen.getByTestId('badge-streak-3')).toHaveAccessibleName('Три дні поспіль');
     expect(screen.queryByTestId('badge-streak-3-mark-symbol')).toBeNull();
     expect(screen.queryByTestId('badge-streak-3-mark-new')).toBeNull();
     expect(screen.getByTestId('badge-win-stress-status')).toHaveTextContent('Ще ні · 0%');

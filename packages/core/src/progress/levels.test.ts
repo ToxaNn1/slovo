@@ -214,10 +214,10 @@ describe('the Level curve', () => {
   // Tickets #1648, #1915: the name's band, the next name, the XP to its first Level and the
   // XP the name spans to it, and the ladder.
   it.each([
-    [0, 0, { first: 0, last: 4 }, { name: 'Sprout', level: 5, xp: 306, span: 306 }],
-    [4, 305, { first: 0, last: 4 }, { name: 'Sprout', level: 5, xp: 1, span: 306 }],
-    [5, 306, { first: 5, last: 9 }, { name: 'Sapling', level: 10, xp: 492, span: 492 }],
-    [19, 1878, { first: 15, last: 19 }, { name: 'Grove', level: 20, xp: 120, span: 600 }],
+    [0, 0, { first: 0, last: 4 }, { name: 'Sprout', level: 5, xp: 306, nameXp: 306 }],
+    [4, 305, { first: 0, last: 4 }, { name: 'Sprout', level: 5, xp: 1, nameXp: 306 }],
+    [5, 306, { first: 5, last: 9 }, { name: 'Sapling', level: 10, xp: 492, nameXp: 492 }],
+    [19, 1878, { first: 15, last: 19 }, { name: 'Grove', level: 20, xp: 120, nameXp: 600 }],
     [25, 2598, { first: 20, last: undefined }, undefined],
     [40, 4398, { first: 20, last: undefined }, undefined],
   ])(

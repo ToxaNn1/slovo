@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { freezeCard, typeStyle } from '../tokens';
-import { Frost } from './ActiveDaysCalendar';
+import { Frost } from './Frost';
 import { dayLabel } from './day-label';
 
 /**
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     borderRadius: freezeCard.chip.radius,
     justifyContent: 'center',
   },
-  text: { opacity: 0.8 },
+  text: { opacity: freezeCard.textOpacity },
   strip: { flexDirection: 'row', gap: freezeCard.strip.gap },
   day: {
     flex: 1,

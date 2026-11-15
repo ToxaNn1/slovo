@@ -366,6 +366,8 @@ export const freezeCard = {
   chip: { height: 30, paddingX: 10, radius: 9 },
   strip: { gap: 6 },
   day: { radius: 9 },
+  /** The card's line under its title, a little faded. */
+  textOpacity: 0.8,
   tiles: { gap: 12, padding: 16, radius: 20, inside: 8 },
 } as const;
 

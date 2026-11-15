@@ -30,7 +30,7 @@ export interface NextName {
   readonly level: number;
   readonly xp: number;
   /** The XP from the first Level of the Level's own name to this name's first Level. */
-  readonly span: number;
+  readonly nameXp: number;
 }
 
 /** One name on the Level ladder, its band, and where the reader stands on it. */
@@ -104,7 +104,7 @@ export function levelOf(levels: Levels, total: number): LevelState {
             name: nextName,
             level: nextLevel,
             xp: totalFor(levels, nextLevel) - total,
-            span: totalFor(levels, nextLevel) - totalFor(levels, nextLevel - LEVELS_PER_NAME),
+            nameXp: totalFor(levels, nextLevel) - totalFor(levels, nextLevel - LEVELS_PER_NAME),
           },
     ladder: levels.names.map((name, each) => ({
       name,
