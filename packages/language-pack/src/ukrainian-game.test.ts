@@ -227,31 +227,31 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
   it('offers the mode to a new reader and plays a full Game of 15 different Words', async () => {
     const app = await runWords(7);
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
-      { modeId: 'correction', entryKind: 'correction', group: 'corrections', canStart: true },
-      { modeId: 'stress', entryKind: 'word', group: 'words', canStart: true },
-      { modeId: 'pairs', entryKind: 'word', group: 'words', canStart: true },
-      { modeId: 'anagram', entryKind: 'word', group: 'words', canStart: true },
-      { modeId: 'by-letters', entryKind: 'word', group: 'words', canStart: true },
-      { modeId: 'type-word', entryKind: 'correction', group: 'words', canStart: true },
-      { modeId: 'anglicism', entryKind: 'correction', group: 'corrections', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
+      { modeId: 'correction', entryKind: 'correction', group: 'meaning', canStart: true },
+      { modeId: 'stress', entryKind: 'word', group: 'sound', canStart: true },
+      { modeId: 'pairs', entryKind: 'word', group: 'meaning', canStart: true },
+      { modeId: 'anagram', entryKind: 'word', group: 'letters', canStart: true },
+      { modeId: 'by-letters', entryKind: 'word', group: 'new', canStart: true },
+      { modeId: 'type-word', entryKind: 'correction', group: 'new', canStart: true },
+      { modeId: 'origin', entryKind: 'word', group: 'new', canStart: true },
+      { modeId: 'anglicism', entryKind: 'correction', group: 'new', canStart: true },
       {
         modeId: 'idiom-meaning',
         entryKind: 'idiom',
-        group: 'idioms',
+        group: 'meaning',
         canStart: false,
         refusal: 'idioms-out-of-mix',
       },
       {
         modeId: 'build-idiom',
         entryKind: 'idiom',
-        group: 'idioms',
+        group: 'new',
         canStart: false,
         refusal: 'idioms-out-of-mix',
       },
-      { modeId: 'survival', entryKind: 'correction', group: 'challenge', canStart: true },
-      { modeId: 'timed', entryKind: 'word', group: 'challenge', canStart: true },
-      { modeId: 'origin', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'survival', entryKind: 'correction', group: 'new', canStart: true },
+      { modeId: 'timed', entryKind: 'word', group: 'speed', canStart: true },
     ]);
 
     const asked = await playGame(app);
@@ -579,7 +579,7 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     expect(app.game.state.modes).toContainEqual({
       modeId: 'correction',
       entryKind: 'correction',
-      group: 'corrections',
+      group: 'meaning',
       canStart: true,
     });
 
