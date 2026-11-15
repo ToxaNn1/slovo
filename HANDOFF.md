@@ -32,3 +32,4 @@ No work running. The previous cloud coordinator (session_01VefVQUUP6Lq9nRKxM2WCH
 - 2026-11-15T01:24Z safety net takeover (last commit 2026-11-15T00:51Z)
 - 2026-11-15T01:34Z merged #1888 (6d3e0cc57; round-look conflict: optionStamp + questionFace); lint/typecheck/core/ui/mobile/language-pack green. Launched #1887 #1890 #1891 (feat/1887-pairs-no-pause, feat/1890-anglicism-build-idiom, feat/1891-survival-timed-screens). Cloud setup fixed (pg cluster 18).
 - WAITING until 2026-11-15T02:20Z: implementers #1887 #1890 #1891, PR #1896 body update, code review of the batch (all running in the safety-net session)
+- 2026-11-15T01:40Z PR #1896 body rewritten (9 Closes, defaults). Code review: REVIEW-1896.md, 6 findings. Plan: after #1887/#1890/#1891 merge, one fixer on feat/1880-games-board for 1,2,3,5; 4 → check #1891 covers it; 6 → check after #1889–#1891.
