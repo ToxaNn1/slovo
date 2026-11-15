@@ -1,5 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { loadEdition, type AnalyticsPort, type Edition, type FeatureSwitch } from '@slovo/core';
+import {
+  loadEdition,
+  type AnalyticsPort,
+  type Composition,
+  type Edition,
+  type FeatureSwitch,
+} from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { fireEvent, screen, within } from 'expo-router/testing-library';
@@ -7,6 +13,7 @@ import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SettingsScreen from '../app/settings';
+import DailyGoalScreen from '../app/settings/daily-goal';
 import NarratorVoiceScreen from '../app/settings/narrator-voice';
 import WidgetGuideScreen from '../app/settings/widgets';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
@@ -27,7 +34,27 @@ const { config } = activeEditionFiles;
 // Settings reads the Account, the Hidden Entries and the Notifications through these; the rows under test need none of them.
 jest.mock('../account/account', () => ({ useAccountInEffect: () => undefined }));
 jest.mock('../mix/hidden', () => ({ useHiddenSummary: () => '' }));
-jest.mock('../notifications/notifications', () => ({ useNotificationsSummary: () => '' }));
+jest.mock('../notifications/notifications', () => ({ useNotificationsSummary: () => '09:00' }));
+// The installed build «Про SLOVO» names (ADR 0044).
+jest.mock('../device/device-native-modules', () => {
+  const { nativeModules } = jest.requireActual<typeof import('../device/device-native-modules')>(
+    '../device/device-native-modules',
+  );
+  return {
+    nativeModules: {
+      ...nativeModules,
+      load: <T,>(name: Parameters<typeof nativeModules.load>[0], require: () => T) =>
+        name === 'application' || name === 'updates'
+          ? require()
+          : nativeModules.load(name, require),
+    },
+  };
+});
+jest.mock('expo-application', () => ({
+  nativeApplicationVersion: '0.9',
+  nativeBuildVersion: '42',
+}));
+jest.mock('expo-updates', () => ({ updateId: null }));
 
 /** The Recording of the sample Word in each Narrator Voice, as the audio module gets it. */
 const sampleRecordings: Record<string, number> = {
@@ -101,12 +128,13 @@ const metrics = {
 async function renderSettings(
   switches: Partial<Record<FeatureSwitch, boolean>> = {},
   analytics?: AnalyticsPort,
+  composition?: Composition,
 ) {
   // A screen an earlier test opened would hold back the next tap's.
   screenSettled();
   const settings = await settingsAt({}, analytics);
   const shell = testShell({
-    composition: opened(await testShell().composition.opened()),
+    composition: opened(composition ?? (await testShell().composition.opened())),
     languagePack: samplePack(),
     remoteSwitches: switchedTo(editionWith(switches)),
     settings,
@@ -127,6 +155,7 @@ async function renderSettings(
       'settings/index': SettingsScreen,
       'settings/widgets': WidgetGuideScreen,
       'settings/narrator-voice': NarratorVoiceScreen,
+      'settings/daily-goal': DailyGoalScreen,
     },
     { initialUrl: '/settings' },
   );
@@ -145,37 +174,122 @@ describe('Settings, as the board', () => {
     expect(heads).toEqual(['ВИГЛЯД', 'ЗВУК І СПОВІЩЕННЯ', 'НАВЧАННЯ', 'АКАУНТ']);
   });
 
-  it('keeps every row of the app under the group the board gives it', async () => {
-    await renderSettings();
+  it('keeps every row of the app under the group the board gives it, in its order', async () => {
+    await renderSettings({
+      reduceMotion: true,
+      sounds: true,
+      rarityCeiling: true,
+      selfCheck: true,
+      textSizeSteps: false,
+    });
 
     const groups: Record<string, string[]> = {
-      look: ['settings-theme-light', 'settings-font-size-M'],
+      look: ['settings-theme-light', 'settings-reduce-motion', 'settings-font-size-M'],
       sound: [
-        'settings-vibration',
+        'settings-sounds',
         'settings-row-narrator-voice',
+        'settings-vibration',
         'settings-row-notifications',
         'settings-row-widgets',
       ],
-      learning: ['settings-row-my-mix', 'settings-row-hidden', 'settings-row-badges'],
-      account: ['settings-row-about'],
+      learning: [
+        'settings-row-daily-goal',
+        'settings-rarity',
+        'settings-row-my-mix',
+        'settings-row-rarity-test',
+        'settings-row-badges',
+        'settings-row-questionnaire',
+        'settings-row-streak-break',
+        'settings-no-counters',
+        'settings-self-check',
+        'settings-row-hidden',
+      ],
+      account: ['settings-share-counters', 'settings-row-about'],
     };
     for (const [key, rows] of Object.entries(groups)) {
       const group = screen.getByTestId(`settings-group-${key}`);
       for (const row of rows) expect(within(group).getByTestId(row)).toBeOnTheScreen();
     }
   });
+
+  it('offers the Themes as Світла · Темна · Системна, «Світла й темна — рівноправні»', async () => {
+    await renderSettings();
+
+    const themes = screen
+      .getAllByRole('button', { name: /^Тема: / })
+      .map((segment): unknown => segment.props['accessibilityLabel']);
+    expect(themes).toEqual(['Тема: Світла', 'Тема: Темна', 'Тема: Системна']);
+    expect(
+      screen.getByText('Світла й темна — рівноправні', { includeHiddenElements: true }),
+    ).toBeOnTheScreen();
+  });
+
+  it('shows the value of a row beside its chevron: the first Notification time', async () => {
+    await renderSettings();
+
+    const row = screen.getByRole('button', { name: 'Сповіщення, 09:00' });
+    expect(row).toHaveProp('accessibilityHint', 'Нагадування про слово дня');
+  });
+
+  it('names the version and the build under «Про SLOVO»', async () => {
+    await renderSettings();
+
+    expect(screen.getByRole('button', { name: 'Про SLOVO' })).toHaveProp(
+      'accessibilityHint',
+      'Версія 0.9 (42)',
+    );
+  });
+
+  it('gives every row a line under its title', async () => {
+    await renderSettings({
+      reduceMotion: true,
+      sounds: true,
+      rarityCeiling: true,
+      selfCheck: true,
+    });
+
+    const rows = [
+      ...screen
+        .getAllByRole('button')
+        .filter((row) => String(row.props['testID']).startsWith('settings-row-')),
+      ...screen.getAllByRole('switch'),
+    ];
+    expect(rows.length).toBeGreaterThan(10);
+    for (const row of rows) expect(row.props['accessibilityHint']).toEqual(expect.any(String));
+  });
+});
+
+describe('Settings › the text size (ADR 0134)', () => {
+  it('keeps the S…XL row while the three-step text size is off, and it changes the font size', async () => {
+    const settings = await renderSettings({ textSizeSteps: false });
+
+    await fireEvent.press(screen.getByTestId('settings-font-size-XL'));
+
+    expect(await settings.read()).toMatchObject({ fontSize: 'XL', textSize: 'system' });
+  });
+
+  it('has no S…XL row while the three-step text size is on', async () => {
+    await renderSettings({ textSizeSteps: true });
+
+    expect(screen.getByTestId('settings-theme-light')).toBeOnTheScreen();
+    expect(screen.queryByTestId('settings-font-size-M')).toBeNull();
+  });
 });
 
 describe('Settings › Віджети', () => {
-  it('opens the widget guide from «Як додати віджет» under «ЗВУК І СПОВІЩЕННЯ», with its 3 steps', async () => {
+  it('opens the widget guide from «Віджети», with no value, under «ЗВУК І СПОВІЩЕННЯ», with its 3 steps', async () => {
     await renderSettings();
     expect(screen.getByText('ЗВУК І СПОВІЩЕННЯ')).toBeOnTheScreen();
 
-    await fireEvent.press(screen.getByRole('button', { name: /^Як додати віджет/ }));
+    const row = screen.getByRole('button', { name: 'Віджети' });
+    expect(row).toHaveProp('accessibilityHint', 'Головний екран і блокування');
+    await fireEvent.press(row);
 
     const guide = await screen.findByTestId('widget-guide');
     // Beside its back tile at the size of every screen a Settings row opens, as the board has it (owner 08.11).
-    expect(within(guide).getByRole('header', { name: 'Слово на головному екрані' })).toHaveStyle({
+    expect(
+      within(guide).getByRole('header', { name: editionStrings.settings.widgets.title }),
+    ).toHaveStyle({
       fontSize: 20,
       textTransform: 'none',
     });
@@ -206,6 +320,49 @@ describe('Settings › ЗВУК І СПОВІЩЕННЯ', () => {
     await fireEvent.press(screen.getByRole('switch', { name: 'Вібрація' }));
 
     expect((await settings.read()).vibration).toBe(false);
+  });
+});
+
+describe('Settings › «Ціль дня»', () => {
+  it('opens the screen of the Daily Goal from its row: the number, the explaining line and four options', async () => {
+    await renderSettings({ dailyGoal: true });
+    await fireEvent.press(screen.getByTestId('settings-row-daily-goal'));
+
+    const goalScreen = await screen.findByTestId('daily-goal-screen');
+    expect(within(goalScreen).getByRole('header', { name: 'Ціль дня' })).toBeOnTheScreen();
+    expect(within(goalScreen).getByText('Скільки нових слів відкривати щодня.')).toBeOnTheScreen();
+    const options = ['10', '25', '50', 'Без цілі'].map((name) =>
+      within(goalScreen).getByRole('radio', { name }),
+    );
+    expect(within(goalScreen).getAllByRole('radio')).toEqual(options);
+  });
+
+  it('keeps the goal chosen on the screen and names it on the row', async () => {
+    const composition = await testShell().composition.opened();
+    await renderSettings({ dailyGoal: true }, undefined, composition);
+    await fireEvent.press(screen.getByTestId('settings-row-daily-goal'));
+
+    await fireEvent.press(await screen.findByTestId('daily-goal-25'));
+    expect(screen.getByTestId('daily-goal-25')).toBeSelected();
+    expect(screen.getByTestId('daily-goal-sample')).toHaveTextContent(
+      '25Двадцять п’ять слів — золота середина.',
+    );
+    expect(composition.xpLog.state.dailyGoal?.goal).toBe(25);
+
+    await fireEvent.press(screen.getByTestId('daily-goal-none'));
+    expect(screen.getByTestId('daily-goal-sample')).toHaveTextContent(
+      '—Без цілі — гортай у власному темпі.',
+    );
+    expect(composition.xpLog.state.dailyGoal).toBeNull();
+    await fireEvent.press(screen.getByTestId('daily-goal-back'));
+
+    expect(await screen.findByRole('button', { name: 'Ціль дня, Без цілі' })).toBeOnTheScreen();
+  });
+
+  it('leaves the row out while its Feature Switch is off', async () => {
+    await renderSettings({ dailyGoal: false });
+
+    expect(screen.queryByTestId('settings-row-daily-goal')).not.toBeOnTheScreen();
   });
 });
 
@@ -277,21 +434,10 @@ describe('Settings › «Сезонний декор»', () => {
     expect(screen.queryByRole('switch', { name: 'Сезонний декор' })).not.toBeOnTheScreen();
   });
 
-  it('turns Seasonal Decor off from its switch while the Edition turns it on', async () => {
-    const settings = await renderSettings({ seasonalDecor: true });
+  it('has no row even while the Edition turns Seasonal Decor on (ADR 0055)', async () => {
+    await renderSettings({ seasonalDecor: true });
 
-    const row = screen.getByRole('switch', { name: 'Сезонний декор' });
-    expect(row).toBeChecked();
-    const { title, explanation } = editionStrings.settings.seasonalDecor;
-    expect(screen.getByText(explanation, { includeHiddenElements: true })).toBeOnTheScreen();
-    // VoiceOver reads the row once, at its switch, with the explanation as its hint.
-    expect(screen.getByHintText(explanation)).toBe(row);
-    expect(screen.queryByText(title)).not.toBeOnTheScreen();
-    expect(screen.queryByText(explanation)).not.toBeOnTheScreen();
-
-    await fireEvent.press(row);
-
-    expect((await settings.read()).seasonalDecor).toBe(false);
+    expect(screen.queryByTestId('settings-seasonal-decor')).not.toBeOnTheScreen();
   });
 });
 

@@ -17,6 +17,18 @@ const everything: Shown = {
   gameReview: true,
   finishPoster: true,
   survivalStreak: true,
+  gameThreeLives: true,
+  survivalOneLife: true,
+  timedTwentySeconds: true,
+  gameRoundMascot: true,
+  gameQuestionOnGround: true,
+  gameOptionStamp: true,
+  livesOverWarmup: true,
+  gameEndToFeed: true,
+  plainGameReview: true,
+  gameHubGroups: true,
+  gameHubRecord: true,
+  gameModeToast: true,
   answerCard: true,
   entryButtons: {
     shareCard: true,
@@ -35,6 +47,7 @@ const everything: Shown = {
   narratorVoiceSetting: true,
   seasonalDecorSetting: true,
   reduceMotionSetting: true,
+  textSizeSteps: true,
   shareCountersSetting: true,
   countersSetting: 'noCounters',
   learning: true,
@@ -164,6 +177,10 @@ describe('what the reader is shown', () => {
       { off: ['reduceMotion'], shown: { reduceMotionSetting: false } },
     ],
     [
+      'the S…XL text size with the three-step text size off',
+      { off: ['textSizeSteps'], shown: { textSizeSteps: false } },
+    ],
+    [
       'no «Ділитися анонімною статистикою» switch with Community Counters and Analytics off',
       { off: ['communityCounters', 'analytics'], shown: { shareCountersSetting: false } },
     ],
@@ -183,6 +200,54 @@ describe('what the reader is shown', () => {
     [
       'the Rounds passed in place of the streak with its switch off',
       { off: ['survivalStreak'], shown: { survivalStreak: false } },
+    ],
+    [
+      'the spec #1674 Game with gameThreeLives off',
+      { off: ['gameThreeLives'], shown: { gameThreeLives: false } },
+    ],
+    [
+      'the spec #1674 Game with survivalOneLife off',
+      { off: ['survivalOneLife'], shown: { survivalOneLife: false } },
+    ],
+    [
+      'the spec #1674 Game with timedTwentySeconds off',
+      { off: ['timedTwentySeconds'], shown: { timedTwentySeconds: false } },
+    ],
+    [
+      'the spec #1674 Game with gameRoundMascot off',
+      { off: ['gameRoundMascot'], shown: { gameRoundMascot: false } },
+    ],
+    [
+      'the spec #1674 Game with gameQuestionOnGround off',
+      { off: ['gameQuestionOnGround'], shown: { gameQuestionOnGround: false } },
+    ],
+    [
+      'the spec #1674 Game with gameOptionStamp off',
+      { off: ['gameOptionStamp'], shown: { gameOptionStamp: false } },
+    ],
+    [
+      'the spec #1674 Game with livesOverWarmup off',
+      { off: ['livesOverWarmup'], shown: { livesOverWarmup: false } },
+    ],
+    [
+      'the spec #1674 Game with gameEndToFeed off',
+      { off: ['gameEndToFeed'], shown: { gameEndToFeed: false } },
+    ],
+    [
+      'the spec #1674 Game with plainGameReview off',
+      { off: ['plainGameReview'], shown: { plainGameReview: false } },
+    ],
+    [
+      'the spec #1674 Game with gameHubGroups off',
+      { off: ['gameHubGroups'], shown: { gameHubGroups: false } },
+    ],
+    [
+      'the spec #1674 Game with gameHubRecord off',
+      { off: ['gameHubRecord'], shown: { gameHubRecord: false } },
+    ],
+    [
+      'the spec #1674 Game with gameModeToast off',
+      { off: ['gameModeToast'], shown: { gameModeToast: false } },
     ],
     [
       'the answer sheet with the answer card off',

@@ -137,7 +137,8 @@ describe('the Rarity Test result', () => {
       each.rarity === 3 && index % 2 === 0 ? { ...each, known: true } : each,
     );
 
-    expect(await app.rarityTest.apply(answers)).toBe(3);
+    // One of the two Words of rarity 3 and both of rarity 5 are not known.
+    expect(await app.rarityTest.apply(answers)).toEqual({ ceiling: 3, known: 7, total: 10 });
     expect(app.rarityCeiling.state).toBe(3);
   });
 
@@ -145,14 +146,22 @@ describe('the Rarity Test result', () => {
     const app = await open();
     await app.rarityCeiling.set(2);
 
-    expect(await app.rarityTest.apply(await answer(app))).toBe(5);
+    expect(await app.rarityTest.apply(await answer(app))).toEqual({
+      ceiling: 5,
+      known: 10,
+      total: 10,
+    });
     expect(app.rarityCeiling.state).toBe(5);
   });
 
   it('sets «до 1» when no Word is known', async () => {
     const app = await open();
 
-    expect(await app.rarityTest.apply(await answer(app, [1, 2, 3, 4, 5]))).toBe(1);
+    expect(await app.rarityTest.apply(await answer(app, [1, 2, 3, 4, 5]))).toEqual({
+      ceiling: 1,
+      known: 0,
+      total: 10,
+    });
     expect(app.rarityCeiling.state).toBe(1);
   });
 

@@ -1,10 +1,4 @@
-import {
-  categoryTarget,
-  type CategoryKind,
-  type HiddenEntry,
-  type HideTarget,
-  type MixKind,
-} from '@slovo/core';
+import type { HiddenEntry } from '@slovo/core';
 import { fill, useEdition, useUndoToast } from '@slovo/ui';
 import { useMemo } from 'react';
 
@@ -13,7 +7,12 @@ import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { useUndo } from '../undo';
-import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
+import {
+  hiddenScreenModel,
+  hiddenSummary,
+  type HiddenRowModel,
+  type HiddenScreenModel,
+} from './hidden-screen';
 import { useMixInEffect } from './mix';
 
 const strings = editionStrings.hidden;
@@ -41,47 +40,30 @@ export function useHiddenScreenModel(): HiddenScreenModel {
 }
 
 /**
- * The calls of the Hidden screen, each an unhide of the Core composition.
- * Bringing an Entry back shows the undo toast, which hides it again at the
- * time the composition returns, in the composition open at the tap, so the
- * Entry goes back to its old place in the list; a Category, Corrections or
- * Idioms go back in the Mix with no toast. A change that could not be kept is
- * logged and leaves things as they were. Needs an `UndoToastProvider` above it.
+ * The one call of the Hidden screen, «Показати»: the unhide of the Core
+ * composition for the row's kind, which restores the Entry or puts the
+ * Category or the kind back in the Mix. Each shows the undo toast, which
+ * hides it again at the time the composition returns, in the composition
+ * open at the tap, so it goes back to its old place in the list. A change
+ * that could not be kept is logged and leaves things as they were. Needs an
+ * `UndoToastProvider` above it.
  */
-export function useHiddenChanges(): {
-  restoreEntry: (entryId: string) => void;
-  /** Puts the Category of the list, the Words' or the Corrections', back in the Mix. */
-  turnCategoryOn: (categoryId: string, of: CategoryKind) => void;
-  /** Puts the kind of Entry (Corrections, Idioms, Synonym Rows, Tips) as a whole back in the Mix. */
-  turnKindOn: (entryKind: MixKind) => void;
-} {
+export function useHiddenShow(): (row: HiddenRowModel) => void {
   const composition = useComposition();
   const undo = useUndo();
   const showToast = useUndoToast();
 
-  function unhide(target: HideTarget): void {
+  return ({ target, name }) => {
     void keep('the hidden change', composition.unhide(target)).then((result) => {
-      if (result?.changed.kind !== 'entry' || result.undo === undefined) return;
-      const { undo: restoreUndo } = result;
+      if (result === undefined) return;
+      const { undo: showUndo } = result;
       showToast({
-        message: fill(strings.entryRestored, { title: result.changed.row.title }),
+        message: fill(strings.entryRestored, { title: name }),
         undoLabel: strings.undo,
         onUndo() {
-          undo('the undo of bringing the Entry back', restoreUndo);
+          undo('the undo of showing what was hidden', showUndo);
         },
       });
     });
-  }
-
-  return {
-    restoreEntry: (entryId) => {
-      unhide({ kind: 'entry', entryId });
-    },
-    turnCategoryOn: (categoryId, of) => {
-      unhide(categoryTarget(categoryId, of));
-    },
-    turnKindOn: (entryKind) => {
-      unhide({ kind: 'whole-kind', entryKind });
-    },
   };
 }

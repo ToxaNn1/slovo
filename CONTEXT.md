@@ -210,8 +210,12 @@ A rule of good speech with its standard form, a short explanation and its own Ga
 _Avoid_: Hack, advice, lifehack
 
 **Entry card**:
-How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. With `swipeMarks` on, the action row moves to the card's top-right corner as heart, Collections and «⋯», whose sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). With `wordTabs` on, every card but the Word of the Day's is a fixed frame the height of the Feed's page (ADR 0091): a Word card with the tabs «Суть», «Приклад», «Зв’язки» and «Історія» under its Lemma, a Correction card with «Як краще», «Чому» and «Приклади» under its struck non-standard form, an Idiom card with «Суть», «Звідки» and «Приклад» under its expression, a Tip card with «Правило» (and, with `tipExceptions` on, «Винятки» for a Tip with exceptions, ADR 0120), and a Synonym Row card with its members four to a tab, «Ряд · 1/2», «Ряд · 2/2» (ADR 0114), empty tabs left out. With `sourceTab` on too, each of them ends with a tab «Джерело» that names the Entry's sources one to a line, and the source line leaves the other tabs (ADR 0116). Content too tall for the frame shrinks a font size at a time down to S, then is clamped under «Детальніше», which opens it whole in a scroll inside the card (ADR 0113). The Feed and every screen that opens a kept Entry show the same Entry card.
+How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. With `swipeMarks` on, the action row moves to the card's top-right corner as heart, Collections and «⋯», whose sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). With `wordTabs` on, every card but the Word of the Day's is a fixed frame the height of the Feed's page (ADR 0091): a Word card with the tabs «Суть», «Приклад», «Зв’язки» and «Історія» under its Lemma, a Correction card with «Як краще», «Чому» and «Приклади» under its struck non-standard form, an Idiom card with «Суть», «Звідки» and «Приклад» under its expression, a Tip card with «Правило» (and, with `tipExceptions` on, «Винятки» for a Tip with exceptions, ADR 0120), and a Synonym Row card with its members four to a tab, «Ряд · 1/2», «Ряд · 2/2» (ADR 0114), empty tabs left out. With `sourceTab` on too, each of them ends with a tab «Джерело» that names the Entry's sources one to a line, and the source line leaves the other tabs (ADR 0116). Content too tall for the frame shrinks a Text size step at a time down to the floor, then is clamped under «Детальніше», which opens it whole in a scroll inside the card (ADR 0113). The Feed and every screen that opens a kept Entry show the same Entry card.
 _Avoid_: Item, tile (for a card; a tile is the pressed button of the design)
+
+**Text size**:
+«Шрифт і розмір»: the size the Entry card's texts start from. With its Feature Switch on, one of «Як у системі» (the phone's text size within a cap), «Більший» and «Найбільший», steps of one ordered ladder whose lowest step is the shrink floor; stored S and M read as «Як у системі», L as «Більший», XL as «Найбільший». Off, the old scale S, M, L, XL with the floor S (ADR 0134).
+_Avoid_: font scale, zoom
 
 ### User's words
 
@@ -242,6 +246,10 @@ Only the name of the tab that groups Favorites, Collections and History. Not a c
 The most recent Seen Entries, newest first, without duplicates (a re-seen Entry moves to the top), capped at 500. Survives Cycles.
 _Avoid_: Recent, log
 
+**Data export**:
+«Експортувати мої дані» on the screen «Конфіденційність», beside the one privacy switch: one versioned, human-readable JSON file of the reader's words, progress, settings and name in this Edition, built on the device without an Account or the network and handed only to the system share window. It never holds the Session, a token, the Install id or content the reader did not make; Entries appear by id and Lemma only (ADR 0135).
+_Avoid_: backup, Sync
+
 ### Progress
 
 **Active Day**:
@@ -261,7 +269,7 @@ The points a learning action earns: a right answer in a Game (1 per Round), a fi
 _Avoid_: Points, score, coins, experience
 
 **XP log**:
-The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set (`word-goal`) and met (`goal-met`) for a day, a freeze consumed, a Break started, a Badge earned, a Badge opened (`badge-opened`, which ends its «НОВА» mark on every device) and a wrong answer in a Game (`wrong-answer`, which earns no XP and feeds the `rightRun` Badge). Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from it and never stored.
+The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set (`word-goal`) and met (`goal-met`) for a day, a freeze consumed, a Break started, a Badge earned, a Badge opened (`badge-opened`, which ends its «НОВА» mark on every device) and a wrong answer in a Game (`wrong-answer`, which earns no XP and feeds the `rightRun` Badge) and a reset marker (a Progress reset, ADR 0133). Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from the records after the latest reset marker and never stored.
 _Avoid_: XP history, score table, ledger
 
 **Level**:
@@ -289,8 +297,12 @@ A group of Badges an Edition declares, with a name, a description, a shape and a
 _Avoid_: Badge category, Badge group, tier
 
 **Profile**:
-The screen of the reader's whole progress: Level and progress to the next, Streak, Best Streak, the Active Days calendar (the last 35 days across months, with Break and frozen days), confirmed learned Entries by rarity, Badges with progress, the Best result of each Game Mode and a button to share the Level; the reader's earlier numbers (Seen, Favorites, Known, Game results) stay available. Without an Account it offers to save the progress.
+The screen of the reader's whole progress: Level and progress to the next, Streak, Best Streak, the Active Days calendar (the last 35 days across months, with Break and frozen days), confirmed learned Entries by rarity, Badges with progress, the Best result of each Game Mode and a button to share the Level; the reader's earlier numbers (Seen, Favorites, Known, Game results) stay available. Without an Account it offers to save the progress. Its header shows the avatar (the first letter of the reader's name, a neutral mark without one), the name and «Рівень N — назва»; the name is optional, trimmed, at most 24 characters, synced through the Account and never sent with Analytics or any counter (ADR 0136).
 _Avoid_: Account (the identity that syncs), dashboard, stats screen
+
+**Progress reset**:
+«Скинути прогрес»: a reset marker the reader writes into the XP log. Every value derived from the log, Badges and Best results included, counts only the records after the latest marker; the Daily Goal in force is written again after it. Favorites, Collections, History, Seen, Knowledge Marks and Reviews, Hidden Entries, the Mix, the Rarity Ceiling, settings, the name and the Account stay (ADR 0133).
+_Avoid_: wipe, delete data, sign out
 
 **Mascot**:
 The Edition's character, a silent figure that moves and shows short lines from the Edition in onboarding, celebrations (a new Level, a Badge, the Daily Goal, Streak milestones), Game reactions and empty states, and never interrupts the Feed. The Edition supplies its vector; the Core draws its states and their motion (ADR 0070). It makes no sound: the interface sounds of the app are not its voice.
@@ -366,7 +378,7 @@ The set of Categories of Words, plus Corrections as a whole with their own Categ
 _Avoid_: Filter, preferences
 
 **Rarity Ceiling**:
-«Рідкість»: the highest rarity of Words the reader wants, «до 1» to «до 5», default «до 5». Only Words up to that rarity appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings, by onboarding's «Хто ви» and by the Rarity Test. There is no lower bound.
+«Рідкість»: the highest rarity of Words the reader wants, «до 1» to «до 5», default «до 5». Only Words up to that rarity appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings, by onboarding's «Рівень» and by the Rarity Test. There is no lower bound.
 _Avoid_: Rarity Floor, difficulty, level, maximum difficulty
 
 **Mix kind weight**:
@@ -491,16 +503,17 @@ _Avoid_: Search index cache
 ### Game
 
 **Game**:
-A run of Rounds in one Game Mode: up to 15 Rounds with 5 Lives by default. A Game Mode may set its own Lives, Round limit and time limit: «Виживання» has 3 Lives and no Round limit, «На час» 60 seconds and no Lives. In every Game Mode up to 5 Rounds are drawn from eligible Entries that are Unknown or due for Review, the rest as before; a wrong answer marks the Entry Unknown. At its end the Game shows its Game Review. The Daily Crossword is not a Game.
+A run of Rounds in one Game Mode: up to 15 Rounds with 3 Lives by default. A Game Mode may set its own Lives, Round limit and time limit: «Виживання» has 1 Life and no Round limit, «На час» 20 seconds and no Lives. In every Game Mode up to 5 Rounds are drawn from eligible Entries that are Unknown or due for Review, the rest as before; a wrong answer marks the Entry Unknown. At its end the Game shows its Game Review. The Daily Crossword is not a Game.
 _Avoid_: Quiz, practice, test
 
 **Game Mode**:
-The kind of challenge in a Game. A Game Mode sets its Lives (or none), its Round limit (or none), its time limit (or none), the form of its answers and the group of the mode screen it stands in, and has its own Feature Switch. The Core modes, in four groups:
+The kind of challenge in a Game. A Game Mode sets its Lives (or none), its Round limit (or none), its time limit (or none), the form of its answers and the group of the mode screen it stands in, and has its own Feature Switch. The Core modes, in five groups:
 
-- «Слова»: «Вгадай слово» (`guess-word`), a Definition → pick the Word, getting harder as it goes (Rounds 6–10 an Example with a gap, Rounds 11–15 a Definition → type the Word); it asks about idioms of Idiom Type `idiom` the same way, with four idioms (place names never play), about Synonym Rows with «Що є синонімом до „{домінанта}“?», one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and about Tips, each with its own Game question; «Наголос» (`stress`), tap the stressed vowel; «Пари» (`pairs`), match 4 Words to 4 Definitions; «Анаграми» (`anagram`), assemble the Word from shuffled letters; «За буквами» (`by-letters`), tap letter tiles into the slots by the Definition (no typing, no opened letters); «Впиши слово» (`type-word`), a sentence with a non-standard form → type the standard form; «Звідки слово» (`origin`), pick the language a Word came from.
-- «Виправлення»: «Обери правильне» (`correction`), a sentence with a non-standard form → pick the standard equivalent; «Англіцизми» (`anglicism`), the same with anglicisms only.
-- «Вислови»: «Фразеологізми» (`idiom-meaning`), an idiom or a proverb → pick its meaning; «Склади вислів» (`build-idiom`), assemble an expression from its words.
-- «Виклик»: «Виживання» (`survival`), 3 Lives and no Round limit; «На час» (`timed`), 60 seconds and no Lives.
+- «Звук»: «Наголос» (`stress`), tap the stressed vowel.
+- «Значення»: «Обери правильне» (`correction`), a sentence with a non-standard form → pick the standard equivalent; «Пари» (`pairs`), match 4 Words to 4 Definitions; «Фразеологізми» (`idiom-meaning`), an idiom or a proverb → pick its meaning.
+- «Букви»: «Анаграми» (`anagram`), assemble the Word from shuffled letters.
+- «Швидкість»: «На час» (`timed`), 20 seconds and no Lives.
+- «Нове»: «Вгадай слово» (`guess-word`), a Definition → pick the Word, getting harder as it goes (Rounds 6–10 an Example with a gap, Rounds 11–15 a Definition → type the Word); it asks about idioms of Idiom Type `idiom` the same way, with four idioms (place names never play), about Synonym Rows with «Що є синонімом до „{домінанта}“?», one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and about Tips, each with its own Game question; «За літерами» (`by-letters`), tap letter tiles into the slots by the Definition (no typing, no opened letters); «Впиши слово» (`type-word`), a sentence with a non-standard form → type the standard form; «Звідки слово» (`origin`), pick the language a Word came from; «Англіцизми» (`anglicism`), the same as «Обери правильне» with anglicisms only; «Склади вислів» (`build-idiom`), assemble an expression from its words among decoy words of other expressions, judged on «Перевірити»; «Виживання» (`survival`), 1 Life and no Round limit.
 
 Editions may add modes through an Extension Point.
 
@@ -524,7 +537,7 @@ The highest result of one finished Game in a Game Mode: the Rounds passed, or th
 _Avoid_: High score, top score
 
 **Game Review**:
-The result screen's list of every played Round in order, in every Game Mode: its prompt → its right answer, ✓ or ✗, with the reader's pick or typed text on a wrong answer; each pair of «Пари» is one row. A tap expands the Definition, Example and etymology (a Correction: the right form and the explanation; a Synonym Row: its members; a Tip: its explanation); a second tap opens the Entry. Its answers are kept only until the result screen and are not stored.
+The result screen's plain list «Огляд раундів» of every played Round in order, in every Game Mode: ✓ or ✗ and the word; each pair of «Пари» is one row. A row neither expands nor opens the Entry. Its answers are kept only until the result screen and are not stored.
 _Avoid_: Mistakes list, answer log
 
 **Daily Crossword**:

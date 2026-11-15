@@ -136,7 +136,7 @@ function lemmaOf({ prompt }: Round): string {
   return asked;
 }
 
-/** Starts «За буквами» and plays it to its end, typing what `type` makes of each Word, keeping each answered Round. */
+/** Starts «За літерами» and plays it to its end, typing what `type` makes of each Word, keeping each answered Round. */
 async function playGame(
   app: Composition,
   type: (lemma: string) => string = (lemma) => lemma,
@@ -151,7 +151,7 @@ async function playGame(
   return rounds;
 }
 
-/** Starts «За буквами» with seeds until its first Round asks about the Word. */
+/** Starts «За літерами» with seeds until its first Round asks about the Word. */
 async function startAt(lemma: string): Promise<Composition> {
   for (let seed = 1; seed < 200; seed += 1) {
     const app = await run({ seed });
@@ -161,14 +161,14 @@ async function startAt(lemma: string): Promise<Composition> {
   throw new Error(`No Game starts with «${lemma}»`);
 }
 
-describe('«За буквами» on offer', () => {
+describe('«За літерами» on offer', () => {
   it('is offered when the Edition turns the mode on', async () => {
     const app = await run();
 
     expect(byLettersOffer(app)).toEqual({
       modeId: 'by-letters',
       entryKind: 'word',
-      group: 'words',
+      group: 'new',
       canStart: true,
     });
   });
@@ -187,7 +187,7 @@ describe('«За буквами» on offer', () => {
     expect(byLettersOffer(app)).toEqual({
       modeId: 'by-letters',
       entryKind: 'word',
-      group: 'words',
+      group: 'new',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -209,7 +209,7 @@ describe('«За буквами» on offer', () => {
   });
 });
 
-describe('a Round of «За буквами»', () => {
+describe('a Round of «За літерами»', () => {
   it('shows the primary Definition and a blank for each letter, and takes the Word typed', async () => {
     const app = await run();
     const rounds = await playGame(app);
@@ -224,7 +224,7 @@ describe('a Round of «За буквами»', () => {
       });
       expect(round.answer).toMatchObject({ form: 'typed', expected: lemma, right: true });
     }
-    expect(current(app)).toMatchObject({ lives: 5, status: 'won' });
+    expect(current(app)).toMatchObject({ lives: 3, status: 'won' });
   });
 
   it('keeps an apostrophe and a hyphen in place, never a blank', async () => {
@@ -292,7 +292,7 @@ describe('a Round of «За буквами»', () => {
     await app.game.answer({ form: 'typed', text: ' ПІ́Р’Я ' });
 
     expect(current(app).round.answer).toMatchObject({ right: true });
-    expect(current(app).lives).toBe(5);
+    expect(current(app).lives).toBe(3);
   });
 
   it('costs a Life for a wrong Word, marks it «Не знаю», moves no Review and lists the text typed', async () => {
@@ -306,7 +306,7 @@ describe('a Round of «За буквами»', () => {
       expected: 'кобза',
       right: false,
     });
-    expect(current(app).lives).toBe(4);
+    expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(idOf('кобза'))).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
     expect(buildGameReview(current(app).played)[0]).toMatchObject({
@@ -326,7 +326,7 @@ describe('a Round of «За буквами»', () => {
   });
 });
 
-describe('«Відкрити літеру» in «За буквами»', () => {
+describe('«Відкрити літеру» in «За літерами»', () => {
   it('opens one letter at a time from the start, until one is left, at no cost', async () => {
     const app = await startAt('пірʼя');
     const blanks = () => blanksOf(app);
@@ -352,7 +352,7 @@ describe('«Відкрити літеру» in «За буквами»', () => {
 
     await app.game.answer({ form: 'typed', text: 'пірʼя' });
     expect(current(app).round.answer).toMatchObject({ right: true });
-    expect(current(app).lives).toBe(5);
+    expect(current(app).lives).toBe(3);
     expect(buildGameReview(current(app).played)[0]).toMatchObject({ right: true });
   });
 
@@ -394,7 +394,7 @@ function placesOf(chips: readonly string[], letters: readonly string[]): number[
   });
 }
 
-/** Starts «За буквами» with letter tiles and plays it to its end, keeping each Round before its answer. */
+/** Starts «За літерами» with letter tiles and plays it to its end, keeping each Round before its answer. */
 async function playTiles(app: Composition): Promise<Round[]> {
   await app.game.start('by-letters');
   const rounds: Round[] = [];
@@ -408,7 +408,7 @@ async function playTiles(app: Composition): Promise<Round[]> {
   return rounds;
 }
 
-describe('«За буквами» with letter tiles', () => {
+describe('«За літерами» with letter tiles', () => {
   it("shows the Word's letters plus decoys from the alphabet, at least 8 tiles in a multiple of 4", async () => {
     const rounds = await playTiles(await run({ off: [] }));
 

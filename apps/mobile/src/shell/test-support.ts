@@ -49,7 +49,7 @@ export function opened<T>(value: T): Opening<T> {
 }
 
 /**
- * The Feature Switches of the Games boards (spec #1674). A test of the Game tab
+ * The Feature Switches of the Games boards (spec #1674, #1880). A test of the Game tab
  * starts with each of them off and turns on the ones it needs, so it does not
  * hang on whether the UA Edition ships them.
  */
@@ -63,6 +63,21 @@ export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
   'letterTiles',
   'survivalStreak',
   'finishPoster',
+  'gameAnswerBanner',
+  'gameThreeLives',
+  'survivalOneLife',
+  'timedTwentySeconds',
+  'gameRoundMascot',
+  'gameQuestionOnGround',
+  'gameOptionStamp',
+  'pairsStay',
+  'buildIdiomCheck',
+  'livesOverWarmup',
+  'gameEndToFeed',
+  'plainGameReview',
+  'gameHubGroups',
+  'gameHubRecord',
+  'gameModeToast',
 ];
 
 /**

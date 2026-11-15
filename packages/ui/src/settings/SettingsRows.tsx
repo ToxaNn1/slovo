@@ -112,14 +112,27 @@ function useRowLook() {
  * optional line of muted text under its label, which VoiceOver reads as the
  * row's hint.
  */
-export function NavigationRow({
+export function NavigationRow(
+  props: RowProps & { subtitle?: string; value?: string | undefined; onPress: () => void },
+) {
+  return <PressRow {...props} chevron />;
+}
+
+/** A row that is pressed: it opens a screen behind its chevron, or runs a plain action without one. */
+function PressRow({
   label,
   subtitle,
   value,
   onPress,
   testID,
   icon,
-}: RowProps & { subtitle?: string; value?: string | undefined; onPress: () => void }) {
+  chevron,
+}: RowProps & {
+  subtitle?: string | undefined;
+  value?: string | undefined;
+  onPress: () => void;
+  chevron: boolean;
+}) {
   const look = useRowLook();
   // At the largest text sizes the value drops under the label instead of squeezing it.
   const stacked = useWindowDimensions().fontScale > STACK_AT_FONT_SCALE;
@@ -149,9 +162,48 @@ export function NavigationRow({
           {value !== undefined && <Text style={[look.value, styles.trailing]}>{value}</Text>}
         </>
       )}
-      <RowChevron />
+      {chevron && (
+        <View testID={testID === undefined ? undefined : `${testID}-chevron`}>
+          <RowChevron />
+        </View>
+      )}
     </Pressable>
   );
+}
+
+/** What a settings row has at its end: a chevron with the value it opens, a switch, or a plain action. */
+export type SettingsRowEnd =
+  | { readonly kind: 'chevron'; readonly value?: string | undefined; readonly onPress: () => void }
+  | {
+      readonly kind: 'switch';
+      readonly value: boolean;
+      readonly onChange: (value: boolean) => void;
+    }
+  | { readonly kind: 'action'; readonly onPress: () => void };
+
+/**
+ * A row of the Settings list (board 11, screen 83): its icon, its title, the
+ * line under it and one end. The line is given on every row; only a row whose
+ * line depends on what the device reports passes undefined.
+ */
+export function SettingsRow({
+  end,
+  ...row
+}: {
+  readonly label: string;
+  readonly testID?: string;
+  readonly icon: RowIcon;
+  readonly subtitle: string | undefined;
+  readonly end: SettingsRowEnd;
+}) {
+  switch (end.kind) {
+    case 'chevron':
+      return <PressRow {...row} value={end.value} onPress={end.onPress} chevron />;
+    case 'switch':
+      return <SwitchRow {...row} value={end.value} onChange={end.onChange} />;
+    case 'action':
+      return <PressRow {...row} onPress={end.onPress} chevron={false} />;
+  }
 }
 
 /**
@@ -166,7 +218,11 @@ export function SwitchRow({
   onChange,
   testID,
   icon,
-}: RowProps & { subtitle?: string; value: boolean; onChange: (value: boolean) => void }) {
+}: RowProps & {
+  subtitle?: string | undefined;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}) {
   const look = useRowLook();
   // At the largest text sizes the switch drops under the label instead of squeezing it.
   const stacked = useWindowDimensions().fontScale > STACK_AT_FONT_SCALE;

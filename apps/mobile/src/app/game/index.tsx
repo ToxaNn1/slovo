@@ -9,9 +9,12 @@ import {
   GameRound,
   GameModeGroupTitle,
   GamesTitle,
+  type ResultReview,
   rowPadding,
   space,
+  UndoToastProvider,
   useTokens,
+  useUndoToast,
   WidgetGuideSheet,
   XpPill,
 } from '@slovo/ui';
@@ -30,8 +33,8 @@ import {
   useTimeLeft,
   useWidgetHintShown,
 } from '@/game/game';
-import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
-import { MascotIn } from '@/mascot/mascot';
+import { gameModeCard, gameModeGroups, gameModeStrings, gameModeToast } from '@/game/game-modes';
+import { MascotAs, MascotIn } from '@/mascot/mascot';
 import { useXpLogState } from '@/progress/xp-log';
 import { useShown } from '@/shown-in-effect';
 
@@ -45,6 +48,8 @@ const { game: strings, widget: widgetStrings, settings: settingsStrings } = edit
  * sheet over it, until the reader closes it. A timed Game's timer ticks, and stops while the app is in the
  * background. The Game stays in the Core composition, so another tab and back,
  * or an Entry the Game Review opens and back, finds it where it was.
+ * A Round's question stands on the ground and the Mascot beside it while
+ * their switches are on (ADR 0139).
  */
 export default function GameScreen() {
   // Turned off remotely while the reader is on it: its tab goes, and so does the screen.
@@ -57,7 +62,19 @@ function Game() {
   const actions = useGameActions();
   const router = useRouter();
   const openScreen = useOpenScreen();
-  const { gameReview, finishPoster, survivalStreak, answerCard } = useShown();
+  const {
+    gameReview,
+    finishPoster,
+    survivalStreak,
+    answerCard,
+    gameQuestionOnGround,
+    gameRoundMascot,
+    gameOptionStamp,
+    timedTwentySeconds,
+    livesOverWarmup,
+    gameEndToFeed,
+    plainGameReview,
+  } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
   /** Whether the reader closed the widget hint, which is offered once ever. */
@@ -70,6 +87,16 @@ function Game() {
   useWidgetHintShown(hintShown);
 
   const timeLeft = useTimeLeft(current?.time);
+  const review: ResultReview = !gameReview
+    ? { kind: 'none' }
+    : plainGameReview
+      ? { kind: 'plain' }
+      : {
+          kind: 'opening',
+          onOpen: (entryId) => {
+            openScreen(`/game/${entryId}`);
+          },
+        };
   return (
     <SafeAreaView
       testID="game"
@@ -77,25 +104,41 @@ function Game() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       {current === undefined ? (
-        <ModeScreen modes={state.modes} onStart={actions.start} />
+        <UndoToastProvider>
+          <ModeScreen modes={state.modes} onStart={actions.start} />
+        </UndoToastProvider>
       ) : result && poster !== undefined ? (
         <GameEndPoster
           game={current}
           end={poster}
           modeName={gameModeStrings(strings.modes, current.modeId).title}
           bestResult={state.bestResults[current.modeId]}
+          warmup={livesOverWarmup}
           onAgain={() => {
             actions.start(current.modeId);
           }}
           onToGames={actions.leave}
-          onOpenEntry={
-            gameReview
-              ? (entryId) => {
-                  openScreen(`/game/${entryId}`);
+          onToFeed={
+            gameEndToFeed
+              ? () => {
+                  actions.leave();
+                  router.navigate('/');
                 }
               : undefined
           }
-          mascot={<MascotIn state="gameEnd" onRed />}
+          timeUpToFinish={timedTwentySeconds}
+          review={review}
+          mascot={
+            poster.kind === 'lives-over' && !livesOverWarmup ? (
+              <MascotIn state="gameEnd" onRed />
+            ) : (
+              // The board's Mascot: glad for «ВЛУЧНО!», sad for «ЩЕ РАУНД!» and «Розминка!».
+              <MascotAs
+                state={poster.kind !== 'lives-over' && poster.onTarget ? 'happy' : 'sad'}
+                onRed
+              />
+            )
+          }
         />
       ) : result ? (
         <>
@@ -109,13 +152,7 @@ function Game() {
               actions.leave();
               router.navigate('/');
             }}
-            onOpenEntry={
-              gameReview
-                ? (entryId) => {
-                    openScreen(`/game/${entryId}`);
-                  }
-                : undefined
-            }
+            review={review}
             mascot={<MascotIn state="gameEnd" onRed />}
           />
           <WidgetGuideSheet
@@ -143,6 +180,14 @@ function Game() {
           onLeave={actions.leave}
           onOpenLetter={actions.openLetter}
           feedback={answerCard ? 'card' : 'sheet'}
+          onGround={gameQuestionOnGround}
+          optionStamp={gameOptionStamp}
+          mascot={
+            gameRoundMascot
+              ? ({ state, width }) => <MascotAs state={state} width={width} />
+              : undefined
+          }
+          onWaitFor={actions.waitFor}
         />
       )}
     </SafeAreaView>
@@ -154,6 +199,9 @@ function Game() {
  * Crossword's red card while it is on, which opens its screen, and a row per
  * mode on offer, with its one line and «★ n» or «—», under the titles of
  * their groups, each after a red mark. No progress share offers (DESIGN-06).
+ * Behind the switches of board 06 «Хаб ігор»: its five groups, whose rows
+ * cascade in, each row's hub line and record, and a mode that can't start
+ * keeping its look and showing a toast on a tap instead of starting.
  */
 function ModeScreen({
   modes,
@@ -164,6 +212,9 @@ function ModeScreen({
 }) {
   const crossword = useDailyCrosswordCard();
   const openScreen = useOpenScreen();
+  const showToast = useUndoToast();
+  const { gameHubGroups, gameHubRecord, gameModeToast: toast } = useShown();
+  let place = 0;
   return (
     <View testID="game-modes" style={styles.screen}>
       <ScrollView contentContainerStyle={styles.modes}>
@@ -198,8 +249,13 @@ function ModeScreen({
               <GameModeCard
                 key={offer.modeId}
                 testID={`game-mode-${offer.modeId}`}
-                {...gameModeCard(offer, strings)}
+                {...gameModeCard(offer, strings, { record: gameHubRecord, toast })}
+                {...(gameHubGroups ? { cascadeIndex: place++ } : {})}
                 onPress={() => {
+                  if (toast && !offer.canStart) {
+                    showToast({ message: gameModeToast(offer, modes, strings), brief: true });
+                    return;
+                  }
                   onStart(offer.modeId);
                 }}
               />

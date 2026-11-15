@@ -128,7 +128,7 @@ describe('«Виживання» on offer', () => {
     expect(survivalOffer(app)).toEqual({
       modeId: 'survival',
       entryKind: 'correction',
-      group: 'challenge',
+      group: 'new',
       canStart: true,
     });
   });
@@ -154,7 +154,7 @@ describe('«Виживання» on offer', () => {
     expect(survivalOffer(app)).toEqual({
       modeId: 'survival',
       entryKind: 'correction',
-      group: 'challenge',
+      group: 'new',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -170,7 +170,7 @@ describe('«Виживання» on offer', () => {
     expect(survivalOffer(app)).toEqual({
       modeId: 'survival',
       entryKind: 'correction',
-      group: 'challenge',
+      group: 'new',
       canStart: false,
       refusal: 'corrections-out-of-mix',
     });
@@ -182,8 +182,20 @@ describe('«Виживання» on offer', () => {
 });
 
 describe('a Game of «Виживання»', () => {
-  it('starts with 3 Lives and ends on the third mistake', async () => {
+  it('starts with 1 Life and ends on the first mistake', async () => {
     const app = await run();
+    await app.game.start('survival');
+
+    expect(current(app)).toMatchObject({ lives: 1, livesAtStart: 1, status: 'playing' });
+
+    const rounds = await play(app, { wrong: [4] });
+
+    expect(rounds).toHaveLength(4);
+    expect(current(app)).toMatchObject({ lives: 0, roundsPassed: 3, status: 'lost' });
+  });
+
+  it('starts with 3 Lives and ends on the third mistake with survivalOneLife off', async () => {
+    const app = await run({ off: ['survivalOneLife'] });
     await app.game.start('survival');
 
     expect(current(app)).toMatchObject({ lives: 3, livesAtStart: 3, status: 'playing' });
@@ -223,7 +235,7 @@ describe('a Game of «Виживання»', () => {
     const rounds = await play(app, { rounds: eligible + GAME_ROUNDS });
 
     expect(rounds).toHaveLength(eligible + GAME_ROUNDS);
-    expect(current(app)).toMatchObject({ lives: 3, status: 'playing' });
+    expect(current(app)).toMatchObject({ lives: 1, status: 'playing' });
     const ids = rounds.map((round) => askedOf(round).id);
     expect(new Set(ids.slice(0, eligible)).size).toBe(eligible);
     expect(ids.slice(eligible)).not.toEqual(ids.slice(0, GAME_ROUNDS));
@@ -248,7 +260,7 @@ describe('a Game of «Виживання»', () => {
 
     await app.game.answer({ form: 'pick', option: wrongOf(round) });
 
-    expect(current(app).lives).toBe(2);
+    expect(current(app).lives).toBe(0);
     expect(app.knowledge.state.shown.get(asked.id)).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
     expect(buildGameReview(current(app).played)).toMatchObject([
@@ -257,7 +269,7 @@ describe('a Game of «Виживання»', () => {
   });
 
   it('keeps the Rounds passed as its Best result, with no upper bound', async () => {
-    const app = await run();
+    const app = await run({ off: ['survivalOneLife'] });
     await app.game.start('survival');
     await play(app, { wrong: [1, 18, 20] });
 
@@ -265,7 +277,7 @@ describe('a Game of «Виживання»', () => {
     expect(survivalOffer(app)).toEqual({
       modeId: 'survival',
       entryKind: 'correction',
-      group: 'challenge',
+      group: 'new',
       best: { result: 19 },
       canStart: true,
     });

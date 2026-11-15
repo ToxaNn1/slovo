@@ -4,7 +4,8 @@ import { guessWord } from './guess-word';
 
 /**
  * «Виживання», the Core's endless mode (ADR 0052), on while the Edition turns
- * the mode and Corrections on: 3 Lives and no Round limit, its Rounds taking
+ * the mode and Corrections on: 1 Life (3 with `survivalOneLife` off, ADR 0137)
+ * and no Round limit, its Rounds taking
  * turns between Words and Corrections, so about half each. A Word's Round is
  * a «Вгадай слово» Definition pick at every Round, with no stages; a
  * Correction's is a Round of «Обери правильне». It refuses while Corrections
@@ -14,9 +15,10 @@ import { guessWord } from './guess-word';
 export const survivalMode: GameMode = {
   id: 'survival',
   group: 'challenge',
+  hubGroup: 'new',
   entryKind: 'correction',
   alsoAsks: ['word'],
-  lives: 3,
+  lives: (edition) => (edition.isFeatureEnabled('survivalOneLife') ? 1 : 3),
   roundLimit: 'none',
   takesTurns: true,
   isOn: (edition) => edition.isFeatureEnabled('gameSurvival'),

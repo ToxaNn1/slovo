@@ -60,6 +60,10 @@ export const AccountStringsSchema = z.strictObject({
   sendCode: TextSchema,
   /** The label of the code field. */
   codeLabel: TextSchema,
+  /** The divider above the email field, under the sign-in buttons. */
+  orByEmail: TextSchema,
+  /** The line above the code cells. Takes `{email}`, the address the code went to. */
+  codeSent: templateOf('email'),
   /** The button that sends a new code, once it may. */
   resend: TextSchema,
   /** The same button while the countdown runs. Takes `{count}`, the seconds left, which picks the form. */
@@ -74,10 +78,10 @@ export const AccountStringsSchema = z.strictObject({
   sync: SyncStatusStringsSchema,
   /** Deleting the Account: its button and the system alert behind it. */
   delete: z.strictObject({
-    /** The destructive button. Takes `{name}`. */
-    button: templateOf('name'),
-    /** The alert's title. Takes `{name}`. */
-    title: templateOf('name'),
+    /** The destructive button. May take `{name}`. */
+    button: TextSchema,
+    /** The alert's title. May take `{name}`. */
+    title: TextSchema,
     message: TextSchema,
     /** The alert's destructive button. */
     confirm: TextSchema,

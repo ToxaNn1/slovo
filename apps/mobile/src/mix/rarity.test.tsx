@@ -34,7 +34,7 @@ describe('the Rarity hooks', () => {
       ]);
     });
 
-    expect(set).toBe(target);
+    expect(set).toEqual({ ceiling: target, known: target - 1, total: target });
     expect(hook.result.current.ceiling).toBe(target);
   });
 });

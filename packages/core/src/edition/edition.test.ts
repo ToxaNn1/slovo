@@ -115,6 +115,21 @@ const validConfig = {
     letterTiles: 'on',
     survivalStreak: 'on',
     finishPoster: 'on',
+    gameAnswerBanner: 'on',
+    gameThreeLives: 'on',
+    survivalOneLife: 'on',
+    timedTwentySeconds: 'on',
+    gameRoundMascot: 'on',
+    gameQuestionOnGround: 'on',
+    gameOptionStamp: 'on',
+    pairsStay: 'on',
+    buildIdiomCheck: 'on',
+    livesOverWarmup: 'on',
+    gameEndToFeed: 'on',
+    plainGameReview: 'on',
+    gameHubGroups: 'on',
+    gameHubRecord: 'on',
+    gameModeToast: 'on',
     eveningNotification: 'on',
     notificationFarewell: 'on',
     notificationExplainer: 'on',
@@ -152,10 +167,16 @@ const validConfig = {
     profileGameBest: 'on',
     forceUpdate: 'on',
     scrollToTop: 'on',
+    progressReset: 'on',
+    dataExport: 'on',
+    readerName: 'on',
+    widgetPreviews: 'on',
+    textSizeSteps: 'on',
   },
   userSettingDefaults: {
     theme: 'system',
     fontSize: 'M',
+    textSize: 'system',
     vibration: true,
     notificationTimes: ['09:00'],
     mix: {
@@ -398,9 +419,29 @@ describe('loadEdition', () => {
     'letterTiles',
     'survivalStreak',
     'finishPoster',
+    'gameAnswerBanner',
+    'gameThreeLives',
+    'survivalOneLife',
+    'timedTwentySeconds',
+    'gameRoundMascot',
+    'gameQuestionOnGround',
+    'gameOptionStamp',
+    'pairsStay',
+    'buildIdiomCheck',
+    'livesOverWarmup',
+    'gameEndToFeed',
+    'plainGameReview',
+    'gameHubGroups',
+    'gameHubRecord',
+    'gameModeToast',
     'fastReveal',
     'dashboard',
     'correctionTypes',
+    'progressReset',
+    'dataExport',
+    'readerName',
+    'widgetPreviews',
+    'textSizeSteps',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
     const off = loadEdition({
@@ -410,6 +451,53 @@ describe('loadEdition', () => {
 
     expect(on.isFeatureEnabled(feature)).toBe(true);
     expect(off.isFeatureEnabled(feature)).toBe(false);
+  });
+
+  it.each([
+    ['progressReset', 'xpLog'],
+    ['readerName', 'profile'],
+    ['widgetPreviews', 'widget'],
+  ] as const)('turns %s off while %s is off', (feature, needed) => {
+    const edition = loadEdition({
+      ...validConfig,
+      featureSwitches: { ...validConfig.featureSwitches, [needed]: 'off' },
+    });
+
+    expect(edition.isFeatureEnabled(feature)).toBe(false);
+  });
+
+  it('keeps the Data export and the three-step text size on whatever else is off', () => {
+    const edition = loadEdition({
+      ...validConfig,
+      featureSwitches: { ...validConfig.featureSwitches, xpLog: 'off', profile: 'off' },
+    });
+
+    expect(edition.isFeatureEnabled('dataExport')).toBe(true);
+    expect(edition.isFeatureEnabled('textSizeSteps')).toBe(true);
+  });
+
+  it.each(['system', 'larger', 'largest'] as const)(
+    'reports the three-step default text size %s beside the S…XL one',
+    (textSize) => {
+      const edition = loadEdition({
+        ...validConfig,
+        userSettingDefaults: { ...validConfig.userSettingDefaults, textSize },
+      });
+
+      expect(edition.userSettingDefaults.textSize).toBe(textSize);
+      expect(edition.userSettingDefaults.fontSize).toBe('M');
+    },
+  );
+
+  it('refuses a default text size off the three steps, an S…XL one included', () => {
+    for (const textSize of ['M', 'huge', undefined]) {
+      expect(() =>
+        loadEdition({
+          ...validConfig,
+          userSettingDefaults: { ...validConfig.userSettingDefaults, textSize },
+        }),
+      ).toThrow(InvalidEditionConfigError);
+    }
   });
 
   it('reports the language traits', () => {
@@ -426,6 +514,7 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults).toEqual({
       theme: 'system',
       fontSize: 'M',
+      textSize: 'system',
       vibration: true,
       narratorVoice: 'anna',
       notificationTimes: ['09:00'],
@@ -559,6 +648,31 @@ describe('loadEdition', () => {
   it('refuses an Edition without the questionnaire Feature Switch', () => {
     expect(() => loadEdition({ ...validConfig, ...withoutQuestionnaireSwitch() })).toThrow(
       'featureSwitches.questionnaire',
+    );
+  });
+
+  it.each([
+    'gameAnswerBanner',
+    'gameThreeLives',
+    'survivalOneLife',
+    'timedTwentySeconds',
+    'gameRoundMascot',
+    'gameQuestionOnGround',
+    'gameOptionStamp',
+    'pairsStay',
+    'buildIdiomCheck',
+    'livesOverWarmup',
+    'gameEndToFeed',
+    'plainGameReview',
+    'gameHubGroups',
+    'gameHubRecord',
+    'gameModeToast',
+  ] as const)('refuses an Edition without the %s Feature Switch (spec #1880)', (feature) => {
+    const switches = Object.fromEntries(
+      Object.entries(validConfig.featureSwitches).filter(([name]) => name !== feature),
+    );
+    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
+      `featureSwitches.${feature}`,
     );
   });
 
@@ -1506,6 +1620,22 @@ const dependentSwitches = [
   ['letterTiles', ['gameByLetters', 'game']],
   ['survivalStreak', ['gameSurvival', 'game']],
   ['finishPoster', ['game']],
+  // The board «slogo game last» parts of a Game (spec #1880).
+  ['gameAnswerBanner', ['game']],
+  ['gameThreeLives', ['game']],
+  ['survivalOneLife', ['gameSurvival', 'corrections', 'game']],
+  ['timedTwentySeconds', ['gameTimed', 'game']],
+  ['gameRoundMascot', ['game']],
+  ['gameQuestionOnGround', ['game']],
+  ['gameOptionStamp', ['game']],
+  ['pairsStay', ['gamePairs', 'game']],
+  ['buildIdiomCheck', ['gameBuildIdiom', 'idioms', 'game']],
+  ['livesOverWarmup', ['finishPoster', 'game']],
+  ['gameEndToFeed', ['finishPoster', 'game']],
+  ['plainGameReview', ['gameReview']],
+  ['gameHubGroups', ['game']],
+  ['gameHubRecord', ['game']],
+  ['gameModeToast', ['game']],
   ['quickQuestion', ['game']],
   ['quickQuestionWordMeaning', ['quickQuestion', 'game']],
   ['playStep', ['game']],

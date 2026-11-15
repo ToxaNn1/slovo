@@ -141,7 +141,7 @@ describe('the 0.8.12 Game strings', () => {
   const parsed = EditionStringsSchema.parse(strings).game;
 
   it('the UA Edition carries the agreed texts verbatim', () => {
-    expect(parsed.groups).toEqual({
+    expect(parsed.groups).toMatchObject({
       words: 'Слова',
       corrections: 'Виправлення',
       idioms: 'Вислови',
@@ -168,7 +168,7 @@ describe('the 0.8.12 Game strings', () => {
       stress: 'Наголос',
       pairs: 'Пари',
       anagram: 'Анаграми',
-      'by-letters': 'За буквами',
+      'by-letters': 'За літерами',
       'type-word': 'Впиши слово',
       origin: 'Звідки слово',
       correction: 'Обери правильне',
@@ -337,7 +337,7 @@ describe('the 0.8.13 strings', () => {
   });
 
   it('the UA Edition carries the agreed texts of Settings, «Збережене» and the widget', () => {
-    expect(parsed.settings.dailyGoal).toEqual({ title: 'Денна ціль', none: 'Без цілі' });
+    expect(parsed.settings.dailyGoal).toMatchObject({ title: 'Ціль дня', none: 'Без цілі' });
     expect(parsed.wordOfTheDayArchive.title).toBe('Слова дня');
     expect(parsed.settings.howToAddWidget).toBe('Як додати віджет');
   });
@@ -955,6 +955,205 @@ describe('the strings of the Category screens and the board style (spec #1604)',
   });
 });
 
+// Spec #1861: the board 11 texts, verbatim where they pass the «ви» test, and the owner's replacements.
+describe('the board 11 strings', () => {
+  const parsed = EditionStringsSchema.parse(readJson('uk', 'strings'));
+
+  it('the UA Edition carries the board’s Settings rows and the owner’s replacements', () => {
+    expect(parsed.settings.rows).toMatchObject({
+      about: 'Про SLOVO',
+      textSize: 'Шрифт і розмір',
+      widgets: 'Віджети',
+      account: 'Акаунт і синхронізація',
+      privacy: 'Конфіденційність',
+    });
+    expect(parsed.settings.rowSubtitles).toMatchObject({
+      theme: 'Світла й темна — рівноправні',
+      sounds: 'Крик на розкритті, «влучно» й «мимо»',
+      notifications: 'Нагадування про слово дня',
+      widgets: 'Головний екран і блокування',
+      privacy: 'Дані та статистика',
+      signedOut: 'Без входу',
+      about: 'Версія {version} ({build})',
+    });
+    expect(parsed.settings.narratorVoice.choose).toBe('ОБЕРИ ГОЛОС');
+    expect(parsed.settings.dailyGoal.title).toBe('Ціль дня');
+  });
+
+  it('the UA Edition names the three text sizes and the four Daily Goal lines', () => {
+    expect(parsed.settings.textSize.sizes).toEqual({
+      system: 'Як у системі',
+      larger: 'Більший',
+      largest: 'Найбільший',
+    });
+    expect(Object.keys(parsed.settings.textSize.explanations).sort()).toEqual([
+      'larger',
+      'largest',
+      'system',
+    ]);
+    expect(Object.keys(parsed.settings.dailyGoal.explanations).sort()).toEqual([
+      '10',
+      '25',
+      '50',
+      'none',
+    ]);
+  });
+
+  it('the UA Edition carries the reset sheet, the Break, the Hidden and the Widgets texts verbatim', () => {
+    expect(parsed.settings.progressReset).toEqual({
+      button: 'Скинути прогрес',
+      title: 'СКИНУТИ ПРОГРЕС?',
+      message: 'Серія, XP і відзнаки зникнуть назавжди. Збережені слова й колекції залишаться.',
+      cancel: 'СКАСУВАТИ',
+      confirm: 'СКИНУТИ',
+      done: 'Прогрес скинуто. Слова збережено.',
+    });
+    expect(parsed.settings.streakBreak.explanation).toBe(
+      'Серія завмре, нагадування замовкнуть. Повертайся, коли зручно.',
+    );
+    expect(parsed.hidden.subtitle).toBe('Те, що сховано зі Стрічки.');
+    expect(parsed.hidden.show).toBe('Показати');
+    expect(parsed.settings.widgets).toEqual({
+      title: 'Віджети',
+      subtitle: 'Слово дня на головному екрані та екрані блокування.',
+      previews: { small: 'Малий', medium: 'Середній', lockScreen: 'Екран блокування' },
+    });
+    expect(parsed.settings.privacy.dataExport.title).toBe('Експортувати мої дані');
+    expect(parsed.settings.privacy.statsTitle).toBe('Анонімна статистика');
+  });
+
+  it('the UA Edition carries the Questionnaire, Rarity Test, Profile and Account texts verbatim', () => {
+    expect(parsed.settings.questionnaireRetake.title).toBe('Анкета: підлаштувати Стрічку');
+    expect(parsed.rarityTest).toMatchObject({
+      question: 'Чи знаєш ти це слово?',
+      resultLine: 'Твоя рідкість — до {n}. Стрічка бере незнайоме, рідші почекають.',
+      known: '{known} з {total} слів знайомі.',
+      again: 'Перевірити рівень ще раз',
+    });
+    expect(parsed.mix.selectedOf).toBe('{selected} з {total} обрано');
+    expect(parsed.settings.profile.headerLevel).toBe('Рівень {level} — {name}');
+    expect(parsed.settings.profile.readerName.row).toBe('Ім’я');
+    expect(parsed.account).toMatchObject({
+      orByEmail: 'або поштою',
+      codeSent: 'Код надіслано на {email}',
+    });
+    expect(parsed.account.sync.syncedToday).toBe('Синхронізовано сьогодні, {time}');
+    expect(parsed.account.delete.button).toBe('Видалити акаунт');
+  });
+
+  it('the UA Edition names its Account «Акаунт», and the sign-in email names SLOVO', () => {
+    expect(EditionConfigSchema.parse(readJson('uk', 'config')).accountName).toBe('Акаунт');
+    expect(parsed.email.subject).not.toContain('{name}');
+    expect(parsed.email.body).not.toContain('{name}');
+  });
+});
+
+describe('the board «slogo game last» strings (spec #1880)', () => {
+  const strings = readJson('uk', 'strings') as Record<string, unknown>;
+  const game = strings['game'] as Record<string, unknown>;
+  const round = game['round'] as Record<string, unknown>;
+  const parsed = EditionStringsSchema.parse(strings).game;
+
+  it('the UA Edition carries the answer banner, the Round and the end texts of the board', () => {
+    expect(parsed.round.banner).toEqual({
+      right: ['Влучив!', 'В яблучко!', 'Точно!'],
+      xp: '+{count} XP',
+      wrong: 'Мимо',
+      lastLife: 'Життя все',
+      answer: 'Майже. Ось як правильно: {answer}',
+    });
+    expect(parsed.round.lives).toBe('Життів: {count} з {total}');
+    expect(parsed.round.pairsCaptions).toEqual({ word: 'Слово', meaning: 'Значення' });
+    expect(parsed.round.survival).toEqual({ streak: 'поспіль', best: 'рекорд {best}' });
+    expect(parsed.round.typed.submit).toBe('Перевірити');
+    expect(parsed.warmup).toEqual({
+      title: 'Розминка!',
+      line: 'Майже. Наступне вийде.',
+      hits: 'влучних',
+    });
+    expect(parsed.finals).toMatchObject({
+      again: 'Ще раз',
+      toGames: 'До ігор',
+      toFeed: 'До стрічки',
+      review: 'Огляд раундів',
+    });
+    expect(parsed.finish).toMatchObject({
+      title: 'Фініш',
+      won: 'Влучно!',
+      more: 'Ще раунд!',
+      newBest: 'Новий рекорд!',
+      xpCount: '+{count} XP',
+    });
+    expect(parsed.exit.message).toBe('Пройдені раунди пропадуть, а рекорд не оновиться.');
+  });
+
+  it('the UA Edition carries the Games hub texts of the board', () => {
+    expect(parsed.groups).toMatchObject({
+      sound: 'Звук',
+      meaning: 'Значення',
+      letters: 'Букви',
+      speed: 'Швидкість',
+      new: 'Нове',
+    });
+    expect(parsed.hubRow).toMatchObject({
+      record: 'Рекорд: {n} з {total}',
+      recordCount: 'Рекорд: {n}',
+      never: 'Ще жодної гри',
+    });
+    expect(parsed.hubToast).toBe('«{mode}» ще розминається. Влучай поки в «{other}»!');
+    expect(
+      Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.hubLine])),
+    ).toEqual({
+      'guess-word': 'Визначення є. Яке це слово?',
+      stress: 'Торкнись наголошеної голосної',
+      pairs: 'Чотири слова й чотири визначення — з’єднуєш їх у пари.',
+      anagram: 'Склади слово з перемішаних літер',
+      'by-letters': 'Збери слово літера за літерою',
+      'type-word': 'У реченні — помилка, яку часто чуєш. Впиши, як сказати краще.',
+      origin: 'З якої мови прийшло слово?',
+      correction: 'Як кажуть українською',
+      anglicism: 'Заміни англіцизм українським',
+      'idiom-meaning': 'Вгадай, що означає вислів',
+      'build-idiom': 'Читаєш значення — складаєш вислів слово за словом.',
+      survival: undefined,
+      timed: undefined,
+    });
+    expect(
+      Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.glyph])),
+    ).toMatchObject({
+      'guess-word': 'Д?',
+      'by-letters': 'А…',
+      'type-word': 'Аб|',
+      origin: '→А',
+      'build-idiom': '«…»',
+    });
+  });
+
+  it.each([
+    ['hubRow.record', { hubRow: { ...(game['hubRow'] as object), record: 'Рекорд: {n}' } }],
+    ['hubRow.recordCount', { hubRow: { ...(game['hubRow'] as object), recordCount: 'Рекорд' } }],
+    ['hubToast', { hubToast: '«{mode}» ще розминається.' }],
+    [
+      'round.banner.answer',
+      { round: { ...round, banner: { ...(round['banner'] as object), answer: 'Майже.' } } },
+    ],
+    [
+      'round.banner.right',
+      { round: { ...round, banner: { ...(round['banner'] as object), right: [] } } },
+    ],
+    [
+      'round.survival.best',
+      { round: { ...round, survival: { streak: 'поспіль', best: 'рекорд' } } },
+    ],
+  ])('the UA Edition refuses %s without its placeholders or texts', (path, changed) => {
+    const result = EditionStringsSchema.safeParse({ ...strings, game: { ...game, ...changed } });
+
+    expect(result.error?.issues.map((issue) => `game.${issue.path.slice(1).join('.')}`)).toEqual([
+      `game.${path}`,
+    ]);
+  });
+});
+
 describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
   /** Every text of a value with its path. */
   const textsOf = (value: unknown, path: string): [string, string][] =>
@@ -1488,12 +1687,12 @@ describe('the 0.7 account and email strings groups', () => {
     ]);
   });
 
-  it('needs the name SLOVO ID, which every Edition shares, in the words to delete it', () => {
-    const deletion = { ...(account['delete'] as object), button: 'Видалити акаунт' };
-
-    expect(issuesOf({ ...strings, account: { ...account, delete: deletion } })).toEqual([
-      'account.delete.button',
-    ]);
+  // Spec #1861: the UA Account is named «Акаунт», which reads «Видалити Акаунт» in the middle of a phrase.
+  it('says «акаунт» in lower case in the words to delete it, not the Account’s name', () => {
+    expect(account['delete']).toMatchObject({
+      button: 'Видалити акаунт',
+      title: 'Видалити акаунт?',
+    });
   });
 
   it.each(['subject', 'body'])('needs email.%s, with the {code} placeholder', (key) => {

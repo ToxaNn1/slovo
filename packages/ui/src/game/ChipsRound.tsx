@@ -6,11 +6,17 @@ import type { GivenAnswer, Round } from '@slovo/core';
 import { useEdition } from '../providers/EditionProvider';
 import { OrderedChips } from './OrderedChips';
 import { RoundCard } from './RoundCard';
+import { useRoundLook } from './round-look';
 
 /**
  * A Round of the chips form: its chips, a Word's letters or an expression's
- * words, stand under the card in place of the options. A Word's letters
- * take «← Стерти літеру», which takes back the last letter placed.
+ * words, stand under the card in place of the options. A Word's letters in
+ * a line, as «Анаграми» shows them, take «← Стерти літеру», which takes back
+ * the last letter placed, and a wrong Word shows the right one in its line
+ * (board 06); letter tiles take a letter back at a tap on its slot.
+ * An expression's words on the ground take the label as an ink heading and
+ * the meaning in grey under it (board 07 g6); in the assembly field the
+ * check key, «Перевірити», gives the answer.
  */
 export function ChipsRound({
   round,
@@ -25,6 +31,8 @@ export function ChipsRound({
   onAnswer: (given: Extract<GivenAnswer, { form: 'chips' }>) => void;
 }) {
   const { strings } = useEdition();
+  const { onGround } = useRoundLook();
+  const lettersInLine = round.chipKind === 'letter' && round.layout === 'line';
   return (
     <>
       <RoundCard
@@ -33,6 +41,7 @@ export function ChipsRound({
         highlight={round.highlight}
         gap={round.gap}
         definition={round.definition}
+        face={onGround && round.chipKind === 'word' ? { look: 'heading' } : undefined}
       />
       <OrderedChips
         key={round.number}
@@ -41,7 +50,9 @@ export function ChipsRound({
         fixed={round.fixed}
         layout={round.layout}
         slots={round.slots}
-        eraseLabel={round.chipKind === 'letter' ? strings.game.round.eraseLetter : undefined}
+        eraseLabel={lettersInLine ? strings.game.round.eraseLetter : undefined}
+        showsRight={lettersInLine}
+        checkLabel={round.layout === 'field' ? strings.game.dailyCrossword.check : undefined}
         answer={round.answer?.form === 'chips' ? round.answer : undefined}
         onAnswer={(chips) => {
           onAnswer({ form: 'chips', chips });

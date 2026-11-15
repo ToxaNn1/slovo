@@ -26,6 +26,15 @@ export interface RarityTestAnswer {
   readonly known: boolean;
 }
 
+/** What the Rarity Test's answers came to: the Rarity Ceiling they set, and how many Words the reader knew. */
+export interface RarityTestResult {
+  readonly ceiling: Rarity;
+  /** How many of the Words asked about were answered «Знаю». */
+  readonly known: number;
+  /** How many Words were asked about. */
+  readonly total: number;
+}
+
 /** The Rarity Test (ADR 0054, 0072): «Перевірка рівня», which sets the Rarity Ceiling. */
 export interface RarityTest {
   /**
@@ -37,14 +46,15 @@ export interface RarityTest {
    */
   draw(): Promise<readonly RarityTestWord[]>;
   /**
-   * Sets the Rarity Ceiling by the answers, at once, and resolves to it: the
-   * lowest rarity with «Не знаю», or 5 when every Word is known. A retake
+   * Sets the Rarity Ceiling by the answers, at once, and resolves to it (the
+   * lowest rarity with «Не знаю», or 5 when every Word is known) with how
+   * many of the Words the reader knew. A retake
    * overwrites the ceiling. It sets no Knowledge Mark, starts no Review and
    * makes nothing Seen. Nothing is set, and it resolves to nothing, for no
    * answers or while the Edition turns the Rarity Test or the Rarity Ceiling
    * off (or a remote switch does).
    */
-  apply(answers: readonly RarityTestAnswer[]): Promise<Rarity | undefined>;
+  apply(answers: readonly RarityTestAnswer[]): Promise<RarityTestResult | undefined>;
 }
 
 export function createRarityTest({
@@ -82,7 +92,7 @@ export function createRarityTest({
       const unknown = answers.filter((answer) => !answer.known).map((answer) => answer.rarity);
       const ceiling = RARITIES.find((rarity) => unknown.includes(rarity)) ?? HIGHEST_RARITY;
       await rarityCeiling.set(ceiling);
-      return ceiling;
+      return { ceiling, known: answers.length - unknown.length, total: answers.length };
     },
   };
 }

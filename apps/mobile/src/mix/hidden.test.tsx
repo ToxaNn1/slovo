@@ -1,33 +1,42 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { nature, renderOverComposition, settled } from '../hook-test/test-support';
-import { useHiddenChanges } from './hidden';
+import { useHiddenScreenModel, useHiddenShow } from './hidden';
 import { useMixState } from './mix';
 
-/** The Hidden screen's calls and the Mix they change, over the test Language Pack. */
+/** The Hidden screen's one list, its «Показати» and the Mix it changes, over the test Language Pack. */
 const renderHidden = () =>
-  renderOverComposition(() => ({ changes: useHiddenChanges(), mix: useMixState() }));
+  renderOverComposition(() => ({
+    rows: useHiddenScreenModel().rows,
+    show: useHiddenShow(),
+    mix: useMixState(),
+  }));
 
-describe('the Hidden screen calls', () => {
-  it('put a hidden Category back in the Mix', async () => {
+describe('«Показати» on the Hidden screen', () => {
+  it('puts a hidden Category back in the Mix', async () => {
     const { composition, hook } = await renderHidden();
     await settled(() => composition.hide({ kind: 'category', categoryId: nature.id }));
     expect(hook.result.current.mix.categoryIds).not.toContain(nature.id);
+    const [row] = hook.result.current.rows;
+    if (row === undefined) throw new Error('The Category is not listed');
 
     await settled(() => {
-      hook.result.current.changes.turnCategoryOn(nature.id, 'word');
+      hook.result.current.show(row);
     });
 
     expect(hook.result.current.mix.categoryIds).toContain(nature.id);
+    expect(hook.result.current.rows).toEqual([]);
   });
 
-  it('put a hidden kind of Entry back in the Mix', async () => {
+  it('puts a hidden kind of Entry back in the Mix', async () => {
     const { composition, hook } = await renderHidden();
     await settled(() => composition.hide({ kind: 'whole-kind', entryKind: 'idiom' }));
     expect(hook.result.current.mix.kinds.idiom).toBe(false);
+    const [row] = hook.result.current.rows;
+    if (row === undefined) throw new Error('The kind is not listed');
 
     await settled(() => {
-      hook.result.current.changes.turnKindOn('idiom');
+      hook.result.current.show(row);
     });
 
     expect(hook.result.current.mix.kinds.idiom).toBe(true);

@@ -22,6 +22,30 @@ export interface Shown {
   readonly finishPoster: boolean;
   /** The streak counter of «Виживання» and its record, in place of the Rounds passed (spec #1674). */
   readonly survivalStreak: boolean;
+  /** 3 Lives by default in place of 5 (ADR 0137). */
+  readonly gameThreeLives: boolean;
+  /** 1 Life in «Виживання» in place of 3 (ADR 0137). */
+  readonly survivalOneLife: boolean;
+  /** 20 seconds in «На час» and no time-up poster, in place of 60 seconds and «Час!» (ADR 0137). */
+  readonly timedTwentySeconds: boolean;
+  /** The Mascot beside the question of a Round (ADR 0139). */
+  readonly gameRoundMascot: boolean;
+  /** The question on the background, labels without numbers and the visible Lives line (ADR 0139). */
+  readonly gameQuestionOnGround: boolean;
+  /** The board's options: short ones without a key, the stamp, the ✓ key, the crossed-out text (ADR 0139). */
+  readonly gameOptionStamp: boolean;
+  /** «Розминка!» with the count and the sad Mascot once the Lives run out (ADR 0139). */
+  readonly livesOverWarmup: boolean;
+  /** The third end button «До стрічки» (ADR 0139). */
+  readonly gameEndToFeed: boolean;
+  /** The plain Game Review: rows that neither expand nor open the Entry (ADR 0139). */
+  readonly plainGameReview: boolean;
+  /** The Games hub in five groups (ADR 0139). */
+  readonly gameHubGroups: boolean;
+  /** «Рекорд: N з M» or «Ще жодної гри» and the board's line in a Games hub row (ADR 0139). */
+  readonly gameHubRecord: boolean;
+  /** The toast on a tap of a Game Mode that cannot be played (ADR 0139). */
+  readonly gameModeToast: boolean;
   /** The inline answer card under a Round's options in place of the bottom sheet (spec #1674). */
   readonly answerCard: boolean;
   /** The switchable buttons of an Entry card, wherever the card appears. */
@@ -57,6 +81,12 @@ export interface Shown {
   readonly seasonalDecorSetting: boolean;
   /** The Settings switch «Менше руху», which joins the system's Reduce Motion. */
   readonly reduceMotionSetting: boolean;
+  /**
+   * The three-step text size (ADR 0134): Word cards draw at the reader's step
+   * on the ladder, and the S…XL row of Settings is gone. Off, the S…XL scale
+   * and its row work as before.
+   */
+  readonly textSizeSteps: boolean;
   /** The Settings switch «Ділитися анонімною статистикою», with its privacy policy link (ADR 0060). */
   readonly shareCountersSetting: boolean;
   /**
@@ -192,6 +222,18 @@ export function shownOf({
     gameReview: on('gameReview'),
     finishPoster: on('finishPoster'),
     survivalStreak: on('survivalStreak'),
+    gameThreeLives: on('gameThreeLives'),
+    survivalOneLife: on('survivalOneLife'),
+    timedTwentySeconds: on('timedTwentySeconds'),
+    gameRoundMascot: on('gameRoundMascot'),
+    gameQuestionOnGround: on('gameQuestionOnGround'),
+    gameOptionStamp: on('gameOptionStamp'),
+    livesOverWarmup: on('livesOverWarmup'),
+    gameEndToFeed: on('gameEndToFeed'),
+    plainGameReview: on('plainGameReview'),
+    gameHubGroups: on('gameHubGroups'),
+    gameHubRecord: on('gameHubRecord'),
+    gameModeToast: on('gameModeToast'),
     answerCard: on('gameAnswerCard'),
     entryButtons: {
       shareCard: on('shareCards'),
@@ -210,6 +252,7 @@ export function shownOf({
     narratorVoiceSetting: on('narratorVoice'),
     seasonalDecorSetting: on('seasonalDecor'),
     reduceMotionSetting: on('reduceMotion'),
+    textSizeSteps: on('textSizeSteps'),
     shareCountersSetting: on('communityCounters') || on('analytics'),
     countersSetting: on('noCounters') ? 'noCounters' : on('statistics') ? 'hideStreak' : undefined,
     learning: knowledge,

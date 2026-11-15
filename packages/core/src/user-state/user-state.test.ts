@@ -97,7 +97,13 @@ describe('openUserState', () => {
     const userState = await openUserState({ port: createMemoryUserStatePort(records) });
     const settings = createSettings({
       userState,
-      defaults: { theme: 'system', fontSize: 'M', vibration: true, narratorVoice: 'anna' },
+      defaults: {
+        theme: 'system',
+        fontSize: 'M',
+        textSize: 'system',
+        vibration: true,
+        narratorVoice: 'anna',
+      },
     });
     const cycle = await openCycle({
       entries: {
@@ -113,6 +119,7 @@ describe('openUserState', () => {
     expect(await settings.read()).toEqual({
       theme: 'dark',
       fontSize: 'L',
+      textSize: 'larger',
       vibration: true,
       sounds: true,
       noCounters: false,
@@ -198,6 +205,7 @@ describe('openUserState', () => {
       ]),
       new Map([['schema.version', '6']]),
       new Map([['schema.version', '7']]),
+      new Map([['schema.version', '8']]),
     ]);
     expect(cycle.unseen()).toEqual({
       words: ['w_2'],
@@ -246,6 +254,7 @@ describe('openUserState', () => {
         ['schema.version', '6'],
       ]),
       new Map([['schema.version', '7']]),
+      new Map([['schema.version', '8']]),
     ]);
     expect(await userState.read(userStateRecords.gameBest.record('guess-word'))).toBe(9);
     expect(await userState.read(userStateRecords.gameBest.record('correction'))).toBeUndefined();
@@ -262,7 +271,7 @@ describe('openUserState', () => {
         [...records.keys()].filter((key) => key.includes('game.best.')),
         best,
       ).toEqual([]);
-      expect(records.get('schema.version')).toBe('7');
+      expect(records.get('schema.version')).toBe('8');
     }
   });
 });

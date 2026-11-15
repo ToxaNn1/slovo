@@ -31,6 +31,7 @@ export const mainEquivalentOf = (correction: Correction): string =>
 export const correctionMode: GameMode = {
   id: 'correction',
   group: 'corrections',
+  hubGroup: 'meaning',
   entryKind: 'correction',
   isOn: (edition) => edition.isFeatureEnabled('gameCorrection'),
   buildRound({ answer, eligible, random, comparison }) {

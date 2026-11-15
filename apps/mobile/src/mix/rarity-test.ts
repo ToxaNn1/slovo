@@ -1,5 +1,9 @@
-import type { Rarity } from '@slovo/contracts';
-import { stressLabel, type RarityTestAnswer, type RarityTestWord } from '@slovo/core';
+import {
+  stressLabel,
+  type RarityTestAnswer,
+  type RarityTestResult,
+  type RarityTestWord,
+} from '@slovo/core';
 import type { RarityTestQuestion } from '@slovo/ui';
 import { useCallback } from 'react';
 
@@ -22,12 +26,13 @@ export function rarityTestQuestionOf({
 
 /**
  * Applies the Rarity Test's answers, in onboarding and from Settings, and
- * resolves to the Rarity Ceiling they set. A ceiling that can't be set is
+ * resolves to the Rarity Ceiling they set, with how many Words the reader
+ * knew. A ceiling that can't be set is
  * logged and leaves the one in force: it resolves to nothing and never rejects.
  */
 export function useApplyRarityTest(): (
   answers: readonly RarityTestAnswer[],
-) => Promise<Rarity | undefined> {
+) => Promise<RarityTestResult | undefined> {
   const { rarityTest } = useComposition();
   return useCallback(
     (answers) => keep('the Rarity Ceiling', rarityTest.apply(answers)),

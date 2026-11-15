@@ -5,6 +5,7 @@ import {
   type FeatureSwitch,
   type FeatureSwitches,
   type FontSize,
+  type TextSize,
   type LanguageTraits,
   type Mood,
   type NarratorVoice,
@@ -41,7 +42,10 @@ export interface DefaultMix {
 /** The settings a new user starts with, as declared by the Edition. */
 export interface UserSettingDefaults {
   readonly theme: Theme;
+  /** The S…XL font size a new user starts with, while `textSizeSteps` is off. */
   readonly fontSize: FontSize;
+  /** The three-step text size a new user starts with, while `textSizeSteps` is on (ADR 0134). */
+  readonly textSize: TextSize;
   /** Whether haptics are on. */
   readonly vibration: boolean;
   /** The id of the Narrator Voice that reads until the reader chooses: the Edition's default voice (ADR 0083). */

@@ -1,4 +1,4 @@
-import type { ColorTokens, EditionTokens, FontSize, MascotState } from '@slovo/contracts';
+import type { ColorTokens, EditionTokens, FontSize, MascotState, TextSize } from '@slovo/contracts';
 
 /**
  * The design tokens from `docs/design/README.md`. The Core names every
@@ -272,9 +272,9 @@ export const typeRoles = {
   roundTitle: role('word', '800', 14, 14, 1, 'uppercase'),
   /** «Життів: 4 з 5» in its red label under the Round's header (board 07). */
   roundLives: role('ui', '600', 13, 13),
-  /** The big streak counter of «Виживання» under the Round's header (spec #1674), the Rounds passed. */
-  roundStreak: role('word', '800', 48, 52),
-  /** «4 поспіль · рекорд 9» beside the big streak counter of «Виживання» (spec #1674). */
+  /** The huge red streak of «Виживання» at the top of the Round's body (board g7), the right answers in a row. */
+  roundStreak: role('word', '900', 80, 68, -3),
+  /** «поспіль» and «рекорд 9», each a line beside the streak of «Виживання» (board g7). */
   roundStreakLine: role('ui', '600', 13, 17),
   /** The label over a Round's prompt, and a Quick Question's title. */
   roundLabel: role('word', '800', 12, 12, 1.5, 'uppercase'),
@@ -286,6 +286,10 @@ export const typeRoles = {
   roundAsk: role('word', '900', 24, 30),
   /** The form a «Впиши слово» Round asks to replace, under its ask (board 07 g3): «замість «вірогідно»». */
   roundInstead: role('ui', '500', 16, 22),
+  /** The Word of a «Звідки слово» Round whole on its full-width tile (board g4). */
+  roundOriginWord: role('word', '900', 34, 34, -1),
+  /** The hint under the vowel buttons of «Наголос» (board 06): «Торкнись голосної, на яку падає наголос». */
+  roundHint: role('ui', '500', 14, 19.6),
   /** A Quick Question's label on its ink tag (board f3), such as «ПОРАДА». */
   quickQuestionTag: role('word', '800', 11, 11, 1, 'uppercase'),
   /** A Quick Question's prompt on its card (board f3), such as «Як правильно?». */
@@ -340,8 +344,10 @@ export const typeRoles = {
   synonymDominant: role('word', '900', 49, 49, -1.5),
   /** A Synonym Row's member, one per row, at the user's font size (XEntry2 e8). */
   synonymMember: role('word', '800', 19, 20.9),
-  /** The name of a hidden category on the Hidden screen. */
+  /** The name of a row on the Hidden screen. */
   hiddenName: role('ui', '700', 15, 18),
+  /** The kind label under a name on the Hidden screen: «запис», «категорія», «тип карток». */
+  hiddenKind: role('ui', '500', 12, 12),
   /** The count beside a Collection's title. */
   collectionCount: role('word', '500', 22, 22),
   /** A recent query of Search. */
@@ -385,6 +391,8 @@ export const typeRoles = {
   shadeNote: role('ui', '500', 14, 18.2),
   /** `Lemma, hero`: the onboarding welcome's Lemma. */
   heroLemma: role('word', '900', 76, 76),
+  /** The Rarity Ceiling's big number behind the Rarity Test's result (board 11, screen 93). */
+  rarityTestNumber: role('word', '900', 200, 200),
   /** A quiet text button of the onboarding, such as «Пропустити» and «Пізніше». */
   quietAction: role('ui', '700', 14, 17),
   /** A Word on its cell of the Pairs Game. */
@@ -483,6 +491,8 @@ export const typeRoles = {
   sectionLabel: role('word', '800', 13, 13, 1, 'uppercase'),
   /** How far a run of questions has come, such as «4 з 10» of the Rarity Test. */
   progressCount: role('ui', '600', 13, 13),
+  /** A Category's name on its tile of the Mix. */
+  mixTileName: role('ui', '600', 13, 15.6),
   /** A Badge's date or progress under its mark on the Badges screen. */
   badgeProgress: role('ui', '500', 11, 13),
   /** A Badge's name under its title on the stamp of a newly earned Badge. */
@@ -565,6 +575,14 @@ export const typeRoles = {
   settingsTitle: role('word', '800', 22, 22),
   /** The title of a screen that a Settings row opens, beside its back tile. */
   settingsSubTitle: role('word', '800', 20, 22),
+  /** The number between a stepper's − and + (board 11, 90). */
+  stepperValue: role('word', '900', 64, 64, -2),
+  /** The − or + on a stepper's tile. */
+  stepperGlyph: role('word', '900', 28, 28),
+  /** The large sample of an option screen, such as the Daily Goal's number (board 11, 85). */
+  optionSample: role('word', '900', 56, 56),
+  /** An option's label in the list of an option screen. */
+  optionLabel: role('ui', '600', 16, 16),
   /** The hero Word's Definition under its Lemma on the onboarding welcome. */
   heroDefinition: role('word', '500', 22, 29),
   /** A weekday's letters over a column of the Active Days calendar. */
@@ -1241,6 +1259,23 @@ export const fontSizeSteps: Readonly<
   M: { lemma: 50, definition: 19, example: 17 },
   L: { lemma: 58, definition: 22, example: 20 },
   XL: { lemma: 65, definition: 25, example: 22 },
+};
+
+/**
+ * The Word card's type sizes at each step of the three-step text size ladder
+ * (ADR 0134), before the OS text size: «Як у системі» at the base step,
+ * «Більший» and «Найбільший» at the design's two steps above it. The OS text
+ * size scales them within `fontScaleCap.text`.
+ */
+export const textSizeSteps: Readonly<
+  Record<
+    TextSize,
+    { readonly lemma: number; readonly definition: number; readonly example: number }
+  >
+> = {
+  system: fontSizeSteps.M,
+  larger: fontSizeSteps.L,
+  largest: fontSizeSteps.XL,
 };
 
 /**

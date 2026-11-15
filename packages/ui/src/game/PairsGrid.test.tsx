@@ -11,6 +11,7 @@ type PairsAnswer = Extract<RoundAnswer, { form: 'pairs' }>;
 
 const strings = testStrings({
   wordCard: { stress: 'stress on {vowels}', stressOr: 'or' },
+  game: { round: { pairsCaptions: { word: 'Word', meaning: 'Meaning' } } },
 });
 
 /** The grid's Words in the order shown, and the place of each one's Definition among the Definitions. */
@@ -39,11 +40,11 @@ function Grid({ onAnswer }: { onAnswer: (word: number, definition: number) => vo
   const [answer, setAnswer] = useState<PairsAnswer>();
   const words: GridCell<RoundOption>[] = WORDS.map((shown, word) => ({
     shown,
-    gone: gone.includes(word),
+    state: gone.includes(word) ? 'found' : 'open',
   }));
   const definitions: GridCell<string>[] = DEFINITIONS.map((shown, definition) => ({
     shown,
-    gone: gone.some((word) => OWN_DEFINITION[word] === definition),
+    state: gone.some((word) => OWN_DEFINITION[word] === definition) ? 'found' : 'open',
   }));
   return (
     <>
@@ -84,6 +85,46 @@ async function renderGrid(onAnswer: (word: number, definition: number) => void =
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <Grid onAnswer={onAnswer} />
+    </EditionProvider>,
+  );
+}
+
+/**
+ * A grid that stays, played as the Game plays it: the pair given is judged at
+ * once, in the same render as the press, and the grid takes the next pair.
+ */
+function StayGrid() {
+  const [judged, setJudged] = useState<readonly { word: number; right: boolean }[]>([]);
+  const stateOf = (word: number) => {
+    const pair = judged.find((one) => one.word === word);
+    if (pair === undefined) return 'open';
+    return pair.right ? 'found' : 'missed';
+  };
+  const words: GridCell<RoundOption>[] = WORDS.map((shown, word) => ({
+    shown,
+    state: stateOf(word),
+  }));
+  const definitions: GridCell<string>[] = DEFINITIONS.map((shown, definition) => ({
+    shown,
+    state: stateOf(OWN_DEFINITION.indexOf(definition as 0 | 1 | 2 | 3)),
+  }));
+  return (
+    <PairsGrid
+      stay
+      words={words}
+      definitions={definitions}
+      answer={undefined}
+      onAnswer={(word, definition) => {
+        setJudged([...judged, { word, right: OWN_DEFINITION[word] === definition }]);
+      }}
+    />
+  );
+}
+
+async function renderStayGrid() {
+  await render(
+    <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+      <StayGrid />
     </EditionProvider>,
   );
 }
@@ -278,6 +319,57 @@ describe('PairsGrid', () => {
 
       expect(face('pairs-word-0')).toHaveStyle({ backgroundColor: surfaceSunken });
       expect(motionOf('pairs-word-0').opacity).toBe(0.6);
+    });
+  });
+
+  describe('that stays', () => {
+    it('pops a right pair as it is judged', async () => {
+      await renderStayGrid();
+
+      await match(0, 1);
+      await wait(150);
+
+      expect(motionOf('pairs-word-0').scale).not.toBe(1);
+      expect(motionOf('pairs-definition-1').scale).not.toBe(1);
+      await wait(1000);
+      expect(motionOf('pairs-definition-1').scale).toBe(1);
+      expect(face('pairs-definition-1')).toHaveStyle({ backgroundColor: accent });
+    });
+
+    it('drops a wrong pair as it is judged', async () => {
+      await renderStayGrid();
+
+      await match(1, 0);
+      await wait(100);
+      const midway = motionOf('pairs-word-1').translateY ?? 0;
+      await wait(1000);
+      const dropped = motionOf('pairs-word-1').translateY ?? 0;
+
+      expect(midway).toBeGreaterThan(0);
+      expect(midway).toBeLessThan(dropped);
+    });
+
+    it('pops a Definition anew when it is given right after a wrong pair', async () => {
+      await renderStayGrid();
+
+      await match(1, 0);
+      await wait(1000);
+      await match(3, 0);
+      await wait(150);
+
+      expect(motionOf('pairs-definition-0').scale).not.toBe(1);
+    });
+
+    it('pops and drops nothing with Reduce Motion', async () => {
+      jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+      await renderStayGrid();
+
+      await match(0, 1);
+      await match(1, 0);
+      await wait(100);
+
+      expect(motionOf('pairs-word-0').scale).toBeUndefined();
+      expect(motionOf('pairs-word-1').translateY).toBeUndefined();
     });
   });
 

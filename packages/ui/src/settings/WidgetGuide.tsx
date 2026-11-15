@@ -2,7 +2,7 @@
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -69,27 +69,32 @@ function GuideStep({
   );
 }
 
+/** The sizes a widget is drawn at: the home screen's two and the lock screen's. */
+export type SampleWidgetSize = 'small' | 'medium' | 'lockScreen';
+
 /** A widget of the drawing: the mode's name, the Word, and the short line on the medium one. */
-function SampleWidget({
+export function SampleWidget({
   size,
   mode,
   lemma,
   definition,
+  testID,
+  style,
 }: {
-  size: 'small' | 'medium';
+  size: SampleWidgetSize;
   mode: string;
   lemma: string;
   definition: string;
+  testID?: string;
+  /** Where the drawing places the widget, over its size. */
+  style?: StyleProp<ViewStyle>;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
   return (
     <View
-      style={[
-        styles.widget,
-        size === 'small' ? styles.smallWidget : styles.mediumWidget,
-        { backgroundColor: colors.background },
-      ]}
+      testID={testID}
+      style={[styles.widget, sizeStyles[size], { backgroundColor: colors.background }, style]}
     >
       <Text
         allowFontScaling={false}
@@ -103,7 +108,7 @@ function SampleWidget({
           allowFontScaling={false}
           numberOfLines={1}
           style={[
-            typeStyle(size === 'small' ? 'widgetSmallLemma' : 'widgetLemma', tokens),
+            typeStyle(size === 'medium' ? 'widgetLemma' : 'widgetSmallLemma', tokens),
             { color: colors.ink },
           ]}
         >
@@ -225,6 +230,35 @@ function AnimatedGuideStep({
 }
 
 /**
+ * The steps of the widget guide, in the order the reader does them, each
+ * coming in at its turn (still with Reduce Motion). The `testID` names the
+ * steps (`${testID}-step-1` on).
+ */
+export function WidgetGuideSteps({
+  steps,
+  testID,
+}: {
+  steps: readonly { readonly title: string; readonly hint: string }[];
+  testID: string;
+}) {
+  return (
+    <View style={styles.steps}>
+      {steps.map((step, index) => (
+        <AnimatedGuideStep
+          key={index}
+          index={index}
+          testID={`${testID}-step-${String(index + 1)}`}
+          number={index + 1}
+          title={step.title}
+          hint={step.hint}
+          last={index === steps.length - 1}
+        />
+      ))}
+    </View>
+  );
+}
+
+/**
  * The widget guide: the drawing of the widgets over the steps, in the order
  * the reader does them, each coming in at its turn (still with Reduce Motion).
  * Settings › «Як додати віджет» and the widget hint on the Game's result both
@@ -256,19 +290,7 @@ export function WidgetGuide({
         lemma={lemma}
         definition={definition}
       />
-      <View style={styles.steps}>
-        {steps.map((step, index) => (
-          <AnimatedGuideStep
-            key={index}
-            index={index}
-            testID={`${testID}-step-${String(index + 1)}`}
-            number={index + 1}
-            title={step.title}
-            hint={step.hint}
-            last={index === steps.length - 1}
-          />
-        ))}
-      </View>
+      <WidgetGuideSteps steps={steps} testID={testID} />
     </View>
   );
 }
@@ -300,8 +322,16 @@ const styles = StyleSheet.create({
     borderRadius: widgetDrawing.widgetRadius,
     overflow: 'hidden',
   },
-  smallWidget: { flex: 1, aspectRatio: 1 },
-  mediumWidget: { aspectRatio: widgetDrawing.mediumAspectRatio },
   widgetWord: { gap: space[1] },
   caption: { textAlign: 'center' },
+});
+
+const sizeStyles = StyleSheet.create({
+  small: { flex: 1, aspectRatio: 1 },
+  medium: { aspectRatio: widgetDrawing.mediumAspectRatio },
+  lockScreen: {
+    aspectRatio: widgetDrawing.lockScreenAspectRatio,
+    padding: space[3],
+    borderRadius: widgetDrawing.lockScreenRadius,
+  },
 });

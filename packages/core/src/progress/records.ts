@@ -99,6 +99,8 @@ const StoredXpRecordSchema = z.discriminatedUnion('kind', [
     at: InstantSchema,
     mode: z.string(),
   }),
+  // The reset marker of «Скинути прогрес»: every progress value folds only the records after the latest one (ADR 0133).
+  z.object({ kind: z.literal('reset'), date: LocalDateKeySchema, at: InstantSchema }),
 ]);
 
 const XpRecordSchema = StoredXpRecordSchema.transform((record): XpRecord =>

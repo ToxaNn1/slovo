@@ -160,7 +160,7 @@ describe('«Звідки слово» on offer', () => {
     expect(originOffer(app)).toEqual({
       modeId: 'origin',
       entryKind: 'word',
-      group: 'words',
+      group: 'new',
       canStart: true,
     });
   });
@@ -191,7 +191,7 @@ describe('«Звідки слово» on offer', () => {
     expect(originOffer(app)).toEqual({
       modeId: 'origin',
       entryKind: 'word',
-      group: 'words',
+      group: 'new',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -266,7 +266,7 @@ describe('a Round of «Звідки слово»', () => {
     await app.game.answer({ form: 'pick', option: wrong });
 
     expect(current(app).round.answer).toMatchObject({ right: false, chosen: wrong });
-    expect(current(app).lives).toBe(4);
+    expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(idOf(asked))).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
     expect(buildGameReview(current(app).played)[0]).toMatchObject({

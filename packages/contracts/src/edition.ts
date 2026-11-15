@@ -325,7 +325,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   gameTypeWord: FeatureSwitchStateSchema,
   /** The Game Mode «Анаграми» (`anagram`); off while `game` is (ADR 0052). */
   gameAnagram: FeatureSwitchStateSchema,
-  /** The Game Mode «За буквами» (`by-letters`); off while `game` is (ADR 0052). */
+  /** The Game Mode «За літерами» (`by-letters`); off while `game` is (ADR 0052). */
   gameByLetters: FeatureSwitchStateSchema,
   /** The Game Mode «Звідки слово» (`origin`); off while `game` is (ADR 0052). */
   gameOrigin: FeatureSwitchStateSchema,
@@ -447,12 +447,42 @@ export const FeatureSwitchesSchema = z.strictObject({
   crosswordBadgeStamp: FeatureSwitchStateSchema,
   /** The inline answer card of a Game Round, in place of the bottom sheet (spec #1674); off while `game` is. */
   gameAnswerCard: FeatureSwitchStateSchema,
-  /** The letter tiles of «За буквами»: tiles with decoys tapped into the slots, in place of the text field (spec #1674); off while `gameByLetters` is. */
+  /** The letter tiles of «За літерами»: tiles with decoys tapped into the slots, in place of the text field (spec #1674); off while `gameByLetters` is. */
   letterTiles: FeatureSwitchStateSchema,
   /** The streak counter of «Виживання»: the right answers in a row and the record (spec #1674); off while `gameSurvival` is. */
   survivalStreak: FeatureSwitchStateSchema,
   /** The «Фініш» poster at the end of a Game and a time-up (spec #1674); off while `game` is. */
   finishPoster: FeatureSwitchStateSchema,
+  /** The answer banner: after an answer a banner tells right or wrong, and the Game moves on by itself after a Core delay, with no «Далі →» (ADR 0138); off, the answer card of `gameAnswerCard`. Off while `game` is. */
+  gameAnswerBanner: FeatureSwitchStateSchema,
+  /** Three Lives: a Game starts with 3 Lives by default (ADR 0137); off, 5. Off while `game` is. */
+  gameThreeLives: FeatureSwitchStateSchema,
+  /** One Life in «Виживання» (ADR 0137); off, 3. Off while `gameSurvival` is. */
+  survivalOneLife: FeatureSwitchStateSchema,
+  /** 20 seconds in «На час», then straight to «ФІНІШ» with no time-up poster (ADR 0137); off, 60 seconds and «Час!». Off while `gameTimed` is. */
+  timedTwentySeconds: FeatureSwitchStateSchema,
+  /** The Mascot beside the question of a Round, in its waiting, glad, wincing and sad states (ADR 0139); off while `game` is. */
+  gameRoundMascot: FeatureSwitchStateSchema,
+  /** The question of a Round on the background with no card, labels with no Round number and the visible Lives line «Життів: {n} з {N}» (ADR 0139); off while `game` is. */
+  gameQuestionOnGround: FeatureSwitchStateSchema,
+  /** The board's options: short ones without a key, the ✓ stamp, the ✓ and ✕ keys and the crossed-out wrong text (ADR 0139); off while `game` is. */
+  gameOptionStamp: FeatureSwitchStateSchema,
+  /** «Пари»: a found pair stays red, the captions «СЛОВО» and «ЗНАЧЕННЯ», no pause after a pair (ADR 0138, 0139); off while `gamePairs` is. */
+  pairsStay: FeatureSwitchStateSchema,
+  /** «Склади вислів»: decoy fragments from other expressions and the answer judged on «Перевірити» (ADR 0139); off, on the last fragment. Off while `gameBuildIdiom` is. */
+  buildIdiomCheck: FeatureSwitchStateSchema,
+  /** «Розминка!» at the end of a Game whose Lives ran out, with the count of right answers and the sad Mascot (ADR 0139); off while `finishPoster` is. */
+  livesOverWarmup: FeatureSwitchStateSchema,
+  /** The third end action «До стрічки» beside «Ще раз» and «До ігор» (ADR 0139); off while `finishPoster` is. */
+  gameEndToFeed: FeatureSwitchStateSchema,
+  /** The plain Game Review: one row per Round, ✓ or ✗ and the word, which does not expand and opens nothing (ADR 0139); off, the Game Review of spec #1674. Off while `gameReview` is. */
+  plainGameReview: FeatureSwitchStateSchema,
+  /** The Games hub in five groups: sound, meaning, letters, speed, new (ADR 0139); off, the groups of spec #1674. Off while `game` is. */
+  gameHubGroups: FeatureSwitchStateSchema,
+  /** The Games hub row with «Рекорд: N з M» or «Ще жодної гри» and the board's descriptions (ADR 0139); off while `game` is. */
+  gameHubRecord: FeatureSwitchStateSchema,
+  /** The toast on a tap of a Game Mode that cannot be played, which keeps its normal look (ADR 0139); off while `game` is. */
+  gameModeToast: FeatureSwitchStateSchema,
   /** The evening notification: at most 2 a day, the morning Word of the Day and one evening slot with the Streak warning or the unmet Daily Goal, or nothing; off, a Word at every Notification time. */
   eveningNotification: FeatureSwitchStateSchema,
   /** The farewell: the polite pause ends with the Edition's farewell on the 14th day without an open; off, it ends in silence. */
@@ -527,6 +557,16 @@ export const FeatureSwitchesSchema = z.strictObject({
   forceUpdate: FeatureSwitchStateSchema,
   /** «Нагору»: the round arrow-up button over a long list once the reader has scrolled down, which scrolls the list gently back to its top; off, no button. */
   scrollToTop: FeatureSwitchStateSchema,
+  /** «Скинути прогрес»: the reset marker in the XP log, after which every progress value counts from zero (ADR 0133); off, no button. Off while `xpLog` is. */
+  progressReset: FeatureSwitchStateSchema,
+  /** «Експортувати мої дані»: one file of the reader's user state, built on the device and handed to the system share window (ADR 0135); off, the row is absent. */
+  dataExport: FeatureSwitchStateSchema,
+  /** The reader's name on the Profile: its header and its «Ім’я» row (ADR 0136); off, the header shows the Level alone. Off while `profile` is. */
+  readerName: FeatureSwitchStateSchema,
+  /** The widget previews «Малий», «Середній» and «Екран блокування» on the Widgets screen, drawn from the Widget Snapshot; off, the steps alone. Off while `widget` is. */
+  widgetPreviews: FeatureSwitchStateSchema,
+  /** The three-step text size «Як у системі», «Більший», «Найбільший» and its screen (ADR 0134); off, the S…XL scale and its row. */
+  textSizeSteps: FeatureSwitchStateSchema,
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -721,6 +761,11 @@ export const FontSizeSchema = z.enum(['S', 'M', 'L', 'XL']);
 
 export type FontSize = z.infer<typeof FontSizeSchema>;
 
+/** The three-step text size, in ladder order: «Як у системі», «Більший», «Найбільший» (ADR 0134). */
+export const TextSizeSchema = z.enum(['system', 'larger', 'largest']);
+
+export type TextSize = z.infer<typeof TextSizeSchema>;
+
 /**
  * The Daily Goal (ADR 0074): the Words the reader aims to see on a local day.
  * It replaces the Daily Limit of ADR 0054.
@@ -809,7 +854,10 @@ export type MixConfig = z.infer<typeof MixConfigSchema>;
 /** The settings a new user starts with. */
 export const UserSettingDefaultsConfigSchema = z.strictObject({
   theme: ThemeSchema,
+  /** The S…XL font size, while `textSizeSteps` is off. */
   fontSize: FontSizeSchema,
+  /** The three-step text size, while `textSizeSteps` is on (ADR 0134). */
+  textSize: TextSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),
   /** The default notification times, kept in time order. */

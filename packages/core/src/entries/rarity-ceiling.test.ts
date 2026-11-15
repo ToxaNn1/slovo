@@ -159,7 +159,7 @@ describe('the Rarity Ceiling', () => {
   it('is set by the Rarity Test to the lowest rarity the reader does not know', async () => {
     const app = await open();
 
-    expect(await app.rarityTest.apply(await answer(app, [4, 5]))).toBe(4);
+    expect((await app.rarityTest.apply(await answer(app, [4, 5])))?.ceiling).toBe(4);
 
     expect(app.rarityCeiling.state).toBe(4);
     expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3, 4]));
@@ -168,7 +168,7 @@ describe('the Rarity Ceiling', () => {
   it('is set to «до 5» by a Rarity Test the reader knows every Word of', async () => {
     const app = await open({ ceiling: 2 });
 
-    expect(await app.rarityTest.apply(await answer(app, []))).toBe(5);
+    expect((await app.rarityTest.apply(await answer(app, [])))?.ceiling).toBe(5);
 
     expect(app.rarityCeiling.state).toBe(5);
   });
@@ -199,7 +199,7 @@ describe('the Rarity Ceiling', () => {
     );
     expect(records.has('mix.rarityFloor')).toBe(false);
     expect(records.has('mix.rarityCeiling')).toBe(false);
-    expect(records.get('schema.version')).toBe('7');
+    expect(records.get('schema.version')).toBe('8');
   });
 
   it('starts at the Edition default when a 1.0 app stored no Ceiling, or one that does not read', async () => {

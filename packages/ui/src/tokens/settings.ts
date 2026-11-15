@@ -60,6 +60,9 @@ export const widgetDrawing = {
   widgetRadius: 22,
   /** The medium widget's width over its height, from the design's 364 × 170. */
   mediumAspectRatio: 364 / 170,
+  /** The lock-screen widget's width over its height and its corner radius, from the board's 160 × 64 and 18. */
+  lockScreenAspectRatio: 160 / 64,
+  lockScreenRadius: 18,
 } as const;
 
 /**
@@ -107,4 +110,40 @@ export const narratorVoiceDrawing = {
   tilePaddingHorizontal: 14,
   tileLineGap: 5,
   descriptionOpacity: 0.75,
+} as const;
+
+/** A Category tile of the Mix (board 11, screen 87): pictogram, name and a check corner while on. */
+export const mixTileDrawing = {
+  minHeight: 50,
+  radius: 13,
+  padding: 8,
+  /** The room on the right the check corner takes. */
+  paddingRight: 26,
+  gap: 10,
+  /** The pictogram's square and its corner radius. */
+  pictogram: 30,
+  pictogramRadius: 9,
+  /** The pictogram's shape inside its square. */
+  glyph: 18,
+  /** The check corner, a triangle in the tile's top right corner. */
+  corner: 26,
+  check: { width: 10, height: 9, inset: 4 },
+  /** The space between the tiles of the two-column grid. */
+  gridGap: 8,
+} as const;
+
+/** A stepper's drawing (board 11, 90): the sunken track's padding and corner, and the − and + tiles. */
+export const stepperDrawing = { padding: 10, radius: 20, tile: 64, tileRadius: 16 } as const;
+
+/**
+ * An option screen's drawing (board 11, 85): the padding of the card that
+ * holds the sample and its explaining line, the gap between the two, the
+ * narrowest the line gets beside the sample before it drops under it, and
+ * the padding of an option's row.
+ */
+export const optionScreenDrawing = {
+  samplePadding: 18,
+  sampleGap: 16,
+  explanationMinWidth: 140,
+  optionPaddingVertical: 17,
 } as const;

@@ -250,10 +250,12 @@ const storedIn1_0: readonly (readonly [
   string,
   string,
 ])[] = [
-  ['schemaVersion', undefined, 'schema.version', '7'],
+  ['schemaVersion', undefined, 'schema.version', '8'],
   ['installed', undefined, 'app.installed', 'true'],
   ['theme', undefined, 'settings.theme', '"dark"'],
   ['fontSize', undefined, 'settings.fontSize', '"L"'],
+  ['textSize', undefined, 'settings.textSize', '"larger"'],
+  ['readerName', undefined, 'settings.readerName', '"Олена"'],
   ['rarityCeiling', undefined, 'settings.rarityCeiling', '3'],
   ['vibration', undefined, 'settings.vibration', 'false'],
   ['sounds', undefined, 'settings.sounds', 'false'],
@@ -412,5 +414,52 @@ describe('a user state kept by 1.0', () => {
     expect(new Set(storedIn1_0.map(([name]) => name))).toEqual(
       new Set(Object.keys(userStateRecords)),
     );
+  });
+});
+
+// Spec #1861, "User-state schema": the board 11 records, read beside the old ones.
+describe('the board 11 user-state records', () => {
+  const { fontSize, textSize, readerName, xpLog } = userStateRecords;
+
+  it('keeps the three-step text size under a key of its own, beside the S…XL one', () => {
+    expect(textSize.key).toBe('settings.textSize');
+    for (const value of ['system', 'larger', 'largest']) {
+      expect(textSize.decode(JSON.stringify(value))).toBe(value);
+    }
+    expect(textSize.decode('"M"')).toBeUndefined();
+    expect(fontSize.decode('"XL"')).toBe('XL');
+    expect(fontSize.decode('"larger"')).toBeUndefined();
+  });
+
+  it('keeps the reader’s name trimmed, from 1 to 24 characters, and reads anything else as absent', () => {
+    expect(readerName.key).toBe('settings.readerName');
+    expect(readerName.decode('"Олена"')).toBe('Олена');
+    expect(readerName.decode(JSON.stringify('я'.repeat(24)))).toBe('я'.repeat(24));
+    expect(readerName.decode(JSON.stringify('я'.repeat(25)))).toBeUndefined();
+    expect(readerName.decode('""')).toBeUndefined();
+    expect(readerName.decode('" Олена"')).toBeUndefined();
+    expect(readerName.decode('"Олена "')).toBeUndefined();
+  });
+
+  it('reads a reset marker in the XP log, with its local date and time', () => {
+    const marker = { kind: 'reset', date: '2026-11-14', at: '2026-11-14T18:30:00.000Z' };
+
+    expect(xpLog.record('x-9').decode(JSON.stringify(marker))).toEqual(marker);
+    expect(
+      xpLog.record('x-9').decode(JSON.stringify({ ...marker, date: '14.11.2026' })),
+    ).toBeUndefined();
+  });
+
+  it('syncs the text size and the name by last write wins, and the marker with the XP log', () => {
+    expect(syncMarkOf('settings.textSize')).toBe('last-write-wins');
+    expect(syncMarkOf('settings.readerName')).toBe('last-write-wins');
+    expect(syncMarkOf('xp.x-9')).toBe('union');
+  });
+
+  it('opens a user state without them as absent, with no migration', async () => {
+    const userState = await openUserState({ port: createMemoryUserStatePort() });
+
+    expect(await userState.read(textSize)).toBeUndefined();
+    expect(await userState.read(readerName)).toBeUndefined();
   });
 });

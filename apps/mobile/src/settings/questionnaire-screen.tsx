@@ -1,5 +1,5 @@
-import type { OptionQuestion } from '@slovo/core';
-import { BackLink, Button, ScreenTitle, SectionLabel, space, useTokens } from '@slovo/ui';
+import type { Composition, OptionQuestion } from '@slovo/core';
+import { BackLink, Button, Chip, ScreenTitle, SectionLabel, space, useTokens } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -8,24 +8,31 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useComposition } from '../composition';
 import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
-import { InterestsChoice } from '../feed/later-question-notice';
+import { InterestChips } from '../feed/later-question-notice';
+import { useMixState } from '../mix/mix';
 import { useShown } from '../shown-in-effect';
 
 const { onboarding, feedNotices, settings } = editionStrings;
 
+/** The answers the retake holds until «ГОТОВО». */
+type Answers = Partial<Record<OptionQuestion, string>>;
+
 /**
- * Settings › Пройти опитування ще раз (ADR 0067): «Рівень» and «Навіщо» while
- * the questionnaire is on, the self-rating while the Rarity Test is on, and
- * the interests. Each answer
- * applies at once through the Core's questionnaire, as on the onboarding and
- * the Feed Notices; the Rarity Test has its own row.
+ * Settings › Пройти опитування ще раз (ADR 0067), one screen: «Рівень» and
+ * «Навіщо» while the questionnaire is on, the self-rating while the Rarity
+ * Test is on, and the interests. The screen holds the answers and «ГОТОВО»
+ * applies them through the Core's questionnaire, as the onboarding and the
+ * Feed Notices do; leaving without it drops them. The Rarity Test has its own
+ * row.
  */
 export function QuestionnaireScreen() {
   const { colors } = useTokens();
   const router = useRouter();
   const { questionnaire } = useComposition();
   const shown = useShown().questionnaire;
-  const [answered, setAnswered] = useState<Partial<Record<OptionQuestion, string>>>({});
+  const { categoryIds } = useMixState();
+  const [answers, setAnswers] = useState<Answers>({});
+  const [interests, setInterests] = useState<readonly string[]>(categoryIds);
   if (shown === undefined) return <Redirect href="/settings" />;
 
   const questions: readonly { question: OptionQuestion; title: string }[] = [
@@ -43,7 +50,7 @@ export function QuestionnaireScreen() {
   return (
     <SafeAreaView
       testID="questionnaire"
-      edges={['top']}
+      edges={['top', 'bottom']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
@@ -55,45 +62,72 @@ export function QuestionnaireScreen() {
           }}
         />
         <View style={styles.section}>
-          <ScreenTitle>{settings.rows.questionnaire}</ScreenTitle>
+          <ScreenTitle>{settings.questionnaireRetake.title}</ScreenTitle>
         </View>
         {questions.map(({ question, title }) => (
           <View key={question} style={styles.section}>
             <SectionLabel>{title}</SectionLabel>
-            {questionnaire.options[question].map(({ id, label }) => (
-              <Button
-                size="small"
-                variant={answered[question] === id ? 'primary' : 'neutral'}
-                key={id}
-                testID={`questionnaire-${question}-${id}`}
-                label={label}
-                selected={answered[question] === id}
-                onPress={() => {
-                  const answering = questionnaire.answer(question, id).then(() => true);
-                  void keep('the answer to a question', answering, false).then((kept) => {
-                    if (kept) setAnswered((before) => ({ ...before, [question]: id }));
-                  });
-                }}
-              />
-            ))}
+            <View style={styles.chips}>
+              {questionnaire.options[question].map(({ id, label }) => (
+                <Chip
+                  key={id}
+                  testID={`questionnaire-${question}-${id}`}
+                  label={label}
+                  on={answers[question] === id}
+                  onPress={() => {
+                    setAnswers((before) => ({ ...before, [question]: id }));
+                  }}
+                />
+              ))}
+            </View>
           </View>
         ))}
         <View style={styles.section}>
           <SectionLabel>{feedNotices.laterQuestions.interests.title}</SectionLabel>
-          <InterestsChoice
-            testIDPrefix="questionnaire"
-            onDone={(categoryIds) => {
-              void keep('the interests', questionnaire.chooseInterests(categoryIds));
-            }}
-          />
+          <InterestChips testIDPrefix="questionnaire" picked={interests} onChange={setInterests} />
         </View>
       </ScrollView>
+      <View style={styles.footer}>
+        <Button
+          testID="questionnaire-done"
+          label={settings.questionnaireRetake.done}
+          onPress={() => {
+            const answered = questions.flatMap(({ question }) => {
+              const answerId = answers[question];
+              return answerId === undefined ? [] : [{ question, answerId }];
+            });
+            const changed = sameIds(interests, categoryIds) ? undefined : interests;
+            void apply(questionnaire, answered, changed).then(() => {
+              router.back();
+            });
+          }}
+        />
+      </View>
     </SafeAreaView>
   );
 }
 
+/** Writes each answer held, then the interests when they changed. */
+async function apply(
+  questionnaire: Composition['questionnaire'],
+  answered: readonly { question: OptionQuestion; answerId: string }[],
+  interests: readonly string[] | undefined,
+) {
+  for (const { question, answerId } of answered) {
+    await keep('the answer to a question', questionnaire.answer(question, answerId));
+  }
+  if (interests !== undefined)
+    await keep('the interests', questionnaire.chooseInterests(interests));
+}
+
+function sameIds(a: readonly string[], b: readonly string[]) {
+  return a.length === b.length && a.every((id) => b.includes(id));
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
+  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[5] },
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[5] },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  footer: { paddingHorizontal: space[5], paddingVertical: space[4] },
 });

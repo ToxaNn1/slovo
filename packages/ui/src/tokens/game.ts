@@ -14,6 +14,9 @@ export const roundPromptLength: LengthSteps = {
   longer: 18 / 24,
 };
 
+/** The Mascot's width beside a Round's question on the ground (board «slogo game last», D5). */
+export const roundMascotWidth = 88;
+
 /**
  * A Game Mode's row on the mode screen, from the design: its tile's side,
  * corner and edge, the gap to its texts and the row's padding; the red mark
@@ -65,6 +68,8 @@ export const roundLayout = {
   cardPaddingVertical: 30,
   cardMinHeight: 220,
   textMaxFontScale: 1.5,
+  /** The full-width tile of the Word in «Звідки слово» on the ground (board g4). */
+  originTileMinHeight: 110,
 } as const;
 
 /**
@@ -119,6 +124,21 @@ export const answerOption = {
   pop: [0.6, 1.12, 1],
   key: { side: 30, radius: 9, border: 2, gap: 14, wrongMark: 12 },
   sentenceMost: 60,
+} as const;
+
+/**
+ * A pick Round's option in the board's look (D6, `gameOptionStamp`): the
+ * most characters a short, keyless option has; how much the options left
+ * out of the answer fade and how far a wrong choice drops; and the round ✓
+ * stamp on a right short option (its side, border and the side of its ✓) and
+ * the side of the ✓ on a right long option's key.
+ */
+export const answerOptionStamp = {
+  shortMost: 14,
+  dimmedOpacity: 0.45,
+  drop: 3,
+  stamp: { side: 30, border: 2, mark: 14 },
+  rightMark: 14,
 } as const;
 
 /**
@@ -256,6 +276,10 @@ export const pairsGridLayout = {
   cellRadius: 16,
   cellGap: 12,
   cellDrop: 8,
+  /** A row of a grid that stays (`pairsStay`), as the board draws it: its cell height, the gap between its two halves and the diamond over it. */
+  stayCellHeight: 64,
+  halfGap: 6,
+  diamond: 8,
 } as const;
 
 /**
@@ -263,7 +287,13 @@ export const pairsGridLayout = {
  * long Word fits the SE (its hit slop makes up the rest), and its height,
  * the board's; the gap between the Word's letters, which leaves the buttons apart.
  */
-export const vowelButtonsLayout = { width: 38, height: 62, letterGap: 2 } as const;
+export const vowelButtonsLayout = {
+  width: 38,
+  height: 62,
+  letterGap: 2,
+  /** The red stress mark over a stressed vowel (board 06 «Наголос»): its bar, slant, rise over the tile and flight in. */
+  mark: { width: 6, height: 20, skew: -15, rise: 4, flyX: 10, flyY: -30, duration: 400 },
+} as const;
 
 /**
  * The Game timer: the height of its skewed bar, from the design, and the
@@ -272,4 +302,9 @@ export const vowelButtonsLayout = { width: 38, height: 62, letterGap: 2 } as con
 export const gameTimerLayout = { barHeight: 10, secondsWidth: 40 } as const;
 
 /** A blank of the typed answer: its width and the thickness of the line it stands on. */
-export const typedAnswerLayout = { blankWidth: 28, blankLine: 2 } as const;
+export const typedAnswerLayout = {
+  blankWidth: 28,
+  blankLine: 2,
+  /** The field's thick ink frame on the ground (board g3). */
+  frame: 2.5,
+} as const;

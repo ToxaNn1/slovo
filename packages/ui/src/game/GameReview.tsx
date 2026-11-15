@@ -1,4 +1,10 @@
-import { buildGameReview, stressLabel, type GameReviewItem, type PlayedRound } from '@slovo/core';
+import {
+  buildGameReview,
+  buildPlainGameReview,
+  stressLabel,
+  type GameReviewItem,
+  type PlayedRound,
+} from '@slovo/core';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -58,6 +64,93 @@ export function GameReview({
   );
 }
 
+/** Which Game Review a result screen shows: the plain one (ADR 0139), the one that opens Entries, or none. */
+export type ResultReview =
+  | { readonly kind: 'plain' }
+  | { readonly kind: 'opening'; readonly onOpen: (entryId: string) => void }
+  | { readonly kind: 'none' };
+
+/** The Game Review `review` names, of the Rounds played. */
+export function GameReviewOf({
+  rounds,
+  review,
+}: {
+  rounds: readonly PlayedRound[];
+  review: ResultReview;
+}) {
+  if (review.kind === 'none') return null;
+  if (review.kind === 'plain') return <PlainGameReview rounds={rounds} />;
+  return <GameReview rounds={rounds} onOpen={review.onOpen} />;
+}
+
+/**
+ * The plain Game Review, «Огляд раундів» (spec #1880, D11): every Round of the
+ * Game just over, in order, as the Core's plain rows, a red ✓ or an ink ✗ and
+ * the word. A row neither expands nor opens the Entry; VoiceOver reads its
+ * number, its word and whether it was right.
+ */
+export function PlainGameReview({ rounds }: { rounds: readonly PlayedRound[] }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { strings, voice } = useEdition();
+  const { review } = strings.game;
+  const rows = useMemo(() => buildPlainGameReview(rounds), [rounds]);
+  return (
+    <View testID="game-review" style={styles.review}>
+      <Text
+        accessibilityRole="header"
+        maxFontSizeMultiplier={fontScaleCap.text}
+        {...voice}
+        style={[typeStyle('reviewTitle', tokens), styles.title, { color: colors.ink }]}
+      >
+        {strings.game.finals.review}
+      </Text>
+      {rows.map(({ number, right, word }) => (
+        <View
+          key={number}
+          testID={`game-review-row-${String(number)}`}
+          accessible
+          accessibilityLabel={[
+            String(number),
+            stressLabel(strings.wordCard, word.text, word.stressedVowels),
+            right ? review.right : review.wrong,
+          ].join(', ')}
+          {...voice}
+          style={[styles.row, styles.head, { borderColor: colors.line }]}
+        >
+          <ReviewMark number={number} right={right} />
+          <Text
+            maxFontSizeMultiplier={fontScaleCap.text}
+            style={[typeStyle('reviewWord', tokens), styles.text, { color: colors.ink }]}
+          >
+            {word.text}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** The red ✓ of a right Round or the ink ✗ of a wrong one. */
+function ReviewMark({ number, right }: { number: number; right: boolean }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const keyInk = useSchemeColors('light').ink;
+  return (
+    <View
+      testID={`game-review-mark-${String(number)}`}
+      style={[styles.mark, { backgroundColor: right ? colors.accent : colors.ink }]}
+    >
+      <Text
+        maxFontSizeMultiplier={fontScaleCap.text}
+        style={[typeStyle('reviewMark', tokens), { color: right ? keyInk : colors.background }]}
+      >
+        {right ? '✓' : '✗'}
+      </Text>
+    </View>
+  );
+}
+
 function ReviewRow({
   item: { number, entryId, title, answer, right, picked: pickedOption, details },
   expanded,
@@ -71,7 +164,6 @@ function ReviewRow({
   const { colors } = tokens;
   const { strings, voice } = useEdition();
   const { review } = strings.game;
-  const keyInk = useSchemeColors('light').ink;
   const pickedTemplate = pickedOption?.form === 'typed' ? review.typed : review.picked;
   const picked =
     pickedOption === undefined ? undefined : fill(pickedTemplate, { text: pickedOption.text });
@@ -101,17 +193,7 @@ function ReviewRow({
         onPress={onPress}
         style={styles.head}
       >
-        <View
-          testID={`game-review-mark-${String(number)}`}
-          style={[styles.mark, { backgroundColor: right ? colors.accent : colors.ink }]}
-        >
-          <Text
-            maxFontSizeMultiplier={fontScaleCap.text}
-            style={[typeStyle('reviewMark', tokens), { color: right ? keyInk : colors.background }]}
-          >
-            {right ? '✓' : '✗'}
-          </Text>
-        </View>
+        <ReviewMark number={number} right={right} />
         <View style={styles.text}>
           <Text
             maxFontSizeMultiplier={fontScaleCap.text}

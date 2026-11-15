@@ -1,5 +1,5 @@
 import { type Word, type Category } from '@slovo/contracts';
-import { featureOfKind, openComposition, type Composition, type Edition } from '@slovo/core';
+import { openComposition, type Composition, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
@@ -134,148 +134,89 @@ const without = (feature: string): Edition => ({
   isFeatureEnabled: (each) => each !== feature && ukrainian.isFeatureEnabled(each),
 });
 
+/** Each row as the screen lists it: its name and its kind label. */
+const rowsOf = (app: Composition) =>
+  modelOf(app).rows.map(({ name, kindLabel }) => [name, kindLabel]);
+
 describe('the «Приховане» screen', () => {
   it('is empty while nothing is hidden', async () => {
     const { app } = await open();
 
-    const model = modelOf(app);
-
-    expect(model.entries).toEqual([]);
-    expect(model.categories).toEqual([]);
-    expect(model.empty).toBe(true);
+    expect(modelOf(app).rows).toEqual([]);
   });
 
-  it('lists the Hidden Entries newest first, each with its kind and labels', async () => {
+  it('lists everything hidden in one list: the Categories, the kinds out of the Mix, then the Hidden Entries newest first, each with its kind', async () => {
     const { app, advance } = await open();
-    for (const id of ['w_one', 'c_one', 'i_one', 'w_two']) {
+    for (const id of ['w_one', 'i_one', 'w_two']) {
       await app.hiddenEntries.hide(id);
       advance();
     }
+    await app.mix.setKind('correction', false);
+    await app.mix.takeOut(first.id);
 
-    const model = modelOf(app);
-
-    expect(model.empty).toBe(false);
-    expect(model.entries.map(({ entryId }) => entryId)).toEqual([
-      'w_two',
-      'i_one',
-      'c_one',
-      'w_one',
+    expect(rowsOf(app)).toEqual([
+      [first.displayName, 'категорія'],
+      ['Виправлення', 'тип карток'],
+      ['two\u0301', 'запис'],
+      ['бити байдики', 'запис'],
+      ['one', 'запис'],
     ]);
-    expect(model.entries.map(({ labels }) => labels.text)).toEqual([
-      'слово · ім., ж. р.',
-      'фразеологізм',
-      'виправлення · росіянізм',
-      'слово · присл., заст.',
-    ]);
-    // VoiceOver reads the whole words, not the abbreviations.
-    expect(model.entries.map(({ labels }) => labels.spoken)).toEqual([
-      'слово, іменник, жіночий рід',
-      'фразеологізм',
-      'виправлення, росіянізм',
-      'слово, прислівник, застаріле',
+    expect(modelOf(app).rows.map(({ target }) => target)).toEqual([
+      { kind: 'category', categoryId: first.id },
+      { kind: 'whole-kind', entryKind: 'correction' },
+      { kind: 'entry', entryId: 'w_two' },
+      { kind: 'entry', entryId: 'i_one' },
+      { kind: 'entry', entryId: 'w_one' },
     ]);
   });
 
-  it('names the Entry for VoiceOver on its «Повернути» button, without the stress mark', async () => {
+  it('names the row for VoiceOver on its «Показати» button, without the stress mark', async () => {
     const { app } = await open();
     await app.hiddenEntries.hide('w_two');
 
-    const [entry] = modelOf(app).entries;
+    const [row] = modelOf(app).rows;
 
-    expect(entry?.row.title).not.toBe('two');
-    expect(entry?.restoreLabel).toBe('Повернути «two»');
+    expect(row?.name).not.toBe('two');
+    expect(row?.showLabel).toBe('Показати «two»');
   });
 
-  it('lists the Hidden Categories by name, in the Language Pack’s order', async () => {
+  it('lists the Hidden Categories in the Language Pack’s order, the Corrections’ after the Words’, named as Corrections', async () => {
     const { app } = await open();
+    await app.hide({ kind: 'category', categoryId: work.id, of: 'correction' });
     await app.mix.takeOut(second.id);
     await app.mix.takeOut(first.id);
 
-    const model = modelOf(app);
-
-    expect(model.categories).toEqual([
-      { id: first.id, of: 'word', name: first.displayName },
-      { id: second.id, of: 'word', name: second.displayName },
+    expect(rowsOf(app)).toEqual([
+      [first.displayName, 'категорія'],
+      [second.displayName, 'категорія'],
+      ['Виправлення: На роботі', 'категорія'],
     ]);
-    expect(model.empty).toBe(false);
   });
 
-  it('lists the Hidden Categories of Corrections after the Words’, named as Corrections', async () => {
-    const { app } = await open();
-    await app.hide({ kind: 'category', categoryId: work.id, of: 'correction' });
-    await app.mix.takeOut(first.id);
-
-    const model = modelOf(app);
-
-    expect(model.categories).toEqual([
-      { id: first.id, of: 'word', name: first.displayName },
-      { id: work.id, of: 'correction', name: 'Виправлення: На роботі' },
-    ]);
-    expect(model.empty).toBe(false);
-  });
-
-  it('brings a Category of Corrections back into the Mix on its offer, leaving the Words’ as they are', async () => {
-    const { app } = await open();
-    await app.hide({ kind: 'category', categoryId: work.id, of: 'correction' });
-
-    await app.unhide({ kind: 'category', categoryId: work.id, of: 'correction' });
-
-    expect(app.mix.state.correctionCategories.categoryIds).toEqual([everyday.id, work.id]);
-    expect(modelOf(app).categories).toEqual([]);
-    expect(modelOf(app).empty).toBe(true);
-  });
-
-  it('leaves the Hidden Categories of Corrections out while Corrections are out as a whole, which the screen offers instead', async () => {
+  it('leaves the Hidden Categories of Corrections out while Corrections are out as a whole, which the screen lists instead', async () => {
     const { app } = await open();
     await app.hide({ kind: 'category', categoryId: work.id, of: 'correction' });
     await app.mix.setKind('correction', false);
 
-    const model = modelOf(app);
-
-    expect(model.categories).toEqual([]);
-    expect(model.kinds.map(({ entryKind }) => entryKind)).toEqual(['correction']);
+    expect(rowsOf(app)).toEqual([['Виправлення', 'тип карток']]);
   });
 
   it('leaves the Hidden Categories of Corrections out while the Edition turns Corrections off', async () => {
     const { app } = await open(without('corrections'));
     await app.hide({ kind: 'category', categoryId: work.id, of: 'correction' });
 
-    const model = modelOf(app);
-
-    expect(model.categories).toEqual([]);
-    expect(model.empty).toBe(true);
+    expect(modelOf(app).rows).toEqual([]);
   });
-
-  it.each([
-    ['correction', 'Виправлення', 'Увімкнути Виправлення'],
-    ['idiom', 'Фразеологізми', 'Увімкнути Фразеологізми'],
-  ] as const)(
-    'lists the kind %s taken out of the Mix as hidden too, so the screen is not empty, and brings it back into the Mix on its offer',
-    async (entryKind, name, turnOnLabel) => {
-      const { app } = await open();
-      expect(modelOf(app).kinds).toEqual([]);
-
-      await app.hide({ kind: 'whole-kind', entryKind });
-
-      expect(modelOf(app).kinds).toEqual([
-        { entryKind, testID: `hidden-${featureOfKind(entryKind)}`, name, turnOnLabel },
-      ]);
-      expect(modelOf(app).empty).toBe(false);
-
-      await app.unhide({ kind: 'whole-kind', entryKind });
-
-      expect(app.mix.state.kinds[entryKind]).toBe(true);
-      expect(modelOf(app).kinds).toEqual([]);
-      expect(modelOf(app).empty).toBe(true);
-    },
-  );
 
   it('lists the kinds out of the Mix in the Mix’s order: Corrections before Idioms', async () => {
     const { app } = await open();
     await app.mix.setKind('idiom', false);
     await app.mix.setKind('correction', false);
 
-    expect(modelOf(app).kinds.map(({ entryKind }) => entryKind)).toEqual(['correction', 'idiom']);
+    expect(rowsOf(app)).toEqual([
+      ['Виправлення', 'тип карток'],
+      ['Фразеологізми', 'тип карток'],
+    ]);
   });
 
   it.each([
@@ -287,23 +228,22 @@ describe('the «Приховане» screen', () => {
       const { app } = await open(without(feature));
       await app.mix.setKind(entryKind, false);
 
-      const model = modelOf(app);
-
-      expect(model.kinds).toEqual([]);
-      expect(model.empty).toBe(true);
+      expect(modelOf(app).rows).toEqual([]);
     },
   );
 
-  it('puts a Category back in the Mix, so the Mix and the screen never disagree', async () => {
+  it.each([
+    ['a Hidden Entry', { kind: 'entry', entryId: 'w_one' }],
+    ['a Hidden Category', { kind: 'category', categoryId: first.id }],
+    ['a kind out of the Mix', { kind: 'whole-kind', entryKind: 'idiom' }],
+  ] as const)('leaves the list once its row’s target is shown: %s', async (_, target) => {
     const { app } = await open();
-    await app.mix.takeOut(first.id);
-    await app.mix.takeOut(second.id);
+    await app.hide(target);
+    expect(modelOf(app).rows.map((row) => row.target)).toEqual([target]);
 
-    await app.mix.putBack(first.id);
+    await app.unhide(target);
 
-    expect(modelOf(app).categories.map(({ id }) => id)).toEqual([second.id]);
-    expect(app.mix.state.categoryIds).toContain(first.id);
-    expect(app.mix.state.hiddenCategories.map(({ id }) => id)).toEqual([second.id]);
+    expect(modelOf(app).rows).toEqual([]);
   });
 });
 

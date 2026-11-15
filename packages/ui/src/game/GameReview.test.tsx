@@ -198,13 +198,14 @@ const vowels = { form: 'vowel' as const, vowels: [1, 3] };
 const grid = {
   form: 'pairs' as const,
   words: [
-    { shown: option('candid'), gone: true },
-    { shown: option('dour'), gone: false },
+    { shown: option('candid'), state: 'found' as const },
+    { shown: option('dour'), state: 'open' as const },
   ],
   definitions: [
-    { shown: 'open and honest', gone: true },
-    { shown: 'stern and gloomy', gone: false },
+    { shown: 'open and honest', state: 'found' as const },
+    { shown: 'stern and gloomy', state: 'open' as const },
   ],
+  stays: false,
 };
 const letters = {
   form: 'chips' as const,

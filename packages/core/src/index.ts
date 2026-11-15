@@ -72,13 +72,16 @@ export {
   type GameTime,
   type GivenAnswer,
   type GridCell,
+  type GridCellState,
   type PlayedRound,
   type Round,
   type RoundAnswer,
   type RoundBlank,
 } from './game/game';
 export {
+  GAME_HUB_GROUPS,
   GAME_MODE_GROUPS,
+  type OfferedGroup,
   type AnswerSheet,
   type ChipLayout,
   type FixedChip,
@@ -86,7 +89,7 @@ export {
   type RoundOption,
   type TextRange,
 } from './game/game-mode';
-export { buildGameReview, type GameReviewItem } from './game/game-review';
+export { buildGameReview, buildPlainGameReview, type GameReviewItem } from './game/game-review';
 export { GAME_ROUNDS } from './game/round-plan';
 export { type SearchResults } from './search/search';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';
@@ -164,6 +167,7 @@ export {
   type SettingsDefaults,
   type UserSettings,
 } from './settings/settings';
+export { smallerTextSize } from './settings/text-size-ladder';
 export { STRESS_MARK, withoutStress } from './entries/stress';
 export { createGesturesHint, type GesturesHint } from './feed/gestures-hint';
 export { type WordCardModel } from './entries/word-card';
@@ -204,7 +208,11 @@ export {
 } from './entries/mix';
 export { type OnboardingStep } from './onboarding/onboarding';
 export type { OptionQuestion, QuestionnaireOption } from './questionnaire/questionnaire';
-export { type RarityTestAnswer, type RarityTestWord } from './mix/rarity-test';
+export {
+  type RarityTestAnswer,
+  type RarityTestResult,
+  type RarityTestWord,
+} from './mix/rarity-test';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
 export { type CollectionShareRefusal } from './collection-links/share-collection';

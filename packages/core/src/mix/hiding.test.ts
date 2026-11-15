@@ -323,7 +323,7 @@ describe('an unhide', () => {
     expect(hiddenIdsOf(app)).toEqual(['w_crafts2', 'w_nature0']);
 
     time.advance(MINUTE);
-    await unhidden?.undo?.(app);
+    await unhidden?.undo(app);
 
     expect(app.hiddenEntries.list).toEqual(before);
     expect(hiddenIdsOf(app)).toEqual(['w_crafts2', 'c_one', 'w_nature0']);
@@ -340,17 +340,18 @@ describe('an unhide', () => {
     expect(records).toEqual(kept);
   });
 
-  it('puts a Hidden Category back in the Mix, with no undo', async () => {
+  it('puts a Hidden Category back in the Mix, and its undo takes it out again', async () => {
     const app = await run();
     await app.hide({ kind: 'category', categoryId: 'crafts' });
 
     const unhidden = await app.unhide({ kind: 'category', categoryId: 'crafts' });
 
-    expect(unhidden).toEqual({
-      changed: { kind: 'category', categoryId: 'crafts' },
-      undo: undefined,
-    });
+    expect(unhidden?.changed).toEqual({ kind: 'category', categoryId: 'crafts' });
     expect(app.mix.state.hiddenCategories).toEqual([]);
+
+    await unhidden?.undo(app);
+
+    expect(app.mix.state.hiddenCategories).toEqual([crafts]);
   });
 
   it('changes nothing for a Category in the Mix, or one the Edition does not have', async () => {
@@ -365,15 +366,19 @@ describe('an unhide', () => {
   });
 
   it.each(MIX_KINDS)(
-    'puts the kind %s as a whole back in the Mix, with no undo',
+    'puts the kind %s as a whole back in the Mix, and its undo takes it out again',
     async (entryKind) => {
       const app = await run();
       await app.hide({ kind: 'whole-kind', entryKind });
 
       const unhidden = await app.unhide({ kind: 'whole-kind', entryKind });
 
-      expect(unhidden).toEqual({ changed: { kind: 'whole-kind', entryKind }, undo: undefined });
+      expect(unhidden?.changed).toEqual({ kind: 'whole-kind', entryKind });
       expect(app.mix.state.kinds[entryKind]).toBe(true);
+
+      await unhidden?.undo(app);
+
+      expect(app.mix.state.kinds[entryKind]).toBe(false);
     },
   );
 

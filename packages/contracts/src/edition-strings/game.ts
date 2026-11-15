@@ -15,6 +15,12 @@ const GameModeStringsSchema = z.strictObject({
   description: TextSchema,
   /** The mode's one line under its name in a Games hub row, with no full stop, e.g. «Обери слово за визначенням» (spec #1674). */
   oneLiner: TextSchema,
+  /**
+   * The board's line under the mode's name in a Games hub row behind
+   * `gameHubRecord`, e.g. «Визначення є. Яке це слово?» (spec #1880); a mode
+   * without one keeps its `oneLiner`.
+   */
+  hubLine: TextSchema.optional(),
   /** The label over a Round's prompt, e.g. «ВИЗНАЧЕННЯ». */
   roundLabel: TextSchema,
   /** What the card says for each reason the Core gives that the mode can't start. */
@@ -48,6 +54,16 @@ export const GameStringsSchema = z.strictObject({
     idioms: TextSchema,
     /** The modes with their own Lives, Round limit or time limit, e.g. «Виклик». */
     challenge: TextSchema,
+    /** The five groups of the Games hub behind `gameHubGroups` (ADR 0139): the modes that ask about sound, e.g. «Звук». */
+    sound: TextSchema,
+    /** The modes that ask about meaning, e.g. «Значення». */
+    meaning: TextSchema,
+    /** The modes that ask about letters, e.g. «Букви». */
+    letters: TextSchema,
+    /** The modes against the clock, e.g. «Швидкість». */
+    speed: TextSchema,
+    /** The modes new to the reader, e.g. «Нове». */
+    new: TextSchema,
   }),
   /** The Best result of a Game Mode on its card. */
   modeBest: z.strictObject({
@@ -62,7 +78,15 @@ export const GameStringsSchema = z.strictObject({
     best: templateOf('n'),
     /** A mode not played yet, e.g. «—». */
     none: TextSchema,
+    /** The Best result behind `gameHubRecord`, e.g. «Рекорд: 12 з 15». Takes `{n}` and `{total}`, the mode's Round limit (ADR 0139). */
+    record: templateOf('n', 'total'),
+    /** The Best result behind `gameHubRecord` of a mode without a Round limit, e.g. «Рекорд: 23». Takes `{n}`. */
+    recordCount: templateOf('n'),
+    /** A mode not played yet behind `gameHubRecord`, e.g. «Ще жодної гри». */
+    never: TextSchema,
   }),
+  /** The toast on a tap of a mode that cannot be played, behind `gameModeToast` (ADR 0139). Takes `{mode}` and `{other}`, a mode the reader can play. */
+  hubToast: templateOf('mode', 'other'),
   /** The button that opens one letter of the answer, in a mode that has it. */
   openLetter: TextSchema,
   /** What VoiceOver reads for a letter in its place in a Word: a vowel button, a blank. */
@@ -169,6 +193,23 @@ export const GameStringsSchema = z.strictObject({
       /** Its button to the next Round, e.g. «Далі →». */
       next: TextSchema,
     }),
+    /** The answer banner behind `gameAnswerBanner` (ADR 0138). */
+    banner: z.strictObject({
+      /** Its head after a right answer, in turn, e.g. «Влучив!». */
+      right: z.array(TextSchema).min(1),
+      /** The XP the answer brought, e.g. «+10 XP». Takes `{count}`. */
+      xp: templateOf('count'),
+      /** Its head after a wrong answer, e.g. «Мимо». */
+      wrong: TextSchema,
+      /** Its head after the answer that took the last Life, e.g. «Життя все». */
+      lastLife: TextSchema,
+      /** Its line after a wrong answer, e.g. «Майже. Ось як правильно: вереск». Takes `{answer}`. */
+      answer: templateOf('answer'),
+    }),
+    /** The captions over the two columns of a «Пари» grid behind `pairsStay`, e.g. «Слово» and «Значення». */
+    pairsCaptions: z.strictObject({ word: TextSchema, meaning: TextSchema }),
+    /** The two lines under the streak of «Виживання» (spec #1880): «поспіль» and «рекорд {best}». Takes `{best}`. */
+    survival: z.strictObject({ streak: TextSchema, best: templateOf('best') }),
     /** The streak counter of «Виживання», e.g. «4 поспіль · рекорд 9». Takes `{n}` and `{best}` (spec #1674). */
     survivalStreak: templateOf('n', 'best'),
     /** The prompts of the restyled Rounds (spec #1674). */
@@ -301,6 +342,15 @@ export const GameStringsSchema = z.strictObject({
   }),
   /** The head of the Lives-over screen, e.g. «ВГАДАЙ СЛОВО · 7/15». Takes `{mode}`, `{score}` and `{total}` (spec #1674). */
   livesOver: templateOf('mode', 'score', 'total'),
+  /** The Lives-over poster behind `livesOverWarmup` (ADR 0139). */
+  warmup: z.strictObject({
+    /** Its head, e.g. «Розминка!». */
+    title: TextSchema,
+    /** The line under it, e.g. «Майже. Наступне вийде.». */
+    line: TextSchema,
+    /** The word under the count of right answers, e.g. «влучних». */
+    hits: TextSchema,
+  }),
   /** The texts both final screens share (spec #1674). */
   finals: z.strictObject({
     /** The title over the Game Review rows, e.g. «Твої раунди». */
@@ -311,6 +361,10 @@ export const GameStringsSchema = z.strictObject({
     again: TextSchema,
     /** The button that goes to the Games hub, e.g. «До ігор». */
     toGames: TextSchema,
+    /** The button that goes to the Feed behind `gameEndToFeed`, e.g. «До стрічки» (ADR 0139). */
+    toFeed: TextSchema,
+    /** The title over the plain Game Review behind `plainGameReview`, e.g. «Огляд раундів» (ADR 0139). */
+    review: TextSchema,
   }),
   /** The result screen. */
   result: z.strictObject({

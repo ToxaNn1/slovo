@@ -1,19 +1,54 @@
-import { BackHeader, space, useTokens, WidgetGuide } from '@slovo/ui';
+import type { WidgetSnapshot } from '@slovo/contracts';
+import type { Composition } from '@slovo/core';
+import {
+  BackHeader,
+  space,
+  typeStyle,
+  useEdition,
+  useTokens,
+  WidgetGuideSteps,
+  WidgetPreviews,
+} from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useCompositionRead } from '@/composition';
 import { editionStrings } from '@/edition/edition';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 const { allEntries, guide } = editionStrings.widget;
+const strings = editionStrings.settings.widgets;
+
+/** Reads the Widget Snapshot the widget would show now. */
+const readSnapshot = ({ widget }: Composition) => widget.snapshot(editionStrings.notificationBody);
 
 /**
- * Settings › Віджети › «Як додати віджет»: how to put the widget on the home
- * screen, in three steps, under a drawing of the small and the medium widget.
+ * The Word the previews draw: the first of «Усі слова» in the Widget
+ * Snapshot, or the guide's sample while the snapshot reads or has none.
  */
-export default function WidgetGuideScreen() {
-  const { colors } = useTokens();
+function previewWordOf(snapshot: WidgetSnapshot | undefined) {
+  const first = snapshot?.entries.find(({ id }) => id === snapshot.allEntries[0]);
+  return first === undefined
+    ? guide.sample
+    : { lemma: first.headline, definition: first.secondLine };
+}
+
+/**
+ * Settings › «Віджети»: what each widget looks like, drawn from the Widget
+ * Snapshot, over the three steps to add one (ADR 0054). The previews are
+ * only a look and keep nothing (ADR 0026); the lock-screen one is there
+ * while the snapshot carries the lock-screen widget. With the widget
+ * previews off, the steps alone.
+ */
+export default function WidgetsScreen() {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
   const router = useRouter();
+  const previewsOn = useEditionInEffect().isFeatureEnabled('widgetPreviews');
+  const read = useCompositionRead(readSnapshot, 'widget previews');
+  const snapshot = read.status === 'ready' ? read.value : undefined;
   return (
     <SafeAreaView
       testID="widget-guide"
@@ -25,7 +60,7 @@ export default function WidgetGuideScreen() {
         <View style={styles.header}>
           <BackHeader
             titleRole="settingsSubTitle"
-            title={guide.title}
+            title={strings.title}
             back={{
               label: editionStrings.settings.title,
               testID: 'widget-guide-back',
@@ -34,14 +69,21 @@ export default function WidgetGuideScreen() {
               },
             }}
           />
+          <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
+            {strings.subtitle}
+          </Text>
         </View>
-        <WidgetGuide
-          testID="widget-guide"
-          steps={guide.steps}
-          caption={guide.sizes}
-          mode={allEntries}
-          {...guide.sample}
-        />
+        {previewsOn && (
+          <WidgetPreviews
+            testID="widget-previews"
+            accessibilityLabel={strings.title}
+            names={strings.previews}
+            lockScreen={snapshot?.lockScreenWidget === true}
+            mode={allEntries}
+            {...previewWordOf(snapshot)}
+          />
+        )}
+        <WidgetGuideSteps testID="widget-guide" steps={guide.steps} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -50,5 +92,5 @@ export default function WidgetGuideScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
-  header: { paddingBottom: space[4] },
+  header: { paddingBottom: space[4], gap: space[2] },
 });

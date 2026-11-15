@@ -94,6 +94,7 @@ describe('the UA Edition', () => {
     expect(edition.userSettingDefaults).toEqual({
       theme: 'system',
       fontSize: 'M',
+      textSize: 'system',
       vibration: true,
       notificationTimes: ['09:00', '13:00', '19:00'],
       mix: {

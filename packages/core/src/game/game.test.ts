@@ -14,6 +14,7 @@ import type {
 
 import {
   buildGameReview,
+  buildPlainGameReview,
   createGameHaptics,
   createHaptics,
   GAME_ROUNDS,
@@ -34,7 +35,7 @@ import { renderStress } from '../entries/stress';
 import { SEEN_DWELL_MS } from '../feed/feed';
 import { type GameMode } from './game-mode';
 import { type UserStateChanges } from '../ports';
-import { GAME_LIVES, streakOf } from './game';
+import { streakOf } from './game';
 import { createMemoryContentPort } from '../testing';
 import {
   fakeClock,
@@ -47,6 +48,9 @@ import {
 } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
+
+/** The Lives a Game starts with here, where `gameThreeLives` is off like every switch not named. */
+const LIVES_SWITCHED_OFF = 5;
 
 function word(
   id: string,
@@ -209,7 +213,10 @@ async function run({
   on = ['rarityCeiling', 'knowledge'],
   off = [],
   badges,
+  marksStress = false,
 }: {
+  /** Whether the Edition marks Stress, which «Наголос» needs. */
+  marksStress?: boolean;
   records?: Map<string, string>;
   port?: UserStatePort;
   seed?: number;
@@ -237,6 +244,7 @@ async function run({
         mix: { categoryIds: categories.map(({ id }) => id), kinds: { correction: false } },
       },
       ...(badges === undefined ? {} : { badges }),
+      ...(marksStress ? { languageTraits: { stress: { marked: true, vowels: ['a', 'e'] } } } : {}),
     }),
     userState: await openUserState({ port }),
     clock: time,
@@ -394,6 +402,70 @@ describe('the Game Modes on offer', () => {
     expect(app.game.state.modes).toEqual([]);
   });
 
+  /** Every Core Game Mode's Feature Switch but «Вгадай слово»'s, which the Game's own turn on. */
+  const everyMode: readonly FeatureSwitch[] = [
+    'gameCorrection',
+    'gameStress',
+    'gamePairs',
+    'gameAnagram',
+    'gameByLetters',
+    'gameTypeWord',
+    'gameAnglicism',
+    'gameIdiomMeaning',
+    'gameBuildIdiom',
+    'gameSurvival',
+    'gameTimed',
+    'gameOrigin',
+  ];
+  const groupsOf = (app: Composition) =>
+    app.game.state.modes.map(({ modeId, group }) => [modeId, group]);
+
+  it('puts every mode in the board’s five groups, in the board’s order, with `gameHubGroups` on (ADR 0139)', async () => {
+    const app = await run({
+      marksStress: true,
+      on: ['rarityCeiling', 'knowledge', 'corrections', 'idioms', ...everyMode, 'gameHubGroups'],
+    });
+
+    expect(groupsOf(app)).toEqual([
+      ['guess-word', 'new'],
+      ['correction', 'meaning'],
+      ['stress', 'sound'],
+      ['pairs', 'meaning'],
+      ['anagram', 'letters'],
+      ['by-letters', 'new'],
+      ['type-word', 'new'],
+      ['origin', 'new'],
+      ['anglicism', 'new'],
+      ['idiom-meaning', 'meaning'],
+      ['build-idiom', 'new'],
+      ['survival', 'new'],
+      ['timed', 'speed'],
+    ]);
+  });
+
+  it('keeps the four groups of spec #1674 with `gameHubGroups` off', async () => {
+    const app = await run({
+      marksStress: true,
+      on: ['rarityCeiling', 'knowledge', 'corrections', 'idioms', ...everyMode],
+    });
+
+    expect(groupsOf(app)).toEqual([
+      ['guess-word', 'words'],
+      ['correction', 'corrections'],
+      ['stress', 'words'],
+      ['pairs', 'words'],
+      ['anagram', 'words'],
+      ['by-letters', 'words'],
+      ['type-word', 'words'],
+      ['origin', 'words'],
+      ['anglicism', 'corrections'],
+      ['idiom-meaning', 'idioms'],
+      ['build-idiom', 'idioms'],
+      ['survival', 'challenge'],
+      ['timed', 'challenge'],
+    ]);
+  });
+
   it("says a mode can't start with fewer than 15 eligible Words, and can once there are again", async () => {
     const app = await run();
     // Nature alone has 17 Words; two hidden leave 15.
@@ -438,8 +510,8 @@ describe('a Round of «Вгадай слово»', () => {
       modeId: 'guess-word',
       roundsPassed: 0,
       roundLimit: GAME_ROUNDS,
-      lives: GAME_LIVES,
-      livesAtStart: GAME_LIVES,
+      lives: LIVES_SWITCHED_OFF,
+      livesAtStart: LIVES_SWITCHED_OFF,
       status: 'playing',
     });
     expect(game.round).toMatchObject({ number: 1, answer: undefined });
@@ -1370,7 +1442,7 @@ describe('the rules of a Game', () => {
     expect(writes).toEqual([]);
     expect(current(app)).toMatchObject({
       roundsPassed: 0,
-      lives: GAME_LIVES,
+      lives: LIVES_SWITCHED_OFF,
       status: 'playing',
       round: { number: 1, answer: undefined },
     });
@@ -2172,7 +2244,11 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
       await right(app);
     }
 
-    expect(current(app)).toMatchObject({ roundsPassed: 10, lives: GAME_LIVES, status: 'won' });
+    expect(current(app)).toMatchObject({
+      roundsPassed: 10,
+      lives: LIVES_SWITCHED_OFF,
+      status: 'won',
+    });
     expect(new Set(prompts).size).toBe(10);
   });
 
@@ -2593,8 +2669,8 @@ describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
     while (current(app).status === 'playing') {
       const { round } = current(app);
       if (round.form !== 'pairs') throw new Error('Not a pairs grid');
-      if (round.words.every(({ gone }) => !gone)) grids.push(round.words.length);
-      const word = round.words.findIndex(({ gone }) => !gone);
+      if (round.words.every(({ state }) => state === 'open')) grids.push(round.words.length);
+      const word = round.words.findIndex(({ state }) => state === 'open');
       await app.game.answer({ form: 'pairs', word, definition: round.words.length - 1 - word });
       await app.game.next();
     }
@@ -2790,7 +2866,7 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
       expect(round).toMatchObject({ number, form: 'typed', blanks: undefined });
       expect(round.highlight).toBeUndefined();
       await app.game.answer({ form: 'typed', text: renderStress(asked).toUpperCase() });
-      expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES });
+      expect(current(app)).toMatchObject({ status: 'answered', lives: LIVES_SWITCHED_OFF });
       expect(current(app).round.answer).toMatchObject({
         form: 'typed',
         right: true,
@@ -2808,7 +2884,7 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
 
     await app.game.answer({ form: 'typed', text: asked.lemma.slice(1) });
 
-    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES - 1 });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: LIVES_SWITCHED_OFF - 1 });
     expect(current(app).round.answer).toMatchObject({
       form: 'typed',
       typed: asked.lemma.slice(1),
@@ -3069,5 +3145,22 @@ describe('the end of a Game', () => {
       right: 0,
       newBest: false,
     });
+  });
+});
+
+// Spec #1880, D11: the plain Game Review, «Огляд раундів».
+describe('the plain Game Review', () => {
+  it('has one row per Round played, in order: whether it was right and its word', async () => {
+    const app = await run();
+
+    const rounds = await playGame(app, [3, 7]);
+
+    const rows = buildPlainGameReview(current(app).played);
+    expect(rows.map(({ number, right }) => [number, right])).toEqual(
+      rounds.map(({ number }) => [number, number !== 3 && number !== 7]),
+    );
+    expect(rows.map(({ word }) => withoutStress(word.text))).toEqual(
+      current(app).played.map(({ entry }) => (entry.kind === 'word' ? entry.lemma : '')),
+    );
   });
 });

@@ -25,4 +25,14 @@ export const RarityTestStringsSchema = z.strictObject({
   result: templateOf('n'),
   /** The button under the result, which goes on. */
   next: TextSchema,
+  /** The question above each Word, e.g. «Чи знаєш ти це слово?». */
+  question: TextSchema,
+  /** The line under the result's big number. Takes `{n}`, the Rarity Ceiling it set (ADR 0072). */
+  resultLine: templateOf('n'),
+  /** How many of the Words the reader knew. Takes `{known}` and `{total}`. */
+  known: templateOf('known', 'total'),
+  /** The result's button that closes the test. */
+  done: TextSchema,
+  /** The result's button in Settings that starts the test again at once. */
+  again: TextSchema,
 });

@@ -12,7 +12,9 @@ export { SwipeDemoStage, useGesturesDemo } from './entries/swipe-demo';
 export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
 export { NarratorVoicePicker } from './settings/NarratorVoicePicker';
-export { FontSizeProvider } from './providers/FontSizeProvider';
+export { OptionSampleNumber, OptionScreen } from './settings/OptionScreen';
+export type { OptionScreenOption } from './settings/OptionScreen';
+export { FontSizeProvider, type TextSizeStep } from './providers/FontSizeProvider';
 export { DecorProvider } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
 export { EndOfCycleCard } from './feed/EndOfCycleCard';
@@ -49,7 +51,7 @@ export { CrosswordSolvedPoster } from './game/CrosswordSolvedPoster';
 export { GameEndPoster } from './game/GameEndPoster';
 export { GameResult } from './game/GameResult';
 export { AnswerCard } from './game/AnswerCard';
-export { GameReview } from './game/GameReview';
+export { GameReview, type ResultReview } from './game/GameReview';
 export { GameRound, QuickQuestionRound } from './game/GameRound';
 export { TypedAnswer, type TypedAnswerBlank } from './game/TypedAnswer';
 export { OrderedChips } from './game/OrderedChips';
@@ -70,11 +72,13 @@ export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
 export { ChipChoice } from './mix/ChipChoice';
+export { MixCategoryTile } from './mix/MixCategoryTile';
 export { LaterButton, OnboardingStep, stepStyles } from './onboarding/OnboardingStep';
 export { OnboardingWelcome, type HeroWord } from './onboarding/OnboardingWelcome';
 export {
   RarityTestQuestions,
   type RarityTestQuestion,
+  type RarityTestResult,
   type RarityTestScreen,
 } from './onboarding/RarityTestQuestions';
 export { Button } from './primitives/Button';
@@ -108,6 +112,7 @@ export { Mascot } from './primitives/Mascot';
 export { Placeholder } from './primitives/Placeholder';
 export { PronunciationButton } from './entries/PronunciationButton';
 export { SegmentedControl } from './primitives/SegmentedControl';
+export { Stepper } from './primitives/Stepper';
 export { Switch } from './primitives/Switch';
 export { SearchField, SearchLink } from './primitives/SearchField';
 export { ProblemLine, TextField } from './primitives/TextField';
@@ -119,10 +124,12 @@ export {
   ChoiceRow,
   NavigationRow,
   SettingsGroup,
+  SettingsRow,
   SoonRow,
   SwitchRow,
   TimeRow,
 } from './settings/SettingsRows';
+export type { SettingsRowEnd } from './settings/SettingsRows';
 export { SplashOverlay } from './onboarding/SplashOverlay';
 export { SearchButton } from './search/SearchButton';
 export { RecentQueries } from './search/RecentQueries';
@@ -214,5 +221,6 @@ export {
   type VerticalPagerHandle,
 } from './primitives/VerticalPager';
 export { VowelButtons } from './game/VowelButtons';
-export { WidgetGuide } from './settings/WidgetGuide';
+export { WidgetGuide, WidgetGuideSteps } from './settings/WidgetGuide';
+export { WidgetPreviews } from './settings/WidgetPreviews';
 export { WidgetGuideSheet } from './settings/WidgetGuideSheet';
