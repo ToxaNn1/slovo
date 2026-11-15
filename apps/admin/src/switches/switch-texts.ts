@@ -520,4 +520,8 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Розмір тексту',
     line: 'Три розміри тексту: як у системі, більший і найбільший.',
   },
+  entryPanelAllKinds: {
+    name: 'Деталі всіх записів',
+    line: 'Виправлення, вислів, синонімічний ряд і порада відкривають деталі з такою ж шапкою, як слово.',
+  },
 };
