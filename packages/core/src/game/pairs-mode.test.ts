@@ -102,8 +102,8 @@ function rightDefinition(grid: Grid, place: number): number {
   return right;
 }
 
-/** The first Word of the grid not gone. */
-const firstLeft = (grid: Grid) => grid.words.findIndex(({ gone }) => !gone);
+/** The first Word of the grid still open. */
+const firstLeft = (grid: Grid) => grid.words.findIndex(({ state }) => state === 'open');
 
 /** Starts «Пари» and matches every pair right, keeping the grid of each Round as it was shown. */
 async function playGame(app: Composition): Promise<Grid[]> {
@@ -114,15 +114,14 @@ async function playGame(app: Composition): Promise<Grid[]> {
     grids.push(grid);
     const word = firstLeft(grid);
     await app.game.answer({ form: 'pairs', word, definition: rightDefinition(grid, word) });
-    if (current(app).round.answer?.right !== true) throw new Error('The pair was not right');
-    if (current(app).status === 'answered') await app.game.next();
+    if (current(app).played.at(-1)?.right !== true) throw new Error('The pair was not right');
   }
   return grids;
 }
 
 /** The grids of a Game, one per first Round of each, as it was first shown. */
 const gridsOf = (shown: readonly Grid[]) =>
-  shown.filter((grid) => grid.words.every(({ gone }) => !gone));
+  shown.filter((grid) => grid.words.every(({ state }) => state === 'open'));
 
 describe('«Пари» on offer', () => {
   it('is offered with its Feature Switch on', async () => {
@@ -193,19 +192,18 @@ describe('the grids of «Пари»', () => {
     }
   });
 
-  it('takes a right pair out of the grid and keeps the others', async () => {
+  it('marks a right pair found in the grid and keeps the others', async () => {
     const app = await run();
     await app.game.start('pairs');
     const grid = gridOf(current(app).round);
     const definition = rightDefinition(grid, 2);
 
     await app.game.answer({ form: 'pairs', word: 2, definition });
-    await app.game.next();
 
     const after = gridOf(current(app).round);
-    expect(after.words.map(({ gone }) => gone)).toEqual([false, false, true, false]);
-    expect(after.definitions.filter(({ gone }) => gone)).toEqual([
-      { shown: grid.definitions[definition]?.shown, gone: true },
+    expect(after.words.map(({ state }) => state)).toEqual(['open', 'open', 'found', 'open']);
+    expect(after.definitions.filter(({ state }) => state !== 'open')).toEqual([
+      { shown: grid.definitions[definition]?.shown, state: 'found' },
     ]);
     expect(after.words.map(({ shown }) => shown)).toEqual(grid.words.map(({ shown }) => shown));
   });
@@ -232,7 +230,7 @@ describe('the grids of «Пари»', () => {
     await app.game.answer({ form: 'pairs', word: 0, definition: wrong });
 
     const game = current(app);
-    expect(game.round.answer).toMatchObject({
+    expect(game.played[0]?.answer).toMatchObject({
       form: 'pairs',
       word: 0,
       correct: right,
@@ -257,7 +255,6 @@ describe('the grids of «Пари»', () => {
     const right = rightDefinition(grid, 1);
 
     await app.game.answer({ form: 'pairs', word: 1, definition: right });
-    await app.game.next();
     const taken = [right, rightDefinition(grid, 0)];
     const wrong = [0, 1, 2, 3].find((place) => !taken.includes(place)) ?? -1;
     await app.game.answer({ form: 'pairs', word: 0, definition: wrong });

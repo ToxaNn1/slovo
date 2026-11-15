@@ -72,6 +72,7 @@ export {
   type GameTime,
   type GivenAnswer,
   type GridCell,
+  type GridCellState,
   type PlayedRound,
   type Round,
   type RoundAnswer,
