@@ -5,7 +5,7 @@ import { createMemoryContentPort, seedUserState } from '../testing';
 import { fakeClock, settle, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort } from '../user-state/user-state';
 
-// Ticket #1817: the XP log read off records kept out of order, at one instant, around reset markers.
+// The XP log read off records kept out of order, at one instant, around reset markers.
 
 const content = createMemoryContentPort({
   categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
@@ -269,8 +269,11 @@ describe('the XP log’s awards and appends', () => {
 
     const now = '2026-10-14T05:00:00.000Z';
     const written = [...records.values()]
-      .map((value) => JSON.parse(value) as { at?: string })
-      .filter((record) => record.at === now);
+      .map((value): unknown => JSON.parse(value))
+      .filter(
+        (record) =>
+          typeof record === 'object' && record !== null && 'at' in record && record.at === now,
+      );
     expect(written).toEqual([
       { kind: 'reset', date: '2026-10-14', at: now },
       { kind: 'word-goal', date: '2026-10-14', at: now, goal: 7 },
