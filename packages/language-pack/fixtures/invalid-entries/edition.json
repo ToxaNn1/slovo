@@ -144,6 +144,7 @@
     "curatedCollections": "on",
     "swipeMarks": "on",
     "gesturesHintDemo": "on",
+    "savedSwipesOff": "on",
     "wordTabs": "on",
     "sourceTab": "on",
     "tipExceptions": "on",

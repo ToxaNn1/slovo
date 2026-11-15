@@ -63,7 +63,12 @@ export function CollectionBoardScreen({
 function Board({ collectionId, created }: { collectionId: string; created: boolean }) {
   const { collection, entries, remove: removeEntry } = useCollectionEntries(collectionId);
   const { rename, remove } = useCollectionChanges();
-  const { available: sharingAvailable, share, sheet: shareSheet } = useCollectionShareSheet();
+  const {
+    available: sharingAvailable,
+    busy: shareBusy,
+    share,
+    sheet: shareSheet,
+  } = useCollectionShareSheet();
   const { colors } = useTokens();
   const { count } = useEdition();
   const showToast = useUndoToast();
@@ -169,6 +174,7 @@ function Board({ collectionId, created }: { collectionId: string; created: boole
         <CollectionShareButton
           testID="collection-share"
           label={collectionStrings.link.share}
+          busy={shareBusy}
           onPress={() => {
             share(collection.id);
           }}

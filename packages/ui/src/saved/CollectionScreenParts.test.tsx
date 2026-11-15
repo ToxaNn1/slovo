@@ -107,4 +107,20 @@ describe('CollectionShareButton', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Share link' }));
     expect(share).toHaveBeenCalledTimes(1);
   });
+
+  it('sets its label on one line, shrunk to fit a narrow screen', async () => {
+    await within(<CollectionShareButton label="Share link" onPress={jest.fn()} />);
+
+    expect(screen.getByText('Share link')).toHaveProp('numberOfLines', 1);
+    expect(screen.getByText('Share link')).toHaveProp('adjustsFontSizeToFit', true);
+  });
+
+  it('takes no tap while the link is asked for', async () => {
+    const share = jest.fn();
+    await within(<CollectionShareButton label="Share link" onPress={share} busy />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Share link' }));
+    expect(share).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Share link' })).toBeBusy();
+  });
 });
