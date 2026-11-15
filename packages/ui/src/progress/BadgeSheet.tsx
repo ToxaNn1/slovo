@@ -13,13 +13,15 @@ import { BadgeMark } from './BadgeMark';
 export type BadgeSheetBadge = BadgeGridItem & {
   readonly shape: BadgeShape;
   readonly tone: BadgeTone;
+  /** What its condition asks, e.g. «Виграй «Наголос»». */
+  readonly condition: string;
   /** Its date once earned, how far its condition has come while not. */
   readonly status: string;
 };
 
 /**
  * One Badge in a bottom sheet with the slanted top (board 10 p3/p4): the
- * `kicker`, its mark large, its name, its status, and while it is not
+ * `kicker`, its mark large, its name, its condition, its status, and while it is not
  * earned a slanted bar of how far its condition has come, over the
  * `doneLabel` button, while `visible`; keep `badge` while it slides away.
  */
@@ -86,6 +88,13 @@ function BadgeSheetContent({
       </Text>
       <Text
         {...voice}
+        testID="badge-sheet-condition"
+        style={[typeStyle('meta', tokens), styles.condition, { color: colors.ink }]}
+      >
+        {badge.condition}
+      </Text>
+      <Text
+        {...voice}
         testID="badge-sheet-status"
         style={[typeStyle('meta', tokens), styles.status, { color: colors.muted }]}
       >
@@ -112,6 +121,7 @@ const styles = StyleSheet.create({
   content: { alignItems: 'center' },
   mark: { marginTop: badgeSheet.markTop },
   name: { marginTop: badgeSheet.nameTop, textAlign: 'center' },
+  condition: { marginTop: badgeSheet.statusTop, textAlign: 'center' },
   status: { marginTop: badgeSheet.statusTop, textAlign: 'center' },
   bar: {
     alignSelf: 'stretch',

@@ -32,6 +32,7 @@ const badges: readonly Badge[] = [
     name: 'Three days',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'streak', days: 3 },
   },
   {
@@ -39,6 +40,7 @@ const badges: readonly Badge[] = [
     name: 'First win',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'gameWin', modes: ['guess-word'] },
   },
   {
@@ -46,6 +48,7 @@ const badges: readonly Badge[] = [
     name: 'Two crosswords',
     symbol: '1',
     family: 'crossword',
+    conditionText: 'A condition',
     condition: { kind: 'dailyCrosswordRun', days: 2 },
   },
   {
@@ -53,6 +56,7 @@ const badges: readonly Badge[] = [
     name: 'Rare',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'rightOnRarity', rarity: 5 },
   },
   {
@@ -60,6 +64,7 @@ const badges: readonly Badge[] = [
     name: 'Level 1',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'level', level: 1 },
   },
   {
@@ -67,6 +72,7 @@ const badges: readonly Badge[] = [
     name: 'Three confirmed',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'confirmedEntries', entries: 3 },
   },
   // An Edition's own Badge from a parameterised kind.
@@ -75,6 +81,7 @@ const badges: readonly Badge[] = [
     name: 'Clean language',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'rightAnswers', modes: ['correction', 'anglicism'], count: 3 },
   },
 ];
@@ -296,6 +303,7 @@ describe('the Badges', () => {
     name: 'Flawless',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'flawlessGame', modes: ['correction', 'anglicism'] },
   };
   const rightRun: Badge = {
@@ -303,6 +311,7 @@ describe('the Badges', () => {
     name: 'Three in a row',
     symbol: '1',
     family: 'f',
+    conditionText: 'A condition',
     condition: { kind: 'rightRun', modes: ['stress'], count: 3 },
   };
   /** A Round answered at the minute `minute` of 14 October, right or wrong, in `mode`. */

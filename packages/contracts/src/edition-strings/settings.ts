@@ -176,22 +176,6 @@ export const SettingsStringsSchema = z.strictObject({
     }),
     /** The ink tag on an earned Badge the reader has not opened yet, e.g. «НОВА» (ADR 0085). */
     newTag: TextSchema,
-    /**
-     * Each Badge's condition under its mark on the Badges screen, by the kind
-     * of its condition (ADR 0085). `{modes}` is the names of its Game Modes,
-     * joined by the list's commas.
-     */
-    conditions: z.strictObject({
-      streak: PluralSchema,
-      confirmedEntries: PluralSchema,
-      gameWin: templateOf('modes'),
-      dailyCrosswordRun: PluralSchema,
-      rightAnswers: pluralOf('modes'),
-      rightOnRarity: templateOf('rarity'),
-      level: templateOf('level'),
-      flawlessGame: templateOf('modes'),
-      rightRun: pluralOf('modes'),
-    }),
     /** The sheet a tap on any Badge opens (p3, p4). */
     sheet: z.strictObject({
       /** The kicker over the mark, e.g. «ВІДЗНАКА». */

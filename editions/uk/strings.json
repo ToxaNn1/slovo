@@ -259,42 +259,6 @@
         }
       },
       "newTag": "НОВА",
-      "conditions": {
-        "streak": {
-          "one": "{count} день поспіль",
-          "few": "{count} дні поспіль",
-          "many": "{count} днів поспіль",
-          "other": "{count} дні поспіль"
-        },
-        "confirmedEntries": {
-          "one": "{count} підтверджений запис",
-          "few": "{count} підтверджені записи",
-          "many": "{count} підтверджених записів",
-          "other": "{count} підтверджені записи"
-        },
-        "gameWin": "Перша перемога: {modes}",
-        "dailyCrosswordRun": {
-          "one": "{count} щоденний кросворд поспіль",
-          "few": "{count} щоденні кросворди поспіль",
-          "many": "{count} щоденних кросвордів поспіль",
-          "other": "{count} щоденні кросворди поспіль"
-        },
-        "rightAnswers": {
-          "one": "{count} правильна відповідь: {modes}",
-          "few": "{count} правильні відповіді: {modes}",
-          "many": "{count} правильних відповідей: {modes}",
-          "other": "{count} правильні відповіді: {modes}"
-        },
-        "rightOnRarity": "Правильна відповідь на слово рідкості {rarity}",
-        "level": "Рівень {level}",
-        "flawlessGame": "Гра без жодної помилки: {modes}",
-        "rightRun": {
-          "one": "{count} правильна відповідь поспіль: {modes}",
-          "few": "{count} правильні відповіді поспіль: {modes}",
-          "many": "{count} правильних відповідей поспіль: {modes}",
-          "other": "{count} правильні відповіді поспіль: {modes}"
-        }
-      },
       "sheet": {
         "kicker": "ВІДЗНАКА",
         "notYet": "Ще ні · {progress}",
