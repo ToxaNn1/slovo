@@ -180,7 +180,7 @@
         "current": "ЗАРАЗ",
         "ahead": "ПОПЕРЕДУ",
         "bar": "РІВЕНЬ {level} · {name}",
-        "toNext": "ДО {name} {xp} XP"
+        "toNext": "{name}: ще {xp} XP"
       },
       "newLevel": {
         "kicker": "РІВЕНЬ",

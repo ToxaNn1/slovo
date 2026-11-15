@@ -527,6 +527,14 @@ export const typeRoles = {
   levelName: role('word', '900', 21, 23),
   /** The XP towards the next Level on the Profile's Level card. */
   levelXp: role('ui', '600', 14, 18),
+  /** The first Level of a range in the wedge of a card in the Profile's Levels row. */
+  ladderNumber: role('word', '900', 24, 24),
+  /** A Level name on a card in the Profile's Levels row. */
+  ladderName: role('word', '900', 14, 16),
+  /** A range of Levels on a card in the Profile's Levels row, such as «Рівні 5–9». */
+  ladderCaption: role('ui', '600', 12, 14),
+  /** The Level and the XP to the next name under the Profile's Levels row. */
+  ladderLine: role('word', '700', 11, 13, 1.5, 'uppercase'),
   /** The Profile's giant red Streak. */
   profileStreak: role('word', '900', 60, 60, -2),
   /** The words beside the Profile's giant Streak. */

@@ -251,13 +251,41 @@ describe('the Profile', () => {
     expect(screen.queryByTestId('profile-best-guess-word')).not.toBeOnTheScreen();
   });
 
-  it('reads the Level card as «N · name», its XP in the Level and the XP left to the next', async () => {
+  it('reads the Level card as «N · name», its XP in the Level and the XP left to the next name', async () => {
     await renderScreen({ rounds: 60 });
 
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('1');
     expect(screen.getByTestId('profile-level-name')).toHaveTextContent('1 · Початківець');
     expect(screen.getByTestId('profile-level-progress')).toHaveTextContent('10 / 55 XP');
-    expect(screen.getByTestId('profile-level-left')).toHaveTextContent('ще 45 XP до рівня 2');
+    expect(screen.getByTestId('profile-level-left')).toHaveTextContent('Читач: ще 246 XP');
+  });
+
+  // Owner decision 16 (#1915): N is the XP to the first Level of the next name.
+  it.each([
+    [0, 0, 'Читач: ще 306 XP'],
+    [4, 233, 'Читач: ще 73 XP'],
+    [5, 306, 'Знавець: ще 492 XP'],
+    [19, 1878, 'Словолюб: ще 120 XP'],
+    [20, 1998, 'Мовознавець: ще 600 XP'],
+  ])(
+    'at Level %i reads «<next name>: ще N XP» on the card and under the row',
+    async (level, rounds, line) => {
+      await renderScreen({ rounds });
+
+      expect(screen.getByTestId('profile-level-number')).toHaveTextContent(String(level));
+      expect(screen.getByTestId('profile-level-left')).toHaveTextContent(line);
+      expect(screen.getByTestId('profile-ladder-to-next')).toHaveTextContent(
+        line.toLocaleUpperCase(edition.locale),
+      );
+    },
+  );
+
+  it('under the last name reads the XP to the next Level and draws no line to a next name', async () => {
+    await renderScreen({ rounds: 2598 });
+
+    expect(screen.getByTestId('profile-level-number')).toHaveTextContent('25');
+    expect(screen.getByTestId('profile-level-left')).toHaveTextContent('ще 120 XP до рівня 26');
+    expect(screen.queryByTestId('profile-ladder-to-next')).not.toBeOnTheScreen();
   });
 
   it('shows the ladder of Level names by range, passed, current and ahead, and the bar to the next name', async () => {
@@ -271,10 +299,14 @@ describe('the Profile', () => {
       expect(screen.getByTestId(`profile-ladder-${String(index)}`)).toHaveAccessibleName(
         `${caption}, ${name}, ${state}`,
       );
+      expect(screen.getByTestId(`profile-ladder-${String(index)}-first`)).toHaveTextContent(
+        String(index * 5),
+      );
     }
     expect(screen.queryByTestId('profile-ladder-6')).not.toBeOnTheScreen();
     expect(screen.getByTestId('profile-ladder-bar')).toHaveTextContent(/^РІВЕНЬ 1 · ПОЧАТКІВЕЦЬ/);
-    expect(screen.getByTestId('profile-ladder-to-next')).toHaveTextContent('ДО ЧИТАЧ 246 XP');
+    expect(screen.getByTestId('profile-ladder-to-next')).toHaveTextContent('ЧИТАЧ: ЩЕ 246 XP');
+    expect(screen.queryByText(/^ДО /)).not.toBeOnTheScreen();
   });
 
   it('tags the names below the Level as passed', async () => {

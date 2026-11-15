@@ -330,10 +330,22 @@ export const newLevelStamp = {
 /** The Profile's Level ladder, from board 10.8: a card per Level name in two columns, and the bar to the next name. */
 export const levelLadder = {
   gap: 10,
-  card: { padding: 14, radius: 16, border: 2, gap: 4 },
-  /** The wedge mark in a card's top right corner, one of the Collection marks in turn. */
-  mark: { side: 26, top: 12, right: 12 },
-  bar: { padding: 16, radius: 16, gap: 4 },
+  /** The six cards in one row, each `width` wide; the row scrolls when the screen is narrower. */
+  card: { width: 112, padding: 12, radius: 16, border: 1, gap: 8 },
+  /** The Level wedge holding a range's first Level (ADR 0145), its fill inset by `inset` of the side. */
+  wedge: {
+    width: 56,
+    height: 44,
+    inset: 0.07,
+    shape: [
+      [0, 0.18],
+      [1, 0],
+      [1, 1],
+      [0, 0.82],
+    ] as const satisfies Wedge,
+  },
+  /** The bar under the row to the next name, slanted by `skew` degrees. */
+  bar: { height: 14, skew: -20, gap: 10 },
 } as const;
 
 /**
