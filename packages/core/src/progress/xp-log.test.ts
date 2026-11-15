@@ -901,6 +901,25 @@ describe('the Seen-Word XP', () => {
     expect(app.xpLog.dayOf('2026-10-14').xp).toBe(6);
   });
 
+  it('writes no Seen-Word record past the goal in Words, counting the ones already kept today', async () => {
+    const { app, time, records } = await run({
+      on,
+      records: new Map([
+        goalSet(3, '2026-10-14T03:00:00.000Z'),
+        seenWord('x_00', '2026-10-14', '2026-10-14T04:00:00.000Z'),
+      ]),
+    });
+    const told: string[] = [];
+    app.xpLog.subscribe((change) => told.push(change));
+
+    for (let card = 0; card < 4; card += 1) await look(app, time);
+
+    expect(xpKeys(records).filter((key) => key.startsWith('xp.seen-word-'))).toHaveLength(3);
+    expect(app.xpLog.state.today).toBe(3);
+    expect(told.length).toBeGreaterThan(0);
+    expect(new Set(told)).toEqual(new Set(['other']));
+  });
+
   it('earns the Seen-Word XP of a write that failed with the next Word Seen', async () => {
     const records = new Map<string, string>();
     const memory = createMemoryUserStatePort(records);
