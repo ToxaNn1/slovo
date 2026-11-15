@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
 import { Button } from '../primitives/Button';
+import { SheetTitle } from '../primitives/SheetParts';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { badgeSheet, typeStyle } from '../tokens';
@@ -20,9 +21,10 @@ export type BadgeSheetBadge = BadgeGridItem & {
 };
 
 /**
- * One Badge in a bottom sheet with the slanted top (board 10 p3/p4): the
- * `kicker`, its mark large, its name, its condition, its status, and while it is not
- * earned a slanted bar of how far its condition has come, over the
+ * One Badge in a bottom sheet with the slanted top (`XSaved` p3/p4): the
+ * `kicker` on the black turned plate of a sheet's title, its mark large in
+ * its family's shape, its name, its condition, its status, and while it is
+ * not earned a slanted bar of how far its condition has come, over the ink
  * `doneLabel` button, while `visible`; keep `badge` while it slides away.
  */
 export function BadgeSheet({
@@ -66,9 +68,7 @@ function BadgeSheetContent({
 
   return (
     <View style={styles.content}>
-      <Text {...voice} style={[typeStyle('soonTag', tokens), { color: colors.accentText }]}>
-        {kicker}
-      </Text>
+      <SheetTitle>{kicker}</SheetTitle>
       <View style={styles.mark}>
         <BadgeMark
           shape={badge.shape}
@@ -82,21 +82,21 @@ function BadgeSheetContent({
       <Text
         {...voice}
         accessibilityRole="header"
-        style={[typeStyle('stampName', tokens), styles.name, { color: colors.ink }]}
+        style={[typeStyle('badgeSheetName', tokens), styles.name, { color: colors.ink }]}
       >
         {badge.name}
       </Text>
       <Text
         {...voice}
         testID="badge-sheet-condition"
-        style={[typeStyle('meta', tokens), styles.condition, { color: colors.ink }]}
+        style={[typeStyle('sub', tokens), styles.condition, { color: colors.ink }]}
       >
         {badge.condition}
       </Text>
       <Text
         {...voice}
         testID="badge-sheet-status"
-        style={[typeStyle('meta', tokens), styles.status, { color: colors.muted }]}
+        style={[typeStyle('sub', tokens), styles.status, { color: colors.muted }]}
       >
         {badge.status}
       </Text>
@@ -111,7 +111,12 @@ function BadgeSheetContent({
         </View>
       )}
       <View style={styles.done}>
-        <Button testID="badge-sheet-done" label={doneLabel} onPress={onClose} />
+        <Button
+          testID="badge-sheet-done"
+          variant="inverse"
+          label={doneLabel}
+          onPress={onClose}
+        />
       </View>
     </View>
   );
@@ -121,7 +126,7 @@ const styles = StyleSheet.create({
   content: { alignItems: 'center' },
   mark: { marginTop: badgeSheet.markTop },
   name: { marginTop: badgeSheet.nameTop, textAlign: 'center' },
-  condition: { marginTop: badgeSheet.statusTop, textAlign: 'center' },
+  condition: { marginTop: badgeSheet.conditionTop, textAlign: 'center' },
   status: { marginTop: badgeSheet.statusTop, textAlign: 'center' },
   bar: {
     alignSelf: 'stretch',

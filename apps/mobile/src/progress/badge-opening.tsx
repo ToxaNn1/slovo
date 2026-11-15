@@ -74,11 +74,12 @@ type Opened =
   | { readonly kind: 'stamp'; readonly badge: BadgeState & { earned: true } };
 
 /**
- * A tap on a Badge's mark, for the screens that show the Badges. With the
- * `badgeSheet` switch on, every tap opens the Badge's sheet (board 10
- * p3/p4) and opens the Badge, which ends its «НОВА» mark (ADR 0085), an
- * earned one with the shout. With it off, only an earned Badge answers,
- * stamped on red. Draw `opening` on the screen.
+ * A tap on a Badge's mark, for the screens that show the Badges (decision 5,
+ * ADR 0145). An earned Badge with no `badge-opened` record yet is stamped on
+ * red with the shout, and taking the stamp writes that record, which ends its
+ * «НОВА» mark on every device (ADR 0085). Every other Badge opens its sheet
+ * (`XSaved` p3/p4) behind the `badgeSheet` switch; with it off, only an
+ * earned Badge answers, stamped. Draw `opening` on the screen.
  */
 export function useBadgeOpening(): {
   onPress: (badge: BadgeState) => void;
@@ -94,17 +95,19 @@ export function useBadgeOpening(): {
   const close = () => {
     setOpened(undefined);
   };
+  const take = (badge: BadgeState) => {
+    close();
+    void badges.open(badge.id).catch(() => undefined);
+  };
 
   const onPress = (badge: BadgeState) => {
-    if (sheetShown) {
+    if (badge.earned && (badge.isNew || !sheetShown)) {
+      setOpened({ kind: 'stamp', badge });
+      if (badge.isNew) sounds.play('shout');
+    } else if (sheetShown) {
       setOpened({ kind: 'sheet', badge });
       setSheeted(badge);
-      if (badge.earned) sounds.play('shout');
-    } else {
-      if (!badge.earned) return;
-      setOpened({ kind: 'stamp', badge });
     }
-    void badges.open(badge.id).catch(() => undefined);
   };
 
   const family = sheeted === undefined ? undefined : familyOf(sheeted);
@@ -139,7 +142,9 @@ export function useBadgeOpening(): {
           doneLabel={stamp.done}
           mascot={<MascotAs state="celebrates" onRed />}
           isNew={opened.badge.isNew}
-          onClose={close}
+          onClose={() => {
+            take(opened.badge);
+          }}
         />
       )}
     </>

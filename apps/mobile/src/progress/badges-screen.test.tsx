@@ -169,15 +169,16 @@ describe('the Badges screen', () => {
     expect(played).toEqual([]);
   });
 
-  // Ticket #1646: board 10 p3/p4, the sheet at every tap on a Badge.
+  // Tickets #1646, #1917: XSaved p3/p4, the sheet under the «ВІДЗНАКА» plate.
   it('opens the sheet at a tap on a Badge not yet earned, with its progress, and no toast or shout', async () => {
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('badge-streak-3'));
 
     const sheet = screen.getByTestId('badge-sheet');
-    expect(within(sheet).getByText(strings.sheet.kicker)).toBeOnTheScreen();
-    expect(within(sheet).getByRole('header')).toHaveTextContent(nameOf('streak-3'));
+    const [plate, name] = within(sheet).getAllByRole('header');
+    expect(plate).toHaveTextContent(strings.sheet.kicker);
+    expect(name).toHaveTextContent(nameOf('streak-3'));
     expect(screen.getByTestId('badge-sheet-condition')).toHaveTextContent('3 дні поспіль');
     expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent('Ще ні · 0 з 3 днів');
     expect(screen.queryByText(/не твоя/)).not.toBeOnTheScreen();
@@ -190,26 +191,8 @@ describe('the Badges screen', () => {
     });
   });
 
-  it('opens the sheet with its date and the shout at a tap on an earned Badge, and no toast', async () => {
-    const composition = await renderScreen();
-    await earnWinWords(composition);
-
-    await act(async () => {
-      await fireEvent.press(screen.getByTestId('badge-win-words'));
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-
-    const sheet = screen.getByTestId('badge-sheet');
-    expect(within(sheet).getByRole('header')).toHaveTextContent(nameOf('win-words'));
-    expect(screen.getByTestId('badge-sheet-condition')).toHaveTextContent('Виграй гру зі словами');
-    expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent('Отримано 13 жовтня');
-    expect(screen.getByTestId('badge-sheet-mark-symbol')).toHaveTextContent('Сл');
-    expect(played).toEqual(['shout']);
-    expect(screen.queryByText(/не твоя/)).toBeNull();
-    expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.line)).toBeNull();
-  });
-
-  it('drops the «НОВА» mark once the sheet opens the Badge', async () => {
+  // Ticket #1917: decision 5, the stamp only for an unopened Badge, the sheet for every other.
+  it('stamps an unopened Badge with the shout, and its done button writes `badge-opened`', async () => {
     const composition = await renderScreen();
     await earnWinWords(composition);
     expect(screen.getByTestId('badge-win-words-mark-new')).toHaveTextContent(strings.newTag);
@@ -219,12 +202,65 @@ describe('the Badges screen', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    expect(screen.queryByTestId('badge-win-words-mark-new')).toBeNull();
+    expect(screen.getByText(editionStrings.settings.profile.badgeStamp.line)).toBeOnTheScreen();
+    expect(screen.getByTestId('badge-stamp-mark-new')).toHaveTextContent(strings.newTag);
+    expect(screen.queryByTestId('badge-sheet')).not.toBeOnTheScreen();
+    expect(played).toEqual(['shout']);
+    // Taken only at the button: until then the Badge stays new.
+    expect(composition.xpLog.milestones.opened.has('win-words')).toBe(false);
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('badge-stamp-done'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
     expect(composition.xpLog.milestones.opened.has('win-words')).toBe(true);
+    expect(screen.queryByTestId('badge-win-words-mark-new')).toBeNull();
+    expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.line)).toBeNull();
+  });
+
+  it('opens the sheet with its date, and no stamp, toast or shout, at a tap on an opened Badge', async () => {
+    const composition = await renderScreen();
+    await earnWinWords(composition);
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('badge-win-words'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('badge-stamp-done'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    played = [];
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('badge-win-words'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    const sheet = screen.getByTestId('badge-sheet');
+    const [plate, name] = within(sheet).getAllByRole('header');
+    expect(plate).toHaveTextContent(strings.sheet.kicker);
+    expect(name).toHaveTextContent(nameOf('win-words'));
+    expect(screen.getByTestId('badge-sheet-condition')).toHaveTextContent('Виграй гру зі словами');
+    expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent('Отримано 13 жовтня');
+    expect(screen.getByTestId('badge-sheet-mark-symbol')).toHaveTextContent('Сл');
+    expect(played).toEqual([]);
+    expect(screen.queryByText(/не твоя/)).toBeNull();
+    expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.line)).toBeNull();
+  });
+
+  it('opens the sheet, and no stamp, at a tap on a Badge in progress', async () => {
+    const composition = await renderScreen();
+    await earnWinWords(composition);
+
+    await fireEvent.press(screen.getByTestId('badge-streak-3'));
+
+    expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent('Ще ні · 1 з 3 днів');
+    expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.line)).toBeNull();
   });
 
   // Ticket #1645: board 10.5/10.6, a new Badge carries «НОВА» until it is opened.
-  it('marks a new Badge «НОВА», cream on its stamp, and drops the mark once the stamp opens it', async () => {
+  it('marks a new Badge «НОВА», cream on its stamp, and drops the mark once the stamp is taken', async () => {
     const composition = await renderScreen({ switchedOff: 'badgeSheet' });
     await act(async () => {
       composition.xpLog
@@ -240,11 +276,17 @@ describe('the Badges screen', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(screen.getByTestId('badge-stamp-mark-new')).toHaveTextContent(strings.newTag);
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('badge-stamp-done'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
     expect(screen.queryByTestId('badge-win-words-mark-new')).toBeNull();
     expect(composition.xpLog.milestones.opened.has('win-words')).toBe(true);
 
-    await fireEvent.press(screen.getByTestId('badge-stamp-done'));
+    // With the sheet off, an opened Badge stamps again, no longer new.
     await fireEvent.press(screen.getByTestId('badge-win-words'));
+    expect(screen.getByTestId('badge-stamp')).toBeOnTheScreen();
     expect(screen.queryByTestId('badge-stamp-mark-new')).toBeNull();
   });
 

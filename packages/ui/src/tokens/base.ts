@@ -501,6 +501,8 @@ export const typeRoles = {
   badgeProgress: role('ui', '500', 11, 13),
   /** A Badge's name under its title on the stamp of a newly earned Badge. */
   stampName: role('ui', '500', 16, 21),
+  /** A Badge's name under its mark in the Badge sheet (`XSaved` p3/p4). */
+  badgeSheetName: role('word', '900', 24, 26.4),
   /** The name over a Badge family's row of marks. */
   badgeFamily: role('word', '800', 12, 14, 1),
   /** The first letter of the reader's name in the Profile header's avatar. */
