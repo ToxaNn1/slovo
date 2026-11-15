@@ -32,6 +32,8 @@ export interface RoundLook {
   readonly inkHeaded: boolean;
   /** The Mascot beside the question; none. */
   readonly mascot: ReactNode;
+  /** The Game Mode and the Round over the question on the ground, «Наголос · 1/10»; none off the ground. */
+  readonly kicker: string | undefined;
 }
 
 export const RoundLookContext = createContext<RoundLook>({
@@ -40,6 +42,7 @@ export const RoundLookContext = createContext<RoundLook>({
   questionFace: 'byLength',
   inkHeaded: false,
   mascot: undefined,
+  kicker: undefined,
 });
 
 export function useRoundLook(): RoundLook {

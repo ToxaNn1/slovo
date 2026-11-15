@@ -16,7 +16,8 @@ import {
   typeStyle,
   withAlpha,
 } from '../tokens';
-import { useTokens } from '../providers/TokensProvider';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { useOnAccent } from './on-accent';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { CategoryChip } from './CategoryChip';
@@ -52,6 +53,7 @@ export function CorrectionCardBody({
   corner,
   tabs,
   sourceTab,
+  headless = false,
 }: {
   card: CorrectionCardModel;
   /** The Lemma's size at the user's font size, a share of which the main standard equivalent takes. */
@@ -64,28 +66,25 @@ export function CorrectionCardBody({
   tabs: boolean;
   /** The last tab «Джерело» with the sources, which leave the other tabs, while `sourceTab` is on (ADR 0116). */
   sourceTab: boolean;
+  /** The kicker and the headline are drawn in Entry details' red panel, so the body leaves them out. */
+  headless?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const edition = useEdition();
   const { voice } = edition;
   const strings = edition.strings.correctionCard;
-  const correctionType = strings.correctionTypes[card.correctionType];
 
   return (
     <>
-      <KickerRow testID="correction-kicker-row" corner={corner}>
-        <EntryKicker testID="correction-kicker" label={strings.title} />
-      </KickerRow>
-      <StruckForm
-        form={card.nonStandardForm}
-        spoken={stressLabel(
-          edition.strings.wordCard,
-          card.nonStandardForm,
-          card.nonStandardStressedVowels,
-        )}
-        correctionType={concealed ? undefined : correctionType}
-      />
+      {headless ? null : (
+        <>
+          <KickerRow testID="correction-kicker-row" corner={corner}>
+            <EntryKicker testID="correction-kicker" label={strings.title} />
+          </KickerRow>
+          <CorrectionStruckForm card={card} concealed={concealed} />
+        </>
+      )}
       {concealed && (
         <Text
           testID="correction-how-to-say"
@@ -372,6 +371,30 @@ export function StandardForm({
 }
 
 /**
+ * A Correction's non-standard form, struck, with its Correction Type, which
+ * Self-check (`concealed`) leaves out: the head of its card, or of Entry
+ * details' red panel, where it takes the key ink with a cream bar.
+ */
+export function CorrectionStruckForm({
+  card,
+  concealed,
+}: {
+  card: CorrectionCardModel;
+  concealed: boolean;
+}) {
+  const { strings } = useEdition();
+  return (
+    <StruckForm
+      form={card.nonStandardForm}
+      spoken={stressLabel(strings.wordCard, card.nonStandardForm, card.nonStandardStressedVowels)}
+      correctionType={
+        concealed ? undefined : strings.correctionCard.correctionTypes[card.correctionType]
+      }
+    />
+  );
+}
+
+/**
  * A Correction's non-standard form on its card (board XEntry2 e6): the line
  * «Так часто кажуть · калька» naming its Correction Type, which Self-check
  * leaves out, over the form, muted and struck with a tilted red bar whose top
@@ -390,7 +413,11 @@ function StruckForm({
   correctionType: string | undefined;
 }) {
   const tokens = useTokens();
-  const { colors } = tokens;
+  // On the red panel the form takes the key ink of both Themes, struck with a cream bar.
+  const key = useSchemeColors('light');
+  const colors = useOnAccent()
+    ? { muted: key.ink, accent: key.background }
+    : { muted: tokens.colors.muted, accent: tokens.colors.accent };
   const { strings, voice } = useEdition();
   const { nonStandard, correctionType: typeLabel } = strings.correctionCard;
   // In the Feed, VoiceOver turns to the next or previous card from the forms.

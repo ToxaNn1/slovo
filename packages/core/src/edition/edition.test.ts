@@ -151,6 +151,7 @@ const validConfig = {
     wordTabs: 'on',
     sourceTab: 'on',
     tipExceptions: 'on',
+    entryPanelAllKinds: 'on',
     searchButton: 'on',
     dashboardWordmark: 'on',
     dailySplash: 'on',

@@ -11,6 +11,7 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useRoundLook } from './round-look';
 import {
   roleSize,
+  roundHeader,
   roundLayout,
   roundPromptLength,
   quickQuestionCard,
@@ -72,9 +73,9 @@ export type RoundFace =
  * An ink-headed Round on the ground (board g3, g4) shows only its ask and
  * its face: «Впиши слово» the wrong form with no sentence, «Звідки слово»
  * the Word whole on a full-width tile with no Definition.
- * A head over the answer, such as «Де наголос?», stands alone beside the
- * Mascot and the answer under it takes the full width, so a long Word keeps
- * to one line.
+ * A head over the answer, such as «Де наголос?», stands alone, beside the
+ * Mascot if any, level with its foot, and the answer under it takes the full
+ * width in the middle of the room left, so a long Word keeps to one line.
  */
 export function RoundCard({
   label,
@@ -148,8 +149,8 @@ export function RoundCard({
             (look.questionFace === 'byLength' && Array.from(prompt).length > DISPLAY_MOST)
           ? 'roundExplanation'
           : 'roundAsk';
-  const headBesideMascot =
-    head !== undefined && quickQuestion === undefined && look.mascot !== undefined;
+  // A head stands over the answer, beside the Mascot if any, the answer in the middle of the room under it.
+  const headed = head !== undefined && quickQuestion === undefined;
   const card = (
     <View
       testID="game-prompt"
@@ -175,7 +176,7 @@ export function RoundCard({
             : styles.inCard
       }
     >
-      {!headBesideMascot && head}
+      {!headed && head}
       {asks && <RoundAsk ask={label} heading={false} />}
       {face?.look === 'instead' && (
         <Text
@@ -244,17 +245,17 @@ export function RoundCard({
       )}
     </View>
   );
-  if (quickQuestion !== undefined || look.mascot === undefined) return card;
-  if (headBesideMascot)
+  if (headed)
     return (
-      <View style={styles.onGround}>
-        <View style={styles.besideMascot}>
+      <View style={styles.headed}>
+        <View style={[styles.besideMascot, styles.headBesideMascot]}>
           <View style={styles.question}>{head}</View>
           {look.mascot}
         </View>
-        {card}
+        <View style={styles.centred}>{card}</View>
       </View>
     );
+  if (quickQuestion !== undefined || look.mascot === undefined) return card;
   return (
     <View style={styles.besideMascot}>
       <View style={styles.question}>{card}</View>
@@ -280,6 +281,27 @@ export function RoundAsk({ ask, heading }: { ask: string; heading: boolean }) {
       style={[typeStyle('roundAsk', tokens), { color: tokens.colors.ink }]}
     >
       {ask}
+    </Text>
+  );
+}
+
+/**
+ * The Game Mode and the Round over the question on the ground (board «slogo
+ * game last»), muted small caps, «НАГОЛОС · 1/10»; VoiceOver reads it as
+ * the Round's heading, the header on the ground having no title.
+ */
+export function RoundKicker({ kicker }: { kicker: string }) {
+  const tokens = useTokens();
+  const { voice } = useEdition();
+  return (
+    <Text
+      testID="game-kicker"
+      accessibilityRole="header"
+      maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+      {...voice}
+      style={[typeStyle('roundKicker', tokens), styles.kicker, { color: tokens.colors.muted }]}
+    >
+      {kicker}
     </Text>
   );
 }
@@ -344,5 +366,10 @@ const styles = StyleSheet.create({
   inCard: { gap: quickQuestionCard.gap },
   onGround: { gap: space[4] },
   besideMascot: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+  // The board sets the Mascot level with the foot of the head and the answer in the middle of the room under it.
+  headBesideMascot: { alignItems: 'flex-end' },
+  headed: { flexGrow: 1, gap: space[4] },
+  centred: { flexGrow: 1, justifyContent: 'center' },
+  kicker: { marginBottom: roundHeader.ground.kickerGap },
   question: { flex: 1 },
 });

@@ -88,6 +88,7 @@ export function AnswerBanner({
   }, [reduceMotion, rise]);
   const slide = useAnimatedStyle(() => ({ transform: [{ translateY: rise.value }] }));
 
+  const [size, setSize] = useState<{ width: number; height: number } | undefined>(undefined);
   const insets = useSafeAreaInsets();
   const right = answered.kind === 'right';
   const { colors } = useTokens();
@@ -96,15 +97,22 @@ export function AnswerBanner({
     <Animated.View
       testID="game-answer-banner"
       pointerEvents="none"
+      // The slab is drawn at the banner's measured size: an SVG sized in percents comes out short on a phone.
+      onLayout={(event) => {
+        const { width, height: bannerHeight } = event.nativeEvent.layout;
+        setSize({ width, height: bannerHeight });
+      }}
       style={[styles.banner, { paddingBottom: Math.max(insets.bottom, space[8]) }, slide]}
     >
-      <Wedge
-        points={wedges.band}
-        color={right ? colors.accent : colors.ink}
-        width="100%"
-        height="100%"
-        style={StyleSheet.absoluteFill}
-      />
+      {size === undefined ? null : (
+        <Wedge
+          points={wedges.answerBanner}
+          color={right ? colors.accent : colors.ink}
+          width={size.width}
+          height={size.height}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       <Scheme>
         <VerdictTitle testID="game-answer-banner-title" typeRole="roundVerdict" text={title} />
         {line === undefined ? null : <BannerLine text={line} />}

@@ -288,6 +288,10 @@ export const typeRoles = {
   roundInstead: role('ui', '500', 16, 22),
   /** The Word of a «Звідки слово» Round whole on its full-width tile (board g4). */
   roundOriginWord: role('word', '900', 34, 34, -1),
+  /** The Game Mode and the Round over the question on the ground (board «slogo game last»), such as «НАГОЛОС · 1/10». */
+  roundKicker: role('word', '800', 12, 12, 2, 'uppercase'),
+  /** A letter of the Word on its cell in «Наголос» on the ground (board «slogo game last»), a vowel's tile or a muted consonant. */
+  vowelCell: role('word', '900', 24, 30, 0, 'uppercase'),
   /** The hint under the vowel buttons of «Наголос» (board 06): «Торкнись голосної, на яку падає наголос». */
   roundHint: role('ui', '500', 14, 19.6),
   /** A Quick Question's label on its ink tag (board f3), such as «ПОРАДА». */
@@ -507,6 +511,14 @@ export const typeRoles = {
   profileHeaderLevel: role('ui', '500', 13, 16),
   /** A line of the Profile with no card of its own, such as all XP while the Levels are off. */
   profileText: role('ui', '400', 15, 22),
+  /** The turned cream word in the corner of the new Level screen, «РІВЕНЬ» (board 10). */
+  newLevelKicker: role('word', '900', 44, 40, -1.5),
+  /** The stamped number of the new Level screen (board 10). */
+  newLevelNumber: role('word', '900', 220, 198, -10),
+  /** «Рівень N — назва» under the stamped number of the new Level screen. */
+  newLevelTitle: role('word', '900', 26, 28.6),
+  /** The line under the title of the new Level screen. */
+  newLevelLine: role('ui', '600', 16, 22.4),
   /** The Level's number in the ring of the Profile's Level card. */
   levelNumber: role('word', '900', 44, 44),
   /** The word under the Level's number in its ring. */
@@ -938,6 +950,13 @@ export const wedges = {
     [1, 0.75],
     [0, 1],
   ],
+  /** The answer banner of a Round (board «slogo game last»): the whole foot of the screen, its top rising to the right. */
+  answerBanner: [
+    [0, 0.18],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+  ],
   /** A slanted band: the toast's mark. */
   band: [
     [0, 0],
@@ -972,6 +991,15 @@ export const wedges = {
     [1, 0.25],
     [1, 1],
     [0, 0.75],
+  ],
+  /** A Life in the Round's header on the ground (board «slogo game last»): an upright hexagon. */
+  lifeHex: [
+    [0.5, 0],
+    [1, 0.3],
+    [1, 0.62],
+    [0.5, 1],
+    [0, 0.62],
+    [0, 0.3],
   ],
   /** A shield, pointed at the bottom. */
   shield: [

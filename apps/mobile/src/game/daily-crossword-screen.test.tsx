@@ -152,6 +152,9 @@ async function renderGame({
       (feature) =>
         !off.includes(feature) &&
         ((crossing && feature === 'crossingCrossword') ||
+          // The UA Edition hides the Daily Crossword for now (owner, 15.11); these tests open it.
+          feature === 'dailyCrossword' ||
+          feature === 'tracedCrossword' ||
           on.includes(feature) ||
           (!GAMES_BOARD_SWITCHES.includes(feature) && edition.isFeatureEnabled(feature))),
     ),

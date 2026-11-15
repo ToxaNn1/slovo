@@ -20,11 +20,14 @@ const typo: MistakeReportDraft = { entryId: 'w_kvasha', type: 'typo', comment: '
 const typoIn = (id: string): MistakeReportDraft => ({ ...typo, entryId: `w_${id}` });
 
 /**
- * The app of the UA Edition at 0.8.14 with pack 42, over a fake
+ * The app of the UA Edition at 0.8.14, or `appVersion`, with pack 42, over a fake
  * backend, with `mistakeReports` on unless the test turns it off. `relaunch`
  * opens the app again over the same device.
  */
-async function device({ off = [] }: { off?: FeatureSwitch[] } = {}) {
+async function device({
+  off = [],
+  appVersion = '0.8.14',
+}: { off?: FeatureSwitch[]; appVersion?: string } = {}) {
   const time = fakeClock('2026-10-28T09:00:00.000Z');
   const timers = testSchedule(time);
   const api = createFakeBackend();
@@ -45,7 +48,7 @@ async function device({ off = [] }: { off?: FeatureSwitch[] } = {}) {
       userState: await openUserState({ port }),
       backend: api.backend,
       edition: { id: 'uk', isFeatureEnabled: (feature) => !switchedOff.has(feature) },
-      appVersion: '0.8.14',
+      appVersion,
       contentVersion: () => 42,
       clock: time.clock,
       schedule: timers.schedule,
@@ -94,6 +97,15 @@ describe('reporting a mistake online', () => {
         contentVersion: 42,
       },
     ]);
+  });
+
+  it('sends the version of a milestone, such as 0.9 (ADR 0044), in three parts, and thanks', async () => {
+    const app = await device({ appVersion: '0.9' });
+
+    const answer = await app.report();
+
+    expect(answer).toBe('thanked');
+    expect(app.api.reports.received.map(({ appVersion }) => appVersion)).toEqual(['0.9.0']);
   });
 
   it('takes a sent report off the queue, so it is never sent again', async () => {

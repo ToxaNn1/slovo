@@ -1,5 +1,5 @@
 import type { GameEnd, GameOver, Haptics } from '@slovo/core';
-import { EditionProvider, GameEndPoster, HapticsProvider, mascotWidth, space } from '@slovo/ui';
+import { EditionProvider, GameEndPoster, HapticsProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
@@ -9,6 +9,17 @@ const strings = testStrings({
   game: {
     livesOver: '{mode} · {score}/{total}',
     result: { lost: { title: 'Out of lives' } },
+    finish: {
+      title: 'Finish',
+      won: 'Bullseye!',
+      more: 'One more round!',
+      timeUp: 'Time!',
+      hits: { one: '{count} of {total} hit', other: '{count} of {total} hits' },
+      newBest: 'New best!',
+      xp: 'XP',
+      xpCount: '+{count} XP',
+      best: 'Best',
+    },
     finals: { toGames: 'To games', again: 'Again!' },
   },
 });
@@ -57,7 +68,6 @@ async function renderPoster() {
           bestResult={undefined}
           onAgain={jest.fn()}
           onToGames={jest.fn()}
-          onToFeed={undefined}
           warmup={false}
           review={{ kind: 'none' }}
           mascot={<Text>Game over. Nice warm-up! A line far wider than any Mascot figure.</Text>}
@@ -68,23 +78,15 @@ async function renderPoster() {
 }
 
 describe('GameEndPoster', () => {
-  it('stacks the Lives-over poster as the board does: the mode and score over the title, the Mascot under them', async () => {
+  it('heads a Game that lost its last Life like one short of its target, as the board does: «FINISH», «ONE MORE ROUND!», the count and the XP tile', async () => {
     await renderPoster();
 
-    // The mode and score and the title are read as one heading.
-    const heading = screen.getByRole('header');
-    expect(heading).toHaveTextContent('SURVIVAL · 2/5', { exact: false });
-    expect(heading).toHaveTextContent('Out of lives', { exact: false });
-    expect(screen.getByText('SURVIVAL · 2/5')).toBeOnTheScreen();
-    // The mode and score lead the title, as on board g9.
-    const drawn = JSON.stringify(screen.toJSON());
-    expect(drawn.indexOf('SURVIVAL · 2/5')).toBeLessThan(drawn.indexOf('Out of lives'));
-    // A column across the panel: neither the title nor the Mascot's line is squeezed beside the other.
-    expect(screen.getByTestId('game-end-panel-foot')).toHaveStyle({ flexDirection: 'column' });
-    // The figure and the padding the Mascot draws around it: its line wraps under it.
-    expect(screen.getByTestId('game-panel-mascot')).toHaveStyle({
-      maxWidth: mascotWidth + 2 * space[4],
-    });
+    expect(screen.getByText('FINISH')).toBeOnTheScreen();
+    expect(screen.getByText('ONE MORE ROUND!')).toBeOnTheScreen();
+    expect(screen.getByText('2 of 5 hits')).toBeOnTheScreen();
+    expect(screen.getByTestId('game-end-xp')).toHaveTextContent('+0 XP', { exact: false });
+    expect(screen.queryByText('Out of lives')).toBeNull();
+    expect(screen.queryByText('SURVIVAL · 2/5')).toBeNull();
   });
 
   it('draws the red ground as tall as the panel grows with its text', async () => {

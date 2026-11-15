@@ -1,7 +1,7 @@
 import { EditionProvider, MistakeReportSheet } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen, within } from '@testing-library/react-native';
-import { Keyboard } from 'react-native';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
+import { Keyboard, ScrollView, type KeyboardEvent } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
 
@@ -145,5 +145,31 @@ describe('MistakeReportSheet', () => {
     await fireEvent.press(send());
     expect(onSend).toHaveBeenCalledWith({ type: 'stress', comment: 'Wrong stress' });
     dismiss.mockRestore();
+  });
+  it('scrolls the comment field into view once the keyboard is up, so what is typed stays readable', async () => {
+    const listen = jest.spyOn(Keyboard, 'addListener');
+    const scrollToEnd = jest.spyOn(ScrollView.prototype, 'scrollToEnd');
+    await renderSheet();
+    expect(scrollToEnd).not.toHaveBeenCalled();
+
+    await fireEvent(screen.getByLabelText('Comment (optional)'), 'focus');
+    const shown = listen.mock.calls.flatMap(([name, handler]) =>
+      name === 'keyboardDidShow' ? [handler] : [],
+    );
+    expect(shown).not.toHaveLength(0);
+    const event: KeyboardEvent = {
+      duration: 250,
+      easing: 'keyboard',
+      startCoordinates: { screenX: 0, screenY: 844, width: 390, height: 344 },
+      endCoordinates: { screenX: 0, screenY: 500, width: 390, height: 344 },
+      isEventFromThisApp: true,
+    };
+    await act(() => {
+      for (const handler of shown) handler(event);
+    });
+
+    expect(scrollToEnd).toHaveBeenCalledWith({ animated: true });
+    listen.mockRestore();
+    scrollToEnd.mockRestore();
   });
 });

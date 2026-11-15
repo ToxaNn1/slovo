@@ -3,22 +3,24 @@
 
 import type { GivenAnswer, Round } from '@slovo/core';
 
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { roundLayout, typeStyle } from '../tokens';
+import { roundLayout, typeStyle, vowelButtonsLayout } from '../tokens';
 import { letterLabel } from './letter-label';
 import { useRoundLook } from './round-look';
-import { RoundAsk, RoundCard } from './RoundCard';
+import { RoundAsk, RoundCard, RoundKicker } from './RoundCard';
 import { VowelButtons } from './VowelButtons';
 
 /**
  * A Round of the vowel form: its Word stands in the card with each vowel a
  * button, which VoiceOver reads by its place among the letters. The
  * Edition's hint stands under the card, e.g. «Торкнись голосної, на яку
- * падає наголос». On the ground (board 06 «Наголос») the label, «Де
- * наголос?», heads the Word in ink and the hint takes the board's size.
+ * падає наголос». On the ground (board «slogo game last») the mode and the
+ * Round, «НАГОЛОС · 1/10», and the label in ink, «Де наголос?», head the
+ * Word beside the Mascot, and the Word with its hint stands in the middle of
+ * the room under them.
  */
 export function VowelRound({
   round,
@@ -34,46 +36,70 @@ export function VowelRound({
 }) {
   const { strings, voice } = useEdition();
   const tokens = useTokens();
-  const { inkHeaded } = useRoundLook();
+  const { inkHeaded, kicker } = useRoundLook();
+  const hint = (
+    <Text
+      testID="game-stress-hint"
+      maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+      {...voice}
+      style={[
+        typeStyle(inkHeaded ? 'roundHint' : 'roundExplanation', tokens),
+        inkHeaded && styles.hint,
+        { color: tokens.colors.muted },
+      ]}
+    >
+      {strings.game.round.stressHint}
+    </Text>
+  );
+  const buttons = (
+    <VowelButtons
+      key={round.number}
+      text={round.prompt}
+      vowels={round.vowels}
+      answer={round.answer?.form === 'vowel' ? round.answer : undefined}
+      onAnswer={(position) => {
+        onAnswer({ form: 'vowel', position });
+      }}
+      texts={{
+        vowelLabel: (letter, place) => letterLabel(strings.game.letters, letter, place),
+        correct: strings.game.round.correct,
+        chosen: strings.game.round.chosen,
+      }}
+      testID="game-vowels"
+    />
+  );
+  if (!inkHeaded)
+    return (
+      <>
+        <RoundCard label={label} prompt={prompt} highlight={undefined} gap={undefined}>
+          {buttons}
+        </RoundCard>
+        {hint}
+      </>
+    );
+  // On the ground the board sets the Word and its hint together in the middle of the room.
   return (
-    <>
-      <RoundCard
-        label={label}
-        prompt={prompt}
-        highlight={undefined}
-        gap={undefined}
-        head={inkHeaded ? <RoundAsk ask={label} heading /> : undefined}
-      >
-        <VowelButtons
-          key={round.number}
-          text={round.prompt}
-          vowels={round.vowels}
-          answer={round.answer?.form === 'vowel' ? round.answer : undefined}
-          onAnswer={(position) => {
-            onAnswer({ form: 'vowel', position });
-          }}
-          texts={{
-            vowelLabel: (letter, place) => letterLabel(strings.game.letters, letter, place),
-            correct: strings.game.round.correct,
-            chosen: strings.game.round.chosen,
-          }}
-          testID="game-vowels"
-        />
-      </RoundCard>
-      <Text
-        testID="game-stress-hint"
-        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-        {...voice}
-        style={[
-          typeStyle(inkHeaded ? 'roundHint' : 'roundExplanation', tokens),
-          inkHeaded && styles.hint,
-          { color: tokens.colors.muted },
-        ]}
-      >
-        {strings.game.round.stressHint}
-      </Text>
-    </>
+    <RoundCard
+      label={label}
+      prompt={prompt}
+      highlight={undefined}
+      gap={undefined}
+      head={
+        <View>
+          {kicker !== undefined && <RoundKicker kicker={kicker} />}
+          <RoundAsk ask={label} heading />
+        </View>
+      }
+    >
+      <View style={styles.word}>
+        {buttons}
+        {hint}
+      </View>
+    </RoundCard>
   );
 }
 
-const styles = StyleSheet.create({ hint: { textAlign: 'center' } });
+const styles = StyleSheet.create({
+  hint: { textAlign: 'center' },
+  word: { gap: vowelButtonsLayout.hintGap },
+});

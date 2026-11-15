@@ -48,6 +48,7 @@ export function IdiomCardBody({
   corner,
   tabs,
   sourceTab,
+  headless = false,
 }: {
   card: IdiomCardModel;
   /** The Lemma's size at the user's font size, which the expression takes. */
@@ -60,6 +61,8 @@ export function IdiomCardBody({
   tabs: boolean;
   /** The last tab «Джерело» with the sources, which leave «Суть», while `sourceTab` is on (ADR 0116). */
   sourceTab: boolean;
+  /** The kicker and the headline are drawn in Entry details' red panel, so the body leaves them out. */
+  headless?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -79,37 +82,41 @@ export function IdiomCardBody({
 
   return (
     <>
-      <KickerRow testID="idiom-kicker-row" corner={corner}>
-        <EntryKicker testID="idiom-type" label={idiomType} />
-      </KickerRow>
-      <View
-        accessible
-        accessibilityRole="header"
-        accessibilityLabel={fill(strings.heading, {
-          expression: withoutStress(card.expression),
-          type: idiomType,
-        })}
-        {...voice}
-        {...turnActions}
-        style={styles.header}
-      >
-        <WholeWordsText
-          flying={flying}
-          text={capitalised(card.expression, voice.accessibilityLanguage)}
-          size={{ fontSize, lineHeight }}
-          typeRole="idiomExpression"
-          testID="idiom-expression"
-          lines={3}
-          style={[typeStyle('idiomExpression', tokens), { color: colors.ink }]}
-        />
-        <Wedge
-          testID="idiom-rule"
-          points={wedges.slant}
-          color={colors.accent}
-          width={entryCardFrame.rule.width}
-          height={entryCardFrame.rule.height}
-        />
-      </View>
+      {headless ? null : (
+        <>
+          <KickerRow testID="idiom-kicker-row" corner={corner}>
+            <EntryKicker testID="idiom-type" label={idiomType} />
+          </KickerRow>
+          <View
+            accessible
+            accessibilityRole="header"
+            accessibilityLabel={fill(strings.heading, {
+              expression: withoutStress(card.expression),
+              type: idiomType,
+            })}
+            {...voice}
+            {...turnActions}
+            style={styles.header}
+          >
+            <WholeWordsText
+              flying={flying}
+              text={capitalised(card.expression, voice.accessibilityLanguage)}
+              size={{ fontSize, lineHeight }}
+              typeRole="idiomExpression"
+              testID="idiom-expression"
+              lines={3}
+              style={[typeStyle('idiomExpression', tokens), { color: colors.ink }]}
+            />
+            <Wedge
+              testID="idiom-rule"
+              points={wedges.slant}
+              color={colors.accent}
+              width={entryCardFrame.rule.width}
+              height={entryCardFrame.rule.height}
+            />
+          </View>
+        </>
+      )}
       {tabs ? (
         <CardTabs
           testID="idiom"

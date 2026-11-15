@@ -363,11 +363,14 @@ describe('the new Level screen', () => {
     expect(screen.getByText(strings.kicker)).toBeOnTheScreen();
     expect(screen.getByText('1')).toBeOnTheScreen();
     expect(screen.getByRole('header', { name: title })).toBeOnTheScreen();
-    expect(screen.getByText(mascot.newLevel)).toBeOnTheScreen();
+    // The Edition's line stands under the title, the Mascot carries none (board 10, p6).
+    expect(screen.getByTestId('new-level-line')).toHaveTextContent(mascot.newLevel);
+    expect(screen.getAllByText(mascot.newLevel, { includeHiddenElements: true })).toHaveLength(1);
     // The screen replaces the overlay: no second Mascot under it.
-    expect(screen.getAllByTestId('mascot-newLevel', { includeHiddenElements: true })).toHaveLength(
-      1,
-    );
+    expect(
+      screen.getAllByTestId('mascot-celebrates', { includeHiddenElements: true }),
+    ).toHaveLength(1);
+    expect(screen.queryByTestId('mascot-newLevel', { includeHiddenElements: true })).toBeNull();
 
     // It waits for the reader, not for the celebration's timer.
     await act(async () => {
