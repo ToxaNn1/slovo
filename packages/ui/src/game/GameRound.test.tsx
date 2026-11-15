@@ -35,6 +35,13 @@ const strings = testStrings({
     round: {
       header: '{mode} · {n}/{total}',
       answerCard: { right: 'Spot on!', wrong: 'Close. Next one will land.', next: 'Next →' },
+      banner: {
+        right: ['Spot on!'],
+        xp: '+{count} XP',
+        wrong: 'Miss',
+        lastLife: 'No Lives left',
+        answer: 'Close. The right one: {answer}',
+      },
       pairsHint: 'Match each word to its meaning',
       stressHint: 'Tap the stressed vowel',
       progress: '{passed} / {total}',
@@ -159,6 +166,7 @@ function answeredPick(game: PlayingGame, given: GivenAnswer): PlayingGame {
     lives: chosen === CORRECT || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
     answered: answeredAs(chosen === CORRECT),
+    banner: false,
   };
 }
 
@@ -231,6 +239,7 @@ function answeredVowel(game: PlayingGame, chosen: number): PlayingGame {
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
     answered: answeredAs(right),
+    banner: false,
   };
 }
 
@@ -322,6 +331,7 @@ function answeredPair(game: PlayingGame, word: number, definition: number): Play
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
     answered: answeredAs(right),
+    banner: false,
   };
 }
 
@@ -366,6 +376,7 @@ function answeredTyped(game: PlayingGame, typed: string): PlayingGame {
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
     answered: answeredAs(right),
+    banner: false,
   };
 }
 
@@ -427,6 +438,7 @@ function answeredChips(game: PlayingGame, chosen: readonly number[]): PlayingGam
     lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
     answered: answeredAs(right),
+    banner: false,
   };
 }
 
@@ -1255,6 +1267,28 @@ describe('GameRound', () => {
         }
         expect(styleOf(lifeFill(4)).opacity).toBe(0);
       });
+    });
+  });
+
+  describe('the answered Round', () => {
+    it('shows the answer banner, with no sheet and its button, when the Core says it moves on by itself', async () => {
+      const shown = answeredPick(first, { form: 'pick', option: CORRECT });
+      if (shown.status !== 'answered') throw new Error('Not answered');
+      await renderRound(jest.fn(), jest.fn(), { ...shown, banner: true });
+
+      expect(screen.getByTestId('game-answer-banner')).toBeOnTheScreen();
+      expect(screen.queryByTestId('game-sheet')).toBeNull();
+    });
+
+    it('shows the sheet and its button to the next Round when the Core says the Round waits for it', async () => {
+      await renderRound(
+        jest.fn(),
+        jest.fn(),
+        answeredPick(first, { form: 'pick', option: CORRECT }),
+      );
+
+      expect(screen.queryByTestId('game-answer-banner')).toBeNull();
+      expect(screen.getByTestId('game-sheet')).toBeOnTheScreen();
     });
   });
 

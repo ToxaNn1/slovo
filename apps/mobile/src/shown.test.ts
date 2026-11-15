@@ -17,7 +17,6 @@ const everything: Shown = {
   gameReview: true,
   finishPoster: true,
   survivalStreak: true,
-  gameAnswerBanner: true,
   gameThreeLives: true,
   survivalOneLife: true,
   timedTwentySeconds: true,
@@ -203,10 +202,6 @@ describe('what the reader is shown', () => {
     [
       'the Rounds passed in place of the streak with its switch off',
       { off: ['survivalStreak'], shown: { survivalStreak: false } },
-    ],
-    [
-      'the spec #1674 Game with gameAnswerBanner off',
-      { off: ['gameAnswerBanner'], shown: { gameAnswerBanner: false } },
     ],
     [
       'the spec #1674 Game with gameThreeLives off',

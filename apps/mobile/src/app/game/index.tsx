@@ -74,7 +74,6 @@ function Game() {
     livesOverWarmup,
     gameEndToFeed,
     plainGameReview,
-    gameAnswerBanner,
     pairsStay,
   } = useShown();
   const { colors } = useTokens();
@@ -189,7 +188,6 @@ function Game() {
               ? ({ state, width }) => <MascotAs state={state} width={width} />
               : undefined
           }
-          banner={gameAnswerBanner}
           pairsStay={pairsStay}
           onWaitFor={actions.waitFor}
         />

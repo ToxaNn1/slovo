@@ -89,6 +89,8 @@ async function open(
     edition = testEdition(
       banner ? {} : { isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' },
     ),
+    write = () => Promise.resolve(),
+    scheduled = true,
   }: OpenOptions = {},
 ) {
   let eligible: EligibleOfKind<AskableEntry> = { entries: eligibleAtStart };
@@ -125,10 +127,10 @@ async function open(
       }),
       answeredWrong: () => ({ changes: new Map(), commit: () => undefined }),
     },
-    userState: { read: () => Promise.resolve(undefined), write: () => Promise.resolve() },
+    userState: { read: () => Promise.resolve(undefined), write },
     clock: time.clock,
     random: inOrder,
-    schedule: later.schedule,
+    ...(scheduled ? { schedule: later.schedule } : {}),
     modes: [gameMode],
     eligibility,
     dayTurned: never,
@@ -153,6 +155,10 @@ interface OpenOptions {
   roundXp?: number;
   /** The Edition the Game opens in; the test Edition with `banner` by default. */
   edition?: GameEdition;
+  /** How the user state writes; every write keeps by default. */
+  write?: () => Promise<void>;
+  /** Whether the Game has a schedule to move on by; it has by default. */
+  scheduled?: boolean;
 }
 
 /** The test Edition with `pairsStay` off: a pair of «Пари» answered waits, as in spec #1674. */
@@ -672,6 +678,37 @@ describe('the answer banner behind `gameAnswerBanner` (ADR 0138)', () => {
     expect(now(game).status).toBe('playing');
   });
 
+  it('shows the banner as its switch says when the Game starts, not when the Game opened', async () => {
+    let switchedOn = false;
+    const edition = testEdition({
+      isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' || switchedOn,
+    });
+    const opened = await open(mode(pick), words, { edition });
+    switchedOn = true;
+    await opened.game.start('test');
+
+    expect(await answer(opened.game, pickAnswer(true))).toMatchObject({ banner: true });
+    await opened.advance(950);
+    expect(now(opened.game)).toMatchObject({ status: 'playing', roundsPassed: 1 });
+
+    switchedOn = false;
+    expect(await answer(opened.game, pickAnswer(true))).toMatchObject({ banner: true });
+    opened.game.leave();
+    await opened.game.start('test');
+    expect(await answer(opened.game, pickAnswer(true))).toMatchObject({ banner: false });
+    await opened.advance(5000);
+    expect(now(opened.game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
+  });
+
+  it('shows no banner without a schedule to move on by, so «Далі» moves on', async () => {
+    const { game } = await start(pick, {}, undefined, { scheduled: false });
+
+    expect(await answer(game, pickAnswer(true))).toMatchObject({
+      status: 'answered',
+      banner: false,
+    });
+  });
+
   it('does not move on after the Game is left', async () => {
     const { game, advance } = await start(pick);
     await game.answer(pickAnswer(true));
@@ -927,7 +964,7 @@ describe('the answer forms of a Round', () => {
 
     await advance(5000);
 
-    expect(now(game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
+    expect(now(game)).toMatchObject({ status: 'answered', banner: false, roundsPassed: 0 });
   });
 
   it('plays a pairs grid with no answered state after a pair, `pairsStay` on: a found pair stays, a wrong one costs a Life', async () => {

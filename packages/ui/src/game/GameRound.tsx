@@ -33,8 +33,8 @@ import { VowelRound } from './VowelRound';
 /**
  * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
  * prompt under its label, the four options and, once answered, the sheet,
- * or with the answer banner on (`gameAnswerBanner`) the banner, but after a
- * pairs grid, which keeps the sheet; a grid whose found pairs stay
+ * or the banner when the Core says the answered Round moves on by itself
+ * (`gameAnswerBanner`, never after a pair of a pairs grid); a grid whose found pairs stay
  * (`pairsStay`) shows its large question and no answered state at all.
  * It plays the pick form, the vowel form, whose Word stands in the card
  * with each vowel a button, and the pairs form, whose grid stands under the
@@ -66,7 +66,6 @@ export function GameRound({
   onGround = false,
   optionStamp = false,
   mascot,
-  banner = false,
   pairsStay = false,
   onWaitFor = noWait,
 }: {
@@ -93,8 +92,6 @@ export function GameRound({
   optionStamp?: boolean;
   /** Draws the Mascot beside the question in a state at a width (`gameRoundMascot`); no Mascot if none. */
   mascot?: ((look: { state: MascotState; width: number }) => ReactNode) | undefined;
-  /** Whether the answer banner shows after an answer in place of the sheet, and the Game moves on by itself (`gameAnswerBanner`). */
-  banner?: boolean;
   /** Whether found pairs of «Пари» stay, under the large question and the captions, with no pause after a pair (`pairsStay`). */
   pairsStay?: boolean;
   /** Hands the Game what the banner waits for besides its delay: VoiceOver reading it. */
@@ -198,15 +195,13 @@ export function GameRound({
           />
         </RoundLookContext.Provider>
       </ScrollView>
-      {banner && round.form !== 'pairs' ? (
-        game.status === 'answered' ? (
-          <AnswerBanner
-            key={round.number}
-            answered={game.answered}
-            praise={game.played.filter(({ right }) => right).length - 1}
-            onWaitFor={onWaitFor}
-          />
-        ) : null
+      {game.status === 'answered' && game.banner ? (
+        <AnswerBanner
+          key={round.number}
+          answered={game.answered}
+          praise={game.played.filter(({ right }) => right).length - 1}
+          onWaitFor={onWaitFor}
+        />
       ) : (
         <AnswerSheet
           answer={answer}

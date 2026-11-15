@@ -199,7 +199,17 @@ export type PlayingGame = GameRounds & {
   readonly end?: never;
 } & (
     | { readonly status: 'playing'; readonly answered?: never }
-    | { readonly status: 'answered'; readonly answered: AnsweredRound }
+    | {
+        readonly status: 'answered';
+        readonly answered: AnsweredRound;
+        /**
+         * Whether the answered Round shows the answer banner and moves on by
+         * itself after its delay, in place of the sheet and its «Далі» (ADR
+         * 0138): as `gameAnswerBanner` said when the Game started, and never
+         * after a pair of a pairs grid or in a Game with no schedule to move on by.
+         */
+        readonly banner: boolean;
+      }
   );
 
 /**
@@ -300,7 +310,7 @@ function createGameInPlay({
   mode: GameMode;
   /** The Lives the Game starts with, which it keeps however the Edition changes; none without Lives. */
   lives: number | undefined;
-  /** Whether the answer banner is on (`gameAnswerBanner`), so a mode that moves on waits for it too. */
+  /** Whether the Game shows the answer banner, as `gameAnswerBanner` said when it started, so a mode that moves on waits for it too. */
   banner: boolean;
   /** Whether a pair of a pairs grid leaves no answered state (`pairsStay`), the Game going on to the next Round at once. */
   pairsStay: boolean;
@@ -342,7 +352,7 @@ function createGameInPlay({
   function next(game: PlayingGame): PlayingGame | EndedGame | undefined {
     if (game.status !== 'answered') return undefined;
     // The banner's answer goes with the Round it answered.
-    const { answered: _banner, ...onward } = game;
+    const { answered: _answered, banner: _banner, ...onward } = game;
     if (game.lives === 0) return { ...onward, status: 'lost' };
     const roundsPassed = game.roundsPassed + 1;
     if (roundLimit === undefined && plannedAt(roundsPassed + 1) === undefined) {
@@ -390,6 +400,7 @@ function createGameInPlay({
         answered: answer.right
           ? { kind: 'right', xp: undefined }
           : { kind: 'wrong', answer: answer.sheet.answer.text, lastLife: lives === 0 },
+        banner: banner && answer.form !== 'pairs',
       };
       const movesOn = (mode.movesOn === true && !banner) || (pairsStay && answer.form === 'pairs');
       return movesOn ? next(answered) : answered;
@@ -711,7 +722,6 @@ export async function openGame({
     ids.add(id);
   }
   const gameOn = edition.isFeatureEnabled('game');
-  const banner = edition.isFeatureEnabled('gameAnswerBanner');
   const pairsStay = edition.isFeatureEnabled('pairsStay');
   const modes = gameOn ? registered.filter((mode) => mode.isOn(edition)) : [];
   const subscribers = createSubscribers();
@@ -840,7 +850,8 @@ export async function openGame({
             planRounds,
             eligible,
             comparison,
-            banner,
+            // Read as the Game starts, as its Lives and time limit are; with no schedule, nothing moves it on.
+            banner: edition.isFeatureEnabled('gameAnswerBanner') && schedule !== undefined,
             pairsStay,
           })
         : undefined;
@@ -884,12 +895,11 @@ export async function openGame({
   /**
    * With the answer banner on, moves the Game on from the answered Round by
    * itself once its delay has passed and what the screen waits for has come,
-   * unless the Game moved on, ended or was left since. A pair of a pairs grid
-   * waits for «Далі» still, unless it leaves no answered state (`pairsStay`).
+   * unless the Game moved on, ended or was left since. A Round answered
+   * with no banner, such as a pair of a pairs grid, waits for «Далі».
    */
   function moveOnLater(shown: PlayingGame): void {
-    if (!banner || schedule === undefined || shown.status !== 'answered') return;
-    if (shown.round.form === 'pairs') return;
+    if (schedule === undefined || shown.status !== 'answered' || !shown.banner) return;
     const delays = ANSWER_BANNER_DELAYS[shown.timeLimit === undefined ? 'untimed' : 'timed'];
     stopMoveOn();
     cancelMoveOn = schedule(() => {

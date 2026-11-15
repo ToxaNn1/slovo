@@ -22,8 +22,6 @@ export interface Shown {
   readonly finishPoster: boolean;
   /** The streak counter of «Виживання» and its record, in place of the Rounds passed (spec #1674). */
   readonly survivalStreak: boolean;
-  /** The answer banner and the Game moving on by itself, in place of the answer card (ADR 0138). */
-  readonly gameAnswerBanner: boolean;
   /** 3 Lives by default in place of 5 (ADR 0137). */
   readonly gameThreeLives: boolean;
   /** 1 Life in «Виживання» in place of 3 (ADR 0137). */
@@ -228,7 +226,6 @@ export function shownOf({
     gameReview: on('gameReview'),
     finishPoster: on('finishPoster'),
     survivalStreak: on('survivalStreak'),
-    gameAnswerBanner: on('gameAnswerBanner'),
     gameThreeLives: on('gameThreeLives'),
     survivalOneLife: on('survivalOneLife'),
     timedTwentySeconds: on('timedTwentySeconds'),
