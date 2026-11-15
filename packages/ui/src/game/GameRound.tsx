@@ -117,8 +117,10 @@ export function GameRound({
 
   const [asking, setAsking] = useState(false);
   const exit = strings.game.exit;
-  const asked = askedAs(round, label, strings.game.round);
-  const card = cardOf(game.modeId, round, asked.prompt, strings.game.round.prompts);
+  // On the ground «Англіцизми» heads its sentence with the mode's title, «АНГЛІЦИЗМИ» (board g5).
+  const modeLabel = onGround && game.modeId === 'anglicism' ? title : label;
+  const asked = askedAs(round, modeLabel, strings.game.round);
+  const card = cardOf(game.modeId, round, asked.prompt, strings.game.round.prompts, onGround);
   const look = {
     onGround,
     optionStamp,

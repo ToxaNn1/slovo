@@ -49,7 +49,6 @@ export type OfferedGroup = GameHubGroup | GameModeGroup;
  */
 export type RoundLabelKind = 'mode' | 'synonymRow' | 'tip' | 'gap' | 'meaning';
 
-
 /**
  * The form of a Round's answer, which the Game Mode decides (ADR 0052): a
  * pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in

@@ -235,9 +235,9 @@ describe('a Round of «Англіцизми»', () => {
         sentence.slice(0, at) + replacement + sentence.slice(at + asked.nonStandardForm.length),
       );
     }
-    expect(replacementOf(optionsOf(round)[rightOf(round)] ?? { text: '', stressedVowels: [] })).toBe(
-      asked.standardEquivalents[0],
-    );
+    expect(
+      replacementOf(optionsOf(round)[rightOf(round)] ?? { text: '', stressedVowels: [] }),
+    ).toBe(asked.standardEquivalents[0]);
   });
 
   it('opens the sentence with a capital when the anglicism did', async () => {

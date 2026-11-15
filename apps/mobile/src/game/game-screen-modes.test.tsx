@@ -453,6 +453,73 @@ describe('the Game screen', () => {
     });
   });
 
+  describe('with decoys and the check (buildIdiomCheck)', () => {
+    async function start() {
+      await open({ idioms: 15, switchedOn: ['buildIdiomCheck'] });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-build-idiom'));
+      await waitFor(() => {
+        expect(screen.getByTestId('chips')).toBeOnTheScreen();
+      });
+    }
+
+    it('mixes three words of other expressions into the tray and judges nothing on the last word', async () => {
+      await start();
+      const words = theWordsOfThePrompt();
+      const chips = screen
+        .getAllByTestId(/^chips-\d+$/)
+        .map((chip) => String(chip.props['accessibilityLabel']));
+
+      expect(chips).toHaveLength(6);
+      expect(chips).toEqual(expect.arrayContaining(words));
+      expect(chips.filter((chip) => !words.includes(chip))).toEqual([
+        expect.stringMatching(/^перше\d+$/),
+        expect.stringMatching(/^перше\d+$/),
+        expect.stringMatching(/^перше\d+$/),
+      ]);
+      expect(screen.getByRole('button', { name: 'Перевірити' })).toBeDisabled();
+
+      await assembleWords(words);
+
+      expect(screen.queryByTestId('game-sheet-title')).toBeNull();
+      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 5 з 5');
+      // A used word stays in its place in the tray, faded.
+      expect(screen.getAllByTestId(/^chips-\d+$/, { includeHiddenElements: true })).toHaveLength(6);
+
+      await fireEvent.press(screen.getByRole('button', { name: 'Перевірити' }));
+
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+    });
+
+    it('takes a Life on the check for a decoy among the words', async () => {
+      await start();
+      const words = theWordsOfThePrompt();
+      const decoy = screen
+        .getAllByTestId(/^chips-\d+$/)
+        .map((chip) => String(chip.props['accessibilityLabel']))
+        .find((chip) => !words.includes(chip));
+
+      await assembleWords([...words, decoy ?? '']);
+      await fireEvent.press(screen.getByRole('button', { name: 'Перевірити' }));
+
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
+      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+    });
+
+    it('has no check and answers on the last word with the switch off, as in spec #1674', async () => {
+      await open({ idioms: 15 });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-build-idiom'));
+      await waitFor(() => {
+        expect(screen.getByTestId('chips')).toBeOnTheScreen();
+      });
+
+      expect(screen.queryByRole('button', { name: 'Перевірити' })).toBeNull();
+      await assembleWords(theWordsOfThePrompt());
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+    });
+  });
+
   it('takes a Life for an expression of «Склади вислів» assembled wrong and shows the right one', async () => {
     await open({ idioms: 15 });
     await renderScreen();
@@ -471,6 +538,25 @@ describe('the Game screen', () => {
     });
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
+  });
+
+  it('heads «Англіцизми» on the ground with «АНГЛІЦИЗМИ» over the sentence alone, each option marking its replacement', async () => {
+    await open({ anglicisms: 15, switchedOn: ['gameQuestionOnGround'] });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-anglicism'));
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+    });
+
+    expect(screen.getAllByText('Англіцизми', { includeHiddenElements: true })).toHaveLength(2);
+    expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+      /^Англіцизми\. Речення (\d+): тут хибне\1\. Виділено: хибне\1$/,
+    );
+    for (const option of screen.getAllByTestId(/^game-option-\d+$/)) {
+      const replacement = /тут (добре\d+)\.$/.exec(String(option.props['accessibilityLabel']))?.[1];
+      expect(within(option).getByText(replacement ?? '-')).toBeOnTheScreen();
+    }
   });
 
   it('starts «Англіцизми» from its card and plays a whole Game of anglicisms alone, picking each standard form, to the result screen', async () => {
@@ -493,7 +579,11 @@ describe('the Game screen', () => {
       const n = theNumberOfThePrompt();
       expect(n).toBeGreaterThanOrEqual(15);
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
-      await fireEvent.press(theOption(`добре${String(n)}`));
+      // Each option is the sentence with its replacement in the anglicism's place.
+      for (const option of screen.getAllByTestId(/^game-option-\d+$/)) {
+        expect(option.props['accessibilityLabel']).toMatch(/^Речення \d+: тут добре\d+\.$/);
+      }
+      await fireEvent.press(theOption(`Речення ${String(n)}: тут добре${String(n)}\\.`));
       expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
       await fireEvent.press(screen.getByTestId('game-next'));
     }
@@ -511,10 +601,11 @@ describe('the Game screen', () => {
     await waitFor(() => {
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
     });
-    const standard = `добре${String(theNumberOfThePrompt())}`;
+    const n = String(theNumberOfThePrompt());
+    const standard = `добре${n}`;
     const wrong = screen
       .getAllByTestId(/^game-option-\d+$/)
-      .find((option) => option.props['accessibilityLabel'] !== standard);
+      .find((option) => option.props['accessibilityLabel'] !== `Речення ${n}: тут ${standard}.`);
     if (wrong === undefined) throw new Error('No wrong option');
     warning.mockClear();
     await fireEvent.press(wrong);

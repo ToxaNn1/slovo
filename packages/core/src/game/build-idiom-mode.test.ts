@@ -304,7 +304,11 @@ describe('a Round of «Склади вислів» with decoys and the check', (
 
       await app.game.answer({ form: 'chips', chips });
 
-      expect(current(app).round.answer).toMatchObject({ form: 'chips', chosen: chips, right: false });
+      expect(current(app).round.answer).toMatchObject({
+        form: 'chips',
+        chosen: chips,
+        right: false,
+      });
       expect(current(app).lives).toBe(2);
     }
   });
