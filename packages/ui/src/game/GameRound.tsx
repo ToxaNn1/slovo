@@ -66,7 +66,6 @@ export function GameRound({
   onGround = false,
   optionStamp = false,
   mascot,
-  pairsStay = false,
   onWaitFor = noWait,
 }: {
   game: CurrentGame;
@@ -92,8 +91,6 @@ export function GameRound({
   optionStamp?: boolean;
   /** Draws the Mascot beside the question in a state at a width (`gameRoundMascot`); no Mascot if none. */
   mascot?: ((look: { state: MascotState; width: number }) => ReactNode) | undefined;
-  /** Whether found pairs of «Пари» stay, under the large question and the captions, with no pause after a pair (`pairsStay`). */
-  pairsStay?: boolean;
   /** Hands the Game what the banner waits for besides its delay: VoiceOver reading it. */
   onWaitFor?: (done: Promise<unknown>) => void;
 }) {
@@ -104,7 +101,7 @@ export function GameRound({
   const gameHaptics = useGameHaptics();
   const sounds = useInterfaceSounds();
   // The answer just given: the Round's, or in a timed Game and a grid that stays, which move on at once, the last Round's.
-  const stays = pairsStay && round.form === 'pairs';
+  const stays = round.form === 'pairs' && round.stays;
   const given = game.time === undefined && !stays ? answer : game.played.at(-1)?.answer;
   // The answer shown before, so only the answer given now plays.
   const shownAnswer = useRef(given);
@@ -190,7 +187,6 @@ export function GameRound({
             round={round}
             label={asked.label}
             card={card}
-            pairsStay={pairsStay}
             onAnswer={onAnswer}
             onOpenLetter={onOpenLetter}
           />
@@ -283,14 +279,12 @@ function FormRound({
   round,
   label,
   card,
-  pairsStay,
   onAnswer,
   onOpenLetter,
 }: {
   round: Round;
   label: string;
   card: CardText;
-  pairsStay: boolean;
   onAnswer: (given: GivenAnswer) => void;
   onOpenLetter: () => void;
 }) {
@@ -301,7 +295,7 @@ function FormRound({
     case 'vowel':
       return <VowelRound round={round} label={label} prompt={prompt} onAnswer={onAnswer} />;
     case 'pairs':
-      return <PairsRound round={round} stay={pairsStay} onAnswer={onAnswer} />;
+      return <PairsRound round={round} onAnswer={onAnswer} />;
     case 'chips':
       return <ChipsRound round={round} label={label} prompt={prompt} onAnswer={onAnswer} />;
     case 'typed':

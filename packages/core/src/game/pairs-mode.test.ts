@@ -208,6 +208,22 @@ describe('the grids of «Пари»', () => {
     expect(after.words.map(({ shown }) => shown)).toEqual(grid.words.map(({ shown }) => shown));
   });
 
+  it('keeps found pairs and goes on to the next pair at once with `pairsStay` on, and waits for «Далі» with it off', async () => {
+    for (const [off, stays, status] of [
+      [[], true, 'playing'],
+      [['pairsStay'], false, 'answered'],
+    ] as const) {
+      const app = await run({ off });
+      await app.game.start('pairs');
+      const grid = gridOf(current(app).round);
+      expect(grid.stays).toBe(stays);
+
+      await app.game.answer({ form: 'pairs', word: 0, definition: rightDefinition(grid, 0) });
+
+      expect(current(app)).toMatchObject({ status, round: { stays } });
+    }
+  });
+
   it('fills a grid with Words of one part of speech', async () => {
     for (const seed of [1, 2, 3, 4, 5, 6]) {
       const app = await run({ seed });

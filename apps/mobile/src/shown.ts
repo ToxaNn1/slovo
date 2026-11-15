@@ -34,10 +34,6 @@ export interface Shown {
   readonly gameQuestionOnGround: boolean;
   /** The board's options: short ones without a key, the stamp, the ✓ key, the crossed-out text (ADR 0139). */
   readonly gameOptionStamp: boolean;
-  /** Found pairs of «Пари» stay, with captions and no pause (ADR 0139). */
-  readonly pairsStay: boolean;
-  /** Decoy fragments in «Склади вислів» and its «Перевірити» (ADR 0139). */
-  readonly buildIdiomCheck: boolean;
   /** «Розминка!» with the count and the sad Mascot once the Lives run out (ADR 0139). */
   readonly livesOverWarmup: boolean;
   /** The third end button «До стрічки» (ADR 0139). */
@@ -232,8 +228,6 @@ export function shownOf({
     gameRoundMascot: on('gameRoundMascot'),
     gameQuestionOnGround: on('gameQuestionOnGround'),
     gameOptionStamp: on('gameOptionStamp'),
-    pairsStay: on('pairsStay'),
-    buildIdiomCheck: on('buildIdiomCheck'),
     livesOverWarmup: on('livesOverWarmup'),
     gameEndToFeed: on('gameEndToFeed'),
     plainGameReview: on('plainGameReview'),
