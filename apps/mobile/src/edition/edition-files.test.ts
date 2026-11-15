@@ -1101,21 +1101,22 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       never: 'Ще жодної гри',
     });
     expect(parsed.hubToast).toBe('«{mode}» ще розминається. Влучай поки в «{other}»!');
+    expect(parsed.hubToastFallback).toBe('«{mode}» ще розминається. Спробуй поки «{other}»!');
     expect(
       Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.hubLine])),
     ).toEqual({
       'guess-word': 'Визначення є. Яке це слово?',
       stress: 'Торкнись наголошеної голосної',
-      pairs: 'Чотири слова й чотири визначення — з’єднуєш їх у пари.',
+      pairs: 'З’єднай чотири слова з їхніми значеннями.',
       anagram: 'Склади слово з перемішаних літер',
       'by-letters': 'Збери слово літера за літерою',
-      'type-word': 'У реченні — помилка, яку часто чуєш. Впиши, як сказати краще.',
+      'type-word': 'Помилка, яку часто чуєш. Впиши, як краще.',
       origin: 'З якої мови прийшло слово?',
       correction: 'Як кажуть українською',
       anglicism: 'Заміни англіцизм українським',
       'idiom-meaning': 'Вгадай, що означає вислів',
-      'build-idiom': 'Читаєш значення — складаєш вислів слово за словом.',
-      survival: undefined,
+      'build-idiom': 'Читаєш значення — складаєш вислів.',
+      survival: 'Одне життя. Як далеко зайдеш?',
       timed: undefined,
     });
     expect(
@@ -1126,13 +1127,17 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       'type-word': 'Аб|',
       origin: '→А',
       'build-idiom': '«…»',
+      survival: '♥ 1',
+      timed: '20 с',
     });
+    expect(parsed.modes['timed']?.oneLiner).toBe('Двадцять секунд. Скільки слів встигнеш?');
   });
 
   it.each([
     ['hubRow.record', { hubRow: { ...(game['hubRow'] as object), record: 'Рекорд: {n}' } }],
     ['hubRow.recordCount', { hubRow: { ...(game['hubRow'] as object), recordCount: 'Рекорд' } }],
     ['hubToast', { hubToast: '«{mode}» ще розминається.' }],
+    ['hubToastFallback', { hubToastFallback: '«{mode}» ще розминається.' }],
     [
       'round.banner.answer',
       { round: { ...round, banner: { ...(round['banner'] as object), answer: 'Майже.' } } },

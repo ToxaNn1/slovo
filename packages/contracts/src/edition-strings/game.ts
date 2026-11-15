@@ -87,6 +87,8 @@ export const GameStringsSchema = z.strictObject({
   }),
   /** The toast on a tap of a mode that cannot be played, behind `gameModeToast` (ADR 0139). Takes `{mode}` and `{other}`, a mode the reader can play. */
   hubToast: templateOf('mode', 'other'),
+  /** The toast while «Наголос» itself cannot be played, behind `gameModeToast`, e.g. «„Наголос“ ще розминається. Спробуй поки „Пари“!». Takes `{mode}` and `{other}`, «Пари» while it can be played, else the first mode that can. */
+  hubToastFallback: templateOf('mode', 'other'),
   /** The button that opens one letter of the answer, in a mode that has it. */
   openLetter: TextSchema,
   /** What VoiceOver reads for a letter in its place in a Word: a vowel button, a blank. */

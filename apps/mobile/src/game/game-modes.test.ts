@@ -281,7 +281,16 @@ describe("the toast on a mode that can't start", () => {
     );
   });
 
-  it('sends the reader to the first mode that can start while «Наголос» cannot', () => {
+  it('sends the reader to «Пари» while «Наголос» itself cannot start', () => {
+    const stress = stuckOffer('stress', 'sound');
+    const offers = [offer('anagram', 'letters'), stress, offer('pairs', 'meaning')];
+
+    expect(gameModeToast(stress, offers, strings)).toBe(
+      '«Наголос» ще розминається. Спробуй поки «Пари»!',
+    );
+  });
+
+  it('sends the reader to the first mode that can start while neither «Наголос» nor «Пари» can', () => {
     const offers = [
       stuckOffer('stress', 'sound'),
       stuck,
@@ -290,7 +299,7 @@ describe("the toast on a mode that can't start", () => {
     ];
 
     expect(gameModeToast(stuck, offers, strings)).toBe(
-      '«Пари» ще розминається. Влучай поки в «Анаграми»!',
+      '«Пари» ще розминається. Спробуй поки «Анаграми»!',
     );
   });
 });

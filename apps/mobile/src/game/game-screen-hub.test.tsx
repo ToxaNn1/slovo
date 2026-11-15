@@ -61,7 +61,7 @@ describe('the Game screen', () => {
       ['idiom-meaning', 'Вгадай, що означає вислів', '—'],
       ['build-idiom', 'Склади вислів слово за словом', '—'],
       ['survival', 'Грай, доки не схибиш. Далеко зайдеш?', '★ 23'],
-      ['timed', 'Хвилина, щоб угадати якнайбільше', '—'],
+      ['timed', 'Двадцять секунд. Скільки слів встигнеш?', '—'],
     ];
     for (const [modeId, line, mark] of rows) {
       const row = within(screen.getByTestId(`game-mode-${modeId}`));
@@ -151,6 +151,25 @@ describe('the Game screen', () => {
         'Наголос. Торкнись наголошеної голосної. Ще жодної гри',
       );
       expect(screen.queryByText(/★/)).toBeNull();
+    });
+
+    it("shows the owner's glyphs and hub lines where the board's ones did not fit", async () => {
+      await open({ switchedOn: ['gameHubRecord'], corrections: 15, idioms: 15 });
+      await renderScreen();
+
+      const rows: readonly (readonly [string, string, string])[] = [
+        ['survival', '♥ 1', 'Одне життя. Як далеко зайдеш?'],
+        ['timed', '20 с', 'Двадцять секунд. Скільки слів встигнеш?'],
+        ['pairs', '=', 'З’єднай чотири слова з їхніми значеннями.'],
+        ['type-word', 'Аб|', 'Помилка, яку часто чуєш. Впиши, як краще.'],
+        ['build-idiom', '«…»', 'Читаєш значення — складаєш вислів.'],
+      ];
+      for (const [modeId, glyph, line] of rows) {
+        const row = within(screen.getByTestId(`game-mode-${modeId}`));
+        expect(row.getByText(glyph)).toBeTruthy();
+        expect(row.getByText(line)).toBeTruthy();
+      }
+      expect(screen.queryByText(/[Хх]вилин/)).toBeNull();
     });
 
     it('shows the toast on a tap of a mode that cannot be played, and starts nothing', async () => {
