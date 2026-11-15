@@ -26,3 +26,4 @@ WAITING until 2026-11-15T18:10:20Z: #1918 DONE commit on feat/1918-badge-stamp-t
 - 15.11 17:40Z laptop coordinator back after a T3 restart: CI red on f247f9594 was profile-screen.test.tsx Level 25 test timing out (2598 awards one by one) → seeded in one XP record, 64fb94ed0 pushed. Laptop also waits for #1918 (a second merge of the same tip is a no-op).
 - 15.11 ~17:42Z safety net: #1918 DONE, merged into integration (6754de954, on top of 64fb94ed0; ui+mobile 10/10 green). Laptop coordinator is back: safety net hands the wave back and stops. Next for laptop: #1921, code-review, fixer, PR ready (no main merge).
 - 15.11 17:45Z #1918 merged (0eb917e8b); laptop launched #1921.
+WAITING until 2026-11-15T20:19:00Z: #1921 local visual pass on the laptop (no pushes until it ends); laptop coordinator alive.
