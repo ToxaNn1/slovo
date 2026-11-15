@@ -16,7 +16,7 @@ import {
   synonymLinks,
 } from '../../word-page';
 
-/** A page for every live Word (ADR 0148), at /slovo/<slug>. */
+/** A page for every live Word (ADR 0149), at /slovo/<slug>. */
 export async function getStaticPaths() {
   const { words, slugs } = await siteWords();
   return words.map((word) => {
@@ -40,7 +40,7 @@ const source = word.sources[0];
 const description = metaDescription(word);
 const url = new URL(`/slovo/${slug}`, Astro.site).href;
 const home = new URL('/', Astro.site).href;
-// The Word as a term of SLOVO's dictionary, and where its page stands (ADR 0148).
+// The Word as a term of SLOVO's dictionary, and where its page stands (ADR 0149).
 const structuredData = JSON.stringify({
   '@context': 'https://schema.org',
   '@graph': [

@@ -1,7 +1,7 @@
 /**
  * The goal of the mission: a million rare Words in SLOVO (ADR 0071). The
  * count towards it is the live Words of the snapshot the site is built from
- * (ADR 0148).
+ * (ADR 0149).
  */
 export const GOAL = 1_000_000;
 

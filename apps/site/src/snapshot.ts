@@ -8,7 +8,7 @@ import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { LANDING_EDITION } from './edition';
 
 /**
- * Where the site's content comes from at the build (ADR 0148): the backend's
+ * Where the site's content comes from at the build (ADR 0149): the backend's
  * content snapshot when `SLOVO_BACKEND_URL` is set, the Edition's seed
  * snapshot when it is not (a local build, the PR checks).
  */

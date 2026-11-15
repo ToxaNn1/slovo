@@ -1,6 +1,6 @@
 # The domain root is the UA Edition's landing
 
-**Amended by ADR 0148.** The site is rebuilt daily from the content snapshot: the counter shows the live Words, Слово дня changes every day, and every live Word has a page.
+**Amended by ADR 0149.** The site is rebuilt daily from the content snapshot: the counter shows the live Words, Слово дня changes every day, and every live Word has a page.
 
 1.0 needs a public page that says what SLOVO is and sends readers to the App Store: the store listing's marketing URL, the address in shares and posts. The owner designed it in «Клин 2.0: Рупор» (ADR 0070): hero with the Mascot and the App Store button, the site's one Слово дня, what is inside, screens, the mission («Навіщо») with the goal of a million confirmed Entries, FAQ, a final call and a footer with support and the legal pages.
 

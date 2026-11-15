@@ -54,7 +54,7 @@ const legal = defineCollection({
 });
 
 /**
- * The landing's live Words (ADR 0148), by id: from the backend's content
+ * The landing's live Words (ADR 0149), by id: from the backend's content
  * snapshot when SLOVO_BACKEND_URL is set, from the seed snapshot when not.
  * The snapshot is parsed once, here; a failed read fails the build.
  */

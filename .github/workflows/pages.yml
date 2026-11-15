@@ -10,7 +10,7 @@ name: Pages
 # keeps it equal to the AppConfig's domain (ADR 0065). The site reads every
 # Edition file through packages/language-pack/src/edition-folder.ts (ADR 0035)
 # and its Words from the backend's content snapshot, a page per live Word
-# at /slovo/<slug>, rebuilt every night (ADR 0148).
+# at /slovo/<slug>, rebuilt every night (ADR 0149).
 
 on:
   push:
@@ -28,7 +28,7 @@ on:
       - '.github/workflows/pages.yml'
   # Every night just after midnight in Kyiv, summer (UTC+3) and winter
   # (UTC+2): the site is rebuilt from the backend's content snapshot, with
-  # the new Слово дня (ADR 0148).
+  # the new Слово дня (ADR 0149).
   schedule:
     - cron: '5 21 * * *'
     - cron: '5 22 * * *'
@@ -59,7 +59,7 @@ jobs:
       # The path Pages serves the site under: /slovo at the github.io address,
       # empty behind the custom domain.
       # The Words come from the backend's content snapshot; a failed fetch
-      # fails the build and the published site stays (ADR 0148).
+      # fails the build and the published site stays (ADR 0149).
       - run: pnpm --filter @slovo/site build
         env:
           SITE_BASE: ${{ steps.pages.outputs.base_path }}
