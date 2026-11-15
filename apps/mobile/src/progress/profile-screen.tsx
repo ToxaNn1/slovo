@@ -156,10 +156,17 @@ export function ProfileScreen() {
                 },
                 {
                   testID: 'profile-level-left',
-                  text: fill(strings.levelLeft, {
-                    left: String(level.toNext - level.progress),
-                    next: String(level.level + 1),
-                  }),
+                  // The XP to the next name's first Level; under the last name, to the next Level.
+                  text:
+                    level.next === undefined
+                      ? fill(strings.levelLeft, {
+                          left: String(level.toNext - level.progress),
+                          next: String(level.level + 1),
+                        })
+                      : fill(strings.ladder.toNext, {
+                          name: level.next.name,
+                          xp: String(level.next.xp),
+                        }),
                 },
               ]}
             />
@@ -406,7 +413,7 @@ function SaveProgressOffer({ opening, onSave }: { opening: Opening<Account>; onS
   );
 }
 
-/** The ladder of the Level names under the Level card, captioned by range of Levels (board 10.8). */
+/** The row of the Level names under the Level card, captioned by range of Levels (owner decisions 12, 16). */
 function ProfileLadder({ level }: { level: LevelState }) {
   const { ladder } = strings;
   const upper = (text: string) => text.toLocaleUpperCase(edition.locale);
@@ -416,6 +423,7 @@ function ProfileLadder({ level }: { level: LevelState }) {
       rungs={level.ladder.map(({ name, band, state }) => ({
         name,
         state,
+        first: band.first,
         caption:
           band.last === undefined
             ? fill(ladder.rangeFrom, { from: String(band.first) })
@@ -426,7 +434,12 @@ function ProfileLadder({ level }: { level: LevelState }) {
       toNext={
         level.next === undefined
           ? undefined
-          : fill(ladder.toNext, { name: upper(level.next.name), xp: String(level.next.xp) })
+          : {
+              text: upper(
+                fill(ladder.toNext, { name: level.next.name, xp: String(level.next.xp) }),
+              ),
+              share: 1 - level.next.xp / level.next.span,
+            }
       }
     />
   );
