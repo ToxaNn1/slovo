@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { FontSizeSchema, TextSizeSchema, ThemeSchema } from '../edition';
 import { TextSchema } from '../shared';
-import { PluralSchema, pluralOf, templateOf } from './shared';
+import { PluralLabelSchema, PluralSchema, pluralOf, templateOf } from './shared';
 
 export const SettingsStringsSchema = z.strictObject({
   /** The Settings screen title. */
@@ -277,7 +277,7 @@ export const SettingsStringsSchema = z.strictObject({
     breakCard: z.strictObject({
       /** The kicker, e.g. «ПЕРЕРВА». */
       kicker: TextSchema,
-      /** The paused Streak, e.g. «Серія 12 на паузі». */
+      /** The paused Streak, e.g. «Серія на паузі: 12». */
       paused: templateOf('count'),
       /** The Break's last day, e.g. «Перерва триває до 12 листопада включно.» */
       until: templateOf('date'),
@@ -291,10 +291,10 @@ export const SettingsStringsSchema = z.strictObject({
       held: templateOf('count'),
       /** What a freeze does. */
       explanation: TextSchema,
-      /** The Streak tile, e.g. «12 днів поспіль». */
-      streakDays: PluralSchema,
-      /** The days the freezes saved in the current Streak, e.g. «1 день врятовано». */
-      saved: PluralSchema,
+      /** The caption under the Streak tile's big number, e.g. «днів поспіль». */
+      streakDays: PluralLabelSchema,
+      /** The caption under the big number of days the freezes saved, e.g. «заморозка врятувала день». */
+      saved: PluralLabelSchema,
     }),
     /** An earned Badge stamped on red (board 10.7). */
     badgeStamp: z.strictObject({

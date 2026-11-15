@@ -541,6 +541,18 @@ export const typeRoles = {
   breakUntil: role('ui', '500', 15, 21),
   /** The next Break's date under the Break card's strip. */
   breakNext: role('ui', '500', 13, 18),
+  /** «Заморозка серії» over the Streak freeze card (p2). */
+  freezeTitle: role('word', '900', 20, 22),
+  /** The cream chip of the freezes held on the Streak freeze card. */
+  freezeChip: role('word', '800', 12, 12),
+  /** What a freeze does, on the Streak freeze card. */
+  freezeText: role('ui', '400', 15, 22),
+  /** The number of a day in the Streak freeze card's strip. */
+  freezeDay: role('ui', '700', 13, 16),
+  /** The big number of a tile under the Streak freeze card. */
+  freezeNumber: role('word', '900', 34, 34),
+  /** The caption under a tile's big number, declined by it. */
+  freezeCaption: role('ui', '500', 13, 16),
   /** The name of the screen before, beside the back tile that returns to it. */
   backLink: role('ui', '500', 14, 17),
   /** The label of an action a list row's swipe shows. */

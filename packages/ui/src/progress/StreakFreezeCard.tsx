@@ -1,57 +1,32 @@
 import type { CalendarDay } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Line } from 'react-native-svg';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { calendarDay, freezeCard, space, typeStyle } from '../tokens';
+import { freezeCard, typeStyle } from '../tokens';
+import { Frost } from './ActiveDaysCalendar';
 import { dayLabel } from './day-label';
 
-const { frost } = freezeCard;
-
-/** The frost on a frozen day: three strokes crossing, as a snowflake. */
-function Frost({ color }: { color: string }) {
-  const half = frost.box / 2;
-  return (
-    <Svg width={frost.box} height={frost.box} style={styles.frost}>
-      {[0, 60, 120].map((angle) => {
-        const turn = (angle * Math.PI) / 180;
-        const dx = Math.sin(turn) * half;
-        const dy = Math.cos(turn) * half;
-        return (
-          <Line
-            key={angle}
-            x1={half - dx}
-            y1={half - dy}
-            x2={half + dx}
-            y2={half + dy}
-            stroke={color}
-            strokeWidth={frost.stroke}
-            strokeLinecap="round"
-          />
-        );
-      })}
-    </Svg>
-  );
-}
-
-/** One day of the strip: an Active Day red, a frozen day cream with frost, today outlined in red. */
+/**
+ * One day of the strip, a square: an Active Day red, a frozen day cream under
+ * the calendar's frost. Today is no different from any other day: red once
+ * active, a plain tile until then.
+ */
 function Day({ day }: { day: CalendarDay }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  // The number on red is the ink of the light Theme in both Themes, as on every red face.
-  const keyInk = useSchemeColors('light').ink;
+  // Red and cream look the same in both Themes, so their number is the light Theme's ink.
+  const key = useSchemeColors('light');
   const { strings, voice } = useEdition();
+  const active = { face: colors.accent, number: key.ink };
+  const plain = { face: colors.tile, number: colors.muted };
   const look = {
-    active: { face: colors.accent, number: keyInk },
-    today: {
-      face: day.state === 'today' && day.active ? colors.accent : colors.background,
-      number: day.state === 'today' && day.active ? keyInk : colors.ink,
-    },
-    missed: { face: colors.tile, number: colors.muted },
-    frozen: { face: colors.highlight, number: colors.ink },
+    active,
+    today: day.state === 'today' && day.active ? active : { ...plain, number: colors.ink },
+    missed: plain,
+    frozen: { face: key.background, number: key.ink },
     break: { face: colors.surfaceSunken, number: colors.muted },
-    future: { face: colors.tile, number: colors.muted },
+    future: plain,
   }[day.state];
   return (
     <View
@@ -59,23 +34,20 @@ function Day({ day }: { day: CalendarDay }) {
       accessible
       accessibilityLabel={dayLabel(strings, day)}
       {...voice}
-      style={[
-        styles.day,
-        { backgroundColor: look.face },
-        day.state === 'today' && [styles.today, { borderColor: colors.accent }],
-      ]}
+      style={[styles.day, { backgroundColor: look.face }]}
     >
-      <Text style={[typeStyle('calendarDay', tokens), { color: look.number }]}>{day.day}</Text>
-      {day.state === 'frozen' && <Frost color={colors.ink} />}
+      {day.state === 'frozen' && <Frost />}
+      <Text style={[typeStyle('freezeDay', tokens), { color: look.number }]}>{day.day}</Text>
     </View>
   );
 }
 
 /**
  * The Profile's Streak freeze card (p2, ADR 0085): an ink card titled
- * «Заморозка серії» with a red chip of the freezes `held`, what a freeze
- * does, the 7 `days` ending today, a frozen one cream with frost, and two
- * tiles, the Streak and the days the freezes `saved` in it.
+ * «Заморозка серії» with a cream chip of the freezes `held`, what a freeze
+ * does and the 7 `days` ending today; under it two tiles, each a big number
+ * over its caption declined by it: the Streak in red, and the days the
+ * freezes `saved` in it.
  */
 export function StreakFreezeCard({
   held,
@@ -92,72 +64,92 @@ export function StreakFreezeCard({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const keyInk = useSchemeColors('light').ink;
+  // The chip is cream in both Themes (owner's decision 7), so its text is the light Theme's ink.
+  const key = useSchemeColors('light');
   const { strings, voice, count } = useEdition();
   const words = strings.settings.profile.freezeCard;
-  const tile = (key: string, text: string) => (
-    <View key={key} style={[styles.tile, { backgroundColor: colors.background }]}>
-      <Text {...voice} style={[typeStyle('rowLabel', tokens), { color: colors.ink }]}>
-        {text}
+  const tile = (name: string, number: number, caption: string, color: string) => (
+    <View
+      key={name}
+      accessible
+      accessibilityLabel={`${String(number)} ${caption}`}
+      {...voice}
+      style={[styles.tile, { backgroundColor: colors.surfaceSunken }]}
+    >
+      <Text maxFontSizeMultiplier={1.4} style={[typeStyle('freezeNumber', tokens), { color }]}>
+        {String(number)}
       </Text>
+      <Text style={[typeStyle('freezeCaption', tokens), { color: colors.muted }]}>{caption}</Text>
     </View>
   );
   return (
-    <View testID={testID} style={[styles.card, { backgroundColor: colors.ink }]}>
-      <View style={styles.head}>
-        <Text
-          accessibilityRole="header"
-          {...voice}
-          style={[typeStyle('heading', tokens), styles.title, { color: colors.background }]}
-        >
-          {words.title}
-        </Text>
-        <View style={[styles.chip, { backgroundColor: colors.accent }]}>
-          <Text {...voice} style={[typeStyle('labelChip', tokens), { color: keyInk }]}>
-            {fill(words.held, { count: String(held) })}
+    <View testID={testID} style={styles.block}>
+      <View style={[styles.card, { backgroundColor: colors.ink }]}>
+        <View style={styles.head}>
+          <Text
+            accessibilityRole="header"
+            {...voice}
+            style={[typeStyle('freezeTitle', tokens), styles.title, { color: colors.background }]}
+          >
+            {words.title}
           </Text>
+          <View style={[styles.chip, { backgroundColor: key.background }]}>
+            <Text {...voice} style={[typeStyle('freezeChip', tokens), { color: key.ink }]}>
+              {fill(words.held, { count: String(held) })}
+            </Text>
+          </View>
+        </View>
+        <Text
+          {...voice}
+          style={[typeStyle('freezeText', tokens), styles.text, { color: colors.background }]}
+        >
+          {words.explanation}
+        </Text>
+        <View style={styles.strip}>
+          {days.map((day) => (
+            <Day key={day.date} day={day} />
+          ))}
         </View>
       </View>
-      <Text {...voice} style={[typeStyle('profileText', tokens), { color: colors.background }]}>
-        {words.explanation}
-      </Text>
-      <View style={styles.strip}>
-        {days.map((day) => (
-          <Day key={day.date} day={day} />
-        ))}
-      </View>
       <View style={styles.tiles}>
-        {tile('streak', count(words.streakDays, streak))}
-        {tile('saved', count(words.saved, saved))}
+        {tile('streak', streak, count(words.streakDays, streak), colors.accent)}
+        {tile('saved', saved, count(words.saved, saved), colors.ink)}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  block: { gap: freezeCard.gap },
   card: {
     gap: freezeCard.gap,
     padding: freezeCard.padding,
     borderRadius: freezeCard.radius,
     overflow: 'hidden',
   },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  head: { flexDirection: 'row', alignItems: 'center', gap: freezeCard.tiles.gap },
   title: { flex: 1 },
   chip: {
+    height: freezeCard.chip.height,
     paddingHorizontal: freezeCard.chip.paddingX,
-    paddingVertical: freezeCard.chip.paddingY,
     borderRadius: freezeCard.chip.radius,
+    justifyContent: 'center',
   },
-  strip: { flexDirection: 'row', gap: calendarDay.gap },
+  text: { opacity: 0.8 },
+  strip: { flexDirection: 'row', gap: freezeCard.strip.gap },
   day: {
     flex: 1,
-    height: calendarDay.height,
-    borderRadius: calendarDay.radius,
+    aspectRatio: 1,
+    borderRadius: freezeCard.day.radius,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  today: { borderWidth: calendarDay.futureBorder },
-  frost: { position: 'absolute', top: space[1], right: space[1] },
-  tiles: { flexDirection: 'row', gap: freezeCard.tilesGap },
-  tile: { flex: 1, padding: freezeCard.tilePadding, borderRadius: freezeCard.tileRadius },
+  tiles: { flexDirection: 'row', gap: freezeCard.tiles.gap },
+  tile: {
+    flex: 1,
+    gap: freezeCard.tiles.inside,
+    padding: freezeCard.tiles.padding,
+    borderRadius: freezeCard.tiles.radius,
+  },
 });

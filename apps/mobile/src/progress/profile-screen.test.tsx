@@ -414,8 +414,9 @@ describe('the Profile', () => {
       expect(card.getByText(words.title)).toBeOnTheScreen();
       expect(card.getByText(fill(words.held, { count: '1' }))).toBeOnTheScreen();
       expect(card.getByText(words.explanation)).toBeOnTheScreen();
-      expect(card.getByText(fill(words.streakDays.few ?? '', { count: '3' }))).toBeOnTheScreen();
-      expect(card.getByText(fill(words.saved.one ?? '', { count: '1' }))).toBeOnTheScreen();
+      // Each tile reads its big number with its caption declined for it.
+      expect(card.getByLabelText(`3 ${words.streakDays.few ?? ''}`)).toBeOnTheScreen();
+      expect(card.getByLabelText(`1 ${words.saved.one ?? ''}`)).toBeOnTheScreen();
       const days = editionStrings.stats.calendar.days;
       const october = editionStrings.dates.months[9] ?? '';
       for (const label of [

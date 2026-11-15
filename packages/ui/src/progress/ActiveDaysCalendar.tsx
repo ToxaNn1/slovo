@@ -79,8 +79,11 @@ export function CalendarDayTile({
   );
 }
 
-/** The frost over a frozen day: diagonal stripes across the tile, as board 10 draws it. */
-function Frost() {
+/**
+ * The frost over a frozen day: diagonal stripes across the tile, as board 10
+ * draws it; the Streak freeze card's strip lays it over its frozen day too.
+ */
+export function Frost() {
   const count = Math.ceil((calendarDay.height * 3) / calendarDay.frost.step);
   return (
     <View style={styles.frost} pointerEvents="none">
