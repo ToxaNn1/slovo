@@ -21,3 +21,5 @@ Never end your turn while work remains; push a `WAITING until <UTC>` line here b
 - 2026-11-15T17:14:23Z safety net takeover (last commit 2026-11-15T16:55:20Z)
 - 2026-11-15T17:15:55Z safety net: #1914 #1916 #1917 #1920 all DONE; merged locally into integration (conflicts: badges-screen test line, ui tokens base.ts both sides); running checks
 - 15.11 ~17:20Z safety net: merged #1914 #1916 #1917 #1920 (f247f9594), launched #1918.
+- 15.11 safety net: PR #1923 body updated (Closes +4, questions, checks, texts). Note for #1921: badgeStamp.done «ГОТОВО» → «ЗАБРАТИ» (decision 5) still open.
+WAITING until 2026-11-15T18:10:20Z: #1918 DONE commit on feat/1918-badge-stamp-toast
