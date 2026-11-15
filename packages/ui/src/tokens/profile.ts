@@ -296,17 +296,18 @@ export const breakCard = {
   nextInset: 4,
 } as const;
 
-/** The Profile's Streak freeze card (p2), an ink card: its chip, its 7-day strip and the frost on a frozen day. */
+/**
+ * The Profile's Streak freeze card (p2): an ink card with its chip and its
+ * 7-day strip of square days, and under it a row of two sunken tiles.
+ */
 export const freezeCard = {
   padding: 20,
   radius: 24,
   gap: 14,
-  chip: { paddingX: 10, paddingY: 4, radius: 999 },
-  tilesGap: 10,
-  tilePadding: 12,
-  tileRadius: 16,
-  /** The frost mark of a frozen day: its box and its stroke. */
-  frost: { box: 14, stroke: 1.6 },
+  chip: { height: 30, paddingX: 10, radius: 9 },
+  strip: { gap: 6 },
+  day: { radius: 9 },
+  tiles: { gap: 12, padding: 16, radius: 20, inside: 8 },
 } as const;
 
 /**
