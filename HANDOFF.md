@@ -8,9 +8,9 @@ Graph: 1910,1912 → 1911(1910) 1913(1910) 1915(1910) 1919(1910) → 1914(1912,1
 Inputs: reports/ (owner decisions 1–24 + comparison reports), HANDBOOK-profil.md (owner's handbook page copy).
 Never end your turn while work remains; push a `WAITING until <UTC>` line here before any wait >10 min. At the very end: `STATUS: FINISHED` first line.
 ## State
-- feat/1909-profile-walkthrough 26f06f5b2 (pushed): main 1468a3269, #1910 #1912 #1911 #1913 #1915 #1919 merged (+ test fix for #1913). Draft PR #1923, body has Closes + checks + texts.
-- Running in the cloud (16:55Z): #1914 feat/1914-badges-families (alone on edition.json/contracts switch/CONTEXT.md), #1916 feat/1916-profile-order, #1917 feat/1917-badge-tap-routing, #1920 feat/1920-new-level-screen.
-- Next: #1918 after #1917; #1921 (laptop visual pass + handbook + owner checks) after all; then code-review, one fixer, PR ready (no main merge).
+- feat/1909-profile-walkthrough f247f9594 (pushed): + #1914 #1916 #1917 #1920 merged (21/21 checks green locally). Draft PR #1923.
+- Running in the cloud (17:24Z): #1918 feat/1918-badge-stamp-toast (session_01VefVQVTpdWTnN35seqGGUU).
+- Next: merge #1918 on DONE; #1921 (laptop visual pass + handbook + owner checks); then code-review, one fixer, PR ready (no main merge). PR #1923 body: add Closes #1914 #1916 #1917 #1920.
 - Cloud merge commits came with a foreign email: replay with ~/.slovo-coord/profile-1909/fix-authors.sh <integration> <ticket tip> (commit-tree, same trees; no force-push), merge the printed tip.
 - Handbook page профіль-і-бейджі: updated in #1921 from all merged reports (copy HANDBOOK-profil.md).
 ## Log
@@ -20,3 +20,4 @@ Never end your turn while work remains; push a `WAITING until <UTC>` line here b
 - 15.11 ~16:55Z merged #1911 #1913 #1915 #1919 (26f06f5b2, checks green); launched #1914 #1916 #1917 #1920.
 - 2026-11-15T17:14:23Z safety net takeover (last commit 2026-11-15T16:55:20Z)
 - 2026-11-15T17:15:55Z safety net: #1914 #1916 #1917 #1920 all DONE; merged locally into integration (conflicts: badges-screen test line, ui tokens base.ts both sides); running checks
+- 15.11 ~17:20Z safety net: merged #1914 #1916 #1917 #1920 (f247f9594), launched #1918.
