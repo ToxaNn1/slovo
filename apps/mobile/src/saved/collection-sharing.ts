@@ -85,6 +85,8 @@ export interface CollectionShareSheetProps {
  */
 export function useCollectionShareSheet(): {
   available: boolean;
+  /** Whether a link is on the way from the backend, a tap away from the share sheet or the toast. */
+  busy: boolean;
   share: (collectionId: string) => void;
   sheet: CollectionShareSheetProps;
 } {
@@ -98,9 +100,12 @@ export function useCollectionShareSheet(): {
   const [shared, setShared] = useState<{ readonly url: string; readonly message: string }>();
   /** The message for the system share sheet, once the share sheet has slid away. */
   const toShare = useRef<string>(undefined);
+  const [busy, setBusy] = useState(false);
   const share = useCallback(
     (collectionId: string) => {
+      setBusy(true);
       void latest.current.share(collectionId, strings).then((made) => {
+        setBusy(false);
         if (made.ok) setShared({ url: made.url, message: made.message });
         else showToast({ message: refusalText(made.reason) });
       });
@@ -112,6 +117,7 @@ export function useCollectionShareSheet(): {
   };
   return {
     available: sharing.available(),
+    busy,
     share,
     sheet: {
       url: shared?.url ?? '',
