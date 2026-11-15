@@ -230,11 +230,6 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
       { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
       { modeId: 'correction', entryKind: 'correction', group: 'meaning', canStart: true },
       { modeId: 'stress', entryKind: 'word', group: 'sound', canStart: true },
-      { modeId: 'pairs', entryKind: 'word', group: 'meaning', canStart: true },
-      { modeId: 'anagram', entryKind: 'word', group: 'letters', canStart: true },
-      { modeId: 'by-letters', entryKind: 'word', group: 'new', canStart: true },
-      { modeId: 'type-word', entryKind: 'correction', group: 'new', canStart: true },
-      { modeId: 'origin', entryKind: 'word', group: 'new', canStart: true },
       { modeId: 'anglicism', entryKind: 'correction', group: 'new', canStart: true },
       {
         modeId: 'idiom-meaning',
@@ -243,14 +238,6 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
         canStart: false,
         refusal: 'idioms-out-of-mix',
       },
-      {
-        modeId: 'build-idiom',
-        entryKind: 'idiom',
-        group: 'new',
-        canStart: false,
-        refusal: 'idioms-out-of-mix',
-      },
-      { modeId: 'survival', entryKind: 'correction', group: 'new', canStart: true },
       { modeId: 'timed', entryKind: 'word', group: 'speed', canStart: true },
     ]);
 

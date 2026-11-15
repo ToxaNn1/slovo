@@ -34,8 +34,24 @@ import { CROSSING_LEMMAS } from './crossing-crossword.test-support';
 const { config } = activeEditionFiles;
 
 /**
- * The UA Edition with the Games boards' switches and the given Feature Switches
- * turned off, and the others given turned on.
+ * The Game Modes and the Daily Crossword the tests play though the UA Edition
+ * hides them for now (owner, 15.11): on unless a test turns them off.
+ */
+const MODES_UNDER_TEST = [
+  'gamePairs',
+  'gameAnagram',
+  'gameTypeWord',
+  'gameByLetters',
+  'gameSurvival',
+  'gameBuildIdiom',
+  'gameOrigin',
+  'dailyCrossword',
+  'tracedCrossword',
+];
+
+/**
+ * The UA Edition with the Games boards' switches off, the hidden modes and
+ * the Daily Crossword on, the given Feature Switches turned off, and the others given turned on.
  */
 export function editionWithout(
   switchedOff: readonly string[],
@@ -47,6 +63,7 @@ export function editionWithout(
     featureSwitches: {
       ...featureSwitches,
       ...Object.fromEntries(GAMES_BOARD_SWITCHES.map((name) => [name, 'off'])),
+      ...Object.fromEntries(MODES_UNDER_TEST.map((name) => [name, 'on'])),
       ...Object.fromEntries(switchedOff.map((name) => [name, 'off'])),
       ...Object.fromEntries(switchedOn.map((name) => [name, 'on'])),
     },

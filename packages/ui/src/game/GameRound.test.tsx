@@ -1295,6 +1295,19 @@ describe('GameRound', () => {
       expect(screen.queryByTestId('game-sheet')).toBeNull();
     });
 
+    it('draws the banner’s slab over the whole banner as it is measured, not at a size in percents', async () => {
+      const shown = answeredPick(first, { form: 'pick', option: CORRECT });
+      if (shown.status !== 'answered') throw new Error('Not answered');
+      await renderRound(jest.fn(), jest.fn(), { ...shown, banner: true });
+      const banner = screen.getByTestId('game-answer-banner');
+      expect(banner.children).toHaveLength(1);
+
+      await fireEvent(banner, 'layout', { nativeEvent: { layout: { width: 393, height: 180 } } });
+
+      expect(banner.children[0]).toHaveProp('width', 393);
+      expect(banner.children[0]).toHaveProp('height', 180);
+    });
+
     it('shows the sheet and its button to the next Round when the Core says the Round waits for it', async () => {
       await renderRound(
         jest.fn(),

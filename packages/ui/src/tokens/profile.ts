@@ -299,20 +299,21 @@ export const freezeCard = {
 } as const;
 
 /**
- * The new Level screen (p6), from the design: the giant «РІВЕНЬ» with the
- * Level's number stamped into it on red, as the Badge stamp lands.
+ * The new Level screen (board 10, p6): the small turned cream «РІВЕНЬ» in
+ * the corner, the Level's giant number stamped on red under it, then the
+ * title and the line.
  */
 export const newLevelStamp = {
-  padding: { top: 110, horizontal: 28, bottom: 40 },
-  /** The number lands from this scale and turn to its rest. */
+  padding: { top: 120, horizontal: 28, bottom: 40 },
+  /** The cream kicker sits in the top corner, turned on its left edge. */
+  kicker: { left: 20, top: 92 },
+  /** The number lands from this scale and turn to its rest; the kicker keeps the rest's turn. */
   from: { scale: 3, turn: -26 },
   turn: -8,
-  /** The number overlaps the giant word's foot. */
-  numberTop: -18,
-  /** The ink frame of the stamped number. */
-  frame: 6,
-  framePadding: { vertical: 4, horizontal: 22 },
+  numberTop: 96,
   titleTop: 30,
+  lineTop: 12,
+  mascotBottom: 22,
 } as const;
 
 /** The Profile's Level ladder, from board 10.8: a card per Level name in two columns, and the bar to the next name. */

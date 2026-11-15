@@ -72,7 +72,6 @@ function Game() {
     gameOptionStamp,
     timedTwentySeconds,
     livesOverWarmup,
-    gameEndToFeed,
     plainGameReview,
   } = useShown();
   const { colors } = useTokens();
@@ -118,26 +117,14 @@ function Game() {
             actions.start(current.modeId);
           }}
           onToGames={actions.leave}
-          onToFeed={
-            gameEndToFeed
-              ? () => {
-                  actions.leave();
-                  router.navigate('/');
-                }
-              : undefined
-          }
           timeUpToFinish={timedTwentySeconds}
           review={review}
           mascot={
-            poster.kind === 'lives-over' && !livesOverWarmup ? (
-              <MascotIn state="gameEnd" onRed />
-            ) : (
-              // The board's Mascot: glad for «ВЛУЧНО!», sad for «ЩЕ РАУНД!» and «Розминка!».
-              <MascotAs
-                state={poster.kind !== 'lives-over' && poster.onTarget ? 'happy' : 'sad'}
-                onRed
-              />
-            )
+            // The board's Mascot: glad for «ВЛУЧНО!», sad for «ЩЕ РАУНД!» and «Розминка!».
+            <MascotAs
+              state={poster.kind !== 'lives-over' && poster.onTarget ? 'happy' : 'sad'}
+              onRed
+            />
           }
         />
       ) : result ? (

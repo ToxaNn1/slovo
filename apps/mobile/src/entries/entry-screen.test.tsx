@@ -60,6 +60,9 @@ let swipeMarksOn = false;
 /** Whether the Word tabs switch is on in effect: on as the Edition ships it unless a test turns it off. */
 let wordTabsOn = true;
 
+/** Whether `entryPanelAllKinds` is on in effect: on as the Edition ships it unless a test turns it off. */
+let panelAllKindsOn = true;
+
 /** The Edition in effect: as it ships, with the Swipe Marks and Word tabs switches as the test sets them. */
 const editionInEffect = (): typeof shippedEdition => ({
   ...shippedEdition,
@@ -68,7 +71,9 @@ const editionInEffect = (): typeof shippedEdition => ({
       ? swipeMarksOn
       : feature === 'wordTabs'
         ? wordTabsOn
-        : shippedEdition.isFeatureEnabled(feature),
+        : feature === 'entryPanelAllKinds'
+          ? panelAllKindsOn
+          : shippedEdition.isFeatureEnabled(feature),
 });
 
 const haptics: Haptics = {
@@ -309,6 +314,38 @@ describe('a tab too long for the Entry screen', () => {
       within(screen.getByTestId('word-tab-scroll')).getByTestId('word-history'),
     ).toBeOnTheScreen();
     expect(scrollsAround(screen.getByTestId('word-tab-panel'))).toEqual([]);
+  });
+});
+
+describe('the Entry screen of a kind other than a Word (owner 15.11)', () => {
+  it('sets a Correction in the red panel as a Word: its struck form and the kind under it, its tabs on the ground with no card frame', async () => {
+    await renderEntry('c_vezhlyvyi');
+
+    const panel = screen.getByTestId('entry-panel');
+    expect(within(panel).getByTestId('correction-non-standard')).toBeOnTheScreen();
+    expect(within(panel).getByTestId('entry-panel-kind')).toHaveTextContent('Виправлення');
+    expect(screen.queryByTestId('correction-card')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('correction-kicker')).not.toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('entry-body')).getByTestId('correction-tab-panel'),
+    ).toBeOnTheScreen();
+  });
+
+  it('keeps a Correction’s corner at the panel’s top right with the Swipe Marks switch on', async () => {
+    swipeMarksOn = true;
+    await renderEntry('c_vezhlyvyi');
+
+    expect(within(screen.getByTestId('entry-panel')).getByTestId('entry-corner')).toBeOnTheScreen();
+    swipeMarksOn = false;
+  });
+
+  it('keeps a Correction’s card under a bare panel with `entryPanelAllKinds` off', async () => {
+    panelAllKindsOn = false;
+    await renderEntry('c_vezhlyvyi');
+
+    expect(screen.getByTestId('correction-card')).toBeOnTheScreen();
+    expect(screen.queryByTestId('entry-panel-kind')).not.toBeOnTheScreen();
+    panelAllKindsOn = true;
   });
 });
 

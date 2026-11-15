@@ -101,6 +101,8 @@ export function openMistakeReports({
   /** What the waits between tries are jittered by. */
   random: Random;
 }): MistakeReports {
+  // A milestone's version, such as 0.9 (ADR 0044), goes out in the three parts the report's contract takes.
+  const reportedVersion = /^\d+\.\d+$/.test(appVersion) ? `${appVersion}.0` : appVersion;
   // One change of the queue at a time, a send included, so no report goes out twice.
   const inTurn = createInTurn();
   const available = () => edition.isFeatureEnabled('mistakeReports');
@@ -189,7 +191,7 @@ export function openMistakeReports({
       const parsed = MistakeReportSchema.safeParse({
         ...draft,
         editionId: edition.id,
-        appVersion,
+        appVersion: reportedVersion,
         contentVersion: contentVersion(),
       });
       if (!parsed.success) return 'invalid';
