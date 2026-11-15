@@ -1356,3 +1356,30 @@ describe('the next morning notification', () => {
     expect(await app.notifications.nextMorning()).toBeUndefined();
   });
 });
+
+describe('the plan made again', () => {
+  it('gives a new time the Words after the furthest planned, not the Word of a notification passed unopened', async () => {
+    const time = fakeClock(start);
+    const { app, scheduler } = await run({ clock: time.clock });
+    const passed = wordAt(planOf(scheduler), '2026-10-14T13:00');
+
+    time.set('2026-10-14T13:30:00+03:00');
+    await app.notifications.keepTime('07:00');
+
+    const plan = planOf(scheduler);
+    expect(plan.map(wordIdOf)).not.toContain(passed);
+    expect(wordAt(plan, '2026-10-15T07:00')).not.toBe(passed);
+  });
+
+  it('titles every notification with the one template of an Edition with one, and alternates two', async () => {
+    const one = await run({ titles: ['Одне: {word}'] });
+    const two = await run({ titles: ['А: {word}', 'Б: {word}'] });
+
+    expect(new Set(planOf(one.scheduler).map((n) => templateOf(titleOf(n))))).toEqual(
+      new Set(['Одне']),
+    );
+    const used = planOf(two.scheduler).map((n) => templateOf(titleOf(n)));
+    expect(used.slice(0, 4)).toEqual(['А', 'Б', 'А', 'Б']);
+    expect(used.slice(1).every((template, index) => template !== used[index])).toBe(true);
+  });
+});
