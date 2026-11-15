@@ -9,6 +9,7 @@ import { memoryMediaStore } from './media/media-store';
 import { randomInt, randomUUID } from 'node:crypto';
 import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { createServer, connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -227,6 +228,44 @@ export function migrationsBefore(suffix: string): string {
 export function testDatabaseUrl(): string {
   if (fileDatabase === undefined) throw new Error('the test file has no database yet');
   return fileDatabase.url;
+}
+
+/**
+ * The database at `url` behind a proxy that counts the bytes the database
+ * sends: what a backend on `proxied.url` reads, as the database's network
+ * transfer bills it. `read(run)` gives the bytes read while `run` ran.
+ */
+export async function countingProxy(url: string) {
+  const target = new URL(url);
+  let bytes = 0;
+  const server = createServer((client) => {
+    const upstream = connect(Number(target.port), target.hostname);
+    upstream.on('data', (chunk: Buffer) => {
+      bytes += chunk.length;
+    });
+    client.pipe(upstream);
+    upstream.pipe(client);
+    client.on('error', () => upstream.destroy());
+    upstream.on('error', () => client.destroy());
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address();
+  if (address === null || typeof address === 'string') throw new Error('the proxy has no port');
+  const proxied = new URL(url);
+  proxied.hostname = '127.0.0.1';
+  proxied.port = String(address.port);
+  return {
+    url: proxied.toString(),
+    read: async (run: () => Promise<unknown>): Promise<number> => {
+      const before = bytes;
+      await run();
+      return bytes - before;
+    },
+    /** Takes no new connections; those open end with the pool that holds them. */
+    close: () => {
+      server.close();
+    },
+  };
 }
 
 // Timers stay real: only the time a test reads stands still.

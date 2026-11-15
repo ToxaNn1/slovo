@@ -3,9 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { dateAfter } from '@slovo/content-rules';
+import type { Word } from '@slovo/contracts';
 import type { ApiClient } from '@slovo/contracts/api';
 import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
+import { sql } from 'drizzle-orm';
 import { afterAll, describe, expect, it, onTestFinished } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
@@ -15,6 +17,7 @@ import { contentIds } from '../database/schema';
 import { systemRandom } from '../random';
 import {
   adminCommandDeps,
+  countingProxy,
   createTestDatabase,
   importedDatabases,
   silentLogger,
@@ -40,7 +43,12 @@ const importedDatabase = importedDatabases('uk', folder);
 async function contentBackend({ imported = true }: { imported?: boolean } = {}) {
   const own = imported ? await importedDatabase() : await createTestDatabase(testDatabaseUrl());
   onTestFinished(() => own.drop());
-  const database = createDatabase(own.url, silentLogger);
+  // The backend reads through a proxy that counts what the database sends it.
+  const proxy = await countingProxy(own.url);
+  onTestFinished(() => {
+    proxy.close();
+  });
+  const database = createDatabase(proxy.url, silentLogger);
   onTestFinished(() => database.close());
   const backend = testApp({ database });
   const admin = createAdminAccess({
@@ -60,7 +68,7 @@ async function contentBackend({ imported = true }: { imported?: boolean } = {}) 
   const { batchId } = imported
     ? await agent.admin.content.openBatch({ editionId: 'uk' })
     : { batchId: '00000000-0000-4000-8000-000000000000' };
-  return { ...backend, database, admin, agent, batchId };
+  return { ...backend, database, admin, agent, batchId, read: proxy.read };
 }
 
 const snapshotOf = (client: ApiClient) => client.content.snapshot({ editionId: 'uk' });
@@ -100,6 +108,38 @@ describe('the content write API', () => {
     expect(after.words.find(({ id }) => id === WORD_ID)?.primaryDefinition).toBe(
       'Кільце з металу чи дерева.',
     );
+  });
+
+  it("reads the Edition's content once, not on every write and report: a write reads its own record", async () => {
+    const { client, agent, batchId, database, read } = await contentBackend();
+    const words = (await snapshotOf(client)).words.filter((word) => !word.retired);
+    const [first, second] = words;
+    if (first === undefined || second === undefined) throw new Error('too few Words');
+    const [stored] = (
+      await database.db.execute<{ bytes: number }>(
+        sql`select sum(octet_length(fields::text))::int as bytes from content_words`,
+      )
+    ).rows;
+    const contentBytes = stored?.bytes ?? 0;
+    const edit = (word: Word) => () =>
+      agent.admin.content.edit({
+        editionId: 'uk',
+        kind: 'word',
+        id: word.id,
+        batchId,
+        recordVersion: 1,
+        fields: { ...word, primaryDefinition: `Змінено: ${word.primaryDefinition}` },
+      });
+
+    // The first read of the content at a version reads it whole.
+    expect(await read(edit(first))).toBeGreaterThan(contentBytes);
+    const later = await read(edit(second));
+    const report = await read(() => agent.admin.content.report({ editionId: 'uk' }));
+
+    // The Words alone are hundreds of kilobytes; a write and a report after it read a few.
+    expect(contentBytes).toBeGreaterThan(500_000);
+    expect(later).toBeLessThan(50_000);
+    expect(report).toBeLessThan(50_000);
   });
 
   it('refuses a save that breaks a rule by the rule name, and the content version stays', async () => {

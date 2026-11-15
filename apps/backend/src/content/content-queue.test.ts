@@ -15,6 +15,7 @@ import { mistakeReports } from '../database/schema';
 import { systemRandom } from '../random';
 import {
   adminCommandDeps,
+  countingProxy,
   importedDatabases,
   signedInAdmin,
   silentLogger,
@@ -36,7 +37,12 @@ const importedDatabase = importedDatabases('uk', folder);
 async function queueBackend() {
   const own = await importedDatabase();
   onTestFinished(() => own.drop());
-  const database = createDatabase(own.url, silentLogger);
+  // The backend reads through a proxy that counts what the database sends it.
+  const proxy = await countingProxy(own.url);
+  onTestFinished(() => {
+    proxy.close();
+  });
+  const database = createDatabase(proxy.url, silentLogger);
   onTestFinished(() => database.close());
   const backend = testApp({ database });
   const admin = createAdminAccess({
@@ -57,7 +63,15 @@ async function queueBackend() {
   if (token === undefined) throw new Error('no Агент token');
   const owner = (await signedInAdmin(backend, 'owner')).client;
   const adminUser = (await signedInAdmin(backend, 'admin')).client;
-  return { ...backend, database, token, agent: backend.clientOf(token), owner, adminUser };
+  return {
+    ...backend,
+    database,
+    token,
+    agent: backend.clientOf(token),
+    owner,
+    adminUser,
+    read: proxy.read,
+  };
 }
 
 const snapshotOf = (client: ApiClient) => client.content.snapshot({ editionId: 'uk' });
@@ -134,11 +148,53 @@ describe('the Content queue', () => {
     expect(batches.map(({ id }) => id)).toEqual([later.batchId]);
   });
 
-  it('lists an open batch with its counts and author, and a reviewed one leaves the queue', async () => {
-    const { client, agent, adminUser } = await queueBackend();
-    const { batchId } = await agentBatch(client, agent);
+  it('checks a save against the writes before it and the rollback between them', async () => {
+    const { client, agent, owner } = await queueBackend();
+    const { batchId, createdId } = await agentBatch(client, agent);
+    const created = await wordOf(client, createdId);
+    const { id: _id, ...copy } = created;
+    const later = await agent.admin.content.openBatch({ editionId: 'uk' });
+    const create = () =>
+      agent.admin.content.create({
+        editionId: 'uk',
+        kind: 'word',
+        batchId: later.batchId,
+        fields: copy,
+      });
 
-    expect((await adminUser.admin.contentQueue.batches({})).batches).toEqual([
+    await expect(create()).rejects.toMatchObject({
+      code: 'REFUSED',
+      data: {
+        refusals: expect.arrayContaining([
+          expect.objectContaining({ rule: 'unique-lemma' }),
+        ]) as unknown,
+      },
+    });
+    await owner.admin.contentQueue.rollback({ batchId, reason: 'Погана пачка' });
+
+    // The rollback retired the Word: its Lemma and Definition are free again.
+    expect(await create()).toMatchObject({ recordVersion: 1 });
+  });
+
+  it('lists an open batch with its counts and author, and a reviewed one leaves the queue', async () => {
+    const { client, agent, adminUser, read } = await queueBackend();
+    const { batchId, createdId } = await agentBatch(client, agent);
+    // A second write of a record the batch created counts it once, as added.
+    const created = await wordOf(client, createdId);
+    await agent.admin.content.edit({
+      editionId: 'uk',
+      kind: 'word',
+      id: createdId,
+      batchId,
+      recordVersion: 1,
+      fields: { ...created, primaryDefinition: `Знову: ${created.primaryDefinition}` },
+    });
+    let listed: unknown;
+    const bytes = await read(async () => {
+      listed = (await adminUser.admin.contentQueue.batches({})).batches;
+    });
+
+    expect(listed).toEqual([
       expect.objectContaining({
         id: batchId,
         editionId: 'uk',
@@ -147,6 +203,8 @@ describe('the Content queue', () => {
         changed: 2,
       }),
     ]);
+    // Counted in the database: the four writes' logged fields are not read.
+    expect(bytes).toBeLessThan(5_000);
     await adminUser.admin.contentQueue.review({ batchId, reason: 'Переглянуто' });
 
     expect((await adminUser.admin.contentQueue.batches({})).batches).toEqual([]);
