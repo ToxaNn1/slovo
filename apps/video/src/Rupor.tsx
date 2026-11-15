@@ -1,5 +1,5 @@
 import decor from '../../../editions/uk/decor/decor.json';
-import { light } from './look';
+import { dark, light } from './look';
 
 type Shape = { path: string; fill?: string; stroke?: string; width?: number; opacity?: number };
 type State = keyof typeof decor.mascot.eyes;
@@ -8,20 +8,23 @@ const mascot = decor.mascot;
 
 /**
  * The Mascot Рупор drawn from the Edition's vector, as the app draws it:
- * red body and black ink on cream, cream body and black ink on red.
+ * red body and black ink on cream, cream body and black ink on red,
+ * red body and cream ink on the dark ground.
  */
 export function Rupor({
   state,
   width,
-  onRed = false,
+  ground = 'cream',
 }: {
   state: State;
   width: number;
-  onRed?: boolean;
+  ground?: 'cream' | 'red' | 'dark';
 }) {
-  const paints = onRed
-    ? { body: light.background, ink: light.ink, accent: light.ink }
-    : { body: light.accent, ink: light.ink, accent: light.accent };
+  const paints = {
+    cream: { body: light.accent, ink: light.ink, accent: light.accent },
+    red: { body: light.background, ink: light.ink, accent: light.ink },
+    dark: { body: dark.accent, ink: dark.ink, accent: dark.accent },
+  }[ground];
   const paint = (role: string) => (role in paints ? paints[role as keyof typeof paints] : role);
   const shapes = (list: readonly Shape[]) =>
     list.map((shape, index) =>

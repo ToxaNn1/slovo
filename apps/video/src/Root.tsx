@@ -2,6 +2,7 @@ import { Composition } from 'remotion';
 
 import { Board, boardLength } from './board/Board';
 import { FindMistake, findMistakeLength } from './fix/FindMistake';
+import { HeroLoop, heroLoopLength } from './hero/HeroLoop';
 import './look';
 import { SayNicerCompositions } from './nicer/SayNicerRoot';
 import { OneWordCompositions } from './oneword/OneWordRoot';
@@ -41,6 +42,15 @@ export function Root() {
         fps={30}
         width={1080}
         height={1920}
+      />
+      {/* The landing Hero's silent 4:5 loop: Рупор shouts ГРИЗОТА into its tiles. */}
+      <Composition
+        id="HeroLoop"
+        component={HeroLoop}
+        durationInFrames={heroLoopLength}
+        fps={30}
+        width={1080}
+        height={1350}
       />
       {/* «Тобі бракувало слова», one Composition per episode. */}
       <Composition
