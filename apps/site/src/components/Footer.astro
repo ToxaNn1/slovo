@@ -1,12 +1,16 @@
+---
+import { sitePath } from '../site-path';
+---
+
 <footer class="bg-coal text-cream">
   <div class="mx-auto flex max-w-[1312px] flex-wrap gap-x-8 gap-y-3 px-[clamp(20px,4vw,56px)] pt-[clamp(40px,5vw,64px)] text-[15px] font-semibold">
-    <a href="#faq" class="text-cream">
+    <a href={sitePath('#faq')} class="text-cream">
       Підтримка
     </a>
-    <a href="uk/privacy" class="text-cream">
+    <a href={sitePath('uk/privacy')} class="text-cream">
       Політика конфіденційності
     </a>
-    <a href="uk/terms" class="text-cream">
+    <a href={sitePath('uk/terms')} class="text-cream">
       Умови
     </a>
     <span class="ml-auto text-coal-mute">© 2026 SLOVO</span>

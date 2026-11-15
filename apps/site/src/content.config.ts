@@ -6,7 +6,10 @@ import { EDITIONS_DIR, listEditions, openEdition } from '@slovo/language-pack/ed
 import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
 
+import { ContentSnapshotSchema } from '@slovo/contracts/api';
+
 import { LANDING_EDITION, LandingEditionSchema, readLandingEdition } from './edition';
+import { readLiveWords, snapshotSource } from './snapshot';
 
 /**
  * The landing's Edition (ADR 0071), one entry by its id. The files are read
@@ -50,4 +53,24 @@ const legal = defineCollection({
   schema: z.object({ title: z.string().min(1), lang: z.string().min(2) }),
 });
 
-export const collections = { edition, legal };
+/**
+ * The landing's live Words (ADR 0148), by id: from the backend's content
+ * snapshot when SLOVO_BACKEND_URL is set, from the seed snapshot when not.
+ * The snapshot is parsed once, here; a failed read fails the build.
+ */
+const words = defineCollection({
+  loader: {
+    name: 'live-words',
+    async load(context) {
+      const live = await readLiveWords(snapshotSource(process.env));
+      context.store.clear();
+      for (const word of live) {
+        const data = await context.parseData({ id: word.id, data: word });
+        context.store.set({ id: word.id, data });
+      }
+    },
+  },
+  schema: ContentSnapshotSchema.shape.words.element,
+});
+
+export const collections = { edition, legal, words };

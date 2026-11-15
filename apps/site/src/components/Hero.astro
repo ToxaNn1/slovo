@@ -1,18 +1,10 @@
 ---
-import { formatCount, goal } from '../goal';
+import { formatCount } from '../goal';
+import { siteWords } from '../site-words';
 import AppStoreBadge from './AppStoreBadge.astro';
-import LetterTiles, { type Tile } from './LetterTiles.astro';
-import Mascot from './Mascot.astro';
 
-const tiles: Tile[] = [
-  { ch: 'Г', tilt: 'rotate(-6deg)' },
-  { ch: 'Р', tilt: 'translateY(-8px) rotate(4deg)' },
-  { ch: 'И', tilt: 'rotate(-2deg)' },
-  { ch: 'З', tilt: 'translateY(-8px) rotate(5deg)', ground: 'red' },
-  { ch: 'О́', tilt: 'rotate(-5deg)' },
-  { ch: 'Т', tilt: 'translateY(-5px) rotate(3deg)' },
-  { ch: 'А', tilt: 'rotate(-3deg)' },
-];
+const { words } = await siteWords();
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 
 <section class="relative overflow-hidden bg-red text-coal">
@@ -29,23 +21,39 @@ const tiles: Tile[] = [
       </p>
       <AppStoreBadge />
     </div>
-    <div class="relative flex w-full max-w-[480px] flex-col gap-5 justify-self-end">
-      <div class="relative grid aspect-[4/5] place-items-center overflow-hidden rounded-[18px] bg-coal-sunk [--ink:var(--cream)]">
-        <Mascot state="shouts" class="w-[62%]" />
+    <div class="relative w-full max-w-[480px] justify-self-end">
+      <div class="relative aspect-[4/5] overflow-hidden rounded-[18px] bg-coal-sunk">
+        <video
+          data-hero-loop
+          class="absolute inset-0 size-full object-cover"
+          src={`${base}video/hero-loop.mp4`}
+          poster={`${base}video/hero-loop.jpg`}
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="metadata"
+          aria-hidden="true"
+        ></video>
       </div>
-      <LetterTiles
-        tiles={tiles}
-        class="grid-cols-[repeat(7,minmax(0,1fr))] pt-3.5"
-        size="text-[clamp(17px,2.4vw,30px)]"
-      />
     </div>
   </div>
   <div class="relative mx-auto flex max-w-[1312px] flex-wrap items-baseline gap-x-5 gap-y-2 px-[clamp(20px,4vw,56px)] pt-[clamp(24px,3vw,40px)] pb-[clamp(32px,4vw,56px)] text-cream">
     <span class="font-word text-[clamp(30px,3.4vw,48px)] font-black tracking-[-0.03em] whitespace-nowrap text-red tabular-nums">
-      {formatCount(goal.confirmed)}
+      {formatCount(words.length)}
     </span>
     <span class="max-w-[34ch] text-[17px] font-semibold">
-      рідкісних слів уже повернуто у вжиток. Мета — мільйон.
+      рідкісних слів уже в SLOVO. Мета — мільйон.
     </span>
   </div>
 </section>
+
+<script>
+  // Reduced motion keeps the loop still: its poster, the word formed.
+  const loop = document.querySelector<HTMLVideoElement>('[data-hero-loop]');
+  if (loop && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    loop.autoplay = false;
+    loop.pause();
+    loop.load();
+  }
+</script>

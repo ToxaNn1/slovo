@@ -1,9 +1,9 @@
 /**
- * The goal of the mission: a million confirmed Entries (ADR 0071).
- * PLACEHOLDER: `confirmed` is the design's demo number until the live count
- * from Analytics exists (ADR 0068).
+ * The goal of the mission: a million rare Words in SLOVO (ADR 0071). The
+ * count towards it is the live Words of the snapshot the site is built from
+ * (ADR 0148).
  */
-export const goal = { confirmed: 18342, target: 1_000_000 } as const;
+export const GOAL = 1_000_000;
 
 /** A count with a space between thousands, as the design writes it: 18 342. */
 export function formatCount(count: number): string {

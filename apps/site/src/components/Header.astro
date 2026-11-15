@@ -1,18 +1,19 @@
 ---
+import { sitePath } from '../site-path';
 import { ThemeToggle } from './ThemeToggle';
 
 const links = [
-  { href: '#how', label: 'Як це працює' },
-  { href: '#word', label: 'Слово дня' },
-  { href: '#games', label: 'Ігри' },
-  { href: '#faq', label: 'Питання' },
+  { href: sitePath('#how'), label: 'Як це працює' },
+  { href: sitePath('#word'), label: 'Слово дня' },
+  { href: sitePath('#games'), label: 'Ігри' },
+  { href: sitePath('#faq'), label: 'Питання' },
 ];
 ---
 
 <header class="sticky top-0 z-10 bg-red text-coal">
   <div class="mx-auto flex max-w-[1312px] items-center gap-[clamp(10px,2.4vw,40px)] px-[clamp(20px,4vw,56px)] py-3.5">
     <a
-      href="#top"
+      href={sitePath('#top')}
       class="-skew-x-6 font-word text-[22px] font-black tracking-[-0.03em] text-coal no-underline hover:text-coal"
     >
       SLOVO
