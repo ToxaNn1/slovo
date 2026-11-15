@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
 
-const label: Record<Theme, string> = { light: 'Світла', dark: 'Темна' };
+const label: Record<Theme, string> = {
+  light: 'Увімкнути темну тему',
+  dark: 'Увімкнути світлу тему',
+};
 
 /**
- * The light/dark switch. The page follows the reader's system Theme until
- * the switch picks one; the pick lasts for the visit.
+ * The light/dark switch in the header. The page follows the reader's system
+ * Theme until the switch picks one; the pick lasts for the visit.
  */
 export function ThemeToggle() {
   const [chosen, setChosen] = useState<Theme | null>(null);
@@ -32,14 +35,17 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      aria-label="Змінити тему"
+      aria-label={label[theme]}
       onClick={() => {
         setChosen(theme === 'dark' ? 'light' : 'dark');
       }}
-      className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border-0 bg-sf2 px-3.5 font-word text-xs leading-none font-extrabold text-ink shadow-[0_4px_0_var(--edge)] active:translate-y-1 active:shadow-none"
+      className="relative h-[30px] w-[52px] flex-none cursor-pointer rounded-[15px] border-0 bg-red-edge p-0"
     >
-      <span className="size-3.5 rounded-full border-2 border-ink bg-[linear-gradient(90deg,var(--ink)_50%,transparent_50%)]" />
-      <span>{label[theme]}</span>
+      <span
+        className={`absolute top-[3px] left-[3px] size-6 rounded-xl transition-transform duration-[220ms] ease-[cubic-bezier(.3,1.4,.5,1)] ${
+          theme === 'dark' ? 'translate-x-[22px] bg-coal' : 'bg-cream'
+        }`}
+      />
     </button>
   );
 }

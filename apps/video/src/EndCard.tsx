@@ -208,7 +208,7 @@ export function EndCard({ line, orientation, qrUrl, store = 'appStore' }: EndCar
           rotate: `${Math.sin(frame / 8) * 3}deg`,
         }}
       >
-        <Rupor state="happy" width={size.rupor * s} onRed />
+        <Rupor state="happy" width={size.rupor * s} ground="red" />
       </div>
     </AbsoluteFill>
   );

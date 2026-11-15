@@ -7,6 +7,8 @@ import { defineConfig } from 'astro/config';
 // SITE_BASE is the path GitHub Pages serves it under: `/slovo` at the
 // github.io address, empty behind the app's own domain (ADR 0071).
 export default defineConfig({
+  // The address canonical links, og:image and the sitemap name (ADR 0147).
+  site: 'https://slovoapp.org',
   base: `${process.env['SITE_BASE'] ?? ''}/`,
   // Pages serve uk/privacy.html at /uk/privacy, the address the app links (ADR 0049).
   build: { format: 'file' },

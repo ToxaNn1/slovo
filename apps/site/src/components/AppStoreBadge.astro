@@ -1,0 +1,31 @@
+---
+/**
+ * The App Store badge in the hero and the final call. Until the app is out it
+ * reads «Скоро в App Store» and is no link; given the store `href`, it turns
+ * into the «Завантажити в App Store» button.
+ */
+interface Props {
+  href?: string;
+}
+
+const { href } = Astro.props;
+const box = 'flex flex-col rounded-2xl bg-coal px-[26px] py-3.5 leading-[1.1] text-cream';
+---
+
+{href === undefined ? (
+  <div aria-disabled="true" class:list={[box, 'cursor-default']}>
+    <span class="text-[13px] text-coal-mute">Скоро в</span>
+    <span class="font-word text-[22px] font-extrabold whitespace-nowrap">App Store</span>
+  </div>
+) : (
+  <a
+    href={href}
+    class:list={[
+      box,
+      'no-underline shadow-[0_5px_0_var(--coal-edge)] transition-[translate,box-shadow] duration-[120ms] ease-out hover:-translate-y-0.5 hover:text-cream hover:shadow-[0_7px_0_var(--coal-edge)] active:translate-y-1 active:shadow-[0_1px_0_var(--coal-edge)]',
+    ]}
+  >
+    <span class="text-[13px] text-coal-mute">Завантажити в</span>
+    <span class="font-word text-[22px] font-extrabold whitespace-nowrap">App Store</span>
+  </a>
+)}

@@ -8,7 +8,9 @@ name: Pages
 # that domain as its custom domain: a site deployed by a workflow takes the
 # domain from the settings, so the published CNAME records it and a test
 # keeps it equal to the AppConfig's domain (ADR 0065). The site reads every
-# Edition file through packages/language-pack/src/edition-folder.ts (ADR 0035).
+# Edition file through packages/language-pack/src/edition-folder.ts (ADR 0035)
+# and its Words from the backend's content snapshot, a page per live Word
+# at /slovo/<slug>, rebuilt every night (ADR 0149).
 
 on:
   push:
@@ -24,6 +26,12 @@ on:
       - 'packages/ui/src/tokens/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/pages.yml'
+  # Every night just after midnight in Kyiv, summer (UTC+3) and winter
+  # (UTC+2): the site is rebuilt from the backend's content snapshot, with
+  # the new Слово дня (ADR 0149).
+  schedule:
+    - cron: '5 21 * * *'
+    - cron: '5 22 * * *'
   workflow_dispatch:
 
 permissions:
@@ -50,9 +58,12 @@ jobs:
       - run: pnpm install --frozen-lockfile --filter @slovo/site...
       # The path Pages serves the site under: /slovo at the github.io address,
       # empty behind the custom domain.
+      # The Words come from the backend's content snapshot; a failed fetch
+      # fails the build and the published site stays (ADR 0149).
       - run: pnpm --filter @slovo/site build
         env:
           SITE_BASE: ${{ steps.pages.outputs.base_path }}
+          SLOVO_BACKEND_URL: ${{ secrets.SLOVO_BACKEND_URL }}
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: apps/site/dist

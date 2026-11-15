@@ -1,0 +1,21 @@
+---
+import Video from './Video.astro';
+
+const label = 'Відтворити відео «Спочатку було слово»';
+---
+
+<section class="mx-auto max-w-[1312px] px-[clamp(20px,4vw,56px)] pt-[clamp(88px,11vw,168px)]">
+  <div class="mb-[clamp(28px,3vw,44px)] flex flex-wrap items-baseline justify-between gap-x-10 gap-y-3">
+    <h2 class="m-0 origin-left [transform:rotate(-3deg)_skewX(-6deg)] font-word text-[clamp(26px,3.4vw,48px)] font-black tracking-[-0.03em]">
+      Подивись за 30 секунд
+    </h2>
+    <p class="m-0 text-[17px]">«Спочатку було слово» — звук вмикається, лише коли натиснеш.</p>
+  </div>
+  <Video
+    name="promo-9x16"
+    label={label}
+    disc="big"
+    class="aspect-[9/16] max-h-[680px] w-full wide:hidden"
+  />
+  <Video name="promo-16x9" label={label} disc="big" class="hidden aspect-video w-full wide:block" />
+</section>

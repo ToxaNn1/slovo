@@ -15,10 +15,20 @@ const { tokens } = await landingEdition();
 const { light, dark } = tokens.colors;
 const { word, ui } = tokens.fontFamilies;
 // Fixed colours: the red, its edge, and the light Theme's ink and ground,
-// which the design keeps on red in both Themes.
-const fixed = `--red:${light.accent};--red-edge:${light.accentEdge};--coal:${light.ink};--cream:${light.background};--font-word:'${word} Variable',${word},sans-serif;--font-ui:'${ui} Variable',${ui},system-ui,sans-serif;`;
+// which the design keeps on red in both Themes; the light Theme's paper
+// shades for the tiles and phone screens, the dark Theme's coal shades for
+// the black sections.
+const fixed = `--red:${light.accent};--red-edge:${light.accentEdge};--coal:${light.ink};--cream:${light.background};--paper:${light.surface};--paper-sunk:${light.surfaceSunken};--paper-edge:${light.tileEdge};--paper-mute:${light.muted};--coal-sunk:${dark.surfaceSunken};--coal-tile:${dark.tile};--coal-edge:${dark.tileEdge};--coal-mute:${dark.muted};--font-word:'${word} Variable',${word},sans-serif;--font-ui:'${ui} Variable',${ui},system-ui,sans-serif;`;
 const css = `:root{${fixed}}[data-th='light']{${themeVariables(light)}}[data-th='dark']{${themeVariables(dark)}}`;
 const favicon = `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}favicon.svg`;
+// Search engines and link previews get the app's domain, not the github.io
+// address with its base path (ADR 0147).
+const path = `/${Astro.url.pathname
+  .slice(import.meta.env.BASE_URL.replace(/\/?$/, '/').length)
+  .replace(/(index)?\.html$/, '')
+  .replace(/^index$/, '')}`;
+const canonical = new URL(path, Astro.site).href;
+const ogImage = new URL('/og.png', Astro.site).href;
 ---
 
 <!doctype html>
@@ -30,6 +40,14 @@ const favicon = `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}favicon.svg`;
     {description !== undefined && <meta name="description" content={description} />}
     <meta name="theme-color" content={light.accent} />
     <link rel="icon" type="image/svg+xml" href={favicon} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:site_name" content="SLOVO" />
+    <meta property="og:locale" content="uk_UA" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
     <slot name="head" />
     <script is:inline>
       document.documentElement.dataset.th = matchMedia('(prefers-color-scheme: dark)').matches

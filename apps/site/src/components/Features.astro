@@ -1,0 +1,100 @@
+---
+import CrossGrid from './CrossGrid.astro';
+import { StressGame } from './StressGame';
+
+const row =
+  'grid grid-cols-[repeat(auto-fit,minmax(min(100%,440px),1fr))] items-center gap-x-[clamp(32px,5vw,80px)] gap-y-7';
+const title = 'm-0 font-word text-[clamp(24px,2.4vw,34px)] font-extrabold tracking-[-0.02em]';
+/** The feed's words: the stressed vowel in red, or the whole word muted. */
+const words = [
+  { before: 'гриз', vowel: 'о́', after: 'та' },
+  { muted: 'бундю́чний' },
+  { before: 'сизиг', vowel: 'і́', after: 'я' },
+  { muted: 'па́тина' },
+  { before: 'кракел', vowel: 'ю́', after: 'р' },
+];
+const intervals = [
+  { label: '1 д', height: 'h-12' },
+  { label: '3 д', height: 'h-[72px]' },
+  { label: '7 д', height: 'h-[100px]' },
+  { label: '30 д', height: 'h-[132px]' },
+];
+const bar =
+  'flex flex-1 flex-col justify-end rounded-[14px] p-2.5 font-word text-[clamp(12px,1.2vw,15px)]';
+---
+
+<section
+  id="games"
+  class="mx-auto max-w-[1312px] px-[clamp(20px,4vw,56px)] pt-[clamp(88px,11vw,168px)]"
+>
+  <h2 class="m-0 mb-[clamp(48px,6vw,88px)] max-w-[14ch] origin-left [transform:rotate(-3deg)_skewX(-6deg)] font-word text-[calc(4vw_+_22px)] leading-none font-black tracking-[-0.04em]">
+    Мова багатша, ніж ти думаєш.
+  </h2>
+  <div class="flex flex-col gap-[clamp(56px,7vw,104px)]">
+    <div class={row}>
+      <div class="flex flex-col gap-3">
+        <h3 class={title}>Ігри</h3>
+        <p class="m-0 max-w-[36ch]">
+          Наголос, Пари, Анаграми, Обери правильне і На час. Спробуй першу просто тут.
+        </p>
+      </div>
+      <StressGame client:visible />
+    </div>
+
+    <div class={row}>
+      <div class="flex flex-col gap-3">
+        <h3 class={title}>Стрічка</h3>
+        <p class="m-0 max-w-[36ch]">
+          Гортай рідкісні й забуті українські слова, як стрічку. Кожне — з тлумаченням, наголосом і
+          прикладом. Працює без інтернету.
+        </p>
+      </div>
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2.5">
+        {words.map((word) =>
+          word.muted === undefined ? (
+            <span class="font-word text-[clamp(26px,3vw,40px)] font-black tracking-[-0.03em]">
+              {word.before}
+              <span class="text-red">{word.vowel}</span>
+              {word.after}
+            </span>
+          ) : (
+            <span class="font-word text-[clamp(26px,3vw,40px)] font-black tracking-[-0.03em] text-mute">
+              {word.muted}
+            </span>
+          ),
+        )}
+      </div>
+    </div>
+
+    <div class={row}>
+      <div class="flex flex-col gap-3">
+        <h3 class={title}>Щоденний кросворд</h3>
+        <p class="m-0 max-w-[36ch]">Новий щодня — зі слів, які ти вже зустрічав у стрічці.</p>
+      </div>
+      <CrossGrid />
+    </div>
+
+    <div class={row}>
+      <div class="flex flex-col gap-3">
+        <h3 class={title}>Колекції й обране</h3>
+        <p class="m-0 max-w-[36ch]">
+          Збирай слова, які зачепили. Застосунок нагадає про кожне саме тоді, коли воно почне
+          забуватись.
+        </p>
+      </div>
+      <div class="flex items-end gap-[clamp(8px,1.2vw,14px)]">
+        {intervals.map((interval) => (
+          <span class:list={[bar, interval.height, 'bg-sf font-extrabold']}>{interval.label}</span>
+        ))}
+        <span
+          class:list={[
+            bar,
+            'h-[168px] bg-red font-black text-coal shadow-[0_5px_0_var(--red-edge)]',
+          ]}
+        >
+          90 д
+        </span>
+      </div>
+    </div>
+  </div>
+</section>

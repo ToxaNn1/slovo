@@ -24,47 +24,28 @@
   --color-red-edge: var(--red-edge);
   --color-coal: var(--coal);
   --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --color-paper-sunk: var(--paper-sunk);
+  --color-paper-edge: var(--paper-edge);
+  --color-paper-mute: var(--paper-mute);
+  --color-coal-sunk: var(--coal-sunk);
+  --color-coal-tile: var(--coal-tile);
+  --color-coal-edge: var(--coal-edge);
+  --color-coal-mute: var(--coal-mute);
   --font-word: var(--font-word);
   --font-ui: var(--font-ui);
 }
 
 @theme {
-  /* Shades the design draws that are no Edition token: the deep shadow under a
-     dark button on red, and the phone mock-ups' body and screen edge. */
-  --color-shadow-red: #6e1610;
-  --color-phone: #3a2c27;
-  --color-phone-edge: #0b0706;
-  --breakpoint-desk: 821px;
+  /* The design's switches: the narrow layout below 720 px, the header's links from 860 px. */
+  --breakpoint-wide: 720px;
+  --breakpoint-nav: 860px;
 
   --animate-ray: ray 0.45s steps(2) infinite;
-  --animate-fly: fly 0.9s cubic-bezier(0.25, 0.9, 0.3, 1.1) both;
-  --animate-float: float 3.2s ease-in-out infinite;
 
   @keyframes ray {
     50% {
       opacity: 0.25;
-    }
-  }
-  @keyframes fly {
-    0% {
-      opacity: 0;
-      transform: translate(var(--fx), var(--fy)) scale(0.3) rotate(-40deg);
-    }
-    60% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 1;
-      transform: translate(0, 0) scale(1) rotate(var(--r));
-    }
-  }
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0) rotate(var(--r));
-    }
-    50% {
-      transform: translateY(-6px) rotate(var(--r));
     }
   }
 }
@@ -74,7 +55,12 @@
     background: var(--bg);
     color: var(--ink);
     font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
     -webkit-text-size-adjust: 100%;
+  }
+  body {
+    font-size: 17px;
+    line-height: 1.55;
   }
   [data-th='light'] {
     color-scheme: light;
@@ -83,11 +69,13 @@
     color-scheme: dark;
   }
   a {
-    color: var(--red);
-    text-underline-offset: 3px;
+    color: inherit;
+    text-decoration-color: var(--red);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
   }
   a:hover {
-    color: inherit;
+    color: var(--red);
   }
   summary {
     list-style: none;
