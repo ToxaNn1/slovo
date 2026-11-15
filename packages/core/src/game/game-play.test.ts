@@ -126,6 +126,8 @@ async function open(
         commit: () => undefined,
       }),
       answeredWrong: () => ({ changes: new Map(), commit: () => undefined }),
+      resetMarker: undefined,
+      subscribe: () => () => undefined,
     },
     userState: { read: () => Promise.resolve(undefined), write },
     clock: time.clock,

@@ -264,6 +264,30 @@ describe('two devices of one Account', () => {
     expect(server.sync.records.get('settings.selfCheck')?.value).toBe(true);
   });
 
+  it('let the newer reader name win, on either device, and carry a forgotten one', async () => {
+    const { device, server, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    await (await phone.open()).readerName.change('Олена');
+    time.advance(HOUR);
+    await (await tablet.open()).readerName.change(' Оля ');
+    await tablet.sync();
+    time.advance(HOUR);
+
+    await phone.sync();
+    await tablet.sync();
+
+    expect((await phone.open()).readerName.state).toBe('Оля');
+    expect((await tablet.open()).readerName.state).toBe('Оля');
+    expect(server.sync.records.get('settings.readerName')?.value).toBe('Оля');
+
+    time.advance(HOUR);
+    await (await phone.open()).readerName.change('');
+    await phone.sync();
+    await tablet.sync();
+    expect((await tablet.open()).readerName.state).toBeUndefined();
+  });
+
   it('carry a choice of Self-check to the other device', async () => {
     const { device } = account();
     const phone = await device();

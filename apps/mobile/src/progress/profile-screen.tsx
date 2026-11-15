@@ -1,5 +1,11 @@
 import { RARITIES } from '@slovo/contracts';
-import { dateKeyOf, type Account, type LevelState } from '@slovo/core';
+import {
+  dateKeyOf,
+  READER_NAME_AT_MOST,
+  readerNameLength,
+  type Account,
+  type LevelState,
+} from '@slovo/core';
 import {
   ActiveDaysCalendar,
   IconButton,
@@ -8,6 +14,9 @@ import {
   fill,
   LevelCard,
   LevelLadder,
+  NameSheet,
+  NavigationRow,
+  ProfileHeader,
   ScreenTitle,
   SettingsGroup,
   StreakFreezeCard,
@@ -121,6 +130,13 @@ export function ProfileScreen() {
             }}
           />
         )}
+        <ReaderNameHead
+          level={
+            shown.xpBar && level !== undefined
+              ? fill(strings.headerLevel, { level: String(level.level), name: level.name })
+              : undefined
+          }
+        />
         {shown.xpBar && level !== undefined && (
           <View style={styles.section}>
             <LevelCard
@@ -298,6 +314,74 @@ function StreakLine({ streak, bestStreak }: { streak: number; bestStreak: number
       >
         {fill(words.bestStreak, { count: String(bestStreak) })}
       </Text>
+    </View>
+  );
+}
+
+const nameStrings = strings.readerName;
+
+/**
+ * The Profile's header above the progress (ADR 0136): the reader's name with
+ * its avatar letter, or the neutral avatar and the invitation, over `level`,
+ * and the «Ім’я» row that opens the name sheet. With the reader's name
+ * switched off, the Level alone and no row; nothing while the Level is hidden too.
+ */
+function ReaderNameHead({ level }: { level: string | undefined }) {
+  const composition = useComposition();
+  const shown = useShown();
+  const name = useSubscribed(composition.readerName, ({ state }) => state);
+  const [naming, setNaming] = useState(false);
+  if (!shown.readerName)
+    return (
+      level !== undefined && (
+        <View style={styles.section}>
+          <ProfileHeader level={level} />
+        </View>
+      )
+    );
+  return (
+    <View style={styles.section}>
+      <ProfileHeader
+        reader={
+          name === undefined
+            ? { kind: 'unnamed', invitation: nameStrings.placeholder }
+            : { kind: 'named', name }
+        }
+        level={level}
+      />
+      <SettingsGroup>
+        <NavigationRow
+          testID="profile-reader-name"
+          label={nameStrings.row}
+          value={name ?? nameStrings.empty}
+          onPress={() => {
+            setNaming(true);
+          }}
+        />
+      </SettingsGroup>
+      <NameSheet
+        visible={naming}
+        title={nameStrings.title}
+        placeholder={nameStrings.placeholder}
+        submitLabel={nameStrings.save}
+        cancelLabel={editionStrings.collections.nameSheet.cancel}
+        counter={nameStrings.counter}
+        max={READER_NAME_AT_MOST}
+        lengthOf={(typed) => readerNameLength(typed.trim())}
+        initialName={name}
+        onSubmit={async (typed) => {
+          const { kind } = await composition.readerName.change(typed);
+          if (kind === 'tooLong')
+            return fill(nameStrings.tooLong, { max: String(READER_NAME_AT_MOST) });
+          setNaming(false);
+          return undefined;
+        }}
+        onClose={() => {
+          setNaming(false);
+        }}
+        failure="Could not keep the reader name"
+        testID="reader-name"
+      />
     </View>
   );
 }

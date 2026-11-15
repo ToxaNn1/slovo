@@ -303,6 +303,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       { onError },
     ),
     shareCard: undefined,
+    shareFile: undefined,
     ...overrides,
   };
 }

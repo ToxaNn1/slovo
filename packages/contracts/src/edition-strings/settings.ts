@@ -71,8 +71,6 @@ export const SettingsStringsSchema = z.strictObject({
     /** The Account, the anonymous statistics and About. */
     account: TextSchema,
   }),
-  /** The row that opens the widget guide. */
-  howToAddWidget: TextSchema,
   /** The names of the rows under the Theme and the font size. */
   rows: z.strictObject({
     notifications: TextSchema,

@@ -4,6 +4,7 @@ import {
 } from './collection-links/copy-collection';
 import { openCollectionSharing, type CollectionSharing } from './collection-links/share-collection';
 import { openCollections, type Collections } from './saved/collections';
+import { buildDataExport, type DataExport } from './data-export/data-export';
 import { anagramMode } from './game/anagram-mode';
 import { anglicismMode } from './game/anglicism-mode';
 import { buildIdiomMode } from './game/build-idiom-mode';
@@ -61,6 +62,7 @@ import type { Backend, Clock, ContentReadPort, NotificationKind, Random, Schedul
 import { openActiveDays } from './progress/active-days';
 import { openXpLog, type XpLog } from './progress/xp-log';
 import { openStreakBreak, type StreakBreak } from './progress/streak-break';
+import { openReaderName, type ReaderName } from './settings/reader-name';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
 import { createRarityTest, type RarityTest } from './mix/rarity-test';
@@ -112,6 +114,8 @@ export interface Composition extends Hiding {
   readonly collectionSharing: CollectionSharing;
   /** History, which the Feed records in the same write as Seen. */
   readonly history: History;
+  /** Builds the reader's Data export of this Edition from the user state, at the Clock's now (ADR 0135). */
+  readonly dataExport: () => Promise<DataExport>;
   /**
    * The Word of the Day archive «Слова дня», the days whose Word of the Day's
    * card was Seen, read afresh on each call (ADR 0054). Opening a Word from it
@@ -144,6 +148,8 @@ export interface Composition extends Hiding {
   readonly badges: Badges;
   /** The Break: a pause of the Streak the reader starts, up to 7 days, once every 30 days (ADR 0066). */
   readonly streakBreak: StreakBreak;
+  /** The reader's optional name on the Profile (ADR 0136), which syncs and reaches no Analytics. */
+  readonly readerName: ReaderName;
   /** The Weekly Recap, whose numbers its Feed Notice shows on a local Monday (ADR 0054). */
   readonly weeklyRecap: WeeklyRecap;
   /** The progress Share Cards on offer today: a Level reached, a Badge earned, a Streak milestone. */
@@ -450,6 +456,7 @@ export async function openComposition({
     history,
     isFirstCycle: () => cycle.isFirst(),
   });
+  const readerName = await openReaderName({ userState });
   const activeDays = await openActiveDays({ edition, userState, clock, xpLog, analytics });
   const day = createDayChange({
     clock,
@@ -766,6 +773,7 @@ export async function openComposition({
       random,
     }),
     history,
+    dataExport: () => buildDataExport({ userState, clock, edition, rows }),
     wordOfTheDayArchive,
     hiddenEntries,
     mix,
@@ -784,6 +792,7 @@ export async function openComposition({
     xpLog,
     badges,
     streakBreak: openStreakBreak({ edition, userState, clock, xpLog, analytics }),
+    readerName,
     weeklyRecap,
     progressShareCards: openProgressShareCards({ edition, clock, xpLog, badges, activeDays }),
     resume: () => day.resume(),

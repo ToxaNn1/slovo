@@ -1,7 +1,7 @@
 import type { Composition, OptionQuestion } from '@slovo/core';
 import { BackLink, Button, Chip, ScreenTitle, SectionLabel, space, useTokens } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -33,6 +33,9 @@ export function QuestionnaireScreen() {
   const { categoryIds } = useMixState();
   const [answers, setAnswers] = useState<Answers>({});
   const [interests, setInterests] = useState<readonly string[]>(categoryIds);
+  // «ГОТОВО» works once: a second tap would write the answers again and go back twice.
+  const applying = useRef(false);
+  const [busy, setBusy] = useState(false);
   if (shown === undefined) return <Redirect href="/settings" />;
 
   const questions: readonly { question: OptionQuestion; title: string }[] = [
@@ -91,12 +94,17 @@ export function QuestionnaireScreen() {
         <Button
           testID="questionnaire-done"
           label={settings.questionnaireRetake.done}
+          busy={busy}
           onPress={() => {
+            if (applying.current) return;
+            applying.current = true;
+            setBusy(true);
             const answered = questions.flatMap(({ question }) => {
               const answerId = answers[question];
               return answerId === undefined ? [] : [{ question, answerId }];
             });
             const changed = sameIds(interests, categoryIds) ? undefined : interests;
+            // `apply` keeps going past a failed write, so the screen always closes after it.
             void apply(questionnaire, answered, changed).then(() => {
               router.back();
             });

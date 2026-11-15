@@ -49,6 +49,7 @@ const everything: Shown = {
   reduceMotionSetting: true,
   textSizeSteps: true,
   shareCountersSetting: true,
+  dataExport: true,
   countersSetting: 'noCounters',
   learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
@@ -65,6 +66,7 @@ const everything: Shown = {
   crosswordSolvedScreen: true,
   crosswordSolveTime: true,
   profile: true,
+  readerName: true,
   profileConfirmedByRarity: true,
   profileGameBest: true,
   quickQuestion: true,
@@ -187,6 +189,10 @@ describe('what the reader is shown', () => {
     [
       'the «Ділитися анонімною статистикою» switch with Analytics on alone',
       { off: ['communityCounters'], shown: { shareCountersSetting: true } },
+    ],
+    [
+      'no «Експортувати мої дані» row with the Data export off',
+      { off: ['dataExport'], shown: { dataExport: false } },
     ],
     [
       'no «Слова дня» card with the Word of the Day archive off',
@@ -398,6 +404,7 @@ describe('what the reader is shown', () => {
       { off: ['streakFreezes'], shown: { streakFreezeCard: false } },
     ],
     ['no Badges with their switch off', { off: ['badges'], shown: { badges: false } }],
+    ['no reader name with its switch off', { off: ['readerName'], shown: { readerName: false } }],
     ['no Profile with its switch off', { off: ['profile'], shown: { profile: false } }],
     [
       'no confirmed Entries by rarity on the Profile with their switch off',

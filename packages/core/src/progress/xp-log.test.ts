@@ -9,6 +9,7 @@ import {
   type AnalyticsPort,
   type Composition,
   type CurrentGame,
+  type Edition,
   type FeatureSwitch,
   type Round,
   type UserStatePort,
@@ -33,7 +34,7 @@ import {
   word,
   analyticsInto,
 } from '../test-support';
-import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { createMemoryUserStatePort, openUserState, type UserState } from '../user-state/user-state';
 import { trackChanges } from '../user-state/tracked-user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -67,7 +68,13 @@ async function run({
   on = [],
   analytics,
   port = createMemoryUserStatePort(records),
+  badges,
+  userState,
 }: {
+  /** The user state the composition opens over, a new one over `port` unless given. */
+  userState?: UserState;
+  /** The Edition's Badges, none unless given. */
+  badges?: Edition['badges'];
   records?: Map<string, string>;
   off?: readonly FeatureSwitch[];
   time?: ReturnType<typeof fakeClock>;
@@ -84,8 +91,9 @@ async function run({
       isFeatureEnabled: (feature) =>
         !off.includes(feature) && ['game', 'gameGuessWord', 'xpLog', ...on].includes(feature),
       ...(xp === undefined ? {} : { xp }),
+      ...(badges === undefined ? {} : { badges }),
     }),
-    userState: await openUserState({ port }),
+    userState: userState ?? (await openUserState({ port })),
     clock: time.clock,
     random: seededRandom(7),
     ...(analytics === undefined ? {} : { analytics: analyticsInto(analytics) }),
@@ -279,10 +287,15 @@ async function device(
     time = fakeClock('2026-10-14T08:00:00+03:00'),
     signedIn = true,
     records = new Map<string, string>(),
+    on = [],
+    badges,
   }: {
     time?: ReturnType<typeof fakeClock>;
     signedIn?: boolean;
     records?: Map<string, string>;
+    /** Feature Switches on beside the Game and the XP log. */
+    on?: readonly FeatureSwitch[];
+    badges?: Edition['badges'];
   } = {},
 ) {
   const timers = testSchedule(time);
@@ -316,7 +329,8 @@ async function device(
     schedule: timers.schedule,
     random: randomOf(0.5),
   });
-  const opened = await run({ records, time });
+  const options = { records, time, on, ...(badges === undefined ? {} : { badges }) };
+  const opened = await run(options);
   return {
     app: opened.app,
     account,
@@ -333,7 +347,11 @@ async function device(
     },
     /** Reopens the composition over the records, as the shell does after a sync wrote. */
     async reopened(): Promise<Composition> {
-      return (await run({ records, time })).app;
+      return (await run(options)).app;
+    },
+    /** Reopens the composition over the user state Sync tracks, so what it writes is pushed on the next sync. */
+    async tracked(): Promise<Composition> {
+      return (await run({ ...options, userState })).app;
     },
   };
 }
@@ -1056,4 +1074,154 @@ describe('the Daily Crossword solve in the XP log (ADR 0087)', () => {
     expect(award.amount).toBe(15);
     expect(app.xpLog.crosswordSolveOn('2026-10-14')).toEqual({ solveSeconds: 222, hinted: false });
   });
+});
+
+// Ticket #1876, ADR 0133: a Progress reset is a reset marker in the XP log.
+const RESET_ON: readonly FeatureSwitch[] = [
+  'progressReset',
+  'levels',
+  'dailyGoal',
+  'badges',
+  'streakFreezes',
+  'streakBreak',
+];
+const FIRST_WIN: Edition['badges'] = [
+  {
+    id: 'win-words',
+    name: 'First win',
+    symbol: '1',
+    family: 'f',
+    condition: { kind: 'gameWin', modes: ['guess-word'] },
+  },
+];
+const DAY = 24 * 60 * 60 * 1000;
+
+/** What a fresh install reads: no XP, no Streak, the 2 freezes of a new reader, no Badge, no Best result. */
+function expectFresh(app: Composition): void {
+  expect(app.xpLog.state).toMatchObject({ total: 0, today: 0, level: { level: 0, progress: 0 } });
+  expect(app.progress.state).toMatchObject({
+    streak: 0,
+    bestStreak: 0,
+    freezesHeld: 2,
+    freezesUsed: 0,
+    bestResult: undefined,
+  });
+  expect(app.badges.state.filter((badge) => badge.earned)).toEqual([]);
+  expect(app.streakBreak.state.kind).toBe('available');
+}
+
+describe('the Progress reset', () => {
+  it('reads as a fresh install after a reset and keeps everything that is not progress', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const server = createFakeBackend({ clock: time.clock });
+    const phone = await device(server, { time, on: RESET_ON, badges: FIRST_WIN });
+    await playGame(phone.app);
+    time.advance(DAY);
+    await phone.earn(6);
+    const before = await phone.reopened();
+    await before.xpLog.setDailyGoal(10);
+    expect(before.xpLog.state.total).toBeGreaterThan(0);
+    expect(before.progress.state.streak).toBeGreaterThan(0);
+    expect(before.badges.state.some((badge) => badge.earned)).toBe(true);
+    expect(before.progress.state.bestResult).toBeGreaterThan(0);
+    const kept = new Map([...phone.records].filter(([key]) => !key.startsWith('xp.')));
+
+    time.advance(60_000);
+    await before.xpLog.reset();
+    await settle();
+
+    expectFresh(before);
+    expectFresh(await phone.reopened());
+    expect(before.xpLog.state.dailyGoal?.goal).toBe(10);
+    expect(new Map([...phone.records].filter(([key]) => !key.startsWith('xp.')))).toEqual(kept);
+  });
+
+  it('counts the XP earned after a reset from zero and earns a Badge again', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const { app } = await run({ time, on: RESET_ON, badges: FIRST_WIN });
+    await playGame(app);
+    time.advance(60_000);
+    await app.xpLog.reset();
+    await settle();
+    time.advance(60_000);
+
+    await playGame(app);
+
+    expect(app.xpLog.state.total).toBeGreaterThan(0);
+    expect(app.progress.state.bestResult).toBeGreaterThan(0);
+    expect(app.badges.state.filter((badge) => badge.earned).map(({ id }) => id)).toEqual([
+      'win-words',
+    ]);
+  });
+
+  it('counts only the Entries confirmed after a reset toward a Badge, and keeps the confirmed Entries', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const confirmedOne: Edition['badges'] = [
+      {
+        id: 'known-1',
+        name: 'One',
+        symbol: '1',
+        family: 'f',
+        condition: { kind: 'confirmedEntries', entries: 1 },
+      },
+    ];
+    const { app } = await run({
+      time,
+      on: [...RESET_ON, 'knowledge', 'confirmedEntries'],
+      badges: confirmedOne,
+    });
+    await app.game.start('guess-word');
+    await play(app, true);
+    await settle();
+    const confirmed = app.knowledge.state.confirmed.total;
+    expect(confirmed).toBeGreaterThan(0);
+    expect(app.badges.state[0]).toMatchObject({ earned: true });
+    time.advance(60_000);
+
+    await app.xpLog.reset();
+    await settle();
+
+    expect(app.badges.state[0]).toMatchObject({ earned: false, progress: { current: 0 } });
+    expect(app.knowledge.state.confirmed.total).toBe(confirmed);
+  });
+
+  it('changes nothing with the progressReset switch off', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const { app, records } = await run({ time, on: ['levels'] });
+    await app.game.start('guess-word');
+    await play(app, true);
+    const written = new Map(records);
+
+    await app.xpLog.reset();
+
+    expect(app.xpLog.state.total).toBe(1);
+    expect(records).toEqual(written);
+  });
+
+  it.each(['the resetting device', 'the other device'])(
+    'holds a reset made offline after both devices sync, %s first',
+    async (first) => {
+      const time = fakeClock('2026-10-14T08:00:00+03:00');
+      const server = createFakeBackend({ clock: time.clock });
+      const phone = await device(server, { time, on: RESET_ON });
+      const tablet = await device(server, { time, on: RESET_ON });
+      await phone.earn(3);
+      await tablet.earn(2);
+      await phone.syncNow();
+      await tablet.syncNow();
+
+      time.advance(60_000);
+      await (await phone.tracked()).xpLog.reset();
+      time.advance(60_000);
+      const later = await tablet.tracked();
+      await later.game.start('guess-word');
+      await play(later, true);
+      const order =
+        first === 'the resetting device' ? [phone, tablet, phone] : [tablet, phone, tablet];
+      for (const one of order) await one.syncNow();
+
+      expect((await phone.reopened()).xpLog.state).toMatchObject({ total: 1, today: 1 });
+      expect((await tablet.reopened()).xpLog.state).toMatchObject({ total: 1, today: 1 });
+    },
+  );
 });

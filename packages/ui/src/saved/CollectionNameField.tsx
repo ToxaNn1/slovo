@@ -5,7 +5,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useEdition } from '../providers/EditionProvider';
 import { cardSpace, minTouchTarget, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { useNameSubmit } from './useNameSubmit';
+import { useNameSubmit } from '../primitives/useNameSubmit';
 
 /**
  * The card in which a Collection is named: one for a new Collection and one

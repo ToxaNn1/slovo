@@ -1,13 +1,17 @@
 import { FontSizeSchema, RARITIES, fill, type Theme } from '@slovo/contracts';
 import {
   ChoiceRow,
+  ConfirmationDialog,
   FontSizePreview,
   BackHeader,
+  SettingsActionCard,
   SettingsGroup,
   SettingsRow,
   space,
+  UndoToastProvider,
   useTokens,
 } from '@slovo/ui';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -20,11 +24,12 @@ import { useHiddenSummary } from '@/mix/hidden';
 import { useMixSummary } from '@/mix/mix';
 import { useRarityCeiling } from '@/mix/rarity-ceiling';
 import { useNotificationsSummary } from '@/notifications/notifications';
+import { usePrivacyRows } from '@/settings/privacy-screen';
 import { useShown } from '@/shown-in-effect';
 import { installedBuild } from '@/settings/installed-build';
 import { useSettings } from '@/settings/settings';
 import { useOpenScreen } from '@/use-open-screen';
-import { useXpLogState } from '@/progress/xp-log';
+import { useResetProgress, useXpLogState } from '@/progress/xp-log';
 
 const strings = editionStrings.settings;
 const subtitles = strings.rowSubtitles;
@@ -57,11 +62,22 @@ const rarityCeilingSegments = RARITIES.map((rarity) => ({
  * the board's order. Each row is shown while its feature is on in effect: the
  * Account, «Менше руху», «Звуки», «Голос диктора», the Daily Goal, the Rarity
  * Ceiling (ADR 0072), «Пройти тест ще раз», «Відзнаки», «Пройти опитування
- * ще раз», «Перерва», the counters, «Самоперевірка» and
- * «Ділитися анонімною статистикою» (the privacy policy link lives in
- * «Про SLOVO»). Seasonal Decor has no row (ADR 0055).
+ * ще раз», «Перерва», the counters, «Самоперевірка» and «Конфіденційність»,
+ * which holds the privacy switch and the Data export (ADR 0135; the privacy
+ * policy link lives in «Про SLOVO»). Seasonal Decor has no row (ADR 0055).
+ * Under the groups, «Скинути прогрес» asks in its sheet and starts the
+ * progress over (ADR 0133).
  */
 export default function SettingsScreen() {
+  // The toast after the Progress reset shows on this screen.
+  return (
+    <UndoToastProvider>
+      <SettingsList />
+    </UndoToastProvider>
+  );
+}
+
+function SettingsList() {
   const { current, update } = useSettings();
   const { colors } = useTokens();
   const openScreen = useOpenScreen();
@@ -73,8 +89,11 @@ export default function SettingsScreen() {
   const notificationsSummary = useNotificationsSummary();
   const accountOpening = useAccountInEffect();
   const shown = useShown();
+  const privacyRows = usePrivacyRows();
   const router = useRouter();
   const build = installedBuild();
+  const resetProgress = useResetProgress();
+  const [askingReset, setAskingReset] = useState(false);
   return (
     <SafeAreaView
       testID="settings"
@@ -125,7 +144,22 @@ export default function SettingsScreen() {
                 }}
               />
             )}
-            {/* The S…XL row while the three-step text size is off; its own screen comes with it (ADR 0134). */}
+            {/* The S…XL row while the three-step text size is off, the row of its own screen while it is on (ADR 0134). */}
+            {shown.textSizeSteps && (
+              <SettingsRow
+                testID="settings-row-text-size"
+                icon="square"
+                label={strings.rows.textSize}
+                subtitle={subtitles.textSize}
+                end={{
+                  kind: 'chevron',
+                  value: strings.textSize.sizes[current.textSize],
+                  onPress: () => {
+                    openScreen('/settings/text-size');
+                  },
+                }}
+              />
+            )}
             {!shown.textSizeSteps && (
               <ChoiceRow
                 icon="square"
@@ -382,17 +416,16 @@ export default function SettingsScreen() {
           <SettingsGroup title={strings.groups.account}>
             {accountOpening !== undefined && <AccountRow opening={accountOpening} />}
             {/* One condition per row: the group draws its hairlines between its children, and a fragment is one child. */}
-            {shown.shareCountersSetting && (
+            {(privacyRows.shareCounters || privacyRows.dataExport !== undefined) && (
               <SettingsRow
-                testID="settings-share-counters"
+                testID="settings-row-privacy"
                 icon="diamond"
-                label={strings.anonymousStats.title}
-                subtitle={strings.anonymousStats.explanation}
+                label={strings.rows.privacy}
+                subtitle={subtitles.privacy}
                 end={{
-                  kind: 'switch',
-                  value: current.shareCounters,
-                  onChange: (shareCounters) => {
-                    update({ shareCounters });
+                  kind: 'chevron',
+                  onPress: () => {
+                    openScreen('/settings/privacy');
                   },
                 }}
               />
@@ -416,7 +449,33 @@ export default function SettingsScreen() {
             />
           </SettingsGroup>
         </View>
+        {edition.isFeatureEnabled('progressReset') && (
+          <View style={styles.section}>
+            <SettingsActionCard
+              testID="settings-reset"
+              label={strings.progressReset.button}
+              onPress={() => {
+                setAskingReset(true);
+              }}
+            />
+          </View>
+        )}
       </ScrollView>
+      <ConfirmationDialog
+        visible={askingReset}
+        testID="settings-reset-dialog"
+        title={strings.progressReset.title}
+        message={strings.progressReset.message}
+        destructiveLabel={strings.progressReset.confirm}
+        cancelLabel={strings.progressReset.cancel}
+        onDestructive={() => {
+          setAskingReset(false);
+          resetProgress();
+        }}
+        onCancel={() => {
+          setAskingReset(false);
+        }}
+      />
     </SafeAreaView>
   );
 }

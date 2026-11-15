@@ -12,7 +12,7 @@ export { SwipeDemoStage, useGesturesDemo } from './entries/swipe-demo';
 export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
 export { NarratorVoicePicker } from './settings/NarratorVoicePicker';
-export { OptionSampleNumber, OptionScreen } from './settings/OptionScreen';
+export { OptionSampleNumber, OptionSampleWord, OptionScreen } from './settings/OptionScreen';
 export type { OptionScreenOption } from './settings/OptionScreen';
 export { FontSizeProvider, type TextSizeStep } from './providers/FontSizeProvider';
 export { DecorProvider } from './decor/DecorProvider';
@@ -107,11 +107,13 @@ export { CollectionNameSheet } from './saved/CollectionNameSheet';
 export { CollectionSheet } from './saved/CollectionSheet';
 export { BottomSheet } from './primitives/BottomSheet';
 export { SheetTitle } from './primitives/SheetParts';
+export { NameSheet } from './primitives/NameSheet';
 export { TitledSheet } from './primitives/TitledSheet';
 export { Mascot } from './primitives/Mascot';
 export { Placeholder } from './primitives/Placeholder';
 export { PronunciationButton } from './entries/PronunciationButton';
 export { SegmentedControl } from './primitives/SegmentedControl';
+export { CodeCells } from './primitives/CodeCells';
 export { Stepper } from './primitives/Stepper';
 export { Switch } from './primitives/Switch';
 export { SearchField, SearchLink } from './primitives/SearchField';
@@ -123,6 +125,7 @@ export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
 export {
   ChoiceRow,
   NavigationRow,
+  SettingsActionCard,
   SettingsGroup,
   SettingsRow,
   SoonRow,
@@ -167,6 +170,7 @@ export { BadgeStamp } from './progress/BadgeStamp';
 export { BadgeToast } from './progress/BadgeToast';
 export { NewLevelScreen } from './progress/NewLevelScreen';
 export { LevelCard } from './progress/LevelCard';
+export { ProfileHeader, type ProfileReader } from './progress/ProfileHeader';
 export { LevelLadder } from './progress/LevelLadder';
 export { StatsSheet } from './progress/StatsSheet';
 export { StreakFreezeCard } from './progress/StreakFreezeCard';
@@ -191,6 +195,7 @@ export {
   railScreen,
   rowPadding,
   savedHeader,
+  accountCardRadius,
   signInButtonHeight,
   space,
   fontScaleCap,

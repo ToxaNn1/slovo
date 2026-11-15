@@ -4,7 +4,7 @@ import { AccessibilityInfo } from 'react-native';
 import { useEdition } from '../providers/EditionProvider';
 
 /**
- * Keeps a Collection's name through `keep`, which resolves to the reason the
+ * Keeps a name (a Collection's, the reader's) through `keep`, which resolves to the reason the
  * name is refused, in the Edition's words, or to nothing once it is kept. A
  * second submit while the first is being kept does nothing; a refusal is
  * announced and stays until `clearRefusal`; a failure keeps nothing, is

@@ -499,6 +499,12 @@ export const typeRoles = {
   stampName: role('ui', '500', 16, 21),
   /** The name over a Badge family's row of marks. */
   badgeFamily: role('word', '800', 12, 14, 1),
+  /** The first letter of the reader's name in the Profile header's avatar. */
+  profileAvatarLetter: role('word', '900', 24, 24),
+  /** The reader's name, or the invitation to add one, in the Profile header. */
+  profileName: role('word', '800', 18, 22),
+  /** «Рівень N — назва» under the name in the Profile header. */
+  profileHeaderLevel: role('ui', '500', 13, 16),
   /** A line of the Profile with no card of its own, such as all XP while the Levels are off. */
   profileText: role('ui', '400', 15, 22),
   /** The Level's number in the ring of the Profile's Level card. */

@@ -2,6 +2,7 @@ import {
   ChoiceRow,
   EditionProvider,
   NavigationRow,
+  SettingsActionCard,
   SettingsGroup,
   SettingsRow,
   SwitchRow,
@@ -160,5 +161,20 @@ describe('Settings row', () => {
 
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('row-chevron')).toBeNull();
+  });
+});
+
+describe('Settings action card', () => {
+  it('runs its action when pressed, read by its label', async () => {
+    const onPress = jest.fn();
+    await render(
+      <Providers>
+        <SettingsActionCard testID="reset" label="Reset progress" onPress={onPress} />
+      </Providers>,
+    );
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Reset progress' }));
+
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 });

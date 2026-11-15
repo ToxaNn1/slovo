@@ -63,4 +63,8 @@ export interface GameXp {
 export interface GameRecords extends GameXp {
   /** The record a Round answered wrong in `mode` appends, for the write of the answer. */
   answeredWrong(mode: string): Omit<XpAward, 'amount'>;
+  /** The latest reset marker of a Progress reset: each Game Mode's Best result counts the Games after it (ADR 0133). */
+  readonly resetMarker: { readonly id: string } | undefined;
+  /** Tells the listener the log changed, a Progress reset included. */
+  subscribe(listener: () => void): () => void;
 }
