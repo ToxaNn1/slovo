@@ -23,3 +23,4 @@ Never end your turn while work remains; push a `WAITING until <UTC>` line here b
 - 15.11 ~17:20Z safety net: merged #1914 #1916 #1917 #1920 (f247f9594), launched #1918.
 - 15.11 safety net: PR #1923 body updated (Closes +4, questions, checks, texts). Note for #1921: badgeStamp.done «ГОТОВО» → «ЗАБРАТИ» (decision 5) still open.
 WAITING until 2026-11-15T18:10:20Z: #1918 DONE commit on feat/1918-badge-stamp-toast
+- 15.11 17:40Z laptop coordinator back after a T3 restart: CI red on f247f9594 was profile-screen.test.tsx Level 25 test timing out (2598 awards one by one) → seeded in one XP record, 64fb94ed0 pushed. Laptop also waits for #1918 (a second merge of the same tip is a no-op).
