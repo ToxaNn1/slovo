@@ -313,7 +313,9 @@ describe('the Badges screen', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    expect(screen.getByTestId('badge-crossword-7')).toHaveAccessibilityValue({ text: '1 з 7 днів' });
+    expect(screen.getByTestId('badge-crossword-7')).toHaveAccessibilityValue({
+      text: '1 з 7 днів',
+    });
     expect(screen.queryByTestId('badge-crossword-7-mark-checker')).toBeNull();
     expect(screen.queryByTestId('badge-crossword-7-mark-symbol')).toBeNull();
   });

@@ -111,12 +111,7 @@ function BadgeSheetContent({
         </View>
       )}
       <View style={styles.done}>
-        <Button
-          testID="badge-sheet-done"
-          variant="inverse"
-          label={doneLabel}
-          onPress={onClose}
-        />
+        <Button testID="badge-sheet-done" variant="inverse" label={doneLabel} onPress={onClose} />
       </View>
     </View>
   );
