@@ -1,16 +1,32 @@
 ---
 import Cta from '../components/Cta.astro';
+import Episodes from '../components/Episodes.astro';
 import Faq from '../components/Faq.astro';
+import Features from '../components/Features.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
-import Inside from '../components/Inside.astro';
+import HowItWorks from '../components/HowItWorks.astro';
 import Mission from '../components/Mission.astro';
+import Promo from '../components/Promo.astro';
 import Screens from '../components/Screens.astro';
 import WordOfDay from '../components/WordOfDay.astro';
 import Base from '../layouts/Base.astro';
 
 const description = 'Спочатку було слово. Потім його забули. Повертаємо.';
+// Who the site belongs to, for search engines (ADR 0147).
+const structuredData = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      name: 'SLOVO',
+      url: 'https://slovoapp.org/',
+      logo: 'https://slovoapp.org/og.png',
+    },
+    { '@type': 'WebSite', name: 'SLOVO', url: 'https://slovoapp.org/', inLanguage: 'uk' },
+  ],
+});
 ---
 
 <Base
@@ -22,13 +38,17 @@ const description = 'Спочатку було слово. Потім його �
     <meta property="og:title" content="SLOVO — Тримай слово." />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <script type="application/ld+json" set:html={structuredData} />
   </Fragment>
   <Header />
   <main id="top">
     <Hero />
+    <HowItWorks />
     <WordOfDay />
-    <Inside />
+    <Features />
     <Screens />
+    <Promo />
+    <Episodes />
     <Mission />
     <Faq />
     <Cta />

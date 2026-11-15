@@ -1,51 +1,49 @@
 ---
-/** The Word of the Day card: rarity 4 of 5. */
+/** The site's one Word of the Day, as the design shows it: кракелю́р, rarity 4 of 5. */
 const rarity = [true, true, true, true, false];
 ---
 
-<section>
-  <div class="mx-auto grid max-w-[1280px] grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))] items-center gap-[clamp(32px,5vw,72px)] px-[clamp(16px,4vw,40px)] py-[clamp(56px,8vw,112px)]">
-    <h2 class="m-0 origin-left -rotate-3 font-word text-[clamp(36px,4.8vw,68px)] leading-none font-black tracking-[-0.035em] text-balance">
-      Знайди слово, якого бракувало.
-    </h2>
-    <div class="flex min-w-0 flex-col gap-[18px]">
-      <article class="flex flex-col gap-[18px] rounded-3xl border border-line bg-sf p-[clamp(22px,3vw,34px)] shadow-[0_8px_0_var(--edge)]">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <span class="-skew-x-10 bg-red px-2.5 py-[7px] font-word text-[11px] leading-none font-extrabold tracking-[1px] text-coal">
-            СЛОВО ДНЯ
-          </span>
-          <div class="flex items-center gap-2 font-ui text-[13px] leading-none font-semibold text-mute">
-            Рідкість 4/5
-            <span class="flex gap-[3px]" aria-label="Рідкість 4 з 5">
-              {rarity.map((on) => (
-                <span class:list={['h-4 w-2.5 -skew-x-12', on ? 'bg-red' : 'bg-line']} />
-              ))}
-            </span>
-          </div>
-        </div>
-        <div class="flex flex-col gap-2">
-          <span class="font-word text-[clamp(40px,5vw,62px)] leading-[1.05] font-black tracking-[-0.03em]">
-            кракелю́р
-          </span>
-          <span class="font-ui text-sm leading-none font-semibold text-mute">іменник, ч. р.</span>
-        </div>
-        <span class="font-ui text-lg leading-normal font-medium text-pretty">
-          Тріщинки, які з часом утворюються на витворах мистецтва, перев. в олійному живописі, а
-          також на кераміці.
-        </span>
-        <div class="flex flex-col gap-2 rounded-2xl bg-sf2 p-4">
-          <span class="font-word text-[11px] leading-none font-extrabold tracking-[1px]">
-            ПРИКЛАД
-          </span>
-          <span class="font-ui text-base leading-normal font-normal text-pretty">
-            Під час реставрації кракелюр на картині залишають, втручання реставратора потрібне лише
-            у випадку лущення й обсипання часток фарби.
-          </span>
-        </div>
-      </article>
-      <span class="font-ui text-base leading-[1.4] font-bold">
-        У застосунку — твоє власне слово, щодня нове.
-      </span>
+<section id="word" class="mt-[clamp(88px,11vw,168px)] bg-sf2">
+  <div class="mx-auto max-w-[1312px] px-[clamp(20px,4vw,56px)] py-[clamp(64px,8vw,120px)]">
+    <div class="flex flex-wrap items-baseline justify-between gap-x-10 gap-y-4">
+      <h2 class="m-0 max-w-[16ch] origin-left [transform:rotate(-3deg)_skewX(-6deg)] font-word text-[clamp(26px,3.4vw,48px)] leading-[1.05] font-black tracking-[-0.03em]">
+        Знайди слово, якого бракувало.
+      </h2>
+      <p class="m-0 max-w-[34ch] text-[17px]">
+        Слово дня українською — щоранку нове, з академічних словників.
+      </p>
     </div>
+    <article class="mt-[clamp(48px,6vw,88px)] flex flex-col gap-[clamp(20px,2.4vw,32px)]">
+      <div class="flex items-center gap-4">
+        <span class="-skew-x-10 bg-red px-2.5 py-[5px] text-[11px] font-bold tracking-[0.1em] whitespace-nowrap text-coal">
+          СЛОВО ДНЯ
+        </span>
+        <span aria-label="Рідкість 4 з 5" role="img" class="flex gap-1">
+          {rarity.map((on) => (
+            <span class:list={['h-5 w-[9px] -skew-x-[14deg]', on ? 'bg-red' : 'bg-edge']} />
+          ))}
+        </span>
+      </div>
+      <div class="font-word text-[calc(8vw_+_20px)] leading-none font-black tracking-[-0.045em]">
+        кракел<span class="text-red">ю́</span>р
+      </div>
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] items-start gap-x-[clamp(32px,5vw,80px)] gap-y-6">
+        <div class="text-[17px] font-semibold">
+          іменник, чоловічий рід
+          <br />
+          рідкість 4 з 5
+        </div>
+        <div class="flex min-w-0 flex-col gap-6">
+          <p class="m-0 text-[clamp(21px,2.2vw,30px)] leading-[1.35] font-medium text-pretty">
+            Тріщинки, які з часом утворюються на витворах мистецтва, перев. в олійному живописі, а
+            також на кераміці.
+          </p>
+          <p class="m-0 text-lg italic">«Під час реставрації кракелюр на картині залишають…»</p>
+          <a href="#cta" class="self-start text-lg font-bold">
+            Більше про це слово →
+          </a>
+        </div>
+      </div>
+    </article>
   </div>
 </section>

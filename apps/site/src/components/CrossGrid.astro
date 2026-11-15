@@ -1,0 +1,40 @@
+---
+import { crossCells } from '../crossword';
+
+/**
+ * The crossword picture: in the Functions section on the Theme's tiles, or
+ * small on a phone's light screen.
+ */
+interface Props {
+  small?: boolean;
+}
+
+const { small = false } = Astro.props;
+const ground = {
+  answer: 'bg-red text-coal shadow-[0_3px_0_var(--red-edge)]',
+  word: small
+    ? 'bg-paper text-coal shadow-[0_3px_0_var(--paper-edge)]'
+    : 'bg-tile text-ink shadow-[0_3px_0_var(--edge)]',
+  empty: '',
+};
+---
+
+<div
+  aria-hidden="true"
+  class:list={[
+    'grid grid-cols-[repeat(9,minmax(0,1fr))]',
+    small ? 'gap-[3px]' : 'max-w-[460px] gap-[5px]',
+  ]}
+>
+  {crossCells().map((cell) => (
+    <span
+      class:list={[
+        'grid aspect-square place-items-center font-word font-black',
+        small ? 'rounded text-[9px]' : 'rounded-lg text-[15px]',
+        ground[cell.kind],
+      ]}
+    >
+      {cell.letter}
+    </span>
+  ))}
+</div>

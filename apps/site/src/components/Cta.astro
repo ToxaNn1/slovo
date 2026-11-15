@@ -1,44 +1,40 @@
 ---
+import AppStoreBadge from './AppStoreBadge.astro';
+import LetterTiles, { type Tile } from './LetterTiles.astro';
 import Mascot from './Mascot.astro';
 
-const tiles = ['С', 'И', 'З', 'И', 'Г', 'І', 'Я'];
-const tile =
-  'grid h-[52px] w-11 place-items-center rounded-[10px] font-word text-[22px] leading-none font-black';
+const tiles: Tile[] = [
+  { ch: 'С', tilt: 'rotate(-5deg)' },
+  { ch: 'И', tilt: 'translateY(-8px) rotate(3deg)' },
+  { ch: 'З', tilt: 'none' },
+  { ch: 'И', tilt: 'translateY(-4px) rotate(-4deg)' },
+  { ch: 'Г', tilt: 'rotate(4deg)' },
+  { ch: 'І', tilt: 'translateY(-12px) rotate(-2deg)', ground: 'coal' },
+  { ch: 'Я', tilt: 'rotate(5deg)' },
+];
 ---
 
-<section id="cta" class="relative overflow-hidden bg-red text-coal">
-  <div class="absolute inset-0 bg-coal [clip-path:polygon(0_0,100%_0,100%_14%,0_30%)]"></div>
-  <div class="relative mx-auto grid max-w-[1280px] grid-cols-[repeat(auto-fit,minmax(min(100%,400px),1fr))] items-center gap-[clamp(40px,6vw,72px)] px-[clamp(16px,4vw,40px)] pt-[clamp(120px,14vw,190px)] pb-[clamp(64px,8vw,112px)]">
-    <div class="flex flex-col items-start gap-9">
-      <h2 class="m-0 origin-bottom-left -rotate-5 -skew-x-6 pt-[0.15em] pb-[0.1em] font-word text-[clamp(54px,8vw,124px)] leading-[0.92] font-black tracking-[-0.04em]">
+<section id="cta" class="relative mt-[clamp(88px,11vw,168px)] overflow-hidden bg-red text-coal">
+  <div class="relative mx-auto grid max-w-[1312px] grid-cols-[repeat(auto-fit,minmax(min(100%,480px),1fr))] items-center gap-12 px-[clamp(20px,4vw,56px)] pt-[clamp(72px,9vw,136px)] pb-[clamp(40px,5vw,72px)]">
+    <div class="flex flex-col items-start gap-[clamp(28px,3vw,40px)]">
+      <LetterTiles
+        tiles={tiles}
+        class="w-full grid-cols-[repeat(7,minmax(0,64px))]"
+        size="text-[clamp(17px,2vw,26px)]"
+      />
+      <h2 class="m-0 origin-bottom-left [transform:rotate(-4deg)_skewX(-6deg)] font-word text-[clamp(56px,7vw,104px)] leading-[0.88] font-black tracking-[-0.045em]">
         Тримай
         <br />
         слово.
       </h2>
-      <a
-        href="#"
-        class="inline-flex min-h-16 items-center rounded-[14px] bg-coal px-[30px] font-word text-[17px] leading-none font-extrabold text-cream no-underline shadow-[0_6px_0_var(--color-shadow-red)] transition-[transform,box-shadow] duration-[120ms] hover:translate-y-0.5 hover:text-cream hover:shadow-[0_4px_0_var(--color-shadow-red)] active:translate-y-1.5 active:shadow-[0_0_0_var(--color-shadow-red)]"
-      >
-        Завантажити в App Store
-      </a>
+      <AppStoreBadge />
     </div>
-    <div class="flex flex-col items-center gap-7">
-      <div class="-rotate-10">
-        <Mascot state="celebrates" onRed class="aspect-[4/3] w-[180px] min-[1000px]:w-[260px]" />
-      </div>
-      <div class="flex -rotate-4 flex-wrap justify-center gap-1.5">
-        {tiles.map((letter, i) =>
-          i === 4 ? (
-            <span
-              class:list={[tile, 'bg-coal text-cream shadow-[0_5px_0_var(--color-shadow-red)]']}
-            >
-              {letter}
-            </span>
-          ) : (
-            <span class:list={[tile, 'bg-cream shadow-[0_5px_0_var(--color-coal)]']}>{letter}</span>
-          ),
-        )}
-      </div>
+    <div class="grid aspect-square w-full max-w-[460px] place-items-center justify-self-center">
+      <Mascot state="celebrates" onRed class="w-[78%]" />
     </div>
   </div>
+  <div
+    aria-hidden="true"
+    class="h-[clamp(56px,8vw,120px)] bg-coal [clip-path:polygon(0_100%,100%_0,100%_100%)]"
+  ></div>
 </section>

@@ -1,0 +1,39 @@
+---
+/** A row of seven letter tiles on red, each with its own tilt: the hero's ГРИЗО́ТА and the final call's СИЗИГІЯ. */
+export interface Tile {
+  ch: string;
+  /** The tile's CSS transform: its lift and tilt. */
+  tilt: string;
+  /** The ground: paper (the default), red or coal. */
+  ground?: 'paper' | 'red' | 'coal';
+}
+
+interface Props {
+  tiles: readonly Tile[];
+  class?: string;
+  /** The classes of every tile's letter size. */
+  size: string;
+}
+
+const { tiles, class: className, size } = Astro.props;
+const grounds = {
+  paper: 'bg-paper shadow-[0_5px_0_var(--paper-edge)]',
+  red: 'bg-red shadow-[0_5px_0_var(--red-edge)]',
+  coal: 'bg-coal text-red shadow-[0_5px_0_var(--coal-edge)]',
+};
+---
+
+<div aria-hidden="true" class:list={['grid gap-1.5', className]}>
+  {tiles.map((tile) => (
+    <span
+      style={`transform:${tile.tilt}`}
+      class:list={[
+        'grid aspect-[1/1.1] place-items-center rounded-[14px] font-word font-black',
+        size,
+        grounds[tile.ground ?? 'paper'],
+      ]}
+    >
+      {tile.ch}
+    </span>
+  ))}
+</div>

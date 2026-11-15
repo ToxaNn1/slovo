@@ -1,38 +1,25 @@
 ---
 import { GoalProgress } from './GoalProgress';
-
-const lines = [
-  'Словники знають сотні тисяч слів. Ми хочемо, щоб їх знали люди.',
-  'Мова живе, поки нею говорять. Ми повертаємо їй забуті слова.',
-  "Зробити багатство мови не обов'язком, а задоволенням.",
-];
 ---
 
-<section data-th="dark" class="bg-bg text-ink">
-  <div class="mx-auto grid max-w-[1280px] grid-cols-[repeat(auto-fit,minmax(min(100%,400px),1fr))] gap-[clamp(36px,5vw,72px)] px-[clamp(16px,4vw,40px)] py-[clamp(56px,8vw,112px)]">
-    <h2 class="m-0 origin-left -rotate-5 -skew-x-6 font-word text-[clamp(52px,7.5vw,112px)] leading-[0.95] font-black tracking-[-0.04em] text-red">
-      Навіщо
+<section class="bg-coal text-cream">
+  <div class="mx-auto max-w-[1312px] px-[clamp(20px,4vw,56px)] py-[clamp(80px,10vw,152px)]">
+    <h2 class="m-0 max-w-[24ch] font-word text-[clamp(28px,3.6vw,52px)] leading-[1.08] font-black tracking-[-0.03em] text-balance">
+      Словники знають сотні тисяч слів. Ми хочемо, щоб їх знали люди.
     </h2>
-    <div class="flex min-w-0 flex-col gap-[clamp(28px,4vw,44px)]">
-      <div class="flex flex-col gap-[26px]">
-        {lines.map((line) => (
-          <span class="text-[clamp(20px,2.1vw,27px)] leading-[1.35] font-semibold text-pretty">
-            {line}
-          </span>
-        ))}
-      </div>
-      <div class="flex flex-col gap-4 rounded-3xl border border-line bg-sf p-[clamp(20px,3vw,28px)]">
-        <span class="-skew-x-10 self-start bg-red px-2.5 py-[7px] font-word text-[11px] leading-none font-extrabold tracking-[1px] text-coal">
-          МЕТА
-        </span>
-        <span class="font-word text-[clamp(20px,2.2vw,26px)] leading-[1.2] font-black tracking-[-0.02em]">
-          Мільйон рідкісних слів, повернутих у вжиток
-        </span>
-        <GoalProgress client:visible />
-        <span class="self-start rounded-md border-[1.5px] border-dashed border-red px-2 py-1.5 text-xs leading-none font-bold text-red">
-          ЗАГЛУШКА: демо-число
-        </span>
-      </div>
+    <div class="mt-[clamp(28px,3vw,40px)] grid max-w-[900px] grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))] gap-x-[clamp(32px,5vw,80px)] gap-y-4">
+      <p class="m-0 text-[19px] leading-normal">
+        Мова живе, поки нею говорять. Ми повертаємо їй забуті слова.
+      </p>
+      <p class="m-0 text-[19px] leading-normal">
+        Зробити багатство мови не обов'язком, а задоволенням.
+      </p>
+    </div>
+    <div class="mt-[clamp(64px,8vw,120px)] flex flex-col gap-[18px]">
+      <h3 class="m-0 text-[clamp(18px,1.6vw,22px)] font-bold">
+        Мільйон рідкісних слів, повернутих у вжиток
+      </h3>
+      <GoalProgress client:visible />
     </div>
   </div>
 </section>

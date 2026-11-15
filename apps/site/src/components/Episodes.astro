@@ -1,0 +1,59 @@
+---
+import Video from './Video.astro';
+
+const caption = 'flex flex-col gap-0.5';
+const title = 'm-0 font-word text-[clamp(16px,1.5vw,20px)] font-extrabold';
+---
+
+<section class="mt-[clamp(88px,11vw,168px)] bg-red text-coal">
+  <div class="mx-auto grid max-w-[1312px] grid-cols-[repeat(auto-fit,minmax(min(100%,400px),1fr))] items-center gap-[clamp(40px,5vw,80px)] px-[clamp(20px,4vw,56px)] py-[clamp(72px,9vw,136px)]">
+    <div class="flex flex-col gap-5">
+      <h2 class="m-0 max-w-[11ch] origin-left [transform:rotate(-3deg)_skewX(-6deg)] font-word text-[calc(3vw_+_22px)] leading-none font-black tracking-[-0.04em]">
+        Тобі бракувало слова
+      </h2>
+      <p class="m-0 max-w-[32ch] text-[clamp(18px,1.6vw,21px)] font-medium">
+        Коротка серія: буденна ситуація, «ну оте…» — і Рупор вигукує забуте українське слово.
+      </p>
+    </div>
+    <div class="grid grid-cols-[repeat(2,minmax(0,250px))] gap-[clamp(12px,1.4vw,16px)]">
+      <article class="flex min-w-0 flex-col gap-3.5">
+        <Video
+          name="missing-bundiuchnyi-9x16"
+          label="Відтворити епізод 1 «бундючний»"
+          disc="small"
+          class="aspect-[9/16]"
+        />
+        <div class={caption}>
+          <h3 class={title}>бундю́чний</h3>
+          <span class="text-[15px] font-semibold">Епізод 1 · 0:15</span>
+        </div>
+      </article>
+      <article class="flex min-w-0 flex-col gap-3.5">
+        <Video
+          name="find-mistake-1-9x16"
+          label="Відтворити гру «Знайди помилку»"
+          disc="none"
+          class="aspect-[9/16]"
+        >
+          <span class="absolute inset-0 flex flex-col justify-between bg-coal p-[clamp(14px,1.6vw,20px)] text-left text-cream">
+            <span class="origin-left [transform:rotate(-3deg)_skewX(-6deg)] font-word text-[clamp(18px,2vw,26px)] leading-[1.02] font-black tracking-[-0.03em]">
+              Знайди помилку
+            </span>
+            <span class="flex flex-col gap-2.5">
+              <span class="text-[clamp(14px,1.3vw,17px)] font-semibold text-coal-mute line-through decoration-red decoration-3">
+                приймати участь
+              </span>
+              <span class="font-word text-[clamp(15px,1.5vw,20px)] font-black text-red">
+                брати участь
+              </span>
+            </span>
+          </span>
+        </Video>
+        <div class={caption}>
+          <h3 class={title}>Кальки</h3>
+          <span class="text-[15px] font-semibold">Гра · 0:15</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>

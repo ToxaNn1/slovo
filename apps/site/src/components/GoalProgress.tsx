@@ -1,29 +1,23 @@
-import { formatCount, goal, shareOfGoal } from '../goal';
+import { barWidth, formatCount, goal, shareOfGoal } from '../goal';
 import { useCountUp } from './useCountUp';
 
-/** The mission's progress bar towards a million, with the count and its share. */
+/** The mission's count towards a million, its bar and its share of the way. */
 export function GoalProgress() {
   const shown = useCountUp(goal.confirmed);
-  const share = (goal.confirmed / goal.target) * 100;
-  const width = Math.max(share * (shown / goal.confirmed), 0.8);
   return (
     <>
-      <div className="h-[22px] overflow-hidden rounded-md bg-tile">
+      <div className="font-word text-[calc(8vw_+_24px)] leading-[0.95] font-black tracking-[-0.05em] text-red tabular-nums">
+        {formatCount(shown)}
+      </div>
+      <div className="h-5 overflow-hidden rounded-[10px] bg-coal-sunk">
         <div
-          className="h-full bg-red [clip-path:polygon(0_0,100%_0,calc(100%-8px)_100%,0_100%)]"
-          style={{ width: `${String(width)}%` }}
+          className="h-full rounded-[10px] bg-red"
+          style={{ width: `${String(barWidth(shown, goal.target))}%` }}
         />
       </div>
-      <div className="flex flex-wrap justify-between gap-3 text-[15px] leading-none font-semibold text-mute">
-        <span>
-          <span className="font-word text-lg font-extrabold text-ink tabular-nums">
-            {formatCount(shown)}
-          </span>{' '}
-          з {formatCount(goal.target)}
-        </span>
-        <span className="font-word text-sm font-extrabold text-red">
-          {shareOfGoal(goal.confirmed, goal.target)}
-        </span>
+      <div className="flex justify-between text-base font-semibold">
+        <span className="whitespace-nowrap">{shareOfGoal(goal.confirmed, goal.target)} шляху</span>
+        <span className="whitespace-nowrap">{formatCount(goal.target)}</span>
       </div>
     </>
   );

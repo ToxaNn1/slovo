@@ -1,0 +1,54 @@
+---
+/**
+ * A video behind its poster and the design's play button: nothing loads until
+ * the reader presses play, the sound comes only then. The slot draws a
+ * poster card over the frame where the design has one.
+ */
+interface Props {
+  /** The file name in public/video/, without the extension; its poster is the .jpg beside it. */
+  name: string;
+  /** The play button's accessible name. */
+  label: string;
+  /** The design's red play disc: big, small or none (the slot is the poster). */
+  disc: 'big' | 'small' | 'none';
+  class?: string;
+}
+
+const { name, label, disc, class: className } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const discs = {
+  big: 'size-[clamp(80px,8vw,112px)] pl-2 text-[clamp(26px,2.6vw,36px)] shadow-[0_6px_0_var(--red-edge)] transition-[translate,box-shadow] duration-[120ms] ease-out group-hover:-translate-y-0.5 group-active:translate-y-1 group-active:shadow-[0_2px_0_var(--red-edge)]',
+  small: 'size-16 pl-1 text-[22px] shadow-[0_4px_0_var(--red-edge)]',
+};
+---
+
+<div class:list={['relative overflow-hidden rounded-[18px] bg-coal-sunk', className]}>
+  <video
+    class="absolute inset-0 size-full object-cover"
+    src={`${base}video/${name}.mp4`}
+    poster={`${base}video/${name}.jpg`}
+    preload="none"
+    controls
+    playsinline
+  ></video>
+  <button
+    type="button"
+    data-play
+    aria-label={label}
+    class="group absolute inset-0 grid cursor-pointer place-items-center border-0 bg-transparent p-0 text-coal"
+  >
+    <slot />
+    {disc !== 'none' && (
+      <span class:list={['grid place-items-center rounded-full bg-red', discs[disc]]}>▶</span>
+    )}
+  </button>
+</div>
+
+<script>
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-play]')) {
+    button.addEventListener('click', () => {
+      button.hidden = true;
+      void button.parentElement?.querySelector('video')?.play();
+    });
+  }
+</script>
