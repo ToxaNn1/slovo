@@ -94,6 +94,8 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     record: contentHandlerOf('record', content.record),
     report: contentHandlerOf('report', content.report),
     records: contentHandlerOf('records', content.records),
+    unchecked: contentHandlerOf('unchecked', content.unchecked),
+    check: contentHandlerOf('check', content.check),
   };
   const queue = fixtures.contentQueue;
   const queueHandlers: Record<QueueName, HttpHandler> = {

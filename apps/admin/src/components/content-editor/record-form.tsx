@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { z } from 'zod';
 
@@ -5,7 +6,8 @@ import { adminApi } from '../../api';
 import { refusalText } from '../../session';
 import { ConfirmDialog, type PendingWrite } from '../confirm-dialog';
 import { Button } from '../ui/button';
-import { type KindEditor, textOf, valueOf } from './kinds';
+import { FieldRow } from './field-controls';
+import { type FormValue, formValueOf, type KindEditor, recordValueOf, shownOf } from './kinds';
 
 type Fields = Record<string, unknown>;
 
@@ -60,9 +62,9 @@ export function RecordForm({
   readonly record: FormRecord;
   readonly onWritten: (written: Written) => void;
 }) {
-  const [texts, setTexts] = useState<Record<string, string>>(() =>
+  const [values, setValues] = useState<Readonly<Record<string, FormValue>>>(() =>
     Object.fromEntries(
-      editor.fields.map((field) => [field.name, textOf(field.control, fields[field.name])]),
+      editor.fields.map((field) => [field.name, formValueOf(field.control, fields[field.name])]),
     ),
   );
   const [base, setBase] = useState<{ fields: Fields; recordVersion: number }>({
@@ -76,6 +78,16 @@ export function RecordForm({
   const [pending, setPending] = useState<PendingWrite>();
   const [busy, setBusy] = useState(false);
   const kind = editor.kind;
+  const card = useQuery({
+    queryKey: ['edition-card', editionId],
+    queryFn: () => adminApi.editionCard({ editionId }),
+  });
+  const optionsOf = (list: readonly { id: string; displayName: string }[] = []) =>
+    list.map(({ id, displayName }) => ({ value: id, label: displayName }));
+  const categories = {
+    categories: optionsOf(card.data?.categories),
+    correctionCategories: optionsOf(card.data?.correctionCategories),
+  };
 
   /** The record's fields as the form holds them over `onto`, or undefined when one can't be read. */
   const read = (onto: Fields): Fields | undefined => {
@@ -85,10 +97,9 @@ export function RecordForm({
     );
     const unread: Record<string, string> = {};
     for (const field of editor.fields) {
-      const value = valueOf(field.control, texts[field.name] ?? '');
+      const value = recordValueOf(field.control, values[field.name]);
       if (!value.ok) {
-        unread[field.name] =
-          field.control === 'number' ? 'Тут має бути число' : 'Тут має бути JSON';
+        unread[field.name] = value.message;
       } else if (value.value !== undefined) {
         next[field.name] = value.value;
       }
@@ -200,7 +211,10 @@ export function RecordForm({
     stale === undefined
       ? []
       : editor.fields.filter(
-          (field) => textOf(field.control, stale.fields[field.name]) !== (texts[field.name] ?? ''),
+          (field) =>
+            JSON.stringify(
+              recordValueOf(field.control, formValueOf(field.control, stale.fields[field.name])),
+            ) !== JSON.stringify(recordValueOf(field.control, values[field.name])),
         );
 
   return (
@@ -212,35 +226,21 @@ export function RecordForm({
           save(base);
         }}
       >
-        {editor.fields.map((field) => {
-          const id = `field-${field.name}`;
-          const error = fieldErrors[field.name];
-          const props = {
-            id,
-            value: texts[field.name] ?? '',
-            'aria-invalid': error !== undefined,
-            'aria-describedby': error === undefined ? undefined : `${id}-error`,
-            className: 'rounded-lg border border-border bg-background px-3 py-2 text-sm',
-            onChange: (event: { target: { value: string } }) => {
-              setTexts((previous) => ({ ...previous, [field.name]: event.target.value }));
-            },
-          };
-          return (
-            <div key={field.name} className="flex flex-col gap-1 text-sm">
-              <label htmlFor={id}>{field.label}</label>
-              {field.control === 'text' || field.control === 'number' ? (
-                <input {...props} inputMode={field.control === 'number' ? 'numeric' : undefined} />
-              ) : (
-                <textarea {...props} className={`${props.className} min-h-20 font-mono`} />
-              )}
-              {error !== undefined && (
-                <p id={`${id}-error`} className="text-destructive">
-                  {error}
-                </p>
-              )}
-            </div>
-          );
-        })}
+        {editor.fields.map((field) => (
+          <FieldRow
+            key={field.name}
+            id={`field-${field.name}`}
+            label={field.label}
+            control={field.control}
+            value={values[field.name]}
+            siblings={values}
+            categories={categories}
+            error={fieldErrors[field.name]}
+            onChange={(value) => {
+              setValues((previous) => ({ ...previous, [field.name]: value }));
+            }}
+          />
+        ))}
         {record.at === 'edit' && (
           <div className="flex flex-col gap-1 text-sm">
             <label htmlFor="edit-reason">Причина (необов&apos;язково)</label>
@@ -269,9 +269,11 @@ export function RecordForm({
               <dl key={field.name} className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
                 <dt className="col-span-2 font-medium">{field.label}</dt>
                 <dt className="text-muted-foreground">Ваша версія</dt>
-                <dd>{texts[field.name] ?? ''}</dd>
+                <dd>{shownOf(field.control, values[field.name])}</dd>
                 <dt className="text-muted-foreground">Поточна версія</dt>
-                <dd>{textOf(field.control, stale.fields[field.name])}</dd>
+                <dd>
+                  {shownOf(field.control, formValueOf(field.control, stale.fields[field.name]))}
+                </dd>
               </dl>
             ))}
             <Button

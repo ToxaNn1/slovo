@@ -363,6 +363,12 @@ function contentColumns<Fields>() {
     /** The Edition's content version the record last changed at. */
     contentVersion: integer('content_version').notNull(),
     retired: boolean('retired').notNull(),
+    /**
+     * The record version an Admin user last marked checked in «Перегляд»; none
+     * while never checked. The record is checked while it equals `recordVersion`,
+     * so any later write leaves it unchecked again (ADR 0143).
+     */
+    checkedVersion: integer('checked_version'),
     changedBy: text('changed_by').$type<ContentAuthor>().notNull(),
     changedAt: time('changed_at'),
     batchId: uuid('batch_id')

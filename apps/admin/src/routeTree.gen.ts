@@ -19,6 +19,7 @@ import { Route as SessionsRouteImport } from './routes/sessions'
 import { Route as SwitchesRouteImport } from './routes/switches'
 import { Route as ContentIndexRouteImport } from './routes/content.index'
 import { Route as ContentQueueRouteImport } from './routes/content.queue'
+import { Route as ContentReviewRouteImport } from './routes/content.review'
 import { Route as SwitchesIndexRouteImport } from './routes/switches.index'
 import { Route as SwitchesKillRouteImport } from './routes/switches.kill'
 import { Route as SwitchesRuleRouteImport } from './routes/switches.rule'
@@ -73,6 +74,11 @@ const ContentQueueRoute = ContentQueueRouteImport.update({
   path: '/queue',
   getParentRoute: () => ContentRoute,
 } as any)
+const ContentReviewRoute = ContentReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => ContentRoute,
+} as any)
 const SwitchesIndexRoute = SwitchesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/sessions': typeof SessionsRoute
   '/switches': typeof SwitchesRouteWithChildren
   '/content/queue': typeof ContentQueueRoute
+  '/content/review': typeof ContentReviewRoute
   '/switches/kill': typeof SwitchesKillRoute
   '/switches/rule': typeof SwitchesRuleRoute
   '/content/': typeof ContentIndexRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/security': typeof SecurityRoute
   '/sessions': typeof SessionsRoute
   '/content/queue': typeof ContentQueueRoute
+  '/content/review': typeof ContentReviewRoute
   '/switches/kill': typeof SwitchesKillRoute
   '/switches/rule': typeof SwitchesRuleRoute
   '/content': typeof ContentIndexRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/sessions': typeof SessionsRoute
   '/switches': typeof SwitchesRouteWithChildren
   '/content/queue': typeof ContentQueueRoute
+  '/content/review': typeof ContentReviewRoute
   '/switches/kill': typeof SwitchesKillRoute
   '/switches/rule': typeof SwitchesRuleRoute
   '/content/': typeof ContentIndexRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/switches'
     | '/content/queue'
+    | '/content/review'
     | '/switches/kill'
     | '/switches/rule'
     | '/content/'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/sessions'
     | '/content/queue'
+    | '/content/review'
     | '/switches/kill'
     | '/switches/rule'
     | '/content'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/switches'
     | '/content/queue'
+    | '/content/review'
     | '/switches/kill'
     | '/switches/rule'
     | '/content/'
@@ -262,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContentQueueRouteImport
       parentRoute: typeof ContentRoute
     }
+    '/content/review': {
+      id: '/content/review'
+      path: '/review'
+      fullPath: '/content/review'
+      preLoaderRoute: typeof ContentReviewRouteImport
+      parentRoute: typeof ContentRoute
+    }
     '/switches/': {
       id: '/switches/'
       path: '/'
@@ -288,11 +307,13 @@ declare module '@tanstack/react-router' {
 
 interface ContentRouteChildren {
   ContentQueueRoute: typeof ContentQueueRoute
+  ContentReviewRoute: typeof ContentReviewRoute
   ContentIndexRoute: typeof ContentIndexRoute
 }
 
 const ContentRouteChildren: ContentRouteChildren = {
   ContentQueueRoute: ContentQueueRoute,
+  ContentReviewRoute: ContentReviewRoute,
   ContentIndexRoute: ContentIndexRoute,
 }
 

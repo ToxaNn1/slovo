@@ -7,7 +7,7 @@ export const Route = createFileRoute('/content')({
 const tabClass =
   'rounded-lg px-3.5 py-[7px] text-[13px] text-muted-foreground hover:text-foreground data-[status=active]:bg-surface data-[status=active]:font-semibold data-[status=active]:text-foreground data-[status=active]:shadow-panel';
 
-/** Контент: the records of the Editions and the Content queue, as two tabs. */
+/** Контент: the records of the Editions and «Перегляд» and the Content queue, as three tabs. */
 function Content() {
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -22,6 +22,14 @@ function Content() {
           className={tabClass}
         >
           Записи
+        </Link>
+        <Link
+          to="/content/review"
+          search={(previous) => previous}
+          activeOptions={{ includeSearch: false }}
+          className={tabClass}
+        >
+          Перегляд
         </Link>
         <Link
           to="/content/queue"
