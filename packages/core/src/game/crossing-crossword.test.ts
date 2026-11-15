@@ -16,6 +16,7 @@ import {
   puzzleOf,
   rowsOf,
   runsOf,
+  vocabulary,
 } from './crossing-crossword.test-support';
 import { word } from '../test-support';
 
@@ -133,5 +134,70 @@ describe('the crossing Daily Crossword generator', () => {
       const covered = new Set(words.flat().map(key));
       expect(runs.flat().every((place) => covered.has(key(place)))).toBe(true);
     }
+  });
+});
+
+describe('the crossing Daily Crossword over many dates', () => {
+  const dates = Array.from({ length: 12 }, (_, i) => `2026-12-${String(i + 10)}`);
+  const eligible = vocabulary.filter(({ lemma }) => !ineligible.has(lemma));
+  /** Each eligible Word again under a second id, and a capitalised copy that cannot fill. */
+  const crowded = [
+    ...vocabulary,
+    ...eligible.map(({ lemma }) => word(`w2_${lemma}`, { lemma })),
+    ...eligible.map(({ lemma }) => word(`w3_${lemma}`, { lemma: lemma.toUpperCase() })),
+  ];
+  const puzzles = dates.map((date) => puzzleOf(date, crowded));
+
+  it('seeds the port with the date and the ids of the Words, one per line', () => {
+    const seeds: string[] = [];
+    generateCrossingCrossword({
+      date: '2026-11-07',
+      words: [word('w_cat'), word('w_dog')],
+      alphabet: ALPHABET,
+      seeded: (seed) => {
+        seeds.push(seed);
+        return seededRandomOf(seed);
+      },
+    });
+    expect(seeds).toEqual(['2026-11-07\nw_cat\nw_dog']);
+  });
+
+  it('lists as blocks exactly the cells of the grid no Word covers', () => {
+    for (const puzzle of puzzles) {
+      const covered = new Set(puzzle.words.flatMap((w) => crossingPlacesOf(w).map(key)));
+      const free = Array.from({ length: CROSSWORD_SIZE ** 2 }, (_, i) =>
+        key({ row: Math.floor(i / CROSSWORD_SIZE), column: i % CROSSWORD_SIZE }),
+      ).filter((cell) => !covered.has(cell));
+      expect(puzzle.blocks.map(key).sort()).toEqual(free.sort());
+    }
+  });
+
+  it('uses each Lemma once and never one with a letter outside the alphabet', () => {
+    for (const puzzle of puzzles) {
+      const lemmas = puzzle.words.map((w) => w.word.lemma);
+      expect(new Set(lemmas).size).toBe(lemmas.length);
+      for (const lemma of lemmas) expect(lemma).toBe(lemma.toLowerCase());
+    }
+  });
+
+  it('pre-fills two cells on some dates and three on others, never a whole Word', () => {
+    expect(new Set(puzzles.map(({ prefilled }) => prefilled.length))).toEqual(new Set([2, 3]));
+    for (const puzzle of puzzles) {
+      const filled = new Set(puzzle.prefilled.map(({ place }) => key(place)));
+      for (const w of puzzle.words)
+        expect(crossingPlacesOf(w).every((place) => filled.has(key(place)))).toBe(false);
+    }
+  });
+
+  it('draws the decoys from the whole alphabet, never a letter of the Word', () => {
+    const decoys = new Set<string>();
+    for (const w of puzzles.flatMap(({ words }) => words)) {
+      const rest = [...w.wheel];
+      for (const letter of w.letters) rest.splice(rest.indexOf(letter), 1);
+      const [decoy = ''] = rest;
+      expect(w.letters).not.toContain(decoy);
+      decoys.add(decoy);
+    }
+    expect(decoys.size).toBeGreaterThan(5);
   });
 });
