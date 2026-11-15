@@ -37,7 +37,7 @@ function app({
 }: {
   contentVersion?: number;
   readableFormats?: number[];
-  media?: Parameters<typeof createMemoryContentStore>[0]['media'];
+  media?: NonNullable<Parameters<typeof createMemoryContentStore>[0]>['media'];
 } = {}) {
   const contentApi = createFakeBackend();
   const store = createMemoryContentStore({ contentVersion, media });
