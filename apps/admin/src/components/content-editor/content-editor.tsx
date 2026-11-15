@@ -1,6 +1,6 @@
 import { CONTENT_PAGE_SIZE } from '@slovo/contracts/admin-api';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { adminApi } from '../../api';
 import { cn } from '../../lib/utils';
@@ -17,6 +17,13 @@ type Open =
   | { readonly at: 'edit'; readonly id: string };
 
 const NONE: Open = { at: 'none' };
+
+/** Tailwind's `xl`: from here up the open record stands beside the list, not under it. */
+const SIDE_BY_SIDE = '(min-width: 1280px)';
+
+// jsdom has no matchMedia: a screen that can't tell lays the editor side by side.
+const sideBySide = () =>
+  typeof window.matchMedia !== 'function' || window.matchMedia(SIDE_BY_SIDE).matches;
 
 /**
  * The content editor of one Edition: its card read-only, then per kind the
@@ -50,9 +57,14 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
     enabled: openId !== undefined,
   });
 
+  const panel = useRef<HTMLDivElement>(null);
   const choose = (next: Open) => {
     setOpen(next);
     setWritten(undefined);
+    // Side by side the panel already stands in view; stacked it sits under the list.
+    if (next.at !== 'none' && !sideBySide()) {
+      panel.current?.scrollIntoView({ block: 'start' });
+    }
   };
   const onWritten = (next: Written) => {
     setWritten(next);
@@ -111,96 +123,106 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
         ))}
       </div>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <form
-            role="search"
-            className="flex min-w-[200px] flex-1 gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setQuery(search.trim());
-              setPage(1);
-            }}
-          >
-            <input
-              aria-label="Пошук"
-              placeholder="Пошук"
-              className="h-9 min-w-0 flex-1 rounded-[10px] bg-surface px-[13px] text-[13px] shadow-panel"
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
+      <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] xl:items-start">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <form
+              role="search"
+              className="flex min-w-[200px] flex-1 gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setQuery(search.trim());
+                setPage(1);
               }}
-            />
-            <Button type="submit" variant="secondary">
-              Шукати
+            >
+              <input
+                aria-label="Пошук"
+                placeholder="Пошук"
+                className="h-9 min-w-0 flex-1 rounded-[10px] bg-surface px-[13px] text-[13px] shadow-panel"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                }}
+              />
+              <Button type="submit" variant="secondary">
+                Шукати
+              </Button>
+            </form>
+            <Button
+              onClick={() => {
+                choose({ at: 'create' });
+              }}
+            >
+              Додати
             </Button>
-          </form>
-          <Button
-            onClick={() => {
-              choose({ at: 'create' });
-            }}
-          >
-            Додати
-          </Button>
-        </div>
-        <div className="overflow-hidden rounded-2xl bg-surface shadow-panel">
-          <table aria-label="Записи" className="w-full text-[13px]">
-            <thead>
-              <tr className="text-xs text-subtle">
-                <th scope="col" className="px-[18px] py-[9px] text-left font-normal">
-                  Запис
-                </th>
-                <th scope="col" className="w-[140px] px-3 py-[9px] text-left font-normal">
-                  Версія
-                </th>
-                <th scope="col" className="w-[140px] px-[18px] py-[9px] text-left font-normal">
-                  Стан
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {records.data?.records.map((each) => (
-                <tr
-                  key={each.id}
-                  className={cn(
-                    'border-t border-border hover:bg-sunk',
-                    each.retired && 'opacity-55',
-                  )}
-                >
-                  <td className="px-[18px] py-[9px]">
-                    <button
-                      type="button"
-                      className={cn(
-                        'text-left font-semibold hover:underline',
-                        each.retired && 'line-through',
-                      )}
-                      onClick={() => {
-                        choose({ at: 'edit', id: each.id });
-                      }}
-                    >
-                      {each.label}
-                    </button>
-                  </td>
-                  <td className="px-3 py-[9px] text-muted-foreground">{each.recordVersion}</td>
-                  <td className="px-[18px] py-[9px] text-muted-foreground">
-                    {each.retired ? 'виведено' : 'чинний'}
-                  </td>
+          </div>
+          <div className="overflow-hidden rounded-2xl bg-surface shadow-panel">
+            <table aria-label="Записи" className="w-full text-[13px]">
+              <thead>
+                <tr className="text-xs text-subtle">
+                  <th scope="col" className="px-[18px] py-[9px] text-left font-normal">
+                    Запис
+                  </th>
+                  <th scope="col" className="w-[140px] px-3 py-[9px] text-left font-normal">
+                    Версія
+                  </th>
+                  <th scope="col" className="w-[140px] px-[18px] py-[9px] text-left font-normal">
+                    Стан
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {records.data?.records.map((each) => (
+                  <tr
+                    key={each.id}
+                    className={cn(
+                      'border-t border-border hover:bg-sunk',
+                      each.retired && 'opacity-55',
+                    )}
+                  >
+                    <td className="px-[18px] py-[9px]">
+                      <button
+                        type="button"
+                        className={cn(
+                          'text-left font-semibold hover:underline',
+                          each.retired && 'line-through',
+                        )}
+                        onClick={() => {
+                          choose({ at: 'edit', id: each.id });
+                        }}
+                      >
+                        {each.label}
+                      </button>
+                    </td>
+                    <td className="px-3 py-[9px] text-muted-foreground">{each.recordVersion}</td>
+                    <td className="px-[18px] py-[9px] text-muted-foreground">
+                      {each.retired ? 'виведено' : 'чинний'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {records.data !== undefined && (
+            <Pager
+              label="Сторінки записів"
+              page={page}
+              pageSize={CONTENT_PAGE_SIZE}
+              total={records.data.total}
+              onPage={setPage}
+            />
+          )}
         </div>
-        {records.data !== undefined && (
-          <Pager
-            label="Сторінки записів"
-            page={page}
-            pageSize={CONTENT_PAGE_SIZE}
-            total={records.data.total}
-            onPage={setPage}
-          />
-        )}
 
-        <div className="flex flex-col gap-4">
+        <div
+          ref={panel}
+          className="flex scroll-mt-20 flex-col gap-4 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto"
+        >
+          {open.at === 'none' && (
+            <p className="text-sm text-muted-foreground">
+              Оберіть запис у списку або натисніть «Додати».
+            </p>
+          )}
           {written !== undefined && (
             <p role="status" className="text-sm">
               {`Опубліковано, версія контенту ${String(written.contentVersion)}`}

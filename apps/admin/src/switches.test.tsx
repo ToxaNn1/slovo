@@ -6,6 +6,7 @@ import { expect, test, vi } from 'vitest';
 
 import { server } from './mock/server';
 import { Admin } from './router';
+import { GROUPED_FEATURES, SWITCH_GROUPS } from './switches/switch-groups';
 import { SWITCH_TEXTS } from './switches/switch-texts';
 
 /** The admin API's refusal as the backend answers it. */
@@ -67,15 +68,23 @@ async function rowOf(feature: string) {
   return within(row);
 }
 
-test('every row of the matrix names its feature in Ukrainian, with one line and the id', async () => {
+test('every row of the matrix names its feature in Ukrainian, with one line and the id, group by group', async () => {
   threeEditions();
   window.history.replaceState(null, '', '/admin/switches');
   render(<Admin />);
 
   await rowOf('game');
   const headers = screen.getAllByRole('rowheader');
-  const features = FeatureSwitchesSchema.keyof().options;
+  const features = GROUPED_FEATURES.flatMap((group) => group.features);
+  expect([...features].sort()).toEqual([...FeatureSwitchesSchema.keyof().options].sort());
   expect(headers.length).toBe(features.length);
+  for (const { group, features: inGroup } of GROUPED_FEATURES) {
+    expect(
+      screen.getByRole('columnheader', {
+        name: `${SWITCH_GROUPS[group]} · ${String(inGroup.length)}`,
+      }),
+    ).toBeTruthy();
+  }
   features.forEach((feature, index) => {
     const { name, line } = SWITCH_TEXTS[feature];
     const [shownName, shownLine, shownId] = Array.from(headers[index]?.children ?? []);
