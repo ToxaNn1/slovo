@@ -71,43 +71,68 @@ export const levelCard = {
 } as const;
 
 /**
- * The Badge stamp, from board 10.7: under the giant cream kicker the earned
- * Badge's mark lands on red in five frames, Підліт (it flies in), Удар (an
- * ink burst and a light shake), Відскок (it springs to `bounce`), Відбиток
- * (it rests at `turn`), then the ribbon and the button.
+ * The Badge stamp, from board XBadges «Штамп» (decision 13): under the giant
+ * cream kicker the earned Badge's mark in its family's shape lands on red.
+ * It flies in from `from`, presses to `press` at the blow, under a dotted
+ * ink ring and a light shake, springs to `bounce` and rests at `turn`: the
+ * hit, about 0.7 s. Then the ribbon flies in from the left and the button
+ * comes in, and the stamp rests, about 1.1 s.
  */
 export const badgeStamp = {
-  markSide: 210,
+  markSide: 120,
   /** The mark flies in from this scale and turn. */
-  from: { scale: 3, turn: -26 },
+  from: { scale: 2.6, turn: -26 },
+  /** The scale of the mark at the blow. */
+  press: 0.9,
   /** The turn of the kicker and of the mark at rest. */
   turn: -8,
   bounce: 1.06,
-  /** The ink burst behind the mark at the blow grows to this share of the mark's side. */
-  burst: 1.5,
-  /** The light shake at the blow, in points. */
-  shake: 6,
-  /** Where each frame ends, as a share of the motion; the ribbon and the button come in after `rest`. */
-  frames: { fly: 0.35, blow: 0.5, bounce: 0.7, rest: 0.85 },
+  /** The dotted ink ring round the mark: it grows from `from` to 1 at the blow, then to `to` as it fades. */
+  ring: { side: 180, width: 6, from: 0.6, to: 1.35 },
+  /** The light shake at the blow, in points, one step per `frames.shake` share. */
+  shake: { x: [0, -3, 3, -1, 0], y: [0, 2, -2, 1, 0] },
+  /**
+   * Where each frame ends, as a share of the motion: the mark lands pressed
+   * at `fly`, springs at `bounce` and rests at `rest`, which ends the hit;
+   * the ribbon and the button are in by `ribbon`; the rest of the motion is
+   * the stamp at rest.
+   */
+  frames: {
+    fly: 0.21,
+    bounce: 0.3,
+    rest: 0.39,
+    ribbon: 0.51,
+    ring: { in: 0.18, blow: 0.27, out: 0.63 },
+    shake: [0.19, 0.22, 0.25, 0.28, 0.33],
+  },
   /** The depth of the hard ink edge under the stamped mark. */
-  drop: 8,
+  drop: 6,
   padding: { top: 90, horizontal: 28, bottom: 40 },
-  /** The mark overlaps the giant word's foot. */
+  /** The ring round the mark overlaps the giant word's foot. */
   markTop: -18,
   nameTop: 16,
   lineTop: 6,
-  ribbon: { top: 18, turn: -3, padding: { vertical: 6, horizontal: 18 } },
+  /** The ink ribbon at the bottom left, over the button: it flies in from `from` points to the left. */
+  ribbon: { top: 18, turn: -6, from: -30, padding: { vertical: 7, horizontal: 10 } },
 } as const;
 
-/** The toast of a Badge earned during a Game: the mark, its name and the stamp's line on ink. */
+/** The toast of a Badge earned during a Game: the mark, its name and the stamp's line, on the Theme's ink. */
 export const badgeToast = {
   markSide: 40,
   gap: 12,
   padding: 12,
   radius: 16,
+  /** The toast is this wide at most, with `horizontal` free on each side. */
+  width: 340,
   /** Over the bottom of the screen, clear of the Game's buttons. */
   bottom: 96,
   horizontal: 16,
+  /** The space between the name and the line. */
+  linesGap: 4,
+  /** The line is a little quieter than the name. */
+  lineOpacity: 0.85,
+  /** A hard shadow under the toast. */
+  shadow: '0 6px 0 rgba(0, 0, 0, 0.3)',
 } as const;
 
 /** The Badge's mark on its Share Card, as on the poster. */

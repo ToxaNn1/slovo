@@ -501,6 +501,12 @@ export const typeRoles = {
   badgeProgress: role('ui', '500', 11, 13),
   /** A Badge's name under its title on the stamp of a newly earned Badge. */
   stampName: role('ui', '500', 16, 21),
+  /** The ink ribbon of a Badge's stamp, «ТЕПЕР ТВОЯ». */
+  stampRibbon: role('word', '900', 11, 11, 1, 'uppercase'),
+  /** The name of a Badge on its toast, as written. */
+  badgeToastName: role('word', '900', 13, 14),
+  /** The line of a Badge's toast. */
+  badgeToastLine: role('ui', '500', 13, 17),
   /** A Badge family's name over its cards on the Badges screen. */
   badgeScreenFamily: role('word', '900', 20, 20),
   /** A Badge's name on its card of the Badges screen. */
@@ -1114,8 +1120,12 @@ export const motion = {
   toast: { duration: 350, easing: [0.2, 0.9, 0.3, 1.1] },
   /** The design's `slToast` of board 09 (XSaved): the plate toast rises in 400 ms. */
   plateToast: { duration: 400, easing: [0.2, 0.9, 0.3, 1] },
-  /** The five frames of a Badge's stamp (board 10.7), after a short wait. */
-  badgeStamp: { duration: 550, easing: ease, delay: 150 },
+  /**
+   * A Badge's stamp (XBadges «Штамп»), once, after a short wait: the hit,
+   * about 0.7 s, then the rest, about 1.1 s. The frames carry their own
+   * spring, so the time runs even.
+   */
+  badgeStamp: { duration: 1800, easing: [0, 0, 1, 1], delay: 150 },
   /** The Level ring fills to the reader's progress. */
   ring: { duration: 1100, easing: [0.2, 0.8, 0.2, 1] },
   /**
