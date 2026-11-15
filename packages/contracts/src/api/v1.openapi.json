@@ -9087,6 +9087,14 @@
                           ],
                           "type": "string"
                         },
+                        "entryPanelAllKinds": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "searchButton": {
                           "enum": [
                             "on",
@@ -9408,6 +9416,7 @@
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",
+                        "entryPanelAllKinds",
                         "searchButton",
                         "dashboardWordmark",
                         "dailySplash",
@@ -11088,6 +11097,14 @@
                           ],
                           "type": "string"
                         },
+                        "entryPanelAllKinds": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "searchButton": {
                           "enum": [
                             "on",
@@ -11409,6 +11426,7 @@
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",
+                        "entryPanelAllKinds",
                         "searchButton",
                         "dashboardWordmark",
                         "dailySplash",
@@ -13020,6 +13038,14 @@
                           ],
                           "type": "string"
                         },
+                        "entryPanelAllKinds": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "searchButton": {
                           "enum": [
                             "on",
@@ -13341,6 +13367,7 @@
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",
+                        "entryPanelAllKinds",
                         "searchButton",
                         "dashboardWordmark",
                         "dailySplash",

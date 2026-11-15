@@ -44,6 +44,7 @@ export function TipCardBody({
   tabs,
   sourceTab,
   exceptionsTab,
+  headless = false,
 }: {
   card: TipCardModel;
   /** The Lemma's size at the user's font size, a share of which the standard form takes. */
@@ -58,6 +59,8 @@ export function TipCardBody({
   sourceTab: boolean;
   /** The tab «Винятки» of a Tip with exceptions, while `tipExceptions` is on (ADR 0120). */
   exceptionsTab: boolean;
+  /** The kicker and the headline are drawn in Entry details' red panel, so the body leaves them out. */
+  headless?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -72,32 +75,36 @@ export function TipCardBody({
 
   return (
     <>
-      <KickerRow testID="tip-kicker-row" corner={corner}>
-        <EntryKicker testID="tip-kicker" label={strings.chip} />
-      </KickerRow>
-      <View
-        accessible
-        accessibilityRole="header"
-        accessibilityLabel={fill(strings.heading, { title: withoutStress(card.title) })}
-        {...voice}
-        {...turnActions}
-        style={styles.header}
-      >
-        <WholeWordsText
-          testID="tip-title"
-          text={capitalised(card.title, voice.accessibilityLanguage)}
-          typeRole="tipTitle"
-          lines={3}
-          style={[typeStyle('tipTitle', tokens), { color: colors.ink }]}
-        />
-        <Wedge
-          testID="tip-rule"
-          points={wedges.slant}
-          color={colors.accent}
-          width={entryCardFrame.rule.width}
-          height={entryCardFrame.rule.height}
-        />
-      </View>
+      {headless ? null : (
+        <>
+          <KickerRow testID="tip-kicker-row" corner={corner}>
+            <EntryKicker testID="tip-kicker" label={strings.chip} />
+          </KickerRow>
+          <View
+            accessible
+            accessibilityRole="header"
+            accessibilityLabel={fill(strings.heading, { title: withoutStress(card.title) })}
+            {...voice}
+            {...turnActions}
+            style={styles.header}
+          >
+            <WholeWordsText
+              testID="tip-title"
+              text={capitalised(card.title, voice.accessibilityLanguage)}
+              typeRole="tipTitle"
+              lines={3}
+              style={[typeStyle('tipTitle', tokens), { color: colors.ink }]}
+            />
+            <Wedge
+              testID="tip-rule"
+              points={wedges.slant}
+              color={colors.accent}
+              width={entryCardFrame.rule.width}
+              height={entryCardFrame.rule.height}
+            />
+          </View>
+        </>
+      )}
       {nonStandardForm === undefined ? null : (
         <NonStandardForm
           testID="tip-non-standard"

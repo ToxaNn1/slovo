@@ -215,14 +215,14 @@ describe('the Game screen', () => {
       await fireEvent.press(wrong);
     }
 
-    it('heads a Round with the mode’s name alone and shows the Lives as flags only, read as «Життів: n з N», one less after a wrong answer', async () => {
+    it('heads a Round with «Вгадай слово · 1/N» over the question, no title in the header, and shows the Lives as hexagons only, read as «Життів: n з N», one less after a wrong answer', async () => {
       await open({ switchedOn: BOARD });
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
       await waitFor(() => {
-        expect(screen.getByRole('header', { name: 'Вгадай слово' })).toBeOnTheScreen();
+        expect(screen.getByRole('header', { name: /^Вгадай слово · 1\/\d+$/ })).toBeOnTheScreen();
       });
-      expect(screen.queryByText(/Вгадай слово · /)).toBeNull();
+      expect(screen.queryByTestId('game-title')).toBeNull();
       const [, before = '', total = ''] = /^Життів: (\d+) з (\d+)$/.exec(livesLabel()) ?? [];
       expect(before).toBe(total);
       expect(screen.queryByText(/Життів/)).toBeNull();
@@ -230,6 +230,17 @@ describe('the Game screen', () => {
       await pickAWrongWord();
 
       expect(livesLabel()).toBe(`Життів: ${String(Number(total) - 1)} з ${total}`);
+    });
+
+    it('heads «Наголос» with «Наголос · 1/N» over «Де наголос?», no title in the header', async () => {
+      await open({ switchedOn: BOARD });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-stress'));
+      await waitFor(() => {
+        expect(screen.getByRole('header', { name: /^Наголос · 1\/\d+$/ })).toBeOnTheScreen();
+      });
+      expect(screen.getByRole('header', { name: 'Де наголос?' })).toBeOnTheScreen();
+      expect(screen.queryByTestId('game-title')).toBeNull();
     });
 
     it('shows no Lives in «На час», which has no Lives', async () => {
@@ -394,12 +405,14 @@ describe('the Game screen', () => {
       expect(screen.queryByTestId(/^game-option-\d+-(right|wrong)-mark$/)).toBeNull();
     });
 
-    it('keys a long option А–Г and, after a wrong pick, puts ✓ in the right one’s key, and crosses the wrong one out with ✕ in its key', async () => {
+    it('keys no option, long ones neither (owner, 15.11), and after a wrong pick stamps ✓ on the right one and crosses the wrong one out', async () => {
       await open({ idioms: 15, switchedOn: ['gameOptionStamp'] });
       await play('game-mode-idiom-meaning');
 
-      optionsShown().forEach((option, place) => {
-        expect(within(option).getByText(KEYS[place] ?? '')).toBeTruthy();
+      optionsShown().forEach((option) => {
+        KEYS.forEach((key) => {
+          expect(within(option).queryByText(key)).toBeNull();
+        });
       });
       const standard = `The sense of idiom${String(theNumberOfThePrompt())}.`;
       const right = optionsShown().findIndex((option) => labelOf(option) === standard);
@@ -408,9 +421,8 @@ describe('the Game screen', () => {
       if (picked === undefined) throw new Error('No wrong option');
       await fireEvent.press(picked);
 
-      expect(screen.getByTestId(`game-option-${String(right)}-right-mark`)).toBeTruthy();
-      expect(screen.getByTestId(`game-option-${String(wrong)}-wrong-mark`)).toBeTruthy();
-      expect(screen.queryByTestId(/^game-option-\d+-stamp$/)).toBeNull();
+      expect(screen.getByTestId(`game-option-${String(right)}-stamp`)).toBeTruthy();
+      expect(screen.queryByTestId(/^game-option-\d+-(right|wrong)-mark$/)).toBeNull();
       expect(labelOf(picked)).toMatch(/, Твій вибір$/);
       expect(within(picked).getByText(labelOf(picked).replace(/, Твій вибір$/, ''))).toHaveStyle({
         textDecorationLine: 'line-through',

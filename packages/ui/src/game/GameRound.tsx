@@ -22,7 +22,7 @@ import { ChipsRound } from './ChipsRound';
 import { GameHeader } from './GameHeader';
 import { PairsRound } from './PairsRound';
 import { AnswerOptions, PickRound } from './PickRound';
-import { RoundCard } from './RoundCard';
+import { RoundCard, RoundKicker } from './RoundCard';
 import { RoundLookContext, type QuestionFace } from './round-look';
 import { askedAs, cardOf, RoundHead, type CardText } from './RoundPrompt';
 import { SurvivalStreak } from './SurvivalStreak';
@@ -128,6 +128,16 @@ export function GameRound({
     questionFace: questionFaceOf(game.modeId),
     inkHeaded: onGround && INK_HEADED.has(game.modeId),
     mascot: mascot?.({ state: mascotState(answer, game.lives), width: roundMascotWidth }),
+    // On the ground the header has no title: the mode and the Round head the question (board «slogo game last»).
+    kicker: !onGround
+      ? undefined
+      : game.roundLimit === undefined
+        ? title
+        : fill(strings.game.round.header, {
+            mode: title,
+            n: String(round.number),
+            total: String(game.roundLimit),
+          }),
   };
   // The streak of «Виживання» heads its body alone (board g7), as an ink-headed mode does on the ground.
   const labelShown = streak === undefined && !look.inkHeaded;
@@ -160,6 +170,9 @@ export function GameRound({
           onGround && styles.roundOnGround,
         ]}
       >
+        {look.kicker !== undefined && round.form !== 'vowel' && (
+          <RoundKicker kicker={look.kicker} />
+        )}
         {streak !== undefined && <SurvivalStreak streak={streak} />}
         {stays ? (
           <Text

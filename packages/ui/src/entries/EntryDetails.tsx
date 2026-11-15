@@ -10,6 +10,11 @@ import { entryPanel, iconButton, space, swipeStampLayout, wedges, wordCardSide }
 import { AccentGround } from './AccentGround';
 import { SwipeMarks, type EntrySwipe } from './SwipeMarks';
 import { EntryCard, type EntryCardProps } from './EntryCard';
+import { CorrectionCardBody } from './CorrectionCard';
+import { EntryPanelHeadline, headlineOf, type OtherKindCard } from './EntryPanelHeadline';
+import { IdiomCardBody } from './IdiomCard';
+import { SynonymRowCardBody } from './SynonymRowCard';
+import { TipCardBody } from './TipCard';
 import { EntryReveal, RevealDetail } from './reveal';
 import { WordHeadline, WordSections } from './WordCard';
 import { WordTabs } from './WordTabs';
@@ -20,11 +25,14 @@ import { WordOfTheDayBadge } from './WordOfTheDayBadge';
  * Entry details (XActions a4): the red panel on top, cut by a slanted bottom
  * edge, under the halftone raster, with the ink back tile. A Word's panel
  * carries the giant first letter of its Lemma, the Word of the Day's kicker
- * when it is one, the Lemma, part of speech and the Pronunciation button;
- * its meaning follows on the screen's ground and its action row is docked at
- * the screen's foot, or while marks are swiped its corner sits at the
- * panel's top right. Any other kind keeps its Entry card, with its row or
- * corner, under the panel. It never conceals the meaning.
+ * when it is one, the Lemma, part of speech and the Pronunciation button.
+ * With `panelAllKinds`, every other kind is headed the same way (owner
+ * 15.11): the giant first letter of its headline, its expression, dominant,
+ * title or struck form, and the name of its kind under it. The meaning
+ * follows on the screen's ground, with no card frame, and the action row is
+ * docked at the screen's foot, or while marks are swiped the corner sits at
+ * the panel's top right. Without it, another kind keeps its Entry card, with
+ * its row or corner, under a bare panel. It never conceals the meaning.
  */
 export function EntryDetails({
   card,
@@ -40,7 +48,11 @@ export function EntryDetails({
   slots,
   tabs = false,
   sourceTab = false,
+  tipExceptions = false,
+  panelAllKinds = false,
 }: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont'> & {
+  /** Every kind is headed in the panel as a Word (`entryPanelAllKinds`); off, another kind keeps its Entry card under the panel. */
+  panelAllKinds?: boolean;
   /** The name of the screen the back tile returns to, which VoiceOver reads. */
   back: string;
   onBack: () => void;
@@ -52,9 +64,12 @@ export function EntryDetails({
   const { colors } = useTokens();
   const lemmaSize = useLemmaSize();
   const compact = useCompactLayout();
-  const word = card.kind === 'word' ? card : undefined;
   const swipe = slots?.slot === 'corner' ? slots.swipe : undefined;
-  const docked = word !== undefined && slots?.slot === 'actions';
+  // Another kind's card under a bare panel keeps its own row or corner.
+  const ownCard = card.kind !== 'word' && !panelAllKinds;
+  // The action row docked at the screen's foot, for any kind headed in the panel.
+  const dock = !ownCard && slots?.slot === 'actions' ? slots.actions : undefined;
+  const docked = dock !== undefined;
   // The tab bar stands at the screen's foot (owner 08.11): under it only the docked
   // action row, or the room the swipe's stamp keeps, which takes in the home indicator.
   const stampRoom = swipe ? swipeStampLayout.room : 0;
@@ -67,7 +82,13 @@ export function EntryDetails({
       <AccentGround
         id="entry-panel"
         testID="entry-panel"
-        letter={word === undefined ? '' : firstLetter(word.model.lemma)}
+        letter={
+          card.kind === 'word'
+            ? firstLetter(card.model.lemma)
+            : ownCard
+              ? ''
+              : firstLetter(headlineOf(card))
+        }
         letterRole="panelLetter"
         letterAt={entryPanel.letter}
         points={wedges.panel}
@@ -75,26 +96,33 @@ export function EntryDetails({
         style={[styles.panel, { paddingTop: topInset + space[3] }]}
       >
         <BackTile label={back} onPress={onBack} />
-        {word !== undefined && slots?.slot === 'corner' && (
-          <View style={[styles.corner, { top: topInset + space[3] }]} testID="word-corner">
+        {!ownCard && slots?.slot === 'corner' && (
+          <View
+            style={[styles.corner, { top: topInset + space[3] }]}
+            testID={`${card.kind}-corner`}
+          >
             {slots.corner}
           </View>
         )}
-        {word !== undefined && (
-          <View style={styles.panelText}>
-            {word.wordOfTheDay !== undefined && <WordOfTheDayBadge day={word.wordOfTheDay} />}
-            <WordHeadline
-              card={word.model}
-              lemmaSize={lemmaSize}
-              concealed={false}
-              stressFalls={stressFalls}
-              lemmaFont={undefined}
-              tabbed={false}
-            />
-          </View>
-        )}
+        <View style={styles.panelText}>
+          {card.kind !== 'word' ? (
+            !ownCard && <EntryPanelHeadline card={card} />
+          ) : (
+            <>
+              {card.wordOfTheDay !== undefined && <WordOfTheDayBadge day={card.wordOfTheDay} />}
+              <WordHeadline
+                card={card.model}
+                lemmaSize={lemmaSize}
+                concealed={false}
+                stressFalls={stressFalls}
+                lemmaFont={undefined}
+                tabbed={false}
+              />
+            </>
+          )}
+        </View>
       </AccentGround>
-      {word === undefined ? (
+      {card.kind !== 'word' && ownCard ? (
         <View style={[styles.otherKind, tabs && styles.fill]}>
           <EntryCard
             card={card}
@@ -107,21 +135,32 @@ export function EntryDetails({
             stressFalls={stressFalls}
             tabs={tabs}
             sourceTab={sourceTab}
+            tipExceptions={tipExceptions}
+          />
+        </View>
+      ) : card.kind !== 'word' ? (
+        <View testID="entry-body" style={[styles.body, tabs && styles.tabbed]}>
+          <OtherKindBody
+            card={card}
+            onOpenWord={onOpenWord}
+            tabs={tabs}
+            sourceTab={sourceTab}
+            tipExceptions={tipExceptions}
           />
         </View>
       ) : (
         <View testID="word-card" style={[styles.body, tabs && styles.tabbed]}>
           {tabs ? (
             <WordTabs
-              card={word.model}
+              card={card.model}
               onOpenCorrection={onOpenCorrection}
               onOpenSynonymRow={onOpenSynonymRow}
               onHistoryShown={onWordHistoryShown}
-              sources={sourceTab ? word.model.sourceNames : undefined}
+              sources={sourceTab ? card.model.sourceNames : undefined}
             />
           ) : (
             <WordSections
-              card={word.model}
+              card={card.model}
               compact={compact}
               onOpenCorrection={onOpenCorrection}
               onOpenSynonymRow={onOpenSynonymRow}
@@ -154,7 +193,7 @@ export function EntryDetails({
           {body}
         </ScrollView>
       )}
-      {word !== undefined && slots?.slot === 'actions' && (
+      {docked && (
         <View
           style={[
             styles.dock,
@@ -165,13 +204,48 @@ export function EntryDetails({
             },
           ]}
         >
-          <RevealDetail step={3} testID="word-actions">
-            {slots.actions}
+          <RevealDetail step={3} testID={`${card.kind}-actions`}>
+            {dock}
           </RevealDetail>
         </View>
       )}
     </EntryReveal>
   );
+}
+
+/** The meaning of an Entry of another kind under the panel that heads it, as its card's body without the head. */
+function OtherKindBody({
+  card,
+  onOpenWord,
+  tabs,
+  sourceTab,
+  tipExceptions,
+}: {
+  card: OtherKindCard;
+  onOpenWord: ((wordId: string) => void) | undefined;
+  tabs: boolean;
+  sourceTab: boolean;
+  tipExceptions: boolean;
+}) {
+  const lemmaSize = useLemmaSize();
+  const shared = {
+    lemmaSize,
+    concealed: false,
+    corner: undefined,
+    tabs,
+    sourceTab,
+    headless: true,
+  };
+  switch (card.kind) {
+    case 'correction':
+      return <CorrectionCardBody card={card.model} {...shared} />;
+    case 'idiom':
+      return <IdiomCardBody card={card.model} {...shared} />;
+    case 'synonymRow':
+      return <SynonymRowCardBody card={card.model} onOpenWord={onOpenWord} {...shared} />;
+    case 'tip':
+      return <TipCardBody card={card.model} exceptionsTab={tipExceptions} {...shared} />;
+  }
 }
 
 /**
@@ -245,11 +319,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  otherKind: { paddingHorizontal: space[6], paddingBottom: space[6] },
   body: {
     paddingHorizontal: wordCardSide - space[1],
     paddingTop: space[1],
     paddingBottom: space[6],
     gap: entryPanel.bodyGap,
   },
-  otherKind: { paddingHorizontal: space[6], paddingBottom: space[6] },
 });

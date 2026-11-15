@@ -673,7 +673,8 @@ describe('the Game screen', () => {
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
     });
 
-    expect(screen.getAllByText('Англіцизми', { includeHiddenElements: true })).toHaveLength(2);
+    expect(screen.getAllByText('Англіцизми', { includeHiddenElements: true })).toHaveLength(1);
+    expect(screen.getByTestId('game-kicker')).toHaveTextContent(/^Англіцизми · 1\/\d+$/);
     expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
       /^Англіцизми\. Речення (\d+): тут хибне\1\. Виділено: хибне\1$/,
     );

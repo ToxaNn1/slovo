@@ -6,7 +6,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { blockGap, fontScaleCap, resultLayout, space, typeRoles, typeStyle } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { ResultButtons, ResultNumber, ResultPanel } from './GameResult';
+import { ResultNumber, ResultPanel } from './GameResult';
 import { GameReviewOf, type ResultReview } from './GameReview';
 import { FlyIn } from './FlyIn';
 import { useGameHaptics } from './useGameHaptics';
@@ -24,9 +24,10 @@ const FINISH_SIZE = Math.round(typeRoles.resultTitle.size * 2.2);
  * Best result tiles. A Game that lost its last Life gets «Розминка!» with
  * `warmup` on: the mode's name and the score, «Майже. Наступне вийде.», the
  * Mascot at the left and the big count of right answers out of the Rounds
- * played; else «Життя закінчилися» over the mode's name and the score. The
- * Game Review follows, then «Ще раз» with «До ігор» and, with `onToFeed`,
- * «До стрічки» under it. A Game on target arrives with the success haptic.
+ * played; else the same poster as a finished Game short of its target,
+ * «ФІНІШ» and «ЩЕ РАУНД!» with the tiles (board «slogo game last», owner
+ * 15.11). The Game Review follows, then «Ще раз!» across the screen and
+ * «До ігор» across under it; no «До стрічки» (owner, 15.11). A Game on target arrives with the success haptic.
  */
 export function GameEndPoster({
   game,
@@ -36,7 +37,6 @@ export function GameEndPoster({
   warmup,
   onAgain,
   onToGames,
-  onToFeed,
   review,
   mascot,
   timeUpToFinish = false,
@@ -54,8 +54,6 @@ export function GameEndPoster({
   onAgain: () => void;
   /** Opens the Games hub. */
   onToGames: () => void;
-  /** Opens the Feed, «До стрічки» (`gameEndToFeed`); without it, no such button. */
-  onToFeed: (() => void) | undefined;
   review: ResultReview;
   /** The Mascot at the Game's end, drawn for the red panel; none without it. */
   mascot?: ReactNode;
@@ -86,81 +84,74 @@ export function GameEndPoster({
     total: String(game.roundLimit ?? end.played),
   });
   const hits = `${String(end.right)}/${String(end.played)}`;
-  const panel =
-    end.kind === 'lives-over' ? (
-      warmup ? (
-        <ResultPanel
-          kicker={kicker}
-          title={words.warmup.title}
-          line={words.warmup.line}
-          mascot={mascot}
-          stacked
-          beside={
-            <View
-              testID="game-end-hits"
-              accessible
-              accessibilityLabel={`${hits} ${words.warmup.hits}`}
+  // The board heads every end the same, a Game that lost its last Life «ЩЕ РАУНД!» like one short of its target.
+  const finishPanel = (
+    <ResultPanel
+      title={upper(onTarget ? finish.won : finish.more)}
+      line={fill(count(finish.hits, end.right), { total: String(end.played) })}
+      mascot={mascot}
+      banner={
+        <View style={styles.banner}>
+          <FlyIn>
+            <Text
               {...voice}
-              style={styles.hits}
+              maxFontSizeMultiplier={fontScaleCap.number}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={[typeStyle('resultTitle', tokens), styles.finish, { color: keyInk }]}
             >
-              <Text
-                maxFontSizeMultiplier={fontScaleCap.number}
-                style={[typeStyle('resultTitle', tokens), { color: keyInk }]}
-              >
-                {hits}
-              </Text>
+              {upper(end.kind === 'time-up' && !timeUpToFinish ? finish.timeUp : finish.title)}
+            </Text>
+          </FlyIn>
+          {end.newBest ? (
+            <View testID="game-end-new-best" style={[styles.stamp, { borderColor: keyInk }]}>
               <Text
                 maxFontSizeMultiplier={fontScaleCap.text}
                 style={[typeStyle('eyebrow', tokens), { color: keyInk }]}
               >
-                {upper(words.warmup.hits)}
+                {upper(finish.newBest)}
               </Text>
             </View>
-          }
-          testID="game-end-panel-foot"
-        />
-      ) : (
-        <ResultPanel
-          kicker={kicker}
-          title={words.result.lost.title}
-          line={undefined}
-          mascot={mascot}
-          stacked
-          testID="game-end-panel-foot"
-        />
-      )
-    ) : (
+          ) : null}
+        </View>
+      }
+      testID="game-end-panel-foot"
+    />
+  );
+  const panel =
+    end.kind === 'lives-over' && warmup ? (
       <ResultPanel
-        title={upper(end.onTarget ? finish.won : finish.more)}
-        line={fill(count(finish.hits, end.right), { total: String(end.played) })}
+        kicker={kicker}
+        title={words.warmup.title}
+        line={words.warmup.line}
         mascot={mascot}
-        banner={
-          <View style={styles.banner}>
-            <FlyIn>
-              <Text
-                {...voice}
-                maxFontSizeMultiplier={fontScaleCap.number}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                style={[typeStyle('resultTitle', tokens), styles.finish, { color: keyInk }]}
-              >
-                {upper(end.kind === 'time-up' && !timeUpToFinish ? finish.timeUp : finish.title)}
-              </Text>
-            </FlyIn>
-            {end.newBest ? (
-              <View testID="game-end-new-best" style={[styles.stamp, { borderColor: keyInk }]}>
-                <Text
-                  maxFontSizeMultiplier={fontScaleCap.text}
-                  style={[typeStyle('eyebrow', tokens), { color: keyInk }]}
-                >
-                  {upper(finish.newBest)}
-                </Text>
-              </View>
-            ) : null}
+        stacked
+        beside={
+          <View
+            testID="game-end-hits"
+            accessible
+            accessibilityLabel={`${hits} ${words.warmup.hits}`}
+            {...voice}
+            style={styles.hits}
+          >
+            <Text
+              maxFontSizeMultiplier={fontScaleCap.number}
+              style={[typeStyle('resultTitle', tokens), { color: keyInk }]}
+            >
+              {hits}
+            </Text>
+            <Text
+              maxFontSizeMultiplier={fontScaleCap.text}
+              style={[typeStyle('eyebrow', tokens), { color: keyInk }]}
+            >
+              {upper(words.warmup.hits)}
+            </Text>
           </View>
         }
         testID="game-end-panel-foot"
       />
+    ) : (
+      finishPanel
     );
 
   return (
@@ -171,7 +162,7 @@ export function GameEndPoster({
     >
       {panel}
       <View style={styles.body}>
-        {end.kind === 'lives-over' ? null : (
+        {end.kind === 'lives-over' && warmup ? null : (
           <View style={styles.numbers}>
             <ResultNumber
               testID="game-end-xp"
@@ -190,35 +181,16 @@ export function GameEndPoster({
           </View>
         )}
         <GameReviewOf rounds={game.played} review={review} />
-        {onToFeed === undefined ? (
-          <ResultButtons
-            away={{ testID: 'game-to-games', label: words.finals.toGames, onPress: onToGames }}
-            on={{ testID: 'game-again', label: words.finals.again, onPress: onAgain }}
+        {/* «Ще раз!» the main action across the screen, «До ігор» across under it (owner, 15.11). */}
+        <View style={styles.actions}>
+          <Button testID="game-again" label={words.finals.again} onPress={onAgain} />
+          <Button
+            variant="neutral"
+            testID="game-to-games"
+            label={words.finals.toGames}
+            onPress={onToGames}
           />
-        ) : (
-          // «Ще раз» the main action across the screen, the two ways out under it.
-          <View style={styles.actions}>
-            <Button testID="game-again" label={words.finals.again} onPress={onAgain} />
-            <View style={styles.ways}>
-              <View style={styles.way}>
-                <Button
-                  variant="neutral"
-                  testID="game-to-games"
-                  label={words.finals.toGames}
-                  onPress={onToGames}
-                />
-              </View>
-              <View style={styles.way}>
-                <Button
-                  variant="neutral"
-                  testID="game-to-feed"
-                  label={words.finals.toFeed}
-                  onPress={onToFeed}
-                />
-              </View>
-            </View>
-          </View>
-        )}
+        </View>
       </View>
     </ScrollView>
   );
@@ -239,6 +211,4 @@ const styles = StyleSheet.create({
   },
   hits: { flex: 1, alignItems: 'flex-end' },
   actions: { gap: space[3] },
-  ways: { flexDirection: 'row', gap: space[3] },
-  way: { flex: 1 },
 });

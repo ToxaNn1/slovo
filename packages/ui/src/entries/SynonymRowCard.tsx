@@ -57,6 +57,7 @@ export function SynonymRowCardBody({
   corner,
   tabs,
   sourceTab,
+  headless = false,
 }: {
   card: SynonymRowCardModel;
   /** The Lemma's size at the user's font size, which the dominant takes. */
@@ -71,6 +72,8 @@ export function SynonymRowCardBody({
   tabs: boolean;
   /** The last tab «Джерело» with the sources, which leave the last page, while `sourceTab` is on (ADR 0116). */
   sourceTab: boolean;
+  /** The kicker and the headline are drawn in Entry details' red panel, so the body leaves them out. */
+  headless?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -90,44 +93,48 @@ export function SynonymRowCardBody({
 
   return (
     <>
-      <KickerRow testID="synonymRow-kicker-row" corner={corner}>
-        <EntryKicker testID="synonym-row-kicker" label={strings.chip} />
-      </KickerRow>
-      <View
-        accessible
-        accessibilityRole="header"
-        accessibilityLabel={
-          shown.concealed
-            ? fill(strings.concealedHeading, { dominant })
-            : fill(strings.heading, {
-                dominant,
-                members: card.members.map(({ text }) => withoutStress(text)).join(', '),
-              })
-        }
-        {...voice}
-        {...turnActions}
-        style={styles.header}
-      >
-        <WholeWordsText
-          flying={flying}
-          text={capitalised(shown.card.dominant.text, voice.accessibilityLanguage)}
-          size={{ fontSize: dominantSize.fontSize, lineHeight: dominantSize.lineHeight }}
-          typeRole="synonymDominant"
-          testID="synonym-row-dominant"
-          // The dominant stays on one line and shrinks rather than wrap (board e8).
-          lines={1}
-          falling={undefined}
-          stressed={{ mark: STRESS_MARK, style: { color: colors.accent } }}
-          style={[typeStyle('synonymDominant', tokens), { color: colors.ink }]}
-        />
-        <Wedge
-          testID="synonym-row-rule"
-          points={wedges.slant}
-          color={colors.accent}
-          width={entryCardFrame.rule.width}
-          height={entryCardFrame.rule.height}
-        />
-      </View>
+      {headless ? null : (
+        <>
+          <KickerRow testID="synonymRow-kicker-row" corner={corner}>
+            <EntryKicker testID="synonym-row-kicker" label={strings.chip} />
+          </KickerRow>
+          <View
+            accessible
+            accessibilityRole="header"
+            accessibilityLabel={
+              shown.concealed
+                ? fill(strings.concealedHeading, { dominant })
+                : fill(strings.heading, {
+                    dominant,
+                    members: card.members.map(({ text }) => withoutStress(text)).join(', '),
+                  })
+            }
+            {...voice}
+            {...turnActions}
+            style={styles.header}
+          >
+            <WholeWordsText
+              flying={flying}
+              text={capitalised(shown.card.dominant.text, voice.accessibilityLanguage)}
+              size={{ fontSize: dominantSize.fontSize, lineHeight: dominantSize.lineHeight }}
+              typeRole="synonymDominant"
+              testID="synonym-row-dominant"
+              // The dominant stays on one line and shrinks rather than wrap (board e8).
+              lines={1}
+              falling={undefined}
+              stressed={{ mark: STRESS_MARK, style: { color: colors.accent } }}
+              style={[typeStyle('synonymDominant', tokens), { color: colors.ink }]}
+            />
+            <Wedge
+              testID="synonym-row-rule"
+              points={wedges.slant}
+              color={colors.accent}
+              width={entryCardFrame.rule.width}
+              height={entryCardFrame.rule.height}
+            />
+          </View>
+        </>
+      )}
       {shown.concealed ? null : tabs ? (
         <CardTabs
           testID="synonymRow"

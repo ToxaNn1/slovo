@@ -90,6 +90,15 @@ export const roundHeader = {
   exitRadius: 12,
   exitGlyph: 14,
   lostPop: { from: 0.6, peak: 1.12, duration: 400 },
+  /** On the ground (board «slogo game last»): the ✕, the Lives as hexagons, the bar's height and the room from the row to the question. */
+  ground: {
+    exit: 44,
+    exitRadius: 14,
+    life: { width: 18, height: 20 },
+    lifeGap: 5,
+    segmentHeight: 8,
+    kickerGap: 8,
+  },
 } as const;
 
 /**
@@ -128,17 +137,16 @@ export const answerOption = {
 
 /**
  * A pick Round's option in the board's look (D6, `gameOptionStamp`): the
- * most characters a short, keyless option has; how much the options left
- * out of the answer fade and how far a wrong choice drops; and the round ✓
- * stamp on a right short option (its side, border and the side of its ✓) and
- * the side of the ✓ on a right long option's key.
+ * most characters a short option has, which takes the large word tier; how
+ * much the options left out of the answer fade and how far a wrong choice
+ * drops; and the round ✓ stamp on the right option (its side, border and the
+ * side of its ✓).
  */
 export const answerOptionStamp = {
   shortMost: 14,
   dimmedOpacity: 0.45,
   drop: 3,
   stamp: { side: 30, border: 2, mark: 14 },
-  rightMark: 14,
 } as const;
 
 /**
@@ -291,6 +299,10 @@ export const vowelButtonsLayout = {
   width: 38,
   height: 62,
   letterGap: 2,
+  /** On the ground every letter takes a cell of the tile's width, this far apart, and the cells shrink to keep a long Word on one line. */
+  cellGap: 4,
+  /** From the Word to its hint on the ground. */
+  hintGap: 12,
   /** The red stress mark over a stressed vowel (board 06 «Наголос»): its bar, slant, rise over the tile and flight in. */
   mark: { width: 6, height: 20, skew: -15, rise: 4, flyX: 10, flyY: -30, duration: 400 },
 } as const;

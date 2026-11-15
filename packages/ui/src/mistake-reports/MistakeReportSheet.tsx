@@ -1,5 +1,5 @@
 import { REPORT_COMMENT_LENGTH, type MistakeType } from '@slovo/contracts';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Keyboard,
   Pressable,
@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
   useWindowDimensions,
+  type ScrollViewInstance,
 } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
@@ -52,7 +53,8 @@ export interface MistakeReportSheetDraft {
  * written. With the keyboard up the field stops at four lines and scrolls,
  * its return key «Готово» closes the keyboard, as do a drag of the sheet and
  * a tap on a type, and «Надіслати» stays below the content that scrolls, so
- * it is never out of reach. The caller turns `visible` off in both callbacks. Needs a
+ * it is never out of reach. Once the keyboard is up, the content scrolls to
+ * its end, so the field and what is typed in it stay on screen. The caller turns `visible` off in both callbacks. Needs a
  * `SafeAreaProvider` above it.
  */
 export function MistakeReportSheet({
@@ -74,10 +76,24 @@ export function MistakeReportSheet({
   const [type, setType] = useState<MistakeType | undefined>(undefined);
   const [comment, setComment] = useState('');
   const ready = type !== undefined && (type !== 'other' || comment.trim() !== '');
+  const scroll = useRef<ScrollViewInstance>(null);
+  // The comment is the sheet's only field, so the keyboard is up for it alone.
+  // The sheet shrinks above the keyboard after the system's own scroll to the
+  // field, which then leaves the field below the fold; scroll once it settles.
+  useEffect(() => {
+    if (!visible) return undefined;
+    const shown = Keyboard.addListener('keyboardDidShow', () => {
+      scroll.current?.scrollToEnd({ animated: true });
+    });
+    return () => {
+      shown.remove();
+    };
+  }, [visible]);
 
   return (
     <BottomSheet visible={visible} onClose={onClose} testID={testID}>
       <ScrollView
+        ref={scroll}
         testID={`${testID}-content`}
         bounces={false}
         keyboardDismissMode="on-drag"

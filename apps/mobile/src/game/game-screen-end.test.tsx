@@ -66,19 +66,20 @@ describe('the Game screen', () => {
       expect(mockRouted).toEqual([]);
     });
 
-    it('ends «Виживання» on its third mistake on the Lives-over poster of #1674 while `livesOverWarmup` is off', async () => {
+    it('ends «Виживання» on its third mistake on «ФІНІШ» and «ЩЕ РАУНД!» with the tiles while `livesOverWarmup` is off (board «slogo game last»)', async () => {
       await open({ corrections: 15, switchedOn: ['finishPoster'] });
       await renderScreen();
 
       await loseSurvival();
 
-      expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
-      expect(screen.getByText('ВИЖИВАННЯ · 2/5')).toBeOnTheScreen();
-      expect(screen.getByTestId('mascot-gameEnd')).toBeTruthy();
+      expect(screen.getByText('ФІНІШ')).toBeOnTheScreen();
+      expect(screen.getByText('ЩЕ РАУНД!')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-xp')).toBeOnTheScreen();
+      expect(screen.queryByText('Життя закінчилися')).toBeNull();
       expect(screen.queryByText('Розминка!')).toBeNull();
-      expect(screen.queryByTestId('game-end-xp')).toBeNull();
-      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз');
+      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз!');
       expect(screen.getByTestId('game-to-games')).toHaveTextContent('До ігор');
+      expect(screen.queryByTestId('game-to-feed')).toBeNull();
     });
 
     it('ends «Виживання» with its Lives over on «Розминка!», the count of right answers and the sad Mascot', async () => {
@@ -96,13 +97,14 @@ describe('the Game screen', () => {
       expect(screen.queryByTestId('game-end-xp')).toBeNull();
     });
 
-    it('offers «Ще раз», «До ігор» and «До стрічки», each leading where it says', async () => {
+    it('offers «Ще раз!» and «До ігор» one under the other and no «До стрічки», even with `gameEndToFeed` on (owner, 15.11)', async () => {
       await open({ corrections: 15, switchedOn: ['finishPoster', 'gameEndToFeed'] });
       await renderScreen();
       await loseSurvival();
-      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз');
+      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз!');
       expect(screen.getByTestId('game-to-games')).toHaveTextContent('До ігор');
-      expect(screen.getByTestId('game-to-feed')).toHaveTextContent('До стрічки');
+      expect(screen.queryByTestId('game-to-feed')).toBeNull();
+      expect(screen.queryByText('До стрічки')).toBeNull();
 
       await fireEvent.press(screen.getByTestId('game-again'));
       await waitFor(() => {
@@ -111,9 +113,8 @@ describe('the Game screen', () => {
       expect(screen.queryByTestId('game-end-lives-over')).toBeNull();
 
       await loseSurvival({ fromCard: false });
-      await fireEvent.press(screen.getByTestId('game-to-feed'));
+      await fireEvent.press(screen.getByTestId('game-to-games'));
 
-      expect(mockRouted).toEqual(['navigate /']);
       expect(screen.getByTestId('game-modes')).toBeOnTheScreen();
     });
 

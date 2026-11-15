@@ -19,7 +19,7 @@ describe('the UA Edition', () => {
     });
   });
 
-  it('turns every Feature Switch on but the paused Seasonal Decor, calligraphy and Search button', () => {
+  it('turns every Feature Switch on but the paused Seasonal Decor, calligraphy, Search button and the Games the owner hid on 15.11', () => {
     expect(edition.isFeatureEnabled('game')).toBe(true);
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
     expect(edition.isFeatureEnabled('synonymRows')).toBe(true);
@@ -45,17 +45,18 @@ describe('the UA Edition', () => {
     expect(edition.isFeatureEnabled('gameGuessWord')).toBe(true);
     expect(edition.isFeatureEnabled('gameCorrection')).toBe(true);
     expect(edition.isFeatureEnabled('gameStress')).toBe(true);
-    expect(edition.isFeatureEnabled('gamePairs')).toBe(true);
-    expect(edition.isFeatureEnabled('gameSurvival')).toBe(true);
+    // Hidden by the owner, 15.11: «Пари», «Анаграми», «Виживання», «Склади вислів», «Впиши слово», «За літерами», «Звідки слово» and the Daily Crossword.
+    expect(edition.isFeatureEnabled('gamePairs')).toBe(false);
+    expect(edition.isFeatureEnabled('gameSurvival')).toBe(false);
     expect(edition.isFeatureEnabled('gameTimed')).toBe(true);
     expect(edition.isFeatureEnabled('gameIdiomMeaning')).toBe(true);
     expect(edition.isFeatureEnabled('gameAnglicism')).toBe(true);
-    expect(edition.isFeatureEnabled('gameBuildIdiom')).toBe(true);
-    expect(edition.isFeatureEnabled('gameTypeWord')).toBe(true);
-    expect(edition.isFeatureEnabled('gameAnagram')).toBe(true);
-    expect(edition.isFeatureEnabled('gameByLetters')).toBe(true);
-    expect(edition.isFeatureEnabled('gameOrigin')).toBe(true);
-    expect(edition.isFeatureEnabled('dailyCrossword')).toBe(true);
+    expect(edition.isFeatureEnabled('gameBuildIdiom')).toBe(false);
+    expect(edition.isFeatureEnabled('gameTypeWord')).toBe(false);
+    expect(edition.isFeatureEnabled('gameAnagram')).toBe(false);
+    expect(edition.isFeatureEnabled('gameByLetters')).toBe(false);
+    expect(edition.isFeatureEnabled('gameOrigin')).toBe(false);
+    expect(edition.isFeatureEnabled('dailyCrossword')).toBe(false);
     expect(edition.isFeatureEnabled('search')).toBe(true);
     expect(edition.isFeatureEnabled('rarityTest')).toBe(true);
     expect(edition.isFeatureEnabled('weeklyRecap')).toBe(true);

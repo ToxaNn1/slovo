@@ -1072,7 +1072,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       hits: 'влучних',
     });
     expect(parsed.finals).toMatchObject({
-      again: 'Ще раз',
+      again: 'Ще раз!',
       toGames: 'До ігор',
       toFeed: 'До стрічки',
       review: 'Огляд раундів',

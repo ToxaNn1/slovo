@@ -25,15 +25,16 @@ const LAND = {
   reduceMotion: ReduceMotion.Never,
 };
 /**
- * A new Level on red, over the whole screen (p6): the giant `kicker` with the
- * `level` stamped into it, `title` under it, the `mascot` and a button
- * labelled `doneLabel` that closes it. Under Reduce Motion the number fades
- * in at rest.
+ * A new Level on red, over the whole screen (board 10, p6): the small cream
+ * `kicker` turned in the top corner, the giant `level` stamped under it,
+ * `title` and `line` under the number, the `mascot` and a button labelled
+ * `doneLabel` that closes it. Under Reduce Motion the number fades in at rest.
  */
 export function NewLevelScreen({
   level,
   kicker,
   title,
+  line,
   doneLabel,
   mascot,
   onClose,
@@ -42,6 +43,7 @@ export function NewLevelScreen({
   level: number;
   kicker: string;
   title: string;
+  line: string;
   doneLabel: string;
   mascot?: ReactNode;
   onClose: () => void;
@@ -49,8 +51,8 @@ export function NewLevelScreen({
 }) {
   const tokens = useTokens();
   const { voice } = useEdition();
-  // Every red face carries the ink of the light Theme, in both Themes.
-  const keyInk = useSchemeColors('light').ink;
+  // Every red face carries the light Theme's ink and cream, in both Themes.
+  const key = useSchemeColors('light');
   const reduceMotion = useReduceMotion();
   const landed = useSharedValue(0);
   useEffect(() => {
@@ -76,21 +78,29 @@ export function NewLevelScreen({
         <StampHalftone id={`${testID}-halftone`} />
         <Text
           {...voice}
-          adjustsFontSizeToFit
           numberOfLines={1}
-          style={[typeStyle('shout', tokens), styles.kicker, { color: keyInk }]}
+          style={[typeStyle('newLevelKicker', tokens), styles.kicker, { color: key.background }]}
         >
           {kicker}
         </Text>
-        <Animated.View style={[styles.number, { borderColor: keyInk }, numberStyle]}>
-          <Text style={[typeStyle('stepShout', tokens), { color: keyInk }]}>{String(level)}</Text>
+        <Animated.View style={[styles.number, numberStyle]}>
+          <Text style={[typeStyle('newLevelNumber', tokens), { color: key.ink }]}>
+            {String(level)}
+          </Text>
         </Animated.View>
         <Text
           {...voice}
           accessibilityRole="header"
-          style={[typeStyle('screenTitle', tokens), styles.title, { color: keyInk }]}
+          style={[typeStyle('newLevelTitle', tokens), styles.title, { color: key.ink }]}
         >
           {title}
+        </Text>
+        <Text
+          {...voice}
+          testID={`${testID}-line`}
+          style={[typeStyle('newLevelLine', tokens), styles.line, { color: key.ink }]}
+        >
+          {line}
         </Text>
         <View style={styles.spring} />
         {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
@@ -116,19 +126,20 @@ const styles = StyleSheet.create({
     paddingBottom: newLevelStamp.padding.bottom,
     overflow: 'hidden',
   },
-  kicker: { alignSelf: 'stretch', textAlign: 'center' },
-  number: {
-    marginTop: newLevelStamp.numberTop,
-    borderWidth: newLevelStamp.frame,
-    paddingVertical: newLevelStamp.framePadding.vertical,
-    paddingHorizontal: newLevelStamp.framePadding.horizontal,
+  kicker: {
+    position: 'absolute',
+    left: newLevelStamp.kicker.left,
+    top: newLevelStamp.kicker.top,
+    transformOrigin: 'left center',
+    transform: [{ rotate: `${String(newLevelStamp.turn)}deg` }],
   },
+  number: { marginTop: newLevelStamp.numberTop },
   title: {
-    marginTop: newLevelStamp.titleTop - capitalMarkRoom('screenTitle'),
+    marginTop: newLevelStamp.titleTop - capitalMarkRoom('newLevelTitle'),
     textAlign: 'center',
-    textTransform: 'uppercase',
   },
+  line: { marginTop: newLevelStamp.lineTop, textAlign: 'center' },
   spring: { flex: 1 },
-  mascot: { alignSelf: 'flex-start' },
+  mascot: { alignSelf: 'flex-start', marginBottom: newLevelStamp.mascotBottom },
   done: { alignSelf: 'stretch' },
 });

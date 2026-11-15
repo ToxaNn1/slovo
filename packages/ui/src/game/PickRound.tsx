@@ -165,11 +165,10 @@ export function AnswerOptions({
  * Nothing shakes. VoiceOver reads the option with its Stress, then
  * «Правильно» or «Твій вибір», and the faded ones as dimmed.
  *
- * In the board's look (D6, `gameOptionStamp`) a short option has no key and
- * takes the large word tier, and a right one gets a round ✓ stamp; a longer
- * one keeps its key on a filled square with no frame, ✓ or ✕ on an ink key
- * once answered. The wrong text is crossed out in red, the choice drops less
- * and the others fade further.
+ * In the board's look (D6, `gameOptionStamp`) no option has a key (owner,
+ * 15.11): a short one takes the large word tier, and the right one, short or
+ * long, gets a round ✓ stamp. The wrong text is crossed out in red, the
+ * choice drops less and the others fade further.
  */
 function AnswerOption({
   option,
@@ -193,11 +192,11 @@ function AnswerOption({
   const tokens = useTokens();
   const { colors } = tokens;
   const keyInk = useSchemeColors('light').ink;
-  const keyPaper = useSchemeColors('light').tile;
   const { strings, voice } = useEdition();
   const { optionStamp } = useRoundLook();
   const short = optionStamp && Array.from(option.text).length <= answerOptionStamp.shortMost;
-  const keyShown = optionKey !== undefined && !short;
+  // The board's options carry no key at all (owner, 15.11): a right one takes the ✓ stamp.
+  const keyShown = optionKey !== undefined && !optionStamp;
   const { dimmedOpacity, drop } = optionStamp ? answerOptionStamp : answerOption;
   const look =
     answer === undefined
@@ -269,19 +268,8 @@ function AnswerOption({
           <View
             style={[
               styles.key,
-              optionStamp
-                ? {
-                    borderWidth: 0,
-                    backgroundColor:
-                      look === 'right'
-                        ? keyInk
-                        : look === 'wrong'
-                          ? colors.ink
-                          : colors.surfaceSunken,
-                  }
-                : { borderColor: look === 'right' ? keyInk : colors.ink },
-              !optionStamp &&
-                look === 'wrong' && { backgroundColor: colors.accent, borderColor: colors.accent },
+              { borderColor: look === 'right' ? keyInk : colors.ink },
+              look === 'wrong' && { backgroundColor: colors.accent, borderColor: colors.accent },
             ]}
           >
             {look === 'wrong' ? (
@@ -291,16 +279,7 @@ function AnswerOption({
                 height={answerOption.key.wrongMark}
                 viewBox="0 0 14 14"
               >
-                <Path d={WRONG_MARK} fill={optionStamp ? colors.tile : colors.onAccent} />
-              </Svg>
-            ) : look === 'right' && optionStamp ? (
-              <Svg
-                testID={`${testID}-right-mark`}
-                width={answerOptionStamp.rightMark}
-                height={answerOptionStamp.rightMark}
-                viewBox="0 0 14 14"
-              >
-                <RightMarkPath color={keyPaper} />
+                <Path d={WRONG_MARK} fill={colors.onAccent} />
               </Svg>
             ) : (
               <Text
@@ -341,7 +320,7 @@ function AnswerOption({
             ]}
           />
         </View>
-        {short && look === 'right' && (
+        {optionStamp && look === 'right' && (
           <View testID={`${testID}-stamp`} style={[styles.stamp, { borderColor: keyInk }]}>
             <Svg
               width={answerOptionStamp.stamp.mark}

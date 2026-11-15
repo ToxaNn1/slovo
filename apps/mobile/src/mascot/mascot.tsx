@@ -194,8 +194,9 @@ export function MascotCelebrations() {
         level={reached.level}
         kicker={newLevelStrings.kicker}
         title={fill(newLevelStrings.title, { level: String(reached.level), name: reached.name })}
+        line={edition.mascot.newLevel}
         doneLabel={newLevelStrings.done}
-        mascot={<MascotIn state="newLevel" onRed />}
+        mascot={<MascotAs state={stateAt.newLevel} onRed />}
         onClose={() => {
           setReached(undefined);
         }}

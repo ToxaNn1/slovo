@@ -57,7 +57,9 @@ const LIFE_FADE = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Neve
  * «Виживання» with its streak one solid red bar (board g7), and in a timed
  * Game the timer under them. The flags alone show the Lives, which VoiceOver
  * reads as «Життів: 4 з 5». A mode without Lives shows no flags.
- * On the ground (ADR 0139) the title is the mode's name alone.
+ * On the ground (board «slogo game last») the row is the ✕, the bar and the
+ * Lives as hexagons, with no title: the Round shows the mode over its
+ * question, «НАГОЛОС · 1/10».
  */
 export function GameHeader({
   title,
@@ -89,7 +91,7 @@ export function GameHeader({
   /** The play time left of a timed Game and its whole time, in milliseconds; none in another Game. */
   time: { left: number; limit: number } | undefined;
   onExit: () => void;
-  /** Whether the Round's question stands on the ground: the name alone. */
+  /** Whether the Round's question stands on the ground: the bar in the row and no title. */
   onGround?: boolean;
 }) {
   const tokens = useTokens();
@@ -98,89 +100,109 @@ export function GameHeader({
   const words = strings.game.round;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
   const heading =
-    roundLimit === undefined || onGround
+    roundLimit === undefined
       ? title
       : fill(words.header, { mode: title, n: String(number), total: String(roundLimit) });
+  // On the ground the bar takes a segment per Round (board «slogo game last»), so it agrees with «1/15».
+  const segments = onGround && roundLimit !== undefined ? roundLimit : roundProgress.segments;
   const filled =
     roundLimit === undefined
       ? 0
-      : Math.floor((Math.min(roundsPassed, roundLimit) * roundProgress.segments) / roundLimit);
+      : Math.floor((Math.min(roundsPassed, roundLimit) * segments) / roundLimit);
   const hasLives = lives !== undefined && livesAtStart !== undefined;
   const livesText = fill(words.lives, { count: String(lives), total: String(livesAtStart) });
-  return (
-    <View style={styles.header}>
-      <View style={styles.headerRow}>
-        <ExitButton onPress={onExit} />
-        <Text
-          testID="game-title"
-          accessibilityRole="header"
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={roundHeader.titleMinScale}
-          maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-          {...voice}
-          style={[typeStyle('roundTitle', tokens), styles.title, { color: colors.ink }]}
-        >
-          {heading}
-        </Text>
-        {hasLives && (
+  const bar =
+    roundLimit === undefined && streak !== undefined ? (
+      <View
+        testID="game-streak-bar"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={[
+          styles.segment,
+          onGround && styles.segmentOnGround,
+          { backgroundColor: colors.accent },
+        ]}
+      />
+    ) : roundLimit === undefined ? (
+      <Text
+        testID="game-progress"
+        accessibilityLabel={fill(words.passedLabel, progress)}
+        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+        {...voice}
+        style={[typeStyle('roundLives', tokens), { color: colors.ink }]}
+      >
+        {fill(words.passed, progress)}
+      </Text>
+    ) : (
+      <View
+        testID="game-progress"
+        accessible
+        accessibilityLabel={fill(words.progressLabel, progress)}
+        {...voice}
+        style={styles.segments}
+      >
+        {Array.from({ length: segments }, (_, place) => (
           <View
-            testID="game-lives"
-            accessible
-            accessibilityLabel={livesText}
-            {...voice}
-            style={styles.lives}
-          >
-            {Array.from({ length: livesAtStart }, (_, life) => (
-              <Life key={life} place={life} full={life < lives} lostAfter={lifeLostAfter} />
-            ))}
-          </View>
-        )}
+            key={place}
+            testID={`game-progress-${String(place)}`}
+            style={[
+              styles.segment,
+              onGround && styles.segmentOnGround,
+              {
+                backgroundColor:
+                  place < filled
+                    ? colors.accent
+                    : place === filled
+                      ? colors.muted
+                      : colors.silhouette,
+              },
+            ]}
+          />
+        ))}
       </View>
-      {roundLimit === undefined && streak !== undefined ? (
-        <View
-          testID="game-streak-bar"
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={[styles.segment, { backgroundColor: colors.accent }]}
+    );
+  const livesShown = hasLives && (
+    <View
+      testID="game-lives"
+      accessible
+      accessibilityLabel={livesText}
+      {...voice}
+      style={[styles.lives, onGround && styles.livesOnGround]}
+    >
+      {Array.from({ length: livesAtStart }, (_, life) => (
+        <Life
+          key={life}
+          place={life}
+          full={life < lives}
+          lostAfter={lifeLostAfter}
+          onGround={onGround}
         />
-      ) : roundLimit === undefined ? (
-        <Text
-          testID="game-progress"
-          accessibilityLabel={fill(words.passedLabel, progress)}
-          maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-          {...voice}
-          style={[typeStyle('roundLives', tokens), { color: colors.ink }]}
-        >
-          {fill(words.passed, progress)}
-        </Text>
-      ) : (
-        <View
-          testID="game-progress"
-          accessible
-          accessibilityLabel={fill(words.progressLabel, progress)}
-          {...voice}
-          style={styles.segments}
-        >
-          {Array.from({ length: roundProgress.segments }, (_, place) => (
-            <View
-              key={place}
-              testID={`game-progress-${String(place)}`}
-              style={[
-                styles.segment,
-                {
-                  backgroundColor:
-                    place < filled
-                      ? colors.accent
-                      : place === filled
-                        ? colors.muted
-                        : colors.silhouette,
-                },
-              ]}
-            />
-          ))}
-        </View>
-      )}
+      ))}
+    </View>
+  );
+  return (
+    <View style={[styles.header, onGround && styles.headerOnGround]}>
+      <View style={styles.headerRow}>
+        <ExitButton onPress={onExit} onGround={onGround} />
+        {onGround ? (
+          <View style={styles.barInRow}>{bar}</View>
+        ) : (
+          <Text
+            testID="game-title"
+            accessibilityRole="header"
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={roundHeader.titleMinScale}
+            maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+            {...voice}
+            style={[typeStyle('roundTitle', tokens), styles.title, { color: colors.ink }]}
+          >
+            {heading}
+          </Text>
+        )}
+        {livesShown}
+      </View>
+      {!onGround && bar}
       {time !== undefined && (
         <GameTimer
           remainingMs={time.left}
@@ -200,7 +222,7 @@ export function GameHeader({
  * The ✕ at the start of the Round's header (board 07), a 40-pt square, which
  * VoiceOver reads as the Edition's «Вийти з гри».
  */
-function ExitButton({ onPress }: { onPress: () => void }) {
+function ExitButton({ onPress, onGround }: { onPress: () => void; onGround: boolean }) {
   const { colors } = useTokens();
   const { strings, voice } = useEdition();
   return (
@@ -210,8 +232,12 @@ function ExitButton({ onPress }: { onPress: () => void }) {
       accessibilityLabel={strings.game.exit.label}
       {...voice}
       onPress={onPress}
-      hitSlop={(minTouchTarget - roundHeader.exit) / 2}
-      style={[styles.exit, { backgroundColor: colors.surfaceSunken }]}
+      hitSlop={Math.max(0, (minTouchTarget - (onGround ? GROUND.exit : roundHeader.exit)) / 2)}
+      style={[
+        styles.exit,
+        onGround && styles.exitOnGround,
+        { backgroundColor: colors.surfaceSunken },
+      ]}
     >
       <Svg width={roundHeader.exitGlyph} height={roundHeader.exitGlyph} viewBox="0 0 14 14">
         <Path d="M0 2L2 0L7 5L12 0L14 2L9 7L14 12L12 14L7 9L2 14L0 12L5 7Z" fill={colors.ink} />
@@ -229,9 +255,12 @@ function Life({
   place,
   full,
   lostAfter,
+  onGround,
 }: {
   place: number;
   full: boolean;
+  /** Whether it stands in the header on the ground, a hexagon (board «slogo game last»), not a flag. */
+  onGround: boolean;
   /** How long after the wrong answer the Life is lost, in milliseconds: when it pops. */
   lostAfter: number;
 }) {
@@ -271,10 +300,10 @@ function Life({
 
   const flag = (color: string) => (
     <Wedge
-      points={wedges.lifeFlag}
+      points={onGround ? wedges.lifeHex : wedges.lifeFlag}
       color={color}
-      width={roundHeader.life.width}
-      height={roundHeader.life.height}
+      width={onGround ? GROUND.life.width : roundHeader.life.width}
+      height={onGround ? GROUND.life.height : roundHeader.life.height}
     />
   );
   return (
@@ -290,6 +319,8 @@ function Life({
   );
 }
 
+const GROUND = roundHeader.ground;
+
 const styles = StyleSheet.create({
   // Room under the header, so a scrolled Round slides away clear of it, not against it.
   header: { gap: roundHeader.gap, paddingHorizontal: space[4], paddingBottom: space[3] },
@@ -298,6 +329,11 @@ const styles = StyleSheet.create({
   segments: { flexDirection: 'row', gap: roundProgress.gap },
   segment: { flex: 1, height: roundProgress.height, transform: [{ skewX: roundProgress.skew }] },
   lives: { flexDirection: 'row', gap: roundHeader.lifeGap },
+  livesOnGround: { gap: GROUND.lifeGap },
+  segmentOnGround: { height: GROUND.segmentHeight },
+  headerOnGround: { paddingBottom: 0 },
+  barInRow: { flex: 1, justifyContent: 'center' },
+  exitOnGround: { width: GROUND.exit, height: GROUND.exit, borderRadius: GROUND.exitRadius },
   exit: {
     width: roundHeader.exit,
     height: roundHeader.exit,

@@ -171,6 +171,9 @@ const generatedModules = {
 
 const config = getDefaultConfig(__dirname);
 config.resolver.assetExts.push('db');
+// The Editions are no workspace package, so Metro would read their files once at start and miss
+// every change to an Edition's switches or strings until a restart.
+config.watchFolders = [...config.watchFolders, EDITIONS_DIR];
 
 const resolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
