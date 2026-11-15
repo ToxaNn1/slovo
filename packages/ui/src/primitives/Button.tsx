@@ -42,6 +42,7 @@ export function Button({
   busy = false,
   disabled = false,
   selected,
+  oneLine = false,
   testID,
 }: {
   variant?: ButtonVariant;
@@ -58,6 +59,8 @@ export function Button({
   /** Whether the request of the button is on the way. */
   busy?: boolean | undefined;
   disabled?: boolean | undefined;
+  /** Whether the label keeps to one line, its type shrunk to fit a narrow screen, rather than wrapping. */
+  oneLine?: boolean;
   /** For a button that is one of a choice: whether it is the chosen one. */
   selected?: boolean | undefined;
   testID?: string | undefined;
@@ -101,6 +104,7 @@ export function Button({
         <Text
           {...voice}
           maxFontSizeMultiplier={fontScaleCap.number}
+          {...(oneLine && { numberOfLines: 1, adjustsFontSizeToFit: true })}
           style={[styles.label, typeStyle('buttonLabel', tokens), { color: labelColor }]}
         >
           {label}

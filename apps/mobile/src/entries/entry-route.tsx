@@ -19,6 +19,8 @@ interface EntryStack {
   /** The name of the link back when the URL names none; a hook, as a Collection reads its name. */
   useDefaultBack: (params: EntryRouteParams) => string;
   openedFrom: (params: EntryRouteParams) => EntryLinkSource | 'search' | undefined;
+  /** Whether the stack is a tab of Saved, where an Entry takes no side swipes (`savedSwipesOff`). */
+  inSaved: boolean;
 }
 
 /** Opened from a list, which makes nothing Seen by its opening (ADR 0054). */
@@ -32,18 +34,39 @@ function useCollectionBack({ collectionId }: EntryRouteParams): string {
 
 const stacks = {
   /** A link, `slovo-<edition id>://entry/<id>`, or the Feed: a notification or the widget opens it as Seen. */
-  link: { useDefaultBack: () => editionStrings.tabs.home, openedFrom: linkSourceOf },
+  link: {
+    useDefaultBack: () => editionStrings.tabs.home,
+    openedFrom: linkSourceOf,
+    inSaved: false,
+  },
   /** A Search result, which makes nothing Seen (ADR 0054). */
-  search: { useDefaultBack: () => editionStrings.search.title, openedFrom: () => 'search' },
-  game: { useDefaultBack: () => editionStrings.game.title, openedFrom: fromList },
-  history: { useDefaultBack: () => editionStrings.history.title, openedFrom: fromList },
-  favorites: { useDefaultBack: () => editionStrings.favorites.title, openedFrom: fromList },
-  learning: { useDefaultBack: () => editionStrings.learning.title, openedFrom: fromList },
+  search: {
+    useDefaultBack: () => editionStrings.search.title,
+    openedFrom: () => 'search',
+    inSaved: false,
+  },
+  game: { useDefaultBack: () => editionStrings.game.title, openedFrom: fromList, inSaved: false },
+  history: {
+    useDefaultBack: () => editionStrings.history.title,
+    openedFrom: fromList,
+    inSaved: true,
+  },
+  favorites: {
+    useDefaultBack: () => editionStrings.favorites.title,
+    openedFrom: fromList,
+    inSaved: true,
+  },
+  learning: {
+    useDefaultBack: () => editionStrings.learning.title,
+    openedFrom: fromList,
+    inSaved: true,
+  },
   wordsOfTheDay: {
     useDefaultBack: () => editionStrings.wordOfTheDayArchive.title,
     openedFrom: fromList,
+    inSaved: true,
   },
-  collection: { useDefaultBack: useCollectionBack, openedFrom: fromList },
+  collection: { useDefaultBack: useCollectionBack, openedFrom: fromList, inSaved: true },
 } satisfies Record<string, EntryStack>;
 
 /**
@@ -52,7 +75,7 @@ const stacks = {
  * stack's default. The Entries it links open on the same stack.
  */
 export function entryRoute(stack: keyof typeof stacks): () => ReactElement {
-  const { useDefaultBack, openedFrom }: EntryStack = stacks[stack];
+  const { useDefaultBack, openedFrom, inSaved }: EntryStack = stacks[stack];
   return function EntryRoute() {
     const params: EntryRouteParams = {
       entryId: useSegmentParam('entryId'),
@@ -66,6 +89,7 @@ export function entryRoute(stack: keyof typeof stacks): () => ReactElement {
         entryId={params.entryId}
         back={params.back ?? defaultBack}
         openedFrom={openedFrom(params)}
+        inSaved={inSaved}
       />
     );
   };

@@ -23,6 +23,8 @@ const count = pluralCount(edition.locale);
 
 /** The composition the screen reads, opened afresh for each test. */
 let composition: Composition;
+/** The backend the composition asks for Collection Links. */
+let api: ReturnType<typeof createFakeBackend>;
 /** Whether the Collection board style is on in effect, as a remote switch leaves it. */
 let boardStyleOn: boolean;
 /** Whether «Скопіювати посилання» is on in effect, as a remote switch leaves it. */
@@ -73,6 +75,7 @@ beforeEach(async () => {
   jest.useFakeTimers();
   boardStyleOn = true;
   linkCopyOn = true;
+  api = createFakeBackend();
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
@@ -83,7 +86,7 @@ beforeEach(async () => {
     userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-29T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
-    backend: createFakeBackend().backend,
+    backend: api.backend,
   });
 });
 
@@ -194,6 +197,23 @@ describe('a Collection in the board style', () => {
     await renderCollection(id);
 
     expect(screen.getByRole('button', { name: strings.link.share })).toBeOnTheScreen();
+  });
+
+  it('keeps the foot button busy while the link is asked for, then opens the share sheet', async () => {
+    const id = await collectionOf(['w_one']);
+    await renderCollection(id);
+    const release = api.hold();
+
+    await settle(() => fireEvent.press(screen.getByTestId('collection-share')));
+
+    expect(screen.getByTestId('collection-share')).toBeBusy();
+    expect(screen.getByTestId('collection-share')).toBeDisabled();
+    expect(screen.queryByTestId('collection-share-sheet-link')).not.toBeOnTheScreen();
+
+    await settle(release);
+
+    expect(screen.getByTestId('collection-share')).not.toBeBusy();
+    expect(screen.getByTestId('collection-share-sheet-link')).toBeOnTheScreen();
   });
 
   it('opens the share sheet from the foot with the Collection Link, and copies it', async () => {

@@ -63,6 +63,9 @@ let wordTabsOn = true;
 /** Whether `entryPanelAllKinds` is on in effect: on as the Edition ships it unless a test turns it off. */
 let panelAllKindsOn = true;
 
+/** Whether `savedSwipesOff` is on in effect: on as the Edition ships it unless a test turns it off. */
+let savedSwipesOffOn = true;
+
 /** The Edition in effect: as it ships, with the Swipe Marks and Word tabs switches as the test sets them. */
 const editionInEffect = (): typeof shippedEdition => ({
   ...shippedEdition,
@@ -73,7 +76,9 @@ const editionInEffect = (): typeof shippedEdition => ({
         ? wordTabsOn
         : feature === 'entryPanelAllKinds'
           ? panelAllKindsOn
-          : shippedEdition.isFeatureEnabled(feature),
+          : feature === 'savedSwipesOff'
+            ? savedSwipesOffOn
+            : shippedEdition.isFeatureEnabled(feature),
 });
 
 const haptics: Haptics = {
@@ -387,6 +392,46 @@ describe('the Entry screen and the side swipes (ADR 0077)', () => {
 
     expect(screen.getByTestId('word-card')).toBeOnTheScreen();
     expect(screen.queryByTestId('swipe-card')).not.toBeOnTheScreen();
+  });
+});
+
+describe('an Entry opened from Saved and the side swipes (owner 15.11)', () => {
+  const savedStacks = [
+    '/saved/history',
+    '/saved/favorites',
+    '/saved/learning',
+    '/saved/words-of-the-day',
+    '/saved/collections/none',
+  ];
+
+  beforeEach(() => {
+    swipeMarksOn = true;
+  });
+
+  afterEach(() => {
+    swipeMarksOn = false;
+    savedSwipesOffOn = true;
+  });
+
+  it.each(savedStacks)('has no side swipes at %s, its corner kept', async (route) => {
+    await renderEntry('w_sumyrnyi', `${route}/w_sumyrnyi`);
+
+    expect(screen.getByTestId('word-card')).toBeOnTheScreen();
+    expect(screen.queryByTestId('swipe-card')).not.toBeOnTheScreen();
+    expect(within(screen.getByTestId('entry-panel')).getByTestId('entry-corner')).toBeOnTheScreen();
+  });
+
+  it('keeps the side swipes of an Entry a link opens', async () => {
+    await renderEntry('w_sumyrnyi');
+
+    expect(screen.getByTestId('swipe-card')).toBeOnTheScreen();
+  });
+
+  it('keeps the side swipes at Saved with `savedSwipesOff` off', async () => {
+    savedSwipesOffOn = false;
+    await renderEntry('w_sumyrnyi', '/saved/favorites/w_sumyrnyi');
+
+    expect(screen.getByTestId('swipe-card')).toBeOnTheScreen();
   });
 });
 

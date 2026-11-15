@@ -9063,6 +9063,14 @@
                           ],
                           "type": "string"
                         },
+                        "savedSwipesOff": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "wordTabs": {
                           "enum": [
                             "on",
@@ -9413,6 +9421,7 @@
                         "curatedCollections",
                         "swipeMarks",
                         "gesturesHintDemo",
+                        "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",
@@ -11073,6 +11082,14 @@
                           ],
                           "type": "string"
                         },
+                        "savedSwipesOff": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "wordTabs": {
                           "enum": [
                             "on",
@@ -11423,6 +11440,7 @@
                         "curatedCollections",
                         "swipeMarks",
                         "gesturesHintDemo",
+                        "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",
@@ -13014,6 +13032,14 @@
                           ],
                           "type": "string"
                         },
+                        "savedSwipesOff": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "wordTabs": {
                           "enum": [
                             "on",
@@ -13364,6 +13390,7 @@
                         "curatedCollections",
                         "swipeMarks",
                         "gesturesHintDemo",
+                        "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",

@@ -188,6 +188,8 @@ export interface Shown {
   readonly swipeMarks: boolean;
   /** While the gestures hint is open, the Feed's card plays the swipes it names (ADR 0112). */
   readonly gesturesHintDemo: boolean;
+  /** Whether an Entry opened from Saved takes no side swipes, its mark set from the «⋯» sheet (owner 15.11). */
+  readonly savedSwipesOff: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
   /** The «Рідкість» row of Settings, the Rarity Ceiling (ADR 0072). */
@@ -302,6 +304,7 @@ export function shownOf({
     curatedCollections: on('curatedCollections'),
     swipeMarks: on('swipeMarks'),
     gesturesHintDemo: on('gesturesHintDemo'),
+    savedSwipesOff: on('savedSwipesOff'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
     rarityCeiling: on('rarityCeiling'),
     rarityTest: on('rarityTest'),
