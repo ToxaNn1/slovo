@@ -213,7 +213,10 @@ async function run({
   on = ['rarityCeiling', 'knowledge'],
   off = [],
   badges,
+  marksStress = false,
 }: {
+  /** Whether the Edition marks Stress, which «Наголос» needs. */
+  marksStress?: boolean;
   records?: Map<string, string>;
   port?: UserStatePort;
   seed?: number;
@@ -241,6 +244,7 @@ async function run({
         mix: { categoryIds: categories.map(({ id }) => id), kinds: { correction: false } },
       },
       ...(badges === undefined ? {} : { badges }),
+      ...(marksStress ? { languageTraits: { stress: { marked: true, vowels: ['a', 'e'] } } } : {}),
     }),
     userState: await openUserState({ port }),
     clock: time,
@@ -396,6 +400,70 @@ describe('the Game Modes on offer', () => {
     const app = await run({ off: ['gameGuessWord'] });
 
     expect(app.game.state.modes).toEqual([]);
+  });
+
+  /** Every Core Game Mode's Feature Switch but «Вгадай слово»'s, which the Game's own turn on. */
+  const everyMode: readonly FeatureSwitch[] = [
+    'gameCorrection',
+    'gameStress',
+    'gamePairs',
+    'gameAnagram',
+    'gameByLetters',
+    'gameTypeWord',
+    'gameAnglicism',
+    'gameIdiomMeaning',
+    'gameBuildIdiom',
+    'gameSurvival',
+    'gameTimed',
+    'gameOrigin',
+  ];
+  const groupsOf = (app: Composition) =>
+    app.game.state.modes.map(({ modeId, group }) => [modeId, group]);
+
+  it('puts every mode in the board’s five groups, in the board’s order, with `gameHubGroups` on (ADR 0139)', async () => {
+    const app = await run({
+      marksStress: true,
+      on: ['rarityCeiling', 'knowledge', 'corrections', 'idioms', ...everyMode, 'gameHubGroups'],
+    });
+
+    expect(groupsOf(app)).toEqual([
+      ['guess-word', 'new'],
+      ['correction', 'meaning'],
+      ['stress', 'sound'],
+      ['pairs', 'meaning'],
+      ['anagram', 'letters'],
+      ['by-letters', 'new'],
+      ['type-word', 'new'],
+      ['origin', 'new'],
+      ['anglicism', 'new'],
+      ['idiom-meaning', 'meaning'],
+      ['build-idiom', 'new'],
+      ['survival', 'new'],
+      ['timed', 'speed'],
+    ]);
+  });
+
+  it('keeps the four groups of spec #1674 with `gameHubGroups` off', async () => {
+    const app = await run({
+      marksStress: true,
+      on: ['rarityCeiling', 'knowledge', 'corrections', 'idioms', ...everyMode],
+    });
+
+    expect(groupsOf(app)).toEqual([
+      ['guess-word', 'words'],
+      ['correction', 'corrections'],
+      ['stress', 'words'],
+      ['pairs', 'words'],
+      ['anagram', 'words'],
+      ['by-letters', 'words'],
+      ['type-word', 'words'],
+      ['origin', 'words'],
+      ['anglicism', 'corrections'],
+      ['idiom-meaning', 'idioms'],
+      ['build-idiom', 'idioms'],
+      ['survival', 'challenge'],
+      ['timed', 'challenge'],
+    ]);
   });
 
   it("says a mode can't start with fewer than 15 eligible Words, and can once there are again", async () => {

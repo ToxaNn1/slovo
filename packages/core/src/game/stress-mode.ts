@@ -56,6 +56,7 @@ function markedStressOf(text: string): number[] {
 export const stressMode: GameMode = {
   id: 'stress',
   group: 'words',
+  hubGroup: 'sound',
   entryKind: 'word',
   alsoAsks: ['correction'],
   isOn: (edition) => edition.isFeatureEnabled('gameStress') && edition.languageTraits.stress.marked,

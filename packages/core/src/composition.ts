@@ -330,7 +330,10 @@ function closable({
   };
 }
 
-/** The Core's own Game Modes, registered through the same Extension Point as an Edition's. */
+/**
+ * The Core's own Game Modes, registered through the same Extension Point as an
+ * Edition's, in the order the mode screen lists them within a group (ADR 0139).
+ */
 const coreGameModes: readonly GameMode[] = [
   guessWord,
   correctionMode,
@@ -339,12 +342,12 @@ const coreGameModes: readonly GameMode[] = [
   anagramMode,
   byLettersMode,
   typeWordMode,
+  originMode,
   anglicismMode,
   idiomMeaningMode,
   buildIdiomMode,
   survivalMode,
   timedMode,
-  originMode,
 ];
 
 /**

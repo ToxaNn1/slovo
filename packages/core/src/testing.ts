@@ -44,7 +44,7 @@ export { createEntries, EVERYTHING_IN, type Entries } from './entries/entries';
 export { buildEntryCard, SEEN_DWELL_MS } from './feed/feed';
 export { type IdiomFeedCard, type WordFeedCard } from './feed/feed-card';
 export { type PlayingGame } from './game/game';
-export { type GameMode, type GameModeGroup } from './game/game-mode';
+export { type GameHubGroup, type GameMode, type GameModeGroup } from './game/game-mode';
 export { relativeTimeOf } from './saved/history-time';
 export { playPuzzle, startPuzzle } from './game/crossword-puzzle';
 export { renderStress } from './entries/stress';

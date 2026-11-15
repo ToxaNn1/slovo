@@ -17,6 +17,7 @@ const TIMED_GAME_LENGTH_SWITCHED_OFF = 60_000;
 export const timedMode: GameMode = {
   id: 'timed',
   group: 'challenge',
+  hubGroup: 'speed',
   entryKind: 'word',
   lives: 'none',
   roundLimit: 'none',

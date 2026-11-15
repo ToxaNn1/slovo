@@ -18,6 +18,7 @@ const WORDS = { min: 2, max: 8 } as const;
 export const buildIdiomMode: GameMode = {
   id: 'build-idiom',
   group: 'idioms',
+  hubGroup: 'new',
   entryKind: 'idiom',
   isOn: (edition) => edition.isFeatureEnabled('gameBuildIdiom'),
   buildRound({ answer, random, edition, comparison }) {

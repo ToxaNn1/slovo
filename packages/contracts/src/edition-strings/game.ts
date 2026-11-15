@@ -80,6 +80,8 @@ export const GameStringsSchema = z.strictObject({
     none: TextSchema,
     /** The Best result behind `gameHubRecord`, e.g. «Рекорд: 12 з 15». Takes `{n}` and `{total}`, the mode's Round limit (ADR 0139). */
     record: templateOf('n', 'total'),
+    /** The Best result behind `gameHubRecord` of a mode without a Round limit, e.g. «Рекорд: 23». Takes `{n}`. */
+    recordCount: templateOf('n'),
     /** A mode not played yet behind `gameHubRecord`, e.g. «Ще жодної гри». */
     never: TextSchema,
   }),

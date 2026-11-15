@@ -137,7 +137,7 @@ describe('«На час» on offer', () => {
     expect(timedOffer(app)).toEqual({
       modeId: 'timed',
       entryKind: 'word',
-      group: 'challenge',
+      group: 'speed',
       canStart: true,
     });
   });
@@ -154,7 +154,7 @@ describe('«На час» on offer', () => {
     expect(timedOffer(app)).toEqual({
       modeId: 'timed',
       entryKind: 'word',
-      group: 'challenge',
+      group: 'speed',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -316,7 +316,7 @@ describe('a Game of «На час»', () => {
     expect(timedOffer(app)).toEqual({
       modeId: 'timed',
       entryKind: 'word',
-      group: 'challenge',
+      group: 'speed',
       best: { result: 4 },
       canStart: true,
     });
@@ -342,7 +342,7 @@ describe('a Game of «На час»', () => {
     expect(timedOffer(app)).toEqual({
       modeId: 'timed',
       entryKind: 'word',
-      group: 'challenge',
+      group: 'speed',
       canStart: true,
     });
   });

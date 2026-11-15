@@ -128,7 +128,7 @@ describe('«Фразеологізми» on offer', () => {
     expect(idiomMeaningOffer(app)).toEqual({
       modeId: 'idiom-meaning',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'meaning',
       canStart: true,
     });
   });
@@ -152,7 +152,7 @@ describe('«Фразеологізми» on offer', () => {
     expect(idiomMeaningOffer(app)).toEqual({
       modeId: 'idiom-meaning',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'meaning',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -168,7 +168,7 @@ describe('«Фразеологізми» on offer', () => {
     expect(idiomMeaningOffer(app)).toEqual({
       modeId: 'idiom-meaning',
       entryKind: 'idiom',
-      group: 'idioms',
+      group: 'meaning',
       canStart: false,
       refusal: 'idioms-out-of-mix',
     });
