@@ -5,11 +5,14 @@ import type { TextComparison } from '../text/text-comparison';
 export type ChipKind = 'letter' | 'word';
 
 /**
- * How a chips Round lays out its chips: in a line of places, one for each
- * chip, or as board 07's letter tiles in 4 columns under red slots, decoys
- * among them, one slot for each letter of the answer.
+ * How a chips Round lays out its chips and when it is answered: in a line of
+ * places, one for each chip, answered by the last chip; as board 07's letter
+ * tiles in 4 columns under red slots, decoys among them, one slot for each
+ * letter of the answer, answered by the last slot; or as the board's
+ * assembly field of «Склади вислів» (spec #1880), decoys among the chips,
+ * answered on the check by the chips placed so far, at least one.
  */
-export type ChipLayout = 'line' | 'tiles';
+export type ChipLayout = 'line' | 'tiles' | 'field';
 
 /** A character of a chips answer that stays in place and is no chip, such as an apostrophe. */
 export interface FixedChip {
@@ -23,7 +26,7 @@ export interface ChipsContent {
   readonly form: 'chips';
   /** What the chips are, a Word's letters or an expression's words. */
   readonly chipKind: ChipKind;
-  /** The chips, in the order shown: the answer's, plus decoys for letter tiles. */
+  /** The chips, in the order shown: the answer's, plus decoys for letter tiles and the field. */
   readonly chips: readonly string[];
   /** The chips in the right order, drawn from the chips; equal chips are interchangeable. */
   readonly expected: readonly string[];
@@ -43,7 +46,7 @@ export interface ChipsRound {
   /** The characters of the answer that stay in place among the chips. */
   readonly fixed: readonly FixedChip[];
   readonly layout: ChipLayout;
-  /** How many chips the answer takes: every chip but the decoys. */
+  /** How many chips the answer takes: every chip but the decoys; the field shows no places for them. */
   readonly slots: number;
 }
 
@@ -123,7 +126,7 @@ export const chipsForm: AnswerForm<ChipsContent, ChipsRound, ChipsGiven, ChipsAn
   wellFormed: ({ chips, expected, layout = 'line' }) =>
     expected.length > 0 &&
     drawnFrom(chips, expected) &&
-    (layout === 'tiles' || chips.length === expected.length),
+    (layout !== 'line' || chips.length === expected.length),
   roundsIn: () => 1,
   entriesIn: () => [],
   shown: ({ chipKind, chips, expected, fixed = [], layout = 'line' }) => ({
@@ -135,9 +138,10 @@ export const chipsForm: AnswerForm<ChipsContent, ChipsRound, ChipsGiven, ChipsAn
     slots: expected.length,
   }),
   judge({ chips, expected, sheet, layout = 'line' }, _shown, { chips: chosen }, comparison) {
-    // A chip is tapped once, and tiles fill every slot: fewer are no answer yet.
+    // A chip is tapped once, tiles fill every slot and the field checks a chip at least: fewer are no answer yet.
     if (new Set(chosen).size !== chosen.length) return undefined;
     if (layout === 'tiles' && chosen.length !== expected.length) return undefined;
+    if (layout === 'field' && chosen.length === 0) return undefined;
     const tapped: string[] = [];
     for (const place of chosen) {
       const chip = chips[place];

@@ -318,6 +318,18 @@ function AnswerOption({
           <WholeWordsText
             text={option.text}
             typeRole={role}
+            // The replacement an option of «Англіцизми» puts in its sentence (board g5); a wrong one stays crossed out whole.
+            highlight={
+              option.highlight === undefined || look === 'wrong'
+                ? undefined
+                : {
+                    range: option.highlight,
+                    style: {
+                      textDecorationLine: 'underline',
+                      textDecorationColor: look === 'right' ? keyInk : colors.accent,
+                    },
+                  }
+            }
             style={[
               typeStyle(role, tokens),
               { color: look === 'right' ? keyInk : look === 'wrong' ? colors.muted : colors.ink },

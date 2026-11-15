@@ -43,9 +43,15 @@ function joinStopped(parts: readonly (string | undefined)[]): string {
  * How a restyled Round's card looks (board 07, spec #1674): a «Впиши слово»
  * Round names the wrong form it asks to replace, «замість «вірогідно»», over
  * its sentence; a «Звідки слово» Round shows its Word big on a sunken tile.
+ * On the ground (spec #1880) «Склади вислів» shows its label as an ink
+ * heading over the meaning in grey (`heading`), and «Англіцизми» draws its
+ * anglicism in red in the sentence (`redMark`).
  */
 export type RoundFace =
-  { readonly look: 'instead'; readonly instead: string } | { readonly look: 'word' };
+  | { readonly look: 'instead'; readonly instead: string }
+  | { readonly look: 'word' }
+  | { readonly look: 'heading' }
+  | { readonly look: 'redMark' };
 
 /**
  * The Round's prompt (`game-round-dark`, `game-round-correction-answered-light`):
@@ -147,7 +153,7 @@ export function RoundCard({
             : styles.inCard
       }
     >
-      {face?.look === 'instead' && (
+      {(face?.look === 'instead' || face?.look === 'heading') && (
         <Text
           testID="game-ask"
           maxFontSizeMultiplier={roundLayout.textMaxFontScale}
@@ -181,17 +187,23 @@ export function RoundCard({
                 ? undefined
                 : sizeForLength(roleSize(promptRole), prompt, roundPromptLength)
             }
-            style={[typeStyle(promptRole, tokens), { color: colors.ink }]}
+            style={[
+              typeStyle(promptRole, tokens),
+              { color: face?.look === 'heading' ? colors.muted : colors.ink },
+            ]}
             highlight={
               highlight === undefined
                 ? undefined
                 : {
                     range: highlight,
-                    style: {
-                      backgroundColor: colors.surfaceSunken,
-                      textDecorationLine: 'underline',
-                      textDecorationColor: colors.accent,
-                    },
+                    style:
+                      face?.look === 'redMark'
+                        ? { color: colors.accent }
+                        : {
+                            backgroundColor: colors.surfaceSunken,
+                            textDecorationLine: 'underline',
+                            textDecorationColor: colors.accent,
+                          },
                   }
             }
           />

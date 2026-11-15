@@ -47,10 +47,10 @@ describe('the Game screen', () => {
   });
 
   it('keys the options А–Г and marks a wrong pick with ✕ on its key', async () => {
-    await open({ anglicisms: 15 });
+    await open({ corrections: 15 });
     await renderScreen();
 
-    await fireEvent.press(screen.getByTestId('game-mode-anglicism'));
+    await fireEvent.press(screen.getByTestId('game-mode-correction'));
     await waitFor(() => {
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
     });
@@ -72,7 +72,7 @@ describe('the Game screen', () => {
   });
 
   it.each([
-    ['a Word', { anglicisms: 15 }, 'game-mode-anglicism', 'roundOptionWord'],
+    ['a Word', { corrections: 15 }, 'game-mode-correction', 'roundOptionWord'],
     ['a sentence', { idioms: 15 }, 'game-mode-idiom-meaning', 'roundOptionSentence'],
     ['a long text', { idioms: 15, longSenses: true }, 'game-mode-idiom-meaning', 'roundOptionLong'],
   ] as const)(
@@ -336,8 +336,8 @@ describe('the Game screen', () => {
     }
 
     it('draws a short option large and without a key, and stamps the right one with ✓', async () => {
-      await open({ anglicisms: 15, switchedOn: ['gameOptionStamp'] });
-      await play('game-mode-anglicism');
+      await open({ corrections: 15, switchedOn: ['gameOptionStamp'] });
+      await play('game-mode-correction');
 
       const { fontSize } = typeStyle('roundOptionWord', coreTokens);
       optionsShown().forEach((option) => {

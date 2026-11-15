@@ -9,12 +9,13 @@ import {
   type Composition,
   type CurrentGame,
   type Round,
+  type RoundOption,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { optionsOf, seededRandom, testEdition } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
-function correction(id: string, correctionType: CorrectionType): Correction {
+function correction(id: string, correctionType: CorrectionType, first = false): Correction {
   const name = id.slice(2);
   return {
     kind: 'correction',
@@ -23,7 +24,10 @@ function correction(id: string, correctionType: CorrectionType): Correction {
     correctionType,
     standardEquivalents: [`good ${name}`],
     explanation: `Why ${name} reads better.`,
-    examplePair: { nonStandard: `They said bad ${name} again.`, standard: `They said ${name}.` },
+    examplePair: {
+      nonStandard: first ? `Bad ${name} is what they said.` : `They said bad ${name} again.`,
+      standard: `They said ${name}.`,
+    },
     categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
     literaryUses: [],
@@ -31,9 +35,13 @@ function correction(id: string, correctionType: CorrectionType): Correction {
   };
 }
 
-/** The 15 anglicisms, just enough for a Game. */
+/** The 15 anglicisms, just enough for a Game; the last one opens its sentence. */
 const anglicisms = Array.from({ length: GAME_ROUNDS }, (_, index) =>
-  correction(`c_anglicism${String(index + 1).padStart(2, '0')}`, 'anglicism'),
+  correction(
+    `c_anglicism${String(index + 1).padStart(2, '0')}`,
+    'anglicism',
+    index === GAME_ROUNDS - 1,
+  ),
 );
 
 /** Corrections of other Correction Types, which the mode never asks about nor offers. */
@@ -96,8 +104,21 @@ function askedOf({ prompt }: Round): Correction {
   return asked;
 }
 
+/** Where the anglicism stands in its «people often say» sentence, case ignored. */
+const atOf = ({ examplePair, nonStandardForm }: Correction): number =>
+  examplePair.nonStandard.toLowerCase().indexOf(nonStandardForm.toLowerCase());
+
+/** The replacement an option puts in the sentence, as the range it tells marks it. */
+function replacementOf({ text, highlight }: RoundOption): string {
+  if (highlight === undefined) throw new Error(`The option «${text}» tells no replacement`);
+  return text.slice(highlight.start, highlight.end);
+}
+
 const rightOf = (round: Round) =>
-  optionsOf(round).findIndex(({ text }) => text === askedOf(round).standardEquivalents[0]);
+  optionsOf(round).findIndex(
+    (option) =>
+      replacementOf(option).toLowerCase() === askedOf(round).standardEquivalents[0].toLowerCase(),
+  );
 
 /** Starts «Англіцизми» and plays it to its end, always right, keeping each answered Round. */
 async function playGame(app: Composition): Promise<Round[]> {
@@ -189,13 +210,49 @@ describe('a Round of «Англіцизми»', () => {
           form: 'pick',
           entryKind: 'correction',
           prompt: asked.examplePair.nonStandard,
-          highlight: { start: 10, end: 10 + asked.nonStandardForm.length },
+          highlight: { start: atOf(asked), end: atOf(asked) + asked.nonStandardForm.length },
         });
         expect(optionsOf(round)).toHaveLength(4);
-        for (const { text } of optionsOf(round)) expect(standards.has(text)).toBe(true);
+        for (const option of optionsOf(round))
+          expect(standards.has(replacementOf(option).toLowerCase())).toBe(true);
       }
       expect(current(app)).toMatchObject({ lives: 3, status: 'won' });
     }
+  });
+
+  it("offers the sentence with each replacement in the anglicism's place, telling the replacement's range", async () => {
+    const app = await run();
+    await app.game.start('anglicism');
+    const { round } = current(app);
+    const asked = askedOf(round);
+    const sentence = asked.examplePair.nonStandard;
+    const at = atOf(asked);
+
+    for (const option of optionsOf(round)) {
+      const replacement = replacementOf(option);
+      expect(option.highlight?.start).toBe(at);
+      expect(option.text).toBe(
+        sentence.slice(0, at) + replacement + sentence.slice(at + asked.nonStandardForm.length),
+      );
+    }
+    expect(
+      replacementOf(optionsOf(round)[rightOf(round)] ?? { text: '', stressedVowels: [] }),
+    ).toBe(asked.standardEquivalents[0]);
+  });
+
+  it('opens the sentence with a capital when the anglicism did', async () => {
+    const app = await run();
+    const rounds = await playGame(app);
+    const first = rounds.find((round) => askedOf(round).id === 'c_anglicism15');
+
+    expect(first === undefined ? [] : optionsOf(first).map(replacementOf)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/^Good /u)]),
+    );
+    for (const option of first === undefined ? [] : optionsOf(first)) {
+      expect(option.text).toMatch(/^Good .* is what they said\.$/u);
+      expect(option.highlight?.start).toBe(0);
+    }
+    expect(first).toBeDefined();
   });
 
   it('marks the anglicism of a wrong pick «Не знаю», moves no Review and shows the explanation', async () => {
