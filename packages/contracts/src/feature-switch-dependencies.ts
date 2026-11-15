@@ -99,6 +99,7 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   analyticsGames: ['analytics'],
   // The Rarity Test sets the Rarity Ceiling (ADR 0072).
   rarityTest: ['rarityCeiling'],
+  interestsQuestion: ['laterQuestions'],
   // The Dashboard's hero is the Word of the Day (ADR 0076).
   dashboard: ['wordOfTheDay'],
   // The Mood check-in is a Dashboard block (ADR 0076).
@@ -133,6 +134,7 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   categoryScreens: ['dashboard'],
   // The grid of the Categories of Corrections opens from the Dashboard's Corrections rail (ADR 0081).
   correctionCategoryScreens: ['dashboard', 'corrections'],
+  correctionTypeGrid: ['correctionCategoryScreens'],
   // The Category's Feed opens from a Category's screen (ADR 0110).
   categoryFeed: ['categoryScreens'],
   categoryKnownFirst: ['categoryScreens'],

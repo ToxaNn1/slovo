@@ -20,7 +20,6 @@ export function CodeCells({
   onChangeText,
   problem = false,
   busy = false,
-  autoFocus,
   testID,
 }: {
   /** What VoiceOver reads as the field's name. */
@@ -33,7 +32,6 @@ export function CodeCells({
   problem?: boolean | undefined;
   /** Whether the request of the code is on the way. */
   busy?: boolean | undefined;
-  autoFocus?: boolean | undefined;
   testID: string;
 }) {
   const tokens = useTokens();
@@ -89,7 +87,6 @@ export function CodeCells({
           setFocused(false);
         }}
         editable={!busy}
-        autoFocus={autoFocus}
         keyboardType="number-pad"
         textContentType="oneTimeCode"
         autoComplete="one-time-code"

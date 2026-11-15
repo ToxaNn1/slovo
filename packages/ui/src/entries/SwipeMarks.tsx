@@ -489,6 +489,7 @@ export function SwipeMarks({
                 testID="swipe-stamp"
                 style={[
                   styles.stamp,
+                  fill && styles.stampRaised,
                   {
                     borderColor: colors.ink,
                     backgroundColor: colors.surface,
@@ -543,4 +544,5 @@ const styles = StyleSheet.create({
     paddingVertical: swipeStampLayout.paddingVertical,
     paddingHorizontal: swipeStampLayout.paddingHorizontal,
   },
+  stampRaised: { bottom: swipeStampLayout.raised },
 });

@@ -234,7 +234,6 @@ function SignIn({
         }}
         problem={problem !== undefined}
         busy={state.inFlight === 'verifyCode'}
-        autoFocus
       />
       <ProblemLine testID="account-code-problem" problem={problem} cause={state} />
       <ResendButton

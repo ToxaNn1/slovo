@@ -8959,6 +8959,14 @@
                           ],
                           "type": "string"
                         },
+                        "interestsQuestion": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "profile": {
                           "enum": [
                             "on",
@@ -9128,6 +9136,14 @@
                           "type": "string"
                         },
                         "correctionCategoryScreens": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "correctionTypeGrid": {
                           "enum": [
                             "on",
                             "off",
@@ -9376,6 +9392,7 @@
                         "notificationExplainer",
                         "notificationTimeStep",
                         "laterQuestions",
+                        "interestsQuestion",
                         "profile",
                         "mascot",
                         "sounds",
@@ -9398,6 +9415,7 @@
                         "feedTab",
                         "categoryScreens",
                         "correctionCategoryScreens",
+                        "correctionTypeGrid",
                         "categoryFeed",
                         "categoryKnownFirst",
                         "quietCategories",
@@ -10942,6 +10960,14 @@
                           ],
                           "type": "string"
                         },
+                        "interestsQuestion": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "profile": {
                           "enum": [
                             "on",
@@ -11111,6 +11137,14 @@
                           "type": "string"
                         },
                         "correctionCategoryScreens": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "correctionTypeGrid": {
                           "enum": [
                             "on",
                             "off",
@@ -11359,6 +11393,7 @@
                         "notificationExplainer",
                         "notificationTimeStep",
                         "laterQuestions",
+                        "interestsQuestion",
                         "profile",
                         "mascot",
                         "sounds",
@@ -11381,6 +11416,7 @@
                         "feedTab",
                         "categoryScreens",
                         "correctionCategoryScreens",
+                        "correctionTypeGrid",
                         "categoryFeed",
                         "categoryKnownFirst",
                         "quietCategories",
@@ -12856,6 +12892,14 @@
                           ],
                           "type": "string"
                         },
+                        "interestsQuestion": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "profile": {
                           "enum": [
                             "on",
@@ -13025,6 +13069,14 @@
                           "type": "string"
                         },
                         "correctionCategoryScreens": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
+                        "correctionTypeGrid": {
                           "enum": [
                             "on",
                             "off",
@@ -13273,6 +13325,7 @@
                         "notificationExplainer",
                         "notificationTimeStep",
                         "laterQuestions",
+                        "interestsQuestion",
                         "profile",
                         "mascot",
                         "sounds",
@@ -13295,6 +13348,7 @@
                         "feedTab",
                         "categoryScreens",
                         "correctionCategoryScreens",
+                        "correctionTypeGrid",
                         "categoryFeed",
                         "categoryKnownFirst",
                         "quietCategories",

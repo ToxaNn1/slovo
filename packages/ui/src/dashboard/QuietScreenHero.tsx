@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { Mascot } from '../primitives/Mascot';
 import { Wedge } from '../primitives/Wedge';
@@ -31,6 +31,8 @@ export function QuietScreenHero({
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
+  // The window's width, as the rail hero's: an Svg sized in % draws short on iOS (owner 15.11).
+  const { width } = useWindowDimensions();
   const { shift, height, onLayout } = useHeroRoom(place.height);
   return (
     <View
@@ -44,7 +46,7 @@ export function QuietScreenHero({
       <Wedge
         points={place.cut}
         color={colors.surfaceSunken}
-        width="100%"
+        width={width}
         height={height}
         style={StyleSheet.absoluteFill}
       />

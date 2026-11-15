@@ -127,6 +127,7 @@ function Collections({ header }: { header: ListHeader }) {
             testID="collections-rename"
             overline={strings.renameOverline}
             placeholder={collectionStrings.sheet.namePlaceholder}
+            cancelLabel={collectionStrings.nameSheet.cancel}
             initialName={renaming.name}
             onSubmit={(name) => keepName(rename(renaming.id, name))}
             onCancel={stopEditing}
@@ -139,6 +140,7 @@ function Collections({ header }: { header: ListHeader }) {
             testID="collections-new"
             overline={strings.newOverline}
             placeholder={collectionStrings.sheet.namePlaceholder}
+            cancelLabel={collectionStrings.nameSheet.cancel}
             onSubmit={(name) =>
               keepName(create(name).then((created) => (created.ok ? undefined : created.refusal)))
             }

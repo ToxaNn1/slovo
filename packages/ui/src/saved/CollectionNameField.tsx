@@ -5,17 +5,20 @@ import Svg, { Path } from 'react-native-svg';
 import { useEdition } from '../providers/EditionProvider';
 import { cardSpace, minTouchTarget, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+import { Button } from '../primitives/Button';
 import { useNameSubmit } from '../primitives/useNameSubmit';
 
 /**
  * The card in which a Collection is named: one for a new Collection and one
- * for a Collection being renamed, over the Collections' cards. The name field takes the focus; the
- * keyboard's return key keeps the name, and leaving the field drops the
- * change (unless a name is being kept). A refused name stays in the field with the reason under it.
+ * for a Collection being renamed, over the Collections' cards. The keyboard
+ * rises only on a tap on the field (owner 15.11); its return key keeps the
+ * name, and «Скасувати» or leaving the field drops the change (unless a name
+ * is being kept). A refused name stays in the field with the reason under it.
  */
 export function CollectionNameField({
   overline,
   placeholder,
+  cancelLabel,
   initialName = '',
   onSubmit,
   onCancel,
@@ -25,6 +28,8 @@ export function CollectionNameField({
   overline: string;
   /** The field's placeholder, which VoiceOver reads as its label. */
   placeholder: string;
+  /** The text button that drops the change, such as «Скасувати». */
+  cancelLabel: string;
   initialName?: string;
   /** Resolves to the reason the name is refused, in the Edition's words, or to nothing once it is kept. */
   onSubmit: (name: string) => Promise<string | undefined>;
@@ -60,7 +65,6 @@ export function CollectionNameField({
         testID={`${testID}-input`}
         accessibilityLabel={placeholder}
         {...voice}
-        autoFocus
         value={name}
         onChangeText={(text) => {
           setName(text);
@@ -95,6 +99,7 @@ export function CollectionNameField({
           {refusal}
         </Text>
       )}
+      <Button variant="ghost" label={cancelLabel} onPress={onCancel} testID={`${testID}-cancel`} />
     </View>
   );
 }

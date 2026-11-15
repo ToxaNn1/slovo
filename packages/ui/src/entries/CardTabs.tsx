@@ -118,7 +118,11 @@ export function CardTabs<Tab extends { readonly key: string }>({
                     />
                   </View>
                 )}
+                {/* A long name shrinks to keep to one line in its column, never breaking mid-word (owner 15.11). */}
                 <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
                   style={[
                     on && !disabled
                       ? [typeStyle('cardTabSelected', tokens), { color: colors.ink }]

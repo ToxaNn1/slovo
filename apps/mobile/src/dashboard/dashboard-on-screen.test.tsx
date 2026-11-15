@@ -106,6 +106,7 @@ async function open(
     curatedCollections = true,
     categoryScreens = true,
     correctionCategoryScreens = true,
+    correctionTypeGrid = true,
   } = {},
 ) {
   const shipped = loadEdition(config);
@@ -118,13 +119,15 @@ async function open(
           ? categoryScreens
           : feature === 'correctionCategoryScreens'
             ? correctionCategoryScreens
-            : feature === 'previousWords'
-              ? previousWords && shipped.isFeatureEnabled(feature)
-              : // The UA Edition ships the rail off till a content spec (ADR 0076); the test turns it on.
-                feature === 'curatedCollections'
-                ? curatedCollections
-                : // No later question takes the Word of the Day's place in the Feed.
-                  feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
+            : feature === 'correctionTypeGrid'
+              ? correctionTypeGrid
+              : feature === 'previousWords'
+                ? previousWords && shipped.isFeatureEnabled(feature)
+                : // The UA Edition ships the rail off till a content spec (ADR 0076); the test turns it on.
+                  feature === 'curatedCollections'
+                  ? curatedCollections
+                  : // No later question takes the Word of the Day's place in the Feed.
+                    feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   userState = await seedUserState(
     {
@@ -383,28 +386,47 @@ describe('the Correction Types rail', () => {
     expect(screen.getByText('типу')).toBeTruthy();
   });
 
-  it('its header opens k2, the grid of the Categories of Corrections, and a tile there opens the Category', async () => {
+  it('its header opens the grid of the rail\u2019s types alone, with no Categories under them (owner 15.11)', async () => {
     await open(true);
     await renderApp();
 
-    const header = screen.getByRole('button', {
-      name: `${editionStrings.dashboard.correctionTypes.title}, 1`,
-    });
+    const { dashboard } = editionStrings;
+    const header = screen.getByRole('button', { name: `${dashboard.correctionTypes.title}, 1` });
     await settle(() => fireEvent.press(header));
 
     expect(
-      screen.getByRole('header', { name: `${editionStrings.dashboard.correctionTypes.title}, 1` }),
+      screen.getByRole('header', { name: `${dashboard.correctionTypes.title}, 1` }),
     ).toBeTruthy();
-    expect(screen.getByTestId('correction-categories-everyday-name')).toHaveTextContent('Щоденне');
+    expect(screen.getByTestId('correction-types-surzhyk-name')).toHaveTextContent(
+      dashboard.correctionTypes.tiles.surzhyk,
+    );
+    expect(screen.queryByRole('header', { name: `${dashboard.categories.title}, 1` })).toBeNull();
+    expect(screen.queryByTestId('correction-categories-everyday')).toBeNull();
+  });
 
-    // The Stack's transition end settles the opener in the app.
+  it('a type\u2019s tile in the grid its header opens opens the type\u2019s screen', async () => {
+    await open(true);
+    await renderApp();
+
+    const { correctionTypes: words } = editionStrings.dashboard;
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: `${words.title}, 1` })));
     screenSettled();
-    await settle(() => fireEvent.press(screen.getByTestId('correction-categories-everyday')));
+    await settle(() => fireEvent.press(screen.getByTestId('correction-types-surzhyk')));
 
-    const hero = screen.getByTestId('category-hero');
-    expect(hero).toHaveTextContent(/Щоденне/);
-    expect(hero).toHaveTextContent(/КАТЕГОРІЯ · \d+ виправлен/);
-    expect(screen.getByText('Щоденне.')).toBeTruthy();
+    expect(screen.getByTestId('correction-type')).toBeTruthy();
+    expect(screen.getByText('шоби')).toBeTruthy();
+  });
+
+  it('with `correctionTypeGrid` off its header opens k2 alone, titled «Виправлення»', async () => {
+    await open(true, { correctionTypeGrid: false });
+    await renderApp();
+
+    const { correctionTypes: words, correctionCategories } = editionStrings.dashboard;
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: `${words.title}, 1` })));
+
+    expect(screen.queryByTestId('correction-types')).toBeNull();
+    expect(screen.getByRole('header', { name: `${correctionCategories.title}, 1` })).toBeTruthy();
+    expect(screen.getByTestId('correction-categories-everyday-name')).toHaveTextContent('Щоденне');
   });
 
   it('its header is a plain title with `correctionCategoryScreens` off', async () => {

@@ -70,7 +70,17 @@ export const entryCardFrame = {
  * member in its row, the hairline between rows (none over the first) and the
  * gap between a member and its shade note.
  */
-export const synonymRowList = { rowPadding: 13, line: 1, shadeGap: 12 } as const;
+export const synonymRowList = {
+  rowPadding: 13,
+  line: 1,
+  shadeGap: 12,
+  /**
+   * The least share of the row a shade note takes beside its member: a member
+   * too long to leave it that much puts the note on a line of its own under
+   * it, so the member is never broken inside a word (owner 15.11).
+   */
+  shadeShare: '40%',
+} as const;
 
 /**
  * A Synonym's or an antonym's chip in the tabbed Word card's «Зв’язки» (board
@@ -208,6 +218,11 @@ export const swipeStampLayout = {
    * the longest stamp, «✓ КАЖУ ПРАВИЛЬНО», tilted 6°, about 18 points.
    */
   room: 40,
+  /**
+   * How high the stamp of a tabbed card that fills its page stands over the
+   * card's foot: clear of its tab bar, so it covers no tab name (owner 15.11).
+   */
+  raised: 86,
 } as const;
 
 /** The side of each button of the action row under the Entry card, from the design. */

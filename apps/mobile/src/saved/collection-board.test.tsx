@@ -259,7 +259,7 @@ describe('a Collection in the board style', () => {
     expect(screen.getByRole('button', { name: strings.screen.menu.delete })).toBeOnTheScreen();
   });
 
-  it('renames the Collection in the name sheet and says so', async () => {
+  it('renames the Collection in the name sheet and says so once the sheet has slid away', async () => {
     const id = await collectionOf(['w_one']);
     await renderCollection(id);
 
@@ -268,9 +268,13 @@ describe('a Collection in the board style', () => {
     // The menu slides away first, then what it chose opens.
     await settle();
     await settle(() => fireEvent.changeText(screen.getByDisplayValue('Осінь'), 'Зима'));
-    await settle(() =>
-      fireEvent.press(screen.getByRole('button', { name: strings.nameSheet.save })),
-    );
+    await act(async () => {
+      await fireEvent.press(screen.getByRole('button', { name: strings.nameSheet.save }));
+      await jest.advanceTimersByTimeAsync(50);
+    });
+    // The sheet and its keyboard are still leaving: the toast waits.
+    expect(screen.queryByText(strings.toasts.renamed)).not.toBeOnTheScreen();
+    await settle();
 
     expect(screen.getByRole('header', { name: 'Зима' })).toBeOnTheScreen();
     expect(screen.getByText(strings.toasts.renamed)).toBeOnTheScreen();

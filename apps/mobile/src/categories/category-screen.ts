@@ -7,7 +7,7 @@ import {
   type Composition,
 } from '@slovo/core';
 import { useUndoToast, type RailBoardCard } from '@slovo/ui';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useComposition, useCompositionRead } from '../composition';
 import { keep } from '../keep';
@@ -77,21 +77,27 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
     [cards, categoryKnownFirst],
   );
   const place: CategoryPlace = categoryPlace(mixState, of, category.id);
-  const inMix = place === 'in' || place === 'last';
+  // The reader's choice shows at once: the Mix keeps it only once the Cycle has read the
+  // eligible Entries again, which takes seconds on a large Edition (owner 15.11).
+  const [chosen, setChosen] = useState<boolean>();
+  const inMix = chosen ?? (place === 'in' || place === 'last');
   const name = category.displayName;
   return {
     cards: listed,
     retry: reading.status === 'failed' ? reading.retry : undefined,
     inMix,
     toggleMix: () => {
-      void keep('the Mix', mix.setCategory(category.id, !inMix, of)).then((done) => {
-        if (done === undefined) return;
-        if (!done) showToast({ message: lastCategoryHint[of] });
-        else
-          showToast({
-            message: fill(inMix ? toasts.removed : toasts.added, { name }),
-            brief: true,
-          });
+      // The last Category of its list stays in, with the Mix screen's reason why.
+      if (chosen === undefined && place === 'last') {
+        showToast({ message: lastCategoryHint[of] });
+        return;
+      }
+      const want = !inMix;
+      setChosen(want);
+      showToast({ message: fill(want ? toasts.added : toasts.removed, { name }), brief: true });
+      // A later tap's choice, still on its way, stays shown.
+      void keep('the Mix', mix.setCategory(category.id, want, of)).then(() => {
+        setChosen((now) => (now === want ? undefined : now));
       });
     },
     // The Entry route of Search opens the card through `entryCard`, with the way back named.

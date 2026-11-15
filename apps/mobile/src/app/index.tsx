@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTonesOf } from '@/categories/categories';
 import { useDashboardScreen } from '@/dashboard/dashboard';
+import { useEditionInEffect } from '@/edition/remote-switches';
 import { edition, editionStrings } from '@/edition/edition';
 import { todayText } from '@/feed/today-text';
 import { StatsPillAndSheet } from '@/progress/progress';
@@ -61,6 +62,7 @@ function DashboardBlocks() {
     openCorrectionCategories,
   } = useDashboardScreen();
   const tonesOf = useTonesOf('quietRail');
+  const typeGrid = useEditionInEffect().isFeatureEnabled('correctionTypeGrid');
   const { colors } = useTokens();
   const shown = useShown();
   // The daily splash from the logo plays over the Dashboard, then hands it back (ADR 0105).
@@ -128,9 +130,12 @@ function DashboardBlocks() {
         return (
           <CorrectionTypesRail
             tiles={block.tiles}
-            categories={
+            grid={
               block.categories.length > 0
-                ? { count: block.categories.length, onOpenAll: openCorrectionCategories }
+                ? {
+                    count: typeGrid ? block.tiles.length : block.categories.length,
+                    onOpenAll: openCorrectionCategories,
+                  }
                 : undefined
             }
             onOpen={openCorrectionType}

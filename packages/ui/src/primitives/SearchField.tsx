@@ -27,7 +27,7 @@ export function SearchField({
   value: string;
   onChangeText: (text: string) => void;
   testID: string;
-} & Pick<TextInputProps, 'autoFocus' | 'onSubmitEditing' | 'returnKeyType'>) {
+} & Pick<TextInputProps, 'onSubmitEditing' | 'returnKeyType'>) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();

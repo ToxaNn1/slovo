@@ -233,7 +233,7 @@ function tabsOf(card: Awaited<ReturnType<typeof cardOf>>) {
 /** The members a Synonym Row card draws, in order, without their Stress marks. */
 function membersOf(card: Awaited<ReturnType<typeof cardOf>>) {
   return card
-    .getAllByTestId(/^synonym-row-member-/, hidden)
+    .getAllByTestId(/^synonym-row-member-\d+$/, hidden)
     .map((member) => String(member.props['accessibilityLabel']).split(',')[0]);
 }
 

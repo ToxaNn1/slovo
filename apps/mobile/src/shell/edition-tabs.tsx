@@ -133,6 +133,9 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
   return (
     <Tabs
       screenOptions={screenOptions}
+      // The way back leads to the screen opened before, as a Word of a Category leads back to
+      // its Category; by default the tabs lead every screen no tab leads to back to the Dashboard.
+      backBehavior="history"
       screenLayout={({ route, children }) => <FocusedEnter route={route}>{children}</FocusedEnter>}
     >
       <Tabs.Screen

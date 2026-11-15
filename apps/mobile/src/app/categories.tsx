@@ -1,6 +1,6 @@
-import { CategoryGrid, categoryGrid, categoryGridBox, useTokens } from '@slovo/ui';
-import { Redirect } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { BackLink, CategoryGrid, categoryGrid, categoryGridBox, space, useTokens } from '@slovo/ui';
+import { Redirect, useRouter } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useBlockCategories, useTonesOf } from '@/categories/categories';
@@ -18,11 +18,24 @@ export default function CategoriesRoute() {
   const tonesOf = useTonesOf('quietGrid');
   const openScreen = useOpenScreen();
   const { colors } = useTokens();
+  const router = useRouter();
   if (categories.length === 0) return <Redirect href="/" />;
   return (
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
       <CategoryGrid
         testID="categories"
+        header={
+          // Back to the Dashboard, the grid's only door (owner 15.11), scrolling with the title.
+          <View style={styles.bar}>
+            <BackLink
+              testID="categories-back"
+              label={editionStrings.tabs.home}
+              onPress={() => {
+                router.back();
+              }}
+            />
+          </View>
+        }
         title={editionStrings.dashboard.categories.title}
         count={String(categories.length)}
         tiles={categories.map(({ id, displayName }) => ({ id, name: displayName }))}
@@ -40,4 +53,5 @@ export default function CategoriesRoute() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  bar: { flexDirection: 'row', paddingHorizontal: space[3], paddingTop: space[2] },
 });

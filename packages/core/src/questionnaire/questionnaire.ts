@@ -125,6 +125,7 @@ export function openQuestionnaire({
     if (question === 'wordGoalChoice') return on('dailyGoal');
     if (question === 'selfRating') return on('rarityTest');
     if (question === 'rarityTest') return on('rarityTest') && offerRarityTest === true;
+    if (question === 'interests') return on('interestsQuestion');
     return true;
   }
 

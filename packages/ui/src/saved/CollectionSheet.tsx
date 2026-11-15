@@ -16,7 +16,7 @@ import { useNameSubmit } from '../primitives/useNameSubmit';
  * checkbox and a count each, which apply at once; «+ Нова колекція» opens a
  * name field, and «Створити» makes the Collection with the Entry in it;
  * «Готово» only closes. The Collections are the Core's, and with none yet the
- * name field is open at once, without the keyboard. Needs a `SafeAreaProvider` above it.
+ * name field is open at once; the keyboard rises only on a tap on the field (owner 15.11). Needs a `SafeAreaProvider` above it.
  */
 export function CollectionSheet({
   visible,
@@ -71,8 +71,6 @@ function SheetContent({
   const { strings, voice, count } = useEdition();
   const sheet = strings.collections.sheet;
   const [creating, setCreating] = useState(collections.length === 0);
-  /** The keyboard rises for a field the reader asked for, not along with the sheet's own slide. */
-  const [focusName, setFocusName] = useState(false);
   const [name, setName] = useState('');
   const { refusal, clearRefusal, submit } = useNameSubmit(
     onCreate,
@@ -149,7 +147,6 @@ function SheetContent({
                 placeholder={sheet.namePlaceholder}
                 placeholderTextColor={colors.muted}
                 returnKeyType="done"
-                autoFocus={focusName}
                 autoCapitalize="sentences"
                 autoCorrect={false}
                 spellCheck={false}
@@ -197,7 +194,6 @@ function SheetContent({
             {...voice}
             onPress={() => {
               setCreating(true);
-              setFocusName(true);
             }}
             style={styles.newCollection}
           >

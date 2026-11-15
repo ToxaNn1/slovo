@@ -256,16 +256,18 @@ function Member({
   ];
   const text = (
     <>
-      <WholeLinesText
-        style={[
-          typeStyle('synonymMember', tokens),
-          size,
-          styles.memberText,
-          { color: wordId === undefined ? colors.ink : colors.accentText },
-        ]}
-      >
-        {capitalised(member.text, voice.accessibilityLanguage)}
-      </WholeLinesText>
+      <View style={styles.memberText}>
+        <WholeWordsText
+          testID={`${testID}-text`}
+          text={capitalised(member.text, voice.accessibilityLanguage)}
+          typeRole="synonymMember"
+          size={size}
+          style={[
+            typeStyle('synonymMember', tokens),
+            { color: wordId === undefined ? colors.ink : colors.accentText },
+          ]}
+        />
+      </View>
       {shadeNote === undefined ? null : (
         <WholeLinesText
           testID={`${testID}-shade`}
@@ -299,15 +301,25 @@ function Member({
 
 const styles = StyleSheet.create({
   header: { gap: space[2] },
-  // A member at the left, its shade note at the right, on one baseline (board e8).
+  // A member at the left, its shade note at the right, on one baseline (board e8);
+  // a note left too little room moves under the member.
   member: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-    gap: synonymRowList.shadeGap,
+    columnGap: synonymRowList.shadeGap,
+    rowGap: space[1],
     paddingVertical: synonymRowList.rowPadding,
   },
-  // A long member or a long note at a large font size wraps in its own column, never cut.
-  memberText: { flexShrink: 1 },
-  shade: { flexShrink: 1, textAlign: 'right', fontStyle: 'normal' },
+  // A member keeps its width whole; one wider than the row shrinks to fit it, never split.
+  memberText: { flexShrink: 0, maxWidth: '100%' },
+  // The note takes the rest of the row, and wraps under the member when that is too little.
+  shade: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: synonymRowList.shadeShare,
+    textAlign: 'right',
+    fontStyle: 'normal',
+  },
 });

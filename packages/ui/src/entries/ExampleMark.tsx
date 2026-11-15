@@ -16,6 +16,7 @@ const role = typeRoles.exampleMark;
 const BOARD_LINE = 0.6;
 const FONT_LINE = 0.995 + 0.245;
 const lift = ((BOARD_LINE - FONT_LINE) * role.size) / 2;
+const CLOSE_RISE = -10;
 
 /**
  * A big red quote mark around a card's first Example in its tab «Приклад»
@@ -34,7 +35,7 @@ export function ExampleMark({ testID, edge }: { testID: string; edge: 'open' | '
   return (
     <View
       testID={`${testID}-box`}
-      style={styles.box}
+      style={[styles.box, edge === 'close' && styles.closeBox]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
@@ -56,6 +57,9 @@ export function ExampleMark({ testID, edge }: { testID: string; edge: 'open' | '
 
 const styles = StyleSheet.create({
   box: { height: role.lineHeight },
+  // The glyph sits low in its line, so the closing box rises into the gap over it and
+  // the mark stays close under the Example (owner 15.11).
+  closeBox: { marginTop: CLOSE_RISE },
   mark: {
     position: 'absolute',
     top: lift,

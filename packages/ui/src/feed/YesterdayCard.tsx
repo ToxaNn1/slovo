@@ -31,11 +31,14 @@ export function YesterdayCard({
   word,
   quiz,
   onAnswer,
+  fill = false,
 }: {
   word: WordCardModel;
   quiz: YesterdayQuiz;
   /** Told the reader's first pick, the place of the meaning among `quiz.meanings`. */
   onAnswer: (option: number) => void;
+  /** On a page of its own the card fills the page's height (owner 15.11). */
+  fill?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -101,8 +104,8 @@ export function YesterdayCard({
         ? strings.feedNotices.yesterday.right
         : strings.feedNotices.yesterday.wrong;
   return (
-    <Animated.View style={entered}>
-      <FeedNoticeCard notice="yesterday" gap={yesterdayCard.gap}>
+    <Animated.View style={[entered, fill && styles.fill]}>
+      <FeedNoticeCard notice="yesterday" gap={yesterdayCard.gap} fill={fill}>
         <Text
           accessibilityRole="header"
           {...voice}
@@ -151,6 +154,7 @@ export function YesterdayCard({
 }
 
 const styles = StyleSheet.create({
+  fill: { flexGrow: 1 },
   options: { gap: yesterdayCard.optionGap },
   verdict: { minHeight: yesterdayCard.verdictHeight },
 });

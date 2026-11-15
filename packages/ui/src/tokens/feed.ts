@@ -569,6 +569,11 @@ export const categoryTile = {
 export const categoryGrid = {
   padding: { top: 60, side: 14, bottom: 30 },
   titleGap: 18,
+  /**
+   * The room after the title's last letter: the title's tight tracking pulls
+   * the box in, and iOS cut the right dot of a closing «ї» (owner 15.11).
+   */
+  titleTail: 4,
   gap: 8,
   height: 112,
   radius: 16,

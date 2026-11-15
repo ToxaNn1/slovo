@@ -202,7 +202,7 @@ describe('the Game screen', () => {
   describe('the Round on the ground (gameQuestionOnGround, gameRoundMascot)', () => {
     const BOARD = ['gameQuestionOnGround', 'gameRoundMascot'];
     const HIDDEN = { includeHiddenElements: true };
-    const livesLine = () => String(screen.getByTestId('game-lives-line').props['children']);
+    const livesLabel = () => String(screen.getByTestId('game-lives').props['accessibilityLabel']);
 
     /** Picks a wrong option in a Round of «Вгадай слово». */
     async function pickAWrongWord() {
@@ -215,7 +215,7 @@ describe('the Game screen', () => {
       await fireEvent.press(wrong);
     }
 
-    it('heads a Round with the mode’s name alone and shows «Життів: n з N» under the bar, one less after a wrong answer', async () => {
+    it('heads a Round with the mode’s name alone and shows the Lives as flags only, read as «Життів: n з N», one less after a wrong answer', async () => {
       await open({ switchedOn: BOARD });
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
@@ -223,23 +223,23 @@ describe('the Game screen', () => {
         expect(screen.getByRole('header', { name: 'Вгадай слово' })).toBeOnTheScreen();
       });
       expect(screen.queryByText(/Вгадай слово · /)).toBeNull();
-      const [, before = '', total = ''] = /^Життів: (\d+) з (\d+)$/.exec(livesLine()) ?? [];
+      const [, before = '', total = ''] = /^Життів: (\d+) з (\d+)$/.exec(livesLabel()) ?? [];
       expect(before).toBe(total);
-      expect(screen.getByText(`Життів: ${total} з ${total}`)).toBeOnTheScreen();
+      expect(screen.queryByText(/Життів/)).toBeNull();
 
       await pickAWrongWord();
 
-      expect(livesLine()).toBe(`Життів: ${String(Number(total) - 1)} з ${total}`);
+      expect(livesLabel()).toBe(`Життів: ${String(Number(total) - 1)} з ${total}`);
     });
 
-    it('shows no Lives line in «На час», which has no Lives', async () => {
+    it('shows no Lives in «На час», which has no Lives', async () => {
       await open({ switchedOn: BOARD });
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
       await waitFor(() => {
         expect(screen.getByRole('header', { name: 'На час' })).toBeOnTheScreen();
       });
-      expect(screen.queryByTestId('game-lives-line')).toBeNull();
+      expect(screen.queryByTestId('game-lives')).toBeNull();
       expect(screen.queryByText(/Життів/)).toBeNull();
     });
 
@@ -299,7 +299,7 @@ describe('the Game screen', () => {
       );
     });
 
-    it('keeps the #1674 Round with its switch off: the number in the header and the label, no Lives line', async () => {
+    it('keeps the #1674 Round with its switch off: the number in the header and the label, no Lives text', async () => {
       await open({ origins: 15, switchedOn: ['gameRoundMascot'] });
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-origin'));
@@ -307,7 +307,7 @@ describe('the Game screen', () => {
         expect(screen.getByRole('header', { name: /^Звідки слово · 1\/\d+$/ })).toBeOnTheScreen();
       });
       expect(screen.getByText(/^Звідки це слово\? · 1 \/ \d+$/, HIDDEN)).toBeOnTheScreen();
-      expect(screen.queryByTestId('game-lives-line')).toBeNull();
+      expect(screen.queryByText(/Життів/)).toBeNull();
     });
 
     it('sets the Mascot beside the question: waiting, glad at a right answer, wincing at a wrong one', async () => {
@@ -339,7 +339,7 @@ describe('the Game screen', () => {
           expect(screen.getByTestId('game-prompt')).toBeTruthy();
         });
         await answerSurvivalRound(false);
-        if (livesLine().startsWith('Життів: 0 ')) break;
+        if (livesLabel().startsWith('Життів: 0 ')) break;
         expect(screen.getByTestId('mascot-cringes')).toBeOnTheScreen();
         await fireEvent.press(screen.getByTestId('game-next'));
       }

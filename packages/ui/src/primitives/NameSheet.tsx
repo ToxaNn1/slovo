@@ -22,8 +22,8 @@ const still = { reduceMotion: ReduceMotion.Never } as const;
 
 /**
  * The sheet of board 09 that names something: a Collection, the reader. The
- * field takes the focus and shows the `counter` on its right, red past `max`
- * as `lengthOf` counts. A tap on the button or the keyboard's return key
+ * field shows the `counter` on its right, red past `max`
+ * as `lengthOf` counts; the keyboard rises only on a tap on the field (owner 15.11). A tap on the button or the keyboard's return key
  * keeps the name; a refused name stays in the field, which turns red and
  * shakes (not under Reduce Motion), with the reason under it. The cancel
  * button, the scrim, a drag and VoiceOver's escape gesture ask `onClose`; the
@@ -117,7 +117,6 @@ export function NameSheet({
           testID={`${testID}-input`}
           accessibilityLabel={placeholder}
           {...voice}
-          autoFocus
           value={name}
           onChangeText={(text) => {
             setName(text);
