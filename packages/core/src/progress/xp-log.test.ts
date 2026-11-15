@@ -175,6 +175,16 @@ describe('the XP log and the Game', () => {
     expect(kindsOf(records)).toEqual(['xp', 'wrong-answer', 'xp']);
   });
 
+  it('keeps the Rarity of the Word a Round answered right asked about', async () => {
+    const { app } = await run();
+    await app.game.start('guess-word');
+    const { rarity } = answerOf(current(app).round);
+
+    await play(app, true);
+
+    expect(app.xpLog.milestones.rightRarities).toEqual(new Set([rarity]));
+  });
+
   it('adds 5 XP for a finished Game with half its answers right and 5 for its first Best result', async () => {
     const { app } = await run();
 
@@ -899,6 +909,25 @@ describe('the Seen-Word XP', () => {
     });
 
     expect(app.xpLog.dayOf('2026-10-14').xp).toBe(6);
+  });
+
+  it('writes no Seen-Word record past the goal in Words, counting the ones already kept today', async () => {
+    const { app, time, records } = await run({
+      on,
+      records: new Map([
+        goalSet(3, '2026-10-14T03:00:00.000Z'),
+        seenWord('x_00', '2026-10-14', '2026-10-14T04:00:00.000Z'),
+      ]),
+    });
+    const told: string[] = [];
+    app.xpLog.subscribe((change) => told.push(change));
+
+    for (let card = 0; card < 4; card += 1) await look(app, time);
+
+    expect(xpKeys(records).filter((key) => key.startsWith('xp.seen-word-'))).toHaveLength(3);
+    expect(app.xpLog.state.today).toBe(3);
+    expect(told.length).toBeGreaterThan(0);
+    expect(new Set(told)).toEqual(new Set(['other']));
   });
 
   it('earns the Seen-Word XP of a write that failed with the next Word Seen', async () => {

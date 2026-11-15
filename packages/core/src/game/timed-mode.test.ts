@@ -305,6 +305,17 @@ describe('a Game of «На час»', () => {
     expect(app.game.state.bestResults['timed']).toBe(1);
   });
 
+  it('takes no answer at the very instant its time runs out', async () => {
+    const time = handTime();
+    const app = await run({ time });
+    await app.game.start('timed');
+    time.moveClock(20_000);
+
+    await pick(app, true);
+
+    expect(current(app)).toMatchObject({ status: 'time-up', played: [] });
+  });
+
   it('keeps the right answers as its Best result, a bare number on its offer', async () => {
     const time = handTime();
     const app = await run({ time });

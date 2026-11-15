@@ -30,9 +30,17 @@ function patchOf(since: number, records: Partial<Patch> = {}): Patch {
 }
 
 /** The app with its content store at a content version, a backend, and a schedule on a frozen clock. */
-function app({ contentVersion = 4, readableFormats = [PATCH_FORMAT] } = {}) {
+function app({
+  contentVersion = 4,
+  readableFormats = [PATCH_FORMAT],
+  media = {},
+}: {
+  contentVersion?: number;
+  readableFormats?: number[];
+  media?: NonNullable<Parameters<typeof createMemoryContentStore>[0]>['media'];
+} = {}) {
   const contentApi = createFakeBackend();
-  const store = createMemoryContentStore({ contentVersion });
+  const store = createMemoryContentStore({ contentVersion, media });
   const time = fakeClock();
   const { schedule, advance } = testSchedule(time);
   const contentUpdate = createContentUpdate({
@@ -112,6 +120,72 @@ describe('checking for a Patch', () => {
 
     expect(contentApi.content.patchesAsked.length).toBeGreaterThan(1);
     expect(contentUpdate.contentVersion()).toBe(4);
+  });
+
+  it('asks for the Patches of its own Edition only', async () => {
+    const { contentApi, store, contentUpdate } = app();
+    contentApi.content.publishPatch({ ...patchOf(4), editionId: 'en' });
+
+    await contentUpdate.checkForUpdate();
+
+    expect(store.applied).toEqual([]);
+    expect(contentUpdate.contentVersion()).toBe(4);
+  });
+
+  it('asks once and keeps the content when the backend does not serve the Edition', async () => {
+    const { contentApi, contentUpdate } = app();
+    contentApi.content.publishPatch(patchOf(4));
+    contentApi.failNext({ procedure: 'content.patch', reason: 'not-found' });
+
+    await contentUpdate.checkForUpdate();
+
+    expect(contentApi.content.patchesAsked).toHaveLength(1);
+    expect(contentUpdate.contentVersion()).toBe(4);
+  });
+
+  it('retries a server error and applies the Patch of the next answer', async () => {
+    const { contentApi, contentUpdate, advance } = app();
+    contentApi.content.publishPatch(patchOf(4));
+    contentApi.failNext({ procedure: 'content.patch', reason: 'server-error' });
+
+    const checked = contentUpdate.checkForUpdate();
+    await advance(CONTENT_UPDATE_EVERY);
+    await checked;
+
+    expect(contentApi.content.patchesAsked).toHaveLength(2);
+    expect(contentUpdate.contentVersion()).toBe(5);
+  });
+
+  it('stops telling a listener that unsubscribed', async () => {
+    const { contentApi, contentUpdate } = app();
+    contentApi.content.publishPatch(patchOf(4));
+    contentApi.content.publishPatch(patchOf(5));
+    let told = 0;
+    const unsubscribe = contentUpdate.subscribe(() => (told += 1));
+    await contentUpdate.checkForUpdate();
+
+    unsubscribe();
+    await contentUpdate.checkForUpdate();
+
+    expect(contentUpdate.contentVersion()).toBe(6);
+    expect(told).toBe(1);
+  });
+
+  it('reads the media of a Word from the pack', async () => {
+    const live = {
+      wordId: 'w1',
+      narratorVoice: 'oksana',
+      recordingKind: 'plain',
+      hash: 'a'.repeat(64),
+      size: 1_000,
+      durationMs: 900,
+    } as const;
+    const { contentUpdate } = app({ media: { recordings: [{ ...live, retired: false }] } });
+
+    const media = await contentUpdate.mediaOf('w1');
+
+    expect(media.recordings).toEqual([live]);
+    expect(media.mediaBase).toBe('https://media.slovo.test');
   });
 
   it('joins a check under way', async () => {

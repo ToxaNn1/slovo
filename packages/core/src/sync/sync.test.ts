@@ -197,6 +197,31 @@ describe('Sync syncs', () => {
     expect(server.sync.records.has('favorites.w_one')).toBe(true);
   });
 
+  it('not before the first return to the foreground', async () => {
+    const { addFavorite, advance, syncs } = await device();
+    await addFavorite('w_one');
+    await advance(HOUR);
+
+    expect(syncs()).toBe(0);
+  });
+
+  it('not when a Session starts in the background, but at the next return to the foreground', async () => {
+    const { sync, account, server, addFavorite, advance, syncs } = await device({
+      signedIn: false,
+    });
+    await addFavorite('w_one');
+    await account.requestCode('anna@mail.com');
+    await account.verifyCode('100001');
+    await advance(HOUR);
+    expect(syncs()).toBe(0);
+
+    sync.foreground();
+    await advance(0);
+
+    expect(syncs()).toBe(1);
+    expect(server.sync.records.has('favorites.w_one')).toBe(true);
+  });
+
   it('when a Session starts with Google in the foreground, so the first Google sign-in merges the device’s user state', async () => {
     const { sync, account, googleSheet, server, addFavorite, advance, syncs } = await device({
       signedIn: false,
@@ -385,6 +410,19 @@ describe('Sync, when too many requests', () => {
     expect(server.sync.records.has('favorites.w_one')).toBe(true);
   });
 
+  it('does not sync when the Retry-After ends in the background', async () => {
+    const { sync, server, advance, syncs } = await device();
+    server.failNext({ procedure: 'sync.pull', reason: 'too-many-requests', retryAfter: 60 });
+    const release = server.hold();
+    sync.foreground();
+    await advance(0);
+    sync.background();
+    release();
+    await advance(HOUR);
+
+    expect(syncs()).toBe(1);
+  });
+
   it('syncs at the next moment when the answer says nothing of when', async () => {
     const { sync, server, advance, syncs } = await device();
     server.failNext({ procedure: 'sync.pull', reason: 'too-many-requests' });
@@ -518,14 +556,17 @@ describe('Sync and the end of a Session', () => {
     expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
   });
 
-  it('forgets a cursor left from a Session that ended before the launch', async () => {
-    const records = new Map([[syncCursor.key, '7']]);
+  it.each([
+    ['a cursor', syncCursor.key, '7'],
+    ['the time of the last sync', syncSyncedAt.key, JSON.stringify('2026-10-17T09:00:00.000Z')],
+  ])('forgets %s left from a Session that ended before the launch', async (_, key, value) => {
+    const records = new Map([[key, value]]);
     const userState = trackChanges({
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
       clock: fakeClock().clock,
     });
     const time = fakeClock();
-    await openSync({
+    const sync = await openSync({
       userState,
       backend: createFakeBackend({ clock: time.clock }).backend,
       account: await openAccount({
@@ -545,7 +586,9 @@ describe('Sync and the end of a Session', () => {
       random: randomOf(0.5),
     });
 
+    expect(sync.state.syncedAt).toBeUndefined();
     expect(await userState.cursor()).toBeUndefined();
+    expect(await userState.read(syncSyncedAt)).toBeUndefined();
   });
 
   it('opens signed out even when the store fails to read what an ended Session left', async () => {
