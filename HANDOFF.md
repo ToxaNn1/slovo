@@ -29,3 +29,4 @@ No work running. The previous cloud coordinator (session_01VefVQUUP6Lq9nRKxM2WCH
 - 14.11 23:52Z merged #1885 #1883 (pushed 45c8f640); #1892 #1884 DONE → merger; launched #1886 #1888.
 - 15.11 00:09Z #1893 #1886 #1888 DONE, queued to the merger. Owner question: #1886 no VoiceOver «crossed out» string (needs a contracts schema change). #1893 toast default «Наголос»; #1888 kept «Стерти літеру» in «Анаграми».
 - 15.11 00:51Z container restart killed the merger after 4 merges; pushed them (51c94d82); handoff to a fresh coordinator.
+- 2026-11-15T01:24Z safety net takeover (last commit 2026-11-15T00:51Z)
