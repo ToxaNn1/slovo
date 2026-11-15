@@ -434,7 +434,7 @@ describe('OrderedChips', () => {
       await tap(2, 5);
       await fireEvent.press(screen.getByTestId('chips-line-0'));
 
-      expect(lineText()).toEqual(['b']);
+      expect(lineText()).toEqual(['B']);
       expect(screen.getByTestId('chips-2')).toBeEnabled();
     });
 
@@ -447,7 +447,7 @@ describe('OrderedChips', () => {
       await tap(0);
 
       expect(onAnswer).toHaveBeenCalledWith([2, 5, 3, 6, 0]);
-      expect(lineText()).toEqual(['o', 'b', 'r', 'o', 'k']);
+      expect(lineText()).toEqual(['O', 'B', 'R', 'O', 'K']);
     });
   });
 });

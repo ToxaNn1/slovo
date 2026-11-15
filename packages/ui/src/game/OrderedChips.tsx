@@ -6,22 +6,53 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   interpolateColor,
+  ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { useReduceMotion } from '../providers/useReduceMotion';
 import { Button } from '../primitives/Button';
 import { PressedTile } from '../primitives/PressedTile';
-import { fontScaleCap, orderedChipsLayout, space, typeStyle } from '../tokens';
-import { RIGHT_FILL, WRONG_FILL } from './round-motion';
+import { fontScaleCap, motion, orderedChipsLayout, space, typeStyle } from '../tokens';
+import { ease, RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** The columns letter tiles stand in (board 07). */
 const TILE_COLUMNS = 4;
 /** How faint a chip placed in the line stays among the shuffled ones. */
 const PLACED_OPACITY = 0.25;
+
+/**
+ * Letter tiles as board 07 g2 draws them: a slot's size, corner and edge,
+ * a tile's height, how faint a used tile stays, and the pop of a filled
+ * slot, from 0.6 over 1.12 back to its size.
+ */
+const tileLook = {
+  slotWidth: 42,
+  slotHeight: 56,
+  slotRadius: 12,
+  slotEdge: 3,
+  filledEdge: 4,
+  tileHeight: 62,
+  usedOpacity: 0.35,
+  pop: { from: 0.6, over: 1.12 },
+} as const;
+
+/** A filled slot's pop, peaking at 60% of the design's pop (`slPop`); Reduce Motion leaves it out. */
+const POP_UP = {
+  duration: motion.pop.duration * 0.6,
+  easing: ease,
+  reduceMotion: ReduceMotion.Never,
+};
+const POP_DOWN = {
+  duration: motion.pop.duration * 0.4,
+  easing: ease,
+  reduceMotion: ReduceMotion.Never,
+};
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -41,11 +72,15 @@ type Judged = 'right' | 'wrong' | undefined;
  * haptic. VoiceOver reads every chip by its text, the line's in the order
  * placed, and skips the empty places. A character that stays in place, such
  * as an apostrophe, is no chip: it shows in the line once the chips before
- * it are there. As letter tiles (board 07), the tiles stand in 4 columns,
- * decoys among them, under a red slot for each letter of the answer; the
- * last slot filled gives the answer. With an erase label, a key under the
- * chips takes back the last chip placed, as «Анаграми» does (spec #1674); it
- * takes nothing from an empty line or a given answer. Words in a line
+ * it are there. As letter tiles (board 07 g2), the tiles stand in capitals,
+ * in the Edition's locale, on a full-width grid of 4 columns, decoys among
+ * them, under a sunken slot for each letter of the answer; a filled slot
+ * turns red with a pop at once, its tile fades, and a tap on it gives the
+ * letter back; the last slot filled gives the answer. With an erase label,
+ * a key under the chips takes back the last chip placed, as «Анаграми» does
+ * (spec #1674); it takes nothing from an empty line or a given answer. With
+ * `showsRight`, a wrong answer shows the right chips in the line (board 06,
+ * «Анаграми»). Words in a line
  * (board 07 g6, «Склади вислів») take their line in a sunken box, the words
  * placed on ink and only the next place dashed, and a placed word leaves an
  * empty dashed place among the chips. Key it by the Round, so a new Round
@@ -58,6 +93,7 @@ export function OrderedChips({
   layout = 'line',
   slots = chips.length,
   eraseLabel,
+  showsRight = false,
   answer,
   onAnswer,
 }: {
@@ -73,6 +109,8 @@ export function OrderedChips({
   slots?: number | undefined;
   /** The key that takes back the last chip placed, e.g. «← Стерти літеру»; no key when left out. */
   eraseLabel?: string | undefined;
+  /** Whether a wrong answer shows the right chips in the line, in place of the ones tapped. */
+  showsRight?: boolean;
   /** The Round's answer, once given. */
   answer: ChipsAnswer | undefined;
   /** The places of the chips, in the order tapped, once every place of the line is filled. */
@@ -82,8 +120,13 @@ export function OrderedChips({
   const line = answer?.chosen ?? tapped;
   const judged: Judged = answer === undefined ? undefined : answer.right ? 'right' : 'wrong';
   const { colors, radii } = useTokens();
+  const { voice } = useEdition();
   /** Words in a line, which take board 07 g6's look. */
   const words = kind === 'word' && layout === 'line';
+  const tiles = layout === 'tiles';
+  /** A chip's text as it shows: letter tiles in capitals, in the Edition's locale. */
+  const shown = (text: string) =>
+    tiles ? text.toLocaleUpperCase(voice.accessibilityLanguage) : text;
 
   return (
     <View testID="chips" style={styles.chips}>
@@ -109,22 +152,20 @@ export function OrderedChips({
                 <EmptySlot
                   index={index}
                   kind={kind}
-                  edge={
-                    layout === 'tiles'
-                      ? 'accent'
-                      : !words || index === line.length
-                        ? 'dashed'
-                        : 'none'
-                  }
+                  edge={tiles ? 'sunken' : !words || index === line.length ? 'dashed' : 'none'}
                 />
               ) : (
                 <LineChip
                   key={place}
                   index={index}
-                  text={chips[place] ?? ''}
+                  text={shown(
+                    (judged === 'wrong' && showsRight ? answer?.expected[index] : chips[place]) ??
+                      '',
+                  )}
                   kind={kind}
                   judged={judged}
                   onInk={words}
+                  tile={tiles}
                   disabled={answer !== undefined}
                   onPress={() => {
                     setTapped(tapped.filter((other) => other !== place));
@@ -139,17 +180,18 @@ export function OrderedChips({
             .filter(({ at }) => at === slots)
             .map(({ text }, mark) => <FixedMark key={mark} text={text} kind={kind} />)}
       </View>
-      <Tray tiles={layout === 'tiles'}>
+      <Tray tiles={tiles}>
         {chips.map((text, place) => {
           const placed = line.includes(place);
           return (
             <Chip
               key={place}
               testID={`chips-${String(place)}`}
-              text={text}
+              text={shown(text)}
               kind={kind}
               placed={placed}
               leavesPlace={words}
+              tile={tiles}
               inert={placed || answer !== undefined}
               onPress={() => {
                 const next = [...tapped, place];
@@ -176,7 +218,7 @@ export function OrderedChips({
   );
 }
 
-/** The chips under the line: wrapped and centred, or letter tiles in rows of 4. */
+/** The chips under the line: wrapped and centred, or letter tiles in full-width rows of 4. */
 function Tray({ tiles, children }: { tiles: boolean; children: ReactNode[] }) {
   if (!tiles) return <View style={styles.tray}>{children}</View>;
   const rows = Array.from({ length: Math.ceil(children.length / TILE_COLUMNS) }, (_, row) =>
@@ -185,7 +227,7 @@ function Tray({ tiles, children }: { tiles: boolean; children: ReactNode[] }) {
   return (
     <View style={styles.tiles}>
       {rows.map((row, index) => (
-        <View key={index} testID={`chips-row-${String(index)}`} style={styles.tray}>
+        <View key={index} testID={`chips-row-${String(index)}`} style={styles.tileRow}>
           {row}
         </View>
       ))}
@@ -194,8 +236,8 @@ function Tray({ tiles, children }: { tiles: boolean; children: ReactNode[] }) {
 }
 
 /**
- * An empty place of the answer line, dashed, a red slot of letter tiles, or
- * a place of words not next, with no edge; VoiceOver skips it. It carries
+ * An empty place of the answer line, dashed, a sunken slot of letter tiles,
+ * or a place of words not next, with no edge; VoiceOver skips it. It carries
  * `chips-slot-${index}`.
  */
 function EmptySlot({
@@ -205,9 +247,24 @@ function EmptySlot({
 }: {
   index: number;
   kind: 'letter' | 'word';
-  edge: 'dashed' | 'accent' | 'none';
+  edge: 'dashed' | 'sunken' | 'none';
 }) {
   const { colors } = useTokens();
+  if (edge === 'sunken')
+    return (
+      <View
+        testID={`chips-slot-${String(index)}`}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={[
+          styles.tileSlot,
+          {
+            backgroundColor: colors.surfaceSunken,
+            boxShadow: `inset 0 ${String(tileLook.slotEdge)}px 0 ${colors.tileEdge}`,
+          },
+        ]}
+      />
+    );
   return (
     <View
       testID={`chips-slot-${String(index)}`}
@@ -216,11 +273,9 @@ function EmptySlot({
       style={[
         styles.slot,
         kind === 'letter' ? styles.letter : styles.word,
-        edge === 'accent'
-          ? { borderColor: colors.accent, borderStyle: 'solid' }
-          : edge === 'dashed'
-            ? { borderColor: colors.line, borderStyle: 'dashed' }
-            : { borderColor: 'transparent', borderStyle: 'solid' },
+        edge === 'dashed'
+          ? { borderColor: colors.line, borderStyle: 'dashed' }
+          : { borderColor: 'transparent', borderStyle: 'solid' },
       ]}
     />
   );
@@ -229,7 +284,8 @@ function EmptySlot({
 /**
  * A chip among the shuffled ones, on a pressed tile. Once placed in the line
  * it stays faint in its place, or leaves an empty dashed place there, takes
- * no tap, and VoiceOver skips it.
+ * no tap, and VoiceOver skips it. A letter tile fills its column, and once
+ * used it fades on the sunken fill with no edge.
  */
 function Chip({
   testID,
@@ -237,6 +293,7 @@ function Chip({
   kind,
   placed,
   leavesPlace,
+  tile,
   inert,
   onPress,
 }: {
@@ -246,6 +303,8 @@ function Chip({
   placed: boolean;
   /** Whether a placed chip leaves an empty dashed place rather than staying faint. */
   leavesPlace: boolean;
+  /** Whether the chip is a letter tile of board 07 g2. */
+  tile: boolean;
   inert: boolean;
   onPress: () => void;
 }) {
@@ -256,18 +315,35 @@ function Chip({
       accessibilityElementsHidden={placed}
       importantForAccessibility={placed ? 'no-hide-descendants' : 'auto'}
       testID={placed && leavesPlace ? `${testID}-place` : undefined}
-      style={placed && (leavesPlace ? [styles.left, { borderColor: colors.line }] : styles.placed)}
+      style={[
+        tile && styles.tileColumn,
+        placed &&
+          (leavesPlace
+            ? [styles.left, { borderColor: colors.line }]
+            : tile
+              ? styles.used
+              : styles.placed),
+      ]}
       {...voice}
     >
       <View style={placed && leavesPlace && styles.gone}>
         <PressedTile
           testID={testID}
+          tone={tile && placed ? 'none' : 'tile'}
           radius={orderedChipsLayout.chipRadius}
           accessibilityLabel={text}
           accessibilityState={{ disabled: inert }}
           inert={inert}
           onPress={onPress}
-          faceStyle={[styles.chip, kind === 'letter' ? styles.letter : styles.word]}
+          faceStyle={
+            tile
+              ? [
+                  styles.tileFace,
+                  { borderColor: colors.line },
+                  placed && { backgroundColor: colors.surfaceSunken },
+                ]
+              : [styles.chip, kind === 'letter' ? styles.letter : styles.word]
+          }
         >
           <ChipText text={text} kind={kind} color={colors.ink} />
         </PressedTile>
@@ -278,7 +354,9 @@ function Chip({
 
 /**
  * A chip in the answer line, in a place bordered in ink, or on ink. A right
- * answer turns the line red, a wrong one sinks it; nothing shakes.
+ * answer turns the line red, a wrong one sinks it; nothing shakes. A letter
+ * tile's slot turns red with a pop as it fills (Reduce Motion leaves the
+ * pop out), stays red at a right answer and sinks at a wrong one.
  */
 function LineChip({
   index,
@@ -286,6 +364,7 @@ function LineChip({
   kind,
   judged,
   onInk,
+  tile,
   disabled,
   onPress,
 }: {
@@ -296,14 +375,18 @@ function LineChip({
   judged: Judged;
   /** Whether the chip lies on ink, its text in the tile's colour, before the answer. */
   onInk: boolean;
+  /** Whether the chip fills a letter tile's slot of board 07 g2. */
+  tile: boolean;
   disabled: boolean;
   onPress: () => void;
 }) {
   const { colors } = useTokens();
   const keyInk = useSchemeColors('light').ink;
   const { voice } = useEdition();
+  const reduceMotion = useReduceMotion();
   /** 0 before the answer, 1 once the chip has turned. */
   const turned = useSharedValue(judged === undefined ? 0 : 1);
+  const scale = useSharedValue(1);
   // Whether the chip showed the answer before, so only the answer given now moves it.
   const shownJudged = useRef(judged !== undefined);
 
@@ -314,15 +397,30 @@ function LineChip({
     // The shared value is stable, so only the answer given turns the chip.
   }, [judged, turned]);
 
-  const base = onInk ? colors.ink : colors.tile;
+  // A letter tile's slot pops once, as it fills; a slot shown with its answer does not.
+  const popped = useRef(!tile || judged !== undefined);
+  useEffect(() => {
+    if (popped.current) return;
+    popped.current = true;
+    if (reduceMotion) return;
+    scale.value = withSequence(
+      withTiming(tileLook.pop.from, { duration: 0, reduceMotion: ReduceMotion.Never }),
+      withTiming(tileLook.pop.over, POP_UP),
+      withTiming(1, POP_DOWN),
+    );
+  }, [reduceMotion, scale]);
+
+  const base = tile ? colors.accent : onInk ? colors.ink : colors.tile;
+  const edge = tile ? colors.accentEdge : colors.ink;
   const face = judged === 'right' ? colors.accent : colors.surfaceSunken;
   const border = judged === 'right' ? colors.accentEdge : colors.ink;
   const motion = useAnimatedStyle(() =>
     judged === undefined
-      ? {}
+      ? { transform: [{ scale: scale.value }] }
       : {
+          transform: [{ scale: scale.value }],
           backgroundColor: interpolateColor(turned.value, [0, 1], [base, face]),
-          borderColor: interpolateColor(turned.value, [0, 1], [colors.ink, border]),
+          borderColor: interpolateColor(turned.value, [0, 1], [edge, border]),
         },
   );
   return (
@@ -335,9 +433,23 @@ function LineChip({
       disabled={disabled}
       onPress={onPress}
       style={[
-        styles.slot,
-        kind === 'letter' ? styles.letter : styles.word,
-        { backgroundColor: base, borderColor: colors.ink, borderStyle: 'solid' },
+        tile
+          ? [
+              styles.tileSlot,
+              {
+                backgroundColor: base,
+                borderColor: edge,
+                boxShadow:
+                  judged === 'wrong'
+                    ? undefined
+                    : `0 ${String(tileLook.filledEdge)}px 0 ${colors.accentEdge}`,
+              },
+            ]
+          : [
+              styles.slot,
+              kind === 'letter' ? styles.letter : styles.word,
+              { backgroundColor: base, borderColor: colors.ink, borderStyle: 'solid' },
+            ],
         motion,
       ]}
     >
@@ -345,7 +457,11 @@ function LineChip({
         text={text}
         kind={kind}
         color={
-          judged === 'right' ? keyInk : onInk && judged === undefined ? colors.tile : colors.ink
+          judged === 'right' || (tile && judged === undefined)
+            ? keyInk
+            : onInk && judged === undefined
+              ? colors.tile
+              : colors.ink
         }
       />
     </AnimatedPressable>
@@ -384,6 +500,22 @@ const styles = StyleSheet.create({
     gap: orderedChipsLayout.chipGap,
   },
   tiles: { gap: orderedChipsLayout.chipGap },
+  tileRow: { flexDirection: 'row', gap: orderedChipsLayout.chipGap },
+  tileColumn: { flex: 1 },
+  tileFace: {
+    height: tileLook.tileHeight,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tileSlot: {
+    width: tileLook.slotWidth,
+    height: tileLook.slotHeight,
+    borderRadius: tileLook.slotRadius,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  used: { opacity: tileLook.usedOpacity },
   tray: {
     flexDirection: 'row',
     flexWrap: 'wrap',

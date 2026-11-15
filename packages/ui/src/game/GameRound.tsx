@@ -23,7 +23,7 @@ import { GameHeader } from './GameHeader';
 import { PairsRound } from './PairsRound';
 import { AnswerOptions, PickRound } from './PickRound';
 import { RoundCard } from './RoundCard';
-import { RoundLookContext } from './round-look';
+import { RoundLookContext, type QuestionFace } from './round-look';
 import { askedAs, cardOf, RoundHead, type CardText } from './RoundPrompt';
 import { TypedRound } from './TypedRound';
 import { useGameHaptics } from './useGameHaptics';
@@ -122,7 +122,7 @@ export function GameRound({
   const look = {
     onGround,
     optionStamp,
-    textFace: TEXT_FACED.has(game.modeId),
+    questionFace: questionFaceOf(game.modeId),
     mascot: mascot?.({ state: mascotState(answer, game.lives), width: roundMascotWidth }),
   };
   const labelShown = !onGround || !INK_HEADED.has(game.modeId);
@@ -230,6 +230,12 @@ const INK_HEADED: ReadonlySet<string> = new Set(['type-word', 'origin', 'build-i
  * in «Англіцизми», the meaning in «Склади вислів».
  */
 const TEXT_FACED: ReadonlySet<string> = new Set(['by-letters', 'anglicism', 'build-idiom']);
+
+/** The face of a Game Mode's question on the ground: «Анаграми» asks its Definition as the large question (board 06). */
+function questionFaceOf(modeId: string): QuestionFace {
+  if (modeId === 'anagram') return 'display';
+  return TEXT_FACED.has(modeId) ? 'text' : 'byLength';
+}
 
 /**
  * The Mascot's state beside the question (ADR 0070): waiting while the
