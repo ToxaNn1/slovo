@@ -23,6 +23,14 @@ export function lemmaParts({ lemma, stress }: Pick<Word, 'lemma' | 'stress'>): L
   return parts;
 }
 
+/**
+ * The letters of the Lemma's longest run with no space or hyphen, where a line
+ * may break: the hero heading takes its size from it so the run fits on one line.
+ */
+export function longestRun(lemma: string): number {
+  return Math.max(...lemma.split(/[\s-]+/u).map((run) => Array.from(run).length));
+}
+
 /** The part of speech with a noun's gender, as the Edition writes it: «іменник, чоловічий рід». */
 export function grammarLine(
   { partOfSpeech, gender }: Pick<Word, 'partOfSpeech' | 'gender'>,

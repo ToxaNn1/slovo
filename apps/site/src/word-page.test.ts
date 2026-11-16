@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   grammarLine,
   lemmaParts,
+  longestRun,
   metaDescription,
   rarityBars,
   similarWords,
@@ -33,6 +34,12 @@ const labels = {
 };
 
 describe('a Word page', () => {
+  it("counts the letters of the Lemma's longest unbroken run, which sets the heading's size", () => {
+    expect(longestRun('сонцестояння')).toBe(12);
+    expect(longestRun('бити байдики')).toBe(7);
+    expect(longestRun('жовто-блакитний')).toBe(9);
+  });
+
   it('splits the Lemma so each stressed vowel carries its mark on its own', () => {
     expect(lemmaParts({ lemma: 'кракелюр', stress: [6] })).toEqual([
       { text: 'кракел', stressed: false },
