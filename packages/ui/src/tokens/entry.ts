@@ -56,7 +56,8 @@ export const entryCardFrame = {
   padding: { top: 20, side: 22, bottom: 18 },
   gap: 16,
   rule: { width: 140, height: 8 },
-  tabBar: { height: 50, line: 2 },
+  /** `nameGap`: the least air between two tab names, held at the largest text size (check 15.11). */
+  tabBar: { height: 50, line: 2, nameGap: 8 },
   tabMark: { height: 5, top: -2, inset: '18%' },
   panelGap: 14,
   moreGap: 8,

@@ -71,6 +71,7 @@ export { type EntrySwipe } from './entries/SwipeMarks';
 export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
+export { AnswerTiles, type AnswerTile } from './primitives/AnswerTiles';
 export { ChipChoice } from './mix/ChipChoice';
 export { MixCategoryTile } from './mix/MixCategoryTile';
 export { LaterButton, OnboardingStep, stepStyles } from './onboarding/OnboardingStep';

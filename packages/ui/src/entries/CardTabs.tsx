@@ -290,10 +290,15 @@ function FitPanel({
 const styles = StyleSheet.create({
   // The tabs fill what the head leaves of the card's frame.
   tabs: { flexGrow: 1, gap: blockGap },
-  // The tabs share the bar's width in equal columns under its line (board XEntry2, owner 13.11).
+  // The tabs share the bar's width under its line (board XEntry2, owner 13.11): each column is its
+  // name and an equal share of the room left, so every pair of names has the same air between them,
+  // and a long name shrinks its column, never the padding between (check 15.11).
   bar: { flexDirection: 'row', borderTopWidth: entryCardFrame.tabBar.line },
   tab: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+    paddingHorizontal: entryCardFrame.tabBar.nameGap / 2,
     height: entryCardFrame.tabBar.height,
     alignItems: 'center',
     justifyContent: 'center',

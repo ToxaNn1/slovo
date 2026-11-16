@@ -434,6 +434,7 @@ describe('Collections', () => {
       expect(result).toEqual({
         ok: true,
         collection: { ...old, name: 'Older', newestLemmas: old.newestLemmas },
+        renamed: true,
       });
       expect(namesOf(app)).toEqual(['Recent', 'Older']);
       expect(app.collections.has(old.id, 'w_one')).toBe(true);
@@ -470,6 +471,17 @@ describe('Collections', () => {
       expect((await app.collections.rename(id, 'WORK'))?.ok).toBe(true);
 
       expect(namesOf(app)).toEqual(['WORK']);
+    });
+
+    it('tells a name kept as it is from a new one', async () => {
+      const app = await run();
+      const { id } = await create(app, 'Work');
+
+      expect(await app.collections.rename(id, '  Work ')).toMatchObject({
+        ok: true,
+        renamed: false,
+      });
+      expect(await app.collections.rename(id, 'WORK')).toMatchObject({ ok: true, renamed: true });
     });
 
     it('frees the old name for another Collection', async () => {

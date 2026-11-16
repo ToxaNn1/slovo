@@ -161,6 +161,8 @@ function SignIn({
   withApple: boolean;
 }) {
   const [email, setEmail] = useState('');
+  // The state whose problem the reader has edited the address since: that problem leaves the field.
+  const [editedSince, setEditedSince] = useState<AccountState>();
   const [code, setCode] = useState('');
   const tokens = useTokens();
   const { voice } = useEdition();
@@ -198,8 +200,11 @@ function SignIn({
           testID="account-email"
           label={strings.emailLabel}
           value={email}
-          onChangeText={setEmail}
-          problem={problem}
+          onChangeText={(typed) => {
+            setEmail(typed);
+            setEditedSince(state);
+          }}
+          problem={editedSince === state ? undefined : problem}
           problemCause={state}
           keyboardType="email-address"
           textContentType="emailAddress"

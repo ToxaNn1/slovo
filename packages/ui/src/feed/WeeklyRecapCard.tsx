@@ -22,7 +22,15 @@ import { PressedTile } from '../primitives/PressedTile';
 import { bezier } from '../primitives/timing';
 import { useCascade } from '../primitives/useCascade';
 import { usePageTurnActions } from '../primitives/VerticalPager';
-import { fontScaleCap, motion, noticeCard, typeStyle, weeklyRecapPage } from '../tokens';
+import {
+  fontScaleCap,
+  iconButton,
+  motion,
+  noticeCard,
+  typeRoles,
+  typeStyle,
+  weeklyRecapPage,
+} from '../tokens';
 import { FeedNoticeCard } from './FeedNoticeCard';
 
 const { enter, pop, fold, below } = weeklyRecapPage;
@@ -121,12 +129,16 @@ export function WeeklyRecapCard({
               )}
             </View>
             {recap !== undefined && onShare !== undefined && (
-              <IconButton
-                icon="share"
-                accessibilityLabel={strings.share.share}
-                onPress={onShare}
-                testID="feed-notice-weeklyRecap-share"
-              />
+              // «Share» reaches into the card's padding, so the row is only as tall as the title,
+              // as on board f5, and the Yesterday under it keeps to the page (check 15.11).
+              <View style={styles.share}>
+                <IconButton
+                  icon="share"
+                  accessibilityLabel={strings.share.share}
+                  onPress={onShare}
+                  testID="feed-notice-weeklyRecap-share"
+                />
+              </View>
             )}
           </View>
           {numbers.length > 0 && (
@@ -197,7 +209,7 @@ export function UnderWeeklyRecap({ folded, children }: { folded: boolean; childr
     );
   }, [folded, reduceMotion, lift]);
   const lifted = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
-  return <Animated.View style={lifted}>{children}</Animated.View>;
+  return <Animated.View style={[styles.under, lifted]}>{children}</Animated.View>;
 }
 
 /** The week's dates, «26.10–1.11»: each day and its month as numbers, the month in two digits. */
@@ -370,6 +382,8 @@ function usePop(index: number) {
 
 const styles = StyleSheet.create({
   folding: { transformOrigin: 'top' },
+  // Yesterday under the week takes the rest of the page and scrolls inside its card.
+  under: { flex: 1 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: weeklyRecapPage.titleGap },
   titleTexts: {
     flex: 1,
@@ -379,6 +393,7 @@ const styles = StyleSheet.create({
     gap: weeklyRecapPage.titleGap,
   },
   title: { flexShrink: 1 },
+  share: { marginVertical: -(iconButton.side - typeRoles.noticeTitle.lineHeight) / 2 },
   grid: { alignSelf: 'stretch', gap: noticeCard.recap.gap },
   row: { flexDirection: 'row', gap: noticeCard.recap.gap },
   tile: { flex: 1 },

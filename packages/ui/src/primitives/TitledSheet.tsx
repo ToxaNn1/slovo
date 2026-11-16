@@ -8,9 +8,10 @@ import { SheetTitle } from './SheetParts';
 
 /**
  * The bottom sheet of board 09 (XSaved), for the Collection menu, name,
- * delete, share and the Due Quiz: the slanted top with the ink title plate on
- * one line, the content, and the cancel button last. The cancel button, a tap
- * on the backdrop, a drag on the top and VoiceOver's escape gesture ask
+ * delete, share and the Due Quiz: the slanted top with the ink title plate,
+ * which wraps a long title, the content, and the cancel button last. The
+ * cancel button, a tap on the backdrop, a drag on the top and VoiceOver's
+ * escape gesture ask
  * `onClose`; the caller turns `visible` off, and `onDismissed` runs once the
  * sheet has slid away.
  */
@@ -35,7 +36,7 @@ export function TitledSheet({
 }) {
   return (
     <BottomSheet visible={visible} onClose={onClose} onDismissed={onDismissed} testID={testID}>
-      <SheetTitle numberOfLines={1}>{title}</SheetTitle>
+      <SheetTitle>{title}</SheetTitle>
       <View style={styles.content}>{children}</View>
       <Button
         variant="ghost"

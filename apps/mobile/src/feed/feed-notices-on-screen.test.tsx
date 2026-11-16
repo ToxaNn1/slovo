@@ -279,7 +279,9 @@ describe('the Feed Notices on the Feed', () => {
 
     expect(screen.getAllByTestId('word-card', hidden).length).toBeGreaterThan(0);
     expect(
-      screen.getAllByTestId(/^feed-notice-/, hidden).map(({ props }) => String(props['testID'])),
+      screen
+        .getAllByTestId(/^feed-notice-\w+$/, hidden)
+        .map(({ props }) => String(props['testID'])),
     ).toEqual(['feed-notice-wordGoalChoice']);
   });
 

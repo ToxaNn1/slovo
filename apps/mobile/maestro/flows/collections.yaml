@@ -1,7 +1,9 @@
 # Collections: the Saved tab's «Колекції» tab shows them as cards, two to a row,
-# «+» makes a Collection (a taken name is refused), and the menu a long press on
-# a card opens renames it in the field over the cards and deletes it after the
-# SLOVO dialog. A subflow of `smoke.yaml`; run it from there.
+# after the «Нова колекція» card; with none, the empty state has its own
+# «Нова колекція» button instead. Either opens the name sheet, which makes a
+# Collection (a taken name is refused). The menu a long press on a card opens
+# renames it in the same sheet and deletes it after the delete sheet asks. A
+# subflow of `smoke.yaml`; run it from there.
 # Names are Latin, so the keyboard of any simulator can type them. It leaves
 # the Collections it found.
 appId: ${APP_ID || 'app.slovo.uk'}
@@ -12,8 +14,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: saved-collections
 - assertVisible:
     id: collections
-# The development client's floating tools button sits over «+»: drag it down for
-# the flow, and back at the end.
+# The development client's floating tools button sits over «Нова колекція»:
+# drag it down for the flow, and back at the end.
 - swipe:
     from:
       id: gearshape.fill
@@ -21,92 +23,126 @@ appId: ${APP_ID || 'app.slovo.uk'}
     duration: 600
 - runFlow:
     file: ../dismiss-dev-menu.yaml
-# A fresh state shows the empty list with its own button; a state that has Collections shows «+».
 - takeScreenshot: collections-start
-# A new Collection, named in the field that «+» opens.
+# A new Collection, named in the sheet: from the empty state on a fresh state,
+# from the «Нова колекція» card once there are Collections.
+- runFlow:
+    when:
+      visible:
+        id: collections-empty-create
+    commands:
+      - tapOn:
+          id: collections-empty-create
+- runFlow:
+    when:
+      notVisible:
+        id: collections-name-input
+    commands:
+      - tapOn:
+          id: collections-add
+- waitForAnimationToEnd
+# The keyboard rises only on a tap on the field.
 - tapOn:
-    id: collections-add
-- assertVisible:
-    id: collections-new-input
+    id: collections-name-input
 - inputText: Alpha
-- pressKey: Enter
+- tapOn:
+    id: collections-name-submit
 - assertVisible:
     id: collection-card-.*
-    text: Alpha, 0 записів
+    text: Alpha, 0 слів
 - assertNotVisible:
-    id: collections-new
-# Newest first: a second Collection comes above the first.
+    id: collections-name-input
+- assertNotVisible:
+    id: collections-empty
+# Newest first: a second Collection comes before the first.
 - tapOn:
     id: collections-add
+- waitForAnimationToEnd
+- tapOn:
+    id: collections-name-input
 - inputText: Bravo
-- pressKey: Enter
+- tapOn:
+    id: collections-name-submit
 - assertVisible:
     id: collection-card-.*
-    text: Bravo, 0 записів
+    text: Bravo, 0 слів
 - takeScreenshot: collections-created
 # A name that breaks a rule stays in the field with its reason, in any letter case.
 - tapOn:
     id: collections-add
+- waitForAnimationToEnd
+- tapOn:
+    id: collections-name-input
 - inputText: bRAVO
-- pressKey: Enter
+- tapOn:
+    id: collections-name-submit
 - assertVisible:
-    id: collections-new-refusal
+    id: collections-name-refusal
     text: Колекція з такою назвою вже є.
 - takeScreenshot: collections-refused
-# Leaving the field drops it: a tap on the Saved title, the first «Збережене» over the tab bar's.
+# «Скасувати» drops the sheet and the name in it.
 - tapOn:
-    text: Збережене
-    index: 0
+    id: collections-name-cancel
 - assertNotVisible:
-    id: collections-new
+    id: collections-name-input
 # The Collections tab counts what the list made.
 - assertVisible:
     id: saved-collections
     text: 'Колекції, [2-9]\d* колекці.*'
 # A long press while the screen still slides in is lost, and a long list slides in later.
 - waitForAnimationToEnd
-# A long press on «Bravo» opens its menu; «Перейменувати» opens the field over the cards, with its name in it.
+# A long press on «Bravo» opens its menu; «Перейменувати» opens the name sheet, with its name in it.
 - longPressOn:
     id: collection-card-.*
-    text: Bravo, 0 записів
+    text: Bravo, 0 слів
 # A tap while the sheet still slides in is lost.
 - waitForAnimationToEnd
 - takeScreenshot: collections-menu
 - tapOn:
     id: collections-menu-rename
+- waitForAnimationToEnd
 - assertVisible:
-    id: collections-rename-input
+    id: collections-name-input
     text: Bravo
-- eraseText: 5
+- tapOn:
+    id: collections-name-input
+- eraseText: 40
 - inputText: Charlie
 - takeScreenshot: collections-renaming
-- pressKey: Enter
+- tapOn:
+    id: collections-name-submit
 - assertVisible:
     id: collection-card-.*
-    text: Charlie, 0 записів
+    text: Charlie, 0 слів
 - assertNotVisible:
-    text: Bravo, 0 записів
+    text: Bravo, 0 слів
 # A name another Collection has is refused while renaming.
 - longPressOn:
     id: collection-card-.*
-    text: Charlie, 0 записів
+    text: Charlie, 0 слів
 # A tap while the sheet still slides in is lost.
 - waitForAnimationToEnd
 - tapOn:
     id: collections-menu-rename
-- eraseText: 7
+- waitForAnimationToEnd
+- tapOn:
+    id: collections-name-input
+- eraseText: 40
 - inputText: alpha
-- pressKey: Enter
+- tapOn:
+    id: collections-name-submit
 - assertVisible:
-    id: collections-rename-refusal
+    id: collections-name-refusal
     text: Колекція з такою назвою вже є.
-- tapOn: Колекції
+- tapOn:
+    id: collections-name-cancel
+- waitForAnimationToEnd
 - assertVisible:
-    text: Charlie, 0 записів
-# «Видалити» in the menu: the SLOVO dialog asks first, and cancelling keeps it.
+    text: Charlie, 0 слів
+# «Видалити колекцію» in the menu: the delete sheet asks first, and «Скасувати» keeps it.
 - longPressOn:
     id: collection-card-.*
-    text: Charlie, 0 записів
+    text: Charlie, 0 слів
 # A tap while the sheet still slides in is lost.
 - waitForAnimationToEnd
 - tapOn:
@@ -118,34 +154,34 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: collections-delete-cancel
 - assertVisible:
-    text: Charlie, 0 записів
+    text: Charlie, 0 слів
 - longPressOn:
     id: collection-card-.*
-    text: Charlie, 0 записів
+    text: Charlie, 0 слів
 # A tap while the sheet still slides in is lost.
 - waitForAnimationToEnd
 - tapOn:
     id: collections-menu-delete
-# A tap while the dialog still fades in is lost.
+# A tap while the sheet still slides in is lost.
 - waitForAnimationToEnd
 - tapOn:
-    id: collections-delete-destructive
+    id: collections-delete-confirm
 - assertNotVisible:
-    text: Charlie, 0 записів
+    text: Charlie, 0 слів
 # «Cancel» in the menu keeps everything as it is.
 - longPressOn:
     id: collection-card-.*
-    text: Alpha, 0 записів
+    text: Alpha, 0 слів
 # A tap while the sheet still slides in is lost.
 - waitForAnimationToEnd
 - tapOn:
     id: collections-menu-cancel
 - assertVisible:
-    text: Alpha, 0 записів
-# «Alpha» goes through the menu and the SLOVO dialog, leaving the Collections the flow found.
+    text: Alpha, 0 слів
+# «Alpha» goes through the menu and the delete sheet, leaving the Collections the flow found.
 - longPressOn:
     id: collection-card-.*
-    text: Alpha, 0 записів
+    text: Alpha, 0 слів
 # A tap while the sheet still slides in is lost.
 - waitForAnimationToEnd
 - tapOn:
@@ -153,9 +189,9 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - waitForAnimationToEnd
 - assertVisible: Видалити колекцію «Alpha»?
 - tapOn:
-    id: collections-delete-destructive
+    id: collections-delete-confirm
 - assertNotVisible:
-    text: Alpha, 0 записів
+    text: Alpha, 0 слів
 - swipe:
     from:
       id: gearshape.fill

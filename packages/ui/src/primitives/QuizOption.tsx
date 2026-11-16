@@ -168,6 +168,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: quizOption.gap,
     paddingHorizontal: quizOption.padding,
+    paddingVertical: quizOption.paddingVertical,
     borderWidth: quizOption.border,
   },
   meaning: { flexShrink: 1 },

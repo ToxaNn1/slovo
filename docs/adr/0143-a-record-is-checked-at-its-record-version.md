@@ -1,6 +1,6 @@
 # A record is checked at its record version
 
-Status: accepted (owner, 15.11; admin fast review). Amended by ADR 0150 («Далі» passes a record by). Amends ADR 0088 (a check is an Admin user's change with no reason and no confirmation) and ADR 0090 (a record carries the version it was checked at, beside the batch review of the Content queue).
+Status: accepted (owner, 15.11; admin fast review). Amended by ADR 0150 («Далі» passes a record by) and ADR 0152 (all unchecked records of a kind at one confirmation). Amends ADR 0088 (a check is an Admin user's change with no reason and no confirmation) and ADR 0090 (a record carries the version it was checked at, beside the batch review of the Content queue).
 
 ## Context
 

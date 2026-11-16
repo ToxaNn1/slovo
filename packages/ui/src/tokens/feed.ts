@@ -111,7 +111,8 @@ export const weeklyRecapPage = {
  */
 export const yesterdayCard = {
   gap: 14,
-  optionGap: 8,
+  /** The clear gap between one option's edge and the next option. */
+  optionGap: 10,
   verdictHeight: 15,
   /** The right meaning lights this long after a wrong pick. */
   lightDelay: 400,

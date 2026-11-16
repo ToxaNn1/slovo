@@ -54,9 +54,9 @@ export function CollectionCard({
   /** The card's place among the cards, which picks its fill and its mark. */
   index: number;
   name: string;
-  /** The Entries it holds, in the Edition's plural form, e.g. «17 записів». */
+  /** The Entries it holds, in the Edition's plural form, e.g. «17 слів». */
   count: string;
-  /** The Collection as VoiceOver reads it, e.g. «Для листів, 17 записів». */
+  /** The Collection as VoiceOver reads it, e.g. «Для листів, 17 слів». */
   accessibilityLabel: string;
   actions: readonly CollectionCardAction[];
   /** Opens the Collection. */

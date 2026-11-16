@@ -137,9 +137,9 @@ describe('Collections as cards', () => {
     await collection('Зима');
     await renderScreen();
 
-    expect(screen.getByRole('button', { name: 'Зима, 0 записів' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Зима, 0 слів' })).toBeOnTheScreen();
     expect(screen.getByText('Осінь')).toBeOnTheScreen();
-    expect(screen.getAllByText('0 записів')).toHaveLength(3);
+    expect(screen.getAllByText('0 слів')).toHaveLength(3);
   });
 
   it('opens the Collection on a tap', async () => {
@@ -222,8 +222,8 @@ describe('Collections in the board style', () => {
     expect(screen.getByTestId('collections-add')).toBeOnTheScreen();
     expect(card(winter)).toBeOnTheScreen();
     expect(card(autumn)).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Зима, 0 записів' })).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Осінь, 0 записів' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Зима, 0 слів' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Осінь, 0 слів' })).toBeOnTheScreen();
   });
 
   it('opens the Collection from its card', async () => {
@@ -279,6 +279,25 @@ describe('Collections in the board style', () => {
     expect(screen.getByText('Пізня осінь')).toBeOnTheScreen();
     expect(screen.getByText(editionStrings.collections.toasts.renamed)).toBeOnTheScreen();
     expect(composition.collections.list.map(({ name }) => name)).toEqual(['Пізня осінь']);
+  });
+
+  it('says nothing when a rename keeps the name as it is', async () => {
+    const autumn = await collection('Осінь');
+    await renderScreen();
+
+    await longPress(autumn);
+    await fireEvent.press(screen.getByTestId('collections-menu-rename'));
+    await settle();
+    await settle();
+    await fireEvent.changeText(screen.getByTestId('collections-name-input'), 'Осінь ');
+    await fireEvent.press(screen.getByTestId('collections-name-submit'));
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(50);
+    });
+    await settle();
+
+    expect(screen.queryByTestId('collections-name-input')).not.toBeOnTheScreen();
+    expect(screen.queryByText(editionStrings.collections.toasts.renamed)).not.toBeOnTheScreen();
   });
 
   it('deletes from the menu after the delete sheet, and its undo brings the Collection back', async () => {
@@ -346,7 +365,7 @@ describe('Collections with the board style off', () => {
     await renderScreen();
 
     expect(card(autumn)).toBeOnTheScreen();
-    expect(screen.getByText('0 записів')).toBeOnTheScreen();
+    expect(screen.getByText('0 слів')).toBeOnTheScreen();
     expect(
       screen.queryByRole('header', { name: `${editionStrings.collections.title}, 1` }),
     ).not.toBeOnTheScreen();

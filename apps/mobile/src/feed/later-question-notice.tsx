@@ -3,6 +3,7 @@ import type { LaterQuestion } from '@slovo/core';
 import {
   FeedNoticeCard,
   Chip,
+  AnswerTiles,
   Button,
   SegmentedControl,
   space,
@@ -75,27 +76,16 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
     );
   if (question === 'selfRating')
     return (
-      <FeedNoticeCard notice={question} title={strings.selfRating.title}>
-        <View style={styles.block}>
-          {questionnaire.options.selfRating.map(({ id, label }) => (
-            <Button
-              size="small"
-              variant="neutral"
-              key={id}
-              testID={`later-question-selfRating-${id}`}
-              label={label}
-              onPress={() => {
-                settle(questionnaire.answer('selfRating', id));
-              }}
-            />
-          ))}
-          {later}
-        </View>
-      </FeedNoticeCard>
+      <SelfRatingQuestion
+        later={later}
+        onAnswer={(id) => {
+          settle(questionnaire.answer('selfRating', id));
+        }}
+      />
     );
   const { title, text } = strings[question];
   return (
-    <FeedNoticeCard notice={question} title={title} message={text}>
+    <FeedNoticeCard notice={question} title={title} message={text} fill>
       <View style={styles.block}>
         <Button
           testID={`later-question-${question}-open`}
@@ -106,6 +96,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
             });
           }}
         />
+        <View style={styles.foot} />
         {later}
       </View>
     </FeedNoticeCard>
@@ -124,7 +115,7 @@ function DailyGoalQuestion({
   const [picked, setPicked] = useState(highlighted);
   const { title, text } = strings.wordGoalChoice;
   return (
-    <FeedNoticeCard notice="wordGoalChoice" title={title} message={text}>
+    <FeedNoticeCard notice="wordGoalChoice" title={title} message={text} fill>
       <View style={styles.block}>
         <SegmentedControl
           accessibilityLabel={title}
@@ -147,6 +138,42 @@ function DailyGoalQuestion({
             onDone(picked);
           }}
         />
+        <View style={styles.foot} />
+        {later}
+      </View>
+    </FeedNoticeCard>
+  );
+}
+
+/**
+ * The self-rating on the tiles of a Game's options (owner, 16.11): a tile
+ * pressed is picked and answers at once, and «Пізніше» stays under the tiles.
+ */
+function SelfRatingQuestion({
+  later,
+  onAnswer,
+}: {
+  later: ReactNode;
+  onAnswer: (answerId: string) => void;
+}) {
+  const { questionnaire } = useComposition();
+  const [picked, setPicked] = useState<string>();
+  return (
+    <FeedNoticeCard notice="selfRating" title={strings.selfRating.title} fill>
+      <View style={styles.block}>
+        <AnswerTiles
+          options={questionnaire.options.selfRating.map(({ id, label }) => ({
+            id,
+            label,
+            testID: `later-question-selfRating-${id}`,
+          }))}
+          picked={picked}
+          onPick={(id) => {
+            setPicked(id);
+            onAnswer(id);
+          }}
+        />
+        <View style={styles.foot} />
         {later}
       </View>
     </FeedNoticeCard>
@@ -163,9 +190,10 @@ function InterestsQuestion({
 }) {
   const { title, text } = strings.interests;
   return (
-    <FeedNoticeCard notice="interests" title={title} message={text}>
+    <FeedNoticeCard notice="interests" title={title} message={text} fill>
       <View style={styles.block}>
         <InterestsChoice testIDPrefix="later-question" onDone={onDone} />
+        <View style={styles.foot} />
         {later}
       </View>
     </FeedNoticeCard>
@@ -236,6 +264,8 @@ export function InterestChips({
 }
 
 const styles = StyleSheet.create({
-  block: { gap: space[3], alignSelf: 'stretch' },
+  // The card fills its page as the Quick Question does: the question on top, «Пізніше» at its foot (owner, 16.11).
+  block: { flexGrow: 1, gap: space[3], alignSelf: 'stretch' },
+  foot: { flexGrow: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
 });

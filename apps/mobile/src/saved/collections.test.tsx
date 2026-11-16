@@ -47,16 +47,24 @@ describe('the Collections hooks', () => {
     });
   });
 
-  it('rename a Collection, and refuse a name too long', async () => {
+  it('rename a Collection, tell a name kept as it is, and refuse a name too long', async () => {
     const { hook } = await renderCollections();
     await settled(() => hook.result.current.changes.create('Мої'));
     const [collection] = hook.result.current.list;
     if (collection === undefined) throw new Error('No Collection was made.');
 
-    expect(await hook.result.current.changes.rename(collection.id, 'я'.repeat(41))).toBe(
-      'Назва задовга: не більше 40 символів.',
-    );
-    expect(await hook.result.current.changes.rename(collection.id, 'Для есе')).toBeUndefined();
+    expect(await hook.result.current.changes.rename(collection.id, 'я'.repeat(41))).toEqual({
+      ok: false,
+      refusal: 'Назва задовга: не більше 40 символів.',
+    });
+    expect(await hook.result.current.changes.rename(collection.id, ' Мої ')).toEqual({
+      ok: true,
+      renamed: false,
+    });
+    expect(await hook.result.current.changes.rename(collection.id, 'Для есе')).toEqual({
+      ok: true,
+      renamed: true,
+    });
     await settled(() => undefined);
 
     expect(hook.result.current.list.map(({ name }) => name)).toEqual(['Для есе']);

@@ -108,6 +108,12 @@
     },
     "dailyGoal": {
       "title": "Ціль дня",
+      "goal": {
+        "one": "{count} слово",
+        "few": "{count} слова",
+        "many": "{count} слів",
+        "other": "{count} слова"
+      },
       "none": "Без цілі",
       "subtitle": "Скільки нових слів відкривати щодня.",
       "explanations": {
@@ -617,10 +623,10 @@
   "collections": {
     "title": "Колекції",
     "count": {
-      "one": "{count} запис",
-      "few": "{count} записи",
-      "many": "{count} записів",
-      "other": "{count} запису"
+      "one": "{count} слово",
+      "few": "{count} слова",
+      "many": "{count} слів",
+      "other": "{count} слова"
     },
     "collectionCount": {
       "one": "{count} колекція",
@@ -1962,7 +1968,6 @@
       "chosen": "Твій вибір: {text}",
       "again": "Ще раз!",
       "toGames": "До ігор",
-      "toFeed": "До стрічки",
       "review": "Огляд раундів"
     },
     "result": {

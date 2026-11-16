@@ -108,14 +108,16 @@ export function CollectionsBoard({ header }: { header: ListHeader }) {
   /** Keeps the name; resolves to why it is refused, and the sheet then stays open. */
   const keepName = async (name: string): Promise<string | undefined> => {
     if (renaming !== undefined) {
-      const refusal = await rename(renaming.id, name);
-      if (refusal === undefined) {
+      const kept = await rename(renaming.id, name);
+      if (!kept.ok) return kept.refusal;
+      // A name kept as it is changes nothing, so nothing is said.
+      if (kept.renamed) {
         afterName.current = () => {
           showToast({ look: 'plate', message: collectionStrings.toasts.renamed });
         };
-        setNaming(undefined);
       }
-      return refusal;
+      setNaming(undefined);
+      return undefined;
     }
     const created = await create(name);
     if (!created.ok) return created.refusal;

@@ -160,6 +160,30 @@ describe('the Search screen', () => {
     expect(screen.getByRole('header', { name: strings.keepTyping })).toBeOnTheScreen();
   });
 
+  it('says nothing over a longer query until its results come, not the shorter one’s «Продовжуй вводити»', async () => {
+    await renderSearch();
+    await type('с');
+    expect(screen.getByRole('header', { name: strings.keepTyping })).toBeOnTheScreen();
+    // The search of the longer query takes its time.
+    const search = composition.search.search.bind(composition.search);
+    let answer = (): void => undefined;
+    jest.spyOn(composition.search, 'search').mockImplementationOnce(
+      (query) =>
+        new Promise((resolve) => {
+          answer = () => {
+            resolve(search(query));
+          };
+        }),
+    );
+
+    await type('сум');
+    expect(screen.queryByTestId('search-label')).not.toBeOnTheScreen();
+
+    answer();
+    await settle();
+    expect(screen.getByRole('header', { name: strings.found })).toBeOnTheScreen();
+  });
+
   it('labels what the query finds «Знайдено»', async () => {
     await renderSearch();
 

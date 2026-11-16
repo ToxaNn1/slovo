@@ -127,5 +127,5 @@ function withoutCounters(
 }
 
 const styles = StyleSheet.create({
-  page: { gap: weeklyRecapPage.pageGap },
+  page: { flex: 1, gap: weeklyRecapPage.pageGap },
 });

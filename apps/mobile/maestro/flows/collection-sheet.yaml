@@ -71,7 +71,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # The new Collection has the card in it, already checked.
 - assertVisible:
     id: collection-row-.*
-    text: Poets, 1 запис
+    text: Poets, 1 слово
 - assertVisible:
     id: collection-new
 - takeScreenshot: collection-sheet-created
@@ -100,7 +100,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: saved-collections
 - assertVisible:
     id: collection-card-.*
-    text: Poets, 1 запис.*
+    text: Poets, 1 слово.*
 - takeScreenshot: collection-saved-overview
 # Back on the card, a checkbox applies at once: unfiled, and the card counts it.
 - tapOn:
@@ -109,10 +109,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: collection-button
 - tapOn:
     id: collection-row-.*
-    text: Poets, 1 запис
+    text: Poets, 1 слово
 - assertVisible:
     id: collection-row-.*
-    text: Poets, 0 записів
+    text: Poets, 0 слів
 - tapOn:
     id: collection-done
 - tapOn:
@@ -121,7 +121,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: saved-collections
 - assertVisible:
     id: collection-card-.*
-    text: Poets, 0 записів.*
+    text: Poets, 0 слів.*
 - tapOn:
     id: tab-home
 - assertVisible:

@@ -138,6 +138,60 @@ describe('«Перегляд»: the records not checked yet', () => {
     expect((await next(backend)).record?.id).toBe(record.id);
   });
 
+  it('checks every unchecked record of a kind at its record version, each with an Action log row', async () => {
+    const backend = await reviewBackend();
+    const idioms = () => backend.admin.unchecked({ editionId: 'uk', kind: 'idiom' });
+    const first = (await idioms()).record ?? never();
+    await backend.admin.check({
+      editionId: 'uk',
+      kind: 'idiom',
+      id: first.id,
+      recordVersion: first.recordVersion,
+    });
+    const { total } = await idioms();
+    const words = await next(backend);
+
+    const done = await backend.admin.checkAll({
+      editionId: 'uk',
+      kind: 'idiom',
+      total,
+      reason: 'Схвалено все',
+    });
+
+    expect(done).toEqual({ checked: total });
+    expect(await idioms()).toEqual({ total: 0 });
+    expect(await next(backend)).toEqual(words);
+    const actions = (await backend.store.actions('uk')).filter(
+      (row) => row.what === 'content.idiom.check',
+    );
+    expect(actions).toHaveLength(total + 1);
+    expect(new Set(actions.map((row) => JSON.stringify(row.after))).size).toBe(total + 1);
+    const all = actions.filter((row) => row.reason === 'Схвалено все');
+    expect(all).toHaveLength(total);
+    expect(all.map((row) => row.who)).toEqual(
+      all.map(() => ({ kind: 'admin-user', email: backend.email })),
+    );
+    expect(all.map((row) => row.after)).not.toContainEqual(
+      expect.objectContaining({ id: first.id }),
+    );
+  });
+
+  it('refuses checking all when the count changed since the confirmation, and an Агент', async () => {
+    const backend = await reviewBackend();
+    const { total } = await next(backend);
+
+    await expect(
+      backend.admin.checkAll({ editionId: 'uk', kind: 'word', total: total + 1, reason: 'Так' }),
+    ).rejects.toMatchObject({ code: 'CHANGED', data: { total } });
+    await expect(
+      backend.agent.checkAll({ editionId: 'uk', kind: 'word', total, reason: 'Так' }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect((await next(backend)).total).toBe(total);
+    expect(
+      (await backend.store.actions('uk')).filter((row) => row.what === 'content.word.check'),
+    ).toEqual([]);
+  });
+
   it('leaves a retired record out', async () => {
     const backend = await reviewBackend();
     const before = await next(backend);

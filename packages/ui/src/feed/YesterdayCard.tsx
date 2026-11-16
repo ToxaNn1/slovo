@@ -121,7 +121,7 @@ export function YesterdayCard({
         >
           {capitalised(word.lemma, voice.accessibilityLanguage)}
         </Text>
-        <View style={styles.options}>
+        <View testID="yesterday-options" style={styles.options}>
           {quiz.meanings.map((meaning, place) => (
             <QuizOption
               key={String(place)}
@@ -154,7 +154,8 @@ export function YesterdayCard({
 }
 
 const styles = StyleSheet.create({
-  fill: { flexGrow: 1 },
+  fill: { flex: 1 },
+  // A clear gap from the bottom of an option's edge to the next option (owner, 16.11).
   options: { gap: yesterdayCard.optionGap },
   verdict: { minHeight: yesterdayCard.verdictHeight },
 });
