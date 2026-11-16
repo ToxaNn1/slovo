@@ -150,6 +150,24 @@ export const toastRadius = 6;
  */
 export const plateToast = { rise: 30, radius: 16, lasts: 3200 } as const;
 
+/**
+ * The offline plate (board XSettings m6): the Theme's ink plate under the
+ * status bar, `below` points under the top inset, `side` from each edge, with
+ * `radius` corners and its left edge leaning in by `lean` of its width at the bottom;
+ * the no-signal mark of `mark` size and the gap after it, its padding; it
+ * drops in from above and hides after `lasts` milliseconds.
+ */
+export const offlinePlate = {
+  below: 6,
+  side: 14,
+  radius: 14,
+  lean: '3%',
+  mark: { width: 20, height: 16 },
+  gap: 12,
+  padding: { across: 16, down: 15 },
+  lasts: 3200,
+} as const;
+
 /** `elev.toast`: `0 10 30 rgba(0, 0, 0, .4)`. */
 export const toastElevation = {
   shadowColor,

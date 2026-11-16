@@ -173,7 +173,8 @@
     "dataExport": "on",
     "readerName": "on",
     "widgetPreviews": "on",
-    "textSizeSteps": "on"
+    "textSizeSteps": "on",
+    "offlinePlate": "on"
   },
   "userSettingDefaults": {
     "theme": "system",

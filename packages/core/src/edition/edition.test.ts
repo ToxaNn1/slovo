@@ -179,6 +179,7 @@ const validConfig = {
     readerName: 'on',
     widgetPreviews: 'on',
     textSizeSteps: 'on',
+    offlinePlate: 'on',
   },
   userSettingDefaults: {
     theme: 'system',
@@ -452,6 +453,7 @@ describe('loadEdition', () => {
     'badgeFamiliesOverview',
     'widgetPreviews',
     'textSizeSteps',
+    'offlinePlate',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
     const off = loadEdition({

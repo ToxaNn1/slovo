@@ -89,7 +89,7 @@ function AccountContent({
 }) {
   const account = useOpened(opening);
   const state = useAccountState(account);
-  const problem = useAccountProblemLine(state);
+  const problem = useAccountProblemLine(state, signIn.edition.isFeatureEnabled('offlinePlate'));
   const { colors } = useTokens();
   return (
     <SafeAreaView

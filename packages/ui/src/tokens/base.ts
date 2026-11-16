@@ -487,9 +487,9 @@ export const typeRoles = {
   /** A line of the stats sheet's Known and due counts. */
   statsLine: role('ui', '400', 16, 22),
   /** The title of the Feed's error state. */
-  errorTitle: role('word', '500', 28, 34),
+  errorTitle: role('word', '900', 26, 28.6),
   /** What went wrong, under the title of the Feed's error state. */
-  errorText: role('ui', '400', 15, 24),
+  errorText: role('ui', '400', 16, 23.2),
   /** A Tip's title, from 36 on `titleScale` (ADR 0157; board XEntry2 e9: line 1.1). */
   tipTitle: role('word', '900', 36, 39.6, -0.6),
   /** A Tip's rule on its card's «Правило» tab (board XEntry2 e9). */
@@ -1130,6 +1130,8 @@ export const motion = {
   toast: { duration: 350, easing: [0.2, 0.9, 0.3, 1.1] },
   /** The design's `slToast` of board 09 (XSaved): the plate toast rises in 400 ms. */
   plateToast: { duration: 400, easing: [0.2, 0.9, 0.3, 1] },
+  /** The design's `slToastD` (XSettings m6): the offline plate drops in from above in 400 ms. */
+  offlinePlate: { duration: 400, easing: [0.2, 0.9, 0.3, 1.1] },
   /**
    * A Badge's stamp (XBadges «Штамп»), once, after a short wait: the hit,
    * about 0.7 s, then the rest, about 1.1 s. The frames carry their own

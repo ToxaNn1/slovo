@@ -9310,6 +9310,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "offlinePlate": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -9475,7 +9483,8 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps"
+                        "textSizeSteps",
+                        "offlinePlate"
                       ]
                     },
                     "rules": {
@@ -11356,6 +11365,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "offlinePlate": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -11521,7 +11538,8 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps"
+                        "textSizeSteps",
+                        "offlinePlate"
                       ]
                     },
                     "rules": {
@@ -13333,6 +13351,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "offlinePlate": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -13498,7 +13524,8 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps"
+                        "textSizeSteps",
+                        "offlinePlate"
                       ]
                     },
                     "rules": {

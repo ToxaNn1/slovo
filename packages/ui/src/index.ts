@@ -6,7 +6,10 @@ export { ActionRow } from './primitives/ActionRow';
 export { DeleteAccountButton } from './account/DeleteAccountButton';
 export { ResendButton } from './account/ResendButton';
 export { BackLink } from './primitives/BackLink';
-export { FeedError, FeedLoading } from './feed/FeedStates';
+export { FeedError } from './feed/FeedStates';
+export { FeedLoading } from './feed/FeedLoading';
+export { TornThread } from './feed/TornThread';
+export { OfflinePlateProvider, useOfflinePlate } from './primitives/OfflinePlate';
 export { GesturesHintSheet } from './feed/GesturesHintSheet';
 export { SwipeDemoStage, useGesturesDemo } from './entries/swipe-demo';
 export { AboutPanel } from './settings/AboutPanel';
@@ -193,6 +196,7 @@ export {
   dashboard,
   designTokens,
   feedHeader,
+  feedLoading,
   disabledOpacity,
   minTouchTarget,
   mascotWidth,

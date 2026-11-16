@@ -13,7 +13,7 @@ import {
   type FakeBackend,
   seedUserState,
 } from '@slovo/core/testing';
-import { EditionProvider, systemSchedule } from '@slovo/ui';
+import { EditionProvider, OfflinePlateProvider, systemSchedule } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { Share } from 'react-native';
@@ -31,6 +31,9 @@ let composition: Composition;
 
 /** Whether a test turned `collectionLinks` off, as a remote switch does. */
 let collectionLinksOff: boolean;
+
+/** Whether a test turned the offline plate off, as a remote switch does. */
+let offlinePlateOff: boolean;
 
 /** The backend of Collection Links, online unless a test takes it off. */
 let api: FakeBackend;
@@ -78,6 +81,7 @@ beforeEach(async () => {
     .mockResolvedValue({ action: Share.sharedAction, activityType: undefined });
   api = createFakeBackend({ domain: 'slovo.example' });
   collectionLinksOff = false;
+  offlinePlateOff = false;
   const loaded = loadEdition(config);
   /** The Edition as the app runs it, `collectionLinks` on unless a test turns it off. */
   const inEffect: Edition = {
@@ -131,7 +135,12 @@ async function openMenuOf(collectionId: string) {
     isFeatureEnabled: (feature) =>
       feature !== 'collectionBoardStyle' &&
       !(feature === 'collectionLinks' && collectionLinksOff) &&
+      !(feature === 'offlinePlate' && offlinePlateOff) &&
       edition.isFeatureEnabled(feature),
+    featureSwitches: {
+      ...edition.featureSwitches,
+      offlinePlate: offlinePlateOff ? 'off' : 'on',
+    },
   };
   await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
@@ -139,7 +148,9 @@ async function openMenuOf(collectionId: string) {
         shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(cards) })}
       >
         <EditionProvider edition={edition} strings={editionStrings}>
-          <CollectionsScreen />
+          <OfflinePlateProvider message={editionStrings.offlinePlate}>
+            <CollectionsScreen />
+          </OfflinePlateProvider>
         </EditionProvider>
       </ShellProvider>
     </SafeAreaProvider>,
@@ -190,14 +201,28 @@ describe('«Поділитися посиланням» in the menu a long press
     expect(share).not.toHaveBeenCalled();
   });
 
-  it('says «Немає з’єднання. Спробуй пізніше.» offline and shares nothing', async () => {
+  it('says «Немає з’єднання. Спробуй пізніше.» on the offline plate offline and shares nothing', async () => {
     const autumn = await collection('Осінь', ['w_kvasha']);
     api.online = false;
     await openMenuOf(autumn);
 
-    expect(await toast()).toHaveTextContent('Немає з’єднання. Спробуй пізніше.');
+    await fireEvent.press(screen.getByTestId('collections-menu-share'));
+    const plate = await screen.findByTestId('offline-plate', {}, { timeout: 10_000 });
+
+    expect(plate).toHaveTextContent('Немає з’єднання. Спробуй пізніше.');
+    expect(screen.queryByTestId('undo-toast')).not.toBeOnTheScreen();
     expect(api.collectionLinks.made).toEqual([]);
     expect(share).not.toHaveBeenCalled();
+  });
+
+  it('says it offline in a toast while the offline plate is switched off', async () => {
+    const autumn = await collection('Осінь', ['w_kvasha']);
+    api.online = false;
+    offlinePlateOff = true;
+    await openMenuOf(autumn);
+
+    expect(await toast()).toHaveTextContent('Немає з’єднання. Спробуй пізніше.');
+    expect(screen.queryByTestId('offline-plate')).not.toBeOnTheScreen();
   });
 
   it('says it failed when the backend makes no link', async () => {

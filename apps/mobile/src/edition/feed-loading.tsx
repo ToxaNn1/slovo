@@ -1,5 +1,4 @@
-import { FeedLoading, space, useTokens } from '@slovo/ui';
-import type { ReactNode } from 'react';
+import { FeedLoading, feedLoading, useTokens } from '@slovo/ui';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,18 +19,14 @@ export const LOGO_ROW = 54;
 
 const { feed: feedStrings } = editionStrings;
 
-/** The Feed's loading state on its own screen: the `mascot` over the red wedges. */
-export function FeedLoadingScreen({ mascot }: { mascot?: ReactNode }) {
+/** The Feed's loading state on its own screen (board XSettings m5): the card placeholder under the status bar. */
+export function FeedLoadingScreen() {
   const { colors } = useTokens();
   const { top } = useSafeAreaInsets();
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <View style={[styles.content, { paddingTop: top + TOP_ROW }]}>
-        <FeedLoading
-          text={feedStrings.loading}
-          accessibilityLabel={feedStrings.loadingLabel}
-          mascot={mascot}
-        />
+      <View style={[styles.content, { paddingTop: top + feedLoading.top }]}>
+        <FeedLoading accessibilityLabel={feedStrings.loadingLabel} />
       </View>
     </View>
   );
@@ -39,5 +34,5 @@ export function FeedLoadingScreen({ mascot }: { mascot?: ReactNode }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[6], paddingBottom: space[6] },
+  content: { paddingHorizontal: feedLoading.side },
 });

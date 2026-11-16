@@ -10,6 +10,7 @@ import {
   FontSizeProvider,
   type TextSizeStep,
   HapticsProvider,
+  OfflinePlateProvider,
   ReduceMotionProvider,
   RouteProvider,
   TokensProvider,
@@ -115,31 +116,34 @@ function ThemedTabs() {
                 <TextSizeInEffect>
                   <ReduceMotionInEffect>
                     <RouteInEffect>
-                      <InterfaceSoundsInEffect engine={soundEngine}>
-                        <DecorInEffect clock={deviceClock}>
-                          <NotificationTaps
-                            onOpened={(kind) => {
-                              // The event never fails; a composition that fails to open is reported where it opens.
-                              composition.opened().then(
-                                (open) => open.analytics.notificationOpened(kind),
-                                () => undefined,
-                              );
-                            }}
-                          />
-                          <EditionTabs
-                            screenOptions={{
-                              headerShown: false,
-                              tabBarStyle: {
-                                backgroundColor: colors.tabBar,
-                                borderTopColor: colors.line,
-                              },
-                            }}
-                          />
-                          {/* Over the tabs until the reader finishes or skips it. */}
-                          <MascotCelebrations />
-                          <Onboarding />
-                        </DecorInEffect>
-                      </InterfaceSoundsInEffect>
+                      {/* «Немає з’єднання» over every screen, under the status bar (ADR 0158). */}
+                      <OfflinePlateProvider message={editionStrings.offlinePlate}>
+                        <InterfaceSoundsInEffect engine={soundEngine}>
+                          <DecorInEffect clock={deviceClock}>
+                            <NotificationTaps
+                              onOpened={(kind) => {
+                                // The event never fails; a composition that fails to open is reported where it opens.
+                                composition.opened().then(
+                                  (open) => open.analytics.notificationOpened(kind),
+                                  () => undefined,
+                                );
+                              }}
+                            />
+                            <EditionTabs
+                              screenOptions={{
+                                headerShown: false,
+                                tabBarStyle: {
+                                  backgroundColor: colors.tabBar,
+                                  borderTopColor: colors.line,
+                                },
+                              }}
+                            />
+                            {/* Over the tabs until the reader finishes or skips it. */}
+                            <MascotCelebrations />
+                            <Onboarding />
+                          </DecorInEffect>
+                        </InterfaceSoundsInEffect>
+                      </OfflinePlateProvider>
                     </RouteInEffect>
                   </ReduceMotionInEffect>
                 </TextSizeInEffect>
