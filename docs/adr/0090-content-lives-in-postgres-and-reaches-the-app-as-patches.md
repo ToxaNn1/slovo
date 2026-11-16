@@ -4,6 +4,8 @@
 
 **Amended by ADR 0149.** The site is built daily from the content snapshot instead of rendering on a server, and picks its own Слово дня.
 
+**Amended by ADR 0155.** The Content queue reviews or rolls back the batches ticked at once, at one confirmation.
+
 Content was files: `editions/<edition>/content/**` (2556 files of seven kinds), checked by `pnpm content check` and `verify` in CI (ADR 0080, 0084), built into a SQLite Language Pack whose version followed the content checksum (ADR 0011), published whole by a local `pnpm publish-pack` (ADR 0032) and opened by the app at its next launch, since a pack never changes while open (ADR 0015, 0036). Every fix was a pull request, a coordinator recording ids and a version, a 2 MB download and a relaunch. The owner wants to fix a Definition in the browser and see it in the app in minutes, let coding agents add Words through the same backend, review them afterwards and roll a bad batch back in one click, and give the site the same content without a build (admin grill 08.11, rounds 1–14, spec #1708). This ADR supersedes ADR 0032 and the whole-pack parts of ADR 0011 (manifest, checksum, `--record`); amends ADR 0015 and 0036; changes the content route of ADR 0080 and 0084.
 
 **The Deployment's Postgres is the source of content; every save publishes on its own; the app keeps its bundled Language Pack as the offline base and applies Patches of changed records as they arrive.**

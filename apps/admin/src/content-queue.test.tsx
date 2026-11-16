@@ -168,3 +168,78 @@ test('a queue that fails to load says so', async () => {
 
   expect(await screen.findByText('Не вдалося завантажити чергу.')).toBeDefined();
 });
+
+/** Three open batches, oldest first, as the queue lists them. */
+const THREE = ['a', 'b', 'c'].map((letter, index) => ({
+  ...BATCH,
+  id: `00000000-0000-4000-8000-00000000000${String(index + 1)}`,
+  author: `wave-${letter}`,
+  createdAt: `2026-11-1${String(index + 1)}T08:00:00.000Z`,
+}));
+
+function threeBatches() {
+  server.use(
+    http.get('*/admin/content-queue/batches', () => HttpResponse.json({ batches: THREE })),
+  );
+}
+
+test('«Вибрати всі» selects every batch and marks them all reviewed at one confirmation', async () => {
+  threeBatches();
+  const received = writes();
+  const user = userEvent.setup();
+  render(<Admin />);
+  const batches = within(await screen.findByRole('region', { name: 'Пачки Агентів' }));
+  const markAll = await batches.findByRole('button', { name: 'Позначити перевіреними (0)' });
+  expect(markAll).toHaveProperty('disabled', true);
+
+  await user.click(batches.getByRole('checkbox', { name: 'Вибрати всі' }));
+  await user.click(batches.getByRole('button', { name: 'Позначити перевіреними (3)' }));
+  await confirmWith('rewritten 16.11', 'Позначити перевіреними');
+
+  expect(await batches.findByText('Позначено перевіреними 3 пачки.')).toBeDefined();
+  expect(received).toEqual(
+    THREE.map((batch) => ({
+      path: `/v1/admin/content-queue/batches/${batch.id}/review`,
+      body: { reason: 'rewritten 16.11' },
+    })),
+  );
+});
+
+test('the batches ticked one by one roll back newest first and count what they skipped', async () => {
+  threeBatches();
+  const received = writes();
+  const user = userEvent.setup();
+  render(<Admin />);
+  const batches = within(await screen.findByRole('region', { name: 'Пачки Агентів' }));
+
+  await user.click(await batches.findByRole('checkbox', { name: /wave-a/ }));
+  await user.click(batches.getByRole('checkbox', { name: /wave-c/ }));
+  expect(batches.getByRole('checkbox', { name: 'Вибрати всі' })).toHaveProperty(
+    'indeterminate',
+    true,
+  );
+  await user.click(batches.getByRole('button', { name: 'Відкотити (2)' }));
+  await confirmWith('bad wave', 'Відкотити');
+
+  expect((await batches.findByText(/Відкочено 2 пачки/)).textContent).toBe(
+    'Відкочено 2 пачки. 2 записи пропущено',
+  );
+  expect(received.map((write) => write.path)).toEqual([
+    `/v1/admin/content-queue/batches/${THREE[2]?.id ?? ''}/rollback`,
+    `/v1/admin/content-queue/batches/${THREE[0]?.id ?? ''}/rollback`,
+  ]);
+});
+
+test('a second click on «Вибрати всі» clears the selection', async () => {
+  threeBatches();
+  const user = userEvent.setup();
+  render(<Admin />);
+  const batches = within(await screen.findByRole('region', { name: 'Пачки Агентів' }));
+  const all = await batches.findByRole('checkbox', { name: 'Вибрати всі' });
+
+  await user.click(all);
+  await user.click(all);
+
+  expect(batches.getByRole('button', { name: 'Відкотити (0)' })).toHaveProperty('disabled', true);
+  expect(batches.queryAllByRole('checkbox', { checked: true })).toHaveLength(0);
+});
