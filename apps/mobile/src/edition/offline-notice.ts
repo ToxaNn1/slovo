@@ -1,6 +1,6 @@
 import { useOfflinePlate } from '@slovo/ui';
 
-import { useEditionInEffect } from '../edition/remote-switches';
+import { useEditionInEffect } from './remote-switches';
 
 /**
  * Shows the offline plate «Немає з’єднання. Спробуй пізніше.» while the

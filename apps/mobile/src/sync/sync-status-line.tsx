@@ -8,7 +8,7 @@ import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
 import { useSubscribed, type Opening } from '../opening';
 import { useShell } from '../shell-value';
-import { useOfflineNotice } from '../shell/offline-notice';
+import { useOfflineNotice } from '../edition/offline-notice';
 import { useShown } from '../shown-in-effect';
 import { syncStatusLine } from './sync-status';
 

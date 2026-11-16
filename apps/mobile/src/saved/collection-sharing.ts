@@ -8,7 +8,7 @@ import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
-import { useOfflineNotice } from '../shell/offline-notice';
+import { useOfflineNotice } from '../edition/offline-notice';
 
 const strings = editionStrings.collections.link;
 
