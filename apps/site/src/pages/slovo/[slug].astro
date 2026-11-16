@@ -10,6 +10,7 @@ import { siteWords, wordPagePath } from '../../site-words';
 import {
   grammarLine,
   lemmaParts,
+  longestRun,
   metaDescription,
   rarityBars,
   similarWords,
@@ -88,7 +89,11 @@ const heading =
         <span aria-current="page">{word.lemma}</span>
       </nav>
       <div class="flex flex-col gap-[clamp(16px,2vw,24px)]">
-        <h1 class="m-0 origin-bottom-left py-2 font-word text-[clamp(52px,9vw,150px)] leading-[0.95] font-black tracking-[-0.05em] [overflow-wrap:anywhere] [transform:rotate(-3deg)_skewX(-6deg)]">
+        {/* Sized by the longest run so a long Lemma fits the red beside the coal wedge on one line; on a phone a run too long still breaks, with a hyphen. */}
+        <h1
+          style={`--run:${String(longestRun(word.lemma))}`}
+          class="m-0 max-w-[min(62vw,25vw_+_560px)] origin-bottom-left py-2 font-word text-[length:clamp(32px,min(max(52px,9vw),calc(min(62vw,25vw_+_560px)/(var(--run)*0.95))),150px)] leading-[0.95] font-black tracking-[-0.05em] hyphens-auto [overflow-wrap:break-word] [transform:rotate(-3deg)_skewX(-6deg)]"
+        >
           {lemmaParts(word).map((part) =>
             part.stressed ? <span class="text-paper">{part.text}</span> : part.text,
           )}
