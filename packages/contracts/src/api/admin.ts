@@ -575,6 +575,34 @@ const contentWriteContract = {
       }),
     )
     .output(z.object({ id: z.string(), recordVersion: z.number().int().positive() })),
+  checkAll: contentProcedure
+    .route({
+      method: 'POST',
+      path: '/admin/content/{editionId}/unchecked/{kind}/check',
+      summary:
+        'Mark every live record of a kind not checked yet checked at its record version, at one confirmation',
+      description:
+        'An Admin user only, with a reason; an Агент token is refused. Each record leaves the Action log row of a single check, with the reason; `total` is the count the confirmation named, and a different count now is refused (ADR 0152).',
+      tags: ['admin'],
+    })
+    .errors({
+      CHANGED: {
+        status: 409,
+        message: 'The records not checked changed since the count the confirmation named',
+        data: z.object({ total: z.number().int().nonnegative() }),
+      },
+    })
+    .input(
+      z.strictObject({
+        editionId: EditionIdSchema,
+        kind: ContentRecordKindSchema,
+        /** How many records the confirmation named. */
+        total: z.number().int().positive(),
+        /** Why, kept in each record's Action log row. */
+        reason: ReasonSchema,
+      }),
+    )
+    .output(z.object({ checked: z.number().int().nonnegative() })),
   report: contentProcedure
     .route({
       method: 'GET',

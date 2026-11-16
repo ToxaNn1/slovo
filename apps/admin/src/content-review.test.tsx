@@ -24,6 +24,7 @@ const word = (id: string, lemma: string, primaryDefinition: string) => ({
 function unchecked(...records: ReturnType<typeof word>[]) {
   const left = [...records];
   const checks: unknown[] = [];
+  const checkAlls: unknown[] = [];
   const retires: unknown[] = [];
   const edits: unknown[] = [];
   const take = (id: string | readonly string[] | undefined) => {
@@ -48,6 +49,11 @@ function unchecked(...records: ReturnType<typeof word>[]) {
       take(params['id']);
       return HttpResponse.json({ id: params['id'], recordVersion: 2 });
     }),
+    http.post('*/admin/content/:editionId/unchecked/:kind/check', async ({ request }) => {
+      checkAlls.push(await request.json());
+      const checked = left.splice(0).length;
+      return HttpResponse.json({ checked });
+    }),
     http.post(
       '*/admin/content/:editionId/records/:kind/:id/retire',
       async ({ request, params }) => {
@@ -61,7 +67,7 @@ function unchecked(...records: ReturnType<typeof word>[]) {
       return HttpResponse.json({ ...FIXTURES.content.edit, id: params['id'], recordVersion: 3 });
     }),
   );
-  return { checks, retires, edits };
+  return { checks, checkAlls, retires, edits };
 }
 
 const card = () => screen.findByRole('article', { name: 'Запис на перегляді' });
@@ -308,4 +314,48 @@ test('the card names the Category as the app does, by its display name', async (
   const shown = await card();
   expect(await within(shown).findByText('Старі ремесла')).toBeTruthy();
   expect(within(shown).queryByText('old-crafts')).toBeNull();
+});
+
+test('«Позначити перевіреними всі (N)» checks them all at one confirmation with a reason', async () => {
+  const { checkAlls } = unchecked(
+    word('w_a1', 'обруч', 'Зігнута кільцем смуга.'),
+    word('w_a2', 'жупан', 'Старовинний одяг.'),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await card();
+
+  await user.click(screen.getByRole('button', { name: 'Позначити перевіреними всі (2)' }));
+  const dialog = screen.getByRole('dialog');
+  const confirm = within(dialog).getByRole('button', { name: 'Позначити перевіреними (2)' });
+  expect(confirm).toHaveProperty('disabled', true);
+  await user.type(within(dialog).getByRole('textbox'), 'Схвалено переписане');
+  await user.click(confirm);
+
+  expect(await screen.findByText('Усе переглянуто')).toBeTruthy();
+  expect(checkAlls).toEqual([{ total: 2, reason: 'Схвалено переписане' }]);
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(screen.queryByRole('button', { name: /Позначити перевіреними всі/ })).toBeNull();
+});
+
+test('a changed count keeps the dialog open with the count now', async () => {
+  unchecked(word('w_a1', 'обруч', 'Зігнута кільцем смуга.'));
+  server.use(
+    http.post('*/admin/content/:editionId/unchecked/:kind/check', () =>
+      HttpResponse.json(
+        { defined: true, code: 'CHANGED', status: 409, message: 'changed', data: { total: 3 } },
+        { status: 409 },
+      ),
+    ),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await card();
+
+  await user.click(screen.getByRole('button', { name: 'Позначити перевіреними всі (1)' }));
+  const dialog = screen.getByRole('dialog');
+  await user.type(within(dialog).getByRole('textbox'), 'Так');
+  await user.click(within(dialog).getByRole('button', { name: 'Позначити перевіреними (1)' }));
+
+  expect((await within(dialog).findByRole('alert')).textContent).toContain('неперевірених тепер 3');
 });

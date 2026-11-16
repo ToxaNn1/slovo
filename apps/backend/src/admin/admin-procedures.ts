@@ -671,6 +671,15 @@ export function adminProcedures(
         if (!checked.ok) throw refusalOf(checked, errors);
         return checked.checked;
       }),
+      checkAll: content.checkAll.handler(async ({ context, input, errors }) => {
+        const writer = await writerOf(context.headers, errors);
+        // Only a person checks a record; an Агент's eye is not a check (ADR 0143, 0152).
+        if (writer.kind !== 'admin-user') throw errors.FORBIDDEN();
+        const checked = await contentWrites.checkAll(writer.email, input);
+        if (checked.ok) return { checked: checked.checked };
+        if (checked.reason === 'changed') throw errors.CHANGED({ data: { total: checked.total } });
+        throw refusalOf(checked, errors);
+      }),
     },
     contentQueue: {
       batches: queue.batches.handler(async ({ context, input, errors }) => {

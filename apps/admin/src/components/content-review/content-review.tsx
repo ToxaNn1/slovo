@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 
 import { adminApi } from '../../api';
 import { cn } from '../../lib/utils';
-import { refusalText } from '../../session';
+import { codeOf, refusalData, refusalText } from '../../session';
+import { ConfirmDialog } from '../confirm-dialog';
 import { CONTENT_KINDS, categoryOptionsOf, type KindEditor } from '../content-editor/kinds';
 import { RecordForm } from '../content-editor/record-form';
 import { Button } from '../ui/button';
@@ -37,6 +38,8 @@ const RESTORE_REASON = 'Повернуто з перегляду';
  * «Далі» (key 4 or →) shows the next with no answer, the record left unchecked.
  * «Назад» (←) shows the records shown here again, newest first: one passed by
  * to answer now, a reviewed one to edit or to bring back into use.
+ * «Позначити перевіреними всі (N)» checks every unchecked one of the kind at
+ * one confirmation with a reason (ADR 0152).
  */
 export function ContentReview({ editionId }: { readonly editionId: string }) {
   const queryClient = useQueryClient();
@@ -48,6 +51,7 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
   const [history, setHistory] = useState<readonly Step[]>([]);
   /** The place in `history` shown again, or none while the queue is shown. */
   const [back, setBack] = useState<number>();
+  const [checkingAll, setCheckingAll] = useState(false);
   const kind = editor.kind;
   /** The records of the queue passed by with «Далі»: they lead it, so the one shown comes after them. */
   const skipped = history.filter((each) => each.outcome === 'skipped').length;
@@ -193,6 +197,42 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
           </button>
         ))}
       </div>
+
+      {total > 0 && (
+        <Button
+          type="button"
+          variant="secondary"
+          className="self-start"
+          disabled={busy || mode !== 'keys'}
+          onClick={() => {
+            setCheckingAll(true);
+          }}
+        >
+          Позначити перевіреними всі ({String(total)})
+        </Button>
+      )}
+
+      {checkingAll && (
+        <ConfirmDialog
+          title={`Позначити перевіреними всі неперевірені записи «${editor.name}»: ${String(total)}?`}
+          confirmLabel={`Позначити перевіреними (${String(total)})`}
+          onConfirm={async (typed) => {
+            await adminApi.content.checkAll({ editionId, kind, total, reason: typed });
+            setHistory([]);
+            setBack(undefined);
+            await queryClient.invalidateQueries({ queryKey: ['content'] });
+          }}
+          onClose={() => {
+            setCheckingAll(false);
+          }}
+          refusalText={checkAllRefusal}
+        >
+          <p>
+            Кожен запис стане перевіреним на своїй теперішній версії, сам запис не зміниться. Журнал
+            дій збереже рядок на кожен запис.
+          </p>
+        </ConfirmDialog>
+      )}
 
       {step === undefined && unchecked.data !== undefined && record === undefined && (
         <p className="rounded-2xl bg-surface p-12 text-center font-display text-lg font-medium shadow-panel">
@@ -371,6 +411,15 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
       )}
     </div>
   );
+}
+
+/** A refused «Позначити перевіреними всі»: the count changed since the dialog named it. */
+function checkAllRefusal(error: unknown): string {
+  if (codeOf(error) !== 'CHANGED') return refusalText(error);
+  const data = refusalData(error);
+  const total =
+    typeof data === 'object' && data !== null && 'total' in data ? String(data.total) : '?';
+  return `Записи змінилися, неперевірених тепер ${total}. Скасуйте й натисніть кнопку знову.`;
 }
 
 /** What became of a record reviewed here, as it stands now. */
