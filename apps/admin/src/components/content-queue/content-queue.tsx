@@ -1,4 +1,5 @@
 import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
 import { adminApi } from '../../api';
@@ -104,10 +105,109 @@ export function ContentQueue() {
   );
 }
 
+/** What one action over the ticked batches did. */
+type BulkDone =
+  | { readonly action: 'review'; readonly count: number }
+  | { readonly action: 'rollback'; readonly count: number; readonly skipped: number };
+
+/**
+ * One action over many batches: each batch is written in turn with the one
+ * reason, a rollback newest first so a later batch never shadows an earlier
+ * one. The queue reloads however it ends.
+ */
+function useBulkWrite() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      action,
+      batches,
+      reason,
+    }: {
+      action: BulkDone['action'];
+      batches: readonly Batch[];
+      reason: string;
+    }): Promise<BulkDone> => {
+      if (action === 'review') {
+        for (const batch of batches) {
+          await adminApi.contentQueue.review({ batchId: batch.id, reason });
+        }
+        return { action, count: batches.length };
+      }
+      let skipped = 0;
+      for (const batch of batches.toReversed()) {
+        const output = await adminApi.contentQueue.rollback({ batchId: batch.id, reason });
+        skipped += output.skipped.length;
+      }
+      return { action, count: batches.length, skipped };
+    },
+    onSettled: () => queryClient.invalidateQueries(),
+  });
+}
+
+const BATCHES_OF: Readonly<Partial<Record<Intl.LDMLPluralRule, string>>> = {
+  one: 'пачку',
+  few: 'пачки',
+};
+
+/** «1 пачку», «2 пачки», «5 пачок». */
+const batchesOf = (count: number) =>
+  `${String(count)} ${BATCHES_OF[RECORDS.select(count)] ?? 'пачок'}`;
+
+function BulkNotice({ done }: { done: BulkDone }) {
+  if (done.action === 'review') {
+    return <>Позначено перевіреними {batchesOf(done.count)}.</>;
+  }
+  return (
+    <>
+      Відкочено {batchesOf(done.count)}.{' '}
+      {done.skipped === 0 ? null : <span>{records(done.skipped)} пропущено</span>}
+    </>
+  );
+}
+
+/** «Вибрати всі»: ticked when every batch is, half-ticked when some are. */
+function SelectAll({
+  selected,
+  total,
+  onChange,
+}: {
+  selected: number;
+  total: number;
+  onChange: () => void;
+}) {
+  return (
+    <input
+      type="checkbox"
+      aria-label="Вибрати всі"
+      className="size-4 accent-primary"
+      checked={total > 0 && selected === total}
+      disabled={total === 0}
+      ref={(box) => {
+        if (box !== null) box.indeterminate = selected > 0 && selected < total;
+      }}
+      onChange={onChange}
+    />
+  );
+}
+
 function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Confirm }) {
   const review = useAdminWrite(adminApi.contentQueue.review);
   const rollback = useAdminWrite(adminApi.contentQueue.rollback);
+  const bulk = useBulkWrite();
+  const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
+  const chosen = batches.filter((batch) => ticked.has(batch.id));
   const skipped = rollback.data?.skipped.length ?? 0;
+  const tick = (id: string) => {
+    setTicked((current) => {
+      const next = new Set(current);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  };
+  const runBulk = (action: BulkDone['action']) => async (reason: string) => {
+    await bulk.mutateAsync({ action, batches: chosen, reason });
+    setTicked(new Set());
+  };
   return (
     <Block title="Пачки Агентів">
       {rollback.isSuccess ? (
@@ -115,24 +215,81 @@ function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Con
           Пачку відкочено. {skipped === 0 ? null : <span>{records(skipped)} пропущено</span>}
         </p>
       ) : null}
+      {bulk.isSuccess ? (
+        <p role="status" className={noticeClass}>
+          <BulkNotice done={bulk.data} />
+        </p>
+      ) : null}
       {review.isError || rollback.isError ? (
         <p role="alert" className={cn(noticeClass, 'text-destructive')}>
           Не вдалося. Спробуйте ще раз.
         </p>
       ) : null}
+      <div className={cn(itemClass, 'bg-sunk/50')}>
+        <label className="flex grow items-center gap-2 text-[12.5px] text-subtle">
+          <SelectAll
+            selected={chosen.length}
+            total={batches.length}
+            onChange={() => {
+              setTicked(
+                chosen.length === batches.length
+                  ? new Set()
+                  : new Set(batches.map((batch) => batch.id)),
+              );
+            }}
+          />
+          Вибрано {chosen.length} з {batches.length}
+        </label>
+        <Button
+          size="sm"
+          disabled={chosen.length === 0}
+          onClick={() => {
+            confirm({
+              title: `Позначити перевіреними ${batchesOf(chosen.length)}?`,
+              confirm: 'Позначити перевіреними',
+              run: runBulk('review'),
+            });
+          }}
+        >
+          Позначити перевіреними ({chosen.length})
+        </Button>
+        <Button
+          size="sm"
+          variant="danger"
+          disabled={chosen.length === 0}
+          onClick={() => {
+            confirm({
+              title: `Відкотити ${batchesOf(chosen.length)}? Записи, змінені після пачки, буде пропущено.`,
+              confirm: 'Відкотити',
+              danger: true,
+              run: runBulk('rollback'),
+            });
+          }}
+        >
+          Відкотити ({chosen.length})
+        </Button>
+      </div>
       <ul aria-label="Пачки">
         {batches.map((batch) => (
           <li key={batch.id} className={itemClass}>
-            <span className="flex grow flex-wrap items-center gap-2 text-[12.5px] text-subtle">
+            <label className="flex grow flex-wrap items-center gap-2 text-[12.5px] text-subtle">
+              <input
+                type="checkbox"
+                aria-label={`Вибрати пачку ${batch.author} ${formatMoment(batch.createdAt)}`}
+                className="size-4 accent-primary"
+                checked={ticked.has(batch.id)}
+                onChange={() => {
+                  tick(batch.id);
+                }}
+              />
               <AgentTag author={batch.author} />
               <span>{formatMoment(batch.createdAt)}</span>
               <span>
                 +{batch.added} нових · {batch.changed} змінено
               </span>
-            </span>
+            </label>
             <Button
               size="sm"
-
               onClick={() => {
                 confirm({
                   title: `Позначити пачку ${batch.author} перевіреною?`,
