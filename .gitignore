@@ -29,6 +29,9 @@ apps/mobile/ios/
 # Agent settings of one machine (hooks, permissions); the shared ones are committed
 .claude/settings.local.json
 
+# Agent worktrees of one machine, full checkouts that lint and Prettier must skip
+.claude/worktrees/
+
 # The private code-signing key of OTA updates lives in EAS only (ADR 0062).
 private-key.pem
 
