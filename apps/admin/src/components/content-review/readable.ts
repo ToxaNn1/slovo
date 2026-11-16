@@ -1,4 +1,4 @@
-import type { EditorField, FieldControl } from '../content-editor/kinds';
+import type { CategoryOptions, EditorField, FieldControl } from '../content-editor/kinds';
 
 /**
  * A field's value as plain text to read on the review card: a list one item
@@ -25,22 +25,28 @@ const STRESS_MARK = '́';
 
 /**
  * A field's value as the owner reads it on the review card: a choice by its
- * label, stressed vowels marked in the word they stress, an object's
- * sub-fields by their labels; none for an empty value.
+ * label, a Category by the name the app shows, stressed vowels marked in the
+ * word they stress, an object's sub-fields by their labels; none for an empty value.
  */
 export function readableField(
   field: EditorField,
   fields: Readonly<Record<string, unknown>>,
+  categories: CategoryOptions,
 ): string | undefined {
-  return readableAs(field.control, fields[field.name], fields);
+  return readableAs(field.control, fields[field.name], fields, categories);
 }
 
 function readableAs(
   control: FieldControl,
   value: unknown,
   siblings: Readonly<Record<string, unknown>>,
+  categories: CategoryOptions,
 ): string | undefined {
   switch (control.type) {
+    case 'category':
+      return (
+        categories[control.of].find((option) => option.value === value)?.label ?? readable(value)
+      );
     case 'choice':
     case 'chips': {
       const label = (each: unknown) =>
@@ -58,7 +64,7 @@ function readableAs(
     case 'list':
       return Array.isArray(value)
         ? joined(
-            value.map((item) => readableAs(control.item, item, siblings)),
+            value.map((item) => readableAs(control.item, item, siblings, categories)),
             '\n',
           )
         : undefined;
@@ -66,7 +72,7 @@ function readableAs(
       if (!isRecord(value)) return undefined;
       return joined(
         control.fields.map((sub) => {
-          const text = readableField(sub, value);
+          const text = readableField(sub, value, categories);
           return text === undefined ? undefined : `${sub.label}: ${text}`;
         }),
         ' · ',

@@ -31,9 +31,18 @@ function unchecked(...records: ReturnType<typeof word>[]) {
     if (at >= 0) left.splice(at, 1);
   };
   server.use(
-    http.get('*/admin/content/:editionId/unchecked/:kind', () =>
-      HttpResponse.json({ total: left.length, ...(left[0] ? { record: left[0] } : {}) }),
-    ),
+    http.get('*/admin/content/:editionId/unchecked/:kind', ({ request }) => {
+      const next = left[Number(new URL(request.url).searchParams.get('skip') ?? 0)];
+      return HttpResponse.json({ total: left.length, ...(next ? { record: next } : {}) });
+    }),
+    http.get('*/admin/content/:editionId/records/:kind/:id', ({ params }) => {
+      const found = records.find((record) => record.id === params['id']);
+      return HttpResponse.json({
+        fields: found?.fields ?? {},
+        recordVersion: found?.recordVersion ?? 1,
+        retired: false,
+      });
+    }),
     http.post('*/admin/content/:editionId/records/:kind/:id/check', async ({ request, params }) => {
       checks.push(await request.json());
       take(params['id']);
@@ -236,4 +245,67 @@ test('a record retired here comes back into use from «Назад»', async () =
     ]);
   });
   expect(await screen.findByText('Уже переглянуто: повернуто в ужиток')).toBeTruthy();
+});
+
+test('«Далі» (key 4) moves on to the next card with no answer: nothing checked or retired, «2 з 2»', async () => {
+  const { checks, retires, edits } = unchecked(
+    word('w_a1', 'обруч', 'Зігнута кільцем смуга.'),
+    word('w_a2', 'жупан', 'Старовинний одяг.'),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await card();
+
+  await user.click(screen.getByRole('button', { name: /Далі/ }));
+  expect(await within(await card()).findByText('жупан')).toBeTruthy();
+  expect(screen.getByText('2 з 2')).toBeTruthy();
+  expect(screen.getByRole('button', { name: /Далі/ })).toHaveProperty('disabled', true);
+
+  await user.keyboard('{ArrowLeft}');
+  expect(await within(await card()).findByText('обруч')).toBeTruthy();
+  await user.keyboard('4');
+  expect(await within(await card()).findByText('жупан')).toBeTruthy();
+
+  expect([checks, retires, edits]).toEqual([[], [], []]);
+});
+
+test('a record passed by is answered later from «Назад» with «Так», then the queue goes on', async () => {
+  const { checks } = unchecked(
+    word('w_a1', 'обруч', 'Зігнута кільцем смуга.'),
+    word('w_a2', 'жупан', 'Старовинний одяг.'),
+    word('w_a3', 'кобза', 'Народний інструмент.'),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await card();
+  await user.keyboard('4');
+  expect(await within(await card()).findByText('жупан')).toBeTruthy();
+
+  await user.click(screen.getByRole('button', { name: '← Назад' }));
+  expect(await within(await card()).findByText('обруч')).toBeTruthy();
+  expect(screen.getByText('Не переглянуто')).toBeTruthy();
+  await user.click(screen.getByRole('button', { name: /Так/ }));
+
+  expect(await within(await card()).findByText('жупан')).toBeTruthy();
+  expect(checks).toEqual([{ recordVersion: 2 }]);
+  expect(screen.getByText('2 з 3')).toBeTruthy();
+});
+
+test('the card names the Category as the app does, by its display name', async () => {
+  unchecked(word('w_a1', 'обруч', 'Зігнута кільцем смуга.'));
+  server.use(
+    http.get('*/admin/editions/:editionId', () =>
+      HttpResponse.json({
+        ...FIXTURES.editionCard,
+        categories: [
+          { id: 'old-crafts', displayName: 'Старі ремесла', description: 'Ремесла.', tone: 'loud' },
+        ],
+      }),
+    ),
+  );
+  render(<Admin />);
+
+  const shown = await card();
+  expect(await within(shown).findByText('Старі ремесла')).toBeTruthy();
+  expect(within(shown).queryByText('old-crafts')).toBeNull();
 });

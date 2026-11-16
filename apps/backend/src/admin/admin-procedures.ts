@@ -658,7 +658,7 @@ export function adminProcedures(
       }),
       unchecked: content.unchecked.handler(async ({ context, input, errors }) => {
         await writerOf(context.headers, errors, { writes: false });
-        const found = await contentWrites.unchecked(input.editionId, input.kind);
+        const found = await contentWrites.unchecked(input.editionId, input.kind, input.skip);
         if (!found.ok) throw refusalOf(found, errors);
         const { ok: _ok, ...answer } = found;
         return answer;

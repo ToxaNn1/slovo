@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { adminApi } from '../../api';
 import { cn } from '../../lib/utils';
 import { refusalText } from '../../session';
-import { CONTENT_KINDS, type KindEditor } from '../content-editor/kinds';
+import { CONTENT_KINDS, categoryOptionsOf, type KindEditor } from '../content-editor/kinds';
 import { RecordForm } from '../content-editor/record-form';
 import { Button } from '../ui/button';
 import { readableField } from './readable';
@@ -18,8 +18,12 @@ interface Reviewed {
 /** What the card shows under it: the three keys, the retire reason, or the record form in its place. */
 type Mode = 'keys' | 'retire' | 'edit';
 
-/** A record already reviewed here, so «Назад» can show it again; a retired one by the batch that can bring it back. */
+/**
+ * A record shown here, so «Назад» can show it again: one passed by with «Далі»
+ * still waits for an answer; a retired one keeps the batch that can bring it back.
+ */
 type Step =
+  | { readonly id: string; readonly outcome: 'skipped' }
   | { readonly id: string; readonly outcome: 'checked' }
   | { readonly id: string; readonly outcome: 'retired'; readonly batchId: string };
 
@@ -30,13 +34,13 @@ const RESTORE_REASON = 'Повернуто з перегляду';
  * change, one at a time as a card to read (ADR 0143). «Так» (key 1) checks it,
  * «Ні» (key 2) retires it with an optional reason, «Редагувати» (key 3) opens
  * the record form, whose save checks it at its new version; each shows the next.
- * «Назад» (←) shows the records reviewed here again, newest first, to edit one
- * or bring a retired one back; «Далі» (→) returns towards the queue.
+ * «Далі» (key 4 or →) shows the next with no answer, the record left unchecked.
+ * «Назад» (←) shows the records shown here again, newest first: one passed by
+ * to answer now, a reviewed one to edit or to bring back into use.
  */
 export function ContentReview({ editionId }: { readonly editionId: string }) {
   const queryClient = useQueryClient();
   const [editor, setEditor] = useState<KindEditor>(CONTENT_KINDS[0] ?? never());
-  const [done, setDone] = useState(0);
   const [mode, setMode] = useState<Mode>('keys');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,10 +49,17 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
   /** The place in `history` shown again, or none while the queue is shown. */
   const [back, setBack] = useState<number>();
   const kind = editor.kind;
+  /** The records of the queue passed by with «Далі»: they lead it, so the one shown comes after them. */
+  const skipped = history.filter((each) => each.outcome === 'skipped').length;
   const unchecked = useQuery({
-    queryKey: ['content', 'unchecked', editionId, kind],
-    queryFn: () => adminApi.content.unchecked({ editionId, kind }),
+    queryKey: ['content', 'unchecked', editionId, kind, skipped],
+    queryFn: () => adminApi.content.unchecked({ editionId, kind, skip: skipped }),
   });
+  const card = useQuery({
+    queryKey: ['edition-card', editionId],
+    queryFn: () => adminApi.editionCard({ editionId }),
+  });
+  const categories = categoryOptionsOf(card.data);
   const step = back === undefined ? undefined : history[back];
   const earlier = useQuery({
     queryKey: ['content', 'record', editionId, kind, step?.id],
@@ -57,6 +68,10 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
   });
   const record: Reviewed | undefined =
     step === undefined ? unchecked.data?.record : earlier.data && { id: step.id, ...earlier.data };
+  /** Whether the record shown waits for «Так», «Ні» or «Редагувати». */
+  const unanswered = step === undefined || step.outcome === 'skipped';
+  const total = unchecked.data?.total ?? 0;
+  const lastInQueue = step === undefined && total - skipped <= 1;
 
   /** Runs one write, then shows the next record of the queue, or the reviewed one again. */
   const write = async (run: () => Promise<unknown>) => {
@@ -74,13 +89,17 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
       await queryClient.invalidateQueries({ queryKey: ['content'] });
     }
   };
-  /** Reviews the record of the queue and moves on to the next one. */
+  /** Answers the record shown, of the queue or passed by, and shows the queue's next one. */
   const act = (run: (shown: Reviewed) => Promise<Step>) =>
     write(async () => {
-      if (record === undefined || step !== undefined) return;
+      if (record === undefined || !unanswered) return;
       const reviewed = await run(record);
-      setHistory((steps) => [...steps, reviewed]);
-      setDone((count) => count + 1);
+      setHistory((steps) =>
+        back === undefined
+          ? [...steps, reviewed]
+          : steps.map((each, at) => (at === back ? reviewed : each)),
+      );
+      setBack(undefined);
     });
 
   const check = async (shown: Reviewed, recordVersion = shown.recordVersion): Promise<Step> => {
@@ -114,8 +133,10 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
     setError(undefined);
   };
   const goForward = () => {
-    if (back === undefined) return;
-    setBack(back + 1 < history.length ? back + 1 : undefined);
+    if (back === undefined) {
+      if (record === undefined || lastInQueue) return;
+      setHistory((steps) => [...steps, { id: record.id, outcome: 'skipped' }]);
+    } else setBack(back + 1 < history.length ? back + 1 : undefined);
     setMode('keys');
     setError(undefined);
   };
@@ -129,9 +150,9 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
         (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
       if (typing || mode !== 'keys' || event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key === 'ArrowLeft') goBack();
-      if (event.key === 'ArrowRight') goForward();
+      if (event.key === 'ArrowRight' || event.key === '4') goForward();
       if (event.key === '3') setMode('edit');
-      if (step !== undefined) return;
+      if (!unanswered) return;
       if (event.key === '1') void act((shown) => check(shown));
       if (event.key === '2') setMode('retire');
     };
@@ -141,7 +162,6 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
     };
   });
 
-  const total = unchecked.data?.total ?? 0;
   return (
     <div className="flex flex-col gap-5">
       <div
@@ -163,7 +183,6 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
             )}
             onClick={() => {
               setEditor(each);
-              setDone(0);
               setHistory([]);
               setBack(undefined);
               setMode('keys');
@@ -192,20 +211,20 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
             >
               ← Назад
             </Button>
-            {step !== undefined && (
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={mode !== 'keys'}
-                onClick={goForward}
-              >
-                Далі →
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={lastInQueue || mode !== 'keys'}
+              onClick={goForward}
+            >
+              Далі → <kbd className="text-[11px] opacity-70">4</kbd>
+            </Button>
             <p className="text-[13px] text-muted-foreground tabular-nums">
               {step === undefined
-                ? `${String(done + 1)} з ${String(done + total)}`
-                : `Уже переглянуто: ${pastOutcome(step, earlier.data?.retired === true)}`}
+                ? `${String(history.length + 1)} з ${String(history.length - skipped + total)}`
+                : step.outcome === 'skipped'
+                  ? 'Не переглянуто'
+                  : `Уже переглянуто: ${pastOutcome(step, earlier.data?.retired === true)}`}
             </p>
           </div>
           {mode !== 'edit' && (
@@ -215,7 +234,7 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
             >
               <dl className="grid grid-cols-[minmax(120px,max-content)_1fr] gap-x-5 gap-y-2.5 text-[14px]">
                 {editor.fields.map((field) => {
-                  const text = readableField(field, record.fields);
+                  const text = readableField(field, record.fields, categories);
                   if (text === undefined) return null;
                   return (
                     <div key={field.name} className="contents">
@@ -234,7 +253,7 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
             </p>
           )}
 
-          {mode === 'keys' && step !== undefined && (
+          {mode === 'keys' && !unanswered && (
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
@@ -254,7 +273,7 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
             </div>
           )}
 
-          {mode === 'keys' && step === undefined && (
+          {mode === 'keys' && unanswered && (
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
@@ -332,7 +351,7 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
                 fields={record.fields}
                 record={{ at: 'edit', id: record.id, recordVersion: record.recordVersion }}
                 onWritten={(written) => {
-                  if (step === undefined) void act((shown) => check(shown, written.recordVersion));
+                  if (unanswered) void act((shown) => check(shown, written.recordVersion));
                   else void write(() => check(record, written.recordVersion));
                 }}
               />
@@ -355,7 +374,7 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
 }
 
 /** What became of a record reviewed here, as it stands now. */
-function pastOutcome(step: Step, retired: boolean): string {
+function pastOutcome(step: Step & { outcome: 'checked' | 'retired' }, retired: boolean): string {
   if (retired) return 'виведено з ужитку';
   return step.outcome === 'retired' ? 'повернуто в ужиток' : 'перевірено';
 }

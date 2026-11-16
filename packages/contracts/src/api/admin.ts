@@ -535,12 +535,19 @@ const contentWriteContract = {
         'Records whose last change came in the newest batch come first. A record is checked at the record version an Admin user marked; any later write leaves it unchecked again (ADR 0143).',
       tags: ['admin'],
     })
-    .input(z.strictObject({ editionId: EditionIdSchema, kind: ContentRecordKindSchema }))
+    .input(
+      z.strictObject({
+        editionId: EditionIdSchema,
+        kind: ContentRecordKindSchema,
+        /** How many of them the reader passed by in «Перегляд» with no answer; the record after them comes. */
+        skip: z.coerce.number<number>().int().nonnegative().optional(),
+      }),
+    )
     .output(
       z.object({
         /** How many live records of the kind are not checked. */
         total: z.number().int().nonnegative(),
-        /** The first of them; none when every record is checked. */
+        /** The first of them after `skip`; none when every record is checked or skipped. */
         record: z
           .object({
             id: z.string(),
