@@ -18,9 +18,6 @@ export type CalendarDay = {
   | { readonly state: 'today'; readonly active: boolean }
 );
 
-/** The state of a day of the Active Days calendar. */
-export type CalendarDayState = CalendarDay['state'];
-
 /** A week of the Active Days calendar: its seven days, Monday first. */
 export type CalendarWeek = readonly CalendarDay[];
 
