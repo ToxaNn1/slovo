@@ -92,9 +92,9 @@ describe('the «Колекції» screen', () => {
       {
         id: empty,
         name: 'Порожня',
-        count: '0 записів',
+        count: '0 слів',
         empty: true,
-        accessibilityLabel: 'Порожня, 0 записів',
+        accessibilityLabel: 'Порожня, 0 слів',
         renameLabel: 'Перейменувати «Порожня»',
         deleteLabel: 'Видалити «Порожня»',
         moreLabel: 'Дії з колекцією «Порожня»',
@@ -102,9 +102,9 @@ describe('the «Колекції» screen', () => {
       {
         id: reading,
         name: 'Читання',
-        count: '2 записи',
+        count: '2 слова',
         empty: false,
-        accessibilityLabel: 'Читання, 2 записи: гармидер, веремія',
+        accessibilityLabel: 'Читання, 2 слова: гармидер, веремія',
         renameLabel: 'Перейменувати «Читання»',
         deleteLabel: 'Видалити «Читання»',
         moreLabel: 'Дії з колекцією «Читання»',
@@ -117,7 +117,7 @@ describe('the «Колекції» screen', () => {
     await create(app, 'Мистецтво', 'w_three');
 
     const [row] = rowsOf(app);
-    expect(row?.accessibilityLabel).toBe('Мистецтво, 1 запис: кракелюр');
+    expect(row?.accessibilityLabel).toBe('Мистецтво, 1 слово: кракелюр');
   });
 
   it('follows a rename', async () => {
@@ -128,6 +128,6 @@ describe('the «Колекції» screen', () => {
 
     expect(
       rowsOf(app).map(({ name, accessibilityLabel }) => ({ name, accessibilityLabel })),
-    ).toEqual([{ name: 'Улюблене', accessibilityLabel: 'Улюблене, 1 запис: веремія' }]);
+    ).toEqual([{ name: 'Улюблене', accessibilityLabel: 'Улюблене, 1 слово: веремія' }]);
   });
 });

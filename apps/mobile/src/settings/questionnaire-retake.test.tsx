@@ -6,11 +6,12 @@ import {
   type Composition,
   type Edition,
   type FeatureSwitch,
+  LATER_QUESTIONS,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
-import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -226,4 +227,40 @@ describe('The Feed Notice of a later question', () => {
 
     expect(composition.xpLog.state.dailyGoal?.goal).toBe(50);
   });
+
+  it('asks the self-rating on tiles as the Game’s options, and a tile pressed is picked and answers (owner, 16.11)', async () => {
+    await openWith(shippedEdition());
+    const answer = jest.spyOn(composition.questionnaire, 'answer');
+    await render('selfRating');
+    const { options } = composition.questionnaire;
+
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    for (const { id, label } of options.selfRating) {
+      expect(screen.getByRole('button', { name: label })).not.toBeSelected();
+      expect(screen.getByTestId(`later-question-selfRating-${id}-face`)).toBeTruthy();
+    }
+    expect(screen.getByRole('button', { name: feedNotices.laterQuestions.later })).toBeTruthy();
+
+    const [first] = options.selfRating;
+    if (first === undefined) throw new Error('The Edition has no self-rating answer');
+    await fireEvent.press(screen.getByRole('button', { name: first.label }));
+    await settle();
+
+    expect(screen.getByRole('button', { name: first.label })).toBeSelected();
+    expect(answer).toHaveBeenCalledWith('selfRating', first.id);
+  });
+
+  it.each(LATER_QUESTIONS)(
+    'fills its page as the Quick Question does, and %s scrolls inside its card (owner, 16.11)',
+    async (question) => {
+      await openWith(shippedEdition());
+      await render(question);
+
+      const card = screen.getByTestId(`feed-notice-${question}`);
+      expect(within(card).getByTestId(`feed-notice-${question}-scroll`).type).toBe('RCTScrollView');
+      expect(
+        within(card).getByRole('button', { name: feedNotices.laterQuestions.later }),
+      ).toBeTruthy();
+    },
+  );
 });

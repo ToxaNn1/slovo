@@ -1,4 +1,4 @@
-import type { DailyGoal } from '@slovo/contracts';
+import { pluralCount, type DailyGoal } from '@slovo/contracts';
 import { OptionSampleNumber, OptionScreen, useTokens } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
 import { StyleSheet } from 'react-native';
@@ -32,6 +32,7 @@ export default function DailyGoalScreen() {
   const setDailyGoal = useSetDailyGoal();
   if (!shown.dailyGoal || !edition.isFeatureEnabled('xpLog')) return <Redirect href="/settings" />;
   const goals = edition.dailyGoals.options;
+  const goalLabel = pluralCount(edition.locale);
   const selected = dailyGoal === null ? NO_DAILY_GOAL : String(dailyGoal.goal);
   return (
     <SafeAreaView
@@ -55,7 +56,7 @@ export default function DailyGoalScreen() {
         options={[
           ...goals.map((goal) => ({
             value: String(goal),
-            label: String(goal),
+            label: goalLabel(strings.goal, goal),
             testID: `daily-goal-${String(goal)}`,
           })),
           { value: NO_DAILY_GOAL, label: strings.none, testID: 'daily-goal-none' },

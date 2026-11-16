@@ -3,6 +3,7 @@ import { EditionProvider, ReduceMotionProvider, WeeklyRecapCard } from '@slovo/u
 import { describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
+import { iconButton, typeRoles } from '../tokens';
 
 const strings = testStrings({
   feedNotices: {
@@ -119,6 +120,14 @@ describe('the Weekly Recap card', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Share' }));
 
     expect(onShare).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets «Share» reach into the padding, so the title row is no taller than the title, as on board f5 (check 15.11)', async () => {
+    await renderCard({ recap, onShare: jest.fn() });
+
+    expect(screen.getByTestId('feed-notice-weeklyRecap-share').parent).toHaveStyle({
+      marginVertical: -(iconButton.side - typeRoles.noticeTitle.lineHeight) / 2,
+    });
   });
 
   it('has no «Share» without sharing, or while its numbers are not read', async () => {

@@ -1,7 +1,9 @@
 import { fill, ScreenEnter, TabBarButton, type IconName } from '@slovo/ui';
+import { tabBar } from '@slovo/ui/tokens';
 import { router, Tabs, useIsFocused, usePathname } from 'expo-router';
 import { getFocusedRouteNameFromRoute } from 'expo-router/react-navigation';
-import type { ComponentProps } from 'react';
+import { createContext, use, type ComponentProps } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
 import { useGameState } from '@/game/game';
@@ -94,6 +96,23 @@ function barShown(shown: boolean, style: TabOptions['tabBarStyle']) {
   return { tabBarStyle: shown ? style : [style, { display: 'none' as const }] };
 }
 
+/** The tab bar's height: the tabs, and the room under them over the home indicator. */
+function useTabBarHeight(): number {
+  const { bottom } = useSafeAreaInsets();
+  return tabBar.height + Math.max(0, bottom - tabBar.homeIndicatorOverlap);
+}
+
+const TabBarRoom = createContext(0);
+
+/**
+ * The room the first screen of a tab's stack keeps for the tab bar over it, 0
+ * where the bar never shows. The bar lies over the screens, so hiding it over
+ * a pushed screen never resizes the stack in the middle of the push (owner, 16.11).
+ */
+export function useTabBarRoom(): number {
+  return use(TabBarRoom);
+}
+
 /**
  * A screen of the tabs, entering as the design has it each time it gains
  * focus. Its focus is read from the navigation state on each render, so no
@@ -125,22 +144,38 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
   /** With `feedTab` on, «Стрічка» shows as selected over the Feed it opens (ADR 0093). */
   const pathname = usePathname();
   const feedSelected = shown.feedTab && pathname === '/feed';
+  const barHeight = useTabBarHeight();
+  // Over the screens rather than under them: the screens keep their height when it hides.
+  const tabBarStyle = [
+    screenOptions.tabBarStyle,
+    { position: 'absolute' as const, left: 0, right: 0, bottom: 0, height: barHeight },
+    { paddingBottom: barHeight - tabBar.height },
+  ];
   const tab = (name: Tab, onRoot = true, alsoSelected = false) => ({
     ...tabOptions(name, tabOrder, names[name], alsoSelected),
-    ...barShown(onRoot, screenOptions.tabBarStyle),
+    ...barShown(onRoot, tabBarStyle),
   });
-  const offTabs = { ...noTabButton, ...barShown(false, screenOptions.tabBarStyle) };
+  const offTabs = { ...noTabButton, ...barShown(false, tabBarStyle) };
+  /** A screen of the tabs the bar always shows over keeps clear of it. */
+  const underBar = { sceneStyle: { paddingBottom: barHeight } };
+  /** The tabs whose stack's first screen the bar shows over. */
+  const roomOf = (name: string) =>
+    name === 'saved' || name === 'settings' || (name === 'game' && !gameOn) ? barHeight : 0;
   return (
     <Tabs
-      screenOptions={screenOptions}
+      screenOptions={{ ...screenOptions, tabBarStyle }}
       // The way back leads to the screen opened before, as a Word of a Category leads back to
       // its Category; by default the tabs lead every screen no tab leads to back to the Dashboard.
       backBehavior="history"
-      screenLayout={({ route, children }) => <FocusedEnter route={route}>{children}</FocusedEnter>}
+      screenLayout={({ route, children }) => (
+        <FocusedEnter route={route}>
+          <TabBarRoom value={roomOf(route.name)}>{children}</TabBarRoom>
+        </FocusedEnter>
+      )}
     >
       <Tabs.Screen
         name="index"
-        options={tab('home', true, feedSelected)}
+        options={{ ...tab('home', true, feedSelected), ...underBar }}
         listeners={{
           tabPress: (event) => {
             // The Dashboard stays the home at launch; its tab opens the Feed (ADR 0093).
@@ -174,7 +209,7 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       {/* The Feed, from the Dashboard; with `dashboard` off the home is the Feed itself. */}
       <Tabs.Screen
         name="feed"
-        options={{ ...noTabButton, ...barShown(true, screenOptions.tabBarStyle) }}
+        options={{ ...noTabButton, ...barShown(true, tabBarStyle), ...underBar }}
       />
       {/* A Correction Type's screen, from its tile on the Dashboard; no tab leads to it. */}
       <Tabs.Screen name="correction-type/[type]" options={offTabs} />

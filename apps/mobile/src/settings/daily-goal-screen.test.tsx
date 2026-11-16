@@ -112,10 +112,10 @@ async function keptDailyGoal() {
 
 // Tickets #1369, #1557 and #1874, ADR 0074: «Ціль дня», screen 85 of board 11.
 describe('the Daily Goal screen', () => {
-  it('offers the Edition’s 10, 25 and 50 and «Без цілі», «Без цілі» chosen to start with', async () => {
+  it('offers the Edition’s 10, 25 and 50 Words and «Без цілі», «Без цілі» chosen to start with', async () => {
     await renderDailyGoal();
 
-    for (const name of ['10', '25', '50']) {
+    for (const name of ['10 слів', '25 слів', '50 слів']) {
       expect(screen.getByRole('radio', { name })).not.toBeSelected();
     }
     expect(screen.getByRole('radio', { name: strings.none })).toBeSelected();
@@ -125,9 +125,9 @@ describe('the Daily Goal screen', () => {
   it('keeps the goal the reader chooses in the XP log, and explains it', async () => {
     await renderDailyGoal();
 
-    await choose('25');
+    await choose('25 слів');
 
-    expect(screen.getByRole('radio', { name: '25' })).toBeSelected();
+    expect(screen.getByRole('radio', { name: '25 слів' })).toBeSelected();
     expect(screen.getByText(strings.explanations['25'])).toBeOnTheScreen();
     expect(await keptDailyGoal()).toBe(25);
   });
@@ -135,13 +135,13 @@ describe('the Daily Goal screen', () => {
   it('turns the goal off from today with «Без цілі», and on again with a number', async () => {
     await renderDailyGoal();
 
-    await choose('10');
+    await choose('10 слів');
     await choose(strings.none);
 
     expect(screen.getByRole('radio', { name: strings.none })).toBeSelected();
     expect(await keptDailyGoal()).toBeUndefined();
 
-    await choose('50');
+    await choose('50 слів');
 
     expect(screen.getByRole('radio', { name: strings.none })).not.toBeSelected();
     expect(screen.getByText(strings.explanations['50'])).toBeOnTheScreen();

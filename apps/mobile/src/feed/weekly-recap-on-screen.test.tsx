@@ -256,6 +256,16 @@ function pageOf(element: ReturnType<typeof screen.getByTestId>): number {
   throw new Error('The element is on no Feed page');
 }
 
+/** How many scroll views hold `element` up to its Feed page. */
+function scrollViewsAround(element: ReturnType<typeof screen.getByTestId>): number {
+  let count = 0;
+  for (let node = element.parent; node !== null; node = node.parent) {
+    if (/^feed-card-\d+$/.test(String((node.props as { testID?: unknown }).testID))) return count;
+    if (node.type === 'RCTScrollView') count += 1;
+  }
+  throw new Error('The element is on no Feed page');
+}
+
 /** Swipes the Feed up to the page that holds `element`. */
 async function swipeTo(element: ReturnType<typeof screen.getByTestId>) {
   for (let page = pageOf(element); page > 0; page -= 1) await swipeUp();
@@ -295,6 +305,17 @@ describe('«Твій тиждень» on the Feed', () => {
     const week = screen.getByTestId('feed-notice-weeklyRecap');
     expect(within(week).getByText('26.10–1.11')).toBeOnTheScreen();
     expect(pageOf(screen.getByTestId('feed-notice-yesterday'))).toBe(pageOf(week));
+  });
+
+  it('scrolls nothing around its cards: Yesterday fills the rest of the page and scrolls inside its card (owner, 16.11)', async () => {
+    await onWeeklyRecap();
+
+    const yesterday = screen.getByTestId('feed-notice-yesterday');
+    expect(within(yesterday).getByTestId('feed-notice-yesterday-scroll').type).toBe(
+      'RCTScrollView',
+    );
+    expect(scrollViewsAround(yesterday)).toBe(0);
+    expect(scrollViewsAround(screen.getByTestId('feed-notice-weeklyRecap'))).toBe(0);
   });
 
   it('«Готово» folds the week away after its fold, with a toast whose «Повернути» brings it back', async () => {

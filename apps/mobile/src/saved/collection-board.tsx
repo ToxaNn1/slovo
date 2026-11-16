@@ -207,13 +207,13 @@ function Board({ collectionId, created }: { collectionId: string; created: boole
         visible={renaming && collection !== undefined}
         kind="rename"
         initialName={name}
-        onSubmit={async (renamed) => {
-          const refusal = await rename(collectionId, renamed);
-          if (refusal === undefined) {
-            toastAfterRename.current = true;
-            setRenaming(false);
-          }
-          return refusal;
+        onSubmit={async (newName) => {
+          const kept = await rename(collectionId, newName);
+          if (!kept.ok) return kept.refusal;
+          // A name kept as it is changes nothing, so nothing is said.
+          toastAfterRename.current = kept.renamed;
+          setRenaming(false);
+          return undefined;
         }}
         onClose={() => {
           setRenaming(false);

@@ -387,7 +387,7 @@ describe('Settings › «Ціль дня»', () => {
     const goalScreen = await screen.findByTestId('daily-goal-screen');
     expect(within(goalScreen).getByRole('header', { name: 'Ціль дня' })).toBeOnTheScreen();
     expect(within(goalScreen).getByText('Скільки нових слів відкривати щодня.')).toBeOnTheScreen();
-    const options = ['10', '25', '50', 'Без цілі'].map((name) =>
+    const options = ['10 слів', '25 слів', '50 слів', 'Без цілі'].map((name) =>
       within(goalScreen).getByRole('radio', { name }),
     );
     expect(within(goalScreen).getAllByRole('radio')).toEqual(options);
@@ -396,23 +396,24 @@ describe('Settings › «Ціль дня»', () => {
   it('keeps the goal chosen on the screen and names it on the row', async () => {
     const composition = await testShell().composition.opened();
     await renderSettings({ dailyGoal: true }, undefined, composition);
+    expect(screen.getByRole('button', { name: 'Ціль дня, Без цілі' })).toBeOnTheScreen();
     await fireEvent.press(screen.getByTestId('settings-row-daily-goal'));
 
-    await fireEvent.press(await screen.findByTestId('daily-goal-25'));
+    await fireEvent.press(await screen.findByTestId('daily-goal-none'));
+    expect(screen.getByTestId('daily-goal-sample')).toHaveTextContent(
+      '—Без цілі — гортай у власному темпі.',
+    );
+    expect(composition.xpLog.state.dailyGoal).toBeNull();
+
+    await fireEvent.press(screen.getByTestId('daily-goal-25'));
     expect(screen.getByTestId('daily-goal-25')).toBeSelected();
     expect(screen.getByTestId('daily-goal-sample')).toHaveTextContent(
       '25Двадцять п’ять слів — золота середина.',
     );
     expect(composition.xpLog.state.dailyGoal?.goal).toBe(25);
-
-    await fireEvent.press(screen.getByTestId('daily-goal-none'));
-    expect(screen.getByTestId('daily-goal-sample')).toHaveTextContent(
-      '—Без цілі — гортай у власному темпі.',
-    );
-    expect(composition.xpLog.state.dailyGoal).toBeNull();
     await fireEvent.press(screen.getByTestId('daily-goal-back'));
 
-    expect(await screen.findByRole('button', { name: 'Ціль дня, Без цілі' })).toBeOnTheScreen();
+    expect(await screen.findByRole('button', { name: 'Ціль дня, 25 слів' })).toBeOnTheScreen();
   });
 
   it('leaves the row out while its Feature Switch is off', async () => {

@@ -93,12 +93,17 @@ async function searchScreenModel(
  */
 export function useSearchScreen(query: string): SearchScreenModel {
   const read = useCallback(
-    (composition: Composition) => searchScreenModel(composition, query),
+    async (composition: Composition) => ({
+      query,
+      model: await searchScreenModel(composition, query),
+    }),
     [query],
   );
   const reading = useCompositionRead(read, 'Could not search');
-  // The results of an earlier query are not those of one that failed.
-  return reading.status === 'ready' ? reading.value : searching;
+  // The results of an earlier query, kept until this one's come, or of one that failed, are not this query's.
+  return reading.status === 'ready' && reading.value.query === query
+    ? reading.value.model
+    : searching;
 }
 
 /**

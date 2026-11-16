@@ -30,7 +30,11 @@ const FRAMES = {
   reduceMotion: ReduceMotion.Never,
 };
 const { fly, bounce, rest, ribbon: ribbonIn, ring, shake } = badgeStamp.frames;
-const turned = (degrees: number) => `${String(degrees)}deg`;
+/** A turn in degrees as a style string; a worklet, as the animated styles call it on the UI thread. */
+function turned(degrees: number) {
+  'worklet';
+  return `${String(degrees)}deg`;
+}
 
 /**
  * An earned Badge stamped on red, over the whole screen (XBadges «Штамп»,

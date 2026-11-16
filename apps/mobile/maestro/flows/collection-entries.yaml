@@ -24,10 +24,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: collection-button
 - tapOn:
     id: collection-row-.*
-    text: Poets, 0 записів
+    text: Poets, 0 слів
 - assertVisible:
     id: collection-row-.*
-    text: Poets, 1 запис
+    text: Poets, 1 слово
 - tapOn:
     id: collection-done
 # The Saved tab leads to the Collections screen, whose row opens the Collection.
@@ -37,12 +37,12 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: saved-collections
 - tapOn:
     id: collection-card-.*
-    text: Poets, 1 запис.*
+    text: Poets, 1 слово.*
 - assertVisible:
     id: collection
 - assertVisible:
     id: collection-count
-    text: 1 запис
+    text: 1 слово
 - assertVisible:
     id: entry-row-.*-open
 - takeScreenshot: collection-entries
@@ -68,13 +68,13 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: collection-empty
 - assertVisible:
     id: collection-count
-    text: 0 записів
+    text: 0 слів
 - takeScreenshot: collection-empty
 - tapOn:
     id: collection-back
 - assertVisible:
     id: collection-card-.*
-    text: Poets, 0 записів
+    text: Poets, 0 слів
 - tapOn:
     id: tab-home
 - assertVisible:

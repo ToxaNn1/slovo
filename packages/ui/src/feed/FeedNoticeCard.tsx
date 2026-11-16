@@ -14,7 +14,11 @@ import { noticeCard, typeStyle, wedges } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { Button, type ButtonVariant } from '../primitives/Button';
 import { Mascot } from '../primitives/Mascot';
-import { usePageTurnActions, useTurnToNextPage } from '../primitives/VerticalPager';
+import {
+  PagerScrollView,
+  usePageTurnActions,
+  useTurnToNextPage,
+} from '../primitives/VerticalPager';
 import { Wedge } from '../primitives/Wedge';
 
 /**
@@ -89,11 +93,8 @@ export function FeedNoticeCard({
       {title}
     </Text>
   );
-  return (
-    <View
-      testID={`feed-notice-${notice}`}
-      style={[styles.card, ground, { gap }, fill && styles.fill]}
-    >
+  const parts = (
+    <>
       {mascot !== undefined && (
         <View style={styles.mascot}>
           <Mascot state={mascot} />
@@ -140,6 +141,23 @@ export function FeedNoticeCard({
           testID={`feed-notice-${notice}-action`}
         />
       )}
+    </>
+  );
+  if (!fill)
+    return (
+      <View testID={`feed-notice-${notice}`} style={[styles.card, styles.padded, ground, { gap }]}>
+        {parts}
+      </View>
+    );
+  // A card that fills its page is a fixed frame: what runs longer scrolls inside it, never the page (owner, 16.11).
+  return (
+    <View testID={`feed-notice-${notice}`} style={[styles.card, styles.frame, ground]}>
+      <PagerScrollView
+        testID={`feed-notice-${notice}-scroll`}
+        contentContainerStyle={[styles.padded, styles.filled, { gap }]}
+      >
+        {parts}
+      </PagerScrollView>
     </View>
   );
 }
@@ -306,13 +324,11 @@ export function FirstWeekCard({
 }
 
 const styles = StyleSheet.create({
-  card: {
-    alignSelf: 'stretch',
-    borderRadius: noticeCard.radius,
-    padding: noticeCard.padding,
-    gap: noticeCard.gap,
-  },
-  fill: { flexGrow: 1, justifyContent: 'center' },
+  card: { alignSelf: 'stretch', borderRadius: noticeCard.radius },
+  padded: { padding: noticeCard.padding },
+  frame: { flexGrow: 1, flexShrink: 1, overflow: 'hidden' },
+  // A filled card's parts sit in its middle while they fit.
+  filled: { flexGrow: 1, justifyContent: 'center' },
   mascot: { alignSelf: 'flex-start' },
   texts: { gap: noticeCard.gap },
   markRow: { flexDirection: 'row', alignItems: 'center', gap: noticeCard.gap },

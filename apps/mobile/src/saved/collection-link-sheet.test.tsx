@@ -152,7 +152,7 @@ describe('the recipient sheet of a Collection Link', () => {
 
     expect(screen.getByText('Осінь')).toBeTruthy();
     expect(screen.getByTestId('collection-link-count').props).toMatchObject({
-      children: '6 записів',
+      children: '6 слів',
     });
     for (const id of PACK.slice(0, 5)) {
       expect(screen.getByTestId(`entry-row-${id}`)).toBeTruthy();
@@ -169,7 +169,7 @@ describe('the recipient sheet of a Collection Link', () => {
 
     expect(screen.getByRole('button', { name: editionStrings.tabs.home })).toBeOnTheScreen();
     expect(screen.getByRole('header', { name: 'Осінь' })).toBeOnTheScreen();
-    expect(screen.getByText('3 записи')).toBeOnTheScreen();
+    expect(screen.getByText('3 слова')).toBeOnTheScreen();
     for (const id of ['w_one', 'w_two']) {
       // The row shows the Lemma with its Stress mark; VoiceOver reads it without.
       expect(screen.getByTestId(`entry-row-${id}-text`)).toHaveTextContent(/\u0301/);
@@ -229,9 +229,9 @@ describe('the recipient sheet of a Collection Link', () => {
   });
 
   it.each([
-    [1, '1 слово недоступне', '2 записи'],
-    [2, '2 слова недоступні', '3 записи'],
-    [5, '5 слів недоступні', '6 записів'],
+    [1, '1 слово недоступне', '2 слова'],
+    [2, '2 слова недоступні', '3 слова'],
+    [5, '5 слів недоступні', '6 слів'],
   ])(
     'says how many of its Entries the pack lacks, in the plural form: %i → «%s» of «%s»',
     async (missing, text, held) => {

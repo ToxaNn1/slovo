@@ -51,17 +51,31 @@ const WRONG_MARK = 'M0 2L2 0L7 5L12 0L14 2L9 7L14 12L12 14L7 9L2 14L0 12L5 7Z';
 /** The ✓ of a right option in the board's look, on the same 14-unit square, stroked. */
 const RIGHT_MARK = 'M2 7.5L5.5 11L12 3.5';
 
+/** The text tiers of the options, from the smallest text to the largest. */
+const OPTION_TIERS = ['roundOptionWord', 'roundOptionSentence', 'roundOptionLong'] as const;
+type OptionTier = (typeof OPTION_TIERS)[number];
+
 /**
- * The type role an option's text takes, its tier: a Word is one word, a
- * sentence runs to `answerOption.sentenceMost` characters, a long text past
- * that. In the board's look a short option takes the word tier and any
- * other a sentence's or a long text's.
+ * The tier an option's text takes alone: a Word is one word, a sentence runs
+ * to `answerOption.sentenceMost` characters, a long text past that. In the
+ * board's look a short option takes the word tier and any other a
+ * sentence's or a long text's.
  */
-function optionRole(text: string, short: boolean | undefined): TypeRole {
+function optionTier(text: string, optionStamp: boolean): OptionTier {
+  const short = optionStamp ? Array.from(text).length <= answerOptionStamp.shortMost : undefined;
   if (short === true || (short === undefined && !/\s/u.test(text.trim()))) return 'roundOptionWord';
   return Array.from(text).length <= answerOption.sentenceMost
     ? 'roundOptionSentence'
     : 'roundOptionLong';
+}
+
+/**
+ * The one tier all the options of a Round take, so none reads bolder than
+ * the others (owner, 16.11): the tier of the option whose text needs the largest.
+ */
+function setTier(options: readonly RoundOption[], optionStamp: boolean): OptionTier {
+  const tiers = options.map((option) => OPTION_TIERS.indexOf(optionTier(option.text, optionStamp)));
+  return OPTION_TIERS[Math.max(0, ...tiers)] ?? 'roundOptionWord';
 }
 
 /**
@@ -129,7 +143,8 @@ export function AnswerOptions({
   onPick: (option: number) => void;
 }) {
   const keys = Array.from(useEdition().strings.game.round.optionKeys);
-  const { onGround } = useRoundLook();
+  const { onGround, optionStamp } = useRoundLook();
+  const tier = setTier(options, optionStamp);
   const reduceMotion = useReduceMotion();
   const cascade = onGround && !reduceMotion;
   return (
@@ -145,6 +160,7 @@ export function AnswerOptions({
             option={option}
             place={place}
             optionKey={keys[place]}
+            tier={tier}
             answer={answer}
             inQuickQuestion={inQuickQuestion}
             onPress={() => {
@@ -174,11 +190,14 @@ function AnswerOption({
   option,
   place,
   optionKey,
+  tier,
   answer,
   inQuickQuestion,
   onPress,
 }: {
   option: RoundOption;
+  /** The text tier of the Round's options, the same on each. */
+  tier: OptionTier;
   /** Whether the option stands in a Quick Question's card. */
   inQuickQuestion: boolean;
   /** Its place among the options. */
@@ -194,7 +213,6 @@ function AnswerOption({
   const keyInk = useSchemeColors('light').ink;
   const { strings, voice } = useEdition();
   const { optionStamp } = useRoundLook();
-  const short = optionStamp && Array.from(option.text).length <= answerOptionStamp.shortMost;
   // The board's options carry no key at all (owner, 15.11): a right one takes the ✓ stamp.
   const keyShown = optionKey !== undefined && !optionStamp;
   const { dimmedOpacity, drop } = optionStamp ? answerOptionStamp : answerOption;
@@ -236,9 +254,8 @@ function AnswerOption({
     };
   });
   const testID = `game-option-${String(place)}`;
-  const shownRole = optionRole(option.text, optionStamp ? short : undefined);
-  const role =
-    inQuickQuestion && shownRole === 'roundOptionWord' ? 'quickQuestionOptionWord' : shownRole;
+  const role: TypeRole =
+    inQuickQuestion && tier === 'roundOptionWord' ? 'quickQuestionOptionWord' : tier;
   return (
     <Animated.View testID={`${testID}-motion`} style={optionMotion} {...voice}>
       <PressedTile

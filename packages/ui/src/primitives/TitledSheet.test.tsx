@@ -31,11 +31,11 @@ async function renderSheet(visible = true) {
 }
 
 describe('TitledSheet', () => {
-  it('reads its title as a header on one line, over its content', async () => {
+  it('reads its title as a header that wraps, over its content', async () => {
     await renderSheet();
 
     const title = screen.getByRole('header', { name: 'Delete «Autumn words»?' });
-    expect(title).toHaveProp('numberOfLines', 1);
+    expect(title).not.toHaveProp('numberOfLines');
     expect(screen.getByText('The Entries stay.')).toBeVisible();
   });
 
