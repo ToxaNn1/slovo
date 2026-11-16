@@ -1,6 +1,6 @@
 # Text size follows the system in three steps
 
-Status: accepted (owner, 14.11)
+Status: accepted (owner, 14.11). Amended by 0157
 
 ## Context
 

@@ -20,6 +20,7 @@ import {
   roleAt,
   space,
   synonymRowList,
+  titleSize,
   typeRoles,
   typeStyle,
   wedges,
@@ -86,10 +87,7 @@ export function SynonymRowCardBody({
   const flying = useFlyingText();
   const shown = selfCheckSynonymRowCard({ card, concealed });
   const dominant = withoutStress(card.dominant.text);
-  const dominantSize = roleAt(
-    'synonymDominant',
-    (lemmaSize.fontSize * typeRoles.synonymDominant.size) / typeRoles.heroWord.size,
-  );
+  const dominantSize = titleSize('synonymDominant', lemmaSize);
 
   return (
     <>
@@ -116,9 +114,12 @@ export function SynonymRowCardBody({
             <WholeWordsText
               flying={flying}
               text={capitalised(shown.card.dominant.text, voice.accessibilityLanguage)}
-              size={{ fontSize: dominantSize.fontSize, lineHeight: dominantSize.lineHeight }}
+              size={dominantSize}
               typeRole="synonymDominant"
               testID="synonym-row-dominant"
+              stepped
+              // A title of 36 or more keeps its size at every OS text size (ADR 0157).
+              allowFontScaling={false}
               // The dominant stays on one line and shrinks rather than wrap (board e8).
               lines={1}
               falling={undefined}

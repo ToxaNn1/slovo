@@ -1,18 +1,4 @@
-import type { LengthSteps } from './base';
-
 /** The tokens of the Game and its modes. */
-
-/**
- * A Round's prompt by its length (owner 08.11, the Feed's Quick Question): 24
- * up to 50 letters, 20 up to 100, 18 for a longer one.
- */
-export const roundPromptLength: LengthSteps = {
-  steps: [
-    { upTo: 50, scale: 1 },
-    { upTo: 100, scale: 20 / 24 },
-  ],
-  longer: 18 / 24,
-};
 
 /** The Mascot's width beside a Round's question on the ground (board «slogo game last», D5). */
 export const roundMascotWidth = 88;
@@ -68,6 +54,8 @@ export const roundLayout = {
   cardPaddingVertical: 30,
   cardMinHeight: 220,
   textMaxFontScale: 1.5,
+  /** The most lines a Round's prompt takes, stepping down the cards' title scale to fit (ADR 0157). */
+  promptLines: 4,
   /** The full-width tile of the Word in «Звідки слово» on the ground (board g4). */
   originTileMinHeight: 110,
 } as const;

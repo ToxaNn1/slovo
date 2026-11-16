@@ -8,7 +8,10 @@ import {
   fontScaleCap,
   fontSizeSteps,
   textSizeSteps,
+  titleSize,
+  typeRoles,
   wordLineHeight,
+  type TypeRole,
 } from '../tokens';
 
 /**
@@ -51,8 +54,10 @@ export interface TextSize {
 
 /**
  * The Word card's type sizes at the user's font size. These are the design
- * sizes in points: iOS Dynamic Type multiplies them again when the text is
- * drawn, so the setting and the system's text size stack.
+ * sizes in points: iOS Dynamic Type multiplies the Definition and the Example
+ * again when they are drawn, so the setting and the system's text size stack.
+ * The Lemma, as every title that starts at 36 or more, ignores the system's
+ * text size (ADR 0157).
  */
 export interface WordTextSizes {
   readonly size: TextSizeStep;
@@ -67,6 +72,7 @@ export interface WordTextSizes {
  * (`fontScale`) taken only up to `fontScaleCap.text`, so a very large system
  * size does not break the card frame (ADR 0134). iOS multiplies every size by
  * `fontScale` when it draws, so a capped size is given divided by the excess.
+ * The Lemma takes the step alone: it is drawn without the OS text size (ADR 0157).
  */
 function wordTextSizes(size: TextSizeStep, fontScale: number): WordTextSizes {
   const { lemma, definition, example } =
@@ -77,7 +83,7 @@ function wordTextSizes(size: TextSizeStep, fontScale: number): WordTextSizes {
       : Math.min(fontScale, fontScaleCap.text) / fontScale;
   return {
     size,
-    lemma: { fontSize: lemma * scale, lineHeight: lemma * scale * wordLineHeight.lemma },
+    lemma: { fontSize: lemma, lineHeight: lemma * wordLineHeight.lemma },
     definition: {
       fontSize: definition * scale,
       lineHeight: definition * scale * wordLineHeight.body,
@@ -113,7 +119,8 @@ export function useCompactLayout(): boolean {
 /**
  * The Lemma's size at the user's font size, as the Feed and the Settings
  * preview both draw it: the table's size, or the compact layout's smaller
- * one on a narrow screen.
+ * one on a narrow screen. The OS text size never changes it: the Lemma is
+ * drawn with `allowFontScaling` off (ADR 0157).
  */
 export function useLemmaSize(): TextSize {
   const { lemma } = useWordTextSizes();
@@ -125,4 +132,22 @@ export function useLemmaSize(): TextSize {
         : lemma,
     [lemma, compact],
   );
+}
+
+/**
+ * How much the steps of `titleScale` grow or shrink here: the Lemma's size at
+ * the user's in-app text size and the compact layout, over its size at M
+ * (ADR 0157).
+ */
+export function useTitleFactor(): number {
+  return useLemmaSize().fontSize / typeRoles.heroWord.size;
+}
+
+/**
+ * A card title's start size here: its role's step of `titleScale`, grown or
+ * shrunk as the Lemma is (ADR 0157).
+ */
+export function useTitleSize(role: TypeRole): TextSize {
+  const lemma = useLemmaSize();
+  return useMemo(() => titleSize(role, lemma), [role, lemma]);
 }

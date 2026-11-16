@@ -5,14 +5,14 @@ import { StyleSheet, Text, View, type TextLayoutEvent } from 'react-native';
 
 import { WholeLinesText } from '../primitives/WholeLines';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
+import { useTitleSize, useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import {
-  correctionStandardScale,
   correctionStrike,
   entryCardFrame,
+  fontScaleCap,
   space,
   standardFormScale,
-  typeRoles,
+  titleSize,
   typeStyle,
   withAlpha,
 } from '../tokens';
@@ -292,6 +292,7 @@ export function NonStandardForm({
   const { strings, voice } = useEdition();
   // In the Feed, VoiceOver turns to the next or previous card from the forms.
   const turnActions = usePageTurnActions();
+  const formSize = useTitleSize('nonStandardForm');
   return (
     <View
       testID={testID}
@@ -307,6 +308,9 @@ export function NonStandardForm({
       <WholeWordsText
         text={capitalised(form, voice.accessibilityLanguage)}
         typeRole="nonStandardForm"
+        size={formSize}
+        stepped
+        maxFontSizeMultiplier={fontScaleCap.text}
         lines={3}
         style={[
           typeStyle('nonStandardForm', tokens),
@@ -363,6 +367,7 @@ export function StandardForm({
           lineHeight: size.lineHeight * standardFormScale,
         }}
         tracking={-0.01}
+        maxFontSizeMultiplier={fontScaleCap.text}
         lines={3}
         style={[typeStyle('heroWord', tokens), { color: colors.ink }]}
       />
@@ -424,6 +429,7 @@ function StruckForm({
   const turnActions = usePageTurnActions();
   // The lines the form is drawn in, each struck on its own; none until it is laid out.
   const [lines, setLines] = useState<TextLayoutEvent['nativeEvent']['lines']>([]);
+  const struckSize = useTitleSize('correctionStruck');
   return (
     <View
       testID="correction-non-standard"
@@ -455,6 +461,9 @@ function StruckForm({
         <WholeWordsText
           text={capitalised(form, voice.accessibilityLanguage)}
           typeRole="correctionStruck"
+          size={struckSize}
+          stepped
+          maxFontSizeMultiplier={fontScaleCap.text}
           lines={3}
           style={[typeStyle('correctionStruck', tokens), { color: colors.muted }]}
           onTextLayout={(event) => {
@@ -488,9 +497,9 @@ function StruckForm({
 /**
  * A Correction's main standard equivalent in «Як краще» (board XEntry2 e6):
  * the red label «Українською краще», with the Category chip at its right as
- * on the Word card's grammar line, over the form at a share of the Lemma's
- * size (`correctionStandardScale`), as one element VoiceOver reads with its
- * label and Category.
+ * on the Word card's grammar line, over the form at its step of the cards'
+ * title scale (ADR 0157), as one element VoiceOver reads with its label and
+ * Category.
  */
 function CorrectionStandard({
   form,
@@ -511,8 +520,6 @@ function CorrectionStandard({
   const { strings, voice } = useEdition();
   const turnActions = usePageTurnActions();
   const label = `${strings.correctionCard.standard}: ${spoken}`;
-  const { size: roleSize, lineHeight } = typeRoles.correctionStandard;
-  const fontSize = size.fontSize * correctionStandardScale;
   return (
     <View
       testID="correction-standard"
@@ -543,7 +550,9 @@ function CorrectionStandard({
       <WholeWordsText
         text={capitalised(form, voice.accessibilityLanguage)}
         typeRole="correctionStandard"
-        size={{ fontSize, lineHeight: (fontSize * lineHeight) / roleSize }}
+        size={titleSize('correctionStandard', size)}
+        stepped
+        maxFontSizeMultiplier={fontScaleCap.text}
         lines={3}
         style={[typeStyle('correctionStandard', tokens), { color: colors.ink }]}
       />

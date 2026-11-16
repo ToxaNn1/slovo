@@ -226,7 +226,7 @@ describe('a Correction card (board XEntry2 e6)', () => {
   });
 
   // Owner shot 13.11: «міжрегіональному» broke inside the word, the title at full size.
-  it('draws a long struck form small enough for its widest word to fit a line, in three lines at most', async () => {
+  it('takes the next lower step of the title scale for a long struck form, in three lines at most', async () => {
     const long: EntryFeedCard = {
       kind: 'correction',
       entryId: 'c1',
@@ -242,15 +242,24 @@ describe('a Correction card (board XEntry2 e6)', () => {
     const line = shown.parent;
     if (line === null) throw new Error('The struck form has no line around it');
     await fireEvent(line, 'layout', { nativeEvent: { layout: { width: 301 } } });
-    // Every word measured on its own line at full size: the widest is twice the line.
-    const measured = screen
-      .getAllByText(text, { includeHiddenElements: true })
-      .find((element) => element !== shown);
-    if (measured === undefined) throw new Error('The struck form is not measured');
-    await fireEvent(measured, 'textLayout', { nativeEvent: { lines: [{ width: 600 }] } });
+    // The words, each on its own line, then the whole form on the line's width.
+    const measures = () =>
+      screen
+        .getAllByText(text, { includeHiddenElements: true })
+        .filter((element) => element !== screen.getByText(text, { exact: true }));
+    const [words] = measures();
+    if (words === undefined) throw new Error('The struck form is not measured');
+    // At 26 the widest word is too wide for the line, at 24 it fits.
+    await fireEvent(words, 'textLayout', { nativeEvent: { lines: [{ width: 320 }] } });
+    await fireEvent(words, 'textLayout', { nativeEvent: { lines: [{ width: 295.4 }] } });
+    const [, lines] = measures();
+    if (lines === undefined) throw new Error('The struck form has no lines counted');
+    await fireEvent(lines, 'textLayout', {
+      nativeEvent: { lines: [{ width: 290 }, { width: 290 }, { width: 100 }] },
+    });
 
     const fitted = screen.getByText(text, { exact: true });
-    expect(fitted).toHaveStyle({ fontSize: typeRoles.correctionStruck.size / 2 });
+    expect(fitted).toHaveStyle({ fontSize: 24 });
     expect(fitted).not.toHaveStyle({ opacity: 0 });
     expect(fitted.props).toMatchObject({ numberOfLines: 3, adjustsFontSizeToFit: true });
   });

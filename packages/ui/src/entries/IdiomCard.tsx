@@ -11,9 +11,8 @@ import { Wedge } from '../primitives/Wedge';
 import {
   entryCardFrame,
   exampleMark,
-  idiomExpressionLength,
   roleAt,
-  sizeForLength,
+  titleSize,
   space,
   typeRoles,
   typeStyle,
@@ -76,9 +75,8 @@ export function IdiomCardBody({
   const flying = useFlyingText();
   const idiomType = strings.idiomTypes[card.idiomType];
   const bodyText = [typeStyle('example', tokens), sizes.example, { color: colors.ink }];
-  // A long expression takes a smaller size, the cards' one text scale (owner 08.11).
-  const { fontSize } = sizeForLength(lemmaSize, card.expression, idiomExpressionLength);
-  const { lineHeight } = roleAt('idiomExpression', fontSize);
+  // The expression starts at its step of the cards' one title scale (ADR 0157).
+  const expressionSize = titleSize('idiomExpression', lemmaSize);
 
   return (
     <>
@@ -101,9 +99,12 @@ export function IdiomCardBody({
             <WholeWordsText
               flying={flying}
               text={capitalised(card.expression, voice.accessibilityLanguage)}
-              size={{ fontSize, lineHeight }}
+              size={expressionSize}
               typeRole="idiomExpression"
               testID="idiom-expression"
+              stepped
+              // A title of 36 or more keeps its size at every OS text size (ADR 0157).
+              allowFontScaling={false}
               lines={3}
               style={[typeStyle('idiomExpression', tokens), { color: colors.ink }]}
             />

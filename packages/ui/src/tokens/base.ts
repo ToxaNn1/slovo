@@ -346,12 +346,12 @@ export const typeRoles = {
   widgetLine: role('word', '500', 12, 15),
   /** An Idiom's «Походження», the tab «Звідки» (XEntry2 e7). */
   idiomEtymology: role('ui', '500', 18, 27),
-  /** An Idiom's expression, at the size its length gives (XEntry2 e7: 40/1.02, tracking −1). */
-  idiomExpression: role('word', '900', 40, 40.8, -1),
+  /** An Idiom's expression, from 36 on `titleScale` (ADR 0157; XEntry2 e7: line 1.02, tracking −1 at 40). */
+  idiomExpression: role('word', '900', 36, 36.72, -0.9),
   /** An Idiom's primary Definition in the tab «Суть», at the user's font size (XEntry2 e7). */
   idiomEssence: role('ui', '500', 22, 31),
-  /** A Synonym Row's dominant, on one line (XEntry2 e8: 49/1). */
-  synonymDominant: role('word', '900', 49, 49, -1.5),
+  /** A Synonym Row's dominant, on one line at the Lemma's size (ADR 0157; XEntry2 e8: line 1). */
+  synonymDominant: role('word', '900', 50, 50, -1.5),
   /** A Synonym Row's member, one per row, at the user's font size (XEntry2 e8). */
   synonymMember: role('word', '800', 19, 20.9),
   /** The name of a row on the Hidden screen. */
@@ -490,8 +490,8 @@ export const typeRoles = {
   errorTitle: role('word', '500', 28, 34),
   /** What went wrong, under the title of the Feed's error state. */
   errorText: role('ui', '400', 15, 24),
-  /** A Tip's title (board XEntry2 e9: 30/1.1). */
-  tipTitle: role('word', '900', 30, 33, -0.5),
+  /** A Tip's title, from 36 on `titleScale` (ADR 0157; board XEntry2 e9: line 1.1). */
+  tipTitle: role('word', '900', 36, 39.6, -0.6),
   /** A Tip's rule on its card's «Правило» tab (board XEntry2 e9). */
   tipRule: role('ui', '500', 20, 28),
   /** The trailing text of a list row, such as when it was saved. */
@@ -602,8 +602,8 @@ export const typeRoles = {
   reviewTag: role('word', '800', 11, 11, 1, 'uppercase'),
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),
-  /** A Correction's non-standard form, struck through. */
-  nonStandardForm: role('word', '800', 24, 26),
+  /** A Correction's non-standard form, struck through, from 26 on `titleScale` (ADR 0157). */
+  nonStandardForm: role('word', '800', 26, 28.17),
   /** A Correction's explanation, also in an expanded Round of the Game Review. */
   explanation: role('ui', '400', 15, 22),
   /** The Entry's Lemma over a sheet, such as the Collection sheet. */
@@ -682,10 +682,10 @@ export const typeRoles = {
   cardKicker: role('word', '800', 11, 11, 1.5, 'uppercase'),
   /** The label over a form on a Correction card: «Так часто кажуть · калька», «Українською краще» (XEntry2 e6). */
   correctionFormLabel: role('ui', '700', 12, 12),
-  /** A Correction's non-standard form on its card, under the red strike (XEntry2 e6). */
+  /** A Correction's non-standard form on its card, under the red strike, from 26 on `titleScale` (ADR 0157; XEntry2 e6). */
   correctionStruck: role('word', '800', 26, 28.6),
-  /** A Correction's standard form in «Як краще»; drawn at a share of the Lemma's size (XEntry2 e6). */
-  correctionStandard: role('word', '900', 38, 39.9, -1),
+  /** A Correction's standard form in «Як краще», from 26 on `titleScale` (ADR 0157; XEntry2 e6: line 1.05). */
+  correctionStandard: role('word', '900', 26, 27.3, -0.7),
   /** A Correction's explanation in «Чому» (XEntry2 e6). */
   correctionWhy: role('ui', '500', 20, 29),
   /** A sentence of a Correction's example pair in «Приклади» (XEntry2 e6). */
@@ -886,24 +886,23 @@ export function roleSize(name: TypeRole): DrawnSize {
 }
 
 /**
- * How a text's size steps down as the text grows, so a long text takes a
- * smaller size and the cards keep one text scale (owner 08.11): the share of
- * the full size for a text of at most `upTo` letters, shortest first, and
- * `longer` for a text longer than every step.
+ * The one fixed type scale of the cards' titles at M, «Як у системі»,
+ * largest first (ADR 0157). A title starts at its role's step and, when its
+ * widest word or its lines do not fit, takes the next lower step, never a size
+ * between two. At a larger in-app text size, or in the compact layout, every
+ * step grows or shrinks by the same factor as the Lemma.
  */
-export interface LengthSteps {
-  readonly steps: readonly { readonly upTo: number; readonly scale: number }[];
-  readonly longer: number;
-}
+export const titleScale = [50, 44, 40, 36, 32, 28, 26, 24, 22, 20] as const;
 
 /**
- * `size` at the share `steps` give the length of `text`, counted in letters
- * without the Stress marks.
+ * A card title's start size at the Lemma's size: its role's size at M, grown
+ * or shrunk as the Lemma is from its own, so every title keeps its step of
+ * `titleScale` at every text size (ADR 0157).
  */
-export function sizeForLength(size: DrawnSize, text: string, steps: LengthSteps): DrawnSize {
-  const length = text.replace(/\p{M}/gu, '').length;
-  const scale = steps.steps.find(({ upTo }) => length <= upTo)?.scale ?? steps.longer;
-  return { fontSize: size.fontSize * scale, lineHeight: size.lineHeight * scale };
+export function titleSize(name: TypeRole, lemma: DrawnSize): DrawnSize {
+  const factor = lemma.fontSize / typeRoles.heroWord.size;
+  const { size, lineHeight } = typeRoles[name];
+  return { fontSize: size * factor, lineHeight: lineHeight * factor };
 }
 
 /**

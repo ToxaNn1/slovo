@@ -54,13 +54,13 @@ describe('the tabbed Idiom card (board XEntry2 e7)', () => {
     });
   });
 
-  it('sets the expression at 40 with a line of 1.02 and tracking -1', async () => {
+  it('starts the expression at 36 on the title scale, with a line of 1.02 and the board tracking (ADR 0157)', async () => {
     await renderTabbed();
 
     expect(screen.getByTestId('idiom-expression')).toHaveStyle({
-      fontSize: 40,
-      lineHeight: 40.8,
-      letterSpacing: -1,
+      fontSize: 36,
+      lineHeight: 36.72,
+      letterSpacing: -0.9,
     });
   });
 
