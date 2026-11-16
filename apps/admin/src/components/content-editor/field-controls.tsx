@@ -1,6 +1,7 @@
 import { RARITIES } from '@slovo/contracts';
 
 import {
+  type CategoryOptions,
   type EditorField,
   type FieldControl,
   type FormObject,
@@ -8,14 +9,8 @@ import {
   formValueOf,
   isList,
   isObject,
-  type Option,
   RARITY_LINES,
 } from './kinds';
-
-/** The Categories of the Edition a Category field picks from. */
-export type CategoryOptions = Readonly<
-  Record<'categories' | 'correctionCategories', readonly Option[]>
->;
 
 const INPUT = 'rounded-lg border border-border bg-background px-3 py-2 text-sm';
 const PILL =

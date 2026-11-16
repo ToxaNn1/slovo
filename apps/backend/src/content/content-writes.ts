@@ -790,9 +790,9 @@ export function createContentWrites({
 
   /**
    * The records of a kind «Перегляд» shows: the count of the live records not
-   * checked, and the first of them, the newest change first.
+   * checked, and the first of them after the `skip` passed by, the newest change first.
    */
-  async function unchecked(editionId: string, kind: RecordKind) {
+  async function unchecked(editionId: string, kind: RecordKind, skip = 0) {
     if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
     return db.transaction(async (tx) => {
       if ((await importedVersion(tx, editionId)) === undefined) {
@@ -809,6 +809,7 @@ export function createContentWrites({
         .from(table)
         .where(where)
         .orderBy(desc(table.contentVersion), asc(table.id))
+        .offset(skip)
         .limit(1);
       const total = counted?.total ?? 0;
       if (first === undefined) return { ok: true, total } as const;

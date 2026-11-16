@@ -7,7 +7,14 @@ import { refusalText } from '../../session';
 import { ConfirmDialog, type PendingWrite } from '../confirm-dialog';
 import { Button } from '../ui/button';
 import { FieldRow } from './field-controls';
-import { type FormValue, formValueOf, type KindEditor, recordValueOf, shownOf } from './kinds';
+import {
+  categoryOptionsOf,
+  type FormValue,
+  formValueOf,
+  type KindEditor,
+  recordValueOf,
+  shownOf,
+} from './kinds';
 
 type Fields = Record<string, unknown>;
 
@@ -82,12 +89,7 @@ export function RecordForm({
     queryKey: ['edition-card', editionId],
     queryFn: () => adminApi.editionCard({ editionId }),
   });
-  const optionsOf = (list: readonly { id: string; displayName: string }[] = []) =>
-    list.map(({ id, displayName }) => ({ value: id, label: displayName }));
-  const categories = {
-    categories: optionsOf(card.data?.categories),
-    correctionCategories: optionsOf(card.data?.correctionCategories),
-  };
+  const categories = categoryOptionsOf(card.data);
 
   /** The record's fields as the form holds them over `onto`, or undefined when one can't be read. */
   const read = (onto: Fields): Fields | undefined => {

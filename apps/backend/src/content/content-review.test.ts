@@ -121,6 +121,22 @@ describe('«Перегляд»: the records not checked yet', () => {
     expect(after.record).toMatchObject({ id: last.id, recordVersion: recordVersion + 1 });
   });
 
+  it('skips the records passed by: `skip` gives the one after them, the count unchanged', async () => {
+    const backend = await reviewBackend();
+    const first = await next(backend);
+
+    const second = await backend.admin.unchecked({ editionId: 'uk', kind: 'word', skip: 1 });
+
+    expect(second.total).toBe(first.total);
+    expect(second.record?.id).not.toBe(first.record?.id);
+    const past = await backend.admin.unchecked({
+      editionId: 'uk',
+      kind: 'word',
+      skip: first.total,
+    });
+    expect(past).toEqual({ total: first.total });
+  });
+
   it('refuses a check at an old record version, and an Агент check', async () => {
     const backend = await reviewBackend();
     const record = (await next(backend)).record ?? never();

@@ -58,6 +58,25 @@ const TEXT: FieldControl = { type: 'text' };
 const LONG_TEXT: FieldControl = { type: 'long-text' };
 const NUMBER: FieldControl = { type: 'number' };
 const TEXTS: FieldControl = { type: 'list', item: TEXT };
+/** The Categories of the Edition a Category field picks from. */
+export type CategoryOptions = Readonly<
+  Record<'categories' | 'correctionCategories', readonly Option[]>
+>;
+
+type Named = readonly { readonly id: string; readonly displayName: string }[];
+
+/**
+ * An Edition's Categories as options, each by the display name the app shows
+ * for it (ADR 0033); none while the Edition card is loading.
+ */
+export function categoryOptionsOf(
+  card: { readonly categories: Named; readonly correctionCategories: Named } | undefined,
+): CategoryOptions {
+  const of = (list: Named = []) =>
+    list.map(({ id, displayName }) => ({ value: id, label: displayName }));
+  return { categories: of(card?.categories), correctionCategories: of(card?.correctionCategories) };
+}
+
 const optionsOf = (labels: Readonly<Record<string, string>>): readonly Option[] =>
   Object.entries(labels).map(([value, label]) => ({ value, label }));
 const choice = (labels: Readonly<Record<string, string>>): FieldControl => ({
