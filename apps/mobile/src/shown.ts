@@ -312,7 +312,7 @@ export function shownOf({
     gesturesHintAgain: on('gesturesHintAgain'),
     savedSwipesOff: on('savedSwipesOff'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
-    rarity: on('rarityRange') ? 'range' : on('rarityCeiling') ? 'top' : 'off',
+    rarity: on('rarityCeiling') ? (on('rarityRange') ? 'range' : 'top') : 'off',
     rarityTest: on('rarityTest'),
     questionnaire:
       on('questionnaire') || on('rarityTest')
