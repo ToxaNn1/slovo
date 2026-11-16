@@ -8,6 +8,7 @@ import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
+import { useOfflineNotice } from '../edition/offline-notice';
 
 const strings = editionStrings.collections.link;
 
@@ -27,11 +28,28 @@ function refusalText(reason: CollectionShareRefusal): string {
 }
 
 /**
+ * Says why a Collection is not shared: no connection on the offline plate
+ * while it is on in effect (ADR 0158), anything else, or no connection with
+ * the plate off, in a toast. It needs an `UndoToastProvider` above it.
+ */
+function useSayRefused(): (reason: CollectionShareRefusal) => void {
+  const showToast = useUndoToast();
+  const showOffline = useOfflineNotice();
+  return useCallback(
+    (reason: CollectionShareRefusal) => {
+      if (reason === 'offline' && showOffline !== undefined) showOffline();
+      else showToast({ message: refusalText(reason) });
+    },
+    [showToast, showOffline],
+  );
+}
+
+/**
  * «Поділитися посиланням» of a Collection's menu (ADR 0058): whether the menu
  * offers it, while `collectionLinks` is on in effect, and the share, which
  * asks the backend for a link and opens the system share sheet with the
- * message, or shows a toast that says why not, such as «Немає з'єднання.
- * Спробуй пізніше.». `share` stays the same from render to render and
+ * message, or says why not, such as «Немає з’єднання. Спробуй пізніше.» on
+ * the offline plate. `share` stays the same from render to render and
  * shares over the composition open at the tap. It needs an `UndoToastProvider`
  * above it.
  */
@@ -40,7 +58,7 @@ export function useCollectionSharing(): {
   share: (collectionId: string) => void;
 } {
   const sharing = useComposition().collectionSharing;
-  const showToast = useUndoToast();
+  const sayRefused = useSayRefused();
   const latest = useRef(sharing);
   useEffect(() => {
     latest.current = sharing;
@@ -49,7 +67,7 @@ export function useCollectionSharing(): {
     (collectionId: string) => {
       void latest.current.share(collectionId, strings).then(async (shared) => {
         if (!shared.ok) {
-          showToast({ message: refusalText(shared.reason) });
+          sayRefused(shared.reason);
           return;
         }
         try {
@@ -59,7 +77,7 @@ export function useCollectionSharing(): {
         }
       });
     },
-    [showToast],
+    [sayRefused],
   );
   return { available: sharing.available(), share };
 }
@@ -77,7 +95,7 @@ export interface CollectionShareSheetProps {
 /**
  * «Поділитися посиланням» of board 09 (ADR 0132): `share` asks the backend
  * for a Collection Link as `useCollectionSharing` does, then opens the share
- * sheet with it, or shows the toast that says why not. On the sheet
+ * sheet with it, or says why not as `useCollectionSharing` does. On the sheet
  * «Скопіювати посилання», while `collectionLinkCopy` is on in effect, copies
  * the link with `expo-clipboard` and says «Посилання скопійовано.»; «Поділитися»
  * opens the system share sheet with the message once the sheet has slid away
@@ -93,6 +111,7 @@ export function useCollectionShareSheet(): {
   const sharing = useComposition().collectionSharing;
   const canCopy = useEditionInEffect().isFeatureEnabled('collectionLinkCopy');
   const showToast = useUndoToast();
+  const sayRefused = useSayRefused();
   const latest = useRef(sharing);
   useEffect(() => {
     latest.current = sharing;
@@ -107,10 +126,10 @@ export function useCollectionShareSheet(): {
       void latest.current.share(collectionId, strings).then((made) => {
         setBusy(false);
         if (made.ok) setShared({ url: made.url, message: made.message });
-        else showToast({ message: refusalText(made.reason) });
+        else sayRefused(made.reason);
       });
     },
-    [showToast],
+    [sayRefused],
   );
   const close = () => {
     setShared(undefined);

@@ -37,19 +37,22 @@ async function renderGate(state: OpeningState<unknown>) {
 }
 
 describe('the gate of an opening', () => {
-  it('shows the Mascot waiting over the loading state', async () => {
+  it('shows the card placeholder with no Mascot while it opens', async () => {
     await renderGate({ status: 'loading' });
 
-    expect(screen.getByTestId('feed-loading')).toBeOnTheScreen();
-    expect(screen.getByTestId('mascot-waits')).toBeOnTheScreen();
+    expect(screen.getByTestId('feed-loading-card')).toBeOnTheScreen();
+    expect(screen.queryByTestId(/^mascot-/)).toBeNull();
     expect(screen.queryByTestId('opened')).toBeNull();
   });
 
-  it('shows the Mascot cringing in the error state', async () => {
+  it('shows the torn thread, «Нитка урвалася» and «Ще раз» with no Mascot when it fails', async () => {
     await renderGate({ status: 'failed', retry: () => undefined });
 
     expect(screen.getByTestId('gate-failed')).toBeOnTheScreen();
-    expect(screen.getByTestId('mascot-cringes')).toBeOnTheScreen();
+    expect(screen.getByTestId('torn-thread')).toBeOnTheScreen();
+    expect(screen.getByText(editionStrings.loadFailed.message)).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: editionStrings.loadFailed.retry })).toBeOnTheScreen();
+    expect(screen.queryByTestId(/^mascot-/)).toBeNull();
     expect(screen.queryByTestId('opened')).toBeNull();
   });
 

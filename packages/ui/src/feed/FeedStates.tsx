@@ -2,65 +2,22 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { space, typeStyle } from '../tokens';
+import { space, tornThread, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { Button } from '../primitives/Button';
-import { WedgeLoader } from '../primitives/WedgeLoader';
 
 /**
- * The Feed's loading state while the Language Pack opens: the design's red
- * wedges and a line of text under them, under the Mascot waiting when the app
- * shows it. With Reduce Motion the wedges stand still. VoiceOver reads it as
- * one element.
- */
-export function FeedLoading({
-  text,
-  accessibilityLabel,
-  mascot,
-}: {
-  text: string;
-  accessibilityLabel: string;
-  /** The Mascot waiting, over the wedges, if the app shows it. */
-  mascot?: ReactNode;
-}) {
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const { voice } = useEdition();
-
-  return (
-    <View
-      testID="feed-loading"
-      accessible
-      accessibilityRole="progressbar"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ busy: true }}
-      {...voice}
-      style={styles.loading}
-    >
-      {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
-      <WedgeLoader testID="feed-loading-wedges" />
-      <Text
-        {...voice}
-        style={[typeStyle('sub', tokens), styles.loadingText, { color: colors.muted }]}
-      >
-        {text}
-      </Text>
-    </View>
-  );
-}
-
-/**
- * The Feed's local error state, when the Language Pack can't be opened: the
- * Mascot when the app shows it, a title, what went wrong and a button that
- * tries again. Nothing here speaks
- * of the network: the Feed never needs it.
+ * The local error state (board XSettings m7), such as when the Language Pack
+ * can't be opened: its art when the app gives one, such as the torn thread,
+ * a title, what went wrong and a compact button at the middle that tries
+ * again. Nothing here speaks of the network: the Feed never needs it.
  */
 export function FeedError({
   title,
   message,
   retry,
   onRetry,
-  mascot,
+  art,
   testID = 'feed-error',
 }: {
   title: string;
@@ -68,8 +25,8 @@ export function FeedError({
   /** The label of the button that tries again. */
   retry: string;
   onRetry: () => void;
-  /** The Mascot drawn over the title, if the app shows it. */
-  mascot?: ReactNode;
+  /** The art drawn over the title, such as `TornThread`, if the app shows one. */
+  art?: ReactNode;
   testID?: string;
 }) {
   const tokens = useTokens();
@@ -77,7 +34,7 @@ export function FeedError({
   const { voice } = useEdition();
   return (
     <View testID={testID} style={styles.error}>
-      {mascot !== undefined && <View style={styles.illustration}>{mascot}</View>}
+      {art}
       <View
         accessible
         accessibilityRole="alert"
@@ -101,17 +58,14 @@ export function FeedError({
 }
 
 const styles = StyleSheet.create({
-  loading: { alignItems: 'center', gap: space[6] + space[1] },
-  mascot: { alignItems: 'center' },
-  loadingText: { textAlign: 'center' },
   error: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: space[8] + space[2],
+    gap: tornThread.gap,
+    paddingHorizontal: space[8],
   },
-  illustration: { marginBottom: space[6] },
   center: { textAlign: 'center' },
-  errorMessage: { marginTop: space[3], textAlign: 'center' },
-  button: { alignSelf: 'stretch', marginTop: space[8] },
+  errorMessage: { marginTop: tornThread.gap, textAlign: 'center' },
+  button: { marginTop: tornThread.buttonGap },
 });

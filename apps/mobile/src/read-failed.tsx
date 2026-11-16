@@ -1,14 +1,13 @@
-import { BackLink, FeedError, space, useTokens } from '@slovo/ui';
+import { BackLink, FeedError, space, TornThread, useTokens } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from './edition/edition';
-import { ShippedMascot } from './mascot/mascot';
 
 /**
  * The error state of a screen whose read failed: the back link to the screen
- * before, then the error with its retry, which reads again; the Mascot cringes.
+ * before, then the error «Нитка урвалася» with its retry, which reads again.
  */
 export function ReadFailed({
   back,
@@ -39,7 +38,7 @@ export function ReadFailed({
         message={message}
         retry={retry}
         onRetry={onRetry}
-        mascot={<ShippedMascot state="cringes" />}
+        art={<TornThread />}
         testID={testID}
       />
     </View>

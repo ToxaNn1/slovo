@@ -10,11 +10,16 @@ export const appStringsShape = {
    */
   loadFailed: z.strictObject({
     title: TextSchema,
-    /** Says what went wrong, e.g. "Не вдалося відкрити словник.". */
+    /** Says what went wrong, e.g. "Не вдалося відкрити словник. Спробуй ще раз — слова нікуди не поділися.". */
     message: TextSchema,
     /** The button that tries to open the Language Pack again. */
     retry: TextSchema,
   }),
   /** The VoiceOver label of the round button that glides a long list back to its top, e.g. "Нагору". */
   scrollToTop: TextSchema,
+  /**
+   * The offline plate under the status bar when an action that needs the
+   * network finds none (ADR 0158), e.g. "Немає з’єднання. Спробуй пізніше.".
+   */
+  offlinePlate: TextSchema,
 };

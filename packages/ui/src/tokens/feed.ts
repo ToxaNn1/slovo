@@ -1292,3 +1292,39 @@ export const goalReachedCard = {
   },
   enter: goalReachedEnter,
 } as const;
+
+/**
+ * The Feed's loading state (board XSettings m5): the card's placeholder, its
+ * top corners round and its bottom slanting up to the right, the red wedges
+ * at its middle, and three skeleton bars under it, each the share of the
+ * width it takes; the room from the status bar to the card, the side margin
+ * and the gap between the pieces; and the `slSkel` pulse, the card first and
+ * each bar a beat later.
+ */
+export const feedLoading = {
+  top: 60,
+  side: 12,
+  gap: 14,
+  card: { height: 430, radius: 30, slant: 0.1 },
+  bars: [
+    { height: 22, width: '60%' },
+    { height: 16, width: '85%' },
+    { height: 16, width: '70%' },
+  ],
+  barRadius: 6,
+  pulse: { duration: 1400, low: 0.55, delays: [0, 200, 300, 400] },
+} as const;
+
+/**
+ * The art of the error state «Нитка урвалася» (board XSettings m7): an ink
+ * thread torn in two with a red wedge at each end of the break, drawn on a
+ * 220 × 60 box with a 5 pt stroke; and the room between the art, the title
+ * and the message, and the extra room over the button.
+ */
+export const tornThread = {
+  width: 220,
+  height: 60,
+  stroke: 5,
+  gap: 16,
+  buttonGap: 8,
+} as const;

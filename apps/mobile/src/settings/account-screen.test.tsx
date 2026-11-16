@@ -14,7 +14,7 @@ import {
   createFakeGoogleSignInSheet,
   seedUserState,
 } from '@slovo/core/testing';
-import { EditionProvider, fill } from '@slovo/ui';
+import { EditionProvider, OfflinePlateProvider, fill } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { Platform } from 'react-native';
@@ -41,8 +41,12 @@ const { problems } = strings;
 /** A client id of the shape Google gives an iOS app; no real one. */
 const CLIENT_ID = '123456789012-test.apps.googleusercontent.com';
 
-/** The Edition with its Google and Apple sign-in Feature Switches as given. */
-const editionWith = (switches: { googleSignIn: boolean; signInWithApple: boolean }) => {
+/** The Edition with its Google and Apple sign-in and offline plate Feature Switches as given. */
+const editionWith = (switches: {
+  googleSignIn: boolean;
+  signInWithApple: boolean;
+  offlinePlate: boolean;
+}) => {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   const states = Object.fromEntries(
     Object.entries(switches).map(([name, on]) => [name, on ? 'on' : 'off']),
@@ -68,6 +72,7 @@ async function settle(action: () => unknown = () => undefined) {
 async function renderScreen({
   googleSignIn = true,
   signInWithApple = true,
+  offlinePlate = false,
   withClientId = true,
   appleModule = true,
   googleSheet = createFakeGoogleSignInSheet(),
@@ -76,6 +81,7 @@ async function renderScreen({
 }: {
   googleSignIn?: boolean;
   signInWithApple?: boolean;
+  offlinePlate?: boolean;
   withClientId?: boolean;
   appleModule?: boolean;
   googleSheet?: GoogleSignInSheet;
@@ -101,20 +107,22 @@ async function renderScreen({
     { onError: jest.fn() },
   );
   await opening.opened();
-  const edition = editionWith({ googleSignIn, signInWithApple });
+  const edition = editionWith({ googleSignIn, signInWithApple, offlinePlate });
   await renderInGestureRoot(
     // The SLOVO ID screen's confirmation dialog is a bottom sheet, which reads the safe area.
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={edition} strings={editionStrings}>
-        <AccountScreen
-          opening={opening}
-          back={{ label: editionStrings.settings.title, onPress: jest.fn() }}
-          signIn={{
-            edition,
-            googleClientId: withClientId ? CLIENT_ID : undefined,
-            appleModule,
-          }}
-        />
+        <OfflinePlateProvider message={editionStrings.offlinePlate}>
+          <AccountScreen
+            opening={opening}
+            back={{ label: editionStrings.settings.title, onPress: jest.fn() }}
+            signIn={{
+              edition,
+              googleClientId: withClientId ? CLIENT_ID : undefined,
+              appleModule,
+            }}
+          />
+        </OfflinePlateProvider>
       </EditionProvider>
     </SafeAreaProvider>,
   );
@@ -135,7 +143,11 @@ describe("the Account screen's name", () => {
   it("is the Edition's Account name, never «SLOVO ID»", async () => {
     await renderScreen();
 
-    const { accountName } = editionWith({ googleSignIn: true, signInWithApple: true });
+    const { accountName } = editionWith({
+      googleSignIn: true,
+      signInWithApple: true,
+      offlinePlate: false,
+    });
     expect(accountName).not.toBe('SLOVO ID');
     expect(screen.getByText(accountName)).toBeOnTheScreen();
     expect(screen.queryByText(/SLOVO ID/)).not.toBeOnTheScreen();
@@ -202,6 +214,18 @@ describe('«Увійти через Google» on the SLOVO ID screen', () => {
     await signInWithGoogle();
 
     expect(screen.getByText(problems.offline)).toBeOnTheScreen();
+    expect(screen.queryByTestId('offline-plate')).not.toBeOnTheScreen();
+  });
+
+  it('says it on the offline plate, not under the field, with the plate on', async () => {
+    const googleSheet = createFakeGoogleSignInSheet();
+    googleSheet.fails('offline');
+    await renderScreen({ googleSheet, offlinePlate: true });
+
+    await signInWithGoogle();
+
+    expect(screen.getByTestId('offline-plate')).toHaveTextContent(editionStrings.offlinePlate);
+    expect(screen.queryByText(problems.offline)).not.toBeOnTheScreen();
   });
 
   it('says so when Google does not confirm the sign-in', async () => {

@@ -148,6 +148,7 @@
     "readerName": "on",
     "widgetPreviews": "on",
     "textSizeSteps": "on",
+    "offlinePlate": "on",
     "fastReveal": "on",
     "dashboard": "on",
     "mood": "on",

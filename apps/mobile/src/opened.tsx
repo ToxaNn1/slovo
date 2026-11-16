@@ -1,10 +1,9 @@
-import { FeedError, useTokens } from '@slovo/ui';
+import { FeedError, TornThread, useTokens } from '@slovo/ui';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { editionStrings } from './edition/edition';
 import { FeedLoadingScreen } from './edition/feed-loading';
-import { ShippedMascot } from './mascot/mascot';
 import { useSubscribed, type Opening } from './opening';
 
 /**
@@ -22,13 +21,12 @@ export function Opened({
   children: ReactNode;
 }) {
   const state = useSubscribed(opening, ({ state }) => state);
-  if (state.status === 'loading')
-    return <FeedLoadingScreen mascot={<ShippedMascot state="waits" />} />;
+  if (state.status === 'loading') return <FeedLoadingScreen />;
   if (state.status === 'failed') return <LoadFailed testID={failedTestID} onRetry={state.retry} />;
   return children;
 }
 
-/** The local error state: the Language Pack or the composition over it can't be opened; the Mascot cringes. */
+/** The local error state «Нитка урвалася»: the Language Pack or the composition over it can't be opened. */
 function LoadFailed({ onRetry, testID }: { onRetry: () => void; testID: string }) {
   const { colors } = useTokens();
   const { title, message, retry } = editionStrings.loadFailed;
@@ -39,7 +37,7 @@ function LoadFailed({ onRetry, testID }: { onRetry: () => void; testID: string }
         message={message}
         retry={retry}
         onRetry={onRetry}
-        mascot={<ShippedMascot state="cringes" />}
+        art={<TornThread />}
         testID={testID}
       />
     </View>

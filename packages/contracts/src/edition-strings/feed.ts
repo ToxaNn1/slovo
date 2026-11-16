@@ -15,8 +15,6 @@ export const feedStringsShape = {
   }),
   /** The Feed around its cards. */
   feed: z.strictObject({
-    /** Shown under the skeleton card while the Language Pack opens. */
-    loading: TextSchema,
     /** What VoiceOver says while the Feed loads. */
     loadingLabel: TextSchema,
     /** The VoiceOver actions that stand in for swiping up and down. */
