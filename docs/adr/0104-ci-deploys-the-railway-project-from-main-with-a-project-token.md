@@ -1,6 +1,6 @@
 # CI deploys the Railway project from main with a project token
 
-Owner decision of 2026-11-11 (ticket #1796). The Railway project has no source (ADR 0103), so Railway builds nothing on its own when `main` changes; someone has to run `railway up`. A deploy from a laptop depends on whoever is signed in there and on what their checkout holds.
+Owner decision of 2026-11-11 (ticket #1796). Amended by ADR 0151 (a push deploys only what it changed). The Railway project has no source (ADR 0103), so Railway builds nothing on its own when `main` changes; someone has to run `railway up`. A deploy from a laptop depends on whoever is signed in there and on what their checkout holds.
 
 **Decision.** The job "Deploy to Railway" of `.github/workflows/ci.yml` deploys on every push to `main`, once the check "Lint, typecheck, test and Language Pack" passed; a pull request never deploys.
 
