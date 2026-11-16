@@ -11,8 +11,6 @@ const MoodCheckInRecordSchema = z.object({
   choice: z.string(),
 });
 
-export type MoodCheckInRecord = z.infer<typeof MoodCheckInRecordSchema>;
-
 /** The records of Mood. */
 export const moodRecords = {
   /**

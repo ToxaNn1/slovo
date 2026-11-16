@@ -110,7 +110,6 @@ const XpRecordSchema = StoredXpRecordSchema.transform((record): XpRecord =>
 type StoredXpRecord = z.infer<typeof StoredXpRecordSchema>;
 /** One record of the XP log in memory: an XP entry holds only the fields of its own source. */
 export type XpRecord = XpEntry | Exclude<StoredXpRecord, { kind: 'xp' }>;
-export type XpSource = z.infer<typeof XpSourceSchema>;
 
 /** The records of the progress: Active Days, the XP log and the reported Streak break. */
 export const progressRecords = {

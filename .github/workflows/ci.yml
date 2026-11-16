@@ -308,10 +308,36 @@ jobs:
   # applies .railway/railway.ts, then uploads each service with `railway up`.
   # RAILWAY_TOKEN is a project token of the production environment; the CLI
   # reads it from the environment, so no step prints it.
+  # Whether this push changed what a Railway service is built from, and
+  # whether it can break the stored content's snapshot (ADR 0151). A job of its
+  # own, so a push that deploys nothing never joins the deploy's concurrency
+  # group and never replaces a deploy still waiting.
+  deploy-scope:
+    name: Deploy scope
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      deploy: ${{ steps.scope.outputs.deploy }}
+      snapshot: ${{ steps.scope.outputs.snapshot }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The diff runs from the last deployed commit, any distance back.
+          fetch-depth: 0
+          persist-credentials: false
+      - id: scope
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci-deploy-scope.mjs
+
   deploy:
     name: Deploy to Railway
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    needs: [checks]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.deploy-scope.outputs.deploy == 'true' }}
+    needs: [checks, deploy-scope]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # One deploy at a time: a newer push waits for the running deploy and
@@ -350,8 +376,11 @@ jobs:
       # old rule let through: the Patch and the snapshot then fail their output
       # validation and answer 500 (#1819). After the new backend has had its
       # health check time to roll out, ask for every Edition's snapshot, which
-      # the CDN never caches; a red deploy reaches the owner's alerts.
+      # the CDN never caches; a red deploy reaches the owner's alerts. Each
+      # snapshot reads all the content from Neon, so it runs only when the
+      # deploy carries a change that can break it (ADR 0151).
       - name: Check every Edition's snapshot
+        if: ${{ needs.deploy-scope.outputs.snapshot == 'true' }}
         shell: bash
         env:
           SLOVO_BACKEND_URL: ${{ secrets.SLOVO_BACKEND_URL }}
