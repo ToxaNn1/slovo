@@ -39,10 +39,12 @@ describe('the web page of a Collection Link', () => {
   async function shared(entryIds: string[], edition = 'uk') {
     // The UA Edition is always there, so a link of another Edition can be asked for under its path.
     const folder = testEditions([...new Set(['uk', edition])]);
-    const content = folder.content(edition);
+    const { editionDir, snapshot } = folder.content(edition);
     const backend = testApp({ editions: folder.read() });
     // The tests of the file share the database, so each import takes the place of the last.
-    const imported = await backend.importContent(edition, content, { override: true });
+    const imported = await backend.importSnapshot(edition, editionDir, snapshot, {
+      override: true,
+    });
     if (!imported.ok) throw new Error(`${edition} did not import`);
     const name = newName();
     const { id } = await backend.client.collectionLinks.create({ edition, name, entryIds });
@@ -100,9 +102,9 @@ describe('the web page of a Collection Link', () => {
     const database = createDatabase(own.url, silentLogger);
     onTestFinished(() => database.close());
     const folder = testEditions(['uk']);
-    const content = folder.content('uk');
+    const { editionDir, snapshot } = folder.content('uk');
     const backend = testApp({ database, editions: folder.read() });
-    const imported = await backend.importContent('uk', content);
+    const imported = await backend.importSnapshot('uk', editionDir, snapshot);
     if (!imported.ok) throw new Error('uk did not import');
     const admin = createAdminAccess({
       store: createAdminStore(database),

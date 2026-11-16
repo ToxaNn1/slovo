@@ -1,4 +1,4 @@
-import { listEditions, openEdition } from '@slovo/language-pack/edition';
+import { listEditions, openEditionWithoutRecords } from '@slovo/language-pack/edition';
 import type { Edition } from '@slovo/server-core';
 
 /**
@@ -10,7 +10,7 @@ import type { Edition } from '@slovo/server-core';
  */
 export function readEditions(editionsDir: string): Edition[] {
   return listEditions(editionsDir).map((editionId) => {
-    const edition = openEdition(editionsDir, editionId);
+    const edition = openEditionWithoutRecords(editionsDir, editionId);
     return { config: edition.config, strings: edition.read('strings') };
   });
 }

@@ -1,24 +1,25 @@
-import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-import { afterAll, afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import type { CrosswordDay } from '@slovo/contracts';
+import { ContentSnapshotSchema, type ContentSnapshot } from '@slovo/contracts/api';
 
-import { buildLanguagePack, formatBuildError, generateDailyCrossword } from './index';
-import { ukrainianSeedFolder, ukrainianSnapshot } from './test-support';
+import { newCrosswordDays } from './crossword';
+import { CROSSWORD_DAYS_AHEAD, dateAfter } from './crossword-days';
+import { buildFromSnapshot, formatBuildError, readEditionWithSnapshot } from './index';
+import type { PackContent } from './pack-layout';
+import { fixtureDir, ukrainianFolder, ukrainianSnapshot, validSnapshot } from './test-support';
 
-const seedDir = mkdtempSync(join(tmpdir(), 'slovo-crossword-uk-'));
-afterAll(() => {
-  rmSync(seedDir, { recursive: true, force: true });
-});
-// The UA Edition's folder with the seed snapshot's content.
-const ukrainianDir = ukrainianSeedFolder(seedDir);
 const seed = ukrainianSnapshot();
-const fixture = (name: string) => fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
-const DAYS_FILE = 'content/crossword-days.json';
+/** The file the content rules name in the errors of crossword days. */
+const DAYS = 'snapshot:crosswordDays';
+const TODAY = new Date('2026-11-16T12:00:00Z');
+
+/** How many placements a day's search may try: less than the build's, so the days build fast. */
+const SEARCH_BUDGET = 100;
 
 const workDirs: string[] = [];
 
@@ -26,26 +27,42 @@ afterEach(() => {
   for (const dir of workDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-function copyEdition(from: string): string {
-  const dir = mkdtempSync(join(tmpdir(), 'slovo-crossword-'));
-  workDirs.push(dir);
-  const editionDir = join(dir, 'edition');
-  cpSync(from, editionDir, { recursive: true });
-  return editionDir;
+/** The checked content of a snapshot with an Edition's folder, or its errors joined into one. */
+function contentOrErrors(
+  editionDir: string,
+  snapshot: ContentSnapshot,
+  today = TODAY,
+): { content: PackContent } | { errors: string[] } {
+  const { errors, valid } = readEditionWithSnapshot(editionDir, snapshot, { today });
+  if (valid === undefined) return { errors: errors.map(formatBuildError) };
+  return { content: valid.content };
 }
 
-function dayOf(editionDir: string, date: string): CrosswordDay {
-  const result = generateDailyCrossword({ editionDir, date });
-  if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-  return result.day;
+function contentOf(editionDir: string, snapshot: ContentSnapshot): PackContent {
+  const read = contentOrErrors(editionDir, snapshot);
+  if ('errors' in read) throw new Error(read.errors.join('\n'));
+  return read.content;
 }
 
-/** The dates from `first` on, one a day. */
-function dates(first: string, count: number): string[] {
-  const start = Date.parse(`${first}T00:00:00Z`);
-  return Array.from({ length: count }, (_, i) =>
-    new Date(start + i * 86_400_000).toISOString().slice(0, 10),
+/** The UA content with no crossword days, so each is made afresh. */
+const ukrainian = contentOf(ukrainianFolder.dir, { ...seed, crosswordDays: [] });
+
+/**
+ * The Daily Crosswords the build makes from `first` on, `count` of them, as
+ * it appends them after a day with no words.
+ */
+function daysResult(content: PackContent, first: string, count: number) {
+  return newCrosswordDays(
+    { ...content, crosswordDays: [{ date: dateAfter(first, -1), words: [] }] },
+    dateAfter(first, count - 1 - CROSSWORD_DAYS_AHEAD),
+    { searchBudget: SEARCH_BUDGET },
   );
+}
+
+function daysFrom(content: PackContent, first: string, count: number): readonly CrosswordDay[] {
+  const result = daysResult(content, first, count);
+  if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+  return result.days;
 }
 
 /** The 5 × 5 grid the words fill, a row a line, `.` for an empty cell. */
@@ -94,25 +111,25 @@ function maskedAnswer(text: string, answer: string): string {
     .join('');
 }
 
-interface EntryJson {
+interface EntryRecord {
   lemma?: string;
   primaryDefinition?: string;
-  standardEquivalents?: string[];
+  standardEquivalents?: readonly string[];
   explanation?: string;
   retired?: boolean;
 }
 
-function entryJson(id: string): EntryJson {
+function entryRecord(id: string): EntryRecord {
   const entry = [...seed.words, ...seed.corrections].find((record) => record.id === id);
   if (entry === undefined) throw new Error(`No Entry ${id} in the seed snapshot`);
   return entry;
 }
 
-describe('the Daily Crossword generated by the pack build', () => {
-  const month = dates('2027-01-01', 20).map((date) => dayOf(ukrainianDir, date));
+describe('the Daily Crossword the pack build makes', () => {
+  const month = daysFrom(ukrainian, '2027-01-01', 20);
 
   it('gives the same grid for the same date, and another for another date', () => {
-    expect(dayOf(ukrainianDir, '2027-01-01')).toEqual(month[0]);
+    expect(daysFrom(ukrainian, '2027-01-01', 1)).toEqual(month.slice(0, 1));
     expect(month[0]?.date).toBe('2027-01-01');
     expect(new Set(month.map((day) => gridOf(day).join('/'))).size).toBeGreaterThan(15);
   });
@@ -136,7 +153,7 @@ describe('the Daily Crossword generated by the pack build', () => {
 
   it("clues each word with its Word's primary Definition or its Correction's explanation, never a Retired Entry's", () => {
     for (const { entryId, answer, clue } of month.flatMap((day) => day.words)) {
-      const entry = entryJson(entryId);
+      const entry = entryRecord(entryId);
       expect(entry.retired ?? false).toBe(false);
       if (entryId.startsWith('w_')) {
         expect(answer).toBe(entry.lemma?.toLowerCase());
@@ -149,37 +166,29 @@ describe('the Daily Crossword generated by the pack build', () => {
   });
 
   it('puts «…» in place of every whole-word occurrence of the answer in a clue, ignoring case and Stress', () => {
-    const editionDir = copyEdition(ukrainianDir);
-    // Recorded days keep the clues they were made with: drop them to generate afresh.
-    rmSync(join(editionDir, DAYS_FILE));
-    const manifestPath = join(editionDir, 'content', 'manifest.json');
-    const { crosswordDaysChecksum: _recorded, ...manifest } = JSON.parse(
-      readFileSync(manifestPath, 'utf8'),
-    ) as Record<string, unknown>;
-    writeFileSync(manifestPath, JSON.stringify(manifest));
-    const folder = join(editionDir, 'content', 'corrections');
     const kept = new Map<string, string>();
-    for (const file of readdirSync(folder)) {
-      const path = join(folder, file);
-      const correction = JSON.parse(readFileSync(path, 'utf8')) as EntryJson & { id: string };
-      const form = correction.standardEquivalents?.[0] ?? '';
+    const corrections = seed.corrections.map((correction) => {
+      const [form] = correction.standardEquivalents;
       const named = `${form.charAt(0).toUpperCase()}${form.slice(1)}`;
-      const explanation = `${named} пишуть так. Кажуть «${form}», а не «${form}ик».`;
       kept.set(correction.id, `${form}ик`);
-      writeFileSync(path, JSON.stringify({ ...correction, explanation }));
-    }
-    const corrections = dates('2027-01-01', 30)
-      .flatMap((date) => dayOf(editionDir, date).words)
+      return {
+        ...correction,
+        explanation: `${named} пишуть так. Кажуть «${form}», а не «${form}ик».`,
+      };
+    });
+    const content = contentOf(ukrainianFolder.dir, { ...seed, corrections, crosswordDays: [] });
+    const clued = daysFrom(content, '2027-01-01', 30)
+      .flatMap((day) => day.words)
       .filter(({ entryId }) => entryId.startsWith('c_'));
 
-    expect(corrections.length).toBeGreaterThan(0);
-    for (const { entryId, clue } of corrections) {
+    expect(clued.length).toBeGreaterThan(0);
+    for (const { entryId, clue } of clued) {
       expect(clue).toBe(`… пишуть так. Кажуть «…», а не «${kept.get(entryId) ?? ''}».`);
     }
-  }, 180_000);
+  });
 
   it("refuses when no grid can be made from the Edition's words", () => {
-    const result = generateDailyCrossword({ editionDir: fixture('valid'), date: '2027-01-01' });
+    const result = daysResult(contentOf(fixtureDir('valid'), validSnapshot()), '2027-01-01', 1);
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.errors.map(formatBuildError)).toEqual([
@@ -188,13 +197,15 @@ describe('the Daily Crossword generated by the pack build', () => {
   });
 
   it('judges the public domain of the content on the given day', () => {
-    const editionDir = copyEdition(fixture('valid'));
-    const file = join(editionDir, 'content/corrections/c_fx0001.json');
-    const correction = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
+    const snapshot = validSnapshot();
     const use = { text: 'Він прийшов.', author: 'Автор', work: 'Твір', authorDeathYear: 2000 };
-    writeFileSync(file, JSON.stringify({ ...correction, literaryUses: [use] }));
+    const corrections = snapshot.corrections.map((correction) =>
+      correction.id === 'c_fx0001' ? { ...correction, literaryUses: [use] } : correction,
+    );
     const errorsOn = (today: Date) => {
-      const result = generateDailyCrossword({ editionDir, date: '2027-01-01', today });
+      const read = contentOrErrors(fixtureDir('valid'), { ...snapshot, corrections }, today);
+      if ('errors' in read) return read.errors;
+      const result = daysResult(read.content, '2027-01-01', 1);
       return result.ok ? [] : result.errors.map(formatBuildError);
     };
 
@@ -202,48 +213,43 @@ describe('the Daily Crossword generated by the pack build', () => {
       'content: No Daily Crossword can be made for 2027-01-01 from the 0 words of 3–5 letters',
     ]);
     expect(errorsOn(new Date(2030, 0, 1))).toEqual([
-      expect.stringMatching(/c_fx0001\.json.*literaryUses\.0\.authorDeathYear/),
+      expect.stringMatching(/c_fx0001.*literaryUses\.0\.authorDeathYear/),
     ]);
-  });
-
-  it('refuses a date that is not a calendar date', () => {
-    const result = generateDailyCrossword({ editionDir: ukrainianDir, date: '2027-02-30' });
-    expect(result.ok).toBe(false);
   });
 });
 
 describe('the crossword days of an Edition', () => {
   it('refuses a day whose grid breaks the rules, or whose words are not Entries of the Edition', () => {
-    const editionDir = copyEdition(fixture('valid'));
-    const day = dayOf(ukrainianDir, '2027-01-01');
-    const [first, ...rest] = day.words;
-    if (first === undefined) throw new Error('No words');
-    const broken = {
-      ...day,
-      date: '2027-01-02',
-      words: [{ ...first, row: 4, column: 4 }, ...rest],
-    };
-    const errorsWith = (days: unknown[]) => {
-      writeFileSync(join(editionDir, DAYS_FILE), JSON.stringify(days));
-      const result = buildLanguagePack({
-        editionDir,
-        outFile: join(editionDir, 'dist', 'pack.db'),
-      });
-      return result.ok ? [] : result.errors.map(formatBuildError);
+    const dir = mkdtempSync(join(tmpdir(), 'slovo-crossword-'));
+    workDirs.push(dir);
+    const [day] = daysFrom(ukrainian, '2027-01-01', 1);
+    if (day === undefined) throw new Error('No day');
+    const [first, second, ...others] = day.words;
+    if (first === undefined || second === undefined) throw new Error('Too few words');
+    // The snapshot is parsed where it enters, so a day breaking a grid rule never reaches the build.
+    const issuesWith = (days: unknown[]) => {
+      const parsed = ContentSnapshotSchema.safeParse({ ...seed, crosswordDays: days });
+      return parsed.success
+        ? []
+        : parsed.error.issues.map(({ path, message }) => `${path.join('.')}: ${message}`);
     };
 
-    expect(errorsWith([day, broken])).toContain(
-      'content/crossword-days.json › 1.words.0: Runs past the edge of the grid',
-    );
-    expect(errorsWith([day])).toContain(
-      `content/crossword-days.json › 0.words.0.entryId: No Word or Correction ${first.entryId} in the Edition`,
-    );
+    expect(issuesWith([day])).toEqual([]);
+    expect(
+      issuesWith([{ ...day, words: [{ ...first, row: 4, column: 4 }, second, ...others] }]),
+    ).toContain('crosswordDays.0.words.0: Runs past the edge of the grid');
+    expect(
+      issuesWith([{ ...day, words: [first, { ...second, entryId: first.entryId }, ...others] }]),
+    ).toContain(`crosswordDays.0.words.1.entryId: ${first.entryId} is already a word of the day`);
 
-    const [, second, ...others] = rest;
-    if (second === undefined) throw new Error('Too few words');
-    const twice = { ...day, words: [first, { ...second, entryId: first.entryId }, ...others] };
-    expect(errorsWith([twice])).toContain(
-      `content/crossword-days.json › 0.words.1.entryId: ${first.entryId} is already a word of the day`,
+    const result = buildFromSnapshot({
+      editionDir: fixtureDir('valid'),
+      snapshot: { ...validSnapshot(), crosswordDays: [day] },
+      outFile: join(dir, 'pack.db'),
+      today: TODAY,
+    });
+    expect(result.ok ? [] : result.errors.map(formatBuildError)).toContain(
+      `${DAYS} › 0.words.0.entryId: No Word or Correction ${first.entryId} in the Edition`,
     );
   });
 });

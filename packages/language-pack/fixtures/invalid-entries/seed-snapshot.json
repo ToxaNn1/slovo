@@ -1,0 +1,666 @@
+{
+  "editionId": "fixture",
+  "contentVersion": 3,
+  "words": [
+    {
+      "kind": "word",
+      "id": "w_fx1001",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити.",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1001",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити.",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1002",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити (w_fx1002).",
+      "categoryId": "space",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1003",
+      "lemma": "балакучий",
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити (w_fx1003).",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1004",
+      "lemma": "балакучий",
+      "stress": [9],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити (w_fx1004).",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1005",
+      "lemma": "балакучий",
+      "stress": [4],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити (w_fx1005).",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1006",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити.",
+      "categoryId": "speech",
+      "rarity": 6,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1007",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1008",
+      "lemma": "заметіль",
+      "stress": [5],
+      "partOfSpeech": "noun",
+      "primaryDefinition": "Сильний вітер зі снігом.",
+      "categoryId": "nature",
+      "rarity": 2,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1009",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити.",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": []
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1011",
+      "lemma": "балакучий",
+      "stress": [7, 5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити.",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1012",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити.",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ],
+      "gender": "masculine"
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1013",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити.",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ],
+      "registers": ["archaic", "archaic"]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1014",
+      "lemma": "завжди",
+      "stress": [1, 5],
+      "partOfSpeech": "adverb",
+      "primaryDefinition": "У будь-який час, постійно.",
+      "categoryId": "speech",
+      "rarity": 1,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ],
+      "correctionIds": ["c_fx1005", "c_fx9999"]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1015",
+      "lemma": "завжди",
+      "stress": [1, 5],
+      "partOfSpeech": "adverb",
+      "primaryDefinition": "У будь-який час, постійно.",
+      "categoryId": "speech",
+      "rarity": 4,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1016",
+      "lemma": "мій",
+      "stress": [1],
+      "partOfSpeech": "pronoun",
+      "primaryDefinition": "Який належить мені.",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1017",
+      "lemma": "за́вжди",
+      "stress": [1],
+      "partOfSpeech": "adverb",
+      "primaryDefinition": "У будь-який час.",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1018",
+      "lemma": "балакучиi",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити (латинська літера).",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1019",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити (невідоме поле).",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ],
+      "lemmma": "балакучий"
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1020",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити (дробова рідкісність).",
+      "categoryId": "speech",
+      "rarity": 2.5,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1022",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити (інше ім’я файлу).",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1023",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити (не в реєстрі).",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx1024",
+      "lemma": "ґазда",
+      "stress": [1],
+      "partOfSpeech": "noun",
+      "gender": "masculine",
+      "primaryDefinition": "Господар.",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ],
+      "registers": ["archaic"],
+      "region": "Гуцульщина"
+    },
+    {
+      "kind": "word",
+      "id": "word-10",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "adjective",
+      "primaryDefinition": "Який любить багато говорити.",
+      "categoryId": "speech",
+      "rarity": 3,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    }
+  ],
+  "corrections": [
+    {
+      "kind": "correction",
+      "id": "c_fx1001",
+      "nonStandardForm": "всігда",
+      "correctionType": "surzhyk",
+      "standardEquivalents": [],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Він всігда приходить вчасно.",
+        "standard": "**Він завжди приходить вчасно**."
+      },
+      "categoryId": "work",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "correction",
+      "id": "c_fx1002",
+      "nonStandardForm": "всігда",
+      "correctionType": "slang",
+      "standardEquivalents": ["завжди"],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Він всігда приходить вчасно.",
+        "standard": "**Він завжди приходить вчасно**."
+      },
+      "categoryId": "work",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "correction",
+      "id": "c_fx1003",
+      "nonStandardForm": "всігда",
+      "correctionType": "surzhyk",
+      "standardEquivalents": ["завжди", "завжди"],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Він всігда приходить вчасно.",
+        "standard": "**Він завжди приходить вчасно**."
+      },
+      "categoryId": "work",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "correction",
+      "id": "c_fx1005",
+      "nonStandardForm": "всігда",
+      "correctionType": "surzhyk",
+      "standardEquivalents": ["завжди"],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Він всігда приходить вчасно.",
+        "standard": "**Він завжди приходить вчасно**."
+      },
+      "categoryId": "work",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "correction",
+      "id": "c_fx1006",
+      "nonStandardForm": "ката́лог",
+      "correctionType": "wrongStress",
+      "standardEquivalents": ["каталог"],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Тестове речення з ката́лог.",
+        "standard": "**Тестове речення з каталог**."
+      },
+      "categoryId": "work",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "correction",
+      "id": "c_fx1007",
+      "nonStandardForm": "кат́алог",
+      "correctionType": "wrongStress",
+      "standardEquivalents": ["катало́г"],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Тестове речення з кат́алог.",
+        "standard": "**Тестове речення з катало́г**."
+      },
+      "categoryId": "work",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "correction",
+      "id": "c_fx1008",
+      "nonStandardForm": "ви́падок",
+      "correctionType": "wrongStress",
+      "standardEquivalents": ["випа́дки"],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Тестове речення з ви́падок.",
+        "standard": "**Тестове речення з випа́дки**."
+      },
+      "categoryId": "work",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "correction",
+      "id": "c_fx1009",
+      "nonStandardForm": "всі́гда",
+      "correctionType": "surzhyk",
+      "standardEquivalents": ["завжди"],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Тестове речення з всі́гда.",
+        "standard": "**Тестове речення з завжди**."
+      },
+      "categoryId": "work",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "correction",
+      "id": "c_fx1010",
+      "nonStandardForm": "каталог",
+      "correctionType": "wrongStress",
+      "standardEquivalents": ["катало́г"],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Тестове речення з каталог.",
+        "standard": "**Тестове речення з катало́г**."
+      },
+      "categoryId": "work",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "correction",
+      "id": "c_fx1011",
+      "nonStandardForm": "тоже",
+      "correctionType": "russianism",
+      "standardEquivalents": ["теж"],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Тестове речення з тоже.",
+        "standard": "**Тестове речення з теж**."
+      },
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "correction",
+      "id": "c_fx1012",
+      "nonStandardForm": "вдруг",
+      "correctionType": "russianism",
+      "standardEquivalents": ["раптом"],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Тестове речення з вдруг.",
+        "standard": "**Тестове речення з раптом**."
+      },
+      "categoryId": "speech",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "correction",
+      "id": "correction-4",
+      "nonStandardForm": "всігда",
+      "correctionType": "surzhyk",
+      "standardEquivalents": ["завжди"],
+      "explanation": "Тестове пояснення.",
+      "examplePair": {
+        "nonStandard": "Він всігда приходить вчасно.",
+        "standard": "**Він завжди приходить вчасно**."
+      },
+      "categoryId": "work",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    }
+  ],
+  "idioms": [
+    {
+      "kind": "idiom",
+      "id": "i_fx1001",
+      "expression": "свій до свого",
+      "idiomType": "idiom",
+      "primaryDefinition": "Тестове значення.",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "idiom",
+      "id": "i_fx1002",
+      "expression": "бити байдикi",
+      "idiomType": "idiom",
+      "primaryDefinition": "Тестове значення.",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "idiom",
+      "id": "i_fx1003",
+      "expression": "Tримати язик за зубами",
+      "idiomType": "idiom",
+      "primaryDefinition": "Тестове значення.",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "idiom",
+      "id": "i_fx1004",
+      "expression": "Бердичів",
+      "idiomType": "placeName",
+      "primaryDefinition": "Тестове значення.",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "idiom",
+      "id": "i_fx1005",
+      "expression": "пекти раків",
+      "idiomType": "idiom",
+      "primaryDefinition": "Тестове значення.",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "idiom",
+      "id": "i_fx1006",
+      "expression": "Пекти раків",
+      "idiomType": "idiom",
+      "primaryDefinition": "Тестове значення: червоніти.",
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    }
+  ],
+  "tips": [],
+  "synonymRows": [],
+  "curatedCollections": [],
+  "crosswordDays": [],
+  "mediaBase": "https://media.slovo.test",
+  "recordings": [],
+  "illustrations": [],
+  "needsNewRecording": []
+}

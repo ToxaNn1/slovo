@@ -6,9 +6,6 @@ tools/sourcing/fixtures/
 # The seed snapshot an empty database imports, a saved answer of the snapshot endpoint
 editions/*/seed-snapshot.json
 
-# The test fixtures' id registries, one id per line as `recordContent` appends them
-packages/language-pack/fixtures/*/content/ids.json
-
 # The design export, kept byte for byte as exported
 docs/design/export/
 

@@ -1,11 +1,11 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
-import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
+import { ukrainianFolder, ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
 import { afterAll, describe, expect, it, onTestFinished } from 'vitest';
 
@@ -22,10 +22,10 @@ import {
   testDatabaseUrl,
 } from '../test-support';
 
-/** A scratch folder of the file's own: the UA Edition folder written from the seed snapshot and the CLI's input files. */
+/** A scratch folder of the file's own: a copy of the UA Edition folder and the CLI's input files. */
 const scratch = (() => {
   const dir = mkdtempSync(join(tmpdir(), 'slovo-content-cli-'));
-  ukrainianSeedFolder(join(dir, 'editions'));
+  cpSync(ukrainianFolder.dir, join(dir, 'editions', 'uk'), { recursive: true });
   afterAll(() => {
     rmSync(dir, { recursive: true, force: true });
   });
@@ -63,7 +63,7 @@ async function servedBackend() {
   await runAdminCommand(['agent', 'add', 'claude-content'], commandDeps, io);
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
-  const imported = await backend.importContent('uk', join(editionsDir, 'uk'));
+  const imported = await backend.importSnapshot('uk', join(editionsDir, 'uk'), ukrainianSnapshot());
   if (!imported.ok) throw new Error('the UA Edition did not import');
   const server = await startServer({ app: backend.app, database, port: 0 });
   onTestFinished(() => server.stop());

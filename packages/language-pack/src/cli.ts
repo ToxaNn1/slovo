@@ -28,7 +28,7 @@ import {
   EDITIONS_DIR,
   EditionFolderError,
   openAppConfig,
-  openEdition,
+  openEditionWithoutRecords,
   REPO_DIR,
   type EditionFolder,
 } from './edition-folder';
@@ -56,7 +56,7 @@ async function main(): Promise<number> {
 
   let edition: EditionFolder;
   try {
-    edition = openEdition(EDITIONS_DIR, editionId);
+    edition = openEditionWithoutRecords(EDITIONS_DIR, editionId);
   } catch (error) {
     if (!(error instanceof EditionFolderError)) throw error;
     if (error.reason === 'unknown') {

@@ -1,12 +1,7 @@
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-
 import type { ApiClient } from '@slovo/contracts/api';
-import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
 import { sql } from 'drizzle-orm';
-import { afterAll, describe, expect, it, onTestFinished } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
@@ -22,16 +17,7 @@ import {
   testApp,
 } from '../test-support';
 
-/** The UA Edition folder written from the seed snapshot, removed after the file. */
-const folder = (() => {
-  const dir = mkdtempSync(join(tmpdir(), 'slovo-queue-'));
-  afterAll(() => {
-    rmSync(dir, { recursive: true, force: true });
-  });
-  return ukrainianSeedFolder(dir);
-})();
-
-const importedDatabase = importedDatabases('uk', folder);
+const importedDatabase = importedDatabases();
 
 /** The backend with the UA Edition imported, an Агент's client and a signed-in Власник and Адмін. */
 async function queueBackend() {

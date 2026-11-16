@@ -1,10 +1,8 @@
 import type { PackMetadata } from '@slovo/contracts';
 
 import type { BuildError } from './build-error';
-import { checkContentVersion } from './content-manifest';
-import { unregisteredEntries } from './id-registry';
-import { PACK_FORMAT, type PackContent } from './pack-layout';
-import { readEdition, readEditionWithSnapshot } from './read-edition';
+import { PACK_FORMAT } from './pack-layout';
+import { readEditionWithSnapshot } from './read-edition';
 import { starterMediaOf, type StarterMediaList } from './starter-media';
 import { contentReport, type ContentReport } from './report';
 import { fetchSnapshot } from './snapshot-source';
@@ -26,50 +24,6 @@ export type BuildResult =
 export type SnapshotBuildResult =
   | (Extract<BuildResult, { ok: true }> & { readonly starterMedia: StarterMediaList })
   | Extract<BuildResult, { ok: false }>;
-
-export type CheckResult =
-  { readonly ok: true } | { readonly ok: false; readonly errors: readonly BuildError[] };
-
-/**
- * Checks an Edition's content with the build's own rules and writes nothing:
- * it refuses exactly what `buildLanguagePack` refuses.
- */
-export function checkLanguagePack({
-  editionDir,
-  today = new Date(),
-}: {
-  editionDir: string;
-  /** The day the public domain is judged on (ADR 0045). */
-  today?: Date;
-}): CheckResult {
-  const checked = checkEdition(editionDir, today);
-  if (!checked.ok) return checked;
-  return { ok: true };
-}
-
-/**
- * Validates an Edition's config and content, Entry by Entry, across Entries
- * and against the id registry and the content manifest, and compiles them
- * into a SQLite Language Pack at `outFile` with a content report. It refuses
- * a literary use not yet in the public domain on `today`. Nothing is written
- * when there are errors.
- */
-export function buildLanguagePack({
-  editionDir,
-  outFile,
-  today = new Date(),
-}: {
-  editionDir: string;
-  outFile: string;
-  /** The day the public domain is judged on (ADR 0045). */
-  today?: Date;
-}): BuildResult {
-  const checked = checkEdition(editionDir, today);
-  if (!checked.ok) return checked;
-  const { content, metadata, report } = checked;
-  writePack(outFile, content, metadata);
-  return { ok: true, metadata, report };
-}
 
 /**
  * Compiles a SQLite Language Pack at `outFile` from an Edition's folder,
@@ -137,52 +91,4 @@ export async function buildFromBackend({
     ...(fetch === undefined ? {} : { fetch }),
   });
   return buildFromSnapshot({ editionDir, snapshot, outFile, today });
-}
-
-function checkEdition(
-  editionDir: string,
-  today: Date,
-):
-  | {
-      ok: true;
-      content: PackContent;
-      metadata: PackMetadata;
-      report: ContentReport;
-    }
-  | { ok: false; errors: readonly BuildError[] } {
-  const source = readEdition(editionDir, { registryRequired: true, today });
-  const unregistered =
-    source.registry === undefined
-      ? []
-      : unregisteredEntries(
-          [
-            ...source.words,
-            ...source.corrections,
-            ...source.idioms,
-            ...source.synonymRows,
-            ...source.tips,
-          ],
-          source.registry,
-        );
-  const errors = [
-    ...source.errors,
-    ...unregistered.map(({ file, entry }) => ({
-      file,
-      entryId: entry.id,
-      field: 'id',
-      message: 'Not in content/ids.json: record new ids with recordContent',
-    })),
-  ];
-  if (errors.length > 0 || source.valid === undefined) return { ok: false, errors };
-
-  const { content, manifest } = source.valid;
-  const check = checkContentVersion(content, manifest);
-  if (!check.recorded) return { ok: false, errors: [check.error] };
-  const metadata: PackMetadata = {
-    editionId: content.editionId,
-    ...check.manifest,
-    packFormat: PACK_FORMAT,
-  };
-
-  return { ok: true, content, metadata, report: contentReport(content) };
 }

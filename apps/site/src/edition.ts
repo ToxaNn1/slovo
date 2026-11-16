@@ -1,5 +1,5 @@
 import { EditionStringsSchema, EditionTokensSchema, MascotFigureSchema } from '@slovo/contracts';
-import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
+import { EDITIONS_DIR, openEditionWithoutRecords } from '@slovo/language-pack/edition';
 import { z } from 'zod';
 
 /** The Edition the landing belongs to: the UA Edition (ADR 0071). */
@@ -27,7 +27,7 @@ export type LandingEdition = z.output<typeof LandingEditionSchema>;
  * the result from the `edition` collection.
  */
 export function readLandingEdition(): LandingEdition {
-  const edition = openEdition(EDITIONS_DIR, LANDING_EDITION);
+  const edition = openEditionWithoutRecords(EDITIONS_DIR, LANDING_EDITION);
   const { partsOfSpeech, genders, partOfSpeechWithGender } = edition.read('strings').wordCard;
   return LandingEditionSchema.parse({
     tokens: edition.read('tokens'),

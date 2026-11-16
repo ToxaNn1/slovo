@@ -2,7 +2,11 @@ import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { EDITIONS_DIR, listEditions, openEdition } from '@slovo/language-pack/edition';
+import {
+  EDITIONS_DIR,
+  listEditions,
+  openEditionWithoutRecords,
+} from '@slovo/language-pack/edition';
 import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
 
@@ -38,7 +42,7 @@ const legal = defineCollection({
     async load(context) {
       context.store.clear();
       for (const editionId of listEditions(EDITIONS_DIR)) {
-        for (const file of openEdition(EDITIONS_DIR, editionId).legalPages()) {
+        for (const file of openEditionWithoutRecords(EDITIONS_DIR, editionId).legalPages()) {
           const id = `${editionId}/${basename(file, '.md')}`;
           const rendered = await context.renderMarkdown(readFileSync(file, 'utf8'), {
             fileURL: pathToFileURL(file),

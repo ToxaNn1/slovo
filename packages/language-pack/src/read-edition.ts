@@ -1,51 +1,16 @@
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
-
-import type {
-  Correction,
-  CuratedCollection,
-  EditionConfig,
-  Idiom,
-  SynonymRow,
-  Tip,
-  Word,
-} from '@slovo/contracts';
-import { WordIdSchema } from '@slovo/contracts';
+import type { EditionConfig } from '@slovo/contracts';
 import type { ContentSnapshot } from '@slovo/contracts/api';
 
-import { checkContentSet, checksumOf, type Authored } from '@slovo/content-rules';
+import { checkContentSet, type Authored } from '@slovo/content-rules';
 
 import { buildErrorsOf, type BuildError } from './build-error';
 import { categoryArtErrors } from './category-art';
-import type { ContentManifest } from './content-manifest';
 import { editionFiles, EditionFolderError, SNAPSHOT_FILE, snapshotEntries } from './edition-folder';
 import { sampleWordErrors } from './recordings';
-import { missingEntryErrors } from './id-registry';
 import type { PackContent } from './pack-layout';
 import { editionFontErrors } from './edition-fonts';
 
-/** An Edition's folder as read and checked, ready to compile when nothing is wrong. */
-export interface EditionSource {
-  readonly errors: readonly BuildError[];
-  /** The Edition id, when the config could be read. */
-  readonly editionId?: string;
-  readonly words: readonly Authored<Word>[];
-  readonly corrections: readonly Authored<Correction>[];
-  readonly idioms: readonly Authored<Idiom>[];
-  readonly synonymRows: readonly Authored<SynonymRow>[];
-  readonly tips: readonly Authored<Tip>[];
-  readonly curatedCollections: readonly Authored<CuratedCollection>[];
-  /** The known ids: none when the registry is optional and missing, unset when it can't be read. */
-  readonly registry?: readonly string[];
-  /** Set when there are no errors. */
-  readonly valid?: {
-    /** The content at the version the manifest records. */
-    readonly content: PackContent;
-    readonly manifest: ContentManifest;
-  };
-}
-
-/** The part of the content a snapshot gives the build, everything else coming from the folder. */
+/** The content a snapshot gives the build, with the config from the Edition's folder. */
 export interface SnapshotSource {
   readonly errors: readonly BuildError[];
   /** Set when there are no errors. */
@@ -58,36 +23,9 @@ export interface SnapshotSource {
 }
 
 /**
- * Reads an Edition's config and content and checks them Entry by Entry,
- * across Entries and against the id registry. It leaves to the caller
- * whether every Entry is registered and whether the manifest records the
- * content as it is.
- */
-export function readEdition(
-  editionDir: string,
-  {
-    registryRequired,
-    today,
-  }: {
-    registryRequired: boolean;
-    /** The day the public domain is judged on (ADR 0045). */
-    today: Date;
-  },
-): EditionSource {
-  const { source, manifest, checked } = readWith(editionDir, today, {
-    from: 'folder',
-    registryRequired,
-  });
-  if (checked === undefined || manifest === undefined) return source;
-  const content = { ...checked.content, contentVersion: manifest.contentVersion };
-  return { ...source, valid: { content, manifest } };
-}
-
-/**
  * Reads an Edition's config, Categories and assets from its folder and takes
- * the records from a snapshot of the backend, checking them as `readEdition`
- * checks the folder's. The folder's content files, id registry and manifest
- * are not read: the snapshot carries the ids and the content version.
+ * the records from a snapshot of the backend, checking them Entry by Entry
+ * and across Entries. The snapshot carries the ids and the content version.
  */
 export function readEditionWithSnapshot(
   editionDir: string,
@@ -99,10 +37,9 @@ export function readEditionWithSnapshot(
     today: Date;
   },
 ): SnapshotSource {
-  const { source, checked } = readWith(editionDir, today, { from: 'snapshot', snapshot });
-  const { errors } = source;
-  if (source.editionId !== undefined && source.editionId !== snapshot.editionId) {
-    const message = `The snapshot is of Edition ${snapshot.editionId}, not ${source.editionId}`;
+  const { errors, editionId, checked } = readWith(editionDir, today, snapshot);
+  if (editionId !== undefined && editionId !== snapshot.editionId) {
+    const message = `The snapshot is of Edition ${snapshot.editionId}, not ${editionId}`;
     return { errors: [...errors, { file: SNAPSHOT_FILE, message }] };
   }
   if (checked === undefined) return { errors };
@@ -116,18 +53,14 @@ export function readEditionWithSnapshot(
   return { errors, valid: { content, config: checked.config } };
 }
 
-/** Where the records come from: the Edition folder's content files or a snapshot of the backend. */
-type RecordsFrom =
-  | { readonly from: 'folder'; readonly registryRequired: boolean }
-  | { readonly from: 'snapshot'; readonly snapshot: ContentSnapshot };
-
 function readWith(
   editionDir: string,
   today: Date,
-  records: RecordsFrom,
+  snapshot: ContentSnapshot,
 ): {
-  source: EditionSource;
-  manifest?: ContentManifest;
+  errors: BuildError[];
+  /** The Edition id, when the config could be read. */
+  editionId?: string;
   /** Set when there are no errors. */
   checked?: {
     content: Omit<PackContent, 'contentVersion'>;
@@ -149,45 +82,12 @@ function readWith(
   }
 
   const config = readOrCollect(() => folder.read('config'));
-  const fromFolder = records.from === 'folder';
-  const manifest = fromFolder ? readOrCollect(() => folder.read('manifest')) : undefined;
-  const {
-    words,
-    corrections,
-    idioms,
-    synonymRows,
-    tips,
-    curatedCollections,
-    errors: entryErrors,
-  } = fromFolder ? folder.entries() : snapshotEntries(records.snapshot);
-  errors.push(...entryErrors);
-  const crosswordDays = fromFolder
-    ? readOrCollect(() => folder.readIfPresent('crosswordDays'))
-    : records.snapshot.crosswordDays.length === 0
-      ? undefined
-      : records.snapshot.crosswordDays;
+  const { words, corrections, idioms, synonymRows, tips, curatedCollections } =
+    snapshotEntries(snapshot);
+  const crosswordDays = snapshot.crosswordDays.length === 0 ? undefined : snapshot.crosswordDays;
   const tokens = readOrCollect(() => folder.readIfPresent('tokens'));
   const decor = readOrCollect(() => folder.readIfPresent('decor'));
-  const registry = fromFolder
-    ? readOrCollect(() =>
-        records.registryRequired
-          ? folder.read('idRegistry')
-          : (folder.readIfPresent('idRegistry') ?? []),
-      )
-    : undefined;
-  // The folder's days are held to the manifest; a snapshot's days are the backend's, which keeps them.
-  const recordedCrosswordDaysChecksum = fromFolder
-    ? manifest?.crosswordDaysChecksum
-    : crosswordDays === undefined
-      ? undefined
-      : checksumOf(crosswordDays);
   const wordIds = new Set(words.map(({ entry }) => entry.id));
-  /** Whether the Edition has a Word of this id: a valid one, or a Word file that fails its checks. */
-  const isWord = (id: string) =>
-    wordIds.has(id) ||
-    (fromFolder &&
-      WordIdSchema.safeParse(id).success &&
-      existsSync(join(editionDir, folder.entryFile(id))));
   if (config !== undefined) {
     errors.push(
       ...buildErrorsOf(
@@ -201,40 +101,17 @@ function readWith(
             tips,
             curatedCollections,
             ...(crosswordDays === undefined ? {} : { crosswordDays }),
-            ...(recordedCrosswordDaysChecksum === undefined
-              ? {}
-              : { recordedCrosswordDaysChecksum }),
           },
           { today },
         ),
       ),
       ...editionFontErrors(config, tokens, folder.fonts()),
       ...categoryArtErrors(config, decor),
-      ...sampleWordErrors(config, isWord),
-    );
-  }
-  if (registry !== undefined) {
-    errors.push(
-      ...missingEntryErrors(
-        registry,
-        (id) => folder.entryFile(id),
-        (file) => existsSync(join(editionDir, file)),
-      ),
+      ...sampleWordErrors(config, (id) => wordIds.has(id)),
     );
   }
 
-  const source = {
-    errors,
-    words,
-    corrections,
-    idioms,
-    synonymRows,
-    tips,
-    curatedCollections,
-    ...(config === undefined ? {} : { editionId: config.id }),
-    ...(registry === undefined ? {} : { registry }),
-  };
-  const read = { source, ...(manifest === undefined ? {} : { manifest }) };
+  const read = { errors, ...(config === undefined ? {} : { editionId: config.id }) };
   if (errors.length > 0 || config === undefined) return read;
   const content = {
     editionId: config.id,

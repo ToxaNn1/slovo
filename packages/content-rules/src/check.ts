@@ -28,8 +28,6 @@ export interface ContentSet {
   readonly curatedCollections: readonly Authored<CuratedCollection>[];
   /** The crossword days; absent when the Edition has none. */
   readonly crosswordDays?: readonly CrosswordDay[];
-  /** The checksum of the crossword days last published; absent when none were. */
-  readonly recordedCrosswordDaysChecksum?: string;
 }
 
 /** The records of each kind of an Edition's content, each with its id. */
@@ -100,7 +98,7 @@ function checkSet(
       ...tips,
     ]),
     ...unknownCrosswordEntries(set.crosswordDays ?? [], [...words, ...corrections]),
-    ...checkCrosswordDays(set.crosswordDays, set.recordedCrosswordDaysChecksum),
+    ...checkCrosswordDays(set.crosswordDays),
     ...protectedLiteraryUses(corrections, today),
   ];
 }

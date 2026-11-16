@@ -1,10 +1,9 @@
 import type { CrosswordDay, Entry } from '@slovo/contracts';
 
-import { checksumOf } from './checksum';
 import type { Authored, Refusal } from './refusal';
 
-/** The file of an Edition's crossword days, relative to the Edition folder. */
-export const CROSSWORD_DAYS_FILE = 'content/crossword-days.json';
+/** What the errors of an Edition's crossword days name as their file: they come in its snapshot. */
+export const CROSSWORD_DAYS_FILE = 'snapshot:crosswordDays';
 
 /**
  * How many days apart a word may come back in the Daily Crossword, at the
@@ -19,29 +18,12 @@ export function dateAfter(date: string, days: number): string {
 }
 
 /**
- * What the rules of ADR 0052 refuse in an Edition's crossword days: days
- * other than those last recorded, days with no checksum recorded among them,
- * since a published day never changes and new days are only appended; a gap
- * between days; and a word that comes back within 20 days.
+ * What the rules of ADR 0052 refuse in an Edition's crossword days: a gap
+ * between days and a word that comes back within 20 days. That a published
+ * day never changes is the content write API's rule (`checkCrosswordDay`).
  */
-export function checkCrosswordDays(
-  days: readonly CrosswordDay[] | undefined,
-  recorded: string | undefined,
-): Refusal[] {
-  const unrecorded =
-    recorded === undefined
-      ? days !== undefined && days.length > 0
-      : days === undefined || checksumOf(days) !== recorded;
-  const checksumErrors: Refusal[] = unrecorded
-    ? [
-        {
-          rule: 'crossword-days-immutable',
-          file: CROSSWORD_DAYS_FILE,
-          message: `Not the days last recorded: a published day never changes and new days are only appended (recordContent), so restore the days as published`,
-        },
-      ]
-    : [];
-  return [...checksumErrors, ...ruleErrors(days ?? [])];
+export function checkCrosswordDays(days: readonly CrosswordDay[] | undefined): Refusal[] {
+  return ruleErrors(days ?? []);
 }
 
 /**

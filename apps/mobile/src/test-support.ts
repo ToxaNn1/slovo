@@ -2,14 +2,14 @@ import { readFileSync } from 'node:fs';
 
 import type { Plural } from '@slovo/contracts';
 import { loadEdition } from '@slovo/core';
-import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
+import { EDITIONS_DIR, openEditionWithoutRecords } from '@slovo/language-pack/edition';
 
 export { fakeClock } from '@slovo/core/testing';
 
 // Helpers the mobile tests share. No screen or module of the app imports them.
 
 /** The UA Edition's folder. */
-export const ukrainianFolder = openEdition(EDITIONS_DIR, 'uk');
+export const ukrainianFolder = openEditionWithoutRecords(EDITIONS_DIR, 'uk');
 
 /** The UA Edition's UI strings. */
 export const strings = ukrainianFolder.read('strings');

@@ -7,7 +7,7 @@
  */
 import { memoryMediaStore } from './media/media-store';
 import { randomInt, randomUUID } from 'node:crypto';
-import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { createServer, connect } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -19,13 +19,12 @@ import { createApiClient, type ContentSnapshot } from '@slovo/contracts/api';
 import type { EasBuild, MainCi, Milestone, PullRequest, Release } from '@slovo/contracts/admin-api';
 import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER } from '@slovo/contracts/admin-api';
 import type { AppConfig, EditionConfig } from '@slovo/contracts';
-import { recordContent } from '@slovo/language-pack';
+import { ukrainianFolder, ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import {
   EDITIONS_DIR,
   editionFiles,
   FONTS_DIR,
   openAppConfig,
-  openEdition,
   REPO_DIR,
 } from '@slovo/language-pack/edition';
 import {
@@ -54,7 +53,7 @@ import {
 import { eq } from 'drizzle-orm';
 import pg from 'pg';
 import { pino, type Logger } from 'pino';
-import { afterAll, afterEach, beforeAll, beforeEach, inject, onTestFinished, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
 import { z } from 'zod';
 
 import { keptSignInCode } from './account/authenticator';
@@ -138,14 +137,12 @@ export async function createTestDatabase(
 }
 
 /**
- * Hands out databases of a test's own with the Edition folder imported. The
- * folder is read, checked and imported once per test file, into a template,
- * and each database is a copy of it: a test pays a copy, not an import of the
- * whole Edition. The template is dropped after the file.
+ * Hands out databases of a test's own with the UA Edition's seed snapshot
+ * imported. The snapshot is read, checked and imported once per test file,
+ * into a template, and each database is a copy of it: a test pays a copy, not
+ * an import of the whole Edition. The template is dropped after the file.
  */
 export function importedDatabases(
-  editionId: string,
-  editionDir: string,
   prepare: (database: Database) => Promise<unknown> = () => Promise.resolve(),
 ) {
   let template: Promise<TestDatabase> | undefined;
@@ -159,8 +156,12 @@ export function importedDatabases(
     const made = await createTestDatabase(testDatabaseUrl());
     const database = createDatabase(made.url, silentLogger);
     try {
-      const result = await testApp({ database }).importContent(editionId, editionDir);
-      if (!result.ok) throw new Error(`the ${editionId} Edition did not import`);
+      const result = await testApp({ database }).importSnapshot(
+        'uk',
+        ukrainianFolder.dir,
+        ukrainianSnapshot(),
+      );
+      if (!result.ok) throw new Error('the uk Edition did not import');
       await prepare(database);
     } finally {
       // A template takes no copy while a connection to it is open.
@@ -498,10 +499,9 @@ export function createFakeApple(): FakeApple {
 
 /**
  * An editions folder made for one test, with an Edition for each id: a copy of
- * the UA Edition's config and strings under its own id, and the seed
- * snapshot's content, recorded once per run (`src/seed-setup.ts`).
- * `change` changes each config. Copying and recording the content takes a
- * while, so an Edition gets it when a test first imports or corrects it.
+ * the UA Edition's config and strings under its own id. `change` changes each
+ * config. An Edition gets the fonts its check reads when a test first asks for
+ * its content, the seed snapshot under its id.
  */
 export function testEditions(
   ids: readonly string[],
@@ -511,51 +511,26 @@ export function testEditions(
   onTestFinished(() => {
     rmSync(dir, { recursive: true, force: true });
   });
-  const ukrainian = openEdition(EDITIONS_DIR, 'uk');
-  const config = JSON.parse(readFileSync(ukrainian.path('config'), 'utf8')) as EditionConfig;
+  const config = JSON.parse(readFileSync(ukrainianFolder.path('config'), 'utf8')) as EditionConfig;
   for (const id of ids) {
     const edition = editionFiles(join(dir, id));
-    cpSync(ukrainian.path('strings'), edition.path('strings'));
+    cpSync(ukrainianFolder.path('strings'), edition.path('strings'));
     writeFileSync(edition.path('config'), JSON.stringify(change({ ...config, id })));
   }
-  const record = (editionDir: string) => {
-    if (!recordContent({ editionDir }).ok) throw new Error('Content not recorded');
-  };
-  const withContent = new Set<string>();
-  /** The Edition's folder, with its content. */
-  const contentOf = (id: string) => {
-    const { dir: editionDir } = editionFiles(join(dir, id));
-    if (!withContent.has(id)) {
-      cpSync(join(inject('ukrainianSeed'), 'content'), join(editionDir, 'content'), {
-        recursive: true,
-      });
-      // The Edition check reads the font of the Word of the Day the config names.
-      cpSync(join(ukrainian.dir, FONTS_DIR), join(editionDir, FONTS_DIR), { recursive: true });
-      // The content checksum takes in the Edition, so the copy is recorded under its own id.
-      record(editionDir);
-      withContent.add(id);
-    }
-    return editionDir;
-  };
 
   return {
     /** Every Edition of the folder, as the backend reads them now. */
     read(): Edition[] {
       return readEditions(dir);
     },
-    /** The Edition's folder with its content, as an import reads it. */
-    content: contentOf,
-    /** Corrects a Word's Definition and records the content, which raises its version. */
-    correctWord(editionId: string): void {
-      const editionDir = contentOf(editionId);
-      const wordsDir = join(editionDir, 'content/words');
-      const name = readdirSync(wordsDir).find((file) => file.endsWith('.json'));
-      if (name === undefined) throw new Error('No Word to correct');
-      const file = join(wordsDir, name);
-      const word = JSON.parse(readFileSync(file, 'utf8')) as { primaryDefinition: string };
-      const primaryDefinition = `${word.primaryDefinition} (corrected)`;
-      writeFileSync(file, JSON.stringify({ ...word, primaryDefinition }));
-      record(editionDir);
+    /** The Edition's folder and the seed snapshot under its id, as an import reads them. */
+    content(id: string): { readonly editionDir: string; readonly snapshot: ContentSnapshot } {
+      const { dir: editionDir } = editionFiles(join(dir, id));
+      // The Edition check reads the font of the Word of the Day the config names.
+      cpSync(join(ukrainianFolder.dir, FONTS_DIR), join(editionDir, FONTS_DIR), {
+        recursive: true,
+      });
+      return { editionDir, snapshot: { ...ukrainianSnapshot(), editionId: id } };
     },
   };
 }
@@ -852,13 +827,6 @@ export function testApp({
       ),
     /** The Edition's media rows, written as the Recording generation and the Illustration upload write them. */
     media: createMediaRows({ database, clock: systemClock }),
-    /** Imports the Edition folder into the content tables, as the import command does. */
-    importContent: (editionId: string, editionDir: string, options?: { override?: boolean }) =>
-      createContentStore({
-        database,
-        clock: systemClock,
-        editions: createEditions({ database, clock: systemClock, editions, alerts }),
-      }).importEdition(editionId, editionDir, options),
     /** Imports a content snapshot into the content tables, as `import --snapshot` does. */
     importSnapshot: (
       editionId: string,

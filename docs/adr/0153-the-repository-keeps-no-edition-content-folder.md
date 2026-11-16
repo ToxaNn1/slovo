@@ -11,7 +11,8 @@ Since ADR 0090 an Edition's content lives in Postgres, and every automatic path 
 - `editions/<edition>/content/` is removed; an Edition folder holds its config, strings, tokens, assets, legal pages and seed snapshot.
 - `pnpm content import` takes `--snapshot <file>` always; with no file it prints its usage and exits 2.
 - `pnpm build:pack` has no `--record`: ids, the content version and the crossword days are the content database's, written through the content write API and the content editor (ADR 0090, 0052).
-- The Language Pack's reading of a content folder (`readEdition`, `recordContent`, `generateDailyCrossword`, `buildLanguagePack`) and the backend's folder import stay as test seams only: tests write a temporary folder from the seed snapshot (`ukrainianSeedFolder`) or from fixtures, and check the same content rules the snapshot path uses.
+- No code reads records from a folder: the Language Pack's folder reading (`readEdition`, `recordContent`, `generateDailyCrossword`, `buildLanguagePack`, `checkLanguagePack`, `openEdition`), its id registry and content manifest, and the backend's folder import are removed. Records come only from a snapshot (`buildFromSnapshot`, `readEditionWithSnapshot`, `openEditionWithSnapshot`, `importSnapshot`); a caller that needs no records opens an Edition with `openEditionWithoutRecords`. Tests feed every content rule a snapshot: the seed snapshot or a fixture's `seed-snapshot.json`.
+- The content rules no longer compare crossword days with a recorded checksum: that a published day never changes is the content write API's rule (`checkCrosswordDay`).
 
 ## Consequences
 

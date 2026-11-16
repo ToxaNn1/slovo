@@ -1,22 +1,15 @@
-import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 
 import {
   AppConfigSchema,
-  CorrectionSchema,
-  CrosswordDaysSchema,
   EditionConfigSchema,
   EditionDecorSchema,
   EditionStringsSchema,
   EditionTokensSchema,
-  IdiomSchema,
   SplashDecorSchema,
-  SynonymRowSchema,
-  TipSchema,
-  CuratedCollectionSchema,
   WidgetSnapshotSchema,
-  WordSchema,
   appReleaseProblems,
   type AppConfig,
   type Correction,
@@ -36,15 +29,12 @@ import type { ContentSnapshot } from '@slovo/contracts/api';
 import {
   checkContentSet,
   contentSetOf,
-  CROSSWORD_DAYS_FILE,
   parseAgainst,
   type Authored,
   type ContentSet,
 } from '@slovo/content-rules';
 
 import { buildErrorsOf, formatBuildError, type BuildError } from './build-error';
-import { ContentManifestSchema, MANIFEST_FILE } from './content-manifest';
-import { ID_REGISTRY_FILE, IdRegistrySchema } from './id-registry';
 
 /** The editions folder of this repo, which holds one folder per Edition. */
 export const EDITIONS_DIR = fileURLToPath(new URL('../../../editions', import.meta.url));
@@ -55,9 +45,6 @@ export const REPO_DIR = fileURLToPath(new URL('../../..', import.meta.url));
 /** Where the repo keeps the AppConfig, the identity of the one app (ADR 0065). */
 export const APP_CONFIG_FILE = 'app/app.json';
 
-/** Where an Edition keeps the days of its Daily Crossword (ADR 0052). */
-export { CROSSWORD_DAYS_FILE };
-
 /** Where each file of an Edition lies in its folder. */
 const FILES = {
   config: 'edition.json',
@@ -65,9 +52,6 @@ const FILES = {
   tokens: 'tokens.json',
   decor: 'decor/decor.json',
   widgetSnapshotExample: 'widget-snapshot.example.json',
-  idRegistry: ID_REGISTRY_FILE,
-  manifest: MANIFEST_FILE,
-  crosswordDays: CROSSWORD_DAYS_FILE,
   languagePack: 'dist/language-pack.db',
 } as const;
 
@@ -76,23 +60,6 @@ const ASSETS_DIR = 'assets';
 export const FONTS_DIR = 'assets/fonts';
 /** Where an Edition keeps its legal pages, one Markdown file per page (ADR 0049). */
 const LEGAL_DIR = 'legal';
-const WORDS_DIR = 'content/words';
-const CORRECTIONS_DIR = 'content/corrections';
-const IDIOMS_DIR = 'content/idioms';
-const SYNONYM_ROWS_DIR = 'content/synonym-rows';
-const TIPS_DIR = 'content/tips';
-/** The Curated Collections of the Edition, one `<id>.json` each (ADR 0076); the folder is optional. */
-const CURATED_COLLECTIONS_DIR = 'content/curated-collections';
-
-/** The folder each kind of Entry is authored in, by the prefix of its id. */
-const ENTRY_DIRS: Record<string, string> = {
-  w_: WORDS_DIR,
-  c_: CORRECTIONS_DIR,
-  i_: IDIOMS_DIR,
-  r_: SYNONYM_ROWS_DIR,
-  t_: TIPS_DIR,
-  cc: CURATED_COLLECTIONS_DIR,
-};
 
 /** The contract each JSON file of an Edition is checked against. */
 const SCHEMAS = {
@@ -101,9 +68,6 @@ const SCHEMAS = {
   tokens: EditionTokensSchema,
   decor: EditionDecorSchema,
   widgetSnapshotExample: WidgetSnapshotSchema,
-  idRegistry: IdRegistrySchema,
-  manifest: ContentManifestSchema,
-  crosswordDays: CrosswordDaysSchema,
 } satisfies Partial<Record<EditionFile, z.ZodType>>;
 
 /** A file of an Edition, named by what it holds. */
@@ -185,17 +149,15 @@ export function openAppConfig(
   };
 }
 
-/** The content of an Edition's Entry folders, each Entry with the file it was authored in. */
+/** An Edition's records, each with the file its errors name (`snapshot:<kind>/<id>`). */
 export interface AuthoredContent {
   readonly words: readonly Authored<Word>[];
   readonly corrections: readonly Authored<Correction>[];
   readonly idioms: readonly Authored<Idiom>[];
   readonly synonymRows: readonly Authored<SynonymRow>[];
   readonly tips: readonly Authored<Tip>[];
-  /** The Curated Collections, each with its file; none when the Edition has no such folder (ADR 0076). */
+  /** The Curated Collections, each with its file (ADR 0076). */
   readonly curatedCollections: readonly Authored<CuratedCollection>[];
-  /** The Entry files that couldn't be read or broke the schema; the other Entries are kept. */
-  readonly errors: readonly BuildError[];
 }
 
 /**
@@ -240,12 +202,6 @@ export interface EditionFiles {
   fonts(): string[];
   /** Every legal page the Edition brings, its Markdown files, in code-unit order (ADR 0049). */
   legalPages(): string[];
-  /** Every Word, Correction, Idiom, Synonym Row and Tip the Edition authors, in a stable order. */
-  entries(): AuthoredContent;
-  /** The text of every Entry `entries` reads, kind by kind; Entries that break their schema are left out. */
-  entryTexts(): EntryText[];
-  /** The file an Entry with this id is authored in, relative to the folder. */
-  entryFile(id: string): string;
 }
 
 /**
@@ -256,6 +212,10 @@ export interface EditionFiles {
 export interface EditionFolder extends EditionFiles {
   readonly id: string;
   readonly config: EditionConfig;
+  /** Every Word, Correction, Idiom, Synonym Row, Tip and Curated Collection it was opened with, in a stable order. */
+  entries(): AuthoredContent;
+  /** The text of every Entry `entries` gives, kind by kind. */
+  entryTexts(): EntryText[];
   /**
    * Checks Words that are not in the Edition yet with the build's own checks,
    * against the Edition's existing Entries, and returns the
@@ -289,20 +249,12 @@ export function listEditions(editionsDir: string): string[] {
 export type EditionBuild = 'development' | 'release';
 
 /**
- * Opens the Edition with the given id in an editions folder. The id must
- * name one of its Editions, and the Edition's config must be valid and carry
- * the folder's name as its id, since the app, Metro and the Language Pack
- * look the Edition up by it. Throws an EditionFolderError otherwise.
- */
-export function openEdition(editionsDir: string, editionId: string): EditionFolder {
-  return open(editionsDir, editionId, (files) => files.entries());
-}
-
-/**
- * Opens an Edition as `openEdition` does, but takes its records from a
- * snapshot of the backend (ADR 0090) instead of its folder's content files:
- * the config, assets and every other file still come from the folder. Throws
- * an EditionFolderError when the snapshot is of another Edition.
+ * Opens the Edition with the given id in an editions folder, with the records
+ * of a snapshot of the backend (ADR 0090, 0153): the config, assets and every
+ * other file come from the folder. The id must name one of its Editions, and
+ * the Edition's config must be valid and carry the folder's name as its id,
+ * since the app, Metro and the Language Pack look the Edition up by it. Throws
+ * an EditionFolderError otherwise, or when the snapshot is of another Edition.
  */
 export function openEditionWithSnapshot(
   editionsDir: string,
@@ -318,8 +270,8 @@ export function openEditionWithSnapshot(
 
 /**
  * Opens the Edition with the given id for its config and files alone, with no
- * records, for a caller that reads none, such as a check of drafts. Throws as
- * `openEdition` does.
+ * records, for a caller that reads none, such as the app config, Metro or a
+ * check of drafts. Throws as `openEditionWithSnapshot` does.
  */
 export function openEditionWithoutRecords(editionsDir: string, editionId: string): EditionFolder {
   return open(editionsDir, editionId, () => NO_RECORDS);
@@ -332,13 +284,12 @@ const NO_RECORDS: AuthoredContent = {
   synonymRows: [],
   tips: [],
   curatedCollections: [],
-  errors: [],
 };
 
 function open(
   editionsDir: string,
   editionId: string,
-  recordsOf: (files: EditionFiles) => AuthoredContent,
+  recordsOf: () => AuthoredContent,
 ): EditionFolder {
   const known = listEditions(editionsDir);
   if (!known.includes(editionId)) {
@@ -361,7 +312,7 @@ function open(
     ]);
   }
   let read: AuthoredContent | undefined;
-  const entries = (): AuthoredContent => (read ??= recordsOf(files));
+  const entries = (): AuthoredContent => (read ??= recordsOf());
   return {
     ...files,
     id: editionId,
@@ -401,11 +352,14 @@ function open(
     return onlyIn(drafts, buildErrorsOf(checkContentSet(config, set, { today })));
   }
 
-  /** New Entries, each located in the file it would be authored in. */
+  /** New Entries, each named `draft:<id>` as its file. */
   function authored<E extends { readonly id: string }>(entries: readonly E[]): Authored<E>[] {
-    return entries.map((entry) => ({ file: files.entryFile(entry.id), entry }));
+    return entries.map((entry) => ({ file: `${DRAFT_FILE}:${entry.id}`, entry }));
   }
 }
+
+/** What the errors of a draft name as their file, with its id. */
+export const DRAFT_FILE = 'draft';
 
 /** What the errors of a snapshot name as their file. */
 export const SNAPSHOT_FILE = 'snapshot';
@@ -424,7 +378,7 @@ export function snapshotEntries(snapshot: ContentSnapshot): AuthoredContent {
     },
     (kind, id) => `${SNAPSHOT_FILE}:${kind}/${id}`,
   );
-  return { words, corrections, idioms, synonymRows, tips, curatedCollections, errors: [] };
+  return { words, corrections, idioms, synonymRows, tips, curatedCollections };
 }
 
 /** The errors that belong to the given Entries' files. */
@@ -469,26 +423,10 @@ export function editionFiles(dir: string): EditionFiles {
         .toSorted()
         .map((file) => join(legalDir, file));
     },
-    entries,
-    entryTexts: () => entryTextsOf(entries()),
-    entryFile: (id) => `${ENTRY_DIRS[id.slice(0, 2)] ?? CORRECTIONS_DIR}/${id}.json`,
   };
-
-  function entries(): AuthoredContent {
-    const errors: BuildError[] = [];
-    const words = readEntries(dir, WORDS_DIR, WordSchema, errors);
-    const corrections = readEntries(dir, CORRECTIONS_DIR, CorrectionSchema, errors);
-    const idioms = readEntries(dir, IDIOMS_DIR, IdiomSchema, errors);
-    const synonymRows = readEntries(dir, SYNONYM_ROWS_DIR, SynonymRowSchema, errors);
-    const tips = readEntries(dir, TIPS_DIR, TipSchema, errors);
-    const curatedCollections = existsSync(join(dir, CURATED_COLLECTIONS_DIR))
-      ? readEntries(dir, CURATED_COLLECTIONS_DIR, CuratedCollectionSchema, errors)
-      : [];
-    return { words, corrections, idioms, synonymRows, tips, curatedCollections, errors };
-  }
 }
 
-/** The texts of the Entries, kind by kind in the order `entries` reads them. */
+/** The texts of the Entries, kind by kind in the order `entries` gives them. */
 function entryTextsOf({
   words,
   corrections,
@@ -557,51 +495,11 @@ function invalid(dir: string, errors: readonly BuildError[]): EditionFolderError
   );
 }
 
-/**
- * The Entries of one Entry folder, in a stable order. The folder must exist
- * and hold `<id>.json` files only, each named after the id of its Entry;
- * hidden files such as `.DS_Store` are skipped.
- */
-function readEntries<T extends { readonly id: string }>(
-  editionDir: string,
-  entryDir: string,
-  schema: z.ZodType<T>,
-  errors: BuildError[],
-): Authored<T>[] {
-  const path = join(editionDir, entryDir);
-  if (!existsSync(path) || !statSync(path).isDirectory()) {
-    errors.push({ file: entryDir, message: 'Folder not found' });
-    return [];
-  }
-  const authored: Authored<T>[] = [];
-  for (const name of readdirSync(path).toSorted()) {
-    if (name.startsWith('.')) continue;
-    const file = `${entryDir}/${name}`;
-    if (!lstatSync(join(path, name)).isFile() || !name.endsWith('.json')) {
-      errors.push({ file, message: 'Expected only files named <id>.json here' });
-      continue;
-    }
-    const result = parseFile(editionDir, file, schema, true);
-    if (!result.ok) {
-      errors.push(...result.errors);
-      continue;
-    }
-    const entry = result.value;
-    if (name !== `${entry.id}.json`) {
-      const message = `Expected the file to be named ${entry.id}.json, after its id`;
-      errors.push({ file, entryId: entry.id, field: 'id', message });
-    }
-    authored.push({ file, entry });
-  }
-  return authored;
-}
-
 /** A JSON file of the Edition checked against a schema, with every problem named by its field. */
 function parseFile<T>(
   editionDir: string,
   file: string,
   schema: z.ZodType<T>,
-  isEntry = false,
 ): { ok: true; value: T } | { ok: false; errors: BuildError[] } {
   const path = join(editionDir, file);
   if (!existsSync(path)) return { ok: false, errors: [{ file, message: 'File not found' }] };
@@ -612,6 +510,6 @@ function parseFile<T>(
     const reason = error instanceof Error ? error.message : String(error);
     return { ok: false, errors: [{ file, message: `Invalid JSON: ${reason}` }] };
   }
-  const result = parseAgainst(schema, file, json, { isEntry });
+  const result = parseAgainst(schema, file, json, { isEntry: false });
   return result.ok ? result : { ok: false, errors: buildErrorsOf(result.refusals) };
 }

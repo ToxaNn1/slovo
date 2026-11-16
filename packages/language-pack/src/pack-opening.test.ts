@@ -1,18 +1,18 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { buildLanguagePack, openLanguagePack } from './index';
+import type { PackMetadata } from '@slovo/contracts';
+
+import { buildFromSnapshot, openLanguagePack } from './index';
 import { PACK_FORMAT, openPack, type AppEditions, type PackDatabase } from './pack-reader';
 import { nodePackDatabase } from './read-pack';
+import { fixtureDir, validSnapshot } from './test-support';
 
 // Opening a compiled pack the way the mobile shell does, over the Node driver.
-
-const fixtureDir = fileURLToPath(new URL('../fixtures/valid', import.meta.url));
 
 const workDirs: string[] = [];
 const openDatabases: DatabaseSync[] = [];
@@ -22,15 +22,21 @@ afterEach(() => {
   for (const dir of workDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-/** Builds the fixture Edition, whose id is `fixture`, into a fresh pack file. */
-function builtPack(): string {
+/** Builds the fixture Edition, whose id is `fixture`, from its snapshot into a fresh pack file. */
+function buildPack(): { file: string; metadata: PackMetadata } {
   const dir = mkdtempSync(join(tmpdir(), 'slovo-pack-opening-'));
   workDirs.push(dir);
-  const outFile = join(dir, 'language-pack.db');
-  if (!buildLanguagePack({ editionDir: fixtureDir, outFile }).ok)
-    throw new Error('No fixture pack');
-  return outFile;
+  const file = join(dir, 'language-pack.db');
+  const built = buildFromSnapshot({
+    editionDir: fixtureDir('valid'),
+    snapshot: validSnapshot(),
+    outFile: file,
+  });
+  if (!built.ok) throw new Error('No fixture pack');
+  return { file, metadata: built.metadata };
 }
+
+const builtPack = (): string => buildPack().file;
 
 function open(file: string, editions: AppEditions) {
   const db = new DatabaseSync(file, { readOnly: true });
@@ -48,23 +54,19 @@ function editMetadata(file: string, sql: string): void {
   }
 }
 
-const recordedChecksum = (
-  JSON.parse(readFileSync(join(fixtureDir, 'content/manifest.json'), 'utf8')) as {
-    contentChecksum: string;
-  }
-).contentChecksum;
-
 describe('openPack', () => {
   it('opens a pack of the app’s Edition, and its reader reads the pack', async () => {
-    const opening = await open(builtPack(), { bundle: 'fixture', native: 'fixture' });
+    const built = buildPack();
+    const opening = await open(built.file, { bundle: 'fixture', native: 'fixture' });
 
     if (!opening.ok) throw new Error(opening.reason);
     const metadata = {
       editionId: 'fixture',
       contentVersion: 9,
-      contentChecksum: recordedChecksum,
+      contentChecksum: built.metadata.contentChecksum,
       packFormat: 13,
     };
+    expect(metadata.contentChecksum).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(opening.metadata).toEqual(metadata);
     expect(await opening.reader.metadata()).toEqual(metadata);
     expect(await opening.reader.listIds('word')).toEqual(['w_fx0002', 'w_fx0003']);

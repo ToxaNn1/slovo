@@ -1,14 +1,9 @@
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-
 import { dateAfter } from '@slovo/content-rules';
 import type { Word } from '@slovo/contracts';
 import type { ApiClient } from '@slovo/contracts/api';
-import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
 import { sql } from 'drizzle-orm';
-import { afterAll, describe, expect, it, onTestFinished } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
@@ -25,16 +20,7 @@ import {
   testDatabaseUrl,
 } from '../test-support';
 
-/** The UA Edition folder written from the seed snapshot, removed after the file. */
-const folder = (() => {
-  const dir = mkdtempSync(join(tmpdir(), 'slovo-writes-'));
-  afterAll(() => {
-    rmSync(dir, { recursive: true, force: true });
-  });
-  return ukrainianSeedFolder(dir);
-})();
-
-const importedDatabase = importedDatabases('uk', folder);
+const importedDatabase = importedDatabases();
 
 /**
  * The backend on a database of the test's own, with a Власник, the UA

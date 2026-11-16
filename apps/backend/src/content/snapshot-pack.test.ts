@@ -2,8 +2,8 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { buildFromSnapshot, buildLanguagePack } from '@slovo/language-pack';
-import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
+import { buildFromSnapshot } from '@slovo/language-pack';
+import { ukrainianFolder, ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { testApp } from '../test-support';
@@ -12,29 +12,29 @@ const dir = mkdtempSync(join(tmpdir(), 'slovo-snapshot-pack-'));
 afterAll(() => {
   rmSync(dir, { recursive: true, force: true });
 });
-const folder = ukrainianSeedFolder(dir);
 const today = new Date('2026-11-08T12:00:00Z');
 
 describe('the Language Pack built from the snapshot of the local backend', () => {
-  it('holds the same content as the pack the Ukrainian suites run over', async () => {
-    const { client, importContent } = testApp();
-    await importContent('uk', folder);
+  it('holds the same content as the pack the Ukrainian suites run over, built from the seed snapshot', async () => {
+    const { client, importSnapshot } = testApp();
+    await importSnapshot('uk', ukrainianFolder.dir, ukrainianSnapshot());
     const snapshot = await client.content.snapshot({ editionId: 'uk' });
 
-    const fromSnapshot = buildFromSnapshot({
-      editionDir: folder,
+    const fromBackend = buildFromSnapshot({
+      editionDir: ukrainianFolder.dir,
       snapshot,
-      outFile: join(dir, 'from-snapshot.db'),
+      outFile: join(dir, 'from-backend.db'),
       today,
     });
-    const fromFolder = buildLanguagePack({
-      editionDir: folder,
-      outFile: join(dir, 'from-folder.db'),
+    const fromSeed = buildFromSnapshot({
+      editionDir: ukrainianFolder.dir,
+      snapshot: ukrainianSnapshot(),
+      outFile: join(dir, 'from-seed.db'),
       today,
     });
 
-    if (!fromSnapshot.ok || !fromFolder.ok) throw new Error('a pack did not build');
-    expect(fromSnapshot.metadata).toEqual(fromFolder.metadata);
-    expect(fromSnapshot.report).toEqual(fromFolder.report);
+    if (!fromBackend.ok || !fromSeed.ok) throw new Error('a pack did not build');
+    expect(fromBackend.metadata).toEqual(fromSeed.metadata);
+    expect(fromBackend.report).toEqual(fromSeed.report);
   });
 });

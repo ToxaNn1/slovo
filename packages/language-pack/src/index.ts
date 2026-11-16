@@ -5,22 +5,13 @@
  * Edition folders are read through `@slovo/language-pack/edition`, which loads
  * no SQLite, so the app config and Metro use it too (ADR 0035).
  */
-export {
-  buildFromBackend,
-  buildFromSnapshot,
-  buildLanguagePack,
-  checkLanguagePack,
-  type BuildResult,
-  type CheckResult,
-} from './build';
+export { buildFromBackend, buildFromSnapshot, type BuildResult } from './build';
 export { formatBuildError, type BuildError } from './build-error';
-export { generateDailyCrossword, type CrosswordResult } from './crossword';
 export { missedTargets, wordsPerRarityFloor, wordFloor } from './content-targets';
 export type { ContentTarget, ContentTargets, MissedTarget } from './content-targets';
 export { PACK_FORMAT } from './pack-layout';
 export { applyPatch, patchStateOf, type PackWriteDatabase } from './apply-patch';
 export { openLanguagePack, packMetadataOf, type NodeLanguagePack } from './read-pack';
-export { readEdition, readEditionWithSnapshot, type EditionSource } from './read-edition';
-export { recordContent, type RecordResult } from './record';
+export { readEditionWithSnapshot, type SnapshotSource } from './read-edition';
 export { contentReport, formatContentReport, type ContentReport } from './report';
 export { fetchSnapshot, readSnapshotFile, SnapshotUnreachableError } from './snapshot-source';

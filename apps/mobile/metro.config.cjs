@@ -5,10 +5,8 @@ const { getDefaultConfig } = require('expo/metro-config');
 const { require: tsxRequire } = require('tsx/cjs/api');
 
 // The Edition folder module is TypeScript, which tsx loads, as for app.config.ts.
-const { APP_CONFIG_FILE, EDITIONS_DIR, REPO_DIR, openAppConfig, openEdition } = tsxRequire(
-  '@slovo/language-pack/edition',
-  __filename,
-);
+const { APP_CONFIG_FILE, EDITIONS_DIR, REPO_DIR, openAppConfig, openEditionWithoutRecords } =
+  tsxRequire('@slovo/language-pack/edition', __filename);
 const { STARTER_MEDIA_DIR, starterMediaFiles, starterWordIds } = tsxRequire(
   '@slovo/language-pack/starter-media',
   __filename,
@@ -113,7 +111,7 @@ function bundledEdition(edition) {
   },`;
 }
 
-const editions = bundledIds.map((id) => openEdition(EDITIONS_DIR, id));
+const editions = bundledIds.map((id) => openEditionWithoutRecords(EDITIONS_DIR, id));
 
 const registryModule = () =>
   generated(

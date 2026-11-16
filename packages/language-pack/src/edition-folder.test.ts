@@ -1,7 +1,6 @@
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -15,10 +14,16 @@ import {
   type SynonymRow,
   type Word,
 } from '@slovo/contracts';
+import type { ContentSnapshot } from '@slovo/contracts/api';
 
-import { EditionFolderError, listEditions, openEdition } from './edition-folder';
-
-const validFixture = fileURLToPath(new URL('../fixtures/valid', import.meta.url));
+import {
+  EditionFolderError,
+  listEditions,
+  openEditionWithoutRecords,
+  openEditionWithSnapshot,
+  snapshotEntries,
+} from './edition-folder';
+import { fixtureDir, validSnapshot } from './test-support';
 
 const workDirs: string[] = [];
 
@@ -42,7 +47,7 @@ function editionsWith({
   const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
   workDirs.push(editionsDir);
   const editionDir = join(editionsDir, folder);
-  cpSync(validFixture, editionDir, { recursive: true });
+  cpSync(fixtureDir('valid'), editionDir, { recursive: true });
   change(editionDir);
   return editionsDir;
 }
@@ -50,6 +55,33 @@ function editionsWith({
 function editJson(path: string, edit: (json: Json) => Json): void {
   writeFileSync(path, JSON.stringify(edit(JSON.parse(readFileSync(path, 'utf8')) as Json)));
 }
+
+/** The fixture Edition of an editions folder, with the given records, the fixture's own by default. */
+function openFixture(editionsDir: string, snapshot: ContentSnapshot = validSnapshot()) {
+  return openEditionWithSnapshot(editionsDir, 'fixture', snapshot);
+}
+
+/** The fixture's snapshot with each Word changed by `change`. */
+function withWords(
+  change: (word: ContentSnapshot['words'][number]) => ContentSnapshot['words'][number],
+) {
+  const snapshot = validSnapshot();
+  return { ...snapshot, words: snapshot.words.map(change) };
+}
+
+/** One of the fixture's records, as the Edition reads it. */
+function fixtureEntry<E extends { readonly id: string }>(
+  entries: readonly { readonly entry: E }[],
+  id: string,
+): E {
+  const found = entries.find(({ entry }) => entry.id === id);
+  if (found === undefined) throw new Error(`The fixture has no ${id}`);
+  return found.entry;
+}
+
+const fixtureWord = (id: string) => fixtureEntry(snapshotEntries(validSnapshot()).words, id);
+const fixtureCorrection = (id: string) =>
+  fixtureEntry(snapshotEntries(validSnapshot()).corrections, id);
 
 /** The failure of opening or reading, or undefined when nothing failed. */
 function failureOf(open: () => unknown): EditionFolderError | undefined {
@@ -80,38 +112,65 @@ describe('listEditions', () => {
   });
 });
 
-describe('openEdition', () => {
-  it('opens an Edition by its id with its config checked', () => {
+describe('openEditionWithSnapshot', () => {
+  it('opens an Edition by its id with its config checked and the records of the snapshot', () => {
     const editionsDir = editionsWith();
 
-    const edition = openEdition(editionsDir, 'fixture');
+    const edition = openFixture(editionsDir);
 
     expect(edition.id).toBe('fixture');
     expect(edition.dir).toBe(join(editionsDir, 'fixture'));
+    expect(edition.entries().words.map(({ file }) => file)).toEqual([
+      'snapshot:word/w_fx0001',
+      'snapshot:word/w_fx0002',
+      'snapshot:word/w_fx0003',
+    ]);
+  });
+
+  it('refuses a snapshot of another Edition', () => {
+    const editionsDir = editionsWith();
+
+    const failure = failureOf(() =>
+      openFixture(editionsDir, { ...validSnapshot(), editionId: 'pl' }),
+    );
+
+    expect(failure).toMatchObject({
+      reason: 'invalid',
+      errors: [{ file: 'snapshot', message: 'The snapshot is of Edition pl, not fixture' }],
+    });
+  });
+
+  it('opens an Edition without records for its config and files alone', () => {
+    const edition = openEditionWithoutRecords(editionsWith(), 'fixture');
+
+    expect(edition.config.id).toBe('fixture');
+    expect(edition.entries().words).toEqual([]);
   });
 
   it('refuses an unknown Edition and names the known ones', () => {
     const editionsDir = editionsWith();
 
-    const failure = failureOf(() => openEdition(editionsDir, 'xx'));
+    const failure = failureOf(() => openEditionWithoutRecords(editionsDir, 'xx'));
 
     expect(failure).toMatchObject({ reason: 'unknown', editionId: 'xx', errors: [] });
     expect(failure?.message).toMatch(/Unknown Edition "xx".*Known Editions: fixture/s);
   });
 
-  it.each(['../fixture', 'fixture/', '', 'fixture/content'])(
+  it.each(['../fixture', 'fixture/', '', 'fixture/assets'])(
     'refuses "%s", which is not the folder of an Edition',
     (editionId) => {
       const editionsDir = editionsWith();
 
-      expect(failureOf(() => openEdition(editionsDir, editionId))?.reason).toBe('unknown');
+      expect(failureOf(() => openEditionWithoutRecords(editionsDir, editionId))?.reason).toBe(
+        'unknown',
+      );
     },
   );
 
   it('refuses an Edition whose id differs from its folder name', () => {
     const editionsDir = editionsWith({ folder: 'uk' });
 
-    const failure = failureOf(() => openEdition(editionsDir, 'uk'));
+    const failure = failureOf(() => openEditionWithoutRecords(editionsDir, 'uk'));
 
     expect(failure).toMatchObject({
       reason: 'invalid',
@@ -141,7 +200,7 @@ describe('openEdition', () => {
       },
     });
 
-    expect(openEdition(editionsDir, 'fixture').config.featureSwitches).toMatchObject({
+    expect(openFixture(editionsDir).config.featureSwitches).toMatchObject({
       game: 'off',
       narratorVoice: 'unavailable',
       corrections: 'on',
@@ -158,7 +217,7 @@ describe('openEdition', () => {
       },
     });
 
-    const failure = failureOf(() => openEdition(editionsDir, 'fixture'));
+    const failure = failureOf(() => openFixture(editionsDir));
 
     expect(failure?.reason).toBe('invalid');
     expect(failure?.errors.map(({ field }) => field)).toEqual([
@@ -178,7 +237,7 @@ describe('openEdition', () => {
       },
     });
 
-    const failure = failureOf(() => openEdition(editionsDir, 'fixture'));
+    const failure = failureOf(() => openFixture(editionsDir));
 
     expect(failure?.reason).toBe('invalid');
     expect(failure?.errors.map(({ file, field }) => `${file} › ${field ?? ''}`)).toEqual([
@@ -196,7 +255,7 @@ describe('openEdition', () => {
       },
     });
 
-    expect(failureOf(() => openEdition(editionsDir, 'fixture'))?.errors).toEqual([
+    expect(failureOf(() => openFixture(editionsDir))?.errors).toEqual([
       expect.objectContaining({
         file: 'edition.json',
         message: expect.stringMatching(/^Invalid JSON/) as string,
@@ -207,14 +266,13 @@ describe('openEdition', () => {
 
 describe('an Edition folder', () => {
   it('reads a file against its contract', () => {
-    const edition = openEdition(editionsWith(), 'fixture');
+    const edition = openFixture(editionsWith());
 
-    expect(edition.read('manifest').contentVersion).toBeGreaterThan(0);
-    expect(edition.read('idRegistry')).toContain('w_fx0001');
+    expect(edition.read('config').categories.map(({ id }) => id)).toEqual(['nature', 'speech']);
   });
 
   it('reports a missing file it needs', () => {
-    const edition = openEdition(editionsWith(), 'fixture');
+    const edition = openFixture(editionsWith());
 
     expect(failureOf(() => edition.read('strings'))).toMatchObject({
       reason: 'invalid',
@@ -223,64 +281,14 @@ describe('an Edition folder', () => {
   });
 
   it('reads a missing optional file as absent', () => {
-    const edition = openEdition(editionsWith(), 'fixture');
+    const edition = openFixture(editionsWith());
 
     expect(edition.readIfPresent('tokens')).toBeUndefined();
     expect(edition.readIfPresent('decor')).toBeUndefined();
   });
 
-  it('reads a missing id registry as absent, so the caller decides whether it may be', () => {
-    const edition = openEdition(
-      editionsWith({
-        change: (dir) => {
-          rmSync(join(dir, 'content/ids.json'));
-        },
-      }),
-      'fixture',
-    );
-
-    expect(edition.readIfPresent('idRegistry')).toBeUndefined();
-    expect(failureOf(() => edition.read('idRegistry'))?.errors).toEqual([
-      expect.objectContaining({ file: 'content/ids.json', message: 'File not found' }),
-    ]);
-  });
-
-  it('reports a malformed id registry, even where it is optional', () => {
-    const edition = openEdition(
-      editionsWith({
-        change: (dir) => {
-          writeFileSync(join(dir, 'content/ids.json'), JSON.stringify(['w_fx0001', 'w_fx0001']));
-        },
-      }),
-      'fixture',
-    );
-
-    expect(failureOf(() => edition.readIfPresent('idRegistry'))?.errors).toEqual([
-      expect.objectContaining({ file: 'content/ids.json', message: 'Ids must not repeat' }),
-    ]);
-  });
-
-  it('names an id in the registry that is not an Entry id', () => {
-    const edition = openEdition(
-      editionsWith({
-        change: (dir) => {
-          writeFileSync(join(dir, 'content/ids.json'), JSON.stringify(['w_fx0001', 'nope']));
-        },
-      }),
-      'fixture',
-    );
-
-    expect(failureOf(() => edition.read('idRegistry'))?.errors).toEqual([
-      expect.objectContaining({
-        file: 'content/ids.json',
-        field: '1',
-        message: expect.any(String) as string,
-      }),
-    ]);
-  });
-
   it('knows where its files, assets and built pack lie', () => {
-    const edition = openEdition(editionsWith(), 'fixture');
+    const edition = openFixture(editionsWith());
 
     expect(edition.path('config')).toBe(join(edition.dir, 'edition.json'));
     expect(edition.path('languagePack')).toBe(join(edition.dir, 'dist/language-pack.db'));
@@ -288,7 +296,7 @@ describe('an Edition folder', () => {
   });
 
   it('lists the font files it brings, in code-unit order', () => {
-    const edition = openEdition(
+    const edition = openFixture(
       editionsWith({
         change: (dir) => {
           mkdirSync(join(dir, 'assets/fonts'), { recursive: true });
@@ -297,7 +305,6 @@ describe('an Edition folder', () => {
           }
         },
       }),
-      'fixture',
     );
 
     expect(edition.fonts()).toEqual(
@@ -314,11 +321,11 @@ describe('an Edition folder', () => {
       },
     });
 
-    expect(openEdition(editionsDir, 'fixture').fonts()).toEqual([]);
+    expect(openFixture(editionsDir).fonts()).toEqual([]);
   });
 
   it('lists the legal pages it brings, its Markdown files, in code-unit order', () => {
-    const edition = openEdition(
+    const edition = openFixture(
       editionsWith({
         change: (dir) => {
           mkdirSync(join(dir, 'legal'), { recursive: true });
@@ -327,7 +334,6 @@ describe('an Edition folder', () => {
           }
         },
       }),
-      'fixture',
     );
 
     expect(edition.legalPages()).toEqual(
@@ -336,16 +342,14 @@ describe('an Edition folder', () => {
   });
 
   it('brings no legal pages when it has no legal folder', () => {
-    expect(openEdition(editionsWith(), 'fixture').legalPages()).toEqual([]);
+    expect(openFixture(editionsWith()).legalPages()).toEqual([]);
   });
 });
 
 describe('checkNewWords', () => {
   const draft = (changes: Json = {}): Word =>
     WordSchema.parse({
-      ...(JSON.parse(
-        readFileSync(join(validFixture, 'content/words/w_fx0002.json'), 'utf8'),
-      ) as Json),
+      ...fixtureWord('w_fx0002'),
       id: 'w_draft1',
       lemma: 'снігур',
       stress: [4],
@@ -353,10 +357,10 @@ describe('checkNewWords', () => {
       correctionIds: [],
       ...changes,
     });
-  const draftFile = 'content/words/w_draft1.json';
+  const draftFile = 'draft:w_draft1';
 
   it('accepts a draft the build would accept', () => {
-    expect(openEdition(editionsWith(), 'fixture').checkNewWords([draft()])).toEqual([]);
+    expect(openFixture(editionsWith()).checkNewWords([draft()])).toEqual([]);
   });
 
   it.each([
@@ -376,7 +380,7 @@ describe('checkNewWords', () => {
       /unknown/i,
     ],
   ])('reports %s as the build does', (_name, changes, field, message) => {
-    expect(openEdition(editionsWith(), 'fixture').checkNewWords([draft(changes)])).toEqual([
+    expect(openFixture(editionsWith()).checkNewWords([draft(changes)])).toEqual([
       expect.objectContaining({
         file: draftFile,
         entryId: 'w_draft1',
@@ -387,10 +391,8 @@ describe('checkNewWords', () => {
   });
 
   it('reports a draft with the Lemma and primary Definition of an existing Word', () => {
-    const edition = openEdition(editionsWith(), 'fixture');
-    const existing = WordSchema.parse(
-      JSON.parse(readFileSync(join(validFixture, 'content/words/w_fx0002.json'), 'utf8')),
-    );
+    const edition = openFixture(editionsWith());
+    const existing = fixtureWord('w_fx0002');
 
     const errors = edition.checkNewWords([
       draft({
@@ -411,7 +413,7 @@ describe('checkNewWords', () => {
   });
 
   it('reports Stress in an Edition that does not mark Stress', () => {
-    const edition = openEdition(
+    const edition = openFixture(
       editionsWith({
         change: (dir) => {
           editJson(join(dir, 'edition.json'), (config) => ({
@@ -420,7 +422,6 @@ describe('checkNewWords', () => {
           }));
         },
       }),
-      'fixture',
     );
 
     expect(edition.checkNewWords([draft()])).toEqual([
@@ -434,16 +435,9 @@ describe('checkNewWords', () => {
   });
 
   it('leaves out the errors of the existing content', () => {
-    const edition = openEdition(
-      editionsWith({
-        change: (dir) => {
-          editJson(join(dir, 'content/words/w_fx0002.json'), (word) => ({
-            ...word,
-            categoryId: 'x',
-          }));
-        },
-      }),
-      'fixture',
+    const edition = openFixture(
+      editionsWith(),
+      withWords((word) => (word.id === 'w_fx0002' ? { ...word, categoryId: 'x' } : word)),
     );
 
     expect(edition.checkNewWords([draft()])).toEqual([]);
@@ -453,9 +447,7 @@ describe('checkNewWords', () => {
 describe('checkNewCorrections', () => {
   const draft = (changes: Json = {}): Correction =>
     CorrectionSchema.parse({
-      ...(JSON.parse(
-        readFileSync(join(validFixture, 'content/corrections/c_fx0001.json'), 'utf8'),
-      ) as Json),
+      ...fixtureCorrection('c_fx0001'),
       id: 'c_draft1',
       nonStandardForm: 'тимбільше',
       standardEquivalents: ['тим паче'],
@@ -463,7 +455,7 @@ describe('checkNewCorrections', () => {
     });
 
   it('accepts a draft the build would accept', () => {
-    expect(openEdition(editionsWith(), 'fixture').checkNewCorrections([draft()])).toEqual([]);
+    expect(openFixture(editionsWith()).checkNewCorrections([draft()])).toEqual([]);
   });
 
   it.each([
@@ -474,19 +466,16 @@ describe('checkNewCorrections', () => {
       'standardEquivalents.0',
       /only a wrong-stress Correction/i,
     ],
-  ])(
-    'reports %s as the build does, in the file it would be authored in',
-    (_name, changes, field, message) => {
-      expect(openEdition(editionsWith(), 'fixture').checkNewCorrections([draft(changes)])).toEqual([
-        expect.objectContaining({
-          file: 'content/corrections/c_draft1.json',
-          entryId: 'c_draft1',
-          field,
-          message: expect.stringMatching(message) as string,
-        }),
-      ]);
-    },
-  );
+  ])("reports %s as the build does, under the draft's id", (_name, changes, field, message) => {
+    expect(openFixture(editionsWith()).checkNewCorrections([draft(changes)])).toEqual([
+      expect.objectContaining({
+        file: 'draft:c_draft1',
+        entryId: 'c_draft1',
+        field,
+        message: expect.stringMatching(message) as string,
+      }),
+    ]);
+  });
   it('judges the public domain on the given day', () => {
     const late = draft({
       literaryUses: [
@@ -498,7 +487,7 @@ describe('checkNewCorrections', () => {
         },
       ],
     });
-    const edition = openEdition(editionsWith(), 'fixture');
+    const edition = openFixture(editionsWith());
 
     expect(edition.checkNewCorrections([late], new Date(2080, 0, 1))).toEqual([]);
     expect(edition.checkNewCorrections([late], new Date(2030, 0, 1))).toEqual([
@@ -526,17 +515,17 @@ describe('checkNewSynonymRows', () => {
     });
 
   it('accepts a row the build would accept', () => {
-    expect(openEdition(editionsWith(), 'fixture').checkNewSynonymRows([row()])).toEqual([]);
+    expect(openFixture(editionsWith()).checkNewSynonymRows([row()])).toEqual([]);
   });
 
   it('reports a link to a Word the Edition does not have, as the build does', () => {
-    const errors = openEdition(editionsWith(), 'fixture').checkNewSynonymRows([
+    const errors = openFixture(editionsWith()).checkNewSynonymRows([
       row({ dominant: { text: 'балакучий', stress: [5], wordId: 'w_nowhere' } }),
     ]);
 
     expect(errors).toEqual([
       expect.objectContaining({
-        file: 'content/synonym-rows/r_draft1.json',
+        file: 'draft:r_draft1',
         entryId: 'r_draft1',
         field: 'dominant.wordId',
         message: 'Unknown Word "w_nowhere"',
@@ -549,40 +538,41 @@ describe('entryTexts', () => {
   const member = (text: string) => ({ text, stress: [1] });
 
   it('lists the text of every Entry of the five kinds, with its group and forms and each Word with its primary Definition, Retired ones marked', () => {
-    const editionsDir = editionsWith({
-      change: (dir) => {
-        writeFileSync(
-          join(dir, 'content/synonym-rows/r_fx0001.json'),
-          JSON.stringify({
-            id: 'r_fx0001',
-            dominant: { text: 'тихо', stress: [1] },
-            meaning: 'Без розмов, мовчки.',
-            members: ['глухо', 'мовчки', 'неголосно', 'негучно', 'слабко'].map(member),
-            sources: [{ title: 'Тестове джерело' }],
-            retired: true,
-          }),
-        );
-        writeFileSync(
-          join(dir, 'content/tips/t_fx0001.json'),
-          JSON.stringify({
-            id: 't_fx0001',
-            title: 'Два студенти',
-            nonStandardForm: 'два студента',
-            standardForm: 'два студенти',
-            explanation: 'Після «два» іменник стоїть у називному відмінку множини.',
-            example: { text: 'У групі лише три студенти.' },
-            sources: [{ title: 'Тестове джерело' }],
-            gameQuestion: {
-              prompt: 'Як правильно?',
-              rightAnswer: 'три олівці',
-              wrongAnswers: ['три олівця', 'три олівців', 'три олівцями'],
-            },
-          }),
-        );
-      },
-    });
+    const snapshot = validSnapshot();
+    const records: ContentSnapshot = {
+      ...snapshot,
+      synonymRows: [
+        {
+          kind: 'synonymRow',
+          id: 'r_fx0001',
+          dominant: { text: 'тихо', stress: [1] },
+          meaning: 'Без розмов, мовчки.',
+          members: ['глухо', 'мовчки', 'неголосно', 'негучно', 'слабко'].map(member),
+          sources: [{ title: 'Тестове джерело' }],
+          retired: true,
+        },
+      ],
+      tips: [
+        {
+          kind: 'tip',
+          id: 't_fx0001',
+          title: 'Два студенти',
+          nonStandardForm: 'два студента',
+          standardForm: 'два студенти',
+          explanation: 'Після «два» іменник стоїть у називному відмінку множини.',
+          example: { text: 'У групі лише три студенти.' },
+          sources: [{ title: 'Тестове джерело' }],
+          gameQuestion: {
+            prompt: 'Як правильно?',
+            rightAnswer: 'три олівці',
+            wrongAnswers: ['три олівця', 'три олівців', 'три олівцями'],
+          },
+          retired: false,
+        },
+      ],
+    };
 
-    const texts = openEdition(editionsDir, 'fixture').entryTexts();
+    const texts = openFixture(editionsWith(), records).entryTexts();
 
     expect(texts).toEqual([
       {
@@ -690,10 +680,10 @@ describe('checkNewIdioms', () => {
       sources: [{ title: 'Тестове джерело', url: 'https://example.org/kury' }],
       ...changes,
     });
-  const draftFile = 'content/idioms/i_draft1.json';
+  const draftFile = 'draft:i_draft1';
 
   it('accepts a draft the build would accept', () => {
-    expect(openEdition(editionsWith(), 'fixture').checkNewIdioms([draft()])).toEqual([]);
+    expect(openFixture(editionsWith()).checkNewIdioms([draft()])).toEqual([]);
   });
 
   it.each([
@@ -704,7 +694,7 @@ describe('checkNewIdioms', () => {
       /same expression as i_fx0001/i,
     ],
   ])('reports %s as the build does', (_name, changes, message) => {
-    expect(openEdition(editionsWith(), 'fixture').checkNewIdioms([draft(changes)])).toEqual([
+    expect(openFixture(editionsWith()).checkNewIdioms([draft(changes)])).toEqual([
       expect.objectContaining({
         file: draftFile,
         entryId: 'i_draft1',
@@ -715,17 +705,13 @@ describe('checkNewIdioms', () => {
   });
 
   it('leaves out the errors of the existing content', () => {
-    const edition = openEdition(
-      editionsWith({
-        change: (dir) => {
-          editJson(join(dir, 'content/idioms/i_fx0001.json'), (idiom) => ({
-            ...idiom,
-            expression: 'бити bайдики',
-          }));
-        },
-      }),
-      'fixture',
-    );
+    const snapshot = validSnapshot();
+    const edition = openFixture(editionsWith(), {
+      ...snapshot,
+      idioms: snapshot.idioms.map((idiom) =>
+        idiom.id === 'i_fx0001' ? { ...idiom, expression: 'бити bайдики' } : idiom,
+      ),
+    });
 
     expect(edition.checkNewIdioms([draft()])).toEqual([]);
   });

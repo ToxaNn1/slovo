@@ -30,7 +30,6 @@ import { parseArgs } from 'node:util';
 import {
   EDITIONS_DIR,
   EditionFolderError,
-  openEdition,
   openEditionWithSnapshot,
   openEditionWithoutRecords,
   type EditionFolder,
@@ -214,7 +213,9 @@ function usage(): number {
 
 /** The Edition folder, for its config alone; the exit code when it does not open. */
 function openedEdition(editionId: string): EditionFolder | number {
-  return opened(() => openEdition(process.env['SLOVO_EDITIONS_DIR'] ?? EDITIONS_DIR, editionId));
+  return opened(() =>
+    openEditionWithoutRecords(process.env['SLOVO_EDITIONS_DIR'] ?? EDITIONS_DIR, editionId),
+  );
 }
 
 /**

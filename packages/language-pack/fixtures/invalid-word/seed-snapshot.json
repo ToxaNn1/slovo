@@ -1,0 +1,47 @@
+{
+  "editionId": "fixture",
+  "contentVersion": 3,
+  "words": [
+    {
+      "kind": "word",
+      "id": "w_fx0001",
+      "lemma": "заметіль",
+      "stress": [5],
+      "partOfSpeech": "noun",
+      "gender": "feminine",
+      "primaryDefinition": "Сильний вітер зі снігом.",
+      "categoryId": "nature",
+      "rarity": 2,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    },
+    {
+      "kind": "word",
+      "id": "w_fx0002",
+      "lemma": "балакучий",
+      "stress": [5],
+      "partOfSpeech": "chatter",
+      "primaryDefinition": "Який любить багато говорити.",
+      "categoryId": "speech",
+      "rarity": 2,
+      "sources": [
+        {
+          "title": "Тестове джерело"
+        }
+      ]
+    }
+  ],
+  "corrections": [],
+  "idioms": [],
+  "tips": [],
+  "synonymRows": [],
+  "curatedCollections": [],
+  "crosswordDays": [],
+  "mediaBase": "https://media.slovo.test",
+  "recordings": [],
+  "illustrations": [],
+  "needsNewRecording": []
+}
