@@ -13,7 +13,6 @@ export {
   type Collection,
   type CollectionEntry,
   type CollectionNameRefusal,
-  type CollectionResult,
   type RenameResult,
   type Collections,
   type DeletedCollection,
