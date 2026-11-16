@@ -6,6 +6,11 @@ import { shadowColor, space } from './base';
 export const tabBar = {
   /** A tab's height above the safe area. */
   height: 56,
+  /**
+   * How far the tabs reach into the home indicator's safe area: they sit 12 points lower
+   * than the navigator's bar of 49 points put them (owner, 16.11).
+   */
+  homeIndicatorOverlap: 19,
   /** A tab's icon, square. */
   icon: 24,
   /** Space between a tab's icon and its label. */

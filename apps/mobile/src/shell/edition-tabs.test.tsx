@@ -4,7 +4,7 @@ import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
 import { router } from 'expo-router';
 import { renderRoutes } from './test-render';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -18,7 +18,8 @@ import { opened, settingsAt, switchedTo, testShell } from './test-support';
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
+  // The home indicator of an iPhone with Face ID.
+  insets: { top: 0, left: 0, right: 0, bottom: 34 },
 };
 
 /** The app's tabs over `editionInEffect` (the shipped Edition by default), opened on `url`. */
@@ -168,6 +169,60 @@ describe('the tab bar', () => {
     });
 
     expect(await screen.findByText(shown)).toBeOnTheScreen();
+  });
+});
+
+type Node = ReturnType<typeof screen.getByText>;
+
+/** The styles of `node` and the views that hold it, from the node outwards. */
+function stylesAround(node: Node) {
+  const styles = [];
+  for (let at: Node | null = node; at !== null; at = at.parent)
+    styles.push(StyleSheet.flatten(at.props['style'] as Parameters<typeof StyleSheet.flatten>[0]));
+  return styles;
+}
+
+/** The room the views around `node` keep under it. */
+function roomUnder(node: Node): number {
+  return stylesAround(node).reduce(
+    (room, style) => room + (typeof style?.paddingBottom === 'number' ? style.paddingBottom : 0),
+    0,
+  );
+}
+
+describe('the room of the tab bar (owner, 16.11)', () => {
+  // The tabs, 56 points, sit 12 points lower than the navigator's bar of 49 over the home indicator put them.
+  const bar = 49 + 34 - 12;
+
+  it('sits 12 points lower, over the screens, which keep their height when a push hides it', async () => {
+    await renderTabs('/');
+
+    expect(stylesAround(screen.getByTestId('tab-home'))).toContainEqual(
+      expect.objectContaining({ position: 'absolute', height: bar }),
+    );
+  });
+
+  it.each([
+    ['/', 'Feed'],
+    ['/feed', 'Feed opened'],
+    ['/saved', 'Saved'],
+    ['/game', 'Games'],
+    ['/settings/profile', 'Profile'],
+  ])('keeps the first screen of a tab clear of it: %s', async (url, shown) => {
+    await renderTabs(url);
+
+    expect(roomUnder(await screen.findByText(shown))).toBe(bar);
+  });
+
+  it.each([
+    ['/game/crossword', 'Crossword'],
+    ['/settings', 'Settings'],
+    ['/entry/w_one', 'Entry'],
+    ['/categories', 'Categories'],
+  ])('gives a screen it hides over the whole height: %s', async (url, shown) => {
+    await renderTabs(url);
+
+    expect(roomUnder(await screen.findByText(shown))).toBe(0);
   });
 });
 

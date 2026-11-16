@@ -25,7 +25,7 @@ import {
   type VerticalPagerHandle,
   useGesturesDemo,
 } from '@slovo/ui';
-import type { FeedCard, FeedNoticeCard } from '@slovo/core';
+import { LATER_QUESTIONS, type FeedCard, type FeedNoticeCard } from '@slovo/core';
 import { memo, useCallback, useRef, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -234,30 +234,29 @@ const FeedPage = memo(function FeedPage({
         testID={`feed-card-${String(position)}`}
         style={[styles.page, { paddingTop: top + topRow }]}
       >
-        <PagerScrollView>
-          <QuickQuestionRound
-            title={feedStrings.quickQuestion}
-            round={card.round}
-            entry={card.entry}
-            label={
-              card.source.kind === 'game-mode'
-                ? gameModeStrings(editionStrings.game.modes, card.source.modeId).roundLabel
-                : feedStrings.quickQuestion
-            }
-            answered={card.answered}
-            feedback={answerCard ? 'card' : 'sheet'}
-            onAnswer={(option) => {
-              onAnswerQuickQuestion(position, option);
-            }}
-          />
-        </PagerScrollView>
+        <QuickQuestionRound
+          title={feedStrings.quickQuestion}
+          round={card.round}
+          entry={card.entry}
+          label={
+            card.source.kind === 'game-mode'
+              ? gameModeStrings(editionStrings.game.modes, card.source.modeId).roundLabel
+              : feedStrings.quickQuestion
+          }
+          answered={card.answered}
+          feedback={answerCard ? 'card' : 'sheet'}
+          onAnswer={(option) => {
+            onAnswerQuickQuestion(position, option);
+          }}
+        />
       </View>
     );
   // The week on top under the header, Yesterday under it (board f5, ADR 0130).
   if (card.kind === 'notice' && card.notice === 'weeklyRecap')
     return (
       <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
-        <PagerScrollView contentContainerStyle={[styles.stack, { paddingTop: topRow }]}>
+        {/* Nothing around the cards scrolls: Yesterday fills the rest and scrolls inside its card. */}
+        <View style={[styles.page, styles.stack, { paddingTop: topRow }]}>
           <WeeklyRecapPage
             day={card.day}
             folded={card.folded}
@@ -266,6 +265,7 @@ const FeedPage = memo(function FeedPage({
                 <YesterdayCard
                   word={card.yesterday.word}
                   quiz={card.yesterday.quiz}
+                  fill
                   onAnswer={(option) => {
                     onAnswerYesterday(position, option);
                   }}
@@ -277,7 +277,7 @@ const FeedPage = memo(function FeedPage({
             }}
             onRestore={onRestoreWeeklyRecap}
           />
-        </PagerScrollView>
+        </View>
       </View>
     );
   if (card.kind === 'end-of-cycle' || (card.kind === 'notice' && card.notice !== 'yesterday'))
@@ -286,7 +286,12 @@ const FeedPage = memo(function FeedPage({
         testID={`feed-card-${String(position)}`}
         style={[
           styles.page,
-          card.kind === 'notice' && card.notice === 'goalReached' ? styles.goal : styles.centred,
+          card.kind === 'notice' && card.notice === 'goalReached'
+            ? styles.goal
+            : // A later question fills its page edge to edge as Yesterday does (owner, 16.11).
+              card.kind === 'notice' && isLaterQuestion(card.notice)
+              ? styles.heroContent
+              : styles.centred,
           { paddingTop: top + topRow },
         ]}
       >
@@ -326,14 +331,11 @@ const FeedPage = memo(function FeedPage({
     </View>
   );
   // Yesterday on its own page fills it, edge to edge as the Word cards (owner 15.11), and
-  // scrolls when its meanings run longer.
+  // scrolls inside its card when its meanings run longer: nothing around it scrolls (owner 16.11).
   if (card.kind === 'notice')
     return (
       <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
-        <PagerScrollView
-          testID={`feed-card-${String(position)}-scroll`}
-          contentContainerStyle={[styles.heroContent, { paddingTop: topRow + space[2] }]}
-        >
+        <View style={[styles.page, styles.heroContent, { paddingTop: topRow + space[2] }]}>
           <YesterdayCard
             word={card.word}
             quiz={card.quiz}
@@ -342,7 +344,7 @@ const FeedPage = memo(function FeedPage({
               onAnswerYesterday(position, option);
             }}
           />
-        </PagerScrollView>
+        </View>
       </View>
     );
   if (card.kind === 'tip') return <SwipedEntryCard card={card} page={page} />;
@@ -409,6 +411,11 @@ function SwipedEntryCard(
   );
 }
 
+/** Whether the Feed Notice is a later question of the questionnaire (ADR 0067). */
+function isLaterQuestion(notice: FeedNoticeCard['notice']): boolean {
+  return LATER_QUESTIONS.some((question) => question === notice);
+}
+
 /**
  * A Feed Notice that sits in the middle of its page: the Community Word, the first-week card, a level milestone, a later question
  * of the questionnaire, the offer to save progress, «Може, на сьогодні
@@ -469,11 +476,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[6],
     paddingBottom: space[6],
   },
-  // The Weekly Recap's page starts under the top row, closer to the edges (board f5).
+  // The Weekly Recap's page starts under the top row, closer to the edges, and ends the board's
+  // 12 points over the tab bar (board f5: 100 under the page, a bar of 88; check 15.11).
   stack: {
     flexGrow: 1,
     paddingHorizontal: space[3],
-    paddingBottom: space[6],
+    paddingBottom: space[3],
   },
   heroContent: {
     flexGrow: 1,

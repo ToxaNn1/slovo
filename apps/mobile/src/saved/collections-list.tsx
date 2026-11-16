@@ -129,7 +129,11 @@ function Collections({ header }: { header: ListHeader }) {
             placeholder={collectionStrings.sheet.namePlaceholder}
             cancelLabel={collectionStrings.nameSheet.cancel}
             initialName={renaming.name}
-            onSubmit={(name) => keepName(rename(renaming.id, name))}
+            onSubmit={(name) =>
+              keepName(
+                rename(renaming.id, name).then((kept) => (kept.ok ? undefined : kept.refusal)),
+              )
+            }
             onCancel={stopEditing}
           />
         </View>

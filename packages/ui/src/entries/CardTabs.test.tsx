@@ -42,7 +42,7 @@ async function renderTabs(sources?: readonly string[]) {
 const label = (name: string) => screen.getByText(name, { exact: true });
 
 describe("an Entry card's tab bar (board XEntry2)", () => {
-  it('sets the tabs as a grid of equal columns, their names centred, under a 2 px line', async () => {
+  it('gives every pair of names the same air, never under the least, their names centred, under a 2 px line (check 15.11)', async () => {
     await renderTabs();
 
     // The tab bar is the tabs' parent, the `tablist`.
@@ -54,7 +54,12 @@ describe("an Entry card's tab bar (board XEntry2)", () => {
     });
     for (const { key } of tabs)
       expect(screen.getByTestId(`word-tab-${key}`)).toHaveStyle({
-        flex: 1,
+        // Each column is its name and an equal share of the room left, so the air between
+        // names is the same; a long name shrinks its column, and the padding stays between.
+        flexGrow: 1,
+        flexShrink: 1,
+        flexBasis: 'auto',
+        paddingHorizontal: entryCardFrame.tabBar.nameGap / 2,
         height: entryCardFrame.tabBar.height,
         alignItems: 'center',
         justifyContent: 'center',

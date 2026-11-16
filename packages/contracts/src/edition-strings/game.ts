@@ -363,8 +363,6 @@ export const GameStringsSchema = z.strictObject({
     again: TextSchema,
     /** The button that goes to the Games hub, e.g. «До ігор». */
     toGames: TextSchema,
-    /** The button that goes to the Feed behind `gameEndToFeed`, e.g. «До стрічки» (ADR 0139). */
-    toFeed: TextSchema,
     /** The title over the plain Game Review behind `plainGameReview`, e.g. «Огляд раундів» (ADR 0139). */
     review: TextSchema,
   }),

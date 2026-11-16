@@ -7,10 +7,11 @@ import {
   YesterdayCard,
 } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
+import { quizOption, yesterdayCard } from '../tokens';
 
 const strings = testStrings({
   feedNotices: {
@@ -62,7 +63,8 @@ const PAGES = ['yesterday', 'next'] as const;
 async function renderFeed({
   given = quiz,
   reduceMotion = false,
-}: { given?: YesterdayQuiz; reduceMotion?: boolean } = {}) {
+  fill = false,
+}: { given?: YesterdayQuiz; reduceMotion?: boolean; fill?: boolean } = {}) {
   const onAnswer = jest.fn();
   await render(
     <ReduceMotionProvider reduceMotion={reduceMotion}>
@@ -74,7 +76,7 @@ async function renderFeed({
             onIndexChange={jest.fn()}
             renderPage={(page) =>
               page === 'yesterday' ? (
-                <YesterdayCard word={word} quiz={given} onAnswer={onAnswer} />
+                <YesterdayCard word={word} quiz={given} fill={fill} onAnswer={onAnswer} />
               ) : (
                 <Text>Next</Text>
               )
@@ -132,6 +134,25 @@ describe('the Yesterday card', () => {
     expect(screen.getByText('Meek')).toBeTruthy();
     for (const meaning of quiz.meanings) expect(option(meaning)).toBeTruthy();
     expect(verdict()).toHaveTextContent('');
+  });
+
+  it('fills its page as a fixed frame, and its meanings scroll inside it, never the page (owner, 16.11)', async () => {
+    await renderFeed({ fill: true });
+
+    const card = screen.getByTestId('feed-notice-yesterday');
+    expect(card).toHaveStyle({ flexGrow: 1, overflow: 'hidden' });
+    expect(within(card).getByTestId('feed-notice-yesterday-scroll').type).toBe('RCTScrollView');
+    expect(within(card).getByTestId('yesterday-options')).toBeTruthy();
+  });
+
+  it('sets its options apart by a clear gap below each one’s edge, and a long meaning clear of the tile’s edges (owner, 16.11)', async () => {
+    await renderFeed();
+
+    // The gap runs from the bottom of an option's edge to the next option's top.
+    expect(screen.getByTestId('yesterday-options')).toHaveStyle({ gap: yesterdayCard.optionGap });
+    expect(screen.getByTestId('yesterday-option-0-face')).toHaveStyle({
+      paddingVertical: quizOption.paddingVertical,
+    });
   });
 
   it('lights a right pick with a check, says «Spot on!» and gives the answer', async () => {

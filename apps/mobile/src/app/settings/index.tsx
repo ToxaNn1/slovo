@@ -1,4 +1,4 @@
-import { FontSizeSchema, RARITIES, fill, type Theme } from '@slovo/contracts';
+import { FontSizeSchema, RARITIES, fill, pluralCount, type Theme } from '@slovo/contracts';
 import {
   ChoiceRow,
   ConfirmationDialog,
@@ -263,7 +263,10 @@ function SettingsList() {
                 end={{
                   kind: 'chevron',
                   // «Без цілі» while today has no Daily Goal.
-                  value: dailyGoal === null ? strings.dailyGoal.none : String(dailyGoal.goal),
+                  value:
+                    dailyGoal === null
+                      ? strings.dailyGoal.none
+                      : pluralCount(edition.locale)(strings.dailyGoal.goal, dailyGoal.goal),
                   onPress: () => {
                     openScreen('/settings/daily-goal');
                   },

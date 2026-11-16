@@ -37,9 +37,11 @@ export const SettingsStringsSchema = z.strictObject({
   reduceMotion: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The switch that shares the Community Counters, and the explanation under it. */
   anonymousStats: z.strictObject({ title: TextSchema, explanation: TextSchema }),
-  /** The Daily Goal choice, its numbers of Words drawn as they are, and «Без цілі», which turns the Daily Goal off from today (ADR 0074). */
+  /** The Daily Goal choice, a goal of Words Seen in its plural form («25 слів»), and «Без цілі», which turns the Daily Goal off from today (ADR 0074). */
   dailyGoal: z.strictObject({
     title: TextSchema,
+    /** A goal as its option and the Settings row name it, e.g. «25 слів». */
+    goal: PluralSchema,
     none: TextSchema,
     /** The line under the Daily Goal screen's title. */
     subtitle: TextSchema,

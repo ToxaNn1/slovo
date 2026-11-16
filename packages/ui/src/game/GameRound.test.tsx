@@ -26,6 +26,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { useState } from 'react';
 import { AccessibilityInfo, Platform, StyleSheet, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
 import { roundHeader } from '../tokens';
@@ -655,31 +656,41 @@ describe('GameRound', () => {
     expect(screen.getAllByTestId(/^game-option-\d+-wrong-mark$/)).toHaveLength(1);
   });
 
-  it('sizes each option for its text: a Word, a sentence or a long text', async () => {
-    const texts = [
-      'candid',
-      'open and honest',
-      'speaking openly and honestly about what one thinks, even when it is unwelcome',
-      'dour',
-    ];
-    const { round } = first;
-    if (round.form !== 'pick') throw new Error('The first Round is a pick Round');
-    await renderRound(jest.fn(), jest.fn(), {
-      ...first,
-      round: { ...round, options: texts.map((text) => ({ text, stressedVowels: [] })) },
-    });
+  it.each([
+    ['all Words', ['candid', 'ardent', 'brittle', 'dour'], 'roundOptionWord'],
+    [
+      'a sentence among Words',
+      ['candid', 'open and honest', 'brittle', 'dour'],
+      'roundOptionSentence',
+    ],
+    [
+      'a long text among them',
+      [
+        'candid',
+        'open and honest',
+        'speaking openly and honestly about what one thinks, even when it is unwelcome',
+        'dour',
+      ],
+      'roundOptionLong',
+    ],
+  ] as const)(
+    'sizes the options of one Round alike, for their longest text: %s',
+    async (_, texts, role) => {
+      const { round } = first;
+      if (round.form !== 'pick') throw new Error('The first Round is a pick Round');
+      await renderRound(jest.fn(), jest.fn(), {
+        ...first,
+        round: { ...round, options: texts.map((text) => ({ text, stressedVowels: [] })) },
+      });
 
-    /** The text on the option at that place. */
-    const textOf = (place: number) =>
-      within(screen.getByTestId(`game-option-${String(place)}`)).getByText(texts[place] ?? '');
-    const sizes = (['roundOptionWord', 'roundOptionSentence', 'roundOptionLong'] as const).map(
-      (role) => typeStyle(role, coreTokens).fontSize,
-    );
-    expect(new Set(sizes).size).toBe(3);
-    sizes.forEach((fontSize, place) => {
-      expect(textOf(place)).toHaveStyle({ fontSize });
-    });
-  });
+      const { fontSize, fontFamily } = typeStyle(role, coreTokens);
+      texts.forEach((text, place) => {
+        expect(
+          within(screen.getByTestId(`game-option-${String(place)}`)).getByText(text),
+        ).toHaveStyle({ fontSize, fontFamily });
+      });
+    },
+  );
 
   it('shows a right answer as right', async () => {
     await renderRound();
@@ -1560,25 +1571,30 @@ describe('QuickQuestionRound', () => {
   ) =>
     render(
       <EditionProvider edition={{ locale: 'en' }} strings={given}>
-        <HapticsProvider haptics={haptics}>
-          <QuickQuestionRound
-            title="Quick question"
-            round={{
-              form: 'pick',
-              prompt: asked.gameQuestion.prompt,
-              labelKind: 'tip',
-              options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
-              correct: CORRECT,
-              sheet: { answer: { text: OPTIONS[CORRECT], stressedVowels: [] }, example: undefined },
-              ...(definition === undefined ? {} : { definition }),
-            }}
-            entry={asked}
-            label="Definition"
-            answered={undefined}
-            feedback="sheet"
-            onAnswer={jest.fn()}
-          />
-        </HapticsProvider>
+        <GestureHandlerRootView>
+          <HapticsProvider haptics={haptics}>
+            <QuickQuestionRound
+              title="Quick question"
+              round={{
+                form: 'pick',
+                prompt: asked.gameQuestion.prompt,
+                labelKind: 'tip',
+                options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
+                correct: CORRECT,
+                sheet: {
+                  answer: { text: OPTIONS[CORRECT], stressedVowels: [] },
+                  example: undefined,
+                },
+                ...(definition === undefined ? {} : { definition }),
+              }}
+              entry={asked}
+              label="Definition"
+              answered={undefined}
+              feedback="sheet"
+              onAnswer={jest.fn()}
+            />
+          </HapticsProvider>
+        </GestureHandlerRootView>
       </EditionProvider>,
     );
 
@@ -1640,24 +1656,29 @@ describe('QuickQuestionRound', () => {
   it('reads the heading once when the label is the Quick Question’s own title', async () => {
     await render(
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <HapticsProvider haptics={haptics}>
-          <QuickQuestionRound
-            title="Quick question"
-            round={{
-              form: 'pick',
-              prompt: 'candid',
-              labelKind: 'meaning',
-              options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
-              correct: CORRECT,
-              sheet: { answer: { text: OPTIONS[CORRECT], stressedVowels: [] }, example: undefined },
-            }}
-            entry={tip}
-            label="Quick question"
-            answered={undefined}
-            feedback="sheet"
-            onAnswer={jest.fn()}
-          />
-        </HapticsProvider>
+        <GestureHandlerRootView>
+          <HapticsProvider haptics={haptics}>
+            <QuickQuestionRound
+              title="Quick question"
+              round={{
+                form: 'pick',
+                prompt: 'candid',
+                labelKind: 'meaning',
+                options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
+                correct: CORRECT,
+                sheet: {
+                  answer: { text: OPTIONS[CORRECT], stressedVowels: [] },
+                  example: undefined,
+                },
+              }}
+              entry={tip}
+              label="Quick question"
+              answered={undefined}
+              feedback="sheet"
+              onAnswer={jest.fn()}
+            />
+          </HapticsProvider>
+        </GestureHandlerRootView>
       </EditionProvider>,
     );
 

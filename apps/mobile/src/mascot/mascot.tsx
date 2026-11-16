@@ -7,6 +7,7 @@ import { StyleSheet, View } from 'react-native';
 import { useComposition } from '../composition';
 import { editionStrings, edition as shippedEdition } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
+import { useGameState } from '../game/game';
 import { useShown } from '../shown-in-effect';
 
 const newLevelStrings = editionStrings.settings.profile.newLevel;
@@ -147,7 +148,6 @@ export function MascotCelebrations() {
   });
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
-    let toastTimer: ReturnType<typeof setTimeout> | undefined;
     const celebrate = (state: MascotMoment) => {
       clearTimeout(timer);
       setShown(state);
@@ -162,11 +162,6 @@ export function MascotCelebrations() {
         return;
       }
       setEarnedBadge({ kind, badge });
-      clearTimeout(toastTimer);
-      if (kind === 'toast')
-        toastTimer = setTimeout(() => {
-          setEarnedBadge(undefined);
-        }, CELEBRATION_MS);
     };
     const stops = [
       xpLog.onLevelReached(({ level, name }) => {
@@ -183,7 +178,6 @@ export function MascotCelebrations() {
     ];
     return () => {
       clearTimeout(timer);
-      clearTimeout(toastTimer);
       for (const stop of stops) stop();
     };
   }, [xpLog, badges, progress]);
@@ -240,19 +234,16 @@ export function MascotCelebrations() {
       />
     );
   }
-  if (earnedBadge?.kind === 'toast') {
-    const { badge } = earnedBadge;
-    const family = familyOf(badge);
+  if (earnedBadge?.kind === 'toast')
     return (
-      <BadgeToast
-        shape={family?.shape ?? 'circle'}
-        tone={family?.tone ?? 'ink'}
-        symbol={badge.symbol}
-        name={badge.name}
-        line={stampStrings.line}
+      <GameBadgeToast
+        key={earnedBadge.badge.id}
+        badge={earnedBadge.badge}
+        onGone={() => {
+          setEarnedBadge(undefined);
+        }}
       />
     );
-  }
   if (shown === undefined) return null;
   return (
     <View
@@ -264,6 +255,35 @@ export function MascotCelebrations() {
       {/* The line floats over any screen, so it stands on a plate (owner bug 07.11). */}
       <MascotIn state={shown} plate />
     </View>
+  );
+}
+
+/**
+ * The toast of a Badge earned in a Game: it waits while the answer banner
+ * shows, so it never hides the banner's verdict (owner check 15.11, item 25),
+ * then shows for a while and calls `onGone`.
+ */
+function GameBadgeToast({ badge, onGone }: { badge: BadgeState; onGone: () => void }) {
+  const game = useGameState().current;
+  const bannerShown = game?.status === 'answered' && game.banner;
+  const gone = useEffectEvent(onGone);
+  useEffect(() => {
+    if (bannerShown) return;
+    const timer = setTimeout(gone, CELEBRATION_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [bannerShown]);
+  if (bannerShown) return null;
+  const family = familyOf(badge);
+  return (
+    <BadgeToast
+      shape={family?.shape ?? 'circle'}
+      tone={family?.tone ?? 'ink'}
+      symbol={badge.symbol}
+      name={badge.name}
+      line={stampStrings.line}
+    />
   );
 }
 

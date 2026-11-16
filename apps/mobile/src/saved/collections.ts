@@ -1,9 +1,9 @@
 import type {
   Collection,
   CollectionEntry,
-  CollectionResult,
   Collections,
   DeletedCollection,
+  RenameResult,
 } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
@@ -56,13 +56,19 @@ export function useEntryCollections(entryId: string): {
   };
 }
 
-/** Why the Core refused a name, in the Edition's words; nothing once the name is kept or the Collection is gone. */
-async function refusalOf(
-  result: Promise<CollectionResult | undefined>,
-): Promise<string | undefined> {
+/**
+ * A rename in the Edition's words: kept, `renamed` false when the name was
+ * already the Collection's own or the Collection is gone, or why it is refused.
+ */
+export type RenamedCollection =
+  | { readonly ok: true; readonly renamed: boolean }
+  | { readonly ok: false; readonly refusal: string };
+
+async function renamedOf(result: Promise<RenameResult | undefined>): Promise<RenamedCollection> {
   const kept = await result;
-  if (kept === undefined || kept.ok) return undefined;
-  return refusalText(editionStrings.collections.sheet.refusal, kept.reason);
+  if (kept === undefined) return { ok: true, renamed: false };
+  if (kept.ok) return { ok: true, renamed: kept.renamed };
+  return { ok: false, refusal: refusalText(editionStrings.collections.sheet.refusal, kept.reason) };
 }
 
 /** A new Collection once it is kept, or why its name is refused, in the Edition's words. */
@@ -74,8 +80,8 @@ export type CreatedCollection =
 export function useCollectionChanges(): {
   /** Makes an empty Collection; resolves to it once it is kept, or to why its name is refused. */
   create: (name: string) => Promise<CreatedCollection>;
-  /** Renames a Collection; resolves to why the name is refused, or to nothing once it is kept. */
-  rename: (collectionId: string, name: string) => Promise<string | undefined>;
+  /** Renames a Collection; resolves to whether the name changed once it is kept, or to why it is refused. */
+  rename: (collectionId: string, name: string) => Promise<RenamedCollection>;
   /**
    * Deletes a Collection with its Entry records; the Entries stay wherever
    * else they are kept. Resolves to its undo once it is kept, or to nothing.
@@ -96,7 +102,7 @@ export function useCollectionChanges(): {
               refusal: refusalText(editionStrings.collections.sheet.refusal, kept.reason),
             };
       },
-      rename: (collectionId, name) => refusalOf(collections.rename(collectionId, name)),
+      rename: (collectionId, name) => renamedOf(collections.rename(collectionId, name)),
       remove: (collectionId) => keep('Collections', collections.delete(collectionId)),
     }),
     [collections],

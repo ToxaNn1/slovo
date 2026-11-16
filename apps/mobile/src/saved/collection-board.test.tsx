@@ -300,6 +300,24 @@ describe('a Collection in the board style', () => {
     expect(screen.getByText(strings.toasts.renamed)).toBeOnTheScreen();
   });
 
+  it('says nothing when the name is kept as it is', async () => {
+    const id = await collectionOf(['w_one']);
+    await renderCollection(id);
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: menuLabel })));
+    await settle(() => fireEvent.press(screen.getByTestId('collection-menu-rename')));
+    await settle();
+    await settle(() => fireEvent.changeText(screen.getByDisplayValue('Осінь'), ' Осінь '));
+    await act(async () => {
+      await fireEvent.press(screen.getByRole('button', { name: strings.nameSheet.save }));
+      await jest.advanceTimersByTimeAsync(50);
+    });
+    await settle();
+
+    expect(screen.queryByDisplayValue(' Осінь ')).not.toBeOnTheScreen();
+    expect(screen.queryByText(strings.toasts.renamed)).not.toBeOnTheScreen();
+  });
+
   it('keeps the name sheet open with why a name is refused', async () => {
     const id = await collectionOf(['w_one']);
     await composition.collections.create('Зима');

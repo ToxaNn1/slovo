@@ -292,5 +292,19 @@ describe('the Quick Question on the Feed', () => {
         expect(text).not.toHaveProp('adjustsFontSizeToFit', true);
       }
     }
+    // The card fills its page and the long options scroll inside it: nothing scrolls around the card (owner, 16.11).
+    expect(within(card).getByTestId('quick-question-scroll', hidden).type).toBe('RCTScrollView');
+    expect(scrollViewsAround(card)).toBe(0);
   });
 });
+
+/** How many scroll views hold `element` up to the Feed's pager, which turns the pages. */
+function scrollViewsAround(element: ReturnType<typeof screen.getByTestId>): number {
+  let count = 0;
+  for (let parent = element.parent; parent !== null; parent = parent.parent) {
+    const { testID } = parent.props;
+    if (typeof testID === 'string' && testID.startsWith('feed-card-')) return count;
+    if (parent.type === 'RCTScrollView') count += 1;
+  }
+  throw new Error('The card is not on a Feed page');
+}

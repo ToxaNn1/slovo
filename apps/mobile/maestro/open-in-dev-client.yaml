@@ -1,6 +1,7 @@
 # Opens the app's JavaScript from Metro in the development client and waits
-# for the Feed, setting aside the development client's own sheets on the way
-# and skipping the onboarding a fresh install opens over the Feed. A flow that
+# for the Feed, setting aside the development client's own sheets on the way,
+# skipping the onboarding a fresh install opens over the Dashboard and going
+# from the Dashboard's Word of the Day hero to the Feed. A flow that
 # checks the onboarding itself passes `PASS_ONBOARDING: 'false'`, and for the
 # onboarding to wait for, `READY_ID: onboarding`.
 # `smoke.yaml` runs it after launching the app, with `output.devClientLink`
@@ -17,8 +18,11 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # Wait for the Feed: a card of any kind, since the Feed reopens on the card the
 # reader was on, which may be a Correction or the end of the Cycle. On a new
 # simulator the development client opens its menu over the app, before or after
-# the JavaScript loads; close it on the way. The onboarding covers the Feed on a
-# fresh install, so «Пропустити» on it brings the Feed up.
+# the JavaScript loads; close it on the way. The onboarding covers the Dashboard
+# on a fresh install, so «Пропустити» on it brings the Dashboard up. The app
+# opens on the Dashboard: «РОЗКРИЙ СЛОВО» opens its hero, and «ЩЕ ПРО СЛОВО →»
+# on the open hero (straight away once the Word of the Day is Seen) opens the
+# Feed. A flow waiting for something else (`READY_ID`) stays where it is.
 - repeat:
     while:
       notVisible:
@@ -38,6 +42,22 @@ appId: ${APP_ID || 'app.slovo.uk'}
             - tapOn:
                 id: onboarding-skip
                 point: 15%, 50%
+      - runFlow:
+          when:
+            true: ${!READY_ID}
+            visible:
+              id: dashboard-reveal
+          commands:
+            - tapOn:
+                id: dashboard-reveal
+      - runFlow:
+          when:
+            true: ${!READY_ID}
+            visible:
+              id: dashboard-to-card
+          commands:
+            - tapOn:
+                id: dashboard-to-card
       - extendedWaitUntil:
           visible:
             id: ${READY_ID || 'feed-card-.*'}
@@ -45,6 +65,24 @@ appId: ${APP_ID || 'app.slovo.uk'}
           optional: true
 - assertVisible:
     id: ${READY_ID || 'feed-card-.*'}
+# The Feed shows its gestures hint once on a device, a moment after the cards;
+# «ЗРОЗУМІЛО» closes it.
+- runFlow:
+    when:
+      true: ${!READY_ID}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: gestures-hint-dismiss
+          timeout: 3000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              id: gestures-hint-dismiss
+          commands:
+            - tapOn:
+                id: gestures-hint-dismiss
 # The app's splash covers everything for a moment, then fades out.
 - extendedWaitUntil:
     notVisible:

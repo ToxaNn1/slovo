@@ -21,6 +21,7 @@ import { AnswerSheet, cardLine } from './AnswerSheet';
 import { ChipsRound } from './ChipsRound';
 import { GameHeader } from './GameHeader';
 import { PairsRound } from './PairsRound';
+import { PagerScrollView } from '../primitives/VerticalPager';
 import { AnswerOptions, PickRound } from './PickRound';
 import { RoundCard, RoundKicker } from './RoundCard';
 import { RoundLookContext, type QuestionFace } from './round-look';
@@ -374,47 +375,54 @@ export function QuickQuestionRound({
   return (
     <View testID="quick-question" style={styles.quickQuestion}>
       <View
+        testID="quick-question-card"
         style={[
           styles.quickQuestionCard,
           { backgroundColor: colors.surface, borderColor: colors.line },
         ]}
       >
-        <View
-          testID="quick-question-tag"
-          accessible
-          accessibilityRole="header"
-          // The tag's visible label first, so the name VoiceOver reads holds what it shows;
-          // a label that is the title itself, the Word Meaning question's, is read once.
-          accessibilityLabel={asked.label === title ? title : `${asked.label}. ${title}`}
-          style={[styles.quickQuestionTag, { backgroundColor: colors.ink }]}
+        {/* The card fills its page and a long question scrolls inside it, never the page (owner, 16.11). */}
+        <PagerScrollView
+          testID="quick-question-scroll"
+          contentContainerStyle={styles.quickQuestionContent}
         >
-          <Text
-            maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-            {...voice}
-            style={[typeStyle('quickQuestionTag', tokens), { color: colors.background }]}
+          <View
+            testID="quick-question-tag"
+            accessible
+            accessibilityRole="header"
+            // The tag's visible label first, so the name VoiceOver reads holds what it shows;
+            // a label that is the title itself, the Word Meaning question's, is read once.
+            accessibilityLabel={asked.label === title ? title : `${asked.label}. ${title}`}
+            style={[styles.quickQuestionTag, { backgroundColor: colors.ink }]}
           >
-            {asked.label}
-          </Text>
-        </View>
-        <RoundCard
-          label={asked.label}
-          prompt={asked.prompt}
-          highlight={round.highlight}
-          gap={undefined}
-          definition={round.definition}
-          quickQuestion={{ instead }}
-        />
-        <AnswerOptions
-          options={round.options}
-          answer={answer}
-          inQuickQuestion
-          onPick={(option) => {
-            if (option === round.correct) gameHaptics.rightAnswer();
-            else gameHaptics.wrongAnswer();
-            setExplaining(true);
-            onAnswer(option);
-          }}
-        />
+            <Text
+              maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+              {...voice}
+              style={[typeStyle('quickQuestionTag', tokens), { color: colors.background }]}
+            >
+              {asked.label}
+            </Text>
+          </View>
+          <RoundCard
+            label={asked.label}
+            prompt={asked.prompt}
+            highlight={round.highlight}
+            gap={undefined}
+            definition={round.definition}
+            quickQuestion={{ instead }}
+          />
+          <AnswerOptions
+            options={round.options}
+            answer={answer}
+            inQuickQuestion
+            onPick={(option) => {
+              if (option === round.correct) gameHaptics.rightAnswer();
+              else gameHaptics.wrongAnswer();
+              setExplaining(true);
+              onAnswer(option);
+            }}
+          />
+        </PagerScrollView>
       </View>
       <AnswerSheet
         answer={explained}
@@ -432,13 +440,17 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   round: { gap: space[5], padding: space[6] },
   // The Feed's page pads the Quick Question's card as board f3 does its cards.
-  quickQuestion: { padding: space[3] },
+  quickQuestion: { flex: 1, padding: space[3] },
   quickQuestionCard: {
+    flex: 1,
+    borderRadius: quickQuestionCard.radius,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  quickQuestionContent: {
     gap: quickQuestionCard.gap,
     paddingVertical: quickQuestionCard.paddingVertical,
     paddingHorizontal: quickQuestionCard.paddingHorizontal,
-    borderRadius: quickQuestionCard.radius,
-    borderWidth: 1,
   },
   quickQuestionTag: {
     alignSelf: 'flex-start',

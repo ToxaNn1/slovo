@@ -63,6 +63,11 @@ export type CollectionResult =
   | { readonly ok: true; readonly collection: Collection }
   | { readonly ok: false; readonly reason: CollectionNameRefusal };
 
+/** A rename: kept, `renamed` false when the name was already the Collection's own, or refused with a reason. */
+export type RenameResult =
+  | { readonly ok: true; readonly collection: Collection; readonly renamed: boolean }
+  | { readonly ok: false; readonly reason: CollectionNameRefusal };
+
 /** An Entry in a Collection, as the Collection's screen draws it. */
 export interface CollectionEntry {
   readonly entryId: string;
@@ -116,10 +121,10 @@ export interface Collections {
   /**
    * Gives the Collection a new name, by the same rules as `create`; its own
    * name, in any letter case, is not a duplicate. The time it was created, its
-   * Entries and its place in the list stay. Nothing for a Collection that
-   * doesn't exist.
+   * Entries and its place in the list stay; `renamed` is false when the name
+   * is already its own. Nothing for a Collection that doesn't exist.
    */
-  rename(collectionId: string, name: string): Promise<CollectionResult | undefined>;
+  rename(collectionId: string, name: string): Promise<RenameResult | undefined>;
   /**
    * Deletes the Collection, its record and the records of its Entries in one
    * write, and resolves to its undo. The Entries stay wherever else they are
@@ -378,7 +383,7 @@ export async function openCollections({
   async function rename(
     collectionId: string,
     untrimmed: string,
-  ): Promise<CollectionResult | undefined> {
+  ): Promise<RenameResult | undefined> {
     const collection = collections.get(collectionId);
     if (collection === undefined) return undefined;
     const name = untrimmed.trim();
@@ -386,7 +391,9 @@ export async function openCollections({
     if (reason !== undefined) return { ok: false, reason };
     // Keeping the name as it is changes nothing.
     const view = views.get(collectionId);
-    if (name === collection.name && view !== undefined) return { ok: true, collection: view };
+    if (name === collection.name && view !== undefined) {
+      return { ok: true, collection: view, renamed: false };
+    }
     await write(
       collectionRecords.record(collectionId).change({
         name,
@@ -394,7 +401,7 @@ export async function openCollections({
         ...(collection.source === undefined ? {} : { source: collection.source }),
       }),
     );
-    return { ok: true, collection: change({ ...collection, name }) };
+    return { ok: true, collection: change({ ...collection, name }), renamed: true };
   }
 
   async function deleteCollection(collectionId: string): Promise<DeletedCollection | undefined> {

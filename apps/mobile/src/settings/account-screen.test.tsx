@@ -373,3 +373,21 @@ describe('signing in with a Sign-in code on the Account screen', () => {
     expect(cells).toEqual(['1', '2', '3', '', '', '']);
   });
 });
+
+describe('the email problem on the Account screen', () => {
+  it('leaves once the reader edits the address, and comes back on the next refused send', async () => {
+    await renderScreen();
+    const email = () => screen.getByTestId('account-email');
+    const send = () => settle(() => fireEvent.press(screen.getByTestId('account-send-code')));
+
+    await fireEvent.changeText(email(), 'abc');
+    await send();
+    expect(screen.getByText(problems['invalid-email'])).toBeOnTheScreen();
+
+    await settle(() => fireEvent.changeText(email(), 'abc@'));
+    expect(screen.queryByText(problems['invalid-email'])).not.toBeOnTheScreen();
+
+    await send();
+    expect(screen.getByText(problems['invalid-email'])).toBeOnTheScreen();
+  });
+});

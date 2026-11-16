@@ -3,6 +3,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
 import { testStrings } from '../test-strings';
+import { space } from '../tokens';
 
 type Theme = 'light' | 'dark';
 
@@ -45,5 +46,19 @@ describe('SegmentedControl', () => {
     expect(onSelect).toHaveBeenCalledWith('dark');
     expect(screen.getByRole('button', { name: 'Theme: Dark' })).toBeSelected();
     expect(screen.getByRole('button', { name: 'Theme: Light' })).not.toBeSelected();
+  });
+
+  it('keeps each label on one line, a long label taking the room it needs (check 15.11)', async () => {
+    await render(<ThemeChoice onSelect={jest.fn()} />);
+
+    // Each segment is its label and an equal share of the room left, so «Екран блокування»
+    // takes more of the track than «Малий» and keeps to one line.
+    expect(screen.getByRole('button', { name: 'Theme: Light' })).toHaveStyle({
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 'auto',
+      paddingHorizontal: space[2],
+    });
+    expect(screen.getByText('Light')).toHaveProp('numberOfLines', 1);
   });
 });

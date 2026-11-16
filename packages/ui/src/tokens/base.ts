@@ -1385,6 +1385,8 @@ export const quizOption = {
   height: 50,
   radius: 14,
   padding: 16,
+  /** The room above and below a meaning, so a long one wrapped on lines clears the tile's edges. */
+  paddingVertical: 12,
   gap: 10,
   border: 1,
   check: { width: 16, height: 14 },
