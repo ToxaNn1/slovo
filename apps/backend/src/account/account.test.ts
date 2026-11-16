@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { fill } from '@slovo/contracts';
 import type { ApiClient } from '@slovo/contracts/api';
-import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
+import { EDITIONS_DIR, openEditionWithoutRecords } from '@slovo/language-pack/edition';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
@@ -51,7 +51,7 @@ describe('signing in with a Sign-in code', () => {
   it('mails the code in the language of the Edition that asked, from a sender named after it', async () => {
     const { client, mailer } = testApp();
     const email = newEmail();
-    const uk = openEdition(EDITIONS_DIR, 'uk');
+    const uk = openEditionWithoutRecords(EDITIONS_DIR, 'uk');
     const strings = uk.read('strings').email;
 
     await client.account.requestCode({ email, editionId: 'uk' });

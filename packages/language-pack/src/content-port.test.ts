@@ -1,21 +1,25 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import type { ContentSnapshot } from '@slovo/contracts/api';
 import { type ContentReadPort } from '@slovo/core';
 import { createMemoryContentPort, ALL_KINDS, ENTRY_KINDS } from '@slovo/core/testing';
 
-import { editionFiles } from './edition-folder';
-import { buildLanguagePack, openLanguagePack, recordContent } from './index';
+import { editionFiles, snapshotEntries } from './edition-folder';
+import { buildFromSnapshot, openLanguagePack } from './index';
+import {
+  buildUkrainianPack,
+  fixtureDir,
+  ukrainianFolder,
+  ukrainianSnapshot,
+  validSnapshot,
+} from './test-support';
 
 // One contract for both adapters of the Core's content read port: the
 // in-memory one the Core ships for tests, and the reader of a compiled pack.
-
-const fixtureDir = fileURLToPath(new URL('../fixtures/valid', import.meta.url));
-const ukrainianDir = fileURLToPath(new URL('../../../editions/uk', import.meta.url));
 
 const workDirs: string[] = [];
 
@@ -29,16 +33,22 @@ function workDir(): string {
   return dir;
 }
 
-/** Builds the Edition into a pack and opens it. */
-function openPack(editionDir: string) {
+/** Builds the Edition from a snapshot of its records into a pack and opens it. */
+function openPack(editionDir: string, snapshot: ContentSnapshot) {
   const outFile = join(workDir(), 'language-pack.db');
-  if (!buildLanguagePack({ editionDir, outFile }).ok)
+  if (!buildFromSnapshot({ editionDir, snapshot, outFile }).ok)
     throw new Error(`${editionDir} does not build`);
   return openLanguagePack(outFile);
 }
 
+/** The UA Language Pack, built from its seed snapshot, opened. */
+function openUkrainianPack() {
+  return openPack(ukrainianFolder.dir, ukrainianSnapshot());
+}
+
 /** A Synonym Row of the fixture whose second member links the Word, Retired or not. */
 const synonymRow = (id: string, wordId: string, retired = false) => ({
+  kind: 'synonymRow' as const,
   id,
   dominant: { text: 'говорити', stress: [5], wordId },
   meaning: 'Тестове значення: висловлювати думки словами.',
@@ -50,37 +60,35 @@ const synonymRow = (id: string, wordId: string, retired = false) => ({
 });
 
 /**
- * The fixture Edition with Correction c_fx0002 and Idiom i_fx0002 retired, so
- * every kind has a Retired Entry, and Synonym Rows linking the live Word
- * w_fx0002 and the Retired Word w_fx0001, one of them Retired.
+ * The fixture Edition's snapshot with Correction c_fx0002 and Idiom i_fx0002
+ * retired, so every kind has a Retired Entry, and Synonym Rows linking the
+ * live Word w_fx0002 and the Retired Word w_fx0001, one of them Retired.
  */
-function editionWithRetiredEntries(): string {
-  const editionDir = join(workDir(), 'edition');
-  cpSync(fixtureDir, editionDir, { recursive: true });
-  for (const row of [
-    synonymRow('r_fx0001', 'w_fx0002', true),
-    synonymRow('r_fx0002', 'w_fx0002'),
-    synonymRow('r_fx0003', 'w_fx0002'),
-    synonymRow('r_fx0004', 'w_fx0001'),
-  ]) {
-    writeFileSync(join(editionDir, `content/synonym-rows/${row.id}.json`), JSON.stringify(row));
-  }
-  for (const file of ['content/corrections/c_fx0002.json', 'content/idioms/i_fx0002.json']) {
-    const path = join(editionDir, file);
-    const entry = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
-    writeFileSync(path, JSON.stringify({ ...entry, retired: true }));
-  }
-  if (!recordContent({ editionDir }).ok) throw new Error('The fixture does not record');
-  return editionDir;
+function snapshotWithRetiredEntries(): ContentSnapshot {
+  const snapshot = validSnapshot();
+  const retiredIds = new Set(['c_fx0002', 'i_fx0002']);
+  const retire = <E extends { readonly id: string }>(entry: E): E =>
+    retiredIds.has(entry.id) ? { ...entry, retired: true } : entry;
+  return {
+    ...snapshot,
+    corrections: snapshot.corrections.map(retire),
+    idioms: snapshot.idioms.map(retire),
+    synonymRows: [
+      synonymRow('r_fx0001', 'w_fx0002', true),
+      synonymRow('r_fx0002', 'w_fx0002'),
+      synonymRow('r_fx0003', 'w_fx0002'),
+      synonymRow('r_fx0004', 'w_fx0001'),
+    ],
+  };
 }
 
-/** The Categories and Entries of an Edition as authored, through the one reader (ADR 0035). */
-function authored(editionDir: string) {
-  const files = editionFiles(editionDir);
-  const { words, corrections, idioms, synonymRows } = files.entries();
+/** The Categories and Entries of the fixture Edition with these records, through the one reader (ADR 0035). */
+function authored(snapshot: ContentSnapshot) {
+  const config = editionFiles(fixtureDir('valid')).read('config');
+  const { words, corrections, idioms, synonymRows } = snapshotEntries(snapshot);
   return {
-    categories: files.read('config').categories,
-    correctionCategories: files.read('config').correctionCategories,
+    categories: config.categories,
+    correctionCategories: config.correctionCategories,
     words: words.map(({ entry }) => entry),
     corrections: corrections.map(({ entry }) => entry),
     idioms: idioms.map(({ entry }) => entry),
@@ -90,19 +98,19 @@ function authored(editionDir: string) {
 
 const adapters: [
   string,
-  (editionDir: string) => { content: ContentReadPort; close: () => void },
+  (snapshot: ContentSnapshot) => { content: ContentReadPort; close: () => void },
 ][] = [
   [
     'in memory',
-    (editionDir) => ({
-      content: createMemoryContentPort(authored(editionDir)),
+    (snapshot) => ({
+      content: createMemoryContentPort(authored(snapshot)),
       close: () => undefined,
     }),
   ],
   [
     'over a compiled pack',
-    (editionDir) => {
-      const pack = openPack(editionDir);
+    (snapshot) => {
+      const pack = openPack(fixtureDir('valid'), snapshot);
       return {
         content: pack,
         close: () => {
@@ -118,7 +126,7 @@ describe.each(adapters)('the content read port %s', (_, open) => {
   let close: () => void;
 
   beforeAll(() => {
-    ({ content, close } = open(editionWithRetiredEntries()));
+    ({ content, close } = open(snapshotWithRetiredEntries()));
   });
 
   afterAll(() => {
@@ -246,16 +254,13 @@ const PACK_TIMEOUT_MS = 20_000;
 
 describe('the Ukrainian Language Pack', { timeout: PACK_TIMEOUT_MS }, () => {
   it('builds', () => {
-    const result = buildLanguagePack({
-      editionDir: ukrainianDir,
-      outFile: join(workDir(), 'language-pack.db'),
-    });
+    const result = buildUkrainianPack(join(workDir(), 'language-pack.db'));
 
     expect(result.ok).toBe(true);
   });
 
   it('lists the 12 Categories in their order, keeping the ids its Words already use', async () => {
-    const pack = openPack(ukrainianDir);
+    const pack = openUkrainianPack();
     try {
       const categories = await pack.listCategories();
 
@@ -286,7 +291,7 @@ describe('the Ukrainian Language Pack', { timeout: PACK_TIMEOUT_MS }, () => {
   });
 
   it('lists the 7 Categories of Corrections in their order, every one holding live Corrections', async () => {
-    const pack = openPack(ukrainianDir);
+    const pack = openUkrainianPack();
     try {
       const categories = await pack.listCorrectionCategories();
       const corrections = await pack.getEntries(await pack.listIds('correction'));
@@ -309,7 +314,7 @@ describe('the Ukrainian Language Pack', { timeout: PACK_TIMEOUT_MS }, () => {
   });
 
   it('holds at least 15 Words in «Діалекти», each with the dialectal register label and a region', async () => {
-    const pack = openPack(ukrainianDir);
+    const pack = openUkrainianPack();
     try {
       const words = await pack.getEntries(await pack.listIds('word', 'dialects'));
 
@@ -327,7 +332,7 @@ describe('the Ukrainian Language Pack', { timeout: PACK_TIMEOUT_MS }, () => {
   });
 
   it('holds at least 15 Words in «Дотепна лайка», each with its Stress', async () => {
-    const pack = openPack(ukrainianDir);
+    const pack = openUkrainianPack();
     try {
       const words = await pack.getEntries(await pack.listIds('word', 'witty-insults'));
 
@@ -341,7 +346,7 @@ describe('the Ukrainian Language Pack', { timeout: PACK_TIMEOUT_MS }, () => {
   });
 
   it('holds at least 15 Words in «Народні назви», each with its sources', async () => {
-    const pack = openPack(ukrainianDir);
+    const pack = openUkrainianPack();
     try {
       const words = await pack.getEntries(await pack.listIds('word', 'folk-names'));
 
@@ -355,7 +360,7 @@ describe('the Ukrainian Language Pack', { timeout: PACK_TIMEOUT_MS }, () => {
   });
 
   it('holds at least 15 Words in «Старі ремесла», each with its sources', async () => {
-    const pack = openPack(ukrainianDir);
+    const pack = openUkrainianPack();
     try {
       const words = await pack.getEntries(await pack.listIds('word', 'old-crafts'));
 
@@ -369,7 +374,7 @@ describe('the Ukrainian Language Pack', { timeout: PACK_TIMEOUT_MS }, () => {
   });
 
   it('holds at least 15 Idioms of type proverb, each with its sources', async () => {
-    const pack = openPack(ukrainianDir);
+    const pack = openUkrainianPack();
     try {
       const idioms = await pack.getEntries(await pack.listIds('idiom'));
       const proverbs = idioms.filter(
@@ -389,7 +394,7 @@ describe('the Ukrainian Language Pack', { timeout: PACK_TIMEOUT_MS }, () => {
     ['Розстріляна лексика', 'repressed-words'],
     ['Слова-хамелеони', 'chameleon-words'],
   ])('holds 15 Words in «%s», each with its history and sources', async (_name, categoryId) => {
-    const pack = openPack(ukrainianDir);
+    const pack = openUkrainianPack();
     try {
       const words = await pack.getEntries(await pack.listIds('word', categoryId));
 
@@ -404,7 +409,7 @@ describe('the Ukrainian Language Pack', { timeout: PACK_TIMEOUT_MS }, () => {
   });
 
   it('lists every live Word under its own Category', async () => {
-    const pack = openPack(ukrainianDir);
+    const pack = openUkrainianPack();
     try {
       const byCategory = await Promise.all(
         (await pack.listCategories()).map(async ({ id }) => ({
@@ -427,7 +432,7 @@ describe('the Ukrainian Language Pack', { timeout: PACK_TIMEOUT_MS }, () => {
   });
 
   it('gives every live Word at once as it gives each by id', async () => {
-    const pack = openPack(ukrainianDir);
+    const pack = openUkrainianPack();
     try {
       const words = await pack.listWords();
 

@@ -27,7 +27,7 @@ interface SplashPluginOptions {
 // sources of the workspace packages (their relative imports have no file
 // extension). tsx loads them, so the Edition is read by the same module, and
 // checked by the same schemas, as the Language Pack build and the app.
-const { EditionFolderError, listEditions, openAppConfig, openEdition } = tsxRequire(
+const { EditionFolderError, listEditions, openAppConfig, openEditionWithoutRecords } = tsxRequire(
   '@slovo/language-pack/edition',
   import.meta.url,
 ) as typeof EditionFolders;
@@ -309,7 +309,7 @@ function updates(
 function bundledEdition(editionsDir: string, app: AppFolder): EditionFolder {
   const id = app.config.defaultEdition;
   try {
-    return openEdition(editionsDir, id);
+    return openEditionWithoutRecords(editionsDir, id);
   } catch (error) {
     if (error instanceof EditionFolderError && error.reason === 'unknown') {
       throw new Error(

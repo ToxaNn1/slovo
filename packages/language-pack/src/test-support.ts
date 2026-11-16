@@ -1,23 +1,18 @@
-import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-
-import { checksumOf } from '@slovo/content-rules';
+import { fileURLToPath, URL } from 'node:url';
 
 import type { ContentSnapshot } from '@slovo/contracts/api';
 import { loadEdition } from '@slovo/core';
 
 import { buildFromSnapshot, type BuildResult } from './build';
-import { crosswordDaysChecksum } from './crossword-days';
-import { CROSSWORD_DAYS_FILE, EDITIONS_DIR, openEdition } from './edition-folder';
-import { MANIFEST_FILE } from './content-manifest';
-import { ID_REGISTRY_FILE } from './id-registry';
-import { readEditionWithSnapshot } from './read-edition';
+import { EDITIONS_DIR, openEditionWithoutRecords } from './edition-folder';
 import { readSnapshotFile } from './snapshot-source';
 
 // Helpers the Language Pack tests share. No module of the package imports them.
 
 /** The UA Edition's folder. */
-export const ukrainianFolder = openEdition(EDITIONS_DIR, 'uk');
+export const ukrainianFolder = openEditionWithoutRecords(EDITIONS_DIR, 'uk');
 
 /** The UA Edition, loaded by the Core from its config file as the app loads it. */
 export const ukrainian = loadEdition(
@@ -36,6 +31,20 @@ export function ukrainianSnapshot(): ContentSnapshot {
   return readSnapshotFile(UK_SEED_SNAPSHOT);
 }
 
+/** The folder of a fixture Edition of this package's `fixtures/`. */
+export function fixtureDir(name: string): string {
+  return fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
+}
+
+/**
+ * The valid fixture Edition's seed snapshot: its records, as the backend
+ * serves them, read fresh as the import reads it. The folder gives the
+ * config and assets alone (ADR 0153).
+ */
+export function validSnapshot(): ContentSnapshot {
+  return readSnapshotFile(join(fixtureDir('valid'), 'seed-snapshot.json'));
+}
+
 /** Builds the UA Language Pack as the app build does: the folder's config and assets, the seed snapshot's records. */
 export function buildUkrainianPack(outFile: string): BuildResult {
   return buildFromSnapshot({
@@ -43,57 +52,6 @@ export function buildUkrainianPack(outFile: string): BuildResult {
     snapshot: ukrainianSnapshot(),
     outFile,
   });
-}
-
-/** The folder of an Edition's content each kind of record of a snapshot is authored in. */
-const CONTENT_FOLDERS = [
-  ['words', 'content/words'],
-  ['idioms', 'content/idioms'],
-  ['corrections', 'content/corrections'],
-  ['tips', 'content/tips'],
-  ['synonymRows', 'content/synonym-rows'],
-  ['curatedCollections', 'content/curated-collections'],
-] as const;
-
-/**
- * A copy of the UA Edition's folder under `dir` whose content folder holds the
- * seed snapshot's records and crossword days, recorded at its content
- * version: for the tests of what still reads an Edition folder (`--record`,
- * the Daily Crossword), so that none reads the Edition's own content folder.
- */
-export function ukrainianSeedFolder(dir: string): string {
-  const editionDir = join(dir, 'uk');
-  const skipped = new Set(
-    ['content', 'dist', 'seed-snapshot.json'].map((name) => join(ukrainianFolder.dir, name)),
-  );
-  cpSync(ukrainianFolder.dir, editionDir, {
-    recursive: true,
-    filter: (from) => !skipped.has(from),
-  });
-  const snapshot = ukrainianSnapshot();
-  const writeJson = (file: string, value: unknown) => {
-    writeFileSync(join(editionDir, file), `${JSON.stringify(value, null, 2)}\n`);
-  };
-  const ids: string[] = [];
-  for (const [kind, folder] of CONTENT_FOLDERS) {
-    mkdirSync(join(editionDir, folder), { recursive: true });
-    for (const record of snapshot[kind]) {
-      // A content file names no kind: its folder does.
-      const file = Object.fromEntries(Object.entries(record).filter(([key]) => key !== 'kind'));
-      writeJson(join(folder, `${record.id}.json`), file);
-      ids.push(record.id);
-    }
-  }
-  writeJson(CROSSWORD_DAYS_FILE, snapshot.crosswordDays);
-  writeJson(ID_REGISTRY_FILE, ids.toSorted());
-  const read = readEditionWithSnapshot(editionDir, snapshot, { today: new Date() });
-  if (read.valid === undefined) throw new Error('The seed snapshot does not read');
-  writeJson(MANIFEST_FILE, {
-    contentVersion: snapshot.contentVersion,
-    contentChecksum: checksumOf(read.valid.content),
-    crosswordDaysChecksum: crosswordDaysChecksum(snapshot.crosswordDays),
-  });
-  return editionDir;
 }
 
 /**

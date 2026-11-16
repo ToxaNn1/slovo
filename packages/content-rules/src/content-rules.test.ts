@@ -6,7 +6,6 @@ import { describe, expect, it } from 'vitest';
 import {
   checkContentSet,
   checkRecord,
-  checksumOf,
   parseRecord,
   type AuthoredRecord,
   type ContentSet,
@@ -107,7 +106,6 @@ describe('checkContentSet', () => {
   it('passes the valid fixture under every rule', () => {
     const set = fixtureSet({}, [], {
       crosswordDays: days,
-      recordedCrosswordDaysChecksum: checksumOf(days),
     });
     expect(checkContentSet(config, set, { today })).toEqual([]);
   });
@@ -185,7 +183,6 @@ describe('checkContentSet', () => {
         const unknown = [day('2026-11-01', ['w_zzzzzz'])];
         return fixtureSet({}, [], {
           crosswordDays: unknown,
-          recordedCrosswordDaysChecksum: checksumOf(unknown),
         });
       },
     ],
@@ -195,7 +192,6 @@ describe('checkContentSet', () => {
         const gap = [days[0], day('2026-11-03', ['w_fx0003'])].filter((d) => d !== undefined);
         return fixtureSet({}, [], {
           crosswordDays: gap,
-          recordedCrosswordDaysChecksum: checksumOf(gap),
         });
       },
     ],
@@ -205,17 +201,8 @@ describe('checkContentSet', () => {
         const repeat = [days[0], day('2026-11-02', ['w_fx0002'])].filter((d) => d !== undefined);
         return fixtureSet({}, [], {
           crosswordDays: repeat,
-          recordedCrosswordDaysChecksum: checksumOf(repeat),
         });
       },
-    ],
-    [
-      'crossword-days-immutable',
-      () =>
-        fixtureSet({}, [], {
-          crosswordDays: days.slice(0, 1),
-          recordedCrosswordDaysChecksum: checksumOf(days),
-        }),
     ],
   ];
 
@@ -251,7 +238,6 @@ describe('checkContentSet', () => {
     const gap = [day('2026-11-01', ['w_fx0002']), day('2026-11-03', ['w_fx0002'])];
     const set = fixtureSet({}, [], {
       crosswordDays: gap,
-      recordedCrosswordDaysChecksum: checksumOf(gap),
     });
     expect(rules(checkContentSet(config, set, { today }))).toEqual([
       'crossword-days-gap',

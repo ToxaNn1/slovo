@@ -17,7 +17,7 @@ import {
   EDITIONS_DIR,
   listEditions,
   openAppConfig,
-  openEdition,
+  openEditionWithoutRecords,
   REPO_DIR,
   type EditionJsonFile,
 } from '@slovo/language-pack/edition';
@@ -27,7 +27,7 @@ import { z } from 'zod';
 
 const editions = listEditions(EDITIONS_DIR);
 const pathOf = (edition: string, file: EditionJsonFile) =>
-  openEdition(EDITIONS_DIR, edition).path(file);
+  openEditionWithoutRecords(EDITIONS_DIR, edition).path(file);
 
 /** A JSON file of an Edition, parsed and not yet checked. */
 function readJson(edition: string, file: EditionJsonFile): unknown {
@@ -47,7 +47,7 @@ describe('Edition UI strings', () => {
   // The contracts require only `other`, since the forms differ by language
   // (ADR 0020), so a missing form of the Edition's language is caught here.
   it.each(editions)('the %s Edition gives every count the plural forms its language has', (id) => {
-    const edition = openEdition(EDITIONS_DIR, id);
+    const edition = openEditionWithoutRecords(EDITIONS_DIR, id);
     const categories = new Intl.PluralRules(edition.config.locale).resolvedOptions()
       .pluralCategories;
     const counts = pluralsOf(edition.read('strings'));
@@ -60,7 +60,7 @@ describe('Edition UI strings', () => {
   it.each(editions)(
     'the %s Edition never says an empty state’s title again in the Mascot’s line',
     (id) => {
-      const edition = openEdition(EDITIONS_DIR, id);
+      const edition = openEditionWithoutRecords(EDITIONS_DIR, id);
       const line = edition.config.mascot.empty.toLocaleLowerCase(edition.config.locale);
       const titles = emptyTitlesOf(edition.read('strings'));
 
@@ -1794,7 +1794,7 @@ describe('plural forms of a label beside its number', () => {
 });
 
 describe('UI strings the app fills in', () => {
-  const strings = openEdition(EDITIONS_DIR, 'uk').read('strings');
+  const strings = openEditionWithoutRecords(EDITIONS_DIR, 'uk').read('strings');
   const { wordOfTheDay, settings } = strings;
 
   it.each([

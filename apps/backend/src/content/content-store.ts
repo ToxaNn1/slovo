@@ -1,6 +1,6 @@
 import type { Entry } from '@slovo/contracts';
-import type { BuildError, EditionSource } from '@slovo/language-pack';
-import { readEdition, readEditionWithSnapshot } from '@slovo/language-pack';
+import type { BuildError, SnapshotSource } from '@slovo/language-pack';
+import { readEditionWithSnapshot } from '@slovo/language-pack';
 import type { Clock, EditionRegistry } from '@slovo/server-core';
 import type { ContentSnapshot, Patch } from '@slovo/contracts/api';
 import { and, eq, gt, inArray, notInArray, sql } from 'drizzle-orm';
@@ -35,11 +35,11 @@ export interface ImportCounts {
 export type ImportResult =
   | { readonly ok: true; readonly contentVersion: number; readonly counts: ImportCounts }
   | { readonly ok: false; readonly reason: 'unknown-edition' | 'already-imported' }
-  /** The folder breaks a content rule or does not read; each refusal names its rule when a rule refused it. */
+  /** The snapshot breaks a content rule or the Edition does not read; each refusal names its rule when a rule refused it. */
   | { readonly ok: false; readonly reason: 'refused'; readonly refusals: readonly BuildError[] };
 
 /** The content an import writes, checked by the shared content rules. */
-type ImportedContent = NonNullable<EditionSource['valid']>['content'];
+type ImportedContent = NonNullable<SnapshotSource['valid']>['content'];
 
 /** Rows a single insert sends, well inside Postgres's limit of parameters. */
 const ROWS_PER_INSERT = 500;
@@ -89,36 +89,15 @@ export function createContentStore({
   const { db } = database;
 
   /**
-   * Imports the Edition's folder through the shared content rules, keeping
-   * every id and retired flag, all in one transaction: a refusal writes
-   * nothing. The first import continues from the manifest's content
-   * version; a second one is refused unless overridden, and then replaces
-   * every record of the folder one version on, so no device ever sees a
-   * lower version, and retires the Entries the folder no longer holds.
-   */
-  async function importEdition(
-    editionId: string,
-    editionDir: string,
-    { override = false }: { readonly override?: boolean } = {},
-  ): Promise<ImportResult> {
-    if (editions.find(editionId) === undefined) return { ok: false, reason: 'unknown-edition' };
-    const now = clock.now();
-    const source = readEdition(editionDir, { registryRequired: true, today: now });
-    if (source.editionId !== undefined && source.editionId !== editionId) {
-      return { ok: false, reason: 'unknown-edition' };
-    }
-    const { valid, registry = [] } = source;
-    if (valid === undefined) return { ok: false, reason: 'refused', refusals: source.errors };
-    return writeContent(editionId, valid.content, registry, override, now);
-  }
-
-  /**
-   * Imports a content snapshot, as the backend answers it, through the same
-   * content rules and the same writes as the folder's import: an empty
-   * database of CI, Maestro or `pnpm dev` starts from a committed one. The
-   * Edition's folder gives the config the rules check against; the snapshot
-   * gives the ids and the content version. Its media rows are not imported:
-   * their files live in the Media Store (ADR 0099).
+   * Imports a content snapshot, as the backend answers it, through the shared
+   * content rules, keeping every id and retired flag, all in one transaction:
+   * a refusal writes nothing. An empty database of CI, Maestro or `pnpm dev`
+   * starts from a committed one. The Edition's folder gives the config the
+   * rules check against; the snapshot gives the ids and the content version.
+   * A second import is refused unless overridden, and then replaces every
+   * record of the snapshot one version on, so no device ever sees a lower
+   * version, and retires the Entries the snapshot no longer holds. Its media
+   * rows are not imported: their files live in the Media Store (ADR 0099).
    */
   async function importSnapshot(
     editionId: string,
@@ -182,7 +161,7 @@ export function createContentStore({
           fields,
           retired: fields.retired ?? false,
         }));
-      // A Word whose Lemma or Stress the folder changes no longer reads as
+      // A Word whose Lemma or Stress the snapshot changes no longer reads as
       // its Recordings: they retire and it needs new ones (ADR 0083).
       const stored = new Map(
         (
@@ -219,7 +198,7 @@ export function createContentStore({
         fields,
         retired: fields.retired ?? false,
       }));
-      const folderIds = new Map<(typeof CONTENT_TABLES)[number], readonly string[]>([
+      const importedIds = new Map<(typeof CONTENT_TABLES)[number], readonly string[]>([
         [contentWords, content.words.map(({ id }) => id)],
         [contentIdioms, content.idioms.map(({ id }) => id)],
         [contentCorrections, content.corrections.map(({ id }) => id)],
@@ -228,11 +207,11 @@ export function createContentStore({
         [contentCuratedCollections, (content.curatedCollections ?? []).map(({ id }) => id)],
         [contentCrosswordDays, crosswordDays.map(({ id }) => id)],
       ]);
-      // Retire, never delete (ADR 0090): an Entry the folder no longer holds
+      // Retire, never delete (ADR 0090): an Entry the snapshot no longer holds
       // is retired one version on, so a device's Patch retires it too. A
       // Curated Collection or Crossword Day has no retired flag, and stays.
       for (const table of ENTRY_TABLES) {
-        const ids = folderIds.get(table) ?? [];
+        const ids = importedIds.get(table) ?? [];
         await tx
           .update(table)
           .set({
@@ -251,7 +230,7 @@ export function createContentStore({
             ),
           );
       }
-      for (const [table, ids] of folderIds) {
+      for (const [table, ids] of importedIds) {
         if (ids.length === 0) continue;
         await tx
           .delete(table)
@@ -466,7 +445,7 @@ export function createContentStore({
     );
   }
 
-  return { importEdition, importSnapshot, snapshot, patch, entries };
+  return { importSnapshot, snapshot, patch, entries };
 }
 
 export type ContentStore = ReturnType<typeof createContentStore>;

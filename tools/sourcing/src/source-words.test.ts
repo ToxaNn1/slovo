@@ -7,7 +7,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { SourceSchema, WordSchema } from '@slovo/contracts';
@@ -200,16 +200,9 @@ function setup(overrides: Partial<SourcingOptions> = {}, network?: NetworkOption
 function editionWith(
   edit: (config: Record<string, unknown>) => Record<string, unknown>,
   words: Record<string, unknown> = {},
-  registry?: unknown,
 ): EditionFolder {
   const config = FieldsSchema.parse(JSON.parse(readFileSync(UK_CONFIG_FILE, 'utf8')));
-  const edition = editionWithSnapshot(words, JSON.stringify(edit(config)));
-  if (registry !== undefined) {
-    const file = edition.path('idRegistry');
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, JSON.stringify(registry));
-  }
-  return edition;
+  return editionWithSnapshot(words, JSON.stringify(edit(config)));
 }
 
 /** An object read from JSON, its fields still unchecked. */
@@ -848,29 +841,6 @@ describe('sourceWords', () => {
     expect(net.requests.filter((address) => address.includes('web.archive.org'))).toEqual([]);
   });
 
-  it('never issues an id the registry lists, even one without a Word file', async () => {
-    // The first id this source of randomness spells is w_olmlqv, listed in the registry of the Edition.
-    const taken = 'olmlqv';
-    const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    const numbers = Array.from(
-      taken,
-      (letter) => (alphabet.indexOf(letter) + 0.5) / alphabet.length,
-    );
-    const next = seededRandom();
-    const edition = editionWith((config) => config, {}, [`w_${taken}`]);
-    const { options } = setup({
-      lemmaList: 'мжичка nature-weather 2\n',
-      edition,
-      random: () => numbers.shift() ?? next(),
-    });
-
-    await sourceWords(options);
-
-    const word = WordSchema.parse(readDrafts(options.outDir)[0]);
-    expect(word.id).not.toBe(`w_${taken}`);
-    expect(word.id).toMatch(/^w_[a-z0-9]{6}$/);
-  });
-
   it('never issues an id a record of the snapshot holds, a Retired one of another Lemma included', async () => {
     // A source of randomness that always draws 0 spells w_aaaaaa first.
     const edition = editionWith((config) => config, {
@@ -900,16 +870,6 @@ describe('sourceWords', () => {
     const word = WordSchema.parse(readDrafts(options.outDir)[0]);
     expect(word.id).not.toBe('w_aaaaaa');
     expect(word.id).toMatch(/^w_[a-z0-9]{6}$/);
-  });
-
-  it('refuses an Edition whose id registry is invalid, before fetching', async () => {
-    const edition = editionWith((config) => config, {}, ['w_aaaaaa', 'w_aaaaaa']);
-    const { options, net } = setup({ lemmaList: 'мжичка nature-weather 2\n', edition });
-
-    const result = await sourceWords(options);
-
-    expect(result.ok).toBe(false);
-    expect(net.requests).toEqual([]);
   });
 
   it('refuses an Edition in another language than its dictionaries, before fetching', async () => {

@@ -18,7 +18,7 @@ import type { z } from 'zod';
 
 /** What every sourcing run takes, whatever kind of Entry it drafts. */
 export interface PipelineOptions {
-  /** The Edition the drafts are for: its Categories, language traits, id registry and content. */
+  /** The Edition the drafts are for: its Categories, language traits and content. */
   readonly edition: EditionFolder;
   /** The review folder: each kind writes its drafts and review report into its own folder in it. */
   readonly outDir: string;
@@ -60,7 +60,7 @@ export type ParsedLine<R> =
 export interface DraftContext {
   readonly client: PoliteClient;
   readonly edition: EditionFolder;
-  /** A new opaque id of the kind that the id registry doesn't list and no draft of this run has. */
+  /** A new opaque id of the kind that no record of the Edition and no draft of this run has. */
   readonly newId: () => string;
 }
 
@@ -257,7 +257,7 @@ function parseList<R>(
 
 /**
  * The ids already taken in the Edition: every record its content holds, of
- * every kind and Retired ones too, and every id its id registry lists.
+ * every kind and Retired ones too.
  */
 function readTakenIds(
   edition: EditionFolder,
@@ -272,7 +272,7 @@ function readTakenIds(
       ...tips,
       ...curatedCollections,
     ].map(({ entry }) => entry.id);
-    return { ok: true, ids: new Set([...ids, ...(edition.readIfPresent('idRegistry') ?? [])]) };
+    return { ok: true, ids: new Set(ids) };
   } catch (error) {
     if (!(error instanceof EditionFolderError)) throw error;
     return { ok: false, errors: error.errors.map(formatBuildError) };
@@ -283,8 +283,7 @@ function readTakenIds(
 const ID_ATTEMPTS = 1000;
 
 /**
- * New opaque ids that no record of the Edition, its id registry or a draft of
- * this run has; throws when `random` keeps drawing taken ones.
+ * New opaque ids that no record of the Edition or a draft of this run has; throws when `random` keeps drawing taken ones.
  */
 function idMaker(prefix: string, random: () => number, takenIds: Set<string>): () => string {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';

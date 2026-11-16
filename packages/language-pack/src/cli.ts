@@ -2,7 +2,6 @@
  * Builds an Edition's Language Pack:
  *
  *   pnpm build:pack [<edition-id>] [--snapshot <file>] [--out <file>]
- *   pnpm build:pack [<edition-id>] --record
  *
  * Without an id it builds the pack of the Edition the app bundles, the
  * AppConfig's default Edition (ADR 0065), as every app build does.
@@ -17,12 +16,6 @@
  * listing every error, when the content is invalid. It lists every content
  * target of `contentTargets` in `edition.json` the content misses and still
  * exits zero: the targets block nothing (ADR 0123).
- *
- * After editing the content files, `--record` appends the new ids to the id
- * registry (`content/ids.json`) and, when the content changed, raises the
- * content version in `content/manifest.json`, building nothing. For an
- * Edition that keeps crossword days (`content/crossword-days.json`), it also
- * appends days so that 400 lie ahead (ADR 0052).
  */
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,36 +28,27 @@ import {
   EDITIONS_DIR,
   EditionFolderError,
   openAppConfig,
-  openEdition,
+  openEditionWithoutRecords,
   REPO_DIR,
   type EditionFolder,
 } from './edition-folder';
-import { recordContent } from './record';
 import { formatContentReport } from './report';
 import { readSnapshotFile, SnapshotUnreachableError } from './snapshot-source';
 import { downloadStarterMedia, STARTER_MEDIA_DIR } from './starter-media';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 
-const USAGE = [
-  'Usage: pnpm build:pack [<edition-id>] [--snapshot <file>] [--out <file>]',
-  '       pnpm build:pack [<edition-id>] --record',
-].join('\n');
+const USAGE = 'Usage: pnpm build:pack [<edition-id>] [--snapshot <file>] [--out <file>]';
 
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
     options: {
       out: { type: 'string' },
-      record: { type: 'boolean' },
       snapshot: { type: 'string' },
     },
   });
-  const recording = values.record === true;
-  if (
-    positionals.length > 1 ||
-    (recording && (values.snapshot !== undefined || values.out !== undefined))
-  ) {
+  if (positionals.length > 1) {
     console.error(USAGE);
     return 2;
   }
@@ -72,7 +56,7 @@ async function main(): Promise<number> {
 
   let edition: EditionFolder;
   try {
-    edition = openEdition(EDITIONS_DIR, editionId);
+    edition = openEditionWithoutRecords(EDITIONS_DIR, editionId);
   } catch (error) {
     if (!(error instanceof EditionFolderError)) throw error;
     if (error.reason === 'unknown') {
@@ -85,25 +69,6 @@ async function main(): Promise<number> {
   }
   const editionDir = edition.dir;
   const fromCwd = (path: string): string => resolve(process.env['INIT_CWD'] ?? process.cwd(), path);
-
-  if (recording) {
-    const recorded = recordContent({ editionDir });
-    if (!recorded.ok) {
-      console.error(
-        `Content of "${editionId}" not recorded: ${String(recorded.errors.length)} error(s)`,
-      );
-      for (const error of recorded.errors) console.error(`  ${formatBuildError(error)}`);
-      return 1;
-    }
-    const { previousContentVersion, contentVersion, newIds, newCrosswordDays } = recorded;
-    console.log(`Recorded the content of "${editionId}"`);
-    console.log(
-      `  content version: ${String(contentVersion)}${contentVersion === previousContentVersion ? ' (unchanged)' : ` (was ${String(previousContentVersion)})`}`,
-    );
-    console.log(`  new ids:         ${String(newIds.length)}`);
-    console.log(`  crossword days:  ${String(newCrosswordDays.length)} appended`);
-    return 0;
-  }
 
   const outFile = values.out === undefined ? edition.path('languagePack') : fromCwd(values.out);
   const apiUrl = process.env['EXPO_PUBLIC_SLOVO_API_URL'];

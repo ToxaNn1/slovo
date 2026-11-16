@@ -1,23 +1,8 @@
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-
 import { recordingPath } from '@slovo/contracts';
 import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
-import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  onTestFinished,
-  vi,
-} from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
@@ -34,15 +19,6 @@ import {
 } from '../test-support';
 import type { RecordingGenerator, RecordingRequest } from './generator';
 import { createRecordings, RECORDING_LEASE_MS, RETIRED_FILE_KEPT_MS } from './recordings';
-
-/** The UA Edition folder written from the seed snapshot, removed after the file. */
-const folder = (() => {
-  const dir = mkdtempSync(join(tmpdir(), 'slovo-recordings-'));
-  afterAll(() => {
-    rmSync(dir, { recursive: true, force: true });
-  });
-  return ukrainianSeedFolder(dir);
-})();
 
 const editions = readEditions(EDITIONS_DIR);
 const VOICES = ['oksana', 'taras', 'marta', 'ostap'];
@@ -113,7 +89,7 @@ function keptStore(): MediaStore & { readonly keys: Set<string> } {
 }
 
 /** The UA Edition imported and its backlog recorded once, copied for every test. */
-const importedDatabase = importedDatabases('uk', folder, (database) =>
+const importedDatabase = importedDatabases((database) =>
   createRecordings({
     database,
     clock: systemClock,

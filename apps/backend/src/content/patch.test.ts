@@ -1,11 +1,7 @@
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-
 import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
-import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
+import { ukrainianFolder, ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
-import { afterAll, describe, expect, it, onTestFinished } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
@@ -19,15 +15,6 @@ import {
   testDatabaseUrl,
   TEST_MEDIA_BASE,
 } from '../test-support';
-
-/** The UA Edition folder written from the seed snapshot, removed after the file. */
-const folder = (() => {
-  const dir = mkdtempSync(join(tmpdir(), 'slovo-patch-'));
-  afterAll(() => {
-    rmSync(dir, { recursive: true, force: true });
-  });
-  return ukrainianSeedFolder(dir);
-})();
 
 /**
  * The backend on a database of the test's own, with a Власник, the UA
@@ -53,7 +40,7 @@ async function contentBackend({ imported = true }: { imported?: boolean } = {}) 
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
   if (imported) {
-    const result = await backend.importContent('uk', folder);
+    const result = await backend.importSnapshot('uk', ukrainianFolder.dir, ukrainianSnapshot());
     if (!result.ok) throw new Error('the UA Edition did not import');
   }
   const agent = backend.clientOf(token);

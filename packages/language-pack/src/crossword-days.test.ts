@@ -1,23 +1,25 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { fileURLToPath } from 'node:url';
 
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import type { CrosswordDay } from '@slovo/contracts';
+import { ContentSnapshotSchema, type ContentSnapshot } from '@slovo/contracts/api';
 
-import {
-  buildLanguagePack,
-  formatBuildError,
-  generateDailyCrossword,
-  recordContent,
-} from './index';
-import { ukrainianSeedFolder } from './test-support';
+import { newCrosswordDays } from './crossword';
+import { buildFromSnapshot, formatBuildError, readEditionWithSnapshot } from './index';
+import type { PackContent } from './pack-layout';
+import { fixtureDir, ukrainianFolder, ukrainianSnapshot, validSnapshot } from './test-support';
 
-const fixtureDir = fileURLToPath(new URL('../fixtures/valid', import.meta.url));
-const DAYS_FILE = 'content/crossword-days.json';
+/** The file the content rules name in the errors of crossword days. */
+const DAYS = 'snapshot:crosswordDays';
+const TODAY = new Date('2026-11-16T12:00:00Z');
+
+/** How many placements a day's search may try: less than the build's, so 400 days build fast. */
+const SEARCH_BUDGET = 100;
+
 const workDirs: string[] = [];
 
 afterEach(() => {
@@ -43,83 +45,69 @@ const LEMMAS = (() => {
   return [...lemmas];
 })();
 
-/**
- * A copy of the fixture Edition with 300 short Words, recorded, that keeps
- * the crossword days given, `[]` by default.
- */
-function editionWithDays(days: readonly CrosswordDay[] = []): string {
+/** The fixture Edition's snapshot with 300 short Words besides its own. */
+const snapshot: ContentSnapshot = (() => {
+  const fixture = validSnapshot();
+  const words = LEMMAS.map((lemma, i) => ({
+    kind: 'word',
+    id: `w_cw${String(i).padStart(4, '0')}`,
+    lemma,
+    stress: [1],
+    partOfSpeech: 'adverb',
+    primaryDefinition: `Вигадане слово номер ${String(i + 1)}.`,
+    examples: [{ text: `Тут стоїть ${lemma}.` }],
+    categoryId: 'speech',
+    rarity: 1,
+    sources: [{ title: 'Тестове джерело' }],
+  }));
+  return ContentSnapshotSchema.parse({ ...fixture, words: [...fixture.words, ...words] });
+})();
+
+/** The snapshot's content with the crossword days given, checked as the build checks it. */
+function contentWith(source: ContentSnapshot, days: readonly CrosswordDay[]): PackContent {
+  const editionDir = source.editionId === 'uk' ? ukrainianFolder.dir : fixtureDir('valid');
+  const { errors, valid } = readEditionWithSnapshot(
+    editionDir,
+    { ...source, crosswordDays: [...days] },
+    { today: TODAY },
+  );
+  if (valid === undefined) throw new Error(errors.map(formatBuildError).join('\n'));
+  return valid.content;
+}
+
+/** The days the build appends on `today` after the days given, each day's search within the budget. */
+function appended(
+  days: readonly CrosswordDay[],
+  today: string,
+  {
+    source = snapshot,
+    searchBudget = SEARCH_BUDGET,
+  }: { source?: ContentSnapshot; searchBudget?: number } = {},
+): readonly CrosswordDay[] {
+  const result = newCrosswordDays(contentWith(source, days), today, { searchBudget });
+  if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+  return result.days;
+}
+
+/** The errors of a pack build from the snapshot with the crossword days given. */
+function buildErrors(days: readonly CrosswordDay[], source: ContentSnapshot = snapshot): string[] {
   const dir = mkdtempSync(join(tmpdir(), 'slovo-crossword-days-'));
   workDirs.push(dir);
-  const editionDir = join(dir, 'edition');
-  cpSync(fixtureDir, editionDir, { recursive: true });
-  LEMMAS.forEach((lemma, i) => {
-    const id = `w_cw${String(i).padStart(4, '0')}`;
-    const word = {
-      id,
-      lemma,
-      stress: [1],
-      partOfSpeech: 'adverb',
-      primaryDefinition: `Вигадане слово номер ${String(i + 1)}.`,
-      examples: [{ text: `Тут стоїть ${lemma}.` }],
-      categoryId: 'speech',
-      rarity: 1,
-      sources: [{ title: 'Тестове джерело' }],
-    };
-    writeFileSync(join(editionDir, 'content', 'words', `${id}.json`), JSON.stringify(word));
+  const result = buildFromSnapshot({
+    editionDir: source.editionId === 'uk' ? ukrainianFolder.dir : fixtureDir('valid'),
+    snapshot: { ...source, crosswordDays: [...days] },
+    outFile: join(dir, 'pack.db'),
+    today: TODAY,
   });
-  writeFileSync(join(editionDir, DAYS_FILE), `${JSON.stringify(days, null, 2)}\n`);
-  return editionDir;
-}
-
-const daysText = (editionDir: string) => readFileSync(join(editionDir, DAYS_FILE), 'utf8');
-const daysOf = (editionDir: string) => JSON.parse(daysText(editionDir)) as CrosswordDay[];
-
-function record(editionDir: string, today: string) {
-  const result = recordContent({ editionDir, today: new Date(`${today}T12:00:00Z`) });
-  if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-  return result;
-}
-
-function recordErrors(editionDir: string, today: string): string[] {
-  const result = recordContent({ editionDir, today: new Date(`${today}T12:00:00Z`) });
-  return result.ok ? [] : result.errors.map(formatBuildError);
-}
-
-function buildErrors(editionDir: string): string[] {
-  const result = buildLanguagePack({ editionDir, outFile: join(editionDir, 'dist', 'pack.db') });
   return result.ok ? [] : result.errors.map(formatBuildError);
 }
 
 const dayAfter = (date: string, days: number) =>
   new Date(Date.parse(`${date}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 
-describe('the crossword days the pack build keeps in the Edition', () => {
-  let recordedDir = '';
-  let recorded: CrosswordDay[] = [];
-  let recordedText = '';
-
-  beforeAll(() => {
-    recordedDir = editionWithDays();
-    // Kept for the whole block, not removed after each test.
-    const base = workDirs.pop();
-    record(recordedDir, '2027-01-01');
-    recorded = daysOf(recordedDir);
-    recordedText = daysText(recordedDir);
-    return () => {
-      if (base !== undefined) rmSync(base, { recursive: true, force: true });
-    };
-  }, 120_000);
-
-  /** A copy of the Edition with the days recorded on 2027-01-01. */
-  function recordedEdition(): string {
-    const dir = mkdtempSync(join(tmpdir(), 'slovo-crossword-days-'));
-    workDirs.push(dir);
-    const editionDir = join(dir, 'edition');
-    cpSync(recordedDir, editionDir, { recursive: true });
-    return editionDir;
-  }
-
-  const notRecorded = `${DAYS_FILE}: Not the days last recorded: a published day never changes and only pnpm build:pack fixture --record appends days, so restore the file from git`;
+describe('the crossword days the pack build appends', () => {
+  // Made once for the whole block: 401 days.
+  const recorded = appended([], '2027-01-01');
 
   it('appends days from today on so that 400 lie ahead, one a day', () => {
     expect(recorded[0]?.date).toBe('2027-01-01');
@@ -139,45 +127,26 @@ describe('the crossword days the pack build keeps in the Edition', () => {
     });
   });
 
-  it('appends later days and keeps the days already there byte-identical', () => {
-    const editionDir = recordedEdition();
-
-    const result = record(editionDir, '2027-01-11');
-    const text = daysText(editionDir);
-    expect(result.newCrosswordDays).toEqual(
+  it('appends later days after the days already there, the same days whenever it runs', () => {
+    const later = appended(recorded, '2027-01-11');
+    expect(later.map(({ date }) => date)).toEqual(
       Array.from({ length: 10 }, (_, i) => dayAfter('2028-02-06', i)),
     );
-    expect(text.startsWith(recordedText.slice(0, -'\n]\n'.length))).toBe(true);
-    expect(daysOf(editionDir).slice(0, recorded.length)).toEqual(recorded);
-    expect(record(editionDir, '2027-01-11').newCrosswordDays).toEqual([]);
-    expect(daysText(editionDir)).toBe(text);
-    expect(buildErrors(editionDir)).toEqual([]);
+    expect(appended(recorded, '2027-01-06')).toEqual(later.slice(0, 5));
+    expect(appended([...recorded, ...later], '2027-01-11')).toEqual([]);
+    expect(buildErrors([...recorded, ...later])).toEqual([]);
   }, 60_000);
 
-  it('generates the Daily Crossword of a date after the days as --record appends it', () => {
-    const editionDir = recordedEdition();
-    const generated = (date: string) => {
-      const result = generateDailyCrossword({ editionDir, date });
-      if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-      return result.day;
-    };
-    const ahead = ['2028-02-06', '2028-02-10', '2028-02-15'].map(generated);
-    const kept = generated('2027-06-15');
-
-    record(editionDir, '2027-01-11');
-    const days = daysOf(editionDir);
-    expect(ahead).toEqual(
-      ['2028-02-06', '2028-02-10', '2028-02-15'].map((date) =>
-        days.find((day) => day.date === date),
-      ),
-    );
-    expect(kept).toEqual(recorded.find((day) => day.date === '2027-06-15'));
-  }, 60_000);
-
-  it('builds the recorded days into pack format 13', () => {
-    const editionDir = recordedEdition();
-    const outFile = join(editionDir, 'dist', 'language-pack.db');
-    const result = buildLanguagePack({ editionDir, outFile });
+  it('builds the days into pack format 13', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'slovo-crossword-days-'));
+    workDirs.push(dir);
+    const outFile = join(dir, 'language-pack.db');
+    const result = buildFromSnapshot({
+      editionDir: fixtureDir('valid'),
+      snapshot: { ...snapshot, crosswordDays: [...recorded] },
+      outFile,
+      today: TODAY,
+    });
     expect(result.ok && result.metadata.packFormat).toBe(13);
     const db = new DatabaseSync(outFile, { readOnly: true });
     try {
@@ -205,77 +174,48 @@ describe('the crossword days the pack build keeps in the Edition', () => {
   }, 60_000);
 
   it('keeps a day whose Entry was Retired later', () => {
-    const editionDir = recordedEdition();
     const wordId = recorded[0]?.words.find(({ entryId }) => entryId.startsWith('w_'))?.entryId;
     if (wordId === undefined) throw new Error('No Word in the first day');
-    const wordFile = join(editionDir, 'content', 'words', `${wordId}.json`);
-    const word = JSON.parse(readFileSync(wordFile, 'utf8')) as Record<string, unknown>;
-    writeFileSync(wordFile, `${JSON.stringify({ ...word, retired: true }, null, 2)}\n`);
+    const retired: ContentSnapshot = {
+      ...snapshot,
+      words: snapshot.words.map((word) => (word.id === wordId ? { ...word, retired: true } : word)),
+    };
 
-    expect(record(editionDir, '2027-01-02').newCrosswordDays).toEqual(['2028-02-06']);
-    expect(daysOf(editionDir).slice(0, recorded.length)).toEqual(recorded);
-    expect(buildErrors(editionDir)).toEqual([]);
-  }, 60_000);
-
-  it('refuses a published day that changed, and a day appended by hand', () => {
-    const editionDir = recordedEdition();
-    const message = notRecorded;
-
-    const changed = recorded.map((day, i) =>
-      i === 5
-        ? { ...day, words: day.words.map((word) => ({ ...word, clue: 'Інша підказка' })) }
-        : day,
-    );
-    writeFileSync(join(editionDir, DAYS_FILE), `${JSON.stringify(changed, null, 2)}\n`);
-    expect(recordErrors(editionDir, '2027-01-01')).toEqual([message]);
-    expect(buildErrors(editionDir)).toContain(message);
-
-    const extra = { ...recorded[0], date: '2028-02-06' } as CrosswordDay;
-    writeFileSync(join(editionDir, DAYS_FILE), JSON.stringify([...recorded, extra]));
-    expect(recordErrors(editionDir, '2027-01-01')).toContain(message);
-  }, 60_000);
-
-  it('refuses days written by hand, with no checksum recorded', () => {
-    const editionDir = editionWithDays(recorded.slice(0, 3));
-    expect(recordErrors(editionDir, '2027-01-01')).toEqual([notRecorded]);
-    expect(buildErrors(editionDir)).toContain(notRecorded);
+    const next = appended(recorded, '2027-01-02', { source: retired });
+    expect(next.map(({ date }) => date)).toEqual(['2028-02-06']);
+    expect(next.flatMap(({ words }) => words.map(({ entryId }) => entryId))).not.toContain(wordId);
+    expect(buildErrors(recorded, retired)).toEqual([]);
   }, 60_000);
 
   it('refuses a gap between days', () => {
     const [first, , third] = recorded;
     if (first === undefined || third === undefined) throw new Error('Too few days');
-    const editionDir = editionWithDays([first, third]);
-    expect(recordErrors(editionDir, '2027-01-01')).toEqual([
-      notRecorded,
-      `${DAYS_FILE} › 1.date: Expected 2027-01-02, the day after the one before: the days run without a gap`,
+    expect(buildErrors([first, third])).toEqual([
+      `${DAYS} › 1.date: Expected 2027-01-02, the day after the one before: the days run without a gap`,
     ]);
-  }, 60_000);
+  });
 
   it('refuses a word repeated within 20 days', () => {
     const [first, second] = recorded;
     if (first === undefined || second === undefined) throw new Error('Too few days');
     const repeated = { ...second, words: first.words };
-    const editionDir = editionWithDays([first, repeated]);
-    expect(recordErrors(editionDir, '2027-01-01')).toEqual([
-      notRecorded,
-      ...first.words.map(
+    expect(buildErrors([first, repeated])).toEqual(
+      first.words.map(
         ({ entryId }, i) =>
-          `${DAYS_FILE} › 1.words.${String(i)}.entryId: ${entryId} is also in the day of 2027-01-01: a word comes back only 20 days or more later`,
+          `${DAYS} › 1.words.${String(i)}.entryId: ${entryId} is also in the day of 2027-01-01: a word comes back only 20 days or more later`,
       ),
-    ]);
-  }, 60_000);
+    );
+  });
 });
 
 describe("the crossword days of the UA Edition's content", () => {
-  it('reach 400 days ahead with --record, no word coming back within 20 days', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'slovo-crossword-uk-'));
-    workDirs.push(dir);
-    const editionDir = ukrainianSeedFolder(dir);
+  it('reach 400 days ahead, no word coming back within 20 days', () => {
+    const uk = ukrainianSnapshot();
+    // Half a year past the snapshot's days' start, so the build appends new days too.
+    // The build's own budget: the UA supply is too thin for a smaller one.
+    const next = appended(uk.crosswordDays, '2027-06-01', { source: uk, searchBudget: 500 });
 
-    // Half a year past the recorded days' start, so --record writes new days too.
-    record(editionDir, '2027-06-01');
-
-    expect(daysOf(editionDir).at(-1)?.date).toBe(dayAfter('2027-06-01', 400));
-    expect(buildErrors(editionDir)).toEqual([]);
+    expect(next.at(-1)?.date).toBe(dayAfter('2027-06-01', 400));
+    expect(buildErrors([...uk.crosswordDays, ...next], uk)).toEqual([]);
   }, 120_000);
 });

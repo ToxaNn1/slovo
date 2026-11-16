@@ -1,12 +1,8 @@
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-
 import { quoteOf } from '@slovo/content-rules';
 import type { ApiClient } from '@slovo/contracts/api';
-import { ukrainianSeedFolder } from '@slovo/language-pack/test-support';
+import { ukrainianFolder, ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
-import { afterAll, describe, expect, it, onTestFinished } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
@@ -21,15 +17,6 @@ import {
   testDatabaseUrl,
 } from '../test-support';
 import { createQuoteCheck, QUOTE_CHECK_FRESHNESS_MS, type SourcePages } from './quote-check';
-
-/** The UA Edition folder written from the seed snapshot, removed after the file. */
-const folder = (() => {
-  const dir = mkdtempSync(join(tmpdir(), 'slovo-quote-check-'));
-  afterAll(() => {
-    rmSync(dir, { recursive: true, force: true });
-  });
-  return ukrainianSeedFolder(dir);
-})();
 
 /** A source that holds the given pages and counts every fetch. */
 function fakePages(pages: Record<string, string>): SourcePages & { readonly fetched: string[] } {
@@ -71,7 +58,7 @@ async function quoteCheckBackend() {
   await runAdminCommand(['agent', 'add', 'claude-content'], commandDeps, io);
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
-  const imported = await backend.importContent('uk', folder);
+  const imported = await backend.importSnapshot('uk', ukrainianFolder.dir, ukrainianSnapshot());
   if (!imported.ok) throw new Error('the UA Edition did not import');
   const agent = backend.clientOf(token);
   const { batchId } = await agent.admin.content.openBatch({ editionId: 'uk' });

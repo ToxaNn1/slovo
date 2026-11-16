@@ -13,7 +13,6 @@ import { withoutStress } from '@slovo/core';
 import type { BuildError } from './build-error';
 import { CROSSWORD_DAYS_AHEAD, CROSSWORD_REPEAT_DAYS, dateAfter } from './crossword-days';
 import type { PackContent } from './pack-layout';
-import { readEdition } from './read-edition';
 
 export type CrosswordResult =
   | { readonly ok: true; readonly day: CrosswordDay }
@@ -24,48 +23,6 @@ export type CrosswordResult =
  * fullest grid found, so a thin word supply never makes the build hang.
  */
 const SEARCH_BUDGET = 500;
-
-/**
- * Makes the Daily Crossword of a date, `YYYY-MM-DD`, from an Edition's
- * content (ADR 0052): 4–6 crossing words of 3–5 letters on a 5 × 5 grid, from
- * the Words that are not Retired, clued by their primary Definition, and the
- * one-word main standard forms of the Corrections that are not Retired, clued
- * by their explanation, with «…» in place of the answer wherever a clue names
- * it. It is the day `--record` keeps or would append for the date: a recorded
- * day as it is, and a later one with no word from fewer than
- * `CROSSWORD_REPEAT_DAYS` days before it. The same content and date always
- * give the same day.
- * It refuses when the content has errors on `today`, now by default, or no
- * grid can be made.
- */
-export function generateDailyCrossword({
-  editionDir,
-  date,
-  today = new Date(),
-}: {
-  editionDir: string;
-  date: string;
-  today?: Date;
-}): CrosswordResult {
-  if (!CrosswordDaySchema.shape.date.safeParse(date).success) {
-    return { ok: false, errors: [{ file: 'content', message: `Not a calendar date: ${date}` }] };
-  }
-  const source = readEdition(editionDir, { registryRequired: false, today });
-  if (source.errors.length > 0 || source.valid === undefined) {
-    return { ok: false, errors: source.errors };
-  }
-  const { content } = source.valid;
-  const supply = crosswordSupply(content);
-  const days = content.crosswordDays ?? [];
-  const recorded = days.find((day) => day.date === date);
-  if (recorded !== undefined) return { ok: true, day: recorded };
-  const last = days.at(-1)?.date;
-  if (last === undefined || date < last) return dayAfterDays(supply, [], date, SEARCH_BUDGET);
-  const between = daysThrough(supply, days, dateAfter(last, 1), dateAfter(date, -1), SEARCH_BUDGET);
-  return between.ok
-    ? dayAfterDays(supply, [...days, ...between.days], date, SEARCH_BUDGET)
-    : between;
-}
 
 /**
  * The days to append to an Edition's crossword days so that 400 lie ahead of

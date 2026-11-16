@@ -30,7 +30,7 @@ const NO_REPEAT_DAYS = 20;
  */
 const DAYS = 4;
 
-/** How many days ahead `--record` fills. */
+/** How many days ahead the build fills. */
 const CROSSWORD_DAYS_AHEAD = 400;
 
 /**
@@ -179,7 +179,7 @@ const recorded = fc
 const lastOf = (content: PackContent) => content.crosswordDays?.at(-1)?.date ?? '';
 
 /**
- * The days `--record` appends to the content, after its recorded days and
+ * The days the build appends to the content, after its recorded days and
  * the ones kept, run on the day that leaves `DAYS` days to fill.
  */
 function appendDays(content: PackContent, kept: readonly CrosswordDay[] = []) {
