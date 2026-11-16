@@ -21,3 +21,11 @@ afterEach(() => {
 afterAll(() => {
   server.close();
 });
+
+// jsdom has no modal dialogs (jsdom 26): open and close only toggle `open`.
+HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+  this.open = true;
+};
+HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+  this.open = false;
+};

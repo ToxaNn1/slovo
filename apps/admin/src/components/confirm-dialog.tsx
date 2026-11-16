@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
@@ -16,6 +16,8 @@ export interface PendingWrite {
  * The confirmation every admin write goes through: what changes, the reason
  * the Action log keeps (ADR 0088), and a confirm button that stays disabled
  * until a reason is typed. A refused write stays open with the refusal.
+ * A native modal `<dialog>`: the browser keeps focus inside, makes the page
+ * inert and turns Esc or the back gesture into Скасувати.
  */
 export function ConfirmDialog({
   title,
@@ -44,6 +46,13 @@ export function ConfirmDialog({
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    dialogRef.current?.showModal();
+    reasonRef.current?.focus();
+  }, []);
 
   const confirm = () => {
     setBusy(true);
@@ -59,66 +68,67 @@ export function ConfirmDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center overflow-auto bg-scrim p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="flex w-full max-w-[520px] flex-col overflow-hidden rounded-[20px] bg-surface shadow-[0_24px_70px_rgb(0_0_0/0.3)]"
-      >
-        <div className="flex flex-col gap-2 px-6 pt-[22px]">
-          <span
-            className={cn(
-              'self-start rounded-full px-[9px] py-[3px] text-[11.5px] font-semibold',
-              danger ? 'bg-destructive-soft text-destructive' : 'bg-side-active text-primary',
-            )}
-          >
-            {danger ? 'небезпечна дія' : 'підтвердження'}
-          </span>
-          <h2 id={titleId} className="font-display text-[17px] leading-[1.35] font-medium">
-            {title}
-          </h2>
-        </div>
-        <div className="flex flex-col gap-3.5 px-6 py-4 text-[13px]">
-          {children}
-          <label htmlFor={reasonId} className="flex flex-col gap-1.5">
-            <span className="text-[12.5px] text-muted-foreground after:content-['_*']">
-              Причина
-            </span>
-            <textarea
-              id={reasonId}
-              rows={2}
-              placeholder="Обов’язково: піде в Журнал дій"
-              className="resize-y rounded-xl border border-border bg-background px-3 py-2.5 text-[13.5px] placeholder:text-subtle"
-              maxLength={500}
-              value={reason}
-              onChange={(event) => {
-                setReason(event.target.value);
-              }}
-            />
-          </label>
-          {error === undefined ? null : (
-            <p role="alert" className="text-destructive">
-              {error}
-            </p>
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={titleId}
+      className="m-auto w-[calc(100%-2rem)] max-w-[520px] flex-col rounded-[20px] border-0 bg-surface p-0 text-foreground shadow-[0_24px_70px_rgb(0_0_0/0.3)] overscroll-contain open:flex backdrop:overflow-hidden backdrop:overscroll-contain backdrop:bg-scrim"
+      onCancel={(event) => {
+        // Esc or the back gesture: React unmounts the dialog, the browser does not close it.
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      <div className="flex flex-col gap-2 px-6 pt-[22px]">
+        <span
+          className={cn(
+            'self-start rounded-full px-[9px] py-[3px] text-[11.5px] font-semibold',
+            danger ? 'bg-destructive-soft text-destructive' : 'bg-side-active text-primary',
           )}
-        </div>
-        <div className="flex justify-end gap-2 px-6 pt-3.5 pb-5">
-          <Button variant="secondary" onClick={onClose}>
-            Скасувати
-          </Button>
-          <Button
-            className={cn(
-              'font-semibold',
-              danger && 'bg-destructive text-white hover:bg-destructive/90',
-            )}
-            disabled={busy || reason.trim() === ''}
-            onClick={confirm}
-          >
-            {confirmLabel}
-          </Button>
-        </div>
+        >
+          {danger ? 'небезпечна дія' : 'підтвердження'}
+        </span>
+        <h2 id={titleId} className="font-display text-[17px] leading-[1.35] font-medium">
+          {title}
+        </h2>
       </div>
-    </div>
+      <div className="flex flex-col gap-3.5 px-6 py-4 text-[13px]">
+        {children}
+        <label htmlFor={reasonId} className="flex flex-col gap-1.5">
+          <span className="text-[12.5px] text-muted-foreground after:content-['_*']">Причина</span>
+          <textarea
+            ref={reasonRef}
+            id={reasonId}
+            rows={2}
+            placeholder="Обов’язково: піде в Журнал дій"
+            className="resize-y rounded-xl border border-border bg-background px-3 py-2.5 text-[13.5px] placeholder:text-subtle"
+            maxLength={500}
+            value={reason}
+            onChange={(event) => {
+              setReason(event.target.value);
+            }}
+          />
+        </label>
+        {error === undefined ? null : (
+          <p role="alert" className="text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
+      <div className="flex justify-end gap-2 px-6 pt-3.5 pb-5">
+        <Button variant="secondary" onClick={onClose}>
+          Скасувати
+        </Button>
+        <Button
+          className={cn(
+            'font-semibold',
+            danger && 'bg-destructive text-white hover:bg-destructive/90',
+          )}
+          disabled={busy || reason.trim() === ''}
+          onClick={confirm}
+        >
+          {confirmLabel}
+        </Button>
+      </div>
+    </dialog>
   );
 }
