@@ -144,7 +144,7 @@ describe('the onboarding', () => {
     expect(screen.getByText(strings.level.title)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Мовний гурман' })).toBeTruthy();
     await press('onboarding-answer-good');
-    expect(composition.rarityCeiling.state).toBe(4);
+    expect(composition.rarityRange.state).toEqual({ from: 1, to: 4 });
 
     expect(screen.getByText(strings.why.title)).toBeTruthy();
     // Owner test pass B-003: «Пізніше» sits right under the options, not pinned to the bottom.
@@ -195,7 +195,7 @@ describe('the onboarding', () => {
     expect(screen.queryByText(editionStrings.rarityTest.done)).toBeNull();
     await press('onboarding-rarity-next');
 
-    expect(composition.rarityCeiling.state).toBe(5);
+    expect(composition.rarityRange.state).toEqual({ from: 1, to: 5 });
     expect(screen.getByText(strings.why.title)).toBeTruthy();
   });
 

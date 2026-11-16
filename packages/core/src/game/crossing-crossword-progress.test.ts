@@ -49,7 +49,7 @@ async function open({
 } = {}) {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   return openCrossingCrossword({
-    entries: { wordsUnderRarityCeiling: () => Promise.resolve(under) },
+    entries: { wordsInRarityRange: () => Promise.resolve(under) },
     userState,
     clock: fakeClock(start).clock,
     edition: {
@@ -94,7 +94,7 @@ describe('the crossing Daily Crossword', () => {
     expect(await open({ on: ['game', 'dailyCrossword'] })).toEqual({ kind: 'off' });
   });
 
-  it('gives no-fill when the Words within the Rarity Ceiling fill no pattern', async () => {
+  it('gives no-fill when the Words within the Rarity Range fill no pattern', async () => {
     expect(await open({ under: vocabulary.slice(0, 3) })).toEqual({ kind: 'no-fill' });
   });
 
@@ -293,7 +293,7 @@ describe('the crossing Daily Crossword of the composition', () => {
     });
   }
 
-  it('opens the puzzle of the Words within the Rarity Ceiling, which a solve plays', async () => {
+  it('opens the puzzle of the Words within the Rarity Range, which a solve plays', async () => {
     const composition = await app(['game', 'dailyCrossword', 'crossingCrossword']);
     const opening = await composition.openDailyCrossword();
     if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);

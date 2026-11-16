@@ -52,6 +52,8 @@ export const WordCardStringsSchema = z.strictObject({
   tabLess: TextSchema,
   /** The name of the last tab of every tabbed Entry card, which names its sources (ADR 0116). */
   tabSource: TextSchema,
+  /** The title of the source every Entry the Edition wrote itself carries (ADR 0146); the cards name no such source and show no «Джерело» tab for it (ADR 0154). */
+  ownSource: TextSchema,
   /** The names of the Word card's tabs (ADR 0091). */
   tabs: z.strictObject({
     essence: TextSchema,

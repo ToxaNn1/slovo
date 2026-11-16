@@ -35,7 +35,7 @@ export interface CrossingCrossword {
 /**
  * What opening the crossing Daily Crossword gives: `off` while the Edition
  * turns it off, `no-fill` when no block pattern fills with the Words within
- * the Rarity Ceiling, so the card is not shown that day (ADR 0087), or the
+ * the Rarity Range, so the card is not shown that day (ADR 0087), or the
  * puzzle.
  */
 export type CrossingCrosswordOpening =
@@ -58,7 +58,7 @@ function fingerprintOf(puzzle: CrossingPuzzle): string {
 /**
  * Opens the crossing Daily Crossword of the clock's local date (ADR 0087),
  * with the progress this device made in it today. Its seed is the date and
- * the ids of the Words within the Rarity Ceiling, so every reader with the
+ * the ids of the Words within the Rarity Range, so every reader with the
  * same Ceiling and Edition content gets the same puzzle on a date. The
  * progress is kept with the puzzle's fingerprint: a new local date, or
  * another puzzle the same day, starts empty; the trace is never kept. It is
@@ -81,7 +81,7 @@ export async function openCrossingCrossword({
   if (!edition.isFeatureEnabled('crossingCrossword')) return { kind: 'off' };
   const timed = edition.isFeatureEnabled('crosswordSolveTime');
   const date = todayKey(clock);
-  const words = await entries.wordsUnderRarityCeiling();
+  const words = await entries.wordsInRarityRange();
   const generation = generateCrossingCrossword({
     date,
     words,

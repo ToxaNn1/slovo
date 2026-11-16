@@ -186,22 +186,22 @@ describe('two devices of one Account', () => {
     expect(server.sync.records.get('settings.hideStreak')?.value).toBe(false);
   });
 
-  it('let the newer Rarity Ceiling win, on either device', async () => {
+  it('let the newer Rarity Range win, on either device', async () => {
     const { device, server, time } = account();
     const phone = await device();
     const tablet = await device();
-    await (await phone.open()).rarityCeiling.set(4);
+    await (await phone.open()).rarityRange.set({ from: 1, to: 4 });
     time.advance(HOUR);
-    await (await tablet.open()).rarityCeiling.set(2);
+    await (await tablet.open()).rarityRange.set({ from: 1, to: 2 });
     await tablet.sync();
     time.advance(HOUR);
 
     await phone.sync();
     await tablet.sync();
 
-    expect((await phone.open()).rarityCeiling.state).toBe(2);
-    expect((await tablet.open()).rarityCeiling.state).toBe(2);
-    expect(server.sync.records.get('settings.rarityCeiling')?.value).toBe(2);
+    expect((await phone.open()).rarityRange.state).toEqual({ from: 1, to: 2 });
+    expect((await tablet.open()).rarityRange.state).toEqual({ from: 1, to: 2 });
+    expect(server.sync.records.get('settings.rarityRange')?.value).toEqual({ from: 1, to: 2 });
   });
 
   it('let the newer choice of Idioms in the Mix win, on either device', async () => {
@@ -569,7 +569,7 @@ describe('two devices of one Account', () => {
 
     expect(server.sync.records.has('notifications.sound')).toBe(false);
     expect((await tablet.settings.read()).vibration).toBe(true);
-    expect(tablet.records.get('schema.version')).toBe('8');
+    expect(tablet.records.get('schema.version')).toBe('9');
     expect(await tablet.userState.pendingChanges()).toEqual(new Map());
     expect(await tablet.userState.cursor()).not.toBe(999);
   });

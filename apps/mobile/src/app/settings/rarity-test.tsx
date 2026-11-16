@@ -18,7 +18,7 @@ import { rarityTestQuestionOf, useApplyRarityTest } from '@/mix/rarity-test';
 
 /**
  * Settings › «Пройти тест ще раз»: the Rarity Test of the onboarding, drawn
- * afresh from the Mix. Its result overwrites the Rarity Ceiling (ADR 0072);
+ * afresh from the Mix. Its result overwrites the Rarity Range, from 1 (ADR 0156);
  * «ГОТОВО» goes back to Settings and «Перевірити рівень ще раз» draws a new
  * test at once. Going back before the last answer sets nothing. A draw with
  * no Word goes back at once.

@@ -251,7 +251,7 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * the reader answers it (ADR 0043). While Entries of another kind are due,
  * the kind's turn shows one before a new Entry of the kind, in the same way. A
  * due Entry the Cycle doesn't cover (Hidden, out of the Mix, above the
- * Rarity Ceiling) waits until it does. Its card is Seen and joins History as
+ * Rarity Range) waits until it does. Its card is Seen and joins History as
  * any card does. Every card whose Entry is due as the Feed adds it, in a
  * Review slot or not, is a Review, labelled «Повторення» (`review`).
  *

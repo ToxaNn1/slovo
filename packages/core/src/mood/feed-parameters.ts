@@ -1,20 +1,27 @@
-import type { MixKindWeight, Mood, MoodShift, Rarity, RarityBand } from '@slovo/contracts';
+import type {
+  MixKindWeight,
+  Mood,
+  MoodShift,
+  Rarity,
+  RarityBand,
+  RarityRange,
+} from '@slovo/contracts';
 
 import type { MixKindWeights } from '../entries/mix';
 
 /**
- * Whether a Word of the rarity is in the Mood's rarity band (ADR 0076):
- * `upper` is the Rarity Ceiling's rarity and the one below it, `lower`
- * rarities 1 and 2, `whole` every rarity. The bands clip to the Ceiling, so
- * under «до 2» `lower` is `whole`; a Word above the Ceiling never reaches the
- * Feed, as the Cycle covers none.
+ * Whether a Word of the rarity is in the Mood's rarity band (ADR 0076, 0156):
+ * `upper` is the Rarity Range's top and the rarity below it, `lower` its
+ * bottom and the rarity above it, `whole` every rarity. The bands lie within
+ * the range, so in «від 1 до 2» `lower` is `whole`; a Word outside the range
+ * never reaches the Feed, as the Cycle covers none.
  */
-export function inRarityBand(rarity: Rarity, band: RarityBand, ceiling: Rarity): boolean {
+export function inRarityBand(rarity: Rarity, band: RarityBand, { from, to }: RarityRange): boolean {
   switch (band) {
     case 'upper':
-      return rarity >= ceiling - 1;
+      return rarity >= to - 1;
     case 'lower':
-      return rarity <= 2;
+      return rarity <= from + 1;
     case 'whole':
       return true;
   }

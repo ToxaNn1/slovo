@@ -5,8 +5,9 @@ import {
   type Composition,
   type Edition,
   type FeatureSwitch,
+  type Haptics,
 } from '@slovo/core';
-import { EditionProvider } from '@slovo/ui';
+import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
@@ -110,6 +111,14 @@ function editionWith(switches: Partial<Record<FeatureSwitch, boolean>>): Edition
   return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...states } });
 }
 
+const haptics: Haptics = {
+  selection: () => undefined,
+  impactLight: () => undefined,
+  impactMedium: () => undefined,
+  success: () => undefined,
+  warning: () => undefined,
+};
+
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
@@ -143,9 +152,11 @@ async function renderSettings(
         <SafeAreaProvider initialMetrics={metrics}>
           <ShellProvider shell={shell}>
             <EditionProvider edition={edition} strings={editionStrings}>
-              <SettingsProvider>
-                <Stack screenOptions={{ headerShown: false }} />
-              </SettingsProvider>
+              <HapticsProvider haptics={haptics}>
+                <SettingsProvider>
+                  <Stack screenOptions={{ headerShown: false }} />
+                </SettingsProvider>
+              </HapticsProvider>
             </EditionProvider>
           </ShellProvider>
         </SafeAreaProvider>
@@ -644,5 +655,36 @@ describe('Settings › «Скинути прогрес»', () => {
     await renderSettings({ progressReset: false });
 
     expect(screen.queryByRole('button', { name: reset.button })).toBeNull();
+  });
+});
+
+describe('Settings › «Рідкість» (ADR 0156)', () => {
+  it('offers both ends of the Rarity Range on its bars and keeps the range chosen', async () => {
+    const composition = await testShell().composition.opened();
+    await renderSettings({ rarityCeiling: true, rarityRange: true }, undefined, composition);
+    expect(screen.getByTestId('settings-rarity-value')).toHaveTextContent('від 1 до 5');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Рідкість 2' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Рідкість 4' }));
+
+    expect(composition.rarityRange.state).toEqual({ from: 2, to: 4 });
+    expect(screen.getByTestId('settings-rarity-value')).toHaveTextContent('від 2 до 4');
+    expect(screen.getByTestId('settings-rarity-bar-1')).not.toBeSelected();
+    expect(screen.getByTestId('settings-rarity-bar-3')).toBeSelected();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Рідкість 4' }));
+    expect(composition.rarityRange.state).toEqual({ from: 4, to: 4 });
+    expect(screen.getByTestId('settings-rarity-value')).toHaveTextContent('лише 4');
+  });
+
+  it('offers only the top, «до 1» to «до 5», while the rarityRange switch is off', async () => {
+    const composition = await testShell().composition.opened();
+    await renderSettings({ rarityCeiling: true, rarityRange: false }, undefined, composition);
+    expect(screen.queryByTestId('settings-rarity-value')).toBeNull();
+
+    await fireEvent.press(screen.getByTestId('settings-rarity-3'));
+
+    expect(composition.rarityRange.state).toEqual({ from: 1, to: 3 });
+    expect(screen.getByTestId('settings-rarity-3')).toBeSelected();
   });
 });

@@ -86,9 +86,10 @@ const everything: Shown = {
   curatedCollections: true,
   swipeMarks: true,
   gesturesHintDemo: true,
+  gesturesHintAgain: true,
   savedSwipesOff: true,
   wordOfTheDayArchive: true,
-  rarityCeiling: true,
+  rarity: 'range',
   rarityTest: true,
   questionnaire: { levelWhy: true, selfRating: true },
 };
@@ -150,6 +151,10 @@ describe('what the reader is shown', () => {
     [
       'a still gestures hint with its demo off',
       { off: ['gesturesHintDemo'], shown: { gesturesHintDemo: false } },
+    ],
+    [
+      'no «Показати підказку жестів» with its switch off',
+      { off: ['gesturesHintAgain'], shown: { gesturesHintAgain: false } },
     ],
     [
       'an Entry opened from Saved swiped as anywhere else with `savedSwipesOff` off',
@@ -274,8 +279,12 @@ describe('what the reader is shown', () => {
       { off: ['dailyGoal'], shown: { dailyGoal: false } },
     ],
     [
-      'no «Рідкість» with the Rarity Ceiling off',
-      { off: ['rarityCeiling'], shown: { rarityCeiling: false } },
+      'no «Рідкість» with the Rarity Range off',
+      { off: ['rarityCeiling'], shown: { rarity: 'off' } },
+    ],
+    [
+      '«Рідкість» as «до 1»…«до 5» with the Rarity Range picker off',
+      { off: ['rarityRange'], shown: { rarity: 'top' } },
     ],
     [
       'no «Пройти тест ще раз» and no self-rating with the Rarity Test off',

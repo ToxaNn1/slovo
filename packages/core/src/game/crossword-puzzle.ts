@@ -176,7 +176,7 @@ export function generateCrosswordPuzzle({
   random,
 }: {
   date: string;
-  /** The Words within the Rarity Ceiling, in the Language Pack's order. */
+  /** The Words within the Rarity Range, in the Language Pack's order. */
   words: readonly Word[];
   random: Random;
 }): PuzzleGeneration {

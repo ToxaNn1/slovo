@@ -49,7 +49,7 @@ const MOODS: readonly Mood[] = [
 
 const KINDS: FeatureSwitch[] = ['corrections', 'idioms', 'synonymRows', 'tips', 'mixKindWeights'];
 
-/** One app run with the Mood check-in and the Rarity Ceiling on, Words alone unless `on` adds kinds. */
+/** One app run with the Mood check-in and the Rarity Range on, Words alone unless `on` adds kinds. */
 async function runApp(on: FeatureSwitch[] = []): Promise<Composition> {
   return openComposition({
     content,
@@ -109,9 +109,9 @@ describe('the Feed under a Mood', () => {
     expect(ids).toHaveLength(words.length);
   });
 
-  it('never crosses the Rarity Ceiling: under «до 3» the upper band is rarities 2 and 3', async () => {
+  it('never crosses the Rarity Range: in «від 1 до 3» the upper band is rarities 2 and 3', async () => {
     const app = await runApp();
-    await app.rarityCeiling.set(3);
+    await app.rarityRange.set({ from: 1, to: 3 });
     await app.mood.choose('upper');
 
     const rarities = (await cycleIds(app.feed)).map(rarityOf);
@@ -124,7 +124,7 @@ describe('the Feed under a Mood', () => {
     expect(chosen.slice(band.length).every((rarity) => rarity === 1)).toBe(true);
   });
 
-  it('puts the lower band first under «до 5», and under «до 2» the lower band is the whole', async () => {
+  it('puts the lower band first in «від 1 до 5», and in «від 1 до 2» the lower band is the whole', async () => {
     const low = await runApp();
     await low.mood.choose('lower');
     const [first, ...chosen] = (await cycleIds(low.feed)).map(rarityOf);
@@ -133,15 +133,28 @@ describe('the Feed under a Mood', () => {
     expect(chosen.slice(8).every((rarity) => rarity > 2)).toBe(true);
 
     const plain = await runApp();
-    await plain.rarityCeiling.set(2);
+    await plain.rarityRange.set({ from: 1, to: 2 });
     const lower = await runApp();
-    await lower.rarityCeiling.set(2);
+    await lower.rarityRange.set({ from: 1, to: 2 });
     await lower.mood.choose('lower');
 
     const ids = await cycleIds(lower.feed);
 
     expect(ids).toEqual(await cycleIds(plain.feed));
     expect(ids).toHaveLength(8);
+  });
+
+  it("starts the lower band at the Rarity Range's bottom: in «від 3 до 5» it is rarities 3 and 4", async () => {
+    const app = await runApp(['rarityRange']);
+    await app.rarityRange.set({ from: 3, to: 5 });
+    await app.mood.choose('lower');
+
+    const [, ...chosen] = (await cycleIds(app.feed)).map(rarityOf);
+
+    expect(chosen.every((rarity) => rarity >= 3)).toBe(true);
+    const band = chosen.filter((rarity) => rarity <= 4);
+    expect(band.length).toBeGreaterThan(0);
+    expect(chosen.slice(0, band.length).every((rarity) => rarity <= 4)).toBe(true);
   });
 
   it('spaces the turns of a `more` kind as «Більше», clamped, and never turns on a kind that is off', async () => {

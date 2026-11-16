@@ -7,9 +7,10 @@ import {
   type Composition,
   type Edition,
   type FeatureSwitch,
+  type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
+import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
@@ -47,6 +48,14 @@ let composition: Composition;
 
 jest.mock('../account/account', () => ({ useAccountInEffect: () => undefined }));
 jest.mock('../notifications/notifications', () => ({ useNotificationsSummary: () => '' }));
+
+const haptics: Haptics = {
+  selection: () => undefined,
+  impactLight: () => undefined,
+  impactMedium: () => undefined,
+  success: () => undefined,
+  warning: () => undefined,
+};
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -116,9 +125,11 @@ async function renderSettings() {
         <SafeAreaProvider initialMetrics={metrics}>
           <ShellProvider shell={shell}>
             <EditionProvider edition={edition} strings={editionStrings}>
-              <SettingsProvider>
-                <Stack screenOptions={{ headerShown: false }} />
-              </SettingsProvider>
+              <HapticsProvider haptics={haptics}>
+                <SettingsProvider>
+                  <Stack screenOptions={{ headerShown: false }} />
+                </SettingsProvider>
+              </HapticsProvider>
             </EditionProvider>
           </ShellProvider>
         </SafeAreaProvider>
@@ -144,15 +155,15 @@ beforeEach(async () => {
 });
 
 describe('Settings › «Рідкість»', () => {
-  it('stores the Rarity Ceiling chosen, and the next Feed picks obey it', async () => {
+  it('stores the Rarity Range chosen, and the next Feed picks obey it', async () => {
     await renderSettings();
-    expect(screen.getByTestId('settings-rarity-5')).toBeSelected();
+    expect(screen.getByTestId('settings-rarity-bar-5')).toBeSelected();
 
-    await fireEvent.press(screen.getByTestId('settings-rarity-3'));
+    await fireEvent.press(screen.getByTestId('settings-rarity-bar-3'));
     await settle();
 
-    expect(composition.rarityCeiling.state).toBe(3);
-    expect(screen.getByTestId('settings-rarity-3')).toBeSelected();
+    expect(composition.rarityRange.state).toEqual({ from: 1, to: 3 });
+    expect(screen.getByTestId('settings-rarity-bar-3')).toBeSelected();
     const picked: string[] = [];
     for (let turn = 0; turn < 6; turn += 1) {
       const card = await composition.feed.next();
@@ -173,8 +184,8 @@ describe('Settings › «Рідкість»', () => {
 });
 
 describe('Settings › «Пройти тест ще раз»', () => {
-  it('takes the Rarity Test again, and its result overwrites the Rarity Ceiling', async () => {
-    await composition.rarityCeiling.set(4);
+  it('takes the Rarity Test again, and its result overwrites the Rarity Range', async () => {
+    await composition.rarityRange.set({ from: 1, to: 4 });
     await renderSettings();
 
     await open(rarityTest.retake);
@@ -198,8 +209,8 @@ describe('Settings › «Пройти тест ще раз»', () => {
     await settle();
     expect(screen.getByRole('header', { name: editionStrings.settings.title })).toBeOnTheScreen();
 
-    expect(screen.getByTestId('settings-rarity-2')).toBeSelected();
-    expect(screen.getByTestId('settings-rarity-4')).not.toBeSelected();
+    expect(screen.getByTestId('settings-rarity-bar-2')).toBeSelected();
+    expect(screen.getByTestId('settings-rarity-bar-4')).not.toBeSelected();
   });
 
   it('offers the Rarity Test again from its result, drawn anew', async () => {
@@ -217,8 +228,8 @@ describe('Settings › «Пройти тест ще раз»', () => {
     expect(screen.getByText(rarityTest.question)).toBeOnTheScreen();
   });
 
-  it('leaves the Rarity Ceiling as it was when the reader goes back halfway', async () => {
-    await composition.rarityCeiling.set(4);
+  it('leaves the Rarity Range as it was when the reader goes back halfway', async () => {
+    await composition.rarityRange.set({ from: 1, to: 4 });
     await renderSettings();
     await open(rarityTest.retake);
     await fireEvent.press(screen.getByRole('button', { name: knowledge.unknown }));
@@ -226,12 +237,12 @@ describe('Settings › «Пройти тест ще раз»', () => {
     await fireEvent.press(screen.getByRole('button', { name: editionStrings.settings.title }));
     await settle();
 
-    expect(composition.rarityCeiling.state).toBe(4);
+    expect(composition.rarityRange.state).toEqual({ from: 1, to: 4 });
   });
 
   it.each<[string, FeatureSwitch]>([
     ['the Rarity Test', 'rarityTest'],
-    ['the Rarity Ceiling it sets', 'rarityCeiling'],
+    ['the Rarity Range it sets', 'rarityCeiling'],
   ])('is not in Settings while %s is off', async (_, off) => {
     await openWith(editionWithout(off));
     await renderSettings();

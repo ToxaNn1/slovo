@@ -233,7 +233,7 @@ function PlayStep({
 
 /**
  * The Rarity Test that «Не знаю» on «Рівень» opens, in the frame of that
- * step: drawn afresh from the Mix, its result sets the Rarity Ceiling and
+ * step: drawn afresh from the Mix, its result sets the Rarity Range and
  * «Далі» goes on. A draw with no Word, or one that fails, goes on at once.
  */
 function RarityTestStep({

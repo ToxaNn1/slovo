@@ -12,7 +12,7 @@ const strings = editionStrings.mix;
  * Settings › Мій Мікс (board 11, screen 87), with no line under the title: a
  * tile for every Category of the Edition under «N з M обрано» and «Усі», and
  * the switches of Corrections, Idioms, Synonym Rows and Tips, each when the
- * Edition turns it on. The Rarity Ceiling stays a Settings row of its own
+ * Edition turns it on. The Rarity Range stays a Settings row of its own
  * (ADR 0072). A change applies at once (the Core's Mix, ADR 0019). The last
  * Category's tile is disabled, with a hint why.
  */

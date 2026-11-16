@@ -222,7 +222,7 @@ export const onboardingLayout = {
 export const rarityTestLayout = {
   /** The bar of one segment per Word over the question. */
   progressBar: { height: 6, gap: 4 },
-  /** The five rarity bars of the result, lit up to the Rarity Ceiling. */
+  /** The five rarity bars of the result, lit up to the Rarity Range. */
   rarityBars: { height: 14, gap: 5 },
   /** How skewed every segment is. */
   skew: '-20deg',

@@ -64,7 +64,7 @@ async function renderTest(result: RarityTestResult | undefined, onAgain?: () => 
 
 describe('RarityTestQuestions', () => {
   it('asks each Word in turn under where the test is', async () => {
-    const { onApply } = await renderTest({ ceiling: 2, known: 1, total: 2 });
+    const { onApply } = await renderTest({ top: 2, known: 1, total: 2 });
 
     expect(screen.getByTestId('test-question')).toBeTruthy();
     expect(screen.getByText('1 of 2')).toBeTruthy();
@@ -79,7 +79,7 @@ describe('RarityTestQuestions', () => {
   });
 
   it('takes two taps before the screen redraws as answers to two Words', async () => {
-    const { onApply } = await renderTest({ ceiling: 2, known: 1, total: 2 });
+    const { onApply } = await renderTest({ top: 2, known: 1, total: 2 });
     const unknown = screen.getByRole('button', { name: 'Unknown' });
     const known = screen.getByRole('button', { name: 'Known' });
 
@@ -97,7 +97,7 @@ describe('RarityTestQuestions', () => {
 
   it("announces each next Word to VoiceOver with where the test is, in the Edition's words", async () => {
     const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
-    await renderTest({ ceiling: 2, known: 1, total: 2 });
+    await renderTest({ top: 2, known: 1, total: 2 });
 
     expect(announce).not.toHaveBeenCalled();
 
@@ -107,7 +107,7 @@ describe('RarityTestQuestions', () => {
   });
 
   it('asks with «Unknown» before «Known», as the board has them', async () => {
-    await renderTest({ ceiling: 2, known: 1, total: 2 });
+    await renderTest({ top: 2, known: 1, total: 2 });
 
     expect(screen.getAllByRole('button')).toEqual([
       screen.getByRole('button', { name: 'Unknown' }),
@@ -115,8 +115,8 @@ describe('RarityTestQuestions', () => {
     ]);
   });
 
-  it('applies all the answers on the last one and shows the Rarity Ceiling they set', async () => {
-    const { onApply, onDone } = await renderTest({ ceiling: 2, known: 1, total: 2 });
+  it('applies all the answers on the last one and shows the Rarity Range they set', async () => {
+    const { onApply, onDone } = await renderTest({ top: 2, known: 1, total: 2 });
 
     await fireEvent.press(screen.getByRole('button', { name: 'Unknown' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Known' }));
@@ -139,7 +139,7 @@ describe('RarityTestQuestions', () => {
 
   it('offers «DONE» and the test again when its caller takes it again', async () => {
     const onAgain = jest.fn();
-    const { onDone } = await renderTest({ ceiling: 2, known: 1, total: 2 }, onAgain);
+    const { onDone } = await renderTest({ top: 2, known: 1, total: 2 }, onAgain);
     await fireEvent.press(screen.getByRole('button', { name: 'Unknown' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Known' }));
 
@@ -150,7 +150,7 @@ describe('RarityTestQuestions', () => {
     expect(screen.queryByRole('button', { name: 'Next' })).toBeNull();
   });
 
-  it('goes on at once when the answers set no Rarity Ceiling', async () => {
+  it('goes on at once when the answers set no Rarity Range', async () => {
     const { onApply, onDone } = await renderTest(undefined);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Known' }));

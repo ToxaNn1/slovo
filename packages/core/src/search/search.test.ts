@@ -108,10 +108,10 @@ describe('Search over Word Lemmas', () => {
     expect(await lemmasOf(search, 'сум')).toEqual(['сумирний']);
   });
 
-  it('finds a Word out of the Mix and above the Rarity Ceiling', async () => {
+  it('finds a Word out of the Mix and outside the Rarity Range', async () => {
     const records = new Map([
       ['mix.categories.nature', JSON.stringify(false)],
-      ['settings.rarityCeiling', JSON.stringify(1)],
+      ['settings.rarityRange', JSON.stringify({ from: 1, to: 1 })],
     ]);
     const search = createSearch({
       content: createMemoryContentPort({

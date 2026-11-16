@@ -612,7 +612,7 @@ describe('settings: the three-step text size (ADR 0134)', () => {
       const settings = await settingsOver(records);
 
       expect(await settings.read(), fontSize).toMatchObject({ fontSize, textSize });
-      expect(records.get('schema.version')).toBe('8');
+      expect(records.get('schema.version')).toBe('9');
     }
   });
 

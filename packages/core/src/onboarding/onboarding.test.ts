@@ -176,14 +176,14 @@ describe('the onboarding', () => {
     expect(app.onboarding.state.status).toBe('finished');
   });
 
-  it('sets the Rarity Ceiling by «Рівень» and the kind weights by «Навіщо»', async () => {
+  it('sets the Rarity Range by «Рівень» and the kind weights by «Навіщо»', async () => {
     const { app } = await run();
     await app.onboarding.next();
     await app.onboarding.next();
     await app.onboarding.answer('good');
     expect(kinds(app)).toBe('why');
     await app.onboarding.answer('write-correctly');
-    expect(app.rarityCeiling.state).toBe(4);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 4 });
     expect(app.mix.state.kindWeights.correction).toBe('more');
   });
 
@@ -191,10 +191,10 @@ describe('the onboarding', () => {
     const { app, events, api } = await run();
     await app.onboarding.next();
     await app.onboarding.next();
-    const ceiling = app.rarityCeiling.state;
+    const ceiling = app.rarityRange.state.to;
     await app.onboarding.answer('dont-know');
     expect(stepOf(app)).toEqual({ kind: 'rarityTest', number: 3, total: 6 });
-    expect(app.rarityCeiling.state).toBe(ceiling);
+    expect(app.rarityRange.state.to).toBe(ceiling);
     await vi.waitFor(() => {
       expect(api.counters.answers).toEqual([
         { editionId: 'test', question: 'level', answer: 'dont-know' },
@@ -225,10 +225,10 @@ describe('the onboarding', () => {
   it('keeps the defaults when the questions are skipped', async () => {
     const { app } = await run();
     const before = app.mix.state;
-    const ceiling = app.rarityCeiling.state;
+    const ceiling = app.rarityRange.state.to;
     await app.onboarding.finish();
     expect(app.onboarding.state.status).toBe('finished');
-    expect(app.rarityCeiling.state).toBe(ceiling);
+    expect(app.rarityRange.state.to).toBe(ceiling);
     expect(app.mix.state.kindWeights).toEqual(before.kindWeights);
   });
 

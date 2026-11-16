@@ -126,7 +126,10 @@
     "rarity": {
       "title": "Рідкість",
       "subtitle": "Лише слова такої рідкості й поширеніші, щоб не траплялися надто рідкісні.",
-      "ceiling": "до {rarity}"
+      "ceiling": "до {rarity}",
+      "range": "від {from} до {to}",
+      "single": "лише {rarity}",
+      "bar": "Рідкість {rarity}"
     },
     "groups": {
       "look": "ВИГЛЯД",
@@ -142,6 +145,7 @@
       "streakBreak": "Перерва",
       "badges": "Відзнаки",
       "questionnaire": "Пройти опитування ще раз",
+      "gesturesHint": "Показати підказку жестів",
       "profile": "Профіль",
       "textSize": "Шрифт і розмір",
       "widgets": "Віджети",
@@ -173,6 +177,7 @@
       "level": "{level} · {name}",
       "levelProgress": "{progress} / {toNext} XP",
       "levelLeft": "ще {left} XP до рівня {next}",
+      "record": "рекорд",
       "bestStreak": {
         "one": "найдовша {count} день",
         "few": "найдовша {count} дні",
@@ -339,6 +344,7 @@
       "streakBreak": "Пауза для серії до 7 днів",
       "badges": "Здобуті й ті, що попереду",
       "questionnaire": "Підлаштувати Стрічку під себе",
+      "gesturesHint": "Як гортати й позначати картки",
       "profile": "Рівень, серія й відзнаки",
       "privacy": "Дані та статистика",
       "signedOut": "Без входу",
@@ -501,6 +507,7 @@
     "tabMore": "Детальніше",
     "tabLess": "Сховати",
     "tabSource": "Джерело",
+    "ownSource": "Власна лексикографічна редакція",
     "tabs": {
       "essence": "Суть",
       "example": "Приклад",

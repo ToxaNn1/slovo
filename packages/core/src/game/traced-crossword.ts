@@ -29,7 +29,7 @@ export interface TracedCrossword {
 
 /**
  * What opening the traced Daily Crossword gives: `off` while the Edition
- * turns it off, `no-tiling` when the Words within the Rarity Ceiling cannot
+ * turns it off, `no-tiling` when the Words within the Rarity Range cannot
  * fill the grid, for the screen's fallback (ADR 0073), or the puzzle.
  */
 export type TracedCrosswordOpening =
@@ -73,7 +73,7 @@ function fingerprintOf(puzzle: CrosswordPuzzle): string {
 /**
  * Opens the traced Daily Crossword of the clock's local date (ADR 0073), with
  * the Words this device found in it today. Its seed is the date and the ids of
- * the Words within the Rarity Ceiling, Hidden ones included, so every reader
+ * the Words within the Rarity Range, Hidden ones included, so every reader
  * with the same Ceiling and Edition content gets the same puzzle on a date.
  * The Words found are kept with the puzzle's fingerprint: a new local date, or
  * another puzzle the same day, starts with none found. It is not a Game and never touches Seen or Knowledge Marks;
@@ -92,7 +92,7 @@ export async function openTracedCrossword({
 }: CrosswordPorts): Promise<TracedCrosswordOpening> {
   if (!edition.isFeatureEnabled('tracedCrossword')) return { kind: 'off' };
   const date = todayKey(clock);
-  const words = await entries.wordsUnderRarityCeiling();
+  const words = await entries.wordsInRarityRange();
   const seed = [date, ...words.map(({ id }) => id)].join('\n');
   const generation = generateCrosswordPuzzle({ date, words, random: seeded(seed) });
   if (generation.kind === 'no-tiling') return generation;

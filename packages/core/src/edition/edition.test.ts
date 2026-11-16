@@ -36,6 +36,7 @@ const validConfig = {
     knowledge: 'on',
     selfCheck: 'on',
     rarityCeiling: 'on',
+    rarityRange: 'on',
     gameReview: 'on',
     gameGuessWord: 'on',
     gameCorrection: 'on',
@@ -149,6 +150,7 @@ const validConfig = {
     curatedCollections: 'on',
     swipeMarks: 'on',
     gesturesHintDemo: 'on',
+    gesturesHintAgain: 'on',
     savedSwipesOff: 'on',
     wordTabs: 'on',
     sourceTab: 'on',
@@ -1166,7 +1168,7 @@ describe('loadEdition', () => {
       'featureSwitches.selfCheck',
     ],
     [
-      'a missing Rarity Ceiling Feature Switch',
+      'a missing Rarity Range Feature Switch',
       withoutSwitch('rarityCeiling'),
       'featureSwitches.rarityCeiling',
     ],
@@ -1389,17 +1391,17 @@ describe('loadEdition', () => {
       'userSettingDefaults.mix.correctionCategories',
     ],
     [
-      'a default Rarity Ceiling that is not a rarity',
+      'a default Rarity Range that is not a rarity',
       { userSettingDefaults: { ...userSettingDefaults, rarityCeiling: 6 } },
       'userSettingDefaults.rarityCeiling',
     ],
     [
-      'no default Rarity Ceiling',
+      'no default Rarity Range',
       { userSettingDefaults: { ...userSettingDefaults, rarityCeiling: undefined } },
       'userSettingDefaults.rarityCeiling',
     ],
     [
-      'a default Mix that still sets a Rarity Ceiling',
+      'a default Mix that still sets a Rarity Range',
       {
         userSettingDefaults: {
           ...userSettingDefaults,
@@ -1648,6 +1650,7 @@ const dependentSwitches = [
   ['quickQuestionWordMeaning', ['quickQuestion', 'game']],
   ['playStep', ['game']],
   ['rarityTest', ['rarityCeiling']],
+  ['rarityRange', ['rarityCeiling']],
   ['dashboard', ['wordOfTheDay']],
   ['mood', ['dashboard', 'wordOfTheDay']],
   ['previousWords', ['dashboard', 'wordOfTheDayArchive', 'wordOfTheDay']],
@@ -1656,6 +1659,7 @@ const dependentSwitches = [
   ['dueQuiz', ['knowledge']],
   ['collectionLinkCopy', ['collectionLinks']],
   ['gesturesHintDemo', ['swipeMarks', 'knowledge']],
+  ['gesturesHintAgain', ['swipeMarks', 'knowledge']],
   ['savedSwipesOff', ['swipeMarks', 'knowledge']],
   ['searchButton', ['search']],
   ['dashboardWordmark', ['dashboard', 'wordOfTheDay']],

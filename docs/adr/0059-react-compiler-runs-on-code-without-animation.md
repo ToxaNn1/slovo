@@ -17,6 +17,7 @@ The app and `@slovo/ui` memoise by hand with `useMemo`, `useCallback` and `React
 - `saved/CollectionNameSheet.tsx`, `saved/FavoriteButton.tsx`
 - `search/RecentQueries.tsx`
 - `settings/NarratorVoicePicker.tsx`
+- `settings/RarityRangePicker.tsx`
 - `settings/WidgetGuide.tsx`
 - `share/ShareSheet.tsx`
 

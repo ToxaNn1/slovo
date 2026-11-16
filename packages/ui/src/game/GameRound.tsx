@@ -439,8 +439,8 @@ export function QuickQuestionRound({
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   round: { gap: space[5], padding: space[6] },
-  // The Feed's page pads the Quick Question's card as board f3 does its cards.
-  quickQuestion: { flex: 1, padding: space[3] },
+  // The Feed's page frames the Quick Question's card as it does a Word card (owner 16.11).
+  quickQuestion: { flex: 1 },
   quickQuestionCard: {
     flex: 1,
     borderRadius: quickQuestionCard.radius,

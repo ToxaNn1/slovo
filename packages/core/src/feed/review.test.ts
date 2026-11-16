@@ -218,19 +218,19 @@ describe('Review in the Feed', () => {
     expect((await firstCards(app.feed, 5))[4]).toBe(due);
   });
 
-  it('skips a due Word out of the Mix or above the Rarity Ceiling until it is eligible again', async () => {
+  it('skips a due Word out of the Mix or above the Rarity Range until it is eligible again', async () => {
     const records = new Map<string, string>();
     const due = ['w_other', 'w_rare'];
     await markUnknown(records, due);
     const app = await run({ records, at: dayTwo });
 
     await app.mix.takeOut('other');
-    await app.rarityCeiling.set(4);
+    await app.rarityRange.set({ from: 1, to: 4 });
     const ids = await firstCards(app.feed, 9);
     expect(ids.filter((id) => id !== undefined && due.includes(id))).toEqual([]);
 
     await app.mix.putBack('other');
-    await app.rarityCeiling.set(5);
+    await app.rarityRange.set({ from: 1, to: 5 });
     const back = await firstCards(app.feed, 15);
     expect(due).toContain(back[11]);
     expect(due).toContain(back[14]);

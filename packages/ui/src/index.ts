@@ -13,6 +13,8 @@ export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
 export { NarratorVoicePicker } from './settings/NarratorVoicePicker';
 export { OptionSampleNumber, OptionSampleWord, OptionScreen } from './settings/OptionScreen';
+export { RarityRangePicker } from './settings/RarityRangePicker';
+export type { RarityRangeValue } from './settings/RarityRangePicker';
 export type { OptionScreenOption } from './settings/OptionScreen';
 export { FontSizeProvider, type TextSizeStep } from './providers/FontSizeProvider';
 export { DecorProvider } from './decor/DecorProvider';

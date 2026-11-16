@@ -35,4 +35,13 @@ describe('the gestures hint sheet', () => {
 
     expect(records.get('feed.seen.w_1')).toBe('1');
   });
+
+  it('is due again after «Показати підказку жестів», also after a restart', async () => {
+    const records = new Map<string, string>();
+    await (await gesturesHintOver(records)).markShown();
+
+    await (await gesturesHintOver(records)).showAgain();
+
+    expect(await (await gesturesHintOver(records)).isDue()).toBe(true);
+  });
 });

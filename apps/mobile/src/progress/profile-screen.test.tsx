@@ -242,7 +242,11 @@ describe('the Profile', () => {
     expect(screen.getByText(strings.title)).toBeOnTheScreen();
     expect(screen.getByTestId('profile-streak')).toHaveTextContent('0');
     expect(screen.getByTestId('profile-streak-words')).toHaveTextContent('днів поспіль');
-    expect(screen.getByTestId('profile-best-streak')).toHaveTextContent('найдовша 0 днів');
+    // The Best Streak a tile: its number over «рекорд», read whole as «найдовша 0 днів».
+    const best = screen.getByTestId('profile-best-streak');
+    expect(within(best).getByText('0')).toBeOnTheScreen();
+    expect(within(best).getByText(strings.record)).toBeOnTheScreen();
+    expect(best).toHaveAccessibleName('найдовша 0 днів');
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('0');
     expect(screen.getByText(strings.levelLabel)).toBeOnTheScreen();
     expect(screen.getByTestId('profile-level-name')).toHaveTextContent('Початківець');

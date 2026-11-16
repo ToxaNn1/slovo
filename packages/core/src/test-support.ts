@@ -451,7 +451,7 @@ export function titleOf(notification: PlannedNotification | undefined): string |
 }
 
 /**
- * The Entries over the live Mix, Rarity Ceiling and Hidden Entries opened
+ * The Entries over the live Mix, Rarity Range and Hidden Entries opened
  * over the user state, wired as the Core composition wires them, for the
  * tests of the Entries without the whole composition.
  */
@@ -464,14 +464,14 @@ export async function openLiveEntries({
   edition: Parameters<typeof openEligibility>[0]['edition'];
   userState: UserState;
 }) {
-  const { entries, mix, rarityCeiling, hiddenEntries } = await openEligibility({
+  const { entries, mix, rarityRange, hiddenEntries } = await openEligibility({
     content,
     edition,
     userState,
     clock: fakeClock().clock,
     eligibility: createSubject(),
   });
-  return { entries, mix, rarityCeiling, hiddenEntries };
+  return { entries, mix, rarityRange, hiddenEntries };
 }
 
 /** The Feature Switch states of an Edition: on where it turns a feature on, else off. */

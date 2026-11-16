@@ -42,7 +42,7 @@ export function CardTabs<Tab extends { readonly key: string }>({
   testID,
   tabs: ownTabs,
   nameOf,
-  sources = [],
+  sources: allSources = [],
   disabled = false,
   children,
 }: {
@@ -61,6 +61,8 @@ export function CardTabs<Tab extends { readonly key: string }>({
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice, strings } = useEdition();
+  // The Edition's own editing is no source to name (ADR 0154).
+  const sources = allSources.filter((source) => source !== strings.wordCard.ownSource);
   const [first, ...rest] = ownTabs;
   const tabs: readonly [CardTab<Tab>, ...CardTab<Tab>[]] = [
     { key: first.key, own: first },

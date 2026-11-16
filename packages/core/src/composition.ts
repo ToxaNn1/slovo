@@ -66,7 +66,7 @@ import { openReaderName, type ReaderName } from './settings/reader-name';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
 import { createRarityTest, type RarityTest } from './mix/rarity-test';
-import type { RarityCeiling } from './entries/rarity-ceiling';
+import type { RarityRangeSetting } from './entries/rarity-range';
 import { createRecentQueries, type RecentQueries } from './search/recent-queries';
 import { createSearch, withNoResultEvent, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
@@ -190,10 +190,10 @@ export interface Composition extends Hiding {
   readonly search: Search;
   /** The last 10 queries a Search result was opened from, kept on this device. */
   readonly recentQueries: RecentQueries;
-  /** The Rarity Test, which draws the Words it asks about and sets the Rarity Ceiling by the answers. */
+  /** The Rarity Test, which draws the Words it asks about and sets the Rarity Range by the answers. */
   readonly rarityTest: RarityTest;
-  /** The Rarity Ceiling, the one «Рідкість» setting every surface obeys (ADR 0072). */
-  readonly rarityCeiling: RarityCeiling;
+  /** The Rarity Range, the one «Рідкість» setting every surface obeys (ADR 0072). */
+  readonly rarityRange: RarityRangeSetting;
   /**
    * Opens today's Daily Crossword, the one its card and its screen draw: the
    * crossing one (ADR 0087) with the progress this device made in it, the
@@ -433,7 +433,7 @@ export async function openComposition({
   const returned: Subject<void> = createSubject();
   // The Entries read the reader's choices live; the Mix opens before the
   // Feed, whose turns follow its kind weights.
-  const { entries, rows, mix, rarityCeiling, hiddenEntries } = await openEligibility({
+  const { entries, rows, mix, rarityRange, hiddenEntries } = await openEligibility({
     content,
     edition,
     userState,
@@ -544,7 +544,7 @@ export async function openComposition({
     userState,
     clock,
     mix,
-    rarityCeiling,
+    rarityRange,
     xpLog,
     analytics,
   });
@@ -555,7 +555,7 @@ export async function openComposition({
     clock,
     dayTurned,
     analytics,
-    rarityCeiling,
+    rarityRange,
   });
   const feed = await openFeed({
     entries,
@@ -718,7 +718,7 @@ export async function openComposition({
     dayTurned,
   });
   // Once the day is turned to, so the welcome shows today's Word of the Day.
-  const rarityTest = createRarityTest({ edition, entries, rarityCeiling, random });
+  const rarityTest = createRarityTest({ edition, entries, rarityRange, random });
   const onboarding = await openOnboarding({
     edition,
     userState,
@@ -726,7 +726,7 @@ export async function openComposition({
     entries,
     wordOfTheDay,
     mix,
-    rarityCeiling,
+    rarityRange,
     xpLog,
     analytics,
     backend,
@@ -803,7 +803,7 @@ export async function openComposition({
     search: withNoResultEvent(createSearch({ content, edition, comparison, userState }), analytics),
     recentQueries: createRecentQueries({ comparison, userState }),
     rarityTest,
-    rarityCeiling,
+    rarityRange,
     openDailyCrossword: () =>
       openDailyCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
     ...createHiding({ rows, hiddenEntries, mix }),

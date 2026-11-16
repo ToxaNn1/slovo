@@ -5,7 +5,7 @@ import type { Entries } from '../entries/entries';
 import { renderStress, stressedVowelsOf } from '../entries/stress';
 import { shuffled } from '../shuffled';
 import type { Random } from '../ports';
-import { HIGHEST_RARITY, type RarityCeiling } from '../entries/rarity-ceiling';
+import { HIGHEST_RARITY, LOWEST_RARITY, type RarityRangeSetting } from '../entries/rarity-range';
 
 /** How many Words of each rarity the Rarity Test asks about. */
 const WORDS_PER_RARITY = 2;
@@ -26,32 +26,33 @@ export interface RarityTestAnswer {
   readonly known: boolean;
 }
 
-/** What the Rarity Test's answers came to: the Rarity Ceiling they set, and how many Words the reader knew. */
+/** What the Rarity Test's answers came to: the top of the Rarity Range they set, from 1, and how many Words the reader knew. */
 export interface RarityTestResult {
-  readonly ceiling: Rarity;
+  /** The top of the Rarity Range set, «від 1 до `top`». */
+  readonly top: Rarity;
   /** How many of the Words asked about were answered «Знаю». */
   readonly known: number;
   /** How many Words were asked about. */
   readonly total: number;
 }
 
-/** The Rarity Test (ADR 0054, 0072): «Перевірка рівня», which sets the Rarity Ceiling. */
+/** The Rarity Test (ADR 0054, 0156): «Перевірка рівня», which sets the Rarity Range. */
 export interface RarityTest {
   /**
    * Draws the Words to ask about: 2 of each rarity, the commonest first, from
-   * the Words eligible but for the Rarity Ceiling (not Retired, not Hidden, of
+   * the Words eligible but for the Rarity Range (not Retired, not Hidden, of
    * a Category in the Mix), or every one of a rarity that has fewer. None
-   * while the Edition turns the Rarity Test or the Rarity Ceiling it sets off
+   * while the Edition turns the Rarity Test or the Rarity Range it sets off
    * (or a remote switch does). Each draw is new; it writes nothing, so no Word is Seen.
    */
   draw(): Promise<readonly RarityTestWord[]>;
   /**
-   * Sets the Rarity Ceiling by the answers, at once, and resolves to it (the
-   * lowest rarity with «Не знаю», or 5 when every Word is known) with how
-   * many of the Words the reader knew. A retake
-   * overwrites the ceiling. It sets no Knowledge Mark, starts no Review and
+   * Sets the Rarity Range by the answers, at once, from 1 to its top, and
+   * resolves to the top (the lowest rarity with «Не знаю», or 5 when every
+   * Word is known) with how many of the Words the reader knew. A retake
+   * overwrites the range. It sets no Knowledge Mark, starts no Review and
    * makes nothing Seen. Nothing is set, and it resolves to nothing, for no
-   * answers or while the Edition turns the Rarity Test or the Rarity Ceiling
+   * answers or while the Edition turns the Rarity Test or the Rarity Range
    * off (or a remote switch does).
    */
   apply(answers: readonly RarityTestAnswer[]): Promise<RarityTestResult | undefined>;
@@ -60,12 +61,12 @@ export interface RarityTest {
 export function createRarityTest({
   edition,
   entries,
-  rarityCeiling,
+  rarityRange,
   random,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   entries: Pick<Entries, 'eligibleWordsOfAnyRarity'>;
-  rarityCeiling: Pick<RarityCeiling, 'set'>;
+  rarityRange: Pick<RarityRangeSetting, 'set'>;
   random: Random;
 }): RarityTest {
   const isOn = () => edition.isFeatureEnabled('rarityTest');
@@ -90,9 +91,9 @@ export function createRarityTest({
     async apply(answers) {
       if (!isOn() || answers.length === 0) return undefined;
       const unknown = answers.filter((answer) => !answer.known).map((answer) => answer.rarity);
-      const ceiling = RARITIES.find((rarity) => unknown.includes(rarity)) ?? HIGHEST_RARITY;
-      await rarityCeiling.set(ceiling);
-      return { ceiling, known: answers.length - unknown.length, total: answers.length };
+      const top = RARITIES.find((rarity) => unknown.includes(rarity)) ?? HIGHEST_RARITY;
+      await rarityRange.set({ from: LOWEST_RARITY, to: top });
+      return { top, known: answers.length - unknown.length, total: answers.length };
     },
   };
 }

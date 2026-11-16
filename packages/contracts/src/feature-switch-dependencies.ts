@@ -98,8 +98,10 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   analyticsNotificationPermission: ['analytics'],
   analyticsNps: ['analytics'],
   analyticsGames: ['analytics'],
-  // The Rarity Test sets the Rarity Ceiling (ADR 0072).
+  // The Rarity Test sets the top of the Rarity Range (ADR 0156).
   rarityTest: ['rarityCeiling'],
+  // The picker sets both ends of the Rarity Range the switch above turns on (ADR 0156).
+  rarityRange: ['rarityCeiling'],
   interestsQuestion: ['laterQuestions'],
   // The Dashboard's hero is the Word of the Day (ADR 0076).
   dashboard: ['wordOfTheDay'],
@@ -117,6 +119,7 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   collectionLinkCopy: ['collectionLinks'],
   // The demo plays the side swipes on the Feed's card (ADR 0112).
   gesturesHintDemo: ['swipeMarks'],
+  gesturesHintAgain: ['swipeMarks'],
   // Only the side swipes are taken off an Entry opened from Saved.
   savedSwipesOff: ['swipeMarks'],
   // The source tab is the last of the Entry card's tabs (ADR 0116).

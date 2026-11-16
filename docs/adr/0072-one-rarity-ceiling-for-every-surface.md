@@ -1,5 +1,7 @@
 # One Rarity Ceiling for every surface
 
+Superseded by [ADR 0156](0156-one-rarity-range-for-every-surface.md): the Rarity Range «від–до» replaces the Rarity Ceiling.
+
 Until 1.0 the reader set rarity in two places inside the Mix: a Rarity Floor («від 1» to «від 5», the commonest Words left out) and a Rarity Ceiling («до 1» to «до 5», the rarest left out), with the Floor never above the Ceiling. The two pulled against each other, the Rarity Test and the self-rating set one while onboarding set the other, and the Daily Crossword ignored both (ADR 0052). The reader thinks of rarity as one thing, how hard SLOVO is for them (owner decision 03.11, spec #1540).
 
 **One setting, «Рідкість»: the Rarity Ceiling, «до 1» to «до 5», default «до 5».** Only Words up to it appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword's choice of Words. The Rarity Floor is removed. Entries without a rarity (Corrections, Idioms, Synonym Rows, Tips) are unaffected. Search, the Knowledge Marks and anything the reader keeps ignore the Ceiling, as they ignored the Mix (ADR 0015, 0043, 0054).

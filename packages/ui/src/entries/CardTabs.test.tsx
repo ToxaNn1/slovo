@@ -28,7 +28,12 @@ async function renderTabs(sources?: readonly string[]) {
       <EditionProvider
         edition={{ locale: 'en' }}
         strings={testStrings({
-          wordCard: { tabMore: 'More', tabLess: 'Less', tabSource: 'Source' },
+          wordCard: {
+            tabMore: 'More',
+            tabLess: 'Less',
+            tabSource: 'Source',
+            ownSource: 'Our own editing',
+          },
         })}
       >
         <CardTabs testID="word" tabs={tabs} nameOf={(tab) => names[tab.key]} sources={sources}>
@@ -223,6 +228,21 @@ describe("an Entry card's Source tab (ADR 0116)", () => {
     expect(screen.queryByText('Essence content')).toBeNull();
     expect(screen.getByTestId('word-source-0')).toHaveTextContent('A dictionary', { exact: true });
     expect(screen.getByTestId('word-source-1')).toHaveTextContent('A style guide', { exact: true });
+  });
+
+  it("is not there when the only source is the Edition's own editing (ADR 0154)", async () => {
+    await renderTabs(['Our own editing']);
+    expect(screen.queryByTestId('word-tab-source')).toBeNull();
+    expect(screen.getByTestId('word-tab-essence')).toBeTruthy();
+  });
+
+  it("leaves the Edition's own editing out of the sources it names (ADR 0154)", async () => {
+    await renderTabs(['Our own editing', 'A dictionary']);
+
+    await fireEvent.press(screen.getByTestId('word-tab-source'));
+
+    expect(screen.getByTestId('word-source-0')).toHaveTextContent('A dictionary', { exact: true });
+    expect(screen.queryByTestId('word-source-1')).toBeNull();
   });
 
   it('is not there without sources', async () => {

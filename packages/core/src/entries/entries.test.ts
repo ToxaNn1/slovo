@@ -154,7 +154,7 @@ const open = ({ correctionsSwitch = true, idiomsSwitch = true } = {}) =>
   });
 
 /**
- * The Entries over the live Mix, Rarity Ceiling and Hidden Entries opened over
+ * The Entries over the live Mix, Rarity Range and Hidden Entries opened over
  * the user state's records, written as the user state keeps them.
  */
 async function openOver(records: Record<string, unknown>, edition = editionWith(true)) {
@@ -352,9 +352,9 @@ describe('the Entries', () => {
       expect(await entries.eligibleOfKind('idiom')).toEqual({ refusal: 'idioms-out-of-mix' });
     });
 
-    it('hold no Word above the Rarity Ceiling, and leave Corrections, Idioms, Synonym Rows and Tips untouched by it', async () => {
+    it('hold no Word above the Rarity Range, and leave Corrections, Idioms, Synonym Rows and Tips untouched by it', async () => {
       const edition = { ...editionWith(true), isFeatureEnabled: () => true };
-      const { entries } = await openOver({ 'settings.rarityCeiling': 2 }, edition);
+      const { entries } = await openOver({ 'settings.rarityRange': { from: 1, to: 2 } }, edition);
 
       expect(await entries.eligible()).toEqual({
         words: ['w_always', 'w_talkative'],

@@ -192,25 +192,25 @@ describe('The later questions', () => {
     expect(await laterQuestionsIn(await run({ records, on: '2026-11-03' }))).toEqual(['mixReview']);
   });
 
-  it('leaves the Rarity Ceiling as it is on a self-rating', async () => {
+  it('leaves the Rarity Range as it is on a self-rating', async () => {
     const records = await newReader('2026-11-01');
     const app = await run({ records, on: '2026-11-02' });
-    await app.rarityCeiling.set(2);
+    await app.rarityRange.set({ from: 1, to: 2 });
 
     expect(await app.questionnaire.answer('selfRating', 'many')).toBe(true);
     await app.questionnaire.answer('selfRating', 'few');
 
-    expect(app.rarityCeiling.state).toBe(2);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 2 });
   });
 
-  it('sets the Rarity Ceiling by a «Рівень» option and has no «Не знаю» on its retake', async () => {
+  it('sets the Rarity Range by a «Рівень» option and has no «Не знаю» on its retake', async () => {
     const app = await run({ records: await existingReader(), on: '2026-11-02' });
     expect(app.questionnaire.options.level.map(({ id }) => id)).toEqual(['starting', 'good']);
 
     expect(await app.questionnaire.answer('level', 'dont-know')).toBe(false);
     expect(await app.questionnaire.answer('level', 'starting')).toBe(true);
 
-    expect(app.rarityCeiling.state).toBe(2);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 2 });
   });
 
   it('asks no self-rating while the Rarity Test is off', async () => {

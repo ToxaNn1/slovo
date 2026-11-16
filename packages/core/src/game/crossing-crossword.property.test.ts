@@ -20,11 +20,11 @@ const dates = fc
   .integer({ min: 0, max: 729 })
   .map((days) => new Date(Date.UTC(2026, 0, 1 + days)).toISOString().slice(0, 10));
 
-/** The Words within a Rarity Ceiling: at least forty of the vocabulary, in any order. */
+/** The Words within a Rarity Range: at least forty of the vocabulary, in any order. */
 const ceilings = fc.shuffledSubarray(vocabulary, { minLength: 40 });
 
 describe('every generated crossing Daily Crossword', () => {
-  it('agrees at every crossing, lies within the Rarity Ceiling, covers the grid and numbers in reading order', () => {
+  it('agrees at every crossing, lies within the Rarity Range, covers the grid and numbers in reading order', () => {
     let puzzles = 0;
     fc.assert(
       fc.property(dates, ceilings, (date, words) => {

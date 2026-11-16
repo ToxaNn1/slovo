@@ -13,7 +13,7 @@ import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, Pressable } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/feed';
@@ -22,6 +22,7 @@ import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
+import { useShowGesturesHintAgain } from './gestures-hint';
 
 const { config } = activeEditionFiles;
 
@@ -149,6 +150,12 @@ const shell = () =>
     composition: opened(composition),
   });
 
+/** Settings' «Показати підказку жестів», beside the Feed. */
+function ShowAgain() {
+  const showAgain = useShowGesturesHintAgain();
+  return <Pressable testID="show-again" onPress={() => void showAgain()} />;
+}
+
 /** The app on the Feed. */
 async function renderApp() {
   await renderRoutes(
@@ -161,6 +168,7 @@ async function renderApp() {
                 <HapticsProvider haptics={haptics}>
                   <SettingsProvider>
                     <Slot />
+                    <ShowAgain />
                   </SettingsProvider>
                 </HapticsProvider>
               </EditionProvider>
@@ -208,6 +216,21 @@ describe('the gestures hint sheet on the Feed', () => {
     await renderApp();
     expect(screen.getByTestId('feed')).toBeOnTheScreen();
     expect(screen.queryByTestId('gestures-hint')).toBeNull();
+  });
+
+  it('comes back on the open Feed after «Показати підказку жестів», once it was dismissed', async () => {
+    await open(true);
+    await renderApp();
+    await settle(() => fireEvent.press(screen.getByTestId('gestures-hint-dismiss')));
+    await waitFor(() => {
+      expect(screen.queryByTestId('gestures-hint')).toBeNull();
+    });
+
+    await settle(() => fireEvent.press(screen.getByTestId('show-again')));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('gestures-hint')).toBeOnTheScreen();
+    });
   });
 
   it('is shown once: not on the next launch even when it was not dismissed', async () => {

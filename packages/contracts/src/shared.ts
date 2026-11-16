@@ -62,6 +62,17 @@ export const RaritySchema = z.literal(RARITIES, { error: 'Expected a whole numbe
 
 export type Rarity = z.infer<typeof RaritySchema>;
 
+/**
+ * The Rarity Range (ADR 0156): the rarities of Words a reader sees, «від
+ * `from` до `to`», both ends in; `from` equal to `to` is a single rarity,
+ * «лише 3».
+ */
+export const RarityRangeSchema = z
+  .strictObject({ from: RaritySchema, to: RaritySchema })
+  .refine(({ from, to }) => from <= to, { error: 'Expected from to be at most to' });
+
+export type RarityRange = z.infer<typeof RarityRangeSchema>;
+
 /** The id prefix of each kind of authored record but a Crossword day, whose id is its date (ADR 0010). */
 export const ID_PREFIX = {
   word: 'w_',

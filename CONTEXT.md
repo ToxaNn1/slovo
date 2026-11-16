@@ -305,7 +305,7 @@ The screen of the reader's whole progress: Level and progress to the next, Strea
 _Avoid_: Account (the identity that syncs), dashboard, stats screen
 
 **Progress reset**:
-«Скинути прогрес»: a reset marker the reader writes into the XP log. Every value derived from the log, Badges and Best results included, counts only the records after the latest marker; the Daily Goal in force is written again after it. Favorites, Collections, History, Seen, Knowledge Marks and Reviews, Hidden Entries, the Mix, the Rarity Ceiling, settings, the name and the Account stay (ADR 0133).
+«Скинути прогрес»: a reset marker the reader writes into the XP log. Every value derived from the log, Badges and Best results included, counts only the records after the latest marker; the Daily Goal in force is written again after it. Favorites, Collections, History, Seen, Knowledge Marks and Reviews, Hidden Entries, the Mix, the Rarity Range, settings, the name and the Account stay (ADR 0133).
 _Avoid_: wipe, delete data, sign out
 
 **Mascot**:
@@ -378,12 +378,12 @@ The quiz «Перевір себе» on the «Вчу» list over the Words Due f
 _Avoid_: Self-check (for this quiz), Review quiz, flashcards
 
 **Mix**:
-The set of Categories of Words, plus Corrections as a whole with their own Categories under it, plus Idioms, Synonym Rows and Tips each as a whole, that the reader chose to see in the Feed, notifications, widgets and the Game. At least one Category of each list always stays in the Mix. The Mix also holds the Mix kind weights and the frequency of the Quick Question; rarity is the Rarity Ceiling, a setting of its own.
+The set of Categories of Words, plus Corrections as a whole with their own Categories under it, plus Idioms, Synonym Rows and Tips each as a whole, that the reader chose to see in the Feed, notifications, widgets and the Game. At least one Category of each list always stays in the Mix. The Mix also holds the Mix kind weights and the frequency of the Quick Question; rarity is the Rarity Range, a setting of its own.
 _Avoid_: Filter, preferences
 
-**Rarity Ceiling**:
-«Рідкість»: the highest rarity of Words the reader wants, «до 1» to «до 5», default «до 5». Only Words up to that rarity appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings, by onboarding's «Рівень» and by the Rarity Test. There is no lower bound.
-_Avoid_: Rarity Floor, difficulty, level, maximum difficulty
+**Rarity Range**:
+«Рідкість»: the rarities of Words the reader wants, from a bottom to a top, «від 1 до 5» by default, «лише 3» when both are one. Only Words within it appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings on five slanted bars, and its top alone by onboarding's «Рівень» and by the Rarity Test, which put the bottom back to 1 (ADR 0156).
+_Avoid_: Rarity Ceiling, Rarity Floor, ceiling, floor, difficulty, level, maximum difficulty
 
 **Mix kind weight**:
 «Менше», «Звичайно» or «Більше» for each of Corrections, Idioms, Synonym Rows and Tips in the Mix; Words fill the rest. «Вимкнено» stays a separate switch per kind. The questionnaire's «Навіщо» sets the starting weights.
@@ -398,7 +398,7 @@ A round type of the Quick Question, not a Game Mode: the Lemma of a Word that is
 _Avoid_: Definition mode, meaning Game
 
 **Questionnaire**:
-The questions that tune the Feed to the reader. Onboarding asks two: «Рівень», how well the reader knows the language (sets the Rarity Ceiling, «Тільки починаю» «до 2» to «Мовний гурман» «до 5»; «Не знаю» opens the Rarity Test, whose result sets it) and «Навіщо» (sets the Mix kind weights); skipping them keeps the defaults. The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (decides whether to offer the Rarity Test) and the Mix review come later through Feed Notices. The reader can retake it from Settings, «Рівень» there without «Не знаю». Its answers reach the owner only as anonymous counters and as properties of the anonymous Analytics id.
+The questions that tune the Feed to the reader. Onboarding asks two: «Рівень», how well the reader knows the language (sets the top of the Rarity Range, «Тільки починаю» «до 2» to «Мовний гурман» «до 5»; «Не знаю» opens the Rarity Test, whose result sets it) and «Навіщо» (sets the Mix kind weights); skipping them keeps the defaults. The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (decides whether to offer the Rarity Test) and the Mix review come later through Feed Notices. The reader can retake it from Settings, «Рівень» there without «Не знаю». Its answers reach the owner only as anonymous counters and as properties of the anonymous Analytics id.
 _Avoid_: Survey, form
 
 **Hidden Entry**:
@@ -410,7 +410,7 @@ A Category, of Words or of Corrections, the user took out of their Mix, whether 
 _Avoid_: Muted topic
 
 **Eligible Entry**:
-An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind whose Feature Switch is in effect, in the user's Mix (a Word of a Category in the Mix within the Rarity Ceiling; a Correction while Corrections and its Category are in; an Idiom while Idioms are in; a Synonym Row while Synonym Rows are in; a Tip while Tips are in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
+An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind whose Feature Switch is in effect, in the user's Mix (a Word of a Category in the Mix within the Rarity Range; a Correction while Corrections and its Category are in; an Idiom while Idioms are in; a Synonym Row while Synonym Rows are in; a Tip while Tips are in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
 _Avoid_: Available, visible, active entry
 
 **Comparison Key**:
@@ -418,11 +418,11 @@ The form a text is compared by, which the Core gives from the Edition's Language
 _Avoid_: Normalized text, search key, folded form
 
 **Search**:
-«Пошук»: finding Entries by their visible text, behind a magnifier in the «Стрічка» header. It covers every Entry of a kind the Edition turns on that is neither Retired nor Hidden, the Mix and the Rarity Ceiling aside, and ignores case, Stress, the kind of apostrophe, г/ґ and е/ё. A text matches from 2 characters when it or one of its words starts with the query; «За значенням», from 3 characters, finds Words by their Definition and the Synonym Rows that contain the query. Opening a result makes nothing Seen. The last 10 queries stay on the device.
+«Пошук»: finding Entries by their visible text, behind a magnifier in the «Стрічка» header. It covers every Entry of a kind the Edition turns on that is neither Retired nor Hidden, the Mix and the Rarity Range aside, and ignores case, Stress, the kind of apostrophe, г/ґ and е/ё. A text matches from 2 characters when it or one of its words starts with the query; «За значенням», from 3 characters, finds Words by their Definition and the Synonym Rows that contain the query. Opening a result makes nothing Seen. The last 10 queries stay on the device.
 _Avoid_: Lookup, filter, dictionary
 
 **Rarity Test**:
-«Перевірка рівня»: 10 Words, 2 of each rarity, each shown as its Lemma with Stress for «Знаю» or «Не знаю», which set the Rarity Ceiling to the lowest rarity with «Не знаю» («до 5» if all are known). Optional in onboarding after the Mix and again from Settings. It sets no Knowledge Mark, starts no Review and makes nothing Seen.
+«Перевірка рівня»: 10 Words, 2 of each rarity, each shown as its Lemma with Stress for «Знаю» or «Не знаю», which set the top of the Rarity Range to the lowest rarity with «Не знаю» («до 5» if all are known). Optional in onboarding after the Mix and again from Settings. It sets no Knowledge Mark, starts no Review and makes nothing Seen.
 _Avoid_: Level test, placement test, quiz
 
 **Weekly Recap**:
@@ -450,7 +450,7 @@ Retired in 1.0. The old setting «Ліміт на день» is replaced by the 
 _Avoid_: use Daily Goal or the 50-Seen Notice
 
 **Mood**:
-«настрій»: a set of Feed parameters the reader chooses once a local day on the Dashboard: a rarity band inside the Rarity Ceiling (never crossing or lowering it) and a shift of each Mix kind weight. The Edition lists its moods (id, name, emoji) and names the four the Dashboard shows. The choice can be skipped or changed, ends with the local day and syncs; no Mood means the Feed as before.
+«настрій»: a set of Feed parameters the reader chooses once a local day on the Dashboard: a rarity band inside the Rarity Range (never crossing or lowering it) and a shift of each Mix kind weight. The Edition lists its moods (id, name, emoji) and names the four the Dashboard shows. The choice can be skipped or changed, ends with the local day and syncs; no Mood means the Feed as before.
 _Avoid_: Emotion, feeling, vibe, roulette
 
 **Reserved**:
@@ -545,7 +545,7 @@ The result screen's plain list «Огляд раундів» of every played Rou
 _Avoid_: Mistakes list, answer log
 
 **Daily Crossword**:
-«Кросворд дня»: one 5×5 crossing crossword a day, the same for every reader with the same Rarity Ceiling on a local date (ADR 0087). Its blocks leave runs of white cells, each run a Word within the Rarity Ceiling, Hidden Entries included, numbered where it starts; across and down Words cross and share their letters, and a few crossing cells come pre-filled. One clue at a time, the current Word's primary Definition, is entered on the Letter Wheel. Solving it earns XP once a day; it is not a Game. Off `crossingCrossword`, the traced grid of ADR 0073 stays.
+«Кросворд дня»: one 5×5 crossing crossword a day, the same for every reader with the same Rarity Range on a local date (ADR 0087). Its blocks leave runs of white cells, each run a Word within the Rarity Range, Hidden Entries included, numbered where it starts; across and down Words cross and share their letters, and a few crossing cells come pre-filled. One clue at a time, the current Word's primary Definition, is entered on the Letter Wheel. Solving it earns XP once a day; it is not a Game. Off `crossingCrossword`, the traced grid of ADR 0073 stays.
 _Avoid_: Daily puzzle, crossword game, Word of the Day
 
 **Letter Wheel**:
