@@ -12,7 +12,7 @@ import {
 import { CONTENT_PAGE_SIZE } from '@slovo/contracts/admin-api';
 import { contentReport, missedTargets } from '@slovo/language-pack';
 import type { Word } from '@slovo/contracts';
-import type { Clock, EditionRegistry, Json, Random } from '@slovo/server-core';
+import type { Actor, Clock, EditionRegistry, Json, Random } from '@slovo/server-core';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
@@ -867,7 +867,51 @@ export function createContentWrites({
     });
   }
 
-  return { openBatch, write, flag, report, record, list, unchecked, check };
+  /**
+   * An Admin user marks every live record of a kind not checked yet checked at
+   * its record version, if their count is still the one the confirmation named:
+   * one statement per table, in Postgres, each record with the Action log row of
+   * a single check; no record's fields leave the database (ADR 0152).
+   */
+  async function checkAll(
+    email: string,
+    {
+      editionId,
+      kind,
+      total,
+      reason,
+    }: { editionId: string; kind: RecordKind; total: number; reason: string },
+  ) {
+    if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
+    return db.transaction(async (tx) => {
+      if ((await heldVersion(tx, editionId)) === undefined) {
+        return { ok: false, reason: 'not-imported' } as const;
+      }
+      const table = TABLES[kind];
+      const where = uncheckedOf(kind, editionId);
+      const [counted] = await tx
+        .select({ total: sql<number>`count(*)::int` })
+        .from(table)
+        .where(where);
+      const current = counted?.total ?? 0;
+      if (current !== total) return { ok: false, reason: 'changed', total: current } as const;
+      const who: Actor = { kind: 'admin-user', email };
+      await tx.execute(sql`
+        insert into ${actionLog} (who, at, what, before, after, reason, edition_id, batch_id)
+        select ${JSON.stringify(who)}::jsonb, ${clock.now().toISOString()}::timestamptz,
+          ${`content.${kind}.check`}, null,
+          jsonb_build_object('id', ${table.id}, 'recordVersion', ${table.recordVersion}),
+          ${reason}, ${editionId}, null
+        from ${table} where ${where}`);
+      await tx
+        .update(table)
+        .set({ checkedVersion: sql`${table.recordVersion}` })
+        .where(where);
+      return { ok: true, checked: current } as const;
+    });
+  }
+
+  return { openBatch, write, flag, report, record, list, unchecked, check, checkAll };
 }
 
 export type ContentWrites = ReturnType<typeof createContentWrites>;

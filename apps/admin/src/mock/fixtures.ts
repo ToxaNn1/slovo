@@ -232,6 +232,7 @@ export const FIXTURES: AdminApiOutputs = {
     },
     unchecked: { total: 1, record: { id: 'w_a1', fields: WORD_FIELDS, recordVersion: 1 } },
     check: { id: 'w_a1', recordVersion: 1 },
+    checkAll: { checked: 1 },
     report: {
       contentVersion: 1,
       report: {
