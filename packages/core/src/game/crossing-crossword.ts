@@ -256,7 +256,7 @@ function wheelOf(
 
 /**
  * The crossing Daily Crossword of a date (ADR 0087). Seeds the port with the
- * date and the ids of the Words within the Rarity Ceiling, tries the block
+ * date and the ids of the Words within the Rarity Range, tries the block
  * patterns in seeded order and fills the first that fills within the search
  * budget; numbers the cells in reading order, pre-fills 2–3 crossing cells
  * and builds each Word's Letter Wheel. The same date, Words and alphabet
@@ -269,7 +269,7 @@ export function generateCrossingCrossword({
   seeded,
 }: {
   date: string;
-  /** The Words within the Rarity Ceiling, in the Language Pack's order. */
+  /** The Words within the Rarity Range, in the Language Pack's order. */
   words: readonly Word[];
   /** The lowercase letters of the Edition's alphabet. */
   alphabet: readonly string[];

@@ -346,7 +346,12 @@ function SheetPanel({
       onLayout={({ nativeEvent }) => {
         onHeight(nativeEvent.layout.height);
       }}
-      style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space[8]) }, sheetStyle]}
+      style={[
+        styles.sheet,
+        // The last control's own padding already keeps it off the edge (owner 16.11).
+        { paddingBottom: Math.max(insets.bottom - space[4], space[4]) },
+        sheetStyle,
+      ]}
     >
       <View style={styles.slant}>
         <Wedge points={SLANT} color={fill} width="100%" height={sheetLayout.slant} />
@@ -383,7 +388,8 @@ const styles = StyleSheet.create({
   avoiding: { flex: 1, justifyContent: 'flex-end', pointerEvents: 'box-none' },
   sheet: {
     maxHeight: '100%',
-    paddingTop: sheetLayout.slant,
+    // A little air between the slanted top and the title (owner 16.11).
+    paddingTop: sheetLayout.slant + space[2],
     paddingHorizontal: space[5],
     gap: space[4],
   },

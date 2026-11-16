@@ -206,6 +206,7 @@ describe('openUserState', () => {
       new Map([['schema.version', '6']]),
       new Map([['schema.version', '7']]),
       new Map([['schema.version', '8']]),
+      new Map([['schema.version', '9']]),
     ]);
     expect(cycle.unseen()).toEqual({
       words: ['w_2'],
@@ -255,6 +256,7 @@ describe('openUserState', () => {
       ]),
       new Map([['schema.version', '7']]),
       new Map([['schema.version', '8']]),
+      new Map([['schema.version', '9']]),
     ]);
     expect(await userState.read(userStateRecords.gameBest.record('guess-word'))).toBe(9);
     expect(await userState.read(userStateRecords.gameBest.record('correction'))).toBeUndefined();
@@ -271,7 +273,7 @@ describe('openUserState', () => {
         [...records.keys()].filter((key) => key.includes('game.best.')),
         best,
       ).toEqual([]);
-      expect(records.get('schema.version')).toBe('8');
+      expect(records.get('schema.version')).toBe('9');
     }
   });
 });

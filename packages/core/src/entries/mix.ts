@@ -144,7 +144,7 @@ export interface MixScreen {
 
 /**
  * The Mix: the Categories, plus each other kind of Entry as a whole, the
- * user chose to see in everything new; the Rarity Ceiling is a setting apart
+ * user chose to see in everything new; the Rarity Range is a setting apart
  * from it (ADR 0072). A Category out of the Mix is a Hidden Category, so the
  * Mix screen, the hide action and the Hidden screen all change it here (ADR
  * 0019). Read from the user state once, when it opens, like the Cycle, so

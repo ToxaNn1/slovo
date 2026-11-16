@@ -20,7 +20,7 @@ import { PressedTile } from '../primitives/PressedTile';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { narratorVoiceDrawing as drawing, space, typeStyle } from '../tokens';
+import { narratorVoiceDrawing as drawing, typeStyle } from '../tokens';
 
 /**
  * The Narrator Voice screen's body (design `XVoice`): the red scene where the
@@ -288,7 +288,6 @@ function Bar({
 
 const styles = StyleSheet.create({
   scene: {
-    marginHorizontal: space[4],
     borderRadius: drawing.sceneRadius,
     overflow: 'hidden',
     paddingTop: drawing.scenePaddingTop,
@@ -315,9 +314,8 @@ const styles = StyleSheet.create({
   choose: {
     paddingTop: drawing.choosePaddingTop,
     paddingBottom: drawing.choosePaddingBottom,
-    paddingHorizontal: space[5],
   },
-  tiles: { paddingHorizontal: space[4], gap: drawing.tileGap },
+  tiles: { gap: drawing.tileGap },
   row: { flexDirection: 'row', gap: drawing.tileGap },
   cell: { flex: 1 },
   tile: {

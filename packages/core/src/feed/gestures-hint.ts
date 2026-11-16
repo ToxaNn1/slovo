@@ -9,6 +9,8 @@ export interface GesturesHint {
   isDue(): Promise<boolean>;
   /** Keeps that the hint was shown, so it never shows again. */
   markShown(): Promise<void>;
+  /** Forgets that the hint was shown, so the Feed shows it once more («Показати підказку жестів»). */
+  showAgain(): Promise<void>;
 }
 
 /**
@@ -23,6 +25,9 @@ export function createGesturesHint({ userState }: { userState: UserState }): Ges
     },
     markShown() {
       return userState.write(gesturesHintShown.change(true));
+    },
+    showAgain() {
+      return userState.write(gesturesHintShown.change(undefined));
     },
   };
 }

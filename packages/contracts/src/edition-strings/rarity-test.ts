@@ -21,13 +21,13 @@ export const RarityTestStringsSchema = z.strictObject({
   announcement: templateOf('n', 'total', 'word'),
   /** The Settings row that takes the test again. */
   retake: TextSchema,
-  /** The result screen. Takes `{n}`, the Rarity Ceiling it set (ADR 0072). */
+  /** The result screen. Takes `{n}`, the top of the Rarity Range it set (ADR 0156). */
   result: templateOf('n'),
   /** The button under the result, which goes on. */
   next: TextSchema,
   /** The question above each Word, e.g. «Чи знаєш ти це слово?». */
   question: TextSchema,
-  /** The line under the result's big number. Takes `{n}`, the Rarity Ceiling it set (ADR 0072). */
+  /** The line under the result's big number. Takes `{n}`, the top of the Rarity Range it set (ADR 0156). */
   resultLine: templateOf('n'),
   /** How many of the Words the reader knew. Takes `{known}` and `{total}`. */
   known: templateOf('known', 'total'),

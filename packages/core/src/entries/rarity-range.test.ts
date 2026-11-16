@@ -1,4 +1,10 @@
-import { RARITIES, type FeatureSwitch, type Rarity, type Word } from '@slovo/contracts';
+import {
+  RARITIES,
+  type FeatureSwitch,
+  type Rarity,
+  type RarityRange,
+  type Word,
+} from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { openComposition, type Composition, type UserStatePort } from '../index';
@@ -22,7 +28,7 @@ interface Options {
   /** The Feature Switches the Edition turns off; every other one is on. */
   off?: readonly FeatureSwitch[];
   port?: UserStatePort;
-  /** The Edition's default Rarity Ceiling. */
+  /** The Edition's default top of the Rarity Range. */
   ceiling?: Rarity;
 }
 
@@ -80,36 +86,82 @@ async function raritiesInFeed(app: Composition): Promise<Set<number>> {
 const answer = async (app: Composition, unknown: readonly number[]) =>
   (await app.rarityTest.draw()).map(({ rarity }) => ({ rarity, known: !unknown.includes(rarity) }));
 
-describe('the Rarity Ceiling', () => {
-  it('starts at the Edition default, «до 5», with every rarity in the Feed', async () => {
+describe('the Rarity Range', () => {
+  it('starts from 1 to the Edition default top, «від 1 до 5», with every rarity in the Feed', async () => {
     const app = await open();
 
-    expect(app.rarityCeiling.state).toBe(5);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 5 });
     expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3, 4, 5]));
   });
 
   it('lets no Word above it into the Feed, and a Correction, which has no rarity, stays', async () => {
     const app = await open();
 
-    await app.rarityCeiling.set(3);
+    await app.rarityRange.set({ from: 1, to: 3 });
 
-    expect(app.rarityCeiling.state).toBe(3);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 3 });
     expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3]));
     expect((await idsInFeed(app)).has('c_1')).toBe(true);
+  });
+
+  it('lets no Word below its bottom into the Feed either: «від 2 до 4»', async () => {
+    const app = await open();
+
+    await app.rarityRange.set({ from: 2, to: 4 });
+
+    expect(app.rarityRange.state).toEqual({ from: 2, to: 4 });
+    expect(await raritiesInFeed(app)).toEqual(new Set([2, 3, 4]));
+    expect((await idsInFeed(app)).has('c_1')).toBe(true);
+  });
+
+  it('holds a single rarity, «лише 3»', async () => {
+    const app = await open();
+
+    await app.rarityRange.set({ from: 3, to: 3 });
+
+    expect(await raritiesInFeed(app)).toEqual(new Set([3]));
+  });
+
+  it('skips a range whose bottom is above its top', async () => {
+    const app = await open();
+
+    await app.rarityRange.set({ from: 4, to: 2 });
+
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 5 });
+  });
+
+  describe('while the Edition turns the rarityRange switch off', () => {
+    it('keeps the bottom at 1 and obeys the top alone', async () => {
+      const app = await open({ off: ['rarityRange'] });
+
+      await app.rarityRange.set({ from: 2, to: 4 });
+
+      expect(app.rarityRange.state).toEqual({ from: 1, to: 4 });
+      expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3, 4]));
+    });
+
+    it('reads a bottom kept while it was on as 1', async () => {
+      const port = createMemoryUserStatePort();
+      await (await open({ port })).rarityRange.set({ from: 3, to: 5 });
+
+      const reopened = await open({ port, off: ['rarityRange'] });
+
+      expect(reopened.rarityRange.state).toEqual({ from: 1, to: 5 });
+    });
   });
 
   it('tells its subscribers of a change and keeps it for the next session', async () => {
     const records = createMemoryUserStatePort();
     const app = await open({ port: records });
-    const told: Rarity[] = [];
-    app.rarityCeiling.subscribe(() => told.push(app.rarityCeiling.state));
+    const told: RarityRange[] = [];
+    app.rarityRange.subscribe(() => told.push(app.rarityRange.state));
 
-    await app.rarityCeiling.set(2);
+    await app.rarityRange.set({ from: 2, to: 3 });
 
-    expect(told).toEqual([2]);
+    expect(told).toEqual([{ from: 2, to: 3 }]);
     const reopened = await open({ port: records });
-    expect(reopened.rarityCeiling.state).toBe(2);
-    expect(await raritiesInFeed(reopened)).toEqual(new Set([1, 2]));
+    expect(reopened.rarityRange.state).toEqual({ from: 2, to: 3 });
+    expect(await raritiesInFeed(reopened)).toEqual(new Set([2, 3]));
   });
 
   it('tells its subscribers once the Feed holds no Word above the new ceiling', async () => {
@@ -122,55 +174,57 @@ describe('the Rarity Ceiling', () => {
       );
     expect(raritiesHeld().some((rarity) => rarity > 2)).toBe(true);
     const told: number[][] = [];
-    app.rarityCeiling.subscribe(() => told.push(raritiesHeld()));
+    app.rarityRange.subscribe(() => told.push(raritiesHeld()));
 
-    await app.rarityCeiling.set(2);
+    await app.rarityRange.set({ from: 1, to: 2 });
 
     expect(told).toHaveLength(1);
     expect(told[0]?.filter((rarity) => rarity > 2)).toEqual([]);
   });
 
-  it('skips a ceiling that is not a rarity', async () => {
+  it('skips a range whose ends are not rarities', async () => {
     const app = await open();
 
-    await app.rarityCeiling.set(0);
-    await app.rarityCeiling.set(2.5);
-    await app.rarityCeiling.set(6);
+    await app.rarityRange.set({ from: 1, to: 0 });
+    await app.rarityRange.set({ from: 1, to: 2.5 });
+    await app.rarityRange.set({ from: 1, to: 6 });
+    await app.rarityRange.set({ from: 0, to: 3 });
 
-    expect(app.rarityCeiling.state).toBe(5);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 5 });
   });
 
-  it('bounds the Words the Daily Crossword picks from: the live Words up to it, Hidden ones included, in pack order', async () => {
+  it('bounds the Words the Daily Crossword picks from: the live Words in it, Hidden ones included, in pack order', async () => {
     const port = createMemoryUserStatePort();
     const app = await open({ port });
-    await app.rarityCeiling.set(2);
-    await app.hide({ kind: 'entry', entryId: 'w_r1_1' });
+    await app.rarityRange.set({ from: 2, to: 3 });
+    await app.hide({ kind: 'entry', entryId: 'w_r2_1' });
     const { entries } = await openLiveEntries({
       content: content(),
       edition: edition({}),
       userState: await openUserState({ port }),
     });
 
-    const words = await entries.wordsUnderRarityCeiling();
+    const words = await entries.wordsInRarityRange();
 
-    expect(words.map(({ id }) => id)).toEqual(['w_r1_0', 'w_r1_1', 'w_r2_0', 'w_r2_1']);
+    expect(words.map(({ id }) => id)).toEqual(['w_r2_0', 'w_r2_1', 'w_r3_0', 'w_r3_1']);
   });
 
-  it('is set by the Rarity Test to the lowest rarity the reader does not know', async () => {
+  it('is set by the Rarity Test from 1 to the lowest rarity the reader does not know', async () => {
     const app = await open();
+    await app.rarityRange.set({ from: 3, to: 5 });
 
-    expect((await app.rarityTest.apply(await answer(app, [4, 5])))?.ceiling).toBe(4);
+    expect((await app.rarityTest.apply(await answer(app, [4, 5])))?.top).toBe(4);
 
-    expect(app.rarityCeiling.state).toBe(4);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 4 });
     expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3, 4]));
   });
 
-  it('is set to «до 5» by a Rarity Test the reader knows every Word of', async () => {
+  it('is set to «від 1 до 5» by a Rarity Test the reader knows every Word of', async () => {
     const app = await open({ ceiling: 2 });
 
-    expect((await app.rarityTest.apply(await answer(app, [])))?.ceiling).toBe(5);
+    expect((await app.rarityTest.apply(await answer(app, [])))?.top).toBe(5);
 
-    expect(app.rarityCeiling.state).toBe(5);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 5 });
   });
 
   it('draws the Rarity Test from every rarity, the ceiling aside', async () => {
@@ -181,7 +235,7 @@ describe('the Rarity Ceiling', () => {
     expect(drawn.map(({ rarity }) => rarity)).toEqual([1, 1, 2, 2, 3, 3, 4, 4, 5, 5]);
   });
 
-  it('keeps the Ceiling a 1.0 app stored in the Mix and drops its Rarity Floor', async () => {
+  it('keeps the Ceiling an early 1.0 app stored in the Mix as the top, and drops its Rarity Floor', async () => {
     const records = new Map([
       ['schema.version', '6'],
       ['app.installed', 'true'],
@@ -191,37 +245,72 @@ describe('the Rarity Ceiling', () => {
 
     const app = await open({ port: createMemoryUserStatePort(records) });
 
-    expect(app.rarityCeiling.state).toBe(3);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 3 });
     expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3]));
-    expect(records.get('settings.rarityCeiling')).toBe('3');
-    expect(records.get('sync.pending.settings.rarityCeiling')).toBe(
-      '{"changedAt":"1970-01-01T00:00:00.000Z","value":"3"}',
+    expect(records.get('settings.rarityRange')).toBe('{"from":1,"to":3}');
+    expect(records.get('sync.pending.settings.rarityRange')).toBe(
+      '{"changedAt":"1970-01-01T00:00:00.000Z","value":"{\\"from\\":1,\\"to\\":3}"}',
     );
+    expect(records.has('settings.rarityCeiling')).toBe(false);
     expect(records.has('mix.rarityFloor')).toBe(false);
     expect(records.has('mix.rarityCeiling')).toBe(false);
-    expect(records.get('schema.version')).toBe('8');
+    expect(records.get('schema.version')).toBe('9');
   });
 
-  it('starts at the Edition default when a 1.0 app stored no Ceiling, or one that does not read', async () => {
+  it('starts at the Edition default when an early 1.0 app stored no Ceiling, or one that does not read', async () => {
     for (const stored of [undefined, '"3"', '7']) {
       const records = new Map([['schema.version', '6']]);
       if (stored !== undefined) records.set('mix.rarityCeiling', stored);
 
       const app = await open({ port: createMemoryUserStatePort(records) });
 
-      expect(app.rarityCeiling.state, stored).toBe(5);
-      expect(records.has('settings.rarityCeiling'), stored).toBe(false);
+      expect(app.rarityRange.state, stored).toEqual({ from: 1, to: 5 });
+      expect(records.has('settings.rarityRange'), stored).toBe(false);
       expect(records.has('mix.rarityCeiling'), stored).toBe(false);
     }
   });
 
+  it('opens the Rarity Range «до N» an older 1.0 app kept as «від 1 до N», and drops it', async () => {
+    const records = new Map([
+      ['schema.version', '8'],
+      ['app.installed', 'true'],
+      ['settings.rarityCeiling', '3'],
+      [
+        'sync.pending.settings.rarityCeiling',
+        '{"changedAt":"2026-11-01T00:00:00.000Z","value":"3"}',
+      ],
+    ]);
+
+    const app = await open({ port: createMemoryUserStatePort(records) });
+
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 3 });
+    expect(records.get('settings.rarityRange')).toBe('{"from":1,"to":3}');
+    expect(records.has('sync.pending.settings.rarityRange')).toBe(true);
+    expect(records.has('settings.rarityCeiling')).toBe(false);
+    expect(records.has('sync.pending.settings.rarityCeiling')).toBe(false);
+  });
+
+  it('drops a Rarity Range that does not read and starts at the Edition default', async () => {
+    const records = new Map([
+      ['schema.version', '8'],
+      ['app.installed', 'true'],
+      ['settings.rarityCeiling', '7'],
+    ]);
+
+    const app = await open({ port: createMemoryUserStatePort(records), ceiling: 4 });
+
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 4 });
+    expect(records.has('settings.rarityCeiling')).toBe(false);
+    expect(records.has('settings.rarityRange')).toBe(false);
+  });
+
   describe('while the Edition turns the rarityCeiling switch off', () => {
-    it('lets every Word into the Feed, as before 1.0, and skips a ceiling', async () => {
+    it('lets every Word into the Feed, as before 1.0, and skips a range', async () => {
       const app = await open({ off: ['rarityCeiling'], ceiling: 2 });
 
-      await app.rarityCeiling.set(3);
+      await app.rarityRange.set({ from: 1, to: 3 });
 
-      expect(app.rarityCeiling.state).toBe(5);
+      expect(app.rarityRange.state).toEqual({ from: 1, to: 5 });
       expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3, 4, 5]));
     });
 

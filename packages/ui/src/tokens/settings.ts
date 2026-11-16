@@ -153,3 +153,26 @@ export const codeCellDrawing = { height: 62, radius: 13, border: 2 } as const;
 
 /** The Account card of the signed-in Account screen (board 11, 97): its corner. */
 export const accountCardRadius = 20;
+
+/**
+ * The Rarity Range picker of Settings (owner's shots 16.11): five slanted bars
+ * of rising height, the lowest `barBase` points tall and each next one
+ * `barStep` taller, `gap` apart and leaning `skew` to the right; the number
+ * sits `numberInset` above a bar's foot. A bar the range takes dips to
+ * `dip` of its height and springs back with `spring`. A drag starts once the
+ * finger moves `dragStart` points sideways and gives way to the page's scroll
+ * after `scrollYield` points up or down.
+ */
+export const rarityRangeDrawing = {
+  headerGap: 12,
+  barBase: 34,
+  barStep: 10,
+  gap: 6,
+  radius: 3,
+  skew: '-12deg',
+  numberInset: 6,
+  dip: 0.82,
+  spring: { dampingRatio: 0.45, duration: 520 },
+  dragStart: 6,
+  scrollYield: 12,
+} as const;

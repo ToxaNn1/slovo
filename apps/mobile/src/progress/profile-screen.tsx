@@ -311,7 +311,7 @@ function ProfileBlocks() {
   );
 }
 
-/** The giant red Streak, its words, and the Best Streak at the far end, as the board. */
+/** The giant red Streak and its words as the board, and the Best Streak's tile at the far end (owner, 16.11). */
 function StreakLine({ streak, bestStreak }: { streak: number; bestStreak: number }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -333,18 +333,35 @@ function StreakLine({ streak, bestStreak }: { streak: number; bestStreak: number
       >
         {onTwoLines(count(words.streak, streak))}
       </Text>
-      <Text
-        {...voice}
-        testID="profile-best-streak"
-        style={[typeStyle('meta', tokens), styles.best, { color: colors.muted }]}
-      >
-        {onTwoLines(count(strings.bestStreak, bestStreak))}
-      </Text>
+      <View style={styles.best}>
+        <View
+          testID="profile-best-streak"
+          accessible
+          accessibilityLabel={count(strings.bestStreak, bestStreak)}
+          {...voice}
+          style={[styles.recordEdge, { backgroundColor: colors.tileEdge }]}
+        >
+          <View style={[styles.recordFace, { backgroundColor: colors.tile }]}>
+            <Text
+              maxFontSizeMultiplier={1}
+              style={[typeStyle('screenTitle', tokens), { color: colors.ink }]}
+            >
+              {String(bestStreak)}
+            </Text>
+            <Text
+              maxFontSizeMultiplier={1}
+              style={[typeStyle('eyebrow', tokens), { color: colors.muted }]}
+            >
+              {strings.record}
+            </Text>
+          </View>
+        </View>
+      </View>
     </View>
   );
 }
 
-/** Breaks a short line after its first word, as the board sets «дні / поспіль» and «найдовша / 31 день». */
+/** Breaks a short line after its first word, as the board sets «дні / поспіль». */
 function onTwoLines(text: string): string {
   return text.replace(' ', '\n');
 }
@@ -477,7 +494,18 @@ const styles = StyleSheet.create({
     paddingTop: profileScreen.streakTop,
   },
   streakWords: { flexShrink: 1, paddingBottom: profileScreen.streakWordsLift },
-  best: { flex: 1, textAlign: 'right', paddingBottom: profileScreen.streakWordsLift },
+  best: { flex: 1, alignItems: 'flex-end' },
+  recordEdge: {
+    borderRadius: profileScreen.record.radius,
+    paddingBottom: profileScreen.record.edge,
+  },
+  recordFace: {
+    alignItems: 'center',
+    gap: profileScreen.record.gap,
+    paddingHorizontal: profileScreen.record.padX,
+    paddingVertical: profileScreen.record.padY,
+    borderRadius: profileScreen.record.radius,
+  },
   calendar: { paddingTop: profileScreen.calendarTop },
   badges: {
     gap: profileScreen.badgesGap,

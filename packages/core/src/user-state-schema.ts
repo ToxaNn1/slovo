@@ -316,6 +316,31 @@ export const userStateMigrations: readonly UserStateMigration[] = [
       ]);
     },
   },
+  // 1.0: the Rarity Range (ADR 0156). The Rarity Ceiling «до N» opens as the
+  // range «від 1 до N» under the new key `settings.rarityRange`, with a
+  // pending change from the first-sign-in time so the Account gets it too;
+  // `settings.rarityCeiling` and its pending change are dropped. A Ceiling that does not read brings
+  // nothing, and the Edition's default holds.
+  {
+    version: 9,
+    async migrate({ get }) {
+      const text = await get('settings.rarityCeiling');
+      if (text === undefined) return new Map();
+      const changes = new Map<string, string | undefined>();
+      for (const key of ['settings.rarityCeiling', 'sync.pending.settings.rarityCeiling']) {
+        if ((await get(key)) !== undefined) changes.set(key, undefined);
+      }
+      const ceiling = RaritySchema.safeParse(parseJson(text));
+      if (!ceiling.success || (await get('settings.rarityRange')) !== undefined) return changes;
+      const value = JSON.stringify({ from: 1, to: ceiling.data });
+      changes.set('settings.rarityRange', value);
+      changes.set(
+        'sync.pending.settings.rarityRange',
+        JSON.stringify({ changedAt: new Date(0).toISOString(), value }),
+      );
+      return changes;
+    },
+  },
 ];
 
 /** The Mix record of each kind of Entry beside Words, by kind. */

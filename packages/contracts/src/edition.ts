@@ -59,8 +59,8 @@ export type Category = z.infer<typeof CategorySchema>;
 
 /**
  * The band of rarities a Mood puts first in the Feed (ADR 0076): `upper` is
- * the Rarity Ceiling's rarity and the one below it, `lower` rarities 1 and 2,
- * `whole` every rarity; the bands clip to the Ceiling.
+ * the top of the Rarity Range and the one below it, `lower` its bottom and
+ * the one above it, `whole` every rarity; the bands clip to the range.
  */
 export const RarityBandSchema = z.enum(['upper', 'lower', 'whole']);
 
@@ -299,8 +299,10 @@ export const FeatureSwitchesSchema = z.strictObject({
   confirmedEntries: FeatureSwitchStateSchema,
   /** Self-check: the setting that hides a card's meaning until the reader reveals it. */
   selfCheck: FeatureSwitchStateSchema,
-  /** The Rarity Ceiling: the one «Рідкість» setting every surface obeys. Off, every Word up to rarity 5 is in, as before 1.0. */
+  /** «Рідкість», the Rarity Range every surface obeys (ADR 0156); with `rarityRange` off only its top. Off, every Word up to rarity 5 is in, as before 1.0. */
   rarityCeiling: FeatureSwitchStateSchema,
+  /** The Rarity Range picker (ADR 0156): «Рідкість» in Settings is five slanted bars, «від 2 до 4» or «лише 3», tapped or dragged, and every surface keeps the Words below its bottom out too. Off, «Рідкість» is «до 1»…«до 5» and the bottom is 1. Off while `rarityCeiling` is. */
+  rarityRange: FeatureSwitchStateSchema,
   /** Game Review: the list of every Round on the Game's result. */
   gameReview: FeatureSwitchStateSchema,
   /** The Game Mode «Вгадай слово» (`guess-word`); off while `game` is (ADR 0052). */
@@ -333,7 +335,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   dailyCrossword: FeatureSwitchStateSchema,
   /** Search: its header button and screen over every non-Retired, non-Hidden Entry (ADR 0054). */
   search: FeatureSwitchStateSchema,
-  /** The Rarity Test: the short test that sets the Rarity Ceiling (ADR 0054, 0072). */
+  /** The Rarity Test: the short test that sets the top of the Rarity Range (ADR 0054, 0156). */
   rarityTest: FeatureSwitchStateSchema,
   /** The Weekly Recap «Твій тиждень»: the Monday Feed Notice about the week before (ADR 0054). */
   weeklyRecap: FeatureSwitchStateSchema,
@@ -521,6 +523,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   swipeMarks: FeatureSwitchStateSchema,
   /** The gestures hint's demo: while «ГОРТАЙ ПАЛЬЦЕМ» is open, the Feed's card plays the swipes right, left and up in a loop, its edge labels sliding in, with a finger over it and each row of the sheet lit in turn (ADR 0112); off, the sheet stands still. Off while `swipeMarks` is. */
   gesturesHintDemo: FeatureSwitchStateSchema,
+  /** «Показати підказку жестів» in Settings (owner 16.11): forgets that the gestures hint was shown, so the Feed shows «ГОРТАЙ ПАЛЬЦЕМ» once more. Off while `swipeMarks` is. */
+  gesturesHintAgain: FeatureSwitchStateSchema,
   /** Saved without swipes (owner 15.11): an Entry opened from any tab of «Збережене» takes no side swipes, its Knowledge Mark set from the «⋯» sheet. Off, it is swiped as anywhere else. Off while `swipeMarks` is. */
   savedSwipesOff: FeatureSwitchStateSchema,
   /** Word tabs: every Entry card in a fixed-height frame (ADR 0091), the Word of the Day's once it is open, with tabs under its head: a Word's «Суть», «Приклад», «Зв’язки» and «Історія», a Correction's «Як краще», «Чому» and «Приклади», an Idiom's «Суть», «Звідки» and «Приклад», a Tip's «Суть» and «Приклад»; a Synonym Row's in the same frame. Content too tall for the frame shrinks a font size at a time, then is clamped under «Детальніше», which opens it whole. The Word of the Day card is the red card while Self-check keeps it closed; the Feed's header draws no XP bar. Off, the cards are one column, the Word's with «Детальніше». */
@@ -875,7 +879,7 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
   vibration: z.boolean(),
   /** The default notification times, kept in time order. */
   notificationTimes: NotificationTimesSchema.transform((times) => [...times].sort()),
-  /** The Rarity Ceiling a new user starts with, «до 1» to «до 5» (ADR 0072). */
+  /** The top of the Rarity Range a new user starts with, «до 1» to «до 5» (ADR 0156). */
   rarityCeiling: RaritySchema,
   mix: MixConfigSchema,
 });
@@ -961,7 +965,7 @@ export const QuestionnaireAnswerIdSchema = KebabCaseIdSchema;
 
 /**
  * The Edition's questionnaire (ADR 0067): the options of the level
- * question, each setting the Rarity Ceiling or opening the Rarity Test, of
+ * question, each setting the Rarity Range or opening the Rarity Test, of
  * «Навіщо», each setting the Mix kind weights it names (the others stay), and
  * of the self-rating. Ids are unique within a question.
  */
@@ -974,7 +978,7 @@ export const QuestionnaireSchema = z.strictObject({
           label: TextSchema,
           rarityCeiling: RaritySchema,
         }),
-        /** «Не знаю»: the onboarding opens the Rarity Test, whose result sets the Rarity Ceiling. */
+        /** «Не знаю»: the onboarding opens the Rarity Test, whose result sets the top of the Rarity Range. */
         z.strictObject({
           id: QuestionnaireAnswerIdSchema,
           label: TextSchema,

@@ -3,7 +3,7 @@ import type {
   Correction,
   Entry,
   EntryKind,
-  Rarity,
+  RarityRange,
   SynonymRow,
   Tip,
   Word,
@@ -23,7 +23,7 @@ import {
   type ShownKind,
 } from './entry-kinds';
 import { kindShown, type KindsInMix, type MixState } from './mix';
-import { HIGHEST_RARITY, withinRarityCeiling } from './rarity-ceiling';
+import { EVERY_RARITY, holdsEveryRarity, withinRarityRange } from './rarity-range';
 import type { ContentReadPort } from '../ports';
 
 export type { ShownKind } from './entry-kinds';
@@ -66,14 +66,14 @@ export type EligibleOfKind<E extends AskableEntry = ShownEntry> =
  * the Feed, the Cycle, the Word of the Day and the card builders never check
  * Retired, a Feature Switch or the Mix themselves. An eligible Entry is live
  * (not Retired), of a kind the Edition turns on and no remote Feature Switch
- * turns off, in the user's Mix, within the Rarity Ceiling (a Word up to it;
+ * turns off, in the user's Mix, within the Rarity Range (a Word in it;
  * the rarities touch no other kind) and not Hidden (ADR 0015, 0019, 0040,
- * 0051, 0072). Synonym Rows and Tips are eligible by the same rules.
+ * 0051, 0156). Synonym Rows and Tips are eligible by the same rules.
  */
 export interface Entries {
   /**
    * The ids of the eligible Entries: the live Words of the Categories in the
-   * Mix within the Rarity Ceiling, Category by Category in the Language
+   * Mix within the Rarity Range, Category by Category in the Language
    * Pack's order, and the live Corrections, Idioms, Synonym Rows and Tips,
    * each kind when the Edition turns it on and it is in the Mix, each in the
    * Language Pack's stable order, leaving out every Hidden Entry. The Mix and
@@ -82,19 +82,19 @@ export interface Entries {
    */
   eligible(): Promise<EntryIds>;
   /**
-   * The Words that would be eligible at the highest Rarity Ceiling: the live
-   * Words of the Categories in the Mix that are not Hidden, whatever the
-   * Rarity Ceiling, in the order `eligible` gives Words, for the Rarity Test
-   * that sets the ceiling. Read afresh on every call, as `eligible` reads.
+   * The Words that would be eligible in a Rarity Range of every rarity: the
+   * live Words of the Categories in the Mix that are not Hidden, whatever the
+   * Rarity Range, in the order `eligible` gives Words, for the Rarity Test
+   * that sets the range. Read afresh on every call, as `eligible` reads.
    */
   eligibleWordsOfAnyRarity(): Promise<readonly Word[]>;
   /**
-   * The Words within the Rarity Ceiling, the Mix and the Hidden Entries
-   * aside: every live Word up to it, in the Language Pack's order, which the
-   * Daily Crossword picks from, so readers at one Ceiling get the same puzzle
-   * (ADR 0072, 0073). Read afresh on every call, as `eligible` reads.
+   * The Words within the Rarity Range, the Mix and the Hidden Entries
+   * aside: every live Word in it, in the Language Pack's order, which the
+   * Daily Crossword picks from, so readers in one Rarity Range get the same
+   * puzzle (ADR 0156, 0073). Read afresh on every call, as `eligible` reads.
    */
-  wordsUnderRarityCeiling(): Promise<readonly Word[]>;
+  wordsInRarityRange(): Promise<readonly Word[]>;
   /**
    * Every live Correction that is not Hidden, in the Language Pack's order,
    * the Mix aside, for the Correction Types rail (ADR 0076). Read afresh on
@@ -149,7 +149,7 @@ export interface Entries {
   /**
    * The live Entries of one Category of the kind's list, the Words' or the
    * Corrections', in the Language Pack's order: a Retired one left out, the
-   * Mix, the Rarity Ceiling and the Feature Switches aside, for the Category
+   * Mix, the Rarity Range and the Feature Switches aside, for the Category
    * screens. None for a Category the list doesn't have. Read from the
    * Language Pack once per Category; nothing becomes Seen.
    */
@@ -186,26 +186,26 @@ export interface Entries {
 
 /**
  * The reader's choices that decide which Entries are eligible, as the Mix,
- * the Rarity Ceiling and the Hidden Entries hold them now: the Entries read
+ * the Rarity Range and the Hidden Entries hold them now: the Entries read
  * them on every call and keep none, so a change is eligible at once.
  */
 export interface EligibilityChoices {
   /** The Mix as it stands, or `everything-in`: every Category and every kind in it. */
   mix(): Pick<MixState, 'categoryIds' | 'correctionCategories' | 'kinds'> | 'everything-in';
-  /** The Rarity Ceiling in force. */
-  rarityCeiling(): Rarity;
+  /** The Rarity Range in force. */
+  rarityRange(): RarityRange;
   /** Whether the Entry is Hidden. */
   isHidden(entryId: string): boolean;
 }
 
 /**
- * Everything in: every Category and every kind in the Mix, at the highest
- * Rarity Ceiling, no Entry Hidden, for the tools and screens that only read
+ * Everything in: every Category and every kind in the Mix, in a Rarity
+ * Range of every rarity, no Entry Hidden, for the tools and screens that only read
  * the Language Pack.
  */
 export const EVERYTHING_IN: EligibilityChoices = {
   mix: () => 'everything-in',
-  rarityCeiling: () => HIGHEST_RARITY,
+  rarityRange: () => EVERY_RARITY,
   isHidden: () => false,
 };
 
@@ -309,21 +309,21 @@ export function createEntries({
     return ids.flat();
   }
 
-  /** The live Word of the id when it is within the Rarity Ceiling. */
-  const wordWithinCeiling = (words: ReadonlyMap<string, Entry>, id: string, ceiling: Rarity) => {
+  /** The live Word of the id when it is within the Rarity Range. */
+  const wordWithinRange = (words: ReadonlyMap<string, Entry>, id: string, range: RarityRange) => {
     const word = words.get(id);
-    return word?.kind === 'word' && withinRarityCeiling(word.rarity, ceiling) ? word : undefined;
+    return word?.kind === 'word' && withinRarityRange(word.rarity, range) ? word : undefined;
   };
 
   /**
-   * The Words of the ids within the Rarity Ceiling; every one of them at the
-   * highest ceiling, without reading the Words.
+   * The Words of the ids within the Rarity Range; every one of them in a
+   * range of every rarity, without reading the Words.
    */
-  async function underRarityCeiling(ids: readonly string[]): Promise<readonly string[]> {
-    const ceiling = choices.rarityCeiling();
-    if (ceiling >= HIGHEST_RARITY) return ids;
+  async function inRarityRange(ids: readonly string[]): Promise<readonly string[]> {
+    const range = choices.rarityRange();
+    if (holdsEveryRarity(range)) return ids;
     const words = await live.word();
-    return ids.filter((id) => wordWithinCeiling(words, id, ceiling) !== undefined);
+    return ids.filter((id) => wordWithinRange(words, id, range) !== undefined);
   }
 
   /** The ids of the Categories of the kind's list in the Mix; none named when every one is in. */
@@ -349,7 +349,7 @@ export function createEntries({
     const kinds = kindsOf(mix);
     const ofKind = (kind: MixKind) => (kindShown(edition, kinds, kind) ? listIds[kind]() : []);
     const [words, corrections, idioms, synonymRows, tips] = await Promise.all([
-      idsInCategories('word', categoryIdsIn('word', mix)).then(underRarityCeiling),
+      idsInCategories('word', categoryIdsIn('word', mix)).then(inRarityRange),
       eligibleCorrectionIds(mix),
       ofKind('idiom'),
       ofKind('synonymRow'),
@@ -395,11 +395,11 @@ export function createEntries({
     });
   }
 
-  async function wordsUnderRarityCeiling(): Promise<readonly Word[]> {
-    const ceiling = choices.rarityCeiling();
+  async function wordsInRarityRange(): Promise<readonly Word[]> {
+    const range = choices.rarityRange();
     const [words, ids] = await Promise.all([live.word(), listIds.word()]);
     return ids.flatMap((id) => {
-      const word = wordWithinCeiling(words, id, ceiling);
+      const word = wordWithinRange(words, id, range);
       return word === undefined ? [] : [word];
     });
   }
@@ -427,7 +427,7 @@ export function createEntries({
   return {
     eligible,
     eligibleWordsOfAnyRarity,
-    wordsUnderRarityCeiling,
+    wordsInRarityRange,
     liveCorrections,
     ofCategory,
     // The kinds asked for pick the Entries returned, as the generic signature says.

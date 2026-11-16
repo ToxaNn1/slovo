@@ -64,6 +64,10 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Межа рідкісності',
     line: 'Налаштування «Рідкість», яке обмежує, наскільки рідкісні слова показують.',
   },
+  rarityRange: {
+    name: 'Рідкість «від – до»',
+    line: 'У «Рідкості» п’ять смужок: читач обирає і найрідкісніші, і найпоширеніші слова, а не лише верхню межу.',
+  },
   gameReview: { name: 'Розбір гри', line: 'Після гри список усіх запитань із відповідями.' },
   gameGuessWord: {
     name: 'Гра «Вгадай слово»',
@@ -428,6 +432,10 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   gesturesHintDemo: {
     name: 'Показ жестів',
     line: 'У підказці про жести картка сама показує свайпи.',
+  },
+  gesturesHintAgain: {
+    name: 'Підказка жестів знову',
+    line: 'У Налаштуваннях є рядок, що ще раз показує підказку про жести в Стрічці.',
   },
   savedSwipesOff: {
     name: 'Без свайпів у «Збереженому»',

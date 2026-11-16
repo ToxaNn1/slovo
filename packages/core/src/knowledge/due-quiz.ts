@@ -51,7 +51,7 @@ export function openDueQuiz({
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   knowledge: Pick<Knowledge, 'state' | 'set'>;
-  entries: Pick<Entries, 'eligibleOfKind' | 'wordsUnderRarityCeiling'>;
+  entries: Pick<Entries, 'eligibleOfKind' | 'wordsInRarityRange'>;
   hiddenEntries: Pick<HiddenEntries, 'has'>;
   /** The Edition's text comparison, which tells the meanings apart. */
   comparison: Pick<TextComparison, 'key'>;
@@ -67,7 +67,7 @@ export function openDueQuiz({
     if (due.length === 0) return [];
     const [eligible, underCeiling] = await Promise.all([
       entries.eligibleOfKind('word'),
-      entries.wordsUnderRarityCeiling(),
+      entries.wordsInRarityRange(),
     ]);
     if ('refusal' in eligible) return [];
     const wordOf = new Map<string, Word>(

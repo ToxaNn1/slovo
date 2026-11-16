@@ -54,13 +54,19 @@ export const SettingsStringsSchema = z.strictObject({
     }),
   }),
   /**
-   * «Рідкість», the Rarity Ceiling row (ADR 0072): its label, the line under
-   * it, and a ceiling's segment, which takes `{rarity}`, e.g. «до 3».
+   * «Рідкість», the Rarity Range (ADR 0156): its label, the line under it,
+   * the segment of the top alone while the `rarityRange` switch is off, which
+   * takes `{rarity}`, e.g. «до 3», and the picker's range, `{from}` to `{to}`,
+   * e.g. «від 2 до 4», or one rarity, `{rarity}`, e.g. «лише 3».
    */
   rarity: z.strictObject({
     title: TextSchema,
     subtitle: TextSchema,
     ceiling: templateOf('rarity'),
+    range: templateOf('from', 'to'),
+    single: templateOf('rarity'),
+    /** What a screen reader names one bar of the picker, `{rarity}`, e.g. «Рідкість 3». */
+    bar: templateOf('rarity'),
   }),
   /** The heads of the Settings groups, as the board names them. */
   groups: z.strictObject({
@@ -85,6 +91,8 @@ export const SettingsStringsSchema = z.strictObject({
     badges: TextSchema,
     /** The row that retakes the questionnaire, e.g. «Пройти опитування ще раз». */
     questionnaire: TextSchema,
+    /** The row that shows the Feed's gestures hint once more, e.g. «Показати підказку жестів». */
+    gesturesHint: TextSchema,
     /** The row that opens the Profile, e.g. «Профіль». */
     profile: TextSchema,
     /** The row that opens the text-size screen, e.g. «Шрифт і розмір». */
@@ -112,6 +120,7 @@ export const SettingsStringsSchema = z.strictObject({
     streakBreak: TextSchema,
     badges: TextSchema,
     questionnaire: TextSchema,
+    gesturesHint: TextSchema,
     profile: TextSchema,
     privacy: TextSchema,
     /** The Account row while signed out. */
@@ -252,7 +261,9 @@ export const SettingsStringsSchema = z.strictObject({
     levelProgress: templateOf('progress', 'toNext'),
     /** The Level card's XP still to go, e.g. «ще 80 XP до рівня 8». Takes `{left}` and `{next}`, the next Level. */
     levelLeft: templateOf('left', 'next'),
-    /** The Best Streak beside the Streak, e.g. «найдовша 12 днів». */
+    /** The word under the Best Streak's number in its tile beside the Streak, e.g. «рекорд». */
+    record: TextSchema,
+    /** The Best Streak beside the Streak as VoiceOver reads its tile, e.g. «найдовша 12 днів». */
     bestStreak: PluralSchema,
     /** The Level ladder (10.8): one card per Level name (ADR 0085). */
     ladder: z.strictObject({

@@ -3,6 +3,7 @@ import {
   ChoiceRow,
   ConfirmationDialog,
   FontSizePreview,
+  RarityRangePicker,
   BackHeader,
   SettingsActionCard,
   SettingsGroup,
@@ -20,9 +21,11 @@ import { AccountRow } from '@/account/account-row';
 import { useAccountInEffect } from '@/account/account';
 import { editionStrings } from '@/edition/edition';
 import { useEditionInEffect } from '@/edition/remote-switches';
+import { useShowGesturesHintAgain } from '@/feed/gestures-hint';
 import { useHiddenSummary } from '@/mix/hidden';
+import { keep } from '@/keep';
 import { useMixSummary } from '@/mix/mix';
-import { useRarityCeiling } from '@/mix/rarity-ceiling';
+import { useRarityRange } from '@/mix/rarity-range';
 import { useNotificationsSummary } from '@/notifications/notifications';
 import { usePrivacyRows } from '@/settings/privacy-screen';
 import { useShown } from '@/shown-in-effect';
@@ -49,8 +52,8 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
   testID: `settings-font-size-${fontSize}`,
 }));
 
-// «до 1» to «до 5», each Rarity Ceiling by its rarity.
-const rarityCeilingSegments = RARITIES.map((rarity) => ({
+// «до 1» to «до 5», the top of the Rarity Range while its picker is off.
+const rarityTopSegments = RARITIES.map((rarity) => ({
   value: String(rarity),
   label: fill(strings.rarity.ceiling, { rarity: String(rarity) }),
   testID: `settings-rarity-${String(rarity)}`,
@@ -61,7 +64,7 @@ const rarityCeilingSegments = RARITIES.map((rarity) => ({
  * a row that opens a screen with its value beside the chevron, the groups in
  * the board's order. Each row is shown while its feature is on in effect: the
  * Account, «Менше руху», «Звуки», «Голос диктора», the Daily Goal, the Rarity
- * Ceiling (ADR 0072), «Пройти тест ще раз», «Відзнаки», «Пройти опитування
+ * Range (ADR 0156), «Пройти тест ще раз», «Відзнаки», «Пройти опитування
  * ще раз», «Перерва», the counters, «Самоперевірка» and «Конфіденційність»,
  * which holds the privacy switch and the Data export (ADR 0135; the privacy
  * policy link lives in «Про SLOVO»). Seasonal Decor has no row (ADR 0055).
@@ -83,7 +86,7 @@ function SettingsList() {
   const openScreen = useOpenScreen();
   const edition = useEditionInEffect();
   const { dailyGoal } = useXpLogState();
-  const { ceiling, setCeiling } = useRarityCeiling();
+  const { range, setRange } = useRarityRange();
   const mixSummary = useMixSummary();
   const hiddenSummary = useHiddenSummary();
   const notificationsSummary = useNotificationsSummary();
@@ -91,6 +94,7 @@ function SettingsList() {
   const shown = useShown();
   const privacyRows = usePrivacyRows();
   const router = useRouter();
+  const showGesturesHintAgain = useShowGesturesHintAgain();
   const build = installedBuild();
   const resetProgress = useResetProgress();
   const [askingReset, setAskingReset] = useState(false);
@@ -273,16 +277,24 @@ function SettingsList() {
                 }}
               />
             )}
-            {shown.rarityCeiling && (
+            {shown.rarity === 'range' && (
+              <RarityRangePicker
+                testID="settings-rarity"
+                rarities={RARITIES}
+                range={range}
+                onChange={setRange}
+              />
+            )}
+            {shown.rarity === 'top' && (
               <ChoiceRow
                 testID="settings-rarity"
                 icon="bar"
                 label={strings.rarity.title}
                 subtitle={strings.rarity.subtitle}
-                segments={rarityCeilingSegments}
-                selected={String(ceiling)}
+                segments={rarityTopSegments}
+                selected={String(range.to)}
                 onSelect={(value) => {
-                  setCeiling(Number(value));
+                  void setRange({ from: 1, to: Number(value) });
                 }}
               />
             )}
@@ -323,6 +335,24 @@ function SettingsList() {
                   kind: 'chevron',
                   onPress: () => {
                     openScreen('/settings/badges');
+                  },
+                }}
+              />
+            )}
+            {shown.gesturesHintAgain && (
+              <SettingsRow
+                testID="settings-row-gestures-hint"
+                icon="square"
+                label={strings.rows.gesturesHint}
+                subtitle={subtitles.gesturesHint}
+                end={{
+                  kind: 'chevron',
+                  onPress: () => {
+                    void keep('showing the gestures hint again', showGesturesHintAgain()).then(
+                      () => {
+                        router.navigate('/feed');
+                      },
+                    );
                   },
                 }}
               />

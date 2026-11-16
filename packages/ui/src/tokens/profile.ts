@@ -56,6 +56,12 @@ export const profileScreen = {
   calendarTop: 16,
   badgesTop: 28,
   badgesGap: 14,
+  /**
+   * The Best Streak's tile at the Streak's far end (owner, 16.11): a key like
+   * a calendar day's, its face this far around the number and «рекорд», its
+   * corner, the edge under it and the gap from the number to the word.
+   */
+  record: { padX: 16, padY: 8, radius: 14, edge: 4, gap: 2 },
 } as const;
 
 /** The Profile's Level card, from the design: an ink card with a red wedge and the XP ring. */

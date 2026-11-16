@@ -91,9 +91,9 @@ describe('the Rarity Test draw', () => {
     ]);
   });
 
-  it('ignores the Rarity Ceiling', async () => {
+  it('ignores the Rarity Range', async () => {
     const app = await open();
-    await app.rarityCeiling.set(2);
+    await app.rarityRange.set({ from: 1, to: 2 });
 
     const drawn = await app.rarityTest.draw();
 
@@ -114,7 +114,7 @@ describe('the Rarity Test draw', () => {
     expect(await idsOf(app)).toEqual(['w_live']);
   });
 
-  it('draws nothing while the Edition turns the Rarity Test or the Rarity Ceiling off', async () => {
+  it('draws nothing while the Edition turns the Rarity Test or the Rarity Range off', async () => {
     const withoutTest = await open({ off: ['rarityTest'] });
     const withoutCeiling = await open({ off: ['rarityCeiling'] });
 
@@ -131,47 +131,47 @@ describe('the Rarity Test result', () => {
       known: !unknown.includes(drawn.rarity),
     }));
 
-  it('sets the Rarity Ceiling to the lowest rarity with «Не знаю», at once', async () => {
+  it('sets the Rarity Range to the lowest rarity with «Не знаю», at once', async () => {
     const app = await open();
     const answers = (await answer(app, [3, 5])).map((each, index) =>
       each.rarity === 3 && index % 2 === 0 ? { ...each, known: true } : each,
     );
 
     // One of the two Words of rarity 3 and both of rarity 5 are not known.
-    expect(await app.rarityTest.apply(answers)).toEqual({ ceiling: 3, known: 7, total: 10 });
-    expect(app.rarityCeiling.state).toBe(3);
+    expect(await app.rarityTest.apply(answers)).toEqual({ top: 3, known: 7, total: 10 });
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 3 });
   });
 
   it('sets «до 5» when every Word is known', async () => {
     const app = await open();
-    await app.rarityCeiling.set(2);
+    await app.rarityRange.set({ from: 1, to: 2 });
 
     expect(await app.rarityTest.apply(await answer(app))).toEqual({
-      ceiling: 5,
+      top: 5,
       known: 10,
       total: 10,
     });
-    expect(app.rarityCeiling.state).toBe(5);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 5 });
   });
 
   it('sets «до 1» when no Word is known', async () => {
     const app = await open();
 
     expect(await app.rarityTest.apply(await answer(app, [1, 2, 3, 4, 5]))).toEqual({
-      ceiling: 1,
+      top: 1,
       known: 0,
       total: 10,
     });
-    expect(app.rarityCeiling.state).toBe(1);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 1 });
   });
 
-  it('overwrites the ceiling on a retake', async () => {
+  it('overwrites the range on a retake', async () => {
     const app = await open();
     await app.rarityTest.apply(await answer(app, [2]));
 
     await app.rarityTest.apply(await answer(app, [4]));
 
-    expect(app.rarityCeiling.state).toBe(4);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 4 });
   });
 
   it('sets no Knowledge Mark, starts no Review and makes nothing Seen', async () => {
@@ -192,13 +192,13 @@ describe('the Rarity Test result', () => {
     }
   });
 
-  it('sets nothing while the Edition turns the Rarity Test or the Rarity Ceiling off', async () => {
+  it('sets nothing while the Edition turns the Rarity Test or the Rarity Range off', async () => {
     const answers = await answer(await open(), [2]);
     for (const off of [['rarityTest'], ['rarityCeiling']] as const) {
       const app = await open({ off });
 
       expect(await app.rarityTest.apply(answers)).toBeUndefined();
-      expect(app.rarityCeiling.state).toBe(5);
+      expect(app.rarityRange.state).toEqual({ from: 1, to: 5 });
     }
   });
 });

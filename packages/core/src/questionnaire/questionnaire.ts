@@ -4,7 +4,7 @@ import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
 import { MIX_KINDS } from '../entries/entry-kinds';
 import type { Mix } from '../entries/mix';
-import type { RarityCeiling } from '../entries/rarity-ceiling';
+import { LOWEST_RARITY, type RarityRangeSetting } from '../entries/rarity-range';
 import { closeNotice, type FeedNotices } from '../feed/feed-notices';
 import { LATER_QUESTIONS, type LaterQuestion } from '../feed-notice';
 import { dateKeyOf, todayKey } from '../local-date';
@@ -33,7 +33,7 @@ export interface Questionnaire {
   readonly options: Readonly<Record<OptionQuestion, readonly QuestionnaireOption[]>>;
   /**
    * Answers the question with the option `answerId`: «Рівень» sets the
-   * Rarity Ceiling (its «Не знаю» option, which opens the Rarity Test in the
+   * Rarity Range (its «Не знаю» option, which opens the Rarity Test in the
    * onboarding, is no option here), «Навіщо» the Mix kind weights, the self-rating only
    * whether the Rarity Test is offered (ADR 0072). Resolves to whether
    * `answerId` is an option of it.
@@ -54,24 +54,24 @@ const { laterQuestions, onboardingFinished, firstWeekFrom } = userStateRecords;
 interface Deps {
   edition: Pick<Edition, 'isFeatureEnabled' | 'questionnaire'>;
   mix: Pick<Mix, 'setKindWeight'>;
-  rarityCeiling: Pick<RarityCeiling, 'set'>;
+  rarityRange: Pick<RarityRangeSetting, 'set'>;
 }
 
 /**
- * Applies the answer `answerId` to the question through the Rarity Ceiling
+ * Applies the answer `answerId` to the question through the Rarity Range
  * or the Mix by the Edition's mapping, for the onboarding and the
  * questionnaire. Resolves to whether `answerId` is an option of it. The
  * self-rating sets nothing: it only decides whether to offer the Rarity Test.
  */
 export async function applyAnswer(
-  { edition: { questionnaire }, mix, rarityCeiling }: Deps,
+  { edition: { questionnaire }, mix, rarityRange }: Deps,
   question: OptionQuestion,
   answerId: string,
 ): Promise<boolean> {
   if (question === 'level') {
     const option = questionnaire.level.find(({ id }) => id === answerId);
     if (option === undefined || !('rarityCeiling' in option)) return false;
-    await rarityCeiling.set(option.rarityCeiling);
+    await rarityRange.set({ from: LOWEST_RARITY, to: option.rarityCeiling });
     return true;
   }
   if (question === 'selfRating') {
@@ -102,7 +102,7 @@ export function openQuestionnaire({
   userState,
   clock,
   mix,
-  rarityCeiling,
+  rarityRange,
   xpLog,
   analytics,
 }: Deps & {
@@ -168,7 +168,7 @@ export function openQuestionnaire({
       selfRating: options.selfRating.map(({ id, label }) => ({ id, label })),
     },
     async answer(question, answerId) {
-      if (!(await applyAnswer({ edition, mix, rarityCeiling }, question, answerId))) return false;
+      if (!(await applyAnswer({ edition, mix, rarityRange }, question, answerId))) return false;
       if (question !== 'selfRating') {
         analytics
           .track('questionnaireAnswered', { question, answer: answerId })

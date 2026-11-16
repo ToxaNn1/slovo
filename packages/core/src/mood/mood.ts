@@ -6,7 +6,7 @@ import type { MixKindWeights } from '../entries/mix';
 import { createSubscribers } from '../in-turn';
 import { todayKey, type LocalDate } from '../local-date';
 import type { Clock } from '../ports';
-import type { RarityCeiling } from '../entries/rarity-ceiling';
+import type { RarityRangeSetting } from '../entries/rarity-range';
 import type { UserState } from '../user-state/user-state';
 import { inRarityBand, shiftedKindWeights } from './feed-parameters';
 import { moodRecords } from './records';
@@ -28,7 +28,7 @@ export type MoodCheckIn =
 export interface MoodFeedParameters {
   /**
    * Whether a Word of the rarity is in today's rarity band, clipped to the
-   * Rarity Ceiling; nothing when the band is every rarity.
+   * Rarity Range; nothing when the band is every rarity.
    */
   readonly inBand: ((rarity: Rarity) => boolean) | undefined;
   /** The reader's Mix kind weights shifted by today's Mood. */
@@ -66,15 +66,15 @@ export async function openMoodCheckIns({
   clock,
   dayTurned,
   analytics,
-  rarityCeiling,
+  rarityRange,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled' | 'dashboardMoods'>;
   userState: Pick<UserState, 'read' | 'list' | 'write'>;
   clock: Clock;
   dayTurned: { subscribe(listener: (day: LocalDate) => unknown): unknown };
   analytics: Pick<Analytics, 'track'>;
-  /** The Rarity Ceiling the Mood's rarity band clips to. */
-  rarityCeiling: Pick<RarityCeiling, 'state'>;
+  /** The Rarity Range the Mood's rarity band clips to. */
+  rarityRange: Pick<RarityRangeSetting, 'state'>;
 }): Promise<MoodCheckIns> {
   const subscribers = createSubscribers();
   const on = edition.isFeatureEnabled('mood');
@@ -132,9 +132,7 @@ export async function openMoodCheckIns({
       const band = mood?.rarityBand ?? 'whole';
       return {
         inBand:
-          band === 'whole'
-            ? undefined
-            : (rarity) => inRarityBand(rarity, band, rarityCeiling.state),
+          band === 'whole' ? undefined : (rarity) => inRarityBand(rarity, band, rarityRange.state),
         kindWeights: (weights) => shiftedKindWeights(weights, mood),
       };
     },

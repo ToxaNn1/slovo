@@ -19,7 +19,7 @@ import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
 import type { Backend, Clock } from '../ports';
 import type { XpLog } from '../progress/xp-log';
-import type { RarityCeiling } from '../entries/rarity-ceiling';
+import type { RarityRangeSetting } from '../entries/rarity-range';
 import {
   applyAnswer,
   dailyGoalAsked,
@@ -113,7 +113,7 @@ export interface Onboarding {
   next(): Promise<void>;
   /**
    * Answers the question on screen with the option `answerId` and goes on:
-   * «Рівень» sets the Rarity Ceiling, or with «Не знаю» opens the Rarity Test,
+   * «Рівень» sets the Rarity Range, or with «Не знаю» opens the Rarity Test,
    * and «Навіщо» the Mix kind weights by the Edition's mapping. The answer is counted by the backend with no reader id
    * while the reader shares their anonymous statistics; a count that fails is
    * lost. An id that is no option, or another step on screen, does nothing.
@@ -158,7 +158,7 @@ export async function openOnboarding({
   entries,
   wordOfTheDay,
   mix,
-  rarityCeiling,
+  rarityRange,
   xpLog,
   analytics,
   backend,
@@ -176,7 +176,7 @@ export async function openOnboarding({
   >;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   mix: Pick<Mix, 'setKindWeight'>;
-  rarityCeiling: Pick<RarityCeiling, 'set'>;
+  rarityRange: Pick<RarityRangeSetting, 'set'>;
   xpLog: Pick<XpLog, 'setDailyGoal'>;
   analytics: Pick<Analytics, 'track'>;
   backend: Pick<Backend, 'counters'> | undefined;
@@ -324,7 +324,7 @@ export async function openOnboarding({
       endStep(async ({ kind, number, total }) => {
         if (kind !== 'level' && kind !== 'why') return;
         const rarityTest = kind === 'level' && opensRarityTest(answerId);
-        if (!rarityTest && !(await applyAnswer({ edition, mix, rarityCeiling }, kind, answerId)))
+        if (!rarityTest && !(await applyAnswer({ edition, mix, rarityRange }, kind, answerId)))
           return;
         await count(kind, answerId);
         analytics

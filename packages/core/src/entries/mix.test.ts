@@ -176,7 +176,7 @@ const mixRecordsOf = (records: Map<string, string>) =>
 
 const isWordOf = (category: Category) => (id: string) => wordIdsOf(category).includes(id);
 const isCorrection = (id: string) => id.startsWith('c_');
-/** Whether the id is a Word above the Rarity Ceiling. */
+/** Whether the id is a Word above the Rarity Range. */
 const isWordAbove = (ceiling: number) => (id: string) => (rarityOf.get(id) ?? ceiling) > ceiling;
 
 describe('the Mix', () => {
@@ -669,12 +669,12 @@ describe('eligibility over the Mix', () => {
     expect(app.feed.cards[app.feed.position]?.entryId).toBe(onScreen);
   });
 
-  it('a Rarity Ceiling of 2 leaves only Words of rarity 1 and 2, and every Correction, in this Cycle, the next one and after reopening', async () => {
+  it('a Rarity Range of 2 leaves only Words of rarity 1 and 2, and every Correction, in this Cycle, the next one and after reopening', async () => {
     const records = new Map<string, string>();
     const time = fakeClock();
     const app = await run({ records, clock: time.clock });
 
-    await app.rarityCeiling.set(2);
+    await app.rarityRange.set({ from: 1, to: 2 });
 
     const offered = await walk(app.feed);
     expect(offered.filter(isWordAbove(2))).toEqual([]);
@@ -687,7 +687,7 @@ describe('eligibility over the Mix', () => {
     expect((await walk(reopened.feed)).filter(isWordAbove(2))).toEqual([]);
   });
 
-  it('a Rarity Ceiling change keeps what is Seen, the seed and the order of the Entries that stay', async () => {
+  it('a Rarity Range change keeps what is Seen, the seed and the order of the Entries that stay', async () => {
     const records = new Map<string, string>();
     const time = fakeClock();
     const app = await run({ records, clock: time.clock });
@@ -699,7 +699,7 @@ describe('eligibility over the Mix', () => {
     const cycle = records.get('feed.cycle');
     const held = entryIdsOf(app.feed.cards);
 
-    await app.rarityCeiling.set(1);
+    await app.rarityRange.set({ from: 1, to: 1 });
 
     expect(records.get('feed.cycle')).toBe(cycle);
     expect(records.get(`feed.seen.${seen}`)).toBe('1');
@@ -708,12 +708,12 @@ describe('eligibility over the Mix', () => {
     expect(words(await walk(app.feed))).toEqual(words(twin).filter((id) => !isWordAbove(1)(id)));
   });
 
-  it('a Rarity Ceiling raised again gives the Words back their places in the Cycle', async () => {
+  it('a Rarity Range raised again gives the Words back their places in the Cycle', async () => {
     const app = await run();
     const twin = await walk((await run()).feed);
 
-    await app.rarityCeiling.set(1);
-    await app.rarityCeiling.set(5);
+    await app.rarityRange.set({ from: 1, to: 1 });
+    await app.rarityRange.set({ from: 1, to: 5 });
 
     // The cards the Feed holds stay; the Words after them follow the Cycle order.
     const held = entryIdsOf(app.feed.cards);
@@ -722,13 +722,13 @@ describe('eligibility over the Mix', () => {
     expect(words(await walk(app.feed))).toEqual(words(twin));
   });
 
-  it('a Rarity Ceiling the user set narrows nothing while the Edition turns its rarityCeiling switch off', async () => {
+  it('a Rarity Range the user set narrows nothing while the Edition turns its rarityCeiling switch off', async () => {
     const records = new Map<string, string>();
-    await (await run({ records })).rarityCeiling.set(1);
+    await (await run({ records })).rarityRange.set({ from: 1, to: 1 });
 
     const app = await run({ records, rarityCeilingSwitch: false });
 
-    expect(app.rarityCeiling.state).toBe(5);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 5 });
     expect(new Set(await walk(app.feed))).toEqual(
       new Set([...categories.flatMap(wordIdsOf), ...correctionIds, ...idiomIds]),
     );

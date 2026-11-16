@@ -7,9 +7,10 @@ import {
   type Edition,
   type FeatureSwitch,
   LATER_QUESTIONS,
+  type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
+import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
@@ -58,6 +59,14 @@ let composition: Composition;
 jest.mock('../account/account', () => ({ useAccountInEffect: () => undefined }));
 jest.mock('../notifications/notifications', () => ({ useNotificationsSummary: () => '' }));
 
+const haptics: Haptics = {
+  selection: () => undefined,
+  impactLight: () => undefined,
+  impactMedium: () => undefined,
+  success: () => undefined,
+  warning: () => undefined,
+};
+
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
@@ -104,9 +113,11 @@ async function render(notice?: Parameters<typeof LaterQuestionNotice>[0]['questi
         <SafeAreaProvider initialMetrics={metrics}>
           <ShellProvider shell={shell}>
             <EditionProvider edition={edition} strings={editionStrings}>
-              <SettingsProvider>
-                <Stack screenOptions={{ headerShown: false }} />
-              </SettingsProvider>
+              <HapticsProvider haptics={haptics}>
+                <SettingsProvider>
+                  <Stack screenOptions={{ headerShown: false }} />
+                </SettingsProvider>
+              </HapticsProvider>
             </EditionProvider>
           </ShellProvider>
         </SafeAreaProvider>
@@ -146,7 +157,7 @@ describe('Settings › «Пройти опитування ще раз»', () =>
   it('writes the answers on «ГОТОВО» and nothing when left without it', async () => {
     await render();
     screenSettled();
-    const ceiling = composition.rarityCeiling.state;
+    const ceiling = composition.rarityRange.state.to;
     const categoryIds = composition.mix.state.categoryIds;
 
     await press(settings.rows.questionnaire);
@@ -155,7 +166,7 @@ describe('Settings › «Пройти опитування ще раз»', () =>
     await settle();
     await fireEvent.press(screen.getByTestId('questionnaire-back'));
     await settle();
-    expect(composition.rarityCeiling.state).toBe(ceiling);
+    expect(composition.rarityRange.state.to).toBe(ceiling);
     expect(composition.mix.state.categoryIds).toEqual(categoryIds);
 
     screenSettled();
@@ -164,7 +175,7 @@ describe('Settings › «Пройти опитування ще раз»', () =>
     await press('Знаю дуже багато');
     await fireEvent.press(screen.getByTestId('questionnaire-interest-food'));
     await press(settings.questionnaireRetake.done);
-    expect(composition.rarityCeiling.state).toBe(5);
+    expect(composition.rarityRange.state).toEqual({ from: 1, to: 5 });
     expect(composition.mix.state.categoryIds).toEqual(['nature']);
     expect(composition.mix.state.hiddenCategories.map(({ id }) => id)).toEqual(['food']);
     expect(screen.queryByTestId('questionnaire')).toBeNull();

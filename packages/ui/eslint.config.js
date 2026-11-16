@@ -108,6 +108,7 @@ export default [
       'src/saved/FavoriteButton.tsx',
       'src/search/RecentQueries.tsx',
       'src/settings/NarratorVoicePicker.tsx',
+      'src/settings/RarityRangePicker.tsx',
       'src/settings/WidgetGuide.tsx',
       'src/share/ShareSheet.tsx',
     ],

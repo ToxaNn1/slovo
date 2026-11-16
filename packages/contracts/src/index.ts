@@ -210,7 +210,13 @@ export {
   type MistakeType,
 } from './mistake-report';
 export { SYNC_BATCH_SIZE } from './sync';
-export { ID_PREFIX, SourceSchema, type Source } from './shared';
+export {
+  ID_PREFIX,
+  RarityRangeSchema,
+  SourceSchema,
+  type RarityRange,
+  type Source,
+} from './shared';
 export {
   ExampleSchema,
   GenderSchema,

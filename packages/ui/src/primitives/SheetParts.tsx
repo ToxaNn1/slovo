@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
@@ -9,7 +9,10 @@ import { fontScaleCap, space, typeStyle } from '../tokens';
 const TITLE_BAND = { vertical: 10, outset: 2 };
 
 /** The title's turn, from the design: along the sheet's slanted top. */
-const TITLE_TURN = '-4.4deg';
+const TITLE_TURN_DEGREES = 4.4;
+const TITLE_TURN = `-${String(TITLE_TURN_DEGREES)}deg`;
+/** How far the turn lifts the band's right end per point of its width. */
+const TITLE_LIFT = Math.tan((TITLE_TURN_DEGREES * Math.PI) / 180);
 
 /**
  * The title of a bottom sheet, the first thing in it: the design's black band
@@ -27,9 +30,15 @@ export function SheetTitle({
   const tokens = useTokens();
   const key = useSchemeColors('light');
   const { voice } = useEdition();
+  // The turn about the left end lifts the right end above the band's own place, and a
+  // scrolling sheet cut a long title's off (owner 16.11): the band keeps that room above it.
+  const [lift, setLift] = useState(0);
   return (
     <Text
       accessibilityRole="header"
+      onLayout={({ nativeEvent }) => {
+        setLift(nativeEvent.layout.width * TITLE_LIFT);
+      }}
       {...voice}
       numberOfLines={numberOfLines}
       ellipsizeMode="tail"
@@ -37,7 +46,7 @@ export function SheetTitle({
       style={[
         typeStyle('sheetTitle', tokens),
         styles.title,
-        { color: key.background, backgroundColor: key.ink },
+        { color: key.background, backgroundColor: key.ink, marginTop: lift },
       ]}
     >
       {children}
@@ -53,7 +62,6 @@ const styles = StyleSheet.create({
     // takes none of the role's room.
     paddingTop: TITLE_BAND.vertical,
     paddingBottom: TITLE_BAND.vertical,
-    marginTop: 0,
     paddingHorizontal: space[4],
     transform: [{ rotate: TITLE_TURN }],
     transformOrigin: 'left',

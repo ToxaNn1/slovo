@@ -8191,6 +8191,14 @@
                           ],
                           "type": "string"
                         },
+                        "rarityRange": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -9071,6 +9079,14 @@
                           ],
                           "type": "string"
                         },
+                        "gesturesHintAgain": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "savedSwipesOff": {
                           "enum": [
                             "on",
@@ -9320,6 +9336,7 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
+                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
@@ -9430,6 +9447,7 @@
                         "curatedCollections",
                         "swipeMarks",
                         "gesturesHintDemo",
+                        "gesturesHintAgain",
                         "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",
@@ -10219,6 +10237,14 @@
                           ],
                           "type": "string"
                         },
+                        "rarityRange": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -11099,6 +11125,14 @@
                           ],
                           "type": "string"
                         },
+                        "gesturesHintAgain": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "savedSwipesOff": {
                           "enum": [
                             "on",
@@ -11348,6 +11382,7 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
+                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
@@ -11458,6 +11493,7 @@
                         "curatedCollections",
                         "swipeMarks",
                         "gesturesHintDemo",
+                        "gesturesHintAgain",
                         "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",
@@ -12178,6 +12214,14 @@
                           ],
                           "type": "string"
                         },
+                        "rarityRange": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -13058,6 +13102,14 @@
                           ],
                           "type": "string"
                         },
+                        "gesturesHintAgain": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "savedSwipesOff": {
                           "enum": [
                             "on",
@@ -13307,6 +13359,7 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
+                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
@@ -13417,6 +13470,7 @@
                         "curatedCollections",
                         "swipeMarks",
                         "gesturesHintDemo",
+                        "gesturesHintAgain",
                         "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",

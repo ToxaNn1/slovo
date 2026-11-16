@@ -18,9 +18,9 @@ export interface RarityTestQuestion {
   readonly accessibilityLabel: string;
 }
 
-/** What the answers came to: the Rarity Ceiling they set, and how many of the Words the reader knew. */
+/** What the answers came to: the top of the Rarity Range they set, and how many of the Words the reader knew. */
 export interface RarityTestResult {
-  readonly ceiling: Rarity;
+  readonly top: Rarity;
   readonly known: number;
   readonly total: number;
 }
@@ -33,7 +33,7 @@ export interface RarityTestScreen {
   readonly children: ReactNode;
 }
 
-/** Where the Rarity Test is: the Word asked about, or the Rarity Ceiling it set. */
+/** Where the Rarity Test is: the Word asked about, or the top of the Rarity Range it set. */
 type RarityTestPhase =
   | { readonly kind: 'asking'; readonly answers: readonly { rarity: Rarity; known: boolean }[] }
   | { readonly kind: 'result'; readonly result: RarityTestResult };
@@ -59,7 +59,7 @@ export function RarityTestTitle({ children }: { children: string }) {
  * in onboarding and from Settings: each Word in turn by its Lemma with Stress
  * under a bar of one segment per Word and «{n} з {total} · Чи знаєш ти це
  * слово?», with «Не знаю» and «Знаю» side by side; the last answer applies
- * them all. The result shows the Rarity Ceiling set as a big number, the line
+ * them all. The result shows the Rarity Range set as a big number, the line
  * «Твоя рідкість — до {n}…», five bars lit up to it and how many Words the
  * reader knew; no range line (ADR 0072). With `onAgain` (Settings) it closes
  * on «ГОТОВО» and offers the test again; without it (onboarding) one «Далі»
@@ -78,7 +78,7 @@ export function RarityTestQuestions({
   /** The Words to ask about, in the order asked. */
   words: readonly RarityTestQuestion[];
   /**
-   * Applies the answers and resolves to the Rarity Ceiling they set, or to
+   * Applies the answers and resolves to the Rarity Range they set, or to
    * nothing when none was set; it never rejects.
    */
   onApply: (
@@ -251,14 +251,14 @@ function Segments({
 }
 
 /**
- * The result (screen 93): the Rarity Ceiling as a big number behind the line
+ * The result (screen 93): the Rarity Range as a big number behind the line
  * that says it, five bars lit up to it, and how many Words the reader knew.
  */
 function RarityTestOutcome({ result }: { result: RarityTestResult }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice, strings } = useEdition();
-  const n = String(result.ceiling);
+  const n = String(result.top);
   return (
     <View style={styles.outcome}>
       <Text
@@ -274,7 +274,7 @@ function RarityTestOutcome({ result }: { result: RarityTestResult }) {
         <Segments
           count={RARITIES.length}
           // Rarities 1…5 in order: those up to the ceiling are lit.
-          colorOf={(index) => (index < result.ceiling ? colors.accent : colors.silhouette)}
+          colorOf={(index) => (index < result.top ? colors.accent : colors.silhouette)}
           style={rarityTestLayout.rarityBars}
         />
         <Text

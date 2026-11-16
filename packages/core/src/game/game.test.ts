@@ -1541,7 +1541,7 @@ describe('the Words a Game asks about', () => {
     }
   });
 
-  it('never asks about or offers a Word above the Rarity Ceiling', async () => {
+  it('never asks about or offers a Word above the Rarity Range', async () => {
     // 16 Words of rarity 1 and 2 over the pack's Words, all of rarity 3.
     const common = numbered('w_common', 16).map((id) =>
       word(id, 'crafts', { rarity: id.endsWith('1') ? 1 : 2 }),
@@ -1550,7 +1550,7 @@ describe('the Words a Game asks about', () => {
     const commonReading = (text: string) => common.find((w) => renderStress(w) === text);
     for (const seed of [1, 2, 3]) {
       const app = await run({ seed, pack });
-      await app.rarityCeiling.set(2);
+      await app.rarityRange.set({ from: 1, to: 2 });
 
       await app.game.start('guess-word');
       while (current(app).status === 'playing') {

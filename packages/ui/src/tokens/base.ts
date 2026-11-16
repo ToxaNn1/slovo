@@ -150,6 +150,12 @@ export const typeRoles = {
   voiceDescription: role('ui', '500', 12, 12),
   /** The «ЧИТАЄ · …» and «ОБЕРИ ГОЛОС» labels of the voice screen. */
   voiceLabel: role('word', '700', 11, 11, 1.5, 'uppercase'),
+  /** The «РІДКІСТЬ» heading of the Rarity Range picker in Settings. */
+  rangeTitle: role('word', '900', 15, 18, 0.5, 'uppercase'),
+  /** The range the Rarity Range picker holds, «від 2 до 4». */
+  rangeValue: role('ui', '700', 15, 18),
+  /** The number on a bar of the Rarity Range picker. */
+  rangeNumber: role('word', '900', 17, 17),
   /** A tab's label under its icon. */
   tabLabel: role('ui', '600', 11, 11),
   /** The rotated black title of a bottom sheet. */
@@ -368,8 +374,11 @@ export const typeRoles = {
   crosswordSolved: role('word', '500', 28, 32),
   /** A segment's label in a segmented control. */
   segment: role('ui', '700', 13, 16),
-  /** The part of speech beside the Lemma on a Word card. */
-  partOfSpeech: role('ui', '600', 15, 15),
+  /**
+   * The part of speech beside the Lemma on a Word card. A line of the font's own height keeps the
+   * letters in the middle of the line on iOS, level with the register chip beside them (owner 16.11).
+   */
+  partOfSpeech: role('ui', '600', 15, 18),
   /** A Word named as a link inside a line of reading text, such as a Synonym Row's dominant. */
   linkWord: role('word', '800', 15, 21),
   /** An accent text button's label, such as a Word card's "more". */
@@ -395,7 +404,7 @@ export const typeRoles = {
   shadeNote: role('ui', '500', 14, 18.2),
   /** `Lemma, hero`: the onboarding welcome's Lemma. */
   heroLemma: role('word', '900', 76, 76),
-  /** The Rarity Ceiling's big number behind the Rarity Test's result (board 11, screen 93). */
+  /** The Rarity Range's big number behind the Rarity Test's result (board 11, screen 93). */
   rarityTestNumber: role('word', '900', 200, 200),
   /** A quiet text button of the onboarding, such as «Пропустити» and «Пізніше». */
   quietAction: role('ui', '700', 14, 17),

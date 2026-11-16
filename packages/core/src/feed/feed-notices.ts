@@ -257,13 +257,13 @@ export function openFeedNotices({
 
   /**
    * The Yesterday quiz of `word`, the Word of the Day of `dayBefore`, over
-   * the Words within the Rarity Ceiling not Hidden. A read that fails is
+   * the Words within the Rarity Range not Hidden. A read that fails is
    * tried again on the next call.
    */
   function quizOf(word: Word, dayBefore: string): Promise<YesterdayQuiz | undefined> {
     const key = `${dayBefore}:${word.id}`;
     if (lastQuiz.key !== key) {
-      const quiz = entries.wordsUnderRarityCeiling().then((words) =>
+      const quiz = entries.wordsInRarityRange().then((words) =>
         meaningQuiz(
           word,
           words.filter((other) => other.id !== word.id && !hiddenEntries.has(other.id)),

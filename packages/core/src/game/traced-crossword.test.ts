@@ -31,7 +31,7 @@ async function open({
 } = {}) {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   return openTracedCrossword({
-    entries: { wordsUnderRarityCeiling: () => Promise.resolve(under) },
+    entries: { wordsInRarityRange: () => Promise.resolve(under) },
     userState,
     clock: fakeClock(start).clock,
     edition: { isFeatureEnabled: (feature) => on.includes(feature) },
@@ -54,7 +54,7 @@ describe('the traced Daily Crossword', () => {
     expect(await open({ on: ['game', 'dailyCrossword'] })).toEqual({ kind: 'off' });
   });
 
-  it('gives no-tiling when the Words within the Rarity Ceiling cannot fill the grid', async () => {
+  it('gives no-tiling when the Words within the Rarity Range cannot fill the grid', async () => {
     expect(await open({ under: words.slice(0, 3) })).toEqual({ kind: 'no-tiling' });
   });
 
@@ -137,7 +137,7 @@ describe('the traced Daily Crossword of the composition', () => {
     expect(second.crossword.puzzle).toEqual(first.crossword.puzzle);
   });
 
-  it('opens the puzzle of the Words within the Rarity Ceiling, and solving it earns XP', async () => {
+  it('opens the puzzle of the Words within the Rarity Range, and solving it earns XP', async () => {
     const { composition, records } = await app([
       'game',
       'dailyCrossword',

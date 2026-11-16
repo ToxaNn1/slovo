@@ -233,10 +233,10 @@ describe('a change to what is eligible', () => {
     expect(next).not.toContain(ready);
   });
 
-  it('leaves the Words above a lowered Rarity Ceiling out of the very next cards', async () => {
+  it('leaves the Words above a lowered Rarity Range out of the very next cards', async () => {
     const app = await opened();
 
-    await app.rarityCeiling.set(4);
+    await app.rarityRange.set({ from: 1, to: 4 });
 
     expect(app.feed.cards.map((card) => card.entryId).filter(isRare)).toEqual([]);
     const next = await nextEntries(app, 5);

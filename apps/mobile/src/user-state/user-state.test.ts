@@ -246,7 +246,7 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
         ['feed.seen.c_1', '4'],
       ]),
     );
-    expect(await port.get('schema.version')).toBe('8');
+    expect(await port.get('schema.version')).toBe('9');
   });
 
   it("opens a new store at the Core's current schema", async () => {

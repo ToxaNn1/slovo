@@ -52,7 +52,7 @@ export interface UserSettingDefaults {
   readonly narratorVoice: string;
   /** Local times of day, `HH:MM` on a 24-hour clock. */
   readonly notificationTimes: readonly string[];
-  /** The Rarity Ceiling a new user starts with, «до 1» to «до 5» (ADR 0072). */
+  /** The top of the Rarity Range a new user starts with, «до 1» to «до 5» (ADR 0156). */
   readonly rarityCeiling: Rarity;
   readonly mix: DefaultMix;
 }

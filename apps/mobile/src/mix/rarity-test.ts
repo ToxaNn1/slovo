@@ -26,8 +26,8 @@ export function rarityTestQuestionOf({
 
 /**
  * Applies the Rarity Test's answers, in onboarding and from Settings, and
- * resolves to the Rarity Ceiling they set, with how many Words the reader
- * knew. A ceiling that can't be set is
+ * resolves to the top of the Rarity Range they set, with how many Words the reader
+ * knew. A range that can't be set is
  * logged and leaves the one in force: it resolves to nothing and never rejects.
  */
 export function useApplyRarityTest(): (
@@ -35,7 +35,7 @@ export function useApplyRarityTest(): (
 ) => Promise<RarityTestResult | undefined> {
   const { rarityTest } = useComposition();
   return useCallback(
-    (answers) => keep('the Rarity Ceiling', rarityTest.apply(answers)),
+    (answers) => keep('the Rarity Range', rarityTest.apply(answers)),
     [rarityTest],
   );
 }

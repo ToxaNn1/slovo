@@ -188,13 +188,18 @@ export interface Shown {
   readonly swipeMarks: boolean;
   /** While the gestures hint is open, the Feed's card plays the swipes it names (ADR 0112). */
   readonly gesturesHintDemo: boolean;
+  /** Settings offers «Показати підказку жестів», which shows the gestures hint once more (owner 16.11). */
+  readonly gesturesHintAgain: boolean;
   /** Whether an Entry opened from Saved takes no side swipes, its mark set from the «⋯» sheet (owner 15.11). */
   readonly savedSwipesOff: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
-  /** The «Рідкість» row of Settings, the Rarity Ceiling (ADR 0072). */
-  readonly rarityCeiling: boolean;
-  /** The «Пройти тест ще раз» row of Settings, while the Rarity Ceiling it sets is on as well. */
+  /**
+   * «Рідкість» in Settings (ADR 0156): `range`, the picker of both ends of the
+   * Rarity Range; `top`, the row «до 1»…«до 5» of its top alone; `off`, none.
+   */
+  readonly rarity: 'off' | 'top' | 'range';
+  /** The «Пройти тест ще раз» row of Settings, while the Rarity Range it sets is on as well. */
   readonly rarityTest: boolean;
   /**
    * The «Пройти опитування ще раз» row of Settings, while any of its questions
@@ -304,9 +309,10 @@ export function shownOf({
     curatedCollections: on('curatedCollections'),
     swipeMarks: on('swipeMarks'),
     gesturesHintDemo: on('gesturesHintDemo'),
+    gesturesHintAgain: on('gesturesHintAgain'),
     savedSwipesOff: on('savedSwipesOff'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
-    rarityCeiling: on('rarityCeiling'),
+    rarity: on('rarityCeiling') ? (on('rarityRange') ? 'range' : 'top') : 'off',
     rarityTest: on('rarityTest'),
     questionnaire:
       on('questionnaire') || on('rarityTest')

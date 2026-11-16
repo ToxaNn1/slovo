@@ -10,7 +10,7 @@ import type { GameXp } from './game-xp';
  * Edition's Feature Switches and whatever else of the Edition one names.
  */
 export interface CrosswordPorts<OfEdition extends keyof Edition = never> {
-  entries: Pick<Entries, 'wordsUnderRarityCeiling'>;
+  entries: Pick<Entries, 'wordsInRarityRange'>;
   userState: UserState;
   clock: Clock;
   edition: Pick<Edition, 'isFeatureEnabled' | OfEdition>;

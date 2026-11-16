@@ -1,4 +1,4 @@
-import { FontSizeSchema, RaritySchema, TextSizeSchema, ThemeSchema } from '@slovo/contracts';
+import { FontSizeSchema, RarityRangeSchema, TextSizeSchema, ThemeSchema } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { declareRecord } from '../user-state/user-state-record';
@@ -67,12 +67,13 @@ export const settingsRecords = {
    */
   narratorVoice: declareRecord('settings.narratorVoice', z.string().min(1)),
   /**
-   * The Rarity Ceiling the user chose, 1 to 5, the one «Рідкість» setting
-   * every surface obeys (ADR 0072); without it, the Edition's default. It
-   * syncs last write wins like the Theme (ADR 0041). Schema version 7 moves
-   * it here from `mix.rarityCeiling` and drops that and `mix.rarityFloor`.
+   * The Rarity Range the user chose (ADR 0156), «від 1 до 5» to «лише 3», the
+   * one «Рідкість» setting every surface obeys; without it, from 1 to the
+   * Edition's default top. It syncs last write wins like the Theme (ADR 0041),
+   * both ends in one record, so no merge splits them. Schema version 9 moves
+   * the Rarity Ceiling of 1.0, `settings.rarityCeiling`, here as its top.
    */
-  rarityCeiling: declareRecord('settings.rarityCeiling', RaritySchema),
+  rarityRange: declareRecord('settings.rarityRange', RarityRangeSchema),
   /**
    * Whether the user has «Ділитися анонімною статистикою» on: this device
    * counts and sends its Community Counters (ADR 0060). It stays on the

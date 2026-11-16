@@ -232,7 +232,12 @@ const FeedPage = memo(function FeedPage({
     return (
       <View
         testID={`feed-card-${String(position)}`}
-        style={[styles.page, { paddingTop: top + topRow }]}
+        // In the Word card's frame, so both cards are the same height (owner 16.11).
+        style={[
+          styles.page,
+          styles.heroContent,
+          { paddingTop: top + (toolsRow ? topRow + space[2] : topRow) },
+        ]}
       >
         <QuickQuestionRound
           title={feedStrings.quickQuestion}
