@@ -104,15 +104,15 @@ It signs in with the GitHub Actions secret `RAILWAY_TOKEN`, a Railway project to
 
 ## Importing an Edition's content
 
-An Edition's content lives in the Deployment's Postgres (ADR 0090). The Edition folder reaches it once, through the import command, run on the owner's machine with the same operator credential:
+An Edition's content lives in the Deployment's Postgres (ADR 0090), and the repository keeps no content folder (ADR 0153). An empty database takes a content snapshot saved to a file, through the import command, run on the owner's machine with the same operator credential:
 
 ```sh
-DATABASE_URL='<the Neon connection string>' pnpm content import --edition uk
+DATABASE_URL='<the Neon connection string>' pnpm content import --edition uk --snapshot <file>
 ```
 
-The command checks every content rule first and writes nothing when one refuses a record; it prints the count of each kind of record and the content version it wrote. A second import writes nothing and says so, because the database is the live content from then on; `--override` imports the folder again over the database and raises the content version.
+The command checks every content rule first and writes nothing when one refuses a record; it prints the count of each kind of record and the content version it wrote. A second import writes nothing and says so, because the database is the live content from then on; `--override` imports the snapshot again over the database and raises the content version.
 
-A change that tightens a content rule (a contracts schema the records must pass) also fixes the Edition folder, and once it reaches `main` the folder is imported again with `--override`: the records Postgres already holds passed only the old rule, and the Patch and the snapshot refuse to answer with them (500). The last step of "Deploy to Railway" asks for each Edition's snapshot (the secret `SLOVO_BACKEND_URL`) and fails the job on anything but 200.
+A change that tightens a content rule (a contracts schema the records must pass) also fixes, through the content write API, the records Postgres holds that the tighter rule refuses, before it reaches `main`: the Patch and the snapshot refuse to answer with them (500). The last step of "Deploy to Railway" asks for each Edition's snapshot (the secret `SLOVO_BACKEND_URL`) and fails the job on anything but 200.
 
 ## Importing an Edition's media
 

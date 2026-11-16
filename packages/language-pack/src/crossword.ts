@@ -31,7 +31,7 @@ const SEARCH_BUDGET = 500;
  * the Words that are not Retired, clued by their primary Definition, and the
  * one-word main standard forms of the Corrections that are not Retired, clued
  * by their explanation, with «…» in place of the answer wherever a clue names
- * it. It is the day `--record` keeps or would append for the date: a recorded
+ * it. It is the day `recordContent` keeps or would append for the date: a recorded
  * day as it is, and a later one with no word from fewer than
  * `CROSSWORD_REPEAT_DAYS` days before it. The same content and date always
  * give the same day.

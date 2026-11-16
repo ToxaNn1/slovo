@@ -72,7 +72,7 @@ function editJson(editionDir: string, file: string, edit: (json: Json) => Json):
   writeFileSync(path, JSON.stringify(edit(readJsonFile(path))));
 }
 
-/** Records edited content, as `pnpm build:pack --record` does, so the copy builds again. */
+/** Records edited content, as `recordContent` does, so the copy builds again. */
 function record(editionDir: string, today = new Date()): void {
   const result = recordContent({ editionDir, today });
   if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
@@ -1941,7 +1941,7 @@ describe('buildLanguagePack', () => {
           file: 'content/manifest.json',
           field: 'contentChecksum',
           message: expect.stringMatching(
-            /content changed since content version 9.*pnpm build:pack fixture --record/i,
+            /content changed since content version 9.*recordContent/i,
           ) as string,
         }),
       ]);
@@ -1970,7 +1970,7 @@ describe('buildLanguagePack', () => {
       expect.objectContaining({
         file: 'content/manifest.json',
         field: 'contentChecksum',
-        message: expect.stringMatching(/not recorded.*--record/i) as string,
+        message: expect.stringMatching(/not recorded.*recordContent/i) as string,
       }),
     ]);
   });
@@ -2425,7 +2425,7 @@ describe('the id registry', () => {
         file: 'content/words/w_fx0004.json',
         entryId: 'w_fx0004',
         field: 'id',
-        message: expect.stringMatching(/not in content\/ids\.json.*--record/i) as string,
+        message: expect.stringMatching(/not in content\/ids\.json.*recordContent/i) as string,
       }),
     ]);
   });

@@ -58,8 +58,8 @@ const CONTENT_FOLDERS = [
 /**
  * A copy of the UA Edition's folder under `dir` whose content folder holds the
  * seed snapshot's records and crossword days, recorded at its content
- * version: for the tests of what still reads an Edition folder (`--record`,
- * the Daily Crossword), so that none reads the Edition's own content folder.
+ * version: for the tests of what still reads an Edition folder (`recordContent`,
+ * the folder import, the Daily Crossword); the repo keeps none (ADR 0153).
  */
 export function ukrainianSeedFolder(dir: string): string {
   const editionDir = join(dir, 'uk');

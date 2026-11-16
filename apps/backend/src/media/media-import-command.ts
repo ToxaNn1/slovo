@@ -48,7 +48,7 @@ async function main(): Promise<number> {
           return 0;
         case 'not-imported':
           console.error(
-            `The content of "${editionId}" is not imported yet: run \`pnpm content import --edition ${editionId}\` first.`,
+            `The content of "${editionId}" is not imported yet: run \`pnpm content import --edition ${editionId} --snapshot <file>\` first.`,
           );
           return 1;
         case 'refused':

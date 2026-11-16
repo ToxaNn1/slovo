@@ -119,7 +119,7 @@ describe('the crossword days the pack build keeps in the Edition', () => {
     return editionDir;
   }
 
-  const notRecorded = `${DAYS_FILE}: Not the days last recorded: a published day never changes and only pnpm build:pack fixture --record appends days, so restore the file from git`;
+  const notRecorded = `${DAYS_FILE}: Not the days last recorded: a published day never changes and new days are only appended (recordContent), so restore the days as published`;
 
   it('appends days from today on so that 400 lie ahead, one a day', () => {
     expect(recorded[0]?.date).toBe('2027-01-01');
@@ -154,7 +154,7 @@ describe('the crossword days the pack build keeps in the Edition', () => {
     expect(buildErrors(editionDir)).toEqual([]);
   }, 60_000);
 
-  it('generates the Daily Crossword of a date after the days as --record appends it', () => {
+  it('generates the Daily Crossword of a date after the days as recordContent appends it', () => {
     const editionDir = recordedEdition();
     const generated = (date: string) => {
       const result = generateDailyCrossword({ editionDir, date });
@@ -267,12 +267,12 @@ describe('the crossword days the pack build keeps in the Edition', () => {
 });
 
 describe("the crossword days of the UA Edition's content", () => {
-  it('reach 400 days ahead with --record, no word coming back within 20 days', () => {
+  it('reach 400 days ahead with recordContent, no word coming back within 20 days', () => {
     const dir = mkdtempSync(join(tmpdir(), 'slovo-crossword-uk-'));
     workDirs.push(dir);
     const editionDir = ukrainianSeedFolder(dir);
 
-    // Half a year past the recorded days' start, so --record writes new days too.
+    // Half a year past the recorded days' start, so recordContent writes new days too.
     record(editionDir, '2027-06-01');
 
     expect(daysOf(editionDir).at(-1)?.date).toBe(dayAfter('2027-06-01', 400));

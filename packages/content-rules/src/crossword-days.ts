@@ -21,13 +21,12 @@ export function dateAfter(date: string, days: number): string {
 /**
  * What the rules of ADR 0052 refuse in an Edition's crossword days: days
  * other than those last recorded, days with no checksum recorded among them,
- * since a published day never changes and only the build appends; a gap
+ * since a published day never changes and new days are only appended; a gap
  * between days; and a word that comes back within 20 days.
  */
 export function checkCrosswordDays(
   days: readonly CrosswordDay[] | undefined,
   recorded: string | undefined,
-  editionId: string,
 ): Refusal[] {
   const unrecorded =
     recorded === undefined
@@ -38,7 +37,7 @@ export function checkCrosswordDays(
         {
           rule: 'crossword-days-immutable',
           file: CROSSWORD_DAYS_FILE,
-          message: `Not the days last recorded: a published day never changes and only pnpm build:pack ${editionId} --record appends days, so restore the file from git`,
+          message: `Not the days last recorded: a published day never changes and new days are only appended (recordContent), so restore the days as published`,
         },
       ]
     : [];

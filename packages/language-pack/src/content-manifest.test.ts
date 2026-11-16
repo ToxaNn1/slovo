@@ -19,7 +19,7 @@ const contentAt = (contentVersion: number, displayName = 'Мовлення'): Pa
   tips: [],
 });
 
-/** The manifest that records the content, as `--record` writes it. */
+/** The manifest that records the content, as `recordContent` writes it. */
 function recordedManifest(contentVersion: number, displayName?: string) {
   const check = checkContentVersion(contentAt(contentVersion - 1, displayName), {
     contentVersion: contentVersion - 1,
@@ -48,7 +48,7 @@ describe('checkContentVersion', () => {
         file: 'content/manifest.json',
         field: 'contentChecksum',
         message: expect.stringMatching(
-          /content changed since content version 4.*pnpm build:pack fixture --record/i,
+          /content changed since content version 4.*recordContent/i,
         ) as string,
       },
     });

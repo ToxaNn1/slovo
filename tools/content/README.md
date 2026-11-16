@@ -62,10 +62,10 @@ It prints one line per Entry, `<outcome>\t<id>\t<file>[\t<detail>]`, then the co
 
 <!-- /#1626 -->
 
-## Import the Edition folder: `import --edition`
+## Import a content snapshot: `import --edition --snapshot`
 
 ```sh
-pnpm content import --edition uk [--snapshot <file>] [--override]
+pnpm content import --edition uk --snapshot <file> [--override]
 ```
 
-Imports the Edition folder into the backend's Postgres through the backend's own command, which reads `DATABASE_URL` and `EDITIONS_DIR`. With `--snapshot <file>` it imports a content snapshot saved to a file instead, through the same content rules: CI, Maestro and `pnpm dev` seed an empty database from `editions/uk/seed-snapshot.json`.
+Imports a content snapshot saved to a file into the backend's Postgres through the backend's own command, which reads `DATABASE_URL` and `EDITIONS_DIR`, through the content rules: CI, Maestro and `pnpm dev` seed an empty database from `editions/uk/seed-snapshot.json`. The repository keeps no content folder to import (ADR 0153).

@@ -57,7 +57,7 @@ export function checkContentVersion(
   }
   const nextVersion = manifest.contentVersion + 1;
   const version = String(manifest.contentVersion);
-  const command = `pnpm build:pack ${content.editionId} --record`;
+  const command = 'recordContent';
   return {
     recorded: false,
     next: {

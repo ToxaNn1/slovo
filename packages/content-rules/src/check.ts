@@ -100,7 +100,7 @@ function checkSet(
       ...tips,
     ]),
     ...unknownCrosswordEntries(set.crosswordDays ?? [], [...words, ...corrections]),
-    ...checkCrosswordDays(set.crosswordDays, set.recordedCrosswordDaysChecksum, config.id),
+    ...checkCrosswordDays(set.crosswordDays, set.recordedCrosswordDaysChecksum),
     ...protectedLiteraryUses(corrections, today),
   ];
 }

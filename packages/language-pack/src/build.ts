@@ -151,7 +151,6 @@ function checkEdition(
     }
   | { ok: false; errors: readonly BuildError[] } {
   const source = readEdition(editionDir, { registryRequired: true, today });
-  const command = `pnpm build:pack ${source.editionId ?? '<edition-id>'} --record`;
   const unregistered =
     source.registry === undefined
       ? []
@@ -171,7 +170,7 @@ function checkEdition(
       file,
       entryId: entry.id,
       field: 'id',
-      message: `Not in content/ids.json: record new ids with ${command}`,
+      message: 'Not in content/ids.json: record new ids with recordContent',
     })),
   ];
   if (errors.length > 0 || source.valid === undefined) return { ok: false, errors };
