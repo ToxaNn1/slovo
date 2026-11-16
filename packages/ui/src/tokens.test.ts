@@ -7,14 +7,12 @@ import {
   designTokens,
   fontSizeSteps,
   halftone,
-  idiomExpressionLength,
   motion,
   offsetShadow,
   roleAt,
-  roleSize,
-  roundPromptLength,
   shadowEdge,
-  sizeForLength,
+  titleScale,
+  titleSize,
   typeRoles,
   typeStyle,
   type TypeRole,
@@ -239,44 +237,31 @@ describe('the Core’s shape, type and motion roles', () => {
   });
 });
 
-describe('sizeForLength', () => {
-  const size = { fontSize: 50, lineHeight: 60 };
-  const steps = {
-    steps: [
-      { upTo: 5, scale: 1 },
-      { upTo: 10, scale: 0.8 },
-    ],
-    longer: 0.6,
-  } as const;
-  const text = (length: number) => 'a'.repeat(length);
-
-  it('keeps the full size for a short text and steps it down as the text grows', () => {
-    expect(sizeForLength(size, text(5), steps)).toEqual(size);
-    expect(sizeForLength(size, text(10), steps)).toEqual({ fontSize: 40, lineHeight: 48 });
-    expect(sizeForLength(size, text(11), steps)).toEqual({ fontSize: 30, lineHeight: 36 });
+describe('titleScale', () => {
+  it('sets the card titles on one fixed scale at M, largest first (ADR 0157)', () => {
+    expect(titleScale).toEqual([50, 44, 40, 36, 32, 28, 26, 24, 22, 20]);
   });
 
-  it('counts no Stress mark as a letter', () => {
-    expect(sizeForLength(size, `${text(2)}\u0301${text(3)}`, steps)).toEqual(size);
+  it('starts every card title on a step of the scale', () => {
+    const titles: readonly TypeRole[] = [
+      'heroWord',
+      'synonymDominant',
+      'idiomExpression',
+      'tipTitle',
+      'nonStandardForm',
+      'correctionStruck',
+      'correctionStandard',
+      'roundPrompt',
+    ];
+    expect(titles.map((name) => typeRoles[name].size)).toEqual([50, 50, 36, 36, 26, 26, 26, 24]);
   });
 
-  it('sets a Round prompt at 24, a longer one at 20 and a long one at 18 (owner 08.11)', () => {
-    const at = (length: number) =>
-      sizeForLength(roleSize('roundPrompt'), text(length), roundPromptLength).fontSize;
-    expect(at(22)).toBe(24);
-    expect(at(68)).toBe(20);
-    // The owner's Quick Question of 110 letters.
-    expect(at(110)).toBe(18);
-  });
-
-  it("sets an Idiom's expression at the Lemma size, a longer one at 40 and a long one at 30 at M (owner 08.11)", () => {
-    const lemma = { fontSize: fontSizeSteps.M.lemma, lineHeight: 65 };
-    const at = (length: number) =>
-      sizeForLength(lemma, text(length), idiomExpressionLength).fontSize;
-    expect(at(7)).toBe(50);
-    expect(at(14)).toBe(40);
-    // «мокрим рядном накрити» and «І долоню протиснути не можна».
-    expect(at(21)).toBe(30);
-    expect(at(28)).toBe(30);
+  it("takes a title role at the Lemma's size: its share of the Lemma's own", () => {
+    // At L the Lemma is 58, so a title of 36 at M takes 36 × 58 / 50.
+    const lemma = { fontSize: fontSizeSteps.L.lemma, lineHeight: 75.4 };
+    expect(titleSize('idiomExpression', lemma)).toEqual({
+      fontSize: (36 * 58) / 50,
+      lineHeight: (typeRoles.idiomExpression.lineHeight * 58) / 50,
+    });
   });
 });

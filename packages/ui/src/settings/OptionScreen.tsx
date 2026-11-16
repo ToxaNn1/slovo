@@ -110,6 +110,9 @@ export function OptionSampleWord({ lemma, definition }: { lemma: string; definit
         testID="option-sample-lemma"
         text={lemma}
         size={lemmaSize}
+        // The Lemma keeps its size at every OS text size, as on the cards (ADR 0157).
+        allowFontScaling={false}
+        stepped
         typeRole="heroWord"
         style={[typeStyle('heroWord', tokens), { color: tokens.colors.ink }]}
       />

@@ -41,6 +41,9 @@ export function FontSizePreview({
         testID="font-size-preview-lemma"
         text={lemma}
         size={lemmaSize}
+        // The Lemma keeps its size at every OS text size, as on the cards (ADR 0157).
+        allowFontScaling={false}
+        stepped
         typeRole="heroWord"
         style={[typeStyle('heroWord', tokens), { color: colors.ink }]}
       />

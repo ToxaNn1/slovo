@@ -1,8 +1,34 @@
 import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
+import { FontSizeProvider } from '../providers/FontSizeProvider';
 import { coreTokens, typeStyle } from '../tokens';
 import { WholeWordsText } from './WholeWordsText';
+
+/** Lays the text's line out `width` wide. */
+async function layOut(testID: string, width: number) {
+  const line = screen.getByTestId(testID).parent;
+  if (line === null) throw new Error('The text has no line around it');
+  await fireEvent(line, 'layout', { nativeEvent: { layout: { width } } });
+}
+
+/** Reports the widest word, at the size the text is tried at, as `width` wide. */
+async function measureWords(testID: string, width: number) {
+  await fireEvent(
+    screen.getByTestId(`${testID}-words`, { includeHiddenElements: true }),
+    'textLayout',
+    { nativeEvent: { lines: [{ width }] } },
+  );
+}
+
+/** Reports the whole text, at the size it is tried at, as taking `count` lines. */
+async function measureLines(testID: string, count: number) {
+  await fireEvent(
+    screen.getByTestId(`${testID}-lines`, { includeHiddenElements: true }),
+    'textLayout',
+    { nativeEvent: { lines: Array.from({ length: count }, () => ({ width: 100 })) } },
+  );
+}
 
 describe('WholeWordsText', () => {
   it('gives a capital mark room at the size it draws a word role at', async () => {
@@ -87,5 +113,146 @@ describe('WholeWordsText', () => {
     await fireEvent(measured, 'textLayout', { nativeEvent: { lines: [{ width: 240 }] } });
 
     expect(screen.getByTestId('word')).toHaveStyle({ fontSize: 50 });
+  });
+
+  it('keeps the start size for a short word', async () => {
+    await render(
+      <WholeWordsText
+        testID="word"
+        text="Hedgehog"
+        typeRole="heroWord"
+        lines={2}
+        stepped
+        style={typeStyle('heroWord', coreTokens)}
+      />,
+    );
+    await layOut('word', 300);
+    await measureWords('word', 120);
+
+    expect(screen.getByTestId('word')).toHaveStyle({ fontSize: 50 });
+    expect(screen.getByTestId('word')).not.toHaveStyle({ opacity: 0 });
+  });
+
+  it('draws a word too wide for its line at the next lower step of the scale, never a fraction', async () => {
+    await render(
+      <WholeWordsText
+        testID="word"
+        text="Synchrophasotron"
+        typeRole="heroWord"
+        lines={2}
+        stepped
+        style={typeStyle('heroWord', coreTokens)}
+      />,
+    );
+    await layOut('word', 300);
+    // At 50 the word takes 320 of the line's 300: (300 − 1) / 320 of 50 would be 46.7.
+    await measureWords('word', 320);
+    expect(screen.getByTestId('word')).toHaveStyle({ opacity: 0 });
+    // At 44 it takes 320 × 44 / 50 = 281.6, which fits.
+    await measureWords('word', 281.6);
+
+    const word = screen.getByTestId('word');
+    expect(word).toHaveStyle({ fontSize: 44 });
+    expect(word).not.toHaveStyle({ opacity: 0 });
+    // A single word stays whole on its one line.
+    expect(word.props).toMatchObject({ numberOfLines: 1 });
+  });
+
+  it('takes the steps of the scale at the in-app text size', async () => {
+    // At the larger ladder step every step is 58 / 50 of its size at M.
+    await render(
+      <FontSizeProvider size={{ scale: 'ladder', step: 'larger' }}>
+        <WholeWordsText
+          testID="word"
+          text="Synchrophasotron"
+          typeRole="heroWord"
+          size={{ fontSize: 58, lineHeight: 75.4 }}
+          lines={2}
+          stepped
+          style={typeStyle('heroWord', coreTokens)}
+        />
+      </FontSizeProvider>,
+    );
+    await layOut('word', 340);
+    await measureWords('word', 371.2);
+    await measureWords('word', 326.6);
+
+    expect(screen.getByTestId('word')).toHaveStyle({ fontSize: (44 * 58) / 50 });
+  });
+
+  it('steps a phrase down until it fits its lines, wrapping only between words', async () => {
+    await render(
+      <WholeWordsText
+        testID="phrase"
+        text="Beat the bushes all day"
+        typeRole="idiomExpression"
+        lines={3}
+        stepped
+        style={typeStyle('idiomExpression', coreTokens)}
+      />,
+    );
+    await layOut('phrase', 300);
+    await measureWords('phrase', 200);
+    // At 36 the phrase takes four lines, at 32 three.
+    await measureLines('phrase', 4);
+    expect(screen.getByTestId('phrase')).toHaveStyle({ opacity: 0 });
+    await measureWords('phrase', 178);
+    await measureLines('phrase', 3);
+
+    const phrase = screen.getByTestId('phrase');
+    expect(phrase).toHaveStyle({ fontSize: 32 });
+    expect(phrase).not.toHaveStyle({ opacity: 0 });
+    expect(phrase.props).toMatchObject({ numberOfLines: 3 });
+  });
+
+  it('shrinks to 0.7 of the smallest step when even that is too wide', async () => {
+    await render(
+      <WholeWordsText
+        testID="word"
+        text="Thelongestwordintheworld"
+        typeRole="heroWord"
+        lines={2}
+        stepped
+        style={typeStyle('heroWord', coreTokens)}
+      />,
+    );
+    await layOut('word', 100);
+    for (let step = 0; step < 10; step += 1) await measureWords('word', 400);
+
+    const word = screen.getByTestId('word');
+    expect(word).toHaveStyle({ fontSize: 20 });
+    expect(word).not.toHaveStyle({ opacity: 0 });
+    expect(word.props).toMatchObject({
+      numberOfLines: 1,
+      adjustsFontSizeToFit: true,
+      minimumFontScale: 0.7,
+    });
+  });
+
+  it('ends a text cut at its lines with an ellipsis only when asked', async () => {
+    await render(
+      <>
+        <WholeWordsText
+          testID="asked"
+          text="Take part"
+          typeRole="heroWord"
+          lines={2}
+          stepped
+          ellipsis
+          style={typeStyle('heroWord', coreTokens)}
+        />
+        <WholeWordsText
+          testID="plain"
+          text="Take part"
+          typeRole="heroWord"
+          lines={2}
+          stepped
+          style={typeStyle('heroWord', coreTokens)}
+        />
+      </>,
+    );
+
+    expect(screen.getByTestId('asked')).toHaveProp('ellipsizeMode', 'tail');
+    expect(screen.getByTestId('plain')).not.toHaveProp('ellipsizeMode');
   });
 });

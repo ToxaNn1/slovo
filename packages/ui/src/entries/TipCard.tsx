@@ -10,7 +10,7 @@ import { LinkChips } from './LinkChips';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { Wedge } from '../primitives/Wedge';
-import { entryCardFrame, space, typeStyle, wedges } from '../tokens';
+import { entryCardFrame, space, titleSize, typeStyle, wedges } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { NonStandardForm, StandardForm } from './CorrectionCard';
@@ -92,6 +92,10 @@ export function TipCardBody({
               testID="tip-title"
               text={capitalised(card.title, voice.accessibilityLanguage)}
               typeRole="tipTitle"
+              size={titleSize('tipTitle', lemmaSize)}
+              stepped
+              // A title of 36 or more keeps its size at every OS text size (ADR 0157).
+              allowFontScaling={false}
               lines={3}
               style={[typeStyle('tipTitle', tokens), { color: colors.ink }]}
             />

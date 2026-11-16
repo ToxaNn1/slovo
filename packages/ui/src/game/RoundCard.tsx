@@ -10,12 +10,9 @@ import { useTokens } from '../providers/TokensProvider';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useRoundLook } from './round-look';
 import {
-  roleSize,
   roundHeader,
   roundLayout,
-  roundPromptLength,
   quickQuestionCard,
-  sizeForLength,
   space,
   typeStyle,
   type TypeRole,
@@ -195,12 +192,12 @@ export function RoundCard({
           <WholeWordsText
             text={prompt}
             typeRole={promptRole}
-            // A long prompt takes a smaller size, the cards' one text scale (owner 08.11);
-            // on the ground the text face already sets a long one.
-            size={
-              promptRole === 'roundExplanation'
-                ? undefined
-                : sizeForLength(roleSize(promptRole), prompt, roundPromptLength)
+            // A prompt too big for its lines takes a lower step of the cards' one title
+            // scale (ADR 0157); on the ground the text face already sets a long one.
+            lines={promptRole === 'roundExplanation' ? undefined : roundLayout.promptLines}
+            stepped={promptRole !== 'roundExplanation'}
+            maxFontSizeMultiplier={
+              promptRole === 'roundExplanation' ? undefined : roundLayout.textMaxFontScale
             }
             style={[
               typeStyle(promptRole, tokens),

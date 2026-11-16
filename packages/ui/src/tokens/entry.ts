@@ -1,4 +1,4 @@
-import type { Easing, LengthSteps } from './base';
+import type { Easing } from './base';
 
 /** The tokens of the Entry: the Word card, its reveal, panels and rows. */
 
@@ -179,13 +179,6 @@ export const correctionCardLayout = { paddingTop: 28 } as const;
 export const correctionStrike = { thickness: 5, overhang: 4, angle: '-4deg' } as const;
 
 /**
- * The standard form in a Correction card's «Як краще» (board XEntry2 e6,
- * 38 pt where the Lemma is 50): this share of the Lemma's size at the user's
- * font size, so it keeps the card's one text scale.
- */
-export const correctionStandardScale = 38 / 50;
-
-/**
  * The mark's wedge at the edge a swiped Entry card leaves (board 04, XSwipe):
  * how far down the card it sits, its padding at the card's edge and inside,
  * the gap to its icon, the width of the light wedge's ink inset, and its icons' sides.
@@ -241,16 +234,11 @@ export const badgePadding = { horizontal: 10, vertical: 6 } as const;
 export const standardFormScale = 30 / 50;
 
 /**
- * An Idiom's expression by its length (owner 08.11): the Lemma's size up to 10
- * letters, 40 where the Lemma is 50 up to 18, and 30 for a longer one.
+ * The size an Entry of another kind starts at in Entry details' red panel at
+ * M, a step of `titleScale` well under the main card's (ADR 0157): it grows
+ * with the in-app text size, shrinks to fit two lines, then ends in «…».
  */
-export const idiomExpressionLength: LengthSteps = {
-  steps: [
-    { upTo: 10, scale: 1 },
-    { upTo: 18, scale: 40 / 50 },
-  ],
-  longer: 30 / 50,
-};
+export const panelHeadline = { size: 24, lines: 2 } as const;
 
 /** The tallest an Illustration is drawn, in points (ADR 0055). */
 export const illustrationHeight = 160;

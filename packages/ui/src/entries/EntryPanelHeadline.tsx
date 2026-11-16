@@ -3,9 +3,9 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { useLemmaSize } from '../providers/FontSizeProvider';
+import { useTitleFactor } from '../providers/FontSizeProvider';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { idiomExpressionLength, sizeForLength, space, typeStyle } from '../tokens';
+import { fontScaleCap, panelHeadline, space, typeStyle, wordLineHeight } from '../tokens';
 import { capitalised } from './capitalised';
 import { CorrectionStruckForm } from './CorrectionCard';
 
@@ -29,14 +29,14 @@ export function headlineOf(card: OtherKindCard): string {
 /**
  * The headline of an Entry of another kind in Entry details' red panel, as a
  * Word's Lemma and part of speech stand there (owner 15.11): its expression,
- * dominant or title in the key ink at the Lemma's size, a long one smaller, or
- * a Correction's struck form; under it, the name of its kind where a Word
- * names its part of speech.
+ * dominant or title in the key ink at `panelHeadline`'s size, on at most two
+ * lines (ADR 0157), or a Correction's struck form; under it, the name of its
+ * kind where a Word names its part of speech.
  */
 export function EntryPanelHeadline({ card }: { card: OtherKindCard }) {
   const tokens = useTokens();
   const keyInk = useSchemeColors('light').ink;
-  const lemmaSize = useLemmaSize();
+  const fontSize = panelHeadline.size * useTitleFactor();
   const { strings, voice } = useEdition();
   const kind = kindName(card, strings);
   const text = headlineOf(card);
@@ -59,10 +59,13 @@ export function EntryPanelHeadline({ card }: { card: OtherKindCard }) {
       ) : (
         <WholeWordsText
           text={capitalised(text, voice.accessibilityLanguage)}
-          size={sizeForLength(lemmaSize, text, idiomExpressionLength)}
+          size={{ fontSize, lineHeight: fontSize * wordLineHeight.lemma }}
           typeRole="heroWord"
           testID="entry-panel-title"
-          lines={3}
+          maxFontSizeMultiplier={fontScaleCap.text}
+          lines={panelHeadline.lines}
+          stepped
+          ellipsis
           accessibilityRole="header"
           accessibilityLabel={heading}
           {...voice}
