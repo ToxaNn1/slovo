@@ -105,7 +105,7 @@ describe('GameEndPoster', () => {
     expect(ground.children[0]).toHaveProp('height', 520);
   });
 
-  it('picks the plural form of the hits by the Rounds played, as «з 4 влучань» reads', async () => {
+  it('picks the plural form of the hits by the Rounds played, as «1 of 4 hits» reads', async () => {
     await renderPoster({
       ended: { kind: 'time-up', onTarget: false, played: 4, right: 1, xp: 0, newBest: false },
     });
