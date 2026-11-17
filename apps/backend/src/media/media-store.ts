@@ -37,6 +37,32 @@ export function memoryMediaStore(): MediaStore {
   };
 }
 
+/**
+ * The Media Store of the Staging Deployment (ADR 0168): it reads a file at
+ * its public URL under the Media Store's root and refuses every write, so
+ * staging never changes the files production serves.
+ */
+export function publicMediaStore(
+  mediaBase: string,
+  { fetch: send = fetch }: { fetch?: typeof fetch } = {},
+): MediaStore {
+  const refuse = (key: string) =>
+    Promise.reject(new Error(`The Staging Deployment writes nothing to the Media Store: ${key}`));
+  return {
+    put: refuse,
+    delete: refuse,
+    async head(key) {
+      const response = await send(`${mediaBase}/${key}`, { method: 'HEAD' });
+      if (response.status === 404) return undefined;
+      if (!response.ok) throw new Error(`HEAD ${key} answered ${String(response.status)}`);
+      return {
+        size: Number(response.headers.get('content-length') ?? 0),
+        contentType: response.headers.get('content-type') ?? '',
+      };
+    },
+  };
+}
+
 export interface R2Config {
   readonly accountId: string;
   readonly bucket: string;

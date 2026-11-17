@@ -42,6 +42,10 @@ _Avoid_: Release, release channel, branch
 The one running backend that serves every Edition: one container image on Railway with its Postgres, which holds every Edition's content (ADR 0090), behind the app's domain (ADR 0063, 0065). Its secrets and addresses live in its environment variables, never in the repository.
 _Avoid_: Env, prod, server (the backend is the code; the Deployment is its running copy)
 
+**Staging Deployment**:
+A second running copy of the backend for the owner's tests: the `staging` Railway environment with its own variables, domain and a Neon branch of the Deployment's Postgres. It sleeps, runs no Cron service, sends no Analytics and writes nothing to the Media Store (ADR 0168). **Deployment** alone means production.
+_Avoid_: Staging server, test environment, dev
+
 **Owner admin**:
 The Vite app `apps/admin`, served built by the backend at `/admin` on the Deployment, where the owner and admins run SLOVO (ADR 0088): seven sections, Огляд, Контент, Свічі, Аналітика, Якість, Розробка and Безпека, behind a global Edition and period filter. It imports only the contracts and talks to the backend over HTTP alone.
 _Avoid_: Dashboard, back office, admin panel

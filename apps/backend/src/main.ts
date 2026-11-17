@@ -11,8 +11,8 @@ import { createMailer } from './account/mailer';
 import { ownerAlertsOf } from './alerts/owner-chat';
 import { createApp } from './app';
 import { readConfig, ServerConfigSchema } from './config';
-import { memoryMediaStore, r2MediaStore } from './media/media-store';
 import { createDatabase } from './database/database';
+import { deploymentPorts } from './deployment-ports';
 import { createEasSource } from './development/eas-source';
 import { createGitHubSource } from './development/github-source';
 import { readEditions } from './edition/edition-folders';
@@ -20,7 +20,6 @@ import { createLogger } from './logger';
 import { systemRandom } from './random';
 import { sentryOf } from './quality/sentry-api';
 import { createSentryReporter } from './sentry-reporter';
-import { createPostHogClient, unavailablePostHog } from './analytics/posthog-client';
 import { startServer } from './server';
 
 const config = readConfig(ServerConfigSchema, process.env);
@@ -28,6 +27,7 @@ const logger = createLogger();
 const database = createDatabase(config.DATABASE_URL, logger);
 const editions = readEditions(config.EDITIONS_DIR);
 const appConfig = openAppConfig(REPO_DIR).config;
+const ports = deploymentPorts(config, { clock: systemClock });
 const mailer = createMailer(config.mail);
 // The owner admin app as `pnpm --filter @slovo/admin build` leaves it; `pnpm dev:admin` serves it in Vite.
 const adminDist = join(REPO_DIR, 'apps/admin/dist');
@@ -40,7 +40,7 @@ const app = createApp({
   editions,
   mailer,
   alerts: ownerAlertsOf(database, config, logger),
-  posthog: config.posthog === undefined ? unavailablePostHog : createPostHogClient(config.posthog),
+  posthog: ports.posthog,
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
   apple: createAppleVerifier({ clock: systemClock }),
   github: createGitHubSource({
@@ -50,15 +50,13 @@ const app = createApp({
   }),
   eas: createEasSource({ token: config.EXPO_TOKEN, projectId: config.EAS_PROJECT_ID, logger }),
   authSecret: config.AUTH_SECRET,
-  reporter: await createSentryReporter(config.SENTRY_DSN),
+  reporter: await createSentryReporter(config.SENTRY_DSN, ports.sentryEnvironment),
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
   sentry: sentryOf(config, systemClock),
   ciToken: config.CI_HISTORY_TOKEN,
   mediaBase: config.mediaBase,
-  // Unset in development, the Media Store's files stay in memory.
-  mediaStore:
-    config.r2 === undefined ? memoryMediaStore() : r2MediaStore(config.r2, { clock: systemClock }),
+  mediaStore: ports.mediaStore,
 });
 const server = await startServer({ app, database, port: config.PORT });
 
