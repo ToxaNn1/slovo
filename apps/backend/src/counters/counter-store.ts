@@ -7,6 +7,7 @@ import {
   contentWords,
   favoritesAdds,
   questionnaireCounters,
+  statisticsOffCounters,
 } from '../database/schema';
 
 /**
@@ -162,6 +163,16 @@ export function createCounterStore({ db }: Database): CounterStore {
             questionnaireCounters.answer,
           ],
           set: { count: sql`${questionnaireCounters.count} + 1` },
+        });
+    },
+
+    async addStatisticsOff(editionId, day) {
+      await db
+        .insert(statisticsOffCounters)
+        .values({ editionId, day, count: 1 })
+        .onConflictDoUpdate({
+          target: [statisticsOffCounters.editionId, statisticsOffCounters.day],
+          set: { count: sql`${statisticsOffCounters.count} + 1` },
         });
     },
   };
