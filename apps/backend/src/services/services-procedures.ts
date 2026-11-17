@@ -14,6 +14,8 @@ import type {
   UsageRead,
 } from '@slovo/server-core';
 
+import { serviceEntriesProcedures, type EntryAccess } from './service-entries-procedures';
+
 /** The refusals every «Сервіси» procedure may answer. */
 interface AdminErrors {
   NOT_FOUND: () => Error;
@@ -39,6 +41,7 @@ export type OwnerWrite = (
 export function servicesProcedures(
   store: ServiceStore,
   admitOwner: AdmitOwner,
+  entryAccess: EntryAccess,
   { book, ownerWrite }: { book: ServiceMoneyBook; ownerWrite: OwnerWrite },
   usage: ServiceUsage,
 ) {
@@ -67,6 +70,7 @@ export function servicesProcedures(
       const services = await store.list();
       return { services: [...services], costs: book.costs(services) };
     }),
+    ...serviceEntriesProcedures(entryAccess),
     ...money,
     usage: os.usage.handler(async ({ context, errors }) => {
       await admitOwner(context.headers, errors);

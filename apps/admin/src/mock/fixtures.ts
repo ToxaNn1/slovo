@@ -5,6 +5,7 @@ import {
   ADDED_SERVICE,
   SENTRY_USAGE,
   SERVICE_COSTS,
+  SERVICE_ENTRIES,
   SERVICE_USAGE,
   SERVICES,
 } from './services-fixtures';
@@ -485,6 +486,10 @@ export const FIXTURES: AdminApiOutputs = {
     ],
   },
   services: {
+    entries: { vault: 'on', entries: SERVICE_ENTRIES },
+    addEntry: { entry: SERVICE_ENTRIES[0] },
+    editEntry: { entry: SERVICE_ENTRIES[0] },
+    deleteEntry: { deleted: true },
     list: { services: SERVICES, costs: SERVICE_COSTS },
     add: { service: ADDED_SERVICE },
     editMoney: { service: ADDED_SERVICE, changed: [] },

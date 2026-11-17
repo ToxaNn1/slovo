@@ -159,6 +159,17 @@ export {
 } from './admin/admin-sign-in';
 export type { ServiceStore } from './services/services';
 export {
+  createServiceEntries,
+  type EntryChanges,
+  type EntryWriteResult,
+  type NewEntry,
+  type ServiceEntries,
+  type ServiceEntryStore,
+  type ServiceVault,
+  type StoredEntryValue,
+  type StoredServiceEntry,
+} from './services/service-entries';
+export {
   createServiceMoneyBook,
   type NewService,
   type ServiceMoney,

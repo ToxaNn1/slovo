@@ -70,7 +70,8 @@ test("the side panel changes a Service's plan, price and billing day only with a
   const panel = within(await screen.findByRole('dialog', { name: 'Neon' }));
   expect(panel.getByText('День списання')).toBeDefined();
 
-  await user.click(panel.getByRole('button', { name: 'Змінити' }));
+  const money = within(panel.getByRole('region', { name: 'Гроші' }));
+  await user.click(money.getByRole('button', { name: 'Змінити' }));
   const form = within(panel.getByRole('form', { name: 'План і ціна' }));
   await user.type(form.getByLabelText('План'), 'Launch');
   await user.type(form.getByLabelText('Ціна, $ / місяць'), '19,5');
