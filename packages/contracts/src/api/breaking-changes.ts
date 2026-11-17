@@ -93,6 +93,9 @@ function takesOthers(others: unknown): boolean {
   );
 }
 
+/** The change of a field added to a strict output, which an admin output may make (ADR 0170). */
+const NEW_IN_STRICT_OBJECT = 'is new in a strict object';
+
 /** Every way the `described` schema breaks the `promised` one, read in `direction`. */
 function schemaChanges(
   promised: Part,
@@ -138,7 +141,7 @@ function schemaChanges(
   // A strict output refuses a field it does not know, so an app would refuse a new one.
   if (direction === 'output' && promised['additionalProperties'] === false) {
     for (const name of Object.keys(describedFields)) {
-      if (!(name in promisedFields)) changes.push(`${at}.${name} is new in a strict object`);
+      if (!(name in promisedFields)) changes.push(`${at}.${name} ${NEW_IN_STRICT_OBJECT}`);
     }
   }
 
@@ -349,8 +352,9 @@ function responseChanges(promised: Part, described: Part): string[] {
 /**
  * Whether a path is the admin's. `apps/admin` and the Агент tooling ship with
  * the backend, so no caller in the field sends an old request: an admin input
- * may narrow (ADR 0122) and an admin procedure may go (ADR 0162). Its outputs
- * are held as every other.
+ * may narrow (ADR 0122), an admin procedure may go (ADR 0162) and an admin
+ * strict output may gain a field (ADR 0170). Its outputs are otherwise held
+ * as every other.
  */
 function isAdmin(path: string): boolean {
   return path.startsWith('/v1/admin/');
@@ -363,7 +367,8 @@ function isAdmin(path: string): boolean {
  * successful answer and an error code stay, nothing optional becomes
  * required, and no type or constraint changes, save an input bound or enum
  * that widens and an output one that narrows (ADR 0031); an admin input may
- * narrow (ADR 0122) and an admin procedure may go (ADR 0162).
+ * narrow (ADR 0122), an admin procedure may go (ADR 0162) and an admin strict
+ * output may gain a field (ADR 0170).
  */
 export function breakingChanges(promised: object, described: object): string[] {
   const changes: string[] = [];
@@ -378,7 +383,9 @@ export function breakingChanges(promised: object, described: object): string[] {
       }
       const located = [
         ...(isAdmin(path) ? [] : requestChanges(part(operation), part(match))),
-        ...responseChanges(part(operation), part(match)),
+        ...responseChanges(part(operation), part(match)).filter(
+          (change) => !(isAdmin(path) && change.endsWith(NEW_IN_STRICT_OBJECT)),
+        ),
       ];
       changes.push(...located.map((change) => `${name}: ${change}`));
     }

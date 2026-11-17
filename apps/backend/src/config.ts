@@ -52,6 +52,9 @@ function refineVaultKey(
 const ServerVariablesSchema = z.object({
   // `production` on a host: the server then refuses to send to Mailpit.
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  // `staging` on the Staging Deployment (ADR 0168): no Analytics, no Media
+  // Store write, Sentry environment `staging`. Unset, the Deployment.
+  DEPLOYMENT: emptyAsUnset(z.enum(['production', 'staging']).default('production')),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/, error: 'must be a postgres:// URL' }),
   // The sign-in emails go over ZeptoMail's HTTPS API (ADR 0115): its email
   // endpoint, https:// only, in the EU data centre by default, and the Send
@@ -192,6 +195,17 @@ const DEVELOPMENT_MEDIA_BASE = 'http://localhost:8787/media';
 
 type R2Variables = Partial<Record<(typeof R2_VARIABLES)[number], string | undefined>>;
 
+/**
+ * The variables the Staging Deployment must not be given (ADR 0168): with
+ * them it could send Analytics queries or write to the Media Store.
+ */
+const STAGING_REFUSED_VARIABLES = [
+  ...R2_VARIABLES,
+  'POSTHOG_PERSONAL_API_KEY',
+  'POSTHOG_PROJECT_ID',
+  'POSTHOG_HOST',
+] as const;
+
 /** Names each R2 variable that is unset when production needs it, or when another one is set. */
 function refineR2(variables: R2Variables & { NODE_ENV: string }, context: z.RefinementCtx): void {
   const unset = R2_VARIABLES.filter((name) => variables[name] === undefined);
@@ -296,6 +310,19 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
       }
     }
   }
+  if (variables.DEPLOYMENT === 'staging') {
+    // It reads the Media Store's public URLs only, so it needs no R2 keys.
+    for (const name of STAGING_REFUSED_VARIABLES) {
+      if (variables[name] !== undefined) {
+        context.addIssue({
+          code: 'custom',
+          path: [name],
+          message: 'must not be set on the Staging Deployment',
+        });
+      }
+    }
+    return;
+  }
   refineR2(variables, context);
   refineVaultKey(variables, context);
 }).transform(
@@ -326,6 +353,8 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     mail: mailOf({ ZEPTOMAIL_API_URL, ZEPTOMAIL_TOKEN, MAILPIT_URL, MAIL_FROM }),
   }),
 );
+
+export type ServerConfig = z.output<typeof ServerConfigSchema>;
 
 /** The environment the migrate and reports commands read. */
 export const MigrateConfigSchema = ServerVariablesSchema.pick({ DATABASE_URL: true });

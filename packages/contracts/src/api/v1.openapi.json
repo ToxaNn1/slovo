@@ -10084,6 +10084,13 @@
                                   }
                                 },
                                 "additionalProperties": false
+                              },
+                              "channel": {
+                                "enum": [
+                                  "beta",
+                                  "production"
+                                ],
+                                "type": "string"
                               }
                             },
                             "additionalProperties": false
@@ -10515,6 +10522,13 @@
                                 }
                               },
                               "additionalProperties": false
+                            },
+                            "channel": {
+                              "enum": [
+                                "beta",
+                                "production"
+                              ],
+                              "type": "string"
                             }
                           },
                           "additionalProperties": false
@@ -12148,6 +12162,13 @@
                                   }
                                 },
                                 "additionalProperties": false
+                              },
+                              "channel": {
+                                "enum": [
+                                  "beta",
+                                  "production"
+                                ],
+                                "type": "string"
                               }
                             },
                             "additionalProperties": false
@@ -14143,6 +14164,13 @@
                                   }
                                 },
                                 "additionalProperties": false
+                              },
+                              "channel": {
+                                "enum": [
+                                  "beta",
+                                  "production"
+                                ],
+                                "type": "string"
                               }
                             },
                             "additionalProperties": false

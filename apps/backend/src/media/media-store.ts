@@ -4,7 +4,8 @@ import type { Clock } from '@slovo/server-core';
 
 /** A file the Media Store holds. */
 export interface StoredFile {
-  readonly size: number;
+  /** In bytes; undefined when a HEAD answer names no Content-Length (a chunked or compressed one). */
+  readonly size: number | undefined;
   readonly contentType: string;
 }
 
@@ -33,6 +34,38 @@ export function memoryMediaStore(): MediaStore {
     },
     head(key) {
       return Promise.resolve(files.get(key));
+    },
+  };
+}
+
+/** The size a HEAD answer names, or undefined when it has no Content-Length. */
+function sizeOf(response: Response): number | undefined {
+  const length = response.headers.get('content-length');
+  return length === null ? undefined : Number(length);
+}
+
+/**
+ * The Media Store of the Staging Deployment (ADR 0168): it reads a file at
+ * its public URL under the Media Store's root and refuses every write, so
+ * staging never changes the files production serves.
+ */
+export function publicMediaStore(
+  mediaBase: string,
+  { fetch: send = fetch }: { fetch?: typeof fetch } = {},
+): MediaStore {
+  const refuse = (key: string) =>
+    Promise.reject(new Error(`The Staging Deployment writes nothing to the Media Store: ${key}`));
+  return {
+    put: refuse,
+    delete: refuse,
+    async head(key) {
+      const response = await send(`${mediaBase}/${key}`, { method: 'HEAD' });
+      if (response.status === 404) return undefined;
+      if (!response.ok) throw new Error(`HEAD ${key} answered ${String(response.status)}`);
+      return {
+        size: sizeOf(response),
+        contentType: response.headers.get('content-type') ?? '',
+      };
     },
   };
 }
@@ -90,7 +123,7 @@ export function r2MediaStore(
       if (response.status === 404) return undefined;
       if (!response.ok) fail('HEAD', key, response);
       return {
-        size: Number(response.headers.get('content-length') ?? 0),
+        size: sizeOf(response),
         contentType: response.headers.get('content-type') ?? '',
       };
     },

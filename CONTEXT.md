@@ -35,12 +35,16 @@ A saved slice of an Edition's content snapshot, `editions/<edition>/seed-snapsho
 _Avoid_: Fixture database, sample content
 
 **Update channel**:
-An Edition's stream of signed OTA updates to the app's JavaScript, named after the Edition id and bound to its builds; an update reaches only the builds whose native code it was made for, and the owner publishes one deliberately, to a share of readers first (ADR 0062).
+One of the app's two streams of signed OTA updates to its JavaScript, `production` for readers and `beta` for testers, each bound to the store builds of its build profile; an update reaches only the builds whose native code it was made for, and the owner publishes one deliberately, to a share of readers first (ADR 0062, 0167).
 _Avoid_: Release, release channel, branch
 
 **Deployment**:
 The one running backend that serves every Edition: one container image on Railway with its Postgres, which holds every Edition's content (ADR 0090), behind the app's domain (ADR 0063, 0065). Its secrets and addresses live in its environment variables, never in the repository.
 _Avoid_: Env, prod, server (the backend is the code; the Deployment is its running copy)
+
+**Staging Deployment**:
+A second running copy of the backend for the owner's tests: the `staging` Railway environment with its own variables, domain and a Neon branch of the Deployment's Postgres. It sleeps, runs no Cron service, sends no Analytics and writes nothing to the Media Store (ADR 0168). **Deployment** alone means production.
+_Avoid_: Staging server, test environment, dev
 
 **Owner admin**:
 The Vite app `apps/admin`, served built by the backend at `/admin` on the Deployment, where the owner and admins run SLOVO (ADR 0088, 0164): eight sections, Огляд, Контент, Свічі, Аналітика, Якість, Розробка, Безпека and Сервіси, behind a global Edition and period filter. It imports only the contracts and talks to the backend over HTTP alone.
@@ -95,7 +99,7 @@ The Edition state of a feature it has no content or assets for (no Narrator Voic
 _Avoid_: Disabled, hidden
 
 **Rule**:
-One remote Feature Switch setting: the readers it targets (Edition, app version, platform, the phone's region, a share of readers, signed in or not, a schedule) and on, off or a Variant; ordered per feature, the first match decides. A Rule the app doesn't understand is skipped (ADR 0089).
+One remote Feature Switch setting: the readers it targets (Edition, app version, platform, the phone's region, a share of readers, signed in or not, a schedule, the Update channel) and on, off or a Variant; ordered per feature, the first match decides. A Rule the app doesn't understand is skipped (ADR 0089, 0170).
 _Avoid_: Flag, override, condition
 
 **Rollout**:

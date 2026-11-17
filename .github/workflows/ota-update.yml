@@ -1,29 +1,54 @@
 name: OTA update
 
 # Publishes a signed OTA update of the one app, every Edition inside it, to
-# the app's one Update channel (`updateChannel` in app/app.json), to a share
-# of its readers (ADR 0062). Started by hand only: Actions → OTA update →
-# Run workflow. Publishing is never a side effect of merging, so there is no
-# push trigger. A first run publishes the update to the rollout percentage and
-# prints its update group; a second run with that group widens the rollout.
+# one of its two Update channels, `beta` or `production`, for a Rollout share
+# of its readers (ADR 0062, 0167). Started by hand only: Actions → OTA update
+# → Run workflow. Publishing is never a side effect of merging, so there is no
+# push trigger and no schedule. Three actions:
+#
+# - publish: builds a new update against a Deployment address and publishes it
+#   to the channel; the run prints its update group.
+# - widen: raises the Rollout share of a published update group.
+# - promote: republishes a tested `beta` update group, the same bundle, to
+#   `production` at a Rollout share.
+#
+# A `production` run takes only the production Deployment's address
+# (apps/mobile/ota-plan.ts checks every input before any EAS call).
+# An update built against any other address, the Staging Deployment's, carries
+# no PostHog key (ADR 0168) and is marked so in its message, and a promotion
+# refuses it.
 #
 # The repository secret EXPO_TOKEN signs in to EAS. The EAS environment
-# "production" holds the bundle's EXPO_PUBLIC_* variables and the code-signing
-# private key as the file variable UPDATES_PRIVATE_KEY (visibility
-# "sensitive"); the key is never in the repository. The public certificate is
-# apps/mobile/certs/certificate.pem.
+# "production" holds the bundle's EXPO_PUBLIC_* variables, the production
+# Deployment's address among them (EXPO_PUBLIC_SLOVO_API_URL), and the
+# code-signing private key as the file variable UPDATES_PRIVATE_KEY
+# (visibility "sensitive"); the key is never in the repository. The public
+# certificate is apps/mobile/certs/certificate.pem.
 on:
   workflow_dispatch:
     inputs:
+      action:
+        description: publish a new update, widen a published one, or promote a beta update group to production
+        type: choice
+        options: [publish, widen, promote]
+        default: publish
+      channel:
+        description: Update channel (production for a promotion)
+        type: choice
+        options: [beta, production]
+        default: beta
       rollout:
-        description: Rollout percentage, 1 to 100
+        description: Rollout share, 1 to 100 per cent
         required: true
         default: '10'
       message:
         description: What the update changes (for a new update)
         required: false
       update-group:
-        description: To widen a published update's rollout, its update group id; empty publishes a new update
+        description: The update group to widen or to promote; empty for a new update
+        required: false
+      deployment-address:
+        description: The Deployment address a new update is built against; empty means the production Deployment
         required: false
 
 permissions:
@@ -39,66 +64,85 @@ env:
   EAS_CLI: eas-cli@24.13.0
   EAS_ENVIRONMENT: production
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+  ACTION: ${{ inputs.action }}
+  CHANNEL: ${{ inputs.channel }}
   ROLLOUT: ${{ inputs.rollout }}
   MESSAGE: ${{ inputs.message }}
   UPDATE_GROUP: ${{ inputs.update-group }}
+  DEPLOYMENT_ADDRESS: ${{ inputs.deployment-address }}
+  # Marks the message of an update built against any address but the
+  # production Deployment's, so a promotion can refuse it.
+  STAGING_MARK: '[built against '
 
 jobs:
   publish:
-    name: Publish or widen
+    name: Publish, widen or promote
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Check the inputs
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Check the token
         shell: bash
         run: |
-          if [[ ! "$ROLLOUT" =~ ^[0-9]+$ ]] || (( ROLLOUT < 1 || ROLLOUT > 100 )); then
-            echo "::error::The rollout percentage is \"$ROLLOUT\": expected a whole number from 1 to 100"
-            exit 1
-          fi
-          if [[ -n "$UPDATE_GROUP" && ! "$UPDATE_GROUP" =~ ^[0-9a-f-]+$ ]]; then
-            echo "::error::The update group is \"$UPDATE_GROUP\": expected an update group id"
-            exit 1
-          fi
-          if [[ -z "$UPDATE_GROUP" && -z "$MESSAGE" ]]; then
-            echo "::error::A new update needs a message"
-            exit 1
-          fi
           if [[ -z "$EXPO_TOKEN" ]]; then
             echo "::error::The repository secret EXPO_TOKEN is not set"
             exit 1
           fi
+      # eas-cli evaluates app.config.ts, which needs the workspace installed,
+      # and ota-plan.ts takes the Update channels from the contracts.
+      - run: pnpm install --frozen-lockfile
+      # Refuses an unknown action or channel, a bad Rollout share, update
+      # group or Deployment address before any EAS call.
+      - name: Check the inputs
+        working-directory: apps/mobile
+        run: pnpm exec tsx ota-plan.ts inputs
 
       - name: Widen the rollout
-        if: ${{ inputs.update-group != '' }}
+        if: ${{ inputs.action == 'widen' }}
         working-directory: apps/mobile
         shell: bash
         run: |
           npx --yes "$EAS_CLI" update:edit "$UPDATE_GROUP" --rollout-percentage "$ROLLOUT" --non-interactive
           echo "Update group \`$UPDATE_GROUP\` now reaches $ROLLOUT% of its channel." >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        if: ${{ inputs.update-group == '' }}
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        if: ${{ inputs.update-group == '' }}
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - if: ${{ inputs.update-group == '' }}
-        run: pnpm install --frozen-lockfile
-      # The pack the update carries, built from the snapshot of the backend the
-      # production environment's EXPO_PUBLIC_SLOVO_API_URL names.
-      - name: Build the Language Pack from the Deployment's snapshot
-        if: ${{ inputs.update-group == '' }}
+      - name: Read the production Deployment's address
+        if: ${{ inputs.action == 'publish' }}
         working-directory: apps/mobile
+        shell: bash
         run: |
-          npx --yes "$EAS_CLI" env:exec "$EAS_ENVIRONMENT" 'pnpm --dir ../.. build:pack' \
+          npx --yes "$EAS_CLI" env:exec "$EAS_ENVIRONMENT" \
+            'printf "%s" "$EXPO_PUBLIC_SLOVO_API_URL" > "$RUNNER_TEMP/production-address"' \
+            --non-interactive
+          echo "PRODUCTION_ADDRESS=$(cat "$RUNNER_TEMP/production-address")" >> "$GITHUB_ENV"
+      # Refuses a production publish against any address but the production
+      # Deployment's.
+      - name: Plan the new update
+        if: ${{ inputs.action == 'publish' }}
+        id: plan
+        working-directory: apps/mobile
+        run: pnpm exec tsx ota-plan.ts publish
+
+      # The pack the update carries, built from the snapshot of the backend at
+      # the Deployment address the update is built against.
+      - name: Build the Language Pack from the Deployment's snapshot
+        if: ${{ inputs.action == 'publish' }}
+        working-directory: apps/mobile
+        env:
+          ADDRESS: ${{ steps.plan.outputs.address }}
+        run: |
+          npx --yes "$EAS_CLI" env:exec "$EAS_ENVIRONMENT" \
+            'EXPO_PUBLIC_SLOVO_API_URL="$ADDRESS" pnpm --dir ../.. build:pack' \
             --non-interactive
 
-      # The app accepts only an update signed with the key of this certificate.
+      # The app accepts only an update signed with the key of this certificate;
+      # a promotion signs the republished update again.
       - name: Fetch the code-signing key
-        if: ${{ inputs.update-group == '' }}
+        if: ${{ inputs.action != 'widen' }}
         working-directory: apps/mobile
         shell: bash
         run: |
@@ -114,30 +158,90 @@ jobs:
             exit 1
           fi
 
+      # Against the production Deployment the bundle takes the EAS
+      # environment as it is. Against any other address it takes that address
+      # and no PostHog key, so the app sends no Analytics from staging (ADR
+      # 0168), and its message carries the mark a promotion refuses.
       - name: Publish the signed update
-        if: ${{ inputs.update-group == '' }}
+        if: ${{ inputs.action == 'publish' }}
         working-directory: apps/mobile
         shell: bash
+        env:
+          ADDRESS: ${{ steps.plan.outputs.address }}
+          PRODUCTION: ${{ steps.plan.outputs.production }}
         run: |
-          channel=$(jq -r '.updateChannel' ../../app/app.json)
-          npx --yes "$EAS_CLI" update \
-            --channel "$channel" \
-            --platform ios \
-            --message "$MESSAGE" \
-            --rollout-percentage "$ROLLOUT" \
-            --environment "$EAS_ENVIRONMENT" \
-            --private-key-path "$RUNNER_TEMP/updates-private-key.pem" \
-            --non-interactive \
-            --json > "$RUNNER_TEMP/update.json"
+          if [[ "$PRODUCTION" == "true" ]]; then
+            npx --yes "$EAS_CLI" update \
+              --channel "$CHANNEL" \
+              --platform ios \
+              --message "$MESSAGE" \
+              --rollout-percentage "$ROLLOUT" \
+              --environment "$EAS_ENVIRONMENT" \
+              --private-key-path "$RUNNER_TEMP/updates-private-key.pem" \
+              --non-interactive \
+              --json > "$RUNNER_TEMP/update.json"
+          else
+            export MESSAGE="$MESSAGE $STAGING_MARK$ADDRESS]"
+            npx --yes "$EAS_CLI" env:exec "$EAS_ENVIRONMENT" \
+              'env -u EXPO_PUBLIC_POSTHOG_KEY EXPO_PUBLIC_SLOVO_API_URL="$ADDRESS" \
+                npx --yes "$EAS_CLI" update \
+                  --channel "$CHANNEL" \
+                  --platform ios \
+                  --message "$MESSAGE" \
+                  --rollout-percentage "$ROLLOUT" \
+                  --private-key-path "$RUNNER_TEMP/updates-private-key.pem" \
+                  --non-interactive \
+                  --json > "$RUNNER_TEMP/update.json"' \
+              --non-interactive
+          fi
           group=$(jq -r '.[0].group' "$RUNNER_TEMP/update.json")
           ids=$(jq -r '[.[] | .platform + " " + .id] | join(", ")' "$RUNNER_TEMP/update.json")
           echo "Update group: $group"
           echo "Update id: $ids"
           {
-            echo "Published to the channel \`$channel\` for $ROLLOUT% of its readers."
+            echo "Published to the channel \`$CHANNEL\` for $ROLLOUT% of its readers, built against \`$ADDRESS\`."
             echo
-            echo "- Update group: \`$group\` (run again with it to widen the rollout)"
+            echo "- Update group: \`$group\` (run again with it to widen the rollout or, from beta, to promote it)"
             echo "- Update id: \`$ids\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # The same bundle, signed again, reaches production at the Rollout
+      # share; a group that is not on beta, one built against any address but
+      # the production Deployment's, or one whose message cannot be read, is
+      # refused.
+      - name: Promote the beta update group to production
+        if: ${{ inputs.action == 'promote' }}
+        working-directory: apps/mobile
+        shell: bash
+        run: |
+          npx --yes "$EAS_CLI" update:view "$UPDATE_GROUP" --json > "$RUNNER_TEMP/source.json"
+          if ! jq -e 'length > 0 and all(.[]; .branch == "beta")' "$RUNNER_TEMP/source.json" > /dev/null; then
+            echo "::error::The update group $UPDATE_GROUP is not on the channel beta"
+            exit 1
+          fi
+          source_message=$(jq -er '.[0].message' "$RUNNER_TEMP/source.json") || {
+            echo "::error::Could not read the message of the update group $UPDATE_GROUP"
+            exit 1
+          }
+          if [[ "$source_message" == *"$STAGING_MARK"* ]]; then
+            echo "::error::The update group $UPDATE_GROUP was built against another Deployment than production: $source_message"
+            exit 1
+          fi
+          npx --yes "$EAS_CLI" update:republish \
+            --group "$UPDATE_GROUP" \
+            --destination-channel production \
+            --platform ios \
+            --message "$source_message" \
+            --rollout-percentage "$ROLLOUT" \
+            --private-key-path "$RUNNER_TEMP/updates-private-key.pem" \
+            --non-interactive \
+            --json > "$RUNNER_TEMP/update.json"
+          group=$(jq -r '.[0].group' "$RUNNER_TEMP/update.json")
+          echo "Update group on production: $group"
+          {
+            echo "Promoted the beta update group \`$UPDATE_GROUP\` to \`production\` for $ROLLOUT% of its readers."
+            echo
+            echo "- Update group on production: \`$group\` (widen it with this id)"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Remove the code-signing key

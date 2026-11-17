@@ -46,21 +46,27 @@ afterEach(() => {
   for (const repo of temporaryRepos.splice(0)) rmSync(repo, { recursive: true, force: true });
 });
 
+/** The build profiles of `eas.json`, by name, as JSON. */
+type EasBuildProfiles = Record<string, Record<string, unknown>>;
+
 /**
- * A throwaway repo layout (`apps/mobile` next to `editions/uk` and the
- * AppConfig) holding a copy of the UA Edition with its config changed by
- * `edit` and of the AppConfig changed by `editApp`. The icon is copied unless
- * `withIcon` is false; `change` may then edit the copies.
+ * A throwaway repo layout (`apps/mobile` with a copy of `eas.json` whose build
+ * profiles `editEas` changes, next to `editions/uk` and the AppConfig) holding
+ * a copy of the UA Edition with its config changed by `edit` and of the
+ * AppConfig changed by `editApp`. The icon is copied unless `withIcon` is
+ * false; `change` may then edit the copies.
  */
 function repoWithEdition(
   edit: (config: Record<string, unknown>) => void,
   {
     withIcon = true,
     editApp = () => undefined,
+    editEas = () => undefined,
     change = () => undefined,
   }: {
     withIcon?: boolean;
     editApp?: (config: Record<string, unknown>) => void;
+    editEas?: (profiles: EasBuildProfiles) => void;
     change?: (edition: EditionFolder, appFile: (file: 'icon' | 'splash') => string) => void;
   } = {},
 ): ConfigContext {
@@ -68,6 +74,11 @@ function repoWithEdition(
   temporaryRepos.push(repo);
   const projectRoot = join(repo, 'apps/mobile');
   mkdirSync(projectRoot, { recursive: true });
+  const eas = JSON.parse(readFileSync(join(context.projectRoot, 'eas.json'), 'utf8')) as {
+    build: EasBuildProfiles;
+  };
+  editEas(eas.build);
+  writeFileSync(join(projectRoot, 'eas.json'), JSON.stringify(eas));
   cpSync(ukrainian.dir, join(repo, 'editions/uk'), { recursive: true });
   const copy = openEditionWithoutRecords(join(repo, 'editions'), 'uk');
   const config = JSON.parse(readFileSync(copy.path('config'), 'utf8')) as Record<string, unknown>;
@@ -99,8 +110,10 @@ function withReleaseApp(config: Record<string, unknown>): void {
  * code-signing certificate of OTA updates in `apps/mobile/certs` (ADR 0062),
  * as a release build needs.
  */
-function repoWithCertificate(): ConfigContext {
-  const repo = repoWithEdition(() => undefined, { editApp: withReleaseApp });
+function repoWithCertificate(
+  editEas: (profiles: EasBuildProfiles) => void = () => undefined,
+): ConfigContext {
+  const repo = repoWithEdition(() => undefined, { editApp: withReleaseApp, editEas });
   mkdirSync(join(repo.projectRoot, 'certs'));
   writeFileSync(
     join(repo.projectRoot, 'certs/certificate.pem'),
@@ -828,7 +841,7 @@ describe('app config', () => {
     );
   });
 
-  it.each(['testflight', 'production'])(
+  it.each(['beta', 'production'])(
     'refuses a release build (%s) with no API address, naming the variable',
     (profile) => {
       vi.stubEnv('EAS_BUILD_PROFILE', profile);
@@ -839,21 +852,80 @@ describe('app config', () => {
   );
 
   it('refuses a release build whose API address is not https', () => {
-    vi.stubEnv('EAS_BUILD_PROFILE', 'testflight');
+    vi.stubEnv('EAS_BUILD_PROFILE', 'production');
     vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'http://api.example.com');
 
     expect(() => appConfig(context)).toThrow(/EXPO_PUBLIC_SLOVO_API_URL.*https:\/\//s);
   });
 
-  it('builds a release with an https API address', () => {
-    vi.stubEnv('EAS_BUILD_PROFILE', 'testflight');
-    vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+  it.each(['beta', 'production'])(
+    'builds a release of the store profile %s with an https API address',
+    (profile) => {
+      vi.stubEnv('EAS_BUILD_PROFILE', profile);
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
 
-    expect(appConfig(repoWithCertificate()).name).toBe(app.config.name);
+      expect(appConfig(repoWithCertificate()).name).toBe(app.config.name);
+    },
+  );
+
+  describe('Update channels (ADR 0167)', () => {
+    it('refuses a release build whose profile names no Update channel', () => {
+      vi.stubEnv('EAS_BUILD_PROFILE', 'beta');
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+      const repo = repoWithCertificate((profiles) => {
+        delete profiles['beta']?.['channel'];
+      });
+
+      expect(() => appConfig(repo)).toThrow(/release build "beta" names no Update channel/);
+    });
+
+    it('refuses a release build whose Update channel is neither beta nor production', () => {
+      vi.stubEnv('EAS_BUILD_PROFILE', 'production');
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+      const repo = repoWithCertificate((profiles) => {
+        profiles['production'] = { ...profiles['production'], channel: 'uk' };
+      });
+
+      expect(() => appConfig(repo)).toThrow(/"uk".*beta, production/s);
+    });
+
+    it('refuses a release build of a profile eas.json lacks, so it has no Update channel', () => {
+      vi.stubEnv('EAS_BUILD_PROFILE', 'testflight');
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+
+      expect(() => appConfig(repoWithCertificate())).toThrow(
+        /release build "testflight" names no Update channel/,
+      );
+    });
+
+    it('takes the Update channel a release profile inherits through `extends`', () => {
+      vi.stubEnv('EAS_BUILD_PROFILE', 'beta');
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+      const inherits = repoWithCertificate((profiles) => {
+        profiles['store'] = { ...profiles['beta'] };
+        profiles['beta'] = { extends: 'store' };
+      });
+      const inheritsNothing = repoWithCertificate((profiles) => {
+        profiles['store'] = { distribution: 'store' };
+        profiles['beta'] = { extends: 'store' };
+      });
+
+      expect(appConfig(inherits).name).toBe(app.config.name);
+      expect(() => appConfig(inheritsNothing)).toThrow(
+        /release build "beta" names no Update channel/,
+      );
+    });
+
+    it('keeps the Update channel out of the config, so it reaches the build from its profile', () => {
+      vi.stubEnv('EAS_BUILD_PROFILE', 'beta');
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+
+      expect(JSON.stringify(appConfig(repoWithCertificate()))).not.toMatch(/channel/i);
+    });
   });
 
   it('refuses a release build of an app with the placeholder domain and no Team ID, naming the fields', () => {
-    vi.stubEnv('EAS_BUILD_PROFILE', 'testflight');
+    vi.stubEnv('EAS_BUILD_PROFILE', 'production');
     vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
 
     expect(() =>
@@ -897,8 +969,8 @@ describe('app config', () => {
   });
 
   describe('OTA updates (ADR 0062)', () => {
-    it("checks the app's channel on launch for updates signed with SLOVO's certificate and made for its native code", () => {
-      vi.stubEnv('EAS_BUILD_PROFILE', 'testflight');
+    it("checks the build's channel on launch for updates signed with SLOVO's certificate and made for its native code", () => {
+      vi.stubEnv('EAS_BUILD_PROFILE', 'production');
       vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
 
       const config = appConfig(repoWithCertificate());
@@ -907,22 +979,11 @@ describe('app config', () => {
       expect(config.updates).toEqual({
         enabled: true,
         url: 'https://u.expo.dev/e2401ef2-2a47-407e-b0ff-03706421b71c',
-        requestHeaders: { 'expo-channel-name': 'uk' },
         checkAutomatically: 'ON_LOAD',
         fallbackToCacheTimeout: 3000,
         codeSigningCertificate: './certs/certificate.pem',
         codeSigningMetadata: { keyid: 'main', alg: 'rsa-v1_5-sha256' },
       });
-    });
-
-    it('takes the one channel from the AppConfig', () => {
-      const channel = repoWithEdition(() => undefined, {
-        editApp: (config) => {
-          config['updateChannel'] = 'main';
-        },
-      });
-
-      expect(appConfig(channel).updates?.requestHeaders).toEqual({ 'expo-channel-name': 'main' });
     });
 
     it('gives every build profile the config Metro gets, so the fingerprint matches on the laptop and on EAS', () => {
@@ -938,7 +999,8 @@ describe('app config', () => {
 
       expect(metro).toHaveProperty(['updates', 'enabled'], true);
       expect(fingerprinted('development-simulator')).toEqual(metro);
-      expect(fingerprinted('testflight')).toEqual(metro);
+      expect(fingerprinted('beta')).toEqual(metro);
+      expect(fingerprinted('production')).toEqual(metro);
     });
 
     it('leaves the generated native folders out of the fingerprint', () => {
@@ -950,7 +1012,7 @@ describe('app config', () => {
     });
 
     it('refuses a release build without the code-signing certificate', () => {
-      vi.stubEnv('EAS_BUILD_PROFILE', 'testflight');
+      vi.stubEnv('EAS_BUILD_PROFILE', 'production');
       vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
 
       expect(() =>

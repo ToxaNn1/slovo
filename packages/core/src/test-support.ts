@@ -486,12 +486,13 @@ export function switchStatesOf(edition: Pick<Edition, 'isFeatureEnabled'>): Feat
   );
 }
 
-/** A reader of 1.0.0 on iOS, signed out, with no region: one no targeted Rule matches. */
+/** A reader of 1.0.0 on iOS, signed out, with no region and no Update channel: one no targeted Rule matches. */
 export const readerFacts = (): ReaderFacts => ({
   appVersion: '1.0.0',
   platform: 'ios',
   region: undefined,
   signedIn: false,
+  updateChannel: undefined,
   installId: 'i',
 });
 

@@ -377,6 +377,8 @@ export const SettingsStringsSchema = z.strictObject({
     versionLine: templateOf('version', 'build'),
     /** The OTA update the app runs (ADR 0062). Takes `{id}`. */
     updateLine: templateOf('id'),
+    /** The Update channel the build listens to, `beta` or `production` (ADR 0167). Takes `{channel}`. */
+    channelLine: templateOf('channel'),
     /** What SLOVO is. */
     description: TextSchema,
     /** Where the words come from. */
