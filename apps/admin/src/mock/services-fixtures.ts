@@ -170,3 +170,10 @@ export const ADDED_SERVICE = {
   position: { x: 340, y: 40 },
   links: [],
 } satisfies AdminApiOutputs['services']['add']['service'];
+
+/** The NBU rate of the Kyiv day. */
+export const USD_RATE = {
+  uahPerUsd: 41.4321,
+  on: '2026-11-17',
+  state: 'today',
+} satisfies AdminApiOutputs['services']['usdRate']['rate'];
