@@ -35,6 +35,7 @@ import type {
   SwitchRefusal,
   SwitchRefused,
   ServiceStore,
+  ServiceMoneyBook,
   ServiceUsage,
 } from '@slovo/server-core';
 
@@ -124,6 +125,7 @@ export function adminProcedures(
     alertStore,
     accounts,
     services,
+    serviceMoney,
     serviceUsage,
   }: {
     /** The readers' Accounts, which a Власник finds and deletes by email (ADR 0127). */
@@ -134,6 +136,8 @@ export function adminProcedures(
     readonly alertStore: AlertStore;
     /** The Services of «Сервіси» (ADR 0164). */
     readonly services: ServiceStore;
+    /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
+    readonly serviceMoney: ServiceMoneyBook;
     /** The usage of the Services, read from their providers (ADR 0164). */
     readonly serviceUsage: ServiceUsage;
   },
@@ -616,6 +620,7 @@ export function adminProcedures(
       services,
       (headers, errors, { writes = false } = {}) =>
         admit(headers, errors, { writes, security: true }),
+      { book: serviceMoney, ownerWrite: securityWrite },
       serviceUsage,
     ),
 

@@ -1,7 +1,13 @@
 import { FeatureSwitchesSchema } from '@slovo/contracts';
 import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
 
-import { SENTRY_USAGE, SERVICE_USAGE, SERVICES } from './services-fixtures';
+import {
+  ADDED_SERVICE,
+  SENTRY_USAGE,
+  SERVICE_COSTS,
+  SERVICE_USAGE,
+  SERVICES,
+} from './services-fixtures';
 
 /** Every feature on, but one off and one the Edition hasn't got. */
 const STATES = FeatureSwitchesSchema.parse({
@@ -479,7 +485,9 @@ export const FIXTURES: AdminApiOutputs = {
     ],
   },
   services: {
-    list: { services: SERVICES },
+    list: { services: SERVICES, costs: SERVICE_COSTS },
+    add: { service: ADDED_SERVICE },
+    editMoney: { service: ADDED_SERVICE, changed: [] },
     usage: { usage: SERVICE_USAGE },
     refreshUsage: { usage: SENTRY_USAGE },
   },

@@ -23,6 +23,7 @@ import type {
   OwnerChecks,
   Quality,
   ServiceStore,
+  ServiceMoneyBook,
   ServiceUsage,
   Sync,
 } from '@slovo/server-core';
@@ -100,6 +101,7 @@ export function createApiHandler({
   quality,
   served,
   services,
+  serviceMoney,
   serviceUsage,
   sync,
 }: {
@@ -133,6 +135,8 @@ export function createApiHandler({
   served: readonly Edition[];
   /** The Services of «Сервіси» (ADR 0164). */
   services: ServiceStore;
+  /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
+  serviceMoney: ServiceMoneyBook;
   /** The usage of the Services, read from their providers (ADR 0164). */
   serviceUsage: ServiceUsage;
   sync: Sync;
@@ -153,7 +157,7 @@ export function createApiHandler({
         contentQueue,
         ownerChecks,
         adminAnalytics,
-        { ...quality, accounts, services, serviceUsage },
+        { ...quality, accounts, services, serviceMoney, serviceUsage },
       ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(editions, contentStore, mediaBase),

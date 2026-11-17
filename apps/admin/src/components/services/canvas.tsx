@@ -1,12 +1,12 @@
-import type { Service } from '@slovo/contracts/admin-api';
+import { SERVICE_BLOCK, type Service } from '@slovo/contracts/admin-api';
 
 import { BlockUsage, type UsageAnswer } from './usage';
 
 /** Each Service's usage read, by the Service's id. */
 export type UsageById = ReadonlyMap<string, UsageAnswer>;
 
-/** A block's size on the canvas, in CSS pixels. */
-const BLOCK = { width: 200, height: 88 } as const;
+/** A block's size on the canvas, in CSS pixels: the backend places a new Service by it. */
+const BLOCK = SERVICE_BLOCK;
 /** The room around the outermost blocks. */
 const MARGIN = 40;
 

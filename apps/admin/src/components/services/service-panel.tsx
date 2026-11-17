@@ -2,13 +2,14 @@ import type { Service } from '@slovo/contracts/admin-api';
 import { useEffect, useId, useRef } from 'react';
 
 import { Button } from '../ui/button';
+import { ServiceMoneySection } from './service-money';
 import { PanelUsage, type UsageAnswer } from './usage';
 
 /**
  * The side panel of a Service: a native modal `<dialog>` at the right edge
  * (ADR 0160), so Esc and the back gesture close it and the page behind is
- * inert. It shows the Service's name and its usage with «Оновити»; its
- * money and entries come with their tickets.
+ * inert. It shows the Service's name, money, and usage with «Оновити»; its
+ * entries come with their ticket.
  */
 export function ServicePanel({
   service,
@@ -50,6 +51,7 @@ export function ServicePanel({
           Закрити
         </Button>
       </div>
+      <ServiceMoneySection service={service} />
       {usage === undefined ? null : <PanelUsage {...usage} />}
     </dialog>
   );

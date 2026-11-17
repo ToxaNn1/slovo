@@ -12,7 +12,16 @@ import { ADMIN_WRITE_HEADER } from './api/admin';
 import { EditionIdSchema } from './edition';
 
 export { EditionIdSchema };
-export { SERVICE_KINDS, ServiceKindSchema, type Service } from './api/services';
+export {
+  SERVICE_BLOCK,
+  SERVICE_KINDS,
+  SERVICE_MONEY_FIELDS,
+  ServiceKindSchema,
+  ServiceRefusalSchema,
+  type Service,
+  type ServiceCosts,
+  type ServiceMoneyField,
+} from './api/services';
 export type { LimitUsage, ServiceReading, ServiceUsage } from './api/services';
 export {
   ADMIN_SESSION_COOKIE,

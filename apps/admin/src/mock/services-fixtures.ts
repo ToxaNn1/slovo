@@ -152,6 +152,24 @@ export const SERVICES = [
   },
 ] satisfies AdminApiOutputs['services']['list']['services'];
 
+/** The fixture Services cost nothing yet: no price and no billing day. */
+export const SERVICE_COSTS = {
+  monthlyTotalUsdCents: 0,
+  nextCharge: null,
+} satisfies AdminApiOutputs['services']['list']['costs'];
+
+/** A Service the Власник adds, at the first free place. */
+export const ADDED_SERVICE = {
+  id: '00000000-0000-4000-8000-000000000099',
+  name: 'Hetzner',
+  kind: 'metered',
+  plan: 'CX22',
+  monthlyPriceUsdCents: 450,
+  billingDay: 31,
+  limits: [],
+  position: { x: 340, y: 40 },
+  links: [],
+} satisfies AdminApiOutputs['services']['add']['service'];
 /** Sentry's usage as its port read it, fresh. */
 export const SENTRY_USAGE = {
   serviceId: SERVICE_IDS.Sentry,
