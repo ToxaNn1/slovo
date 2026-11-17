@@ -344,6 +344,9 @@ export const ACCOUNTS_PAGE_SIZE = 50;
 /** How many records the content editor lists on one page. */
 export const CONTENT_PAGE_SIZE = 50;
 
+/** How many rows of the Action log Безпека lists on one page. */
+export const ACTION_PAGE_SIZE = 50;
+
 /** The Edition card: what the Edition registry holds of an Edition, shown read-only (story 44). */
 export const EditionCardSchema = z.object({
   id: EditionIdSchema,
@@ -1054,13 +1057,21 @@ export const adminContract = {
       path: '/admin/actions',
       summary: 'The Action log, newest first, of one Edition when one is named',
       description:
-        'A Безпека procedure: a Власник only. Answers the 500 newest rows; under an Edition, only its rows.',
+        'A Безпека procedure: a Власник only. Answers one page of `ACTION_PAGE_SIZE` rows, newest first, and the count of every row; under an Edition, only its rows.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.strictObject({ editionId: EditionIdSchema.optional() }))
+    .input(
+      z.strictObject({
+        editionId: EditionIdSchema.optional(),
+        /** The page from 1, of `ACTION_PAGE_SIZE` rows newest first; past the last one it lists none. */
+        page: z.coerce.number<number>().int().positive().optional(),
+      }),
+    )
     .output(
       z.object({
+        /** The count of every row the filter matches, on every page. */
+        total: z.number().int().nonnegative(),
         actions: z.array(
           z.object({
             at: z.string(),

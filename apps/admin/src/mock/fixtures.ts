@@ -138,6 +138,7 @@ export const FIXTURES: AdminApiOutputs = {
   signOut: { signedOut: true },
   signOutEverywhere: { signedOut: true },
   actions: {
+    total: 1,
     actions: [
       {
         at: '2026-11-08T09:30:00.000Z',

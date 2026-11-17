@@ -362,8 +362,9 @@ export function adminProcedures(
 
     actions: os.actions.handler(async ({ context, input, errors }) => {
       await admit(context.headers, errors, { security: true });
-      const actions = await admin.actions(input.editionId);
+      const { actions, total } = await admin.actionPage(input.editionId, input.page ?? 1);
       return {
+        total,
         actions: actions.map(({ at, who, what, before, after, reason, editionId }) => ({
           at: at.toISOString(),
           who,
