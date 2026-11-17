@@ -294,4 +294,31 @@ describe('the Action log', () => {
       },
     ]);
   });
+
+  it('answers a page of 50 rows, newest first, with the count of every row of the Edition', async () => {
+    const backend = await ownerOn('paged', 'other');
+    const write = (editionId: string, n: number) =>
+      backend.store.appendAction({
+        who: { kind: 'command', command: 'test' },
+        what: 'content.crosswordDay.check',
+        before: null,
+        after: { n },
+        reason: null,
+        editionId,
+        batchId: null,
+        at: new Date(),
+      });
+    for (let n = 1; n <= 53; n += 1) await write('paged', n);
+    await write('other', 0);
+    const afters = ({ actions }: { actions: readonly { after: unknown }[] }) =>
+      actions.map(({ after }) => after);
+
+    const first = await backend.owner.client.admin.actions({ editionId: 'paged' });
+    const second = await backend.owner.client.admin.actions({ editionId: 'paged', page: 2 });
+
+    expect(first.total).toBe(53);
+    expect(afters(first)).toEqual(Array.from({ length: 50 }, (_, i) => ({ n: 53 - i })));
+    expect(second).toMatchObject({ total: 53 });
+    expect(afters(second)).toEqual([{ n: 3 }, { n: 2 }, { n: 1 }]);
+  });
 });
