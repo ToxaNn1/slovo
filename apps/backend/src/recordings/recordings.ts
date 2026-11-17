@@ -4,14 +4,15 @@
  * or whose Lemma or Stress changed, puts the files in the Media Store and
  * saves their rows at one content version per run. It then deletes the files
  * of rows retired longer than RETIRED_FILE_KEPT_MS, which no device on a
- * Patch that old still asks for. After STALL_RUNS runs in a row whose
- * generator made no file of the Words it had, it tells the owner and stops for the Edition until
- * its content or the job's deployment changes (ADR 0169).
+ * Patch that old still asks for. After STALL_RUNS stuck runs in a row, whose
+ * generator made no file of the Words it had or hit its time limit, it tells
+ * the owner and stops for the Edition until its content or the job's
+ * deployment changes (ADR 0169, 0172).
  */
 import { createHash, randomUUID } from 'node:crypto';
 
 import { illustrationPath, recordingPath, type RecordingKind, type Word } from '@slovo/contracts';
-import type { Alerts, Clock, Edition } from '@slovo/server-core';
+import type { Alert, Alerts, Clock, Edition } from '@slovo/server-core';
 import { and, asc, eq, inArray, isNotNull, isNull, lt, lte, sql, type SQL } from 'drizzle-orm';
 
 import { createMediaRows, type NewRecording, type RecordedWord } from '../content/media-rows';
@@ -36,7 +37,10 @@ export const RETIRED_FILE_KEPT_MS = 30 * 24 * 60 * 60 * 1000;
 /** How long a run's lease on an Edition lasts before another run may take it: 30 minutes. */
 export const RECORDING_LEASE_MS = 30 * 60 * 1000;
 
-/** How many runs in a row whose generator made no file of the Words it had stop the job for an Edition. */
+/**
+ * How many stuck runs in a row stop the job for an Edition: runs whose
+ * generator made no file of the Words it had or hit its time limit.
+ */
 export const STALL_RUNS = 2;
 
 /** What one run did, summed over the Editions. */
@@ -180,7 +184,8 @@ export function createRecordings({
 
   /**
    * Records the Edition's next batch of Words; how many were recorded, how
-   * many failed, and whether the generator made no file of them at all.
+   * many failed, and whether the run was stuck: why, when the generator made
+   * no file of them at all or hit its time limit.
    * Nothing is written when the holder lost its lease while the generator read.
    */
   async function recordEdition(edition: Edition, holder: string) {
@@ -195,19 +200,24 @@ export function createRecordings({
         text: RECORDING_TEXTS[slot.recordingKind](word.fields),
       })),
     );
-    if (requests.length === 0) return { recorded: 0, failed: 0, empty: false };
+    if (requests.length === 0) return { recorded: 0, failed: 0, stuck: undefined };
     const putSince = clock.now();
     // A generator that throws fails the whole batch: its Words go to the back of the queue.
-    const outcomes: readonly (RecordingOutcome | undefined)[] = await generator
+    const batch = await generator
       .record(requests.map(({ voice, text }) => ({ voice, text })))
       .catch((error: unknown) => {
         console.error(
           `recordings: the generator failed for ${editionId}: ${error instanceof Error ? error.message : String(error)}`,
         );
-        return requests.map(() => ({ ok: false }) satisfies RecordingOutcome);
+        return { outcomes: requests.map((): RecordingOutcome => ({ ok: false })), timedOut: false };
       });
-    const empty = outcomes.every((outcome) => outcome?.ok !== true);
-    if (!(await renewLease(editionId, holder))) return { recorded: 0, failed: 0, empty: false };
+    const outcomes: readonly (RecordingOutcome | undefined)[] = batch.outcomes;
+    const stuck: StuckCause | undefined = outcomes.every((outcome) => outcome?.ok !== true)
+      ? 'nothing-made'
+      : batch.timedOut
+        ? 'time-limit'
+        : undefined;
+    if (!(await renewLease(editionId, holder))) return { recorded: 0, failed: 0, stuck: undefined };
     const made: RecordedWord[] = [];
     for (const word of words) {
       const own = requests.flatMap((request, index) =>
@@ -240,7 +250,7 @@ export function createRecordings({
     const saved = await rows.saveRecordings(editionId, made, putSince);
     const recorded = saved.ok ? saved.recorded : [];
     await markFailures(editionId, words, recorded);
-    return { recorded: recorded.length, failed: words.length - recorded.length, empty };
+    return { recorded: recorded.length, failed: words.length - recorded.length, stuck };
   }
 
   async function stallOf(editionId: string) {
@@ -259,10 +269,15 @@ export function createRecordings({
     return { contentVersion, emptyRuns };
   }
 
-  /** Counts a run whose generator made no file; tells the owner once the job stops. */
-  async function countEmptyRun(editionId: string) {
-    const { contentVersion, emptyRuns } = await stallOf(editionId);
-    const runs = emptyRuns + 1;
+  /**
+   * Counts a stuck run on top of the count the run started with; tells the
+   * owner, with the run's cause, once the job stops. The count keeps the
+   * content version as the run left it, since a run that hit its time limit
+   * saved the Words it made at a new one.
+   */
+  async function countStuckRun(editionId: string, cause: StuckCause, before: number) {
+    const { contentVersion } = await stallOf(editionId);
+    const runs = before + 1;
     await db
       .insert(recordingStalls)
       .values({ editionId, emptyRuns: runs, deployment, contentVersion })
@@ -270,7 +285,8 @@ export function createRecordings({
         target: recordingStalls.editionId,
         set: { emptyRuns: runs, deployment, contentVersion },
       });
-    if (runs === STALL_RUNS) await alerts.send({ kind: 'recordings-stalled', editionId, runs });
+    if (runs === STALL_RUNS)
+      await alerts.send({ kind: 'recordings-stalled', editionId, runs, cause });
   }
 
   /** Stamps the Words the run failed for, and clears the stamp of the ones it recorded. */
@@ -358,7 +374,8 @@ export function createRecordings({
     let stalled = 0;
     for (const edition of editions) {
       const editionId = edition.config.id;
-      if ((await stallOf(editionId)).emptyRuns >= STALL_RUNS) {
+      const { emptyRuns } = await stallOf(editionId);
+      if (emptyRuns >= STALL_RUNS) {
         console.error(
           `recordings: stopped for ${editionId} until its content or the deployment changes`,
         );
@@ -370,8 +387,8 @@ export function createRecordings({
         const counts = await recordEdition(edition, holder);
         recorded += counts.recorded;
         failed += counts.failed;
-        if (counts.empty) await countEmptyRun(editionId);
-        // The generator made a file: the job is not stuck, and the count starts again.
+        if (counts.stuck !== undefined) await countStuckRun(editionId, counts.stuck, emptyRuns);
+        // The generator made a file in time: the job is not stuck, and the count starts again.
         else if (counts.recorded + counts.failed > 0)
           await db.delete(recordingStalls).where(eq(recordingStalls.editionId, editionId));
       } finally {
@@ -383,5 +400,8 @@ export function createRecordings({
 
   return { run };
 }
+
+/** Why a run was stuck (ADR 0172). */
+type StuckCause = Extract<Alert, { kind: 'recordings-stalled' }>['cause'];
 
 const readOf = ({ lemma, stress }: Pick<Word, 'lemma' | 'stress'>) => ({ lemma, stress });

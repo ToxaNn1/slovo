@@ -32,8 +32,8 @@ function fakeGenerator(
     asked,
     record(requests) {
       asked.push(...requests);
-      return Promise.resolve(
-        requests.map(({ voice, text }) =>
+      return Promise.resolve({
+        outcomes: requests.map(({ voice, text }) =>
           failing !== undefined && text.startsWith(failing)
             ? { ok: false as const }
             : {
@@ -42,7 +42,21 @@ function fakeGenerator(
                 durationMs: 900,
               },
         ),
-      );
+        timedOut: false,
+      });
+    },
+  };
+}
+
+/** A generator that hits its time limit after the first `made` requests, which it makes. */
+function timedOutGenerator(made: number): RecordingGenerator {
+  return {
+    record: async (requests) => {
+      const { outcomes } = await fakeGenerator().record(requests);
+      return {
+        outcomes: outcomes.map((outcome, index) => (index < made ? outcome : { ok: false })),
+        timedOut: true,
+      };
     },
   };
 }
@@ -301,7 +315,9 @@ describe('the Recordings job', () => {
     expect(await run(throwing)).toMatchObject({ recorded: 0, failed: 1, stalled: 0 });
     expect(alerts.sent).toEqual([]);
     expect(await run(throwing)).toMatchObject({ recorded: 0, failed: 1, stalled: 0 });
-    expect(alerts.sent).toEqual([{ kind: 'recordings-stalled', editionId: 'uk', runs: 2 }]);
+    expect(alerts.sent).toEqual([
+      { kind: 'recordings-stalled', editionId: 'uk', runs: 2, cause: 'nothing-made' },
+    ]);
 
     const idle = fakeGenerator();
     expect(await run(idle)).toEqual({ recorded: 0, failed: 0, stalled: 1, deleted: 0 });
@@ -310,6 +326,30 @@ describe('the Recordings job', () => {
 
     await createWord(client, agent, batchId, 'ґудзичок', 1);
     expect(await run(fakeGenerator())).toMatchObject({ recorded: 2, failed: 0, stalled: 0 });
+  });
+
+  it('stops after two runs in a row whose generator hit its time limit, though each made a Word', async () => {
+    const { client, agent, batchId, alerts, run } = await recordingsBackend();
+    for (const [lemma, stress] of [
+      ['обручичок', 3],
+      ['ґудзичок', 1],
+      ['обручик', 3],
+    ] as const)
+      await createWord(client, agent, batchId, lemma, stress);
+    // One Word is four requests, one in each Narrator Voice.
+    const slow = timedOutGenerator(VOICES.length);
+
+    expect(await run(slow)).toMatchObject({ recorded: 1, failed: 2, stalled: 0 });
+    expect(alerts.sent).toEqual([]);
+    expect(await run(slow)).toMatchObject({ recorded: 1, failed: 1, stalled: 0 });
+    expect(alerts.sent).toEqual([
+      { kind: 'recordings-stalled', editionId: 'uk', runs: 2, cause: 'time-limit' },
+    ]);
+
+    const idle = fakeGenerator();
+    expect(await run(idle)).toMatchObject({ recorded: 0, stalled: 1 });
+    expect(idle.asked).toEqual([]);
+    expect(await run(fakeGenerator(), 50, 'second')).toMatchObject({ recorded: 1, stalled: 0 });
   });
 
   it('records again on a new deployment of the job after it stopped', async () => {

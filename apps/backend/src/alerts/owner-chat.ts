@@ -47,7 +47,7 @@ export function alertText(alert: Alert): string {
     case 'service-limit':
       return `🟡 ${alert.service}: ліміт «${alert.usage.name}» використано на ${n(Math.floor((alert.usage.used / alert.usage.limit) * 100))} % — ${n(alert.usage.used)} з ${n(alert.usage.limit)} ${alert.usage.unit} за ${alert.period}.`;
     case 'recordings-stalled':
-      return `🎙️ Озвучка ${alert.editionId} зупинилась: ${n(alert.runs)} запуски поспіль не записали жодного слова. Знову спробує після зміни контенту або нового деплою.`;
+      return `🎙️ Озвучка ${alert.editionId} зупинилась: ${n(alert.runs)} запуски поспіль ${alert.cause === 'time-limit' ? 'не встигли записати все до ліміту часу' : 'не записали жодного слова'}. Знову спробує після зміни контенту або нового деплою.`;
   }
 }
 

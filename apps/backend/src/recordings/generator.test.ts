@@ -33,10 +33,31 @@ describe('the script generator', () => {
       { voice: 'oksana', text: 'обру́ч' },
       { voice: 'taras', text: 'зламане' },
     ]);
-    expect(outcomes).toEqual([
-      { ok: true, bytes: new Uint8Array(Buffer.from('oksana:обру́ч')), durationMs: 700 },
-      { ok: false },
-    ]);
+    expect(outcomes).toEqual({
+      outcomes: [
+        { ok: true, bytes: new Uint8Array(Buffer.from('oksana:обру́ч')), durationMs: 700 },
+        { ok: false },
+      ],
+      timedOut: false,
+    });
+  });
+
+  it('runs the script on two threads for torch and its maths libraries', async () => {
+    const threads = join(dir, 'threads.cjs');
+    writeFileSync(
+      threads,
+      `const { OMP_NUM_THREADS, MKL_NUM_THREADS, OPENBLAS_NUM_THREADS } = process.env;
+console.log('threads ' + [OMP_NUM_THREADS, MKL_NUM_THREADS, OPENBLAS_NUM_THREADS].join(','));
+${STUB}`,
+    );
+    const lines: string[] = [];
+    const generator = scriptGenerator({
+      command: [process.execPath, threads],
+      modelDir: dir,
+      log: (line) => lines.push(line),
+    });
+    await generator.record([{ voice: 'oksana', text: 'обру́ч' }]);
+    expect(lines).toContain('threads 2,2,2');
   });
 
   it('stops a hung script at its time limit and fails the batch', async () => {
@@ -64,25 +85,34 @@ const out = arg('--out-dir');
 mkdirSync(out, { recursive: true });
 writeFileSync(out + '/' + first.id + '.mp3', first.voice + ':' + first.text);
 writeFileSync(out + '/results.json', JSON.stringify([{ id: first.id, ok: true, durationMs: 700 }]));
+console.log('1/2 oksana 1.4 s');
+console.error('RTF = 0.31');
 setTimeout(() => {}, 60_000);`,
     );
+    const lines: string[] = [];
     const generator = scriptGenerator({
       command: [process.execPath, slow],
       modelDir: dir,
       timeoutMs: 1_000,
+      log: (line) => lines.push(line),
     });
     const outcomes = await generator.record([
       { voice: 'oksana', text: 'обру́ч' },
       { voice: 'taras', text: 'за́плава' },
     ]);
-    expect(outcomes).toEqual([
-      { ok: true, bytes: new Uint8Array(Buffer.from('oksana:обру́ч')), durationMs: 700 },
-      { ok: false },
-    ]);
+    expect(outcomes).toEqual({
+      outcomes: [
+        { ok: true, bytes: new Uint8Array(Buffer.from('oksana:обру́ч')), durationMs: 700 },
+        { ok: false },
+      ],
+      timedOut: true,
+    });
+    // The seconds per request the script printed reach the log, though the run was killed.
+    expect(lines).toEqual(expect.arrayContaining(['1/2 oksana 1.4 s', 'RTF = 0.31']));
   });
 
   it('records nothing for no requests, without running the script', async () => {
     const generator = scriptGenerator({ command: ['/nonexistent'], modelDir: dir });
-    expect(await generator.record([])).toEqual([]);
+    expect(await generator.record([])).toEqual({ outcomes: [], timedOut: false });
   });
 });
