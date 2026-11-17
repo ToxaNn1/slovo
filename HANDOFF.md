@@ -11,3 +11,4 @@ Frontier #1962 #1963; then #1964, #1965 one at a time; #1966 after #1963. #1967 
 - 2026-11-17T11:34:13Z #1966 started in /tmp/wt/1966 (feat/1966-staging-deploy-reset from 6e46c5dd). #1962 still running.
 - 2026-11-17T11:37:49Z #1962 DONE 51112901; merger running. Next: #1964, then #1965 (one at a time).
 - 2026-11-17T11:38:38Z #1962 merged 1ac2092b. #1964 started in /tmp/wt/1964 (feat/1964-ota-channels). #1965 after #1964 (hot files).
+- 2026-11-17T11:50:10Z #1964 DONE 8379650b; merger running; #1965 next.
