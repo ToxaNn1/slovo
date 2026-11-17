@@ -34,11 +34,13 @@ import type {
   SignedInAdmin,
   SwitchRefusal,
   SwitchRefused,
+  ServiceStore,
 } from '@slovo/server-core';
 
 import { alertText } from '../alerts/owner-chat';
 import type { ContentQueue } from '../content/content-queue';
 import type { ContentWrites, WriteRefusal, Writer } from '../content/content-writes';
+import { servicesProcedures } from '../services/services-procedures';
 import { adminInviteEmail } from './admin-mail';
 
 /** The path the admin session cookie is sent on: the admin API's. */
@@ -85,7 +87,7 @@ interface Needs {
   readonly writesContent?: boolean;
   /** It writes: the admin header must come with it. */
   readonly writes?: boolean;
-  /** It is a Безпека procedure: a Власник only. */
+  /** It is a Безпека or a «Сервіси» procedure: a Власник only. */
   readonly security?: boolean;
 }
 
@@ -120,6 +122,7 @@ export function adminProcedures(
     alertSettings,
     alertStore,
     accounts,
+    services,
   }: {
     /** The readers' Accounts, which a Власник finds and deletes by email (ADR 0127). */
     readonly accounts: Accounts;
@@ -127,6 +130,8 @@ export function adminProcedures(
     readonly ciToken: string | undefined;
     readonly alertSettings: AlertSettings;
     readonly alertStore: AlertStore;
+    /** The Services of «Сервіси» (ADR 0164). */
+    readonly services: ServiceStore;
   },
 ) {
   const os = implement(apiContract.admin).$context<{
@@ -602,6 +607,10 @@ export function adminProcedures(
         onboardingNotificationTimes,
       };
     }),
+
+    services: servicesProcedures(services, (headers, errors, { writes = false } = {}) =>
+      admit(headers, errors, { writes, security: true }),
+    ),
 
     content: {
       openBatch: content.openBatch.handler(async ({ context, input, errors }) => {

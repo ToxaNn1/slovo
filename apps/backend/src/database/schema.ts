@@ -681,3 +681,42 @@ export const alertDigests = pgTable('alert_digests', {
   day: date('day', { mode: 'string' }).primaryKey(),
   sentAt: time('sent_at'),
 });
+
+/** A link of a Service as the table keeps it: the other Service by its name. */
+export interface StoredServiceLink {
+  readonly to: string;
+  readonly kind: 'constant' | 'scheduled';
+}
+
+/** A limit of a Service's plan as the table keeps it. */
+export interface StoredServiceLimit {
+  readonly name: string;
+  readonly unit: string;
+  readonly limit: number;
+}
+
+/**
+ * The Services of «Сервіси» (ADR 0164), seeded with the eleven known ones.
+ * A block's place on the canvas is fixed data; a link names the other Service.
+ */
+export const services = pgTable(
+  'services',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull().unique(),
+    /** `railway`, `cron` or `metered`: what the block shows. */
+    kind: text('kind').notNull(),
+    plan: text('plan'),
+    monthlyPriceUsdCents: integer('monthly_price_usd_cents'),
+    billingDay: integer('billing_day'),
+    limits: jsonb('limits').$type<StoredServiceLimit[]>().notNull().default([]),
+    x: integer('x').notNull(),
+    y: integer('y').notNull(),
+    links: jsonb('links').$type<StoredServiceLink[]>().notNull().default([]),
+  },
+  (table) => [
+    check('services_kind', sql`${table.kind} in ('railway', 'cron', 'metered')`),
+    check('services_price', sql`${table.monthlyPriceUsdCents} >= 0`),
+    check('services_billing_day', sql`${table.billingDay} between 1 and 31`),
+  ],
+);

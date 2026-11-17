@@ -157,3 +157,4 @@ export {
   type SignedInAdmin,
   type SignInRefused,
 } from './admin/admin-sign-in';
+export type { ServiceStore } from './services/services';

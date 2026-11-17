@@ -11,6 +11,7 @@ import { Logo } from './sidebar';
 const PHONE_TITLES: Readonly<Record<string, string>> = {
   '/': 'Огляд',
   '/switches/kill': 'Аварійний вимикач',
+  '/services': 'Сервіси',
 };
 
 const tabClass =
@@ -18,8 +19,8 @@ const tabClass =
 
 /**
  * The admin on a phone: the header with the section's title, the Theme and
- * the account, and the bottom tabs Огляд, Вимикач and Ще. Only Огляд and the
- * Kill switch open here; any other section, and Ще, say to open a computer.
+ * the account, and the bottom tabs Огляд, Вимикач and Ще. Only Огляд, the
+ * Kill switch and a Власник's Сервіси (as cards) open here; any other section, and Ще, say to open a computer.
  */
 export function PhoneShell({
   admin,
@@ -65,7 +66,7 @@ export function PhoneShell({
         <AccountMenu admin={admin} theme={theme} setTheme={setTheme} compact />
       </header>
       {more ? (
-        <MoreScreen onOverview={closeMore} />
+        <MoreScreen onOverview={closeMore} owner={admin.role === 'owner'} />
       ) : (
         <main className="flex flex-1 flex-col gap-3 px-4 pt-1 pb-4">
           {/* The Kill switch picks its own place; the filters are Огляд's. */}
@@ -131,7 +132,14 @@ function Dot({ on, danger = false }: { readonly on: boolean; readonly danger?: b
 }
 
 /** Ще: the other sections work on a big screen only. */
-function MoreScreen({ onOverview }: { readonly onOverview: () => void }) {
+function MoreScreen({
+  onOverview,
+  owner,
+}: {
+  readonly onOverview: () => void;
+  /** A Власник also opens Сервіси here. */
+  readonly owner: boolean;
+}) {
   const [copied, setCopied] = useState(false);
   return (
     <main className="flex flex-col items-center gap-3 px-6 py-10 text-center">
@@ -148,6 +156,16 @@ function MoreScreen({ onOverview }: { readonly onOverview: () => void }) {
         >
           До Огляду
         </Link>
+        {owner ? (
+          <Link
+            to="/services"
+            search={(previous) => previous}
+            onClick={onOverview}
+            className="grid min-h-12 place-items-center rounded-[14px] bg-sunk text-sm text-foreground no-underline"
+          >
+            До Сервісів
+          </Link>
+        ) : null}
         <button
           type="button"
           onClick={() => {
