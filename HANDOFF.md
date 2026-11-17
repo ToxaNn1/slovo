@@ -8,3 +8,4 @@ STATUS: RUNNING
 - 2026-11-17T09:19:56Z #1950 merged (8e43af2d, migration 0030_services, ADR 0164). Started #1951 #1952 #1956 in /tmp/wt/<n>.
 - 2026-11-17T09:20:40Z draft PR #1960 opened (body source /tmp/claude-0/pr-body.md; update via gh api PATCH pulls/1960).
 - 2026-11-17T09:35:49Z #1951 merged (13c57b64; ReasonSchema moved to contracts api/reason.ts). Started #1954 in /tmp/wt/1954.
+- 2026-11-17T09:45:01Z #1952 STUCK at the integration merge (context); a fresh agent resolves it in /tmp/wt/1952.
