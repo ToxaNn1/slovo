@@ -32,3 +32,4 @@ WAITING until 2026-11-17T10:52:46Z: merger (#1952, #1954) and implementers #1955
 - 2026-11-17T11:16:45Z #1953 merged (0dbced1) + lint fixes 59f7920, 36ca819. #1958 DONE (50a0998), merger running. #1959 implementer in /tmp/wt/1959 (checklist to /tmp/claude-0/checklist.md for the PR body).
 - 2026-11-17T11:22:18Z #1958 merged (03f5794), #1959 merged (1e31fa5). Every ticket merged. Code review of feat/1949-services vs main started (findings to /tmp/claude-0/review.md).
 - 2026-11-17T11:34:14Z code review done: 1 finding (edit() opened a sealed value) fixed in c22cd4c, pushed. Composing the final PR body; then CI wait, mark ready.
+WAITING until 2026-11-17T12:04:27Z: CI on c22cd4c (PR #1960) and the PR body composer
