@@ -55,7 +55,7 @@ export default defineRailway(() => {
 
   const alerts = service('alerts', {
     build: dockerfile('Dockerfile'),
-    deploy: cron('pnpm cron', '*/15 * * * *'),
+    deploy: cron('pnpm cron', '0 * * * *'),
     replicas: EU_WEST_AMSTERDAM,
     env: {
       DATABASE_URL: backend.env.DATABASE_URL,
@@ -88,6 +88,8 @@ export default defineRailway(() => {
       R2_BUCKET: backend.env.R2_BUCKET,
       R2_ACCESS_KEY_ID: backend.env.R2_ACCESS_KEY_ID,
       R2_SECRET_ACCESS_KEY: backend.env.R2_SECRET_ACCESS_KEY,
+      TELEGRAM_BOT_TOKEN: backend.env.TELEGRAM_BOT_TOKEN,
+      TELEGRAM_CHAT_ID: backend.env.TELEGRAM_CHAT_ID,
     },
   });
 

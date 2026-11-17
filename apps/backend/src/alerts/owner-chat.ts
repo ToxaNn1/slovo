@@ -37,13 +37,15 @@ export function alertText(alert: Alert): string {
     case 'ci-red':
       return `🔴 CI на main червоний: ${alert.sha.slice(0, 7)}, тестів упало: ${n(alert.failedTests.length)}.${alert.failedTests.length > 0 ? `\n${alert.failedTests.slice(0, 5).join('\n')}` : ''}`;
     case 'api-errors':
-      return `⚠️ Помилки API 5xx за 15 хв: ${n(alert.percent)} % (поріг ${n(alert.threshold)} %).`;
+      return `⚠️ Помилки API 5xx за годину: ${n(alert.percent)} % (поріг ${n(alert.threshold)} %).`;
     case 'activity-drop':
       return `📉 Активність упала: ${alert.day} активних ${n(alert.active)}, у середньому за 7 днів ${n(alert.average)} (поріг падіння ${n(alert.threshold)} %).`;
     case 'backend-down':
       return '🚨 Бекенд не відповідає на перевірку здоров’я.';
     case 'batch-size':
       return `📦 Велика пачка у черзі ${alert.editionId}: ${n(alert.records)} записів (поріг ${n(alert.threshold)}).`;
+    case 'recordings-stalled':
+      return `🎙️ Озвучка ${alert.editionId} зупинилась: ${n(alert.runs)} запуски поспіль не записали жодного слова. Знову спробує після зміни контенту або нового деплою.`;
   }
 }
 

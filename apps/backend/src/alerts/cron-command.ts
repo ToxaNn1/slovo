@@ -1,4 +1,4 @@
-// `pnpm cron`: one run of the Cron service, every 15 minutes on Railway
+// `pnpm cron`: one run of the Cron service, hourly at :00 on Railway
 // (.railway/railway.ts): the alert checks, the daily digest after 09:00 Kyiv,
 // then the messages to the owner's Telegram chat. A run then exits.
 import { fileURLToPath } from 'node:url';
