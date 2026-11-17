@@ -40,3 +40,6 @@ copy-review/
 
 # The Starter Media the Language Pack build downloads for Metro (ADR 0099).
 editions/*/starter-media/
+
+# Python bytecode
+__pycache__/

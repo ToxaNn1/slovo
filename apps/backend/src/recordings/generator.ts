@@ -33,6 +33,7 @@ const run = promisify(execFile);
 /**
  * How long one run of the script may take: 25 minutes, under the 30-minute
  * lease (`RECORDING_LEASE_MS`), so a hung script never outlives its lease.
+ * A run it stops keeps the Recordings the script listed by then.
  */
 export const GENERATOR_TIMEOUT_MS = 25 * 60 * 1000;
 
@@ -48,7 +49,10 @@ export function scriptGenerator({
   /** The interpreter and the script, such as `[python, '-I', 'generate.py']`. */
   command: readonly [string, ...string[]];
   modelDir: string;
-  /** The run is killed after this long and the batch fails. */
+  /**
+   * The run is killed after this long: the requests the script listed as
+   * made keep their Recordings and the rest fail.
+   */
   timeoutMs?: number;
 }): RecordingGenerator {
   return {
@@ -61,14 +65,27 @@ export function scriptGenerator({
         const outDir = join(work, 'out');
         await writeFile(requestsFile, JSON.stringify(listed));
         const [program, ...args] = command;
-        await run(
+        const stopped = await run(
           program,
           [...args, '--model', modelDir, '--requests', requestsFile, '--out-dir', outDir],
           { maxBuffer: 16 * 1024 * 1024, timeout: timeoutMs, killSignal: 'SIGKILL' },
+        ).then(
+          () => undefined,
+          (error: unknown) => (error instanceof Error ? error : new Error('the script failed')),
         );
-        const results = ResultsSchema.parse(
-          JSON.parse(await readFile(join(outDir, 'results.json'), 'utf8')),
+        // The script rewrites results.json after every request, so a run that
+        // stopped part way still lists what it made; with no list, the batch fails.
+        const results = await readFile(join(outDir, 'results.json'), 'utf8').then(
+          (text) => ResultsSchema.parse(JSON.parse(text)),
+          (error: unknown) => {
+            throw stopped ?? error;
+          },
         );
+        if (stopped !== undefined)
+          console.error(
+            `recordings: the generator stopped after ${String(results.length)} of ` +
+              `${String(requests.length)} requests: ${stopped.message}`,
+          );
         const byId = new Map(results.map((result) => [result.id, result]));
         return await Promise.all(
           listed.map(async ({ id }): Promise<RecordingOutcome> => {
