@@ -13,17 +13,28 @@
         "simulator": true
       }
     },
-    "testflight": {
+    "beta": {
       "distribution": "store",
       "autoIncrement": true,
       "environment": "production",
-      "channel": "uk",
+      "channel": "beta",
+      "node": "22.23.4",
+      "pnpm": "12.9.1"
+    },
+    "production": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "environment": "production",
+      "channel": "production",
       "node": "22.23.4",
       "pnpm": "12.9.1"
     }
   },
   "submit": {
-    "testflight": {
+    "beta": {
+      "ios": {}
+    },
+    "production": {
       "ios": {}
     }
   }

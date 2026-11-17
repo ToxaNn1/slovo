@@ -45,8 +45,12 @@ describe('the AppConfig', () => {
       bundleId: 'app.slovo.uk',
       appGroup: 'group.app.slovo.uk',
       defaultEdition: 'uk',
-      updateChannel: 'uk',
-      buildProfiles: { ios: { development: 'development-simulator', release: 'testflight' } },
+      buildProfiles: {
+        ios: {
+          development: 'development-simulator',
+          release: { beta: 'beta', production: 'production' },
+        },
+      },
     });
     expect(app.path('icon')).toBe(join(REPO_DIR, 'editions/uk/assets/icon.png'));
     expect(app.splash().light.backgroundColor).toMatch(/^#[0-9A-F]{6}$/i);
