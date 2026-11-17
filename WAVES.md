@@ -117,7 +117,7 @@ brief:
 You are the profile walkthrough wave coordinator (spec #1909, tickets #1910–#1921), in the cloud; the laptop coordinator stopped. Read HANDOFF.md on origin/coord/profile-1909 and continue per docs/agents/waves.md and mattpocock-skills:implement-spec. Integration branch feat/1909-profile-walkthrough, one draft PR. #1921 (visual pass) needs the laptop: do the code part, list the screenshots for the owner. Grants: commits, pushes, one draft PR; NO merge to main, no force-push, no branch deletion, no EAS. Never write the owner's email anywhere. Never end your turn while work remains.
 
 ## wave services-1949
-status: active
+status: finished
 coord: coord/services-1949
 branches: ^origin/(feat/1949-services|coord/services-1949|(feat|chore|fix|docs|refactor|test)/19(5[0-9])-)
 brief:
