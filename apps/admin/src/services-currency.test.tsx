@@ -86,7 +86,9 @@ test('a failed NBU read shows the last known rate with its day', async () => {
 
   // $48.50 × 41.2 = 1 998.2.
   expect(await header.findByText('≈ 1 998 ₴ / місяць')).toBeDefined();
-  expect(header.getByText('Курс НБУ на 14 листопада (останній відомий): $1 = 41,2 ₴')).toBeDefined();
+  expect(
+    header.getByText('Курс НБУ на 14 листопада (останній відомий): $1 = 41,2 ₴'),
+  ).toBeDefined();
 });
 
 test('with no rate ever read the money stays in dollars and says so', async () => {
