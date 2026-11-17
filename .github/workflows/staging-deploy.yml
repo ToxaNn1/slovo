@@ -1,0 +1,74 @@
+name: Staging deploy
+
+# Deploys a chosen git ref to the Staging Deployment (ADR 0168), the `staging`
+# environment of the Railway project: applies that ref's .railway/railway.ts,
+# then uploads the backend, whose release step runs the migrations as in
+# production (ADR 0063). Started by hand only: Actions → Staging deploy → Run
+# workflow. No push trigger and no schedule: the Staging Deployment and its
+# Neon branch sleep until the owner tests (cost rule).
+#
+# RAILWAY_STAGING_TOKEN is a project token of the `staging` environment, so
+# nothing here can reach production; the CLI reads it from the environment.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: The branch, tag or commit to deploy
+        required: true
+        default: main
+
+permissions:
+  contents: read
+
+# One staging deploy at a time; a newer run waits rather than cancelling one.
+concurrency:
+  group: railway-staging-deploy
+  cancel-in-progress: false
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  REF: ${{ inputs.ref }}
+  # The Railway CLI, pinned as in ci.yml's deploy.
+  RAILWAY_CLI_VERSION: 5.71.0
+
+jobs:
+  deploy:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # The checks come from this workflow's own commit, whatever the ref holds.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/staging.ts
+            .nvmrc
+          sparse-checkout-cone-mode: false
+      # Node of .nvmrc runs scripts/staging.ts as it is, types stripped.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Check the ref
+        run: |
+          node scripts/staging.ts check-ref "$REF"
+          cp scripts/staging.ts "$RUNNER_TEMP/staging.mts"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      # A ref from before the Staging Deployment existed would apply
+      # production's Cron services to staging, which keep Neon awake.
+      - name: Check the ref's Railway project file
+        run: node "$RUNNER_TEMP/staging.mts" check-definition .railway/railway.ts
+      - name: Install the Railway CLI
+        run: npm install --global "@railway/cli@$RAILWAY_CLI_VERSION"
+      - name: Apply the Railway project file
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+        run: railway config apply --yes
+      - name: Deploy the backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+        run: railway up --ci --service backend
