@@ -15,3 +15,4 @@ Frontier #1962 #1963; then #1964, #1965 one at a time; #1966 after #1963. #1967 
 - 2026-11-17T11:50:32Z #1964 merged 78e51dbd. #1965 started in /tmp/wt/1965 (feat/1965-channel-rule-target). #1966 still running.
 - 2026-11-17T11:55:27Z #1966 DONE 8ac4ac81 (report wave/report-1966.md); merger running. #1965 running.
 - 2026-11-17T12:08:37Z #1966 merged 3256d245; PR body updated with #1966 (wave/pr-body.md). Remaining: #1965 running, then merge, code-review subagent, fixes, CI, ready.
+- 2026-11-17T12:14:57Z #1965 STUCK on ADR 0122 (admin strict output RuleSchema gains targets.channel → breaking-changes check + describe-api refuse). Default chosen: ADR 0170 also amends 0122, admin outputs may gain a field; implementer resumed. Owner Q in PR body.
