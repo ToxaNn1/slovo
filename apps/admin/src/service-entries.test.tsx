@@ -15,7 +15,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** Opens Neon's side panel and answers its entries section. */
+/** Opens Neon's window and answers its entries section. */
 async function neonEntries(options: Parameters<typeof userEvent.setup>[0] = {}) {
   const user = userEvent.setup(options);
   render(<Admin />);
@@ -65,7 +65,8 @@ test('a new entry goes through the confirmation with a reason', async () => {
     }),
   );
   const { user, entries } = await neonEntries();
-  const form = within(await entries.findByRole('form', { name: 'Новий запис' }));
+  await user.click(await entries.findByRole('button', { name: 'Додати запис' }));
+  const form = within(entries.getByRole('form', { name: 'Новий запис' }));
 
   await user.selectOptions(form.getByLabelText('Тип'), 'Токен / API-ключ');
   await user.type(form.getByLabelText('Назва'), 'Read key');

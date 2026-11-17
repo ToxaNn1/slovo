@@ -1,5 +1,6 @@
 import {
   SERVICE_KINDS,
+  type RailwaySpendPart,
   ServiceRefusalSchema,
   type Service,
   type ServiceCosts,
@@ -11,21 +12,17 @@ import { refusalData } from '../../session';
 import { useAdminWrite } from '../admin-write';
 import { ConfirmDialog, type PendingWrite } from '../confirm-dialog';
 import { Button } from '../ui/button';
-import { CurrencySwitch, useMoney } from './service-currency';
+import { CurrencySwitch, usd, useMoney } from './service-currency';
+import type { UsageAnswer } from './usage';
 
 const inputClass = 'h-9 rounded-lg border border-border bg-background px-3 text-sm';
 
-const KIND_LABELS: Record<Service['kind'], string> = {
+/** What the Власник reads of each kind of Service. */
+export const KIND_LABELS: Readonly<Record<Service['kind'], string>> = {
   railway: 'Сервіс Railway',
   cron: 'Cron',
   metered: 'Інший, з лімітами',
 };
-
-/** Dollars of the cents: whole dollars without cents, «$4.50» with them. */
-export function usd(cents: number): string {
-  const dollars = cents / 100;
-  return `$${Number.isInteger(dollars) ? String(dollars) : dollars.toFixed(2)}`;
-}
 
 /** «28 лютого» of a day `YYYY-MM-DD`. */
 const dayOf = (iso: string) =>
@@ -161,8 +158,82 @@ export function ServiceCostsHeader({
   );
 }
 
-/** The money of a Service in its side panel, changed through a confirmation with a reason. */
-export function ServiceMoneySection({ service }: { readonly service: Service }) {
+/** The parts of Railway's spend as the owner reads them (ADR 0173). */
+const SPEND_PART_LABELS: Readonly<Record<RailwaySpendPart, string>> = {
+  cpu: 'Процесор',
+  memory: "Пам'ять",
+  egress: 'Вихідний трафік',
+  disk: 'Диск',
+};
+
+/** The Kyiv day of `now` as `YYYY-MM-DD`. */
+const kyivDay = (now: Date) =>
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Kyiv',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+
+/**
+ * The next day a Service charges on, as `YYYY-MM-DD`: this month's billing
+ * day from the Kyiv day of `now`, else next month's; a day past a month's end
+ * is its last day.
+ */
+export function nextBillingDay(billingDay: number, now: Date): string {
+  const [year = 0, month = 1, day = 1] = kyivDay(now).split('-').map(Number);
+  const on = (y: number, m: number) => {
+    const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    return `${String(y)}-${String(m).padStart(2, '0')}-${String(Math.min(billingDay, last)).padStart(2, '0')}`;
+  };
+  const thisMonth = on(year, month);
+  if (Number(thisMonth.slice(8)) >= day) return thisMonth;
+  return month === 12 ? on(year + 1, 1) : on(year, month + 1);
+}
+
+/** What the Service spent this month as its port read it: Railway's spend and its parts. */
+function Spent({ read }: { readonly read: UsageAnswer | undefined }) {
+  const shown = useMoney(usd);
+  if (read?.state !== 'read' || read.reading.kind !== 'railway') {
+    return <p className="text-muted-foreground">Провайдер не повідомляє, скільки вже витрачено.</p>;
+  }
+  const spend = read.reading.usage.find((usage) => usage.name === 'spend');
+  return (
+    <div className="flex flex-col gap-2">
+      {spend === undefined ? null : (
+        <p>
+          <span className="font-display text-lg font-semibold tabular-nums">
+            {shown(Math.round(spend.used * 100))}
+          </span>{' '}
+          <span className="text-muted-foreground">
+            з {shown(Math.round(spend.limit * 100))}, включених у тариф
+          </span>
+        </p>
+      )}
+      <ul aria-label="З чого складаються витрати" className="flex flex-col gap-1">
+        {read.reading.spendParts.map(({ part, usd: dollars }) => (
+          <li key={part} className="flex justify-between gap-3">
+            <span className="text-muted-foreground">{SPEND_PART_LABELS[part]}</span>
+            <span className="tabular-nums">{shown(Math.round(dollars * 100))}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/**
+ * The money of a Service in its window: the plan, the price, the billing day
+ * and the next charge, what it spent this month as its port read it; changed
+ * through a confirmation with a reason.
+ */
+export function ServiceMoneySection({
+  service,
+  read,
+}: {
+  readonly service: Service;
+  readonly read: UsageAnswer | undefined;
+}) {
   const [draft, setDraft] = useState<MoneyDraft>();
   const [pending, setPending] = useState<PendingWrite | null>(null);
   const shown = useMoney(usd);
@@ -182,31 +253,50 @@ export function ServiceMoneySection({ service }: { readonly service: Service }) 
   };
 
   return (
-    <section aria-label="Гроші" className="flex flex-col gap-3">
+    <>
       {draft === undefined ? (
         <>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
             <dt className="text-muted-foreground">План</dt>
             <dd>{service.plan ?? '—'}</dd>
             <dt className="text-muted-foreground">Ціна</dt>
-            <dd>
+            <dd className="tabular-nums">
               {service.monthlyPriceUsdCents === null
                 ? '—'
                 : `${shown(service.monthlyPriceUsdCents)} / місяць`}
             </dd>
             <dt className="text-muted-foreground">День списання</dt>
-            <dd>{service.billingDay === null ? '—' : String(service.billingDay)}</dd>
+            <dd>
+              {service.billingDay === null ? (
+                '—'
+              ) : (
+                <>
+                  {`${String(service.billingDay)}-го щомісяця`}
+                  <span className="block text-xs text-muted-foreground">
+                    Наступне {dayOf(nextBillingDay(service.billingDay, new Date()))}
+                  </span>
+                </>
+              )}
+            </dd>
           </dl>
-          <CurrencySwitch />
-          <Button
-            variant="secondary"
-            className="self-start"
-            onClick={() => {
-              setDraft(draftOf(service));
-            }}
-          >
-            Змінити
-          </Button>
+          <div className="flex flex-col gap-2 border-t border-border pt-3">
+            <h4 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Витрачено цього місяця
+            </h4>
+            <Spent read={read} />
+          </div>
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+            <CurrencySwitch />
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setDraft(draftOf(service));
+              }}
+            >
+              Змінити
+            </Button>
+          </div>
         </>
       ) : (
         <form aria-label="План і ціна" onSubmit={onSave} className="flex flex-col gap-3">
@@ -235,7 +325,7 @@ export function ServiceMoneySection({ service }: { readonly service: Service }) 
           }}
         />
       )}
-    </section>
+    </>
   );
 }
 

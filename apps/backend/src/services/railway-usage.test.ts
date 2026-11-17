@@ -19,6 +19,12 @@ describe('the Railway usage', () => {
         kind: 'railway',
         state: 'online',
         usage: [{ name: 'spend', unit: 'USD', used: 1.8, limit: 5 }],
+        spendParts: [
+          { part: 'cpu', usd: 0.56 },
+          { part: 'memory', usd: 1.16 },
+          { part: 'egress', usd: 0.09 },
+          { part: 'disk', usd: 0 },
+        ],
       },
     });
     expect(await ports.alerts.read()).toEqual({

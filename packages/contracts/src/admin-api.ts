@@ -22,7 +22,7 @@ export {
   type ServiceCosts,
   type ServiceMoneyField,
 } from './api/services';
-export type { LimitUsage, ServiceReading, ServiceUsage } from './api/services';
+export type { LimitUsage, RailwaySpendPart, ServiceReading, ServiceUsage } from './api/services';
 export { type UsdRate } from './api/services';
 export { NEAR_LIMIT_SHARE, nearLimit } from './api/services';
 export {

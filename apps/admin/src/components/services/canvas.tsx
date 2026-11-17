@@ -303,7 +303,7 @@ function ZoomBar({
   );
 }
 
-/** The Services as a list of cards, for a phone: each card opens the same panel. */
+/** The Services as a list of cards, for a phone: each card opens the same window. */
 export function ServiceCards({
   services,
   usage,

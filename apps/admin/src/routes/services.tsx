@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { adminApi } from '../api';
 import { ServiceCards, ServicesCanvas, type UsageById } from '../components/services/canvas';
 import { AddService, ServiceCostsHeader } from '../components/services/service-money';
-import { ServicePanel } from '../components/services/service-panel';
+import { ServiceWindow } from '../components/services/service-window';
 import { useWide } from '../screen-width';
 import { sectionAt } from '../sections';
 import { useSignedInAdmin } from '../session';
@@ -31,10 +31,10 @@ function Services() {
   );
 }
 
-/** Every Service on the canvas, or on a phone as cards; a Service opens its side panel. */
+/** Every Service on the canvas, or on a phone as cards; a Service opens its window. */
 function OwnerServices() {
   const wide = useWide();
-  // By id, so the panel shows the Service as the list reads it after a write.
+  // By id, so the window shows the Service as the list reads it after a write.
   const [openId, setOpenId] = useState<Service['id']>();
   const setOpen = (service: Service) => {
     setOpenId(service.id);
@@ -65,9 +65,9 @@ function OwnerServices() {
         <ServiceCards services={list} usage={usage.byId} onOpen={setOpen} />
       )}
       {open === undefined ? null : (
-        <ServicePanel
+        <ServiceWindow
           service={open}
-          {...usage.panelOf(open)}
+          {...usage.windowOf(open)}
           onClose={() => {
             setOpenId(undefined);
           }}
@@ -106,8 +106,8 @@ function useServiceUsage() {
   );
   return {
     byId,
-    /** The panel's usage of the Service, when it has one. */
-    panelOf(service: Service) {
+    /** The window's usage of the Service, when it has one. */
+    windowOf(service: Service) {
       const read = byId.get(service.id);
       return read === undefined
         ? {}

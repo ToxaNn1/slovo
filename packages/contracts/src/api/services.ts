@@ -313,6 +313,10 @@ export const NEAR_LIMIT_SHARE = 0.9;
 export const nearLimit = ({ used, limit }: { readonly used: number; readonly limit: number }) =>
   used >= limit * NEAR_LIMIT_SHARE;
 
+/** What Railway bills a month by: the vCPU, the memory, the egress and the volume (ADR 0173). */
+export const RailwaySpendPartSchema = z.enum(['cpu', 'memory', 'egress', 'disk']);
+export type RailwaySpendPart = z.infer<typeof RailwaySpendPartSchema>;
+
 /** What a Service's provider answered, by the Service's kind. */
 export const ServiceReadingSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('metered'), usage: z.array(LimitUsageSchema) }),
@@ -320,6 +324,8 @@ export const ServiceReadingSchema = z.discriminatedUnion('kind', [
     kind: z.literal('railway'),
     state: z.enum(['online', 'offline']),
     usage: z.array(LimitUsageSchema),
+    /** This month's spend of each part Railway bills, in USD (ADR 0173). */
+    spendParts: z.array(z.object({ part: RailwaySpendPartSchema, usd: z.number().min(0) })),
   }),
   z.object({
     kind: z.literal('cron'),

@@ -166,7 +166,7 @@ test('the Sentry and PostHog blocks show a usage bar, PostHog’s marked stale',
     '250000',
   );
   expect(posthog.getByText('застаріло')).toBeDefined();
-  expect(within(blocks.getByRole('button', { name: 'Neon' })).queryByRole('meter')).toBeNull();
+  expect(within(blocks.getByRole('button', { name: 'Zoho Mail' })).queryByRole('meter')).toBeNull();
 });
 
 test('a Service whose read failed says so on its block', async () => {
@@ -210,7 +210,7 @@ test('the panel shows the usage numbers and the read time, and «Оновити�
   const panel = within(await screen.findByRole('dialog', { name: 'Sentry' }));
 
   expect(panel.getByText('1 200 з 5 000 подій')).toBeDefined();
-  expect(panel.getByText(/Прочитано 17 лист\. 2026 р\., 09:30/)).toBeDefined();
+  expect(panel.getByText(/Оновлено 17 листопада, 09:30/)).toBeDefined();
 
   await user.click(panel.getByRole('button', { name: 'Оновити' }));
 
