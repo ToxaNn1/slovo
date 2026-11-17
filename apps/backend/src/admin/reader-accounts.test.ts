@@ -151,7 +151,11 @@ describe('a reader Account in Безпека', () => {
             editionId: 'uk',
             records: [
               { key: 'favorites.w_a1', value: '2026-11-01T10:00:00.000Z', changedAt: at },
-              { key: 'knowledge.w_b2', value: { mark: 'known', learned: false }, changedAt: at + 1 },
+              {
+                key: 'knowledge.w_b2',
+                value: { mark: 'known', learned: false },
+                changedAt: at + 1,
+              },
             ],
           },
         ],
@@ -182,7 +186,9 @@ describe('a reader Account in Безпека', () => {
     const device = await backend.signInDevice(email);
     await device.sync.push({
       editionId: 'uk',
-      changes: [{ key: 'favorites.w_a1', value: '2026-11-01T10:00:00.000Z', changedAt: Date.now() }],
+      changes: [
+        { key: 'favorites.w_a1', value: '2026-11-01T10:00:00.000Z', changedAt: Date.now() },
+      ],
     });
     const deletedId = await backend.idOf(email);
     await backend.owner.client.admin.deleteAccount({ email, reason: 'test Account' });
@@ -194,9 +200,9 @@ describe('a reader Account in Безпека', () => {
     await expect(again.sync.pull({ editionId: 'uk' })).resolves.toMatchObject({ records: [] });
     const opened = await backend.owner.client.admin.getAccount({ accountId: newId });
     expect(opened.account?.editions).toEqual([]);
-    await expect(
-      backend.owner.client.admin.getAccount({ accountId: deletedId }),
-    ).resolves.toEqual({ account: null });
+    await expect(backend.owner.client.admin.getAccount({ accountId: deletedId })).resolves.toEqual({
+      account: null,
+    });
   });
 
   it('deletes the Account as the app does, signing its devices out, and logs who, which email and why', async () => {
