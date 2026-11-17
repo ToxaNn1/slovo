@@ -434,17 +434,18 @@ export function adminProcedures(
       return { revoked: true as const };
     }),
 
-    findAccount: os.findAccount.handler(async ({ context, input, errors }) => {
+    // Never logged: reads are not (ADR 0088, 0162).
+    listAccounts: os.listAccounts.handler(async ({ context, input, errors }) => {
       await admit(context.headers, errors, { security: true });
-      const found = await accounts.find(input.email);
-      if (found === undefined) return { account: null };
-      const { account, signInMethods } = found;
+      const listed = await accounts.list({ page: input.page ?? 1, search: input.search ?? '' });
       return {
-        account: {
+        accounts: listed.accounts.map(({ account, signInMethods }) => ({
+          id: account.id,
           email: account.email,
           createdAt: account.createdAt.toISOString(),
           signInMethods: [...signInMethods],
-        },
+        })),
+        total: listed.total,
       };
     }),
 

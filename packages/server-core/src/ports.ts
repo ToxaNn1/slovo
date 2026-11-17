@@ -158,15 +158,31 @@ export interface Authenticator {
    * sign-in methods recorded for it; none when the email has no Account.
    */
   accountOf(email: string): Promise<ReaderAccount | undefined>;
+  /**
+   * One page of the Accounts whose email holds `search`, lower-cased already
+   * (every Account without one), newest first, with the Google and Apple
+   * sign-in methods recorded for each, and the count of every match.
+   */
+  accounts(query: {
+    readonly search: string;
+    readonly offset: number;
+    readonly limit: number;
+  }): Promise<AccountsPage>;
 }
 
 /** A Sign-in method an Account keeps a record of; a Sign-in code reaches every Account. */
 export type RecordedSignInMethod = 'google' | 'apple';
 
-/** An Account as the owner admin finds it by email (ADR 0127). */
+/** An Account as the owner admin lists it (ADR 0162). */
 export interface ReaderAccount {
   readonly account: AccountRecord;
   readonly signInMethods: readonly RecordedSignInMethod[];
+}
+
+/** A page of the owner admin's list of Accounts, with the count of every match. */
+export interface AccountsPage {
+  readonly accounts: readonly ReaderAccount[];
+  readonly total: number;
 }
 
 /** An email to one reader, in plain text. */
