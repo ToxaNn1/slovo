@@ -37,6 +37,7 @@
     "@commitlint/config-conventional": "^21.2.4",
     "@slovo/config": "workspace:*",
     "dependency-cruiser": "^18.7.2",
+    "istanbul-lib-coverage": "^3.2.2",
     "knip": "^6.44.1",
     "oxlint": "~1.91.0",
     "prettier": "^3.9.10",

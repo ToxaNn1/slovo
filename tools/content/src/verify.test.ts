@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { readSnapshotFile } from '@slovo/language-pack';
 import {
@@ -412,5 +412,131 @@ describe('verify', () => {
 
     expect(run.stderr).toContain('--snapshot <file>');
     expect(run.status).toBe(2);
+  });
+});
+
+describe('verifyEntries, in process', () => {
+  /** Verifies in this process, every page through `fetch`; gives the exit code and every line. */
+  async function run(
+    targets: Parameters<typeof verifyEntries>[0]['targets'],
+    {
+      fetch = () => Promise.resolve({ status: 200, body: gorohPage([SUM, definition]) }),
+      bookFile,
+    }: {
+      fetch?: (url: string) => Promise<{ status: number; body: string }>;
+      bookFile?: string;
+    } = {},
+  ) {
+    const lines: string[] = [];
+    const problems: string[] = [];
+    const status = await verifyEntries({
+      edition: edition(),
+      targets,
+      bookFile,
+      client: new PoliteClient(
+        fetch,
+        { now: () => 0, sleep: () => Promise.resolve() },
+        cacheDir,
+        0,
+      ),
+      cwd: workDir,
+      print: (line) => lines.push(line),
+      problem: (line) => problems.push(line),
+    });
+    return { status, lines, problems };
+  }
+
+  it('fails an Entry whose page fetch throws, with the reason', async () => {
+    const file = writeEntry(word('w_vrf010', definition, `${GOROH}перевірка010`));
+
+    const result = await run(
+      { kind: 'named', names: ['w_vrf010'] },
+      { fetch: () => Promise.reject(new Error('socket hang up')) },
+    );
+
+    expect(result).toEqual({
+      status: 1,
+      lines: [
+        `fetch-failed\tw_vrf010\t${file}\tgoroh.pp.ua: no connection (socket hang up)`,
+        '1 fetch-failed',
+      ],
+      problems: [],
+    });
+  });
+
+  it('verifies drafts of a folder against their pages, naming each file from the run', async () => {
+    const drafts = join(workDir, 'drafts');
+    mkdirSync(drafts);
+    writeFileSync(
+      join(drafts, 'a.json'),
+      JSON.stringify(word('w_vrf011', definition, `${GOROH}перевірка011`)),
+    );
+
+    expect(await run({ kind: 'named', names: ['drafts'] })).toEqual({
+      status: 0,
+      lines: [`ok\tw_vrf011\t${join('drafts', 'a.json')}`, '1 ok'],
+      problems: [],
+    });
+  });
+
+  it('refuses an empty drafts folder and drafts of no kind, verifying nothing', async () => {
+    mkdirSync(join(workDir, 'empty'));
+    writeFileSync(join(workDir, 'nokind.json'), JSON.stringify({ id: 'zz_1', lemma: 'слово' }));
+    writeFileSync(join(workDir, 'broken.json'), JSON.stringify({ id: 'w_vrf012' }));
+    const fetch = vi.fn(() => Promise.resolve({ status: 200, body: '' }));
+
+    const result = await run(
+      { kind: 'named', names: ['empty', 'nokind.json', 'broken.json', 'w_nothere'] },
+      { fetch },
+    );
+
+    expect(result.status).toBe(2);
+    expect(result.lines).toEqual([]);
+    const problems = result.problems.join('\n');
+    expect(problems).toContain('No draft is in empty');
+    expect(problems).toContain("nokind.json: The draft's id names no kind of Entry");
+    expect(problems).toMatch(/broken\.json: .+/);
+    expect(problems).toContain('No Entry of the Edition is w_nothere');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("verifies a Tip from the book alone, every quoted field, and prints the quote's page", async () => {
+    const tip = ukrainian
+      .entries()
+      .tips.find(({ entry }) => entry.sources.every((source) => source.url === undefined));
+    if (tip === undefined) throw new Error('The UA Edition has no Tip sourced from a book alone');
+    const { entry } = tip;
+    const book = join(workDir, 'book.txt');
+    const quoted = [entry.title, entry.nonStandardForm, entry.standardForm, entry.example?.text];
+    writeFileSync(
+      book,
+      [
+        'no tab on this line',
+        ...quoted.filter((text) => text !== undefined).map((text) => `40\t${text}`),
+        `40\t${entry.gameQuestion.rightAnswer}`,
+        `41\t${entry.explanation}`,
+      ].join('\n'),
+    );
+
+    const passed = await run({ kind: 'named', names: [entry.id] }, { bookFile: book });
+    writeFileSync(book, `41\t${entry.explanation}`);
+    const failed = await run({ kind: 'named', names: [entry.id] }, { bookFile: book });
+
+    expect(passed.status).toBe(0);
+    expect(passed.lines[0]).toBe(`ok\t${entry.id}\t${tip.file}\tpage 41`);
+    expect(failed.status).toBe(1);
+    expect(failed.lines[0]).toMatch(/^unverified\t.*\tnot in the book: title/);
+  });
+
+  it('with --changed, verifies nothing when no quote differs', async () => {
+    const since = readSnapshotFile(saveSnapshot('earlier.json'));
+    const fetch = vi.fn(() => Promise.resolve({ status: 200, body: '' }));
+
+    expect(await run({ kind: 'changed', since, name: 'earlier.json' }, { fetch })).toEqual({
+      status: 0,
+      lines: ['No Entry differs from earlier.json'],
+      problems: [],
+    });
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

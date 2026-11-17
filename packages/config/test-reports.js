@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 
-// In CI every test run also writes a JUnit report and a coverage summary to
+// In CI every test run also writes a JUnit report, a coverage summary and its
+// coverage map (merged across a sharded run by scripts/ci-history.mjs) to
 // the package's coverage/ folder, which .github/workflows/ci.yml keeps as an
 // artifact; a run on a machine prints what it always did.
 const ci = Boolean(process.env.CI);
@@ -15,7 +16,8 @@ export const vitestReports = {
   coverage: {
     enabled: ci,
     provider: 'v8',
-    reporter: ['json-summary'],
+    // The summary for the job's page; the full map, so CI merges a sharded run's parts.
+    reporter: ['json-summary', 'json'],
     reportsDirectory: 'coverage/vitest',
     // A red run keeps its summary too.
     reportOnFailure: true,
@@ -34,7 +36,7 @@ export const jestReports = ci
       ],
       collectCoverage: true,
       coverageProvider: 'v8',
-      coverageReporters: ['json-summary'],
+      coverageReporters: ['json-summary', 'json'],
       coverageDirectory: '<rootDir>/coverage/jest',
     }
   : {};

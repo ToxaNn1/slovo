@@ -9,7 +9,7 @@ export interface PostHogSettings {
 }
 
 /** The days of the Аналітика are Kyiv's. */
-const DAY = "toString(toDate(timestamp, 'Europe/Kyiv'))";
+const DAY = "toString(toDate(toTimeZone(timestamp, 'Europe/Kyiv')))";
 /** An event's Edition and day in the period. */
 const IN_PERIOD = `properties.edition IN {editions} AND ${DAY} >= {from} AND ${DAY} <= {to}`;
 /** A Feature Switch's name, so it is safe inside a property's name. */

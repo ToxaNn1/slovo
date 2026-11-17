@@ -1,11 +1,12 @@
-import { randomInt } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 
 import type { MistakeReport } from '@slovo/contracts';
+import type { ApiClient } from '@slovo/contracts/api';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import type { Database } from '../database/database';
-import { mistakeReports, rateLimits } from '../database/schema';
+import { accounts, mistakeReports, rateLimits } from '../database/schema';
 import { newIp, passTime, testApp, testEditions } from '../test-support';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -15,6 +16,19 @@ const DAY = 24 * 60 * 60 * 1000;
  * database: the backend doesn't check that the Entry is in a pack.
  */
 const newEntryId = () => `w_${randomInt(2 ** 47).toString(36)}`;
+
+/** An email no other test uses. */
+const newEmail = () => `reader-${randomUUID()}@example.com`;
+
+/** The client of a new Session of the email's Account on the backend. */
+async function signIn(
+  { client, clientOf, mailer }: ReturnType<typeof testApp>,
+  email = newEmail(),
+): Promise<ApiClient> {
+  await client.account.requestCode({ email, editionId: 'uk' });
+  const { token } = await client.account.verifyCode({ email, code: mailer.codeSentTo(email) });
+  return clientOf(token);
+}
 
 /** A valid report of a mistake in a Word of the UA Edition. */
 const validReport = (entryId: string, change: Partial<MistakeReport> = {}): MistakeReport => ({
@@ -59,6 +73,8 @@ describe('reports.send', () => {
         appVersion: '0.8.14',
         contentVersion: 42,
         receivedAt: arrived,
+        // Sent with no Session, the report names no Account (ADR 0159).
+        accountId: null,
       },
     ]);
   });
@@ -74,22 +90,20 @@ describe('reports.send', () => {
     expect(rows.map((row) => row.comment).sort()).toEqual(['', 'Typo in the Definition.']);
   });
 
-  it('keeps no IP address, device id or Account, even from a signed-in device', async () => {
+  it('keeps no IP address, no device id and no Account from a device with no Session', async () => {
     const { request, database, ip } = testApp();
     const entryId = newEntryId();
 
     const response = await request(
       '/v1/reports',
-      post(validReport(entryId), {
-        authorization: 'Bearer a-session-token',
-        'x-forwarded-for': '203.0.113.7',
-      }),
+      post(validReport(entryId), { 'x-forwarded-for': '203.0.113.7' }),
     );
 
     expect(response.status).toBe(202);
     const [row] = await keptOf(database, entryId);
     // The row holds the report and its time, and nothing that names who sent it.
     expect(Object.keys(row ?? {}).sort()).toEqual([
+      'accountId',
       'appVersion',
       'comment',
       'contentVersion',
@@ -99,10 +113,54 @@ describe('reports.send', () => {
       'receivedAt',
       'type',
     ]);
+    expect(row?.accountId).toBeNull();
     const kept = JSON.stringify(row);
     expect(kept).not.toContain(ip);
     expect(kept).not.toContain('203.0.113.7');
-    expect(kept).not.toContain('a-session-token');
+  });
+
+  it('keeps the Account of a signed-in reader, and nothing else that names them (ADR 0159)', async () => {
+    const backend = testApp();
+    const { database, ip } = backend;
+    const email = newEmail();
+    const reader = await signIn(backend, email);
+    const entryId = newEntryId();
+
+    await reader.reports.send(validReport(entryId));
+
+    const [row] = await keptOf(database, entryId);
+    const [account] = await database.db.select().from(accounts).where(eq(accounts.email, email));
+    expect(row?.accountId).toBe(account?.id);
+    const kept = JSON.stringify(row);
+    expect(kept).not.toContain(ip);
+    expect(kept).not.toContain(email);
+  });
+
+  it('keeps a report with a Session that is not on as anonymous, and takes it', async () => {
+    const { request, database } = testApp();
+    const entryId = newEntryId();
+
+    const response = await request(
+      '/v1/reports',
+      post(validReport(entryId), { authorization: 'Bearer a-session-token' }),
+    );
+
+    expect(response.status).toBe(202);
+    const [row] = await keptOf(database, entryId);
+    expect(row?.accountId).toBeNull();
+    expect(JSON.stringify(row)).not.toContain('a-session-token');
+  });
+
+  it('forgets who sent a report once the Account is deleted, and keeps the report', async () => {
+    const backend = testApp();
+    const reader = await signIn(backend);
+    const entryId = newEntryId();
+    await reader.reports.send(validReport(entryId));
+
+    await reader.account.delete();
+
+    const [row] = await keptOf(backend.database, entryId);
+    expect(row).toMatchObject({ entryId, accountId: null });
   });
 
   it.each([

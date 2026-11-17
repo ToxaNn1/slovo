@@ -7,6 +7,7 @@ import type {
   CounterStore,
   CounterTotals,
   PostHogPort,
+  TopWords,
 } from '../ports';
 import { createQueryQueue, type Wait } from './query-queue';
 import { createSourceCache } from './source-cache';
@@ -31,9 +32,13 @@ export interface AnalyticsOverview {
 export type PostHogRead<T> =
   { readonly ok: true; readonly value: T; readonly fetchedAt: Date } | { readonly ok: false };
 
-/** The Community Counters sums and questionnaire counts of some Editions. */
+/** How many Words of each mark the Лічильники name. */
+export const TOP_WORDS = 10;
+
+/** The Community Counters sums, top Words and questionnaire counts of some Editions. */
 export interface CountersSummary {
   readonly totals: CounterTotals;
+  readonly top: TopWords;
   readonly answers: readonly AnswerCount[];
 }
 
@@ -130,11 +135,12 @@ export function createAdminAnalytics({
       guarded((rows) => rows({ kind: 'variants', editionIds, feature })),
 
     async counters(editionIds) {
-      const [totals, answers] = await Promise.all([
+      const [totals, top, answers] = await Promise.all([
         counters.totals(editionIds),
+        counters.topWords(editionIds, TOP_WORDS),
         counters.answers(editionIds),
       ]);
-      return { totals, answers };
+      return { totals, top, answers };
     },
   };
 }

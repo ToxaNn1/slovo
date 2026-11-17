@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { MistakeReportSchema } from '../mistake-report';
 import { procedure } from './procedure';
 
-/** The Mistake Report procedures. They need no Account and send no Session. */
+/**
+ * The Mistake Report procedures. They need no Account; a signed-in device
+ * sends its Session, and a Session that is not on makes the report anonymous.
+ */
 export const reportsContract = {
   send: procedure
     .route({
@@ -12,7 +15,7 @@ export const reportsContract = {
       successStatus: 202,
       summary: 'Report a mistake in an Entry',
       description:
-        "The backend checks the report's shape, not whether its Entry is in a pack, and keeps it with its time of arrival only: no Account, no device id, no IP address (ADR 0056). A comment has at most 500 characters once trimmed and is empty when there is none; type other needs one.",
+        "The backend checks the report's shape, not whether its Entry is in a pack, and keeps it with its time of arrival and, from a signed-in device, the Account of its Session: no device id, no IP address (ADR 0056, 0159). Without a Session, or with one that is not on, the report is anonymous and still taken. A comment has at most 500 characters once trimmed and is empty when there is none; type other needs one.",
       tags: ['reports'],
     })
     .errors({

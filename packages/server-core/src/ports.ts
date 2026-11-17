@@ -303,14 +303,19 @@ export interface SwitchRuleStore {
   ): Promise<void>;
 }
 
-/** A Mistake Report as the backend keeps it: the report and its time of arrival, nothing else. */
+/**
+ * A Mistake Report as the backend keeps it: the report, its time of arrival
+ * and the Account of a signed-in reader, none for an anonymous one (ADR 0159).
+ */
 export interface KeptReport extends MistakeReport {
   readonly receivedAt: Date;
+  readonly accountId: string | null;
 }
 
 /**
  * The Mistake Reports still to check, per Edition (Postgres in the backend).
- * It keeps no IP address, no device id and no Account (ADR 0056).
+ * It keeps no IP address and no device id (ADR 0056); a deleted Account
+ * leaves its reports anonymous (ADR 0159).
  */
 export interface MistakeReportStore {
   keep(report: KeptReport): Promise<void>;
@@ -414,6 +419,25 @@ export interface CounterStore {
   totals(editionIds: readonly string[]): Promise<CounterTotals>;
   /** The count of each questionnaire answer of the Editions, summed over them, in any order. */
   answers(editionIds: readonly string[]): Promise<readonly AnswerCount[]>;
+  /**
+   * The Editions' Words with the highest count of each mark, the most first,
+   * at most `limit` of each; a Word not counted for a mark is not among them.
+   */
+  topWords(editionIds: readonly string[], limit: number): Promise<TopWords>;
+}
+
+/** A Word among the most counted of a mark (ADR 0060). */
+export interface TopWord {
+  readonly entryId: string;
+  readonly lemma: string;
+  readonly count: number;
+}
+
+/** The Words most marked Known, Unknown and kept in Favorites. */
+export interface TopWords {
+  readonly known: readonly TopWord[];
+  readonly unknown: readonly TopWord[];
+  readonly saved: readonly TopWord[];
 }
 
 /** The sums of the Community Counters of some Editions. */

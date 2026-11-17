@@ -560,8 +560,14 @@ export function adminProcedures(
 
     counters: os.counters.handler(async ({ context, input, errors }) => {
       await admit(context.headers, errors);
-      const { totals, answers } = await analytics.counters(editionIdsOf(input.editionId, errors));
-      return { ...totals, answers: [...answers] };
+      const { totals, top, answers } = await analytics.counters(
+        editionIdsOf(input.editionId, errors),
+      );
+      return {
+        ...totals,
+        top: { known: [...top.known], unknown: [...top.unknown], saved: [...top.saved] },
+        answers: [...answers],
+      };
     }),
 
     editions: os.editions.handler(async ({ context, errors }) => {
@@ -575,8 +581,26 @@ export function adminProcedures(
       await admit(context.headers, errors);
       const edition = served.find(({ config }) => config.id === input.editionId);
       if (edition === undefined) throw errors.NOT_FOUND();
-      const { id, displayName, locale, categories, correctionCategories, levels } = edition.config;
-      return { id, displayName, locale, categories, correctionCategories, levels };
+      const {
+        id,
+        displayName,
+        locale,
+        categories,
+        correctionCategories,
+        levels,
+        questionnaire,
+        onboardingNotificationTimes,
+      } = edition.config;
+      return {
+        id,
+        displayName,
+        locale,
+        categories,
+        correctionCategories,
+        levels,
+        questionnaire,
+        onboardingNotificationTimes,
+      };
     }),
 
     content: {

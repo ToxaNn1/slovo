@@ -2,7 +2,14 @@ import { z } from 'zod';
 
 import { ContentTargetsSchema } from '../content-targets';
 import { CorrectionTypeSchema } from '../correction';
-import { CategorySchema, EditionIdSchema, FeatureSwitchesSchema, LevelsSchema } from '../edition';
+import {
+  CategorySchema,
+  EditionIdSchema,
+  FeatureSwitchesSchema,
+  LevelsSchema,
+  OnboardingNotificationTimesSchema,
+  QuestionnaireSchema,
+} from '../edition';
 import {
   ForceUpdateMinimumSchema,
   ForceUpdateMinimumsSchema,
@@ -143,11 +150,24 @@ export const VariantResultsSchema = z.object({
 });
 export type VariantResults = z.infer<typeof VariantResultsSchema>;
 
+/** A Word among the most counted of a mark: its id, its Lemma and its readers. */
+const TopWordSchema = z.object({
+  entryId: z.string(),
+  lemma: z.string(),
+  count: z.number().int().min(1),
+});
+
 /** The Community Counters sums and the questionnaire counters of an Edition. */
 export const CountersSummarySchema = z.object({
   known: z.number().int().min(0),
   unknown: z.number().int().min(0),
   saved: z.number().int().min(0),
+  /** The Words most marked Known, Unknown and kept in Favorites, the most first. */
+  top: z.object({
+    known: z.array(TopWordSchema),
+    unknown: z.array(TopWordSchema),
+    saved: z.array(TopWordSchema),
+  }),
   answers: z.array(
     z.object({ question: z.string(), answer: z.string(), count: z.number().int().min(0) }),
   ),
@@ -319,6 +339,10 @@ export const EditionCardSchema = z.object({
   categories: z.array(CategorySchema),
   correctionCategories: z.array(CategorySchema),
   levels: LevelsSchema,
+  /** The onboarding questions and their options, which name the counted answers in Аналітика. */
+  questionnaire: QuestionnaireSchema,
+  /** The Notification times «Коли нагадати?» offers, which name its counted buckets. */
+  onboardingNotificationTimes: OnboardingNotificationTimesSchema,
 });
 export type EditionCard = z.infer<typeof EditionCardSchema>;
 
@@ -656,7 +680,7 @@ const QueueFlagSchema = z.object({
   at: z.string(),
 });
 
-/** A Mistake Report still to check (ADR 0056). */
+/** A Mistake Report still to check (ADR 0056, 0159). */
 const QueueReportSchema = z.object({
   id: z.string(),
   editionId: EditionIdSchema,
@@ -666,6 +690,16 @@ const QueueReportSchema = z.object({
   appVersion: z.string(),
   contentVersion: z.number().int(),
   receivedAt: z.string(),
+  /** The Entry reported as the content database keeps it now; none when the Edition has no record of its id. */
+  entry: z
+    .object({
+      kind: ContentRecordKindSchema.extract(['word', 'correction', 'idiom', 'synonymRow', 'tip']),
+      fields: z.record(z.string(), z.unknown()),
+      retired: z.boolean(),
+    })
+    .nullable(),
+  /** The email of the signed-in reader's Account; none for an anonymous report or a deleted Account. */
+  accountEmail: z.string().nullable(),
 });
 
 const queuePath = '/admin/content-queue';

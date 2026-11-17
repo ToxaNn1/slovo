@@ -1,5 +1,6 @@
 import { MistakeReportSchema, type MistakeReport, type MistakeType } from '@slovo/contracts';
 
+import type { Account } from '../account/account';
 import type { Edition } from '../edition/edition';
 import { createInTurn } from '../in-turn';
 import { answerOf } from '../backend';
@@ -28,7 +29,7 @@ export interface MistakeReportDraft {
 export type MistakeReportAnswer = 'thanked' | 'too-many-requests' | 'switched-off' | 'invalid';
 
 /**
- * Mistake Reports (ADR 0056): the reports a reader sends from an Entry's card,
+ * Mistake Reports (ADR 0056, 0159): the reports a reader sends from an Entry's card,
  * through a `device-only` queue of at most `MISTAKE_REPORT_QUEUE_SIZE` unsent
  * reports, so a report written offline goes out later. The queue sends at
  * launch, on each return to the foreground and after a report the backend
@@ -86,6 +87,7 @@ export function openMistakeReports({
   clock,
   schedule,
   random,
+  account,
 }: {
   userState: Pick<UserState, 'read' | 'write'>;
   backend: Pick<Backend, 'reports'>;
@@ -100,6 +102,11 @@ export function openMistakeReports({
   schedule: Schedule;
   /** What the waits between tries are jittered by. */
   random: Random;
+  /**
+   * The device's Account, whose Session a report goes out with while the
+   * reader is signed in (ADR 0159); none for an Edition without Accounts.
+   */
+  account?: Pick<Account, 'withSession'> | undefined;
 }): MistakeReports {
   // A milestone's version, such as 0.9 (ADR 0044), goes out in the three parts the report's contract takes.
   const reportedVersion = /^\d+\.\d+$/.test(appVersion) ? `${appVersion}.0` : appVersion;
@@ -113,13 +120,20 @@ export function openMistakeReports({
 
   const queue = async () => (await userState.read(mistakeReportQueue)) ?? [];
 
-  /** Sends the report, with no Session (ADR 0056); the backend answers 202 when it keeps it. */
+  /**
+   * Sends the report, with the Session of a signed-in reader and none
+   * otherwise (ADR 0159); the backend answers 202 when it keeps it.
+   */
   async function sendOnce(
     report: MistakeReport,
   ): Promise<{ readonly ok: true } | ReportsApiFailure> {
-    const answer = await answerOf(backend.reports.send(report), ({ code }) =>
-      code === 'NOT_FOUND' ? ({ ok: false, reason: 'not-found' } as const) : undefined,
-    );
+    const send = (token?: string) =>
+      answerOf(
+        backend.reports.send(report, token === undefined ? {} : { context: { token } }),
+        ({ code }) =>
+          code === 'NOT_FOUND' ? ({ ok: false, reason: 'not-found' } as const) : undefined,
+      );
+    const answer = (await account?.withSession(send)) ?? (await send());
     return answer.ok ? { ok: true } : answer;
   }
 

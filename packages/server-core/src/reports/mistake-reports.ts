@@ -1,5 +1,6 @@
 import type { MistakeReport } from '@slovo/contracts';
 
+import type { Session } from '../account/accounts';
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type { Clock, MistakeReportStore, RateLimits } from '../ports';
 import { countRequest, ipSubject, type TooManyRequests } from '../rate-limit';
@@ -13,11 +14,13 @@ export interface MistakeReports {
    * Keeps the report with its time of arrival, when its Edition serves
    * Mistake Reports. Its shape is checked where it enters; whether its Entry
    * is in a pack is not. A report over the day's limit of its IP address is
-   * refused; one its Edition doesn't take counts nothing.
+   * refused; one its Edition doesn't take counts nothing. A report sent with
+   * a Session keeps its Account, so the owner can thank the reader (ADR 0159).
    */
   send(
     report: MistakeReport,
     ip: string,
+    session?: Session,
   ): Promise<{ readonly ok: true } | NotServing | TooManyRequests>;
 }
 
@@ -33,7 +36,7 @@ export function createMistakeReports({
   clock: Clock;
 }): MistakeReports {
   return {
-    async send(report, ip) {
+    async send(report, ip, session) {
       const serving = await editions.serving(report.editionId, 'mistakeReports');
       if (!serving.ok) return serving;
       const refused = await countRequest(
@@ -43,7 +46,11 @@ export function createMistakeReports({
         clock.now(),
       );
       if (refused !== undefined) return refused;
-      await store.keep({ ...report, receivedAt: clock.now() });
+      await store.keep({
+        ...report,
+        receivedAt: clock.now(),
+        accountId: session?.account.id ?? null,
+      });
       return { ok: true };
     },
   };

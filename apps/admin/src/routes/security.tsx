@@ -8,6 +8,7 @@ import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
 import { useState, type ReactNode, type SubmitEvent } from 'react';
 import type { z } from 'zod';
 
+import { changeOf, ROLE_LABELS, THRESHOLD_LABELS, whatOf } from '../action-texts';
 import { adminApi } from '../api';
 import { useAdminWrite } from '../components/admin-write';
 import { ConfirmDialog, type PendingWrite } from '../components/confirm-dialog';
@@ -24,8 +25,6 @@ type AccessRefusal = z.infer<typeof AccessRefusalSchema>;
 type Action = AdminApiOutputs['actions']['actions'][number];
 type AlertThreshold = AdminApiOutputs['alertThresholds']['thresholds'][number];
 type SignInMethod = NonNullable<AdminApiOutputs['findAccount']['account']>['signInMethods'][number];
-
-const ROLE_LABELS: Readonly<Record<Role, string>> = { owner: 'Власник', admin: 'Адмін' };
 
 const REFUSALS: Readonly<Record<AccessRefusal['refusal'], string>> = {
   taken: 'Ця пошта вже має доступ.',
@@ -53,8 +52,6 @@ function authorOf(who: Action['who']): string {
       return `команда ${who.command}`;
   }
 }
-
-const shown = (value: unknown) => (value === null ? '—' : JSON.stringify(value));
 
 /** A block of Безпека; `failed` says its read did not load rather than leave it empty. */
 function Block({
@@ -436,15 +433,6 @@ function ReaderAccount({ confirm }: { confirm: Confirm }) {
   );
 }
 
-/** What each alert threshold measures, as the Власник reads it. */
-const THRESHOLD_LABELS: Readonly<Record<AlertThresholdKey, string>> = {
-  crashFree: 'Сесії без падінь, %',
-  issueEvents: 'Подій нової помилки за годину',
-  apiErrors: 'Помилки API 5xx за 15 хв, %',
-  batchRecords: 'Записів у пакеті',
-  activityDrop: 'Падіння активності, %',
-};
-
 const number = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 2 });
 
 function AlertThresholds({ confirm }: { confirm: Confirm }) {
@@ -541,16 +529,19 @@ function ActionLog() {
             </tr>
           </thead>
           <tbody>
-            {(actions.data?.actions ?? []).map((row, index) => (
-              <tr key={`${row.at}-${String(index)}`} className="border-t border-border">
-                <td className="px-2 py-[9px]">{authorOf(row.who)}</td>
-                <td className="px-2 py-[9px]">{formatMoment(row.at)}</td>
-                <td className="px-2 py-[9px] font-mono">{row.what}</td>
-                <td className="px-2 py-[9px] font-mono">{shown(row.before)}</td>
-                <td className="px-2 py-[9px] font-mono">{shown(row.after)}</td>
-                <td className="px-2 py-[9px]">{row.reason ?? '—'}</td>
-              </tr>
-            ))}
+            {(actions.data?.actions ?? []).map((row, index) => {
+              const change = changeOf(row.what, row.before, row.after);
+              return (
+                <tr key={`${row.at}-${String(index)}`} className="border-t border-border">
+                  <td className="px-2 py-[9px]">{authorOf(row.who)}</td>
+                  <td className="px-2 py-[9px]">{formatMoment(row.at)}</td>
+                  <td className="px-2 py-[9px]">{whatOf(row.what)}</td>
+                  <td className="px-2 py-[9px]">{change.before}</td>
+                  <td className="px-2 py-[9px]">{change.after}</td>
+                  <td className="px-2 py-[9px]">{row.reason ?? '—'}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -249,9 +249,20 @@ export const mistakeReports = pgTable(
     /** The content version of the Language Pack the reader had open. */
     contentVersion: integer('content_version').notNull(),
     receivedAt: time('received_at'),
+    /**
+     * The Account of the Session a signed-in reader sent the report with, so
+     * the owner can thank them; none for an anonymous report. Deleting the
+     * Account empties it and keeps the report (ADR 0159).
+     */
+    accountId: uuid('account_id').references(() => accounts.id, { onDelete: 'set null' }),
   },
-  // By Edition for `reports list --edition`, by time alone for every Edition.
-  (table) => [index().on(table.editionId, table.receivedAt), index().on(table.receivedAt)],
+  // By Edition for `reports list --edition`, by time alone for every Edition,
+  // by Account for the deletion of an Account.
+  (table) => [
+    index().on(table.editionId, table.receivedAt),
+    index().on(table.receivedAt),
+    index().on(table.accountId),
+  ],
 );
 
 /**

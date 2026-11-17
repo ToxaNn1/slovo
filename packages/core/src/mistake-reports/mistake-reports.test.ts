@@ -27,7 +27,8 @@ const typoIn = (id: string): MistakeReportDraft => ({ ...typo, entryId: `w_${id}
 async function device({
   off = [],
   appVersion = '0.8.14',
-}: { off?: FeatureSwitch[]; appVersion?: string } = {}) {
+  session,
+}: { off?: FeatureSwitch[]; appVersion?: string; session?: string } = {}) {
   const time = fakeClock('2026-10-28T09:00:00.000Z');
   const timers = testSchedule(time);
   const api = createFakeBackend();
@@ -50,6 +51,10 @@ async function device({
       edition: { id: 'uk', isFeatureEnabled: (feature) => !switchedOff.has(feature) },
       appVersion,
       contentVersion: () => 42,
+      // The device's Account, lending the Session it holds, if any (ADR 0159).
+      account: {
+        withSession: async (request) => (session === undefined ? undefined : request(session)),
+      },
       clock: time.clock,
       schedule: timers.schedule,
       random: randomOf(0.5),
@@ -126,6 +131,24 @@ describe('reporting a mistake online', () => {
     expect(await app.report()).toBe('thanked');
     expect(app.api.calls).toHaveLength(2);
     expect(app.received()).toEqual(['w_kvasha']);
+  });
+});
+
+describe('who sent a report (ADR 0159)', () => {
+  it('sends the Session of a signed-in reader with the report', async () => {
+    const app = await device({ session: 'session-of-anna' });
+
+    await expect(app.report()).resolves.toBe('thanked');
+
+    expect(app.api.reports.sessions).toEqual(['session-of-anna']);
+  });
+
+  it('sends no Session from a device that is not signed in', async () => {
+    const app = await device();
+
+    await expect(app.report()).resolves.toBe('thanked');
+
+    expect(app.api.reports.sessions).toEqual([undefined]);
   });
 });
 

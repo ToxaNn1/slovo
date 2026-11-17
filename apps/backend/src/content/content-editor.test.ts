@@ -113,6 +113,8 @@ describe('the content editor through an admin session', () => {
     const card = await adminClient.admin.editionCard({ editionId: 'uk' });
     expect(card.id).toBe('uk');
     expect(card.displayName.length).toBeGreaterThan(0);
+    expect(card.questionnaire.level.map(({ label }) => label)).toContain('Добре');
+    expect(card.onboardingNotificationTimes.morning).toBe('09:00');
   });
 
   it('lists the records a page of 50 at a time, with the count of every match', async () => {

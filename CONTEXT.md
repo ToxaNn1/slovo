@@ -442,7 +442,7 @@ Reader-consented product events (onboarding steps, Games, Review, goals, Streak 
 _Avoid_: Tracking, telemetry, stats (the reader's own numbers)
 
 **Mistake Report**:
-«Повідомлення про помилку»: what a reader sends from an Entry card's menu about a mistake in that Entry: its type (typo, Stress, Definition or other), an optional comment of at most 500 characters (required for other), the Edition, the Entry id, the app version and the content version. It carries no Account, no device id and no Install id, waits on the device until it can be sent, and is kept on the server until the owner resolves it in the Owner admin's Content queue.
+«Повідомлення про помилку»: what a reader sends from an Entry card's menu about a mistake in that Entry: its type (typo, Stress, Definition or other), an optional comment of at most 500 characters (required for other), the Edition, the Entry id, the app version and the content version. It carries no device id and no Install id; a signed-in reader's report names their Account, an anonymous one nothing (ADR 0159). It waits on the device until it can be sent, and is kept on the server until the owner resolves it in the Owner admin's Content queue.
 _Avoid_: Bug report, feedback, complaint
 
 **Daily Limit**:

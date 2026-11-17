@@ -1,10 +1,12 @@
+import { ID_PREFIX } from '@slovo/contracts';
 import { parseRecord, recordFileOf, type RecordKind } from '@slovo/content-rules';
 import type { Actor, Clock, Json } from '@slovo/server-core';
-import { and, asc, eq, inArray, isNull, like, or, sql } from 'drizzle-orm';
+import { and, asc, eq, getTableColumns, inArray, isNull, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import type { Database } from '../database/database';
 import {
+  accounts,
   actionLog,
   contentBatches,
   contentCorrections,
@@ -18,6 +20,10 @@ import {
   mistakeReports,
 } from '../database/schema';
 import { readsDifferently, retireRecordings } from './media-rows';
+
+/** The kinds of record that are Entries, which a Mistake Report names (ADR 0056). */
+const ENTRY_KINDS = ['word', 'correction', 'idiom', 'synonymRow', 'tip'] as const;
+type EntryKindOfId = (typeof ENTRY_KINDS)[number];
 
 /** The table of each kind of record. */
 const TABLES = {
@@ -438,21 +444,73 @@ export function createContentQueue({ database, clock }: { database: Database; cl
     });
   }
 
-  /** The Mistake Reports still to check, oldest first. */
+  /**
+   * The Mistake Reports still to check, oldest first, each with the Entry it
+   * names as the content database keeps it now and the email of a signed-in
+   * reader's Account (ADR 0159).
+   */
   async function reports(editionId?: string) {
+    const { accountId: _accountId, ...columns } = getTableColumns(mistakeReports);
     const rows = await db
-      .select()
+      .select({ ...columns, accountEmail: accounts.email })
       .from(mistakeReports)
+      .leftJoin(accounts, eq(accounts.id, mistakeReports.accountId))
       .where(editionId === undefined ? undefined : eq(mistakeReports.editionId, editionId))
       .orderBy(asc(mistakeReports.receivedAt));
-    return rows.map((row) => ({ ...row, receivedAt: row.receivedAt.toISOString() }));
+    const entries = await entriesOf(rows);
+    return rows.map((row) => ({
+      ...row,
+      receivedAt: row.receivedAt.toISOString(),
+      entry: entries.get(`${row.editionId} ${row.entryId}`) ?? null,
+    }));
+  }
+
+  /** The Entries the reports name, by `<Edition> <Entry id>`: one read per kind of Entry named. */
+  async function entriesOf(rows: readonly { editionId: string; entryId: string }[]) {
+    const found = new Map<
+      string,
+      { kind: EntryKindOfId; fields: Readonly<Record<string, unknown>>; retired: boolean }
+    >();
+    for (const kind of ENTRY_KINDS) {
+      const named = rows.filter(({ entryId }) => entryId.startsWith(ID_PREFIX[kind]));
+      if (named.length === 0) continue;
+      const table = TABLES[kind];
+      const kept = await db
+        .select({
+          editionId: table.editionId,
+          id: table.id,
+          fields: table.fields,
+          retired: table.retired,
+        })
+        .from(table)
+        .where(
+          or(
+            ...named.map(({ editionId, entryId }) =>
+              and(eq(table.editionId, editionId), eq(table.id, entryId)),
+            ),
+          ),
+        );
+      for (const record of kept) {
+        found.set(`${record.editionId} ${record.id}`, {
+          kind,
+          fields: record.fields,
+          retired: record.retired,
+        });
+      }
+    }
+    return found;
   }
 
   /** «Вирішено»: deletes the Mistake Report (ADR 0056), keeping it in the Action log row. */
   async function resolveReport(email: string, id: string, reason: string) {
     return db.transaction(async (tx) => {
-      const [report] = await tx.delete(mistakeReports).where(eq(mistakeReports.id, id)).returning();
-      if (report === undefined) return { ok: false } as const;
+      const [deleted] = await tx
+        .delete(mistakeReports)
+        .where(eq(mistakeReports.id, id))
+        .returning();
+      if (deleted === undefined) return { ok: false } as const;
+      // The Action log keeps what the report said, not who sent it (ADR 0159).
+      const { accountId: _accountId, ...report } = deleted;
       await tx.insert(actionLog).values({
         who: adminActor(email),
         at: clock.now(),

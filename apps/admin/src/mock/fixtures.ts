@@ -86,6 +86,19 @@ export const QUEUE_REPORT = {
   appVersion: '0.8.0',
   contentVersion: 2,
   receivedAt: '2026-11-07T20:00:00.000Z',
+  entry: {
+    kind: 'word',
+    fields: {
+      id: 'w_b2',
+      lemma: 'обрій',
+      stress: [0],
+      partOfSpeech: 'noun',
+      primaryDefinition: 'Лінія, де небо ніби сходиться з землею.',
+      rarity: 2,
+    },
+    retired: false,
+  },
+  accountEmail: 'reader@example.com',
 } satisfies AdminApiOutputs['contentQueue']['reports']['reports'][number];
 
 /** An open Owner check, the base of the fixtures. */
@@ -130,8 +143,10 @@ export const FIXTURES: AdminApiOutputs = {
         at: '2026-11-08T09:30:00.000Z',
         who: { kind: 'command', command: 'switches off' },
         what: 'switches.kill',
-        before: null,
-        after: { feature: 'game', verdict: 'off' },
+        before: [],
+        after: [
+          { id: 'kill', verdict: 'off', targets: {}, editionId: 'uk', feature: 'game', order: 0 },
+        ],
         reason: 'the Game loses scores',
         editionId: 'uk',
       },
@@ -196,7 +211,25 @@ export const FIXTURES: AdminApiOutputs = {
     known: 1200,
     unknown: 340,
     saved: 95,
-    answers: [{ question: 'level', answer: 'good', count: 12 }],
+    top: {
+      unknown: [
+        { entryId: 'w_obruchyk', lemma: 'обручик', count: 41 },
+        { entryId: 'w_zhmut', lemma: 'жмут', count: 17 },
+      ],
+      known: [{ entryId: 'w_vesna', lemma: 'весна', count: 300 }],
+      saved: [],
+    },
+    answers: [
+      { question: 'dailyGoal', answer: '10', count: 6 },
+      { question: 'dailyGoal', answer: 'none', count: 2 },
+      { question: 'level', answer: 'dont-know', count: 4 },
+      { question: 'level', answer: 'expert', count: 1 },
+      { question: 'level', answer: 'good', count: 12 },
+      { question: 'notificationTime', answer: 'morning', count: 3 },
+      { question: 'notificationTime', answer: 'none', count: 1 },
+      { question: 'who', answer: 'student', count: 2 },
+      { question: 'why', answer: 'play', count: 5 },
+    ],
   },
   editionCard: {
     id: 'uk',
@@ -211,6 +244,15 @@ export const FIXTURES: AdminApiOutputs = {
       later: 200,
       names: ['Новачок', 'Знавець'],
     },
+    questionnaire: {
+      level: [
+        { id: 'good', label: 'Добре', rarityCeiling: 4 },
+        { id: 'dont-know', label: 'Не знаю', rarityTest: true },
+      ],
+      why: [{ id: 'play', label: 'Грати зі словами', kindWeights: { idiom: 'more' } }],
+      selfRating: [{ id: 'few', label: 'Знаю мало рідкісних слів', offerRarityTest: false }],
+    },
+    onboardingNotificationTimes: { morning: '09:00', midday: '13:00', evening: '20:30' },
   },
   content: {
     openBatch: { batchId: BATCH_ID },

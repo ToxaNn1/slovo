@@ -8,6 +8,16 @@ function bearerToken(headers: Headers): string | undefined {
 }
 
 /**
+ * The Session the request's token carries, when one is on, for a procedure
+ * that takes a request with or without one, such as a Mistake Report
+ * (ADR 0159): a token that carries none makes the request anonymous.
+ */
+export async function sessionIfAny(accounts: Accounts, headers: Headers) {
+  const opened = await accounts.session(bearerToken(headers));
+  return opened.ok ? opened.session : undefined;
+}
+
+/**
  * The one way a procedure of a Session reaches its Account (ADR 0030): it
  * puts the Session the request's token carries in the context, or refuses
  * the request as UNAUTHORIZED, the one place that does.

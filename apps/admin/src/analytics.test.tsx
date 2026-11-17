@@ -34,10 +34,12 @@ test('Аналітика draws the fixtures, the Counters and the Variant result
     within(section.getByRole('figure', { name: 'Країни' })).getByText('Немає даних'),
   ).toBeDefined();
 
-  const counters = within(section.getByRole('list', { name: 'Лічильники' }));
-  expect(counters.getByText('Знаю: 1200')).toBeDefined();
-  expect(counters.getByText('Не знаю: 340')).toBeDefined();
-  expect(counters.getByText('Збережено: 95')).toBeDefined();
+  const marks = within(section.getByRole('list', { name: 'Позначки читачів' }));
+  expect(marks.getAllByRole('listitem').map(({ textContent }) => textContent)).toEqual([
+    'Натиснули «Знаю»1200 · 78 % позначок',
+    'Натиснули «Не знаю»340 · 22 % позначок',
+    'Додали в Улюблене95',
+  ]);
 
   const variants = within(await section.findByRole('figure', { name: 'Варіанти gameTimed' }));
   expect(variants.getByText('a')).toBeDefined();
@@ -76,4 +78,43 @@ test('a period reads its days up to today, in Kyiv', () => {
   const now = new Date('2026-11-08T23:30:00.000Z');
   expect(periodDays('7d', now)).toEqual({ from: '2026-11-03', to: '2026-11-09' });
   expect(periodDays('1d', now)).toEqual({ from: '2026-11-09', to: '2026-11-09' });
+});
+
+test('the questionnaire answers come grouped per question, in Ukrainian, with counts and shares', async () => {
+  const { section } = await openAnalytics();
+  const answersOf = async (question: string) =>
+    within(await section.findByRole('figure', { name: question }))
+      .getAllByRole('listitem')
+      .map(({ textContent }) => textContent);
+
+  expect(await answersOf('«Як добре ти знаєш мову?»')).toEqual([
+    'Добре12 · 71 %',
+    'Не знаю4 · 24 %',
+    'expert1 · 6 %',
+  ]);
+  expect(section.getByText('Відповіли 17 разів')).toBeDefined();
+  expect(await answersOf('«Навіщо тобі рідкісні слова?»')).toEqual(['Грати зі словами5 · 100 %']);
+  expect(await answersOf('«Скільки слів на день?»')).toEqual([
+    '10 слів на день6 · 75 %',
+    'Без цілі (крок пропущено)2 · 25 %',
+  ]);
+  expect(await answersOf('«Коли нагадати?»')).toEqual([
+    'Зранку, 09:003 · 75 %',
+    'Без нагадувань1 · 25 %',
+  ]);
+  expect(await answersOf('«Хто ви?» (старі версії застосунку)')).toEqual(['student2 · 100 %']);
+});
+
+test('the top Words of each mark come as the Lemma and its readers, the most first, and say so when none is marked', async () => {
+  const { section } = await openAnalytics();
+  const topOf = (label: string) =>
+    within(section.getByRole('list', { name: label }))
+      .getAllByRole('listitem')
+      .map(({ textContent }) => textContent);
+
+  expect(topOf('Найчастіше «Не знаю»')).toEqual(['1. обручик41', '2. жмут17']);
+  expect(topOf('Найчастіше «Знаю»')).toEqual(['1. весна300']);
+  expect(section.getByRole('figure', { name: 'Найчастіше в Улюбленому' }).textContent).toContain(
+    'Ще ніхто не додав',
+  );
 });
