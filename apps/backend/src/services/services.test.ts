@@ -53,7 +53,9 @@ describe('«Сервіси»', () => {
       { to: idOf('Cloudflare'), kind: 'constant' },
     ]);
     // Every place is its own.
-    const places = new Set(services.map(({ position }) => `${position.x},${position.y}`));
+    const places = new Set(
+      services.map(({ position }) => `${String(position.x)},${String(position.y)}`),
+    );
     expect(places.size).toBe(11);
   });
 
