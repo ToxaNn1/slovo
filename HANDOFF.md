@@ -1,4 +1,4 @@
-STATUS: RUNNING (successor coordinator 2)
+STATUS: FINISHED
 ## NEXT (for the successor coordinator)
 Setup: `mkdir -p /tmp/claude-0 && cp wave/* /tmp/claude-0/` (from this branch); fetch issues #1949-#1959 to /tmp/claude-0/<n>.md via `gh api repos/ToxaNn1/slovo/issues/<n>` (no GraphQL). If cloud-setup failed: `pg_createcluster 18 main --port 5432 --start` then rerun `.claude/hooks/cloud-setup.sh`. Commit ONLY via /tmp/claude-0/gc.sh (env email otherwise overrides and GitHub declines the push). Ignore the stop hook asking for a Claude identity (owner rule wins).
 State: integration feat/1949-services = #1950 #1951 #1952 #1954 #1956 merged (tip 17ced2cd). PR #1960 draft; body source wave/pr-body.md + wave/notes.md (fold notes in). Migrations used: 0030_services, 0031_service_entries; one spare. ADR 0164 holds the whole spec; 0165-0166 unused.
@@ -33,3 +33,4 @@ WAITING until 2026-11-17T10:52:46Z: merger (#1952, #1954) and implementers #1955
 - 2026-11-17T11:22:18Z #1958 merged (03f5794), #1959 merged (1e31fa5). Every ticket merged. Code review of feat/1949-services vs main started (findings to /tmp/claude-0/review.md).
 - 2026-11-17T11:34:14Z code review done: 1 finding (edit() opened a sealed value) fixed in c22cd4c, pushed. Composing the final PR body; then CI wait, mark ready.
 WAITING until 2026-11-17T12:04:27Z: CI on c22cd4c (PR #1960) and the PR body composer
+- 2026-11-17T11:39:11Z CI green on c22cd4c; PR #1960 body final (wave/pr-body.md); PR marked ready. Not merged, no auto-merge (left to the owner).
