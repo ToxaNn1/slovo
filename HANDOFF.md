@@ -25,3 +25,4 @@ WAITING until 2026-11-17T10:52:46Z: merger (#1952, #1954) and implementers #1955
 - 2026-11-17T10:32:45Z successor coordinator started; pg cluster recreated; merger #1955 started; #1953 implementer in /tmp/wt/1953. Main moved (da78fc1 adds 0030_statistics_off_counters): merge main + renumber services migrations to 0031/0032 after #1957.
 - 2026-11-17T10:38:39Z #1955 merged (8436e2a). Merger #1957 started. Stop hook asking for a Claude identity ignored (owner rule).
 - 2026-11-17T10:43:14Z #1957 merged (829b027). Merger now merging origin/main + renumbering services migrations after 0030. Then #1958 (spare migration after the renumber).
+- 2026-11-17T10:48:44Z origin/main merged (c329ac1); services migrations now one generated 0031_services (DDL + seed of 11 Services). #1958 implementer started in /tmp/wt/1958; may use 0032.
