@@ -22,7 +22,12 @@ import type {
   MistakeReports,
   OwnerChecks,
   Quality,
+  ServiceEntries,
+  ServiceStore,
+  ServiceMoneyBook,
+  ServiceUsage,
   Sync,
+  UsdRates,
 } from '@slovo/server-core';
 import type { Logger } from 'pino';
 
@@ -97,6 +102,11 @@ export function createApiHandler({
   ownerChecks,
   quality,
   served,
+  services,
+  serviceEntries,
+  serviceMoney,
+  serviceUsage,
+  usdRates,
   sync,
 }: {
   accounts: Accounts;
@@ -127,6 +137,16 @@ export function createApiHandler({
   };
   /** The Editions the backend serves, as the admin lists them. */
   served: readonly Edition[];
+  /** The Services of «Сервіси» (ADR 0164). */
+  services: ServiceStore;
+  /** The Service entries of «Сервіси», sealed in the Vault (ADR 0164). */
+  serviceEntries: ServiceEntries;
+  /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
+  serviceMoney: ServiceMoneyBook;
+  /** The usage of the Services, read from their providers (ADR 0164). */
+  serviceUsage: ServiceUsage;
+  /** The NBU rate «Сервіси» counts the money in hryvnias at (ADR 0164). */
+  usdRates: UsdRates;
   sync: Sync;
 }) {
   const router = implement(apiContract)
@@ -145,7 +165,7 @@ export function createApiHandler({
         contentQueue,
         ownerChecks,
         adminAnalytics,
-        { ...quality, accounts },
+        { ...quality, accounts, services, serviceEntries, serviceMoney, serviceUsage, usdRates },
       ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(editions, contentStore, mediaBase),

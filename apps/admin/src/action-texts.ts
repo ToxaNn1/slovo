@@ -24,7 +24,7 @@ export const ROLE_LABELS: Readonly<Record<Role, string>> = { owner: 'Власн�
 export const THRESHOLD_LABELS: Readonly<Record<AlertThresholdKey, string>> = {
   crashFree: 'Сесії без падінь, %',
   issueEvents: 'Подій нової помилки за годину',
-  apiErrors: 'Помилки API 5xx за 15 хв, %',
+  apiErrors: 'Помилки API 5xx за годину, %',
   batchRecords: 'Записів у пакеті',
   activityDrop: 'Падіння активності, %',
 };

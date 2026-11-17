@@ -34,11 +34,17 @@ import type {
   SignedInAdmin,
   SwitchRefusal,
   SwitchRefused,
+  ServiceEntries,
+  ServiceStore,
+  ServiceMoneyBook,
+  ServiceUsage,
+  UsdRates,
 } from '@slovo/server-core';
 
 import { alertText } from '../alerts/owner-chat';
 import type { ContentQueue } from '../content/content-queue';
 import type { ContentWrites, WriteRefusal, Writer } from '../content/content-writes';
+import { servicesProcedures } from '../services/services-procedures';
 import { adminInviteEmail } from './admin-mail';
 
 /** The path the admin session cookie is sent on: the admin API's. */
@@ -85,7 +91,7 @@ interface Needs {
   readonly writesContent?: boolean;
   /** It writes: the admin header must come with it. */
   readonly writes?: boolean;
-  /** It is a Безпека procedure: a Власник only. */
+  /** It is a Безпека or a «Сервіси» procedure: a Власник only. */
   readonly security?: boolean;
 }
 
@@ -120,6 +126,11 @@ export function adminProcedures(
     alertSettings,
     alertStore,
     accounts,
+    services,
+    serviceEntries,
+    serviceMoney,
+    serviceUsage,
+    usdRates,
   }: {
     /** The readers' Accounts, which a Власник finds and deletes by email (ADR 0127). */
     readonly accounts: Accounts;
@@ -127,6 +138,16 @@ export function adminProcedures(
     readonly ciToken: string | undefined;
     readonly alertSettings: AlertSettings;
     readonly alertStore: AlertStore;
+    /** The Services of «Сервіси» (ADR 0164). */
+    readonly services: ServiceStore;
+    /** The Service entries of «Сервіси», sealed in the Vault (ADR 0164). */
+    readonly serviceEntries: ServiceEntries;
+    /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
+    readonly serviceMoney: ServiceMoneyBook;
+    /** The usage of the Services, read from their providers (ADR 0164). */
+    readonly serviceUsage: ServiceUsage;
+    /** The NBU rate «Сервіси» counts the money in hryvnias at (ADR 0164). */
+    readonly usdRates: UsdRates;
   },
 ) {
   const os = implement(apiContract.admin).$context<{
@@ -636,6 +657,22 @@ export function adminProcedures(
         onboardingNotificationTimes,
       };
     }),
+
+    services: servicesProcedures(
+      services,
+      (headers, errors, { writes = false } = {}) =>
+        admit(headers, errors, { writes, security: true }),
+      {
+        entries: serviceEntries,
+        ownerOf: async (headers, errors, { writes = false } = {}) => {
+          const { email, token } = await ownSession(headers, errors, { writes, security: true });
+          return { who: { kind: 'admin-user', email }, session: token };
+        },
+        signIn,
+      },
+      { book: serviceMoney, ownerWrite: securityWrite, usdRates },
+      serviceUsage,
+    ),
 
     content: {
       openBatch: content.openBatch.handler(async ({ context, input, errors }) => {

@@ -1,7 +1,7 @@
 import { recordingPath } from '@slovo/contracts';
 import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
-import { createAdminAccess, systemClock } from '@slovo/server-core';
+import { createAdminAccess, systemClock, type Alert, type Alerts } from '@slovo/server-core';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
@@ -88,6 +88,18 @@ function keptStore(): MediaStore & { readonly keys: Set<string> } {
   };
 }
 
+/** Alerts that keep what they were told. */
+function keptAlerts(): Alerts & { readonly sent: Alert[] } {
+  const sent: Alert[] = [];
+  return {
+    sent,
+    send(alert) {
+      sent.push(alert);
+      return Promise.resolve();
+    },
+  };
+}
+
 /** The UA Edition imported and its backlog recorded once, copied for every test. */
 const importedDatabase = importedDatabases((database) =>
   createRecordings({
@@ -96,6 +108,8 @@ const importedDatabase = importedDatabases((database) =>
     store: memoryMediaStore(),
     generator: fakeGenerator(),
     editions,
+    alerts: keptAlerts(),
+    deployment: 'template',
     batch: 100_000,
   }).run(),
 );
@@ -123,9 +137,19 @@ async function recordingsBackend(store = keptStore()) {
   if (token === undefined) throw new Error('no Агент token');
   const agent = backend.clientOf(token);
   const { batchId } = await agent.admin.content.openBatch({ editionId: 'uk' });
-  const run = (generator: RecordingGenerator, batch = 50) =>
-    createRecordings({ database, clock: systemClock, store, generator, editions, batch }).run();
-  return { ...backend, agent, batchId, store, run };
+  const alerts = keptAlerts();
+  const run = (generator: RecordingGenerator, batch = 50, deployment = 'first') =>
+    createRecordings({
+      database,
+      clock: systemClock,
+      store,
+      generator,
+      editions,
+      alerts,
+      deployment,
+      batch,
+    }).run();
+  return { ...backend, agent, batchId, store, alerts, run };
 }
 
 const versionOf = async (client: ApiClient) =>
@@ -267,6 +291,50 @@ describe('the Recordings job', () => {
 
     expect(await run(throwing, 1)).toMatchObject({ recorded: 0, failed: 1 });
     expect(await run(fakeGenerator(), 1)).toMatchObject({ recorded: 1, failed: 0 });
+  });
+
+  it('stops after two runs in a row whose generator made no file, tells the owner once, and records again once the content changed', async () => {
+    const { client, agent, batchId, alerts, run } = await recordingsBackend();
+    await createWord(client, agent, batchId, 'обручичок', 3);
+    const throwing: RecordingGenerator = { record: () => Promise.reject(new Error('timed out')) };
+
+    expect(await run(throwing)).toMatchObject({ recorded: 0, failed: 1, stalled: 0 });
+    expect(alerts.sent).toEqual([]);
+    expect(await run(throwing)).toMatchObject({ recorded: 0, failed: 1, stalled: 0 });
+    expect(alerts.sent).toEqual([{ kind: 'recordings-stalled', editionId: 'uk', runs: 2 }]);
+
+    const idle = fakeGenerator();
+    expect(await run(idle)).toEqual({ recorded: 0, failed: 0, stalled: 1, deleted: 0 });
+    expect(idle.asked).toEqual([]);
+    expect(alerts.sent).toHaveLength(1);
+
+    await createWord(client, agent, batchId, 'ґудзичок', 1);
+    expect(await run(fakeGenerator())).toMatchObject({ recorded: 2, failed: 0, stalled: 0 });
+  });
+
+  it('records again on a new deployment of the job after it stopped', async () => {
+    const { client, agent, batchId, run } = await recordingsBackend();
+    await createWord(client, agent, batchId, 'обручичок', 3);
+    const throwing: RecordingGenerator = { record: () => Promise.reject(new Error('timed out')) };
+    await run(throwing);
+    await run(throwing);
+
+    expect(await run(fakeGenerator(), 50, 'second')).toMatchObject({ recorded: 1, stalled: 0 });
+  });
+
+  it('counts only runs in a row that had Words, and starts again after a run that made a file', async () => {
+    const { client, agent, batchId, alerts, run } = await recordingsBackend();
+    const throwing: RecordingGenerator = { record: () => Promise.reject(new Error('timed out')) };
+    await run(throwing);
+    await run(throwing);
+    await createWord(client, agent, batchId, 'обручичок', 3);
+    await run(throwing);
+    await createWord(client, agent, batchId, 'ґудзичок', 1);
+    await run(fakeGenerator(), 1);
+    await run(throwing);
+
+    expect(alerts.sent).toEqual([]);
+    expect(await run(fakeGenerator())).toMatchObject({ recorded: 1, stalled: 0 });
   });
 
   it('retires the Recordings of a Word whose Lemma changed, and records it anew', async () => {

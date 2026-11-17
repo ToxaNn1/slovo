@@ -15,6 +15,7 @@ import { Route as ContentRouteImport } from './routes/content'
 import { Route as DevelopmentRouteImport } from './routes/development'
 import { Route as QualityRouteImport } from './routes/quality'
 import { Route as SecurityRouteImport } from './routes/security'
+import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SessionsRouteImport } from './routes/sessions'
 import { Route as SwitchesRouteImport } from './routes/switches'
 import { Route as ContentIndexRouteImport } from './routes/content.index'
@@ -53,6 +54,11 @@ const QualityRoute = QualityRouteImport.update({
 const SecurityRoute = SecurityRouteImport.update({
   id: '/security',
   path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesRoute = ServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SessionsRoute = SessionsRouteImport.update({
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/development': typeof DevelopmentRoute
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
+  '/services': typeof ServicesRoute
   '/sessions': typeof SessionsRoute
   '/switches': typeof SwitchesRouteWithChildren
   '/content/queue': typeof ContentQueueRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/development': typeof DevelopmentRoute
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
+  '/services': typeof ServicesRoute
   '/sessions': typeof SessionsRoute
   '/content/queue': typeof ContentQueueRoute
   '/content/review': typeof ContentReviewRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/development': typeof DevelopmentRoute
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
+  '/services': typeof ServicesRoute
   '/sessions': typeof SessionsRoute
   '/switches': typeof SwitchesRouteWithChildren
   '/content/queue': typeof ContentQueueRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/development'
     | '/quality'
     | '/security'
+    | '/services'
     | '/sessions'
     | '/switches'
     | '/content/queue'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/development'
     | '/quality'
     | '/security'
+    | '/services'
     | '/sessions'
     | '/content/queue'
     | '/content/review'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/development'
     | '/quality'
     | '/security'
+    | '/services'
     | '/sessions'
     | '/switches'
     | '/content/queue'
@@ -211,6 +223,7 @@ export interface RootRouteChildren {
   DevelopmentRoute: typeof DevelopmentRoute
   QualityRoute: typeof QualityRoute
   SecurityRoute: typeof SecurityRoute
+  ServicesRoute: typeof ServicesRoute
   SessionsRoute: typeof SessionsRoute
   SwitchesRoute: typeof SwitchesRouteWithChildren
   SecurityAccountsAccountIdRoute: typeof SecurityAccountsAccountIdRoute
@@ -258,6 +271,13 @@ declare module '@tanstack/react-router' {
       path: '/security'
       fullPath: '/security'
       preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services': {
+      id: '/services'
+      path: '/services'
+      fullPath: '/services'
+      preLoaderRoute: typeof ServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sessions': {
@@ -364,6 +384,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevelopmentRoute: DevelopmentRoute,
   QualityRoute: QualityRoute,
   SecurityRoute: SecurityRoute,
+  ServicesRoute: ServicesRoute,
   SessionsRoute: SessionsRoute,
   SwitchesRoute: SwitchesRouteWithChildren,
   SecurityAccountsAccountIdRoute: SecurityAccountsAccountIdRoute,

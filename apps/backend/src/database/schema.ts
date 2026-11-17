@@ -498,6 +498,19 @@ export const recordingLeases = pgTable('recording_leases', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
 });
 
+/**
+ * The Recordings job's runs in a row whose generator made no file of the
+ * Words it had, per Edition, with the job's deployment and the Edition's content
+ * version they ran at; a row stops the job for the Edition once it reached
+ * the limit, until either changes (ADR 0169).
+ */
+export const recordingStalls = pgTable('recording_stalls', {
+  editionId: text('edition_id').primaryKey(),
+  emptyRuns: integer('empty_runs').notNull(),
+  deployment: text('deployment').notNull(),
+  contentVersion: integer('content_version').notNull(),
+});
+
 /** A Recording per Word, Narrator Voice and Recording Kind. */
 export const mediaRecordings = pgTable(
   'media_recordings',
@@ -553,10 +566,13 @@ export const quoteChecks = pgTable(
   (table) => [primaryKey({ columns: [table.editionId, table.kind, table.id] })],
 );
 
-/** The sourcing cache: the source pages the quote check fetched, each with when. */
+/**
+ * The sourcing cache: the source pages the quote check fetched, each with
+ * when, and the NBU's page of the dollar's rate, one a Kyiv day (ADR 0164).
+ */
 export const sourcingCache = pgTable('sourcing_cache', {
   pageUrl: text('page_url').primaryKey(),
-  /** The page's HTTP status: 200, or 404 for no such page. */
+  /** The page's HTTP status: 200, or 404 for no such page; an NBU read that found no rate is 0. */
   httpStatus: integer('http_status').notNull(),
   body: text('body').notNull(),
   fetchedAt: time('fetched_at'),
@@ -698,3 +714,77 @@ export const alertDigests = pgTable('alert_digests', {
   day: date('day', { mode: 'string' }).primaryKey(),
   sentAt: time('sent_at'),
 });
+
+/** A link of a Service as the table keeps it: the other Service by its name. */
+export interface StoredServiceLink {
+  readonly to: string;
+  readonly kind: 'constant' | 'scheduled';
+}
+
+/** A limit of a Service's plan as the table keeps it. */
+export interface StoredServiceLimit {
+  readonly name: string;
+  readonly unit: string;
+  readonly limit: number;
+}
+
+/**
+ * The Services of «Сервіси» (ADR 0164), seeded with the eleven known ones.
+ * A block's place on the canvas is fixed data; a link names the other Service.
+ */
+export const services = pgTable(
+  'services',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull().unique(),
+    /** `railway`, `cron` or `metered`: what the block shows. */
+    kind: text('kind').notNull(),
+    plan: text('plan'),
+    monthlyPriceUsdCents: integer('monthly_price_usd_cents'),
+    billingDay: integer('billing_day'),
+    limits: jsonb('limits').$type<StoredServiceLimit[]>().notNull().default([]),
+    x: integer('x').notNull(),
+    y: integer('y').notNull(),
+    links: jsonb('links').$type<StoredServiceLink[]>().notNull().default([]),
+  },
+  (table) => [
+    check('services_kind', sql`${table.kind} in ('railway', 'cron', 'metered')`),
+    check('services_price', sql`${table.monthlyPriceUsdCents} >= 0`),
+    check('services_billing_day', sql`${table.billingDay} between 1 and 31`),
+  ],
+);
+
+/**
+ * The Service entries of «Сервіси» (ADR 0164): a login or a link keeps its
+ * value in the open, a password, token or recovery codes only sealed in the
+ * Vault under `VAULT_KEY`. An entry goes with its Service.
+ */
+export const serviceEntries = pgTable(
+  'service_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    serviceId: uuid('service_id')
+      .notNull()
+      .references(() => services.id, { onDelete: 'cascade' }),
+    /** `login`, `link`, `password`, `token` or `recovery-codes`. */
+    type: text('type').notNull(),
+    label: text('label').notNull(),
+    /** «Де використовується». */
+    note: text('note'),
+    /** The value of a login or a link. */
+    openValue: text('open_value'),
+    /** The sealed value of a password, a token or recovery codes. */
+    sealedValue: text('sealed_value'),
+  },
+  (table) => [
+    index('service_entries_service_id_idx').on(table.serviceId),
+    check(
+      'service_entries_type',
+      sql`${table.type} in ('login', 'link', 'password', 'token', 'recovery-codes')`,
+    ),
+    check(
+      'service_entries_value',
+      sql`(${table.type} in ('login', 'link')) = (${table.openValue} is not null and ${table.sealedValue} is null) and (${table.openValue} is null) <> (${table.sealedValue} is null)`,
+    ),
+  ],
+);

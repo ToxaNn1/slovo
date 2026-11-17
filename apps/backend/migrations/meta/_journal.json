@@ -218,6 +218,20 @@
       "when": 1794902985958,
       "tag": "0030_statistics_off_counters",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794918013532,
+      "tag": "0031_recording_stalls",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794924002922,
+      "tag": "0032_services",
+      "breakpoints": true
     }
   ]
 }

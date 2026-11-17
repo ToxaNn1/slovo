@@ -1,6 +1,7 @@
 import type { FeatureSwitch } from '@slovo/contracts';
 import type { AlertThresholdKey } from '@slovo/contracts/admin-api';
 
+import type { LimitUsage } from '../services/service-usage';
 import type { AccessWrite, Actor, AdminAccess } from './admin-access';
 
 /** What the owner hears of: a Kill switch at once, the rest from a Cron run. */
@@ -34,7 +35,7 @@ export type Alert =
       readonly failedTests: readonly string[];
     }
   | {
-      /** The backend's 5xx share of the last 15 minutes, in percent, above the threshold. */
+      /** The backend's 5xx share of the last hour, in percent, above the threshold. */
       readonly kind: 'api-errors';
       readonly percent: number;
       readonly threshold: number;
@@ -58,6 +59,19 @@ export type Alert =
       readonly editionId: string;
       readonly records: number;
       readonly threshold: number;
+    }
+  | {
+      /** A limit of a Service's plan used to 90 % or more in the period, a UTC month `YYYY-MM`. */
+      readonly kind: 'service-limit';
+      readonly service: string;
+      readonly period: string;
+      readonly usage: LimitUsage;
+    }
+  | {
+      /** The Recordings job stopped for an Edition: its last runs had Words and recorded none. */
+      readonly kind: 'recordings-stalled';
+      readonly editionId: string;
+      readonly runs: number;
     };
 
 /** Tells the owner of an Alert at once (Telegram in the backend). */

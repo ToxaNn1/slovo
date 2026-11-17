@@ -164,3 +164,41 @@ export {
   type SignedInAdmin,
   type SignInRefused,
 } from './admin/admin-sign-in';
+export type { ServiceStore } from './services/services';
+export {
+  createServiceEntries,
+  type EntryChanges,
+  type EntryRead,
+  type EntryReadResult,
+  type EntryWriteResult,
+  type NewEntry,
+  type ServiceEntries,
+  type ServiceEntryStore,
+  type ServiceVault,
+  type StoredEntryValue,
+  type StoredServiceEntry,
+} from './services/service-entries';
+export {
+  createServiceMoneyBook,
+  type NewService,
+  type ServiceMoney,
+  type ServiceMoneyBook,
+  type ServiceMoneyStore,
+} from './services/money';
+export {
+  createServiceUsage,
+  USAGE_FRESH_MS,
+  type LimitUsage,
+  type ServiceReading,
+  type ServiceUsage,
+  type UsagePort,
+  type UsageRead,
+} from './services/service-usage';
+export {
+  createUsdRates,
+  type NbuPort,
+  type NbuRate,
+  type NbuRead,
+  type UsdRates,
+  type UsdRateStore,
+} from './services/usd-rate';

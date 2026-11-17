@@ -1,10 +1,12 @@
-// `pnpm cron`: one run of the Cron service, every 15 minutes on Railway
-// (.railway/railway.ts): the alert checks, the daily digest after 09:00 Kyiv,
-// then the messages to the owner's Telegram chat. A run then exits.
+// `pnpm cron`: one run of the Cron service, hourly at :00 on Railway
+// (.railway/railway.ts): the alert checks (the Services' limits included), the
+// daily digest after 09:00 Kyiv, then the messages to the owner's Telegram
+// chat. A run then exits.
 import { fileURLToPath } from 'node:url';
 
 import {
   createMonitor,
+  createServiceUsage,
   systemClock,
   thresholdsOf,
   type HealthProbe,
@@ -19,6 +21,7 @@ import { readEditions } from '../edition/edition-folders';
 import { createLogger } from '../logger';
 import { createCiRunStore } from '../quality/ci-run-store';
 import { sentryOf } from '../quality/sentry-api';
+import { usagePortsOf } from '../services/usage-ports';
 import { createAlertStore, createAlertThresholdStore } from './alert-store';
 import { ownerChatOf } from './owner-chat';
 
@@ -73,6 +76,8 @@ async function main(): Promise<number> {
       ciRuns: createCiRunStore(database),
       health: createHealthProbe(config.BACKEND_HEALTH_URL),
       batches: openBatchesOf(createContentQueue({ database, clock })),
+      // One read of each provider in the first run of an hour; Railway's ports share one request.
+      usage: createServiceUsage({ ports: usagePortsOf(config, { clock, logger }), clock }),
       editionIds: readEditions(config.EDITIONS_DIR).map(({ config: edition }) => edition.id),
       clock,
       logFailure: (message, error) => {

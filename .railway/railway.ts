@@ -36,6 +36,7 @@ export default defineRailway((ctx) => {
     env: {
       DATABASE_URL: preserve(),
       AUTH_SECRET: preserve(),
+      VAULT_KEY: preserve(),
       ZEPTOMAIL_API_URL: preserve(),
       ZEPTOMAIL_TOKEN: preserve(),
       MAIL_FROM: preserve(),
@@ -52,18 +53,23 @@ export default defineRailway((ctx) => {
       EXPO_TOKEN: preserve(),
       POSTHOG_PERSONAL_API_KEY: preserve(),
       POSTHOG_PROJECT_ID: preserve(),
+      POSTHOG_HOST: preserve(),
       R2_ACCOUNT_ID: preserve(),
       R2_BUCKET: preserve(),
       R2_ACCESS_KEY_ID: preserve(),
       R2_SECRET_ACCESS_KEY: preserve(),
       MEDIA_BASE: preserve(),
       TRUSTED_PROXY_HOPS: preserve(),
+      RAILWAY_READ_TOKEN: preserve(),
+      NEON_API_KEY: preserve(),
+      NEON_PROJECT_ID: preserve(),
+      CLOUDFLARE_API_TOKEN: preserve(),
     },
   });
 
   const alerts = service('alerts', {
     build: dockerfile('Dockerfile'),
-    deploy: cron('pnpm cron', '*/15 * * * *'),
+    deploy: cron('pnpm cron', '0 * * * *'),
     replicas: EU_WEST_AMSTERDAM,
     env: {
       DATABASE_URL: backend.env.DATABASE_URL,
@@ -76,6 +82,14 @@ export default defineRailway((ctx) => {
       POSTHOG_PERSONAL_API_KEY: backend.env.POSTHOG_PERSONAL_API_KEY,
       POSTHOG_PROJECT_ID: backend.env.POSTHOG_PROJECT_ID,
       BACKEND_HEALTH_URL: preserve(),
+      // The usage ports' keys for the 90 % Alert (ADR 0164); Railway sets the project and environment.
+      RAILWAY_READ_TOKEN: backend.env.RAILWAY_READ_TOKEN,
+      NEON_API_KEY: backend.env.NEON_API_KEY,
+      NEON_PROJECT_ID: backend.env.NEON_PROJECT_ID,
+      GITHUB_TOKEN: backend.env.GITHUB_TOKEN,
+      CLOUDFLARE_API_TOKEN: backend.env.CLOUDFLARE_API_TOKEN,
+      R2_ACCOUNT_ID: backend.env.R2_ACCOUNT_ID,
+      R2_BUCKET: backend.env.R2_BUCKET,
     },
   });
 
@@ -96,6 +110,8 @@ export default defineRailway((ctx) => {
       R2_BUCKET: backend.env.R2_BUCKET,
       R2_ACCESS_KEY_ID: backend.env.R2_ACCESS_KEY_ID,
       R2_SECRET_ACCESS_KEY: backend.env.R2_SECRET_ACCESS_KEY,
+      TELEGRAM_BOT_TOKEN: backend.env.TELEGRAM_BOT_TOKEN,
+      TELEGRAM_CHAT_ID: backend.env.TELEGRAM_CHAT_ID,
     },
   });
 
