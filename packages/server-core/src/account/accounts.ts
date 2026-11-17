@@ -1,8 +1,10 @@
 import { AccountEmailSchema, fill } from '@slovo/contracts';
+import { ACCOUNTS_PAGE_SIZE } from '@slovo/contracts/admin-api';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type {
   AccountRecord,
+  AccountsPage,
   AppleVerifier,
   Authenticator,
   Clock,
@@ -11,7 +13,9 @@ import type {
   Mailer,
   RateLimits,
   ReaderAccount,
+  RecordChange,
   SignedIn,
+  UserRecords,
 } from '../ports';
 import type { TooManyRequests } from '../rate-limit';
 import { createSignInLimits } from './sign-in-limits';
@@ -125,17 +129,33 @@ export interface Accounts {
    */
   delete(session: Session): Promise<void>;
   /**
-   * The Account of the email, for the owner admin alone (ADR 0127), which
-   * names an Account by email instead of by its Session; none when the email
-   * has no Account or is not an email.
+   * One page from 1 of every Account, newest first, for the owner admin alone
+   * (ADR 0162), which names Accounts other than the Session's own; a `search`
+   * keeps those whose email holds it, in any case. Past the last page it
+   * lists none.
    */
-  find(email: string): Promise<ReaderAccount | undefined>;
+  list(query: { readonly page: number; readonly search: string }): Promise<AccountsPage>;
+  /**
+   * The Account of the id with, for every Edition it syncs, the records Sync
+   * keeps of it in the order they were kept, tombstones left out; for the
+   * owner admin alone (ADR 0162), which reads them and never changes them.
+   * None when no Account has the id.
+   */
+  get(accountId: string): Promise<AccountWithRecords | undefined>;
   /**
    * Deletes the email's Account as `delete` does a Session's, for the owner
    * admin alone (ADR 0127), and answers the Account deleted; none, and
    * nothing changes, when the email has no Account.
    */
   deleteByEmail(email: string): Promise<AccountRecord | undefined>;
+}
+
+/** An Account as the owner admin opens it, with the records Sync keeps of it per Edition (ADR 0162). */
+export interface AccountWithRecords extends ReaderAccount {
+  readonly editions: readonly {
+    readonly editionId: string;
+    readonly records: readonly RecordChange[];
+  }[];
 }
 
 /** The email as the backend keeps it, by `AccountEmailSchema`; none when it is not an email. */
@@ -156,6 +176,7 @@ export function createAccounts({
   bundleId,
   mailer,
   rateLimits,
+  records,
   clock,
 }: {
   editions: EditionRegistry;
@@ -166,13 +187,10 @@ export function createAccounts({
   bundleId: string;
   mailer: Mailer;
   rateLimits: RateLimits;
+  records: UserRecords;
   clock: Clock;
 }): Accounts {
   const limits = createSignInLimits({ rateLimits, clock });
-  const find = async (email: string) => {
-    const normal = normalised(email);
-    return normal === undefined ? undefined : authenticator.accountOf(normal);
-  };
   return {
     async requestCode(typedEmail, editionId, ip) {
       const email = normalised(typedEmail);
@@ -246,10 +264,35 @@ export function createAccounts({
 
     delete: ({ account }) => authenticator.delete(account),
 
-    find,
+    list: ({ page, search }) =>
+      authenticator.accounts({
+        search: search.trim().toLowerCase(),
+        offset: (page - 1) * ACCOUNTS_PAGE_SIZE,
+        limit: ACCOUNTS_PAGE_SIZE,
+      }),
 
-    async deleteByEmail(email) {
-      const found = await find(email);
+    async get(accountId) {
+      // An unknown id reads no records.
+      const found = await authenticator.accountById(accountId);
+      if (found === undefined) return undefined;
+      const kept = await records.ofAccount(accountId);
+      const byEdition = new Map<string, RecordChange[]>();
+      for (const { editionId, key, value, changedAt } of kept) {
+        if (value === null) continue;
+        const edition = byEdition.get(editionId) ?? [];
+        edition.push({ key, value, changedAt });
+        byEdition.set(editionId, edition);
+      }
+      return {
+        ...found,
+        editions: [...byEdition].map(([editionId, changes]) => ({ editionId, records: changes })),
+      };
+    },
+
+    async deleteByEmail(typedEmail) {
+      const email = normalised(typedEmail);
+      if (email === undefined) return undefined;
+      const found = await authenticator.accountOf(email);
       if (found === undefined) return undefined;
       await authenticator.delete(found.account);
       return found.account;

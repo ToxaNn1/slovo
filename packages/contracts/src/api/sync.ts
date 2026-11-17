@@ -55,7 +55,7 @@ const ChangedAtSchema = z.number().int().nonnegative();
 const CursorSchema = z.number().int().nonnegative();
 
 /** One change of a record, as a device pushes it and a pull answers it. */
-const RecordChangeSchema = z.object({
+export const RecordChangeSchema = z.object({
   key: RecordKeySchema,
   value: RecordValueSchema,
   changedAt: ChangedAtSchema,

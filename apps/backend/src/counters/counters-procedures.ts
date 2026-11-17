@@ -25,7 +25,8 @@ interface CountersContext {
  * answers its Community Word `NOT_FOUND` too, so the Community Word needs both
  * switches on. A questionnaire answer of an Edition with the questionnaire
  * switched off, or one that is not an option of its question, answers
- * `NOT_FOUND` (ADR 0068).
+ * `NOT_FOUND` (ADR 0068), as a switch-off unit of an Edition with
+ * `statisticsOffCounter` off does (ADR 0163).
  */
 export function countersProcedures(communityCounters: CommunityCounters) {
   const counters = implement(apiContract.counters).$context<CountersContext>();
@@ -66,6 +67,18 @@ export function countersProcedures(communityCounters: CommunityCounters) {
           throw errors.NOT_FOUND();
         case 'too-many-requests':
           retryAfter(context, answered);
+          throw errors.TOO_MANY_REQUESTS();
+      }
+    }),
+    statisticsOff: counters.statisticsOff.handler(async ({ input, context, errors }) => {
+      const counted = await communityCounters.statisticsOff(input, context.ip);
+      if (counted.ok) return;
+      switch (counted.reason) {
+        case 'unknown-edition':
+        case 'switched-off':
+          throw errors.NOT_FOUND();
+        case 'too-many-requests':
+          retryAfter(context, counted);
           throw errors.TOO_MANY_REQUESTS();
       }
     }),

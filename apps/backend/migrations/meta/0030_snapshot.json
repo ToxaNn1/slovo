@@ -1,5 +1,5 @@
 {
-  "id": "7fd53e5f-50b8-4c01-aea9-707886df7dae",
+  "id": "e0f0bd09-0937-4f3a-847d-fe5fd2b61b6d",
   "prevId": "c8a3c642-8193-4b4a-9611-a24a10bde636",
   "version": "7",
   "dialect": "postgresql",
@@ -2390,103 +2390,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.services": {
-      "name": "services",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "plan": {
-          "name": "plan",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "monthly_price_usd_cents": {
-          "name": "monthly_price_usd_cents",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "billing_day": {
-          "name": "billing_day",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "limits": {
-          "name": "limits",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "x": {
-          "name": "x",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "y": {
-          "name": "y",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "links": {
-          "name": "links",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "services_name_unique": {
-          "name": "services_name_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "services_kind": {
-          "name": "services_kind",
-          "value": "\"services\".\"kind\" in ('railway', 'cron', 'metered')"
-        },
-        "services_price": {
-          "name": "services_price",
-          "value": "\"services\".\"monthly_price_usd_cents\" >= 0"
-        },
-        "services_billing_day": {
-          "name": "services_billing_day",
-          "value": "\"services\".\"billing_day\" between 1 and 31"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.sessions": {
       "name": "sessions",
       "schema": "",
@@ -2828,6 +2731,45 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.statistics_off_counters": {
+      "name": "statistics_off_counters",
+      "schema": "",
+      "columns": {
+        "edition_id": {
+          "name": "edition_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "day": {
+          "name": "day",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "statistics_off_counters_edition_id_day_pk": {
+          "name": "statistics_off_counters_edition_id_day_pk",
+          "columns": [
+            "edition_id",
+            "day"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},

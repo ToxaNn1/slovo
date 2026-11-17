@@ -10,6 +10,7 @@ import {
   type ReaderFacts,
   type AnalyticsPort,
   type AnalyticsSink,
+  type Backend,
   type Clock,
   type Edition,
   type Random,
@@ -146,15 +147,18 @@ export function recordedAnalytics(): RecordedAnalytics {
  * defaults with `changes`, for a screen drawn under `SettingsProvider`; what
  * the screen changes, `settings.read()` gives back. With `analytics`, a
  * changed setting is told to that port through the Core's gate, as on the device.
+ * With `backend`, switching sharing off sends its one anonymous unit there (ADR 0163).
  */
 export async function settingsAt(
   changes: Partial<UserSettings> = {},
   analytics?: AnalyticsPort,
+  backend?: Pick<Backend, 'counters'>,
 ): Promise<Opening<OpenedSettings>> {
   const userState = await seedUserState();
   const settings = createSettings({
     userState,
     defaults: edition.userSettingDefaults,
+    ...(backend === undefined ? {} : { statisticsOff: { edition, backend } }),
     ...(analytics === undefined
       ? {}
       : {

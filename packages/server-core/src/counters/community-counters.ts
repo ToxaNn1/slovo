@@ -17,6 +17,9 @@ const EVENTS_PER_IP = { requests: 500, windowSeconds: 24 * 60 * 60 } as const;
 /** The questionnaire answers one IP address may send in a day (ADR 0068). */
 const ANSWERS_PER_IP = { requests: 100, windowSeconds: 24 * 60 * 60 } as const;
 
+/** The switch-offs of anonymous statistics one IP address may send in a day (ADR 0163). */
+const SWITCH_OFFS_PER_IP = { requests: 20, windowSeconds: 24 * 60 * 60 } as const;
+
 /** The Feature Switch that serves each counted question. */
 const SWITCH_OF = {
   level: 'questionnaire',
@@ -97,6 +100,16 @@ export interface CommunityCounters {
     },
     ip: string,
   ): Promise<{ readonly ok: true } | NotServing | UnknownAnswer | TooManyRequests>;
+  /**
+   * Adds one to the Edition's switch-offs of anonymous statistics on the day
+   * (UTC) it arrives, when the Edition serves `statisticsOffCounter` (ADR
+   * 0163). A unit that takes its IP address over the day's limit counts
+   * nothing.
+   */
+  statisticsOff(
+    request: { readonly editionId: string },
+    ip: string,
+  ): Promise<{ readonly ok: true } | NotServing | TooManyRequests>;
 }
 
 export function createCommunityCounters({
@@ -159,6 +172,20 @@ export function createCommunityCounters({
       );
       if (refused !== undefined) return refused;
       await store.addAnswer(editionId, question, answer);
+      return { ok: true };
+    },
+
+    async statisticsOff({ editionId }, ip) {
+      const serving = await editions.serving(editionId, 'statisticsOffCounter');
+      if (!serving.ok) return serving;
+      const refused = await countRequest(
+        rateLimits,
+        `statisticsOffPerIp:${ipSubject(ip)}`,
+        SWITCH_OFFS_PER_IP,
+        clock.now(),
+      );
+      if (refused !== undefined) return refused;
+      await store.addStatisticsOff(editionId, clock.now().toISOString().slice(0, 10));
       return { ok: true };
     },
   };

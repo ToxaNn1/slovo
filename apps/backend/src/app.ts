@@ -198,20 +198,23 @@ export function createApp({
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions, alerts });
   const rateLimits = createRateLimits(database, { secret: authSecret });
+  const userRecords = createUserRecords(database);
+  const authenticator = createAuthenticator(database, { secret: authSecret, logger });
   const accounts = createAccounts({
     editions: editionRegistry,
-    authenticator: createAuthenticator(database, { secret: authSecret, logger }),
+    authenticator,
     google,
     apple,
     bundleId: appConfig.bundleId,
     mailer,
     rateLimits,
+    records: userRecords,
     clock,
   });
   const contentStore = createContentStore({ database, clock, editions: editionRegistry });
   const sync = createSync({
     editions: editionRegistry,
-    records: createUserRecords(database),
+    records: userRecords,
     rateLimits,
     clock,
   });
@@ -254,6 +257,8 @@ export function createApp({
   const adminAnalytics = createAdminAnalytics({
     posthog,
     counters: counterStore,
+    accounts: authenticator,
+    records: userRecords,
     clock,
     wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   });

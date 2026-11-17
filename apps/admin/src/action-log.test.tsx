@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test } from 'vitest';
 
@@ -24,7 +25,9 @@ const row = (what: string, before: unknown, after: unknown, reason: string | nul
 
 /** The Action log answering these rows; its table rows, each as [Що, Було, Стало]. */
 async function logOf(...rows: readonly ReturnType<typeof row>[]) {
-  server.use(http.get('*/admin/actions', () => HttpResponse.json({ actions: rows })));
+  server.use(
+    http.get('*/admin/actions', () => HttpResponse.json({ actions: rows, total: rows.length })),
+  );
   render(<Admin />);
   const log = within(await screen.findByRole('region', { name: 'Журнал дій' }));
   await log.findAllByText('owner@example.com');
@@ -143,4 +146,35 @@ test('a key the admin does not know yet still reads, never as raw JSON', async (
 
   expect(unknown).toEqual(['Інша дія: something.new', 'a: 1, b: два', 'текст']);
   expect(screen.getByRole('region', { name: 'Журнал дій' }).textContent).not.toContain('{"');
+});
+
+test('the log lists a page of rows, the total, and the next page of the Edition on Далі', async () => {
+  window.history.replaceState(null, '', '/admin/security?edition=uk');
+  const asked: string[] = [];
+  server.use(
+    http.get('*/admin/actions', ({ request }) => {
+      const url = new URL(request.url);
+      asked.push(url.search);
+      const page = url.searchParams.get('page') ?? '1';
+      const at = page === '1' ? '2026-11-16T10:00:00.000Z' : '2026-11-15T10:00:00.000Z';
+      return HttpResponse.json({
+        actions: [{ ...row('content.crosswordDay.check', null, null, `row-of-page-${page}`), at }],
+        total: 53,
+      });
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  const log = within(await screen.findByRole('region', { name: 'Журнал дій' }));
+  const pages = within(await log.findByRole('navigation', { name: 'Сторінки журналу' }));
+
+  expect(pages.getByText('1–50 з 53')).toBeTruthy();
+  expect(log.getByText('row-of-page-1')).toBeTruthy();
+
+  await user.click(pages.getByRole('button', { name: 'Далі' }));
+
+  expect(await log.findByText('row-of-page-2')).toBeTruthy();
+  expect(pages.getByText('51–53 з 53')).toBeTruthy();
+  expect(asked.at(-1)).toContain('page=2');
+  expect(asked.at(-1)).toContain('editionId=uk');
 });

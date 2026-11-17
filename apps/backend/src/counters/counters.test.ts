@@ -9,6 +9,7 @@ import {
   favoritesAdds,
   questionnaireCounters,
   rateLimits,
+  statisticsOffCounters,
 } from '../database/schema';
 import { newIp, passTime, testApp, testEditions } from '../test-support';
 
@@ -913,5 +914,107 @@ describe('counters.questionnaire', () => {
     await expect(clientFrom(newIp()).counters.questionnaire(answer)).resolves.toBeUndefined();
     passTime(DAY / 2);
     await expect(client.counters.questionnaire(answer)).resolves.toBeUndefined();
+  });
+});
+
+/** What the database keeps of the Edition's switch-offs of anonymous statistics: each day, oldest first. */
+async function switchOffsOf({ db }: Database, editionId: string) {
+  const rows = await db
+    .select()
+    .from(statisticsOffCounters)
+    .where(eq(statisticsOffCounters.editionId, editionId))
+    .orderBy(statisticsOffCounters.day);
+  return rows.map(({ day, count }) => ({ day, count }));
+}
+
+describe('counters.statisticsOff', () => {
+  it('adds one to the switch-offs of the Edition on the day (UTC) it arrives, and answers 202 with no body', async () => {
+    const { request, client, database } = testApp({
+      editions: testEditions(['sa', 'sb']).read(),
+    });
+
+    vi.setSystemTime(new Date('2026-11-16T23:59:59Z'));
+    const response = await request('/v1/counters/statistics-off', post({ editionId: 'sa' }));
+    await client.counters.statisticsOff({ editionId: 'sa' });
+    vi.setSystemTime(new Date('2026-11-17T00:00:00Z'));
+    await client.counters.statisticsOff({ editionId: 'sa' });
+    await client.counters.statisticsOff({ editionId: 'sb' });
+
+    expect(response.status).toBe(202);
+    await expect(response.text()).resolves.toBe('');
+    await expect(switchOffsOf(database, 'sa')).resolves.toEqual([
+      { day: '2026-11-16', count: 2 },
+      { day: '2026-11-17', count: 1 },
+    ]);
+    await expect(switchOffsOf(database, 'sb')).resolves.toEqual([{ day: '2026-11-17', count: 1 }]);
+  });
+
+  it('keeps counts only: no column names a reader, a device or an IP address', async () => {
+    const { clientFrom, database } = testApp({ editions: testEditions(['sid']).read() });
+    vi.setSystemTime(new Date('2026-11-17T12:00:00Z'));
+    await clientFrom('2001:db8:7:6::16').counters.statisticsOff({ editionId: 'sid' });
+
+    const rows = await database.db
+      .select()
+      .from(statisticsOffCounters)
+      .where(eq(statisticsOffCounters.editionId, 'sid'));
+    expect(rows).toEqual([{ editionId: 'sid', day: '2026-11-17', count: 1 }]);
+    const keys = (await database.db.select({ key: rateLimits.key }).from(rateLimits)).map(
+      (row) => row.key,
+    );
+    for (const key of keys) expect(key).not.toContain('2001:db8');
+  });
+
+  it('refuses a request that names a reader, a Session or a device as BAD_REQUEST', async () => {
+    const { request } = testApp();
+
+    for (const extra of [{ installId: 'i1' }, { deviceId: 'd1' }, { session: 's1' }]) {
+      const response = await request(
+        '/v1/counters/statistics-off',
+        post({ editionId: 'uk', ...extra }),
+      );
+      expect(response.status).toBe(400);
+    }
+  });
+
+  it('answers NOT_FOUND for an Edition it does not serve, or with `statisticsOffCounter` off, locally or remotely', async () => {
+    const folder = testEditions(['soff'], (config) => ({
+      ...config,
+      featureSwitches: { ...config.featureSwitches, statisticsOffCounter: 'off' },
+    }));
+    const { client, database, kill } = testApp({
+      editions: [...folder.read(), ...testEditions(['sremote']).read()],
+    });
+    await kill('sremote', 'statisticsOffCounter');
+
+    for (const editionId of ['xx', 'soff', 'sremote']) {
+      await expect(client.counters.statisticsOff({ editionId })).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+        status: 404,
+      });
+      await expect(switchOffsOf(database, editionId)).resolves.toEqual([]);
+    }
+  });
+
+  it('are at most 20 a day from one IP address: the 21st is TOO_MANY_REQUESTS with Retry-After, and counts nothing', async () => {
+    const { request, client, clientFrom, database } = testApp({
+      editions: testEditions(['slimit']).read(),
+    });
+    vi.setSystemTime(new Date('2026-11-17T00:00:00Z'));
+    const unit = { editionId: 'slimit' } as const;
+    for (let sent = 0; sent < 20; sent++) await client.counters.statisticsOff(unit);
+    passTime(DAY / 2);
+
+    const next = await request('/v1/counters/statistics-off', post(unit));
+
+    expect(next.status).toBe(429);
+    await expect(next.json()).resolves.toMatchObject({ code: 'TOO_MANY_REQUESTS' });
+    expect(next.headers.get('retry-after')).toBe(String(DAY / 2 / 1000));
+    await expect(switchOffsOf(database, 'slimit')).resolves.toEqual([
+      { day: '2026-11-17', count: 20 },
+    ]);
+    await expect(clientFrom(newIp()).counters.statisticsOff(unit)).resolves.toBeUndefined();
+    passTime(DAY / 2);
+    await expect(client.counters.statisticsOff(unit)).resolves.toBeUndefined();
   });
 });
