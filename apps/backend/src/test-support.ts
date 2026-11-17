@@ -73,6 +73,7 @@ import { systemRandom } from './random';
 import { listReports, type ReportFilter } from './reports/report-list';
 import { resolveReport } from './reports/report-resolve';
 import { createFakePostHog } from './analytics/fake-posthog';
+import { createFakeNbu } from './services/fake-nbu';
 import type { ErrorReport } from './error-reporter';
 
 /** The Postgres of the repo's `compose.yaml`, which the tests use unless `DATABASE_URL` names another. */
@@ -710,6 +711,7 @@ export function testApp({
   const mailer = createFakeMailer();
   const alerts = createFakeAlerts();
   const posthog = createFakePostHog();
+  const nbu = createFakeNbu();
   const google = createFakeGoogle(googleClientIds);
   const apple = createFakeApple();
   const reports: ErrorReport[] = [];
@@ -724,6 +726,7 @@ export function testApp({
     mailer,
     alerts,
     posthog,
+    nbu,
     google: givenGoogle ?? google,
     apple: givenApple ?? apple,
     authSecret: TEST_AUTH_SECRET,
@@ -790,6 +793,8 @@ export function testApp({
     sentry,
     /** The fake PostHog the Аналітика reads from. */
     posthog,
+    /** The fake NBU «Сервіси» reads the dollar's rate from. */
+    nbu,
     /** The fake Google the backend verifies tokens with, and the tokens its sign-in sheet gives. */
     google,
     /** The fake Apple the backend verifies tokens with, and the tokens its sign-in sheet gives. */

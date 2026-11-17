@@ -21,6 +21,7 @@ import { systemRandom } from './random';
 import { sentryOf } from './quality/sentry-api';
 import { createSentryReporter } from './sentry-reporter';
 import { createPostHogClient, unavailablePostHog } from './analytics/posthog-client';
+import { createNbuClient } from './services/nbu-client';
 import { startServer } from './server';
 
 const config = readConfig(ServerConfigSchema, process.env);
@@ -41,6 +42,7 @@ const app = createApp({
   mailer,
   alerts: ownerAlertsOf(database, config, logger),
   posthog: config.posthog === undefined ? unavailablePostHog : createPostHogClient(config.posthog),
+  nbu: createNbuClient(),
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
   apple: createAppleVerifier({ clock: systemClock }),
   github: createGitHubSource({

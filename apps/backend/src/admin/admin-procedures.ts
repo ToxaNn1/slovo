@@ -36,6 +36,7 @@ import type {
   SwitchRefused,
   ServiceStore,
   ServiceMoneyBook,
+  UsdRates,
 } from '@slovo/server-core';
 
 import { alertText } from '../alerts/owner-chat';
@@ -125,6 +126,7 @@ export function adminProcedures(
     accounts,
     services,
     serviceMoney,
+    usdRates,
   }: {
     /** The readers' Accounts, which a Власник finds and deletes by email (ADR 0127). */
     readonly accounts: Accounts;
@@ -136,6 +138,8 @@ export function adminProcedures(
     readonly services: ServiceStore;
     /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
     readonly serviceMoney: ServiceMoneyBook;
+    /** The NBU rate «Сервіси» counts the money in hryvnias at (ADR 0164). */
+    readonly usdRates: UsdRates;
   },
 ) {
   const os = implement(apiContract.admin).$context<{
@@ -616,7 +620,7 @@ export function adminProcedures(
       services,
       (headers, errors, { writes = false } = {}) =>
         admit(headers, errors, { writes, security: true }),
-      { book: serviceMoney, ownerWrite: securityWrite },
+      { book: serviceMoney, ownerWrite: securityWrite, usdRates },
     ),
 
     content: {

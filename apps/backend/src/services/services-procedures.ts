@@ -1,6 +1,6 @@
 import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
-import type { AccessWrite, ServiceMoneyBook, ServiceStore } from '@slovo/server-core';
+import type { AccessWrite, ServiceMoneyBook, ServiceStore, UsdRates } from '@slovo/server-core';
 
 /** The refusals every «Сервіси» procedure may answer. */
 interface AdminErrors {
@@ -27,7 +27,11 @@ export type OwnerWrite = (
 export function servicesProcedures(
   store: ServiceStore,
   admitOwner: AdmitOwner,
-  { book, ownerWrite }: { book: ServiceMoneyBook; ownerWrite: OwnerWrite },
+  {
+    book,
+    ownerWrite,
+    usdRates,
+  }: { book: ServiceMoneyBook; ownerWrite: OwnerWrite; usdRates: UsdRates },
 ) {
   const os = implement(apiContract.admin.services).$context<{ headers: Headers }>();
 
@@ -48,6 +52,14 @@ export function servicesProcedures(
     }),
   };
 
+  // The NBU rate the money in hryvnias is counted at.
+  const rate = {
+    usdRate: os.usdRate.handler(async ({ context, errors }) => {
+      await admitOwner(context.headers, errors);
+      return { rate: await usdRates.current() };
+    }),
+  };
+
   return os.router({
     list: os.list.handler(async ({ context, errors }) => {
       await admitOwner(context.headers, errors);
@@ -55,5 +67,6 @@ export function servicesProcedures(
       return { services: [...services], costs: book.costs(services) };
     }),
     ...money,
+    ...rate,
   });
 }
