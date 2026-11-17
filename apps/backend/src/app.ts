@@ -299,6 +299,7 @@ export function createApp({
       store: createServiceEntryStore(database),
       vault,
       admin,
+      clock,
     }),
     serviceMoney: createServiceMoneyBook({
       services: createServiceStore(database),

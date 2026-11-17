@@ -4,7 +4,11 @@ import {
   type ServiceEntryType,
 } from '@slovo/contracts/admin-api';
 
-import type { AccessWrite, AdminAccess } from '../admin/admin-access';
+import type { AccessWrite, Actor, AdminAccess } from '../admin/admin-access';
+import type { Clock } from '../ports';
+
+/** How long a fresh TOTP opens «Показати» and «Копіювати» for one admin session (ADR 0164). */
+export const VAULT_OPEN_MS = 15 * 60 * 1000;
 
 /**
  * The Vault (ADR 0164): seals the secret Service entries under `VAULT_KEY`,
@@ -66,7 +70,15 @@ export interface NewEntry {
 export type EntryWriteResult<Done> =
   ({ readonly ok: true } & Done) | { readonly ok: false; readonly reason: 'vault-off' | 'unknown' };
 
-/** The Service entries of «Сервіси» (ADR 0164): no read answers a sealed value. */
+/** One entry's plain value, or the refusal by name: the Vault locked for the session among them. */
+export type EntryReadResult =
+  | { readonly ok: true; readonly value: string }
+  | { readonly ok: false; readonly reason: 'vault-off' | 'locked' | 'unknown' };
+
+/** Why a plain value is read: shown by «Показати», or copied by «Копіювати» without showing. */
+export type EntryRead = 'reveal' | 'copy';
+
+/** The Service entries of «Сервіси» (ADR 0164): no list answers a sealed value. */
 export interface ServiceEntries {
   readonly vault: ServiceVault['state'];
   /** The Service's entries, sealed ones without their value; none when there is no such Service. */
@@ -78,6 +90,13 @@ export interface ServiceEntries {
     write: AccessWrite,
   ): Promise<EntryWriteResult<{ entry: ServiceEntry }>>;
   remove(id: string, write: AccessWrite): Promise<EntryWriteResult<object>>;
+  /**
+   * Opens the Vault for the admin session for 15 minutes, once its Admin user
+   * has entered a fresh TOTP; the window lives in memory, by the session.
+   */
+  unlock(session: string): { readonly openUntil: Date };
+  /** One entry's plain value inside the session's window, logged by the entry and never the value. */
+  read(id: string, how: EntryRead, session: string, who: Actor): Promise<EntryReadResult>;
 }
 
 const isOpenType = (type: ServiceEntryType): type is (typeof OPEN_ENTRY_TYPES)[number] =>
@@ -101,11 +120,20 @@ export function createServiceEntries({
   store,
   vault,
   admin,
+  clock,
 }: {
   store: ServiceEntryStore;
   vault: ServiceVault;
   admin: Pick<AdminAccess, 'log'>;
+  clock: Clock;
 }): ServiceEntries {
+  /** The end of each admin session's window, by its token; none is ever written down. */
+  const openUntil = new Map<string, Date>();
+  const isOpen = (session: string) => {
+    const until = openUntil.get(session);
+    return until !== undefined && clock.now() < until;
+  };
+
   const log = (
     { who, reason }: AccessWrite,
     what: string,
@@ -182,6 +210,34 @@ export function createServiceEntries({
       await store.remove(id);
       await log(write, 'service.entry.delete', entry, service, []);
       return { ok: true };
+    },
+
+    unlock(session) {
+      const now = clock.now();
+      for (const [kept, until] of openUntil) if (until <= now) openUntil.delete(kept);
+      const until = new Date(now.getTime() + VAULT_OPEN_MS);
+      openUntil.set(session, until);
+      return { openUntil: until };
+    },
+
+    async read(id, how, session, who) {
+      if (vault.state === 'off') return { ok: false, reason: 'vault-off' };
+      if (!isOpen(session)) return { ok: false, reason: 'locked' };
+      const entry = await store.get(id);
+      const service = entry === undefined ? undefined : await store.serviceName(entry.serviceId);
+      if (entry === undefined || service === undefined) return { ok: false, reason: 'unknown' };
+      const value =
+        entry.value.kind === 'open' ? entry.value.value : vault.open(entry.value.sealed);
+      await admin.log({
+        who,
+        what: `service.entry.${how}`,
+        before: null,
+        after: { service, entry: entry.id, type: entry.type },
+        reason: null,
+        editionId: null,
+        batchId: null,
+      });
+      return { ok: true, value };
     },
   };
 }
