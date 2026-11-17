@@ -20,3 +20,4 @@ Next: review done (wave/review.md: 1 high, 2 med, 7 low); fix implementer runnin
 - 2026-11-17T12:14:57Z #1965 STUCK on ADR 0122 (admin strict output RuleSchema gains targets.channel → breaking-changes check + describe-api refuse). Default chosen: ADR 0170 also amends 0122, admin outputs may gain a field; implementer resumed. Owner Q in PR body.
 - 2026-11-17T12:44:49Z #1965 merged 558c059f. All tickets merged; PR body complete; code review starting.
 - 2026-11-17T12:51:18Z prettier fix c1106ebd pushed (CI Lint). Code review: 1 high, 2 med, 7 low; fixer running.
+WAITING until 2026-11-17T13:43:25Z: CI on 46f7a095d (PR #1968) after review fixes

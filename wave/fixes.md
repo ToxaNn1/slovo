@@ -1,0 +1,2 @@
+- ZeptoMail on staging (review #8, behaviour unchanged): the Staging Deployment keeps production's ZEPTOMAIL_TOKEN/MAIL_FROM and the reset copies real Accounts, so a staging sign-in mails a real address from the production sender.
+- Owner question: refuse mail variables under DEPLOYMENT=staging (or a log-only mailer there)? Safe default until answered: leave as is, sign in on staging only with the owner's own address.
