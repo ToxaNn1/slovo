@@ -132,6 +132,9 @@ function nextChargeDay(today: Day, billingDay: number): Day {
 const isoOf = ({ year, month, day }: Day) =>
   `${String(year)}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
+/** The Kyiv day `YYYY-MM-DD` of the time. */
+export const kyivDateOf = (at: Date): string => isoOf(kyivDayOf(at));
+
 function costsOn(services: readonly Service[], today: Day): ServiceCosts {
   const monthlyTotalUsdCents = services.reduce(
     (sum, { monthlyPriceUsdCents }) => sum + (monthlyPriceUsdCents ?? 0),

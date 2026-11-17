@@ -152,6 +152,40 @@ export const SERVICES = [
   },
 ] satisfies AdminApiOutputs['services']['list']['services'];
 
+/** The Service entries of Neon in the mock: a login and a link open, a password and a token sealed. */
+export const SERVICE_ENTRIES = [
+  {
+    id: '00000000-0000-4000-9000-000000000001',
+    serviceId: SERVICE_IDS.Neon,
+    type: 'login',
+    label: 'Акаунт',
+    note: null,
+    value: 'owner@example.com',
+  },
+  {
+    id: '00000000-0000-4000-9000-000000000002',
+    serviceId: SERVICE_IDS.Neon,
+    type: 'link',
+    label: 'Консоль',
+    note: null,
+    value: 'https://console.neon.tech',
+  },
+  {
+    id: '00000000-0000-4000-9000-000000000003',
+    serviceId: SERVICE_IDS.Neon,
+    type: 'password',
+    label: 'Пароль',
+    note: 'вхід у консоль',
+  },
+  {
+    id: '00000000-0000-4000-9000-000000000004',
+    serviceId: SERVICE_IDS.Neon,
+    type: 'token',
+    label: 'API-ключ',
+    note: 'DATABASE_URL',
+  },
+] as const satisfies AdminApiOutputs['services']['entries']['entries'];
+
 /** The fixture Services cost nothing yet: no price and no billing day. */
 export const SERVICE_COSTS = {
   monthlyTotalUsdCents: 0,
@@ -200,3 +234,10 @@ export const SERVICE_USAGE = [
     },
   },
 ] satisfies AdminApiOutputs['services']['usage']['usage'];
+
+/** The NBU rate of the Kyiv day. */
+export const USD_RATE = {
+  uahPerUsd: 41.4321,
+  on: '2026-11-17',
+  state: 'today',
+} satisfies AdminApiOutputs['services']['usdRate']['rate'];

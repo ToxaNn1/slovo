@@ -50,6 +50,118 @@ export const ServiceSchema = z.object({
 });
 export type Service = z.infer<typeof ServiceSchema>;
 
+/** The types of a Service entry: a login and a link stay open, the rest are sealed in the Vault (ADR 0164). */
+export const OPEN_ENTRY_TYPES = ['login', 'link'] as const;
+export const SEALED_ENTRY_TYPES = ['password', 'token', 'recovery-codes'] as const;
+export const ServiceEntryTypeSchema = z.enum([...OPEN_ENTRY_TYPES, ...SEALED_ENTRY_TYPES]);
+export type ServiceEntryType = z.infer<typeof ServiceEntryTypeSchema>;
+
+const ServiceEntryIdSchema = z.uuid();
+const EntryLabelSchema = z.string().trim().min(1).max(120);
+/** «Де використовується»: where the entry is used. */
+const EntryNoteSchema = z.string().trim().max(500).nullable();
+const EntryValueSchema = z.string().min(1).max(10_000);
+
+const ServiceEntryFieldsSchema = z.object({
+  id: ServiceEntryIdSchema,
+  serviceId: ServiceIdSchema,
+  label: z.string(),
+  note: z.string().nullable(),
+});
+
+/**
+ * One login, link, password, token or recovery-codes item of a Service. A
+ * login and a link come with their value; a sealed entry never does: no read
+ * answers a sealed value.
+ */
+export const ServiceEntrySchema = z.discriminatedUnion('type', [
+  ServiceEntryFieldsSchema.extend({ type: z.enum(OPEN_ENTRY_TYPES), value: z.string() }),
+  ServiceEntryFieldsSchema.extend({ type: z.enum(SEALED_ENTRY_TYPES) }),
+]);
+export type ServiceEntry = z.infer<typeof ServiceEntrySchema>;
+
+/** Whether the Deployment has a `VAULT_KEY`: without it no entry is written. */
+export const VaultStateSchema = z.enum(['on', 'off']);
+
+/** The errors of an entry write: `VAULT_OFF` while `VAULT_KEY` is unset. */
+const ENTRY_WRITE_ERRORS = {
+  ...ADMIN_ERRORS,
+  VAULT_OFF: { status: 503, message: 'The Vault is off: the Deployment has no VAULT_KEY' },
+} as const;
+
+/** The Service entries of «Сервіси»: a Власник only, every write with a reason (ADR 0122, 0164). */
+const serviceEntriesContract = {
+  entries: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/services/{serviceId}/entries',
+      summary: "A Service's entries: logins and links with their values, sealed ones without",
+      description: 'A «Сервіси» procedure: a Власник only. No read answers a sealed value.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.strictObject({ serviceId: ServiceIdSchema }))
+    .output(z.object({ vault: VaultStateSchema, entries: z.array(ServiceEntrySchema) })),
+  addEntry: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/services/{serviceId}/entries',
+      summary: 'Adds an entry to a Service, sealing a password, token or recovery codes',
+      description:
+        'A «Сервіси» procedure: a Власник only. The Action log row names the fields, never a value.',
+      tags: ['admin'],
+    })
+    .errors(ENTRY_WRITE_ERRORS)
+    .input(
+      z.strictObject({
+        serviceId: ServiceIdSchema,
+        type: ServiceEntryTypeSchema,
+        label: EntryLabelSchema,
+        note: EntryNoteSchema,
+        value: EntryValueSchema,
+        reason: ReasonSchema,
+      }),
+    )
+    .output(z.object({ entry: ServiceEntrySchema })),
+  editEntry: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/services/entries/{id}',
+      summary: "Changes an entry's label, note or value; its type stays",
+      description:
+        'A «Сервіси» procedure: a Власник only. The Action log row names the changed fields, never a value.',
+      tags: ['admin'],
+    })
+    .errors(ENTRY_WRITE_ERRORS)
+    .input(
+      z
+        .strictObject({
+          id: ServiceEntryIdSchema,
+          label: EntryLabelSchema.optional(),
+          note: EntryNoteSchema.optional(),
+          value: EntryValueSchema.optional(),
+          reason: ReasonSchema,
+        })
+        .refine(
+          ({ label, note, value }) =>
+            label !== undefined || note !== undefined || value !== undefined,
+          'names a field to change',
+        ),
+    )
+    .output(z.object({ entry: ServiceEntrySchema })),
+  deleteEntry: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/services/entries/{id}/delete',
+      summary: 'Deletes an entry of a Service',
+      description: 'A «Сервіси» procedure: a Власник only.',
+      tags: ['admin'],
+    })
+    .errors(ENTRY_WRITE_ERRORS)
+    .input(z.strictObject({ id: ServiceEntryIdSchema, reason: ReasonSchema }))
+    .output(z.object({ deleted: z.literal(true) })),
+};
+
 /** A block's size on the canvas in CSS pixels: a new Service takes a place where it overlaps none. */
 export const SERVICE_BLOCK = { width: 200, height: 88 } as const;
 
@@ -170,6 +282,32 @@ export const ServiceUsageSchema = z.object({
 });
 export type ServiceUsage = z.infer<typeof ServiceUsageSchema>;
 
+/** The official NBU rate of the dollar the UAH figures are counted at (ADR 0164). */
+export const UsdRateSchema = z.object({
+  /** Hryvnias for one dollar, as the NBU sets it. */
+  uahPerUsd: z.number().positive(),
+  /** The day `YYYY-MM-DD` the NBU set the rate for. */
+  on: z.iso.date(),
+  /** `today` for the rate of the Kyiv day; `last-known` when the day's read failed and an older rate stands in. */
+  state: z.enum(['today', 'last-known']),
+});
+export type UsdRate = z.infer<typeof UsdRateSchema>;
+
+/** The «Сервіси» read of the NBU rate: a Власник only. */
+export const serviceRateContract = {
+  usdRate: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/services/usd-rate',
+      summary: 'The official NBU rate of the dollar, for the money in hryvnias',
+      description:
+        'A Власник only. The NBU is read at most once a Kyiv day and the rate kept; when that read fails, the last known rate answers with its day. `rate` is `null` while no read has ever found one.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(z.object({ rate: UsdRateSchema.nullable() })),
+};
+
 /** The «Сервіси» procedures of the admin API: a Власник only (ADR 0164). */
 export const servicesContract = {
   list: procedure
@@ -182,6 +320,7 @@ export const servicesContract = {
     })
     .errors(ADMIN_ERRORS)
     .output(z.object({ services: z.array(ServiceSchema), costs: ServiceCostsSchema })),
+  ...serviceEntriesContract,
   ...serviceMoneyContract,
   usage: procedure
     .route({
@@ -205,4 +344,5 @@ export const servicesContract = {
     .errors(ADMIN_ERRORS)
     .input(z.strictObject({ serviceId: ServiceIdSchema }))
     .output(z.object({ usage: ServiceUsageSchema })),
+  ...serviceRateContract,
 };

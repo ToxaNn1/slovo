@@ -11,6 +11,7 @@ import { refusalData } from '../../session';
 import { useAdminWrite } from '../admin-write';
 import { ConfirmDialog, type PendingWrite } from '../confirm-dialog';
 import { Button } from '../ui/button';
+import { CurrencySwitch, useMoney } from './service-currency';
 
 const inputClass = 'h-9 rounded-lg border border-border bg-background px-3 text-sm';
 
@@ -135,6 +136,7 @@ export function ServiceCostsHeader({
   readonly costs: ServiceCosts;
   readonly services: readonly Service[];
 }) {
+  const shown = useMoney(usd);
   const next = costs.nextCharge;
   const names = next?.serviceIds
     .map((id) => services.find((service) => service.id === id)?.name)
@@ -147,13 +149,14 @@ export function ServiceCostsHeader({
       className="flex flex-wrap items-baseline gap-x-6 gap-y-1"
     >
       <p className="font-display text-xl font-semibold">
-        ≈ {usd(costs.monthlyTotalUsdCents)} / місяць
+        ≈ {shown(costs.monthlyTotalUsdCents)} / місяць
       </p>
       <p className="text-sm text-muted-foreground">
         {next === null
           ? 'Наступного списання немає'
-          : `Наступне списання ${dayOf(next.on)}: ${usd(next.amountUsdCents)} · ${names ?? ''}`}
+          : `Наступне списання ${dayOf(next.on)}: ${shown(next.amountUsdCents)} · ${names ?? ''}`}
       </p>
+      <CurrencySwitch />
     </div>
   );
 }
@@ -162,6 +165,7 @@ export function ServiceCostsHeader({
 export function ServiceMoneySection({ service }: { readonly service: Service }) {
   const [draft, setDraft] = useState<MoneyDraft>();
   const [pending, setPending] = useState<PendingWrite | null>(null);
+  const shown = useMoney(usd);
   const edit = useAdminWrite(adminApi.services.editMoney, () => {
     setDraft(undefined);
   });
@@ -188,11 +192,12 @@ export function ServiceMoneySection({ service }: { readonly service: Service }) 
             <dd>
               {service.monthlyPriceUsdCents === null
                 ? '—'
-                : `${usd(service.monthlyPriceUsdCents)} / місяць`}
+                : `${shown(service.monthlyPriceUsdCents)} / місяць`}
             </dd>
             <dt className="text-muted-foreground">День списання</dt>
             <dd>{service.billingDay === null ? '—' : String(service.billingDay)}</dd>
           </dl>
+          <CurrencySwitch />
           <Button
             variant="secondary"
             className="self-start"

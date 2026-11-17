@@ -536,10 +536,13 @@ export const quoteChecks = pgTable(
   (table) => [primaryKey({ columns: [table.editionId, table.kind, table.id] })],
 );
 
-/** The sourcing cache: the source pages the quote check fetched, each with when. */
+/**
+ * The sourcing cache: the source pages the quote check fetched, each with
+ * when, and the NBU's page of the dollar's rate, one a Kyiv day (ADR 0164).
+ */
 export const sourcingCache = pgTable('sourcing_cache', {
   pageUrl: text('page_url').primaryKey(),
-  /** The page's HTTP status: 200, or 404 for no such page. */
+  /** The page's HTTP status: 200, or 404 for no such page; an NBU read that found no rate is 0. */
   httpStatus: integer('http_status').notNull(),
   body: text('body').notNull(),
   fetchedAt: time('fetched_at'),
@@ -718,5 +721,40 @@ export const services = pgTable(
     check('services_kind', sql`${table.kind} in ('railway', 'cron', 'metered')`),
     check('services_price', sql`${table.monthlyPriceUsdCents} >= 0`),
     check('services_billing_day', sql`${table.billingDay} between 1 and 31`),
+  ],
+);
+
+/**
+ * The Service entries of «Сервіси» (ADR 0164): a login or a link keeps its
+ * value in the open, a password, token or recovery codes only sealed in the
+ * Vault under `VAULT_KEY`. An entry goes with its Service.
+ */
+export const serviceEntries = pgTable(
+  'service_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    serviceId: uuid('service_id')
+      .notNull()
+      .references(() => services.id, { onDelete: 'cascade' }),
+    /** `login`, `link`, `password`, `token` or `recovery-codes`. */
+    type: text('type').notNull(),
+    label: text('label').notNull(),
+    /** «Де використовується». */
+    note: text('note'),
+    /** The value of a login or a link. */
+    openValue: text('open_value'),
+    /** The sealed value of a password, a token or recovery codes. */
+    sealedValue: text('sealed_value'),
+  },
+  (table) => [
+    index('service_entries_service_id_idx').on(table.serviceId),
+    check(
+      'service_entries_type',
+      sql`${table.type} in ('login', 'link', 'password', 'token', 'recovery-codes')`,
+    ),
+    check(
+      'service_entries_value',
+      sql`(${table.type} in ('login', 'link')) = (${table.openValue} is not null and ${table.sealedValue} is null) and (${table.openValue} is null) <> (${table.sealedValue} is null)`,
+    ),
   ],
 );

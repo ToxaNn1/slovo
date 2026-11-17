@@ -6,7 +6,7 @@
  * `Clock` read and only `passTime` moves.
  */
 import { memoryMediaStore } from './media/media-store';
-import { randomInt, randomUUID } from 'node:crypto';
+import { randomBytes, randomInt, randomUUID } from 'node:crypto';
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { createServer, connect } from 'node:net';
@@ -50,6 +50,7 @@ import {
   type SentryReader,
   type SentryWindow,
   type UsagePort,
+  type ServiceVault,
 } from '@slovo/server-core';
 import { eq } from 'drizzle-orm';
 import pg from 'pg';
@@ -74,7 +75,9 @@ import { systemRandom } from './random';
 import { listReports, type ReportFilter } from './reports/report-list';
 import { resolveReport } from './reports/report-resolve';
 import { createFakePostHog } from './analytics/fake-posthog';
+import { createFakeNbu } from './services/fake-nbu';
 import type { ErrorReport } from './error-reporter';
+import { createVault } from './services/vault';
 
 /** The Postgres of the repo's `compose.yaml`, which the tests use unless `DATABASE_URL` names another. */
 const LOCAL_DATABASE_URL = 'postgres://slovo:slovo@localhost:55432/slovo';
@@ -683,6 +686,8 @@ interface TestAppOptions {
   readonly usage?: Readonly<Record<string, UsagePort>>;
   /** Sees every answer before the test gets it, with the request it answers. */
   readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
+  /** The Vault of the Service entries; on under a fake key made for the test unless given. */
+  readonly vault?: ServiceVault;
 }
 
 /**
@@ -708,12 +713,14 @@ export function testApp({
   eas = createFakeEas(),
   usage = {},
   onAnswer,
+  vault = createVault(randomBytes(32)),
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
   const mediaStore = memoryMediaStore();
   const mailer = createFakeMailer();
   const alerts = createFakeAlerts();
   const posthog = createFakePostHog();
+  const nbu = createFakeNbu();
   const google = createFakeGoogle(googleClientIds);
   const apple = createFakeApple();
   const reports: ErrorReport[] = [];
@@ -728,6 +735,7 @@ export function testApp({
     mailer,
     alerts,
     posthog,
+    nbu,
     google: givenGoogle ?? google,
     apple: givenApple ?? apple,
     authSecret: TEST_AUTH_SECRET,
@@ -742,6 +750,7 @@ export function testApp({
     ciToken: TEST_CI_TOKEN,
     mediaBase: TEST_MEDIA_BASE,
     mediaStore,
+    vault,
   });
   const ip = newIp();
   // The one way a request reaches the app.
@@ -795,6 +804,8 @@ export function testApp({
     sentry,
     /** The fake PostHog the Аналітика reads from. */
     posthog,
+    /** The fake NBU «Сервіси» reads the dollar's rate from. */
+    nbu,
     /** The fake Google the backend verifies tokens with, and the tokens its sign-in sheet gives. */
     google,
     /** The fake Apple the backend verifies tokens with, and the tokens its sign-in sheet gives. */

@@ -34,9 +34,11 @@ import type {
   SignedInAdmin,
   SwitchRefusal,
   SwitchRefused,
+  ServiceEntries,
   ServiceStore,
   ServiceMoneyBook,
   ServiceUsage,
+  UsdRates,
 } from '@slovo/server-core';
 
 import { alertText } from '../alerts/owner-chat';
@@ -125,8 +127,10 @@ export function adminProcedures(
     alertStore,
     accounts,
     services,
+    serviceEntries,
     serviceMoney,
     serviceUsage,
+    usdRates,
   }: {
     /** The readers' Accounts, which a Власник finds and deletes by email (ADR 0127). */
     readonly accounts: Accounts;
@@ -136,10 +140,14 @@ export function adminProcedures(
     readonly alertStore: AlertStore;
     /** The Services of «Сервіси» (ADR 0164). */
     readonly services: ServiceStore;
+    /** The Service entries of «Сервіси», sealed in the Vault (ADR 0164). */
+    readonly serviceEntries: ServiceEntries;
     /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
     readonly serviceMoney: ServiceMoneyBook;
     /** The usage of the Services, read from their providers (ADR 0164). */
     readonly serviceUsage: ServiceUsage;
+    /** The NBU rate «Сервіси» counts the money in hryvnias at (ADR 0164). */
+    readonly usdRates: UsdRates;
   },
 ) {
   const os = implement(apiContract.admin).$context<{
@@ -620,7 +628,12 @@ export function adminProcedures(
       services,
       (headers, errors, { writes = false } = {}) =>
         admit(headers, errors, { writes, security: true }),
-      { book: serviceMoney, ownerWrite: securityWrite },
+      {
+        entries: serviceEntries,
+        ownerOf: async (headers, errors, { writes = false } = {}) =>
+          actorOf(await admit(headers, errors, { writes, security: true })),
+      },
+      { book: serviceMoney, ownerWrite: securityWrite, usdRates },
       serviceUsage,
     ),
 

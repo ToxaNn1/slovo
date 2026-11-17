@@ -12,7 +12,10 @@ import type {
   ServiceStore,
   ServiceUsage,
   UsageRead,
+  UsdRates,
 } from '@slovo/server-core';
+
+import { serviceEntriesProcedures, type EntryAccess } from './service-entries-procedures';
 
 /** The refusals every «Сервіси» procedure may answer. */
 interface AdminErrors {
@@ -39,7 +42,12 @@ export type OwnerWrite = (
 export function servicesProcedures(
   store: ServiceStore,
   admitOwner: AdmitOwner,
-  { book, ownerWrite }: { book: ServiceMoneyBook; ownerWrite: OwnerWrite },
+  entryAccess: EntryAccess,
+  {
+    book,
+    ownerWrite,
+    usdRates,
+  }: { book: ServiceMoneyBook; ownerWrite: OwnerWrite; usdRates: UsdRates },
   usage: ServiceUsage,
 ) {
   const os = implement(apiContract.admin.services).$context<{ headers: Headers }>();
@@ -61,12 +69,21 @@ export function servicesProcedures(
     }),
   };
 
+  // The NBU rate the money in hryvnias is counted at.
+  const rate = {
+    usdRate: os.usdRate.handler(async ({ context, errors }) => {
+      await admitOwner(context.headers, errors);
+      return { rate: await usdRates.current() };
+    }),
+  };
+
   return os.router({
     list: os.list.handler(async ({ context, errors }) => {
       await admitOwner(context.headers, errors);
       const services = await store.list();
       return { services: [...services], costs: book.costs(services) };
     }),
+    ...serviceEntriesProcedures(entryAccess),
     ...money,
     usage: os.usage.handler(async ({ context, errors }) => {
       await admitOwner(context.headers, errors);
@@ -85,6 +102,7 @@ export function servicesProcedures(
       if (service === undefined || read === undefined) throw errors.NOT_FOUND();
       return { usage: usageAnswerOf(service, read) };
     }),
+    ...rate,
   });
 }
 
