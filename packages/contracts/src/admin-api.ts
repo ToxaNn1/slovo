@@ -12,6 +12,7 @@ import { ADMIN_WRITE_HEADER } from './api/admin';
 import { EditionIdSchema } from './edition';
 
 export { EditionIdSchema };
+export { SERVICE_KINDS, ServiceKindSchema, type Service } from './api/services';
 export {
   ADMIN_SESSION_COOKIE,
   ADMIN_WRITE_HEADER,

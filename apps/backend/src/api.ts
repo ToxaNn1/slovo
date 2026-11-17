@@ -22,6 +22,7 @@ import type {
   MistakeReports,
   OwnerChecks,
   Quality,
+  ServiceStore,
   Sync,
 } from '@slovo/server-core';
 import type { Logger } from 'pino';
@@ -97,6 +98,7 @@ export function createApiHandler({
   ownerChecks,
   quality,
   served,
+  services,
   sync,
 }: {
   accounts: Accounts;
@@ -127,6 +129,8 @@ export function createApiHandler({
   };
   /** The Editions the backend serves, as the admin lists them. */
   served: readonly Edition[];
+  /** The Services of «Сервіси» (ADR 0164). */
+  services: ServiceStore;
   sync: Sync;
 }) {
   const router = implement(apiContract)
@@ -145,7 +149,7 @@ export function createApiHandler({
         contentQueue,
         ownerChecks,
         adminAnalytics,
-        { ...quality, accounts },
+        { ...quality, accounts, services },
       ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(editions, contentStore, mediaBase),

@@ -41,6 +41,7 @@ import { createContentStore } from './content/content-store';
 import { createContentQueue } from './content/content-queue';
 import { createContentWrites } from './content/content-writes';
 import { createOwnerCheckStore } from './admin/owner-check-store';
+import { createServiceStore } from './services/service-store';
 import { createCiRunStore } from './quality/ci-run-store';
 import { createAlertStore, createAlertThresholdStore } from './alerts/alert-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
@@ -269,6 +270,7 @@ export function createApp({
       alertStore: createAlertStore(database),
     },
     served: editions,
+    services: createServiceStore(database),
     sync,
   });
 
