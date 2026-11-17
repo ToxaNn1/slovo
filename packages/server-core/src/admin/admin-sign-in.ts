@@ -82,6 +82,11 @@ export interface AdminSignIn {
   /** The sessions of the token's Admin user. */
   sessionsOf(token: string): Promise<readonly AdminSessionView[]>;
   signOut(token: string): Promise<void>;
+  /**
+   * Checks a fresh TOTP of a signed-in Admin user again, as the Vault unlock
+   * asks (ADR 0164), and spends it; wrong ones count against their own limit.
+   */
+  confirmTotp(email: string, totp: string): Promise<{ readonly ok: true } | SignInRefused>;
   /** Ends every session of the token's Admin user, and of no one else. */
   signOutEverywhere(token: string): Promise<void>;
 }
@@ -116,6 +121,7 @@ export function createAdminSignIn({
   const letters = (length: number, alphabet = LETTERS) =>
     Array.from({ length }, () => alphabet.charAt(random.int(alphabet.length))).join('');
   const failuresKey = (email: string) => `adminSignIn:${email}`;
+  const confirmsKey = (email: string) => `adminTotpConfirm:${email}`;
   const codeHashOf = (email: string, code: string) => hash(`${email}:${code.trim()}`);
 
   const attemptLimit = () => ({
@@ -132,8 +138,8 @@ export function createAdminSignIn({
   }
 
   /** Answers the refusal a wrong attempt, already taken, earns. */
-  async function failed(email: string): Promise<SignInRefused> {
-    const result = await attemptFailed(rateLimits, failuresKey(email), attemptLimit());
+  async function failed(email: string, key = failuresKey(email)): Promise<SignInRefused> {
+    const result = await attemptFailed(rateLimits, key, attemptLimit());
     return 'attemptsLeft' in result
       ? { ok: false, reason: 'wrong-code', attemptsLeft: result.attemptsLeft }
       : result;
@@ -268,6 +274,19 @@ export function createAdminSignIn({
     },
 
     signOut: (token) => store.deleteAdminSession(hash(token)),
+
+    async confirmTotp(given, totp) {
+      const email = normalized(given);
+      const key = confirmsKey(email);
+      const blocked = await takeAttempt(rateLimits, key, attemptLimit());
+      if (blocked !== undefined) return blocked;
+      const user = await store.adminUserByEmail(email);
+      if (user === undefined || !(await spendTotp(user, totp, clock.now()))) {
+        return failed(email, key);
+      }
+      await clearFailures(rateLimits, key);
+      return { ok: true };
+    },
 
     async signOutEverywhere(token) {
       const row = await store.adminSession(hash(token));

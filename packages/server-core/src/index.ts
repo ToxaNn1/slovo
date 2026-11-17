@@ -161,6 +161,8 @@ export type { ServiceStore } from './services/services';
 export {
   createServiceEntries,
   type EntryChanges,
+  type EntryRead,
+  type EntryReadResult,
   type EntryWriteResult,
   type NewEntry,
   type ServiceEntries,
