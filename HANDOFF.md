@@ -26,3 +26,4 @@ WAITING until 2026-11-17T10:52:46Z: merger (#1952, #1954) and implementers #1955
 - 2026-11-17T10:38:39Z #1955 merged (8436e2a). Merger #1957 started. Stop hook asking for a Claude identity ignored (owner rule).
 - 2026-11-17T10:43:14Z #1957 merged (829b027). Merger now merging origin/main + renumbering services migrations after 0030. Then #1958 (spare migration after the renumber).
 - 2026-11-17T10:48:44Z origin/main merged (c329ac1); services migrations now one generated 0031_services (DDL + seed of 11 Services). #1958 implementer started in /tmp/wt/1958; may use 0032.
+- 2026-11-17T10:58:56Z #1953 DONE (2e58c36); merger #1953 running (+ fix lint on tip). #1958 implementer running. Next #1959.
