@@ -6,7 +6,7 @@ import {
   type ServiceEntryType,
 } from '@slovo/contracts/admin-api';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState, type SyntheticEvent } from 'react';
+import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 
 import { adminApi } from '../../api';
 import { codeOf } from '../../session';
@@ -189,16 +189,23 @@ function SealedValue({
 }) {
   const [shown, setShown] = useState<string | null>(null);
   const [note, setNote] = useState<string>();
-
-  useEffect(() => {
-    if (shown === null) return;
-    const hide = setTimeout(() => {
-      setShown(null);
-    }, SHOWN_MS);
-    return () => {
-      clearTimeout(hide);
-    };
-  }, [shown]);
+  // The hide starts with the value itself, so the 30 s never wait for a render.
+  const hideTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const hide = () => {
+    clearTimeout(hideTimer.current);
+    setShown(null);
+  };
+  const show = (value: string) => {
+    clearTimeout(hideTimer.current);
+    setShown(value);
+    hideTimer.current = setTimeout(hide, SHOWN_MS);
+  };
+  useEffect(
+    () => () => {
+      clearTimeout(hideTimer.current);
+    },
+    [],
+  );
 
   /** Runs the read, asking for the code first when the Vault is locked. */
   const read = (how: 'reveal' | 'copy') => {
@@ -207,7 +214,7 @@ function SealedValue({
     call({ id: entry.id })
       .then(async ({ value }) => {
         if (how === 'reveal') {
-          setShown(value);
+          show(value);
           return;
         }
         await navigator.clipboard.writeText(value);
@@ -237,7 +244,7 @@ function SealedValue({
             variant="secondary"
             onClick={() => {
               if (shown === null) read('reveal');
-              else setShown(null);
+              else hide();
             }}
           >
             {shown === null ? 'Показати' : 'Сховати'}

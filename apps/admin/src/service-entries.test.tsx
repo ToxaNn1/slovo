@@ -247,11 +247,11 @@ test('«Показати» asks for the TOTP on a locked Vault, shows the value,
   ]);
   // The fake clock also runs on with real time, so the check before 30 s keeps a margin.
   act(() => {
-    vi.advanceTimersByTime(20_000);
+    vi.advanceTimersByTime(25_000);
   });
   expect(token.queryByText(FAKE_VALUE)).not.toBeNull();
   act(() => {
-    vi.advanceTimersByTime(10_000);
+    vi.advanceTimersByTime(5_000);
   });
   expect(token.queryByText(FAKE_VALUE)).toBeNull();
   expect(token.getByLabelText('Приховано').textContent).toBe('••••••••');
