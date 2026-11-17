@@ -72,6 +72,7 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     analytics: handlerOf('analytics', fixtures.analytics),
     variantResults: handlerOf('variantResults', fixtures.variantResults),
     counters: handlerOf('counters', fixtures.counters),
+    readerCounts: handlerOf('readerCounts', fixtures.readerCounts),
     editionCard: handlerOf('editionCard', fixtures.editionCard),
     development: handlerOf('development', fixtures.development),
     ownerChecks: handlerOf('ownerChecks', fixtures.ownerChecks),

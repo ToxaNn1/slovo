@@ -353,5 +353,10 @@ export function createAuthenticator(
         total: counted?.total ?? 0,
       };
     },
+
+    async accountCount() {
+      const [counted] = await database.db.select({ total: count() }).from(accounts);
+      return counted?.total ?? 0;
+    },
   };
 }

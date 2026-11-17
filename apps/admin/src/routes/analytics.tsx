@@ -3,9 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useSearch } from '@tanstack/react-router';
 
 import { adminApi } from '../api';
-import { analyticsQuery } from '../queries';
+import { analyticsQuery, readerCountsQuery } from '../queries';
 import { BarList } from '../components/bar-list';
 import { CommunityCounters } from '../components/counters';
+import { ReaderCounts } from '../components/reader-counts';
 import { VariantResult } from '../components/variant-result';
 import { DEFAULT_PERIOD, periodDays } from '../filters';
 
@@ -47,8 +48,8 @@ async function variantFeatures(edition: string | undefined): Promise<string[]> {
 }
 
 /**
- * Аналітика: the Edition's aggregates from PostHog over the period, the
- * Community Counters, and the result of each A/B Feature Switch. Countries
+ * Аналітика: the reader counts, the Edition's aggregates from PostHog over
+ * the period, the Community Counters, and the result of each A/B Feature Switch. Countries
  * stay «Немає даних»: the app sends no location (ADR 0068).
  */
 function Analytics() {
@@ -56,6 +57,7 @@ function Analytics() {
   const editionId = search.edition ?? ALL_EDITIONS;
   const days = periodDays(search.period ?? DEFAULT_PERIOD, new Date());
   const overview = useQuery(analyticsQuery(editionId, days));
+  const readers = useQuery(readerCountsQuery(editionId, days));
   const counters = useQuery({
     queryKey: ['counters', editionId],
     queryFn: () => adminApi.counters({ editionId }),
@@ -82,6 +84,7 @@ function Analytics() {
           </p>
         )}
       </div>
+      {readers.data !== undefined && <ReaderCounts counts={readers.data} />}
       {overview.isError && <p className="text-sm text-destructive">PostHog недоступний</p>}
       {overview.isPending && <p className="text-sm text-muted-foreground">Завантаження…</p>}
       {data !== undefined && (

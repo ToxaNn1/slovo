@@ -4,7 +4,7 @@ import { Link, useSearch } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { adminApi } from '../../api';
-import { analyticsQuery, qualityQuery } from '../../queries';
+import { analyticsQuery, qualityQuery, readerCountsQuery } from '../../queries';
 import { DEFAULT_PERIOD, periodDays, qualityPeriod } from '../../filters';
 import { useWide } from '../../screen-width';
 import { useSignedInAdmin } from '../../session';
@@ -102,7 +102,8 @@ const shortDay = (day: string) => `${day.slice(8, 10)}.${day.slice(5, 7)}`;
 
 /**
  * Огляд: whether today is fine, for the global Edition and period, each block
- * from the procedure its section reads: PostHog of Аналітика, Sentry of
+ * from the procedure its section reads: PostHog and the reader counts of
+ * Аналітика, Sentry of
  * Якість, CI on `main` of Розробка, the open batches of the Content queue,
  * and the latest alerts the owner was told of (a Власник reads them).
  */
@@ -115,6 +116,7 @@ export function Overview() {
   const wide = useWide();
 
   const analytics = useQuery(analyticsQuery(editionId, days));
+  const readers = useQuery(readerCountsQuery(editionId, days));
   const quality = useQuery(
     qualityQuery({ editionId: search.edition, period: qualityPeriod(period) }),
   );
@@ -163,6 +165,10 @@ export function Overview() {
         </Block>
         <Block title="Відвідини" read={posthog}>
           <Figure>{number(visits)}</Figure>
+        </Block>
+        <Block title="Зареєстровані читачі" read={readOf(readers, 'Читачі недоступні')}>
+          <Figure>{number(readers.data?.registered ?? 0)}</Figure>
+          <Quiet>в усіх виданнях</Quiet>
         </Block>
         <Block title="Збої" read={sentry(kpis?.crashes)}>
           {kpis ? <KpiValue kpi={kpis.crashes} /> : null}

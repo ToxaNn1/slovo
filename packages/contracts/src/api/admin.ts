@@ -175,6 +175,21 @@ export const CountersSummarySchema = z.object({
 });
 export type CountersSummary = z.infer<typeof CountersSummarySchema>;
 
+/** How many people read the Editions (ADR 0163). */
+export const ReaderCountsSchema = z.object({
+  /** The Accounts, of every Edition whatever the filter. */
+  registered: z.number().int().min(0),
+  /**
+   * The people active on the newest day of the period beyond the Accounts,
+   * never below 0: a lower estimate, since PostHog counts only the readers
+   * who share statistics. `null` while PostHog can't answer.
+   */
+  unregisteredAtLeast: z.number().int().min(0).nullable(),
+  /** The switch-offs of anonymous statistics over the period. */
+  statisticsOff: z.number().int().min(0),
+});
+export type ReaderCounts = z.infer<typeof ReaderCountsSchema>;
+
 /** A role of an Admin user: Власник (`owner`) or Адмін (`admin`). */
 const AdminRoleSchema = z.enum(['owner', 'admin']);
 
@@ -1389,6 +1404,19 @@ export const adminContract = {
     .errors(ADMIN_ERRORS)
     .input(z.strictObject({ editionId: AnalyticsEditionSchema }))
     .output(CountersSummarySchema),
+  readerCounts: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/editions/{editionId}/reader-counts',
+      summary:
+        'The registered readers, the unregistered at least and the switch-offs of statistics, of an Edition or of `all`',
+      description:
+        'Counts only (ADR 0163). The Accounts ignore the Edition filter; the unregistered estimate is `null` while PostHog is unavailable.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.strictObject({ editionId: AnalyticsEditionSchema, from: DaySchema, to: DaySchema }))
+    .output(ReaderCountsSchema),
   content: contentWriteContract,
   contentQueue: contentQueueContract,
   development: procedure

@@ -596,6 +596,14 @@ export function adminProcedures(
       };
     }),
 
+    readerCounts: os.readerCounts.handler(async ({ context, input, errors }) => {
+      await admit(context.headers, errors);
+      return analytics.readers(editionIdsOf(input.editionId, errors), {
+        from: input.from,
+        to: input.to,
+      });
+    }),
+
     editions: os.editions.handler(async ({ context, errors }) => {
       await admit(context.headers, errors);
       return {

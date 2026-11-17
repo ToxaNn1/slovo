@@ -5,11 +5,13 @@ import { describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { createDatabase } from '../database/database';
 import {
+  createTestDatabase,
   importedDatabases,
   passTime,
   signedInAdmin,
   silentLogger,
   testApp,
+  testDatabaseUrl,
   testEditions,
 } from '../test-support';
 
@@ -180,6 +182,7 @@ describe('no Аналітика read', () => {
       await client.admin.analytics({ editionId: 'all', ...PERIOD }),
       await client.admin.variantResults({ editionId: 'all', feature: 'dailyGoal' }),
       await client.admin.counters({ editionId: 'all' }),
+      await client.admin.readerCounts({ editionId: 'all', ...PERIOD }),
     ];
     const allowed = new Set([
       'activeByDay',
@@ -200,10 +203,103 @@ describe('no Аналітика read', () => {
       'top',
       'entryId',
       'lemma',
+      'registered',
+      'unregisteredAtLeast',
+      'statisticsOff',
     ]);
     expect(keysOf(answers).filter((key) => !allowed.has(key))).toEqual([]);
     const people = stringsOf(answers).filter((text) => /@|^[0-9a-f-]{32,}$|^ins_/i.test(text));
     expect(people).toEqual([]);
+  });
+});
+
+/**
+ * A backend on a database of its own, so it counts only the Accounts of the
+ * test, serving two Editions, with an Адмін signed in and a way to give a
+ * reader an Account.
+ */
+async function readersBackend() {
+  const own = await createTestDatabase(testDatabaseUrl());
+  onTestFinished(() => own.drop());
+  const database = createDatabase(own.url, silentLogger);
+  onTestFinished(() => database.close());
+  const ids = [newEditionId(), newEditionId()] as const;
+  const app = testApp({ database, editions: testEditions(ids).read() });
+  await signedInAdmin(app, 'owner');
+  const { client } = await signedInAdmin(app, 'admin');
+  const register = async (email: string) => {
+    await app.client.account.requestCode({ email, editionId: ids[0] });
+    await app.client.account.verifyCode({ email, code: app.mailer.codeSentTo(email) });
+  };
+  return { app, client, ids, register };
+}
+
+describe('the reader counts', () => {
+  it('count the Accounts, whatever the Edition filter, and the people active on the newest day beyond them', async () => {
+    const { app, client, ids, register } = await readersBackend();
+    await register('anna@example.com');
+    await register('boris@example.com');
+    app.posthog.answer('activeByDay', [
+      { key: '2026-11-06', count: 40 },
+      { key: '2026-11-07', count: 7 },
+    ]);
+
+    const counts = await client.admin.readerCounts({ editionId: ids[1], ...PERIOD });
+
+    expect(counts).toEqual({ registered: 2, unregisteredAtLeast: 5, statisticsOff: 0 });
+    expect(app.posthog.asked).toContainEqual({
+      kind: 'activeByDay',
+      editionIds: [ids[1]],
+      period: PERIOD,
+    });
+    await expect(client.admin.readerCounts({ editionId: 'all', ...PERIOD })).resolves.toMatchObject(
+      { registered: 2 },
+    );
+  });
+
+  it('never estimate fewer than 0 unregistered readers', async () => {
+    const { app, client, ids, register } = await readersBackend();
+    await register('anna@example.com');
+    await register('boris@example.com');
+    app.posthog.answer('activeByDay', [{ key: '2026-11-07', count: 1 }]);
+
+    await expect(client.admin.readerCounts({ editionId: ids[0], ...PERIOD })).resolves.toEqual({
+      registered: 2,
+      unregisteredAtLeast: 0,
+      statisticsOff: 0,
+    });
+  });
+
+  it('answer no estimate while PostHog can not answer, and the other counts still', async () => {
+    const { app, client, ids, register } = await readersBackend();
+    await register('anna@example.com');
+    app.posthog.down(true);
+
+    await expect(client.admin.readerCounts({ editionId: ids[0], ...PERIOD })).resolves.toEqual({
+      registered: 1,
+      unregisteredAtLeast: null,
+      statisticsOff: 0,
+    });
+  });
+
+  it('sum the switch-offs of the Edition filter over the period', async () => {
+    const { app, client, ids } = await readersBackend();
+    const switchOffOn = async (day: string, editionId: string) => {
+      vi.setSystemTime(new Date(`${day}T12:00:00Z`));
+      await app.client.counters.statisticsOff({ editionId });
+    };
+    await switchOffOn('2026-10-31', ids[0]);
+    await switchOffOn('2026-11-01', ids[0]);
+    await switchOffOn('2026-11-07', ids[0]);
+    await switchOffOn('2026-11-07', ids[0]);
+    await switchOffOn('2026-11-08', ids[0]);
+    await switchOffOn('2026-11-03', ids[1]);
+
+    const switchOffs = async (editionId: string) =>
+      (await client.admin.readerCounts({ editionId, ...PERIOD })).statisticsOff;
+    await expect(switchOffs(ids[0])).resolves.toBe(3);
+    await expect(switchOffs(ids[1])).resolves.toBe(1);
+    await expect(switchOffs('all')).resolves.toBe(4);
   });
 });
 

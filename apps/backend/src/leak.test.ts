@@ -388,6 +388,11 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         counters: async () => {
           await client.admin.counters({ editionId: EDITION }).catch(refused);
         },
+        readerCounts: async () => {
+          await client.admin
+            .readerCounts({ editionId: EDITION, from: '2026-11-01', to: '2026-11-07' })
+            .catch(refused);
+        },
         setRules: async () => {
           await client.admin
             .setRules({ editionId: EDITION, feature: 'game', rules: [], reason: 'leak' })

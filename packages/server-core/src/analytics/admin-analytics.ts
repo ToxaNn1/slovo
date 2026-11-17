@@ -3,6 +3,7 @@ import type {
   AnalyticsQuery,
   AnalyticsRow,
   AnswerCount,
+  Authenticator,
   Clock,
   CounterStore,
   CounterTotals,
@@ -42,6 +43,18 @@ export interface CountersSummary {
   readonly answers: readonly AnswerCount[];
 }
 
+/**
+ * How many people read the Editions (ADR 0163): the Accounts, of every
+ * Edition; the people active on the newest day of the period beyond them, a
+ * lower estimate, none while PostHog can't answer; the switch-offs of
+ * anonymous statistics over the period.
+ */
+export interface ReaderCounts {
+  readonly registered: number;
+  readonly unregisteredAtLeast: number | null;
+  readonly statisticsOff: number;
+}
+
 /** The admin's Аналітика reads (ADR 0088): PostHog through a cache and a queue, the Counters from the store. */
 export interface AdminAnalytics {
   overview(
@@ -54,6 +67,7 @@ export interface AdminAnalytics {
     feature: string,
   ): Promise<PostHogRead<readonly AnalyticsRow[]>>;
   counters(editionIds: readonly string[]): Promise<CountersSummary>;
+  readers(editionIds: readonly string[], period: AnalyticsPeriod): Promise<ReaderCounts>;
 }
 
 /** PostHog answered that it can't answer now. */
@@ -62,11 +76,13 @@ class Unavailable extends Error {}
 export function createAdminAnalytics({
   posthog,
   counters,
+  accounts,
   clock,
   wait,
 }: {
   posthog: PostHogPort;
   counters: CounterStore;
+  accounts: Pick<Authenticator, 'accountCount'>;
   clock: Clock;
   /** How the queue waits out PostHog's minute budget. */
   wait: Wait;
@@ -141,6 +157,23 @@ export function createAdminAnalytics({
         counters.answers(editionIds),
       ]);
       return { totals, top, answers };
+    },
+
+    async readers(editionIds, period) {
+      const [registered, active, statisticsOff] = await Promise.all([
+        accounts.accountCount(),
+        // The same query as the overview's, so the cache answers it.
+        guarded(async (rows) => {
+          const days = await rows({ kind: 'activeByDay', editionIds, period });
+          return days.at(-1)?.count ?? 0;
+        }),
+        counters.statisticsOffs(editionIds, period),
+      ]);
+      return {
+        registered,
+        unregisteredAtLeast: active.ok ? Math.max(0, active.value - registered) : null,
+        statisticsOff,
+      };
     },
   };
 }

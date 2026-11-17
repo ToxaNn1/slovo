@@ -170,6 +170,8 @@ export interface Authenticator {
     readonly offset: number;
     readonly limit: number;
   }): Promise<AccountsPage>;
+  /** How many Accounts there are, of every Edition (ADR 0163). */
+  accountCount(): Promise<number>;
 }
 
 /** A Sign-in method an Account keeps a record of; a Sign-in code reaches every Account. */
@@ -437,6 +439,8 @@ export interface CounterStore {
   addAnswer(editionId: string, question: CountedQuestion, answer: string): Promise<void>;
   /** Adds one to the Edition's switch-offs of anonymous statistics on the day, `YYYY-MM-DD` (UTC) (ADR 0163). */
   addStatisticsOff(editionId: string, day: string): Promise<void>;
+  /** The Editions' switch-offs of anonymous statistics on the days of the period, summed (ADR 0163). */
+  statisticsOffs(editionIds: readonly string[], period: AnalyticsPeriod): Promise<number>;
   /** The sums of the Community Counters of the Editions' Entries. */
   totals(editionIds: readonly string[]): Promise<CounterTotals>;
   /** The count of each questionnaire answer of the Editions, summed over them, in any order. */
