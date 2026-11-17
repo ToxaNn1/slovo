@@ -1,0 +1,47 @@
+name: Staging reset
+
+# Resets the Staging Deployment's database (ADR 0168): Neon restores the
+# staging branch to the head of its parent, production's `main`, inside Neon,
+# so no data crosses the network. Whatever staging changed is lost. Started by
+# hand only: Actions → Staging reset → Run workflow. No push trigger and no
+# schedule (cost rule); the owner can run the same command on the laptop.
+#
+# Repository secrets: NEON_API_KEY, NEON_PROJECT_ID, NEON_STAGING_BRANCH_ID.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type staging to replace the staging data with production's
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neon-staging-reset
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    name: Reset staging from production
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/staging.ts
+            .nvmrc
+          sparse-checkout-cone-mode: false
+      # Node of .nvmrc runs scripts/staging.ts as it is, types stripped.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Restore the staging branch from its parent
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NEON_STAGING_BRANCH_ID: ${{ secrets.NEON_STAGING_BRANCH_ID }}
+        run: node scripts/staging.ts reset "$CONFIRM"

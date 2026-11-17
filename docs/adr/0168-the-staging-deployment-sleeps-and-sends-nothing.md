@@ -9,9 +9,13 @@ The backend is one Deployment (ADR 0063): a backend change or a migration can on
 - **Its own variables and domain.** Every secret is `preserve()`, set in the `staging` environment and never copied from production; the file sets `DEPLOYMENT=staging`. It has a domain of its own on the app's domain, `staging.slovoapp.org`, proxied by Cloudflare.
 - **Its Postgres** is a branch of the Neon project (Launch plan), made from `main`: fixed 0.25 CU, scale-to-zero after 5 minutes. A reset from its parent brings production's data back on demand.
 - **`DEPLOYMENT=staging` makes it harmless.** The backend parses it once, at start (`apps/backend/src/config.ts`): it then refuses the PostHog and `R2_*` variables, never asks PostHog (no Analytics query leaves), refuses every Media Store write and reads the Media Store's public URLs under `MEDIA_BASE` only, and Sentry files its reports under the environment `staging` (the Deployment's are `production`).
-- **Deployed by hand** from any git ref, linked to the `staging` environment: `railway config apply`, then `railway up --service backend`. CI never deploys it.
+- **Deployed by hand** from any git ref, linked to the `staging` environment: `railway config apply`, then `railway up --service backend`. CI never deploys it on its own (see Deploy, reset and set-up).
 
-## Cost
+## Deploy, reset and set-up
+
+- **Two workflows started by hand, never on a push or a schedule.** "Staging deploy" (`.github/workflows/staging-deploy.yml`) takes a git ref, applies that ref's `.railway/railway.ts` and uploads the backend with a project token of the `staging` environment (`RAILWAY_STAGING_TOKEN`), so it cannot reach production. "Staging reset" (`.github/workflows/staging-reset.yml`) restores the staging Neon branch to the head of its parent with Neon's branch restore: the data never leaves Neon.
+- **Inputs are checked first, by `scripts/staging.ts`, from the workflow's own commit.** The ref must be a plain branch, tag or commit name; the ref's Railway file must declare the backend alone for `staging`, asleep, with no Cron schedule and `DEPLOYMENT=staging`, so an older ref never brings the Cron services there. The reset asks for the word `staging` and refuses a branch that is the project's default or protected one, or has no parent.
+- **The owner's set-up is one script**, `node scripts/staging.ts wizard` (`--dry-run` prints every step and waits for no one). It calls no API: the owner does each step in the Neon, Railway, Cloudflare, GitHub and EAS dashboards. The staging variables it lists come from the Railway file.
 
 - **Neon**: 0.25 CU × about 2 h a day ≈ 15 CU-hours ≈ $1.6 a month. Awake all month it would be ≈ 180 CU-hours ≈ $19, which is why nothing scheduled runs there. Storage: only the branch's changes from `main`.
 - **Railway** with sleep: about $1–5 a month.
