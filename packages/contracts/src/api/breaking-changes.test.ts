@@ -158,6 +158,24 @@ describe('a change of the contract', () => {
     ]);
   });
 
+  it('breaks nothing when an admin strict output grows, but breaks an app one that grows (ADR 0170)', async () => {
+    const output = (path: `/${string}`, shape: z.ZodRawShape) =>
+      thingContract({ path, output: z.strictObject(shape) });
+
+    expect(
+      await changesFrom(
+        output('/admin/things', { id: z.string() }),
+        output('/admin/things', { id: z.string(), size: z.number() }),
+      ),
+    ).toEqual([]);
+    expect(
+      await changesFrom(
+        output('/things', { id: z.string() }),
+        output('/things', { id: z.string(), size: z.number() }),
+      ),
+    ).toEqual(['POST /v1/things: 200 body.size is new in a strict object']);
+  });
+
   it('breaks nothing when an admin procedure goes, but breaks an app one that goes (ADR 0162)', async () => {
     const empty = oc.prefix('/v1').router({});
 
