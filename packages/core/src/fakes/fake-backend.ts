@@ -161,6 +161,14 @@ export interface FakeBackend {
       readonly question: string;
       readonly answer: string;
     }[];
+    /**
+     * Each `counters.statisticsOff` request the backend counted, in order: its
+     * body and the Session it carried, none when it carried none (ADR 0163).
+     */
+    readonly statisticsOff: readonly {
+      readonly body: { readonly editionId: string };
+      readonly session: string | undefined;
+    }[];
     /** Sets the counts the backend keeps for an Entry; an Entry nobody counted answers zeros. */
     count(entryId: string, counts: Omit<EntryCounters, 'entryId'>): void;
     /** Answers this Community Word from now on; `undefined`, none, as when nobody added anything. */
@@ -233,6 +241,10 @@ export function createFakeBackend({
     readonly answer: string;
   }[] = [];
   const sent: (readonly CounterEvent[])[] = [];
+  const statisticsOff: {
+    readonly body: { readonly editionId: string };
+    readonly session: string | undefined;
+  }[] = [];
   let communityWord: CommunityWordAnswer | undefined;
   let rules: readonly RemoteRule[] = [];
   let minimums: ForceUpdateMinimums = {};
@@ -473,6 +485,13 @@ export function createFakeBackend({
         await arrive('counters.questionnaire', context);
         answers.push({ ...input });
       },
+      async statisticsOff({ input, context }) {
+        await arrive('counters.statisticsOff', context);
+        statisticsOff.push({
+          body: { ...input },
+          session: context.headers.get('authorization')?.replace(/^Bearer /, ''),
+        });
+      },
       async communityWord({ context }) {
         await arrive('counters.communityWord', context);
         return { communityWord: communityWord ?? null };
@@ -555,6 +574,7 @@ export function createFakeBackend({
       asked: countersAsked,
       sent,
       answers,
+      statisticsOff,
       count(entryId, entryCounts) {
         counts.set(entryId, entryCounts);
       },

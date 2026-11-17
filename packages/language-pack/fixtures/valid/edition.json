@@ -174,7 +174,8 @@
     "readerName": "on",
     "widgetPreviews": "on",
     "textSizeSteps": "on",
-    "offlinePlate": "on"
+    "offlinePlate": "on",
+    "statisticsOffCounter": "on"
   },
   "userSettingDefaults": {
     "theme": "system",

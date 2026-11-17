@@ -431,6 +431,8 @@ export interface CounterStore {
   mostAdded(editionId: string, week: string): Promise<CommunityWord | undefined>;
   /** Adds one to the count of the answer to the Edition's counted question (ADR 0068). */
   addAnswer(editionId: string, question: CountedQuestion, answer: string): Promise<void>;
+  /** Adds one to the Edition's switch-offs of anonymous statistics on the day, `YYYY-MM-DD` (UTC) (ADR 0163). */
+  addStatisticsOff(editionId: string, day: string): Promise<void>;
   /** The sums of the Community Counters of the Editions' Entries. */
   totals(editionIds: readonly string[]): Promise<CounterTotals>;
   /** The count of each questionnaire answer of the Editions, summed over them, in any order. */

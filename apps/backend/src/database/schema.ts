@@ -326,6 +326,23 @@ export const questionnaireCounters = pgTable(
 );
 
 /**
+ * The switch-offs of «Ділитися анонімною статистикою» of each Edition and day
+ * (UTC), one for each unit the app sends when the reader turns it off (ADR
+ * 0163): counts only, with no row and no column that names a reader.
+ */
+export const statisticsOffCounters = pgTable(
+  'statistics_off_counters',
+  {
+    editionId: text('edition_id').notNull(),
+    /** The day (UTC) the switch-offs arrived on. */
+    day: date('day', { mode: 'string' }).notNull(),
+    /** The switch-offs of the day. */
+    count: integer('count').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.day] })],
+);
+
+/**
  * The Collection Links (ADR 0058): one row per link with the Collection as it
  * was shared. A row is never updated, and holds no IP address, device id or
  * Account; only the owner's script deletes one.
