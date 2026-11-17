@@ -129,6 +129,14 @@ export interface AdminStore {
   appendAction(action: Action): Promise<void>;
   /** The 500 newest rows of the Action log, newest first, of the Edition when one is given. */
   actions(editionId?: string): Promise<readonly Action[]>;
+  /** One page of the Action log, newest first, of the Edition when one is given, and the count of every row. */
+  actionPage(editionId: string | undefined, page: number): Promise<ActionPage>;
+}
+
+/** One page of the Action log and the count of every row its filter matches. */
+export interface ActionPage {
+  readonly actions: readonly Action[];
+  readonly total: number;
 }
 
 /** An Агент token as Безпека lists it: never the token, nor its hash. */
@@ -160,6 +168,8 @@ export interface AdminAccess {
   log(entry: ActionEntry): Promise<void>;
   /** The 500 newest rows of the Action log, newest first, of the Edition when one is given. */
   actions(editionId?: string): Promise<readonly Action[]>;
+  /** One page of the Action log, newest first, of the Edition when one is given, and the count of every row. */
+  actionPage(editionId: string | undefined, page: number): Promise<ActionPage>;
   /** Adds a Власник by a server command, and logs it. */
   addOwner(email: string, command: string): Promise<'added' | 'taken'>;
   /** The active Admin users, by email. */
@@ -217,6 +227,7 @@ export function createAdminAccess({
     isOn: () => store.hasOwner(),
     log,
     actions: (editionId) => store.actions(editionId),
+    actionPage: (editionId, page) => store.actionPage(editionId, page),
 
     async addOwner(email, command) {
       const normalized = normal(email);

@@ -516,6 +516,10 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           await client.counters.questionnaire({ editionId: EDITION, ...answer }).catch(refused);
           await client.counters.questionnaire({ editionId: 'pl', ...answer }).catch(refused);
         },
+        statisticsOff: async () => {
+          await client.counters.statisticsOff({ editionId: EDITION }).catch(refused);
+          await client.counters.statisticsOff({ editionId: 'pl' }).catch(refused);
+        },
       },
       edition: {
         switches: async () => {
