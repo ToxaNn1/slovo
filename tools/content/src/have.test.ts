@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ukrainianSnapshot } from '@slovo/language-pack/test-support';
 
 import { counts, have } from './have';
-import { backend, fakeIo, refused } from './test-backend';
+import { backend, fakeIo, refused } from './test-support';
 
 describe('have', () => {
   const seed = ukrainianSnapshot();

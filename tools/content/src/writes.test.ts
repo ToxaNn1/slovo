@@ -7,7 +7,7 @@ import { createApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR, openEditionWithSnapshot } from '@slovo/language-pack/edition';
 import { ukrainianSnapshot } from '@slovo/language-pack/test-support';
 
-import { BATCH, backend, fakeIo, refused } from './test-backend';
+import { BATCH, backend, fakeIo, refused } from './test-support';
 import { add, check, edit, flag, retire } from './writes';
 
 /** A client whose backend answers every request with a 500, keeping what was asked. */
