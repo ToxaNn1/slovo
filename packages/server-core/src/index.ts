@@ -2,7 +2,12 @@
  * The server Core's public interface. The backend reaches the server's rules
  * through this module only (ADR 0030).
  */
-export { createAccounts, type Accounts, type Session } from './account/accounts';
+export {
+  createAccounts,
+  type Accounts,
+  type AccountWithRecords,
+  type Session,
+} from './account/accounts';
 export { createCollectionLinks, type CollectionLinks } from './collection-links/collection-links';
 export {
   createEditionRegistry,
@@ -22,6 +27,7 @@ export {
   type AnalyticsOverview,
   type CountersSummary,
   type PostHogRead,
+  type ReaderCounts,
 } from './analytics/admin-analytics';
 export { createSourceCache, type Fetched, type SourceCache } from './analytics/source-cache';
 export { createQueryQueue, type QueryQueue, type Wait } from './analytics/query-queue';
@@ -46,6 +52,7 @@ export { createSync, type Sync, type SyncChange, type SyncPage } from './sync/sy
 export {
   systemClock,
   type AccountRecord,
+  type AccountsPage,
   type ReaderAccount,
   type RecordedSignInMethod,
   type AnalyticsAnswer,

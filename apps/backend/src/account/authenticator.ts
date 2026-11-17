@@ -11,7 +11,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { bearer, emailOTP } from 'better-auth/plugins';
-import { desc, eq } from 'drizzle-orm';
+import { count, desc, eq, inArray, like, type SQL } from 'drizzle-orm';
 import type { Logger } from 'pino';
 
 import type { Database } from '../database/database';
@@ -37,6 +37,11 @@ const SESSION_SECONDS = 90 * 24 * 60 * 60;
 const GOOGLE = 'google';
 const APPLE = 'apple';
 const RECORDED: readonly RecordedSignInMethod[] = [GOOGLE, APPLE];
+
+/** The Google and Apple sign-in methods among an Account's sign-in method rows, in one order. */
+function recordedOf(methods: readonly { readonly providerId: string }[]) {
+  return RECORDED.filter((method) => methods.some(({ providerId }) => providerId === method));
+}
 
 /** The kind of Sign-in code: better-auth's email OTP also has others SLOVO never uses. */
 const SIGN_IN = 'sign-in';
@@ -167,6 +172,17 @@ export function createAuthenticator(
   { secret, logger }: { secret: string; logger: Logger },
 ): Authenticator {
   const auth = createAuth({ database, secret, logger });
+
+  /** The Account the condition picks, with its Google and Apple sign-in methods; none when none matches. */
+  async function readerAccountWhere(picks: SQL) {
+    const [account] = await database.db.select().from(accounts).where(picks);
+    if (account === undefined) return undefined;
+    const methods = await database.db
+      .select({ providerId: signInMethods.providerId })
+      .from(signInMethods)
+      .where(eq(signInMethods.accountId, account.id));
+    return { account: accountRecord(account), signInMethods: recordedOf(methods) };
+  }
 
   /** The tries spent on the code waiting for the email; none when no code waits. */
   async function triesSpent(email: string): Promise<number | undefined> {
@@ -300,19 +316,47 @@ export function createAuthenticator(
       });
     },
 
-    async accountOf(email) {
-      const [account] = await database.db.select().from(accounts).where(eq(accounts.email, email));
-      if (account === undefined) return undefined;
-      const methods = await database.db
-        .select({ providerId: signInMethods.providerId })
-        .from(signInMethods)
-        .where(eq(signInMethods.accountId, account.id));
+    accountOf: (email) => readerAccountWhere(eq(accounts.email, email)),
+
+    accountById: (accountId) => readerAccountWhere(eq(accounts.id, accountId)),
+
+    async accounts({ search, offset, limit }) {
+      // The search is text: LIKE's wildcards and its escape character match only themselves.
+      const holds = like(accounts.email, `%${search.replace(/[\\%_]/g, '\\$&')}%`);
+      const [rows, [counted]] = await Promise.all([
+        database.db
+          .select()
+          .from(accounts)
+          .where(holds)
+          .orderBy(desc(accounts.createdAt), desc(accounts.id))
+          .offset(offset)
+          .limit(limit),
+        database.db.select({ total: count() }).from(accounts).where(holds),
+      ]);
+      const methods =
+        rows.length === 0
+          ? []
+          : await database.db
+              .select({ accountId: signInMethods.accountId, providerId: signInMethods.providerId })
+              .from(signInMethods)
+              .where(
+                inArray(
+                  signInMethods.accountId,
+                  rows.map(({ id }) => id),
+                ),
+              );
       return {
-        account: accountRecord(account),
-        signInMethods: RECORDED.filter((method) =>
-          methods.some(({ providerId }) => providerId === method),
-        ),
+        accounts: rows.map((account) => ({
+          account: accountRecord(account),
+          signInMethods: recordedOf(methods.filter(({ accountId }) => accountId === account.id)),
+        })),
+        total: counted?.total ?? 0,
       };
+    },
+
+    async accountCount() {
+      const [counted] = await database.db.select({ total: count() }).from(accounts);
+      return counted?.total ?? 0;
     },
   };
 }

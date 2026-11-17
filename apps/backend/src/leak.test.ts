@@ -356,8 +356,11 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         revokeAgentToken: async () => {
           await client.admin.revokeAgentToken({ name: 'claude', reason: 'leaked' }).catch(refused);
         },
-        findAccount: async () => {
-          await client.admin.findAccount({ email: 'reader@example.com' }).catch(refused);
+        listAccounts: async () => {
+          await client.admin.listAccounts({ search: 'reader' }).catch(refused);
+        },
+        getAccount: async () => {
+          await client.admin.getAccount({ accountId: randomUUID() }).catch(refused);
         },
         deleteAccount: async () => {
           await client.admin
@@ -384,6 +387,11 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         },
         counters: async () => {
           await client.admin.counters({ editionId: EDITION }).catch(refused);
+        },
+        readerCounts: async () => {
+          await client.admin
+            .readerCounts({ editionId: EDITION, from: '2026-11-01', to: '2026-11-07' })
+            .catch(refused);
         },
         setRules: async () => {
           await client.admin
@@ -512,6 +520,10 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           const answer = { question: 'level', answer: 'studying' } as const;
           await client.counters.questionnaire({ editionId: EDITION, ...answer }).catch(refused);
           await client.counters.questionnaire({ editionId: 'pl', ...answer }).catch(refused);
+        },
+        statisticsOff: async () => {
+          await client.counters.statisticsOff({ editionId: EDITION }).catch(refused);
+          await client.counters.statisticsOff({ editionId: 'pl' }).catch(refused);
         },
       },
       edition: {

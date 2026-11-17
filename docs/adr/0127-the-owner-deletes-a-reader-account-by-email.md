@@ -1,5 +1,7 @@
 # A Власник deletes a reader's Account by email in the admin
 
+**Superseded by ADR 0162**: a Власник now sees a list of every Account with its Sync records.
+
 ADR 0088 kept the Owner admin apart from Accounts: it lists none and acts on none, and the Account rules let only a Session act on its own Account. A reader who lost their phone, or a spam or test Account, could then be removed only by hand in the database, past the Action log. This ADR amends ADR 0088 and keeps the rest of it.
 
 The rule:

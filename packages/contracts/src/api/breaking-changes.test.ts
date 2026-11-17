@@ -158,6 +158,13 @@ describe('a change of the contract', () => {
     ]);
   });
 
+  it('breaks nothing when an admin procedure goes, but breaks an app one that goes (ADR 0162)', async () => {
+    const empty = oc.prefix('/v1').router({});
+
+    expect(await changesFrom(thingContract({ path: '/admin/things' }), empty)).toEqual([]);
+    expect(await changesFrom(thingContract(), empty)).toEqual(['POST /v1/things is gone']);
+  });
+
   it('breaks an input enum that loses a value, or an output one that gains a value', async () => {
     const before = thingContract({
       input: z.strictObject({ kind: z.enum(['word', 'phrase']) }),

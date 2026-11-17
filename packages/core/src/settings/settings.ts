@@ -2,6 +2,8 @@ import type { FontSize, TextSize, Theme } from '@slovo/contracts';
 
 import type { Analytics } from '../analytics/analytics';
 import { forgetUnsentCounters } from '../community-counters/counter-deltas';
+import type { Edition } from '../edition/edition';
+import type { Backend } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -91,11 +93,22 @@ export function createSettings({
   userState,
   defaults,
   analytics,
+  statisticsOff,
 }: {
   userState: UserState;
   defaults: SettingsDefaults;
   /** Where a changed setting is told (ADR 0068); turning sharing off stops it. Without it, nowhere. */
   analytics?: Analytics;
+  /**
+   * Where turning «Ділитися анонімною статистикою» from on to off sends its
+   * one anonymous unit, with the Edition alone, while `statisticsOffCounter`
+   * is on in effect (ADR 0163): the counters' transport, never Analytics. A
+   * unit that fails is lost, never retried or queued. Without it, nowhere.
+   */
+  statisticsOff?: {
+    readonly edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
+    readonly backend: Pick<Backend, 'counters'>;
+  };
 }): Settings {
   const all: UserSettings = {
     ...defaults,
@@ -159,6 +172,15 @@ export function createSettings({
         ]),
       );
       if (changes.shareCounters === false) analytics?.stop();
+      if (
+        changes.shareCounters === false &&
+        before.get('shareCounters') === true &&
+        statisticsOff?.edition.isFeatureEnabled('statisticsOffCounter') === true
+      ) {
+        void statisticsOff.backend.counters
+          .statisticsOff({ editionId: statisticsOff.edition.id })
+          .catch(() => undefined);
+      }
       for (const [setting, value] of changed) {
         if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
           await analytics?.track('settingChanged', { setting, value }).catch(() => undefined);

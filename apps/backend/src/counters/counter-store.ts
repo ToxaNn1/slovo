@@ -1,5 +1,5 @@
 import type { CounterStore } from '@slovo/server-core';
-import { and, asc, desc, eq, gt, inArray, sql } from 'drizzle-orm';
+import { and, asc, between, desc, eq, gt, inArray, sql } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import {
@@ -7,6 +7,7 @@ import {
   contentWords,
   favoritesAdds,
   questionnaireCounters,
+  statisticsOffCounters,
 } from '../database/schema';
 
 /**
@@ -163,6 +164,26 @@ export function createCounterStore({ db }: Database): CounterStore {
           ],
           set: { count: sql`${questionnaireCounters.count} + 1` },
         });
+    },
+
+    async addStatisticsOff(editionId, day) {
+      await db
+        .insert(statisticsOffCounters)
+        .values({ editionId, day, count: 1 })
+        .onConflictDoUpdate({
+          target: [statisticsOffCounters.editionId, statisticsOffCounters.day],
+          set: { count: sql`${statisticsOffCounters.count} + 1` },
+        });
+    },
+
+    async statisticsOffs(editionIds, { from, to }) {
+      if (editionIds.length === 0) return 0;
+      const { editionId, day, count } = statisticsOffCounters;
+      const [row] = await db
+        .select({ total: sql<number>`coalesce(sum(${count}), 0)::integer` })
+        .from(statisticsOffCounters)
+        .where(and(inArray(editionId, [...editionIds]), between(day, from, to)));
+      return row?.total ?? 0;
     },
   };
 }

@@ -158,15 +158,35 @@ export interface Authenticator {
    * sign-in methods recorded for it; none when the email has no Account.
    */
   accountOf(email: string): Promise<ReaderAccount | undefined>;
+  /** The Account of the id, with the Google and Apple sign-in methods recorded for it; none when no Account has it. */
+  accountById(accountId: string): Promise<ReaderAccount | undefined>;
+  /**
+   * One page of the Accounts whose email holds `search`, lower-cased already
+   * (every Account without one), newest first, with the Google and Apple
+   * sign-in methods recorded for each, and the count of every match.
+   */
+  accounts(query: {
+    readonly search: string;
+    readonly offset: number;
+    readonly limit: number;
+  }): Promise<AccountsPage>;
+  /** How many Accounts there are, of every Edition (ADR 0163). */
+  accountCount(): Promise<number>;
 }
 
 /** A Sign-in method an Account keeps a record of; a Sign-in code reaches every Account. */
 export type RecordedSignInMethod = 'google' | 'apple';
 
-/** An Account as the owner admin finds it by email (ADR 0127). */
+/** An Account as the owner admin lists it (ADR 0162). */
 export interface ReaderAccount {
   readonly account: AccountRecord;
   readonly signInMethods: readonly RecordedSignInMethod[];
+}
+
+/** A page of the owner admin's list of Accounts, with the count of every match. */
+export interface AccountsPage {
+  readonly accounts: readonly ReaderAccount[];
+  readonly total: number;
 }
 
 /** An email to one reader, in plain text. */
@@ -390,6 +410,10 @@ export interface UserRecords {
     sequence: number,
     limit: number,
   ): Promise<readonly KeptRecord[]>;
+  /** Every record of the Account, in every Edition, in sequence order, tombstones included. */
+  ofAccount(accountId: string): Promise<readonly (KeptRecord & { readonly editionId: string })[]>;
+  /** How many Accounts keep a record other than a tombstone in any of the Editions (ADR 0162). */
+  accountsWithRecords(editionIds: readonly string[]): Promise<number>;
 }
 
 /**
@@ -415,6 +439,10 @@ export interface CounterStore {
   mostAdded(editionId: string, week: string): Promise<CommunityWord | undefined>;
   /** Adds one to the count of the answer to the Edition's counted question (ADR 0068). */
   addAnswer(editionId: string, question: CountedQuestion, answer: string): Promise<void>;
+  /** Adds one to the Edition's switch-offs of anonymous statistics on the day, `YYYY-MM-DD` (UTC) (ADR 0163). */
+  addStatisticsOff(editionId: string, day: string): Promise<void>;
+  /** The Editions' switch-offs of anonymous statistics on the days of the period, summed (ADR 0163). */
+  statisticsOffs(editionIds: readonly string[], period: AnalyticsPeriod): Promise<number>;
   /** The sums of the Community Counters of the Editions' Entries. */
   totals(editionIds: readonly string[]): Promise<CounterTotals>;
   /** The count of each questionnaire answer of the Editions, summed over them, in any order. */

@@ -349,7 +349,8 @@ function responseChanges(promised: Part, described: Part): string[] {
 /**
  * Whether a path is the admin's. `apps/admin` and the Агент tooling ship with
  * the backend, so no caller in the field sends an old request: an admin input
- * may narrow (ADR 0122). Its outputs are held as every other.
+ * may narrow (ADR 0122) and an admin procedure may go (ADR 0162). Its outputs
+ * are held as every other.
  */
 function isAdmin(path: string): boolean {
   return path.startsWith('/v1/admin/');
@@ -362,7 +363,7 @@ function isAdmin(path: string): boolean {
  * successful answer and an error code stay, nothing optional becomes
  * required, and no type or constraint changes, save an input bound or enum
  * that widens and an output one that narrows (ADR 0031); an admin input may
- * narrow (ADR 0122).
+ * narrow (ADR 0122) and an admin procedure may go (ADR 0162).
  */
 export function breakingChanges(promised: object, described: object): string[] {
   const changes: string[] = [];
@@ -372,7 +373,7 @@ export function breakingChanges(promised: object, described: object): string[] {
       const name = `${method.toUpperCase()} ${path}`;
       const match = part(describedPaths[path])[method];
       if (!match) {
-        changes.push(`${name} is gone`);
+        if (!isAdmin(path)) changes.push(`${name} is gone`);
         continue;
       }
       const located = [

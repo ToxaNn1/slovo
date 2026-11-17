@@ -22,6 +22,14 @@ export const analyticsQuery = (editionId: string, days: { from: string; to: stri
     retry: false,
   });
 
+/** The reader counts of one Edition, or of all of them, over the given days (ADR 0163). */
+export const readerCountsQuery = (editionId: string, days: { from: string; to: string }) =>
+  queryOptions({
+    queryKey: ['readerCounts', editionId, days],
+    queryFn: () => adminApi.readerCounts({ editionId, ...days }),
+    retry: false,
+  });
+
 /** Якість of the filtered Edition over a Quality period. */
 export const qualityQuery = (input: Parameters<typeof adminApi.quality>[0]) =>
   queryOptions({

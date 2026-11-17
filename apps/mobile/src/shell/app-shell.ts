@@ -149,7 +149,12 @@ export function createShell(
     : undefined;
   return {
     userState,
-    settings: settingsOpening({ userState, edition: editionInEffect, analytics }),
+    settings: settingsOpening({
+      userState,
+      edition: editionInEffect,
+      analytics,
+      backend: sources.backend,
+    }),
     remoteSwitches,
     languagePack,
     composition: compositionOpening({ languagePack, ports, account }),

@@ -9,7 +9,7 @@ import {
   smallerTextSize,
 } from '../index';
 import { TEXT_SIZE_LADDER } from './text-size-ladder';
-import { fakeClock, randomOf, testSchedule } from '../test-support';
+import { fakeClock, randomOf, settle, testSchedule } from '../test-support';
 import {
   createFakeAppleSignInSheet,
   createFakeBackend,
@@ -722,5 +722,90 @@ describe('settings: the text size and Sync', () => {
     await tablet.syncNow();
     await phone.syncNow();
     expect((await (await phone.reopened()).read()).textSize).toBe('larger');
+  });
+});
+
+describe('settings: the switch-off unit of anonymous statistics (ADR 0163)', () => {
+  async function settingsSending({
+    records = new Map<string, string>(),
+    unitSwitch = 'on',
+  }: { records?: Map<string, string>; unitSwitch?: 'on' | 'off' } = {}) {
+    const server = createFakeBackend();
+    const userState = await openUserState({ port: createMemoryUserStatePort(records) });
+    const settings = createSettings({
+      userState,
+      defaults,
+      statisticsOff: {
+        edition: {
+          id: 'uk',
+          isFeatureEnabled: (feature) => feature !== 'statisticsOffCounter' || unitSwitch === 'on',
+        },
+        backend: server.backend,
+      },
+    });
+    return { server, settings };
+  }
+
+  it('sends exactly one unit carrying only the Edition when the reader turns sharing off', async () => {
+    const { server, settings } = await settingsSending();
+
+    await settings.update({ shareCounters: false });
+    await settle();
+
+    expect(server.counters.statisticsOff).toEqual([
+      { body: { editionId: 'uk' }, session: undefined },
+    ]);
+  });
+
+  it('sends nothing on→on, off→off or off→on, nor for another setting', async () => {
+    const { server, settings } = await settingsSending();
+
+    await settings.update({ shareCounters: true });
+    await settings.update({ theme: 'dark' });
+    await settings.update({ shareCounters: false });
+    await settings.update({ shareCounters: false });
+    await settings.update({ shareCounters: true });
+    await settle();
+
+    expect(server.counters.statisticsOff).toHaveLength(1);
+  });
+
+  it('sends nothing when the reader had already turned sharing off on an earlier run', async () => {
+    const { server, settings } = await settingsSending({
+      records: new Map([['settings.shareCounters', 'false']]),
+    });
+
+    await settings.update({ shareCounters: false });
+    await settle();
+
+    expect(server.calls).not.toContain('counters.statisticsOff');
+  });
+
+  it('drops a unit that fails: it is neither retried nor queued for a later switch-off', async () => {
+    const { server, settings } = await settingsSending();
+    server.online = false;
+
+    await expect(settings.update({ shareCounters: false })).resolves.toMatchObject({
+      shareCounters: false,
+    });
+    await settle();
+    server.online = true;
+    await settings.update({ shareCounters: true });
+    await settings.update({ shareCounters: false });
+    await settle();
+
+    expect(server.calls.filter((call) => call === 'counters.statisticsOff')).toHaveLength(2);
+    expect(server.counters.statisticsOff).toEqual([
+      { body: { editionId: 'uk' }, session: undefined },
+    ]);
+  });
+
+  it('sends nothing while `statisticsOffCounter` is off', async () => {
+    const { server, settings } = await settingsSending({ unitSwitch: 'off' });
+
+    await settings.update({ shareCounters: false });
+    await settle();
+
+    expect(server.calls).not.toContain('counters.statisticsOff');
   });
 });

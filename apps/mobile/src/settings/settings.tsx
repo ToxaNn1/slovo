@@ -3,6 +3,7 @@ import {
   createAnalytics,
   createSettings,
   type AnalyticsSink,
+  type Backend,
   type ColorScheme,
   type Edition,
   type Settings,
@@ -42,12 +43,18 @@ export function settingsOpening({
   userState,
   edition: inEffect,
   analytics,
+  backend,
 }: {
   userState: Opening<TrackedUserState>;
-  /** The Edition in effect, remote switches included, whose `analytics` gates a changed setting's event. */
+  /**
+   * The Edition in effect, remote switches included, whose `analytics` gates a
+   * changed setting's event and `statisticsOffCounter` the switch-off unit.
+   */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   /** Where a changed setting is told; nowhere while it can't be opened. */
   analytics: Opening<AnalyticsSink>;
+  /** Where switching sharing off sends its one anonymous unit (ADR 0163). */
+  backend: Pick<Backend, 'counters'>;
 }): Opening<OpenedSettings> {
   async function settingsOverUserState(): Promise<Settings> {
     const opened = await userState.opened();
@@ -56,6 +63,7 @@ export function settingsOpening({
       userState: opened,
       defaults,
       analytics: createAnalytics({ edition: inEffect, userState: opened, sink }),
+      statisticsOff: { edition: inEffect, backend },
     });
   }
   return openOnce(

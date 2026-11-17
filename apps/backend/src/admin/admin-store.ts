@@ -1,7 +1,8 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'node:crypto';
 
-import type { AdminStore, AdminTotp, AdminUser, SecretVault } from '@slovo/server-core';
-import { and, asc, desc, eq, isNull, lt, or } from 'drizzle-orm';
+import { ACTION_PAGE_SIZE } from '@slovo/contracts/admin-api';
+import type { Action, AdminStore, AdminTotp, AdminUser, SecretVault } from '@slovo/server-core';
+import { and, asc, count, desc, eq, isNull, lt, or } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import {
@@ -245,22 +246,52 @@ export function createAdminStore({ db }: Database): AdminStore {
       const rows = await db
         .select()
         .from(actionLog)
-        .where(editionId === undefined ? undefined : eq(actionLog.editionId, editionId))
+        .where(ofEdition(editionId))
         .orderBy(desc(actionLog.id))
         .limit(500);
-      return rows.map(({ who, at, what, before, after, reason, editionId, batchId }) => ({
-        who,
-        at,
-        what,
-        before: before ?? null,
-        after: after ?? null,
-        reason,
-        editionId,
-        batchId,
-      }));
+      return rows.map(actionOf);
+    },
+
+    async actionPage(editionId, page) {
+      const [rows, [counted]] = await Promise.all([
+        db
+          .select()
+          .from(actionLog)
+          .where(ofEdition(editionId))
+          .orderBy(desc(actionLog.id))
+          .limit(ACTION_PAGE_SIZE)
+          .offset((page - 1) * ACTION_PAGE_SIZE),
+        db.select({ total: count() }).from(actionLog).where(ofEdition(editionId)),
+      ]);
+      return { actions: rows.map(actionOf), total: counted?.total ?? 0 };
     },
   };
 }
+
+/** The rows of the Action log of the Edition when one is given. */
+const ofEdition = (editionId: string | undefined) =>
+  editionId === undefined ? undefined : eq(actionLog.editionId, editionId);
+
+/** A row of the Action log as the store answers it. */
+const actionOf = ({
+  who,
+  at,
+  what,
+  before,
+  after,
+  reason,
+  editionId,
+  batchId,
+}: typeof actionLog.$inferSelect): Action => ({
+  who,
+  at,
+  what,
+  before: before ?? null,
+  after: after ?? null,
+  reason,
+  editionId,
+  batchId,
+});
 
 /** The SHA-256 of a token, in hex: what the admin's tables keep instead of the token. */
 export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
