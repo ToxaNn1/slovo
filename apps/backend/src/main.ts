@@ -23,14 +23,7 @@ import { createSentryReporter } from './sentry-reporter';
 import { createPostHogClient, unavailablePostHog } from './analytics/posthog-client';
 import { createNbuClient } from './services/nbu-client';
 import { startServer } from './server';
-import {
-  createCloudflareUsage,
-  createGitHubActionsUsage,
-  createNeonUsage,
-  createPostHogUsage,
-  createSentryUsage,
-} from './services/usage-sources';
-import { createRailwayUsage } from './services/railway-usage';
+import { usagePortsOf } from './services/usage-ports';
 import { createVault, VAULT_OFF } from './services/vault';
 
 const config = readConfig(ServerConfigSchema, process.env);
@@ -66,34 +59,10 @@ const app = createApp({
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
   sentry: sentryOf(config, systemClock),
   // «Сервіси» reads usage with the keys Якість and the Аналітика already hold (ADR 0164).
-  usage: {
-    Sentry: createSentryUsage({
-      token: config.SENTRY_AUTH_TOKEN,
-      org: config.SENTRY_ORG,
-      clock: systemClock,
-      logger,
-    }),
-    PostHog: createPostHogUsage({ settings: config.posthog, logger }),
-    ...createRailwayUsage({ settings: config.railway, clock: systemClock, logger }),
-    Neon: createNeonUsage({
-      apiKey: config.NEON_API_KEY,
-      projectId: config.NEON_PROJECT_ID,
-      logger,
-    }),
-    GitHub: createGitHubActionsUsage({
-      token: config.GITHUB_TOKEN,
-      repository: config.GITHUB_REPOSITORY,
-      clock: systemClock,
-      logger,
-    }),
-    Cloudflare: createCloudflareUsage({
-      token: config.CLOUDFLARE_API_TOKEN,
-      accountId: config.r2?.accountId,
-      bucket: config.r2?.bucket,
-      clock: systemClock,
-      logger,
-    }),
-  },
+  usage: usagePortsOf(
+    { ...config, R2_ACCOUNT_ID: config.r2?.accountId, R2_BUCKET: config.r2?.bucket },
+    { clock: systemClock, logger },
+  ),
   ciToken: config.CI_HISTORY_TOKEN,
   mediaBase: config.mediaBase,
   // Unset in development, the Media Store's files stay in memory.

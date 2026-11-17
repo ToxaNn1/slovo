@@ -349,10 +349,32 @@ export const CronConfigSchema = ServerVariablesSchema.pick({
   TELEGRAM_BOT_TOKEN: true,
   TELEGRAM_CHAT_ID: true,
   BACKEND_HEALTH_URL: true,
-}).transform(({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST, ...rest }) => ({
-  ...rest,
-  posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
-}));
+  // The usage ports' keys: the 90 % Alert reads what «Сервіси» shows (ADR 0164).
+  RAILWAY_READ_TOKEN: true,
+  RAILWAY_PROJECT_ID: true,
+  RAILWAY_ENVIRONMENT_ID: true,
+  NEON_API_KEY: true,
+  NEON_PROJECT_ID: true,
+  GITHUB_TOKEN: true,
+  GITHUB_REPOSITORY: true,
+  CLOUDFLARE_API_TOKEN: true,
+  R2_ACCOUNT_ID: true,
+  R2_BUCKET: true,
+}).transform(
+  ({
+    POSTHOG_PERSONAL_API_KEY,
+    POSTHOG_PROJECT_ID,
+    POSTHOG_HOST,
+    RAILWAY_READ_TOKEN,
+    RAILWAY_PROJECT_ID,
+    RAILWAY_ENVIRONMENT_ID,
+    ...rest
+  }) => ({
+    ...rest,
+    posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
+    railway: railwayOf({ RAILWAY_READ_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_ENVIRONMENT_ID }),
+  }),
+);
 
 /** The environment the Recordings service's `pnpm recordings` reads. */
 export const RecordingsConfigSchema = ServerVariablesSchema.pick({

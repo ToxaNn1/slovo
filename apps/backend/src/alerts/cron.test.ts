@@ -1,7 +1,9 @@
 import {
   ALERT_THRESHOLD_DEFAULTS,
   createMonitor,
+  createServiceUsage,
   type CiRun,
+  type LimitUsage,
   type OpenBatch,
   type OwnerMessage,
   type SentryAlertRead,
@@ -14,6 +16,7 @@ import { createDatabase } from '../database/database';
 import { silentLogger, testDatabaseUrl } from '../test-support';
 import { createAlertStore } from './alert-store';
 import { openBatchesOf } from './cron-command';
+import { alertText } from './owner-chat';
 
 /**
  * A Cron service over this file's database, with fake Sentry, PostHog, CI,
@@ -31,6 +34,34 @@ function cron(start: string) {
   const posthog = createFakePostHog();
   const failures: string[] = [];
   let batchesFail = false;
+  const clock = { now: () => now };
+  const limits = new Map<string, LimitUsage[]>();
+  let usageReads = 0;
+  const usage = createServiceUsage({
+    ports: Object.fromEntries(
+      ['Sentry', 'Neon', 'alerts'].map((name) => [
+        name,
+        {
+          read: () => {
+            usageReads += 1;
+            if (name === 'alerts') {
+              return Promise.resolve({
+                ok: true as const,
+                value: { kind: 'cron' as const, lastRun: null, nextRunAt: null },
+              });
+            }
+            const usage = limits.get(name);
+            return Promise.resolve(
+              usage === undefined
+                ? { ok: false as const, reason: 'unavailable' as const }
+                : { ok: true as const, value: { kind: 'metered' as const, usage } },
+            );
+          },
+        },
+      ]),
+    ),
+    clock,
+  });
   const monitor = createMonitor({
     settings: { thresholds: () => Promise.resolve(ALERT_THRESHOLD_DEFAULTS) },
     store: createAlertStore(database),
@@ -52,9 +83,10 @@ function cron(start: string) {
       open: () =>
         batchesFail ? Promise.reject(new Error('connection reset')) : Promise.resolve(batches),
     },
+    usage,
     editionIds: ['uk'],
     logFailure: (message) => failures.push(message),
-    clock: { now: () => now },
+    clock,
   });
   return {
     sent,
@@ -66,6 +98,8 @@ function cron(start: string) {
     run: () => monitor.run(),
     failBatches: () => (batchesFail = true),
     failures,
+    usage: (name: string, usage: LimitUsage[]) => limits.set(name, usage),
+    usageReads: () => usageReads,
     alerts: () => sent.flatMap((message) => (message.kind === 'alert' ? [message.alert] : [])),
   };
 }
@@ -182,6 +216,60 @@ describe('the Cron service', () => {
         failedTests: ['words › finds a rare word'],
       },
     ]);
+  });
+
+  it('fires the limit alert at 90 %, once per Service, limit and month, none below', async () => {
+    // A month of its own: the alerts other tests kept have other keys.
+    const c = cron('2027-01-05T10:00:00Z');
+    c.usage('Sentry', [
+      { name: 'errors', unit: 'errors', used: 4500, limit: 5000 },
+      { name: 'replays', unit: 'replays', used: 49, limit: 50 },
+    ]);
+    c.usage('Neon', [{ name: 'storage', unit: 'GB', used: 0.449, limit: 0.5 }]);
+    await c.run();
+    c.at('2027-01-05T11:00:00Z');
+    c.usage('Sentry', [
+      { name: 'errors', unit: 'errors', used: 4900, limit: 5000 },
+      { name: 'replays', unit: 'replays', used: 50, limit: 50 },
+    ]);
+    await c.run();
+    expect(c.alerts()).toEqual([
+      {
+        kind: 'service-limit',
+        service: 'Sentry',
+        period: '2027-01',
+        usage: { name: 'errors', unit: 'errors', used: 4500, limit: 5000 },
+      },
+      {
+        kind: 'service-limit',
+        service: 'Sentry',
+        period: '2027-01',
+        usage: { name: 'replays', unit: 'replays', used: 49, limit: 50 },
+      },
+    ]);
+
+    expect(alertText(c.alerts()[0] ?? { kind: 'backend-down' })).toBe(
+      '🟡 Sentry: ліміт «errors» використано на 90 % — 4\u00a0500 з 5\u00a0000 errors за 2027-01.',
+    );
+
+    c.at('2027-02-01T00:05:00Z');
+    await c.run();
+    expect(c.alerts().map((alert) => (alert.kind === 'service-limit' ? alert.period : ''))).toEqual(
+      ['2027-01', '2027-01', '2027-02', '2027-02'],
+    );
+  });
+
+  it('reads the usage once an hour, in the first run of the hour', async () => {
+    const c = cron('2027-03-05T10:00:00Z');
+    c.usage('Sentry', [{ name: 'errors', unit: 'errors', used: 4600, limit: 5000 }]);
+    await c.run();
+    expect(c.usageReads()).toBe(3);
+    for (const minutes of ['15', '30', '45']) {
+      c.at(`2027-03-05T10:${minutes}:00Z`);
+      await c.run();
+    }
+    expect(c.usageReads()).toBe(3);
+    expect(c.alerts()).toHaveLength(1);
   });
 
   it('counts the added and changed records of an open batch', async () => {

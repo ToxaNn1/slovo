@@ -1,4 +1,4 @@
-import type { LimitUsage, ServiceUsage } from '@slovo/contracts/admin-api';
+import { nearLimit, type LimitUsage, type ServiceUsage } from '@slovo/contracts/admin-api';
 
 import { formatMoment } from '../../format';
 import { Button } from '../ui/button';
@@ -35,6 +35,21 @@ const number = (value: number) => value.toLocaleString('uk-UA', { maximumFractio
 /** The limits a reading has a bar for: a Cron has none. */
 function limitsOf(read: UsageAnswer): readonly LimitUsage[] {
   return read.state === 'read' && read.reading.kind !== 'cron' ? read.reading.usage : [];
+}
+
+/** Whether a limit of the reading is used to 90 % or more: the block's yellow mark (ADR 0164). */
+export const nearLimitOf = (read: UsageAnswer | undefined) =>
+  read !== undefined && limitsOf(read).some(nearLimit);
+
+/** The yellow mark of a Service at 90 % of a limit or more. */
+function NearLimitMark({ read }: { readonly read: UsageAnswer }) {
+  if (!nearLimitOf(read)) return null;
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-warn">
+      <span aria-hidden className="size-1.5 rounded-full bg-current" />
+      Ліміт майже вичерпано
+    </span>
+  );
 }
 
 /** The minutes from now until the moment, rounded up, none below zero. */
@@ -98,7 +113,10 @@ function Bar({ usage }: { readonly usage: LimitUsage }) {
       aria-valuenow={usage.used}
       className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
     >
-      <div className="h-full rounded-full bg-ok" style={{ width: `${String(share * 100)}%` }} />
+      <div
+        className={`h-full rounded-full ${nearLimit(usage) ? 'bg-warn' : 'bg-ok'}`}
+        style={{ width: `${String(share * 100)}%` }}
+      />
     </div>
   );
 }
@@ -117,6 +135,7 @@ export function BlockUsage({ id, read }: { readonly id: string; readonly read: U
   }
   return (
     <span id={id} className="flex w-full flex-col gap-1">
+      <NearLimitMark read={read} />
       <StateLines read={read} />
       {limitsOf(read).map((usage) => (
         <span key={usage.name} className="flex items-center gap-2">
@@ -150,6 +169,7 @@ export function PanelUsage({
         <p className="text-muted-foreground">Використання: не вдалося прочитати.</p>
       ) : (
         <>
+          <NearLimitMark read={read} />
           <StateLines read={read} />
           {limitsOf(read).map((usage) => (
             <div key={usage.name} className="flex flex-col gap-0.5">

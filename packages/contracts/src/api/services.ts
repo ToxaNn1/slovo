@@ -247,6 +247,13 @@ export const LimitUsageSchema = z.object({
 });
 export type LimitUsage = z.infer<typeof LimitUsageSchema>;
 
+/** The share of a limit from which a Service is near it: a yellow mark and an Alert (ADR 0164). */
+export const NEAR_LIMIT_SHARE = 0.9;
+
+/** Whether a limit is used to `NEAR_LIMIT_SHARE` or more. */
+export const nearLimit = ({ used, limit }: { readonly used: number; readonly limit: number }) =>
+  used >= limit * NEAR_LIMIT_SHARE;
+
 /** What a Service's provider answered, by the Service's kind. */
 export const ServiceReadingSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('metered'), usage: z.array(LimitUsageSchema) }),
