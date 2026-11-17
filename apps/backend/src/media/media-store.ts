@@ -4,7 +4,8 @@ import type { Clock } from '@slovo/server-core';
 
 /** A file the Media Store holds. */
 export interface StoredFile {
-  readonly size: number;
+  /** In bytes; undefined when a HEAD answer names no Content-Length (a chunked or compressed one). */
+  readonly size: number | undefined;
   readonly contentType: string;
 }
 
@@ -37,6 +38,12 @@ export function memoryMediaStore(): MediaStore {
   };
 }
 
+/** The size a HEAD answer names, or undefined when it has no Content-Length. */
+function sizeOf(response: Response): number | undefined {
+  const length = response.headers.get('content-length');
+  return length === null ? undefined : Number(length);
+}
+
 /**
  * The Media Store of the Staging Deployment (ADR 0168): it reads a file at
  * its public URL under the Media Store's root and refuses every write, so
@@ -56,7 +63,7 @@ export function publicMediaStore(
       if (response.status === 404) return undefined;
       if (!response.ok) throw new Error(`HEAD ${key} answered ${String(response.status)}`);
       return {
-        size: Number(response.headers.get('content-length') ?? 0),
+        size: sizeOf(response),
         contentType: response.headers.get('content-type') ?? '',
       };
     },
@@ -116,7 +123,7 @@ export function r2MediaStore(
       if (response.status === 404) return undefined;
       if (!response.ok) fail('HEAD', key, response);
       return {
-        size: Number(response.headers.get('content-length') ?? 0),
+        size: sizeOf(response),
         contentType: response.headers.get('content-type') ?? '',
       };
     },

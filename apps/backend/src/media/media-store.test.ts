@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { MediaImportConfigSchema, RecordingsConfigSchema } from '../config';
-import { memoryMediaStore, r2MediaStore, signS3Request } from './media-store';
+import { memoryMediaStore, publicMediaStore, r2MediaStore, signS3Request } from './media-store';
 
 describe('the memory Media Store', () => {
   it('keeps a put file until it is deleted', async () => {
@@ -10,6 +10,25 @@ describe('the memory Media Store', () => {
     expect(await store.head('recordings/a.mp3')).toEqual({ size: 3, contentType: 'audio/mpeg' });
     await store.delete('recordings/a.mp3');
     expect(await store.head('recordings/a.mp3')).toBeUndefined();
+  });
+});
+
+describe('the Media Store of the Staging Deployment', () => {
+  it('reads the size from Content-Length and leaves it unknown when the answer has none', async () => {
+    const answers = [
+      new Response(null, {
+        headers: { 'content-length': '3', 'content-type': 'audio/mpeg' },
+      }),
+      new Response(null, { headers: { 'content-type': 'audio/mpeg' } }),
+    ];
+    const store = publicMediaStore('https://media.example.org', {
+      fetch: () => Promise.resolve(answers.shift() ?? new Response(null, { status: 500 })),
+    });
+    expect(await store.head('recordings/a.mp3')).toEqual({ size: 3, contentType: 'audio/mpeg' });
+    expect(await store.head('recordings/a.mp3')).toEqual({
+      size: undefined,
+      contentType: 'audio/mpeg',
+    });
   });
 });
 
