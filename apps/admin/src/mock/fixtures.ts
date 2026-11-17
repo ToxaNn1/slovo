@@ -1,6 +1,8 @@
 import { FeatureSwitchesSchema } from '@slovo/contracts';
 import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
 
+import { SERVICES } from './services-fixtures';
+
 /** Every feature on, but one off and one the Edition hasn't got. */
 const STATES = FeatureSwitchesSchema.parse({
   ...Object.fromEntries(FeatureSwitchesSchema.keyof().options.map((feature) => [feature, 'on'])),
@@ -476,4 +478,5 @@ export const FIXTURES: AdminApiOutputs = {
       },
     ],
   },
+  services: { list: { services: SERVICES } },
 };
