@@ -2,18 +2,26 @@ import type { Service } from '@slovo/contracts/admin-api';
 import { useEffect, useId, useRef } from 'react';
 
 import { Button } from '../ui/button';
+import { PanelUsage, type UsageAnswer } from './usage';
 
 /**
  * The side panel of a Service: a native modal `<dialog>` at the right edge
  * (ADR 0160), so Esc and the back gesture close it and the page behind is
- * inert. It shows the Service's name; its usage, money and entries come with
- * their tickets.
+ * inert. It shows the Service's name and its usage with «Оновити»; its
+ * money and entries come with their tickets.
  */
 export function ServicePanel({
   service,
+  usage,
   onClose,
 }: {
   readonly service: Service;
+  /** The Service's usage and how to read it again, when it has a usage port. */
+  readonly usage?: {
+    readonly read: UsageAnswer;
+    readonly refreshing: boolean;
+    readonly onRefresh: () => void;
+  };
   readonly onClose: () => void;
 }) {
   const titleId = useId();
@@ -42,6 +50,7 @@ export function ServicePanel({
           Закрити
         </Button>
       </div>
+      {usage === undefined ? null : <PanelUsage {...usage} />}
     </dialog>
   );
 }

@@ -1,5 +1,10 @@
 import type { Service } from '@slovo/contracts/admin-api';
 
+import { BlockUsage, type UsageAnswer } from './usage';
+
+/** Each Service's usage read, by the Service's id. */
+export type UsageById = ReadonlyMap<string, UsageAnswer>;
+
 /** A block's size on the canvas, in CSS pixels. */
 const BLOCK = { width: 200, height: 88 } as const;
 /** The room around the outermost blocks. */
@@ -31,9 +36,11 @@ function Glyph() {
  */
 export function ServicesCanvas({
   services,
+  usage,
   onOpen,
 }: {
   readonly services: readonly Service[];
+  readonly usage: UsageById;
   readonly onOpen: (service: Service) => void;
 }) {
   const byId = new Map(services.map((service) => [service.id, service]));
@@ -83,6 +90,8 @@ export function ServicesCanvas({
           <button
             key={service.id}
             type="button"
+            aria-label={service.name}
+            {...usageDescription(service, usage)}
             onClick={() => {
               onOpen(service);
             }}
@@ -95,7 +104,10 @@ export function ServicesCanvas({
             }}
           >
             <Glyph />
-            <span className="text-sm font-semibold leading-tight">{service.name}</span>
+            <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <span className="text-sm font-semibold leading-tight">{service.name}</span>
+              <UsageOf service={service} usage={usage} />
+            </span>
           </button>
         ))}
       </div>
@@ -106,9 +118,11 @@ export function ServicesCanvas({
 /** The Services as a list of cards, for a phone: each card opens the same panel. */
 export function ServiceCards({
   services,
+  usage,
   onOpen,
 }: {
   readonly services: readonly Service[];
+  readonly usage: UsageById;
   readonly onOpen: (service: Service) => void;
 }) {
   return (
@@ -117,15 +131,34 @@ export function ServiceCards({
         <li key={service.id}>
           <button
             type="button"
+            aria-label={service.name}
+            {...usageDescription(service, usage)}
             onClick={() => {
               onOpen(service);
             }}
             className="flex w-full items-center gap-3 rounded-[14px] border border-border bg-surface px-4 py-3 text-left"
           >
-            <span className="text-sm font-semibold">{service.name}</span>
+            <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <span className="text-sm font-semibold">{service.name}</span>
+              <UsageOf service={service} usage={usage} />
+            </span>
           </button>
         </li>
       ))}
     </ul>
   );
+}
+
+/** The id of a block's usage, which describes its button. */
+const usageIdOf = (service: Service) => `usage-${service.id}`;
+
+/** The block's button is described by its usage, when the Service has one. */
+function usageDescription(service: Service, usage: UsageById) {
+  return usage.has(service.id) ? { 'aria-describedby': usageIdOf(service) } : {};
+}
+
+/** A block's usage bar, when its Service's usage is read. */
+function UsageOf({ service, usage }: { readonly service: Service; readonly usage: UsageById }) {
+  const read = usage.get(service.id);
+  return read === undefined ? null : <BlockUsage id={usageIdOf(service)} read={read} />;
 }
