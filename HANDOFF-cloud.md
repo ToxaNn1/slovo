@@ -11,3 +11,8 @@ Integration branch: feat/1117-admin-accounts. Order: #1944 ∥ #1945 → action-
 - 17.11: #1946 DONE, merged; admin 110 tests, backend affected green (limits.test flake, rerun ok). Owner question: Streak/Level not shown on the Account page (admin/backend do not depend on Core).
 - 17.11: #1947 DONE, merged (app.ts conflict: kept userRecords and authenticator); backend 293 + admin 112 + contracts 91 green. Next: code-review on feat/1117-admin-accounts.
 - 17.11: code-review: 10 findings, 9 fixed (fix/1943-review merged), Streak/Level is an owner question. PR #1948 body updated (Handbook), ready, squash auto-merge on. Waiting for CI.
+- 17.11: Secret scanning false positive (Sync record keys in test fixtures) allowlisted in .gitleaks.toml; CI green; PR #1948 squash-merged. Ticket branches and worktrees removed. Wave done.
+
+## Next
+- Owner: Streak and Level on the Account page (needs @slovo/core in apps/admin via the infra queue); Lemmas instead of Entry ids; which day the unregistered estimate takes.
+- Owner checks of PR #1948 to add with pnpm admin check add (no admin token in the cloud).
