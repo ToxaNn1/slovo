@@ -136,6 +136,44 @@ describe('the usage sources', () => {
     expect(asked[0]?.headers.get('authorization')).toBe('Bearer a-fake-token');
   });
 
+  it("leaves a public repository's Actions minutes out of GitHub Free's 2,000", async () => {
+    const asked: Request[] = [];
+    const fetch: typeof globalThis.fetch = (input, init) => {
+      const request = new Request(input, init);
+      asked.push(request);
+      const body = new URL(request.url).pathname.startsWith('/repos/')
+        ? { private: false }
+        : {
+            usageItems: [
+              {
+                product: 'actions',
+                unitType: 'Minutes',
+                quantity: 29_000,
+                repositoryName: 'slovo',
+              },
+              { product: 'actions', unitType: 'Minutes', quantity: 120, repositoryName: 'other' },
+            ],
+          };
+      return Promise.resolve(Response.json(body));
+    };
+    const github = createGitHubActionsUsage({
+      token: 'a-fake-token',
+      repository: 'ToxaNn1/slovo',
+      clock,
+      logger,
+      fetch,
+    });
+
+    expect(await github.read()).toEqual({
+      ok: true,
+      value: {
+        kind: 'metered',
+        usage: [{ name: 'minutes', unit: 'minutes', used: 120, limit: 2000 }],
+      },
+    });
+    expect(asked.map((request) => new URL(request.url).pathname)).toContain('/repos/ToxaNn1/slovo');
+  });
+
   it('reads R2 storage and operations and the Worker requests of today in one Cloudflare query', async () => {
     const { fetch, asked } = fetchAnswering(200, {
       data: {

@@ -311,9 +311,14 @@ describe('the Neon, GitHub Actions and Cloudflare usage', () => {
         { name: 'worker-requests', unit: 'requests', used: 40_000, limit: 100_000 },
       ],
     });
-    expect(asked.toSorted()).toEqual(['api.cloudflare.com', 'api.github.com', 'console.neon.tech']);
+    expect(asked.toSorted()).toEqual([
+      'api.cloudflare.com',
+      'api.github.com',
+      'api.github.com',
+      'console.neon.tech',
+    ]);
 
     await owner.client.admin.services.usage();
-    expect(asked).toHaveLength(3);
+    expect(asked).toHaveLength(4);
   });
 });
