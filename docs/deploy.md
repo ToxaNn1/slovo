@@ -208,3 +208,15 @@ DATABASE_URL='<the Neon connection string>' pnpm admin check import <file> [--ve
 ```
 
 `agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. A person signs in to `/admin` with a code emailed by the mailer above and a TOTP; the TOTP secrets are sealed with a key derived from `AUTH_SECRET`, so rotating it makes every Admin user set up the TOTP again.
+
+## Checking «Сервіси» by hand
+
+After the variables above are set and the Deployment is live, the owner checks the section once:
+
+1. Open «Сервіси»: the canvas shows the eleven Services, and the top shows the monthly total and the next charge.
+2. Without `VAULT_KEY`, adding a Service entry answers that the Vault is off. With it, a login and a link show openly; a password, token or recovery code shows hidden.
+3. «Показати» and «Копіювати» ask for a fresh TOTP code and then open the Vault for 15 minutes in that session only. A shown value hides itself after 30 seconds; «Копіювати» puts it on the clipboard without showing it. Every reveal and copy appears in the Action log without the value.
+4. Each metered block with a read key (Railway, Sentry, PostHog, Neon, GitHub, Cloudflare) shows a bar against its limit, the read time and «Оновити»; with a key unset it says why instead of a bar.
+5. The USD / UAH switch changes the sums and is remembered on the device.
+6. At 90 % of any limit the block and the panel turn yellow («Ліміт майже вичерпано»), and the alerts Cron sends one Telegram message per Service, limit and month.
+7. After a backend restart the Vault is locked again.
