@@ -29,7 +29,12 @@ function servicesOf(definition: Definition) {
 }
 
 interface ServiceShape {
-  readonly deploy?: { cronSchedule?: string; sleepApplication?: boolean; healthcheckPath?: string };
+  readonly deploy?: {
+    cronSchedule?: string;
+    sleepApplication?: boolean;
+    healthcheckPath?: string;
+    limitOverride?: { containers?: { cpu?: number; memoryBytes?: number } };
+  };
   readonly variables?: Record<string, { type?: string; value?: string } | string>;
   readonly networking?: { customDomains?: Record<string, unknown> };
 }
@@ -63,5 +68,13 @@ describe('the Railway project file', () => {
     expect([...services.keys()]).toEqual(['backend', 'alerts', 'quote-check', 'recordings']);
     expect(services.get('backend')?.deploy?.sleepApplication).toBeUndefined();
     expect(services.get('backend')?.variables?.['DEPLOYMENT']).toBeUndefined();
+  });
+
+  it('runs the Recordings service on 2 vCPU and 5 GB, the size its generator needs (ADR 0172)', async () => {
+    const recordings = servicesOf(await projectIn('production')).get('recordings');
+
+    expect(recordings?.deploy?.limitOverride).toEqual({
+      containers: { cpu: 2, memoryBytes: 5 * 1024 ** 3 },
+    });
   });
 });

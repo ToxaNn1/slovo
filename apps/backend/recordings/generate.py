@@ -18,6 +18,11 @@ the text the engine read stresses the vowels the Word marks.
 
 The model files come from `fetch-model.sh`, checked by SHA256; the engine is
 given that folder, so it downloads nothing else.
+
+torch runs on `OMP_NUM_THREADS` threads (2 unless set; the Recordings service
+sets it, ADR 0172): by default it takes one per core of the whole host, more
+than the container may run, and crawls. Each request prints the seconds it
+took, line by line, so a run killed at its time limit still shows them.
 """
 
 from __future__ import annotations
@@ -28,6 +33,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 import unicodedata
 import wave
 from pathlib import Path
@@ -80,9 +86,22 @@ def without_stress(text: str) -> str:
     return text.replace(ACUTE, "")
 
 
+def engine_threads() -> int:
+    """The threads torch may use; the maths libraries are told the same before they load."""
+    threads = os.environ.setdefault("OMP_NUM_THREADS", "2")
+    for name in ("MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
+        os.environ.setdefault(name, threads)
+    return int(threads)
+
+
 class Engine:
     def __init__(self, model_dir: Path) -> None:
+        threads = engine_threads()
+        import torch
         from ukrainian_tts.tts import TTS
+
+        torch.set_num_threads(threads)
+        torch.set_num_interop_threads(1)
 
         # The model's config names its feature stats relative to the working folder.
         here = Path.cwd()
@@ -125,10 +144,13 @@ def generate(engine: Engine, requests: list[dict[str, str]], out_dir: Path) -> N
     with tempfile.TemporaryDirectory() as work:
         wav = Path(work) / "recording.wav"
         for done, request in enumerate(requests, start=1):
+            started = time.monotonic()
             try:
                 engine.read(request["voice"], request["text"], wav)
                 to_mp3(wav, out_dir / f"{request['id']}.mp3")
                 results.append({"id": request["id"], "ok": True, "durationMs": duration_ms(wav)})
+                seconds = time.monotonic() - started
+                print(f"{done}/{len(requests)} {request['voice']} {seconds:.1f} s", flush=True)
             except Exception as error:  # noqa: BLE001 - one failing Word must not stop the others
                 print(f"FAIL {request['id']} {request['voice']}: {error}", file=sys.stderr)
                 results.append({"id": request["id"], "ok": False})
@@ -137,8 +159,6 @@ def generate(engine: Engine, requests: list[dict[str, str]], out_dir: Path) -> N
             listed = out_dir / "results.json.part"
             listed.write_text(json.dumps(results) + "\n", encoding="utf-8")
             os.replace(listed, out_dir / "results.json")
-            if done % 50 == 0 or done == len(requests):
-                print(f"{done}/{len(requests)}", flush=True)
 
 
 def check(engine: Engine, requests: list[dict[str, str]]) -> bool:
@@ -158,6 +178,8 @@ def check(engine: Engine, requests: list[dict[str, str]]) -> bool:
 
 
 def main() -> int:
+    # Line by line into the Recordings service's pipe, the engine's own RTF lines too.
+    sys.stdout.reconfigure(line_buffering=True)
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--requests", type=Path, required=True)

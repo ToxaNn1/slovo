@@ -102,7 +102,11 @@ export default defineRailway((ctx) => {
 
   const recordings = service('recordings', {
     build: dockerfile('recordings.Dockerfile'),
-    deploy: cron('pnpm recordings', '0 * * * *'),
+    // 2 vCPU for the generator's two threads and 5 GB over its 3–4 GB peak (ADR 0172).
+    deploy: {
+      ...cron('pnpm recordings', '0 * * * *'),
+      limitOverride: { containers: { cpu: 2, memoryBytes: 5 * 1024 ** 3 } },
+    },
     replicas: EU_WEST_AMSTERDAM,
     env: {
       DATABASE_URL: backend.env.DATABASE_URL,

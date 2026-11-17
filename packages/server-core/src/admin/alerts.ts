@@ -68,10 +68,14 @@ export type Alert =
       readonly usage: LimitUsage;
     }
   | {
-      /** The Recordings job stopped for an Edition: its last runs had Words and recorded none. */
+      /**
+       * The Recordings job stopped for an Edition: its last runs were stuck,
+       * the last one because its generator made no file or hit its time limit.
+       */
       readonly kind: 'recordings-stalled';
       readonly editionId: string;
       readonly runs: number;
+      readonly cause: 'nothing-made' | 'time-limit';
     };
 
 /** Tells the owner of an Alert at once (Telegram in the backend). */
