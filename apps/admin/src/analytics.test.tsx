@@ -86,6 +86,7 @@ test('Аналітика counts the readers, each number with the one line sayin
     'Зареєстровані312Читачі з SLOVO ID. Фільтр видання на це число не діє: тут усі SLOVO ID.',
     'Без реєстрації, щонайменшещонайменше 845Активні за останній день у PostHog мінус зареєстровані. Оцінка знизу: PostHog бачить лише тих, хто ділиться статистикою.',
     'Вимкнули статистику27Скільки разів «Ділитися анонімною статистикою» вимкнули за період. Кожне вимкнення окремо, а не скільки читачів мають її вимкненою зараз.',
+    'Із синхронізацією198SLOVO ID із записами синхронізації у вибраних виданнях: це число йде за фільтром видання.',
   ]);
   expect(requests.some((url) => /\/admin\/editions\/all\/reader-counts\?.*from=/.test(url))).toBe(
     true,
@@ -96,17 +97,35 @@ test('Аналітика counts the readers, each number with the one line sayin
 test('the unregistered estimate says PostHog is down, and the other counts stay', async () => {
   server.use(
     http.get('*/admin/editions/:editionId/reader-counts', () =>
-      HttpResponse.json({ registered: 312, unregisteredAtLeast: null, statisticsOff: 27 }),
+      HttpResponse.json({
+        registered: 312,
+        unregisteredAtLeast: null,
+        statisticsOff: 27,
+        syncing: 198,
+      }),
     ),
   );
   const { section } = await openAnalytics();
   const readers = within(await section.findByRole('list', { name: 'Читачі' }));
-  const [registered, unregistered, switchOffs] = readers.getAllByRole('listitem');
+  const [registered, unregistered, switchOffs, syncing] = readers.getAllByRole('listitem');
 
   expect(registered?.textContent).toContain('312');
   expect(unregistered?.textContent).toContain('PostHog недоступний');
   expect(unregistered?.textContent).not.toContain('щонайменше 0');
   expect(switchOffs?.textContent).toContain('27');
+  expect(syncing?.textContent).toContain('198');
+});
+
+test('the reader counts say they are unavailable when their read fails', async () => {
+  server.use(
+    http.get('*/admin/editions/:editionId/reader-counts', () =>
+      HttpResponse.json({ message: 'down' }, { status: 500 }),
+    ),
+  );
+  const { section } = await openAnalytics();
+
+  expect(await section.findByText('Кількість читачів недоступна')).toBeDefined();
+  expect(section.queryByRole('list', { name: 'Читачі' })).toBeNull();
 });
 
 test('a period reads its days up to today, in Kyiv', () => {
