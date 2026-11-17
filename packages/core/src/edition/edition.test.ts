@@ -180,6 +180,7 @@ const validConfig = {
     widgetPreviews: 'on',
     textSizeSteps: 'on',
     offlinePlate: 'on',
+    statisticsOffCounter: 'on',
   },
   userSettingDefaults: {
     theme: 'system',
@@ -454,6 +455,7 @@ describe('loadEdition', () => {
     'widgetPreviews',
     'textSizeSteps',
     'offlinePlate',
+    'statisticsOffCounter',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
     const off = loadEdition({

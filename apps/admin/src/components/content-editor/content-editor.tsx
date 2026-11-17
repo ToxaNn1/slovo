@@ -7,7 +7,7 @@ import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { IllustrationUpload } from './illustration';
 import { CONTENT_KINDS, type KindEditor } from './kinds';
-import { Pager } from './pager';
+import { Pager } from '../pager';
 import { RecordForm, type Written } from './record-form';
 
 /** The record the editor has open: none, a new one, or one by its id. */

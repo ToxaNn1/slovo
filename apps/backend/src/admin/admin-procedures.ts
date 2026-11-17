@@ -383,8 +383,9 @@ export function adminProcedures(
 
     actions: os.actions.handler(async ({ context, input, errors }) => {
       await admit(context.headers, errors, { security: true });
-      const actions = await admin.actions(input.editionId);
+      const { actions, total } = await admin.actionPage(input.editionId, input.page ?? 1);
       return {
+        total,
         actions: actions.map(({ at, who, what, before, after, reason, editionId }) => ({
           at: at.toISOString(),
           who,
@@ -455,16 +456,41 @@ export function adminProcedures(
       return { revoked: true as const };
     }),
 
-    findAccount: os.findAccount.handler(async ({ context, input, errors }) => {
+    // Never logged: reads are not (ADR 0088, 0162).
+    listAccounts: os.listAccounts.handler(async ({ context, input, errors }) => {
       await admit(context.headers, errors, { security: true });
-      const found = await accounts.find(input.email);
-      if (found === undefined) return { account: null };
-      const { account, signInMethods } = found;
+      const listed = await accounts.list({ page: input.page ?? 1, search: input.search ?? '' });
       return {
-        account: {
+        accounts: listed.accounts.map(({ account, signInMethods }) => ({
+          id: account.id,
           email: account.email,
           createdAt: account.createdAt.toISOString(),
           signInMethods: [...signInMethods],
+        })),
+        total: listed.total,
+      };
+    }),
+
+    // Never logged: reads are not (ADR 0088, 0162).
+    getAccount: os.getAccount.handler(async ({ context, input, errors }) => {
+      await admit(context.headers, errors, { security: true });
+      const found = await accounts.get(input.accountId);
+      if (found === undefined) return { account: null };
+      const { account, signInMethods, editions } = found;
+      return {
+        account: {
+          id: account.id,
+          email: account.email,
+          createdAt: account.createdAt.toISOString(),
+          signInMethods: [...signInMethods],
+          editions: editions.map(({ editionId, records }) => ({
+            editionId,
+            records: records.map(({ key, value, changedAt }) => ({
+              key,
+              value,
+              changedAt: changedAt.getTime(),
+            })),
+          })),
         },
       };
     }),
@@ -589,6 +615,14 @@ export function adminProcedures(
         top: { known: [...top.known], unknown: [...top.unknown], saved: [...top.saved] },
         answers: [...answers],
       };
+    }),
+
+    readerCounts: os.readerCounts.handler(async ({ context, input, errors }) => {
+      await admit(context.headers, errors);
+      return analytics.readers(editionIdsOf(input.editionId, errors), {
+        from: input.from,
+        to: input.to,
+      });
     }),
 
     editions: os.editions.handler(async ({ context, errors }) => {

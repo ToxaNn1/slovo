@@ -583,6 +583,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   textSizeSteps: FeatureSwitchStateSchema,
   /** The offline plate «Немає з’єднання. Спробуй пізніше.» under the status bar when sharing a Collection Link, signing in or syncing finds no network (ADR 0158); off, the toast or the line each of them showed before. */
   offlinePlate: FeatureSwitchStateSchema,
+  /** The switch-off unit: turning «Ділитися анонімною статистикою» off sends one anonymous +1 with the Edition alone, and nothing after (ADR 0163); off, nothing is sent at switch-off. */
+  statisticsOffCounter: FeatureSwitchStateSchema,
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

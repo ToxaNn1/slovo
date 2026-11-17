@@ -1,6 +1,6 @@
 {
-  "id": "b767fa62-5e90-4e1a-af3a-67ff4a1a2523",
-  "prevId": "7fd53e5f-50b8-4c01-aea9-707886df7dae",
+  "id": "e861fda0-ec8f-4509-88cc-34af5a15b4d1",
+  "prevId": "e0f0bd09-0937-4f3a-847d-fe5fd2b61b6d",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2923,6 +2923,45 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.statistics_off_counters": {
+      "name": "statistics_off_counters",
+      "schema": "",
+      "columns": {
+        "edition_id": {
+          "name": "edition_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "day": {
+          "name": "day",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "statistics_off_counters_edition_id_day_pk": {
+          "name": "statistics_off_counters_edition_id_day_pk",
+          "columns": [
+            "edition_id",
+            "day"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},

@@ -1,4 +1,4 @@
-import { cn } from '../../lib/utils';
+import { cn } from '../lib/utils';
 
 /** A page number, or a gap of pages left out. */
 type Step =

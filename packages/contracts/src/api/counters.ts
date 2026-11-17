@@ -189,4 +189,26 @@ export const countersContract = {
       }),
     )
     .output(z.void()),
+
+  statisticsOff: procedure
+    .route({
+      method: 'POST',
+      path: '/counters/statistics-off',
+      successStatus: 202,
+      summary: 'Count one switch-off of anonymous statistics',
+      description:
+        'Adds one to the switch-offs of «Ділитися анонімною статистикою» of the Edition on the current day (UTC), sent once when the reader turns it off. The backend keeps the count per Edition and day only: no Account, no device id, no IP address (ADR 0163).',
+      tags: ['counters'],
+    })
+    .errors({
+      /** An Edition the backend doesn't serve, or one with `statisticsOffCounter` off. */
+      NOT_FOUND: { message: 'Not found' },
+      /**
+       * Over the limit of 20 switch-offs from one IP address in a day;
+       * `Retry-After` says, in seconds, when to try again.
+       */
+      TOO_MANY_REQUESTS: { message: 'Too many requests' },
+    })
+    .input(z.strictObject({ editionId: EditionIdSchema }))
+    .output(z.void()),
 };

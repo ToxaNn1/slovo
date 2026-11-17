@@ -1,5 +1,12 @@
 import { describe, expect, it } from '@jest/globals';
-import { loadEdition, type AnalyticsPort, type Edition, type FeatureSwitch } from '@slovo/core';
+import {
+  loadEdition,
+  type AnalyticsPort,
+  type Backend,
+  type Edition,
+  type FeatureSwitch,
+} from '@slovo/core';
+import { createFakeBackend } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
@@ -52,13 +59,16 @@ function recordedShareWindow() {
 async function renderPrivacy({
   switches = {},
   analytics,
+  backend,
   shareFile = recordedShareWindow().share,
 }: {
   switches?: Partial<Record<FeatureSwitch, boolean>>;
   analytics?: AnalyticsPort;
+  /** Where switching sharing off sends its one anonymous unit; nowhere unless given. */
+  backend?: Pick<Backend, 'counters'>;
   shareFile?: ShareFile;
 } = {}) {
-  const settings = await settingsAt({}, analytics);
+  const settings = await settingsAt({}, analytics, backend);
   const shell = testShell({
     composition: opened(await testShell().composition.opened()),
     remoteSwitches: switchedTo(editionWith(switches)),
@@ -91,7 +101,8 @@ const statsSwitch = () => screen.getByRole('switch', { name: 'Анонімна �
 describe('Settings › «Конфіденційність»', () => {
   it('turns sharing off from its one switch, which stops Analytics and the Community Counters', async () => {
     const analytics = recordedAnalytics();
-    const settings = await renderPrivacy({ analytics: analytics.port });
+    const server = createFakeBackend();
+    const settings = await renderPrivacy({ analytics: analytics.port, backend: server.backend });
 
     expect(statsSwitch()).toBeChecked();
     expect(screen.getByHintText(editionStrings.settings.anonymousStats.explanation)).toBe(
@@ -103,6 +114,11 @@ describe('Settings › «Конфіденційність»', () => {
     expect((await settings.read()).shareCounters).toBe(false);
     expect(analytics.stopped()).toBe(true);
     expect(analytics.events).toEqual([]);
+    await waitFor(() => {
+      expect(server.counters.statisticsOff).toEqual([
+        { body: { editionId: edition.id }, session: undefined },
+      ]);
+    });
   });
 
   it('hands the Data export, built without an Account, to the share window as one JSON file', async () => {

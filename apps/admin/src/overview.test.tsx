@@ -11,6 +11,7 @@ import { Admin } from './router';
 const BLOCKS = [
   'Активні люди',
   'Відвідини',
+  'Зареєстровані читачі',
   'Збої',
   'Помилки',
   'p95 бекенду',
@@ -72,6 +73,9 @@ test('Огляд reads every block of the picked Edition and period, each with t
   expect(block(overview, 'Активні люди').getByText('135')).toBeDefined();
   expect(block(overview, 'Активні люди').getByText('за 07.11')).toBeDefined();
   expect(block(overview, 'Відвідини').getByText('652')).toBeDefined();
+  // The Accounts of every Edition, whatever the filter.
+  expect(block(overview, 'Зареєстровані читачі').getByText('312')).toBeDefined();
+  expect(block(overview, 'Зареєстровані читачі').getByText('в усіх виданнях')).toBeDefined();
   expect(block(overview, 'Збої').getByText('3')).toBeDefined();
   expect(block(overview, 'Помилки').getByText('42')).toBeDefined();
   expect(block(overview, 'p95 бекенду').getByText('Немає даних')).toBeDefined();
@@ -93,6 +97,7 @@ test('Огляд reads every block of the picked Edition and period, each with t
   expect(block(overview, 'CI на main').getByText('Останні дані за 11:30')).toBeDefined();
 
   expect(requests.some((url) => url.includes('/admin/editions/uk/analytics?'))).toBe(true);
+  expect(requests.some((url) => url.includes('/admin/editions/uk/reader-counts?'))).toBe(true);
   expect(requests.some((url) => /\/admin\/quality\?.*editionId=uk/.test(url))).toBe(true);
   expect(requests.some((url) => /\/admin\/quality\?.*period=30d/.test(url))).toBe(true);
   expect(requests.some((url) => /\/batches\?.*editionId=uk/.test(url))).toBe(true);

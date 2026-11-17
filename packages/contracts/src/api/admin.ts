@@ -24,6 +24,7 @@ import { ADMIN_ERRORS } from './admin-errors';
 import { procedure } from './procedure';
 import { ReasonSchema } from './reason';
 import { servicesContract } from './services';
+import { RecordChangeSchema } from './sync';
 
 /** An Edition the admin's global Edition filter offers. */
 export const AdminEditionSchema = z.object({
@@ -166,6 +167,23 @@ export const CountersSummarySchema = z.object({
   ),
 });
 export type CountersSummary = z.infer<typeof CountersSummarySchema>;
+
+/** How many people read the Editions (ADR 0163). */
+export const ReaderCountsSchema = z.object({
+  /** The Accounts, of every Edition whatever the filter. */
+  registered: z.number().int().min(0),
+  /**
+   * The people active on the newest day of the period beyond the Accounts,
+   * never below 0: a lower estimate, since PostHog counts only the readers
+   * who share statistics. `null` while PostHog can't answer.
+   */
+  unregisteredAtLeast: z.number().int().min(0).nullable(),
+  /** The switch-offs of anonymous statistics over the period. */
+  statisticsOff: z.number().int().min(0),
+  /** The Accounts with Sync records in the filtered Editions, a tombstone not one (ADR 0162). */
+  syncing: z.number().int().min(0),
+});
+export type ReaderCounts = z.infer<typeof ReaderCountsSchema>;
 
 /** A role of an Admin user: Власник (`owner`) or Адмін (`admin`). */
 const AdminRoleSchema = z.enum(['owner', 'admin']);
@@ -318,8 +336,34 @@ export const ContentRecordSummarySchema = z.object({
 });
 export type ContentRecordSummary = z.infer<typeof ContentRecordSummarySchema>;
 
+/** One reader Account in the Безпека list (ADR 0162). */
+export const AccountRowSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  createdAt: z.string(),
+  /** The Google and Apple sign-in methods recorded for it; a Sign-in code reaches every Account. */
+  signInMethods: z.array(z.enum(['google', 'apple'])),
+});
+export type AccountRow = z.infer<typeof AccountRowSchema>;
+
+/**
+ * One reader Account on its own page in Безпека (ADR 0162): its row and, for
+ * every Edition it syncs, the records Sync keeps of it, as a pull answers
+ * them, in the order they were kept; a tombstone is left out.
+ */
+export const AccountDetailSchema = AccountRowSchema.extend({
+  editions: z.array(z.object({ editionId: z.string(), records: z.array(RecordChangeSchema) })),
+});
+export type AccountDetail = z.infer<typeof AccountDetailSchema>;
+
+/** How many Accounts Безпека lists on one page. */
+export const ACCOUNTS_PAGE_SIZE = 50;
+
 /** How many records the content editor lists on one page. */
 export const CONTENT_PAGE_SIZE = 50;
+
+/** How many rows of the Action log Безпека lists on one page. */
+export const ACTION_PAGE_SIZE = 50;
 
 /** The Edition card: what the Edition registry holds of an Edition, shown read-only (story 44). */
 export const EditionCardSchema = z.object({
@@ -1031,13 +1075,21 @@ export const adminContract = {
       path: '/admin/actions',
       summary: 'The Action log, newest first, of one Edition when one is named',
       description:
-        'A Безпека procedure: a Власник only. Answers the 500 newest rows; under an Edition, only its rows.',
+        'A Безпека procedure: a Власник only. Answers one page of `ACTION_PAGE_SIZE` rows, newest first, and the count of every row; under an Edition, only its rows.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.strictObject({ editionId: EditionIdSchema.optional() }))
+    .input(
+      z.strictObject({
+        editionId: EditionIdSchema.optional(),
+        /** The page from 1, of `ACTION_PAGE_SIZE` rows newest first; past the last one it lists none. */
+        page: z.coerce.number<number>().int().positive().optional(),
+      }),
+    )
     .output(
       z.object({
+        /** The count of every row the filter matches, on every page. */
+        total: z.number().int().nonnegative(),
         actions: z.array(
           z.object({
             at: z.string(),
@@ -1151,28 +1203,44 @@ export const adminContract = {
     .input(z.strictObject({ name: AgentNameSchema, reason: ReasonSchema }))
     .output(z.object({ revoked: z.literal(true) })),
 
-  findAccount: procedure
+  listAccounts: procedure
     .route({
       method: 'GET',
-      path: '/admin/accounts/{email}',
-      summary: "Finds a reader's Account by email",
+      path: '/admin/accounts',
+      summary:
+        "Every reader's Account, newest first, a page of 50 at a time with the count of every match",
       description:
-        'A Безпека procedure: a Власник only (ADR 0127). Answers the date the Account was made and its Google and Apple sign-in methods, nothing more; `null` for an email with no Account.',
+        'A Безпека procedure: a Власник only (ADR 0162), and never logged. A `search` keeps the Accounts whose email holds it, in any case.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.strictObject({ email: EmailSchema }))
+    .input(
+      z.strictObject({
+        search: z.string().max(200).optional(),
+        /** The page from 1, of `ACCOUNTS_PAGE_SIZE` Accounts newest first; past the last one it lists none. */
+        page: z.coerce.number<number>().int().positive().optional(),
+      }),
+    )
     .output(
       z.object({
-        account: z
-          .object({
-            email: z.string(),
-            createdAt: z.string(),
-            signInMethods: z.array(z.enum(['google', 'apple'])),
-          })
-          .nullable(),
+        accounts: z.array(AccountRowSchema),
+        /** How many Accounts match, on every page. */
+        total: z.number().int().nonnegative(),
       }),
     ),
+
+  getAccount: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/accounts/{accountId}',
+      summary: "One reader's Account with its Sync records in every Edition, read only",
+      description:
+        'A Безпека procedure: a Власник only (ADR 0162), and never logged. Answers the email, the date, the Google and Apple sign-in methods and, per Edition, the records Sync keeps, without tombstones; `null` for an id with no Account.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.strictObject({ accountId: z.uuid() }))
+    .output(z.object({ account: AccountDetailSchema.nullable() })),
 
   deleteAccount: procedure
     .route({
@@ -1328,6 +1396,19 @@ export const adminContract = {
     .errors(ADMIN_ERRORS)
     .input(z.strictObject({ editionId: AnalyticsEditionSchema }))
     .output(CountersSummarySchema),
+  readerCounts: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/editions/{editionId}/reader-counts',
+      summary:
+        'The registered readers, the unregistered at least and the switch-offs of statistics, of an Edition or of `all`',
+      description:
+        'Counts only (ADR 0163). The Accounts ignore the Edition filter; the unregistered estimate is `null` while PostHog is unavailable.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.strictObject({ editionId: AnalyticsEditionSchema, from: DaySchema, to: DaySchema }))
+    .output(ReaderCountsSchema),
   content: contentWriteContract,
   contentQueue: contentQueueContract,
   services: servicesContract,
