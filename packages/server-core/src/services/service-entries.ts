@@ -178,12 +178,14 @@ export function createServiceEntries({
       const entry = await store.get(id);
       const service = entry === undefined ? undefined : await store.serviceName(entry.serviceId);
       if (entry === undefined || service === undefined) return { ok: false, reason: 'unknown' };
-      const plainBefore =
-        entry.value.kind === 'open' ? entry.value.value : vault.open(entry.value.sealed);
+      // A sealed value is opened by a reveal or a copy alone: a new one given counts as changed.
+      const valueChanged =
+        changes.value !== undefined &&
+        (entry.value.kind === 'sealed' || changes.value !== entry.value.value);
       const fields = [
         changes.label !== undefined && changes.label !== entry.label ? 'label' : [],
         changes.note !== undefined && changes.note !== entry.note ? 'note' : [],
-        changes.value !== undefined && changes.value !== plainBefore ? 'value' : [],
+        valueChanged ? 'value' : [],
       ].flat();
       const { value } = changes;
       const edited: StoredServiceEntry = {

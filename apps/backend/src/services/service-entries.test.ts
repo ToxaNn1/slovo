@@ -3,7 +3,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import { adminHeaders, signedInAdmin, testApp } from '../test-support';
-import { VAULT_OFF } from './vault';
+import { createVault, VAULT_OFF } from './vault';
 
 /** A backend whose admin is on, with a signed-in Власник; its Vault is on under a fake key unless given. */
 async function ownerOn(options: Parameters<typeof testApp>[0] = {}) {
@@ -164,6 +164,40 @@ describe('the Service entries', () => {
     });
 
     expect(edited.entry).toMatchObject({ value: 'https://github.com/settings/billing/summary' });
+  });
+
+  it('change a sealed value without opening the old one: only a reveal opens it', async () => {
+    const sealer = createVault(randomBytes(32));
+    if (sealer.state !== 'on') throw new Error('the Vault is off');
+    const backend = await ownerOn({
+      vault: {
+        ...sealer,
+        open: () => {
+          throw new Error('a sealed value was opened outside a reveal');
+        },
+      },
+    });
+    const sentry = await serviceId(backend, 'Sentry');
+    const services = backend.owner.client.admin.services;
+    const { entry } = await services.addEntry({
+      serviceId: sentry,
+      type: 'token',
+      label: 'Read token',
+      note: null,
+      value: fakeSecret(),
+      reason: 'Якість reads Sentry',
+    });
+
+    await services.editEntry({ id: entry.id, value: fakeSecret(), reason: 'rotated' });
+
+    const { actions } = await backend.owner.client.admin.actions({});
+    const edit = actions.find(({ what }) => what === 'service.entry.edit');
+    expect(edit?.after).toEqual({
+      service: 'Sentry',
+      entry: entry.id,
+      type: 'token',
+      fields: ['value'],
+    });
   });
 
   it('need a reason, and refuse an unknown Service or entry', async () => {
