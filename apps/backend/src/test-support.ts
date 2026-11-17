@@ -49,6 +49,7 @@ import {
   type SentryRead,
   type SentryReader,
   type SentryWindow,
+  type UsagePort,
 } from '@slovo/server-core';
 import { eq } from 'drizzle-orm';
 import pg from 'pg';
@@ -679,6 +680,8 @@ interface TestAppOptions {
   readonly github?: GitHubSource;
   /** EAS, for Розробка; a fake EAS unless given. */
   readonly eas?: EasSource;
+  /** The usage ports of «Сервіси», by Service name; none unless given. */
+  readonly usage?: Readonly<Record<string, UsagePort>>;
   /** Sees every answer before the test gets it, with the request it answers. */
   readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
 }
@@ -704,6 +707,7 @@ export function testApp({
   adminDist,
   github = createFakeGitHub(),
   eas = createFakeEas(),
+  usage = {},
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
@@ -737,6 +741,7 @@ export function testApp({
     github,
     eas,
     sentry,
+    usage,
     ciToken: TEST_CI_TOKEN,
     mediaBase: TEST_MEDIA_BASE,
     mediaStore,

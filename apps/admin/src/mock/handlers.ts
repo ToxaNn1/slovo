@@ -121,6 +121,8 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     list: servicesHandlerOf('list', fixtures.services.list),
     add: servicesHandlerOf('add', fixtures.services.add),
     editMoney: servicesHandlerOf('editMoney', fixtures.services.editMoney),
+    usage: servicesHandlerOf('usage', fixtures.services.usage),
+    refreshUsage: servicesHandlerOf('refreshUsage', fixtures.services.refreshUsage),
     usdRate: servicesHandlerOf('usdRate', fixtures.services.usdRate),
   };
   return [

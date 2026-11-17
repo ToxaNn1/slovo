@@ -23,6 +23,7 @@ import { createSentryReporter } from './sentry-reporter';
 import { createPostHogClient, unavailablePostHog } from './analytics/posthog-client';
 import { createNbuClient } from './services/nbu-client';
 import { startServer } from './server';
+import { createPostHogUsage, createSentryUsage } from './services/usage-sources';
 
 const config = readConfig(ServerConfigSchema, process.env);
 const logger = createLogger();
@@ -56,6 +57,16 @@ const app = createApp({
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
   sentry: sentryOf(config, systemClock),
+  // «Сервіси» reads usage with the keys Якість and the Аналітика already hold (ADR 0164).
+  usage: {
+    Sentry: createSentryUsage({
+      token: config.SENTRY_AUTH_TOKEN,
+      org: config.SENTRY_ORG,
+      clock: systemClock,
+      logger,
+    }),
+    PostHog: createPostHogUsage({ settings: config.posthog, logger }),
+  },
   ciToken: config.CI_HISTORY_TOKEN,
   mediaBase: config.mediaBase,
   // Unset in development, the Media Store's files stay in memory.

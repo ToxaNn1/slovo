@@ -24,6 +24,7 @@ import type {
   Quality,
   ServiceStore,
   ServiceMoneyBook,
+  ServiceUsage,
   Sync,
   UsdRates,
 } from '@slovo/server-core';
@@ -102,6 +103,7 @@ export function createApiHandler({
   served,
   services,
   serviceMoney,
+  serviceUsage,
   usdRates,
   sync,
 }: {
@@ -137,6 +139,8 @@ export function createApiHandler({
   services: ServiceStore;
   /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
   serviceMoney: ServiceMoneyBook;
+  /** The usage of the Services, read from their providers (ADR 0164). */
+  serviceUsage: ServiceUsage;
   /** The NBU rate «Сервіси» counts the money in hryvnias at (ADR 0164). */
   usdRates: UsdRates;
   sync: Sync;
@@ -157,7 +161,7 @@ export function createApiHandler({
         contentQueue,
         ownerChecks,
         adminAnalytics,
-        { ...quality, accounts, services, serviceMoney, usdRates },
+        { ...quality, accounts, services, serviceMoney, serviceUsage, usdRates },
       ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(editions, contentStore, mediaBase),

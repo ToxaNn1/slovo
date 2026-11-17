@@ -1,0 +1,105 @@
+import type { LimitUsage, ServiceUsage } from '@slovo/contracts/admin-api';
+
+import { formatMoment } from '../../format';
+import { Button } from '../ui/button';
+
+/** What a Service's usage read answered. */
+export type UsageAnswer = ServiceUsage['read'];
+
+/** The names of the limits and units the usage ports answer, as the owner reads them. */
+const WORDS: Readonly<Record<string, string>> = { errors: 'Помилки', events: 'Події' };
+const UNITS: Readonly<Record<string, string>> = { events: 'подій' };
+
+const labelOf = (name: string) => WORDS[name] ?? name;
+const number = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
+
+/** The limits a reading has a bar for: a Cron has none. */
+function limitsOf(read: UsageAnswer): readonly LimitUsage[] {
+  return read.state === 'read' && read.reading.kind !== 'cron' ? read.reading.usage : [];
+}
+
+/** One limit's bar, as full as the share of it used. */
+function Bar({ usage }: { readonly usage: LimitUsage }) {
+  const share = Math.min(1, usage.used / usage.limit);
+  return (
+    <div
+      role="meter"
+      aria-label={labelOf(usage.name)}
+      aria-valuemin={0}
+      aria-valuemax={usage.limit}
+      aria-valuenow={usage.used}
+      className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+    >
+      <div className="h-full rounded-full bg-ok" style={{ width: `${String(share * 100)}%` }} />
+    </div>
+  );
+}
+
+/**
+ * The usage on a block (ADR 0164): a bar per limit with its share, a mark when
+ * the reading is stale, or «не вдалося прочитати» while no read succeeded.
+ */
+export function BlockUsage({ id, read }: { readonly id: string; readonly read: UsageAnswer }) {
+  if (read.state === 'unavailable') {
+    return (
+      <span id={id} className="text-xs text-muted-foreground">
+        не вдалося прочитати
+      </span>
+    );
+  }
+  return (
+    <span id={id} className="flex w-full flex-col gap-1">
+      {limitsOf(read).map((usage) => (
+        <span key={usage.name} className="flex items-center gap-2">
+          <Bar usage={usage} />
+          <span className="flex-none text-[11px] tabular-nums text-muted-foreground">
+            {Math.round((usage.used / usage.limit) * 100)}%
+          </span>
+        </span>
+      ))}
+      {read.stale ? <span className="text-[11px] text-warn">застаріло</span> : null}
+    </span>
+  );
+}
+
+/**
+ * The usage in a Service's panel: each limit's numbers, the read time, the
+ * stale mark, and «Оновити», which reads the provider again.
+ */
+export function PanelUsage({
+  read,
+  refreshing,
+  onRefresh,
+}: {
+  readonly read: UsageAnswer;
+  readonly refreshing: boolean;
+  readonly onRefresh: () => void;
+}) {
+  return (
+    <section aria-label="Використання" className="flex flex-col gap-2 text-sm">
+      {read.state === 'unavailable' ? (
+        <p className="text-muted-foreground">Використання: не вдалося прочитати.</p>
+      ) : (
+        <>
+          {limitsOf(read).map((usage) => (
+            <div key={usage.name} className="flex flex-col gap-0.5">
+              <span className="text-muted-foreground">{labelOf(usage.name)}</span>
+              <span className="tabular-nums">
+                {`${number(usage.used)} з ${number(usage.limit)} ${UNITS[usage.unit] ?? usage.unit}`}
+              </span>
+            </div>
+          ))}
+          <p className="text-xs text-muted-foreground">
+            Прочитано {formatMoment(read.readAt)}
+            {read.stale ? ' · застаріло: останнє читання не вдалося' : ''}
+          </p>
+        </>
+      )}
+      <div>
+        <Button variant="secondary" disabled={refreshing} onClick={onRefresh}>
+          Оновити
+        </Button>
+      </div>
+    </section>
+  );
+}

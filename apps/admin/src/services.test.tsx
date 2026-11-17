@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 
 import { server } from './mock/server';
-import { SERVICES } from './mock/services-fixtures';
+import { SENTRY_USAGE, SERVICE_IDS, SERVICES } from './mock/services-fixtures';
 import { Admin } from './router';
 
 beforeEach(() => {
@@ -112,4 +112,71 @@ test('a phone gets a card list of the Services with the same panel', async () =>
 
   await user.click(cards.getByRole('button', { name: 'Railway' }));
   expect(await screen.findByRole('dialog', { name: 'Railway' })).toBeDefined();
+});
+
+test('the Sentry and PostHog blocks show a usage bar, PostHog’s marked stale', async () => {
+  render(<Admin />);
+  const blocks = await canvas();
+
+  const sentry = within(blocks.getByRole('button', { name: 'Sentry' }));
+  const bar = await sentry.findByRole('meter', { name: 'Помилки' });
+  expect(bar.getAttribute('aria-valuenow')).toBe('1200');
+  expect(bar.getAttribute('aria-valuemax')).toBe('5000');
+  expect(sentry.queryByText('застаріло')).toBeNull();
+
+  const posthog = within(blocks.getByRole('button', { name: 'PostHog' }));
+  expect((await posthog.findByRole('meter', { name: 'Події' })).getAttribute('aria-valuenow')).toBe(
+    '250000',
+  );
+  expect(posthog.getByText('застаріло')).toBeDefined();
+  expect(within(blocks.getByRole('button', { name: 'Neon' })).queryByRole('meter')).toBeNull();
+});
+
+test('a Service whose read failed says so on its block', async () => {
+  server.use(
+    http.get('*/admin/services/usage', () =>
+      HttpResponse.json({
+        usage: [{ serviceId: SERVICE_IDS.Sentry, read: { state: 'unavailable' } }],
+      }),
+    ),
+  );
+  render(<Admin />);
+  const blocks = await canvas();
+
+  const sentry = within(blocks.getByRole('button', { name: 'Sentry' }));
+  expect(await sentry.findByText('не вдалося прочитати')).toBeDefined();
+  expect(sentry.queryByRole('meter')).toBeNull();
+});
+
+test('the panel shows the usage numbers and the read time, and «Оновити» reads again', async () => {
+  let refreshed: unknown;
+  server.use(
+    http.post('*/admin/services/usage/refresh', async ({ request }) => {
+      refreshed = await request.json();
+      return HttpResponse.json({
+        usage: {
+          ...SENTRY_USAGE,
+          read: {
+            ...SENTRY_USAGE.read,
+            reading: {
+              kind: 'metered',
+              usage: [{ name: 'errors', unit: 'events', used: 1300, limit: 5000 }],
+            },
+          },
+        },
+      });
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click((await canvas()).getByRole('button', { name: 'Sentry' }));
+  const panel = within(await screen.findByRole('dialog', { name: 'Sentry' }));
+
+  expect(panel.getByText('1 200 з 5 000 подій')).toBeDefined();
+  expect(panel.getByText(/Прочитано 17 лист\. 2026 р\., 09:30/)).toBeDefined();
+
+  await user.click(panel.getByRole('button', { name: 'Оновити' }));
+
+  expect(refreshed).toEqual({ serviceId: SERVICE_IDS.Sentry });
+  expect(await panel.findByText('1 300 з 5 000 подій')).toBeDefined();
 });
