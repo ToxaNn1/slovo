@@ -1,5 +1,7 @@
 # OTA updates are signed and ship on the app's one channel
 
+**Amended by ADR 0167.** «One channel for the one app» no longer holds: the app has the Update channels `production` and `beta`, each bound to its store build profile, and the channel stays out of the fingerprinted app config.
+
 Until 0.9 every change to the app, JavaScript included, reached a reader only through a new native build (ADR 0004). ADR 0007 promised each Edition its own OTA update channel with staged rollout and left the how open. Spec #1293 wires `expo-updates` into the app: the app checks for an update at launch and runs the newest one it accepts. What the app accepts, which build an update may reach, how an update is published and who may publish one are decided here, since an update is code that runs on every reader's phone (security baseline of #1).
 
 **Every update is signed with SLOVO's code-signing key, and the app accepts only an update signed with it.** The public certificate lives in the repository, and the app config names it as the updates' code-signing certificate, so every build embeds it; the private key lives in the EAS environment and never in the repository (it is public, and gitleaks runs in CI). An unsigned update, one signed with another key or one whose signature doesn't check is refused and the app keeps running the code it has. Nobody who cannot sign can push code to readers, whatever they can push to EAS.

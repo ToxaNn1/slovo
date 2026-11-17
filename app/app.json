@@ -8,8 +8,10 @@
   "icon": "editions/uk/assets/icon.png",
   "splash": "editions/uk/decor/splash.json",
   "defaultEdition": "uk",
-  "updateChannel": "uk",
   "buildProfiles": {
-    "ios": { "development": "development-simulator", "release": "testflight" }
+    "ios": {
+      "development": "development-simulator",
+      "release": { "beta": "beta", "production": "production" }
+    }
   }
 }

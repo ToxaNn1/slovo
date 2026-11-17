@@ -35,7 +35,7 @@ A saved slice of an Edition's content snapshot, `editions/<edition>/seed-snapsho
 _Avoid_: Fixture database, sample content
 
 **Update channel**:
-An Edition's stream of signed OTA updates to the app's JavaScript, named after the Edition id and bound to its builds; an update reaches only the builds whose native code it was made for, and the owner publishes one deliberately, to a share of readers first (ADR 0062).
+One of the app's two streams of signed OTA updates to its JavaScript, `production` for readers and `beta` for testers, each bound to the store builds of its build profile; an update reaches only the builds whose native code it was made for, and the owner publishes one deliberately, to a share of readers first (ADR 0062, 0167).
 _Avoid_: Release, release channel, branch
 
 **Deployment**:

@@ -17,7 +17,7 @@ type UpdatesModule = typeof import('expo-updates');
  * The installed build and the update it runs, as `expo-application` and
  * `expo-updates` report them, or undefined while the installed binary lacks
  * the module that reports the version (a dev client built before the 0.9
- * batch). Both modules are required here and nowhere else: a static import
+ * batch). Both modules are required here (and `expo-updates` for the Update channel in `device-facts`) and nowhere else: a static import
  * of a module the binary lacks stops the app at start.
  */
 export function installedBuild(): InstalledBuild | undefined {

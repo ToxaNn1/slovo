@@ -10,17 +10,20 @@ import { edition, editionStrings } from '../edition/edition';
 
 /**
  * What the installed build and the update it runs report, set by each test,
- * and whether the binary has the modules that report them.
+ * and whether the binary has the modules that report them. The Update
+ * channel is read once, when first asked, so it stays `beta` here.
  */
 const mockBuild: {
   version: string | null;
   build: string | null;
   updateId: string | null;
+  channel: string | null;
   modules: boolean;
 } = {
   version: '0.9',
   build: '42',
   updateId: null,
+  channel: 'beta',
   modules: true,
 };
 // The binary has `expo-application` and `expo-updates` unless a test says not.
@@ -41,6 +44,9 @@ jest.mock('expo-application', () => ({
 jest.mock('expo-updates', () => ({
   get updateId() {
     return mockBuild.updateId;
+  },
+  get channel() {
+    return mockBuild.channel;
   },
 }));
 
@@ -90,6 +96,13 @@ describe('About', () => {
 
     expect(screen.getByText('Версія 0.9 · збірка 42')).toBeTruthy();
     expect(screen.getByText('Оновлення 0198e3a1-7c2b-7f00-9a4e-3b5d6c7e8f90')).toBeTruthy();
+  });
+
+  it('shows the Update channel the build listens to (ADR 0167)', async () => {
+    mockBuild.modules = true;
+    await renderAbout();
+
+    expect(screen.getByText('Канал оновлень beta')).toBeTruthy();
   });
 
   it('shows no update line when the app runs without updates', async () => {
