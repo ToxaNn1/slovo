@@ -3,18 +3,26 @@ import { useEffect, useId, useRef } from 'react';
 
 import { Button } from '../ui/button';
 import { ServiceMoneySection } from './service-money';
+import { PanelUsage, type UsageAnswer } from './usage';
 
 /**
  * The side panel of a Service: a native modal `<dialog>` at the right edge
  * (ADR 0160), so Esc and the back gesture close it and the page behind is
- * inert. It shows the Service's name and money; its usage and entries come
- * with their tickets.
+ * inert. It shows the Service's name, money, and usage with «Оновити»; its
+ * entries come with their ticket.
  */
 export function ServicePanel({
   service,
+  usage,
   onClose,
 }: {
   readonly service: Service;
+  /** The Service's usage and how to read it again, when it has a usage port. */
+  readonly usage?: {
+    readonly read: UsageAnswer;
+    readonly refreshing: boolean;
+    readonly onRefresh: () => void;
+  };
   readonly onClose: () => void;
 }) {
   const titleId = useId();
@@ -44,6 +52,7 @@ export function ServicePanel({
         </Button>
       </div>
       <ServiceMoneySection service={service} />
+      {usage === undefined ? null : <PanelUsage {...usage} />}
     </dialog>
   );
 }

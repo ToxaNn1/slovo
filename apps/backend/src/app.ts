@@ -6,6 +6,7 @@ import {
   createOwnerChecks,
   createAdminSignIn,
   createQuality,
+  createServiceUsage,
   createCollectionLinks,
   createAdminAnalytics,
   createCommunityCounters,
@@ -24,6 +25,7 @@ import {
   type PostHogPort,
   type Random,
   type SentryReader,
+  type UsagePort,
 } from '@slovo/server-core';
 import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
@@ -106,6 +108,8 @@ export interface AppDependencies {
   readonly trustedProxyHops: number;
   /** Where Якість reads Sentry's numbers. */
   readonly sentry: SentryReader;
+  /** Where «Сервіси» reads each Service's usage, by the Service's name (ADR 0164). */
+  readonly usage: Readonly<Record<string, UsagePort>>;
   /** The Bearer token CI pushes its history with (ADR 0096); unset refuses every push. */
   readonly ciToken: string | undefined;
   /** The URL root of the Media Store the snapshot and the Patch name (ADR 0099). */
@@ -175,6 +179,7 @@ export function createApp({
   trustedProxyHops,
   adminDist,
   sentry,
+  usage,
   ciToken,
   mediaBase,
   mediaStore,
@@ -279,6 +284,7 @@ export function createApp({
       clock,
       admin,
     }),
+    serviceUsage: createServiceUsage({ ports: usage, clock }),
     sync,
   });
 

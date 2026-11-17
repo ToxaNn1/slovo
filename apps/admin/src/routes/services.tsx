@@ -1,10 +1,10 @@
 import type { Service } from '@slovo/contracts/admin-api';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import { adminApi } from '../api';
-import { ServiceCards, ServicesCanvas } from '../components/services/canvas';
+import { ServiceCards, ServicesCanvas, type UsageById } from '../components/services/canvas';
 import { AddService, ServiceCostsHeader } from '../components/services/service-money';
 import { ServicePanel } from '../components/services/service-panel';
 import { useWide } from '../screen-width';
@@ -45,6 +45,7 @@ function OwnerServices() {
   });
   const list = services.data?.services;
   const open = list?.find((service) => service.id === openId);
+  const usage = useServiceUsage();
   return (
     <>
       {services.isError ? (
@@ -59,13 +60,14 @@ function OwnerServices() {
         </div>
       )}
       {list === undefined ? null : wide ? (
-        <ServicesCanvas services={list} onOpen={setOpen} />
+        <ServicesCanvas services={list} usage={usage.byId} onOpen={setOpen} />
       ) : (
-        <ServiceCards services={list} onOpen={setOpen} />
+        <ServiceCards services={list} usage={usage.byId} onOpen={setOpen} />
       )}
       {open === undefined ? null : (
         <ServicePanel
           service={open}
+          {...usage.panelOf(open)}
           onClose={() => {
             setOpenId(undefined);
           }}
@@ -73,4 +75,51 @@ function OwnerServices() {
       )}
     </>
   );
+}
+
+const USAGE_KEY = ['services', 'usage'];
+
+/**
+ * The Services' usage, read apart from the list so the canvas never waits for
+ * a provider, and «Оновити», which reads one Service's provider again and puts
+ * its answer in place.
+ */
+function useServiceUsage() {
+  const queryClient = useQueryClient();
+  const usage = useQuery({
+    queryKey: USAGE_KEY,
+    queryFn: () => adminApi.services.usage(),
+  });
+  const refresh = useMutation({
+    mutationFn: (serviceId: string) => adminApi.services.refreshUsage({ serviceId }),
+    onSuccess: ({ usage: fresh }) => {
+      queryClient.setQueryData(USAGE_KEY, (kept: typeof usage.data) => ({
+        usage: [
+          ...(kept?.usage ?? []).filter(({ serviceId }) => serviceId !== fresh.serviceId),
+          fresh,
+        ],
+      }));
+    },
+  });
+  const byId: UsageById = new Map(
+    (usage.data?.usage ?? []).map(({ serviceId, read }) => [serviceId, read]),
+  );
+  return {
+    byId,
+    /** The panel's usage of the Service, when it has one. */
+    panelOf(service: Service) {
+      const read = byId.get(service.id);
+      return read === undefined
+        ? {}
+        : {
+            usage: {
+              read,
+              refreshing: refresh.isPending,
+              onRefresh: () => {
+                refresh.mutate(service.id);
+              },
+            },
+          };
+    },
+  };
 }

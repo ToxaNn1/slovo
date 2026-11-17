@@ -170,3 +170,33 @@ export const ADDED_SERVICE = {
   position: { x: 340, y: 40 },
   links: [],
 } satisfies AdminApiOutputs['services']['add']['service'];
+/** Sentry's usage as its port read it, fresh. */
+export const SENTRY_USAGE = {
+  serviceId: SERVICE_IDS.Sentry,
+  read: {
+    state: 'read',
+    reading: {
+      kind: 'metered',
+      usage: [{ name: 'errors', unit: 'events', used: 1200, limit: 5000 }],
+    },
+    readAt: '2026-11-17T07:30:00.000Z',
+    stale: false,
+  },
+} satisfies AdminApiOutputs['services']['refreshUsage']['usage'];
+
+/** The usage the Sentry and PostHog ports read: Sentry fresh, PostHog's last read failed. */
+export const SERVICE_USAGE = [
+  SENTRY_USAGE,
+  {
+    serviceId: SERVICE_IDS.PostHog,
+    read: {
+      state: 'read',
+      reading: {
+        kind: 'metered',
+        usage: [{ name: 'events', unit: 'events', used: 250_000, limit: 1_000_000 }],
+      },
+      readAt: '2026-11-17T06:00:00.000Z',
+      stale: true,
+    },
+  },
+] satisfies AdminApiOutputs['services']['usage']['usage'];

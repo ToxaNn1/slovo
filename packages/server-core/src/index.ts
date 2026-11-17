@@ -165,3 +165,12 @@ export {
   type ServiceMoneyBook,
   type ServiceMoneyStore,
 } from './services/money';
+export {
+  createServiceUsage,
+  USAGE_FRESH_MS,
+  type LimitUsage,
+  type ServiceReading,
+  type ServiceUsage,
+  type UsagePort,
+  type UsageRead,
+} from './services/service-usage';

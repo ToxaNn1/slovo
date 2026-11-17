@@ -22,6 +22,7 @@ export {
   type ServiceCosts,
   type ServiceMoneyField,
 } from './api/services';
+export type { LimitUsage, ServiceReading, ServiceUsage } from './api/services';
 export {
   ADMIN_SESSION_COOKIE,
   ADMIN_WRITE_HEADER,

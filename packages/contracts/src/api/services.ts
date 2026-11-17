@@ -126,6 +126,49 @@ export const serviceMoneyContract = {
     .input(z.strictObject({ id: ServiceIdSchema, ...ServiceMoneyFields, reason: ReasonSchema }))
     .output(z.object({ service: ServiceSchema, changed: z.array(ServiceMoneyFieldSchema) })),
 };
+/** How much of one limit of its plan a Service used in the current period (ADR 0164). */
+export const LimitUsageSchema = z.object({
+  name: z.string().min(1),
+  unit: z.string().min(1),
+  used: z.number().min(0),
+  limit: z.number().positive(),
+});
+export type LimitUsage = z.infer<typeof LimitUsageSchema>;
+
+/** What a Service's provider answered, by the Service's kind. */
+export const ServiceReadingSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('metered'), usage: z.array(LimitUsageSchema) }),
+  z.object({
+    kind: z.literal('railway'),
+    state: z.enum(['online', 'offline']),
+    usage: z.array(LimitUsageSchema),
+  }),
+  z.object({
+    kind: z.literal('cron'),
+    lastRun: z.object({ at: z.iso.datetime(), succeeded: z.boolean() }).nullable(),
+    nextRunAt: z.iso.datetime().nullable(),
+  }),
+]);
+export type ServiceReading = z.infer<typeof ServiceReadingSchema>;
+
+/**
+ * A Service's usage, read from its provider's API and kept for an hour: the
+ * reading and its read time, `stale` when the latest read failed and this is
+ * the last good one, or `unavailable` while no read has succeeded.
+ */
+export const ServiceUsageSchema = z.object({
+  serviceId: ServiceIdSchema,
+  read: z.discriminatedUnion('state', [
+    z.object({
+      state: z.literal('read'),
+      reading: ServiceReadingSchema,
+      readAt: z.iso.datetime(),
+      stale: z.boolean(),
+    }),
+    z.object({ state: z.literal('unavailable') }),
+  ]),
+});
+export type ServiceUsage = z.infer<typeof ServiceUsageSchema>;
 
 /** The «Сервіси» procedures of the admin API: a Власник only (ADR 0164). */
 export const servicesContract = {
@@ -140,4 +183,26 @@ export const servicesContract = {
     .errors(ADMIN_ERRORS)
     .output(z.object({ services: z.array(ServiceSchema), costs: ServiceCostsSchema })),
   ...serviceMoneyContract,
+  usage: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/services/usage',
+      summary: 'The usage of every Service read from its provider',
+      description: 'A «Сервіси» procedure: a Власник only. Each reading is kept for an hour.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(z.object({ usage: z.array(ServiceUsageSchema) })),
+  refreshUsage: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/services/usage/refresh',
+      summary: "Reads one Service's usage from its provider now («Оновити»)",
+      description:
+        'A «Сервіси» procedure: a Власник only. NOT_FOUND for a Service without a usage read.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.strictObject({ serviceId: ServiceIdSchema }))
+    .output(z.object({ usage: ServiceUsageSchema })),
 };
