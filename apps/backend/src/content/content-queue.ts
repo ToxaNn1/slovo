@@ -465,15 +465,23 @@ export function createContentQueue({ database, clock }: { database: Database; cl
     }));
   }
 
-  /** The Entries the reports name, by `<Edition> <Entry id>`: one read per kind of Entry named. */
+  /**
+   * The Entries the rows name, as the content database keeps them now, by
+   * `<Edition> <Entry id>`: one read per kind of Entry named. An id the
+   * Edition has no record of is left out.
+   */
   async function entriesOf(rows: readonly { editionId: string; entryId: string }[]) {
     const found = new Map<
       string,
       { kind: EntryKindOfId; fields: Readonly<Record<string, unknown>>; retired: boolean }
     >();
     for (const kind of ENTRY_KINDS) {
-      const named = rows.filter(({ entryId }) => entryId.startsWith(ID_PREFIX[kind]));
-      if (named.length === 0) continue;
+      const named = new Map<string, string[]>();
+      for (const { editionId, entryId } of rows) {
+        if (!entryId.startsWith(ID_PREFIX[kind])) continue;
+        named.set(editionId, [...(named.get(editionId) ?? []), entryId]);
+      }
+      if (named.size === 0) continue;
       const table = TABLES[kind];
       const kept = await db
         .select({
@@ -485,8 +493,8 @@ export function createContentQueue({ database, clock }: { database: Database; cl
         .from(table)
         .where(
           or(
-            ...named.map(({ editionId, entryId }) =>
-              and(eq(table.editionId, editionId), eq(table.id, entryId)),
+            ...[...named].map(([editionId, ids]) =>
+              and(eq(table.editionId, editionId), inArray(table.id, ids)),
             ),
           ),
         );
@@ -525,7 +533,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
     });
   }
 
-  return { batches, review, rollback, flags, resolveFlag, reports, resolveReport };
+  return { batches, review, rollback, flags, resolveFlag, reports, resolveReport, entriesOf };
 }
 
 /** The name an Action log row's author is shown by. */

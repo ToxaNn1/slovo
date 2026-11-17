@@ -53,20 +53,23 @@ test("a Власник opens a reader's Account from the list and reads its reco
   expect(page.getByText('Входи: Код з листа, Google')).toBeDefined();
   const edition = within(page.getByRole('region', { name: 'Видання uk' }));
   const facts = (name: string) => within(edition.getByRole('region', { name })).getByRole('list');
-  expect(within(facts('Обране')).getByText(/w_a1/)).toBeDefined();
-  expect(within(facts('Добірки')).getByText('Для подорожі · 2 слова: w_a1, w_e5')).toBeDefined();
-  expect(within(facts('Приховані')).getByText(/w_c3/)).toBeDefined();
-  expect(within(facts('Знаю')).getByText(/w_b2/)).toBeDefined();
-  expect(within(facts('Не знаю')).getByText(/w_d4/)).toBeDefined();
+  expect(within(facts('Обране')).getByText('обруч')).toBeDefined();
+  expect(
+    within(facts('Добірки')).getByText('Для подорожі · 2 слова: обруч, w_e5 (немає в базі)'),
+  ).toBeDefined();
+  expect(within(facts('Приховані')).getByText('вир')).toBeDefined();
+  expect(within(facts('Знаю')).getByText('обрій')).toBeDefined();
+  expect(within(facts('Не знаю')).getByText('шпарка')).toBeDefined();
   const progress = within(facts('Прогрес'));
   // 15 + 5 XP; the 7 XP before the reset marker of «Скинути прогрес» count no more.
   expect(progress.getByText('XP: 20')).toBeDefined();
   expect(progress.getByText('Денна ціль: 25 слів')).toBeDefined();
   expect(progress.getByText('Заморозки використано: 1')).toBeDefined();
   expect(progress.getByText(/Перерва з 2026-11-05 · 3 дн\./)).toBeDefined();
-  expect(progress.getByText(/Відзнака streak-7 · 2026-11-02/)).toBeDefined();
-  expect(within(facts('Налаштування')).getByText('theme: "dark"')).toBeDefined();
-  expect(within(facts('Інші записи')).getByText('history: 1')).toBeDefined();
+  expect(await progress.findByText('Відзнака «Тиждень поспіль» · 2026-11-02')).toBeDefined();
+  expect(within(facts('Налаштування')).getByText('Тема: Темна')).toBeDefined();
+  expect(within(facts('Активність')).getByText('Переглянуті: 1 слово')).toBeDefined();
+  expect(edition.queryByRole('region', { name: 'Інші записи' })).toBeNull();
   expect(page.queryAllByRole('textbox')).toEqual([]);
   expect(page.getAllByRole('button').map((button) => button.textContent)).toEqual([
     'Видалити акаунт',
@@ -146,7 +149,10 @@ test('the Account page folds the XP log as the Core does: only the records after
   server.use(
     http.get('*/admin/accounts/:accountId', () =>
       HttpResponse.json({
-        account: { ...FIXTURES.getAccount.account, editions: [{ editionId: 'uk', records }] },
+        account: {
+          ...FIXTURES.getAccount.account,
+          editions: [{ editionId: 'uk', records, entries: [] }],
+        },
       }),
     ),
   );
@@ -159,4 +165,97 @@ test('the Account page folds the XP log as the Core does: only the records after
     'Заморозки використано: 1',
   ]);
   expect(edition.queryByRole('region', { name: 'Інші записи' })).toBeNull();
+});
+
+/** The Account's records in the UA Edition, every other part of the fixture kept. */
+function withRecords(records: readonly { key: string; value: unknown }[]) {
+  server.use(
+    http.get('*/admin/accounts/:accountId', () =>
+      HttpResponse.json({
+        account: {
+          ...FIXTURES.getAccount.account,
+          editions: [
+            {
+              editionId: 'uk',
+              records: records.map((record, index) => ({ ...record, changedAt: index + 1 })),
+              entries: [],
+            },
+          ],
+        },
+      }),
+    ),
+  );
+}
+
+/** The lines of a block of the UA Edition on the Account page. */
+const linesOf = (page: Awaited<ReturnType<typeof openFromList>>, name: string) =>
+  within(within(page.getByRole('region', { name: 'Видання uk' })).getByRole('region', { name }))
+    .getAllByRole('listitem')
+    .map((item) => item.textContent);
+
+test('the Account page names every setting and its value in Ukrainian, and one it does not know as it is kept', async () => {
+  backend();
+  withRecords([
+    { key: 'settings.theme', value: 'system' },
+    { key: 'settings.textSize', value: 'larger' },
+    { key: 'settings.fontSize', value: 'L' },
+    { key: 'settings.hideStreak', value: true },
+    { key: 'settings.selfCheck', value: false },
+    { key: 'settings.seasonalDecor', value: true },
+    { key: 'settings.narratorVoice', value: 'taras' },
+    { key: 'settings.rarityRange', value: { from: 1, to: 3 } },
+    { key: 'settings.readerName', value: 'Оля' },
+    { key: 'settings.theme2', value: 'dark' },
+    { key: 'settings.selfCheck', value: 'yes' },
+  ]);
+  const page = await openFromList();
+
+  await waitFor(() => {
+    expect(linesOf(page, 'Налаштування')).toContain('Голос диктора: Тарас');
+  });
+  expect(linesOf(page, 'Налаштування')).toEqual([
+    'Тема: Як у системі',
+    'Шрифт і розмір: Більший',
+    'Розмір шрифту: L',
+    'Без лічильників: увімкнено',
+    'Перевір себе: вимкнено',
+    'Сезонний декор: увімкнено',
+    'Голос диктора: Тарас',
+    'Рідкість: від 1 до 3',
+    'Ім’я: Оля',
+    'theme2: "dark"',
+    'selfCheck: "yes"',
+  ]);
+});
+
+test('the Account page names the synced kinds it knows, the Best results after the latest reset marker, and counts only the rest under «Інші записи»', async () => {
+  backend();
+  const day = (date: string) => ({ date, at: `${date}T10:00:00.000Z` });
+  withRecords([
+    { key: 'history.w_a1', value: { seenAt: '2026-11-01T10:00:00.000Z', wordOfTheDay: false } },
+    { key: 'history.w_b2', value: { seenAt: '2026-11-02T10:00:00.000Z', wordOfTheDay: true } },
+    { key: 'activeDays.2026-10-02', value: true },
+    { key: 'activeDays.2026-10-05', value: true },
+    { key: 'activeDays.2026-10-03', value: true },
+    { key: 'confirmed.w_a1', value: '2026-11-03T10:00:00.000Z' },
+    { key: 'correctionsWorkedThrough.c_a1', value: true },
+    { key: 'curatedCollections.opened.cc_a1', value: true },
+    { key: 'xp.r1', value: { kind: 'reset', ...day('2026-11-04') } },
+    { key: 'game.best.stress', value: 9 },
+    { key: 'game.best.guess-word~r1', value: 12 },
+    { key: 'game.best.no-such-mode~r1', value: 3 },
+    { key: 'mix.categories.nature', value: true },
+    { key: 'mix.categories.city', value: false },
+  ]);
+  const page = await openFromList();
+
+  expect(linesOf(page, 'Активність')).toEqual([
+    'Переглянуті: 2 слова',
+    'Активні дні до 1.0: 3, останній 2026-10-05',
+    'Підтверджені: 1 слово',
+    'Розібрані виправлення: 1',
+    'Відкриті добірки редакції: 1',
+  ]);
+  expect(linesOf(page, 'Найкраще в грі')).toEqual(['Гра «Вгадай слово»: 12', 'no-such-mode: 3']);
+  expect(linesOf(page, 'Інші записи')).toEqual(['mix: 2']);
 });

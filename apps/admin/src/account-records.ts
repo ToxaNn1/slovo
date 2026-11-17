@@ -1,5 +1,17 @@
-import type { AccountRow } from '@slovo/contracts/admin-api';
+import {
+  FontSizeSchema,
+  RarityRangeSchema,
+  TextSizeSchema,
+  ThemeSchema,
+  type FontSize,
+  type TextSize,
+  type Theme,
+} from '@slovo/contracts';
+import type { AccountDetail, AccountRow, AdminApiOutputs } from '@slovo/contracts/admin-api';
 import { z } from 'zod';
+
+import { titleOf } from './action-texts';
+import { SWITCH_TEXTS } from './switches/switch-texts';
 
 type SignInMethod = AccountRow['signInMethods'][number];
 
@@ -18,6 +30,16 @@ export function signInMethodsText(methods: readonly SignInMethod[]): string {
 interface SyncedRecord {
   readonly key: string;
   readonly value: unknown;
+}
+
+/**
+ * What names the ids an Edition's records keep: the Entries they name, as
+ * the content database keeps them now, and the Edition card's Badges and
+ * Narrator Voices, none while the card is loading.
+ */
+export interface RecordNames {
+  readonly entries: AccountDetail['editions'][number]['entries'];
+  readonly card: Pick<AdminApiOutputs['editionCard'], 'badges' | 'narratorVoices'> | undefined;
 }
 
 /** One block of an Edition's records on the Account page, each line a fact. */
@@ -61,6 +83,8 @@ interface Progress {
   readonly freezes: number;
   readonly breaks: readonly string[];
   readonly badges: readonly string[];
+  /** The id of the latest reset marker, which a Best result after it carries. */
+  readonly markerId: string | undefined;
 }
 
 /**
@@ -69,7 +93,10 @@ interface Progress {
  * after its instant count, whatever order the server gives them in. The
  * Daily Goal in force is the last `word-goal` by date, then by instant.
  */
-function progressOf(log: readonly { id: string; record: XpRecord }[]): Progress {
+function progressOf(
+  log: readonly { id: string; record: XpRecord }[],
+  badgeName: (id: string) => string,
+): Progress {
   let marker: { id: string; at: string } | undefined;
   for (const { id, record } of log) {
     if (record.kind !== 'reset') continue;
@@ -101,7 +128,7 @@ function progressOf(log: readonly { id: string; record: XpRecord }[]): Progress 
         breaks.push(`Перерва з ${record.date} · ${String(record.days)} дн.`);
         break;
       case 'badge':
-        badges.push(`Відзнака ${record.badge} · ${record.date}`);
+        badges.push(`Відзнака «${badgeName(record.badge)}» · ${record.date}`);
         break;
       default:
         // The other kinds are kept by the log and show nothing on this page.
@@ -111,8 +138,84 @@ function progressOf(log: readonly { id: string; record: XpRecord }[]): Progress 
   goals.sort((one, other) =>
     one.date === other.date ? one.at.localeCompare(other.at) : one.date.localeCompare(other.date),
   );
-  return { xp, goal: goals.at(-1)?.goal, freezes, breaks, badges };
+  return { xp, goal: goals.at(-1)?.goal, freezes, breaks, badges, markerId: marker?.id };
 }
+
+const THEMES: Readonly<Record<Theme, string>> = {
+  system: 'Як у системі',
+  light: 'Світла',
+  dark: 'Темна',
+};
+const TEXT_SIZES: Readonly<Record<TextSize, string>> = {
+  system: 'Як у системі',
+  larger: 'Більший',
+  largest: 'Найбільший',
+};
+const FONT_SIZES: Readonly<Record<FontSize, string>> = { S: 'S', M: 'M', L: 'L', XL: 'XL' };
+
+/** A setting's value read as one of its choices, `undefined` when it is none of them. */
+const choiceOf =
+  <T extends string>(schema: z.ZodType<T>, labels: Readonly<Record<T, string>>) =>
+  (value: unknown) => {
+    const read = schema.safeParse(value).data;
+    return read === undefined ? undefined : labels[read];
+  };
+
+/** A switch's value as the Settings words it, `undefined` when it is not one. */
+const toggle = (value: unknown) =>
+  typeof value === 'boolean' ? (value ? 'увімкнено' : 'вимкнено') : undefined;
+
+/**
+ * The synced settings of the Core's `settingsRecords` by the key after
+ * `settings.`: the name the app's Settings give it, and its value in words.
+ */
+function settingsOf(voiceName: (id: string) => string) {
+  const settings: Readonly<
+    Record<string, readonly [string, (value: unknown) => string | undefined]>
+  > = {
+    theme: ['Тема', choiceOf(ThemeSchema, THEMES)],
+    textSize: ['Шрифт і розмір', choiceOf(TextSizeSchema, TEXT_SIZES)],
+    fontSize: ['Розмір шрифту', choiceOf(FontSizeSchema, FONT_SIZES)],
+    hideStreak: ['Без лічильників', toggle],
+    selfCheck: ['Перевір себе', toggle],
+    seasonalDecor: ['Сезонний декор', toggle],
+    narratorVoice: [
+      'Голос диктора',
+      (value) => (typeof value === 'string' ? voiceName(value) : undefined),
+    ],
+    rarityRange: [
+      'Рідкість',
+      (value) => {
+        const read = RarityRangeSchema.safeParse(value).data;
+        if (read === undefined) return undefined;
+        return read.from === read.to
+          ? `лише ${String(read.to)}`
+          : `від ${String(read.from)} до ${String(read.to)}`;
+      },
+    ],
+    readerName: ['Ім’я', (value) => (typeof value === 'string' ? value : undefined)],
+  };
+  /** A setting as one line: its name and value, or its key and value as kept when it reads as none. */
+  return (id: string, value: unknown) => {
+    const known = Object.hasOwn(settings, id) ? settings[id] : undefined;
+    const text = known?.[1](value);
+    return known === undefined || text === undefined
+      ? `${id}: ${JSON.stringify(value)}`
+      : `${known[0]}: ${text}`;
+  };
+}
+
+/** The names of the Game Modes by their id, from their Feature Switches: `guess-word` is `gameGuessWord`. */
+const GAME_MODE_NAMES = new Map(
+  Object.entries(SWITCH_TEXTS).map(([feature, { name }]) => [feature, name] as const),
+);
+const gameModeName = (modeId: string) =>
+  GAME_MODE_NAMES.get(
+    `game${modeId
+      .split('-')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join('')}`,
+  ) ?? modeId;
 
 /** A kind of record that keeps an instant under an Entry's id, adding the id to the list. */
 const instantsInto = (ids: string[]) => (id: string, value: unknown) => {
@@ -130,13 +233,26 @@ function idAfter(key: string, prefix: string): string | undefined {
 
 /**
  * An Edition's records as the Account page reads them (ADR 0162): Favorites,
- * Collections, hidden Entries, «Знаю» and «Не знаю» marks, the progress the
- * XP log keeps (XP after the latest reset marker, the Daily Goal in force,
- * freezes used, Breaks and Badges) and settings. A record of no known kind,
- * or one that does not read as its kind, is counted under «Інші записи» by
- * the first part of its key, so nothing of the Account is left unseen.
+ * Collections, hidden Entries and «Знаю» and «Не знаю» marks by the title of
+ * their Entry, the progress the XP log keeps (XP after the latest reset
+ * marker, the Daily Goal in force, freezes used, Breaks and Badges by name),
+ * settings in words, the counts of History, the Active Days kept from before
+ * 1.0, confirmed Entries, Corrections worked through and Curated Collections
+ * opened, and the Best result of each Game Mode after the latest reset
+ * marker. A record of no known kind, or one that does not read as its kind,
+ * is counted under «Інші записи» by the first part of its key, so nothing of
+ * the Account is left unseen.
  */
-export function recordsBlocks(records: readonly SyncedRecord[]): readonly RecordsBlock[] {
+export function recordsBlocks(
+  records: readonly SyncedRecord[],
+  { entries, card }: RecordNames,
+): readonly RecordsBlock[] {
+  const titles = new Map(entries.map(({ id, kind, fields }) => [id, titleOf(kind, fields) ?? id]));
+  const entryName = (id: string) => titles.get(id) ?? `${id} (немає в базі)`;
+  const nameIn = (named: readonly { id: string; name: string }[] | undefined) => (id: string) =>
+    named?.find((each) => each.id === id)?.name ?? id;
+  const settingText = settingsOf(nameIn(card?.narratorVoices));
+
   const favorites: string[] = [];
   const collections = new Map<string, { name: string; entries: string[] }>();
   const collectionEntries: { collectionId: string; entryId: string }[] = [];
@@ -146,10 +262,21 @@ export function recordsBlocks(records: readonly SyncedRecord[]): readonly Record
   const settings: string[] = [];
   const others = new Map<string, number>();
   const xpLog: { id: string; record: XpRecord }[] = [];
+  const history: string[] = [];
+  const activeDays: string[] = [];
+  const confirmed: string[] = [];
+  const workedThrough: string[] = [];
+  const curatedOpened: string[] = [];
+  const bests: { id: string; result: number }[] = [];
 
   const other = (key: string) => {
     const kind = key.split('.')[0] ?? key;
     others.set(kind, (others.get(kind) ?? 0) + 1);
+  };
+  /** A kind of record counted by its ids, whatever it keeps under them. */
+  const countedInto = (ids: string[]) => (id: string) => {
+    ids.push(id);
+    return true;
   };
 
   // Each kind of record, by its prefix: what it adds when its value reads as its kind.
@@ -195,7 +322,20 @@ export function recordsBlocks(records: readonly SyncedRecord[]): readonly Record
     [
       'settings.',
       (id, value) => {
-        settings.push(`${id}: ${JSON.stringify(value)}`);
+        settings.push(settingText(id, value));
+        return true;
+      },
+    ],
+    ['history.', countedInto(history)],
+    ['activeDays.', countedInto(activeDays)],
+    ['confirmed.', instantsInto(confirmed)],
+    ['correctionsWorkedThrough.', countedInto(workedThrough)],
+    ['curatedCollections.opened.', countedInto(curatedOpened)],
+    [
+      'game.best.',
+      (id, value) => {
+        if (typeof value !== 'number') return false;
+        bests.push({ id, result: value });
         return true;
       },
     ],
@@ -212,7 +352,7 @@ export function recordsBlocks(records: readonly SyncedRecord[]): readonly Record
     else collection.entries.push(entryId);
   }
 
-  const { xp, goal, freezes, breaks, badges } = progressOf(xpLog);
+  const { xp, goal, freezes, breaks, badges, markerId } = progressOf(xpLog, nameIn(card?.badges));
   const progress = [
     `XP: ${String(xp)}`,
     ...(goal === undefined ? [] : [`Денна ціль: ${goal === null ? 'Без цілі' : words(goal)}`]),
@@ -220,19 +360,41 @@ export function recordsBlocks(records: readonly SyncedRecord[]): readonly Record
     ...breaks,
     ...badges,
   ];
+  const lastDay = activeDays.toSorted().at(-1);
+  const activity = [
+    ...(history.length === 0 ? [] : [`Переглянуті: ${words(history.length)}`]),
+    ...(lastDay === undefined
+      ? []
+      : [`Активні дні до 1.0: ${String(activeDays.length)}, останній ${lastDay}`]),
+    ...(confirmed.length === 0 ? [] : [`Підтверджені: ${words(confirmed.length)}`]),
+    ...(workedThrough.length === 0
+      ? []
+      : [`Розібрані виправлення: ${String(workedThrough.length)}`]),
+    ...(curatedOpened.length === 0
+      ? []
+      : [`Відкриті добірки редакції: ${String(curatedOpened.length)}`]),
+  ];
+  // A Best result counts when it carries the latest reset marker: one from before it is no more.
+  const bestLines = bests.flatMap(({ id, result }) => {
+    const [modeId = id, after] = id.split('~');
+    return after === markerId ? [`${gameModeName(modeId)}: ${String(result)}`] : [];
+  });
+  const named = (ids: readonly string[]) => ids.map(entryName);
   const blocks: RecordsBlock[] = [
-    { title: 'Обране', lines: favorites },
+    { title: 'Обране', lines: named(favorites) },
     {
       title: 'Добірки',
       lines: [...collections.values()].map(
-        ({ name, entries }) =>
-          `${name} · ${words(entries.length)}${entries.length === 0 ? '' : `: ${entries.join(', ')}`}`,
+        ({ name, entries: inIt }) =>
+          `${name} · ${words(inIt.length)}${inIt.length === 0 ? '' : `: ${named(inIt).join(', ')}`}`,
       ),
     },
-    { title: 'Приховані', lines: hidden },
-    { title: 'Знаю', lines: known },
-    { title: 'Не знаю', lines: unknown },
+    { title: 'Приховані', lines: named(hidden) },
+    { title: 'Знаю', lines: named(known) },
+    { title: 'Не знаю', lines: named(unknown) },
     { title: 'Прогрес', lines: progress },
+    { title: 'Найкраще в грі', lines: bestLines },
+    { title: 'Активність', lines: activity },
     { title: 'Налаштування', lines: settings },
     {
       title: 'Інші записи',

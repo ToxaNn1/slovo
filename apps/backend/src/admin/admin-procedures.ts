@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 
 import type { Illustrations } from '../content/illustrations';
 import { implement } from '@orpc/server';
+import { ID_PREFIX } from '@slovo/contracts';
 import { apiContract } from '@slovo/contracts/api';
 import {
   ALERT_THRESHOLD_KEYS,
@@ -71,6 +72,16 @@ export function sessionTokenOf(headers: Headers): string | undefined {
 function sameToken(given: string, expected: string): boolean {
   const digest = (token: string) => createHash('sha256').update(token).digest();
   return timingSafeEqual(digest(given), digest(expected));
+}
+
+/** The kinds of Sync record the Account page names by their Entry (ADR 0162); each key ends in the Entry's id. */
+const ENTRY_NAMING_KINDS = ['favorites.', 'hidden.', 'knowledge.', 'collectionEntries.'];
+
+/** The Entry id a Sync record's key names, when it is of a kind the Account page names by its Entry. */
+function entryIdsOf(key: string): readonly string[] {
+  if (!ENTRY_NAMING_KINDS.some((kind) => key.startsWith(kind))) return [];
+  const id = key.slice(key.lastIndexOf('.') + 1);
+  return Object.values(ID_PREFIX).some((prefix) => id.startsWith(prefix)) ? [id] : [];
 }
 
 /** A Sentry number as the contract carries it: its freshness as an ISO time. */
@@ -477,20 +488,32 @@ export function adminProcedures(
       const found = await accounts.get(input.accountId);
       if (found === undefined) return { account: null };
       const { account, signInMethods, editions } = found;
+      const entries = await contentQueue.entriesOf(
+        editions.flatMap(({ editionId, records }) =>
+          records.flatMap(({ key }) => entryIdsOf(key).map((entryId) => ({ editionId, entryId }))),
+        ),
+      );
       return {
         account: {
           id: account.id,
           email: account.email,
           createdAt: account.createdAt.toISOString(),
           signInMethods: [...signInMethods],
-          editions: editions.map(({ editionId, records }) => ({
-            editionId,
-            records: records.map(({ key, value, changedAt }) => ({
-              key,
-              value,
-              changedAt: changedAt.getTime(),
-            })),
-          })),
+          editions: editions.map(({ editionId, records }) => {
+            const named = new Set(records.flatMap(({ key }) => entryIdsOf(key)));
+            return {
+              editionId,
+              records: records.map(({ key, value, changedAt }) => ({
+                key,
+                value,
+                changedAt: changedAt.getTime(),
+              })),
+              entries: [...named].flatMap((id) => {
+                const entry = entries.get(`${editionId} ${id}`);
+                return entry === undefined ? [] : [{ id, ...entry }];
+              }),
+            };
+          }),
         },
       };
     }),
@@ -645,6 +668,8 @@ export function adminProcedures(
         levels,
         questionnaire,
         onboardingNotificationTimes,
+        badges,
+        narratorVoices,
       } = edition.config;
       return {
         id,
@@ -655,6 +680,11 @@ export function adminProcedures(
         levels,
         questionnaire,
         onboardingNotificationTimes,
+        badges: badges.map(({ id: badgeId, name }) => ({ id: badgeId, name })),
+        narratorVoices: narratorVoices.voices.map(({ id: voiceId, name }) => ({
+          id: voiceId,
+          name,
+        })),
       };
     }),
 

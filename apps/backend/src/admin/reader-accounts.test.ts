@@ -1,18 +1,28 @@
 import { randomUUID } from 'node:crypto';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { ACCOUNTS_PAGE_SIZE } from '@slovo/contracts/admin-api';
 
-import { adminHeaders, passTime, signedInAdmin, testApp } from '../test-support';
+import { createDatabase, type Database } from '../database/database';
+import {
+  adminHeaders,
+  importedDatabases,
+  passTime,
+  signedInAdmin,
+  silentLogger,
+  testApp,
+} from '../test-support';
 
 const newEmail = () => `reader-${randomUUID()}@example.com`;
 /** A part of an email no other test's Account carries. */
 const newTag = () => `t${randomUUID().slice(0, 8)}`;
 
+const importedDatabase = importedDatabases();
+
 /** A backend whose admin is on, with a signed-in Власник and a way to sign readers in. */
-async function ownerOn() {
-  const backend = testApp();
+async function ownerOn(database?: Database) {
+  const backend = testApp(database === undefined ? {} : { database });
   const owner = await signedInAdmin(backend, 'owner');
   /** A device signed in to the email's Account. */
   async function signInDevice(email: string) {
@@ -157,10 +167,61 @@ describe('a reader Account in Безпека', () => {
                 changedAt: at + 1,
               },
             ],
+            entries: [],
           },
         ],
       },
     });
+  });
+
+  it('opens an Account with the Entries its records name, as the content database keeps them now, and no others', async () => {
+    const own = await importedDatabase();
+    onTestFinished(() => own.drop());
+    const database = createDatabase(own.url, silentLogger);
+    onTestFinished(() => database.close());
+    const backend = await ownerOn(database);
+    const { words } = await backend.client.content.snapshot({ editionId: 'uk' });
+    const [favorite, collected, seen] = words;
+    if (favorite === undefined || collected === undefined || seen === undefined) {
+      throw new Error('no Words');
+    }
+    const email = newEmail();
+    const device = await backend.signInDevice(email);
+    const at = Date.parse('2026-01-01T00:00:00.000Z');
+    await device.sync.push({
+      editionId: 'uk',
+      changes: [
+        { key: `favorites.${favorite.id}`, value: '2026-11-01T10:00:00.000Z', changedAt: at },
+        {
+          key: `collectionEntries.c1.${collected.id}`,
+          value: '2026-11-01T10:00:00.000Z',
+          changedAt: at,
+        },
+        { key: 'knowledge.w_nosuchword', value: { mark: 'known' }, changedAt: at },
+        // History is counted on the page, never named, so its Entries are not read.
+        {
+          key: `history.${seen.id}`,
+          value: { seenAt: '2026-11-01T10:00:00.000Z', wordOfTheDay: false },
+          changedAt: at,
+        },
+      ],
+    });
+
+    const opened = await backend.owner.client.admin.getAccount({
+      accountId: await backend.idOf(email),
+    });
+
+    const entry = ({ id, ...fields }: typeof favorite) => ({
+      id,
+      kind: 'word',
+      fields: expect.objectContaining(fields) as unknown,
+      retired: false,
+    });
+    expect(opened.account?.editions).toEqual([expect.objectContaining({ editionId: 'uk' })]);
+    expect(opened.account?.editions[0]?.entries).toEqual(
+      expect.arrayContaining([entry(favorite), entry(collected)]),
+    );
+    expect(opened.account?.editions[0]?.entries).toHaveLength(2);
   });
 
   it('opens an Account with no Sync records with no Editions, an unknown one as none, and logs neither', async () => {
