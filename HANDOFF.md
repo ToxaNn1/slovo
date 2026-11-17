@@ -12,3 +12,4 @@ STATUS: RUNNING
 - 2026-11-17T10:06:59Z #1956 merged (4f4efb71). #1952 (3315d709) and #1954 (234d1fc5) done, merger running. #1955 and #1957 started in /tmp/wt/<n> from 4f4efb71. Next: #1953 after #1952 lands; #1958 after #1955; #1959 last. PR notes in /tmp/claude-0/notes.md.
 - 2026-11-17T10:04:35Z safety net takeover (last commit 2026-11-17T09:45:01Z)
 - 2026-11-17T10:07:23Z original coordinator still alive (5 subagents running); a takeover session, if any, must stop and leave the wave to it.
+WAITING until 2026-11-17T10:52:46Z: merger (#1952, #1954) and implementers #1955, #1957
