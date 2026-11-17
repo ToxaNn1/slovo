@@ -28,6 +28,7 @@ export {
   type AnalyticsCount,
   type AnalyticsOverview,
   type CountersSummary,
+  type ReaderCounts,
   type VariantResults,
   type AdminEdition,
   type Development,

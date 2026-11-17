@@ -22,6 +22,7 @@ export {
   type AnalyticsOverview,
   type CountersSummary,
   type PostHogRead,
+  type ReaderCounts,
 } from './analytics/admin-analytics';
 export { createSourceCache, type Fetched, type SourceCache } from './analytics/source-cache';
 export { createQueryQueue, type QueryQueue, type Wait } from './analytics/query-queue';
