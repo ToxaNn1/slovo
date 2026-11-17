@@ -191,6 +191,9 @@ importers:
       dependency-cruiser:
         specifier: ^18.7.2
         version: 18.7.2
+      istanbul-lib-coverage:
+        specifier: ^3.2.2
+        version: 3.2.2
       knip:
         specifier: ^6.44.1
         version: 6.44.1

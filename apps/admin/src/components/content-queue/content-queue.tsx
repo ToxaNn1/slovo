@@ -1,10 +1,12 @@
 import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
 import { adminApi } from '../../api';
 import { cn } from '../../lib/utils';
 import { ConfirmDialog, type PendingWrite } from '../confirm-dialog';
+import { CONTENT_KINDS, categoryOptionsOf } from '../content-editor/kinds';
+import { readableField } from '../content-review/readable';
 import { useAdminWrite } from '../admin-write';
 import { Button } from '../ui/button';
 import { formatMoment } from '../../format';
@@ -372,31 +374,100 @@ function Reports({ reports, confirm }: { reports: readonly Report[]; confirm: Co
       ) : null}
       <ul aria-label="Звіти">
         {reports.map((report) => (
-          <li key={report.id} className={itemClass}>
-            <strong className="w-[150px] font-semibold">{report.entryId}</strong>
-            <span className="flex min-w-[200px] grow flex-col gap-0.5">
-              <span>{report.comment}</span>
-              <span className="text-xs text-subtle">
-                {MISTAKE_TYPES[report.type]} · {formatMoment(report.receivedAt)} · версія застосунку{' '}
-                {report.appVersion} · версія контенту {report.contentVersion}
-              </span>
-            </span>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                confirm({
-                  title: `Позначити помилку в ${report.entryId} вирішеною? Звіт буде видалено.`,
-                  confirm: 'Вирішено',
-                  run: (reason) => resolve.mutateAsync({ id: report.id, reason }),
-                });
-              }}
-            >
-              Вирішено
-            </Button>
-          </li>
+          <ReportRow
+            key={report.id}
+            report={report}
+            resolve={() => {
+              confirm({
+                title: `Позначити помилку в ${report.entryId} вирішеною? Звіт буде видалено.`,
+                confirm: 'Вирішено',
+                run: (reason) => resolve.mutateAsync({ id: report.id, reason }),
+              });
+            }}
+          />
         ))}
       </ul>
     </Block>
+  );
+}
+
+/**
+ * One Mistake Report: what the reader said, who sent it (the email of a
+ * signed-in reader, to thank them) and, opened, the whole Entry it names as
+ * the content database keeps it now (ADR 0159).
+ */
+function ReportRow({ report, resolve }: { report: Report; resolve: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className="border-t border-border">
+      <div className={cn(itemClass, 'border-t-0')}>
+        <strong className="w-[150px] font-semibold">{report.entryId}</strong>
+        <span className="flex min-w-[200px] grow flex-col gap-0.5">
+          <span>{report.comment}</span>
+          <span className="text-xs text-subtle">
+            {MISTAKE_TYPES[report.type]} · {formatMoment(report.receivedAt)} · версія застосунку{' '}
+            {report.appVersion} · версія контенту {report.contentVersion} ·{' '}
+            {report.accountEmail === null ? (
+              'анонімно'
+            ) : (
+              <a className="underline" href={`mailto:${report.accountEmail}`}>
+                {report.accountEmail}
+              </a>
+            )}
+          </span>
+        </span>
+        <Button
+          size="sm"
+          variant="ghost"
+          aria-expanded={open}
+          aria-label={`${open ? 'Сховати' : 'Показати'} запис ${report.entryId}`}
+          onClick={() => {
+            setOpen(!open);
+          }}
+        >
+          {open ? 'Сховати запис' : 'Показати запис'}
+        </Button>
+        <Button size="sm" variant="secondary" onClick={resolve}>
+          Вирішено
+        </Button>
+      </div>
+      {open ? <ReportedEntry report={report} /> : null}
+    </li>
+  );
+}
+
+/** The Entry a report names, every field the content database keeps of it, as «Перегляд» reads them. */
+function ReportedEntry({ report }: { report: Report }) {
+  const card = useQuery({
+    queryKey: ['edition-card', report.editionId],
+    queryFn: () => adminApi.editionCard({ editionId: report.editionId }),
+  });
+  const { entry } = report;
+  if (entry === null) {
+    return (
+      <p className={cn(noticeClass, 'text-muted-foreground')}>Запису з таким id у виданні немає.</p>
+    );
+  }
+  const categories = categoryOptionsOf(card.data);
+  const fields = CONTENT_KINDS.find((editor) => editor.kind === entry.kind)?.fields ?? [];
+  return (
+    <article
+      aria-label={`Запис ${report.entryId}`}
+      className="mx-[18px] mb-3 flex flex-col gap-2 rounded-xl bg-sunk p-4"
+    >
+      {entry.retired ? <p className="text-xs text-destructive">Знято з використання</p> : null}
+      <dl className="grid grid-cols-[minmax(120px,max-content)_1fr] gap-x-5 gap-y-2 text-[13px]">
+        {fields.map((field) => {
+          const text = readableField(field, entry.fields, categories);
+          if (text === undefined) return null;
+          return (
+            <div key={field.name} className="contents">
+              <dt className="text-muted-foreground">{field.label}</dt>
+              <dd className="whitespace-pre-wrap">{text}</dd>
+            </div>
+          );
+        })}
+      </dl>
+    </article>
   );
 }

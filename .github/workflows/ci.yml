@@ -155,9 +155,11 @@ jobs:
           restore-keys: jest-${{ runner.os }}-${{ matrix.part.shard }}-
       - if: ${{ env.RUN == 'true' }}
         run: ${{ matrix.part.run }}
-      # In CI each test run writes a JUnit report and a coverage summary to its
-      # package's coverage/ folder (packages/config/test-reports.js); the part
-      # keeps them as an artifact for the test history.
+      # In CI each test run writes a JUnit report, a coverage summary and its
+      # coverage map to its package's coverage/ folder
+      # (packages/config/test-reports.js); the part keeps them as an artifact
+      # for the test history, which merges a sharded package's maps into one
+      # number. The summary below is this part's alone.
       - name: Publish the coverage to the job summary
         id: reports
         if: ${{ !cancelled() && env.RUN == 'true' }}
@@ -284,7 +286,7 @@ jobs:
     if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: [checks]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     continue-on-error: true
     permissions:
       contents: read
@@ -293,6 +295,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The script merges the parts' coverage maps with istanbul-lib-coverage.
+      - uses: ./.github/actions/setup
       - name: Download the test reports
         env:
           GH_TOKEN: ${{ github.token }}

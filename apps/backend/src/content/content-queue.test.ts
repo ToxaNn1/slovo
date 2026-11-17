@@ -318,6 +318,66 @@ describe('the Content queue', () => {
     expect(actions.find(({ what }) => what === 'report.resolve')?.reason).toBe('Виправлено');
   });
 
+  it('shows each Mistake Report with its Entry and the email of a signed-in reader (ADR 0159)', async () => {
+    const { client, clientOf, mailer, owner } = await queueBackend();
+    const [word] = (await snapshotOf(client)).words;
+    if (word === undefined) throw new Error('no Word');
+    const email = 'reader-queue@example.com';
+    await client.account.requestCode({ email, editionId: 'uk' });
+    const { token } = await client.account.verifyCode({ email, code: mailer.codeSentTo(email) });
+    const reader = clientOf(token);
+    const report = {
+      editionId: 'uk',
+      type: 'typo',
+      comment: '',
+      appVersion: '1.2.0',
+      contentVersion: 1,
+    } as const;
+    await reader.reports.send({ ...report, entryId: word.id });
+    await client.reports.send({ ...report, entryId: 'w_nosuchword' });
+
+    const { reports } = await owner.admin.contentQueue.reports({ editionId: 'uk' });
+
+    const { id: _id, ...fields } = word;
+    expect(reports).toEqual([
+      expect.objectContaining({
+        entryId: word.id,
+        accountEmail: email,
+        entry: { kind: 'word', fields: expect.objectContaining(fields) as unknown, retired: false },
+      }),
+      expect.objectContaining({ entryId: 'w_nosuchword', accountEmail: null, entry: null }),
+    ]);
+
+    await reader.account.delete();
+    const after = await owner.admin.contentQueue.reports({ editionId: 'uk' });
+    expect(after.reports.map(({ accountEmail }) => accountEmail)).toEqual([null, null]);
+  });
+
+  it('keeps no Account in the Action log row of a resolved Mistake Report', async () => {
+    const { client, clientOf, mailer, owner } = await queueBackend();
+    const email = 'reader-resolved@example.com';
+    await client.account.requestCode({ email, editionId: 'uk' });
+    const { token } = await client.account.verifyCode({ email, code: mailer.codeSentTo(email) });
+    await clientOf(token).reports.send({
+      editionId: 'uk',
+      entryId: 'w_009orq',
+      type: 'typo',
+      comment: '',
+      appVersion: '1.2.0',
+      contentVersion: 1,
+    });
+    const [report] = (await owner.admin.contentQueue.reports({})).reports;
+    if (report === undefined) throw new Error('no report');
+
+    await owner.admin.contentQueue.resolveReport({ id: report.id, reason: 'Виправлено' });
+
+    const { actions } = await owner.admin.actions({ editionId: 'uk' });
+    const row = actions.find(({ what }) => what === 'report.resolve');
+    expect(row?.before).toMatchObject({ entryId: 'w_009orq' });
+    expect(row?.before).not.toHaveProperty('accountId');
+    expect(JSON.stringify(row)).not.toContain(email);
+  });
+
   it('lets an Адмін roll back, and refuses an Агент token, no session and no reason', async () => {
     const { client, agent, adminUser, clientWith } = await queueBackend();
     const { batchId } = await agentBatch(client, agent);

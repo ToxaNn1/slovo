@@ -1,14 +1,20 @@
 import type { CounterStore } from '@slovo/server-core';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, sql } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
-import { communityCounters, favoritesAdds, questionnaireCounters } from '../database/schema';
+import {
+  communityCounters,
+  contentWords,
+  favoritesAdds,
+  questionnaireCounters,
+} from '../database/schema';
 
 /**
  * The Community Counters of every Edition and Entry, kept in the
  * `community_counters` table, and their Favorites adds of each ISO week, in
  * `favorites_adds`, and the count of each questionnaire answer, in
- * `questionnaire_counters`.
+ * `questionnaire_counters`. The top Words read their Lemma from
+ * `content_words`.
  */
 export function createCounterStore({ db }: Database): CounterStore {
   return {
@@ -99,6 +105,39 @@ export function createCounterStore({ db }: Database): CounterStore {
         .from(communityCounters)
         .where(inArray(editionId, [...editionIds]));
       return row ?? { known: 0, unknown: 0, saved: 0 };
+    },
+
+    async topWords(editionIds, limit) {
+      if (editionIds.length === 0) return { known: [], unknown: [], saved: [] };
+      const lemma = sql<string>`${contentWords.fields}->>'lemma'`;
+      const topOf = async (mark: 'known' | 'unknown' | 'saved') => {
+        const counted = communityCounters[mark];
+        const count = sql<number>`sum(${counted})::integer`;
+        return (
+          db
+            .select({ entryId: communityCounters.entryId, lemma, count })
+            .from(communityCounters)
+            // Only a Word has a row in content_words, so an Entry of another kind drops out.
+            .innerJoin(
+              contentWords,
+              and(
+                eq(contentWords.editionId, communityCounters.editionId),
+                eq(contentWords.id, communityCounters.entryId),
+              ),
+            )
+            .where(and(inArray(communityCounters.editionId, [...editionIds]), gt(counted, 0)))
+            .groupBy(communityCounters.entryId, lemma)
+            // The "C" collation compares code points, whatever the database's locale.
+            .orderBy(desc(count), asc(sql`${communityCounters.entryId} collate "C"`))
+            .limit(limit)
+        );
+      };
+      const [known, unknown, saved] = await Promise.all([
+        topOf('known'),
+        topOf('unknown'),
+        topOf('saved'),
+      ]);
+      return { known, unknown, saved };
     },
 
     async answers(editionIds) {

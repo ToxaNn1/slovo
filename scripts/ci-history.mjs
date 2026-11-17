@@ -2,7 +2,8 @@
 /**
  * Pushes this CI run on `main` to the backend's history for Якість (ADR 0096):
  * the tests and failed tests of every JUnit report, the coverage per package
- * of every coverage summary, and how long each finished job took.
+ * of its coverage maps merged, so a sharded run's parts make one number, and
+ * how long each finished job took.
  *
  *   node scripts/ci-history.mjs <folder of the downloaded test reports> [--dry-run]
  *
@@ -13,6 +14,8 @@
 import { readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
+
+import libCoverage from 'istanbul-lib-coverage';
 
 /** Every file under the folder whose name is `name`. */
 function filesNamed(folder, name) {
@@ -67,21 +70,24 @@ export function readReports(folder) {
     tests += report.tests;
     failedTests.push(...report.failed);
   }
-  const sums = new Map();
-  for (const path of filesNamed(folder, 'coverage-summary.json')) {
-    const { total } = JSON.parse(readFileSync(path, 'utf8'));
+  // A sharded run leaves one coverage map per part; Istanbul merges the maps
+  // of a package and runner before any count, as Jest merges its workers', so
+  // a file two parts load counts once.
+  const merged = new Map();
+  for (const path of filesNamed(folder, 'coverage-final.json')) {
     const key = whereOf(folder, path);
-    const sum = sums.get(key) ?? { lines: [0, 0], branches: [0, 0] };
-    sum.lines[0] += total.lines.covered;
-    sum.lines[1] += total.lines.total;
-    sum.branches[0] += total.branches.covered;
-    sum.branches[1] += total.branches.total;
-    sums.set(key, sum);
+    const map = merged.get(key) ?? libCoverage.createCoverageMap({});
+    map.merge(JSON.parse(readFileSync(path, 'utf8')));
+    merged.set(key, map);
   }
-  const pct = ([covered, all]) => (all === 0 ? 100 : Math.round((covered / all) * 10000) / 100);
-  const coverage = [...sums]
+  const pct = ({ covered, total }) =>
+    total === 0 ? 100 : Math.round((covered / total) * 10000) / 100;
+  const coverage = [...merged]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, sum]) => ({ package: key, lines: pct(sum.lines), branches: pct(sum.branches) }));
+    .map(([key, map]) => {
+      const { lines, branches } = map.getCoverageSummary();
+      return { package: key, lines: pct(lines), branches: pct(branches) };
+    });
   return { tests, failedTests: [...new Set(failedTests)].slice(0, 1000), coverage };
 }
 

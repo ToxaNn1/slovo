@@ -160,12 +160,15 @@ export function createShell(
         : over(ports, 'Could not open Sync', async (opened) =>
             openSync({ ...opened, account: await account.opened() }),
           ),
-    // Each report carries the app version the build declares and the content version of the Language Pack.
+    // Each report carries the app version the build declares and the content version of the Language Pack,
+    // and goes out with the Session while the reader is signed in (ADR 0159); an Account that failed to
+    // open leaves the reports anonymous.
     mistakeReports: over(ports, 'Could not open Mistake Reports', async (opened) =>
       openMistakeReports({
         ...opened,
         appVersion: deviceFacts.appVersion,
         contentVersion: (await languagePack.opened()).contentVersion,
+        account: await account?.opened().catch(() => undefined),
       }),
     ),
     counterReads: over(ports, 'Could not open the Community Counters', openCounterReads),

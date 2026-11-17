@@ -14775,6 +14775,166 @@
                         "names"
                       ],
                       "additionalProperties": false
+                    },
+                    "questionnaire": {
+                      "type": "object",
+                      "properties": {
+                        "level": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "rarityCeiling": {
+                                    "enum": [
+                                      1,
+                                      2,
+                                      3,
+                                      4,
+                                      5
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "rarityCeiling"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "rarityTest": {
+                                    "const": true
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "rarityTest"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "why": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                              },
+                              "label": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "kindWeights": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "enum": [
+                                    "correction",
+                                    "idiom",
+                                    "synonymRow",
+                                    "tip"
+                                  ]
+                                },
+                                "additionalProperties": {
+                                  "enum": [
+                                    "less",
+                                    "normal",
+                                    "more"
+                                  ],
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "kindWeights"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "selfRating": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                              },
+                              "label": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "offerRarityTest": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "offerRarityTest"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "level",
+                        "why",
+                        "selfRating"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "onboardingNotificationTimes": {
+                      "type": "object",
+                      "properties": {
+                        "morning": {
+                          "type": "string",
+                          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                        },
+                        "midday": {
+                          "type": "string",
+                          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                        },
+                        "evening": {
+                          "type": "string",
+                          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                        }
+                      },
+                      "required": [
+                        "morning",
+                        "midday",
+                        "evening"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -14783,7 +14943,9 @@
                     "locale",
                     "categories",
                     "correctionCategories",
-                    "levels"
+                    "levels",
+                    "questionnaire",
+                    "onboardingNotificationTimes"
                   ]
                 }
               }
@@ -15898,6 +16060,88 @@
                       "minimum": 0,
                       "maximum": 9007199254740991
                     },
+                    "top": {
+                      "type": "object",
+                      "properties": {
+                        "known": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "entryId": {
+                                "type": "string"
+                              },
+                              "lemma": {
+                                "type": "string"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "entryId",
+                              "lemma",
+                              "count"
+                            ]
+                          }
+                        },
+                        "unknown": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "entryId": {
+                                "type": "string"
+                              },
+                              "lemma": {
+                                "type": "string"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "entryId",
+                              "lemma",
+                              "count"
+                            ]
+                          }
+                        },
+                        "saved": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "entryId": {
+                                "type": "string"
+                              },
+                              "lemma": {
+                                "type": "string"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "entryId",
+                              "lemma",
+                              "count"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "known",
+                        "unknown",
+                        "saved"
+                      ]
+                    },
                     "answers": {
                       "type": "array",
                       "items": {
@@ -15927,6 +16171,7 @@
                     "known",
                     "unknown",
                     "saved",
+                    "top",
                     "answers"
                   ]
                 }
@@ -23439,6 +23684,53 @@
                           },
                           "receivedAt": {
                             "type": "string"
+                          },
+                          "entry": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "enum": [
+                                      "word",
+                                      "correction",
+                                      "idiom",
+                                      "synonymRow",
+                                      "tip"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "fields": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {}
+                                  },
+                                  "retired": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "fields",
+                                  "retired"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "accountEmail": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           }
                         },
                         "required": [
@@ -23449,7 +23741,9 @@
                           "comment",
                           "appVersion",
                           "contentVersion",
-                          "receivedAt"
+                          "receivedAt",
+                          "entry",
+                          "accountEmail"
                         ]
                       }
                     }
@@ -32464,7 +32758,7 @@
       "post": {
         "operationId": "reports.send",
         "summary": "Report a mistake in an Entry",
-        "description": "The backend checks the report's shape, not whether its Entry is in a pack, and keeps it with its time of arrival only: no Account, no device id, no IP address (ADR 0056). A comment has at most 500 characters once trimmed and is empty when there is none; type other needs one.",
+        "description": "The backend checks the report's shape, not whether its Entry is in a pack, and keeps it with its time of arrival and, from a signed-in device, the Account of its Session: no device id, no IP address (ADR 0056, 0159). Without a Session, or with one that is not on, the report is anonymous and still taken. A comment has at most 500 characters once trimmed and is empty when there is none; type other needs one.",
         "tags": [
           "reports"
         ],

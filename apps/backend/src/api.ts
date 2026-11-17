@@ -151,7 +151,7 @@ export function createApiHandler({
       content: contentProcedures(editions, contentStore, mediaBase),
       counters: countersProcedures(communityCounters),
       edition: editionProcedures(editions, clock),
-      reports: reportsProcedures(mistakeReports),
+      reports: reportsProcedures(mistakeReports, accounts),
       sync: syncProcedures(sync, accounts),
     });
   return new OpenAPIHandler(router, {

@@ -102,6 +102,39 @@ test('a Mistake Report reads its type and versions; «Вирішено» resolve
   ]);
 });
 
+test('a Mistake Report opens the whole Entry it names and links the email of a signed-in reader', async () => {
+  const user = userEvent.setup();
+  render(<Admin />);
+  const reports = within(await screen.findByRole('region', { name: 'Помилки в записах' }));
+  const report = within(await reports.findByRole('listitem'));
+
+  const email = report.getByRole('link', { name: 'reader@example.com' });
+  expect(email.getAttribute('href')).toBe('mailto:reader@example.com');
+  expect(report.queryByText('Лінія, де небо ніби сходиться з землею.')).toBeNull();
+  await user.click(report.getByRole('button', { name: 'Показати запис w_b2' }));
+
+  const entry = within(report.getByRole('article', { name: 'Запис w_b2' }));
+  expect(entry.getByText('Лема')).toBeDefined();
+  expect(entry.getByText('Лінія, де небо ніби сходиться з землею.')).toBeDefined();
+});
+
+test('an anonymous report names no reader; one whose Entry is gone says so', async () => {
+  server.use(
+    http.get('*/admin/content-queue/reports', () =>
+      HttpResponse.json({ reports: [{ ...REPORT, entry: null, accountEmail: null }] }),
+    ),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  const reports = within(await screen.findByRole('region', { name: 'Помилки в записах' }));
+  const report = within(await reports.findByRole('listitem'));
+
+  expect(report.getByText(/анонімно/)).toBeDefined();
+  expect(report.queryByRole('link')).toBeNull();
+  await user.click(report.getByRole('button', { name: 'Показати запис w_b2' }));
+  expect(report.getByText('Запису з таким id у виданні немає.')).toBeDefined();
+});
+
 test('an empty queue reads «Усе перевірено»', async () => {
   server.use(
     http.get('*/admin/content-queue/batches', () => HttpResponse.json({ batches: [] })),

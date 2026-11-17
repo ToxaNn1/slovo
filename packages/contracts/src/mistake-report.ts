@@ -13,8 +13,8 @@ export const MistakeTypeSchema = z.enum(['typo', 'stress', 'definition', 'other'
 export type MistakeType = z.output<typeof MistakeTypeSchema>;
 
 /**
- * A Mistake Report as the app sends it (ADR 0056). It carries no Account and
- * no device id: the body has no field for either.
+ * A Mistake Report as the app sends it (ADR 0056). Its body names no Account
+ * and no device id; a signed-in device sends its Session beside it (ADR 0159).
  */
 export const MistakeReportSchema = z
   .strictObject({

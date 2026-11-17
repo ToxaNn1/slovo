@@ -5,6 +5,7 @@ import { createFileRoute, useSearch } from '@tanstack/react-router';
 import { adminApi } from '../api';
 import { analyticsQuery } from '../queries';
 import { BarList } from '../components/bar-list';
+import { CommunityCounters } from '../components/counters';
 import { VariantResult } from '../components/variant-result';
 import { DEFAULT_PERIOD, periodDays } from '../filters';
 
@@ -26,10 +27,16 @@ const shortDay = (day: string) => `${day.slice(8, 10)}.${day.slice(5, 7)}`;
 const duration = (seconds: number) =>
   `${String(Math.floor(seconds / 60))} хв ${String(seconds % 60)} с`;
 
+/** The ids of the Editions read: the one chosen, or every Edition. */
+async function editionIdsOf(edition: string | undefined): Promise<string[]> {
+  return edition === undefined
+    ? (await adminApi.editions()).editions.map(({ id }) => id)
+    : [edition];
+}
+
 /** The A/B Feature Switches of the Editions read: those with a Rule of Variants. */
 async function variantFeatures(edition: string | undefined): Promise<string[]> {
-  const editionIds =
-    edition === undefined ? (await adminApi.editions()).editions.map(({ id }) => id) : [edition];
+  const editionIds = await editionIdsOf(edition);
   const switches = await Promise.all(
     editionIds.map((editionId) => adminApi.switches({ editionId })),
   );
@@ -52,6 +59,14 @@ function Analytics() {
   const counters = useQuery({
     queryKey: ['counters', editionId],
     queryFn: () => adminApi.counters({ editionId }),
+  });
+  // The Editions' questionnaire options name the counted answers.
+  const cards = useQuery({
+    queryKey: ['editionCards', search.edition],
+    queryFn: async () =>
+      Promise.all(
+        (await editionIdsOf(search.edition)).map((id) => adminApi.editionCard({ editionId: id })),
+      ),
   });
   const features = useQuery({
     queryKey: ['variantFeatures', search.edition],
@@ -84,19 +99,7 @@ function Analytics() {
         </div>
       )}
       {counters.data !== undefined && (
-        <div className="flex flex-col gap-3 rounded-2xl bg-surface px-[18px] py-4 shadow-panel">
-          <h2 className="font-display text-[13px] font-medium">Лічильники</h2>
-          <ul aria-label="Лічильники" className="flex flex-col gap-1.5 text-sm">
-            <li>Знаю: {counters.data.known}</li>
-            <li>Не знаю: {counters.data.unknown}</li>
-            <li>Збережено: {counters.data.saved}</li>
-            {counters.data.answers.map(({ question, answer, count }) => (
-              <li key={`${question}-${answer}`}>
-                {question} · {answer}: {count}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <CommunityCounters counters={counters.data} cards={cards.data ?? []} />
       )}
       <div className="flex flex-col gap-3">
         <h2 className="font-display text-[15px] font-medium">Варіанти</h2>

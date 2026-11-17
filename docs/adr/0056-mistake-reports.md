@@ -2,7 +2,7 @@
 
 Until 0.8.14 a reader who spotted a wrong Stress or a typo in a Definition couldn't say so, and the mistake stayed until the owner happened to find it. Spec #886 adds the Mistake Report («Повідомлення про помилку»): a reader reports a mistake from an Entry's card, anonymously, and the owner works through the reports with a backend script. The decisions come from the owner's grilling of 2026-10-25 and 2026-10-26.
 
-**Amended by ADR 0075 and 0088.** The reports the owner still has to check are part of the Content queue in the Owner admin, with Resolve there (ADR 0088); the two scripts below stay for a shell. The texts address the reader with «ти» (ADR 0075).
+**Amended by ADR 0075, 0088 and 0159.** A signed-in reader's report names their Account, and the Content queue shows it with its Entry (ADR 0159). The reports the owner still has to check are part of the Content queue in the Owner admin, with Resolve there (ADR 0088); the two scripts below stay for a shell. The texts address the reader with «ти» (ADR 0075).
 
 **Feature Switch.** `mistakeReports` is required of every Edition and on in the UA Edition. While it is off in effect the card menu has no «Повідомити про помилку» and nothing is sent; reports already queued stay until it is on again. The backend answers an Edition with the switch off as one it doesn't find (`NOT_FOUND`), as content does (ADR 0090). A remote Rule turns it on or off (ADR 0089).
 
@@ -14,7 +14,7 @@ Until 0.8.14 a reader who spotted a wrong Stress or a typo in a Definition could
 
 **The request.** `POST /v1/reports` is a procedure of the API contract like the others (ADR 0031), so the contract only grows and the committed description changes with it (`pnpm describe:api`). Its body carries the Edition, the Entry id, the type, the comment (trimmed, at most 500 characters, empty when there is none; non-empty for `other`), the app version (ADR 0044) and the content version of the open Language Pack. The backend checks the shape, not whether the Entry is in a pack, and answers `202` with no body; a body it refuses answers `400`.
 
-**Anonymous.** A report carries no Account and no device id: the request sends no Session even when the reader is signed in, and the body has no field for either. The backend keeps the report with its time of arrival and nothing else; it never stores the IP address. The limit is 10 reports a day per IP, a window of the existing rate limits, keyed by the HMAC-SHA256 like them, so the `rate_limits` table names no IP (ADR 0030); a request over it answers `TOO_MANY_REQUESTS` (429) with `Retry-After`.
+**Anonymous** (superseded for a signed-in reader by ADR 0159). A report carries no Account and no device id: the request sends no Session even when the reader is signed in, and the body has no field for either. The backend keeps the report with its time of arrival and nothing else; it never stores the IP address. The limit is 10 reports a day per IP, a window of the existing rate limits, keyed by the HMAC-SHA256 like them, so the `rate_limits` table names no IP (ADR 0030); a request over it answers `TOO_MANY_REQUESTS` (429) with `Retry-After`.
 
 **The address is not Edition-scoped.** Sync and content live under `/v1/editions/{edition}/…`; `/v1/reports` is the owner's choice of 2026-10-26 and carries the Edition in its body. A report is a one-way message to the owner, not a resource of an Edition a reader reads back, and the counters' addresses follow the same pattern (ADR 0060). The backend keeps reports per Edition like all its data (ADR 0030).
 

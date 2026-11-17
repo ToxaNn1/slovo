@@ -125,6 +125,8 @@ export interface FakeBackend {
   readonly reports: {
     /** The reports the backend took, in order. */
     readonly received: readonly MistakeReport[];
+    /** The Session token each report taken came with, in the same order; none for an anonymous one. */
+    readonly sessions: readonly (string | undefined)[];
   };
   /**
    * The Collection Link procedures (ADR 0058): a link gets the next id,
@@ -218,6 +220,7 @@ export function createFakeBackend({
   let sequence = 0;
   // Mistake Reports, Collection Links, content, counters, switches.
   const received: MistakeReport[] = [];
+  const reportSessions: (string | undefined)[] = [];
   const made: CollectionLink[] = [];
   const linksById = new Map<string, CollectionLink>();
   const patchesAsked: FakePatchAsk[] = [];
@@ -398,6 +401,7 @@ export function createFakeBackend({
       async send({ input, context }) {
         await arrive('reports.send', context);
         received.push(input);
+        reportSessions.push(context.headers.get('authorization')?.replace(/^Bearer /, ''));
       },
     },
     collectionLinks: {
@@ -539,7 +543,7 @@ export function createFakeBackend({
       },
     },
     sync: { records },
-    reports: { received },
+    reports: { received, sessions: reportSessions },
     collectionLinks: { made },
     content: {
       patchesAsked,

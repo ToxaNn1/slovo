@@ -1,9 +1,17 @@
 import { randomInt } from 'node:crypto';
 
 import { POSTHOG_FRESH_FOR_MS } from '@slovo/server-core';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 
-import { passTime, signedInAdmin, testApp, testEditions } from '../test-support';
+import { createDatabase } from '../database/database';
+import {
+  importedDatabases,
+  passTime,
+  signedInAdmin,
+  silentLogger,
+  testApp,
+  testEditions,
+} from '../test-support';
 
 /** An Edition id no other test of the file uses, since they share a database. */
 const newEditionId = () => `an${randomInt(2 ** 40).toString(36)}`;
@@ -189,6 +197,9 @@ describe('no Аналітика read', () => {
       'answers',
       'question',
       'answer',
+      'top',
+      'entryId',
+      'lemma',
     ]);
     expect(keysOf(answers).filter((key) => !allowed.has(key))).toEqual([]);
     const people = stringsOf(answers).filter((text) => /@|^[0-9a-f-]{32,}$|^ins_/i.test(text));
@@ -222,10 +233,53 @@ describe('the Counters read', () => {
       known: 2,
       unknown: 1,
       saved: 1,
+      // These Entries are in no content database, so no Word of them is named.
+      top: { known: [], unknown: [], saved: [] },
       answers: [{ question: 'level', answer: 'only-starting', count: 1 }],
     });
     const all = await client.admin.counters({ editionId: 'all' });
     expect(all).toMatchObject({ known: 2, unknown: 1, saved: 2 });
     expect(all.answers).toEqual([{ question: 'level', answer: 'only-starting', count: 2 }]);
+  });
+});
+
+const importedDatabase = importedDatabases();
+
+describe('the top Words of the Counters', () => {
+  it('names the Words most marked «Не знаю», «Знаю» and kept in Favorites by their Lemma, the most first', async () => {
+    const own = await importedDatabase();
+    onTestFinished(() => own.drop());
+    const database = createDatabase(own.url, silentLogger);
+    onTestFinished(() => database.close());
+    const app = testApp({ database });
+    await signedInAdmin(app, 'owner');
+    const { client: admin } = await signedInAdmin(app, 'admin');
+    const words = (await app.client.content.snapshot({ editionId: 'uk' })).words;
+    const [one, two, three] = words;
+    if (one === undefined || two === undefined || three === undefined) {
+      throw new Error('too few Words');
+    }
+    const event = (entryId: string, change: { known?: 1; unknown?: 1; saved?: 1 }) =>
+      ({ entryId, known: 0, unknown: 0, saved: 0, ...change }) as const;
+    // Each send stands for one reader; an Idiom is counted but is no Word.
+    for (const events of [
+      [event(one.id, { unknown: 1 }), event(two.id, { unknown: 1, saved: 1 })],
+      [event(two.id, { unknown: 1 }), event(three.id, { known: 1 })],
+      [event(two.id, { unknown: 1 }), event('i_notaword', { unknown: 1 })],
+    ]) {
+      await app.client.counters.send({ editionId: 'uk', events });
+    }
+
+    const { top } = await admin.admin.counters({ editionId: 'uk' });
+
+    expect(top).toEqual({
+      unknown: [
+        { entryId: two.id, lemma: two.lemma, count: 3 },
+        { entryId: one.id, lemma: one.lemma, count: 1 },
+      ],
+      known: [{ entryId: three.id, lemma: three.lemma, count: 1 }],
+      saved: [{ entryId: two.id, lemma: two.lemma, count: 1 }],
+    });
+    expect((await admin.admin.counters({ editionId: 'all' })).top).toEqual(top);
   });
 });
