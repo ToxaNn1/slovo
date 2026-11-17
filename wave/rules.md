@@ -1,0 +1,13 @@
+# Wave rules for every implementer (spec #1961 release channels + staging)
+
+- Follow `CLAUDE.md` and `docs/agents/ticket-brief.md` (skip its cloud/status-commit parts: you report in your final reply). Read the spec `/tmp/claude-0/1961.md` (sections Implementation Decisions, Testing Decisions) and your ticket `/tmp/claude-0/<n>.md`; do not call GitHub.
+- Work only in your worktree `/tmp/wt/<n>`. First `pnpm install --frozen-lockfile --offline | tail -2`. Test first with Skill `mattpocock-skills:tdd` if it exists, else red-then-green by hand, through the spec's seams. Inject time and randomness.
+- Commit with `/tmp/claude-0/gc.sh -m "<msg>"` only (never plain git commit, never type or print an email). Conventional Commits, types feat/fix/docs/chore/test/refactor, scopes from `commitlint.config.js`. No Co-Authored-By, no AI mention, never the word «claude» in messages. No push, no `&`/`nohup`, never `eas build` or `eas update`, no Railway/Neon/Cloudflare/App Store API calls.
+- `export DATABASE_URL=postgres://slovo:slovo@localhost:5432/slovo` before backend tests. A backend test failing only with Postgres «permission denied to terminate process» is flake: rerun once.
+- Output through `tail -30` / `--output-logs=errors-only`. Checks for affected packages only: `pnpm turbo run lint typecheck test --filter=<pkg> --output-logs=errors-only`; never full `pnpm test`.
+- Generated files (migrations `meta/`, `v1.openapi.json`, `pnpm-lock.yaml`, `routeTree.gen.ts`) only through their scripts; never hand-edit or print them. No new dependencies unless unavoidable: then say so.
+- Reserved for this wave: ADR 0167–0170 (#1962 → 0167, #1963 → 0168, #1964 amends 0167 or takes 0169, #1965 → 0170), migration 0034 only if unavoidable. The ticket texts say 0166–0169/0033: ignore those numbers.
+- Cost-first (owner rule): the Staging Deployment must sleep — no Cron services, no health check that wakes the database, no scheduled workflow (`schedule:`), nothing that keeps Neon awake. Write requests × bytes × frequency for anything you add in your report.
+- No Ukrainian outside UI strings and Edition content. Use glossary terms exactly (Update channel, Deployment, Staging Deployment, Rule, Rollout share, update group).
+- Before DONE: `git merge feat/1961-release-channels` (integration tip, local branch in /home/user/slovo) into your branch, rerun affected checks, commit.
+- Final reply ≤ 10 lines, first line `DONE #<n>` / `STUCK #<n>` / `FAILED #<n>`: branch, last commit, checks run, owner questions with your safe default, the handbook page change in one Ukrainian sentence, owner steps (Ukrainian) if any, cost notes. Longer notes go to `/tmp/claude-0/report-<n>.md`.
