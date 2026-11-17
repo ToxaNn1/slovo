@@ -1,11 +1,12 @@
 import {
   ACCOUNTS_PAGE_SIZE,
   AccessRefusalSchema,
+  ACTION_PAGE_SIZE,
   type AccountRow,
   type AdminApiOutputs,
   type AlertThresholdKey,
 } from '@slovo/contracts/admin-api';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
 import { useState, type ReactNode, type SubmitEvent } from 'react';
 import type { z } from 'zod';
@@ -545,9 +546,14 @@ function ThresholdForm({
 
 function ActionLog() {
   const { edition } = useSearch({ from: '__root__' });
+  // The page belongs to the Edition it was chosen under: another Edition starts on page 1.
+  const [chosen, setChosen] = useState({ edition, page: 1 });
+  const page = chosen.edition === edition ? chosen.page : 1;
   const actions = useQuery({
-    queryKey: ['actions', edition],
-    queryFn: () => adminApi.actions(edition === undefined ? {} : { editionId: edition }),
+    queryKey: ['actions', edition, page],
+    queryFn: () =>
+      adminApi.actions(edition === undefined ? { page } : { editionId: edition, page }),
+    placeholderData: keepPreviousData,
     retry: false,
   });
   return (
@@ -581,6 +587,17 @@ function ActionLog() {
           </tbody>
         </table>
       </div>
+      {actions.data !== undefined && (
+        <Pager
+          label="Сторінки журналу"
+          page={page}
+          pageSize={ACTION_PAGE_SIZE}
+          total={actions.data.total}
+          onPage={(next) => {
+            setChosen({ edition, page: next });
+          }}
+        />
+      )}
     </Block>
   );
 }

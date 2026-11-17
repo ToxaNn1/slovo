@@ -44,6 +44,7 @@ export {
   CiRunSchema,
   ACCOUNTS_PAGE_SIZE,
   CONTENT_PAGE_SIZE,
+  ACTION_PAGE_SIZE,
   type AccountRow,
   PERIOD_DAYS,
   type AdminPeriod,
