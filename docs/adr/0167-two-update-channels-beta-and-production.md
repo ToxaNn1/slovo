@@ -14,6 +14,16 @@ Owner decision of 2026-11-17 (spec #1961). ADR 0062 gives the app one Update cha
 
 **Testing.** Vitest: each store profile in `eas.json` is bound to its channel and the development one to none; the app config refuses a release with no or an unknown channel and gives `beta`, `production`, the development profile and Metro the same JSON config. Jest: About shows the channel. Whether a build listens to its channel is the owner's check on the first store builds (ADR 0004).
 
+## Amendment: publishing to a channel and promoting beta to production (#1964)
+
+The OTA workflow (`.github/workflows/ota-update.yml`, still started by hand only, with no push trigger and no schedule, ADR 0062) takes the action (`publish`, `widen` or `promote`), the Update channel, the Rollout share, an update group and the Deployment address a new update is built against, empty meaning the production Deployment's (`EXPO_PUBLIC_SLOVO_API_URL` of the EAS `production` environment). Before anything is published, `apps/mobile/ota-plan.ts` checks every input and refuses an unknown action or channel, a bad Rollout share or update group, and any `production` run, a promotion included, whose address is not the production Deployment's.
+
+**A tested `beta` update reaches readers by promotion.** `promote` republishes a given `beta` update group to `production` at a Rollout share (`eas update:republish --destination-channel production`): the same bundle, signed again, as a new update group on `production` that the run prints and a later `widen` raises. Nothing is rebuilt, so readers get exactly what the testers tried.
+
+**An update for the Staging Deployment never reaches readers.** A `beta` update built against any address but the production Deployment's carries that address and no `EXPO_PUBLIC_POSTHOG_KEY` (ADR 0168), and its message ends with `[built against <address>]`; a promotion reads the source group's message and refuses one with that mark, or one whose message it cannot read.
+
+**Testing.** Vitest drives `otaPlan` (`apps/mobile/ota-plan.test.ts`): its channels are the contracts' `UpdateChannelSchema`; an unknown channel and a `production` publish or promotion against another address are refused. The publish, widen and promotion themselves are the owner's check after the Apple purchase (spec #1961).
+
 ## Considered Options
 
 - **The channel in the app config** (`updates.requestHeaders` or `extra`): rejected. The fingerprint hashes the app config, so the two profiles would get different runtime versions for the same native code, and the laptop, with no profile, would compute a third (ADR 0062).
