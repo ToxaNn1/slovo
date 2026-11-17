@@ -9,6 +9,7 @@ import type {
   CounterTotals,
   PostHogPort,
   TopWords,
+  UserRecords,
 } from '../ports';
 import { createQueryQueue, type Wait } from './query-queue';
 import { createSourceCache } from './source-cache';
@@ -53,6 +54,8 @@ export interface ReaderCounts {
   readonly registered: number;
   readonly unregisteredAtLeast: number | null;
   readonly statisticsOff: number;
+  /** The Accounts with Sync records in the Editions, which follows the Edition filter (ADR 0162). */
+  readonly syncing: number;
 }
 
 /** The admin's Аналітика reads (ADR 0088): PostHog through a cache and a queue, the Counters from the store. */
@@ -77,12 +80,14 @@ export function createAdminAnalytics({
   posthog,
   counters,
   accounts,
+  records,
   clock,
   wait,
 }: {
   posthog: PostHogPort;
   counters: CounterStore;
   accounts: Pick<Authenticator, 'accountCount'>;
+  records: Pick<UserRecords, 'accountsWithRecords'>;
   clock: Clock;
   /** How the queue waits out PostHog's minute budget. */
   wait: Wait;
@@ -160,19 +165,22 @@ export function createAdminAnalytics({
     },
 
     async readers(editionIds, period) {
-      const [registered, active, statisticsOff] = await Promise.all([
+      const [registered, active, statisticsOff, syncing] = await Promise.all([
         accounts.accountCount(),
-        // The same query as the overview's, so the cache answers it.
+        // The same query as the overview's, so the cache answers it. The
+        // period's newest day is its `to`; a day with no row had no one active.
         guarded(async (rows) => {
           const days = await rows({ kind: 'activeByDay', editionIds, period });
-          return days.at(-1)?.count ?? 0;
+          return days.find(({ key }) => key === period.to)?.count ?? 0;
         }),
         counters.statisticsOffs(editionIds, period),
+        records.accountsWithRecords(editionIds),
       ]);
       return {
         registered,
         unregisteredAtLeast: active.ok ? Math.max(0, active.value - registered) : null,
         statisticsOff,
+        syncing,
       };
     },
   };

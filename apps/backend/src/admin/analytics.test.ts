@@ -206,6 +206,7 @@ describe('no Аналітика read', () => {
       'registered',
       'unregisteredAtLeast',
       'statisticsOff',
+      'syncing',
     ]);
     expect(keysOf(answers).filter((key) => !allowed.has(key))).toEqual([]);
     const people = stringsOf(answers).filter((text) => /@|^[0-9a-f-]{32,}$|^ins_/i.test(text));
@@ -227,9 +228,14 @@ async function readersBackend() {
   const app = testApp({ database, editions: testEditions(ids).read() });
   await signedInAdmin(app, 'owner');
   const { client } = await signedInAdmin(app, 'admin');
+  /** Gives the email an Account; the client of a device signed in to it. */
   const register = async (email: string) => {
     await app.client.account.requestCode({ email, editionId: ids[0] });
-    await app.client.account.verifyCode({ email, code: app.mailer.codeSentTo(email) });
+    const { token } = await app.client.account.verifyCode({
+      email,
+      code: app.mailer.codeSentTo(email),
+    });
+    return app.clientOf(token);
   };
   return { app, client, ids, register };
 }
@@ -246,7 +252,7 @@ describe('the reader counts', () => {
 
     const counts = await client.admin.readerCounts({ editionId: ids[1], ...PERIOD });
 
-    expect(counts).toEqual({ registered: 2, unregisteredAtLeast: 5, statisticsOff: 0 });
+    expect(counts).toEqual({ registered: 2, unregisteredAtLeast: 5, statisticsOff: 0, syncing: 0 });
     expect(app.posthog.asked).toContainEqual({
       kind: 'activeByDay',
       editionIds: [ids[1]],
@@ -267,6 +273,7 @@ describe('the reader counts', () => {
       registered: 2,
       unregisteredAtLeast: 0,
       statisticsOff: 0,
+      syncing: 0,
     });
   });
 
@@ -279,6 +286,7 @@ describe('the reader counts', () => {
       registered: 1,
       unregisteredAtLeast: null,
       statisticsOff: 0,
+      syncing: 0,
     });
   });
 
@@ -300,6 +308,54 @@ describe('the reader counts', () => {
     await expect(switchOffs(ids[0])).resolves.toBe(3);
     await expect(switchOffs(ids[1])).resolves.toBe(1);
     await expect(switchOffs('all')).resolves.toBe(4);
+  });
+
+  it("estimate the unregistered readers from the period's newest day, a day with no row as none active", async () => {
+    const { app, client, ids, register } = await readersBackend();
+    await register('anna@example.com');
+    const unregistered = async () =>
+      (await client.admin.readerCounts({ editionId: ids[0], ...PERIOD })).unregisteredAtLeast;
+    app.posthog.answer('activeByDay', [
+      { key: '2026-11-07', count: 9 },
+      { key: '2026-11-06', count: 40 },
+    ]);
+    await expect(unregistered()).resolves.toBe(8);
+
+    passTime(POSTHOG_FRESH_FOR_MS + 1);
+    app.posthog.answer('activeByDay', [{ key: '2026-11-06', count: 40 }]);
+    await expect(unregistered()).resolves.toBe(0);
+  });
+
+  it('count the Accounts with Sync records in the Edition filter, a tombstone alone not one', async () => {
+    const { client, ids, register } = await readersBackend();
+    // Long past, so the server's own time never caps it.
+    const at = Date.parse('2026-01-01T00:00:00.000Z');
+    const anna = await register('anna@example.com');
+    await anna.sync.push({
+      editionId: ids[0],
+      changes: [{ key: 'favorites.w_a1', value: '2026-11-01T10:00:00.000Z', changedAt: at }],
+    });
+    const boris = await register('boris@example.com');
+    await boris.sync.push({
+      editionId: ids[0],
+      changes: [{ key: 'favorites.w_a1', value: '2026-11-01T10:00:00.000Z', changedAt: at }],
+    });
+    await boris.sync.push({
+      editionId: ids[1],
+      changes: [{ key: 'favorites.w_a1', value: '2026-11-01T10:00:00.000Z', changedAt: at }],
+    });
+    const clara = await register('clara@example.com');
+    await clara.sync.push({
+      editionId: ids[1],
+      changes: [{ key: 'hidden.w_c3', value: null, changedAt: at }],
+    });
+    await register('dmytro@example.com');
+
+    const syncing = async (editionId: string) =>
+      (await client.admin.readerCounts({ editionId, ...PERIOD })).syncing;
+    await expect(syncing(ids[0])).resolves.toBe(2);
+    await expect(syncing(ids[1])).resolves.toBe(1);
+    await expect(syncing('all')).resolves.toBe(2);
   });
 });
 
