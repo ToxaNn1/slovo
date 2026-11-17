@@ -1,7 +1,7 @@
-import type { Service } from '@slovo/contracts/admin-api';
+import { SERVICE_BLOCK, type Service } from '@slovo/contracts/admin-api';
 
-/** A block's size on the canvas, in CSS pixels. */
-const BLOCK = { width: 200, height: 88 } as const;
+/** A block's size on the canvas, in CSS pixels: the backend places a new Service by it. */
+const BLOCK = SERVICE_BLOCK;
 /** The room around the outermost blocks. */
 const MARGIN = 40;
 

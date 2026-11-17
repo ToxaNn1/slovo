@@ -36,6 +36,7 @@ import type {
   SwitchRefused,
   ServiceEntries,
   ServiceStore,
+  ServiceMoneyBook,
 } from '@slovo/server-core';
 
 import { alertText } from '../alerts/owner-chat';
@@ -125,6 +126,7 @@ export function adminProcedures(
     accounts,
     services,
     serviceEntries,
+    serviceMoney,
   }: {
     /** The readers' Accounts, which a Власник finds and deletes by email (ADR 0127). */
     readonly accounts: Accounts;
@@ -136,6 +138,8 @@ export function adminProcedures(
     readonly services: ServiceStore;
     /** The Service entries of «Сервіси», sealed in the Vault (ADR 0164). */
     readonly serviceEntries: ServiceEntries;
+    /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
+    readonly serviceMoney: ServiceMoneyBook;
   },
 ) {
   const os = implement(apiContract.admin).$context<{
@@ -621,6 +625,7 @@ export function adminProcedures(
         ownerOf: async (headers, errors, { writes = false } = {}) =>
           actorOf(await admit(headers, errors, { writes, security: true })),
       },
+      { book: serviceMoney, ownerWrite: securityWrite },
     ),
 
     content: {

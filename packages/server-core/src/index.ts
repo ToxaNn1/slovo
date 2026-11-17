@@ -169,3 +169,10 @@ export {
   type StoredEntryValue,
   type StoredServiceEntry,
 } from './services/service-entries';
+export {
+  createServiceMoneyBook,
+  type NewService,
+  type ServiceMoney,
+  type ServiceMoneyBook,
+  type ServiceMoneyStore,
+} from './services/money';

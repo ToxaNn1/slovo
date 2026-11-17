@@ -3,12 +3,13 @@ import { useEffect, useId, useRef } from 'react';
 
 import { Button } from '../ui/button';
 import { ServiceEntries } from './service-entries';
+import { ServiceMoneySection } from './service-money';
 
 /**
  * The side panel of a Service: a native modal `<dialog>` at the right edge
  * (ADR 0160), so Esc and the back gesture close it and the page behind is
- * inert. It shows the Service's name; its usage, money and entries come with
- * their tickets.
+ * inert. It shows the Service's name and money; its usage and entries come
+ * with their tickets.
  */
 export function ServicePanel({
   service,
@@ -44,6 +45,7 @@ export function ServicePanel({
         </Button>
       </div>
       <ServiceEntries service={service} />
+      <ServiceMoneySection service={service} />
     </dialog>
   );
 }

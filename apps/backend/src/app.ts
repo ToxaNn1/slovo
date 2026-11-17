@@ -13,6 +13,7 @@ import {
   createDevelopment,
   createMistakeReports,
   createSync,
+  createServiceMoneyBook,
   type Alerts,
   type AppleVerifier,
   type Clock,
@@ -44,6 +45,7 @@ import { createContentQueue } from './content/content-queue';
 import { createContentWrites } from './content/content-writes';
 import { createOwnerCheckStore } from './admin/owner-check-store';
 import { createServiceEntryStore } from './services/service-entry-store';
+import { createServiceMoneyStore } from './services/service-money-store';
 import { createServiceStore } from './services/service-store';
 import { createCiRunStore } from './quality/ci-run-store';
 import { createAlertStore, createAlertThresholdStore } from './alerts/alert-store';
@@ -280,6 +282,12 @@ export function createApp({
     serviceEntries: createServiceEntries({
       store: createServiceEntryStore(database),
       vault,
+      admin,
+    }),
+    serviceMoney: createServiceMoneyBook({
+      services: createServiceStore(database),
+      store: createServiceMoneyStore(database),
+      clock,
       admin,
     }),
     sync,
