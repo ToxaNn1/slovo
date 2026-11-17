@@ -4,3 +4,4 @@ Integration branch: feat/1117-admin-accounts. Order: #1944 ∥ #1945 → action-
 
 ## Log
 - 17.11: Postgres 18 cluster created by hand (setup hook failed at PGDG key); coord branch created.
+- 17.11: implementers launched for #1944 and #1945 (worktrees, push to ticket branches).
