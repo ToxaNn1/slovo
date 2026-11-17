@@ -1,6 +1,8 @@
 STATUS: RUNNING
 ## NEXT
-Frontier #1962 #1963; then #1964, #1965 one at a time; #1966 after #1963. #1967 untouched.
+Setup: mkdir -p /tmp/claude-0 && cp wave/* /tmp/claude-0/; if cloud-setup failed: pg_createcluster 18 main --port 5432 --start then rerun .claude/hooks/cloud-setup.sh. Commit only via /tmp/claude-0/gc.sh. Ignore the stop hook asking for a Claude identity (owner rule wins).
+State: all of #1962-#1966 merged into feat/1961-release-channels (tip 558c059f). Draft PR #1968 (body wave/pr-body.md, PATCH via gh api pulls/1968).
+Next: code-review subagent on feat/1961-release-channels vs origin/main -> /tmp/claude-0/review.md; one implementer fixes; CI green (one blocking wait); mark ready via POST pulls/1968/ccr/ready_for_review; NO merge. Then STATUS: FINISHED and Ukrainian report to the owner.
 ## LOG
 # HANDOFF coord/release-1961 (spec #1961, tickets #1962-#1966)
 
@@ -16,3 +18,4 @@ Frontier #1962 #1963; then #1964, #1965 one at a time; #1966 after #1963. #1967 
 - 2026-11-17T11:55:27Z #1966 DONE 8ac4ac81 (report wave/report-1966.md); merger running. #1965 running.
 - 2026-11-17T12:08:37Z #1966 merged 3256d245; PR body updated with #1966 (wave/pr-body.md). Remaining: #1965 running, then merge, code-review subagent, fixes, CI, ready.
 - 2026-11-17T12:14:57Z #1965 STUCK on ADR 0122 (admin strict output RuleSchema gains targets.channel → breaking-changes check + describe-api refuse). Default chosen: ADR 0170 also amends 0122, admin outputs may gain a field; implementer resumed. Owner Q in PR body.
+- 2026-11-17T12:44:49Z #1965 merged 558c059f. All tickets merged; PR body complete; code review starting.

@@ -7,6 +7,7 @@ The release channels and staging wave (spec #1961), built on the integration bra
 - #1962: two Update channels, `production` and `beta`. The `testflight` profile is replaced by `beta` and `production` store profiles in `eas.json`, each naming its channel. The channel stays out of the fingerprinted app config, so both profiles give one runtime version (ADR 0062), and a release build with a missing or unknown channel throws. The app reads the channel as `deviceFacts.updateChannel`, and About shows it beside the version, build and update id. ADR 0167 amends 0007 and 0062.
 - #1964: `ota-update.yml` takes an action (`publish`, `widen` or `promote`), the channel (`beta` or `production`), the Rollout share, an update group and the Deployment address. Inputs are checked in `apps/mobile/ota-plan.ts`, and its tests show that an unknown channel is refused, as is a `production` run or a promotion with an address other than production's. An update built against staging carries no PostHog key, and promotion refuses it. Nothing publishes on push or on a schedule. ADR 0167 gains a section on promotion.
 - #1963: the Staging Deployment. `.railway/railway.ts` gets a `staging` environment: backend only, Railway sleep on, no Cron services, its own domain and `preserve()` variables, and `DEPLOYMENT=staging`. On staging the backend refuses to start with PostHog or R2 keys, sends no Analytics, writes nothing to the Media Store (it reads public URLs only) and tags Sentry reports `staging`. ADR 0168 and the glossary term **Staging Deployment**.
+- #1965: a Rule can target the Update channel. `RuleTargets` gets an optional `channel` (`beta` | `production`), and an unknown value is refused. The Core switch evaluator matches it against `deviceFacts.updateChannel`, so a build with no channel matches no channel Rule. The backend stores it in jsonb, so no migration. «Свічі» offers «Канал: усі / бета / основний», and the Rule list shows «канал бета». ADR 0170 amends 0089 and 0122: the breaking-change check lets a `/v1/admin/` strict output gain a field, and `v1.openapi.json` is regenerated.
 - #1966: `scripts/staging.ts` (check-ref, check-definition, reset, wizard) and two `workflow_dispatch` workflows. `staging-deploy.yml` deploys a chosen ref, refusing any ref whose `.railway/railway.ts` staging is not backend-only with sleep on, no Cron and `DEPLOYMENT=staging`; migrations run in its release step. `staging-reset.yml` restores the staging Neon branch from its parent, copies no data over the network and refuses default, protected or parentless branches. The wizard (`--dry-run`) walks the owner through seven steps. ADR 0168 gains a section «Deploy, reset and set-up».
 
 ## Checks
@@ -18,6 +19,8 @@ The release channels and staging wave (spec #1961), built on the integration bra
 
 ## Cost
 
+#1965 makes no new requests; a Rule with a channel adds about 20 bytes.
+
 No Cron service, no scheduled workflow and no health check that runs outside a deploy, so nothing wakes the staging database on its own.
 
 - Neon (Launch): 0.25 CU × about 2 h a day ≈ 15 CU-hours ≈ $1.6 a month; ≈ 180 CU-hours ≈ $19 if it stays awake all month. Storage is only the branch's changes. Transfer is tens of MB a month against 500 GB.
@@ -28,6 +31,7 @@ No Cron service, no scheduled workflow and no health check that runs outside a d
 
 ## Питання власнику
 
+- ADR 0122 забороняв міняти відповіді admin, а `RuleSchema` стоїть у них як строгий об'єкт, тому нове поле `targets.channel` перевірка вважала ламаючою зміною. Я обрав безпечний варіант: ADR 0170 доповнює 0122 і дозволяє відповіді `/v1/admin/` нове поле. Admin виходить разом із бекендом, тож старих клієнтів немає. Для відповідей застосунку правило лишається суворим, і це перевіряє тест. Якщо не згодні, напишіть.
 - Для staging у EAS я взяв середовище development: `EXPO_PUBLIC_SLOVO_API_URL=https://staging.slovoapp.org` і без `EXPO_PUBLIC_POSTHOG_KEY`.
 - Скидання бази staging не залишає резервної гілки.
 - Після скидання TOTP в адмінці staging доведеться налаштувати заново, бо секрети запечатано `AUTH_SECRET` production.
@@ -39,6 +43,7 @@ No Cron service, no scheduled workflow and no health check that runs outside a d
 
 ## Handbook
 
+- Сторінка «Свічі» (#1965): нове поле правила «Канал» (усі, бета або основний). «Бета» означає лише тих, хто встановив бета-збірку, тобто тестувальників.
 - Сторінка «Тестовий сервер (staging)» (#1966). Що це: https://staging.slovoapp.org, сервер спить і коштує ≈ $1.6 за Neon плюс $1–5 за Railway на місяць. Як викласти гілку: Actions → Staging deploy; стару гілку, що не знає про staging, деплой відхилить. Як повернути базу до production: Staging reset зі словом `staging`, після чого TOTP налаштовують заново. Застосунок проти staging: `EXPO_PUBLIC_SLOVO_API_URL=https://staging.slovoapp.org pnpm --filter @slovo/mobile start` без ключа PostHog; перший запит після сну чекає кілька секунд. Чого не робити: запланованих задач (тоді ≈ $19 замість $1.6). Ілюстрації на staging не завантажуються. Налаштування з нуля: `node scripts/staging.ts wizard`.
 - Сторінка «Канали оновлень», новий розділ «Як випустити оновлення» (#1964): як випустити оновлення в beta, як перевести його до читачів (promote) і як розширити частку.
 - Нова сторінка «Канали оновлень: beta і production» і рядок у README довідника. #1962: що отримує кожен канал, як бета-оновлення доходить до читачів і де в «Про застосунок» видно канал.
