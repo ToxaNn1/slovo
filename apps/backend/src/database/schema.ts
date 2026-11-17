@@ -498,6 +498,19 @@ export const recordingLeases = pgTable('recording_leases', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
 });
 
+/**
+ * The Recordings job's runs in a row whose generator made no file of the
+ * Words it had, per Edition, with the job's deployment and the Edition's content
+ * version they ran at; a row stops the job for the Edition once it reached
+ * the limit, until either changes (ADR 0169).
+ */
+export const recordingStalls = pgTable('recording_stalls', {
+  editionId: text('edition_id').primaryKey(),
+  emptyRuns: integer('empty_runs').notNull(),
+  deployment: text('deployment').notNull(),
+  contentVersion: integer('content_version').notNull(),
+});
+
 /** A Recording per Word, Narrator Voice and Recording Kind. */
 export const mediaRecordings = pgTable(
   'media_recordings',

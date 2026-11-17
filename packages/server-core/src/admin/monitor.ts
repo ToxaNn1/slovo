@@ -128,9 +128,10 @@ export function createMonitor({
               : [[{ kind: 'ci-red', runId, sha, failedTests }, `ci-red:${String(runId)}`]],
         ),
       'api-errors': async () => {
-        const errors = await sentryNumber('backendErrorRate', 15 * MINUTE, now);
+        // Over the hour since the last hourly run (ADR 0169).
+        const errors = await sentryNumber('backendErrorRate', HOUR, now);
         if (errors === null || errors <= t.apiErrors) return [];
-        const slot = Math.floor(now.getTime() / (15 * MINUTE));
+        const slot = Math.floor(now.getTime() / HOUR);
         return [
           [
             { kind: 'api-errors', percent: errors, threshold: t.apiErrors },
