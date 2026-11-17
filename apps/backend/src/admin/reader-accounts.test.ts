@@ -79,7 +79,7 @@ describe('a reader Account in Безпека', () => {
     const tag = newTag();
     const emails = Array.from(
       { length: ACCOUNTS_PAGE_SIZE + 1 },
-      (_, i) => `${tag}-${i}@example.com`,
+      (_, i) => `${tag}-${String(i)}@example.com`,
     );
     for (const [i, email] of emails.entries()) {
       // Past the per-IP limit of Google sign-ins.

@@ -196,43 +196,93 @@ test('a Безпека list that fails to load says so instead of reading empty'
   expect(await people.findByText('Не вдалося завантажити.')).toBeDefined();
 });
 
-test('a Власник finds a reader Account by email and deletes it with a reason', async () => {
+/** A backend of 51 Accounts, newest first, listed by page and search as the backend does; the deletions asked of it and the list's queries. */
+function accountsBackend() {
   const deleted: unknown[] = [];
+  const queries: { page: string | null; search: string | null }[] = [];
+  let accounts = Array.from({ length: 51 }, (_, i) => ({
+    id: `account-${String(i)}`,
+    email: i === 0 ? 'reader@example.com' : `reader-${String(i)}@example.com`,
+    createdAt: '2026-10-01T09:00:00.000Z',
+    signInMethods: i === 0 ? ['google', 'apple'] : [],
+  }));
   server.use(
-    http.get('*/admin/accounts/:email', ({ params }) =>
-      HttpResponse.json({
-        account:
-          params['email'] === 'reader@example.com'
-            ? {
-                email: 'reader@example.com',
-                createdAt: '2026-10-01T09:00:00.000Z',
-                signInMethods: ['google'],
-              }
-            : null,
-      }),
-    ),
+    http.get('*/admin/accounts', ({ request }) => {
+      const params = new URL(request.url).searchParams;
+      const page = Number(params.get('page') ?? '1');
+      const search = (params.get('search') ?? '').trim().toLowerCase();
+      queries.push({ page: params.get('page'), search: params.get('search') });
+      const matching = accounts.filter(({ email }) => email.includes(search));
+      return HttpResponse.json({
+        accounts: matching.slice((page - 1) * 50, page * 50),
+        total: matching.length,
+      });
+    }),
     http.post('*/admin/accounts/:email/delete', async ({ params, request }) => {
       deleted.push({ email: params['email'], ...Object(await request.json()) });
+      accounts = accounts.filter(({ email }) => email !== params['email']);
       return HttpResponse.json({ deleted: true });
     }),
   );
+  return { deleted, queries };
+}
+
+test('a Власник sees every reader Account a page at a time, with its date and sign-in methods', async () => {
+  accountsBackend();
   const user = userEvent.setup();
   render(<Admin />);
-  const block = within(await screen.findByRole('region', { name: 'Акаунт читача' }));
+  const block = within(await screen.findByRole('region', { name: 'Акаунти читачів' }));
 
-  await user.type(block.getByLabelText('Пошта читача'), 'nobody@example.com');
+  const first = await block.findByRole('row', { name: /reader@example\.com/ });
+  expect(within(first).getByText('Код з листа, Google, Apple')).toBeDefined();
+  // 09:00 UTC is 12:00 in Kyiv.
+  expect(within(first).getByText(/2026.*12:00/)).toBeDefined();
+  expect(block.getAllByRole('row', { name: /@example\.com/ })).toHaveLength(50);
+  expect(block.getByText('1–50 з 51')).toBeDefined();
+
+  await user.click(block.getByRole('button', { name: 'Далі' }));
+  expect(await block.findByText('51–51 з 51')).toBeDefined();
+  expect(
+    block.getAllByRole('row', { name: /@example\.com/ }).map((row) => row.textContent),
+  ).toEqual([expect.stringContaining('reader-50@example.com')]);
+});
+
+test('a search by part of an email narrows the Accounts from the first page', async () => {
+  const { queries } = accountsBackend();
+  const user = userEvent.setup();
+  render(<Admin />);
+  const block = within(await screen.findByRole('region', { name: 'Акаунти читачів' }));
+  await block.findByText('1–50 з 51');
+  await user.click(block.getByRole('button', { name: 'Далі' }));
+  await block.findByText('51–51 з 51');
+
+  await user.type(block.getByLabelText('Пошта читача'), 'READER-5');
   await user.click(block.getByRole('button', { name: 'Знайти' }));
-  expect(await block.findByText('Не знайдено.')).toBeDefined();
-  expect(block.queryByRole('button', { name: 'Видалити акаунт' })).toBeNull();
+
+  expect(await block.findByText('1–2 з 2')).toBeDefined();
+  expect(queries.at(-1)).toEqual({ page: null, search: 'READER-5' });
+  expect(block.getByRole('row', { name: /reader-50@example\.com/ })).toBeDefined();
 
   await user.clear(block.getByLabelText('Пошта читача'));
-  await user.type(block.getByLabelText('Пошта читача'), 'reader@example.com');
+  await user.type(block.getByLabelText('Пошта читача'), 'nobody');
   await user.click(block.getByRole('button', { name: 'Знайти' }));
-  expect(await block.findByText(/Код з листа, Google/)).toBeDefined();
-  await user.click(block.getByRole('button', { name: 'Видалити акаунт' }));
+  expect(await block.findByText('Не знайдено.')).toBeDefined();
+});
+
+test('a Власник deletes a listed Account with a reason', async () => {
+  const { deleted } = accountsBackend();
+  const user = userEvent.setup();
+  render(<Admin />);
+  const block = within(await screen.findByRole('region', { name: 'Акаунти читачів' }));
+  const row = await block.findByRole('row', { name: /reader@example\.com/ });
+
+  await user.click(within(row).getByRole('button', { name: 'Видалити акаунт' }));
   expect(within(await screen.findByRole('dialog')).getByText('небезпечна дія')).toBeDefined();
   await confirmWith('spam Account', 'Видалити акаунт');
 
   expect(await block.findByText('Акаунт reader@example.com видалено.')).toBeDefined();
   expect(deleted).toEqual([{ email: 'reader@example.com', reason: 'spam Account' }]);
+  await waitFor(() => {
+    expect(block.queryByRole('row', { name: /reader@example\.com/ })).toBeNull();
+  });
 });
