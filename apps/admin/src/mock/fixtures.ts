@@ -277,6 +277,23 @@ export const FIXTURES: AdminApiOutputs = {
               changedAt: 17,
             },
           ],
+          // w_e5 is named in a Collection and no longer in the content database.
+          entries: [
+            { id: 'w_a1', kind: 'word', fields: WORD_FIELDS, retired: false },
+            {
+              id: 'w_b2',
+              kind: 'word',
+              fields: { ...WORD_FIELDS, lemma: 'обрій' },
+              retired: false,
+            },
+            { id: 'w_c3', kind: 'word', fields: { ...WORD_FIELDS, lemma: 'вир' }, retired: false },
+            {
+              id: 'w_d4',
+              kind: 'word',
+              fields: { ...WORD_FIELDS, lemma: 'шпарка' },
+              retired: false,
+            },
+          ],
         },
       ],
     },
@@ -359,6 +376,11 @@ export const FIXTURES: AdminApiOutputs = {
       selfRating: [{ id: 'few', label: 'Знаю мало рідкісних слів', offerRarityTest: false }],
     },
     onboardingNotificationTimes: { morning: '09:00', midday: '13:00', evening: '20:30' },
+    badges: [{ id: 'streak-7', name: 'Тиждень поспіль' }],
+    narratorVoices: [
+      { id: 'oksana', name: 'Оксана' },
+      { id: 'taras', name: 'Тарас' },
+    ],
   },
   content: {
     openBatch: { batchId: BATCH_ID },

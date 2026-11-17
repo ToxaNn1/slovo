@@ -199,7 +199,10 @@ function fieldText(field: EditorField | undefined, value: unknown): string {
 }
 
 /** The field that names a record: a Word's Lemma, an Idiom's expression and so on. */
-function titleOf(kind: string, fields: Readonly<Record<string, unknown>>): string | undefined {
+export function titleOf(
+  kind: string,
+  fields: Readonly<Record<string, unknown>>,
+): string | undefined {
   const [first] = fieldsOf(kind);
   if (first === undefined) return undefined;
   const text = fieldText(first, fields[first.name]);

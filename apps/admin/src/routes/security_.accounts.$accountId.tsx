@@ -89,32 +89,8 @@ function ReaderAccount({ account }: { account: AccountDetail }) {
       {account.editions.length === 0 ? (
         <p className="text-sm text-muted-foreground">Немає даних синхронізації.</p>
       ) : (
-        account.editions.map(({ editionId, records }) => (
-          <section
-            key={editionId}
-            aria-label={`Видання ${editionId}`}
-            className="flex flex-col gap-4"
-          >
-            <h3 className="font-display text-base font-semibold">Видання {editionId}</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {recordsBlocks(records).map(({ title, lines }) => (
-                <section
-                  key={title}
-                  aria-label={title}
-                  className="flex flex-col gap-1 rounded-lg border border-border p-3"
-                >
-                  <h4 className="text-[13px] font-semibold">{title}</h4>
-                  <ul className="flex flex-col gap-0.5 text-[13px]">
-                    {lines.map((line, index) => (
-                      <li key={index} className="break-words">
-                        {line}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          </section>
+        account.editions.map((edition) => (
+          <EditionRecords key={edition.editionId} edition={edition} />
         ))
       )}
       {deleting ? (
@@ -132,6 +108,38 @@ function ReaderAccount({ account }: { account: AccountDetail }) {
           refusalText={refusalOf}
         />
       ) : null}
+    </section>
+  );
+}
+
+/** An Edition's records of the Account, each block a kind; its Edition card names its Badges and voices. */
+function EditionRecords({ edition }: { edition: AccountDetail['editions'][number] }) {
+  const { editionId, records, entries } = edition;
+  const card = useQuery({
+    queryKey: ['edition-card', editionId],
+    queryFn: () => adminApi.editionCard({ editionId }),
+  });
+  return (
+    <section aria-label={`Видання ${editionId}`} className="flex flex-col gap-4">
+      <h3 className="font-display text-base font-semibold">Видання {editionId}</h3>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {recordsBlocks(records, { entries, card: card.data }).map(({ title, lines }) => (
+          <section
+            key={title}
+            aria-label={title}
+            className="flex flex-col gap-1 rounded-lg border border-border p-3"
+          >
+            <h4 className="text-[13px] font-semibold">{title}</h4>
+            <ul className="flex flex-col gap-0.5 text-[13px]">
+              {lines.map((line, index) => (
+                <li key={index} className="break-words">
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
     </section>
   );
 }

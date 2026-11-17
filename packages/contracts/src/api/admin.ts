@@ -346,13 +346,29 @@ export const AccountRowSchema = z.object({
 });
 export type AccountRow = z.infer<typeof AccountRowSchema>;
 
+/** An Entry as the content database keeps it now: its kind, its fields and whether it is retired. */
+const KeptEntrySchema = z.object({
+  kind: ContentRecordKindSchema.extract(['word', 'correction', 'idiom', 'synonymRow', 'tip']),
+  fields: z.record(z.string(), z.unknown()),
+  retired: z.boolean(),
+});
+
 /**
  * One reader Account on its own page in Безпека (ADR 0162): its row and, for
  * every Edition it syncs, the records Sync keeps of it, as a pull answers
- * them, in the order they were kept; a tombstone is left out.
+ * them, in the order they were kept, a tombstone left out, and the Entries
+ * its Favorites, Collections, Hidden Entries and «Знаю» / «Не знаю» marks
+ * name, as the content database keeps them now; an id the Edition has no
+ * record of has none.
  */
 export const AccountDetailSchema = AccountRowSchema.extend({
-  editions: z.array(z.object({ editionId: z.string(), records: z.array(RecordChangeSchema) })),
+  editions: z.array(
+    z.object({
+      editionId: z.string(),
+      records: z.array(RecordChangeSchema),
+      entries: z.array(KeptEntrySchema.extend({ id: z.string() })),
+    }),
+  ),
 });
 export type AccountDetail = z.infer<typeof AccountDetailSchema>;
 
@@ -377,6 +393,10 @@ export const EditionCardSchema = z.object({
   questionnaire: QuestionnaireSchema,
   /** The Notification times «Коли нагадати?» offers, which name its counted buckets. */
   onboardingNotificationTimes: OnboardingNotificationTimesSchema,
+  /** The Badges the Edition chooses, which name an Account's earned Badges. */
+  badges: z.array(z.object({ id: z.string(), name: z.string() })),
+  /** The Narrator Voices the Edition offers, which name an Account's chosen voice. */
+  narratorVoices: z.array(z.object({ id: z.string(), name: z.string() })),
 });
 export type EditionCard = z.infer<typeof EditionCardSchema>;
 
@@ -725,13 +745,7 @@ const QueueReportSchema = z.object({
   contentVersion: z.number().int(),
   receivedAt: z.string(),
   /** The Entry reported as the content database keeps it now; none when the Edition has no record of its id. */
-  entry: z
-    .object({
-      kind: ContentRecordKindSchema.extract(['word', 'correction', 'idiom', 'synonymRow', 'tip']),
-      fields: z.record(z.string(), z.unknown()),
-      retired: z.boolean(),
-    })
-    .nullable(),
+  entry: KeptEntrySchema.nullable(),
   /** The email of the signed-in reader's Account; none for an anonymous report or a deleted Account. */
   accountEmail: z.string().nullable(),
 });

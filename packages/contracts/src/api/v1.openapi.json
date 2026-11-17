@@ -7539,11 +7539,49 @@
                                         "changedAt"
                                       ]
                                     }
+                                  },
+                                  "entries": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "enum": [
+                                            "word",
+                                            "correction",
+                                            "idiom",
+                                            "synonymRow",
+                                            "tip"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "fields": {
+                                          "type": "object",
+                                          "propertyNames": {
+                                            "type": "string"
+                                          },
+                                          "additionalProperties": {}
+                                        },
+                                        "retired": {
+                                          "type": "boolean"
+                                        },
+                                        "id": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "fields",
+                                        "retired",
+                                        "id"
+                                      ]
+                                    }
                                   }
                                 },
                                 "required": [
                                   "editionId",
-                                  "records"
+                                  "records",
+                                  "entries"
                                 ]
                               }
                             }
@@ -15473,6 +15511,42 @@
                         "evening"
                       ],
                       "additionalProperties": false
+                    },
+                    "badges": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      }
+                    },
+                    "narratorVoices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      }
                     }
                   },
                   "required": [
@@ -15483,7 +15557,9 @@
                     "correctionCategories",
                     "levels",
                     "questionnaire",
-                    "onboardingNotificationTimes"
+                    "onboardingNotificationTimes",
+                    "badges",
+                    "narratorVoices"
                   ]
                 }
               }
