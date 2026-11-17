@@ -282,12 +282,23 @@ function requireReleaseChannel(build: Build, projectRoot: string): void {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
-/** The `channel` the build profile names in `eas.json`, unchecked, or undefined. */
+/**
+ * The `channel` the build profile names in `eas.json`, itself or through the
+ * profiles it `extends`, unchecked, or undefined.
+ */
 function profileChannel(projectRoot: string, profile: string): unknown {
   const eas: unknown = JSON.parse(readFileSync(join(projectRoot, 'eas.json'), 'utf8'));
   const profiles = isRecord(eas) ? eas['build'] : undefined;
-  const settings = isRecord(profiles) ? profiles[profile] : undefined;
-  return isRecord(settings) ? settings['channel'] : undefined;
+  const seen = new Set<string>();
+  let name: unknown = profile;
+  while (typeof name === 'string' && !seen.has(name)) {
+    seen.add(name);
+    const settings = isRecord(profiles) ? profiles[name] : undefined;
+    if (!isRecord(settings)) return undefined;
+    if (settings['channel'] !== undefined) return settings['channel'];
+    name = settings['extends'];
+  }
+  return undefined;
 }
 
 /** The EAS project @slovo-app/slovo. */

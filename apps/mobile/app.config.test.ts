@@ -898,6 +898,24 @@ describe('app config', () => {
       );
     });
 
+    it('takes the Update channel a release profile inherits through `extends`', () => {
+      vi.stubEnv('EAS_BUILD_PROFILE', 'beta');
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+      const inherits = repoWithCertificate((profiles) => {
+        profiles['store'] = { ...profiles['beta'] };
+        profiles['beta'] = { extends: 'store' };
+      });
+      const inheritsNothing = repoWithCertificate((profiles) => {
+        profiles['store'] = { distribution: 'store' };
+        profiles['beta'] = { extends: 'store' };
+      });
+
+      expect(appConfig(inherits).name).toBe(app.config.name);
+      expect(() => appConfig(inheritsNothing)).toThrow(
+        /release build "beta" names no Update channel/,
+      );
+    });
+
     it('keeps the Update channel out of the config, so it reaches the build from its profile', () => {
       vi.stubEnv('EAS_BUILD_PROFILE', 'beta');
       vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
