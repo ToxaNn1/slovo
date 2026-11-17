@@ -12,10 +12,13 @@ export interface LimitUsage {
   readonly limit: number;
 }
 
+/** What Railway bills a month by: the vCPU, the memory, the egress and the volume (ADR 0173). */
+export type RailwaySpendPart = 'cpu' | 'memory' | 'egress' | 'disk';
+
 /**
  * What a provider answers of a Service, by the Service's kind: a metered
- * Service its usage per limit, a Railway service also whether it is online,
- * a Cron its last run and its next.
+ * Service its usage per limit, a Railway service also whether it is online
+ * and its spend by each part Railway bills, a Cron its last run and its next.
  */
 export type ServiceReading =
   | { readonly kind: 'metered'; readonly usage: readonly LimitUsage[] }
@@ -23,6 +26,8 @@ export type ServiceReading =
       readonly kind: 'railway';
       readonly state: 'online' | 'offline';
       readonly usage: readonly LimitUsage[];
+      /** This month's spend of each part, in USD rounded to cents. */
+      readonly spendParts: readonly { readonly part: RailwaySpendPart; readonly usd: number }[];
     }
   | {
       readonly kind: 'cron';

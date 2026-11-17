@@ -137,3 +137,52 @@ body {
     radial-gradient(700px 380px at 20% 110%, var(--glow-2), transparent 70%), var(--background);
   background-attachment: fixed;
 }
+
+/*
+ * A Service's window (ADR 0173): it fades and grows in over a fading scrim,
+ * its columns rise one after another, each usage bar fills from the left.
+ * With reduced motion everything is simply there.
+ */
+@keyframes service-window-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+@keyframes service-window-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes service-window-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes usage-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+.service-window[open] {
+  animation: service-window-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.service-window[open]::backdrop {
+  animation: service-window-fade 240ms ease-out;
+}
+.service-window-column {
+  animation: service-window-rise 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.usage-fill {
+  transform-origin: left;
+  animation: usage-fill 700ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .service-window[open],
+  .service-window[open]::backdrop,
+  .service-window-column,
+  .usage-fill {
+    animation: none;
+  }
+}

@@ -189,6 +189,7 @@ export {
   createServiceUsage,
   USAGE_FRESH_MS,
   type LimitUsage,
+  type RailwaySpendPart,
   type ServiceReading,
   type ServiceUsage,
   type UsagePort,

@@ -7,6 +7,12 @@ import { useCurrency, type Currency } from '../../currency';
 const PILL =
   'rounded-full border border-border px-3 py-1 text-sm aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground';
 
+/** Dollars of the cents: whole dollars without cents, «$4.50» with them. */
+export function usd(cents: number): string {
+  const dollars = cents / 100;
+  return `$${Number.isInteger(dollars) ? String(dollars) : dollars.toFixed(2)}`;
+}
+
 /** Whole hryvnias of the dollar cents at the rate, «2 013 ₴». */
 export const uah = (cents: number, rate: UsdRate): string =>
   `${Math.round((cents / 100) * rate.uahPerUsd).toLocaleString('uk-UA')} ₴`;
