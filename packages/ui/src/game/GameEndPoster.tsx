@@ -62,7 +62,7 @@ export function GameEndPoster({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { strings, voice, count } = useEdition();
+  const { strings, voice, form } = useEdition();
   const keyInk = useSchemeColors('light').ink;
   const words = strings.game;
   const onTarget = end.kind !== 'lives-over' && end.onTarget;
@@ -88,7 +88,11 @@ export function GameEndPoster({
   const finishPanel = (
     <ResultPanel
       title={upper(onTarget ? finish.won : finish.more)}
-      line={fill(count(finish.hits, end.right), { total: String(end.played) })}
+      // «з 4 влучань»: the noun follows the Rounds played, not the hits.
+      line={fill(form(finish.hits, end.played), {
+        count: String(end.right),
+        total: String(end.played),
+      })}
       mascot={mascot}
       banner={
         <View style={styles.banner}>
