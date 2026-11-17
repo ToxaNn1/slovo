@@ -91,6 +91,7 @@ export type EditionStrings = z.infer<typeof EditionStringsSchema>;
 export {
   fill,
   pluralCount,
+  pluralForm,
   PluralLabelSchema,
   PluralSchema,
   type Plural,

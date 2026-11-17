@@ -38,22 +38,6 @@ type RarityTestPhase =
   | { readonly kind: 'asking'; readonly answers: readonly { rarity: Rarity; known: boolean }[] }
   | { readonly kind: 'result'; readonly result: RarityTestResult };
 
-/** A Rarity Test screen's title, as VoiceOver's header. */
-export function RarityTestTitle({ children }: { children: string }) {
-  const tokens = useTokens();
-  const { voice } = useEdition();
-  return (
-    <Text
-      accessibilityRole="header"
-      {...voice}
-      maxFontSizeMultiplier={fontScaleCap.number}
-      style={[typeStyle('stepTitle', tokens), { color: tokens.colors.ink }]}
-    >
-      {children}
-    </Text>
-  );
-}
-
 /**
  * The Rarity Test's questions and result (board 11, screens 92–93), the same
  * in onboarding and from Settings: each Word in turn by its Lemma with Stress
@@ -139,7 +123,12 @@ export function RarityTestQuestions({
           <Button testID={`${testID}-next`} label={strings.rarityTest.next} onPress={onDone} />
         ) : (
           <>
-            <Button testID={`${testID}-done`} label={strings.rarityTest.done} onPress={onDone} />
+            <Button
+              testID={`${testID}-done`}
+              variant="inverse"
+              label={strings.rarityTest.done}
+              onPress={onDone}
+            />
             <QuietButton
               testID={`${testID}-again`}
               label={strings.rarityTest.again}
@@ -251,8 +240,9 @@ function Segments({
 }
 
 /**
- * The result (screen 93): the Rarity Range as a big number behind the line
- * that says it, five bars lit up to it, and how many Words the reader knew.
+ * The result (screen 93, XSettings t7): a card with the Rarity Range as a big
+ * number cut by its top right corner, behind the line that says it, five bars
+ * lit up to it, and how many Words the reader knew.
  */
 function RarityTestOutcome({ result }: { result: RarityTestResult }) {
   const tokens = useTokens();
@@ -260,7 +250,12 @@ function RarityTestOutcome({ result }: { result: RarityTestResult }) {
   const { voice, strings } = useEdition();
   const n = String(result.top);
   return (
-    <View style={styles.outcome}>
+    <View
+      style={[
+        styles.outcome,
+        { backgroundColor: colors.surfaceSunken, borderRadius: rarityTestLayout.resultCard.radius },
+      ]}
+    >
       <Text
         accessibilityElementsHidden
         importantForAccessibility="no"
@@ -269,25 +264,32 @@ function RarityTestOutcome({ result }: { result: RarityTestResult }) {
       >
         {n}
       </Text>
-      <View style={styles.outcomeText}>
-        <RarityTestTitle>{fill(strings.rarityTest.resultLine, { n })}</RarityTestTitle>
+      <Text
+        accessibilityRole="header"
+        {...voice}
+        maxFontSizeMultiplier={fontScaleCap.number}
+        style={[typeStyle('rarityTestResult', tokens), styles.outcomeLine, { color: colors.ink }]}
+      >
+        {fill(strings.rarityTest.resultLine, { n })}
+      </Text>
+      <View style={styles.outcomeLine}>
         <Segments
           count={RARITIES.length}
           // Rarities 1…5 in order: those up to the ceiling are lit.
           colorOf={(index) => (index < result.top ? colors.accent : colors.silhouette)}
           style={rarityTestLayout.rarityBars}
         />
-        <Text
-          {...voice}
-          maxFontSizeMultiplier={fontScaleCap.text}
-          style={[typeStyle('statsNote', tokens), { color: colors.muted }]}
-        >
-          {fill(strings.rarityTest.known, {
-            known: String(result.known),
-            total: String(result.total),
-          })}
-        </Text>
       </View>
+      <Text
+        {...voice}
+        maxFontSizeMultiplier={fontScaleCap.text}
+        style={[typeStyle('statsNote', tokens), styles.outcomeNote, { color: colors.muted }]}
+      >
+        {fill(strings.rarityTest.known, {
+          known: String(result.known),
+          total: String(result.total),
+        })}
+      </Text>
     </View>
   );
 }
@@ -329,8 +331,15 @@ const styles = StyleSheet.create({
   half: { flex: 1 },
   segments: { flexDirection: 'row', alignSelf: 'stretch' },
   segment: { flex: 1, transform: [{ skewX: rarityTestLayout.skew }] },
-  outcome: { alignSelf: 'stretch' },
-  number: { position: 'absolute', right: -space[3], top: -(space[8] + space[2]) },
-  outcomeText: { gap: space[4], maxWidth: rarityTestLayout.resultWidth },
+  outcome: {
+    alignSelf: 'stretch',
+    overflow: 'hidden',
+    paddingVertical: rarityTestLayout.resultCard.paddingVertical,
+    paddingHorizontal: rarityTestLayout.resultCard.paddingHorizontal,
+    gap: rarityTestLayout.resultCard.gap,
+  },
+  number: { position: 'absolute', ...rarityTestLayout.number },
+  outcomeLine: { maxWidth: rarityTestLayout.resultWidth },
+  outcomeNote: { maxWidth: rarityTestLayout.noteWidth },
   quiet: { minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' },
 });

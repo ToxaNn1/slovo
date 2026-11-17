@@ -97,6 +97,7 @@ export {
   EditionStringsSchema,
   fill,
   pluralCount,
+  pluralForm,
   PluralLabelSchema,
   PluralSchema,
   type EditionStrings,

@@ -1,13 +1,12 @@
 import type { EntryKind } from '@slovo/contracts';
-import { GAME_ROUNDS, type CalendarWeek, type ProgressState } from '@slovo/core';
+import { GAME_ROUNDS, type ProgressState } from '@slovo/core';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
-import { ActiveDaysCalendar } from './ActiveDaysCalendar';
 import { knownLine } from './known-line';
 import { moodLine, type MoodDays } from './mood-line';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { fontScaleCap, space, STACK_AT_FONT_SCALE, typeStyle } from '../tokens';
+import { fontScaleCap, space, STACK_AT_FONT_SCALE, statsSheetLayout, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** One count of the sheet's grid: the number over the words that name it. */
@@ -35,7 +34,11 @@ function Count({
       accessible
       accessibilityLabel={spoken}
       {...voice}
-      style={[styles.count, { width: stacked ? '100%' : '50%' }]}
+      style={[
+        styles.count,
+        stacked && styles.countStacked,
+        { backgroundColor: colors.surfaceSunken },
+      ]}
     >
       <Text
         maxFontSizeMultiplier={fontScaleCap.text}
@@ -43,20 +46,22 @@ function Count({
       >
         {value}
       </Text>
-      <Text style={[typeStyle('statsNote', tokens), { color: colors.muted }]}>{label}</Text>
+      <Text style={[typeStyle('statsCountLabel', tokens), { color: colors.muted }]}>{label}</Text>
     </View>
   );
 }
 
 /**
- * The stats sheet the Stats pill opens (design `stats-sheet-dark`): the big
- * Streak with its Best Streak, then the Entries Seen
+ * The stats sheet the Stats pill opens, in the cards of XSaved's Streak
+ * screens (`statsSheetLayout`): the big Streak with its Best Streak on an ink
+ * card, then, each on its own card, the Entries Seen
  * today, the Favorites count, the Entries in Collections and the best Game
  * result once a Game has finished, each in the Edition's plural form, and
  * under them the Known count of each kind of Entry shown, and the Entries
  * due for Review today, unless the knowledge rows are hidden, then the days
- * by Mood once a Mood was chosen, and last the
- * Active Days calendar, with its weeks, unless it has none. It
+ * by Mood once a Mood was chosen: the Known counts two by two under «ЗНАЮ»
+ * on a card of their own, the due and Mood lines on the next; the Active Days
+ * calendar lives on the profile alone (owner, 17.11). No scroll bar shows. It
  * closes with a swipe down, a tap outside or VoiceOver's escape gesture, and
  * with Reduce Motion it appears without sliding. While the reader hides the
  * Streak, the Streak with its Best Streak is left out. Needs a
@@ -67,7 +72,6 @@ export function StatsSheet({
   stats,
   hideStreak = false,
   knowledge = ['word', 'correction', 'idiom'],
-  calendar = [],
   moodDays = [],
   onClose,
 }: {
@@ -76,15 +80,13 @@ export function StatsSheet({
   hideStreak?: boolean;
   /** The knowledge rows, with the kinds of Entry whose Known count shows, in order, or none. */
   knowledge?: readonly EntryKind[] | 'none';
-  /** The weeks of the Active Days calendar; none leaves it out. */
-  calendar?: readonly CalendarWeek[];
   /** The days each Mood was chosen on, in display order; without a chosen day the row is left out. */
   moodDays?: readonly MoodDays[];
   onClose: () => void;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { strings, voice, count } = useEdition();
+  const { strings, voice, count, form } = useEdition();
   const stacked = useWindowDimensions().fontScale > STACK_AT_FONT_SCALE;
   const words = strings.stats;
   const streak = count(words.streak, stats.streak);
@@ -93,7 +95,11 @@ export function StatsSheet({
   const moods = moodLine(words, moodDays, count);
   return (
     <BottomSheet visible={visible} onClose={onClose} testID="stats-sheet">
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* VoiceOver reads the sheet's name first, then the texts in the order they show, as it reads a group. */}
         {!hideStreak && (
           <View
@@ -102,19 +108,29 @@ export function StatsSheet({
             accessibilityRole="header"
             accessibilityLabel={[words.title, String(stats.streak), streak, bestStreak].join(', ')}
             {...voice}
-            style={[styles.streakRow, stacked && styles.streakStacked]}
+            style={[
+              styles.streakRow,
+              stacked && styles.streakStacked,
+              { backgroundColor: colors.ink },
+            ]}
           >
             <Text
               maxFontSizeMultiplier={fontScaleCap.text}
-              style={[typeStyle('statsStreak', tokens), { color: colors.ink }]}
+              style={[typeStyle('statsStreak', tokens), { color: colors.accent }]}
             >
               {stats.streak}
             </Text>
             <View style={stacked ? styles.streakWordsStacked : styles.streakWords}>
-              <Text style={[typeStyle('statsStreakLabel', tokens), { color: colors.ink }]}>
+              <Text style={[typeStyle('statsStreakLabel', tokens), { color: colors.background }]}>
                 {streak}
               </Text>
-              <Text style={[typeStyle('statsNote', tokens), { color: colors.muted }]}>
+              <Text
+                style={[
+                  typeStyle('statsNote', tokens),
+                  styles.bestStreak,
+                  { color: colors.background },
+                ]}
+              >
                 {bestStreak}
               </Text>
             </View>
@@ -155,35 +171,55 @@ export function StatsSheet({
           )}
         </View>
         {knowledge !== 'none' && (
-          <View style={styles.knowledge}>
+          <View
+            testID="stats-known"
+            accessible
+            accessibilityLabel={knownLine(words, stats.known, knowledge, count)}
+            {...voice}
+            style={[styles.lines, { backgroundColor: colors.surfaceSunken }]}
+          >
             <Text
-              testID="stats-known"
-              {...voice}
-              style={[typeStyle('statsLine', tokens), { color: colors.ink }]}
+              style={[typeStyle('statsKicker', tokens), styles.kicker, { color: colors.muted }]}
             >
-              {knownLine(words, stats.known, knowledge, count)}
+              {fill(words.known, { counts: '' }).trim()}
             </Text>
-            <Text
-              testID="stats-due-today"
-              {...voice}
-              style={[typeStyle('statsLine', tokens), { color: colors.ink }]}
-            >
-              {fill(words.dueToday, { count: String(stats.dueToday) })}
-            </Text>
+            <View style={styles.kinds}>
+              {knowledge.map((kind) => (
+                <View key={kind} style={[styles.kind, stacked && styles.countStacked]}>
+                  <Text
+                    maxFontSizeMultiplier={fontScaleCap.text}
+                    style={[typeStyle('statsKnownCount', tokens), { color: colors.ink }]}
+                  >
+                    {stats.known[kind]}
+                  </Text>
+                  <Text style={[typeStyle('statsCountLabel', tokens), { color: colors.muted }]}>
+                    {fill(form(words.knownByKind[kind], stats.known[kind]), { count: '' }).trim()}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
-        {moods !== undefined && (
-          <Text
-            testID="stats-moods"
-            {...voice}
-            style={[styles.moods, typeStyle('statsLine', tokens), { color: colors.ink }]}
-          >
-            {moods}
-          </Text>
-        )}
-        {calendar.length > 0 && (
-          <View style={styles.calendar}>
-            <ActiveDaysCalendar weeks={calendar} />
+        {(knowledge !== 'none' || moods !== undefined) && (
+          <View style={[styles.lines, { backgroundColor: colors.surfaceSunken }]}>
+            {knowledge !== 'none' && (
+              <Text
+                testID="stats-due-today"
+                {...voice}
+                style={[typeStyle('statsLine', tokens), { color: colors.ink }]}
+              >
+                {fill(words.dueToday, { count: String(stats.dueToday) })}
+              </Text>
+            )}
+            {moods !== undefined && (
+              <Text
+                testID="stats-moods"
+                {...voice}
+                style={[typeStyle('statsLine', tokens), { color: colors.ink }]}
+              >
+                {moods}
+              </Text>
+            )}
           </View>
         )}
       </ScrollView>
@@ -191,26 +227,44 @@ export function StatsSheet({
   );
 }
 
+const card = statsSheetLayout;
+
 const styles = StyleSheet.create({
-  calendar: { marginTop: space[6] },
   scroll: { flexGrow: 0, flexShrink: 1 },
-  content: { paddingHorizontal: space[1], paddingTop: space[4], paddingBottom: space[4] },
+  content: {
+    paddingHorizontal: space[1],
+    paddingTop: space[4],
+    paddingBottom: space[4],
+    gap: card.gap,
+  },
   streakRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space[4],
-    marginBottom: space[6],
+    gap: card.streakCard.gap,
+    padding: card.streakCard.padding,
+    borderRadius: card.streakCard.radius,
   },
   streakStacked: { flexDirection: 'column', alignItems: 'flex-start', gap: space[2] },
   streakWords: { flex: 1, gap: space[1] },
   streakWordsStacked: { gap: space[1] },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    rowGap: space[6],
-    marginTop: space[6],
+  bestStreak: { opacity: 0.8 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: card.gap },
+  // Two cards a row; a card left alone on its row takes the whole row.
+  count: {
+    flexGrow: 1,
+    flexBasis: '40%',
+    padding: card.countCard.padding,
+    gap: card.countCard.gap,
+    borderRadius: card.countCard.radius,
   },
-  knowledge: { marginTop: space[6], gap: space[2] },
-  moods: { marginTop: space[2] },
-  count: { paddingRight: space[3], gap: space[1] },
+  countStacked: { flexBasis: '100%' },
+  kicker: { textTransform: 'uppercase' },
+  kinds: { flexDirection: 'row', flexWrap: 'wrap', rowGap: space[4] },
+  // Two kinds a row, each its number over its name.
+  kind: { flexBasis: '50%', gap: space[1], paddingRight: space[3] },
+  lines: {
+    padding: card.linesCard.padding,
+    gap: card.linesCard.gap,
+    borderRadius: card.linesCard.radius,
+  },
 });

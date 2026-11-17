@@ -482,3 +482,19 @@ export const dueQuiz = {
   segment: { width: 26, height: 6, gap: 4, skew: '-20deg' },
   optionHeight: 54,
 } as const;
+
+/**
+ * The stats sheet's cards, in the look of XSaved's Streak screens (owner,
+ * 17.11): the Streak on an ink card, each count on a sunken card two by two,
+ * the knowledge and Mood lines on a sunken card.
+ */
+export const statsSheetLayout = {
+  /** The room between the cards. */
+  gap: 12,
+  /** The ink card of the Streak. */
+  streakCard: { radius: 24, padding: 20, gap: 16 },
+  /** A count's card. */
+  countCard: { radius: 20, padding: 16, gap: 8 },
+  /** The card of the knowledge and Mood lines. */
+  linesCard: { radius: 20, padding: 16, gap: 8 },
+} as const;
