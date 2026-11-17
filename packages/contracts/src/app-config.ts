@@ -47,6 +47,15 @@ const RepoFileSchema = z
 const BuildProfileSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected an EAS build profile');
 
 /**
+ * The Update channels of the app (ADR 0167): `production` for readers and
+ * `beta` for the owner's testers. A store build listens to the one its build
+ * profile names; a development build and Metro listen to none.
+ */
+export const UpdateChannelSchema = z.enum(['beta', 'production']);
+
+export type UpdateChannel = z.infer<typeof UpdateChannelSchema>;
+
+/**
  * The identity of the one SLOVO app (ADR 0065): everything that is the same
  * for every Edition inside it. Adding an Edition never touches it; everything
  * per language stays in the EditionConfig.
@@ -89,11 +98,15 @@ export const AppConfigSchema = z
      * without an id take it, so no build names an Edition of its own.
      */
     defaultEdition: z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected an Edition id'),
-    /** The one Update channel the app's OTA updates come from (ADR 0062). */
-    updateChannel: z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a lower-case channel name'),
-    /** The EAS build profiles of each platform, one per kind of build. */
+    /**
+     * The EAS build profiles of each platform: one development profile and one
+     * store profile per Update channel, which `eas.json` binds to it (ADR 0167).
+     */
     buildProfiles: z.strictObject({
-      ios: z.strictObject({ development: BuildProfileSchema, release: BuildProfileSchema }),
+      ios: z.strictObject({
+        development: BuildProfileSchema,
+        release: z.strictObject({ beta: BuildProfileSchema, production: BuildProfileSchema }),
+      }),
     }),
   })
   // The App Group the app shares with its widget (ADR 0026), derived from the

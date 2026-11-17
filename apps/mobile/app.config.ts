@@ -3,6 +3,7 @@ import { basename, join, relative } from 'node:path';
 
 import type * as EditionFolders from '@slovo/language-pack/edition';
 import type * as UiTokens from '@slovo/ui/tokens';
+import type * as Contracts from '@slovo/contracts';
 import type * as Core from '@slovo/core';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import type * as ConfigPlugins from 'expo/config-plugins';
@@ -32,6 +33,7 @@ const { EditionFolderError, listEditions, openAppConfig, openEditionWithoutRecor
   import.meta.url,
 ) as typeof EditionFolders;
 const { loadDecor } = tsxRequire('@slovo/core', import.meta.url) as typeof Core;
+const { UpdateChannelSchema } = tsxRequire('@slovo/contracts', import.meta.url) as typeof Contracts;
 const { IOSConfig, withDangerousMod, withXcodeProject } = tsxRequire(
   'expo/config-plugins',
   import.meta.url,
@@ -254,6 +256,40 @@ function requireReleaseApiUrl(build: Build): void {
   }
 }
 
+/**
+ * Refuses a release build whose profile in `eas.json` names no Update channel
+ * or one that is neither `beta` nor `production` (ADR 0167). EAS writes the
+ * profile's channel into the native project, so the channel never enters this
+ * config and both store profiles get the same fingerprint (ADR 0062).
+ */
+function requireReleaseChannel(build: Build, projectRoot: string): void {
+  if (build.kind !== 'release') return;
+  const { profile } = build;
+  const channel = profileChannel(projectRoot, profile);
+  const channels = UpdateChannelSchema.options.join(', ');
+  if (channel === undefined) {
+    throw new Error(
+      `The release build "${profile}" names no Update channel: give its profile in eas.json a "channel", one of ${channels}`,
+    );
+  }
+  if (!UpdateChannelSchema.safeParse(channel).success) {
+    throw new Error(
+      `The release build "${profile}" names the Update channel ${JSON.stringify(channel)} in eas.json, but a release listens to one of ${channels}`,
+    );
+  }
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+/** The `channel` the build profile names in `eas.json`, unchecked, or undefined. */
+function profileChannel(projectRoot: string, profile: string): unknown {
+  const eas: unknown = JSON.parse(readFileSync(join(projectRoot, 'eas.json'), 'utf8'));
+  const profiles = isRecord(eas) ? eas['build'] : undefined;
+  const settings = isRecord(profiles) ? profiles[profile] : undefined;
+  return isRecord(settings) ? settings['channel'] : undefined;
+}
+
 /** The EAS project @slovo-app/slovo. */
 const EAS_PROJECT_ID = 'e2401ef2-2a47-407e-b0ff-03706421b71c';
 
@@ -261,7 +297,8 @@ const EAS_PROJECT_ID = 'e2401ef2-2a47-407e-b0ff-03706421b71c';
 const UPDATES_CERTIFICATE = './certs/certificate.pem';
 
 /**
- * OTA updates (ADR 0062): on launch the app checks the app's one channel,
+ * OTA updates (ADR 0062, 0167): on launch the app checks its build's Update
+ * channel, which EAS writes into the native project from the build profile,
  * waits a few seconds at most and otherwise starts the code it has; it
  * accepts only an update signed with SLOVO's key and made for its native
  * code (the fingerprint runtime version). A release refuses to build without
@@ -269,13 +306,12 @@ const UPDATES_CERTIFICATE = './certs/certificate.pem';
  *
  * The block is the same for every build, so the fingerprint eas-cli computes
  * on the laptop, where no `EAS_BUILD_PROFILE` is set, matches the one the EAS
- * build computes (#1498). A development build still takes no update from the
- * channel: its Debug configuration loads the bundle from Metro through the
+ * build computes (#1498). A development build names no channel and takes
+ * no update: its Debug configuration loads the bundle from Metro through the
  * development client.
  */
 function updates(
   build: Build,
-  channel: string,
   projectRoot: string,
 ): Pick<ExpoConfig, 'runtimeVersion' | 'updates'> {
   const certificate = join(projectRoot, UPDATES_CERTIFICATE);
@@ -290,7 +326,6 @@ function updates(
     updates: {
       enabled: true,
       url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
-      requestHeaders: { 'expo-channel-name': channel },
       checkAutomatically: 'ON_LOAD',
       fallbackToCacheTimeout: 3000,
       ...(signed && {
@@ -338,10 +373,11 @@ function openApp(repoDir: string, build: Build): AppFolder {
 export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   const build = currentBuild();
   requireReleaseApiUrl(build);
+  requireReleaseChannel(build, projectRoot);
   const repoDir = join(projectRoot, '../..');
   const app = openApp(repoDir, build);
   const edition = bundledEdition(join(repoDir, 'editions'), app);
-  const { name, scheme, bundleId, appGroup, domain, updateChannel } = app.config;
+  const { name, scheme, bundleId, appGroup, domain } = app.config;
   const [language] = edition.config.locale.split('-');
 
   const widget = widgetEdition(edition, app.config);
@@ -364,7 +400,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     // Memoises components and hooks at build time; modules with Reanimated or
     // gesture code opt out with 'use no memo' (ADR 0059).
     experiments: { reactCompiler: true },
-    ...updates(build, updateChannel, projectRoot),
+    ...updates(build, projectRoot),
     ios: {
       bundleIdentifier: bundleId,
       supportsTablet: false,

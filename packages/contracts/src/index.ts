@@ -5,6 +5,8 @@ export {
   appReleaseProblems,
   type AppConfig,
   type ReleaseProblem,
+  UpdateChannelSchema,
+  type UpdateChannel,
 } from './app-config';
 /**
  * The contracts: the single definition of every shape shared across the
