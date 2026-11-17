@@ -42,8 +42,14 @@ describe('Rules the admin sets', () => {
     await client.admin.setRules({
       editionId: 'ruled',
       feature: 'game',
-      rules: [{ id: 'beta', verdict: 'off', targets: { platform: 'android', share: 50 } }],
-      reason: 'try the Game on half of Android',
+      rules: [
+        {
+          id: 'beta',
+          verdict: 'off',
+          targets: { platform: 'android', share: 50, channel: 'beta' },
+        },
+      ],
+      reason: 'try the Game on half of Android testers',
     });
     await client.admin.setMinimum({
       editionId: 'ruled',
@@ -65,7 +71,7 @@ describe('Rules the admin sets', () => {
             id: 'beta',
             feature: 'game',
             verdict: 'off',
-            targets: { platform: 'android', share: 50 },
+            targets: { platform: 'android', share: 50, channel: 'beta' },
           },
         ],
         minimums: { ios: { soft: '1.2.0', hard: '1.0.0' } },

@@ -10,6 +10,7 @@ import {
   type Rule,
   type RuleTargets,
   type RuleVerdict,
+  type UpdateChannel,
 } from '@slovo/contracts';
 import type { AdminEdition } from '@slovo/contracts/admin-api';
 import { useState, type ReactNode, type SubmitEvent } from 'react';
@@ -31,6 +32,12 @@ const inputClass =
 
 const PLATFORMS: readonly Platform[] = ['ios', 'android'];
 
+/** The Update channels in the admin's words: `beta` is the owner's testers (ADR 0170). */
+const CHANNEL_TEXTS: Readonly<Record<UpdateChannel, string>> = {
+  beta: 'бета',
+  production: 'основний',
+};
+
 /** A Rule's verdict in the admin's words. */
 function verdictText(verdict: RuleVerdict): string {
   if (verdict === 'on') return 'увімкнено';
@@ -51,6 +58,7 @@ function targetsText(targets: RuleTargets): string {
     targets.schedule === undefined
       ? undefined
       : `з ${targets.schedule.from ?? '…'} до ${targets.schedule.until ?? '…'}`,
+    targets.channel === undefined ? undefined : `канал ${CHANNEL_TEXTS[targets.channel]}`,
   ].filter((part) => part !== undefined);
   return parts.length === 0 ? 'усі читачі' : parts.join(' · ');
 }
@@ -87,6 +95,7 @@ function draftOf(form: FormData, id: string): Draft | undefined {
     share: share === undefined ? undefined : Number(share),
     signedIn: signedIn === undefined ? undefined : signedIn === 'yes',
     schedule: range(momentOf(form, 'scheduleFrom'), momentOf(form, 'scheduleUntil')),
+    channel: textOf(form, 'channel'),
   });
   if (!verdict.success || !targets.success) return undefined;
   return { id, verdict: verdict.data, targets: targets.data };
@@ -251,6 +260,16 @@ export function RuleEditor({
             <option value="">усі</option>
             <option value="yes">з акаунтом</option>
             <option value="no">без акаунта</option>
+          </select>
+        </Field>
+        <Field label="Канал">
+          <select name="channel" className={inputClass} defaultValue="">
+            <option value="">усі</option>
+            {Object.entries(CHANNEL_TEXTS).map(([channel, text]) => (
+              <option key={channel} value={channel}>
+                {text}
+              </option>
+            ))}
           </select>
         </Field>
         <Field label="Розклад від">

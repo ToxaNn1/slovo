@@ -19,6 +19,7 @@ const facts = (changes: Partial<SwitchFacts> = {}): SwitchFacts => ({
   platform: 'ios',
   region: 'UA',
   signedIn: false,
+  updateChannel: 'production',
   installId: 'install-1',
   clock: fixedClock('2026-11-08T12:00:00Z'),
   clockOffsetMs: 0,
@@ -107,6 +108,45 @@ describe('the switch evaluator', () => {
     expect(evaluate(rules).search).toEqual({ on: false });
   });
 
+  it('applies a beta Rule on a beta device and not on a production one', () => {
+    const rules = [rule({ feature: 'tips', targets: { channel: 'beta' } })];
+
+    expect(evaluate(rules, statesWith(), facts({ updateChannel: 'beta' })).tips).toEqual({
+      on: false,
+    });
+    expect(evaluate(rules, statesWith(), facts({ updateChannel: 'production' })).tips).toEqual({
+      on: true,
+    });
+    expect(evaluate(rules, statesWith(), facts({ updateChannel: undefined })).tips).toEqual({
+      on: true,
+    });
+  });
+
+  it('combines the channel with the platform and the share', () => {
+    const ids = Array.from({ length: 200 }, (_, i) => `install-${String(i)}`);
+    const offOn = (changes: Partial<SwitchFacts>) =>
+      ids.filter(
+        (installId) =>
+          !evaluate(
+            [
+              rule({
+                id: 'beta-half',
+                feature: 'tips',
+                targets: { channel: 'beta', platform: 'ios', share: 50 },
+              }),
+            ],
+            statesWith(),
+            facts({ installId, ...changes }),
+          ).tips.on,
+      );
+
+    const onBetaIos = offOn({ updateChannel: 'beta' });
+    expect(onBetaIos.length).toBeGreaterThan(0);
+    expect(onBetaIos.length).toBeLessThan(ids.length);
+    expect(offOn({ updateChannel: 'beta', platform: 'android' })).toEqual([]);
+    expect(offOn({ updateChannel: 'production' })).toEqual([]);
+  });
+
   it('compares app versions by number, not by text', () => {
     const rules = [rule({ feature: 'tips', targets: { appVersion: { from: '1.10.0' } } })];
 
@@ -159,6 +199,7 @@ describe('the switch evaluator', () => {
       rule({ id: 'a', feature: 'tips', verdict: 'off', targets: { browser: 'safari' } }),
       rule({ id: 'b', feature: 'tips', verdict: 'off', targets: { share: 'half' } }),
       rule({ id: 'c', feature: 'tips', verdict: 'dimmed' }),
+      rule({ id: 'f', feature: 'tips', verdict: 'off', targets: { channel: 'alpha' } }),
       rule({ id: 'd', feature: 'teleport', verdict: 'off' }),
       rule({ id: 'e', feature: 'search', verdict: 'off' }),
     ]);

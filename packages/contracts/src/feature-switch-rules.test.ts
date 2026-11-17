@@ -14,7 +14,7 @@ const rule = {
 
 // ADR 0089: a Rule says on, off or a Variant for the readers it targets.
 describe('a Rule', () => {
-  it('reads every target: app version range, platform, region, share, signed-in state and schedule', () => {
+  it('reads every target: app version range, platform, region, share, signed-in state, schedule and Update channel', () => {
     const parsed = RuleSchema.parse({
       ...rule,
       verdict: { variants: ['a', 'b', 'c'] },
@@ -25,11 +25,13 @@ describe('a Rule', () => {
         share: 30,
         signedIn: false,
         schedule: { from: '2026-11-10T09:00:00.000Z', until: '2026-12-01T00:00:00.000Z' },
+        channel: 'beta',
       },
     });
 
     expect(parsed.verdict).toEqual({ variants: ['a', 'b', 'c'] });
     expect(parsed.targets.share).toBe(30);
+    expect(parsed.targets.channel).toBe('beta');
   });
 
   it.each([
@@ -43,6 +45,7 @@ describe('a Rule', () => {
     ['a region that is no country code', { targets: { region: ['Ukraine'] } }],
     ['an app version that is no version', { targets: { appVersion: { from: 'latest' } } }],
     ['a schedule that is no moment', { targets: { schedule: { from: 'tomorrow' } } }],
+    ['an Update channel the app has none of', { targets: { channel: 'alpha' } }],
     ['a target it does not know', { targets: { weather: 'sunny' } }],
     ['an order below zero', { order: -1 }],
   ])('refuses %s', (_name, change) => {

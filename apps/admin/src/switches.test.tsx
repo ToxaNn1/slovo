@@ -236,3 +236,42 @@ test('while the Editions fail to load, the Kill switch stays off and the screen 
   expect(await screen.findByText('Не вдалося завантажити свічі.')).toBeDefined();
   expect(screen.getByRole('button', { name: 'Вимкнути зараз' })).toHaveProperty('disabled', true);
 });
+
+test('the Rule editor offers the Update channel, saves it and shows it in plain words', async () => {
+  threeEditions();
+  const sent: unknown[] = [];
+  server.use(
+    http.put('*/admin/editions/:editionId/switches/:feature/rules', async ({ request }) => {
+      sent.push(await request.json());
+      return HttpResponse.json({ editionId: 'uk' });
+    }),
+  );
+  const user = userEvent.setup();
+  window.history.replaceState(null, '', '/admin/switches?edition=uk');
+  render(<Admin />);
+
+  await user.click((await rowOf('game')).getByRole('button', { name: 'Правила' }));
+  const editor = within(
+    await screen.findByRole('region', { name: 'Правила game у Рідкісні слова' }),
+  );
+  const channel = editor.getByRole('combobox', { name: 'Канал' });
+  expect(within(channel).getAllByRole('option').map((option) => option.textContent)).toEqual([
+    'усі',
+    'бета',
+    'основний',
+  ]);
+  await user.selectOptions(channel, 'бета');
+  await user.click(editor.getByRole('button', { name: 'Додати правило' }));
+
+  expect(editor.getByText('канал бета')).toBeDefined();
+  await user.click(editor.getByRole('button', { name: 'Зберегти правила' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByRole('textbox', { name: 'Причина' }), 'testers first');
+  await user.click(dialog.getByRole('button', { name: 'Підтвердити' }));
+
+  await vi.waitFor(() => {
+    expect(sent).toMatchObject([
+      { rules: [{ verdict: 'on', targets: { channel: 'beta' } }], reason: 'testers first' },
+    ]);
+  });
+});
