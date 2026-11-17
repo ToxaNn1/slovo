@@ -11,8 +11,23 @@ const WORDS: Readonly<Record<string, string>> = {
   errors: 'Помилки',
   events: 'Події',
   spend: 'Витрати',
+  compute: 'Обчислення',
+  storage: 'Сховище',
+  egress: 'Вихідний трафік',
+  minutes: 'Хвилини Actions',
+  'r2-storage': 'Сховище R2',
+  'r2-class-a': 'Операції R2 класу A',
+  'r2-class-b': 'Операції R2 класу B',
+  'worker-requests': 'Запити Worker за сьогодні',
 };
-const UNITS: Readonly<Record<string, string>> = { events: 'подій' };
+const UNITS: Readonly<Record<string, string>> = {
+  events: 'подій',
+  'CU-hours': 'CU-год',
+  GB: 'ГБ',
+  minutes: 'хв',
+  operations: 'операцій',
+  requests: 'запитів',
+};
 
 const labelOf = (name: string) => WORDS[name] ?? name;
 const number = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });

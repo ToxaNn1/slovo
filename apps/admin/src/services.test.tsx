@@ -180,3 +180,40 @@ test('the panel shows the usage numbers and the read time, and «Оновити�
   expect(refreshed).toEqual({ serviceId: SERVICE_IDS.Sentry });
   expect(await panel.findByText('1 300 з 5 000 подій')).toBeDefined();
 });
+
+test('the Neon panel names each limit and unit as the owner reads them', async () => {
+  server.use(
+    http.get('*/admin/services/usage', () =>
+      HttpResponse.json({
+        usage: [
+          {
+            serviceId: SERVICE_IDS.Neon,
+            read: {
+              ...SENTRY_USAGE.read,
+              reading: {
+                kind: 'metered',
+                usage: [
+                  { name: 'compute', unit: 'CU-hours', used: 25, limit: 100 },
+                  { name: 'egress', unit: 'GB', used: 4.5, limit: 5 },
+                ],
+              },
+            },
+          },
+        ],
+      }),
+    ),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  const blocks = await canvas();
+
+  const neon = within(blocks.getByRole('button', { name: 'Neon' }));
+  expect(
+    (await neon.findByRole('meter', { name: 'Вихідний трафік' })).getAttribute('aria-valuenow'),
+  ).toBe('4.5');
+  await user.click(blocks.getByRole('button', { name: 'Neon' }));
+  const panel = within(await screen.findByRole('dialog', { name: 'Neon' }));
+  expect(panel.getByText('Обчислення')).toBeDefined();
+  expect(panel.getByText('25 з 100 CU-год')).toBeDefined();
+  expect(panel.getByText('4,5 з 5 ГБ')).toBeDefined();
+});

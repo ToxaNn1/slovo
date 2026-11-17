@@ -51,6 +51,9 @@ export default defineRailway(() => {
       MEDIA_BASE: preserve(),
       TRUSTED_PROXY_HOPS: preserve(),
       RAILWAY_READ_TOKEN: preserve(),
+      NEON_API_KEY: preserve(),
+      NEON_PROJECT_ID: preserve(),
+      CLOUDFLARE_API_TOKEN: preserve(),
     },
   });
 

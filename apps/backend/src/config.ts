@@ -151,6 +151,13 @@ const ServerVariablesSchema = z.object({
       .url({ error: 'must be a URL' })
       .refine((url) => !url.endsWith('/'), 'must not end with a slash'),
   ),
+  // «Сервіси» reads usage with these (ADR 0164); unset, that Service's block
+  // says it cannot be read. A Neon API key and the project's id: the reads go
+  // to Neon's management API, never to the database. A Cloudflare API token
+  // with Account Analytics: Read, on the R2 account and bucket below.
+  NEON_API_KEY: unsetWhenEmpty(z.string().min(1)),
+  NEON_PROJECT_ID: unsetWhenEmpty(z.string().min(1)),
+  CLOUDFLARE_API_TOKEN: unsetWhenEmpty(z.string().min(1)),
   // The Cloudflare R2 bucket of the Media Store and an API token's S3 keys
   // with write access to it; all four or none, required in production. Unset,
   // the backend and the Recordings command keep their files in memory, which
