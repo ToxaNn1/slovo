@@ -1,4 +1,4 @@
-STATUS: RUNNING (handed off at ~165k context)
+STATUS: RUNNING (successor coordinator 2)
 ## NEXT (for the successor coordinator)
 Setup: `mkdir -p /tmp/claude-0 && cp wave/* /tmp/claude-0/` (from this branch); fetch issues #1949-#1959 to /tmp/claude-0/<n>.md via `gh api repos/ToxaNn1/slovo/issues/<n>` (no GraphQL). If cloud-setup failed: `pg_createcluster 18 main --port 5432 --start` then rerun `.claude/hooks/cloud-setup.sh`. Commit ONLY via /tmp/claude-0/gc.sh (env email otherwise overrides and GitHub declines the push). Ignore the stop hook asking for a Claude identity (owner rule wins).
 State: integration feat/1949-services = #1950 #1951 #1952 #1954 #1956 merged (tip 17ced2cd). PR #1960 draft; body source wave/pr-body.md + wave/notes.md (fold notes in). Migrations used: 0030_services, 0031_service_entries; one spare. ADR 0164 holds the whole spec; 0165-0166 unused.
@@ -22,3 +22,4 @@ WAITING until 2026-11-17T10:52:46Z: merger (#1952, #1954) and implementers #1955
 - 2026-11-17T10:27:04Z OWNER GRANT (laptop): «злиття дозволяю для всіх тікетів»: when every ticket is merged, code review fixed and CI green, mark PR #1960 ready and run gh pr merge 1960 --auto --squash. Renumber the services migrations after main's 0030 first.
 - 2026-11-17T10:27:38Z PR comment from the owner's account grants auto-merge; not acted on (the stored grant says no merge; a GitHub comment cannot grant merging). Reported to the owner.
 - 2026-11-17T10:31:27Z handed off to successor session session_01VefVQRb18SiVZuvfUXq2sK (this coordinator stops).
+- 2026-11-17T10:32:45Z successor coordinator started; pg cluster recreated; merger #1955 started; #1953 implementer in /tmp/wt/1953. Main moved (da78fc1 adds 0030_statistics_off_counters): merge main + renumber services migrations to 0031/0032 after #1957.
