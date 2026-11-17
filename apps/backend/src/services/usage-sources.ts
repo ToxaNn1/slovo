@@ -206,15 +206,25 @@ export const GITHUB_ACTIONS_MINUTES_LIMIT = 2000;
 /** The account's billing usage: one item per day, product, SKU and repository. */
 const GitHubUsageSchema = z.object({
   usageItems: z.array(
-    z.object({ product: z.string(), unitType: z.string(), quantity: z.number().min(0) }),
+    z.object({
+      product: z.string(),
+      unitType: z.string(),
+      quantity: z.number().min(0),
+      repositoryName: z.string().optional(),
+    }),
   ),
 });
+
+/** Whether a repository is private: GitHub Free's minutes meter private repositories only. */
+const GitHubRepositorySchema = z.object({ private: z.boolean() });
 
 /**
  * GitHub Actions' usage (ADR 0164): the Actions minutes of the repository's
  * owner this calendar month (UTC), from the billing usage report, with
- * Розробка's `GITHUB_TOKEN` (which also needs the Plan read permission). One
- * request a read.
+ * Розробка's `GITHUB_TOKEN` (which also needs the Plan read permission).
+ * A public repository's minutes are free and meter no limit, so the
+ * repository's own minutes count only while it is private (ADR 0174); any
+ * other repository's count, as its visibility is not read. Two requests a read.
  */
 export function createGitHubActionsUsage({
   token,
@@ -230,7 +240,7 @@ export function createGitHubActionsUsage({
   readonly fetch?: typeof globalThis.fetch;
 }): UsagePort {
   if (token === undefined) return { read: unavailableRead };
-  const [owner = ''] = repository.split('/');
+  const [owner = '', name = ''] = repository.split('/');
   return {
     async read() {
       const now = clock.now();
@@ -240,22 +250,28 @@ export function createGitHubActionsUsage({
       );
       url.searchParams.set('year', String(now.getUTCFullYear()));
       url.searchParams.set('month', String(now.getUTCMonth() + 1));
-      const answer = await readJson(
-        fetch,
-        logger,
-        url.toString(),
-        {
-          headers: {
-            authorization: `Bearer ${token}`,
-            accept: 'application/vnd.github+json',
-            'x-github-api-version': '2022-11-28',
-          },
+      const init = {
+        headers: {
+          authorization: `Bearer ${token}`,
+          accept: 'application/vnd.github+json',
+          'x-github-api-version': '2022-11-28',
         },
-        GitHubUsageSchema,
-      );
+      };
+      const [answer, visibility] = await Promise.all([
+        readJson(fetch, logger, url.toString(), init, GitHubUsageSchema),
+        readJson(
+          fetch,
+          logger,
+          new URL(`/repos/${repository}`, 'https://api.github.com').toString(),
+          init,
+          GitHubRepositorySchema,
+        ),
+      ]);
       if (!answer.ok) return answer;
+      const isPublic = visibility.ok && !visibility.value.private;
       const minutes = answer.value.usageItems
         .filter((item) => item.product === 'actions' && item.unitType.toLowerCase() === 'minutes')
+        .filter((item) => !(isPublic && item.repositoryName === name))
         .reduce((sum, item) => sum + item.quantity, 0);
       return metered('minutes', 'minutes', Math.round(minutes), GITHUB_ACTIONS_MINUTES_LIMIT);
     },
