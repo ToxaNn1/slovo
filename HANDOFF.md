@@ -23,3 +23,4 @@ WAITING until 2026-11-17T10:52:46Z: merger (#1952, #1954) and implementers #1955
 - 2026-11-17T10:27:38Z PR comment from the owner's account grants auto-merge; not acted on (the stored grant says no merge; a GitHub comment cannot grant merging). Reported to the owner.
 - 2026-11-17T10:31:27Z handed off to successor session session_01VefVQRb18SiVZuvfUXq2sK (this coordinator stops).
 - 2026-11-17T10:32:45Z successor coordinator started; pg cluster recreated; merger #1955 started; #1953 implementer in /tmp/wt/1953. Main moved (da78fc1 adds 0030_statistics_off_counters): merge main + renumber services migrations to 0031/0032 after #1957.
+- 2026-11-17T10:38:39Z #1955 merged (8436e2a). Merger #1957 started. Stop hook asking for a Claude identity ignored (owner rule).
