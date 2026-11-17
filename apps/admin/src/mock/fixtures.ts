@@ -180,6 +180,96 @@ export const FIXTURES: AdminApiOutputs = {
     ],
     total: 1,
   },
+  getAccount: {
+    account: {
+      id: '7d3c1f0e-5b6a-4c2d-9e8f-1a2b3c4d5e6f',
+      email: 'reader@example.com',
+      createdAt: '2026-10-01T09:00:00.000Z',
+      signInMethods: ['google'],
+      editions: [
+        {
+          editionId: 'uk',
+          records: [
+            { key: 'favorites.w_a1', value: '2026-11-01T10:00:00.000Z', changedAt: 1 },
+            {
+              key: 'collections.c1',
+              value: { name: 'Для подорожі', createdAt: '2026-11-01T10:00:00.000Z' },
+              changedAt: 2,
+            },
+            { key: 'collectionEntries.c1.w_a1', value: '2026-11-01T10:01:00.000Z', changedAt: 3 },
+            { key: 'collectionEntries.c1.w_e5', value: '2026-11-01T10:02:00.000Z', changedAt: 4 },
+            { key: 'hidden.w_c3', value: '2026-11-02T10:00:00.000Z', changedAt: 5 },
+            {
+              key: 'knowledge.w_b2',
+              value: { mark: 'known', step: null, reviewDay: null, learned: false },
+              changedAt: 6,
+            },
+            {
+              key: 'knowledge.w_d4',
+              value: { mark: 'unknown', step: 1, reviewDay: '2026-11-03', learned: false },
+              changedAt: 7,
+            },
+            {
+              key: 'xp.x0',
+              value: { kind: 'xp', date: '2026-10-30', at: '2026-10-30T10:00:00.000Z', amount: 7 },
+              changedAt: 8,
+            },
+            {
+              key: 'xp.r0',
+              value: { kind: 'reset', date: '2026-10-31', at: '2026-10-31T10:00:00.000Z' },
+              changedAt: 9,
+            },
+            {
+              key: 'xp.x1',
+              value: { kind: 'xp', date: '2026-11-01', at: '2026-11-01T10:00:00.000Z', amount: 15 },
+              changedAt: 10,
+            },
+            {
+              key: 'xp.x2',
+              value: { kind: 'xp', date: '2026-11-02', at: '2026-11-02T10:00:00.000Z', amount: 5 },
+              changedAt: 11,
+            },
+            {
+              key: 'xp.g1',
+              value: {
+                kind: 'word-goal',
+                date: '2026-11-01',
+                at: '2026-11-01T09:00:00.000Z',
+                goal: 25,
+              },
+              changedAt: 12,
+            },
+            {
+              key: 'xp.f1',
+              value: { kind: 'freeze', date: '2026-11-03', at: '2026-11-04T08:00:00.000Z' },
+              changedAt: 13,
+            },
+            {
+              key: 'xp.b1',
+              value: { kind: 'break', date: '2026-11-05', at: '2026-11-05T08:00:00.000Z', days: 3 },
+              changedAt: 14,
+            },
+            {
+              key: 'xp.bd1',
+              value: {
+                kind: 'badge',
+                date: '2026-11-02',
+                at: '2026-11-02T10:00:00.000Z',
+                badge: 'streak-7',
+              },
+              changedAt: 15,
+            },
+            { key: 'settings.theme', value: 'dark', changedAt: 16 },
+            {
+              key: 'history.w_a1',
+              value: { seenAt: '2026-11-01T10:00:00.000Z', wordOfTheDay: false },
+              changedAt: 17,
+            },
+          ],
+        },
+      ],
+    },
+  },
   deleteAccount: { deleted: true },
   status: { on: true },
   switches: SWITCHES,

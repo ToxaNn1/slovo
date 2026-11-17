@@ -23,6 +23,7 @@ import { Route as ContentReviewRouteImport } from './routes/content.review'
 import { Route as SwitchesIndexRouteImport } from './routes/switches.index'
 import { Route as SwitchesKillRouteImport } from './routes/switches.kill'
 import { Route as SwitchesRuleRouteImport } from './routes/switches.rule'
+import { Route as SecurityAccountsAccountIdRouteImport } from './routes/security_.accounts.$accountId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,6 +95,12 @@ const SwitchesRuleRoute = SwitchesRuleRouteImport.update({
   path: '/rule',
   getParentRoute: () => SwitchesRoute,
 } as any)
+const SecurityAccountsAccountIdRoute =
+  SecurityAccountsAccountIdRouteImport.update({
+    id: '/security_/accounts/$accountId',
+    path: '/security/accounts/$accountId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/switches/rule': typeof SwitchesRuleRoute
   '/content/': typeof ContentIndexRoute
   '/switches/': typeof SwitchesIndexRoute
+  '/security/accounts/$accountId': typeof SecurityAccountsAccountIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -124,6 +132,7 @@ export interface FileRoutesByTo {
   '/switches/rule': typeof SwitchesRuleRoute
   '/content': typeof ContentIndexRoute
   '/switches': typeof SwitchesIndexRoute
+  '/security/accounts/$accountId': typeof SecurityAccountsAccountIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -141,6 +150,7 @@ export interface FileRoutesById {
   '/switches/rule': typeof SwitchesRuleRoute
   '/content/': typeof ContentIndexRoute
   '/switches/': typeof SwitchesIndexRoute
+  '/security_/accounts/$accountId': typeof SecurityAccountsAccountIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/switches/rule'
     | '/content/'
     | '/switches/'
+    | '/security/accounts/$accountId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/switches/rule'
     | '/content'
     | '/switches'
+    | '/security/accounts/$accountId'
   id:
     | '__root__'
     | '/'
@@ -189,6 +201,7 @@ export interface FileRouteTypes {
     | '/switches/rule'
     | '/content/'
     | '/switches/'
+    | '/security_/accounts/$accountId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -200,6 +213,7 @@ export interface RootRouteChildren {
   SecurityRoute: typeof SecurityRoute
   SessionsRoute: typeof SessionsRoute
   SwitchesRoute: typeof SwitchesRouteWithChildren
+  SecurityAccountsAccountIdRoute: typeof SecurityAccountsAccountIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -302,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SwitchesRuleRouteImport
       parentRoute: typeof SwitchesRoute
     }
+    '/security_/accounts/$accountId': {
+      id: '/security_/accounts/$accountId'
+      path: '/security/accounts/$accountId'
+      fullPath: '/security/accounts/$accountId'
+      preLoaderRoute: typeof SecurityAccountsAccountIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -345,6 +366,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityRoute: SecurityRoute,
   SessionsRoute: SessionsRoute,
   SwitchesRoute: SwitchesRouteWithChildren,
+  SecurityAccountsAccountIdRoute: SecurityAccountsAccountIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
