@@ -2,6 +2,7 @@ import type { Service } from '@slovo/contracts/admin-api';
 import { useEffect, useId, useRef } from 'react';
 
 import { Button } from '../ui/button';
+import { ServiceEntries } from './service-entries';
 
 /**
  * The side panel of a Service: a native modal `<dialog>` at the right edge
@@ -42,6 +43,7 @@ export function ServicePanel({
           Закрити
         </Button>
       </div>
+      <ServiceEntries service={service} />
     </dialog>
   );
 }
