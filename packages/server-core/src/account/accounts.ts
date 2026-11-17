@@ -272,11 +272,10 @@ export function createAccounts({
       }),
 
     async get(accountId) {
-      const [found, kept] = await Promise.all([
-        authenticator.accountById(accountId),
-        records.ofAccount(accountId),
-      ]);
+      // An unknown id reads no records.
+      const found = await authenticator.accountById(accountId);
       if (found === undefined) return undefined;
+      const kept = await records.ofAccount(accountId);
       const byEdition = new Map<string, RecordChange[]>();
       for (const { editionId, key, value, changedAt } of kept) {
         if (value === null) continue;
