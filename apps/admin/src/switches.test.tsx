@@ -255,11 +255,11 @@ test('the Rule editor offers the Update channel, saves it and shows it in plain 
     await screen.findByRole('region', { name: 'Правила game у Рідкісні слова' }),
   );
   const channel = editor.getByRole('combobox', { name: 'Канал' });
-  expect(within(channel).getAllByRole('option').map((option) => option.textContent)).toEqual([
-    'усі',
-    'бета',
-    'основний',
-  ]);
+  expect(
+    within(channel)
+      .getAllByRole('option')
+      .map((option) => option.textContent),
+  ).toEqual(['усі', 'бета', 'основний']);
   await user.selectOptions(channel, 'бета');
   await user.click(editor.getByRole('button', { name: 'Додати правило' }));
 
