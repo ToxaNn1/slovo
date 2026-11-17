@@ -8,8 +8,9 @@ the voice reads (the Lemma with a combining acute after its first stressed
 vowel). The Recordings service (`pnpm recordings`) writes the list and reads
 the result. Each Recording goes to `<out-dir>/<id>.mp3`, mono 24 kHz 48 kbps,
 and `<out-dir>/results.json` lists `{ id, ok, durationMs }` for every
-request: a request the engine fails on is `ok: false` and the others still
-get their Recordings.
+request done so far, rewritten after each one: a request the engine fails on
+is `ok: false` and the others still get their Recordings, and a run stopped
+at its time limit keeps the ones it made.
 
 `--check` is the Stress spot-check: it reads the Words of `CHECK_LEMMAS`
 from the requests, once in each voice, writes no Recording, and fails unless
@@ -131,9 +132,13 @@ def generate(engine: Engine, requests: list[dict[str, str]], out_dir: Path) -> N
             except Exception as error:  # noqa: BLE001 - one failing Word must not stop the others
                 print(f"FAIL {request['id']} {request['voice']}: {error}", file=sys.stderr)
                 results.append({"id": request["id"], "ok": False})
+            # Listed after every request, so a run stopped at its time limit keeps what it made;
+            # the rename makes a stop mid-write leave the previous list whole.
+            listed = out_dir / "results.json.part"
+            listed.write_text(json.dumps(results) + "\n", encoding="utf-8")
+            os.replace(listed, out_dir / "results.json")
             if done % 50 == 0 or done == len(requests):
                 print(f"{done}/{len(requests)}", flush=True)
-    (out_dir / "results.json").write_text(json.dumps(results) + "\n", encoding="utf-8")
 
 
 def check(engine: Engine, requests: list[dict[str, str]]) -> bool:

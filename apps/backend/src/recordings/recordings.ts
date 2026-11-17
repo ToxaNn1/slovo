@@ -185,7 +185,12 @@ export function createRecordings({
     // A generator that throws fails the whole batch: its Words go to the back of the queue.
     const outcomes: readonly (RecordingOutcome | undefined)[] = await generator
       .record(requests.map(({ voice, text }) => ({ voice, text })))
-      .catch(() => requests.map(() => ({ ok: false }) satisfies RecordingOutcome));
+      .catch((error: unknown) => {
+        console.error(
+          `recordings: the generator failed for ${editionId}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        return requests.map(() => ({ ok: false }) satisfies RecordingOutcome);
+      });
     if (!(await renewLease(editionId, holder))) return { recorded: 0, failed: 0 };
     const made: RecordedWord[] = [];
     for (const word of words) {

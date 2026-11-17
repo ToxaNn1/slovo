@@ -52,6 +52,35 @@ describe('the script generator', () => {
     expect(Date.now() - started).toBeLessThan(10_000);
   });
 
+  it('keeps the Recordings a script made before its time limit stopped it', async () => {
+    // Makes the first request's Recording, lists it, then hangs on the second.
+    const slow = join(dir, 'slow.cjs');
+    writeFileSync(
+      slow,
+      `const { readFileSync, writeFileSync, mkdirSync } = require('node:fs');
+const arg = (name) => process.argv[process.argv.indexOf(name) + 1];
+const [first] = JSON.parse(readFileSync(arg('--requests'), 'utf8'));
+const out = arg('--out-dir');
+mkdirSync(out, { recursive: true });
+writeFileSync(out + '/' + first.id + '.mp3', first.voice + ':' + first.text);
+writeFileSync(out + '/results.json', JSON.stringify([{ id: first.id, ok: true, durationMs: 700 }]));
+setTimeout(() => {}, 60_000);`,
+    );
+    const generator = scriptGenerator({
+      command: [process.execPath, slow],
+      modelDir: dir,
+      timeoutMs: 1_000,
+    });
+    const outcomes = await generator.record([
+      { voice: 'oksana', text: 'обру́ч' },
+      { voice: 'taras', text: 'за́плава' },
+    ]);
+    expect(outcomes).toEqual([
+      { ok: true, bytes: new Uint8Array(Buffer.from('oksana:обру́ч')), durationMs: 700 },
+      { ok: false },
+    ]);
+  });
+
   it('records nothing for no requests, without running the script', async () => {
     const generator = scriptGenerator({ command: ['/nonexistent'], modelDir: dir });
     expect(await generator.record([])).toEqual([]);
