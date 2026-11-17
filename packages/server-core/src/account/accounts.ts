@@ -1,8 +1,10 @@
 import { AccountEmailSchema, fill } from '@slovo/contracts';
+import { ACCOUNTS_PAGE_SIZE } from '@slovo/contracts/admin-api';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type {
   AccountRecord,
+  AccountsPage,
   AppleVerifier,
   Authenticator,
   Clock,
@@ -10,7 +12,6 @@ import type {
   GoogleVerifier,
   Mailer,
   RateLimits,
-  ReaderAccount,
   SignedIn,
 } from '../ports';
 import type { TooManyRequests } from '../rate-limit';
@@ -125,11 +126,12 @@ export interface Accounts {
    */
   delete(session: Session): Promise<void>;
   /**
-   * The Account of the email, for the owner admin alone (ADR 0127), which
-   * names an Account by email instead of by its Session; none when the email
-   * has no Account or is not an email.
+   * One page from 1 of every Account, newest first, for the owner admin alone
+   * (ADR 0162), which names Accounts other than the Session's own; a `search`
+   * keeps those whose email holds it, in any case. Past the last page it
+   * lists none.
    */
-  find(email: string): Promise<ReaderAccount | undefined>;
+  list(query: { readonly page: number; readonly search: string }): Promise<AccountsPage>;
   /**
    * Deletes the email's Account as `delete` does a Session's, for the owner
    * admin alone (ADR 0127), and answers the Account deleted; none, and
@@ -169,10 +171,6 @@ export function createAccounts({
   clock: Clock;
 }): Accounts {
   const limits = createSignInLimits({ rateLimits, clock });
-  const find = async (email: string) => {
-    const normal = normalised(email);
-    return normal === undefined ? undefined : authenticator.accountOf(normal);
-  };
   return {
     async requestCode(typedEmail, editionId, ip) {
       const email = normalised(typedEmail);
@@ -246,10 +244,17 @@ export function createAccounts({
 
     delete: ({ account }) => authenticator.delete(account),
 
-    find,
+    list: ({ page, search }) =>
+      authenticator.accounts({
+        search: search.trim().toLowerCase(),
+        offset: (page - 1) * ACCOUNTS_PAGE_SIZE,
+        limit: ACCOUNTS_PAGE_SIZE,
+      }),
 
-    async deleteByEmail(email) {
-      const found = await find(email);
+    async deleteByEmail(typedEmail) {
+      const email = normalised(typedEmail);
+      if (email === undefined) return undefined;
+      const found = await authenticator.accountOf(email);
       if (found === undefined) return undefined;
       await authenticator.delete(found.account);
       return found.account;

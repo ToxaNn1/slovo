@@ -170,12 +170,16 @@ export const FIXTURES: AdminApiOutputs = {
     token: 'slovo_agent_4fJk9QmZr2Lw8xPaT7eYb3NcVd6HsUoG1iKqMnBy',
   },
   revokeAgentToken: { revoked: true },
-  findAccount: {
-    account: {
-      email: 'reader@example.com',
-      createdAt: '2026-10-01T09:00:00.000Z',
-      signInMethods: ['google'],
-    },
+  listAccounts: {
+    accounts: [
+      {
+        id: '7d3c1f0e-5b6a-4c2d-9e8f-1a2b3c4d5e6f',
+        email: 'reader@example.com',
+        createdAt: '2026-10-01T09:00:00.000Z',
+        signInMethods: ['google'],
+      },
+    ],
+    total: 1,
   },
   deleteAccount: { deleted: true },
   status: { on: true },

@@ -15,7 +15,7 @@ The rule:
 Consequences:
 
 - The server Core's Accounts gain `list(page, search)` and `get(accountId)`, which name Accounts for the admin alone; `find` by email is folded into the search. `deleteByEmail` stays. The Account procedures of the app still act only on the Session's own Account.
-- The admin API gains `listAccounts` and `getAccount`; `findAccount` goes.
+- The admin API gains `listAccounts` and `getAccount`; `findAccount` goes. An admin procedure may go within `/v1`, as an admin input may narrow (ADR 0122): the admin ships with the backend, so the breaking-change check skips a gone admin path. Admin outputs stay held.
 
 ## Considered Options
 

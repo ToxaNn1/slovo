@@ -328,6 +328,19 @@ export const ContentRecordSummarySchema = z.object({
 });
 export type ContentRecordSummary = z.infer<typeof ContentRecordSummarySchema>;
 
+/** One reader Account in the Безпека list (ADR 0162). */
+export const AccountRowSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  createdAt: z.string(),
+  /** The Google and Apple sign-in methods recorded for it; a Sign-in code reaches every Account. */
+  signInMethods: z.array(z.enum(['google', 'apple'])),
+});
+export type AccountRow = z.infer<typeof AccountRowSchema>;
+
+/** How many Accounts Безпека lists on one page. */
+export const ACCOUNTS_PAGE_SIZE = 50;
+
 /** How many records the content editor lists on one page. */
 export const CONTENT_PAGE_SIZE = 50;
 
@@ -1172,26 +1185,29 @@ export const adminContract = {
     .input(z.strictObject({ name: AgentNameSchema, reason: ReasonSchema }))
     .output(z.object({ revoked: z.literal(true) })),
 
-  findAccount: procedure
+  listAccounts: procedure
     .route({
       method: 'GET',
-      path: '/admin/accounts/{email}',
-      summary: "Finds a reader's Account by email",
+      path: '/admin/accounts',
+      summary:
+        "Every reader's Account, newest first, a page of 50 at a time with the count of every match",
       description:
-        'A Безпека procedure: a Власник only (ADR 0127). Answers the date the Account was made and its Google and Apple sign-in methods, nothing more; `null` for an email with no Account.',
+        'A Безпека procedure: a Власник only (ADR 0162), and never logged. A `search` keeps the Accounts whose email holds it, in any case.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
-    .input(z.strictObject({ email: EmailSchema }))
+    .input(
+      z.strictObject({
+        search: z.string().max(200).optional(),
+        /** The page from 1, of `ACCOUNTS_PAGE_SIZE` Accounts newest first; past the last one it lists none. */
+        page: z.coerce.number<number>().int().positive().optional(),
+      }),
+    )
     .output(
       z.object({
-        account: z
-          .object({
-            email: z.string(),
-            createdAt: z.string(),
-            signInMethods: z.array(z.enum(['google', 'apple'])),
-          })
-          .nullable(),
+        accounts: z.array(AccountRowSchema),
+        /** How many Accounts match, on every page. */
+        total: z.number().int().nonnegative(),
       }),
     ),
 

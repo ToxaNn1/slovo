@@ -1,6 +1,8 @@
 import {
+  ACCOUNTS_PAGE_SIZE,
   AccessRefusalSchema,
   ACTION_PAGE_SIZE,
+  type AccountRow,
   type AdminApiOutputs,
   type AlertThresholdKey,
 } from '@slovo/contracts/admin-api';
@@ -13,7 +15,7 @@ import { changeOf, ROLE_LABELS, THRESHOLD_LABELS, whatOf } from '../action-texts
 import { adminApi } from '../api';
 import { useAdminWrite } from '../components/admin-write';
 import { ConfirmDialog, type PendingWrite } from '../components/confirm-dialog';
-import { Pager } from '../components/content-editor/pager';
+import { Pager } from '../components/pager';
 import { Button } from '../components/ui/button';
 import { refusalData, useSignedInAdmin } from '../session';
 import { formatMoment } from '../format';
@@ -26,7 +28,7 @@ type Role = 'owner' | 'admin';
 type AccessRefusal = z.infer<typeof AccessRefusalSchema>;
 type Action = AdminApiOutputs['actions']['actions'][number];
 type AlertThreshold = AdminApiOutputs['alertThresholds']['thresholds'][number];
-type SignInMethod = NonNullable<AdminApiOutputs['findAccount']['account']>['signInMethods'][number];
+type SignInMethod = AccountRow['signInMethods'][number];
 
 const REFUSALS: Readonly<Record<AccessRefusal['refusal'], string>> = {
   taken: 'Ця пошта вже має доступ.',
@@ -107,7 +109,7 @@ function OwnerSecurity({ email }: { email: string }) {
       </div>
       <People self={email} confirm={setPending} />
       <AgentTokens confirm={setPending} />
-      <ReaderAccount confirm={setPending} />
+      <ReaderAccounts confirm={setPending} />
       <AlertThresholds confirm={setPending} />
       <ActionLog />
       {pending === null ? null : (
@@ -354,35 +356,38 @@ const SIGN_IN_METHOD_LABELS: Readonly<Record<SignInMethod, string>> = {
   apple: 'Apple',
 };
 
-/** A reader's Account, found by email and deleted with a reason (ADR 0127). */
-function ReaderAccount({ confirm }: { confirm: Confirm }) {
+/** Every reader Account, newest first, a page at a time and searched by email; each deleted with a reason (ADR 0162). */
+function ReaderAccounts({ confirm }: { confirm: Confirm }) {
   const [draft, setDraft] = useState('');
-  const [email, setEmail] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [deleted, setDeleted] = useState<string | null>(null);
-  const found = useQuery({
-    queryKey: ['reader-account', email],
-    queryFn: () => adminApi.findAccount({ email: email ?? '' }),
-    enabled: email !== null,
+  const listed = useQuery({
+    queryKey: ['reader-accounts', search, page],
+    queryFn: () =>
+      adminApi.listAccounts({
+        ...(search === '' ? {} : { search }),
+        ...(page === 1 ? {} : { page }),
+      }),
     retry: false,
   });
   const remove = useAdminWrite(adminApi.deleteAccount);
 
   function onFind(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    const typed = draft.trim();
-    if (typed === '') return;
     setDeleted(null);
-    setEmail(typed);
+    setSearch(draft.trim());
+    setPage(1);
   }
 
-  const account = email === null ? undefined : found.data?.account;
+  const accounts = listed.data?.accounts ?? [];
   return (
-    <Block title="Акаунт читача" failed={found.isError}>
+    <Block title="Акаунти читачів" failed={listed.isError}>
       <form onSubmit={onFind} className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1 text-sm">
           Пошта читача
           <input
-            type="email"
+            type="search"
             className={inputClass}
             value={draft}
             onChange={(event) => {
@@ -390,7 +395,7 @@ function ReaderAccount({ confirm }: { confirm: Confirm }) {
             }}
           />
         </label>
-        <Button type="submit" variant="secondary" disabled={found.isFetching}>
+        <Button type="submit" variant="secondary" disabled={listed.isFetching}>
           Знайти
         </Button>
       </form>
@@ -399,37 +404,67 @@ function ReaderAccount({ confirm }: { confirm: Confirm }) {
           Акаунт {deleted} видалено.
         </p>
       )}
-      {account === null ? <p className="text-sm text-muted-foreground">Не знайдено.</p> : null}
-      {account === undefined || account === null ? null : (
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface px-[18px] py-3 text-[13px] shadow-panel">
-          <span className="grow">
-            {account.email} · створено {formatMoment(account.createdAt)} · входи:{' '}
-            {[
-              'Код з листа',
-              ...account.signInMethods.map((method) => SIGN_IN_METHOD_LABELS[method]),
-            ].join(', ')}
-          </span>
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() => {
-              const target = account.email;
-              confirm({
-                title: `Видалити акаунт ${target} назавжди? Слова, прогрес і входи читача зникнуть.`,
-                confirm: 'Видалити акаунт',
-                danger: true,
-                run: async (reason) => {
-                  await remove.mutateAsync({ email: target, reason });
-                  setEmail(null);
-                  setDraft('');
-                  setDeleted(target);
-                },
-              });
-            }}
-          >
-            Видалити акаунт
-          </Button>
+      {listed.data?.total === 0 ? (
+        <p className="text-sm text-muted-foreground">Не знайдено.</p>
+      ) : null}
+      {accounts.length === 0 ? null : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-[13px]">
+            <thead className="text-xs text-subtle">
+              <tr>
+                <th className="px-2 py-[9px] font-normal">Пошта</th>
+                <th className="px-2 py-[9px] font-normal">Створено</th>
+                <th className="px-2 py-[9px] font-normal">Входи</th>
+                <th className="px-2 py-[9px] font-normal">
+                  <span className="sr-only">Дії</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {accounts.map((account) => (
+                <tr key={account.id} className="border-t border-border">
+                  <td className="px-2 py-[9px]">{account.email}</td>
+                  <td className="px-2 py-[9px]">{formatMoment(account.createdAt)}</td>
+                  <td className="px-2 py-[9px]">
+                    {[
+                      'Код з листа',
+                      ...account.signInMethods.map((method) => SIGN_IN_METHOD_LABELS[method]),
+                    ].join(', ')}
+                  </td>
+                  <td className="px-2 py-[9px] text-right">
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      onClick={() => {
+                        const target = account.email;
+                        confirm({
+                          title: `Видалити акаунт ${target} назавжди? Слова, прогрес і входи читача зникнуть.`,
+                          confirm: 'Видалити акаунт',
+                          danger: true,
+                          run: async (reason) => {
+                            await remove.mutateAsync({ email: target, reason });
+                            setDeleted(target);
+                          },
+                        });
+                      }}
+                    >
+                      Видалити акаунт
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+      )}
+      {listed.data === undefined || listed.data.total === 0 ? null : (
+        <Pager
+          label="Сторінки акаунтів"
+          page={page}
+          pageSize={ACCOUNTS_PAGE_SIZE}
+          total={listed.data.total}
+          onPage={setPage}
+        />
       )}
     </Block>
   );
