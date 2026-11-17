@@ -128,10 +128,10 @@ describe("«Сервіси»: a Service's money and a new Service", () => {
     expect(after).toHaveLength(before.length + 1);
     expect(after).toContainEqual(service);
     const apart = (a: Service, b: Service) =>
-      a.position.x + 200 <= b.position.x ||
-      b.position.x + 200 <= a.position.x ||
-      a.position.y + 88 <= b.position.y ||
-      b.position.y + 88 <= a.position.y;
+      a.position.x + 230 <= b.position.x ||
+      b.position.x + 230 <= a.position.x ||
+      a.position.y + 115 <= b.position.y ||
+      b.position.y + 115 <= a.position.y;
     for (const other of before) expect(apart(service, other)).toBe(true);
     expect(await newestAction(owner)).toMatchObject({
       what: 'service.add',

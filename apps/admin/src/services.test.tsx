@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, expect, test } from 'vitest';
@@ -54,7 +54,7 @@ test('an Адмін has no «Сервіси» in the sidebar and does not open i
   expect(asked).toBe(false);
 });
 
-test('the eleven Services are blocks at their places, joined by solid and dashed lines', async () => {
+test('the eleven Services are 230 × 115 blocks at their places, joined by solid and dashed lines', async () => {
   render(<Admin />);
   const blocks = await canvas();
 
@@ -62,6 +62,7 @@ test('the eleven Services are blocks at their places, joined by solid and dashed
     const block = blocks.getByRole('button', { name: service.name });
     expect(block.style.left).toBe(`${String(service.position.x)}px`);
     expect(block.style.top).toBe(`${String(service.position.y)}px`);
+    expect([block.style.width, block.style.height]).toEqual(['230px', '115px']);
   }
   const lines = within(blocks.getByRole('img', { name: 'Зв’язки між Сервісами' }));
   const dashed = (name: string) => lines.getByLabelText(name).getAttribute('stroke-dasharray');
@@ -70,6 +71,41 @@ test('the eleven Services are blocks at their places, joined by solid and dashed
   expect(dashed('Railway → Telegram bot')).not.toBeNull();
   const total = SERVICES.reduce((sum, service) => sum + service.links.length, 0);
   expect(lines.getAllByLabelText(/→/)).toHaveLength(total);
+});
+
+test('the canvas zooms out, in and back to fit its window, as Railway’s does', async () => {
+  const user = userEvent.setup();
+  render(<Admin />);
+  const zoom = within(await screen.findByRole('toolbar', { name: 'Масштаб полотна' }));
+  const group = await screen.findByRole('group', { name: 'Полотно Сервісів' });
+
+  expect(zoom.getByText('100 %')).toBeDefined();
+  await user.click(zoom.getByRole('button', { name: 'Зменшити' }));
+  await user.click(zoom.getByRole('button', { name: 'Зменшити' }));
+  expect(zoom.getByText('80 %')).toBeDefined();
+  expect(group.style.transform).toBe('translate(0px, 0px) scale(0.8)');
+  await user.click(zoom.getByRole('button', { name: 'Збільшити' }));
+  expect(zoom.getByText('90 %')).toBeDefined();
+  await user.click(zoom.getByRole('button', { name: 'Вмістити' }));
+  expect(zoom.getByText('100 %')).toBeDefined();
+  expect(group.style.transform).toBe('translate(0px, 0px) scale(1)');
+});
+
+test('dragging the empty canvas or the wheel moves it anywhere, as on Railway; dragging a block does not', async () => {
+  render(<Admin />);
+  const group = await screen.findByRole('group', { name: 'Полотно Сервісів' });
+  const drag = (from: Element, by: { x: number; y: number }) => {
+    fireEvent.pointerDown(from, { button: 0, clientX: 500, clientY: 300, pointerId: 1 });
+    fireEvent.pointerMove(from, { clientX: 500 + by.x, clientY: 300 + by.y, pointerId: 1 });
+    fireEvent.pointerUp(from, { clientX: 500 + by.x, clientY: 300 + by.y, pointerId: 1 });
+  };
+
+  drag(group, { x: 120, y: 60 });
+  expect(group.style.transform).toBe('translate(120px, 60px) scale(1)');
+  drag(within(group).getByRole('button', { name: 'Neon' }), { x: 80, y: 40 });
+  expect(group.style.transform).toBe('translate(120px, 60px) scale(1)');
+  fireEvent.wheel(group, { deltaX: 20, deltaY: 100 });
+  expect(group.style.transform).toBe('translate(100px, -40px) scale(1)');
 });
 
 test('a block opens the side panel with the Service’s name', async () => {
@@ -85,20 +121,21 @@ test('a block opens the side panel with the Service’s name', async () => {
   });
 });
 
-test('the canvas stays dark in both admin themes', async () => {
+test('the canvas follows the admin Theme: white with black dots, then black with white dots', async () => {
   const user = userEvent.setup();
   render(<Admin />);
-  const dark = async () =>
-    (await screen.findByRole('group', { name: 'Полотно Сервісів' })).closest('[data-theme]');
+  const frame = async () =>
+    (await screen.findByRole('toolbar', { name: 'Масштаб полотна' })).parentElement;
 
-  expect((await dark())?.getAttribute('data-theme')).toBe('dark');
+  expect((await frame())?.className).toMatch(/(^| )bg-white( |$)/);
   expect(document.documentElement.dataset['theme']).toBe('light');
-  expect((await dark())?.className).toContain('bg-black');
+  expect((await frame())?.className).toContain('bg-[radial-gradient(rgb(0_0_0/0.22)');
+  expect((await frame())?.closest('[data-theme="dark"]')).toBeNull();
 
   await user.click(screen.getByRole('button', { name: 'owner@example.com Власник' }));
   await user.click(screen.getByRole('button', { name: 'Темна' }));
   expect(document.documentElement.dataset['theme']).toBe('dark');
-  expect((await dark())?.getAttribute('data-theme')).toBe('dark');
+  expect((await frame())?.className).toContain('dark:bg-black');
 });
 
 test('a phone gets a card list of the Services with the same panel', async () => {
