@@ -6,13 +6,14 @@ import {
   type ServiceEntryType,
 } from '@slovo/contracts/admin-api';
 import { useQuery } from '@tanstack/react-query';
-import { useState, type SyntheticEvent } from 'react';
+import { useEffect, useState, type SyntheticEvent } from 'react';
 
 import { adminApi } from '../../api';
 import { codeOf } from '../../session';
 import { useAdminWrite } from '../admin-write';
 import { ConfirmDialog, type PendingWrite } from '../confirm-dialog';
 import { Button } from '../ui/button';
+import { VaultUnlockDialog } from './vault-unlock-dialog';
 
 /** What the Власник reads of each entry type. */
 export const ENTRY_TYPE_LABELS: Readonly<Record<ServiceEntryType, string>> = {
@@ -28,6 +29,9 @@ const VAULT_OFF_TEXT =
 
 /** What a sealed value shows in its place. */
 const MASK = '••••••••';
+
+/** How long a shown value stays on screen. */
+const SHOWN_MS = 30_000;
 
 const inputClass = 'h-9 rounded-lg border border-border bg-background px-3 text-sm';
 
@@ -47,6 +51,8 @@ function refusalOf(error: unknown): string {
 export function ServiceEntries({ service }: { readonly service: Service }) {
   const [pending, setPending] = useState<PendingWrite | null>(null);
   const [editing, setEditing] = useState<string>();
+  /** The read waiting for the TOTP prompt to open the Vault. */
+  const [unlocking, setUnlocking] = useState<{ readonly retry: () => void } | null>(null);
   const entries = useQuery({
     queryKey: ['services', service.id, 'entries'],
     queryFn: () => adminApi.services.entries({ serviceId: service.id }),
@@ -94,7 +100,13 @@ export function ServiceEntries({ service }: { readonly service: Service }) {
                   {entry.type === 'login' || entry.type === 'link' ? (
                     <span className="break-all">{entry.value}</span>
                   ) : (
-                    <span aria-label="Приховано">{MASK}</span>
+                    <SealedValue
+                      entry={entry}
+                      vaultOn={vaultOn}
+                      askCode={(retry) => {
+                        setUnlocking({ retry });
+                      }}
+                    />
                   )}
                   {entry.note === null ? null : (
                     <span className="text-xs text-muted-foreground">
@@ -135,6 +147,14 @@ export function ServiceEntries({ service }: { readonly service: Service }) {
       {vaultOn ? (
         <EntryForm service={service} confirm={setPending} onDone={() => undefined} />
       ) : null}
+      {unlocking === null ? null : (
+        <VaultUnlockDialog
+          onOpen={unlocking.retry}
+          onClose={() => {
+            setUnlocking(null);
+          }}
+        />
+      )}
       {pending === null ? null : (
         <ConfirmDialog
           title={pending.title}
@@ -150,6 +170,94 @@ export function ServiceEntries({ service }: { readonly service: Service }) {
         />
       )}
     </section>
+  );
+}
+
+/**
+ * A sealed value, masked (ADR 0164). «Показати» shows it for 30 s and
+ * «Копіювати» puts it on the clipboard without rendering it; on a locked
+ * Vault either asks for the TOTP first, and then runs.
+ */
+function SealedValue({
+  entry,
+  vaultOn,
+  askCode,
+}: {
+  readonly entry: ServiceEntry;
+  readonly vaultOn: boolean;
+  readonly askCode: (retry: () => void) => void;
+}) {
+  const [shown, setShown] = useState<string | null>(null);
+  const [note, setNote] = useState<string>();
+
+  useEffect(() => {
+    if (shown === null) return;
+    const hide = setTimeout(() => {
+      setShown(null);
+    }, SHOWN_MS);
+    return () => {
+      clearTimeout(hide);
+    };
+  }, [shown]);
+
+  /** Runs the read, asking for the code first when the Vault is locked. */
+  const read = (how: 'reveal' | 'copy') => {
+    setNote(undefined);
+    const call = how === 'reveal' ? adminApi.services.revealEntry : adminApi.services.copyEntry;
+    call({ id: entry.id })
+      .then(async ({ value }) => {
+        if (how === 'reveal') {
+          setShown(value);
+          return;
+        }
+        await navigator.clipboard.writeText(value);
+        setNote('Скопійовано');
+      })
+      .catch((error: unknown) => {
+        if (codeOf(error) === 'LOCKED') {
+          askCode(() => {
+            read(how);
+          });
+          return;
+        }
+        setNote(refusalOf(error));
+      });
+  };
+
+  return (
+    <>
+      {shown === null ? (
+        <span aria-label="Приховано">{MASK}</span>
+      ) : (
+        <span className="font-mono break-all">{shown}</span>
+      )}
+      {vaultOn ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (shown === null) read('reveal');
+              else setShown(null);
+            }}
+          >
+            {shown === null ? 'Показати' : 'Сховати'}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              read('copy');
+            }}
+          >
+            Копіювати
+          </Button>
+          {note === undefined ? null : (
+            <span role="status" className="text-xs text-muted-foreground">
+              {note}
+            </span>
+          )}
+        </div>
+      ) : null}
+    </>
   );
 }
 
