@@ -5,6 +5,7 @@ Closes #1962, closes #1963, closes #1964, closes #1965, closes #1966
 The release channels and staging wave (spec #1961), built on the integration branch `feat/1961-release-channels`. #1967 (App Store Connect) waits for the Apple Developer purchase and is not part of this PR.
 
 - #1962: two Update channels, `production` and `beta`. The `testflight` profile is replaced by `beta` and `production` store profiles in `eas.json`, each naming its channel. The channel stays out of the fingerprinted app config, so both profiles give one runtime version (ADR 0062), and a release build with a missing or unknown channel throws. The app reads the channel as `deviceFacts.updateChannel`, and About shows it beside the version, build and update id. ADR 0167 amends 0007 and 0062.
+- #1964: `ota-update.yml` takes an action (`publish`, `widen` or `promote`), the channel (`beta` or `production`), the Rollout share, an update group and the Deployment address. Inputs are checked in `apps/mobile/ota-plan.ts`, and its tests show that an unknown channel is refused, as is a `production` run or a promotion with an address other than production's. An update built against staging carries no PostHog key, and promotion refuses it. Nothing publishes on push or on a schedule. ADR 0167 gains a section on promotion.
 - #1963: the Staging Deployment. `.railway/railway.ts` gets a `staging` environment: backend only, Railway sleep on, no Cron services, its own domain and `preserve()` variables, and `DEPLOYMENT=staging`. On staging the backend refuses to start with PostHog or R2 keys, sends no Analytics, writes nothing to the Media Store (it reads public URLs only) and tags Sentry reports `staging`. ADR 0168 and the glossary term **Staging Deployment**.
 
 ## Checks
@@ -24,11 +25,14 @@ No Cron service, no scheduled workflow and no health check that runs outside a d
 
 ## Питання власнику
 
+- Promote створює в production нову групу оновлень з тим самим кодом, бо EAS не зберігає номер групи. Частку потім розширюють уже за новим номером, і workflow його показує.
+- Без `eas` я не перевірив, чи eas-cli 24.13 приймає `update:republish --destination-channel --rollout-percentage`, чи повертає `update:view --json` поле `.[0].message` і чи `eas update` бере змінні всередині `env:exec`. Якщо щось із цього не так, workflow зупиниться з помилкою й нічого не опублікує. Перевіримо після покупки Apple (#1967).
 - Railway перевіряє `/health` на staging лише під час розгортання (одразу після міграцій). Перевірка звертається до бази, але базу вже розбудили міграції. За замовчуванням я її залишив; якщо треба прибрати, це один рядок у `stagingProject()`.
 - Завантаження ілюстрації в адмінці staging свідомо падає з помилкою 500, бо запис у Media Store там заборонено.
 
 ## Handbook
 
+- Сторінка «Канали оновлень», новий розділ «Як випустити оновлення» (#1964): як випустити оновлення в beta, як перевести його до читачів (promote) і як розширити частку.
 - Нова сторінка «Канали оновлень: beta і production» і рядок у README довідника. #1962: що отримує кожен канал, як бета-оновлення доходить до читачів і де в «Про застосунок» видно канал.
 - Нова сторінка «Тестовий сервер (staging)» і рядок у README довідника. #1963: це окрема копія бекенду для перевірок власника. Вона засинає, коли нею не користуються, не збирає аналітику і нічого не змінює в медіафайлах.
 
