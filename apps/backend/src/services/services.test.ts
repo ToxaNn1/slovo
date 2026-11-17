@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import { adminHeaders, signedInAdmin, testApp } from '../test-support';
+import { adminHeaders, passTime, signedInAdmin, testApp } from '../test-support';
+import { createFakeUsage } from './fake-usage';
 
 /** A backend whose admin is on, with a signed-in Власник. */
 async function ownerOn() {
@@ -74,5 +75,143 @@ describe('«Сервіси»', () => {
     expect(agent.status).toBe(403);
     const anyone = await backend.request('/v1/admin/services', { headers: adminHeaders() });
     expect(anyone.status).toBe(401);
+  });
+});
+
+describe('the usage of «Сервіси»', () => {
+  const HOUR = 60 * 60 * 1000;
+
+  /** A backend with faked Sentry and PostHog usage ports, a signed-in Власник, and the Services' ids. */
+  async function withUsage() {
+    const sentry = createFakeUsage('errors', 'events', 1200, 5000);
+    const posthog = createFakeUsage('events', 'events', 250_000, 1_000_000);
+    const backend = testApp({ usage: { Sentry: sentry, PostHog: posthog } });
+    const owner = await signedInAdmin(backend, 'owner');
+    const { services } = await owner.client.admin.services.list();
+    const idOf = (name: string) => services.find((service) => service.name === name)?.id ?? '';
+    const usageOf = async (name: string) =>
+      (await owner.client.admin.services.usage()).usage.find(
+        ({ serviceId }) => serviceId === idOf(name),
+      )?.read;
+    return { backend, owner, sentry, posthog, idOf, usageOf };
+  }
+
+  it('answers the Sentry and PostHog usage per limit with its read time', async () => {
+    const { owner, idOf } = await withUsage();
+    const readAt = new Date().toISOString();
+
+    const { usage } = await owner.client.admin.services.usage();
+
+    expect(usage).toHaveLength(2);
+    expect(usage).toContainEqual({
+      serviceId: idOf('Sentry'),
+      read: {
+        state: 'read',
+        reading: {
+          kind: 'metered',
+          usage: [{ name: 'errors', unit: 'events', used: 1200, limit: 5000 }],
+        },
+        readAt,
+        stale: false,
+      },
+    });
+    expect(usage).toContainEqual({
+      serviceId: idOf('PostHog'),
+      read: {
+        state: 'read',
+        reading: {
+          kind: 'metered',
+          usage: [{ name: 'events', unit: 'events', used: 250_000, limit: 1_000_000 }],
+        },
+        readAt,
+        stale: false,
+      },
+    });
+  });
+
+  it('keeps a reading for an hour, then reads the provider again', async () => {
+    const { sentry, usageOf } = await withUsage();
+    await usageOf('Sentry');
+    sentry.set({
+      kind: 'metered',
+      usage: [{ name: 'errors', unit: 'events', used: 1300, limit: 5000 }],
+    });
+
+    passTime(HOUR - 1);
+    expect(await usageOf('Sentry')).toMatchObject({
+      reading: { usage: [{ used: 1200 }] },
+    });
+    expect(sentry.calls).toBe(1);
+
+    passTime(1);
+    expect(await usageOf('Sentry')).toMatchObject({
+      reading: { usage: [{ used: 1300 }] },
+      readAt: new Date().toISOString(),
+    });
+    expect(sentry.calls).toBe(2);
+  });
+
+  it('reads the provider again on «Оновити», within the hour', async () => {
+    const { owner, sentry, idOf, usageOf } = await withUsage();
+    await usageOf('Sentry');
+    sentry.set({
+      kind: 'metered',
+      usage: [{ name: 'errors', unit: 'events', used: 1300, limit: 5000 }],
+    });
+    passTime(60_000);
+
+    const { usage } = await owner.client.admin.services.refreshUsage({
+      serviceId: idOf('Sentry'),
+    });
+
+    expect(usage).toMatchObject({
+      serviceId: idOf('Sentry'),
+      read: { reading: { usage: [{ used: 1300 }] }, readAt: new Date().toISOString() },
+    });
+    expect(await usageOf('Sentry')).toMatchObject({ reading: { usage: [{ used: 1300 }] } });
+    expect(sentry.calls).toBe(2);
+  });
+
+  it('keeps the last reading, marked stale, when a read fails', async () => {
+    const { owner, sentry, idOf, usageOf } = await withUsage();
+    const readAt = new Date().toISOString();
+    await usageOf('Sentry');
+    sentry.fail();
+
+    const { usage } = await owner.client.admin.services.refreshUsage({
+      serviceId: idOf('Sentry'),
+    });
+
+    expect(usage.read).toMatchObject({
+      state: 'read',
+      reading: { usage: [{ used: 1200 }] },
+      readAt,
+      stale: true,
+    });
+  });
+
+  it('answers unavailable while no read has succeeded', async () => {
+    const { posthog, usageOf } = await withUsage();
+    posthog.fail();
+
+    expect(await usageOf('PostHog')).toEqual({ state: 'unavailable' });
+  });
+
+  it('refuses «Оновити» for a Service without a usage read', async () => {
+    const { owner, idOf } = await withUsage();
+
+    await expect(
+      owner.client.admin.services.refreshUsage({ serviceId: idOf('Zoho Mail') }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('refuses the usage and «Оновити» to an Адмін', async () => {
+    const { backend, idOf } = await withUsage();
+    const admin = await signedInAdmin(backend, 'admin');
+
+    await expect(admin.client.admin.services.usage()).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      admin.client.admin.services.refreshUsage({ serviceId: idOf('Sentry') }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 });

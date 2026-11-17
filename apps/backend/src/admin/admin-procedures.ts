@@ -35,6 +35,7 @@ import type {
   SwitchRefusal,
   SwitchRefused,
   ServiceStore,
+  ServiceUsage,
 } from '@slovo/server-core';
 
 import { alertText } from '../alerts/owner-chat';
@@ -123,6 +124,7 @@ export function adminProcedures(
     alertStore,
     accounts,
     services,
+    serviceUsage,
   }: {
     /** The readers' Accounts, which a Власник finds and deletes by email (ADR 0127). */
     readonly accounts: Accounts;
@@ -132,6 +134,8 @@ export function adminProcedures(
     readonly alertStore: AlertStore;
     /** The Services of «Сервіси» (ADR 0164). */
     readonly services: ServiceStore;
+    /** The usage of the Services, read from their providers (ADR 0164). */
+    readonly serviceUsage: ServiceUsage;
   },
 ) {
   const os = implement(apiContract.admin).$context<{
@@ -608,8 +612,11 @@ export function adminProcedures(
       };
     }),
 
-    services: servicesProcedures(services, (headers, errors, { writes = false } = {}) =>
-      admit(headers, errors, { writes, security: true }),
+    services: servicesProcedures(
+      services,
+      (headers, errors, { writes = false } = {}) =>
+        admit(headers, errors, { writes, security: true }),
+      serviceUsage,
     ),
 
     content: {

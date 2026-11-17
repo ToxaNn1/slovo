@@ -23,6 +23,7 @@ import type {
   OwnerChecks,
   Quality,
   ServiceStore,
+  ServiceUsage,
   Sync,
 } from '@slovo/server-core';
 import type { Logger } from 'pino';
@@ -99,6 +100,7 @@ export function createApiHandler({
   quality,
   served,
   services,
+  serviceUsage,
   sync,
 }: {
   accounts: Accounts;
@@ -131,6 +133,8 @@ export function createApiHandler({
   served: readonly Edition[];
   /** The Services of «Сервіси» (ADR 0164). */
   services: ServiceStore;
+  /** The usage of the Services, read from their providers (ADR 0164). */
+  serviceUsage: ServiceUsage;
   sync: Sync;
 }) {
   const router = implement(apiContract)
@@ -149,7 +153,7 @@ export function createApiHandler({
         contentQueue,
         ownerChecks,
         adminAnalytics,
-        { ...quality, accounts, services },
+        { ...quality, accounts, services, serviceUsage },
       ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(editions, contentStore, mediaBase),

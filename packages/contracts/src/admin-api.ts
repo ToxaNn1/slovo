@@ -13,6 +13,7 @@ import { EditionIdSchema } from './edition';
 
 export { EditionIdSchema };
 export { SERVICE_KINDS, ServiceKindSchema, type Service } from './api/services';
+export type { LimitUsage, ServiceReading, ServiceUsage } from './api/services';
 export {
   ADMIN_SESSION_COOKIE,
   ADMIN_WRITE_HEADER,
