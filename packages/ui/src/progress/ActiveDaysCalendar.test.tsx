@@ -1,5 +1,5 @@
-import type { CalendarDay, CalendarWeek, ProgressState } from '@slovo/core';
-import { coreTokens, EditionProvider, StatsSheet, TokensProvider } from '@slovo/ui';
+import type { CalendarDay, CalendarWeek } from '@slovo/core';
+import { ActiveDaysCalendar, coreTokens, EditionProvider, TokensProvider } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -37,19 +37,6 @@ const strings = testStrings({
   dates: { months: monthNames('.') },
 });
 
-const progress: ProgressState = {
-  streak: 1,
-  bestStreak: 1,
-  freezesHeld: 0,
-  freezesUsed: 0,
-  seenToday: 0,
-  favorites: 0,
-  inCollections: 0,
-  bestResult: undefined,
-  known: { word: 0, correction: 0, idiom: 0, synonymRow: 0, tip: 0 },
-  dueToday: 0,
-};
-
 /** 35 days from Monday 28 September 2026, today 28 October, each in the state `stateOf` gives. */
 function weeksOf(stateOf: (month: number, day: number) => CalendarDay['state']): CalendarWeek[] {
   const days: CalendarDay[] = Array.from({ length: 35 }, (_, index) => {
@@ -77,7 +64,7 @@ const weeks = weeksOf((month, day) => {
 const light = { ...coreTokens.colors.light, accent: '#E0301E' };
 const tokens = { ...coreTokens, colors: { ...coreTokens.colors, light } };
 
-async function renderSheet(calendar: readonly CalendarWeek[]) {
+async function renderCalendar(calendar: readonly CalendarWeek[]) {
   await render(
     <SafeAreaProvider
       initialMetrics={{
@@ -87,22 +74,16 @@ async function renderSheet(calendar: readonly CalendarWeek[]) {
     >
       <TokensProvider tokens={tokens} colorScheme="light">
         <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-          <StatsSheet
-            visible
-            stats={progress}
-            knowledge="none"
-            calendar={calendar}
-            onClose={() => undefined}
-          />
+          <ActiveDaysCalendar weeks={calendar} />
         </EditionProvider>
       </TokensProvider>
     </SafeAreaProvider>,
   );
 }
 
-describe('the Active Days calendar on the stats sheet (ADR 0085)', () => {
+describe('the Active Days calendar (ADR 0085)', () => {
   it('shows the 35 days across months under the weekday names, with no month title', async () => {
-    await renderSheet(weeks);
+    await renderCalendar(weeks);
 
     expect(screen.getByText('Mo', { includeHiddenElements: true })).toBeOnTheScreen();
     expect(screen.queryByText(/2026/)).not.toBeOnTheScreen();
@@ -116,7 +97,7 @@ describe('the Active Days calendar on the stats sheet (ADR 0085)', () => {
   });
 
   it('draws each day as a tile in its state: active red, today ink, missed plain, to come none', async () => {
-    await renderSheet(weeks);
+    await renderCalendar(weeks);
 
     const { accent, ink, tile } = light;
     const face = (date: string) => screen.getByTestId(`stats-calendar-${date}-face`);
@@ -130,9 +111,8 @@ describe('the Active Days calendar on the stats sheet (ADR 0085)', () => {
   });
 
   it('is left out with no weeks, as with its Feature Switch off', async () => {
-    await renderSheet([]);
+    await renderCalendar([]);
 
     expect(screen.queryByTestId('stats-calendar')).not.toBeOnTheScreen();
-    expect(screen.getByTestId('stats-favorites')).toBeOnTheScreen();
   });
 });

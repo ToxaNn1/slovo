@@ -131,11 +131,12 @@ describe('StatsSheet', () => {
       'uk',
     );
 
-    expect(
-      screen.getByText(
-        `know ${String(n)} word (${form}) · ${String(n)} correction (${form}) · ${String(n)} idiom (${form})`,
-      ),
-    ).toBeOnTheScreen();
+    expect(screen.getByTestId('stats-known')).toHaveAccessibleName(
+      `know ${String(n)} word (${form}) · ${String(n)} correction (${form}) · ${String(n)} idiom (${form})`,
+    );
+    // Each kind shows its number over its name.
+    expect(screen.getByText(`word (${form})`, { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.getByText(`idiom (${form})`, { includeHiddenElements: true })).toBeOnTheScreen();
     expect(screen.getByText(`due today: ${String(n)}`)).toBeOnTheScreen();
   });
 
@@ -154,7 +155,7 @@ describe('StatsSheet', () => {
       'uk',
     );
 
-    expect(screen.getByTestId('stats-known')).toHaveTextContent(
+    expect(screen.getByTestId('stats-known')).toHaveAccessibleName(
       'know 12 word (many) · 3 correction (few)',
     );
     expect(screen.queryByText(/idiom/)).not.toBeOnTheScreen();
@@ -176,7 +177,7 @@ describe('StatsSheet', () => {
       'uk',
     );
 
-    expect(screen.getByTestId('stats-known')).toHaveTextContent(
+    expect(screen.getByTestId('stats-known')).toHaveAccessibleName(
       'know 120 word (many) · 12 correction (many) · 8 idiom (many)',
     );
   });
@@ -196,7 +197,7 @@ describe('StatsSheet', () => {
       'uk',
     );
 
-    expect(screen.getByTestId('stats-known')).toHaveTextContent(
+    expect(screen.getByTestId('stats-known')).toHaveAccessibleName(
       'know 120 word (many) · 15 correction (many) · 8 idiom (many) · 5 synonymRow (many) · 3 tip (few)',
     );
   });
@@ -212,7 +213,7 @@ describe('StatsSheet', () => {
       'uk',
     );
 
-    expect(screen.getByTestId('stats-known')).toHaveTextContent(
+    expect(screen.getByTestId('stats-known')).toHaveAccessibleName(
       'know 12 word (many) · 1 idiom (one)',
     );
     expect(screen.queryByText(/correction/)).not.toBeOnTheScreen();
@@ -234,7 +235,7 @@ describe('StatsSheet', () => {
       'uk',
     );
 
-    expect(screen.getByTestId('stats-known')).toHaveTextContent('know 12 word (many)');
+    expect(screen.getByTestId('stats-known')).toHaveAccessibleName('know 12 word (many)');
     expect(screen.queryByText(/correction|idiom/)).not.toBeOnTheScreen();
     expect(screen.getByText('due today: 2')).toBeOnTheScreen();
   });

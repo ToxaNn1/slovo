@@ -406,6 +406,8 @@ export const typeRoles = {
   heroLemma: role('word', '900', 76, 76),
   /** The Rarity Range's big number behind the Rarity Test's result (board 11, screen 93). */
   rarityTestNumber: role('word', '900', 200, 200),
+  /** The line over the Rarity Test's result, «Твоя рідкість — до {n}…» (XSettings t7). */
+  rarityTestResult: role('word', '900', 26, 27.3),
   /** A quiet text button of the onboarding, such as «Пропустити» and «Пізніше». */
   quietAction: role('ui', '700', 14, 17),
   /** A Word on its cell of the Pairs Game. */
@@ -477,15 +479,21 @@ export const typeRoles = {
   /** The standard form of an expanded Round's Correction. */
   reviewForm: role('ui', '500', 15, 22),
   /** The big Streak at the top of the stats sheet. */
-  statsStreak: role('word', '500', 64, 70),
+  statsStreak: role('word', '900', 64, 64),
   /** The words beside the big Streak of the stats sheet. */
-  statsStreakLabel: role('ui', '600', 16, 20),
+  statsStreakLabel: role('word', '900', 20, 22),
   /** A count's number on the stats sheet's grid. */
-  statsCount: role('word', '500', 28, 34),
+  statsCount: role('word', '900', 34, 34),
+  /** The «ЗНАЮ» over the stats sheet's Known counts. */
+  statsKicker: role('word', '800', 13, 13, 1.5),
+  /** A Known count of the stats sheet, over the name of its kind of Entry. */
+  statsKnownCount: role('word', '900', 28, 28),
+  /** The words under a count of the stats sheet, on its card. */
+  statsCountLabel: role('ui', '500', 13, 16),
   /** The words under a count of the stats sheet, and the Best Streak. */
   statsNote: role('ui', '400', 14, 18),
   /** A line of the stats sheet's Known and due counts. */
-  statsLine: role('ui', '400', 16, 22),
+  statsLine: role('ui', '700', 17, 24),
   /** The title of the Feed's error state. */
   errorTitle: role('word', '900', 26, 28.6),
   /** What went wrong, under the title of the Feed's error state. */

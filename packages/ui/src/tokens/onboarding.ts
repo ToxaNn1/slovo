@@ -226,6 +226,12 @@ export const rarityTestLayout = {
   rarityBars: { height: 14, gap: 5 },
   /** How skewed every segment is. */
   skew: '-20deg',
+  /** The result's card: its corners and the room around its content (XSettings t7). */
+  resultCard: { radius: 24, paddingVertical: 22, paddingHorizontal: 20, gap: 14 },
   /** How wide the result's line and bars run beside the big number. */
-  resultWidth: 220,
+  resultWidth: 200,
+  /** How wide the note under the bars runs. */
+  noteWidth: 220,
+  /** Where the big number sits, off the card's top right corner, which cuts it. */
+  number: { right: -14, top: -40 },
 } as const;

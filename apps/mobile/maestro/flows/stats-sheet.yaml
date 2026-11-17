@@ -1,5 +1,5 @@
 # The stats sheet: the Stats pill opens it on a fresh install, with no Game
-# cell before a finished Game and the Active Days calendar on its first day,
+# cell before a finished Game and no Active Days calendar,
 # a tap outside and a swipe down close it, and a heart in the Feed grows its
 # Favorites count.
 # A subflow of `smoke.yaml`; run it from there. It clears the app's state.
@@ -22,12 +22,9 @@ appId: ${APP_ID || 'app.slovo.uk'}
     text: 0, записів у Колекціях
 - assertNotVisible:
     id: stats-game-best
-# The Active Days calendar shows the rolling 35 days, with today, the first Active Day.
-- scrollUntilVisible:
-    element:
-      id: stats-calendar
-- assertVisible:
-    text: 'Сьогодні, .*, активний день'
+# The Active Days calendar lives on the profile alone, not on the sheet.
+- assertNotVisible:
+    id: stats-calendar
 - takeScreenshot: stats-sheet-fresh
 # A tap outside, above the sheet, closes it.
 - tapOn:
