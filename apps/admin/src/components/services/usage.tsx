@@ -1,12 +1,18 @@
-import { nearLimit, type LimitUsage, type ServiceUsage } from '@slovo/contracts/admin-api';
+import {
+  nearLimit,
+  type LimitUsage,
+  type Service,
+  type ServiceUsage,
+} from '@slovo/contracts/admin-api';
 
-import { formatMoment } from '../../format';
+import { formatWhen } from '../../format';
 import { Button } from '../ui/button';
+import { usd, useMoney } from './service-currency';
 
 /** What a Service's usage read answered. */
 export type UsageAnswer = ServiceUsage['read'];
 
-/** The names of the limits and units the usage ports answer, as the owner reads them. */
+/** The names of the limits the usage ports answer, as the owner reads them. */
 const WORDS: Readonly<Record<string, string>> = {
   errors: 'Помилки',
   events: 'Події',
@@ -20,17 +26,56 @@ const WORDS: Readonly<Record<string, string>> = {
   'r2-class-b': 'Операції R2 класу B',
   'worker-requests': 'Запити Worker за сьогодні',
 };
+
+/** What each limit counts, in a few plain words under its name. */
+const HINTS: Readonly<Record<string, string>> = {
+  errors: 'Помилки застосунку й сервера, які Sentry прийняв цього місяця',
+  events: 'Події аналітики, які PostHog прийняв цього місяця',
+  spend: 'Скільки Railway нарахував цього місяця з включених у тариф',
+  compute: 'Час роботи бази даних цього місяця',
+  storage: 'Скільки місця займає база даних',
+  egress: 'Дані, які база віддала назовні цього місяця',
+  minutes: 'Хвилини збірок і перевірок цього місяця',
+  'r2-storage': 'Скільки місця займають файли в R2',
+  'r2-class-a': 'Записи файлів у R2 цього місяця',
+  'r2-class-b': 'Читання файлів з R2 цього місяця',
+  'worker-requests': 'Запити до Worker сьогодні, ліміт скидається щодня',
+};
+
+/** The units of a count, as the owner reads them. */
 const UNITS: Readonly<Record<string, string>> = {
   events: 'подій',
   'CU-hours': 'CU-год',
-  GB: 'ГБ',
   minutes: 'хв',
   operations: 'операцій',
   requests: 'запитів',
 };
 
 const labelOf = (name: string) => WORDS[name] ?? name;
+
+/** «used з limit» of two amounts, the unit said once when both end with it: «1 200 з 5 000 подій». */
+function usedOf(used: string, limit: string): string {
+  const unit = / \S+$/.exec(limit)?.[0];
+  return unit !== undefined && used.endsWith(unit)
+    ? `${used.slice(0, -unit.length)} з ${limit}`
+    : `${used} з ${limit}`;
+}
 const number = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 1 });
+
+/** Gigabytes as the owner reads them: megabytes below one, else gigabytes. */
+const gigabytes = (value: number) =>
+  value < 1 ? `${number(Math.round(value * 1024))} МБ` : `${number(value)} ГБ`;
+
+/** An amount of a limit's unit: dollars in the picked currency, sizes in МБ or ГБ, counts with their word. */
+function useAmount(): (value: number, unit: string) => string {
+  const money = useMoney(usd);
+  return (value, unit) => {
+    if (unit === 'USD') return money(Math.round(value * 100));
+    if (unit === 'GB') return gigabytes(value);
+    const word = UNITS[unit];
+    return word === undefined ? `${number(value)} ${unit}` : `${number(value)} ${word}`;
+  };
+}
 
 /** The limits a reading has a bar for: a Cron has none. */
 function limitsOf(read: UsageAnswer): readonly LimitUsage[] {
@@ -42,7 +87,7 @@ export const nearLimitOf = (read: UsageAnswer | undefined) =>
   read !== undefined && limitsOf(read).some(nearLimit);
 
 /** The yellow mark of a Service at 90 % of a limit or more. */
-function NearLimitMark({ read }: { readonly read: UsageAnswer }) {
+export function NearLimitMark({ read }: { readonly read: UsageAnswer }) {
   if (!nearLimitOf(read)) return null;
   return (
     <span className="flex items-center gap-1.5 text-xs text-warn">
@@ -56,25 +101,24 @@ function NearLimitMark({ read }: { readonly read: UsageAnswer }) {
 const minutesUntil = (iso: string, now: Date) =>
   Math.max(0, Math.ceil((new Date(iso).getTime() - now.getTime()) / 60_000));
 
-/**
- * A Railway service's or a Cron's state lines (ADR 0164): «Online» or
- * «Offline», or whether the Cron's last run succeeded and when the next is.
- */
-function StateLines({ read }: { readonly read: UsageAnswer }) {
-  if (read.state !== 'read' || read.reading.kind === 'metered') return null;
-  const { reading } = read;
-  if (reading.kind === 'railway') {
-    const online = reading.state === 'online';
-    return (
-      <span
-        className={`flex items-center gap-1.5 text-xs ${online ? 'text-ok' : 'text-destructive'}`}
-      >
-        <span aria-hidden className="size-1.5 rounded-full bg-current" />
-        {online ? 'Online' : 'Offline'}
-      </span>
-    );
-  }
-  const { lastRun, nextRunAt } = reading;
+/** A Railway service's «Online» or «Offline», as a dot and a word (ADR 0164). */
+export function RailwayState({ read }: { readonly read: UsageAnswer | undefined }) {
+  if (read?.state !== 'read' || read.reading.kind !== 'railway') return null;
+  const online = read.reading.state === 'online';
+  return (
+    <span
+      className={`flex items-center gap-1.5 text-xs ${online ? 'text-ok' : 'text-destructive'}`}
+    >
+      <span aria-hidden className="size-1.5 rounded-full bg-current" />
+      {online ? 'Online' : 'Offline'}
+    </span>
+  );
+}
+
+/** A Cron's last run and its next on a block: whether it succeeded, the minutes to the next. */
+function CronLines({ read }: { readonly read: UsageAnswer }) {
+  if (read.state !== 'read' || read.reading.kind !== 'cron') return null;
+  const { lastRun, nextRunAt } = read.reading;
   return (
     <span className="flex flex-col gap-0.5 text-xs">
       <span
@@ -101,8 +145,8 @@ function StateLines({ read }: { readonly read: UsageAnswer }) {
   );
 }
 
-/** One limit's bar, as full as the share of it used. */
-function Bar({ usage }: { readonly usage: LimitUsage }) {
+/** One limit's bar, as full as the share of it used; it fills as it appears, unless motion is reduced. */
+function Bar({ usage, thick = false }: { readonly usage: LimitUsage; readonly thick?: boolean }) {
   const share = Math.min(1, usage.used / usage.limit);
   return (
     <div
@@ -111,15 +155,17 @@ function Bar({ usage }: { readonly usage: LimitUsage }) {
       aria-valuemin={0}
       aria-valuemax={usage.limit}
       aria-valuenow={usage.used}
-      className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+      className={`${thick ? 'h-2' : 'h-1.5'} w-full overflow-hidden rounded-full bg-bar`}
     >
       <div
-        className={`h-full rounded-full ${nearLimit(usage) ? 'bg-warn' : 'bg-ok'}`}
+        className={`usage-fill h-full rounded-full ${nearLimit(usage) ? 'bg-warn' : 'bg-ok'}`}
         style={{ width: `${String(share * 100)}%` }}
       />
     </div>
   );
 }
+
+const percentOf = (usage: LimitUsage) => Math.round((usage.used / usage.limit) * 100);
 
 /**
  * The usage on a block (ADR 0164): the state lines, a bar per limit with its share, a mark when
@@ -136,12 +182,13 @@ export function BlockUsage({ id, read }: { readonly id: string; readonly read: U
   return (
     <span id={id} className="flex w-full flex-col gap-1">
       <NearLimitMark read={read} />
-      <StateLines read={read} />
+      <RailwayState read={read} />
+      <CronLines read={read} />
       {limitsOf(read).map((usage) => (
         <span key={usage.name} className="flex items-center gap-2">
           <Bar usage={usage} />
           <span className="flex-none text-[11px] tabular-nums text-muted-foreground">
-            {Math.round((usage.used / usage.limit) * 100)}%
+            {percentOf(usage)}%
           </span>
         </span>
       ))}
@@ -150,46 +197,134 @@ export function BlockUsage({ id, read }: { readonly id: string; readonly read: U
   );
 }
 
-/**
- * The usage in a Service's panel: each limit's numbers, the read time, the
- * stale mark, and «Оновити», which reads the provider again.
- */
-export function PanelUsage({
-  read,
-  refreshing,
-  onRefresh,
-}: {
-  readonly read: UsageAnswer;
-  readonly refreshing: boolean;
-  readonly onRefresh: () => void;
-}) {
+/** One limit in the window: its name and what it counts, used of the limit, the share, what is left. */
+function LimitRow({ usage }: { readonly usage: LimitUsage }) {
+  const amount = useAmount();
+  const left = Math.max(0, usage.limit - usage.used);
   return (
-    <section aria-label="Використання" className="flex flex-col gap-2 text-sm">
+    <li className="flex flex-col gap-1.5">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="font-medium">{labelOf(usage.name)}</span>
+        <span
+          className={`flex-none text-xs tabular-nums ${nearLimit(usage) ? 'text-warn' : 'text-muted-foreground'}`}
+        >
+          {percentOf(usage)} %
+        </span>
+      </div>
+      <Bar usage={usage} thick />
+      <div className="flex items-baseline justify-between gap-3 text-xs">
+        <span className="tabular-nums">
+          {usedOf(amount(usage.used, usage.unit), amount(usage.limit, usage.unit))}
+        </span>
+        <span className="text-muted-foreground tabular-nums">
+          {`лишилося ${amount(left, usage.unit)}`}
+        </span>
+      </div>
+      {HINTS[usage.name] === undefined ? null : (
+        <span className="text-xs text-subtle">{HINTS[usage.name]}</span>
+      )}
+    </li>
+  );
+}
+
+/** A Cron's runs in the window: when the last one ended and how, when the next starts. */
+function CronRuns({ read }: { readonly read: UsageAnswer }) {
+  if (read.state !== 'read' || read.reading.kind !== 'cron') return null;
+  const { lastRun, nextRunAt } = read.reading;
+  return (
+    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+      <dt className="text-muted-foreground">Останній запуск</dt>
+      <dd>
+        {lastRun === null ? (
+          'Ще не запускався'
+        ) : (
+          <>
+            {formatWhen(lastRun.at)} ·{' '}
+            <span className={lastRun.succeeded ? 'text-ok' : 'text-destructive'}>
+              {lastRun.succeeded ? 'успішний' : 'невдалий'}
+            </span>
+          </>
+        )}
+      </dd>
+      <dt className="text-muted-foreground">Наступний запуск</dt>
+      <dd>
+        {nextRunAt === null
+          ? 'Не заплановано'
+          : `${formatWhen(nextRunAt)} · через ${String(minutesUntil(nextRunAt, new Date()))} хв`}
+      </dd>
+    </dl>
+  );
+}
+
+/** The limits of a Service's plan as the Власник entered them, while no port reads its usage. */
+function PlanLimits({ service }: { readonly service: Service }) {
+  const amount = useAmount();
+  if (service.limits.length === 0) {
+    return <p className="text-muted-foreground">Цей сервіс не повідомляє про використання.</p>;
+  }
+  return (
+    <>
+      <p className="text-muted-foreground">Використання не читається, ось ліміти тарифу:</p>
+      <ul className="flex flex-col gap-1">
+        {service.limits.map((limit) => (
+          <li key={limit.name} className="flex justify-between gap-3">
+            <span>{labelOf(limit.name)}</span>
+            <span className="tabular-nums">{amount(limit.limit, limit.unit)}</span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+/**
+ * The usage in a Service's window: the near-limit mark, a Cron's runs, each
+ * limit's numbers with its bar, when it was read and «Оновити», which reads
+ * the provider again; a Service without a usage port shows its plan limits.
+ */
+export function WindowUsage({
+  service,
+  usage,
+}: {
+  readonly service: Service;
+  readonly usage:
+    | {
+        readonly read: UsageAnswer;
+        readonly refreshing: boolean;
+        readonly onRefresh: () => void;
+      }
+    | undefined;
+}) {
+  if (usage === undefined) return <PlanLimits service={service} />;
+  const { read, refreshing, onRefresh } = usage;
+  return (
+    <>
       {read.state === 'unavailable' ? (
-        <p className="text-muted-foreground">Використання: не вдалося прочитати.</p>
+        <p className="text-muted-foreground">Не вдалося прочитати використання.</p>
       ) : (
         <>
           <NearLimitMark read={read} />
-          <StateLines read={read} />
-          {limitsOf(read).map((usage) => (
-            <div key={usage.name} className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground">{labelOf(usage.name)}</span>
-              <span className="tabular-nums">
-                {`${number(usage.used)} з ${number(usage.limit)} ${UNITS[usage.unit] ?? usage.unit}`}
-              </span>
-            </div>
-          ))}
-          <p className="text-xs text-muted-foreground">
-            Прочитано {formatMoment(read.readAt)}
-            {read.stale ? ' · застаріло: останнє читання не вдалося' : ''}
-          </p>
+          <CronRuns read={read} />
+          <ul className="flex flex-col gap-4">
+            {limitsOf(read).map((usage) => (
+              <LimitRow key={usage.name} usage={usage} />
+            ))}
+          </ul>
         </>
       )}
-      <div>
-        <Button variant="secondary" disabled={refreshing} onClick={onRefresh}>
-          Оновити
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+        <p className="text-xs text-muted-foreground">
+          {read.state === 'unavailable'
+            ? 'Ще жодного читання'
+            : `Оновлено ${formatWhen(read.readAt)}`}
+          {read.state === 'read' && read.stale ? (
+            <span className="block text-warn">Застаріло: останнє читання не вдалося</span>
+          ) : null}
+        </p>
+        <Button variant="secondary" size="sm" disabled={refreshing} onClick={onRefresh}>
+          {refreshing ? 'Оновлюю…' : 'Оновити'}
         </Button>
       </div>
-    </section>
+    </>
   );
 }

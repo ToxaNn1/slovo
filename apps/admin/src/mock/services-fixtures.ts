@@ -218,9 +218,47 @@ export const SENTRY_USAGE = {
   },
 } satisfies AdminApiOutputs['services']['refreshUsage']['usage'];
 
-/** The usage the Sentry and PostHog ports read: Sentry fresh, PostHog's last read failed. */
+/**
+ * The usage the ports read: Sentry fresh, PostHog's last read failed, Neon's
+ * three limits, Railway Online with its spend and the parts of it.
+ */
 export const SERVICE_USAGE = [
   SENTRY_USAGE,
+  {
+    serviceId: SERVICE_IDS.Neon,
+    read: {
+      state: 'read',
+      reading: {
+        kind: 'metered',
+        usage: [
+          { name: 'compute', unit: 'CU-hours', used: 38.4, limit: 100 },
+          { name: 'storage', unit: 'GB', used: 0.31, limit: 0.5 },
+          { name: 'egress', unit: 'GB', used: 4.6, limit: 5 },
+        ],
+      },
+      readAt: '2026-11-17T07:30:00.000Z',
+      stale: false,
+    },
+  },
+  {
+    serviceId: SERVICE_IDS.Railway,
+    read: {
+      state: 'read',
+      reading: {
+        kind: 'railway',
+        state: 'online',
+        usage: [{ name: 'spend', unit: 'USD', used: 3.42, limit: 5 }],
+        spendParts: [
+          { part: 'cpu', usd: 1.12 },
+          { part: 'memory', usd: 2.07 },
+          { part: 'egress', usd: 0.21 },
+          { part: 'disk', usd: 0.02 },
+        ],
+      },
+      readAt: '2026-11-17T07:30:00.000Z',
+      stale: false,
+    },
+  },
   {
     serviceId: SERVICE_IDS.PostHog,
     read: {

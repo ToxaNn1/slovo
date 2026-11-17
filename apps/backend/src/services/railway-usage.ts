@@ -1,4 +1,10 @@
-import type { Clock, ServiceReading, SourceRead, UsagePort } from '@slovo/server-core';
+import type {
+  Clock,
+  RailwaySpendPart,
+  ServiceReading,
+  SourceRead,
+  UsagePort,
+} from '@slovo/server-core';
 import type { Logger } from 'pino';
 import { z } from 'zod';
 
@@ -18,6 +24,17 @@ const PRICE_USD = {
   DISK_USAGE_GB: 0.00000347,
 } as const;
 const MEASUREMENTS = ['CPU_USAGE', 'MEMORY_USAGE_GB', 'NETWORK_TX_GB', 'DISK_USAGE_GB'] as const;
+
+/** The part of the spend each measurement is (ADR 0173). */
+const PART = {
+  CPU_USAGE: 'cpu',
+  MEMORY_USAGE_GB: 'memory',
+  NETWORK_TX_GB: 'egress',
+  DISK_USAGE_GB: 'disk',
+} as const satisfies Record<(typeof MEASUREMENTS)[number], RailwaySpendPart>;
+
+/** Dollars rounded to cents. */
+const cents = (usd: number) => Math.round(usd * 100) / 100;
 
 /** The Deployment's Railway service that serves the backend. */
 const BACKEND = 'backend';
@@ -151,10 +168,11 @@ export function createRailwayUsage({
     };
   }
   const backend = port((answer) => {
-    const spend = answer.usage.reduce(
-      (sum, { measurement, value }) => sum + value * PRICE_USD[measurement],
-      0,
-    );
+    const spendOf = (measurement: (typeof MEASUREMENTS)[number]) =>
+      answer.usage
+        .filter((each) => each.measurement === measurement)
+        .reduce((sum, { value }) => sum + value * PRICE_USD[measurement], 0);
+    const spend = MEASUREMENTS.reduce((sum, measurement) => sum + spendOf(measurement), 0);
     return {
       kind: 'railway',
       state:
@@ -163,10 +181,14 @@ export function createRailwayUsage({
         {
           name: 'spend',
           unit: 'USD',
-          used: Math.round(spend * 100) / 100,
+          used: cents(spend),
           limit: RAILWAY_INCLUDED_USD,
         },
       ],
+      spendParts: MEASUREMENTS.map((measurement) => ({
+        part: PART[measurement],
+        usd: cents(spendOf(measurement)),
+      })),
     };
   });
   const cron = (name: (typeof RAILWAY_CRONS)[number]) =>

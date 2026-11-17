@@ -29877,12 +29877,38 @@
                                                 "limit"
                                               ]
                                             }
+                                          },
+                                          "spendParts": {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "object",
+                                              "properties": {
+                                                "part": {
+                                                  "enum": [
+                                                    "cpu",
+                                                    "memory",
+                                                    "egress",
+                                                    "disk"
+                                                  ],
+                                                  "type": "string"
+                                                },
+                                                "usd": {
+                                                  "type": "number",
+                                                  "minimum": 0
+                                                }
+                                              },
+                                              "required": [
+                                                "part",
+                                                "usd"
+                                              ]
+                                            }
                                           }
                                         },
                                         "required": [
                                           "kind",
                                           "state",
-                                          "usage"
+                                          "usage",
+                                          "spendParts"
                                         ]
                                       },
                                       {
@@ -30357,12 +30383,38 @@
                                               "limit"
                                             ]
                                           }
+                                        },
+                                        "spendParts": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "part": {
+                                                "enum": [
+                                                  "cpu",
+                                                  "memory",
+                                                  "egress",
+                                                  "disk"
+                                                ],
+                                                "type": "string"
+                                              },
+                                              "usd": {
+                                                "type": "number",
+                                                "minimum": 0
+                                              }
+                                            },
+                                            "required": [
+                                              "part",
+                                              "usd"
+                                            ]
+                                          }
                                         }
                                       },
                                       "required": [
                                         "kind",
                                         "state",
-                                        "usage"
+                                        "usage",
+                                        "spendParts"
                                       ]
                                     },
                                     {

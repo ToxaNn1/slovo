@@ -43,14 +43,16 @@ function refusalOf(error: unknown): string {
 }
 
 /**
- * The entries of a Service in its side panel (ADR 0164): a login and a link
+ * The entries of a Service in its window (ADR 0164, 0173): a login and a link
  * in the open, a password, token or recovery codes masked, since no read
  * brings their value. Every write goes through the confirmation with a reason.
- * Without `VAULT_KEY` the section says the Vault is off.
+ * A new entry's form opens with «Додати запис». Without `VAULT_KEY` the
+ * section says the Vault is off.
  */
 export function ServiceEntries({ service }: { readonly service: Service }) {
   const [pending, setPending] = useState<PendingWrite | null>(null);
   const [editing, setEditing] = useState<string>();
+  const [adding, setAdding] = useState(false);
   /** The read waiting for the TOTP prompt to open the Vault. */
   const [unlocking, setUnlocking] = useState<{ readonly retry: () => void } | null>(null);
   const entries = useQuery({
@@ -61,8 +63,7 @@ export function ServiceEntries({ service }: { readonly service: Service }) {
   const vaultOn = entries.data?.vault === 'on';
 
   return (
-    <section aria-label="Записи" className="flex flex-col gap-3">
-      <h3 className="text-sm font-semibold">Записи</h3>
+    <>
       {entries.isError ? (
         <p role="alert" className="text-sm text-destructive">
           Не вдалося завантажити записи.
@@ -81,7 +82,7 @@ export function ServiceEntries({ service }: { readonly service: Service }) {
             <li
               key={entry.id}
               aria-label={entry.label}
-              className="flex flex-col gap-1 rounded-lg border border-border p-3 text-sm"
+              className="flex flex-col gap-1 rounded-xl border border-border bg-surface px-3 py-2.5 motion-safe:transition-colors hover:border-border-strong"
             >
               {editing === entry.id ? (
                 <EntryForm
@@ -117,6 +118,7 @@ export function ServiceEntries({ service }: { readonly service: Service }) {
                     <div className="flex gap-2">
                       <Button
                         variant="secondary"
+                        size="sm"
                         onClick={() => {
                           setEditing(entry.id);
                         }}
@@ -125,6 +127,7 @@ export function ServiceEntries({ service }: { readonly service: Service }) {
                       </Button>
                       <Button
                         variant="secondary"
+                        size="sm"
                         onClick={() => {
                           setPending({
                             title: `Видалити запис «${entry.label}» з ${service.name}?`,
@@ -144,9 +147,29 @@ export function ServiceEntries({ service }: { readonly service: Service }) {
           ))}
         </ul>
       )}
-      {vaultOn ? (
-        <EntryForm service={service} confirm={setPending} onDone={() => undefined} />
-      ) : null}
+      {!vaultOn ? null : adding ? (
+        <div className="rounded-xl border border-border bg-surface p-3">
+          <EntryForm
+            service={service}
+            confirm={setPending}
+            onDone={() => {
+              setAdding(false);
+            }}
+          />
+        </div>
+      ) : (
+        <Button
+          variant="secondary"
+          size="sm"
+          className="self-start"
+          onClick={() => {
+            setAdding(true);
+          }}
+        >
+          <span aria-hidden>+</span>
+          Додати запис
+        </Button>
+      )}
       {unlocking === null ? null : (
         <VaultUnlockDialog
           onOpen={unlocking.retry}
@@ -169,7 +192,7 @@ export function ServiceEntries({ service }: { readonly service: Service }) {
           refusalText={refusalOf}
         />
       )}
-    </section>
+    </>
   );
 }
 
@@ -242,6 +265,7 @@ function SealedValue({
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="secondary"
+            size="sm"
             onClick={() => {
               if (shown === null) read('reveal');
               else hide();
@@ -251,6 +275,7 @@ function SealedValue({
           </Button>
           <Button
             variant="secondary"
+            size="sm"
             onClick={() => {
               read('copy');
             }}
@@ -396,11 +421,9 @@ function EntryForm({
         >
           {entry === undefined ? 'Додати запис' : 'Зберегти'}
         </Button>
-        {entry === undefined ? null : (
-          <Button type="button" variant="secondary" onClick={onDone}>
-            Скасувати
-          </Button>
-        )}
+        <Button type="button" variant="secondary" onClick={onDone}>
+          Скасувати
+        </Button>
       </div>
     </form>
   );

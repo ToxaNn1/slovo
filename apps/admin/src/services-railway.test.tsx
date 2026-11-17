@@ -54,6 +54,12 @@ function railwayAnswers(state: 'online' | 'offline') {
               kind: 'railway',
               state,
               usage: [{ name: 'spend', unit: 'USD', used: 1.8, limit: 5 }],
+              spendParts: [
+                { part: 'cpu', usd: 0.56 },
+                { part: 'memory', usd: 1.15 },
+                { part: 'egress', usd: 0.09 },
+                { part: 'disk', usd: 0 },
+              ],
             }),
           },
           {
@@ -105,7 +111,7 @@ test('the Railway block shows Online and its spend, each Cron its last run and t
   expect(quoteCheck.queryByText(/Наступний/)).toBeNull();
 });
 
-test('the Railway block shows Offline, and its panel the state and the spend', async () => {
+test('the Railway block shows Offline, and its window the state, the spend and its parts', async () => {
   railwayAnswers('offline');
   const user = userEvent.setup();
   render(<Admin />);
@@ -118,5 +124,27 @@ test('the Railway block shows Offline, and its panel the state and the spend', a
   const panel = within(await screen.findByRole('dialog', { name: 'Railway' }));
 
   expect(panel.getByText('Offline')).toBeDefined();
-  expect(panel.getByText('1,8 з 5 USD')).toBeDefined();
+  expect(panel.getByText('$1.80 з $5')).toBeDefined();
+  const parts = within(panel.getByRole('list', { name: 'З чого складаються витрати' }));
+  expect(parts.getAllByRole('listitem').map((part) => part.textContent)).toEqual([
+    'Процесор$0.56',
+    "Пам'ять$1.15",
+    'Вихідний трафік$0.09',
+    'Диск$0',
+  ]);
+});
+
+test('a Cron’s window says when its last run ended and how, and when the next starts', async () => {
+  railwayAnswers('online');
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click((await canvas()).getByRole('button', { name: 'quote-check' }));
+  const usage = within(
+    within(await screen.findByRole('dialog', { name: 'quote-check' })).getByRole('region', {
+      name: 'Використання',
+    }),
+  );
+
+  expect(usage.getByText('невдалий')).toBeDefined();
+  expect(usage.getByText('Не заплановано')).toBeDefined();
 });

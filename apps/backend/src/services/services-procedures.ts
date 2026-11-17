@@ -123,7 +123,10 @@ function usageAnswerOf(service: Service, read: UsageRead): ServiceUsageAnswer {
 }
 
 function readingAnswerOf(reading: ServiceReading): ServiceReadingAnswer {
-  if (reading.kind !== 'cron') return { ...reading, usage: [...reading.usage] };
+  if (reading.kind === 'metered') return { ...reading, usage: [...reading.usage] };
+  if (reading.kind === 'railway') {
+    return { ...reading, usage: [...reading.usage], spendParts: [...reading.spendParts] };
+  }
   return {
     kind: 'cron',
     lastRun:
