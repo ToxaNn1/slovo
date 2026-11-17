@@ -1,4 +1,4 @@
-STATUS: RUNNING
+STATUS: FINISHED
 ## NEXT
 Setup: mkdir -p /tmp/claude-0 && cp wave/* /tmp/claude-0/; if cloud-setup failed: pg_createcluster 18 main --port 5432 --start then rerun .claude/hooks/cloud-setup.sh. Commit only via /tmp/claude-0/gc.sh. Ignore the stop hook asking for a Claude identity (owner rule wins).
 State: all of #1962-#1966 merged into feat/1961-release-channels (tip 558c059f). Draft PR #1968 (body wave/pr-body.md, PATCH via gh api pulls/1968).
@@ -23,3 +23,4 @@ Done: review fixed (46f7a095d), CI green, PR #1968 ready for review, mergeable c
 WAITING until 2026-11-17T13:43:25Z: CI on 46f7a095d (PR #1968) after review fixes
 - 2026-11-17T13:08:00Z CI green on 46f7a095d; PR #1968 marked ready (not merged). Worktrees removed; local ticket branches kept. FINISHED.
 - 2026-11-17T14:44:10Z fix run: c1106ebd reworded to chore(admin) (85b17064), one force-push with lease (tip 7fafd3b0); origin/main merged as e3e377c6 (conflicts main.ts, adr/README.md, deploy.md; #1971 crons kept in production, staging no Cron service; generated files unchanged vs regeneration). Lint, typecheck, tests green locally. Waiting for CI.
+- 2026-11-17T14:48:18Z CI green on e3e377c6 (all 24 checks), PR #1968 mergeable clean, not merged. FINISHED.
