@@ -127,6 +127,32 @@ export const serviceMoneyContract = {
     .output(z.object({ service: ServiceSchema, changed: z.array(ServiceMoneyFieldSchema) })),
 };
 
+/** The official NBU rate of the dollar the UAH figures are counted at (ADR 0164). */
+export const UsdRateSchema = z.object({
+  /** Hryvnias for one dollar, as the NBU sets it. */
+  uahPerUsd: z.number().positive(),
+  /** The day `YYYY-MM-DD` the NBU set the rate for. */
+  on: z.iso.date(),
+  /** `today` for the rate of the Kyiv day; `last-known` when the day's read failed and an older rate stands in. */
+  state: z.enum(['today', 'last-known']),
+});
+export type UsdRate = z.infer<typeof UsdRateSchema>;
+
+/** The «Сервіси» read of the NBU rate: a Власник only. */
+export const serviceRateContract = {
+  usdRate: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/services/usd-rate',
+      summary: 'The official NBU rate of the dollar, for the money in hryvnias',
+      description:
+        'A Власник only. The NBU is read at most once a Kyiv day and the rate kept; when that read fails, the last known rate answers with its day. `rate` is `null` while no read has ever found one.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(z.object({ rate: UsdRateSchema.nullable() })),
+};
+
 /** The «Сервіси» procedures of the admin API: a Власник only (ADR 0164). */
 export const servicesContract = {
   list: procedure
@@ -140,4 +166,5 @@ export const servicesContract = {
     .errors(ADMIN_ERRORS)
     .output(z.object({ services: z.array(ServiceSchema), costs: ServiceCostsSchema })),
   ...serviceMoneyContract,
+  ...serviceRateContract,
 };

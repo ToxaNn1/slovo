@@ -165,3 +165,11 @@ export {
   type ServiceMoneyBook,
   type ServiceMoneyStore,
 } from './services/money';
+export {
+  createUsdRates,
+  type NbuPort,
+  type NbuRate,
+  type NbuRead,
+  type UsdRates,
+  type UsdRateStore,
+} from './services/usd-rate';
