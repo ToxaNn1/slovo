@@ -24,6 +24,7 @@ import { createPostHogClient, unavailablePostHog } from './analytics/posthog-cli
 import { createNbuClient } from './services/nbu-client';
 import { startServer } from './server';
 import { createPostHogUsage, createSentryUsage } from './services/usage-sources';
+import { createRailwayUsage } from './services/railway-usage';
 import { createVault, VAULT_OFF } from './services/vault';
 
 const config = readConfig(ServerConfigSchema, process.env);
@@ -67,6 +68,7 @@ const app = createApp({
       logger,
     }),
     PostHog: createPostHogUsage({ settings: config.posthog, logger }),
+    ...createRailwayUsage({ settings: config.railway, clock: systemClock, logger }),
   },
   ciToken: config.CI_HISTORY_TOKEN,
   mediaBase: config.mediaBase,
