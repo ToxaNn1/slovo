@@ -1,6 +1,7 @@
 // The Deployment's Railway project as Infrastructure as Code (ADR 0103):
 // the backend and its three Cron services, all in EU West (Amsterdam), one
-// replica each. No service has a source: CI deploys with `railway up`. The
+// replica each. The `staging` environment is the Staging Deployment (ADR
+// 0168): the backend alone, asleep when idle, with no Cron service. No service has a source: CI deploys with `railway up`. The
 // repository holds no secret, so every secret and every value that belongs to
 // SLOVO's accounts is `preserve()`: Railway keeps the value set there.
 // docs/deploy.md lists what each variable holds.
@@ -16,7 +17,15 @@ function cron(startCommand: string, cronSchedule: string) {
   return { startCommand, cronSchedule, restartPolicyType: 'NEVER' } as const;
 }
 
-export default defineRailway(() => {
+/** The Staging Deployment's address on the app's domain, proxied by Cloudflare. */
+const STAGING_DOMAIN = 'staging.slovoapp.org';
+
+/** The port the Staging Deployment's backend listens on, behind its domain. */
+const STAGING_PORT = 8080;
+
+export default defineRailway((ctx) => {
+  if (ctx.isEnvironment('staging')) return stagingProject();
+
   const backend = service('backend', {
     build: dockerfile('Dockerfile'),
     preDeploy: 'pnpm db:migrate',
@@ -92,3 +101,38 @@ export default defineRailway(() => {
 
   return project('slovo', { resources: [backend, alerts, quoteCheck, recordings] });
 });
+
+/**
+ * The Staging Deployment (ADR 0168): the backend alone, with variables of its
+ * own. It sleeps while no request comes, and no Cron service or scheduled
+ * check runs, so its Neon branch scales to zero. `DEPLOYMENT=staging` keeps
+ * Analytics, Media Store writes and production's Sentry environment out.
+ * Railway's health check runs only while a deploy rolls out.
+ */
+function stagingProject() {
+  const backend = service('backend', {
+    build: dockerfile('Dockerfile'),
+    preDeploy: 'pnpm db:migrate',
+    healthcheck: '/health',
+    healthcheckTimeout: 120,
+    deploy: { restartPolicyType: 'ON_FAILURE', restartPolicyMaxRetries: 5, sleepApplication: true },
+    replicas: EU_WEST_AMSTERDAM,
+    domains: [{ domain: STAGING_DOMAIN, port: STAGING_PORT }],
+    env: {
+      DEPLOYMENT: 'staging',
+      PORT: String(STAGING_PORT),
+      DATABASE_URL: preserve(),
+      AUTH_SECRET: preserve(),
+      ZEPTOMAIL_API_URL: preserve(),
+      ZEPTOMAIL_TOKEN: preserve(),
+      MAIL_FROM: preserve(),
+      GOOGLE_CLIENT_IDS: preserve(),
+      SENTRY_DSN: preserve(),
+      // Production's Media Store root: staging reads its public URLs, no R2 key.
+      MEDIA_BASE: preserve(),
+      TRUSTED_PROXY_HOPS: preserve(),
+    },
+  });
+
+  return project('slovo', { resources: [backend] });
+}
