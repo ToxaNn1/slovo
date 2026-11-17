@@ -70,7 +70,7 @@ export type ResultReview =
   | { readonly kind: 'opening'; readonly onOpen: (entryId: string) => void }
   | { readonly kind: 'none' };
 
-/** The Game Review `review` names, of the Rounds played. */
+/** The Game Review `review` names, of the Rounds played; none, heading included, when no Round was played. */
 export function GameReviewOf({
   rounds,
   review,
@@ -78,7 +78,7 @@ export function GameReviewOf({
   rounds: readonly PlayedRound[];
   review: ResultReview;
 }) {
-  if (review.kind === 'none') return null;
+  if (review.kind === 'none' || rounds.length === 0) return null;
   if (review.kind === 'plain') return <PlainGameReview rounds={rounds} />;
   return <GameReview rounds={rounds} onOpen={review.onOpen} />;
 }

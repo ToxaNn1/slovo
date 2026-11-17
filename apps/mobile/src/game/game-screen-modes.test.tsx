@@ -918,7 +918,7 @@ describe('the Game screen', () => {
       });
       expect(screen.getByText('ЧАС!')).toBeOnTheScreen();
       expect(screen.getByText('ЩЕ РАУНД!')).toBeOnTheScreen();
-      expect(screen.getByText('1 з 3 влучання')).toBeOnTheScreen();
+      expect(screen.getByText('1 з 3 влучань')).toBeOnTheScreen();
       expect(screen.queryByText('Час вийшов!')).toBeNull();
     });
 

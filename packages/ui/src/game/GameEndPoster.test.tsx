@@ -2,6 +2,7 @@ import type { GameEnd, GameOver, Haptics } from '@slovo/core';
 import { EditionProvider, GameEndPoster, HapticsProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import type { ComponentProps } from 'react';
 import { Text } from 'react-native';
 import { testStrings } from '../test-strings';
 
@@ -20,7 +21,7 @@ const strings = testStrings({
       xpCount: '+{count} XP',
       best: 'Best',
     },
-    finals: { toGames: 'To games', again: 'Again!' },
+    finals: { toGames: 'To games', again: 'Again!', review: 'Round review' },
   },
 });
 
@@ -57,19 +58,25 @@ const haptics: Haptics = {
   warning: jest.fn(),
 };
 
-async function renderPoster() {
+async function renderPoster({
+  ended = end,
+  review = { kind: 'none' },
+}: {
+  ended?: GameEnd;
+  review?: ComponentProps<typeof GameEndPoster>['review'];
+} = {}) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <HapticsProvider haptics={haptics}>
         <GameEndPoster
-          game={game}
-          end={end}
+          game={{ ...game, end: ended }}
+          end={ended}
           modeName="Survival"
           bestResult={undefined}
           onAgain={jest.fn()}
           onToGames={jest.fn()}
           warmup={false}
-          review={{ kind: 'none' }}
+          review={review}
           mascot={<Text>Game over. Nice warm-up! A line far wider than any Mascot figure.</Text>}
         />
       </HapticsProvider>
@@ -96,5 +103,31 @@ describe('GameEndPoster', () => {
     await fireEvent(ground, 'layout', { nativeEvent: { layout: { width: 393, height: 520 } } });
 
     expect(ground.children[0]).toHaveProp('height', 520);
+  });
+
+  it('picks the plural form of the hits by the Rounds played, as «з 4 влучань» reads', async () => {
+    await renderPoster({
+      ended: { kind: 'time-up', onTarget: false, played: 4, right: 1, xp: 0, newBest: false },
+    });
+
+    expect(screen.getByText('1 of 4 hits')).toBeOnTheScreen();
+  });
+
+  it('takes the one form when a single Round was played', async () => {
+    await renderPoster({
+      ended: { kind: 'time-up', onTarget: true, played: 1, right: 1, xp: 0, newBest: false },
+    });
+
+    expect(screen.getByText('1 of 1 hit')).toBeOnTheScreen();
+  });
+
+  it('shows no Game Review, nor its heading, when no Round was played', async () => {
+    await renderPoster({
+      ended: { kind: 'time-up', onTarget: false, played: 0, right: 0, xp: 0, newBest: false },
+      review: { kind: 'plain' },
+    });
+
+    expect(screen.queryByTestId('game-review')).toBeNull();
+    expect(screen.queryByText('Round review')).toBeNull();
   });
 });
