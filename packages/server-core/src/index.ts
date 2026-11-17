@@ -185,3 +185,11 @@ export {
   type UsagePort,
   type UsageRead,
 } from './services/service-usage';
+export {
+  createUsdRates,
+  type NbuPort,
+  type NbuRate,
+  type NbuRead,
+  type UsdRates,
+  type UsdRateStore,
+} from './services/usd-rate';

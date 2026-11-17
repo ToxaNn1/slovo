@@ -8,6 +8,7 @@ import {
   SERVICE_ENTRIES,
   SERVICE_USAGE,
   SERVICES,
+  USD_RATE,
 } from './services-fixtures';
 
 /** Every feature on, but one off and one the Edition hasn't got. */
@@ -495,5 +496,6 @@ export const FIXTURES: AdminApiOutputs = {
     editMoney: { service: ADDED_SERVICE, changed: [] },
     usage: { usage: SERVICE_USAGE },
     refreshUsage: { usage: SENTRY_USAGE },
+    usdRate: { rate: USD_RATE },
   },
 };

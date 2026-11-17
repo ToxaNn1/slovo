@@ -15,6 +15,7 @@ import {
   createMistakeReports,
   createSync,
   createServiceMoneyBook,
+  createUsdRates,
   type Alerts,
   type AppleVerifier,
   type Clock,
@@ -24,6 +25,7 @@ import {
   type GoogleVerifier,
   type Mailer,
   type PostHogPort,
+  type NbuPort,
   type Random,
   type SentryReader,
   type UsagePort,
@@ -48,6 +50,7 @@ import { createContentWrites } from './content/content-writes';
 import { createOwnerCheckStore } from './admin/owner-check-store';
 import { createServiceEntryStore } from './services/service-entry-store';
 import { createServiceMoneyStore } from './services/service-money-store';
+import { createUsdRateStore } from './services/usd-rate-store';
 import { createServiceStore } from './services/service-store';
 import { createCiRunStore } from './quality/ci-run-store';
 import { createAlertStore, createAlertThresholdStore } from './alerts/alert-store';
@@ -92,6 +95,8 @@ export interface AppDependencies {
   readonly alerts: Alerts;
   /** Reads the aggregates of the Analytics events, for the admin's Аналітика. */
   readonly posthog: PostHogPort;
+  /** The NBU's official rate of the dollar, for «Сервіси»'s money in hryvnias (ADR 0164). */
+  readonly nbu: NbuPort;
   /** Verifies the Google identity tokens of Google sign-ins. */
   readonly google: GoogleVerifier;
   /** Verifies the Apple identity tokens of Apple sign-ins, for the app's bundle id. */
@@ -175,6 +180,7 @@ export function createApp({
   mailer,
   alerts,
   posthog,
+  nbu,
   google,
   apple,
   github,
@@ -296,6 +302,7 @@ export function createApp({
       admin,
     }),
     serviceUsage: createServiceUsage({ ports: usage, clock }),
+    usdRates: createUsdRates({ nbu, store: createUsdRateStore(database, clock), clock }),
     sync,
   });
 

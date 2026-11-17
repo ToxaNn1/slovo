@@ -536,10 +536,13 @@ export const quoteChecks = pgTable(
   (table) => [primaryKey({ columns: [table.editionId, table.kind, table.id] })],
 );
 
-/** The sourcing cache: the source pages the quote check fetched, each with when. */
+/**
+ * The sourcing cache: the source pages the quote check fetched, each with
+ * when, and the NBU's page of the dollar's rate, one a Kyiv day (ADR 0164).
+ */
 export const sourcingCache = pgTable('sourcing_cache', {
   pageUrl: text('page_url').primaryKey(),
-  /** The page's HTTP status: 200, or 404 for no such page. */
+  /** The page's HTTP status: 200, or 404 for no such page; an NBU read that found no rate is 0. */
   httpStatus: integer('http_status').notNull(),
   body: text('body').notNull(),
   fetchedAt: time('fetched_at'),

@@ -23,6 +23,7 @@ export {
   type ServiceMoneyField,
 } from './api/services';
 export type { LimitUsage, ServiceReading, ServiceUsage } from './api/services';
+export { type UsdRate } from './api/services';
 export {
   OPEN_ENTRY_TYPES,
   SEALED_ENTRY_TYPES,

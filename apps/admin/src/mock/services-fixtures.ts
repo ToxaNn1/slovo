@@ -234,3 +234,10 @@ export const SERVICE_USAGE = [
     },
   },
 ] satisfies AdminApiOutputs['services']['usage']['usage'];
+
+/** The NBU rate of the Kyiv day. */
+export const USD_RATE = {
+  uahPerUsd: 41.4321,
+  on: '2026-11-17',
+  state: 'today',
+} satisfies AdminApiOutputs['services']['usdRate']['rate'];

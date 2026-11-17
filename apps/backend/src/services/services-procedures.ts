@@ -12,6 +12,7 @@ import type {
   ServiceStore,
   ServiceUsage,
   UsageRead,
+  UsdRates,
 } from '@slovo/server-core';
 
 import { serviceEntriesProcedures, type EntryAccess } from './service-entries-procedures';
@@ -42,7 +43,11 @@ export function servicesProcedures(
   store: ServiceStore,
   admitOwner: AdmitOwner,
   entryAccess: EntryAccess,
-  { book, ownerWrite }: { book: ServiceMoneyBook; ownerWrite: OwnerWrite },
+  {
+    book,
+    ownerWrite,
+    usdRates,
+  }: { book: ServiceMoneyBook; ownerWrite: OwnerWrite; usdRates: UsdRates },
   usage: ServiceUsage,
 ) {
   const os = implement(apiContract.admin.services).$context<{ headers: Headers }>();
@@ -61,6 +66,14 @@ export function servicesProcedures(
       const edited = await book.editMoney(id, fields, write);
       if (!edited.ok) throw errors.CONFLICT({ data: { refusal: edited.reason } });
       return { service: edited.service, changed: edited.changed };
+    }),
+  };
+
+  // The NBU rate the money in hryvnias is counted at.
+  const rate = {
+    usdRate: os.usdRate.handler(async ({ context, errors }) => {
+      await admitOwner(context.headers, errors);
+      return { rate: await usdRates.current() };
     }),
   };
 
@@ -89,6 +102,7 @@ export function servicesProcedures(
       if (service === undefined || read === undefined) throw errors.NOT_FOUND();
       return { usage: usageAnswerOf(service, read) };
     }),
+    ...rate,
   });
 }
 

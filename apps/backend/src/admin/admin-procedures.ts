@@ -38,6 +38,7 @@ import type {
   ServiceStore,
   ServiceMoneyBook,
   ServiceUsage,
+  UsdRates,
 } from '@slovo/server-core';
 
 import { alertText } from '../alerts/owner-chat';
@@ -129,6 +130,7 @@ export function adminProcedures(
     serviceEntries,
     serviceMoney,
     serviceUsage,
+    usdRates,
   }: {
     /** The readers' Accounts, which a Власник finds and deletes by email (ADR 0127). */
     readonly accounts: Accounts;
@@ -144,6 +146,8 @@ export function adminProcedures(
     readonly serviceMoney: ServiceMoneyBook;
     /** The usage of the Services, read from their providers (ADR 0164). */
     readonly serviceUsage: ServiceUsage;
+    /** The NBU rate «Сервіси» counts the money in hryvnias at (ADR 0164). */
+    readonly usdRates: UsdRates;
   },
 ) {
   const os = implement(apiContract.admin).$context<{
@@ -629,7 +633,7 @@ export function adminProcedures(
         ownerOf: async (headers, errors, { writes = false } = {}) =>
           actorOf(await admit(headers, errors, { writes, security: true })),
       },
-      { book: serviceMoney, ownerWrite: securityWrite },
+      { book: serviceMoney, ownerWrite: securityWrite, usdRates },
       serviceUsage,
     ),
 
