@@ -185,8 +185,8 @@ describe('the usage sources', () => {
     expect(asked).toHaveLength(1);
     expect(asked[0]?.url).toBe('https://api.cloudflare.com/client/v4/graphql');
     expect(asked[0]?.headers.get('authorization')).toBe('Bearer a-fake-token');
-    const { variables } = (await asked[0]?.json()) as { variables: Record<string, string> };
-    expect(variables).toEqual({
+    const body = (await asked[0]?.json()) as { variables: Record<string, string> } | undefined;
+    expect(body?.variables).toEqual({
       accountTag: 'a-fake-account',
       bucket: 'slovo-media',
       monthStart: '2026-11-01T00:00:00.000Z',
