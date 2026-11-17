@@ -119,6 +119,8 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
   };
   const servicesHandlers: Record<ServicesName, HttpHandler> = {
     list: servicesHandlerOf('list', fixtures.services.list),
+    add: servicesHandlerOf('add', fixtures.services.add),
+    editMoney: servicesHandlerOf('editMoney', fixtures.services.editMoney),
   };
   return [
     ...Object.values(handlers),

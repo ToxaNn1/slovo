@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { adminApi } from '../api';
 import { ServiceCards, ServicesCanvas } from '../components/services/canvas';
+import { AddService, ServiceCostsHeader } from '../components/services/service-money';
 import { ServicePanel } from '../components/services/service-panel';
 import { useWide } from '../screen-width';
 import { sectionAt } from '../sections';
@@ -33,12 +34,17 @@ function Services() {
 /** Every Service on the canvas, or on a phone as cards; a Service opens its side panel. */
 function OwnerServices() {
   const wide = useWide();
-  const [open, setOpen] = useState<Service>();
+  // By id, so the panel shows the Service as the list reads it after a write.
+  const [openId, setOpenId] = useState<Service['id']>();
+  const setOpen = (service: Service) => {
+    setOpenId(service.id);
+  };
   const services = useQuery({
     queryKey: ['services'],
     queryFn: () => adminApi.services.list(),
   });
   const list = services.data?.services;
+  const open = list?.find((service) => service.id === openId);
   return (
     <>
       {services.isError ? (
@@ -46,6 +52,12 @@ function OwnerServices() {
           Не вдалося завантажити.
         </p>
       ) : null}
+      {services.data === undefined ? null : (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <ServiceCostsHeader costs={services.data.costs} services={services.data.services} />
+          <AddService />
+        </div>
+      )}
       {list === undefined ? null : wide ? (
         <ServicesCanvas services={list} onOpen={setOpen} />
       ) : (
@@ -55,7 +67,7 @@ function OwnerServices() {
         <ServicePanel
           service={open}
           onClose={() => {
-            setOpen(undefined);
+            setOpenId(undefined);
           }}
         />
       )}

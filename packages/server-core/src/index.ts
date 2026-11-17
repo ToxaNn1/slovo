@@ -158,3 +158,10 @@ export {
   type SignInRefused,
 } from './admin/admin-sign-in';
 export type { ServiceStore } from './services/services';
+export {
+  createServiceMoneyBook,
+  type NewService,
+  type ServiceMoney,
+  type ServiceMoneyBook,
+  type ServiceMoneyStore,
+} from './services/money';

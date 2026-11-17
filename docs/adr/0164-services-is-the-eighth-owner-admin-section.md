@@ -10,6 +10,8 @@ SLOVO runs on about a dozen outside Services, and the owner had no single place 
 
 **A Railway-like canvas.** Each Service is a block absolutely placed at its position over an SVG layer of lines: solid for a constant link, dashed for a scheduled one. The black background with white dots stays dark whatever the admin's theme: the canvas sets `data-theme="dark"` for itself, and the rest of the admin is unchanged. A block opens a side panel, the admin's native modal `<dialog>` (ADR 0160). Under the admin's phone width (`md`) the canvas becomes a list of cards that open the same panel.
 
+**Money by hand.** The Власник enters a Service's plan, monthly price (USD cents) and billing day, and adds a Service by name and kind; each write takes a confirmation and a `ReasonSchema` reason and appends an Action log row: `service.add` with the fields entered, or `service.money.edit` with the Service's name and only the fields that changed, before and after (none when nothing changed). A new Service takes the first place, row by row on a 300 × 140 px grid, whose block keeps 20 px clear of every other block. The list answers the monthly total, the priced Services summed, and the next charge: the nearest Kyiv day, today included, on which a Service with a price above zero and a billing day charges, a billing day past the month's end charging on its last day; the backend counts both by its clock.
+
 **The Vault and the Service entries** are named in the glossary here and built by their own tickets of spec #1949, with the decisions they bring.
 
 ## Considered Options

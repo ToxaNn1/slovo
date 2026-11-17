@@ -22,6 +22,7 @@ import { IdiomTypeSchema } from '../idiom';
 import { MistakeTypeSchema } from '../mistake-report';
 import { ADMIN_ERRORS } from './admin-errors';
 import { procedure } from './procedure';
+import { ReasonSchema } from './reason';
 import { servicesContract } from './services';
 
 /** An Edition the admin's global Edition filter offers. */
@@ -204,9 +205,6 @@ const SWITCH_WRITE_ERRORS = {
   ...ADMIN_ERRORS,
   BAD_REQUEST: { message: 'The switch is refused', data: SwitchRefusalSchema },
 } as const;
-
-/** Every admin write names why: the Action log keeps it (ADR 0088). */
-const ReasonSchema = z.string().trim().min(1).max(500);
 
 /** Why the backend refuses a write of people or Агент tokens, by name. */
 export const AccessRefusalSchema = z.object({
