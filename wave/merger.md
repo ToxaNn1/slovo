@@ -1,0 +1,7 @@
+# Merger brief («Сервіси» wave)
+
+In /home/user/slovo (integration branch feat/1949-services checked out; first `git status` must be clean and on that branch), merge the local ticket branch named in your prompt:
+1. `git merge --no-ff --no-commit <branch>`. Resolve conflicts by keeping both sides' intent (tickets add separate functions; wiring lines in app.ts/api.ts/admin-procedures.ts/services list output combine). Generated files (migrations `meta/` + their .sql, v1.openapi.json, pnpm-lock.yaml, routeTree.gen.ts): take the integration side, then regenerate with the script (`pnpm --filter backend db:generate` after dropping the ticket's own migration, `pnpm --filter contracts describe-api`, router generator); never hand-edit or print them. Commit with `/tmp/claude-0/gc.sh -m 'chore: merge #<n>: <ticket title>'` (never plain git commit, never type an email).
+2. `export DATABASE_URL=postgres://slovo:slovo@localhost:5432/slovo`; `pnpm install --frozen-lockfile --offline | tail -2`; `pnpm turbo run lint typecheck test --filter=@slovo/backend --filter=@slovo/admin --filter=@slovo/contracts --filter=@slovo/server-core --output-logs=errors-only 2>&1 | tail -30`. Fix merge-caused failures minimally (commit `fix(<scope>): ...` via gc.sh). «permission denied to terminate process» only = flake, rerun once.
+3. Green: `git push origin feat/1949-services 2>&1 | tail -2` (retry ≤4 on network error). Never force-push.
+Reply ≤5 lines: merge sha, conflicts and how resolved, checks, push. Red: do not push; give failing tests and errors.
