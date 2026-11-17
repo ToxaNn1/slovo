@@ -356,8 +356,8 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         revokeAgentToken: async () => {
           await client.admin.revokeAgentToken({ name: 'claude', reason: 'leaked' }).catch(refused);
         },
-        findAccount: async () => {
-          await client.admin.findAccount({ email: 'reader@example.com' }).catch(refused);
+        listAccounts: async () => {
+          await client.admin.listAccounts({ search: 'reader' }).catch(refused);
         },
         deleteAccount: async () => {
           await client.admin
