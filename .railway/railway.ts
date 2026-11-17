@@ -27,6 +27,7 @@ export default defineRailway(() => {
     env: {
       DATABASE_URL: preserve(),
       AUTH_SECRET: preserve(),
+      VAULT_KEY: preserve(),
       ZEPTOMAIL_API_URL: preserve(),
       ZEPTOMAIL_TOKEN: preserve(),
       MAIL_FROM: preserve(),

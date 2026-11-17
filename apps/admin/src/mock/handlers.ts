@@ -119,6 +119,10 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
   };
   const servicesHandlers: Record<ServicesName, HttpHandler> = {
     list: servicesHandlerOf('list', fixtures.services.list),
+    entries: servicesHandlerOf('entries', fixtures.services.entries),
+    addEntry: servicesHandlerOf('addEntry', fixtures.services.addEntry),
+    editEntry: servicesHandlerOf('editEntry', fixtures.services.editEntry),
+    deleteEntry: servicesHandlerOf('deleteEntry', fixtures.services.deleteEntry),
     add: servicesHandlerOf('add', fixtures.services.add),
     editMoney: servicesHandlerOf('editMoney', fixtures.services.editMoney),
     usage: servicesHandlerOf('usage', fixtures.services.usage),

@@ -2,6 +2,7 @@ import type { Service } from '@slovo/contracts/admin-api';
 import { useEffect, useId, useRef } from 'react';
 
 import { Button } from '../ui/button';
+import { ServiceEntries } from './service-entries';
 import { ServiceMoneySection } from './service-money';
 import { PanelUsage, type UsageAnswer } from './usage';
 
@@ -51,6 +52,7 @@ export function ServicePanel({
           Закрити
         </Button>
       </div>
+      <ServiceEntries service={service} />
       <ServiceMoneySection service={service} />
       {usage === undefined ? null : <PanelUsage {...usage} />}
     </dialog>

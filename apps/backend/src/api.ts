@@ -22,6 +22,7 @@ import type {
   MistakeReports,
   OwnerChecks,
   Quality,
+  ServiceEntries,
   ServiceStore,
   ServiceMoneyBook,
   ServiceUsage,
@@ -101,6 +102,7 @@ export function createApiHandler({
   quality,
   served,
   services,
+  serviceEntries,
   serviceMoney,
   serviceUsage,
   sync,
@@ -135,6 +137,8 @@ export function createApiHandler({
   served: readonly Edition[];
   /** The Services of «Сервіси» (ADR 0164). */
   services: ServiceStore;
+  /** The Service entries of «Сервіси», sealed in the Vault (ADR 0164). */
+  serviceEntries: ServiceEntries;
   /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
   serviceMoney: ServiceMoneyBook;
   /** The usage of the Services, read from their providers (ADR 0164). */
@@ -157,7 +161,7 @@ export function createApiHandler({
         contentQueue,
         ownerChecks,
         adminAnalytics,
-        { ...quality, accounts, services, serviceMoney, serviceUsage },
+        { ...quality, accounts, services, serviceEntries, serviceMoney, serviceUsage },
       ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(editions, contentStore, mediaBase),

@@ -34,6 +34,7 @@ import type {
   SignedInAdmin,
   SwitchRefusal,
   SwitchRefused,
+  ServiceEntries,
   ServiceStore,
   ServiceMoneyBook,
   ServiceUsage,
@@ -125,6 +126,7 @@ export function adminProcedures(
     alertStore,
     accounts,
     services,
+    serviceEntries,
     serviceMoney,
     serviceUsage,
   }: {
@@ -136,6 +138,8 @@ export function adminProcedures(
     readonly alertStore: AlertStore;
     /** The Services of «Сервіси» (ADR 0164). */
     readonly services: ServiceStore;
+    /** The Service entries of «Сервіси», sealed in the Vault (ADR 0164). */
+    readonly serviceEntries: ServiceEntries;
     /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
     readonly serviceMoney: ServiceMoneyBook;
     /** The usage of the Services, read from their providers (ADR 0164). */
@@ -620,6 +624,11 @@ export function adminProcedures(
       services,
       (headers, errors, { writes = false } = {}) =>
         admit(headers, errors, { writes, security: true }),
+      {
+        entries: serviceEntries,
+        ownerOf: async (headers, errors, { writes = false } = {}) =>
+          actorOf(await admit(headers, errors, { writes, security: true })),
+      },
       { book: serviceMoney, ownerWrite: securityWrite },
       serviceUsage,
     ),

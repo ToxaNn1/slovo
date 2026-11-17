@@ -24,6 +24,13 @@ export {
 } from './api/services';
 export type { LimitUsage, ServiceReading, ServiceUsage } from './api/services';
 export {
+  OPEN_ENTRY_TYPES,
+  SEALED_ENTRY_TYPES,
+  ServiceEntryTypeSchema,
+  type ServiceEntry,
+  type ServiceEntryType,
+} from './api/services';
+export {
   ADMIN_SESSION_COOKIE,
   ADMIN_WRITE_HEADER,
   ADMIN_PERIODS,
