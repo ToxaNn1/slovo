@@ -102,6 +102,13 @@ const ServerVariablesSchema = z.object({
   TELEGRAM_CHAT_ID: unsetWhenEmpty(z.string().regex(/^-?\d+$/, 'must be a numeric chat id')),
   // The backend's health URL the Cron service checks; unset, it is not checked.
   BACKEND_HEALTH_URL: unsetWhenEmpty(z.url()),
+  // «Сервіси» reads the backend's and the Crons' state and the month's spend
+  // from Railway's GraphQL API with this token (ADR 0164). Railway sets the
+  // project's and the environment's ids itself. Unset, those blocks answer
+  // «не вдалося прочитати».
+  RAILWAY_READ_TOKEN: unsetWhenEmpty(z.string().min(1)),
+  RAILWAY_PROJECT_ID: unsetWhenEmpty(z.string().min(1)),
+  RAILWAY_ENVIRONMENT_ID: unsetWhenEmpty(z.string().min(1)),
   // How many proxies in front of the backend append to X-Forwarded-For, whose
   // addresses it trusts (ADR 0030): 0 when nothing is in front, as in local
   // Docker; 1 behind Railway's proxy.
@@ -195,6 +202,27 @@ function posthogOf({
       };
 }
 
+/** The Railway project and environment «Сервіси» reads, or none while any of them is unset. */
+function railwayOf({
+  RAILWAY_READ_TOKEN,
+  RAILWAY_PROJECT_ID,
+  RAILWAY_ENVIRONMENT_ID,
+}: {
+  RAILWAY_READ_TOKEN?: string | undefined;
+  RAILWAY_PROJECT_ID?: string | undefined;
+  RAILWAY_ENVIRONMENT_ID?: string | undefined;
+}) {
+  return RAILWAY_READ_TOKEN === undefined ||
+    RAILWAY_PROJECT_ID === undefined ||
+    RAILWAY_ENVIRONMENT_ID === undefined
+    ? undefined
+    : {
+        token: RAILWAY_READ_TOKEN,
+        projectId: RAILWAY_PROJECT_ID,
+        environmentId: RAILWAY_ENVIRONMENT_ID,
+      };
+}
+
 /** Where the emails go: ZeptoMail with a token, otherwise Mailpit. */
 function mailOf({
   ZEPTOMAIL_API_URL,
@@ -246,9 +274,13 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     R2_BUCKET,
     R2_ACCESS_KEY_ID,
     R2_SECRET_ACCESS_KEY,
+    RAILWAY_READ_TOKEN,
+    RAILWAY_PROJECT_ID,
+    RAILWAY_ENVIRONMENT_ID,
     ...rest
   }) => ({
     ...rest,
+    railway: railwayOf({ RAILWAY_READ_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_ENVIRONMENT_ID }),
     posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
     mediaBase: MEDIA_BASE ?? DEVELOPMENT_MEDIA_BASE,
     r2: r2Of({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY }),
