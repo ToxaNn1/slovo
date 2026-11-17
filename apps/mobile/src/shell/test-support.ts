@@ -185,12 +185,13 @@ const never: Schedule = () => () => undefined;
 /** The Install id of the test device, which the Analytics events carry. */
 export const TEST_INSTALL_ID = 'test-install';
 
-/** A reader of 1.0.0 on iOS, signed out, with no region: one no targeted Rule matches. */
+/** A reader of 1.0.0 on iOS, signed out, with no region and no Update channel: one no targeted Rule matches. */
 const testReader: ReaderFacts = {
   appVersion: '1.0.0',
   platform: 'ios',
   region: undefined,
   signedIn: false,
+  updateChannel: undefined,
   installId: TEST_INSTALL_ID,
 };
 

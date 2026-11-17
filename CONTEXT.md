@@ -87,7 +87,7 @@ The Edition state of a feature it has no content or assets for (no Narrator Voic
 _Avoid_: Disabled, hidden
 
 **Rule**:
-One remote Feature Switch setting: the readers it targets (Edition, app version, platform, the phone's region, a share of readers, signed in or not, a schedule) and on, off or a Variant; ordered per feature, the first match decides. A Rule the app doesn't understand is skipped (ADR 0089).
+One remote Feature Switch setting: the readers it targets (Edition, app version, platform, the phone's region, a share of readers, signed in or not, a schedule, the Update channel) and on, off or a Variant; ordered per feature, the first match decides. A Rule the app doesn't understand is skipped (ADR 0089, 0170).
 _Avoid_: Flag, override, condition
 
 **Rollout**:

@@ -6,6 +6,7 @@ import {
   type FeatureSwitches,
   type Platform,
   type RuleTargets,
+  type UpdateChannel,
   type Variant,
 } from '@slovo/contracts';
 
@@ -35,6 +36,8 @@ export interface SwitchFacts {
   /** The phone's two-letter region, when the locale names one. */
   readonly region: string | undefined;
   readonly signedIn: boolean;
+  /** The Update channel the build listens to; undefined in a development build, which no channel Rule matches. */
+  readonly updateChannel: UpdateChannel | undefined;
   /** The Install id: the device's own random name, sent only as the Analytics distinct id, while Analytics are on. */
   readonly installId: string;
   readonly clock: Clock;
@@ -65,7 +68,7 @@ function fnv1a(text: string): number {
 const bucketOf = (ruleId: string, installId: string) => fnv1a(`${ruleId}:${installId}`) % 100;
 
 function matches(ruleId: string, targets: RuleTargets, facts: SwitchFacts): boolean {
-  const { appVersion, platform, region, share, signedIn, schedule } = targets;
+  const { appVersion, platform, region, share, signedIn, schedule, channel } = targets;
   if (appVersion?.from !== undefined && compareVersions(facts.appVersion, appVersion.from) < 0) {
     return false;
   }
@@ -78,6 +81,7 @@ function matches(ruleId: string, targets: RuleTargets, facts: SwitchFacts): bool
   }
   if (share !== undefined && bucketOf(ruleId, facts.installId) >= share) return false;
   if (signedIn !== undefined && signedIn !== facts.signedIn) return false;
+  if (channel !== undefined && channel !== facts.updateChannel) return false;
   if (schedule !== undefined) {
     const now = facts.clock.now().getTime() + facts.clockOffsetMs;
     if (schedule.from !== undefined && now < Date.parse(schedule.from)) return false;
