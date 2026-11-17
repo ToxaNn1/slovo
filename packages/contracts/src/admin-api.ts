@@ -45,6 +45,7 @@ export {
   CONTENT_PAGE_SIZE,
   ACTION_PAGE_SIZE,
   type AccountRow,
+  type AccountDetail,
   PERIOD_DAYS,
   type AdminPeriod,
   type CiRunInput,

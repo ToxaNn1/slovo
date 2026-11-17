@@ -61,6 +61,7 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     issueAgentToken: handlerOf('issueAgentToken', fixtures.issueAgentToken),
     revokeAgentToken: handlerOf('revokeAgentToken', fixtures.revokeAgentToken),
     listAccounts: handlerOf('listAccounts', fixtures.listAccounts),
+    getAccount: handlerOf('getAccount', fixtures.getAccount),
     deleteAccount: handlerOf('deleteAccount', fixtures.deleteAccount),
     status: handlerOf('status', fixtures.status),
     switches: handlerOf('switches', fixtures.switches),

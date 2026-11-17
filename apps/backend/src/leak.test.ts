@@ -359,6 +359,9 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         listAccounts: async () => {
           await client.admin.listAccounts({ search: 'reader' }).catch(refused);
         },
+        getAccount: async () => {
+          await client.admin.getAccount({ accountId: randomUUID() }).catch(refused);
+        },
         deleteAccount: async () => {
           await client.admin
             .deleteAccount({ email: 'reader@example.com', reason: 'spam' })

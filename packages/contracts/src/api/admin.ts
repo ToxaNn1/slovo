@@ -21,6 +21,7 @@ import {
 import { IdiomTypeSchema } from '../idiom';
 import { MistakeTypeSchema } from '../mistake-report';
 import { procedure } from './procedure';
+import { RecordChangeSchema } from './sync';
 
 /** An Edition the admin's global Edition filter offers. */
 export const AdminEditionSchema = z.object({
@@ -337,6 +338,16 @@ export const AccountRowSchema = z.object({
   signInMethods: z.array(z.enum(['google', 'apple'])),
 });
 export type AccountRow = z.infer<typeof AccountRowSchema>;
+
+/**
+ * One reader Account on its own page in Безпека (ADR 0162): its row and, for
+ * every Edition it syncs, the records Sync keeps of it, as a pull answers
+ * them, in the order they were kept; a tombstone is left out.
+ */
+export const AccountDetailSchema = AccountRowSchema.extend({
+  editions: z.array(z.object({ editionId: z.string(), records: z.array(RecordChangeSchema) })),
+});
+export type AccountDetail = z.infer<typeof AccountDetailSchema>;
 
 /** How many Accounts Безпека lists on one page. */
 export const ACCOUNTS_PAGE_SIZE = 50;
@@ -1210,6 +1221,19 @@ export const adminContract = {
         total: z.number().int().nonnegative(),
       }),
     ),
+
+  getAccount: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/accounts/{accountId}',
+      summary: "One reader's Account with its Sync records in every Edition, read only",
+      description:
+        'A Безпека procedure: a Власник only (ADR 0162), and never logged. Answers the email, the date, the Google and Apple sign-in methods and, per Edition, the records Sync keeps, without tombstones; `null` for an id with no Account.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.strictObject({ accountId: z.uuid() }))
+    .output(z.object({ account: AccountDetailSchema.nullable() })),
 
   deleteAccount: procedure
     .route({

@@ -158,6 +158,8 @@ export interface Authenticator {
    * sign-in methods recorded for it; none when the email has no Account.
    */
   accountOf(email: string): Promise<ReaderAccount | undefined>;
+  /** The Account of the id, with the Google and Apple sign-in methods recorded for it; none when no Account has it. */
+  accountById(accountId: string): Promise<ReaderAccount | undefined>;
   /**
    * One page of the Accounts whose email holds `search`, lower-cased already
    * (every Account without one), newest first, with the Google and Apple
@@ -406,6 +408,8 @@ export interface UserRecords {
     sequence: number,
     limit: number,
   ): Promise<readonly KeptRecord[]>;
+  /** Every record of the Account, in every Edition, in sequence order, tombstones included. */
+  ofAccount(accountId: string): Promise<readonly (KeptRecord & { readonly editionId: string })[]>;
 }
 
 /**

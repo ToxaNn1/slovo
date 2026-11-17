@@ -2,7 +2,6 @@ import {
   ACCOUNTS_PAGE_SIZE,
   AccessRefusalSchema,
   ACTION_PAGE_SIZE,
-  type AccountRow,
   type AdminApiOutputs,
   type AlertThresholdKey,
 } from '@slovo/contracts/admin-api';
@@ -11,6 +10,7 @@ import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
 import { useState, type ReactNode, type SubmitEvent } from 'react';
 import type { z } from 'zod';
 
+import { signInMethodsText } from '../account-records';
 import { changeOf, ROLE_LABELS, THRESHOLD_LABELS, whatOf } from '../action-texts';
 import { adminApi } from '../api';
 import { useAdminWrite } from '../components/admin-write';
@@ -28,7 +28,6 @@ type Role = 'owner' | 'admin';
 type AccessRefusal = z.infer<typeof AccessRefusalSchema>;
 type Action = AdminApiOutputs['actions']['actions'][number];
 type AlertThreshold = AdminApiOutputs['alertThresholds']['thresholds'][number];
-type SignInMethod = AccountRow['signInMethods'][number];
 
 const REFUSALS: Readonly<Record<AccessRefusal['refusal'], string>> = {
   taken: 'Ця пошта вже має доступ.',
@@ -350,12 +349,6 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
   );
 }
 
-/** How a reader's recorded Sign-in methods read; a Sign-in code reaches every Account. */
-const SIGN_IN_METHOD_LABELS: Readonly<Record<SignInMethod, string>> = {
-  google: 'Google',
-  apple: 'Apple',
-};
-
 /** Every reader Account, newest first, a page at a time and searched by email; each deleted with a reason (ADR 0162). */
 function ReaderAccounts({ confirm }: { confirm: Confirm }) {
   const [draft, setDraft] = useState('');
@@ -423,14 +416,13 @@ function ReaderAccounts({ confirm }: { confirm: Confirm }) {
             <tbody>
               {accounts.map((account) => (
                 <tr key={account.id} className="border-t border-border">
-                  <td className="px-2 py-[9px]">{account.email}</td>
-                  <td className="px-2 py-[9px]">{formatMoment(account.createdAt)}</td>
                   <td className="px-2 py-[9px]">
-                    {[
-                      'Код з листа',
-                      ...account.signInMethods.map((method) => SIGN_IN_METHOD_LABELS[method]),
-                    ].join(', ')}
+                    <Link to="/security/accounts/$accountId" params={{ accountId: account.id }}>
+                      {account.email}
+                    </Link>
                   </td>
+                  <td className="px-2 py-[9px]">{formatMoment(account.createdAt)}</td>
+                  <td className="px-2 py-[9px]">{signInMethodsText(account.signInMethods)}</td>
                   <td className="px-2 py-[9px] text-right">
                     <Button
                       size="sm"
