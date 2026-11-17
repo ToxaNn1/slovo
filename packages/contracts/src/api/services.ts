@@ -222,7 +222,7 @@ const serviceEntriesContract = {
 };
 
 /** A block's size on the canvas in CSS pixels: a new Service takes a place where it overlaps none. */
-export const SERVICE_BLOCK = { width: 200, height: 88 } as const;
+export const SERVICE_BLOCK = { width: 230, height: 115 } as const;
 
 /** What SLOVO pays: the monthly total and the next charge, by the Kyiv day (ADR 0164). */
 export const ServiceCostsSchema = z.object({

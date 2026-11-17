@@ -29,3 +29,15 @@ HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogEleme
 HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
   this.open = false;
 };
+
+// jsdom has no pointer events (jsdom 26): a pointer event is a mouse event with its pointer's id.
+if (!('PointerEvent' in window)) {
+  class PointerEvent extends MouseEvent {
+    readonly pointerId: number;
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 0;
+    }
+  }
+  Object.defineProperty(window, 'PointerEvent', { configurable: true, value: PointerEvent });
+}
