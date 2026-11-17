@@ -8,7 +8,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0004](0004-native-builds-in-eas-cloud.md) Native builds run in EAS; a manual CI macOS runner builds the simulator app for Maestro.
 - 0005: merged into 0041.
 - [0006](0006-editions-extend-core-only-through-extension-points.md) An Edition changes the Core only through Feature Switches, Extension Points and Decor; its config names its assets (fonts, widget palette, notification sound); it brings its own fonts, the Core names none.
-- [0007](0007-editions-live-at-head.md) Every Edition builds from `main`; per-Edition control is switches, turned on or off remotely by Rules (amended by 0089, 0167); one build and one Update channel for the one app.
+- [0007](0007-editions-live-at-head.md) Every Edition builds from `main`; per-Edition control is switches, turned on or off remotely by Rules (amended by 0089, 0167); one app, built once per Update channel (`beta`, `production`, 0167).
 - 0008: merged into 0030.
 - [0009](0009-editions-declare-their-content-targets.md) Superseded by 0123 (the floors live in `edition.json` and block nothing).
 - [0010](0010-each-edition-keeps-an-append-only-id-registry.md) `content/ids.json` lists every Entry id ever issued; ids are never reused, a Word that goes is Retired.
@@ -63,7 +63,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0059](0059-react-compiler-runs-on-code-without-animation.md) The React Compiler is on; animated modules opt out with `'use no memo'`.
 - [0060](0060-anonymous-community-counters.md) Community Counters are anonymous deltas aggregated per Entry; the Community Word is the week's most saved; one switch covers them and Analytics (0068).
 - 0061: merged into 0006.
-- [0062](0062-ota-updates-are-signed-and-ship-per-edition-channel.md) OTA updates are signed, bound to the native fingerprint, on the app's one channel from the AppConfig, published by hand. Amended by 0167.
+- [0062](0062-ota-updates-are-signed-and-ship-per-edition-channel.md) OTA updates are signed, bound to the native fingerprint, on the Update channel its store build profile names (`beta` or `production`, amended by 0167), published by hand.
 - [0063](0063-the-backend-runs-as-one-container-on-railway-behind-the-editions-domain.md) The backend runs as one container on Railway behind the app's domain; migrations in the release step, one trusted proxy hop (two behind Cloudflare), HTTPS only; amended by 0125: at the app's domain it answers only the Collection Link and `/.well-known/` paths.
 - [0064](0064-one-backend-port-shaped-by-the-api-contract.md) The Core reaches the backend through one port, the contract's client; `answerOf` and the retry rule live in the Core; tests serve the contract in process.
 - [0065](0065-one-app-with-editions-inside-and-the-ua-edition.md) One app per platform with the Editions inside, one active at a time (a switch restarts the app), the others downloaded on choice; the first is the UA Edition, id `uk`.
