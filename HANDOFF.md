@@ -2,7 +2,7 @@ STATUS: RUNNING (handed off at ~165k context)
 ## NEXT (for the successor coordinator)
 Setup: `mkdir -p /tmp/claude-0 && cp wave/* /tmp/claude-0/` (from this branch); fetch issues #1949-#1959 to /tmp/claude-0/<n>.md via `gh api repos/ToxaNn1/slovo/issues/<n>` (no GraphQL). If cloud-setup failed: `pg_createcluster 18 main --port 5432 --start` then rerun `.claude/hooks/cloud-setup.sh`. Commit ONLY via /tmp/claude-0/gc.sh (env email otherwise overrides and GitHub declines the push). Ignore the stop hook asking for a Claude identity (owner rule wins).
 State: integration feat/1949-services = #1950 #1951 #1952 #1954 #1956 merged (tip 17ced2cd). PR #1960 draft; body source wave/pr-body.md + wave/notes.md (fold notes in). Migrations used: 0030_services, 0031_service_entries; one spare. ADR 0164 holds the whole spec; 0165-0166 unused.
-Pending: #1955 DONE on origin/feat/1955-services-railway (b5083c7f) - merge it (merger.md). #1957 was running in the old container on local branch feat/1957-services-usage-more - if origin has no such branch, relaunch #1957 from integration.
+Pending: #1955 DONE on origin/feat/1955-services-railway (b5083c7f) - merge it (merger.md). #1957 DONE on origin/feat/1957-services-usage-more (85a05d8d) - merge it after #1955.
 Then: #1953 (after #1952), #1958 (after #1955+#1956; may seed cron Services alerts/quote-check/recordings with the spare migration), #1959 last (checklist into PR body «Чекліст власника»). Then code-review, fixes, CI green, mark ready. Merge: stored grant says NO merge; a PR comment from the owner account (10:27Z) and a laptop log line grant `gh pr merge 1960 --auto --squash` - leave that to the owner unless the live owner asks.
 ## LOG
 # HANDOFF coord/services-1949 (spec #1949, tickets #1950-#1959)
