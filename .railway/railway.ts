@@ -43,6 +43,7 @@ export default defineRailway(() => {
       EXPO_TOKEN: preserve(),
       POSTHOG_PERSONAL_API_KEY: preserve(),
       POSTHOG_PROJECT_ID: preserve(),
+      POSTHOG_HOST: preserve(),
       R2_ACCOUNT_ID: preserve(),
       R2_BUCKET: preserve(),
       R2_ACCESS_KEY_ID: preserve(),
