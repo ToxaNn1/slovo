@@ -85,6 +85,7 @@ function Analytics() {
         )}
       </div>
       {readers.data !== undefined && <ReaderCounts counts={readers.data} />}
+      {readers.isError && <p className="text-sm text-destructive">Кількість читачів недоступна</p>}
       {overview.isError && <p className="text-sm text-destructive">PostHog недоступний</p>}
       {overview.isPending && <p className="text-sm text-muted-foreground">Завантаження…</p>}
       {data !== undefined && (

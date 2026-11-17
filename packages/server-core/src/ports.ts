@@ -412,6 +412,8 @@ export interface UserRecords {
   ): Promise<readonly KeptRecord[]>;
   /** Every record of the Account, in every Edition, in sequence order, tombstones included. */
   ofAccount(accountId: string): Promise<readonly (KeptRecord & { readonly editionId: string })[]>;
+  /** How many Accounts keep a record other than a tombstone in any of the Editions (ADR 0162). */
+  accountsWithRecords(editionIds: readonly string[]): Promise<number>;
 }
 
 /**

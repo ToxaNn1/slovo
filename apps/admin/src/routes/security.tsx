@@ -436,6 +436,8 @@ function ReaderAccounts({ confirm }: { confirm: Confirm }) {
                           run: async (reason) => {
                             await remove.mutateAsync({ email: target, reason });
                             setDeleted(target);
+                            // The page's last Account gone, the page before is the last one left.
+                            if (accounts.length === 1 && page > 1) setPage(page - 1);
                           },
                         });
                       }}

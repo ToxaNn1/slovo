@@ -302,7 +302,7 @@ export const FIXTURES: AdminApiOutputs = {
     ],
     fetchedAt: ANALYTICS_FETCHED_AT,
   },
-  readerCounts: { registered: 312, unregisteredAtLeast: 845, statisticsOff: 27 },
+  readerCounts: { registered: 312, unregisteredAtLeast: 845, statisticsOff: 27, syncing: 198 },
   counters: {
     known: 1200,
     unknown: 340,

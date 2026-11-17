@@ -1,5 +1,16 @@
 import type { UserRecords } from '@slovo/server-core';
-import { and, asc, count, eq, gt, inArray, sql, type Column } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  countDistinct,
+  eq,
+  gt,
+  inArray,
+  isNotNull,
+  sql,
+  type Column,
+} from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import { accounts, userRecords } from '../database/schema';
@@ -94,6 +105,15 @@ export function createUserRecords({ db }: Database): UserRecords {
         .from(userRecords)
         .where(eq(userRecords.accountId, accountId))
         .orderBy(asc(userRecords.sequence));
+    },
+
+    async accountsWithRecords(editionIds) {
+      if (editionIds.length === 0) return 0;
+      const [row] = await db
+        .select({ accounts: countDistinct(userRecords.accountId) })
+        .from(userRecords)
+        .where(and(inArray(userRecords.editionId, [...editionIds]), isNotNull(userRecords.value)));
+      return row?.accounts ?? 0;
     },
   };
 }

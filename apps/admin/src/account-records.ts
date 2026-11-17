@@ -37,14 +37,82 @@ function words(count: number): string {
 const Instant = z.string();
 const Collection = z.object({ name: z.string() });
 const Knowledge = z.object({ mark: z.enum(['known', 'unknown']) });
+const Dated = { date: z.string(), at: z.string() };
+/** Every kind the Core's XP log stores (its `StoredXpRecordSchema`), with the fields this page reads. */
 const XpRecord = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('xp'), amount: z.number() }),
-  z.object({ kind: z.literal('reset') }),
-  z.object({ kind: z.literal('word-goal'), goal: z.number().nullable() }),
-  z.object({ kind: z.literal('freeze') }),
-  z.object({ kind: z.literal('break'), date: z.string(), days: z.number() }),
-  z.object({ kind: z.literal('badge'), date: z.string(), badge: z.string() }),
+  z.object({ kind: z.literal('xp'), ...Dated, amount: z.number() }),
+  z.object({ kind: z.literal('reset'), ...Dated }),
+  z.object({ kind: z.literal('word-goal'), ...Dated, goal: z.number().nullable() }),
+  z.object({ kind: z.literal('daily-goal'), ...Dated }),
+  z.object({ kind: z.literal('goal-met'), ...Dated }),
+  z.object({ kind: z.literal('freeze'), ...Dated }),
+  z.object({ kind: z.literal('break'), ...Dated, days: z.number() }),
+  z.object({ kind: z.literal('badge'), ...Dated, badge: z.string() }),
+  z.object({ kind: z.literal('badge-opened'), ...Dated }),
+  z.object({ kind: z.literal('wrong-answer'), ...Dated }),
 ]);
+type XpRecord = z.infer<typeof XpRecord>;
+
+/** What the XP log comes to on the Account page. */
+interface Progress {
+  readonly xp: number;
+  /** The Daily Goal in force, `null` for «Без цілі», `undefined` when none was set. */
+  readonly goal: number | null | undefined;
+  readonly freezes: number;
+  readonly breaks: readonly string[];
+  readonly badges: readonly string[];
+}
+
+/**
+ * Folds the XP log as the Core does (ADR 0133): the latest reset marker is
+ * the one with the latest instant, then the greatest id, and only the records
+ * after its instant count, whatever order the server gives them in. The
+ * Daily Goal in force is the last `word-goal` by date, then by instant.
+ */
+function progressOf(log: readonly { id: string; record: XpRecord }[]): Progress {
+  let marker: { id: string; at: string } | undefined;
+  for (const { id, record } of log) {
+    if (record.kind !== 'reset') continue;
+    if (
+      marker === undefined ||
+      record.at > marker.at ||
+      (record.at === marker.at && id > marker.id)
+    )
+      marker = { id, at: record.at };
+  }
+  let xp = 0;
+  let freezes = 0;
+  const breaks: string[] = [];
+  const badges: string[] = [];
+  const goals: Extract<XpRecord, { kind: 'word-goal' }>[] = [];
+  for (const { record } of log) {
+    if (marker !== undefined && record.at <= marker.at) continue;
+    switch (record.kind) {
+      case 'xp':
+        xp += record.amount;
+        break;
+      case 'word-goal':
+        goals.push(record);
+        break;
+      case 'freeze':
+        freezes += 1;
+        break;
+      case 'break':
+        breaks.push(`Перерва з ${record.date} · ${String(record.days)} дн.`);
+        break;
+      case 'badge':
+        badges.push(`Відзнака ${record.badge} · ${record.date}`);
+        break;
+      default:
+        // The other kinds are kept by the log and show nothing on this page.
+        break;
+    }
+  }
+  goals.sort((one, other) =>
+    one.date === other.date ? one.at.localeCompare(other.at) : one.date.localeCompare(other.date),
+  );
+  return { xp, goal: goals.at(-1)?.goal, freezes, breaks, badges };
+}
 
 /** A kind of record that keeps an instant under an Entry's id, adding the id to the list. */
 const instantsInto = (ids: string[]) => (id: string, value: unknown) => {
@@ -77,11 +145,7 @@ export function recordsBlocks(records: readonly SyncedRecord[]): readonly Record
   const unknown: string[] = [];
   const settings: string[] = [];
   const others = new Map<string, number>();
-  let xp = 0;
-  let goal: number | null | undefined;
-  let freezes = 0;
-  const breaks: string[] = [];
-  const badges: string[] = [];
+  const xpLog: { id: string; record: XpRecord }[] = [];
 
   const other = (key: string) => {
     const kind = key.split('.')[0] ?? key;
@@ -121,29 +185,10 @@ export function recordsBlocks(records: readonly SyncedRecord[]): readonly Record
     ],
     [
       'xp.',
-      (_, value) => {
-        const read = XpRecord.safeParse(value).data;
-        if (read === undefined) return false;
-        switch (read.kind) {
-          case 'xp':
-            xp += read.amount;
-            break;
-          case 'reset':
-            xp = 0;
-            break;
-          case 'word-goal':
-            goal = read.goal;
-            break;
-          case 'freeze':
-            freezes += 1;
-            break;
-          case 'break':
-            breaks.push(`Перерва з ${read.date} · ${String(read.days)} дн.`);
-            break;
-          case 'badge':
-            badges.push(`Відзнака ${read.badge} · ${read.date}`);
-            break;
-        }
+      (id, value) => {
+        const record = XpRecord.safeParse(value).data;
+        if (record === undefined) return false;
+        xpLog.push({ id, record });
         return true;
       },
     ],
@@ -156,7 +201,6 @@ export function recordsBlocks(records: readonly SyncedRecord[]): readonly Record
     ],
   ];
 
-  // The XP log folds in the order the records were kept, which is the order they come in.
   for (const { key, value } of records) {
     const kind = kinds.find(([prefix]) => idAfter(key, prefix) !== undefined);
     const id = kind === undefined ? undefined : idAfter(key, kind[0]);
@@ -168,6 +212,7 @@ export function recordsBlocks(records: readonly SyncedRecord[]): readonly Record
     else collection.entries.push(entryId);
   }
 
+  const { xp, goal, freezes, breaks, badges } = progressOf(xpLog);
   const progress = [
     `XP: ${String(xp)}`,
     ...(goal === undefined ? [] : [`Денна ціль: ${goal === null ? 'Без цілі' : words(goal)}`]),

@@ -286,3 +286,19 @@ test('a Власник deletes a listed Account with a reason', async () => {
     expect(block.queryByRole('row', { name: /reader@example\.com/ })).toBeNull();
   });
 });
+
+test('deleting the one Account of the last page steps back to the page before', async () => {
+  accountsBackend();
+  const user = userEvent.setup();
+  render(<Admin />);
+  const block = within(await screen.findByRole('region', { name: 'Акаунти читачів' }));
+  await block.findByText('1–50 з 51');
+  await user.click(block.getByRole('button', { name: 'Далі' }));
+  const row = await block.findByRole('row', { name: /reader-50@example\.com/ });
+
+  await user.click(within(row).getByRole('button', { name: 'Видалити акаунт' }));
+  await confirmWith('spam Account', 'Видалити акаунт');
+
+  expect(await block.findByText('1–50 з 50')).toBeDefined();
+  expect(block.getAllByRole('row', { name: /@example\.com/ })).toHaveLength(50);
+});

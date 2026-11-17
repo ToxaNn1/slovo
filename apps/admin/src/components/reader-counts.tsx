@@ -28,13 +28,14 @@ const Figure = ({ children }: { readonly children: ReactNode }) => (
 
 /**
  * How many people read SLOVO (ADR 0163): the registered readers of every
- * Edition, the unregistered ones at least, and the switch-offs of statistics.
+ * Edition, the unregistered ones at least, the switch-offs of statistics, and
+ * the Accounts with Sync records in the filtered Editions (ADR 0162).
  */
 export function ReaderCounts({ counts }: { readonly counts: Counts }) {
   return (
     <div className="flex flex-col gap-3 rounded-2xl bg-surface px-[18px] py-4 shadow-panel">
       <h2 className="font-display text-[13px] font-medium">Читачі</h2>
-      <ul aria-label="Читачі" className="grid gap-4 md:grid-cols-3">
+      <ul aria-label="Читачі" className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Count
           label="Зареєстровані"
           explanation="Читачі з SLOVO ID. Фільтр видання на це число не діє: тут усі SLOVO ID."
@@ -58,6 +59,12 @@ export function ReaderCounts({ counts }: { readonly counts: Counts }) {
           explanation="Скільки разів «Ділитися анонімною статистикою» вимкнули за період. Кожне вимкнення окремо, а не скільки читачів мають її вимкненою зараз."
         >
           <Figure>{number(counts.statisticsOff)}</Figure>
+        </Count>
+        <Count
+          label="Із синхронізацією"
+          explanation="SLOVO ID із записами синхронізації у вибраних виданнях: це число йде за фільтром видання."
+        >
+          <Figure>{number(counts.syncing)}</Figure>
         </Count>
       </ul>
     </div>

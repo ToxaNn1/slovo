@@ -450,7 +450,6 @@ export function adminProcedures(
       };
     }),
 
-    // The app's own deletion path (ADR 0127): the Account goes as «Видалити SLOVO ID» deletes it.
     // Never logged: reads are not (ADR 0088, 0162).
     getAccount: os.getAccount.handler(async ({ context, input, errors }) => {
       await admit(context.headers, errors, { security: true });
@@ -475,6 +474,7 @@ export function adminProcedures(
       };
     }),
 
+    // The app's own deletion path (ADR 0127): the Account goes as «Видалити SLOVO ID» deletes it.
     deleteAccount: os.deleteAccount.handler(async ({ context, input, errors }) => {
       const { who, reason } = await securityWrite(context.headers, errors, input.reason);
       const deleted = await accounts.deleteByEmail(input.email);

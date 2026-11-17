@@ -115,3 +115,48 @@ test('an Account no longer there says so', async () => {
 
   expect(await screen.findByText('Цього акаунта немає: його видалено.')).toBeDefined();
 });
+
+/** An XP log record of the Account under its id. */
+const xpRecord = (id: string, value: Record<string, unknown>) => ({
+  key: `xp.${id}`,
+  value,
+  changedAt: 1,
+});
+
+test('the Account page folds the XP log as the Core does: only the records after the latest reset marker by instant, in any order', async () => {
+  backend();
+  const at = (day: string) => ({ date: `2026-11-${day}`, at: `2026-11-${day}T10:00:00.000Z` });
+  const records = [
+    // The latest reset marker by instant comes first in the server's order.
+    xpRecord('r2', { kind: 'reset', ...at('05') }),
+    xpRecord('x1', { kind: 'xp', ...at('01'), amount: 9 }),
+    xpRecord('r1', { kind: 'reset', ...at('02') }),
+    xpRecord('g1', { kind: 'word-goal', ...at('03'), goal: 25 }),
+    xpRecord('f1', { kind: 'freeze', ...at('03') }),
+    xpRecord('b1', { kind: 'break', ...at('03'), days: 2 }),
+    xpRecord('bd1', { kind: 'badge', ...at('03'), badge: 'streak-7' }),
+    xpRecord('x2', { kind: 'xp', ...at('06'), amount: 4 }),
+    xpRecord('x3', { kind: 'xp', ...at('04'), amount: 6 }),
+    xpRecord('f2', { kind: 'freeze', ...at('07') }),
+    xpRecord('dg', { kind: 'daily-goal', ...at('06'), goal: 50 }),
+    xpRecord('gm', { kind: 'goal-met', ...at('06') }),
+    xpRecord('bo', { kind: 'badge-opened', ...at('06'), badge: 'streak-7' }),
+    xpRecord('wa', { kind: 'wrong-answer', ...at('06'), mode: 'quiz' }),
+  ];
+  server.use(
+    http.get('*/admin/accounts/:accountId', () =>
+      HttpResponse.json({
+        account: { ...FIXTURES.getAccount.account, editions: [{ editionId: 'uk', records }] },
+      }),
+    ),
+  );
+  const page = await openFromList();
+
+  const edition = within(page.getByRole('region', { name: 'Видання uk' }));
+  const progress = within(edition.getByRole('region', { name: 'Прогрес' }));
+  expect(progress.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+    'XP: 4',
+    'Заморозки використано: 1',
+  ]);
+  expect(edition.queryByRole('region', { name: 'Інші записи' })).toBeNull();
+});

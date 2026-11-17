@@ -187,6 +187,8 @@ export const ReaderCountsSchema = z.object({
   unregisteredAtLeast: z.number().int().min(0).nullable(),
   /** The switch-offs of anonymous statistics over the period. */
   statisticsOff: z.number().int().min(0),
+  /** The Accounts with Sync records in the filtered Editions, a tombstone not one (ADR 0162). */
+  syncing: z.number().int().min(0),
 });
 export type ReaderCounts = z.infer<typeof ReaderCountsSchema>;
 

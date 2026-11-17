@@ -238,6 +238,7 @@ export function createApp({
     posthog,
     counters: counterStore,
     accounts: authenticator,
+    records: userRecords,
     clock,
     wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   });
