@@ -3,9 +3,10 @@ import { HttpHandler, HttpResponse, type JsonBodyType } from 'msw';
 
 import { FIXTURES } from './fixtures';
 
-type Name = Exclude<keyof typeof adminApiContract, 'content' | 'contentQueue'>;
+type Name = Exclude<keyof typeof adminApiContract, 'content' | 'contentQueue' | 'services'>;
 type ContentName = keyof typeof adminApiContract.content;
 type QueueName = keyof typeof adminApiContract.contentQueue;
+type ServicesName = keyof typeof adminApiContract.services;
 
 /** A handler at a contract route, answering the fixture. */
 function routeHandler(
@@ -40,6 +41,14 @@ function queueHandlerOf<N extends QueueName>(
   fixture: AdminApiOutputs['contentQueue'][N],
 ): HttpHandler {
   return routeHandler(adminApiContract.contentQueue[name]['~orpc'].route, name, fixture);
+}
+
+/** The handler of one «Сервіси» procedure, as `handlerOf`. */
+function servicesHandlerOf<N extends ServicesName>(
+  name: N,
+  fixture: AdminApiOutputs['services'][N],
+): HttpHandler {
+  return routeHandler(adminApiContract.services[name]['~orpc'].route, name, fixture);
 }
 
 /** The MSW handlers of every admin API procedure; a new procedure needs a fixture to compile. */
@@ -110,9 +119,25 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     reports: queueHandlerOf('reports', queue.reports),
     resolveReport: queueHandlerOf('resolveReport', queue.resolveReport),
   };
+  const servicesHandlers: Record<ServicesName, HttpHandler> = {
+    list: servicesHandlerOf('list', fixtures.services.list),
+    entries: servicesHandlerOf('entries', fixtures.services.entries),
+    addEntry: servicesHandlerOf('addEntry', fixtures.services.addEntry),
+    editEntry: servicesHandlerOf('editEntry', fixtures.services.editEntry),
+    deleteEntry: servicesHandlerOf('deleteEntry', fixtures.services.deleteEntry),
+    unlockVault: servicesHandlerOf('unlockVault', fixtures.services.unlockVault),
+    revealEntry: servicesHandlerOf('revealEntry', fixtures.services.revealEntry),
+    copyEntry: servicesHandlerOf('copyEntry', fixtures.services.copyEntry),
+    add: servicesHandlerOf('add', fixtures.services.add),
+    editMoney: servicesHandlerOf('editMoney', fixtures.services.editMoney),
+    usage: servicesHandlerOf('usage', fixtures.services.usage),
+    refreshUsage: servicesHandlerOf('refreshUsage', fixtures.services.refreshUsage),
+    usdRate: servicesHandlerOf('usdRate', fixtures.services.usdRate),
+  };
   return [
     ...Object.values(handlers),
     ...Object.values(contentHandlers),
     ...Object.values(queueHandlers),
+    ...Object.values(servicesHandlers),
   ];
 }

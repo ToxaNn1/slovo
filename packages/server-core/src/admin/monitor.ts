@@ -1,4 +1,7 @@
+import { nearLimit } from '@slovo/contracts/admin-api';
+
 import type { CiRunStore, Clock, PostHogPort, SentryReader } from '../ports';
+import type { ServiceUsage } from '../services/service-usage';
 import type { Alert, AlertSettings, AlertStore, Digest, OwnerChat } from './alerts';
 
 /** Whether the backend answers its health check. */
@@ -28,6 +31,12 @@ const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 /** The digest goes out from 09:00 Kyiv, once a Kyiv day. */
 const DIGEST_MINUTES = 9 * 60;
+/**
+ * The Services' usage is read in the first 15 minutes of a UTC hour alone (the
+ * Cron runs hourly at :00, ADR 0169): once an hour, as the backend keeps it
+ * (ADR 0164), even when a run is started by hand.
+ */
+const USAGE_RUN_MINUTES = 15;
 
 const KYIV = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Europe/Kyiv',
@@ -62,6 +71,7 @@ export function createMonitor({
   ciRuns,
   health,
   batches,
+  usage,
   editionIds,
   clock,
   logFailure,
@@ -74,6 +84,8 @@ export function createMonitor({
   ciRuns: Pick<CiRunStore, 'between'>;
   health: HealthProbe;
   batches: OpenBatches;
+  /** The usage of the Services with a usage port. */
+  usage: Pick<ServiceUsage, 'all'>;
   /** The Editions served: activity is summed over them. */
   editionIds: readonly string[];
   clock: Clock;
@@ -179,6 +191,20 @@ export function createMonitor({
                 ],
               ],
         ),
+      'service-limit': async () => {
+        if (now.getUTCMinutes() >= USAGE_RUN_MINUTES) return [];
+        const period = now.toISOString().slice(0, 7);
+        return (await usage.all()).flatMap(({ name, usage: read }): [Alert, string][] =>
+          read.state === 'read' && read.reading.kind !== 'cron'
+            ? read.reading.usage
+                .filter(nearLimit)
+                .map((limit) => [
+                  { kind: 'service-limit', service: name, period, usage: limit },
+                  `service-limit:${name}:${limit.name}:${period}`,
+                ])
+            : [],
+        );
+      },
     };
 
     const fired: [Alert, string][] = [];

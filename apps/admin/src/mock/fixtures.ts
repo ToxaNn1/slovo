@@ -1,6 +1,16 @@
 import { FeatureSwitchesSchema } from '@slovo/contracts';
 import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
 
+import {
+  ADDED_SERVICE,
+  SENTRY_USAGE,
+  SERVICE_COSTS,
+  SERVICE_ENTRIES,
+  SERVICE_USAGE,
+  SERVICES,
+  USD_RATE,
+} from './services-fixtures';
+
 /** Every feature on, but one off and one the Edition hasn't got. */
 const STATES = FeatureSwitchesSchema.parse({
   ...Object.fromEntries(FeatureSwitchesSchema.keyof().options.map((feature) => [feature, 'on'])),
@@ -571,5 +581,20 @@ export const FIXTURES: AdminApiOutputs = {
         sentAt: '2026-11-08T10:15:05.000Z',
       },
     ],
+  },
+  services: {
+    entries: { vault: 'on', entries: SERVICE_ENTRIES },
+    addEntry: { entry: SERVICE_ENTRIES[0] },
+    editEntry: { entry: SERVICE_ENTRIES[0] },
+    deleteEntry: { deleted: true },
+    unlockVault: { openUntil: '2026-01-01T00:15:00.000Z' },
+    revealEntry: { value: 'fake-value' },
+    copyEntry: { value: 'fake-value' },
+    list: { services: SERVICES, costs: SERVICE_COSTS },
+    add: { service: ADDED_SERVICE },
+    editMoney: { service: ADDED_SERVICE, changed: [] },
+    usage: { usage: SERVICE_USAGE },
+    refreshUsage: { usage: SENTRY_USAGE },
+    usdRate: { rate: USD_RATE },
   },
 };

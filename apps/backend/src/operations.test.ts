@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { Writable } from 'node:stream';
 
@@ -307,6 +308,17 @@ describe('the server', { timeout: 30_000 }, () => {
 
     expect(await server.exited).toBe(1);
     expect(server.output().stderr).toContain('AUTH_SECRET: is the example value');
+  });
+
+  it('refuses to start with a VAULT_KEY that is not 32 bytes in base64, or is the AUTH_SECRET', async () => {
+    const short = runServer({ ...VALID_ENV, VAULT_KEY: Buffer.alloc(16).toString('base64') });
+    const secret = randomBytes(32).toString('base64');
+    const same = runServer({ ...VALID_ENV, AUTH_SECRET: secret, VAULT_KEY: secret });
+
+    expect(await short.exited).toBe(1);
+    expect(short.output().stderr).toContain('VAULT_KEY: must be 32 bytes in base64');
+    expect(await same.exited).toBe(1);
+    expect(same.output().stderr).toContain('VAULT_KEY: must not be the AUTH_SECRET');
   });
 
   it('refuses to start in production without its ZeptoMail token and sender, naming each', async () => {

@@ -1,0 +1,243 @@
+import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
+
+/** The id of a fixture Service by its name. */
+export const SERVICE_IDS = {
+  'Apple Developer / App Store Connect': '00000000-0000-4000-8000-000000000001',
+  Cloudflare: '00000000-0000-4000-8000-000000000002',
+  'Expo/EAS': '00000000-0000-4000-8000-000000000003',
+  GitHub: '00000000-0000-4000-8000-000000000004',
+  'Google Play': '00000000-0000-4000-8000-000000000005',
+  Neon: '00000000-0000-4000-8000-000000000006',
+  PostHog: '00000000-0000-4000-8000-000000000007',
+  Railway: '00000000-0000-4000-8000-000000000008',
+  Sentry: '00000000-0000-4000-8000-000000000009',
+  'Telegram bot': '00000000-0000-4000-8000-000000000010',
+  'Zoho Mail': '00000000-0000-4000-8000-000000000011',
+} as const;
+
+/** The eleven Services as the migration seeds them, by name. */
+export const SERVICES = [
+  {
+    id: SERVICE_IDS['Apple Developer / App Store Connect'],
+    name: 'Apple Developer / App Store Connect',
+    kind: 'metered',
+    plan: null,
+    monthlyPriceUsdCents: null,
+    billingDay: null,
+    limits: [],
+    position: { x: 340, y: 400 },
+    links: [{ to: SERVICE_IDS.Railway, kind: 'constant' }],
+  },
+  {
+    id: SERVICE_IDS.Cloudflare,
+    name: 'Cloudflare',
+    kind: 'metered',
+    plan: null,
+    monthlyPriceUsdCents: null,
+    billingDay: null,
+    limits: [],
+    position: { x: 40, y: 260 },
+    links: [{ to: SERVICE_IDS.Railway, kind: 'constant' }],
+  },
+  {
+    id: SERVICE_IDS['Expo/EAS'],
+    name: 'Expo/EAS',
+    kind: 'metered',
+    plan: null,
+    monthlyPriceUsdCents: null,
+    billingDay: null,
+    limits: [],
+    position: { x: 40, y: 480 },
+    links: [
+      { to: SERVICE_IDS['Apple Developer / App Store Connect'], kind: 'constant' },
+      { to: SERVICE_IDS['Google Play'], kind: 'constant' },
+    ],
+  },
+  {
+    id: SERVICE_IDS.GitHub,
+    name: 'GitHub',
+    kind: 'metered',
+    plan: null,
+    monthlyPriceUsdCents: null,
+    billingDay: null,
+    limits: [],
+    position: { x: 40, y: 40 },
+    links: [
+      { to: SERVICE_IDS.Railway, kind: 'constant' },
+      { to: SERVICE_IDS.Cloudflare, kind: 'constant' },
+    ],
+  },
+  {
+    id: SERVICE_IDS['Google Play'],
+    name: 'Google Play',
+    kind: 'metered',
+    plan: null,
+    monthlyPriceUsdCents: null,
+    billingDay: null,
+    limits: [],
+    position: { x: 340, y: 560 },
+    links: [{ to: SERVICE_IDS.Railway, kind: 'constant' }],
+  },
+  {
+    id: SERVICE_IDS.Neon,
+    name: 'Neon',
+    kind: 'metered',
+    plan: null,
+    monthlyPriceUsdCents: null,
+    billingDay: null,
+    limits: [],
+    position: { x: 940, y: 40 },
+    links: [],
+  },
+  {
+    id: SERVICE_IDS.PostHog,
+    name: 'PostHog',
+    kind: 'metered',
+    plan: null,
+    monthlyPriceUsdCents: null,
+    billingDay: null,
+    limits: [],
+    position: { x: 940, y: 320 },
+    links: [],
+  },
+  {
+    id: SERVICE_IDS.Railway,
+    name: 'Railway',
+    kind: 'railway',
+    plan: null,
+    monthlyPriceUsdCents: null,
+    billingDay: null,
+    limits: [],
+    position: { x: 640, y: 260 },
+    links: [
+      { to: SERVICE_IDS.Neon, kind: 'constant' },
+      { to: SERVICE_IDS.Sentry, kind: 'constant' },
+      { to: SERVICE_IDS.PostHog, kind: 'constant' },
+      { to: SERVICE_IDS['Zoho Mail'], kind: 'constant' },
+      { to: SERVICE_IDS['Telegram bot'], kind: 'scheduled' },
+    ],
+  },
+  {
+    id: SERVICE_IDS.Sentry,
+    name: 'Sentry',
+    kind: 'metered',
+    plan: null,
+    monthlyPriceUsdCents: null,
+    billingDay: null,
+    limits: [],
+    position: { x: 940, y: 180 },
+    links: [],
+  },
+  {
+    id: SERVICE_IDS['Telegram bot'],
+    name: 'Telegram bot',
+    kind: 'metered',
+    plan: null,
+    monthlyPriceUsdCents: null,
+    billingDay: null,
+    limits: [],
+    position: { x: 940, y: 600 },
+    links: [],
+  },
+  {
+    id: SERVICE_IDS['Zoho Mail'],
+    name: 'Zoho Mail',
+    kind: 'metered',
+    plan: null,
+    monthlyPriceUsdCents: null,
+    billingDay: null,
+    limits: [],
+    position: { x: 940, y: 460 },
+    links: [],
+  },
+] satisfies AdminApiOutputs['services']['list']['services'];
+
+/** The Service entries of Neon in the mock: a login and a link open, a password and a token sealed. */
+export const SERVICE_ENTRIES = [
+  {
+    id: '00000000-0000-4000-9000-000000000001',
+    serviceId: SERVICE_IDS.Neon,
+    type: 'login',
+    label: 'Акаунт',
+    note: null,
+    value: 'owner@example.com',
+  },
+  {
+    id: '00000000-0000-4000-9000-000000000002',
+    serviceId: SERVICE_IDS.Neon,
+    type: 'link',
+    label: 'Консоль',
+    note: null,
+    value: 'https://console.neon.tech',
+  },
+  {
+    id: '00000000-0000-4000-9000-000000000003',
+    serviceId: SERVICE_IDS.Neon,
+    type: 'password',
+    label: 'Пароль',
+    note: 'вхід у консоль',
+  },
+  {
+    id: '00000000-0000-4000-9000-000000000004',
+    serviceId: SERVICE_IDS.Neon,
+    type: 'token',
+    label: 'API-ключ',
+    note: 'DATABASE_URL',
+  },
+] as const satisfies AdminApiOutputs['services']['entries']['entries'];
+
+/** The fixture Services cost nothing yet: no price and no billing day. */
+export const SERVICE_COSTS = {
+  monthlyTotalUsdCents: 0,
+  nextCharge: null,
+} satisfies AdminApiOutputs['services']['list']['costs'];
+
+/** A Service the Власник adds, at the first free place. */
+export const ADDED_SERVICE = {
+  id: '00000000-0000-4000-8000-000000000099',
+  name: 'Hetzner',
+  kind: 'metered',
+  plan: 'CX22',
+  monthlyPriceUsdCents: 450,
+  billingDay: 31,
+  limits: [],
+  position: { x: 340, y: 40 },
+  links: [],
+} satisfies AdminApiOutputs['services']['add']['service'];
+/** Sentry's usage as its port read it, fresh. */
+export const SENTRY_USAGE = {
+  serviceId: SERVICE_IDS.Sentry,
+  read: {
+    state: 'read',
+    reading: {
+      kind: 'metered',
+      usage: [{ name: 'errors', unit: 'events', used: 1200, limit: 5000 }],
+    },
+    readAt: '2026-11-17T07:30:00.000Z',
+    stale: false,
+  },
+} satisfies AdminApiOutputs['services']['refreshUsage']['usage'];
+
+/** The usage the Sentry and PostHog ports read: Sentry fresh, PostHog's last read failed. */
+export const SERVICE_USAGE = [
+  SENTRY_USAGE,
+  {
+    serviceId: SERVICE_IDS.PostHog,
+    read: {
+      state: 'read',
+      reading: {
+        kind: 'metered',
+        usage: [{ name: 'events', unit: 'events', used: 250_000, limit: 1_000_000 }],
+      },
+      readAt: '2026-11-17T06:00:00.000Z',
+      stale: true,
+    },
+  },
+] satisfies AdminApiOutputs['services']['usage']['usage'];
+
+/** The NBU rate of the Kyiv day. */
+export const USD_RATE = {
+  uahPerUsd: 41.4321,
+  on: '2026-11-17',
+  state: 'today',
+} satisfies AdminApiOutputs['services']['usdRate']['rate'];

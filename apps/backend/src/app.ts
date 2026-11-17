@@ -2,16 +2,20 @@ import { CollectionLinkIdSchema, type AppConfig } from '@slovo/contracts';
 import {
   createAccounts,
   createAdminAccess,
+  createServiceEntries,
   createAlertSettings,
   createOwnerChecks,
   createAdminSignIn,
   createQuality,
+  createServiceUsage,
   createCollectionLinks,
   createAdminAnalytics,
   createCommunityCounters,
   createDevelopment,
   createMistakeReports,
   createSync,
+  createServiceMoneyBook,
+  createUsdRates,
   type Alerts,
   type AppleVerifier,
   type Clock,
@@ -21,8 +25,11 @@ import {
   type GoogleVerifier,
   type Mailer,
   type PostHogPort,
+  type NbuPort,
   type Random,
   type SentryReader,
+  type UsagePort,
+  type ServiceVault,
 } from '@slovo/server-core';
 import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
@@ -41,6 +48,10 @@ import { createContentStore } from './content/content-store';
 import { createContentQueue } from './content/content-queue';
 import { createContentWrites } from './content/content-writes';
 import { createOwnerCheckStore } from './admin/owner-check-store';
+import { createServiceEntryStore } from './services/service-entry-store';
+import { createServiceMoneyStore } from './services/service-money-store';
+import { createUsdRateStore } from './services/usd-rate-store';
+import { createServiceStore } from './services/service-store';
 import { createCiRunStore } from './quality/ci-run-store';
 import { createAlertStore, createAlertThresholdStore } from './alerts/alert-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
@@ -84,6 +95,8 @@ export interface AppDependencies {
   readonly alerts: Alerts;
   /** Reads the aggregates of the Analytics events, for the admin's Аналітика. */
   readonly posthog: PostHogPort;
+  /** The NBU's official rate of the dollar, for «Сервіси»'s money in hryvnias (ADR 0164). */
+  readonly nbu: NbuPort;
   /** Verifies the Google identity tokens of Google sign-ins. */
   readonly google: GoogleVerifier;
   /** Verifies the Apple identity tokens of Apple sign-ins, for the app's bundle id. */
@@ -103,6 +116,8 @@ export interface AppDependencies {
   readonly trustedProxyHops: number;
   /** Where Якість reads Sentry's numbers. */
   readonly sentry: SentryReader;
+  /** Where «Сервіси» reads each Service's usage, by the Service's name (ADR 0164). */
+  readonly usage: Readonly<Record<string, UsagePort>>;
   /** The Bearer token CI pushes its history with (ADR 0096); unset refuses every push. */
   readonly ciToken: string | undefined;
   /** The URL root of the Media Store the snapshot and the Patch name (ADR 0099). */
@@ -111,6 +126,8 @@ export interface AppDependencies {
   readonly mediaStore: MediaStore;
   /** The folder of the built owner admin app (apps/admin/dist), served at `/admin`; without it none. */
   readonly adminDist?: string | undefined;
+  /** The Vault of the Service entries, under `VAULT_KEY`, or off without it (ADR 0164). */
+  readonly vault: ServiceVault;
 }
 
 type Variables = RequestIdVariables & {
@@ -163,6 +180,7 @@ export function createApp({
   mailer,
   alerts,
   posthog,
+  nbu,
   google,
   apple,
   github,
@@ -172,9 +190,11 @@ export function createApp({
   trustedProxyHops,
   adminDist,
   sentry,
+  usage,
   ciToken,
   mediaBase,
   mediaStore,
+  vault,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions, alerts });
   const rateLimits = createRateLimits(database, { secret: authSecret });
@@ -274,6 +294,21 @@ export function createApp({
       alertStore: createAlertStore(database),
     },
     served: editions,
+    services: createServiceStore(database),
+    serviceEntries: createServiceEntries({
+      store: createServiceEntryStore(database),
+      vault,
+      admin,
+      clock,
+    }),
+    serviceMoney: createServiceMoneyBook({
+      services: createServiceStore(database),
+      store: createServiceMoneyStore(database),
+      clock,
+      admin,
+    }),
+    serviceUsage: createServiceUsage({ ports: usage, clock }),
+    usdRates: createUsdRates({ nbu, store: createUsdRateStore(database, clock), clock }),
     sync,
   });
 

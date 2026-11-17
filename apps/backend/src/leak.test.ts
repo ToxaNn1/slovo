@@ -488,6 +488,9 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         latestAlerts: async () => {
           await client.admin.latestAlerts().catch(refused);
         },
+        services: async () => {
+          await client.admin.services.list().catch(refused);
+        },
       },
       collectionLinks: {
         create: async () => {

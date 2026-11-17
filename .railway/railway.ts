@@ -27,6 +27,7 @@ export default defineRailway(() => {
     env: {
       DATABASE_URL: preserve(),
       AUTH_SECRET: preserve(),
+      VAULT_KEY: preserve(),
       ZEPTOMAIL_API_URL: preserve(),
       ZEPTOMAIL_TOKEN: preserve(),
       MAIL_FROM: preserve(),
@@ -50,6 +51,10 @@ export default defineRailway(() => {
       R2_SECRET_ACCESS_KEY: preserve(),
       MEDIA_BASE: preserve(),
       TRUSTED_PROXY_HOPS: preserve(),
+      RAILWAY_READ_TOKEN: preserve(),
+      NEON_API_KEY: preserve(),
+      NEON_PROJECT_ID: preserve(),
+      CLOUDFLARE_API_TOKEN: preserve(),
     },
   });
 
@@ -68,6 +73,14 @@ export default defineRailway(() => {
       POSTHOG_PERSONAL_API_KEY: backend.env.POSTHOG_PERSONAL_API_KEY,
       POSTHOG_PROJECT_ID: backend.env.POSTHOG_PROJECT_ID,
       BACKEND_HEALTH_URL: preserve(),
+      // The usage ports' keys for the 90 % Alert (ADR 0164); Railway sets the project and environment.
+      RAILWAY_READ_TOKEN: backend.env.RAILWAY_READ_TOKEN,
+      NEON_API_KEY: backend.env.NEON_API_KEY,
+      NEON_PROJECT_ID: backend.env.NEON_PROJECT_ID,
+      GITHUB_TOKEN: backend.env.GITHUB_TOKEN,
+      CLOUDFLARE_API_TOKEN: backend.env.CLOUDFLARE_API_TOKEN,
+      R2_ACCOUNT_ID: backend.env.R2_ACCOUNT_ID,
+      R2_BUCKET: backend.env.R2_BUCKET,
     },
   });
 

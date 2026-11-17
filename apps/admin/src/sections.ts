@@ -2,17 +2,24 @@
 export interface Section {
   /** The route under `/admin`. */
   readonly path:
-    '/' | '/content' | '/switches' | '/analytics' | '/quality' | '/development' | '/security';
+    | '/'
+    | '/content'
+    | '/switches'
+    | '/analytics'
+    | '/quality'
+    | '/development'
+    | '/security'
+    | '/services';
   readonly title: string;
   /** The line under the title in the header; it may name the Edition filter's choice. */
   readonly subtitle: (edition: string) => string;
   /** The empty state's line until the section's own ticket fills it. */
   readonly empty: string;
-  /** Whether only a Власник opens it: Безпека. */
+  /** Whether only a Власник opens it: Безпека and Сервіси. */
   readonly ownerOnly?: true;
 }
 
-/** The seven sections in sidebar order; Магазини is deferred whole. */
+/** The eight sections in sidebar order (ADR 0088, 0164); Магазини is deferred whole. */
 export const SECTIONS = [
   {
     path: '/',
@@ -57,9 +64,16 @@ export const SECTIONS = [
     empty: 'Тут будуть люди, токени Агентів і Action log.',
     ownerOnly: true,
   },
+  {
+    path: '/services',
+    title: 'Сервіси',
+    subtitle: () => 'Тільки Власник',
+    empty: 'Тут будуть Сервіси SLOVO.',
+    ownerOnly: true,
+  },
 ] as const satisfies readonly Section[];
 
-/** The sections the Admin user of the role opens: an Адмін has no Безпека. */
+/** The sections the Admin user of the role opens: an Адмін has no Безпека and no Сервіси. */
 export const sectionsOf = (role: 'owner' | 'admin'): readonly Section[] =>
   role === 'owner' ? SECTIONS : SECTIONS.filter((section: Section) => section.ownerOnly !== true);
 

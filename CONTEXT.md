@@ -43,7 +43,7 @@ The one running backend that serves every Edition: one container image on Railwa
 _Avoid_: Env, prod, server (the backend is the code; the Deployment is its running copy)
 
 **Owner admin**:
-The Vite app `apps/admin`, served built by the backend at `/admin` on the Deployment, where the owner and admins run SLOVO (ADR 0088): seven sections, Огляд, Контент, Свічі, Аналітика, Якість, Розробка and Безпека, behind a global Edition and period filter. It imports only the contracts and talks to the backend over HTTP alone.
+The Vite app `apps/admin`, served built by the backend at `/admin` on the Deployment, where the owner and admins run SLOVO (ADR 0088, 0164): eight sections, Огляд, Контент, Свічі, Аналітика, Якість, Розробка, Безпека and Сервіси, behind a global Edition and period filter. It imports only the contracts and talks to the backend over HTTP alone.
 _Avoid_: Dashboard, back office, admin panel
 
 **Admin user**:
@@ -51,12 +51,24 @@ A person or token that signs in to the Owner admin: a row of its own table with 
 _Avoid_: Account, user (a reader)
 
 **Власник / Адмін / Агент**:
-The three roles of an Admin user (ADR 0088). Власник does everything and makes the others; the first is made by `pnpm admin owner add`. Адмін does everything but Безпека. Агент is the service token a coding agent writes content with, one per agent, named in the Action log; in English, an Agent token.
+The three roles of an Admin user (ADR 0088). Власник does everything and makes the others; the first is made by `pnpm admin owner add`. Адмін does everything but Безпека and Сервіси. Агент is the service token a coding agent writes content with, one per agent, named in the Action log; in English, an Agent token.
 _Avoid_: Admin (for Власник), bot, superuser
 
 **Action log**:
 The append-only record of every write through the admin API, the server commands included: who, when, what, the value before and after, and the reason (ADR 0088). Every change asks for a confirmation and a reason; an Entry save takes an optional one, an Owner check tick none.
 _Avoid_: Audit trail, history, journal
+
+**Service**:
+An outside provider SLOVO pays for or depends on (Railway, Neon, Cloudflare, GitHub, Expo/EAS, Sentry, PostHog, Zoho Mail, Apple Developer / App Store Connect, Google Play, the Telegram bot), with a block on the canvas of «Сервіси», the Власник-only section of the Owner admin: its kind, plan, monthly price, billing day, limits, fixed place and links to other Services (ADR 0164).
+_Avoid_: Integration, provider
+
+**Service entry**:
+One login, link, password, token or recovery-codes item of a Service, with a label and a note of where it is used; logins and links show openly, the rest is kept in the Vault (ADR 0164).
+_Avoid_: Credential, secret (for the item)
+
+**Vault**:
+The encrypted store of the secret Service entries: sealed with AES-256-GCM under `VAULT_KEY`, a Deployment environment variable apart from `AUTH_SECRET`, and opened only by a reveal or copy inside a TOTP unlock (ADR 0164).
+_Avoid_: Password manager
 
 **Content queue** («Черга контенту»):
 The list under Контент in the Owner admin of agent Batches «не перевірено», of agents' and the quote check's flags on records, and of Mistake Reports awaiting the owner (ADR 0088, 0090).

@@ -13,6 +13,26 @@ import { EditionIdSchema } from './edition';
 
 export { EditionIdSchema };
 export {
+  SERVICE_BLOCK,
+  SERVICE_KINDS,
+  SERVICE_MONEY_FIELDS,
+  ServiceKindSchema,
+  ServiceRefusalSchema,
+  type Service,
+  type ServiceCosts,
+  type ServiceMoneyField,
+} from './api/services';
+export type { LimitUsage, ServiceReading, ServiceUsage } from './api/services';
+export { type UsdRate } from './api/services';
+export { NEAR_LIMIT_SHARE, nearLimit } from './api/services';
+export {
+  OPEN_ENTRY_TYPES,
+  SEALED_ENTRY_TYPES,
+  ServiceEntryTypeSchema,
+  type ServiceEntry,
+  type ServiceEntryType,
+} from './api/services';
+export {
   ADMIN_SESSION_COOKIE,
   ADMIN_WRITE_HEADER,
   ADMIN_PERIODS,

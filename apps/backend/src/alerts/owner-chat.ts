@@ -44,6 +44,8 @@ export function alertText(alert: Alert): string {
       return '🚨 Бекенд не відповідає на перевірку здоров’я.';
     case 'batch-size':
       return `📦 Велика пачка у черзі ${alert.editionId}: ${n(alert.records)} записів (поріг ${n(alert.threshold)}).`;
+    case 'service-limit':
+      return `🟡 ${alert.service}: ліміт «${alert.usage.name}» використано на ${n(Math.floor((alert.usage.used / alert.usage.limit) * 100))} % — ${n(alert.usage.used)} з ${n(alert.usage.limit)} ${alert.usage.unit} за ${alert.period}.`;
     case 'recordings-stalled':
       return `🎙️ Озвучка ${alert.editionId} зупинилась: ${n(alert.runs)} запуски поспіль не записали жодного слова. Знову спробує після зміни контенту або нового деплою.`;
   }

@@ -20,7 +20,10 @@ import {
 } from '../feature-switch-rules';
 import { IdiomTypeSchema } from '../idiom';
 import { MistakeTypeSchema } from '../mistake-report';
+import { ADMIN_ERRORS } from './admin-errors';
 import { procedure } from './procedure';
+import { ReasonSchema } from './reason';
+import { servicesContract } from './services';
 import { RecordChangeSchema } from './sync';
 
 /** An Edition the admin's global Edition filter offers. */
@@ -96,16 +99,6 @@ export const ADMIN_WRITE_HEADER = 'x-slovo-admin';
 
 /** The cookie of an admin session: `HttpOnly`, `Secure`, `SameSite=Strict`, under the admin API's path. */
 export const ADMIN_SESSION_COOKIE = 'slovo_admin_session';
-
-/** What every admin procedure may refuse with. */
-const ADMIN_ERRORS = {
-  NOT_FOUND: { message: 'Not found' },
-  UNAUTHORIZED: { message: 'No admin session, or the Агент token is unknown or revoked' },
-  FORBIDDEN: {
-    message:
-      'Refused for this caller: an Агент writes content only, an Адмін has no Безпека, a write needs the admin header',
-  },
-} as const;
 
 /** What an Аналітика read from PostHog may refuse with: the errors of every admin procedure, and PostHog down. */
 const ANALYTICS_ERRORS = {
@@ -230,9 +223,6 @@ const SWITCH_WRITE_ERRORS = {
   ...ADMIN_ERRORS,
   BAD_REQUEST: { message: 'The switch is refused', data: SwitchRefusalSchema },
 } as const;
-
-/** Every admin write names why: the Action log keeps it (ADR 0088). */
-const ReasonSchema = z.string().trim().min(1).max(500);
 
 /** Why the backend refuses a write of people or Агент tokens, by name. */
 export const AccessRefusalSchema = z.object({
@@ -1421,6 +1411,7 @@ export const adminContract = {
     .output(ReaderCountsSchema),
   content: contentWriteContract,
   contentQueue: contentQueueContract,
+  services: servicesContract,
   development: procedure
     .route({
       method: 'GET',
