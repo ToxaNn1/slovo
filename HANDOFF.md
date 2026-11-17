@@ -29,3 +29,4 @@ WAITING until 2026-11-17T10:52:46Z: merger (#1952, #1954) and implementers #1955
 - 2026-11-17T10:58:56Z #1953 DONE (2e58c36); merger #1953 running (+ fix lint on tip). #1958 implementer running. Next #1959.
 - 2026-11-17T11:14:17Z safety net takeover (last commit 2026-11-17T10:58:56Z)
 - 2026-11-17T11:14:50Z successor coordinator still alive (session running, waiting on merger #1953); this safety net takeover stops and leaves the wave to it.
+- 2026-11-17T11:16:45Z #1953 merged (0dbced1) + lint fixes 59f7920, 36ca819. #1958 DONE (50a0998), merger running. #1959 implementer in /tmp/wt/1959 (checklist to /tmp/claude-0/checklist.md for the PR body).
