@@ -9,3 +9,4 @@ Frontier #1962 #1963; then #1964, #1965 one at a time; #1966 after #1963. #1967 
 - 2026-11-17T11:23:40Z #1963 DONE 53bec605; merger running.
 - 2026-11-17T11:33:53Z #1963 merged 6e46c5dd. Draft PR #1968 opened (body wave/pr-body.md; update via gh api PATCH pulls/1968). Waiting on #1962; then #1966 (after #1963) can start now.
 - 2026-11-17T11:34:13Z #1966 started in /tmp/wt/1966 (feat/1966-staging-deploy-reset from 6e46c5dd). #1962 still running.
+- 2026-11-17T11:37:49Z #1962 DONE 51112901; merger running. Next: #1964, then #1965 (one at a time).
