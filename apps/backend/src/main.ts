@@ -22,6 +22,7 @@ import { sentryOf } from './quality/sentry-api';
 import { createSentryReporter } from './sentry-reporter';
 import { createPostHogClient, unavailablePostHog } from './analytics/posthog-client';
 import { startServer } from './server';
+import { createVault, VAULT_OFF } from './services/vault';
 
 const config = readConfig(ServerConfigSchema, process.env);
 const logger = createLogger();
@@ -59,6 +60,8 @@ const app = createApp({
   // Unset in development, the Media Store's files stay in memory.
   mediaStore:
     config.r2 === undefined ? memoryMediaStore() : r2MediaStore(config.r2, { clock: systemClock }),
+  // Without VAULT_KEY the Vault is off: no Service entry is written (ADR 0164).
+  vault: config.VAULT_KEY === undefined ? VAULT_OFF : createVault(config.VAULT_KEY),
 });
 const server = await startServer({ app, database, port: config.PORT });
 

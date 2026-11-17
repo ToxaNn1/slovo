@@ -22,6 +22,7 @@ import type {
   MistakeReports,
   OwnerChecks,
   Quality,
+  ServiceEntries,
   ServiceStore,
   Sync,
 } from '@slovo/server-core';
@@ -99,6 +100,7 @@ export function createApiHandler({
   quality,
   served,
   services,
+  serviceEntries,
   sync,
 }: {
   accounts: Accounts;
@@ -131,6 +133,8 @@ export function createApiHandler({
   served: readonly Edition[];
   /** The Services of «Сервіси» (ADR 0164). */
   services: ServiceStore;
+  /** The Service entries of «Сервіси», sealed in the Vault (ADR 0164). */
+  serviceEntries: ServiceEntries;
   sync: Sync;
 }) {
   const router = implement(apiContract)
@@ -149,7 +153,7 @@ export function createApiHandler({
         contentQueue,
         ownerChecks,
         adminAnalytics,
-        { ...quality, accounts, services },
+        { ...quality, accounts, services, serviceEntries },
       ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(editions, contentStore, mediaBase),

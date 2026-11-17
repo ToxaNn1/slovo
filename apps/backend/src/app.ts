@@ -2,6 +2,7 @@ import { CollectionLinkIdSchema, type AppConfig } from '@slovo/contracts';
 import {
   createAccounts,
   createAdminAccess,
+  createServiceEntries,
   createAlertSettings,
   createOwnerChecks,
   createAdminSignIn,
@@ -23,6 +24,7 @@ import {
   type PostHogPort,
   type Random,
   type SentryReader,
+  type ServiceVault,
 } from '@slovo/server-core';
 import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
@@ -41,6 +43,7 @@ import { createContentStore } from './content/content-store';
 import { createContentQueue } from './content/content-queue';
 import { createContentWrites } from './content/content-writes';
 import { createOwnerCheckStore } from './admin/owner-check-store';
+import { createServiceEntryStore } from './services/service-entry-store';
 import { createServiceStore } from './services/service-store';
 import { createCiRunStore } from './quality/ci-run-store';
 import { createAlertStore, createAlertThresholdStore } from './alerts/alert-store';
@@ -112,6 +115,8 @@ export interface AppDependencies {
   readonly mediaStore: MediaStore;
   /** The folder of the built owner admin app (apps/admin/dist), served at `/admin`; without it none. */
   readonly adminDist?: string | undefined;
+  /** The Vault of the Service entries, under `VAULT_KEY`, or off without it (ADR 0164). */
+  readonly vault: ServiceVault;
 }
 
 type Variables = RequestIdVariables & {
@@ -176,6 +181,7 @@ export function createApp({
   ciToken,
   mediaBase,
   mediaStore,
+  vault,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions, alerts });
   const rateLimits = createRateLimits(database, { secret: authSecret });
@@ -271,6 +277,11 @@ export function createApp({
     },
     served: editions,
     services: createServiceStore(database),
+    serviceEntries: createServiceEntries({
+      store: createServiceEntryStore(database),
+      vault,
+      admin,
+    }),
     sync,
   });
 

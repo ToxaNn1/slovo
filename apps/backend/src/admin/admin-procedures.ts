@@ -34,6 +34,7 @@ import type {
   SignedInAdmin,
   SwitchRefusal,
   SwitchRefused,
+  ServiceEntries,
   ServiceStore,
 } from '@slovo/server-core';
 
@@ -123,6 +124,7 @@ export function adminProcedures(
     alertStore,
     accounts,
     services,
+    serviceEntries,
   }: {
     /** The readers' Accounts, which a Власник finds and deletes by email (ADR 0127). */
     readonly accounts: Accounts;
@@ -132,6 +134,8 @@ export function adminProcedures(
     readonly alertStore: AlertStore;
     /** The Services of «Сервіси» (ADR 0164). */
     readonly services: ServiceStore;
+    /** The Service entries of «Сервіси», sealed in the Vault (ADR 0164). */
+    readonly serviceEntries: ServiceEntries;
   },
 ) {
   const os = implement(apiContract.admin).$context<{
@@ -608,8 +612,15 @@ export function adminProcedures(
       };
     }),
 
-    services: servicesProcedures(services, (headers, errors, { writes = false } = {}) =>
-      admit(headers, errors, { writes, security: true }),
+    services: servicesProcedures(
+      services,
+      (headers, errors, { writes = false } = {}) =>
+        admit(headers, errors, { writes, security: true }),
+      {
+        entries: serviceEntries,
+        ownerOf: async (headers, errors, { writes = false } = {}) =>
+          actorOf(await admit(headers, errors, { writes, security: true })),
+      },
     ),
 
     content: {

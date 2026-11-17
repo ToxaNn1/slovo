@@ -720,3 +720,38 @@ export const services = pgTable(
     check('services_billing_day', sql`${table.billingDay} between 1 and 31`),
   ],
 );
+
+/**
+ * The Service entries of «Сервіси» (ADR 0164): a login or a link keeps its
+ * value in the open, a password, token or recovery codes only sealed in the
+ * Vault under `VAULT_KEY`. An entry goes with its Service.
+ */
+export const serviceEntries = pgTable(
+  'service_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    serviceId: uuid('service_id')
+      .notNull()
+      .references(() => services.id, { onDelete: 'cascade' }),
+    /** `login`, `link`, `password`, `token` or `recovery-codes`. */
+    type: text('type').notNull(),
+    label: text('label').notNull(),
+    /** «Де використовується». */
+    note: text('note'),
+    /** The value of a login or a link. */
+    openValue: text('open_value'),
+    /** The sealed value of a password, a token or recovery codes. */
+    sealedValue: text('sealed_value'),
+  },
+  (table) => [
+    index('service_entries_service_id_idx').on(table.serviceId),
+    check(
+      'service_entries_type',
+      sql`${table.type} in ('login', 'link', 'password', 'token', 'recovery-codes')`,
+    ),
+    check(
+      'service_entries_value',
+      sql`(${table.type} in ('login', 'link')) = (${table.openValue} is not null and ${table.sealedValue} is null) and (${table.openValue} is null) <> (${table.sealedValue} is null)`,
+    ),
+  ],
+);

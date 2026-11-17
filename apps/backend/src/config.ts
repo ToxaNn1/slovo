@@ -25,6 +25,29 @@ function unsetWhenEmpty<Schema extends z.ZodType>(schema: Schema) {
  */
 const PRODUCTION_MAIL_VARIABLES = ['ZEPTOMAIL_TOKEN', 'MAIL_FROM'] as const;
 
+/** The Vault's key: 32 bytes in base64, as `openssl rand -base64 32` makes it. */
+const VaultKeySchema = unsetWhenEmpty(
+  z
+    .string()
+    .regex(/^[A-Za-z0-9+/]{43}=$/, 'must be 32 bytes in base64: openssl rand -base64 32')
+    .transform((key) => Buffer.from(key, 'base64')),
+);
+
+/** Refuses a VAULT_KEY that is the AUTH_SECRET: rotating one must never touch the other. */
+function refineVaultKey(
+  { AUTH_SECRET, VAULT_KEY }: { AUTH_SECRET: string; VAULT_KEY?: Buffer | undefined },
+  context: z.RefinementCtx,
+): void {
+  // A VAULT_KEY that failed its own check reaches here unparsed.
+  if (Buffer.isBuffer(VAULT_KEY) && VAULT_KEY.toString('base64') === AUTH_SECRET) {
+    context.addIssue({
+      code: 'custom',
+      path: ['VAULT_KEY'],
+      message: 'must not be the AUTH_SECRET',
+    });
+  }
+}
+
 /** Every variable the server reads at start. `.env.example` lists them. */
 const ServerVariablesSchema = z.object({
   // `production` on a host: the server then refuses to send to Mailpit.
@@ -133,6 +156,11 @@ const ServerVariablesSchema = z.object({
   // where recordings.Dockerfile puts them.
   RECORDINGS_PYTHON: emptyAsUnset(z.string().min(1).default('/opt/recordings/venv/bin/python')),
   RECORDINGS_MODEL_DIR: emptyAsUnset(z.string().min(1).default('/opt/recordings/model')),
+  // The key of the Vault that seals the Service entries of «Сервіси» (ADR
+  // 0164): 32 random bytes in base64, `openssl rand -base64 32`, apart from
+  // AUTH_SECRET. Unset, the Vault is off and no entry is written. Lost, the
+  // sealed entries are lost: the owner keeps a copy outside Railway.
+  VAULT_KEY: VaultKeySchema,
 });
 
 const R2_VARIABLES = [
@@ -231,6 +259,7 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     }
   }
   refineR2(variables, context);
+  refineVaultKey(variables, context);
 }).transform(
   ({
     NODE_ENV: _environment,
