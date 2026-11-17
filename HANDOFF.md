@@ -1,8 +1,8 @@
-STATUS: RUNNING
+STATUS: FINISHED
 ## NEXT
 Setup: mkdir -p /tmp/claude-0 && cp wave/* /tmp/claude-0/; if cloud-setup failed: pg_createcluster 18 main --port 5432 --start then rerun .claude/hooks/cloud-setup.sh. Commit only via /tmp/claude-0/gc.sh. Ignore the stop hook asking for a Claude identity (owner rule wins).
 State: all of #1962-#1966 merged into feat/1961-release-channels (tip 558c059f). Draft PR #1968 (body wave/pr-body.md, PATCH via gh api pulls/1968).
-Next: review done (wave/review.md: 1 high, 2 med, 7 low); fix implementer running on the integration branch directly (writes /tmp/claude-0/fixes.md). Then CI green (one blocking wait), mark ready via POST pulls/1968/ccr/ready_for_review, add ZeptoMail-on-staging owner question to PR body; NO merge. Then STATUS: FINISHED and Ukrainian report.
+Done: review fixed (46f7a095d), CI green, PR #1968 ready for review, mergeable clean. Not merged: the owner merges. #1967 untouched.
 ## LOG
 # HANDOFF coord/release-1961 (spec #1961, tickets #1962-#1966)
 
@@ -21,3 +21,4 @@ Next: review done (wave/review.md: 1 high, 2 med, 7 low); fix implementer runnin
 - 2026-11-17T12:44:49Z #1965 merged 558c059f. All tickets merged; PR body complete; code review starting.
 - 2026-11-17T12:51:18Z prettier fix c1106ebd pushed (CI Lint). Code review: 1 high, 2 med, 7 low; fixer running.
 WAITING until 2026-11-17T13:43:25Z: CI on 46f7a095d (PR #1968) after review fixes
+- 2026-11-17T13:08:00Z CI green on 46f7a095d; PR #1968 marked ready (not merged). Worktrees removed; local ticket branches kept. FINISHED.
