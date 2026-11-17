@@ -11,7 +11,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { bearer, emailOTP } from 'better-auth/plugins';
-import { count, desc, eq, inArray, like } from 'drizzle-orm';
+import { count, desc, eq, inArray, like, type SQL } from 'drizzle-orm';
 import type { Logger } from 'pino';
 
 import type { Database } from '../database/database';
@@ -173,6 +173,17 @@ export function createAuthenticator(
 ): Authenticator {
   const auth = createAuth({ database, secret, logger });
 
+  /** The Account the condition picks, with its Google and Apple sign-in methods; none when none matches. */
+  async function readerAccountWhere(picks: SQL) {
+    const [account] = await database.db.select().from(accounts).where(picks);
+    if (account === undefined) return undefined;
+    const methods = await database.db
+      .select({ providerId: signInMethods.providerId })
+      .from(signInMethods)
+      .where(eq(signInMethods.accountId, account.id));
+    return { account: accountRecord(account), signInMethods: recordedOf(methods) };
+  }
+
   /** The tries spent on the code waiting for the email; none when no code waits. */
   async function triesSpent(email: string): Promise<number | undefined> {
     const { internalAdapter } = await auth.$context;
@@ -305,15 +316,9 @@ export function createAuthenticator(
       });
     },
 
-    async accountOf(email) {
-      const [account] = await database.db.select().from(accounts).where(eq(accounts.email, email));
-      if (account === undefined) return undefined;
-      const methods = await database.db
-        .select({ providerId: signInMethods.providerId })
-        .from(signInMethods)
-        .where(eq(signInMethods.accountId, account.id));
-      return { account: accountRecord(account), signInMethods: recordedOf(methods) };
-    },
+    accountOf: (email) => readerAccountWhere(eq(accounts.email, email)),
+
+    accountById: (accountId) => readerAccountWhere(eq(accounts.id, accountId)),
 
     async accounts({ search, offset, limit }) {
       // The search is text: LIKE's wildcards and its escape character match only themselves.

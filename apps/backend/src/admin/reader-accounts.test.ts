@@ -14,16 +14,24 @@ const newTag = () => `t${randomUUID().slice(0, 8)}`;
 async function ownerOn() {
   const backend = testApp();
   const owner = await signedInAdmin(backend, 'owner');
-  /** The Account procedures of a device signed in to the email's Account. */
-  async function signInReader(email: string) {
+  /** A device signed in to the email's Account. */
+  async function signInDevice(email: string) {
     await backend.client.account.requestCode({ email, editionId: 'uk' });
     const { token } = await backend.client.account.verifyCode({
       email,
       code: backend.mailer.codeSentTo(email),
     });
-    return backend.clientOf(token).account;
+    return backend.clientOf(token);
   }
-  return { ...backend, owner, signInReader };
+  /** The Account procedures of a device signed in to the email's Account. */
+  const signInReader = async (email: string) => (await signInDevice(email)).account;
+  /** The id of the email's Account. */
+  async function idOf(email: string) {
+    const { account } = await backend.rowsOf(email);
+    if (account === undefined) throw new Error(`${email} has no Account`);
+    return account.id;
+  }
+  return { ...backend, owner, signInDevice, signInReader, idOf };
 }
 
 describe('a reader Account in Безпека', () => {
@@ -110,12 +118,94 @@ describe('a reader Account in Безпека', () => {
     expect((await backend.owner.client.admin.actions({})).actions).toEqual(before);
   });
 
+  it("opens one Account with its sign-in methods and every Edition's Sync records, a tombstone left out", async () => {
+    const backend = await ownerOn();
+    const email = newEmail();
+    const device = await backend.signInDevice(email);
+    await backend.client.account.signInWithGoogle({
+      idToken: backend.google.token({ email }),
+      editionId: 'uk',
+    });
+    // Long past, so the server's own time never caps it.
+    const at = Date.parse('2026-01-01T00:00:00.000Z');
+    await device.sync.push({
+      editionId: 'uk',
+      changes: [
+        { key: 'favorites.w_a1', value: '2026-11-01T10:00:00.000Z', changedAt: at },
+        { key: 'knowledge.w_b2', value: { mark: 'known', learned: false }, changedAt: at + 1 },
+        { key: 'hidden.w_c3', value: null, changedAt: at + 2 },
+      ],
+    });
+    const { account } = await backend.rowsOf(email);
+
+    await expect(
+      backend.owner.client.admin.getAccount({ accountId: await backend.idOf(email) }),
+    ).resolves.toEqual({
+      account: {
+        id: account?.id,
+        email,
+        createdAt: account?.createdAt.toISOString(),
+        signInMethods: ['google'],
+        editions: [
+          {
+            editionId: 'uk',
+            records: [
+              { key: 'favorites.w_a1', value: '2026-11-01T10:00:00.000Z', changedAt: at },
+              { key: 'knowledge.w_b2', value: { mark: 'known', learned: false }, changedAt: at + 1 },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  it('opens an Account with no Sync records with no Editions, an unknown one as none, and logs neither', async () => {
+    const backend = await ownerOn();
+    const email = newEmail();
+    await backend.signInReader(email);
+    const before = (await backend.owner.client.admin.actions({})).actions;
+
+    const opened = await backend.owner.client.admin.getAccount({
+      accountId: await backend.idOf(email),
+    });
+    expect(opened.account?.email).toBe(email);
+    expect(opened.account?.editions).toEqual([]);
+    await expect(
+      backend.owner.client.admin.getAccount({ accountId: randomUUID() }),
+    ).resolves.toEqual({ account: null });
+    expect((await backend.owner.client.admin.actions({})).actions).toEqual(before);
+  });
+
+  it('lets the deleted email sign in to a new, empty Account', async () => {
+    const backend = await ownerOn();
+    const email = newEmail();
+    const device = await backend.signInDevice(email);
+    await device.sync.push({
+      editionId: 'uk',
+      changes: [{ key: 'favorites.w_a1', value: '2026-11-01T10:00:00.000Z', changedAt: Date.now() }],
+    });
+    const deletedId = await backend.idOf(email);
+    await backend.owner.client.admin.deleteAccount({ email, reason: 'test Account' });
+
+    const again = await backend.signInDevice(email);
+
+    const newId = await backend.idOf(email);
+    expect(newId).not.toBe(deletedId);
+    await expect(again.sync.pull({ editionId: 'uk' })).resolves.toMatchObject({ records: [] });
+    const opened = await backend.owner.client.admin.getAccount({ accountId: newId });
+    expect(opened.account?.editions).toEqual([]);
+    await expect(
+      backend.owner.client.admin.getAccount({ accountId: deletedId }),
+    ).resolves.toEqual({ account: null });
+  });
+
   it('deletes the Account as the app does, signing its devices out, and logs who, which email and why', async () => {
     const backend = await ownerOn();
     const email = newEmail();
     const other = newEmail();
     const phone = await backend.signInReader(email);
     const otherReader = await backend.signInReader(other);
+    const { account: created } = await backend.rowsOf(email);
 
     await expect(
       backend.owner.client.admin.deleteAccount({ email, reason: 'spam Account' }),
@@ -132,7 +222,7 @@ describe('a reader Account in Безпека', () => {
     expect(actions[0]).toMatchObject({
       who: { kind: 'admin-user', email: backend.owner.email },
       what: 'account.delete',
-      before: { email },
+      before: { email, createdAt: created?.createdAt.toISOString() },
       after: null,
       reason: 'spam Account',
       editionId: null,
@@ -177,6 +267,9 @@ describe('a reader Account in Безпека', () => {
       await expect(caller.admin.listAccounts({})).rejects.toMatchObject({
         code: 'FORBIDDEN',
       });
+      await expect(
+        caller.admin.getAccount({ accountId: await backend.idOf(email) }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
       await expect(caller.admin.deleteAccount({ email, reason: 'try' })).rejects.toMatchObject({
         code: 'FORBIDDEN',
       });

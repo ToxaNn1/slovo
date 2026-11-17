@@ -81,5 +81,19 @@ export function createUserRecords({ db }: Database): UserRecords {
         .orderBy(asc(userRecords.sequence))
         .limit(limit);
     },
+
+    ofAccount(accountId) {
+      return db
+        .select({
+          editionId: userRecords.editionId,
+          key: userRecords.key,
+          value: userRecords.value,
+          changedAt: userRecords.changedAt,
+          sequence: userRecords.sequence,
+        })
+        .from(userRecords)
+        .where(eq(userRecords.accountId, accountId))
+        .orderBy(asc(userRecords.sequence));
+    },
   };
 }

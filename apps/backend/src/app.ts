@@ -178,6 +178,7 @@ export function createApp({
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions, alerts });
   const rateLimits = createRateLimits(database, { secret: authSecret });
+  const userRecords = createUserRecords(database);
   const accounts = createAccounts({
     editions: editionRegistry,
     authenticator: createAuthenticator(database, { secret: authSecret, logger }),
@@ -186,12 +187,13 @@ export function createApp({
     bundleId: appConfig.bundleId,
     mailer,
     rateLimits,
+    records: userRecords,
     clock,
   });
   const contentStore = createContentStore({ database, clock, editions: editionRegistry });
   const sync = createSync({
     editions: editionRegistry,
-    records: createUserRecords(database),
+    records: userRecords,
     rateLimits,
     clock,
   });

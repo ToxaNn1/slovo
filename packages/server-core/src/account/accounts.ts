@@ -12,7 +12,10 @@ import type {
   GoogleVerifier,
   Mailer,
   RateLimits,
+  ReaderAccount,
+  RecordChange,
   SignedIn,
+  UserRecords,
 } from '../ports';
 import type { TooManyRequests } from '../rate-limit';
 import { createSignInLimits } from './sign-in-limits';
@@ -133,11 +136,26 @@ export interface Accounts {
    */
   list(query: { readonly page: number; readonly search: string }): Promise<AccountsPage>;
   /**
+   * The Account of the id with, for every Edition it syncs, the records Sync
+   * keeps of it in the order they were kept, tombstones left out; for the
+   * owner admin alone (ADR 0162), which reads them and never changes them.
+   * None when no Account has the id.
+   */
+  get(accountId: string): Promise<AccountWithRecords | undefined>;
+  /**
    * Deletes the email's Account as `delete` does a Session's, for the owner
    * admin alone (ADR 0127), and answers the Account deleted; none, and
    * nothing changes, when the email has no Account.
    */
   deleteByEmail(email: string): Promise<AccountRecord | undefined>;
+}
+
+/** An Account as the owner admin opens it, with the records Sync keeps of it per Edition (ADR 0162). */
+export interface AccountWithRecords extends ReaderAccount {
+  readonly editions: readonly {
+    readonly editionId: string;
+    readonly records: readonly RecordChange[];
+  }[];
 }
 
 /** The email as the backend keeps it, by `AccountEmailSchema`; none when it is not an email. */
@@ -158,6 +176,7 @@ export function createAccounts({
   bundleId,
   mailer,
   rateLimits,
+  records,
   clock,
 }: {
   editions: EditionRegistry;
@@ -168,6 +187,7 @@ export function createAccounts({
   bundleId: string;
   mailer: Mailer;
   rateLimits: RateLimits;
+  records: UserRecords;
   clock: Clock;
 }): Accounts {
   const limits = createSignInLimits({ rateLimits, clock });
@@ -250,6 +270,25 @@ export function createAccounts({
         offset: (page - 1) * ACCOUNTS_PAGE_SIZE,
         limit: ACCOUNTS_PAGE_SIZE,
       }),
+
+    async get(accountId) {
+      const [found, kept] = await Promise.all([
+        authenticator.accountById(accountId),
+        records.ofAccount(accountId),
+      ]);
+      if (found === undefined) return undefined;
+      const byEdition = new Map<string, RecordChange[]>();
+      for (const { editionId, key, value, changedAt } of kept) {
+        if (value === null) continue;
+        const edition = byEdition.get(editionId) ?? [];
+        edition.push({ key, value, changedAt });
+        byEdition.set(editionId, edition);
+      }
+      return {
+        ...found,
+        editions: [...byEdition].map(([editionId, changes]) => ({ editionId, records: changes })),
+      };
+    },
 
     async deleteByEmail(typedEmail) {
       const email = normalised(typedEmail);

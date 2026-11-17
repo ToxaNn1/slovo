@@ -2,7 +2,12 @@
  * The server Core's public interface. The backend reaches the server's rules
  * through this module only (ADR 0030).
  */
-export { createAccounts, type Accounts, type Session } from './account/accounts';
+export {
+  createAccounts,
+  type Accounts,
+  type AccountWithRecords,
+  type Session,
+} from './account/accounts';
 export { createCollectionLinks, type CollectionLinks } from './collection-links/collection-links';
 export {
   createEditionRegistry,
