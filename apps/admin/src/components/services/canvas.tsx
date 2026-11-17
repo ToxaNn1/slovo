@@ -1,6 +1,6 @@
 import { SERVICE_BLOCK, type Service } from '@slovo/contracts/admin-api';
 
-import { BlockUsage, type UsageAnswer } from './usage';
+import { BlockUsage, nearLimitOf, type UsageAnswer } from './usage';
 
 /** Each Service's usage read, by the Service's id. */
 export type UsageById = ReadonlyMap<string, UsageAnswer>;
@@ -95,7 +95,7 @@ export function ServicesCanvas({
             onClick={() => {
               onOpen(service);
             }}
-            className="absolute flex items-center gap-3 rounded-[14px] border border-white/15 bg-[#13111c] px-4 text-left shadow-[0_8px_24px_rgb(0_0_0/0.5)] hover:border-white/40 focus-visible:outline-2 focus-visible:outline-white"
+            className={`absolute flex items-center gap-3 rounded-[14px] border ${nearLimitOf(usage.get(service.id)) ? 'border-warn' : 'border-white/15'} bg-[#13111c] px-4 text-left shadow-[0_8px_24px_rgb(0_0_0/0.5)] hover:border-white/40 focus-visible:outline-2 focus-visible:outline-white`}
             style={{
               left: `${String(service.position.x)}px`,
               top: `${String(service.position.y)}px`,
@@ -136,7 +136,7 @@ export function ServiceCards({
             onClick={() => {
               onOpen(service);
             }}
-            className="flex w-full items-center gap-3 rounded-[14px] border border-border bg-surface px-4 py-3 text-left"
+            className={`flex w-full items-center gap-3 rounded-[14px] border ${nearLimitOf(usage.get(service.id)) ? 'border-warn' : 'border-border'} bg-surface px-4 py-3 text-left`}
           >
             <span className="flex min-w-0 flex-1 flex-col gap-1.5">
               <span className="text-sm font-semibold">{service.name}</span>
