@@ -89,6 +89,29 @@ const ENTRY_WRITE_ERRORS = {
   VAULT_OFF: { status: 503, message: 'The Vault is off: the Deployment has no VAULT_KEY' },
 } as const;
 
+/** The errors of a reveal or a copy: `LOCKED` outside the 15 minutes a TOTP opens. */
+const ENTRY_READ_ERRORS = {
+  ...ENTRY_WRITE_ERRORS,
+  LOCKED: { status: 423, message: 'The Vault is locked: enter a fresh TOTP code to open it' },
+} as const;
+
+/** The errors of an unlock: a wrong code with the attempts left, or too many wrong ones. */
+const UNLOCK_ERRORS = {
+  ...ENTRY_WRITE_ERRORS,
+  WRONG_CODE: {
+    status: 400,
+    message: 'The TOTP code is wrong or already used',
+    data: z.object({ attemptsLeft: z.number().int().min(0) }),
+  },
+  TOO_MANY_REQUESTS: {
+    message: 'Too many wrong codes: the unlock is blocked for a while',
+    data: z.object({ retryAfterSeconds: z.number().int().positive() }),
+  },
+} as const;
+
+/** One entry's value as a reveal or a copy answers it. */
+const EntryValueAnswerSchema = z.object({ value: z.string() });
+
 /** The Service entries of «Сервіси»: a Власник only, every write with a reason (ADR 0122, 0164). */
 const serviceEntriesContract = {
   entries: procedure
@@ -160,6 +183,42 @@ const serviceEntriesContract = {
     .errors(ENTRY_WRITE_ERRORS)
     .input(z.strictObject({ id: ServiceEntryIdSchema, reason: ReasonSchema }))
     .output(z.object({ deleted: z.literal(true) })),
+  unlockVault: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/services/vault/unlock',
+      summary: 'Opens «Показати» and «Копіювати» for 15 minutes on a fresh TOTP code',
+      description:
+        'A «Сервіси» procedure: a Власник only. It opens the calling admin session alone; a code that signed in or opened before is refused.',
+      tags: ['admin'],
+    })
+    .errors(UNLOCK_ERRORS)
+    .input(z.strictObject({ code: z.string().trim().min(1).max(20) }))
+    .output(z.object({ openUntil: z.iso.datetime() })),
+  revealEntry: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/services/entries/{id}/reveal',
+      summary: "Answers one entry's plain value to show («Показати»)",
+      description:
+        'A «Сервіси» procedure: a Власник only, inside the 15 minutes an unlock opens. The Action log row names the entry, never the value.',
+      tags: ['admin'],
+    })
+    .errors(ENTRY_READ_ERRORS)
+    .input(z.strictObject({ id: ServiceEntryIdSchema }))
+    .output(EntryValueAnswerSchema),
+  copyEntry: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/services/entries/{id}/copy',
+      summary: "Answers one entry's plain value to copy without showing it («Копіювати»)",
+      description:
+        'A «Сервіси» procedure: a Власник only, inside the 15 minutes an unlock opens. The Action log row names the entry, never the value.',
+      tags: ['admin'],
+    })
+    .errors(ENTRY_READ_ERRORS)
+    .input(z.strictObject({ id: ServiceEntryIdSchema }))
+    .output(EntryValueAnswerSchema),
 };
 
 /** A block's size on the canvas in CSS pixels: a new Service takes a place where it overlaps none. */

@@ -1,7 +1,7 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { server } from './mock/server';
 import { SERVICE_ENTRIES, SERVICE_IDS } from './mock/services-fixtures';
@@ -11,9 +11,13 @@ beforeEach(() => {
   window.history.replaceState(null, '', '/admin/services');
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 /** Opens Neon's side panel and answers its entries section. */
-async function neonEntries() {
-  const user = userEvent.setup();
+async function neonEntries(options: Parameters<typeof userEvent.setup>[0] = {}) {
+  const user = userEvent.setup(options);
   render(<Admin />);
   const canvas = within(await screen.findByRole('group', { name: 'Полотно Сервісів' }));
   await user.click(canvas.getByRole('button', { name: 'Neon' }));
@@ -171,4 +175,114 @@ test('a write refused as vault-off says why in the confirmation', async () => {
 
   const dialog = within(await screen.findByRole('dialog', { name: /Видалити запис/ }));
   expect((await dialog.findByText(/Сховище вимкнене/)).textContent).toContain('VAULT_KEY');
+});
+
+/** A fake value, made for the test: never a real one. */
+const FAKE_VALUE = 'fake-neon-key-0001';
+
+/**
+ * Answers the reads of the API key as the backend does: locked until a
+ * code is entered, the value after it; keeps what each request was.
+ */
+function vaultLockedUntilCode(rightCode = '123456') {
+  const calls: string[] = [];
+  let open = false;
+  const locked = () =>
+    HttpResponse.json(
+      { defined: true, code: 'LOCKED', status: 423, message: 'locked' },
+      { status: 423 },
+    );
+  server.use(
+    http.post('*/admin/services/vault/unlock', async ({ request }) => {
+      const { code } = Object(await request.json()) as { code: string };
+      calls.push(`unlock ${code}`);
+      if (code !== rightCode) {
+        return HttpResponse.json(
+          {
+            defined: true,
+            code: 'WRONG_CODE',
+            status: 400,
+            message: 'wrong',
+            data: { attemptsLeft: 2 },
+          },
+          { status: 400 },
+        );
+      }
+      open = true;
+      return HttpResponse.json({ openUntil: '2026-11-17T10:15:00.000Z' });
+    }),
+    http.post('*/admin/services/entries/:id/:how', ({ params }) => {
+      const how = String(params['how']);
+      if (how !== 'reveal' && how !== 'copy') return undefined;
+      calls.push(`${how} ${String(params['id'])}`);
+      return open ? HttpResponse.json({ value: FAKE_VALUE }) : locked();
+    }),
+  );
+  return calls;
+}
+
+/** Enters the code in the TOTP prompt. */
+async function enterCode(user: ReturnType<typeof userEvent.setup>, code: string) {
+  const prompt = within(await screen.findByRole('dialog', { name: 'Відкрити сховище' }));
+  await user.type(prompt.getByLabelText('Код із застосунку'), code);
+  await user.click(prompt.getByRole('button', { name: 'Відкрити' }));
+  return prompt;
+}
+
+test('«Показати» asks for the TOTP on a locked Vault, shows the value, and hides it after 30 s', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  const calls = vaultLockedUntilCode();
+  const { user, entries } = await neonEntries({ advanceTimers: vi.advanceTimersByTime.bind(vi) });
+  const token = within(await entries.findByRole('listitem', { name: 'API-ключ' }));
+
+  await user.click(token.getByRole('button', { name: 'Показати' }));
+  await enterCode(user, '123456');
+
+  expect(await token.findByText(FAKE_VALUE)).toBeDefined();
+  expect(screen.queryByRole('dialog', { name: 'Відкрити сховище' })).toBeNull();
+  expect(calls).toEqual([
+    `reveal ${SERVICE_ENTRIES[3].id}`,
+    'unlock 123456',
+    `reveal ${SERVICE_ENTRIES[3].id}`,
+  ]);
+  // The fake clock also runs on with real time, so the check before 30 s keeps a margin.
+  act(() => {
+    vi.advanceTimersByTime(25_000);
+  });
+  expect(token.queryByText(FAKE_VALUE)).not.toBeNull();
+  act(() => {
+    vi.advanceTimersByTime(5_000);
+  });
+  expect(token.queryByText(FAKE_VALUE)).toBeNull();
+  expect(token.getByLabelText('Приховано').textContent).toBe('••••••••');
+});
+
+test('a wrong TOTP is refused in the prompt and shows nothing', async () => {
+  const calls = vaultLockedUntilCode();
+  const { user, entries } = await neonEntries();
+  const token = within(await entries.findByRole('listitem', { name: 'API-ключ' }));
+
+  await user.click(token.getByRole('button', { name: 'Показати' }));
+  const prompt = await enterCode(user, '000000');
+
+  expect((await prompt.findByRole('alert')).textContent).toContain('Невірний код');
+  expect(screen.queryByText(FAKE_VALUE)).toBeNull();
+  expect(calls).toEqual([`reveal ${SERVICE_ENTRIES[3].id}`, 'unlock 000000']);
+});
+
+test('«Копіювати» writes the clipboard without ever showing the value', async () => {
+  const calls = vaultLockedUntilCode();
+  const { user, entries } = await neonEntries();
+  const token = within(await entries.findByRole('listitem', { name: 'API-ключ' }));
+
+  await user.click(token.getByRole('button', { name: 'Копіювати' }));
+  await enterCode(user, '123456');
+
+  expect(await token.findByText('Скопійовано')).toBeDefined();
+  expect(await navigator.clipboard.readText()).toBe(FAKE_VALUE);
+  expect(document.body.textContent).not.toContain(FAKE_VALUE);
+  expect(calls.at(-1)).toBe(`copy ${SERVICE_ENTRIES[3].id}`);
+  // A login is in the open: it has neither.
+  const login = within(entries.getByRole('listitem', { name: 'Акаунт' }));
+  expect(login.queryByRole('button', { name: 'Копіювати' })).toBeNull();
 });

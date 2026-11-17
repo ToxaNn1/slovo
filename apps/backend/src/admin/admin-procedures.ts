@@ -664,8 +664,11 @@ export function adminProcedures(
         admit(headers, errors, { writes, security: true }),
       {
         entries: serviceEntries,
-        ownerOf: async (headers, errors, { writes = false } = {}) =>
-          actorOf(await admit(headers, errors, { writes, security: true })),
+        ownerOf: async (headers, errors, { writes = false } = {}) => {
+          const { email, token } = await ownSession(headers, errors, { writes, security: true });
+          return { who: { kind: 'admin-user', email }, session: token };
+        },
+        signIn,
       },
       { book: serviceMoney, ownerWrite: securityWrite, usdRates },
       serviceUsage,
