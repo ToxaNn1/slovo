@@ -35,7 +35,7 @@ export type Alert =
       readonly failedTests: readonly string[];
     }
   | {
-      /** The backend's 5xx share of the last 15 minutes, in percent, above the threshold. */
+      /** The backend's 5xx share of the last hour, in percent, above the threshold. */
       readonly kind: 'api-errors';
       readonly percent: number;
       readonly threshold: number;
@@ -66,6 +66,12 @@ export type Alert =
       readonly service: string;
       readonly period: string;
       readonly usage: LimitUsage;
+    }
+  | {
+      /** The Recordings job stopped for an Edition: its last runs had Words and recorded none. */
+      readonly kind: 'recordings-stalled';
+      readonly editionId: string;
+      readonly runs: number;
     };
 
 /** Tells the owner of an Alert at once (Telegram in the backend). */

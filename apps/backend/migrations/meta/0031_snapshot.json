@@ -1,5 +1,5 @@
 {
-  "id": "e861fda0-ec8f-4509-88cc-34af5a15b4d1",
+  "id": "4095b0da-43f4-4ca4-8d52-d7cd924a2b30",
   "prevId": "e0f0bd09-0937-4f3a-847d-fe5fd2b61b6d",
   "version": "7",
   "dialect": "postgresql",
@@ -2345,6 +2345,43 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.recording_stalls": {
+      "name": "recording_stalls",
+      "schema": "",
+      "columns": {
+        "edition_id": {
+          "name": "edition_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "empty_runs": {
+          "name": "empty_runs",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deployment": {
+          "name": "deployment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_version": {
+          "name": "content_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.recovery_codes": {
       "name": "recovery_codes",
       "schema": "",
@@ -2388,198 +2425,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.service_entries": {
-      "name": "service_entries",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "service_id": {
-          "name": "service_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "label": {
-          "name": "label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "note": {
-          "name": "note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "open_value": {
-          "name": "open_value",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sealed_value": {
-          "name": "sealed_value",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "service_entries_service_id_idx": {
-          "name": "service_entries_service_id_idx",
-          "columns": [
-            {
-              "expression": "service_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "service_entries_service_id_services_id_fk": {
-          "name": "service_entries_service_id_services_id_fk",
-          "tableFrom": "service_entries",
-          "tableTo": "services",
-          "columnsFrom": [
-            "service_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "service_entries_type": {
-          "name": "service_entries_type",
-          "value": "\"service_entries\".\"type\" in ('login', 'link', 'password', 'token', 'recovery-codes')"
-        },
-        "service_entries_value": {
-          "name": "service_entries_value",
-          "value": "(\"service_entries\".\"type\" in ('login', 'link')) = (\"service_entries\".\"open_value\" is not null and \"service_entries\".\"sealed_value\" is null) and (\"service_entries\".\"open_value\" is null) <> (\"service_entries\".\"sealed_value\" is null)"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.services": {
-      "name": "services",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "plan": {
-          "name": "plan",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "monthly_price_usd_cents": {
-          "name": "monthly_price_usd_cents",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "billing_day": {
-          "name": "billing_day",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "limits": {
-          "name": "limits",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "x": {
-          "name": "x",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "y": {
-          "name": "y",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "links": {
-          "name": "links",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "services_name_unique": {
-          "name": "services_name_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "services_kind": {
-          "name": "services_kind",
-          "value": "\"services\".\"kind\" in ('railway', 'cron', 'metered')"
-        },
-        "services_price": {
-          "name": "services_price",
-          "value": "\"services\".\"monthly_price_usd_cents\" >= 0"
-        },
-        "services_billing_day": {
-          "name": "services_billing_day",
-          "value": "\"services\".\"billing_day\" between 1 and 31"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.sessions": {

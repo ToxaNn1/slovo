@@ -28,6 +28,7 @@ function cron(start: string) {
   const database = createDatabase(testDatabaseUrl(), silentLogger);
   let now = new Date(start);
   const numbers = new Map<SentryRead | SentryAlertRead, number>();
+  const periods = new Map<SentryRead | SentryAlertRead, { from: Date; to: Date }>();
   const runs: CiRun[] = [];
   const batches: OpenBatch[] = [];
   const sent: OwnerMessage[] = [];
@@ -72,7 +73,10 @@ function cron(start: string) {
       },
     },
     sentry: {
-      read: (read) => Promise.resolve({ ok: true, value: numbers.get(read) ?? null }),
+      read: (read, period) => {
+        periods.set(read, period);
+        return Promise.resolve({ ok: true, value: numbers.get(read) ?? null });
+      },
     },
     posthog,
     ciRuns: {
@@ -94,6 +98,7 @@ function cron(start: string) {
     batches,
     runs,
     sentry: (read: SentryRead | SentryAlertRead, value: number) => numbers.set(read, value),
+    periodOf: (read: SentryRead | SentryAlertRead) => periods.get(read),
     at: (time: string) => (now = new Date(time)),
     run: () => monitor.run(),
     failBatches: () => (batchesFail = true),
@@ -129,7 +134,8 @@ describe('the Cron service', () => {
 
     c.at('2026-11-10T07:00:00Z');
     await c.run();
-    c.at('2026-11-10T07:15:00Z');
+    // The Cron service runs hourly at :00 (.railway/railway.ts).
+    c.at('2026-11-10T08:00:00Z');
     await c.run();
     expect(c.sent.filter(({ kind }) => kind === 'digest')).toEqual([
       {
@@ -144,6 +150,25 @@ describe('the Cron service', () => {
           openRecords: 7,
         },
       },
+    ]);
+  });
+
+  it('reads the API errors of the hour before the run, and fires once an hour above 2 %', async () => {
+    const c = cron('2026-11-18T05:00:00Z');
+    c.sentry('backendErrorRate', 2.5);
+
+    await c.run();
+    expect(c.periodOf('backendErrorRate')).toEqual({
+      from: new Date('2026-11-18T04:00:00Z'),
+      to: new Date('2026-11-18T05:00:00Z'),
+    });
+    c.at('2026-11-18T05:30:00Z');
+    await c.run();
+    c.at('2026-11-18T06:00:00Z');
+    await c.run();
+    expect(c.alerts()).toEqual([
+      { kind: 'api-errors', percent: 2.5, threshold: 2 },
+      { kind: 'api-errors', percent: 2.5, threshold: 2 },
     ]);
   });
 

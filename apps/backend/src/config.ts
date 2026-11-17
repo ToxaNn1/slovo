@@ -175,6 +175,9 @@ const ServerVariablesSchema = z.object({
   // AUTH_SECRET. Unset, the Vault is off and no entry is written. Lost, the
   // sealed entries are lost: the owner keeps a copy outside Railway.
   VAULT_KEY: VaultKeySchema,
+  // The deployment Railway runs; a new one lets a stopped Recordings job try
+  // again (ADR 0169). Unset outside Railway.
+  RAILWAY_DEPLOYMENT_ID: emptyAsUnset(z.string().min(1).default('local')),
 });
 
 const R2_VARIABLES = [
@@ -387,6 +390,9 @@ export const RecordingsConfigSchema = ServerVariablesSchema.pick({
   R2_SECRET_ACCESS_KEY: true,
   RECORDINGS_PYTHON: true,
   RECORDINGS_MODEL_DIR: true,
+  RAILWAY_DEPLOYMENT_ID: true,
+  TELEGRAM_BOT_TOKEN: true,
+  TELEGRAM_CHAT_ID: true,
 })
   .superRefine(refineR2)
   .transform(({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, ...rest }) => ({

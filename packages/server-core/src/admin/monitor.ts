@@ -32,8 +32,9 @@ const DAY = 24 * HOUR;
 /** The digest goes out from 09:00 Kyiv, once a Kyiv day. */
 const DIGEST_MINUTES = 9 * 60;
 /**
- * The Services' usage is read in the first run of a UTC hour alone (the Cron
- * runs every 15 minutes): once an hour, as the backend keeps it (ADR 0164).
+ * The Services' usage is read in the first 15 minutes of a UTC hour alone (the
+ * Cron runs hourly at :00, ADR 0169): once an hour, as the backend keeps it
+ * (ADR 0164), even when a run is started by hand.
  */
 const USAGE_RUN_MINUTES = 15;
 
@@ -139,9 +140,10 @@ export function createMonitor({
               : [[{ kind: 'ci-red', runId, sha, failedTests }, `ci-red:${String(runId)}`]],
         ),
       'api-errors': async () => {
-        const errors = await sentryNumber('backendErrorRate', 15 * MINUTE, now);
+        // Over the hour since the last hourly run (ADR 0169).
+        const errors = await sentryNumber('backendErrorRate', HOUR, now);
         if (errors === null || errors <= t.apiErrors) return [];
-        const slot = Math.floor(now.getTime() / (15 * MINUTE));
+        const slot = Math.floor(now.getTime() / HOUR);
         return [
           [
             { kind: 'api-errors', percent: errors, threshold: t.apiErrors },
