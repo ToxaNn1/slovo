@@ -74,6 +74,41 @@ test('Аналітика says PostHog is down when its read fails', async () => 
   expect(await screen.findByText('PostHog недоступний')).toBeDefined();
 });
 
+test('Аналітика counts the readers, each number with the one line saying what it counts', async () => {
+  const requests: string[] = [];
+  server.events.on('request:start', ({ request }) => {
+    requests.push(decodeURIComponent(request.url));
+  });
+  const { section } = await openAnalytics();
+  const readers = within(await section.findByRole('list', { name: 'Читачі' }));
+
+  expect(readers.getAllByRole('listitem').map(({ textContent }) => textContent)).toEqual([
+    'Зареєстровані312Читачі з SLOVO ID. Фільтр видання на це число не діє: тут усі SLOVO ID.',
+    'Без реєстрації, щонайменшещонайменше 845Активні за останній день у PostHog мінус зареєстровані. Оцінка знизу: PostHog бачить лише тих, хто ділиться статистикою.',
+    'Вимкнули статистику27Скільки разів «Ділитися анонімною статистикою» вимкнули за період. Кожне вимкнення окремо, а не скільки читачів мають її вимкненою зараз.',
+  ]);
+  expect(requests.some((url) => /\/admin\/editions\/all\/reader-counts\?.*from=/.test(url))).toBe(
+    true,
+  );
+  server.events.removeAllListeners();
+});
+
+test('the unregistered estimate says PostHog is down, and the other counts stay', async () => {
+  server.use(
+    http.get('*/admin/editions/:editionId/reader-counts', () =>
+      HttpResponse.json({ registered: 312, unregisteredAtLeast: null, statisticsOff: 27 }),
+    ),
+  );
+  const { section } = await openAnalytics();
+  const readers = within(await section.findByRole('list', { name: 'Читачі' }));
+  const [registered, unregistered, switchOffs] = readers.getAllByRole('listitem');
+
+  expect(registered?.textContent).toContain('312');
+  expect(unregistered?.textContent).toContain('PostHog недоступний');
+  expect(unregistered?.textContent).not.toContain('щонайменше 0');
+  expect(switchOffs?.textContent).toContain('27');
+});
+
 test('a period reads its days up to today, in Kyiv', () => {
   const now = new Date('2026-11-08T23:30:00.000Z');
   expect(periodDays('7d', now)).toEqual({ from: '2026-11-03', to: '2026-11-09' });
