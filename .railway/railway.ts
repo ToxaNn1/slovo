@@ -49,6 +49,9 @@ export default defineRailway(() => {
       R2_SECRET_ACCESS_KEY: preserve(),
       MEDIA_BASE: preserve(),
       TRUSTED_PROXY_HOPS: preserve(),
+      NEON_API_KEY: preserve(),
+      NEON_PROJECT_ID: preserve(),
+      CLOUDFLARE_API_TOKEN: preserve(),
     },
   });
 
