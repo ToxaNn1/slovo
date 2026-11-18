@@ -16,7 +16,6 @@ const everything: Shown = {
   tabs: ['home', 'game', 'saved', 'settings'],
   gameReview: true,
   finishPoster: true,
-  survivalOneLife: true,
   gameRoundMascot: true,
   gameQuestionOnGround: true,
   gameOptionStamp: true,
@@ -218,10 +217,6 @@ describe('what the reader is shown', () => {
     [
       'the old result screen with the end poster off',
       { off: ['finishPoster'], shown: { finishPoster: false } },
-    ],
-    [
-      'the spec #1674 Game with survivalOneLife off',
-      { off: ['survivalOneLife'], shown: { survivalOneLife: false } },
     ],
     [
       'the spec #1674 Game with gameRoundMascot off',

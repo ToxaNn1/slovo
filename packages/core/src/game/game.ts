@@ -47,12 +47,9 @@ export type { GridCell, GridCellState } from './pairs-form';
 /** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own (ADR 0137). */
 export const GAME_LIVES = 3;
 
-/** The Lives a Game in the mode starts with, read at its start; none in a mode without Lives. */
-function livesOf({ lives }: GameMode, edition: GameEdition): number | undefined {
-  if (lives === 'none') return undefined;
-  if (typeof lives === 'function') return lives(edition);
-  if (lives !== undefined) return lives;
-  return GAME_LIVES;
+/** The Lives a Game in the mode starts with; none in a mode without Lives. */
+function livesOf({ lives = GAME_LIVES }: GameMode): number | undefined {
+  return lives === 'none' ? undefined : lives;
 }
 
 /** The time limit of a Game in the mode, read at its start; none in a mode without one. */
@@ -821,7 +818,7 @@ export async function openGame({
       'rounds' in plan
         ? createGameInPlay({
             mode,
-            lives: livesOf(mode, edition),
+            lives: livesOf(mode),
             rounds: plan.rounds,
             planRounds,
             eligible,

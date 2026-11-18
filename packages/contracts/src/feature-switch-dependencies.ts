@@ -68,7 +68,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   finishPoster: ['game'],
   // The board «slogo game last» parts of a Game (spec #1880).
   gameAnswerBanner: ['game'],
-  survivalOneLife: ['gameSurvival'],
   gameRoundMascot: ['game'],
   gameQuestionOnGround: ['game'],
   gameOptionStamp: ['game'],

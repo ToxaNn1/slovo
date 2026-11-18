@@ -302,10 +302,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Смужка відповіді',
     line: 'Після відповіді смужка каже, правильно чи ні, і гра йде далі сама.',
   },
-  survivalOneLife: {
-    name: 'Одне життя у «Виживанні»',
-    line: 'У «Виживанні» лише одне життя замість трьох.',
-  },
   gameRoundMascot: {
     name: 'Талісман у грі',
     line: 'Біля запитання гри стоїть талісман, який реагує на відповідь.',

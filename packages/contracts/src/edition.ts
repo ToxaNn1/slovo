@@ -452,7 +452,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   gameAnswerBanner: FeatureSwitchStateSchema,
   /** Three Lives: a Game starts with 3 Lives by default (ADR 0137); off, 5. Off while `game` is. */
   /** One Life in «Виживання» (ADR 0137); off, 3. Off while `gameSurvival` is. */
-  survivalOneLife: FeatureSwitchStateSchema,
   /** 20 seconds in «На час», then straight to «ФІНІШ» with no time-up poster (ADR 0137); off, 60 seconds and «Час!». Off while `gameTimed` is. */
   /** The Mascot beside the question of a Round, in its waiting, glad, wincing and sad states (ADR 0139); off while `game` is. */
   gameRoundMascot: FeatureSwitchStateSchema,

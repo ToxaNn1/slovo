@@ -116,11 +116,10 @@ export interface GameMode {
    */
   readonly alsoAsks?: readonly AskableKind[];
   /**
-   * The Lives a Game in the mode starts with, or what reads them from the
-   * Edition at the start of a Game: the default Lives (`gameLives`) when
-   * left out, or none, so that a mistake never ends the Game.
+   * The Lives a Game in the mode starts with: the default Lives (`GAME_LIVES`)
+   * when left out, or none, so that a mistake never ends the Game.
    */
-  readonly lives?: number | 'none' | ((edition: GameEdition) => number);
+  readonly lives?: number | 'none';
   /**
    * How many Rounds a Game in the mode has, which it also needs eligible
    * Entries for: `GAME_ROUNDS` when left out, or none, so that the Game goes
