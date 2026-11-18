@@ -18,6 +18,7 @@ import {
   silentLogger,
   testApp,
   passTime,
+  signedInAdmin,
   testDatabaseUrl,
 } from '../test-support';
 
@@ -534,6 +535,31 @@ describe("a Curated Collection's publish date", () => {
       appearedAt: '2026-11-20T22:00:00.000Z',
     });
   });
+  it('rolls a moved date back with the appearance of the date it restores', async () => {
+    const backend = await collectionBackend();
+    const { agent, save, record } = backend;
+    vi.setSystemTime(new Date('2026-11-18T10:00:00.000Z'));
+    const { id } = await save('2026-12-01');
+    const later = await agent.admin.content.openBatch({ editionId: 'uk' });
+    const { fields, recordVersion } = await record(id);
+    await agent.admin.content.edit({
+      editionId: 'uk',
+      kind: 'curatedCollection',
+      id,
+      batchId: later.batchId,
+      recordVersion,
+      fields: { ...fields, publishedOn: '2026-11-20' },
+    });
+    const owner = (await signedInAdmin(backend, 'owner')).client;
+
+    await owner.admin.contentQueue.rollback({ batchId: later.batchId, reason: 'Не та дата' });
+
+    expect(await record(id)).toMatchObject({
+      fields: { publishedOn: '2026-12-01' },
+      appearedAt: '2026-11-30T22:00:00.000Z',
+    });
+  });
+
   it('keeps the pictogram a save names, and refuses one that names no Category', async () => {
     const { agent, batchId, client, save, record } = await collectionBackend();
     const { id } = await save();
