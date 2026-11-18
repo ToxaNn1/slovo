@@ -90,7 +90,6 @@ describe('the remote Feature Switches', () => {
     await switches.ask();
 
     expect(switches.edition.isFeatureEnabled('search')).toBe(false);
-    expect(switches.edition.isFeatureEnabled('widgetHint')).toBe(true);
     expect(switches.edition.isFeatureEnabled('enoughForToday')).toBe(true);
   });
 

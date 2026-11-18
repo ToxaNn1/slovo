@@ -8904,14 +8904,6 @@
                           ],
                           "type": "string"
                         },
-                        "widgetHint": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "seasonalDecor": {
                           "enum": [
                             "on",
@@ -9745,7 +9737,6 @@
                         "activeDaysCalendar",
                         "politePause",
                         "firstWeek",
-                        "widgetHint",
                         "seasonalDecor",
                         "stressAnimation",
                         "illustrations",
@@ -10811,14 +10802,6 @@
                           ],
                           "type": "string"
                         },
-                        "widgetHint": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "seasonalDecor": {
                           "enum": [
                             "on",
@@ -11652,7 +11635,6 @@
                         "activeDaysCalendar",
                         "politePause",
                         "firstWeek",
-                        "widgetHint",
                         "seasonalDecor",
                         "stressAnimation",
                         "illustrations",
@@ -12642,14 +12624,6 @@
                           ],
                           "type": "string"
                         },
-                        "widgetHint": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "seasonalDecor": {
                           "enum": [
                             "on",
@@ -13483,7 +13457,6 @@
                         "activeDaysCalendar",
                         "politePause",
                         "firstWeek",
-                        "widgetHint",
                         "seasonalDecor",
                         "stressAnimation",
                         "illustrations",

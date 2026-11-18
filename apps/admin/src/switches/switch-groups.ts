@@ -68,7 +68,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   activeDaysCalendar: 'progress',
   politePause: 'notifications',
   firstWeek: 'onboarding',
-  widgetHint: 'widgets',
   seasonalDecor: 'look',
   stressAnimation: 'content',
   illustrations: 'content',

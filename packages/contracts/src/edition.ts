@@ -349,8 +349,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   politePause: FeatureSwitchStateSchema,
   /** The first week: one intro Feed Notice on each of a new reader's first 7 Active Days (ADR 0054). */
   firstWeek: FeatureSwitchStateSchema,
-  /** The widget hint: the sheet after the first finished Game and the guide to adding the widget (ADR 0054). */
-  widgetHint: FeatureSwitchStateSchema,
   /** «Сезонний декор»: the Decor motif of the local date's Holiday or Season, and its setting (ADR 0055). */
   seasonalDecor: FeatureSwitchStateSchema,
   /** The falling Stress: the Stress mark of a Word card's Lemma falls onto its vowel (ADR 0055). */

@@ -5,8 +5,10 @@ import { declareRecord, declareRecords } from '../user-state/user-state-record';
 /** The records of the Game. */
 export const gameRecords = {
   /**
-   * That the widget hint was on screen on this device, once ever (ADR 0054).
-   * The key keeps its first name, so a device that showed it shows it no more.
+   * Reserved (ADR 0013): that the widget hint of ADR 0054 was on screen on
+   * this device. The widget hint is gone (ADR 0176) and nothing reads or writes
+   * the record; it stays declared so user state that holds it opens as before
+   * and the key is never given to another record. Device-only, with no Sync.
    */
   widgetHintShown: declareRecord('game.widgetHintOffered', z.literal(true), {
     sync: 'device-only',

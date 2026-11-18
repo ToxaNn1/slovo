@@ -61,12 +61,10 @@ export const WidgetStringsSchema = z.strictObject({
   backgroundParchment: TextSchema,
   /** The deep blue background of the Edition's widget palette. */
   backgroundBlue: TextSchema,
-  /** The widget guide that Settings › «Віджети» opens and the widget hint shows. */
+  /** The widget guide that Settings › «Віджети» opens. */
   guide: z.strictObject({
-    /** The title of the screen and of the widget hint's sheet. */
+    /** The title of the screen. */
     title: TextSchema,
-    /** The button that closes the widget hint's sheet. */
-    close: TextSchema,
     /** The steps, in the order the reader does them. */
     steps: z.tuple([GuideStepSchema, GuideStepSchema, GuideStepSchema]),
     /** The sizes the widget comes in, as the widget gallery lists them. */

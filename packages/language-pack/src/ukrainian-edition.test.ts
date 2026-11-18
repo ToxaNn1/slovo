@@ -66,7 +66,6 @@ describe('the UA Edition', () => {
     expect(edition.isFeatureEnabled('dailyGoal')).toBe(true);
     expect(edition.isFeatureEnabled('politePause')).toBe(true);
     expect(edition.isFeatureEnabled('firstWeek')).toBe(true);
-    expect(edition.isFeatureEnabled('widgetHint')).toBe(true);
     expect(edition.isFeatureEnabled('seasonalDecor')).toBe(false);
     expect(edition.isFeatureEnabled('stressAnimation')).toBe(true);
     expect(edition.isFeatureEnabled('illustrations')).toBe(true);

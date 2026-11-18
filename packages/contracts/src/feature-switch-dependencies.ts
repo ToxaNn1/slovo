@@ -134,8 +134,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   communityWord: ['communityCounters'],
   // Sync runs for the reader's Account.
   sync: ['account'],
-  // The hint after a Game points to the widget.
-  widgetHint: ['widget'],
   // The reader's choice of voice only changes what Pronunciation plays (ADR 0083).
   narratorVoice: ['pronunciation'],
 };
