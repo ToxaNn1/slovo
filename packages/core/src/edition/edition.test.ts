@@ -880,6 +880,15 @@ describe('loadEdition', () => {
     expect(dashboardMoods).toEqual([moods[3], moods[4], moods[1], moods[0], moods[2]]);
   });
 
+  it('resolves three Dashboard moods, the Edition keeping the rest among its moods', () => {
+    const { moods, dashboardMoods } = loadEdition({
+      ...validConfig,
+      dashboardMoods: ['energetic', 'thoughtful', 'calm'],
+    });
+    expect(dashboardMoods.map(({ id }) => id)).toEqual(['energetic', 'thoughtful', 'calm']);
+    expect(moods.map(({ id }) => id)).toEqual(expect.arrayContaining(['joyful', 'sad']));
+  });
+
   it('accepts an Edition whose Categories require no history', () => {
     // Code outside the Core reads this field from the Edition config; the loaded Edition does not carry it.
     expect(loadEdition({ ...validConfig, categoriesRequiringHistory: [] }).id).toBe(validConfig.id);
@@ -1401,11 +1410,7 @@ describe('loadEdition', () => {
     ],
     ['no `dashboardMoods`', { dashboardMoods: undefined }, 'dashboardMoods'],
     ['no Dashboard moods', { moods: [], dashboardMoods: [] }, 'dashboardMoods'],
-    [
-      'four Dashboard moods',
-      { dashboardMoods: ['joyful', 'calm', 'sad', 'energetic'] },
-      'dashboardMoods',
-    ],
+    ['two Dashboard moods', { dashboardMoods: ['joyful', 'calm'] }, 'dashboardMoods'],
     [
       'six Dashboard moods',
       { dashboardMoods: ['joyful', 'calm', 'sad', 'energetic', 'thoughtful', 'sleepy'] },

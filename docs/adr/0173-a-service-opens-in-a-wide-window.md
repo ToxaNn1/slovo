@@ -8,6 +8,6 @@ Owner decision of 2026-11-17, after the first look at «Сервіси» in prod
 
 **Plain words only.** Nothing in the window is raw JSON or a field name: amounts carry their units (МБ, ГБ, CU-год, $), times read «17 листопада, 19:40», and a limit at 90 % or more turns the bar and its share yellow.
 
-**Railway's spend is shown by part.** The Railway reading gains `spendParts`, this month's USD of each part Railway bills (`cpu`, `memory`, `egress`, `disk`, `RailwaySpendPartSchema`), read from the same usage query; «Гроші» lists them as «Процесор», «Пам'ять», «Вихідний трафік», «Диск» under the month's total.
+**Railway's spend is shown by part.** The Railway reading gains `spendParts`, this month's USD of each part Railway bills (`cpu`, `memory`, `egress`, `disk`, `RailwaySpendPartSchema`), read from the same usage query; «Гроші» lists them as «Процесор», «Пам’ять», «Вихідний трафік», «Диск» under the month's total.
 
 **It moves, unless the reader asks it not to.** The window fades and grows in over a fading scrim, its columns rise one after another and the bars fill from the left; under `prefers-reduced-motion: reduce` none of it animates.

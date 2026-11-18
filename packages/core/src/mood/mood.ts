@@ -68,7 +68,7 @@ export async function openMoodCheckIns({
   analytics,
   rarityRange,
 }: {
-  edition: Pick<Edition, 'isFeatureEnabled' | 'dashboardMoods'>;
+  edition: Pick<Edition, 'isFeatureEnabled' | 'moods' | 'dashboardMoods'>;
   userState: Pick<UserState, 'read' | 'list' | 'write'>;
   clock: Clock;
   dayTurned: { subscribe(listener: (day: LocalDate) => unknown): unknown };
@@ -79,7 +79,10 @@ export async function openMoodCheckIns({
   const subscribers = createSubscribers();
   const on = edition.isFeatureEnabled('mood');
   const moods = edition.dashboardMoods;
-  const moodOf = (id: string) => moods.find((mood) => mood.id === id);
+  /** A Mood the Dashboard offers, the only kind a reader chooses. */
+  const offeredMoodOf = (id: string) => moods.find((mood) => mood.id === id);
+  /** Any Mood of the Edition: a saved one still reads once the Dashboard hides it (ADR 0192). */
+  const moodOf = (id: string) => edition.moods.find((mood) => mood.id === id);
 
   async function checkInOn(date: string): Promise<MoodCheckIn> {
     if (!on) return { state: 'asking' };
@@ -138,7 +141,7 @@ export async function openMoodCheckIns({
     },
     moods,
     async choose(moodId) {
-      if (moodOf(moodId) === undefined) return;
+      if (offeredMoodOf(moodId) === undefined) return;
       await record(moodId);
       await analytics.track('moodChosen', { mood: moodId }).catch(() => undefined);
     },

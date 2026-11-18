@@ -69,7 +69,7 @@ export function FieldRow({
       control.type !== 'publish-date'
         ? undefined
         : fixed
-          ? "Добірка вже з'явилася: дату не змінити"
+          ? 'Добірка вже з’явилася: дату не змінити'
           : 'Порожньо — одразу';
     const described = [hint === undefined ? undefined : `${id}-hint`, describedBy]
       .filter((part) => part !== undefined)

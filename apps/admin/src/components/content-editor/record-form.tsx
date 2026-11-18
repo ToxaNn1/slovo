@@ -279,7 +279,7 @@ export function RecordForm({
         ))}
         {record.at === 'edit' && (
           <div className="flex flex-col gap-1 text-sm">
-            <label htmlFor="edit-reason">Причина (необов&apos;язково)</label>
+            <label htmlFor="edit-reason">Причина (необов’язково)</label>
             <input
               id="edit-reason"
               className="rounded-lg border border-border bg-background px-3 py-2"

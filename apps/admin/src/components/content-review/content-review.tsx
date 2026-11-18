@@ -354,7 +354,7 @@ export function ContentReview({ editionId }: { readonly editionId: string }) {
               }}
             >
               <label htmlFor="review-retire-reason" className="text-[13px]">
-                Причина (необов&apos;язково)
+                Причина (необов’язково)
               </label>
               <input
                 id="review-retire-reason"

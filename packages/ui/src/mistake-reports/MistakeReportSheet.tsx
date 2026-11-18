@@ -45,7 +45,7 @@ export interface MistakeReportSheetDraft {
 
 /**
  * The sheet of «Повідомити про помилку» (ADR 0056): the type of the mistake,
- * one of four and required; «Коментар (необов'язково)» with a counter that
+ * one of four and required; «Коментар (необов’язково)» with a counter that
  * stops at 500 characters; and «Надіслати», disabled until a type is chosen,
  * and for «Інше» until the comment says something. «Надіслати» hands the
  * draft to `onSend` and the sheet starts afresh; a tap on the scrim, a drag on

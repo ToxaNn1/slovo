@@ -7,7 +7,7 @@ import {
   type Example,
   type WordCardModel,
 } from '@slovo/core';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WholeLinesText } from '../primitives/WholeLines';
 import Svg, { Path } from 'react-native-svg';
@@ -18,10 +18,8 @@ import { SectionLabel } from '../primitives/headings';
 import { LabelChip } from '../primitives/LabelChip';
 import { Wedge } from '../primitives/Wedge';
 import {
-  blockGap,
   entryCardFrame,
   illustrationHeight,
-  minTouchTarget,
   space,
   typeStyle,
   wedges,
@@ -34,7 +32,6 @@ import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { RevealDetail, useFlyingText } from './reveal';
 import { capitalised } from './capitalised';
-import { NumberedDefinitions } from './NumberedDefinitions';
 import { CategoryChip } from './CategoryChip';
 
 /**
@@ -163,81 +160,6 @@ export function WordHeadline({
       </View>
       {tabbed ? null : pronunciation}
     </View>
-  );
-}
-
-/**
- * The Word's meaning under its headline: the Illustration, the primary
- * Definition, the first Example, the Word History, Synonyms and antonyms,
- * the Category chip, the details behind "more", the Synonym Row and the
- * linked Corrections, each only when the Core put it in the card.
- */
-export function WordSections({
-  card,
-  compact,
-  onOpenCorrection,
-  onOpenSynonymRow,
-  onHistoryShown,
-}: {
-  card: WordCardModel;
-  compact: boolean;
-  onOpenCorrection: ((correctionId: string) => void) | undefined;
-  onOpenSynonymRow: ((synonymRowId: string) => void) | undefined;
-  onHistoryShown: (() => void) | undefined;
-}) {
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const sizes = useWordTextSizes();
-  const edition = useEdition();
-  const { voice } = edition;
-  const strings = edition.strings.wordCard;
-  const { categoryName } = card;
-  const categoryChip =
-    categoryName === undefined ? null : <CategoryChip testID="word-category" name={categoryName} />;
-  const relations = [
-    { key: 'synonyms', words: card.synonyms, one: strings.synonym, many: strings.synonyms },
-    { key: 'antonyms', words: card.antonyms, one: strings.antonym, many: strings.antonyms },
-  ].filter(({ words }) => words.length > 0);
-  return (
-    <>
-      <WordIllustration card={card} />
-      <WordDefinition card={card} />
-      {card.example === undefined ? null : (
-        <ExampleText testID="word-example" example={card.example} size={sizes.example} />
-      )}
-      {card.history === undefined ? null : (
-        <WordHistory history={card.history} onShown={onHistoryShown} />
-      )}
-      {relations.length === 0 && !compact ? null : (
-        <View style={compact ? styles.compactRow : styles.relations}>
-          {relations.length === 0 ? null : (
-            <View style={[styles.relations, compact && styles.compactRelations]}>
-              {relations.map(({ key, words, one, many }) => (
-                <Text
-                  key={key}
-                  testID={`word-${key}`}
-                  accessibilityLabel={withoutStress(
-                    `${words.length === 1 ? one : many} ${words.join(', ')}`,
-                  )}
-                  {...voice}
-                  style={[typeStyle('sub', tokens), { color: colors.ink }]}
-                >
-                  <Text style={{ color: colors.muted }}>{words.length === 1 ? one : many}</Text>{' '}
-                  {words.map((word) => capitalised(word, voice.accessibilityLanguage)).join(', ')}
-                </Text>
-              ))}
-            </View>
-          )}
-          {compact ? categoryChip : null}
-        </View>
-      )}
-      {compact ? null : categoryChip}
-      {card.details === undefined ? null : <Details details={card.details} />}
-      {card.synonymRow === undefined ? null : (
-        <SynonymRowLine synonymRow={card.synonymRow} onOpen={onOpenSynonymRow} />
-      )}
-      <OftenSaid card={card} onOpenCorrection={onOpenCorrection} />
-    </>
   );
 }
 
@@ -479,71 +401,6 @@ export function ExampleText({
   );
 }
 
-/** "More": the etymology, extra Definitions and further Examples, opened on demand. */
-function Details({ details }: { details: NonNullable<WordCardModel['details']> }) {
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const { strings, voice } = useEdition();
-  const sizes = useWordTextSizes();
-  const [open, setOpen] = useState(false);
-  const bodyText = [typeStyle('example', tokens), sizes.example, { color: colors.ink }];
-  return (
-    <View>
-      <Pressable
-        testID="word-more"
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        {...voice}
-        hitSlop={{ left: space[2], right: space[2] }}
-        onPress={() => {
-          setOpen((current) => !current);
-        }}
-        style={styles.moreButton}
-      >
-        <Text style={[typeStyle('textLink', tokens), { color: colors.accentText }]}>
-          {strings.wordCard.more}
-        </Text>
-        <Svg
-          width={wordCardControls.moreChevron}
-          height={wordCardControls.moreChevron}
-          viewBox="0 0 24 24"
-          fill="none"
-          style={open ? styles.chevronOpen : undefined}
-        >
-          <Path d="M6 9l6 6 6-6" stroke={colors.accent} strokeWidth={2.2} />
-        </Svg>
-      </Pressable>
-      {open ? (
-        <View testID="word-details" style={styles.details}>
-          {details.extraDefinitions.length === 0 ? null : (
-            <DetailSection title={strings.wordCard.extraDefinitions}>
-              <NumberedDefinitions definitions={details.extraDefinitions} style={bodyText} />
-            </DetailSection>
-          )}
-          {details.examples.length === 0 ? null : (
-            <DetailSection title={strings.wordCard.moreExamples}>
-              {details.examples.map((example, index) => (
-                <ExampleText key={index} example={example} size={sizes.example} />
-              ))}
-            </DetailSection>
-          )}
-          {details.etymology === undefined ? null : (
-            <DetailSection title={strings.wordCard.etymology}>
-              <Text
-                accessibilityLabel={withoutStress(details.etymology)}
-                {...voice}
-                style={[typeStyle('sectionText', tokens), { color: colors.ink }]}
-              >
-                {capitalised(details.etymology, voice.accessibilityLanguage)}
-              </Text>
-            </DetailSection>
-          )}
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
 /** A titled section of a card, such as «Етимологія». */
 export function DetailSection({
   title,
@@ -573,28 +430,7 @@ const styles = StyleSheet.create({
   grammarLine: { flex: 1, minWidth: 0 },
   italic: { fontStyle: 'italic' },
   author: { marginTop: space[1] },
-  relations: { gap: space[1] },
   synonymRow: { alignSelf: 'flex-start' },
-  compactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space[3],
-  },
-  // On the SE the relations share a row with the Category chip, which keeps its width.
-  compactRelations: { flex: 1, minWidth: 0 },
-  // A full touch target that looks no taller than its label.
-  moreButton: {
-    alignSelf: 'flex-start',
-    minHeight: minTouchTarget,
-    marginVertical: -space[3],
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: wordCardControls.moreGap,
-  },
-  chevronOpen: { transform: [{ rotate: '180deg' }] },
-  // The details keep the card's gap between blocks.
-  details: { gap: blockGap, marginTop: space[4] },
   detailSection: { gap: space[2] },
   oftenSaid: {
     flexDirection: 'row',

@@ -23,8 +23,9 @@ interface WordCardSynonymRow {
 }
 
 /**
- * What "more" opens on a Word card, present when at least one part is: an
- * etymology, an extra Definition or an extra Example. A list may be empty.
+ * A Word's details beyond its primary Definition and first Example, which
+ * its card's tabs show, present when at least one part is: an etymology, an
+ * extra Definition or an extra Example. A list may be empty.
  */
 interface WordCardDetails {
   readonly etymology: string | undefined;
@@ -130,7 +131,7 @@ async function linkedSynonymRow(
   return { synonymRowId, dominant };
 }
 
-/** What "more" opens, or nothing when the card already shows all the Word has. */
+/** The Word's details, or nothing when the card already shows all the Word has. */
 function detailsOf({ etymology, extraDefinitions, examples }: Word): WordCardDetails | undefined {
   const moreExamples = examples.slice(1);
   if (etymology === undefined && extraDefinitions.length === 0 && moreExamples.length === 0) {

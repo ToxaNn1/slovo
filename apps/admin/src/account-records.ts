@@ -151,6 +151,14 @@ const TEXT_SIZES: Readonly<Record<TextSize, string>> = {
   largest: 'Найбільший',
 };
 
+const OldFontSize = z.enum(['S', 'M', 'L', 'XL']);
+const OLD_FONT_SIZES: Readonly<Record<z.infer<typeof OldFontSize>, string>> = {
+  S: 'S',
+  M: 'M',
+  L: 'L',
+  XL: 'XL',
+};
+
 /** A setting's value read as one of its choices, `undefined` when it is none of them. */
 const choiceOf =
   <T extends string>(schema: z.ZodType<T>, labels: Readonly<Record<T, string>>) =>
@@ -173,6 +181,8 @@ function settingsOf(voiceName: (id: string) => string) {
   > = {
     theme: ['Тема', choiceOf(ThemeSchema, THEMES)],
     textSize: ['Шрифт і розмір', choiceOf(TextSizeSchema, TEXT_SIZES)],
+    // The S…XL scale before the text size followed the system (ADR 0134), still kept (ADR 0013).
+    fontSize: ['Старий розмір шрифту', choiceOf(OldFontSize, OLD_FONT_SIZES)],
     hideStreak: ['Без лічильників', toggle],
     selfCheck: ['Перевір себе', toggle],
     seasonalDecor: ['Сезонний декор', toggle],

@@ -136,6 +136,8 @@ describe('the onboarding', () => {
       throw new Error('No first Word');
     const firstWord = state.step;
     expect(screen.getAllByText(firstWord.word.primaryDefinition).length).toBeGreaterThan(0);
+    // The sample card is the Feed's tabbed card in its fixed frame (ADR 0091).
+    expect(screen.getByTestId('word-tab-panel')).toBeTruthy();
 
     await press('onboarding-next');
     expect(screen.getByText(strings.playStep.title)).toBeTruthy();

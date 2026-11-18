@@ -48,9 +48,12 @@ async function run({
   records = new Map<string, string>(),
   clock = fakeClock('2026-11-04T09:00:00+02:00').clock,
   on = ['wordOfTheDay', 'mood', 'analytics'],
+  dashboardMoods = MOODS,
   analyticsFails = false,
 }: {
   records?: Map<string, string>;
+  /** The moods the Dashboard offers, among all of `MOODS`. */
+  dashboardMoods?: readonly Mood[];
   clock?: Clock;
   on?: FeatureSwitch[];
   /** Whether the Analytics port throws at each Mood event. */
@@ -62,7 +65,7 @@ async function run({
     edition: testEdition({
       isFeatureEnabled: (feature) => on.includes(feature),
       moods: MOODS,
-      dashboardMoods: MOODS,
+      dashboardMoods,
       userSettingDefaults: { mix: { kinds: { correction: false } } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
@@ -237,6 +240,29 @@ describe('The Mood check-in', () => {
     const { app } = await run({ records });
 
     expect(app.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'energetic' } });
+  });
+
+  it('reads a saved Mood the Dashboard no longer offers as the choice of the day, and counts it', async () => {
+    const records = new Map([
+      ['mood.2026-11-03', JSON.stringify({ date: '2026-11-03', choice: 'joyful' })],
+      ['mood.2026-11-04', JSON.stringify({ date: '2026-11-04', choice: 'joyful' })],
+    ]);
+
+    const { app } = await run({ records, dashboardMoods: MOODS.slice(0, 3) });
+
+    expect(app.mood.moods.map(({ id }) => id)).toEqual(['energetic', 'thoughtful', 'calm']);
+    expect(app.mood.today).toEqual({ state: 'chosen', mood: MOODS[3] });
+    expect(moodBlock(app)).toMatchObject({ check: { state: 'chosen', mood: { id: 'joyful' } } });
+    expect(await app.mood.daysByMood()).toEqual(new Map([['joyful', 2]]));
+  });
+
+  it('ignores a choice of a Mood the Edition has but the Dashboard hides', async () => {
+    const { app, events } = await run({ dashboardMoods: MOODS.slice(0, 3) });
+
+    await app.mood.choose('joyful');
+
+    expect(app.mood.today).toEqual({ state: 'asking' });
+    expect(events).toEqual([]);
   });
 
   it('counts the days per mood for the statistics, skipped days for none', async () => {

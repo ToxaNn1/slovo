@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 
 import {
   AppConfigSchema,
@@ -2182,4 +2182,26 @@ describe('the Badge texts', () => {
       },
     ]);
   });
+});
+
+// Р27: a Ukrainian apostrophe is always the typographic «’» (U+2019). The
+// content snapshot is the content database's and is checked by its own rules.
+describe('Ukrainian apostrophe', () => {
+  const ukDir = join(EDITIONS_DIR, 'uk');
+  const textFiles = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) return textFiles(path);
+      return /\.(json|md)$/.test(entry.name) && entry.name !== 'seed-snapshot.json' ? [path] : [];
+    });
+
+  it.each(textFiles(ukDir).map((path) => [relative(ukDir, path), path]))(
+    'uk/%s has no straight or modifier apostrophe between Cyrillic letters',
+    (_name, path) => {
+      const wrong = readFileSync(path, 'utf8').match(
+        /\p{Script=Cyrillic}['ʼ]\p{Script=Cyrillic}/gu,
+      );
+      expect(wrong).toBeNull();
+    },
+  );
 });

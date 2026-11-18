@@ -207,6 +207,7 @@ test('the Account page names every setting and its value in Ukrainian, and one i
     { key: 'settings.readerName', value: 'Оля' },
     { key: 'settings.theme2', value: 'dark' },
     { key: 'settings.selfCheck', value: 'yes' },
+    { key: 'settings.fontSize', value: 'XXL' },
   ]);
   const page = await openFromList();
 
@@ -216,7 +217,7 @@ test('the Account page names every setting and its value in Ukrainian, and one i
   expect(linesOf(page, 'Налаштування')).toEqual([
     'Тема: Як у системі',
     'Шрифт і розмір: Більший',
-    'fontSize: "L"',
+    'Старий розмір шрифту: L',
     'Без лічильників: увімкнено',
     'Перевір себе: вимкнено',
     'Сезонний декор: увімкнено',
@@ -225,6 +226,7 @@ test('the Account page names every setting and its value in Ukrainian, and one i
     'Ім’я: Оля',
     'theme2: "dark"',
     'selfCheck: "yes"',
+    'fontSize: "XXL"',
   ]);
 });
 

@@ -45,7 +45,7 @@ export function EntryDetails({
   slots,
   sourceTab = false,
   tipExceptions = false,
-}: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont' | 'tabs'> & {
+}: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont'> & {
   /** The name of the screen the back tile returns to, which VoiceOver reads. */
   back: string;
   onBack: () => void;
@@ -157,7 +157,6 @@ function OtherKindBody({
     lemmaSize,
     concealed: false,
     corner: undefined,
-    tabs: true,
     sourceTab,
     headless: true,
   };

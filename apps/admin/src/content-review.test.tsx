@@ -130,7 +130,7 @@ test('«Ні» retires the record with the reason typed, or with none, and shows
   await card();
 
   await user.click(screen.getByRole('button', { name: /Ні/ }));
-  await user.type(screen.getByLabelText("Причина (необов'язково)"), 'Не рідкісне');
+  await user.type(screen.getByLabelText('Причина (необов’язково)'), 'Не рідкісне');
   await user.click(screen.getByRole('button', { name: 'Вивести з ужитку' }));
   expect(await within(await card()).findByText('жупан')).toBeTruthy();
 
