@@ -26,6 +26,8 @@ export interface Option {
  */
 export type FieldControl =
   | { readonly type: 'text' }
+  /** A Curated Collection's publish date: empty means «одразу», fixed once the collection appeared. */
+  | { readonly type: 'publish-date' }
   | { readonly type: 'long-text' }
   | { readonly type: 'number' }
   | { readonly type: 'choice'; readonly options: readonly Option[] }
@@ -279,7 +281,7 @@ export const CONTENT_KINDS: readonly KindEditor[] = [
     fields: [
       field('name', 'Назва', TEXT),
       field('description', 'Опис', LONG_TEXT),
-      field('publishedOn', 'Дата публікації', TEXT),
+      field('publishedOn', 'Дата публікації', { type: 'publish-date' }),
       field('entryIds', 'Записи добірки', TEXTS),
     ],
   },

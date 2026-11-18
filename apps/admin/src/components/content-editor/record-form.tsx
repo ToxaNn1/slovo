@@ -61,12 +61,15 @@ export function RecordForm({
   editor,
   fields,
   record,
+  appeared = false,
   onWritten,
 }: {
   readonly editionId: string;
   readonly editor: KindEditor;
   readonly fields: Fields;
   readonly record: FormRecord;
+  /** Whether the Curated Collection appeared on the rail, so its publish date stays. */
+  readonly appeared?: boolean;
   readonly onWritten: (written: Written) => void;
 }) {
   const [values, setValues] = useState<Readonly<Record<string, FormValue>>>(() =>
@@ -238,6 +241,7 @@ export function RecordForm({
             siblings={values}
             categories={categories}
             error={fieldErrors[field.name]}
+            fixed={appeared && field.control.type === 'publish-date'}
             onChange={(value) => {
               setValues((previous) => ({ ...previous, [field.name]: value }));
             }}

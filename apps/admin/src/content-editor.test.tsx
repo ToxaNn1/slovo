@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { CONTENT_KINDS } from './components/content-editor/kinds';
 import { FIXTURES, WORD_FIELDS } from './mock/fixtures';
@@ -337,6 +337,82 @@ test('a new Crossword day sends its date and words to the crosswordDay kind', as
       },
     ]);
   });
+});
+
+/** A Curated Collection of the list, answered with its date and when it appears. */
+function collection(appearedAt: string) {
+  server.use(
+    http.get('*/admin/content/:editionId/records/:kind', () =>
+      HttpResponse.json({
+        records: [{ id: 'cc_a1', label: 'Слова зими', retired: false, recordVersion: 1 }],
+        total: 1,
+      }),
+    ),
+    http.get(RECORD, () =>
+      HttpResponse.json({
+        fields: {
+          id: 'cc_a1',
+          name: 'Слова зими',
+          description: 'Рідкісні слова холодної пори.',
+          publishedOn: '2026-12-01',
+          entryIds: ['w_a1'],
+        },
+        recordVersion: 1,
+        retired: false,
+        appearedAt,
+      }),
+    ),
+  );
+}
+
+test('a new Curated Collection with no date is sent without one, which means «одразу»', async () => {
+  const sent: unknown[] = [];
+  server.use(
+    http.post('*/admin/content/:editionId/records/:kind', async ({ request }) => {
+      sent.push(await request.json());
+      return HttpResponse.json(FIXTURES.content.create);
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Додати' }));
+  const date = await screen.findByLabelText('Дата публікації');
+  expect(date.getAttribute('aria-describedby')).toBeTruthy();
+  expect(screen.getByText('Порожньо — одразу')).toBeDefined();
+  await user.type(screen.getByLabelText('Назва'), 'Слова зими');
+  await user.type(screen.getByLabelText('Опис'), 'Рідкісні слова холодної пори.');
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByLabelText('Причина'), 'нова добірка');
+  await user.click(dialog.getByRole('button', { name: 'Додати' }));
+
+  await waitFor(() => {
+    expect(sent).toHaveLength(1);
+  });
+  expect(sent[0]).toMatchObject({ fields: { name: 'Слова зими' } });
+  expect(sent[0]).not.toHaveProperty('fields.publishedOn');
+});
+
+test('the date of a Curated Collection is read-only once it appeared, and editable before', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-11-18T10:00:00.000Z'));
+  const user = userEvent.setup();
+  collection('2026-11-30T22:00:00.000Z');
+  const { unmount } = render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  expect((await screen.findByLabelText('Дата публікації')).hasAttribute('readonly')).toBe(false);
+  unmount();
+
+  collection('2026-11-17T22:00:00.000Z');
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  const date = await screen.findByLabelText('Дата публікації');
+  expect(date.hasAttribute('readonly')).toBe(true);
+  expect(screen.getByText("Добірка вже з'явилася: дату не змінити")).toBeDefined();
+  vi.useRealTimers();
 });
 
 const ILLUSTRATION = `${RECORD}/illustration`;

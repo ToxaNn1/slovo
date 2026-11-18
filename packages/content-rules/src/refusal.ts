@@ -20,6 +20,7 @@ export type RuleName =
   | 'word-origin'
   | 'synonym-row-word'
   | 'curated-collection-entry'
+  | 'curated-collection-appeared'
   | 'crossword-day-entry'
   | 'crossword-days-gap'
   | 'crossword-days-repeat'
