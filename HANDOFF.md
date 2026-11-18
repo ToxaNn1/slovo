@@ -9,7 +9,7 @@ Wave #1992 «SLOVO пропонує». Integration branch feat/1992-slovo-propon
 - #1998 both parts: Entry picker + pictogram choice (names, not pictures)
 
 ## Running / next
-- #1995 grid + collection screen: implementer on branch feat/1995-collection-grid-screen (report /tmp/claude-0/w/report-1995.md; pushed to origin if coordinator handed off)
+- #1995 merged (grid, route, app-pass)
 - Then #1996 UI part: switch curatedCollectionFeed (needs curatedCollections, on in UA), route + app-pass step, kicker string «Добірка · {name} · {place} з {of}», add `export { collectionFeedPage } from './feed/collection-feed';` to core index, switch off -> Entry card.
 - Fold #1997 appearedAt rules into ADR 0178 (see wave-notes.md).
 - code-review on integration vs main, fix, CI green, PR body (sections Питання власнику, Handbook, Перевірки власника; from wave-notes.md + report-1998p.md), ready (POST .../pulls/2002/ccr/ready_for_review), auto-merge (PUT .../pulls/2002/ccr/auto_merge, squash), wait merge, STATUS: FINISHED first line.
