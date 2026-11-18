@@ -724,3 +724,54 @@ test('an open collection lists its Entries by kind, label and Category; remove a
   expect(await screen.findByText(/collection-entry/)).toBeDefined();
   expect(bodies[0]).toMatchObject({ fields: { entryIds: ['c_a1', 'w_a2', 'w_gone'] } });
 });
+
+test("a collection's pictogram is a Category or Correction Category, and empty means the Edition default", async () => {
+  const { user, save } = await newCollection();
+  const pictogram = await screen.findByLabelText('Піктограма');
+  await waitFor(() => {
+    expect(
+      within(pictogram)
+        .getAllByRole('option')
+        .map(({ textContent }) => textContent),
+    ).toEqual(['Типова піктограма Видання', 'Предмети', 'Одяг', 'Граматика']);
+  });
+
+  await user.selectOptions(pictogram, 'Граматика');
+  expect(await save()).toMatchObject({ fields: { pictogram: 'grammar' } });
+});
+
+test('an open collection shows its pictogram, and the Edition default saves it without one', async () => {
+  pickable();
+  server.use(
+    http.get(RECORD, () =>
+      HttpResponse.json({
+        fields: {
+          id: 'cc_a1',
+          name: 'Слова зими',
+          description: 'Рідкісні слова холодної пори.',
+          entryIds: ['w_a1'],
+          pictogram: 'clothes',
+        },
+        recordVersion: 1,
+        retired: false,
+      }),
+    ),
+  );
+  const bodies = edits();
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  const pictogram = await screen.findByLabelText('Піктограма');
+  await waitFor(() => {
+    expect(pictogram).toHaveProperty('value', 'clothes');
+  });
+
+  await user.selectOptions(pictogram, 'Типова піктограма Видання');
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  await waitFor(() => {
+    expect(bodies).toHaveLength(1);
+  });
+  expect(bodies[0]).toMatchObject({ fields: { entryIds: ['w_a1'] } });
+  expect(bodies[0]).not.toHaveProperty('fields.pictogram');
+});

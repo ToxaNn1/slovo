@@ -29,7 +29,8 @@ const isLeaf = (control: FieldControl) =>
   control.type === 'long-text' ||
   control.type === 'number' ||
   control.type === 'choice' ||
-  control.type === 'category';
+  control.type === 'category' ||
+  control.type === 'pictogram';
 
 interface ControlProps {
   readonly id: string;
@@ -132,8 +133,13 @@ function Leaf({
     'aria-describedby': describedBy,
     className: INPUT,
   };
-  if (control.type === 'choice' || control.type === 'category') {
-    const options = control.type === 'choice' ? control.options : categories[control.of];
+  if (control.type === 'choice' || control.type === 'category' || control.type === 'pictogram') {
+    const options =
+      control.type === 'choice'
+        ? control.options
+        : control.type === 'category'
+          ? categories[control.of]
+          : [...categories.categories, ...categories.correctionCategories];
     const known = text === '' || options.some((option) => option.value === text);
     return (
       <select
@@ -142,7 +148,7 @@ function Leaf({
           onChange(event.target.value);
         }}
       >
-        <option value="">—</option>
+        <option value="">{control.type === 'pictogram' ? 'Типова піктограма Видання' : '—'}</option>
         {(known ? options : [...options, { value: text, label: text }]).map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

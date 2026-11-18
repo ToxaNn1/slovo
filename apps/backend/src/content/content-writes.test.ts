@@ -534,4 +534,39 @@ describe("a Curated Collection's publish date", () => {
       appearedAt: '2026-11-20T22:00:00.000Z',
     });
   });
+  it('keeps the pictogram a save names, and refuses one that names no Category', async () => {
+    const { agent, batchId, client, save, record } = await collectionBackend();
+    const { id } = await save();
+    const { categoryId } = await wordOf(client, WORD_ID);
+    const edit = async (fields: Record<string, unknown>) => {
+      const current = await record(id);
+      return agent.admin.content.edit({
+        editionId: 'uk',
+        kind: 'curatedCollection',
+        id,
+        batchId,
+        recordVersion: current.recordVersion,
+        fields,
+      });
+    };
+
+    const { fields } = await record(id);
+    await edit({ ...fields, pictogram: categoryId });
+    expect(await record(id)).toMatchObject({ fields: { pictogram: categoryId } });
+
+    const { pictogram: _pictogram, ...withoutPictogram } = (await record(id)).fields;
+    await edit(withoutPictogram);
+    expect((await record(id)).fields).not.toHaveProperty('pictogram');
+
+    await expect(
+      edit({ ...withoutPictogram, pictogram: 'no-such-category' }),
+    ).rejects.toMatchObject({
+      code: 'REFUSED',
+      data: {
+        refusals: [
+          expect.objectContaining({ rule: 'curated-collection-pictogram', field: 'pictogram' }),
+        ],
+      },
+    });
+  });
 });
