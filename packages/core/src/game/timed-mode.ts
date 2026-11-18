@@ -12,8 +12,7 @@ const TIMED_GAME_LENGTH = 20_000;
  */
 export const timedMode: GameMode = {
   id: 'timed',
-  group: 'challenge',
-  hubGroup: 'speed',
+  group: 'speed',
   entryKind: 'word',
   lives: 'none',
   roundLimit: 'none',

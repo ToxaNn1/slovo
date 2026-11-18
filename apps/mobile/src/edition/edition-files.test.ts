@@ -136,11 +136,12 @@ describe('the 0.8.12 Game strings', () => {
   const parsed = EditionStringsSchema.parse(strings).game;
 
   it('the UA Edition carries the agreed texts verbatim', () => {
-    expect(parsed.groups).toMatchObject({
-      words: 'Слова',
-      corrections: 'Виправлення',
-      idioms: 'Вислови',
-      challenge: 'Виклик',
+    expect(parsed.groups).toEqual({
+      sound: 'Звук',
+      meaning: 'Значення',
+      letters: 'Букви',
+      speed: 'Швидкість',
+      new: 'Нове',
     });
     expect(parsed.modeBest).toEqual({
       outOf: 'Рекорд: {n} з {total}',

@@ -4,7 +4,7 @@ import {
   systemRandom,
   type Composition,
   type GameModeOffer,
-  type OfferedGroup,
+  type GameHubGroup,
 } from '@slovo/core';
 import {
   createMemoryContentPort,
@@ -43,7 +43,7 @@ const word = (index: number): Word => ({
 const unnamedMode: GameMode = {
   id: 'test-unnamed',
   entryKind: 'word',
-  group: 'words',
+  group: 'new',
   isOn: () => true,
   buildRound: () => undefined,
 };
@@ -124,7 +124,7 @@ describe('the card of each Game Mode on offer', () => {
 
   it("draws a mode still planned as one that can't start yet, with no refusal", () => {
     const card = gameModeCard(
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: false, planning: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: false, planning: true },
       strings,
     );
 
@@ -173,7 +173,7 @@ describe('the card of each Game Mode on offer', () => {
     [{ result: 23 }, '★ 23', 'Рекорд: 23'],
   ])('shows the Best result %j as «%s», read as «%s»', (best, text, label) => {
     const card = gameModeCard(
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true, best },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true, best },
       strings,
     );
 
@@ -252,7 +252,7 @@ describe('the label over a Round', () => {
 });
 
 /** An offer of the mode in the group that can't start, for too few Entries in the Mix. */
-const stuckOffer = (modeId: string, group: OfferedGroup): GameModeOffer => ({
+const stuckOffer = (modeId: string, group: GameHubGroup): GameModeOffer => ({
   modeId,
   entryKind: 'word',
   group,
@@ -261,7 +261,7 @@ const stuckOffer = (modeId: string, group: OfferedGroup): GameModeOffer => ({
 });
 
 /** An offer of the mode in the group that can start, with nothing else on it. */
-const offer = (modeId: string, group: OfferedGroup = 'words'): GameModeOffer => ({
+const offer = (modeId: string, group: GameHubGroup = 'new'): GameModeOffer => ({
   modeId,
   entryKind: 'word',
   group,
@@ -321,21 +321,22 @@ const HUB_GROUPS = [
 describe('the groups of the modes on offer', () => {
   it('puts every mode in the group it declares, the groups in the agreed order and the modes in the order offered', () => {
     const offers = [
-      offer('timed', 'challenge'),
-      offer('build-idiom', 'idioms'),
-      offer('anglicism', 'corrections'),
+      offer('timed', 'speed'),
+      offer('build-idiom'),
+      offer('anagram', 'letters'),
       offer('origin'),
-      offer('survival', 'challenge'),
-      offer('idiom-meaning', 'idioms'),
-      offer('correction', 'corrections'),
+      offer('idiom-meaning', 'meaning'),
+      offer('stress', 'sound'),
+      offer('correction', 'meaning'),
       offer('guess-word'),
     ];
 
     expect(shapeOf(gameModeGroups(offers, strings))).toEqual([
-      ['Слова', ['origin', 'guess-word']],
-      ['Виправлення', ['anglicism', 'correction']],
-      ['Вислови', ['build-idiom', 'idiom-meaning']],
-      ['Виклик', ['timed', 'survival']],
+      ['Звук', ['stress']],
+      ['Значення', ['idiom-meaning', 'correction']],
+      ['Букви', ['anagram']],
+      ['Швидкість', ['timed']],
+      ['Нове', ['build-idiom', 'origin', 'guess-word']],
     ]);
   });
 
@@ -346,32 +347,36 @@ describe('the groups of the modes on offer', () => {
   });
 
   it('lists only the modes the Core offers, and no group without one', async () => {
-    const app = await open({ words: 15, switchedOff: ['gameHubGroups'] });
+    const app = await open({ words: 15 });
 
     expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
-      ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters', 'type-word', 'origin']],
-      ['Виправлення', ['correction', 'anglicism']],
-      ['Вислови', ['idiom-meaning', 'build-idiom']],
-      ['Виклик', ['survival', 'timed']],
+      ['Значення', ['correction', 'pairs', 'idiom-meaning']],
+      ['Букви', ['anagram']],
+      ['Швидкість', ['timed']],
+      [
+        'Нове',
+        ['guess-word', 'by-letters', 'type-word', 'origin', 'anglicism', 'build-idiom', 'survival'],
+      ],
     ]);
   });
 
   it('leaves out a mode the Edition switches off', async () => {
-    const app = await open({ words: 15, switchedOff: ['corrections', 'gameHubGroups'] });
+    const app = await open({ words: 15, switchedOff: ['corrections'] });
 
     expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
-      ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters', 'origin']],
-      ['Вислови', ['idiom-meaning', 'build-idiom']],
-      ['Виклик', ['timed']],
+      ['Значення', ['pairs', 'idiom-meaning']],
+      ['Букви', ['anagram']],
+      ['Швидкість', ['timed']],
+      ['Нове', ['guess-word', 'by-letters', 'origin', 'build-idiom']],
     ]);
   });
 
   it('puts a Game Mode added only in the Core under the group its offer names', () => {
     expect(
-      shapeOf(gameModeGroups([offer('guess-word'), offer('test-new', 'idioms')], strings)),
+      shapeOf(gameModeGroups([offer('guess-word'), offer('test-new', 'letters')], strings)),
     ).toEqual([
-      ['Слова', ['guess-word']],
-      ['Вислови', ['test-new']],
+      ['Букви', ['test-new']],
+      ['Нове', ['guess-word']],
     ]);
   });
 });

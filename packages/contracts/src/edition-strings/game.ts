@@ -44,17 +44,9 @@ export const GameStringsSchema = z.strictObject({
   title: TextSchema,
   /** The XP earned in all, beside the mode screen's title, e.g. «45 XP». Takes `{count}`. */
   xp: templateOf('count'),
-  /** The titles of the mode screen's groups of mode cards, e.g. «Слова». */
+  /** The titles of the Games hub's five groups of mode cards (ADR 0139). */
   groups: z.strictObject({
-    /** The modes that ask about Words, e.g. «Слова». */
-    words: TextSchema,
-    /** The modes that ask about Corrections, e.g. «Виправлення». */
-    corrections: TextSchema,
-    /** The modes that ask about Idioms, e.g. «Вислови». */
-    idioms: TextSchema,
-    /** The modes with their own Lives, Round limit or time limit, e.g. «Виклик». */
-    challenge: TextSchema,
-    /** The five groups of the Games hub behind `gameHubGroups` (ADR 0139): the modes that ask about sound, e.g. «Звук». */
+    /** The modes that ask about sound, e.g. «Звук». */
     sound: TextSchema,
     /** The modes that ask about meaning, e.g. «Значення». */
     meaning: TextSchema,

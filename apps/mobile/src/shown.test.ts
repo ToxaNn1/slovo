@@ -18,7 +18,6 @@ const everything: Shown = {
   gameRoundMascot: true,
   gameEndToFeed: true,
   plainGameReview: true,
-  gameHubGroups: true,
   gameHubRecord: true,
   gameModeToast: true,
   entryButtons: {
@@ -209,10 +208,6 @@ describe('what the reader is shown', () => {
     [
       'the spec #1674 Game with plainGameReview off',
       { off: ['plainGameReview'], shown: { plainGameReview: false } },
-    ],
-    [
-      'the spec #1674 Game with gameHubGroups off',
-      { off: ['gameHubGroups'], shown: { gameHubGroups: false } },
     ],
     [
       'the spec #1674 Game with gameHubRecord off',

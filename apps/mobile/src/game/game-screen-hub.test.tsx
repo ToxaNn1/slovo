@@ -13,28 +13,29 @@ import {
 beforeEach(resetGameScreen);
 
 describe('the Game screen', () => {
-  it('lists the modes on offer under their groups, in order', async () => {
+  it("lists the modes on offer under the board's five groups, in the board's order (ADR 0139)", async () => {
     await renderScreen();
 
     expect(shape()).toEqual([
       'Ігри',
-      'Слова',
-      'game-mode-guess-word',
+      'Звук',
       'game-mode-stress',
+      'Значення',
+      'game-mode-correction',
       'game-mode-pairs',
+      'game-mode-idiom-meaning',
+      'Букви',
       'game-mode-anagram',
+      'Швидкість',
+      'game-mode-timed',
+      'Нове',
+      'game-mode-guess-word',
       'game-mode-by-letters',
       'game-mode-type-word',
       'game-mode-origin',
-      'Виправлення',
-      'game-mode-correction',
       'game-mode-anglicism',
-      'Вислови',
-      'game-mode-idiom-meaning',
       'game-mode-build-idiom',
-      'Виклик',
       'game-mode-survival',
-      'game-mode-timed',
     ]);
   });
 
@@ -93,51 +94,25 @@ describe('the Game screen', () => {
 
     expect(shape()).toEqual([
       'Ігри',
-      'Слова',
-      'game-mode-guess-word',
+      'Звук',
       'game-mode-stress',
+      'Значення',
       'game-mode-pairs',
+      'game-mode-idiom-meaning',
+      'Букви',
       'game-mode-anagram',
+      'Швидкість',
+      'game-mode-timed',
+      'Нове',
+      'game-mode-guess-word',
       'game-mode-by-letters',
       'game-mode-origin',
-      'Вислови',
-      'game-mode-idiom-meaning',
       'game-mode-build-idiom',
-      'Виклик',
-      'game-mode-timed',
     ]);
-    expect(screen.queryByText('Виправлення')).toBeNull();
   });
 
   describe('as board 06 «Хаб ігор»', () => {
-    const HUB = ['gameHubGroups', 'gameHubRecord', 'gameModeToast'];
-
-    it("lists the modes on offer under the board's five groups, in the board's order", async () => {
-      await open({ switchedOn: ['gameHubGroups'] });
-      await renderScreen();
-
-      expect(shape()).toEqual([
-        'Ігри',
-        'Звук',
-        'game-mode-stress',
-        'Значення',
-        'game-mode-correction',
-        'game-mode-pairs',
-        'game-mode-idiom-meaning',
-        'Букви',
-        'game-mode-anagram',
-        'Швидкість',
-        'game-mode-timed',
-        'Нове',
-        'game-mode-guess-word',
-        'game-mode-by-letters',
-        'game-mode-type-word',
-        'game-mode-origin',
-        'game-mode-anglicism',
-        'game-mode-build-idiom',
-        'game-mode-survival',
-      ]);
-    });
+    const HUB = ['gameHubRecord', 'gameModeToast'];
 
     it("shows each row's hub line and «Рекорд: N з M», «Рекорд: N» or «Ще жодної гри», read as it shows", async () => {
       await open({ best: { 'guess-word': 12, survival: 23 }, switchedOn: ['gameHubRecord'] });

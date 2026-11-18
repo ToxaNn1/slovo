@@ -1640,10 +1640,6 @@
     "title": "Ігри",
     "xp": "{count} XP",
     "groups": {
-      "words": "Слова",
-      "corrections": "Виправлення",
-      "idioms": "Вислови",
-      "challenge": "Виклик",
       "sound": "Звук",
       "meaning": "Значення",
       "letters": "Букви",
