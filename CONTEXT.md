@@ -466,7 +466,7 @@ Retired in 1.0. The old setting «Ліміт на день» is replaced by the 
 _Avoid_: use Daily Goal or the 50-Seen Notice
 
 **Mood**:
-«настрій»: a set of Feed parameters the reader chooses once a local day on the Dashboard: a rarity band inside the Rarity Range (never crossing or lowering it) and a shift of each Mix kind weight. The Edition lists its moods (id, name, emoji) and names the four the Dashboard shows. The choice can be skipped or changed, ends with the local day and syncs; no Mood means the Feed as before.
+«настрій»: a set of Feed parameters the reader chooses once a local day on the Dashboard: a rarity band inside the Rarity Range (never crossing or lowering it) and a shift of each Mix kind weight. The Edition lists its moods (id, name, emoji) and names the four the Dashboard shows. The choice can be skipped or changed, ends with the local day and syncs; no Mood means the Feed as before. While `moodEffect` is on, a line under the check-in says what the picked Mood changed in the Feed (the Mood's `effect`), and a second tap on the picked Mood unpicks it: no Mood that day (ADR 0185).
 _Avoid_: Emotion, feeling, vibe, roulette
 
 **Reserved**:

@@ -4,6 +4,8 @@
 
 **Amended by ADR 0178.** The UA Dashboard has Curated Collections again (`curatedCollections` on), as the rail «SLOVO пропонує» before «Категорії».
 
+**Amended by ADR 0185.** A line under the Mood check-in says what the picked Mood changed in the Feed, and a second tap on the picked Mood unpicks it, behind `moodEffect`.
+
 Owner test pass of 2026-11-12 against the «Рупор» Dashboard board («робимо все», Dashboard only). The app drew the Dashboard in its own way where the board is precise: four Moods, a hero without a number, a giant letter over the revealed Word, no motion on the reveal and a logo that did nothing.
 
 **Five Moods.** `dashboardMoods` names exactly five listed ids in display order (was four); the Edition check refuses any other count or an unknown id. The UA Edition shows the board's five: Бадьоро, Радісно, Сумно, Закохано, Спокійно (`energetic`, `joyful`, `sad`, `in-love`, `calm`), with the board's replies. A Mood with no `rarityBand` or shifts leaves the Feed as it is (`whole`, no shift). The tiles stay two to a row; the fifth keeps half a row beside an empty cell, and each tile has its own red mark (a fifth shape from the board).
