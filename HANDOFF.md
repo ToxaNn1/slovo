@@ -8,3 +8,4 @@
 - 2026-11-18T15:42:30Z OWNER 18.11: no cap on parallel implementers, speed first. On the next step start every part that does not need #1994: #1998 backend Category filter + picker (pictogram choice after #1994), #1996 Core paging; split tickets into parallel parts where files do not clash.
 - 2026-11-18T15:46:24Z #1997 DONE, authors rewritten to noreply, merged b37e69e, checks green, pushed; draft PR #2002. Notes /tmp/claude-0/w/notes-*.md. Waiting #1994 finisher; then #1995 and #1998
 - 2026-11-18T15:46:48Z starting #1998 backend part (Category filter) and #1996 Core part (collection Feed paging) in parallel, max 5 per stored grant
+- 2026-11-18T15:55:29Z #1996 Core part merged (collectionFeedPage); UI part waits #1994. CI green on b37e69e. Running: #1994 finisher (worktree agent-a04e1a8e46f5c0dd6), #1998 picker part
