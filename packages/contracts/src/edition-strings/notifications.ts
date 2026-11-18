@@ -13,6 +13,8 @@ export const NotificationsStringsSchema = z.strictObject({
   title: TextSchema,
   /** The Settings row's value with no times, or while permission is denied or not asked yet. */
   off: TextSchema,
+  /** The Settings row's value past three times, e.g. «4 рази на день». Takes `{count}`. */
+  timesCount: PluralSchema,
   /** Adds a time. */
   addTime: TextSchema,
   /** Why «Додати час» is disabled at the limit. VoiceOver reads it as that button's hint. Takes `{count}`, the limit. */
@@ -25,10 +27,14 @@ export const NotificationsStringsSchema = z.strictObject({
   change: TextSchema,
   /** The action that removes a time (a swipe, and the same for VoiceOver). */
   remove: TextSchema,
+  /** The line under the times that says how a time is removed: a swipe to the left. VoiceOver skips it, as the row offers the action. */
+  removeHint: TextSchema,
   /** The label of the time picker. */
   pickerLabel: TextSchema,
   /** The button that keeps the picked time and closes the picker. */
   done: TextSchema,
+  /** The button that closes the picker without a pick. */
+  cancel: TextSchema,
   /** The switch for the notification sound. */
   sound: TextSchema,
   /** The button that asks for permission while it is not asked yet. */
