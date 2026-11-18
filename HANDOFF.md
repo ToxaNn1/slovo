@@ -1,23 +1,10 @@
+STATUS: FINISHED
+
 # HANDOFF: ticket #2022 «Retire a Curated Collection» (spec #1992)
 
-STATUS: IN PROGRESS
+PR #2028 (from `feat/2022-retire-curated-collection-pr`) had green CI and was merged by the owner at 2026-11-18T19:12Z; #2022 is closed.
 
-Integration branch: `feat/2022-retire-curated-collection`. Grant: commits, pushes, one PR to main; no merge, no auto-merge.
-
-## Decisions
-- `retired: z.boolean().default(false)` on the Curated Collection (contracts). No migration: the backend's `content_curated_collections.retired` column exists.
-- Language Pack: like a Retired Crossword day, a Retired collection has no rows (build and Patch); pack format stays 14.
-- Core: the rail, count, grid, screen, Feed and «Додати собі» skip a Retired collection; the reader's copy in the Mix stays.
-
-## Log
-- Step 1 (done): contracts `retired`, OpenAPI regenerated, test fixtures. Commit on the integration branch.
-
-- Step 2 (done): ADR 0178 amended («Retiring»), index line, glossary «Retired Curated Collection».
-- Step 3 (done): A, B, C merged; full lint/typecheck/test green (backend needs DATABASE_URL=postgres://slovo:slovo@localhost:5432/slovo).
-- Step 4 (done): review fixes merged. Some integration-branch commits carried a non-owner address (CI refuses them, no force-push allowed), so the PR comes from `feat/2022-retire-curated-collection-pr`: the same work rebased on main with the owner's address.
-- Step 5: PR #2028 open (no auto-merge). Local lint/typecheck/deps/test green.
-
-WAITING until 2026-11-18T19:36:00Z: CI on PR #2028
-
-## Next
-- CI green → HANDOFF starts with `STATUS: FINISHED`. Red → fix on `feat/2022-retire-curated-collection-pr`. Main moves → merge origin/main into it.
+## Left for the owner
+- The questions in PR #2028 «Питання власнику»: old app builds keep a Retired collection until updated (`forceUpdate`), a bring-back refused while it names a Retired Entry, the action log's raw «retired: так → ні», import does not retire a collection missing from a snapshot.
+- Handbook page «SLOVO пропонує»: new section «Як прибрати добірку», text in the PR body «Handbook»; the content editor page gains «Повернути в ужиток» for every kind.
+- Stale branches to delete when convenient: `feat/2022-retire-curated-collection` (holds commits with a non-owner address), `feat/2022-retire-curated-collection-pr` (one extra main-merge commit after the merge, no content).
