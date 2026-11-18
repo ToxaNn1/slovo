@@ -115,7 +115,6 @@ describe('the tabbed Idiom card (board XEntry2 e7)', () => {
               etymology: 'from the hunt.',
             },
           }}
-         
         />
       </EditionProvider>,
     );

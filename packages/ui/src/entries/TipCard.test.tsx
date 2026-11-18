@@ -1,7 +1,7 @@
 import type { TipCardModel, TipFeedCard } from '@slovo/core';
 import { EditionProvider, EntryCard } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
-import { fireEvent, render, screen, within } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({

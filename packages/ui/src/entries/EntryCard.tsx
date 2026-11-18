@@ -248,7 +248,7 @@ function EntryCardFace({
             stressFalls={stressFalls}
             wordOfTheDayFont={wordOfTheDayFont}
             corner={bodyCorner}
-                  sourceTab={sourceTab}
+            sourceTab={sourceTab}
             kicker={kicker}
           />
         ) : card.kind === 'correction' ? (
@@ -257,7 +257,7 @@ function EntryCardFace({
             lemmaSize={lemmaSize}
             concealed={concealed}
             corner={bodyCorner}
-                  sourceTab={sourceTab}
+            sourceTab={sourceTab}
           />
         ) : card.kind === 'idiom' ? (
           <IdiomCardBody
@@ -265,7 +265,7 @@ function EntryCardFace({
             lemmaSize={lemmaSize}
             concealed={concealed}
             corner={bodyCorner}
-                  sourceTab={sourceTab}
+            sourceTab={sourceTab}
           />
         ) : card.kind === 'synonymRow' ? (
           <SynonymRowCardBody
@@ -274,7 +274,7 @@ function EntryCardFace({
             concealed={concealed}
             onOpenWord={onOpenWord}
             corner={bodyCorner}
-                  sourceTab={sourceTab}
+            sourceTab={sourceTab}
           />
         ) : (
           <TipCardBody
@@ -282,7 +282,7 @@ function EntryCardFace({
             lemmaSize={lemmaSize}
             concealed={concealed}
             corner={bodyCorner}
-                  sourceTab={sourceTab}
+            sourceTab={sourceTab}
             exceptionsTab={tipExceptions}
           />
         )}

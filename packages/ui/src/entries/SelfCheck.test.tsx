@@ -264,6 +264,7 @@ describe('Self-check', () => {
     expect(onMark).not.toHaveBeenCalled();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
+    await fireEvent.press(screen.getByTestId('correction-tab-why'));
 
     expect(screen.getByText('Why join in is better.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Unknown', disabled: false }));
@@ -296,8 +297,10 @@ describe('Self-check', () => {
 
     expect(screen.getByText('To idle about.')).toBeTruthy();
     expect(screen.getByText('2. To search everywhere.')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('idiom-tab-example'));
     expect(screen.getByTestId('idiom-example')).toHaveTextContent('He beat the bushes all day.');
-    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent('OriginFrom the hunt.');
+    await fireEvent.press(screen.getByTestId('idiom-tab-origin'));
+    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent('From the hunt.');
     await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: false }));
     expect(onMark).toHaveBeenCalledWith('known');
   });

@@ -183,10 +183,7 @@ function FirstWord({
         <Title>{strings.firstWord.title}</Title>
       </View>
       {/* The Feed's tabbed card in its frame, with no corner or swipe (owner decision Р29). */}
-      <EntryCard
-        card={{ kind: 'word', entryId: word.wordId, model: word }}
-        sourceTab={sourceTab}
-      />
+      <EntryCard card={{ kind: 'word', entryId: word.wordId, model: word }} sourceTab={sourceTab} />
     </OnboardingStep>
   );
 }

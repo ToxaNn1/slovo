@@ -14,7 +14,8 @@ import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ShellProvider } from '../shell-value';
-import { opened, switchedTo, testShell } from '../shell/test-support';
+import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import { SettingsProvider } from '../settings/settings';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
 import { Onboarding } from './onboarding';
 
@@ -84,6 +85,7 @@ async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFile
     userState: opened(userState),
     remoteSwitches: switchedTo(shipped),
     composition: opened(composition),
+    settings: await settingsAt({}),
   });
   await renderRoutes(
     {
@@ -93,7 +95,9 @@ async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFile
             <ShellProvider shell={shell}>
               <EditionProvider edition={edition} strings={editionStrings}>
                 <HapticsProvider haptics={haptics}>
-                  <Onboarding />
+                  <SettingsProvider>
+                    <Onboarding />
+                  </SettingsProvider>
                 </HapticsProvider>
               </EditionProvider>
             </ShellProvider>
