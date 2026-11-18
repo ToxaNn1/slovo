@@ -130,8 +130,9 @@ export async function openCuratedCollections({
   const subscribers = createSubscribers();
   const on = edition.isFeatureEnabled('curatedCollections');
   const records = dashboardRecords.curatedCollectionsOpened;
-  // The pack is read once: its collections change only with the pack. A
-  // Retired one is out of circulation: no rail, grid, screen or Feed (ADR 0178).
+  // The pack is read once per composition: a Patch applied reopens the
+  // composition, which reads them afresh. A Retired one is out of
+  // circulation: no rail, grid, screen or Feed (ADR 0178).
   const all = on ? (await content.listCuratedCollections()).filter(({ retired }) => !retired) : [];
   const pictogramOf = await pictograms(on ? entries : undefined);
   const defaultPictogram = pictogramOf(edition.curatedCollectionPictogram);
