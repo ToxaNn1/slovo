@@ -112,6 +112,8 @@ export interface Shown {
   readonly streakFreezeCard: boolean;
   /** The Settings row that opens the Badges (ADR 0066). */
   readonly badges: boolean;
+  /** How many Badges are earned («1 з 21», a family's «0 з 4»), while the reader has not hidden the counters (ADR 0188). */
+  readonly badgeCounts: boolean;
   /**
    * The offers to share a Level reached, a Badge earned or a Streak
    * milestone today, while Share Cards and the XP log are on and the reader
@@ -255,6 +257,7 @@ export function shownOf({
     calendarDayLines: on('calendarDayLines'),
     streakFreezeCard: on('streakFreezeCard') && on('streakFreezes') && !noCounters,
     badges: on('badges'),
+    badgeCounts: !noCounters,
     progressShareCards: on('progressShareCards') && !noCounters,
     crosswordSolvedScreen: on('crosswordSolvedScreen'),
     crosswordSolveTime: on('crosswordSolveTime'),

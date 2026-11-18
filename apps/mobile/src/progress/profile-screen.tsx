@@ -200,18 +200,25 @@ function ProfileBlocks() {
             >
               {strings.badges}
             </Text>
-            <Text
-              {...voice}
-              testID="profile-badges-count"
-              style={[typeStyle('progressCount', tokens), { color: colors.muted }]}
-            >
-              {fill(editionStrings.settings.badges.earnedOf, {
-                earned: String(badges.filter(({ earned }) => earned).length),
-                total: String(badges.length),
-              })}
-            </Text>
+            {shown.badgeCounts && (
+              <Text
+                {...voice}
+                testID="profile-badges-count"
+                style={[typeStyle('progressCount', tokens), { color: colors.muted }]}
+              >
+                {fill(editionStrings.settings.badges.earnedOf, {
+                  earned: String(badges.filter(({ earned }) => earned).length),
+                  total: String(badges.length),
+                })}
+              </Text>
+            )}
           </View>
-          <BadgeGrid families={edition.badgeFamilies} badges={badges} onPress={onPress} />
+          <BadgeGrid
+            families={edition.badgeFamilies}
+            badges={badges}
+            counts={shown.badgeCounts}
+            onPress={onPress}
+          />
           {opening}
         </View>
         <ReaderNameHead />
