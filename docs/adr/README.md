@@ -37,7 +37,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0033](0033-the-language-pack-is-the-runtime-source-of-categories.md) The app reads Categories only from the Language Pack; Corrections have a list of Categories of their own. Amended by 0081.
 - 0034: unused.
 - [0035](0035-one-module-reads-an-edition-folder.md) `edition-folder.ts` is the only code that knows an Edition folder's layout; the Edition check refuses missing glyphs and release placeholders.
-- [0036](0036-the-shell-opens-each-resource-once-through-one-module-and-draws-screens-over-it-open.md) The shell opens each resource once through `opening.ts`, draws every screen over it open, and hands one Shell down (amended by 0090: a Patch changes the pack under its open reader inside a transaction).
+- [0036](0036-the-shell-opens-each-resource-once-through-one-module-and-draws-screens-over-it-open.md) The shell opens each resource once through `opening.ts`, draws every screen over it open, and hands one Shell down (amended by 0090: a Patch changes the pack under its open reader inside a transaction; by 0189: a reopen waits for the Game on screen).
 - [0037](0037-the-core-account-opens-apart-from-the-composition.md) The Core's Account opens apart from the composition and keeps the Session.
 - 0038: unused.
 - 0039: merged into 0064.
@@ -178,3 +178,4 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0177](0177-the-app-pass-is-one-command-and-opens-every-route.md) `pnpm app-pass` runs `apps/mobile/maestro/app-pass.yaml`, one step per screen route of `apps/mobile/src/app` plus the Feed's sheets, on the booted simulator against the one Metro, keeping the user state and a screenshot per step; `app-pass.test.ts` fails CI naming each route file no step names, so a PR that adds a route adds its step (amends 0126).
 - [0179](0179-a-wrong-answer-waits-for-next.md) After a wrong answer the answer banner with the right answer stays until «Далі →» on it; in «На час» it shows no button and the Game moves on after 3 s; `answerBannerDelay` in the Core says which (amends 0138).
 - [0180](0180-a-break-ends-early-and-its-unused-days-come-back.md) «Завершити перерву» ends a running Break today with a Break-ended record (one per Break, the earlier day holds); the reader has 7 Break days in the 30 days from the first Break of them, so days a Break did not use come back for a later one (amends 0066).
+- [0189](0189-a-reopen-of-the-composition-waits-for-the-game-on-screen.md) While a Game is on screen, in play or its result, a reopen of the composition (sync, Patch, remote switch) waits until the Game is left, and the asks made meanwhile reopen once (amends 0036).
