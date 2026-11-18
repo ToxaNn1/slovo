@@ -8,6 +8,8 @@ Owner decision of spec #1992, ticket #1994. This ADR amends ADR 0076, 0081, 0082
 
 **The pictogram.** A Curated Collection carries an optional `pictogram`: the id of a Category or Correction Category whose pictogram its tile draws. Unset, the tile draws the Edition's `curatedCollectionPictogram` (UA `language-speech`), itself the id of an existing Category; with neither, no pictogram. The Language Pack build refuses a `pictogram` that names no Category, and the Edition config refuses such a default; the pack format is 14.
 
+**The publish date.** A Curated Collection's `publishedOn` is optional: unset, it means today in the Edition's calendar (Europe/Kyiv). The backend alone keeps `appearedAt`, the moment the collection appeared; it is never sent in Patches. A save sets it to the save moment when `publishedOn` is today or earlier, else to 00:00 Europe/Kyiv of `publishedOn`; an edit that leaves the date unchanged keeps it; the import and the migration set it to the start of `publishedOn`. Once `appearedAt` has passed, a change of `publishedOn` is refused by the rule `curated-collection-appeared`. The app never shows the date; a later-dated collection stays hidden until that day.
+
 **Amends.** ADR 0076 and 0081: the rail is named «SLOVO пропонує» and comes before «Категорії», not after. ADR 0082: the Curated Collection screen stays, its entry point is the new tile. ADR 0105: the UA Edition turns `curatedCollections` on. Under ADR 0176 the new look replaces the old «Добірки» rail code in the same change; no switch keeps the old rail.
 
 **Consequences.** One more rail on the UA Dashboard; editors pick a pictogram per collection or rely on the default.
