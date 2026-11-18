@@ -153,6 +153,7 @@
     "correctionCategoryScreens": "on",
     "correctionTypeGrid": "on",
     "categoryFeed": "on",
+    "curatedCollectionFeed": "on",
     "previousWords": "on",
     "correctionTypes": "on",
     "profileConfirmedByRarity": "off",

@@ -1103,6 +1103,20 @@ describe("a Word card's kicker", () => {
     );
   });
 
+  it.each<[string, EntryFeedCard]>([
+    ['correction', card],
+    ['idiom', { kind: 'idiom', entryId: 'i1', model: idiomCard() }],
+  ])(
+    "says the %s card's place in a Curated Collection's Feed over its own kicker",
+    async (kind, entry) => {
+      const kicker = 'COLLECTION · PICKS · 3 OF 5';
+      await render(inEdition(<EntryCard card={entry} kicker={kicker} />));
+
+      expect(screen.getByTestId(`${kind}-card-kicker`)).toHaveTextContent(kicker);
+      expect(screen.getByTestId(`${kind}-card`)).toBeOnTheScreen();
+    },
+  );
+
   it('is left out of a Word card in the Feed', async () => {
     await render(inEdition(<EntryCard card={wordCard} />));
 

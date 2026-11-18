@@ -8,6 +8,7 @@ import { useCallback } from 'react';
 import { useComposition, useCompositionRead } from '../composition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
+import { useShown } from '../shown-in-effect';
 import { useOpenScreen } from '../use-open-screen';
 
 /**
@@ -45,7 +46,10 @@ export interface CuratedCollectionScreen {
   readonly place: number;
   /** «+ Додати»: copies it into the reader's Collections. */
   readonly add: () => void;
-  /** Opens an Entry's card, which makes nothing Seen (ADR 0076). */
+  /**
+   * Opens the collection's Feed from an Entry while `curatedCollectionFeed` is
+   * on (ADR 0178), else its card; neither makes anything Seen (ADR 0076).
+   */
   readonly openEntry: (entryId: string) => void;
 }
 
@@ -56,6 +60,7 @@ export interface CuratedCollectionScreen {
 export function useCuratedCollectionScreen(collectionId: string): CuratedCollectionScreen {
   const { curatedCollections } = useComposition();
   const openScreen = useOpenScreen();
+  const { curatedCollectionFeed } = useShown();
   const read = useCallback(
     async (open: Composition) => (await open.curatedCollections.screen(collectionId)) ?? null,
     [collectionId],
@@ -75,6 +80,10 @@ export function useCuratedCollectionScreen(collectionId: string): CuratedCollect
     },
     // The Entry route of Search opens the card through `entryCard`, with the way back named.
     openEntry: (entryId) => {
+      if (curatedCollectionFeed) {
+        openScreen(`/curated-collection-feed/${collectionId}?from=${encodeURIComponent(entryId)}`);
+        return;
+      }
       openScreen(`/search/${entryId}?back=${encodeURIComponent(name)}`);
     },
   };

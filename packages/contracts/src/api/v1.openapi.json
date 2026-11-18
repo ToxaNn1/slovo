@@ -9576,6 +9576,14 @@
                           ],
                           "type": "string"
                         },
+                        "curatedCollectionFeed": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "collectionLinkCopy": {
                           "enum": [
                             "on",
@@ -9813,6 +9821,7 @@
                         "correctionCategoryScreens",
                         "correctionTypeGrid",
                         "categoryFeed",
+                        "curatedCollectionFeed",
                         "collectionLinkCopy",
                         "dueQuiz",
                         "profileConfirmedByRarity",
@@ -11465,6 +11474,14 @@
                           ],
                           "type": "string"
                         },
+                        "curatedCollectionFeed": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "collectionLinkCopy": {
                           "enum": [
                             "on",
@@ -11702,6 +11719,7 @@
                         "correctionCategoryScreens",
                         "correctionTypeGrid",
                         "categoryFeed",
+                        "curatedCollectionFeed",
                         "collectionLinkCopy",
                         "dueQuiz",
                         "profileConfirmedByRarity",
@@ -13278,6 +13296,14 @@
                           ],
                           "type": "string"
                         },
+                        "curatedCollectionFeed": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "collectionLinkCopy": {
                           "enum": [
                             "on",
@@ -13515,6 +13541,7 @@
                         "correctionCategoryScreens",
                         "correctionTypeGrid",
                         "categoryFeed",
+                        "curatedCollectionFeed",
                         "collectionLinkCopy",
                         "dueQuiz",
                         "profileConfirmedByRarity",
