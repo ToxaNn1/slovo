@@ -1949,7 +1949,6 @@
       "title": "Фініш",
       "won": "Влучно!",
       "more": "Ще раунд!",
-      "timeUp": "Час!",
       "hits": {
         "one": "{count} з {total} влучання",
         "few": "{count} з {total} влучань",

@@ -26,7 +26,6 @@ export interface Shown {
   /** 1 Life in «Виживання» in place of 3 (ADR 0137). */
   readonly survivalOneLife: boolean;
   /** 20 seconds in «На час» and no time-up poster, in place of 60 seconds and «Час!» (ADR 0137). */
-  readonly timedTwentySeconds: boolean;
   /** The Mascot beside the question of a Round (ADR 0139). */
   readonly gameRoundMascot: boolean;
   /** The question on the background, labels without numbers and the visible Lives line (ADR 0139). */
@@ -241,7 +240,6 @@ export function shownOf({
     finishPoster: on('finishPoster'),
     survivalStreak: on('survivalStreak'),
     survivalOneLife: on('survivalOneLife'),
-    timedTwentySeconds: on('timedTwentySeconds'),
     gameRoundMascot: on('gameRoundMascot'),
     gameQuestionOnGround: on('gameQuestionOnGround'),
     gameOptionStamp: on('gameOptionStamp'),

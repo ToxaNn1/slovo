@@ -457,7 +457,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** One Life in «Виживання» (ADR 0137); off, 3. Off while `gameSurvival` is. */
   survivalOneLife: FeatureSwitchStateSchema,
   /** 20 seconds in «На час», then straight to «ФІНІШ» with no time-up poster (ADR 0137); off, 60 seconds and «Час!». Off while `gameTimed` is. */
-  timedTwentySeconds: FeatureSwitchStateSchema,
   /** The Mascot beside the question of a Round, in its waiting, glad, wincing and sad states (ADR 0139); off while `game` is. */
   gameRoundMascot: FeatureSwitchStateSchema,
   /** The question of a Round on the background with no card, labels with no Round number and the visible Lives line «Життів: {n} з {N}» (ADR 0139); off while `game` is. */

@@ -9328,14 +9328,6 @@
                           ],
                           "type": "string"
                         },
-                        "timedTwentySeconds": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameRoundMascot": {
                           "enum": [
                             "on",
@@ -9918,7 +9910,6 @@
                         "finishPoster",
                         "gameAnswerBanner",
                         "survivalOneLife",
-                        "timedTwentySeconds",
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
@@ -11370,14 +11361,6 @@
                           ],
                           "type": "string"
                         },
-                        "timedTwentySeconds": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameRoundMascot": {
                           "enum": [
                             "on",
@@ -11960,7 +11943,6 @@
                         "finishPoster",
                         "gameAnswerBanner",
                         "survivalOneLife",
-                        "timedTwentySeconds",
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
@@ -13336,14 +13318,6 @@
                           ],
                           "type": "string"
                         },
-                        "timedTwentySeconds": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameRoundMascot": {
                           "enum": [
                             "on",
@@ -13926,7 +13900,6 @@
                         "finishPoster",
                         "gameAnswerBanner",
                         "survivalOneLife",
-                        "timedTwentySeconds",
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",

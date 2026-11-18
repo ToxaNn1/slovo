@@ -14,7 +14,6 @@ const strings = testStrings({
       title: 'Finish',
       won: 'Bullseye!',
       more: 'One more round!',
-      timeUp: 'Time!',
       hits: { one: '{count} of {total} hit', other: '{count} of {total} hits' },
       newBest: 'New best!',
       xp: 'XP',

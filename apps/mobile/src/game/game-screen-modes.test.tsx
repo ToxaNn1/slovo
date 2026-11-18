@@ -850,15 +850,15 @@ describe('the Game screen', () => {
       jest.useRealTimers();
     });
 
-    it('starts from its card and races 60 seconds with the timer on top, a mistake moving on, to the result screen', async () => {
+    it('starts from its card and races 20 seconds with the timer on top, a mistake moving on, to the result screen', async () => {
       await renderScreen();
 
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
 
       await waitFor(() => {
-        expect(timerLabel()).toBe('лишилось 60 секунд');
+        expect(timerLabel()).toBe('лишилось 20 секунд');
       });
-      expect(screen.getByTestId('game-timer')).toHaveTextContent('60 с');
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('20 с');
       expect(screen.getByTestId('game-progress')).toHaveTextContent('Пройдено: 0');
       expect(screen.queryByTestId('game-lives')).toBeNull();
       expect(screen.queryByTestId('game-life-0', { includeHiddenElements: true })).toBeNull();
@@ -878,12 +878,12 @@ describe('the Game screen', () => {
       expect(screen.queryByTestId('game-next')).toBeNull();
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
 
-      await pass(10_000);
+      await pass(5_000);
 
-      expect(timerLabel()).toBe('лишилось 50 секунд');
-      expect(screen.getByTestId('game-timer')).toHaveTextContent('50 с');
+      expect(timerLabel()).toBe('лишилось 15 секунд');
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('15 с');
 
-      await pass(50_000);
+      await pass(15_000);
 
       await waitFor(() => {
         expect(screen.getByText('Час вийшов!')).toBeOnTheScreen();
@@ -896,7 +896,7 @@ describe('the Game screen', () => {
       expect(screen.getByTestId('game-result-best')).toHaveTextContent('3', { exact: false });
     });
 
-    it('ends on the «Фініш» poster headed «Час!», «Ще раунд!» for fewer than half right', async () => {
+    it('ends on the «Фініш» poster, «Ще раунд!» for fewer than half right', async () => {
       await open({
         clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
         schedule: systemSchedule,
@@ -906,17 +906,17 @@ describe('the Game screen', () => {
 
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
       await waitFor(() => {
-        expect(timerLabel()).toBe('лишилось 60 секунд');
+        expect(timerLabel()).toBe('лишилось 20 секунд');
       });
       await pickTheWordOfThePrompt();
       await pickAnotherWord();
       await pickAnotherWord();
-      await pass(60_000);
+      await pass(20_000);
 
       await waitFor(() => {
         expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
       });
-      expect(screen.getByText('ЧАС!')).toBeOnTheScreen();
+      expect(screen.getByText('ФІНІШ')).toBeOnTheScreen();
       expect(screen.getByText('ЩЕ РАУНД!')).toBeOnTheScreen();
       expect(screen.getByText('1 з 3 влучань')).toBeOnTheScreen();
       expect(screen.queryByText('Час вийшов!')).toBeNull();
@@ -926,18 +926,18 @@ describe('the Game screen', () => {
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
       await waitFor(() => {
-        expect(timerLabel()).toBe('лишилось 60 секунд');
+        expect(timerLabel()).toBe('лишилось 20 секунд');
       });
-      await pass(20_000);
+      await pass(5_000);
 
       await moveApp('background');
       await pass(5 * 60_000);
 
-      expect(timerLabel()).toBe('лишилось 40 секунд');
+      expect(timerLabel()).toBe('лишилось 15 секунд');
       expect(screen.getByTestId('game-round')).toBeOnTheScreen();
 
       await moveApp('foreground');
-      await pass(39_000);
+      await pass(14_000);
 
       expect(timerLabel()).toBe('лишилась 1 секунда');
       expect(screen.getByTestId('game-round')).toBeOnTheScreen();

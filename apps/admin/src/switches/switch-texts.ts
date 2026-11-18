@@ -318,10 +318,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Одне життя у «Виживанні»',
     line: 'У «Виживанні» лише одне життя замість трьох.',
   },
-  timedTwentySeconds: {
-    name: '20 секунд на час',
-    line: 'У грі «На час» дають 20 секунд замість 60.',
-  },
   gameRoundMascot: {
     name: 'Талісман у грі',
     line: 'Біля запитання гри стоїть талісман, який реагує на відповідь.',

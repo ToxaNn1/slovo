@@ -121,7 +121,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   finishPoster: 'games',
   gameAnswerBanner: 'games',
   survivalOneLife: 'games',
-  timedTwentySeconds: 'games',
   gameRoundMascot: 'games',
   gameQuestionOnGround: 'games',
   gameOptionStamp: 'games',

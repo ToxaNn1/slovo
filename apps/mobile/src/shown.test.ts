@@ -18,7 +18,6 @@ const everything: Shown = {
   finishPoster: true,
   survivalStreak: true,
   survivalOneLife: true,
-  timedTwentySeconds: true,
   gameRoundMascot: true,
   gameQuestionOnGround: true,
   gameOptionStamp: true,
@@ -228,10 +227,6 @@ describe('what the reader is shown', () => {
     [
       'the spec #1674 Game with survivalOneLife off',
       { off: ['survivalOneLife'], shown: { survivalOneLife: false } },
-    ],
-    [
-      'the spec #1674 Game with timedTwentySeconds off',
-      { off: ['timedTwentySeconds'], shown: { timedTwentySeconds: false } },
     ],
     [
       'the spec #1674 Game with gameRoundMascot off',
