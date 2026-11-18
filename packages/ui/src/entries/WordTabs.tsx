@@ -23,7 +23,7 @@ import {
 import { wordTabsOf, type WordTab } from './word-tabs';
 
 /**
- * The Word card's tabs under its Lemma (ADR 0091): «Суть», «Приклад»,
+ * The Word card's tabs under its Lemma (ADR 0091, 0186): «Суть», «Приклад»,
  * «Зв’язки» and «Історія», without the empty ones, «Суть» selected first, in
  * the Entry card's tabs (`CardTabs`), and while `sourceTab` is on «Джерело»
  * last (ADR 0116).
@@ -83,7 +83,7 @@ function TabContent({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { strings: editionStrings, voice, count } = useEdition();
+  const { strings: editionStrings, voice } = useEdition();
   const strings = editionStrings.wordCard;
   const sizes = useWordTextSizes();
   const body = [typeStyle('sectionText', tokens), { color: colors.ink }];
@@ -93,22 +93,18 @@ function TabContent({
         <>
           <WordIllustration card={card} />
           <WordDefinition card={card} />
-          {tab.moreMeanings === 0 ? null : (
-            <WholeLinesText
-              testID="word-more-meanings"
-              {...voice}
-              style={[typeStyle('sub', tokens), { color: colors.muted }]}
-            >
-              {capitalised(
-                count(strings.moreMeanings, tab.moreMeanings),
-                voice.accessibilityLanguage,
-              )}
-            </WholeLinesText>
+          {tab.meanings.length === 0 ? null : (
+            <View testID="word-meanings" style={styles.paragraphs}>
+              <NumberedDefinitions definitions={tab.meanings} style={body} />
+            </View>
           )}
           {card.synonymRow === undefined ? null : (
             <SynonymRowLine synonymRow={card.synonymRow} onOpen={onOpenSynonymRow} />
           )}
           <OftenSaid card={card} onOpenCorrection={onOpenCorrection} />
+          {tab.history === undefined ? null : (
+            <WordHistory history={tab.history} onShown={onHistoryShown} />
+          )}
         </>
       );
     case 'example': {
@@ -156,31 +152,21 @@ function TabContent({
     case 'history':
       return (
         <>
-          {tab.meanings.length === 0 ? null : (
-            <DetailSection testID="word-meanings" title={strings.extraDefinitions}>
-              <NumberedDefinitions definitions={tab.meanings} style={body} />
-            </DetailSection>
-          )}
-          {tab.etymology.length === 0 ? null : (
-            <DetailSection testID="word-etymology" title={strings.etymology}>
-              {/* A paragraph per group of the dictionary's etymology, apart, so it reads as steps. */}
-              <View style={styles.paragraphs}>
-                {tab.etymology.map((paragraph, index) => (
-                  <WholeLinesText
-                    key={index}
-                    accessibilityLabel={withoutStress(paragraph)}
-                    {...voice}
-                    style={body}
-                  >
-                    {capitalised(paragraph, voice.accessibilityLanguage)}
-                  </WholeLinesText>
-                ))}
-              </View>
-            </DetailSection>
-          )}
-          {tab.history === undefined ? null : (
-            <WordHistory history={tab.history} onShown={onHistoryShown} />
-          )}
+          <DetailSection testID="word-etymology" title={strings.etymology}>
+            {/* A paragraph per group of the dictionary's etymology, apart, so it reads as steps. */}
+            <View style={styles.paragraphs}>
+              {tab.etymology.map((paragraph, index) => (
+                <WholeLinesText
+                  key={index}
+                  accessibilityLabel={withoutStress(paragraph)}
+                  {...voice}
+                  style={body}
+                >
+                  {capitalised(paragraph, voice.accessibilityLanguage)}
+                </WholeLinesText>
+              ))}
+            </View>
+          </DetailSection>
         </>
       );
   }

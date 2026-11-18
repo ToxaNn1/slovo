@@ -7,13 +7,18 @@ import type {
 } from '@slovo/core';
 
 /**
- * One tab of a Word's Entry card (ADR 0091), with what it shows: «Суть» the
- * primary Definition and how many other meanings «Історія» holds, «Приклад»
- * the Examples, «Зв’язки» the Synonyms and antonyms, «Історія» the other
- * meanings, the etymology and the Word History.
+ * One tab of a Word's Entry card (ADR 0091, 0186), with what it shows:
+ * «Суть» every Definition, the primary one first and the other ones under
+ * it, and the Word History, «Приклад» the Examples, «Зв’язки» the Synonyms
+ * and antonyms, «Історія» the etymology alone.
  */
 export type WordTab =
-  | { readonly key: 'essence'; readonly moreMeanings: number }
+  | {
+      readonly key: 'essence';
+      /** The Definitions other than the primary one, in order. */
+      readonly meanings: readonly string[];
+      readonly history: string | undefined;
+    }
   | { readonly key: 'example'; readonly examples: readonly [Example, ...Example[]] }
   | {
       readonly key: 'links';
@@ -22,10 +27,8 @@ export type WordTab =
     }
   | {
       readonly key: 'history';
-      readonly meanings: readonly string[];
-      /** The etymology in paragraphs (`etymologyParagraphs`), none when the Word has none. */
-      readonly etymology: readonly string[];
-      readonly history: string | undefined;
+      /** The etymology in paragraphs (`etymologyParagraphs`). */
+      readonly etymology: readonly [string, ...string[]];
     };
 
 /** The names of the tabs, which the Edition's strings give. */
@@ -38,7 +41,7 @@ export type WordTabKey = WordTab['key'];
  */
 export function wordTabsOf(card: WordCardModel): readonly [WordTab, ...WordTab[]] {
   const meanings = card.details?.extraDefinitions ?? [];
-  const etymology =
+  const [firstParagraph, ...paragraphs] =
     card.details?.etymology === undefined ? [] : etymologyParagraphs(card.details.etymology);
   const examples = [
     ...(card.example === undefined ? [] : [card.example]),
@@ -49,9 +52,9 @@ export function wordTabsOf(card: WordCardModel): readonly [WordTab, ...WordTab[]
   if (first !== undefined) tabs.push({ key: 'example', examples: [first, ...rest] });
   if (card.synonyms.length > 0 || card.antonyms.length > 0)
     tabs.push({ key: 'links', synonyms: card.synonyms, antonyms: card.antonyms });
-  if (meanings.length > 0 || etymology.length > 0 || card.history !== undefined)
-    tabs.push({ key: 'history', meanings, etymology, history: card.history });
-  return [{ key: 'essence', moreMeanings: meanings.length }, ...tabs];
+  if (firstParagraph !== undefined)
+    tabs.push({ key: 'history', etymology: [firstParagraph, ...paragraphs] });
+  return [{ key: 'essence', meanings, history: card.history }, ...tabs];
 }
 
 /**

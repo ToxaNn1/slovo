@@ -81,9 +81,7 @@ async function open({
         ? categoryFeed
         : feature === 'wordTabs'
           ? wordTabs
-          : feature === 'dashboard' ||
-            feature === 'categoryScreens' ||
-            shipped.isFeatureEnabled(feature),
+          : feature === 'categoryScreens' || shipped.isFeatureEnabled(feature),
   };
   const userState = await seedUserState(
     { onboardingFinished: '2026-09-01T09:00:00.000Z' },

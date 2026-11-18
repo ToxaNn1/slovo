@@ -55,7 +55,7 @@ const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
 
 /**
- * The Feed: the home with `dashboard` off, else opened from the Dashboard (ADR 0076). A vertical stream of Entry cards and Feed Notices, one per
+ * The Feed, opened from the Dashboard (ADR 0076). A vertical stream of Entry cards and Feed Notices, one per
  * screen. Its undo toasts outlive the card they came from, also when no card
  * is left.
  */

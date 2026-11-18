@@ -138,8 +138,6 @@ export interface Shown {
   readonly searchField: boolean;
   /** The fast reveal of the Feed's Entry cards after the first one in a visit; off, each plays the full reveal. */
   readonly fastReveal: boolean;
-  /** Whether the home is the Dashboard, which opens the Feed; else the Feed is the home (ADR 0076). */
-  readonly dashboard: boolean;
   /** The Feed header's wordmark opens the Dashboard (ADR 0079). */
   readonly dashboardWordmark: boolean;
   /** The Dashboard's logo plays the daily splash, the short cut, then the Dashboard again (ADR 0105). */
@@ -257,7 +255,6 @@ export function shownOf({
     search: on('searchButton'),
     searchField: on('search'),
     fastReveal: on('fastReveal'),
-    dashboard: on('dashboard'),
     dashboardWordmark: on('dashboardWordmark'),
     dailySplash: on('dailySplash'),
     heroSparks: on('heroSparks'),

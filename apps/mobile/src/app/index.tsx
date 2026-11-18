@@ -24,22 +24,13 @@ import { todayText } from '@/feed/today-text';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { useShown } from '@/shown-in-effect';
 
-import FeedRoute from './feed';
-
 /**
- * The home behind «Стрічка»: the Dashboard, which opens the Feed; with
- * `dashboard` off the Feed itself (ADR 0076).
- */
-export default function HomeScreen() {
-  return useShown().dashboard ? <DashboardScreen /> : <FeedRoute />;
-}
-
-/**
- * The Dashboard: the header, as the Feed's with the logo on an ink plate,
+ * The home behind «Стрічка», the Dashboard, which opens the Feed (ADR 0076):
+ * the header, as the Feed's with the logo on an ink plate,
  * over the blocks of the local day, in display order, each with the board's
  * room above it. A Mood's reply comes as a toast.
  */
-function DashboardScreen() {
+export default function HomeScreen() {
   return (
     <UndoToastProvider>
       <DashboardBlocks />

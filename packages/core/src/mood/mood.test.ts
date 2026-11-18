@@ -47,7 +47,7 @@ const MOODS: readonly Mood[] = [
 async function run({
   records = new Map<string, string>(),
   clock = fakeClock('2026-11-04T09:00:00+02:00').clock,
-  on = ['wordOfTheDay', 'dashboard', 'mood', 'analytics'],
+  on = ['wordOfTheDay', 'mood', 'analytics'],
   analyticsFails = false,
 }: {
   records?: Map<string, string>;
@@ -131,9 +131,7 @@ describe('The Mood check-in', () => {
       content,
       edition: testEdition({
         isFeatureEnabled: (feature) =>
-          ['wordOfTheDay', 'wordOfTheDayArchive', 'previousWords', 'dashboard', 'mood'].includes(
-            feature,
-          ),
+          ['wordOfTheDay', 'wordOfTheDayArchive', 'previousWords', 'mood'].includes(feature),
         moods: MOODS,
         dashboardMoods: MOODS,
         userSettingDefaults: { mix: { kinds: { correction: false } } },
@@ -259,7 +257,7 @@ describe('The Mood check-in', () => {
   });
 
   it('has no Mood block and asks nothing with `mood` off', async () => {
-    const { app, records } = await run({ on: ['wordOfTheDay', 'dashboard', 'analytics'] });
+    const { app, records } = await run({ on: ['wordOfTheDay', 'analytics'] });
 
     await app.mood.choose('calm');
 

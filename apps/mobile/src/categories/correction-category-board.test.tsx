@@ -75,7 +75,6 @@ async function open() {
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
-      feature === 'dashboard' ||
       feature === 'corrections' ||
       feature === 'correctionCategoryScreens' ||
       shipped.isFeatureEnabled(feature),
