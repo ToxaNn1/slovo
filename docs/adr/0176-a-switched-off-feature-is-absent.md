@@ -10,4 +10,6 @@ Owner decision of 2026-11-17, after the app pass. This ADR supersedes ADR 0073 (
 
 **The API.** A retired Feature Switch leaves the `states` of every admin answer. The admin ships with the backend and its client validates no answer (ADR 0170), so the breaking-change check skips a field gone from `body.states` on a `/v1/admin/` path; any other admin output field that goes still breaks `/v1` (amends ADR 0122).
 
-**Still to do.** The 31 other switches whose `off` shows an older version (Game Lives and limits, the Game hub, the Feed board parts, the Profile board parts and others) each retire in their own change by the same rule.
+**Retired by the same rule.** `gameThreeLives` (a Game has 3 Lives), `timedTwentySeconds` («На час» lasts 20 seconds and ends on «Фініш») and `newLevelScreen` (a new Level shows the new Level screen). With `dailyCrossword` off, its Badges are absent too.
+
+**Still to do.** 28 switches whose `off` shows an older version, each retired in its own change by the same rule: `gameAnswerCard`, `finishPoster`, `gameAnswerBanner`, `gameQuestionOnGround`, `gameOptionStamp`, `plainGameReview`, `gameHubGroups`, `gameHubRecord`, `noCounters`, `badgeToast`, `eveningNotification`, `wordTabs`, `entryPanelAllKinds`, `swipeMarks`, `savedSwipesOff`, `collectionBoardStyle`, `textSizeSteps`, `rarityRange`, `dashboard`, `categoryKnownFirst`, `quietCategories`, `offlinePlate`, and the six off in the UA Edition, which wait for the owner: `letterTiles`, `survivalStreak`, `survivalOneLife`, `pairsStay`, `buildIdiomCheck`, `livesOverWarmup`.
