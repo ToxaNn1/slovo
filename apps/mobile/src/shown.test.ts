@@ -156,6 +156,10 @@ describe('what the reader is shown', () => {
       { off: ['categoryFeed'], shown: { categoryFeed: false } },
     ],
     [
+      "an Entry's card from a Curated Collection's screen with the collection's Feed off",
+      { off: ['curatedCollectionFeed'], shown: { curatedCollectionFeed: false } },
+    ],
+    [
       'a «Стрічка» tab to the Dashboard with the Feed tab off',
       { off: ['feedTab'], shown: { feedTab: false } },
     ],

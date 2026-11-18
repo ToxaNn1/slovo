@@ -141,6 +141,20 @@ appId: ${APP_ID || 'app.slovo.uk'}
     env:
       ROUTE: '/curated-collection/[collectionId]'
       SCREEN: curated-collection(-error)?
+# A collection's Feed from a tap on one of its Entries (the Entry card with the switch off).
+- scrollUntilVisible:
+    element:
+      id: 'curated-collection-entry-[^-]+'
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: 'curated-collection-entry-[^-]+'
+    index: 0
+- runFlow:
+    file: app-pass/screen.yaml
+    env:
+      ROUTE: '/curated-collection-feed/[collectionId]'
+      SCREEN: curated-collection-feed-screen|entry-screen
 # The grid of every Curated Collection, and a collection's screen from its tile.
 - runFlow:
     file: app-pass/open.yaml
