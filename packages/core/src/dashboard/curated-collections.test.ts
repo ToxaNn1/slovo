@@ -183,6 +183,43 @@ describe('The Curated Collections rail', () => {
     expect(app.dashboard.blocks.map(({ kind }) => kind)).toEqual(['wordOfTheDay']);
   });
 
+  it("draws on each card the pictogram of the Category it names, else the Edition's default", async () => {
+    const category = (id: string) => ({
+      id,
+      displayName: id,
+      description: `About ${id}`,
+      tone: 'loud' as const,
+    });
+    const app = await openComposition({
+      content: createMemoryContentPort({
+        words: [word('w_one')],
+        categories: [category('nature'), category('feelings')],
+        correctionCategories: [category('shop'), category('speech')],
+        curatedCollections: [
+          { ...collection('cc_a', '2026-11-04'), pictogram: 'feelings' },
+          { ...collection('cc_b', '2026-11-03'), pictogram: 'speech' },
+          collection('cc_c', '2026-11-02'),
+          { ...collection('cc_d', '2026-11-01'), pictogram: 'gone' },
+        ],
+      }),
+      edition: testEdition({
+        isFeatureEnabled: (feature) =>
+          ['wordOfTheDay', 'dashboard', 'curatedCollections'].includes(feature),
+        curatedCollectionPictogram: 'nature',
+      }),
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock: fakeClock('2026-11-04T09:00:00+02:00').clock,
+      random: { next: () => 0.25 },
+    });
+
+    expect(app.curatedCollections.rail.map(({ pictogram }) => pictogram)).toEqual([
+      { of: 'category', categoryId: 'feelings', position: 1 },
+      { of: 'correctionCategory', categoryId: 'speech', position: 1 },
+      { of: 'category', categoryId: 'nature', position: 0 },
+      { of: 'category', categoryId: 'nature', position: 0 },
+    ]);
+  });
+
   it('has no block when nothing is published yet', async () => {
     const { app } = await run({ curatedCollections: [collection('cc_later', '2027-01-01')] });
 

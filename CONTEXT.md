@@ -244,7 +244,7 @@ The home the app opens on, behind «Стрічка» unless `feedTab` makes that
 _Avoid_: Home, start screen, overview
 
 **Curated Collection**:
-«Добірка»: an editorial list of Entries shipped in the Language Pack with a publish date, unlocking on it, shown on the Dashboard's «Добірки» rail; not a Collection, though «ДОДАТИ» copies it into one.
+«Добірка»: an editorial list of Entries of any kind shipped in the Language Pack with a publish date, unlocking on it, shown on the Dashboard's «SLOVO пропонує» rail right above «Категорії», its tile drawing the pictogram of the Category or Correction Category it names, else the Edition's default; not a Collection, though «ДОДАТИ» copies it into one.
 _Avoid_: Playlist, featured, set
 
 **Collection**:

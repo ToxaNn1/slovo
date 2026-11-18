@@ -487,7 +487,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   previousWords: FeatureSwitchStateSchema,
   /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `dashboard` or `corrections` is. */
   correctionTypes: FeatureSwitchStateSchema,
-  /** Curated Collections: the Dashboard's «Добірки» rail of editorial Entry sets from the Language Pack (ADR 0076). Off while `dashboard` is. */
+  /** Curated Collections: the Dashboard's «SLOVO пропонує» rail of editorial Entry sets from the Language Pack, above «Категорії» (ADR 0076, 0178). Off while `dashboard` is. */
   curatedCollections: FeatureSwitchStateSchema,
   /** Swipe marks: the reader swipes an Entry card right for Known and left for Unknown, with an undo; off, the card's mark buttons stay. Off while `knowledge` is. */
   swipeMarks: FeatureSwitchStateSchema,
@@ -1024,6 +1024,12 @@ export const EditionConfigSchema = z
      */
     categoriesRequiringHistory: z.array(KebabCaseIdSchema),
     /**
+     * The id of the Category or Correction Category whose pictogram a Curated
+     * Collection's tile draws when the collection names none (ADR 0178);
+     * unset, such a tile draws no pictogram.
+     */
+    curatedCollectionPictogram: KebabCaseIdSchema.optional(),
+    /**
      * The languages Words come from, in their order (ADR 0052): the Edition
      * owns the list, so the Core stays language-agnostic. Empty when the
      * Edition gives no Word an origin.
@@ -1083,6 +1089,7 @@ export const EditionConfigSchema = z
         categories,
         correctionCategories,
         categoriesRequiringHistory,
+        curatedCollectionPictogram,
         originLanguages,
         moods,
         dashboardMoods,
@@ -1130,6 +1137,17 @@ export const EditionConfigSchema = z
           });
         }
       });
+      if (
+        curatedCollectionPictogram !== undefined &&
+        !known.categories.has(curatedCollectionPictogram) &&
+        !known.correctionCategories.has(curatedCollectionPictogram)
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['curatedCollectionPictogram'],
+          message: `Unknown Category id "${curatedCollectionPictogram}"`,
+        });
+      }
       reportRepeats(
         context,
         originLanguages.map(({ code }) => code),

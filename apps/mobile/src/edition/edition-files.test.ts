@@ -881,7 +881,7 @@ describe('the strings of the Category screens and the board style (spec #1604)',
     }).toEqual({
       categories: 'Категорії',
       correctionCategories: 'Виправлення',
-      curatedCollections: 'Добірки',
+      curatedCollections: 'SLOVO пропонує',
       quiet: 'Категорія',
       add: 'ДОДАТИ',
       inMix: 'У МІКСІ',

@@ -15,9 +15,26 @@ import { dashboardRecords } from './records';
 /** The rail shows this many cards at most. */
 const RAIL_LENGTH = 10;
 
+/**
+ * The pictogram a Curated Collection's tile draws (ADR 0178): that of a
+ * Category of Words or of Corrections, at its place in the Language Pack's
+ * list of them, which picks the shapes as on that Category's own tile.
+ */
+export interface CuratedCollectionPictogram {
+  readonly of: 'category' | 'correctionCategory';
+  readonly categoryId: string;
+  /** The Category's place in its list of the Language Pack, from 0. */
+  readonly position: number;
+}
+
 /** One card of the Curated Collections rail: «Нова» until the reader opens it. */
 export interface CuratedCollectionCard {
   readonly collection: CuratedCollection;
+  /**
+   * The collection's own pictogram, else the Edition's default; none when
+   * neither names a Category of the Language Pack.
+   */
+  readonly pictogram: CuratedCollectionPictogram | undefined;
   readonly state: 'new' | 'opened';
   /** «Додано ✓»: one of the reader's Collections is a copy of it. */
   readonly added: boolean;
@@ -48,14 +65,17 @@ export interface CuratedCollectionScreen {
 }
 
 /**
- * The Curated Collections (ADR 0076): the Dashboard's «Добірки» rail of the
- * Language Pack's editorial Entry sets. A collection is on the rail from its
- * publication date in the local calendar; the unopened ones come first, then
- * the newest, ten at most. With `curatedCollections` off the rail is empty.
+ * The Curated Collections (ADR 0076, 0178): the Dashboard's «SLOVO пропонує»
+ * rail of the Language Pack's editorial Entry sets. A collection is on the
+ * rail from its publication date in the local calendar; the unopened ones come
+ * first, then the newest, ten at most. With `curatedCollections` off the rail
+ * is empty.
  */
 export interface CuratedCollections {
   /** The cards in display order. A change makes a new array and tells the subscribers. */
   readonly rail: readonly CuratedCollectionCard[];
+  /** The rail header's count: every collection published by today, past the ten cards. */
+  readonly published: number;
   /**
    * Calls `listener` after each change of the rail, and of what a screen
    * shows (a Knowledge Mark, a Hidden Entry, a copy). Returns the call that stops it.
@@ -90,10 +110,10 @@ export async function openCuratedCollections({
   hiddenEntries,
   knowledge,
 }: {
-  edition: Pick<Edition, 'isFeatureEnabled'>;
+  edition: Pick<Edition, 'isFeatureEnabled' | 'curatedCollectionPictogram'>;
   content: Pick<ContentReadPort, 'listCuratedCollections'>;
   userState: Pick<UserState, 'list' | 'write'>;
-  entries: Pick<Entries, 'getManyOfAnyKind'>;
+  entries: Pick<Entries, 'getManyOfAnyKind' | 'categories' | 'correctionCategories'>;
   collections: Pick<Collections, 'list' | 'createCopy' | 'subscribe'>;
   hiddenEntries: Pick<HiddenEntries, 'has' | 'subscribe'>;
   knowledge: { subscribe(listener: () => void): unknown };
@@ -106,6 +126,8 @@ export async function openCuratedCollections({
   const records = dashboardRecords.curatedCollectionsOpened;
   // The pack is read once: its collections change only with the pack.
   const all = on ? await content.listCuratedCollections() : [];
+  const pictogramOf = await pictograms(on ? entries : undefined);
+  const defaultPictogram = pictogramOf(edition.curatedCollectionPictogram);
 
   async function openedIds(): Promise<ReadonlySet<string>> {
     return new Set((await userState.list(records)).keys());
@@ -127,13 +149,18 @@ export async function openCuratedCollections({
     });
   }
 
-  async function railOf(): Promise<readonly CuratedCollectionCard[]> {
+  /** The collections published by today, in the pack's order. */
+  const publishedByToday = () => {
     const today = todayKey(clock);
+    return all.filter(({ publishedOn }) => publishedOn <= today);
+  };
+
+  async function railOf(): Promise<readonly CuratedCollectionCard[]> {
     const opened = await openedIds();
-    return all
-      .filter(({ publishedOn }) => publishedOn <= today)
+    return publishedByToday()
       .map((collection): CuratedCollectionCard => ({
         collection,
+        pictogram: pictogramOf(collection.pictogram) ?? defaultPictogram,
         state: opened.has(collection.id) ? 'opened' : 'new',
         added: isAdded(collection.id),
       }))
@@ -174,6 +201,9 @@ export async function openCuratedCollections({
   return {
     get rail() {
       return rail;
+    },
+    get published() {
+      return publishedByToday().length;
     },
     subscribe: subscribers.subscribe,
     async open(collectionId) {
@@ -220,5 +250,31 @@ export async function openCuratedCollections({
         adding.delete(collectionId);
       }
     },
+  };
+}
+
+/**
+ * The pictogram of a Category or Correction Category by its id, from the
+ * Language Pack's lists; nothing for an id of neither, or with nothing to read.
+ */
+async function pictograms(
+  entries: Pick<Entries, 'categories' | 'correctionCategories'> | undefined,
+): Promise<(categoryId: string | undefined) => CuratedCollectionPictogram | undefined> {
+  if (entries === undefined) return () => undefined;
+  const [categories, correctionCategories] = await Promise.all([
+    entries.categories(),
+    entries.correctionCategories(),
+  ]);
+  const lists = [
+    ['category', categories],
+    ['correctionCategory', correctionCategories],
+  ] as const;
+  return (categoryId) => {
+    if (categoryId === undefined) return undefined;
+    for (const [of, list] of lists) {
+      const position = list.findIndex(({ id }) => id === categoryId);
+      if (position >= 0) return { of, categoryId, position };
+    }
+    return undefined;
   };
 }

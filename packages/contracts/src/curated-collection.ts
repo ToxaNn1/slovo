@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { EntryIdSchema } from './entry';
-import { EntryTextSchema, hasNoRepeats, recordIdSchema } from './shared';
+import { EntryTextSchema, hasNoRepeats, KebabCaseIdSchema, recordIdSchema } from './shared';
 
 /**
  * A Curated Collection id: opaque, assigned when the collection is authored
@@ -20,12 +20,19 @@ const curatedCollectionShape = {
   publishedOn: z.iso.date(),
   /** The Entries in the collection's order. */
   entryIds: z.array(EntryIdSchema).min(1).refine(hasNoRepeats, 'Expected each Entry at most once'),
+  /**
+   * The id of the Category or Correction Category whose pictogram the
+   * collection's tile draws (ADR 0178); unset, the Edition's
+   * `curatedCollectionPictogram`. The Language Pack build refuses an id that
+   * names no Category.
+   */
+  pictogram: KebabCaseIdSchema.optional(),
 };
 
 /**
  * A Curated Collection as the Language Pack holds it (ADR 0076): an editorial
  * set of Entries with a name, a description and the local date from which the
- * Dashboard's «Добірки» rail shows it.
+ * Dashboard's «SLOVO пропонує» rail shows it, and the Category whose pictogram its tile draws (ADR 0178).
  */
 export const CuratedCollectionSchema = z.strictObject(curatedCollectionShape);
 
