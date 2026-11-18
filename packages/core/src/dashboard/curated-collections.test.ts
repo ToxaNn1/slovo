@@ -8,7 +8,14 @@ import { correction, fakeClock, settle, testEdition, word } from '../test-suppor
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 function collection(id: string, publishedOn: string): CuratedCollection {
-  return { id, name: `Name ${id}`, description: `About ${id}`, publishedOn, entryIds: ['w_one'] };
+  return {
+    id,
+    name: `Name ${id}`,
+    description: `About ${id}`,
+    publishedOn,
+    entryIds: ['w_one'],
+    retired: false,
+  };
 }
 
 const collections = [
@@ -260,6 +267,7 @@ describe('A Curated Collection screen', () => {
     name: 'Добірка',
     description: 'Про добірку',
     publishedOn: '2026-11-01',
+    retired: false,
     entryIds: ['w_three', 'w_old', 'w_one', 'w_two'],
   };
 
