@@ -9352,6 +9352,14 @@
                           ],
                           "type": "string"
                         },
+                        "moodEffect": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "previousWords": {
                           "enum": [
                             "on",
@@ -9681,6 +9689,7 @@
                         "reduceMotion",
                         "fastReveal",
                         "mood",
+                        "moodEffect",
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",
@@ -11124,6 +11133,14 @@
                           ],
                           "type": "string"
                         },
+                        "moodEffect": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "previousWords": {
                           "enum": [
                             "on",
@@ -11453,6 +11470,7 @@
                         "reduceMotion",
                         "fastReveal",
                         "mood",
+                        "moodEffect",
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",
@@ -12820,6 +12838,14 @@
                           ],
                           "type": "string"
                         },
+                        "moodEffect": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "previousWords": {
                           "enum": [
                             "on",
@@ -13149,6 +13175,7 @@
                         "reduceMotion",
                         "fastReveal",
                         "mood",
+                        "moodEffect",
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",

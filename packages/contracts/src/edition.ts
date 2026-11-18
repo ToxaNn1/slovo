@@ -80,13 +80,16 @@ export type MoodShift = z.infer<typeof MoodShiftSchema>;
  * language, its emoji, the reply the Dashboard's Mood check-in answers it
  * with, in the Edition's language, and its Feed parameters (ADR 0076): the
  * rarity band put first and a shift per kind. A mood that names neither
- * leaves the Feed as it is.
+ * leaves the Feed as it is. `effect` is the short line under the check-in
+ * that says what the Mood changed in the Feed (ADR 0185): every Mood the
+ * Dashboard lists has one.
  */
 export const MoodSchema = z.strictObject({
   id: KebabCaseIdSchema,
   name: z.string().min(1),
   emoji: z.string().min(1),
   reply: TextSchema,
+  effect: TextSchema.optional(),
   rarityBand: RarityBandSchema.default('whole'),
   shifts: z.partialRecord(MixKindSchema, MoodShiftSchema).default({}),
 });
@@ -470,6 +473,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   fastReveal: FeatureSwitchStateSchema,
   /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day (ADR 0076). */
   mood: FeatureSwitchStateSchema,
+  /** The Mood's effect: the line under the Mood check-in that says what the picked Mood changed in the Feed, and the second tap that unpicks it (ADR 0185). Off while `mood` is. */
+  moodEffect: FeatureSwitchStateSchema,
   /** «Попередні слова»: the Dashboard block with the three newest Word of the Day archive days before today (ADR 0076). Off while `wordOfTheDayArchive` is. */
   previousWords: FeatureSwitchStateSchema,
   /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `corrections` is. */
@@ -1143,6 +1148,13 @@ export const EditionConfigSchema = z
           });
         }
         dashboardMoodIds.add(id);
+        if (moods.find((mood) => mood.id === id)?.effect === undefined && moodIds.has(id)) {
+          context.addIssue({
+            code: 'custom',
+            path: ['dashboardMoods', index],
+            message: `The Dashboard mood "${id}" has no effect line`,
+          });
+        }
       });
       for (const field of ['categories', 'correctionCategories'] as const) {
         const inMix = userSettingDefaults.mix[field];
