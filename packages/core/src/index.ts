@@ -235,9 +235,11 @@ export {
 export { type CorrectionTypeRow, type CorrectionTypeTile } from './dashboard/correction-types';
 export {
   type CuratedCollectionCard,
+  type CuratedCollectionPictogram,
   type CuratedCollectionScreen,
 } from './dashboard/curated-collections';
 export {
+  type CuratedCollectionsBlock,
   type DashboardBlock,
   type MoodBlock,
   type PreviousWordsBlock,
