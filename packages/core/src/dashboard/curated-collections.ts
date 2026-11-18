@@ -212,7 +212,7 @@ export async function openCuratedCollections({
       return grid;
     },
     get published() {
-      return publishedByToday().length;
+      return grid.length;
     },
     subscribe: subscribers.subscribe,
     async open(collectionId) {

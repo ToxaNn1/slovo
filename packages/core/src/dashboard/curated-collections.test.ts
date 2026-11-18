@@ -198,10 +198,13 @@ describe('The Curated Collections rail', () => {
     expect(app.curatedCollections.published).toBe(12);
 
     time.advance(2 * 60 * 1000);
+    // Past midnight, the header counts the grid it heads until the grid is read again.
+    expect(app.curatedCollections.published).toBe(12);
     await app.resume();
 
     expect(gridOf()[0]).toBe('cc_tomorrow:new');
     expect(gridOf()).toHaveLength(13);
+    expect(app.curatedCollections.published).toBe(13);
   });
 
   it('has no rail and no block with `curatedCollections` off', async () => {
