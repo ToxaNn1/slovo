@@ -156,12 +156,12 @@ describe('the whole onboarding flow', () => {
     expect(screen.queryByTestId('dashboard')).toBeNull();
     expect(shouts).toEqual([
       'СЛОВО',
-      'ПЕРШЕ',
+      'ТРИМАЙ!',
       'ГРАЙ!',
       'РІВЕНЬ?',
       'НАВІЩО?',
       'ЦІЛЬ',
-      'НАГАДУВАННЯ',
+      'ДЗИНЬ!',
     ]);
 
     expectStep(1);
