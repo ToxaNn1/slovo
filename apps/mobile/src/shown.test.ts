@@ -19,7 +19,6 @@ const everything: Shown = {
   gameRoundMascot: true,
   gameQuestionOnGround: true,
   gameOptionStamp: true,
-  livesOverWarmup: true,
   gameEndToFeed: true,
   plainGameReview: true,
   gameHubGroups: true,
@@ -229,10 +228,6 @@ describe('what the reader is shown', () => {
     [
       'the spec #1674 Game with gameOptionStamp off',
       { off: ['gameOptionStamp'], shown: { gameOptionStamp: false } },
-    ],
-    [
-      'the spec #1674 Game with livesOverWarmup off',
-      { off: ['livesOverWarmup'], shown: { livesOverWarmup: false } },
     ],
     [
       'the spec #1674 Game with gameEndToFeed off',

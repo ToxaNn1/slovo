@@ -314,10 +314,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Печатки варіантів',
     line: 'Варіанти відповіді з печаткою ✓ і закресленим неправильним текстом.',
   },
-  livesOverWarmup: {
-    name: 'Екран «Розминка!»',
-    line: 'Коли життя скінчилися, показують екран «Розминка!» і кількість правильних відповідей.',
-  },
   gameEndToFeed: {
     name: 'Кнопка «До стрічки»',
     line: 'Наприкінці гри є третя кнопка, що веде до стрічки.',
@@ -445,10 +441,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   categoryKnownFirst: {
     name: 'Знайомі спершу',
     line: 'На екрані категорії спершу йдуть слова з позначкою «ЗНАЮ».',
-  },
-  quietCategories: {
-    name: 'Тихі категорії',
-    line: 'Тиха категорія має спокійніший вигляд і приглушену плитку.',
   },
   collectionBoardStyle: {
     name: 'Добірки плитками',

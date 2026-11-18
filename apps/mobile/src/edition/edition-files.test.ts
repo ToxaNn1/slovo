@@ -1056,11 +1056,6 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
     });
     expect(parsed.round.lives).toBe('Життів: {count} з {total}');
     expect(parsed.round.typed.submit).toBe('Перевірити');
-    expect(parsed.warmup).toEqual({
-      title: 'Розминка!',
-      line: 'Майже. Наступне вийде.',
-      hits: 'влучних',
-    });
     expect(parsed.finals).toMatchObject({
       again: 'Ще раз!',
       toGames: 'До ігор',

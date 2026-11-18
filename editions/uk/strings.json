@@ -1951,12 +1951,6 @@
       "xpCount": "+{count} XP",
       "best": "Рекорд"
     },
-    "livesOver": "{mode} · {score}/{total}",
-    "warmup": {
-      "title": "Розминка!",
-      "line": "Майже. Наступне вийде.",
-      "hits": "влучних"
-    },
     "finals": {
       "rounds": "Твої раунди",
       "chosen": "Твій вибір: {text}",

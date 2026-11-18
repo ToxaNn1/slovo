@@ -21,10 +21,7 @@ const FINISH_SIZE = Math.round(typeRoles.resultTitle.size * 2.2);
  * straight to «ФІНІШ» (ADR 0137), then «ВЛУЧНО!» at
  * 60% right or more, else «ЩЕ РАУНД!»; the right answers out of those played;
  * the framed «НОВИЙ РЕКОРД!» stamp once the Game beat the record; the XP and
- * Best result tiles. A Game that lost its last Life gets «Розминка!» with
- * `warmup` on: the mode's name and the score, «Майже. Наступне вийде.», the
- * Mascot at the left and the big count of right answers out of the Rounds
- * played; else the same poster as a finished Game short of its target,
+ * Best result tiles. A Game that lost its last Life gets the same poster as a finished Game short of its target,
  * «ФІНІШ» and «ЩЕ РАУНД!» with the tiles (board «slogo game last», owner
  * 15.11). The Game Review follows, then «Ще раз!» across the screen and
  * «До ігор» across under it; no «До стрічки» (owner, 15.11). A Game on target arrives with the success haptic.
@@ -32,9 +29,7 @@ const FINISH_SIZE = Math.round(typeRoles.resultTitle.size * 2.2);
 export function GameEndPoster({
   game,
   end,
-  modeName,
   bestResult,
-  warmup,
   onAgain,
   onToGames,
   review,
@@ -44,12 +39,8 @@ export function GameEndPoster({
   game: CurrentGame;
   /** How it ended. */
   end: GameEnd;
-  /** The Game Mode's name, e.g. «Вгадай слово». */
-  modeName: string;
   /** The best result, the Game just over included. */
   bestResult: number | undefined;
-  /** Whether a Game whose Lives ran out ends on «Розминка!» (`livesOverWarmup`). */
-  warmup: boolean;
   onAgain: () => void;
   /** Opens the Games hub. */
   onToGames: () => void;
@@ -75,14 +66,8 @@ export function GameEndPoster({
 
   const upper = (text: string) => text.toLocaleUpperCase(voice.accessibilityLanguage);
   const finish = words.finish;
-  const kicker = fill(words.livesOver, {
-    mode: upper(modeName),
-    score: String(end.right),
-    total: String(game.roundLimit ?? end.played),
-  });
-  const hits = `${String(end.right)}/${String(end.played)}`;
   // The board heads every end the same, a Game that lost its last Life «ЩЕ РАУНД!» like one short of its target.
-  const finishPanel = (
+  const panel = (
     <ResultPanel
       title={upper(onTarget ? finish.won : finish.more)}
       // «з 4 влучань»: the noun follows the Rounds played, not the hits.
@@ -119,41 +104,6 @@ export function GameEndPoster({
       testID="game-end-panel-foot"
     />
   );
-  const panel =
-    end.kind === 'lives-over' && warmup ? (
-      <ResultPanel
-        kicker={kicker}
-        title={words.warmup.title}
-        line={words.warmup.line}
-        mascot={mascot}
-        stacked
-        beside={
-          <View
-            testID="game-end-hits"
-            accessible
-            accessibilityLabel={`${hits} ${words.warmup.hits}`}
-            {...voice}
-            style={styles.hits}
-          >
-            <Text
-              maxFontSizeMultiplier={fontScaleCap.number}
-              style={[typeStyle('resultTitle', tokens), { color: keyInk }]}
-            >
-              {hits}
-            </Text>
-            <Text
-              maxFontSizeMultiplier={fontScaleCap.text}
-              style={[typeStyle('eyebrow', tokens), { color: keyInk }]}
-            >
-              {upper(words.warmup.hits)}
-            </Text>
-          </View>
-        }
-        testID="game-end-panel-foot"
-      />
-    ) : (
-      finishPanel
-    );
 
   return (
     <ScrollView
@@ -163,24 +113,22 @@ export function GameEndPoster({
     >
       {panel}
       <View style={styles.body}>
-        {end.kind === 'lives-over' && warmup ? null : (
-          <View style={styles.numbers}>
+        <View style={styles.numbers}>
+          <ResultNumber
+            testID="game-end-xp"
+            value={fill(finish.xpCount, { count: String(end.xp) })}
+            label={finish.xp}
+            spoken={`${finish.xp}: ${fill(finish.xpCount, { count: String(end.xp) })}`}
+          />
+          {bestResult === undefined ? null : (
             <ResultNumber
-              testID="game-end-xp"
-              value={fill(finish.xpCount, { count: String(end.xp) })}
-              label={finish.xp}
-              spoken={`${finish.xp}: ${fill(finish.xpCount, { count: String(end.xp) })}`}
+              testID="game-end-best"
+              value={String(bestResult)}
+              label={finish.best}
+              spoken={`${finish.best}: ${String(bestResult)}`}
             />
-            {bestResult === undefined ? null : (
-              <ResultNumber
-                testID="game-end-best"
-                value={String(bestResult)}
-                label={finish.best}
-                spoken={`${finish.best}: ${String(bestResult)}`}
-              />
-            )}
-          </View>
-        )}
+          )}
+        </View>
         <GameReviewOf rounds={game.played} review={review} />
         {/* «Ще раз!» the main action across the screen, «До ігор» across under it (owner, 15.11). */}
         <View style={styles.actions}>
@@ -210,6 +158,5 @@ const styles = StyleSheet.create({
     paddingVertical: space[1],
     transform: [{ rotate: '-4deg' }],
   },
-  hits: { flex: 1, alignItems: 'flex-end' },
   actions: { gap: space[3] },
 });

@@ -462,7 +462,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** «Пари»: a found pair stays red, the captions «СЛОВО» and «ЗНАЧЕННЯ», no pause after a pair (ADR 0138, 0139); off while `gamePairs` is. */
   /** «Склади вислів»: decoy fragments from other expressions and the answer judged on «Перевірити» (ADR 0139); off, on the last fragment. Off while `gameBuildIdiom` is. */
   /** «Розминка!» at the end of a Game whose Lives ran out, with the count of right answers and the sad Mascot (ADR 0139); off while `finishPoster` is. */
-  livesOverWarmup: FeatureSwitchStateSchema,
   /** The third end action «До стрічки» beside «Ще раз» and «До ігор» (ADR 0139); off while `finishPoster` is. */
   gameEndToFeed: FeatureSwitchStateSchema,
   /** The plain Game Review: one row per Round, ✓ or ✗ and the word, which does not expand and opens nothing (ADR 0139); off, the Game Review of spec #1674. Off while `gameReview` is. */
@@ -542,7 +541,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** Known first on a Category's screen: its Known Entries, stamped «ЗНАЮ», come before the rest, each group in Language Pack order (ADR 0111); off, all in Language Pack order as the board draws. Off while `categoryScreens` is. */
   categoryKnownFirst: FeatureSwitchStateSchema,
   /** Quiet Categories: the quiet variant of a Category screen and the muted tile for a Category whose tone is `quiet` (ADR 0081); off, a quiet Category draws loud. Off while `categoryScreens` is. */
-  quietCategories: FeatureSwitchStateSchema,
   /** The board style of the Collections: their list as the Category grid and a Collection's screen as a Category screen (ADR 0082); off, today's list and screen. */
   collectionBoardStyle: FeatureSwitchStateSchema,
   /** «Скопіювати посилання» on the share sheet of a Collection, which copies its Collection Link with `expo-clipboard` (ADR 0132); off until the EAS build with that module is out, and off the sheet keeps the system Share alone. Off while `collectionLinks` is. */

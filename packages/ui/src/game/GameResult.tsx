@@ -1,14 +1,6 @@
 import { countsAsWon, type GameOver } from '@slovo/core';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
-import {
-  ScrollView,
-  type StyleProp,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, Defs, Pattern, Polygon } from 'react-native-svg';
 
 import { fill, useEdition } from '../providers/EditionProvider';
@@ -39,15 +31,9 @@ const MASCOT_COLUMN = mascotWidth + 2 * space[4];
  * would take its whole width on one line, run off the screen and squeeze the
  * title and line beside it until their words break.
  */
-export function PanelMascot({
-  children,
-  style,
-}: {
-  children: ReactNode;
-  style?: StyleProp<ViewStyle> | undefined;
-}) {
+export function PanelMascot({ children }: { children: ReactNode }) {
   return (
-    <View testID="game-panel-mascot" style={[styles.mascot, style]}>
+    <View testID="game-panel-mascot" style={styles.mascot}>
       {children}
     </View>
   );
@@ -103,31 +89,23 @@ export function PanelGround({ color }: { color: string }) {
 }
 
 /**
- * The red panel over a result: the ground, an eyebrow `kicker`, the title and
- * its `line` read as one heading, and the Mascot beside them, or under them
- * when `stacked` (the Lives-over poster, board 07, g9).
+ * The red panel over a result: the ground, the title and its `line` read as
+ * one heading, and the Mascot beside them.
  */
 export function ResultPanel({
-  kicker,
   title,
   line,
   lineTestID,
   mascot,
-  stacked = false,
   banner,
-  beside,
   testID,
 }: {
-  kicker?: string | undefined;
   title: string;
   line: string | undefined;
   lineTestID?: string;
   mascot: ReactNode;
-  stacked?: boolean;
   /** What the panel shows over its title, such as the huge «ФІНІШ». */
   banner?: ReactNode;
-  /** What stands right of the Mascot under a stacked title, such as the count of «Розминка!». */
-  beside?: ReactNode;
   /** The panel's foot, under the ground. */
   testID?: string;
 }) {
@@ -139,21 +117,8 @@ export function ResultPanel({
     <View style={styles.panel}>
       <PanelGround color={colors.accent} />
       {banner}
-      <View testID={testID} style={[styles.panelFoot, stacked ? styles.stacked : null]}>
-        <View
-          accessible
-          accessibilityRole="header"
-          {...voice}
-          style={stacked ? styles.stackedText : styles.text}
-        >
-          {kicker === undefined ? null : (
-            <Text
-              maxFontSizeMultiplier={fontScaleCap.text}
-              style={[typeStyle('eyebrow', tokens), { color: keyInk }]}
-            >
-              {kicker}
-            </Text>
-          )}
+      <View testID={testID} style={styles.panelFoot}>
+        <View accessible accessibilityRole="header" {...voice} style={styles.text}>
           <WholeWordsText
             text={title}
             typeRole="resultTitle"
@@ -170,14 +135,7 @@ export function ResultPanel({
             </Text>
           )}
         </View>
-        {beside === undefined ? (
-          <PanelMascot style={stacked ? styles.stackedMascot : undefined}>{mascot}</PanelMascot>
-        ) : (
-          <View style={styles.beside}>
-            <PanelMascot style={styles.stackedMascot}>{mascot}</PanelMascot>
-            {beside}
-          </View>
-        )}
+        <PanelMascot>{mascot}</PanelMascot>
       </View>
     </View>
   );
@@ -380,12 +338,6 @@ const styles = StyleSheet.create({
   },
   text: { flex: 1, gap: space[2] - 2 },
   // The Lives-over poster (board 07, g9): the title across the panel, the Mascot under it, its figure in line with the text.
-  stacked: { flexDirection: 'column', alignItems: 'flex-start', gap: 0 },
-  stackedText: { alignSelf: 'stretch', gap: space[2] - 2 },
-  // The figure in line with the text, past the padding the Mascot draws around it.
-  stackedMascot: { marginLeft: -space[4] },
-  // The Mascot at the left, what stands beside it at the right (board g9).
-  beside: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
   mascot: { maxWidth: MASCOT_COLUMN },
   body: { paddingHorizontal: space[5], gap: blockGap },
   numbers: { flexDirection: 'row', flexWrap: 'wrap', gap: resultLayout.numbersGap },

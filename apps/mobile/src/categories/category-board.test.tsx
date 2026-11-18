@@ -67,12 +67,10 @@ let shellOf: () => ReturnType<typeof testShell>;
 
 /** Opens the composition over two Categories of Words, «Емоції» with three live Words and a Retired one, «Порожня» with none. */
 async function open({
-  quietCategories = true,
   categoryFeed = true,
   categoryKnownFirst = true,
   wordTabs = false,
 }: {
-  quietCategories?: boolean;
   categoryFeed?: boolean;
   categoryKnownFirst?: boolean;
   wordTabs?: boolean;
@@ -81,17 +79,15 @@ async function open({
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
-      feature === 'quietCategories'
-        ? quietCategories
-        : feature === 'categoryFeed'
-          ? categoryFeed
-          : feature === 'categoryKnownFirst'
-            ? categoryKnownFirst
-            : feature === 'wordTabs'
-              ? wordTabs
-              : feature === 'dashboard' ||
-                feature === 'categoryScreens' ||
-                shipped.isFeatureEnabled(feature),
+      feature === 'categoryFeed'
+        ? categoryFeed
+        : feature === 'categoryKnownFirst'
+          ? categoryKnownFirst
+          : feature === 'wordTabs'
+            ? wordTabs
+            : feature === 'dashboard' ||
+              feature === 'categoryScreens' ||
+              shipped.isFeatureEnabled(feature),
   };
   const userState = await seedUserState(
     { onboardingFinished: '2026-09-01T09:00:00.000Z' },
@@ -314,17 +310,6 @@ describe('the quiet Category screen (k3)', () => {
     await settle(() => fireEvent.press(screen.getByTestId('category-entry-w_vtrata')));
     expect(screen.queryByText(editionStrings.dashboard.category.quiet)).toBeNull();
     expect(screen.getByText('Значення слова втрата.')).toBeTruthy();
-  });
-
-  it('opens the loud screen for the quiet Category with quietCategories off', async () => {
-    await open({ quietCategories: false });
-    await renderCategory('war');
-
-    const hero = screen.getByTestId('category-hero');
-    expect(within(hero).getByText('Війна')).toBeTruthy();
-    expect(within(hero).getByText('ЗНАЮ 0 З 1')).toBeTruthy();
-    expect(screen.getByTestId('category-mix')).toBeTruthy();
-    expect(screen.queryByText(editionStrings.dashboard.category.quiet)).toBeNull();
   });
 });
 

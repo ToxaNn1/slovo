@@ -9320,14 +9320,6 @@
                           ],
                           "type": "string"
                         },
-                        "livesOverWarmup": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameEndToFeed": {
                           "enum": [
                             "on",
@@ -9640,14 +9632,6 @@
                           ],
                           "type": "string"
                         },
-                        "quietCategories": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "collectionBoardStyle": {
                           "enum": [
                             "on",
@@ -9861,7 +9845,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "livesOverWarmup",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",
@@ -9901,7 +9884,6 @@
                         "correctionTypeGrid",
                         "categoryFeed",
                         "categoryKnownFirst",
-                        "quietCategories",
                         "collectionBoardStyle",
                         "collectionLinkCopy",
                         "dueQuiz",
@@ -11299,14 +11281,6 @@
                           ],
                           "type": "string"
                         },
-                        "livesOverWarmup": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameEndToFeed": {
                           "enum": [
                             "on",
@@ -11619,14 +11593,6 @@
                           ],
                           "type": "string"
                         },
-                        "quietCategories": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "collectionBoardStyle": {
                           "enum": [
                             "on",
@@ -11840,7 +11806,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "livesOverWarmup",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",
@@ -11880,7 +11845,6 @@
                         "correctionTypeGrid",
                         "categoryFeed",
                         "categoryKnownFirst",
-                        "quietCategories",
                         "collectionBoardStyle",
                         "collectionLinkCopy",
                         "dueQuiz",
@@ -13202,14 +13166,6 @@
                           ],
                           "type": "string"
                         },
-                        "livesOverWarmup": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameEndToFeed": {
                           "enum": [
                             "on",
@@ -13522,14 +13478,6 @@
                           ],
                           "type": "string"
                         },
-                        "quietCategories": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "collectionBoardStyle": {
                           "enum": [
                             "on",
@@ -13743,7 +13691,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "livesOverWarmup",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",
@@ -13783,7 +13730,6 @@
                         "correctionTypeGrid",
                         "categoryFeed",
                         "categoryKnownFirst",
-                        "quietCategories",
                         "collectionBoardStyle",
                         "collectionLinkCopy",
                         "dueQuiz",

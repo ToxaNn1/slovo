@@ -26,8 +26,6 @@ export interface Shown {
   readonly gameQuestionOnGround: boolean;
   /** The board's options: short ones without a key, the stamp, the ✓ key, the crossed-out text (ADR 0139). */
   readonly gameOptionStamp: boolean;
-  /** «Розминка!» with the count and the sad Mascot once the Lives run out (ADR 0139). */
-  readonly livesOverWarmup: boolean;
   /** The third end button «До стрічки» (ADR 0139). */
   readonly gameEndToFeed: boolean;
   /** The plain Game Review: rows that neither expand nor open the Entry (ADR 0139). */
@@ -235,7 +233,6 @@ export function shownOf({
     gameRoundMascot: on('gameRoundMascot'),
     gameQuestionOnGround: on('gameQuestionOnGround'),
     gameOptionStamp: on('gameOptionStamp'),
-    livesOverWarmup: on('livesOverWarmup'),
     gameEndToFeed: on('gameEndToFeed'),
     plainGameReview: on('plainGameReview'),
     gameHubGroups: on('gameHubGroups'),

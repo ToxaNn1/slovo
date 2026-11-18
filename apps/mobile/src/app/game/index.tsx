@@ -68,7 +68,6 @@ function Game() {
     gameQuestionOnGround,
     gameRoundMascot,
     gameOptionStamp,
-    livesOverWarmup,
     plainGameReview,
   } = useShown();
   const { colors } = useTokens();
@@ -107,9 +106,7 @@ function Game() {
         <GameEndPoster
           game={current}
           end={poster}
-          modeName={gameModeStrings(strings.modes, current.modeId).title}
           bestResult={state.bestResults[current.modeId]}
-          warmup={livesOverWarmup}
           onAgain={() => {
             actions.start(current.modeId);
           }}
