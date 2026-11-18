@@ -1,10 +1,10 @@
 import type { CuratedCollectionCard, CuratedCollectionPictogram } from '@slovo/core';
 import { ScrollView, StyleSheet } from 'react-native';
 
-import { CategoryTile, shapeAt, toneByPosition } from '../categories/CategoryTile';
+import { CategoryTile, shapeAt, toneByPosition } from './CategoryTile';
 import { useEdition } from '../providers/EditionProvider';
 import { categoryRailBox, categoryTile, correctionGrid, dashboard } from '../tokens';
-import { RailHeader } from './RailHeader';
+import { RailHeader } from '../dashboard/RailHeader';
 
 /**
  * The «SLOVO пропонує» rail of the Dashboard (ADR 0076, 0178), drawn as the
@@ -42,8 +42,7 @@ export function CuratedCollectionsRail({
         contentContainerStyle={styles.rail}
       >
         {cards.map(({ collection: { id, name, entryIds }, pictogram, state, added }, index) => {
-          const mark =
-            state === 'new' ? curatedCollectionNew : added ? addedMark : undefined;
+          const mark = state === 'new' ? curatedCollectionNew : added ? addedMark : undefined;
           const entries = count(curatedCollectionCount, entryIds.length);
           return (
             <CategoryTile

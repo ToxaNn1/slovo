@@ -239,7 +239,6 @@ export {
   type CuratedCollectionScreen,
 } from './dashboard/curated-collections';
 export {
-  type CuratedCollectionsBlock,
   type DashboardBlock,
   type MoodBlock,
   type PreviousWordsBlock,

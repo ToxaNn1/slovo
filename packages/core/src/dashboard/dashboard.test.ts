@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 import {
   openComposition,
   type Clock,
-  type CuratedCollectionsBlock,
   type DashboardBlock,
   type FeatureSwitch,
   type PreviousWordsBlock,
@@ -325,7 +324,10 @@ describe('«SLOVO пропонує» on the Dashboard', () => {
   }
 
   const railOf = (blocks: readonly DashboardBlock[]) =>
-    blocks.find((block): block is CuratedCollectionsBlock => block.kind === 'curatedCollections');
+    blocks.find(
+      (block): block is Extract<DashboardBlock, { kind: 'curatedCollections' }> =>
+        block.kind === 'curatedCollections',
+    );
 
   it('comes after «Попередні слова» and before the Categories', async () => {
     const app = await withCollections(published(2));

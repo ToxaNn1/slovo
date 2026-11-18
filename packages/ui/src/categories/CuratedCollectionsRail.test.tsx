@@ -53,15 +53,15 @@ async function renderIn(element: ReactElement) {
 
 /** The path of every wedge drawn inside the element. */
 function wedgesIn(testID: string): unknown[] {
-  type Node = { props: Record<string, unknown>; children: readonly (Node | string)[] };
+  interface Node {
+    props: Record<string, unknown>;
+    children: readonly (Node | string)[];
+  }
   const pointsIn = (node: Node | string): unknown[] =>
     typeof node === 'string'
       ? []
-      : [
-          ...('d' in node.props ? [node.props['d']] : []),
-          ...node.children.flatMap(pointsIn),
-        ];
-  return pointsIn(screen.getByTestId(testID) as unknown as Node);
+      : [...('d' in node.props ? [node.props['d']] : []), ...node.children.flatMap(pointsIn)];
+  return pointsIn(screen.getByTestId(testID));
 }
 
 describe('CuratedCollectionsRail', () => {
