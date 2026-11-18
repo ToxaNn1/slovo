@@ -106,7 +106,7 @@ describe('the Game screen', () => {
     });
   });
 
-  it('takes a Life for a Word of «Вгадай слово» typed wrong in Round 11 and shows the right one', async () => {
+  it('takes a Life for a Word of «Вгадай слово» typed wrong in Round 11 and shows its Definition on the answer card', async () => {
     await renderScreen();
 
     await startGuessWordAtRound11();
@@ -120,7 +120,9 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-answer-card-title')).toHaveTextContent(
       'Майже. Наступне вийде.',
     );
-    expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
+    expect(screen.getByTestId('game-answer-card-line')).toHaveTextContent(
+      `The meaning of test${word.slice('слово'.length)}.`,
+    );
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
   });
 
@@ -239,7 +241,9 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-answer-card-title')).toHaveTextContent(
       'Майже. Наступне вийде.',
     );
-    expect(screen.getByTestId('game-sheet')).toHaveTextContent(/слово\d+/);
+    expect(screen.getByTestId('game-answer-card-line')).toHaveTextContent(
+      /^The meaning of test\d+\.$/,
+    );
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
   });
 
@@ -304,7 +308,7 @@ describe('the Game screen', () => {
     expect(erase()).toBeDisabled();
   });
 
-  it('takes a Life for a Word of «Анаграми» assembled wrong and shows the right one', async () => {
+  it('takes a Life for a Word of «Анаграми» assembled wrong and shows its Definition on the answer card', async () => {
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('game-mode-anagram'));
@@ -318,7 +322,9 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-answer-card-title')).toHaveTextContent(
       'Майже. Наступне вийде.',
     );
-    expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
+    expect(screen.getByTestId('game-answer-card-line')).toHaveTextContent(
+      `The meaning of test${word.slice('слово'.length)}.`,
+    );
     // The slots show the right Word in place of the one assembled.
     expect(screen.getByTestId('chips-line')).toHaveTextContent(word);
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
@@ -358,7 +364,7 @@ describe('the Game screen', () => {
     });
   });
 
-  it('takes a Life for a wrong form in «Впиши слово» and shows the standard form with its explanation', async () => {
+  it('takes a Life for a wrong form in «Впиши слово» and shows the explanation on the answer card', async () => {
     await open({ corrections: 15 });
     await renderScreen();
 
@@ -373,8 +379,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-answer-card-title')).toHaveTextContent(
       'Майже. Наступне вийде.',
     );
-    expect(screen.getByTestId('game-sheet')).toHaveTextContent(new RegExp(standard));
-    expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
+    expect(screen.getByTestId('game-answer-card-line')).toHaveTextContent(
       `Чому ${standard} краще.`,
     );
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
@@ -404,10 +409,9 @@ describe('the Game screen', () => {
       expect(screen.getAllByTestId(/^chips-\d+$/)).toHaveLength(3);
       await assembleWords(theWordsOfThePrompt());
       expect(screen.getByTestId('game-answer-card-title')).toHaveTextContent('Влучно!');
-      // The sheet shows the whole expression, its punctuation too.
-      expect(screen.getByTestId('game-sheet')).toHaveTextContent(', друге — третє', {
-        exact: false,
-      });
+      expect(screen.getByTestId('game-answer-card-line')).toHaveTextContent(
+        /^The sense of idiom\d+\.$/,
+      );
       await fireEvent.press(screen.getByTestId('game-next'));
     }
 
@@ -416,7 +420,7 @@ describe('the Game screen', () => {
     });
   });
 
-  it('takes a Life for an expression of «Склади вислів» assembled wrong and shows the right one', async () => {
+  it('takes a Life for an expression of «Склади вислів» assembled wrong and shows its Definition on the answer card', async () => {
     await open({ idioms: 15 });
     await renderScreen();
 
@@ -431,9 +435,9 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-answer-card-title')).toHaveTextContent(
       'Майже. Наступне вийде.',
     );
-    expect(screen.getByTestId('game-sheet')).toHaveTextContent(`${words[0] ?? ''}, друге — третє`, {
-      exact: false,
-    });
+    expect(screen.getByTestId('game-answer-card-line')).toHaveTextContent(
+      /^The sense of idiom\d+\.$/,
+    );
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
     expect(warning).toHaveBeenCalled();
   });
@@ -492,7 +496,7 @@ describe('the Game screen', () => {
     });
   });
 
-  it('takes a Life for a wrong pick in «Англіцизми» and shows the standard form with its explanation', async () => {
+  it('takes a Life for a wrong pick in «Англіцизми» and shows the explanation on the answer card', async () => {
     await open({ anglicisms: 15 });
     await renderScreen();
 
@@ -512,8 +516,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-answer-card-title')).toHaveTextContent(
       'Майже. Наступне вийде.',
     );
-    expect(screen.getByTestId('game-sheet')).toHaveTextContent(new RegExp(standard));
-    expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
+    expect(screen.getByTestId('game-answer-card-line')).toHaveTextContent(
       `Чому ${standard} краще.`,
     );
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
@@ -547,7 +550,7 @@ describe('the Game screen', () => {
     });
   });
 
-  it('takes a Life for a wrong meaning in «Фразеологізми» and shows the right one', async () => {
+  it('takes a Life for a wrong meaning in «Фразеологізми» and shows its Definition on the answer card', async () => {
     await open({ idioms: 15 });
     await renderScreen();
 
@@ -566,7 +569,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-answer-card-title')).toHaveTextContent(
       'Майже. Наступне вийде.',
     );
-    expect(screen.getByTestId('game-sheet')).toHaveTextContent(meaning, { exact: false });
+    expect(screen.getByTestId('game-answer-card-line')).toHaveTextContent(meaning);
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
     expect(warning).toHaveBeenCalled();
   });
@@ -773,7 +776,7 @@ describe('the Game screen', () => {
     });
   });
 
-  it('takes a Life for a wrong language in «Звідки слово» and shows the right one with the Word’s etymology', async () => {
+  it('takes a Life for a wrong language in «Звідки слово» and shows the Word’s etymology on the answer card', async () => {
     await open({ origins: 8 });
     await renderScreen();
 
@@ -795,8 +798,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-answer-card-title')).toHaveTextContent(
       'Майже. Наступне вийде.',
     );
-    expect(screen.getByTestId('game-sheet')).toHaveTextContent(language, { exact: false });
-    expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(`Від test${String(n)}.`);
+    expect(screen.getByTestId('game-answer-card-line')).toHaveTextContent(`Від test${String(n)}.`);
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
     expect(warning).toHaveBeenCalled();
   });

@@ -182,15 +182,5 @@ describe('the Game screen', () => {
 
       expect(screen.getByTestId('game-review-details')).toHaveTextContent(/Речення \d+/);
     });
-
-    it('keeps the bottom sheet with its switch off', async () => {
-      await renderScreen();
-
-      await fireEvent.press(screen.getByTestId('game-mode-stress'));
-      await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
-
-      expect(screen.getByTestId('game-answer-card-title')).toHaveTextContent('Влучно!');
-      expect(screen.queryByTestId('game-answer-card')).toBeNull();
-    });
   });
 });
