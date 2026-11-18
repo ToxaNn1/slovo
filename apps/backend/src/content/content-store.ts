@@ -209,7 +209,8 @@ export function createContentStore({
       ]);
       // Retire, never delete (ADR 0090): an Entry the snapshot no longer holds
       // is retired one version on, so a device's Patch retires it too. A
-      // Curated Collection or Crossword Day has no retired flag, and stays.
+      // Curated Collection or Crossword Day the snapshot no longer holds stays
+      // as it is: it is retired by a write, never by the import.
       for (const table of ENTRY_TABLES) {
         const ids = importedIds.get(table) ?? [];
         await tx
