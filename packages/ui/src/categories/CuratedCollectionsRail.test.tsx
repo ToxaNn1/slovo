@@ -69,7 +69,9 @@ function wedgesIn(testID: string): unknown[] {
 describe('CuratedCollectionsRail', () => {
   it('heads the rail with its title and the count of every collection published by today', async () => {
     await renderIn(
-      <CuratedCollectionsRail cards={[card('cc_a')]} published={12}
+      <CuratedCollectionsRail
+        cards={[card('cc_a')]}
+        published={12}
         onOpenAll={() => undefined}
         onOpen={() => undefined}
       />,
@@ -177,7 +179,7 @@ describe('CuratedCollectionGrid', () => {
     );
 
     expect(screen.getByTestId('grid-title')).toHaveProp('accessibilityLabel', 'Picks, 3');
-    expect(screen.getAllByText(/^Name cc_/).map((text) => text.props['children'])).toEqual([
+    expect(screen.getAllByText(/^Name cc_/).map((text) => String(text.props['children']))).toEqual([
       'Name cc_b',
       'Name cc_a',
       'Name cc_c',

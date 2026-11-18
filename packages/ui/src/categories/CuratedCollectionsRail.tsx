@@ -118,7 +118,8 @@ function useTileOf(): (card: CuratedCollectionCard) => GridTile {
   const { strings, count } = useEdition();
   const { curatedCollectionCount, curatedCollectionNew, curatedCollection } = strings.dashboard;
   return ({ collection: { id, name, entryIds }, state, added }) => {
-    const mark = state === 'new' ? curatedCollectionNew : added ? curatedCollection.added : undefined;
+    const mark =
+      state === 'new' ? curatedCollectionNew : added ? curatedCollection.added : undefined;
     const entries = count(curatedCollectionCount, entryIds.length);
     return {
       id,
