@@ -6,7 +6,7 @@ import type { UserState } from '../user-state/user-state';
 import type { GameXp } from './game-xp';
 
 /**
- * What a Daily Crossword opens over, the traced and the crossing alike; the
+ * What the Daily Crossword opens over: the
  * Edition's Feature Switches and whatever else of the Edition one names.
  */
 export interface CrosswordPorts<OfEdition extends keyof Edition = never> {

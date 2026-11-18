@@ -2,7 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
 import { crossingPlacesOf, generateCrossingCrossword } from './crossing-crossword';
-import { seededRandomOf } from './traced-crossword';
+import { seededRandomOf } from './seeded-random';
 import {
   ALPHABET,
   ineligible,

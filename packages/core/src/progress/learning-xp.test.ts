@@ -19,7 +19,6 @@ const ALL_ON: readonly FeatureSwitch[] = [
   'xpLog',
   'game',
   'dailyCrossword',
-  'crossingCrossword',
   'knowledge',
   'analytics',
 ];
@@ -148,7 +147,7 @@ describe('the Daily Crossword XP', () => {
   });
 
   it('appends nothing with the xpLog switch off', async () => {
-    const { app, records } = await run({ on: ['game', 'dailyCrossword', 'crossingCrossword'] });
+    const { app, records } = await run({ on: ['game', 'dailyCrossword'] });
     await solve(app);
     expect(xpKeys(records)).toEqual([]);
   });

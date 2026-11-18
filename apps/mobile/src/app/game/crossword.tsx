@@ -1,11 +1,9 @@
-import type { CrossingCrossword, CrosswordSolve, TracedCrossword } from '@slovo/core';
+import type { CrossingCrossword, CrosswordSolve } from '@slovo/core';
 import {
   CrossingClueBar,
   CrossingGrid,
   LetterWheel,
-  TracedCrosswordGrid,
   BackHeader,
-  Button,
   CrosswordSolvedPoster,
   UndoToastProvider,
   useUndoToast,
@@ -16,7 +14,7 @@ import {
   fontScaleCap,
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { AccessibilityInfo, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -25,10 +23,8 @@ import { editionStrings } from '@/edition/edition';
 import { crosswordShare } from '@/game/crossword-share';
 import { useCrossingCrossword, type CrossingCrosswordPlay } from '@/game/crossing-crossword';
 import { useDailyCrossword } from '@/game/daily-crossword';
-import { tracedCrosswordTexts, useScreenReader, useTracedCrossword } from '@/game/traced-crossword';
+import { useScreenReader } from '@/game/screen-reader';
 import { MascotAs } from '@/mascot/mascot';
-import { ShareCardSheet } from '@/share/share-card-sheet';
-import { useShell } from '@/shell-value';
 import { useShown } from '@/shown-in-effect';
 
 const { game: strings } = editionStrings;
@@ -39,8 +35,7 @@ const wheelTexts = {
 
 /**
  * Today's Daily Crossword, opened from its card on the Game's mode screen:
- * the crossing one played on the Letter Wheel (ADR 0087), or the traced one
- * while the crossing one is off (ADR 0073). The progress stays on the device,
+ * the crossing one played on the Letter Wheel (ADR 0087, 0176). The progress stays on the device,
  * so «Назад» and the card's «Продовжити» find it; a day solved on another
  * device opens solved. On a day no pattern fills, when it cannot open, or
  * with the crossword turned off while the reader is on it, the screen goes
@@ -50,7 +45,6 @@ export default function DailyCrosswordScreen() {
   const opening = useDailyCrossword();
   if (opening === undefined) return <CrosswordFrame />;
   if (opening.kind === 'crossing') return <CrossingCrosswordScreen opened={opening.crossword} />;
-  if (opening.kind === 'traced') return <TracedCrosswordScreen opened={opening.crossword} />;
   return <Redirect href="/game" />;
 }
 
@@ -96,84 +90,6 @@ function CrosswordFrame({
       </View>
       {children}
     </View>
-  );
-}
-
-/**
- * The traced Daily Crossword (ADR 0073): a line on how to play, the grid the
- * reader traces by finger, or taps with VoiceOver on, and its clues;
- * «Розв’язано!» and its Share Card, every cell open with no letter, once
- * every Word is found.
- */
-function TracedCrosswordScreen({ opened }: { opened: TracedCrossword }) {
-  const crossword = useTracedCrossword(opened);
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const { voice } = useEdition();
-  const accessibleMode = useScreenReader();
-  const { solved } = crossword;
-  const { shareCard } = useShell();
-  const share = useShown().dailyCrosswordShare ? shareCard : undefined;
-  const [sharing, setSharing] = useState(false);
-
-  useEffect(() => {
-    if (!solved) return;
-    AccessibilityInfo.announceForAccessibility(strings.dailyCrossword.solved);
-  }, [solved]);
-
-  return (
-    <CrosswordFrame>
-      <ScrollView contentContainerStyle={styles.content} scrollEnabled={accessibleMode || solved}>
-        {!solved && (
-          <Text {...voice} style={[typeStyle('hint', tokens), { color: colors.muted }]}>
-            {strings.dailyCrossword.traceHint}
-          </Text>
-        )}
-        <TracedCrosswordGrid
-          testID="traced-crossword-grid"
-          grid={crossword.puzzle.grid}
-          words={crossword.words}
-          trace={crossword.trace}
-          miss={crossword.miss}
-          accessibleMode={accessibleMode}
-          onExtend={crossword.extend}
-          onStepBack={crossword.stepBack}
-          onRelease={crossword.release}
-          texts={tracedCrosswordTexts}
-        />
-        {solved && (
-          <Text
-            testID="daily-crossword-solved"
-            {...voice}
-            maxFontSizeMultiplier={fontScaleCap.text}
-            style={[typeStyle('crosswordSolved', tokens), styles.solved, { color: colors.correct }]}
-          >
-            {strings.dailyCrossword.solved}
-          </Text>
-        )}
-        {solved && share !== undefined && (
-          <>
-            <Button
-              variant="neutral"
-              testID="daily-crossword-share"
-              label={editionStrings.share.button}
-              onPress={() => {
-                setSharing(true);
-              }}
-            />
-            <ShareCardSheet
-              subject={{ puzzle: crossword.puzzle }}
-              kind="dailyCrossword"
-              share={share}
-              visible={sharing}
-              onClose={() => {
-                setSharing(false);
-              }}
-            />
-          </>
-        )}
-      </ScrollView>
-    </CrosswordFrame>
   );
 }
 
@@ -352,7 +268,6 @@ function CrossingCrosswordSolved({
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { paddingHorizontal: space[4], paddingTop: space[2] },
-  content: { gap: space[4], paddingHorizontal: space[5], paddingBottom: space[8] },
   // Board 08's spacing; the grid shrinks when the clue bar and the Letter Wheel need its room.
   crossing: { paddingHorizontal: space[4], paddingBottom: space[2] },
   crossingSolved: { marginTop: space[4] },

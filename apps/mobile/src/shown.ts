@@ -142,8 +142,6 @@ export interface Shown {
    * has not hidden the counters («Без лічильників»).
    */
   readonly progressShareCards: boolean;
-  /** «Поділитися» under a solved Daily Crossword, its Share Card with no letters. */
-  readonly dailyCrosswordShare: boolean;
   /** Board 08's «Розгадано!» screen once the crossing Daily Crossword is solved (ADR 0087). */
   readonly crosswordSolvedScreen: boolean;
   /** The crossing Daily Crossword's Solve time on its solved screen and share line (ADR 0087). */
@@ -286,7 +284,6 @@ export function shownOf({
     streakFreezeCard: on('streakFreezeCard') && on('streakFreezes') && !noCounters,
     badges: on('badges'),
     progressShareCards: on('progressShareCards') && !noCounters,
-    dailyCrosswordShare: on('dailyCrosswordShare'),
     crosswordSolvedScreen: on('crosswordSolvedScreen'),
     crosswordSolveTime: on('crosswordSolveTime'),
     profile: on('profile'),

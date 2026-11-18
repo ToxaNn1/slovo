@@ -1,6 +1,6 @@
 # The Daily Crossword is a crossing crossword played on a letter wheel
 
-Owner decisions 07.11 (spec #1674, board 08): the traced grid of ADR 0073 gives way to a classic crossing crossword entered on a letter wheel. This ADR supersedes ADR 0073's Puzzle, Generation, Play, Progress and fallback; ADR 0073's card, XP, Share Card and «not a Game» stay, now stated here (ADR 0073 is superseded by this one). It amends ADR 0085 (one new Badge family shape) and ADR 0052 (the typed fallback goes). Behind `crossingCrossword` and its parts `crosswordHint`, `crosswordSolveTime`, `crosswordSolvedScreen` and `crosswordBadgeStamp` (needs `badges`); off, the traced crossword of ADR 0073 stays.
+Owner decisions 07.11 (spec #1674, board 08): the traced grid of ADR 0073 gives way to a classic crossing crossword entered on a letter wheel. This ADR supersedes ADR 0073's Puzzle, Generation, Play, Progress and fallback; ADR 0073's card, XP, Share Card and «not a Game» stay, now stated here (ADR 0073 is superseded by this one). It amends ADR 0085 (one new Badge family shape) and ADR 0052 (the typed fallback goes). Behind `dailyCrossword` (amended by ADR 0176: `crossingCrossword` is gone and off means no Daily Crossword) and its parts `crosswordHint`, `crosswordSolveTime`, `crosswordSolvedScreen` and `crosswordBadgeStamp` (needs `badges`).
 
 ## Decision
 

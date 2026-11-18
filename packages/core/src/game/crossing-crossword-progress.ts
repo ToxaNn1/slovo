@@ -12,7 +12,7 @@ import {
   type CrossingPlay,
 } from './crossing-play';
 import { noXp, type CrosswordPorts } from './crossword-ports';
-import { seededRandomOf } from './traced-crossword';
+import { seededRandomOf } from './seeded-random';
 
 const { crossingCrosswordProgress } = userStateRecords;
 
@@ -78,7 +78,7 @@ export async function openCrossingCrossword({
   xp = noXp,
   analytics,
 }: CrosswordPorts<'languageTraits'>): Promise<CrossingCrosswordOpening> {
-  if (!edition.isFeatureEnabled('crossingCrossword')) return { kind: 'off' };
+  if (!edition.isFeatureEnabled('dailyCrossword')) return { kind: 'off' };
   const timed = edition.isFeatureEnabled('crosswordSolveTime');
   const date = todayKey(clock);
   const words = await entries.wordsInRarityRange();

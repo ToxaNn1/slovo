@@ -284,7 +284,7 @@ describe('the Game screen', () => {
   });
 
   it('leaves out the Daily Crossword’s card on a day no pattern fills', async () => {
-    await open({ switchedOn: ['crossingCrossword'] });
+    await open();
     await renderScreen();
 
     await screen.findByTestId('game-modes');

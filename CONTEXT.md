@@ -91,7 +91,7 @@ The language-agnostic behaviour and screens shared by every Edition. Editions ne
 _Avoid_: Engine, base app
 
 **Feature Switch**:
-A per-Edition setting for a Core feature (e.g. the Game) that the Edition declares `on`, `off` or `unavailable` in `edition.json`, and that a remote Rule set in the Owner admin can turn on or off for the readers it targets; `unavailable` nothing turns on (ADR 0089). Its effective value, which everything reads, is the first matching Rule's answer on the device, else the Edition's state, and every Feature Switch it depends on in effect (a Game Mode needs the Game, the Badges need the XP log); the Core's Edition module lists the dependencies, nothing else joins two switches.
+A per-Edition setting for a Core feature (e.g. the Game) that the Edition declares `on`, `off` or `unavailable` in `edition.json`, and that a remote Rule set in the Owner admin can turn on or off for the readers it targets; `unavailable` nothing turns on (ADR 0089). Its effective value, which everything reads, is the first matching Rule's answer on the device, else the Edition's state, and every Feature Switch it depends on in effect (a Game Mode needs the Game, the Badges need the XP log); the Core's Edition module lists the dependencies, nothing else joins two switches. Off, its feature is absent; a Feature Switch never chooses between an old and a new version of a feature (ADR 0176).
 _Avoid_: Toggle, flag (in conversation)
 
 **`unavailable`**:
@@ -505,7 +505,7 @@ The mark on a Word whose text or stress changed in the content database; Pronunc
 _Avoid_: Stale audio, outdated recording
 
 **Share Card**:
-A branded image of an Entry, of the reader's Weekly Recap («Мій тиждень у SLOVO»), of their progress on the day it happens (a Level reached, a Badge earned, a Streak milestone), or of a solved Daily Crossword's grid without its letters, made for sharing outside the app.
+A branded image of an Entry, of the reader's Weekly Recap («Мій тиждень у SLOVO»), of their progress on the day it happens (a Level reached, a Badge earned, a Streak milestone), made for sharing outside the app.
 _Avoid_: Screenshot
 
 **Widget Mode**:
@@ -561,7 +561,7 @@ The result screen's plain list «Огляд раундів» of every played Rou
 _Avoid_: Mistakes list, answer log
 
 **Daily Crossword**:
-«Кросворд дня»: one 5×5 crossing crossword a day, the same for every reader with the same Rarity Range on a local date (ADR 0087). Its blocks leave runs of white cells, each run a Word within the Rarity Range, Hidden Entries included, numbered where it starts; across and down Words cross and share their letters, and a few crossing cells come pre-filled. One clue at a time, the current Word's primary Definition, is entered on the Letter Wheel. Solving it earns XP once a day; it is not a Game. Off `crossingCrossword`, the traced grid of ADR 0073 stays.
+«Кросворд дня»: one 5×5 crossing crossword a day, the same for every reader with the same Rarity Range on a local date (ADR 0087). Its blocks leave runs of white cells, each run a Word within the Rarity Range, Hidden Entries included, numbered where it starts; across and down Words cross and share their letters, and a few crossing cells come pre-filled. One clue at a time, the current Word's primary Definition, is entered on the Letter Wheel. Solving it earns XP once a day; it is not a Game.
 _Avoid_: Daily puzzle, crossword game, Word of the Day
 
 **Letter Wheel**:

@@ -96,6 +96,13 @@ function takesOthers(others: unknown): boolean {
 /** The change of a field added to a strict output, which an admin output may make (ADR 0170). */
 const NEW_IN_STRICT_OBJECT = 'is new in a strict object';
 
+/** A retired Feature Switch gone from an Edition's `states`, which an admin output may lose (ADR 0176). */
+const RETIRED_SWITCH = /body\.states\.\w+ is gone$/;
+
+/** Whether an admin output may make the change: gain a field in a strict object or lose a retired Feature Switch. */
+const adminMayMake = (change: string) =>
+  change.endsWith(NEW_IN_STRICT_OBJECT) || RETIRED_SWITCH.test(change);
+
 /** Every way the `described` schema breaks the `promised` one, read in `direction`. */
 function schemaChanges(
   promised: Part,
@@ -352,9 +359,10 @@ function responseChanges(promised: Part, described: Part): string[] {
 /**
  * Whether a path is the admin's. `apps/admin` and the Агент tooling ship with
  * the backend, so no caller in the field sends an old request: an admin input
- * may narrow (ADR 0122), an admin procedure may go (ADR 0162) and an admin
- * strict output may gain a field (ADR 0170). Its outputs are otherwise held
- * as every other.
+ * may narrow (ADR 0122), an admin procedure may go (ADR 0162), an admin
+ * strict output may gain a field (ADR 0170) and a retired Feature Switch may
+ * leave an admin `states` (ADR 0176). Its outputs are otherwise held as every
+ * other.
  */
 function isAdmin(path: string): boolean {
   return path.startsWith('/v1/admin/');
@@ -367,8 +375,9 @@ function isAdmin(path: string): boolean {
  * successful answer and an error code stay, nothing optional becomes
  * required, and no type or constraint changes, save an input bound or enum
  * that widens and an output one that narrows (ADR 0031); an admin input may
- * narrow (ADR 0122), an admin procedure may go (ADR 0162) and an admin strict
- * output may gain a field (ADR 0170).
+ * narrow (ADR 0122), an admin procedure may go (ADR 0162), an admin strict
+ * output may gain a field (ADR 0170) and a retired Feature Switch may leave an
+ * admin `states` (ADR 0176).
  */
 export function breakingChanges(promised: object, described: object): string[] {
   const changes: string[] = [];
@@ -384,7 +393,7 @@ export function breakingChanges(promised: object, described: object): string[] {
       const located = [
         ...(isAdmin(path) ? [] : requestChanges(part(operation), part(match))),
         ...responseChanges(part(operation), part(match)).filter(
-          (change) => !(isAdmin(path) && change.endsWith(NEW_IN_STRICT_OBJECT)),
+          (change) => !(isAdmin(path) && adminMayMake(change)),
         ),
       ];
       changes.push(...located.map((change) => `${name}: ${change}`));

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { type FeatureSwitch, fill, STRESS_MARK, switchedOn, type Word } from '@slovo/contracts';
+import { type FeatureSwitch, fill, switchedOn, type Word } from '@slovo/contracts';
 import {
   openComposition,
   systemRandom,
@@ -32,9 +32,6 @@ import {
 } from '../shell/test-support';
 import { SCREEN_OPEN_TIMEOUT_MS } from '../open-screen';
 import { CROSSING_LEMMAS } from './crossing-crossword.test-support';
-
-/** Lemmas of the Edition's alphabet, whose lengths fill the traced grid. */
-const TRACEABLE = ['кіт', 'дім', 'вовк', 'сова', 'річка', 'весна', 'яблуко', 'зоря'];
 
 /** The local date the tests' clock reads. */
 const TODAY = '2026-10-26';
@@ -123,14 +120,12 @@ const analytics: AnalyticsPort = {
  * composition, with a Share Card capture when the binary has one.
  */
 async function renderGame({
-  crossing = false,
   on = [],
   off = [],
   fills = true,
   solvedElsewhere,
   failsToOpen = false,
 }: {
-  crossing?: boolean;
   /** Feature Switches turned on, such as the Games boards' `crosswordSolveTime`. */
   on?: readonly FeatureSwitch[];
   /** Feature Switches turned off, such as `dailyCrossword`. */
@@ -144,17 +139,14 @@ async function renderGame({
 } = {}) {
   events = [];
   mockInForeground = true;
-  // The Games boards' switches start off, so the traced crossword shows unless
-  // `crossing` turns the crossing one on (ADR 0073, 0087).
+  // The Games boards' switches start off; `on` turns the ones a test needs on.
   const switched: Edition = {
     ...edition,
     isFeatureEnabled: switchedOn(
       (feature) =>
         !off.includes(feature) &&
-        ((crossing && feature === 'crossingCrossword') ||
-          // The UA Edition hides the Daily Crossword for now (owner, 15.11); these tests open it.
-          feature === 'dailyCrossword' ||
-          feature === 'tracedCrossword' ||
+        // The UA Edition hides the Daily Crossword for now (owner, 15.11); these tests open it.
+        (feature === 'dailyCrossword' ||
           on.includes(feature) ||
           (!GAMES_BOARD_SWITCHES.includes(feature) && edition.isFeatureEnabled(feature))),
     ),
@@ -164,8 +156,8 @@ async function renderGame({
       categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       words: [
         ...Array.from({ length: fills ? 15 : 1 }, (_, i) => word(i)),
-        // Words of the Edition's alphabet, which can fill the traced grid.
-        ...(fills ? (crossing ? CROSSING_LEMMAS : TRACEABLE) : []).map((lemma) => ({
+        // Words of the Edition's alphabet, which fill the crossing grid.
+        ...(fills ? CROSSING_LEMMAS : []).map((lemma) => ({
           ...word(0),
           id: `w_${lemma}`,
           lemma,
@@ -308,23 +300,18 @@ async function solveWord(target: CrossingWord) {
 }
 
 describe('the Daily Crossword’s card, as the Core opens the crossword', () => {
-  it('shows the crossing one while it is on', async () => {
-    await renderGame({ crossing: true });
+  it('shows the crossing one while the Daily Crossword is on', async () => {
+    await renderGame();
     expect(card()).toBe('Кросворд дня · 26 жовтня. 5×5 · 5 слів. Почати');
   });
 
   it('shows none on a day no pattern fills the crossing one', async () => {
-    await renderGame({ crossing: true, fills: false });
+    await renderGame({ fills: false });
     expect(screen.queryByTestId('daily-crossword')).toBeNull();
   });
 
-  it('shows the traced one while the crossing one is off', async () => {
-    await renderGame();
-    expect(card()).toBe('Кросворд дня. 26 жовтня. Почати');
-  });
-
   it('shows none while the Daily Crossword is off', async () => {
-    await renderGame({ crossing: true, off: ['dailyCrossword'] });
+    await renderGame({ off: ['dailyCrossword'] });
     expect(screen.queryByTestId('daily-crossword')).toBeNull();
   });
 });
@@ -335,14 +322,13 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
   });
 
   it('opens from its card on the first Word’s clue, which a tap on a cell and «next» move', async () => {
-    await renderGame({ crossing: true });
+    await renderGame();
     await openFromCard();
     const { words } = await crossingPuzzle();
     const [first, second] = words;
     if (first === undefined || second === undefined) throw new Error('Expected two Words');
 
     expect(screen.getByTestId('crossing-crossword-grid')).toBeOnTheScreen();
-    expect(screen.queryByTestId('traced-crossword-grid')).toBeNull();
     expect(screen.getByText('Веди пальцем по літерах, щоб скласти слово')).toBeOnTheScreen();
     expect(chip(first)).toBeOnTheScreen();
     expect(screen.getByTestId('crossing-crossword-clue-clue')).toHaveTextContent(first.clue);
@@ -359,7 +345,7 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
   });
 
   it('fills the current Word traced by VoiceOver’s tiles and «Перевірити», and shortens the line', async () => {
-    await renderGame({ crossing: true });
+    await renderGame();
     await openFromCard();
     const [first] = (await crossingPuzzle()).words;
     if (first === undefined) throw new Error('Expected a Word');
@@ -379,7 +365,7 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
   });
 
   it('fills the first empty cell of the current Word by «Підказка» in the header', async () => {
-    await renderGame({ crossing: true, on: ['crosswordHint'] });
+    await renderGame({ on: ['crosswordHint'] });
     await openFromCard();
     const { words, prefilled } = await crossingPuzzle();
     const [first] = words;
@@ -405,14 +391,14 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
   });
 
   it('shows no «Підказка» while the Crossword Hint is off', async () => {
-    await renderGame({ crossing: true });
+    await renderGame();
     await openFromCard();
     expect(screen.getByTestId('crossing-crossword-grid')).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: 'Підказка' })).toBeNull();
   });
 
   it('says «Десь закралася помилка. Шукай уважніше!» for a trace that spells no Word', async () => {
-    await renderGame({ crossing: true });
+    await renderGame();
     await openFromCard();
     const [first] = (await crossingPuzzle()).words;
     if (first === undefined) throw new Error('Expected a Word');
@@ -429,7 +415,7 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
   });
 
   it('shows «Розв’язано!» once every Word is solved, and the card marks it solved', async () => {
-    await renderGame({ crossing: true });
+    await renderGame();
     await openFromCard();
     const { words } = await crossingPuzzle();
 
@@ -446,7 +432,6 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
       .spyOn(Share, 'share')
       .mockResolvedValue({ action: Share.sharedAction, activityType: undefined });
     const app = await renderGame({
-      crossing: true,
       on: ['crosswordSolvedScreen', 'crosswordSolveTime'],
     });
     await openFromCard();
@@ -475,7 +460,6 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
 
   it('shows today solved on another device from the synced XP log: the card, «Розгадано!» and its time', async () => {
     await renderGame({
-      crossing: true,
       on: ['crosswordSolvedScreen', 'crosswordSolveTime'],
       solvedElsewhere: { solveSeconds: 222 },
     });
@@ -491,7 +475,7 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
   });
 
   it('shows «Розв’язано!» and every letter for today solved on another device, with the solved screen off', async () => {
-    await renderGame({ crossing: true, solvedElsewhere: { hinted: true } });
+    await renderGame({ solvedElsewhere: { hinted: true } });
     await openFromCard();
     const { words } = await crossingPuzzle();
 
@@ -504,9 +488,9 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
     ).toHaveTextContent(first.letters[0] ?? '', { exact: false });
   });
 
-  it('shows no card and sends the screen back to the Game when it cannot open, never the traced one', async () => {
+  it('shows no card and sends the screen back to the Game when it cannot open', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    const app = await renderGame({ crossing: true, failsToOpen: true });
+    const app = await renderGame({ failsToOpen: true });
 
     expect(screen.queryByTestId('daily-crossword')).toBeNull();
     await settle(() => {
@@ -514,12 +498,10 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
     });
 
     expect(app.pathname()).toBe('/game');
-    expect(screen.queryByTestId('traced-crossword-grid')).toBeNull();
   });
 
   it('drops «без підказок» from the share line once «Підказка» filled a letter', async () => {
     await renderGame({
-      crossing: true,
       on: ['crosswordSolvedScreen', 'crosswordSolveTime', 'crosswordHint'],
     });
     await openFromCard();
@@ -533,7 +515,7 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
   });
 
   it('counts the Solve time on screen only: it pauses in the background and on leave, and goes on when the reader comes back', async () => {
-    await renderGame({ crossing: true, on: ['crosswordSolveTime'] });
+    await renderGame({ on: ['crosswordSolveTime'] });
     await openFromCard();
     await pass(5);
     await moveApp('background');
@@ -560,42 +542,10 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
   });
 
   it('keeps no time with crosswordSolveTime off', async () => {
-    await renderGame({ crossing: true });
+    await renderGame();
     await openFromCard();
     await pass(5);
     await back();
     expect(await keptSeconds()).toBe(0);
-  });
-});
-
-describe('the traced Daily Crossword, with the crossing one off (ADR 0073)', () => {
-  it('opens from its card, and with VoiceOver on locks a Word tapped cell by cell and checked', async () => {
-    jest.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(true);
-    await renderGame();
-    await openFromCard();
-    expect(await screen.findByTestId('traced-crossword-grid')).toBeOnTheScreen();
-    expect(screen.queryByTestId('crossing-crossword-grid')).toBeNull();
-
-    const opening = await composition.openDailyCrossword();
-    if (opening.kind !== 'traced') throw new Error('Expected the traced puzzle');
-    const { puzzle } = opening.crossword;
-    const [hidden] = puzzle.words;
-    if (hidden === undefined) throw new Error('Expected a hidden Word');
-    const { tracedCellLabel, clueFound, check } = editionStrings.game.dailyCrossword;
-    for (const { row, column } of hidden.path) {
-      const { letter, stressed } = puzzle.grid[row]?.[column] ?? { letter: '', stressed: false };
-      const label = fill(tracedCellLabel, {
-        letter: stressed ? `${letter}${STRESS_MARK}` : letter,
-        row: String(row + 1),
-        column: String(column + 1),
-      });
-      await settle(() => fireEvent.press(screen.getByLabelText(label)));
-    }
-    await settle(() => fireEvent.press(screen.getByText(check)));
-    expect(
-      screen.getByLabelText(fill(clueFound, { clue: hidden.clue, word: '' }), {
-        exact: false,
-      }),
-    ).toBeOnTheScreen();
   });
 });

@@ -50,10 +50,4 @@ export const ShareStringsSchema = z.strictObject({
     /** The Streak's length in every plural form, e.g. «7 днів поспіль». Takes `{count}`. */
     headline: pluralOf(),
   }),
-  /** The Share Card of a solved Daily Crossword: its grid with no letters, so it gives no answer away. */
-  dailyCrossword: z.strictObject({
-    title: TextSchema,
-    /** What VoiceOver reads of the empty grid. */
-    grid: TextSchema,
-  }),
 });

@@ -135,13 +135,7 @@ export {
   untilNextLocalDay,
   type LocalDate,
 } from './local-date';
-export {
-  isSolved,
-  type CrosswordPuzzle,
-  type PuzzleAction,
-  type PuzzlePlace,
-  type PuzzleState,
-} from './game/crossword-puzzle';
+export { type PuzzlePlace } from './game/crossword-puzzle';
 export { type CrossingPuzzle, type CrossingWord } from './game/crossing-crossword';
 export {
   crossingCellKey,
@@ -151,7 +145,6 @@ export {
   type CrossingPlay,
 } from './game/crossing-play';
 export { type CrossingCrossword } from './game/crossing-crossword-progress';
-export { type TracedCrossword } from './game/traced-crossword';
 export { type DailyCrosswordOpening } from './game/daily-crossword';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
 export { loadEdition, type Edition } from './edition/edition';

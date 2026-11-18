@@ -7,7 +7,7 @@ import {
   type CrossingWord,
 } from './crossing-crossword';
 import type { PuzzlePlace } from './crossword-puzzle';
-import { seededRandomOf } from './traced-crossword';
+import { seededRandomOf } from './seeded-random';
 import { word } from '../test-support';
 
 export const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('');

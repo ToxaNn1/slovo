@@ -6,33 +6,21 @@ import type {
   CrosswordSolve,
   DailyCrosswordOpening,
 } from '@slovo/core';
-import type { CrosswordDayCardState, CrosswordMiniCell, DailyCrosswordCard } from '@slovo/ui';
+import type { CrosswordDayCardState } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState, type ComponentProps } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useComposition, useCompositionRead } from '../composition';
 import { edition, editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { crossingMiniGrid, crossingProgress, crossingSolveOf } from './crossing-crossword';
 import { solveTimeText } from './crossword-share';
-import type { DailyCrosswordProgress } from './crossword-progress';
-import { tracedMiniGrid, tracedProgress } from './traced-crossword';
 
-/**
- * What the Daily Crossword's card draws: the crossing one's card in board
- * 08's states (ADR 0087), or the traced one's red card while the crossing one
- * is off (ADR 0073).
- */
-export type DailyCrosswordCardContent =
-  | {
-      readonly kind: 'crossing';
-      readonly title: string;
-      readonly state: CrosswordDayCardState;
-    }
-  | ({ readonly kind: 'traced' } & Omit<
-      ComponentProps<typeof DailyCrosswordCard>,
-      'testID' | 'onPress'
-    >);
+/** What the Daily Crossword's card draws: the crossing one's card in board 08's states (ADR 0087). */
+export interface DailyCrosswordCardContent {
+  readonly title: string;
+  readonly state: CrosswordDayCardState;
+}
 
 type Strings = EditionStrings['game']['dailyCrossword'];
 type Months = EditionStrings['dates']['months'];
@@ -62,7 +50,6 @@ function crossingCard(
   const progress = crossingProgress(state, solve);
   if (solve !== undefined)
     return {
-      kind: 'crossing',
       title,
       state: {
         kind: 'solved',
@@ -75,7 +62,6 @@ function crossingCard(
     };
   if (progress === 'started')
     return {
-      kind: 'crossing',
       title,
       state: {
         kind: 'resume',
@@ -87,43 +73,10 @@ function crossingCard(
   const size = fill(strings.size, { size: String(crossingMiniGrid(puzzle, state).length) });
   const words = pluralCount(edition.locale)(strings.words, puzzle.words.length);
   return {
-    kind: 'crossing',
     title,
     state: { kind: 'start', line: `${size} · ${words}`, action: strings.start },
   };
 }
-
-/**
- * The Daily Crossword's card in the Edition's texts: its name, the day and
- * month of its date, «Почати», «Продовжити» or the solved mark, and its grid
- * with the letters typed.
- */
-function dailyCrosswordCard(
-  state: {
-    readonly date: string;
-    readonly progress: DailyCrosswordProgress;
-    readonly grid: readonly (readonly CrosswordMiniCell[])[];
-  },
-  strings: Strings,
-  months: Months,
-): DailyCrosswordCardContent {
-  const { date, progress } = state;
-  return {
-    kind: 'traced',
-    title: strings.title,
-    day: dayOf(date, strings, months),
-    solved: progress === 'solved',
-    grid: state.grid,
-    state:
-      progress === 'solved'
-        ? strings.solvedMark
-        : progress === 'started'
-          ? strings.resume
-          : strings.start,
-  };
-}
-
-type TracedCardState = Parameters<typeof dailyCrosswordCard>[0];
 
 /** Today's crossing Daily Crossword, the play kept and its solve, synced in the XP log. */
 interface CrossingCardState {
@@ -132,27 +85,14 @@ interface CrossingCardState {
   readonly solve: CrosswordSolve | undefined;
 }
 
-type CardState =
-  | ({ readonly kind: 'crossing' } & CrossingCardState)
-  | ({ readonly kind: 'traced' } & TracedCardState);
-
 /** What the card shows of the Daily Crossword the Core opened today: none when it opens none. */
 const openDailyCrossword = (composition: Composition) => composition.openDailyCrossword();
 
-async function cardState(composition: Composition): Promise<CardState | undefined> {
+async function cardState(composition: Composition): Promise<CrossingCardState | undefined> {
   const opening = await composition.openDailyCrossword();
   if (opening.kind === 'none') return undefined;
-  if (opening.kind === 'crossing') {
-    const { puzzle, state } = opening.crossword;
-    return { kind: 'crossing', puzzle, state, solve: crossingSolveOf(composition, puzzle, state) };
-  }
   const { puzzle, state } = opening.crossword;
-  return {
-    kind: 'traced',
-    date: puzzle.date,
-    progress: tracedProgress(state),
-    grid: tracedMiniGrid(puzzle, state),
-  };
+  return { puzzle, state, solve: crossingSolveOf(composition, puzzle, state) };
 }
 
 /**
@@ -175,7 +115,7 @@ export function useDailyCrossword(): DailyCrosswordOpening | undefined {
  */
 export function useDailyCrosswordCard(): DailyCrosswordCardContent | undefined {
   const composition = useComposition();
-  const [read, setRead] = useState<{ in: Composition; state: CardState | undefined }>();
+  const [read, setRead] = useState<{ in: Composition; state: CrossingCardState | undefined }>();
   useFocusEffect(
     useCallback(() => {
       let active = true;
@@ -197,7 +137,5 @@ export function useDailyCrosswordCard(): DailyCrosswordCardContent | undefined {
   if (state === undefined) return undefined;
   const { dailyCrossword: strings } = editionStrings.game;
   const { months } = editionStrings.dates;
-  return state.kind === 'crossing'
-    ? crossingCard(state, strings, months)
-    : dailyCrosswordCard(state, strings, months);
+  return crossingCard(state, strings, months);
 }
