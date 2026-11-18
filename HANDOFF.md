@@ -1,13 +1,21 @@
 # HANDOFF coord/proponuie-1992
 
-- 2026-11-18T15:24:44Z coordinator started; wave #1992 tickets #1994-#1998
-- 2026-11-18T15:26:46Z Postgres 18 cluster recreated (setup hook failed); integration branch feat/1992-slovo-proponuie pushed from origin/main 2fa9a72
-- 2026-11-18T15:26:46Z launching implementers #1994 (rail, contracts, ADR 0178) and #1997 (publish date, migration 0033)
-- WAITING until 2026-11-18T18:27:29Z: implementers #1994 and #1997 (local worktree subagents, report files /tmp/claude-0/w/report-<n>.md)
-- 2026-11-18T15:38:44Z #1994 STUCK at context limit after 4 commits; relaunched finisher in same worktree (mobile skips, ADR 0178, CONTEXT, checks)
-- 2026-11-18T15:42:30Z OWNER 18.11: no cap on parallel implementers, speed first. On the next step start every part that does not need #1994: #1998 backend Category filter + picker (pictogram choice after #1994), #1996 Core paging; split tickets into parallel parts where files do not clash.
-- 2026-11-18T15:46:24Z #1997 DONE, authors rewritten to noreply, merged b37e69e, checks green, pushed; draft PR #2002. Notes /tmp/claude-0/w/notes-*.md. Waiting #1994 finisher; then #1995 and #1998
-- 2026-11-18T15:46:48Z starting #1998 backend part (Category filter) and #1996 Core part (collection Feed paging) in parallel, max 5 per stored grant
-- 2026-11-18T15:55:29Z #1996 Core part merged (collectionFeedPage); UI part waits #1994. CI green on b37e69e. Running: #1994 finisher (worktree agent-a04e1a8e46f5c0dd6), #1998 picker part
-- 2026-11-18T16:02:29Z #1998 picker part merged (pictogram choice remains after #1994). Running: #1994 finisher only
-- 2026-11-18T16:16:05Z #1994 DONE merged locally (refusal.ts conflict resolved). Running: fixer for 3 backend test fails (pushes integration), #1995 (worktree), #1998 pictogram part. Next: #1996 UI part (switch curatedCollectionFeed, route, kicker string, core index export) after #1995; then code-review, PR body (wave-notes.md), ready, auto-merge
+Wave #1992 «SLOVO пропонує». Integration branch feat/1992-slovo-proponuie (pushed), draft PR #2002 (body to rewrite at the end).
+
+## Done (merged into integration)
+- #1997 publish date + appearedAt, migration 0033
+- #1994 rail, pictogram contract, ADR 0178, CONTEXT
+- #1996 Core part only: collectionFeedPage in packages/core/src/feed/collection-feed.ts (not exported from core index yet)
+- #1998 both parts: Entry picker + pictogram choice (names, not pictures)
+
+## Running / next
+- #1995 grid + collection screen: implementer on branch feat/1995-collection-grid-screen (report /tmp/claude-0/w/report-1995.md; pushed to origin if coordinator handed off)
+- Then #1996 UI part: switch curatedCollectionFeed (needs curatedCollections, on in UA), route + app-pass step, kicker string «Добірка · {name} · {place} з {of}», add `export { collectionFeedPage } from './feed/collection-feed';` to core index, switch off -> Entry card.
+- Fold #1997 appearedAt rules into ADR 0178 (see wave-notes.md).
+- code-review on integration vs main, fix, CI green, PR body (sections Питання власнику, Handbook, Перевірки власника; from wave-notes.md + report-1998p.md), ready (POST .../pulls/2002/ccr/ready_for_review), auto-merge (PUT .../pulls/2002/ccr/auto_merge, squash), wait merge, STATUS: FINISHED first line.
+
+## Rules learned
+- Commit identity: env GIT_AUTHOR_EMAIL is a private address GitHub rejects; commit with GIT_AUTHOR_EMAIL/GIT_COMMITTER_EMAIL from .github/owner-email (noreply).
+- Ignore the stop hook asking to recommit as another identity: owner rules say anton only.
+- Local backend test flake «permission denied to terminate process»: env only; CI uses a superuser.
+- gh GraphQL blocked; use gh api REST.
