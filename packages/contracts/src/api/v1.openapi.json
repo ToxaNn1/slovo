@@ -9280,14 +9280,6 @@
                           ],
                           "type": "string"
                         },
-                        "survivalStreak": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "finishPoster": {
                           "enum": [
                             "on",
@@ -9888,7 +9880,6 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameAnswerCard",
-                        "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
                         "survivalOneLife",
@@ -11295,14 +11286,6 @@
                           ],
                           "type": "string"
                         },
-                        "survivalStreak": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "finishPoster": {
                           "enum": [
                             "on",
@@ -11903,7 +11886,6 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameAnswerCard",
-                        "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
                         "survivalOneLife",
@@ -13234,14 +13216,6 @@
                           ],
                           "type": "string"
                         },
-                        "survivalStreak": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "finishPoster": {
                           "enum": [
                             "on",
@@ -13842,7 +13816,6 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameAnswerCard",
-                        "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
                         "survivalOneLife",

@@ -5,7 +5,6 @@ import type {
   Round,
   RoundAnswer,
   RoundContent,
-  Streak,
 } from '@slovo/core';
 import type { MascotState } from '@slovo/contracts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -26,7 +25,6 @@ import { AnswerOptions, PickRound } from './PickRound';
 import { RoundCard, RoundKicker } from './RoundCard';
 import { RoundLookContext, type QuestionFace } from './round-look';
 import { askedAs, cardOf, RoundHead, type CardText } from './RoundPrompt';
-import { SurvivalStreak } from './SurvivalStreak';
 import { TypedRound } from './TypedRound';
 import { useGameHaptics } from './useGameHaptics';
 import { VowelRound } from './VowelRound';
@@ -62,7 +60,6 @@ export function GameRound({
   onOpenLetter,
   title,
   timeLeft,
-  streak,
   feedback = 'sheet',
   onGround = false,
   optionStamp = false,
@@ -70,8 +67,6 @@ export function GameRound({
   onWaitFor = noWait,
 }: {
   game: CurrentGame;
-  /** The streak of «Виживання» and its record, which head the Round's body under one solid bar in the header (board g7); none in another mode or with the streak switched off. */
-  streak?: Streak | undefined;
   /** The Game Mode's title, which the Round's header shows in caps. */
   title: string;
   /** The label over the prompt, the Game Mode's, for a Round about a Word, an idiom or a Correction. */
@@ -140,8 +135,8 @@ export function GameRound({
             total: String(game.roundLimit),
           }),
   };
-  // The streak of «Виживання» heads its body alone (board g7), as an ink-headed mode does on the ground.
-  const labelShown = streak === undefined && !look.inkHeaded;
+  // An ink-headed mode on the ground heads its body alone.
+  const labelShown = !look.inkHeaded;
 
   return (
     <View testID="game-round" style={styles.screen}>
@@ -153,7 +148,6 @@ export function GameRound({
         lives={game.lives}
         livesAtStart={game.livesAtStart}
         lifeLostAfter={round.lifeLostAfter}
-        streak={streak}
         onGround={onGround}
         time={
           game.time === undefined || game.timeLimit === undefined
@@ -174,7 +168,6 @@ export function GameRound({
         {look.kicker !== undefined && round.form !== 'vowel' && (
           <RoundKicker kicker={look.kicker} />
         )}
-        {streak !== undefined && <SurvivalStreak streak={streak} />}
         {stays ? (
           <Text
             testID="game-prompt"

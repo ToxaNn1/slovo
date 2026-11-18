@@ -1,13 +1,6 @@
 import { type PlayingGame } from '@slovo/core/testing';
 import type { Tip } from '@slovo/contracts';
-import type {
-  GivenAnswer,
-  Haptics,
-  PlayedRound,
-  RoundAnswer,
-  RoundBlank,
-  Streak,
-} from '@slovo/core';
+import type { GivenAnswer, Haptics, PlayedRound, RoundAnswer, RoundBlank } from '@slovo/core';
 import {
   coreTokens,
   EditionProvider,
@@ -50,8 +43,6 @@ const strings = testStrings({
       progressLabel: 'Rounds passed: {passed} of {total}',
       passed: 'Passed: {passed}',
       passedLabel: 'Rounds passed: {passed}',
-      survivalStreak: '{n} in a row · best {best}',
-      survival: { streak: 'in a row', best: 'best {best}' },
       lives: 'Lives: {count} of {total}',
       highlight: 'Marked: {text}',
       gap: { label: 'Which word is missing?', voiceOver: 'gap' },
@@ -456,21 +447,18 @@ function Game({
   onAnswer,
   onLeave,
   onOpenLetter,
-  streak,
   feedback = 'sheet',
 }: {
   start: PlayingGame;
   onAnswer: (given: GivenAnswer) => void;
   onLeave: () => void;
   onOpenLetter: () => void;
-  streak?: Streak | undefined;
   feedback?: 'sheet' | 'card';
 }) {
   const [game, setGame] = useState(start);
   return (
     <GameRound
       game={game}
-      streak={streak}
       feedback={feedback}
       title="Definitions"
       label={LABELS[game.round.form] ?? 'Definition'}
@@ -496,20 +484,13 @@ async function renderRound(
   onLeave: () => void = jest.fn(),
   start: PlayingGame = first,
   onOpenLetter: () => void = jest.fn(),
-  streak?: Streak,
 ) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <HapticsProvider haptics={haptics}>
           <InterfaceSoundsProvider sounds={{ play }}>
-            <Game
-              start={start}
-              onAnswer={onAnswer}
-              onLeave={onLeave}
-              onOpenLetter={onOpenLetter}
-              streak={streak}
-            />
+            <Game start={start} onAnswer={onAnswer} onLeave={onLeave} onOpenLetter={onOpenLetter} />
           </InterfaceSoundsProvider>
         </HapticsProvider>
       </EditionProvider>
@@ -607,26 +588,6 @@ describe('GameRound', () => {
     expect(screen.getByText('Passed: 23')).toBeTruthy();
     expect(screen.queryByTestId('game-progress-bar')).toBeNull();
     expect(screen.getByRole('header', { name: 'Definitions' })).toBeOnTheScreen();
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 2 of 3');
-  });
-
-  it('shows the streak at the top of the body, a big counter and «in a row» and the record under each other, in place of the passed line', async () => {
-    const survival: PlayingGame = {
-      ...first,
-      modeId: 'survival',
-      roundsPassed: 4,
-      roundLimit: undefined,
-      lives: 2,
-      livesAtStart: 3,
-    };
-    await renderRound(jest.fn(), jest.fn(), survival, jest.fn(), { rounds: 4, record: 9 });
-
-    const streak = screen.getByTestId('game-streak');
-    expect(within(streak).getByTestId('game-streak-rounds')).toHaveTextContent('4');
-    expect(within(streak).getByText('in a row')).toBeTruthy();
-    expect(within(streak).getByText('best 9')).toBeTruthy();
-    expect(streak).toHaveAccessibleName('4 in a row · best 9');
-    expect(screen.queryByText('Passed: 4')).toBeNull();
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 2 of 3');
   });
 

@@ -1888,11 +1888,6 @@
         "word": "Слово",
         "meaning": "Значення"
       },
-      "survival": {
-        "streak": "поспіль",
-        "best": "рекорд {best}"
-      },
-      "survivalStreak": "{n} поспіль · рекорд {best}",
       "prompts": {
         "meaning": "«{word}» — це…",
         "instead": "замість «{wrong}»",

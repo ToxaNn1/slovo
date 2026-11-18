@@ -297,10 +297,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Картка відповіді в грі',
     line: 'Відповідь на запитання гри з’являється на самій сторінці, а не в шторці.',
   },
-  survivalStreak: {
-    name: 'Лічильник у «Виживанні»',
-    line: 'У «Виживанні» видно правильні відповіді підряд і рекорд.',
-  },
   finishPoster: { name: 'Плакат «Фініш»', line: 'Наприкінці гри з’являється плакат «Фініш».' },
   gameAnswerBanner: {
     name: 'Смужка відповіді',
