@@ -47,12 +47,9 @@ export type { GridCell, GridCellState } from './pairs-form';
 /** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own (ADR 0137). */
 export const GAME_LIVES = 3;
 
-/** The Lives a Game in the mode starts with, read at its start; none in a mode without Lives. */
-function livesOf({ lives }: GameMode, edition: GameEdition): number | undefined {
-  if (lives === 'none') return undefined;
-  if (typeof lives === 'function') return lives(edition);
-  if (lives !== undefined) return lives;
-  return GAME_LIVES;
+/** The Lives a Game in the mode starts with; none in a mode without Lives. */
+function livesOf({ lives = GAME_LIVES }: GameMode): number | undefined {
+  return lives === 'none' ? undefined : lives;
 }
 
 /** The time limit of a Game in the mode, read at its start; none in a mode without one. */
@@ -596,25 +593,6 @@ const resultOf = (over: EndedGame): number =>
   over.lives === undefined ? over.played.filter(({ right }) => right).length : over.roundsPassed;
 
 /**
- * The streak of a Game in an endless mode with Lives, such as «Виживання»
- * (spec #1674): the Rounds passed so far, and the record to chase, the mode's
- * Best result, or the streak itself once it passes that.
- */
-export interface Streak {
-  readonly rounds: number;
-  readonly record: number;
-}
-
-/** The streak of the Game in play or just over; none on the mode screen, or in a mode with a Round limit or with no Lives. */
-export function streakOf({ current, bestResults }: GameState): Streak | undefined {
-  if (current?.lives === undefined || current.roundLimit !== undefined) {
-    return undefined;
-  }
-  const rounds = current.roundsPassed;
-  return { rounds, record: Math.max(bestResults[current.modeId] ?? 0, rounds) };
-}
-
-/**
  * How a Game just over ended, by its status: its last Life lost, its time up,
  * or its Round limit reached; at least 60% of the answers right is on target.
  */
@@ -840,7 +818,7 @@ export async function openGame({
       'rounds' in plan
         ? createGameInPlay({
             mode,
-            lives: livesOf(mode, edition),
+            lives: livesOf(mode),
             rounds: plan.rounds,
             planRounds,
             eligible,

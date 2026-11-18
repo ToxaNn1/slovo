@@ -57,14 +57,7 @@ export {
 export { entryCardTitle } from './feed/entry-feed-card';
 export { type FeedNotice, LATER_QUESTIONS, type LaterQuestion } from './feed-notice';
 export { ENOUGH_FOR_TODAY_SEEN, type FirstWeekDay, type YesterdayQuiz } from './feed/feed-notices';
-export {
-  countsAsWon,
-  streakOf,
-  type GameModeOffer,
-  type GameState,
-  type OfferedBest,
-  type Streak,
-} from './game/game';
+export { countsAsWon, type GameModeOffer, type GameState, type OfferedBest } from './game/game';
 export {
   type CurrentGame,
   type GameEnd,

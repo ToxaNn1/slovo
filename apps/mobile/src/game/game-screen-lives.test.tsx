@@ -14,24 +14,24 @@ import {
 beforeEach(resetGameScreen);
 
 describe('the Games boards’ Lives and time (ADR 0137)', () => {
-  it('ends «Виживання» on the first mistake with its 1 Life', async () => {
-    await open({ corrections: 15, switchedOn: ['survivalOneLife'] });
+  it('ends «Виживання» on the third mistake with its 3 Lives', async () => {
+    await open({ corrections: 15 });
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('game-mode-survival'));
     await waitFor(() => {
-      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 1 з 1');
+      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 3 з 3');
     });
-    await answerSurvivalRound(true);
-    await fireEvent.press(screen.getByTestId('game-next'));
-    await answerSurvivalRound(false);
-    await fireEvent.press(screen.getByTestId('game-next'));
+    for (const right of [true, false, false, false]) {
+      await answerSurvivalRound(right);
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
 
     await waitFor(() => {
       expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
     });
     expect(screen.getByTestId('game-result-rounds').props['accessibilityLabel']).toBe(
-      'Пройдено раундів: 1',
+      'Пройдено раундів: 3',
     );
   });
 

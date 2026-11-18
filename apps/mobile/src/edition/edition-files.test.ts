@@ -1056,7 +1056,6 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
     });
     expect(parsed.round.lives).toBe('Життів: {count} з {total}');
     expect(parsed.round.pairsCaptions).toEqual({ word: 'Слово', meaning: 'Значення' });
-    expect(parsed.round.survival).toEqual({ streak: 'поспіль', best: 'рекорд {best}' });
     expect(parsed.round.typed.submit).toBe('Перевірити');
     expect(parsed.warmup).toEqual({
       title: 'Розминка!',
@@ -1136,10 +1135,6 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
     [
       'round.banner.right',
       { round: { ...round, banner: { ...(round['banner'] as object), right: [] } } },
-    ],
-    [
-      'round.survival.best',
-      { round: { ...round, survival: { streak: 'поспіль', best: 'рекорд' } } },
     ],
   ])('the UA Edition refuses %s without its placeholders or texts', (path, changed) => {
     const result = EditionStringsSchema.safeParse({ ...strings, game: { ...game, ...changed } });

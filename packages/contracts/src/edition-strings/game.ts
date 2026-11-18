@@ -199,10 +199,6 @@ export const GameStringsSchema = z.strictObject({
     }),
     /** The captions over the two columns of a «Пари» grid behind `pairsStay`, e.g. «Слово» and «Значення». */
     pairsCaptions: z.strictObject({ word: TextSchema, meaning: TextSchema }),
-    /** The two lines under the streak of «Виживання» (spec #1880): «поспіль» and «рекорд {best}». Takes `{best}`. */
-    survival: z.strictObject({ streak: TextSchema, best: templateOf('best') }),
-    /** The streak counter of «Виживання», e.g. «4 поспіль · рекорд 9». Takes `{n}` and `{best}` (spec #1674). */
-    survivalStreak: templateOf('n', 'best'),
     /** The prompts of the restyled Rounds (spec #1674). */
     prompts: z.strictObject({
       /** E.g. ««вереск» — це…». Takes `{word}`. */

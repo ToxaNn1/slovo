@@ -343,72 +343,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
   });
 
-  it('plays «За літерами» as letter tiles in rows of 4 with letterTiles on, no text field', async () => {
-    await open({ switchedOn: ['letterTiles'] });
-    await renderScreen();
-
-    await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
-    await waitFor(() => {
-      expect(screen.getByTestId('chips')).toBeOnTheScreen();
-    });
-    const word = theWordOfThePrompt();
-    const tiles = screen.getAllByTestId(/^chips-\d+$/);
-    expect(tiles.length).toBe(Math.max(8, Math.ceil(word.length / 4) * 4));
-    for (const row of screen.getAllByTestId(/^chips-row-\d+$/)) {
-      expect(within(row).getAllByRole('button')).toHaveLength(4);
-    }
-    expect(screen.queryByLabelText('Твоя відповідь')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Відкрити літеру' })).toBeNull();
-    expect(screen.queryByRole('button', { name: '← Стерти літеру' })).toBeNull();
-
-    await assemble(word.toLocaleUpperCase('uk'));
-
-    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
-  });
-
-  it('draws the letter tiles of «За літерами» in capitals', async () => {
-    await open({ switchedOn: ['letterTiles'] });
-    await renderScreen();
-
-    await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
-    await waitFor(() => {
-      expect(screen.getByTestId('chips')).toBeOnTheScreen();
-    });
-
-    // Each tile shows its letter in capitals, as VoiceOver reads it.
-    const letters = screen
-      .getAllByTestId(/^chips-\d+$/)
-      .map((tile) => String(within(tile).getByText(/./).props['children']));
-    expect(letters).toEqual(
-      expect.arrayContaining(Array.from(theWordOfThePrompt().toLocaleUpperCase('uk'))),
-    );
-    expect(letters.filter((letter) => /\p{Ll}/u.test(letter))).toEqual([]);
-  });
-
-  it('gives a letter of «За літерами» back at a tap on its slot, then takes the Word', async () => {
-    await open({ switchedOn: ['letterTiles'] });
-    await renderScreen();
-
-    await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
-    await waitFor(() => {
-      expect(screen.getByTestId('chips')).toBeOnTheScreen();
-    });
-    const word = theWordOfThePrompt().toLocaleUpperCase('uk');
-    // A wrong letter for the second, given back before the slots are full.
-    await assemble(`${word.charAt(0)}${word.charAt(word.length - 1)}`);
-    expect(screen.getByTestId('chips-line')).toHaveTextContent(
-      `${word.charAt(0)}${word.charAt(word.length - 1)}`,
-    );
-
-    await fireEvent.press(screen.getByTestId('chips-line-1'));
-
-    expect(screen.getByTestId('chips-line')).toHaveTextContent(word.charAt(0));
-    await assemble(word.slice(1));
-    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
-  });
-
-  it('keeps the text field of «За літерами» with letterTiles off', async () => {
-    await open({ switchedOff: ['letterTiles'] });
+  it('plays «За літерами» in a text field, no chips', async () => {
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('game-mode-by-letters'));

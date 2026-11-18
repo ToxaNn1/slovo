@@ -445,16 +445,13 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** The inline answer card of a Game Round, in place of the bottom sheet (spec #1674); off while `game` is. */
   gameAnswerCard: FeatureSwitchStateSchema,
   /** The letter tiles of «За літерами»: tiles with decoys tapped into the slots, in place of the text field (spec #1674); off while `gameByLetters` is. */
-  letterTiles: FeatureSwitchStateSchema,
   /** The streak counter of «Виживання»: the right answers in a row and the record (spec #1674); off while `gameSurvival` is. */
-  survivalStreak: FeatureSwitchStateSchema,
   /** The «Фініш» poster at the end of a Game and a time-up (spec #1674); off while `game` is. */
   finishPoster: FeatureSwitchStateSchema,
   /** The answer banner: after an answer a banner tells right or wrong, and the Game moves on by itself after a Core delay, with no «Далі →» (ADR 0138); off, the answer card of `gameAnswerCard`. Off while `game` is. */
   gameAnswerBanner: FeatureSwitchStateSchema,
   /** Three Lives: a Game starts with 3 Lives by default (ADR 0137); off, 5. Off while `game` is. */
   /** One Life in «Виживання» (ADR 0137); off, 3. Off while `gameSurvival` is. */
-  survivalOneLife: FeatureSwitchStateSchema,
   /** 20 seconds in «На час», then straight to «ФІНІШ» with no time-up poster (ADR 0137); off, 60 seconds and «Час!». Off while `gameTimed` is. */
   /** The Mascot beside the question of a Round, in its waiting, glad, wincing and sad states (ADR 0139); off while `game` is. */
   gameRoundMascot: FeatureSwitchStateSchema,

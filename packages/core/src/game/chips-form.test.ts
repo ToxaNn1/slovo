@@ -30,16 +30,16 @@ describe('the chips form', () => {
     });
   });
 
-  it('takes decoys among letter tiles only, the answer drawn from the tiles', () => {
-    const tiles: ChipsContent = { ...content, chips: ['д', 'з', 'х', 'з', 'ї', 'к'] };
+  it('takes decoys in the field only, the answer drawn from its chips', () => {
+    const field: ChipsContent = { ...content, chips: ['д', 'з', 'х', 'з', 'ї', 'к'] };
 
-    expect(chipsForm.wellFormed({ ...tiles, layout: 'tiles' })).toBe(true);
-    expect(chipsForm.shown({ ...tiles, layout: 'tiles' }, [])).toMatchObject({
-      layout: 'tiles',
+    expect(chipsForm.wellFormed({ ...field, layout: 'field' })).toBe(true);
+    expect(chipsForm.shown({ ...field, layout: 'field' }, [])).toMatchObject({
+      layout: 'field',
       slots: 4,
     });
-    expect(chipsForm.wellFormed(tiles)).toBe(false);
-    expect(chipsForm.wellFormed({ ...tiles, layout: 'tiles', expected: ['з', 'з', 'з'] })).toBe(
+    expect(chipsForm.wellFormed(field)).toBe(false);
+    expect(chipsForm.wellFormed({ ...field, layout: 'field', expected: ['з', 'з', 'з'] })).toBe(
       false,
     );
   });

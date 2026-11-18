@@ -523,7 +523,7 @@ _Avoid_: Search index cache
 ### Game
 
 **Game**:
-A run of Rounds in one Game Mode: up to 15 Rounds with 3 Lives by default. A Game Mode may set its own Lives, Round limit and time limit: «Виживання» has 1 Life and no Round limit, «На час» 20 seconds and no Lives. In every Game Mode up to 5 Rounds are drawn from eligible Entries that are Unknown or due for Review, the rest as before; a wrong answer marks the Entry Unknown. At its end the Game shows its Game Review. The Daily Crossword is not a Game.
+A run of Rounds in one Game Mode: up to 15 Rounds with 3 Lives by default. A Game Mode may set its own Lives, Round limit and time limit: «Виживання» has no Round limit, «На час» 20 seconds and no Lives. In every Game Mode up to 5 Rounds are drawn from eligible Entries that are Unknown or due for Review, the rest as before; a wrong answer marks the Entry Unknown. At its end the Game shows its Game Review. The Daily Crossword is not a Game.
 _Avoid_: Quiz, practice, test
 
 **Game Mode**:

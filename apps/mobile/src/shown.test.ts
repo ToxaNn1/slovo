@@ -16,8 +16,6 @@ const everything: Shown = {
   tabs: ['home', 'game', 'saved', 'settings'],
   gameReview: true,
   finishPoster: true,
-  survivalStreak: true,
-  survivalOneLife: true,
   gameRoundMascot: true,
   gameQuestionOnGround: true,
   gameOptionStamp: true,
@@ -219,14 +217,6 @@ describe('what the reader is shown', () => {
     [
       'the old result screen with the end poster off',
       { off: ['finishPoster'], shown: { finishPoster: false } },
-    ],
-    [
-      'the Rounds passed in place of the streak with its switch off',
-      { off: ['survivalStreak'], shown: { survivalStreak: false } },
-    ],
-    [
-      'the spec #1674 Game with survivalOneLife off',
-      { off: ['survivalOneLife'], shown: { survivalOneLife: false } },
     ],
     [
       'the spec #1674 Game with gameRoundMascot off',

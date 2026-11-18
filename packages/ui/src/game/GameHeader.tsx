@@ -1,7 +1,6 @@
 'use no memo';
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
-import type { Streak } from '@slovo/core';
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -53,8 +52,7 @@ const LIFE_FADE = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Neve
  * The Round's header (board 07), one for every Game Mode: a row of the ✕,
  * the mode's title in caps with the Round in play out of the Round limit,
  * and the Lives as flags; under it the 10 segments that fill as the Rounds
- * pass towards the limit, or with no limit the Rounds passed, in
- * «Виживання» with its streak one solid red bar (board g7), and in a timed
+ * pass towards the limit, or with no limit the Rounds passed, and in a timed
  * Game the timer under them. The flags alone show the Lives, which VoiceOver
  * reads as «Життів: 4 з 5». A mode without Lives shows no flags.
  * On the ground (board «slogo game last») the row is the ✕, the bar and the
@@ -69,7 +67,6 @@ export function GameHeader({
   lives,
   livesAtStart,
   lifeLostAfter,
-  streak,
   time,
   onExit,
   onGround = false,
@@ -86,8 +83,6 @@ export function GameHeader({
   livesAtStart: number | undefined;
   /** How long after a wrong answer its Life is lost, in milliseconds. */
   lifeLostAfter: number;
-  /** The streak of «Виживання», whose one solid bar (board g7) stands in place of the Rounds passed in a mode with no Round limit; the body shows the streak itself. */
-  streak: Streak | undefined;
   /** The play time left of a timed Game and its whole time, in milliseconds; none in another Game. */
   time: { left: number; limit: number } | undefined;
   onExit: () => void;
@@ -112,18 +107,7 @@ export function GameHeader({
   const hasLives = lives !== undefined && livesAtStart !== undefined;
   const livesText = fill(words.lives, { count: String(lives), total: String(livesAtStart) });
   const bar =
-    roundLimit === undefined && streak !== undefined ? (
-      <View
-        testID="game-streak-bar"
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={[
-          styles.segment,
-          onGround && styles.segmentOnGround,
-          { backgroundColor: colors.accent },
-        ]}
-      />
-    ) : roundLimit === undefined ? (
+    roundLimit === undefined ? (
       <Text
         testID="game-progress"
         accessibilityLabel={fill(words.passedLabel, progress)}

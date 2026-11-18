@@ -20,12 +20,6 @@ export interface Shown {
   readonly gameReview: boolean;
   /** The end poster of a Game, «Фініш» or «Час!» or the Lives-over one, in place of the old result screen (spec #1674). */
   readonly finishPoster: boolean;
-  /** The streak counter of «Виживання» and its record, in place of the Rounds passed (spec #1674). */
-  readonly survivalStreak: boolean;
-  /** 3 Lives by default in place of 5 (ADR 0137). */
-  /** 1 Life in «Виживання» in place of 3 (ADR 0137). */
-  readonly survivalOneLife: boolean;
-  /** 20 seconds in «На час» and no time-up poster, in place of 60 seconds and «Час!» (ADR 0137). */
   /** The Mascot beside the question of a Round (ADR 0139). */
   readonly gameRoundMascot: boolean;
   /** The question on the background, labels without numbers and the visible Lives line (ADR 0139). */
@@ -238,8 +232,6 @@ export function shownOf({
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
     finishPoster: on('finishPoster'),
-    survivalStreak: on('survivalStreak'),
-    survivalOneLife: on('survivalOneLife'),
     gameRoundMascot: on('gameRoundMascot'),
     gameQuestionOnGround: on('gameQuestionOnGround'),
     gameOptionStamp: on('gameOptionStamp'),

@@ -9280,22 +9280,6 @@
                           ],
                           "type": "string"
                         },
-                        "letterTiles": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "survivalStreak": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "finishPoster": {
                           "enum": [
                             "on",
@@ -9305,14 +9289,6 @@
                           "type": "string"
                         },
                         "gameAnswerBanner": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "survivalOneLife": {
                           "enum": [
                             "on",
                             "off",
@@ -9896,11 +9872,8 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameAnswerCard",
-                        "letterTiles",
-                        "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
-                        "survivalOneLife",
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
@@ -11304,22 +11277,6 @@
                           ],
                           "type": "string"
                         },
-                        "letterTiles": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "survivalStreak": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "finishPoster": {
                           "enum": [
                             "on",
@@ -11329,14 +11286,6 @@
                           "type": "string"
                         },
                         "gameAnswerBanner": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "survivalOneLife": {
                           "enum": [
                             "on",
                             "off",
@@ -11920,11 +11869,8 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameAnswerCard",
-                        "letterTiles",
-                        "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
-                        "survivalOneLife",
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
@@ -13252,22 +13198,6 @@
                           ],
                           "type": "string"
                         },
-                        "letterTiles": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "survivalStreak": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "finishPoster": {
                           "enum": [
                             "on",
@@ -13277,14 +13207,6 @@
                           "type": "string"
                         },
                         "gameAnswerBanner": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "survivalOneLife": {
                           "enum": [
                             "on",
                             "off",
@@ -13868,11 +13790,8 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameAnswerCard",
-                        "letterTiles",
-                        "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
-                        "survivalOneLife",
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",

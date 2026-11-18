@@ -10,10 +10,10 @@ import { useRoundLook } from './round-look';
 
 /**
  * A Round of the chips form: its chips, a Word's letters or an expression's
- * words, stand under the card in place of the options. A Word's letters in
- * a line, as «Анаграми» shows them, take «← Стерти літеру», which takes back
+ * words, stand under the card in place of the options. A Word's letters, as
+ * «Анаграми» shows them in a line, take «← Стерти літеру», which takes back
  * the last letter placed, and a wrong Word shows the right one in its line
- * (board 06); letter tiles take a letter back at a tap on its slot.
+ * (board 06).
  * An expression's words on the ground take the label as an ink heading and
  * the meaning in grey under it (board 07 g6); in the assembly field the
  * check key, «Перевірити», gives the answer.
@@ -32,7 +32,7 @@ export function ChipsRound({
 }) {
   const { strings } = useEdition();
   const { onGround } = useRoundLook();
-  const lettersInLine = round.chipKind === 'letter' && round.layout === 'line';
+  const letters = round.chipKind === 'letter';
   return (
     <>
       <RoundCard
@@ -50,8 +50,8 @@ export function ChipsRound({
         fixed={round.fixed}
         layout={round.layout}
         slots={round.slots}
-        eraseLabel={lettersInLine ? strings.game.round.eraseLetter : undefined}
-        showsRight={lettersInLine}
+        eraseLabel={letters ? strings.game.round.eraseLetter : undefined}
+        showsRight={letters}
         checkLabel={round.layout === 'field' ? strings.game.dailyCrossword.check : undefined}
         answer={round.answer?.form === 'chips' ? round.answer : undefined}
         onAnswer={(chips) => {
