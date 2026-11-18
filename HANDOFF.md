@@ -21,3 +21,4 @@ Wave #1992 «SLOVO пропонує». Integration branch feat/1992-slovo-propon
 - gh GraphQL blocked; use gh api REST.
 - 2026-11-18T16:55Z safety net takeover (last commit 2026-11-18T16:38:52Z)
 - 16:57Z safety net: #1996 UI part implementer started on feat/1996-collection-feed
+- 16:57Z ADR 0178 gets the #1997 publish-date rules (pushed to integration)
