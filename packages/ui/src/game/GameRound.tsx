@@ -33,8 +33,7 @@ import { VowelRound } from './VowelRound';
  * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
  * prompt under its label, the four options and, once answered, the sheet,
  * or the banner when the Core says the answered Round moves on by itself
- * (`gameAnswerBanner`, never after a pair of a pairs grid); a grid whose found pairs stay
- * (`pairsStay`) shows its large question and no answered state at all.
+ * (`gameAnswerBanner`, never after a pair of a pairs grid).
  * It plays the pick form, the vowel form, whose Word stands in the card
  * with each vowel a button, and the pairs form, whose grid stands under the
  * mode's label in place of the card and the options, the chips form, whose
@@ -90,15 +89,13 @@ export function GameRound({
   /** Hands the Game what the banner waits for besides its delay: VoiceOver reading it. */
   onWaitFor?: (done: Promise<unknown>) => void;
 }) {
-  const { strings, voice } = useEdition();
-  const tokens = useTokens();
+  const { strings } = useEdition();
   const { round } = game;
   const { answer } = round;
   const gameHaptics = useGameHaptics();
   const sounds = useInterfaceSounds();
-  // The answer just given: the Round's, or in a timed Game and a grid that stays, which move on at once, the last Round's.
-  const stays = round.form === 'pairs' && round.stays;
-  const given = game.time === undefined && !stays ? answer : game.played.at(-1)?.answer;
+  // The answer just given: the Round's, or in a timed Game, which moves on at once, the last Round's.
+  const given = game.time === undefined ? answer : game.played.at(-1)?.answer;
   // The answer shown before, so only the answer given now plays.
   const shownAnswer = useRef(given);
 
@@ -168,26 +165,14 @@ export function GameRound({
         {look.kicker !== undefined && round.form !== 'vowel' && (
           <RoundKicker kicker={look.kicker} />
         )}
-        {stays ? (
-          <Text
-            testID="game-prompt"
-            accessibilityRole="header"
-            maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-            {...voice}
-            style={[typeStyle('roundAsk', tokens), { color: tokens.colors.ink }]}
-          >
-            {strings.game.round.pairsHint}
-          </Text>
-        ) : (
-          labelShown && (
-            <RoundHead
-              label={round.form === 'pairs' ? strings.game.round.pairsHint : asked.label}
-              number={round.number}
-              roundLimit={onGround ? undefined : game.roundLimit}
-              heading={round.form === 'vowel' || round.form === 'pairs'}
-              testID={round.form === 'pairs' ? 'game-prompt' : undefined}
-            />
-          )
+        {labelShown && (
+          <RoundHead
+            label={round.form === 'pairs' ? strings.game.round.pairsHint : asked.label}
+            number={round.number}
+            roundLimit={onGround ? undefined : game.roundLimit}
+            heading={round.form === 'vowel' || round.form === 'pairs'}
+            testID={round.form === 'pairs' ? 'game-prompt' : undefined}
+          />
         )}
         <RoundLookContext.Provider value={look}>
           <FormRound

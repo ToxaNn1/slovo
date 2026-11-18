@@ -9320,14 +9320,6 @@
                           ],
                           "type": "string"
                         },
-                        "pairsStay": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "buildIdiomCheck": {
                           "enum": [
                             "on",
@@ -9877,7 +9869,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "pairsStay",
                         "buildIdiomCheck",
                         "livesOverWarmup",
                         "gameEndToFeed",
@@ -11317,14 +11308,6 @@
                           ],
                           "type": "string"
                         },
-                        "pairsStay": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "buildIdiomCheck": {
                           "enum": [
                             "on",
@@ -11874,7 +11857,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "pairsStay",
                         "buildIdiomCheck",
                         "livesOverWarmup",
                         "gameEndToFeed",
@@ -13238,14 +13220,6 @@
                           ],
                           "type": "string"
                         },
-                        "pairsStay": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "buildIdiomCheck": {
                           "enum": [
                             "on",
@@ -13795,7 +13769,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "pairsStay",
                         "buildIdiomCheck",
                         "livesOverWarmup",
                         "gameEndToFeed",

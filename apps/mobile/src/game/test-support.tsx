@@ -366,28 +366,6 @@ export function pairsLeft(): { word: number; definition: number }[] {
   });
 }
 
-/**
- * The pairs still to match in a grid whose found pairs stay (`pairsStay`):
- * each open Word with the place of its own Definition; a pair answered takes
- * no tap.
- */
-export function pairsOpen(): { word: number; definition: number }[] {
-  const definitions = screen.getAllByTestId(/^pairs-definition-\d+$/, ALL_CELLS);
-  const labels = definitions.map((cell): unknown => cell.props['accessibilityLabel']);
-  return screen.getAllByTestId(/^pairs-word-\d+$/, ALL_CELLS).flatMap((cell, word) => {
-    const state: unknown = cell.props['accessibilityState'];
-    if (
-      typeof state === 'object' &&
-      state !== null &&
-      'disabled' in state &&
-      state.disabled === true
-    )
-      return [];
-    const n = /\d+/.exec(String(cell.props['accessibilityLabel']))?.[0] ?? '';
-    return [{ word, definition: labels.indexOf(`The meaning of test${n}.`) }];
-  });
-}
-
 /** Picks the option of the Word whose number is the prompt's, right in a Round of «Вгадай слово». */
 export async function pickTheWordOfThePrompt() {
   const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);

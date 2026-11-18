@@ -7,9 +7,7 @@ import { PairsGrid } from './PairsGrid';
 
 /**
  * A Round of the pairs form: its grid stands under the mode's label in place
- * of the card and the options. A grid that stays (the Round's `stays`, `pairsStay`) is kept from
- * pair to pair, keyed by the grid's first Round: the Round's number less the
- * pairs answered in it.
+ * of the card and the options, keyed by the Round.
  */
 export function PairsRound({
   round,
@@ -18,12 +16,9 @@ export function PairsRound({
   round: Extract<Round, { form: 'pairs' }>;
   onAnswer: (given: Extract<GivenAnswer, { form: 'pairs' }>) => void;
 }) {
-  const answered = round.words.filter(({ state }) => state !== 'open').length;
-  const stay = round.stays;
   return (
     <PairsGrid
-      key={stay ? round.number - answered : round.number}
-      stay={stay}
+      key={round.number}
       words={round.words}
       definitions={round.definitions}
       answer={round.answer?.form === 'pairs' ? round.answer : undefined}

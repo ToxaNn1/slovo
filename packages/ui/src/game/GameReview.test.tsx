@@ -205,7 +205,6 @@ const grid = {
     { shown: 'open and honest', state: 'found' as const },
     { shown: 'stern and gloomy', state: 'open' as const },
   ],
-  stays: false,
 };
 const letters = {
   form: 'chips' as const,

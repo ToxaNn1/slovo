@@ -34,12 +34,7 @@ describe('the pairs form', () => {
         shown: definition,
         state: 'open',
       })),
-      stays: false,
     });
-  });
-
-  it('shows the found pairs staying when the content says so', () => {
-    expect(pairsForm.shown({ ...content, stays: true }, [])).toMatchObject({ stays: true });
   });
 
   it('spans one Round per pair and asks about every pair Entry', () => {

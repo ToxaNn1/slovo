@@ -197,8 +197,6 @@ export const GameStringsSchema = z.strictObject({
       /** Its line after a wrong answer, e.g. «Майже. Ось як правильно: вереск». Takes `{answer}`. */
       answer: templateOf('answer'),
     }),
-    /** The captions over the two columns of a «Пари» grid behind `pairsStay`, e.g. «Слово» and «Значення». */
-    pairsCaptions: z.strictObject({ word: TextSchema, meaning: TextSchema }),
     /** The prompts of the restyled Rounds (spec #1674). */
     prompts: z.strictObject({
       /** E.g. ««вереск» — це…». Takes `{word}`. */

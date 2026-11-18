@@ -9,7 +9,6 @@ import {
   renderScreen,
   ALL_CELLS,
   pairsLeft,
-  pairsOpen,
   pickTheWordOfThePrompt,
   answerSurvivalRound,
   startGuessWordAtRound11,
@@ -27,12 +26,6 @@ import {
 } from './test-support';
 
 beforeEach(resetGameScreen);
-
-/** A pair of a grid: the place of its Word and of its own Definition. */
-interface Pair {
-  word: number;
-  definition: number;
-}
 
 describe('the Game screen', () => {
   it('starts «Наголос» from its card and plays a whole Game to the result screen', async () => {
@@ -174,120 +167,21 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
   });
 
-  describe('«Пари» with `pairsStay` on', () => {
-    it('shows the question and the two captions, keeps a found pair red in place and takes the next pair at once', async () => {
-      await open({ switchedOn: ['pairsStay'] });
-      await renderScreen();
+  it('pauses after a pair and takes a found pair out of the grid on «Далі»', async () => {
+    await renderScreen();
 
-      await fireEvent.press(screen.getByTestId('game-mode-pairs'));
-      await waitFor(() => {
-        expect(screen.getByTestId('pairs')).toBeOnTheScreen();
-      });
-      expect(screen.getByRole('header', { name: 'З’єднай слово і значення' })).toBeOnTheScreen();
-      expect(screen.getByText('СЛОВО')).toBeOnTheScreen();
-      expect(screen.getByText('ЗНАЧЕННЯ')).toBeOnTheScreen();
-
-      const [first, second] = pairsOpen() as [Pair, Pair];
-      await fireEvent.press(screen.getByTestId(`pairs-word-${String(first.word)}`));
-      await fireEvent.press(screen.getByTestId(`pairs-definition-${String(first.definition)}`));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('game-progress')).toHaveAccessibleName(
-          'Пройдено раундів: 1 з 15',
-        );
-      });
-      expect(screen.queryByTestId('game-sheet-title')).toBeNull();
-      expect(screen.queryByTestId('game-next')).toBeNull();
-      expect(screen.getByTestId(`pairs-word-${String(first.word)}`)).toBeOnTheScreen();
-      expect(screen.getByTestId(`pairs-word-${String(first.word)}`)).toBeDisabled();
-      expect(screen.getByTestId(`pairs-definition-${String(first.definition)}`)).toBeOnTheScreen();
-      expect(pairsOpen()).toHaveLength(3);
-
-      await fireEvent.press(screen.getByTestId(`pairs-word-${String(second.word)}`));
-      await fireEvent.press(screen.getByTestId(`pairs-definition-${String(second.definition)}`));
-      await waitFor(() => {
-        expect(screen.getByTestId('game-progress')).toHaveAccessibleName(
-          'Пройдено раундів: 2 з 15',
-        );
-      });
-      expect(pairsOpen()).toHaveLength(2);
+    await fireEvent.press(screen.getByTestId('game-mode-pairs'));
+    await waitFor(() => {
+      expect(screen.getByTestId('pairs')).toBeOnTheScreen();
     });
+    const [{ word, definition }] = pairsLeft() as [{ word: number; definition: number }];
+    await fireEvent.press(screen.getByTestId(`pairs-word-${String(word)}`));
+    await fireEvent.press(screen.getByTestId(`pairs-definition-${String(definition)}`));
 
-    it('plays four grids of 4, 4, 4 and 3 pairs with no pause to the result screen', async () => {
-      await open({ switchedOn: ['pairsStay'] });
-      await renderScreen();
-
-      await fireEvent.press(screen.getByTestId('game-mode-pairs'));
-
-      const grids: number[] = [];
-      for (let round = 1; round <= 15; round += 1) {
-        await waitFor(() => {
-          expect(screen.getByTestId('game-progress')).toHaveAccessibleName(
-            `Пройдено раундів: ${String(round - 1)} з 15`,
-          );
-        });
-        const left = pairsOpen();
-        // A grid with none of its pairs found yet is a new one.
-        if (left.length === screen.getAllByTestId(/^pairs-word-\d+$/, ALL_CELLS).length)
-          grids.push(left.length);
-        const [{ word, definition }] = left as [Pair];
-        await fireEvent.press(screen.getByTestId(`pairs-word-${String(word)}`));
-        await fireEvent.press(screen.getByTestId(`pairs-definition-${String(definition)}`));
-        expect(screen.queryByTestId('game-next')).toBeNull();
-      }
-
-      await waitFor(() => {
-        expect(screen.getByText('Перемога!')).toBeOnTheScreen();
-      });
-      expect(grids).toEqual([4, 4, 4, 3]);
-    });
-
-    it('takes a Life for a wrong pair, clears the pick and takes the next pair at once', async () => {
-      await open({ switchedOn: ['pairsStay'] });
-      await renderScreen();
-
-      await fireEvent.press(screen.getByTestId('game-mode-pairs'));
-      await waitFor(() => {
-        expect(screen.getByTestId('pairs')).toBeOnTheScreen();
-      });
-      const [{ word, definition }] = pairsOpen() as [Pair];
-      await fireEvent.press(screen.getByTestId(`pairs-word-${String(word)}`));
-      await fireEvent.press(screen.getByTestId(`pairs-definition-${String((definition + 1) % 4)}`));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
-      });
-      expect(screen.queryByTestId('game-sheet-title')).toBeNull();
-      expect(screen.getByTestId(`pairs-word-${String(word)}`)).toBeDisabled();
-      const [next] = pairsOpen() as [Pair];
-      expect(screen.getByTestId(`pairs-word-${String(next.word)}`)).not.toBeSelected();
-      await fireEvent.press(screen.getByTestId(`pairs-word-${String(next.word)}`));
-      await fireEvent.press(screen.getByTestId(`pairs-definition-${String(next.definition)}`));
-      await waitFor(() => {
-        expect(screen.getByTestId('game-progress')).toHaveAccessibleName(
-          'Пройдено раундів: 2 з 15',
-        );
-      });
-    });
-
-    it('brings back the pause after a pair and the vanishing pairs with `pairsStay` off', async () => {
-      await open({ switchedOff: ['pairsStay'] });
-      await renderScreen();
-
-      await fireEvent.press(screen.getByTestId('game-mode-pairs'));
-      await waitFor(() => {
-        expect(screen.getByTestId('pairs')).toBeOnTheScreen();
-      });
-      expect(screen.queryByText('СЛОВО')).toBeNull();
-      const [{ word, definition }] = pairsOpen() as [Pair];
-      await fireEvent.press(screen.getByTestId(`pairs-word-${String(word)}`));
-      await fireEvent.press(screen.getByTestId(`pairs-definition-${String(definition)}`));
-
-      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
-      await fireEvent.press(screen.getByTestId('game-next'));
-      await waitFor(() => {
-        expect(screen.queryByTestId(`pairs-word-${String(word)}`)).toBeNull();
-      });
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+    await fireEvent.press(screen.getByTestId('game-next'));
+    await waitFor(() => {
+      expect(screen.queryByTestId(`pairs-word-${String(word)}`)).toBeNull();
     });
   });
 

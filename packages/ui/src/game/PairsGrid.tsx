@@ -23,11 +23,6 @@ import { useAnswerMotion } from './useAnswerMotion';
 const CELL_TURN = 3;
 const WRONG_OPACITY = 0.6;
 
-/** The lines a Word and a Definition take at most in a grid that stays, as the board sets them. */
-const { stayCellHeight: STAY_CELL_HEIGHT, halfGap: HALF_GAP, diamond: DIAMOND } = pairsGridLayout;
-const WORD_LINES = 2;
-const DEFINITION_LINES = 3;
-
 /** The face of a cell in each look. */
 const TONES: Record<Look, TileTone> = {
   rest: 'tile',
@@ -42,29 +37,6 @@ type PairsAnswer = Extract<RoundAnswer, { form: 'pairs' }>;
 /** What a cell shows: at rest, the selected Word, or a judged pair's right or wrong look. */
 type Look = 'rest' | 'selected' | 'right' | 'wrong';
 
-/** A pair given, judged: the places of its Word and the Definition tapped, and whether it was right. */
-interface Judged {
-  readonly word: number;
-  readonly definition: number;
-  readonly right: boolean;
-}
-
-/** A pair the reader gave in a grid that stays. */
-interface Given {
-  readonly word: number;
-  readonly definition: number;
-}
-
-/** The pair given last, judged once the grid tells where its Word stands; nothing while it is still open. */
-function judgedOf(
-  given: Given | undefined,
-  words: readonly GridCell<RoundOption>[],
-): Judged | undefined {
-  const state = given === undefined ? undefined : words[given.word]?.state;
-  if (given === undefined || state === undefined || state === 'open') return undefined;
-  return { word: given.word, definition: given.definition, right: state === 'found' };
-}
-
 /**
  * A pairs grid: its Words in a column on the left and its Definitions on the
  * right, each a tile of the design. A tap on a Word selects it, a tap on it
@@ -78,63 +50,43 @@ function judgedOf(
  * empty, which VoiceOver skips. VoiceOver reads each Word with its Stress and
  * each Definition by its text. Key it by the Round, so a new Round starts
  * with nothing selected.
- *
- * A grid that stays (`pairsStay`, ADR 0139) has the captions «СЛОВО» and
- * «ЗНАЧЕННЯ» over its columns and draws each row as one block of two halves
- * with a small diamond between; a found pair stays red in its place and a
- * missed one leaves its places empty once its wrong look has played, as the
- * next Word is picked. It takes the next pair at once, the Game showing no
- * answered state: key it by the grid, so it keeps its looks from pair to pair.
  */
 export function PairsGrid({
   words,
   definitions,
   answer,
-  stay = false,
   onAnswer,
 }: {
   /** The grid's Words, in the order shown. */
   words: readonly GridCell<RoundOption>[];
   /** The grid's Definitions, in the order shown. */
   definitions: readonly GridCell<string>[];
-  /** The Round's answer, once given; none in a grid that stays. */
+  /** The Round's answer, once given. */
   answer: PairsAnswer | undefined;
-  /** Whether found pairs stay, with the captions and no pause after a pair (`pairsStay`). */
-  stay?: boolean;
   /** The place of the Word tapped among the Words, then of the Definition among the Definitions. */
   onAnswer: (word: number, definition: number) => void;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const keyInk = useSchemeColors('light').ink;
-  const { strings, voice } = useEdition();
+  const { strings } = useEdition();
   const [selected, setSelected] = useState<number>();
-  const [given, setGiven] = useState<Given>();
-  const judged = stay ? judgedOf(given, words) : answer;
-  const lookOf = (
-    place: number,
-    judgedPlace: number | undefined,
-    on: boolean,
-    state: GridCellState,
-  ): Look => {
-    if (judged !== undefined && place === judgedPlace) return judged.right ? 'right' : 'wrong';
-    if (stay && state === 'found') return 'right';
+  const lookOf = (place: number, judgedPlace: number | undefined, on: boolean): Look => {
+    if (answer !== undefined && place === judgedPlace) return answer.right ? 'right' : 'wrong';
     return on ? 'selected' : 'rest';
   };
   const textColor = (look: Look): string =>
     ({ rest: colors.ink, selected: colors.background, right: keyInk, wrong: colors.muted })[look];
-  /** Whether a cell leaves its place empty: answered in an earlier Round, or in a grid that stays, missed with its look played. */
-  const emptyOf = (state: GridCellState, look: Look) =>
-    stay ? state === 'missed' && look !== 'wrong' : state !== 'open';
-  /** Whether a cell takes no tap: in a Round answered, or in a grid that stays, of a pair answered. */
-  const inertOf = (state: GridCellState) => (stay ? state !== 'open' : answer !== undefined);
+  /** Whether a cell leaves its place empty: answered in an earlier Round. */
+  const emptyOf = (state: GridCellState) => state !== 'open';
+  const inert = answer !== undefined;
 
   const wordCell = (place: number) => {
     const cell = words[place];
     if (cell === undefined) return null;
     const { shown, state } = cell;
     const on = selected === place;
-    const look = lookOf(place, judged?.word, on, state);
+    const look = lookOf(place, answer?.word, on);
     return (
       <Cell
         key={place}
@@ -142,19 +94,16 @@ export function PairsGrid({
         label={stressLabel(strings.wordCard, shown.text, shown.stressedVowels)}
         look={look}
         turn={-CELL_TURN}
-        empty={emptyOf(state, look)}
-        inert={inertOf(state)}
-        half={stay}
+        empty={emptyOf(state)}
+        inert={inert}
         onPress={() => {
           setSelected(on ? undefined : place);
-          setGiven(undefined);
         }}
       >
         <WholeWordsText
           text={shown.text}
           typeRole="pairsWord"
           tracking={0}
-          numberOfLines={stay ? WORD_LINES : undefined}
           style={[typeStyle('pairsWord', tokens), styles.word, { color: textColor(look) }]}
         />
       </Cell>
@@ -164,7 +113,7 @@ export function PairsGrid({
     const cell = definitions[place];
     if (cell === undefined) return null;
     const { shown, state } = cell;
-    const look = lookOf(place, judged?.definition, false, state);
+    const look = lookOf(place, answer?.definition, false);
     return (
       <Cell
         key={place}
@@ -172,19 +121,16 @@ export function PairsGrid({
         label={shown}
         look={look}
         turn={CELL_TURN}
-        empty={emptyOf(state, look)}
-        inert={inertOf(state)}
-        half={stay}
+        empty={emptyOf(state)}
+        inert={inert}
         onPress={() => {
           if (selected === undefined) return;
           setSelected(undefined);
-          if (stay) setGiven({ word: selected, definition: place });
           onAnswer(selected, place);
         }}
       >
         <Text
           maxFontSizeMultiplier={fontScaleCap.text}
-          numberOfLines={stay ? DEFINITION_LINES : undefined}
           style={[typeStyle('pairsDefinition', tokens), { color: textColor(look) }]}
         >
           {shown}
@@ -193,39 +139,10 @@ export function PairsGrid({
     );
   };
 
-  if (!stay)
-    return (
-      <View testID="pairs" style={styles.grid}>
-        <View style={styles.words}>{words.map((_, place) => wordCell(place))}</View>
-        <View style={styles.definitions}>
-          {definitions.map((_, place) => definitionCell(place))}
-        </View>
-      </View>
-    );
-  const caption = (text: string) => text.toLocaleUpperCase(voice.accessibilityLanguage);
-  const captionStyle = [typeStyle('eyebrow', tokens), { color: colors.muted }];
   return (
-    <View testID="pairs" style={styles.rows}>
-      <View style={styles.row}>
-        <Text maxFontSizeMultiplier={fontScaleCap.text} style={[captionStyle, styles.words]}>
-          {caption(strings.game.round.pairsCaptions.word)}
-        </Text>
-        <Text maxFontSizeMultiplier={fontScaleCap.text} style={[captionStyle, styles.definitions]}>
-          {caption(strings.game.round.pairsCaptions.meaning)}
-        </Text>
-      </View>
-      {words.map((_, place) => (
-        <View key={place} style={styles.row}>
-          <View style={styles.words}>{wordCell(place)}</View>
-          <View style={styles.definitions}>{definitionCell(place)}</View>
-          <View
-            pointerEvents="none"
-            importantForAccessibility="no-hide-descendants"
-            accessibilityElementsHidden
-            style={[styles.diamond, { backgroundColor: colors.accent }]}
-          />
-        </View>
-      ))}
+    <View testID="pairs" style={styles.grid}>
+      <View style={styles.words}>{words.map((_, place) => wordCell(place))}</View>
+      <View style={styles.definitions}>{definitions.map((_, place) => definitionCell(place))}</View>
     </View>
   );
 }
@@ -241,7 +158,6 @@ function Cell({
   turn,
   empty,
   inert,
-  half,
   onPress,
   children,
 }: {
@@ -254,8 +170,6 @@ function Cell({
   empty: boolean;
   /** Whether it takes no tap. */
   inert: boolean;
-  /** Whether it is a half of a row's block, in a grid that stays, rather than a tile of its own. */
-  half: boolean;
   onPress: () => void;
   children: ReactNode;
 }) {
@@ -281,11 +195,7 @@ function Cell({
           accessibilityState={{ selected: look === 'selected', disabled: inert || empty }}
           inert={inert || empty}
           onPress={onPress}
-          faceStyle={[
-            styles.cell,
-            half && styles.half,
-            look === 'wrong' && { backgroundColor: colors.surfaceSunken },
-          ]}
+          faceStyle={[styles.cell, look === 'wrong' && { backgroundColor: colors.surfaceSunken }]}
         >
           {children}
         </PressedTile>
@@ -307,18 +217,4 @@ const styles = StyleSheet.create({
   },
   gone: { opacity: 0 },
   word: { textAlign: 'center' },
-  rows: { gap: pairsGridLayout.cellGap },
-  row: { flexDirection: 'row', gap: HALF_GAP },
-  half: { minHeight: STAY_CELL_HEIGHT },
-  // The small diamond where a row's two halves meet, over the gap between them.
-  diamond: {
-    position: 'absolute',
-    left: '40%',
-    top: '50%',
-    width: DIAMOND,
-    height: DIAMOND,
-    marginLeft: -(DIAMOND + HALF_GAP) / 2,
-    marginTop: -DIAMOND / 2,
-    transform: [{ rotate: '45deg' }],
-  },
 });

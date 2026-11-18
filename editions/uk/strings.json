@@ -1884,10 +1884,6 @@
         "lastLife": "Життя все",
         "answer": "Майже. Ось як правильно: {answer}"
       },
-      "pairsCaptions": {
-        "word": "Слово",
-        "meaning": "Значення"
-      },
       "prompts": {
         "meaning": "«{word}» — це…",
         "instead": "замість «{wrong}»",
