@@ -838,25 +838,31 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
     expect(screen.getByText('From the Greék.')).toHaveProp('accessibilityLabel', 'From the Greek.');
   });
 
-  it('numbers the other meanings in the History tab on from the primary Definition', async () => {
+  it('shows every Definition in the Essence tab, the others numbered on from the primary one', async () => {
     await render(
-      <EditionProvider
-        edition={{ locale: 'en' }}
-        strings={testStrings({
-          ...tabbedStrings,
-          wordCard: { ...tabbedStrings.wordCard, moreMeanings: { other: '{count} more' } },
-        })}
-      >
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings(tabbedStrings)}>
         <EntryCard card={stressedWord} tabs />
       </EditionProvider>,
     );
-    await fireEvent.press(screen.getByTestId('word-tab-history'));
 
     expect(
       within(screen.getByTestId('word-meanings')).getByText('2. A handsome yóuth.', {
         includeHiddenElements: true,
       }),
     ).toHaveProp('accessibilityLabel', '2. A handsome youth.');
+  });
+
+  it('shows the etymology alone in the History tab', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings(tabbedStrings)}>
+        <EntryCard card={stressedWord} tabs />
+      </EditionProvider>,
+    );
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+
+    expect(screen.getByTestId('word-etymology')).toBeTruthy();
+    expect(screen.queryByTestId('word-meanings')).toBeNull();
+    expect(screen.queryByTestId('word-history')).toBeNull();
   });
 
   it('shows the Stress marks on an Idiom card and reads its texts without them', async () => {
@@ -1020,6 +1026,20 @@ describe("a Word card's kicker", () => {
       },
     );
   });
+
+  it.each<[string, EntryFeedCard]>([
+    ['correction', card],
+    ['idiom', { kind: 'idiom', entryId: 'i1', model: idiomCard() }],
+  ])(
+    "says the %s card's place in a Curated Collection's Feed over its own kicker",
+    async (kind, entry) => {
+      const kicker = 'COLLECTION · PICKS · 3 OF 5';
+      await render(inEdition(<EntryCard card={entry} kicker={kicker} />));
+
+      expect(screen.getByTestId(`${kind}-card-kicker`)).toHaveTextContent(kicker);
+      expect(screen.getByTestId(`${kind}-card`)).toBeOnTheScreen();
+    },
+  );
 
   it('is left out of a Word card in the Feed', async () => {
     await render(inEdition(<EntryCard card={wordCard} />));

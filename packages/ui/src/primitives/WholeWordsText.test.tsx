@@ -161,7 +161,7 @@ describe('WholeWordsText', () => {
   it('takes the steps of the scale at the in-app text size', async () => {
     // At the larger ladder step every step is 58 / 50 of its size at M.
     await render(
-      <FontSizeProvider size={{ scale: 'ladder', step: 'larger' }}>
+      <FontSizeProvider size={'larger'}>
         <WholeWordsText
           testID="word"
           text="Synchrophasotron"

@@ -1,4 +1,4 @@
-import type { FontSize, TextSize, Theme } from '@slovo/contracts';
+import type { TextSize, Theme } from '@slovo/contracts';
 
 import type { Analytics } from '../analytics/analytics';
 import { forgetUnsentCounters } from '../community-counters/counter-deltas';
@@ -10,13 +10,7 @@ import { userStateRecords } from '../user-state-schema';
 /** The user settings in effect. */
 export interface UserSettings {
   readonly theme: Theme;
-  /** The S…XL font size, in effect while the Edition's `textSizeSteps` switch is off. */
-  readonly fontSize: FontSize;
-  /**
-   * The step on the text size ladder a Word text starts from, in effect while
-   * the `textSizeSteps` switch is on (ADR 0134). Both are kept, so turning the
-   * switch off again finds the font size as it was.
-   */
+  /** The step on the three-step text size ladder a Word text starts from (ADR 0134). */
   readonly textSize: TextSize;
   /** Whether haptics are on. */
   readonly vibration: boolean;
@@ -122,7 +116,6 @@ export function createSettings({
   async function read(): Promise<UserSettings> {
     return {
       theme: (await userState.read(userStateRecords.theme)) ?? all.theme,
-      fontSize: (await userState.read(userStateRecords.fontSize)) ?? all.fontSize,
       textSize: (await userState.read(userStateRecords.textSize)) ?? all.textSize,
       vibration: (await userState.read(userStateRecords.vibration)) ?? all.vibration,
       sounds: (await userState.read(userStateRecords.sounds)) ?? all.sounds,
@@ -147,7 +140,6 @@ export function createSettings({
       await userState.write(
         new Map([
           ...('theme' in changes ? userStateRecords.theme.change(changes.theme) : []),
-          ...('fontSize' in changes ? userStateRecords.fontSize.change(changes.fontSize) : []),
           ...('textSize' in changes ? userStateRecords.textSize.change(changes.textSize) : []),
           ...('vibration' in changes ? userStateRecords.vibration.change(changes.vibration) : []),
           ...('sounds' in changes ? userStateRecords.sounds.change(changes.sounds) : []),

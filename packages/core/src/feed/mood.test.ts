@@ -55,7 +55,7 @@ async function runApp(on: FeatureSwitch[] = []): Promise<Composition> {
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) =>
-        ['wordOfTheDay', 'dashboard', 'mood', 'rarityCeiling', ...on].includes(feature),
+        ['wordOfTheDay', 'mood', 'rarityCeiling', ...on].includes(feature),
       moods: MOODS,
       dashboardMoods: MOODS,
     }),
@@ -145,7 +145,7 @@ describe('the Feed under a Mood', () => {
   });
 
   it("starts the lower band at the Rarity Range's bottom: in «від 3 до 5» it is rarities 3 and 4", async () => {
-    const app = await runApp(['rarityRange']);
+    const app = await runApp();
     await app.rarityRange.set({ from: 3, to: 5 });
     await app.mood.choose('lower');
 
@@ -195,7 +195,7 @@ describe('the Feed under a Mood', () => {
         content,
         edition: testEdition({
           isFeatureEnabled: (feature) =>
-            ['wordOfTheDay', 'dashboard', 'mood', 'rarityCeiling'].includes(feature),
+            ['wordOfTheDay', 'mood', 'rarityCeiling'].includes(feature),
           moods: MOODS,
           dashboardMoods: MOODS,
         }),

@@ -208,7 +208,7 @@ function fullSaved(calendar: Calendar, words: readonly string[]): UserStateFacts
   const favorites = words.slice(0, 12);
   const learning = words.slice(12, 18);
   const history = words.slice(0, 30);
-  const collections = ['Улюблені', 'На каву', 'Діалекти', 'Для листів'];
+  const collections = ['Для подкасту', 'На каву', 'Діалекти', 'Для листів'];
   const collectionEntries: Record<string, string> = {};
   collections.forEach((_, index) => {
     for (const id of words.slice(index * 5, index * 5 + 5)) {

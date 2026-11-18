@@ -43,7 +43,6 @@ async function device() {
     userState,
     defaults: {
       theme: 'system',
-      fontSize: 'M',
       textSize: 'system',
       vibration: true,
       narratorVoice: 'anna',

@@ -46,6 +46,7 @@ export { buildEntryRow, type EntryRowModel } from './entries/entry-row';
 export { type Favorite } from './saved/favorites';
 export { isTodaysWordOfTheDay, type Feed } from './feed/feed';
 export { categoryFeedPage, type CategoryFeedPage } from './feed/category-feed';
+export { collectionFeedPage } from './feed/collection-feed';
 export {
   type AnyEntryCard,
   type EntryFeedCard,
@@ -235,6 +236,7 @@ export {
 export { type CorrectionTypeRow, type CorrectionTypeTile } from './dashboard/correction-types';
 export {
   type CuratedCollectionCard,
+  type CuratedCollectionPictogram,
   type CuratedCollectionScreen,
 } from './dashboard/curated-collections';
 export {

@@ -75,17 +75,6 @@
       "light": "Світла",
       "dark": "Темна"
     },
-    "fontSize": "Розмір шрифту",
-    "fontSizes": {
-      "S": "S",
-      "M": "M",
-      "L": "L",
-      "XL": "XL"
-    },
-    "fontSizePreview": {
-      "lemma": "шпарки́й",
-      "definition": "Швидкий, жвавий."
-    },
     "noCounters": {
       "title": "Без лічильників",
       "explanation": "Ховає досвід, рівень і серію. Лік іде далі: вимкни, і все буде на місці."
@@ -124,8 +113,6 @@
     },
     "rarity": {
       "title": "Рідкість",
-      "subtitle": "Лише слова такої рідкості й поширеніші, щоб не траплялися надто рідкісні.",
-      "ceiling": "до {rarity}",
       "range": "від {from} до {to}",
       "single": "лише {rarity}",
       "bar": "Рідкість {rarity}",
@@ -545,12 +532,6 @@
         "one": "Антонім",
         "many": "Антоніми"
       }
-    },
-    "moreMeanings": {
-      "one": "Ще {count} значення — у вкладці «Історія».",
-      "few": "Ще {count} значення — у вкладці «Історія».",
-      "many": "Ще {count} значень — у вкладці «Історія».",
-      "other": "Ще {count} значення — у вкладці «Історія»."
     },
     "history": "Історія слова",
     "oftenSaid": "Часто кажуть:",
@@ -1526,7 +1507,8 @@
       "question": "Як настрій?",
       "note": "Настрій дня"
     },
-    "curatedCollectionsTitle": "Добірки",
+    "curatedCollectionsTitle": "SLOVO пропонує",
+    "curatedCollectionsGridTitle": "Добірки",
     "curatedCollectionCount": {
       "one": "{count} слово",
       "few": "{count} слова",
@@ -1540,7 +1522,8 @@
       "added": "У Міксі ✓",
       "kicker": "ДОБІРКА · {count}",
       "addButton": "ДОДАТИ СОБІ",
-      "addedButton": "У МІКСІ"
+      "addedButton": "У МІКСІ",
+      "feedKicker": "Добірка · {name} · {place} з {of}"
     },
     "categories": {
       "title": "Категорії",
@@ -2074,7 +2057,6 @@
     "signOutEverywhere": "Вийти на всіх пристроях",
     "sync": {
       "syncing": "Синхронізація…",
-      "waitingForNetwork": "Синхронізація чекає на мережу",
       "syncedToday": "Синхронізовано сьогодні, {time}",
       "syncedOn": "Синхронізовано {day} {month}",
       "syncedOnInYear": "Синхронізовано {day} {month} {year}"
@@ -2087,7 +2069,6 @@
       "cancel": "Скасувати"
     },
     "problems": {
-      "offline": "Немає з’єднання з інтернетом. Спробуй ще раз.",
       "invalid-email": "Перевір адресу пошти.",
       "wrong-code": {
         "one": "Код не підходить. Лишилась {count} спроба.",

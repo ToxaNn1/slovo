@@ -84,7 +84,7 @@ describe('the problem line of the Account screen', () => {
     expect(problemOf(account)).toBe('Код не підходить. Лишилась 1 спроба.');
   });
 
-  it('says a code ran out, and that there is no connection', async () => {
+  it('says a code ran out, and leaves no connection to the offline plate', async () => {
     const { account, api } = await open();
     await account.requestCode('anna@mail.com');
 
@@ -94,6 +94,6 @@ describe('the problem line of the Account screen', () => {
     api.failNext('offline', 'offline', 'offline', 'offline');
     await account.verifyCode(api.account.sentCodes[0]?.code ?? '');
 
-    expect(problemOf(account)).toBe('Немає з’єднання з інтернетом. Спробуй ще раз.');
+    expect(problemOf(account)).toBeUndefined();
   });
 });

@@ -294,9 +294,9 @@ export const userStateMigrations: readonly UserStateMigration[] = [
   // 1.0: the text size in three steps on one ladder (ADR 0134). The S…XL font
   // size opens as its step: S and M as system, L as larger, XL as largest,
   // under the new key `settings.textSize`, with a pending change from the
-  // first-sign-in time so the Account gets it too. `settings.fontSize` stays,
-  // read while the `textSizeSteps` switch is off; one that does not read
-  // brings nothing, and the Edition's default holds.
+  // first-sign-in time so the Account gets it too. `settings.fontSize` stays
+  // reserved (ADR 0176); one that does not read brings nothing, and the
+  // Edition's default holds.
   {
     version: 8,
     async migrate({ get }) {

@@ -96,11 +96,11 @@ import { openWordOfTheDay } from './feed/word-of-the-day';
 export interface Composition extends Hiding {
   /** The Feed of the app session. */
   readonly feed: Feed;
-  /** The Dashboard, the home's blocks for the local day (ADR 0076); none with `dashboard` off. */
+  /** The Dashboard, the home's blocks for the local day (ADR 0076). */
   readonly dashboard: Dashboard;
   /** The Correction Types, the rail's tiles and each type's Corrections (ADR 0076); none with `correctionTypes` off. */
   readonly correctionTypes: CorrectionTypes;
-  /** The Curated Collections, the «Добірки» rail's cards (ADR 0076); none with `curatedCollections` off. */
+  /** The Curated Collections, the «SLOVO пропонує» rail's cards (ADR 0076); none with `curatedCollections` off. */
   readonly curatedCollections: CuratedCollections;
   /** The daily Mood check-in the Dashboard asks (ADR 0076); asking and asking nothing with `mood` off. */
   readonly mood: MoodCheckIns;

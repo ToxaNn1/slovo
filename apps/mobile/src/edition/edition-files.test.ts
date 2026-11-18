@@ -775,7 +775,7 @@ describe('the 0.8 Sync strings', () => {
     expect(issuesOf({ ...strings, account: without(account, 'sync') })).toEqual(['account.sync']);
   });
 
-  it.each(['syncing', 'waitingForNetwork', 'syncedToday', 'syncedOn', 'syncedOnInYear'])(
+  it.each(['syncing', 'syncedToday', 'syncedOn', 'syncedOnInYear'])(
     'the UA Edition needs account.sync.%s',
     (key) => {
       const changed = { ...strings, account: { ...account, sync: without(sync, key) } };
@@ -854,6 +854,7 @@ describe('the strings of the Category screens and the board style (spec #1604)',
       categories: categories.title,
       correctionCategories: correctionCategories.title,
       curatedCollections: parsed.dashboard.curatedCollectionsTitle,
+      curatedCollectionsGrid: parsed.dashboard.curatedCollectionsGridTitle,
       quiet: category.quiet,
       add: category.add,
       inMix: category.inMix,
@@ -867,7 +868,8 @@ describe('the strings of the Category screens and the board style (spec #1604)',
     }).toEqual({
       categories: 'Категорії',
       correctionCategories: 'Виправлення',
-      curatedCollections: 'Добірки',
+      curatedCollections: 'SLOVO пропонує',
+      curatedCollectionsGrid: 'Добірки',
       quiet: 'Категорія',
       add: 'ДОДАТИ',
       inMix: 'У МІКСІ',
@@ -1654,7 +1656,6 @@ describe('the 0.7 account and email strings groups', () => {
   );
 
   it.each([
-    'offline',
     'invalid-email',
     'wrong-code',
     'code-expired',
@@ -1774,8 +1775,11 @@ describe('UI strings the app fills in', () => {
 
   it.each([
     [
-      'settings.rarity.ceiling',
-      { ...strings, settings: { ...settings, rarity: { ...settings.rarity, ceiling: 'до' } } },
+      'settings.rarity.range',
+      {
+        ...strings,
+        settings: { ...settings, rarity: { ...settings.rarity, range: 'від {from}' } },
+      },
     ],
     [
       'wordOfTheDay.badge',

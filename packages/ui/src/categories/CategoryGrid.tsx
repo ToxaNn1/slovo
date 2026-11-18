@@ -25,13 +25,17 @@ export interface GridTile {
   readonly name: string;
   /** What VoiceOver reads for the tile, when it is more than its name. */
   readonly accessibilityLabel?: string;
+  /** A line under the name, such as a Curated Collection's count of Entries. */
+  readonly count?: string | undefined;
+  /** A small mark in the top corner, such as «Нова». */
+  readonly mark?: string | undefined;
 }
 
 /**
  * A full-screen grid of tiles (board 05.2): the title with its count on one
  * baseline, then the tiles in `columns` columns, each in the tone `toneAt`
  * gives its position and the shape pair at its position, wrapping past the
- * set. The tiles cascade in one after another; under Reduce Motion they only
+ * set, unless `shapes` gives each tile's pair by its position, or none. The tiles cascade in one after another; under Reduce Motion they only
  * fade in (ADR 0055). A tile opens its id. A `header` goes over the title,
  * across the whole width from the top, as a list's header would, and `empty`
  * shows in place of the tiles while there are none.
@@ -57,7 +61,7 @@ export function CategoryGrid({
   columns: GridColumns;
   /** The tile's box; its width is the column's. */
   box: Omit<CategoryTileBox, 'width'>;
-  shapes: readonly CategoryShapes[];
+  shapes: readonly CategoryShapes[] | ((index: number) => CategoryShapes | undefined);
   toneAt?: (index: number) => CategoryTone;
   /** How long after the one before a tile starts to rise in, in ms. */
   stagger?: number;
@@ -92,14 +96,16 @@ export function CategoryGrid({
       // try, and the header moves over the keyboard.
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
-      renderItem={({ item: { id, name, accessibilityLabel }, index }) => (
+      renderItem={({ item: { id, name, accessibilityLabel, count: line, mark }, index }) => (
         <Cascade testID={`${testID}-${id}-cascade`} index={index} stagger={stagger} width={width}>
           <CategoryTile
             testID={`${testID}-${id}`}
             name={name}
             accessibilityLabel={accessibilityLabel ?? name}
+            count={line}
+            mark={mark}
             tone={toneAt(index)}
-            shapes={shapeAt(shapes, index)}
+            shapes={typeof shapes === 'function' ? shapes(index) : shapeAt(shapes, index)}
             box={box}
             onPress={() => {
               onOpen(id);

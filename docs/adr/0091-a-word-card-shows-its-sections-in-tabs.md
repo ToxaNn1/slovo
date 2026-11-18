@@ -4,10 +4,10 @@ A Word's Entry card grew into a long column: the Definition, the Example, the Sy
 
 **Behind the `wordTabs` Feature Switch**, a Word card is a fixed frame that takes the page's height, with the Lemma and its line on top and tabs under it, and nothing behind «Детальніше». The tab bar stands at the card's foot under the selected tab's panel, a red slanted mark over the selected tab, and the Category chip ends the line under the Lemma, whichever tab is selected (board p1):
 
-- **«Суть»**: the primary Definition, the Synonym Row line and «Часто кажуть», and «Ще {count} значення — у вкладці «Історія».» when the Word has other meanings.
+- **«Суть»**: the primary Definition, the Synonym Row line and «Часто кажуть», and «Ще {count} значення — у вкладці «Історія».» when the Word has other meanings. (Amended by ADR 0186 on 18.11.2026: every Definition, the other ones numbered from 2, then the Word History.)
 - **«Приклад»**: every Example, each with its author.
 - **«Зв’язки»**: the Synonyms and antonyms.
-- **«Історія»**: the other meanings numbered from 1, the etymology and the Word History.
+- **«Історія»**: the other meanings numbered from 1, the etymology and the Word History. (Amended by ADR 0186 on 18.11.2026: the etymology alone.)
 
 **A Correction card** takes the same frame: the kicker row and the struck non-standard form on top, then the tabs **«Як краще»** (the standard equivalents and the Category chip), **«Чому»** (the explanation and its sources) and **«Приклади»** (the example pair and the literary uses). «Чому» is left out when the Correction gives no reason. Under Self-check the card keeps the non-standard form and the question above its tabs, which stay disabled until the reveal.
 

@@ -4,7 +4,6 @@ import {
   type OnboardingNotificationTimes,
   type FeatureSwitch,
   type FeatureSwitches,
-  type FontSize,
   type TextSize,
   type LanguageTraits,
   type Mood,
@@ -42,9 +41,7 @@ export interface DefaultMix {
 /** The settings a new user starts with, as declared by the Edition. */
 export interface UserSettingDefaults {
   readonly theme: Theme;
-  /** The S…XL font size a new user starts with, while `textSizeSteps` is off. */
-  readonly fontSize: FontSize;
-  /** The three-step text size a new user starts with, while `textSizeSteps` is on (ADR 0134). */
+  /** The three-step text size a new user starts with (ADR 0134). */
   readonly textSize: TextSize;
   /** Whether haptics are on. */
   readonly vibration: boolean;
@@ -105,6 +102,11 @@ export interface Edition {
   readonly badges: readonly Badge[];
   /** The Mascot's short line for each moment it shows in. */
   readonly mascot: MascotLines;
+  /**
+   * The id of the Category or Correction Category whose pictogram a Curated
+   * Collection's tile draws when the collection names none (ADR 0178).
+   */
+  readonly curatedCollectionPictogram: string | undefined;
   /** The Edition's own Feature Switch states, which hold where no remote Rule matches (ADR 0089). */
   readonly featureSwitches: FeatureSwitches;
   /**
@@ -153,6 +155,7 @@ export function loadEdition(config: unknown): Edition {
     badgeFamilies,
     badges,
     mascot,
+    curatedCollectionPictogram,
   } = result.data;
   const moodOf = (id: string) => moods.find((mood) => mood.id === id);
   const voiceOf = (id: string | undefined) =>
@@ -194,6 +197,7 @@ export function loadEdition(config: unknown): Edition {
     badgeFamilies,
     badges,
     mascot,
+    curatedCollectionPictogram,
     featureSwitches,
     isFeatureEnabled: switchedOn((feature) => featureSwitches[feature] === 'on'),
   };

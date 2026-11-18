@@ -34,7 +34,6 @@
     "confirmedEntries": "on",
     "selfCheck": "off",
     "rarityCeiling": "on",
-    "rarityRange": "on",
     "gameReview": "on",
     "gameGuessWord": "on",
     "gameCorrection": "on",
@@ -125,12 +124,9 @@
     "dataExport": "on",
     "readerName": "on",
     "widgetPreviews": "on",
-    "textSizeSteps": "on",
-    "offlinePlate": "on",
     "fastReveal": "on",
-    "dashboard": "on",
     "mood": "on",
-    "curatedCollections": "off",
+    "curatedCollections": "on",
     "gesturesHintDemo": "on",
     "gesturesHintAgain": "on",
     "wordTabs": "on",
@@ -146,6 +142,7 @@
     "correctionCategoryScreens": "on",
     "correctionTypeGrid": "on",
     "categoryFeed": "on",
+    "curatedCollectionFeed": "on",
     "previousWords": "on",
     "correctionTypes": "on",
     "profileConfirmedByRarity": "off",
@@ -153,7 +150,6 @@
   },
   "userSettingDefaults": {
     "theme": "system",
-    "fontSize": "M",
     "textSize": "system",
     "vibration": true,
     "notificationTimes": ["09:00", "13:00", "19:00"],
@@ -319,6 +315,7 @@
     }
   ],
   "categoriesRequiringHistory": ["repressed-words", "chameleon-words"],
+  "curatedCollectionPictogram": "language-speech",
   "originLanguages": [
     {
       "code": "la",

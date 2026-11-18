@@ -12,7 +12,15 @@ import {
 import { CONTENT_PAGE_SIZE } from '@slovo/contracts/admin-api';
 import { contentReport, missedTargets } from '@slovo/language-pack';
 import type { Word } from '@slovo/contracts';
-import type { Actor, Clock, EditionRegistry, Json, Random } from '@slovo/server-core';
+import {
+  collectionAppearance,
+  editionDateOf,
+  type Actor,
+  type Clock,
+  type EditionRegistry,
+  type Json,
+  type Random,
+} from '@slovo/server-core';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
@@ -165,6 +173,57 @@ function datedRefusal(
     };
   }
   return undefined;
+}
+
+/**
+ * The fields of a save with a Curated Collection's publish date: one given
+ * none is published on the Edition's today.
+ */
+function withPublishDate(
+  kind: RecordKind,
+  fields: Readonly<Record<string, unknown>>,
+  now: Date,
+): Readonly<Record<string, unknown>> {
+  if (kind !== 'curatedCollection') return fields;
+  const publishedOn = fields['publishedOn'];
+  return publishedOn === undefined || publishedOn === ''
+    ? { ...fields, publishedOn: editionDateOf(now) }
+    : fields;
+}
+
+/** A Curated Collection as its row keeps it beside its fields: when it appeared. */
+interface Appearance {
+  readonly publishedOn: string;
+  readonly appearedAt: Date;
+}
+
+/**
+ * When the saved Curated Collection appears, and why the save is refused by
+ * it: an appeared collection keeps its publish date; one not appeared yet
+ * appears anew by the date it is saved with.
+ */
+function appearanceOf(
+  publishedOn: string,
+  before: Appearance | undefined,
+  now: Date,
+  file: string,
+):
+  | { readonly ok: true; readonly appearedAt: Date }
+  | { readonly ok: false; readonly refusal: Refusal } {
+  if (before === undefined) return { ok: true, appearedAt: collectionAppearance(publishedOn, now) };
+  if (publishedOn === before.publishedOn) return { ok: true, appearedAt: before.appearedAt };
+  if (before.appearedAt <= now) {
+    return {
+      ok: false,
+      refusal: {
+        rule: 'curated-collection-appeared',
+        file,
+        field: 'publishedOn',
+        message: `The collection appeared on ${before.publishedOn} and keeps that date`,
+      },
+    };
+  }
+  return { ok: true, appearedAt: collectionAppearance(publishedOn, now) };
 }
 
 /**
@@ -404,6 +463,22 @@ export function createContentWrites({
     }
   }
 
+  /** When the Curated Collection of the id appeared, with the publish date it was kept at. */
+  async function appearedOf(tx: Tx, editionId: string, id: string, fields: object) {
+    const [row] = await tx
+      .select({ appearedAt: contentCuratedCollections.appearedAt })
+      .from(contentCuratedCollections)
+      .where(
+        and(
+          eq(contentCuratedCollections.editionId, editionId),
+          eq(contentCuratedCollections.id, id),
+        ),
+      );
+    if (row === undefined) return undefined;
+    const publishedOn = 'publishedOn' in fields ? String(fields.publishedOn) : '';
+    return { publishedOn, appearedAt: row.appearedAt };
+  }
+
   /** Writes the record's row at its new versions. */
   async function saveRow(
     tx: Tx,
@@ -416,8 +491,9 @@ export function createContentWrites({
       changedAt: Date;
       batchId: string;
     },
-    needsNewRecording: boolean,
+    own: { readonly needsNewRecording: boolean; readonly appearedAt: Date | undefined },
   ) {
+    const { needsNewRecording, appearedAt } = own;
     const key = {
       id: recordIdOf(record),
       retired: 'retired' in record.entry && record.entry.retired === true,
@@ -471,7 +547,9 @@ export function createContentWrites({
         return;
       }
       case 'curatedCollection': {
-        const row = { ...key, fields: record.entry };
+        if (appearedAt === undefined)
+          throw new Error('a Curated Collection is saved with when it appears');
+        const row = { ...key, fields: record.entry, appearedAt };
         await tx
           .insert(contentCuratedCollections)
           .values(row)
@@ -525,6 +603,7 @@ export function createContentWrites({
         if (!(await ownBatch(tx, writer, editionId, batchId))) {
           return { ok: false, reason: 'not-found' };
         }
+        const now = clock.now();
         const records = await recordsAt(tx, editionId, contentVersion);
         let current: StoredRecord | undefined;
         let wordBefore: { readonly fields: Word; readonly needsNewRecording: boolean } | undefined;
@@ -549,12 +628,23 @@ export function createContentWrites({
             ? { ...current?.fields, retired: true }
             : kind === 'crosswordDay'
               ? change.fields
-              : { ...change.fields, id };
+              : { ...withPublishDate(kind, change.fields, now), id };
         const parsed = parseRecord(kind, recordFileOf(kind, id), fields);
         // A new id is registered by now: a refusal rolls it back with the rest.
         if (!parsed.ok)
           throw new Refused({ ok: false, reason: 'refused', refusals: parsed.refusals });
         const { record } = parsed;
+        let appearedAt: Date | undefined;
+        if (record.kind === 'curatedCollection') {
+          const before =
+            current === undefined
+              ? undefined
+              : await appearedOf(tx, editionId, current.id, current.fields);
+          const appearance = appearanceOf(record.entry.publishedOn, before, now, record.file);
+          if (!appearance.ok)
+            throw new Refused({ ok: false, reason: 'refused', refusals: [appearance.refusal] });
+          appearedAt = appearance.appearedAt;
+        }
         const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
           rows.map((row) => row.fields);
         const set = contentSetOf({
@@ -566,7 +656,6 @@ export function createContentWrites({
           curatedCollection: fieldsOf(records.curatedCollection),
           crosswordDay: fieldsOf(records.crosswordDay),
         });
-        const now = clock.now();
         const refusals = checkRecord(edition.config, set, record, { today: now });
         if (refusals.length > 0) throw new Refused({ ok: false, reason: 'refused', refusals });
 
@@ -594,7 +683,7 @@ export function createContentWrites({
             changedAt: now,
             batchId,
           },
-          needsNewRecording,
+          { needsNewRecording, appearedAt },
         );
         await tx
           .update(contentVersions)
@@ -723,19 +812,24 @@ export function createContentWrites({
       }
       const [current] = await readersOf(tx, editionId, id)[kind]();
       if (current === undefined) return { ok: false, reason: 'not-found' } as const;
+      const appeared =
+        kind === 'curatedCollection'
+          ? await appearedOf(tx, editionId, id, current.fields)
+          : undefined;
       return {
         ok: true,
         fields: current.fields,
         recordVersion: current.recordVersion,
         retired: 'retired' in current.fields && current.fields.retired === true,
         ...('needsNewRecording' in current ? { needsNewRecording: current.needsNewRecording } : {}),
+        ...(appeared === undefined ? {} : { appearedAt: appeared.appearedAt.toISOString() }),
       } as const;
     }, readOnly);
   }
 
   /**
    * The records of a kind the content editor lists: by a text query in their
-   * label, retired ones on request, one page of `CONTENT_PAGE_SIZE` in label
+   * label, a Category (only Words and Corrections have one) and ids, retired ones on request, one page of `CONTENT_PAGE_SIZE` in label
    * then id order, with the count of every match.
    */
   async function list(
@@ -744,10 +838,14 @@ export function createContentWrites({
     {
       query = '',
       retired = false,
+      categoryId,
+      ids,
       page = 1,
     }: {
       query?: string | undefined;
       retired?: boolean | undefined;
+      categoryId?: string | undefined;
+      ids?: readonly string[] | undefined;
       page?: number | undefined;
     } = {},
   ) {
@@ -759,14 +857,19 @@ export function createContentWrites({
       const records = (await recordsAt(tx, editionId, contentVersion))[kind]
         .map((row) => {
           const fields: Readonly<Record<string, unknown>> = row.fields;
+          const category = fields['categoryId'];
           return {
             id: row.id,
+            kind,
             label: labelOf(kind, fields),
+            ...(typeof category === 'string' ? { categoryId: category } : {}),
             retired: fields['retired'] === true,
             recordVersion: row.recordVersion,
           };
         })
         .filter((row) => retired || !row.retired)
+        .filter((row) => categoryId === undefined || row.categoryId === categoryId)
+        .filter((row) => ids === undefined || ids.includes(row.id))
         .filter((row) => needle === '' || row.label.toLocaleLowerCase().includes(needle))
         .sort((a, b) => a.label.localeCompare(b.label) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
       const start = (page - 1) * CONTENT_PAGE_SIZE;

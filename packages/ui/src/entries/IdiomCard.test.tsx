@@ -2,6 +2,7 @@ import type { IdiomCardModel } from '@slovo/core';
 import { EditionProvider, EntryCard } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
+import { Dimensions } from 'react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
@@ -65,15 +66,23 @@ describe('the tabbed Idiom card (board XEntry2 e7)', () => {
   });
 
   it('reads the essence at 22/31 and the origin at Onest 500 18/27', async () => {
-    await renderTabbed();
+    // The board's sizes are at the OS text size 1; Jest's window reports 2, which the cap scales down.
+    const window = Dimensions.get('window');
+    Dimensions.set({ window: { ...window, fontScale: 1 } });
 
-    expect(screen.getByTestId('idiom-definition')).toHaveStyle({ fontSize: 22, lineHeight: 31 });
-    await fireEvent.press(screen.getByTestId('idiom-tab-origin'));
-    expect(screen.getByTestId('idiom-etymology')).toHaveStyle({
-      fontSize: 18,
-      lineHeight: 27,
-      fontWeight: '500',
-    });
+    try {
+      await renderTabbed();
+
+      expect(screen.getByTestId('idiom-definition')).toHaveStyle({ fontSize: 22, lineHeight: 31 });
+      await fireEvent.press(screen.getByTestId('idiom-tab-origin'));
+      expect(screen.getByTestId('idiom-etymology')).toHaveStyle({
+        fontSize: 18,
+        lineHeight: 27,
+        fontWeight: '500',
+      });
+    } finally {
+      Dimensions.set({ window });
+    }
   });
 
   it('opens the Example tab with the big red quote marks around the Example without quotes', async () => {

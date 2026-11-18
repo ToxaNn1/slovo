@@ -61,12 +61,6 @@ export interface Shown {
   readonly seasonalDecorSetting: boolean;
   /** The Settings switch «Менше руху», which joins the system's Reduce Motion. */
   readonly reduceMotionSetting: boolean;
-  /**
-   * The three-step text size (ADR 0134): Word cards draw at the reader's step
-   * on the ladder, and the S…XL row of Settings is gone. Off, the S…XL scale
-   * and its row work as before.
-   */
-  readonly textSizeSteps: boolean;
   /** The switch «Анонімна статистика» on the privacy screen (ADR 0060, 0135). */
   readonly shareCountersSetting: boolean;
   /** «Експортувати мої дані» on the privacy screen (ADR 0135). */
@@ -140,8 +134,6 @@ export interface Shown {
   readonly searchField: boolean;
   /** The fast reveal of the Feed's Entry cards after the first one in a visit; off, each plays the full reveal. */
   readonly fastReveal: boolean;
-  /** Whether the home is the Dashboard, which opens the Feed; else the Feed is the home (ADR 0076). */
-  readonly dashboard: boolean;
   /** The Feed header's wordmark opens the Dashboard (ADR 0079). */
   readonly dashboardWordmark: boolean;
   /** The Dashboard's logo plays the daily splash, the short cut, then the Dashboard again (ADR 0105). */
@@ -154,19 +146,18 @@ export interface Shown {
   readonly categoryFeed: boolean;
   /** The Mood check-in block of the Dashboard, «Як настрій?» (ADR 0076). */
   readonly mood: boolean;
-  /** The Curated Collections rail of the Dashboard, «Добірки» (ADR 0076). */
+  /** The Curated Collections rail of the Dashboard, «SLOVO пропонує» (ADR 0076, 0178). */
   readonly curatedCollections: boolean;
+  /** A tap on an Entry of a Curated Collection's screen opens the collection's Feed (ADR 0178). */
+  readonly curatedCollectionFeed: boolean;
   /** While the gestures hint is open, the Feed's card plays the swipes it names (ADR 0112). */
   readonly gesturesHintDemo: boolean;
   /** Settings offers «Показати підказку жестів», which shows the gestures hint once more (owner 16.11). */
   readonly gesturesHintAgain: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
-  /**
-   * «Рідкість» in Settings (ADR 0156): `range`, the picker of both ends of the
-   * Rarity Range; `top`, the row «до 1»…«до 5» of its top alone; `off`, none.
-   */
-  readonly rarity: 'off' | 'top' | 'range';
+  /** «Рідкість» in Settings (ADR 0156): the picker of both ends of the Rarity Range. */
+  readonly rarity: boolean;
   /** The «Пройти тест ще раз» row of Settings, while the Rarity Range it sets is on as well. */
   readonly rarityTest: boolean;
   /**
@@ -229,7 +220,6 @@ export function shownOf({
     narratorVoiceSetting: on('narratorVoice'),
     seasonalDecorSetting: on('seasonalDecor'),
     reduceMotionSetting: on('reduceMotion'),
-    textSizeSteps: on('textSizeSteps'),
     shareCountersSetting: on('communityCounters') || on('analytics'),
     dataExport: on('dataExport'),
     learning: knowledge,
@@ -261,7 +251,6 @@ export function shownOf({
     search: on('searchButton'),
     searchField: on('search'),
     fastReveal: on('fastReveal'),
-    dashboard: on('dashboard'),
     dashboardWordmark: on('dashboardWordmark'),
     dailySplash: on('dailySplash'),
     heroSparks: on('heroSparks'),
@@ -269,10 +258,11 @@ export function shownOf({
     categoryFeed: on('categoryFeed'),
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
+    curatedCollectionFeed: on('curatedCollectionFeed'),
     gesturesHintDemo: on('gesturesHintDemo'),
     gesturesHintAgain: on('gesturesHintAgain'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
-    rarity: on('rarityCeiling') ? (on('rarityRange') ? 'range' : 'top') : 'off',
+    rarity: on('rarityCeiling'),
     rarityTest: on('rarityTest'),
     questionnaire:
       on('questionnaire') || on('rarityTest') || on('interestsQuestion')
