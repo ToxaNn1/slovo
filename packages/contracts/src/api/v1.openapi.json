@@ -9320,22 +9320,6 @@
                           ],
                           "type": "string"
                         },
-                        "pairsStay": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "buildIdiomCheck": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "livesOverWarmup": {
                           "enum": [
                             "on",
@@ -9877,8 +9861,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "pairsStay",
-                        "buildIdiomCheck",
                         "livesOverWarmup",
                         "gameEndToFeed",
                         "plainGameReview",
@@ -11317,22 +11299,6 @@
                           ],
                           "type": "string"
                         },
-                        "pairsStay": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "buildIdiomCheck": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "livesOverWarmup": {
                           "enum": [
                             "on",
@@ -11874,8 +11840,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "pairsStay",
-                        "buildIdiomCheck",
                         "livesOverWarmup",
                         "gameEndToFeed",
                         "plainGameReview",
@@ -13238,22 +13202,6 @@
                           ],
                           "type": "string"
                         },
-                        "pairsStay": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "buildIdiomCheck": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "livesOverWarmup": {
                           "enum": [
                             "on",
@@ -13795,8 +13743,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "pairsStay",
-                        "buildIdiomCheck",
                         "livesOverWarmup",
                         "gameEndToFeed",
                         "plainGameReview",

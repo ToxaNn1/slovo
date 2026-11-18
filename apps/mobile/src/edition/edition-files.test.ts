@@ -1055,7 +1055,6 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       answer: 'Майже. Ось як правильно: {answer}',
     });
     expect(parsed.round.lives).toBe('Життів: {count} з {total}');
-    expect(parsed.round.pairsCaptions).toEqual({ word: 'Слово', meaning: 'Значення' });
     expect(parsed.round.typed.submit).toBe('Перевірити');
     expect(parsed.warmup).toEqual({
       title: 'Розминка!',

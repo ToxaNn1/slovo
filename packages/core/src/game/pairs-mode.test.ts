@@ -115,6 +115,7 @@ async function playGame(app: Composition): Promise<Grid[]> {
     const word = firstLeft(grid);
     await app.game.answer({ form: 'pairs', word, definition: rightDefinition(grid, word) });
     if (current(app).played.at(-1)?.right !== true) throw new Error('The pair was not right');
+    await app.game.next();
   }
   return grids;
 }
@@ -199,6 +200,7 @@ describe('the grids of «Пари»', () => {
     const definition = rightDefinition(grid, 2);
 
     await app.game.answer({ form: 'pairs', word: 2, definition });
+    await app.game.next();
 
     const after = gridOf(current(app).round);
     expect(after.words.map(({ state }) => state)).toEqual(['open', 'open', 'found', 'open']);
@@ -208,20 +210,14 @@ describe('the grids of «Пари»', () => {
     expect(after.words.map(({ shown }) => shown)).toEqual(grid.words.map(({ shown }) => shown));
   });
 
-  it('keeps found pairs and goes on to the next pair at once with `pairsStay` on, and waits for «Далі» with it off', async () => {
-    for (const [off, stays, status] of [
-      [[], true, 'playing'],
-      [['pairsStay'], false, 'answered'],
-    ] as const) {
-      const app = await run({ off });
-      await app.game.start('pairs');
-      const grid = gridOf(current(app).round);
-      expect(grid.stays).toBe(stays);
+  it('waits for «Далі» after a pair', async () => {
+    const app = await run();
+    await app.game.start('pairs');
+    const grid = gridOf(current(app).round);
 
-      await app.game.answer({ form: 'pairs', word: 0, definition: rightDefinition(grid, 0) });
+    await app.game.answer({ form: 'pairs', word: 0, definition: rightDefinition(grid, 0) });
 
-      expect(current(app)).toMatchObject({ status, round: { stays } });
-    }
+    expect(current(app)).toMatchObject({ status: 'answered' });
   });
 
   it('fills a grid with Words of one part of speech', async () => {
@@ -271,6 +267,7 @@ describe('the grids of «Пари»', () => {
     const right = rightDefinition(grid, 1);
 
     await app.game.answer({ form: 'pairs', word: 1, definition: right });
+    await app.game.next();
     const taken = [right, rightDefinition(grid, 0)];
     const wrong = [0, 1, 2, 3].find((place) => !taken.includes(place)) ?? -1;
     await app.game.answer({ form: 'pairs', word: 0, definition: wrong });

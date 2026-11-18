@@ -393,9 +393,7 @@ function createGameInPlay({
           : { kind: 'wrong', answer: answer.sheet.answer.text, lastLife: lives === 0 },
         banner: banner && answer.form !== 'pairs',
       };
-      // A grid whose found pairs stay goes on to its next pair at once.
-      const stays = game.round.form === 'pairs' && game.round.stays;
-      const movesOn = (mode.movesOn === true && !banner) || stays;
+      const movesOn = mode.movesOn === true && !banner;
       return movesOn ? next(answered) : answered;
     },
     next,
@@ -509,7 +507,7 @@ export interface Game {
    * Answers the current Round in its form: an option picked, a vowel tapped,
    * a pair matched, chips in order or typed text. A wrong answer costs a Life
    * at once and marks the Round's Entry «Не знаю» in the background, before
-   * the next «Далі» goes on. In a mode that moves on, and after a pair with `pairsStay` on, the next Round comes at
+   * the next «Далі» goes on. In a mode that moves on, the next Round comes at
    * once. Once the play time of a timed Game is up, the answer counts for
    * nothing and the Game ends, should its schedule not have ended it yet.
    * Resolves once the mark is written; a mark that fails to write rejects,

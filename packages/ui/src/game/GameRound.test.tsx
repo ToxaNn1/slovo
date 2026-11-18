@@ -37,7 +37,6 @@ const strings = testStrings({
         answer: 'Close. The right one: {answer}',
       },
       pairsHint: 'Match each word to its meaning',
-      pairsCaptions: { word: 'Word', meaning: 'Meaning' },
       stressHint: 'Tap the stressed vowel',
       progress: '{passed} / {total}',
       progressLabel: 'Rounds passed: {passed} of {total}',
@@ -297,7 +296,6 @@ const pairsRound: PlayingGame = {
     form: 'pairs',
     words: PAIR_WORDS.map((text) => ({ shown: { text, stressedVowels: [] }, state: 'open' })),
     definitions: PAIR_DEFINITIONS.map((shown) => ({ shown, state: 'open' })),
-    stays: false,
     answer: undefined,
   },
 };
@@ -405,8 +403,6 @@ const chipsRound: PlayingGame = {
     chipKind: 'letter',
     chips: CHIPS,
     fixed: [{ at: 1, text: "'" }],
-    layout: 'line',
-    slots: CHIPS.length,
     answer: undefined,
   },
 };
@@ -909,19 +905,6 @@ describe('GameRound', () => {
       expect(
         screen.getAllByRole('button').map((button): unknown => button.props['accessibilityLabel']),
       ).toEqual(['Leave the Game', 'ardent', 'candid', 'open and honest', 'full of passion']);
-    });
-
-    it('keeps found pairs under the two captions when the Round says its pairs stay, and not otherwise', async () => {
-      await renderRound(jest.fn(), jest.fn(), pairsRound);
-      expect(screen.queryByText('WORD')).toBeNull();
-
-      const { round } = pairsRound;
-      if (round.form !== 'pairs') throw new Error('Not a pairs grid');
-      await renderRound(jest.fn(), jest.fn(), { ...pairsRound, round: { ...round, stays: true } });
-
-      expect(screen.getByText('WORD')).toBeOnTheScreen();
-      expect(screen.getByText('MEANING')).toBeOnTheScreen();
-      expect(screen.getByRole('header', { name: 'Match each word to its meaning' })).toBeTruthy();
     });
 
     it('answers with the Word, then the Definition tapped, and shows the Word with its Example', async () => {

@@ -205,23 +205,18 @@ const grid = {
     { shown: 'open and honest', state: 'found' as const },
     { shown: 'stern and gloomy', state: 'open' as const },
   ],
-  stays: false,
 };
 const letters = {
   form: 'chips' as const,
   chipKind: 'letter' as const,
   chips: ['r', 'o', 'd', 'u'],
   fixed: [],
-  layout: 'line' as const,
-  slots: 4,
 };
 const words = {
   form: 'chips' as const,
   chipKind: 'word' as const,
   chips: ['beans', 'the', 'spill'],
   fixed: [],
-  layout: 'line' as const,
-  slots: 3,
 };
 const typed = { form: 'typed' as const, blanks: undefined, canOpenLetter: false as const };
 

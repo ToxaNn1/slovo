@@ -38,9 +38,7 @@ function pairOf(word: Word): GridPair {
  * them share a Lemma or a primary Definition, so each Word has one right
  * Definition. A wrong pair costs a Life and marks Unknown the Word tapped,
  * whose Definition was matched wrongly. Each pair's sheet shows its Word and
- * the Word's first Example, if it has one. With `pairsStay` (ADR 0139), read
- * as each grid is built, its found pairs stay and a pair leaves no answered
- * state.
+ * the Word's first Example, if it has one.
  */
 export const pairsMode: GameMode = {
   id: 'pairs',
@@ -48,7 +46,7 @@ export const pairsMode: GameMode = {
   hubGroup: 'meaning',
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gamePairs'),
-  buildRound({ answer, next, upTo, random, comparison, edition }) {
+  buildRound({ answer, next, upTo, random, comparison }) {
     /** A primary Definition as the reader tells it apart: its Comparison Key as a Definition. */
     const definitionOf = ({ primaryDefinition }: Word) =>
       comparison.key(primaryDefinition, 'definition');
@@ -71,7 +69,6 @@ export const pairsMode: GameMode = {
       pairs: grid.map(pairOf),
       wordOrder: shuffled(places, random),
       definitionOrder: shuffled(places, random),
-      stays: edition.isFeatureEnabled('pairsStay'),
     };
   },
 };

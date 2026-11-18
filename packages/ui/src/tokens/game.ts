@@ -251,10 +251,6 @@ export const pairsGridLayout = {
   cellRadius: 16,
   cellGap: 12,
   cellDrop: 8,
-  /** A row of a grid that stays (`pairsStay`), as the board draws it: its cell height, the gap between its two halves and the diamond over it. */
-  stayCellHeight: 64,
-  halfGap: 6,
-  diamond: 8,
 } as const;
 
 /**

@@ -76,7 +76,6 @@ export {
   GAME_MODE_GROUPS,
   type OfferedGroup,
   type AnswerSheet,
-  type ChipLayout,
   type FixedChip,
   type RoundContent,
   type RoundOption,
