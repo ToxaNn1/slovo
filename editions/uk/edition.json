@@ -97,7 +97,6 @@
     "badges": "on",
     "levelLadder": "on",
     "badgeSheet": "on",
-    "badgeToast": "on",
     "badgeFamiliesOverview": "on",
     "streakFreezeCard": "on",
     "breakCard": "on",
@@ -836,7 +835,6 @@
   "mascot": {
     "onboarding": "Вітаю! Я буду поруч, поки ти збираєш рідкісні слова.",
     "newLevel": "Новий рівень! Так тримати.",
-    "badge": "Нова відзнака — тепер вона твоя назавжди.",
     "dailyGoal": "Ціль дня виконано! Завтра нова — і серія росте.",
     "streakMilestone": "Оце серія! Завтра продовжимо?",
     "gameRight": "Влучно!",

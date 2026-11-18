@@ -45,7 +45,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   breakCard: ['xpLog'],
   calendarDayLines: ['xpLog'],
   badgeSheet: ['xpLog', 'badges'],
-  badgeToast: ['xpLog', 'badges'],
   badgeFamiliesOverview: ['xpLog', 'badges'],
   profile: ['xpLog'],
   profileConfirmedByRarity: ['profile', 'confirmedEntries'],

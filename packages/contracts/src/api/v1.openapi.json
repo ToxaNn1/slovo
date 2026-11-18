@@ -9176,14 +9176,6 @@
                           ],
                           "type": "string"
                         },
-                        "badgeToast": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "badgeFamiliesOverview": {
                           "enum": [
                             "on",
@@ -9755,7 +9747,6 @@
                         "badges",
                         "levelLadder",
                         "badgeSheet",
-                        "badgeToast",
                         "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",
@@ -11056,14 +11047,6 @@
                           ],
                           "type": "string"
                         },
-                        "badgeToast": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "badgeFamiliesOverview": {
                           "enum": [
                             "on",
@@ -11635,7 +11618,6 @@
                         "badges",
                         "levelLadder",
                         "badgeSheet",
-                        "badgeToast",
                         "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",
@@ -12860,14 +12842,6 @@
                           ],
                           "type": "string"
                         },
-                        "badgeToast": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "badgeFamiliesOverview": {
                           "enum": [
                             "on",
@@ -13439,7 +13413,6 @@
                         "badges",
                         "levelLadder",
                         "badgeSheet",
-                        "badgeToast",
                         "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",

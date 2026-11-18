@@ -420,7 +420,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** The Badge sheet: a tap on any Badge opens its name, date or progress, and an unearned one answers with a toast (ADR 0085); off while `xpLog` or `badges` is. */
   badgeSheet: FeatureSwitchStateSchema,
   /** The Badge toast: a Badge earned during a Game shows a toast in place of the stamp (ADR 0085); off while `xpLog` or `badges` is. */
-  badgeToast: FeatureSwitchStateSchema,
   /** The Badge families overview heading the Badges screen: each family's mark, name, count, description and shape (ADR 0145); off while `xpLog` or `badges` is. */
   badgeFamiliesOverview: FeatureSwitchStateSchema,
   /** The Streak freeze card of the Profile: the freezes held, the last 7 days and the days saved (ADR 0085); off while `xpLog` is. */
@@ -696,14 +695,13 @@ export type Badge = z.infer<typeof BadgeSchema>;
 
 /**
  * The Mascot's short line for each moment it shows in: the onboarding, the
- * celebrations of a new Level, a Badge, the Daily Goal and a Streak
+ * celebrations of a new Level, the Daily Goal and a Streak
  * milestone, a right and a wrong Game answer, the Game's end, and an empty
  * state.
  */
 export const MascotLinesSchema = z.strictObject({
   onboarding: TextSchema,
   newLevel: TextSchema,
-  badge: TextSchema,
   dailyGoal: TextSchema,
   streakMilestone: TextSchema,
   gameRight: TextSchema,

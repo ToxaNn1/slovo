@@ -22,7 +22,6 @@
     "analyticsSessions": "on",
     "appIntents": "on",
     "badgeSheet": "off",
-    "badgeToast": "off",
     "badgeFamiliesOverview": "off",
     "badges": "on",
     "breakCard": "off",
@@ -372,7 +371,6 @@
   "mascot": {
     "onboarding": "Mascot onboarding",
     "newLevel": "Mascot newLevel",
-    "badge": "Mascot badge",
     "dailyGoal": "Mascot dailyGoal",
     "streakMilestone": "Mascot streakMilestone",
     "gameRight": "Mascot gameRight",
