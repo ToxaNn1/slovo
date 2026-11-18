@@ -22,10 +22,6 @@ export interface Shown {
   readonly gameRoundMascot: boolean;
   /** The third end button «До стрічки» (ADR 0139). */
   readonly gameEndToFeed: boolean;
-  /** The Games hub in five groups (ADR 0139). */
-  readonly gameHubGroups: boolean;
-  /** «Рекорд: N з M» or «Ще жодної гри» and the board's line in a Games hub row (ADR 0139). */
-  readonly gameHubRecord: boolean;
   /** The toast on a tap of a Game Mode that cannot be played (ADR 0139). */
   readonly gameModeToast: boolean;
   /** The switchable buttons of an Entry card, wherever the card appears. */
@@ -202,8 +198,6 @@ export function shownOf({
     gameReview: on('gameReview'),
     gameRoundMascot: on('gameRoundMascot'),
     gameEndToFeed: on('gameEndToFeed'),
-    gameHubGroups: on('gameHubGroups'),
-    gameHubRecord: on('gameHubRecord'),
     gameModeToast: on('gameModeToast'),
     entryButtons: {
       shareCard: on('shareCards'),

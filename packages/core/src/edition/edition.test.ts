@@ -107,8 +107,6 @@ const validConfig = {
     crosswordBadgeStamp: 'on',
     gameRoundMascot: 'on',
     gameEndToFeed: 'on',
-    gameHubGroups: 'on',
-    gameHubRecord: 'on',
     gameModeToast: 'on',
     notificationFarewell: 'on',
     notificationExplainer: 'on',
@@ -385,8 +383,6 @@ describe('loadEdition', () => {
     'crosswordBadgeStamp',
     'gameRoundMascot',
     'gameEndToFeed',
-    'gameHubGroups',
-    'gameHubRecord',
     'gameModeToast',
     'fastReveal',
     'correctionTypes',
@@ -602,20 +598,17 @@ describe('loadEdition', () => {
     );
   });
 
-  it.each([
-    'gameRoundMascot',
-    'gameEndToFeed',
-    'gameHubGroups',
-    'gameHubRecord',
-    'gameModeToast',
-  ] as const)('refuses an Edition without the %s Feature Switch (spec #1880)', (feature) => {
-    const switches = Object.fromEntries(
-      Object.entries(validConfig.featureSwitches).filter(([name]) => name !== feature),
-    );
-    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
-      `featureSwitches.${feature}`,
-    );
-  });
+  it.each(['gameRoundMascot', 'gameEndToFeed', 'gameModeToast'] as const)(
+    'refuses an Edition without the %s Feature Switch (spec #1880)',
+    (feature) => {
+      const switches = Object.fromEntries(
+        Object.entries(validConfig.featureSwitches).filter(([name]) => name !== feature),
+      );
+      expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
+        `featureSwitches.${feature}`,
+      );
+    },
+  );
 
   it('refuses an Edition without the levels Feature Switch', () => {
     const { levels, ...switches } = validConfig.featureSwitches;
@@ -1535,8 +1528,6 @@ const dependentSwitches = [
   // The board «slogo game last» parts of a Game (spec #1880).
   ['gameRoundMascot', ['game']],
   ['gameEndToFeed', ['game']],
-  ['gameHubGroups', ['game']],
-  ['gameHubRecord', ['game']],
   ['gameModeToast', ['game']],
   ['quickQuestion', ['game']],
   ['quickQuestionWordMeaning', ['quickQuestion', 'game']],

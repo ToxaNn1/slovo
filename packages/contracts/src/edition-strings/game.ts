@@ -13,14 +13,8 @@ const GameModeStringsSchema = z.strictObject({
   glyph: TextSchema,
   title: TextSchema,
   description: TextSchema,
-  /** The mode's one line under its name in a Games hub row, with no full stop, e.g. «Обери слово за визначенням» (spec #1674). */
+  /** The mode's one line under its name in a Games hub row, e.g. «Визначення є. Яке це слово?» (ADR 0139). */
   oneLiner: TextSchema,
-  /**
-   * The board's line under the mode's name in a Games hub row behind
-   * `gameHubRecord`, e.g. «Визначення є. Яке це слово?» (spec #1880); a mode
-   * without one keeps its `oneLiner`.
-   */
-  hubLine: TextSchema.optional(),
   /** The label over a Round's prompt, e.g. «ВИЗНАЧЕННЯ». */
   roundLabel: TextSchema,
   /** What the card says for each reason the Core gives that the mode can't start. */
@@ -44,17 +38,9 @@ export const GameStringsSchema = z.strictObject({
   title: TextSchema,
   /** The XP earned in all, beside the mode screen's title, e.g. «45 XP». Takes `{count}`. */
   xp: templateOf('count'),
-  /** The titles of the mode screen's groups of mode cards, e.g. «Слова». */
+  /** The titles of the Games hub's five groups of mode cards (ADR 0139). */
   groups: z.strictObject({
-    /** The modes that ask about Words, e.g. «Слова». */
-    words: TextSchema,
-    /** The modes that ask about Corrections, e.g. «Виправлення». */
-    corrections: TextSchema,
-    /** The modes that ask about Idioms, e.g. «Вислови». */
-    idioms: TextSchema,
-    /** The modes with their own Lives, Round limit or time limit, e.g. «Виклик». */
-    challenge: TextSchema,
-    /** The five groups of the Games hub behind `gameHubGroups` (ADR 0139): the modes that ask about sound, e.g. «Звук». */
+    /** The modes that ask about sound, e.g. «Звук». */
     sound: TextSchema,
     /** The modes that ask about meaning, e.g. «Значення». */
     meaning: TextSchema,
@@ -72,17 +58,13 @@ export const GameStringsSchema = z.strictObject({
     /** In a mode without a Round limit, e.g. «Найкраще: 23». Takes `{n}`, the Best result. */
     count: templateOf('n'),
   }),
-  /** A Games hub row's Best result (spec #1674). */
+  /** A Games hub row's Best result (ADR 0139). */
   hubRow: z.strictObject({
-    /** The Best result, e.g. «★ 12». Takes `{n}`. */
-    best: templateOf('n'),
-    /** A mode not played yet, e.g. «—». */
-    none: TextSchema,
-    /** The Best result behind `gameHubRecord`, e.g. «Рекорд: 12 з 15». Takes `{n}` and `{total}`, the mode's Round limit (ADR 0139). */
+    /** The Best result, e.g. «Рекорд: 12 з 15». Takes `{n}` and `{total}`, the mode's Round limit. */
     record: templateOf('n', 'total'),
-    /** The Best result behind `gameHubRecord` of a mode without a Round limit, e.g. «Рекорд: 23». Takes `{n}`. */
+    /** The Best result of a mode without a Round limit, e.g. «Рекорд: 23». Takes `{n}`. */
     recordCount: templateOf('n'),
-    /** A mode not played yet behind `gameHubRecord`, e.g. «Ще жодної гри». */
+    /** A mode not played yet, e.g. «Ще жодної гри». */
     never: TextSchema,
   }),
   /** The toast on a tap of a mode that cannot be played, behind `gameModeToast` (ADR 0139). Takes `{mode}` and `{other}`, a mode the reader can play. */

@@ -60,8 +60,6 @@ export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
   'crosswordBadgeStamp',
   'gameRoundMascot',
   'gameEndToFeed',
-  'gameHubGroups',
-  'gameHubRecord',
   'gameModeToast',
 ];
 

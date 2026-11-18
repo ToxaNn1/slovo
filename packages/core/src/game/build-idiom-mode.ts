@@ -27,8 +27,7 @@ const wordsOf = (expression: string, punctuation: ReadonlySet<string>): string[]
  */
 export const buildIdiomMode: GameMode = {
   id: 'build-idiom',
-  group: 'idioms',
-  hubGroup: 'new',
+  group: 'new',
   entryKind: 'idiom',
   isOn: (edition) => edition.isFeatureEnabled('gameBuildIdiom'),
   buildRound({ answer, random, edition, comparison }) {

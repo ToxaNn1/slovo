@@ -14,7 +14,7 @@ import { userStateRecords } from '../user-state-schema';
 import type {
   GameEdition,
   GameMode,
-  OfferedGroup,
+  GameHubGroup,
   GameModeRefusal,
   RoundLabelKind,
   TextRange,
@@ -451,7 +451,7 @@ export type GameModeOffer = {
   readonly modeId: string;
   readonly entryKind: EntryKind;
   /** The group of the mode screen its card stands in. */
-  readonly group: OfferedGroup;
+  readonly group: GameHubGroup;
   /** The mode's Best result; left out before its first finished Game. */
   readonly best?: OfferedBest;
 } & (
@@ -607,31 +607,19 @@ function offeredBest(mode: GameMode, result: number): OfferedBest {
   return of === undefined ? { result } : { result, of };
 }
 
-/**
- * The group of the mode screen a mode's card stands in: the board's behind
- * `gameHubGroups` (ADR 0139), else the one of spec #1674.
- */
-const groupOf = (mode: GameMode, edition: GameEdition): OfferedGroup =>
-  edition.isFeatureEnabled('gameHubGroups') ? (mode.hubGroup ?? 'new') : mode.group;
-
 /** What every offer of a Game Mode says: its id, kind, group and Best result, if any. */
-const offeredMode = (mode: GameMode, edition: GameEdition, best: number | undefined) => ({
+const offeredMode = (mode: GameMode, best: number | undefined) => ({
   modeId: mode.id,
   entryKind: mode.entryKind,
-  group: groupOf(mode, edition),
+  group: mode.group,
   ...(best === undefined ? {} : { best: offeredBest(mode, best) }),
 });
 
 /** The offer of a Game Mode: it can start when it can make its Rounds. */
-const offerOf = (
-  mode: GameMode,
-  edition: GameEdition,
-  plan: RoundPlan,
-  best: number | undefined,
-): GameModeOffer =>
+const offerOf = (mode: GameMode, plan: RoundPlan, best: number | undefined): GameModeOffer =>
   'rounds' in plan
-    ? { ...offeredMode(mode, edition, best), canStart: true }
-    : { ...offeredMode(mode, edition, best), canStart: false, refusal: plan.refusal };
+    ? { ...offeredMode(mode, best), canStart: true }
+    : { ...offeredMode(mode, best), canStart: false, refusal: plan.refusal };
 
 /**
  * Opens the Game over the eligible Entries, History and the Knowledge Marks,
@@ -702,7 +690,7 @@ export async function openGame({
   const bestResults = await bestResultsOf(modes);
   let state: GameState = {
     modes: modes.map((mode) => ({
-      ...offeredMode(mode, edition, bestResults[mode.id]),
+      ...offeredMode(mode, bestResults[mode.id]),
       canStart: false,
       planning: true,
     })),
@@ -751,7 +739,7 @@ export async function openGame({
     );
     // Planned one after another, so the modes draw from the random source in turn.
     const offers = read.map(({ mode, eligible }) =>
-      offerOf(mode, edition, planRounds(mode, eligible), state.bestResults[mode.id]),
+      offerOf(mode, planRounds(mode, eligible), state.bestResults[mode.id]),
     );
     if (!sameOffers(offers, state.modes)) change({ ...state, modes: offers });
     const game = state.current;
@@ -806,7 +794,7 @@ export async function openGame({
     const plan = planRounds(mode, eligible);
     // The offer says what the plan does already, unless the mode's fair Rounds hang on the draw.
     const offers = state.modes.map((offer) =>
-      offer.modeId === modeId ? offerOf(mode, edition, plan, state.bestResults[modeId]) : offer,
+      offer.modeId === modeId ? offerOf(mode, plan, state.bestResults[modeId]) : offer,
     );
     const modesNow = sameOffers(offers, state.modes) ? state.modes : offers;
     played =
@@ -1067,7 +1055,7 @@ export async function openGame({
       modes: state.modes.map((offer) => {
         const mode = modes.find(({ id }) => id === offer.modeId);
         if (mode === undefined) return offer;
-        const next = { ...offer, ...offeredMode(mode, edition, bestResults[mode.id]) };
+        const next = { ...offer, ...offeredMode(mode, bestResults[mode.id]) };
         if (bestResults[mode.id] === undefined) delete next.best;
         return next;
       }),

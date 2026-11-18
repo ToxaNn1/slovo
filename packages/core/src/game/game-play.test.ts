@@ -75,7 +75,7 @@ const pick: Build = (answer, { eligible }) => {
 const mode = (build: Build, rest: Partial<GameMode> = {}): GameMode => ({
   id: 'test',
   entryKind: 'word',
-  group: 'words',
+  group: 'new',
   isOn: () => true,
   buildRound: (input) => (input.answer.kind === 'word' ? build(input.answer, input) : undefined),
   ...rest,
