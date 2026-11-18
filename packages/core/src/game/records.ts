@@ -14,14 +14,24 @@ export const gameRecords = {
     sync: 'device-only',
   }),
   /**
-   * The Best result of each Game Mode, one record per mode, by mode id: the
-   * best result of one finished Game in it, Rounds passed or, in a mode with
-   * no Lives, right answers. The Game keeps a 15-Round mode within 0–15; a
-   * mode with no Round limit has no upper bound. Without the record, no Game
-   * in the mode has finished yet. Sync keeps the higher of two devices'
-   * results (ADR 0052).
+   * Reserved (ADR 0013): the Best result of each Game Mode as ADR 0052 first
+   * counted it, Rounds passed in a mode with Lives. The Best result counts
+   * right answers now, a meaning a synced record never takes in place, so it
+   * moved to `gameBest`; nothing reads or writes this record; it stays
+   * declared so user state that holds it opens and syncs as before and the
+   * key is never given to another record.
    */
-  gameBest: declareRecords('game.best.', z.number().int().nonnegative(), { sync: 'highest' }),
+  gameBestRoundsPassed: declareRecords('game.best.', z.number().int().nonnegative(), {
+    sync: 'highest',
+  }),
+  /**
+   * The Best result of each Game Mode, one record per mode, by mode id: the
+   * most right answers of one finished Game in it (ADR 0052). The Game keeps
+   * a 15-Round mode within 0–15; a mode with no Round limit has no upper
+   * bound. Without the record, no Game in the mode has finished yet. Sync
+   * keeps the higher of two devices' results.
+   */
+  gameBest: declareRecords('game.bestRight.', z.number().int().nonnegative(), { sync: 'highest' }),
   /**
    * Reserved (ADR 0013): the letters typed into the typed Daily Crossword of
    * ADR 0052, each by its cell, `row,column`, and the local date of its day.

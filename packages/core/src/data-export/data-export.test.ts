@@ -67,7 +67,7 @@ describe('the Data export', () => {
       amount: 5,
       source: 'seen-word',
     },
-    'game.best.classic': 7,
+    'game.bestRight.classic': 7,
     'edition.installId': INSTALL_ID,
     'sync.cursor': 42,
   });

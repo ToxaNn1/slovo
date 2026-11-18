@@ -97,7 +97,29 @@ async function app() {
   const composition = openOnce(
     () =>
       openComposition({
-        content: createMemoryContentPort(),
+        content: createMemoryContentPort({
+          categories: [
+            { id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' },
+          ],
+          words: Array.from({ length: 15 }, (_, index) => ({
+            kind: 'word' as const,
+            id: `w_${String(index)}`,
+            lemma: `слово${String(index)}`,
+            stress: [1],
+            partOfSpeech: 'noun' as const,
+            primaryDefinition: `Значення ${String(index)}.`,
+            extraDefinitions: [],
+            examples: [],
+            synonyms: [],
+            antonyms: [],
+            registers: [],
+            categoryId: 'nature',
+            rarity: 3 as const,
+            sources: [{ title: 'Test source' }],
+            correctionIds: [],
+            retired: false,
+          })),
+        }),
         edition: ukrainian,
         userState,
         clock: time.clock,
@@ -240,6 +262,35 @@ describe('the shell syncs in the background', () => {
     reports.stop();
   });
 
+  it('keeps the Game on screen through a sync that changed the user state, and reopens once it is left', async () => {
+    const { server, composition, time, openSyncModule, reports } = await app();
+    const first = await held(composition);
+    const offer = first.game.state.modes.find((mode) => 'canStart' in mode && mode.canStart);
+    if (offer === undefined) throw new Error('No Game Mode can start.');
+    await first.game.start(offer.modeId);
+    expect(first.game.state.current).toBeDefined();
+    const changedAt = time.clock.now().getTime() + 1_000;
+    await server.backend.sync.push(
+      { editionId: ukrainian.id, changes: [{ key: 'mix.corrections', value: false, changedAt }] },
+      { context: { token: 'another-session' } },
+    );
+
+    openSyncModule();
+    await settled();
+
+    // The Game in play lives in the composition: a reopen now would drop it.
+    expect(await held(composition)).toBe(first);
+    expect(first.game.state.current?.modeId).toBe(offer.modeId);
+
+    first.game.leave();
+    await settled();
+
+    const second = await held(composition);
+    expect(second).not.toBe(first);
+    expect(second.mix.state.kinds.correction).toBe(false);
+    reports.stop();
+  });
+
   it('leaves the composition as it is after a sync that changed nothing', async () => {
     const { composition, widgetWrites, openSyncModule, reports } = await app();
     const first = await held(composition);
@@ -255,7 +306,10 @@ describe('the shell syncs in the background', () => {
   it('writes no Widget Snapshot when the composition fails to reopen, and keeps the old one', async () => {
     let opens = 0;
     const composition = openOnce(
-      () => (++opens === 1 ? Promise.resolve({ opens }) : Promise.reject(new Error('refused'))),
+      () =>
+        ++opens === 1
+          ? Promise.resolve({ opens, game: { state: { current: undefined } } })
+          : Promise.reject(new Error('refused')),
       { onError: () => undefined },
     );
     const first = await held(composition);

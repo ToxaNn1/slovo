@@ -241,9 +241,10 @@ test('the Account page names the synced kinds it knows, the Best results after t
     { key: 'correctionsWorkedThrough.c_a1', value: true },
     { key: 'curatedCollections.opened.cc_a1', value: true },
     { key: 'xp.r1', value: { kind: 'reset', ...day('2026-11-04') } },
-    { key: 'game.best.stress', value: 9 },
-    { key: 'game.best.guess-word~r1', value: 12 },
-    { key: 'game.best.no-such-mode~r1', value: 3 },
+    { key: 'game.bestRight.stress', value: 9 },
+    { key: 'game.bestRight.guess-word~r1', value: 12 },
+    { key: 'game.bestRight.no-such-mode~r1', value: 3 },
+    { key: 'game.best.guess-word~r1', value: 15 },
     { key: 'mix.categories.nature', value: true },
     { key: 'mix.categories.city', value: false },
   ]);
@@ -257,5 +258,6 @@ test('the Account page names the synced kinds it knows, the Best results after t
     'Відкриті добірки редакції: 1',
   ]);
   expect(linesOf(page, 'Найкраще в грі')).toEqual(['Гра «Вгадай слово»: 12', 'no-such-mode: 3']);
-  expect(linesOf(page, 'Інші записи')).toEqual(['mix: 2']);
+  // The Best results kept before, which counted Rounds passed, are not read.
+  expect(linesOf(page, 'Інші записи')).toEqual(['game: 1', 'mix: 2']);
 });

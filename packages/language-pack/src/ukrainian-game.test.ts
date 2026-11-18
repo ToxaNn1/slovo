@@ -324,7 +324,8 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
 
     await playGame(app);
 
-    const { roundsPassed, played } = current(app);
+    const { played } = current(app);
+    const right = played.filter((round) => round.right).length;
     const confirmed = writes.filter((write) =>
       [...write.keys()].every((key) => key.startsWith('confirmed.')),
     );
@@ -333,7 +334,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     );
     // The XP of a right Round goes in its own write; the XP of the finished
     // Game and of the new Best result share the Best result's write.
-    const bestKey = 'game.best.guess-word';
+    const bestKey = 'game.bestRight.guess-word';
     // Each Badge the Game earns goes in its own write of its XP log record.
     const badges = writes.filter((write) =>
       [...write.keys()].every((key) => key.startsWith('xp.badge-')),
@@ -342,8 +343,8 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     const others = writes.filter((write) => !confirmed.includes(write) && !badges.includes(write));
     const withBest = others.filter((write) => write.has(bestKey));
     expect(withBest).toHaveLength(1);
-    expect(withBest[0]?.get(bestKey)).toBe(String(roundsPassed));
-    expect(await readFact(userState, 'gameBest')).toEqual(new Map([['guess-word', roundsPassed]]));
+    expect(withBest[0]?.get(bestKey)).toBe(String(right));
+    expect(await readFact(userState, 'gameBest')).toEqual(new Map([['guess-word', right]]));
     for (const write of others) {
       const xpKeys = [...write.keys()].filter((key) => key !== bestKey);
       expect(xpKeys.length).toBeGreaterThan(0);
@@ -458,7 +459,7 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 3, status: 'won' });
   });
 
-  it('highlights the non-standard form where the sentence holds it as written, and nothing where it is inflected', async () => {
+  it('highlights the whole words holding the non-standard form where the sentence holds it as written, and nothing where it is inflected', async () => {
     const rounds: Round[] = [];
     // One composition plays four Games, as in the test of stress traps below.
     const app = await run(1);
@@ -471,9 +472,12 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     expect(plain.length).toBeGreaterThan(0);
     for (const round of highlighted) {
       const { start = 0, end = 0 } = round.highlight ?? {};
-      expect(round.prompt.slice(start, end).toLowerCase()).toBe(
+      // «фан» lights up as the whole «фани».
+      expect(round.prompt.slice(start, end).toLowerCase()).toContain(
         askedOf(round).nonStandardForm.toLowerCase(),
       );
+      expect(round.prompt.charAt(start - 1)).not.toMatch(/\p{L}/u);
+      expect(round.prompt.charAt(end)).not.toMatch(/\p{L}/u);
     }
     for (const round of plain) {
       expect(round.prompt.toLowerCase()).not.toContain(

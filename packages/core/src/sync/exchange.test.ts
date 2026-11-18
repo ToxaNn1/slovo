@@ -491,7 +491,7 @@ describe('two devices of one Account', () => {
     expect(await phone.userState.read(guessWordBest)).toBe(9);
     expect(await tablet.userState.read(guessWordBest)).toBe(9);
     // The phone wrote its result again, so it won on the server with a new change time.
-    expect(server.sync.records.get('game.best.guess-word')).toMatchObject({
+    expect(server.sync.records.get('game.bestRight.guess-word')).toMatchObject({
       value: 9,
       changedAt: new Date('2026-10-18T11:00:00.000Z').getTime(),
     });
@@ -533,7 +533,7 @@ describe('two devices of one Account', () => {
     }
   });
 
-  it('bring the best result a signed-in 0.8.11 app kept to the Account as the Best result of «Вгадай слово»', async () => {
+  it('bring no Best result from the best result a signed-in 0.8.11 app kept, which counted Rounds passed', async () => {
     const { device } = account();
     const phone = await device(
       new Map([
@@ -548,7 +548,7 @@ describe('two devices of one Account', () => {
     await phone.sync();
     await tablet.sync();
 
-    expect(await tablet.userState.read(guessWordBest)).toBe(11);
+    expect(await tablet.userState.read(guessWordBest)).toBeUndefined();
   });
 
   it('leave `device-only` records on each device, also those the Account holds', async () => {
