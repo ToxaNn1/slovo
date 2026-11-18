@@ -43,16 +43,50 @@ const MOODS: readonly Mood[] = [
   },
 ];
 
+/** Moods that say their effect on the Feed, the first with a rarity band. */
+const EFFECT_MOODS: readonly Mood[] = [
+  {
+    id: 'energetic',
+    name: 'Бадьорий',
+    emoji: '⚡',
+    reply: 'Тримай темп!',
+    effect: 'Rarer words.',
+    rarityBand: 'upper',
+    shifts: {},
+  },
+  {
+    id: 'calm',
+    name: 'Спокійний',
+    emoji: '😌',
+    reply: 'Без поспіху.',
+    effect: 'Simpler words.',
+    rarityBand: 'whole',
+    shifts: {},
+  },
+  {
+    id: 'joyful',
+    name: 'Радісний',
+    emoji: '😊',
+    reply: 'Лови світле слово!',
+    effect: 'More idioms.',
+    rarityBand: 'whole',
+    shifts: {},
+  },
+];
+
 /** The Core composition of one app run over the records, the Mood check-in on unless said otherwise. */
 async function run({
   records = new Map<string, string>(),
   clock = fakeClock('2026-11-04T09:00:00+02:00').clock,
   on = ['wordOfTheDay', 'mood', 'analytics'],
-  dashboardMoods = MOODS,
+  moods = MOODS,
+  dashboardMoods = moods,
   analyticsFails = false,
 }: {
   records?: Map<string, string>;
-  /** The moods the Dashboard offers, among all of `MOODS`. */
+  /** The Edition's moods. */
+  moods?: readonly Mood[];
+  /** The moods the Dashboard offers, among all of `moods`. */
   dashboardMoods?: readonly Mood[];
   clock?: Clock;
   on?: FeatureSwitch[];
@@ -64,7 +98,7 @@ async function run({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) => on.includes(feature),
-      moods: MOODS,
+      moods,
       dashboardMoods,
       userSettingDefaults: { mix: { kinds: { correction: false } } },
     }),
@@ -280,6 +314,86 @@ describe('The Mood check-in', () => {
         ['joyful', 1],
       ]),
     );
+  });
+
+  it('says the effect of the chosen Mood in its block with `moodEffect` on', async () => {
+    const { app } = await run({ on: ['mood', 'moodEffect'], moods: EFFECT_MOODS });
+    const dashboardTold = dashboardChange(app);
+
+    await app.mood.choose('energetic');
+    await dashboardTold;
+
+    expect(moodBlock(app)).toMatchObject({
+      check: { state: 'chosen', mood: { id: 'energetic' }, effect: 'Rarer words.' },
+    });
+  });
+
+  it('says no effect with `moodEffect` off', async () => {
+    const { app } = await run({ on: ['mood'], moods: EFFECT_MOODS });
+    const dashboardTold = dashboardChange(app);
+
+    await app.mood.choose('energetic');
+    await dashboardTold;
+
+    expect(moodBlock(app)).toMatchObject({ check: { state: 'chosen', effect: undefined } });
+  });
+
+  it('unpicks the Mood of the day: no Mood today, the Feed on its plain parameters, the effect gone', async () => {
+    const { app, records, events } = await run({
+      on: ['mood', 'moodEffect', 'analytics'],
+      moods: EFFECT_MOODS,
+    });
+    await app.mood.choose('energetic');
+    expect(app.mood.feedParameters().inBand).toBeDefined();
+    let told = 0;
+    app.mood.subscribe(() => (told += 1));
+    const dashboardTold = dashboardChange(app);
+
+    await app.mood.unpick();
+    await dashboardTold;
+
+    expect(app.mood.today).toEqual({ state: 'asking' });
+    expect(moodBlock(app)).toMatchObject({ check: { state: 'asking' } });
+    expect(app.mood.feedParameters().inBand).toBeUndefined();
+    expect(told).toBe(1);
+    expect(await app.mood.daysByMood()).toEqual(new Map());
+    // A record of the day stays, so the unpick wins on the reader's other devices.
+    expect(JSON.parse(records.get('mood.2026-11-04') ?? '{}')).toEqual({
+      date: '2026-11-04',
+      choice: 'unpicked',
+    });
+    expect(events).toEqual([
+      { event: 'moodChosen', properties: { mood: 'energetic' } },
+      { event: 'moodUnpicked', properties: { mood: 'energetic' } },
+    ]);
+  });
+
+  it('picks a Mood again after an unpick', async () => {
+    const { app } = await run({ on: ['mood', 'moodEffect'], moods: EFFECT_MOODS });
+    await app.mood.choose('energetic');
+    await app.mood.unpick();
+
+    await app.mood.choose('calm');
+
+    expect(app.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'calm' } });
+  });
+
+  it('keeps a skipped day skipped at an unpick', async () => {
+    const { app } = await run({ on: ['mood', 'moodEffect'], moods: EFFECT_MOODS });
+    await app.mood.skip();
+
+    await app.mood.unpick();
+
+    expect(app.mood.today).toEqual({ state: 'skipped' });
+  });
+
+  it('keeps the Mood of the day at an unpick with `moodEffect` off', async () => {
+    const { app } = await run({ on: ['mood'], moods: EFFECT_MOODS });
+    await app.mood.choose('energetic');
+
+    await app.mood.unpick();
+
+    expect(app.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'energetic' } });
   });
 
   it('has no Mood block and asks nothing with `mood` off', async () => {

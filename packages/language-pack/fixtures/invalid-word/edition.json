@@ -115,6 +115,7 @@
     "reduceMotion": "on",
     "fastReveal": "on",
     "mood": "on",
+    "moodEffect": "on",
     "curatedCollections": "on",
     "gesturesHintDemo": "on",
     "gesturesHintAgain": "on",
@@ -200,30 +201,35 @@
       "id": "energetic",
       "name": "бадьорий",
       "emoji": "⚡",
+      "effect": "Стрічка сьогодні інакша.",
       "reply": "Тримай темп!"
     },
     {
       "id": "thoughtful",
       "name": "задумливий",
       "emoji": "🤔",
+      "effect": "Стрічка сьогодні інакша.",
       "reply": "Є над чим подумати."
     },
     {
       "id": "calm",
       "name": "спокійний",
       "emoji": "😌",
+      "effect": "Стрічка сьогодні інакша.",
       "reply": "Без поспіху."
     },
     {
       "id": "joyful",
       "name": "радісний",
       "emoji": "😊",
+      "effect": "Стрічка сьогодні інакша.",
       "reply": "Лови світле слово!"
     },
     {
       "id": "sad",
       "name": "сумний",
       "emoji": "😢",
+      "effect": "Стрічка сьогодні інакша.",
       "reply": "Слово зігріє."
     }
   ],

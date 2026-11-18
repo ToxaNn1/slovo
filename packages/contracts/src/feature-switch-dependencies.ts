@@ -88,6 +88,8 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   // The demo plays the side swipes on the Feed's card (ADR 0112).
   gesturesHintDemo: ['knowledge'],
   gesturesHintAgain: ['knowledge'],
+  // The line under the Mood check-in and the unpick (ADR 0185).
+  moodEffect: ['mood'],
   // The Feed header's Search button opens the Search screen.
   searchButton: ['search'],
   // The grid of the Categories of Corrections opens from the Dashboard's Corrections rail (ADR 0081).

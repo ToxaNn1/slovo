@@ -14,21 +14,27 @@ import { BlockTitle } from './BlockTitle';
  * The Mood check-in of the Dashboard (ADR 0076), from the board: «Як
  * настрій?» with «Mood дня» at the end, over a tile for each Mood, two to a
  * row (an odd last tile keeps half a row) or three in one row (ADR 0192), each with its own red mark. A tap chooses the Mood, or changes it, and
- * a toast says its reply; the chosen tile turns red. It needs an
+ * a toast says its reply; the chosen tile turns red. While the block carries
+ * the chosen Mood's effect (ADR 0185), a line under the tiles says it and a
+ * tap on the chosen tile unpicks the Mood, with no toast. It needs an
  * `UndoToastProvider` above it.
  */
 export function MoodCheckIn({
   block,
   onChoose,
+  onUnpick,
 }: {
   block: MoodBlock;
   onChoose: (moodId: string) => void;
+  onUnpick: () => void;
 }) {
-  const { strings } = useEdition();
+  const tokens = useTokens();
+  const { strings, voice } = useEdition();
   const words = strings.dashboard.mood;
   const showToast = useUndoToast();
   const { check } = block;
   const chosenId = check.state === 'chosen' ? check.mood.id : undefined;
+  const effect = check.state === 'chosen' ? check.effect : undefined;
   const columns = block.moods.length === 3 ? 3 : moodTile.columns;
   const rows = inRows(
     block.moods.map((mood, index) => ({ mood, index })),
@@ -47,6 +53,10 @@ export function MoodCheckIn({
                 index={index}
                 chosen={mood.id === chosenId}
                 onPress={() => {
+                  if (effect !== undefined && mood.id === chosenId) {
+                    onUnpick();
+                    return;
+                  }
                   onChoose(mood.id);
                   showToast({ message: mood.reply });
                 }}
@@ -57,6 +67,15 @@ export function MoodCheckIn({
             ) : null}
           </View>
         ))}
+        {effect !== undefined && (
+          <Text
+            {...voice}
+            testID="dashboard-mood-effect"
+            style={[typeStyle('blockNote', tokens), styles.effect, { color: tokens.colors.muted }]}
+          >
+            {effect}
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -131,4 +150,6 @@ const styles = StyleSheet.create({
   // line height under the font's own drops them below the mark. The font's own line
   // height lets the row centre the glyphs on the mark, as the board does.
   name: { lineHeight: undefined },
+  // A long line wraps, so it takes the font's own line height too.
+  effect: { lineHeight: undefined },
 });

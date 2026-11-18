@@ -125,6 +125,7 @@
     "widgetPreviews": "on",
     "fastReveal": "on",
     "mood": "on",
+    "moodEffect": "on",
     "curatedCollections": "on",
     "gesturesHintDemo": "on",
     "gesturesHintAgain": "on",
@@ -381,6 +382,7 @@
       "name": "Радісно",
       "emoji": "😊",
       "reply": "Радісно? Ловімо слово, яким можна поділитися з другом.",
+      "effect": "Більше синонімічних рядів і висловів.",
       "rarityBand": "whole",
       "shifts": {
         "synonymRow": "more",
@@ -404,6 +406,7 @@
       "name": "Бадьоро",
       "emoji": "⚡",
       "reply": "Бадьоро? Тоді слова сьогодні рідкісніші, а Виправлень більше.",
+      "effect": "Слова рідкісніші, Виправлень більше.",
       "rarityBand": "upper",
       "shifts": {
         "correction": "more"
@@ -414,6 +417,7 @@
       "name": "Спокійно",
       "emoji": "😌",
       "reply": "Спокійно? Саме час для довгого слова й ще довшого вислову.",
+      "effect": "Слова простіші, порад більше, Виправлень менше.",
       "rarityBand": "lower",
       "shifts": {
         "tip": "more",

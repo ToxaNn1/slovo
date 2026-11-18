@@ -4,7 +4,7 @@ import { declareRecords } from '../user-state/user-state-record';
 
 /**
  * The Mood check-in of one local day (ADR 0076): its date and the choice, a
- * mood id or `skipped`. An unknown id, from an older Edition, reads as asking.
+ * mood id, `skipped` or `unpicked` (ADR 0185). An unknown id, from an older Edition, reads as asking.
  */
 const MoodCheckInRecordSchema = z.object({
   date: z.string(),

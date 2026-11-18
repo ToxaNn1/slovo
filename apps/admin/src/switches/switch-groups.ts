@@ -124,6 +124,7 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   reduceMotion: 'look',
   fastReveal: 'feed',
   mood: 'feed',
+  moodEffect: 'feed',
   previousWords: 'feed',
   correctionTypes: 'content',
   curatedCollections: 'content',

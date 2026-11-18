@@ -23,6 +23,8 @@ export interface DashboardScreen {
   readonly today: LocalDate;
   /** A Mood tile: chooses today's Mood, or changes it. */
   readonly chooseMood: (moodId: string) => void;
+  /** A second tap on the chosen Mood's tile: unpicks today's Mood (ADR 0185). */
+  readonly unpickMood: () => void;
   /** A row of «Попередні слова»: opens its Entry card as Search does, making nothing Seen. */
   readonly openPreviousWord: (entryId: string) => void;
   /** A tile of the Correction Types rail: opens its type's screen. */
@@ -73,6 +75,9 @@ export function useDashboardScreen(): DashboardScreen {
     toCard: wordOfTheDayLanding.ask,
     chooseMood: (moodId) => {
       void keep("today's Mood", mood.choose(moodId));
+    },
+    unpickMood: () => {
+      void keep("the unpick of today's Mood", mood.unpick());
     },
     openPreviousWord: (entryId) => {
       openScreen(`/search/${entryId}?back=${encodeURIComponent(previousWordsTitle)}`);
