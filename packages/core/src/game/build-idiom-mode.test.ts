@@ -313,13 +313,20 @@ describe('a Round of «Склади вислів»', () => {
     expect(app.knowledge.state.shown.size).toBe(0);
   });
 
-  it('asks first about the expressions the reader marked «Не знаю»', async () => {
-    const app = await run();
+  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  it('asks about the expressions the reader marked «Не знаю» at places drawn among the first 15 Rounds', async () => {
     const weak = ['пекти раків', 'Око за око', 'не все те золото, що блищить'];
-    for (const expression of weak) await app.knowledge.tap(idOf(expression), 'unknown');
+    const places: number[] = [];
+    for (const seed of [1, 2, 3, 4]) {
+      const app = await run({ seed });
+      for (const expression of weak) await app.knowledge.tap(idOf(expression), 'unknown');
 
-    const rounds = await playGame(app);
+      const asked = (await playGame(app)).map(expressionOf);
 
-    expect(rounds.slice(0, weak.length).map(expressionOf).sort()).toEqual([...weak].sort());
+      places.push(...weak.map((one) => asked.indexOf(one)));
+    }
+
+    expect(places.every((place) => place >= 0 && place < 15)).toBe(true);
+    expect(places.some((place) => place >= weak.length)).toBe(true);
   });
 });

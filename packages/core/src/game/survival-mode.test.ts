@@ -229,15 +229,22 @@ describe('a Game of «Виживання»', () => {
     expect(ids.slice(eligible)).not.toEqual(ids.slice(0, GAME_ROUNDS));
   });
 
-  it('asks first about the Words and Corrections the reader marked «Не знаю»', async () => {
-    const app = await run();
+  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  it('asks about the Words and Corrections the reader marked «Не знаю» at places drawn among the first 15 Rounds', async () => {
     const weak = ['c_fix03', 'w_word07', 'w_word19'];
-    for (const id of weak) await app.knowledge.tap(id, 'unknown');
-    await app.game.start('survival');
+    const places: number[] = [];
+    for (const seed of [1, 2, 3, 4]) {
+      const app = await run({ seed });
+      for (const id of weak) await app.knowledge.tap(id, 'unknown');
 
-    const rounds = await play(app, { rounds: weak.length });
+      await app.game.start('survival');
+      const asked = (await play(app, { rounds: 15 })).map((round) => askedOf(round).id);
 
-    expect(rounds.map((round) => askedOf(round).id).sort()).toEqual(weak);
+      places.push(...weak.map((one) => asked.indexOf(one)));
+    }
+
+    expect(places.every((place) => place >= 0 && place < 15)).toBe(true);
+    expect(places.some((place) => place >= weak.length)).toBe(true);
   });
 
   it('marks the Entry of a wrong pick «Не знаю», moves no Review and lists it in the Game Review', async () => {

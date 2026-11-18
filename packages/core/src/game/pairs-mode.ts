@@ -8,8 +8,8 @@ import { shuffled } from '../shuffled';
 /**
  * The Words that may share a grid with the answer, best first: the Words of
  * the answer's part of speech, then the others, each group kept in the
- * Game's order so that the Words it would ask next, the weak ones first,
- * come first.
+ * Game's order so that the Words it would ask next, the weak ones at their
+ * places (ADR 0190), come first.
  */
 const gridOrder = (answer: Word, others: readonly Word[]): Word[] => [
   ...others.filter((word) => word.partOfSpeech === answer.partOfSpeech),

@@ -489,7 +489,8 @@ export interface GameState {
  * the app session and never in the user state. A Game asks as many
  * different eligible Entries of the kinds its mode asks about as the mode's
  * Round limit, 15 by default (`roundsToPlanOf`), each pair of a grid
- * counted: up to 5 the reader is weak on, first (ADR 0043, 0052), the rest
+ * counted: up to 5 the reader is weak on, at places drawn at random among
+ * its first 15 Rounds (ADR 0043, 0052, 0190), the rest
  * those in History when there are at least 15, else any (ADR 0024). A mode
  * with no Round limit asks them again, reshuffled, once it has asked them all. A mode may set its own Lives too, or none, and a time limit (ADR 0052). Playing never writes Seen, History or Active Days; a Round
  * answered right writes its XP, and a finished Game its mode's Best result,
