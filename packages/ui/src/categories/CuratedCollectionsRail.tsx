@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 
 import { CategoryGrid, type GridTile } from './CategoryGrid';
 import { CategoryTile, shapeAt, toneByPosition } from './CategoryTile';
+import type { TileShapeKind } from '../primitives/TileShape';
 import { useEdition } from '../providers/EditionProvider';
 import {
   categoryGridBox,
@@ -136,6 +137,16 @@ function shapesOf(pictogram: CuratedCollectionPictogram | undefined) {
   if (pictogram === undefined) return undefined;
   const shapes = pictogram.of === 'category' ? categoryTile.shapes : correctionGrid.shapes;
   return shapeAt(shapes, pictogram.position);
+}
+
+/**
+ * The glyph of a Curated Collection's screen hero: the big shape its tile
+ * draws, else a circle (ADR 0178).
+ */
+export function curatedCollectionGlyph(
+  pictogram: CuratedCollectionPictogram | undefined,
+): TileShapeKind {
+  return shapesOf(pictogram)?.[0] ?? 'circle';
 }
 
 const styles = StyleSheet.create({

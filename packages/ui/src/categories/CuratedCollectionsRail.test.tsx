@@ -2,7 +2,10 @@ import { describe, expect, it, jest } from '@jest/globals';
 import type { CuratedCollectionCard } from '@slovo/core';
 import {
   CategoriesRail,
+  categoryTile,
   coreTokens,
+  correctionGrid,
+  curatedCollectionGlyph,
   CuratedCollectionGrid,
   CuratedCollectionsRail,
   EditionProvider,
@@ -243,5 +246,20 @@ describe('CuratedCollectionGrid', () => {
     await fireEvent.press(screen.getByTestId('grid-cc_b'));
 
     expect(onOpen).toHaveBeenCalledWith('cc_b');
+  });
+});
+
+describe('curatedCollectionGlyph', () => {
+  it("is the big shape of the pictogram's Category, the one its tile draws, else a circle", () => {
+    const [category] = categoryTile.shapes[1];
+    const [correction] = correctionGrid.shapes[2];
+
+    expect(curatedCollectionGlyph({ of: 'category', categoryId: 'feelings', position: 1 })).toEqual(
+      category,
+    );
+    expect(
+      curatedCollectionGlyph({ of: 'correctionCategory', categoryId: 'surzhyk', position: 2 }),
+    ).toEqual(correction);
+    expect(curatedCollectionGlyph(undefined)).toBe('circle');
   });
 });

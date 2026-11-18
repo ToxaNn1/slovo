@@ -1,6 +1,7 @@
 import type {
   Composition,
   CuratedCollectionCard,
+  CuratedCollectionPictogram,
   CuratedCollectionScreen as Screen,
 } from '@slovo/core';
 import { useCallback } from 'react';
@@ -42,8 +43,8 @@ export interface CuratedCollectionScreen {
   readonly screen: Screen | null | undefined;
   /** Set once the read failed: reads the collection again. */
   readonly retry: (() => void) | undefined;
-  /** Its tile's place on the rail, which picks its pictogram; 0 once it left the rail. */
-  readonly place: number;
+  /** The pictogram its tile draws, whose big shape is the hero's glyph (ADR 0178). */
+  readonly pictogram: CuratedCollectionPictogram | undefined;
   /** «+ Додати»: copies it into the reader's Collections. */
   readonly add: () => void;
   /**
@@ -71,10 +72,8 @@ export function useCuratedCollectionScreen(collectionId: string): CuratedCollect
   return {
     screen,
     retry: reading.status === 'failed' ? reading.retry : undefined,
-    place: Math.max(
-      0,
-      curatedCollections.rail.findIndex(({ collection }) => collection.id === collectionId),
-    ),
+    pictogram: curatedCollections.grid.find(({ collection }) => collection.id === collectionId)
+      ?.pictogram,
     add: () => {
       void keep('the copy of a Curated Collection', curatedCollections.add(collectionId));
     },

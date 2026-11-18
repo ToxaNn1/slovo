@@ -1,11 +1,10 @@
 import { fill } from '@slovo/contracts';
 import {
-  categoryTile,
+  curatedCollectionGlyph,
   knownShare,
   RailBoard,
   type RailBoardCard,
   RailScreenHero,
-  shapeAt,
   useEdition,
   useListScroll,
 } from '@slovo/ui';
@@ -28,7 +27,7 @@ const { curatedCollection: words, curatedCollectionCount } = editionStrings.dash
  */
 export default function CuratedCollectionRoute() {
   const collectionId = useSegmentParam('collectionId');
-  const { screen, retry, place, add, openEntry } = useCuratedCollectionScreen(collectionId);
+  const { screen, retry, pictogram, add, openEntry } = useCuratedCollectionScreen(collectionId);
   const { count } = useEdition();
   const router = useRouter();
   const scroll = useListScroll<FlatList<RailBoardCard>>();
@@ -41,7 +40,6 @@ export default function CuratedCollectionRoute() {
         testID="curated-collection-error"
       />
     );
-  const [glyph] = shapeAt(categoryTile.shapes, place);
   const { known, total, done } = knownShare(screen?.entries ?? []);
   return (
     <RailBoard
@@ -53,7 +51,7 @@ export default function CuratedCollectionRoute() {
       hero={
         <RailScreenHero
           id="curated-collection-hero"
-          glyph={glyph}
+          glyph={curatedCollectionGlyph(pictogram)}
           kicker={fill(words.kicker, { count: count(curatedCollectionCount, total) })}
           title={screen?.collection.name ?? ''}
           description={screen?.collection.description ?? ''}
