@@ -69,16 +69,39 @@ export function reopenAfterSync({
  * and does what the launch did: the composition makes the notification plan
  * as it opens, and the Widget Snapshot is written from the composition that
  * opened. A reopen that failed keeps the composition the snapshot was written
- * from, and writes none.
+ * from, and writes none. The Game on screen, in play or its result, lives in
+ * the composition alone (ADR 0052), so a reopen asked meanwhile waits until
+ * it is left, and the asks made while it waits reopen once (ADR 0189).
  */
 export function reopenComposition(
   composition: Opening<Composition>,
   writeWidgetSnapshot: (widget: Composition['widget']) => void,
 ): () => Promise<void> {
-  return async () => {
+  let waiting: Promise<void> | undefined;
+  async function reopen(): Promise<void> {
     const before = composition.state;
     await composition.reopen();
     const { state } = composition;
     if (state.status === 'ready' && state !== before) writeWidgetSnapshot(state.value.widget);
+  }
+  return () => {
+    const { state } = composition;
+    if (state.status !== 'ready' || state.value.game.state.current === undefined) return reopen();
+    waiting ??= gameLeft(state.value.game).then(() => {
+      waiting = undefined;
+      return reopen();
+    });
+    return waiting;
   };
+}
+
+/** Settles once the Game has no Game on screen, neither in play nor its result. */
+function gameLeft(game: Composition['game']): Promise<void> {
+  return new Promise((resolve) => {
+    const stop = game.subscribe(() => {
+      if (game.state.current !== undefined) return;
+      stop();
+      resolve();
+    });
+  });
 }
