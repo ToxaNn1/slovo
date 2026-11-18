@@ -149,7 +149,7 @@ describe('the 0.8.12 Game strings', () => {
     expect(parsed.openLetter).toBe('Відкрити літеру');
     expect(parsed.dailyCrossword).toMatchObject({
       title: 'Кросворд дня',
-      start: 'Почати',
+      start: 'Розгадати',
       resume: 'Продовжити',
       solved: 'Розгадано!',
     });
@@ -236,10 +236,10 @@ describe('the 0.8.13 strings', () => {
   it('the UA Edition carries the agreed Rarity Test texts verbatim', () => {
     expect(parsed.rarityTest).toMatchObject({
       start: 'Перевірити рівень',
-      subtitle: '10 слів — і ми підберемо рідкість саме для тебе',
+      subtitle: '10 слів — і Стрічка підбере слова, нові саме для тебе',
       progress: '{n} з {total}',
-      retake: 'Пройти тест ще раз',
-      result: 'Твоя рідкість: до {n}',
+      retake: 'Перевірити рівень ще раз',
+      result: 'Твоя рідкість — до {n}. Стрічка бере незнайоме, рідші почекають.',
     });
     expect(parsed.knowledge).toMatchObject({ known: 'Знаю', unknown: 'Не знаю' });
   });
@@ -265,7 +265,7 @@ describe('the 0.8.13 strings', () => {
       enoughForToday: {
         message: 'Може, на сьогодні досить?',
         body: 'Уже {n} карток позаду. Рідкісні слова краще засвоюються невеликими порціями.',
-        keepGoing: 'Гортати далі',
+        keepGoing: 'Ще одне слово',
       },
       firstWeek: { close: 'Зрозуміло', lastDayTitle: 'Тиждень із нами' },
     });
@@ -358,8 +358,12 @@ describe('the 0.8.13 strings', () => {
     it('the UA Edition carries 10 title templates, each with {word}, and a farewell and the evening texts', () => {
       expect(parsed.notificationTemplates.titles).toHaveLength(10);
       for (const title of parsed.notificationTemplates.titles) expect(title).toContain('{word}');
-      expect(parsed.notificationTemplates.farewell).toBe('Ми зупиняємо нагадування');
-      expect(parsed.notificationTemplates.goalNotMet).toBe('Ціль ще не виконана');
+      expect(parsed.notificationTemplates.farewell).toBe(
+        'Нагадування на паузі. Слова нікуди не дінуться — повертайся, коли захочеш.',
+      );
+      expect(parsed.notificationTemplates.goalNotMet).toBe(
+        'Ціль дня ще відкрита: кілька слів — і готово.',
+      );
       expect(parsed.notificationTemplates.streakWarning).not.toBe('');
     });
 
@@ -426,7 +430,7 @@ describe('the 0.8.14 strings', () => {
     expect(parsed.settings.anonymousStats).toEqual({
       title: 'Ділитися анонімною статистикою',
       explanation:
-        'Анонімні лічильники слів і відповідей анкети та анонімна статистика використання. Без акаунта, пошти й ідентифікатора пристрою.',
+        'Анонімні лічильники слів і відповідей опитування та анонімна статистика використання. Без акаунта, пошти й ідентифікатора пристрою.',
     });
   });
 
@@ -436,10 +440,10 @@ describe('the 0.8.14 strings', () => {
   });
 
   it.each([
-    [1, 'Знають 1 з 1 читача · зберегли 0'],
-    [2, 'Знають 1 з 2 читачів · зберегли 0'],
-    [5, 'Знають 1 з 5 читачів · зберегли 0'],
-    [21, 'Знають 1 з 21 читача · зберегли 0'],
+    [1, '«Знаю» — 1 з 1 читача · зберегли 0'],
+    [2, '«Знаю» — 1 з 2 читачів · зберегли 0'],
+    [5, '«Знаю» — 1 з 5 читачів · зберегли 0'],
+    [21, '«Знаю» — 1 з 21 читача · зберегли 0'],
   ])('the Ukrainian counter line of %i readers reads «%s»', (total, line) => {
     const counters = parsed.knowledge.communityCounters;
 
@@ -452,11 +456,11 @@ describe('the 0.8.14 strings', () => {
   });
 
   it.each([
-    [1, 'додав 1 читач'],
-    [2, 'додали 2 читачі'],
-    [5, 'додали 5 читачів'],
-    [12, 'додали 12 читачів'],
-    [21, 'додав 21 читач'],
+    [1, 'до Улюбленого додав 1 читач'],
+    [2, 'до Улюбленого додали 2 читачі'],
+    [5, 'до Улюбленого додали 5 читачів'],
+    [12, 'до Улюбленого додали 12 читачів'],
+    [21, 'до Улюбленого додав 21 читач'],
   ])('the Ukrainian Community Word of %i readers reads «%s»', (count, text) => {
     expect(countText(parsed.feedNotices.communityWord.added, count)).toBe(text);
   });
@@ -635,30 +639,30 @@ describe('the 0.9 VoiceOver templates', () => {
   it.each([
     [
       1,
-      'переглянуто 1 запис',
-      'збережено 1 запис',
-      'позначено «Знаю»: 1 запис',
+      'переглянуто 1 картку',
+      'збережено 1 картку',
+      'позначено «Знаю»: 1 картка',
       'серія: 1 день поспіль',
     ],
     [
       2,
-      'переглянуто 2 записи',
-      'збережено 2 записи',
-      'позначено «Знаю»: 2 записи',
+      'переглянуто 2 картки',
+      'збережено 2 картки',
+      'позначено «Знаю»: 2 картки',
       'серія: 2 дні поспіль',
     ],
     [
       5,
-      'переглянуто 5 записів',
-      'збережено 5 записів',
-      'позначено «Знаю»: 5 записів',
+      'переглянуто 5 карток',
+      'збережено 5 карток',
+      'позначено «Знаю»: 5 карток',
       'серія: 5 днів поспіль',
     ],
     [
       21,
-      'переглянуто 21 запис',
-      'збережено 21 запис',
-      'позначено «Знаю»: 21 запис',
+      'переглянуто 21 картку',
+      'збережено 21 картку',
+      'позначено «Знаю»: 21 картка',
       'серія: 21 день поспіль',
     ],
   ])(
@@ -884,10 +888,10 @@ describe('the strings of the Category screens and the board style (spec #1604)',
       known: 'ЗНАЮ 3 З 12',
       knownStamp: 'ЗНАЮ',
       feedKicker: 'Категорія · Емоції · 2 з 4',
-      addedToMix: '„Емоції“ тепер у твоєму Міксі.',
-      removedFromMix: '„Емоції“ прибрано з Міксу.',
-      curatedAdd: 'ДОДАТИ',
-      curatedAdded: 'ДОДАНО',
+      addedToMix: '«Емоції» тепер у твоєму Міксі.',
+      removedFromMix: '«Емоції» прибрано з Міксу.',
+      curatedAdd: 'ДОДАТИ СОБІ',
+      curatedAdded: 'У МІКСІ',
     });
   });
 
@@ -989,7 +993,8 @@ describe('the board 11 strings', () => {
     expect(parsed.settings.progressReset).toEqual({
       button: 'Скинути прогрес',
       title: 'СКИНУТИ ПРОГРЕС?',
-      message: 'Серія, XP і відзнаки зникнуть назавжди. Збережені слова й колекції залишаться.',
+      message:
+        'Серія, XP, відзнаки, рекорди ігор, перерва і підказки зникнуть назавжди. Збережені слова й колекції залишаться.',
       cancel: 'СКАСУВАТИ',
       confirm: 'СКИНУТИ',
       done: 'Прогрес скинуто. Слова збережено.',
@@ -1024,7 +1029,7 @@ describe('the board 11 strings', () => {
       codeSent: 'Код надіслано на {email}',
     });
     expect(parsed.account.sync.syncedToday).toBe('Синхронізовано сьогодні, {time}');
-    expect(parsed.account.delete.button).toBe('Видалити акаунт');
+    expect(parsed.account.delete.button).toBe('Видалити «{name}»');
   });
 
   it('the UA Edition names its Account «Акаунт», and the sign-in email names SLOVO', () => {
@@ -1690,8 +1695,8 @@ describe('the 0.7 account and email strings groups', () => {
   // Spec #1861: the UA Account is named «Акаунт», which reads «Видалити Акаунт» in the middle of a phrase.
   it('says «акаунт» in lower case in the words to delete it, not the Account’s name', () => {
     expect(account['delete']).toMatchObject({
-      button: 'Видалити акаунт',
-      title: 'Видалити акаунт?',
+      button: 'Видалити «{name}»',
+      title: 'Видалити «{name}»?',
     });
   });
 
