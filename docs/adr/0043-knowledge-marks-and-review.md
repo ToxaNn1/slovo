@@ -1,5 +1,5 @@
 ---
-summary: A Known or Unknown mark schedules Review at 1, 3, 7, 30 and 90 days, then Learned (1.0: extended from 7 days); due Entries return in the Feed and the Game; marking amended by 0077.
+summary: A Known or Unknown mark schedules Review at 1, 3, 7, 30 and 90 days, then Learned (1.0: extended from 7 days); due Entries return in the Feed and the Game; marking amended by 0077; the Feed's Review slots amended by 0194.
 ---
 
 # Knowledge Marks and Review
@@ -18,7 +18,7 @@ Until 0.8.6 SLOVO could not tell whether the reader knew an Entry: an unknown En
 
 - **Word Review slots.** Every 3rd card of the session, counting every card shown so far (the Word of the Day and a card a hide took out included), is a Review slot, unless it is a Correction slot (every 5th card of the Cycle), which keeps its card: with Corrections the Reviews fall on cards 3, 6, 9, 12, 18 and so on.
 - **Correction slots.** A due Correction takes the Correction slot before a new one, also once the Cycle has no unseen Correction. A due Word never takes a Correction slot.
-- **Which due Entry.** Of the due Entries of the slot's kind the Cycle covers, the slot takes the one not shown in this session yet, else the one shown longest ago, in Cycle order, never the Entry of the card before it, so a swiped-past Entry comes back at a later slot.
+- **Which due Entry.** Of the due Entries of the slot's kind the Cycle covers, the slot takes the one not shown in this session yet, else the one shown longest ago, in Cycle order, never the Entry of the card before it, so a swiped-past Entry comes back at a later slot. **Amended by ADR 0194:** one whose card the reader read today and left without a mark takes no slot again that day.
 - **«Повторення».** A card is labelled a Review when its Entry is due as it is shown: at a slot, at its own turn in the Cycle, as the Word of the Day, as a linked Correction, or on an Entry screen opened from «Вчу», the Game Review, Favorites, a notification or the widget. It keeps the label once answered.
 
 **The Game takes up to 5 Rounds of a Game from Entries the reader is weak on**, eligible and Unknown or due, in every Game Mode, and the rest from ADR 0024's pool, with its fallback (ADR 0052). The Daily Crossword is not a Game: it marks nothing and moves no Review. The Round answers are kept until the result screen for the Game Review, never stored.
