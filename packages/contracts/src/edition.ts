@@ -536,8 +536,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   widgetPreviews: FeatureSwitchStateSchema,
   /** The three-step text size «Як у системі», «Більший», «Найбільший» and its screen (ADR 0134); off, the S…XL scale and its row. */
   textSizeSteps: FeatureSwitchStateSchema,
-  /** The offline plate «Немає з’єднання. Спробуй пізніше.» under the status bar when sharing a Collection Link, signing in or syncing finds no network (ADR 0158); off, the toast or the line each of them showed before. */
-  offlinePlate: FeatureSwitchStateSchema,
   /** The switch-off unit: turning «Ділитися анонімною статистикою» off sends one anonymous +1 with the Edition alone, and nothing after (ADR 0163); off, nothing is sent at switch-off. */
   statisticsOffCounter: FeatureSwitchStateSchema,
 });

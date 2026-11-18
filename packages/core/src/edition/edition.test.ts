@@ -152,7 +152,6 @@ const validConfig = {
     readerName: 'on',
     widgetPreviews: 'on',
     textSizeSteps: 'on',
-    offlinePlate: 'on',
     statisticsOffCounter: 'on',
   },
   userSettingDefaults: {
@@ -401,7 +400,6 @@ describe('loadEdition', () => {
     'badgeFamiliesOverview',
     'widgetPreviews',
     'textSizeSteps',
-    'offlinePlate',
     'statisticsOffCounter',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
