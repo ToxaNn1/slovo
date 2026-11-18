@@ -412,12 +412,17 @@ export async function openXpLog({
     };
   }
 
-  /** The goal in force on a local date: the last `word-goal` set on or before it, unless that one turned it off. */
-  function goalOf(date: string): DailyGoal | undefined {
+  /**
+   * The goal in force on a local date: the last `word-goal` set on or before
+   * it, unless that one turned it off. With `at`, the goal in force at that
+   * instant of the day: a goal set later that day is not in force yet.
+   */
+  function goalOf(date: string, at?: string): DailyGoal | undefined {
     if (!goalOn) return undefined;
     let last: WordGoalRecord | undefined;
     for (const record of wordGoalsInOrder()) {
       if (record.date > date) break;
+      if (record.date === date && at !== undefined && record.at > at) break;
       last = record;
     }
     return last?.goal ?? undefined;
@@ -504,6 +509,8 @@ export async function openXpLog({
   function fold() {
     let total = 0;
     const byDate = new Map<string, number>();
+    /** The XP of each date earned while no goal was in force, which makes an Active Day at 5. */
+    const ungoaled = new Map<string, number>();
     const active = new Set<string>();
     const frozen = new Set<string>();
     /** The length of each Break and when it was started last, by the local date it starts on. */
@@ -603,7 +610,14 @@ export async function openXpLog({
           const xp = (byDate.get(record.date) ?? 0) + amount;
           byDate.set(record.date, xp);
           // A day with a goal is active once met: its `goal-met` record says so.
-          if (goalFor(record.date) === undefined && xp >= ACTIVE_DAY_XP) active.add(record.date);
+          // A day that reached 5 XP before its goal was set stays active (ADR 0188).
+          if (goalFor(record.date) === undefined) {
+            if (xp >= ACTIVE_DAY_XP) active.add(record.date);
+          } else if (goalOf(record.date, record.at) === undefined) {
+            const free = (ungoaled.get(record.date) ?? 0) + amount;
+            ungoaled.set(record.date, free);
+            if (free >= ACTIVE_DAY_XP) active.add(record.date);
+          }
         }
       }
     }
