@@ -32,7 +32,7 @@ async function measureLines(testID: string, count: number) {
 
 describe('WholeWordsText', () => {
   it('gives a capital mark room at the size it draws a word role at', async () => {
-    // The hero word, 50 on a 50-point line, drawn at 58 on a 58-point line:
+    // The hero word, drawn at 58 on a 58-point line:
     // Ї needs 1.255 × 58 = 72.8 points, so 15 above the line.
     await render(
       <WholeWordsText
@@ -53,7 +53,7 @@ describe('WholeWordsText', () => {
         testID="word"
         text="Hedgehog"
         typeRole="heroWord"
-        size={{ fontSize: 58, lineHeight: 75.4 }}
+        size={{ fontSize: 51, lineHeight: 66.3 }}
         style={typeStyle('heroWord', coreTokens)}
       />,
     );
@@ -112,7 +112,7 @@ describe('WholeWordsText', () => {
     if (measured === undefined) throw new Error('The word is not measured');
     await fireEvent(measured, 'textLayout', { nativeEvent: { lines: [{ width: 240 }] } });
 
-    expect(screen.getByTestId('word')).toHaveStyle({ fontSize: 50 });
+    expect(screen.getByTestId('word')).toHaveStyle({ fontSize: 44 });
   });
 
   it('keeps the start size for a short word', async () => {
@@ -129,7 +129,7 @@ describe('WholeWordsText', () => {
     await layOut('word', 300);
     await measureWords('word', 120);
 
-    expect(screen.getByTestId('word')).toHaveStyle({ fontSize: 50 });
+    expect(screen.getByTestId('word')).toHaveStyle({ fontSize: 44 });
     expect(screen.getByTestId('word')).not.toHaveStyle({ opacity: 0 });
   });
 
@@ -145,28 +145,28 @@ describe('WholeWordsText', () => {
       />,
     );
     await layOut('word', 300);
-    // At 50 the word takes 320 of the line's 300: (300 − 1) / 320 of 50 would be 46.7.
+    // At 44 the word takes 320 of the line's 300: (300 − 1) / 320 of 44 would be 41.1.
     await measureWords('word', 320);
     expect(screen.getByTestId('word')).toHaveStyle({ opacity: 0 });
-    // At 44 it takes 320 × 44 / 50 = 281.6, which fits.
-    await measureWords('word', 281.6);
+    // At 40 it takes 320 × 40 / 44 = 290.9, which fits.
+    await measureWords('word', 290.9);
 
     const word = screen.getByTestId('word');
-    expect(word).toHaveStyle({ fontSize: 44 });
+    expect(word).toHaveStyle({ fontSize: 40 });
     expect(word).not.toHaveStyle({ opacity: 0 });
     // A single word stays whole on its one line.
     expect(word.props).toMatchObject({ numberOfLines: 1 });
   });
 
   it('takes the steps of the scale at the in-app text size', async () => {
-    // At the larger ladder step every step is 58 / 50 of its size at M.
+    // At the larger ladder step every step is 51 / 44 of its size at M, as the Lemma grows.
     await render(
       <FontSizeProvider size={'larger'}>
         <WholeWordsText
           testID="word"
           text="Synchrophasotron"
           typeRole="heroWord"
-          size={{ fontSize: 58, lineHeight: 75.4 }}
+          size={{ fontSize: 51, lineHeight: 66.3 }}
           lines={2}
           stepped
           style={typeStyle('heroWord', coreTokens)}
@@ -177,7 +177,7 @@ describe('WholeWordsText', () => {
     await measureWords('word', 371.2);
     await measureWords('word', 326.6);
 
-    expect(screen.getByTestId('word')).toHaveStyle({ fontSize: (44 * 58) / 50 });
+    expect(screen.getByTestId('word')).toHaveStyle({ fontSize: (40 * 51) / 44 });
   });
 
   it('steps a phrase down until it fits its lines, wrapping only between words', async () => {
@@ -193,14 +193,14 @@ describe('WholeWordsText', () => {
     );
     await layOut('phrase', 300);
     await measureWords('phrase', 200);
-    // At 36 the phrase takes four lines, at 32 three.
+    // At 44 the phrase takes four lines, at 40 three.
     await measureLines('phrase', 4);
     expect(screen.getByTestId('phrase')).toHaveStyle({ opacity: 0 });
-    await measureWords('phrase', 178);
+    await measureWords('phrase', 180);
     await measureLines('phrase', 3);
 
     const phrase = screen.getByTestId('phrase');
-    expect(phrase).toHaveStyle({ fontSize: 32 });
+    expect(phrase).toHaveStyle({ fontSize: 40 });
     expect(phrase).not.toHaveStyle({ opacity: 0 });
     expect(phrase.props).toMatchObject({ numberOfLines: 3 });
   });

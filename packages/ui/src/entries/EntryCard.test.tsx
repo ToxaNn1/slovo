@@ -541,11 +541,11 @@ describe('Self-check on a Correction card', () => {
 });
 
 describe('the standard form on a Correction card', () => {
-  it('starts the main equivalent at 26, as the non-standard form, not at the Lemma size (ADR 0157)', async () => {
+  it('starts the main equivalent at 44, as every card title', async () => {
     await render(inEdition(<EntryCard card={card} />));
 
     const form = within(screen.getByTestId('correction-standard')).getByText('Join in');
-    expect(form).toHaveStyle({ fontSize: 26 });
+    expect(form).toHaveStyle({ fontSize: 44 });
     expect(form).toHaveProp('maxFontSizeMultiplier', 1.5);
   });
 });
@@ -761,10 +761,10 @@ describe('the Idiom card', () => {
     ['a short expression', placeName],
     ['a longer one', idiomCard()],
     ['a long one', proverb],
-  ])('starts %s at 36, whatever its length (ADR 0157)', async (_case, model) => {
+  ])('starts %s at 44, as every card title, whatever its length', async (_case, model) => {
     await render(inEdition(<EntryCard card={{ kind: 'idiom', entryId: 'i1', model }} />));
 
-    expect(screen.getByTestId('idiom-expression')).toHaveStyle({ fontSize: 36 });
+    expect(screen.getByTestId('idiom-expression')).toHaveStyle({ fontSize: 44 });
   });
 
   it.each([

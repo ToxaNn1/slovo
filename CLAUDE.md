@@ -7,12 +7,14 @@ SLOVO is a factory of single-language rare-word apps: one language-agnostic Core
 The owner never names the mode. Before any work, pick it from the task and say it in one line («Швидкий режим» / «Важкий режим» and why). When unsure, start fast and switch to heavy the moment the change reaches a heavy-mode area.
 
 **Fast mode (the default).** UI, texts, styles, layout, a small bug, a change in 1–3 files that touches no heavy-mode area.
+
 - No ticket, ADR, handbook page, subagent or wave. Don't read `map.md`, `CONTEXT.md`, ADRs or `docs/react-native.md` up front; read only the files you change and grep a term only when the code needs it.
 - Run only the tests next to the change while working; full lint, typecheck and tests once, before the commit.
 - The owner checks on the phone through Metro (8082). Fixes pile up on one branch; one commit and one PR with auto-merge when the owner says so.
 - These rules override the ADR, handbook, ticket and "write the test first" rules below for fast-mode work.
 
 **Heavy mode.** Core logic (`packages/core`), data, storage, sync, backend and API contracts, schemas, money, accounts, privacy, native changes, or a new feature.
+
 - The rest of this file applies. Tests first where there is behaviour. An ADR only for a real decision someone could argue with later, never for a string, a style or a size.
 - Subagents and waves only for a large spec, and only when the owner asks.
 

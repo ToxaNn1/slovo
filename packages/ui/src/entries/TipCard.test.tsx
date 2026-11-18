@@ -144,10 +144,10 @@ describe('the Tip card with the Source tab (ADR 0116)', () => {
 });
 
 describe('the Tip card in tabs (board e9)', () => {
-  it('starts the title at 36 on the title scale, on a line of 1.1 (ADR 0157)', async () => {
+  it('starts the title at 44, as every card title, on a line of 46', async () => {
     await render(inEdition(<EntryCard card={card} />));
 
-    expect(screen.getByTestId('tip-title')).toHaveStyle({ fontSize: 36, lineHeight: 39.6 });
+    expect(screen.getByTestId('tip-title')).toHaveStyle({ fontSize: 44, lineHeight: 46 });
   });
 
   it('keeps «Often said» over the rule tab: the explanation, a chip of the standard form and of the Example, and the sources', async () => {
@@ -226,9 +226,9 @@ describe('a long Tip title', () => {
     if (line === null) throw new Error('The title has no line around it');
     await fireEvent(line, 'layout', { nativeEvent: { layout: { width: 301 } } });
     const words = () => screen.getByTestId('tip-title-words', { includeHiddenElements: true });
-    // Every word measured on its own line: at 36 the widest is too wide, at 32 it fits.
+    // Every word measured on its own line: at 44 the widest is too wide, at 40 it fits.
     await fireEvent(words(), 'textLayout', { nativeEvent: { lines: [{ width: 330 }] } });
-    await fireEvent(words(), 'textLayout', { nativeEvent: { lines: [{ width: 293.3 }] } });
+    await fireEvent(words(), 'textLayout', { nativeEvent: { lines: [{ width: 300 }] } });
     await fireEvent(
       screen.getByTestId('tip-title-lines', { includeHiddenElements: true }),
       'textLayout',
@@ -236,7 +236,7 @@ describe('a long Tip title', () => {
     );
 
     const fitted = screen.getByTestId('tip-title');
-    expect(fitted).toHaveStyle({ fontSize: 32, lineHeight: 39.6 * (32 / 36) });
+    expect(fitted).toHaveStyle({ fontSize: 40, lineHeight: 46 * (40 / 44) });
     expect(fitted).not.toHaveStyle({ opacity: 0 });
     expect(fitted.props).toMatchObject({ numberOfLines: 3, adjustsFontSizeToFit: true });
   });

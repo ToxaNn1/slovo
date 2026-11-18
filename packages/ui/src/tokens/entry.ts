@@ -74,13 +74,6 @@ export const entryCardFrame = {
 export const synonymRowList = {
   rowPadding: 13,
   line: 1,
-  shadeGap: 12,
-  /**
-   * The least share of the row a shade note takes beside its member: a member
-   * too long to leave it that much puts the note on a line of its own under
-   * it, so the member is never broken inside a word (owner 15.11).
-   */
-  shadeShare: '40%',
 } as const;
 
 /**
