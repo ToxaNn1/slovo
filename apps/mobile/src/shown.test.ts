@@ -30,7 +30,6 @@ const everything: Shown = {
   stressFall: true,
   sourceTab: true,
   tipExceptions: true,
-  entryPanelAllKinds: true,
   calligraphicLemma: true,
   selfCheck: false,
   selfCheckSetting: true,
@@ -113,10 +112,6 @@ describe('what the reader is shown', () => {
     [
       'a Tip card with «Правило» alone with its «Винятки» tab off',
       { off: ['tipExceptions'], shown: { tipExceptions: false } },
-    ],
-    [
-      'another kind’s card under a bare panel on the Entry screen with `entryPanelAllKinds` off',
-      { off: ['entryPanelAllKinds'], shown: { entryPanelAllKinds: false } },
     ],
     [
       'the Word of the Day Lemma in the Word font with the calligraphic Lemma off',

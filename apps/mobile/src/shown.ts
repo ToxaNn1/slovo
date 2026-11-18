@@ -47,8 +47,6 @@ export interface Shown {
   readonly sourceTab: boolean;
   /** Whether a tabbed Tip card with exceptions shows them in a tab «Винятки» after «Правило» (ADR 0120). */
   readonly tipExceptions: boolean;
-  /** Whether Entry details head every kind as a Word, in the red panel, and draw its meaning with no card frame (owner 15.11). */
-  readonly entryPanelAllKinds: boolean;
   /** Whether the Lemma on the Word of the Day card in the Feed is set in the Edition's calligraphic font. */
   readonly calligraphicLemma: boolean;
   /** Whether an Entry card is in Self-check. */
@@ -224,7 +222,6 @@ export function shownOf({
     stressFall: on('stressAnimation'),
     sourceTab: on('sourceTab'),
     tipExceptions: on('tipExceptions'),
-    entryPanelAllKinds: on('entryPanelAllKinds'),
     calligraphicLemma: on('calligraphy'),
     selfCheck: on('selfCheck') && settings.selfCheck,
     selfCheckSetting: on('selfCheck'),

@@ -492,8 +492,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   sourceTab: FeatureSwitchStateSchema,
   /** The Tip card's tab «Винятки»: a Tip with exceptions shows them after «Правило», their text and their words in chips (ADR 0120). Off, the card has «Правило» alone. */
   tipExceptions: FeatureSwitchStateSchema,
-  /** Entry details head every kind as a Word (owner 15.11): a Correction's, an Idiom's, a Synonym Row's or a Tip's first letter, headline and kind in the red panel, its meaning on the ground with no card frame. Off, an Entry of another kind keeps its Entry card under the panel. */
-  entryPanelAllKinds: FeatureSwitchStateSchema,
   /** The Search button of the Feed's header, which opens the Search screen; Search itself stays under `search`. Off while `search` is. */
   searchButton: FeatureSwitchStateSchema,
   /** The Feed header's wordmark as a button that opens the Dashboard (ADR 0079). */

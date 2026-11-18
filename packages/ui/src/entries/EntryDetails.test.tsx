@@ -54,17 +54,10 @@ const tip: AnyEntryCard = {
   },
 };
 
-async function renderDetails(card: AnyEntryCard, panelAllKinds = true) {
+async function renderDetails(card: AnyEntryCard) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <EntryDetails
-        card={card}
-        back="Back"
-        onBack={jest.fn()}
-        topInset={0}
-        bottomInset={0}
-        panelAllKinds={panelAllKinds}
-      />
+      <EntryDetails card={card} back="Back" onBack={jest.fn()} topInset={0} bottomInset={0} />
     </EditionProvider>,
   );
 }
@@ -104,11 +97,4 @@ describe('Entry details of a kind other than a Word (owner 15.11)', () => {
       expect(within(body).getByText(meaning)).toBeOnTheScreen();
     },
   );
-
-  it('keeps the card of another kind under a bare panel with `entryPanelAllKinds` off', async () => {
-    await renderDetails(idiom, false);
-
-    expect(screen.getByTestId('idiom-card')).toBeOnTheScreen();
-    expect(screen.queryByTestId('entry-panel-headline')).not.toBeOnTheScreen();
-  });
 });

@@ -51,15 +51,8 @@ jest.mock('./entry-actions', () => {
 /** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition = loadEdition(activeEditionFiles.config);
 
-/** Whether `entryPanelAllKinds` is on in effect: on as the Edition ships it unless a test turns it off. */
-let panelAllKindsOn = true;
-
-/** The Edition in effect: as it ships, with the panel switch as the test sets it. */
-const editionInEffect = (): typeof shippedEdition => ({
-  ...shippedEdition,
-  isFeatureEnabled: (feature) =>
-    feature === 'entryPanelAllKinds' ? panelAllKindsOn : shippedEdition.isFeatureEnabled(feature),
-});
+/** The Edition in effect: as it ships. */
+const editionInEffect = (): typeof shippedEdition => shippedEdition;
 
 const haptics: Haptics = {
   selection: jest.fn(),
@@ -306,15 +299,6 @@ describe('the Entry screen of a kind other than a Word (owner 15.11)', () => {
     await renderEntry('c_vezhlyvyi');
 
     expect(within(screen.getByTestId('entry-panel')).getByTestId('entry-corner')).toBeOnTheScreen();
-  });
-
-  it('keeps a Correction’s card under a bare panel with `entryPanelAllKinds` off', async () => {
-    panelAllKindsOn = false;
-    await renderEntry('c_vezhlyvyi');
-
-    expect(screen.getByTestId('correction-card')).toBeOnTheScreen();
-    expect(screen.queryByTestId('entry-panel-kind')).not.toBeOnTheScreen();
-    panelAllKindsOn = true;
   });
 });
 

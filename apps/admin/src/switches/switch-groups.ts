@@ -157,7 +157,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   widgetPreviews: 'widgets',
   textSizeSteps: 'look',
   statisticsOffCounter: 'analytics',
-  entryPanelAllKinds: 'content',
 };
 
 /** The Feature Switches by group, in table order; a group with none is left out. */
