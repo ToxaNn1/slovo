@@ -72,6 +72,9 @@ function GuideStep({
 /** The sizes a widget is drawn at: the home screen's two and the lock screen's. */
 export type SampleWidgetSize = 'small' | 'medium' | 'lockScreen';
 
+/** How far the Word shrinks to fit before it would wrap, the widget's `minimumScaleFactor`. */
+const WIDGET_LEMMA_MIN_SCALE = 0.4;
+
 /** A widget of the drawing: the mode's name, the Word, and the short line on the medium one. */
 export function SampleWidget({
   size,
@@ -106,7 +109,10 @@ export function SampleWidget({
       <View style={styles.widgetWord}>
         <Text
           allowFontScaling={false}
-          numberOfLines={1}
+          // As the widget draws it: a single Word shrinks on one line, words wrap between them, none is cut.
+          numberOfLines={lemma.includes(' ') ? 3 : 1}
+          adjustsFontSizeToFit
+          minimumFontScale={WIDGET_LEMMA_MIN_SCALE}
           style={[
             typeStyle(size === 'medium' ? 'widgetLemma' : 'widgetSmallLemma', tokens),
             { color: colors.ink },
