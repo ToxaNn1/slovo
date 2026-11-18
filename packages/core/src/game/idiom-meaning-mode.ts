@@ -21,8 +21,7 @@ const plays = (idiom: Idiom): boolean => idiom.idiomType !== 'placeName';
  */
 export const idiomMeaningMode: GameMode = {
   id: 'idiom-meaning',
-  group: 'idioms',
-  hubGroup: 'meaning',
+  group: 'meaning',
   entryKind: 'idiom',
   isOn: (edition) => edition.isFeatureEnabled('gameIdiomMeaning'),
   buildRound({ answer, eligible, random, comparison }) {

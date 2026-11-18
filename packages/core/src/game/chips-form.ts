@@ -1,4 +1,4 @@
-import type { AnswerForm, AnswerSheet, RoundOption } from './answer-form';
+import type { AnswerForm, AnswerSheet } from './answer-form';
 import type { TextComparison } from '../text/text-comparison';
 
 /** What a chips Round's chips are: a Word's letters or an expression's words. */
@@ -94,18 +94,6 @@ const drawnFrom = (chips: readonly string[], expected: readonly string[]): boole
   });
 };
 
-/** A chip that is one character, such as a letter of «Анаграми»; the words of «Склади вислів» are longer. */
-const isLetter = (chip: string) => Array.from(chip).length === 1;
-
-/** The letters tapped as one Word, each character that stays in place before the chip it precedes. */
-const lettersJoined = (tapped: readonly string[], fixed: readonly FixedChip[]) =>
-  tapped
-    .map(
-      (letter, place) =>
-        fixed.flatMap(({ at, text }) => (at === place ? [text] : [])).join('') + letter,
-    )
-    .join('');
-
 /** The chips tapped in order: the answer's chips, reordered, are right. */
 export const chipsForm: AnswerForm<ChipsContent, ChipsRound, ChipsGiven, ChipsAnswer> = {
   wellFormed: ({ chips, expected }) =>
@@ -131,10 +119,5 @@ export const chipsForm: AnswerForm<ChipsContent, ChipsRound, ChipsGiven, ChipsAn
         sheet,
       },
     };
-  },
-  reviewAnswer({ chips, fixed }, { chosen }): RoundOption {
-    const tapped = chosen.flatMap((place) => chips[place] ?? []);
-    const text = tapped.every(isLetter) ? lettersJoined(tapped, fixed) : tapped.join(' ');
-    return { text, stressedVowels: [] };
   },
 };

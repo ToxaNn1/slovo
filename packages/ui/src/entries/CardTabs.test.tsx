@@ -108,7 +108,7 @@ describe("an Entry card's tab bar (board XEntry2)", () => {
 /** Names the text size it is drawn at. */
 function DrawnAt() {
   const { size } = useWordTextSizes();
-  return <Text testID="drawn-at">{`${size.scale} ${size.step}`}</Text>;
+  return <Text testID="drawn-at">{size}</Text>;
 }
 
 describe("an Entry card's tab on the three-step ladder (ADR 0134)", () => {
@@ -121,7 +121,7 @@ describe("an Entry card's tab on the three-step ladder (ADR 0134)", () => {
             wordCard: { tabMore: 'More', tabLess: 'Less', tabSource: 'Source' },
           })}
         >
-          <FontSizeProvider size={{ scale: 'ladder', step: 'largest' }}>
+          <FontSizeProvider size={'largest'}>
             <CardTabs testID="word" tabs={tabs} nameOf={(tab) => names[tab.key]}>
               {() => <DrawnAt />}
             </CardTabs>
@@ -135,12 +135,12 @@ describe("an Entry card's tab on the three-step ladder (ADR 0134)", () => {
       });
     };
     await layout('word-tab-panel', 200);
-    expect(screen.getByTestId('drawn-at')).toHaveTextContent('ladder largest');
+    expect(screen.getByTestId('drawn-at')).toHaveTextContent('largest');
 
     // Too tall at every step: each layout takes the next step down, until the floor clamps.
     for (const step of ['larger', 'system', 'system']) {
       await layout('word-tab-content', 2000);
-      expect(screen.getByTestId('drawn-at')).toHaveTextContent(`ladder ${step}`);
+      expect(screen.getByTestId('drawn-at')).toHaveTextContent(step);
     }
     await layout('word-tab-more', 16);
 
@@ -151,7 +151,7 @@ describe("an Entry card's tab on the three-step ladder (ADR 0134)", () => {
     });
     // At the floor it goes no further down.
     await layout('word-tab-content', 2000);
-    expect(screen.getByTestId('drawn-at')).toHaveTextContent('ladder system');
+    expect(screen.getByTestId('drawn-at')).toHaveTextContent('system');
   });
 });
 

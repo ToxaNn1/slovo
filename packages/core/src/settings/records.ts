@@ -1,4 +1,4 @@
-import { FontSizeSchema, RarityRangeSchema, TextSizeSchema, ThemeSchema } from '@slovo/contracts';
+import { RarityRangeSchema, TextSizeSchema, ThemeSchema } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { declareRecord } from '../user-state/user-state-record';
@@ -22,13 +22,17 @@ const ReaderNameSchema = z
 export const settingsRecords = {
   /** The user's Theme. */
   theme: declareRecord('settings.theme', ThemeSchema),
-  /** The user's S…XL font size, read while `textSizeSteps` is off. */
-  fontSize: declareRecord('settings.fontSize', FontSizeSchema),
   /**
-   * The user's three-step text size, read while `textSizeSteps` is on (ADR
-   * 0134). A new encoding takes a new key (ADR 0013), so the S…XL one stays
-   * readable and turning the switch off again breaks nothing. It syncs last
-   * write wins like the Theme (ADR 0041); without it, the Edition's default.
+   * Reserved (ADR 0013): the user's S…XL font size before the three-step text
+   * size. The S…XL scale is gone (ADR 0176) and only the user state migration
+   * to `settings.textSize` reads it; it stays declared so the key is never
+   * given to another record.
+   */
+  fontSize: declareRecord('settings.fontSize', z.enum(['S', 'M', 'L', 'XL'])),
+  /**
+   * The user's three-step text size (ADR 0134). A new encoding takes a new
+   * key (ADR 0013). It syncs last write wins like the Theme (ADR 0041);
+   * without it, the Edition's default.
    */
   textSize: declareRecord('settings.textSize', TextSizeSchema),
   /**

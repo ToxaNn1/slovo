@@ -12,7 +12,6 @@ export { OfflinePlateProvider, useOfflinePlate } from './primitives/OfflinePlate
 export { GesturesHintSheet } from './feed/GesturesHintSheet';
 export { SwipeDemoStage, useGesturesDemo } from './entries/swipe-demo';
 export { AboutPanel } from './settings/AboutPanel';
-export { FontSizePreview } from './settings/FontSizePreview';
 export { NarratorVoicePicker } from './settings/NarratorVoicePicker';
 export { OptionSampleNumber, OptionSampleWord, OptionScreen } from './settings/OptionScreen';
 export { RarityRangePicker } from './settings/RarityRangePicker';
@@ -56,7 +55,7 @@ export { GameModeCard, GameModeGroupTitle, GamesTitle } from './game/GameModeCar
 export { CrosswordSolvedPoster } from './game/CrosswordSolvedPoster';
 export { GameEndPoster } from './game/GameEndPoster';
 export { AnswerCard } from './game/AnswerCard';
-export { GameReview, type ResultReview } from './game/GameReview';
+export { GameReview } from './game/GameReview';
 export { GameRound, QuickQuestionRound } from './game/GameRound';
 export { TypedAnswer, type TypedAnswerBlank } from './game/TypedAnswer';
 export { OrderedChips } from './game/OrderedChips';

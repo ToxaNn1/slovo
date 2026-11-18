@@ -44,5 +44,4 @@ export const pickForm: AnswerForm<PickContent, PickRound, PickGiven, PickAnswer>
     if (options[chosen] === undefined) return undefined;
     return { answer: { form: 'pick', chosen, correct, right: chosen === correct, sheet } };
   },
-  reviewAnswer: ({ options }, { chosen }) => options[chosen],
 };

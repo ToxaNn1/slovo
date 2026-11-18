@@ -99,7 +99,6 @@ describe('openUserState', () => {
       userState,
       defaults: {
         theme: 'system',
-        fontSize: 'M',
         textSize: 'system',
         vibration: true,
         narratorVoice: 'anna',
@@ -118,7 +117,6 @@ describe('openUserState', () => {
 
     expect(await settings.read()).toEqual({
       theme: 'dark',
-      fontSize: 'L',
       textSize: 'larger',
       vibration: true,
       sounds: true,

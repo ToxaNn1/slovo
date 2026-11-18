@@ -67,32 +67,6 @@ describe('the chips form', () => {
     expect(chipsForm.wellFormed({ ...content, chips: [], expected: [] })).toBe(false);
   });
 
-  it('shows the letters tapped as one Word in the Game Review, the fixed characters in place', () => {
-    const judged = chipsForm.judge(
-      content,
-      round,
-      { form: 'chips', chips: [0, 1, 2, 3] },
-      testComparison,
-    );
-    expect(judged && chipsForm.reviewAnswer(round, judged.answer)).toEqual({
-      text: 'дʼззї',
-      stressedVowels: [],
-    });
-  });
-
-  it('shows word chips joined with spaces in the Game Review', () => {
-    const words: ChipsContent = {
-      form: 'chips',
-      chipKind: 'word',
-      chips: ['байдики', 'бити'],
-      expected: ['бити', 'байдики'],
-      sheet,
-    };
-    const shown = { ...chipsForm.shown(words, []), prompt: 'Ледарювати' };
-    const judged = chipsForm.judge(words, shown, { form: 'chips', chips: [0, 1] }, testComparison);
-    expect(judged && chipsForm.reviewAnswer(shown, judged.answer)?.text).toBe('байдики бити');
-  });
-
   it('spans one Round and asks about no other Entry', () => {
     expect(chipsForm.roundsIn(content)).toBe(1);
     expect(chipsForm.entriesIn(content)).toEqual([]);

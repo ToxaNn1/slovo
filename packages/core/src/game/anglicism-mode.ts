@@ -48,8 +48,7 @@ function asSentences(round: RoundContent): RoundContent {
  */
 export const anglicismMode: GameMode = {
   id: 'anglicism',
-  group: 'corrections',
-  hubGroup: 'new',
+  group: 'new',
   entryKind: 'correction',
   isOn: (edition) => edition.isFeatureEnabled('gameAnglicism'),
   buildRound(input) {

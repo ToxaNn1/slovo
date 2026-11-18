@@ -195,12 +195,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
       ROUTE: '/game/crossword'
       LINK_PATH: 'game/crossword'
       SCREEN: daily-crossword-screen|game
-- runFlow:
-    file: app-pass/open.yaml
-    env:
-      ROUTE: '/game/[entryId]'
-      LINK_PATH: "game/${ENTRY_ID || 'w_0wr2ne'}"
-      SCREEN: entry-screen
 
 # Saved
 - runFlow:

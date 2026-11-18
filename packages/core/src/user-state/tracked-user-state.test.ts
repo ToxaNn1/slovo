@@ -208,7 +208,6 @@ describe('the settings and the composition over the tracked user state', () => {
       userState,
       defaults: {
         theme: 'system',
-        fontSize: 'M',
         textSize: 'system',
         vibration: true,
         narratorVoice: 'anna',

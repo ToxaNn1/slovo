@@ -429,7 +429,7 @@ describe('a Round of «Обери правильне»', () => {
       },
     });
   });
-  it('lists the Round in the Game Review led by the non-standard form, expanding into the standard form and the explanation', async () => {
+  it('lists the Round in the Game Review led by the non-standard form', async () => {
     const app = await run();
     await app.game.start('correction');
     const { round } = current(app);
@@ -439,19 +439,7 @@ describe('a Round of «Обери правильне»', () => {
 
     const asked = askedOf(round);
     expect(buildGameReview(current(app).played)).toEqual([
-      {
-        number: 1,
-        entryId: asked.id,
-        title: { text: asked.nonStandardForm, stressedVowels: [] },
-        answer: undefined,
-        right: false,
-        picked: { ...optionsOf(round)[wrong], form: 'pick' },
-        details: {
-          kind: 'correction',
-          standardForm: asked.standardEquivalents[0],
-          explanation: `Why ${asked.id.slice(2)} reads better.`,
-        },
-      },
+      { number: 1, right: false, word: { text: asked.nonStandardForm, stressedVowels: [] } },
     ]);
   });
 });

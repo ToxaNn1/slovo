@@ -3,12 +3,10 @@ import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts'
 import {
   loadEdition,
   openComposition,
-  openCounterReads,
   openMistakeReports,
   systemRandom,
   type AnyEntryCard,
   type Composition,
-  type CounterReads,
   type Haptics,
   type MistakeReports,
 } from '@slovo/core';
@@ -62,13 +60,10 @@ let mistakeReports: MistakeReports;
 let reportsApi: FakeBackend;
 /** Mistake Reports as the Shell opens them, when a test makes them fail to open. */
 let mockReportsOpening: ReturnType<typeof opened<MistakeReports>> | undefined;
-/** The Core's reads of the Community Counters over a fake backend, opened afresh for each test. */
-let counterReads: CounterReads;
-let countersApi: FakeBackend;
 
 /**
- * The Shell the card draws under: the composition, Mistake Reports and the
- * Community Counters of the test, on a binary that can capture the Share Card.
+ * The Shell the card draws under: the composition and Mistake Reports of the
+ * test, on a binary that can capture the Share Card.
  */
 const shell = () =>
   testShell({
@@ -76,7 +71,6 @@ const shell = () =>
     remoteSwitches: switchedTo(editionInEffect()),
     settings,
     mistakeReports: mockReportsOpening ?? opened(mistakeReports),
-    counterReads: opened(counterReads),
     shareCard: () => Promise.resolve('closed'),
   });
 
@@ -183,13 +177,6 @@ beforeEach(async () => {
     userState,
     clock,
     random: systemRandom,
-  });
-  countersApi = createFakeBackend();
-  counterReads = openCounterReads({
-    edition: shippedEdition,
-    backend: countersApi.backend,
-    userState,
-    clock,
   });
   mistakeReportsOn = true;
   mockReportsOpening = undefined;

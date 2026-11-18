@@ -14,7 +14,6 @@ import type {
 
 import {
   buildGameReview,
-  buildPlainGameReview,
   createGameHaptics,
   createHaptics,
   GAME_ROUNDS,
@@ -380,7 +379,7 @@ describe('the Game Modes on offer', () => {
     const app = await run();
 
     expect(app.game.state).toEqual({
-      modes: [{ modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true }],
+      modes: [{ modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true }],
       current: undefined,
       bestResults: {},
     });
@@ -416,10 +415,10 @@ describe('the Game Modes on offer', () => {
   const groupsOf = (app: Composition) =>
     app.game.state.modes.map(({ modeId, group }) => [modeId, group]);
 
-  it('puts every mode in the board’s five groups, in the board’s order, with `gameHubGroups` on (ADR 0139)', async () => {
+  it('puts every mode in the board’s five groups, in the board’s order (ADR 0139)', async () => {
     const app = await run({
       marksStress: true,
-      on: ['rarityCeiling', 'knowledge', 'corrections', 'idioms', ...everyMode, 'gameHubGroups'],
+      on: ['rarityCeiling', 'knowledge', 'corrections', 'idioms', ...everyMode],
     });
 
     expect(groupsOf(app)).toEqual([
@@ -439,29 +438,6 @@ describe('the Game Modes on offer', () => {
     ]);
   });
 
-  it('keeps the four groups of spec #1674 with `gameHubGroups` off', async () => {
-    const app = await run({
-      marksStress: true,
-      on: ['rarityCeiling', 'knowledge', 'corrections', 'idioms', ...everyMode],
-    });
-
-    expect(groupsOf(app)).toEqual([
-      ['guess-word', 'words'],
-      ['correction', 'corrections'],
-      ['stress', 'words'],
-      ['pairs', 'words'],
-      ['anagram', 'words'],
-      ['by-letters', 'words'],
-      ['type-word', 'words'],
-      ['origin', 'words'],
-      ['anglicism', 'corrections'],
-      ['idiom-meaning', 'idioms'],
-      ['build-idiom', 'idioms'],
-      ['survival', 'challenge'],
-      ['timed', 'challenge'],
-    ]);
-  });
-
   it("says a mode can't start with fewer than 15 eligible Words, and can once there are again", async () => {
     const app = await run();
     // Nature alone has 17 Words; two hidden leave 15.
@@ -470,7 +446,7 @@ describe('the Game Modes on offer', () => {
     await app.hide({ kind: 'entry', entryId: 'w_nnoun01' });
     await app.hide({ kind: 'entry', entryId: 'w_nnoun02' });
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
     ]);
 
     await app.hide({ kind: 'entry', entryId: 'w_nnoun03' });
@@ -479,7 +455,7 @@ describe('the Game Modes on offer', () => {
       {
         modeId: 'guess-word',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: false,
         refusal: 'too-few-entries',
       },
@@ -490,7 +466,7 @@ describe('the Game Modes on offer', () => {
     await app.unhide({ kind: 'entry', entryId: 'w_nnoun03' });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
     ]);
   });
   it('keeps the same offers while hiding a Word leaves what they say unchanged', async () => {
@@ -715,7 +691,7 @@ describe('the idioms «Вгадай слово» asks about', () => {
     }
   });
 
-  it('lists an idiom Round in the Game Review led by its expression, expanding into its Definition, Example and etymology', async () => {
+  it('lists an idiom Round in the Game Review led by its expression', async () => {
     const app = await runWith({ idioms });
 
     const played = await playAll(app);
@@ -726,16 +702,8 @@ describe('the idioms «Вгадай слово» asks about', () => {
         const { entry } = round;
         return {
           number: round.number,
-          entryId: entry.id,
-          title: { text: entry.expression, stressedVowels: [] },
           right: true,
-          picked: undefined,
-          details: {
-            kind: 'idiom',
-            definition: entry.primaryDefinition,
-            example: entry.examples[0],
-            etymology: entry.etymology,
-          },
+          word: { text: entry.expression, stressedVowels: [] },
         };
       }),
     );
@@ -777,7 +745,7 @@ describe('the idioms «Вгадай слово» asks about', () => {
       {
         modeId: 'guess-word',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: false,
         refusal: 'too-few-entries',
       },
@@ -869,7 +837,7 @@ describe('the idioms «Вгадай слово» asks about', () => {
 
     for (const app of [outOfMix, switchedOff]) {
       expect(app.game.state.modes).toEqual([
-        { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+        { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
       ]);
       const played = await playAll(app);
       expect(played).toHaveLength(GAME_ROUNDS);
@@ -1037,7 +1005,7 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
     expect(await askedKinds(await runWith({ synonymRows: four }))).toContain('synonymRow');
     for (const app of [await runWith({ synonymRows: three }), hiding]) {
       expect(app.game.state.modes).toEqual([
-        { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+        { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
       ]);
       const kinds = await askedKinds(app);
       expect(kinds).toHaveLength(GAME_ROUNDS);
@@ -1075,35 +1043,22 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
     });
   });
 
-  it('lists a row Round in the Game Review led by its dominant, expanding into every member, with the wrong pick, to open the row', async () => {
+  it('lists a row Round in the Game Review led by its dominant, right or wrong', async () => {
     const app = await unknown(await runWith({ seed: 3 }), live.slice(0, 5));
 
     const played = await playAll(app, ['r_go', 'r_say']);
 
-    const items = buildGameReview(played);
-    const rowItems = items.filter(({ details }) => details.kind === 'synonymRow');
-    expect(rowItems.some(({ right }) => right)).toBe(true);
-    expect(rowItems.some(({ right }) => !right)).toBe(true);
-    for (const item of rowItems) {
-      const round = played[item.number - 1];
-      if (round?.entry.kind !== 'synonymRow') throw new Error(`Item ${String(item.number)}`);
-      const { entry } = round;
-      expect(item).toEqual({
+    const rows = buildGameReview(played).flatMap((row) => {
+      const round = played[row.number - 1];
+      return round?.entry.kind === 'synonymRow' ? [{ row, round, entry: round.entry }] : [];
+    });
+    expect(rows.some(({ row }) => row.right)).toBe(true);
+    expect(rows.some(({ row }) => !row.right)).toBe(true);
+    for (const { row, round, entry } of rows) {
+      expect(row).toEqual({
         number: round.number,
-        entryId: entry.id,
-        title: { text: round.prompt, stressedVowels: [expect.any(String)] },
         right: !['r_go', 'r_say'].includes(entry.id),
-        answer: undefined,
-        picked: round.right
-          ? undefined
-          : { ...optionsOf(round)[pickPlayed(round).answer.chosen], form: 'pick' },
-        details: {
-          kind: 'synonymRow',
-          members: entry.members.map((member) => ({
-            text: shownAs(member),
-            stressedVowels: [expect.any(String)],
-          })),
-        },
+        word: { text: round.prompt, stressedVowels: [expect.any(String)] },
       });
     }
   });
@@ -1250,33 +1205,23 @@ describe('the Tips «Вгадай слово» asks about', () => {
     expect(tipRounds.some(({ right }) => !right)).toBe(true);
   });
 
-  it('lists a Tip Round in the Game Review led by its title, expanding into its explanation, with the wrong pick, to open the Tip', async () => {
+  it('lists a Tip Round in the Game Review led by its title, right or wrong', async () => {
     const app = await unknown(await runWith({ seed: 3 }), live);
 
     const played = await playAll(app, ['t_time', 't_greet']);
 
-    const items = buildGameReview(played);
-    const tipItems = items.filter(({ details }) => details.kind === 'tip');
-    expect(tipItems).toHaveLength(live.length);
-    expect(tipItems.filter(({ right }) => !right)).toHaveLength(2);
-    for (const item of tipItems) {
-      const round = played[item.number - 1];
-      if (round?.entry.kind !== 'tip') throw new Error(`Item ${String(item.number)}`);
-      const { entry } = round;
-      expect(item).toEqual({
+    const rows = buildGameReview(played).flatMap((row) => {
+      const round = played[row.number - 1];
+      return round?.entry.kind === 'tip' ? [{ row, round, entry: round.entry }] : [];
+    });
+    expect(rows).toHaveLength(live.length);
+    expect(rows.filter(({ row }) => !row.right)).toHaveLength(2);
+    for (const { row, round, entry } of rows) {
+      expect(row).toEqual({
         number: round.number,
-        entryId: entry.id,
-        title: { text: entry.title, stressedVowels: [] },
         right: !['t_time', 't_greet'].includes(entry.id),
-        answer: undefined,
-        picked: round.right
-          ? undefined
-          : { ...optionsOf(round)[pickPlayed(round).answer.chosen], form: 'pick' },
-        details: { kind: 'tip', explanation: entry.explanation },
+        word: { text: entry.title, stressedVowels: [] },
       });
-    }
-    for (const { picked } of tipItems) {
-      if (picked !== undefined) expect(picked.text).toMatch(/: wrong \d$/);
     }
   });
 
@@ -1374,7 +1319,7 @@ describe('the rules of a Game', () => {
         {
           modeId: 'guess-word',
           entryKind: 'word',
-          group: 'words',
+          group: 'new',
           canStart: false,
           refusal: 'too-few-entries',
           best: { result: 15, of: 15 },
@@ -1396,7 +1341,7 @@ describe('the rules of a Game', () => {
       {
         modeId: 'guess-word',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: true,
         best: { result: 15, of: 15 },
       },
@@ -1411,7 +1356,7 @@ describe('the rules of a Game', () => {
     app.game.leave();
     expect(app.game.state.current).toBeUndefined();
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
     ]);
 
     await app.game.start('guess-word');
@@ -2001,11 +1946,11 @@ describe('the Best result per mode', () => {
       {
         modeId: 'guess-word',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: true,
         best: { result: 12, of: 15 },
       },
-      { modeId: 'test-lemma', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'test-lemma', entryKind: 'word', group: 'new', canStart: true },
     ]);
 
     await app.game.start('test-lemma');
@@ -2018,7 +1963,7 @@ describe('the Best result per mode', () => {
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'test-lemma',
       entryKind: 'word',
-      group: 'words',
+      group: 'new',
       canStart: true,
       best: { result: 2 },
     });
@@ -2041,7 +1986,7 @@ describe('the Best result per mode', () => {
       {
         modeId: 'guess-word',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: false,
         planning: true,
         best: { result: 12, of: 15 },
@@ -2093,7 +2038,7 @@ describe('the Best result per mode', () => {
 /** A Game Mode that asks for a Word's Lemma among three made-up ones, the answer always first. */
 const lemmaMode: GameMode = {
   id: 'test-lemma',
-  group: 'words',
+  group: 'new',
   entryKind: 'word',
   isOn: () => true,
   buildRound: ({ answer }) => {
@@ -2113,8 +2058,8 @@ describe('the Game Mode Extension Point', () => {
   it('plays a full Game in a Game Mode registered through it, after the Core modes', async () => {
     const app = await run({ gameModes: [lemmaMode] });
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
-      { modeId: 'test-lemma', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
+      { modeId: 'test-lemma', entryKind: 'word', group: 'new', canStart: true },
     ]);
 
     await app.game.start('test-lemma');
@@ -2137,18 +2082,18 @@ describe('the Game Mode Extension Point', () => {
     const app = await run({ gameModes: [{ ...lemmaMode, isOn: () => false }] });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
     ]);
   });
 
   it("says a Game Mode that can't make its Rounds can't start, before a start and after it", async () => {
     const app = await run({ gameModes: [{ ...lemmaMode, buildRound: () => undefined }] });
     const offers = [
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
       {
         modeId: 'test-lemma',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: false,
         refusal: 'too-few-entries',
       },
@@ -2167,11 +2112,11 @@ describe('the Game Mode Extension Point', () => {
     });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
       {
         modeId: 'test-correction',
         entryKind: 'correction',
-        group: 'words',
+        group: 'new',
         canStart: false,
         refusal: 'corrections-out-of-mix',
       },
@@ -2186,14 +2131,14 @@ describe('the Game Mode Extension Point', () => {
       {
         modeId: 'guess-word',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: false,
         refusal: 'too-few-entries',
       },
       {
         modeId: 'test-lemma',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: false,
         refusal: 'too-few-entries',
       },
@@ -2233,11 +2178,11 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
       {
         modeId: 'guess-word',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: false,
         refusal: 'too-few-entries',
       },
-      { modeId: 'test-lemma', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'test-lemma', entryKind: 'word', group: 'new', canStart: true },
     ]);
 
     await app.game.start('test-lemma');
@@ -2307,19 +2252,19 @@ describe('whether a Game Mode can start', () => {
     });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: false, planning: true },
-      { modeId: 'test-lemma', entryKind: 'word', group: 'words', canStart: false, planning: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: false, planning: true },
+      { modeId: 'test-lemma', entryKind: 'word', group: 'new', canStart: false, planning: true },
     ]);
     const start = app.game.start('guess-word');
     release();
     await start;
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true },
       {
         modeId: 'test-lemma',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: false,
         refusal: 'too-few-entries',
       },
@@ -2337,7 +2282,7 @@ describe('whether a Game Mode can start', () => {
       offer: {
         modeId: 'test-noun',
         entryKind: 'word',
-        group: 'words',
+        group: 'new',
         canStart: false,
         refusal: 'too-few-entries',
       },
@@ -2347,7 +2292,7 @@ describe('whether a Game Mode can start', () => {
 
   it('offers what a start then does, after a hide, a restore and a Mix change', async () => {
     const app = await run({ gameModes: [nounMode] });
-    const canStart = { modeId: 'test-noun', entryKind: 'word', group: 'words', canStart: true };
+    const canStart = { modeId: 'test-noun', entryKind: 'word', group: 'new', canStart: true };
     const refused = { ...canStart, canStart: false, refusal: 'too-few-entries' };
     // Without Speech, the Mix holds 17 nouns among 20 Words.
     await app.mix.takeOut('speech');
@@ -2459,9 +2404,9 @@ describe('a failed planning of the offers', () => {
   }
 
   const planning = [
-    { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: false, planning: true },
+    { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: false, planning: true },
   ];
-  const ready = [{ modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true }];
+  const ready = [{ modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true }];
 
   it('plans the offers again a second after a failed read, without a hide, a restore or a Mix change', async () => {
     let reads = 0;
@@ -2609,7 +2554,7 @@ describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
    */
   const pairsMode: GameMode = {
     id: 'test-pairs',
-    group: 'words',
+    group: 'new',
     entryKind: 'word',
     isOn: () => true,
     buildRound: ({ answer, next, upTo }) => {
@@ -2735,7 +2680,7 @@ describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
     expect(app.game.state.modes.find(({ modeId }) => modeId === endlessMode.id)).toEqual({
       modeId: endlessMode.id,
       entryKind: 'word',
-      group: 'words',
+      group: 'new',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -3079,13 +3024,13 @@ describe('the end of a Game', () => {
 });
 
 // Spec #1880, D11: the plain Game Review, «Огляд раундів».
-describe('the plain Game Review', () => {
+describe('the Game Review', () => {
   it('has one row per Round played, in order: whether it was right and its word', async () => {
     const app = await run();
 
     const rounds = await playGame(app, [3, 7]);
 
-    const rows = buildPlainGameReview(current(app).played);
+    const rows = buildGameReview(current(app).played);
     expect(rows.map(({ number, right }) => [number, right])).toEqual(
       rounds.map(({ number }) => [number, number !== 3 && number !== 7]),
     );

@@ -18,6 +18,8 @@ const mockBuild: {
   build: string | null;
   environment: string;
   updateId: string | null;
+  createdAt: Date | null;
+  isEmbeddedLaunch: boolean;
   channel: string | null;
   modules: boolean;
 } = {
@@ -26,6 +28,8 @@ const mockBuild: {
   build: '42',
   environment: 'standalone',
   updateId: null,
+  createdAt: null,
+  isEmbeddedLaunch: true,
   channel: 'beta',
   modules: true,
 };
@@ -58,6 +62,12 @@ jest.mock('expo-application', () => ({
 jest.mock('expo-updates', () => ({
   get updateId() {
     return mockBuild.updateId;
+  },
+  get createdAt() {
+    return mockBuild.createdAt;
+  },
+  get isEmbeddedLaunch() {
+    return mockBuild.isEmbeddedLaunch;
   },
   get channel() {
     return mockBuild.channel;
@@ -119,6 +129,36 @@ describe('About', () => {
     expect(screen.getByTestId('about-version')).toHaveTextContent('Версія 0.9 · збірка 42');
     expect(screen.queryByText(/0198e3a1/)).toBeNull();
     expect(screen.queryByText(/^Оновлення /)).toBeNull();
+  });
+
+  it('names the update it runs by the day it was made, never by its id', async () => {
+    mockBuild.modules = true;
+    mockBuild.updateId = '0198e3a1-7c2b-7f00-9a4e-3b5d6c7e8f90';
+    mockBuild.createdAt = new Date(2026, 10, 18, 9, 30);
+    mockBuild.isEmbeddedLaunch = false;
+    try {
+      await renderAbout();
+
+      expect(screen.getByTestId('about-update')).toHaveTextContent('Оновлення від 18 листопада');
+      expect(screen.queryByText(/0198e3a1/)).toBeNull();
+    } finally {
+      mockBuild.updateId = null;
+      mockBuild.createdAt = null;
+      mockBuild.isEmbeddedLaunch = true;
+    }
+  });
+
+  it('shows no update line while the build runs the code it shipped with', async () => {
+    mockBuild.modules = true;
+    mockBuild.createdAt = new Date(2026, 10, 18, 9, 30);
+    try {
+      await renderAbout();
+
+      expect(screen.getByTestId('about-version')).toHaveTextContent('Версія 0.9 · збірка 42');
+      expect(screen.queryByTestId('about-update')).toBeNull();
+    } finally {
+      mockBuild.createdAt = null;
+    }
   });
 
   it("shows the app's version, not Expo Go's, and no build under Expo Go", async () => {

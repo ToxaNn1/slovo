@@ -75,7 +75,7 @@ const pick: Build = (answer, { eligible }) => {
 const mode = (build: Build, rest: Partial<GameMode> = {}): GameMode => ({
   id: 'test',
   entryKind: 'word',
-  group: 'words',
+  group: 'new',
   isOn: () => true,
   buildRound: (input) => (input.answer.kind === 'word' ? build(input.answer, input) : undefined),
   ...rest,
@@ -929,74 +929,28 @@ describe('the answer forms of a Round', () => {
     await noMove(game, () => game.answer({ form: 'pairs', word: 0, definition: 0 }));
   });
 
-  /** The reader's answer each Game Review row shows, in the order played: nothing on a right answer. */
-  const answersReviewed = (game: CurrentGame) =>
-    buildGameReview(game.played).map(({ picked }) => picked);
-
-  it('lists a vowel Round in the Game Review with the stressed form, and the vowel tapped on a mistake', async () => {
+  it('lists a vowel Round in the Game Review with the stressed form, right or wrong', async () => {
     const { game } = await start(vowel, { roundLimit: 2 });
     await game.answer({ form: 'vowel', position: 2 });
     await game.next();
     const wrong = await answer(game, { form: 'vowel', position: 0 });
-    const [tapped, ...rest] = Array.from(second.lemma);
 
-    const items = buildGameReview(wrong.played);
+    const rows = buildGameReview(wrong.played);
 
-    expect(items.map(({ title }) => title.text)).toEqual([answerWord.lemma, second.lemma]);
-    expect(items.map(({ right: was }) => was)).toEqual([true, false]);
-    expect(answersReviewed(wrong)).toEqual([
-      undefined,
-      { text: `${tapped ?? ''}́${rest.join('')}`, stressedVowels: [tapped], form: 'vowel' },
-    ]);
+    expect(rows.map(({ word }) => word.text)).toEqual([answerWord.lemma, second.lemma]);
+    expect(rows.map(({ right: was }) => was)).toEqual([true, false]);
   });
 
-  it('lists a chips Round in the Game Review with the chips the reader tapped, in order, on a mistake', async () => {
-    const { game } = await start(chips, { roundLimit: 3 });
-    await game.answer({ form: 'chips', chips: [1, 2, 0] });
-    await game.next();
-    await game.answer({ form: 'chips', chips: [1, 0, 2] });
-    await game.next();
-    const part = await answer(game, { form: 'chips', chips: [1, 2] });
-
-    expect(answersReviewed(part)).toEqual([
-      undefined,
-      { ...option('acb'), form: 'chips' },
-      { ...option('ab'), form: 'chips' },
-    ]);
-  });
-
-  it('joins word chips with a space in the Game Review, as «Склади вислів» has them', async () => {
-    const { game } = await start(
-      (of) => ({
-        form: 'chips',
-        chipKind: 'word',
-        prompt: of.lemma,
-        chips: ['beans', 'spill', 'the'],
-        expected: ['spill', 'the', 'beans'],
-        sheet: sheetOf('spill the beans'),
-      }),
-      { roundLimit: 1 },
-    );
-
-    const wrong = await answer(game, { form: 'chips', chips: [2, 1] });
-
-    expect(answersReviewed(wrong)).toEqual([{ ...option('the spill'), form: 'chips' }]);
-  });
-
-  it("lists a typed Round in the Game Review with the reader's text on a mistake", async () => {
+  it('lists a typed Round in the Game Review, right or wrong', async () => {
     const { game } = await start(typed, { roundLimit: 2 });
     await game.answer({ form: 'typed', text: answerWord.lemma });
     await game.next();
     const wrong = await answer(game, { form: 'typed', text: ' something else ' });
 
     expect(buildGameReview(wrong.played).map(({ right: was }) => was)).toEqual([true, false]);
-    expect(answersReviewed(wrong)).toEqual([
-      undefined,
-      { ...option('something else'), form: 'typed' },
-    ]);
   });
 
-  it('lists each pair of a pairs grid as one Game Review row, with the Definition matched on a mistake', async () => {
+  it('lists each pair of a pairs grid as one Game Review row', async () => {
     const { game } = await start(grid, { roundLimit: 4 });
     await game.answer({ form: 'pairs', word: 0, definition: 3 });
     await game.next();
@@ -1004,17 +958,10 @@ describe('the answer forms of a Round', () => {
     await game.next();
     const wrong = await answer(game, { form: 'pairs', word: 2, definition: 0 });
 
-    const items = buildGameReview(wrong.played);
-
-    expect(items.map(({ number, entryId, right }) => ({ number, entryId, right }))).toEqual([
-      { number: 1, entryId: 'w_word01', right: true },
-      { number: 2, entryId: 'w_word02', right: true },
-      { number: 3, entryId: 'w_word03', right: false },
-    ]);
-    expect(answersReviewed(wrong)).toEqual([
-      undefined,
-      undefined,
-      { ...option(wordAt(3).primaryDefinition), form: 'pairs' },
+    expect(buildGameReview(wrong.played).map(({ number, right }) => ({ number, right }))).toEqual([
+      { number: 1, right: true },
+      { number: 2, right: true },
+      { number: 3, right: false },
     ]);
   });
 });

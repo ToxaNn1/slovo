@@ -12,8 +12,7 @@ import type { GameMode } from './game-mode';
  */
 export const typeWordMode: GameMode = {
   id: 'type-word',
-  group: 'words',
-  hubGroup: 'new',
+  group: 'new',
   entryKind: 'correction',
   isOn: (edition) => edition.isFeatureEnabled('gameTypeWord'),
   buildRound({ answer, comparison }) {

@@ -299,10 +299,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   confirmedEntries: FeatureSwitchStateSchema,
   /** Self-check: the setting that hides a card's meaning until the reader reveals it. */
   selfCheck: FeatureSwitchStateSchema,
-  /** «Рідкість», the Rarity Range every surface obeys (ADR 0156); with `rarityRange` off only its top. Off, every Word up to rarity 5 is in, as before 1.0. */
+  /** «Рідкість», the Rarity Range every surface obeys (ADR 0156): «Рідкість» in Settings is five slanted bars, «від 2 до 4» or «лише 3», tapped or dragged, and every surface keeps the Words outside it out. Off, every Word up to rarity 5 is in, as before 1.0. */
   rarityCeiling: FeatureSwitchStateSchema,
-  /** The Rarity Range picker (ADR 0156): «Рідкість» in Settings is five slanted bars, «від 2 до 4» or «лише 3», tapped or dragged, and every surface keeps the Words below its bottom out too. Off, «Рідкість» is «до 1»…«до 5» and the bottom is 1. Off while `rarityCeiling` is. */
-  rarityRange: FeatureSwitchStateSchema,
   /** Game Review: the list of every Round on the Game's result. */
   gameReview: FeatureSwitchStateSchema,
   /** The Game Mode «Вгадай слово» (`guess-word`); off while `game` is (ADR 0052). */
@@ -447,12 +445,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** «Склади вислів»: decoy fragments from other expressions and the answer judged on «Перевірити» (ADR 0139); off, on the last fragment. Off while `gameBuildIdiom` is. */
   /** The third end action «До стрічки» beside «Ще раз» and «До ігор» (ADR 0139); off while `game` is. */
   gameEndToFeed: FeatureSwitchStateSchema,
-  /** The plain Game Review: one row per Round, ✓ or ✗ and the word, which does not expand and opens nothing (ADR 0139); off, the Game Review of spec #1674. Off while `gameReview` is. */
-  plainGameReview: FeatureSwitchStateSchema,
-  /** The Games hub in five groups: sound, meaning, letters, speed, new (ADR 0139); off, the groups of spec #1674. Off while `game` is. */
-  gameHubGroups: FeatureSwitchStateSchema,
-  /** The Games hub row with «Рекорд: N з M» or «Ще жодної гри» and the board's descriptions (ADR 0139); off while `game` is. */
-  gameHubRecord: FeatureSwitchStateSchema,
   /** The toast on a tap of a Game Mode that cannot be played, which keeps its normal look (ADR 0139); off while `game` is. */
   gameModeToast: FeatureSwitchStateSchema,
   /** The evening notification: at most 2 a day, the morning Word of the Day and one evening slot with the Streak warning or the unmet Daily Goal, or nothing; off, a Word at every Notification time. */
@@ -532,8 +524,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   readerName: FeatureSwitchStateSchema,
   /** The widget previews «Малий», «Середній» and «Екран блокування» on the Widgets screen, drawn from the Widget Snapshot; off, the steps alone. Off while `widget` is. */
   widgetPreviews: FeatureSwitchStateSchema,
-  /** The three-step text size «Як у системі», «Більший», «Найбільший» and its screen (ADR 0134); off, the S…XL scale and its row. */
-  textSizeSteps: FeatureSwitchStateSchema,
   /** The switch-off unit: turning «Ділитися анонімною статистикою» off sends one anonymous +1 with the Edition alone, and nothing after (ADR 0163); off, nothing is sent at switch-off. */
   statisticsOffCounter: FeatureSwitchStateSchema,
 });
@@ -727,10 +717,6 @@ export type QuickQuestionEvery = z.infer<typeof QuickQuestionEverySchema>;
 
 export type Theme = z.infer<typeof ThemeSchema>;
 
-export const FontSizeSchema = z.enum(['S', 'M', 'L', 'XL']);
-
-export type FontSize = z.infer<typeof FontSizeSchema>;
-
 /** The three-step text size, in ladder order: «Як у системі», «Більший», «Найбільший» (ADR 0134). */
 export const TextSizeSchema = z.enum(['system', 'larger', 'largest']);
 
@@ -824,9 +810,7 @@ export type MixConfig = z.infer<typeof MixConfigSchema>;
 /** The settings a new user starts with. */
 export const UserSettingDefaultsConfigSchema = z.strictObject({
   theme: ThemeSchema,
-  /** The S…XL font size, while `textSizeSteps` is off. */
-  fontSize: FontSizeSchema,
-  /** The three-step text size, while `textSizeSteps` is on (ADR 0134). */
+  /** The three-step text size (ADR 0134). */
   textSize: TextSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),

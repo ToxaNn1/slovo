@@ -16,8 +16,7 @@ const LETTERS = { min: 4, max: 9 } as const;
  */
 export const anagramMode: GameMode = {
   id: 'anagram',
-  group: 'words',
-  hubGroup: 'letters',
+  group: 'letters',
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gameAnagram'),
   buildRound({ answer, random, comparison }) {

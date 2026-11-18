@@ -292,7 +292,7 @@ describe('a Round of «Наголос»', () => {
     expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(idOf(asked.lemma))).toBe('unknown');
     expect(buildGameReview(current(app).played)[0]).toMatchObject({
-      entryId: idOf(asked.lemma),
+      number: 1,
       right: false,
     });
   });

@@ -1,5 +1,4 @@
 import type { AnswerForm, AnswerSheet } from './answer-form';
-import { renderStress, stressedVowelsOf } from '../entries/stress';
 
 /** The content of a vowel Round as a Game Mode builds it. */
 export interface VowelContent {
@@ -47,9 +46,5 @@ export const vowelForm: AnswerForm<VowelContent, VowelRound, VowelGiven, VowelAn
     return {
       answer: { form: 'vowel', chosen, stressed, right: stressed.includes(chosen), sheet },
     };
-  },
-  reviewAnswer({ prompt }, { chosen }) {
-    const tapped = { lemma: prompt, stress: [chosen] };
-    return { text: renderStress(tapped), stressedVowels: stressedVowelsOf(tapped) };
   },
 };

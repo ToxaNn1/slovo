@@ -1,4 +1,4 @@
-import type { ColorTokens, EditionTokens, FontSize, MascotState, TextSize } from '@slovo/contracts';
+import type { ColorTokens, EditionTokens, MascotState, TextSize } from '@slovo/contracts';
 
 /**
  * The design tokens from `docs/design/README.md`. The Core names every
@@ -456,12 +456,6 @@ export const typeRoles = {
   reviewMark: role('word', '900', 13, 13),
   /** A Round's Lemma in the Game Review. */
   reviewWord: role('ui', '700', 15, 17),
-  /** The line under a Round's Lemma in the Game Review: what was picked. */
-  reviewPicked: role('ui', '500', 12, 14),
-  /** A label over a part of an expanded Round, such as the standard form. */
-  reviewHeading: role('ui', '700', 13, 17),
-  /** The standard form of an expanded Round's Correction. */
-  reviewForm: role('ui', '500', 15, 22),
   /** The big Streak at the top of the stats sheet. */
   statsStreak: role('word', '900', 64, 64),
   /** The words beside the big Streak of the stats sheet. */
@@ -1321,27 +1315,11 @@ export const scrim = 'rgba(20, 12, 10, 0.55)';
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
 
 /**
- * The Word card's type sizes at each font-size step: the design's three
- * steps, the hero word and the reading text at their base size, 1.15 times it
- * and 1.3 times it (ADR 0070). S and M both take the base step.
- */
-export const fontSizeSteps: Readonly<
-  Record<
-    FontSize,
-    { readonly lemma: number; readonly definition: number; readonly example: number }
-  >
-> = {
-  S: { lemma: 50, definition: 19, example: 17 },
-  M: { lemma: 50, definition: 19, example: 17 },
-  L: { lemma: 58, definition: 22, example: 20 },
-  XL: { lemma: 65, definition: 25, example: 22 },
-};
-
-/**
  * The Word card's type sizes at each step of the three-step text size ladder
- * (ADR 0134), before the OS text size: «Як у системі» at the base step,
- * «Більший» and «Найбільший» at the design's two steps above it. The OS text
- * size scales them within `fontScaleCap.text`.
+ * (ADR 0134), before the OS text size: «Як у системі» at the base step, the
+ * hero word and the reading text at their base size, «Більший» and
+ * «Найбільший» at 1.15 and 1.3 times it (ADR 0070). The OS text size scales
+ * them within `fontScaleCap.text`.
  */
 export const textSizeSteps: Readonly<
   Record<
@@ -1349,9 +1327,9 @@ export const textSizeSteps: Readonly<
     { readonly lemma: number; readonly definition: number; readonly example: number }
   >
 > = {
-  system: fontSizeSteps.M,
-  larger: fontSizeSteps.L,
-  largest: fontSizeSteps.XL,
+  system: { lemma: 50, definition: 19, example: 17 },
+  larger: { lemma: 58, definition: 22, example: 20 },
+  largest: { lemma: 65, definition: 25, example: 22 },
 };
 
 /**

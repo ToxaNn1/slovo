@@ -8712,14 +8712,6 @@
                           ],
                           "type": "string"
                         },
-                        "rarityRange": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -9264,30 +9256,6 @@
                           ],
                           "type": "string"
                         },
-                        "plainGameReview": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameHubGroups": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameHubRecord": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameModeToast": {
                           "enum": [
                             "on",
@@ -9600,14 +9568,6 @@
                           ],
                           "type": "string"
                         },
-                        "textSizeSteps": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "statisticsOffCounter": {
                           "enum": [
                             "on",
@@ -9641,7 +9601,6 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
-                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
@@ -9710,9 +9669,6 @@
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
                         "gameEndToFeed",
-                        "plainGameReview",
-                        "gameHubGroups",
-                        "gameHubRecord",
                         "gameModeToast",
                         "notificationFarewell",
                         "notificationExplainer",
@@ -9752,7 +9708,6 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps",
                         "statisticsOffCounter"
                       ]
                     },
@@ -10529,14 +10484,6 @@
                           ],
                           "type": "string"
                         },
-                        "rarityRange": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -11081,30 +11028,6 @@
                           ],
                           "type": "string"
                         },
-                        "plainGameReview": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameHubGroups": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameHubRecord": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameModeToast": {
                           "enum": [
                             "on",
@@ -11417,14 +11340,6 @@
                           ],
                           "type": "string"
                         },
-                        "textSizeSteps": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "statisticsOffCounter": {
                           "enum": [
                             "on",
@@ -11458,7 +11373,6 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
-                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
@@ -11527,9 +11441,6 @@
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
                         "gameEndToFeed",
-                        "plainGameReview",
-                        "gameHubGroups",
-                        "gameHubRecord",
                         "gameModeToast",
                         "notificationFarewell",
                         "notificationExplainer",
@@ -11569,7 +11480,6 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps",
                         "statisticsOffCounter"
                       ]
                     },
@@ -12270,14 +12180,6 @@
                           ],
                           "type": "string"
                         },
-                        "rarityRange": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -12822,30 +12724,6 @@
                           ],
                           "type": "string"
                         },
-                        "plainGameReview": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameHubGroups": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameHubRecord": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameModeToast": {
                           "enum": [
                             "on",
@@ -13158,14 +13036,6 @@
                           ],
                           "type": "string"
                         },
-                        "textSizeSteps": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "statisticsOffCounter": {
                           "enum": [
                             "on",
@@ -13199,7 +13069,6 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
-                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
@@ -13268,9 +13137,6 @@
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
                         "gameEndToFeed",
-                        "plainGameReview",
-                        "gameHubGroups",
-                        "gameHubRecord",
                         "gameModeToast",
                         "notificationFarewell",
                         "notificationExplainer",
@@ -13310,7 +13176,6 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps",
                         "statisticsOffCounter"
                       ]
                     },

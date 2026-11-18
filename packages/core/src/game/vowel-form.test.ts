@@ -43,14 +43,6 @@ describe('the vowel form', () => {
     ).toBeUndefined();
   });
 
-  it('shows the prompt stressed on the vowel tapped in the Game Review', () => {
-    const judged = vowelForm.judge(content, round, { form: 'vowel', position: 5 }, testComparison);
-    expect(judged && vowelForm.reviewAnswer(round, judged.answer)).toEqual({
-      text: 'вимова́',
-      stressedVowels: ['а'],
-    });
-  });
-
   it('spans one Round and no other Entry', () => {
     expect(vowelForm.roundsIn(content)).toBe(1);
     expect(vowelForm.entriesIn(content)).toEqual([]);

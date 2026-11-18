@@ -17,9 +17,6 @@ const everything: Shown = {
   gameReview: true,
   gameRoundMascot: true,
   gameEndToFeed: true,
-  plainGameReview: true,
-  gameHubGroups: true,
-  gameHubRecord: true,
   gameModeToast: true,
   entryButtons: {
     shareCard: true,
@@ -37,7 +34,6 @@ const everything: Shown = {
   narratorVoiceSetting: true,
   seasonalDecorSetting: true,
   reduceMotionSetting: true,
-  textSizeSteps: true,
   shareCountersSetting: true,
   dataExport: true,
   learning: true,
@@ -75,7 +71,7 @@ const everything: Shown = {
   gesturesHintDemo: true,
   gesturesHintAgain: true,
   wordOfTheDayArchive: true,
-  rarity: 'range',
+  rarity: true,
   rarityTest: true,
   questionnaire: { levelWhy: true, selfRating: true, interests: true },
 };
@@ -175,10 +171,6 @@ describe('what the reader is shown', () => {
       { off: ['reduceMotion'], shown: { reduceMotionSetting: false } },
     ],
     [
-      'the S…XL text size with the three-step text size off',
-      { off: ['textSizeSteps'], shown: { textSizeSteps: false } },
-    ],
-    [
       'no «Ділитися анонімною статистикою» switch with Community Counters and Analytics off',
       { off: ['communityCounters', 'analytics'], shown: { shareCountersSetting: false } },
     ],
@@ -204,18 +196,6 @@ describe('what the reader is shown', () => {
       { off: ['gameEndToFeed'], shown: { gameEndToFeed: false } },
     ],
     [
-      'the spec #1674 Game with plainGameReview off',
-      { off: ['plainGameReview'], shown: { plainGameReview: false } },
-    ],
-    [
-      'the spec #1674 Game with gameHubGroups off',
-      { off: ['gameHubGroups'], shown: { gameHubGroups: false } },
-    ],
-    [
-      'the spec #1674 Game with gameHubRecord off',
-      { off: ['gameHubRecord'], shown: { gameHubRecord: false } },
-    ],
-    [
       'the spec #1674 Game with gameModeToast off',
       { off: ['gameModeToast'], shown: { gameModeToast: false } },
     ],
@@ -225,11 +205,7 @@ describe('what the reader is shown', () => {
     ],
     [
       'no «Рідкість» with the Rarity Range off',
-      { off: ['rarityCeiling'], shown: { rarity: 'off' } },
-    ],
-    [
-      '«Рідкість» as «до 1»…«до 5» with the Rarity Range picker off',
-      { off: ['rarityRange'], shown: { rarity: 'top' } },
+      { off: ['rarityCeiling'], shown: { rarity: false } },
     ],
     [
       'no «Пройти тест ще раз» and no self-rating with the Rarity Test off',

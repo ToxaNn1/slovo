@@ -7,7 +7,6 @@ import {
   GameRound,
   GameModeGroupTitle,
   GamesTitle,
-  type ResultReview,
   rowPadding,
   space,
   UndoToastProvider,
@@ -35,8 +34,8 @@ const { game: strings, settings: settingsStrings } = editionStrings;
  * poster with its Game Review, whose «До ігор» goes back to the mode screen,
  * as the Core's Game stands, while the Game is on in effect. A timed Game's
  * timer ticks, and stops while the app is in the
- * background. The Game stays in the Core composition, so another tab and back,
- * or an Entry the Game Review opens and back, finds it where it was.
+ * background. The Game stays in the Core composition, so another tab and back
+ * finds it where it was.
  * A Round's question stands on the ground and the Mascot beside it while
  * their switches are on (ADR 0139).
  */
@@ -49,24 +48,13 @@ export default function GameScreen() {
 function Game() {
   const state = useGameState();
   const actions = useGameActions();
-  const openScreen = useOpenScreen();
-  const { gameReview, gameRoundMascot, plainGameReview } = useShown();
+  const { gameReview, gameRoundMascot } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
   const { current } = state;
   const end = current?.end;
 
   const timeLeft = useTimeLeft(current?.time);
-  const review: ResultReview = !gameReview
-    ? { kind: 'none' }
-    : plainGameReview
-      ? { kind: 'plain' }
-      : {
-          kind: 'opening',
-          onOpen: (entryId) => {
-            openScreen(`/game/${entryId}`);
-          },
-        };
   return (
     <SafeAreaView
       testID="game"
@@ -86,7 +74,7 @@ function Game() {
             void actions.start(current.modeId);
           }}
           onToGames={actions.leave}
-          review={review}
+          review={gameReview}
           mascot={
             // The board's Mascot: glad for «ВЛУЧНО!», sad for «ЩЕ РАУНД!» and «Розминка!».
             <MascotAs state={end.kind !== 'lives-over' && end.onTarget ? 'happy' : 'sad'} onRed />
@@ -134,7 +122,7 @@ function ModeScreen({
   const crossword = useDailyCrosswordCard();
   const openScreen = useOpenScreen();
   const showToast = useUndoToast();
-  const { gameHubGroups, gameHubRecord, gameModeToast: toast } = useShown();
+  const { gameModeToast: toast } = useShown();
   let place = 0;
   return (
     <View testID="game-modes" style={styles.screen}>
@@ -162,8 +150,8 @@ function ModeScreen({
               <GameModeCard
                 key={offer.modeId}
                 testID={`game-mode-${offer.modeId}`}
-                {...gameModeCard(offer, strings, { record: gameHubRecord, toast })}
-                {...(gameHubGroups ? { cascadeIndex: place++ } : {})}
+                {...gameModeCard(offer, strings, { toast })}
+                cascadeIndex={place++}
                 onPress={() => {
                   const warmingUp = () => {
                     showToast({ message: gameModeToast(offer, modes, strings), brief: true });

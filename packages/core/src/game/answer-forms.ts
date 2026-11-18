@@ -1,6 +1,6 @@
 import type { AskableEntry } from '../entries/entries';
 import type { TextComparison } from '../text/text-comparison';
-import type { AnswerForm, Judged, RoundOption } from './answer-form';
+import type { AnswerForm, Judged } from './answer-form';
 import {
   chipsForm,
   type ChipsAnswer,
@@ -116,13 +116,4 @@ export function judge(
     comparison,
   );
   return judgement && { answer: judgement.answer, entry: judgement.about ?? own };
-}
-
-/** The reader's answer as the Game Review shows it; nothing when the Round is of another form or it can't be shown. */
-export function reviewAnswer(
-  round: ShownRound & { readonly prompt: string },
-  answer: RoundAnswer,
-): RoundOption | undefined {
-  if (round.form !== answer.form) return undefined;
-  return formOf(round.form).reviewAnswer(round, answer);
 }

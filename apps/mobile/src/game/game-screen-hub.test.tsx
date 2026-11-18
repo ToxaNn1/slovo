@@ -13,78 +13,30 @@ import {
 beforeEach(resetGameScreen);
 
 describe('the Game screen', () => {
-  it('lists the modes on offer under their groups, in order', async () => {
+  it("lists the modes on offer under the board's five groups, in the board's order (ADR 0139)", async () => {
     await renderScreen();
 
     expect(shape()).toEqual([
       'Ігри',
-      'Слова',
-      'game-mode-guess-word',
+      'Звук',
       'game-mode-stress',
+      'Значення',
+      'game-mode-correction',
       'game-mode-pairs',
+      'game-mode-idiom-meaning',
+      'Букви',
       'game-mode-anagram',
+      'Швидкість',
+      'game-mode-timed',
+      'Нове',
+      'game-mode-guess-word',
       'game-mode-by-letters',
       'game-mode-type-word',
       'game-mode-origin',
-      'Виправлення',
-      'game-mode-correction',
       'game-mode-anglicism',
-      'Вислови',
-      'game-mode-idiom-meaning',
       'game-mode-build-idiom',
-      'Виклик',
       'game-mode-survival',
-      'game-mode-timed',
     ]);
-  });
-
-  it('shows every mode row with its one-liner and «★ n» for its Best result or «—» before', async () => {
-    await open({
-      best: { 'guess-word': 12, correction: 7, survival: 23 },
-      corrections: 15,
-      anglicisms: 15,
-      idioms: 15,
-      origins: 15,
-    });
-    await renderScreen();
-
-    const rows: readonly (readonly [string, string, string])[] = [
-      ['guess-word', 'Обери слово за визначенням', '★ 12'],
-      ['stress', 'Влуч у правильний склад', '—'],
-      ['pairs', 'З’єднай слово і його значення', '—'],
-      ['anagram', 'Збери слово з перемішаних літер', '—'],
-      ['by-letters', 'Склади слово з плиток за визначенням', '—'],
-      ['type-word', 'Виправ помилку — впиши як треба', '—'],
-      ['origin', 'Вгадай, з якої мови прийшло слово', '—'],
-      ['correction', 'Обери, як кажуть українською', '★ 7'],
-      ['anglicism', 'Заміни англіцизм українським словом', '—'],
-      ['idiom-meaning', 'Вгадай, що означає вислів', '—'],
-      ['build-idiom', 'Склади вислів слово за словом', '—'],
-      ['survival', 'Грай, доки не схибиш. Далеко зайдеш?', '★ 23'],
-      ['timed', 'Двадцять секунд. Скільки слів встигнеш?', '—'],
-    ];
-    for (const [modeId, line, mark] of rows) {
-      const row = within(screen.getByTestId(`game-mode-${modeId}`));
-      expect(row.getByText(line)).toBeTruthy();
-      expect(row.getByText(mark)).toBeTruthy();
-    }
-    expect(screen.queryByText(/Найкраще/)).toBeNull();
-  });
-
-  it('reads a row’s Best result in words, out of its Round limit, and no dash', async () => {
-    await open({ best: { 'guess-word': 12, survival: 23 } });
-    await renderScreen();
-
-    expect(screen.getByTestId('game-mode-guess-word')).toHaveAccessibleName(
-      'Вгадай слово. Обери слово за визначенням. Рекорд: 12 з 15',
-    );
-    // «Виживання» has no Round limit, so its Best result stands alone.
-    expect(screen.getByTestId('game-mode-survival')).toHaveAccessibleName(
-      'Виживання. Грай, доки не схибиш. Далеко зайдеш? Рекорд: 23',
-    );
-    expect(screen.getByTestId('game-mode-stress')).toHaveAccessibleName(
-      'Наголос. Влуч у правильний склад',
-    );
   });
 
   it('leaves out a switched-off mode and its group', async () => {
@@ -93,54 +45,28 @@ describe('the Game screen', () => {
 
     expect(shape()).toEqual([
       'Ігри',
-      'Слова',
-      'game-mode-guess-word',
+      'Звук',
       'game-mode-stress',
+      'Значення',
       'game-mode-pairs',
+      'game-mode-idiom-meaning',
+      'Букви',
       'game-mode-anagram',
+      'Швидкість',
+      'game-mode-timed',
+      'Нове',
+      'game-mode-guess-word',
       'game-mode-by-letters',
       'game-mode-origin',
-      'Вислови',
-      'game-mode-idiom-meaning',
       'game-mode-build-idiom',
-      'Виклик',
-      'game-mode-timed',
     ]);
-    expect(screen.queryByText('Виправлення')).toBeNull();
   });
 
   describe('as board 06 «Хаб ігор»', () => {
-    const HUB = ['gameHubGroups', 'gameHubRecord', 'gameModeToast'];
-
-    it("lists the modes on offer under the board's five groups, in the board's order", async () => {
-      await open({ switchedOn: ['gameHubGroups'] });
-      await renderScreen();
-
-      expect(shape()).toEqual([
-        'Ігри',
-        'Звук',
-        'game-mode-stress',
-        'Значення',
-        'game-mode-correction',
-        'game-mode-pairs',
-        'game-mode-idiom-meaning',
-        'Букви',
-        'game-mode-anagram',
-        'Швидкість',
-        'game-mode-timed',
-        'Нове',
-        'game-mode-guess-word',
-        'game-mode-by-letters',
-        'game-mode-type-word',
-        'game-mode-origin',
-        'game-mode-anglicism',
-        'game-mode-build-idiom',
-        'game-mode-survival',
-      ]);
-    });
+    const HUB = ['gameModeToast'];
 
     it("shows each row's hub line and «Рекорд: N з M», «Рекорд: N» or «Ще жодної гри», read as it shows", async () => {
-      await open({ best: { 'guess-word': 12, survival: 23 }, switchedOn: ['gameHubRecord'] });
+      await open({ best: { 'guess-word': 12, survival: 23 } });
       await renderScreen();
 
       const guessWord = within(screen.getByTestId('game-mode-guess-word'));
@@ -154,7 +80,7 @@ describe('the Game screen', () => {
     });
 
     it("shows the owner's glyphs and hub lines where the board's ones did not fit", async () => {
-      await open({ switchedOn: ['gameHubRecord'], corrections: 15, idioms: 15 });
+      await open({ corrections: 15, idioms: 15 });
       await renderScreen();
 
       const rows: readonly (readonly [string, string, string])[] = [

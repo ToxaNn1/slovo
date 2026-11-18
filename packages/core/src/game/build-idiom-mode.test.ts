@@ -283,7 +283,7 @@ describe('a Round of «Склади вислів»', () => {
     for (const round of rounds) expect(round.answer).toMatchObject({ right: true });
   });
 
-  it('costs a Life for words in the wrong order, marks the Idiom «Не знаю», moves no Review and lists the words tapped in the Game Review', async () => {
+  it('costs a Life for words in the wrong order, marks the Idiom «Не знаю», moves no Review and lists it in the Game Review', async () => {
     const app = await run();
     await app.game.start('build-idiom');
     const asked = expressionOf(current(app).round);
@@ -296,12 +296,9 @@ describe('a Round of «Склади вислів»', () => {
     expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(idOf(asked))).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
-    const tapped = wrong.map((place) => chipsOf(current(app).round)[place]).join(' ');
     expect(buildGameReview(current(app).played)[0]).toMatchObject({
-      entryId: idOf(asked),
-      title: { text: asked },
       right: false,
-      picked: { text: tapped },
+      word: { text: asked },
     });
   });
 
