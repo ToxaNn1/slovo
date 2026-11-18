@@ -8,7 +8,7 @@ ADR 0072 left one bound, the Rarity Ceiling «до 1»…«до 5». The owner w
 
 **Who sets it.** The reader in Settings sets both ends. Onboarding's «Рівень» and the Rarity Test set the top alone, and the bottom goes back to 1 (ADR 0054, 0067). Amended by ADR 0183: «Рівень» sets nothing, so the Rarity Test alone sets the top (by the rule of ADR 0182).
 
-**The Core.** `entries/rarity-range.ts` holds the rule every surface filters by (`withinRarityRange`) and the setting (`RarityRangeSetting`); the Daily Crossword takes `wordsInRarityRange`. A Mood's band clips to the range: `upper` is its top and the one below, `lower` its bottom and the one above (ADR 0076). The app's hook is `useRarityRange` in `mix/`, for the folder reason of ADR 0072.
+**The Core.** `entries/rarity-range.ts` holds the rule every surface filters by (`withinRarityRange`) and the setting (`RarityRangeSetting`); the Daily Crossword takes `wordsInRarityRange`. A Mood's band clips to the range: `upper` is its top and the one below, `lower` its bottom and the one above (ADR 0076). The app's hook is `useRarityRange` in `mix/`, for the folder reason of ADR 0027.
 
 **Stored state is parsed once, where it enters.** The record is `settings.rarityRange` `{from, to}`, synced last write wins (ADR 0041). Migration 9 of the user-state schema (ADR 0013) turns a stored `settings.rarityCeiling` of N into «від 1 до N» with a pending change, and deletes the old key.
 

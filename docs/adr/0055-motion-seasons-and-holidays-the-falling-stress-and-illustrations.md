@@ -27,9 +27,9 @@ The design boards (`docs/design/`) show each animation with its timing and its R
 **Illustrations.**
 
 - **The field.** A Word may carry an optional `illustration`, the name of a PNG file in the Edition's `assets/illustrations/`, which the Edition folder module names (ADR 0035). The content CLI sets, edits and checks it like the other Word fields.
-- **Bundled, not in the pack.** Illustrations are Edition assets bundled in the app, so the Language Pack stays small and a Content update downloads no Illustration (ADR 0032). A Content update that names a file the app lacks shows no Illustration; the card never breaks.
+- **Bundled, not in the pack.** Illustrations are Edition assets bundled in the app, so the Language Pack stays small and a Content update downloads no Illustration (ADR 0090). A Content update that names a file the app lacks shows no Illustration; the card never breaks.
 - **The build's refusals.** The Language Pack build refuses a Word whose file is missing, is not a PNG (by its `.png` name and its content), is over 150 KB (150 000 bytes) or is not square, naming the Word and every reason, so a broken Illustration never ships.
-- **The pack format.** The pack carries each Word's `illustration`, which an older app can't read, so it took a new pack format (ADR 0032).
+- **The pack format.** The pack carries each Word's `illustration`, which an older app can't read, so it took a new pack format (ADR 0090).
 - **On the card.** The Illustration sits above the Definition, at most 160 pt high, the same Illustration in light and dark mode; a tap on it does nothing. VoiceOver reads it as «Ілюстрація до слова {lemma}». A Word without an Illustration looks as before. Only Words carry Illustrations.
 - **Placeholders.** The UA Edition gives 15 Words agent-drawn vector placeholders exported as PNG until final art.
 

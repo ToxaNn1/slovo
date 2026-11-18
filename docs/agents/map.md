@@ -15,12 +15,12 @@ The short map. `README.md` is for people; grep it for one section when you need 
 | `packages/server-core`   | Backend rules and ports, no HTTP, SQL or language.                  |
 | `packages/content-rules` | Content rules as pure functions, shared by build, CLI and backend.  |
 | `packages/language-pack` | Builds and reads the SQLite Language Pack.                          |
-| `editions/<edition>`     | Config, strings, tokens, Decor, content, assets, legal pages.       |
+| `editions/<edition>`     | Config, strings, tokens, Decor, seed snapshot, assets, legal pages. |
 | `tools/sourcing`         | Drafts Entries for review (`pnpm source:*`).                        |
 | `tools/content`          | Writes Entries through the write API, checks them (`pnpm content`). |
 | `scripts/content-wave`   | The content wave launcher and two page helpers.                     |
 | `docs/adr/`              | Decisions; `docs/adr/README.md` has one line per ADR.               |
-| `docs/agents/`           | This map, ticket brief, waves, test states, agent-skills config.    |
+| `docs/agents/`           | This map, brief, waves, content waves, test states, domain, issues. |
 | `docs/research/`         | Research behind a decision not yet taken, one dated file each.      |
 
 Truth: `CONTEXT.md` (glossary) and `docs/adr/` override everything. Read both with `grep -n`, never whole.

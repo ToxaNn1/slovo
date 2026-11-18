@@ -11,7 +11,7 @@ How the coordinator builds a spec. The owner's scheme since 2026-11-03: `/mattpo
 
 ## Parallel waves
 
-Several specs may build at once, at most 3, when they cannot conflict:
+Several specs may build at once when they cannot conflict:
 
 - **Lanes.** At the start the coordinator writes each wave's lane: the folders it may change (`apps/admin/`, `packages/core/src/feed/` …). Every implementer brief says «touch only these folders». Two waves whose lanes share a folder run one after another. A ticket that needs a folder outside its lane stops with `STUCK` and names it.
 - **Infra queue.** Hot shared files change only in the infra queue, never inside a wave: `package.json` files and `pnpm-lock.yaml`, `.github/workflows/`, the switches in `edition.json`. A wave that needs one asks the coordinator; the change goes to `main` as its own small PR, one at a time, and the waves merge `main` after it. Dependency bumps, CI changes and new tools go there too.
@@ -23,7 +23,7 @@ Several specs may build at once, at most 3, when they cannot conflict:
 
 1. Work only on the tickets the owner's grant names.
 2. Create the integration branch and push it.
-3. **Implementers**, one per ticket on the frontier (blockers merged into the integration branch), model per `CLAUDE.md`, at most 5 at once, never two at once on the same hot file (Edition strings, `edition.json`, `CONTEXT.md`, the ADR index, barrels). Brief ≤ 1.5 KB of pointers: ticket number, ticket branch, integration branch, the Testing Decisions, verification, grant, «follow `docs/agents/ticket-brief.md`».
+3. **Implementers**, one per ticket on the frontier (blockers merged into the integration branch), model per `CLAUDE.md`, as many at once as the frontier holds, never two at once on the same hot file (Edition strings, `edition.json`, `CONTEXT.md`, the ADR index, barrels). Brief ≤ 1.5 KB of pointers: ticket number, ticket branch, integration branch, the Testing Decisions, verification, grant, «follow `docs/agents/ticket-brief.md`».
    - A ticket with both a Core part and an app part goes to two implementers one after the other on the same branch: the Core part, then the UI part from its handoff.
    - Every cloud brief also says: commit with plain `git commit`; never a command that holds the owner's email (a permission prompt freezes an unattended session); no `&` or `nohup`; no AI attribution; batch pushes.
    - **Cloud first.** Launch with a pseudo-terminal, since `--cloud` refuses to run without one: `script -q /tmp/cloud-<n>.log claude --cloud "<brief>" </dev/null >/dev/null`. The log holds the session URL. Then start ONE background Bash per ticket that exits when the ticket branch on `origin` ends in a status commit, or on a timeout of 1.5× the budget: `until git ls-remote --exit-code origin refs/heads/<branch> >/dev/null && git fetch -q origin <branch> && git log -1 --format=%s FETCH_HEAD | grep -qE 'DONE|FAILED|STUCK'; do sleep 60; done`, with a deadline. The report is that commit's body. A cloud session asks nothing: `.claude/hooks/cloud-approve.mjs` approves its tool calls and turns a question into its own decision, written in the report, or a `STUCK` commit. A SessionStart hook, `.claude/hooks/cloud-setup.sh`, installs Postgres 18 on port 5432 with role and database `slovo`, runs `pnpm install` and sets `DATABASE_URL` before the first step, so a brief needs no setup steps. `Agent` with `isolation: "remote"` is no cloud path here: it runs as a local worktree, and its `git push` fails.

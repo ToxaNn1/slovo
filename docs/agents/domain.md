@@ -15,7 +15,7 @@ How the engineering skills consume this repo's domain documentation. Single-cont
 
 When your output names a domain concept (an issue title, a refactor proposal, a hypothesis, a test name), use the term as `CONTEXT.md` defines it, and avoid the words each term lists under _Avoid_.
 
-If the concept is not in the glossary yet, either you are inventing language the project does not use (reconsider) or there is a real gap: `/domain-modeling` adds the term to `CONTEXT.md`.
+If the concept is not in the glossary yet, either you are inventing language the project does not use (reconsider) or there is a real gap: `/mattpocock-skills:domain-modeling` adds the term to `CONTEXT.md`.
 
 ## Flag ADR conflicts
 

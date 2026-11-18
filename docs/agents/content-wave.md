@@ -1,13 +1,13 @@
 # Content waves
 
-How the coordinator runs a content wave: new Entries from the sourcing tool (rewritten in the Edition's own words, ADR 0146), landing in Postgres through the content write API with the Агент token, without a version bump or a PR (ADR 0090, which amends the ADR 0080 route; ADR 0084). A wave is a CLI run per implementer: its batch lands «не перевірено» in the Черга контенту. A content wave is a spec wave ([waves.md](waves.md)) whose tickets are batches of Entries; what this page does not say, `waves.md` says.
+How the coordinator runs a content wave: new Entries from the sourcing tool (rewritten in the Edition's own words, ADR 0146), landing in Postgres through the content write API with the Агент token, without a version bump or a PR (ADR 0090, 0095). A wave is a CLI run per implementer: its batch lands «не перевірено» in the Черга контенту. A content wave is a spec wave ([waves.md](waves.md)) whose tickets are batches of Entries; what this page does not say, `waves.md` says.
 
 ## Plan
 
 - **Kinds.** Words (`pnpm source:words`), Idioms (`pnpm source:idioms`), Corrections (`pnpm source:corrections`) and Synonym Rows (`pnpm source:synonyms`). Tips, Word Histories, Literary Uses and place-name Idioms have no sourcing command: an agent quotes them from a cited source and `pnpm content verify --book` checks a Tip against its book.
 - **Where the Edition is short.** `pnpm content counts --edition uk` shows Words per Category and rarity and Corrections per Category against the content targets, each gap marked. `pnpm content have --edition uk [--kind <kind>]` lists what the Edition already has; a list line whose text is there is wasted.
 - **Lists.** One list file per implementer, in the format its command reads (the sourcing README): a Lemma list `<lemma> <category> <rarity>` for Words, `<lemma> [idiom|proverb]` for Idioms, `<non-standard form> <correction type> <category id>` for Corrections, `<dominant>[:<sense>]` for Synonym Rows. Leave out Categories that require a Word History (`source:words` refuses them) and dialect Words (no source gives their Region). Write about a third more lines than the count: some drafts end incomplete.
-- **Size.** About 15 Entries per implementer, at most 5 implementers at once, one kind each.
+- **Size.** About 15 Entries per implementer, one kind each.
 
 ## Branches
 
@@ -38,9 +38,9 @@ What the brief points at; the brief itself carries the grant, the branch and the
 - Source with the kind's command; it checks drafts against the content snapshot, read from the backend at `SLOVO_API_URL` or from `--snapshot <file>`. Take only the ready drafts in `drafts/`, never `incomplete/`, and keep at most the count. Flags such as `cross-reference`, `region-missing`, `missing-data` and `stress-unresolved` mean the draft is not taken; say how many in the report.
 - Before `add`, `pnpm content verify tools/sourcing/review/<kind>/drafts --edition uk` must print no `miss`, `llm` or `fetch-failed`: a name that is a file or folder is read as drafts, each verified as the Entry its id prefix names, and drafts alone need no snapshot; `pnpm content check <kind> <drafts> --edition uk` runs the shared content rules locally and sends nothing.
 - `pnpm content add <kind> <drafts> --edition uk` writes the drafts through the write API in one batch, with `SLOVO_AGENT_TOKEN` and `SLOVO_API_URL` from the cloud environment, and prints each id, record version and content version, or the rule that refused it.
-- A Word's Definitions, etymology and history are written in the Edition's own words from the draft, Examples by public-domain authors plus one own sentence, `sources` «Власна лексикографічна редакція» (ADR 0146); the other kinds follow their rules in ADR 0146; no article goroh marks «Велика мовна модель». The CLI never writes the Edition folder; no content commit, no version bump, no PR.
+- A Word's Definitions and Word History are written in the Edition's own words from the draft, Examples by public-domain authors plus one own sentence, `sources` «Власна лексикографічна редакція» (ADR 0146); the other kinds follow their rules in ADR 0146; no article goroh marks «Велика мовна модель». The CLI never writes the Edition folder; no content commit, no version bump, no PR.
 - Pages only through the sourcing tool, which keeps one request per host every two seconds through the shared cache. For a page by hand, the helpers: `scripts/content-wave/fetch-article.mjs <url> [filter] [skip]` prints an article's text, at most 2 KB, with language-model blocks hidden; `scripts/content-wave/fetch-osvita.mjs <book url> <last page> <out.txt>` writes an osvita book one paragraph per line with its page, the file `verify --book` reads.
-- Context: at most 10 mapping lookups (`grep -n`, `sed -n`), every output through `tail -20`, never print a content folder; commit and push after each step; at ~200k end with `STUCK`.
+- Context: at most 10 mapping lookups (`grep -n`, `sed -n`), every output through `tail -20`, never print the Content snapshot whole; commit and push after each step; at ~200k end with `STUCK`.
 - Finish: one empty commit `chore: DONE <branch>` (or `FAILED` / `STUCK`) whose body is the report in Ukrainian, at most 25 lines: Entries added (the lines `add` printed), refused, dropped and why, problems. The owner's identity; no `Co-Authored-By`, no AI attribution.
 
 ## After the wave
@@ -50,7 +50,7 @@ The coordinator only launches the implementers and reads their reports: nothing 
 ## Lessons of the 06.11 wave
 
 - **Politeness.** goroh is one small site that every implementer reads at once; the sourcing tool's client (one request per host every two seconds, back-off) and its shared cache are the only way to its pages, never `curl` loops.
-- **Context budget.** A printed content folder or a whole page costs every later step; the brief's context line keeps implementers to `grep`, `sed -n` and `tail`.
+- **Context budget.** A printed Content snapshot or a whole page costs every later step; the brief's context line keeps implementers to `grep`, `sed -n` and `tail`.
 - **Cross-references.** Definitions such as «Зменш. до…», «Див.…», «Те саме, що…» explain nothing on an Entry card; `source:words` flags them `cross-reference`.
 - **Dialect Words.** A dialect Word without a Region is refused by the build; `source:words` flags it `region-missing`, and lists leave dialect Words out.
 - **No shared `FETCH_HEAD`.** Parallel waiters fetching into one `FETCH_HEAD` read each other's branch; each waiter now has its own ref.
