@@ -9296,14 +9296,6 @@
                           ],
                           "type": "string"
                         },
-                        "eveningNotification": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "notificationFarewell": {
                           "enum": [
                             "on",
@@ -9762,7 +9754,6 @@
                         "gameHubGroups",
                         "gameHubRecord",
                         "gameModeToast",
-                        "eveningNotification",
                         "notificationFarewell",
                         "notificationExplainer",
                         "notificationTimeStep",
@@ -11167,14 +11158,6 @@
                           ],
                           "type": "string"
                         },
-                        "eveningNotification": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "notificationFarewell": {
                           "enum": [
                             "on",
@@ -11633,7 +11616,6 @@
                         "gameHubGroups",
                         "gameHubRecord",
                         "gameModeToast",
-                        "eveningNotification",
                         "notificationFarewell",
                         "notificationExplainer",
                         "notificationTimeStep",
@@ -12962,14 +12944,6 @@
                           ],
                           "type": "string"
                         },
-                        "eveningNotification": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "notificationFarewell": {
                           "enum": [
                             "on",
@@ -13428,7 +13402,6 @@
                         "gameHubGroups",
                         "gameHubRecord",
                         "gameModeToast",
-                        "eveningNotification",
                         "notificationFarewell",
                         "notificationExplainer",
                         "notificationTimeStep",

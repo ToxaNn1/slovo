@@ -40,9 +40,6 @@ import type { ActiveDays } from '../progress/active-days';
 import { deriveStreak } from '../progress/streak';
 import type { XpLog } from '../progress/xp-log';
 
-/** The most notifications the plan holds: the most iOS keeps pending for one app. */
-const MAX_PLANNED_NOTIFICATIONS = 64;
-
 /** How many local days of Notification times the plan reaches, from the next time ahead. */
 const PLAN_DAYS = 14;
 
@@ -108,12 +105,11 @@ function momentOf(clock: Clock): { today: LocalDate; now: TimeOfDay } {
 /**
  * When each notification the plan covers comes, in time order: every time
  * from the next one still ahead today (a time due this minute has passed),
- * for `PLAN_DAYS` days' worth of times, and never more than
- * `MAX_PLANNED_NOTIFICATIONS`.
+ * for `PLAN_DAYS` days' worth of times.
  */
 function slotsAhead(times: readonly TimeOfDay[], clock: Clock): Slot[] {
   const { today, now } = momentOf(clock);
-  const count = Math.min(times.length * PLAN_DAYS, MAX_PLANNED_NOTIFICATIONS);
+  const count = times.length * PLAN_DAYS;
   const slots: Slot[] = [];
   for (let day = 0; slots.length < count; day += 1) {
     const date = localDateAfter(today, day);
@@ -130,9 +126,7 @@ function slotsAhead(times: readonly TimeOfDay[], clock: Clock): Slot[] {
  * The slots of the polite pause (ADR 0054): every time from the next one
  * still ahead today to the last of the `PLAN_DAYS`th local day after today,
  * the last of which is the farewell. Every plan is made with the app open,
- * so today is the day of the last open. When the times hold more than
- * `MAX_PLANNED_NOTIFICATIONS`, the farewell stays the last and the slots
- * with a Word end earlier.
+ * so today is the day of the last open.
  */
 function slotsUntilPause(
   times: readonly TimeOfDay[],
@@ -147,7 +141,7 @@ function slotsUntilPause(
     }
   }
   const farewell = slots.pop();
-  return { slots: slots.slice(0, MAX_PLANNED_NOTIFICATIONS - 1), farewell };
+  return { slots, farewell };
 }
 
 /**
@@ -356,9 +350,8 @@ export function createNotificationPlanner({
 
   /**
    * The slots with a Word, the evening slots and the farewell's while the
-   * polite pause and the farewell are on. On the 1.0 plan only the earliest
-   * time of a day takes a Word and its latest the evening slot, so a day
-   * brings at most 2; off, every time takes a Word.
+   * polite pause and the farewell are on. Only the earliest time of a day
+   * takes a Word and its latest the evening slot, so a day brings at most 2.
    */
   function slotsOf(times: readonly TimeOfDay[]): {
     slots: Slot[];
@@ -367,30 +360,27 @@ export function createNotificationPlanner({
   } {
     const [earliest] = times;
     const latest = times.at(-1);
-    const twoADay = edition.isFeatureEnabled('eveningNotification') && earliest !== undefined;
+    if (earliest === undefined) return { slots: [], evenings: [], farewell: undefined };
     // Narrowed before the slots are counted, so the times that take none use up no days of the plan.
-    const taking =
-      twoADay && latest !== undefined && times.length > 1 ? [earliest, latest] : times.slice(0, 1);
+    const evening = latest !== undefined && times.length > 1 ? latest : undefined;
+    const taking = evening === undefined ? [earliest] : [earliest, evening];
     const { slots, farewell } = edition.isFeatureEnabled('politePause')
-      ? slotsUntilPause(twoADay ? taking : times, clock)
-      : { slots: slotsAhead(twoADay ? taking : times, clock), farewell: undefined };
-    const shown = edition.isFeatureEnabled('notificationFarewell') ? farewell : undefined;
-    if (!twoADay) return { slots, evenings: [], farewell: shown };
+      ? slotsUntilPause(taking, clock)
+      : { slots: slotsAhead(taking, clock), farewell: undefined };
     const at = (time: TimeOfDay) => (slot: Slot) => compareTimesOfDay(slot.time, time) === 0;
     return {
       slots: slots.filter(at(earliest)),
-      evenings: taking.length < 2 ? [] : slots.filter(at(taking[1] ?? earliest)),
-      farewell: shown,
+      evenings: evening === undefined ? [] : slots.filter(at(evening)),
+      farewell: edition.isFeatureEnabled('notificationFarewell') ? farewell : undefined,
     };
   }
 
   /**
-   * Whether the evening slots stay silent: with the evening notification
-   * off, or while the reader hides the counters («Без лічильників»), since
-   * every evening message is a nudge by a counter.
+   * Whether the evening slots stay silent: while the reader hides the
+   * counters («Без лічильників»), since every evening message is a nudge by
+   * a counter.
    */
   async function eveningSilent(): Promise<boolean> {
-    if (!edition.isFeatureEnabled('eveningNotification')) return true;
     return (await userState.read(userStateRecords.noCounters)) === true;
   }
 
@@ -519,7 +509,11 @@ export function createNotificationPlanner({
       (await eveningSilent())
         ? ''
         : slotsOf(times)
-            .evenings.map((slot) => eveningMessageOf(dateKeyOf(slot.date)) ?? '')
+            .evenings.flatMap((slot) => {
+              const date = dateKeyOf(slot.date);
+              const message = eveningMessageOf(date);
+              return message === undefined ? [] : [`${date} ${message}`];
+            })
             .join(),
     isReserved: (wordId) => reservedWords.isReserved(wordId),
     nextMorning,
