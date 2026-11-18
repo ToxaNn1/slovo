@@ -90,7 +90,7 @@ function checkSet(
     ...checkMixedScript([...words, ...corrections, ...idioms, ...synonymRows, ...tips], checksFile),
     ...checkSynonymRows(config, words, synonymRows, checksFile),
     ...checkTips(config, tips, checksFile),
-    ...checkCuratedCollections(curatedCollections, [
+    ...checkCuratedCollections(config, curatedCollections, [
       ...words,
       ...corrections,
       ...idioms,

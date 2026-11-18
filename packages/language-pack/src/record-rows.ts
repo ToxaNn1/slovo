@@ -109,9 +109,10 @@ const SQL = {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `,
   collection: `
-    INSERT INTO curated_collections (id, name, description, published_on) VALUES (?, ?, ?, ?)
+    INSERT INTO curated_collections (id, name, description, published_on, pictogram) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT (id) DO UPDATE SET
-      name = excluded.name, description = excluded.description, published_on = excluded.published_on
+      name = excluded.name, description = excluded.description, published_on = excluded.published_on,
+      pictogram = excluded.pictogram
   `,
   collectionEntry:
     'INSERT INTO curated_collection_entries (collection_id, position, entry_id) VALUES (?, ?, ?)',
@@ -343,9 +344,10 @@ export function curatedCollectionRows({
   description,
   publishedOn,
   entryIds,
+  pictogram,
 }: CuratedCollection): Statement[] {
   return [
-    statement(SQL.collection, id, name, description, publishedOn),
+    statement(SQL.collection, id, name, description, publishedOn, pictogram ?? null),
     ...entryIds.map((entryId, position) => statement(SQL.collectionEntry, id, position, entryId)),
   ];
 }

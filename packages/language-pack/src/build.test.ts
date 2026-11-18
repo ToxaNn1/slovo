@@ -1004,14 +1004,14 @@ describe('the build of a fixture Edition from its snapshot', () => {
       }
     }
 
-    it('builds a Tip and reads it back with every field, in pack format 13', async () => {
+    it('builds a Tip and reads it back with every field, in pack format 14', async () => {
       const editionDir = withTips([fullTip]);
       const outFile = packPath();
 
       const result = build({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 13 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 14 } });
       expect(await readTips(outFile, ['t_fx0001'])).toEqual([
         { ...fullTip, kind: 'tip', retired: false },
       ]);
@@ -1182,14 +1182,14 @@ describe('the build of a fixture Edition from its snapshot', () => {
       }
     }
 
-    it('builds a Synonym Row and reads it back with every field, in pack format 13', async () => {
+    it('builds a Synonym Row and reads it back with every field, in pack format 14', async () => {
       const editionDir = withRows([fullRow]);
       const outFile = packPath();
 
       const result = build({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 13 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 14 } });
       expect(await readRows(outFile, ['r_fx0001'])).toEqual([
         { ...fullRow, kind: 'synonymRow', retired: false },
       ]);
@@ -1615,7 +1615,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
       return editionDir;
     }
 
-    it("builds a Word with an origin from the Edition's list and reads it back, in pack format 13", async () => {
+    it("builds a Word with an origin from the Edition's list and reads it back, in pack format 14", async () => {
       const editionDir = withOriginLanguages();
       editRecord(editionDir, 'w_fx0002', (word) => ({ ...word, origin: 'la' }));
       const outFile = packPath();
@@ -1623,7 +1623,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
       const result = build({ editionDir, outFile });
 
       if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-      expect(result.metadata.packFormat).toBe(13);
+      expect(result.metadata.packFormat).toBe(14);
       await withEntries(outFile, async (entries) => {
         const word = await entries.get('w_fx0002');
         const other = await entries.get('w_fx0003');
@@ -1680,14 +1680,14 @@ describe('the build of a fixture Edition from its snapshot', () => {
       return editionDir;
     }
 
-    it('builds a Word that names an Illustration and reads the name back, in pack format 13', async () => {
+    it('builds a Word that names an Illustration and reads the name back, in pack format 14', async () => {
       const editionDir = withIllustration('w_fx0002.png');
       const outFile = packPath();
 
       const result = build({ editionDir, outFile });
 
       if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-      expect(result.metadata.packFormat).toBe(13);
+      expect(result.metadata.packFormat).toBe(14);
       await withEntries(outFile, async (entries) => {
         const word = await entries.get('w_fx0002');
         const other = await entries.get('w_fx0003');
@@ -1817,7 +1817,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
       editionId: 'fixture',
       contentVersion: 9,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
-      packFormat: 13,
+      packFormat: 14,
     });
     expect(b.metadata).toEqual(a.metadata);
     expect(readFileSync(second).equals(readFileSync(first))).toBe(true);
@@ -1828,8 +1828,8 @@ describe('the build of a fixture Edition from its snapshot', () => {
 
     const result = build({ editionDir: fixture('valid'), outFile });
 
-    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 13 } });
-    expect((await readBack(outFile)).metadata.packFormat).toBe(13);
+    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 14 } });
+    expect((await readBack(outFile)).metadata.packFormat).toBe(14);
   });
 });
 
@@ -2185,6 +2185,69 @@ describe('Curated Collections', () => {
     }
   });
 
+  it('writes the pictogram of a Category or Correction Category, and the Edition default it may name', async () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      curatedCollectionPictogram: 'shop',
+    }));
+    addRecords(
+      editionDir,
+      'curatedCollection',
+      {
+        id: 'cc_fx0003',
+        name: 'Добірка природи',
+        description: 'З піктограмою Категорії.',
+        publishedOn: '2026-02-01',
+        entryIds: ['w_fx0003'],
+        pictogram: 'nature',
+      },
+      {
+        id: 'cc_fx0004',
+        name: 'Добірка крамниці',
+        description: 'З піктограмою Категорії виправлень.',
+        publishedOn: '2026-02-02',
+        entryIds: ['w_fx0003'],
+        pictogram: 'shop',
+      },
+    );
+    const outFile = packPath();
+    const result = build({ editionDir, outFile });
+    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+
+    const pack = openLanguagePack(outFile);
+    try {
+      const pictograms = (await pack.listCuratedCollections()).map(({ id, pictogram }) => [
+        id,
+        pictogram,
+      ]);
+      expect(pictograms).toEqual([
+        ['cc_fx0001', undefined],
+        ['cc_fx0002', undefined],
+        ['cc_fx0003', 'nature'],
+        ['cc_fx0004', 'shop'],
+      ]);
+    } finally {
+      pack.close();
+    }
+  });
+
+  it('refuses an Edition default pictogram naming no Category', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      curatedCollectionPictogram: 'weather',
+    }));
+
+    expect(buildErrors(editionDir)).toContainEqual(
+      expect.objectContaining({
+        file: 'edition.json',
+        field: 'curatedCollectionPictogram',
+        message: 'Unknown Category id "weather"',
+      }),
+    );
+  });
+
   it('builds an Edition without collections, with no collections in its pack', async () => {
     const editionDir = copyFixture('valid');
     editRecords(editionDir, (kind, records) => (kind === 'curatedCollection' ? [] : records));
@@ -2215,6 +2278,12 @@ describe('Curated Collections', () => {
     ],
     ['an unreadable date', { publishedOn: '2026-13-01' }, 'publishedOn', /./],
     ['a repeated Entry', { entryIds: ['w_fx0003', 'w_fx0003'] }, 'entryIds', /at most once/i],
+    [
+      'a pictogram naming no Category',
+      { pictogram: 'weather' },
+      'pictogram',
+      /weather.*no category or correction category/i,
+    ],
   ])('refuses %s', (_name, change, field, message) => {
     const editionDir = copyFixture('valid');
     const collection = {
