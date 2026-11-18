@@ -56,7 +56,7 @@ const card: EntryFeedCard = { kind: 'correction', entryId: 'c1', model };
 async function renderCard() {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <EntryCard card={card} tabs />
+      <EntryCard card={card} />
     </EditionProvider>,
   );
 }
@@ -207,7 +207,7 @@ describe('a Correction card (board XEntry2 e6)', () => {
     };
     await render(
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <EntryCard card={lowercase} tabs />
+        <EntryCard card={lowercase} />
       </EditionProvider>,
     );
 
@@ -234,7 +234,7 @@ describe('a Correction card (board XEntry2 e6)', () => {
     };
     await render(
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <EntryCard card={long} tabs />
+        <EntryCard card={long} />
       </EditionProvider>,
     );
     const text = 'Take part in an interregional meeting';

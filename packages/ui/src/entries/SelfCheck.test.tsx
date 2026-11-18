@@ -33,22 +33,26 @@ function CornerMarks({ onMark }: { onMark: (mark: 'known' | 'unknown') => void }
 
 const strings = testStrings({
   wordCard: {
+    tabs: { essence: 'Essence', example: 'Example', links: 'Links', history: 'History' },
+    tabMore: 'More',
+    tabLess: 'Less',
     partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
     genders: {},
     partOfSpeechWithGender: '{partOfSpeech}, {gender}',
     registers: {},
     category: '{category}',
     reveal: 'Show the meaning',
-    extraDefinitions: 'Other meanings',
     example: '{text}',
   },
   idiomCard: {
+    tabs: { essence: 'Essence', origin: 'Origin', example: 'Example' },
     idiomTypes: { idiom: 'idiom', placeName: 'place name' },
     heading: '{expression}, {type}',
     etymology: 'Origin',
     source: 'Source: {source}',
   },
   correctionCard: {
+    tabs: { better: 'Better', why: 'Why', examples: 'Examples' },
     title: 'Correction',
     correctionTypes: { calque: 'calque' },
     correctionType: 'Type: {type}',
@@ -262,6 +266,7 @@ describe('Self-check', () => {
     expect(onMark).not.toHaveBeenCalled();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
+    await fireEvent.press(screen.getByTestId('correction-tab-why'));
 
     expect(screen.getByText('Why join in is better.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Unknown', disabled: false }));
@@ -286,7 +291,7 @@ describe('Self-check', () => {
     for (const concealed of ['To idle about.', '2. To search everywhere.', 'From the hunt.']) {
       expect(screen.queryByText(concealed)).toBeNull();
     }
-    expect(screen.queryByTestId('idiom-example')).toBeNull();
+    expect(screen.queryByTestId('idiom-definition')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: true }));
     expect(onMark).not.toHaveBeenCalled();
 
@@ -294,8 +299,10 @@ describe('Self-check', () => {
 
     expect(screen.getByText('To idle about.')).toBeTruthy();
     expect(screen.getByText('2. To search everywhere.')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('idiom-tab-example'));
     expect(screen.getByTestId('idiom-example')).toHaveTextContent('He beat the bushes all day.');
-    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent('OriginFrom the hunt.');
+    await fireEvent.press(screen.getByTestId('idiom-tab-origin'));
+    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent('From the hunt.');
     await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: false }));
     expect(onMark).toHaveBeenCalledWith('known');
   });

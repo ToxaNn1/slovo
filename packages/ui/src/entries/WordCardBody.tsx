@@ -2,19 +2,17 @@ import type { LocalDate, WordCardModel } from '@slovo/core';
 import type { ReactNode } from 'react';
 
 import type { TextSize } from '../providers/FontSizeProvider';
-import { CategoryChip } from './CategoryChip';
 import { CardKicker } from './EntryKicker';
 import { KickerRow } from './KickerRow';
-import { WordHeadline, WordSections } from './WordCard';
-import { WordOfTheDayBadge, WordOfTheDayKicker } from './WordOfTheDayBadge';
+import { WordHeadline } from './WordCard';
+import { WordOfTheDayKicker } from './WordOfTheDayBadge';
 import { WordTabs } from './WordTabs';
 
 /**
  * The Word card's blocks inside the Entry card's frame: the Lemma with Stress,
- * part of speech and register chips, the dialectal one with the region, the primary Definition, the first
- * Example, the Illustration above the Definition, the Word History under its heading, Synonyms and antonyms, the Category chip, the details behind
- * "more", the Synonym Row the Word is a member of and the linked Corrections. It draws only the sections the Core put
- * in the card, at the user's font size. Under Self-check it keeps the Lemma,
+ * part of speech, register chips and the Category chip, and the Word's tabs
+ * under them (ADR 0091). It draws only the sections the Core put in the card,
+ * at the user's font size. Under Self-check it keeps the Lemma,
  * part of speech and Category; the Entry card draws the button that reveals
  * the rest under them. Where the Stress falls, the Lemma's Stress mark falls
  * onto its vowel each time the card comes on screen, unless the reader turned
@@ -23,7 +21,6 @@ import { WordTabs } from './WordTabs';
 export function WordCardBody({
   card,
   wordOfTheDay,
-  compact,
   lemmaSize,
   onOpenCorrection,
   onOpenSynonymRow,
@@ -32,15 +29,12 @@ export function WordCardBody({
   stressFalls,
   wordOfTheDayFont,
   corner,
-  tabs,
   sourceTab,
   kicker,
 }: {
   card: WordCardModel;
-  /** On the card of the Word of the Day: the local day it is the Word of, its kicker with tabs and its badge without. */
+  /** On the card of the Word of the Day: the local day it is the Word of, in its kicker. */
   wordOfTheDay: LocalDate | undefined;
-  /** The design's compact iPhone SE layout. */
-  compact: boolean;
   /** The Lemma's size at the user's font size, smaller in the compact layout. */
   lemmaSize: TextSize;
   onOpenCorrection: ((correctionId: string) => void) | undefined;
@@ -55,8 +49,6 @@ export function WordCardBody({
   wordOfTheDayFont: string | undefined;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The tabs under the Lemma in place of the one column (ADR 0091). */
-  tabs: boolean;
   /** The last tab «Джерело» with the sources, which leave the other tabs, while `sourceTab` is on (ADR 0116). */
   sourceTab: boolean;
   /** The card's kicker beside its corner, such as its place in a Category's Feed (ADR 0110). */
@@ -69,10 +61,8 @@ export function WordCardBody({
           kicker === undefined ? null : (
             <CardKicker testID="word-card-kicker" text={kicker} />
           )
-        ) : tabs ? (
-          <WordOfTheDayKicker day={wordOfTheDay} />
         ) : (
-          <WordOfTheDayBadge day={wordOfTheDay} />
+          <WordOfTheDayKicker day={wordOfTheDay} />
         )}
       </KickerRow>
       <WordHeadline
@@ -81,29 +71,16 @@ export function WordCardBody({
         concealed={concealed}
         stressFalls={stressFalls}
         lemmaFont={wordOfTheDay === undefined ? undefined : wordOfTheDayFont}
-        tabbed={tabs}
+        tabbed
       />
-      {!tabs && concealed && card.categoryName !== undefined && (
-        <CategoryChip testID="word-category" name={card.categoryName} />
-      )}
-      {tabs ? (
-        <WordTabs
-          card={card}
-          onOpenCorrection={onOpenCorrection}
-          onOpenSynonymRow={onOpenSynonymRow}
-          onHistoryShown={onHistoryShown}
-          sources={sourceTab ? card.sourceNames : undefined}
-          disabled={concealed}
-        />
-      ) : concealed ? null : (
-        <WordSections
-          card={card}
-          compact={compact}
-          onOpenCorrection={onOpenCorrection}
-          onOpenSynonymRow={onOpenSynonymRow}
-          onHistoryShown={onHistoryShown}
-        />
-      )}
+      <WordTabs
+        card={card}
+        onOpenCorrection={onOpenCorrection}
+        onOpenSynonymRow={onOpenSynonymRow}
+        onHistoryShown={onHistoryShown}
+        sources={sourceTab ? card.sourceNames : undefined}
+        disabled={concealed}
+      />
     </>
   );
 }

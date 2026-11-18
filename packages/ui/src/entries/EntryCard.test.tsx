@@ -9,37 +9,39 @@ import { testStrings } from '../test-strings';
 
 const strings = testStrings({
   wordCard: {
+    tabs: { essence: 'Essence', example: 'Example', links: 'Links', history: 'History' },
+    tabMore: 'More',
+    tabLess: 'Less',
     partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
     genders: {},
     partOfSpeechWithGender: '{partOfSpeech}, {gender}',
     registers: { dialectal: { short: 'dial.', full: 'dialectal' } },
     registerWithRegion: '{register}, {region}',
     category: 'Category: {category}',
-    synonym: 'Synonym',
-    synonyms: 'Synonyms',
-    antonym: 'Antonym',
-    antonyms: 'Antonyms',
+    linkLabels: {
+      synonyms: { one: 'Synonym', many: 'Synonyms' },
+      antonyms: { one: 'Antonym', many: 'Antonyms' },
+    },
     example: '{text}',
     exampleAuthor: '— {author}',
     reveal: 'Show the meaning',
     pronunciation: { label: 'Pronounce', stop: 'Stop', noVoice: 'No voice' },
     stress: 'stress on {vowels}',
     stressOr: 'or',
-    extraDefinitions: 'Other meanings',
-    moreExamples: 'More examples',
     etymology: 'Etymology',
-    more: 'More',
     history: 'History of the word',
     synonymRow: 'In the synonym row: {dominant}',
     synonymRowHint: 'Opens the synonym row',
   },
   idiomCard: {
+    tabs: { essence: 'Essence', origin: 'Origin', example: 'Example' },
     idiomTypes: { idiom: 'idiom', placeName: 'place name', proverb: 'proverb' },
     heading: '{expression}, {type}',
     etymology: 'Origin',
     source: 'Source: {source}',
   },
   correctionCard: {
+    tabs: { better: 'Better', why: 'Why', examples: 'Examples' },
     title: 'Correction',
     correctionType: 'Type: {type}',
     correctionTypes: {
@@ -60,7 +62,10 @@ const strings = testStrings({
     literaryUseSource: '{author}, {work}',
     literaryUseSourceWithYear: '{author}, {work}, {year}',
   },
-  wordOfTheDay: { badge: 'Word of the day · {day} {month}' },
+  wordOfTheDay: {
+    badge: 'Word of the day · {day} {month}',
+    kicker: 'Word of the day · {day}.{month}',
+  },
   dates: { months: [] },
   knowledge: {
     known: 'Known',
@@ -222,17 +227,11 @@ describe('EntryCard', () => {
     expect(screen.getByText('An effectual dress')).toBeTruthy();
   });
 
-  it('names the sources of a Correction in a line under the example pair', async () => {
-    await render(inEdition(<EntryCard card={cardWithSources(['Sources A', 'Sources B'])} />));
-
-    expect(screen.getByTestId('correction-source')).toHaveTextContent(
-      'Source: Sources A; Sources B',
-    );
-  });
-
   it('draws no source line on a Correction without sources', async () => {
     await render(inEdition(<EntryCard card={card} />));
+    await fireEvent.press(screen.getByTestId('correction-tab-why'));
 
+    expect(screen.getByTestId('correction-explanation')).toBeTruthy();
     expect(screen.queryByTestId('correction-source')).toBeNull();
   });
 
@@ -475,8 +474,9 @@ describe('Self-check on a Word card', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
 
     expect(screen.getByTestId('word-definition')).toHaveTextContent('What it means.');
-    expect(screen.getByTestId('word-example')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Show the meaning' })).toBeNull();
+    await fireEvent.press(screen.getByTestId('word-tab-example'));
+    expect(screen.getByTestId('word-example')).toHaveTextContent('An example.');
   });
 
   it('keeps the Word of the Day badge on a concealed card', async () => {
@@ -531,10 +531,12 @@ describe('Self-check on a Correction card', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
 
     expect(screen.getByTestId('correction-standard')).toBeTruthy();
-    expect(screen.getByTestId('correction-explanation')).toHaveTextContent('A long explanation.');
-    expect(screen.getByTestId('correction-example-pair')).toBeTruthy();
     expect(screen.queryByText('How to say it?')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Show' })).toBeNull();
+    await fireEvent.press(screen.getByTestId('correction-tab-why'));
+    expect(screen.getByTestId('correction-explanation')).toHaveTextContent('A long explanation.');
+    await fireEvent.press(screen.getByTestId('correction-tab-examples'));
+    expect(screen.getByTestId('correction-example-pair')).toBeTruthy();
   });
 });
 
@@ -574,6 +576,7 @@ describe('the literary uses on a Correction card', () => {
 
   it('shows each use with its author, work and year under the heading when the Correction has uses', async () => {
     await render(inEdition(<EntryCard card={withUses} />));
+    await fireEvent.press(screen.getByTestId('correction-tab-examples'));
 
     const section = within(screen.getByTestId('correction-literary-uses'));
     expect(section.getByRole('header', { name: 'How it is really written' })).toBeTruthy();
@@ -585,16 +588,19 @@ describe('the literary uses on a Correction card', () => {
 
   it('is absent when the Correction has none', async () => {
     await render(inEdition(<EntryCard card={card} />));
+    await fireEvent.press(screen.getByTestId('correction-tab-examples'));
 
+    expect(screen.getByTestId('correction-example-pair')).toBeTruthy();
     expect(screen.queryByTestId('correction-literary-uses')).toBeNull();
     expect(screen.queryByText('How it is really written')).toBeNull();
   });
 
   it('stays hidden under Self-check until revealed', async () => {
     await render(inEdition(<EntryCard card={withUses} selfCheck />));
-    expect(screen.queryByTestId('correction-literary-uses')).toBeNull();
+    expect(screen.queryByTestId('correction-standard')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
+    await fireEvent.press(screen.getByTestId('correction-tab-examples'));
 
     expect(screen.getByTestId('correction-literary-uses')).toBeTruthy();
   });
@@ -605,6 +611,7 @@ describe('the literary uses on a Correction card', () => {
 
     try {
       await render(inEdition(<EntryCard card={withUses} />));
+      await fireEvent.press(screen.getByTestId('correction-tab-examples'));
 
       const section = within(screen.getByTestId('correction-literary-uses'));
       for (const text of ['They all joined in the song.', '— An Author, A Long Poem, 1840']) {
@@ -633,11 +640,13 @@ describe('VoiceOver on a stress trap', () => {
 
   it('reads the explanation and the example pair without the Stress mark', async () => {
     await render(inEdition(<EntryCard card={stressTrap} />));
+    await fireEvent.press(screen.getByTestId('correction-tab-why'));
 
     expect(screen.getByTestId('correction-explanation')).toHaveProp(
       'accessibilityLabel',
       'Say catalog, as in dialog.',
     );
+    await fireEvent.press(screen.getByTestId('correction-tab-examples'));
     expect(screen.getByLabelText('Not: Open the catalog.')).toBeTruthy();
     expect(screen.getByLabelText('Right: Open the catalog.')).toBeTruthy();
   });
@@ -706,15 +715,17 @@ describe('the Idiom card', () => {
 
     expect(screen.getByTestId('idiom-expression')).toHaveTextContent('To beat the bushes');
     expect(screen.getByTestId('idiom-type')).toHaveTextContent('idiom');
+    expect(
+      screen.getAllByRole('tab').map((tab) => tab.props['accessibilityLabel'] as string),
+    ).toEqual(['Essence', 'Origin', 'Example']);
     expect(screen.getByTestId('idiom-definition')).toHaveTextContent('To idle about.');
-    expect(screen.getByTestId('idiom-extra-definitions')).toHaveTextContent(
-      'Other meanings2. To search everywhere.',
-    );
-    expect(screen.getAllByTestId('idiom-example')).toHaveLength(2);
-    expect(screen.getByText('He beat the bushes all day.')).toBeTruthy();
-    expect(screen.getByText('Stop beating the bushes.')).toBeTruthy();
-    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent('OriginFrom the hunt.');
+    expect(screen.getByText('2. To search everywhere.')).toBeTruthy();
     expect(screen.getByTestId('idiom-source')).toHaveTextContent('Source: A phrase dictionary');
+    await fireEvent.press(screen.getByTestId('idiom-tab-origin'));
+    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent('From the hunt.');
+    await fireEvent.press(screen.getByTestId('idiom-tab-example'));
+    expect(screen.getByTestId('idiom-example')).toHaveTextContent('He beat the bushes all day.');
+    expect(screen.getByText('Stop beating the bushes.')).toBeTruthy();
   });
 
   it('shows the chip «place name» on a place name card, and only the sections it has', async () => {
@@ -727,12 +738,12 @@ describe('the Idiom card', () => {
     expect(screen.getByTestId('idiom-definition')).toHaveTextContent(
       'A town in the Zhytomyr region.',
     );
-    expect(screen.getByText('They drove to Berdychiv.')).toBeTruthy();
-    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent(
-      'OriginNamed after the Berdy tribe.',
-    );
-    expect(screen.queryByTestId('idiom-extra-definitions')).toBeNull();
+    expect(screen.queryByText(/^2\. /)).toBeNull();
     expect(screen.queryByTestId('idiom-source')).toBeNull();
+    await fireEvent.press(screen.getByTestId('idiom-tab-origin'));
+    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent('Named after the Berdy tribe.');
+    await fireEvent.press(screen.getByTestId('idiom-tab-example'));
+    expect(screen.getByText('They drove to Berdychiv.')).toBeTruthy();
   });
 
   it('shows the chip «proverb» on a proverb card', async () => {
@@ -743,7 +754,7 @@ describe('the Idiom card', () => {
     );
     expect(screen.getByTestId('idiom-type')).toHaveTextContent('proverb');
     expect(screen.getByTestId('idiom-definition')).toHaveTextContent('Who starts early, wins.');
-    expect(screen.queryByTestId('idiom-etymology')).toBeNull();
+    expect(screen.queryByRole('tablist')).toBeNull();
   });
 
   it.each([
@@ -780,14 +791,13 @@ describe('the Idiom card', () => {
     );
 
     expect(screen.getByRole('header', { name: 'to beat the bushes, idiom' })).toBeTruthy();
-    for (const concealedPart of ['idiom-definition', 'idiom-example', 'idiom-etymology']) {
-      expect(screen.queryByTestId(concealedPart)).toBeNull();
-    }
+    expect(screen.queryByTestId('idiom-definition')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
 
     expect(screen.getByTestId('idiom-definition')).toHaveTextContent('To idle about.');
-    expect(screen.getByTestId('idiom-etymology')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('idiom-tab-origin'));
+    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent('From the hunt.');
   });
 });
 
@@ -810,40 +820,35 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
 
   it('shows the Stress marks on a Word card and reads its texts without them', async () => {
     await render(inEdition(<EntryCard card={stressedWord} />));
-    await fireEvent.press(screen.getByTestId('word-more'));
 
     expect(screen.getByTestId('word-definition')).toHaveTextContent('Same as adónis.');
     expect(screen.getByTestId('word-definition')).toHaveProp(
       'accessibilityLabel',
       'Same as adonis.',
     );
+    expect(screen.getByText('Named after Adónis.', { includeHiddenElements: true })).toHaveProp(
+      'accessibilityLabel',
+      'Named after Adonis.',
+    );
+    await fireEvent.press(screen.getByTestId('word-tab-example'));
     expect(screen.getByTestId('word-example')).toHaveTextContent('The adónis bloomed.— A poét');
     expect(screen.getByTestId('word-example')).toHaveProp(
       'accessibilityLabel',
       'The adonis bloomed. — A poet',
     );
-    expect(screen.getByText('Named after Adónis.')).toHaveProp(
-      'accessibilityLabel',
-      'Named after Adonis.',
-    );
-    expect(screen.getByTestId('word-synonyms')).toHaveProp(
-      'accessibilityLabel',
-      'Synonym pheasant eye',
-    );
-    expect(screen.getByText('2. A handsome yóuth.')).toHaveProp(
-      'accessibilityLabel',
-      '2. A handsome youth.',
-    );
-    expect(screen.getByLabelText('He was an adonis.')).toBeTruthy();
-    expect(screen.getByText('From the Greék.')).toHaveProp('accessibilityLabel', 'From the Greek.');
+    expect(
+      screen.getByLabelText('He was an adonis.', { includeHiddenElements: true }),
+    ).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('word-tab-links'));
+    expect(screen.getByTestId('word-synonyms')).toHaveTextContent(/^Synonym/);
+    expect(screen.getByLabelText('pheasant eye')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+    // The History tab composes the etymology (NFC), so its Stress mark is one letter.
+    expect(screen.getByText('From the Gre\u00e9k.')).toBeTruthy();
   });
 
   it('shows every Definition in the Essence tab, the others numbered on from the primary one', async () => {
-    await render(
-      <EditionProvider edition={{ locale: 'en' }} strings={testStrings(tabbedStrings)}>
-        <EntryCard card={stressedWord} tabs />
-      </EditionProvider>,
-    );
+    await render(inEdition(<EntryCard card={stressedWord} />));
 
     expect(
       within(screen.getByTestId('word-meanings')).getByText('2. A handsome yóuth.', {
@@ -853,11 +858,7 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
   });
 
   it('shows the etymology alone in the History tab', async () => {
-    await render(
-      <EditionProvider edition={{ locale: 'en' }} strings={testStrings(tabbedStrings)}>
-        <EntryCard card={stressedWord} tabs />
-      </EditionProvider>,
-    );
+    await render(inEdition(<EntryCard card={stressedWord} />));
     await fireEvent.press(screen.getByTestId('word-tab-history'));
 
     expect(screen.getByTestId('word-etymology')).toBeTruthy();
@@ -887,10 +888,12 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
       'accessibilityLabel',
       '2. To search everywhere.',
     );
+    await fireEvent.press(screen.getByTestId('idiom-tab-example'));
     expect(screen.getByTestId('idiom-example')).toHaveProp(
       'accessibilityLabel',
       'He beat the bushes all day.',
     );
+    await fireEvent.press(screen.getByTestId('idiom-tab-origin'));
     expect(screen.getByText('From the húnt.')).toHaveProp('accessibilityLabel', 'From the hunt.');
   });
 });
@@ -929,7 +932,7 @@ describe('the corner of an Entry card', () => {
     );
 
     const row = screen.getByTestId('word-kicker-row');
-    expect(within(row).getByTestId('word-of-the-day-badge')).toBeOnTheScreen();
+    expect(within(row).getByTestId('word-of-the-day-kicker')).toBeOnTheScreen();
     expect(within(row).getByTestId('word-corner')).not.toHaveStyle({ position: 'absolute' });
     expect(within(row).queryByTestId('word-lemma')).toBeNull();
   });
@@ -1012,12 +1015,9 @@ describe('the corner of an Entry card', () => {
 });
 
 describe("a Word card's kicker", () => {
-  it("says the card's place in its Category's Feed, one-column or tabbed", async () => {
+  it("says the card's place in its Category's Feed", async () => {
     const kicker = 'CATEGORY · EMOTIONS · 2 OF 4';
     await render(inEdition(<EntryCard card={wordCard} kicker={kicker} />));
-    expect(screen.getByTestId('word-card-kicker')).toHaveTextContent(kicker);
-
-    await render(inEdition(<EntryCard card={wordCard} kicker={kicker} tabs />));
     expect(screen.getByTestId('word-card-kicker')).toHaveTextContent(kicker);
     // Level with the corner tiles' middle, as the board's CSS centres it (EntryKicker).
     expect(StyleSheet.flatten(screen.getByTestId('word-card-kicker').props['style'])).toMatchObject(
@@ -1048,25 +1048,6 @@ describe("a Word card's kicker", () => {
   });
 });
 
-/** The file's strings with the names of each kind's tabs. */
-const tabbedStrings = testStrings({
-  ...strings,
-  wordCard: {
-    ...strings.wordCard,
-    tabs: { essence: 'Essence', example: 'Example', links: 'Links', history: 'History' },
-    tabMore: 'More',
-    tabLess: 'Less',
-  },
-  correctionCard: {
-    ...strings.correctionCard,
-    tabs: { better: 'Better', why: 'Why', examples: 'Examples' },
-  },
-  idiomCard: {
-    ...strings.idiomCard,
-    tabs: { essence: 'Essence', origin: 'Origin', example: 'Example' },
-  },
-});
-
 describe('the frame of a tabbed Entry card (board XEntry2)', () => {
   it.each([
     ['word', wordCard],
@@ -1075,11 +1056,7 @@ describe('the frame of a tabbed Entry card (board XEntry2)', () => {
   ] as const)(
     'draws a %s card at radius 24, outlined 2.5, padded 20/22/18, blocks 16 apart',
     async (kind, entry) => {
-      await render(
-        <EditionProvider edition={{ locale: 'en' }} strings={tabbedStrings}>
-          <EntryCard card={entry} tabs />
-        </EditionProvider>,
-      );
+      await render(inEdition(<EntryCard card={entry} />));
 
       expect(screen.getByTestId(`${kind}-card`)).toHaveStyle({
         borderRadius: 24,
@@ -1099,29 +1076,15 @@ describe('the page an Entry card lays itself out on', () => {
     <View testID={framed ? 'framed-page' : 'scrolled-page'}>{entry}</View>
   );
   const wordOfTheDay = { ...wordWithEverything, wordOfTheDay: { year: 2026, month: 11, day: 5 } };
-  const wordOfTheDayStrings = {
-    ...tabbedStrings,
-    wordOfTheDay: { ...tabbedStrings.wordOfTheDay, kicker: 'Word of the day · {day}.{month}' },
-  };
 
-  it('is a fixed frame for a tabbed card', async () => {
-    await render(inEdition(<EntryCard card={wordCard} tabs page={page} />));
+  it('is a fixed frame for an Entry card', async () => {
+    await render(inEdition(<EntryCard card={wordCard} page={page} />));
 
     expect(within(screen.getByTestId('framed-page')).getByTestId('word-card')).toBeTruthy();
   });
 
-  it('is no fixed frame for an untabbed card', async () => {
-    await render(inEdition(<EntryCard card={wordCard} page={page} />));
-
-    expect(screen.getByTestId('scrolled-page')).toBeTruthy();
-  });
-
   it('scrolls the red Word of the Day card while Self-check keeps it closed, and frames it once revealed', async () => {
-    await render(
-      <EditionProvider edition={{ locale: 'en' }} strings={wordOfTheDayStrings}>
-        <EntryCard card={wordOfTheDay} tabs selfCheck page={page} />
-      </EditionProvider>,
-    );
+    await render(inEdition(<EntryCard card={wordOfTheDay} selfCheck page={page} />));
 
     expect(screen.getByTestId('scrolled-page')).toBeTruthy();
 
@@ -1133,8 +1096,8 @@ describe('the page an Entry card lays itself out on', () => {
 
 describe('the Source tab of a tabbed Entry card (ADR 0116)', () => {
   const sourceStrings = testStrings({
-    ...tabbedStrings,
-    wordCard: { ...tabbedStrings.wordCard, tabSource: 'Source' },
+    ...strings,
+    wordCard: { ...strings.wordCard, tabSource: 'Source' },
   });
   const sourced = ['A dictionary', 'A book of proverbs'];
   const cases = [
@@ -1159,7 +1122,7 @@ describe('the Source tab of a tabbed Entry card (ADR 0116)', () => {
     async (kind, entry) => {
       await render(
         <EditionProvider edition={{ locale: 'en' }} strings={sourceStrings}>
-          <EntryCard card={entry} tabs sourceTab />
+          <EntryCard card={entry} sourceTab />
         </EditionProvider>,
       );
 
@@ -1184,7 +1147,7 @@ describe('the Source tab of a tabbed Entry card (ADR 0116)', () => {
     async (kind, entry) => {
       await render(
         <EditionProvider edition={{ locale: 'en' }} strings={sourceStrings}>
-          <EntryCard card={entry} tabs />
+          <EntryCard card={entry} />
         </EditionProvider>,
       );
 
@@ -1212,8 +1175,12 @@ describe('the texts of a Word card', () => {
     expect(screen.getByTestId('word-lemma')).toHaveTextContent(/^Lemma$/);
     expect(screen.getByTestId('word-definition')).toHaveTextContent('What it means.');
     expect(screen.getByTestId('word-category')).toHaveTextContent('Rare');
+    expect(screen.getByTestId('word-history', { includeHiddenElements: true })).toHaveTextContent(
+      /A story\./,
+    );
+    await fireEvent.press(screen.getByTestId('word-tab-example'));
     expect(screen.getByTestId('word-example')).toHaveTextContent(/An example\./);
+    await fireEvent.press(screen.getByTestId('word-tab-links'));
     expect(screen.getByTestId('word-synonyms')).toHaveTextContent(/Alike$/);
-    expect(screen.getByTestId('word-history')).toHaveTextContent(/A story\./);
   });
 });

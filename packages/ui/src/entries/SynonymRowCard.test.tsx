@@ -185,7 +185,7 @@ describe('the tabbed Synonym Row card (board XEntry2 e8)', () => {
   }));
 
   async function renderTabbed(shown: SynonymRowCardModel) {
-    await render(inEdition(<EntryCard card={{ ...card, model: shown }} tabs />));
+    await render(inEdition(<EntryCard card={{ ...card, model: shown }} />));
   }
 
   it('pages the members four at a time, the meaning on the first page, the example and sources on the last', async () => {
@@ -210,7 +210,7 @@ describe('the tabbed Synonym Row card (board XEntry2 e8)', () => {
 
   it('with the Source tab, names the sources in a last tab after the pages, not on the last page', async () => {
     await render(
-      inEdition(<EntryCard card={{ ...card, model: { ...model, members } }} tabs sourceTab />),
+      inEdition(<EntryCard card={{ ...card, model: { ...model, members } }} sourceTab />),
     );
 
     expect(

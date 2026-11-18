@@ -167,7 +167,6 @@ function ListFeedPageView({
         kicker={kicker}
         selfCheck={selfCheck}
         stressFalls={stressFall}
-        tabs
         sourceTab={sourceTab}
         tipExceptions={tipExceptions}
         // A tabbed card is a fixed frame the page's height, as in the Feed: only
