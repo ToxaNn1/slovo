@@ -9272,14 +9272,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameOptionStamp": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameEndToFeed": {
                           "enum": [
                             "on",
@@ -9783,7 +9775,6 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
-                        "gameOptionStamp",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",
@@ -11170,14 +11161,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameOptionStamp": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameEndToFeed": {
                           "enum": [
                             "on",
@@ -11681,7 +11664,6 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
-                        "gameOptionStamp",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",
@@ -12992,14 +12974,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameOptionStamp": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameEndToFeed": {
                           "enum": [
                             "on",
@@ -13503,7 +13477,6 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
-                        "gameOptionStamp",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",

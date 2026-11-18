@@ -572,32 +572,6 @@ describe('GameRound', () => {
     expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 2 of 3');
   });
 
-  it('keys the options in order with the Edition’s keys', async () => {
-    await renderRound();
-
-    ['A', 'B', 'C', 'D'].forEach((key, place) => {
-      expect(
-        within(screen.getByTestId(`game-option-${String(place)}`)).getByText(key),
-      ).toBeTruthy();
-    });
-  });
-
-  it('marks a wrong pick with ✕ on its key and leaves the other keys as they are', async () => {
-    await renderRound();
-
-    await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
-
-    const wrong = within(screen.getByTestId('game-option-1'));
-    expect(wrong.getByTestId('game-option-1-wrong-mark')).toBeTruthy();
-    expect(wrong.queryByText('B')).toBeNull();
-    expect(screen.getByRole('button', { name: 'brittle, Your choice' })).toBeTruthy();
-    expect(within(screen.getByTestId('game-option-0')).getByText('A')).toBeTruthy();
-    expect(
-      within(screen.getByTestId(`game-option-${String(CORRECT)}`)).getByText('C'),
-    ).toBeTruthy();
-    expect(screen.getAllByTestId(/^game-option-\d+-wrong-mark$/)).toHaveLength(1);
-  });
-
   it.each([
     ['all Words', ['candid', 'ardent', 'brittle', 'dour'], 'roundOptionWord'],
     [
@@ -1143,9 +1117,9 @@ describe('GameRound', () => {
       await wait(1000);
 
       expect(optionFace(1)).toHaveStyle({ backgroundColor: surfaceSunken });
-      expect(styleOf(optionMotion(1)).translateY).toBe(8);
+      expect(styleOf(optionMotion(1)).translateY).toBe(3);
       expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: accent });
-      expect(styleOf(optionMotion(0)).opacity).toBe(0.5);
+      expect(styleOf(optionMotion(0)).opacity).toBeCloseTo(0.45);
       expect(optionFace(0)).toHaveStyle({ backgroundColor: tile });
     });
 

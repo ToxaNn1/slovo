@@ -3,8 +3,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 /**
  * How a Game's Round draws its question (ADR 0139): on the background with
  * no card and the Mascot beside it
- * (`gameRoundMascot`), and its options in the board's look
- * (`gameOptionStamp`). The Game Round provides it for its form's parts; a
+ * (`gameRoundMascot`), and its options in the board's look. The Game Round provides it for its form's parts; a
  * Quick Question, which provides none, keeps the card, the keyed options
  * and no Mascot.
  */
@@ -14,7 +13,7 @@ export type QuestionFace = 'byLength' | 'text' | 'display';
 export interface RoundLook {
   /** Whether the question stands on the background, its options at the bottom, cascading in: always in a Game's Round, never in a Quick Question. */
   readonly onGround: boolean;
-  /** Whether a short option goes keyless with a ✓ stamp, a long one's key is filled, ✓ or ✕ on ink once answered, and the wrong text is crossed out. */
+  /** Whether the options take the board's look: none keyed, a short one large, the right one stamped ✓ and the wrong text crossed out; always in a Game's Round, never in a Quick Question. */
   readonly optionStamp: boolean;
   /**
    * The face of the question on the ground: the large display face up to 40

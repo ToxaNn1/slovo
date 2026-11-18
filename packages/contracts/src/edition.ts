@@ -445,8 +445,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** 20 seconds in «На час», then straight to «ФІНІШ» with no time-up poster (ADR 0137); off, 60 seconds and «Час!». Off while `gameTimed` is. */
   /** The Mascot beside the question of a Round, in its waiting, glad, wincing and sad states (ADR 0139); off while `game` is. */
   gameRoundMascot: FeatureSwitchStateSchema,
-  /** The board's options: short ones without a key, the ✓ stamp, the ✓ and ✕ keys and the crossed-out wrong text (ADR 0139); off while `game` is. */
-  gameOptionStamp: FeatureSwitchStateSchema,
   /** «Пари»: a found pair stays red, the captions «СЛОВО» and «ЗНАЧЕННЯ», no pause after a pair (ADR 0138, 0139); off while `gamePairs` is. */
   /** «Склади вислів»: decoy fragments from other expressions and the answer judged on «Перевірити» (ADR 0139); off, on the last fragment. Off while `gameBuildIdiom` is. */
   /** The third end action «До стрічки» beside «Ще раз» and «До ігор» (ADR 0139); off while `game` is. */

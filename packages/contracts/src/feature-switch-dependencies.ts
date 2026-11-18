@@ -65,7 +65,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   crosswordBadgeStamp: ['dailyCrossword', 'badges'],
   // The board «slogo game last» parts of a Game (spec #1880).
   gameRoundMascot: ['game'],
-  gameOptionStamp: ['game'],
   gameEndToFeed: ['game'],
   plainGameReview: ['gameReview'],
   gameHubGroups: ['game'],

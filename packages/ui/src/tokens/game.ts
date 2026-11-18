@@ -116,7 +116,7 @@ export const answerOption = {
 } as const;
 
 /**
- * A pick Round's option in the board's look (D6, `gameOptionStamp`): the
+ * A pick Round's option in the board's look (D6): the
  * most characters a short option has, which takes the large word tier; how
  * much the options left out of the answer fade and how far a wrong choice
  * drops; and the round ✓ stamp on the right option (its side, border and the

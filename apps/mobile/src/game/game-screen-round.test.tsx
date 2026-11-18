@@ -45,31 +45,6 @@ describe('the Game screen', () => {
     });
   });
 
-  it('keys the options А–Г and marks a wrong pick with ✕ on its key', async () => {
-    await open({ corrections: 15 });
-    await renderScreen();
-
-    await fireEvent.press(screen.getByTestId('game-mode-correction'));
-    await waitFor(() => {
-      expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
-    });
-    const options = screen.getAllByTestId(/^game-option-\d+$/);
-    options.forEach((option, place) => {
-      expect(within(option).getByText(['А', 'Б', 'В', 'Г'][place] ?? '')).toBeTruthy();
-    });
-    expect(screen.queryByTestId(/^game-option-\d+-wrong-mark$/)).toBeNull();
-
-    const standard = `добре${String(theNumberOfThePrompt())}`;
-    const wrong = options.findIndex((option) => option.props['accessibilityLabel'] !== standard);
-    const picked = options[wrong];
-    if (picked === undefined) throw new Error('No wrong option');
-    await fireEvent.press(picked);
-
-    expect(screen.getAllByTestId(/^game-option-\d+-wrong-mark$/)).toHaveLength(1);
-    expect(screen.getByTestId(`game-option-${String(wrong)}-wrong-mark`)).toBeTruthy();
-    expect(theOption(`${standard}, Правильно`)).toBeTruthy();
-  });
-
   it.each([
     ['a Word', { corrections: 15 }, 'game-mode-correction', 'roundOptionWord'],
     ['a sentence', { idioms: 15 }, 'game-mode-idiom-meaning', 'roundOptionSentence'],
@@ -314,7 +289,7 @@ describe('the Game screen', () => {
     });
   });
 
-  describe('the board’s options (gameOptionStamp)', () => {
+  describe('the board’s options', () => {
     const KEYS = ['А', 'Б', 'В', 'Г'];
     const optionsShown = () => screen.getAllByTestId(/^game-option-\d+$/);
     const labelOf = (option: ReturnType<typeof optionsShown>[number]) =>
@@ -329,7 +304,7 @@ describe('the Game screen', () => {
     }
 
     it('draws a short option large and without a key, and stamps the right one with ✓', async () => {
-      await open({ corrections: 15, switchedOn: ['gameOptionStamp'] });
+      await open({ corrections: 15 });
       await play('game-mode-correction');
 
       const { fontSize } = typeStyle('roundOptionWord', coreTokens);
@@ -352,7 +327,7 @@ describe('the Game screen', () => {
     });
 
     it('keys no option, long ones neither (owner, 15.11), and after a wrong pick stamps ✓ on the right one and crosses the wrong one out', async () => {
-      await open({ idioms: 15, switchedOn: ['gameOptionStamp'] });
+      await open({ idioms: 15 });
       await play('game-mode-idiom-meaning');
 
       optionsShown().forEach((option) => {
@@ -373,17 +348,6 @@ describe('the Game screen', () => {
       expect(within(picked).getByText(labelOf(picked).replace(/, Твій вибір$/, ''))).toHaveStyle({
         textDecorationLine: 'line-through',
       });
-    });
-
-    it('keys every option А–Г as in #1674 with its switch off', async () => {
-      await open({});
-      await play('game-mode-guess-word');
-
-      optionsShown().forEach((option, place) => {
-        expect(within(option).getByText(KEYS[place] ?? '')).toBeTruthy();
-      });
-      await fireEvent.press(screen.getByTestId('game-option-0'));
-      expect(screen.queryByTestId(/^game-option-\d+-(stamp|right-mark)$/)).toBeNull();
     });
   });
 });

@@ -60,7 +60,6 @@ export function GameRound({
   onOpenLetter,
   title,
   timeLeft,
-  optionStamp = false,
   mascot,
   onWaitFor = noWait,
 }: {
@@ -77,8 +76,6 @@ export function GameRound({
   onOpenLetter: () => void;
   /** The play time left now in a timed Game, as the screen ticks it; the Game's own when none. */
   timeLeft?: number | undefined;
-  /** Whether the options take the board's look (`gameOptionStamp`): short ones keyless with a ✓ stamp, ✓ and ✕ keys, the wrong text crossed out; keyed as in spec #1674 if not. */
-  optionStamp?: boolean;
   /** Draws the Mascot beside the question in a state at a width (`gameRoundMascot`); no Mascot if none. */
   mascot?: ((look: { state: MascotState; width: number }) => ReactNode) | undefined;
   /** Hands the Game what the banner waits for besides its delay: VoiceOver reading it. */
@@ -112,7 +109,7 @@ export function GameRound({
   const card = cardOf(game.modeId, round, asked.prompt, strings.game.round.prompts);
   const look = {
     onGround: true,
-    optionStamp,
+    optionStamp: true,
     questionFace: questionFaceOf(game.modeId),
     inkHeaded: INK_HEADED.has(game.modeId),
     mascot: mascot?.({ state: mascotState(answer, game.lives), width: roundMascotWidth }),
