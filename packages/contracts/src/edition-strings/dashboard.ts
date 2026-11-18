@@ -57,6 +57,8 @@ export const DashboardStringsSchema = z.strictObject({
   }),
   /** The title over the Curated Collections rail, «SLOVO пропонує» (ADR 0081, 0178). */
   curatedCollectionsTitle: TextSchema,
+  /** The title of the grid of every Curated Collection, opened from the rail's header, «Добірки». */
+  curatedCollectionsGridTitle: TextSchema,
   /** A Curated Collection's count of Entries on its tile, «{count} слів». */
   curatedCollectionCount: PluralSchema,
   /** The badge on a Curated Collection card not yet opened, «Нова». */

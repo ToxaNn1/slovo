@@ -1524,6 +1524,7 @@
       "note": "Настрій дня"
     },
     "curatedCollectionsTitle": "SLOVO пропонує",
+    "curatedCollectionsGridTitle": "Добірки",
     "curatedCollectionCount": {
       "one": "{count} слово",
       "few": "{count} слова",
