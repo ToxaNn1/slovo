@@ -1,3 +1,5 @@
+STATUS: FINISHED
+
 # HANDOFF coord/proponuie-1992
 
 Wave #1992 «SLOVO пропонує». Integration branch feat/1992-slovo-proponuie (pushed), draft PR #2002 (body to rewrite at the end).
@@ -29,3 +31,4 @@ Wave #1992 «SLOVO пропонує». Integration branch feat/1992-slovo-propon
 WAITING until 2026-11-18T18:20:48Z: CI on 08b4df988 (PR #2002 body rewritten; review fixes pushed)
 - 17:33Z safety net steps back: the finisher session is alive and holds the wave (review fixes, CI wait). Local checks on 12aba8039 were green (typecheck, lint, tests mobile ui core language-pack).
 WAITING until 2026-11-18T18:34:38Z: CI + auto-merge on 667c8b195 (main merged again: dashboard switch retired; PR ready, auto-merge squash on)
+- 17:44Z PR #2002 merged (squash 6f3dfa27778ea0e591ce91074dba4d83d9f7e52b); CI green; wave #1992 done
