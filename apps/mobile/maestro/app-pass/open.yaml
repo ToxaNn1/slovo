@@ -1,0 +1,15 @@
+# One app pass step by link: opens `LINK_PATH` (the route `ROUTE` with real
+# ids) through the app's link, `LINK` (the scheme's `slovo://` by default,
+# `exp://127.0.0.1:8082/--/` in Expo Go), then checks the screen
+# (`screen.yaml`).
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- openLink: ${(LINK || ((SCHEME || 'slovo') + '://')) + (LINK_PATH || '')}
+# A simulator asks once whether the link may open the app.
+- runFlow:
+    when:
+      visible: Open
+    commands:
+      - tapOn: Open
+- runFlow:
+    file: screen.yaml

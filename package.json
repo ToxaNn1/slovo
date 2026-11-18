@@ -22,6 +22,7 @@
     "source:synonyms": "pnpm --filter @slovo/sourcing source-synonyms",
     "content": "pnpm --filter @slovo/content content",
     "smoke:halves": "node scripts/smoke-halves.mjs",
+    "app-pass": "node scripts/app-pass.mjs",
     "lint": "oxlint && turbo run lint && prettier --check .",
     "typecheck": "turbo run typecheck && tsc -p .railway",
     "deps": "depcruise apps packages tools editions --config .dependency-cruiser.mjs && depcruise apps/mobile/src packages/core/src packages/ui/src --config .dependency-cruiser.folders.mjs && node scripts/core-exports.mjs",
