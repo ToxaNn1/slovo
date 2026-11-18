@@ -84,7 +84,6 @@ export const typedForm: AnswerForm<TypedContent, TypedRound, TypedGiven, TypedAn
       },
     };
   },
-  reviewAnswer: (_round, { typed }) => ({ text: typed.trim(), stressedVowels: [] }),
   openLetter({ expected }, shown) {
     if (!shown.canOpenLetter) return undefined;
     const letters = Array.from(expected);

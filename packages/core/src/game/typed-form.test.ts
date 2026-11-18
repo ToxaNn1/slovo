@@ -72,19 +72,6 @@ describe('the typed form', () => {
     ).toBe(false);
   });
 
-  it('shows the text typed, trimmed, in the Game Review', () => {
-    const judged = typedForm.judge(
-      content,
-      round,
-      { form: 'typed', text: ' пять ' },
-      testComparison,
-    );
-    expect(judged && typedForm.reviewAnswer(round, judged.answer)).toEqual({
-      text: 'пять',
-      stressedVowels: [],
-    });
-  });
-
   it('is well formed only with text to type', () => {
     expect(typedForm.wellFormed(content)).toBe(true);
     expect(typedForm.wellFormed({ ...content, expected: '' })).toBe(false);

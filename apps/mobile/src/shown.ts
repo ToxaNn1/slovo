@@ -22,8 +22,6 @@ export interface Shown {
   readonly gameRoundMascot: boolean;
   /** The third end button «До стрічки» (ADR 0139). */
   readonly gameEndToFeed: boolean;
-  /** The plain Game Review: rows that neither expand nor open the Entry (ADR 0139). */
-  readonly plainGameReview: boolean;
   /** The Games hub in five groups (ADR 0139). */
   readonly gameHubGroups: boolean;
   /** «Рекорд: N з M» or «Ще жодної гри» and the board's line in a Games hub row (ADR 0139). */
@@ -204,7 +202,6 @@ export function shownOf({
     gameReview: on('gameReview'),
     gameRoundMascot: on('gameRoundMascot'),
     gameEndToFeed: on('gameEndToFeed'),
-    plainGameReview: on('plainGameReview'),
     gameHubGroups: on('gameHubGroups'),
     gameHubRecord: on('gameHubRecord'),
     gameModeToast: on('gameModeToast'),

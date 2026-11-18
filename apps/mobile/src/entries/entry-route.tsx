@@ -45,7 +45,6 @@ const stacks = {
     openedFrom: () => 'search',
     inSaved: false,
   },
-  game: { useDefaultBack: () => editionStrings.game.title, openedFrom: fromList, inSaved: false },
   history: {
     useDefaultBack: () => editionStrings.history.title,
     openedFrom: fromList,

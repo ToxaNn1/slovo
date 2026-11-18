@@ -1,23 +1,14 @@
 import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 import type { PlayedRound, RoundAnswer } from '@slovo/core';
 import { EditionProvider, GameReview } from '@slovo/ui';
-import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import { describe, expect, it } from '@jest/globals';
+import { render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
   game: {
-    review: {
-      title: 'Your Rounds',
-      right: 'right',
-      wrong: 'wrong',
-      picked: 'you picked {text}',
-      typed: 'you typed {text}',
-      withAnswer: '{title} — {answer}',
-      expandHint: 'Shows what it means',
-      openHint: 'Opens the entry',
-    },
+    review: { right: 'right', wrong: 'wrong' },
+    finals: { review: 'Round review' },
   },
   wordCard: {
     stress: 'stress on {vowels}',
@@ -341,253 +332,66 @@ const originRounds: PlayedRound[] = [
   },
 }));
 
-/** The Edition's Pronunciation, as the app gives it: a stand-in that names the Word it reads. */
-function Pronunciation({ lemma, entryId }: { lemma: string; entryId: string }) {
-  return <Text>{`hear ${lemma} (${entryId})`}</Text>;
-}
-
-async function renderReview({
-  onOpen = jest.fn(),
-  played = rounds,
-  pronunciation,
-}: {
-  onOpen?: (entryId: string) => void;
-  played?: readonly PlayedRound[];
-  pronunciation?: typeof Pronunciation;
-} = {}) {
+async function renderReview(played: readonly PlayedRound[] = rounds) {
   await render(
-    <EditionProvider
-      edition={{ locale: 'en' }}
-      strings={strings}
-      {...(pronunciation === undefined ? {} : { pronunciation })}
-    >
-      <GameReview rounds={played} onOpen={onOpen} />
+    <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+      <GameReview rounds={played} />
     </EditionProvider>,
   );
 }
 
+/** What VoiceOver reads of each row, in order. */
+const rowLabels = () =>
+  screen.getAllByTestId(/^game-review-row-/).map((row) => String(row.props['accessibilityLabel']));
+
 describe('GameReview', () => {
-  it('lists every Round in order, right or wrong, with the wrong pick', async () => {
+  it('lists every Round in order under its title: its number, its word and whether it was right', async () => {
     await renderReview();
 
-    expect(screen.getByRole('header', { name: 'Your Rounds' })).toBeTruthy();
-    expect(screen.getAllByRole('button')).toEqual(
-      [
-        '1, candid, right',
-        '2, dour, wrong, you picked brittle',
-        '3, in the meantimes, wrong, you picked in the meanwhiles',
-        '4, spill the beans, wrong, you picked bite the dust',
-        '5, walk, stress on a, wrong, you picked run, stress on u',
-        '6, What time is it?, wrong, you picked How many hours?',
-      ].map((name) => screen.getByRole('button', { name })),
-    );
-    expect(screen.getByTestId('game-review-row-1')).toHaveTextContent(/✓/);
-    expect(screen.getByTestId('game-review-row-2')).toHaveTextContent(/✗/);
-    expect(screen.getByText('you picked brittle')).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Round review' })).toBeTruthy();
+    expect(rowLabels()).toEqual([
+      '1, candid, right',
+      '2, dour, wrong',
+      '3, in the meantimes, wrong',
+      '4, spill the beans, wrong',
+      '5, walk, stress on a, wrong',
+      '6, What time is it?, wrong',
+    ]);
+    expect(screen.getByTestId('game-review-row-1')).toHaveTextContent('✓candid');
+    expect(screen.getByTestId('game-review-row-2')).toHaveTextContent('✗dour');
+    expect(screen.queryByText(/brittle/)).toBeNull();
     expect(screen.queryByText('open and honest')).toBeNull();
   });
 
-  it('expands a Word on a tap: its Definition, Example and etymology', async () => {
-    await renderReview();
+  it('leads a Round of every answer form with its word, stressed where the Round showed the Stress', async () => {
+    await renderReview(formRounds);
 
-    await fireEvent.press(screen.getByTestId('game-review-row-1'));
-
-    expect(screen.getByRole('button', { name: '1, candid, right', expanded: true })).toBeTruthy();
-    expect(screen.getByText('open and honest')).toBeTruthy();
-    expect(screen.getByText('“a candid talk”')).toBeTruthy();
-    expect(screen.getByText('— Austen')).toBeTruthy();
-    expect(screen.getByText('Etymology')).toBeTruthy();
-    expect(screen.getByText('from Latin candidus, white')).toBeTruthy();
-  });
-
-  it('expands a Word without an Example or etymology to its Definition alone', async () => {
-    await renderReview();
-
-    await fireEvent.press(screen.getByTestId('game-review-row-2'));
-
-    expect(screen.getByText('stern and gloomy')).toBeTruthy();
-    expect(screen.queryByText('Etymology')).toBeNull();
-  });
-
-  it('offers an expanded Word to hear, its stressed Lemma read by the Pronunciation', async () => {
-    await renderReview({ played: originRounds, pronunciation: Pronunciation });
-
-    expect(screen.queryByText(/^hear/)).toBeNull();
-    await fireEvent.press(screen.getByTestId('game-review-row-1'));
-
-    expect(screen.getByText('hear re\u0301cord (w_record)')).toBeTruthy();
-    expect(screen.queryByText('hear candid (w_candid)')).toBeNull();
-  });
-
-  it('offers no Word to hear for an idiom, a Correction, a Synonym Row or a Tip', async () => {
-    await renderReview({ pronunciation: Pronunciation });
-
-    for (const row of [3, 4, 5, 6]) {
-      await fireEvent.press(screen.getByTestId(`game-review-row-${String(row)}`));
-      expect(screen.getByTestId('game-review-details')).toBeTruthy();
-      expect(screen.queryByText(/^hear/)).toBeNull();
-    }
-  });
-
-  it('offers no Word to hear when the Edition gives no Pronunciation', async () => {
-    await renderReview();
-
-    await fireEvent.press(screen.getByTestId('game-review-row-1'));
-
-    expect(screen.getByText('open and honest')).toBeTruthy();
-    expect(screen.queryByText(/^hear/)).toBeNull();
-  });
-
-  it('expands a Correction on a tap: the right form and the explanation', async () => {
-    await renderReview();
-
-    await fireEvent.press(screen.getByTestId('game-review-row-3'));
-
-    expect(screen.getByText('Better')).toBeTruthy();
-    expect(screen.getByText('in the meantime')).toBeTruthy();
-    expect(screen.getByText('The phrase takes the singular.')).toBeTruthy();
-  });
-
-  it('expands an idiom on a tap: its Definition, Example and origin', async () => {
-    await renderReview();
-
-    await fireEvent.press(screen.getByTestId('game-review-row-4'));
-
-    expect(
-      screen.getByRole('button', {
-        name: '4, spill the beans, wrong, you picked bite the dust',
-        expanded: true,
-      }),
-    ).toBeTruthy();
-    expect(screen.getByText('to give away a secret')).toBeTruthy();
-    expect(screen.getByText('“Who spilled the beans?”')).toBeTruthy();
-    expect(screen.getByText('Origin')).toBeTruthy();
-    expect(screen.getByText('from voting with beans in ancient Greece')).toBeTruthy();
-    expect(screen.queryByText('Etymology')).toBeNull();
-  });
-
-  it('expands a Synonym Row on a tap: its members with their Stress', async () => {
-    await renderReview();
-
-    await fireEvent.press(screen.getByTestId('game-review-row-5'));
-
-    expect(
-      screen.getByRole('button', {
-        name: '5, walk, stress on a, wrong, you picked run, stress on u',
-        expanded: true,
-      }),
-    ).toBeTruthy();
-    expect(
-      screen.getByText('stro\u0301ll, a\u0301mble, stri\u0301de, hi\u0301ke, tru\u0301dge'),
-    ).toBeTruthy();
-  });
-
-  it('expands a Tip on a tap: its explanation', async () => {
-    await renderReview();
-
-    await fireEvent.press(screen.getByTestId('game-review-row-6'));
-
-    expect(
-      screen.getByRole('button', {
-        name: '6, What time is it?, wrong, you picked How many hours?',
-        expanded: true,
-      }),
-    ).toBeTruthy();
-    expect(
-      screen.getByText('Ask for the hour with «what time», not «how much time».'),
-    ).toBeTruthy();
-  });
-
-  it('opens the Entry on a second tap, and keeps one Round expanded at a time', async () => {
-    const onOpen = jest.fn();
-    await renderReview({ onOpen });
-
-    await fireEvent.press(screen.getByTestId('game-review-row-1'));
-    expect(onOpen).not.toHaveBeenCalled();
-    await fireEvent.press(screen.getByTestId('game-review-row-2'));
-    expect(screen.queryByText('open and honest')).toBeNull();
-    expect(onOpen).not.toHaveBeenCalled();
-    await fireEvent.press(screen.getByTestId('game-review-row-2'));
-
-    await fireEvent.press(screen.getByTestId('game-review-row-4'));
-    await fireEvent.press(screen.getByTestId('game-review-row-4'));
-
-    expect(onOpen.mock.calls).toEqual([['w_dour'], ['i_spillthebeans']]);
-  });
-
-  it('opens a Synonym Row and a Tip on a second tap', async () => {
-    const onOpen = jest.fn();
-    await renderReview({ onOpen });
-
-    await fireEvent.press(screen.getByTestId('game-review-row-5'));
-    expect(onOpen).not.toHaveBeenCalled();
-    await fireEvent.press(screen.getByTestId('game-review-row-5'));
-    await fireEvent.press(screen.getByTestId('game-review-row-6'));
-    expect(onOpen).toHaveBeenCalledTimes(1);
-    await fireEvent.press(screen.getByTestId('game-review-row-6'));
-
-    expect(onOpen.mock.calls).toEqual([['r_walk'], ['t_whattime']]);
-  });
-  it("lists a Round of every answer form, right or wrong, with the reader's answer on a mistake", async () => {
-    await renderReview({ played: formRounds });
-
-    expect(screen.getAllByRole('button')).toEqual(
-      [
-        '1, record, stress on e, right',
-        '2, record, stress on e, wrong, you picked record, stress on o',
-        '3, candid, right',
-        '4, dour, wrong, you picked open and honest',
-        '5, dour, right',
-        '6, dour, wrong, you picked duor',
-        '7, spill the beans, right',
-        '8, spill the beans, wrong, you picked beans the spill',
-        '9, in the meantimes, right',
-        '10, candid, wrong, you typed candit',
-      ].map((name) => screen.getByRole('button', { name })),
-    );
+    expect(rowLabels()).toEqual([
+      '1, record, stress on e, right',
+      '2, record, stress on e, wrong',
+      '3, candid, right',
+      '4, dour, wrong',
+      '5, dour, right',
+      '6, dour, wrong',
+      '7, spill the beans, right',
+      '8, spill the beans, wrong',
+      '9, in the meantimes, right',
+      '10, candid, wrong',
+    ]);
     expect(screen.getByTestId('game-review-row-1')).toHaveTextContent('✓re\u0301cord');
-    expect(screen.getByTestId('game-review-row-2')).toHaveTextContent(
-      '✗re\u0301cordyou picked reco\u0301rd',
-    );
-    expect(screen.getByTestId('game-review-row-4')).toHaveTextContent(
-      '✗douryou picked open and honest',
-    );
-    expect(screen.getByTestId('game-review-row-6')).toHaveTextContent('✗douryou picked duor');
-    expect(screen.getByTestId('game-review-row-7')).toHaveTextContent('✓spill the beans');
-    expect(screen.getByTestId('game-review-row-8')).toHaveTextContent(
-      '✗spill the beansyou picked beans the spill',
-    );
-    expect(screen.getByTestId('game-review-row-10')).toHaveTextContent('✗candidyou typed candit');
+    expect(screen.getByTestId('game-review-row-8')).toHaveTextContent('✗spill the beans');
   });
 
-  it('leads a Round of the origin mode with the Word asked about, its right language beside it', async () => {
-    await renderReview({ played: originRounds });
+  it('leads a Round of the origin mode with the Word asked about, not its language', async () => {
+    await renderReview(originRounds);
 
-    expect(screen.getAllByRole('button')).toEqual(
-      ['1, record, stress on e — Latin, right', '2, candid — Latin, wrong, you picked Greek'].map(
-        (name) => screen.getByRole('button', { name }),
-      ),
-    );
-    expect(screen.getByTestId('game-review-row-1')).toHaveTextContent('✓re\u0301cord — Latin');
-    expect(screen.getByTestId('game-review-row-2')).toHaveTextContent(
-      '✗candid — Latinyou picked Greek',
-    );
+    expect(rowLabels()).toEqual(['1, record, stress on e, right', '2, candid, wrong']);
+    expect(screen.getByTestId('game-review-row-1')).toHaveTextContent('✓re\u0301cord');
   });
 
-  it('expands a Round of any answer form and opens its Entry on a second tap', async () => {
-    const onOpen = jest.fn();
-    await renderReview({ onOpen, played: formRounds });
+  it('offers no row to tap', async () => {
+    await renderReview();
 
-    await fireEvent.press(screen.getByTestId('game-review-row-4'));
-    expect(screen.getByText('stern and gloomy')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('game-review-row-4'));
-    await fireEvent.press(screen.getByTestId('game-review-row-8'));
-    expect(screen.getByText('to give away a secret')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('game-review-row-8'));
-    await fireEvent.press(screen.getByTestId('game-review-row-9'));
-    expect(screen.getByText('The phrase takes the singular.')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('game-review-row-9'));
-
-    expect(onOpen.mock.calls).toEqual([['w_dour'], ['i_spillthebeans'], ['c_meanwhile']]);
+    expect(screen.queryAllByRole('button')).toEqual([]);
   });
 });

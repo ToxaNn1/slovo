@@ -7,7 +7,7 @@ import { Button } from '../primitives/Button';
 import { blockGap, fontScaleCap, resultLayout, space, typeRoles, typeStyle } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { ResultNumber, ResultPanel } from './ResultPanel';
-import { GameReviewOf, type ResultReview } from './GameReview';
+import { GameReview } from './GameReview';
 import { FlyIn } from './FlyIn';
 import { useGameHaptics } from './useGameHaptics';
 
@@ -44,7 +44,8 @@ export function GameEndPoster({
   onAgain: () => void;
   /** Opens the Games hub. */
   onToGames: () => void;
-  review: ResultReview;
+  /** Whether the Game Review follows the result (`gameReview`); none, heading included, when no Round was played. */
+  review: boolean;
   /** The Mascot at the Game's end, drawn for the red panel; none without it. */
   mascot?: ReactNode;
 }) {
@@ -129,7 +130,7 @@ export function GameEndPoster({
             />
           )}
         </View>
-        <GameReviewOf rounds={game.played} review={review} />
+        {review && game.played.length > 0 ? <GameReview rounds={game.played} /> : null}
         {/* «Ще раз!» the main action across the screen, «До ігор» across under it (owner, 15.11). */}
         <View style={styles.actions}>
           <Button testID="game-again" label={words.finals.again} onPress={onAgain} />

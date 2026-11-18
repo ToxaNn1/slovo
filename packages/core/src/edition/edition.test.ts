@@ -107,7 +107,6 @@ const validConfig = {
     crosswordBadgeStamp: 'on',
     gameRoundMascot: 'on',
     gameEndToFeed: 'on',
-    plainGameReview: 'on',
     gameHubGroups: 'on',
     gameHubRecord: 'on',
     gameModeToast: 'on',
@@ -386,7 +385,6 @@ describe('loadEdition', () => {
     'crosswordBadgeStamp',
     'gameRoundMascot',
     'gameEndToFeed',
-    'plainGameReview',
     'gameHubGroups',
     'gameHubRecord',
     'gameModeToast',
@@ -607,7 +605,6 @@ describe('loadEdition', () => {
   it.each([
     'gameRoundMascot',
     'gameEndToFeed',
-    'plainGameReview',
     'gameHubGroups',
     'gameHubRecord',
     'gameModeToast',
@@ -1538,7 +1535,6 @@ const dependentSwitches = [
   // The board «slogo game last» parts of a Game (spec #1880).
   ['gameRoundMascot', ['game']],
   ['gameEndToFeed', ['game']],
-  ['plainGameReview', ['gameReview']],
   ['gameHubGroups', ['game']],
   ['gameHubRecord', ['game']],
   ['gameModeToast', ['game']],

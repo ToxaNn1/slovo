@@ -51,9 +51,9 @@ describe('the Game screen', () => {
       expect(screen.getByTestId('mascot-happy')).toBeTruthy();
       expect(screen.queryByTestId('game-end-time-up')).toBeNull();
       expect(screen.getByTestId('game-end-best')).toHaveTextContent('Рекорд15');
-      // Off `gameEndToFeed` and `plainGameReview`, the two buttons and the Game Review of #1674 stay.
+      // Off `gameEndToFeed`, the two buttons stay.
       expect(screen.queryByTestId('game-to-feed')).toBeNull();
-      expect(screen.getByRole('header', { name: 'Твої раунди' })).toBeOnTheScreen();
+      expect(screen.getByRole('header', { name: 'Огляд раундів' })).toBeOnTheScreen();
 
       await fireEvent.press(screen.getByTestId('game-to-games'));
 
@@ -98,12 +98,11 @@ describe('the Game screen', () => {
     });
 
     it('lists «Огляд раундів», a plain row for each Round whose tap does nothing', async () => {
-      await open({ corrections: 15, switchedOn: ['plainGameReview'] });
+      await open({ corrections: 15 });
       await renderScreen();
       await loseSurvival();
 
       expect(screen.getByRole('header', { name: 'Огляд раундів' })).toBeOnTheScreen();
-      expect(screen.queryByRole('header', { name: 'Твої раунди' })).toBeNull();
       const rows = screen.getAllByTestId(/^game-review-row-/);
       expect(rows.map((row) => String(row.props['accessibilityLabel']).split(', ').at(-1))).toEqual(
         ['помилка', 'правильно', 'правильно', 'помилка', 'помилка'],

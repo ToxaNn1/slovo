@@ -4,7 +4,6 @@ import type { Category, Word } from '@slovo/contracts';
 
 import {
   buildGameReview,
-  buildPlainGameReview,
   GAME_ROUNDS,
   openComposition,
   type Composition,
@@ -255,12 +254,10 @@ describe('the grids of «Пари»', () => {
     for (const { id } of wordsShownAs(grid.words[other]?.shown.text ?? '')) {
       expect(app.knowledge.state.shown.get(id)).toBeUndefined();
     }
-    expect(buildGameReview(game.played)).toEqual([
-      expect.objectContaining({ entryId: tapped, right: false }),
-    ]);
+    expect(buildGameReview(game.played)).toEqual([expect.objectContaining({ right: false })]);
   });
 
-  it('gives each pair its own row of the plain Game Review, ✓ or ✗ and the Word tapped', async () => {
+  it('gives each pair its own row of the Game Review, ✓ or ✗ and the Word tapped', async () => {
     const app = await run();
     await app.game.start('pairs');
     const grid = gridOf(current(app).round);
@@ -272,7 +269,7 @@ describe('the grids of «Пари»', () => {
     const wrong = [0, 1, 2, 3].find((place) => !taken.includes(place)) ?? -1;
     await app.game.answer({ form: 'pairs', word: 0, definition: wrong });
 
-    const rows = buildPlainGameReview(current(app).played);
+    const rows = buildGameReview(current(app).played);
     expect(rows.map(({ number, right: rightRow, word }) => [number, rightRow, word.text])).toEqual([
       [1, true, grid.words[1]?.shown.text],
       [2, false, grid.words[0]?.shown.text],

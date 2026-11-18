@@ -1939,21 +1939,13 @@
       "best": "Рекорд"
     },
     "finals": {
-      "rounds": "Твої раунди",
-      "chosen": "Твій вибір: {text}",
       "again": "Ще раз!",
       "toGames": "До ігор",
       "review": "Огляд раундів"
     },
     "review": {
-      "title": "Твої раунди",
       "right": "правильно",
-      "wrong": "помилка",
-      "picked": "Твій вибір: {text}",
-      "typed": "Твоя відповідь: {text}",
-      "withAnswer": "{title} — {answer}",
-      "expandHint": "Показує пояснення",
-      "openHint": "Відкриває запис"
+      "wrong": "помилка"
     }
   },
   "widget": {

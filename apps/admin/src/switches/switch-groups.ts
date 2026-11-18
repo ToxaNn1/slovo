@@ -112,7 +112,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   crosswordBadgeStamp: 'crossword',
   gameRoundMascot: 'games',
   gameEndToFeed: 'games',
-  plainGameReview: 'games',
   gameHubGroups: 'games',
   gameHubRecord: 'games',
   gameModeToast: 'games',

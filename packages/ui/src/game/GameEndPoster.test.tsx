@@ -57,7 +57,7 @@ const haptics: Haptics = {
 
 async function renderPoster({
   ended = end,
-  review = { kind: 'none' },
+  review = false,
 }: {
   ended?: GameEnd;
   review?: ComponentProps<typeof GameEndPoster>['review'];
@@ -118,7 +118,7 @@ describe('GameEndPoster', () => {
   it('shows no Game Review, nor its heading, when no Round was played', async () => {
     await renderPoster({
       ended: { kind: 'time-up', onTarget: false, played: 0, right: 0, xp: 0, newBest: false },
-      review: { kind: 'plain' },
+      review: true,
     });
 
     expect(screen.queryByTestId('game-review')).toBeNull();

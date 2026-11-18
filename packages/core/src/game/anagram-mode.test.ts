@@ -263,37 +263,7 @@ describe('a Round of «Анаграми»', () => {
     expect(current(app).round.answer).toMatchObject({ form: 'chips', chosen: wrong, right: false });
     expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(idOf(asked))).toBe('unknown');
-    const tapped = [...lettersOf(asked).slice(1), ...lettersOf(asked).slice(0, 1)];
-    /** The letters tapped, the characters that stay in place in their places. */
-    const shown = Array.from(asked, (character) =>
-      inPlace.has(character) ? character : tapped.shift(),
-    ).join('');
-    expect(buildGameReview(current(app).played)[0]).toMatchObject({
-      entryId: idOf(asked),
-      right: false,
-      picked: { text: shown },
-    });
-  });
-
-  it('shows an apostrophe or a hyphen in place in the letters tapped in the Game Review', async () => {
-    for (const seed of [1, 2, 3, 4, 5, 6]) {
-      const app = await run({ seed });
-      await app.game.start('anagram');
-      while (current(app).status === 'playing' && lemmaOf(current(app).round) !== 'будь-що') {
-        await app.game.answer({ form: 'chips', chips: tapsFor(current(app).round) });
-        await app.game.next();
-      }
-      if (current(app).status !== 'playing') continue;
-      const taps = tapsFor(current(app).round);
-
-      await app.game.answer({ form: 'chips', chips: [...taps].reverse() });
-
-      expect(buildGameReview(current(app).played).at(-1)?.picked).toMatchObject({
-        text: 'ощьд-уб',
-      });
-      return;
-    }
-    throw new Error('No Game asked about «будь-що»');
+    expect(buildGameReview(current(app).played)[0]).toMatchObject({ number: 1, right: false });
   });
 
   it('leaves the Knowledge Marks as they were after right answers', async () => {
