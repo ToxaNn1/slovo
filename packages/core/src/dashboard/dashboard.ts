@@ -75,7 +75,18 @@ export interface MoodBlock {
   readonly kind: 'mood';
   /** The five moods to choose from, in display order. */
   readonly moods: readonly Mood[];
-  readonly check: { readonly state: 'asking' } | { readonly state: 'chosen'; readonly mood: Mood };
+  readonly check:
+    | { readonly state: 'asking' }
+    | {
+        readonly state: 'chosen';
+        readonly mood: Mood;
+        /**
+         * The line under the check-in that says what the Mood changed in the
+         * Feed, while `moodEffect` is on (ADR 0185): then a second tap on the
+         * chosen Mood unpicks it.
+         */
+        readonly effect: string | undefined;
+      };
 }
 
 /**
@@ -170,6 +181,7 @@ export async function openDashboard({
   const subscribers = createSubscribers();
   const wordOfTheDayOn = edition.isFeatureEnabled('wordOfTheDay');
   const moodOn = edition.isFeatureEnabled('mood');
+  const moodEffectOn = edition.isFeatureEnabled('moodEffect');
   const previousWordsOn = edition.isFeatureEnabled('previousWords');
   const categoriesOn = edition.isFeatureEnabled('categoryScreens');
   const correctionCategoriesOn = edition.isFeatureEnabled('correctionCategoryScreens');
@@ -200,7 +212,9 @@ export async function openDashboard({
   function moodBlock(): MoodBlock | undefined {
     const check = mood.today;
     if (!moodOn || check.state === 'skipped') return undefined;
-    return { kind: 'mood', moods: mood.moods, check };
+    if (check.state === 'asking') return { kind: 'mood', moods: mood.moods, check };
+    const effect = moodEffectOn ? check.mood.effect : undefined;
+    return { kind: 'mood', moods: mood.moods, check: { ...check, effect } };
   }
 
   /** The kept archive days before `day`, newest first. */

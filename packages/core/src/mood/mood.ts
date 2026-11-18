@@ -15,6 +15,12 @@ import { moodRecords } from './records';
 const SKIPPED = 'skipped';
 
 /**
+ * The choice an unpicked day keeps (ADR 0185): the day reads as asking again,
+ * and the record stays so the unpick wins on the reader's other devices.
+ */
+const UNPICKED = 'unpicked';
+
+/**
  * Today's Mood check-in (ADR 0076): asking while the local day has no record,
  * chosen with the Mood, or skipped («Не сьогодні»), which hides the block
  * until tomorrow.
@@ -52,6 +58,12 @@ export interface MoodCheckIns {
   readonly moods: readonly Mood[];
   /** Chooses the mood for today, or changes it; an id not among `moods` is ignored. */
   choose(moodId: string): Promise<void>;
+  /**
+   * Unpicks today's Mood (ADR 0185): no Mood today, so the check-in asks
+   * again and the Feed is back on its plain parameters. Ignored on a day
+   * without a chosen Mood and with `moodEffect` off.
+   */
+  unpick(): Promise<void>;
   /** «Не сьогодні»: skips today. */
   skip(): Promise<void>;
   /** The days each Mood was chosen on, by mood id, for the statistics row «Настрої»; skipped days count for none. */
@@ -78,6 +90,8 @@ export async function openMoodCheckIns({
 }): Promise<MoodCheckIns> {
   const subscribers = createSubscribers();
   const on = edition.isFeatureEnabled('mood');
+  // Off while `mood` is: the contracts hold the dependency.
+  const unpicks = edition.isFeatureEnabled('moodEffect');
   const moods = edition.dashboardMoods;
   /** A Mood the Dashboard offers, the only kind a reader chooses. */
   const offeredMoodOf = (id: string) => moods.find((mood) => mood.id === id);
@@ -89,6 +103,7 @@ export async function openMoodCheckIns({
     const record = await userState.read(moodRecords.checkIns.record(date));
     if (record === undefined) return { state: 'asking' };
     if (record.choice === SKIPPED) return { state: 'skipped' };
+    if (record.choice === UNPICKED) return { state: 'asking' };
     const mood = moodOf(record.choice);
     return mood === undefined ? { state: 'asking' } : { state: 'chosen', mood };
   }
@@ -145,6 +160,12 @@ export async function openMoodCheckIns({
       await record(moodId);
       await analytics.track('moodChosen', { mood: moodId }).catch(() => undefined);
     },
+    async unpick() {
+      const mood = todaysMood();
+      if (!unpicks || mood === undefined) return;
+      await record(UNPICKED);
+      await analytics.track('moodUnpicked', { mood: mood.id }).catch(() => undefined);
+    },
     async skip() {
       await record(SKIPPED);
       await analytics.track('moodSkipped', {}).catch(() => undefined);
@@ -152,7 +173,7 @@ export async function openMoodCheckIns({
     async daysByMood() {
       const days = new Map<string, number>();
       for (const { choice } of (await userState.list(moodRecords.checkIns)).values()) {
-        if (choice === SKIPPED || moodOf(choice) === undefined) continue;
+        if (choice === SKIPPED || choice === UNPICKED || moodOf(choice) === undefined) continue;
         days.set(choice, (days.get(choice) ?? 0) + 1);
       }
       return days;

@@ -73,6 +73,8 @@ export interface AnalyticsEvents {
   };
   /** The reader chose a Mood in the Dashboard's Mood check-in, or changed it (ADR 0076). */
   readonly moodChosen: { readonly mood: string };
+  /** The reader unpicked today's Mood with a second tap on it (ADR 0185). */
+  readonly moodUnpicked: { readonly mood: string };
   /** The reader skipped the Mood check-in with «Не сьогодні». */
   readonly moodSkipped: Record<string, never>;
   /** The reader reached a new Level (ADR 0066). */
