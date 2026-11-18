@@ -1,5 +1,5 @@
 import type { CollectionShareRefusal } from '@slovo/core';
-import { useUndoToast } from '@slovo/ui';
+import { useOfflinePlate, useUndoToast } from '@slovo/ui';
 import * as Clipboard from 'expo-clipboard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Share } from 'react-native';
@@ -8,15 +8,12 @@ import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
-import { useOfflineNotice } from '../edition/offline-notice';
 
 const strings = editionStrings.collections.link;
 
-/** What the toast says when a Collection is not shared: no connection, too many Entries, or that it failed. */
-function refusalText(reason: CollectionShareRefusal): string {
+/** What the toast says when a Collection is not shared: too many Entries, or that it failed. */
+function refusalText(reason: Exclude<CollectionShareRefusal, 'offline'>): string {
   switch (reason) {
-    case 'offline':
-      return strings.offline;
     case 'too-many-entries':
       return strings.tooManyEntries;
     case 'switched-off':
@@ -29,15 +26,14 @@ function refusalText(reason: CollectionShareRefusal): string {
 
 /**
  * Says why a Collection is not shared: no connection on the offline plate
- * while it is on in effect (ADR 0158), anything else, or no connection with
- * the plate off, in a toast. It needs an `UndoToastProvider` above it.
+ * (ADR 0158), anything else in a toast. It needs an `UndoToastProvider` above it.
  */
 function useSayRefused(): (reason: CollectionShareRefusal) => void {
   const showToast = useUndoToast();
-  const showOffline = useOfflineNotice();
+  const showOffline = useOfflinePlate();
   return useCallback(
     (reason: CollectionShareRefusal) => {
-      if (reason === 'offline' && showOffline !== undefined) showOffline();
+      if (reason === 'offline') showOffline();
       else showToast({ message: refusalText(reason) });
     },
     [showToast, showOffline],

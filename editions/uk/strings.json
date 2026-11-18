@@ -2092,7 +2092,6 @@
     "signOutEverywhere": "Вийти на всіх пристроях",
     "sync": {
       "syncing": "Синхронізація…",
-      "waitingForNetwork": "Синхронізація чекає на мережу",
       "syncedToday": "Синхронізовано сьогодні, {time}",
       "syncedOn": "Синхронізовано {day} {month}",
       "syncedOnInYear": "Синхронізовано {day} {month} {year}"
@@ -2105,7 +2104,6 @@
       "cancel": "Скасувати"
     },
     "problems": {
-      "offline": "Немає з’єднання з інтернетом. Спробуй ще раз.",
       "invalid-email": "Перевір адресу пошти.",
       "wrong-code": {
         "one": "Код не підходить. Лишилась {count} спроба.",

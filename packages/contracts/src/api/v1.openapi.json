@@ -9376,14 +9376,6 @@
                           ],
                           "type": "string"
                         },
-                        "dashboard": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "mood": {
                           "enum": [
                             "on",
@@ -9624,14 +9616,6 @@
                           ],
                           "type": "string"
                         },
-                        "offlinePlate": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "statisticsOffCounter": {
                           "enum": [
                             "on",
@@ -9748,7 +9732,6 @@
                         "sounds",
                         "reduceMotion",
                         "fastReveal",
-                        "dashboard",
                         "mood",
                         "previousWords",
                         "correctionTypes",
@@ -9779,7 +9762,6 @@
                         "readerName",
                         "widgetPreviews",
                         "textSizeSteps",
-                        "offlinePlate",
                         "statisticsOffCounter"
                       ]
                     },
@@ -11220,14 +11202,6 @@
                           ],
                           "type": "string"
                         },
-                        "dashboard": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "mood": {
                           "enum": [
                             "on",
@@ -11468,14 +11442,6 @@
                           ],
                           "type": "string"
                         },
-                        "offlinePlate": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "statisticsOffCounter": {
                           "enum": [
                             "on",
@@ -11592,7 +11558,6 @@
                         "sounds",
                         "reduceMotion",
                         "fastReveal",
-                        "dashboard",
                         "mood",
                         "previousWords",
                         "correctionTypes",
@@ -11623,7 +11588,6 @@
                         "readerName",
                         "widgetPreviews",
                         "textSizeSteps",
-                        "offlinePlate",
                         "statisticsOffCounter"
                       ]
                     },
@@ -12988,14 +12952,6 @@
                           ],
                           "type": "string"
                         },
-                        "dashboard": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "mood": {
                           "enum": [
                             "on",
@@ -13236,14 +13192,6 @@
                           ],
                           "type": "string"
                         },
-                        "offlinePlate": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "statisticsOffCounter": {
                           "enum": [
                             "on",
@@ -13360,7 +13308,6 @@
                         "sounds",
                         "reduceMotion",
                         "fastReveal",
-                        "dashboard",
                         "mood",
                         "previousWords",
                         "correctionTypes",
@@ -13391,7 +13338,6 @@
                         "readerName",
                         "widgetPreviews",
                         "textSizeSteps",
-                        "offlinePlate",
                         "statisticsOffCounter"
                       ]
                     },

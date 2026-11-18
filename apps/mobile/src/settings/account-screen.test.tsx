@@ -41,12 +41,8 @@ const { problems } = strings;
 /** A client id of the shape Google gives an iOS app; no real one. */
 const CLIENT_ID = '123456789012-test.apps.googleusercontent.com';
 
-/** The Edition with its Google and Apple sign-in and offline plate Feature Switches as given. */
-const editionWith = (switches: {
-  googleSignIn: boolean;
-  signInWithApple: boolean;
-  offlinePlate: boolean;
-}) => {
+/** The Edition with its Google and Apple sign-in Feature Switches as given. */
+const editionWith = (switches: { googleSignIn: boolean; signInWithApple: boolean }) => {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   const states = Object.fromEntries(
     Object.entries(switches).map(([name, on]) => [name, on ? 'on' : 'off']),
@@ -72,7 +68,6 @@ async function settle(action: () => unknown = () => undefined) {
 async function renderScreen({
   googleSignIn = true,
   signInWithApple = true,
-  offlinePlate = false,
   withClientId = true,
   appleModule = true,
   googleSheet = createFakeGoogleSignInSheet(),
@@ -81,7 +76,6 @@ async function renderScreen({
 }: {
   googleSignIn?: boolean;
   signInWithApple?: boolean;
-  offlinePlate?: boolean;
   withClientId?: boolean;
   appleModule?: boolean;
   googleSheet?: GoogleSignInSheet;
@@ -107,7 +101,7 @@ async function renderScreen({
     { onError: jest.fn() },
   );
   await opening.opened();
-  const edition = editionWith({ googleSignIn, signInWithApple, offlinePlate });
+  const edition = editionWith({ googleSignIn, signInWithApple });
   await renderInGestureRoot(
     // The SLOVO ID screen's confirmation dialog is a bottom sheet, which reads the safe area.
     <SafeAreaProvider initialMetrics={metrics}>
@@ -146,7 +140,6 @@ describe("the Account screen's name", () => {
     const { accountName } = editionWith({
       googleSignIn: true,
       signInWithApple: true,
-      offlinePlate: false,
     });
     expect(accountName).not.toBe('SLOVO ID');
     expect(screen.getByText(accountName)).toBeOnTheScreen();
@@ -220,30 +213,19 @@ describe('«Увійти через Google» on the SLOVO ID screen', () => {
     await signInWithGoogle();
 
     expect(googleButton()).toBeOnTheScreen();
-    expect(screen.queryByText(problems.offline)).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('offline-plate')).not.toBeOnTheScreen();
     expect(screen.queryByText(problems.refused)).not.toBeOnTheScreen();
   });
 
-  it('says so when the sheet finds no network', async () => {
+  it('says it on the offline plate, not under the field, when the sheet finds no network', async () => {
     const googleSheet = createFakeGoogleSignInSheet();
     googleSheet.fails('offline');
     await renderScreen({ googleSheet });
 
     await signInWithGoogle();
 
-    expect(screen.getByText(problems.offline)).toBeOnTheScreen();
-    expect(screen.queryByTestId('offline-plate')).not.toBeOnTheScreen();
-  });
-
-  it('says it on the offline plate, not under the field, with the plate on', async () => {
-    const googleSheet = createFakeGoogleSignInSheet();
-    googleSheet.fails('offline');
-    await renderScreen({ googleSheet, offlinePlate: true });
-
-    await signInWithGoogle();
-
     expect(screen.getByTestId('offline-plate')).toHaveTextContent(editionStrings.offlinePlate);
-    expect(screen.queryByText(problems.offline)).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('account-problem')).not.toBeOnTheScreen();
   });
 
   it('waits on «НАДІСЛАТИ КОД» while the code is asked for, then says there is no connection and offers it again', async () => {
@@ -257,7 +239,6 @@ describe('«Увійти через Google» on the SLOVO ID screen', () => {
       noAnswer.then(() => backend.account.requestCode(...call));
     await renderScreen({
       backend: { account: { ...backend.account, requestCode } },
-      offlinePlate: true,
     });
     const sendCode = () => screen.getByRole('button', { name: strings.sendCode });
 

@@ -119,7 +119,6 @@
     "sounds": "on",
     "reduceMotion": "on",
     "fastReveal": "on",
-    "dashboard": "on",
     "mood": "on",
     "curatedCollections": "on",
     "gesturesHintDemo": "on",
@@ -148,7 +147,6 @@
     "readerName": "on",
     "widgetPreviews": "on",
     "textSizeSteps": "on",
-    "offlinePlate": "on",
     "statisticsOffCounter": "on"
   },
   "userSettingDefaults": {

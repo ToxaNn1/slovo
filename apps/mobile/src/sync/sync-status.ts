@@ -5,28 +5,24 @@ const twoDigits = (value: number) => String(value).padStart(2, '0');
 
 /**
  * The status line under the email of the SLOVO ID screen: that a sync runs,
- * that it waits for the network, or when the words were last synced (the time
- * today, or the date, with the year only in another year). With
- * `offlineOnPlate` the offline plate says there is no network (ADR 0158), so
- * the line gives the last sync instead. Nothing before a first sync has gone
- * through.
+ * or when the words were last synced (the time today, or the date, with the
+ * year only in another year). The offline plate says there is no network
+ * (ADR 0158), so the line gives the last sync then too. Nothing before a first
+ * sync has gone through.
  */
 export function syncStatusLine({
   state,
   strings,
   months,
   clock,
-  offlineOnPlate,
 }: {
   state: SyncState;
   strings: EditionStrings['account']['sync'];
   /** The short month names, as the line abbreviates them. */
   months: EditionStrings['dates']['shortMonths'];
   clock: Clock;
-  offlineOnPlate: boolean;
 }): string | undefined {
   if (state.running) return strings.syncing;
-  if (state.offline && !offlineOnPlate) return strings.waitingForNetwork;
   if (state.syncedAt === undefined) return undefined;
   const { date, daysAgo } = localDayOf(state.syncedAt, clock);
   if (daysAgo === 0) {

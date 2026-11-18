@@ -1,5 +1,5 @@
 import type { Sync } from '@slovo/core';
-import { space, typeStyle, useTokens } from '@slovo/ui';
+import { space, typeStyle, useOfflinePlate, useTokens } from '@slovo/ui';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Polygon } from 'react-native-svg';
@@ -8,7 +8,6 @@ import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
 import { useSubscribed, type Opening } from '../opening';
 import { useShell } from '../shell-value';
-import { useOfflineNotice } from '../edition/offline-notice';
 import { useShown } from '../shown-in-effect';
 import { syncStatusLine } from './sync-status';
 
@@ -35,17 +34,16 @@ function Opened({ opening }: { opening: Opening<Sync> }) {
 function Line({ sync }: { sync: Sync }) {
   const state = useSubscribed(sync, ({ state }) => state);
   const tokens = useTokens();
-  const showOffline = useOfflineNotice();
+  const showOffline = useOfflinePlate();
   const { offline } = state;
   useEffect(() => {
-    if (offline) showOffline?.();
+    if (offline) showOffline();
   }, [offline, showOffline]);
   const line = syncStatusLine({
     state,
     strings: editionStrings.account.sync,
     months: editionStrings.dates.shortMonths,
     clock: deviceClock,
-    offlineOnPlate: showOffline !== undefined,
   });
   if (line === undefined) return null;
   const synced = !state.running && !state.offline;

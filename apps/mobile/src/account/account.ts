@@ -24,7 +24,7 @@ export function useAccountInEffect(): Opening<Account> | undefined {
  * Edition's switches in effect and what the build has (ADR 0047).
  */
 export interface AccountScreenSignIn {
-  /** The Edition as the app runs it, its `googleSignIn`, `signInWithApple` and `offlinePlate` switches at their effective values. */
+  /** The Edition as the app runs it, its `googleSignIn` and `signInWithApple` switches at their effective values. */
   readonly edition: Edition;
   /** The build's Google client id, if it has one; «Увійти через Google» shows only with one. */
   readonly googleClientId: string | undefined;
@@ -63,22 +63,17 @@ export function useAccountState(account: Account): AccountState {
 
 /**
  * The line under the field of the Account screen for the last request's
- * problem, if any. With `offlineOnPlate` no connection is said on the offline
- * plate instead (ADR 0158): the plate shows once for each request that finds
- * no network, and the line stays empty.
+ * problem, if any. No connection is said on the offline plate instead
+ * (ADR 0158): the plate shows once for each request that finds no network,
+ * and the line stays empty.
  */
-export function useAccountProblemLine(
-  state: AccountState,
-  offlineOnPlate: boolean,
-): string | undefined {
+export function useAccountProblemLine(state: AccountState): string | undefined {
   const { count } = useEdition();
   const showOffline = useOfflinePlate();
-  const offline = offlineOnPlate && state.problem === 'offline';
+  const offline = state.problem === 'offline';
   useEffect(() => {
     // Each request makes a new state, so the plate shows once per request.
     if (offline) showOffline();
   }, [state, offline, showOffline]);
-  return offline
-    ? undefined
-    : accountProblemLine({ state, strings: editionStrings.account, count });
+  return accountProblemLine({ state, strings: editionStrings.account, count });
 }
