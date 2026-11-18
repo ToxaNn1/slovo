@@ -30,7 +30,7 @@ const curatedCollectionShape = {
   /**
    * A Retired collection has left circulation (ADR 0178): no rail, grid,
    * screen or Feed shows it, and the Language Pack holds no rows of it. A
-   * reader's copy in the Mix stays. Defaults to false.
+   * reader's copy among their Collections stays. Defaults to false.
    */
   retired: z.boolean().default(false),
 };
