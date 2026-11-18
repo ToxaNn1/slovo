@@ -91,6 +91,27 @@ test('a new record and a Retired one name the record by its main field', async (
   ]);
 });
 
+test('a Curated Collection retired and brought back reads as any record, by its name', async () => {
+  const before = { name: 'Слова зими', retired: false };
+  const rows = await logOf(
+    row(
+      'content.curatedCollection.retire',
+      { recordVersion: 1, fields: before },
+      { recordVersion: 2, fields: { ...before, retired: true } },
+    ),
+    row(
+      'content.curatedCollection.edit',
+      { recordVersion: 2, fields: { ...before, retired: true } },
+      { recordVersion: 3, fields: before },
+    ),
+  );
+
+  expect(rows).toEqual([
+    ['Добірку виведено', 'версія 1 · «Слова зими»', 'версія 2 · «Слова зими»'],
+    ['Добірку змінено', 'версія 2 · «Слова зими»', 'версія 3 · retired: так → ні'],
+  ]);
+});
+
 test('switches, people, thresholds and the Content queue read in Ukrainian', async () => {
   const rule = { editionId: 'uk', feature: 'game', order: 0, targets: {} };
   const rows = await logOf(
