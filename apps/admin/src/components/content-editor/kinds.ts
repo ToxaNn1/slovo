@@ -32,6 +32,11 @@ export type FieldControl =
   | { readonly type: 'number' }
   | { readonly type: 'choice'; readonly options: readonly Option[] }
   | { readonly type: 'category'; readonly of: 'categories' | 'correctionCategories' }
+  /**
+   * A Curated Collection's pictogram: a Category or Correction Category whose
+   * pictogram its tile draws (ADR 0178); empty means the Edition's default.
+   */
+  | { readonly type: 'pictogram' }
   | { readonly type: 'chips'; readonly options: readonly Option[] }
   | { readonly type: 'stress'; readonly of: string }
   | { readonly type: 'rarity' }
@@ -285,6 +290,7 @@ export const CONTENT_KINDS: readonly KindEditor[] = [
       field('description', 'Опис', LONG_TEXT),
       field('publishedOn', 'Дата публікації', { type: 'publish-date' }),
       field('entryIds', 'Записи добірки', { type: 'entries' }),
+      field('pictogram', 'Піктограма', { type: 'pictogram' }),
     ],
   },
   {
