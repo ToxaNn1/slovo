@@ -4,6 +4,7 @@ import { useIsFocused } from 'expo-router';
 import { useEffect, useSyncExternalStore } from 'react';
 
 import { useComposition } from '../composition';
+import { useOpenCuratedCollection } from './curated-collection';
 import { editionStrings } from '../edition/edition';
 import { wordOfTheDayLanding, type LandingAsked } from '../feed/word-of-the-day-landing';
 import { keep } from '../keep';
@@ -28,6 +29,8 @@ export interface DashboardScreen {
   readonly openCorrectionType: (type: CorrectionType) => void;
   /** A card of the Curated Collections rail: marks the collection opened, so «Нова» goes. */
   readonly openCuratedCollection: (collectionId: string) => void;
+  /** The Curated Collections rail's header: opens the grid of them all. */
+  readonly openCuratedCollections: () => void;
   /** The Categories rail's header: opens the grid of them all, k1. */
   readonly openCategories: () => void;
   /** A tile of the Categories rail or of k1: opens its Category's screen. */
@@ -49,7 +52,8 @@ let feedOpenedFor: LandingAsked | undefined;
  * a return to the Dashboard while the Feed lacks the card stays on it.
  */
 export function useDashboardScreen(): DashboardScreen {
-  const { dashboard, feed, mood, curatedCollections } = useComposition();
+  const { dashboard, feed, mood } = useComposition();
+  const openCuratedCollection = useOpenCuratedCollection();
   const blocks = useSubscribed(dashboard, (source) => source.blocks);
   const today = useSubscribed(feed, (source) => source.today);
   const openScreen = useOpenScreen();
@@ -76,9 +80,9 @@ export function useDashboardScreen(): DashboardScreen {
     openCorrectionType: (type) => {
       openScreen(`/correction-type/${type}`);
     },
-    openCuratedCollection: (collectionId) => {
-      void keep('the opened Curated Collections', curatedCollections.open(collectionId));
-      openScreen(`/curated-collection/${collectionId}`);
+    openCuratedCollection,
+    openCuratedCollections: () => {
+      openScreen('/curated-collections');
     },
     openCategories: () => {
       openScreen('/categories');

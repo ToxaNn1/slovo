@@ -1,9 +1,33 @@
-import type { Composition, CuratedCollectionScreen as Screen } from '@slovo/core';
+import type {
+  Composition,
+  CuratedCollectionCard,
+  CuratedCollectionScreen as Screen,
+} from '@slovo/core';
 import { useCallback } from 'react';
 
 import { useComposition, useCompositionRead } from '../composition';
 import { keep } from '../keep';
+import { useSubscribed } from '../opening';
 import { useOpenScreen } from '../use-open-screen';
+
+/**
+ * A tile of the «SLOVO пропонує» rail or of its grid: marks the collection
+ * opened, so «Нова» goes, and opens its screen.
+ */
+export function useOpenCuratedCollection(): (collectionId: string) => void {
+  const { curatedCollections } = useComposition();
+  const openScreen = useOpenScreen();
+  return (collectionId) => {
+    void keep('the opened Curated Collections', curatedCollections.open(collectionId));
+    openScreen(`/curated-collection/${collectionId}`);
+  };
+}
+
+/** The cards of every Curated Collection published by today, in the rail's order, as they change. */
+export function useCuratedCollectionGrid(): readonly CuratedCollectionCard[] {
+  const { curatedCollections } = useComposition();
+  return useSubscribed(curatedCollections, (source) => source.grid);
+}
 
 /** What tells of a change to a Curated Collection's screen. */
 const changes = (open: Composition) => open.curatedCollections;
