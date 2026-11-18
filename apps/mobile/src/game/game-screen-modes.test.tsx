@@ -126,7 +126,7 @@ describe('the Game screen', () => {
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
   });
 
   it('starts «Пари» from its card and plays four grids of 4, 4, 4 and 3 pairs to the result screen', async () => {
@@ -171,7 +171,7 @@ describe('the Game screen', () => {
     await fireEvent.press(screen.getByTestId(`pairs-definition-${String((definition + 1) % 4)}`));
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
   });
 
   describe('«Пари» with `pairsStay` on', () => {
@@ -255,7 +255,7 @@ describe('the Game screen', () => {
       await fireEvent.press(screen.getByTestId(`pairs-definition-${String((definition + 1) % 4)}`));
 
       await waitFor(() => {
-        expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+        expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
       });
       expect(screen.queryByTestId('game-sheet-title')).toBeNull();
       expect(screen.getByTestId(`pairs-word-${String(word)}`)).toBeDisabled();
@@ -333,14 +333,14 @@ describe('the Game screen', () => {
     expect(screen.getByLabelText('с, перша літера')).toBeOnTheScreen();
     expect(screen.getByLabelText('л, друга літера')).toBeOnTheScreen();
     expect(screen.getByLabelText('третя літера, порожня')).toBeOnTheScreen();
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 5 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 3 з 3');
 
     await fireEvent.changeText(screen.getByLabelText('Твоя відповідь'), 'слово');
     await fireEvent(screen.getByLabelText('Твоя відповідь'), 'submitEditing');
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(/слово\d+/);
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
   });
 
   it('plays «За літерами» as letter tiles in rows of 4 with letterTiles on, no text field', async () => {
@@ -484,7 +484,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
     // The slots show the right Word in place of the one assembled.
     expect(screen.getByTestId('chips-line')).toHaveTextContent(word);
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
   });
 
   it('starts «Впиши слово» from its card and plays a whole Game, typing each standard form, to the result screen', async () => {
@@ -538,7 +538,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
       `Чому ${standard} краще.`,
     );
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
   });
 
   it('starts «Склади вислів» from its card and plays a whole Game, assembling each expression, to the result screen', async () => {
@@ -606,7 +606,7 @@ describe('the Game screen', () => {
       await assembleWords(words);
 
       expect(screen.queryByTestId('game-sheet-title')).toBeNull();
-      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 5 з 5');
+      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 3 з 3');
       // A used word stays in its place in the tray, faded.
       expect(screen.getAllByTestId(/^chips-\d+$/, { includeHiddenElements: true })).toHaveLength(6);
 
@@ -627,7 +627,7 @@ describe('the Game screen', () => {
       await fireEvent.press(screen.getByRole('button', { name: 'Перевірити' }));
 
       expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
-      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
     });
 
     it('has no check and answers on the last word with the switch off, as in spec #1674', async () => {
@@ -660,7 +660,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(`${words[0] ?? ''}, друге — третє`, {
       exact: false,
     });
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
     expect(warning).toHaveBeenCalled();
   });
 
@@ -740,7 +740,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
       `Чому ${standard} краще.`,
     );
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
     expect(warning).toHaveBeenCalled();
   });
 
@@ -789,7 +789,7 @@ describe('the Game screen', () => {
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(meaning, { exact: false });
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
     expect(warning).toHaveBeenCalled();
   });
 
@@ -1017,7 +1017,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(language, { exact: false });
     expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(`Від test${String(n)}.`);
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
     expect(warning).toHaveBeenCalled();
   });
 });

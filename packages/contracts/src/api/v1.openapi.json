@@ -9320,14 +9320,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameThreeLives": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "survivalOneLife": {
                           "enum": [
                             "on",
@@ -9925,7 +9917,6 @@
                         "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
-                        "gameThreeLives",
                         "survivalOneLife",
                         "timedTwentySeconds",
                         "gameRoundMascot",
@@ -11371,14 +11362,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameThreeLives": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "survivalOneLife": {
                           "enum": [
                             "on",
@@ -11976,7 +11959,6 @@
                         "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
-                        "gameThreeLives",
                         "survivalOneLife",
                         "timedTwentySeconds",
                         "gameRoundMascot",
@@ -13346,14 +13328,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameThreeLives": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "survivalOneLife": {
                           "enum": [
                             "on",
@@ -13951,7 +13925,6 @@
                         "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
-                        "gameThreeLives",
                         "survivalOneLife",
                         "timedTwentySeconds",
                         "gameRoundMascot",

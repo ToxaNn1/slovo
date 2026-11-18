@@ -5,7 +5,6 @@ import {
   open,
   renderScreen,
   answerSurvivalRound,
-  pickAnotherWord,
   pickTheWordOfThePrompt,
   timerLabel,
   pass,
@@ -15,19 +14,6 @@ import {
 beforeEach(resetGameScreen);
 
 describe('the Games boards’ Lives and time (ADR 0137)', () => {
-  it('starts a Game with 3 Lives and loses one to a wrong answer', async () => {
-    await open({ switchedOn: ['gameThreeLives'] });
-    await renderScreen();
-
-    await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
-    await waitFor(() => {
-      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 3 з 3');
-    });
-    await pickAnotherWord();
-
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
-  });
-
   it('ends «Виживання» on the first mistake with its 1 Life', async () => {
     await open({ corrections: 15, switchedOn: ['survivalOneLife'] });
     await renderScreen();

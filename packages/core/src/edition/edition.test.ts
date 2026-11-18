@@ -115,7 +115,6 @@ const validConfig = {
     survivalStreak: 'on',
     finishPoster: 'on',
     gameAnswerBanner: 'on',
-    gameThreeLives: 'on',
     survivalOneLife: 'on',
     timedTwentySeconds: 'on',
     gameRoundMascot: 'on',
@@ -425,7 +424,6 @@ describe('loadEdition', () => {
     'survivalStreak',
     'finishPoster',
     'gameAnswerBanner',
-    'gameThreeLives',
     'survivalOneLife',
     'timedTwentySeconds',
     'gameRoundMascot',
@@ -661,7 +659,6 @@ describe('loadEdition', () => {
 
   it.each([
     'gameAnswerBanner',
-    'gameThreeLives',
     'survivalOneLife',
     'timedTwentySeconds',
     'gameRoundMascot',
@@ -1627,7 +1624,6 @@ const dependentSwitches = [
   ['finishPoster', ['game']],
   // The board «slogo game last» parts of a Game (spec #1880).
   ['gameAnswerBanner', ['game']],
-  ['gameThreeLives', ['game']],
   ['survivalOneLife', ['gameSurvival', 'corrections', 'game']],
   ['timedTwentySeconds', ['gameTimed', 'game']],
   ['gameRoundMascot', ['game']],

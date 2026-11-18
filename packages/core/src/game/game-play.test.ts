@@ -263,36 +263,6 @@ describe('the Rounds of a Game in play', () => {
     expect(over).toMatchObject({ roundsPassed: 6, lives: 0, status: 'lost' });
   });
 
-  it('starts with 5 Lives with gameThreeLives off', async () => {
-    const edition = testEdition({ isFeatureEnabled: (feature) => feature !== 'gameThreeLives' });
-    const { game } = await open(mode(pick), words, { edition });
-    await game.start('test');
-
-    expect(now(game)).toMatchObject({ lives: 5, livesAtStart: 5 });
-
-    const { over } = await playOut(game, [1, 2, 3, 4]);
-
-    expect(over).toMatchObject({ roundsPassed: GAME_ROUNDS, lives: 1, status: 'won' });
-  });
-
-  it('keeps the Lives it started with when gameThreeLives turns off in play', async () => {
-    let threeLives = true;
-    const edition = testEdition({
-      isFeatureEnabled: (feature) => feature !== 'gameThreeLives' || threeLives,
-    });
-    const { game } = await open(mode(pick), words, { edition });
-    await game.start('test');
-
-    threeLives = false;
-    const { over } = await playOut(game, [1, 2, 3]);
-
-    expect(over).toMatchObject({ roundsPassed: 2, lives: 0, livesAtStart: 3, status: 'lost' });
-
-    await game.start('test');
-
-    expect(now(game)).toMatchObject({ lives: 5, livesAtStart: 5 });
-  });
-
   it('starts no Game when the mode makes fewer Rounds than a Game has, and its offer says why', async () => {
     const { game } = await open(mode(pick), words.slice(0, GAME_ROUNDS - 1));
 

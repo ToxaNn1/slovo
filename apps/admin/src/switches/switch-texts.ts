@@ -314,7 +314,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Смужка відповіді',
     line: 'Після відповіді смужка каже, правильно чи ні, і гра йде далі сама.',
   },
-  gameThreeLives: { name: 'Три життя', line: 'Гра починається з трьома життями замість п’яти.' },
   survivalOneLife: {
     name: 'Одне життя у «Виживанні»',
     line: 'У «Виживанні» лише одне життя замість трьох.',

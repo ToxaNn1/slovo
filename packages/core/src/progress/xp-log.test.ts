@@ -197,13 +197,13 @@ describe('the XP log and the Game', () => {
   it('gives no bonus for a finished Game below half right, and none for a result that is not a new best', async () => {
     const { app } = await run();
 
-    // Wrong in every second Round, so below half right; the first result is the Best result.
-    const first = await playGame(app, [1, 2, 3, 5, 7, 9, 11, 13, 15]);
+    // Two right in five Rounds, so below half right; the first result is the Best result.
+    const first = await playGame(app, [1, 2, 5]);
     expect(first.right / first.played).toBeLessThan(0.5);
     expect(app.xpLog.state.total).toBe(first.right + 5);
 
     // Fewer right than the Best result and below half: the Rounds alone.
-    const second = await playGame(app, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15]);
+    const second = await playGame(app, [1, 2, 3]);
     expect(second.right).toBeLessThan(first.right);
     expect(app.xpLog.state.total).toBe(first.right + 5 + second.right);
   });

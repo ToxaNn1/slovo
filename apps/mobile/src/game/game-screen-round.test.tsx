@@ -22,10 +22,10 @@ describe('the Game screen', () => {
     await waitFor(() => {
       expect(screen.getByRole('header', { name: 'Вгадай слово · 1/15' })).toBeOnTheScreen();
     });
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 5 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 3 з 3');
     expect(screen.queryByText(/Життів/)).toBeNull();
     expect(screen.getAllByTestId(/^game-life-\d+$/, { includeHiddenElements: true })).toHaveLength(
-      5,
+      3,
     );
 
     const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
@@ -36,9 +36,9 @@ describe('the Game screen', () => {
     if (wrong === undefined) throw new Error(`No wrong option for «${prompt}»`);
     await fireEvent.press(wrong);
 
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
     expect(screen.getAllByTestId(/^game-life-\d+$/, { includeHiddenElements: true })).toHaveLength(
-      5,
+      3,
     );
     await fireEvent.press(screen.getByTestId('game-next'));
     await waitFor(() => {

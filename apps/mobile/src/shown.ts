@@ -23,7 +23,6 @@ export interface Shown {
   /** The streak counter of «Виживання» and its record, in place of the Rounds passed (spec #1674). */
   readonly survivalStreak: boolean;
   /** 3 Lives by default in place of 5 (ADR 0137). */
-  readonly gameThreeLives: boolean;
   /** 1 Life in «Виживання» in place of 3 (ADR 0137). */
   readonly survivalOneLife: boolean;
   /** 20 seconds in «На час» and no time-up poster, in place of 60 seconds and «Час!» (ADR 0137). */
@@ -241,7 +240,6 @@ export function shownOf({
     gameReview: on('gameReview'),
     finishPoster: on('finishPoster'),
     survivalStreak: on('survivalStreak'),
-    gameThreeLives: on('gameThreeLives'),
     survivalOneLife: on('survivalOneLife'),
     timedTwentySeconds: on('timedTwentySeconds'),
     gameRoundMascot: on('gameRoundMascot'),
