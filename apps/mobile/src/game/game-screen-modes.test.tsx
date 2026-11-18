@@ -577,7 +577,7 @@ describe('the Game screen', () => {
     expect(warning).toHaveBeenCalled();
   });
 
-  it('starts «Виживання» from its card with 3 Lives and no Round limit, mixing Words and Corrections, and ends on the third mistake with the Rounds passed', async () => {
+  it('starts «Виживання» from its card with 3 Lives and no Round limit, mixing Words and Corrections, and ends on the third mistake with its right answers as the Best result', async () => {
     await open({ corrections: 15 });
     await renderScreen();
 
@@ -611,7 +611,7 @@ describe('the Game screen', () => {
       expect(screen.getByTestId('game-end-lives-over')).toBeOnTheScreen();
     });
     expect(kinds).toEqual(new Set(['word', 'correction']));
-    expect(screen.getByTestId('game-end-best')).toHaveTextContent(/11$/);
+    expect(screen.getByTestId('game-end-best')).toHaveTextContent(/9$/);
   });
 
   describe('«На час»', () => {
