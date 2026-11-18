@@ -17,6 +17,13 @@ const collectionLinksPath = /^\/c(?:\/|$)/;
 /** A link's scheme, such as `slovo://`, after which its host is the first part of the path. */
 const schemePrefix = /^[a-z][a-z0-9+.-]*:\/\//i;
 
+/**
+ * Expo Go's link, `exp://<host>:<port>/--/<path>` (or `exps://`), up to its
+ * `/--`, after which comes the route; with no `/--`, the whole link names the
+ * app's start.
+ */
+const expoGoPrefix = /^exps?:\/\/(?:[^/]*\/--(?=\/|$)|[^/]*\/?$)/i;
+
 /** The origin of a web address, with its host, which Expo Router leaves out of the path it opens. */
 const webOrigin = /^https?:\/\/([^/?#]*)/i;
 
@@ -31,7 +38,7 @@ interface Route {
 /**
  * The route a link opens, as Expo Router reads it: after the scheme, or after
  * the origin `https://<domain>/<edition>` of the app's one domain, in any
- * letter case, or, for the dev client's link
+ * letter case, or after Expo Go's `exp://<host>:<port>/--`, or, for the dev client's link
  * (`<scheme>://expo-development-client/?url=<link>`), that of the link in its
  * `url`. Nothing for a web address of any other host, which the app never
  * opens (ADR 0058, 0065).
@@ -40,7 +47,7 @@ function routeOf(link: string, domain: string): Route | undefined {
   const host = webOrigin.exec(link)?.[1];
   if (host !== undefined && host.toLowerCase() !== domain.toLowerCase()) return undefined;
   const [location = '', search = ''] = link.replace(webOrigin, '').replace(/#.*$/, '').split('?');
-  const rest = location.replace(schemePrefix, '');
+  const rest = location.replace(expoGoPrefix, '').replace(schemePrefix, '');
   if (schemePrefix.test(location) && /^expo-development-client\/?$/.test(rest)) {
     const inner = new URLSearchParams(search).get('url') ?? '';
     return routeOf(inner, domain);
