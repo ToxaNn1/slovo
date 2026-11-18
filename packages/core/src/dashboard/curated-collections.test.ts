@@ -231,8 +231,7 @@ describe('The Curated Collections rail', () => {
         ],
       }),
       edition: testEdition({
-        isFeatureEnabled: (feature) =>
-          ['wordOfTheDay', 'curatedCollections'].includes(feature),
+        isFeatureEnabled: (feature) => ['wordOfTheDay', 'curatedCollections'].includes(feature),
         curatedCollectionPictogram: 'nature',
       }),
       userState: await openUserState({ port: createMemoryUserStatePort() }),
