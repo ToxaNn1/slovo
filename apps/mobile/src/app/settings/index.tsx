@@ -450,10 +450,10 @@ function SettingsList() {
               testID="settings-row-about"
               icon="triangle"
               label={strings.rows.about}
-              // «Версія <version> (<build>)» (ADR 0044), unknown to a binary without `expo-application`.
+              // «Версія <version> (<build>)» (ADR 0044); «Версія <version>» without a build of the app's own.
               subtitle={
-                build === undefined
-                  ? undefined
+                build.build === undefined
+                  ? fill(strings.about.versionAlone, { version: build.version })
                   : fill(subtitles.about, { version: build.version, build: build.build })
               }
               end={{

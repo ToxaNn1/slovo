@@ -372,8 +372,8 @@ export const SettingsStringsSchema = z.strictObject({
     editionLine: TextSchema,
     /** The installed build's line. Takes `{version}` and `{build}`. */
     versionLine: templateOf('version', 'build'),
-    /** The OTA update the app runs (ADR 0062). Takes `{id}`. */
-    updateLine: templateOf('id'),
+    /** The same line without a build number of the app's own, under Expo Go. Takes `{version}`. */
+    versionAlone: templateOf('version'),
     /** The Update channel the build listens to, `beta` or `production` (ADR 0167). Takes `{channel}`. */
     channelLine: templateOf('channel'),
     /** What SLOVO is. */
