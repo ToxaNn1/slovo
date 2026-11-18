@@ -54,7 +54,7 @@ const numbered = (prefix: string, count: number) =>
  * russianism, and a Retired calque. One calque has a second equivalent that
  * is another calque's main one, and two surzhyk share their main equivalent.
  * Two sentences hold the form as written, in other case; one holds it
- * inflected.
+ * inflected, one with an ending after it.
  */
 const corrections = [
   ...numbered('c_calque', 8).map((id) =>
@@ -75,7 +75,12 @@ const corrections = [
             standardEquivalents: ['отримувати'],
             sentence: 'Щомісяця вона получає пенсію.',
           })
-        : correction(id, 'surzhyk'),
+        : id === 'c_surzhyk04'
+          ? correction(id, 'surzhyk', {
+              nonStandardForm: 'гружчик',
+              sentence: 'Гружчики пішли додому.',
+            })
+          : correction(id, 'surzhyk'),
   ),
   ...numbered('c_official', 3).map((id) => correction(id, 'officialese')),
   correction('c_russian01', 'russianism', {
@@ -341,6 +346,19 @@ describe('a Round of «Обери правильне»', () => {
       gap: undefined,
       text: 'bad calque05',
     });
+  });
+
+  // App pass finding 27: «Гружчик» was highlighted inside «Гружчики».
+  it('highlights the whole word when the sentence holds the form with an ending after it', async () => {
+    const rounds = (await roundsOfSeeds([1, 2, 3, 4, 5])).filter(
+      (round) => askedOf(round).id === 'c_surzhyk04',
+    );
+
+    expect(rounds.length).toBeGreaterThan(0);
+    for (const { prompt, highlight } of rounds) {
+      expect(highlight).toEqual({ start: 0, end: 8 });
+      expect(prompt.slice(0, 8)).toBe('Гружчики');
+    }
   });
 
   it('highlights nothing when the sentence holds the form inflected', async () => {
