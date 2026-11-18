@@ -42,7 +42,6 @@ import { useFirstWeekStreak } from '@/feed/first-week';
 import { LOGO_ROW, TOP_ROW } from '@/edition/feed-loading';
 import { wordOfTheDayFontFamily } from '@/edition/reported-edition';
 import { StatsPillAndSheet } from '@/progress/progress';
-import { XpBarToGame } from '@/progress/xp-bar';
 import { useShown } from '@/shown-in-effect';
 import { useGesturesHint } from '@/feed/gestures-hint';
 import { todayText } from '@/feed/today-text';
@@ -168,10 +167,9 @@ function FeedScreen() {
               : undefined
           }
         />
-        {/* The tabbed cards' Feed has no XP bar over them (board p1, ADR 0091). */}
+        {/* The Feed has no XP bar over its cards (board p1, ADR 0091). */}
         {toolsRow && (
           <View testID="feed-header-tools" pointerEvents="box-none" style={styles.tools}>
-            {!shown.wordTabs && <XpBarToGame />}
             <View style={styles.headerButtons}>
               {shown.search && (
                 <SearchButton
@@ -382,13 +380,12 @@ const FeedPage = memo(function FeedPage({
 });
 
 /**
- * The Feed header's rows: the logo row, and the row of the XP bar and Search
- * under it unless the tabbed cards leave it empty (board p1, ADR 0091), with
- * the header's height under the status bar.
+ * The Feed header's rows: the logo row, and the row of Search under it while
+ * Search is shown (board p1, ADR 0091), with the header's height under the
+ * status bar.
  */
 function useHeaderRows() {
-  const { wordTabs, search } = useShown();
-  const toolsRow = !wordTabs || search;
+  const toolsRow = useShown().search;
   return { toolsRow, topRow: toolsRow ? TOP_ROW : LOGO_ROW };
 }
 
@@ -402,13 +399,13 @@ function SwipedEntryCard(
     'slots' | 'selfCheck' | 'tabs' | 'sourceTab' | 'tipExceptions'
   >,
 ) {
-  const { selfCheck, wordTabs, sourceTab, tipExceptions } = useShown();
+  const { selfCheck, sourceTab, tipExceptions } = useShown();
   return (
     <EntryCard
       {...props}
       slots={useEntrySlots(props.card)}
       selfCheck={selfCheck}
-      tabs={wordTabs}
+      tabs
       sourceTab={sourceTab}
       tipExceptions={tipExceptions}
     />
@@ -469,7 +466,7 @@ const styles = StyleSheet.create({
     gap: space[2],
   },
   headerBackdrop: { flex: 1 },
-  // Under the header: the XP bar at the start, Search at the end, with the XP bar or without it.
+  // Under the header: Search at the end.
   tools: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerButtons: { marginLeft: 'auto', flexDirection: 'row', gap: space[2] },
   page: { flex: 1 },

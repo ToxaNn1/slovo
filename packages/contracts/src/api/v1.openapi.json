@@ -9424,14 +9424,6 @@
                           ],
                           "type": "string"
                         },
-                        "wordTabs": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "sourceTab": {
                           "enum": [
                             "on",
@@ -9746,7 +9738,6 @@
                         "curatedCollections",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "wordTabs",
                         "sourceTab",
                         "tipExceptions",
                         "entryPanelAllKinds",
@@ -11259,14 +11250,6 @@
                           ],
                           "type": "string"
                         },
-                        "wordTabs": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "sourceTab": {
                           "enum": [
                             "on",
@@ -11581,7 +11564,6 @@
                         "curatedCollections",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "wordTabs",
                         "sourceTab",
                         "tipExceptions",
                         "entryPanelAllKinds",
@@ -13018,14 +13000,6 @@
                           ],
                           "type": "string"
                         },
-                        "wordTabs": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "sourceTab": {
                           "enum": [
                             "on",
@@ -13340,7 +13314,6 @@
                         "curatedCollections",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "wordTabs",
                         "sourceTab",
                         "tipExceptions",
                         "entryPanelAllKinds",

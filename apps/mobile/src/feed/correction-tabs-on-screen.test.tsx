@@ -91,16 +91,14 @@ const correction: Correction = {
   retired: false,
 };
 
-/** Opens the composition over the Word of the Day and a Correction, with `wordTabs` on or off. */
-async function open(wordTabs = true) {
+/** Opens the composition over the Word of the Day and a Correction. */
+async function open() {
   const shipped = loadEdition(config);
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
-      feature === 'wordTabs'
-        ? wordTabs
-        : // No later question takes the Word of the Day's place in the Feed.
-          feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
+      // No later question takes the Word of the Day's place in the Feed.
+      feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
   // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
@@ -286,20 +284,5 @@ describe('the tabs of a Correction card in the Feed', () => {
     expect(
       card.queryByText('Дієприкметник на -учий не властивий українській мові.', hidden),
     ).toBeNull();
-  });
-
-  it("keeps today's column with `wordTabs` off", async () => {
-    await open(false);
-    await renderApp();
-    await swipeUp();
-
-    const card = correctionCard();
-    expect(tabsOf(card)).toEqual([]);
-    expect(card.getByTestId('correction-standard', hidden)).toBeTruthy();
-    expect(card.getByText(/другий/, hidden)).toBeTruthy();
-    expect(
-      card.getByText('Дієприкметник на -учий не властивий українській мові.', hidden),
-    ).toBeTruthy();
-    expect(card.getByText('Наступний тиждень.', hidden)).toBeTruthy();
   });
 });

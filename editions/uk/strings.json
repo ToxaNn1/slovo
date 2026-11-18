@@ -1073,21 +1073,6 @@
       "other": "Статистика: серія {count} дня"
     },
     "pillLabelWithoutStreak": "Статистика",
-    "xpToday": "{count} XP",
-    "xpBarLabel": "Досвід: сьогодні {count} XP",
-    "xpBarHint": "Відкриває Гру",
-    "wordsTowardGoal": {
-      "one": "{seen} з {count} слова",
-      "few": "{seen} з {count} слів",
-      "many": "{seen} з {count} слів",
-      "other": "{seen} з {count} слова"
-    },
-    "wordsTowardGoalLabel": {
-      "one": "Ціль дня: {seen} з {count} слова",
-      "few": "Ціль дня: {seen} з {count} слів",
-      "many": "Ціль дня: {seen} з {count} слів",
-      "other": "Ціль дня: {seen} з {count} слова"
-    },
     "streak": {
       "one": "день поспіль",
       "few": "дні поспіль",

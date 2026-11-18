@@ -128,7 +128,6 @@ const validConfig = {
     curatedCollections: 'on',
     gesturesHintDemo: 'on',
     gesturesHintAgain: 'on',
-    wordTabs: 'on',
     sourceTab: 'on',
     tipExceptions: 'on',
     entryPanelAllKinds: 'on',

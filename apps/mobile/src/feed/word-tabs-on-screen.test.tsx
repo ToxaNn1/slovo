@@ -80,27 +80,19 @@ function word(id: string, lemma: string, more: Partial<Word> = {}): Word {
 }
 
 /**
- * Opens the composition over the Word of the Day and `second`, with `wordTabs`
- * on or off, with `idioms` when the test reads an Idiom card, and with the
+ * Opens the composition over the Word of the Day and `second`, with `idioms` when the test reads an Idiom card, and with the
  * reader's Self-check on or off.
  */
-async function open(
-  second: Word,
-  wordTabs = true,
-  idioms: readonly Idiom[] = [],
-  selfCheck = false,
-) {
+async function open(second: Word, idioms: readonly Idiom[] = [], selfCheck = false) {
   const shipped = loadEdition(config);
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
-      feature === 'wordTabs'
-        ? wordTabs
-        : // Self-check's switch follows the reader's setting; the UA Edition turns it off (owner 08.11).
-          feature === 'selfCheck'
-          ? selfCheck
-          : // No later question takes the Word of the Day's place in the Feed.
-            feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
+      // Self-check's switch follows the reader's setting; the UA Edition turns it off (owner 08.11).
+      feature === 'selfCheck'
+        ? selfCheck
+        : // No later question takes the Word of the Day's place in the Feed.
+          feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
   // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
@@ -540,16 +532,6 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(around('swipe-frame')).toHaveStyle({ flexGrow: 1 });
     expect(around('swipe-card')).toHaveStyle({ flexGrow: 1 });
   });
-
-  it('keeps the column with «Детальніше» with `wordTabs` off', async () => {
-    await open(fullWord, false);
-    await renderApp();
-
-    const card = wordCard();
-    expect(tabsOf(card)).toEqual([]);
-    expect(card.getByText('Детальніше', hidden)).toBeTruthy();
-    expect(card.getByText('Значення слова сумирний.', hidden)).toBeTruthy();
-  });
 });
 
 /** An Idiom with every tab filled: two Definitions, an origin and an Example. */
@@ -681,7 +663,7 @@ describe('the look of a tabbed Word card in the Feed (board p1)', () => {
   });
 });
 
-describe('the Word of the Day with `wordTabs` on (board p1 #5–#12)', () => {
+describe('the Word of the Day (board p1 #5–#12)', () => {
   /** The Word of the Day's card: the one with its kicker or its badge. */
   const dayCard = () => {
     const card = screen
@@ -696,7 +678,7 @@ describe('the Word of the Day with `wordTabs` on (board p1 #5–#12)', () => {
   };
 
   it('stays the red card while Self-check keeps it closed', async () => {
-    await open(fullWord, true, [], true);
+    await open(fullWord, [], true);
     await renderApp();
 
     const card = within(dayCard());
@@ -706,7 +688,7 @@ describe('the Word of the Day with `wordTabs` on (board p1 #5–#12)', () => {
   });
 
   it('opens on «Розкрити» into the tabbed card, its kicker the day as «Слово дня · 28.10»', async () => {
-    await open(fullWord, true, [], true);
+    await open(fullWord, [], true);
     await renderApp();
 
     await settle(() => fireEvent.press(within(dayCard()).getByTestId('word-reveal', hidden)));
@@ -729,36 +711,20 @@ describe('the Word of the Day with `wordTabs` on (board p1 #5–#12)', () => {
     expect(card.getByTestId('word-of-the-day-kicker', hidden)).toBeTruthy();
     expect(card.getByTestId('word-tab-panel', hidden)).toBeTruthy();
   });
-
-  it('keeps the red card in one column with `wordTabs` off', async () => {
-    await open(fullWord, false);
-    await renderApp();
-
-    const card = within(dayCard());
-    expect(card.getByTestId('word-hero', hidden)).toBeTruthy();
-    expect(card.queryByRole('tablist', hidden)).toBeNull();
-  });
 });
 
-describe('the Feed header with `wordTabs` on (board p1)', () => {
+describe('the Feed header (board p1)', () => {
   it('draws no XP bar over the cards', async () => {
     await open(fullWord);
     await renderApp();
 
     expect(screen.queryByTestId('xp-bar', hidden)).toBeNull();
   });
-
-  it('keeps the XP bar with `wordTabs` off', async () => {
-    await open(fullWord, false);
-    await renderApp();
-
-    expect(screen.getByTestId('xp-bar', hidden)).toBeTruthy();
-  });
 });
 
 describe('the tabs of an Idiom card in the Feed', () => {
   it('shows «Суть», «Звідки» and «Приклад», «Суть» selected with the Definitions', async () => {
-    await open(word('w_sumyrnyi', 'сумирний'), true, [fullIdiom]);
+    await open(word('w_sumyrnyi', 'сумирний'), [fullIdiom]);
     await renderApp();
     await swipeUp();
 
@@ -786,7 +752,7 @@ describe('the tabs of an Idiom card in the Feed', () => {
   });
 
   it('shows where the expression comes from on «Звідки»', async () => {
-    await open(word('w_sumyrnyi', 'сумирний'), true, [fullIdiom]);
+    await open(word('w_sumyrnyi', 'сумирний'), [fullIdiom]);
     await renderApp();
     await swipeUp();
     // A second swipe makes the Idiom the card on screen, the one a tap reaches.
@@ -802,22 +768,10 @@ describe('the tabs of an Idiom card in the Feed', () => {
   });
 
   it('leaves out «Звідки» for an Idiom without an origin', async () => {
-    await open(word('w_sumyrnyi', 'сумирний'), true, [{ ...fullIdiom, etymology: undefined }]);
+    await open(word('w_sumyrnyi', 'сумирний'), [{ ...fullIdiom, etymology: undefined }]);
     await renderApp();
     await swipeUp();
 
     expect(tabsOf(idiomCard()).map(({ name }) => name)).toEqual(['Суть', 'Приклад', 'Джерело']);
-  });
-
-  it('keeps the column with «Походження» with `wordTabs` off', async () => {
-    await open(word('w_sumyrnyi', 'сумирний'), false, [fullIdiom]);
-    await renderApp();
-    await swipeUp();
-
-    const card = idiomCard();
-    expect(tabsOf(card)).toEqual([]);
-    expect(card.getByText('Походження', hidden)).toBeTruthy();
-    expect(card.getByText('Ледарювати.', hidden)).toBeTruthy();
-    expect(card.getByText('Байдики — дрібні тріски.', hidden)).toBeTruthy();
   });
 });

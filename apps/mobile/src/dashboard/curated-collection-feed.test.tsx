@@ -86,8 +86,7 @@ async function open({ curatedCollectionFeed = true } = {}) {
     isFeatureEnabled: (feature: Parameters<typeof shipped.isFeatureEnabled>[0]) =>
       feature === 'curatedCollectionFeed'
         ? curatedCollectionFeed
-        : feature === 'curatedCollections' ||
-          (feature !== 'wordTabs' && shipped.isFeatureEnabled(feature)),
+        : feature === 'curatedCollections' || shipped.isFeatureEnabled(feature),
   };
   const userState = await seedUserState(
     {

@@ -488,11 +488,9 @@ export const FeatureSwitchesSchema = z.strictObject({
   gesturesHintDemo: FeatureSwitchStateSchema,
   /** «Показати підказку жестів» in Settings (owner 16.11): forgets that the gestures hint was shown, so the Feed shows «ГОРТАЙ ПАЛЬЦЕМ» once more. Off while `knowledge` is. */
   gesturesHintAgain: FeatureSwitchStateSchema,
-  /** Word tabs: every Entry card in a fixed-height frame (ADR 0091), the Word of the Day's once it is open, with tabs under its head: a Word's «Суть», «Приклад», «Зв’язки» and «Історія», a Correction's «Як краще», «Чому» and «Приклади», an Idiom's «Суть», «Звідки» and «Приклад», a Tip's «Суть» and «Приклад»; a Synonym Row's in the same frame. Content too tall for the frame shrinks a font size at a time, then is clamped under «Детальніше», which opens it whole. The Word of the Day card is the red card while Self-check keeps it closed; the Feed's header draws no XP bar. Off, the cards are one column, the Word's with «Детальніше». */
-  wordTabs: FeatureSwitchStateSchema,
-  /** The source tab: every tabbed Entry card's last tab «Джерело» names its sources, each on its own line, and the source line leaves the other tabs (ADR 0116). Off, the source line stays in its tab. Off while `wordTabs` is. */
+  /** The source tab: every tabbed Entry card's last tab «Джерело» names its sources, each on its own line, and the source line leaves the other tabs (ADR 0116). Off, the source line stays in its tab. */
   sourceTab: FeatureSwitchStateSchema,
-  /** The Tip card's tab «Винятки»: a Tip with exceptions shows them after «Правило», their text and their words in chips (ADR 0120). Off, the card has «Правило» alone. Off while `wordTabs` is. */
+  /** The Tip card's tab «Винятки»: a Tip with exceptions shows them after «Правило», their text and their words in chips (ADR 0120). Off, the card has «Правило» alone. */
   tipExceptions: FeatureSwitchStateSchema,
   /** Entry details head every kind as a Word (owner 15.11): a Correction's, an Idiom's, a Synonym Row's or a Tip's first letter, headline and kind in the red panel, its meaning on the ground with no card frame. Off, an Entry of another kind keeps its Entry card under the panel. */
   entryPanelAllKinds: FeatureSwitchStateSchema,

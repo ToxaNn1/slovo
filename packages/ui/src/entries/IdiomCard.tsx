@@ -56,7 +56,7 @@ export function IdiomCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The tabs under the expression in place of the one column, while `wordTabs` is on (ADR 0091). */
+  /** The tabs under the expression in place of the one column (ADR 0091). */
   tabs: boolean;
   /** The last tab «Джерело» with the sources, which leave «Суть», while `sourceTab` is on (ADR 0116). */
   sourceTab: boolean;

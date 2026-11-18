@@ -67,8 +67,8 @@ export interface EntryCardProps {
   wordOfTheDayFont?: string | undefined;
   /**
    * A Word's, a Correction's, a Tip's, a Synonym Row's or an Idiom's card in
-   * a fixed-height frame, with tabs under its head, while the Edition's
-   * `wordTabs` is on in effect (ADR 0091). The Word of the Day's card stays
+   * a fixed-height frame, with tabs under its head (ADR 0091): every card of the Feed, a
+   * Category's Feed and Entry details; the onboarding's card is one column. The Word of the Day's card stays
    * the red card while Self-check keeps it closed, and opens into the tabbed
    * card with its kicker.
    */
@@ -368,7 +368,7 @@ function EntryCardFace({
 }
 
 /**
- * Whether the card is a fixed frame the page's height while `wordTabs` is on
+ * Whether the card is a fixed frame the page's height with tabs
  * (ADR 0091): every card but the Word of the Day's while Self-check keeps it
  * closed, which is the red card until the reader reveals it.
  */

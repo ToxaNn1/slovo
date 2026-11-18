@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Icon } from '../primitives/Icon';
 import { PressedTile } from '../primitives/PressedTile';
 import { useEdition } from '../providers/EditionProvider';
-import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
+import { useLemmaSize } from '../providers/FontSizeProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { entryPanel, iconButton, space, swipeStampLayout, wedges, wordCardSide } from '../tokens';
 import { AccentGround } from './AccentGround';
@@ -16,7 +16,7 @@ import { IdiomCardBody } from './IdiomCard';
 import { SynonymRowCardBody } from './SynonymRowCard';
 import { TipCardBody } from './TipCard';
 import { EntryReveal } from './reveal';
-import { WordHeadline, WordSections } from './WordCard';
+import { WordHeadline } from './WordCard';
 import { WordTabs } from './WordTabs';
 import { firstLetter } from './WordHero';
 import { WordOfTheDayBadge } from './WordOfTheDayBadge';
@@ -45,11 +45,10 @@ export function EntryDetails({
   onOpenSynonymRow,
   onWordHistoryShown,
   slots,
-  tabs = false,
   sourceTab = false,
   tipExceptions = false,
   panelAllKinds = false,
-}: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont'> & {
+}: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont' | 'tabs'> & {
   /** Every kind is headed in the panel as a Word (`entryPanelAllKinds`); off, another kind keeps its Entry card under the panel. */
   panelAllKinds?: boolean;
   /** The name of the screen the back tile returns to, which VoiceOver reads. */
@@ -61,7 +60,6 @@ export function EntryDetails({
   bottomInset: number;
 }) {
   const lemmaSize = useLemmaSize();
-  const compact = useCompactLayout();
   const swipe = slots?.swipe;
   // Another kind's card under a bare panel keeps its own corner.
   const ownCard = card.kind !== 'word' && !panelAllKinds;
@@ -73,7 +71,7 @@ export function EntryDetails({
   // the bar stands lower (owner 14.11).
   const drop = Math.min(entryPanel.tabBarDrop, Math.max(bottomInset, stampRoom));
   const body = (
-    <Swiped swipe={swipe} correction={card.kind === 'correction'} fill={tabs}>
+    <Swiped swipe={swipe} correction={card.kind === 'correction'} fill>
       <AccentGround
         id="entry-panel"
         testID="entry-panel"
@@ -118,7 +116,7 @@ export function EntryDetails({
         </View>
       </AccentGround>
       {card.kind !== 'word' && ownCard ? (
-        <View style={[styles.otherKind, tabs && styles.fill]}>
+        <View style={[styles.otherKind, styles.fill]}>
           <EntryCard
             card={card}
             onOpenCorrection={onOpenCorrection}
@@ -128,66 +126,43 @@ export function EntryDetails({
             // The swipes take the whole of Entry details, so the card keeps only its corner.
             slots={slots && { ...slots, swipe: undefined }}
             stressFalls={stressFalls}
-            tabs={tabs}
+            tabs
             sourceTab={sourceTab}
             tipExceptions={tipExceptions}
           />
         </View>
       ) : card.kind !== 'word' ? (
-        <View testID="entry-body" style={[styles.body, tabs && styles.tabbed]}>
+        <View testID="entry-body" style={[styles.body, styles.tabbed]}>
           <OtherKindBody
             card={card}
             onOpenWord={onOpenWord}
-            tabs={tabs}
             sourceTab={sourceTab}
             tipExceptions={tipExceptions}
           />
         </View>
       ) : (
-        <View testID="word-card" style={[styles.body, tabs && styles.tabbed]}>
-          {tabs ? (
-            <WordTabs
-              card={card.model}
-              onOpenCorrection={onOpenCorrection}
-              onOpenSynonymRow={onOpenSynonymRow}
-              onHistoryShown={onWordHistoryShown}
-              sources={sourceTab ? card.model.sourceNames : undefined}
-            />
-          ) : (
-            <WordSections
-              card={card.model}
-              compact={compact}
-              onOpenCorrection={onOpenCorrection}
-              onOpenSynonymRow={onOpenSynonymRow}
-              onHistoryShown={onWordHistoryShown}
-            />
-          )}
+        <View testID="word-card" style={[styles.body, styles.tabbed]}>
+          <WordTabs
+            card={card.model}
+            onOpenCorrection={onOpenCorrection}
+            onOpenSynonymRow={onOpenSynonymRow}
+            onHistoryShown={onWordHistoryShown}
+            sources={sourceTab ? card.model.sourceNames : undefined}
+          />
         </View>
       )}
     </Swiped>
   );
   return (
     <EntryReveal>
-      {tabs ? (
-        // A tabbed card is a fixed frame the rest of the screen's height: nothing around it
-        // scrolls, only an opened tab inside it (ADR 0091, ADR 0113).
-        <View
-          testID="entry-frame"
-          style={[styles.scroll, { paddingBottom: foot }, drop > 0 && { marginBottom: -drop }]}
-        >
-          {body}
-        </View>
-      ) : (
-        <ScrollView
-          testID="entry-scroll"
-          style={styles.scroll}
-          // The sheet of the action row is a child in React's tree, so a tap in its
-          // name field must not be swallowed to put the keyboard away.
-          keyboardShouldPersistTaps="handled"
-        >
-          {body}
-        </ScrollView>
-      )}
+      {/* The tabbed card is a fixed frame the rest of the screen's height: nothing around it
+      scrolls, only an opened tab inside it (ADR 0091, ADR 0113). */}
+      <View
+        testID="entry-frame"
+        style={[styles.scroll, { paddingBottom: foot }, drop > 0 && { marginBottom: -drop }]}
+      >
+        {body}
+      </View>
     </EntryReveal>
   );
 }
@@ -196,13 +171,11 @@ export function EntryDetails({
 function OtherKindBody({
   card,
   onOpenWord,
-  tabs,
   sourceTab,
   tipExceptions,
 }: {
   card: OtherKindCard;
   onOpenWord: ((wordId: string) => void) | undefined;
-  tabs: boolean;
   sourceTab: boolean;
   tipExceptions: boolean;
 }) {
@@ -211,7 +184,7 @@ function OtherKindBody({
     lemmaSize,
     concealed: false,
     corner: undefined,
-    tabs,
+    tabs: true,
     sourceTab,
     headless: true,
   };

@@ -51,21 +51,14 @@ jest.mock('./entry-actions', () => {
 /** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition = loadEdition(activeEditionFiles.config);
 
-/** Whether the Word tabs switch is on in effect: on as the Edition ships it unless a test turns it off. */
-let wordTabsOn = true;
-
 /** Whether `entryPanelAllKinds` is on in effect: on as the Edition ships it unless a test turns it off. */
 let panelAllKindsOn = true;
 
-/** The Edition in effect: as it ships, with the Word tabs and panel switches as the test sets them. */
+/** The Edition in effect: as it ships, with the panel switch as the test sets it. */
 const editionInEffect = (): typeof shippedEdition => ({
   ...shippedEdition,
   isFeatureEnabled: (feature) =>
-    feature === 'wordTabs'
-      ? wordTabsOn
-      : feature === 'entryPanelAllKinds'
-        ? panelAllKindsOn
-        : shippedEdition.isFeatureEnabled(feature),
+    feature === 'entryPanelAllKinds' ? panelAllKindsOn : shippedEdition.isFeatureEnabled(feature),
 });
 
 const haptics: Haptics = {
@@ -218,7 +211,7 @@ const historyOpened = () => analytics.events.filter(({ event }) => event === 'wo
 describe('the Entry screen and the Word History', () => {
   it('tells Analytics the Word History opened once, with the Entry, when the section is drawn', async () => {
     await renderEntry('w_sumyrnyi');
-    // With `wordTabs` on, the Word History is drawn on «Суть», the tab the card opens on (ADR 0186).
+    // The Word History is drawn on «Суть», the tab the card opens on (ADR 0186).
     await settle();
 
     expect(screen.getByTestId('word-history')).toBeOnTheScreen();
@@ -386,10 +379,6 @@ function tabsOnScreen() {
 }
 
 describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
-  afterEach(() => {
-    wordTabsOn = true;
-  });
-
   it('shows a Word with its tabs, «Суть» selected with the Definition', async () => {
     await renderEntry('w_sumyrnyi');
 
@@ -430,16 +419,6 @@ describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
     expect(screen.getByTestId('entry-frame')).toHaveStyle({ flex: 1, paddingBottom: 0 });
     // The bar stands 12 points lower, into the stamp's room (owner 14.11).
     expect(screen.getByTestId('entry-frame')).toHaveStyle({ marginBottom: -12 });
-  });
-
-  it('keeps a Word and a Correction in one column with `wordTabs` off', async () => {
-    wordTabsOn = false;
-    await renderEntry('w_sumyrnyi');
-    expect(tabsOnScreen()).toEqual([]);
-    expect(screen.getByTestId('word-definition')).toBeOnTheScreen();
-
-    await renderEntry('c_vezhlyvyi');
-    expect(tabsOnScreen()).toEqual([]);
   });
 });
 

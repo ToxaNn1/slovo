@@ -179,7 +179,6 @@ export { LevelLadder } from './progress/LevelLadder';
 export { StatsSheet } from './progress/StatsSheet';
 export { StreakFreezeCard } from './progress/StreakFreezeCard';
 export type { MoodDays } from './progress/mood-line';
-export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
 export {
   categoryGrid,

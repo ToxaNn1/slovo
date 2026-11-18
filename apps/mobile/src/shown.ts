@@ -43,11 +43,9 @@ export interface Shown {
   };
   /** Whether the Stress mark of a Word card's Lemma falls onto its vowel in the Feed and on the Entry screen. */
   readonly stressFall: boolean;
-  /** Whether the Entry cards of Words, Corrections, Idioms, Tips and Synonym Rows, in the Feed and on the Entry screen, are fixed-height cards with tabs (ADR 0091); the Word of the Day card is the red card while Self-check keeps it closed, and the Feed's header draws no XP bar. */
-  readonly wordTabs: boolean;
-  /** Whether those tabbed cards give the Entry's sources their own last tab «Джерело», out of the other tabs (ADR 0116); on only with `wordTabs`. */
+  /** Whether those tabbed cards give the Entry's sources their own last tab «Джерело», out of the other tabs (ADR 0116). */
   readonly sourceTab: boolean;
-  /** Whether a tabbed Tip card with exceptions shows them in a tab «Винятки» after «Правило» (ADR 0120); on only with `wordTabs`. */
+  /** Whether a tabbed Tip card with exceptions shows them in a tab «Винятки» after «Правило» (ADR 0120). */
   readonly tipExceptions: boolean;
   /** Whether Entry details head every kind as a Word, in the red panel, and draw its meaning with no card frame (owner 15.11). */
   readonly entryPanelAllKinds: boolean;
@@ -224,7 +222,6 @@ export function shownOf({
       mistakeReport: on('mistakeReports'),
     },
     stressFall: on('stressAnimation'),
-    wordTabs: on('wordTabs'),
     sourceTab: on('sourceTab'),
     tipExceptions: on('tipExceptions'),
     entryPanelAllKinds: on('entryPanelAllKinds'),

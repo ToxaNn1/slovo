@@ -63,7 +63,6 @@ async function renderDetails(card: AnyEntryCard, panelAllKinds = true) {
         onBack={jest.fn()}
         topInset={0}
         bottomInset={0}
-        tabs
         panelAllKinds={panelAllKinds}
       />
     </EditionProvider>,
