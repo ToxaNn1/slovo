@@ -477,6 +477,68 @@ test('a retired record comes back into use: an edit of its fields with `retired:
   expect(screen.queryByText('Виведено з ужитку')).toBeNull();
 });
 
+test('a record that was just retired stays retired on the next save', async () => {
+  const retires: unknown[] = [];
+  const bodies = edits();
+  collection('2026-11-01T00:00:00.000Z', () => retires.length > 0);
+  server.use(
+    http.post(`${RECORD}/retire`, async ({ request }) => {
+      retires.push(await request.json());
+      return HttpResponse.json(FIXTURES.content.retire);
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  await user.click(await screen.findByRole('button', { name: 'Вивести з ужитку' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByLabelText('Причина'), 'застаріла');
+  await user.click(dialog.getByRole('button', { name: 'Вивести з ужитку' }));
+  expect(await screen.findByRole('button', { name: 'Повернути в ужиток' })).toBeDefined();
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+  await waitFor(() => {
+    expect(bodies).toEqual([
+      expect.objectContaining({
+        recordVersion: 2,
+        fields: expect.objectContaining({ retired: true }) as unknown,
+      }),
+    ]);
+  });
+});
+
+test('bringing a record back sends its saved fields, and the next save keeps it in use', async () => {
+  const bodies = edits();
+  collection('2026-11-01T00:00:00.000Z', () => bodies.length === 0);
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  const name = await screen.findByLabelText('Назва');
+  await user.clear(name);
+  await user.type(name, 'Слова весни');
+  await user.click(screen.getByRole('button', { name: 'Повернути в ужиток' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByLabelText('Причина'), 'знову актуальна');
+  await user.click(dialog.getByRole('button', { name: 'Повернути в ужиток' }));
+  expect(await screen.findByRole('button', { name: 'Вивести з ужитку' })).toBeDefined();
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+  await waitFor(() => {
+    expect(bodies).toEqual([
+      expect.objectContaining({
+        recordVersion: 1,
+        fields: expect.objectContaining({ name: 'Слова зими', retired: false }) as unknown,
+      }),
+      expect.objectContaining({
+        recordVersion: 2,
+        fields: expect.objectContaining({ name: 'Слова весни', retired: false }) as unknown,
+      }),
+    ]);
+  });
+});
+
 const ILLUSTRATION = `${RECORD}/illustration`;
 const LIVE = { hash: 'a'.repeat(64), url: 'https://media.slovo.test/illustrations/w_a1.old.png' };
 
