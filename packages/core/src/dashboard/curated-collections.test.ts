@@ -210,6 +210,24 @@ describe('The Curated Collections rail', () => {
     expect(app.curatedCollections.published).toBe(13);
   });
 
+  it('leaves a Retired collection out of the rail, its count and the grid, and opens it without a change', async () => {
+    const { app, records } = await run({
+      curatedCollections: [
+        ...collections,
+        { ...collection('cc_gone', '2026-11-03'), retired: true },
+      ],
+    });
+
+    expect(idsOf(app)).toEqual(['cc_today:new', 'cc_oct:new', 'cc_jan:new']);
+    expect(app.curatedCollections.grid.map(({ collection: { id } }) => id)).not.toContain(
+      'cc_gone',
+    );
+    expect(app.curatedCollections.published).toBe(3);
+
+    await app.curatedCollections.open('cc_gone');
+    expect([...records.keys()]).not.toContain('curatedCollections.opened.cc_gone');
+  });
+
   it('has no rail and no block with `curatedCollections` off', async () => {
     const { app } = await run({ on: ['wordOfTheDay'] });
 
@@ -271,13 +289,13 @@ describe('A Curated Collection screen', () => {
     entryIds: ['w_three', 'w_old', 'w_one', 'w_two'],
   };
 
-  async function runPicks(records = new Map<string, string>()) {
+  async function runPicks(records = new Map<string, string>(), collection = picks) {
     let draws = 0;
     const time = fakeClock('2026-11-04T09:00:00+02:00');
     const app = await openComposition({
       content: createMemoryContentPort({
         words: [word('w_one'), word('w_two'), word('w_three'), word('w_old', { retired: true })],
-        curatedCollections: [picks],
+        curatedCollections: [collection],
       }),
       edition: testEdition({
         isFeatureEnabled: (feature) =>
@@ -328,6 +346,29 @@ describe('A Curated Collection screen', () => {
   it('is nothing for an unknown or unpublished id', async () => {
     const { app } = await runPicks();
     expect(await app.curatedCollections.screen('cc_none')).toBeUndefined();
+  });
+
+  it('is nothing for a Retired collection, which has no Feed and no «+ Додати» either', async () => {
+    const { app } = await runPicks(undefined, { ...picks, retired: true });
+
+    expect(await app.curatedCollections.screen('cc_picks')).toBeUndefined();
+    expect(await app.curatedCollections.add('cc_picks')).toBeUndefined();
+    expect(app.collections.list).toEqual([]);
+  });
+
+  it("keeps the reader's copy in Collections once the collection is Retired", async () => {
+    const { app, records } = await runPicks();
+    const copy = await app.curatedCollections.add('cc_picks');
+
+    const next = await runPicks(records, { ...picks, retired: true });
+
+    expect(next.app.curatedCollections.rail).toEqual([]);
+    expect(next.app.collections.list).toContainEqual(copy);
+    expect(next.app.collections.entries(copy?.id ?? '').map(({ entryId }) => entryId)).toEqual([
+      'w_three',
+      'w_one',
+      'w_two',
+    ]);
   });
 
   it('opening an Entry from it makes nothing Seen and writes nothing', async () => {
