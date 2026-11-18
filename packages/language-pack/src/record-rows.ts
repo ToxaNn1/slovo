@@ -22,7 +22,10 @@ export interface Statement {
  * The SQL that writes each content record of a pack, the one copy both the
  * build (`writePack`) and a Patch (`applyPatch`) run. A record's own row is
  * an upsert, so a Patch replaces it in place; its child rows are plain
- * inserts, which a Patch runs after `childDeletes` removed the old ones.
+ * inserts, which a Patch runs after `childDeletes` removed the old ones. A
+ * Curated Collection is the exception: its own row is a plain insert too, run
+ * after `curatedCollectionDeletes` removed the old one, so a Retired one is
+ * left out of the pack (ADR 0178).
  */
 const SQL = {
   entry:
