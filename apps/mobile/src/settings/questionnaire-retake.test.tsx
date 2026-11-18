@@ -182,6 +182,35 @@ describe('Settings › «Пройти опитування ще раз»', () =>
     expect(screen.queryByTestId('questionnaire')).toBeNull();
   });
 
+  it('starts from the last answers, so the reader sees what they chose before (owner, 18.11)', async () => {
+    await render();
+    await act(async () => {
+      await composition.questionnaire.answer('level', 'good');
+      await composition.questionnaire.answer('selfRating', 'many');
+      await composition.rarityRange.set({ from: 2, to: 3 });
+    });
+    screenSettled();
+
+    await press(settings.rows.questionnaire);
+    await settle();
+
+    expect(
+      screen.getByTestId('questionnaire-level-good').props['accessibilityState'],
+    ).toMatchObject({
+      selected: true,
+    });
+    expect(
+      screen.getByTestId('questionnaire-selfRating-many').props['accessibilityState'],
+    ).toMatchObject({ selected: true });
+    expect(
+      screen.getByTestId('questionnaire-why-rare-words').props['accessibilityState'],
+    ).toMatchObject({ selected: false });
+
+    // «ГОТОВО» applies no answer left as it was, so the Rarity Range set since stays.
+    await press(settings.questionnaireRetake.done);
+    expect(composition.rarityRange.state).toEqual({ from: 2, to: 3 });
+  });
+
   it('applies the answers once when «ГОТОВО» is tapped twice before they are written', async () => {
     await render();
     screenSettled();

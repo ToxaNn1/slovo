@@ -1,7 +1,7 @@
 import type { Composition, OptionQuestion } from '@slovo/core';
 import { BackHeader, Button, Chip, SectionLabel, space, useTokens } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,7 +22,8 @@ type Answers = Partial<Record<OptionQuestion, string>>;
  * «Навіщо» while the questionnaire is on, the self-rating while the Rarity
  * Test is on, and the interests while «Що тобі цікаво?» is on. The screen holds the answers and «ГОТОВО»
  * applies them through the Core's questionnaire, as the onboarding and the
- * Feed Notices do; leaving without it drops them. The Rarity Test has its own
+ * Feed Notices do; leaving without it drops them. It starts from the last
+ * answer to each question, and the interests from the Mix. The Rarity Test has its own
  * row.
  */
 export function QuestionnaireScreen() {
@@ -36,6 +37,17 @@ export function QuestionnaireScreen() {
   // «ГОТОВО» works once: a second tap would write the answers again and go back twice.
   const applying = useRef(false);
   const [busy, setBusy] = useState(false);
+  // The last answers mark their chips; only an answer changed from them is applied.
+  const [last, setLast] = useState<Answers>({});
+  useEffect(() => {
+    let open = true;
+    void questionnaire.answers().then((answered) => {
+      if (open) setLast(answered);
+    });
+    return () => {
+      open = false;
+    };
+  }, [questionnaire]);
   if (shown === undefined) return <Redirect href="/settings" />;
 
   const questions: readonly { question: OptionQuestion; title: string }[] = [
@@ -77,7 +89,7 @@ export function QuestionnaireScreen() {
                   key={id}
                   testID={`questionnaire-${question}-${id}`}
                   label={label}
-                  on={answers[question] === id}
+                  on={(answers[question] ?? last[question]) === id}
                   onPress={() => {
                     setAnswers((before) => ({ ...before, [question]: id }));
                   }}
@@ -108,7 +120,9 @@ export function QuestionnaireScreen() {
             setBusy(true);
             const answered = questions.flatMap(({ question }) => {
               const answerId = answers[question];
-              return answerId === undefined ? [] : [{ question, answerId }];
+              return answerId === undefined || answerId === last[question]
+                ? []
+                : [{ question, answerId }];
             });
             const changed =
               !shown.interests || sameIds(interests, categoryIds) ? undefined : interests;

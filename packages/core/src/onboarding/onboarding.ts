@@ -324,7 +324,10 @@ export async function openOnboarding({
       endStep(async ({ kind, number, total }) => {
         if (kind !== 'level' && kind !== 'why') return;
         const rarityTest = kind === 'level' && opensRarityTest(answerId);
-        if (!rarityTest && !(await applyAnswer({ edition, mix, rarityRange }, kind, answerId)))
+        if (
+          !rarityTest &&
+          !(await applyAnswer({ edition, userState, mix, rarityRange }, kind, answerId))
+        )
           return;
         await count(kind, answerId);
         analytics

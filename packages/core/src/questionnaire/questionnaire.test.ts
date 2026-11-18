@@ -213,6 +213,25 @@ describe('The later questions', () => {
     expect(app.rarityRange.state).toEqual({ from: 1, to: 2 });
   });
 
+  it('keeps the last answer to each question, from the onboarding and the retake, for the retake to start from', async () => {
+    const records = new Map<string, string>();
+    const first = await run({ records, on: '2026-11-01' });
+    expect(await first.questionnaire.answers()).toEqual({});
+    while (first.onboarding.state.status === 'open' && first.onboarding.state.step.kind !== 'level')
+      await first.onboarding.next();
+    await first.onboarding.answer('good');
+    await first.questionnaire.answer('why', 'play');
+    await first.questionnaire.answer('selfRating', 'many');
+    await first.questionnaire.answer('why', 'unknown');
+
+    const later = await run({ records, on: '2026-11-02' });
+    expect(await later.questionnaire.answers()).toEqual({
+      level: 'good',
+      why: 'play',
+      selfRating: 'many',
+    });
+  });
+
   it('asks no self-rating while the Rarity Test is off', async () => {
     const records = await existingReader();
 
