@@ -4,7 +4,6 @@ import type {
   Backend,
   Clock,
   Composition,
-  CounterReads,
   Edition,
   MistakeReports,
   openCounterSending,
@@ -101,7 +100,6 @@ export interface Shell {
   /** Undefined when the Edition has no Account or no Sync. */
   readonly sync: Opening<Sync> | undefined;
   readonly mistakeReports: Opening<MistakeReports>;
-  readonly counterReads: Opening<CounterReads>;
   readonly counterSending: Opening<CounterSending>;
   /** Undefined when the binary can't capture a view, so no share button shows. */
   readonly shareCard: ShareCard | undefined;
