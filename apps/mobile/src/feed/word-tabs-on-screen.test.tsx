@@ -301,17 +301,17 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(card.getByText('Значення слова сумирний.', hidden)).toBeTruthy();
   });
 
-  it('counts the other meanings in «Суть» and numbers them in «Історія»', async () => {
+  it('numbers the other meanings under the primary one in «Суть» and leaves them out of «Історія»', async () => {
     await open(fullWord);
     await renderApp();
     await swipeUp();
-    expect(wordCard().getByText('Ще 2 значення — у вкладці «Історія».', hidden)).toBeTruthy();
+    expect(wordCard().getByText('2. Покірний.', hidden)).toBeTruthy();
+    expect(wordCard().getByText('3. Миролюбний.', hidden)).toBeTruthy();
 
     await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-history')));
 
-    const card = wordCard();
-    expect(card.getByText('2. Покірний.', hidden)).toBeTruthy();
-    expect(card.getByText('3. Миролюбний.', hidden)).toBeTruthy();
+    expect(wordCard().queryByText('2. Покірний.', hidden)).toBeNull();
+    expect(wordCard().queryByText('3. Миролюбний.', hidden)).toBeNull();
   });
 
   it('clamps a very long Definition in a tab too short for it under «Детальніше», the corner still working', async () => {
@@ -501,7 +501,6 @@ describe('the tabs of a Word card in the Feed', () => {
     await open({ ...fullWord, history });
     await renderApp();
     await swipeUp();
-    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-history')));
     await fireEvent(wordCard().getByTestId('word-tab-panel', hidden), 'layout', {
       nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 200 } },
     });

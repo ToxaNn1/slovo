@@ -52,15 +52,14 @@ describe('wordTabsOf', () => {
     ]);
   });
 
-  it('counts the other meanings in the essence tab and lists them in the history tab', () => {
+  it('lists the other meanings and the Word History in the essence tab, and the etymology alone in the history tab', () => {
     const [essence, , , history] = wordTabsOf(full);
-    expect(essence).toEqual({ key: 'essence', moreMeanings: 2 });
-    expect(history).toEqual({
-      key: 'history',
+    expect(essence).toEqual({
+      key: 'essence',
       meanings: ['Submissive.', 'Tame.'],
-      etymology: ['From Old Norse.'],
       history: 'Old word.',
     });
+    expect(history).toEqual({ key: 'history', etymology: ['From Old Norse.'] });
   });
 
   it('keeps every Example in the example tab and both lists in the links tab', () => {
@@ -81,12 +80,16 @@ describe('wordTabsOf', () => {
       'example',
       'history',
     ]);
-    expect(wordTabsOf(bare)).toEqual([{ key: 'essence', moreMeanings: 0 }]);
+    expect(wordTabsOf(bare)).toEqual([{ key: 'essence', meanings: [], history: undefined }]);
   });
 
-  it('opens the links tab on antonyms alone and the history tab on the Word History alone', () => {
-    const tabs = wordTabsOf({ ...bare, antonyms: ['bold'], history: 'Old word.' });
-    expect(tabs.map((tab) => tab.key)).toEqual(['essence', 'links', 'history']);
+  it('opens the links tab on antonyms alone and no history tab without an etymology', () => {
+    const tabs = wordTabsOf({
+      ...full,
+      example: undefined,
+      details: { etymology: undefined, extraDefinitions: ['Tame.'], examples: [] },
+    });
+    expect(tabs.map((tab) => tab.key)).toEqual(['essence', 'links']);
   });
 });
 

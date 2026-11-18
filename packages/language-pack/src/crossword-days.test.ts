@@ -137,7 +137,7 @@ describe('the crossword days the pack build appends', () => {
     expect(buildErrors([...recorded, ...later])).toEqual([]);
   }, 60_000);
 
-  it('builds the days into pack format 13', () => {
+  it('builds the days into pack format 14', () => {
     const dir = mkdtempSync(join(tmpdir(), 'slovo-crossword-days-'));
     workDirs.push(dir);
     const outFile = join(dir, 'language-pack.db');
@@ -147,7 +147,7 @@ describe('the crossword days the pack build appends', () => {
       outFile,
       today: TODAY,
     });
-    expect(result.ok && result.metadata.packFormat).toBe(13);
+    expect(result.ok && result.metadata.packFormat).toBe(14);
     const db = new DatabaseSync(outFile, { readOnly: true });
     try {
       const wordsOf = (date: string) =>

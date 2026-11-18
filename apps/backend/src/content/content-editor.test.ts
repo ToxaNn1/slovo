@@ -106,7 +106,9 @@ describe('the content editor through an admin session', () => {
     });
     expect(records).toContainEqual({
       id: WORD_ID,
+      kind: 'word',
       label: word.lemma,
+      categoryId: word.categoryId,
       retired: false,
       recordVersion: 1,
     });
@@ -115,6 +117,59 @@ describe('the content editor through an admin session', () => {
     expect(card.displayName.length).toBeGreaterThan(0);
     expect(card.questionnaire.level.map(({ label }) => label)).toContain('Добре');
     expect(card.onboardingNotificationTimes.morning).toBe('09:00');
+  });
+
+  it('lists the Words and Corrections of one Category, and no other kind under a Category', async () => {
+    const backend = await editorBackend();
+    const { client: adminClient } = await signedInAdmin(backend, 'owner');
+    const snapshot = await backend.client.content.snapshot({ editionId: 'uk' });
+    const { word } = await wordOf(backend.client);
+    const ofCategory = (kind: 'word' | 'correction' | 'idiom', categoryId: string) =>
+      adminClient.admin.content.records({ editionId: 'uk', kind, categoryId });
+
+    const words = await ofCategory('word', word.categoryId);
+    const liveWords = snapshot.words.filter(
+      (each) => each.categoryId === word.categoryId && !each.retired,
+    );
+    expect(words.total).toBe(liveWords.length);
+    expect(words.records.every((each) => each.categoryId === word.categoryId)).toBe(true);
+    const correction = snapshot.corrections.find((each) => !each.retired);
+    if (correction === undefined) throw new Error('no Correction');
+    const corrections = await ofCategory('correction', correction.categoryId);
+    expect(corrections.total).toBe(
+      snapshot.corrections.filter(
+        (each) => each.categoryId === correction.categoryId && !each.retired,
+      ).length,
+    );
+    expect(corrections.records).toContainEqual(
+      expect.objectContaining({ id: correction.id, kind: 'correction' }),
+    );
+    expect((await ofCategory('idiom', word.categoryId)).total).toBe(0);
+    const narrowed = await adminClient.admin.content.records({
+      editionId: 'uk',
+      kind: 'word',
+      categoryId: word.categoryId,
+      query: word.lemma,
+    });
+    expect(narrowed.records.map((each) => each.id)).toContain(WORD_ID);
+  });
+
+  it('lists the records of the given ids, a Retired one on request, and none for an unknown id', async () => {
+    const backend = await editorBackend();
+    const { client: adminClient } = await signedInAdmin(backend, 'owner');
+    const snapshot = await backend.client.content.snapshot({ editionId: 'uk' });
+    const [first, second] = snapshot.words.filter((each) => !each.retired);
+    if (first === undefined || second === undefined) throw new Error('no Words');
+
+    const { records, total } = await adminClient.admin.content.records({
+      editionId: 'uk',
+      kind: 'word',
+      ids: [second.id, first.id, 'w_unknown0'],
+      retired: 'true',
+    });
+
+    expect(total).toBe(2);
+    expect(records.map((each) => each.id).sort()).toEqual([first.id, second.id].sort());
   });
 
   it('lists the records a page of 50 at a time, with the count of every match', async () => {

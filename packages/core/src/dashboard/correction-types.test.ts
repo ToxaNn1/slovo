@@ -20,7 +20,7 @@ const content = createMemoryContentPort({
 /** The Core composition of one app run over the records, the Correction Types on unless said otherwise. */
 async function run({
   records = new Map<string, string>(),
-  on = ['wordOfTheDay', 'wordOfTheDayArchive', 'dashboard', 'corrections', 'correctionTypes'],
+  on = ['wordOfTheDay', 'wordOfTheDayArchive', 'corrections', 'correctionTypes'],
   port = createMemoryUserStatePort(records),
 }: { records?: Map<string, string>; on?: FeatureSwitch[]; port?: UserStatePort } = {}) {
   const time = fakeClock('2026-11-04T09:00:00+02:00');
@@ -52,7 +52,7 @@ describe('The Correction Types', () => {
   });
 
   it('has no tiles and no block with `correctionTypes` off', async () => {
-    const { app } = await run({ on: ['wordOfTheDay', 'dashboard', 'corrections'] });
+    const { app } = await run({ on: ['wordOfTheDay', 'corrections'] });
 
     expect(app.correctionTypes.tiles).toEqual([]);
     expect(app.dashboard.blocks.map(({ kind }) => kind)).toEqual(['wordOfTheDay']);
@@ -61,13 +61,7 @@ describe('The Correction Types', () => {
 
   it('carries the Categories of Corrections in pack order with `correctionCategoryScreens` on', async () => {
     const { app } = await run({
-      on: [
-        'wordOfTheDay',
-        'dashboard',
-        'corrections',
-        'correctionTypes',
-        'correctionCategoryScreens',
-      ],
+      on: ['wordOfTheDay', 'corrections', 'correctionTypes', 'correctionCategoryScreens'],
     });
     const categories = await content.listCorrectionCategories();
 

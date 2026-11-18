@@ -33,7 +33,6 @@ let composition: Composition;
 let collectionLinksOff: boolean;
 
 /** Whether a test turned the offline plate off, as a remote switch does. */
-let offlinePlateOff: boolean;
 
 /** The backend of Collection Links, online unless a test takes it off. */
 let api: FakeBackend;
@@ -81,7 +80,6 @@ beforeEach(async () => {
     .mockResolvedValue({ action: Share.sharedAction, activityType: undefined });
   api = createFakeBackend({ domain: 'slovo.example' });
   collectionLinksOff = false;
-  offlinePlateOff = false;
   const loaded = loadEdition(config);
   /** The Edition as the app runs it, `collectionLinks` on unless a test turns it off. */
   const inEffect: Edition = {
@@ -132,13 +130,7 @@ async function openMenuOf(collectionId: string) {
   const cards: Edition = {
     ...edition,
     isFeatureEnabled: (feature) =>
-      !(feature === 'collectionLinks' && collectionLinksOff) &&
-      !(feature === 'offlinePlate' && offlinePlateOff) &&
-      edition.isFeatureEnabled(feature),
-    featureSwitches: {
-      ...edition.featureSwitches,
-      offlinePlate: offlinePlateOff ? 'off' : 'on',
-    },
+      !(feature === 'collectionLinks' && collectionLinksOff) && edition.isFeatureEnabled(feature),
   };
   await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
@@ -221,16 +213,6 @@ describe('«Поділитися посиланням» in the menu a long press
     expect(screen.queryByTestId('undo-toast')).not.toBeOnTheScreen();
     expect(api.collectionLinks.made).toEqual([]);
     expect(share).not.toHaveBeenCalled();
-  });
-
-  it('says it offline in a toast while the offline plate is switched off', async () => {
-    const autumn = await collection('Осінь', ['w_kvasha']);
-    api.online = false;
-    offlinePlateOff = true;
-    await openMenuOf(autumn);
-
-    expect(await toast()).toHaveTextContent('Немає з’єднання. Спробуй пізніше.');
-    expect(screen.queryByTestId('offline-plate')).not.toBeOnTheScreen();
   });
 
   it('says it failed when the backend makes no link', async () => {

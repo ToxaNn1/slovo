@@ -83,16 +83,10 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   // The picker sets both ends of the Rarity Range the switch above turns on (ADR 0156).
   rarityRange: ['rarityCeiling'],
   interestsQuestion: ['laterQuestions'],
-  // The Dashboard's hero is the Word of the Day (ADR 0076).
-  dashboard: ['wordOfTheDay'],
-  // The Mood check-in is a Dashboard block (ADR 0076).
-  mood: ['dashboard'],
   // «Попередні слова» is a Dashboard block over the Word of the Day archive (ADR 0076).
-  previousWords: ['dashboard', 'wordOfTheDayArchive'],
+  previousWords: ['wordOfTheDayArchive'],
   // The Correction Types rail is a Dashboard block over the Corrections (ADR 0076).
-  correctionTypes: ['dashboard', 'corrections'],
-  // The Curated Collections rail is a Dashboard block (ADR 0076).
-  curatedCollections: ['dashboard'],
+  correctionTypes: ['corrections'],
   dueQuiz: ['knowledge'],
   collectionLinkCopy: ['collectionLinks'],
   // The demo plays the side swipes on the Feed's card (ADR 0112).
@@ -104,21 +98,13 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   tipExceptions: ['wordTabs'],
   // The Feed header's Search button opens the Search screen.
   searchButton: ['search'],
-  // The wordmark leads to the Dashboard (ADR 0079).
-  dashboardWordmark: ['dashboard'],
-  // The daily splash plays from the Dashboard's logo (ADR 0105).
-  dailySplash: ['dashboard'],
-  // The sparks fly in the Dashboard's hero (ADR 0109).
-  heroSparks: ['dashboard'],
-  // The «Стрічка» tab opens the Feed the Dashboard otherwise opens (ADR 0093).
-  feedTab: ['dashboard'],
-  // The Categories rail and its grid are Dashboard blocks (ADR 0081).
-  categoryScreens: ['dashboard'],
   // The grid of the Categories of Corrections opens from the Dashboard's Corrections rail (ADR 0081).
-  correctionCategoryScreens: ['dashboard', 'corrections'],
+  correctionCategoryScreens: ['corrections'],
   correctionTypeGrid: ['correctionCategoryScreens'],
   // The Category's Feed opens from a Category's screen (ADR 0110).
   categoryFeed: ['categoryScreens'],
+  // A Curated Collection's Feed opens from its screen (ADR 0178).
+  curatedCollectionFeed: ['curatedCollections'],
   // The quiet variant is a variant of a Category screen (ADR 0081).
   notificationTimeStep: ['notifications'],
   // The explainer card asks for the permission the Notifications need.

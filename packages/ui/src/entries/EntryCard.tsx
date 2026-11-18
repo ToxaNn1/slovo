@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { CorrectionCardBody } from './CorrectionCard';
 import { IdiomCardBody } from './IdiomCard';
+import { CardKicker } from './EntryKicker';
 import { KickerRow } from './KickerRow';
 import { ConcealedProvider, useSelfCheck } from './self-check';
 import { SynonymRowCardBody } from './SynonymRowCard';
@@ -83,7 +84,7 @@ export interface EntryCardProps {
    * Edition's `tipExceptions` is on in effect (ADR 0120).
    */
   tipExceptions?: boolean | undefined;
-  /** A Word card's kicker, such as its place in a Category's Feed (ADR 0110); none in the Feed. */
+  /** The card's place in a Category's or a Curated Collection's Feed (ADR 0110, 0178); none in the Feed. */
   kicker?: string | undefined;
   /**
    * Lays the card out on its page, told whether it is a fixed frame the
@@ -285,6 +286,10 @@ function EntryCardFace({
           <KickerRow testID={`${card.kind}-review-row`} corner={corner}>
             <ReviewLabel />
           </KickerRow>
+        )}
+        {/* A Word draws its kicker beside its corner; the other kinds over their own kicker. */}
+        {card.kind !== 'word' && kicker !== undefined && (
+          <CardKicker testID={`${card.kind}-card-kicker`} text={kicker} />
         )}
         {card.kind === 'word' ? (
           <WordCardBody

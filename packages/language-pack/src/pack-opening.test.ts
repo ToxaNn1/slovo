@@ -64,7 +64,7 @@ describe('openPack', () => {
       editionId: 'fixture',
       contentVersion: 9,
       contentChecksum: built.metadata.contentChecksum,
-      packFormat: 13,
+      packFormat: 14,
     };
     expect(metadata.contentChecksum).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(opening.metadata).toEqual(metadata);

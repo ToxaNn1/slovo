@@ -214,9 +214,7 @@ const historyOpened = () => analytics.events.filter(({ event }) => event === 'wo
 describe('the Entry screen and the Word History', () => {
   it('tells Analytics the Word History opened once, with the Entry, when the section is drawn', async () => {
     await renderEntry('w_sumyrnyi');
-    // With `wordTabs` on, the Word History is drawn on «Історія» alone (ADR 0091).
-    expect(historyOpened()).toEqual([]);
-    await fireEvent.press(screen.getByTestId('word-tab-history'));
+    // With `wordTabs` on, the Word History is drawn on «Суть», the tab the card opens on (ADR 0186).
     await settle();
 
     expect(screen.getByTestId('word-history')).toBeOnTheScreen();
@@ -228,14 +226,13 @@ describe('the Entry screen and the Word History', () => {
     ]);
   });
 
-  it('tells Analytics once per Entry, however often «Історія» is drawn again', async () => {
+  it('tells Analytics once per Entry, however often «Суть» is drawn again', async () => {
     await renderEntry('w_sumyrnyi');
-    await fireEvent.press(screen.getByTestId('word-tab-history'));
     await settle();
-    // Another tab, then «Історія» again, and a smaller size that draws the tab anew.
+    // Another tab, then «Суть» again, and a smaller size that draws the tab anew.
+    await fireEvent.press(screen.getByTestId('word-tab-source'));
+    await settle();
     await fireEvent.press(screen.getByTestId('word-tab-essence'));
-    await settle();
-    await fireEvent.press(screen.getByTestId('word-tab-history'));
     await settle();
     await fireEvent(screen.getByTestId('word-tab-panel'), 'layout', {
       nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 10 } },
@@ -267,8 +264,8 @@ function scrollsAround(element: ReturnType<typeof screen.getByTestId>) {
 
 describe('a tab too long for the Entry screen', () => {
   it('is clamped under «Детальніше», which opens it whole in a scroll inside the card, and nothing around the card scrolls (ADR 0113)', async () => {
+    // The long Word History is on «Суть», the tab the card opens on (ADR 0186).
     await renderEntry('w_sumyrnyi');
-    await fireEvent.press(screen.getByTestId('word-tab-history'));
     await settle();
     await fireEvent(screen.getByTestId('word-tab-panel'), 'layout', {
       nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 10 } },
@@ -393,7 +390,8 @@ describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
     await renderEntry('w_sumyrnyi');
 
     expect(tabsOnScreen()[0]).toEqual({ name: 'Суть', selected: true });
-    expect(tabsOnScreen().map(({ name }) => name)).toContain('Історія');
+    // No etymology, so no «Історія» (ADR 0186).
+    expect(tabsOnScreen().map(({ name }) => name)).toEqual(['Суть', 'Джерело']);
     expect(screen.getByTestId('word-definition')).toBeOnTheScreen();
   });
 

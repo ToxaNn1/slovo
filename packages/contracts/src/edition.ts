@@ -474,15 +474,13 @@ export const FeatureSwitchesSchema = z.strictObject({
   reduceMotion: FeatureSwitchStateSchema,
   /** The fast reveal: in one visit to the Feed the first Entry card plays the full reveal and every next card a fast one; off, every card plays the full reveal. */
   fastReveal: FeatureSwitchStateSchema,
-  /** The Dashboard: the home behind the «Стрічка» tab, with the Word of the Day hero; off, the Feed is the home (ADR 0076). Off while `wordOfTheDay` is. */
-  dashboard: FeatureSwitchStateSchema,
-  /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day (ADR 0076). Off while `dashboard` is. */
+  /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day (ADR 0076). */
   mood: FeatureSwitchStateSchema,
-  /** «Попередні слова»: the Dashboard block with the three newest Word of the Day archive days before today (ADR 0076). Off while `dashboard` or `wordOfTheDayArchive` is. */
+  /** «Попередні слова»: the Dashboard block with the three newest Word of the Day archive days before today (ADR 0076). Off while `wordOfTheDayArchive` is. */
   previousWords: FeatureSwitchStateSchema,
-  /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `dashboard` or `corrections` is. */
+  /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `corrections` is. */
   correctionTypes: FeatureSwitchStateSchema,
-  /** Curated Collections: the Dashboard's «Добірки» rail of editorial Entry sets from the Language Pack (ADR 0076). Off while `dashboard` is. */
+  /** Curated Collections: the Dashboard's «SLOVO пропонує» rail of editorial Entry sets from the Language Pack, above «Категорії» (ADR 0076, 0178). */
   curatedCollections: FeatureSwitchStateSchema,
   /** The gestures hint's demo: while «ГОРТАЙ ПАЛЬЦЕМ» is open, the Feed's card plays the swipes right, left and up in a loop, its edge labels sliding in, with a finger over it and each row of the sheet lit in turn (ADR 0112); off, the sheet stands still. Off while `knowledge` is. */
   gesturesHintDemo: FeatureSwitchStateSchema,
@@ -498,22 +496,24 @@ export const FeatureSwitchesSchema = z.strictObject({
   entryPanelAllKinds: FeatureSwitchStateSchema,
   /** The Search button of the Feed's header, which opens the Search screen; Search itself stays under `search`. Off while `search` is. */
   searchButton: FeatureSwitchStateSchema,
-  /** The Feed header's wordmark as a button that opens the Dashboard (ADR 0079). Off while `dashboard` is. */
+  /** The Feed header's wordmark as a button that opens the Dashboard (ADR 0079). */
   dashboardWordmark: FeatureSwitchStateSchema,
-  /** The daily splash: a tap on the Dashboard's logo plays the short splash cut, then the Dashboard again (ADR 0105). Off while `dashboard` is. */
+  /** The daily splash: a tap on the Dashboard's logo plays the short splash cut, then the Dashboard again (ADR 0105). */
   dailySplash: FeatureSwitchStateSchema,
-  /** The hero's sparks: the Mascot in the Dashboard's hero throws sparks from its megaphone, always, not as Decor (ADR 0109). Off while `dashboard` is. */
+  /** The hero's sparks: the Mascot in the Dashboard's hero throws sparks from its megaphone, always, not as Decor (ADR 0109). */
   heroSparks: FeatureSwitchStateSchema,
-  /** The «Стрічка» tab opens the Feed, not the Dashboard, which stays the home at launch (ADR 0093). Off while `dashboard` is. */
+  /** The «Стрічка» tab opens the Feed, not the Dashboard, which stays the home at launch (ADR 0093). */
   feedTab: FeatureSwitchStateSchema,
-  /** Category screens: the Dashboard's «Категорії» rail of Categories of Words, their grid and each one's screen (ADR 0081). Off while `dashboard` is. */
+  /** Category screens: the Dashboard's «Категорії» rail of Categories of Words, their grid and each one's screen (ADR 0081). */
   categoryScreens: FeatureSwitchStateSchema,
-  /** The grid of the Categories of Corrections behind the «Виправлення» rail header and each one's screen (ADR 0081); off, the header is a plain title. Off while `dashboard` or `corrections` is. */
+  /** The grid of the Categories of Corrections behind the «Виправлення» rail header and each one's screen (ADR 0081); off, the header is a plain title. Off while `corrections` is. */
   correctionCategoryScreens: FeatureSwitchStateSchema,
   /** The «Виправлення» rail's header counts its Correction Types and opens their grid, k2 «Категорії» under it (ADR 0140, owner 15.11). */
   correctionTypeGrid: FeatureSwitchStateSchema,
   /** The Category's Feed: a tap on a Word of a Category's screen opens a Feed of that Category's Words alone, from the tapped one in Language Pack order and round again after the last (ADR 0110); off, the tap opens the Word's card as Search does. Off while `categoryScreens` is. */
   categoryFeed: FeatureSwitchStateSchema,
+  /** A Curated Collection's Feed: a tap on an Entry of a Curated Collection's screen opens a Feed of that collection's Entries of every kind alone, from the tapped one in its order and round again after the last (ADR 0178); off, the tap opens the Entry's card as Search does. Off while `curatedCollections` is. */
+  curatedCollectionFeed: FeatureSwitchStateSchema,
   /** «Скопіювати посилання» on the share sheet of a Collection, which copies its Collection Link with `expo-clipboard` (ADR 0132); off until the EAS build with that module is out, and off the sheet keeps the system Share alone. Off while `collectionLinks` is. */
   collectionLinkCopy: FeatureSwitchStateSchema,
   /** The Due Quiz «Перевір себе» on «Вчу»: three meanings for each Word due for Review today, right sets Known and wrong Unknown (ADR 0131); off, «Вчу» has no card. Off while `knowledge` is. */
@@ -536,8 +536,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   widgetPreviews: FeatureSwitchStateSchema,
   /** The three-step text size «Як у системі», «Більший», «Найбільший» and its screen (ADR 0134); off, the S…XL scale and its row. */
   textSizeSteps: FeatureSwitchStateSchema,
-  /** The offline plate «Немає з’єднання. Спробуй пізніше.» under the status bar when sharing a Collection Link, signing in or syncing finds no network (ADR 0158); off, the toast or the line each of them showed before. */
-  offlinePlate: FeatureSwitchStateSchema,
   /** The switch-off unit: turning «Ділитися анонімною статистикою» off sends one anonymous +1 with the Edition alone, and nothing after (ADR 0163); off, nothing is sent at switch-off. */
   statisticsOffCounter: FeatureSwitchStateSchema,
 });
@@ -1015,6 +1013,12 @@ export const EditionConfigSchema = z
      */
     categoriesRequiringHistory: z.array(KebabCaseIdSchema),
     /**
+     * The id of the Category or Correction Category whose pictogram a Curated
+     * Collection's tile draws when the collection names none (ADR 0178);
+     * unset, such a tile draws no pictogram.
+     */
+    curatedCollectionPictogram: KebabCaseIdSchema.optional(),
+    /**
      * The languages Words come from, in their order (ADR 0052): the Edition
      * owns the list, so the Core stays language-agnostic. Empty when the
      * Edition gives no Word an origin.
@@ -1074,6 +1078,7 @@ export const EditionConfigSchema = z
         categories,
         correctionCategories,
         categoriesRequiringHistory,
+        curatedCollectionPictogram,
         originLanguages,
         moods,
         dashboardMoods,
@@ -1121,6 +1126,17 @@ export const EditionConfigSchema = z
           });
         }
       });
+      if (
+        curatedCollectionPictogram !== undefined &&
+        !known.categories.has(curatedCollectionPictogram) &&
+        !known.correctionCategories.has(curatedCollectionPictogram)
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['curatedCollectionPictogram'],
+          message: `Unknown Category id "${curatedCollectionPictogram}"`,
+        });
+      }
       reportRepeats(
         context,
         originLanguages.map(({ code }) => code),

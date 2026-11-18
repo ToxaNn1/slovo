@@ -546,12 +546,6 @@
         "many": "Антоніми"
       }
     },
-    "moreMeanings": {
-      "one": "Ще {count} значення — у вкладці «Історія».",
-      "few": "Ще {count} значення — у вкладці «Історія».",
-      "many": "Ще {count} значень — у вкладці «Історія».",
-      "other": "Ще {count} значення — у вкладці «Історія»."
-    },
     "history": "Історія слова",
     "oftenSaid": "Часто кажуть:",
     "oftenSaidHint": "Відкриває виправлення",
@@ -1526,7 +1520,8 @@
       "question": "Як настрій?",
       "note": "Настрій дня"
     },
-    "curatedCollectionsTitle": "Добірки",
+    "curatedCollectionsTitle": "SLOVO пропонує",
+    "curatedCollectionsGridTitle": "Добірки",
     "curatedCollectionCount": {
       "one": "{count} слово",
       "few": "{count} слова",
@@ -1540,7 +1535,8 @@
       "added": "У Міксі ✓",
       "kicker": "ДОБІРКА · {count}",
       "addButton": "ДОДАТИ СОБІ",
-      "addedButton": "У МІКСІ"
+      "addedButton": "У МІКСІ",
+      "feedKicker": "Добірка · {name} · {place} з {of}"
     },
     "categories": {
       "title": "Категорії",
@@ -2084,7 +2080,6 @@
     "signOutEverywhere": "Вийти на всіх пристроях",
     "sync": {
       "syncing": "Синхронізація…",
-      "waitingForNetwork": "Синхронізація чекає на мережу",
       "syncedToday": "Синхронізовано сьогодні, {time}",
       "syncedOn": "Синхронізовано {day} {month}",
       "syncedOnInYear": "Синхронізовано {day} {month} {year}"
@@ -2097,7 +2092,6 @@
       "cancel": "Скасувати"
     },
     "problems": {
-      "offline": "Немає з’єднання з інтернетом. Спробуй ще раз.",
       "invalid-email": "Перевір адресу пошти.",
       "wrong-code": {
         "one": "Код не підходить. Лишилась {count} спроба.",

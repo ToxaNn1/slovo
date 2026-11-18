@@ -151,7 +151,11 @@ export { QuietScreenHero } from './dashboard/QuietScreenHero';
 export { QuietScreenRow } from './dashboard/QuietScreenRow';
 export { RailBoard, RailList, knownShare, type RailBoardCard } from './dashboard/RailBoard';
 export { RailScreenCard } from './dashboard/RailScreenCard';
-export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
+export {
+  curatedCollectionGlyph,
+  CuratedCollectionGrid,
+  CuratedCollectionsRail,
+} from './categories/CuratedCollectionsRail';
 export { RailScreenHero } from './dashboard/RailScreenHero';
 export { CategoriesRail } from './categories/CategoriesRail';
 export { CategoryGrid, GridTitle, type GridTile } from './categories/CategoryGrid';

@@ -6,17 +6,12 @@ import { syncStatusLine } from './sync-status';
 
 const idle: SyncState = { syncedAt: undefined, running: false, offline: false };
 
-function lineOf(
-  state: Partial<SyncState>,
-  clock = fakeClock('2026-10-18T12:00:00Z').clock,
-  offlineOnPlate = false,
-) {
+function lineOf(state: Partial<SyncState>, clock = fakeClock('2026-10-18T12:00:00Z').clock) {
   return syncStatusLine({
     state: { ...idle, ...state },
     strings: strings.account.sync,
     months: strings.dates.shortMonths,
     clock,
-    offlineOnPlate,
   });
 }
 
@@ -27,18 +22,12 @@ describe('the status line of the SLOVO ID screen', () => {
     ).toBe('Синхронізація…');
   });
 
-  it('says sync waits for the network when the last attempt found none', () => {
-    expect(lineOf({ offline: true, syncedAt: new Date('2026-10-18T09:00:00Z') })).toBe(
-      'Синхронізація чекає на мережу',
-    );
-  });
-
-  it('leaves the network to the offline plate and gives the last sync while the plate is on', () => {
+  it('leaves the network to the offline plate and gives the last sync', () => {
     const clock = fakeClock('2026-10-18T12:00:00Z').clock;
-    expect(lineOf({ offline: true, syncedAt: new Date('2026-10-18T09:05:00Z') }, clock, true)).toBe(
+    expect(lineOf({ offline: true, syncedAt: new Date('2026-10-18T09:05:00Z') }, clock)).toBe(
       'Синхронізовано сьогодні, 12:05',
     );
-    expect(lineOf({ offline: true }, clock, true)).toBeUndefined();
+    expect(lineOf({ offline: true }, clock)).toBeUndefined();
   });
 
   it('gives the local time of a sync made today', () => {

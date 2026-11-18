@@ -117,7 +117,6 @@
     "sounds": "on",
     "reduceMotion": "on",
     "fastReveal": "on",
-    "dashboard": "on",
     "mood": "on",
     "previousWords": "on",
     "correctionTypes": "on",
@@ -137,6 +136,7 @@
     "correctionCategoryScreens": "on",
     "correctionTypeGrid": "on",
     "categoryFeed": "on",
+    "curatedCollectionFeed": "on",
     "profileConfirmedByRarity": "on",
     "profileGameBest": "on",
     "forceUpdate": "on",
@@ -146,7 +146,6 @@
     "readerName": "on",
     "widgetPreviews": "on",
     "textSizeSteps": "on",
-    "offlinePlate": "on",
     "statisticsOffCounter": "on"
   },
   "userSettingDefaults": {

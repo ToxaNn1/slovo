@@ -21,7 +21,7 @@ const collections = [
 /** The Core composition of one app run over the records, the Curated Collections on unless said otherwise. */
 async function run({
   records = new Map<string, string>(),
-  on = ['wordOfTheDay', 'dashboard', 'curatedCollections'],
+  on = ['wordOfTheDay', 'curatedCollections'],
   curatedCollections = collections,
   start = '2026-11-04T09:00:00+02:00',
   port = createMemoryUserStatePort(records),
@@ -69,13 +69,9 @@ describe('The Curated Collections rail', () => {
       }),
       edition: testEdition({
         isFeatureEnabled: (feature) =>
-          [
-            'wordOfTheDay',
-            'dashboard',
-            'curatedCollections',
-            'corrections',
-            'correctionTypes',
-          ].includes(feature),
+          ['wordOfTheDay', 'curatedCollections', 'corrections', 'correctionTypes'].includes(
+            feature,
+          ),
       }),
       userState: await openUserState({ port: createMemoryUserStatePort() }),
       clock: fakeClock('2026-11-04T09:00:00+02:00').clock,
@@ -176,11 +172,79 @@ describe('The Curated Collections rail', () => {
     expect(idsOf(app)).not.toContain('cc_00:new');
   });
 
+  it('lists every collection published by today on the grid, in rail order, a future one absent', async () => {
+    const many = Array.from({ length: 12 }, (_, i) =>
+      collection(`cc_${String(i).padStart(2, '0')}`, `2026-01-${String(i + 1).padStart(2, '0')}`),
+    );
+    const { app, time } = await run({
+      curatedCollections: [...many, collection('cc_tomorrow', '2026-11-05')],
+      start: '2026-11-04T23:59:00+02:00',
+    });
+    const gridOf = () =>
+      app.curatedCollections.grid.map(({ collection: { id }, state }) => `${id}:${state}`);
+
+    await app.curatedCollections.open('cc_11');
+    await settle();
+
+    expect(gridOf()).toEqual([
+      ...Array.from({ length: 11 }, (_, i) => `cc_${String(10 - i).padStart(2, '0')}:new`),
+      'cc_11:opened',
+    ]);
+    expect(app.curatedCollections.rail).toEqual(app.curatedCollections.grid.slice(0, 10));
+    expect(app.curatedCollections.published).toBe(12);
+
+    time.advance(2 * 60 * 1000);
+    // Past midnight, the header counts the grid it heads until the grid is read again.
+    expect(app.curatedCollections.published).toBe(12);
+    await app.resume();
+
+    expect(gridOf()[0]).toBe('cc_tomorrow:new');
+    expect(gridOf()).toHaveLength(13);
+    expect(app.curatedCollections.published).toBe(13);
+  });
+
   it('has no rail and no block with `curatedCollections` off', async () => {
-    const { app } = await run({ on: ['wordOfTheDay', 'dashboard'] });
+    const { app } = await run({ on: ['wordOfTheDay'] });
 
     expect(app.curatedCollections.rail).toEqual([]);
+    expect(app.curatedCollections.grid).toEqual([]);
     expect(app.dashboard.blocks.map(({ kind }) => kind)).toEqual(['wordOfTheDay']);
+  });
+
+  it("draws on each card the pictogram of the Category it names, else the Edition's default", async () => {
+    const category = (id: string) => ({
+      id,
+      displayName: id,
+      description: `About ${id}`,
+      tone: 'loud' as const,
+    });
+    const app = await openComposition({
+      content: createMemoryContentPort({
+        words: [word('w_one')],
+        categories: [category('nature'), category('feelings')],
+        correctionCategories: [category('shop'), category('speech')],
+        curatedCollections: [
+          { ...collection('cc_a', '2026-11-04'), pictogram: 'feelings' },
+          { ...collection('cc_b', '2026-11-03'), pictogram: 'speech' },
+          collection('cc_c', '2026-11-02'),
+          { ...collection('cc_d', '2026-11-01'), pictogram: 'gone' },
+        ],
+      }),
+      edition: testEdition({
+        isFeatureEnabled: (feature) => ['wordOfTheDay', 'curatedCollections'].includes(feature),
+        curatedCollectionPictogram: 'nature',
+      }),
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock: fakeClock('2026-11-04T09:00:00+02:00').clock,
+      random: { next: () => 0.25 },
+    });
+
+    expect(app.curatedCollections.rail.map(({ pictogram }) => pictogram)).toEqual([
+      { of: 'category', categoryId: 'feelings', position: 1 },
+      { of: 'correctionCategory', categoryId: 'speech', position: 1 },
+      { of: 'category', categoryId: 'nature', position: 0 },
+      { of: 'category', categoryId: 'nature', position: 0 },
+    ]);
   });
 
   it('has no block when nothing is published yet', async () => {
@@ -209,7 +273,7 @@ describe('A Curated Collection screen', () => {
       }),
       edition: testEdition({
         isFeatureEnabled: (feature) =>
-          ['wordOfTheDay', 'dashboard', 'curatedCollections', 'knowledge'].includes(feature),
+          ['wordOfTheDay', 'curatedCollections', 'knowledge'].includes(feature),
       }),
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
       clock: time.clock,

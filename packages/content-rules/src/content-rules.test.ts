@@ -177,6 +177,7 @@ describe('checkContentSet', () => {
       'curated-collection-entry',
       () => fixtureSet({ cc_fx0001: { entryIds: ['w_fx0001', 'c_fx0003'] } }),
     ],
+    ['curated-collection-pictogram', () => fixtureSet({ cc_fx0001: { pictogram: 'unknown' } })],
     [
       'crossword-day-entry',
       () => {

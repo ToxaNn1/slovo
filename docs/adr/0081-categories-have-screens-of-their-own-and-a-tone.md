@@ -1,5 +1,7 @@
 # Categories have screens of their own and a tone
 
+**Amended by ADR 0178.** The Curated Collections rail is «SLOVO пропонує», right before «Категорії», built from this rail's header and tiles.
+
 Spec #1604 ports board 05.1 (05.11). Until now a Category was only a filter of the Mix: the reader met it as a chip on a card, on the Mix screen and on the Hidden screen, never as a place to look at its Entries. This amends ADR 0019, ADR 0033 and ADR 0076.
 
 **Decision.** The Categories of Words and the Categories of Corrections each get a grid screen: the Words' (k1, three columns) opens from the header of the Dashboard's «Категорії» rail, the Corrections' (k2, two columns) from the header of the «Виправлення» rail. A tile opens the Category screen with that Category's live Entries in pack order, Retired ones left out; nothing becomes Seen there, as in Search. Its right button takes the Category out of the Mix («У МІКСІ» → «ДОДАТИ») or puts it back, with a toast for each; the rule that one Category of each list stays in the Mix holds there too. The hero reads «ЗНАЮ x З n» from the Known Knowledge Marks.
@@ -10,7 +12,7 @@ Spec #1604 ports board 05.1 (05.11). Until now a Category was only a filter of t
 
 **The Dashboard rails (amends ADR 0076).** The Dashboard shows the «Категорії» rail of the Categories of Words; the Curated Collections rail is titled «Добірки»; the Correction Types rail keeps its tiles and its header opens k2.
 
-**Feature Switches** (required of every Edition, ADR 0089): `categoryScreens` (needs `dashboard`): the «Категорії» rail, k1 and the Category screen of Words; `correctionCategoryScreens` (needs `dashboard` and `corrections`): k2 and the Category screen of Corrections, off a plain «Виправлення» header. A quiet Category always draws k3 and the muted tile (`quietCategories` retired, ADR 0176). The UA Edition has both on.
+**Feature Switches** (required of every Edition, ADR 0089): `categoryScreens`: the «Категорії» rail, k1 and the Category screen of Words; `correctionCategoryScreens` (needs `corrections`): k2 and the Category screen of Corrections, off a plain «Виправлення» header. A quiet Category always draws k3 and the muted tile (`quietCategories` retired, ADR 0176). The UA Edition has both on.
 
 ## Considered options
 

@@ -118,7 +118,6 @@
     "sounds": "on",
     "reduceMotion": "on",
     "fastReveal": "on",
-    "dashboard": "on",
     "mood": "on",
     "curatedCollections": "on",
     "gesturesHintDemo": "on",
@@ -136,6 +135,7 @@
     "correctionCategoryScreens": "on",
     "correctionTypeGrid": "on",
     "categoryFeed": "on",
+    "curatedCollectionFeed": "on",
     "previousWords": "on",
     "correctionTypes": "on",
     "profileConfirmedByRarity": "on",
@@ -147,7 +147,6 @@
     "readerName": "on",
     "widgetPreviews": "on",
     "textSizeSteps": "on",
-    "offlinePlate": "on",
     "statisticsOffCounter": "on"
   },
   "userSettingDefaults": {

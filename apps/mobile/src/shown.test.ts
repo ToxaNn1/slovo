@@ -65,7 +65,6 @@ const everything: Shown = {
   search: true,
   searchField: true,
   fastReveal: true,
-  dashboard: true,
   dashboardWordmark: true,
   dailySplash: true,
   heroSparks: true,
@@ -73,6 +72,7 @@ const everything: Shown = {
   categoryFeed: true,
   mood: true,
   curatedCollections: true,
+  curatedCollectionFeed: true,
   gesturesHintDemo: true,
   gesturesHintAgain: true,
   wordOfTheDayArchive: true,
@@ -146,6 +146,10 @@ describe('what the reader is shown', () => {
     [
       "a Word's card from a Category's screen with the Category's Feed off",
       { off: ['categoryFeed'], shown: { categoryFeed: false } },
+    ],
+    [
+      "an Entry's card from a Curated Collection's screen with the collection's Feed off",
+      { off: ['curatedCollectionFeed'], shown: { curatedCollectionFeed: false } },
     ],
     [
       'a «Стрічка» tab to the Dashboard with the Feed tab off',

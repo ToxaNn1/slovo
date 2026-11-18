@@ -1,5 +1,6 @@
 import { RARITIES } from '@slovo/contracts';
 
+import { EntryPicker } from './entry-picker';
 import {
   type CategoryOptions,
   type EditorField,
@@ -24,10 +25,12 @@ const VOWEL = /[аеєиіїоуюяaeiouy]/iu;
 /** A control whose value is one text or choice, labelled by a `<label>` beside it. */
 const isLeaf = (control: FieldControl) =>
   control.type === 'text' ||
+  control.type === 'publish-date' ||
   control.type === 'long-text' ||
   control.type === 'number' ||
   control.type === 'choice' ||
-  control.type === 'category';
+  control.type === 'category' ||
+  control.type === 'pictogram';
 
 interface ControlProps {
   readonly id: string;
@@ -37,7 +40,11 @@ interface ControlProps {
   /** The values of the fields beside this one, which a Stress control reads its text from. */
   readonly siblings: FormObject;
   readonly categories: CategoryOptions;
+  /** The Edition whose records an Entry picker lists. */
+  readonly editionId: string;
   readonly onChange: (value: FormValue) => void;
+  /** Whether the value is shown and kept, not edited: a publish date once its collection appeared. */
+  readonly fixed?: boolean;
 }
 
 /**
@@ -49,7 +56,7 @@ export function FieldRow({
   error,
   ...props
 }: ControlProps & { readonly error?: string | undefined }) {
-  const { id, label, control } = props;
+  const { id, label, control, fixed = false } = props;
   const describedBy = error === undefined ? undefined : `${id}-error`;
   const message =
     error === undefined ? null : (
@@ -58,10 +65,28 @@ export function FieldRow({
       </p>
     );
   if (isLeaf(control)) {
+    const hint =
+      control.type !== 'publish-date'
+        ? undefined
+        : fixed
+          ? "Добірка вже з'явилася: дату не змінити"
+          : 'Порожньо — одразу';
+    const described = [hint === undefined ? undefined : `${id}-hint`, describedBy]
+      .filter((part) => part !== undefined)
+      .join(' ');
     return (
       <div className="flex flex-col gap-1 text-sm">
         <label htmlFor={id}>{label}</label>
-        <Leaf {...props} invalid={error !== undefined} describedBy={describedBy} />
+        <Leaf
+          {...props}
+          invalid={error !== undefined}
+          describedBy={described === '' ? undefined : described}
+        />
+        {hint !== undefined && (
+          <p id={`${id}-hint`} className="text-muted-foreground">
+            {hint}
+          </p>
+        )}
         {message}
       </div>
     );
@@ -91,6 +116,7 @@ function Leaf({
   invalid,
   describedBy,
   ariaLabel,
+  fixed = false,
 }: ControlProps & {
   readonly invalid?: boolean;
   readonly describedBy?: string | undefined;
@@ -101,13 +127,19 @@ function Leaf({
   const common = {
     id,
     value: text,
+    readOnly: fixed,
     'aria-label': ariaLabel,
     'aria-invalid': invalid,
     'aria-describedby': describedBy,
     className: INPUT,
   };
-  if (control.type === 'choice' || control.type === 'category') {
-    const options = control.type === 'choice' ? control.options : categories[control.of];
+  if (control.type === 'choice' || control.type === 'category' || control.type === 'pictogram') {
+    const options =
+      control.type === 'choice'
+        ? control.options
+        : control.type === 'category'
+          ? categories[control.of]
+          : [...categories.categories, ...categories.correctionCategories];
     const known = text === '' || options.some((option) => option.value === text);
     return (
       <select
@@ -116,7 +148,7 @@ function Leaf({
           onChange(event.target.value);
         }}
       >
-        <option value="">—</option>
+        <option value="">{control.type === 'pictogram' ? 'Типова піктограма Видання' : '—'}</option>
         {(known ? options : [...options, { value: text, label: text }]).map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -149,8 +181,18 @@ function Leaf({
 
 /** A Stress, chips, rarity, list or object control. */
 function Composite(props: ControlProps) {
-  const { id, label, control, value, siblings, categories, onChange } = props;
+  const { id, label, control, value, siblings, categories, editionId, onChange } = props;
   switch (control.type) {
+    case 'entries':
+      return (
+        <EntryPicker
+          id={id}
+          editionId={editionId}
+          value={value}
+          categories={categories}
+          onChange={onChange}
+        />
+      );
     case 'stress': {
       const positions = isList(value) ? value : [];
       const text = siblings[control.of];
@@ -240,6 +282,7 @@ function Composite(props: ControlProps) {
       return (
         <SubFields
           id={id}
+          editionId={editionId}
           fields={control.fields}
           value={isObject(value) ? value : {}}
           categories={categories}
@@ -267,6 +310,7 @@ function Composite(props: ControlProps) {
                     value={each}
                     siblings={{}}
                     categories={categories}
+                    editionId={editionId}
                     onChange={(next) => {
                       onChange(replaced(index, next));
                     }}
@@ -280,6 +324,7 @@ function Composite(props: ControlProps) {
                     {item.type === 'object' ? (
                       <SubFields
                         id={rowId}
+                        editionId={editionId}
                         fields={item.fields}
                         value={isObject(each) ? each : {}}
                         categories={categories}
@@ -334,12 +379,14 @@ function Composite(props: ControlProps) {
 /** The labelled sub-fields of an object. */
 function SubFields({
   id,
+  editionId,
   fields,
   value,
   categories,
   onChange,
 }: {
   readonly id: string;
+  readonly editionId: string;
   readonly fields: readonly EditorField[];
   readonly value: FormObject;
   readonly categories: CategoryOptions;
@@ -356,6 +403,7 @@ function SubFields({
           value={value[field.name]}
           siblings={value}
           categories={categories}
+          editionId={editionId}
           onChange={(next) => {
             onChange({ ...value, [field.name]: next });
           }}
