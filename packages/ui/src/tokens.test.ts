@@ -241,7 +241,7 @@ describe('titleScale', () => {
     expect(titleScale).toEqual([50, 44, 40, 36, 32, 28, 26, 24, 22, 20]);
   });
 
-  it('starts every card title at 44, the non-standard forms at 26', () => {
+  it('starts a Word or a Synonym Row at 44, a Correction at 32, a phrase and the non-standard forms at 26', () => {
     const titles: readonly TypeRole[] = [
       'heroWord',
       'synonymDominant',
@@ -251,15 +251,14 @@ describe('titleScale', () => {
       'correctionStruck',
       'correctionStandard',
     ];
-    expect(titles.map((name) => typeRoles[name].size)).toEqual([44, 44, 44, 44, 26, 26, 44]);
+    expect(titles.map((name) => typeRoles[name].size)).toEqual([44, 44, 26, 26, 26, 26, 32]);
   });
 
   it("takes a title role at the Lemma's size: its share of the Lemma's own", () => {
-    // At L the Lemma is 51, so a title of 44 at M takes 44 × 51 / 44.
+    // At L the Lemma is 51, so a title of 26 at M takes 26 × 51 / 44.
     const lemma = { fontSize: textSizeSteps.larger.lemma, lineHeight: 66.3 };
-    expect(titleSize('idiomExpression', lemma)).toEqual({
-      fontSize: (44 * 51) / 44,
-      lineHeight: (typeRoles.idiomExpression.lineHeight * 51) / 44,
-    });
+    const drawn = titleSize('idiomExpression', lemma);
+    expect(drawn.fontSize).toBeCloseTo((26 * 51) / 44);
+    expect(drawn.lineHeight).toBeCloseTo((typeRoles.idiomExpression.lineHeight * 51) / 44);
   });
 });

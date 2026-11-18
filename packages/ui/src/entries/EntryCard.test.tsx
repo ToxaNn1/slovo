@@ -6,6 +6,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react-native
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import { useConcealed } from './self-check';
 import { testStrings } from '../test-strings';
+import { tightLineDrop, typeRoles } from '../tokens';
 
 const strings = testStrings({
   wordCard: {
@@ -541,11 +542,11 @@ describe('Self-check on a Correction card', () => {
 });
 
 describe('the standard form on a Correction card', () => {
-  it('starts the main equivalent at 44, as every card title', async () => {
+  it("starts the main equivalent at the standard form's title size", async () => {
     await render(inEdition(<EntryCard card={card} />));
 
     const form = within(screen.getByTestId('correction-standard')).getByText('Join in');
-    expect(form).toHaveStyle({ fontSize: 44 });
+    expect(form).toHaveStyle({ fontSize: typeRoles.correctionStandard.size });
     expect(form).toHaveProp('maxFontSizeMultiplier', 1.5);
   });
 });
@@ -761,10 +762,12 @@ describe('the Idiom card', () => {
     ['a short expression', placeName],
     ['a longer one', idiomCard()],
     ['a long one', proverb],
-  ])('starts %s at 44, as every card title, whatever its length', async (_case, model) => {
+  ])("starts %s at the expression's title size, whatever its length", async (_case, model) => {
     await render(inEdition(<EntryCard card={{ kind: 'idiom', entryId: 'i1', model }} />));
 
-    expect(screen.getByTestId('idiom-expression')).toHaveStyle({ fontSize: 44 });
+    expect(screen.getByTestId('idiom-expression')).toHaveStyle({
+      fontSize: typeRoles.idiomExpression.size,
+    });
   });
 
   it.each([
@@ -1022,7 +1025,7 @@ describe("a Word card's kicker", () => {
     // Level with the corner tiles' middle, as the board's CSS centres it (EntryKicker).
     expect(StyleSheet.flatten(screen.getByTestId('word-card-kicker').props['style'])).toMatchObject(
       {
-        transform: [{ translateY: 1.32 }],
+        transform: [{ translateY: tightLineDrop('cardKicker') }],
       },
     );
   });

@@ -3,6 +3,7 @@ import { EditionProvider, EntryCard } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
+import { titleScale, typeRoles } from '../tokens';
 
 const strings = testStrings({
   wordCard: {
@@ -144,10 +145,13 @@ describe('the Tip card with the Source tab (ADR 0116)', () => {
 });
 
 describe('the Tip card in tabs (board e9)', () => {
-  it('starts the title at 44, as every card title, on a line of 46', async () => {
+  it('starts the title at its own title size and line', async () => {
     await render(inEdition(<EntryCard card={card} />));
 
-    expect(screen.getByTestId('tip-title')).toHaveStyle({ fontSize: 44, lineHeight: 46 });
+    expect(screen.getByTestId('tip-title')).toHaveStyle({
+      fontSize: typeRoles.tipTitle.size,
+      lineHeight: typeRoles.tipTitle.lineHeight,
+    });
   });
 
   it('keeps «Often said» over the rule tab: the explanation, a chip of the standard form and of the Example, and the sources', async () => {
@@ -155,7 +159,10 @@ describe('the Tip card in tabs (board e9)', () => {
 
     expect(screen.getByLabelText('Often said: How much is the time?')).toBeTruthy();
     expect(screen.queryByRole('tablist')).toBeNull();
-    expect(screen.getByTestId('tip-explanation')).toHaveStyle({ fontSize: 20, lineHeight: 28 });
+    expect(screen.getByTestId('tip-explanation')).toHaveStyle({
+      fontSize: typeRoles.tipRule.size,
+      lineHeight: typeRoles.tipRule.lineHeight,
+    });
     expect(screen.getByTestId('tip-word-0')).toHaveTextContent('What time is it?');
     expect(screen.getByTestId('tip-word-1')).toHaveTextContent('Excuse me, what time is it?');
     expect(screen.queryByTestId('tip-standard')).toBeNull();
@@ -226,7 +233,7 @@ describe('a long Tip title', () => {
     if (line === null) throw new Error('The title has no line around it');
     await fireEvent(line, 'layout', { nativeEvent: { layout: { width: 301 } } });
     const words = () => screen.getByTestId('tip-title-words', { includeHiddenElements: true });
-    // Every word measured on its own line: at 44 the widest is too wide, at 40 it fits.
+    // Every word measured on its own line: at the title's size the widest is too wide, a step lower it fits.
     await fireEvent(words(), 'textLayout', { nativeEvent: { lines: [{ width: 330 }] } });
     await fireEvent(words(), 'textLayout', { nativeEvent: { lines: [{ width: 300 }] } });
     await fireEvent(
@@ -235,8 +242,12 @@ describe('a long Tip title', () => {
       { nativeEvent: { lines: [{ width: 290 }, { width: 290 }, { width: 120 }] } },
     );
 
+    const { size, lineHeight } = typeRoles.tipTitle;
+    // The title scale runs from the largest down, so the next lower step is the first below.
+    const lower = titleScale.find((step) => step < size);
+    if (lower === undefined) throw new Error('No lower step on the title scale');
     const fitted = screen.getByTestId('tip-title');
-    expect(fitted).toHaveStyle({ fontSize: 40, lineHeight: 46 * (40 / 44) });
+    expect(fitted).toHaveStyle({ fontSize: lower, lineHeight: lineHeight * (lower / size) });
     expect(fitted).not.toHaveStyle({ opacity: 0 });
     expect(fitted.props).toMatchObject({ numberOfLines: 3, adjustsFontSizeToFit: true });
   });

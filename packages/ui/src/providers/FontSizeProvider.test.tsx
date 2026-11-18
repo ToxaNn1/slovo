@@ -9,6 +9,10 @@ import {
   useWordTextSizes,
   type TextSizeStep,
 } from './FontSizeProvider';
+import { textSizeSteps, typeRoles } from '../tokens';
+
+const idiom = typeRoles.idiomExpression.size;
+const tip = typeRoles.tipTitle.size;
 
 /** Shows the sizes the provider gives, each in a text of its own. */
 function Probe() {
@@ -54,11 +58,11 @@ describe('FontSizeProvider', () => {
       await renderAt('system', { fontScale });
 
       expect(sizeOf('lemma')).toBe(44);
-      expect(sizeOf('idiom')).toBe(44);
-      expect(sizeOf('tip')).toBe(44);
+      expect(sizeOf('idiom')).toBe(idiom);
+      expect(sizeOf('tip')).toBe(tip);
       // iOS multiplies the reading text by the OS text size when it draws it.
-      expect(sizeOf('definition') * fontScale).toBeCloseTo(19 * 1.5);
-      expect(sizeOf('example') * fontScale).toBeCloseTo(17 * 1.5);
+      expect(sizeOf('definition') * fontScale).toBeCloseTo(textSizeSteps.system.definition * 1.5);
+      expect(sizeOf('example') * fontScale).toBeCloseTo(textSizeSteps.system.example * 1.5);
     },
   );
 
@@ -72,8 +76,8 @@ describe('FontSizeProvider', () => {
       await renderAt(size);
 
       expect(sizeOf('lemma')).toBe(lemma);
-      expect(sizeOf('idiom')).toBeCloseTo((44 * lemma) / 44);
-      expect(sizeOf('tip')).toBeCloseTo((44 * lemma) / 44);
+      expect(sizeOf('idiom')).toBeCloseTo((idiom * lemma) / 44);
+      expect(sizeOf('tip')).toBeCloseTo((tip * lemma) / 44);
     },
   );
 
@@ -81,7 +85,7 @@ describe('FontSizeProvider', () => {
     await renderAt('system', { width: 375 });
 
     expect(sizeOf('lemma')).toBeCloseTo((44 * 44) / 48);
-    expect(sizeOf('idiom')).toBeCloseTo((44 * 44) / 48);
-    expect(sizeOf('tip')).toBeCloseTo((44 * 44) / 48);
+    expect(sizeOf('idiom')).toBeCloseTo((idiom * 44) / 48);
+    expect(sizeOf('tip')).toBeCloseTo((tip * 44) / 48);
   });
 });

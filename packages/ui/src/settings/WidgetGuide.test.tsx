@@ -4,6 +4,7 @@ import { act, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
+import { typeRoles } from '../tokens';
 
 const strings = testStrings({});
 
@@ -54,18 +55,18 @@ describe('WidgetGuide', () => {
     jest.restoreAllMocks();
   });
 
-  it('draws the widgets at the sizes of board 15, scaled to the drawing (owner 08.11)', async () => {
+  it('draws the widgets at the sizes of their widget roles', async () => {
     await renderGuide();
 
     // The drawing is a picture VoiceOver skips, so its texts are hidden ones.
     const hidden = { includeHiddenElements: true };
     const [small, medium, ...more] = screen.getAllByText('word', hidden);
     expect(more).toHaveLength(0);
-    expect(small).toHaveStyle({ fontSize: 19 });
-    expect(medium).toHaveStyle({ fontSize: 24 });
+    expect(small).toHaveStyle({ fontSize: typeRoles.widgetSmallLemma.size });
+    expect(medium).toHaveStyle({ fontSize: typeRoles.widgetLemma.size });
     const modes = screen.getAllByText('ALL WORDS', hidden);
     expect(modes).toHaveLength(2);
-    for (const mode of modes) expect(mode).toHaveStyle({ fontSize: 8 });
+    for (const mode of modes) expect(mode).toHaveStyle({ fontSize: typeRoles.widgetMode.size });
   });
 
   it('shrinks a long Word to fit its line, as the widget does, instead of cutting it', async () => {

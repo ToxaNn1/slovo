@@ -118,7 +118,6 @@ export function WordHeadline({
           size={lemmaSize}
           typeRole="heroWord"
           testID="word-lemma"
-          stepped
           // A title of 36 or more keeps its size at every OS text size (ADR 0157).
           allowFontScaling={false}
           falling={falling}
