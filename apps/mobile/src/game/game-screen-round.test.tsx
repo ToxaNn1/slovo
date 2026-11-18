@@ -156,8 +156,8 @@ describe('the Game screen', () => {
     });
   });
 
-  describe('the Round on the ground (gameQuestionOnGround, gameRoundMascot)', () => {
-    const BOARD = ['gameQuestionOnGround', 'gameRoundMascot'];
+  describe('the Round on the ground (gameRoundMascot)', () => {
+    const BOARD = ['gameRoundMascot'];
     const HIDDEN = { includeHiddenElements: true };
     const livesLabel = () => String(screen.getByTestId('game-lives').props['accessibilityLabel']);
 
@@ -267,17 +267,6 @@ describe('the Game screen', () => {
       );
     });
 
-    it('keeps the #1674 Round with its switch off: the number in the header and the label, no Lives text', async () => {
-      await open({ origins: 15, switchedOn: ['gameRoundMascot'] });
-      await renderScreen();
-      await fireEvent.press(screen.getByTestId('game-mode-origin'));
-      await waitFor(() => {
-        expect(screen.getByRole('header', { name: /^Звідки слово · 1\/\d+$/ })).toBeOnTheScreen();
-      });
-      expect(screen.getByText(/^Звідки це слово\? · 1 \/ \d+$/, HIDDEN)).toBeOnTheScreen();
-      expect(screen.queryByText(/Життів/)).toBeNull();
-    });
-
     it('sets the Mascot beside the question: waiting, glad at a right answer, wincing at a wrong one', async () => {
       await open({ switchedOn: BOARD });
       await renderScreen();
@@ -315,7 +304,7 @@ describe('the Game screen', () => {
     });
 
     it('keeps the Mascot out of the Round with its switch off', async () => {
-      await open({ switchedOn: ['gameQuestionOnGround'] });
+      await open();
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
       await waitFor(() => {
