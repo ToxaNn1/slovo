@@ -929,7 +929,7 @@ export const QuestionnaireAnswerIdSchema = KebabCaseIdSchema;
 
 /**
  * The Edition's questionnaire (ADR 0067): the options of the level
- * question, each setting the Rarity Range or opening the Rarity Test, of
+ * question, which set nothing (ADR 0183) but for the one opening the Rarity Test, of
  * «Навіщо», each setting the Mix kind weights it names (the others stay), and
  * of the self-rating. Ids are unique within a question.
  */
@@ -940,6 +940,7 @@ export const QuestionnaireSchema = z.strictObject({
         z.strictObject({
           id: QuestionnaireAnswerIdSchema,
           label: TextSchema,
+          /** No longer read: «Рівень» sets no Rarity Range (ADR 0183). Kept so Edition configs written before stay valid. */
           rarityCeiling: RaritySchema,
         }),
         /** «Не знаю»: the onboarding opens the Rarity Test, whose result sets the top of the Rarity Range. */

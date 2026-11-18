@@ -543,7 +543,6 @@ export async function openComposition({
     userState,
     clock,
     mix,
-    rarityRange,
     xpLog,
     analytics,
   });
@@ -725,7 +724,6 @@ export async function openComposition({
     entries,
     wordOfTheDay,
     mix,
-    rarityRange,
     xpLog,
     analytics,
     backend,
