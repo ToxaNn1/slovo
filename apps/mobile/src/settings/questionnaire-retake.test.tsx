@@ -141,7 +141,7 @@ beforeEach(async () => {
   await openWith(editionWithout());
 });
 
-describe('Settings › «Пройти опитування ще раз»', () => {
+describe('Settings › «Анкета: підлаштувати Стрічку»', () => {
   it('is the board’s one screen: «Рівень» with no «Не знаю», «Навіщо», the self-rating and the interests', async () => {
     await render();
     screenSettled();

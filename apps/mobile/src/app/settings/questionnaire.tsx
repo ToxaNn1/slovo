@@ -1,4 +1,4 @@
 import { QuestionnaireScreen } from '@/settings/questionnaire-screen';
 
-/** Settings › Пройти опитування ще раз. */
+/** Settings › Анкета: підлаштувати Стрічку. */
 export default QuestionnaireScreen;

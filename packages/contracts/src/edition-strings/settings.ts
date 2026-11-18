@@ -87,7 +87,7 @@ export const SettingsStringsSchema = z.strictObject({
     streakBreak: TextSchema,
     /** The row that opens the Badges screen, e.g. «Відзнаки». */
     badges: TextSchema,
-    /** The row that retakes the questionnaire, e.g. «Пройти опитування ще раз». */
+    /** The row that retakes the questionnaire, e.g. «Анкета: підлаштувати Стрічку». */
     questionnaire: TextSchema,
     /** The row that shows the Feed's gestures hint once more, e.g. «Показати підказку жестів». */
     gesturesHint: TextSchema,

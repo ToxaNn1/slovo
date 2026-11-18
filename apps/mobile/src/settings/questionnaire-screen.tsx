@@ -18,7 +18,7 @@ const { onboarding, feedNotices, settings } = editionStrings;
 type Answers = Partial<Record<OptionQuestion, string>>;
 
 /**
- * Settings › Пройти опитування ще раз (ADR 0067), one screen: «Рівень» and
+ * Settings › Анкета: підлаштувати Стрічку (ADR 0067), one screen: «Рівень» and
  * «Навіщо» while the questionnaire is on, the self-rating while the Rarity
  * Test is on, and the interests while «Що тобі цікаво?» is on. The screen holds the answers and «ГОТОВО»
  * applies them through the Core's questionnaire, as the onboarding and the
