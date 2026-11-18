@@ -324,6 +324,33 @@ describe('a link from outside the app to no Entry', () => {
     expect(entryScreen()).toBe(`${home} | inside`);
   });
 
+  it("opens, as Expo Go's link, the route after its `/--/`", async () => {
+    const app = await renderApp();
+
+    await app.open('exp://127.0.0.1:8082/--/game');
+
+    expect(app.pathname()).toBe('/game');
+    expect(screen.getByText('Game')).toBeTruthy();
+  });
+
+  it("opens, as Expo Go's link to an Entry, the Entry without the label it names", async () => {
+    const app = await renderApp({ initialUrl: '/game' });
+
+    await app.open('exps://u.expo.dev/--/entry/w_bevz?back=Вхід&from=notification');
+
+    expect(app.pathname()).toBe('/entry/w_bevz');
+    expect(entryScreen()).toBe(`${home} | inside`);
+  });
+
+  it("opens, as Expo Go's link with no `/--/`, the app's start", async () => {
+    const app = await renderApp({ initialUrl: '/game' });
+
+    await app.open('exp://127.0.0.1:8082');
+
+    expect(app.pathname()).toBe('/');
+    expect(screen.getByText('Feed')).toBeTruthy();
+  });
+
   it('goes on to the router as it came, to a path the app has no route for', async () => {
     const app = await renderApp();
 
