@@ -95,7 +95,6 @@
     "questionnaire": "on",
     "badges": "on",
     "levelLadder": "off",
-    "newLevelScreen": "off",
     "badgeSheet": "off",
     "badgeToast": "off",
     "badgeFamiliesOverview": "off",

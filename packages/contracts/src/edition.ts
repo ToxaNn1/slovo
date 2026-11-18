@@ -420,7 +420,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** The Level ladder of the Profile: one card per Level name with its range of Levels, and the bar to the next name (spec #1641, ADR 0085); off while `xpLog` is. */
   levelLadder: FeatureSwitchStateSchema,
   /** The new Level screen: the full red ground with the Level stamped in, at every new Level, in place of the Mascot celebration (ADR 0085); off while `xpLog` is. */
-  newLevelScreen: FeatureSwitchStateSchema,
   /** The Badge sheet: a tap on any Badge opens its name, date or progress, and an unearned one answers with a toast (ADR 0085); off while `xpLog` or `badges` is. */
   badgeSheet: FeatureSwitchStateSchema,
   /** The Badge toast: a Badge earned during a Game shows a toast in place of the stamp (ADR 0085); off while `xpLog` or `badges` is. */

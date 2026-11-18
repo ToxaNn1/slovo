@@ -249,10 +249,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Драбина рівнів',
     line: 'У профілі видно всі назви рівнів і смугу до наступної назви.',
   },
-  newLevelScreen: {
-    name: 'Екран нового рівня',
-    line: 'Новий рівень відзначає великий червоний екран.',
-  },
   badgeSheet: {
     name: 'Картка відзнаки',
     line: 'Дотик до відзнаки відкриває її назву, дату або прогрес.',

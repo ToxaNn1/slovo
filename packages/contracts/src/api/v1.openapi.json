@@ -9184,14 +9184,6 @@
                           ],
                           "type": "string"
                         },
-                        "newLevelScreen": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "badgeSheet": {
                           "enum": [
                             "on",
@@ -9892,7 +9884,6 @@
                         "questionnaire",
                         "badges",
                         "levelLadder",
-                        "newLevelScreen",
                         "badgeSheet",
                         "badgeToast",
                         "badgeFamiliesOverview",
@@ -11217,14 +11208,6 @@
                           ],
                           "type": "string"
                         },
-                        "newLevelScreen": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "badgeSheet": {
                           "enum": [
                             "on",
@@ -11925,7 +11908,6 @@
                         "questionnaire",
                         "badges",
                         "levelLadder",
-                        "newLevelScreen",
                         "badgeSheet",
                         "badgeToast",
                         "badgeFamiliesOverview",
@@ -13174,14 +13156,6 @@
                           ],
                           "type": "string"
                         },
-                        "newLevelScreen": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "badgeSheet": {
                           "enum": [
                             "on",
@@ -13882,7 +13856,6 @@
                         "questionnaire",
                         "badges",
                         "levelLadder",
-                        "newLevelScreen",
                         "badgeSheet",
                         "badgeToast",
                         "badgeFamiliesOverview",

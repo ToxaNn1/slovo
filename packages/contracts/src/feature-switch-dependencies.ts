@@ -41,7 +41,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   badges: ['xpLog'],
   // The board 10 parts of the Profile and the Badges (ADR 0085).
   levelLadder: ['xpLog'],
-  newLevelScreen: ['xpLog'],
   streakFreezeCard: ['xpLog'],
   breakCard: ['xpLog'],
   calendarDayLines: ['xpLog'],

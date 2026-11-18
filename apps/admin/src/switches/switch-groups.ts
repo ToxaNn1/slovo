@@ -103,7 +103,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   questionnaire: 'onboarding',
   badges: 'progress',
   levelLadder: 'progress',
-  newLevelScreen: 'progress',
   badgeSheet: 'progress',
   badgeToast: 'progress',
   badgeFamiliesOverview: 'progress',
