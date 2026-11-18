@@ -553,7 +553,7 @@ _Avoid_: Heart, attempt
 A wrong option in a Round.
 
 **Best result**:
-The highest result of one finished Game in a Game Mode: the Rounds passed, or the right answers in «На час»; one per Game Mode per Edition. Stored, since finished Games are not kept, and written only when a finished Game beats it; a Game left before its end never counts.
+The highest result of one finished Game in a Game Mode: its right answers, in every Game Mode; one per Game Mode per Edition. Stored, since finished Games are not kept, and written only when a finished Game beats it; a Game left before its end never counts.
 _Avoid_: High score, top score
 
 **Game Review**:
