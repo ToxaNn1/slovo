@@ -7,7 +7,6 @@ import {
   fontScaleCap,
   textSizeSteps,
   titleSize,
-  typeRoles,
   wordLineHeight,
   type TypeRole,
 } from '../tokens';
@@ -102,7 +101,7 @@ export function useLemmaSize(): TextSize {
  * (ADR 0157).
  */
 export function useTitleFactor(): number {
-  return useLemmaSize().fontSize / typeRoles.heroWord.size;
+  return useLemmaSize().fontSize / textSizeSteps.system.lemma;
 }
 
 /**

@@ -123,7 +123,7 @@ const role = (
  */
 export const typeRoles = {
   shout: role('word', '900', 96, 88, -5),
-  heroWord: role('word', '900', 50, 50, -1.5),
+  heroWord: role('word', '900', 44, 46, -1.3),
   screenTitle: role('word', '900', 30, 30, -1, 'uppercase'),
   heading: role('word', '800', 18, 20, 0.5),
   eyebrow: role('word', '700', 11, 13, 2, 'uppercase'),
@@ -337,11 +337,11 @@ export const typeRoles = {
   /** An Idiom's «Походження», the tab «Звідки» (XEntry2 e7). */
   idiomEtymology: role('ui', '500', 18, 27),
   /** An Idiom's expression, from 36 on `titleScale` (ADR 0157; XEntry2 e7: line 1.02, tracking −1 at 40). */
-  idiomExpression: role('word', '900', 36, 36.72, -0.9),
+  idiomExpression: role('word', '900', 44, 46, -1.3),
   /** An Idiom's primary Definition in the tab «Суть», at the user's font size (XEntry2 e7). */
   idiomEssence: role('ui', '500', 22, 31),
   /** A Synonym Row's dominant, on one line at the Lemma's size (ADR 0157; XEntry2 e8: line 1). */
-  synonymDominant: role('word', '900', 50, 50, -1.5),
+  synonymDominant: role('word', '900', 44, 46, -1.3),
   /** A Synonym Row's member, one per row, at the user's font size (XEntry2 e8). */
   synonymMember: role('word', '800', 19, 20.9),
   /** The name of a row on the Hidden screen. */
@@ -477,7 +477,7 @@ export const typeRoles = {
   /** What went wrong, under the title of the Feed's error state. */
   errorText: role('ui', '400', 16, 23.2),
   /** A Tip's title, from 36 on `titleScale` (ADR 0157; board XEntry2 e9: line 1.1). */
-  tipTitle: role('word', '900', 36, 39.6, -0.6),
+  tipTitle: role('word', '900', 44, 46, -1.3),
   /** A Tip's rule on its card's «Правило» tab (board XEntry2 e9). */
   tipRule: role('ui', '500', 20, 28),
   /** The trailing text of a list row, such as when it was saved. */
@@ -671,7 +671,7 @@ export const typeRoles = {
   /** A Correction's non-standard form on its card, under the red strike, from 26 on `titleScale` (ADR 0157; XEntry2 e6). */
   correctionStruck: role('word', '800', 26, 28.6),
   /** A Correction's standard form in «Як краще», from 26 on `titleScale` (ADR 0157; XEntry2 e6: line 1.05). */
-  correctionStandard: role('word', '900', 26, 27.3, -0.7),
+  correctionStandard: role('word', '900', 44, 46, -1.3),
   /** A Correction's explanation in «Чому» (XEntry2 e6). */
   correctionWhy: role('ui', '500', 20, 29),
   /** A sentence of a Correction's example pair in «Приклади» (XEntry2 e6). */
@@ -886,7 +886,7 @@ export const titleScale = [50, 44, 40, 36, 32, 28, 26, 24, 22, 20] as const;
  * `titleScale` at every text size (ADR 0157).
  */
 export function titleSize(name: TypeRole, lemma: DrawnSize): DrawnSize {
-  const factor = lemma.fontSize / typeRoles.heroWord.size;
+  const factor = lemma.fontSize / textSizeSteps.system.lemma;
   const { size, lineHeight } = typeRoles[name];
   return { fontSize: size * factor, lineHeight: lineHeight * factor };
 }
@@ -1327,9 +1327,9 @@ export const textSizeSteps: Readonly<
     { readonly lemma: number; readonly definition: number; readonly example: number }
   >
 > = {
-  system: { lemma: 50, definition: 19, example: 17 },
-  larger: { lemma: 58, definition: 22, example: 20 },
-  largest: { lemma: 65, definition: 25, example: 22 },
+  system: { lemma: 44, definition: 19, example: 17 },
+  larger: { lemma: 51, definition: 22, example: 20 },
+  largest: { lemma: 57, definition: 25, example: 22 },
 };
 
 /**

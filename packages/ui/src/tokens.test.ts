@@ -115,13 +115,13 @@ describe('the UA Edition’s design tokens', () => {
   it('sets the word in Unbounded and the UI in Onest', () => {
     expect(typeStyle('heroWord', tokens)).toEqual({
       fontFamily: 'Unbounded',
-      fontSize: 50,
+      fontSize: 44,
       fontWeight: '900',
-      lineHeight: 50,
-      letterSpacing: -1.5,
+      lineHeight: 46,
+      letterSpacing: -1.3,
       textTransform: 'none',
-      paddingTop: 13,
-      marginTop: -13,
+      paddingTop: 10,
+      marginTop: -10,
     });
     expect(typeStyle('definition', tokens)).toMatchObject({
       fontFamily: 'Onest',
@@ -241,7 +241,7 @@ describe('titleScale', () => {
     expect(titleScale).toEqual([50, 44, 40, 36, 32, 28, 26, 24, 22, 20]);
   });
 
-  it('starts every card title on a step of the scale', () => {
+  it('starts every card title at 44, the non-standard forms at 26', () => {
     const titles: readonly TypeRole[] = [
       'heroWord',
       'synonymDominant',
@@ -251,15 +251,15 @@ describe('titleScale', () => {
       'correctionStruck',
       'correctionStandard',
     ];
-    expect(titles.map((name) => typeRoles[name].size)).toEqual([50, 50, 36, 36, 26, 26, 26]);
+    expect(titles.map((name) => typeRoles[name].size)).toEqual([44, 44, 44, 44, 26, 26, 44]);
   });
 
   it("takes a title role at the Lemma's size: its share of the Lemma's own", () => {
-    // At L the Lemma is 58, so a title of 36 at M takes 36 × 58 / 50.
-    const lemma = { fontSize: textSizeSteps.larger.lemma, lineHeight: 75.4 };
+    // At L the Lemma is 51, so a title of 44 at M takes 44 × 51 / 44.
+    const lemma = { fontSize: textSizeSteps.larger.lemma, lineHeight: 66.3 };
     expect(titleSize('idiomExpression', lemma)).toEqual({
-      fontSize: (36 * 58) / 50,
-      lineHeight: (typeRoles.idiomExpression.lineHeight * 58) / 50,
+      fontSize: (44 * 51) / 44,
+      lineHeight: (typeRoles.idiomExpression.lineHeight * 51) / 44,
     });
   });
 });

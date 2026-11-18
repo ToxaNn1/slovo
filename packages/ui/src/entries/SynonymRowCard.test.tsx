@@ -119,20 +119,22 @@ describe('the Synonym Row card', () => {
     );
   });
 
-  it('sets the members one per row, a hairline between, the shade note upright at the right', async () => {
+  it('sets the members one per row, a hairline between, the shade note upright under the member, at the left', async () => {
     await render(inEdition(<EntryCard card={card} />));
 
-    expect(screen.getByTestId('synonym-row-member-0')).toHaveStyle({ borderTopWidth: 0 });
-    expect(screen.getByTestId('synonym-row-member-1')).toHaveStyle({
-      borderTopWidth: 1,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    });
-    expect(screen.getByTestId('synonym-row-member-0-shade')).toHaveTextContent('Slowly');
-    expect(screen.getByTestId('synonym-row-member-0-shade')).toHaveStyle({
-      fontStyle: 'normal',
-      fontSize: 14,
-    });
+    const member = screen.getByTestId('synonym-row-member-0');
+    expect(member).toHaveStyle({ borderTopWidth: 0 });
+    expect(screen.getByTestId('synonym-row-member-1')).toHaveStyle({ borderTopWidth: 1 });
+    // One column: the member first, its shade note under it.
+    expect(member).not.toHaveStyle({ flexDirection: 'row' });
+    const [first, last] = [member.children[0], member.children[member.children.length - 1]];
+    if (typeof first !== 'object' || typeof last !== 'object')
+      throw new Error('The member has no rows');
+    expect(within(first).getByTestId('synonym-row-member-0-text')).toBeTruthy();
+    expect(last).toBe(screen.getByTestId('synonym-row-member-0-shade'));
+    expect(last).toHaveTextContent('Slowly');
+    expect(last).toHaveStyle({ fontStyle: 'normal', fontSize: 14 });
+    expect(last).not.toHaveStyle({ textAlign: 'right' });
   });
 
   it('draws the red bar under the dominant', async () => {

@@ -302,25 +302,12 @@ function Member({
 
 const styles = StyleSheet.create({
   header: { gap: space[2] },
-  // A member at the left, its shade note at the right, on one baseline (board e8);
-  // a note left too little room moves under the member.
+  // A member over its shade note, both at the left: one column, nothing to squeeze.
   member: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    columnGap: synonymRowList.shadeGap,
-    rowGap: space[1],
+    gap: space[1],
     paddingVertical: synonymRowList.rowPadding,
   },
   // A member keeps its width whole; one wider than the row shrinks to fit it, never split.
-  memberText: { flexShrink: 0, maxWidth: '100%' },
-  // The note takes the rest of the row, and wraps under the member when that is too little.
-  shade: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: synonymRowList.shadeShare,
-    textAlign: 'right',
-    fontStyle: 'normal',
-  },
+  memberText: { maxWidth: '100%' },
+  shade: { fontStyle: 'normal' },
 });

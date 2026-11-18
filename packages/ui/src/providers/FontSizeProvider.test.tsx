@@ -53,9 +53,9 @@ describe('FontSizeProvider', () => {
     async (fontScale) => {
       await renderAt('system', { fontScale });
 
-      expect(sizeOf('lemma')).toBe(50);
-      expect(sizeOf('idiom')).toBe(36);
-      expect(sizeOf('tip')).toBe(36);
+      expect(sizeOf('lemma')).toBe(44);
+      expect(sizeOf('idiom')).toBe(44);
+      expect(sizeOf('tip')).toBe(44);
       // iOS multiplies the reading text by the OS text size when it draws it.
       expect(sizeOf('definition') * fontScale).toBeCloseTo(19 * 1.5);
       expect(sizeOf('example') * fontScale).toBeCloseTo(17 * 1.5);
@@ -63,25 +63,25 @@ describe('FontSizeProvider', () => {
   );
 
   it.each([
-    ['system', 50],
-    ['larger', 58],
-    ['largest', 65],
+    ['system', 44],
+    ['larger', 51],
+    ['largest', 57],
   ] satisfies [TextSizeStep, number][])(
     'grows every title by the Lemma’s own step at %j',
     async (size, lemma) => {
       await renderAt(size);
 
       expect(sizeOf('lemma')).toBe(lemma);
-      expect(sizeOf('idiom')).toBeCloseTo((36 * lemma) / 50);
-      expect(sizeOf('tip')).toBeCloseTo((36 * lemma) / 50);
+      expect(sizeOf('idiom')).toBeCloseTo((44 * lemma) / 44);
+      expect(sizeOf('tip')).toBeCloseTo((44 * lemma) / 44);
     },
   );
 
   it('takes the compact layout’s smaller titles in a window narrower than 390', async () => {
     await renderAt('system', { width: 375 });
 
-    expect(sizeOf('lemma')).toBeCloseTo((50 * 44) / 48);
-    expect(sizeOf('idiom')).toBeCloseTo((36 * 44) / 48);
-    expect(sizeOf('tip')).toBeCloseTo((36 * 44) / 48);
+    expect(sizeOf('lemma')).toBeCloseTo((44 * 44) / 48);
+    expect(sizeOf('idiom')).toBeCloseTo((44 * 44) / 48);
+    expect(sizeOf('tip')).toBeCloseTo((44 * 44) / 48);
   });
 });

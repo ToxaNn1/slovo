@@ -60,6 +60,6 @@ describe("Entry details' panel headline", () => {
   it('grows by the in-app text size, never to the main card’s size', async () => {
     await renderHeadline('to beat the bushes', 'larger');
 
-    expect(screen.getByTestId('entry-panel-title')).toHaveStyle({ fontSize: 24 * (58 / 50) });
+    expect(screen.getByTestId('entry-panel-title')).toHaveStyle({ fontSize: 24 * (51 / 44) });
   });
 });
