@@ -9376,14 +9376,6 @@
                           ],
                           "type": "string"
                         },
-                        "dashboard": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "mood": {
                           "enum": [
                             "on",
@@ -9748,7 +9740,6 @@
                         "sounds",
                         "reduceMotion",
                         "fastReveal",
-                        "dashboard",
                         "mood",
                         "previousWords",
                         "correctionTypes",
@@ -11220,14 +11211,6 @@
                           ],
                           "type": "string"
                         },
-                        "dashboard": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "mood": {
                           "enum": [
                             "on",
@@ -11592,7 +11575,6 @@
                         "sounds",
                         "reduceMotion",
                         "fastReveal",
-                        "dashboard",
                         "mood",
                         "previousWords",
                         "correctionTypes",
@@ -12988,14 +12970,6 @@
                           ],
                           "type": "string"
                         },
-                        "dashboard": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "mood": {
                           "enum": [
                             "on",
@@ -13360,7 +13334,6 @@
                         "sounds",
                         "reduceMotion",
                         "fastReveal",
-                        "dashboard",
                         "mood",
                         "previousWords",
                         "correctionTypes",
