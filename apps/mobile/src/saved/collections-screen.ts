@@ -14,10 +14,6 @@ export interface CollectionRowModel {
    * Lemmas, without the Stress mark the voices break a word at.
    */
   readonly accessibilityLabel: string;
-  /** What VoiceOver reads for the card's rename action. */
-  readonly renameLabel: string;
-  /** What VoiceOver reads for the card's delete action. */
-  readonly deleteLabel: string;
   /** What VoiceOver reads for the card's menu action. */
   readonly moreLabel: string;
 }
@@ -48,8 +44,6 @@ export function collectionRows({
               count: entries,
               lemmas: withoutStress(newestLemmas.join(', ')),
             }),
-      renameLabel: fill(screen.renameLabel, { name }),
-      deleteLabel: fill(screen.deleteLabel, { name }),
       moreLabel: fill(screen.moreLabel, { name }),
     };
   });

@@ -27,8 +27,8 @@ const lastCategoryHint: Record<CategoryKind, string> = {
 /** What a Category's screen draws and does. */
 export interface CategoryScreen {
   /**
-   * A card per live Entry of the Category, in the Language Pack's order, the
-   * Known ones first while `categoryKnownFirst` is on (ADR 0111);
+   * A card per live Entry of the Category, the Known ones first, each group in
+   * the Language Pack's order (ADR 0111);
    * `undefined` till the first read ends, so nothing counts the Entries before.
    */
   readonly cards: readonly RailBoardCard[] | undefined;
@@ -58,7 +58,7 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
   const mixState = useMixState();
   const showToast = useUndoToast();
   const openScreen = useOpenScreen();
-  const { categoryFeed, categoryKnownFirst } = useShown();
+  const { categoryFeed } = useShown();
   const read = useCallback(
     async (open: Composition) =>
       (await open.categoryEntries(of, category.id)).map((entry) => {
@@ -70,11 +70,8 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
   const reading = useCompositionRead(read, 'Could not read the Entries of a Category');
   const cards = useKnownCards(reading.status === 'ready' ? reading.value : undefined);
   const listed = useMemo(
-    () =>
-      cards && categoryKnownFirst
-        ? [...cards.filter((card) => card.known), ...cards.filter((card) => !card.known)]
-        : cards,
-    [cards, categoryKnownFirst],
+    () => cards && [...cards.filter((card) => card.known), ...cards.filter((card) => !card.known)],
+    [cards],
   );
   const place: CategoryPlace = categoryPlace(mixState, of, category.id);
   // The reader's choice shows at once: the Mix keeps it only once the Cycle has read the

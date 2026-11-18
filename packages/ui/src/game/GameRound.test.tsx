@@ -72,7 +72,6 @@ const strings = testStrings({
       confirm: 'Leave',
       cancel: 'Play on',
     },
-    sheet: { correct: 'Right!', wrong: 'Not this time', next: 'Next' },
   },
   wordCard: {
     stress: 'stress on {vowels}',
@@ -443,19 +442,16 @@ function Game({
   onAnswer,
   onLeave,
   onOpenLetter,
-  feedback = 'sheet',
 }: {
   start: PlayingGame;
   onAnswer: (given: GivenAnswer) => void;
   onLeave: () => void;
   onOpenLetter: () => void;
-  feedback?: 'sheet' | 'card';
 }) {
   const [game, setGame] = useState(start);
   return (
     <GameRound
       game={game}
-      feedback={feedback}
       title="Definitions"
       label={LABELS[game.round.form] ?? 'Definition'}
       onAnswer={(given) => {
@@ -656,7 +652,7 @@ describe('GameRound', () => {
 
     expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
     expect(screen.queryByText('Your choice')).toBeNull();
-    expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Spot on!' })).toBeTruthy();
   });
 
   it('asks for the right sound for a right answer and the wrong sound for a wrong one', async () => {
@@ -678,7 +674,7 @@ describe('GameRound', () => {
 
     expect(screen.getByRole('button', { name: 'brittle, Your choice' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
-    expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Close. Next one will land.' })).toBeTruthy();
   });
 
   it('takes one answer a Round: a second tap does not count', async () => {
@@ -708,7 +704,7 @@ describe('GameRound', () => {
 
     expect(onAnswer).toHaveBeenCalledWith({ form: 'pick', option: CORRECT });
     expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
-    expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Spot on!' })).toBeTruthy();
   });
 
   it('names a highlight that is no gap after the prompt, under the mode’s label', async () => {
@@ -807,7 +803,7 @@ describe('GameRound', () => {
     expect(onAnswer).toHaveBeenCalledWith({ form: 'pick', option: 3 });
     expect(screen.getByRole('button', { name: 'dour, Your choice' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
-    expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Close. Next one will land.' })).toBeTruthy();
   });
 
   it('asks a Word by its Example with a gap under its own label, VoiceOver reading the gap, and takes an answer', async () => {
@@ -824,7 +820,7 @@ describe('GameRound', () => {
 
     expect(onAnswer).toHaveBeenCalledWith({ form: 'pick', option: CORRECT });
     expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
-    expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Spot on!' })).toBeTruthy();
   });
 
   it('shows a Word with its Definition under it, VoiceOver reading both, and takes an answer', async () => {
@@ -844,7 +840,7 @@ describe('GameRound', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
 
     expect(onAnswer).toHaveBeenCalledWith({ form: 'pick', option: CORRECT });
-    expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Spot on!' })).toBeTruthy();
   });
 
   it('shows no Definition for a Round without one', async () => {
@@ -866,7 +862,7 @@ describe('GameRound', () => {
       ).toEqual(['Leave the Game', 'a, second letter', 'a, fourth letter', 'a, sixth letter']);
     });
 
-    it('answers a Word with the vowel tapped and shows the Word with its Stress and Example', async () => {
+    it('answers a Word with the vowel tapped and says it is right', async () => {
       const onAnswer = jest.fn();
       await renderRound(onAnswer, jest.fn(), wordVowelRound);
 
@@ -874,12 +870,10 @@ describe('GameRound', () => {
 
       expect(onAnswer).toHaveBeenCalledWith({ form: 'vowel', position: 3 });
       expect(screen.getByRole('button', { name: 'a, fourth letter, Right' })).toBeTruthy();
-      expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
-      expect(screen.getByText('bana\u0301na')).toBeOnTheScreen();
-      expect(screen.getByText('A banana a day.')).toBeOnTheScreen();
+      expect(screen.getByRole('header', { name: 'Spot on!' })).toBeTruthy();
     });
 
-    it('shows a stress trap’s wrong tap beside its Stress, and the explanation in the sheet', async () => {
+    it('shows a stress trap’s wrong tap beside its Stress, and the explanation on the answer card', async () => {
       const onAnswer = jest.fn();
       await renderRound(onAnswer, jest.fn(), trapVowelRound);
 
@@ -889,9 +883,8 @@ describe('GameRound', () => {
       expect(onAnswer).toHaveBeenCalledTimes(1);
       expect(onAnswer).toHaveBeenCalledWith({ form: 'vowel', position: 4 });
       expect(screen.getByRole('button', { name: 'o, fifth letter, Your choice' })).toBeTruthy();
-      expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
-      expect(screen.getByText('ma\u0301ngo')).toBeOnTheScreen();
-      expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
+      expect(screen.getByRole('header', { name: 'Close. Next one will land.' })).toBeTruthy();
+      expect(screen.getByTestId('game-answer-card-line')).toHaveTextContent(
         'Say MAngo, not manGO.',
       );
     });
@@ -907,7 +900,7 @@ describe('GameRound', () => {
       ).toEqual(['Leave the Game', 'ardent', 'candid', 'open and honest', 'full of passion']);
     });
 
-    it('answers with the Word, then the Definition tapped, and shows the Word with its Example', async () => {
+    it('answers with the Word, then the Definition tapped, and says it is right', async () => {
       const onAnswer = jest.fn();
       await renderRound(onAnswer, jest.fn(), pairsRound);
 
@@ -915,8 +908,7 @@ describe('GameRound', () => {
       await fireEvent.press(screen.getByRole('button', { name: 'open and honest' }));
 
       expect(onAnswer).toHaveBeenCalledWith({ form: 'pairs', word: 1, definition: 0 });
-      expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
-      expect(screen.getByText('An ardent reader.')).toBeOnTheScreen();
+      expect(screen.getByRole('header', { name: 'Spot on!' })).toBeTruthy();
       expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 5 of 5');
     });
 
@@ -926,7 +918,7 @@ describe('GameRound', () => {
       await fireEvent.press(screen.getByRole('button', { name: 'ardent' }));
       await fireEvent.press(screen.getByRole('button', { name: 'open and honest' }));
 
-      expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
+      expect(screen.getByRole('header', { name: 'Close. Next one will land.' })).toBeTruthy();
       expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 4 of 5');
     });
   });
@@ -942,7 +934,7 @@ describe('GameRound', () => {
       expect(screen.getByRole('button', { name: 'k' })).toBeEnabled();
     });
 
-    it('answers with the chips in the order tapped and shows the Word with its Example', async () => {
+    it('answers with the chips in the order tapped and says it is right', async () => {
       const onAnswer = jest.fn();
       await renderRound(onAnswer, jest.fn(), chipsRound);
 
@@ -952,19 +944,17 @@ describe('GameRound', () => {
 
       expect(onAnswer).toHaveBeenCalledWith({ form: 'chips', chips: [1, 3, 2, 4, 0] });
       expect(screen.getByTestId('chips-line')).toHaveTextContent("o'brok");
-      expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
-      expect(screen.getByText('An o’brok of grain.')).toBeOnTheScreen();
+      expect(screen.getByRole('header', { name: 'Spot on!' })).toBeTruthy();
     });
 
-    it('takes a Life for a Word assembled wrong and shows the right one in the sheet', async () => {
+    it('takes a Life for a Word assembled wrong and says it is wrong', async () => {
       await renderRound(jest.fn(), jest.fn(), chipsRound);
 
       for (const place of [0, 1, 2, 3, 4]) {
         await fireEvent.press(screen.getByTestId(`chips-${String(place)}`));
       }
 
-      expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
-      expect(screen.getByTestId('game-sheet')).toHaveTextContent("o'brok", { exact: false });
+      expect(screen.getByRole('header', { name: 'Close. Next one will land.' })).toBeTruthy();
       expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 4 of 5');
     });
   });
@@ -999,7 +989,7 @@ describe('GameRound', () => {
       expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 5 of 5');
     });
 
-    it('answers with the text typed and shows the Word with its Example', async () => {
+    it('answers with the text typed and says it is right', async () => {
       const onAnswer = jest.fn();
       await renderRound(onAnswer, jest.fn(), typedRound);
 
@@ -1007,18 +997,16 @@ describe('GameRound', () => {
       await fireEvent.press(screen.getByRole('button', { name: 'Check' }));
 
       expect(onAnswer).toHaveBeenCalledWith({ form: 'typed', text: TYPED });
-      expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
-      expect(screen.getByText('A well-read friend.')).toBeOnTheScreen();
+      expect(screen.getByRole('header', { name: 'Spot on!' })).toBeTruthy();
     });
 
-    it('takes a Life for a wrong Word and shows the right one in the sheet', async () => {
+    it('takes a Life for a wrong Word and says it is wrong', async () => {
       await renderRound(jest.fn(), jest.fn(), typedRound);
 
       await fireEvent.changeText(screen.getByLabelText('Your answer'), 'well-bred');
       await fireEvent(screen.getByLabelText('Your answer'), 'submitEditing');
 
-      expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
-      expect(screen.getByTestId('game-sheet')).toHaveTextContent(TYPED, { exact: false });
+      expect(screen.getByRole('header', { name: 'Close. Next one will land.' })).toBeTruthy();
       expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 4 of 5');
     });
   });
@@ -1399,11 +1387,7 @@ describe('the answer sheet', () => {
     },
   };
 
-  async function answerIn(
-    colorScheme: ColorScheme,
-    option: string,
-    feedback: 'sheet' | 'card' = 'sheet',
-  ) {
+  async function answerIn(colorScheme: ColorScheme, option: string) {
     await render(
       <TokensProvider tokens={boardTokens} colorScheme={colorScheme}>
         <SafeAreaProvider initialMetrics={metrics}>
@@ -1412,7 +1396,6 @@ describe('the answer sheet', () => {
               <InterfaceSoundsProvider sounds={{ play }}>
                 <Game
                   start={first}
-                  feedback={feedback}
                   onAnswer={jest.fn()}
                   onLeave={jest.fn()}
                   onOpenLetter={jest.fn()}
@@ -1427,30 +1410,9 @@ describe('the answer sheet', () => {
   }
 
   it.each(['light', 'dark'] as const)(
-    'draws a right answer red with ink on it in the %s Theme',
-    async (colorScheme) => {
-      await answerIn(colorScheme, 'candid');
-
-      expect(screen.getByTestId('game-sheet-fill')).toHaveStyle({ backgroundColor: RED });
-      expect(screen.getByTestId('game-sheet-title')).toHaveStyle({ color: DARK });
-    },
-  );
-
-  it.each(['light', 'dark'] as const)(
-    'draws a wrong answer on the Theme’s ink with its background on it in the %s Theme',
-    async (colorScheme) => {
-      const { ink: fill, background: text } = boardTokens.colors[colorScheme];
-      await answerIn(colorScheme, 'brittle');
-
-      expect(screen.getByTestId('game-sheet-fill')).toHaveStyle({ backgroundColor: fill });
-      expect(screen.getByTestId('game-sheet-title')).toHaveStyle({ color: text });
-    },
-  );
-
-  it.each(['light', 'dark'] as const)(
     'draws the answer card of a right answer red with ink on it in the %s Theme, apart from the Round under it',
     async (colorScheme) => {
-      await answerIn(colorScheme, 'candid', 'card');
+      await answerIn(colorScheme, 'candid');
 
       expect(screen.getByTestId('game-sheet-fill')).toHaveStyle({ backgroundColor: RED });
       expect(screen.getByTestId('game-answer-card-title')).toHaveStyle({ color: DARK });
@@ -1461,7 +1423,7 @@ describe('the answer sheet', () => {
     'draws the answer card of a wrong answer on the Theme’s ink in the %s Theme, apart from the Round under it',
     async (colorScheme) => {
       const { ink: fill, background: text } = boardTokens.colors[colorScheme];
-      await answerIn(colorScheme, 'brittle', 'card');
+      await answerIn(colorScheme, 'brittle');
 
       expect(screen.getByTestId('game-sheet-fill')).toHaveStyle({ backgroundColor: fill });
       expect(screen.getByTestId('game-answer-card-title')).toHaveStyle({ color: text });
@@ -1469,7 +1431,7 @@ describe('the answer sheet', () => {
   );
 
   it('spaces the answer card’s verdict so a wrapped line’s capital marks clear the line over it', async () => {
-    await answerIn('light', 'brittle', 'card');
+    await answerIn('light', 'brittle');
 
     // The banner type at its size, each line tall enough for Ї over a capital (1.255 em at 30 pt), so a wrapped line clears the one above.
     expect(screen.getByTestId('game-answer-card-title')).toHaveStyle({
@@ -1483,7 +1445,7 @@ describe('the answer sheet', () => {
     async (option) => {
       await answerIn('light', option);
 
-      expect(screen.getByTestId('game-sheet-title')).toHaveStyle({
+      expect(screen.getByTestId('game-answer-card-title')).toHaveStyle({
         fontSize: 30,
         textTransform: 'uppercase',
         fontWeight: '900',
@@ -1534,7 +1496,6 @@ describe('QuickQuestionRound', () => {
               entry={asked}
               label="Definition"
               answered={undefined}
-              feedback="sheet"
               onAnswer={jest.fn()}
             />
           </HapticsProvider>
@@ -1618,7 +1579,6 @@ describe('QuickQuestionRound', () => {
               entry={tip}
               label="Quick question"
               answered={undefined}
-              feedback="sheet"
               onAnswer={jest.fn()}
             />
           </HapticsProvider>

@@ -109,7 +109,6 @@ const validConfig = {
     crosswordSolveTime: 'on',
     crosswordSolvedScreen: 'on',
     crosswordBadgeStamp: 'on',
-    gameAnswerCard: 'on',
     finishPoster: 'on',
     gameAnswerBanner: 'on',
     gameRoundMascot: 'on',
@@ -153,8 +152,6 @@ const validConfig = {
     correctionCategoryScreens: 'on',
     correctionTypeGrid: 'on',
     categoryFeed: 'on',
-    categoryKnownFirst: 'on',
-    collectionBoardStyle: 'on',
     collectionLinkCopy: 'on',
     dueQuiz: 'on',
     profileConfirmedByRarity: 'on',
@@ -409,7 +406,6 @@ describe('loadEdition', () => {
     'crosswordSolveTime',
     'crosswordSolvedScreen',
     'crosswordBadgeStamp',
-    'gameAnswerCard',
     'finishPoster',
     'gameAnswerBanner',
     'gameRoundMascot',
@@ -1048,19 +1044,9 @@ describe('loadEdition', () => {
       'featureSwitches.categoryFeed',
     ],
     [
-      'a missing Known-first Feature Switch',
-      withoutSwitch('categoryKnownFirst'),
-      'featureSwitches.categoryKnownFirst',
-    ],
-    [
       'a missing correctionCategoryScreens Feature Switch',
       withoutSwitch('correctionCategoryScreens'),
       'featureSwitches.correctionCategoryScreens',
-    ],
-    [
-      'a missing collectionBoardStyle Feature Switch',
-      withoutSwitch('collectionBoardStyle'),
-      'featureSwitches.collectionBoardStyle',
     ],
     [
       'a missing collectionLinkCopy Feature Switch',
@@ -1590,7 +1576,6 @@ const dependentSwitches = [
   ['crosswordSolveTime', ['dailyCrossword', 'game']],
   ['crosswordSolvedScreen', ['dailyCrossword', 'game']],
   ['crosswordBadgeStamp', ['dailyCrossword', 'badges', 'xpLog', 'game']],
-  ['gameAnswerCard', ['game']],
   ['finishPoster', ['game']],
   // The board «slogo game last» parts of a Game (spec #1880).
   ['gameAnswerBanner', ['game']],
@@ -1627,7 +1612,6 @@ const dependentSwitches = [
   ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],
   ['correctionTypeGrid', ['correctionCategoryScreens', 'dashboard', 'wordOfTheDay', 'corrections']],
   ['categoryFeed', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
-  ['categoryKnownFirst', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
   ['gameSurvival', ['corrections', 'game']],
   ['gameAnglicism', ['corrections', 'game']],
   ['gameTypeWord', ['corrections', 'game']],
@@ -1653,16 +1637,6 @@ describe('the Feature Switches a feature depends on', () => {
 
       expect(edition.isFeatureEnabled(feature)).toBe(false);
     }
-  });
-
-  it('keep the Collection board style on while the Dashboard is off', () => {
-    const edition = loadEdition({
-      ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, dashboard: 'off' },
-    });
-
-    expect(edition.isFeatureEnabled('categoryScreens')).toBe(false);
-    expect(edition.isFeatureEnabled('collectionBoardStyle')).toBe(true);
   });
 
   it('keep a feature on while only a feature that depends on it is off', () => {

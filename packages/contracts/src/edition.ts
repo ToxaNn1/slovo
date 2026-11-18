@@ -442,13 +442,9 @@ export const FeatureSwitchesSchema = z.strictObject({
   crosswordSolvedScreen: FeatureSwitchStateSchema,
   /** The full-screen Badge stamp after a solved Daily Crossword that earns a Badge (ADR 0087); off while `dailyCrossword` or `badges` is. */
   crosswordBadgeStamp: FeatureSwitchStateSchema,
-  /** The inline answer card of a Game Round, in place of the bottom sheet (spec #1674); off while `game` is. */
-  gameAnswerCard: FeatureSwitchStateSchema,
-  /** The letter tiles of «За літерами»: tiles with decoys tapped into the slots, in place of the text field (spec #1674); off while `gameByLetters` is. */
-  /** The streak counter of «Виживання»: the right answers in a row and the record (spec #1674); off while `gameSurvival` is. */
   /** The «Фініш» poster at the end of a Game and a time-up (spec #1674); off while `game` is. */
   finishPoster: FeatureSwitchStateSchema,
-  /** The answer banner: after an answer a banner tells right or wrong, and the Game moves on by itself after a Core delay, with no «Далі →» (ADR 0138); off, the answer card of `gameAnswerCard`. Off while `game` is. */
+  /** The answer banner: after an answer a banner tells right or wrong, and the Game moves on by itself after a Core delay, with no «Далі →» (ADR 0138); off, the answer card. Off while `game` is. */
   gameAnswerBanner: FeatureSwitchStateSchema,
   /** Three Lives: a Game starts with 3 Lives by default (ADR 0137); off, 5. Off while `game` is. */
   /** One Life in «Виживання» (ADR 0137); off, 3. Off while `gameSurvival` is. */
@@ -538,11 +534,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   correctionTypeGrid: FeatureSwitchStateSchema,
   /** The Category's Feed: a tap on a Word of a Category's screen opens a Feed of that Category's Words alone, from the tapped one in Language Pack order and round again after the last (ADR 0110); off, the tap opens the Word's card as Search does. Off while `categoryScreens` is. */
   categoryFeed: FeatureSwitchStateSchema,
-  /** Known first on a Category's screen: its Known Entries, stamped «ЗНАЮ», come before the rest, each group in Language Pack order (ADR 0111); off, all in Language Pack order as the board draws. Off while `categoryScreens` is. */
-  categoryKnownFirst: FeatureSwitchStateSchema,
-  /** Quiet Categories: the quiet variant of a Category screen and the muted tile for a Category whose tone is `quiet` (ADR 0081); off, a quiet Category draws loud. Off while `categoryScreens` is. */
-  /** The board style of the Collections: their list as the Category grid and a Collection's screen as a Category screen (ADR 0082); off, today's list and screen. */
-  collectionBoardStyle: FeatureSwitchStateSchema,
   /** «Скопіювати посилання» on the share sheet of a Collection, which copies its Collection Link with `expo-clipboard` (ADR 0132); off until the EAS build with that module is out, and off the sheet keeps the system Share alone. Off while `collectionLinks` is. */
   collectionLinkCopy: FeatureSwitchStateSchema,
   /** The Due Quiz «Перевір себе» on «Вчу»: three meanings for each Word due for Review today, right sets Known and wrong Unknown (ADR 0131); off, «Вчу» has no card. Off while `knowledge` is. */

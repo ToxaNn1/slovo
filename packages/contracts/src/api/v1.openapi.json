@@ -9272,14 +9272,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameAnswerCard": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "finishPoster": {
                           "enum": [
                             "on",
@@ -9624,22 +9616,6 @@
                           ],
                           "type": "string"
                         },
-                        "categoryKnownFirst": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "collectionBoardStyle": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "collectionLinkCopy": {
                           "enum": [
                             "on",
@@ -9839,7 +9815,6 @@
                         "crosswordSolveTime",
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
-                        "gameAnswerCard",
                         "finishPoster",
                         "gameAnswerBanner",
                         "gameRoundMascot",
@@ -9883,8 +9858,6 @@
                         "correctionCategoryScreens",
                         "correctionTypeGrid",
                         "categoryFeed",
-                        "categoryKnownFirst",
-                        "collectionBoardStyle",
                         "collectionLinkCopy",
                         "dueQuiz",
                         "profileConfirmedByRarity",
@@ -11233,14 +11206,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameAnswerCard": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "finishPoster": {
                           "enum": [
                             "on",
@@ -11585,22 +11550,6 @@
                           ],
                           "type": "string"
                         },
-                        "categoryKnownFirst": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "collectionBoardStyle": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "collectionLinkCopy": {
                           "enum": [
                             "on",
@@ -11800,7 +11749,6 @@
                         "crosswordSolveTime",
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
-                        "gameAnswerCard",
                         "finishPoster",
                         "gameAnswerBanner",
                         "gameRoundMascot",
@@ -11844,8 +11792,6 @@
                         "correctionCategoryScreens",
                         "correctionTypeGrid",
                         "categoryFeed",
-                        "categoryKnownFirst",
-                        "collectionBoardStyle",
                         "collectionLinkCopy",
                         "dueQuiz",
                         "profileConfirmedByRarity",
@@ -13118,14 +13064,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameAnswerCard": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "finishPoster": {
                           "enum": [
                             "on",
@@ -13470,22 +13408,6 @@
                           ],
                           "type": "string"
                         },
-                        "categoryKnownFirst": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "collectionBoardStyle": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "collectionLinkCopy": {
                           "enum": [
                             "on",
@@ -13685,7 +13607,6 @@
                         "crosswordSolveTime",
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
-                        "gameAnswerCard",
                         "finishPoster",
                         "gameAnswerBanner",
                         "gameRoundMascot",
@@ -13729,8 +13650,6 @@
                         "correctionCategoryScreens",
                         "correctionTypeGrid",
                         "categoryFeed",
-                        "categoryKnownFirst",
-                        "collectionBoardStyle",
                         "collectionLinkCopy",
                         "dueQuiz",
                         "profileConfirmedByRarity",

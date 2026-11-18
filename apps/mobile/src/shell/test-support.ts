@@ -59,7 +59,6 @@ export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
   'crosswordSolveTime',
   'crosswordSolvedScreen',
   'crosswordBadgeStamp',
-  'gameAnswerCard',
   'finishPoster',
   'gameAnswerBanner',
   'gameRoundMascot',

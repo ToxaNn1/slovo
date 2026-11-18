@@ -293,10 +293,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Печатка відзнаки за кросворд',
     line: 'Відзнаку за кросворд показано на весь екран.',
   },
-  gameAnswerCard: {
-    name: 'Картка відповіді в грі',
-    line: 'Відповідь на запитання гри з’являється на самій сторінці, а не в шторці.',
-  },
   finishPoster: { name: 'Плакат «Фініш»', line: 'Наприкінці гри з’являється плакат «Фініш».' },
   gameAnswerBanner: {
     name: 'Смужка відповіді',
@@ -437,14 +433,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   categoryFeed: {
     name: 'Стрічка категорії',
     line: 'Дотик до слова категорії відкриває стрічку лише з її слів.',
-  },
-  categoryKnownFirst: {
-    name: 'Знайомі спершу',
-    line: 'На екрані категорії спершу йдуть слова з позначкою «ЗНАЮ».',
-  },
-  collectionBoardStyle: {
-    name: 'Добірки плитками',
-    line: 'Список добірок має вигляд сітки категорій.',
   },
   collectionLinkCopy: {
     name: 'Копіювання посилання',

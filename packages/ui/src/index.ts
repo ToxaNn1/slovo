@@ -46,7 +46,6 @@ export { EntryRow, type EntryRowAction } from './entries/EntryRow';
 export { FavoriteButton } from './saved/FavoriteButton';
 export { ClearHistoryButton } from './saved/ClearHistoryButton';
 export { CollectionMenuSheet } from './saved/CollectionMenuSheet';
-export { DeleteCollectionDialog } from './saved/DeleteCollectionDialog';
 export { DeleteCollectionSheet } from './saved/DeleteCollectionSheet';
 export { CollectionShareSheet } from './saved/CollectionShareSheet';
 export {
@@ -102,7 +101,6 @@ export { GoogleSignInButton } from './primitives/GoogleSignInButton';
 export { LearningRow } from './saved/Learning';
 export { DueQuizCard, DueQuizSheet } from './saved/DueQuiz';
 export { CollectionButton } from './saved/CollectionButton';
-export { CollectionEntryRow } from './saved/CollectionEntryRow';
 export {
   CollectionHeader,
   CollectionShareButton,
@@ -110,7 +108,6 @@ export {
 } from './saved/CollectionScreenParts';
 export { SavedTabs, type SavedTab } from './saved/SavedTabs';
 export { CollectionCard, NewCollectionCard } from './saved/CollectionCard';
-export { CollectionNameField, NewCollectionButton } from './saved/CollectionNameField';
 export { CollectionNameSheet } from './saved/CollectionNameSheet';
 export { CollectionSheet } from './saved/CollectionSheet';
 export { BottomSheet } from './primitives/BottomSheet';

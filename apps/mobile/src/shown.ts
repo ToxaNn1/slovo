@@ -36,8 +36,6 @@ export interface Shown {
   readonly gameHubRecord: boolean;
   /** The toast on a tap of a Game Mode that cannot be played (ADR 0139). */
   readonly gameModeToast: boolean;
-  /** The inline answer card under a Round's options in place of the bottom sheet (spec #1674). */
-  readonly answerCard: boolean;
   /** The switchable buttons of an Entry card, wherever the card appears. */
   readonly entryButtons: {
     /** The Share Card button of the action row. */
@@ -168,8 +166,6 @@ export interface Shown {
   readonly feedTab: boolean;
   /** A tap on a Word of a Category's screen opens the Category's Feed (ADR 0110). */
   readonly categoryFeed: boolean;
-  /** A Category's screen lists its Known Entries first (ADR 0111). */
-  readonly categoryKnownFirst: boolean;
   /** The Mood check-in block of the Dashboard, «Як настрій?» (ADR 0076). */
   readonly mood: boolean;
   /** The Curated Collections rail of the Dashboard, «Добірки» (ADR 0076). */
@@ -238,7 +234,6 @@ export function shownOf({
     gameHubGroups: on('gameHubGroups'),
     gameHubRecord: on('gameHubRecord'),
     gameModeToast: on('gameModeToast'),
-    answerCard: on('gameAnswerCard'),
     entryButtons: {
       shareCard: on('shareCards'),
       pronunciation: on('pronunciation'),
@@ -295,7 +290,6 @@ export function shownOf({
     heroSparks: on('heroSparks'),
     feedTab: on('feedTab'),
     categoryFeed: on('categoryFeed'),
-    categoryKnownFirst: on('categoryKnownFirst'),
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
     swipeMarks: on('swipeMarks'),

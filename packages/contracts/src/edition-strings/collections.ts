@@ -29,7 +29,7 @@ export const CollectionsStringsSchema = z.strictObject({
     many: pluralOf(),
     withFavorites: templateOf('place'),
   }),
-  /** The Collections screen: its rows, its swipe actions, the name fields, the delete confirmation and the empty list. */
+  /** The Collections screen: its cards, their menu, the delete confirmation and the empty list. */
   screen: z.strictObject({
     /** The kicker of a Collection's screen in the board style, «КОЛЕКЦІЯ · {count}» (ADR 0082). Takes `{count}`, the `wordCount` phrase. */
     kicker: templateOf('count'),
@@ -37,20 +37,8 @@ export const CollectionsStringsSchema = z.strictObject({
     wordCount: PluralSchema,
     /** The «+» that opens the field for a new Collection, as VoiceOver reads it. */
     add: TextSchema,
-    /** The small capitals over the field for a new Collection. */
-    newOverline: TextSchema,
-    /** The small capitals over the field of a Collection being renamed. */
-    renameOverline: TextSchema,
     /** A Collection as VoiceOver reads it, with its newest Lemmas. Takes `{name}`, `{count}` (the Entries in words) and `{lemmas}`. */
     rowLabel: templateOf('name', 'count', 'lemmas'),
-    /** The swipe action that renames a Collection in place. */
-    rename: TextSchema,
-    /** The same action as VoiceOver reads it. Takes `{name}`. */
-    renameLabel: templateOf('name'),
-    /** The swipe action that deletes a Collection. */
-    delete: TextSchema,
-    /** The same action as VoiceOver reads it. Takes `{name}`. */
-    deleteLabel: templateOf('name'),
     /** The «…» button of a row, as VoiceOver reads it. Takes `{name}`. */
     moreLabel: templateOf('name'),
     /** The menu the «…» button opens: rename, delete and the cancel row; the share row is `link.share` (ADR 0132). */
@@ -76,11 +64,9 @@ export const CollectionsStringsSchema = z.strictObject({
       create: TextSchema,
     }),
   }),
-  /** A Collection's screen: its Entries newest first, the swipe action that takes one out, and the empty Collection. */
+  /** A Collection's screen: the action that takes an Entry out, and the empty Collection. */
   entries: z.strictObject({
-    /** The line under the list, on how it is ordered and what a tap does. */
-    footer: TextSchema,
-    /** The swipe action that takes an Entry out of this Collection only. */
+    /** The action that takes an Entry out of this Collection only. */
     remove: TextSchema,
     /** The same action as VoiceOver reads it. Takes `{title}`, the Entry's, and `{name}`, the Collection's. */
     removeLabel: templateOf('title', 'name'),

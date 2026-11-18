@@ -24,7 +24,6 @@ const everything: Shown = {
   gameHubGroups: true,
   gameHubRecord: true,
   gameModeToast: true,
-  answerCard: true,
   entryButtons: {
     shareCard: true,
     pronunciation: true,
@@ -76,7 +75,6 @@ const everything: Shown = {
   heroSparks: true,
   feedTab: true,
   categoryFeed: true,
-  categoryKnownFirst: true,
   mood: true,
   curatedCollections: true,
   swipeMarks: true,
@@ -158,10 +156,6 @@ describe('what the reader is shown', () => {
     [
       "a Word's card from a Category's screen with the Category's Feed off",
       { off: ['categoryFeed'], shown: { categoryFeed: false } },
-    ],
-    [
-      "a Category's screen in Language Pack order alone with Known first off",
-      { off: ['categoryKnownFirst'], shown: { categoryKnownFirst: false } },
     ],
     [
       'a «Стрічка» tab to the Dashboard with the Feed tab off',
@@ -248,10 +242,6 @@ describe('what the reader is shown', () => {
     [
       'the spec #1674 Game with gameModeToast off',
       { off: ['gameModeToast'], shown: { gameModeToast: false } },
-    ],
-    [
-      'the answer sheet with the answer card off',
-      { off: ['gameAnswerCard'], shown: { answerCard: false } },
     ],
     [
       'no Daily Goal choice with the Daily Goal off',

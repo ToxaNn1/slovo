@@ -129,11 +129,9 @@ async function settle() {
 }
 
 async function openMenuOf(collectionId: string) {
-  // The cards' menu: the board style's grid has none, its menu is the Collection screen's.
   const cards: Edition = {
     ...edition,
     isFeatureEnabled: (feature) =>
-      feature !== 'collectionBoardStyle' &&
       !(feature === 'collectionLinks' && collectionLinksOff) &&
       !(feature === 'offlinePlate' && offlinePlateOff) &&
       edition.isFeatureEnabled(feature),
@@ -172,7 +170,7 @@ async function toast() {
 }
 
 describe('«Поділитися посиланням» in the menu a long press on a Collection’s card opens', () => {
-  it('opens the share sheet with «Колекція «Осінь» у SLOVO: …» and the new link', async () => {
+  it('opens the share sheet with the new link, whose «Поділитися» shares «Колекція «Осінь» у SLOVO: …»', async () => {
     const autumn = await collection('Осінь', ['w_kvasha', 'w_buzok']);
     await openMenuOf(autumn);
 
@@ -182,6 +180,16 @@ describe('«Поділитися посиланням» in the menu a long press
     expect(api.collectionLinks.made).toEqual([
       { edition: 'uk', name: 'Осінь', entryIds: ['w_buzok', 'w_kvasha'] },
     ]);
+    expect(screen.getByTestId('collections-share-sheet-link')).toHaveTextContent(
+      'slovo.example/uk/c/link000001',
+    );
+    await fireEvent.press(
+      screen.getByRole('button', { name: editionStrings.collections.shareSheet.share }),
+    );
+    // The share sheet slides away first, then the system Share opens.
+    await settle();
+    await settle();
+
     expect(share).toHaveBeenCalledTimes(1);
     expect(share).toHaveBeenCalledWith({
       message: 'Колекція «Осінь» у SLOVO: https://slovo.example/uk/c/link000001',

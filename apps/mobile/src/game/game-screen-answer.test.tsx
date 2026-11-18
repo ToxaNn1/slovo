@@ -41,7 +41,7 @@ describe('the Game screen', () => {
       await open({
         clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
         schedule: systemSchedule,
-        switchedOn: ['gameAnswerBanner', 'gameAnswerCard'],
+        switchedOn: ['gameAnswerBanner'],
       });
     });
 
@@ -135,7 +135,7 @@ describe('the Game screen', () => {
 
   describe('the answer card', () => {
     it('answers in the sheet over the Round with «Влучно!» or «Майже. Наступне вийде.» and the Definition, «Далі →» moving on, and keeps the Example for the Game Review', async () => {
-      await open({ switchedOn: ['gameAnswerCard'] });
+      await open({ switchedOn: [] });
       await renderScreen();
 
       await fireEvent.press(screen.getByTestId('game-mode-stress'));
@@ -181,16 +181,6 @@ describe('the Game screen', () => {
       await fireEvent.press(screen.getByTestId('game-review-row-1'));
 
       expect(screen.getByTestId('game-review-details')).toHaveTextContent(/Речення \d+/);
-    });
-
-    it('keeps the bottom sheet with its switch off', async () => {
-      await renderScreen();
-
-      await fireEvent.press(screen.getByTestId('game-mode-stress'));
-      await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
-
-      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
-      expect(screen.queryByTestId('game-answer-card')).toBeNull();
     });
   });
 });

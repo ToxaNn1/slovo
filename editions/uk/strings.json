@@ -668,13 +668,7 @@
         "other": "{count} слова"
       },
       "add": "Нова колекція",
-      "newOverline": "Нова колекція",
-      "renameOverline": "Перейменування",
       "rowLabel": "{name}, {count}: {lemmas}",
-      "rename": "Назва",
-      "renameLabel": "Перейменувати «{name}»",
-      "delete": "Видалити",
-      "deleteLabel": "Видалити «{name}»",
       "moreLabel": "Дії з колекцією «{name}»",
       "menu": {
         "rename": "Перейменувати",
@@ -694,7 +688,6 @@
       }
     },
     "entries": {
-      "footer": "Найновіші — першими. Тап відкриває повну картку.",
       "remove": "Прибрати",
       "removeLabel": "Прибрати «{title}» з колекції «{name}»",
       "empty": {
@@ -1930,11 +1923,6 @@
       "message": "Пройдені раунди пропадуть, а рекорд не оновиться.",
       "confirm": "Вийти",
       "cancel": "Грати далі"
-    },
-    "sheet": {
-      "correct": "Правильно!",
-      "wrong": "Не цього разу",
-      "next": "Далі"
     },
     "finish": {
       "title": "Фініш",
