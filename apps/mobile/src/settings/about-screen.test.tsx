@@ -3,7 +3,7 @@ import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
-import { Linking } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 
 import AboutScreen from '../app/settings/about';
 import { edition, editionStrings } from '../edition/edition';
@@ -94,14 +94,22 @@ describe('About', () => {
   it.each([
     ['privacy policy', 'about-row-privacy', 'https://slovoapp.org/uk/privacy'],
     ['terms', 'about-row-terms', 'https://slovoapp.org/uk/terms'],
-  ])("opens the Edition's %s in the browser", async (_page, rowId, address) => {
-    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
-    await renderAbout();
+  ])(
+    "opens the Edition's %s in the app's own browser sheet, closed by «Готово»",
+    async (_page, rowId, address) => {
+      const openBrowser = jest
+        .spyOn(WebBrowser, 'openBrowserAsync')
+        .mockResolvedValue({ type: WebBrowser.WebBrowserResultType.DISMISS });
+      await renderAbout();
 
-    await fireEvent.press(screen.getByTestId(rowId));
+      await fireEvent.press(screen.getByTestId(rowId));
 
-    expect(openURL).toHaveBeenCalledWith(address);
-  });
+      expect(openBrowser).toHaveBeenCalledWith(address, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+        dismissButtonStyle: 'done',
+      });
+    },
+  );
 
   it("shows the app's own version and the build, never the raw update id", async () => {
     mockBuild.modules = true;
@@ -143,5 +151,20 @@ describe('About', () => {
 
     expect(screen.getByText(edition.displayName)).toBeTruthy();
     expect(screen.getByTestId('about-version')).toHaveTextContent('Версія 0.9');
+  });
+});
+
+describe('About › its header (app pass 91)', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await renderAbout();
+
+    expect(
+      screen.getByRole('header', { name: editionStrings.settings.rows.about }),
+    ).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('about-scroll')).queryByRole('header', {
+        name: editionStrings.settings.rows.about,
+      }),
+    ).toBeNull();
   });
 });

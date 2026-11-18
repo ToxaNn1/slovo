@@ -87,7 +87,7 @@ export function PrivacyScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.bar}>
         <BackHeader
           titleRole="settingsSubTitle"
           title={privacy.title}
@@ -99,6 +99,8 @@ export function PrivacyScreen() {
             },
           }}
         />
+      </View>
+      <ScrollView testID="privacy-scroll" contentContainerStyle={styles.content}>
         <View style={styles.section}>
           <SettingsGroup>
             {shareCounters && (
@@ -149,7 +151,9 @@ export function PrivacyScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
+  // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
+  bar: { paddingHorizontal: space[5], paddingTop: space[2] },
+  content: { paddingHorizontal: space[5], paddingBottom: space[8] },
   section: { marginTop: space[4] },
   failed: { marginTop: space[2], paddingHorizontal: space[4] },
 });

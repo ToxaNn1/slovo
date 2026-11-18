@@ -42,7 +42,7 @@ export function AboutScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.bar}>
         <BackHeader
           titleRole="settingsSubTitle"
           title={strings.rows.about}
@@ -54,6 +54,8 @@ export function AboutScreen() {
             },
           }}
         />
+      </View>
+      <ScrollView testID="about-scroll" contentContainerStyle={styles.content}>
         <View style={styles.panel}>
           <AboutPanel testID="about-panel" name={edition.displayName} glyph={strings.about.glyph} />
         </View>
@@ -126,7 +128,9 @@ export function AboutScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
+  // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
+  bar: { paddingHorizontal: space[5], paddingTop: space[2] },
+  content: { paddingHorizontal: space[5], paddingBottom: space[8] },
   panel: { marginTop: space[3], marginBottom: space[4] },
   block: { gap: space[1], paddingHorizontal: space[4], paddingVertical: rowPadding },
   description: { gap: space[3] },

@@ -110,7 +110,7 @@ function SettingsList() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.bar}>
         <BackHeader
           titleRole="settingsTitle"
           title={strings.title}
@@ -127,6 +127,8 @@ function SettingsList() {
               : undefined
           }
         />
+      </View>
+      <ScrollView testID="settings-scroll" contentContainerStyle={styles.content}>
         <View testID="settings-group-look" style={styles.section}>
           <SettingsGroup title={strings.groups.look}>
             <ChoiceRow
@@ -508,6 +510,8 @@ function SettingsList() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
+  // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
+  bar: { paddingHorizontal: space[5], paddingTop: space[2] },
+  content: { paddingHorizontal: space[5], paddingBottom: space[8] },
   section: { marginTop: space[4] },
 });
