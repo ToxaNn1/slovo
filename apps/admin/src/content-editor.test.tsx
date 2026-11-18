@@ -411,7 +411,7 @@ test('the date of a Curated Collection is read-only once it appeared, and editab
   await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
   const date = await screen.findByLabelText('Дата публікації');
   expect(date.hasAttribute('readonly')).toBe(true);
-  expect(screen.getByText("Добірка вже з'явилася: дату не змінити")).toBeDefined();
+  expect(screen.getByText('Добірка вже з’явилася: дату не змінити')).toBeDefined();
   vi.useRealTimers();
 });
 

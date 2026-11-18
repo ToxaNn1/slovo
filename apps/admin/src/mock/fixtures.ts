@@ -515,7 +515,7 @@ export const FIXTURES: AdminApiOutputs = {
         ...OPEN_CHECK,
         id: 2,
         version: '0.9',
-        text: 'Пейвол зʼявляється один раз.',
+        text: 'Пейвол з’являється один раз.',
         ticked: { at: '2026-11-07T10:00:00.000Z', by: 'owner@example.com' },
       },
       { ...OPEN_CHECK, id: 3, version: '1.0', text: 'Вхід через Apple.' },
