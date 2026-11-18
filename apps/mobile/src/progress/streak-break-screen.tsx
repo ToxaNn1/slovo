@@ -1,8 +1,7 @@
 import {
-  BackLink,
+  BackHeader,
   fill,
   Button,
-  ScreenTitle,
   SectionLabel,
   space,
   Stepper,
@@ -48,15 +47,18 @@ export function StreakBreakScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <BackLink
-          testID="streak-break-back"
-          label={editionStrings.settings.title}
-          onPress={() => {
-            router.back();
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={strings.title}
+          back={{
+            label: editionStrings.settings.title,
+            testID: 'streak-break-back',
+            onPress: () => {
+              router.back();
+            },
           }}
         />
         <View style={styles.section}>
-          <ScreenTitle>{strings.title}</ScreenTitle>
           <Text {...voice} style={textStyle}>
             {strings.explanation}
           </Text>

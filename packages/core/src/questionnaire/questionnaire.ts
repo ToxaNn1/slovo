@@ -39,6 +39,8 @@ export interface Questionnaire {
    * `answerId` is an option of it.
    */
   answer(question: OptionQuestion, answerId: string): Promise<boolean>;
+  /** The option id of the last answer to each question, in the onboarding or here; a question never answered has none. */
+  answers(): Promise<Partial<Record<OptionQuestion, string>>>;
   /** Keeps in the Mix the Word Categories of `categoryIds` and hides every other one. */
   chooseInterests(categoryIds: readonly string[]): Promise<void>;
   /** Sets the Daily Goal the reader chose on its Feed Notice. */
@@ -49,10 +51,12 @@ export interface Questionnaire {
   later(question: LaterQuestion): Promise<void>;
 }
 
-const { laterQuestions, onboardingFinished, firstWeekFrom } = userStateRecords;
+const { laterQuestions, questionnaireAnswers, onboardingFinished, firstWeekFrom } =
+  userStateRecords;
 
 interface Deps {
   edition: Pick<Edition, 'isFeatureEnabled' | 'questionnaire'>;
+  userState: Pick<UserState, 'read' | 'write'>;
   mix: Pick<Mix, 'setKindWeight'>;
   rarityRange: Pick<RarityRangeSetting, 'set'>;
 }
@@ -62,8 +66,22 @@ interface Deps {
  * or the Mix by the Edition's mapping, for the onboarding and the
  * questionnaire. Resolves to whether `answerId` is an option of it. The
  * self-rating sets nothing: it only decides whether to offer the Rarity Test.
+ * An option answered is kept as the question's last answer.
  */
 export async function applyAnswer(
+  deps: Deps,
+  question: OptionQuestion,
+  answerId: string,
+): Promise<boolean> {
+  if (!(await setBy(deps, question, answerId))) return false;
+  const { userState } = deps;
+  const before = (await userState.read(questionnaireAnswers)) ?? {};
+  await userState.write(questionnaireAnswers.change({ ...before, [question]: answerId }));
+  return true;
+}
+
+/** Sets what the option `answerId` of the question sets; resolves to whether it is an option of it. */
+async function setBy(
   { edition: { questionnaire }, mix, rarityRange }: Deps,
   question: OptionQuestion,
   answerId: string,
@@ -105,7 +123,7 @@ export function openQuestionnaire({
   rarityRange,
   xpLog,
   analytics,
-}: Deps & {
+}: Omit<Deps, 'userState'> & {
   userState: UserState;
   clock: Clock;
   mix: Pick<Mix, 'state' | 'takeOut' | 'putBack' | 'setKindWeight'>;
@@ -168,7 +186,8 @@ export function openQuestionnaire({
       selfRating: options.selfRating.map(({ id, label }) => ({ id, label })),
     },
     async answer(question, answerId) {
-      if (!(await applyAnswer({ edition, mix, rarityRange }, question, answerId))) return false;
+      if (!(await applyAnswer({ edition, userState, mix, rarityRange }, question, answerId)))
+        return false;
       if (question !== 'selfRating') {
         analytics
           .track('questionnaireAnswered', { question, answer: answerId })
@@ -180,6 +199,7 @@ export function openQuestionnaire({
       await answered('selfRating', answerId);
       return true;
     },
+    answers: async () => (await userState.read(questionnaireAnswers)) ?? {},
     async chooseInterests(categoryIds) {
       // Put back first, so taking out never meets the last Category in the Mix.
       for (const { id } of mix.state.allCategories) {

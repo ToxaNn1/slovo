@@ -65,6 +65,8 @@ export const SettingsStringsSchema = z.strictObject({
     single: templateOf('rarity'),
     /** What a screen reader names one bar of the picker, `{rarity}`, e.g. «Рідкість 3». */
     bar: templateOf('rarity'),
+    /** The line under the picker's bars that says how a range is picked. */
+    hint: TextSchema,
   }),
   /** The heads of the Settings groups, as the board names them. */
   groups: z.strictObject({

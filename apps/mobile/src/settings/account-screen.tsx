@@ -2,7 +2,7 @@ import { SIGN_IN_CODE_DIGITS } from '@slovo/contracts';
 import type { Account, AccountState } from '@slovo/core';
 import {
   accountCardRadius,
-  BackLink,
+  BackHeader,
   CodeCells,
   DeleteAccountButton,
   disabledOpacity,
@@ -11,7 +11,6 @@ import {
   Button,
   ProblemLine,
   ResendButton,
-  ScreenTitle,
   signInButtonHeight,
   space,
   TextField,
@@ -102,18 +101,17 @@ function AccountContent({
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
-        <BackLink
-          testID="account-back"
-          label={back.label}
-          onPress={() => {
-            back.onPress(account);
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={state.status === 'code-sent' ? strings.codeLabel : edition.accountName}
+          back={{
+            label: back.label,
+            testID: 'account-back',
+            onPress: () => {
+              back.onPress(account);
+            },
           }}
         />
-        <View style={styles.header}>
-          <ScreenTitle>
-            {state.status === 'code-sent' ? strings.codeLabel : edition.accountName}
-          </ScreenTitle>
-        </View>
         {state.status === 'signed-in' ? (
           <SignedIn account={account} state={state} problem={problem} />
         ) : (

@@ -1,7 +1,6 @@
 import {
-  BackLink,
+  BackHeader,
   NarratorVoicePicker,
-  ScreenTitle,
   space,
   typeStyle,
   useEdition,
@@ -36,15 +35,18 @@ export default function NarratorVoiceScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <BackLink
-          testID="narrator-voice-back"
-          label={editionStrings.settings.title}
-          onPress={() => {
-            router.back();
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={strings.title}
+          back={{
+            label: editionStrings.settings.title,
+            testID: 'narrator-voice-back',
+            onPress: () => {
+              router.back();
+            },
           }}
         />
         <View style={styles.header}>
-          <ScreenTitle>{strings.title}</ScreenTitle>
           <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
             {strings.lead}
           </Text>

@@ -1,9 +1,8 @@
 import {
-  BackLink,
+  BackHeader,
   BadgeFamilies,
   BadgeGrid,
   fill,
-  ScreenTitle,
   space,
   typeStyle,
   useEdition,
@@ -79,16 +78,17 @@ export function BadgesScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <BackLink
-          testID="badges-back"
-          label={editionStrings.settings.title}
-          onPress={() => {
-            router.back();
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={strings.title}
+          back={{
+            label: editionStrings.settings.title,
+            testID: 'badges-back',
+            onPress: () => {
+              router.back();
+            },
           }}
         />
-        <View style={styles.section}>
-          <ScreenTitle>{strings.title}</ScreenTitle>
-        </View>
         <Badges />
       </ScrollView>
     </SafeAreaView>

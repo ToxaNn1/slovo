@@ -20,6 +20,7 @@ const strings = testStrings({
       range: 'from {from} to {to}',
       single: 'only {rarity}',
       bar: 'Rarity {rarity}',
+      hint: 'Tap a bar or drag across them.',
     },
   },
 });
@@ -171,15 +172,25 @@ describe('RarityRangePicker', () => {
     expect(value()).toHaveTextContent('from 1 to 3');
   });
 
-  it('leaves one rarity alone on a tap on an end, and a tap on that one bar changes nothing', async () => {
+  it('leaves one rarity alone on a tap on an end, and a tap on that one bar takes every rarity back', async () => {
     await draw(2, 4);
 
     await tap(4);
     expect(value()).toHaveTextContent('only 4');
     expect(bar(3)).not.toBeSelected();
     await tap(4);
-    expect(kept).toEqual([{ from: 4, to: 4 }]);
-    expect(impactLight).toHaveBeenCalledTimes(1);
+    expect(value()).toHaveTextContent('from 1 to 5');
+    expect(kept).toEqual([
+      { from: 4, to: 4 },
+      { from: 1, to: 5 },
+    ]);
+    expect(impactLight).toHaveBeenCalledTimes(2);
+  });
+
+  it('says under the bars how a range is picked', async () => {
+    await draw(5, 5);
+
+    expect(screen.getByText('Tap a bar or drag across them.')).toBeOnTheScreen();
   });
 
   it('picks the range a drag spans, either way, and keeps it when the finger lifts', async () => {

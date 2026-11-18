@@ -1,8 +1,9 @@
+import { pluralCount } from '@slovo/contracts';
 import type { NotificationsState, NotificationTimeRefusal } from '@slovo/core';
 import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
-import { editionStrings } from '../edition/edition';
+import { edition, editionStrings } from '../edition/edition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { notificationsSummary } from './notifications-summary';
@@ -12,11 +13,16 @@ export function useNotificationsState(): NotificationsState {
   return useSubscribed(useComposition().notifications, ({ state }) => state);
 }
 
-/** The value of the «Сповіщення» row of Settings: the first Notification time, or «Вимкнено». */
+/** The value of the «Сповіщення» row of Settings: the Notification times, their count past three, or «Вимкнено». */
 export function useNotificationsSummary(): string {
   const state = useNotificationsState();
   return useMemo(
-    () => notificationsSummary({ notifications: state, strings: editionStrings.notifications }),
+    () =>
+      notificationsSummary({
+        notifications: state,
+        strings: editionStrings.notifications,
+        count: pluralCount(edition.locale),
+      }),
     [state],
   );
 }

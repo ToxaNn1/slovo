@@ -1,8 +1,7 @@
 import {
-  BackLink,
+  BackHeader,
   Button,
   rowPadding,
-  ScreenTitle,
   space,
   STACK_AT_FONT_SCALE,
   typeStyle,
@@ -87,9 +86,12 @@ function HiddenHeader({ empty, onBack }: { empty: boolean; onBack: () => void })
   const { voice } = useEdition();
   return (
     <View style={styles.header}>
-      <BackLink testID="hidden-back" label={editionStrings.settings.title} onPress={onBack} />
+      <BackHeader
+        titleRole="settingsSubTitle"
+        title={strings.title}
+        back={{ label: editionStrings.settings.title, testID: 'hidden-back', onPress: onBack }}
+      />
       <View style={styles.titles}>
-        <ScreenTitle>{strings.title}</ScreenTitle>
         <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
           {strings.subtitle}
         </Text>

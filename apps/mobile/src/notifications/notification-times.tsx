@@ -2,6 +2,7 @@ import { MAX_NOTIFICATION_TIMES } from '@slovo/contracts';
 import {
   fill,
   minTouchTarget,
+  space,
   SettingsGroup,
   TimeRow,
   typeStyle,
@@ -98,6 +99,18 @@ export function NotificationTimes() {
           ))}
         </SettingsGroup>
       )}
+      {state.times.length > 0 && (
+        <Text
+          testID="notifications-remove-hint"
+          // VoiceOver offers «Видалити» as an action of each time instead.
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          {...voice}
+          style={[typeStyle('hint', tokens), styles.removeHint, { color: colors.muted }]}
+        >
+          {strings.removeHint}
+        </Text>
+      )}
       <Pressable
         testID="notifications-add-time"
         accessibilityRole="button"
@@ -159,5 +172,6 @@ function listKey(times: readonly string[]): string {
 }
 
 const styles = StyleSheet.create({
+  removeHint: { marginTop: space[2] },
   addTime: { minHeight: minTouchTarget, justifyContent: 'center', alignSelf: 'flex-start' },
 });
