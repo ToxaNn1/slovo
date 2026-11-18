@@ -118,7 +118,10 @@ function ListFeed({ read, failure, kicker, testID }: ListFeedProps) {
   if (reading.status === 'ready' && pages.length === 0)
     return <Placeholder message={editionStrings.noWords} />;
   return (
-    <View testID={`${testID}-screen`} style={[styles.screen, { backgroundColor: colors.background }]}>
+    <View
+      testID={`${testID}-screen`}
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
       <View style={[styles.header, { paddingTop: top + space[2] }]}>
         <BackLink
           testID={`${testID}-back`}

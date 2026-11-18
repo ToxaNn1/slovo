@@ -2,7 +2,7 @@ import { collectionFeedPage, type Composition } from '@slovo/core';
 import { useCallback } from 'react';
 
 import { editionStrings } from '../edition/edition';
-import { ListFeedScreen, readCards, type ListFeedRead } from '../feed/list-feed';
+import { ListFeedScreen, readCards, type ListFeedRead } from '../categories/list-feed';
 
 /** A Curated Collection's live Entries of every kind, in its order, opened on `from`. */
 async function readCollection(
