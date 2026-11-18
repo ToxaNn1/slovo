@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { FontSizeSchema, TextSizeSchema, ThemeSchema } from '../edition';
+import { TextSizeSchema, ThemeSchema } from '../edition';
 import { TextSchema } from '../shared';
 import { PluralLabelSchema, PluralSchema, pluralOf, templateOf } from './shared';
 
@@ -11,16 +11,6 @@ export const SettingsStringsSchema = z.strictObject({
   theme: TextSchema,
   /** The name of every Theme. */
   themes: z.record(ThemeSchema, TextSchema),
-  /** The label over the font-size choice. */
-  fontSize: TextSchema,
-  /** The name of every font size. */
-  fontSizes: z.record(FontSizeSchema, TextSchema),
-  /** The sample Word the font-size preview shows. */
-  fontSizePreview: z.strictObject({
-    /** The sample Lemma, Stress marks included. */
-    lemma: TextSchema,
-    definition: TextSchema,
-  }),
   /** The tag on a row that a later version brings. */
   soon: TextSchema,
   /** What VoiceOver reads for a row that a later version brings. Takes `{label}`. */

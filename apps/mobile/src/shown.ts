@@ -65,12 +65,6 @@ export interface Shown {
   readonly seasonalDecorSetting: boolean;
   /** The Settings switch «Менше руху», which joins the system's Reduce Motion. */
   readonly reduceMotionSetting: boolean;
-  /**
-   * The three-step text size (ADR 0134): Word cards draw at the reader's step
-   * on the ladder, and the S…XL row of Settings is gone. Off, the S…XL scale
-   * and its row work as before.
-   */
-  readonly textSizeSteps: boolean;
   /** The switch «Анонімна статистика» on the privacy screen (ADR 0060, 0135). */
   readonly shareCountersSetting: boolean;
   /** «Експортувати мої дані» on the privacy screen (ADR 0135). */
@@ -235,7 +229,6 @@ export function shownOf({
     narratorVoiceSetting: on('narratorVoice'),
     seasonalDecorSetting: on('seasonalDecor'),
     reduceMotionSetting: on('reduceMotion'),
-    textSizeSteps: on('textSizeSteps'),
     shareCountersSetting: on('communityCounters') || on('analytics'),
     dataExport: on('dataExport'),
     learning: knowledge,

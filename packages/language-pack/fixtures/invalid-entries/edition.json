@@ -146,13 +146,11 @@
     "dataExport": "on",
     "readerName": "on",
     "widgetPreviews": "on",
-    "textSizeSteps": "on",
     "offlinePlate": "on",
     "statisticsOffCounter": "on"
   },
   "userSettingDefaults": {
     "theme": "system",
-    "fontSize": "M",
     "textSize": "system",
     "vibration": true,
     "notificationTimes": ["09:00"],

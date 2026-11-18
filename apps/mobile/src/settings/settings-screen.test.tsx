@@ -205,11 +205,10 @@ describe('Settings, as the board', () => {
       sounds: true,
       rarityCeiling: true,
       selfCheck: true,
-      textSizeSteps: false,
     });
 
     const groups: Record<string, string[]> = {
-      look: ['settings-theme-light', 'settings-reduce-motion', 'settings-font-size-M'],
+      look: ['settings-theme-light', 'settings-reduce-motion', 'settings-row-text-size'],
       sound: [
         'settings-sounds',
         'settings-row-narrator-voice',
@@ -299,29 +298,8 @@ describe('Settings, as the board', () => {
 });
 
 describe('Settings › the text size (ADR 0134)', () => {
-  it('keeps the S…XL row while the three-step text size is off, and it changes the font size', async () => {
-    const settings = await renderSettings({ textSizeSteps: false });
-
-    await fireEvent.press(screen.getByTestId('settings-font-size-XL'));
-
-    expect(await settings.read()).toMatchObject({ fontSize: 'XL', textSize: 'system' });
-  });
-
-  it('keeps no screen of its own while the three-step text size is off', async () => {
-    await renderSettings({ textSizeSteps: false });
-
-    expect(screen.queryByTestId('settings-row-text-size')).not.toBeOnTheScreen();
-  });
-
-  it('has no S…XL row while the three-step text size is on', async () => {
-    await renderSettings({ textSizeSteps: true });
-
-    expect(screen.getByTestId('settings-theme-light')).toBeOnTheScreen();
-    expect(screen.queryByTestId('settings-font-size-M')).toBeNull();
-  });
-
   it('opens «Шрифт і розмір» from its row: the sample «Заграва» and the three sizes, «Як у системі» chosen', async () => {
-    await renderSettings({ textSizeSteps: true });
+    await renderSettings();
     await fireEvent.press(screen.getByRole('button', { name: 'Шрифт і розмір, Як у системі' }));
 
     const sizeScreen = await screen.findByTestId('text-size-screen');
@@ -345,7 +323,7 @@ describe('Settings › the text size (ADR 0134)', () => {
   });
 
   it('keeps the size chosen on the screen, draws the sample at it and names it on the row', async () => {
-    const settings = await renderSettings({ textSizeSteps: true });
+    const settings = await renderSettings();
     await fireEvent.press(screen.getByTestId('settings-row-text-size'));
     const definitionSize = (): number => {
       const style: unknown = StyleSheet.flatten(

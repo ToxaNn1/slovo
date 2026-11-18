@@ -39,7 +39,6 @@ const everything: Shown = {
   narratorVoiceSetting: true,
   seasonalDecorSetting: true,
   reduceMotionSetting: true,
-  textSizeSteps: true,
   shareCountersSetting: true,
   dataExport: true,
   learning: true,
@@ -176,10 +175,6 @@ describe('what the reader is shown', () => {
     [
       'no «Менше руху» switch with its Feature Switch off',
       { off: ['reduceMotion'], shown: { reduceMotionSetting: false } },
-    ],
-    [
-      'the S…XL text size with the three-step text size off',
-      { off: ['textSizeSteps'], shown: { textSizeSteps: false } },
     ],
     [
       'no «Ділитися анонімною статистикою» switch with Community Counters and Analytics off',

@@ -1,8 +1,7 @@
-import { FontSizeSchema, RARITIES, fill, pluralCount, type Theme } from '@slovo/contracts';
+import { RARITIES, fill, pluralCount, type Theme } from '@slovo/contracts';
 import {
   ChoiceRow,
   ConfirmationDialog,
-  FontSizePreview,
   RarityRangePicker,
   BackHeader,
   SettingsActionCard,
@@ -47,12 +46,6 @@ const themeSegments = THEME_ORDER.map((theme) => ({
   value: theme,
   label: strings.themes[theme],
   testID: `settings-theme-${theme}`,
-}));
-
-const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
-  value: fontSize,
-  label: strings.fontSizes[fontSize],
-  testID: `settings-font-size-${fontSize}`,
 }));
 
 // «до 1» to «до 5», the top of the Rarity Range while its picker is off.
@@ -156,40 +149,19 @@ function SettingsList() {
                 }}
               />
             )}
-            {/* The S…XL row while the three-step text size is off, the row of its own screen while it is on (ADR 0134). */}
-            {shown.textSizeSteps && (
-              <SettingsRow
-                testID="settings-row-text-size"
-                icon="square"
-                label={strings.rows.textSize}
-                subtitle={subtitles.textSize}
-                end={{
-                  kind: 'chevron',
-                  value: strings.textSize.sizes[current.textSize],
-                  onPress: () => {
-                    openScreen('/settings/text-size');
-                  },
-                }}
-              />
-            )}
-            {!shown.textSizeSteps && (
-              <ChoiceRow
-                icon="square"
-                label={strings.rows.textSize}
-                subtitle={subtitles.textSize}
-                segments={fontSizeSegments}
-                selected={current.fontSize}
-                onSelect={(fontSize) => {
-                  update({ fontSize });
-                }}
-              >
-                <FontSizePreview
-                  testID="settings-font-size-preview"
-                  lemma={strings.fontSizePreview.lemma}
-                  definition={strings.fontSizePreview.definition}
-                />
-              </ChoiceRow>
-            )}
+            <SettingsRow
+              testID="settings-row-text-size"
+              icon="square"
+              label={strings.rows.textSize}
+              subtitle={subtitles.textSize}
+              end={{
+                kind: 'chevron',
+                value: strings.textSize.sizes[current.textSize],
+                onPress: () => {
+                  openScreen('/settings/text-size');
+                },
+              }}
+            />
           </SettingsGroup>
         </View>
         <View testID="settings-group-sound" style={styles.section}>

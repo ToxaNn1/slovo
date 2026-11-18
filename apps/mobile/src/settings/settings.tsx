@@ -25,8 +25,8 @@ function applyToNativeViews({ theme }: UserSettings): void {
   Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
 }
 
-const { theme, fontSize, textSize, vibration, narratorVoice } = edition.userSettingDefaults;
-const defaults: SettingsDefaults = { theme, fontSize, textSize, vibration, narratorVoice };
+const { theme, textSize, vibration, narratorVoice } = edition.userSettingDefaults;
+const defaults: SettingsDefaults = { theme, textSize, vibration, narratorVoice };
 
 /** The settings with those in effect, which native views follow from the start. */
 function opened(settings: Settings, current: UserSettings): OpenedSettings {

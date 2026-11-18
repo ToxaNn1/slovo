@@ -99,7 +99,6 @@ describe('openUserState', () => {
       userState,
       defaults: {
         theme: 'system',
-        fontSize: 'M',
         textSize: 'system',
         vibration: true,
         narratorVoice: 'anna',

@@ -152,13 +152,11 @@ const validConfig = {
     dataExport: 'on',
     readerName: 'on',
     widgetPreviews: 'on',
-    textSizeSteps: 'on',
     offlinePlate: 'on',
     statisticsOffCounter: 'on',
   },
   userSettingDefaults: {
     theme: 'system',
-    fontSize: 'M',
     textSize: 'system',
     vibration: true,
     notificationTimes: ['09:00'],
@@ -402,7 +400,6 @@ describe('loadEdition', () => {
     'readerName',
     'badgeFamiliesOverview',
     'widgetPreviews',
-    'textSizeSteps',
     'offlinePlate',
     'statisticsOffCounter',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
@@ -429,18 +426,17 @@ describe('loadEdition', () => {
     expect(edition.isFeatureEnabled(feature)).toBe(false);
   });
 
-  it('keeps the Data export and the three-step text size on whatever else is off', () => {
+  it('keeps the Data export on whatever else is off', () => {
     const edition = loadEdition({
       ...validConfig,
       featureSwitches: { ...validConfig.featureSwitches, xpLog: 'off', profile: 'off' },
     });
 
     expect(edition.isFeatureEnabled('dataExport')).toBe(true);
-    expect(edition.isFeatureEnabled('textSizeSteps')).toBe(true);
   });
 
   it.each(['system', 'larger', 'largest'] as const)(
-    'reports the three-step default text size %s beside the S…XL one',
+    'reports the three-step default text size %s',
     (textSize) => {
       const edition = loadEdition({
         ...validConfig,
@@ -448,7 +444,6 @@ describe('loadEdition', () => {
       });
 
       expect(edition.userSettingDefaults.textSize).toBe(textSize);
-      expect(edition.userSettingDefaults.fontSize).toBe('M');
     },
   );
 
@@ -476,7 +471,6 @@ describe('loadEdition', () => {
 
     expect(edition.userSettingDefaults).toEqual({
       theme: 'system',
-      fontSize: 'M',
       textSize: 'system',
       vibration: true,
       narratorVoice: 'anna',
@@ -1182,11 +1176,6 @@ describe('loadEdition', () => {
       'an unknown Theme',
       { userSettingDefaults: { ...userSettingDefaults, theme: 'sepia' } },
       'userSettingDefaults.theme',
-    ],
-    [
-      'an unknown font size',
-      { userSettingDefaults: { ...userSettingDefaults, fontSize: 'XXL' } },
-      'userSettingDefaults.fontSize',
     ],
     [
       'a missing Vibration default',

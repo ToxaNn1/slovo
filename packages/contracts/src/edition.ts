@@ -536,8 +536,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   readerName: FeatureSwitchStateSchema,
   /** The widget previews «Малий», «Середній» and «Екран блокування» on the Widgets screen, drawn from the Widget Snapshot; off, the steps alone. Off while `widget` is. */
   widgetPreviews: FeatureSwitchStateSchema,
-  /** The three-step text size «Як у системі», «Більший», «Найбільший» and its screen (ADR 0134); off, the S…XL scale and its row. */
-  textSizeSteps: FeatureSwitchStateSchema,
   /** The offline plate «Немає з’єднання. Спробуй пізніше.» under the status bar when sharing a Collection Link, signing in or syncing finds no network (ADR 0158); off, the toast or the line each of them showed before. */
   offlinePlate: FeatureSwitchStateSchema,
   /** The switch-off unit: turning «Ділитися анонімною статистикою» off sends one anonymous +1 with the Edition alone, and nothing after (ADR 0163); off, nothing is sent at switch-off. */
@@ -733,10 +731,6 @@ export type QuickQuestionEvery = z.infer<typeof QuickQuestionEverySchema>;
 
 export type Theme = z.infer<typeof ThemeSchema>;
 
-export const FontSizeSchema = z.enum(['S', 'M', 'L', 'XL']);
-
-export type FontSize = z.infer<typeof FontSizeSchema>;
-
 /** The three-step text size, in ladder order: «Як у системі», «Більший», «Найбільший» (ADR 0134). */
 export const TextSizeSchema = z.enum(['system', 'larger', 'largest']);
 
@@ -830,9 +824,7 @@ export type MixConfig = z.infer<typeof MixConfigSchema>;
 /** The settings a new user starts with. */
 export const UserSettingDefaultsConfigSchema = z.strictObject({
   theme: ThemeSchema,
-  /** The S…XL font size, while `textSizeSteps` is off. */
-  fontSize: FontSizeSchema,
-  /** The three-step text size, while `textSizeSteps` is on (ADR 0134). */
+  /** The three-step text size (ADR 0134). */
   textSize: TextSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),

@@ -127,7 +127,6 @@
     "dataExport": "on",
     "readerName": "on",
     "widgetPreviews": "on",
-    "textSizeSteps": "on",
     "offlinePlate": "on",
     "fastReveal": "on",
     "dashboard": "on",
@@ -155,7 +154,6 @@
   },
   "userSettingDefaults": {
     "theme": "system",
-    "fontSize": "M",
     "textSize": "system",
     "vibration": true,
     "notificationTimes": ["09:00", "13:00", "19:00"],

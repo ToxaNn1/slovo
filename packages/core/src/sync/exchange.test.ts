@@ -59,7 +59,6 @@ function account(start = '2026-10-18T09:00:00.000Z') {
         userState,
         defaults: {
           theme: 'system',
-          fontSize: 'M',
           textSize: 'system',
           vibration: true,
           narratorVoice: 'anna',
@@ -660,10 +659,10 @@ describe('the first sign-in', () => {
   it('keeps the time of the changes made while signed out', async () => {
     const { device, server, time } = account('2026-10-18T08:00:00.000Z');
     const tablet = await device();
-    await tablet.settings.update({ fontSize: 'L' });
+    await tablet.settings.update({ textSize: 'largest' });
     time.advance(HOUR);
     const phone = await device();
-    await phone.settings.update({ theme: 'dark', fontSize: 'S' });
+    await phone.settings.update({ theme: 'dark', textSize: 'larger' });
     await phone.sync();
     time.advance(HOUR);
     await tablet.settings.update({ theme: 'light' });
@@ -672,7 +671,7 @@ describe('the first sign-in', () => {
     await phone.sync();
 
     for (const each of [phone, tablet]) {
-      expect(await each.settings.read()).toMatchObject({ theme: 'light', fontSize: 'S' });
+      expect(await each.settings.read()).toMatchObject({ theme: 'light', textSize: 'larger' });
     }
     expect(server.sync.records.get('settings.theme')?.changedAt).toBe(
       new Date('2026-10-18T10:00:00.000Z').getTime(),

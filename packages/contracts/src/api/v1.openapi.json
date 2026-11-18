@@ -9616,14 +9616,6 @@
                           ],
                           "type": "string"
                         },
-                        "textSizeSteps": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "offlinePlate": {
                           "enum": [
                             "on",
@@ -9778,7 +9770,6 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps",
                         "offlinePlate",
                         "statisticsOffCounter"
                       ]
@@ -11460,14 +11451,6 @@
                           ],
                           "type": "string"
                         },
-                        "textSizeSteps": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "offlinePlate": {
                           "enum": [
                             "on",
@@ -11622,7 +11605,6 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps",
                         "offlinePlate",
                         "statisticsOffCounter"
                       ]
@@ -13228,14 +13210,6 @@
                           ],
                           "type": "string"
                         },
-                        "textSizeSteps": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "offlinePlate": {
                           "enum": [
                             "on",
@@ -13390,7 +13364,6 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps",
                         "offlinePlate",
                         "statisticsOffCounter"
                       ]
