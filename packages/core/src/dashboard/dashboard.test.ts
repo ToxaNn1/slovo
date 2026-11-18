@@ -1,8 +1,10 @@
+import type { CuratedCollection } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import {
   openComposition,
   type Clock,
+  type CuratedCollectionsBlock,
   type DashboardBlock,
   type FeatureSwitch,
   type PreviousWordsBlock,
@@ -279,5 +281,76 @@ describe('The Categories rail on the Dashboard', () => {
     const { app } = await run();
 
     expect(categoriesOf(app.dashboard.blocks)).toBeUndefined();
+  });
+});
+
+describe('«SLOVO пропонує» on the Dashboard', () => {
+  const on: FeatureSwitch[] = [
+    'wordOfTheDay',
+    'wordOfTheDayArchive',
+    'dashboard',
+    'previousWords',
+    'categoryScreens',
+    'curatedCollections',
+  ];
+  const published = (count: number): CuratedCollection[] =>
+    Array.from({ length: count }, (_, i) => ({
+      id: `cc_${String(i).padStart(2, '0')}`,
+      name: `Name ${String(i)}`,
+      description: `About ${String(i)}`,
+      publishedOn: `2026-10-${String(i + 1).padStart(2, '0')}`,
+      entryIds: ['w_one'],
+    }));
+  const tomorrows: CuratedCollection = {
+    id: 'cc_tomorrow',
+    name: 'Tomorrow',
+    description: 'Not yet',
+    publishedOn: '2026-11-05',
+    entryIds: ['w_one'],
+  };
+
+  async function withCollections(curatedCollections: readonly CuratedCollection[]) {
+    return openComposition({
+      content: createMemoryContentPort({
+        words: [word('w_one'), word('w_two'), word('w_three')],
+        curatedCollections,
+      }),
+      edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature) }),
+      userState: await openUserState({
+        port: createMemoryUserStatePort(archived({ '2026-11-02': 'w_two' })),
+      }),
+      clock: fakeClock('2026-11-04T09:00:00+02:00').clock,
+      random: { next: () => 0.25 },
+    });
+  }
+
+  const railOf = (blocks: readonly DashboardBlock[]) =>
+    blocks.find((block): block is CuratedCollectionsBlock => block.kind === 'curatedCollections');
+
+  it('comes after «Попередні слова» and before the Categories', async () => {
+    const app = await withCollections(published(2));
+
+    expect(app.dashboard.blocks.map(({ kind }) => kind)).toEqual([
+      'wordOfTheDay',
+      'previousWords',
+      'curatedCollections',
+      'categories',
+    ]);
+  });
+
+  it('counts in its header every collection published by today, past the ten cards', async () => {
+    const app = await withCollections([...published(12), tomorrows]);
+    const block = railOf(app.dashboard.blocks);
+
+    expect(block?.cards).toHaveLength(10);
+    expect(block?.published).toBe(12);
+  });
+
+  it('hides a collection published after today', async () => {
+    const app = await withCollections([...published(1), tomorrows]);
+    const block = railOf(app.dashboard.blocks);
+
+    expect(block?.cards.map(({ collection: { id } }) => id)).toEqual(['cc_00']);
+    expect(block?.published).toBe(1);
   });
 });

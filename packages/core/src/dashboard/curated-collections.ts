@@ -48,14 +48,17 @@ export interface CuratedCollectionScreen {
 }
 
 /**
- * The Curated Collections (ADR 0076): the Dashboard's «Добірки» rail of the
- * Language Pack's editorial Entry sets. A collection is on the rail from its
- * publication date in the local calendar; the unopened ones come first, then
- * the newest, ten at most. With `curatedCollections` off the rail is empty.
+ * The Curated Collections (ADR 0076, 0178): the Dashboard's «SLOVO пропонує»
+ * rail of the Language Pack's editorial Entry sets. A collection is on the
+ * rail from its publication date in the local calendar; the unopened ones come
+ * first, then the newest, ten at most. With `curatedCollections` off the rail
+ * is empty.
  */
 export interface CuratedCollections {
   /** The cards in display order. A change makes a new array and tells the subscribers. */
   readonly rail: readonly CuratedCollectionCard[];
+  /** The rail header's count: every collection published by today, past the ten cards. */
+  readonly published: number;
   /**
    * Calls `listener` after each change of the rail, and of what a screen
    * shows (a Knowledge Mark, a Hidden Entry, a copy). Returns the call that stops it.
@@ -127,11 +130,15 @@ export async function openCuratedCollections({
     });
   }
 
-  async function railOf(): Promise<readonly CuratedCollectionCard[]> {
+  /** The collections published by today, in the pack's order. */
+  const publishedByToday = () => {
     const today = todayKey(clock);
+    return all.filter(({ publishedOn }) => publishedOn <= today);
+  };
+
+  async function railOf(): Promise<readonly CuratedCollectionCard[]> {
     const opened = await openedIds();
-    return all
-      .filter(({ publishedOn }) => publishedOn <= today)
+    return publishedByToday()
       .map((collection): CuratedCollectionCard => ({
         collection,
         state: opened.has(collection.id) ? 'opened' : 'new',
@@ -174,6 +181,9 @@ export async function openCuratedCollections({
   return {
     get rail() {
       return rail;
+    },
+    get published() {
+      return publishedByToday().length;
     },
     subscribe: subscribers.subscribe,
     async open(collectionId) {
