@@ -10,3 +10,4 @@
 - 2026-11-18T15:46:48Z starting #1998 backend part (Category filter) and #1996 Core part (collection Feed paging) in parallel, max 5 per stored grant
 - 2026-11-18T15:55:29Z #1996 Core part merged (collectionFeedPage); UI part waits #1994. CI green on b37e69e. Running: #1994 finisher (worktree agent-a04e1a8e46f5c0dd6), #1998 picker part
 - 2026-11-18T16:02:29Z #1998 picker part merged (pictogram choice remains after #1994). Running: #1994 finisher only
+- 2026-11-18T16:16:05Z #1994 DONE merged locally (refusal.ts conflict resolved). Running: fixer for 3 backend test fails (pushes integration), #1995 (worktree), #1998 pictogram part. Next: #1996 UI part (switch curatedCollectionFeed, route, kicker string, core index export) after #1995; then code-review, PR body (wave-notes.md), ready, auto-merge
