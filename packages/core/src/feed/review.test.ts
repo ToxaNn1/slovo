@@ -193,6 +193,26 @@ describe('Review in the Feed', () => {
     expect(after.slice(6)).not.toContain(due);
   });
 
+  // ADR 0194: a Review read and passed without a mark waits until the next day.
+  it('takes a due Word read and passed without a mark out of the Review slots until the next day', async () => {
+    const records = new Map<string, string>();
+    const [due] = await markSeenWordsUnknown(records, { count: 3, unknown: 1 });
+    const dayThree = '2026-10-13T09:00:00+03:00';
+    const passing = await run({ records, at: dayTwo });
+
+    for (let position = 0; position < 12; position += 1) {
+      await passing.feed.show(position);
+      passing.advance(1000);
+    }
+    await passing.feed.show(undefined);
+    const passed = await firstCards(passing.feed, 18);
+    expect(passed[2]).toBe(due);
+    expect(passed.filter((id) => id === due)).toHaveLength(1);
+
+    const tomorrow = await firstCards((await run({ records, at: dayThree })).feed, 3);
+    expect(tomorrow[2]).toBe(due);
+  });
+
   it('skips a Hidden due Word until it is restored', async () => {
     const records = new Map<string, string>();
     const [due] = await markSeenWordsUnknown(records, { count: 3, unknown: 1 });

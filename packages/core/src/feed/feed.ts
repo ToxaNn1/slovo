@@ -205,11 +205,18 @@ export async function buildFeedCard(
 
 const { feedPosition } = userStateRecords;
 
-/** The Entries due for Review that the Cycle covers, so neither Hidden nor out of the Mix, in its order. */
-function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryIds {
+/**
+ * The Entries due for Review that the Cycle covers, so neither Hidden nor out
+ * of the Mix, in its order, but those `waits` holds back.
+ */
+function eligibleDue(
+  cycle: Cycle,
+  knowledge: Pick<Knowledge, 'state'>,
+  waits: (entryId: string) => boolean,
+): EntryIds {
   const due = new Set(knowledge.state.due);
   const { words, corrections, idioms, synonymRows, tips } = cycle.order();
-  const isDue = (id: string) => due.has(id);
+  const isDue = (id: string) => due.has(id) && !waits(id);
   return {
     words: words.filter(isDue),
     corrections: corrections.filter(isDue),
@@ -250,7 +257,8 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  *
  * While Words are due for Review, every 3rd card of the session
  * that is no other kind's turn shows one, Seen in this Cycle or not, until
- * the reader answers it (ADR 0043). While Entries of another kind are due,
+ * the reader answers it (ADR 0043); one whose card the reader read in this
+ * session today was passed without a mark and waits for the next day (ADR 0194). While Entries of another kind are due,
  * the kind's turn shows one before a new Entry of the kind, in the same way. A
  * due Entry the Cycle doesn't cover (Hidden, out of the Mix, above the
  * Rarity Range) waits until it does. Its card is Seen and joins History as
@@ -438,7 +446,7 @@ export async function openFeed({
           shownIds: session.shownIds(),
         },
         unseen: unseenNow,
-        due: ordinary(eligibleDue(cycle, knowledge)),
+        due: ordinary(eligibleDue(cycle, knowledge, readToday)),
         weights: today.kindWeights(mix.kindWeightsInEffect()),
         wordInBand: await inBandOf(unseenNow.words, today.inBand),
       });
@@ -464,6 +472,14 @@ export async function openFeed({
       return card;
     }
   }
+
+  /** The local day each Entry's card was last read on in this session: on screen long enough to be Seen. */
+  const readOn = new Map<string, string>();
+  /**
+   * Whether the reader read the Entry's card today. A due Entry read today
+   * was passed without a mark, so it waits for the next day (ADR 0194).
+   */
+  const readToday = (entryId: string) => readOn.get(entryId) === todayKey(clock);
 
   /**
    * The Entries an ordinary card may take: the readable ones, without the
@@ -742,6 +758,7 @@ export async function openFeed({
     swiped?: boolean;
   }): Promise<string | undefined> {
     const seenId = seenOnLeaving(left, stayed);
+    if (left?.entryId !== undefined && stayed >= SEEN_DWELL_MS) readOn.set(left.entryId, date);
     const leftWordOfTheDay = left?.kind === 'word' ? left.wordOfTheDay : undefined;
     // A Feed Notice of a day before, left open over midnight, is closed already.
     const closed =
