@@ -191,3 +191,20 @@ describe('the whole onboarding flow', () => {
     expect(screen.getByTestId('dashboard')).toBeTruthy();
   });
 });
+
+// Owner decision Р29: the sample card is the Feed's tabbed card in its fixed frame, and takes no swipe or action.
+describe('the sample Entry card of «ТРИМАЙ!»', () => {
+  it('is the tabbed Word card of the Feed, with no corner', async () => {
+    await renderApp();
+    await press('onboarding-start');
+
+    const card = screen.getByTestId('word-card');
+    expect(card).toBeTruthy();
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.map((tab) => tab.props.accessibilityLabel)).toEqual([
+      editionStrings.wordCard.tabs.essence,
+      editionStrings.wordCard.tabSource,
+    ]);
+    expect(screen.queryByTestId('word-corner')).toBeNull();
+  });
+});
