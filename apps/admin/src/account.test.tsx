@@ -216,7 +216,7 @@ test('the Account page names every setting and its value in Ukrainian, and one i
   expect(linesOf(page, 'Налаштування')).toEqual([
     'Тема: Як у системі',
     'Шрифт і розмір: Більший',
-    'Розмір шрифту: L',
+    'fontSize: "L"',
     'Без лічильників: увімкнено',
     'Перевір себе: вимкнено',
     'Сезонний декор: увімкнено',

@@ -44,7 +44,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   confirmedEntries: 'progress',
   selfCheck: 'feed',
   rarityCeiling: 'content',
-  rarityRange: 'content',
   gameReview: 'games',
   gameGuessWord: 'games',
   gameCorrection: 'games',
@@ -156,7 +155,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   dataExport: 'account',
   readerName: 'account',
   widgetPreviews: 'widgets',
-  textSizeSteps: 'look',
   statisticsOffCounter: 'analytics',
   entryPanelAllKinds: 'content',
 };

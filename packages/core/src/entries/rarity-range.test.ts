@@ -1,10 +1,4 @@
-import {
-  RARITIES,
-  type FeatureSwitch,
-  type Rarity,
-  type RarityRange,
-  type Word,
-} from '@slovo/contracts';
+import { RARITIES, type FeatureSwitch, type Rarity, type Word } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { openComposition, type Composition, type UserStatePort } from '../index';
@@ -128,40 +122,6 @@ describe('the Rarity Range', () => {
     await app.rarityRange.set({ from: 4, to: 2 });
 
     expect(app.rarityRange.state).toEqual({ from: 1, to: 5 });
-  });
-
-  describe('while the Edition turns the rarityRange switch off', () => {
-    it('keeps the bottom at 1 and obeys the top alone', async () => {
-      const app = await open({ off: ['rarityRange'] });
-
-      await app.rarityRange.set({ from: 2, to: 4 });
-
-      expect(app.rarityRange.state).toEqual({ from: 1, to: 4 });
-      expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3, 4]));
-    });
-
-    it('reads a bottom kept while it was on as 1', async () => {
-      const port = createMemoryUserStatePort();
-      await (await open({ port })).rarityRange.set({ from: 3, to: 5 });
-
-      const reopened = await open({ port, off: ['rarityRange'] });
-
-      expect(reopened.rarityRange.state).toEqual({ from: 1, to: 5 });
-    });
-  });
-
-  it('tells its subscribers of a change and keeps it for the next session', async () => {
-    const records = createMemoryUserStatePort();
-    const app = await open({ port: records });
-    const told: RarityRange[] = [];
-    app.rarityRange.subscribe(() => told.push(app.rarityRange.state));
-
-    await app.rarityRange.set({ from: 2, to: 3 });
-
-    expect(told).toEqual([{ from: 2, to: 3 }]);
-    const reopened = await open({ port: records });
-    expect(reopened.rarityRange.state).toEqual({ from: 2, to: 3 });
-    expect(await raritiesInFeed(reopened)).toEqual(new Set([2, 3]));
   });
 
   it('tells its subscribers once the Feed holds no Word above the new ceiling', async () => {

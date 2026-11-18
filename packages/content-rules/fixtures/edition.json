@@ -68,7 +68,6 @@
     "dataExport": "on",
     "readerName": "on",
     "widgetPreviews": "on",
-    "textSizeSteps": "on",
     "statisticsOffCounter": "on",
     "game": "on",
     "gameAnagram": "on",
@@ -115,7 +114,6 @@
     "quickQuestion": "on",
     "quickQuestionWordMeaning": "on",
     "rarityCeiling": "on",
-    "rarityRange": "on",
     "rarityTest": "on",
     "reduceMotion": "on",
     "replaceOpenEntry": "on",
@@ -152,7 +150,6 @@
   },
   "userSettingDefaults": {
     "theme": "system",
-    "fontSize": "M",
     "textSize": "system",
     "vibration": true,
     "notificationTimes": ["09:00"],

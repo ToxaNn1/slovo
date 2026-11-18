@@ -34,7 +34,6 @@
     "confirmedEntries": "on",
     "selfCheck": "off",
     "rarityCeiling": "on",
-    "rarityRange": "on",
     "gameReview": "on",
     "gameGuessWord": "on",
     "gameCorrection": "on",
@@ -127,7 +126,6 @@
     "dataExport": "on",
     "readerName": "on",
     "widgetPreviews": "on",
-    "textSizeSteps": "on",
     "fastReveal": "on",
     "mood": "on",
     "curatedCollections": "on",
@@ -154,7 +152,6 @@
   },
   "userSettingDefaults": {
     "theme": "system",
-    "fontSize": "M",
     "textSize": "system",
     "vibration": true,
     "notificationTimes": ["09:00", "13:00", "19:00"],

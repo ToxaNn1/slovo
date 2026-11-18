@@ -51,7 +51,7 @@ describe('FontSizeProvider', () => {
   it.each([1.5, 2])(
     'leaves the big titles at their size at an OS text size of %s, the reading text grown at most 1.5 times',
     async (fontScale) => {
-      await renderAt({ scale: 'ladder', step: 'system' }, { fontScale });
+      await renderAt('system', { fontScale });
 
       expect(sizeOf('lemma')).toBe(50);
       expect(sizeOf('idiom')).toBe(36);
@@ -63,13 +63,9 @@ describe('FontSizeProvider', () => {
   );
 
   it.each([
-    [{ scale: 'fontSize', step: 'S' }, 50],
-    [{ scale: 'fontSize', step: 'M' }, 50],
-    [{ scale: 'fontSize', step: 'L' }, 58],
-    [{ scale: 'fontSize', step: 'XL' }, 65],
-    [{ scale: 'ladder', step: 'system' }, 50],
-    [{ scale: 'ladder', step: 'larger' }, 58],
-    [{ scale: 'ladder', step: 'largest' }, 65],
+    ['system', 50],
+    ['larger', 58],
+    ['largest', 65],
   ] satisfies [TextSizeStep, number][])(
     'grows every title by the Lemma’s own step at %j',
     async (size, lemma) => {
@@ -82,7 +78,7 @@ describe('FontSizeProvider', () => {
   );
 
   it('takes the compact layout’s smaller titles in a window narrower than 390', async () => {
-    await renderAt({ scale: 'ladder', step: 'system' }, { width: 375 });
+    await renderAt('system', { width: 375 });
 
     expect(sizeOf('lemma')).toBeCloseTo((50 * 44) / 48);
     expect(sizeOf('idiom')).toBeCloseTo((36 * 44) / 48);

@@ -12,7 +12,7 @@ ADR 0072 left one bound, the Rarity Ceiling «до 1»…«до 5». The owner w
 
 **Stored state is parsed once, where it enters.** The record is `settings.rarityRange` `{from, to}`, synced last write wins (ADR 0041). Migration 9 of the user-state schema (ADR 0013) turns a stored `settings.rarityCeiling` of N into «від 1 до N» with a pending change, and deletes the old key.
 
-**Feature Switches.** `rarityCeiling` stays the switch of the setting as a whole: off, every Word is in and the Rarity Test is off. The new `rarityRange` depends on it and turns on the picker and the bottom: off, «Рідкість» is the row «до 1»…«до 5» of the top alone and the bottom is 1 in effect. The Edition's `userSettingDefaults.rarityCeiling` and the questionnaire's `rarityCeiling` options keep their names and mean the top.
+**Feature Switch.** `rarityCeiling` is the switch of the setting as a whole: off, every Word is in and the Rarity Test is off; on, «Рідкість» is the picker of both ends. The former switch `rarityRange` is retired (ADR 0176): the «до 1»…«до 5» row of the top alone is gone. The Edition's `userSettingDefaults.rarityCeiling` and the questionnaire's `rarityCeiling` options keep their names and mean the top.
 
 This supersedes ADR 0072 and its removal of the Rarity Floor.
 

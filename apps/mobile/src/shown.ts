@@ -65,12 +65,6 @@ export interface Shown {
   readonly seasonalDecorSetting: boolean;
   /** The Settings switch «Менше руху», which joins the system's Reduce Motion. */
   readonly reduceMotionSetting: boolean;
-  /**
-   * The three-step text size (ADR 0134): Word cards draw at the reader's step
-   * on the ladder, and the S…XL row of Settings is gone. Off, the S…XL scale
-   * and its row work as before.
-   */
-  readonly textSizeSteps: boolean;
   /** The switch «Анонімна статистика» on the privacy screen (ADR 0060, 0135). */
   readonly shareCountersSetting: boolean;
   /** «Експортувати мої дані» on the privacy screen (ADR 0135). */
@@ -166,11 +160,8 @@ export interface Shown {
   readonly gesturesHintAgain: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
-  /**
-   * «Рідкість» in Settings (ADR 0156): `range`, the picker of both ends of the
-   * Rarity Range; `top`, the row «до 1»…«до 5» of its top alone; `off`, none.
-   */
-  readonly rarity: 'off' | 'top' | 'range';
+  /** «Рідкість» in Settings (ADR 0156): the picker of both ends of the Rarity Range. */
+  readonly rarity: boolean;
   /** The «Пройти тест ще раз» row of Settings, while the Rarity Range it sets is on as well. */
   readonly rarityTest: boolean;
   /**
@@ -235,7 +226,6 @@ export function shownOf({
     narratorVoiceSetting: on('narratorVoice'),
     seasonalDecorSetting: on('seasonalDecor'),
     reduceMotionSetting: on('reduceMotion'),
-    textSizeSteps: on('textSizeSteps'),
     shareCountersSetting: on('communityCounters') || on('analytics'),
     dataExport: on('dataExport'),
     learning: knowledge,
@@ -278,7 +268,7 @@ export function shownOf({
     gesturesHintDemo: on('gesturesHintDemo'),
     gesturesHintAgain: on('gesturesHintAgain'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
-    rarity: on('rarityCeiling') ? (on('rarityRange') ? 'range' : 'top') : 'off',
+    rarity: on('rarityCeiling'),
     rarityTest: on('rarityTest'),
     questionnaire:
       on('questionnaire') || on('rarityTest') || on('interestsQuestion')

@@ -31,7 +31,6 @@
     "confirmedEntries": "on",
     "selfCheck": "on",
     "rarityCeiling": "on",
-    "rarityRange": "on",
     "gameReview": "on",
     "gameGuessWord": "on",
     "gameCorrection": "on",
@@ -146,12 +145,10 @@
     "dataExport": "on",
     "readerName": "on",
     "widgetPreviews": "on",
-    "textSizeSteps": "on",
     "statisticsOffCounter": "on"
   },
   "userSettingDefaults": {
     "theme": "system",
-    "fontSize": "M",
     "textSize": "system",
     "vibration": true,
     "notificationTimes": ["09:00"],

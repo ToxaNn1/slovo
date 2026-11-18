@@ -1,11 +1,10 @@
 import { useState, type ReactNode } from 'react';
+import { smallerTextSize } from '@slovo/core';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import {
   FontSizeProvider,
-  smallerTextSizeStep,
-  textSizeStepKey,
   useWordTextSizes,
   type TextSizeStep,
 } from '../providers/FontSizeProvider';
@@ -184,7 +183,7 @@ function FitPanel({
   const tokens = useTokens();
   const { strings, voice } = useEdition();
   const { size } = useWordTextSizes();
-  const from = textSizeStepKey(size);
+  const from = size;
   const [fit, setFit] = useState<{ key: string; from: string; fit: Fit }>({
     key: fitKey,
     from,
@@ -193,11 +192,11 @@ function FitPanel({
   const fitNow: Fit = fit.key === fitKey && fit.from === from ? fit.fit : { size, clamped: false };
   const [room, setRoom] = useState<number | undefined>(undefined);
   // The drawn height counts only for the tab and text size it was drawn at.
-  const drawnAt = `${fitKey} ${from} ${textSizeStepKey(fitNow.size)}${fitNow.clamped ? ' clamped' : ''}`;
+  const drawnAt = `${fitKey} ${from} ${fitNow.size}${fitNow.clamped ? ' clamped' : ''}`;
   const [drawn, setDrawn] = useState<{ at: string; height: number } | undefined>(undefined);
   // Content too tall for the room takes the next smaller size, or is clamped at the floor.
   if (!fitNow.clamped && room !== undefined && drawn?.at === drawnAt && drawn.height > room) {
-    const smaller = smallerTextSizeStep(fitNow.size);
+    const smaller = smallerTextSize(fitNow.size);
     setFit({
       key: fitKey,
       from,

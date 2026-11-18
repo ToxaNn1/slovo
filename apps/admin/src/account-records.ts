@@ -1,9 +1,7 @@
 import {
-  FontSizeSchema,
   RarityRangeSchema,
   TextSizeSchema,
   ThemeSchema,
-  type FontSize,
   type TextSize,
   type Theme,
 } from '@slovo/contracts';
@@ -152,7 +150,6 @@ const TEXT_SIZES: Readonly<Record<TextSize, string>> = {
   larger: 'Більший',
   largest: 'Найбільший',
 };
-const FONT_SIZES: Readonly<Record<FontSize, string>> = { S: 'S', M: 'M', L: 'L', XL: 'XL' };
 
 /** A setting's value read as one of its choices, `undefined` when it is none of them. */
 const choiceOf =
@@ -176,7 +173,6 @@ function settingsOf(voiceName: (id: string) => string) {
   > = {
     theme: ['Тема', choiceOf(ThemeSchema, THEMES)],
     textSize: ['Шрифт і розмір', choiceOf(TextSizeSchema, TEXT_SIZES)],
-    fontSize: ['Розмір шрифту', choiceOf(FontSizeSchema, FONT_SIZES)],
     hideStreak: ['Без лічильників', toggle],
     selfCheck: ['Перевір себе', toggle],
     seasonalDecor: ['Сезонний декор', toggle],
