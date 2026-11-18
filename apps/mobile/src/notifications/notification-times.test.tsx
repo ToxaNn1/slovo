@@ -105,7 +105,7 @@ describe('the duplicate hint', () => {
 });
 
 describe('removing a time', () => {
-  it('says under the times how a time is removed', async () => {
+  it('says under the times how a time is removed', () => {
     // VoiceOver skips the line: each time offers «Видалити» as its action.
     expect(
       screen.getByTestId('notifications-remove-hint', { includeHiddenElements: true }),
