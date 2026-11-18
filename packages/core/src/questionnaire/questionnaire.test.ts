@@ -203,14 +203,15 @@ describe('The later questions', () => {
     expect(app.rarityRange.state).toEqual({ from: 1, to: 2 });
   });
 
-  it('sets the Rarity Range by a «Рівень» option and has no «Не знаю» on its retake', async () => {
+  it('leaves the Rarity Range as it is on «Рівень» and has no «Не знаю» on its retake', async () => {
     const app = await run({ records: await existingReader(), on: '2026-11-02' });
+    await app.rarityRange.set({ from: 2, to: 5 });
     expect(app.questionnaire.options.level.map(({ id }) => id)).toEqual(['starting', 'good']);
 
     expect(await app.questionnaire.answer('level', 'dont-know')).toBe(false);
     expect(await app.questionnaire.answer('level', 'starting')).toBe(true);
 
-    expect(app.rarityRange.state).toEqual({ from: 1, to: 2 });
+    expect(app.rarityRange.state).toEqual({ from: 2, to: 5 });
   });
 
   it('keeps the last answer to each question, from the onboarding and the retake, for the retake to start from', async () => {

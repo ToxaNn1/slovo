@@ -305,10 +305,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Підказка про недоступну гру',
     line: 'Дотик до гри, у яку ще не можна грати, показує коротке пояснення.',
   },
-  eveningNotification: {
-    name: 'Вечірнє сповіщення',
-    line: 'Удень — слово дня, увечері — нагадування про серію чи ціль.',
-  },
   notificationFarewell: {
     name: 'Прощання',
     line: 'Коли сповіщення вщухають, застосунок на прощання пише слово від видання.',

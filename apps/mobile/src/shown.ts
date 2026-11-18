@@ -176,7 +176,7 @@ export interface Shown {
   /** The «Пройти тест ще раз» row of Settings, while the Rarity Range it sets is on as well. */
   readonly rarityTest: boolean;
   /**
-   * The «Пройти опитування ще раз» row of Settings, while any of its questions
+   * The «Анкета: підлаштувати Стрічку» row of Settings, while any of its questions
    * is on: «Рівень» and «Навіщо» under the questionnaire, the self-rating
    * under the Rarity Test it offers, the interests under «Що тобі цікаво?».
    */

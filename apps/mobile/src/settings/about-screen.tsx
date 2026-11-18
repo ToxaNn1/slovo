@@ -24,9 +24,8 @@ import { openLegalPage } from './legal-page';
 const strings = editionStrings.settings;
 
 /**
- * About: the Edition's name on the red shout panel, the installed build, the OTA update it runs
- * (ADR 0062) and the Update channel it listens to (ADR 0167), so a bug report names the exact code, while the binary reports
- * them; what SLOVO is and where its words come from, and its privacy policy
+ * About: the Edition's name on the red shout panel, the app's version and the installed build
+ * (ADR 0062) and the Update channel it listens to (ADR 0167), so a bug report names the code; what SLOVO is and where its words come from, and its privacy policy
  * and terms, which open in the browser. Suggesting a word and reporting a
  * mistake wait for the backend (0.7).
  */
@@ -63,16 +62,11 @@ export function AboutScreen() {
             <Text {...voice} style={[typeStyle('rowLabel', tokens), { color: colors.ink }]}>
               {strings.about.editionLine}
             </Text>
-            {build !== undefined && (
-              <Text testID="about-version" {...voice} style={sub}>
-                {fill(strings.about.versionLine, { version: build.version, build: build.build })}
-              </Text>
-            )}
-            {build?.updateId !== undefined && (
-              <Text testID="about-update" {...voice} style={sub}>
-                {fill(strings.about.updateLine, { id: build.updateId })}
-              </Text>
-            )}
+            <Text testID="about-version" {...voice} style={sub}>
+              {build.build === undefined
+                ? fill(strings.about.versionAlone, { version: build.version })
+                : fill(strings.about.versionLine, { version: build.version, build: build.build })}
+            </Text>
             {deviceFacts.updateChannel !== undefined && (
               <Text testID="about-channel" {...voice} style={sub}>
                 {fill(strings.about.channelLine, { channel: deviceFacts.updateChannel })}

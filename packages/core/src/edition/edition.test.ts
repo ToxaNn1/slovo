@@ -112,7 +112,6 @@ const validConfig = {
     gameHubGroups: 'on',
     gameHubRecord: 'on',
     gameModeToast: 'on',
-    eveningNotification: 'on',
     notificationFarewell: 'on',
     notificationExplainer: 'on',
     notificationTimeStep: 'on',
@@ -320,11 +319,7 @@ function withoutQuestionnaireSwitch() {
   return { featureSwitches };
 }
 /** The Feature Switches of the 1.0 notification plan. */
-const notificationSwitches = [
-  'eveningNotification',
-  'notificationFarewell',
-  'notificationExplainer',
-] as const;
+const notificationSwitches = ['notificationFarewell', 'notificationExplainer'] as const;
 
 describe('loadEdition', () => {
   it('reports the Edition id, locale and whether it marks Stress', () => {

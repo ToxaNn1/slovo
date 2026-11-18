@@ -144,7 +144,8 @@ describe('the onboarding', () => {
     expect(screen.getByText(strings.level.title)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Мовний гурман' })).toBeTruthy();
     await press('onboarding-answer-good');
-    expect(composition.rarityRange.state).toEqual({ from: 1, to: 4 });
+    // «Рівень» sets no Rarity Range (ADR 0183).
+    expect(composition.rarityRange.state).toEqual({ from: 1, to: 5 });
 
     expect(screen.getByText(strings.why.title)).toBeTruthy();
     // Owner test pass B-003: «Пізніше» sits right under the options, not pinned to the bottom.
@@ -190,12 +191,13 @@ describe('the onboarding', () => {
       await press('onboarding-rarity-known');
     }
     // One button goes on: no «ГОТОВО» and no test again, as from Settings.
-    expect(await screen.findByText(/^(\d+) з \1 слів знайомі\.$/)).toBeTruthy();
+    expect(await screen.findByText(/^(\d+) з \1 слів знайомі\./)).toBeTruthy();
     expect(screen.queryByText(editionStrings.rarityTest.again)).toBeNull();
     expect(screen.queryByText(editionStrings.rarityTest.done)).toBeNull();
     await press('onboarding-rarity-next');
 
-    expect(composition.rarityRange.state).toEqual({ from: 1, to: 5 });
+    // The rarest Word asked about is of rarity 3, and the reader knows it (ADR 0182).
+    expect(composition.rarityRange.state).toEqual({ from: 1, to: 3 });
     expect(screen.getByText(strings.why.title)).toBeTruthy();
   });
 

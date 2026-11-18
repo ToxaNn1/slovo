@@ -456,7 +456,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** The toast on a tap of a Game Mode that cannot be played, which keeps its normal look (ADR 0139); off while `game` is. */
   gameModeToast: FeatureSwitchStateSchema,
   /** The evening notification: at most 2 a day, the morning Word of the Day and one evening slot with the Streak warning or the unmet Daily Goal, or nothing; off, a Word at every Notification time. */
-  eveningNotification: FeatureSwitchStateSchema,
   /** The farewell: the polite pause ends with the Edition's farewell on the 14th day without an open; off, it ends in silence. */
   notificationFarewell: FeatureSwitchStateSchema,
   /** The notification explainer: the sheet before the system permission prompt, after the first met Daily Goal or on day 3, and its one re-ask Feed Notice 7 days after a refusal. */
@@ -929,7 +928,7 @@ export const QuestionnaireAnswerIdSchema = KebabCaseIdSchema;
 
 /**
  * The Edition's questionnaire (ADR 0067): the options of the level
- * question, each setting the Rarity Range or opening the Rarity Test, of
+ * question, which set nothing (ADR 0183) but for the one opening the Rarity Test, of
  * «Навіщо», each setting the Mix kind weights it names (the others stay), and
  * of the self-rating. Ids are unique within a question.
  */
@@ -940,6 +939,7 @@ export const QuestionnaireSchema = z.strictObject({
         z.strictObject({
           id: QuestionnaireAnswerIdSchema,
           label: TextSchema,
+          /** No longer read: «Рівень» sets no Rarity Range (ADR 0183). Kept so Edition configs written before stay valid. */
           rarityCeiling: RaritySchema,
         }),
         /** «Не знаю»: the onboarding opens the Rarity Test, whose result sets the top of the Rarity Range. */
