@@ -461,7 +461,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   gameOptionStamp: FeatureSwitchStateSchema,
   /** «Пари»: a found pair stays red, the captions «СЛОВО» and «ЗНАЧЕННЯ», no pause after a pair (ADR 0138, 0139); off while `gamePairs` is. */
   /** «Склади вислів»: decoy fragments from other expressions and the answer judged on «Перевірити» (ADR 0139); off, on the last fragment. Off while `gameBuildIdiom` is. */
-  buildIdiomCheck: FeatureSwitchStateSchema,
   /** «Розминка!» at the end of a Game whose Lives ran out, with the count of right answers and the sad Mascot (ADR 0139); off while `finishPoster` is. */
   livesOverWarmup: FeatureSwitchStateSchema,
   /** The third end action «До стрічки» beside «Ще раз» and «До ігор» (ADR 0139); off while `finishPoster` is. */

@@ -65,7 +65,6 @@ export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
   'gameRoundMascot',
   'gameQuestionOnGround',
   'gameOptionStamp',
-  'buildIdiomCheck',
   'livesOverWarmup',
   'gameEndToFeed',
   'plainGameReview',

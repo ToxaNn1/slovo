@@ -403,8 +403,6 @@ const chipsRound: PlayingGame = {
     chipKind: 'letter',
     chips: CHIPS,
     fixed: [{ at: 1, text: "'" }],
-    layout: 'line',
-    slots: CHIPS.length,
     answer: undefined,
   },
 };

@@ -25,23 +25,7 @@ describe('the chips form', () => {
       chipKind: 'letter',
       chips: ['д', 'з', 'з', 'ї'],
       fixed: [{ at: 1, text: 'ʼ' }],
-      layout: 'line',
-      slots: 4,
     });
-  });
-
-  it('takes decoys in the field only, the answer drawn from its chips', () => {
-    const field: ChipsContent = { ...content, chips: ['д', 'з', 'х', 'з', 'ї', 'к'] };
-
-    expect(chipsForm.wellFormed({ ...field, layout: 'field' })).toBe(true);
-    expect(chipsForm.shown({ ...field, layout: 'field' }, [])).toMatchObject({
-      layout: 'field',
-      slots: 4,
-    });
-    expect(chipsForm.wellFormed(field)).toBe(false);
-    expect(chipsForm.wellFormed({ ...field, layout: 'field', expected: ['з', 'з', 'з'] })).toBe(
-      false,
-    );
   });
 
   it('shows no fixed characters when the content has none', () => {
@@ -79,6 +63,7 @@ describe('the chips form', () => {
   it('is well formed only when the chips are the answer reordered', () => {
     expect(chipsForm.wellFormed(content)).toBe(true);
     expect(chipsForm.wellFormed({ ...content, chips: ['д', 'з', 'ї', 'ї'] })).toBe(false);
+    expect(chipsForm.wellFormed({ ...content, chips: ['д', 'з', 'х', 'з', 'ї'] })).toBe(false);
     expect(chipsForm.wellFormed({ ...content, chips: [], expected: [] })).toBe(false);
   });
 

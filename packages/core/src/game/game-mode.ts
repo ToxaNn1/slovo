@@ -8,7 +8,7 @@ import type { Random } from '../ports';
 
 import type { TextRange } from './answer-form';
 export { ROUND_OPTIONS, type AnswerSheet, type RoundOption, type TextRange } from './answer-form';
-export type { ChipKind, ChipLayout, FixedChip } from './chips-form';
+export type { ChipKind, FixedChip } from './chips-form';
 
 /**
  * What the Game needs to know of the Edition: its Feature Switches, whether

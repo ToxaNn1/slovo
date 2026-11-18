@@ -1,7 +1,7 @@
 'use no memo';
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
-import type { ChipLayout, FixedChip, RoundAnswer } from '@slovo/core';
+import type { FixedChip, RoundAnswer } from '@slovo/core';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -46,21 +46,15 @@ type Judged = 'right' | 'wrong' | undefined;
  * «Анаграми»). Words in a line
  * (board 07 g6, «Склади вислів») take their line in a sunken box, the words
  * placed on ink and only the next place dashed, and a placed word leaves an
- * empty dashed place among the chips. In the assembly field (spec #1880,
- * «Склади вислів» with decoys) the box holds the words placed and one dashed
- * mark for the next, a used word fades in its place among the chips, and the
- * last chip gives no answer: the check key gives the chips placed so far.
+ * empty dashed place among the chips.
  * Key it by the Round, so a new Round starts with an empty line.
  */
 export function OrderedChips({
   chips,
   kind,
   fixed = [],
-  layout = 'line',
-  slots = chips.length,
   eraseLabel,
   showsRight = false,
-  checkLabel,
   answer,
   onAnswer,
 }: {
@@ -70,34 +64,22 @@ export function OrderedChips({
   kind: 'letter' | 'word';
   /** The characters that stay in place among the chips; none when left out. */
   fixed?: readonly FixedChip[] | undefined;
-  /** A line of places or the assembly field: a line when left out. */
-  layout?: ChipLayout | undefined;
-  /** How many places the answer takes, every chip but the decoys: one for each chip when left out. */
-  slots?: number | undefined;
   /** The key that takes back the last chip placed, e.g. «← Стерти літеру»; no key when left out. */
   eraseLabel?: string | undefined;
   /** Whether a wrong answer shows the right chips in the line, in place of the ones tapped. */
   showsRight?: boolean;
-  /** The key under the assembly field that gives the answer, e.g. «Перевірити»; the field alone has one. */
-  checkLabel?: string | undefined;
   /** The Round's answer, once given. */
   answer: ChipsAnswer | undefined;
-  /** The places of the chips, in the order tapped, once every place of the line is filled, or on the check in the field. */
+  /** The places of the chips, in the order tapped, once every place of the line is filled. */
   onAnswer: (chosen: number[]) => void;
 }) {
   const [tapped, setTapped] = useState<readonly number[]>([]);
   const line = answer?.chosen ?? tapped;
   const judged: Judged = answer === undefined ? undefined : answer.right ? 'right' : 'wrong';
   const { colors, radii } = useTokens();
-  const field = layout === 'field';
-  /** Words in a line or in the field, which take board 07 g6's look. */
+  /** Words in a line, which take board 07 g6's look. */
   const words = kind === 'word';
-  /** The places the line shows: the field's placed chips and, before the answer, a mark for the next while chips are left. */
-  const places = !field
-    ? slots
-    : answer === undefined
-      ? Math.min(line.length + 1, chips.length)
-      : line.length;
+  const places = chips.length;
 
   return (
     <View testID="chips" style={styles.chips}>
@@ -160,27 +142,17 @@ export function OrderedChips({
               text={text}
               kind={kind}
               placed={placed}
-              leavesPlace={words && !field}
+              leavesPlace={words}
               inert={placed || answer !== undefined}
               onPress={() => {
                 const next = [...tapped, place];
                 setTapped(next);
-                if (!field && next.length === slots) onAnswer(next);
+                if (next.length === places) onAnswer(next);
               }}
             />
           );
         })}
       </View>
-      {field && checkLabel !== undefined && (
-        <Button
-          label={checkLabel}
-          disabled={line.length === 0 || answer !== undefined}
-          testID="chips-check"
-          onPress={() => {
-            onAnswer([...tapped]);
-          }}
-        />
-      )}
       {eraseLabel !== undefined && (
         <Button
           variant="ghost"

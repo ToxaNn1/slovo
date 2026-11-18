@@ -15,8 +15,7 @@ import { useRoundLook } from './round-look';
  * the last letter placed, and a wrong Word shows the right one in its line
  * (board 06).
  * An expression's words on the ground take the label as an ink heading and
- * the meaning in grey under it (board 07 g6); in the assembly field the
- * check key, «Перевірити», gives the answer.
+ * the meaning in grey under it (board 07 g6).
  */
 export function ChipsRound({
   round,
@@ -48,11 +47,8 @@ export function ChipsRound({
         chips={round.chips}
         kind={round.chipKind}
         fixed={round.fixed}
-        layout={round.layout}
-        slots={round.slots}
         eraseLabel={letters ? strings.game.round.eraseLetter : undefined}
         showsRight={letters}
-        checkLabel={round.layout === 'field' ? strings.game.dailyCrossword.check : undefined}
         answer={round.answer?.form === 'chips' ? round.answer : undefined}
         onAnswer={(chips) => {
           onAnswer({ form: 'chips', chips });
