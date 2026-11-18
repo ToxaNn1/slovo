@@ -69,6 +69,14 @@ export function AboutScreen() {
                 ? fill(strings.about.versionAlone, { version: build.version })
                 : fill(strings.about.versionLine, { version: build.version, build: build.build })}
             </Text>
+            {build.updatedOn !== undefined && (
+              <Text testID="about-update" {...voice} style={sub}>
+                {fill(strings.about.updateLine, {
+                  day: String(build.updatedOn.day),
+                  month: editionStrings.dates.months[build.updatedOn.month - 1] ?? '',
+                })}
+              </Text>
+            )}
             {deviceFacts.updateChannel !== undefined && (
               <Text testID="about-channel" {...voice} style={sub}>
                 {fill(strings.about.channelLine, { channel: deviceFacts.updateChannel })}

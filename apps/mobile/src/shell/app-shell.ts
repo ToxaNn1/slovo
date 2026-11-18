@@ -1,5 +1,4 @@
 import {
-  openCounterReads,
   openCounterSending,
   openMistakeReports,
   openRemoteSwitches,
@@ -176,7 +175,6 @@ export function createShell(
         account: await account?.opened().catch(() => undefined),
       }),
     ),
-    counterReads: over(ports, 'Could not open the Community Counters', openCounterReads),
     counterSending: over(
       ports,
       'Could not open the sending of the Community Counters',

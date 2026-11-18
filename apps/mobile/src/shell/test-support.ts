@@ -2,7 +2,6 @@ import {
   createAnalytics,
   createSettings,
   openComposition,
-  openCounterReads,
   openCounterSending,
   openMistakeReports,
   evaluateSwitches,
@@ -268,16 +267,6 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
           clock,
           schedule: never,
           random,
-        }),
-      { onError },
-    ),
-    counterReads: openOnce(
-      async () =>
-        openCounterReads({
-          edition: (await remoteSwitches.opened()).edition,
-          backend: createFakeBackend().backend,
-          userState: await userState.opened(),
-          clock,
         }),
       { onError },
     ),

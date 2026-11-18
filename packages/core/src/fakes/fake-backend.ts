@@ -151,8 +151,6 @@ export interface FakeBackend {
   };
   /** The Community Counters procedures (ADR 0060): the counts the backend keeps, and what it counted. */
   readonly counters: {
-    /** The Entry ids of each `counters.read` request, in order, failed ones included. */
-    readonly asked: readonly (readonly string[])[];
     /** The events of each `counters.send` request the backend counted, in order. */
     readonly sent: readonly (readonly CounterEvent[])[];
     /** The input of each `counters.questionnaire` request the backend counted, in order. */
@@ -234,7 +232,6 @@ export function createFakeBackend({
   const patchesAsked: FakePatchAsk[] = [];
   const patches: Patch[] = [];
   const counts = new Map<string, Omit<EntryCounters, 'entryId'>>();
-  const countersAsked: (readonly string[])[] = [];
   const answers: {
     readonly editionId: string;
     readonly question: string;
@@ -468,7 +465,6 @@ export function createFakeBackend({
     },
     counters: {
       async read({ input, context }) {
-        countersAsked.push([...input.entries]);
         await arrive('counters.read', context);
         return {
           counters: input.entries.map((entryId) => ({
@@ -571,7 +567,6 @@ export function createFakeBackend({
       },
     },
     counters: {
-      asked: countersAsked,
       sent,
       answers,
       statisticsOff,
