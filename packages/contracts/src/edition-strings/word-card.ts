@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { GenderSchema, PartOfSpeechSchema, RegisterSchema } from '../word';
 import { TextSchema } from '../shared';
-import { LabelSchema, pluralOf, templateOf } from './shared';
+import { LabelSchema, templateOf } from './shared';
 
 export const WordCardStringsSchema = z.strictObject({
   /** What VoiceOver says after the Lemma about its Stress, e.g. "наголос на {vowels}". */
@@ -66,8 +66,6 @@ export const WordCardStringsSchema = z.strictObject({
     synonyms: z.strictObject({ one: TextSchema, many: TextSchema }),
     antonyms: z.strictObject({ one: TextSchema, many: TextSchema }),
   }),
-  /** The line under the Definition in «Суть» that names the other meanings in «Історія», e.g. "Ще {count} значення — у вкладці «Історія»." (ADR 0091). */
-  moreMeanings: pluralOf(),
   /** The heading of the Word History on the card, e.g. "Історія слова". */
   history: TextSchema,
   /** The label before the non-standard forms of the linked Corrections. */
