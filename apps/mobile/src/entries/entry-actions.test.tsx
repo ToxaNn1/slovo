@@ -753,7 +753,9 @@ describe('the corner of an Entry card while marks are swiped', () => {
     await pressItem('Змінити на «Не знаю»');
     await menuGone();
     expect(composition.knowledge.state.shown.get('w_test')).toBe('unknown');
-    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Позначено: не знаю. Повторимо завтра');
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent(
+      'Позначено: не знаю. Повторимо завтра',
+    );
 
     await openMenu();
     expect(

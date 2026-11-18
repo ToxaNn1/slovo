@@ -154,15 +154,7 @@ describe('the whole onboarding flow', () => {
     await renderApp();
     // The Onboarding covers the home: a modal over it hides it from the reader.
     expect(screen.queryByTestId('dashboard')).toBeNull();
-    expect(shouts).toEqual([
-      'СЛОВО',
-      'ТРИМАЙ!',
-      'ГРАЙ!',
-      'РІВЕНЬ?',
-      'НАВІЩО?',
-      'ЦІЛЬ',
-      'ДЗИНЬ!',
-    ]);
+    expect(shouts).toEqual(['СЛОВО', 'ТРИМАЙ!', 'ГРАЙ!', 'РІВЕНЬ?', 'НАВІЩО?', 'ЦІЛЬ', 'ДЗИНЬ!']);
 
     expectStep(1);
     expect(screen.getByText(strings.welcome.title)).toBeTruthy();

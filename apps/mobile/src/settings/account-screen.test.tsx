@@ -407,7 +407,7 @@ describe('signing in with a Sign-in code on the Account screen', () => {
     const buttons = screen.getAllByRole('button');
     const signOutEverywhere = screen.getByRole('button', { name: strings.signOutEverywhere });
     const deletion = screen.getByRole('button', {
-      name: fill(strings.delete.button, { name: config.accountName }),
+      name: fill(strings.delete.button, { name: 'Акаунт' }),
     });
     expect(buttons.indexOf(signOutEverywhere)).toBeLessThan(buttons.indexOf(deletion));
   });
