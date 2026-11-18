@@ -43,7 +43,7 @@ describe("Entry details' panel headline", () => {
   it.each(['Beat', 'to beat the bushes all day long in the rain'])(
     'starts «%s» at 24, whatever its length, on two lines that end in an ellipsis',
     async (expression) => {
-      await renderHeadline(expression, { scale: 'ladder', step: 'system' });
+      await renderHeadline(expression, 'system');
 
       const title = screen.getByTestId('entry-panel-title');
       expect(title).toHaveStyle({ fontSize: 24 });
@@ -58,7 +58,7 @@ describe("Entry details' panel headline", () => {
   );
 
   it('grows by the in-app text size, never to the main card’s size', async () => {
-    await renderHeadline('to beat the bushes', { scale: 'ladder', step: 'larger' });
+    await renderHeadline('to beat the bushes', 'larger');
 
     expect(screen.getByTestId('entry-panel-title')).toHaveStyle({ fontSize: 24 * (58 / 50) });
   });

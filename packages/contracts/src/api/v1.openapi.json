@@ -8712,14 +8712,6 @@
                           ],
                           "type": "string"
                         },
-                        "rarityRange": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -9608,14 +9600,6 @@
                           ],
                           "type": "string"
                         },
-                        "textSizeSteps": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "statisticsOffCounter": {
                           "enum": [
                             "on",
@@ -9649,7 +9633,6 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
-                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
@@ -9761,7 +9744,6 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps",
                         "statisticsOffCounter"
                       ]
                     },
@@ -10538,14 +10520,6 @@
                           ],
                           "type": "string"
                         },
-                        "rarityRange": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -11434,14 +11408,6 @@
                           ],
                           "type": "string"
                         },
-                        "textSizeSteps": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "statisticsOffCounter": {
                           "enum": [
                             "on",
@@ -11475,7 +11441,6 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
-                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
@@ -11587,7 +11552,6 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps",
                         "statisticsOffCounter"
                       ]
                     },
@@ -12288,14 +12252,6 @@
                           ],
                           "type": "string"
                         },
-                        "rarityRange": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -13184,14 +13140,6 @@
                           ],
                           "type": "string"
                         },
-                        "textSizeSteps": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "statisticsOffCounter": {
                           "enum": [
                             "on",
@@ -13225,7 +13173,6 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
-                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
@@ -13337,7 +13284,6 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "textSizeSteps",
                         "statisticsOffCounter"
                       ]
                     },

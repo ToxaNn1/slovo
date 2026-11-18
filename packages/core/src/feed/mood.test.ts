@@ -145,7 +145,7 @@ describe('the Feed under a Mood', () => {
   });
 
   it("starts the lower band at the Rarity Range's bottom: in «від 3 до 5» it is rarities 3 and 4", async () => {
-    const app = await runApp(['rarityRange']);
+    const app = await runApp();
     await app.rarityRange.set({ from: 3, to: 5 });
     await app.mood.choose('lower');
 

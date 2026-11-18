@@ -21,7 +21,6 @@ import { userStateRecords } from '../user-state-schema';
 
 const defaults = {
   theme: 'system',
-  fontSize: 'M',
   textSize: 'system',
   vibration: true,
   narratorVoice: 'anna',
@@ -38,7 +37,6 @@ describe('settings', () => {
 
     expect(await settings.read()).toEqual({
       theme: 'system',
-      fontSize: 'M',
       textSize: 'system',
       vibration: true,
       sounds: true,
@@ -57,7 +55,6 @@ describe('settings', () => {
 
     expect(settings.defaults).toEqual({
       theme: 'system',
-      fontSize: 'M',
       textSize: 'system',
       vibration: true,
       sounds: true,
@@ -75,7 +72,6 @@ describe('settings', () => {
 
     expect(await settings.update({ theme: 'dark' })).toEqual({
       theme: 'dark',
-      fontSize: 'M',
       textSize: 'system',
       vibration: true,
       sounds: true,
@@ -88,7 +84,6 @@ describe('settings', () => {
     });
     expect(await settings.read()).toEqual({
       theme: 'dark',
-      fontSize: 'M',
       textSize: 'system',
       vibration: true,
       sounds: true,
@@ -101,13 +96,12 @@ describe('settings', () => {
     });
   });
 
-  it("uses the user's font size over the Edition's default, and returns the settings in effect", async () => {
+  it("uses the user's text size over the Edition's default, and returns the settings in effect", async () => {
     const settings = await settingsOver();
 
-    expect(await settings.update({ fontSize: 'XL' })).toEqual({
+    expect(await settings.update({ textSize: 'largest' })).toEqual({
       theme: 'system',
-      fontSize: 'XL',
-      textSize: 'system',
+      textSize: 'largest',
       vibration: true,
       sounds: true,
       noCounters: false,
@@ -119,8 +113,7 @@ describe('settings', () => {
     });
     expect(await settings.read()).toEqual({
       theme: 'system',
-      fontSize: 'XL',
-      textSize: 'system',
+      textSize: 'largest',
       vibration: true,
       sounds: true,
       noCounters: false,
@@ -132,14 +125,15 @@ describe('settings', () => {
     });
   });
 
-  it("keeps the user's Theme and font size when the user state is opened again", async () => {
+  it("keeps the user's Theme and text size when the user state is opened again", async () => {
     const records = new Map<string, string>();
-    await (await settingsOver(records)).update({ theme: 'light', fontSize: 'S', vibration: true });
+    await (
+      await settingsOver(records)
+    ).update({ theme: 'light', textSize: 'larger', vibration: true });
 
     expect(await (await settingsOver(records)).read()).toEqual({
       theme: 'light',
-      fontSize: 'S',
-      textSize: 'system',
+      textSize: 'larger',
       vibration: true,
       sounds: true,
       noCounters: false,
@@ -155,10 +149,9 @@ describe('settings', () => {
     const settings = await settingsOver();
     await settings.update({ theme: 'dark' });
 
-    expect(await settings.update({ fontSize: 'L' })).toEqual({
+    expect(await settings.update({ textSize: 'larger' })).toEqual({
       theme: 'dark',
-      fontSize: 'L',
-      textSize: 'system',
+      textSize: 'larger',
       vibration: true,
       sounds: true,
       noCounters: false,
@@ -175,7 +168,6 @@ describe('settings', () => {
 
     expect(await settings.read()).toEqual({
       theme: 'system',
-      fontSize: 'M',
       textSize: 'system',
       vibration: true,
       sounds: true,
@@ -188,36 +180,12 @@ describe('settings', () => {
     });
   });
 
-  it("falls back to the Edition's default when the stored font size is not one the Core knows", async () => {
-    const settings = await settingsOver(
-      new Map([
-        ['settings.fontSize', 'XXL'],
-        ['settings.theme', 'dark'],
-      ]),
-    );
-
-    expect(await settings.read()).toEqual({
-      theme: 'dark',
-      fontSize: 'M',
-      textSize: 'system',
-      vibration: true,
-      sounds: true,
-      noCounters: false,
-      selfCheck: false,
-      seasonalDecor: true,
-      shareCounters: true,
-      reduceMotion: false,
-      narratorVoice: 'anna',
-    });
-  });
-
-  it("starts from a different Edition's default font size", async () => {
+  it("starts from a different Edition's default text size", async () => {
     const userState = await openUserState({ port: createMemoryUserStatePort() });
     const settings = createSettings({
       userState,
       defaults: {
         theme: 'light',
-        fontSize: 'L',
         textSize: 'larger',
         vibration: false,
         narratorVoice: 'boris',
@@ -226,7 +194,6 @@ describe('settings', () => {
 
     expect(await settings.read()).toEqual({
       theme: 'light',
-      fontSize: 'L',
       textSize: 'larger',
       vibration: false,
       sounds: true,
@@ -253,7 +220,6 @@ describe('settings: Vibration', () => {
 
     expect(await settings.update({ vibration: false })).toEqual({
       theme: 'system',
-      fontSize: 'M',
       textSize: 'system',
       vibration: false,
       sounds: true,
@@ -290,14 +256,13 @@ describe('settings: Vibration', () => {
     expect((await (await settingsOver(records)).read()).sounds).toBe(false);
   });
 
-  it('changes Vibration without touching the Theme or the font size', async () => {
+  it('changes Vibration without touching the Theme or the text size', async () => {
     const settings = await settingsOver();
-    await settings.update({ theme: 'dark', fontSize: 'XL' });
+    await settings.update({ theme: 'dark', textSize: 'largest' });
 
     expect(await settings.update({ vibration: false })).toEqual({
       theme: 'dark',
-      fontSize: 'XL',
-      textSize: 'system',
+      textSize: 'largest',
       vibration: false,
       sounds: true,
       noCounters: false,
@@ -328,7 +293,6 @@ describe('settings: «Без лічильників»', () => {
 
     expect(await settings.update({ noCounters: true })).toEqual({
       theme: 'system',
-      fontSize: 'M',
       textSize: 'system',
       vibration: true,
       sounds: true,
@@ -358,12 +322,11 @@ describe('settings: «Без лічильників»', () => {
 
   it('changes the choice without touching the other settings', async () => {
     const settings = await settingsOver();
-    await settings.update({ theme: 'dark', fontSize: 'XL', vibration: false });
+    await settings.update({ theme: 'dark', textSize: 'largest', vibration: false });
 
     expect(await settings.update({ noCounters: true })).toEqual({
       theme: 'dark',
-      fontSize: 'XL',
-      textSize: 'system',
+      textSize: 'largest',
       vibration: false,
       sounds: true,
       noCounters: true,
@@ -398,7 +361,6 @@ describe('settings: «Без лічильників»', () => {
 
     expect(await settings.read()).toEqual({
       theme: 'dark',
-      fontSize: 'L',
       textSize: 'larger',
       vibration: true,
       sounds: true,
@@ -424,7 +386,6 @@ describe('settings: Self-check', () => {
 
     expect(await settings.update({ selfCheck: true })).toEqual({
       theme: 'system',
-      fontSize: 'M',
       textSize: 'system',
       vibration: true,
       sounds: true,
@@ -451,7 +412,6 @@ describe('settings: Self-check', () => {
 
     expect(await settings.update({ selfCheck: true })).toEqual({
       theme: 'dark',
-      fontSize: 'M',
       textSize: 'system',
       vibration: true,
       sounds: true,
@@ -485,7 +445,6 @@ describe('settings: Seasonal Decor', () => {
 
     expect(await settings.update({ seasonalDecor: false })).toEqual({
       theme: 'dark',
-      fontSize: 'M',
       textSize: 'system',
       vibration: true,
       sounds: true,
@@ -584,13 +543,13 @@ describe('settings: «Менше руху»', () => {
 });
 
 describe('settings: the three-step text size (ADR 0134)', () => {
-  it("uses the user's text size over the Edition's default, and keeps the S…XL font size apart", async () => {
+  it("uses the user's text size over the Edition's default", async () => {
     const settings = await settingsOver();
 
     const now = await settings.update({ textSize: 'largest' });
 
-    expect(now).toMatchObject({ textSize: 'largest', fontSize: 'M' });
-    expect(await settings.read()).toMatchObject({ textSize: 'largest', fontSize: 'M' });
+    expect(now).toMatchObject({ textSize: 'largest' });
+    expect(await settings.read()).toMatchObject({ textSize: 'largest' });
   });
 
   it("falls back to the Edition's default when the stored text size is not one the Core knows", async () => {
@@ -611,7 +570,7 @@ describe('settings: the three-step text size (ADR 0134)', () => {
 
       const settings = await settingsOver(records);
 
-      expect(await settings.read(), fontSize).toMatchObject({ fontSize, textSize });
+      expect(await settings.read(), fontSize).toMatchObject({ textSize });
       expect(records.get('schema.version')).toBe('9');
     }
   });
@@ -626,21 +585,6 @@ describe('settings: the three-step text size (ADR 0134)', () => {
       expect((await settings.read()).textSize, stored).toBe('system');
       expect(records.has('settings.textSize'), stored).toBe(false);
     }
-  });
-
-  it('keeps both scales readable, so the switch can go on and off again', async () => {
-    const records = new Map([
-      ['schema.version', '7'],
-      ['settings.fontSize', '"XL"'],
-    ]);
-    const settings = await settingsOver(records);
-    // Switch on: the reader picks a step; switch off again: the S…XL row changes the font size.
-    await settings.update({ textSize: 'larger' });
-    await settings.update({ fontSize: 'S' });
-
-    const reopened = await settingsOver(records);
-
-    expect(await reopened.read()).toMatchObject({ fontSize: 'S', textSize: 'larger' });
   });
 
   it('steps down the ladder one step at a time to the floor, and no further', () => {

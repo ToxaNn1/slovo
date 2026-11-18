@@ -56,7 +56,6 @@ const testEditionConfig = {
   ),
   userSettingDefaults: {
     theme: 'system',
-    fontSize: 'M',
     textSize: 'system',
     vibration: true,
     notificationTimes: [],

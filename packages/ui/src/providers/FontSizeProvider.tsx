@@ -1,12 +1,10 @@
-import type { FontSize, TextSize as LadderStep } from '@slovo/contracts';
-import { smallerTextSize } from '@slovo/core';
+import type { TextSize as LadderStep } from '@slovo/contracts';
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useWindowDimensions } from 'react-native';
 
 import {
   compactWidth,
   fontScaleCap,
-  fontSizeSteps,
   textSizeSteps,
   titleSize,
   typeRoles,
@@ -14,37 +12,8 @@ import {
   type TypeRole,
 } from '../tokens';
 
-/**
- * The step a Word text starts from, on the scale in effect: the S…XL font
- * size while the Edition's `textSizeSteps` switch is off, the three-step
- * ladder while it is on (ADR 0134).
- */
-export type TextSizeStep =
-  | { readonly scale: 'fontSize'; readonly step: FontSize }
-  | { readonly scale: 'ladder'; readonly step: LadderStep };
-
-/** The S…XL step below each font size above the floor, S (ADR 0091). */
-const SMALLER_FONT_SIZE: Readonly<Record<FontSize, FontSize | undefined>> = {
-  S: undefined,
-  M: 'S',
-  L: 'M',
-  XL: 'L',
-};
-
-/** The step below a size on its own scale, or nothing at the scale's floor. */
-export function smallerTextSizeStep(size: TextSizeStep): TextSizeStep | undefined {
-  if (size.scale === 'fontSize') {
-    const step = SMALLER_FONT_SIZE[size.step];
-    return step === undefined ? undefined : { scale: 'fontSize', step };
-  }
-  const step = smallerTextSize(size.step);
-  return step === undefined ? undefined : { scale: 'ladder', step };
-}
-
-/** A name of a size, the same for the same scale and step. */
-export function textSizeStepKey(size: TextSizeStep): string {
-  return `${size.scale}:${size.step}`;
-}
+/** The step on the three-step text size ladder a Word text starts from (ADR 0134). */
+export type TextSizeStep = LadderStep;
 
 /** A font size and the line height that goes with it. */
 export interface TextSize {
@@ -67,20 +36,15 @@ export interface WordTextSizes {
 }
 
 /**
- * The type sizes of a step: an S…XL one from `fontSizeSteps`, stacked with the
- * OS text size as before; a ladder one from `textSizeSteps`, the OS text size
+ * The type sizes of a step from `textSizeSteps`, the OS text size
  * (`fontScale`) taken only up to `fontScaleCap.text`, so a very large system
  * size does not break the card frame (ADR 0134). iOS multiplies every size by
  * `fontScale` when it draws, so a capped size is given divided by the excess.
  * The Lemma takes the step alone: it is drawn without the OS text size (ADR 0157).
  */
 function wordTextSizes(size: TextSizeStep, fontScale: number): WordTextSizes {
-  const { lemma, definition, example } =
-    size.scale === 'fontSize' ? fontSizeSteps[size.step] : textSizeSteps[size.step];
-  const scale =
-    size.scale === 'fontSize' || fontScale <= 0
-      ? 1
-      : Math.min(fontScale, fontScaleCap.text) / fontScale;
+  const { lemma, definition, example } = textSizeSteps[size];
+  const scale = fontScale <= 0 ? 1 : Math.min(fontScale, fontScaleCap.text) / fontScale;
   return {
     size,
     lemma: { fontSize: lemma, lineHeight: lemma * wordLineHeight.lemma },
@@ -92,9 +56,7 @@ function wordTextSizes(size: TextSizeStep, fontScale: number): WordTextSizes {
   };
 }
 
-const FontSizeContext = createContext<WordTextSizes>(
-  wordTextSizes({ scale: 'fontSize', step: 'M' }, 1),
-);
+const FontSizeContext = createContext<WordTextSizes>(wordTextSizes('system', 1));
 
 /** Gives every Word card below the type sizes of the user's text size. */
 export function FontSizeProvider({ size, children }: { size: TextSizeStep; children: ReactNode }) {
@@ -103,7 +65,7 @@ export function FontSizeProvider({ size, children }: { size: TextSizeStep; child
   return <FontSizeContext value={value}>{children}</FontSizeContext>;
 }
 
-/** The Word card's type sizes in effect: step M outside a provider. */
+/** The Word card's type sizes in effect: «Як у системі» outside a provider. */
 export function useWordTextSizes(): WordTextSizes {
   return useContext(FontSizeContext);
 }

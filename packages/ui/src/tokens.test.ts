@@ -5,7 +5,7 @@ import { EditionTokensSchema } from '@slovo/contracts';
 import {
   coreTokens,
   designTokens,
-  fontSizeSteps,
+  textSizeSteps,
   halftone,
   motion,
   offsetShadow,
@@ -208,11 +208,10 @@ describe('the Core’s shape, type and motion roles', () => {
     ]);
   });
 
-  it('maps the font size setting to the design’s three steps', () => {
-    expect(fontSizeSteps.S).toEqual(fontSizeSteps.M);
-    expect(fontSizeSteps.M.lemma).toBe(typeStyle('heroWord', coreTokens).fontSize);
-    expect(fontSizeSteps.L.definition).toBeCloseTo(fontSizeSteps.M.definition * 1.15, 0);
-    expect(fontSizeSteps.XL.lemma).toBeCloseTo(fontSizeSteps.M.lemma * 1.3, 0);
+  it('maps the text size ladder to the design’s three steps', () => {
+    expect(textSizeSteps.system.lemma).toBe(typeStyle('heroWord', coreTokens).fontSize);
+    expect(textSizeSteps.larger.definition).toBeCloseTo(textSizeSteps.system.definition * 1.15, 0);
+    expect(textSizeSteps.largest.lemma).toBeCloseTo(textSizeSteps.system.lemma * 1.3, 0);
   });
 
   it('drops a pressed tile by the depth its shadow loses, onto the red edge under red', () => {
@@ -257,7 +256,7 @@ describe('titleScale', () => {
 
   it("takes a title role at the Lemma's size: its share of the Lemma's own", () => {
     // At L the Lemma is 58, so a title of 36 at M takes 36 × 58 / 50.
-    const lemma = { fontSize: fontSizeSteps.L.lemma, lineHeight: 75.4 };
+    const lemma = { fontSize: textSizeSteps.larger.lemma, lineHeight: 75.4 };
     expect(titleSize('idiomExpression', lemma)).toEqual({
       fontSize: (36 * 58) / 50,
       lineHeight: (typeRoles.idiomExpression.lineHeight * 58) / 50,

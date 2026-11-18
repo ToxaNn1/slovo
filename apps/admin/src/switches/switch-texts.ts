@@ -64,10 +64,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Межа рідкісності',
     line: 'Налаштування «Рідкість», яке обмежує, наскільки рідкісні слова показують.',
   },
-  rarityRange: {
-    name: 'Рідкість «від – до»',
-    line: 'У «Рідкості» п’ять смужок: читач обирає і найрідкісніші, і найпоширеніші слова, а не лише верхню межу.',
-  },
   gameReview: { name: 'Розбір гри', line: 'Після гри список усіх запитань із відповідями.' },
   gameGuessWord: {
     name: 'Гра «Вгадай слово»',
@@ -429,10 +425,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   widgetPreviews: {
     name: 'Перегляд віджетів',
     line: 'На екрані віджетів видно, який вигляд матимуть малий, середній і на екрані блокування.',
-  },
-  textSizeSteps: {
-    name: 'Розмір тексту',
-    line: 'Три розміри тексту: як у системі, більший і найбільший.',
   },
   statisticsOffCounter: {
     name: 'Лічильник вимкнень статистики',

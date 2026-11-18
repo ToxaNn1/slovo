@@ -8,7 +8,6 @@ import {
   DecorProvider,
   EditionProvider,
   FontSizeProvider,
-  type TextSizeStep,
   HapticsProvider,
   OfflinePlateProvider,
   ReduceMotionProvider,
@@ -171,20 +170,10 @@ function ReduceMotionInEffect({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * Gives the Word cards the reader's text size on the scale in effect: the
- * three-step ladder while `textSizeSteps` is on, the S…XL font size while it
- * is off (ADR 0134).
- */
+/** Gives the Word cards the reader's step on the three-step text size ladder (ADR 0134). */
 function TextSizeInEffect({ children }: { children: ReactNode }) {
-  const { textSizeSteps } = useShown();
-  const { fontSize, textSize } = useSettings().current;
-  const size = useMemo<TextSizeStep>(
-    () =>
-      textSizeSteps ? { scale: 'ladder', step: textSize } : { scale: 'fontSize', step: fontSize },
-    [textSizeSteps, textSize, fontSize],
-  );
-  return <FontSizeProvider size={size}>{children}</FontSizeProvider>;
+  const { textSize } = useSettings().current;
+  return <FontSizeProvider size={textSize}>{children}</FontSizeProvider>;
 }
 
 /** The route on screen for every sheet below, so a sheet closes when another route comes on screen. */

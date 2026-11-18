@@ -38,7 +38,6 @@ const everything: Shown = {
   narratorVoiceSetting: true,
   seasonalDecorSetting: true,
   reduceMotionSetting: true,
-  textSizeSteps: true,
   shareCountersSetting: true,
   dataExport: true,
   learning: true,
@@ -76,7 +75,7 @@ const everything: Shown = {
   gesturesHintDemo: true,
   gesturesHintAgain: true,
   wordOfTheDayArchive: true,
-  rarity: 'range',
+  rarity: true,
   rarityTest: true,
   questionnaire: { levelWhy: true, selfRating: true, interests: true },
 };
@@ -181,10 +180,6 @@ describe('what the reader is shown', () => {
       { off: ['reduceMotion'], shown: { reduceMotionSetting: false } },
     ],
     [
-      'the S…XL text size with the three-step text size off',
-      { off: ['textSizeSteps'], shown: { textSizeSteps: false } },
-    ],
-    [
       'no «Ділитися анонімною статистикою» switch with Community Counters and Analytics off',
       { off: ['communityCounters', 'analytics'], shown: { shareCountersSetting: false } },
     ],
@@ -227,11 +222,7 @@ describe('what the reader is shown', () => {
     ],
     [
       'no «Рідкість» with the Rarity Range off',
-      { off: ['rarityCeiling'], shown: { rarity: 'off' } },
-    ],
-    [
-      '«Рідкість» as «до 1»…«до 5» with the Rarity Range picker off',
-      { off: ['rarityRange'], shown: { rarity: 'top' } },
+      { off: ['rarityCeiling'], shown: { rarity: false } },
     ],
     [
       'no «Пройти тест ще раз» and no self-rating with the Rarity Test off',

@@ -80,8 +80,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   analyticsGames: ['analytics'],
   // The Rarity Test sets the top of the Rarity Range (ADR 0156).
   rarityTest: ['rarityCeiling'],
-  // The picker sets both ends of the Rarity Range the switch above turns on (ADR 0156).
-  rarityRange: ['rarityCeiling'],
   interestsQuestion: ['laterQuestions'],
   // «Попередні слова» is a Dashboard block over the Word of the Day archive (ADR 0076).
   previousWords: ['wordOfTheDayArchive'],

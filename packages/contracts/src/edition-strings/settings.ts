@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { FontSizeSchema, TextSizeSchema, ThemeSchema } from '../edition';
+import { TextSizeSchema, ThemeSchema } from '../edition';
 import { TextSchema } from '../shared';
 import { PluralLabelSchema, PluralSchema, pluralOf, templateOf } from './shared';
 
@@ -11,16 +11,6 @@ export const SettingsStringsSchema = z.strictObject({
   theme: TextSchema,
   /** The name of every Theme. */
   themes: z.record(ThemeSchema, TextSchema),
-  /** The label over the font-size choice. */
-  fontSize: TextSchema,
-  /** The name of every font size. */
-  fontSizes: z.record(FontSizeSchema, TextSchema),
-  /** The sample Word the font-size preview shows. */
-  fontSizePreview: z.strictObject({
-    /** The sample Lemma, Stress marks included. */
-    lemma: TextSchema,
-    definition: TextSchema,
-  }),
   /** The tag on a row that a later version brings. */
   soon: TextSchema,
   /** What VoiceOver reads for a row that a later version brings. Takes `{label}`. */
@@ -52,15 +42,11 @@ export const SettingsStringsSchema = z.strictObject({
     }),
   }),
   /**
-   * «Рідкість», the Rarity Range (ADR 0156): its label, the line under it,
-   * the segment of the top alone while the `rarityRange` switch is off, which
-   * takes `{rarity}`, e.g. «до 3», and the picker's range, `{from}` to `{to}`,
+   * «Рідкість», the Rarity Range (ADR 0156): its label and the picker's range, `{from}` to `{to}`,
    * e.g. «від 2 до 4», or one rarity, `{rarity}`, e.g. «лише 3».
    */
   rarity: z.strictObject({
     title: TextSchema,
-    subtitle: TextSchema,
-    ceiling: templateOf('rarity'),
     range: templateOf('from', 'to'),
     single: templateOf('rarity'),
     /** What a screen reader names one bar of the picker, `{rarity}`, e.g. «Рідкість 3». */

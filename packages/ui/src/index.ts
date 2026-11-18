@@ -12,7 +12,6 @@ export { OfflinePlateProvider, useOfflinePlate } from './primitives/OfflinePlate
 export { GesturesHintSheet } from './feed/GesturesHintSheet';
 export { SwipeDemoStage, useGesturesDemo } from './entries/swipe-demo';
 export { AboutPanel } from './settings/AboutPanel';
-export { FontSizePreview } from './settings/FontSizePreview';
 export { NarratorVoicePicker } from './settings/NarratorVoicePicker';
 export { OptionSampleNumber, OptionSampleWord, OptionScreen } from './settings/OptionScreen';
 export { RarityRangePicker } from './settings/RarityRangePicker';

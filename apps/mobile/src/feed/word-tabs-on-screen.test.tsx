@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { FontSize, Idiom, Word } from '@slovo/contracts';
+import type { Idiom, TextSize, Word } from '@slovo/contracts';
 import {
   loadEdition,
   openComposition,
@@ -14,7 +14,7 @@ import { Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StyleSheet } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
@@ -22,7 +22,7 @@ import HomeScreen from '../app/feed';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
-import { entryCardFrame, fontSizeSteps, linkChip } from '@slovo/ui/tokens';
+import { entryCardFrame, linkChip, textSizeSteps } from '@slovo/ui/tokens';
 import { LOGO_ROW } from '../edition/feed-loading';
 import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
@@ -129,8 +129,16 @@ beforeEach(() => {
   jest.useFakeTimers();
 });
 
+const window = Dimensions.get('window');
+
+/** The OS text size at 1, so a Word text is drawn at its step's size in the table. */
+function atSystemTextSize(): void {
+  Dimensions.set({ window: { ...window, fontScale: 1 } });
+}
+
 afterEach(() => {
   jest.useRealTimers();
+  Dimensions.set({ window });
   screenSettled();
 });
 
@@ -149,8 +157,8 @@ const shell = () =>
     composition: opened(composition),
   });
 
-/** The app on the Feed, at the user's font size. */
-async function renderApp(fontSize: FontSize = 'M') {
+/** The app on the Feed, at the user's text size. */
+async function renderApp(textSize: TextSize = 'system') {
   await renderRoutes(
     {
       _layout: () => (
@@ -160,7 +168,7 @@ async function renderApp(fontSize: FontSize = 'M') {
               <EditionProvider edition={edition} strings={editionStrings}>
                 <HapticsProvider haptics={haptics}>
                   <SettingsProvider>
-                    <FontSizeProvider size={{ scale: 'fontSize', step: fontSize }}>
+                    <FontSizeProvider size={textSize}>
                       <Slot />
                     </FontSizeProvider>
                   </SettingsProvider>
@@ -350,10 +358,11 @@ describe('the tabs of a Word card in the Feed', () => {
     );
   });
 
-  it('shrinks a Definition a font size at a time before it is clamped, whichever height comes last', async () => {
+  it('shrinks a Definition a text size at a time before it is clamped, whichever height comes last', async () => {
     const long = `${'Довге значення слова. '.repeat(20)}Кінець.`;
     await open({ ...fullWord, primaryDefinition: long });
-    await renderApp('XL');
+    atSystemTextSize();
+    await renderApp('largest');
     await swipeUp();
     const layout = async (testID: string, height: number) => {
       await fireEvent(wordCard().getByTestId(testID, hidden), 'layout', {
@@ -368,26 +377,23 @@ describe('the tabs of a Word card in the Feed', () => {
         : undefined;
     };
     const clamped = () => wordCard().queryByTestId('word-tab-more', hidden) !== null;
-    expect(size()).toBe(fontSizeSteps.XL.definition);
+    expect(size()).toBe(textSizeSteps.largest.definition);
 
     // The content is drawn before the frame leaves it its room: the check waits for the room.
     await layout('word-tab-content', 300);
-    expect(size()).toBe(fontSizeSteps.XL.definition);
+    expect(size()).toBe(textSizeSteps.largest.definition);
     await layout('word-tab-panel', 200);
-    expect(size()).toBe(fontSizeSteps.L.definition);
+    expect(size()).toBe(textSizeSteps.larger.definition);
     expect(clamped()).toBe(false);
 
     // A step smaller it fits, so it stays whole there without «Детальніше».
     await layout('word-tab-content', 180);
-    expect(size()).toBe(fontSizeSteps.L.definition);
+    expect(size()).toBe(textSizeSteps.larger.definition);
     expect(clamped()).toBe(false);
 
-    // Too tall again, it takes M, then S, and only then is clamped.
+    // Too tall again, it takes «Як у системі», and only then is clamped.
     await layout('word-tab-content', 300);
-    expect(size()).toBe(fontSizeSteps.M.definition);
-    expect(clamped()).toBe(false);
-    await layout('word-tab-content', 300);
-    expect(size()).toBe(fontSizeSteps.S.definition);
+    expect(size()).toBe(textSizeSteps.system.definition);
     expect(clamped()).toBe(false);
     await layout('word-tab-content', 300);
     expect(clamped()).toBe(true);
@@ -470,7 +476,8 @@ describe('the tabs of a Word card in the Feed', () => {
   it('shrinks a Definition when the room and the content are laid out in one go', async () => {
     const long = `${'Довге значення слова. '.repeat(20)}Кінець.`;
     await open({ ...fullWord, primaryDefinition: long });
-    await renderApp('XL');
+    atSystemTextSize();
+    await renderApp('largest');
     await swipeUp();
     const size = (): unknown => {
       const style: unknown = StyleSheet.flatten(wordCard().getByText(long, hidden).props['style']);
@@ -493,7 +500,7 @@ describe('the tabs of a Word card in the Feed', () => {
       ]),
     );
 
-    expect(size()).toBe(fontSizeSteps.L.definition);
+    expect(size()).toBe(textSizeSteps.larger.definition);
   });
 
   it('measures the content afresh at each smaller size, so text that keeps its height is still clamped', async () => {
