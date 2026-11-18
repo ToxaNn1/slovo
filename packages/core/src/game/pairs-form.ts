@@ -128,8 +128,4 @@ export const pairsForm: AnswerForm<PairsContent, PairsRound, PairsGiven, PairsAn
       },
     };
   },
-  reviewAnswer({ definitions }, { definition }) {
-    const cell = definitions[definition];
-    return cell === undefined ? undefined : { text: cell.shown, stressedVowels: [] };
-  },
 };

@@ -256,7 +256,7 @@ describe('a Round of «Звідки слово»', () => {
     expect(shown).toEqual(new Set(languages.map(({ name }) => name)));
   });
 
-  it('costs a Life for a wrong pick, marks the Word «Не знаю», moves no Review and lists the pick in the Game Review', async () => {
+  it('costs a Life for a wrong pick, marks the Word «Не знаю», moves no Review and lists it in the Game Review', async () => {
     const app = await run();
     await app.game.start('origin');
     const { round } = current(app);
@@ -270,15 +270,12 @@ describe('a Round of «Звідки слово»', () => {
     expect(app.knowledge.state.shown.get(idOf(asked))).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
     expect(buildGameReview(current(app).played)[0]).toMatchObject({
-      entryId: idOf(asked),
-      title: { text: round.prompt },
-      answer: { text: nameOf(withOrigin[asked] ?? ''), stressedVowels: [] },
       right: false,
-      picked: { form: 'pick', text: optionsOf(round)[wrong] },
+      word: { text: round.prompt },
     });
   });
 
-  it('leads a Game Review item with the Word asked about, its right language beside it', async () => {
+  it('leads a Game Review row with the Word asked about, stressed', async () => {
     const app = await run();
     await app.game.start('origin');
     const { round } = current(app);
@@ -288,10 +285,8 @@ describe('a Round of «Звідки слово»', () => {
 
     expect(buildGameReview(current(app).played)[0]).toMatchObject({
       // Every Word here is stressed on its second letter.
-      title: { text: round.prompt, stressedVowels: [asked[1]] },
-      answer: { text: nameOf(withOrigin[asked] ?? ''), stressedVowels: [] },
+      word: { text: round.prompt, stressedVowels: [asked[1]] },
       right: true,
-      picked: undefined,
     });
   });
 

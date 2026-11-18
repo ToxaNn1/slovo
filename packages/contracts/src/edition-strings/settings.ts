@@ -381,6 +381,8 @@ export const SettingsStringsSchema = z.strictObject({
     versionAlone: templateOf('version'),
     /** The Update channel the build listens to, `beta` or `production` (ADR 0167). Takes `{channel}`. */
     channelLine: templateOf('channel'),
+    /** The day the update the build runs was made, e.g. «Оновлення від 18 листопада». Takes `{day}` and `{month}`, one of `dates.months`. */
+    updateLine: templateOf('day', 'month'),
     /** What SLOVO is. */
     description: TextSchema,
     /** Where the words come from. */

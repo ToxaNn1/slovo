@@ -292,7 +292,7 @@ describe('a Round of «За літерами»', () => {
     expect(current(app).lives).toBe(3);
   });
 
-  it('costs a Life for a wrong Word, marks it «Не знаю», moves no Review and lists the text typed', async () => {
+  it('costs a Life for a wrong Word, marks it «Не знаю», moves no Review and lists it in the Game Review', async () => {
     const app = await startAt('кобза');
 
     await app.game.answer({ form: 'typed', text: 'кобзар' });
@@ -307,7 +307,7 @@ describe('a Round of «За літерами»', () => {
     expect(app.knowledge.state.shown.get(idOf('кобза'))).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
     expect(buildGameReview(current(app).played)[0]).toMatchObject({
-      entryId: idOf('кобза'),
+      number: 1,
       right: false,
     });
   });

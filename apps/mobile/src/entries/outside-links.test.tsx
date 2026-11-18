@@ -6,7 +6,6 @@ import { Text } from 'react-native';
 
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
-import GameEntryScreen from '../app/game/[entryId]';
 import FavoriteEntryScreen from '../app/saved/favorites/[entryId]';
 import HistoryEntryScreen from '../app/saved/history/[entryId]';
 import LearningEntryScreen from '../app/saved/learning/[entryId]';
@@ -104,7 +103,6 @@ async function renderApp({
       'saved/favorites/[entryId]': FavoriteEntryScreen,
       'saved/history/[entryId]': HistoryEntryScreen,
       'saved/learning/[entryId]': LearningEntryScreen,
-      'game/[entryId]': GameEntryScreen,
       // The recipient sheet needs the composition; its own test draws it.
       'c/[linkId]': () => <Text>Recipient sheet</Text>,
     },
@@ -167,7 +165,6 @@ describe('a link from outside the app', () => {
     ['Favorites', 'saved/favorites', editionStrings.favorites.title],
     ['History', 'saved/history', editionStrings.history.title],
     ['Learning', 'saved/learning', editionStrings.learning.title],
-    ['the Game', 'game', editionStrings.game.title],
   ])('to an Entry of %s opens it without the label it names', async (_, route, title) => {
     const app = await renderApp();
     await app.open(`slovo://${route}/w_bevz/?back=Вхід&from=widget`);

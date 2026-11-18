@@ -77,18 +77,6 @@ describe('the Shell of the device', () => {
     mockRemoteSwitches = 'open';
   });
 
-  it('reads the Community Counters from its backend until they are switched off remotely', async () => {
-    const { fake, shell, turnOffRemotely } = shellOverFakes();
-    const reads = await shell.counterReads.opened();
-
-    await reads.lines(['w_one']);
-    expect(fake.counters.asked).toEqual([['w_one']]);
-
-    await turnOffRemotely('communityCounters');
-    expect(await reads.lines(['w_two'])).toEqual(new Map());
-    expect(fake.counters.asked).toEqual([['w_one']]);
-  });
-
   it('sends a Mistake Report with the content version of its Language Pack until they are switched off remotely', async () => {
     const { fake, shell, turnOffRemotely } = shellOverFakes();
     const reports = await shell.mistakeReports.opened();
@@ -139,9 +127,6 @@ describe('the Shell of the device', () => {
       expect(sync?.state.running).toBe(false);
       const reports = await shell.mistakeReports.opened();
       expect(reports.available()).toBe(true);
-      await expect(shell.counterReads.opened()).resolves.toEqual(
-        expect.objectContaining({ lines: expect.any(Function) }),
-      );
       await expect(shell.counterSending.opened()).resolves.toEqual(
         expect.objectContaining({ foreground: expect.any(Function) }),
       );

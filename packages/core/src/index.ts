@@ -84,7 +84,7 @@ export {
   type RoundOption,
   type TextRange,
 } from './game/game-mode';
-export { buildGameReview, buildPlainGameReview, type GameReviewItem } from './game/game-review';
+export { buildGameReview } from './game/game-review';
 export { GAME_ROUNDS } from './game/round-plan';
 export { type SearchResults } from './search/search';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';
@@ -103,7 +103,6 @@ export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
 export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
 export type { DueQuestion } from './knowledge/due-quiz';
-export { openCounterReads, type CounterReads } from './community-counters/counter-reads';
 export { openCounterSending } from './community-counters/counter-sending';
 export {
   createAnalytics,

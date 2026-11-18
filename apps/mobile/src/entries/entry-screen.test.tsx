@@ -12,8 +12,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
-import GameLayout from '../app/game/_layout';
-import GameEntryScreen from '../app/game/[entryId]';
 import SavedLayout from '../app/saved/_layout';
 import CollectionEntryScreen from '../app/saved/collections/[collectionId]/[entryId]';
 import FavoriteEntryScreen from '../app/saved/favorites/[entryId]';
@@ -190,8 +188,6 @@ async function renderEntry(entryId: string, url = `/entry/${entryId}`) {
       'entry/[entryId]': EntryFromLinkScreen,
       'search/_layout': SearchLayout,
       'search/[entryId]': EntryFromSearchScreen,
-      'game/_layout': GameLayout,
-      'game/[entryId]': GameEntryScreen,
       'saved/_layout': SavedLayout,
       'saved/history/[entryId]': HistoryEntryScreen,
       'saved/favorites/[entryId]': FavoriteEntryScreen,
@@ -468,7 +464,6 @@ describe('the Entry screen of each stack', () => {
   const stacks: readonly (readonly [string, string])[] = [
     ['/entry', editionStrings.tabs.home],
     ['/search', editionStrings.search.title],
-    ['/game', editionStrings.game.title],
     ['/saved/history', editionStrings.history.title],
     ['/saved/favorites', editionStrings.favorites.title],
     ['/saved/learning', editionStrings.learning.title],

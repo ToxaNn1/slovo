@@ -281,7 +281,7 @@ describe('a Round of «Впиши слово»', () => {
     expect(current(app).lives).toBe(2);
   });
 
-  it('marks the Correction of a wrong form «Не знаю», moves no Review and lists the text typed', async () => {
+  it('marks the Correction of a wrong form «Не знаю», moves no Review and lists it in the Game Review', async () => {
     const app = await startAt('c_surzhyk01');
 
     await app.game.answer({ form: 'typed', text: 'пірья' });
@@ -289,19 +289,7 @@ describe('a Round of «Впиши слово»', () => {
     expect(app.knowledge.state.shown.get('c_surzhyk01')).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
     expect(buildGameReview(current(app).played)).toEqual([
-      {
-        number: 1,
-        entryId: 'c_surzhyk01',
-        title: { text: 'пірья', stressedVowels: [] },
-        answer: undefined,
-        right: false,
-        picked: { form: 'typed', text: 'пірья', stressedVowels: [] },
-        details: {
-          kind: 'correction',
-          standardForm: 'пірʼя',
-          explanation: 'Why surzhyk01 reads better.',
-        },
-      },
+      { number: 1, right: false, word: { text: 'пірья', stressedVowels: [] } },
     ]);
   });
 

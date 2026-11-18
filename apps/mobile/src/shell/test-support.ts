@@ -2,7 +2,6 @@ import {
   createAnalytics,
   createSettings,
   openComposition,
-  openCounterReads,
   openCounterSending,
   openMistakeReports,
   evaluateSwitches,
@@ -61,7 +60,6 @@ export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
   'crosswordBadgeStamp',
   'gameRoundMascot',
   'gameEndToFeed',
-  'plainGameReview',
   'gameModeToast',
 ];
 
@@ -266,16 +264,6 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
           clock,
           schedule: never,
           random,
-        }),
-      { onError },
-    ),
-    counterReads: openOnce(
-      async () =>
-        openCounterReads({
-          edition: (await remoteSwitches.opened()).edition,
-          backend: createFakeBackend().backend,
-          userState: await userState.opened(),
-          clock,
         }),
       { onError },
     ),

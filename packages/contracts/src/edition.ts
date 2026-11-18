@@ -445,8 +445,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** «Склади вислів»: decoy fragments from other expressions and the answer judged on «Перевірити» (ADR 0139); off, on the last fragment. Off while `gameBuildIdiom` is. */
   /** The third end action «До стрічки» beside «Ще раз» and «До ігор» (ADR 0139); off while `game` is. */
   gameEndToFeed: FeatureSwitchStateSchema,
-  /** The plain Game Review: one row per Round, ✓ or ✗ and the word, which does not expand and opens nothing (ADR 0139); off, the Game Review of spec #1674. Off while `gameReview` is. */
-  plainGameReview: FeatureSwitchStateSchema,
   /** The toast on a tap of a Game Mode that cannot be played, which keeps its normal look (ADR 0139); off while `game` is. */
   gameModeToast: FeatureSwitchStateSchema,
   /** The evening notification: at most 2 a day, the morning Word of the Day and one evening slot with the Streak warning or the unmet Daily Goal, or nothing; off, a Word at every Notification time. */

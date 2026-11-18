@@ -9256,14 +9256,6 @@
                           ],
                           "type": "string"
                         },
-                        "plainGameReview": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameModeToast": {
                           "enum": [
                             "on",
@@ -9693,7 +9685,6 @@
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
                         "gameEndToFeed",
-                        "plainGameReview",
                         "gameModeToast",
                         "notificationFarewell",
                         "notificationExplainer",
@@ -11055,14 +11046,6 @@
                           ],
                           "type": "string"
                         },
-                        "plainGameReview": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameModeToast": {
                           "enum": [
                             "on",
@@ -11492,7 +11475,6 @@
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
                         "gameEndToFeed",
-                        "plainGameReview",
                         "gameModeToast",
                         "notificationFarewell",
                         "notificationExplainer",
@@ -12778,14 +12760,6 @@
                           ],
                           "type": "string"
                         },
-                        "plainGameReview": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameModeToast": {
                           "enum": [
                             "on",
@@ -13215,7 +13189,6 @@
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
                         "gameEndToFeed",
-                        "plainGameReview",
                         "gameModeToast",
                         "notificationFarewell",
                         "notificationExplainer",

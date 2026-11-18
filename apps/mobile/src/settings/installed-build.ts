@@ -12,9 +12,28 @@ export interface InstalledBuild {
    * module reporting it.
    */
   readonly build: string | undefined;
+  /**
+   * The local day the update the app runs was made, or undefined while it
+   * runs the code it shipped with, under Expo Go and on a binary that lacks
+   * `expo-updates`. Never the update's id, which tells the reader nothing.
+   */
+  readonly updatedOn: { readonly day: number; readonly month: number } | undefined;
 }
 
 type ApplicationModule = typeof import('expo-application');
+type UpdatesModule = typeof import('expo-updates');
+
+/** The local day `expo-updates` says the running update was made, when it runs one. */
+function updatedOn(): InstalledBuild['updatedOn'] {
+  const updates = nativeModules.load(
+    'updates',
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    () => require('expo-updates') as UpdatesModule,
+  );
+  const createdAt = updates?.isEmbeddedLaunch === false ? updates.createdAt : null;
+  if (!(createdAt instanceof Date) || Number.isNaN(createdAt.getTime())) return undefined;
+  return { day: createdAt.getDate(), month: createdAt.getMonth() + 1 };
+}
 
 /**
  * The app's version, as its app config names it, and the build number
@@ -26,7 +45,7 @@ type ApplicationModule = typeof import('expo-application');
 export function installedBuild(): InstalledBuild {
   const version = Constants.expoConfig?.version ?? '';
   if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
-    return { version, build: undefined };
+    return { version, build: undefined, updatedOn: undefined };
   }
   const application = nativeModules.load(
     'application',
@@ -34,5 +53,5 @@ export function installedBuild(): InstalledBuild {
     () => require('expo-application') as ApplicationModule,
   );
   const build = application?.nativeBuildVersion ?? undefined;
-  return { version, build: build === '' ? undefined : build };
+  return { version, build: build === '' ? undefined : build, updatedOn: updatedOn() };
 }
