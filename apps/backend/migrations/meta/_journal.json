@@ -232,6 +232,13 @@
       "when": 1794924002922,
       "tag": "0032_services",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1795015981466,
+      "tag": "0033_curated_collection_appeared",
+      "breakpoints": true
     }
   ]
 }

@@ -24,6 +24,7 @@ const VOWEL = /[аеєиіїоуюяaeiouy]/iu;
 /** A control whose value is one text or choice, labelled by a `<label>` beside it. */
 const isLeaf = (control: FieldControl) =>
   control.type === 'text' ||
+  control.type === 'publish-date' ||
   control.type === 'long-text' ||
   control.type === 'number' ||
   control.type === 'choice' ||
@@ -38,6 +39,8 @@ interface ControlProps {
   readonly siblings: FormObject;
   readonly categories: CategoryOptions;
   readonly onChange: (value: FormValue) => void;
+  /** Whether the value is shown and kept, not edited: a publish date once its collection appeared. */
+  readonly fixed?: boolean;
 }
 
 /**
@@ -49,7 +52,7 @@ export function FieldRow({
   error,
   ...props
 }: ControlProps & { readonly error?: string | undefined }) {
-  const { id, label, control } = props;
+  const { id, label, control, fixed = false } = props;
   const describedBy = error === undefined ? undefined : `${id}-error`;
   const message =
     error === undefined ? null : (
@@ -58,10 +61,28 @@ export function FieldRow({
       </p>
     );
   if (isLeaf(control)) {
+    const hint =
+      control.type !== 'publish-date'
+        ? undefined
+        : fixed
+          ? "Добірка вже з'явилася: дату не змінити"
+          : 'Порожньо — одразу';
+    const described = [hint === undefined ? undefined : `${id}-hint`, describedBy]
+      .filter((part) => part !== undefined)
+      .join(' ');
     return (
       <div className="flex flex-col gap-1 text-sm">
         <label htmlFor={id}>{label}</label>
-        <Leaf {...props} invalid={error !== undefined} describedBy={describedBy} />
+        <Leaf
+          {...props}
+          invalid={error !== undefined}
+          describedBy={described === '' ? undefined : described}
+        />
+        {hint !== undefined && (
+          <p id={`${id}-hint`} className="text-muted-foreground">
+            {hint}
+          </p>
+        )}
         {message}
       </div>
     );
@@ -91,6 +112,7 @@ function Leaf({
   invalid,
   describedBy,
   ariaLabel,
+  fixed = false,
 }: ControlProps & {
   readonly invalid?: boolean;
   readonly describedBy?: string | undefined;
@@ -101,6 +123,7 @@ function Leaf({
   const common = {
     id,
     value: text,
+    readOnly: fixed,
     'aria-label': ariaLabel,
     'aria-invalid': invalid,
     'aria-describedby': describedBy,
