@@ -12,12 +12,12 @@ import type { XpLog } from './xp-log';
 export type BreakState =
   /** The XP log or the `streakBreak` Feature Switch is off: no Break starts. */
   | { readonly kind: 'off' }
-  /** A Break of 1 to `longest` days can start today. */
+  /** A Break of 1 to `longest` days, the Break days left in the 30 days, can start today. */
   | { readonly kind: 'available'; readonly longest: number }
   /**
-   * A Break runs from `firstDay` up to and with `lastDay`, and the next one
-   * can start on `nextStart`, all `YYYY-MM-DD`; `strip` holds the 14 days
-   * ending the day after it (board 10, p1).
+   * A Break runs from `firstDay` up to and with `lastDay`, and the 30 days
+   * of its allowance end before `nextStart`, all `YYYY-MM-DD`; `strip` holds
+   * the 14 days ending the day after it (board 10, p1).
    */
   | {
       readonly kind: 'running';
@@ -26,13 +26,16 @@ export type BreakState =
       readonly nextStart: string;
       readonly strip: readonly CalendarDay[];
     }
-  /** The last Break is over; the next one can start on `nextStart`, `YYYY-MM-DD`. */
+  /** The Break days of the 30 days are spent; the next Break can start on `nextStart`, `YYYY-MM-DD`. */
   | { readonly kind: 'waiting'; readonly nextStart: string };
 
 /**
- * The Break (ADR 0066): the reader pauses the Streak for up to 7 days from
- * today, once every 30 days, free. Starting one appends a Break-started record
- * to the XP log; its days keep the Streak and add nothing to it.
+ * The Break (ADR 0066, 0180): the reader pauses the Streak from today, free,
+ * for up to 7 Break days in the 30 days from the first Break of them, and may
+ * end it early. Starting one appends a Break-started record to the XP log;
+ * its days keep the Streak and add nothing to it. Ending one appends a
+ * Break-ended record: today and the days after it count again, and the days
+ * not used come back for a later Break in the same 30 days.
  */
 export interface StreakBreak {
   /** Whether a Break can start today, on today's local date. */
@@ -43,6 +46,11 @@ export interface StreakBreak {
    * number from 1 to the longest.
    */
   start(days: number): Promise<'started' | 'refused'>;
+  /**
+   * Ends the running Break today and keeps its record. Refused, with nothing
+   * written, unless the state is `running`.
+   */
+  end(): Promise<'ended' | 'refused'>;
   /** Calls `listener` after each change of the XP log the state is derived from. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -58,7 +66,7 @@ export function openStreakBreak({
   edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: Pick<UserState, 'write'>;
   clock: Clock;
-  xpLog: Pick<XpLog, 'days' | 'startBreak' | 'subscribe'>;
+  xpLog: Pick<XpLog, 'days' | 'startBreak' | 'endBreak' | 'subscribe'>;
   analytics: Pick<Analytics, 'track'>;
 }): StreakBreak {
   const inTurn = createInTurn();
@@ -69,27 +77,37 @@ export function openStreakBreak({
     const today = parseLocalDate(todayKey(clock));
     const todayNumber = dayNumber(today);
     const after = (days: number) => dateKeyOf(localDateAfter(today, days));
-    let latest: { start: number; days: number } | undefined;
-    for (const [start, days] of xpLog.days.breaks) {
-      const startNumber = dayNumber(parseLocalDate(start));
-      // A Break that starts after today, from a clock that moved back, waits like the latest.
-      if (Number.isFinite(startNumber) && (latest === undefined || startNumber > latest.start)) {
-        latest = { start: startNumber, days };
+    // The Breaks in order, each 30 days of allowance opened by the first Break after the last ones.
+    const ordered = [...xpLog.days.breaks]
+      .map(([start, days]) => ({ start: dayNumber(parseLocalDate(start)), days }))
+      .filter(({ start }) => Number.isFinite(start))
+      .sort((one, other) => one.start - other.start);
+    let window: { start: number; used: number } | undefined;
+    /** The first day of the 30 days each Break counts in, in the order of `ordered`. */
+    const windowStarts: number[] = [];
+    for (const { start, days } of ordered) {
+      if (window === undefined || start >= window.start + BREAK_INTERVAL_DAYS) {
+        window = { start, used: 0 };
       }
+      window.used += days;
+      windowStarts.push(window.start);
     }
-    if (latest === undefined || todayNumber >= latest.start + BREAK_INTERVAL_DAYS) {
-      return { kind: 'available', longest: BREAK_DAYS_AT_MOST };
-    }
-    const lastDay = latest.start + latest.days - 1;
-    const nextStart = after(latest.start + BREAK_INTERVAL_DAYS - todayNumber);
-    if (todayNumber >= latest.start && todayNumber <= lastDay) {
+    if (window === undefined) return { kind: 'available', longest: BREAK_DAYS_AT_MOST };
+    const nextStartOf = (windowStart: number) =>
+      after(windowStart + BREAK_INTERVAL_DAYS - todayNumber);
+    const covering = ordered.findIndex(
+      ({ start, days }) => todayNumber >= start && todayNumber < start + days,
+    );
+    const running = ordered[covering];
+    const runningWindow = windowStarts[covering];
+    if (running !== undefined && runningWindow !== undefined) {
       const { active, frozen, breaks } = xpLog.days;
-      const last = after(lastDay - todayNumber);
+      const last = after(running.start + running.days - 1 - todayNumber);
       return {
         kind: 'running',
-        firstDay: after(latest.start - todayNumber),
+        firstDay: after(running.start - todayNumber),
         lastDay: last,
-        nextStart,
+        nextStart: nextStartOf(runningWindow),
         strip: breakStrip({
           activeDays: active,
           frozen,
@@ -99,7 +117,14 @@ export function openStreakBreak({
         }),
       };
     }
-    return { kind: 'waiting', nextStart };
+    const nextStart = nextStartOf(window.start);
+    // A Break that starts after today, from a clock that moved back, waits like a spent allowance.
+    if (ordered.some(({ start }) => start > todayNumber)) return { kind: 'waiting', nextStart };
+    if (todayNumber >= window.start + BREAK_INTERVAL_DAYS) {
+      return { kind: 'available', longest: BREAK_DAYS_AT_MOST };
+    }
+    const left = BREAK_DAYS_AT_MOST - window.used;
+    return left > 0 ? { kind: 'available', longest: left } : { kind: 'waiting', nextStart };
   }
 
   async function start(days: number): Promise<'started' | 'refused'> {
@@ -113,6 +138,15 @@ export function openStreakBreak({
     return 'started';
   }
 
+  async function end(): Promise<'ended' | 'refused'> {
+    const current = state();
+    if (current.kind !== 'running') return 'refused';
+    const append = xpLog.endBreak(current.firstDay);
+    await userState.write(append.changes);
+    append.commit();
+    return 'ended';
+  }
+
   /** The last state handed over, kept while it stays the same so a reader of it sees no change. */
   let last: BreakState = { kind: 'off' };
   const sameAs = (next: BreakState) => JSON.stringify(next) === JSON.stringify(last);
@@ -124,6 +158,7 @@ export function openStreakBreak({
       return last;
     },
     start: (days) => inTurn(() => start(days)),
+    end: () => inTurn(end),
     subscribe: xpLog.subscribe,
   };
 }

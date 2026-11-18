@@ -1,7 +1,7 @@
 import type { DailyGoal, XpTable } from '@slovo/contracts';
 
 import { createSubscribers } from '../in-turn';
-import { todayBounds, todayKey } from '../local-date';
+import { dayNumber, parseLocalDate, todayBounds, todayKey } from '../local-date';
 import type { Clock, Random, UserStateChanges } from '../ports';
 import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
@@ -68,7 +68,11 @@ export interface XpLogDays {
   readonly active: ReadonlySet<string>;
   /** The missed local dates a consumed Streak freeze covers. */
   readonly frozen: ReadonlySet<string>;
-  /** The Breaks started: the length in days by the local date each starts on. */
+  /**
+   * The Breaks: the days each covers by the local date it starts on, cut at
+   * the day a Break ended early (ADR 0180); a Break ended on its first day
+   * covers none and is left out.
+   */
   readonly breaks: ReadonlyMap<string, number>;
 }
 
@@ -148,6 +152,12 @@ export interface XpLog {
    * Break on the same day merge into one.
    */
   startBreak(days: number): XpLogAppend;
+  /**
+   * The record that ends the Break starting on `start` today, for another
+   * write (ADR 0180): the Break covers the days before today only. A Break has
+   * one such record by its id; of two from two devices the earlier day holds.
+   */
+  endBreak(start: string): XpLogAppend;
   /** What the Badges are evaluated against, in memory for the session. */
   readonly milestones: XpLogMilestones;
   /**
@@ -496,7 +506,10 @@ export async function openXpLog({
     const byDate = new Map<string, number>();
     const active = new Set<string>();
     const frozen = new Set<string>();
-    const breaks = new Map<string, number>();
+    /** The length of each Break and when it was started last, by the local date it starts on. */
+    const started = new Map<string, { days: number; at: string }>();
+    /** The day each Break ended early and the start it ended, by the local date it starts on. */
+    const ended = new Map<string, { date: string; startedAt: string }>();
     /** The Review and Seen-Word XP of each date, which count up to their caps even as two devices' logs merge. */
     const { count, reviewXpOf, seenWordsOf, goalFor } = counter();
     const wins = new Set<string>();
@@ -533,9 +546,25 @@ export async function openXpLog({
         case 'freeze':
           frozen.add(record.date);
           break;
-        case 'break':
-          breaks.set(record.date, Math.max(breaks.get(record.date) ?? 0, record.days));
+        case 'break': {
+          const before = started.get(record.date);
+          started.set(record.date, {
+            days: Math.max(before?.days ?? 0, record.days),
+            at: before === undefined || record.at > before.at ? record.at : before.at,
+          });
           break;
+        }
+        case 'break-end': {
+          const before = ended.get(record.start);
+          if (
+            before === undefined ||
+            record.startedAt > before.startedAt ||
+            (record.startedAt === before.startedAt && record.date < before.date)
+          ) {
+            ended.set(record.start, { date: record.date, startedAt: record.startedAt });
+          }
+          break;
+        }
         case 'daily-goal':
           xpGoals.push(record);
           break;
@@ -599,11 +628,34 @@ export async function openXpLog({
       byDate,
       active,
       frozen,
-      breaks,
+      started,
+      get breaks() {
+        return breaksOf(started, ended);
+      },
       milestones,
       ofDate,
       xpGoals,
     };
+  }
+
+  /**
+   * The days each Break covers, by its start, cut at the day it ended early;
+   * a Break started again after it ended, on its first day, is not cut.
+   */
+  function breaksOf(
+    started: ReadonlyMap<string, { days: number; at: string }>,
+    ended: ReadonlyMap<string, { date: string; startedAt: string }>,
+  ): Map<string, number> {
+    const breaks = new Map<string, number>();
+    for (const [start, { days, at }] of started) {
+      const end = ended.get(start);
+      const covered =
+        end === undefined || end.startedAt < at
+          ? days
+          : Math.min(days, dayNumber(parseLocalDate(end.date)) - dayNumber(parseLocalDate(start)));
+      if (covered > 0) breaks.set(start, covered);
+    }
+    return breaks;
   }
 
   /** The fold of every record kept, in the order kept. */
@@ -800,6 +852,24 @@ export async function openXpLog({
     };
   }
 
+  function endBreak(start: string): XpLogAppend {
+    const id = scoped(`break-end-${start}`);
+    const record: XpRecord = {
+      kind: 'break-end',
+      date: todayKey(clock),
+      at: clock.now().toISOString(),
+      start,
+      startedAt: folded.started.get(start)?.at ?? clock.now().toISOString(),
+    };
+    return {
+      changes: xpRecords.record(id).change(record),
+      commit() {
+        keep(id, record);
+        change();
+      },
+    };
+  }
+
   /** The goal-met record of today, when today's Words Seen reach `goal` and today is not met yet. */
   function metToday(goal: DailyGoal | undefined): Map<string, XpRecord> {
     const date = todayKey(clock);
@@ -940,6 +1010,7 @@ export async function openXpLog({
     open,
     freeze,
     startBreak,
+    endBreak,
     reachedOn,
     crosswordSolveOn,
     subscribe: subscribers.subscribe,
