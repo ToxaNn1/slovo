@@ -134,13 +134,8 @@ function SlottedEntryDetails({
   swipes,
   ...props
 }: Omit<ComponentProps<typeof EntryDetails>, 'slots'> & { swipes: boolean }) {
-  const slots = useEntrySlots(props.card, 'details');
-  return (
-    <EntryDetails
-      {...props}
-      slots={slots.slot === 'corner' && !swipes ? { ...slots, swipe: undefined } : slots}
-    />
-  );
+  const slots = useEntrySlots(props.card);
+  return <EntryDetails {...props} slots={!swipes ? { ...slots, swipe: undefined } : slots} />;
 }
 
 /** The Entry card, opened through the composition's path for where it opened from. */

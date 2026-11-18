@@ -104,11 +104,7 @@ export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
 export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
 export type { DueQuestion } from './knowledge/due-quiz';
-export {
-  openCounterReads,
-  type CounterLine,
-  type CounterReads,
-} from './community-counters/counter-reads';
+export { openCounterReads, type CounterReads } from './community-counters/counter-reads';
 export { openCounterSending } from './community-counters/counter-sending';
 export {
   createAnalytics,

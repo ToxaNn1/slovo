@@ -43,8 +43,6 @@ let composition: Composition;
 let mistakeReportsOn: boolean;
 /** Whether the Knowledge switch is on in effect, as the Edition ships it unless a test turns it off. */
 let knowledgeOn: boolean;
-/** Whether the Swipe Marks switch is on in effect: off unless a test turns it on. */
-let swipeMarksOn: boolean;
 
 /** The Edition in effect: as it ships, with Mistake Reports or the Knowledge switch off when a test turns them off. */
 const editionInEffect = (): typeof shippedEdition => ({
@@ -52,7 +50,6 @@ const editionInEffect = (): typeof shippedEdition => ({
   isFeatureEnabled: (feature) => {
     if (feature === 'mistakeReports') return mistakeReportsOn;
     if (feature === 'knowledge') return knowledgeOn;
-    if (feature === 'swipeMarks') return swipeMarksOn;
     return shippedEdition.isFeatureEnabled(feature);
   },
 });
@@ -197,7 +194,6 @@ beforeEach(async () => {
   mistakeReportsOn = true;
   mockReportsOpening = undefined;
   knowledgeOn = true;
-  swipeMarksOn = false;
   settings = await settingsAt();
   reportsApi = createFakeBackend();
   mistakeReports = openMistakeReports({
@@ -276,13 +272,15 @@ describe.each([
     'Котра година?',
     'Порада: Котра година? Так часто кажуть: Скільки часу? Так правильно: Котра година?',
   ],
-])('the action row of %s', (_, entryId, title, shareCardName) => {
+])('the corner of %s', (_, entryId, title, shareCardName) => {
   it('shares it from its own Share Card', async () => {
     await renderCard(entryId);
 
-    await fireEvent.press(screen.getByTestId('share-button'));
+    await openMenu();
+    await pressItem('Поділитися');
+    await menuGone();
 
-    const preview = within(screen.getByTestId('share-preview')).getByTestId('share-card');
+    const preview = within(await screen.findByTestId('share-preview')).getByTestId('share-card');
     expect(preview).toHaveAccessibleName(shareCardName);
   });
 
@@ -314,53 +312,6 @@ describe.each([
       { entryId, row: { title } },
     ]);
   });
-
-  it('marks it Known with «Знаю», and the button shows the mark', async () => {
-    await renderCard(entryId);
-
-    await fireEvent.press(screen.getByTestId('knowledge-known'));
-    await settle();
-
-    expect(composition.knowledge.state.shown.get(entryId)).toBe('known');
-    expect(screen.getByTestId('knowledge-known')).toBeSelected();
-  });
-
-  it('keeps «Знаю» and «Не знаю» inactive until Self-check is revealed', async () => {
-    const card = await composition.entryCard(entryId);
-    if (card === undefined) throw new Error(`No card for ${entryId}`);
-    await renderInGestureRoot(
-      <SafeAreaProvider initialMetrics={metrics}>
-        <ShellProvider shell={shell()}>
-          <EditionProvider edition={edition} strings={editionStrings}>
-            <HapticsProvider haptics={haptics}>
-              <SettingsProvider>
-                <UndoToastProvider>
-                  <SwipedCard card={card} selfCheck />
-                </UndoToastProvider>
-              </SettingsProvider>
-            </HapticsProvider>
-          </EditionProvider>
-        </ShellProvider>
-      </SafeAreaProvider>,
-    );
-
-    expect(screen.getByTestId('knowledge-unknown')).toBeDisabled();
-    await fireEvent.press(screen.getByTestId(`${card.kind}-reveal`));
-    expect(screen.getByTestId('knowledge-unknown')).toBeEnabled();
-  });
-
-  it('hides it from its card, and the toast says so', async () => {
-    await renderCard(entryId);
-
-    await fireEvent.press(screen.getByTestId('hide-button'));
-    await settle();
-    expect(screen.getByTestId('hide-choice-whole-kind')).toBeOnTheScreen();
-    await fireEvent.press(screen.getByTestId('hide-choice-entry'));
-    await settle();
-
-    expect(composition.hiddenEntries.has(entryId)).toBe(true);
-    expect(screen.getByText(`«${title}» приховано`)).toBeOnTheScreen();
-  });
 });
 
 describe.each([
@@ -372,10 +323,10 @@ describe.each([
 ])('«Повідомити про помилку» on %s', (_, entryId) => {
   const send = () => screen.getByRole('button', { name: 'Надіслати' });
 
-  it('reports a mistake in it, with no Account, from the flag of its action row', async () => {
+  it('reports a mistake in it, with no Account, from its «⋯» sheet', async () => {
     await renderCard(entryId);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Повідомити про помилку' }));
+    await openReport();
     expect(send()).toBeDisabled();
     await fireEvent.press(screen.getByRole('radio', { name: 'Наголос' }));
     await fireEvent.changeText(
@@ -402,9 +353,9 @@ describe('«Повідомити про помилку»', () => {
   const entryId = 'w_test';
   const send = () => screen.getByRole('button', { name: 'Надіслати' });
 
-  /** Reports a typo in the Entry from its flag, with no comment. */
+  /** Reports a typo in the Entry from its «⋯» sheet, with no comment. */
   async function reportTypo() {
-    await fireEvent.press(screen.getByRole('button', { name: 'Повідомити про помилку' }));
+    await openReport();
     await fireEvent.press(screen.getByRole('radio', { name: 'Друкарська помилка' }));
     await fireEvent.press(send());
     await settle();
@@ -490,7 +441,7 @@ describe('«Повідомити про помилку»', () => {
   it('keeps «Надіслати» disabled for «Інше» until the comment says something', async () => {
     await renderCard(entryId);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Повідомити про помилку' }));
+    await openReport();
     await fireEvent.press(screen.getByRole('radio', { name: 'Інше' }));
     expect(send()).toBeDisabled();
     await fireEvent.changeText(screen.getByLabelText('Коментар (необов’язково)'), 'Приклад хибний');
@@ -498,91 +449,22 @@ describe('«Повідомити про помилку»', () => {
     expect(send()).toBeEnabled();
   });
 
-  it('has no flag while Mistake Reports are off in effect', async () => {
+  it('has no report item while Mistake Reports are off in effect', async () => {
     mistakeReportsOn = false;
     await renderCard(entryId);
+    await openMenu();
 
-    expect(screen.getByTestId('favorite-button')).toBeOnTheScreen();
-    expect(screen.queryByRole('button', { name: 'Повідомити про помилку' })).toBeNull();
-  });
-});
-
-describe.each([
-  ['a Word', 'w_test'],
-  ['a Correction', 'c_test'],
-  ['an Idiom', 'i_test'],
-  ['a Synonym Row', 'r_walk'],
-  ['a Tip', 't_hour'],
-])('the Community Counters line on %s', (_, entryId) => {
-  const line = () => screen.getByTestId('community-counters');
-
-  it('shows the zeros of an Entry nobody counted, read as one sentence', async () => {
-    await renderCard(entryId);
-    await settle();
-
-    expect(line()).toHaveTextContent('«Знаю» — 0 з 0 читачів · зберегли 0');
-    expect(line()).toHaveAccessibleName('«Знаю» — 0 з 0 читачів, зберегли 0');
-  });
-});
-
-describe('the Community Counters line', () => {
-  const entryId = 'w_test';
-  const line = () => screen.getByTestId('community-counters');
-
-  it.each([
-    [{ known: 1, unknown: 0, saved: 4 }, '«Знаю» — 1 з 1 читача · зберегли 4'],
-    [{ known: 1, unknown: 1, saved: 1 }, '«Знаю» — 1 з 2 читачів · зберегли 1'],
-    [{ known: 3, unknown: 2, saved: 0 }, '«Знаю» — 3 з 5 читачів · зберегли 0'],
-    [{ known: 20, unknown: 1, saved: 7 }, '«Знаю» — 20 з 21 читача · зберегли 7'],
-  ])('says %o under the mark buttons as %s', async (counts, text) => {
-    countersApi.counters.count(entryId, counts);
-    await renderCard(entryId);
-    await settle();
-
-    expect(line()).toHaveTextContent(text);
-  });
-
-  it('has no line offline with nothing kept', async () => {
-    countersApi.failNext('offline');
-    await renderCard(entryId);
-    await settle();
-
-    expect(screen.getByTestId('knowledge-known')).toBeOnTheScreen();
-    expect(screen.queryByTestId('community-counters')).toBeNull();
-  });
-
-  it('counts the reader’s own mark and Favorite at once', async () => {
-    countersApi.counters.count(entryId, { known: 3, unknown: 2, saved: 0 });
-    await renderCard(entryId);
-    await settle();
-
-    await fireEvent.press(screen.getByTestId('knowledge-unknown'));
-    await settle();
-    expect(line()).toHaveTextContent('«Знаю» — 3 з 6 читачів · зберегли 0');
-
-    await fireEvent.press(screen.getByTestId('knowledge-known'));
-    await fireEvent.press(screen.getByTestId('favorite-button'));
-    await settle();
-    expect(line()).toHaveTextContent('«Знаю» — 4 з 6 читачів · зберегли 1');
-    expect(countersApi.counters.asked).toEqual([[entryId]]);
-  });
-
-  it('is not read while the Knowledge switch hides it', async () => {
-    knowledgeOn = false;
-    await renderCard(entryId);
-    await settle();
-
-    expect(screen.queryByTestId('knowledge-known')).toBeNull();
-    expect(screen.queryByTestId('community-counters')).toBeNull();
-    expect(countersApi.counters.asked).toEqual([]);
+    expect(
+      within(screen.getByTestId('entry-menu')).queryByRole('button', {
+        name: 'Повідомити про помилку',
+      }),
+    ).toBeNull();
   });
 });
 
 describe('the side swipes of an Entry card (ADR 0077)', () => {
-  it('mark the Word Known on a swipe right, in place of the buttons, and the toast undoes it', async () => {
-    swipeMarksOn = true;
+  it('mark the Word Known on a swipe right, and the toast undoes it', async () => {
     await renderCard(word.id);
-    expect(screen.queryByTestId('knowledge-known')).not.toBeOnTheScreen();
 
     await swipeBy(200);
 
@@ -596,7 +478,6 @@ describe('the side swipes of an Entry card (ADR 0077)', () => {
   });
 
   it('mark the Word Unknown on a swipe left', async () => {
-    swipeMarksOn = true;
     await renderCard(word.id);
 
     await swipeBy(-200);
@@ -604,16 +485,11 @@ describe('the side swipes of an Entry card (ADR 0077)', () => {
     expect(composition.knowledge.state.shown.get(word.id)).toBe('unknown');
   });
 
-  it.each([
-    ['the Swipe Marks switch is off', false, true],
-    ['the Knowledge switch is off', true, false],
-  ])('are not there while %s', async (_, swipe, knowledge) => {
-    swipeMarksOn = swipe;
-    knowledgeOn = knowledge;
+  it('are not there while the Knowledge switch is off', async () => {
+    knowledgeOn = false;
     await renderCard(word.id);
 
     expect(screen.queryByTestId('swipe-card')).not.toBeOnTheScreen();
-    if (knowledge) expect(screen.getByTestId('knowledge-known')).toBeOnTheScreen();
   });
 });
 
@@ -666,6 +542,14 @@ async function pressItem(name: string) {
   await settle();
 }
 
+/** Opens the Mistake Report sheet from the «⋯» sheet once it has slid away, and waits for it. */
+async function openReport() {
+  await openMenu();
+  await pressItem('Повідомити про помилку');
+  await menuGone();
+  await screen.findByRole('button', { name: 'Надіслати' });
+}
+
 /** Waits for the «⋯» sheet to slide away. */
 async function menuGone() {
   await waitFor(() => {
@@ -673,34 +557,17 @@ async function menuGone() {
   });
 }
 
-describe('the corner of an Entry card while marks are swiped', () => {
-  beforeEach(() => {
-    swipeMarksOn = true;
-  });
-
+describe('the corner of an Entry card', () => {
   afterEach(() => {
     jest.useRealTimers();
   });
 
-  it('has the corner and no action row, Counters line or mark buttons', async () => {
+  it('has the corner with the heart and «До колекції»', async () => {
     await renderSlotted('w_test');
 
     expect(screen.getByTestId('word-corner')).toBeOnTheScreen();
     expect(screen.getByTestId('favorite-button')).toBeOnTheScreen();
     expect(screen.getByTestId('collection-button')).toBeOnTheScreen();
-    expect(screen.queryByTestId('word-actions')).toBeNull();
-    expect(screen.queryByTestId('community-counters')).toBeNull();
-    expect(screen.queryByTestId('knowledge-known')).toBeNull();
-  });
-
-  it('keeps the action row while the Swipe Marks switch is off in effect', async () => {
-    swipeMarksOn = false;
-    await renderSlotted('w_test');
-
-    expect(screen.getByTestId('word-actions')).toBeOnTheScreen();
-    expect(screen.getByTestId('knowledge-known')).toBeOnTheScreen();
-    expect(screen.queryByTestId('word-corner')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Більше дій' })).toBeNull();
   });
 
   it('titles the sheet with the Entry and offers «Знаю» and «Не знаю» with no mark', async () => {

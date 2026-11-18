@@ -1,14 +1,35 @@
 import type { EntryFeedCard, Haptics } from '@slovo/core';
-import {
-  EditionProvider,
-  EntryCard,
-  HapticsProvider,
-  KnowledgeButtons,
-  VerticalPager,
-} from '@slovo/ui';
+import { EditionProvider, EntryCard, HapticsProvider, VerticalPager } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { Pressable, View } from 'react-native';
 import { testStrings } from '../test-strings';
+import { useConcealed } from './self-check';
+
+/** The corner's marks stand-in: inactive while the card is concealed, as the corner's actions are. */
+function CornerMarks({ onMark }: { onMark: (mark: 'known' | 'unknown') => void }) {
+  const concealed = useConcealed();
+  return (
+    <View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Known"
+        disabled={concealed}
+        onPress={() => {
+          onMark('known');
+        }}
+      />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Unknown"
+        disabled={concealed}
+        onPress={() => {
+          onMark('unknown');
+        }}
+      />
+    </View>
+  );
+}
 
 const strings = testStrings({
   wordCard: {
@@ -40,7 +61,7 @@ const strings = testStrings({
     howToSay: 'How to say it?',
     reveal: 'Show',
   },
-  knowledge: { known: 'Known', unknown: 'Unknown', correctionKnownHint: 'I say it right' },
+  knowledge: { known: 'Known', unknown: 'Unknown' },
 });
 
 function wordCard(lemma: string): EntryFeedCard {
@@ -146,10 +167,7 @@ async function renderFeed(
             <EntryCard
               card={card}
               selfCheck={on}
-              slots={{
-                slot: 'actions',
-                actions: <KnowledgeButtons entryKind={card.kind} mark={undefined} onTap={onMark} />,
-              }}
+              slots={{ corner: <CornerMarks onMark={onMark} />, swipe: undefined }}
             />
           )}
           turnActionLabels={TURN_LABELS}

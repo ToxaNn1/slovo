@@ -9416,14 +9416,6 @@
                           ],
                           "type": "string"
                         },
-                        "swipeMarks": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gesturesHintDemo": {
                           "enum": [
                             "on",
@@ -9769,7 +9761,6 @@
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",
-                        "swipeMarks",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
                         "savedSwipesOff",
@@ -11278,14 +11269,6 @@
                           ],
                           "type": "string"
                         },
-                        "swipeMarks": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gesturesHintDemo": {
                           "enum": [
                             "on",
@@ -11631,7 +11614,6 @@
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",
-                        "swipeMarks",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
                         "savedSwipesOff",
@@ -13064,14 +13046,6 @@
                           ],
                           "type": "string"
                         },
-                        "swipeMarks": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gesturesHintDemo": {
                           "enum": [
                             "on",
@@ -13417,7 +13391,6 @@
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",
-                        "swipeMarks",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
                         "savedSwipesOff",

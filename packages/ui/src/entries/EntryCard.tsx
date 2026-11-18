@@ -12,7 +12,7 @@ import { Button } from '../primitives/Button';
 import { SwipeMarks, type EntrySwipe } from './SwipeMarks';
 import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
-import { EntryReveal, RevealDetail, RevealFrame } from './reveal';
+import { EntryReveal, RevealFrame } from './reveal';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
 import {
   blockGap,
@@ -42,7 +42,7 @@ export interface EntryCardProps {
    * stable across renders, as it is called again when it changes.
    */
   onWordHistoryShown?: (() => void) | undefined;
-  /** The action row or, while marks are swiped, the corner and the swipes; none on a bare card. */
+  /** The corner and the side swipes; none on a bare card. */
   slots?: EntryCardSlots | undefined;
   /**
    * Self-check applies to the card: until the reader reveals it, a Word card
@@ -95,16 +95,15 @@ export interface EntryCardProps {
 }
 
 /**
- * What an Entry card carries beside its content. With the `swipeMarks`
- * Feature Switch off, the action row: under a Word's card, at the bottom
- * inside the card of every other kind. With it on (ADR 0077, XSwipe), the
- * actions in the card's top row, beside its kicker, and the side swipes that set the
- * Entry's Knowledge Mark, with its stamp and undo toast, while the Knowledge
- * switch is on. Self-check conceals either as it conceals the card.
+ * What an Entry card carries beside its content (ADR 0077, XSwipe): the
+ * actions in the card's top row, beside its kicker, and the side swipes that
+ * set the Entry's Knowledge Mark, with its stamp and undo toast, while the
+ * Knowledge switch is on. Self-check conceals them as it conceals the card.
  */
-export type EntryCardSlots =
-  | { slot: 'actions'; actions: ReactNode }
-  | { slot: 'corner'; corner: ReactNode; swipe: EntrySwipe | undefined };
+export interface EntryCardSlots {
+  corner: ReactNode;
+  swipe: EntrySwipe | undefined;
+}
 
 /** The padding and the space between blocks from the design, for each kind of card. */
 const SPACING = {
@@ -131,7 +130,7 @@ const TABBED_SPACING = {
 /**
  * The Entry card: a Word's, a Correction's, an Idiom's, a Synonym Row's or a Tip's card in the one card frame, at
  * the user's font size, with the compact layout on narrow screens, the Decor
- * slots and the action row under it. A card brought back for Review carries
+ * slots and the corner in its top row. A card brought back for Review carries
  * the Review label on top. Under Self-check the card conceals its meaning
  * until the reader reveals it. Each time the card comes on screen its
  * headline's letters fly in and its details rise after them (the design's
@@ -174,7 +173,7 @@ export function EntryCard({
       reveal={reveal}
     />
   );
-  if (slots?.slot !== 'corner' || slots.swipe === undefined) return page(face, framed);
+  if (slots?.swipe === undefined) return page(face, framed);
   return page(
     <SwipeMarks
       swipe={slots.swipe}
@@ -213,16 +212,9 @@ function EntryCardFace({
   // The tabbed card takes the board's frame for every kind (XEntry2), the one-column card its kind's spacing.
   const framed = fixedFrame(card, tabs, concealed);
   const spacing = framed ? TABBED_SPACING : SPACING[card.kind];
-  // A Word's raised tiles stand under its card; the icons of the other kinds sit in theirs (XActions a10).
-  const actionsOf = (kind: typeof card.kind) =>
-    slots?.slot === 'actions' && (
-      <RevealDetail step={3} testID={`${kind}-actions`}>
-        <ConcealedProvider value={concealed}>{slots.actions}</ConcealedProvider>
-      </RevealDetail>
-    );
   // The corner actions share the top row with the card's kicker (XSwipe bar 6), which its body draws.
   const corner =
-    slots?.slot === 'corner' ? (
+    slots !== undefined ? (
       <View testID={`${card.kind}-corner`}>
         <ConcealedProvider value={concealed}>{slots.corner}</ConcealedProvider>
       </View>
@@ -253,7 +245,6 @@ function EntryCardFace({
             corner={corner}
           />
         </RevealFrame>
-        {actionsOf(card.kind)}
       </EntryReveal>
     );
 
@@ -366,9 +357,7 @@ function EntryCardFace({
             onPress={reveal}
           />
         )}
-        {card.kind !== 'word' && actionsOf(card.kind)}
       </RevealFrame>
-      {card.kind === 'word' && actionsOf(card.kind)}
     </EntryReveal>
   );
 }

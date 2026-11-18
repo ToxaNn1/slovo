@@ -160,8 +160,6 @@ export interface Shown {
   readonly mood: boolean;
   /** The Curated Collections rail of the Dashboard, «Добірки» (ADR 0076). */
   readonly curatedCollections: boolean;
-  /** Side swipes mark an Entry Known or Unknown; the card corner holds the heart, Collections and «⋯» in place of the action row (ADR 0077). */
-  readonly swipeMarks: boolean;
   /** While the gestures hint is open, the Feed's card plays the swipes it names (ADR 0112). */
   readonly gesturesHintDemo: boolean;
   /** Settings offers «Показати підказку жестів», which shows the gestures hint once more (owner 16.11). */
@@ -279,7 +277,6 @@ export function shownOf({
     categoryFeed: on('categoryFeed'),
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
-    swipeMarks: on('swipeMarks'),
     gesturesHintDemo: on('gesturesHintDemo'),
     gesturesHintAgain: on('gesturesHintAgain'),
     savedSwipesOff: on('savedSwipesOff'),

@@ -6,7 +6,6 @@ import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
-import { StyleSheet } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -36,7 +35,7 @@ import {
 } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
 
-// The Entry card's action row and corner have their own tests; here they are stand-ins to find on the screen.
+// The Entry card's corner has its own tests; here they are stand-ins to find on the screen.
 jest.mock('./entry-actions', () => {
   const { View } = jest.requireActual<typeof import('react-native')>('react-native');
   const { entrySwipe, useEntryMarks } =
@@ -44,18 +43,13 @@ jest.mock('./entry-actions', () => {
   return {
     useEntrySlots: (card: { entryId: string }) => {
       const marks = useEntryMarks(card.entryId);
-      return marks.swiped
-        ? { slot: 'corner', corner: <View testID="entry-corner" />, swipe: entrySwipe(marks) }
-        : { slot: 'actions', actions: <View testID="entry-actions" /> };
+      return { corner: <View testID="entry-corner" />, swipe: entrySwipe(marks) };
     },
   };
 });
 
 /** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition = loadEdition(activeEditionFiles.config);
-
-/** Whether the Swipe Marks switch is on in effect: off as the Edition ships it unless a test turns it on. */
-let swipeMarksOn = false;
 
 /** Whether the Word tabs switch is on in effect: on as the Edition ships it unless a test turns it off. */
 let wordTabsOn = true;
@@ -66,19 +60,17 @@ let panelAllKindsOn = true;
 /** Whether `savedSwipesOff` is on in effect: on as the Edition ships it unless a test turns it off. */
 let savedSwipesOffOn = true;
 
-/** The Edition in effect: as it ships, with the Swipe Marks and Word tabs switches as the test sets them. */
+/** The Edition in effect: as it ships, with the Word tabs, panel and Saved switches as the test sets them. */
 const editionInEffect = (): typeof shippedEdition => ({
   ...shippedEdition,
   isFeatureEnabled: (feature) =>
-    feature === 'swipeMarks'
-      ? swipeMarksOn
-      : feature === 'wordTabs'
-        ? wordTabsOn
-        : feature === 'entryPanelAllKinds'
-          ? panelAllKindsOn
-          : feature === 'savedSwipesOff'
-            ? savedSwipesOffOn
-            : shippedEdition.isFeatureEnabled(feature),
+    feature === 'wordTabs'
+      ? wordTabsOn
+      : feature === 'entryPanelAllKinds'
+        ? panelAllKindsOn
+        : feature === 'savedSwipesOff'
+          ? savedSwipesOffOn
+          : shippedEdition.isFeatureEnabled(feature),
 });
 
 const haptics: Haptics = {
@@ -282,17 +274,6 @@ function scrollsAround(element: ReturnType<typeof screen.getByTestId>) {
   return found;
 }
 
-describe('the Entry screen of a Word', () => {
-  it("keeps the action row docked under the text, out of the card's frame", async () => {
-    await renderEntry('w_sumyrnyi');
-
-    const scroll = screen.getByTestId('entry-frame');
-    expect(within(scroll).getByTestId('word-definition')).toBeOnTheScreen();
-    expect(screen.getByTestId('entry-actions')).toBeOnTheScreen();
-    expect(within(scroll).queryByTestId('entry-actions')).not.toBeOnTheScreen();
-  });
-});
-
 describe('a tab too long for the Entry screen', () => {
   it('is clamped under «Детальніше», which opens it whole in a scroll inside the card, and nothing around the card scrolls (ADR 0113)', async () => {
     await renderEntry('w_sumyrnyi');
@@ -336,12 +317,10 @@ describe('the Entry screen of a kind other than a Word (owner 15.11)', () => {
     ).toBeOnTheScreen();
   });
 
-  it('keeps a Correction’s corner at the panel’s top right with the Swipe Marks switch on', async () => {
-    swipeMarksOn = true;
+  it('keeps a Correction’s corner at the panel’s top right', async () => {
     await renderEntry('c_vezhlyvyi');
 
     expect(within(screen.getByTestId('entry-panel')).getByTestId('entry-corner')).toBeOnTheScreen();
-    swipeMarksOn = false;
   });
 
   it('keeps a Correction’s card under a bare panel with `entryPanelAllKinds` off', async () => {
@@ -355,12 +334,7 @@ describe('the Entry screen of a kind other than a Word (owner 15.11)', () => {
 });
 
 describe('the Entry screen and the side swipes (ADR 0077)', () => {
-  afterEach(() => {
-    swipeMarksOn = false;
-  });
-
-  it('marks the Word Known on a swipe right with the Swipe Marks switch on, with its stamp', async () => {
-    swipeMarksOn = true;
+  it('marks the Word Known on a swipe right, with its stamp', async () => {
     await renderEntry('w_sumyrnyi');
 
     await act(async () => {
@@ -379,19 +353,10 @@ describe('the Entry screen and the side swipes (ADR 0077)', () => {
     expect(screen.getByTestId('undo-toast')).toBeOnTheScreen();
   });
 
-  it('keeps the Word’s corner at the panel’s top right with the Swipe Marks switch on', async () => {
-    swipeMarksOn = true;
+  it('keeps the Word’s corner at the panel’s top right', async () => {
     await renderEntry('w_sumyrnyi');
 
     expect(within(screen.getByTestId('entry-panel')).getByTestId('entry-corner')).toBeOnTheScreen();
-    expect(screen.queryByTestId('entry-actions')).not.toBeOnTheScreen();
-  });
-
-  it('has no side swipes with the Swipe Marks switch off', async () => {
-    await renderEntry('w_sumyrnyi');
-
-    expect(screen.getByTestId('word-card')).toBeOnTheScreen();
-    expect(screen.queryByTestId('swipe-card')).not.toBeOnTheScreen();
   });
 });
 
@@ -404,12 +369,7 @@ describe('an Entry opened from Saved and the side swipes (owner 15.11)', () => {
     '/saved/collections/none',
   ];
 
-  beforeEach(() => {
-    swipeMarksOn = true;
-  });
-
   afterEach(() => {
-    swipeMarksOn = false;
     savedSwipesOffOn = true;
   });
 
@@ -447,7 +407,6 @@ function tabsOnScreen() {
 describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
   afterEach(() => {
     wordTabsOn = true;
-    swipeMarksOn = false;
   });
 
   it('shows a Word with its tabs, «Суть» selected with the Definition', async () => {
@@ -480,29 +439,16 @@ describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
     expect(screen.getByTestId('correction-tab-panel')).toBeOnTheScreen();
   });
 
-  it.each([
-    ['off', false],
-    ['on', true],
-  ])(
-    'stands the tab bar at the foot of the screen with the Swipe Marks switch %s (owner 08.11)',
-    async (_, swiped) => {
-      swipeMarksOn = swiped;
-      await renderEntry('w_sumyrnyi');
+  it('stands the tab bar at the foot of the screen (owner 08.11)', async () => {
+    await renderEntry('w_sumyrnyi');
 
-      // Under the tab bar: the docked action row, or the room for the swipe's stamp,
-      // which takes in the home indicator; the frame adds nothing of its own.
-      expect(screen.getByTestId('word-card')).toHaveStyle({ paddingBottom: 0 });
-      expect(screen.getByTestId('entry-frame')).toHaveStyle({ flex: 1, paddingBottom: 0 });
-      // Off the dock the bar stands 12 points lower, into the stamp's room (owner 14.11);
-      // on the dock it keeps on the action row.
-      const frame: unknown = StyleSheet.flatten(screen.getByTestId('entry-frame').props['style']);
-      expect(frame).toEqual(
-        swiped
-          ? expect.objectContaining({ marginBottom: -12 })
-          : expect.not.objectContaining({ marginBottom: expect.anything() }),
-      );
-    },
-  );
+    // Under the tab bar: the room for the swipe's stamp, which takes in the home
+    // indicator; the frame adds nothing of its own.
+    expect(screen.getByTestId('word-card')).toHaveStyle({ paddingBottom: 0 });
+    expect(screen.getByTestId('entry-frame')).toHaveStyle({ flex: 1, paddingBottom: 0 });
+    // The bar stands 12 points lower, into the stamp's room (owner 14.11).
+    expect(screen.getByTestId('entry-frame')).toHaveStyle({ marginBottom: -12 });
+  });
 
   it('keeps a Word and a Correction in one column with `wordTabs` off', async () => {
     wordTabsOn = false;

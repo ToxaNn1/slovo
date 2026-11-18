@@ -8,11 +8,11 @@ import {
   type EntryFeedCard,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HideButton, HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
+import { EditionProvider, HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
 import { Link, Stack } from 'expo-router';
 import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
-import { Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HiddenScreen from '../app/settings/hidden';
@@ -92,12 +92,12 @@ async function cardOf(entryId: string): Promise<EntryFeedCard> {
   return card;
 }
 
-/** The hide button of a card and the hide choice it opens, as on the Entry card's action row. */
+/** The hide button of a card and the hide choice it opens, as from the Entry card's menu. */
 function CardHide({ card }: { card: EntryFeedCard }) {
   const hide = useHide(card);
   return (
     <>
-      <HideButton onPress={hide.open} />
+      <Pressable accessibilityRole="button" testID="hide-button" onPress={hide.open} />
       <HideChoiceSheet {...hide.choice} />
     </>
   );

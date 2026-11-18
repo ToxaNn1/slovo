@@ -133,7 +133,6 @@
     "dashboard": "on",
     "mood": "on",
     "curatedCollections": "off",
-    "swipeMarks": "on",
     "gesturesHintDemo": "on",
     "gesturesHintAgain": "on",
     "savedSwipesOff": "on",
