@@ -192,12 +192,12 @@ describe('the Category screen', () => {
     await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })));
     expect(hiddenIds()).toEqual([]);
     expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
-    expect(screen.getByText('„Емоції“ тепер у твоєму Міксі.')).toBeTruthy();
+    expect(screen.getByText('«Емоції» тепер у твоєму Міксі.')).toBeTruthy();
 
     await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У МІКСІ' })));
     expect(hiddenIds()).toEqual(['emotions-character']);
     expect(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })).toBeTruthy();
-    expect(screen.getByText('„Емоції“ прибрано з Міксу.')).toBeTruthy();
+    expect(screen.getByText('«Емоції» прибрано з Міксу.')).toBeTruthy();
   });
 
   it('opens with «У МІКСІ» for a Category already in the Mix', async () => {

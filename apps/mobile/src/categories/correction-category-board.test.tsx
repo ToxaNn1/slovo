@@ -225,12 +225,12 @@ describe('the Category screen of Corrections', () => {
     await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У МІКСІ' })));
     expect(hiddenIds()).toEqual(['everyday']);
     expect(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })).toBeTruthy();
-    expect(screen.getByText('„Щоденне“ прибрано з Міксу.')).toBeTruthy();
+    expect(screen.getByText('«Щоденне» прибрано з Міксу.')).toBeTruthy();
 
     await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })));
     expect(hiddenIds()).toEqual([]);
     expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
-    expect(screen.getByText('„Щоденне“ тепер у твоєму Міксі.')).toBeTruthy();
+    expect(screen.getByText('«Щоденне» тепер у твоєму Міксі.')).toBeTruthy();
   });
 
   it('keeps the last Category of Corrections in the Mix and says why, as the Mix screen does', async () => {
