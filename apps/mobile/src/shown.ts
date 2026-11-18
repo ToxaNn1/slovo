@@ -160,11 +160,8 @@ export interface Shown {
   readonly gesturesHintAgain: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
-  /**
-   * «Рідкість» in Settings (ADR 0156): `range`, the picker of both ends of the
-   * Rarity Range; `top`, the row «до 1»…«до 5» of its top alone; `off`, none.
-   */
-  readonly rarity: 'off' | 'top' | 'range';
+  /** «Рідкість» in Settings (ADR 0156): the picker of both ends of the Rarity Range. */
+  readonly rarity: boolean;
   /** The «Пройти тест ще раз» row of Settings, while the Rarity Range it sets is on as well. */
   readonly rarityTest: boolean;
   /**
@@ -271,7 +268,7 @@ export function shownOf({
     gesturesHintDemo: on('gesturesHintDemo'),
     gesturesHintAgain: on('gesturesHintAgain'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
-    rarity: on('rarityCeiling') ? (on('rarityRange') ? 'range' : 'top') : 'off',
+    rarity: on('rarityCeiling'),
     rarityTest: on('rarityTest'),
     questionnaire:
       on('questionnaire') || on('rarityTest') || on('interestsQuestion')

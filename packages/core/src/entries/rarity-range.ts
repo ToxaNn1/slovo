@@ -8,7 +8,7 @@ import { userStateRecords } from '../user-state-schema';
 
 const { rarityRange: record } = userStateRecords;
 
-/** The lowest rarity, the bottom of every Rarity Range while the `rarityRange` switch is off. */
+/** The lowest rarity, the bottom of «від 1 до 5». */
 export const LOWEST_RARITY: Rarity = 1;
 
 /** The highest rarity, at which every Word is within a Rarity Range from 1. */
@@ -29,16 +29,14 @@ export type RarityRangeEdition = Pick<Edition, 'isFeatureEnabled' | 'userSetting
 export interface RarityRangeSetting {
   /**
    * The Rarity Range in force: the user's, or from 1 to the Edition's default
-   * top; from 1 while the `rarityRange` switch is off; every rarity while the
-   * `rarityCeiling` switch is off.
+   * top; every rarity while the `rarityCeiling` switch is off.
    */
   readonly state: RarityRange;
   /**
    * Sets the Rarity Range and publishes `eligibility`. A range whose ends are
    * not rarities, whole numbers from 1 to 5, or whose `from` is above its
    * `to`, is skipped, and so is any while the Edition turns the
-   * `rarityCeiling` switch off (or a remote switch does). While the
-   * `rarityRange` switch is off, the range is taken from 1.
+   * `rarityCeiling` switch off (or a remote switch does).
    */
   set(range: { from: number; to: number }): Promise<void>;
   /** Tells of each change of `state`, after it. */
@@ -70,17 +68,12 @@ export async function openRarityRange({
   eligibility: Pick<Subject<void>, 'publish'>;
 }): Promise<RarityRangeSetting> {
   const isOn = () => edition.isFeatureEnabled('rarityCeiling');
-  // The bottom is obeyed only while the picker that sets it is on.
-  const inForce = (range: RarityRange): RarityRange =>
-    edition.isFeatureEnabled('rarityRange') ? range : { from: LOWEST_RARITY, to: range.to };
   // Every rarity, as before 1.0, while the Edition turns the switch off.
   let state = isOn()
-    ? inForce(
-        (await userState.read(record)) ?? {
-          from: LOWEST_RARITY,
-          to: edition.userSettingDefaults.rarityCeiling,
-        },
-      )
+    ? ((await userState.read(record)) ?? {
+        from: LOWEST_RARITY,
+        to: edition.userSettingDefaults.rarityCeiling,
+      })
     : EVERY_RARITY;
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
@@ -88,7 +81,7 @@ export async function openRarityRange({
   async function set(next: { from: number; to: number }): Promise<void> {
     const range = RarityRangeSchema.safeParse(next);
     if (!range.success || !isOn()) return;
-    const kept = inForce(range.data);
+    const kept = range.data;
     if (kept.from === state.from && kept.to === state.to) return;
     await userState.write(record.change(kept));
     state = kept;

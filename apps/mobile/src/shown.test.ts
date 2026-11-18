@@ -76,7 +76,7 @@ const everything: Shown = {
   gesturesHintDemo: true,
   gesturesHintAgain: true,
   wordOfTheDayArchive: true,
-  rarity: 'range',
+  rarity: true,
   rarityTest: true,
   questionnaire: { levelWhy: true, selfRating: true, interests: true },
 };
@@ -223,11 +223,7 @@ describe('what the reader is shown', () => {
     ],
     [
       'no «Рідкість» with the Rarity Range off',
-      { off: ['rarityCeiling'], shown: { rarity: 'off' } },
-    ],
-    [
-      '«Рідкість» as «до 1»…«до 5» with the Rarity Range picker off',
-      { off: ['rarityRange'], shown: { rarity: 'top' } },
+      { off: ['rarityCeiling'], shown: { rarity: false } },
     ],
     [
       'no «Пройти тест ще раз» and no self-rating with the Rarity Test off',

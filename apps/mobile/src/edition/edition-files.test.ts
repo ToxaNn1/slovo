@@ -1774,8 +1774,11 @@ describe('UI strings the app fills in', () => {
 
   it.each([
     [
-      'settings.rarity.ceiling',
-      { ...strings, settings: { ...settings, rarity: { ...settings.rarity, ceiling: 'до' } } },
+      'settings.rarity.range',
+      {
+        ...strings,
+        settings: { ...settings, rarity: { ...settings.rarity, range: 'від {from}' } },
+      },
     ],
     [
       'wordOfTheDay.badge',

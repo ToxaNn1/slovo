@@ -48,13 +48,6 @@ const themeSegments = THEME_ORDER.map((theme) => ({
   testID: `settings-theme-${theme}`,
 }));
 
-// «до 1» to «до 5», the top of the Rarity Range while its picker is off.
-const rarityTopSegments = RARITIES.map((rarity) => ({
-  value: String(rarity),
-  label: fill(strings.rarity.ceiling, { rarity: String(rarity) }),
-  testID: `settings-rarity-${String(rarity)}`,
-}));
-
 /**
  * Settings, as screen 83 of board 11: every row with its icon and its line,
  * a row that opens a screen with its value beside the chevron, the groups in
@@ -257,25 +250,12 @@ function SettingsList() {
                 }}
               />
             )}
-            {shown.rarity === 'range' && (
+            {shown.rarity && (
               <RarityRangePicker
                 testID="settings-rarity"
                 rarities={RARITIES}
                 range={range}
                 onChange={setRange}
-              />
-            )}
-            {shown.rarity === 'top' && (
-              <ChoiceRow
-                testID="settings-rarity"
-                icon="bar"
-                label={strings.rarity.title}
-                subtitle={strings.rarity.subtitle}
-                segments={rarityTopSegments}
-                selected={String(range.to)}
-                onSelect={(value) => {
-                  void setRange({ from: 1, to: Number(value) });
-                }}
               />
             )}
             <SettingsRow

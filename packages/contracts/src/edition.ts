@@ -299,10 +299,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   confirmedEntries: FeatureSwitchStateSchema,
   /** Self-check: the setting that hides a card's meaning until the reader reveals it. */
   selfCheck: FeatureSwitchStateSchema,
-  /** «Рідкість», the Rarity Range every surface obeys (ADR 0156); with `rarityRange` off only its top. Off, every Word up to rarity 5 is in, as before 1.0. */
+  /** «Рідкість», the Rarity Range every surface obeys (ADR 0156): «Рідкість» in Settings is five slanted bars, «від 2 до 4» or «лише 3», tapped or dragged, and every surface keeps the Words outside it out. Off, every Word up to rarity 5 is in, as before 1.0. */
   rarityCeiling: FeatureSwitchStateSchema,
-  /** The Rarity Range picker (ADR 0156): «Рідкість» in Settings is five slanted bars, «від 2 до 4» or «лише 3», tapped or dragged, and every surface keeps the Words below its bottom out too. Off, «Рідкість» is «до 1»…«до 5» and the bottom is 1. Off while `rarityCeiling` is. */
-  rarityRange: FeatureSwitchStateSchema,
   /** Game Review: the list of every Round on the Game's result. */
   gameReview: FeatureSwitchStateSchema,
   /** The Game Mode «Вгадай слово» (`guess-word`); off while `game` is (ADR 0052). */

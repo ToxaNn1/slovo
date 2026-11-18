@@ -8712,14 +8712,6 @@
                           ],
                           "type": "string"
                         },
-                        "rarityRange": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -9657,7 +9649,6 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
-                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
@@ -10547,14 +10538,6 @@
                           ],
                           "type": "string"
                         },
-                        "rarityRange": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -11492,7 +11475,6 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
-                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
@@ -12306,14 +12288,6 @@
                           ],
                           "type": "string"
                         },
-                        "rarityRange": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameReview": {
                           "enum": [
                             "on",
@@ -13251,7 +13225,6 @@
                         "confirmedEntries",
                         "selfCheck",
                         "rarityCeiling",
-                        "rarityRange",
                         "gameReview",
                         "gameGuessWord",
                         "gameCorrection",
