@@ -1623,6 +1623,37 @@ describe('the Rounds about Entries marked «Не знаю» or due', () => {
     expect(new Set(ids).size).toBe(GAME_ROUNDS);
   });
 
+  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  it('asks the Words marked «Не знаю» at places drawn anew for each Game, not first', async () => {
+    const places: number[][] = [];
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const app = await run({ seed });
+      for (const id of unknown) await app.knowledge.tap(id, 'unknown');
+
+      const ids = asked(await playGame(app));
+
+      places.push(ids.flatMap((id, place) => (unknown.includes(id) ? [place] : [])));
+    }
+
+    for (const ofGame of places) expect(ofGame).toHaveLength(5);
+    expect(new Set(places.map(String)).size).toBeGreaterThan(1);
+    expect(places.some((ofGame) => ofGame[0] !== 0)).toBe(true);
+    expect(places.some((ofGame) => ofGame.some((place) => place >= 5))).toBe(true);
+  });
+
+  it('keeps the stages of «Вгадай слово» whatever the places of the Words marked «Не знаю»', async () => {
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const app = await run({ seed });
+      for (const id of unknown) await app.knowledge.tap(id, 'unknown');
+
+      const rounds = await playGame(app);
+
+      expect(rounds).toHaveLength(GAME_ROUNDS);
+      expect(rounds.slice(0, 5).every(({ form }) => form === 'pick')).toBe(true);
+      expect(rounds.slice(10).map(({ form }) => form)).toEqual(Array(5).fill('typed'));
+    }
+  });
+
   it('asks both of 2 Words marked «Не знаю», the rest from History as before', async () => {
     const met = numbered('w_nnoun', 14).concat('w_snoun03');
     const app = await run({ records: historyOf(met) });
@@ -2628,14 +2659,37 @@ describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
     expect(ids.filter((id) => unknown.includes(id))).toHaveLength(5);
   });
 
-  it('asks 5 of 8 Words marked «Не знаю» at the start of a mode with no Round limit', async () => {
-    const ids = await playRight(await startWeak(endlessMode), 30);
+  it('moves a weak Round the mode cannot build at its place to the next place, dropping none', async () => {
+    /** A mode with a stage: it asks about a Word marked «Не знаю» from Round 11 only. */
+    const stagedMode: GameMode = {
+      ...lemmaMode,
+      id: 'test-staged',
+      buildRound: (input) =>
+        unknown.includes(input.answer.id) && input.round < 11
+          ? undefined
+          : lemmaMode.buildRound(input),
+    };
+    for (const seed of [1, 2, 3, 4]) {
+      const app = await run({ seed, gameModes: [stagedMode] });
+      for (const id of unknown) await app.knowledge.tap(id, 'unknown');
+      await app.game.start(stagedMode.id);
 
-    expect(ids.slice(0, 5).every((id) => unknown.includes(id))).toBe(true);
-    expect(ids.slice(5, GAME_ROUNDS).some((id) => unknown.includes(id))).toBe(false);
+      const ids = await playRight(app);
+
+      expect(ids).toHaveLength(GAME_ROUNDS);
+      expect(ids.slice(0, 10).some((id) => unknown.includes(id))).toBe(false);
+      expect(ids.slice(10).every((id) => unknown.includes(id))).toBe(true);
+    }
   });
 
-  it('counts pairs in a pairs mode: 15 pairs in grids of 4, 4, 4 and 3, the first 5 about Words marked «Не знаю»', async () => {
+  it('asks 5 of 8 Words marked «Не знаю» in the first 15 Rounds of a mode with no Round limit', async () => {
+    const ids = await playRight(await startWeak(endlessMode), 30);
+
+    expect(ids.slice(0, GAME_ROUNDS).filter((id) => unknown.includes(id))).toHaveLength(5);
+    expect(ids.slice(0, 5).every((id) => unknown.includes(id))).toBe(false);
+  });
+
+  it('counts pairs in a pairs mode: 15 pairs in grids of 4, 4, 4 and 3, 5 of them about Words marked «Не знаю»', async () => {
     const app = await startWeak({ ...pairsMode, roundLimit: GAME_ROUNDS });
     const grids: number[] = [];
     while (current(app).status === 'playing') {
@@ -2651,7 +2705,6 @@ describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
     expect(current(app)).toMatchObject({ roundsPassed: GAME_ROUNDS, status: 'won' });
     expect(grids).toEqual([4, 4, 4, 3]);
     expect(new Set(ids).size).toBe(GAME_ROUNDS);
-    expect(ids.slice(0, 5).every((id) => unknown.includes(id))).toBe(true);
     expect(ids.filter((id) => unknown.includes(id))).toHaveLength(5);
   });
 

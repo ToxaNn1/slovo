@@ -278,18 +278,21 @@ describe('a Round of «Англіцизми»', () => {
     ]);
   });
 
-  it('asks first about the anglicisms the reader marked «Не знаю», never about other weak Corrections', async () => {
-    const app = await run();
+  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  it('asks about the anglicisms the reader marked «Не знаю» at places drawn among the first 15 Rounds, never about other weak Corrections', async () => {
     const weak = ['c_anglicism03', 'c_anglicism07', 'c_anglicism12'];
-    for (const id of [...weak, 'c_calque1', 'c_surzhyk1']) await app.knowledge.tap(id, 'unknown');
+    const places: number[] = [];
+    for (const seed of [1, 2, 3, 4]) {
+      const app = await run({ seed });
+      for (const id of [...weak, 'c_calque1', 'c_surzhyk1']) await app.knowledge.tap(id, 'unknown');
 
-    const rounds = await playGame(app);
+      const asked = (await playGame(app)).map((round) => askedOf(round).id);
 
-    expect(
-      rounds
-        .slice(0, weak.length)
-        .map((round) => askedOf(round).id)
-        .sort(),
-    ).toEqual(weak);
+      expect(asked.every((id) => id.startsWith('c_anglicism'))).toBe(true);
+      places.push(...weak.map((one) => asked.indexOf(one)));
+    }
+
+    expect(places.every((place) => place >= 0 && place < 15)).toBe(true);
+    expect(places.some((place) => place >= weak.length)).toBe(true);
   });
 });

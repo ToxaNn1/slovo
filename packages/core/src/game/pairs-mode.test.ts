@@ -279,16 +279,22 @@ describe('the grids of «Пари»', () => {
     ]);
   });
 
-  it('puts the Words the reader marked «Не знаю» in the first grid', async () => {
+  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  it('puts the Words the reader marked «Не знаю» in grids drawn anew for each Game, not always the first', async () => {
     const weak = ['w_n03', 'w_n07', 'w_n09'];
-    for (const seed of [1, 2, 3]) {
+    const places: number[] = [];
+    for (const seed of [1, 2, 3, 4]) {
       const app = await run({ seed });
       for (const id of weak) await app.knowledge.tap(id, 'unknown');
 
-      await app.game.start('pairs');
-      const texts = gridOf(current(app).round).words.map(({ shown: { text } }) => text);
+      const shown = (await playGame(app)).map((grid) =>
+        grid.words.map(({ shown: { text } }) => text),
+      );
 
-      expect(texts).toEqual(expect.arrayContaining(weak.map((id) => id.slice(2))));
+      places.push(...weak.map((id) => shown.findIndex((texts) => texts.includes(id.slice(2)))));
     }
+
+    expect(places.every((place) => place >= 0)).toBe(true);
+    expect(places.some((place) => place >= 4)).toBe(true);
   });
 });

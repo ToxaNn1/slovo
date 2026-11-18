@@ -297,19 +297,23 @@ describe('a Round of «Наголос»', () => {
     });
   });
 
-  it('asks first about the Words the reader marked «Не знаю»', async () => {
-    const app = await run();
+  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  it('asks about the Words the reader marked «Не знаю» at places drawn among the first 15 Rounds', async () => {
     const weak = ['кобза', 'ослін', 'пугач'];
-    for (const lemma of weak) await app.knowledge.tap(idOf(lemma), 'unknown');
+    const places: number[] = [];
+    for (const seed of [1, 2, 3, 4]) {
+      const app = await run({ seed });
+      for (const lemma of weak) await app.knowledge.tap(idOf(lemma), 'unknown');
 
-    const rounds = await playGame(app, ({ stress }) => stress[0] ?? -1);
+      const asked = (await playGame(app, ({ stress }) => stress[0] ?? -1)).map(
+        ({ prompt }) => prompt,
+      );
 
-    expect(
-      rounds
-        .slice(0, weak.length)
-        .map(({ prompt }) => prompt)
-        .sort(),
-    ).toEqual([...weak].sort());
+      places.push(...weak.map((one) => asked.indexOf(one)));
+    }
+
+    expect(places.every((place) => place >= 0 && place < 15)).toBe(true);
+    expect(places.some((place) => place >= weak.length)).toBe(true);
   });
 });
 
