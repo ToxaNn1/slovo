@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import { openComposition, type Composition, type UserStateFact } from '@slovo/core';
+import { openComposition, type Composition, type Edition, type UserStateFact } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, SEEN_DWELL_MS } from '@slovo/core/testing';
 import { EditionProvider, RouteProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
@@ -8,12 +8,18 @@ import { renderInGestureRoot } from '../shell/test-render';
 import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { edition, editionStrings } from '../edition/edition';
+import { edition as shipped, editionStrings } from '../edition/edition';
 import { fill } from '@slovo/contracts';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { CELEBRATION_MS, MascotCelebrations } from './mascot';
+
+/** The UA Edition as it ships, with the Daily Crossword on, so its Badges show (ADR 0176). */
+const edition: Edition = {
+  ...shipped,
+  isFeatureEnabled: (feature) => feature === 'dailyCrossword' || shipped.isFeatureEnabled(feature),
+};
 
 const { mascot } = edition;
 
