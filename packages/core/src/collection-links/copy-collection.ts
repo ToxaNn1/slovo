@@ -13,7 +13,7 @@ const PREVIEW_SIZE = 5;
 /**
  * What a Collection Link opens as on the recipient sheet: its preview and
  * «Додати собі», or why not. `offline` when the backend could not be reached
- * or failed («Немає з'єднання»); `unavailable` for an unknown link, a link of
+ * or failed («Немає з’єднання»); `unavailable` for an unknown link, a link of
  * another Edition, or while `collectionLinks` is off in effect.
  */
 export type CollectionLinkPreview =
