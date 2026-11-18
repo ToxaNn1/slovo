@@ -328,6 +328,37 @@ describe('checkRecord', () => {
     ]);
   });
 
+  it('passes a Retired Curated Collection naming a Retired Entry', () => {
+    expect(
+      save(record('cc_fx0001', { entryIds: ['w_fx0001', 'c_fx0003'], retired: true })),
+    ).toEqual([]);
+  });
+
+  it('passes a retire of an Entry only Retired Curated Collections name', () => {
+    const retiredCollections = fixtureSet({
+      cc_fx0001: { retired: true },
+      cc_fx0002: { retired: true },
+    });
+    const retire = parsed(record('w_fx0003', { retired: true }));
+    expect(checkRecord(config, retiredCollections, retire, { today })).toEqual([]);
+  });
+
+  it('refuses a bring-back of a Curated Collection naming a Retired Entry', () => {
+    const retiredCollection = fixtureSet({
+      cc_fx0001: { entryIds: ['w_fx0001', 'c_fx0003'], retired: true },
+    });
+    const bringBack = parsed(
+      record('cc_fx0001', { entryIds: ['w_fx0001', 'c_fx0003'], retired: false }),
+    );
+    expect(checkRecord(config, retiredCollection, bringBack, { today })).toEqual([
+      expect.objectContaining({
+        rule: 'curated-collection-entry',
+        entryId: 'cc_fx0001',
+        field: 'entryIds.0',
+      }),
+    ]);
+  });
+
   it('keeps refusals the set already had out of a save', () => {
     const broken = fixtureSet({ w_fx0003: { categoryId: 'unknown' } });
     const edit = parsed(record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' }));
