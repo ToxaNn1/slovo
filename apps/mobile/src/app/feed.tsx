@@ -391,12 +391,12 @@ function useHeaderRows() {
 
 /**
  * An Entry's card in the Feed, with its action row or its corner and side
- * swipes (ADR 0077), under Self-check and the tabs as they are shown in effect.
+ * swipes (ADR 0077), under Self-check and the source and exceptions tabs as they are shown in effect.
  */
 function SwipedEntryCard(
   props: Omit<
     ComponentProps<typeof EntryCard>,
-    'slots' | 'selfCheck' | 'tabs' | 'sourceTab' | 'tipExceptions'
+    'slots' | 'selfCheck' | 'sourceTab' | 'tipExceptions'
   >,
 ) {
   const { selfCheck, sourceTab, tipExceptions } = useShown();
@@ -405,7 +405,6 @@ function SwipedEntryCard(
       {...props}
       slots={useEntrySlots(props.card)}
       selfCheck={selfCheck}
-      tabs
       sourceTab={sourceTab}
       tipExceptions={tipExceptions}
     />

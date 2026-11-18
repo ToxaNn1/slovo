@@ -32,20 +32,10 @@ export const WordCardStringsSchema = z.strictObject({
   example: templateOf('text'),
   /** The line under an Example that names its author, e.g. "— {author}". */
   exampleAuthor: templateOf('author'),
-  /** The label before one Synonym, and before several. */
-  synonym: TextSchema,
-  synonyms: TextSchema,
-  /** The label before one antonym, and before several. */
-  antonym: TextSchema,
-  antonyms: TextSchema,
   /** The VoiceOver label of the Category chip, e.g. "Категорія: {category}". */
   category: templateOf('category'),
-  /** The button that opens the details. */
-  more: TextSchema,
-  /** The headings inside the details. */
+  /** The heading over a Word's etymology in «Історія» and in a Game's review. */
   etymology: TextSchema,
-  extraDefinitions: TextSchema,
-  moreExamples: TextSchema,
   /** The button under a tab too long for its card's frame, on every kind of card, which opens the rest of the tab (ADR 0091). */
   tabMore: TextSchema,
   /** The button under a tab opened by «Детальніше», which clamps it to the card's frame again (owner 08.11). */

@@ -27,7 +27,7 @@ import { NumberedDefinitions } from './NumberedDefinitions';
 import { CardTabs } from './CardTabs';
 import { ExampleMark } from './ExampleMark';
 import { useFlyingText } from './reveal';
-import { DetailSection, ExampleText } from './WordCard';
+import { ExampleText } from './WordCard';
 import { idiomTabsOf, type IdiomTab } from './word-tabs';
 
 /**
@@ -38,14 +38,13 @@ import { idiomTabsOf, type IdiomTab } from './word-tabs';
  * only the sections the Core put in the card. VoiceOver reads the expression
  * with its kind, then its Definition. Under Self-check it keeps the
  * kicker and the expression; the Entry card draws the button that reveals the
- * rest under them. With `tabs` the rest sits in the tabs «Суть», «Звідки» and «Приклад» (ADR 0091).
+ * rest under them. The rest sits in the tabs «Суть», «Звідки» and «Приклад» (ADR 0091).
  */
 export function IdiomCardBody({
   card,
   lemmaSize,
   concealed,
   corner,
-  tabs,
   sourceTab,
   headless = false,
 }: {
@@ -56,8 +55,6 @@ export function IdiomCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The tabs under the expression in place of the one column (ADR 0091). */
-  tabs: boolean;
   /** The last tab «Джерело» with the sources, which leave «Суть», while `sourceTab` is on (ADR 0116). */
   sourceTab: boolean;
   /** The kicker and the headline are drawn in Entry details' red panel, so the body leaves them out. */
@@ -65,7 +62,6 @@ export function IdiomCardBody({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const sizes = useWordTextSizes();
   const edition = useEdition();
   const { voice } = edition;
   const strings = edition.strings.idiomCard;
@@ -74,7 +70,6 @@ export function IdiomCardBody({
   // The headline's letters fly in as the card reveals.
   const flying = useFlyingText();
   const idiomType = strings.idiomTypes[card.idiomType];
-  const bodyText = [typeStyle('example', tokens), sizes.example, { color: colors.ink }];
   // The expression starts at its step of the cards' one title scale (ADR 0157).
   const expressionSize = titleSize('idiomExpression', lemmaSize);
 
@@ -118,62 +113,15 @@ export function IdiomCardBody({
           </View>
         </>
       )}
-      {tabs ? (
-        <CardTabs
-          testID="idiom"
-          tabs={idiomTabsOf(card)}
-          nameOf={({ key }) => strings.tabs[key]}
-          sources={sourceTab ? card.sourceNames : undefined}
-          disabled={concealed}
-        >
-          {(tab) => <IdiomTabContent tab={tab} sourceTab={sourceTab} />}
-        </CardTabs>
-      ) : concealed ? null : (
-        <>
-          <WholeLinesText
-            testID="idiom-definition"
-            // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
-            accessibilityLabel={withoutStress(card.primaryDefinition)}
-            {...voice}
-            {...turnActions}
-            style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
-          >
-            {capitalised(card.primaryDefinition, voice.accessibilityLanguage)}
-          </WholeLinesText>
-          {card.extraDefinitions.length === 0 ? null : (
-            <DetailSection
-              testID="idiom-extra-definitions"
-              title={edition.strings.wordCard.extraDefinitions}
-            >
-              <NumberedDefinitions definitions={card.extraDefinitions} style={bodyText} />
-            </DetailSection>
-          )}
-          {card.examples.map((example, index) => (
-            <ExampleText
-              key={index}
-              testID="idiom-example"
-              example={example}
-              size={sizes.example}
-            />
-          ))}
-          {card.etymology === undefined ? null : (
-            <DetailSection testID="idiom-etymology" title={strings.etymology}>
-              <WholeLinesText
-                accessibilityLabel={withoutStress(card.etymology)}
-                {...voice}
-                style={[typeStyle('idiomEtymology', tokens), { color: colors.ink }]}
-              >
-                {capitalised(card.etymology, voice.accessibilityLanguage)}
-              </WholeLinesText>
-            </DetailSection>
-          )}
-          <SourceLine
-            testID="idiom-source"
-            template={edition.strings.idiomCard.source}
-            sourceNames={card.sourceNames}
-          />
-        </>
-      )}
+      <CardTabs
+        testID="idiom"
+        tabs={idiomTabsOf(card)}
+        nameOf={({ key }) => strings.tabs[key]}
+        sources={sourceTab ? card.sourceNames : undefined}
+        disabled={concealed}
+      >
+        {(tab) => <IdiomTabContent tab={tab} sourceTab={sourceTab} />}
+      </CardTabs>
     </>
   );
 }
