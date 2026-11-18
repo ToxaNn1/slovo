@@ -202,9 +202,15 @@ export interface Shown {
   /**
    * The «Пройти опитування ще раз» row of Settings, while any of its questions
    * is on: «Рівень» and «Навіщо» under the questionnaire, the self-rating
-   * under the Rarity Test it offers.
+   * under the Rarity Test it offers, the interests under «Що тобі цікаво?».
    */
-  readonly questionnaire: { readonly levelWhy: boolean; readonly selfRating: boolean } | undefined;
+  readonly questionnaire:
+    | {
+        readonly levelWhy: boolean;
+        readonly selfRating: boolean;
+        readonly interests: boolean;
+      }
+    | undefined;
 }
 
 /**
@@ -312,8 +318,12 @@ export function shownOf({
     rarity: on('rarityCeiling') ? (on('rarityRange') ? 'range' : 'top') : 'off',
     rarityTest: on('rarityTest'),
     questionnaire:
-      on('questionnaire') || on('rarityTest')
-        ? { levelWhy: on('questionnaire'), selfRating: on('rarityTest') }
+      on('questionnaire') || on('rarityTest') || on('interestsQuestion')
+        ? {
+            levelWhy: on('questionnaire'),
+            selfRating: on('rarityTest'),
+            interests: on('interestsQuestion'),
+          }
         : undefined,
   };
 }
