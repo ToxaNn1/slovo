@@ -1,0 +1,14 @@
+# One app pass step: waits for the screen of the route `ROUTE` (its root
+# testID matches `SCREEN`, a regular expression) and keeps a screenshot named
+# after the route. `app-pass.yaml` calls it, through `open.yaml` or after taps.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- runFlow:
+    file: ../dismiss-dev-menu.yaml
+- extendedWaitUntil:
+    visible:
+      id: ${SCREEN}
+    timeout: 15000
+- assertNotVisible: Unmatched Route
+- waitForAnimationToEnd
+- takeScreenshot: ${'app-pass' + ROUTE.split('/').join('-').split('[').join('').split(']').join('')}

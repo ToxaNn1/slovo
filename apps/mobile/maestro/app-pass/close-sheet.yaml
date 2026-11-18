@@ -1,0 +1,6 @@
+# Closes the open sheet by a tap above it, as the walk of 17.11 did.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    point: 50%,8%
+- waitForAnimationToEnd

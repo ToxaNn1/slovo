@@ -1,0 +1,384 @@
+# The full app pass (ADR 0177): one flow that opens every screen route of
+# `apps/mobile/src/app` and the sheets a tap opens, keeping a screenshot of
+# each. Run it from the repo root with `pnpm app-pass` (scripts/app-pass.mjs),
+# on a booted simulator with the app open from the one Metro on 8082.
+#
+# Every route file is one step below: `app-pass/open.yaml` opens its link,
+# or taps lead to it and `app-pass/screen.yaml` checks it, each with the
+# route as `ROUTE`. `app-pass.test.ts` fails CI naming each route file no
+# step names, and each `ROUTE` no route file has: a new screen joins the pass
+# in the same change.
+#
+# The pass reads and keeps the reader's state: it saves, files and sends
+# nothing. A route behind a Feature Switch that is off leads to its fallback,
+# which the step's `SCREEN` names too. The Collection steps need one
+# Collection with an Entry on the simulator (`--state full-saved` loads one).
+#
+# Settings (`-e`): APP_ID, SCHEME or LINK (Expo Go: `exp://127.0.0.1:8082/--/`),
+# ENTRY_ID (an Entry of the API, `w_0wr2ne` by default).
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# Home
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/'
+      LINK_PATH: ''
+      SCREEN: dashboard
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/feed'
+      LINK_PATH: 'feed'
+      SCREEN: feed
+
+# The sheets the Feed opens by a tap, each closed again unused: a card's
+# «Більше дій» and its error report, «Додати до колекції», the stats sheet.
+- tapOn: 'Вимова'
+- tapOn: 'Більше дій'
+- waitForAnimationToEnd
+- tapOn: 'ПОВІДОМИТИ ПРО ПОМИЛКУ'
+- waitForAnimationToEnd
+- takeScreenshot: app-pass-sheet-report
+- runFlow: app-pass/close-sheet.yaml
+- tapOn: 'Додати до колекції'
+- waitForAnimationToEnd
+- takeScreenshot: app-pass-sheet-collection
+- runFlow: app-pass/close-sheet.yaml
+- tapOn: 'Статистика: .*'
+- waitForAnimationToEnd
+- takeScreenshot: app-pass-sheet-stats
+- runFlow: app-pass/close-sheet.yaml
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/categories'
+      LINK_PATH: 'categories'
+      SCREEN: categories
+- scrollUntilVisible:
+    element:
+      id: 'categories-(?!back|title)(?!.*-(cascade|name|count)$).+'
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: 'categories-(?!back|title)(?!.*-(cascade|name|count)$).+'
+    index: 0
+- runFlow:
+    file: app-pass/screen.yaml
+    env:
+      ROUTE: '/category/[categoryId]'
+      SCREEN: category
+# With `categoryFeed` off a Category's Entry opens on its own screen.
+- scrollUntilVisible:
+    element:
+      id: 'category-entry-.+'
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: 'category-entry-.+'
+    index: 0
+- runFlow:
+    file: app-pass/screen.yaml
+    env:
+      ROUTE: '/category-feed/[categoryId]'
+      SCREEN: category-feed-screen|entry-screen
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/correction-categories'
+      LINK_PATH: 'correction-categories'
+      SCREEN: correction-categories
+- scrollUntilVisible:
+    element:
+      id: 'correction-categories-(?!back|title)(?!.*-(cascade|name|count)$).+'
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: 'correction-categories-(?!back|title)(?!.*-(cascade|name|count)$).+'
+    index: 0
+- runFlow:
+    file: app-pass/screen.yaml
+    env:
+      ROUTE: '/correction-category/[categoryId]'
+      SCREEN: category
+# Back to the grid for its Correction types.
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/correction-categories'
+      LINK_PATH: 'correction-categories'
+      SCREEN: correction-categories
+- scrollUntilVisible:
+    element:
+      id: 'correction-types-(?!title)(?!.*-(name|count)$).+'
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: 'correction-types-(?!title)(?!.*-(name|count)$).+'
+    index: 0
+- runFlow:
+    file: app-pass/screen.yaml
+    env:
+      ROUTE: '/correction-type/[type]'
+      SCREEN: correction-type
+# The Dashboard's rail of Curated Collections.
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/'
+      LINK_PATH: ''
+      SCREEN: dashboard
+- scrollUntilVisible:
+    element:
+      id: 'dashboard-curated-collection-[^-]+'
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: 'dashboard-curated-collection-[^-]+'
+    index: 0
+- runFlow:
+    file: app-pass/screen.yaml
+    env:
+      ROUTE: '/curated-collection/[collectionId]'
+      SCREEN: curated-collection(-error)?
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/entry/[entryId]'
+      LINK_PATH: "entry/${ENTRY_ID || 'w_0wr2ne'}"
+      SCREEN: entry-screen
+
+# Games
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/game'
+      LINK_PATH: 'game'
+      SCREEN: game
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/game/crossword'
+      LINK_PATH: 'game/crossword'
+      SCREEN: daily-crossword-screen|game
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/game/[entryId]'
+      LINK_PATH: "game/${ENTRY_ID || 'w_0wr2ne'}"
+      SCREEN: entry-screen
+
+# Saved
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/saved'
+      LINK_PATH: 'saved'
+      SCREEN: saved
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/saved/favorites'
+      LINK_PATH: 'saved/favorites'
+      SCREEN: favorites
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/saved/favorites/[entryId]'
+      LINK_PATH: "saved/favorites/${ENTRY_ID || 'w_0wr2ne'}"
+      SCREEN: entry-screen
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/saved/history'
+      LINK_PATH: 'saved/history'
+      SCREEN: history
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/saved/history/[entryId]'
+      LINK_PATH: "saved/history/${ENTRY_ID || 'w_0wr2ne'}"
+      SCREEN: entry-screen
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/saved/learning'
+      LINK_PATH: 'saved/learning'
+      SCREEN: learning
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/saved/learning/[entryId]'
+      LINK_PATH: "saved/learning/${ENTRY_ID || 'w_0wr2ne'}"
+      SCREEN: entry-screen
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/saved/words-of-the-day'
+      LINK_PATH: 'saved/words-of-the-day'
+      SCREEN: words-of-the-day
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/saved/words-of-the-day/[entryId]'
+      LINK_PATH: "saved/words-of-the-day/${ENTRY_ID || 'w_0wr2ne'}"
+      SCREEN: entry-screen
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/saved/collections'
+      LINK_PATH: 'saved/collections'
+      SCREEN: collections
+- scrollUntilVisible:
+    element:
+      id: 'collection-card-.+'
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: 'collection-card-.+'
+    index: 0
+- runFlow:
+    file: app-pass/screen.yaml
+    env:
+      ROUTE: '/saved/collections/[collectionId]'
+      SCREEN: collection
+- scrollUntilVisible:
+    element:
+      id: 'collection-row-.+'
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: 'collection-row-.+'
+    index: 0
+- runFlow:
+    file: app-pass/screen.yaml
+    env:
+      ROUTE: '/saved/collections/[collectionId]/[entryId]'
+      SCREEN: entry-screen
+# A Collection Link no Account shared: the screen says so.
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/c/[linkId]'
+      LINK_PATH: 'c/AAAAAAAAAA'
+      SCREEN: collection-link(-failure)?
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/search'
+      LINK_PATH: 'search'
+      SCREEN: search
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/search/[entryId]'
+      LINK_PATH: "search/${ENTRY_ID || 'w_0wr2ne'}"
+      SCREEN: entry-screen
+
+# Settings
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings'
+      LINK_PATH: 'settings'
+      SCREEN: settings
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/about'
+      LINK_PATH: 'settings/about'
+      SCREEN: about
+# With no sign-in on offer Settings opens instead.
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/account'
+      LINK_PATH: 'settings/account'
+      SCREEN: account|settings
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/badges'
+      LINK_PATH: 'settings/badges'
+      SCREEN: badges
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/daily-goal'
+      LINK_PATH: 'settings/daily-goal'
+      SCREEN: daily-goal-screen
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/hidden'
+      LINK_PATH: 'settings/hidden'
+      SCREEN: hidden
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/mix'
+      LINK_PATH: 'settings/mix'
+      SCREEN: mix
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/narrator-voice'
+      LINK_PATH: 'settings/narrator-voice'
+      SCREEN: narrator-voice-screen
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/notifications'
+      LINK_PATH: 'settings/notifications'
+      SCREEN: notifications
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/privacy'
+      LINK_PATH: 'settings/privacy'
+      SCREEN: privacy
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/profile'
+      LINK_PATH: 'settings/profile'
+      SCREEN: profile
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/questionnaire'
+      LINK_PATH: 'settings/questionnaire'
+      SCREEN: questionnaire
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/rarity-test'
+      LINK_PATH: 'settings/rarity-test'
+      SCREEN: rarity-test-back
+# With `streakBreak` off Settings opens instead.
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/streak-break'
+      LINK_PATH: 'settings/streak-break'
+      SCREEN: streak-break|settings
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/text-size'
+      LINK_PATH: 'settings/text-size'
+      SCREEN: text-size-screen
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/widgets'
+      LINK_PATH: 'settings/widgets'
+      SCREEN: widget-guide
+
+# Back home.
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/'
+      LINK_PATH: ''
+      SCREEN: dashboard
