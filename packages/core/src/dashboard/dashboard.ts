@@ -56,8 +56,8 @@ export type DashboardBlock =
   | WordOfTheDayBlock
   | MoodBlock
   | PreviousWordsBlock
-  | CategoriesBlock
   | CuratedCollectionsBlock
+  | CategoriesBlock
   | CorrectionTypesBlock;
 
 /** The Word of the Day hero's block, first on the Dashboard. */
@@ -91,7 +91,7 @@ export interface PreviousWordsBlock {
 }
 
 /**
- * The Correction Types rail's block, last, after the Curated Collections: a
+ * The Correction Types rail's block, last, after the Categories: a
  * tile per Correction Type with live Corrections, with N and X «розібрано».
  * No tile, no block. With `correctionCategoryScreens` on it carries the
  * Categories of Corrections in pack order, whose grid, k2, its header opens;
@@ -104,7 +104,7 @@ export interface CorrectionTypesBlock {
 }
 
 /**
- * The Categories rail's block, «Категорії», after «Попередні слова»: every
+ * The Categories rail's block, «Категорії», after «SLOVO пропонує»: every
  * Category of Words of the Language Pack, in its order, with
  * `categoryScreens` on (ADR 0081). Its header opens the grid of them all.
  */
@@ -114,13 +114,16 @@ export interface CategoriesBlock {
 }
 
 /**
- * The Curated Collections rail's block, «Добірки», after «Попередні слова»:
- * the collections published by today, the unopened first. No card, no
- * block.
+ * The Curated Collections rail's block, «SLOVO пропонує», after «Попередні
+ * слова» and before «Категорії» (ADR 0178): ten cards at most of the
+ * collections published by today, the unopened first, and the header's count
+ * of them all. No card, no block.
  */
 export interface CuratedCollectionsBlock {
   readonly kind: 'curatedCollections';
   readonly cards: readonly CuratedCollectionCard[];
+  /** Every collection published by today, which the header counts. */
+  readonly published: number;
 }
 
 /**
@@ -160,7 +163,7 @@ export async function openDashboard({
   /** Tells today, whose archive day is the hero's. */
   clock: Clock;
   correctionTypes: Pick<CorrectionTypes, 'tiles' | 'subscribe'>;
-  curatedCollections: Pick<CuratedCollections, 'rail' | 'subscribe'>;
+  curatedCollections: Pick<CuratedCollections, 'rail' | 'published' | 'subscribe'>;
   seen: { subscribe(listener: (entryId: string) => unknown): unknown };
   dayTurned: { subscribe(listener: (day: LocalDate) => unknown): unknown };
 }): Promise<Dashboard> {
@@ -221,10 +224,10 @@ export async function openDashboard({
     if (moodCheckIn !== undefined) blocks.push(moodCheckIn);
     const previous = previousWordsOn ? await previousWords() : undefined;
     if (previous !== undefined) blocks.push(previous);
+    const { rail, published } = curatedCollections;
+    if (rail.length > 0) blocks.push({ kind: 'curatedCollections', cards: rail, published });
     const categories = categoriesOn ? await entries.categories() : [];
     if (categories.length > 0) blocks.push({ kind: 'categories', categories });
-    const { rail } = curatedCollections;
-    if (rail.length > 0) blocks.push({ kind: 'curatedCollections', cards: rail });
     const { tiles } = correctionTypes;
     // The Categories of Corrections ride only on the Correction Types block: with no
     // Correction Type tile there is no door to k2, which then returns to the Dashboard,
@@ -296,7 +299,7 @@ function blockKeyOf(block: DashboardBlock): string {
         )
         .join(',')}`;
     case 'curatedCollections':
-      return `curatedCollections:${block.cards
+      return `curatedCollections:${String(block.published)}:${block.cards
         .map(({ collection: { id }, state, added }) => `${id}=${state}${added ? '+added' : ''}`)
         .join(',')}`;
   }

@@ -13,6 +13,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import HomeScreen from '../app/index';
 import CorrectionTypeScreen from '../app/correction-type/[type]';
 import CuratedCollectionScreen from '../app/curated-collection/[collectionId]';
+import CuratedCollectionsScreen from '../app/curated-collections';
 import FeedScreen from '../app/feed';
 import EntryFromSearchScreen from '../app/search/[entryId]';
 import { ShellProvider } from '../shell-value';
@@ -120,6 +121,7 @@ async function renderApp(feedScreen: () => ReactElement = FeedScreen) {
         word('w_sumyrnyi', 'сумирний'),
         word('w_lahidnyi', 'лагідний'),
         word('w_tykhyi', 'тихий'),
+        { ...word('w_retired', 'старий'), retired: true },
       ],
       correctionCategories: [
         { id: 'everyday', displayName: 'Щоденне', description: 'Щоденне.', tone: 'loud' },
@@ -135,6 +137,20 @@ async function renderApp(feedScreen: () => ReactElement = FeedScreen) {
           description: 'Слова, що звучать м’яко.',
           publishedOn: '2026-10-20',
           entryIds: ['w_lahidnyi', 'w_tykhyi'],
+        },
+        {
+          id: 'cc_mishani',
+          name: 'Мішанина',
+          description: 'Слова й Виправлення впереміш.',
+          publishedOn: '2026-10-25',
+          entryIds: ['c_tipa', 'w_tykhyi', 'w_retired', 'w_sumyrnyi'],
+        },
+        {
+          id: 'cc_zavtra',
+          name: 'Завтрашня',
+          description: 'Ще не вийшла.',
+          publishedOn: '2026-10-29',
+          entryIds: ['w_tykhyi'],
         },
       ],
     }),
@@ -171,6 +187,7 @@ async function renderApp(feedScreen: () => ReactElement = FeedScreen) {
       'search/[entryId]': EntryFromSearchScreen,
       'correction-type/[type]': CorrectionTypeScreen,
       'curated-collection/[collectionId]': CuratedCollectionScreen,
+      'curated-collections': CuratedCollectionsScreen,
     },
     { initialUrl: '/' },
   );
@@ -205,7 +222,7 @@ async function back(testID: string) {
 
 // Spec #1564, ticket #1575: one walk over every block of the Dashboard (ADR 0076).
 describe('the whole Dashboard', () => {
-  it('walks onboarding → hero → Mood → «Попередні слова» → Correction Type → Curated Collection → «До картки →» Feed → wordmark → Dashboard', async () => {
+  it('walks onboarding → hero → Mood → «Попередні слова» → Correction Type → Curated Collection → their grid → «До картки →» Feed → wordmark → Dashboard', async () => {
     const app = await renderApp();
 
     // Onboarding, the quickest way through: it lands on the Dashboard.
@@ -254,15 +271,46 @@ describe('the whole Dashboard', () => {
     ]);
 
     // A Curated Collection: its screen shows its Entries and «Знаю X з N».
-    // DESIGN-05: not on the board, owner decides
-    // expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeTruthy();
+    expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-mark')).toHaveTextContent(
+      'Нова',
+    );
     await press('dashboard-curated-collection-cc_lahidni');
     expect(screen.getByTestId('curated-collection')).toBeTruthy();
     expect(screen.getByText('Знаю 0 з 2')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
     await back('curated-collection-back');
-    // DESIGN-05: not on the board, owner decides
-    // expect(screen.queryByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeNull();
+    expect(screen.queryByTestId('dashboard-curated-collection-cc_lahidni-mark')).toBeNull();
+
+    // The rail header opens the grid of every collection published by today, a future one absent.
+    await press('dashboard-curated-collections-title');
+    screenSettled();
+    expect(screen.getByTestId('curated-collections-title')).toHaveProp(
+      'accessibilityLabel',
+      'Добірки, 2',
+    );
+    expect(screen.queryByTestId('curated-collections-cc_zavtra')).toBeNull();
+    expect(screen.getByTestId('curated-collections-cc_mishani-mark')).toHaveTextContent('Нова');
+    // Its tile opens the collection's screen: «ДОБІРКА», «Знаю X з N», the copy, its Entries of
+    // every kind in order without the Retired one, and no Mix button.
+    await press('curated-collections-cc_mishani');
+    expect(screen.getByTestId('curated-collection-hero-kicker')).toHaveTextContent(
+      'ДОБІРКА · 3 слова',
+    );
+    expect(screen.getByText('Знаю 0 з 3')).toBeTruthy();
+    expect(screen.getByTestId('curated-collection-add')).toHaveTextContent('ДОДАТИ СОБІ');
+    expect(screen.queryByTestId('category-mix')).toBeNull();
+    expect(
+      screen
+        .getAllByTestId(/^curated-collection-entry-[^-]+$/)
+        .map(({ props }) => String(props['testID'])),
+    ).toEqual([
+      'curated-collection-entry-c_tipa',
+      'curated-collection-entry-w_tykhyi',
+      'curated-collection-entry-w_sumyrnyi',
+    ]);
+    await back('curated-collection-back');
+    expect(screen.queryByTestId('curated-collections-cc_mishani-mark')).toBeNull();
+    await back('curated-collections-back');
 
     // «До картки →» opens the Feed on the Word of the Day card.
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));

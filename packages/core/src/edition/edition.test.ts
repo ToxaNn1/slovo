@@ -140,6 +140,7 @@ const validConfig = {
     correctionCategoryScreens: 'on',
     correctionTypeGrid: 'on',
     categoryFeed: 'on',
+    curatedCollectionFeed: 'on',
     collectionLinkCopy: 'on',
     dueQuiz: 'on',
     profileConfirmedByRarity: 'on',
@@ -1008,6 +1009,11 @@ describe('loadEdition', () => {
       'featureSwitches.categoryFeed',
     ],
     [
+      "a missing Curated Collection's Feed Feature Switch",
+      withoutSwitch('curatedCollectionFeed'),
+      'featureSwitches.curatedCollectionFeed',
+    ],
+    [
       'a missing correctionCategoryScreens Feature Switch',
       withoutSwitch('correctionCategoryScreens'),
       'featureSwitches.correctionCategoryScreens',
@@ -1551,6 +1557,7 @@ const dependentSwitches = [
   ['correctionCategoryScreens', ['corrections']],
   ['correctionTypeGrid', ['correctionCategoryScreens', 'corrections']],
   ['categoryFeed', ['categoryScreens']],
+  ['curatedCollectionFeed', ['curatedCollections']],
   ['gameSurvival', ['corrections', 'game']],
   ['gameAnglicism', ['corrections', 'game']],
   ['gameTypeWord', ['corrections', 'game']],

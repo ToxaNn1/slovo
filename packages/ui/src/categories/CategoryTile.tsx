@@ -1,4 +1,4 @@
-import { StyleSheet, View, type DimensionValue } from 'react-native';
+import { StyleSheet, Text, View, type DimensionValue } from 'react-native';
 
 import { PressedTile } from '../primitives/PressedTile';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -53,13 +53,17 @@ export interface CategoryTileBox {
 /**
  * A Category's tile, as the Dashboard's rail and the k1 grid draw it: its
  * name at the bottom under a two-shape pictogram, in its tone. A tap opens
- * the Category; VoiceOver reads its name.
+ * the Category; VoiceOver reads its name. The «SLOVO пропонує» rail draws its
+ * Curated Collections with it too (ADR 0178), with a count under the name
+ * and a mark in the top corner; without shapes it draws no pictogram.
  */
 export function CategoryTile({
   name,
   accessibilityLabel = name,
   tone,
-  shapes: [big, small],
+  shapes,
+  count,
+  mark,
   box,
   onPress,
   testID,
@@ -68,7 +72,11 @@ export function CategoryTile({
   /** What VoiceOver reads for the tile; its name unless given. */
   accessibilityLabel?: string;
   tone: CategoryTone;
-  shapes: readonly [CategoryShape, CategoryShape];
+  shapes: readonly [CategoryShape, CategoryShape] | undefined;
+  /** A line under the name, such as a Curated Collection's count of Entries. */
+  count?: string | undefined;
+  /** A small mark in the top corner, such as «Нова». */
+  mark?: string | undefined;
   box: CategoryTileBox;
   onPress: () => void;
   testID: string;
@@ -113,8 +121,26 @@ export function CategoryTile({
           { height: box.height, padding: box.padding, backgroundColor: look.ground },
         ]}
       >
-        <TileShape shape={big} color={look.big} place={box.big} />
-        <TileShape shape={small} color={look.small} place={box.small} />
+        {shapes !== undefined && (
+          <>
+            <TileShape shape={shapes[0]} color={look.big} place={box.big} />
+            <TileShape shape={shapes[1]} color={look.small} place={box.small} />
+          </>
+        )}
+        {mark !== undefined && (
+          <Text
+            {...voice}
+            testID={`${testID}-mark`}
+            style={[
+              styles.mark,
+              { left: box.padding, top: box.padding },
+              typeStyle('labelChip', tokens),
+              { color: look.text },
+            ]}
+          >
+            {mark}
+          </Text>
+        )}
         <WholeWordsText
           {...voice}
           testID={`${testID}-name`}
@@ -122,6 +148,15 @@ export function CategoryTile({
           typeRole={box.name}
           style={[typeStyle(box.name, tokens), { color: look.text }]}
         />
+        {count !== undefined && (
+          <Text
+            {...voice}
+            testID={`${testID}-count`}
+            style={[styles.count, typeStyle('categoryCount', tokens), { color: look.text }]}
+          >
+            {count}
+          </Text>
+        )}
       </PressedTile>
     </View>
   );
@@ -129,4 +164,6 @@ export function CategoryTile({
 
 const styles = StyleSheet.create({
   face: { justifyContent: 'flex-end', overflow: 'hidden' },
+  mark: { position: 'absolute' },
+  count: { marginTop: categoryTile.countGap, opacity: categoryTile.countOpacity },
 });

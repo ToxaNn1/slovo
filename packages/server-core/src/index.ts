@@ -21,6 +21,11 @@ export {
   type WriteBy,
 } from './edition/edition-registry';
 export {
+  collectionAppearance,
+  editionDateOf,
+  editionDayStart,
+} from './edition/collection-appearance';
+export {
   createAdminAnalytics,
   POSTHOG_FRESH_FOR_MS,
   type AdminAnalytics,

@@ -102,6 +102,8 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   correctionTypeGrid: ['correctionCategoryScreens'],
   // The Category's Feed opens from a Category's screen (ADR 0110).
   categoryFeed: ['categoryScreens'],
+  // A Curated Collection's Feed opens from its screen (ADR 0178).
+  curatedCollectionFeed: ['curatedCollections'],
   // The quiet variant is a variant of a Category screen (ADR 0081).
   notificationTimeStep: ['notifications'],
   // The explainer card asks for the permission the Notifications need.

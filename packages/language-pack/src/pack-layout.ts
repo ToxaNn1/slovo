@@ -245,12 +245,14 @@ CREATE TABLE crossword_words (
   PRIMARY KEY (date, position)
 ) WITHOUT ROWID;
 
--- The Curated Collections of the Dashboard's «Добірки» rail (ADR 0076).
+-- The Curated Collections of the Dashboard's «SLOVO пропонує» rail (ADR 0076,
+-- 0178); pictogram is the id of the Category whose pictogram the tile draws.
 CREATE TABLE curated_collections (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT NOT NULL,
-  published_on TEXT NOT NULL
+  published_on TEXT NOT NULL,
+  pictogram TEXT
 ) WITHOUT ROWID;
 
 -- The Entries of a Curated Collection, in its order.
@@ -329,9 +331,10 @@ CREATE TABLE media_illustrations (
  * tables `media_recordings` and `media_illustrations` and the metadata key
  * `media_base` (ADR 0099); format 13 adds the Tip's `exceptions_explanation`
  * column and the table `tip_exception_words`, the «Винятки» tab of a Tip
- * (ADR 0120).
+ * (ADR 0120); format 14 adds the Curated Collection's `pictogram` column
+ * (ADR 0178).
  */
-export const PACK_FORMAT = 13;
+export const PACK_FORMAT = 14;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how

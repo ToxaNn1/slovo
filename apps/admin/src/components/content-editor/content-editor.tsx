@@ -53,7 +53,15 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
   const openId = open.at === 'edit' ? open.id : undefined;
   const record = useQuery({
     queryKey: ['content', 'record', editionId, kind, openId],
-    queryFn: () => adminApi.content.record({ editionId, kind, id: openId ?? '' }),
+    queryFn: async () => {
+      const read = await adminApi.content.record({ editionId, kind, id: openId ?? '' });
+      // A Curated Collection that appeared by the time it is read keeps its date.
+      const { appearedAt } = read;
+      return {
+        ...read,
+        appeared: appearedAt !== undefined && Date.parse(appearedAt) <= Date.now(),
+      };
+    },
     enabled: openId !== undefined,
   });
 
@@ -251,6 +259,7 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
               editor={editor}
               fields={record.data.fields}
               record={{ at: 'edit', id: open.id, recordVersion: record.data.recordVersion }}
+              appeared={record.data.appeared}
               onWritten={onWritten}
             />
           )}

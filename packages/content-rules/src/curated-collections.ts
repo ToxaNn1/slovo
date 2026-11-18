@@ -1,17 +1,20 @@
-import type { CuratedCollection, Entry } from '@slovo/contracts';
+import type { CuratedCollection, EditionConfig, Entry } from '@slovo/contracts';
 
 import type { Authored, Refusal } from './refusal';
 
 /**
  * The checks the schema can't make on one Curated Collection alone (ADR 0076):
- * every Entry it names is authored and not Retired, and no two files share a
- * collection id.
+ * every Entry it names is authored and not Retired, its pictogram names a
+ * Category or Correction Category of the Edition (ADR 0178), and no two files
+ * share a collection id.
  */
 export function checkCuratedCollections(
+  { categories, correctionCategories }: Pick<EditionConfig, 'categories' | 'correctionCategories'>,
   collections: readonly Authored<CuratedCollection>[],
   entries: readonly Authored<Entry>[],
 ): Refusal[] {
   const errors: Refusal[] = [];
+  const categoryIds = new Set([...categories, ...correctionCategories].map(({ id }) => id));
   const retiredById = new Map(entries.map(({ entry }) => [entry.id, entry.retired]));
   const fileById = new Map<string, string>();
 
@@ -22,6 +25,16 @@ export function checkCuratedCollections(
     } else {
       const message = `Duplicate Curated Collection id: also in ${first}`;
       errors.push({ rule: 'duplicate-id', file, entryId: collection.id, field: 'id', message });
+    }
+    const { pictogram } = collection;
+    if (pictogram !== undefined && !categoryIds.has(pictogram)) {
+      errors.push({
+        rule: 'curated-collection-pictogram',
+        file,
+        entryId: collection.id,
+        field: 'pictogram',
+        message: `The pictogram ${pictogram} is no Category or Correction Category of the Edition`,
+      });
     }
     collection.entryIds.forEach((entryId, position) => {
       const retired = retiredById.get(entryId);

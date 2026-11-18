@@ -102,6 +102,11 @@ export interface Edition {
   readonly badges: readonly Badge[];
   /** The Mascot's short line for each moment it shows in. */
   readonly mascot: MascotLines;
+  /**
+   * The id of the Category or Correction Category whose pictogram a Curated
+   * Collection's tile draws when the collection names none (ADR 0178).
+   */
+  readonly curatedCollectionPictogram: string | undefined;
   /** The Edition's own Feature Switch states, which hold where no remote Rule matches (ADR 0089). */
   readonly featureSwitches: FeatureSwitches;
   /**
@@ -150,6 +155,7 @@ export function loadEdition(config: unknown): Edition {
     badgeFamilies,
     badges,
     mascot,
+    curatedCollectionPictogram,
   } = result.data;
   const moodOf = (id: string) => moods.find((mood) => mood.id === id);
   const voiceOf = (id: string | undefined) =>
@@ -191,6 +197,7 @@ export function loadEdition(config: unknown): Edition {
     badgeFamilies,
     badges,
     mascot,
+    curatedCollectionPictogram,
     featureSwitches,
     isFeatureEnabled: switchedOn((feature) => featureSwitches[feature] === 'on'),
   };

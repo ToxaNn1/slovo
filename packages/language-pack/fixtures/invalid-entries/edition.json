@@ -136,6 +136,7 @@
     "correctionCategoryScreens": "on",
     "correctionTypeGrid": "on",
     "categoryFeed": "on",
+    "curatedCollectionFeed": "on",
     "profileConfirmedByRarity": "on",
     "profileGameBest": "on",
     "forceUpdate": "on",

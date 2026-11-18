@@ -429,8 +429,21 @@ export const contentIdioms = contentTable<Idiom>('content_idioms');
 export const contentCorrections = contentTable<Correction>('content_corrections');
 export const contentTips = contentTable<Tip>('content_tips');
 export const contentSynonymRows = contentTable<SynonymRow>('content_synonym_rows');
-export const contentCuratedCollections = contentTable<CuratedCollection>(
+export const contentCuratedCollections = pgTable(
   'content_curated_collections',
+  {
+    ...contentColumns<CuratedCollection>(),
+    /**
+     * When the collection appeared on the rail: the save moment of one
+     * published by the Edition's today, else the start of its date in Kyiv.
+     * Once it has passed, the publish date stays.
+     */
+    appearedAt: time('appeared_at'),
+  },
+  (table) => [
+    primaryKey({ columns: [table.editionId, table.id] }),
+    index().on(table.editionId, table.contentVersion),
+  ],
 );
 /** A Crossword day's id is its date. */
 export const contentCrosswordDays = contentTable<CrosswordDay>('content_crossword_days');

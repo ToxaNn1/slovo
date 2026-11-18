@@ -389,6 +389,10 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Стрічка категорії',
     line: 'Дотик до слова категорії відкриває стрічку лише з її слів.',
   },
+  curatedCollectionFeed: {
+    name: 'Стрічка добірки',
+    line: 'Дотик до запису добірки відкриває стрічку лише з її записів.',
+  },
   collectionLinkCopy: {
     name: 'Копіювання посилання',
     line: 'У вікні поширення добірки є кнопка «Скопіювати посилання».',

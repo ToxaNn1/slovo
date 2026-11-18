@@ -54,6 +54,7 @@ interface CuratedCollectionRow {
   name: string;
   description: string;
   published_on: string;
+  pictogram: string | null;
 }
 
 interface CuratedCollectionEntryRow {
@@ -173,7 +174,7 @@ const SQL = {
   `,
   metadata: 'SELECT key, value FROM metadata',
   curatedCollections:
-    'SELECT id, name, description, published_on FROM curated_collections ORDER BY id',
+    'SELECT id, name, description, published_on, pictogram FROM curated_collections ORDER BY id',
   curatedCollectionEntries:
     'SELECT collection_id, entry_id FROM curated_collection_entries ORDER BY collection_id, position',
 };
@@ -608,6 +609,7 @@ export function createPackReader(db: PackDatabase): PackReader {
           description: row.description,
           publishedOn: row.published_on,
           entryIds: (entryIds.get(row.id) ?? []).map((entry) => entry.entry_id),
+          ...(row.pictogram === null ? {} : { pictogram: row.pictogram }),
         }),
       );
     },
