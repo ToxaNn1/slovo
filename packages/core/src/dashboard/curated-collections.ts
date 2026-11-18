@@ -74,6 +74,11 @@ export interface CuratedCollectionScreen {
 export interface CuratedCollections {
   /** The cards in display order. A change makes a new array and tells the subscribers. */
   readonly rail: readonly CuratedCollectionCard[];
+  /**
+   * The grid opened from the rail header: a card for every collection
+   * published by today, in the rail's order, the rail being its first ten.
+   */
+  readonly grid: readonly CuratedCollectionCard[];
   /** The rail header's count: every collection published by today, past the ten cards. */
   readonly published: number;
   /**
@@ -155,7 +160,7 @@ export async function openCuratedCollections({
     return all.filter(({ publishedOn }) => publishedOn <= today);
   };
 
-  async function railOf(): Promise<readonly CuratedCollectionCard[]> {
+  async function gridOf(): Promise<readonly CuratedCollectionCard[]> {
     const opened = await openedIds();
     return publishedByToday()
       .map((collection): CuratedCollectionCard => ({
@@ -169,22 +174,23 @@ export async function openCuratedCollections({
           Number(one.state === 'opened') - Number(other.state === 'opened') ||
           other.collection.publishedOn.localeCompare(one.collection.publishedOn) ||
           one.collection.id.localeCompare(other.collection.id),
-      )
-      .slice(0, RAIL_LENGTH);
+      );
   }
 
   /** The collections whose copy is being made. */
   const adding = new Set<string>();
 
-  let rail = await railOf();
+  let grid = await gridOf();
+  let rail = grid.slice(0, RAIL_LENGTH);
   // The refreshes started, so one that ends after a newer one never puts back what it read.
   let started = 0;
   async function refresh(): Promise<void> {
     started += 1;
     const mine = started;
-    const next = await railOf();
+    const next = await gridOf();
     if (mine !== started) return;
-    rail = next;
+    grid = next;
+    rail = next.slice(0, RAIL_LENGTH);
     subscribers.tell();
   }
   if (on) {
@@ -201,6 +207,9 @@ export async function openCuratedCollections({
   return {
     get rail() {
       return rail;
+    },
+    get grid() {
+      return grid;
     },
     get published() {
       return publishedByToday().length;
