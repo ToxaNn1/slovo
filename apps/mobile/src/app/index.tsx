@@ -45,6 +45,7 @@ function DashboardBlocks() {
     reveal,
     toCard,
     chooseMood,
+    unpickMood,
     openPreviousWord,
     openCorrectionType,
     openCuratedCollection,
@@ -115,7 +116,7 @@ function DashboardBlocks() {
           />
         );
       case 'mood':
-        return <MoodCheckIn block={block} onChoose={chooseMood} />;
+        return <MoodCheckIn block={block} onChoose={chooseMood} onUnpick={unpickMood} />;
       case 'previousWords':
         return <PreviousWords block={block} onOpen={openPreviousWord} />;
       case 'correctionTypes':

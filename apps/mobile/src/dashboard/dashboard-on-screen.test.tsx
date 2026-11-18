@@ -324,6 +324,23 @@ describe('the Mood check-in', () => {
       selected: false,
     });
   });
+
+  it('a line under the tiles says what the Mood changed in the Feed, and a second tap unpicks it', async () => {
+    await open();
+    await renderApp();
+
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-calm')));
+
+    expect(screen.getByText('Слова простіші, порад більше, Виправлень менше.')).toBeTruthy();
+
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-calm')));
+
+    expect(composition.mood.today).toEqual({ state: 'asking' });
+    expect(screen.queryByTestId('dashboard-mood-effect')).toBeNull();
+    expect(screen.getByTestId('dashboard-mood-calm').props['accessibilityState']).toMatchObject({
+      selected: false,
+    });
+  });
 });
 
 describe('«Попередні слова»', () => {
