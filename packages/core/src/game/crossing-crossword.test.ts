@@ -7,7 +7,7 @@ import {
   crossingPlacesOf,
   generateCrossingCrossword,
 } from './crossing-crossword';
-import { seededRandomOf } from './traced-crossword';
+import { seededRandomOf } from './seeded-random';
 import {
   ALPHABET,
   crossingsOf,

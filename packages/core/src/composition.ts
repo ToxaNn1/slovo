@@ -46,7 +46,7 @@ import {
 } from './saved/word-of-the-day-archive';
 import { openDueQuiz, type DueQuiz } from './knowledge/due-quiz';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
-import { seededRandomOf } from './game/traced-crossword';
+import { seededRandomOf } from './game/seeded-random';
 import { openBadges, type Badges } from './progress/badges';
 import { openCommunityCounters, type CommunityCounters } from './community-counters/counter-deltas';
 import type { HiddenEntries } from './mix/hidden-entries';
@@ -196,10 +196,9 @@ export interface Composition extends Hiding {
   readonly rarityRange: RarityRangeSetting;
   /**
    * Opens today's Daily Crossword, the one its card and its screen draw: the
-   * crossing one (ADR 0087) with the progress this device made in it, the
-   * traced one (ADR 0073) with the Words this device found while the crossing
-   * one is off, or none on a day no pattern fills, while the traced one cannot
-   * fill its grid or with both off. Open it again once the next local day starts.
+   * crossing one (ADR 0087) with the progress this device made in it, or none
+   * on a day no pattern fills or while it is off (ADR 0176). Open it again
+   * once the next local day starts.
    */
   openDailyCrossword(): Promise<DailyCrosswordOpening>;
   /**

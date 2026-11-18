@@ -33,11 +33,11 @@ export const gameRecords = {
     { sync: 'device-only' },
   ),
   /**
-   * The hidden Words found in the traced Daily Crossword, by Word id, the
-   * local date of its day and the fingerprint of its puzzle. Only today's
-   * puzzle counts; a new day, or another puzzle the same day (a new Rarity
-   * Ceiling, new Edition content), starts with none found. It stays on the
-   * device, with no Sync (ADR 0073).
+   * Reserved (ADR 0013): the hidden Words found in the traced Daily Crossword
+   * of ADR 0073, by Word id, with the local date and the puzzle's fingerprint.
+   * The traced crossword is gone (ADR 0176) and nothing reads or writes the
+   * record; it stays declared so user state that holds it opens as before and
+   * the key is never given to another record. Device-only, with no Sync.
    */
   tracedCrosswordProgress: declareRecord(
     'crossword.traced',

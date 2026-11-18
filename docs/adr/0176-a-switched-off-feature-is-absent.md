@@ -1,0 +1,13 @@
+# A switched-off feature is absent
+
+Owner decision of 2026-11-17, after the app pass. This ADR supersedes ADR 0073 (the traced Daily Crossword), amends ADR 0087 (the crossing crossword is no longer behind its own switch), ADR 0052 and ADR 0089 (what a Feature Switch's `off` means), and amends ADR 0122 for one more change an admin output may make.
+
+**What went wrong.** Several Feature Switches did not hide their feature when off: they brought back an older version of it. With `crossingCrossword` off the app showed the traced 5×5 grid of ADR 0073; with `tracedCrossword` off as well, the typed crossword of ADR 0052. Every such switch kept two or three versions of one feature alive in the code, the tests, the strings and the admin.
+
+**The rule.** A Feature Switch turns one feature on or off; off, the feature is absent from the app. It never chooses between an old and a new version. When a new version of a feature replaces the old one, the old code, its tests, strings, tokens and Feature Switch go in the same change; the feature keeps the one switch that makes it absent.
+
+**The Daily Crossword.** `tracedCrossword`, `crossingCrossword` and `dailyCrosswordShare` are deleted. `dailyCrossword` on is the crossing crossword on the Letter Wheel of ADR 0087; off, there is no Daily Crossword card and its screen goes back to the Game. Its parts `crosswordHint`, `crosswordSolveTime`, `crosswordSolvedScreen` and `crosswordBadgeStamp` (with `badges`) now depend on `dailyCrossword`. The traced grid, its screen, card, Share Card, strings and tokens are gone; a solved crossword is shared from «Розгадано!» as ADR 0087 states. The user state record `crossword.traced` stays reserved (ADR 0013): nothing reads or writes it.
+
+**The API.** A retired Feature Switch leaves the `states` of every admin answer. The admin ships with the backend and its client validates no answer (ADR 0170), so the breaking-change check skips a field gone from `body.states` on a `/v1/admin/` path; any other admin output field that goes still breaks `/v1` (amends ADR 0122).
+
+**Still to do.** The 31 other switches whose `off` shows an older version (Game Lives and limits, the Game hub, the Feed board parts, the Profile board parts and others) each retire in their own change by the same rule.

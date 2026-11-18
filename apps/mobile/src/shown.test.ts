@@ -63,7 +63,6 @@ const everything: Shown = {
   streakFreezeCard: true,
   badges: true,
   progressShareCards: true,
-  dailyCrosswordShare: true,
   crosswordSolvedScreen: true,
   crosswordSolveTime: true,
   profile: true,
@@ -436,10 +435,6 @@ describe('what the reader is shown', () => {
     [
       'no progress Share Cards with their switch off',
       { off: ['progressShareCards'], shown: { progressShareCards: false } },
-    ],
-    [
-      'no Daily Crossword Share Card with its switch off',
-      { off: ['dailyCrosswordShare'], shown: { dailyCrosswordShare: false } },
     ],
     [
       'no «Розгадано!» screen with its switch off',

@@ -176,6 +176,20 @@ describe('a change of the contract', () => {
     ).toEqual(['POST /v1/things: 200 body.size is new in a strict object']);
   });
 
+  it('breaks nothing when a retired Feature Switch leaves an admin `states`, but breaks an app one (ADR 0176)', async () => {
+    const output = (path: `/${string}`, shape: z.ZodRawShape) =>
+      thingContract({ path, output: z.object({ states: z.object(shape), size: z.number() }) });
+    const before = { feed: z.string(), tracedCrossword: z.string() };
+    const after = { feed: z.string() };
+
+    expect(
+      await changesFrom(output('/admin/things', before), output('/admin/things', after)),
+    ).toEqual([]);
+    expect(await changesFrom(output('/things', before), output('/things', after))).toEqual([
+      'POST /v1/things: 200 body.states.tracedCrossword is gone',
+    ]);
+  });
+
   it('breaks nothing when an admin procedure goes, but breaks an app one that goes (ADR 0162)', async () => {
     const empty = oc.prefix('/v1').router({});
 

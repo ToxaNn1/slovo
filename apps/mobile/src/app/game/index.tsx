@@ -2,7 +2,6 @@ import { fill } from '@slovo/contracts';
 import { streakOf, type GameModeOffer } from '@slovo/core';
 import {
   CrosswordDayCard,
-  DailyCrosswordCard,
   GameEndPoster,
   GameModeCard,
   GameResult,
@@ -209,19 +208,11 @@ function ModeScreen({
           <GamesTitle>{strings.title}</GamesTitle>
           <TotalXp />
         </View>
-        {crossword === undefined ? null : crossword.kind === 'crossing' ? (
+        {crossword !== undefined && (
           <CrosswordDayCard
             testID="daily-crossword"
             title={crossword.title}
             state={crossword.state}
-            onPress={() => {
-              openScreen('/game/crossword');
-            }}
-          />
-        ) : (
-          <DailyCrosswordCard
-            testID="daily-crossword"
-            {...crossword}
             onPress={() => {
               openScreen('/game/crossword');
             }}

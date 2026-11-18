@@ -9248,30 +9248,6 @@
                           ],
                           "type": "string"
                         },
-                        "dailyCrosswordShare": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "tracedCrossword": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "crossingCrossword": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "crosswordHint": {
                           "enum": [
                             "on",
@@ -9940,9 +9916,6 @@
                         "breakCard",
                         "calendarDayLines",
                         "progressShareCards",
-                        "dailyCrosswordShare",
-                        "tracedCrossword",
-                        "crossingCrossword",
                         "crosswordHint",
                         "crosswordSolveTime",
                         "crosswordSolvedScreen",
@@ -11326,30 +11299,6 @@
                           ],
                           "type": "string"
                         },
-                        "dailyCrosswordShare": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "tracedCrossword": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "crossingCrossword": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "crosswordHint": {
                           "enum": [
                             "on",
@@ -12018,9 +11967,6 @@
                         "breakCard",
                         "calendarDayLines",
                         "progressShareCards",
-                        "dailyCrosswordShare",
-                        "tracedCrossword",
-                        "crossingCrossword",
                         "crosswordHint",
                         "crosswordSolveTime",
                         "crosswordSolvedScreen",
@@ -13328,30 +13274,6 @@
                           ],
                           "type": "string"
                         },
-                        "dailyCrosswordShare": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "tracedCrossword": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "crossingCrossword": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "crosswordHint": {
                           "enum": [
                             "on",
@@ -14020,9 +13942,6 @@
                         "breakCard",
                         "calendarDayLines",
                         "progressShareCards",
-                        "dailyCrosswordShare",
-                        "tracedCrossword",
-                        "crossingCrossword",
                         "crosswordHint",
                         "crosswordSolveTime",
                         "crosswordSolvedScreen",

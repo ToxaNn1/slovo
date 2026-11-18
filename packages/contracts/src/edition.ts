@@ -435,19 +435,13 @@ export const FeatureSwitchesSchema = z.strictObject({
   calendarDayLines: FeatureSwitchStateSchema,
   /** The Share Cards of a Level reached, a Badge earned and a Streak milestone; off while `shareCards` or `xpLog` is. */
   progressShareCards: FeatureSwitchStateSchema,
-  /** The Share Card of a solved Daily Crossword, its grid with no letters; off while `shareCards` or `dailyCrossword` is. */
-  dailyCrosswordShare: FeatureSwitchStateSchema,
-  /** The traced Daily Crossword: a 5 × 5 grid full of letters whose hidden Words the reader traces; off, the typed one (ADR 0073). Off while `dailyCrossword` is. */
-  tracedCrossword: FeatureSwitchStateSchema,
-  /** The crossing Daily Crossword: a 5 × 5 crossword with blocks, numbered cells and pre-filled letters, played one clue at a time on the Letter Wheel (ADR 0087); off, the traced one stays. Off while `dailyCrossword` is. */
-  crossingCrossword: FeatureSwitchStateSchema,
-  /** «Підказка»: the Crossword Hint, which fills one letter of the current Word, costs nothing and marks the day as hinted (ADR 0087); off while `crossingCrossword` is. */
+  /** «Підказка»: the Crossword Hint, which fills one letter of the current Word, costs nothing and marks the day as hinted (ADR 0087); off while `dailyCrossword` is. */
   crosswordHint: FeatureSwitchStateSchema,
-  /** The Solve time: the on-screen seconds of the Daily Crossword, kept with its XP log record and shown on the solved card (ADR 0087); off while `crossingCrossword` is. */
+  /** The Solve time: the on-screen seconds of the Daily Crossword, kept with its XP log record and shown on the solved card (ADR 0087); off while `dailyCrossword` is. */
   crosswordSolveTime: FeatureSwitchStateSchema,
-  /** The solved screen of the Daily Crossword, «Розгадано!» with its share buttons (ADR 0087); off while `crossingCrossword` is. */
+  /** The solved screen of the Daily Crossword, «Розгадано!» with its share buttons (ADR 0087); off while `dailyCrossword` is. */
   crosswordSolvedScreen: FeatureSwitchStateSchema,
-  /** The full-screen Badge stamp after a solved Daily Crossword that earns a Badge (ADR 0087); off while `crossingCrossword` or `badges` is. */
+  /** The full-screen Badge stamp after a solved Daily Crossword that earns a Badge (ADR 0087); off while `dailyCrossword` or `badges` is. */
   crosswordBadgeStamp: FeatureSwitchStateSchema,
   /** The inline answer card of a Game Round, in place of the bottom sheet (spec #1674); off while `game` is. */
   gameAnswerCard: FeatureSwitchStateSchema,

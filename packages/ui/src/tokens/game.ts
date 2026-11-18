@@ -137,16 +137,8 @@ export const answerOptionStamp = {
   stamp: { side: 30, border: 2, mark: 14 },
 } as const;
 
-/**
- * The Daily Crossword's red card on the mode screen, from the design: its
- * padding, the gap between its grid and its lines and between its lines, the
- * gap over the state, and the small grid's cell (side, corner, edge) and gap.
- */
+/** The small grid of the Daily Crossword's solved poster: a cell's side, corner and edge, and the gap between cells. */
 export const dailyCrosswordCard = {
-  padding: 18,
-  gap: 16,
-  lineGap: 6,
-  stateGap: 4,
   mini: { cell: 22, radius: 5, depth: 2, gap: 4 },
 } as const;
 
@@ -194,20 +186,6 @@ export const crosswordLayout = {
   keyGap: 4,
   keyRowGap: 7,
   eraseKeyFlex: 1.5,
-} as const;
-
-/**
- * The traced Daily Crossword (ADR 0073): how much of a cell's side, from its
- * centre, catches the finger, so a diagonal passes between corners; the dotted
- * trace's dot and the gap between dots; an answer tile's side; how long a
- * trace that locked nothing takes to fade (ms).
- */
-export const tracedCrosswordLayout = {
-  hitRadius: 0.42,
-  dot: 6,
-  dotGap: 12,
-  tile: 28,
-  missFade: 300,
 } as const;
 
 /**

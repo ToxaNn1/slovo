@@ -55,7 +55,6 @@ export function opened<T>(value: T): Opening<T> {
  * hang on whether the UA Edition ships them.
  */
 export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
-  'crossingCrossword',
   'crosswordHint',
   'crosswordSolveTime',
   'crosswordSolvedScreen',

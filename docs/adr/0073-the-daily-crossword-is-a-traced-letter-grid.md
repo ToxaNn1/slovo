@@ -1,6 +1,6 @@
 # The Daily Crossword is a traced letter grid
 
-**Superseded by ADR 0087 while `crossingCrossword` is on.** With it on, the crossing crossword of ADR 0087 replaces this grid's generation, play, progress and fallback; what both share (the card, the XP once a day, the Share Card, «not a Game», nothing Seen, no Knowledge Mark changed) is stated in ADR 0087. With `crossingCrossword` off, the traced grid below (`tracedCrossword`) is still the Daily Crossword.
+**Superseded by ADR 0087 and ADR 0176.** The crossing crossword of ADR 0087 is the Daily Crossword; the traced grid below, its `tracedCrossword` switch and its code are gone (ADR 0176). What both shared (the card, the XP once a day, «not a Game», nothing Seen, no Knowledge Mark changed) is stated in ADR 0087.
 
 The Daily Crossword of ADR 0052 asks the reader to type letters into empty cells, which is slow and fiddly on a phone. Owner decision 03.11 (spec #1540): a 5×5 grid already full of letters, whose hidden Words the reader finds by dragging a finger across them. This ADR supersedes the crossword part of ADR 0052 (Generation and Play); the card, the XP, the Share Card and «not a Game» stay.
 

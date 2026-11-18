@@ -5,6 +5,10 @@ import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { crosswordDayCard, fontScaleCap, pressedFade, typeStyle } from '../tokens';
 
+/** A place of a Daily Crossword's small grid: dark where no word reads through, else a cell with the letter in it, if any. */
+export type CrosswordMiniCell =
+  { readonly kind: 'block' } | { readonly kind: 'cell'; readonly letter: string | undefined };
+
 /**
  * How far today's crossing Daily Crossword has come, as its card draws it:
  * not started, with its size and count of Words and «Почати»; started, with

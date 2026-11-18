@@ -15,7 +15,7 @@ import type { XpLog } from '../progress/xp-log';
 import type { Clock, Random, UserStateChanges } from '../ports';
 import type { History } from '../saved/history';
 import type { TextComparison } from '../text/text-comparison';
-import { seededRandomOf } from '../game/traced-crossword';
+import { seededRandomOf } from '../game/seeded-random';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 

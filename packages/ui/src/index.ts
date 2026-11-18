@@ -49,8 +49,11 @@ export { CollectionMenuSheet } from './saved/CollectionMenuSheet';
 export { DeleteCollectionDialog } from './saved/DeleteCollectionDialog';
 export { DeleteCollectionSheet } from './saved/DeleteCollectionSheet';
 export { CollectionShareSheet } from './saved/CollectionShareSheet';
-export { DailyCrosswordCard, type CrosswordMiniCell } from './game/DailyCrosswordCard';
-export { CrosswordDayCard, type CrosswordDayCardState } from './game/CrosswordDayCard';
+export {
+  CrosswordDayCard,
+  type CrosswordDayCardState,
+  type CrosswordMiniCell,
+} from './game/CrosswordDayCard';
 export { GameModeCard, GameModeGroupTitle, GamesTitle } from './game/GameModeCard';
 export { CrosswordSolvedPoster } from './game/CrosswordSolvedPoster';
 export { GameEndPoster } from './game/GameEndPoster';
@@ -62,7 +65,6 @@ export { TypedAnswer, type TypedAnswerBlank } from './game/TypedAnswer';
 export { OrderedChips } from './game/OrderedChips';
 export { PairsGrid } from './game/PairsGrid';
 export { GameTimer } from './game/GameTimer';
-export { TracedCrosswordGrid, type TracedMiss, type TracedWord } from './game/TracedCrosswordGrid';
 export { CrossingClueBar, CrossingGrid, type CrossingGridCell } from './game/CrossingGrid';
 export { LetterWheel, type WheelMiss } from './game/LetterWheel';
 export { HapticsProvider } from './providers/HapticsProvider';

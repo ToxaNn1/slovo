@@ -46,7 +46,6 @@ const MODES_UNDER_TEST = [
   'gameBuildIdiom',
   'gameOrigin',
   'dailyCrossword',
-  'tracedCrossword',
 ];
 
 /**
@@ -250,17 +249,14 @@ export async function open({
   switchedOff?: readonly string[];
   /** Feature Switches turned on, such as the Games boards' ones. */
   switchedOn?: readonly string[];
-  /** Lemmas that fill the crossing Daily Crossword, with it switched on. */
+  /** Lemmas that fill the Daily Crossword, so a day opens one. */
   crossing?: boolean;
   /** The clock the Core reads; a stopped one on the morning of 26 October by default. */
   clock?: Clock;
   /** What the Core runs something later by; nothing by default. */
   schedule?: Schedule;
 } = {}) {
-  editionInEffect = editionWithout(
-    switchedOff,
-    crossing ? [...switchedOn, 'crossingCrossword'] : switchedOn,
-  );
+  editionInEffect = editionWithout(switchedOff, switchedOn);
   const xpLog = Object.fromEntries(
     xp.map(({ date, amount }, index): [string, XpRecord] => [
       `seeded-${String(index)}`,

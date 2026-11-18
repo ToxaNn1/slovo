@@ -6,8 +6,6 @@ import { buildShareCardContent, type AnyEntryCard, type WeeklyRecapModel } from 
 import { buildCorrectionCard } from '../entries/correction-card';
 import { buildWordCard } from '../entries/word-card';
 import { createEntries, EVERYTHING_IN } from '../entries/entries';
-import { generateCrosswordPuzzle } from '../game/crossword-puzzle';
-import { seededRandomOf } from '../game/traced-crossword';
 import { type ShareCardStrings } from './share-card';
 import { buildIdiomCard } from '../entries/idiom-card';
 import { buildSynonymRowCard } from '../entries/synonym-row-card';
@@ -38,7 +36,6 @@ const STRINGS = {
         other: '{count} дня поспіль',
       },
     },
-    dailyCrossword: { title: 'Кросворд дня розв’язано', grid: 'Сітка кросворду без літер' },
   },
   dates: {
     months: [
@@ -551,45 +548,5 @@ describe('the Share Card of progress', () => {
     expect(
       buildShareCardContent({ streak: 3, date: '2026-11-01' }, STRINGS, 'uk', clock).label,
     ).toBe('1 листопада. Моя серія в SLOVO. 3 дні поспіль');
-  });
-});
-
-describe('the Share Card of a solved traced Daily Crossword', () => {
-  const words = [
-    'w_кіт',
-    'w_дім',
-    'w_вовк',
-    'w_сова',
-    'w_річка',
-    'w_весна',
-    'w_яблуко',
-    'w_зоря',
-  ].map((id) => word(id));
-  const generation = generateCrosswordPuzzle({
-    date: '2026-11-01',
-    words,
-    random: seededRandomOf('2026-11-01'),
-  });
-
-  it('shows every cell of the grid open, with no Word and no clue, the day as its overline', () => {
-    if (generation.kind !== 'puzzle') throw new Error('Expected the puzzle');
-    const { puzzle } = generation;
-    const content = buildShareCardContent({ puzzle }, STRINGS, 'uk', clock);
-
-    expect(content).toEqual({
-      shows: 'crossword:2026-11-01',
-      overline: '1 листопада',
-      label: '1 листопада. Кросворд дня розв’язано. Сітка кросворду без літер',
-      body: {
-        kind: 'dailyCrossword',
-        title: 'Кросворд дня розв’язано',
-        grid: Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => true)),
-      },
-    });
-    const shared = JSON.stringify(content);
-    for (const { word: hidden, clue } of puzzle.words) {
-      expect(shared).not.toContain(hidden.lemma);
-      expect(shared).not.toContain(clue);
-    }
   });
 });

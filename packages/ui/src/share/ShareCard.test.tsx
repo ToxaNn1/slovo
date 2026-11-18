@@ -76,29 +76,6 @@ describe('ShareCard', () => {
     }
   });
 
-  it("draws a solved Daily Crossword's open cells with no letter", async () => {
-    const card = await renderCard(
-      {
-        shows: 'crossword:2026-11-01',
-        overline: '1 November',
-        label: '1 November. Crossword solved. An empty grid',
-        body: {
-          kind: 'dailyCrossword',
-          title: 'Crossword solved',
-          grid: [
-            [true, true],
-            [false, true],
-          ],
-        },
-      },
-      'square',
-    );
-
-    expect(within(card).getByText('Crossword solved')).toBeOnTheScreen();
-    expect(within(card).getAllByTestId('crossword-open-cell')).toHaveLength(3);
-    expect(within(card).getAllByTestId('crossword-closed-cell')).toHaveLength(1);
-  });
-
   it('is red in the light Theme and the dark ground in the dark one, the giant glyph in cream or red', async () => {
     const { light, dark } = coreTokens.colors;
 

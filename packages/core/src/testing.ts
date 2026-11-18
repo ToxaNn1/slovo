@@ -46,7 +46,6 @@ export { type IdiomFeedCard, type WordFeedCard } from './feed/feed-card';
 export { type PlayingGame } from './game/game';
 export { type GameHubGroup, type GameMode, type GameModeGroup } from './game/game-mode';
 export { relativeTimeOf } from './saved/history-time';
-export { playPuzzle, startPuzzle } from './game/crossword-puzzle';
 export { renderStress } from './entries/stress';
 export { buildWordCard } from './entries/word-card';
 export type { XpRecord } from './progress/records';

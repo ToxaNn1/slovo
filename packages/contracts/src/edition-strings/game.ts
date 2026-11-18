@@ -114,19 +114,8 @@ export const GameStringsSchema = z.strictObject({
     solvedMark: TextSchema,
     /** The screen's line once it is solved, e.g. «Розв’язано!». */
     solved: TextSchema,
-    /** The traced Daily Crossword's line over its grid, which says how to play, e.g. «Веди пальцем по сусідніх літерах…». */
-    traceHint: TextSchema,
-    /** The traced Daily Crossword's button that checks the cells tapped with VoiceOver on, e.g. «Перевірити». */
+    /** The Letter Wheel's button that checks the tiles tapped with VoiceOver on, e.g. «Перевірити». */
     check: TextSchema,
-    /**
-     * What VoiceOver reads for a cell of the traced Daily Crossword, e.g. «к. Рядок 1, стовпець 1».
-     * Takes `{letter}`, with its Stress mark, and `{row}` and `{column}`, counted from 1 at the top left corner.
-     */
-    tracedCellLabel: templateOf('letter', 'row', 'column'),
-    /** What VoiceOver reads for a clue of the traced Daily Crossword before its Word is found. Takes `{clue}`. */
-    clueHidden: templateOf('clue'),
-    /** What VoiceOver reads for a clue of the traced Daily Crossword once its Word is found. Takes `{clue}` and `{word}`. */
-    clueFound: templateOf('clue', 'word'),
     /** The crossing Daily Crossword's grid size on its card, e.g. «5×5». Takes `{size}` (ADR 0087). */
     size: templateOf('size'),
     /** The count of its Words on its card, e.g. «6 слів» (ADR 0087). */

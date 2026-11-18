@@ -74,12 +74,11 @@ export interface ShareCardProps {
 interface Paint {
   ground: string;
   ink: string;
-  /** The brand wedge, the labels and the filled crossword cells. */
+  /** The brand wedge and the labels. */
   mark: string;
   giant: string;
   dot: string;
   chip: string;
-  closedCell: string;
   footer: string;
   onFooter: string;
   onRed: boolean;
@@ -95,7 +94,6 @@ function usePaint(): Paint {
       giant: colors.background,
       dot: halftone.dot,
       chip: withAlpha(colors.background, shareCardDrawing.chipAlpha.light),
-      closedCell: withAlpha(colors.background, shareCardDrawing.closedCellAlpha.light),
       footer: colors.ink,
       onFooter: colors.background,
       onRed: true,
@@ -108,7 +106,6 @@ function usePaint(): Paint {
     giant: colors.accent,
     dot: withAlpha(colors.ink, shareCardDrawing.darkDotAlpha),
     chip: withAlpha(colors.ink, shareCardDrawing.chipAlpha.dark),
-    closedCell: withAlpha(colors.ink, shareCardDrawing.closedCellAlpha.dark),
     footer: colors.surfaceSunken,
     onFooter: colors.ink,
     onRed: false,
@@ -130,8 +127,7 @@ function usePaint(): Paint {
  * a place name's «Походження» over its etymology; a Synonym Row's its
  * dominant, its meaning and its first members; a Tip's its title over its
  * forms; a Weekly Recap's its title and the week's numbers in chips; a
- * milestone's its title, headline and the Level's name; a Daily Crossword's
- * its title and its grid without letters. The card is laid out at its own
+ * milestone's its title, headline and the Level's name. The card is laid out at its own
  * size, so it is sharp at any size, and its type keeps the design's
  * proportions whatever the reader's text size. A headline too wide for its
  * line shrinks to a floor and then wraps; text too tall for the card shrinks
@@ -324,24 +320,23 @@ function FittedCard({
 
 /** Whether the card shows an Entry, whose headline is the design's largest. */
 function isEntry(body: ShareCardBody): boolean {
-  return body.kind !== 'weeklyRecap' && body.kind !== 'milestone' && body.kind !== 'dailyCrossword';
+  return body.kind !== 'weeklyRecap' && body.kind !== 'milestone';
 }
 
 /** The Mascot's state on the card, as the share board picks it. */
 function mascotState(body: ShareCardBody): MascotState {
   if (body.kind === 'milestone') return 'celebrates';
-  if (body.kind === 'weeklyRecap' || body.kind === 'dailyCrossword') return 'happy';
+  if (body.kind === 'weeklyRecap') return 'happy';
   return 'shouts';
 }
 
 /**
  * The giant glyph behind the text: a milestone's number, or the first letter
- * of what the card names, without its Stress; none for a week or a crossword.
+ * of what the card names, without its Stress; none for a week.
  */
 function giantGlyph(body: ShareCardBody): string | undefined {
   switch (body.kind) {
     case 'weeklyRecap':
-    case 'dailyCrossword':
       return undefined;
     case 'milestone':
       return /\d+/.exec(body.headline)?.[0] ?? firstLetter(body.headline);
@@ -465,8 +460,6 @@ function Blocks({ body, ...props }: BlockProps & { body: ShareCardBody }) {
           {body.detail !== undefined && <Sub {...props} value={body.detail} />}
         </>
       );
-    case 'dailyCrossword':
-      return <DailyCrosswordBlocks card={body} {...props} />;
   }
 }
 
@@ -594,36 +587,6 @@ function WeeklyRecapBlocks({ card, ...props }: BlockProps & { card: BodyOf<'week
   );
 }
 
-/** A solved Daily Crossword: its title and its grid with the open cells filled, never a letter. */
-function DailyCrosswordBlocks({ card, ...props }: BlockProps & { card: BodyOf<'dailyCrossword'> }) {
-  const { text, format, paint } = props;
-  const cell = text(shareCardLayout[format].cell);
-  const gap = text(shareCardDrawing.cellGap);
-  return (
-    <>
-      {props.headline(card.title)}
-      <View style={{ gap }}>
-        {card.grid.map((row, r) => (
-          <View key={r} style={[styles.gridRow, { gap }]}>
-            {row.map((open, c) => (
-              <View
-                key={c}
-                testID={open ? 'crossword-open-cell' : 'crossword-closed-cell'}
-                style={{
-                  width: cell,
-                  height: cell,
-                  borderRadius: text(shareCardDrawing.cellRadius),
-                  backgroundColor: open ? paint.mark : paint.closedCell,
-                }}
-              />
-            ))}
-          </View>
-        ))}
-      </View>
-    </>
-  );
-}
-
 const styles = StyleSheet.create({
   card: { overflow: 'hidden' },
   giant: { position: 'absolute' },
@@ -631,7 +594,6 @@ const styles = StyleSheet.create({
   room: { flex: 1 },
   strike: { textDecorationLine: 'line-through' },
   stats: { flexDirection: 'row', flexWrap: 'wrap' },
-  gridRow: { flexDirection: 'row' },
   footer: {
     flexDirection: 'row',
     alignItems: 'flex-end',

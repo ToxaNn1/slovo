@@ -31,7 +31,6 @@ export const shareCardLayout = {
     giant: { size: 320, right: -50, top: 120 },
     mascot: 96,
     footer: 120,
-    cell: 22,
     /** Each stat chip's base width: two to a row. */
     statBasis: '40%',
     type: {
@@ -55,7 +54,6 @@ export const shareCardLayout = {
     giant: { size: 220, right: -30, top: 40 },
     mascot: 70,
     footer: 84,
-    cell: 18,
     /** Four to a row. */
     statBasis: '20%',
     type: {
@@ -82,11 +80,8 @@ export const shareCardDrawing = {
   /** Secondary text over the card: the reading text and the watermark. */
   subOpacity: 0.9,
   watermarkOpacity: 0.8,
-  /** A stat's chip and a closed crossword cell, over red and over the dark ground. */
+  /** A stat's chip, over red and over the dark ground. */
   chipAlpha: { light: 0.55, dark: 0.1 },
-  closedCellAlpha: { light: 0.6, dark: 0.12 },
-  cellRadius: 4,
-  cellGap: 3,
   chipRadius: 9,
   chipPadding: 8,
   /** The Mascot's whole width with its own padding, which the card scales to its size. */

@@ -2,7 +2,6 @@ import { fill, pluralCount, type EditionStrings } from '@slovo/contracts';
 
 import type { AnyEntryCard } from '../feed/entry-feed-card';
 import { isTodaysWordOfTheDay } from '../feed/feed';
-import type { CrosswordPuzzle } from '../game/crossword-puzzle';
 import { parseLocalDate, type LocalDate } from '../local-date';
 import type { BadgeState } from '../progress/badges';
 import type { LevelState } from '../progress/levels';
@@ -20,7 +19,7 @@ const MORE_MEMBERS = '…';
 
 /**
  * What a Share Card shows: an Entry's card, a Weekly Recap, progress (a Level
- * reached, a Badge earned, a Streak milestone) or a solved Daily Crossword.
+ * reached, a Badge earned, a Streak milestone).
  * Dates are local, `YYYY-MM-DD`.
  */
 export type ShareCardSubject =
@@ -39,9 +38,7 @@ export type ShareCardSubject =
     }
   | { readonly level: Pick<LevelState, 'level' | 'name'>; readonly date: string }
   | { readonly badge: Extract<BadgeState, { readonly earned: true }> }
-  | { readonly streak: number; readonly date: string }
-  /** A solved traced Daily Crossword (ADR 0073), whose every cell a Word reads through. */
-  | { readonly puzzle: CrosswordPuzzle };
+  | { readonly streak: number; readonly date: string };
 
 /**
  * The blocks of a Share Card, by what it shows, each text final, with its
@@ -98,23 +95,16 @@ export type ShareCardBody =
       readonly headline: string;
       /** The Level's name; undefined for a Badge or a Streak. */
       readonly detail: string | undefined;
-    }
-  | {
-      readonly kind: 'dailyCrossword';
-      /** «Кросворд дня розв’язано». */
-      readonly title: string;
-      /** The grid by row and column, `true` for a cell a word reads through; never a letter. */
-      readonly grid: readonly (readonly boolean[])[];
     };
 
 /** What a Share Card shows, built by the Core, the same in every format; the UI draws it. */
 export interface ShareCardContent {
-  /** What it shows, so a new one is measured afresh: the Entry's id, the Weekly Recap's week, or the progress or crossword it shows. */
+  /** What it shows, so a new one is measured afresh: the Entry's id, the Weekly Recap's week, or the progress it shows. */
   readonly shows: string;
   /**
    * Today's Word of the Day or a Word's Category, the Correction Type, the
    * chip of the Idiom Type, of a row or of a Tip, a Weekly Recap's week, or
-   * the day of progress or of a Daily Crossword.
+   * the day of progress.
    */
   readonly overline: string | undefined;
   /** What VoiceOver reads of the card, without Stress marks. */
@@ -136,8 +126,8 @@ export type ShareCardStrings = Pick<
 >;
 
 /**
- * The Share Card of an Entry, a Weekly Recap, progress or a solved Daily
- * Crossword, in the Edition's texts. `locale` picks the plural forms of the
+ * The Share Card of an Entry, a Weekly Recap or progress, in the Edition's
+ * texts. `locale` picks the plural forms of the
  * recap's numbers and of a Streak; `clock` says whether a Word's card is
  * today's Word of the Day.
  */
@@ -174,7 +164,6 @@ export function buildShareCardContent(
       detail: undefined,
     });
   }
-  if ('puzzle' in subject) return tracedCrosswordContent(subject.puzzle, strings);
   const { card } = subject;
   const model = card.model;
   const shows = card.entryId;
@@ -337,7 +326,7 @@ function weeklyRecapContent(
   };
 }
 
-/** A local date, `YYYY-MM-DD`, as a progress or crossword Share Card's overline, e.g. «1 листопада». */
+/** A local date, `YYYY-MM-DD`, as a progress Share Card's overline, e.g. «1 листопада». */
 function dayText(date: string, strings: ShareCardStrings): string {
   const { day, month } = parseLocalDate(date);
   return fill(strings.share.day, {
@@ -359,33 +348,5 @@ function milestoneContent(
     overline,
     label: sentences([overline, texts.title, texts.headline, texts.detail]),
     body: { kind: 'milestone', ...texts },
-  };
-}
-
-/**
- * A solved traced Daily Crossword's Share Card: its grid, every cell open,
- * with no letter and no clue.
- */
-function tracedCrosswordContent(
-  puzzle: CrosswordPuzzle,
-  strings: ShareCardStrings,
-): ShareCardContent {
-  const grid = puzzle.grid.map((line) => line.map(() => true));
-  return crosswordGridContent(puzzle.date, grid, strings);
-}
-
-/** The Share Card of a solved Daily Crossword's grid on its day. */
-function crosswordGridContent(
-  date: string,
-  grid: readonly (readonly boolean[])[],
-  strings: ShareCardStrings,
-): ShareCardContent {
-  const texts = strings.share.dailyCrossword;
-  const overline = dayText(date, strings);
-  return {
-    shows: `crossword:${date}`,
-    overline,
-    label: sentences([overline, texts.title, texts.grid]),
-    body: { kind: 'dailyCrossword', title: texts.title, grid },
   };
 }

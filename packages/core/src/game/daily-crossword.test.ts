@@ -25,13 +25,8 @@ const kindOf = async (on: readonly FeatureSwitch[], words?: readonly Word[]) =>
   (await (await app(on, words)).openDailyCrossword()).kind;
 
 describe('the Daily Crossword the composition opens', () => {
-  it('is the crossing one while it is on, the traced one on as well', async () => {
-    const composition = await app([
-      'game',
-      'dailyCrossword',
-      'crossingCrossword',
-      'tracedCrossword',
-    ]);
+  it('is the crossing one while the Daily Crossword is on', async () => {
+    const composition = await app(['game', 'dailyCrossword']);
     const opening = await composition.openDailyCrossword();
     if (opening.kind !== 'crossing')
       throw new Error(`Expected the crossing one, got ${opening.kind}`);
@@ -39,28 +34,11 @@ describe('the Daily Crossword the composition opens', () => {
     for (const { word: placed } of opening.crossword.puzzle.words) expect(ids).toContain(placed.id);
   });
 
-  it('is none on a day no pattern fills, never the traced one', async () => {
-    expect(
-      await kindOf(['game', 'dailyCrossword', 'crossingCrossword', 'tracedCrossword'], []),
-    ).toBe('none');
+  it('is none on a day no pattern fills', async () => {
+    expect(await kindOf(['game', 'dailyCrossword'], [])).toBe('none');
   });
 
-  it('is the traced one while the crossing one is off', async () => {
-    const composition = await app(['game', 'dailyCrossword', 'tracedCrossword']);
-    const opening = await composition.openDailyCrossword();
-    if (opening.kind !== 'traced') throw new Error(`Expected the traced one, got ${opening.kind}`);
-    expect(opening.crossword.puzzle.words.length).toBeGreaterThan(0);
-  });
-
-  it('is none while the traced one cannot fill its grid and the crossing one is off', async () => {
-    expect(await kindOf(['game', 'dailyCrossword', 'tracedCrossword'], [])).toBe('none');
-  });
-
-  it('is none with both crosswords off', async () => {
-    expect(await kindOf(['game', 'dailyCrossword'])).toBe('none');
-  });
-
-  it('is none while the Daily Crossword is off', async () => {
-    expect(await kindOf(['game', 'crossingCrossword', 'tracedCrossword'])).toBe('none');
+  it('is none while the Daily Crossword is off, no older crossword in its place (ADR 0176)', async () => {
+    expect(await kindOf(['game'])).toBe('none');
   });
 });
