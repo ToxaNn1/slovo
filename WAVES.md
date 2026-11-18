@@ -129,3 +129,10 @@ coord: coord/release-1961
 branches: ^origin/(feat/1961-release-channels|coord/release-1961|(feat|chore|fix|docs|refactor|test)/196[2-6]-)
 brief:
 Read HANDOFF.md on origin/coord/release-1961 first and continue. You are the cloud coordinator of the SLOVO release channels + staging wave: spec #1961, tickets #1962–#1966 (#1967 waits for the owner's Apple purchase: leave it open). Grants: commits, pushes, ONE draft PR to main from feat/1961-release-channels; NO merge to main, no force-push, no branch deletion, no EAS, no outside dashboards. Follow CLAUDE.md, docs/agents/waves.md and mattpocock-skills:implement-spec. Reserved ADR 0167–0170, migration 0034. Never write the owner's email anywhere. Never end your turn while work remains.
+
+## wave proponuie-1992
+status: running
+coord: coord/proponuie-1992
+branches: ^origin/(feat/1992-slovo-proponuie|coord/proponuie-1992|(feat|chore|fix|docs|refactor|test)/199[4-8]-)
+brief:
+Read HANDOFF.md on origin/coord/proponuie-1992 first and continue. You are the cloud coordinator of the SLOVO «SLOVO пропонує» wave: spec #1992, tickets #1994–#1998. Grants (owner 18.11 «можеш зливати і пушити»): commits, pushes, ONE PR to main from feat/1992-slovo-proponuie, squash auto-merge on green after code-review; no force-push, no EAS. Reserved ADR 0178, migration next free from 0033. Follow CLAUDE.md, docs/agents/waves.md and mattpocock-skills:implement-spec. Never write the owner's email anywhere. Never end your turn while work remains.
