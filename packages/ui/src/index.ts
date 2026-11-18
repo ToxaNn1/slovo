@@ -235,4 +235,3 @@ export {
 export { VowelButtons } from './game/VowelButtons';
 export { WidgetGuide, WidgetGuideSteps } from './settings/WidgetGuide';
 export { WidgetPreviews } from './settings/WidgetPreviews';
-export { WidgetGuideSheet } from './settings/WidgetGuideSheet';

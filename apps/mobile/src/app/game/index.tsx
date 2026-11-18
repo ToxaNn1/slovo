@@ -50,7 +50,7 @@ function Game() {
   const state = useGameState();
   const actions = useGameActions();
   const openScreen = useOpenScreen();
-  const { gameReview, gameRoundMascot, gameOptionStamp, plainGameReview } = useShown();
+  const { gameReview, gameRoundMascot, plainGameReview } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
   const { current } = state;
@@ -102,7 +102,6 @@ function Game() {
           onNext={actions.next}
           onLeave={actions.leave}
           onOpenLetter={actions.openLetter}
-          optionStamp={gameOptionStamp}
           mascot={
             gameRoundMascot
               ? ({ state, width }) => <MascotAs state={state} width={width} />

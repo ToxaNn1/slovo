@@ -8904,14 +8904,6 @@
                           ],
                           "type": "string"
                         },
-                        "widgetHint": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "seasonalDecor": {
                           "enum": [
                             "on",
@@ -9273,14 +9265,6 @@
                           "type": "string"
                         },
                         "gameRoundMascot": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameOptionStamp": {
                           "enum": [
                             "on",
                             "off",
@@ -9745,7 +9729,6 @@
                         "activeDaysCalendar",
                         "politePause",
                         "firstWeek",
-                        "widgetHint",
                         "seasonalDecor",
                         "stressAnimation",
                         "illustrations",
@@ -9792,7 +9775,6 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
-                        "gameOptionStamp",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",
@@ -10811,14 +10793,6 @@
                           ],
                           "type": "string"
                         },
-                        "widgetHint": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "seasonalDecor": {
                           "enum": [
                             "on",
@@ -11180,14 +11154,6 @@
                           "type": "string"
                         },
                         "gameRoundMascot": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameOptionStamp": {
                           "enum": [
                             "on",
                             "off",
@@ -11652,7 +11618,6 @@
                         "activeDaysCalendar",
                         "politePause",
                         "firstWeek",
-                        "widgetHint",
                         "seasonalDecor",
                         "stressAnimation",
                         "illustrations",
@@ -11699,7 +11664,6 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
-                        "gameOptionStamp",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",
@@ -12642,14 +12606,6 @@
                           ],
                           "type": "string"
                         },
-                        "widgetHint": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "seasonalDecor": {
                           "enum": [
                             "on",
@@ -13011,14 +12967,6 @@
                           "type": "string"
                         },
                         "gameRoundMascot": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameOptionStamp": {
                           "enum": [
                             "on",
                             "off",
@@ -13483,7 +13431,6 @@
                         "activeDaysCalendar",
                         "politePause",
                         "firstWeek",
-                        "widgetHint",
                         "seasonalDecor",
                         "stressAnimation",
                         "illustrations",
@@ -13530,7 +13477,6 @@
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
-                        "gameOptionStamp",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",

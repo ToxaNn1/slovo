@@ -193,7 +193,6 @@ describe('a switch turned off alone', () => {
     ['idioms', ['gameIdiomMeaning', 'gameBuildIdiom']],
     ['communityCounters', ['communityWord']],
     ['account', ['sync']],
-    ['widget', ['widgetHint']],
     ['notifications', ['notificationExplainer']],
     ['xpLog', ['levels', 'streakFreezes']],
   ] as const)('%s turns off %j, as it does on the phone', async (dependency, dependents) => {

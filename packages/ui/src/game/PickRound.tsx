@@ -181,7 +181,7 @@ export function AnswerOptions({
  * Nothing shakes. VoiceOver reads the option with its Stress, then
  * «Правильно» or «Твій вибір», and the faded ones as dimmed.
  *
- * In the board's look (D6, `gameOptionStamp`) no option has a key (owner,
+ * In the board's look (D6), a Game's Round's, no option has a key (owner,
  * 15.11): a short one takes the large word tier, and the right one, short or
  * long, gets a round ✓ stamp. The wrong text is crossed out in red, the
  * choice drops less and the others fade further.

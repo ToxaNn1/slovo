@@ -127,10 +127,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Перший тиждень',
     line: 'У перші сім днів читача стрічка показує по одному вступному повідомленню.',
   },
-  widgetHint: {
-    name: 'Підказка про віджет',
-    line: 'Після першої гри застосунок показує, як додати віджет.',
-  },
   seasonalDecor: { name: 'Сезонний декор', line: 'Оформлення змінюється до свят і пір року.' },
   stressAnimation: {
     name: 'Падіння наголосу',
@@ -296,10 +292,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   gameRoundMascot: {
     name: 'Талісман у грі',
     line: 'Біля запитання гри стоїть талісман, який реагує на відповідь.',
-  },
-  gameOptionStamp: {
-    name: 'Печатки варіантів',
-    line: 'Варіанти відповіді з печаткою ✓ і закресленим неправильним текстом.',
   },
   gameEndToFeed: {
     name: 'Кнопка «До стрічки»',

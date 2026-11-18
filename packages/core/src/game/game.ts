@@ -468,13 +468,6 @@ export interface GameState {
    * A mode has none before its first finished Game; none has with the Game off.
    */
   readonly bestResults: Readonly<Partial<Record<string, number>>>;
-  /**
-   * Whether the result of the Game just over offers the widget hint: after
-   * each finished Game with at least one Life left until the shell shows it,
-   * then never again on the device (ADR 0054), and never with the widget or
-   * its hint switched off.
-   */
-  readonly widgetHint: boolean;
 }
 
 /**
@@ -530,11 +523,6 @@ export interface Game {
    */
   openLetter(): void;
   /**
-   * Keeps on the device that the widget hint the result offers is on screen,
-   * so no later Game offers it. The shell tells it once the hint shows.
-   */
-  widgetHintShown(): Promise<void>;
-  /**
    * Keeps the answered Round until `done` settles as well as its banner's
    * delay has passed, with the banner on: so the screen has VoiceOver read
    * the banner before the next Round. Nothing changes once the delay has
@@ -574,7 +562,7 @@ const sameOffer = (one: GameModeOffer, other: GameModeOffer | undefined) => {
 const sameOffers = (one: readonly GameModeOffer[], other: readonly GameModeOffer[]) =>
   one.length === other.length && one.every((offer, index) => sameOffer(offer, other[index]));
 
-const { gameBest, widgetHintShown } = userStateRecords;
+const { gameBest } = userStateRecords;
 
 /** Whether the Game is still in play: a Round to answer, or one answered and waiting for «Далі». */
 const inPlay = <Game extends { readonly status: GameStatus }>(
@@ -707,11 +695,7 @@ export async function openGame({
     })),
     current: undefined,
     bestResults,
-    widgetHint: false,
   };
-  /** Whether the next finished Game with a Life left offers the widget hint: until it is shown. */
-  let widgetHintDue =
-    edition.isFeatureEnabled('widgetHint') && (await userState.read(widgetHintShown)) === undefined;
   /** The Game in play, or just over; none on the mode screen. */
   let played: GameInPlay | undefined;
   /** When the Game in play started, by the clock. */
@@ -731,7 +715,7 @@ export async function openGame({
   }
 
   const changeCurrent = (current: CurrentGame | undefined) => {
-    change({ ...state, current, widgetHint: false });
+    change({ ...state, current });
   };
 
   /** The one place that decides whether a mode can start, see `createRoundPlanner`. */
@@ -832,7 +816,7 @@ export async function openGame({
       played && timeLimit !== undefined
         ? { ...played.first, timeLimit, time: runTime(timeLimit) }
         : played?.first;
-    change({ ...state, modes: modesNow, current: first, widgetHint: false });
+    change({ ...state, modes: modesNow, current: first });
     if (first === undefined) return;
     startedAt = clock.now();
     earned = 0;
@@ -982,7 +966,6 @@ export async function openGame({
     const result = resultOf(ended);
     const best = state.bestResults[ended.modeId];
     const beaten = best === undefined || result > best;
-    const widgetHint = widgetHintDue && ended.lives !== undefined && ended.lives > 0;
     const right = ended.played.filter((round) => round.right).length;
     // A Game with no right answer still sets the mode's first Best result but
     // earns no XP for it: the bonus rewards effort, not random tapping (story 3).
@@ -1027,7 +1010,6 @@ export async function openGame({
       ),
       current: state.current === game ? over : state.current,
       bestResults: beaten ? { ...state.bestResults, [over.modeId]: result } : state.bestResults,
-      widgetHint: widgetHint && state.current === game,
     });
   }
 
@@ -1119,12 +1101,6 @@ export async function openGame({
       const opened = game && inPlay(game) ? played?.openLetter(game) : undefined;
       if (opened !== undefined) changeCurrent(opened);
     },
-    widgetHintShown: () =>
-      inTurn(async () => {
-        if (!state.widgetHint || !widgetHintDue) return;
-        await userState.write(widgetHintShown.change(true));
-        widgetHintDue = false;
-      }),
     waitFor(done) {
       if (cancelMoveOn !== undefined) moveOnWaits.push(done);
     },

@@ -383,7 +383,6 @@ describe('the Game Modes on offer', () => {
       modes: [{ modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true }],
       current: undefined,
       bestResults: {},
-      widgetHint: false,
     });
   });
 
@@ -1383,7 +1382,6 @@ describe('the rules of a Game', () => {
       ],
       current: undefined,
       bestResults: { 'guess-word': 15 },
-      widgetHint: false,
     });
   });
 
@@ -2908,103 +2906,6 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
       expect(pickPlayed(round).options).toHaveLength(4);
     }
   });
-});
-
-// Spec #832, "Widget hint": the result of the first finished Game with a Life left offers it, once ever.
-describe('the widget hint', () => {
-  const hintOn: readonly FeatureSwitch[] = ['rarityCeiling', 'widget', 'widgetHint'];
-
-  it('is offered on the result of the first finished Game with a Life left', async () => {
-    const app = await run({ on: hintOn });
-    expect(app.game.state.widgetHint).toBe(false);
-
-    await playGame(app, [2, 15]);
-
-    expect(current(app)).toMatchObject({ lives: 1, status: 'won' });
-    expect(app.game.state.widgetHint).toBe(true);
-  });
-
-  it('is not offered after losing all Lives, and is after the next Game with a Life left', async () => {
-    const app = await run({ on: hintOn });
-
-    await playGame(app, [3, 4, 5]);
-    expect(current(app).status).toBe('lost');
-    expect(app.game.state.widgetHint).toBe(false);
-
-    await playGame(app);
-    expect(app.game.state.widgetHint).toBe(true);
-  });
-
-  it('is never offered twice, also in a later app run on the device', async () => {
-    const records = new Map<string, string>();
-    const first = await run({ records, on: hintOn });
-    await playGame(first);
-    await first.game.widgetHintShown();
-
-    await first.game.start('guess-word');
-    expect(first.game.state.widgetHint).toBe(false);
-    for (const game of [first, await run({ records, on: hintOn })]) {
-      await playGame(game);
-      expect(game.game.state.widgetHint).toBe(false);
-    }
-  });
-
-  it('goes with the result: leaving it drops the hint', async () => {
-    const app = await run({ on: hintOn });
-    await playGame(app);
-
-    app.game.leave();
-
-    expect(app.game.state.widgetHint).toBe(false);
-  });
-
-  it('is offered again by the next Game with a Life left while it was never on screen', async () => {
-    const records = new Map<string, string>();
-    const first = await run({ records, on: hintOn });
-    await playGame(first);
-    expect(first.game.state.widgetHint).toBe(true);
-
-    // The reader left the result before the shell showed the hint.
-    first.game.leave();
-    await playGame(first);
-    expect(first.game.state.widgetHint).toBe(true);
-
-    const later = await run({ records, on: hintOn });
-    await playGame(later);
-    expect(later.game.state.widgetHint).toBe(true);
-  });
-
-  it('keeps on the device only that it was shown, once the shell shows it', async () => {
-    const records = new Map<string, string>();
-    const { port, writes } = recordingPort(records);
-    const app = await run({ port, on: hintOn });
-    writes.length = 0;
-
-    await playGame(app);
-    const kept = () =>
-      writes
-        .flatMap((changes) => [...changes.keys()])
-        .filter((key) => !key.startsWith('game.best.'));
-    expect(kept()).toEqual([]);
-
-    await app.game.widgetHintShown();
-    await app.game.widgetHintShown();
-
-    expect(userStateRecords.widgetHintShown.sync).toBe('device-only');
-    expect(kept()).toEqual([userStateRecords.widgetHintShown.key]);
-    expect(app.game.state.widgetHint).toBe(true);
-  });
-
-  it.each([['widgetHint'], ['widget']] as const)(
-    'is never offered with the Feature Switch %s off',
-    async (off) => {
-      const app = await run({ on: hintOn, off: [off] });
-
-      await playGame(app);
-
-      expect(app.game.state.widgetHint).toBe(false);
-    },
-  );
 });
 
 // Spec #1641, ticket #1644, ADR 0085: a played Game leaves in the XP log what

@@ -261,8 +261,7 @@ export function WidgetGuideSteps({
 /**
  * The widget guide: the drawing of the widgets over the steps, in the order
  * the reader does them, each coming in at its turn (still with Reduce Motion).
- * Settings › «Віджети» and the widget hint on the Game's result both
- * show it. The `testID` names the drawing (`${testID}-drawing`) and the steps
+ * Settings › «Віджети» shows it. The `testID` names the drawing (`${testID}-drawing`) and the steps
  * (`${testID}-step-1` on).
  */
 export function WidgetGuide({

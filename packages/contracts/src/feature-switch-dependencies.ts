@@ -65,7 +65,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   crosswordBadgeStamp: ['dailyCrossword', 'badges'],
   // The board «slogo game last» parts of a Game (spec #1880).
   gameRoundMascot: ['game'],
-  gameOptionStamp: ['game'],
   gameEndToFeed: ['game'],
   plainGameReview: ['gameReview'],
   gameHubGroups: ['game'],
@@ -134,8 +133,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   communityWord: ['communityCounters'],
   // Sync runs for the reader's Account.
   sync: ['account'],
-  // The hint after a Game points to the widget.
-  widgetHint: ['widget'],
   // The reader's choice of voice only changes what Pronunciation plays (ADR 0083).
   narratorVoice: ['pronunciation'],
 };
