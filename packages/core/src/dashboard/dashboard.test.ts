@@ -297,6 +297,7 @@ describe('«SLOVO пропонує» on the Dashboard', () => {
       name: `Name ${String(i)}`,
       description: `About ${String(i)}`,
       publishedOn: `2026-10-${String(i + 1).padStart(2, '0')}`,
+      retired: false,
       entryIds: ['w_one'],
     }));
   const tomorrows: CuratedCollection = {
@@ -304,6 +305,7 @@ describe('«SLOVO пропонує» on the Dashboard', () => {
     name: 'Tomorrow',
     description: 'Not yet',
     publishedOn: '2026-11-05',
+    retired: false,
     entryIds: ['w_one'],
   };
 
