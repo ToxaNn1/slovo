@@ -24,7 +24,6 @@ const everything: Shown = {
   gameHubGroups: true,
   gameHubRecord: true,
   gameModeToast: true,
-  answerCard: true,
   entryButtons: {
     shareCard: true,
     pronunciation: true,
@@ -248,10 +247,6 @@ describe('what the reader is shown', () => {
     [
       'the spec #1674 Game with gameModeToast off',
       { off: ['gameModeToast'], shown: { gameModeToast: false } },
-    ],
-    [
-      'the answer sheet with the answer card off',
-      { off: ['gameAnswerCard'], shown: { answerCard: false } },
     ],
     [
       'no Daily Goal choice with the Daily Goal off',

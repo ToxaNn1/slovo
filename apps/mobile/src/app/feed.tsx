@@ -225,7 +225,7 @@ const FeedPage = memo(function FeedPage({
   onRestoreWeeklyRecap: () => void;
 }) {
   const { top } = useSafeAreaInsets();
-  const { stressFall, calligraphicLemma, answerCard } = useShown();
+  const { stressFall, calligraphicLemma } = useShown();
   const { toolsRow, topRow } = useHeaderRows();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
@@ -249,7 +249,6 @@ const FeedPage = memo(function FeedPage({
               : feedStrings.quickQuestion
           }
           answered={card.answered}
-          feedback={answerCard ? 'card' : 'sheet'}
           onAnswer={(option) => {
             onAnswerQuickQuestion(position, option);
           }}

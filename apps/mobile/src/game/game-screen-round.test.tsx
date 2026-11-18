@@ -154,7 +154,7 @@ describe('the Game screen', () => {
       await fireEvent.press(screen.getByTestId('game-mode-survival'));
 
       await answerSurvivalRound(true);
-      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      expect(screen.getByTestId('game-answer-card-title')).toHaveTextContent('Влучно!');
       expect(screen.queryByTestId(/^mascot-/)).toBeNull();
     });
   });

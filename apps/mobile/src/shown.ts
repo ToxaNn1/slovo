@@ -36,8 +36,6 @@ export interface Shown {
   readonly gameHubRecord: boolean;
   /** The toast on a tap of a Game Mode that cannot be played (ADR 0139). */
   readonly gameModeToast: boolean;
-  /** The inline answer card under a Round's options in place of the bottom sheet (spec #1674). */
-  readonly answerCard: boolean;
   /** The switchable buttons of an Entry card, wherever the card appears. */
   readonly entryButtons: {
     /** The Share Card button of the action row. */
@@ -238,7 +236,6 @@ export function shownOf({
     gameHubGroups: on('gameHubGroups'),
     gameHubRecord: on('gameHubRecord'),
     gameModeToast: on('gameModeToast'),
-    answerCard: on('gameAnswerCard'),
     entryButtons: {
       shareCard: on('shareCards'),
       pronunciation: on('pronunciation'),

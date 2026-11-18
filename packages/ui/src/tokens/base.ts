@@ -320,8 +320,6 @@ export const typeRoles = {
    * Й's breve and Ї's dots, clear the line over it.
    */
   answerVerdict: role('word', '900', 30, 38, -0.5, 'uppercase'),
-  /** The right answer on the Round's answer sheet. */
-  roundAnswer: role('word', '500', 30, 39),
   /** A Round's explanation, and the Definition under its prompt. */
   roundExplanation: role('ui', '400', 16, 25),
   /** A letter in a blank of the typed answer. */

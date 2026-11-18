@@ -273,15 +273,6 @@ export const GameStringsSchema = z.strictObject({
     /** The button that goes back to the same Round. */
     cancel: TextSchema,
   }),
-  /** The sheet after an answer, which only its button closes. */
-  sheet: z.strictObject({
-    /** Its title after a right answer, e.g. «Правильно!». */
-    correct: TextSchema,
-    /** Its title after a wrong one, e.g. «Не цього разу». */
-    wrong: TextSchema,
-    /** The button that goes on, e.g. «Далі». */
-    next: TextSchema,
-  }),
   /** The Game Review under the result: a row per Round played. */
   review: z.strictObject({
     /** The heading over the rows, e.g. «Твої раунди». */

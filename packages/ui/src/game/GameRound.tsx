@@ -59,7 +59,6 @@ export function GameRound({
   onOpenLetter,
   title,
   timeLeft,
-  feedback = 'sheet',
   onGround = false,
   optionStamp = false,
   mascot,
@@ -78,8 +77,6 @@ export function GameRound({
   onOpenLetter: () => void;
   /** The play time left now in a timed Game, as the screen ticks it; the Game's own when none. */
   timeLeft?: number | undefined;
-  /** What the sheet after an answer shows: the answer with its Example, or the answer card (`gameAnswerCard`, spec #1674). */
-  feedback?: 'sheet' | 'card';
   /** Whether the question stands on the background (`gameQuestionOnGround`); on its card, as in spec #1674, if not. */
   onGround?: boolean;
   /** Whether the options take the board's look (`gameOptionStamp`): short ones keyless with a ✓ stamp, ✓ and ✕ keys, the wrong text crossed out; keyed as in spec #1674 if not. */
@@ -197,7 +194,6 @@ export function GameRound({
           line={
             answer === undefined ? undefined : cardLine(answer.sheet, game.played.at(-1)?.entry)
           }
-          feedback={feedback}
           onNext={onNext}
         />
       )}
@@ -319,7 +315,6 @@ export function QuickQuestionRound({
   entry,
   label,
   answered,
-  feedback,
   onAnswer,
 }: {
   title: string;
@@ -330,8 +325,6 @@ export function QuickQuestionRound({
   label: string;
   /** The option the reader picked; none yet. */
   answered: number | undefined;
-  /** What the sheet after an answer shows, as in the Game (`gameAnswerCard`). */
-  feedback: 'sheet' | 'card';
   onAnswer: (option: number) => void;
 }) {
   const tokens = useTokens();
@@ -405,7 +398,6 @@ export function QuickQuestionRound({
       <AnswerSheet
         answer={explained}
         line={cardLine(round.sheet, entry)}
-        feedback={feedback}
         onNext={() => {
           setExplaining(false);
         }}

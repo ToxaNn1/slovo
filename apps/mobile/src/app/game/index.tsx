@@ -64,7 +64,6 @@ function Game() {
   const {
     gameReview,
     finishPoster,
-    answerCard,
     gameQuestionOnGround,
     gameRoundMascot,
     gameOptionStamp,
@@ -158,7 +157,6 @@ function Game() {
           onNext={actions.next}
           onLeave={actions.leave}
           onOpenLetter={actions.openLetter}
-          feedback={answerCard ? 'card' : 'sheet'}
           onGround={gameQuestionOnGround}
           optionStamp={gameOptionStamp}
           mascot={
