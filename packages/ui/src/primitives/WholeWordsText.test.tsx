@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { FontSizeProvider } from '../providers/FontSizeProvider';
-import { coreTokens, typeStyle } from '../tokens';
+import { coreTokens, titleScale, typeRoles, typeStyle } from '../tokens';
 import { WholeWordsText } from './WholeWordsText';
 
 /** Lays the text's line out `width` wide. */
@@ -191,16 +191,20 @@ describe('WholeWordsText', () => {
         style={typeStyle('idiomExpression', coreTokens)}
       />,
     );
+    const start = typeRoles.idiomExpression.size;
+    // The title scale runs from the largest down, so the next lower step is the first below.
+    const lower = titleScale.find((step) => step < start);
+    if (lower === undefined) throw new Error('No lower step on the title scale');
     await layOut('phrase', 300);
     await measureWords('phrase', 200);
-    // At 44 the phrase takes four lines, at 40 three.
+    // At its start the phrase takes four lines, a step lower three.
     await measureLines('phrase', 4);
     expect(screen.getByTestId('phrase')).toHaveStyle({ opacity: 0 });
     await measureWords('phrase', 180);
     await measureLines('phrase', 3);
 
     const phrase = screen.getByTestId('phrase');
-    expect(phrase).toHaveStyle({ fontSize: 40 });
+    expect(phrase).toHaveStyle({ fontSize: lower });
     expect(phrase).not.toHaveStyle({ opacity: 0 });
     expect(phrase.props).toMatchObject({ numberOfLines: 3 });
   });

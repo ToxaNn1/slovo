@@ -4,6 +4,7 @@ import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { Dimensions } from 'react-native';
 import { testStrings } from '../test-strings';
+import { typeRoles } from '../tokens';
 
 const strings = testStrings({
   wordCard: { example: '«{text}»', exampleAuthor: '— {author}', tabMore: 'More', tabLess: 'Less' },
@@ -55,17 +56,18 @@ describe('the tabbed Idiom card (board XEntry2 e7)', () => {
     });
   });
 
-  it('starts the expression at 44, as every card title, on a line of 46 with its tracking', async () => {
+  it('starts the expression at its own title size, line and tracking', async () => {
     await renderTabbed();
 
+    const { size, lineHeight, letterSpacing } = typeRoles.idiomExpression;
     expect(screen.getByTestId('idiom-expression')).toHaveStyle({
-      fontSize: 44,
-      lineHeight: 46,
-      letterSpacing: -1.3,
+      fontSize: size,
+      lineHeight,
+      letterSpacing,
     });
   });
 
-  it('reads the essence at 22/31 and the origin at Onest 500 18/27', async () => {
+  it('reads the essence and the origin, Onest 500, at the sizes of their roles', async () => {
     // The board's sizes are at the OS text size 1; Jest's window reports 2, which the cap scales down.
     const window = Dimensions.get('window');
     Dimensions.set({ window: { ...window, fontScale: 1 } });
@@ -73,11 +75,14 @@ describe('the tabbed Idiom card (board XEntry2 e7)', () => {
     try {
       await renderTabbed();
 
-      expect(screen.getByTestId('idiom-definition')).toHaveStyle({ fontSize: 22, lineHeight: 31 });
+      expect(screen.getByTestId('idiom-definition')).toHaveStyle({
+        fontSize: typeRoles.idiomEssence.size,
+        lineHeight: typeRoles.idiomEssence.lineHeight,
+      });
       await fireEvent.press(screen.getByTestId('idiom-tab-origin'));
       expect(screen.getByTestId('idiom-etymology')).toHaveStyle({
-        fontSize: 18,
-        lineHeight: 27,
+        fontSize: typeRoles.idiomEtymology.size,
+        lineHeight: typeRoles.idiomEtymology.lineHeight,
         fontWeight: '500',
       });
     } finally {

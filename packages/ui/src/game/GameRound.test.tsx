@@ -22,6 +22,7 @@ import { getAnimatedStyle } from 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
+import { typeRoles } from '../tokens';
 
 const strings = testStrings({
   game: {
@@ -1444,11 +1445,11 @@ describe('the answer sheet', () => {
   it('spaces the answer card’s verdict so a wrapped line’s capital marks clear the line over it', async () => {
     await answerIn('light', 'brittle');
 
-    // The banner type at its size, each line tall enough for Ї over a capital (1.255 em at 30 pt), so a wrapped line clears the one above.
-    expect(screen.getByTestId('game-answer-card-title')).toHaveStyle({
-      fontSize: 30,
-      lineHeight: 38,
-    });
+    // The banner type at its size, each line tall enough for Ї over a capital (1.255 em), so a wrapped line clears the one above.
+    const { size, lineHeight } = typeRoles.answerVerdict;
+    const title = screen.getByTestId('game-answer-card-title');
+    expect(title).toHaveStyle({ fontSize: size, lineHeight });
+    expect(lineHeight).toBeGreaterThanOrEqual(1.255 * size);
   });
 
   it.each(['candid', 'brittle'])(
@@ -1457,7 +1458,7 @@ describe('the answer sheet', () => {
       await answerIn('light', option);
 
       expect(screen.getByTestId('game-answer-card-title')).toHaveStyle({
-        fontSize: 30,
+        fontSize: typeRoles.answerVerdict.size,
         textTransform: 'uppercase',
         fontWeight: '900',
         fontFamily: boardTokens.fontFamilies.word,

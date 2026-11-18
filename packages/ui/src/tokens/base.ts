@@ -124,80 +124,80 @@ const role = (
 export const typeRoles = {
   shout: role('word', '900', 96, 88, -5),
   heroWord: role('word', '900', 44, 46, -1.3),
-  screenTitle: role('word', '900', 30, 30, -1, 'uppercase'),
-  heading: role('word', '800', 18, 20, 0.5),
-  eyebrow: role('word', '700', 11, 13, 2, 'uppercase'),
+  screenTitle: role('word', '900', 26, 26, -1, 'uppercase'),
+  heading: role('word', '800', 19, 21.1, 0.5),
+  eyebrow: role('word', '700', 12, 14.2, 2, 'uppercase'),
   buttonLabel: role('word', '900', 15, 15, 0, 'uppercase'),
-  listWord: role('word', '800', 17, 20),
+  listWord: role('word', '800', 19, 22.4),
   /** Reading text: a Definition. */
   definition: role('ui', '500', 19, 27),
   /** Reading text: an Example. */
-  example: role('ui', '400', 17, 25),
+  example: role('ui', '400', 19, 27.9),
   /** Reading text: the line under a heading. */
   sub: role('ui', '500', 15, 21),
-  meta: role('ui', '500', 13, 17),
+  meta: role('ui', '500', 15, 19.6),
   /** A Settings row's label. */
-  rowLabel: role('ui', '600', 16, 19),
+  rowLabel: role('ui', '600', 15, 17.8),
   /** The muted line under a Settings row's label, and its value. */
-  rowSub: role('ui', '400', 13, 17),
+  rowSub: role('ui', '400', 15, 19.6),
   /** The Narrator Voice screen's sample Word, syllable by syllable. */
-  voiceSample: role('word', '900', 40, 40, -1.5),
+  voiceSample: role('word', '900', 44, 44, -1.5),
   /** The caption under the sample Word: its syllables and part of speech. */
-  voiceCaption: role('ui', '600', 14, 14),
+  voiceCaption: role('ui', '600', 15, 15),
   /** A Narrator Voice's name on its tile. */
   voiceName: role('word', '900', 15, 15),
   /** What a Narrator Voice sounds like, under its name. */
   voiceDescription: role('ui', '500', 12, 12),
   /** The «ЧИТАЄ · …» and «ОБЕРИ ГОЛОС» labels of the voice screen. */
-  voiceLabel: role('word', '700', 11, 11, 1.5, 'uppercase'),
+  voiceLabel: role('word', '700', 12, 12, 1.5, 'uppercase'),
   /** The «РІДКІСТЬ» heading of the Rarity Range picker in Settings. */
   rangeTitle: role('word', '900', 15, 18, 0.5, 'uppercase'),
   /** The range the Rarity Range picker holds, «від 2 до 4». */
   rangeValue: role('ui', '700', 15, 18),
   /** The number on a bar of the Rarity Range picker. */
-  rangeNumber: role('word', '900', 17, 17),
+  rangeNumber: role('word', '900', 19, 19),
   /** A tab's label under its icon. */
-  tabLabel: role('ui', '600', 11, 11),
+  tabLabel: role('ui', '600', 12, 12),
   /** The rotated black title of a bottom sheet. */
-  sheetTitle: role('word', '900', 18, 18, 0.5, 'uppercase'),
+  sheetTitle: role('word', '900', 19, 19, 0.5, 'uppercase'),
   /** The title of a row of the gestures hint sheet, «Вправо — знаю». */
   hintRowTitle: role('word', '900', 15, 17),
   /** A toast's message. */
-  toast: role('ui', '600', 14, 19),
+  toast: role('ui', '600', 15, 20.4),
   /** The label of a toast's button. */
   toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
   /** The mark's label in the wedge at the edge a swiped Entry card leaves (board 04). */
   swipeEdge: role('word', '900', 26, 26, -0.5, 'uppercase'),
   /** The stamp a swipe leaves on a marked Entry card. */
-  swipeStamp: role('word', '800', 18, 22, 2, 'uppercase'),
+  swipeStamp: role('word', '800', 19, 23.2, 2, 'uppercase'),
   /** The app's name beside the wedge at the top of the Feed. */
-  logo: role('word', '900', 22, 22, -0.5),
+  logo: role('word', '900', 19, 19, -0.5),
   /** Today in the Feed's header. */
-  headerDate: role('ui', '600', 13, 13),
+  headerDate: role('ui', '600', 15, 15),
   /** The Streak in its pill. */
-  streak: role('word', '800', 14, 14),
+  streak: role('word', '800', 15, 15),
   /** The word an onboarding step shouts on its red top. */
   stepShout: role('word', '900', 168, 151, -8),
   /** An onboarding step's title. */
-  stepTitle: role('word', '800', 28, 31, -0.5),
+  stepTitle: role('word', '800', 26, 28.8, -0.5),
   /** An onboarding step's text under its title. */
-  stepText: role('ui', '400', 16, 23),
+  stepText: role('ui', '400', 15, 21.6),
   /** The number on a Daily Goal tile of the onboarding. */
   goalNumber: role('word', '900', 26, 26),
   /** The unit under a Daily Goal tile's number. */
   goalUnit: role('ui', '600', 12, 12),
   /** The title of a Feed Notice's card. */
-  noticeTitle: role('word', '900', 22, 24),
+  noticeTitle: role('word', '900', 19, 20.7),
   /** The text of a Feed Notice's card, under its title. */
   noticeText: role('ui', '400', 15, 22),
   /** A number of the Weekly Recap. */
-  recapNumber: role('word', '900', 24, 24),
+  recapNumber: role('word', '900', 26, 26),
   /** The label under a number of the Weekly Recap. */
   recapLabel: role('ui', '500', 12, 14),
   /** The week's dates beside the Weekly Recap's title, «26.10–1.11». */
-  recapDates: role('ui', '500', 13, 13),
+  recapDates: role('ui', '500', 15, 15),
   /** The Weekly Recap's «Готово». */
-  recapDone: role('word', '900', 14, 14, 0, 'uppercase'),
+  recapDone: role('word', '900', 15, 15, 0, 'uppercase'),
   /** The title of Yesterday's quiz, «Пам’ятаєш учорашнє слово?» (board f5). */
   yesterdayTitle: role('word', '900', 19, 22),
   /** The red Lemma of Yesterday's quiz (board f5). */
@@ -209,123 +209,125 @@ export const typeRoles = {
   /** The Due Quiz card's big count behind its text (board 09, screen 73). */
   dueQuizCount: role('word', '900', 140, 140),
   /** The Due Quiz card's title, «Перевір себе» (board 09). */
-  dueQuizTitle: role('word', '900', 18, 19.8),
+  dueQuizTitle: role('word', '900', 19, 20.9),
   /** The Due Quiz card's line, «2 слова на сьогодні» (board 09). */
-  dueQuizLine: role('ui', '600', 13, 13),
+  dueQuizLine: role('ui', '600', 15, 15),
   /** The Due Quiz sheet's place, «1 з 2» (board 09). */
   dueQuizProgress: role('word', '700', 12, 12, 1.5, 'uppercase'),
   /** The Lemma on the Due Quiz sheet (board 09). */
-  dueQuizLemma: role('word', '900', 28, 28, -0.5),
+  dueQuizLemma: role('word', '900', 26, 26, -0.5),
   /** «Що це означає?» on the Due Quiz sheet (board 09). */
   dueQuizQuestion: role('ui', '500', 15, 19.5),
   /** The mark of a meaning on the Due Quiz sheet, «А», «Б», «В» (board 09). */
-  dueQuizMark: role('word', '900', 14, 14),
+  dueQuizMark: role('word', '900', 15, 15),
   /** The Word of the Community Word card. */
-  communityWord: role('word', '900', 30, 30, -0.5),
+  communityWord: role('word', '900', 26, 26, -0.5),
   /** The Definition under the Word of the Community Word card. */
-  communityDefinition: role('ui', '500', 16, 22),
+  communityDefinition: role('ui', '500', 15, 20.6),
   /** The title of the end-of-Cycle card. */
   endOfCycleTitle: role('word', '900', 26, 29),
   /** «Денна ціль» over the goal-reached card. */
   goalReachedLabel: role('word', '800', 12, 12, 2),
   /** The slanted plate of the goal-reached card, «3 / 3 слова». */
-  goalReachedPlate: role('word', '800', 11, 11, 1),
+  goalReachedPlate: role('word', '800', 12, 12, 1),
   /** «Ціль дня виконано!». */
   goalReachedTitle: role('word', '900', 44, 42, -1.8, 'uppercase'),
   /** The line under the goal-reached card's title. */
-  goalReachedText: role('ui', '600', 17, 23),
+  goalReachedText: role('ui', '600', 19, 25.7),
   /** «Сьогодні ви зібрали» and the label under the Streak on the goal-reached card. */
-  goalReachedCaption: role('word', '800', 11, 13, 1.5),
+  goalReachedCaption: role('word', '800', 12, 14.2, 1.5),
   /** A Word Seen today on its plate of the goal-reached card. */
-  goalReachedWord: role('word', '900', 20, 20, -0.4),
+  goalReachedWord: role('word', '900', 19, 19, -0.4),
   /** The Streak's number on the goal-reached card. */
   goalReachedStreak: role('word', '900', 44, 44),
   /** The goal-reached card's button. */
   goalReachedButton: role('word', '900', 15, 15),
   /** The Games screen's title. */
-  gamesTitle: role('word', '900', 36, 36, -1, 'uppercase'),
+  gamesTitle: role('word', '900', 44, 44, -1, 'uppercase'),
   /** The title of a group of Game Modes, after its red mark. */
-  groupTitle: role('word', '800', 13, 13, 1.5, 'uppercase'),
+  groupTitle: role('word', '800', 12, 12, 1.5, 'uppercase'),
   /** The glyph on a Game Mode's tile. */
   modeGlyph: role('word', '900', 15, 15),
   /** A Game Mode's name in its row. */
-  modeName: role('ui', '700', 16, 18),
+  modeName: role('ui', '700', 15, 16.9),
   /** A Game Mode's line under its name. */
-  modeLine: role('ui', '400', 13, 16),
+  modeLine: role('ui', '400', 15, 18.5),
   /** A Game Mode's Best result at the end of its row. */
   modeBest: role('word', '800', 12, 12),
   /** The Daily Crossword's name on its red card. */
   crosswordTitle: role('word', '900', 19, 20, 0, 'uppercase'),
   /** The Daily Crossword's name in its screen's header, beside the back tile. */
-  crosswordHeader: role('word', '900', 18, 18, 0, 'uppercase'),
+  crosswordHeader: role('word', '900', 19, 19, 0, 'uppercase'),
   /** A screen's own action at the far end of its header, as the Daily Crossword's «Підказка». */
-  headerAction: role('ui', '700', 13, 13),
+  headerAction: role('ui', '700', 15, 15),
   /** How far today's Daily Crossword has come, on its red card. */
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
   /** The day under the Daily Crossword's name on its red card. */
-  crosswordDay: role('ui', '600', 13, 17),
+  crosswordDay: role('ui', '600', 15, 19.6),
   /** The crossing Daily Crossword's name and day on its card of the hub (ADR 0087). */
-  crosswordCardTitle: role('word', '800', 16, 18),
+  crosswordCardTitle: role('word', '800', 15, 16.9),
   /** The line under it, its grid size and count of Words, and the solved card's time line. */
-  crosswordCardLine: role('ui', '500', 13, 17),
+  crosswordCardLine: role('ui', '500', 15, 19.6),
   /** The solved card's red mark, «✓ Розв’язано». */
-  crosswordCardMark: role('word', '900', 18, 20),
+  crosswordCardMark: role('word', '900', 19, 21.1),
   /** A letter in a cell of the small grid on the Daily Crossword's red card. */
-  crosswordMiniLetter: role('word', '800', 11, 13, 0, 'uppercase'),
+  crosswordMiniLetter: role('word', '800', 12, 14.2, 0, 'uppercase'),
   /** The XP earned in all, in its pill beside the Games screen's title. */
-  xpPill: role('word', '800', 13, 13),
+  xpPill: role('word', '800', 15, 15),
   /** «Життів: 4 з 5» in its red label under the Round's header (board 07). */
-  roundLives: role('ui', '600', 13, 13),
+  roundLives: role('ui', '600', 15, 15),
   /** The label over a Round's prompt, and a Quick Question's title. */
   roundLabel: role('word', '800', 12, 12, 1.5, 'uppercase'),
   /** A Round's head: its label and place, such as «НАГОЛОС · 6/10». */
   roundHead: role('word', '800', 12, 12, 2, 'uppercase'),
   /** A restyled Round's ask on its card (board 07 g3, g4), such as «Як сказати краще?» or the Word in «Звідки слово». */
-  roundAsk: role('word', '900', 24, 30),
+  roundAsk: role('word', '900', 32, 40),
   /** The form a «Впиши слово» Round asks to replace, under its ask (board 07 g3): «замість «вірогідно»». */
-  roundInstead: role('ui', '500', 16, 22),
+  roundInstead: role('ui', '500', 15, 20.6),
   /** The Word of a «Звідки слово» Round whole on its full-width tile (board g4). */
-  roundOriginWord: role('word', '900', 34, 34, -1),
+  roundOriginWord: role('word', '900', 26, 26, -1),
   /** The Game Mode and the Round over the question on the ground (board «slogo game last»), such as «НАГОЛОС · 1/10». */
   roundKicker: role('word', '800', 12, 12, 2, 'uppercase'),
   /** A letter of the Word on its cell in «Наголос» on the ground (board «slogo game last»), a vowel's tile or a muted consonant. */
-  vowelCell: role('word', '900', 24, 30, 0, 'uppercase'),
+  vowelCell: role('word', '900', 26, 32.5, 0, 'uppercase'),
   /** The hint under the vowel buttons of «Наголос» (board 06): «Торкнись голосної, на яку падає наголос». */
-  roundHint: role('ui', '500', 14, 19.6),
+  roundHint: role('ui', '500', 15, 21),
   /** A Quick Question's label on its ink tag (board f3), such as «ПОРАДА». */
-  quickQuestionTag: role('word', '800', 11, 11, 1, 'uppercase'),
+  quickQuestionTag: role('word', '800', 12, 12, 1, 'uppercase'),
   /** A Quick Question's prompt on its card (board f3), such as «Як правильно?». */
   quickQuestionPrompt: role('word', '900', 26, 28.6),
   /** The non-standard form a Quick Question's Tip replaces, under its prompt (board f3): «замість «скіко»». */
   quickQuestionInstead: role('ui', '500', 15, 21),
   /** A Quick Question's option on its tile when it is a Word (board f3). */
-  quickQuestionOptionWord: role('word', '800', 16, 20),
+  quickQuestionOptionWord: role('word', '800', 15, 18.8),
   /** A Round's option on its tile when it is a Word. */
-  roundOptionWord: role('word', '800', 18, 22),
+  roundOptionWord: role('word', '800', 19, 23.2),
   /** A Round's option on its tile when it is a sentence. */
-  roundOptionSentence: role('ui', '600', 17, 22),
+  roundOptionSentence: role('ui', '600', 19, 24.6),
   /** A Round's option on its tile when it is a long text. */
-  roundOptionLong: role('ui', '500', 16, 22),
+  roundOptionLong: role('ui', '500', 19, 26.1),
   /** The key of a Round's option, such as «А»: a line of 20 centres the letter in its box. */
-  roundOptionKey: role('word', '900', 16, 20),
+  roundOptionKey: role('word', '900', 15, 18.8),
   /** The verdict over the Round's answer sheet, right or wrong: the board's big uppercase banner title. */
-  roundVerdict: role('word', '900', 30, 30, -0.5, 'uppercase'),
+  roundVerdict: role('word', '900', 26, 26, -0.5, 'uppercase'),
   /**
    * The answer card's verdict, such as «Майже. Наступне вийде.»: the banner title's
    * type, with lines far enough apart that a wrapped line's capital marks,
    * Й's breve and Ї's dots, clear the line over it.
    */
-  answerVerdict: role('word', '900', 30, 38, -0.5, 'uppercase'),
+  answerVerdict: role('word', '900', 26, 32.9, -0.5, 'uppercase'),
   /** A Round's explanation, and the Definition under its prompt. */
-  roundExplanation: role('ui', '400', 16, 25),
+  roundExplanation: role('ui', '400', 19, 29.6),
+  /** A round's question when it is a text, such as a Definition to guess the Word by. */
+  roundPrompt: role('ui', '500', 26, 34),
   /** A letter in a blank of the typed answer. */
-  blankLetter: role('word', '900', 22, 26),
+  blankLetter: role('word', '900', 19, 22.5),
   /** What the user types as a Round's answer. */
-  typedAnswer: role('word', '800', 20, 24),
+  typedAnswer: role('word', '800', 19, 22.8),
   /** The number of a step of the widget guide. */
   guideNumber: role('ui', '700', 15, 15),
   /** The title of a step of the widget guide. */
-  guideTitle: role('ui', '700', 17, 20),
+  guideTitle: role('ui', '700', 19, 22.4),
   /** The mode over the Lemma on a widget of the widget guide's drawing (board 15: 8 and 9). */
   widgetMode: role('word', '800', 8, 10, 1.2, 'uppercase'),
   /** The Lemma on the drawing's small widget (board 15: 19 at 158 wide). */
@@ -335,11 +337,11 @@ export const typeRoles = {
   /** The short line under the Lemma on the drawing's medium widget. */
   widgetLine: role('word', '500', 12, 15),
   /** An Idiom's «Походження», the tab «Звідки» (XEntry2 e7). */
-  idiomEtymology: role('ui', '500', 18, 27),
-  /** An Idiom's expression, from 36 on `titleScale` (ADR 0157; XEntry2 e7: line 1.02, tracking −1 at 40). */
-  idiomExpression: role('word', '900', 44, 46, -1.3),
+  idiomEtymology: role('ui', '500', 19, 28.5),
+  /** An Idiom's expression, from 26 on `titleScale` (ADR 0157; XEntry2 e7: line 1.02, tracking −1 at 40). */
+  idiomExpression: role('word', '900', 26, 27.2, -0.8),
   /** An Idiom's primary Definition in the tab «Суть», at the user's font size (XEntry2 e7). */
-  idiomEssence: role('ui', '500', 22, 31),
+  idiomEssence: role('ui', '500', 19, 26.8),
   /** A Synonym Row's dominant, on one line at the Lemma's size (ADR 0157; XEntry2 e8: line 1). */
   synonymDominant: role('word', '900', 44, 46, -1.3),
   /** A Synonym Row's member, one per row, at the user's font size (XEntry2 e8). */
@@ -349,21 +351,21 @@ export const typeRoles = {
   /** The kind label under a name on the Hidden screen: «запис», «категорія», «тип карток». */
   hiddenKind: role('ui', '500', 12, 12),
   /** The count beside a Collection's title. */
-  collectionCount: role('word', '500', 22, 22),
+  collectionCount: role('word', '500', 19, 19),
   /** A recent query of Search. */
-  recentQuery: role('ui', '600', 16, 19),
+  recentQuery: role('ui', '600', 15, 17.8),
   /** The text button that clears the recent queries of Search, smaller than the label beside it (board 09). */
-  recentClear: role('ui', '600', 14, 17),
+  recentClear: role('ui', '600', 15, 18.2),
   /** What the reader types in the Search field (board 09, screen 78). */
-  searchText: role('ui', '600', 16, 20),
+  searchText: role('ui', '600', 15, 18.8),
   /** «Скасувати» beside the Search field, which closes Search (board 09, screen 78). */
   searchCancel: role('ui', '600', 15, 18),
   /** The text button that clears the history of the Saved screen, smaller than a title (board 09). */
-  historyClear: role('ui', '600', 14, 17),
+  historyClear: role('ui', '600', 15, 18.2),
   /** The line on a solved Daily Crossword. */
-  crosswordSolved: role('word', '500', 28, 32),
+  crosswordSolved: role('word', '500', 26, 29.7),
   /** A segment's label in a segmented control. */
-  segment: role('ui', '700', 13, 16),
+  segment: role('ui', '700', 15, 18.5),
   /**
    * The part of speech beside the Lemma on a Word card. A line of the font's own height keeps the
    * letters in the middle of the line on iOS, level with the register chip beside them (owner 16.11).
@@ -376,22 +378,22 @@ export const typeRoles = {
   /** The text under a section heading of a card: the Word History, the etymology. */
   sectionText: role('ui', '400', 15, 22),
   /** A non-standard form a Word card links to a Correction, in italics. */
-  oftenSaidForm: role('word', '400', 14, 18),
+  oftenSaidForm: role('word', '400', 15, 19.3),
   /** A Collection's name on its card of the Collections screen. */
-  collectionCardName: role('word', '800', 14, 17),
+  collectionCardName: role('word', '800', 15, 18.2),
   /** A Collection's name over its rows, and its count of Words under it (board 09). */
-  collectionTitle: role('word', '900', 30, 30, -1),
-  collectionWordCount: role('ui', '500', 14, 17),
+  collectionTitle: role('word', '900', 26, 26, -1),
+  collectionWordCount: role('ui', '500', 15, 18.2),
   /** How many Entries a Collection holds, under its name on its card. */
   collectionCardCount: role('ui', '600', 12, 12),
   /** The line under the plate of a Collection's delete sheet (board 09). */
-  collectionSheetMessage: role('ui', '500', 16, 23),
+  collectionSheetMessage: role('ui', '500', 15, 21.6),
   /** The muted line of a Collection's share sheet (board 09). */
   collectionSheetNote: role('ui', '500', 15, 22),
   /** The Collection Link in its box on the share sheet (board 09). */
   collectionLink: role('ui', '600', 15, 15),
   /** A Synonym Row member's shade note, upright at the right end of its row (XEntry2 e8). */
-  shadeNote: role('ui', '500', 14, 18.2),
+  shadeNote: role('ui', '500', 15, 19.5),
   /** `Lemma, hero`: the onboarding welcome's Lemma. */
   heroLemma: role('word', '900', 76, 76),
   /** The Rarity Range's big number behind the Rarity Test's result (board 11, screen 93). */
@@ -399,37 +401,37 @@ export const typeRoles = {
   /** The line over the Rarity Test's result, «Твоя рідкість — до {n}…» (XSettings t7). */
   rarityTestResult: role('word', '900', 26, 27.3),
   /** A quiet text button of the onboarding, such as «Пропустити» and «Пізніше». */
-  quietAction: role('ui', '700', 14, 17),
+  quietAction: role('ui', '700', 15, 18.2),
   /** A Word on its cell of the Pairs Game. */
-  pairsWord: role('word', '800', 14, 16),
+  pairsWord: role('word', '800', 15, 17.1),
   /** A Definition on its cell of the Pairs Game, wrapping over as many lines as it needs. */
   pairsDefinition: role('ui', '600', 15, 19),
   /** An empty state's title. */
-  emptyTitle: role('word', '900', 22, 25),
+  emptyTitle: role('word', '900', 19, 21.6),
   /** An empty state's line of muted text under its title. */
   emptyText: role('ui', '400', 15, 22),
   /** A reminder's time on its Settings row. */
-  reminderTime: role('word', '500', 22, 26),
+  reminderTime: role('word', '500', 19, 22.5),
   /** The «soon» tag of a Settings row that a later version brings. */
-  soonTag: role('ui', '700', 11, 13, 1.5, 'uppercase'),
+  soonTag: role('ui', '700', 12, 14.2, 1.5, 'uppercase'),
   /** A letter on its cell of the Daily Crossword. */
   crosswordLetter: role('word', '900', 26, 31.2, 0, 'uppercase'),
   /** The clue of the Daily Crossword's selected word, on its bar. */
   crosswordClue: role('ui', '600', 15, 19.5),
   /** The selected word's number and direction, such as «1→», on its red badge of the clue bar. */
-  crosswordClueNumber: role('word', '900', 14, 14),
+  crosswordClueNumber: role('word', '900', 15, 15),
   /** A letter on a path chip over the Daily Crossword's Letter Wheel: uppercase, as the tiles. */
-  crosswordPathLetter: role('word', '900', 14, 14, 0, 'uppercase'),
+  crosswordPathLetter: role('word', '900', 15, 15, 0, 'uppercase'),
   /** A word's number in the corner of its first cell of the Daily Crossword. */
-  crosswordCellNumber: role('ui', '700', 10, 10),
+  crosswordCellNumber: role('ui', '700', 12, 12),
   /** A letter on a key of the Daily Crossword's keyboard. */
   crosswordKey: role('ui', '700', 15, 18, 0, 'uppercase'),
   /** A letter of the wordmark popping up on the splash, on its 390-wide frame; the splash scales it. */
   splashLetter: role('word', '900', 58, 58, -2),
   /** The tagline under the splash's wordmark, on its 390-wide frame; the splash scales it. */
-  splashTagline: role('ui', '500', 17, 17),
+  splashTagline: role('ui', '500', 19, 19),
   /** The Category's name on its filled chip of a Word card. */
-  categoryChip: role('ui', '600', 12.5, 15),
+  categoryChip: role('ui', '600', 12, 14.4),
   /** The name of an unselected tab in an Entry card's tab bar (board XEntry2). */
   cardTab: role('ui', '600', 15, 15),
   /**
@@ -439,93 +441,93 @@ export const typeRoles = {
    */
   cardTabSelected: role('ui', '700', 15, 15),
   /** A chip's label: a Category of the Mix, a tab of the Saved screen. */
-  chipLabel: role('ui', '700', 14, 17),
+  chipLabel: role('ui', '700', 15, 18.2),
   /** The count beside a chip's label. */
   chipCount: role('ui', '600', 12, 14),
   /** The seconds left beside a timed Game's bar. */
-  timerSeconds: role('word', '800', 14, 17),
+  timerSeconds: role('word', '800', 15, 18.2),
   /** The giant ∞ behind the end-of-Cycle card. */
   endOfCycleInfinity: role('word', '900', 330, 330),
   /** A Badge's symbol on its mark, at a 156-wide mark; the mark scales it to a third of its side. */
   badgeSymbol: role('word', '900', 52, 62),
   /** The «НОВА» tag on an earned Badge the reader has not opened (ADR 0085). */
-  badgeNewTag: role('word', '900', 11, 11, 1, 'uppercase'),
+  badgeNewTag: role('word', '900', 12, 12, 1, 'uppercase'),
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
   /** The ✓ or ✗ on a Round's mark in the Game Review. */
-  reviewMark: role('word', '900', 13, 13),
+  reviewMark: role('word', '900', 15, 15),
   /** A Round's Lemma in the Game Review. */
   reviewWord: role('ui', '700', 15, 17),
   /** The big Streak at the top of the stats sheet. */
   statsStreak: role('word', '900', 64, 64),
   /** The words beside the big Streak of the stats sheet. */
-  statsStreakLabel: role('word', '900', 20, 22),
+  statsStreakLabel: role('word', '900', 19, 20.9),
   /** A count's number on the stats sheet's grid. */
-  statsCount: role('word', '900', 34, 34),
+  statsCount: role('word', '900', 26, 26),
   /** The «ЗНАЮ» over the stats sheet's Known counts. */
-  statsKicker: role('word', '800', 13, 13, 1.5),
+  statsKicker: role('word', '800', 15, 15, 1.5),
   /** A Known count of the stats sheet, over the name of its kind of Entry. */
-  statsKnownCount: role('word', '900', 28, 28),
+  statsKnownCount: role('word', '900', 26, 26),
   /** The words under a count of the stats sheet, on its card. */
-  statsCountLabel: role('ui', '500', 13, 16),
+  statsCountLabel: role('ui', '500', 15, 18.5),
   /** The words under a count of the stats sheet, and the Best Streak. */
-  statsNote: role('ui', '400', 14, 18),
+  statsNote: role('ui', '400', 15, 19.3),
   /** A line of the stats sheet's Known and due counts. */
-  statsLine: role('ui', '700', 17, 24),
+  statsLine: role('ui', '700', 19, 26.8),
   /** The title of the Feed's error state. */
   errorTitle: role('word', '900', 26, 28.6),
   /** What went wrong, under the title of the Feed's error state. */
-  errorText: role('ui', '400', 16, 23.2),
-  /** A Tip's title, from 36 on `titleScale` (ADR 0157; board XEntry2 e9: line 1.1). */
-  tipTitle: role('word', '900', 44, 46, -1.3),
+  errorText: role('ui', '400', 15, 21.8),
+  /** A Tip's title, from 26 on `titleScale` (ADR 0157; board XEntry2 e9: line 1.1). */
+  tipTitle: role('word', '900', 26, 27.2, -0.8),
   /** A Tip's rule on its card's «Правило» tab (board XEntry2 e9). */
-  tipRule: role('ui', '500', 20, 28),
+  tipRule: role('ui', '500', 19, 26.6),
   /** The trailing text of a list row, such as when it was saved. */
   rowTrailing: role('ui', '700', 12, 12),
   /** The title on the red panel of the Game's result. */
-  resultTitle: role('word', '900', 40, 38, -1.5),
+  resultTitle: role('word', '900', 44, 41.8, -1.5),
   /** The line under the title of the Game's result. */
-  resultLine: role('ui', '700', 16, 20),
+  resultLine: role('ui', '700', 15, 18.8),
   /** The capitalised label over a group of controls or a card's section. */
-  sectionLabel: role('word', '800', 13, 13, 1, 'uppercase'),
+  sectionLabel: role('word', '800', 12, 12, 1, 'uppercase'),
   /** How far a run of questions has come, such as «4 з 10» of the Rarity Test. */
-  progressCount: role('ui', '600', 13, 13),
+  progressCount: role('ui', '600', 15, 15),
   /** A Category's name on its tile of the Mix. */
-  mixTileName: role('ui', '600', 13, 15.6),
+  mixTileName: role('ui', '600', 15, 18),
   /** A Badge's date or progress under its mark on the Badges screen. */
-  badgeProgress: role('ui', '500', 11, 13),
+  badgeProgress: role('ui', '500', 12, 14.2),
   /** A Badge's name under its title on the stamp of a newly earned Badge. */
-  stampName: role('ui', '500', 16, 21),
+  stampName: role('ui', '500', 15, 19.7),
   /** The ink ribbon of a Badge's stamp, «ТЕПЕР ТВОЯ». */
-  stampRibbon: role('word', '900', 11, 11, 1, 'uppercase'),
+  stampRibbon: role('word', '900', 12, 12, 1, 'uppercase'),
   /** The name of a Badge on its toast, as written. */
-  badgeToastName: role('word', '900', 13, 14),
+  badgeToastName: role('word', '900', 15, 16.2),
   /** The line of a Badge's toast. */
-  badgeToastLine: role('ui', '500', 13, 17),
+  badgeToastLine: role('ui', '500', 15, 19.6),
   /** A Badge family's name over its cards on the Badges screen. */
-  badgeScreenFamily: role('word', '900', 20, 20),
+  badgeScreenFamily: role('word', '900', 19, 19),
   /** A Badge's name on its card of the Badges screen. */
-  badgeCardName: role('word', '800', 13, 16),
+  badgeCardName: role('word', '800', 15, 18.5),
   /** A Badge's condition on its card of the Badges screen. */
   badgeCardCondition: role('ui', '500', 12, 16),
   /** A Badge's status on its card, «Отримано» or «Ще ні · 77%». */
   badgeCardStatus: role('ui', '600', 12, 14),
   /** A Badge family's name on its card of the families overview. */
-  badgeFamilyName: role('word', '900', 18, 20),
+  badgeFamilyName: role('word', '900', 19, 21.1),
   /** A Badge family's description on its card of the families overview. */
-  badgeFamilyText: role('ui', '500', 14, 20),
+  badgeFamilyText: role('ui', '500', 15, 21.4),
   /** The «ФОРМА» label before a Badge family's shape in the families overview. */
-  badgeFamilyLabel: role('word', '700', 10, 10, 1.5),
+  badgeFamilyLabel: role('word', '700', 12, 12, 1.5),
   /** A Badge's name under its mark in the Badge sheet (`XSaved` p3/p4). */
-  badgeSheetName: role('word', '900', 24, 26.4),
+  badgeSheetName: role('word', '900', 26, 28.6),
   /** The name and the count over a Badge family's row of marks on the Profile (`SlovoApp` profile). */
   badgeFamily: role('ui', '600', 12, 12),
   /** The first letter of the reader's name in the Profile header's avatar. */
-  profileAvatarLetter: role('word', '900', 24, 24),
+  profileAvatarLetter: role('word', '900', 26, 26),
   /** The reader's name, or the invitation to add one, in the Profile header. */
-  profileName: role('word', '800', 18, 22),
+  profileName: role('word', '800', 19, 23.2),
   /** «Рівень N — назва» under the name in the Profile header. */
-  profileHeaderLevel: role('ui', '500', 13, 16),
+  profileHeaderLevel: role('ui', '500', 15, 18.5),
   /** A line of the Profile with no card of its own, such as all XP while the Levels are off. */
   profileText: role('ui', '400', 15, 22),
   /** The turned cream word in the corner of the new Level screen, «РІВЕНЬ» (board 10). */
@@ -535,57 +537,57 @@ export const typeRoles = {
   /** «Рівень N — назва» under the stamped number of the new Level screen. */
   newLevelTitle: role('word', '900', 26, 28.6),
   /** The line under the title of the new Level screen. */
-  newLevelLine: role('ui', '600', 16, 22.4),
+  newLevelLine: role('ui', '600', 15, 21),
   /** The Level's number in the ring of the Profile's Level card. */
   levelNumber: role('word', '900', 44, 44),
   /** The word under the Level's number in its ring. */
-  levelLabel: role('word', '700', 10, 10, 1.5, 'uppercase'),
+  levelLabel: role('word', '700', 12, 12, 1.5, 'uppercase'),
   /** The Level's name on the Profile's Level card. */
-  levelName: role('word', '900', 21, 23),
+  levelName: role('word', '900', 19, 20.8),
   /** The XP towards the next Level on the Profile's Level card. */
-  levelXp: role('ui', '600', 14, 18),
+  levelXp: role('ui', '600', 15, 19.3),
   /** The first Level of a range in the wedge of a card in the Profile's Levels row. */
-  ladderNumber: role('word', '900', 24, 24),
+  ladderNumber: role('word', '900', 26, 26),
   /** A Level name on a card in the Profile's Levels row. */
-  ladderName: role('word', '900', 14, 16),
+  ladderName: role('word', '900', 15, 17.1),
   /** A range of Levels on a card in the Profile's Levels row, such as «Рівні 5–9». */
   ladderCaption: role('ui', '600', 12, 14),
   /** The Level and the XP to the next name under the Profile's Levels row. */
-  ladderLine: role('word', '700', 11, 13, 1.5, 'uppercase'),
+  ladderLine: role('word', '700', 12, 14.2, 1.5, 'uppercase'),
   /** The Profile's giant red Streak, set solid as on `SlovoApp` profile (60/.9). */
   profileStreak: role('word', '900', 60, 54, -2),
   /** «Відзнаки» over the Profile's Badges (`SlovoApp` profile). */
   profileBadgesHeading: role('word', '800', 15, 15),
   /** The words beside the Profile's giant Streak. */
-  profileStreakLabel: role('word', '800', 16, 18),
+  profileStreakLabel: role('word', '800', 15, 16.9),
   /** The paused Streak's ghost number in the corner of the Profile's Break card (p1). */
   breakGhost: role('word', '900', 170, 170),
   /** «ПЕРЕРВА» on the Break card. */
-  breakKicker: role('word', '800', 13, 13, 1.5),
+  breakKicker: role('word', '800', 15, 15, 1.5),
   /** «Серія N на паузі» on the Break card. */
   breakPaused: role('word', '900', 26, 27),
   /** The Break's last day on the Break card. */
   breakUntil: role('ui', '500', 15, 21),
   /** The next Break's date under the Break card's strip. */
-  breakNext: role('ui', '500', 13, 18),
+  breakNext: role('ui', '500', 15, 20.8),
   /** «Заморозка серії» over the Streak freeze card (p2). */
-  freezeTitle: role('word', '900', 20, 22),
+  freezeTitle: role('word', '900', 19, 20.9),
   /** The cream chip of the freezes held on the Streak freeze card. */
   freezeChip: role('word', '800', 12, 12),
   /** What a freeze does, on the Streak freeze card. */
   freezeText: role('ui', '400', 15, 22),
   /** The number of a day in the Streak freeze card's strip. */
-  freezeDay: role('ui', '700', 13, 16),
+  freezeDay: role('ui', '700', 15, 18.5),
   /** The big number of a tile under the Streak freeze card. */
-  freezeNumber: role('word', '900', 34, 34),
+  freezeNumber: role('word', '900', 26, 26),
   /** The caption under a tile's big number, declined by it. */
-  freezeCaption: role('ui', '500', 13, 16),
+  freezeCaption: role('ui', '500', 15, 18.5),
   /** The name of the screen before, beside the back tile that returns to it. */
-  backLink: role('ui', '500', 14, 17),
+  backLink: role('ui', '500', 15, 18.2),
   /** The label of an action a list row's swipe shows. */
-  swipeAction: role('ui', '700', 14, 17),
+  swipeAction: role('ui', '700', 15, 18.2),
   /** The «Повторити» tag of an Entry due for review. */
-  reviewTag: role('word', '800', 11, 11, 1, 'uppercase'),
+  reviewTag: role('word', '800', 12, 12, 1, 'uppercase'),
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),
   /** A Correction's non-standard form, struck through, from 26 on `titleScale` (ADR 0157). */
@@ -593,15 +595,15 @@ export const typeRoles = {
   /** A Correction's explanation, also in an expanded Round of the Game Review. */
   explanation: role('ui', '400', 15, 22),
   /** The Entry's Lemma over a sheet, such as the Collection sheet. */
-  sheetLemma: role('word', '600', 20, 24),
+  sheetLemma: role('word', '600', 19, 22.8),
   /** A text button of a sheet: «+ Нова колекція», a field's «Створити». */
-  textButton: role('ui', '700', 17, 20),
+  textButton: role('ui', '700', 19, 22.4),
   /** What the reader types in a field. */
-  fieldText: role('ui', '500', 16, 20),
+  fieldText: role('ui', '500', 15, 18.8),
   /** The label over a field, and a small label of a form. */
-  fieldLabel: role('ui', '600', 14, 18),
+  fieldLabel: role('ui', '600', 15, 19.3),
   /** What is wrong with a field's value, under it. */
-  fieldProblem: role('ui', '600', 13, 17),
+  fieldProblem: role('ui', '600', 15, 19.6),
   /*
    * The Share Card's roles at the Story's scale; the card scales each by its
    * width, keeping the role's line height as a share of its size.
@@ -609,78 +611,78 @@ export const typeRoles = {
   /** The giant glyph behind a Share Card's text. */
   shareGiant: role('word', '900', 320, 320, -8),
   /** The kicker over a Share Card's headline. */
-  shareKicker: role('word', '800', 10, 13, 1.5, 'uppercase'),
+  shareKicker: role('word', '800', 12, 15.6, 1.5, 'uppercase'),
   /** A Share Card's headline, with room above its glyphs for a Stress mark over a tall vowel. */
-  shareHeadline: role('word', '900', 40, 44, -1),
+  shareHeadline: role('word', '900', 44, 48.4, -1),
   /** A Share Card's reading text. */
   shareSub: role('ui', '500', 12, 16.8),
   /** A label of a Share Card: over a form, under a stat. */
-  shareLabel: role('ui', '600', 10, 14),
+  shareLabel: role('ui', '600', 12, 16.8),
   /** A form on a Share Card under its label, such as the non-standard form. */
-  shareForm: role('word', '500', 22, 30.8),
+  shareForm: role('word', '500', 19, 26.6),
   /** A number of the Weekly Recap on its Share Card. */
-  shareStat: role('word', '900', 18, 22),
+  shareStat: role('word', '900', 19, 23.2),
   /** The watermark at the foot of a Share Card. */
-  shareWatermark: role('ui', '600', 10, 12),
+  shareWatermark: role('ui', '600', 12, 14.4),
   /** The giant letter behind the About screen's red panel. */
   aboutGiant: role('word', '900', 220, 220),
   /** The app's name on the About screen's red panel. */
-  aboutName: role('word', '900', 34, 34, -1),
+  aboutName: role('word', '900', 26, 26, -1),
   /** What SLOVO is, on the About screen's card. */
-  aboutDescription: role('word', '500', 22, 30),
+  aboutDescription: role('word', '500', 19, 25.9),
   /** Settings' title beside its back tile (design `SlovoApp`, Settings). */
-  settingsTitle: role('word', '800', 22, 22),
+  settingsTitle: role('word', '800', 19, 19),
   /** The title of a screen that a Settings row opens, beside its back tile. */
-  settingsSubTitle: role('word', '800', 20, 22),
+  settingsSubTitle: role('word', '800', 19, 20.9),
   /** The number between a stepper's − and + (board 11, 90). */
   stepperValue: role('word', '900', 64, 64, -2),
   /** The − or + on a stepper's tile. */
-  stepperGlyph: role('word', '900', 28, 28),
+  stepperGlyph: role('word', '900', 26, 26),
   /** The large sample of an option screen, such as the Daily Goal's number (board 11, 85). */
   optionSample: role('word', '900', 56, 56),
   /** An option's label in the list of an option screen. */
-  optionLabel: role('ui', '600', 16, 16),
+  optionLabel: role('ui', '600', 15, 15),
   /** The hero Word's Definition under its Lemma on the onboarding welcome. */
-  heroDefinition: role('word', '500', 22, 29),
+  heroDefinition: role('word', '500', 19, 25),
   /** A weekday's letters over a column of the Active Days calendar. */
-  calendarWeekday: role('ui', '700', 11, 13),
+  calendarWeekday: role('ui', '700', 12, 14.2),
   /** A day's number on its tile of the Active Days calendar. */
-  calendarDay: role('word', '800', 13, 16),
+  calendarDay: role('word', '800', 15, 18.5),
   /** A hint under a control: why it is off, or what was refused. */
   hint: role('ui', '400', 15, 22),
   /** A letter on its chip of a Round's chips form. */
   chipLetter: role('word', '900', 26, 30),
   /** A word on its chip of a Round's chips form, smaller so an expression of 8 words fits. */
-  chipWord: role('word', '800', 18, 22),
+  chipWord: role('word', '800', 19, 23.2),
   /** The text of a small label chip, such as a Correction Type. */
-  labelChip: role('ui', '700', 11.5, 14),
+  labelChip: role('ui', '700', 12, 14.6),
   /** The label under the Streak's number on its red tile of the Weekly Recap. */
   recapLabelMarked: role('ui', '600', 12, 14),
   /** The label under the icon of a tile of an Entry's action row, «Улюблене». */
-  actionLabel: role('ui', '600', 10.5, 10.5),
+  actionLabel: role('ui', '600', 12, 12),
   /** The line under an Entry's action row that says where the Entry is kept. */
-  actionHint: role('ui', '600', 13, 15.6),
+  actionHint: role('ui', '600', 15, 18),
   /** The shout on the closed card of the Word of the Day, «ЛОВИ СЛОВО!». */
-  heroShout: role('word', '900', 40, 38, -1.5, 'uppercase'),
+  heroShout: role('word', '900', 44, 41.8, -1.5, 'uppercase'),
   /** The kicker over the Lemma of the Word of the Day on a red ground, such as «СЛОВО ДНЯ · 3 ЛИСТОПАДА». */
-  heroKicker: role('word', '800', 11, 11, 2, 'uppercase'),
+  heroKicker: role('word', '800', 12, 12, 2, 'uppercase'),
   /** The kicker of a tabbed Entry card, «СЛОВО ДНЯ · 7.11», «ВИПРАВЛЕННЯ» (boards p1, XEntry2). */
-  cardKicker: role('word', '800', 11, 11, 1.5, 'uppercase'),
+  cardKicker: role('word', '800', 12, 12, 1.5, 'uppercase'),
   /** The label over a form on a Correction card: «Так часто кажуть · калька», «Українською краще» (XEntry2 e6). */
   correctionFormLabel: role('ui', '700', 12, 12),
   /** A Correction's non-standard form on its card, under the red strike, from 26 on `titleScale` (ADR 0157; XEntry2 e6). */
   correctionStruck: role('word', '800', 26, 28.6),
-  /** A Correction's standard form in «Як краще», from 26 on `titleScale` (ADR 0157; XEntry2 e6: line 1.05). */
-  correctionStandard: role('word', '900', 44, 46, -1.3),
+  /** A Correction's standard form in «Як краще», from 32 on `titleScale` (ADR 0157; XEntry2 e6: line 1.05). */
+  correctionStandard: role('word', '900', 32, 33.5, -0.9),
   /** A Correction's explanation in «Чому» (XEntry2 e6). */
-  correctionWhy: role('ui', '500', 20, 29),
+  correctionWhy: role('ui', '500', 19, 27.6),
   /** A sentence of a Correction's example pair in «Приклади» (XEntry2 e6). */
-  correctionExample: role('ui', '500', 17, 25),
+  correctionExample: role('ui', '500', 19, 27.9),
   /**
    * The marked standard form in the standard sentence of «Приклади»
    * (ADR 0117). The board sets it in bold; the Edition ships Onest up to 700.
    */
-  correctionExampleStrong: role('ui', '700', 17, 25),
+  correctionExampleStrong: role('ui', '700', 19, 27.9),
   /** The big red opening quote mark over the Example in the tabbed Word card's «Приклад» (board p1). */
   exampleMark: role('word', '900', 54, 26),
   /** The small label over the chips in the tabbed Word card's «Зв’язки», «Синоніми» (board p1). */
@@ -704,75 +706,75 @@ export const typeRoles = {
   /** The Stress and part of speech on the open Dashboard hero's card. */
   dashboardWordLine: role('ui', '600', 15, 15),
   /** «РІДКІСТЬ 3 З 5» at the foot of the open Dashboard hero's card. */
-  dashboardRarity: role('word', '700', 11, 11, 1.5, 'uppercase'),
+  dashboardRarity: role('word', '700', 12, 12, 1.5, 'uppercase'),
   /** The short Definition on the open Dashboard hero's card. */
-  dashboardDefinition: role('ui', '600', 18, 25.2),
+  dashboardDefinition: role('ui', '600', 19, 26.6),
   /** The closed Dashboard hero's ink button, «РОЗКРИЙ СЛОВО». */
-  dashboardButton: role('word', '900', 16, 16, 0.5, 'uppercase'),
+  dashboardButton: role('word', '900', 15, 15, 0.5, 'uppercase'),
   /** The open Dashboard hero's «ЩЕ ПРО СЛОВО →», a size under «РОЗКРИЙ СЛОВО». */
   dashboardToCardButton: role('word', '900', 15, 15, 0.5, 'uppercase'),
   /** A block's title on the Dashboard, such as «Як настрій?». */
   blockTitle: role('word', '800', 15, 15),
   /** The count or note at the end of a block's title on the Dashboard. */
-  blockNote: role('ui', '500', 13, 13),
+  blockNote: role('ui', '500', 15, 15),
   /** A Mood's name on its tile. */
   moodName: role('ui', '700', 15, 15),
   /** The date column of «Попередні слова», «31» over «жов». */
   previousDate: role('ui', '600', 12, 14.4),
   /** The Lemma of a row of «Попередні слова». */
-  previousWord: role('word', '800', 17, 18.7),
+  previousWord: role('word', '800', 19, 20.9),
   /** The short Definition of a row of «Попередні слова». */
-  previousDefinition: role('ui', '400', 14, 18.2),
+  previousDefinition: role('ui', '400', 15, 19.5),
   /** A Curated Collection's name on its tile of the Categories rail. */
   categoryName: role('word', '800', 12, 13.8),
   /** «24 слова» on a tile of the Categories rail. */
   categoryCount: role('ui', '500', 12, 12),
   /** A grid screen's title, «Категорії» (board 05.2 k1). */
-  gridTitle: role('word', '900', 28, 28, -1),
+  gridTitle: role('word', '900', 26, 26, -1),
   /** The count on a grid screen title's baseline, «16». */
-  gridCount: role('ui', '600', 14, 14),
+  gridCount: role('ui', '600', 15, 15),
   /** A Category's name on its tile of the k1 grid, hyphenated. */
-  gridTileName: role('word', '800', 11, 12.65),
+  gridTileName: role('word', '800', 12, 13.8),
   /** A Correction Type's name on its tile of the Corrections rail. */
-  correctionName: role('word', '800', 13, 15),
+  correctionName: role('word', '800', 15, 17.3),
   /** The kicker beside the icon tile on a rail screen's hero, «ВИПРАВЛЕННЯ · 4 приклади». */
-  railKicker: role('word', '700', 11, 11, 2),
+  railKicker: role('word', '700', 12, 12, 2),
   /** A rail screen's title on its hero, «Суржик». */
-  railTitle: role('word', '900', 36, 36.7, -1),
+  railTitle: role('word', '900', 44, 44.9, -1),
   /** The line under a rail screen's title. */
   railDescription: role('ui', '500', 15, 21),
   /** «РОЗІБРАНО 0 З 4» over a rail screen's progress bar. */
-  railProgress: role('word', '800', 11, 11, 1.5, 'uppercase'),
+  railProgress: role('word', '800', 12, 12, 1.5, 'uppercase'),
   /** The add button on a Curated Collection's hero, «ДОДАТИ». */
   railAdd: role('word', '900', 12, 12, 0.5, 'uppercase'),
   /** The type chip on a Correction's card, «суржик». */
-  railChip: role('word', '700', 11, 11, 0.5),
+  railChip: role('word', '700', 12, 12, 0.5),
   /** A small label on a card: «ТАК ЧАСТО КАЖУТЬ», «УКРАЇНСЬКОЮ КРАЩЕ». */
-  railLabel: role('word', '700', 10, 10, 1.5, 'uppercase'),
+  railLabel: role('word', '700', 12, 12, 1.5, 'uppercase'),
   /** The struck non-standard form on a Correction's card. */
-  railStruck: role('ui', '600', 18, 23.4),
+  railStruck: role('ui', '600', 19, 24.7),
   /** The ink button on a Correction's card, «ВІДПОВІДЬ». */
-  railButton: role('word', '900', 13, 13, 0, 'uppercase'),
+  railButton: role('word', '900', 12, 12, 0, 'uppercase'),
   /** The standard form in a Correction card's revealed block. */
   railStandard: role('word', '900', 19, 22.8, -0.3),
   /** The explanation in a Correction card's revealed block. */
-  railNote: role('ui', '500', 14, 19.6),
+  railNote: role('ui', '500', 15, 21),
   /** «Категорія» over a quiet Category's name on its hero (k3). */
-  quietLabel: role('ui', '600', 13, 17.55),
+  quietLabel: role('ui', '600', 15, 20.3),
   /** A quiet Category's name on its hero (k3). */
-  quietTitle: role('word', '800', 30, 32.4, -0.5),
+  quietTitle: role('word', '800', 26, 28.1, -0.5),
   /** The line under a quiet Category's name (k3). */
   quietDescription: role('ui', '400', 15, 21.75),
   /** The Lemma of a plain row on a quiet Category's screen (k3). */
-  quietWord: role('word', '800', 17, 18.7),
+  quietWord: role('word', '800', 19, 20.9),
   /** The short Definition under it, the gloss. */
-  quietGloss: role('ui', '400', 14, 18.2),
+  quietGloss: role('ui', '400', 15, 19.5),
   /** The Lemma on a word card of a Curated Collection's screen. */
   railWord: role('word', '800', 19, 20.9),
   /** The «ЗНАЮ» stamp on a known word's card. */
-  railKnown: role('word', '800', 10, 10, 1, 'uppercase'),
+  railKnown: role('word', '800', 12, 12, 1, 'uppercase'),
   /** The Stress and part of speech on a word card. */
-  railMeta: role('ui', '500', 13, 13),
+  railMeta: role('ui', '500', 15, 15),
   /** The Definition on a word card. */
   railMeaning: role('ui', '400', 15, 21),
 } as const satisfies Record<string, TypeRoleSpec>;

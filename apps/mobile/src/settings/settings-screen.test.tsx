@@ -9,6 +9,7 @@ import {
 } from '@slovo/core';
 import { seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider } from '@slovo/ui';
+import { typeRoles } from '@slovo/ui/tokens';
 import { Stack } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
@@ -368,7 +369,7 @@ describe('Settings › Віджети', () => {
     expect(
       within(guide).getByRole('header', { name: editionStrings.settings.widgets.title }),
     ).toHaveStyle({
-      fontSize: 20,
+      fontSize: typeRoles.settingsSubTitle.size,
       textTransform: 'none',
     });
     for (const [index, step] of editionStrings.widget.guide.steps.entries()) {

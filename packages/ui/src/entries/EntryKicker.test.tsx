@@ -36,10 +36,12 @@ describe("an Entry card's kicker (board XEntry2)", () => {
       </EditionProvider>,
     );
 
-    // Unbounded's ascent .995 and descent .245 em: iOS lays the 11 pt line from its foot,
-    // (1.24 × 11 − 11) / 2 pt above where the board's CSS centres it.
+    // Unbounded's ascent .995 and descent .245 em: iOS lays the tight line from its foot,
+    // (1.24 × size − line) / 2 pt above where the board's CSS centres it.
+    const { size, lineHeight } = typeRoles.cardKicker;
+    const drop = Math.round(((1.24 * size - lineHeight) / 2) * 100) / 100;
     expect(StyleSheet.flatten(screen.getByText('Correction').props['style'])).toMatchObject({
-      transform: [{ translateY: 1.32 }],
+      transform: [{ translateY: drop }],
     });
   });
 });

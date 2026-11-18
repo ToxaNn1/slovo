@@ -4,6 +4,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { Dimensions } from 'react-native';
 import { testStrings } from '../test-strings';
+import { typeRoles } from '../tokens';
 
 const strings = testStrings({
   wordCard: {
@@ -133,7 +134,7 @@ describe('the Synonym Row card', () => {
     expect(within(first).getByTestId('synonym-row-member-0-text')).toBeTruthy();
     expect(last).toBe(screen.getByTestId('synonym-row-member-0-shade'));
     expect(last).toHaveTextContent('Slowly');
-    expect(last).toHaveStyle({ fontStyle: 'normal', fontSize: 14 });
+    expect(last).toHaveStyle({ fontStyle: 'normal', fontSize: typeRoles.shadeNote.size });
     expect(last).not.toHaveStyle({ textAlign: 'right' });
   });
 

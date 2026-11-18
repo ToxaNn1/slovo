@@ -39,7 +39,7 @@ The earlier rules had Definitions and Examples copied word for word from СУМ 
 
 - The Idiom Type is exact: `idiom` is a fixed phrase that is not a whole sentence and stands for a word or an action; `proverb` is a whole sentence with an instructive or figurative conclusion; `placeName` is a real geographical name.
 - An `idiom` or a `proverb` is explained by its real figurative meaning, not a word-for-word reading, and has a modern Example in which it sounds natural.
-- A `placeName`'s etymology follows present-day Ukrainian history and toponymy, without Soviet or imperial myths.
+- No new `placeName`: place names are not gathered, offered as candidates or added, and the shipped ones are retired (owner, 18.11).
 
 ### Synonym Rows
 
@@ -56,7 +56,7 @@ The earlier rules had Definitions and Examples copied word for word from СУМ 
 
 ### New content
 
-- Candidates are gathered with about 30% to spare for what is dropped: Words from goroh («Найцікавіші слова»), Грінченко, ЕСУМ and the ГРАК corpus, without officialese, Soviet abbreviations or medical Latin; Corrections and anglicisms from OnlineCorrector, «Мова — ДНК нації» and Словотвір; Idioms, proverbs and place names from the phraseological dictionary, goroh «Фразеологія», the collections of Номис and Франко and the toponymic dictionary of Ukraine; Synonym Rows from the synonym dictionaries (common dominants with 5–12 vivid members); Tips from Пономарів, Авраменко, Караванський and the current Правопис. These are working material; the shipped text is written anew under the rules above.
+- Candidates are gathered with about 30% to spare for what is dropped: Words from goroh («Найцікавіші слова»), Грінченко, ЕСУМ and the ГРАК corpus, without officialese, Soviet abbreviations or medical Latin; Corrections and anglicisms from OnlineCorrector, «Мова — ДНК нації» and Словотвір; Idioms and proverbs from the phraseological dictionary, goroh «Фразеологія» and the collections of Номис and Франко; Synonym Rows from the synonym dictionaries (common dominants with 5–12 vivid members); Tips from Пономарів, Авраменко, Караванський and the current Правопис. These are working material; the shipped text is written anew under the rules above.
 - Each candidate is checked against the live content (`pnpm content have`, the content snapshot), exact matches and words of the same root dropped; Stress, gender, part of speech and inflection are checked against ВЕСУМ or goroh.
 - After the owner's yes the candidates are written with `pnpm content add`, one run, one batch, so they are reviewed and rolled back together.
 

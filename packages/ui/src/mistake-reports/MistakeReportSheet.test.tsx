@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react-n
 import { Keyboard, ScrollView, type KeyboardEvent } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
+import { typeRoles } from '../tokens';
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -116,10 +117,10 @@ describe('MistakeReportSheet', () => {
     await renderSheet();
 
     const field = screen.getByLabelText('Comment (optional)');
-    // Four lines of 20 pt at the text size React Native's Jest setup gives (2),
+    // Four lines of the field's text at the text size React Native's Jest setup gives (2),
     // capped at 1.5 times, 12 pt of padding above and below, and a 1 pt border
     // each side: the letters grow up to 1.5 times, and the cap with them.
-    expect(field).toHaveStyle({ maxHeight: 4 * 20 * 1.5 + 2 * 12 + 2 });
+    expect(field).toHaveStyle({ maxHeight: 4 * typeRoles.fieldText.lineHeight * 1.5 + 2 * 12 + 2 });
     expect(field).toHaveProp('maxFontSizeMultiplier', 1.5);
     expect(field).toHaveProp('scrollEnabled', true);
   });

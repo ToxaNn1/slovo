@@ -141,7 +141,7 @@ export function RoundCard({
       ? 'quickQuestionPrompt'
       : look.questionFace === 'text' ||
           (look.questionFace === 'byLength' && Array.from(prompt).length > DISPLAY_MOST)
-        ? 'roundExplanation'
+        ? 'roundPrompt'
         : 'roundAsk';
   // A head stands over the answer, beside the Mascot if any, the answer in the middle of the room under it.
   const headed = head !== undefined && quickQuestion === undefined;
@@ -178,10 +178,10 @@ export function RoundCard({
             typeRole={promptRole}
             // A prompt too big for its lines takes a lower step of the cards' one title
             // scale (ADR 0157); on the ground the text face already sets a long one.
-            lines={promptRole === 'roundExplanation' ? undefined : roundLayout.promptLines}
-            stepped={promptRole !== 'roundExplanation'}
+            lines={promptRole === 'roundPrompt' ? undefined : roundLayout.promptLines}
+            stepped={promptRole !== 'roundPrompt'}
             maxFontSizeMultiplier={
-              promptRole === 'roundExplanation' ? undefined : roundLayout.textMaxFontScale
+              promptRole === 'roundPrompt' ? undefined : roundLayout.textMaxFontScale
             }
             style={[
               typeStyle(promptRole, tokens),
