@@ -2067,6 +2067,7 @@
   },
   "account": {
     "signedOut": "Увійти",
+    "whySignIn": "Увійди, щоб синхронізувати слова й прогрес між пристроями і не втратити їх.",
     "signInWithGoogle": "Увійти через Google",
     "signInWithApple": "Увійти через Apple",
     "emailLabel": "Електронна пошта",
