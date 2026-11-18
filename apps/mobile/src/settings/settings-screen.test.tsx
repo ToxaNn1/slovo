@@ -326,6 +326,11 @@ describe('Settings › the text size (ADR 0134)', () => {
 
     const sizeScreen = await screen.findByTestId('text-size-screen');
     expect(within(sizeScreen).getByRole('header', { name: 'Шрифт і розмір' })).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('text-size-list')).queryByRole('header', {
+        name: 'Шрифт і розмір',
+      }),
+    ).toBeNull();
     const sample = within(sizeScreen).getByTestId('text-size-sample');
     expect(within(sample).getByTestId('option-sample-lemma')).toHaveTextContent('Загра́ва');
     expect(within(sample).getByTestId('option-sample-definition')).toHaveTextContent(
@@ -741,5 +746,16 @@ describe('Settings › «Перерва» row', () => {
     expect(row()).toHaveTextContent(editionStrings.settings.rowSubtitles.streakBreak, {
       exact: false,
     });
+  });
+});
+
+describe('Settings › its header (app pass 91)', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await renderSettings();
+
+    expect(screen.getByRole('header', { name: 'Налаштування' })).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('settings-scroll')).queryByRole('header', { name: 'Налаштування' }),
+    ).toBeNull();
   });
 });

@@ -2,7 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { loadEdition, type Edition, type FeatureSwitch } from '@slovo/core';
 import { seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import WidgetsScreen from '../app/settings/widgets';
@@ -123,5 +123,16 @@ describe('Settings › Віджети', () => {
     await settle();
     expect(screen.getByTestId('widget-previews-widget-lockScreen', HIDDEN)).toBeOnTheScreen();
     expect(writes()).toBe(before);
+  });
+});
+
+describe('Widgets › its header (app pass 91)', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await renderWidgets();
+
+    expect(screen.getByRole('header', { name: strings.title })).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('widgets-scroll')).queryByRole('header', { name: strings.title }),
+    ).toBeNull();
   });
 });

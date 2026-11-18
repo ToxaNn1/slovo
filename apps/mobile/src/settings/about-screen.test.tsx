@@ -153,3 +153,18 @@ describe('About', () => {
     expect(screen.getByTestId('about-version')).toHaveTextContent('Версія 0.9');
   });
 });
+
+describe('About › its header (app pass 91)', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await renderAbout();
+
+    expect(
+      screen.getByRole('header', { name: editionStrings.settings.rows.about }),
+    ).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('about-scroll')).queryByRole('header', {
+        name: editionStrings.settings.rows.about,
+      }),
+    ).toBeNull();
+  });
+});
