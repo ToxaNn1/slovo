@@ -13,7 +13,7 @@ import { BlockTitle } from './BlockTitle';
 /**
  * The Mood check-in of the Dashboard (ADR 0076), from the board: «Як
  * настрій?» with «Mood дня» at the end, over a tile for each Mood, two to a
- * row (an odd last tile keeps half a row), each with its own red mark. A tap chooses the Mood, or changes it, and
+ * row (an odd last tile keeps half a row) or three in one row (ADR 0192), each with its own red mark. A tap chooses the Mood, or changes it, and
  * a toast says its reply; the chosen tile turns red. It needs an
  * `UndoToastProvider` above it.
  */
@@ -29,7 +29,11 @@ export function MoodCheckIn({
   const showToast = useUndoToast();
   const { check } = block;
   const chosenId = check.state === 'chosen' ? check.mood.id : undefined;
-  const rows = inRows(block.moods.map((mood, index) => ({ mood, index })));
+  const columns = block.moods.length === 3 ? 3 : moodTile.columns;
+  const rows = inRows(
+    block.moods.map((mood, index) => ({ mood, index })),
+    columns,
+  );
   return (
     <View testID="dashboard-mood" style={styles.block}>
       <BlockTitle title={words.question} note={words.note} />
@@ -48,7 +52,7 @@ export function MoodCheckIn({
                 }}
               />
             ))}
-            {row.length < moodTile.columns ? (
+            {row.length < columns ? (
               <View testID="dashboard-mood-empty" style={styles.cell} />
             ) : null}
           </View>
@@ -103,11 +107,11 @@ function MoodTile({
   );
 }
 
-/** The tiles cut into rows of `moodTile.columns`. */
-function inRows<T>(items: readonly T[]): T[][] {
+/** The tiles cut into rows of `columns`. */
+function inRows<T>(items: readonly T[], columns: number): T[][] {
   const rows: T[][] = [];
-  for (let start = 0; start < items.length; start += moodTile.columns)
-    rows.push(items.slice(start, start + moodTile.columns));
+  for (let start = 0; start < items.length; start += columns)
+    rows.push(items.slice(start, start + columns));
   return rows;
 }
 
