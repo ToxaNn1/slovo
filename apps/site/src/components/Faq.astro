@@ -1,6 +1,9 @@
 ---
-/** The questions; `placeholder` names what is still to be decided, shown as the design's visible stub. */
-const items: { q: string; a: string; placeholder?: string }[] = [
+/**
+ * The questions; `placeholder` names what is still to be decided, shown as the
+ * design's visible stub; `mail` is an address the answer links to.
+ */
+const items: { q: string; a: string; placeholder?: string; mail?: string }[] = [
   { q: 'Це безкоштовно?', a: 'Умови доступу ще вирішуємо.', placeholder: 'відповідь про ціну' },
   {
     q: 'Звідки слова?',
@@ -23,7 +26,7 @@ const items: { q: string; a: string; placeholder?: string }[] = [
   {
     q: 'Я знайшов помилку в слові.',
     a: 'Дякуємо! Напиши нам — виправимо.',
-    placeholder: 'пошта підтримки',
+    mail: 'support@slovoapp.org',
   },
 ];
 /** The design opens the second question first. */
@@ -42,19 +45,24 @@ const OPEN = 1;
       <details
         name="faq"
         open={i === OPEN}
-        class="group rounded-[14px] bg-sf transition-colors duration-200 open:bg-sf2"
+        class="faq-item group rounded-[14px] bg-sf transition-colors duration-200 open:bg-sf2"
       >
         <summary class="flex min-h-[68px] items-center justify-between gap-4 px-5 py-3.5 text-lg font-bold">
           <h3 class="m-0 text-lg font-bold">{item.q}</h3>
           <span
             aria-hidden="true"
-            class="grid size-9 flex-none place-items-center rounded-[11px] bg-sf2 font-word text-xl font-black text-ink transition-[rotate,background-color] duration-200 group-open:rotate-45 group-open:bg-red group-open:text-coal"
+            class="faq-icon grid size-9 flex-none place-items-center rounded-[11px] bg-sf2 font-word text-xl font-black text-ink transition-[rotate,scale,background-color] duration-200 ease-(--ease-out) group-open:rotate-45 group-open:bg-red group-open:text-coal"
           >
             +
           </span>
         </summary>
-        <div class="flex flex-col items-start gap-2.5 pr-[72px] pb-[22px] pl-5">
+        <div class="faq-body flex flex-col items-start gap-2.5 pr-[72px] pb-[22px] pl-5">
           <p class="m-0 text-[17px] leading-[1.55] text-pretty">{item.a}</p>
+          {item.mail !== undefined && (
+            <a href={`mailto:${item.mail}`} class="text-[17px] font-bold no-underline hover:underline focus-visible:underline">
+              {item.mail}
+            </a>
+          )}
           {item.placeholder !== undefined && (
             <span class="rounded-lg border-2 border-dashed border-red px-2.5 py-1.5 text-sm font-bold">
               Заглушка: {item.placeholder}
@@ -65,3 +73,121 @@ const OPEN = 1;
     ))}
   </div>
 </section>
+
+<style>
+  /* While an answer folds away it already looks closed: the closed ground and the «+» turning back. */
+  .faq-item[data-closing] {
+    background-color: var(--sf);
+  }
+  .faq-item[data-closing] .faq-icon {
+    rotate: 0deg;
+    background-color: var(--sf2);
+    color: var(--ink);
+  }
+  /* The «+» answers the press at once. */
+  .faq-item summary:active .faq-icon {
+    scale: 0.9;
+    transition-duration: 100ms;
+  }
+  summary {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+</style>
+
+<script>
+  // The answers unfold and fold smoothly (the height, and the text fading),
+  // one open at a time, and a second tap mid-way turns the motion around.
+  // Without this script <details name="faq"> does the same at once; for a
+  // reader who asks for less motion it stays instant.
+  const OPEN_MS = 280;
+  const CLOSE_MS = 200;
+  const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)';
+  const items = [...document.querySelectorAll<HTMLDetailsElement>('#faq details')];
+  const heights = new WeakMap<HTMLDetailsElement, Animation>();
+
+  const height = (element: Element): number => element.getBoundingClientRect().height;
+  const closing = (item: HTMLDetailsElement): boolean => item.dataset['closing'] !== undefined;
+
+  /** Fades the answer to `to`, from `start` or from wherever it is now. */
+  function fade(item: HTMLDetailsElement, to: number, ms: number, start?: number): void {
+    const body = item.querySelector('.faq-body');
+    if (body === null) return;
+    const from = start ?? Number(getComputedStyle(body).opacity);
+    for (const animation of body.getAnimations()) animation.cancel();
+    body.animate({ opacity: [from, to] }, { duration: ms, easing: EASE_OUT, fill: 'both' });
+  }
+
+  /** Moves the height from `from` to `to`, runs `done` at the end, then hands the height back to the layout. */
+  function resize(
+    item: HTMLDetailsElement,
+    from: number,
+    to: number,
+    ms: number,
+    done: () => void,
+  ): void {
+    item.style.overflow = 'hidden';
+    const animation = item.animate(
+      { height: [`${from}px`, `${to}px`] },
+      { duration: ms, easing: EASE_OUT, fill: 'forwards' },
+    );
+    heights.set(item, animation);
+    animation.onfinish = () => {
+      if (heights.get(item) !== animation) return;
+      done();
+      for (const fadeOut of item.querySelector('.faq-body')?.getAnimations() ?? [])
+        fadeOut.cancel();
+      animation.cancel();
+      heights.delete(item);
+      item.style.removeProperty('overflow');
+    };
+  }
+
+  function open(item: HTMLDetailsElement): void {
+    const from = height(item);
+    const wasClosed = !item.open;
+    heights.get(item)?.cancel();
+    delete item.dataset['closing'];
+    item.open = true;
+    if (reduced()) return;
+    fade(item, 1, OPEN_MS, wasClosed ? 0 : undefined);
+    resize(item, from, height(item), OPEN_MS, () => {});
+  }
+
+  function close(item: HTMLDetailsElement): void {
+    if (reduced()) {
+      heights.get(item)?.cancel();
+      delete item.dataset['closing'];
+      item.open = false;
+      return;
+    }
+    const from = height(item);
+    heights.get(item)?.cancel();
+    item.dataset['closing'] = '';
+    const summary = item.querySelector('summary');
+    fade(item, 0, CLOSE_MS * 0.6);
+    resize(item, from, summary === null ? 0 : height(summary), CLOSE_MS, () => {
+      item.open = false;
+      delete item.dataset['closing'];
+    });
+  }
+
+  function reduced(): boolean {
+    return matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  for (const item of items) {
+    // The script keeps one answer open itself, so the browser's own exclusive
+    // group does not snap the other one shut.
+    item.removeAttribute('name');
+    item.querySelector('summary')?.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (item.open && !closing(item)) {
+        close(item);
+        return;
+      }
+      for (const other of items) if (other !== item && other.open && !closing(other)) close(other);
+      open(item);
+    });
+  }
+</script>
