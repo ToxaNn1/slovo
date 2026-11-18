@@ -380,9 +380,11 @@ export function SoonRow({
       testID={testID}
       accessible
       accessibilityState={{ disabled: true }}
-      accessibilityLabel={[fill(soonAccessibilityLabel, { label }), subtitle]
-        .filter((part) => part !== undefined)
-        .join('. ')}
+      // The subtitle goes on the label's phrase («Запропонувати слово або Виправлення»),
+      // so VoiceOver reads them as one before the "soon".
+      accessibilityLabel={fill(soonAccessibilityLabel, {
+        label: subtitle === undefined ? label : `${label} ${subtitle}`,
+      })}
       {...look.voice}
       style={[styles.row, styles.soonRow]}
     >

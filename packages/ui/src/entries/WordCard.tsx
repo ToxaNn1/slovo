@@ -458,8 +458,11 @@ export function ExampleText({
     <View
       testID={testID}
       accessible
-      // The Example and its author's line, as VoiceOver joins them, without the Stress marks.
-      accessibilityLabel={withoutStress(author === undefined ? text : `${text}, ${author}`)}
+      // The Example and its author's line, as VoiceOver joins them, without the Stress marks:
+      // an Example ending in its own full stop takes no comma before the author's dash.
+      accessibilityLabel={withoutStress(
+        author === undefined ? text : `${text}${/[.!?…]$/.test(text) ? '' : ','} ${author}`,
+      )}
       {...voice}
     >
       <WholeLinesText

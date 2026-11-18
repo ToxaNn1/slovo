@@ -6,6 +6,7 @@ import type {
   RoundAnswer,
   RoundContent,
 } from '@slovo/core';
+import { sentences } from '@slovo/core';
 import type { MascotState } from '@slovo/contracts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -363,7 +364,7 @@ export function QuickQuestionRound({
             accessibilityRole="header"
             // The tag's visible label first, so the name VoiceOver reads holds what it shows;
             // a label that is the title itself, the Word Meaning question's, is read once.
-            accessibilityLabel={asked.label === title ? title : `${asked.label}. ${title}`}
+            accessibilityLabel={asked.label === title ? title : sentences([asked.label, title])}
             style={[styles.quickQuestionTag, { backgroundColor: colors.ink }]}
           >
             <Text
