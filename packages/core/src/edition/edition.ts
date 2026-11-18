@@ -73,7 +73,7 @@ export interface Edition {
   readonly originLanguages: readonly OriginLanguage[];
   /** The Edition's moods, in their order. */
   readonly moods: readonly Mood[];
-  /** The four moods the Dashboard's Mood check-in offers, in display order (ADR 0076). */
+  /** The three to five moods the Dashboard's Mood check-in offers, in display order (ADR 0076, ADR 0192). */
   readonly dashboardMoods: readonly Mood[];
   /** The Narrator Voices that read Words, in their order (ADR 0083). */
   readonly narratorVoices: readonly NarratorVoice[];
