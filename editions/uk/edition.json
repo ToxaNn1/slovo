@@ -130,7 +130,7 @@
     "textSizeSteps": "on",
     "fastReveal": "on",
     "mood": "on",
-    "curatedCollections": "off",
+    "curatedCollections": "on",
     "gesturesHintDemo": "on",
     "gesturesHintAgain": "on",
     "wordTabs": "on",
@@ -146,6 +146,7 @@
     "correctionCategoryScreens": "on",
     "correctionTypeGrid": "on",
     "categoryFeed": "on",
+    "curatedCollectionFeed": "on",
     "previousWords": "on",
     "correctionTypes": "on",
     "profileConfirmedByRarity": "off",
@@ -319,6 +320,7 @@
     }
   ],
   "categoriesRequiringHistory": ["repressed-words", "chameleon-words"],
+  "curatedCollectionPictogram": "language-speech",
   "originLanguages": [
     {
       "code": "la",

@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { CONTENT_KINDS } from './components/content-editor/kinds';
 import { FIXTURES, WORD_FIELDS } from './mock/fixtures';
@@ -339,6 +339,82 @@ test('a new Crossword day sends its date and words to the crosswordDay kind', as
   });
 });
 
+/** A Curated Collection of the list, answered with its date and when it appears. */
+function collection(appearedAt: string) {
+  server.use(
+    http.get('*/admin/content/:editionId/records/:kind', () =>
+      HttpResponse.json({
+        records: [{ id: 'cc_a1', label: 'Слова зими', retired: false, recordVersion: 1 }],
+        total: 1,
+      }),
+    ),
+    http.get(RECORD, () =>
+      HttpResponse.json({
+        fields: {
+          id: 'cc_a1',
+          name: 'Слова зими',
+          description: 'Рідкісні слова холодної пори.',
+          publishedOn: '2026-12-01',
+          entryIds: ['w_a1'],
+        },
+        recordVersion: 1,
+        retired: false,
+        appearedAt,
+      }),
+    ),
+  );
+}
+
+test('a new Curated Collection with no date is sent without one, which means «одразу»', async () => {
+  const sent: unknown[] = [];
+  server.use(
+    http.post('*/admin/content/:editionId/records/:kind', async ({ request }) => {
+      sent.push(await request.json());
+      return HttpResponse.json(FIXTURES.content.create);
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Додати' }));
+  const date = await screen.findByLabelText('Дата публікації');
+  expect(date.getAttribute('aria-describedby')).toBeTruthy();
+  expect(screen.getByText('Порожньо — одразу')).toBeDefined();
+  await user.type(screen.getByLabelText('Назва'), 'Слова зими');
+  await user.type(screen.getByLabelText('Опис'), 'Рідкісні слова холодної пори.');
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByLabelText('Причина'), 'нова добірка');
+  await user.click(dialog.getByRole('button', { name: 'Додати' }));
+
+  await waitFor(() => {
+    expect(sent).toHaveLength(1);
+  });
+  expect(sent[0]).toMatchObject({ fields: { name: 'Слова зими' } });
+  expect(sent[0]).not.toHaveProperty('fields.publishedOn');
+});
+
+test('the date of a Curated Collection is read-only once it appeared, and editable before', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-11-18T10:00:00.000Z'));
+  const user = userEvent.setup();
+  collection('2026-11-30T22:00:00.000Z');
+  const { unmount } = render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  expect((await screen.findByLabelText('Дата публікації')).hasAttribute('readonly')).toBe(false);
+  unmount();
+
+  collection('2026-11-17T22:00:00.000Z');
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  const date = await screen.findByLabelText('Дата публікації');
+  expect(date.hasAttribute('readonly')).toBe(true);
+  expect(screen.getByText("Добірка вже з'явилася: дату не змінити")).toBeDefined();
+  vi.useRealTimers();
+});
+
 const ILLUSTRATION = `${RECORD}/illustration`;
 const LIVE = { hash: 'a'.repeat(64), url: 'https://media.slovo.test/illustrations/w_a1.old.png' };
 
@@ -470,4 +546,232 @@ test('on a narrow screen the open record sits under the list, and opening one sc
   const form = await screen.findByLabelText('Лема');
   expect(scrolled).toHaveLength(1);
   expect(scrolled[0]?.contains(form)).toBe(true);
+});
+
+/** The records the Entry picker finds, each of its kind and Category. */
+const PICKABLE = [
+  { id: 'w_a1', kind: 'word', label: 'обруч', categoryId: 'objects' },
+  { id: 'w_a2', kind: 'word', label: 'жупан', categoryId: 'clothes' },
+  { id: 'w_a3', kind: 'word', label: 'кунтуш', categoryId: 'clothes' },
+  { id: 'c_a1', kind: 'correction', label: 'дякуючи', categoryId: 'grammar' },
+  { id: 'i_a1', kind: 'idiom', label: 'бити байдики' },
+  { id: 'cc_a1', kind: 'curatedCollection', label: 'Слова зими' },
+].map((record) => ({ ...record, retired: false, recordVersion: 1 }));
+
+/** The records answered by kind, text query, Category and ids; the Edition card with its Categories. */
+function pickable() {
+  server.use(
+    http.get('*/admin/content/:editionId/records/:kind', ({ params, request }) => {
+      const url = new URL(request.url);
+      const query = url.searchParams.get('query') ?? '';
+      const categoryId = url.searchParams.get('categoryId');
+      const ids = [...url.searchParams.entries()]
+        .filter(([key]) => key.startsWith('ids'))
+        .map(([, value]) => value);
+      const records = PICKABLE.filter(
+        (record) =>
+          record.kind === params['kind'] &&
+          record.label.includes(query) &&
+          (categoryId === null || record.categoryId === categoryId) &&
+          (ids.length === 0 || ids.includes(record.id)),
+      );
+      return HttpResponse.json({ records, total: records.length });
+    }),
+    http.get('*/admin/editions/:editionId', () =>
+      HttpResponse.json({
+        ...FIXTURES.editionCard,
+        categories: [
+          { id: 'objects', displayName: 'Предмети' },
+          { id: 'clothes', displayName: 'Одяг' },
+        ],
+        correctionCategories: [{ id: 'grammar', displayName: 'Граматика' }],
+      }),
+    ),
+  );
+}
+
+/** Opens a new Curated Collection; `save` sends it and answers the Entry ids it sent. */
+async function newCollection() {
+  const sent: unknown[] = [];
+  pickable();
+  server.use(
+    http.post('*/admin/content/:editionId/records/:kind', async ({ request }) => {
+      sent.push(await request.json());
+      return HttpResponse.json(FIXTURES.content.create);
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Додати' }));
+  const picker = within(await screen.findByRole('group', { name: 'Записи добірки' }));
+  const save = async () => {
+    await user.type(screen.getByLabelText('Назва'), 'Слова зими');
+    await user.type(screen.getByLabelText('Опис'), 'Рідкісні слова холодної пори.');
+    await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+    const dialog = within(await screen.findByRole('dialog'));
+    await user.type(dialog.getByLabelText('Причина'), 'нова добірка');
+    await user.click(dialog.getByRole('button', { name: 'Додати' }));
+    await waitFor(() => {
+      expect(sent).toHaveLength(1);
+    });
+    return sent[0];
+  };
+  return { user, picker, save };
+}
+
+/** The chosen Entries of a picker as their rows read: kind, label and Category. */
+const chosenOf = (picker: {
+  getByRole: (role: 'list', options: { name: string }) => HTMLElement;
+}) =>
+  within(picker.getByRole('list', { name: 'Обрані записи' }))
+    .queryAllByRole('listitem')
+    .map((item) => item.querySelector('[data-entry]')?.textContent);
+
+test('the Entry picker finds Entries of every kind by text, ticks them and saves them in order', async () => {
+  const { user, picker, save } = await newCollection();
+
+  await user.type(picker.getByLabelText('Пошук записів'), 'жуп');
+  await waitFor(() => {
+    expect(picker.queryByRole('checkbox', { name: 'обруч' })).toBeNull();
+  });
+  await user.click(await picker.findByRole('checkbox', { name: 'жупан' }));
+  await user.click(picker.getByRole('tab', { name: 'Ідіоми' }));
+  await user.clear(picker.getByLabelText('Пошук записів'));
+  await user.click(await picker.findByRole('checkbox', { name: 'бити байдики' }));
+  expect(picker.queryByLabelText('Категорія записів')).toBeNull();
+  expect(picker.queryByRole('tab', { name: 'Добірки' })).toBeNull();
+
+  expect(chosenOf(picker)).toEqual(['Слова · жупан · Одяг', 'Ідіоми · бити байдики']);
+  expect(await save()).toMatchObject({ fields: { entryIds: ['w_a2', 'i_a1'] } });
+});
+
+test('the Entry picker finds by Category, and «Додати всі показані» adds each listed Entry once', async () => {
+  const { user, picker, save } = await newCollection();
+
+  await user.selectOptions(await picker.findByLabelText('Категорія записів'), 'Одяг');
+  await waitFor(() => {
+    expect(picker.queryByRole('checkbox', { name: 'обруч' })).toBeNull();
+  });
+  await user.click(await picker.findByRole('checkbox', { name: 'кунтуш' }));
+  await user.click(picker.getByRole('button', { name: 'Додати всі показані' }));
+  await user.click(picker.getByRole('button', { name: 'Додати всі показані' }));
+
+  expect(chosenOf(picker)).toEqual(['Слова · кунтуш · Одяг', 'Слова · жупан · Одяг']);
+  expect(picker.getByRole('checkbox', { name: 'жупан' })).toHaveProperty('checked', true);
+  await user.click(picker.getByRole('tab', { name: 'Виправлення' }));
+  await user.selectOptions(await picker.findByLabelText('Категорія записів'), 'Граматика');
+  await user.click(await picker.findByRole('checkbox', { name: 'дякуючи' }));
+  expect(await save()).toMatchObject({ fields: { entryIds: ['w_a3', 'w_a2', 'c_a1'] } });
+});
+
+test('an open collection lists its Entries by kind, label and Category; remove and reorder save the shown order, and a refused save names its rule', async () => {
+  pickable();
+  server.use(
+    http.get(RECORD, () =>
+      HttpResponse.json({
+        fields: {
+          id: 'cc_a1',
+          name: 'Слова зими',
+          description: 'Рідкісні слова холодної пори.',
+          entryIds: ['w_a1', 'c_a1', 'w_a2', 'w_gone'],
+        },
+        recordVersion: 1,
+        retired: false,
+      }),
+    ),
+  );
+  const bodies = edits(() =>
+    HttpResponse.json(
+      {
+        defined: true,
+        code: 'REFUSED',
+        status: 422,
+        message: 'The record breaks a content rule',
+        data: {
+          refusals: [
+            { rule: 'collection-entry', field: 'entryIds', message: 'w_gone is an unknown entry' },
+          ],
+        },
+      },
+      { status: 422 },
+    ),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  const picker = within(await screen.findByRole('group', { name: 'Записи добірки' }));
+
+  await waitFor(() => {
+    expect(chosenOf(picker)).toEqual([
+      'Слова · обруч · Предмети',
+      'Виправлення · дякуючи · Граматика',
+      'Слова · жупан · Одяг',
+      'w_gone · невідомий запис',
+    ]);
+  });
+  await user.click(picker.getByRole('button', { name: 'Вище: жупан' }));
+  await user.click(picker.getByRole('button', { name: 'Прибрати: обруч' }));
+  await user.click(picker.getByRole('button', { name: 'Нижче: жупан' }));
+  expect(chosenOf(picker)).toEqual([
+    'Виправлення · дякуючи · Граматика',
+    'Слова · жупан · Одяг',
+    'w_gone · невідомий запис',
+  ]);
+
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  expect(await screen.findByText(/collection-entry/)).toBeDefined();
+  expect(bodies[0]).toMatchObject({ fields: { entryIds: ['c_a1', 'w_a2', 'w_gone'] } });
+});
+
+test("a collection's pictogram is a Category or Correction Category, and empty means the Edition default", async () => {
+  const { user, save } = await newCollection();
+  const pictogram = await screen.findByLabelText('Піктограма');
+  await waitFor(() => {
+    expect(
+      within(pictogram)
+        .getAllByRole('option')
+        .map(({ textContent }) => textContent),
+    ).toEqual(['Типова піктограма Видання', 'Предмети', 'Одяг', 'Граматика']);
+  });
+
+  await user.selectOptions(pictogram, 'Граматика');
+  expect(await save()).toMatchObject({ fields: { pictogram: 'grammar' } });
+});
+
+test('an open collection shows its pictogram, and the Edition default saves it without one', async () => {
+  pickable();
+  server.use(
+    http.get(RECORD, () =>
+      HttpResponse.json({
+        fields: {
+          id: 'cc_a1',
+          name: 'Слова зими',
+          description: 'Рідкісні слова холодної пори.',
+          entryIds: ['w_a1'],
+          pictogram: 'clothes',
+        },
+        recordVersion: 1,
+        retired: false,
+      }),
+    ),
+  );
+  const bodies = edits();
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  const pictogram = await screen.findByLabelText('Піктограма');
+  await waitFor(() => {
+    expect(pictogram).toHaveProperty('value', 'clothes');
+  });
+
+  await user.selectOptions(pictogram, 'Типова піктограма Видання');
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  await waitFor(() => {
+    expect(bodies).toHaveLength(1);
+  });
+  expect(bodies[0]).toMatchObject({ fields: { entryIds: ['w_a1'] } });
+  expect(bodies[0]).not.toHaveProperty('fields.pictogram');
 });

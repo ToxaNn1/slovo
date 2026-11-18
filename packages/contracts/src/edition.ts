@@ -482,7 +482,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   previousWords: FeatureSwitchStateSchema,
   /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `corrections` is. */
   correctionTypes: FeatureSwitchStateSchema,
-  /** Curated Collections: the Dashboard's «Добірки» rail of editorial Entry sets from the Language Pack (ADR 0076). */
+  /** Curated Collections: the Dashboard's «SLOVO пропонує» rail of editorial Entry sets from the Language Pack, above «Категорії» (ADR 0076, 0178). */
   curatedCollections: FeatureSwitchStateSchema,
   /** The gestures hint's demo: while «ГОРТАЙ ПАЛЬЦЕМ» is open, the Feed's card plays the swipes right, left and up in a loop, its edge labels sliding in, with a finger over it and each row of the sheet lit in turn (ADR 0112); off, the sheet stands still. Off while `knowledge` is. */
   gesturesHintDemo: FeatureSwitchStateSchema,
@@ -514,6 +514,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   correctionTypeGrid: FeatureSwitchStateSchema,
   /** The Category's Feed: a tap on a Word of a Category's screen opens a Feed of that Category's Words alone, from the tapped one in Language Pack order and round again after the last (ADR 0110); off, the tap opens the Word's card as Search does. Off while `categoryScreens` is. */
   categoryFeed: FeatureSwitchStateSchema,
+  /** A Curated Collection's Feed: a tap on an Entry of a Curated Collection's screen opens a Feed of that collection's Entries of every kind alone, from the tapped one in its order and round again after the last (ADR 0178); off, the tap opens the Entry's card as Search does. Off while `curatedCollections` is. */
+  curatedCollectionFeed: FeatureSwitchStateSchema,
   /** «Скопіювати посилання» on the share sheet of a Collection, which copies its Collection Link with `expo-clipboard` (ADR 0132); off until the EAS build with that module is out, and off the sheet keeps the system Share alone. Off while `collectionLinks` is. */
   collectionLinkCopy: FeatureSwitchStateSchema,
   /** The Due Quiz «Перевір себе» on «Вчу»: three meanings for each Word due for Review today, right sets Known and wrong Unknown (ADR 0131); off, «Вчу» has no card. Off while `knowledge` is. */
@@ -1013,6 +1015,12 @@ export const EditionConfigSchema = z
      */
     categoriesRequiringHistory: z.array(KebabCaseIdSchema),
     /**
+     * The id of the Category or Correction Category whose pictogram a Curated
+     * Collection's tile draws when the collection names none (ADR 0178);
+     * unset, such a tile draws no pictogram.
+     */
+    curatedCollectionPictogram: KebabCaseIdSchema.optional(),
+    /**
      * The languages Words come from, in their order (ADR 0052): the Edition
      * owns the list, so the Core stays language-agnostic. Empty when the
      * Edition gives no Word an origin.
@@ -1072,6 +1080,7 @@ export const EditionConfigSchema = z
         categories,
         correctionCategories,
         categoriesRequiringHistory,
+        curatedCollectionPictogram,
         originLanguages,
         moods,
         dashboardMoods,
@@ -1119,6 +1128,17 @@ export const EditionConfigSchema = z
           });
         }
       });
+      if (
+        curatedCollectionPictogram !== undefined &&
+        !known.categories.has(curatedCollectionPictogram) &&
+        !known.correctionCategories.has(curatedCollectionPictogram)
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['curatedCollectionPictogram'],
+          message: `Unknown Category id "${curatedCollectionPictogram}"`,
+        });
+      }
       reportRepeats(
         context,
         originLanguages.map(({ code }) => code),

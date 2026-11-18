@@ -1,6 +1,6 @@
 import { ID_PREFIX } from '@slovo/contracts';
 import { parseRecord, recordFileOf, type RecordKind } from '@slovo/content-rules';
-import type { Actor, Clock, Json } from '@slovo/server-core';
+import { editionDayStart, type Actor, type Clock, type Json } from '@slovo/server-core';
 import { and, asc, eq, getTableColumns, inArray, isNull, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -313,12 +313,24 @@ export function createContentQueue({ database, clock }: { database: Database; cl
               .set({ ...set, fields: record.entry })
               .where(where);
             break;
-          case 'curatedCollection':
+          case 'curatedCollection': {
+            // A restored publish date brings back its appearance, as the import sets it (ADR 0178).
+            const [collection] = await tx
+              .select({ fields: contentCuratedCollections.fields })
+              .from(contentCuratedCollections)
+              .where(where);
+            const { publishedOn } = record.entry;
+            const moved = collection !== undefined && collection.fields.publishedOn !== publishedOn;
             await tx
               .update(contentCuratedCollections)
-              .set({ ...set, fields: record.entry })
+              .set({
+                ...set,
+                fields: record.entry,
+                ...(moved ? { appearedAt: editionDayStart(publishedOn) } : {}),
+              })
               .where(where);
             break;
+          }
           case 'crosswordDay':
             await tx
               .update(contentCrosswordDays)

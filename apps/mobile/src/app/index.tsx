@@ -48,6 +48,7 @@ function DashboardBlocks() {
     openPreviousWord,
     openCorrectionType,
     openCuratedCollection,
+    openCuratedCollections,
     openCategories,
     openCategory,
     openCorrectionCategories,
@@ -142,7 +143,14 @@ function DashboardBlocks() {
           />
         );
       case 'curatedCollections':
-        return <CuratedCollectionsRail cards={block.cards} onOpen={openCuratedCollection} />;
+        return (
+          <CuratedCollectionsRail
+            cards={block.cards}
+            published={block.published}
+            onOpenAll={openCuratedCollections}
+            onOpen={openCuratedCollection}
+          />
+        );
     }
   }
 }

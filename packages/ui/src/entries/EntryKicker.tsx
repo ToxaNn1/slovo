@@ -42,6 +42,28 @@ export function EntryKicker({ label, testID }: { label: string; testID: string }
 }
 
 /**
+ * A kicker in ink capitals over a card, as XSwipeV's «КАТЕГОРІЯ · … · 2 З 4»:
+ * the card's place in a Category's or a Curated Collection's Feed (ADR 0110,
+ * 0178). It wraps rather than shrinks.
+ */
+export function CardKicker({ text, testID }: { text: string; testID: string }) {
+  const tokens = useTokens();
+  return (
+    <Text
+      testID={testID}
+      style={[
+        typeStyle('cardKicker', tokens),
+        styles.text,
+        kickerLevel,
+        { color: tokens.colors.ink },
+      ]}
+    >
+      {text}
+    </Text>
+  );
+}
+
+/**
  * Moves a kicker's tight line down on iOS to where the board's CSS draws it,
  * so its capitals sit level with the middle of the corner tiles beside it.
  */

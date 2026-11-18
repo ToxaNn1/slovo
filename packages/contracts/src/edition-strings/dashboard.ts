@@ -55,8 +55,10 @@ export const DashboardStringsSchema = z.strictObject({
     /** Each Correction Type's line under its title on its screen, «Слова, що прослизають у мову непомітно.». */
     descriptions: z.record(CorrectionTypeSchema, TextSchema),
   }),
-  /** The title over the Curated Collections rail, «Добірки» (ADR 0081). */
+  /** The title over the Curated Collections rail, «SLOVO пропонує» (ADR 0081, 0178). */
   curatedCollectionsTitle: TextSchema,
+  /** The title of the grid of every Curated Collection, opened from the rail's header, «Добірки». */
+  curatedCollectionsGridTitle: TextSchema,
   /** A Curated Collection's count of Entries on its tile, «{count} слів». */
   curatedCollectionCount: PluralSchema,
   /** The badge on a Curated Collection card not yet opened, «Нова». */
@@ -75,6 +77,11 @@ export const DashboardStringsSchema = z.strictObject({
     addButton: TextSchema,
     /** The screen's button beside its tick once a copy is kept, «ДОДАНО». */
     addedButton: TextSchema,
+    /**
+     * The kicker of each card of the collection's Feed (ADR 0178), «Добірка · {name} · {place} з {of}».
+     * Takes `{name}`, the collection's name, `{place}`, the card's place from the tapped Entry, and `{of}`, the collection's Entries.
+     */
+    feedKicker: templateOf('name', 'place', 'of'),
   }),
   /** The Categories of Words: the Dashboard rail, the grid and the kicker of a Category screen (ADR 0081). */
   categories: z.strictObject({

@@ -156,8 +156,10 @@ export interface Shown {
   readonly categoryFeed: boolean;
   /** The Mood check-in block of the Dashboard, «Як настрій?» (ADR 0076). */
   readonly mood: boolean;
-  /** The Curated Collections rail of the Dashboard, «Добірки» (ADR 0076). */
+  /** The Curated Collections rail of the Dashboard, «SLOVO пропонує» (ADR 0076, 0178). */
   readonly curatedCollections: boolean;
+  /** A tap on an Entry of a Curated Collection's screen opens the collection's Feed (ADR 0178). */
+  readonly curatedCollectionFeed: boolean;
   /** While the gestures hint is open, the Feed's card plays the swipes it names (ADR 0112). */
   readonly gesturesHintDemo: boolean;
   /** Settings offers «Показати підказку жестів», which shows the gestures hint once more (owner 16.11). */
@@ -272,6 +274,7 @@ export function shownOf({
     categoryFeed: on('categoryFeed'),
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
+    curatedCollectionFeed: on('curatedCollectionFeed'),
     gesturesHintDemo: on('gesturesHintDemo'),
     gesturesHintAgain: on('gesturesHintAgain'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
