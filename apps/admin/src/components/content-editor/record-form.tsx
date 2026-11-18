@@ -62,6 +62,7 @@ export function RecordForm({
   fields,
   record,
   appeared = false,
+  retired = false,
   onWritten,
 }: {
   readonly editionId: string;
@@ -70,6 +71,8 @@ export function RecordForm({
   readonly record: FormRecord;
   /** Whether the Curated Collection appeared on the rail, so its publish date stays. */
   readonly appeared?: boolean;
+  /** Whether the record is retired, so the form brings it back instead of retiring it. */
+  readonly retired?: boolean;
   readonly onWritten: (written: Written) => void;
 }) {
   const [values, setValues] = useState<Readonly<Record<string, FormValue>>>(() =>
@@ -212,6 +215,29 @@ export function RecordForm({
     });
   };
 
+  /** Brings a retired record back into use: an edit of its fields with `retired: false`. */
+  const bringBack = () => {
+    if (record.at !== 'edit') return;
+    const next = read(base.fields);
+    if (next === undefined) return;
+    setPending({
+      title: 'Повернути запис в ужиток',
+      confirm: 'Повернути в ужиток',
+      run: (confirmed) =>
+        write((batchId) =>
+          adminApi.content.edit({
+            editionId,
+            kind,
+            id: record.id,
+            batchId,
+            recordVersion: base.recordVersion,
+            fields: { ...next, retired: false },
+            reason: confirmed,
+          }),
+        ),
+    });
+  };
+
   const changed =
     stale === undefined
       ? []
@@ -298,7 +324,12 @@ export function RecordForm({
           <Button type="submit" disabled={busy}>
             Зберегти
           </Button>
-          {record.at === 'edit' && (
+          {record.at === 'edit' && retired && (
+            <Button type="button" variant="secondary" disabled={busy} onClick={bringBack}>
+              Повернути в ужиток
+            </Button>
+          )}
+          {record.at === 'edit' && !retired && (
             <Button type="button" variant="danger" disabled={busy} onClick={retire}>
               Вивести з ужитку
             </Button>
