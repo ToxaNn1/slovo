@@ -83,7 +83,10 @@ function onboardingHero({
  * on-red Mascot and «Пропустити»; under it the step dots, the step's content
  * and its buttons. The step slides in from the side and its shout word flies
  * in from the left; with Reduce Motion both only fade in where they are.
- * VoiceOver starts a step at its dots, which say its number.
+ * VoiceOver starts a step at its dots, which say its number. A `framed`
+ * step's content never scrolls: it takes the whole room under the red top,
+ * kept at its shortest, for a card in its fixed frame that scrolls inside
+ * itself (ADR 0091, 0113).
  */
 export function OnboardingStep({
   step,
@@ -93,6 +96,7 @@ export function OnboardingStep({
   onSkip,
   children,
   footer,
+  framed = false,
   testID,
 }: {
   /** This step's number, from 1. */
@@ -107,6 +111,8 @@ export function OnboardingStep({
   children: ReactNode;
   /** The step's buttons, pinned under the content. */
   footer: ReactNode;
+  /** The content takes the room under the red top and never scrolls, for the first Word's card. */
+  framed?: boolean;
   testID?: string;
 }) {
   const { colors, fontFamilies } = useTokens();
@@ -123,7 +129,8 @@ export function OnboardingStep({
     height,
     bottom,
     skipBottom: top + minTouchTarget,
-    content,
+    // A framed step's content takes whatever room there is: the red top stays its shortest.
+    content: framed ? Number.POSITIVE_INFINITY : content,
     footer: footerHeight,
   });
   const { onboarding } = strings;
@@ -170,6 +177,37 @@ export function OnboardingStep({
       { rotate: SHOUT_TURN },
     ],
   }));
+
+  // The step's dots over its content.
+  const body = (
+    <>
+      <View
+        ref={dots}
+        testID="onboarding-progress"
+        accessible
+        accessibilityLabel={fill(onboarding.stepLabel, {
+          step: String(step),
+          total: String(total),
+        })}
+        {...voice}
+        style={styles.dots}
+      >
+        {Array.from({ length: total }, (_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.dot,
+              {
+                width: index + 1 === step ? dot.currentWidth : dot.width,
+                backgroundColor: index < step ? colors.accent : colors.silhouette,
+              },
+            ]}
+          />
+        ))}
+      </View>
+      {children}
+    </>
+  );
 
   return (
     <Animated.View
@@ -221,41 +259,23 @@ export function OnboardingStep({
           </Pressable>
         </View>
       </View>
-      <ScrollView
-        testID="onboarding-content"
-        onContentSizeChange={(_, contentHeight) => {
-          setContent(contentHeight);
-        }}
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View
-          ref={dots}
-          testID="onboarding-progress"
-          accessible
-          accessibilityLabel={fill(onboarding.stepLabel, {
-            step: String(step),
-            total: String(total),
-          })}
-          {...voice}
-          style={styles.dots}
-        >
-          {Array.from({ length: total }, (_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.dot,
-                {
-                  width: index + 1 === step ? dot.currentWidth : dot.width,
-                  backgroundColor: index < step ? colors.accent : colors.silhouette,
-                },
-              ]}
-            />
-          ))}
+      {framed ? (
+        <View testID="onboarding-content" style={[styles.content, styles.framed]}>
+          {body}
         </View>
-        {children}
-      </ScrollView>
+      ) : (
+        <ScrollView
+          testID="onboarding-content"
+          onContentSizeChange={(_, contentHeight) => {
+            setContent(contentHeight);
+          }}
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {body}
+        </ScrollView>
+      )}
       {/* Opaque, so content scrolled under the pinned buttons never shows through them. */}
       <View
         testID="onboarding-footer"
@@ -327,6 +347,8 @@ const styles = StyleSheet.create({
   topRow: { paddingHorizontal: side, flexDirection: 'row', justifyContent: 'flex-end' },
   skip: { minHeight: minTouchTarget, minWidth: minTouchTarget, justifyContent: 'center' },
   scroll: { flex: 1 },
+  // A framed step's content fills the room above the buttons, the card's frame its last block.
+  framed: { flex: 1, paddingBottom: space[3] },
   // Never grown to the scroll's height: the step measures how tall its content is.
   content: {
     paddingHorizontal: side,

@@ -34,7 +34,7 @@ export const WordCardStringsSchema = z.strictObject({
   exampleAuthor: templateOf('author'),
   /** The VoiceOver label of the Category chip, e.g. "Категорія: {category}". */
   category: templateOf('category'),
-  /** The heading of the etymology in the tab «Історія». */
+  /** The heading over a Word's etymology in «Історія» and in a Game's review. */
   etymology: TextSchema,
   /** The button under a tab too long for its card's frame, on every kind of card, which opens the rest of the tab (ADR 0091). */
   tabMore: TextSchema,

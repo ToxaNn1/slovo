@@ -431,7 +431,7 @@
       }
     }
   ],
-  "dashboardMoods": ["energetic", "joyful", "sad", "in-love", "calm"],
+  "dashboardMoods": ["energetic", "joyful", "calm"],
   "narratorVoices": {
     "default": "oksana",
     "voices": [

@@ -159,6 +159,7 @@ async function open({
           name: 'Лагідні слова',
           description: 'Слова, що звучать м’яко.',
           publishedOn: '2026-10-20',
+          retired: false,
           entryIds: ['w_lahidnyi', 'w_tykhyi'],
         },
       ],

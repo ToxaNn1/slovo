@@ -9,7 +9,7 @@ Until 0.8.14 a reader who spotted a wrong Stress or a typo in a Definition could
 **On the card.** «Повідомити про помилку» is an item of the card menu on cards of all five kinds of Entry: Word, Correction, Idiom, Synonym Row and Tip. The card menu is the action row under the card (ADR 0017): the item is a flag in its last slot, which VoiceOver reads as «Повідомити про помилку», so it takes no new text and the actions stay one tap away. It opens a sheet:
 
 - **The type**, required, one of «Друкарська помилка» (`typo`), «Наголос» (`stress`), «Визначення» (`definition`) and «Інше» (`other`).
-- **«Коментар (необов'язково)»**, at most 500 characters, with a counter. «Інше» needs a comment, since the owner can't guess what it means.
+- **«Коментар (необов’язково)»**, at most 500 characters, with a counter. «Інше» needs a comment, since the owner can't guess what it means.
 - **«Надіслати»** closes the sheet with «Дякуємо! Ми перевіримо.», online or not; over the daily limit it shows «Забагато повідомлень сьогодні. Спробуй завтра.» instead.
 
 **The request.** `POST /v1/reports` is a procedure of the API contract like the others (ADR 0031), so the contract only grows and the committed description changes with it (`pnpm describe:api`). Its body carries the Edition, the Entry id, the type, the comment (trimmed, at most 500 characters, empty when there is none; non-empty for `other`), the app version (ADR 0044) and the content version of the open Language Pack. The backend checks the shape, not whether the Entry is in a pack, and answers `202` with no body; a body it refuses answers `400`.

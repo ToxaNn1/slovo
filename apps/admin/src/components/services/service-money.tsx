@@ -161,7 +161,7 @@ export function ServiceCostsHeader({
 /** The parts of Railway's spend as the owner reads them (ADR 0173). */
 const SPEND_PART_LABELS: Readonly<Record<RailwaySpendPart, string>> = {
   cpu: 'Процесор',
-  memory: "Пам'ять",
+  memory: 'Пам’ять',
   egress: 'Вихідний трафік',
   disk: 'Диск',
 };

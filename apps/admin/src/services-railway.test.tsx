@@ -128,7 +128,7 @@ test('the Railway block shows Offline, and its window the state, the spend and i
   const parts = within(panel.getByRole('list', { name: 'З чого складаються витрати' }));
   expect(parts.getAllByRole('listitem').map((part) => part.textContent)).toEqual([
     'Процесор$0.56',
-    "Пам'ять$1.15",
+    'Пам’ять$1.15',
     'Вихідний трафік$0.09',
     'Диск$0',
   ]);

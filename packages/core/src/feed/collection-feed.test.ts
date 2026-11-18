@@ -21,6 +21,7 @@ const picks: CuratedCollection = {
   name: 'Добірка',
   description: 'Про добірку',
   publishedOn: '2026-11-01',
+  retired: false,
   entryIds: ['w_one', 'c_one', 'w_old', 'i_one', 's_one', 't_one', 'w_hidden'],
 };
 

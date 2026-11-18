@@ -192,7 +192,7 @@ describe('the whole onboarding flow', () => {
   });
 });
 
-// Owner decision Р29: the sample card is the Feed's tabbed card, at its natural height, and takes no swipe or action.
+// Owner decision Р29: the sample card is the Feed's tabbed card in its fixed frame, and takes no swipe or action.
 describe('the sample Entry card of «ТРИМАЙ!»', () => {
   it('is the tabbed Word card of the Feed, with no corner', async () => {
     await renderApp();

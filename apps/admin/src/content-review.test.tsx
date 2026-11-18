@@ -21,7 +21,9 @@ const word = (id: string, lemma: string, primaryDefinition: string) => ({
  * The backend's records not checked yet, in order: a check or a retire takes
  * one out; the bodies of every check and retire, in turn.
  */
-function unchecked(...records: ReturnType<typeof word>[]) {
+function unchecked(
+  ...records: { id: string; fields: Record<string, unknown>; recordVersion: number }[]
+) {
   const left = [...records];
   const checks: unknown[] = [];
   const checkAlls: unknown[] = [];
@@ -128,7 +130,7 @@ test('«Ні» retires the record with the reason typed, or with none, and shows
   await card();
 
   await user.click(screen.getByRole('button', { name: /Ні/ }));
-  await user.type(screen.getByLabelText("Причина (необов'язково)"), 'Не рідкісне');
+  await user.type(screen.getByLabelText('Причина (необов’язково)'), 'Не рідкісне');
   await user.click(screen.getByRole('button', { name: 'Вивести з ужитку' }));
   expect(await within(await card()).findByText('жупан')).toBeTruthy();
 
@@ -249,6 +251,61 @@ test('a record retired here comes back into use from «Назад»', async () =
     expect(rollbacks).toEqual([
       { batchId: FIXTURES.content.openBatch.batchId, body: { reason: 'Повернуто з перегляду' } },
     ]);
+  });
+  expect(await screen.findByText('Уже переглянуто: повернуто в ужиток')).toBeTruthy();
+});
+
+test('a Curated Collection retires and comes back into use as any record', async () => {
+  const collection = {
+    id: 'cc_a1',
+    fields: {
+      id: 'cc_a1',
+      name: 'Слова зими',
+      description: 'Рідкісні слова холодної пори.',
+      publishedOn: '2026-12-01',
+      entryIds: ['w_a1'],
+    },
+    recordVersion: 2,
+  };
+  const { retires } = unchecked(collection);
+  const kinds: unknown[] = [];
+  const rollbacks: unknown[] = [];
+  server.use(
+    http.post(
+      '*/admin/content/:editionId/records/:kind/:id/retire',
+      async ({ request, params }) => {
+        kinds.push(params['kind']);
+        retires.push(await request.json());
+        return HttpResponse.json(FIXTURES.content.retire);
+      },
+    ),
+    http.get('*/admin/content/:editionId/records/:kind/:id', () =>
+      HttpResponse.json({ ...collection, retired: rollbacks.length === 0 }),
+    ),
+    http.post('*/admin/content-queue/batches/:batchId/rollback', async ({ request }) => {
+      rollbacks.push(await request.json());
+      return HttpResponse.json(FIXTURES.contentQueue.rollback);
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  expect(await within(await card()).findByText('Слова зими')).toBeTruthy();
+
+  await user.click(screen.getByRole('button', { name: /Ні/ }));
+  await user.click(screen.getByRole('button', { name: 'Вивести з ужитку' }));
+  await waitFor(() => {
+    expect(kinds).toEqual(['curatedCollection']);
+  });
+  expect(retires).toEqual([
+    expect.objectContaining({ recordVersion: 2, batchId: FIXTURES.content.openBatch.batchId }),
+  ]);
+  await user.keyboard('{ArrowLeft}');
+  expect(await screen.findByText('Уже переглянуто: виведено з ужитку')).toBeTruthy();
+  await user.click(screen.getByRole('button', { name: 'Повернути в ужиток' }));
+
+  await waitFor(() => {
+    expect(rollbacks).toEqual([{ reason: 'Повернуто з перегляду' }]);
   });
   expect(await screen.findByText('Уже переглянуто: повернуто в ужиток')).toBeTruthy();
 });

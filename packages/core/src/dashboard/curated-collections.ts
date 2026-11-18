@@ -67,7 +67,8 @@ export interface CuratedCollectionScreen {
 /**
  * The Curated Collections (ADR 0076, 0178): the Dashboard's «SLOVO пропонує»
  * rail of the Language Pack's editorial Entry sets. A collection is on the
- * rail from its publication date in the local calendar; the unopened ones come
+ * rail from its publication date in the local calendar until it is Retired,
+ * when a reader's copy in Collections stays; the unopened ones come
  * first, then the newest, ten at most. With `curatedCollections` off the rail
  * is empty.
  */
@@ -129,8 +130,10 @@ export async function openCuratedCollections({
   const subscribers = createSubscribers();
   const on = edition.isFeatureEnabled('curatedCollections');
   const records = dashboardRecords.curatedCollectionsOpened;
-  // The pack is read once: its collections change only with the pack.
-  const all = on ? await content.listCuratedCollections() : [];
+  // The pack is read once per composition: a Patch applied reopens the
+  // composition, which reads them afresh. A Retired one is out of
+  // circulation: no rail, grid, screen or Feed (ADR 0178).
+  const all = on ? (await content.listCuratedCollections()).filter(({ retired }) => !retired) : [];
   const pictogramOf = await pictograms(on ? entries : undefined);
   const defaultPictogram = pictogramOf(edition.curatedCollectionPictogram);
 

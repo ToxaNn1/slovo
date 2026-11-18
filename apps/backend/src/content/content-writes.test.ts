@@ -1,14 +1,14 @@
 import { dateAfter } from '@slovo/content-rules';
 import type { Word } from '@slovo/contracts';
-import type { ApiClient } from '@slovo/contracts/api';
+import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
 import { createDatabase } from '../database/database';
-import { contentIds } from '../database/schema';
+import { contentCuratedCollections, contentIds } from '../database/schema';
 import { systemRandom } from '../random';
 import {
   adminCommandDeps,
@@ -558,6 +558,102 @@ describe("a Curated Collection's publish date", () => {
       fields: { publishedOn: '2026-12-01' },
       appearedAt: '2026-11-30T22:00:00.000Z',
     });
+  });
+
+  it('retires an appeared collection and brings it back, keeping its appearance', async () => {
+    const backend = await collectionBackend();
+    const { agent, batchId, client, database, save, record } = backend;
+    vi.setSystemTime(new Date('2026-11-18T10:00:00.000Z'));
+    const { id } = await save('2026-11-20');
+    passTime(4 * 24 * 60 * 60 * 1000);
+    const retiredColumn = async () =>
+      (
+        await database.db
+          .select({ retired: contentCuratedCollections.retired })
+          .from(contentCuratedCollections)
+          .where(eq(contentCuratedCollections.id, id))
+      ).map(({ retired }) => retired);
+    const { contentVersion } = await snapshotOf(client);
+
+    await agent.admin.content.retire({
+      editionId: 'uk',
+      kind: 'curatedCollection',
+      id,
+      batchId,
+      recordVersion: (await record(id)).recordVersion,
+    });
+
+    expect(await record(id)).toMatchObject({
+      fields: { retired: true, publishedOn: '2026-11-20' },
+      appearedAt: '2026-11-19T22:00:00.000Z',
+    });
+    expect(await retiredColumn()).toEqual([true]);
+    const snapshot = await snapshotOf(client);
+    expect(snapshot.curatedCollections.find((found) => found.id === id)).toMatchObject({
+      retired: true,
+    });
+    const patch = await client.content.patch({
+      params: { editionId: 'uk' },
+      query: { since: contentVersion, patchFormat: PATCH_FORMAT },
+    });
+    expect(patch.status === 200 && patch.body.status === 'patch' && patch.body.patch).toMatchObject(
+      { curatedCollections: [expect.objectContaining({ id, retired: true })] },
+    );
+
+    const { fields, recordVersion } = await record(id);
+    await agent.admin.content.edit({
+      editionId: 'uk',
+      kind: 'curatedCollection',
+      id,
+      batchId,
+      recordVersion,
+      fields: { ...fields, retired: false },
+    });
+
+    expect(await record(id)).toMatchObject({
+      fields: { retired: false },
+      appearedAt: '2026-11-19T22:00:00.000Z',
+    });
+    expect(await retiredColumn()).toEqual([false]);
+  });
+
+  it('rolls a retire back to the live collection, and a create back to a Retired one', async () => {
+    const backend = await collectionBackend();
+    const { agent, database, save, record } = backend;
+    const { id } = await save();
+    const retiredColumn = async (of: string) =>
+      (
+        await database.db
+          .select({ retired: contentCuratedCollections.retired })
+          .from(contentCuratedCollections)
+          .where(eq(contentCuratedCollections.id, of))
+      ).map(({ retired }) => retired);
+    const later = await agent.admin.content.openBatch({ editionId: 'uk' });
+    await agent.admin.content.retire({
+      editionId: 'uk',
+      kind: 'curatedCollection',
+      id,
+      batchId: later.batchId,
+      recordVersion: (await record(id)).recordVersion,
+    });
+    const owner = (await signedInAdmin(backend, 'owner')).client;
+
+    await owner.admin.contentQueue.rollback({ batchId: later.batchId, reason: 'Ще потрібна' });
+    expect(await record(id)).toMatchObject({ fields: { retired: false } });
+    expect(await retiredColumn(id)).toEqual([false]);
+
+    // The first batch's collection changed since, so a create rolls back in a batch of its own.
+    const added = await agent.admin.content.openBatch({ editionId: 'uk' });
+    const { id: _id, ...fields } = (await record(id)).fields;
+    const created = await agent.admin.content.create({
+      editionId: 'uk',
+      kind: 'curatedCollection',
+      batchId: added.batchId,
+      fields: { ...fields, name: 'Слова весни' },
+    });
+    await owner.admin.contentQueue.rollback({ batchId: added.batchId, reason: 'Зайва' });
+    expect(await record(created.id)).toMatchObject({ fields: { retired: true } });
+    expect(await retiredColumn(created.id)).toEqual([true]);
   });
 
   it('keeps the pictogram a save names, and refuses one that names no Category', async () => {

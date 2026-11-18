@@ -340,11 +340,12 @@ test('a new Crossword day sends its date and words to the crosswordDay kind', as
 });
 
 /** A Curated Collection of the list, answered with its date and when it appears. */
-function collection(appearedAt: string) {
+/** One Curated Collection, retired while `retired()` says so. */
+function collection(appearedAt: string, retired: () => boolean = () => false) {
   server.use(
     http.get('*/admin/content/:editionId/records/:kind', () =>
       HttpResponse.json({
-        records: [{ id: 'cc_a1', label: 'Слова зими', retired: false, recordVersion: 1 }],
+        records: [{ id: 'cc_a1', label: 'Слова зими', retired: retired(), recordVersion: 1 }],
         total: 1,
       }),
     ),
@@ -356,9 +357,10 @@ function collection(appearedAt: string) {
           description: 'Рідкісні слова холодної пори.',
           publishedOn: '2026-12-01',
           entryIds: ['w_a1'],
+          retired: retired(),
         },
         recordVersion: 1,
-        retired: false,
+        retired: retired(),
         appearedAt,
       }),
     ),
@@ -411,8 +413,130 @@ test('the date of a Curated Collection is read-only once it appeared, and editab
   await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
   const date = await screen.findByLabelText('Дата публікації');
   expect(date.hasAttribute('readonly')).toBe(true);
-  expect(screen.getByText("Добірка вже з'явилася: дату не змінити")).toBeDefined();
+  expect(screen.getByText('Добірка вже з’явилася: дату не змінити')).toBeDefined();
   vi.useRealTimers();
+});
+
+test('a Curated Collection that appeared retires as any record: marked «виведено», its date still read-only', async () => {
+  const retires: unknown[] = [];
+  collection('2026-11-01T00:00:00.000Z', () => retires.length > 0);
+  server.use(
+    http.post(`${RECORD}/retire`, async ({ request, params }) => {
+      retires.push({ kind: params['kind'], body: await request.json() });
+      return HttpResponse.json(FIXTURES.content.retire);
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  await user.click(await screen.findByRole('button', { name: 'Вивести з ужитку' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByLabelText('Причина'), 'застаріла');
+  await user.click(dialog.getByRole('button', { name: 'Вивести з ужитку' }));
+
+  expect(await screen.findByText('Виведено з ужитку')).toBeDefined();
+  expect(retires).toEqual([
+    {
+      kind: 'curatedCollection',
+      body: expect.objectContaining({ reason: 'застаріла', recordVersion: 1 }) as unknown,
+    },
+  ]);
+  expect(screen.getByText('виведено')).toBeDefined();
+  expect(screen.getByLabelText('Дата публікації').hasAttribute('readonly')).toBe(true);
+});
+
+test('a retired record comes back into use: an edit of its fields with `retired: false`', async () => {
+  const bodies = edits();
+  collection('2026-11-01T00:00:00.000Z', () => bodies.length === 0);
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  expect(await screen.findByText('Виведено з ужитку')).toBeDefined();
+  expect(screen.queryByRole('button', { name: 'Вивести з ужитку' })).toBeNull();
+  await user.click(screen.getByRole('button', { name: 'Повернути в ужиток' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByLabelText('Причина'), 'знову актуальна');
+  await user.click(dialog.getByRole('button', { name: 'Повернути в ужиток' }));
+
+  await waitFor(() => {
+    expect(bodies).toEqual([
+      expect.objectContaining({
+        reason: 'знову актуальна',
+        recordVersion: 1,
+        fields: expect.objectContaining({
+          name: 'Слова зими',
+          publishedOn: '2026-12-01',
+          retired: false,
+        }) as unknown,
+      }),
+    ]);
+  });
+  expect(await screen.findByRole('button', { name: 'Вивести з ужитку' })).toBeDefined();
+  expect(screen.queryByText('Виведено з ужитку')).toBeNull();
+});
+
+test('a record that was just retired stays retired on the next save', async () => {
+  const retires: unknown[] = [];
+  const bodies = edits();
+  collection('2026-11-01T00:00:00.000Z', () => retires.length > 0);
+  server.use(
+    http.post(`${RECORD}/retire`, async ({ request }) => {
+      retires.push(await request.json());
+      return HttpResponse.json(FIXTURES.content.retire);
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  await user.click(await screen.findByRole('button', { name: 'Вивести з ужитку' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByLabelText('Причина'), 'застаріла');
+  await user.click(dialog.getByRole('button', { name: 'Вивести з ужитку' }));
+  expect(await screen.findByRole('button', { name: 'Повернути в ужиток' })).toBeDefined();
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+  await waitFor(() => {
+    expect(bodies).toEqual([
+      expect.objectContaining({
+        recordVersion: 2,
+        fields: expect.objectContaining({ retired: true }) as unknown,
+      }),
+    ]);
+  });
+});
+
+test('bringing a record back sends its saved fields, and the next save keeps it in use', async () => {
+  const bodies = edits();
+  collection('2026-11-01T00:00:00.000Z', () => bodies.length === 0);
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Добірки' }));
+  await user.click(await screen.findByRole('button', { name: 'Слова зими' }));
+  const name = await screen.findByLabelText('Назва');
+  await user.clear(name);
+  await user.type(name, 'Слова весни');
+  await user.click(screen.getByRole('button', { name: 'Повернути в ужиток' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByLabelText('Причина'), 'знову актуальна');
+  await user.click(dialog.getByRole('button', { name: 'Повернути в ужиток' }));
+  expect(await screen.findByRole('button', { name: 'Вивести з ужитку' })).toBeDefined();
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+  await waitFor(() => {
+    expect(bodies).toEqual([
+      expect.objectContaining({
+        recordVersion: 1,
+        fields: expect.objectContaining({ name: 'Слова зими', retired: false }) as unknown,
+      }),
+      expect.objectContaining({
+        recordVersion: 2,
+        fields: expect.objectContaining({ name: 'Слова весни', retired: false }) as unknown,
+      }),
+    ]);
+  });
 });
 
 const ILLUSTRATION = `${RECORD}/illustration`;

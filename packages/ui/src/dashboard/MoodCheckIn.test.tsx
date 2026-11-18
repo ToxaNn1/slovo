@@ -41,6 +41,16 @@ describe('MoodCheckIn', () => {
     expect(screen.queryByTestId('dashboard-mood-empty')).toBeNull();
   });
 
+  it('with three Moods, sets them in one row with no empty cell', async () => {
+    await show(['energetic', 'joyful', 'calm']);
+
+    expect(screen.getAllByRole('button')).toHaveLength(3);
+    expect(screen.queryByTestId('dashboard-mood-empty')).toBeNull();
+    const row = screen.getByTestId('dashboard-mood-energetic').parent?.parent;
+    if (row === null || row === undefined) throw new Error('The tile has no row');
+    expect(within(row).getByTestId('dashboard-mood-calm')).toBeTruthy();
+  });
+
   it('sets a name on its own line box, so it centres on its mark as on the board', async () => {
     await show(['energetic']);
 

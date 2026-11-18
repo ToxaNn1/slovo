@@ -4,9 +4,9 @@ import type { Authored, Refusal } from './refusal';
 
 /**
  * The checks the schema can't make on one Curated Collection alone (ADR 0076):
- * every Entry it names is authored and not Retired, its pictogram names a
- * Category or Correction Category of the Edition (ADR 0178), and no two files
- * share a collection id.
+ * every Entry it names is authored and, unless the collection is Retired
+ * itself, not Retired; its pictogram names a Category or Correction Category
+ * of the Edition (ADR 0178), and no two files share a collection id.
  */
 export function checkCuratedCollections(
   { categories, correctionCategories }: Pick<EditionConfig, 'categories' | 'correctionCategories'>,
@@ -48,7 +48,7 @@ export function checkCuratedCollections(
           field,
           message,
         });
-      } else if (retired) {
+      } else if (retired && !collection.retired) {
         const message = `${entryId} is a Retired Entry: a Curated Collection names live Entries only`;
         errors.push({
           rule: 'curated-collection-entry',

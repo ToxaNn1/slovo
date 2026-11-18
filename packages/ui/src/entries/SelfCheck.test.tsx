@@ -33,6 +33,9 @@ function CornerMarks({ onMark }: { onMark: (mark: 'known' | 'unknown') => void }
 
 const strings = testStrings({
   wordCard: {
+    tabs: { essence: 'Essence', example: 'Example', links: 'Links', history: 'History' },
+    tabMore: 'More',
+    tabLess: 'Less',
     partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
     genders: {},
     partOfSpeechWithGender: '{partOfSpeech}, {gender}',
@@ -40,16 +43,16 @@ const strings = testStrings({
     category: '{category}',
     reveal: 'Show the meaning',
     example: '{text}',
-    tabs: { essence: 'Essence', example: 'Example', links: 'Links', history: 'History' },
   },
   idiomCard: {
+    tabs: { essence: 'Essence', origin: 'Origin', example: 'Example' },
     idiomTypes: { idiom: 'idiom', placeName: 'place name' },
     heading: '{expression}, {type}',
     etymology: 'Origin',
     source: 'Source: {source}',
-    tabs: { essence: 'Essence', origin: 'Origin', example: 'Example' },
   },
   correctionCard: {
+    tabs: { better: 'Better', why: 'Why', examples: 'Examples' },
     title: 'Correction',
     correctionTypes: { calque: 'calque' },
     correctionType: 'Type: {type}',
@@ -61,7 +64,6 @@ const strings = testStrings({
     source: 'Source: {source}',
     howToSay: 'How to say it?',
     reveal: 'Show',
-    tabs: { better: 'Better', why: 'Why', examples: 'Examples' },
   },
   knowledge: { known: 'Known', unknown: 'Unknown' },
 });
@@ -289,7 +291,7 @@ describe('Self-check', () => {
     for (const concealed of ['To idle about.', '2. To search everywhere.', 'From the hunt.']) {
       expect(screen.queryByText(concealed)).toBeNull();
     }
-    expect(screen.queryByTestId('idiom-example')).toBeNull();
+    expect(screen.queryByTestId('idiom-definition')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: true }));
     expect(onMark).not.toHaveBeenCalled();
 
