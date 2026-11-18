@@ -2,6 +2,7 @@ import { withoutStress, type EntryRowModel } from '@slovo/core';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
+import { lowercased } from './capitalised';
 import { entryRowSubtitle } from './entry-row-text';
 import { useEdition } from '../providers/EditionProvider';
 import {
@@ -85,7 +86,7 @@ export function EntryRow({
           maxFontSizeMultiplier={hasAccessory ? fontScaleCap.number : undefined}
           style={[typeStyle('listWord', tokens), styles.title, { color: colors.ink }]}
         >
-          {row.title}
+          {lowercased(row.title, voice.accessibilityLanguage)}
         </Text>
         {trailing !== undefined && (
           <Text

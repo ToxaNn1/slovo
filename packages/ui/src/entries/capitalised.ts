@@ -15,5 +15,20 @@ export function capitalised(text: string, locale?: string): string {
   );
 }
 
+/**
+ * A text as a list row shows it: starting with a small letter, as a Word's
+ * Lemma does, so an Idiom or a Correction reads like the Words beside it.
+ * The same first letter as `capitalised` becomes small in `locale`.
+ */
+export function lowercased(text: string, locale?: string): string {
+  const first = FIRST_LETTER_OR_DIGIT.exec(text);
+  if (first === null || !LETTER.test(first[0])) return text;
+  return (
+    text.slice(0, first.index) +
+    first[0].toLocaleLowerCase(locale) +
+    text.slice(first.index + first[0].length)
+  );
+}
+
 const FIRST_LETTER_OR_DIGIT = /[\p{L}\p{N}]/u;
 const LETTER = /\p{L}/u;
