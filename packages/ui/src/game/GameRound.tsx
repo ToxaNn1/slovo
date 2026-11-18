@@ -133,6 +133,7 @@ export function GameRound({
     <View testID="game-round" style={styles.screen}>
       <GameHeader
         roundsPassed={game.roundsPassed}
+        missed={new Set(game.played.filter(({ right }) => !right).map(({ number }) => number))}
         roundLimit={game.roundLimit}
         lives={game.lives}
         livesAtStart={game.livesAtStart}

@@ -52,13 +52,15 @@ const LIFE_FADE = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Neve
  * The Round's header (board «slogo game last»), one for every Game Mode: a
  * row of the ✕, the bar and the Lives as hexagons, with no title: the Round
  * shows the mode over its question, «НАГОЛОС · 1/10». The bar takes a
- * segment per Round that fills as the Rounds pass towards the limit, or with
- * no limit shows the Rounds passed; in a timed Game the timer stands under
+ * segment per Round that fills as the Rounds pass towards the limit, a
+ * missed Round's segment in the wrong answer's colour, or with no limit
+ * shows the Rounds passed; in a timed Game the timer stands under
  * the row. The hexagons alone show the Lives, which VoiceOver reads as
  * «Життів: 4 з 5». A mode without Lives shows none.
  */
 export function GameHeader({
   roundsPassed,
+  missed,
   roundLimit,
   lives,
   livesAtStart,
@@ -67,6 +69,8 @@ export function GameHeader({
   onExit,
 }: {
   roundsPassed: number;
+  /** The numbers of the Rounds passed with a wrong answer. */
+  missed: ReadonlySet<number>;
   /** The mode's Round limit; none in a mode without one, which shows no bar. */
   roundLimit: number | undefined;
   /** The Lives left; none in a mode without Lives, which shows none. */
@@ -116,7 +120,9 @@ export function GameHeader({
               {
                 backgroundColor:
                   place < filled
-                    ? colors.accent
+                    ? missed.has(place + 1)
+                      ? colors.wrong
+                      : colors.accent
                     : place === filled
                       ? colors.muted
                       : colors.silhouette,
