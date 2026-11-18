@@ -8,14 +8,6 @@ const { added } = editionStrings.favorites;
 const { shortMonths } = editionStrings.dates;
 
 /**
- * When an Entry was added to Favorites or to a Collection, as its row says it:
- * today, yesterday or the date, by the device's clock.
- */
-export function addedOn(addedAt: Date): string {
-  return dayChip(addedAt).label;
-}
-
-/**
  * The day on a Saved row's chip (board 09): «сьогодні», «вчора» or the short
  * date of when the Entry was added or Seen, by the device's clock, and
  * whether it is today, which the chip marks.

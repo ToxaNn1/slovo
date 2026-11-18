@@ -50,16 +50,12 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-/** Whether the Collection board style is on in effect, as a remote switch leaves it. */
-let boardStyleOn: boolean;
-
 /** The device's time, which moves a minute on with each Collection a test makes. */
 let now: number;
 
 beforeEach(async () => {
   jest.useFakeTimers();
   mockPush.mockClear();
-  boardStyleOn = false;
   now = Date.parse('2026-10-28T09:00:00Z');
   composition = await openComposition({
     content: createMemoryContentPort({
@@ -96,17 +92,12 @@ async function settle() {
 }
 
 async function renderScreen() {
-  const editionInEffect: typeof edition = {
-    ...edition,
-    isFeatureEnabled: (feature) =>
-      feature === 'collectionBoardStyle' ? boardStyleOn : edition.isFeatureEnabled(feature),
-  };
   await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
         shell={testShell({
           composition: opened(composition),
-          remoteSwitches: switchedTo(editionInEffect),
+          remoteSwitches: switchedTo(edition),
         })}
       >
         <EditionProvider edition={edition} strings={editionStrings}>
@@ -130,88 +121,17 @@ async function longPress(id: string) {
   await settle();
 }
 
-describe('Collections as cards', () => {
-  it('shows each Collection as a card with its name and count', async () => {
-    await collection('Осінь');
-    await collection('Весна');
-    await collection('Зима');
-    await renderScreen();
-
-    expect(screen.getByRole('button', { name: 'Зима, 0 слів' })).toBeOnTheScreen();
-    expect(screen.getByText('Осінь')).toBeOnTheScreen();
-    expect(screen.getAllByText('0 слів')).toHaveLength(3);
-  });
-
-  it('opens the Collection on a tap', async () => {
-    const autumn = await collection('Осінь');
-    await renderScreen();
-
-    await fireEvent.press(card(autumn));
-
-    expect(mockPush).toHaveBeenCalledWith(`/saved/collections/${autumn}`);
-  });
-
-  it('renames from the menu a long press opens, in the field over the cards', async () => {
-    const autumn = await collection('Осінь');
-    await renderScreen();
-
-    await longPress(autumn);
-    await fireEvent.press(screen.getByTestId('collections-menu-rename'));
-    await settle();
-
-    const input = screen.getByTestId('collections-rename-input');
-    expect(input).toHaveDisplayValue('Осінь');
-    await fireEvent.changeText(input, 'Пізня осінь');
-    await fireEvent(input, 'submitEditing');
-    await settle();
-
-    expect(screen.queryByTestId('collections-rename')).not.toBeOnTheScreen();
-    expect(screen.getByText('Пізня осінь')).toBeOnTheScreen();
-    expect(composition.collections.list.map(({ name }) => name)).toEqual(['Пізня осінь']);
-  });
-
-  it('deletes from the menu after the confirmation', async () => {
-    const autumn = await collection('Осінь');
-    const spring = await collection('Весна');
-    await renderScreen();
-
-    await longPress(autumn);
-    await fireEvent.press(screen.getByTestId('collections-menu-delete'));
-    await settle();
-    await fireEvent.press(screen.getByTestId('collections-delete-destructive'));
-    await settle();
-
-    expect(screen.queryByTestId(`collection-card-${autumn}`)).not.toBeOnTheScreen();
-    expect(card(spring)).toBeOnTheScreen();
-  });
-
-  it('offers rename, delete and the menu to VoiceOver', async () => {
+describe('Collections', () => {
+  it('offers the menu to VoiceOver', async () => {
     const autumn = await collection('Осінь');
     await renderScreen();
 
     expect(card(autumn)).toHaveProp('accessibilityActions', [
-      { name: 'rename', label: 'Перейменувати «Осінь»' },
-      { name: 'delete', label: 'Видалити «Осінь»' },
       { name: 'menu', label: 'Дії з колекцією «Осінь»' },
     ]);
-
-    await voiceOverAction(autumn, 'rename');
-    expect(screen.getByTestId('collections-rename-input')).toHaveDisplayValue('Осінь');
-
-    await voiceOverAction(autumn, 'delete');
-    expect(screen.getByText(`Видалити колекцію «Осінь»?`)).toBeOnTheScreen();
-    await fireEvent.press(screen.getByTestId('collections-delete-cancel'));
-    await settle();
-
     await voiceOverAction(autumn, 'menu');
-    expect(screen.getByTestId('collections-menu-rename')).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: strings.menu.delete })).toBeOnTheScreen();
-  });
-});
 
-describe('Collections in the board style', () => {
-  beforeEach(() => {
-    boardStyleOn = true;
+    expect(screen.getByTestId('collections-menu-rename')).toBeOnTheScreen();
   });
 
   it('shows the dashed «Нова колекція» card first, then a card for each Collection', async () => {
@@ -356,18 +276,5 @@ describe('Collections in the board style', () => {
     await settle();
 
     expect(composition.collections.list.map(({ name }) => name)).toEqual(['Весна']);
-  });
-});
-
-describe('Collections with the board style off', () => {
-  it('shows today’s cards under the screen title, without the grid', async () => {
-    const autumn = await collection('Осінь');
-    await renderScreen();
-
-    expect(card(autumn)).toBeOnTheScreen();
-    expect(screen.getByText('0 слів')).toBeOnTheScreen();
-    expect(
-      screen.queryByRole('header', { name: `${editionStrings.collections.title}, 1` }),
-    ).not.toBeOnTheScreen();
   });
 });

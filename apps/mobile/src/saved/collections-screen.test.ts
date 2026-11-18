@@ -95,8 +95,6 @@ describe('the «Колекції» screen', () => {
         count: '0 слів',
         empty: true,
         accessibilityLabel: 'Порожня, 0 слів',
-        renameLabel: 'Перейменувати «Порожня»',
-        deleteLabel: 'Видалити «Порожня»',
         moreLabel: 'Дії з колекцією «Порожня»',
       },
       {
@@ -105,8 +103,6 @@ describe('the «Колекції» screen', () => {
         count: '2 слова',
         empty: false,
         accessibilityLabel: 'Читання, 2 слова: гармидер, веремія',
-        renameLabel: 'Перейменувати «Читання»',
-        deleteLabel: 'Видалити «Читання»',
         moreLabel: 'Дії з колекцією «Читання»',
       },
     ]);

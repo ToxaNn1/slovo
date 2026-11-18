@@ -668,13 +668,7 @@
         "other": "{count} слова"
       },
       "add": "Нова колекція",
-      "newOverline": "Нова колекція",
-      "renameOverline": "Перейменування",
       "rowLabel": "{name}, {count}: {lemmas}",
-      "rename": "Назва",
-      "renameLabel": "Перейменувати «{name}»",
-      "delete": "Видалити",
-      "deleteLabel": "Видалити «{name}»",
       "moreLabel": "Дії з колекцією «{name}»",
       "menu": {
         "rename": "Перейменувати",
@@ -694,7 +688,6 @@
       }
     },
     "entries": {
-      "footer": "Найновіші — першими. Тап відкриває повну картку.",
       "remove": "Прибрати",
       "removeLabel": "Прибрати «{title}» з колекції «{name}»",
       "empty": {

@@ -1,42 +1,33 @@
-import { BackLink, ScreenTitle, space, useTokens } from '@slovo/ui';
+import { BackLink, space, useTokens } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
-import { useEditionInEffect } from '@/edition/remote-switches';
 import { CollectionsList } from '@/saved/collections-list';
 
 /**
  * Collections on their own screen: a back link to Saved and «+», the title,
- * then the list; in the board style the grid carries the title, with the count.
+ * then the grid, which carries the title with the count.
  */
 export default function CollectionsScreen() {
   const { colors } = useTokens();
   const router = useRouter();
-  const boardStyle = useEditionInEffect().isFeatureEnabled('collectionBoardStyle');
 
   return (
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
       <CollectionsList
         header={(add) => (
-          <>
-            <View style={styles.bar}>
-              <BackLink
-                testID="collections-back"
-                label={editionStrings.tabs.saved}
-                onPress={() => {
-                  router.back();
-                }}
-              />
-              {add}
-            </View>
-            {!boardStyle && (
-              <View style={styles.header}>
-                <ScreenTitle>{editionStrings.collections.title}</ScreenTitle>
-              </View>
-            )}
-          </>
+          <View style={styles.bar}>
+            <BackLink
+              testID="collections-back"
+              label={editionStrings.tabs.saved}
+              onPress={() => {
+                router.back();
+              }}
+            />
+            {add}
+          </View>
         )}
       />
     </SafeAreaView>
@@ -52,5 +43,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[3],
     paddingTop: space[2],
   },
-  header: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[4] },
 });

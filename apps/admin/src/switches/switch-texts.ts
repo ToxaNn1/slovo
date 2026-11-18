@@ -442,10 +442,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Знайомі спершу',
     line: 'На екрані категорії спершу йдуть слова з позначкою «ЗНАЮ».',
   },
-  collectionBoardStyle: {
-    name: 'Добірки плитками',
-    line: 'Список добірок має вигляд сітки категорій.',
-  },
   collectionLinkCopy: {
     name: 'Копіювання посилання',
     line: 'У вікні поширення добірки є кнопка «Скопіювати посилання».',

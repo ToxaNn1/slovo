@@ -44,44 +44,6 @@ function useSayRefused(): (reason: CollectionShareRefusal) => void {
   );
 }
 
-/**
- * «Поділитися посиланням» of a Collection's menu (ADR 0058): whether the menu
- * offers it, while `collectionLinks` is on in effect, and the share, which
- * asks the backend for a link and opens the system share sheet with the
- * message, or says why not, such as «Немає з’єднання. Спробуй пізніше.» on
- * the offline plate. `share` stays the same from render to render and
- * shares over the composition open at the tap. It needs an `UndoToastProvider`
- * above it.
- */
-export function useCollectionSharing(): {
-  available: boolean;
-  share: (collectionId: string) => void;
-} {
-  const sharing = useComposition().collectionSharing;
-  const sayRefused = useSayRefused();
-  const latest = useRef(sharing);
-  useEffect(() => {
-    latest.current = sharing;
-  }, [sharing]);
-  const share = useCallback(
-    (collectionId: string) => {
-      void latest.current.share(collectionId, strings).then(async (shared) => {
-        if (!shared.ok) {
-          sayRefused(shared.reason);
-          return;
-        }
-        try {
-          await Share.share({ message: shared.message });
-        } catch (error) {
-          logError('Could not open the share sheet for a Collection Link', error);
-        }
-      });
-    },
-    [sayRefused],
-  );
-  return { available: sharing.available(), share };
-}
-
 /** What the share sheet of a Collection (board 09) takes from the screen that opens it. */
 export interface CollectionShareSheetProps {
   readonly url: string;
@@ -93,9 +55,11 @@ export interface CollectionShareSheetProps {
 }
 
 /**
- * «Поділитися посиланням» of board 09 (ADR 0132): `share` asks the backend
- * for a Collection Link as `useCollectionSharing` does, then opens the share
- * sheet with it, or says why not as `useCollectionSharing` does. On the sheet
+ * «Поділитися посиланням» of board 09 (ADR 0058, 0132): whether it is offered,
+ * while `collectionLinks` is on in effect, and `share`, which asks the backend
+ * for a Collection Link over the composition open at the tap and opens the
+ * share sheet with it, or says why not, such as «Немає з’єднання. Спробуй
+ * пізніше.» on the offline plate. On the sheet
  * «Скопіювати посилання», while `collectionLinkCopy` is on in effect, copies
  * the link with `expo-clipboard` and says «Посилання скопійовано.»; «Поділитися»
  * opens the system share sheet with the message once the sheet has slid away

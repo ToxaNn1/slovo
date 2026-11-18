@@ -25,8 +25,6 @@ const count = pluralCount(edition.locale);
 let composition: Composition;
 /** The backend the composition asks for Collection Links. */
 let api: ReturnType<typeof createFakeBackend>;
-/** Whether the Collection board style is on in effect, as a remote switch leaves it. */
-let boardStyleOn: boolean;
 /** Whether «Скопіювати посилання» is on in effect, as a remote switch leaves it. */
 let linkCopyOn: boolean;
 
@@ -73,7 +71,6 @@ const idiom: Idiom = {
 
 beforeEach(async () => {
   jest.useFakeTimers();
-  boardStyleOn = true;
   linkCopyOn = true;
   api = createFakeBackend();
   composition = await openComposition({
@@ -112,16 +109,12 @@ async function collectionOf(entryIds: readonly string[]): Promise<string> {
   return created.collection.id;
 }
 
-/** The Saved tab's Collection screen of `collectionId`, with the board style as a test leaves it. */
+/** The Saved tab's Collection screen of `collectionId`, with link copying as a test leaves it. */
 async function renderCollection(collectionId: string, query = '') {
   const editionInEffect: typeof edition = {
     ...edition,
     isFeatureEnabled: (feature) =>
-      feature === 'collectionBoardStyle'
-        ? boardStyleOn
-        : feature === 'collectionLinkCopy'
-          ? linkCopyOn
-          : edition.isFeatureEnabled(feature),
+      feature === 'collectionLinkCopy' ? linkCopyOn : edition.isFeatureEnabled(feature),
   };
   const app = await renderRoutes(
     {
@@ -367,18 +360,5 @@ describe('a Collection in the board style', () => {
     await renderCollection(id, '?created=1');
 
     expect(screen.getByText(fill(strings.toasts.created, { name: 'Осінь' }))).toBeOnTheScreen();
-  });
-});
-
-describe('a Collection with the board style off', () => {
-  it('is today’s screen: the back link, the name with its count and the footer', async () => {
-    boardStyleOn = false;
-    const id = await collectionOf(['w_one', 'i_idle']);
-    await renderCollection(id);
-
-    expect(screen.getByTestId('collection-back')).toBeOnTheScreen();
-    expect(screen.getByTestId('collection-count')).toHaveTextContent('2');
-    expect(screen.getByText(strings.entries.footer)).toBeOnTheScreen();
-    expect(screen.queryByTestId('collection-hero-kicker')).not.toBeOnTheScreen();
   });
 });

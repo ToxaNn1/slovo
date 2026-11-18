@@ -541,8 +541,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** Known first on a Category's screen: its Known Entries, stamped «ЗНАЮ», come before the rest, each group in Language Pack order (ADR 0111); off, all in Language Pack order as the board draws. Off while `categoryScreens` is. */
   categoryKnownFirst: FeatureSwitchStateSchema,
   /** Quiet Categories: the quiet variant of a Category screen and the muted tile for a Category whose tone is `quiet` (ADR 0081); off, a quiet Category draws loud. Off while `categoryScreens` is. */
-  /** The board style of the Collections: their list as the Category grid and a Collection's screen as a Category screen (ADR 0082); off, today's list and screen. */
-  collectionBoardStyle: FeatureSwitchStateSchema,
   /** «Скопіювати посилання» on the share sheet of a Collection, which copies its Collection Link with `expo-clipboard` (ADR 0132); off until the EAS build with that module is out, and off the sheet keeps the system Share alone. Off while `collectionLinks` is. */
   collectionLinkCopy: FeatureSwitchStateSchema,
   /** The Due Quiz «Перевір себе» on «Вчу»: three meanings for each Word due for Review today, right sets Known and wrong Unknown (ADR 0131); off, «Вчу» has no card. Off while `knowledge` is. */

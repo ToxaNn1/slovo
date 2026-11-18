@@ -154,7 +154,6 @@ const validConfig = {
     correctionTypeGrid: 'on',
     categoryFeed: 'on',
     categoryKnownFirst: 'on',
-    collectionBoardStyle: 'on',
     collectionLinkCopy: 'on',
     dueQuiz: 'on',
     profileConfirmedByRarity: 'on',
@@ -1058,11 +1057,6 @@ describe('loadEdition', () => {
       'featureSwitches.correctionCategoryScreens',
     ],
     [
-      'a missing collectionBoardStyle Feature Switch',
-      withoutSwitch('collectionBoardStyle'),
-      'featureSwitches.collectionBoardStyle',
-    ],
-    [
       'a missing collectionLinkCopy Feature Switch',
       withoutSwitch('collectionLinkCopy'),
       'featureSwitches.collectionLinkCopy',
@@ -1653,16 +1647,6 @@ describe('the Feature Switches a feature depends on', () => {
 
       expect(edition.isFeatureEnabled(feature)).toBe(false);
     }
-  });
-
-  it('keep the Collection board style on while the Dashboard is off', () => {
-    const edition = loadEdition({
-      ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, dashboard: 'off' },
-    });
-
-    expect(edition.isFeatureEnabled('categoryScreens')).toBe(false);
-    expect(edition.isFeatureEnabled('collectionBoardStyle')).toBe(true);
   });
 
   it('keep a feature on while only a feature that depends on it is off', () => {
