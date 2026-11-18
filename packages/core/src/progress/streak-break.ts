@@ -16,7 +16,8 @@ export type BreakState =
   | { readonly kind: 'available'; readonly longest: number }
   /**
    * A Break runs from `firstDay` up to and with `lastDay`, and the 30 days
-   * of its allowance end before `nextStart`, all `YYYY-MM-DD`; `strip` holds
+   * of its allowance end before `nextStart`, all `YYYY-MM-DD`; `daysLeft`
+   * counts its days from today to `lastDay`, both included; `strip` holds
    * the 14 days ending the day after it (board 10, p1).
    */
   | {
@@ -24,6 +25,7 @@ export type BreakState =
       readonly firstDay: string;
       readonly lastDay: string;
       readonly nextStart: string;
+      readonly daysLeft: number;
       readonly strip: readonly CalendarDay[];
     }
   /** The Break days of the 30 days are spent; the next Break can start on `nextStart`, `YYYY-MM-DD`. */
@@ -108,6 +110,7 @@ export function openStreakBreak({
         firstDay: after(running.start - todayNumber),
         lastDay: last,
         nextStart: nextStartOf(runningWindow),
+        daysLeft: running.start + running.days - todayNumber,
         strip: breakStrip({
           activeDays: active,
           frozen,

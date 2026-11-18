@@ -117,6 +117,8 @@ export const SettingsStringsSchema = z.strictObject({
     myMix: TextSchema,
     hidden: TextSchema,
     streakBreak: TextSchema,
+    /** The Break row's line while a Break runs. Takes `{date}`, its last day. */
+    streakBreakRunning: templateOf('date'),
     badges: TextSchema,
     questionnaire: TextSchema,
     gesturesHint: TextSchema,
@@ -344,6 +346,12 @@ export const SettingsStringsSchema = z.strictObject({
     /** What VoiceOver reads for the stepper's − and + buttons. */
     fewerDays: TextSchema,
     moreDays: TextSchema,
+    /** Under the stepper at 7, the longest a Break can be (ADR 0066). */
+    most: TextSchema,
+    /** Under the stepper at the Break days left in the 30 days, fewer than 7 (ADR 0180). */
+    mostLeft: PluralSchema,
+    /** While a Break runs, its days from today to its last day, both included. */
+    daysLeft: PluralSchema,
     /** While a Break runs. Takes `{date}`, its last day, e.g. «20.10». */
     running: templateOf('date'),
     /** The button that ends the running Break today (ADR 0180). */

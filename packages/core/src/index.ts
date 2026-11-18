@@ -172,6 +172,7 @@ export type {
 } from './ports';
 export { createMedia, PREFETCH_CARDS, type Media } from './media/media';
 export { type ProgressState } from './progress/progress';
+export { BREAK_DAYS_AT_MOST } from './progress/streak';
 export type { CrosswordSolve, XpLogState } from './progress/xp-log';
 export type { BadgeState } from './progress/badges';
 export { totalFor, type LevelMilestone, type LevelState } from './progress/levels';

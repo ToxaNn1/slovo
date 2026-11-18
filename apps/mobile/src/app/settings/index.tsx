@@ -18,12 +18,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { AccountRow } from '@/account/account-row';
+import { useComposition } from '@/composition';
 import { useAccountInEffect } from '@/account/account';
 import { editionStrings } from '@/edition/edition';
 import { useEditionInEffect } from '@/edition/remote-switches';
 import { useShowGesturesHintAgain } from '@/feed/gestures-hint';
 import { useHiddenSummary } from '@/mix/hidden';
 import { keep } from '@/keep';
+import { useSubscribed } from '@/opening';
+import { dayText } from '@/progress/day-text';
 import { useMixSummary } from '@/mix/mix';
 import { useRarityRange } from '@/mix/rarity-range';
 import { useNotificationsSummary } from '@/notifications/notifications';
@@ -95,6 +98,9 @@ function SettingsList() {
   const privacyRows = usePrivacyRows();
   const router = useRouter();
   const showGesturesHintAgain = useShowGesturesHintAgain();
+  const breakLastDay = useSubscribed(useComposition().streakBreak, ({ state }) =>
+    state.kind === 'running' ? state.lastDay : undefined,
+  );
   const build = installedBuild();
   const resetProgress = useResetProgress();
   const [askingReset, setAskingReset] = useState(false);
@@ -376,7 +382,11 @@ function SettingsList() {
                 testID="settings-row-streak-break"
                 icon="bar"
                 label={strings.rows.streakBreak}
-                subtitle={subtitles.streakBreak}
+                subtitle={
+                  breakLastDay === undefined
+                    ? subtitles.streakBreak
+                    : fill(subtitles.streakBreakRunning, { date: dayText(breakLastDay) })
+                }
                 end={{
                   kind: 'chevron',
                   onPress: () => {
