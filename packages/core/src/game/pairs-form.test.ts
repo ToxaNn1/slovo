@@ -83,21 +83,6 @@ describe('the pairs form', () => {
     ).toBe(undefined);
   });
 
-  it('reviews a wrong answer as the Definition tapped', () => {
-    const round = { ...fresh, prompt: '' };
-    const judged = pairsForm.judge(
-      content,
-      fresh,
-      { form: 'pairs', word: 1, definition: 0 },
-      testComparison,
-    );
-    if (judged === undefined) throw new Error('The answer was not judged');
-    expect(pairsForm.reviewAnswer(round, judged.answer)).toEqual({
-      text: 'A mountain path.',
-      stressedVowels: [],
-    });
-  });
-
   it('is well formed only with every pair shown once in each order, up to four pairs', () => {
     expect(pairsForm.wellFormed(content)).toBe(true);
     expect(pairsForm.wellFormed({ ...content, wordOrder: [0, 0, 2] })).toBe(false);

@@ -61,7 +61,6 @@ export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
   'crosswordBadgeStamp',
   'gameRoundMascot',
   'gameEndToFeed',
-  'plainGameReview',
   'gameHubGroups',
   'gameHubRecord',
   'gameModeToast',

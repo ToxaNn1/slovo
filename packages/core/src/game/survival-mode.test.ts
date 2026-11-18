@@ -258,9 +258,7 @@ describe('a Game of «Виживання»', () => {
     expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(asked.id)).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
-    expect(buildGameReview(current(app).played)).toMatchObject([
-      { number: 1, entryId: asked.id, right: false },
-    ]);
+    expect(buildGameReview(current(app).played)).toMatchObject([{ number: 1, right: false }]);
   });
 
   it('keeps the right answers as its Best result, with no upper bound', async () => {

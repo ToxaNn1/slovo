@@ -56,7 +56,7 @@ export { GameModeCard, GameModeGroupTitle, GamesTitle } from './game/GameModeCar
 export { CrosswordSolvedPoster } from './game/CrosswordSolvedPoster';
 export { GameEndPoster } from './game/GameEndPoster';
 export { AnswerCard } from './game/AnswerCard';
-export { GameReview, type ResultReview } from './game/GameReview';
+export { GameReview } from './game/GameReview';
 export { GameRound, QuickQuestionRound } from './game/GameRound';
 export { TypedAnswer, type TypedAnswerBlank } from './game/TypedAnswer';
 export { OrderedChips } from './game/OrderedChips';

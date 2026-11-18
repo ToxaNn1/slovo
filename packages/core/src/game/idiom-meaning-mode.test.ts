@@ -220,7 +220,7 @@ describe('a Round of «Фразеологізми»', () => {
     expect(offered.has(placeName.primaryDefinition)).toBe(false);
   });
 
-  it('costs a Life for a wrong meaning, marks the Idiom «Не знаю», moves no Review and lists the meaning picked', async () => {
+  it('costs a Life for a wrong meaning, marks the Idiom «Не знаю», moves no Review and lists it in the Game Review', async () => {
     const app = await startAt('i_proverb3');
     const { round } = current(app);
     if (round.form !== 'pick') throw new Error(`A ${round.form} Round`);
@@ -239,20 +239,7 @@ describe('a Round of «Фразеологізми»', () => {
     expect(app.knowledge.state.shown.get('i_proverb3')).toBe('unknown');
     expect(app.knowledge.state.due).toEqual([]);
     expect(buildGameReview(current(app).played)).toEqual([
-      {
-        number: 1,
-        entryId: 'i_proverb3',
-        title: { text: 'expression proverb3', stressedVowels: [] },
-        answer: undefined,
-        right: false,
-        picked: { ...round.options[wrong], form: 'pick' },
-        details: {
-          kind: 'idiom',
-          definition: 'meaning proverb3',
-          example: { text: 'They said expression proverb3.' },
-          etymology: undefined,
-        },
-      },
+      { number: 1, right: false, word: { text: 'expression proverb3', stressedVowels: [] } },
     ]);
   });
 

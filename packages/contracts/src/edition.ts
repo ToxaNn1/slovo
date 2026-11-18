@@ -447,8 +447,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** «Склади вислів»: decoy fragments from other expressions and the answer judged on «Перевірити» (ADR 0139); off, on the last fragment. Off while `gameBuildIdiom` is. */
   /** The third end action «До стрічки» beside «Ще раз» and «До ігор» (ADR 0139); off while `game` is. */
   gameEndToFeed: FeatureSwitchStateSchema,
-  /** The plain Game Review: one row per Round, ✓ or ✗ and the word, which does not expand and opens nothing (ADR 0139); off, the Game Review of spec #1674. Off while `gameReview` is. */
-  plainGameReview: FeatureSwitchStateSchema,
   /** The Games hub in five groups: sound, meaning, letters, speed, new (ADR 0139); off, the groups of spec #1674. Off while `game` is. */
   gameHubGroups: FeatureSwitchStateSchema,
   /** The Games hub row with «Рекорд: N з M» or «Ще жодної гри» and the board's descriptions (ADR 0139); off while `game` is. */

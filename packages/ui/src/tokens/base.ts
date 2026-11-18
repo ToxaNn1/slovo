@@ -456,12 +456,6 @@ export const typeRoles = {
   reviewMark: role('word', '900', 13, 13),
   /** A Round's Lemma in the Game Review. */
   reviewWord: role('ui', '700', 15, 17),
-  /** The line under a Round's Lemma in the Game Review: what was picked. */
-  reviewPicked: role('ui', '500', 12, 14),
-  /** A label over a part of an expanded Round, such as the standard form. */
-  reviewHeading: role('ui', '700', 13, 17),
-  /** The standard form of an expanded Round's Correction. */
-  reviewForm: role('ui', '500', 15, 22),
   /** The big Streak at the top of the stats sheet. */
   statsStreak: role('word', '900', 64, 64),
   /** The words beside the big Streak of the stats sheet. */

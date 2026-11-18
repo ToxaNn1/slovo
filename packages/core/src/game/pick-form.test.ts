@@ -37,11 +37,6 @@ describe('the pick form', () => {
     ).toBeUndefined();
   });
 
-  it('shows the option picked in the Game Review', () => {
-    const judged = pickForm.judge(content, round, { form: 'pick', option: 2 }, testComparison);
-    expect(judged && pickForm.reviewAnswer(round, judged.answer)).toEqual(option('сіни'));
-  });
-
   it('spans one Round and no other Entry', () => {
     expect(pickForm.roundsIn(content)).toBe(1);
     expect(pickForm.entriesIn(content)).toEqual([]);

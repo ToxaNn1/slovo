@@ -49,8 +49,8 @@ export interface Judged<Answer> {
 /**
  * An Answer Form: one form a Round's answer takes, such as a pick of options
  * or a tap on a vowel. It owns the content a Game Mode builds in it, the Round
- * the reader sees, how a given answer is judged, what the Game Review shows of
- * a wrong answer and how many Rounds and Entries the content spans; the Game
+ * the reader sees, how a given answer is judged and how many Rounds and
+ * Entries the content spans; the Game
  * keeps only its state machine.
  */
 export interface AnswerForm<Content, Shown, Given, Answer> {
@@ -72,6 +72,4 @@ export interface AnswerForm<Content, Shown, Given, Answer> {
     given: Given,
     comparison: TextComparison,
   ): Judged<Answer> | undefined;
-  /** The reader's wrong answer as the Game Review shows it; nothing when it can't be shown. */
-  reviewAnswer(round: Shown & { readonly prompt: string }, answer: Answer): RoundOption | undefined;
 }

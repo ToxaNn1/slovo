@@ -9264,14 +9264,6 @@
                           ],
                           "type": "string"
                         },
-                        "plainGameReview": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameHubGroups": {
                           "enum": [
                             "on",
@@ -9734,7 +9726,6 @@
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
                         "gameEndToFeed",
-                        "plainGameReview",
                         "gameHubGroups",
                         "gameHubRecord",
                         "gameModeToast",
@@ -11108,14 +11099,6 @@
                           ],
                           "type": "string"
                         },
-                        "plainGameReview": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameHubGroups": {
                           "enum": [
                             "on",
@@ -11578,7 +11561,6 @@
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
                         "gameEndToFeed",
-                        "plainGameReview",
                         "gameHubGroups",
                         "gameHubRecord",
                         "gameModeToast",
@@ -12876,14 +12858,6 @@
                           ],
                           "type": "string"
                         },
-                        "plainGameReview": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameHubGroups": {
                           "enum": [
                             "on",
@@ -13346,7 +13320,6 @@
                         "crosswordBadgeStamp",
                         "gameRoundMascot",
                         "gameEndToFeed",
-                        "plainGameReview",
                         "gameHubGroups",
                         "gameHubRecord",
                         "gameModeToast",

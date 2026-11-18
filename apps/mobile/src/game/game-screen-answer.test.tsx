@@ -132,7 +132,7 @@ describe('the Game screen', () => {
   });
 
   describe('the answer card', () => {
-    it('answers in the sheet over the Round with «Влучно!» or «Майже. Наступне вийде.» and the Definition, «Далі →» moving on, and keeps the Example for the Game Review', async () => {
+    it('answers in the sheet over the Round with «Влучно!» or «Майже. Наступне вийде.» and the Definition, «Далі →» moving on', async () => {
       await open({ switchedOn: [] });
       await renderScreen();
 
@@ -164,21 +164,6 @@ describe('the Game screen', () => {
       expect(within(screen.getByTestId('game-answer-card')).getByRole('header')).toHaveTextContent(
         'Майже. Наступне вийде.',
       );
-
-      await fireEvent.press(screen.getByRole('button', { name: 'Далі →' }));
-      for (let round = 3; round <= 15; round += 1) {
-        await waitFor(() => {
-          expect(screen.getByTestId('game-vowels')).toBeOnTheScreen();
-        });
-        await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
-        await fireEvent.press(screen.getByRole('button', { name: 'Далі →' }));
-      }
-      await waitFor(() => {
-        expect(screen.getByTestId('game-review')).toBeOnTheScreen();
-      });
-      await fireEvent.press(screen.getByTestId('game-review-row-1'));
-
-      expect(screen.getByTestId('game-review-details')).toHaveTextContent(/Речення \d+/);
     });
   });
 });
