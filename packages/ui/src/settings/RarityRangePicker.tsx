@@ -23,6 +23,7 @@ import { useEdition } from '../providers/EditionProvider';
 import { useHaptics } from '../providers/HapticsProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
+import { rarityRangeLabel } from './rarity-range-label';
 import { motion, rarityRangeDrawing as drawing, settingsRowDrawing, typeStyle } from '../tokens';
 
 /** Both ends of a Rarity Range, the lowest rarity first; they may be the same. */
@@ -185,9 +186,7 @@ export function RarityRangePicker({
           testID={`${testID}-value`}
           style={[typeStyle('rangeValue', tokens), { color: colors.ink }]}
         >
-          {shown.from === shown.to
-            ? fill(texts.single, { rarity: String(shown.from) })
-            : fill(texts.range, { from: String(shown.from), to: String(shown.to) })}
+          {rarityRangeLabel(texts, shown)}
         </Text>
       </View>
       <GestureDetector gesture={pan}>

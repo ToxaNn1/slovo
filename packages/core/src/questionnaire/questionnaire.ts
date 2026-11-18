@@ -4,7 +4,6 @@ import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
 import { MIX_KINDS } from '../entries/entry-kinds';
 import type { Mix } from '../entries/mix';
-import { LOWEST_RARITY, type RarityRangeSetting } from '../entries/rarity-range';
 import { closeNotice, type FeedNotices } from '../feed/feed-notices';
 import { LATER_QUESTIONS, type LaterQuestion } from '../feed-notice';
 import { dateKeyOf, todayKey } from '../local-date';
@@ -32,8 +31,8 @@ export interface Questionnaire {
   /** The Edition's options of each question answered with an option; «Рівень» leaves out «Не знаю». */
   readonly options: Readonly<Record<OptionQuestion, readonly QuestionnaireOption[]>>;
   /**
-   * Answers the question with the option `answerId`: «Рівень» sets the
-   * Rarity Range (its «Не знаю» option, which opens the Rarity Test in the
+   * Answers the question with the option `answerId`: «Рівень» sets nothing
+   * (ADR 0183; its «Не знаю» option, which opens the Rarity Test in the
    * onboarding, is no option here), «Навіщо» the Mix kind weights, the self-rating only
    * whether the Rarity Test is offered (ADR 0072). Resolves to whether
    * `answerId` is an option of it.
@@ -58,15 +57,15 @@ interface Deps {
   edition: Pick<Edition, 'isFeatureEnabled' | 'questionnaire'>;
   userState: Pick<UserState, 'read' | 'write'>;
   mix: Pick<Mix, 'setKindWeight'>;
-  rarityRange: Pick<RarityRangeSetting, 'set'>;
 }
 
 /**
- * Applies the answer `answerId` to the question through the Rarity Range
- * or the Mix by the Edition's mapping, for the onboarding and the
- * questionnaire. Resolves to whether `answerId` is an option of it. The
- * self-rating sets nothing: it only decides whether to offer the Rarity Test.
- * An option answered is kept as the question's last answer.
+ * Applies the answer `answerId` to the question, for the onboarding and the
+ * questionnaire: «Навіщо» sets the Mix kind weights by the Edition's mapping.
+ * Resolves to whether `answerId` is an option of it. «Рівень» and the
+ * self-rating set nothing: the Rarity Range is the reader's and the Rarity
+ * Test's alone (ADR 0183), and the self-rating only decides whether to offer
+ * the Rarity Test. An option answered is kept as the question's last answer.
  */
 export async function applyAnswer(
   deps: Deps,
@@ -82,15 +81,15 @@ export async function applyAnswer(
 
 /** Sets what the option `answerId` of the question sets; resolves to whether it is an option of it. */
 async function setBy(
-  { edition: { questionnaire }, mix, rarityRange }: Deps,
+  { edition: { questionnaire }, mix }: Deps,
   question: OptionQuestion,
   answerId: string,
 ): Promise<boolean> {
   if (question === 'level') {
-    const option = questionnaire.level.find(({ id }) => id === answerId);
-    if (option === undefined || !('rarityCeiling' in option)) return false;
-    await rarityRange.set({ from: LOWEST_RARITY, to: option.rarityCeiling });
-    return true;
+    // The option that opens the Rarity Test is the onboarding's, never an answer.
+    return questionnaire.level.some(
+      (option) => option.id === answerId && !('rarityTest' in option),
+    );
   }
   if (question === 'selfRating') {
     return questionnaire.selfRating.some(({ id }) => id === answerId);
@@ -120,7 +119,6 @@ export function openQuestionnaire({
   userState,
   clock,
   mix,
-  rarityRange,
   xpLog,
   analytics,
 }: Omit<Deps, 'userState'> & {
@@ -180,14 +178,13 @@ export function openQuestionnaire({
   const questionnaire: Questionnaire = {
     options: {
       level: options.level.flatMap((option) =>
-        'rarityCeiling' in option ? [{ id: option.id, label: option.label }] : [],
+        'rarityTest' in option ? [] : [{ id: option.id, label: option.label }],
       ),
       why: options.why.map(({ id, label }) => ({ id, label })),
       selfRating: options.selfRating.map(({ id, label }) => ({ id, label })),
     },
     async answer(question, answerId) {
-      if (!(await applyAnswer({ edition, userState, mix, rarityRange }, question, answerId)))
-        return false;
+      if (!(await applyAnswer({ edition, userState, mix }, question, answerId))) return false;
       if (question !== 'selfRating') {
         analytics
           .track('questionnaireAnswered', { question, answer: answerId })

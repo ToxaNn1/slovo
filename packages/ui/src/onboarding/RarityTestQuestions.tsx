@@ -5,6 +5,7 @@ import { RARITIES, type Rarity } from '@slovo/contracts';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
+import { rarityRangeLabel } from '../settings/rarity-range-label';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { fontScaleCap, minTouchTarget, rarityTestLayout, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -18,9 +19,14 @@ export interface RarityTestQuestion {
   readonly accessibilityLabel: string;
 }
 
-/** What the answers came to: the top of the Rarity Range they set, and how many of the Words the reader knew. */
+/**
+ * What the answers came to: the top of the Rarity Range they set, from the
+ * lowest rarity, whether that changed the range, and how many of the Words
+ * the reader knew.
+ */
 export interface RarityTestResult {
   readonly top: Rarity;
+  readonly changed: boolean;
   readonly known: number;
   readonly total: number;
 }
@@ -240,15 +246,18 @@ function Segments({
 }
 
 /**
- * The result (screen 93, XSettings t7): a card with the Rarity Range as a big
- * number cut by its top right corner, behind the line that says it, five bars
- * lit up to it, and how many Words the reader knew.
+ * The result (screen 93, XSettings t7): a card with the top of the Rarity
+ * Range as a big number cut by its top right corner, beside the heading that
+ * says the range the test set and whether that changed it (ADR 0182), five
+ * bars lit up to it, and how many Words the reader knew. The heading is a few
+ * short words, so each fits its line beside the number.
  */
 function RarityTestOutcome({ result }: { result: RarityTestResult }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice, strings } = useEdition();
-  const n = String(result.top);
+  const [lowest] = RARITIES;
+  const range = rarityRangeLabel(strings.settings.rarity, { from: lowest, to: result.top });
   return (
     <View
       style={[
@@ -262,7 +271,7 @@ function RarityTestOutcome({ result }: { result: RarityTestResult }) {
         maxFontSizeMultiplier={fontScaleCap.number}
         style={[typeStyle('rarityTestNumber', tokens), styles.number, { color: colors.accent }]}
       >
-        {n}
+        {String(result.top)}
       </Text>
       <Text
         accessibilityRole="header"
@@ -270,7 +279,9 @@ function RarityTestOutcome({ result }: { result: RarityTestResult }) {
         maxFontSizeMultiplier={fontScaleCap.number}
         style={[typeStyle('rarityTestResult', tokens), styles.outcomeLine, { color: colors.ink }]}
       >
-        {fill(strings.rarityTest.resultLine, { n })}
+        {fill(result.changed ? strings.rarityTest.resultChanged : strings.rarityTest.resultKept, {
+          range,
+        })}
       </Text>
       <View style={styles.outcomeLine}>
         <Segments
