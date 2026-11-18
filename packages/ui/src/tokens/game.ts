@@ -34,16 +34,17 @@ export const resultLayout = {
 export const reviewMark = { side: 28, radius: 8 } as const;
 
 /**
- * The Round's progress (board 07): 10 skewed segments under the header's
- * row, filled as the Rounds pass towards the mode's Round limit.
+ * The Round's progress (board «slogo game last»): skewed segments in the
+ * header's row, this far apart, filled as the Rounds pass towards the mode's
+ * Round limit.
  */
-export const roundProgress = { height: 6, gap: 4, skew: '-20deg', segments: 10 } as const;
+export const roundProgress = { gap: 4, skew: '-20deg' } as const;
 
 /**
  * Gaps and paddings of the Game's Round off the 4-pt grid, from the design:
  * between the options and between the header's parts, a tight one (the
- * progress label over its bar, «Далі» under the sheet), the sheet's own and
- * the vertical padding and least height of the Round's card; and how far
+ * progress label over its bar, «Далі» under the sheet), the sheet's own;
+ * and how far
  * the largest text sizes of iOS may scale the Round's smaller text, so it
  * never breaks a word.
  */
@@ -51,8 +52,6 @@ export const roundLayout = {
   gap: 10,
   tightGap: 6,
   sheetGap: 14,
-  cardPaddingVertical: 30,
-  cardMinHeight: 220,
   textMaxFontScale: 1.5,
   /** The most lines a Round's prompt takes, stepping down the cards' title scale to fit (ADR 0157). */
   promptLines: 4,
@@ -61,21 +60,14 @@ export const roundLayout = {
 } as const;
 
 /**
- * The Round's header (board 07): the gap between its row and the bar and
- * label under it, between the row's parts and between Lives; a Life's flag;
- * the ✕'s 40-pt sunken square, its corners and glyph; the pop of a Life as
- * it is lost (`slPop`: its scale at the start, at 60 % and the end, and how
- * long it takes); how far the title may shrink to fit its line beside the
- * Lives, so «ВГАДАЙ СЛОВО · 3/15» shows whole on a narrow iPhone.
+ * The Round's header (board 07): the gap between its row and the timer
+ * under it, between the row's parts; the ✕'s glyph; the pop of a Life as it
+ * is lost (`slPop`: its scale at the start, at 60 % and the end, and how
+ * long it takes).
  */
 export const roundHeader = {
-  titleMinScale: 0.6,
   gap: 14,
   rowGap: 12,
-  lifeGap: 4,
-  life: { width: 16, height: 22 },
-  exit: 40,
-  exitRadius: 12,
   exitGlyph: 14,
   lostPop: { from: 0.6, peak: 1.12, duration: 400 },
   /** On the ground (board «slogo game last»): the ✕, the Lives as hexagons, the bar's height and the room from the row to the question. */
@@ -261,7 +253,6 @@ export const pairsGridLayout = {
 export const vowelButtonsLayout = {
   width: 38,
   height: 62,
-  letterGap: 2,
   /** On the ground every letter takes a cell of the tile's width, this far apart, and the cells shrink to keep a long Word on one line. */
   cellGap: 4,
   /** From the Word to its hint on the ground. */

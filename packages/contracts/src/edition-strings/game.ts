@@ -184,7 +184,7 @@ export const GameStringsSchema = z.strictObject({
       /** Its button to the next Round, e.g. «Далі →». */
       next: TextSchema,
     }),
-    /** The answer banner behind `gameAnswerBanner` (ADR 0138). */
+    /** The answer banner (ADR 0138). */
     banner: z.strictObject({
       /** Its head after a right answer, in turn, e.g. «Влучив!». */
       right: z.array(TextSchema).min(1),
@@ -203,8 +203,6 @@ export const GameStringsSchema = z.strictObject({
       meaning: templateOf('word'),
       /** Under a Correction's right form, e.g. «замість «їхати»». Takes `{wrong}`. */
       instead: templateOf('wrong'),
-      /** An Anglicism Round. Takes `{word}` and `{sentence}`. */
-      replace: templateOf('word', 'sentence'),
     }),
     /** The line of a «Наголос» Round, e.g. «Торкнись голосної, на яку падає наголос». */
     stressHint: TextSchema,

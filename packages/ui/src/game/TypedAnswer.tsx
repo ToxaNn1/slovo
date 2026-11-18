@@ -11,7 +11,6 @@ import {
   typeStyle,
 } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { useRoundLook } from './round-look';
 
 /**
  * One place of the Word to type, in order: an apostrophe or a hyphen, which
@@ -60,7 +59,6 @@ export function TypedAnswer({
   const tokens = useTokens();
   const { colors, radii } = tokens;
   const { voice } = useEdition();
-  const { onGround } = useRoundLook();
   const typed = value.trim() !== '';
   const closed = blanks?.filter((blank) => !('mark' in blank) && blank.letter === undefined);
   const submit = () => {
@@ -75,18 +73,12 @@ export function TypedAnswer({
       <View
         style={[
           styles.box,
-          onGround
-            ? {
-                backgroundColor: colors.tile,
-                borderColor: colors.ink,
-                borderWidth: typedAnswerLayout.frame,
-                borderRadius: radii.button,
-              }
-            : {
-                backgroundColor: colors.surface,
-                borderColor: colors.line,
-                borderRadius: radii.button,
-              },
+          {
+            backgroundColor: colors.tile,
+            borderColor: colors.ink,
+            borderWidth: typedAnswerLayout.frame,
+            borderRadius: radii.button,
+          },
         ]}
       >
         <TextInput
@@ -116,7 +108,7 @@ export function TypedAnswer({
         />
       )}
       <Button
-        variant={onGround ? 'inverse' : 'primary'}
+        variant="inverse"
         label={texts.submit}
         onPress={submit}
         disabled={!typed}

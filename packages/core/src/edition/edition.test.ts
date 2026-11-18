@@ -109,9 +109,7 @@ const validConfig = {
     crosswordSolveTime: 'on',
     crosswordSolvedScreen: 'on',
     crosswordBadgeStamp: 'on',
-    gameAnswerBanner: 'on',
     gameRoundMascot: 'on',
-    gameQuestionOnGround: 'on',
     gameOptionStamp: 'on',
     gameEndToFeed: 'on',
     plainGameReview: 'on',
@@ -404,9 +402,7 @@ describe('loadEdition', () => {
     'crosswordSolveTime',
     'crosswordSolvedScreen',
     'crosswordBadgeStamp',
-    'gameAnswerBanner',
     'gameRoundMascot',
-    'gameQuestionOnGround',
     'gameOptionStamp',
     'gameEndToFeed',
     'plainGameReview',
@@ -634,9 +630,7 @@ describe('loadEdition', () => {
   });
 
   it.each([
-    'gameAnswerBanner',
     'gameRoundMascot',
-    'gameQuestionOnGround',
     'gameOptionStamp',
     'gameEndToFeed',
     'plainGameReview',
@@ -1574,9 +1568,7 @@ const dependentSwitches = [
   ['crosswordSolvedScreen', ['dailyCrossword', 'game']],
   ['crosswordBadgeStamp', ['dailyCrossword', 'badges', 'xpLog', 'game']],
   // The board «slogo game last» parts of a Game (spec #1880).
-  ['gameAnswerBanner', ['game']],
   ['gameRoundMascot', ['game']],
-  ['gameQuestionOnGround', ['game']],
   ['gameOptionStamp', ['game']],
   ['gameEndToFeed', ['game']],
   ['plainGameReview', ['gameReview']],

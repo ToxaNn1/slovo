@@ -293,17 +293,9 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Печатка відзнаки за кросворд',
     line: 'Відзнаку за кросворд показано на весь екран.',
   },
-  gameAnswerBanner: {
-    name: 'Смужка відповіді',
-    line: 'Після відповіді смужка каже, правильно чи ні, і гра йде далі сама.',
-  },
   gameRoundMascot: {
     name: 'Талісман у грі',
     line: 'Біля запитання гри стоїть талісман, який реагує на відповідь.',
-  },
-  gameQuestionOnGround: {
-    name: 'Запитання на тлі',
-    line: 'Запитання гри без картки, з видимим рядком «Життів».',
   },
   gameOptionStamp: {
     name: 'Печатки варіантів',

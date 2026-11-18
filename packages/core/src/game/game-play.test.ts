@@ -84,11 +84,8 @@ async function open(
   gameMode: GameMode,
   eligibleAtStart: readonly Word[] = words,
   {
-    banner = true,
     roundXp = 0,
-    edition = testEdition(
-      banner ? {} : { isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' },
-    ),
+    edition = testEdition(),
     write = () => Promise.resolve(),
     scheduled = true,
   }: OpenOptions = {},
@@ -149,13 +146,11 @@ async function open(
   };
 }
 
-/** How a test opens the Game: with the answer banner switched on or off, the XP a right Round earns, and its Edition. */
+/** How a test opens the Game: the XP a right Round earns, and its Edition. */
 interface OpenOptions {
-  /** Whether `gameAnswerBanner` is on; on by default, as every switch of the test Edition. */
-  banner?: boolean;
   /** The XP the XP log records for a right Round; 0 by default. */
   roundXp?: number;
-  /** The Edition the Game opens in; the test Edition with `banner` by default. */
+  /** The Edition the Game opens in; the test Edition by default. */
   edition?: GameEdition;
   /** How the user state writes; every write keeps by default. */
   write?: () => Promise<void>;
@@ -464,7 +459,7 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
 
   it('moves on at once in a mode that moves on: the answer counts and the next Round comes with no «Далі»', async () => {
     const { game } = await start(pick, { lives: 'none', movesOn: true }, undefined, {
-      banner: false,
+      scheduled: false,
     });
 
     const second = await answer(game, pickAnswer(false));
@@ -476,7 +471,7 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
   });
 });
 
-describe('the answer banner behind `gameAnswerBanner` (ADR 0138)', () => {
+describe('the answer banner (ADR 0138)', () => {
   it('holds a right answer in the answered state with the XP the XP log records for it', async () => {
     const { game } = await start(pick, {}, undefined, { roundXp: 10 });
 
@@ -645,28 +640,6 @@ describe('the answer banner behind `gameAnswerBanner` (ADR 0138)', () => {
     expect(now(game).status).toBe('playing');
   });
 
-  it('shows the banner as its switch says when the Game starts, not when the Game opened', async () => {
-    let switchedOn = false;
-    const edition = testEdition({
-      isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' || switchedOn,
-    });
-    const opened = await open(mode(pick), words, { edition });
-    switchedOn = true;
-    await opened.game.start('test');
-
-    expect(await answer(opened.game, pickAnswer(true))).toMatchObject({ banner: true });
-    await opened.advance(950);
-    expect(now(opened.game)).toMatchObject({ status: 'playing', roundsPassed: 1 });
-
-    switchedOn = false;
-    expect(await answer(opened.game, pickAnswer(true))).toMatchObject({ banner: true });
-    opened.game.leave();
-    await opened.game.start('test');
-    expect(await answer(opened.game, pickAnswer(true))).toMatchObject({ banner: false });
-    await opened.advance(5000);
-    expect(now(opened.game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
-  });
-
   it('shows no banner without a schedule to move on by, so «Далі» moves on', async () => {
     const { game } = await start(pick, {}, undefined, { scheduled: false });
 
@@ -697,26 +670,6 @@ describe('the answer banner behind `gameAnswerBanner` (ADR 0138)', () => {
     await advance(950);
 
     expect(game.state.current).toBeUndefined();
-  });
-
-  it('waits for «Далі» with its switch off, and a mode that moves on moves on at once', async () => {
-    const waiting = await start(pick, {}, undefined, { banner: false });
-    await waiting.game.answer(pickAnswer(true));
-    await waiting.advance(5000);
-    expect(now(waiting.game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
-
-    const timed = await start(
-      pick,
-      { lives: 'none', timeLimit: 20_000, movesOn: true },
-      undefined,
-      {
-        banner: false,
-      },
-    );
-    expect(await answer(timed.game, pickAnswer(true))).toMatchObject({
-      status: 'playing',
-      roundsPassed: 1,
-    });
   });
 });
 

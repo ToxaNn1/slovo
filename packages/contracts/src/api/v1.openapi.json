@@ -9272,23 +9272,7 @@
                           ],
                           "type": "string"
                         },
-                        "gameAnswerBanner": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameRoundMascot": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameQuestionOnGround": {
                           "enum": [
                             "on",
                             "off",
@@ -9807,9 +9791,7 @@
                         "crosswordSolveTime",
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
-                        "gameAnswerBanner",
                         "gameRoundMascot",
-                        "gameQuestionOnGround",
                         "gameOptionStamp",
                         "gameEndToFeed",
                         "plainGameReview",
@@ -11197,23 +11179,7 @@
                           ],
                           "type": "string"
                         },
-                        "gameAnswerBanner": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameRoundMascot": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameQuestionOnGround": {
                           "enum": [
                             "on",
                             "off",
@@ -11732,9 +11698,7 @@
                         "crosswordSolveTime",
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
-                        "gameAnswerBanner",
                         "gameRoundMascot",
-                        "gameQuestionOnGround",
                         "gameOptionStamp",
                         "gameEndToFeed",
                         "plainGameReview",
@@ -13046,23 +13010,7 @@
                           ],
                           "type": "string"
                         },
-                        "gameAnswerBanner": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameRoundMascot": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "gameQuestionOnGround": {
                           "enum": [
                             "on",
                             "off",
@@ -13581,9 +13529,7 @@
                         "crosswordSolveTime",
                         "crosswordSolvedScreen",
                         "crosswordBadgeStamp",
-                        "gameAnswerBanner",
                         "gameRoundMascot",
-                        "gameQuestionOnGround",
                         "gameOptionStamp",
                         "gameEndToFeed",
                         "plainGameReview",

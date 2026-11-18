@@ -12,7 +12,7 @@ Spec #1674 (G5 of 07.11) shows an inline answer card with «Далі →» after
 - **The Game moves on by itself.** The Game leaves the answered state on a timer, not on a tap. The delay is a Core value per case, following the board: 950 ms after a right answer and 1600 ms after a wrong one; 550 and 900 ms in a Game Mode with a time limit («На час»). The time comes from the injected clock and schedule. The time limit of «На час» keeps running under the banner.
 - **«Пари»** shows no banner after a pair; the grid ends when its four pairs are found.
 - **Accessibility.** With VoiceOver on, the banner is announced and the Game waits for the announcement or the delay, whichever is longer. With «Менше руху» the banner shows without motion.
-- **Switch.** Behind `gameAnswerBanner` (needs `game`). Off, the answer card, its bottom sheet and «Далі →» of spec #1674 stay, with the card's explanation line; on, no explanation is left in the Game, which the owner accepts.
+- **No switch.** The banner always follows an answer; the answer card and its explanation line are gone, which the owner accepts. Its switch `gameAnswerBanner` is retired by ADR 0176.
 - Supersedes G5 of 07.11. Amends ADR 0052 where it describes what follows an answer.
 
 ## Consequences

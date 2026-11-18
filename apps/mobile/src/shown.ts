@@ -20,8 +20,6 @@ export interface Shown {
   readonly gameReview: boolean;
   /** The Mascot beside the question of a Round (ADR 0139). */
   readonly gameRoundMascot: boolean;
-  /** The question on the background, labels without numbers and the visible Lives line (ADR 0139). */
-  readonly gameQuestionOnGround: boolean;
   /** The board's options: short ones without a key, the stamp, the ✓ key, the crossed-out text (ADR 0139). */
   readonly gameOptionStamp: boolean;
   /** The third end button «До стрічки» (ADR 0139). */
@@ -224,7 +222,6 @@ export function shownOf({
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
     gameRoundMascot: on('gameRoundMascot'),
-    gameQuestionOnGround: on('gameQuestionOnGround'),
     gameOptionStamp: on('gameOptionStamp'),
     gameEndToFeed: on('gameEndToFeed'),
     plainGameReview: on('plainGameReview'),

@@ -442,15 +442,11 @@ export const FeatureSwitchesSchema = z.strictObject({
   crosswordSolvedScreen: FeatureSwitchStateSchema,
   /** The full-screen Badge stamp after a solved Daily Crossword that earns a Badge (ADR 0087); off while `dailyCrossword` or `badges` is. */
   crosswordBadgeStamp: FeatureSwitchStateSchema,
-  /** The answer banner: after an answer a banner tells right or wrong, and the Game moves on by itself after a Core delay, with no «Далі →» (ADR 0138); off, the answer card. Off while `game` is. */
-  gameAnswerBanner: FeatureSwitchStateSchema,
   /** Three Lives: a Game starts with 3 Lives by default (ADR 0137); off, 5. Off while `game` is. */
   /** One Life in «Виживання» (ADR 0137); off, 3. Off while `gameSurvival` is. */
   /** 20 seconds in «На час», then straight to «ФІНІШ» with no time-up poster (ADR 0137); off, 60 seconds and «Час!». Off while `gameTimed` is. */
   /** The Mascot beside the question of a Round, in its waiting, glad, wincing and sad states (ADR 0139); off while `game` is. */
   gameRoundMascot: FeatureSwitchStateSchema,
-  /** The question of a Round on the background with no card, labels with no Round number and the visible Lives line «Життів: {n} з {N}» (ADR 0139); off while `game` is. */
-  gameQuestionOnGround: FeatureSwitchStateSchema,
   /** The board's options: short ones without a key, the ✓ stamp, the ✓ and ✕ keys and the crossed-out wrong text (ADR 0139); off while `game` is. */
   gameOptionStamp: FeatureSwitchStateSchema,
   /** «Пари»: a found pair stays red, the captions «СЛОВО» and «ЗНАЧЕННЯ», no pause after a pair (ADR 0138, 0139); off while `gamePairs` is. */

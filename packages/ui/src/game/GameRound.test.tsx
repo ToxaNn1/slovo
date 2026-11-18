@@ -22,7 +22,6 @@ import { getAnimatedStyle } from 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
-import { roundHeader } from '../tokens';
 
 const strings = testStrings({
   game: {
@@ -56,7 +55,6 @@ const strings = testStrings({
       prompts: {
         meaning: '“{word}” means…',
         instead: 'instead of “{wrong}”',
-        replace: 'What replaces “{word}”: “{sentence}”?',
       },
     },
     openLetter: 'Open a letter',
@@ -521,16 +519,7 @@ describe('GameRound', () => {
     expect(screen.getByRole('button', { name: 'Leave the Game' })).toBeOnTheScreen();
   });
 
-  it('shrinks a long title to its line beside the Lives rather than cutting it short', async () => {
-    await renderRound(jest.fn(), jest.fn(), first);
-
-    const title = screen.getByTestId('game-title');
-    expect(title).toHaveProp('numberOfLines', 1);
-    expect(title).toHaveProp('adjustsFontSizeToFit', true);
-    expect(title).toHaveProp('minimumFontScale', roundHeader.titleMinScale);
-  });
-
-  it('fills the 10 segments by the Rounds passed out of the Round limit, then the current one, then the rest', async () => {
+  it('fills a segment per Round passed out of the Round limit, then the current one, then the rest', async () => {
     const played = (right: boolean): PlayedRound => {
       const { round } = answeredPick(first, { form: 'pick', option: right ? CORRECT : 0 });
       if (round.answer === undefined) throw new Error('No answer');
@@ -555,13 +544,13 @@ describe('GameRound', () => {
       return (StyleSheet.flatten(style as ViewStyle) as ViewStyle | undefined)?.backgroundColor;
     };
 
-    expect(screen.getAllByTestId(/^game-progress-\d+$/)).toHaveLength(10);
-    // 6 of 15 Rounds passed fill 4 of the 10 segments; the 5th is the current one.
-    expect(fillOf(3)).toBe(fillOf(0));
-    expect(fillOf(4)).not.toBe(fillOf(3));
-    expect(fillOf(5)).not.toBe(fillOf(4));
-    expect(fillOf(5)).not.toBe(fillOf(3));
-    expect(fillOf(9)).toBe(fillOf(5));
+    expect(screen.getAllByTestId(/^game-progress-\d+$/)).toHaveLength(15);
+    // 6 of 15 Rounds passed fill 6 segments; the 7th is the current one.
+    expect(fillOf(5)).toBe(fillOf(0));
+    expect(fillOf(6)).not.toBe(fillOf(5));
+    expect(fillOf(7)).not.toBe(fillOf(6));
+    expect(fillOf(7)).not.toBe(fillOf(5));
+    expect(fillOf(14)).toBe(fillOf(7));
   });
 
   it('counts the Rounds passed with no limit in a mode without one, and its own Lives', async () => {
@@ -727,8 +716,9 @@ describe('GameRound', () => {
     });
 
     expect(screen.getByTestId('game-instead')).toHaveTextContent('instead of “probly”');
+    // The board heads the wrong form in ink and shows nothing of the sentence (g3).
     expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(
-      'Definition. instead of “probly”. It is probly true. Marked: probly',
+      'Definition. instead of “probly”',
     );
   });
 
@@ -763,11 +753,11 @@ describe('GameRound', () => {
     expect(screen.queryByTestId('game-ask')).not.toBeOnTheScreen();
   });
 
-  it('asks what replaces the anglicism in its sentence, the anglicism still marked', async () => {
+  it('shows the anglicism’s sentence alone, the anglicism marked', async () => {
     await renderRound(jest.fn(), jest.fn(), { ...highlightRound, modeId: 'anglicism' });
 
     expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(
-      'Definition. What replaces “took measures”: “She took measures quickly.”? Marked: took measures',
+      'Definitions. She took measures quickly. Marked: took measures',
     );
     expect(screen.queryByTestId('game-instead')).not.toBeOnTheScreen();
   });
@@ -831,11 +821,9 @@ describe('GameRound', () => {
       round: { ...first.round, prompt: 'candour', definition: 'Open honesty.' },
     });
 
-    expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(
-      'Definition. candour. Open honesty.',
-    );
+    // «Звідки слово» heads its Word in ink on its tile and shows nothing besides (g4).
+    expect(screen.getByTestId('game-prompt')).toHaveAccessibleName('Definition. candour');
     expect(screen.getByText('candour')).toBeOnTheScreen();
-    expect(screen.getByTestId('game-definition')).toHaveTextContent('Open honesty.');
 
     await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
 
@@ -854,7 +842,7 @@ describe('GameRound', () => {
       await renderRound(jest.fn(), jest.fn(), wordVowelRound);
 
       expect(screen.getByRole('header', { name: 'Where is the stress?' })).toHaveTextContent(
-        'Where is the stress? · 1 / 15',
+        'Where is the stress?',
       );
       expect(screen.getByTestId('game-vowels')).toHaveTextContent('banana', { exact: true });
       expect(

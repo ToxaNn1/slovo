@@ -25,6 +25,10 @@ import {
   resetGameScreen,
 } from './test-support';
 
+/** The number of the Word a Round of «Звідки слово» shows: «слово{n}» is the Entry of «test{n}». */
+const theNumberOfTheWord = () =>
+  Number(/(\d+)$/.exec(String(screen.getByTestId('game-prompt').props['accessibilityLabel']))?.[1]);
+
 beforeEach(resetGameScreen);
 
 describe('the Game screen', () => {
@@ -342,11 +346,10 @@ describe('the Game screen', () => {
           `Пройдено раундів: ${String(round - 1)} з 15`,
         );
       });
-      // Board 07 g3: the card names the wrong form over its sentence; VoiceOver reads both,
-      // then names the non-standard form marked in the sentence.
+      // On the ground the question names the wrong form alone, with no sentence.
       expect(screen.getByTestId('game-instead')).toHaveTextContent(/^замість «хибне\d+»$/);
       expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
-        /^Як сказати краще\? замість «хибне(\d+)»\. Речення \1: тут хибне\1\. Виділено: хибне\1$/,
+        /^Як сказати краще\? замість «хибне\d+»$/,
       );
       // The reader types the whole form: no blanks, no «Відкрити літеру».
       expect(screen.queryByTestId('game-typed-blanks')).toBeNull();
@@ -443,7 +446,7 @@ describe('the Game screen', () => {
   });
 
   it('heads «Англіцизми» on the ground with «АНГЛІЦИЗМИ» over the sentence alone, each option marking its replacement', async () => {
-    await open({ anglicisms: 15, switchedOn: ['gameQuestionOnGround'] });
+    await open({ anglicisms: 15 });
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('game-mode-anglicism'));
@@ -474,9 +477,9 @@ describe('the Game screen', () => {
           `Пройдено раундів: ${String(round - 1)} з 15`,
         );
       });
-      // Board 07: «Чим замінити «…»: «…»?», the anglicism still marked in the sentence.
+      // On the ground the sentence alone, the anglicism marked in it.
       expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
-        /^Як сказати краще\? Чим замінити «хибне(\d+)»: «Речення \1: тут хибне\1\.»\? Виділено: хибне\1$/,
+        /^Англіцизми\. Речення (\d+): тут хибне\1\. Виділено: хибне\1$/,
       );
       // Anglicisms are numbered after the 15 calques, which never play here.
       const n = theNumberOfThePrompt();
@@ -643,17 +646,20 @@ describe('the Game screen', () => {
       ).toBeOnTheScreen();
       for (let answered = 0; answered < 3; answered += 1) {
         await pickTheWordOfThePrompt();
-        // The next Round comes at once, with no sheet.
+        // The banner shows with no sheet, and the next Round comes 550 ms on, the time running under it.
+        expect(screen.getByTestId('game-answer-banner')).toBeOnTheScreen();
         expect(screen.queryByTestId('game-next')).toBeNull();
+        await pass(550);
         expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
       }
       warning.mockClear();
       await pickAnotherWord();
       expect(warning).toHaveBeenCalled();
       expect(screen.queryByTestId('game-next')).toBeNull();
+      await pass(900);
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
 
-      await pass(5_000);
+      await pass(5_000 - 3 * 550 - 900);
 
       expect(timerLabel()).toBe('лишилося 15 секунд');
       expect(screen.getByTestId('game-timer')).toHaveTextContent('15 с');
@@ -679,9 +685,11 @@ describe('the Game screen', () => {
         expect(timerLabel()).toBe('лишилося 20 секунд');
       });
       await pickTheWordOfThePrompt();
+      await pass(550);
       await pickAnotherWord();
+      await pass(900);
       await pickAnotherWord();
-      await pass(20_000);
+      await pass(20_000 - 550 - 900);
 
       await waitFor(() => {
         expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
@@ -743,15 +751,12 @@ describe('the Game screen', () => {
           `Пройдено раундів: ${String(round - 1)} з 8`,
         );
       });
-      // The Word with its Stress, then its Definition, over four languages.
+      // The Word with its Stress alone, with no Definition, over four languages.
       expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
-        /^Звідки це слово\? сло\u0301?во(\d+)\. The meaning of test\1\.$/,
+        /^Звідки це слово\? сло\u0301?во\d+$/,
       );
-      // Board 07 g4: the Word big on its sunken tile.
-      expect(screen.getByTestId('game-word')).toHaveTextContent(/^сло\u0301?во\d+$/);
-      const n = Number(
-        /test(\d+)/.exec(String(screen.getByTestId('game-definition').props['children']))?.[1],
-      );
+      expect(screen.queryByTestId('game-definition')).toBeNull();
+      const n = theNumberOfTheWord();
       expect(n).toBeLessThan(8);
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
       await fireEvent.press(theOption(originOf(n)?.name ?? ''));
@@ -772,9 +777,7 @@ describe('the Game screen', () => {
     await waitFor(() => {
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
     });
-    const n = Number(
-      /test(\d+)/.exec(String(screen.getByTestId('game-definition').props['children']))?.[1],
-    );
+    const n = theNumberOfTheWord();
     const language = originOf(n)?.name ?? '';
     const wrong = screen
       .getAllByTestId(/^game-option-\d+$/)

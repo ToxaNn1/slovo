@@ -251,9 +251,8 @@ describe('titleScale', () => {
       'nonStandardForm',
       'correctionStruck',
       'correctionStandard',
-      'roundPrompt',
     ];
-    expect(titles.map((name) => typeRoles[name].size)).toEqual([50, 50, 36, 36, 26, 26, 26, 24]);
+    expect(titles.map((name) => typeRoles[name].size)).toEqual([50, 50, 36, 36, 26, 26, 26]);
   });
 
   it("takes a title role at the Lemma's size: its share of the Lemma's own", () => {

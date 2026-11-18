@@ -274,16 +274,12 @@ export const typeRoles = {
   crosswordMiniLetter: role('word', '800', 11, 13, 0, 'uppercase'),
   /** The XP earned in all, in its pill beside the Games screen's title. */
   xpPill: role('word', '800', 13, 13),
-  /** The mode's title in the Round's header (board 07), such as «ВГАДАЙ СЛОВО · 3/15». */
-  roundTitle: role('word', '800', 14, 14, 1, 'uppercase'),
   /** «Життів: 4 з 5» in its red label under the Round's header (board 07). */
   roundLives: role('ui', '600', 13, 13),
   /** The label over a Round's prompt, and a Quick Question's title. */
   roundLabel: role('word', '800', 12, 12, 1.5, 'uppercase'),
   /** A Round's head: its label and place, such as «НАГОЛОС · 6/10». */
   roundHead: role('word', '800', 12, 12, 2, 'uppercase'),
-  /** A Round's prompt on its card. */
-  roundPrompt: role('word', '800', 24, 30),
   /** A restyled Round's ask on its card (board 07 g3, g4), such as «Як сказати краще?» or the Word in «Звідки слово». */
   roundAsk: role('word', '900', 24, 30),
   /** The form a «Впиши слово» Round asks to replace, under its ask (board 07 g3): «замість «вірогідно»». */
@@ -412,10 +408,6 @@ export const typeRoles = {
   emptyTitle: role('word', '900', 22, 25),
   /** An empty state's line of muted text under its title. */
   emptyText: role('ui', '400', 15, 22),
-  /** A letter of the Word in a Round of the vowel form, in the Round's prompt size. */
-  vowelWordLetter: role('word', '500', 25, 32.5),
-  /** A vowel on its button in a Round of the vowel form. */
-  vowelButton: role('word', '900', 25, 32.5),
   /** A reminder's time on its Settings row. */
   reminderTime: role('word', '500', 22, 26),
   /** The «soon» tag of a Settings row that a later version brings. */
@@ -1038,13 +1030,6 @@ export const wedges = {
     [1, 0],
     [1, 1],
     [0, 1],
-  ],
-  /** A Life in the Round's header (board 07): a flag whose right edge sits lower. */
-  lifeFlag: [
-    [0, 0],
-    [1, 0.25],
-    [1, 1],
-    [0, 0.75],
   ],
   /** A Life in the Round's header on the ground (board «slogo game last»): an upright hexagon. */
   lifeHex: [

@@ -1892,8 +1892,7 @@
       },
       "prompts": {
         "meaning": "«{word}» — це…",
-        "instead": "замість «{wrong}»",
-        "replace": "Чим замінити «{word}»: «{sentence}»?"
+        "instead": "замість «{wrong}»"
       },
       "stressHint": "Торкнись голосної, на яку падає наголос",
       "pairsHint": "З’єднай слово і значення",
