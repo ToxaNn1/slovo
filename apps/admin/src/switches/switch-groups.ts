@@ -134,7 +134,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   curatedCollections: 'content',
   gesturesHintDemo: 'feed',
   gesturesHintAgain: 'feed',
-  savedSwipesOff: 'feed',
   wordTabs: 'feed',
   sourceTab: 'content',
   tipExceptions: 'content',

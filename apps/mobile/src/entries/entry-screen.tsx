@@ -34,7 +34,7 @@ export function EntryScreen({
 }: {
   entryId: string;
   back: string;
-  /** Opened from a tab of Saved: the card takes no side swipes while `savedSwipesOff` is on (owner 15.11). */
+  /** Opened from a tab of Saved: the card takes no side swipes, its mark set from the «⋯» sheet (ADR 0144). */
   inSaved?: boolean;
   /**
    * Where outside the app it opened from, if it did: the Entry is Seen, in
@@ -52,8 +52,7 @@ export function EntryScreen({
   // The stack's Entry route, such as `/saved/favorites`: this screen's path without its Entry.
   const pathname = usePathname();
   const route = pathname.slice(0, pathname.lastIndexOf('/'));
-  const { stressFall, wordTabs, sourceTab, tipExceptions, entryPanelAllKinds, savedSwipesOff } =
-    useShown();
+  const { stressFall, wordTabs, sourceTab, tipExceptions, entryPanelAllKinds } = useShown();
   // `null` once read for an id the Language Pack doesn't have.
   const read = useCallback(
     async (open: Composition) => (await openEntry(open, entryId, openedFrom)) ?? null,
@@ -90,7 +89,7 @@ export function EntryScreen({
         {card?.entryId === entryId && (
           <SlottedEntryDetails
             card={card}
-            swipes={!(inSaved && savedSwipesOff)}
+            swipes={!inSaved}
             back={back}
             onBack={() => {
               router.back();

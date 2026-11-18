@@ -164,8 +164,6 @@ export interface Shown {
   readonly gesturesHintDemo: boolean;
   /** Settings offers «Показати підказку жестів», which shows the gestures hint once more (owner 16.11). */
   readonly gesturesHintAgain: boolean;
-  /** Whether an Entry opened from Saved takes no side swipes, its mark set from the «⋯» sheet (owner 15.11). */
-  readonly savedSwipesOff: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
   /**
@@ -279,7 +277,6 @@ export function shownOf({
     curatedCollections: on('curatedCollections'),
     gesturesHintDemo: on('gesturesHintDemo'),
     gesturesHintAgain: on('gesturesHintAgain'),
-    savedSwipesOff: on('savedSwipesOff'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
     rarity: on('rarityCeiling') ? (on('rarityRange') ? 'range' : 'top') : 'off',
     rarityTest: on('rarityTest'),

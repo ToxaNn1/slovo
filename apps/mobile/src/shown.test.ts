@@ -76,7 +76,6 @@ const everything: Shown = {
   curatedCollections: true,
   gesturesHintDemo: true,
   gesturesHintAgain: true,
-  savedSwipesOff: true,
   wordOfTheDayArchive: true,
   rarity: 'range',
   rarityTest: true,
@@ -144,10 +143,6 @@ describe('what the reader is shown', () => {
     [
       'no «Показати підказку жестів» with its switch off',
       { off: ['gesturesHintAgain'], shown: { gesturesHintAgain: false } },
-    ],
-    [
-      'an Entry opened from Saved swiped as anywhere else with `savedSwipesOff` off',
-      { off: ['savedSwipesOff'], shown: { savedSwipesOff: false } },
     ],
     [
       "a Word's card from a Category's screen with the Category's Feed off",

@@ -57,10 +57,7 @@ let wordTabsOn = true;
 /** Whether `entryPanelAllKinds` is on in effect: on as the Edition ships it unless a test turns it off. */
 let panelAllKindsOn = true;
 
-/** Whether `savedSwipesOff` is on in effect: on as the Edition ships it unless a test turns it off. */
-let savedSwipesOffOn = true;
-
-/** The Edition in effect: as it ships, with the Word tabs, panel and Saved switches as the test sets them. */
+/** The Edition in effect: as it ships, with the Word tabs and panel switches as the test sets them. */
 const editionInEffect = (): typeof shippedEdition => ({
   ...shippedEdition,
   isFeatureEnabled: (feature) =>
@@ -68,9 +65,7 @@ const editionInEffect = (): typeof shippedEdition => ({
       ? wordTabsOn
       : feature === 'entryPanelAllKinds'
         ? panelAllKindsOn
-        : feature === 'savedSwipesOff'
-          ? savedSwipesOffOn
-          : shippedEdition.isFeatureEnabled(feature),
+        : shippedEdition.isFeatureEnabled(feature),
 });
 
 const haptics: Haptics = {
@@ -369,10 +364,6 @@ describe('an Entry opened from Saved and the side swipes (owner 15.11)', () => {
     '/saved/collections/none',
   ];
 
-  afterEach(() => {
-    savedSwipesOffOn = true;
-  });
-
   it.each(savedStacks)('has no side swipes at %s, its corner kept', async (route) => {
     await renderEntry('w_sumyrnyi', `${route}/w_sumyrnyi`);
 
@@ -383,13 +374,6 @@ describe('an Entry opened from Saved and the side swipes (owner 15.11)', () => {
 
   it('keeps the side swipes of an Entry a link opens', async () => {
     await renderEntry('w_sumyrnyi');
-
-    expect(screen.getByTestId('swipe-card')).toBeOnTheScreen();
-  });
-
-  it('keeps the side swipes at Saved with `savedSwipesOff` off', async () => {
-    savedSwipesOffOn = false;
-    await renderEntry('w_sumyrnyi', '/saved/favorites/w_sumyrnyi');
 
     expect(screen.getByTestId('swipe-card')).toBeOnTheScreen();
   });
