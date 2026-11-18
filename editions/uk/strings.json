@@ -633,7 +633,6 @@
       "add": "Додати в Улюблене",
       "remove": "Прибрати з Улюбленого"
     },
-    "hint": "В Улюбленому",
     "footer": "Найновіші — першими. Тап відкриває повну картку.",
     "remove": "Прибрати",
     "removeLabel": "Прибрати «{title}» з Улюбленого",
@@ -669,16 +668,6 @@
     "tile": {
       "add": "До колекції",
       "filed": "У колекції"
-    },
-    "hint": {
-      "one": "У колекції «{name}»",
-      "many": {
-        "one": "У {count} колекції",
-        "few": "У {count} колекціях",
-        "many": "У {count} колекціях",
-        "other": "У {count} колекції"
-      },
-      "withFavorites": "{place} · в Улюбленому"
     },
     "screen": {
       "kicker": "КОЛЕКЦІЯ · {count}",
@@ -843,7 +832,6 @@
   },
   "knowledge": {
     "known": "Знаю",
-    "correctionKnownHint": "Я й так кажу правильно",
     "unknown": "Не знаю",
     "swipe": {
       "edges": {
@@ -900,22 +888,10 @@
         "dismiss": "ЗРОЗУМІЛО"
       }
     },
-    "review": "Повторення",
-    "communityCounters": {
-      "known": {
-        "one": "«Знаю» — {known} з {count} читача",
-        "few": "«Знаю» — {known} з {count} читачів",
-        "many": "«Знаю» — {known} з {count} читачів",
-        "other": "«Знаю» — {known} з {count} читача"
-      },
-      "saved": "зберегли {saved}",
-      "line": "{known} · {saved}",
-      "spokenLine": "{known}, {saved}"
-    }
+    "review": "Повторення"
   },
   "mistakeReport": {
     "action": "Повідомити про помилку",
-    "tile": "Помилка",
     "types": {
       "typo": "Друкарська помилка",
       "stress": "Наголос",
@@ -994,8 +970,6 @@
     }
   },
   "hiding": {
-    "button": "Сховати",
-    "tile": "Не показувати",
     "choice": {
       "entry": "Не показувати цей запис",
       "category": "Не показувати категорію «{category}»",
@@ -2063,7 +2037,6 @@
     }
   },
   "share": {
-    "button": "Поділитися",
     "title": "Поділитися карткою",
     "format": "Формат",
     "story": "Сторіс",

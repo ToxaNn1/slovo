@@ -19,7 +19,7 @@ interface EntryStack {
   /** The name of the link back when the URL names none; a hook, as a Collection reads its name. */
   useDefaultBack: (params: EntryRouteParams) => string;
   openedFrom: (params: EntryRouteParams) => EntryLinkSource | 'search' | undefined;
-  /** Whether the stack is a tab of Saved, where an Entry takes no side swipes (`savedSwipesOff`). */
+  /** Whether the stack is a tab of Saved, where an Entry takes no side swipes (ADR 0144). */
   inSaved: boolean;
 }
 

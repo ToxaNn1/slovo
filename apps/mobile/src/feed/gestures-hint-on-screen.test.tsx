@@ -29,17 +29,16 @@ const { config } = activeEditionFiles;
 const onOff = (on: boolean) => (on ? 'on' : 'off');
 
 /**
- * The UA Edition with the side swipes marking an Entry as `swipeMarks` says,
- * and the hint playing its demo as `gesturesHintDemo` says.
+ * The UA Edition with the side swipes marking an Entry as the Knowledge switch
+ * says, and the hint playing its demo as `gesturesHintDemo` says.
  */
-function editionWith(swipeMarks: boolean, gesturesHintDemo = true): Edition {
+function editionWith(knowledge: boolean, gesturesHintDemo = true): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   return loadEdition({
     ...rest,
     featureSwitches: {
       ...featureSwitches,
-      knowledge: 'on',
-      swipeMarks: onOff(swipeMarks),
+      knowledge: onOff(knowledge),
       gesturesHintDemo: onOff(gesturesHintDemo),
     },
   });
@@ -95,8 +94,8 @@ function word(id: string, lemma: string): Word {
 }
 
 /** Opens the composition over two Words. */
-async function open(swipeMarks: boolean, gesturesHintDemo = true) {
-  editionInEffect = editionWith(swipeMarks, gesturesHintDemo);
+async function open(knowledge: boolean, gesturesHintDemo = true) {
+  editionInEffect = editionWith(knowledge, gesturesHintDemo);
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
   userState = await seedUserState({ onboardingFinished: '2026-09-01T09:00:00.000Z' }, { clock });
   await reopen();
@@ -189,7 +188,7 @@ async function renderApp() {
 }
 
 describe('the gestures hint sheet on the Feed', () => {
-  it('shows «ГОРТАЙ ПАЛЬЦЕМ» with its three rows on the first launch with swipeMarks on', async () => {
+  it('shows «ГОРТАЙ ПАЛЬЦЕМ» with its three rows on the first launch ', async () => {
     await open(true);
     await renderApp();
     await settle();
@@ -245,7 +244,7 @@ describe('the gestures hint sheet on the Feed', () => {
     expect(screen.queryByTestId('gestures-hint')).toBeNull();
   });
 
-  it('shows no hint at all with swipeMarks off', async () => {
+  it('shows no hint at all with the Knowledge switch off', async () => {
     await open(false);
     await renderApp();
     expect(screen.getByTestId('feed')).toBeOnTheScreen();

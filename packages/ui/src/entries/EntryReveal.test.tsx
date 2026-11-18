@@ -11,7 +11,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
-import { AccessibilityInfo, Text } from 'react-native';
+import { AccessibilityInfo } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { getAnimatedStyle } from 'react-native-reanimated';
@@ -59,10 +59,7 @@ async function renderCard(reduceMotion: boolean, lemma = card.model.lemma) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <ReduceMotionProvider reduceMotion={reduceMotion}>
-        <EntryCard
-          card={{ ...card, model: { ...card.model, lemma } }}
-          slots={{ slot: 'actions', actions: <Text>Actions</Text> }}
-        />
+        <EntryCard card={{ ...card, model: { ...card.model, lemma } }} />
       </ReduceMotionProvider>
     </EditionProvider>,
   );
@@ -111,20 +108,19 @@ describe('the Entry card reveal', () => {
       screen.getAllByTestId('word-lemma-flying', { includeHiddenElements: true }),
     ).toHaveLength(1);
     expect(styleOf('word-lemma-flying').opacity).toBe(0);
-    expect(styleOf('word-actions').opacity).toBe(0);
+    expect(styleOf('word-details').opacity).toBe(0);
 
     // The headline is on its way while the details still wait their turn.
     await wait(120 + 100);
     expect(styleOf('word-lemma-flying').opacity).toBeGreaterThan(0);
     expect(styleOf('word-lemma-flying').opacity).toBeLessThan(1);
-    expect(styleOf('word-actions').opacity).toBe(0);
+    expect(styleOf('word-details').opacity).toBe(0);
 
     await wait(1000 - 220);
     expect(styleOf('word-lemma-flying').opacity).toBeCloseTo(1);
     expect(styleOf('word-lemma-flying').rise).toBeCloseTo(0);
-    expect(styleOf('word-actions').opacity).toBeCloseTo(1);
-    expect(styleOf('word-actions').rise).toBeCloseTo(0);
-    expect(screen.getByText('Actions')).toBeTruthy();
+    expect(styleOf('word-details').opacity).toBeCloseTo(1);
+    expect(styleOf('word-details').rise).toBeCloseTo(0);
   });
 
   it('settles within a second, however long the Lemma', async () => {
@@ -136,7 +132,7 @@ describe('the Entry card reveal', () => {
       opacity: expect.closeTo(1),
       rise: expect.closeTo(0),
     });
-    expect(styleOf('word-actions')).toEqual({
+    expect(styleOf('word-details')).toEqual({
       opacity: expect.closeTo(1),
       rise: expect.closeTo(0),
     });
@@ -146,7 +142,7 @@ describe('the Entry card reveal', () => {
     await renderCard(true);
 
     expect(screen.queryByTestId('word-lemma-flying', { includeHiddenElements: true })).toBeNull();
-    expect(styleOf('word-actions')).toEqual({ opacity: 1, rise: 0 });
+    expect(styleOf('word-details')).toEqual({ opacity: 1, rise: 0 });
     expect(styleOf('word-card').opacity).toBeLessThan(1);
 
     await wait(300);
@@ -159,7 +155,7 @@ describe('the Entry card reveal', () => {
     await rerenderFeed({ fast: true, visiting: true, card: 'w2', reduceMotion: true });
 
     expect(screen.queryByTestId('word-lemma-flying', { includeHiddenElements: true })).toBeNull();
-    expect(styleOf('word-actions')).toEqual({ opacity: 1, rise: 0 });
+    expect(styleOf('word-details')).toEqual({ opacity: 1, rise: 0 });
     expect(styleOf('word-card').opacity).toBeLessThan(1);
     await wait(300);
     expect(styleOf('word-card').opacity).toBeCloseTo(1);
@@ -169,7 +165,7 @@ describe('the Entry card reveal', () => {
 /** Whether the card on screen shows its actions this long after it started to play: the fast reveal has, the full one not yet. */
 async function actionsShownAfter(ms: number) {
   await wait(ms);
-  return styleOf('word-actions').opacity > 0.99;
+  return styleOf('word-details').opacity > 0.99;
 }
 
 interface FeedVisit {
@@ -185,11 +181,7 @@ function feed({ fast, visiting, card: entryId, reduceMotion = false }: FeedVisit
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <ReduceMotionProvider reduceMotion={reduceMotion}>
         <RevealPace fast={fast} visiting={visiting}>
-          <EntryCard
-            key={entryId}
-            card={{ ...card, entryId }}
-            slots={{ slot: 'actions', actions: <Text>Actions</Text> }}
-          />
+          <EntryCard key={entryId} card={{ ...card, entryId }} />
         </RevealPace>
       </ReduceMotionProvider>
     </EditionProvider>
@@ -231,10 +223,10 @@ describe('the pace of the Entry card reveal in one visit to the Feed', () => {
     await renderFeed({ fast: true, visiting: true, card: 'w1' });
     expect(await actionsShownAfter(450)).toBe(false);
     await wait(1000);
-    expect(styleOf('word-actions').opacity).toBeCloseTo(1);
+    expect(styleOf('word-details').opacity).toBeCloseTo(1);
 
     await rerenderFeed({ fast: true, visiting: true, card: 'w2' });
-    expect(styleOf('word-actions').opacity).toBe(0);
+    expect(styleOf('word-details').opacity).toBe(0);
     expect(await actionsShownAfter(450)).toBe(true);
     expect(styleOf('word-lemma-flying').opacity).toBeCloseTo(1);
   });
@@ -260,7 +252,7 @@ describe('the pace of the Entry card reveal in one visit to the Feed', () => {
     await rerenderFeed({ fast: false, visiting: true, card: 'w2' });
     expect(await actionsShownAfter(450)).toBe(false);
     await wait(1000);
-    expect(styleOf('word-actions').opacity).toBeCloseTo(1);
+    expect(styleOf('word-details').opacity).toBeCloseTo(1);
   });
 });
 
@@ -285,10 +277,7 @@ async function renderPager(reduceMotion = false) {
             items={LEMMAS}
             onIndexChange={jest.fn()}
             renderPage={(lemma) => (
-              <EntryCard
-                card={{ ...card, entryId: lemma, model: { ...card.model, lemma } }}
-                slots={{ slot: 'actions', actions: <Text>{`Actions of ${lemma}`}</Text> }}
-              />
+              <EntryCard card={{ ...card, entryId: lemma, model: { ...card.model, lemma } }} />
             )}
           />
         </HapticsProvider>
@@ -316,17 +305,15 @@ async function flickUp() {
   });
 }
 
-/** How a part of the card with `lemma` looks: its headline, or its action row. */
-function cardPart(lemma: string, part: 'word-lemma-flying' | 'word-actions') {
+/** How a part of the card with `lemma` looks: its headline, or its details under it. */
+function cardPart(lemma: string, part: 'word-lemma-flying' | 'word-details') {
   // The headline shows the Lemma starting with a capital (owner decision 11).
-  const text =
-    part === 'word-actions'
-      ? `Actions of ${lemma}`
-      : lemma.charAt(0).toUpperCase() + lemma.slice(1);
-  const node = screen
-    .getAllByTestId(part, hidden)
+  const text = lemma.charAt(0).toUpperCase() + lemma.slice(1);
+  const wordCard = screen
+    .getAllByTestId('word-card', hidden)
     .find((candidate) => within(candidate).queryAllByText(text, hidden).length > 0);
-  if (node === undefined) throw new Error(`No ${part} of «${lemma}» is drawn.`);
+  if (wordCard === undefined) throw new Error(`No card of «${lemma}» is drawn.`);
+  const node = within(wordCard).getByTestId(part, hidden);
   const style = getAnimatedStyle(node) as Style;
   return {
     opacity: style.opacity ?? 1,
@@ -366,7 +353,7 @@ describe('the Entry card reveal in the Feed', () => {
     expect(cardPart('second', 'word-lemma-flying').opacity).toBeGreaterThan(0);
     await wait(1000);
     expect(cardPart('second', 'word-lemma-flying')).toEqual(revealed);
-    expect(cardPart('second', 'word-actions')).toEqual(revealed);
+    expect(cardPart('second', 'word-details')).toEqual(revealed);
   });
 
   it('shows a card swiped past before it settled in its final frame', async () => {
@@ -379,7 +366,7 @@ describe('the Entry card reveal in the Feed', () => {
 
     // The passed card is whole at once, never half-drawn, as it leaves.
     expect(cardPart('second', 'word-lemma-flying')).toEqual(revealed);
-    expect(cardPart('second', 'word-actions')).toEqual(revealed);
+    expect(cardPart('second', 'word-details')).toEqual(revealed);
     // The card the Feed heads for draws itself while it moves in, not after it rests.
     await wait(200);
     expect(cardPart('third', 'word-lemma-flying').opacity).toBeGreaterThan(0);
@@ -407,7 +394,7 @@ describe('the Entry card reveal in the Feed', () => {
     for (const ms of [50, 300, 200]) {
       await wait(ms);
       expect(cardPart('first', 'word-lemma-flying')).toEqual(revealed);
-      expect(cardPart('first', 'word-actions')).toEqual(revealed);
+      expect(cardPart('first', 'word-details')).toEqual(revealed);
     }
   });
 });

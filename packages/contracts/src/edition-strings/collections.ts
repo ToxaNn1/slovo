@@ -15,20 +15,10 @@ export const CollectionsStringsSchema = z.strictObject({
   cardLabel: templateOf('count'),
   /** A Collection on the card, as VoiceOver reads it. Takes `{name}` and `{count}`, the Entries in words. */
   collectionLabel: templateOf('name', 'count'),
-  /** The action row's Collections button, as VoiceOver reads it: what a tap will do. */
+  /** The Entry card's Collections button, as VoiceOver reads it: what a tap will do. */
   button: TextSchema,
-  /** The label under the bookmark of the action row's tile: `add` while the Entry is in no Collection, «До колекції», `filed` once it is in one, «У колекції». */
+  /** The label under the bookmark of the Entry card's Collections tile: `add` while the Entry is in no Collection, «До колекції», `filed` once it is in one, «У колекції». */
   tile: z.strictObject({ add: TextSchema, filed: TextSchema }),
-  /**
-   * The line under the action row that says where the Entry is kept: `one`
-   * names its one Collection, `{name}`; `many` counts them, `{count}`; and
-   * `withFavorites` adds Favorites after either, `{place}`.
-   */
-  hint: z.strictObject({
-    one: templateOf('name'),
-    many: pluralOf(),
-    withFavorites: templateOf('place'),
-  }),
   /** The Collections screen: its cards, their menu, the delete confirmation and the empty list. */
   screen: z.strictObject({
     /** The kicker of a Collection's screen in the board style, «КОЛЕКЦІЯ · {count}» (ADR 0082). Takes `{count}`, the `wordCount` phrase. */

@@ -9416,14 +9416,6 @@
                           ],
                           "type": "string"
                         },
-                        "swipeMarks": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gesturesHintDemo": {
                           "enum": [
                             "on",
@@ -9433,14 +9425,6 @@
                           "type": "string"
                         },
                         "gesturesHintAgain": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "savedSwipesOff": {
                           "enum": [
                             "on",
                             "off",
@@ -9769,10 +9753,8 @@
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",
-                        "swipeMarks",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",
@@ -11278,14 +11260,6 @@
                           ],
                           "type": "string"
                         },
-                        "swipeMarks": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gesturesHintDemo": {
                           "enum": [
                             "on",
@@ -11295,14 +11269,6 @@
                           "type": "string"
                         },
                         "gesturesHintAgain": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "savedSwipesOff": {
                           "enum": [
                             "on",
                             "off",
@@ -11631,10 +11597,8 @@
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",
-                        "swipeMarks",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",
@@ -13064,14 +13028,6 @@
                           ],
                           "type": "string"
                         },
-                        "swipeMarks": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gesturesHintDemo": {
                           "enum": [
                             "on",
@@ -13081,14 +13037,6 @@
                           "type": "string"
                         },
                         "gesturesHintAgain": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "savedSwipesOff": {
                           "enum": [
                             "on",
                             "off",
@@ -13417,10 +13365,8 @@
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",
-                        "swipeMarks",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",

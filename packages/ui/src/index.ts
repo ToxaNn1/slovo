@@ -2,7 +2,6 @@
  * The UI: Edition-neutral components that read every text, design token and
  * Decor from the Edition.
  */
-export { ActionRow } from './primitives/ActionRow';
 export { DeleteAccountButton } from './account/DeleteAccountButton';
 export { ResendButton } from './account/ResendButton';
 export { BackLink } from './primitives/BackLink';
@@ -67,9 +66,6 @@ export { CrossingClueBar, CrossingGrid, type CrossingGridCell } from './game/Cro
 export { LetterWheel, type WheelMiss } from './game/LetterWheel';
 export { HapticsProvider } from './providers/HapticsProvider';
 export { InterfaceSoundsProvider, useInterfaceSounds } from './providers/InterfaceSoundsProvider';
-export { HideButton } from './mix/HideButton';
-export { CommunityCountersLine } from './community-counters/CommunityCountersLine';
-export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
 export { CornerActions } from './knowledge/CornerActions';
 export { EntryMenuSheet, type EntryMenuMarks } from './knowledge/EntryMenuSheet';
 export { type EntrySwipe } from './entries/SwipeMarks';
@@ -122,8 +118,6 @@ export { Stepper } from './primitives/Stepper';
 export { Switch } from './primitives/Switch';
 export { SearchField, SearchLink } from './primitives/SearchField';
 export { ProblemLine, TextField } from './primitives/TextField';
-export { ShareButton } from './share/ShareButton';
-export { MistakeReportButton } from './mistake-reports/MistakeReportButton';
 export { MistakeReportSheet } from './mistake-reports/MistakeReportSheet';
 export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
 export {

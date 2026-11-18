@@ -413,7 +413,6 @@ describe('the 0.8.14 strings', () => {
   it('the UA Edition carries the agreed Mistake Report texts verbatim', () => {
     expect(parsed.mistakeReport).toEqual({
       action: 'Повідомити про помилку',
-      tile: 'Помилка',
       types: {
         typo: 'Друкарська помилка',
         stress: 'Наголос',
@@ -445,22 +444,6 @@ describe('the 0.8.14 strings', () => {
   });
 
   it.each([
-    [1, '«Знаю» — 1 з 1 читача · зберегли 0'],
-    [2, '«Знаю» — 1 з 2 читачів · зберегли 0'],
-    [5, '«Знаю» — 1 з 5 читачів · зберегли 0'],
-    [21, '«Знаю» — 1 з 21 читача · зберегли 0'],
-  ])('the Ukrainian counter line of %i readers reads «%s»', (total, line) => {
-    const counters = parsed.knowledge.communityCounters;
-
-    expect(
-      fill(counters.line, {
-        known: countText(counters.known, total, { known: '1' }),
-        saved: fill(counters.saved, { saved: '0' }),
-      }),
-    ).toBe(line);
-  });
-
-  it.each([
     [1, 'до Улюбленого додав 1 читач'],
     [2, 'до Улюбленого додали 2 читачі'],
     [5, 'до Улюбленого додали 5 читачів'],
@@ -480,7 +463,6 @@ describe('the 0.8.14 strings', () => {
     ['settings', 'seasonalDecor'],
     ['settings', 'reduceMotion'],
     ['settings', 'anonymousStats'],
-    ['knowledge', 'communityCounters'],
     ['feedNotices', 'communityWord'],
     ['wordCard', 'illustration'],
   ])('every Edition needs %s.%s', (group, key) => {
@@ -491,19 +473,17 @@ describe('the 0.8.14 strings', () => {
     expect(issuesOf({ ...strings, [group]: without })).toEqual([`${group}.${key}`]);
   });
 
-  it.each([
-    ['knowledge.communityCounters.known.other', 'knowledge', 'communityCounters', 'known'],
-    ['knowledge.communityCounters.saved', 'knowledge', 'communityCounters', 'saved'],
-    ['knowledge.communityCounters.line', 'knowledge', 'communityCounters', 'line'],
-    ['feedNotices.communityWord.added.other', 'feedNotices', 'communityWord', 'added'],
-  ])('needs every placeholder in %s', (path, group, area, key) => {
-    const groupStrings = strings[group] as Record<string, Record<string, unknown>>;
-    const value = groupStrings[area]?.[key];
-    const broken = typeof value === 'string' ? 'текст' : { ...(value as object), other: 'текст' };
-    const changed = { ...groupStrings, [area]: { ...groupStrings[area], [key]: broken } };
+  it.each([['feedNotices.communityWord.added.other', 'feedNotices', 'communityWord', 'added']])(
+    'needs every placeholder in %s',
+    (path, group, area, key) => {
+      const groupStrings = strings[group] as Record<string, Record<string, unknown>>;
+      const value = groupStrings[area]?.[key];
+      const broken = typeof value === 'string' ? 'текст' : { ...(value as object), other: 'текст' };
+      const changed = { ...groupStrings, [area]: { ...groupStrings[area], [key]: broken } };
 
-    expect(issuesOf({ ...strings, [group]: changed })).toEqual([path]);
-  });
+      expect(issuesOf({ ...strings, [group]: changed })).toEqual([path]);
+    },
+  );
 
   it('needs the {lemma} of the Illustration label', () => {
     const wordCard = { ...strings['wordCard'], illustration: 'Ілюстрація' };
@@ -1610,7 +1590,6 @@ describe('the 0.6 share strings group', () => {
   });
 
   it.each([
-    'button',
     'title',
     'format',
     'story',

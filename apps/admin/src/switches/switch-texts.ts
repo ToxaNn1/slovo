@@ -347,10 +347,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Добірки редакції',
     line: 'На головній є стрічка «Добірки» з підбором записів від редакції.',
   },
-  swipeMarks: {
-    name: 'Позначки свайпом',
-    line: 'Картку проводять праворуч — «Знаю», ліворуч — «Не знаю».',
-  },
   gesturesHintDemo: {
     name: 'Показ жестів',
     line: 'У підказці про жести картка сама показує свайпи.',
@@ -358,10 +354,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   gesturesHintAgain: {
     name: 'Підказка жестів знову',
     line: 'У Налаштуваннях є рядок, що ще раз показує підказку про жести в Стрічці.',
-  },
-  savedSwipesOff: {
-    name: 'Без свайпів у «Збереженому»',
-    line: 'Слово, відкрите з «Збереженого», не гортається вбік, «Знаю» і «Не знаю» в меню «⋯».',
   },
   wordTabs: {
     name: 'Вкладки на картці',

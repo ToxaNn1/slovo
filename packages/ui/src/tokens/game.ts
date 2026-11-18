@@ -214,9 +214,6 @@ export const crossingCrosswordLayout = {
   coachSweep: 1100,
 } as const;
 
-/** The «Знаю» and «Не знаю» pair: two equal columns across the card's width (XActions). */
-export const knowledgePair = { gap: 10 } as const;
-
 /**
  * The Ordered chips mode (board 07): a place of the answer line, the
  * design's slot, with its height and border; a chip among the shuffled

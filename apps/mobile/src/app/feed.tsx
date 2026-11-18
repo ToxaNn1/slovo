@@ -75,7 +75,7 @@ function FeedScreen() {
   const { top } = useSafeAreaInsets();
   const shown = useShown();
   const { toolsRow, topRow } = useHeaderRows();
-  const gesturesHint = useGesturesHint(shown.swipeMarks);
+  const gesturesHint = useGesturesHint(shown.entryButtons.knowledge);
   // While the hint is open the Feed's own card plays the gestures (board XSwipeV, ADR 0112).
   const gesturesDemo = useGesturesDemo(gesturesHint.visible && shown.gesturesHintDemo);
   const openScreen = useOpenScreen();
