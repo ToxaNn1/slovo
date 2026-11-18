@@ -263,7 +263,7 @@ describe('the Feed', () => {
 
     it('leaves the Entry unseen in memory, as on disk, when keeping it Seen fails', async () => {
       const records = new Map<string, string>();
-      const words = [word('w_one'), word('w_two')];
+      const words = [word('w_one'), word('w_two'), word('w_three')];
       let failing = false;
       const time = fakeClock('2026-10-11T09:00:00+03:00');
       const feed = await run({
@@ -272,16 +272,18 @@ describe('the Feed', () => {
         words,
         clock: time.clock,
       });
-      const first = feed.cards[0]?.entryId;
-      await feed.show(0);
+      // Past the Word of the Day, which comes no second time today (ADR 0184).
+      await look(feed, time, 0, SEEN_DWELL_MS);
+      const first = feed.cards[1]?.entryId;
+      await feed.show(1);
       time.advance(SEEN_DWELL_MS);
 
       failing = true;
       await expect(feed.show(undefined)).rejects.toThrow('The disk is full');
       failing = false;
-      await look(feed, time, 1, SEEN_DWELL_MS);
+      await look(feed, time, 2, SEEN_DWELL_MS);
 
-      // The other Word is Seen, so the Entry whose Seen mark failed is the
+      // The other Words are Seen, so the Entry whose Seen mark failed is the
       // only one left: it comes again instead of the end-of-Cycle card.
       expect(feed.cards.at(-1)?.entryId).toBe(first);
       const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
@@ -515,7 +517,8 @@ describe('the Feed', () => {
 
       const again = [await feed.next(), await feed.next()];
 
-      expect(again.map((card) => card?.entryId)).toEqual(order.slice(0, 2));
+      // Never the Word of the Day, which opened the day (ADR 0184).
+      expect(again.map((card) => card?.entryId)).toEqual(order.slice(1, 3));
     });
   });
 
@@ -591,14 +594,17 @@ describe('the Feed', () => {
       const feed = await run({ clock: time.clock, random: randomSequence(0.25, 0.75) });
       await readToTheEnd(feed, time);
       const lastCycle = entryIdsOf(feed.cards);
+      const today = lastCycle[0];
 
       const newCycle: string[] = [];
-      while (newCycle.length < liveIds.length)
+      while (newCycle.length < liveIds.length - 1)
         newCycle.push((await readLastCard(feed, time, SEEN_DWELL_MS))?.entryId ?? 'none');
 
       expect(lastCycle).toEqual(await walk(await run({ random: randomOf(0.25) })));
-      // The order a first Cycle shuffled with the second seed has.
-      expect(newCycle).toEqual(await walk(await run({ random: randomOf(0.75) })));
+      // The order a first Cycle shuffled with the second seed has, without
+      // today's Word of the Day (ADR 0184).
+      const order = await walk(await run({ random: randomOf(0.75) }));
+      expect(newCycle).toEqual(order.filter((id) => id !== today));
       expect(newCycle).not.toEqual(lastCycle);
       expect((await readLastCard(feed, time, SEEN_DWELL_MS))?.kind).toBe('end-of-cycle');
     });
@@ -629,15 +635,17 @@ describe('the Feed', () => {
       const card = await feed.next();
       expect(card?.kind).toBe('word');
       const newCycle = await walk(feed, entryIdsOf(card === undefined ? [] : [card]));
-      // Nothing Seen, in the order of the seed drawn on the next try.
-      expect(newCycle).toEqual(await walk(await run({ words: small, random: randomOf(0.5) })));
+      // Nothing Seen, in the order of the seed drawn on the next try, without
+      // today's Word of the Day (ADR 0184).
+      const order = await walk(await run({ words: small, random: randomOf(0.5) }));
+      expect(newCycle).toEqual(order.filter((id) => id !== wordOfTheDay));
       // The next app run reads the same new Cycle; its Word of the Day is
       // the first Word of the order other than the day before's.
       const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
-      const opening = newCycle.find((id) => id !== wordOfTheDay);
+      const opening = order.find((id) => id !== wordOfTheDay);
       expect(await walk(await run({ records, words: small, clock: nextDay }))).toEqual([
         opening,
-        ...newCycle.filter((id) => id !== opening),
+        ...order.filter((id) => id !== opening),
       ]);
     });
 
@@ -827,6 +835,38 @@ describe('the Word of the Day in the Feed', () => {
     expect(feed.cards).toHaveLength(1);
     expect(wordOfTheDayOf(feed.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
     expect(liveIds).toContain(feed.cards[0]?.entryId);
+  });
+
+  it('never comes again as an ordinary card the same local day, even when swiped past before it was Seen', async () => {
+    const feed = await run({ clock: fakeClock('2026-10-11T09:00:00+03:00').clock });
+    const today = feed.cards[0]?.entryId;
+    // Every card swiped past at once: nothing is Seen, so the Cycle offers them again.
+    for (let card = 0; card < 2 * liveIds.length; card++) await feed.next();
+
+    expect(entryIdsOf(feed.cards.slice(1))).not.toContain(today);
+  });
+
+  it('is left out of a new Cycle that starts the same local day, and comes back the next day', async () => {
+    const small = [word('w_one'), word('w_two'), word('w_three')];
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({ records, words: small, clock: time.clock });
+    const today = feed.cards[0]?.entryId;
+    for (let card = 0; card < 8; card++) {
+      await feed.show(feed.cards.length - 1);
+      time.advance(SEEN_DWELL_MS);
+      await feed.show(undefined);
+    }
+
+    expect(feed.cards.some((card) => card.kind === 'end-of-cycle')).toBe(true);
+    expect(entryIdsOf(feed.cards.slice(1))).not.toContain(today);
+
+    const nextDay = await run({
+      records,
+      words: small,
+      clock: fakeClock('2026-10-12T09:00:00+03:00').clock,
+    });
+    expect(await walk(nextDay)).toContain(today);
   });
 
   it('stays the same, with its mark, when the app reopens later the same local day', async () => {
@@ -1097,7 +1137,8 @@ describe('Corrections in the Feed', () => {
     // After the Word of the Day: the other Word, the Correction, the end, then a new Cycle.
     expect(offered.slice(0, 2)).toEqual([expect.stringMatching(/^w_/), 'c_one']);
     expect(offered[2]).toBe('end');
-    expect(new Set(offered.slice(3))).toEqual(new Set(['w_one', 'w_two', 'c_one']));
+    // The new Cycle leaves out today's Word of the Day (ADR 0184), so it ends sooner.
+    expect(new Set(offered.slice(3))).toEqual(new Set([offered[0], 'c_one', 'end']));
   });
 
   it('ends the Cycle after the Words alone when the Corrections Feature Switch is off', async () => {
@@ -1558,7 +1599,8 @@ describe('Idioms in the Feed', () => {
     // After the Word of the Day: the other Word, the Correction, the Idiom, the end, then a new Cycle.
     expect(offered.slice(0, 3)).toEqual([expect.stringMatching(/^w_/), 'c_one', 'i_one']);
     expect(offered[3]).toBe('end');
-    expect(new Set(offered.slice(4))).toEqual(new Set(['w_one', 'w_two', 'c_one', 'i_one']));
+    // The new Cycle leaves out today's Word of the Day (ADR 0184), so it ends sooner.
+    expect(new Set(offered.slice(4))).toEqual(new Set([offered[0], 'c_one', 'i_one', 'end']));
   });
 
   it('opens on the Idiom card the reader was on when the app reopens the same day', async () => {

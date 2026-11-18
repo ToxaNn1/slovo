@@ -244,7 +244,9 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * `card-order.ts`) gives each card's Entry: each kind's turn, spaced by its
  * Mix kind weight, and the Review slots are set out there (ADR 0046,
  * 0051). Every kind is shuffled and Seen like Words, and the Cycle ends only
- * once every eligible Entry is Seen. The Word of the Day is always a Word.
+ * once every eligible Entry is Seen. The Word of the Day is always a Word,
+ * and once its card opened the day it takes no other card that day, in this
+ * Cycle or a new one (ADR 0184).
  *
  * While Words are due for Review, every 3rd card of the session
  * that is no other kind's turn shows one, Seen in this Cycle or not, until
@@ -331,12 +333,12 @@ export async function openFeed({
   /** Since when the reader's card is on screen, or nothing while no card is. */
   let onScreenSince: number | undefined;
   /**
-   * The local day `YYYY-MM-DD` the Feed last opened with its Word of the Day.
+   * The Word of the Day the Feed last opened its day with, and that day.
    * Another feature may choose a new day's Word of the Day first, such as a
    * notification that opens its morning Word, so a chosen Word of the Day
    * alone doesn't open the day.
    */
-  let openedDay: string | undefined;
+  let opening: WordOfTheDayChoice | undefined;
   /** The local day `YYYY-MM-DD` the composition turned to that the Feed hasn't opened yet, if any. */
   let dayToOpen: string | undefined;
   /** The local day the composition last turned to, whose Feed Notices the Feed shows. */
@@ -359,11 +361,12 @@ export async function openFeed({
     const card = await buildFeedCard(entries, position.entryId);
     if (card === undefined) return false;
     const today = wordOfTheDay.chosen();
-    const opening =
+    const openingCard =
       today !== undefined && cycle.covers(today.wordId) ? await wordOfTheDayCard(today) : undefined;
-    if (opening !== undefined) openedDay = position.date;
-    const restored = opening?.entryId === card.entryId ? undefined : asReviewIfDue(card, knowledge);
-    if (opening !== undefined) session.add(opening);
+    if (openingCard !== undefined) opening = today;
+    const restored =
+      openingCard?.entryId === card.entryId ? undefined : asReviewIfDue(card, knowledge);
+    if (openingCard !== undefined) session.add(openingCard);
     if (restored !== undefined) session.add(restored);
     subscribers.tell();
     return true;
@@ -399,7 +402,7 @@ export async function openFeed({
     // The last card shown is the current Cycle's end-of-Cycle card, not one of
     // an earlier Cycle whose next cards were all dropped.
     const atEnd = last?.kind === 'end-of-cycle' && session.inCurrentCycle(last);
-    const { words, corrections, idioms, synonymRows, tips } = readable(cycle.unseen());
+    const { words, corrections, idioms, synonymRows, tips } = ordinary(cycle.unseen());
     const unseenLeft = [words, corrections, idioms, synonymRows, tips].some(
       ({ length }) => length > 0,
     );
@@ -426,7 +429,7 @@ export async function openFeed({
     const today = mood.feedParameters();
     for (;;) {
       // Read again: the card after the end-of-Cycle card started a new Cycle above.
-      const unseenNow = readable(cycle.unseen());
+      const unseenNow = ordinary(cycle.unseen());
       const id = nextEntryId({
         session: {
           cards: session.cards,
@@ -435,7 +438,7 @@ export async function openFeed({
           shownIds: session.shownIds(),
         },
         unseen: unseenNow,
-        due: readable(eligibleDue(cycle, knowledge)),
+        due: ordinary(eligibleDue(cycle, knowledge)),
         weights: today.kindWeights(mix.kindWeightsInEffect()),
         wordInBand: await inBandOf(unseenNow.words, today.inBand),
       });
@@ -460,6 +463,20 @@ export async function openFeed({
       subscribers.tell();
       return card;
     }
+  }
+
+  /**
+   * The Entries an ordinary card may take: the readable ones, without the
+   * Word of the Day whose card opened today's Feed, which comes no second
+   * time that day, Seen or not, in this Cycle or a new one (ADR 0184).
+   */
+  function ordinary(ids: EntryIds): EntryIds {
+    const { words, ...rest } = readable(ids);
+    const today =
+      opening !== undefined && dateKeyOf(opening.date) === todayKey(clock)
+        ? opening.wordId
+        : undefined;
+    return { ...rest, words: words.filter((id) => id !== today) };
   }
 
   /** The Entries the Language Pack listed as eligible but cannot read, passed over for the session. */
@@ -641,7 +658,7 @@ export async function openFeed({
     if (today === undefined) return undefined;
     const card = await wordOfTheDayCard(today);
     if (card === undefined) return undefined;
-    openedDay = dateKeyOf(today.date);
+    opening = today;
     dayToOpen = undefined;
     session.add(card, replaced);
     subscribers.tell();
@@ -926,7 +943,7 @@ export async function openFeed({
     await inTurn(() => {
       const key = dateKeyOf(day);
       noticeDay = day;
-      dayToOpen = key === openedDay ? undefined : key;
+      dayToOpen = opening !== undefined && dateKeyOf(opening.date) === key ? undefined : key;
       return Promise.resolve();
     });
     await keepNextCardReady();
