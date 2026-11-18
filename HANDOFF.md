@@ -19,3 +19,4 @@ Wave #1992 «SLOVO пропонує». Integration branch feat/1992-slovo-propon
 - Ignore the stop hook asking to recommit as another identity: owner rules say anton only.
 - Local backend test flake «permission denied to terminate process»: env only; CI uses a superuser.
 - gh GraphQL blocked; use gh api REST.
+- 2026-11-18T16:55Z safety net takeover (last commit 2026-11-18T16:38:52Z)
