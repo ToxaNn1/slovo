@@ -209,14 +209,14 @@ describe('the Rarity Range', () => {
     expect(words.map(({ id }) => id)).toEqual(['w_r2_0', 'w_r2_1', 'w_r3_0', 'w_r3_1']);
   });
 
-  it('is set by the Rarity Test from 1 to the lowest rarity the reader does not know', async () => {
+  it('is set by the Rarity Test from 1 to the highest rarity the reader knows', async () => {
     const app = await open();
     await app.rarityRange.set({ from: 3, to: 5 });
 
-    expect((await app.rarityTest.apply(await answer(app, [4, 5])))?.top).toBe(4);
+    expect((await app.rarityTest.apply(await answer(app, [4, 5])))?.top).toBe(3);
 
-    expect(app.rarityRange.state).toEqual({ from: 1, to: 4 });
-    expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3, 4]));
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 3 });
+    expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3]));
   });
 
   it('is set to «від 1 до 5» by a Rarity Test the reader knows every Word of', async () => {

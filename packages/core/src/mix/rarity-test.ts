@@ -5,7 +5,7 @@ import type { Entries } from '../entries/entries';
 import { renderStress, stressedVowelsOf } from '../entries/stress';
 import { shuffled } from '../shuffled';
 import type { Random } from '../ports';
-import { HIGHEST_RARITY, LOWEST_RARITY, type RarityRangeSetting } from '../entries/rarity-range';
+import { LOWEST_RARITY, type RarityRangeSetting } from '../entries/rarity-range';
 
 /** How many Words of each rarity the Rarity Test asks about. */
 const WORDS_PER_RARITY = 2;
@@ -26,17 +26,22 @@ export interface RarityTestAnswer {
   readonly known: boolean;
 }
 
-/** What the Rarity Test's answers came to: the top of the Rarity Range they set, from 1, and how many Words the reader knew. */
+/**
+ * What the Rarity Test's answers came to: the top of the Rarity Range they
+ * set, from 1, whether that changed the range, and how many Words the reader knew.
+ */
 export interface RarityTestResult {
   /** The top of the Rarity Range set, «від 1 до `top`». */
   readonly top: Rarity;
+  /** Whether the Rarity Range in force is another than before the test. */
+  readonly changed: boolean;
   /** How many of the Words asked about were answered «Знаю». */
   readonly known: number;
   /** How many Words were asked about. */
   readonly total: number;
 }
 
-/** The Rarity Test (ADR 0054, 0156): «Перевірка рівня», which sets the Rarity Range. */
+/** The Rarity Test (ADR 0054, 0156, 0182): «Перевірка рівня», which sets the Rarity Range. */
 export interface RarityTest {
   /**
    * Draws the Words to ask about: 2 of each rarity, the commonest first, from
@@ -48,8 +53,9 @@ export interface RarityTest {
   draw(): Promise<readonly RarityTestWord[]>;
   /**
    * Sets the Rarity Range by the answers, at once, from 1 to its top, and
-   * resolves to the top (the lowest rarity with «Не знаю», or 5 when every
-   * Word is known) with how many of the Words the reader knew. A retake
+   * resolves to the top (the highest rarity of which the reader knew at
+   * least half of the Words asked, or 1 when there is none), whether the
+   * range changed, and how many of the Words the reader knew. A retake
    * overwrites the range. It sets no Knowledge Mark, starts no Review and
    * makes nothing Seen. Nothing is set, and it resolves to nothing, for no
    * answers or while the Edition turns the Rarity Test or the Rarity Range
@@ -66,7 +72,7 @@ export function createRarityTest({
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   entries: Pick<Entries, 'eligibleWordsOfAnyRarity'>;
-  rarityRange: Pick<RarityRangeSetting, 'set'>;
+  rarityRange: Pick<RarityRangeSetting, 'set' | 'state'>;
   random: Random;
 }): RarityTest {
   const isOn = () => edition.isFeatureEnabled('rarityTest');
@@ -90,10 +96,21 @@ export function createRarityTest({
     },
     async apply(answers) {
       if (!isOn() || answers.length === 0) return undefined;
-      const unknown = answers.filter((answer) => !answer.known).map((answer) => answer.rarity);
-      const top = RARITIES.find((rarity) => unknown.includes(rarity)) ?? HIGHEST_RARITY;
+      const knowsHalf = (rarity: Rarity): boolean => {
+        const asked = answers.filter((answer) => answer.rarity === rarity);
+        const known = asked.filter((answer) => answer.known).length;
+        return asked.length > 0 && known * 2 >= asked.length;
+      };
+      const top = RARITIES.findLast(knowsHalf) ?? LOWEST_RARITY;
+      const before = rarityRange.state;
       await rarityRange.set({ from: LOWEST_RARITY, to: top });
-      return { top, known: answers.length - unknown.length, total: answers.length };
+      const { from, to } = rarityRange.state;
+      return {
+        top,
+        changed: from !== before.from || to !== before.to,
+        known: answers.filter((answer) => answer.known).length,
+        total: answers.length,
+      };
     },
   };
 }
