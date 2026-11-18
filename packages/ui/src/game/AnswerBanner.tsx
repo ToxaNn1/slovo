@@ -18,7 +18,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { InvertedTokens, SchemeTokens, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { motion, roundLayout, space, typeStyle, wedges } from '../tokens';
-import { VerdictTitle } from './AnswerCard';
+import { NextButton, VerdictTitle } from './AnswerCard';
 
 /** What the answer banner shows: the Core's answered state (ADR 0138). */
 export type AnsweredRound = Extract<CurrentGame, { status: 'answered' }>['answered'];
@@ -31,7 +31,9 @@ const ANNOUNCEMENT_LIMIT = 5000;
  * in from the bottom, the whole width, on the accent for a right answer with
  * the praise and the XP the answer earned, on the ink for a wrong one with
  * «МИМО», or «ЖИТТЯ ВСЕ» when it took the last Life, and the right answer.
- * No button: the Game moves on by itself. With «Менше руху» it shows without
+ * The Game moves on by itself after its delay, or, when the Core gives none
+ * (a wrong answer with no time limit, ADR 0178), on the banner's «Далі →»,
+ * which `onNext` names. With «Менше руху» it shows without
  * sliding. With VoiceOver on it is announced, and `onWaitFor` gets the
  * announcement, so the Game holds the Round until VoiceOver has read it.
  */
@@ -39,12 +41,15 @@ export function AnswerBanner({
   answered,
   praise,
   onWaitFor,
+  onNext,
 }: {
   answered: AnsweredRound;
   /** Which praise a right answer takes: the praises go in turn, one per right answer. */
   praise: number;
   /** Hands the Game what it waits for besides the banner's delay: VoiceOver reading the banner. */
   onWaitFor: (done: Promise<unknown>) => void;
+  /** «Далі →» on the banner, for a Round that waits for it; left out, the Game moves on by itself. */
+  onNext?: (() => void) | undefined;
 }) {
   const { strings } = useEdition();
   const texts = strings.game.round.banner;
@@ -96,7 +101,7 @@ export function AnswerBanner({
   return (
     <Animated.View
       testID="game-answer-banner"
-      pointerEvents="none"
+      pointerEvents={onNext === undefined ? 'none' : 'box-none'}
       // The slab is drawn at the banner's measured size: an SVG sized in percents comes out short on a phone.
       onLayout={(event) => {
         const { width, height: bannerHeight } = event.nativeEvent.layout;
@@ -116,6 +121,9 @@ export function AnswerBanner({
       <Scheme>
         <VerdictTitle testID="game-answer-banner-title" typeRole="roundVerdict" text={title} />
         {line === undefined ? null : <BannerLine text={line} />}
+        {onNext === undefined ? null : (
+          <NextButton label={strings.game.round.answerCard.next} right={right} onPress={onNext} />
+        )}
       </Scheme>
     </Animated.View>
   );

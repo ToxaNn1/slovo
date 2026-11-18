@@ -72,7 +72,7 @@ describe('the Game screen', () => {
       }
     });
 
-    it('names the right answer after a wrong one, says «Життя все» when it took the last Life, and the Game is lost when it moves on', async () => {
+    it('names the right answer after a wrong one until «Далі», says «Життя все» when it took the last Life, and the Game is lost on «Далі»', async () => {
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-stress'));
 
@@ -85,11 +85,10 @@ describe('the Game screen', () => {
         const { title, line } = banner();
         expect(title).toHaveTextContent(wrong === lives.length ? 'Життя все' : 'Мимо');
         expect(line).toHaveTextContent(/^Майже\. Ось як правильно: \S+$/);
-        expect(screen.queryByRole('button', { name: 'Далі →' })).toBeNull();
 
-        await advance(1599);
+        await advance(60_000);
         expect(screen.getByTestId('game-answer-banner')).toBeOnTheScreen();
-        await advance(1);
+        await fireEvent.press(screen.getByRole('button', { name: 'Далі →' }));
         expect(screen.queryByTestId('game-answer-banner')).toBeNull();
       }
       await waitFor(() => {

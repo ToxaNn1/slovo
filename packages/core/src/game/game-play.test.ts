@@ -8,7 +8,14 @@ import { createSubject } from '../subject';
 import { fakeClock, testComparison, testEdition, testSchedule, word } from '../test-support';
 import { buildGameReview } from './game-review';
 import { LIFE_LOST_DELAY } from './game-haptics';
-import { GAME_LIVES, openGame, type CurrentGame, type Game, type GivenAnswer } from './game';
+import {
+  answerBannerDelay,
+  GAME_LIVES,
+  openGame,
+  type CurrentGame,
+  type Game,
+  type GivenAnswer,
+} from './game';
 import type { GameEdition, GameMode, RoundContent, RoundInput, RoundOption } from './game-mode';
 import { GAME_ROUNDS } from './round-plan';
 
@@ -511,7 +518,9 @@ describe('the answer banner (ADR 0138)', () => {
       lives: 0,
       answered: { kind: 'wrong', lastLife: true },
     });
-    await advance(1600);
+    await advance(60_000);
+    expect(now(game).status).toBe('answered');
+    await game.next();
 
     expect(now(game)).toMatchObject({ status: 'lost', roundsPassed: 0 });
   });
@@ -536,13 +545,14 @@ describe('the answer banner (ADR 0138)', () => {
     expect(now(game)).not.toHaveProperty('answered');
   });
 
-  it('moves on by itself 1600 ms after a wrong answer, and not before', async () => {
+  it('keeps a wrong answer with its right answer until «Далі», however long it waits', async () => {
     const { game, advance } = await start(pick);
     await game.answer(pickAnswer(false));
 
-    await advance(1599);
+    await advance(60_000);
     expect(now(game)).toMatchObject({ status: 'answered', roundsPassed: 0 });
-    await advance(1);
+    expect(answerBannerDelay(now(game))).toBeUndefined();
+    await game.next();
 
     expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1, round: { number: 2 } });
   });
@@ -566,7 +576,7 @@ describe('the answer banner (ADR 0138)', () => {
     expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1 });
   });
 
-  it('moves on in a mode with a time limit after 550 ms right and 900 ms wrong, its clock running under the banner', async () => {
+  it('moves on in a mode with a time limit after 550 ms right and 3 s wrong, its clock running under the banner', async () => {
     const { game, advance } = await start(pick, {
       lives: 'none',
       roundLimit: 'none',
@@ -586,7 +596,8 @@ describe('the answer banner (ADR 0138)', () => {
     expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 1 });
 
     await game.answer(pickAnswer(false));
-    await advance(899);
+    expect(answerBannerDelay(now(game))).toBe(3000);
+    await advance(2999);
     expect(now(game).status).toBe('answered');
     await advance(1);
     expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 2 });
@@ -1254,7 +1265,7 @@ describe('the clock of a Game with a time limit', () => {
     const { game, advance } = await start(pick, { ...timed, lives: 1 });
     await game.pause();
     await game.answer(pickAnswer(false));
-    await advance(1_600);
+    await advance(3000);
     expect(now(game)).toMatchObject({ status: 'lost', time: { endsAt: undefined } });
 
     await noMove(game, () => game.resume());
@@ -1263,7 +1274,7 @@ describe('the clock of a Game with a time limit', () => {
   it('pauses no Game that ended before its time ran out', async () => {
     const { game, advance } = await start(pick, { ...timed, lives: 1 });
     await game.answer(pickAnswer(false));
-    await advance(1_600);
+    await advance(3000);
     expect(now(game).status).toBe('lost');
 
     await noMove(game, () => game.pause());

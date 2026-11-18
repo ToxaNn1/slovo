@@ -1226,6 +1226,28 @@ describe('GameRound', () => {
       expect(screen.queryByTestId('game-sheet')).toBeNull();
     });
 
+    it('keeps the banner of a wrong answer with a button to the next Round', async () => {
+      const shown = answeredPick(first, { form: 'pick', option: 0 });
+      if (shown.status !== 'answered') throw new Error('Not answered');
+      await renderRound(jest.fn(), jest.fn(), { ...shown, banner: true });
+
+      expect(screen.getByTestId('game-answer-banner')).toBeOnTheScreen();
+      expect(screen.getByRole('button', { name: 'Next →' })).toBeOnTheScreen();
+    });
+
+    it('shows no button on the banner of a wrong answer in a Game with a time limit', async () => {
+      const shown = answeredPick(first, { form: 'pick', option: 0 });
+      if (shown.status !== 'answered') throw new Error('Not answered');
+      await renderRound(jest.fn(), jest.fn(), {
+        ...shown,
+        banner: true,
+        timeLimit: 20_000,
+        time: { left: 20_000, endsAt: undefined },
+      });
+      expect(screen.getByTestId('game-answer-banner')).toBeOnTheScreen();
+      expect(screen.queryByRole('button', { name: 'Next →' })).toBeNull();
+    });
+
     it('draws the banner’s slab over the whole banner as it is measured, not at a size in percents', async () => {
       const shown = answeredPick(first, { form: 'pick', option: CORRECT });
       if (shown.status !== 'answered') throw new Error('Not answered');
