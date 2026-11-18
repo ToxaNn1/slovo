@@ -76,24 +76,39 @@ describe('the Break screen', () => {
     expect(screen.queryByTestId('streak-break-days')).not.toBeOnTheScreen();
   });
 
-  it('while a Break runs, shows its last day and when the next one can start', async () => {
-    await renderScreen(breakFrom('2026-10-12', 3));
+  it('while a Break runs, shows its last day and ends it early from «Завершити перерву»', async () => {
+    const composition = await renderScreen(breakFrom('2026-10-12', 3));
     expect(screen.getByTestId('streak-break-running')).toHaveTextContent(
       'Перерва триває до 14 жовтня включно.',
     );
-    expect(screen.getByTestId('streak-break-waiting')).toHaveTextContent(
-      /^Наступну перерву можна почати з \d+ \S+\.$/,
-    );
+    expect(screen.queryByTestId('streak-break-waiting')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-days')).not.toBeOnTheScreen();
+
+    await act(async () => {
+      await fireEvent.press(screen.getByRole('button', { name: strings.end }));
+      await Promise.resolve();
+    });
+
+    // 12 October was the one Break day used: 6 of the 7 come back.
+    expect(composition.streakBreak.state).toEqual({ kind: 'available', longest: 6 });
+    expect(screen.queryByTestId('streak-break-running')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('streak-break-days-value')).toHaveTextContent('6');
   });
 
-  it('after a Break, before the next one is allowed, shows only when it can start', async () => {
+  it('after a short Break, offers the days left of the 7', async () => {
     await renderScreen(breakFrom('2026-10-01', 2));
+    expect(screen.getByTestId('streak-break-days-value')).toHaveTextContent('5');
+    expect(screen.queryByTestId('streak-break-waiting')).not.toBeOnTheScreen();
+  });
+
+  it('once the 7 days are spent, before the next Break is allowed, shows only when it can start', async () => {
+    await renderScreen(breakFrom('2026-10-01', 7));
     expect(screen.getByTestId('streak-break-waiting')).toHaveTextContent(
-      /^Наступну перерву можна почати з \d+ \S+\.$/,
+      'Наступну перерву можна почати з 31 жовтня.',
     );
     expect(screen.queryByTestId('streak-break-running')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-days')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-start')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('streak-break-end')).not.toBeOnTheScreen();
   });
 });

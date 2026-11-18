@@ -24,10 +24,11 @@ import { dayText } from './day-text';
 const strings = editionStrings.settings.streakBreak;
 
 /**
- * Settings › Перерва (ADR 0066, board 11, 90): what a Break does, and either
- * its length on a − N + stepper from 1 to the longest with the button that
- * starts it, or why none can start today: while one runs, its last day; and
- * while the next one is not yet allowed, the day it can start.
+ * Settings › Перерва (ADR 0066, 0180, board 11, 90): what a Break does, and
+ * either its length on a − N + stepper from 1 to the Break days left with the
+ * button that starts it; or, while one runs, its last day and «Завершити
+ * перерву», which ends it today; or, once the 7 days are spent, the day the
+ * next Break can start.
  */
 export function StreakBreakScreen() {
   const tokens = useTokens();
@@ -83,11 +84,20 @@ export function StreakBreakScreen() {
           </View>
         )}
         {state.kind === 'running' && (
-          <Text {...voice} testID="streak-break-running" style={textStyle}>
-            {fill(strings.running, { date: dayText(state.lastDay) })}
-          </Text>
+          <View style={styles.section}>
+            <Text {...voice} testID="streak-break-running" style={textStyle}>
+              {fill(strings.running, { date: dayText(state.lastDay) })}
+            </Text>
+            <Button
+              testID="streak-break-end"
+              label={strings.end}
+              onPress={() => {
+                void keep('the Break end', streakBreak.end());
+              }}
+            />
+          </View>
         )}
-        {(state.kind === 'running' || state.kind === 'waiting') && (
+        {state.kind === 'waiting' && (
           <Text {...voice} testID="streak-break-waiting" style={textStyle}>
             {fill(strings.waiting, { date: dayText(state.nextStart) })}
           </Text>

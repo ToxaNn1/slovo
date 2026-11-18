@@ -323,7 +323,7 @@ export const SettingsStringsSchema = z.strictObject({
       line: TextSchema,
     }),
   }),
-  /** The Break screen: what a Break does, its length and whether one can start today (ADR 0066). */
+  /** The Break screen: what a Break does, its length, whether one can start today and how one ends early (ADR 0066, 0180). */
   streakBreak: z.strictObject({
     title: TextSchema,
     /** What a Break does and how often it can start. */
@@ -337,6 +337,8 @@ export const SettingsStringsSchema = z.strictObject({
     moreDays: TextSchema,
     /** While a Break runs. Takes `{date}`, its last day, e.g. «20.10». */
     running: templateOf('date'),
+    /** The button that ends the running Break today (ADR 0180). */
+    end: TextSchema,
     /** While the next Break waits. Takes `{date}`, the first day it can start, e.g. «13.11». */
     waiting: templateOf('date'),
   }),

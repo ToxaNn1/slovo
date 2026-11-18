@@ -301,7 +301,7 @@ A cover for one missed day that keeps the Streak, used automatically. A new read
 _Avoid_: Streak saver, repair, shield
 
 **Break**:
-A pause of the Streak the reader starts: up to 7 days, once every 30 days, free. Break days keep the Streak and add nothing to it.
+A pause of the Streak the reader starts: up to 7 days, at most 7 Break days in the 30 days from the first Break of them, free; the reader can end it early, and the days it did not use come back (ADR 0180). Break days keep the Streak and add nothing to it.
 _Avoid_: Vacation, pause (the polite pause is a notification rule), repair
 
 **Badge**:
