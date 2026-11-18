@@ -5,6 +5,7 @@ import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
+import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
@@ -152,7 +153,7 @@ async function settle(action: () => unknown = () => undefined) {
 }
 
 /** The app on the collection's screen, with the routes its cards open. */
-async function renderCollection() {
+async function renderCollection(initialUrl = '/curated-collection/cc_mishani') {
   await renderRoutes(
     {
       _layout: () => (
@@ -170,12 +171,12 @@ async function renderCollection() {
           </TokensProvider>
         </SafeAreaProvider>
       ),
-      index: () => null,
+      index: () => <View testID="home" />,
       'curated-collection/[collectionId]': CuratedCollectionScreen,
       'curated-collection-feed/[collectionId]': CuratedCollectionFeedScreen,
       'search/[entryId]': EntryFromSearchScreen,
     },
-    { initialUrl: '/curated-collection/cc_mishani' },
+    { initialUrl },
   );
   await settle();
 }
@@ -255,6 +256,14 @@ describe("a Curated Collection's Feed", () => {
     await settle(() => fireEvent.press(screen.getByRole('button', { name: 'Мішанина' })));
 
     expect(screen.getByTestId('curated-collection')).toBeTruthy();
+  });
+
+  it('returns home for a collection with no screen, as its screen does', async () => {
+    await open();
+    await renderCollection('/curated-collection-feed/cc_unknown?from=w_tykhyi');
+
+    expect(screen.getByTestId('home')).toBeTruthy();
+    expect(screen.queryByTestId('curated-collection-feed-screen')).toBeNull();
   });
 
   it('with its switch off, a tap opens the Entry card as Search does, and nothing is Seen', async () => {

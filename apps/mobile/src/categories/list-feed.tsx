@@ -11,7 +11,7 @@ import {
   useTokens,
   VerticalPager,
 } from '@slovo/ui';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -48,7 +48,7 @@ export async function readCards(
 }
 
 interface ListFeedProps {
-  /** Reads the list; `undefined` for a list there is none of. */
+  /** Reads the list; `undefined` for a list there is none of, which returns home. */
   readonly read: (composition: Composition) => Promise<ListFeedRead | undefined>;
   /** What a failed read logs. */
   readonly failure: string;
@@ -115,6 +115,8 @@ function ListFeed({ read, failure, kicker, testID }: ListFeedProps) {
     [closeUndoToast],
   );
 
+  // A list there is none of returns home, as its screen does.
+  if (reading.status === 'ready' && reading.value === undefined) return <Redirect href="/" />;
   if (reading.status === 'ready' && pages.length === 0)
     return <Placeholder message={editionStrings.noWords} />;
   return (
