@@ -6,7 +6,7 @@ import type {
   RoundAnswer,
   RoundContent,
 } from '@slovo/core';
-import { sentences } from '@slovo/core';
+import { answerBannerDelay, sentences } from '@slovo/core';
 import type { MascotState } from '@slovo/contracts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -130,6 +130,7 @@ export function GameRound({
     <View testID="game-round" style={styles.screen}>
       <GameHeader
         roundsPassed={game.roundsPassed}
+        missed={new Set(game.played.filter(({ right }) => !right).map(({ number }) => number))}
         roundLimit={game.roundLimit}
         lives={game.lives}
         livesAtStart={game.livesAtStart}
@@ -170,6 +171,7 @@ export function GameRound({
           answered={game.answered}
           praise={game.played.filter(({ right }) => right).length - 1}
           onWaitFor={onWaitFor}
+          onNext={answerBannerDelay(game) === undefined ? onNext : undefined}
         />
       ) : (
         <AnswerSheet

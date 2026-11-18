@@ -1,6 +1,6 @@
 import { coreTokens, EditionProvider, GameModeCard } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
 function Card({
@@ -63,7 +63,18 @@ describe('GameModeCard', () => {
     );
   });
 
-  it('keeps the Best result beside the reason a mode cannot start', async () => {
+  it('shows its whole line and puts a long mark under it, leaving the row its full width', async () => {
+    const line =
+      'Read a Definition and pick the one word of four that it names, before the time runs out';
+    await render(<Card line={line} best="No Game yet" />);
+
+    expect(screen.getByText(line).props['numberOfLines']).toBeUndefined();
+    const texts = screen.getByTestId('card-texts');
+    expect(within(texts).getByText(line)).toBeTruthy();
+    expect(within(texts).getByText('No Game yet')).toBeTruthy();
+  });
+
+  it('keeps the Best result with the reason a mode cannot start', async () => {
     await render(<Card best="★ 23" bestLabel="Best: 23" refusal="Too few words." />);
 
     expect(screen.getByText('Too few words.')).toBeTruthy();

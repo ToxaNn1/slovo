@@ -103,13 +103,13 @@ function CardHide({ card }: { card: EntryFeedCard }) {
   );
 }
 
-/** A stand-in for the Feed: the card's hide, under the screen's toasts, and a link to Settings › Приховане. */
+/** A stand-in for the Feed: the card's hide, under the screen's toasts, and a link to Settings › Приховані записи. */
 function CardScreen({ card }: { card: EntryFeedCard }) {
   return (
     <UndoToastProvider>
       <CardHide card={card} />
       <Link href="/settings/hidden">
-        <Text>Приховане</Text>
+        <Text>Приховані записи</Text>
       </Link>
     </UndoToastProvider>
   );
@@ -156,7 +156,7 @@ describe('a Category of Corrections hidden from its card', () => {
     expect(composition.mix.state.correctionCategories.categoryIds).toEqual([shop.id]);
     expect(screen.getByText(`Категорію «${work.displayName}» приховано`)).toBeOnTheScreen();
 
-    await fireEvent.press(screen.getByText('Приховане'));
+    await fireEvent.press(screen.getByText('Приховані записи'));
     await settle();
     expect(app.pathname()).toBe('/settings/hidden');
     expect(screen.getByTestId(`hidden-correction-category-${work.id}`)).toHaveTextContent(

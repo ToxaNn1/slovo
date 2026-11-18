@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, screen, within } from '@testing-library/react-native';
 import { solveCrossingWord } from './crossing-crossword.test-support';
 import {
@@ -182,6 +182,33 @@ describe('the Game screen', () => {
         screen.getByText('«Обери правильне» ще розминається. Влучай поки в «Наголос»!'),
       ).toBeTruthy();
       expect(screen.getByTestId('game-modes')).toBeTruthy();
+      expect(composition.game.state.current).toBeUndefined();
+    });
+
+    it('shows the toast on a tap of «Англіцизми» with 12 anglicisms of the 15 it needs, and starts nothing', async () => {
+      await open({ switchedOn: HUB, corrections: 15, anglicisms: 12 });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-anglicism'));
+
+      expect(
+        screen.getByText('«Англіцизми» ще розминається. Влучай поки в «Наголос»!'),
+      ).toBeTruthy();
+      expect(screen.getByTestId('game-modes')).toBeTruthy();
+      expect(composition.game.state.current).toBeUndefined();
+    });
+
+    it('shows the toast when a mode on offer turns out short of Entries as it starts, and starts nothing', async () => {
+      await open({ switchedOn: HUB, corrections: 15, anglicisms: 15 });
+      // The Entries went short since the offer was planned: the start makes no Game.
+      jest.spyOn(composition.game, 'start').mockResolvedValue(undefined);
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-anglicism'));
+
+      expect(
+        await screen.findByText('«Англіцизми» ще розминається. Влучай поки в «Наголос»!'),
+      ).toBeTruthy();
       expect(composition.game.state.current).toBeUndefined();
     });
 

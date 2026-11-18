@@ -23,7 +23,7 @@ import { ListTopButton } from '@/shell/list-top';
 const strings = editionStrings.hidden;
 
 /**
- * Settings › Приховане (board 11, screen 88): everything hidden from the
+ * Settings › Приховані записи (board 11, screen 88): everything hidden from the
  * Feed in one list, the Hidden Categories, the kinds out of the Mix and the
  * Hidden Entries, each with its name, its kind and «Показати», which brings
  * it back and shows an undo toast. Nothing hidden says so.

@@ -987,6 +987,16 @@ describe('the board 11 strings', () => {
       '50',
       'none',
     ]);
+    expect(parsed.settings.dailyGoal.explanations['10']).toBe(
+      'Десять слів на день — легкий початок, коли часу обмаль.',
+    );
+  });
+
+  it('the UA Edition names the Category «Фразеологізми» by its set expressions and proverbs', () => {
+    expect(parsed.mix.idioms).toEqual({
+      title: 'Фразеологізми',
+      subtitle: 'Сталі вирази й прислів’я з їхнім походженням',
+    });
   });
 
   it('the UA Edition carries the reset sheet, the Break, the Hidden and the Widgets texts verbatim', () => {
@@ -1002,6 +1012,7 @@ describe('the board 11 strings', () => {
     expect(parsed.settings.streakBreak.explanation).toBe(
       'Серія завмре, нагадування замовкнуть. Повертайся, коли зручно.',
     );
+    expect(parsed.hidden.title).toBe('Приховані записи');
     expect(parsed.hidden.subtitle).toBe('Те, що сховано зі Стрічки.');
     expect(parsed.hidden.show).toBe('Показати');
     expect(parsed.settings.widgets).toEqual({

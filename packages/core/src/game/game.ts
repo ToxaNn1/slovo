@@ -208,13 +208,27 @@ export type PlayingGame = GameRounds & {
 
 /**
  * How long the answer banner shows before the Game moves on by itself, in
- * milliseconds (ADR 0138): after a right and a wrong answer, and shorter in a
- * Game Mode with a time limit, whose clock keeps running under it.
+ * milliseconds (ADR 0138, 0179): after a right and a wrong answer, and in a
+ * Game Mode with a time limit, whose clock keeps running under it. A wrong
+ * answer in a Game with no time limit keeps its banner, with the right
+ * answer, until «Далі».
  */
-export const ANSWER_BANNER_DELAYS = {
-  untimed: { right: 950, wrong: 1600 },
-  timed: { right: 550, wrong: 900 },
+const ANSWER_BANNER_DELAYS = {
+  untimed: { right: 950, wrong: undefined },
+  timed: { right: 550, wrong: 3000 },
 } as const;
+
+/**
+ * How long the banner of an answered Round shows before the Game moves on by
+ * itself, in milliseconds; undefined when it waits for «Далі»: with no banner,
+ * or after a wrong answer in a Game with no time limit (ADR 0179).
+ */
+export function answerBannerDelay(game: CurrentGame): number | undefined {
+  if (game.status !== 'answered' || !game.banner) return undefined;
+  return ANSWER_BANNER_DELAYS[game.timeLimit === undefined ? 'untimed' : 'timed'][
+    game.answered.kind
+  ];
+}
 
 /** A Game the moment it ends, before its end is counted. */
 type EndedGame = GameRounds & { readonly status: GameOverStatus };
@@ -848,15 +862,15 @@ export async function openGame({
 
   /**
    * With the answer banner on, moves the Game on from the answered Round by
-   * itself once its delay has passed and what the screen waits for has come,
+   * itself once its delay, if it has one, has passed and what the screen waits for has come,
    * unless the Game moved on, ended or was left since. A Round answered
    * with no banner, such as a pair of a pairs grid, waits for «Далі». A move
    * on that fails to write takes the banner down, so the sheet's «Далі»
    * tries again.
    */
   function moveOnLater(shown: PlayingGame): void {
-    if (schedule === undefined || shown.status !== 'answered' || !shown.banner) return;
-    const delays = ANSWER_BANNER_DELAYS[shown.timeLimit === undefined ? 'untimed' : 'timed'];
+    const delay = answerBannerDelay(shown);
+    if (schedule === undefined || delay === undefined) return;
     stopMoveOn();
     cancelMoveOn = schedule(() => {
       const waits = moveOnWaits;
@@ -876,7 +890,7 @@ export async function openGame({
           }),
         )
         .catch(() => undefined);
-    }, delays[shown.answered.kind]);
+    }, delay);
   }
 
   /** Whether the play time of the Game has run out by the clock. */

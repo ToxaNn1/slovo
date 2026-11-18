@@ -28,9 +28,10 @@ const UNAVAILABLE_OPACITY = 0.45;
 
 /**
  * A Game Mode's row on the mode screen: its glyph on a pressed tile, red
- * while the mode can start, its name over its one line, and its mark at the
- * end, the Best result («★ 12») or a dash before the first finished Game,
- * over a hairline. A tap starts a Game. A mode that
+ * while the mode can start, then its name, its whole line, wrapped, and its
+ * mark under them, the Best result («★ 12», «Рекорд: 12 з 15») or a dash or
+ * «Ще жодної гри» before the first finished Game, over a hairline. The mark
+ * shares the text's column, so the line keeps the row's full width. A tap starts a Game. A mode that
  * can't start shows its glyph on the neutral tile, fades and takes no tap;
  * once it knows why, it says so in place of its line. VoiceOver reads the
  * row as one button, with the Best result in words and no dash. Given its
@@ -106,7 +107,7 @@ export function GameModeCard({
           {glyph}
         </Text>
       </View>
-      <View style={styles.texts}>
+      <View testID={testID === undefined ? undefined : `${testID}-texts`} style={styles.texts}>
         <Text
           maxFontSizeMultiplier={fontScaleCap.text}
           style={[typeStyle('modeName', tokens), { color: colors.ink }]}
@@ -115,7 +116,6 @@ export function GameModeCard({
         </Text>
         <Text
           maxFontSizeMultiplier={fontScaleCap.text}
-          numberOfLines={refusal === undefined ? 1 : undefined}
           style={[
             typeStyle('modeLine', tokens),
             { color: refusal === undefined ? colors.muted : colors.ink },
@@ -123,13 +123,13 @@ export function GameModeCard({
         >
           {refusal ?? line}
         </Text>
+        <Text
+          maxFontSizeMultiplier={fontScaleCap.text}
+          style={[typeStyle('modeBest', tokens), { color: colors.muted }]}
+        >
+          {best}
+        </Text>
       </View>
-      <Text
-        maxFontSizeMultiplier={fontScaleCap.text}
-        style={[typeStyle('modeBest', tokens), styles.best, { color: colors.muted }]}
-      >
-        {best}
-      </Text>
     </Pressable>
   );
   return cascadeIndex === undefined ? row : <CascadeIn index={cascadeIndex}>{row}</CascadeIn>;
@@ -190,5 +190,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   texts: { flex: 1, minWidth: 0, gap: space[1] },
-  best: { flexShrink: 1, maxWidth: '35%', textAlign: 'right' },
 });
