@@ -83,7 +83,7 @@ function Game() {
           end={end}
           bestResult={state.bestResults[current.modeId]}
           onAgain={() => {
-            actions.start(current.modeId);
+            void actions.start(current.modeId);
           }}
           onToGames={actions.leave}
           review={review}
@@ -129,7 +129,8 @@ function ModeScreen({
   onStart,
 }: {
   modes: readonly GameModeOffer[];
-  onStart: (modeId: string) => void;
+  /** Starts a Game of the mode, and says whether one started. */
+  onStart: (modeId: string) => Promise<boolean>;
 }) {
   const crossword = useDailyCrosswordCard();
   const openScreen = useOpenScreen();
@@ -165,11 +166,17 @@ function ModeScreen({
                 {...gameModeCard(offer, strings, { record: gameHubRecord, toast })}
                 {...(gameHubGroups ? { cascadeIndex: place++ } : {})}
                 onPress={() => {
-                  if (toast && !offer.canStart) {
+                  const warmingUp = () => {
                     showToast({ message: gameModeToast(offer, modes, strings), brief: true });
+                  };
+                  if (toast && !offer.canStart) {
+                    warmingUp();
                     return;
                   }
-                  onStart(offer.modeId);
+                  // An offer planned before the Entries went short starts no Game: the toast says so.
+                  void onStart(offer.modeId).then((started) => {
+                    if (toast && !started) warmingUp();
+                  });
                 }}
               />
             ))}
