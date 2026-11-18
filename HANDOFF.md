@@ -26,3 +26,4 @@ Wave #1992 «SLOVO пропонує». Integration branch feat/1992-slovo-propon
 - 2026-11-18T17:14Z safety net takeover (last commit 2026-11-18T16:57:54Z)
 - 17:20Z ADR 0178 publish-date fold done; merged origin/main (swipeMarks retired, ADR index both); pushed integration
 - 17:18Z finisher session active (coordinator's): code-review fixes committed on integration (rollback appearedAt, header count, hero glyph, Feed redirect); merging the safety net's ADR fold; safety net please step back
+WAITING until 2026-11-18T18:20:48Z: CI on 08b4df988 (PR #2002 body rewritten; review fixes pushed)
