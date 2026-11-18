@@ -46,8 +46,8 @@ import { VowelRound } from './VowelRound';
  * own question, each under its kind's label rather than the mode's.
  * The ✕ asks first, with the SLOVO confirmation dialog, as «Очистити Історію?»
  * does; «Грати далі» leaves the Round as it was.
- * On the ground (ADR 0139) the question stands on the background with no
- * card, its label without the Round's number and none in the modes the board
+ * The question stands on the background with no card (ADR 0139), its label
+ * without the Round's number and none in the modes the board
  * heads in ink, the options at the bottom; the Mascot, when given, stands
  * beside the question, waiting, glad, wincing or sad at the last Life lost.
  */
@@ -60,7 +60,6 @@ export function GameRound({
   onOpenLetter,
   title,
   timeLeft,
-  onGround = false,
   optionStamp = false,
   mascot,
   onWaitFor = noWait,
@@ -78,8 +77,6 @@ export function GameRound({
   onOpenLetter: () => void;
   /** The play time left now in a timed Game, as the screen ticks it; the Game's own when none. */
   timeLeft?: number | undefined;
-  /** Whether the question stands on the background (`gameQuestionOnGround`); on its card, as in spec #1674, if not. */
-  onGround?: boolean;
   /** Whether the options take the board's look (`gameOptionStamp`): short ones keyless with a ✓ stamp, ✓ and ✕ keys, the wrong text crossed out; keyed as in spec #1674 if not. */
   optionStamp?: boolean;
   /** Draws the Mascot beside the question in a state at a width (`gameRoundMascot`); no Mascot if none. */
@@ -109,20 +106,19 @@ export function GameRound({
 
   const [asking, setAsking] = useState(false);
   const exit = strings.game.exit;
-  // On the ground «Англіцизми» heads its sentence with the mode's title, «АНГЛІЦИЗМИ» (board g5).
-  const modeLabel = onGround && game.modeId === 'anglicism' ? title : label;
+  // «Англіцизми» heads its sentence with the mode's title, «АНГЛІЦИЗМИ» (board g5).
+  const modeLabel = game.modeId === 'anglicism' ? title : label;
   const asked = askedAs(round, modeLabel, strings.game.round);
-  const card = cardOf(game.modeId, round, asked.prompt, strings.game.round.prompts, onGround);
+  const card = cardOf(game.modeId, round, asked.prompt, strings.game.round.prompts);
   const look = {
-    onGround,
+    onGround: true,
     optionStamp,
     questionFace: questionFaceOf(game.modeId),
-    inkHeaded: onGround && INK_HEADED.has(game.modeId),
+    inkHeaded: INK_HEADED.has(game.modeId),
     mascot: mascot?.({ state: mascotState(answer, game.lives), width: roundMascotWidth }),
-    // On the ground the header has no title: the mode and the Round head the question (board «slogo game last»).
-    kicker: !onGround
-      ? undefined
-      : game.roundLimit === undefined
+    // The header has no title: the mode and the Round head the question (board «slogo game last»).
+    kicker:
+      game.roundLimit === undefined
         ? title
         : fill(strings.game.round.header, {
             mode: title,
@@ -130,20 +126,17 @@ export function GameRound({
             total: String(game.roundLimit),
           }),
   };
-  // An ink-headed mode on the ground heads its body alone.
+  // An ink-headed mode heads its body alone.
   const labelShown = !look.inkHeaded;
 
   return (
     <View testID="game-round" style={styles.screen}>
       <GameHeader
-        title={title}
-        number={round.number}
         roundsPassed={game.roundsPassed}
         roundLimit={game.roundLimit}
         lives={game.lives}
         livesAtStart={game.livesAtStart}
         lifeLostAfter={round.lifeLostAfter}
-        onGround={onGround}
         time={
           game.time === undefined || game.timeLimit === undefined
             ? undefined
@@ -154,20 +147,12 @@ export function GameRound({
         }}
       />
       <ScrollView
-        contentContainerStyle={[
-          styles.round,
-          round.form !== 'pick' && styles.roundWithoutOptions,
-          onGround && styles.roundOnGround,
-        ]}
+        contentContainerStyle={[styles.round, round.form !== 'pick' && styles.roundWithoutOptions]}
       >
-        {look.kicker !== undefined && round.form !== 'vowel' && (
-          <RoundKicker kicker={look.kicker} />
-        )}
+        {round.form !== 'vowel' && <RoundKicker kicker={look.kicker} />}
         {labelShown && (
           <RoundHead
             label={round.form === 'pairs' ? strings.game.round.pairsHint : asked.label}
-            number={round.number}
-            roundLimit={onGround ? undefined : game.roundLimit}
             heading={round.form === 'vowel' || round.form === 'pairs'}
             testID={round.form === 'pairs' ? 'game-prompt' : undefined}
           />
@@ -409,7 +394,8 @@ export function QuickQuestionRound({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  round: { gap: space[5], padding: space[6] },
+  // The Round fills the screen, so its options sit at the bottom.
+  round: { flexGrow: 1, gap: space[5], padding: space[6] },
   // The Feed's page frames the Quick Question's card as it does a Word card (owner 16.11).
   quickQuestion: { flex: 1 },
   quickQuestionCard: {
@@ -431,6 +417,4 @@ const styles = StyleSheet.create({
   },
   // A Round of a form without options keeps one gap more under its content than a pick Round.
   roundWithoutOptions: { paddingBottom: space[6] + space[5] },
-  // On the ground the Round fills the screen, so its options sit at the bottom.
-  roundOnGround: { flexGrow: 1 },
 });

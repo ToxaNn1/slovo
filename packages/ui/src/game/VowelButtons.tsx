@@ -24,7 +24,6 @@ import {
   typeStyle,
   vowelButtonsLayout,
 } from '../tokens';
-import { useRoundLook } from './round-look';
 import { useAnswerMotion, type AnswerDrop } from './useAnswerMotion';
 
 /** How a wrong tap drops: down, tilted and faded, the board's `slDrop`. */
@@ -45,7 +44,7 @@ type VowelAnswer = Extract<RoundAnswer, { form: 'vowel' }>;
  * plays the answer's haptic. VoiceOver reads a vowel
  * with its place among the letters («а, третя літера»), then its tag. Key it
  * by the Round, so a new Round starts unanswered.
- * On the ground (board «slogo game last») every letter takes a cell of the
+ * Every letter takes a cell (board «slogo game last») of the
  * tile's width in capitals on one line, the other letters in grey with no
  * tile, the cells narrowing for a long Word; a red stress mark flies onto
  * each stressed vowel once answered; under Reduce Motion it stands there still.
@@ -79,29 +78,22 @@ export function VowelButtons({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { onGround } = useRoundLook();
   const [room, setRoom] = useState<number | undefined>(undefined);
-  const cell = cellOf(onGround, room, Array.from(text).length);
-  const letterStyle = onGround
-    ? [
-        typeStyle('vowelCell', tokens),
-        roleAt('vowelCell', cell.fontSize),
-        styles.letter,
-        { width: cell.width, color: colors.muted },
-      ]
-    : [typeStyle('vowelWordLetter', tokens), styles.letter, { color: colors.ink }];
+  const cell = cellOf(room, Array.from(text).length);
+  const letterStyle = [
+    typeStyle('vowelCell', tokens),
+    roleAt('vowelCell', cell.fontSize),
+    styles.letter,
+    { width: cell.width, color: colors.muted },
+  ];
   let place = 0;
   return (
     <View
       testID={testID}
-      onLayout={
-        onGround
-          ? (event) => {
-              setRoom(event.nativeEvent.layout.width);
-            }
-          : undefined
-      }
-      style={[styles.word, onGround && styles.wordOnGround]}
+      onLayout={(event) => {
+        setRoom(event.nativeEvent.layout.width);
+      }}
+      style={styles.word}
     >
       {Array.from(text, (letter, position) => {
         const letterPlace = place;
@@ -138,8 +130,8 @@ export function VowelButtons({
               .filter(Boolean)
               .join(', ')}
             fill={fill}
-            cell={onGround ? cell : undefined}
-            marked={onGround && fill === 'right'}
+            cell={cell}
+            marked={fill === 'right'}
             disabled={answer !== undefined}
             onPress={() => {
               onAnswer(position);
@@ -170,8 +162,8 @@ function Vowel({
   testID: string;
   letter: string;
   label: string;
-  /** The letter's cell on the ground, its width and face size; the plain tile off the ground. */
-  cell: Cell | undefined;
+  /** The letter's cell, its width and face size. */
+  cell: Cell;
   /** How the judged answer fills it; nothing before the answer or for a vowel neither stressed nor tapped. */
   fill: 'right' | 'wrong' | undefined;
   /** Whether the red stress mark stands over it (board 06 «Наголос»). */
@@ -196,16 +188,15 @@ function Vowel({
         hitSlop={{ left: VOWEL_SLOP, right: VOWEL_SLOP }}
         faceStyle={[
           styles.vowel,
-          cell !== undefined && { width: cell.width, minWidth: cell.width },
+          { width: cell.width, minWidth: cell.width },
           fill === 'wrong' && { backgroundColor: colors.surfaceSunken },
         ]}
       >
         <Text
           maxFontSizeMultiplier={fontScaleCap.number}
           style={[
-            cell === undefined
-              ? typeStyle('vowelButton', tokens)
-              : [typeStyle('vowelCell', tokens), roleAt('vowelCell', cell.fontSize)],
+            typeStyle('vowelCell', tokens),
+            roleAt('vowelCell', cell.fontSize),
             styles.letter,
             {
               color: fill === 'right' ? keyInk : fill === 'wrong' ? colors.muted : colors.ink,
@@ -215,7 +206,7 @@ function Vowel({
           {letter}
         </Text>
       </PressedTile>
-      {marked && <StressMark testID={`${testID}-mark`} width={cell?.width} />}
+      {marked && <StressMark testID={`${testID}-mark`} width={cell.width} />}
     </Animated.View>
   );
 }
@@ -262,7 +253,7 @@ function StressMark({ testID, width }: { testID: string; width: number | undefin
   );
 }
 
-/** A letter's cell on the ground: its width and its face size. */
+/** A letter's cell: its width and its face size. */
 interface Cell {
   readonly width: number;
   readonly fontSize: number;
@@ -271,13 +262,13 @@ interface Cell {
 const CELL_FACE = roleSize('vowelCell').fontSize;
 
 /**
- * The cell of each letter on the ground: the tile's width, narrower for a
+ * The cell of each letter: the tile's width, narrower for a
  * Word too long for the room, its face shrinking with it, so the Word keeps
  * to one line (board «slogo game last»).
  */
-function cellOf(onGround: boolean, room: number | undefined, letters: number): Cell {
+function cellOf(room: number | undefined, letters: number): Cell {
   const full = vowelButtonsLayout.width;
-  if (!onGround || room === undefined || letters === 0) return { width: full, fontSize: CELL_FACE };
+  if (room === undefined || letters === 0) return { width: full, fontSize: CELL_FACE };
   const fits = (room - vowelButtonsLayout.cellGap * (letters - 1)) / letters;
   const width = Math.min(full, Math.floor(fits));
   return { width, fontSize: (CELL_FACE * width) / full };
@@ -287,16 +278,16 @@ function cellOf(onGround: boolean, room: number | undefined, letters: number): C
 const MARK_ROOM = vowelButtonsLayout.mark.height + vowelButtonsLayout.mark.rise;
 
 const styles = StyleSheet.create({
+  // Every letter takes a cell on one line (board «slogo game last»), the mark landing over it.
   word: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: vowelButtonsLayout.letterGap,
-    paddingVertical: space[2],
+    gap: vowelButtonsLayout.cellGap,
+    paddingTop: MARK_ROOM,
+    paddingBottom: space[2],
   },
-  // On the ground every letter takes a cell on one line (board «slogo game last»), the mark landing over it.
-  wordOnGround: { flexWrap: 'nowrap', gap: vowelButtonsLayout.cellGap, paddingTop: MARK_ROOM },
   letter: { textAlign: 'center' },
   mark: {
     position: 'absolute',

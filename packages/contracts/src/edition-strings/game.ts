@@ -203,8 +203,6 @@ export const GameStringsSchema = z.strictObject({
       meaning: templateOf('word'),
       /** Under a Correction's right form, e.g. «замість «їхати»». Takes `{wrong}`. */
       instead: templateOf('wrong'),
-      /** An Anglicism Round. Takes `{word}` and `{sentence}`. */
-      replace: templateOf('word', 'sentence'),
     }),
     /** The line of a «Наголос» Round, e.g. «Торкнись голосної, на яку падає наголос». */
     stressHint: TextSchema,

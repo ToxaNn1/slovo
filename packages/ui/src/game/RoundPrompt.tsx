@@ -45,17 +45,14 @@ export interface CardText {
 /**
  * The card a Round shows by its Game Mode (board 07 g3, g4, spec #1674):
  * «Впиши слово» names the wrong form over its sentence, «замість «вірогідно»»;
- * «Англіцизм» asks «Чим замінити «{word}»: «{sentence}»?» with the
- * anglicism still marked in the sentence, or on the ground (board g5) the
- * sentence alone, the anglicism in red; «Звідки слово» shows its Word on a
+ * «Англіцизм» shows the sentence alone, the anglicism in red (board g5); «Звідки слово» shows its Word on a
  * sunken tile. Any other Round shows its prompt as it is.
  */
 export function cardOf(
   modeId: string,
   round: Round,
   prompt: string,
-  prompts: { readonly instead: string; readonly replace: string },
-  onGround = false,
+  prompts: { readonly instead: string },
 ): CardText {
   const highlight = round.form === 'pick' || round.form === 'typed' ? round.highlight : undefined;
   const plain = { prompt, highlight, face: undefined };
@@ -71,18 +68,8 @@ export function cardOf(
       face: { look: 'instead', instead: fill(prompts.instead, { wrong: marked }) },
     };
   }
-  if (modeId === 'anglicism' && round.form === 'pick' && onGround) {
-    return { prompt, highlight, face: { look: 'redMark' } };
-  }
   if (modeId === 'anglicism' && round.form === 'pick') {
-    const asked = fill(prompts.replace, { word: marked, sentence: prompt });
-    const at = asked.indexOf(prompt);
-    if (at < 0) return plain;
-    return {
-      prompt: asked,
-      highlight: { start: at + highlight.start, end: at + highlight.end },
-      face: undefined,
-    };
+    return { prompt, highlight, face: { look: 'redMark' } };
   }
   return plain;
 }
@@ -95,30 +82,17 @@ export function cardOf(
  */
 export function RoundHead({
   label,
-  number,
-  roundLimit,
   heading,
   testID,
 }: {
   label: string;
-  /** Which Round of the Game it is, from 1. */
-  number: number;
-  /** The mode's Round limit; none in a mode without one, which shows no place. */
-  roundLimit: number | undefined;
   /** Whether VoiceOver reads the label as the Round's heading; else the card reads it. */
   heading: boolean;
   testID: string | undefined;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { strings, voice } = useEdition();
-  const place =
-    roundLimit === undefined
-      ? undefined
-      : fill(strings.game.round.progress, {
-          passed: String(number),
-          total: String(roundLimit),
-        });
+  const { voice } = useEdition();
   return (
     <Text
       testID={testID}
@@ -129,7 +103,7 @@ export function RoundHead({
       {...voice}
       style={[typeStyle('roundHead', tokens), { color: colors.accentText }]}
     >
-      {place === undefined ? label : `${label} · ${place}`}
+      {label}
     </Text>
   );
 }

@@ -16,7 +16,6 @@ const everything: Shown = {
   tabs: ['home', 'game', 'saved', 'settings'],
   gameReview: true,
   gameRoundMascot: true,
-  gameQuestionOnGround: true,
   gameOptionStamp: true,
   gameEndToFeed: true,
   plainGameReview: true,
@@ -209,10 +208,6 @@ describe('what the reader is shown', () => {
     [
       'the spec #1674 Game with gameRoundMascot off',
       { off: ['gameRoundMascot'], shown: { gameRoundMascot: false } },
-    ],
-    [
-      'the spec #1674 Game with gameQuestionOnGround off',
-      { off: ['gameQuestionOnGround'], shown: { gameQuestionOnGround: false } },
     ],
     [
       'the spec #1674 Game with gameOptionStamp off',

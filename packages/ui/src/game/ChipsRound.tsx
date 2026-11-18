@@ -6,7 +6,6 @@ import type { GivenAnswer, Round } from '@slovo/core';
 import { useEdition } from '../providers/EditionProvider';
 import { OrderedChips } from './OrderedChips';
 import { RoundCard } from './RoundCard';
-import { useRoundLook } from './round-look';
 
 /**
  * A Round of the chips form: its chips, a Word's letters or an expression's
@@ -30,7 +29,6 @@ export function ChipsRound({
   onAnswer: (given: Extract<GivenAnswer, { form: 'chips' }>) => void;
 }) {
   const { strings } = useEdition();
-  const { onGround } = useRoundLook();
   const letters = round.chipKind === 'letter';
   return (
     <>
@@ -40,7 +38,7 @@ export function ChipsRound({
         highlight={round.highlight}
         gap={round.gap}
         definition={round.definition}
-        face={onGround && round.chipKind === 'word' ? { look: 'heading' } : undefined}
+        face={round.chipKind === 'word' ? { look: 'heading' } : undefined}
       />
       <OrderedChips
         key={round.number}

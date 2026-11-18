@@ -110,10 +110,9 @@ export function RoundCard({
   head?: ReactNode;
 }) {
   const tokens = useTokens();
-  const { colors, radii } = tokens;
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   const look = useRoundLook();
-  const onGround = quickQuestion === undefined && look.onGround;
   // The board's ink-headed faces show their ask and nothing of the Round besides.
   const bare =
     quickQuestion === undefined &&
@@ -140,12 +139,10 @@ export function RoundCard({
   const promptRole: TypeRole =
     quickQuestion !== undefined
       ? 'quickQuestionPrompt'
-      : !onGround
-        ? 'roundPrompt'
-        : look.questionFace === 'text' ||
-            (look.questionFace === 'byLength' && Array.from(prompt).length > DISPLAY_MOST)
-          ? 'roundExplanation'
-          : 'roundAsk';
+      : look.questionFace === 'text' ||
+          (look.questionFace === 'byLength' && Array.from(prompt).length > DISPLAY_MOST)
+        ? 'roundExplanation'
+        : 'roundAsk';
   // A head stands over the answer, beside the Mascot if any, the answer in the middle of the room under it.
   const headed = head !== undefined && quickQuestion === undefined;
   const card = (
@@ -158,20 +155,7 @@ export function RoundCard({
           : undefined
       }
       {...voice}
-      style={
-        onGround
-          ? styles.onGround
-          : quickQuestion === undefined
-            ? [
-                styles.card,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.line,
-                  borderRadius: radii.card,
-                },
-              ]
-            : styles.inCard
-      }
+      style={quickQuestion === undefined ? styles.onGround : styles.inCard}
     >
       {!headed && head}
       {asks && <RoundAsk ask={label} heading={false} />}
@@ -351,14 +335,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     minHeight: roundLayout.originTileMinHeight,
     padding: space[4],
-  },
-  card: {
-    minHeight: roundLayout.cardMinHeight,
-    justifyContent: 'center',
-    gap: space[4],
-    paddingVertical: roundLayout.cardPaddingVertical,
-    paddingHorizontal: space[6],
-    borderWidth: 1,
   },
   inCard: { gap: quickQuestionCard.gap },
   onGround: { gap: space[4] },

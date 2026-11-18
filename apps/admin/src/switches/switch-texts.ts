@@ -297,10 +297,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Талісман у грі',
     line: 'Біля запитання гри стоїть талісман, який реагує на відповідь.',
   },
-  gameQuestionOnGround: {
-    name: 'Запитання на тлі',
-    line: 'Запитання гри без картки, з видимим рядком «Життів».',
-  },
   gameOptionStamp: {
     name: 'Печатки варіантів',
     line: 'Варіанти відповіді з печаткою ✓ і закресленим неправильним текстом.',
