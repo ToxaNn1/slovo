@@ -14,7 +14,10 @@ Integration branch: `feat/2022-retire-curated-collection`. Grant: commits, pushe
 
 - Step 2 (done): ADR 0178 amended («Retiring»), index line, glossary «Retired Curated Collection».
 - Step 3 (done): A, B, C merged; full lint/typecheck/test green (backend needs DATABASE_URL=postgres://slovo:slovo@localhost:5432/slovo).
-- Step 4 (running): code-review done; a fixer works on the admin stale-fields bug, record-rows doc, Core refresh after Patch, directly on the integration branch (uncommitted work there is the fixer's).
+- Step 4 (done): review fixes merged. Some integration-branch commits carried a non-owner address (CI refuses them, no force-push allowed), so the PR comes from `feat/2022-retire-curated-collection-pr`: the same work rebased on main with the owner's address.
+- Step 5: PR #2028 open (no auto-merge). Local lint/typecheck/deps/test green.
+
+WAITING until 2026-11-18T19:36:00Z: CI on PR #2028
 
 ## Next
-- Merge-check fixer commits, push, open the PR (one, no auto-merge), wait for CI, STATUS: FINISHED.
+- CI green → HANDOFF starts with `STATUS: FINISHED`. Red → fix on `feat/2022-retire-curated-collection-pr`. Main moves → merge origin/main into it.
