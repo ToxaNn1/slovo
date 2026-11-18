@@ -17683,7 +17683,7 @@
       },
       "get": {
         "operationId": "admin.content.records",
-        "summary": "The records of a kind, for the content editor: by a text query, retired ones on request, a page of 50 at a time with the count of every match",
+        "summary": "The records of a kind, for the content editor: by a text query and a Category, retired ones on request, a page of 50 at a time with the count of every match",
         "tags": [
           "admin"
         ],
@@ -17734,6 +17734,34 @@
             "allowReserved": true
           },
           {
+            "name": "categoryId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "maxItems": 50,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "style": "deepObject",
+            "explode": true,
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
             "name": "page",
             "in": "query",
             "schema": {
@@ -17762,7 +17790,22 @@
                           "id": {
                             "type": "string"
                           },
+                          "kind": {
+                            "enum": [
+                              "word",
+                              "correction",
+                              "idiom",
+                              "synonymRow",
+                              "tip",
+                              "curatedCollection",
+                              "crosswordDay"
+                            ],
+                            "type": "string"
+                          },
                           "label": {
+                            "type": "string"
+                          },
+                          "categoryId": {
                             "type": "string"
                           },
                           "retired": {
@@ -17777,6 +17820,7 @@
                         },
                         "required": [
                           "id",
+                          "kind",
                           "label",
                           "retired",
                           "recordVersion"

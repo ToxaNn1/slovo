@@ -329,8 +329,11 @@ const IllustrationFileSchema = z.base64().max(1_000_000);
 /** A record as the content editor lists it. */
 export const ContentRecordSummarySchema = z.object({
   id: z.string(),
+  kind: ContentRecordKindSchema,
   /** The lemma, expression, form, title, name or date the record is known by. */
   label: z.string(),
+  /** Words and Corrections only: the Category the record belongs to. */
+  categoryId: z.string().optional(),
   retired: z.boolean(),
   recordVersion: z.number().int().positive(),
 });
@@ -588,7 +591,7 @@ const contentWriteContract = {
       method: 'GET',
       path: recordPath,
       summary:
-        'The records of a kind, for the content editor: by a text query, retired ones on request, a page of 50 at a time with the count of every match',
+        'The records of a kind, for the content editor: by a text query and a Category, retired ones on request, a page of 50 at a time with the count of every match',
       tags: ['admin'],
     })
     .input(
@@ -597,6 +600,10 @@ const contentWriteContract = {
         kind: ContentRecordKindSchema,
         query: z.string().max(200).optional(),
         retired: z.stringbool().optional(),
+        /** Only the records of this Category; a kind without Categories then lists none. */
+        categoryId: z.string().min(1).max(200).optional(),
+        /** Only the records of these ids, at most a page of them; an unknown id lists none. */
+        ids: z.array(z.string().min(1).max(200)).max(CONTENT_PAGE_SIZE).optional(),
         /** The page from 1, of `CONTENT_PAGE_SIZE` records in label order; past the last one it lists none. */
         page: z.coerce.number<number>().int().positive().optional(),
       }),
