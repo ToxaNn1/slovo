@@ -1,4 +1,3 @@
-import type { CuratedCollectionScreen } from '../dashboard/curated-collections';
 import { categoryFeedPage, type CategoryFeedPage } from './category-feed';
 
 /**
@@ -11,7 +10,8 @@ import { categoryFeedPage, type CategoryFeedPage } from './category-feed';
  * Entry; a screen with no Entries has no page.
  */
 export function collectionFeedPage(
-  screen: Pick<CuratedCollectionScreen, 'entries'>,
+  // A `CuratedCollectionScreen`, by shape: the dashboard folder imports this one.
+  screen: { readonly entries: readonly { readonly entryId: string }[] },
   from: string,
   position: number,
 ): CategoryFeedPage | undefined {

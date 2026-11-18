@@ -1,7 +1,7 @@
 import type { CuratedCollection } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { collectionFeedPage, openComposition, type CuratedCollectionScreen } from '../index';
+import { openComposition, type CuratedCollectionScreen } from '../index';
 import { createMemoryContentPort } from '../testing';
 import {
   correction,
@@ -14,6 +14,7 @@ import {
   word,
 } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { collectionFeedPage } from './collection-feed';
 
 const picks: CuratedCollection = {
   id: 'cc_picks',
