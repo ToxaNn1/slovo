@@ -2171,6 +2171,7 @@ describe('Curated Collections', () => {
           description: 'Два слова і виправлення для тестів.',
           publishedOn: '2026-01-01',
           entryIds: ['w_fx0003', 'c_fx0003'],
+          retired: false,
         },
         {
           id: 'cc_fx0002',
@@ -2178,8 +2179,24 @@ describe('Curated Collections', () => {
           description: 'Виходить на рейку влітку.',
           publishedOn: '2026-06-01',
           entryIds: ['c_fx0004', 'w_fx0003'],
+          retired: false,
         },
       ]);
+    } finally {
+      pack.close();
+    }
+  });
+
+  it('writes no rows of a Retired collection', async () => {
+    const editionDir = copyFixture('valid');
+    editRecord(editionDir, 'cc_fx0001', (collection) => ({ ...collection, retired: true }));
+    const outFile = packPath();
+    const result = build({ editionDir, outFile });
+    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+
+    const pack = openLanguagePack(outFile);
+    try {
+      expect((await pack.listCuratedCollections()).map(({ id }) => id)).toEqual(['cc_fx0002']);
     } finally {
       pack.close();
     }

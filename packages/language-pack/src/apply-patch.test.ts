@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
-import type { Word } from '@slovo/contracts';
+import type { CuratedCollection, Word } from '@slovo/contracts';
 import { PATCH_FORMAT, type Patch } from '@slovo/contracts/api';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
@@ -133,6 +133,34 @@ describe('applying a Patch', () => {
 
     expect(await pack.listIds('word')).not.toContain(first.id);
     expect(await pack.getEntries([first.id])).toMatchObject([{ id: first.id, retired: true }]);
+  });
+
+  it('removes a Retired collection, row and Entries, and brings it back when it returns', async () => {
+    const pack = writablePack();
+    const collection: CuratedCollection = {
+      id: 'cc_patchadded',
+      name: 'Нова добірка',
+      description: 'Добірка з Patch.',
+      publishedOn: '2026-01-01',
+      entryIds: [first.id, second.id],
+      retired: false,
+    };
+    const next = (since: number, curatedCollections: CuratedCollection[]): Patch => ({
+      ...patchOf({ curatedCollections }),
+      since,
+      contentVersion: since + 1,
+    });
+    const ids = async () => (await pack.listCuratedCollections()).map(({ id }) => id);
+    const v = snapshot.contentVersion;
+
+    await applyPatch(pack.writer, next(v, [collection]), '"1"');
+    expect(await ids()).toContain(collection.id);
+
+    await applyPatch(pack.writer, next(v + 1, [{ ...collection, retired: true }]), '"2"');
+    expect(await ids()).not.toContain(collection.id);
+
+    await applyPatch(pack.writer, next(v + 2, [collection]), '"3"');
+    expect(await pack.listCuratedCollections()).toContainEqual(collection);
   });
 
   it('rolls the whole Patch back when a record fails half-way', async () => {
