@@ -228,6 +228,36 @@ describe('«Увійти через Google» on the SLOVO ID screen', () => {
     expect(screen.queryByText(problems.offline)).not.toBeOnTheScreen();
   });
 
+  it('waits on «НАДІСЛАТИ КОД» while the code is asked for, then says there is no connection and offers it again', async () => {
+    const { backend } = createFakeBackend();
+    let giveUp: (error: Error) => void = () => undefined;
+    // The device backend fails a try with no answer once its timeout passes.
+    const noAnswer = new Promise<never>((_, reject) => {
+      giveUp = reject;
+    });
+    const requestCode: typeof backend.account.requestCode = (...call) =>
+      noAnswer.then(() => backend.account.requestCode(...call));
+    await renderScreen({
+      backend: { account: { ...backend.account, requestCode } },
+      offlinePlate: true,
+    });
+    const sendCode = () => screen.getByRole('button', { name: strings.sendCode });
+
+    await fireEvent.changeText(screen.getByTestId('account-email'), 'olena@ukr.net');
+    await settle(() => fireEvent.press(sendCode()));
+
+    expect(sendCode()).toBeBusy();
+    expect(screen.queryByTestId('offline-plate')).not.toBeOnTheScreen();
+
+    await settle(() => {
+      giveUp(new Error('No answer'));
+    });
+
+    expect(screen.getByTestId('offline-plate')).toHaveTextContent(editionStrings.offlinePlate);
+    expect(sendCode()).not.toBeBusy();
+    expect(sendCode()).toBeEnabled();
+  });
+
   it('says so when Google does not confirm the sign-in', async () => {
     const googleSheet = createFakeGoogleSignInSheet();
     googleSheet.signsIn('anna@mail.com', { verified: false });
