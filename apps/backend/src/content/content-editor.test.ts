@@ -129,16 +129,16 @@ describe('the content editor through an admin session', () => {
 
     const words = await ofCategory('word', word.categoryId);
     const liveWords = snapshot.words.filter(
-      (each) => each.categoryId === word.categoryId && each.retired !== true,
+      (each) => each.categoryId === word.categoryId && !each.retired,
     );
     expect(words.total).toBe(liveWords.length);
     expect(words.records.every((each) => each.categoryId === word.categoryId)).toBe(true);
-    const correction = snapshot.corrections.find((each) => each.retired !== true);
+    const correction = snapshot.corrections.find((each) => !each.retired);
     if (correction === undefined) throw new Error('no Correction');
     const corrections = await ofCategory('correction', correction.categoryId);
     expect(corrections.total).toBe(
       snapshot.corrections.filter(
-        (each) => each.categoryId === correction.categoryId && each.retired !== true,
+        (each) => each.categoryId === correction.categoryId && !each.retired,
       ).length,
     );
     expect(corrections.records).toContainEqual(
@@ -158,14 +158,14 @@ describe('the content editor through an admin session', () => {
     const backend = await editorBackend();
     const { client: adminClient } = await signedInAdmin(backend, 'owner');
     const snapshot = await backend.client.content.snapshot({ editionId: 'uk' });
-    const [first, second] = snapshot.words.filter((each) => each.retired !== true);
+    const [first, second] = snapshot.words.filter((each) => !each.retired);
     if (first === undefined || second === undefined) throw new Error('no Words');
 
     const { records, total } = await adminClient.admin.content.records({
       editionId: 'uk',
       kind: 'word',
       ids: [second.id, first.id, 'w_unknown0'],
-      retired: true,
+      retired: 'true',
     });
 
     expect(total).toBe(2);
