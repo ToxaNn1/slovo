@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { blockGap, dailyCrosswordCard, fontScaleCap, space, typeStyle } from '../tokens';
-import { ResultButtons, ResultPanel } from './GameResult';
+import { ResultButtons, ResultPanel } from './ResultPanel';
 
 const { mini } = dailyCrosswordCard;
 

@@ -15,7 +15,6 @@ function editionWithout(...off: FeatureSwitch[]) {
 const everything: Shown = {
   tabs: ['home', 'game', 'saved', 'settings'],
   gameReview: true,
-  finishPoster: true,
   gameRoundMascot: true,
   gameQuestionOnGround: true,
   gameOptionStamp: true,
@@ -207,10 +206,6 @@ describe('what the reader is shown', () => {
       { off: ['wordOfTheDayArchive'], shown: { wordOfTheDayArchive: false } },
     ],
     ['no Game Review with its switch off', { off: ['gameReview'], shown: { gameReview: false } }],
-    [
-      'the old result screen with the end poster off',
-      { off: ['finishPoster'], shown: { finishPoster: false } },
-    ],
     [
       'the spec #1674 Game with gameRoundMascot off',
       { off: ['gameRoundMascot'], shown: { gameRoundMascot: false } },

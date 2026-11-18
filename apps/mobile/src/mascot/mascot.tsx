@@ -42,7 +42,6 @@ const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
   streakMilestone: 'celebrates',
   gameRight: 'happy',
   gameWrong: 'cringes',
-  gameEnd: 'happy',
   empty: 'sleeps',
 };
 

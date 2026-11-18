@@ -48,7 +48,7 @@ describe('the Game screen', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
     });
   });
 
@@ -102,7 +102,7 @@ describe('the Game screen', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
     });
   });
 
@@ -151,7 +151,7 @@ describe('the Game screen', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
     });
     expect(grids).toEqual([4, 4, 4, 3]);
   });
@@ -216,7 +216,7 @@ describe('the Game screen', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
     });
   });
 
@@ -280,7 +280,7 @@ describe('the Game screen', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
     });
   });
 
@@ -360,7 +360,7 @@ describe('the Game screen', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
     });
   });
 
@@ -416,7 +416,7 @@ describe('the Game screen', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
     });
   });
 
@@ -492,7 +492,7 @@ describe('the Game screen', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
     });
   });
 
@@ -546,7 +546,7 @@ describe('the Game screen', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
     });
   });
 
@@ -605,16 +605,10 @@ describe('the Game screen', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-lives-over')).toBeOnTheScreen();
     });
     expect(kinds).toEqual(new Set(['word', 'correction']));
-    expect(screen.getByTestId('game-result-rounds')).toHaveTextContent(/^раунд\S* ?11$/);
-    expect(screen.getByTestId('game-result-rounds').props['accessibilityLabel']).toBe(
-      'Пройдено раундів: 11',
-    );
-    expect(screen.getByTestId('game-result-best')).toHaveTextContent(/11$/);
-    // A Game with no Life left offers no widget hint.
-    expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+    expect(screen.getByTestId('game-end-best')).toHaveTextContent(/11$/);
   });
 
   describe('«На час»', () => {
@@ -631,7 +625,7 @@ describe('the Game screen', () => {
       jest.useRealTimers();
     });
 
-    it('starts from its card and races 20 seconds with the timer on top, a mistake moving on, to the result screen', async () => {
+    it('starts from its card and races 20 seconds with the timer on top, a mistake moving on, to «Фініш»', async () => {
       await renderScreen();
 
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
@@ -667,21 +661,16 @@ describe('the Game screen', () => {
       await pass(15_000);
 
       await waitFor(() => {
-        expect(screen.getByText('Час вийшов!')).toBeOnTheScreen();
+        expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
       });
-      expect(screen.getByTestId('game-result-right').props['accessibilityLabel']).toBe(
-        '3 правильні відповіді',
-      );
-      expect(screen.queryByTestId('game-result-rounds')).toBeNull();
-      expect(screen.queryByTestId('game-result-lives')).toBeNull();
-      expect(screen.getByTestId('game-result-best')).toHaveTextContent('3', { exact: false });
+      expect(screen.getByText('3 з 4 влучань')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-best')).toHaveTextContent('3', { exact: false });
     });
 
     it('ends on the «Фініш» poster, «Ще раунд!» for fewer than half right', async () => {
       await open({
         clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
         schedule: systemSchedule,
-        switchedOn: ['finishPoster'],
       });
       await renderScreen();
 
@@ -700,7 +689,6 @@ describe('the Game screen', () => {
       expect(screen.getByText('ФІНІШ')).toBeOnTheScreen();
       expect(screen.getByText('ЩЕ РАУНД!')).toBeOnTheScreen();
       expect(screen.getByText('1 з 3 влучань')).toBeOnTheScreen();
-      expect(screen.queryByText('Час вийшов!')).toBeNull();
     });
 
     it('stops the timer while the app is in the background, and runs it on from there on return', async () => {
@@ -726,7 +714,7 @@ describe('the Game screen', () => {
       await pass(1_000);
 
       await waitFor(() => {
-        expect(screen.getByText('Час вийшов!')).toBeOnTheScreen();
+        expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
       });
     });
   });
@@ -772,7 +760,7 @@ describe('the Game screen', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
     });
   });
 

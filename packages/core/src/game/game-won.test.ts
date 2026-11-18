@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { countsAsWon } from '../index';
+import { countsAsWon } from './game';
 
 describe('whether a Game over counts as won', () => {
   it('counts a Game won at its Round limit', () => {

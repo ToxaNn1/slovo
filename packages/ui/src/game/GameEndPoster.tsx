@@ -6,7 +6,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { blockGap, fontScaleCap, resultLayout, space, typeRoles, typeStyle } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { ResultNumber, ResultPanel } from './GameResult';
+import { ResultNumber, ResultPanel } from './ResultPanel';
 import { GameReviewOf, type ResultReview } from './GameReview';
 import { FlyIn } from './FlyIn';
 import { useGameHaptics } from './useGameHaptics';

@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { coreTokens, typeStyle } from '@slovo/ui';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react-native';
-import { edition } from '../edition/edition';
 import {
   open,
   renderScreen,
@@ -121,9 +120,7 @@ describe('the Game screen', () => {
   });
 
   describe('the Mascot (#1386)', () => {
-    const { mascot } = edition;
-
-    it('stays out of the Round, which board 07 draws without it, and meets the Game’s end with the Edition’s line', async () => {
+    it('stays out of the Round, which board 07 draws without it, and meets the Game’s end sad', async () => {
       await open({ corrections: 15 });
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-survival'));
@@ -144,7 +141,7 @@ describe('the Game screen', () => {
       }
 
       await waitFor(() => {
-        expect(screen.getByTestId('mascot-gameEnd')).toHaveTextContent(mascot.gameEnd);
+        expect(screen.getByTestId('mascot-sad')).toBeOnTheScreen();
       });
     });
 

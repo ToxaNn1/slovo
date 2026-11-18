@@ -478,21 +478,6 @@ export async function pass(ms: number) {
   });
 }
 
-/** Plays a whole Game of «Наголос», started from its card unless said, each Round right, to the result screen. */
-export async function winStress({ fromCard = true } = {}) {
-  if (fromCard) await fireEvent.press(screen.getByTestId('game-mode-stress'));
-  for (let round = 1; round <= 15; round += 1) {
-    await waitFor(() => {
-      expect(screen.getByTestId('game-vowels')).toBeOnTheScreen();
-    });
-    await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
-    await fireEvent.press(screen.getByTestId('game-next'));
-  }
-  await waitFor(() => {
-    expect(screen.getByText('Перемога!')).toBeOnTheScreen();
-  });
-}
-
 /** Puts the screen back as a test finds it: the app in the foreground, no events, the composition opened afresh. */
 export async function resetGameScreen() {
   mockInForeground = true;

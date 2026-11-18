@@ -28,11 +28,9 @@ describe('the Games boards’ Lives and time (ADR 0137)', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-lives-over')).toBeOnTheScreen();
     });
-    expect(screen.getByTestId('game-result-rounds').props['accessibilityLabel']).toBe(
-      'Пройдено раундів: 3',
-    );
+    expect(screen.getByText('1 з 4 влучань')).toBeOnTheScreen();
   });
 
   describe('«На час»', () => {
@@ -49,7 +47,6 @@ describe('the Games boards’ Lives and time (ADR 0137)', () => {
       await open({
         clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
         schedule: systemSchedule,
-        switchedOn: ['finishPoster'],
       });
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-timed'));

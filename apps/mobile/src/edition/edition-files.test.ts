@@ -112,13 +112,7 @@ describe('the 0.5 UI strings group', () => {
     Object.fromEntries(
       Object.entries(group as Record<string, unknown>).filter(([name]) => name !== key),
     );
-  const game = strings['game'] as Record<string, unknown>;
-
   it.each([
-    [
-      'game.result.best',
-      { ...strings, game: { ...game, result: without(game['result'], 'best') } },
-    ],
     ['stats.gameBest', { ...strings, stats: without(strings['stats'], 'gameBest') }],
     ['stats.gameBestLabel', { ...strings, stats: without(strings['stats'], 'gameBestLabel') }],
   ])('the UA Edition needs %s, the best result', (path, stringsWithout) => {

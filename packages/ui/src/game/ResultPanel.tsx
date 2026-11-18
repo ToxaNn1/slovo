@@ -1,12 +1,10 @@
-import { countsAsWon, type GameOver } from '@slovo/core';
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { type ReactNode, useId, useState } from 'react';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, Defs, Pattern, Polygon } from 'react-native-svg';
 
-import { fill, useEdition } from '../providers/EditionProvider';
+import { useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import {
-  blockGap,
   fontScaleCap,
   halftone,
   mascotWidth,
@@ -17,8 +15,6 @@ import {
   wedges,
 } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { GameReviewOf, type ResultReview } from './GameReview';
-import { useGameHaptics } from './useGameHaptics';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 
 export const TITLE_TRACKING = typeRoles.resultTitle.letterSpacing / typeRoles.resultTitle.size;
@@ -205,128 +201,7 @@ export function ResultNumber({
   );
 }
 
-/**
- * The result screen: a red panel cut by a slanted bottom edge under the
- * halftone raster, with the title and the line of a win or a loss in ink and
- * the `mascot` beside them; then tiles of the Rounds passed (out of the mode's
- * Round limit, or alone in a mode without one), the Lives left and the best
- * result; a Game in a mode with a time limit ends as a time-up, its right
- * answers in place of the Rounds passed, even when it ran out of Rounds first. The Game Review of every Round follows, while it opens
- * Entries, then «На головну» for the Feed beside «Ще раз» for a new Game in
- * the same mode. A win arrives with the success haptic twice.
- */
-export function GameResult({
-  game,
-  bestResult,
-  onAgain,
-  onHome,
-  review,
-  mascot,
-}: {
-  /** The Game just over, won, lost or with its time up. */
-  game: GameOver;
-  /** The best result, the Game just over included. */
-  bestResult: number | undefined;
-  onAgain: () => void;
-  onHome: () => void;
-  /** The Game Review under the result. */
-  review: ResultReview;
-  /** The Mascot at the Game's end, drawn for the red panel; none without it. */
-  mascot?: ReactNode;
-}) {
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const { strings, count } = useEdition();
-  const words = strings.game;
-  const { roundsPassed, roundLimit, lives } = game;
-  // A Game in a mode with a time limit counts its right answers, as its Best
-  // result does, and arrives as a win does, even when it ran out of Rounds first.
-  const timed = game.timeLimit !== undefined;
-  const won = countsAsWon(game);
-  const right = game.played.filter((round) => round.right).length;
-  const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
-  const gameHaptics = useGameHaptics();
-  // Whether the win has played, so only the screen's arrival plays it.
-  const played = useRef(false);
-
-  useEffect(() => {
-    if (!won || played.current) return;
-    played.current = true;
-    gameHaptics.win();
-    // New haptics, after a change of Vibration, find the win already played.
-  }, [won, gameHaptics]);
-
-  const title = timed
-    ? words.result.timeUp.title
-    : won
-      ? words.result.won.title
-      : words.result.lost.title;
-  const line = timed
-    ? words.result.timeUp.line
-    : won
-      ? count(words.result.won.line, roundsPassed)
-      : words.result.lost.line;
-
-  return (
-    <ScrollView
-      testID="game-result"
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.screen}
-    >
-      <ResultPanel title={title} line={line} mascot={mascot} />
-      <View style={styles.body}>
-        <View style={styles.numbers}>
-          {timed ? (
-            <ResultNumber
-              testID="game-result-right"
-              value={String(right)}
-              label={count(words.result.right, right)}
-              spoken={`${String(right)} ${count(words.result.right, right)}`}
-            />
-          ) : (
-            <ResultNumber
-              testID="game-result-rounds"
-              value={
-                roundLimit === undefined
-                  ? String(roundsPassed)
-                  : fill(words.round.progress, progress)
-              }
-              label={count(words.result.rounds, roundLimit ?? roundsPassed)}
-              spoken={fill(
-                roundLimit === undefined ? words.round.passedLabel : words.round.progressLabel,
-                progress,
-              )}
-            />
-          )}
-          {lives !== undefined && (
-            <ResultNumber
-              testID="game-result-lives"
-              value={String(lives)}
-              label={count(words.result.lives, lives)}
-              spoken={`${String(lives)} ${count(words.result.lives, lives)}`}
-            />
-          )}
-          {bestResult === undefined ? null : (
-            <ResultNumber
-              testID="game-result-best"
-              value={String(bestResult)}
-              label={count(words.result.best, bestResult)}
-              spoken={`${String(bestResult)} ${count(words.result.best, bestResult)}`}
-            />
-          )}
-        </View>
-        <GameReviewOf rounds={game.played} review={review} />
-        <ResultButtons
-          away={{ testID: 'game-home', label: words.result.home, onPress: onHome }}
-          on={{ testID: 'game-again', label: words.result.again, onPress: onAgain }}
-        />
-      </View>
-    </ScrollView>
-  );
-}
-
 const styles = StyleSheet.create({
-  screen: { flexGrow: 1, paddingBottom: space[8] + space[2] },
   panel: { minHeight: resultLayout.panelHeight, justifyContent: 'flex-end' },
   // The title and line on the left, the Mascot on the right, over the slant.
   panelFoot: {
@@ -339,8 +214,6 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: space[2] - 2 },
   // The Lives-over poster (board 07, g9): the title across the panel, the Mascot under it, its figure in line with the text.
   mascot: { maxWidth: MASCOT_COLUMN },
-  body: { paddingHorizontal: space[5], gap: blockGap },
-  numbers: { flexDirection: 'row', flexWrap: 'wrap', gap: resultLayout.numbersGap },
   number: {
     flexGrow: 1,
     flexBasis: '40%',

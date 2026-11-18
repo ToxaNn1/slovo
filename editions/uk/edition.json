@@ -109,7 +109,6 @@
     "crosswordSolveTime": "off",
     "crosswordSolvedScreen": "off",
     "crosswordBadgeStamp": "off",
-    "finishPoster": "on",
     "gameAnswerBanner": "on",
     "gameRoundMascot": "off",
     "gameQuestionOnGround": "on",
@@ -847,7 +846,6 @@
     "streakMilestone": "Серія росте — ще один день поспіль!",
     "gameRight": "Влучно!",
     "gameWrong": "Майже. Наступне вийде.",
-    "gameEnd": "Гру завершено. Гарна розминка!",
     "empty": "Це ненадовго."
   },
   "contentTargets": {

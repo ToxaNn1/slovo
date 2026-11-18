@@ -18,8 +18,6 @@ export interface Shown {
   readonly tabs: readonly Tab[];
   /** The Game Review under the Game's result. */
   readonly gameReview: boolean;
-  /** The end poster of a Game, «Фініш» or «Час!» or the Lives-over one, in place of the old result screen (spec #1674). */
-  readonly finishPoster: boolean;
   /** The Mascot beside the question of a Round (ADR 0139). */
   readonly gameRoundMascot: boolean;
   /** The question on the background, labels without numbers and the visible Lives line (ADR 0139). */
@@ -225,7 +223,6 @@ export function shownOf({
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
-    finishPoster: on('finishPoster'),
     gameRoundMascot: on('gameRoundMascot'),
     gameQuestionOnGround: on('gameQuestionOnGround'),
     gameOptionStamp: on('gameOptionStamp'),
