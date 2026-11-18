@@ -534,9 +534,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   correctionTypeGrid: FeatureSwitchStateSchema,
   /** The Category's Feed: a tap on a Word of a Category's screen opens a Feed of that Category's Words alone, from the tapped one in Language Pack order and round again after the last (ADR 0110); off, the tap opens the Word's card as Search does. Off while `categoryScreens` is. */
   categoryFeed: FeatureSwitchStateSchema,
-  /** Known first on a Category's screen: its Known Entries, stamped «ЗНАЮ», come before the rest, each group in Language Pack order (ADR 0111); off, all in Language Pack order as the board draws. Off while `categoryScreens` is. */
-  categoryKnownFirst: FeatureSwitchStateSchema,
-  /** Quiet Categories: the quiet variant of a Category screen and the muted tile for a Category whose tone is `quiet` (ADR 0081); off, a quiet Category draws loud. Off while `categoryScreens` is. */
   /** «Скопіювати посилання» on the share sheet of a Collection, which copies its Collection Link with `expo-clipboard` (ADR 0132); off until the EAS build with that module is out, and off the sheet keeps the system Share alone. Off while `collectionLinks` is. */
   collectionLinkCopy: FeatureSwitchStateSchema,
   /** The Due Quiz «Перевір себе» on «Вчу»: three meanings for each Word due for Review today, right sets Known and wrong Unknown (ADR 0131); off, «Вчу» has no card. Off while `knowledge` is. */

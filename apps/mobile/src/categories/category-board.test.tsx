@@ -68,11 +68,9 @@ let shellOf: () => ReturnType<typeof testShell>;
 /** Opens the composition over two Categories of Words, «Емоції» with three live Words and a Retired one, «Порожня» with none. */
 async function open({
   categoryFeed = true,
-  categoryKnownFirst = true,
   wordTabs = false,
 }: {
   categoryFeed?: boolean;
-  categoryKnownFirst?: boolean;
   wordTabs?: boolean;
 } = {}) {
   const shipped = loadEdition(activeEditionFiles.config);
@@ -81,13 +79,11 @@ async function open({
     isFeatureEnabled: (feature) =>
       feature === 'categoryFeed'
         ? categoryFeed
-        : feature === 'categoryKnownFirst'
-          ? categoryKnownFirst
-          : feature === 'wordTabs'
-            ? wordTabs
-            : feature === 'dashboard' ||
-              feature === 'categoryScreens' ||
-              shipped.isFeatureEnabled(feature),
+        : feature === 'wordTabs'
+          ? wordTabs
+          : feature === 'dashboard' ||
+            feature === 'categoryScreens' ||
+            shipped.isFeatureEnabled(feature),
   };
   const userState = await seedUserState(
     { onboardingFinished: '2026-09-01T09:00:00.000Z' },
@@ -240,14 +236,14 @@ describe('the Category screen', () => {
     expect(screen.queryByTestId('category-entry-w_sumyrnyi-known')).toBeNull();
   });
 
-  it("lists a card per live Word in pack order, «ЗНАЮ» on a Known one, and with the Category's Feed off a tap opens its Entry without a Seen", async () => {
-    await open({ categoryFeed: false, categoryKnownFirst: false });
+  it("lists a card per live Word, a Known one first with «ЗНАЮ», and with the Category's Feed off a tap opens its Entry without a Seen", async () => {
+    await open({ categoryFeed: false });
     await composition.knowledge.set('w_tykhyi', 'known');
     await renderCategory('emotions-character');
 
     const meanings = screen.getAllByText(/^Значення слова /);
     expect(meanings).toHaveLength(3);
-    ['сумирний', 'лагідний', 'тихий'].forEach((lemma, at) => {
+    ['тихий', 'сумирний', 'лагідний'].forEach((lemma, at) => {
       expect(meanings[at]).toHaveTextContent(`Значення слова ${lemma}.`);
     });
     // The stamp reads «ЗНАЮ»: the Edition's «Знаю» in the stamp's capitals.

@@ -152,7 +152,6 @@ const validConfig = {
     correctionCategoryScreens: 'on',
     correctionTypeGrid: 'on',
     categoryFeed: 'on',
-    categoryKnownFirst: 'on',
     collectionLinkCopy: 'on',
     dueQuiz: 'on',
     profileConfirmedByRarity: 'on',
@@ -1045,11 +1044,6 @@ describe('loadEdition', () => {
       'featureSwitches.categoryFeed',
     ],
     [
-      'a missing Known-first Feature Switch',
-      withoutSwitch('categoryKnownFirst'),
-      'featureSwitches.categoryKnownFirst',
-    ],
-    [
       'a missing correctionCategoryScreens Feature Switch',
       withoutSwitch('correctionCategoryScreens'),
       'featureSwitches.correctionCategoryScreens',
@@ -1618,7 +1612,6 @@ const dependentSwitches = [
   ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],
   ['correctionTypeGrid', ['correctionCategoryScreens', 'dashboard', 'wordOfTheDay', 'corrections']],
   ['categoryFeed', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
-  ['categoryKnownFirst', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
   ['gameSurvival', ['corrections', 'game']],
   ['gameAnglicism', ['corrections', 'game']],
   ['gameTypeWord', ['corrections', 'game']],

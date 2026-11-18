@@ -166,8 +166,6 @@ export interface Shown {
   readonly feedTab: boolean;
   /** A tap on a Word of a Category's screen opens the Category's Feed (ADR 0110). */
   readonly categoryFeed: boolean;
-  /** A Category's screen lists its Known Entries first (ADR 0111). */
-  readonly categoryKnownFirst: boolean;
   /** The Mood check-in block of the Dashboard, «Як настрій?» (ADR 0076). */
   readonly mood: boolean;
   /** The Curated Collections rail of the Dashboard, «Добірки» (ADR 0076). */
@@ -292,7 +290,6 @@ export function shownOf({
     heroSparks: on('heroSparks'),
     feedTab: on('feedTab'),
     categoryFeed: on('categoryFeed'),
-    categoryKnownFirst: on('categoryKnownFirst'),
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
     swipeMarks: on('swipeMarks'),

@@ -75,7 +75,6 @@ const everything: Shown = {
   heroSparks: true,
   feedTab: true,
   categoryFeed: true,
-  categoryKnownFirst: true,
   mood: true,
   curatedCollections: true,
   swipeMarks: true,
@@ -157,10 +156,6 @@ describe('what the reader is shown', () => {
     [
       "a Word's card from a Category's screen with the Category's Feed off",
       { off: ['categoryFeed'], shown: { categoryFeed: false } },
-    ],
-    [
-      "a Category's screen in Language Pack order alone with Known first off",
-      { off: ['categoryKnownFirst'], shown: { categoryKnownFirst: false } },
     ],
     [
       'a «Стрічка» tab to the Dashboard with the Feed tab off',
