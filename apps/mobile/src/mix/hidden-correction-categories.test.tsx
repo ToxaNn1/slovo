@@ -173,7 +173,7 @@ describe('a Category of Corrections hidden from its card', () => {
 
     // The undo toast takes «Показати» back: the Category is out of the Mix and listed again.
     expect(
-      screen.getByText(`«Виправлення: ${work.displayName}» знову у Стрічці`),
+      screen.getByText(`«Виправлення: ${work.displayName}» знову в Стрічці`),
     ).toBeOnTheScreen();
     await fireEvent.press(screen.getByText(editionStrings.hidden.undo));
     await waitFor(() => {
