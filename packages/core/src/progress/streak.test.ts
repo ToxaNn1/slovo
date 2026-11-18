@@ -377,6 +377,8 @@ describe('the Break', () => {
       firstDay: '2026-10-28',
       lastDay: '2026-11-01',
       nextStart: '2026-11-27',
+      // 30 October to 1 November, today included.
+      daysLeft: 3,
     });
     if (state.kind !== 'running') throw new Error('The Break does not run');
     // The 14 days ending the day after the Break's last day: 20 October to 2 November.
