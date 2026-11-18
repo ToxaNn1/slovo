@@ -8,7 +8,7 @@
 
 Spec #1564 (owner decisions of 2026-11-04). The app opened straight into the Feed, which left no place to see the day at a glance, and Mood (ADR 0054) was a roulette over hand-tagged Words with no memory and no effect on the Feed. The «Рупор» boards draw the home as a Dashboard.
 
-**The Dashboard is the home.** The route behind the «Стрічка» tab renders the Dashboard: the Word of the Day hero, the Mood check-in, «Попередні слова», the Curated Collections rail and the Correction Types rail. The Feed is opened from it. With `dashboard` off the Feed is the home as before and the «Стрічка» tab opens it. Onboarding still ends on the home route (amends ADR 0067: «the Feed» at its end becomes the home), and every «open the home» path (notification, widget, App Intent, Collection Link) lands on the home route; the «Слово дня» App Intent still lands on the Word of the Day card in the Feed, opened over the Dashboard.
+**The Dashboard is the home.** The route behind the «Стрічка» tab renders the Dashboard: the Word of the Day hero, the Mood check-in, «Попередні слова», the Curated Collections rail and the Correction Types rail. The Feed is opened from it. The Dashboard has no Feature Switch of its own (ADR 0176): the hero shows while `wordOfTheDay` is on, and every other block has its own switch. Onboarding still ends on the home route (amends ADR 0067: «the Feed» at its end becomes the home), and every «open the home» path (notification, widget, App Intent, Collection Link) lands on the home route; the «Слово дня» App Intent still lands on the Word of the Day card in the Feed, opened over the Dashboard.
 
 **The reveal goes through the Feed's Seen (amends ADR 0016).** «Розкрити» on the hero shows the Lemma with its Stress and the short Definition and makes the Word of the Day Seen through the Feed's own Seen, so it joins the archive, History and the Seen XP as a dwell would; the Feed stays the owner of Seen. Revealed is derived, not stored: today's Word of the Day is Seen in the current Cycle. «До картки →» opens the Feed on the Word of the Day card. An Entry opened from a previous Word, a Curated Collection or a Correction Type makes nothing Seen, as in Search.
 
@@ -24,7 +24,7 @@ Spec #1564 (owner decisions of 2026-11-04). The app opened straight into the Fee
 
 **Tab bar.** Стрічка · Ігри (absent with `game` off) · Збережене · Профіль. It is shell only, with no Core change and no switch.
 
-**Feature Switches** (required of every Edition, ADR 0089): `dashboard` (needs `wordOfTheDay`), `mood`, `previousWords` (also `wordOfTheDayArchive`), `curatedCollections` and `correctionTypes` (also `corrections`); the last four need `dashboard`. The UA Edition has all on but `curatedCollections`.
+**Feature Switches** (required of every Edition, ADR 0089): `mood`, `previousWords` (needs `wordOfTheDayArchive`), `curatedCollections` and `correctionTypes` (needs `corrections`). The UA Edition has all on but `curatedCollections`.
 
 ## Considered Options
 

@@ -96,7 +96,7 @@ import { openWordOfTheDay } from './feed/word-of-the-day';
 export interface Composition extends Hiding {
   /** The Feed of the app session. */
   readonly feed: Feed;
-  /** The Dashboard, the home's blocks for the local day (ADR 0076); none with `dashboard` off. */
+  /** The Dashboard, the home's blocks for the local day (ADR 0076). */
   readonly dashboard: Dashboard;
   /** The Correction Types, the rail's tiles and each type's Corrections (ADR 0076); none with `correctionTypes` off. */
   readonly correctionTypes: CorrectionTypes;

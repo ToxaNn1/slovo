@@ -66,7 +66,6 @@ const everything: Shown = {
   search: true,
   searchField: true,
   fastReveal: true,
-  dashboard: true,
   dashboardWordmark: true,
   dailySplash: true,
   heroSparks: true,

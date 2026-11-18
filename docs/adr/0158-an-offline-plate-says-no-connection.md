@@ -6,9 +6,9 @@ Before this, each action that needs the network said «no connection» its own w
 
 **Where it shows.** Only where an action needs the network and finds none: sharing a Collection Link, every request of the Account (signing in, signing out everywhere, deleting) and a sync while the Account screen is open. With the plate on, those toasts and the offline line under the Account's field are gone, and the Sync line gives the last sync instead of «чекає на мережу». The Feed never shows it: the Feed works offline. A screen whose content itself could not be fetched, such as a Collection Link's preview, keeps its own state.
 
-**How.** `OfflinePlateProvider` of `@slovo/ui` wraps every screen in the root layout and `useOfflinePlate()` shows it; the app's `useOfflineNotice()` gives it only while the Feature Switch `offlinePlate` is on in effect. The text is the Edition's string `offlinePlate`.
+**How.** `OfflinePlateProvider` of `@slovo/ui` wraps every screen in the root layout and `useOfflinePlate()` shows it. The text is the Edition's string `offlinePlate`.
 
-**Feature Switch.** `offlinePlate`; off, each action says it as before.
+**Feature Switch.** None: the plate is how these actions say there is no connection, and their old toasts and lines are gone (ADR 0176).
 
 ## Considered Options
 

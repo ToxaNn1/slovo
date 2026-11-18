@@ -24,11 +24,11 @@ const content = createMemoryContentPort({
   ],
 });
 
-/** The Core composition of one app run over the records, the Dashboard on unless said otherwise. */
+/** The Core composition of one app run over the records, the Word of the Day on unless said otherwise. */
 async function run({
   records = new Map<string, string>(),
   clock = fakeClock('2026-11-04T09:00:00+02:00').clock,
-  on = ['wordOfTheDay', 'wordOfTheDayArchive', 'dashboard'],
+  on = ['wordOfTheDay', 'wordOfTheDayArchive'],
 }: { records?: Map<string, string>; clock?: Clock; on?: FeatureSwitch[] } = {}) {
   const app = await openComposition({
     content,
@@ -95,10 +95,10 @@ describe('The Dashboard', () => {
     expect(heroOf(app.dashboard.blocks).number).toBe(4);
   });
 
-  it('has no Word of the Day block with `dashboard` off', async () => {
-    const { app } = await run({ on: ['wordOfTheDay', 'wordOfTheDayArchive'] });
+  it('has no Word of the Day block with `wordOfTheDay` off', async () => {
+    const { app } = await run({ on: ['wordOfTheDayArchive', 'mood'] });
 
-    expect(app.dashboard.blocks).toEqual([]);
+    expect(app.dashboard.blocks.map(({ kind }) => kind)).toEqual(['mood']);
   });
 
   it('reveals the Lemma with its Stress, part of speech, Rarity and short Definition, and makes the Word Seen and archived', async () => {
@@ -189,7 +189,7 @@ describe('The Dashboard', () => {
 });
 
 describe('«Попередні слова» on the Dashboard', () => {
-  const on: FeatureSwitch[] = ['wordOfTheDay', 'wordOfTheDayArchive', 'dashboard', 'previousWords'];
+  const on: FeatureSwitch[] = ['wordOfTheDay', 'wordOfTheDayArchive', 'previousWords'];
 
   it('shows the three newest archive days before today, newest first, a Retired Word kept', async () => {
     const { app } = await run({
@@ -269,7 +269,7 @@ describe('The Categories rail on the Dashboard', () => {
     blocks.find((block) => block.kind === 'categories');
 
   it('lists the Categories of Words of the Language Pack in its order', async () => {
-    const { app } = await run({ on: ['wordOfTheDay', 'dashboard', 'categoryScreens'] });
+    const { app } = await run({ on: ['wordOfTheDay', 'categoryScreens'] });
     const categories = await content.listCategories();
 
     expect(categories.length).toBeGreaterThan(0);
@@ -287,7 +287,6 @@ describe('«SLOVO пропонує» on the Dashboard', () => {
   const on: FeatureSwitch[] = [
     'wordOfTheDay',
     'wordOfTheDayArchive',
-    'dashboard',
     'previousWords',
     'categoryScreens',
     'curatedCollections',

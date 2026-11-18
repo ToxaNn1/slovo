@@ -333,10 +333,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Швидка поява карток',
     line: 'Перша картка з’являється з повною анімацією, наступні швидше.',
   },
-  dashboard: {
-    name: 'Головна',
-    line: 'Початковий екран зі словом дня та добірками замість стрічки.',
-  },
   mood: { name: 'Настрій', line: 'На головній раз на день питають «Як настрій?».' },
   previousWords: { name: 'Попередні слова', line: 'На головній показані три останні слова дня.' },
   correctionTypes: {
@@ -441,10 +437,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   textSizeSteps: {
     name: 'Розмір тексту',
     line: 'Три розміри тексту: як у системі, більший і найбільший.',
-  },
-  offlinePlate: {
-    name: 'Плашка «Немає з’єднання»',
-    line: 'Коли поділитися колекцією, увійти чи синхронізувати не виходить без мережі, згори з’являється плашка.',
   },
   statisticsOffCounter: {
     name: 'Лічильник вимкнень статистики',

@@ -21,7 +21,7 @@ const collections = [
 /** The Core composition of one app run over the records, the Curated Collections on unless said otherwise. */
 async function run({
   records = new Map<string, string>(),
-  on = ['wordOfTheDay', 'dashboard', 'curatedCollections'],
+  on = ['wordOfTheDay', 'curatedCollections'],
   curatedCollections = collections,
   start = '2026-11-04T09:00:00+02:00',
   port = createMemoryUserStatePort(records),
@@ -69,13 +69,9 @@ describe('The Curated Collections rail', () => {
       }),
       edition: testEdition({
         isFeatureEnabled: (feature) =>
-          [
-            'wordOfTheDay',
-            'dashboard',
-            'curatedCollections',
-            'corrections',
-            'correctionTypes',
-          ].includes(feature),
+          ['wordOfTheDay', 'curatedCollections', 'corrections', 'correctionTypes'].includes(
+            feature,
+          ),
       }),
       userState: await openUserState({ port: createMemoryUserStatePort() }),
       clock: fakeClock('2026-11-04T09:00:00+02:00').clock,
@@ -208,7 +204,7 @@ describe('The Curated Collections rail', () => {
   });
 
   it('has no rail and no block with `curatedCollections` off', async () => {
-    const { app } = await run({ on: ['wordOfTheDay', 'dashboard'] });
+    const { app } = await run({ on: ['wordOfTheDay'] });
 
     expect(app.curatedCollections.rail).toEqual([]);
     expect(app.curatedCollections.grid).toEqual([]);
@@ -236,7 +232,7 @@ describe('The Curated Collections rail', () => {
       }),
       edition: testEdition({
         isFeatureEnabled: (feature) =>
-          ['wordOfTheDay', 'dashboard', 'curatedCollections'].includes(feature),
+          ['wordOfTheDay', 'curatedCollections'].includes(feature),
         curatedCollectionPictogram: 'nature',
       }),
       userState: await openUserState({ port: createMemoryUserStatePort() }),
@@ -278,7 +274,7 @@ describe('A Curated Collection screen', () => {
       }),
       edition: testEdition({
         isFeatureEnabled: (feature) =>
-          ['wordOfTheDay', 'dashboard', 'curatedCollections', 'knowledge'].includes(feature),
+          ['wordOfTheDay', 'curatedCollections', 'knowledge'].includes(feature),
       }),
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
       clock: time.clock,

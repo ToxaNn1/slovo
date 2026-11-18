@@ -127,7 +127,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   sounds: 'look',
   reduceMotion: 'look',
   fastReveal: 'feed',
-  dashboard: 'feed',
   mood: 'feed',
   previousWords: 'feed',
   correctionTypes: 'content',
@@ -158,7 +157,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   readerName: 'account',
   widgetPreviews: 'widgets',
   textSizeSteps: 'look',
-  offlinePlate: 'look',
   statisticsOffCounter: 'analytics',
   entryPanelAllKinds: 'content',
 };

@@ -128,8 +128,7 @@ export interface CuratedCollectionsBlock {
 
 /**
  * The Dashboard (ADR 0076): the home's blocks for the local day the
- * composition turned to last. They follow the day change and Seen; with
- * `dashboard` off there are none.
+ * composition turned to last. They follow the day change and Seen.
  */
 export interface Dashboard {
   /** The blocks in display order. A change makes a new array and tells the subscribers. */
@@ -169,7 +168,7 @@ export async function openDashboard({
   dayTurned: { subscribe(listener: (day: LocalDate) => unknown): unknown };
 }): Promise<Dashboard> {
   const subscribers = createSubscribers();
-  const on = edition.isFeatureEnabled('dashboard');
+  const wordOfTheDayOn = edition.isFeatureEnabled('wordOfTheDay');
   const moodOn = edition.isFeatureEnabled('mood');
   const previousWordsOn = edition.isFeatureEnabled('previousWords');
   const categoriesOn = edition.isFeatureEnabled('categoryScreens');
@@ -217,9 +216,8 @@ export async function openDashboard({
   }
 
   async function blocksOf(): Promise<readonly DashboardBlock[]> {
-    if (!on) return [];
     const blocks: DashboardBlock[] = [];
-    const wordOfTheDayHero = await hero();
+    const wordOfTheDayHero = wordOfTheDayOn ? await hero() : undefined;
     if (wordOfTheDayHero !== undefined)
       blocks.push({ kind: 'wordOfTheDay', hero: wordOfTheDayHero });
     const moodCheckIn = moodBlock();
@@ -255,13 +253,11 @@ export async function openDashboard({
     shownKey = key;
     subscribers.tell();
   }
-  if (on) {
-    seen.subscribe(() => refresh());
-    dayTurned.subscribe(() => refresh());
-    mood.subscribe(() => void refresh());
-    correctionTypes.subscribe(() => void refresh());
-    curatedCollections.subscribe(() => void refresh());
-  }
+  seen.subscribe(() => refresh());
+  dayTurned.subscribe(() => refresh());
+  mood.subscribe(() => void refresh());
+  correctionTypes.subscribe(() => void refresh());
+  curatedCollections.subscribe(() => void refresh());
 
   return {
     get blocks() {

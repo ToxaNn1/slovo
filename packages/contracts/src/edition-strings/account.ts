@@ -5,12 +5,11 @@ import { PluralSchema, templateOf } from './shared';
 
 /**
  * The line under the field for each problem the Account can meet. The keys are
- * the problems the Core gives, so a problem without a line, or a line for a
- * problem the Core never gives, is refused.
+ * the problems the Core gives but `offline`, which the offline plate says
+ * (ADR 0158), so a problem without a line, or a line for a problem the Core
+ * never gives, is refused.
  */
 const AccountProblemsSchema = z.strictObject({
-  /** The request found no network. */
-  offline: TextSchema,
   /** The email is not an email; nothing was sent. */
   'invalid-email': TextSchema,
   /** The code is wrong. Takes `{count}`, the tries left, which picks the form. */
@@ -27,13 +26,11 @@ const AccountProblemsSchema = z.strictObject({
 
 /**
  * The status line under the email of the SLOVO ID screen: when the words were
- * last synced, that a sync is running, or that it waits for the network.
+ * last synced, or that a sync is running.
  */
 const SyncStatusStringsSchema = z.strictObject({
   /** While a sync runs. */
   syncing: TextSchema,
-  /** When the last attempt found no network. */
-  waitingForNetwork: TextSchema,
   /** The last sync was today. Takes `{time}`, e.g. «14:05». */
   syncedToday: templateOf('time'),
   /** The last sync was another day of this year. Takes `{day}` and `{month}`. */

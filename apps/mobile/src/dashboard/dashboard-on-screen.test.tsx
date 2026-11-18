@@ -96,38 +96,33 @@ let userState: TrackedUserState;
 let composition: Composition;
 
 /**
- * Opens the composition over three Words, with `dashboard` on or off. Today's
+ * Opens the composition over three Words. Today's
  * Word of the Day is сумирний, and the reader was on a later card of the Feed.
  */
-async function open(
-  dashboard: boolean,
-  {
-    previousWords = true,
-    curatedCollections = true,
-    categoryScreens = true,
-    correctionCategoryScreens = true,
-    correctionTypeGrid = true,
-  } = {},
-) {
+async function open({
+  previousWords = true,
+  curatedCollections = true,
+  categoryScreens = true,
+  correctionCategoryScreens = true,
+  correctionTypeGrid = true,
+} = {}) {
   const shipped = loadEdition(config);
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
-      feature === 'dashboard'
-        ? dashboard
-        : feature === 'categoryScreens'
-          ? categoryScreens
-          : feature === 'correctionCategoryScreens'
-            ? correctionCategoryScreens
-            : feature === 'correctionTypeGrid'
-              ? correctionTypeGrid
-              : feature === 'previousWords'
-                ? previousWords && shipped.isFeatureEnabled(feature)
-                : // The UA Edition ships the rail off till a content spec (ADR 0076); the test turns it on.
-                  feature === 'curatedCollections'
-                  ? curatedCollections
-                  : // No later question takes the Word of the Day's place in the Feed.
-                    feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
+      feature === 'categoryScreens'
+        ? categoryScreens
+        : feature === 'correctionCategoryScreens'
+          ? correctionCategoryScreens
+          : feature === 'correctionTypeGrid'
+            ? correctionTypeGrid
+            : feature === 'previousWords'
+              ? previousWords && shipped.isFeatureEnabled(feature)
+              : // The UA Edition ships the rail off till a content spec (ADR 0076); the test turns it on.
+                feature === 'curatedCollections'
+                ? curatedCollections
+                : // No later question takes the Word of the Day's place in the Feed.
+                  feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   userState = await seedUserState(
     {
@@ -243,7 +238,7 @@ async function layOutFeed() {
 
 describe('the home', () => {
   it('shows the Dashboard with the Word of the Day hero unrevealed', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     expect(screen.getByTestId('dashboard')).toBeTruthy();
@@ -253,7 +248,7 @@ describe('the home', () => {
   });
 
   it('dates its header by the Feed\u2019s day, as the Feed header does', async () => {
-    await open(true);
+    await open();
     // The device's clock a day on from the composition's: the header follows the Feed.
     jest.setSystemTime(new Date('2026-10-29T09:00:00Z'));
     await renderApp();
@@ -261,19 +256,11 @@ describe('the home', () => {
     expect(screen.getByText('ср, 28 жовтня')).toBeTruthy();
     expect(screen.queryByText('чт, 29 жовтня')).toBeNull();
   });
-
-  it('shows the Feed with `dashboard` off', async () => {
-    await open(false);
-    await renderApp();
-
-    expect(screen.queryByTestId('dashboard')).toBeNull();
-    expect(screen.getByTestId('feed')).toBeTruthy();
-  });
 });
 
 describe('the Word of the Day hero', () => {
   it('«Розкрити» reveals the Word in place and makes it Seen', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.reveal)));
@@ -285,7 +272,7 @@ describe('the Word of the Day hero', () => {
   });
 
   it('«До картки →», once revealed, opens the Feed on the Word of the Day card', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     expect(screen.queryByText(editionStrings.dashboard.toCard)).toBeNull();
@@ -301,7 +288,7 @@ describe('the Word of the Day hero', () => {
 
 describe('the Mood check-in', () => {
   it('a Mood tile chooses today’s Mood, turns chosen and says its reply in a toast', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     expect(screen.getByText(editionStrings.dashboard.mood.question)).toBeTruthy();
@@ -323,7 +310,7 @@ describe('the Mood check-in', () => {
   });
 
   it('another tile changes today’s Mood', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-energetic')));
@@ -341,7 +328,7 @@ describe('the Mood check-in', () => {
 
 describe('«Попередні слова»', () => {
   it('lists yesterday’s Word, and a tap opens its Entry without making it Seen', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     expect(screen.getByText(editionStrings.dashboard.previousWords.title)).toBeTruthy();
@@ -355,7 +342,7 @@ describe('«Попередні слова»', () => {
   });
 
   it('is absent with `previousWords` off', async () => {
-    await open(true, { previousWords: false });
+    await open({ previousWords: false });
     await renderApp();
 
     expect(screen.getByTestId('dashboard-hero')).toBeTruthy();
@@ -365,7 +352,7 @@ describe('«Попередні слова»', () => {
 
 describe('the Correction Types rail', () => {
   it('the title counts the tiles, a tile names its type and opens the type\u2019s screen', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     const { correctionTypes: words } = editionStrings.dashboard;
@@ -387,7 +374,7 @@ describe('the Correction Types rail', () => {
   });
 
   it('its header opens the grid of the rail\u2019s types alone, with no Categories under them (owner 15.11)', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     const { dashboard } = editionStrings;
@@ -405,7 +392,7 @@ describe('the Correction Types rail', () => {
   });
 
   it('a type\u2019s tile in the grid its header opens opens the type\u2019s screen', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     const { correctionTypes: words } = editionStrings.dashboard;
@@ -418,7 +405,7 @@ describe('the Correction Types rail', () => {
   });
 
   it('with `correctionTypeGrid` off its header opens k2 alone, titled «Виправлення»', async () => {
-    await open(true, { correctionTypeGrid: false });
+    await open({ correctionTypeGrid: false });
     await renderApp();
 
     const { correctionTypes: words, correctionCategories } = editionStrings.dashboard;
@@ -430,7 +417,7 @@ describe('the Correction Types rail', () => {
   });
 
   it('its header is a plain title with `correctionCategoryScreens` off', async () => {
-    await open(true, { correctionCategoryScreens: false });
+    await open({ correctionCategoryScreens: false });
     await renderApp();
 
     const title = screen.getByTestId('dashboard-correction-types-title');
@@ -439,7 +426,7 @@ describe('the Correction Types rail', () => {
   });
 
   it('«Відповідь» shows the standard form and the explanation, and counts it «розібрано»', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-correction-type-surzhyk')));
@@ -466,7 +453,7 @@ describe('the Correction Types rail', () => {
 
 describe('the Categories rail', () => {
   it('reads «Категорії» with their number, a tile with a Category’s name and no count', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     const title = screen.getByTestId('dashboard-categories-title');
@@ -479,7 +466,7 @@ describe('the Categories rail', () => {
   });
 
   it('is absent with `categoryScreens` off, the other blocks as today', async () => {
-    await open(true, { categoryScreens: false });
+    await open({ categoryScreens: false });
     await renderApp();
 
     expect(screen.queryByTestId('dashboard-categories')).toBeNull();
@@ -488,7 +475,7 @@ describe('the Categories rail', () => {
   });
 
   it('its header opens k1, the grid of every Category, and a tile there opens the Category', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-categories-title')));
@@ -505,7 +492,7 @@ describe('the Categories rail', () => {
   });
 
   it('a tile on the rail opens its Category’s screen', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     await settle(() =>
@@ -518,7 +505,7 @@ describe('the Categories rail', () => {
 
 describe('the Curated Collections rail', () => {
   it('reads «SLOVO пропонує» with the count of collections, a tile with its name, and a tap opens it', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     const title = screen.getByTestId('dashboard-curated-collections-title');
@@ -535,7 +522,7 @@ describe('the Curated Collections rail', () => {
   });
 
   it('shows a tile\u2019s count of Entries and «Нова» till a tap opens it', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     const tile = screen.getByTestId('dashboard-curated-collection-cc_lahidni');
@@ -552,7 +539,7 @@ describe('the Curated Collections rail', () => {
   });
 
   it('a card opens the collection\u2019s screen: its name, description, «Знаю X з N» and Entries', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     await settle(() =>
@@ -572,7 +559,7 @@ describe('the Curated Collections rail', () => {
   });
 
   it('a Known mark counts at once and shows on its row', async () => {
-    await open(true);
+    await open();
     await renderApp();
     await settle(() =>
       fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
@@ -591,7 +578,7 @@ describe('the Curated Collections rail', () => {
   });
 
   it('shows the error with a retry when its read fails, and the retry reads it again', async () => {
-    await open(true);
+    await open();
     await renderApp();
     jest
       .spyOn(composition.curatedCollections, 'screen')
@@ -609,7 +596,7 @@ describe('the Curated Collections rail', () => {
   });
 
   it('a tap on a row opens its Entry without making it Seen', async () => {
-    await open(true);
+    await open();
     await renderApp();
     await settle(() =>
       fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
@@ -622,7 +609,7 @@ describe('the Curated Collections rail', () => {
   });
 
   it('«ДОДАТИ СОБІ» copies it into the Collections and turns to «У МІКСІ» with the tick', async () => {
-    await open(true);
+    await open();
     await renderApp();
     await settle(() =>
       fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
@@ -639,7 +626,7 @@ describe('the Curated Collections rail', () => {
   });
 
   it('shows the added mark on the card once copied', async () => {
-    await open(true);
+    await open();
     await renderApp();
     await settle(() =>
       fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
@@ -654,7 +641,7 @@ describe('the Curated Collections rail', () => {
   });
 
   it('is absent with `curatedCollections` off', async () => {
-    await open(true, { curatedCollections: false });
+    await open({ curatedCollections: false });
     await renderApp();
 
     expect(screen.getByTestId('dashboard-hero')).toBeTruthy();

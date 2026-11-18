@@ -37,7 +37,7 @@ async function run() {
     }),
     edition: testEdition({
       isFeatureEnabled: (feature) =>
-        ['wordOfTheDay', 'dashboard', 'curatedCollections'].includes(feature),
+        ['wordOfTheDay', 'curatedCollections'].includes(feature),
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: fakeClock('2026-11-04T09:00:00+02:00').clock,
