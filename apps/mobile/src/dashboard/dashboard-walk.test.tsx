@@ -254,15 +254,15 @@ describe('the whole Dashboard', () => {
     ]);
 
     // A Curated Collection: its screen shows its Entries and «Знаю X з N».
-    // DESIGN-05: not on the board, owner decides
-    // expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeTruthy();
+    expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-mark')).toHaveTextContent(
+      'Нова',
+    );
     await press('dashboard-curated-collection-cc_lahidni');
     expect(screen.getByTestId('curated-collection')).toBeTruthy();
     expect(screen.getByText('Знаю 0 з 2')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
     await back('curated-collection-back');
-    // DESIGN-05: not on the board, owner decides
-    // expect(screen.queryByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeNull();
+    expect(screen.queryByTestId('dashboard-curated-collection-cc_lahidni-mark')).toBeNull();
 
     // «До картки →» opens the Feed on the Word of the Day card.
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));
