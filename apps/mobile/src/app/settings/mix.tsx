@@ -1,6 +1,6 @@
-import { BackLink, ScreenTitle, space, useTokens } from '@slovo/ui';
+import { BackHeader, space, useTokens } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
@@ -27,16 +27,17 @@ export default function MixScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <BackLink
-          testID="mix-back"
-          label={editionStrings.settings.title}
-          onPress={() => {
-            router.back();
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={strings.title}
+          back={{
+            label: editionStrings.settings.title,
+            testID: 'mix-back',
+            onPress: () => {
+              router.back();
+            },
           }}
         />
-        <View style={styles.header}>
-          <ScreenTitle>{strings.title}</ScreenTitle>
-        </View>
         <MixChoices />
       </ScrollView>
     </SafeAreaView>

@@ -1,5 +1,5 @@
 import type { Composition, OptionQuestion } from '@slovo/core';
-import { BackLink, Button, Chip, ScreenTitle, SectionLabel, space, useTokens } from '@slovo/ui';
+import { BackHeader, Button, Chip, SectionLabel, space, useTokens } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -57,16 +57,17 @@ export function QuestionnaireScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <BackLink
-          testID="questionnaire-back"
-          label={settings.title}
-          onPress={() => {
-            router.back();
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={settings.questionnaireRetake.title}
+          back={{
+            label: settings.title,
+            testID: 'questionnaire-back',
+            onPress: () => {
+              router.back();
+            },
           }}
         />
-        <View style={styles.section}>
-          <ScreenTitle>{settings.questionnaireRetake.title}</ScreenTitle>
-        </View>
         {questions.map(({ question, title }) => (
           <View key={question} style={styles.section}>
             <SectionLabel>{title}</SectionLabel>
