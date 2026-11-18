@@ -660,7 +660,6 @@ export async function openComposition({
   const badges = await openBadges({
     edition,
     userState,
-    clock,
     xpLog,
     knowledge,
     activeDays,
