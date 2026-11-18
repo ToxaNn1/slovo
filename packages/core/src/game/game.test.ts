@@ -1601,7 +1601,7 @@ describe('the Words a Game asks about', () => {
     await playGame(app, [3, 4]);
     await playGame(app, [3, 4, 5]);
 
-    expect(writes).toEqual([userStateRecords.gameBest.record('guess-word').change(15)]);
+    expect(writes).toEqual([userStateRecords.gameBest.record('guess-word').change(13)]);
     expect(app.history.list).toEqual([]);
   });
 });
@@ -1938,7 +1938,7 @@ describe('the Best result per mode', () => {
     let now = new Date('2026-10-12T09:00:00+03:00').getTime();
     const time: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
     const app = await run({ records, time });
-    expect(app.game.state.bestResults['guess-word']).toBe(7);
+    expect(app.game.state.bestResults['guess-word']).toBe(5);
 
     // Read every card, then the card after the end-of-Cycle card starts a new Cycle.
     while (app.feed.cards.at(-1)?.kind !== 'end-of-cycle') {
@@ -1951,11 +1951,11 @@ describe('the Best result per mode', () => {
     await app.history.clear();
 
     expect(app.history.list).toEqual([]);
-    expect(app.game.state.bestResults['guess-word']).toBe(7);
-    expect(app.progress.state.bestResult).toBe(7);
+    expect(app.game.state.bestResults['guess-word']).toBe(5);
+    expect(app.progress.state.bestResult).toBe(5);
     const reopened = await run({ records, time });
-    expect(reopened.game.state.bestResults['guess-word']).toBe(7);
-    expect(reopened.progress.state.bestResult).toBe(7);
+    expect(reopened.game.state.bestResults['guess-word']).toBe(5);
+    expect(reopened.progress.state.bestResult).toBe(5);
   });
 
   it("rides on its mode's offer, out of the mode's Round limit, or bare in a mode with none", async () => {
@@ -1982,14 +1982,14 @@ describe('the Best result per mode', () => {
       await play(app, right, () => 0);
     }
 
-    // «4», a bare number, once its first Game is over.
+    // «2», a bare number of right answers, once its first Game is over.
     expect(current(app)).toMatchObject({ roundsPassed: 4, status: 'lost' });
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'test-lemma',
       entryKind: 'word',
       group: 'words',
       canStart: true,
-      best: { result: 4 },
+      best: { result: 2 },
     });
     expect(app.game.state.modes[0]).toMatchObject({ best: { result: 12, of: 15 } });
   });
@@ -2028,11 +2028,11 @@ describe('the Best result per mode', () => {
 
     await playGame(app, [6, 7, 8]);
 
-    expect(app.progress.state).toEqual({ ...before, bestResult: 7 });
+    expect(app.progress.state).toEqual({ ...before, bestResult: 5 });
     expect(told).toBe(1);
   });
 
-  it('shows the single best result a 0.8.11 app kept as the Best result of «Вгадай слово»', async () => {
+  it('reads no Best result a 0.8.11 app kept, which counted Rounds passed', async () => {
     const records = new Map([
       ['schema.version', '5'],
       ['app.installed', 'true'],
@@ -2040,12 +2040,12 @@ describe('the Best result per mode', () => {
     ]);
     const app = await run({ records, gameModes: [lemmaMode] });
 
-    expect(app.game.state.bestResults).toEqual({ 'guess-word': 9 });
-    expect(app.progress.state.bestResult).toBe(9);
+    expect(app.game.state.bestResults).toEqual({});
+    expect(app.progress.state.bestResult).toBeUndefined();
 
-    // A Game that passes 10 Rounds beats it; one that passes 9 would not.
+    // The first finished Game sets it: 8 right answers.
     await playGame(app, [9, 10, 11]);
-    expect(app.game.state.bestResults).toEqual({ 'guess-word': 10 });
+    expect(app.game.state.bestResults).toEqual({ 'guess-word': 8 });
   });
 
   it('is absent on the Game and in the progress snapshot when the Edition turns the Game off', async () => {
