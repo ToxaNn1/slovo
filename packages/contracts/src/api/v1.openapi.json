@@ -9184,14 +9184,6 @@
                           ],
                           "type": "string"
                         },
-                        "newLevelScreen": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "badgeSheet": {
                           "enum": [
                             "on",
@@ -9320,23 +9312,7 @@
                           ],
                           "type": "string"
                         },
-                        "gameThreeLives": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "survivalOneLife": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "timedTwentySeconds": {
                           "enum": [
                             "on",
                             "off",
@@ -9908,7 +9884,6 @@
                         "questionnaire",
                         "badges",
                         "levelLadder",
-                        "newLevelScreen",
                         "badgeSheet",
                         "badgeToast",
                         "badgeFamiliesOverview",
@@ -9925,9 +9900,7 @@
                         "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
-                        "gameThreeLives",
                         "survivalOneLife",
-                        "timedTwentySeconds",
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
@@ -11235,14 +11208,6 @@
                           ],
                           "type": "string"
                         },
-                        "newLevelScreen": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "badgeSheet": {
                           "enum": [
                             "on",
@@ -11371,23 +11336,7 @@
                           ],
                           "type": "string"
                         },
-                        "gameThreeLives": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "survivalOneLife": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "timedTwentySeconds": {
                           "enum": [
                             "on",
                             "off",
@@ -11959,7 +11908,6 @@
                         "questionnaire",
                         "badges",
                         "levelLadder",
-                        "newLevelScreen",
                         "badgeSheet",
                         "badgeToast",
                         "badgeFamiliesOverview",
@@ -11976,9 +11924,7 @@
                         "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
-                        "gameThreeLives",
                         "survivalOneLife",
-                        "timedTwentySeconds",
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
@@ -13210,14 +13156,6 @@
                           ],
                           "type": "string"
                         },
-                        "newLevelScreen": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "badgeSheet": {
                           "enum": [
                             "on",
@@ -13346,23 +13284,7 @@
                           ],
                           "type": "string"
                         },
-                        "gameThreeLives": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "survivalOneLife": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "timedTwentySeconds": {
                           "enum": [
                             "on",
                             "off",
@@ -13934,7 +13856,6 @@
                         "questionnaire",
                         "badges",
                         "levelLadder",
-                        "newLevelScreen",
                         "badgeSheet",
                         "badgeToast",
                         "badgeFamiliesOverview",
@@ -13951,9 +13872,7 @@
                         "survivalStreak",
                         "finishPoster",
                         "gameAnswerBanner",
-                        "gameThreeLives",
                         "survivalOneLife",
-                        "timedTwentySeconds",
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",

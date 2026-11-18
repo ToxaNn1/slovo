@@ -59,7 +59,11 @@ export default function SavedScreen() {
   const favorites = useFavoriteList();
   const collections = useCollectionList();
   const learning = useLearningList();
-  const { learning: learningShown, wordOfTheDayArchive: archiveShown } = useShown();
+  const {
+    learning: learningShown,
+    wordOfTheDayArchive: archiveShown,
+    searchField: searchShown,
+  } = useShown();
   const archive = useWordOfTheDayArchive() ?? [];
   const history = useHistoryCount();
   const { colors } = useTokens();
@@ -108,15 +112,17 @@ export default function SavedScreen() {
         <View style={styles.inset}>
           <ScreenTitle>{editionStrings.tabs.saved}</ScreenTitle>
         </View>
-        <View style={styles.inset}>
-          <SearchLink
-            testID="saved-search"
-            label={editionStrings.search.placeholder}
-            onPress={() => {
-              openScreen('/search');
-            }}
-          />
-        </View>
+        {searchShown && (
+          <View style={styles.inset}>
+            <SearchLink
+              testID="saved-search"
+              label={editionStrings.search.placeholder}
+              onPress={() => {
+                openScreen('/search');
+              }}
+            />
+          </View>
+        )}
         <SavedTabs
           testID="saved"
           tabs={tabs}

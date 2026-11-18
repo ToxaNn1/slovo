@@ -249,10 +249,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Драбина рівнів',
     line: 'У профілі видно всі назви рівнів і смугу до наступної назви.',
   },
-  newLevelScreen: {
-    name: 'Екран нового рівня',
-    line: 'Новий рівень відзначає великий червоний екран.',
-  },
   badgeSheet: {
     name: 'Картка відзнаки',
     line: 'Дотик до відзнаки відкриває її назву, дату або прогрес.',
@@ -314,14 +310,9 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Смужка відповіді',
     line: 'Після відповіді смужка каже, правильно чи ні, і гра йде далі сама.',
   },
-  gameThreeLives: { name: 'Три життя', line: 'Гра починається з трьома життями замість п’яти.' },
   survivalOneLife: {
     name: 'Одне життя у «Виживанні»',
     line: 'У «Виживанні» лише одне життя замість трьох.',
-  },
-  timedTwentySeconds: {
-    name: '20 секунд на час',
-    line: 'У грі «На час» дають 20 секунд замість 60.',
   },
   gameRoundMascot: {
     name: 'Талісман у грі',

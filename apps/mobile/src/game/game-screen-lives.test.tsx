@@ -5,7 +5,6 @@ import {
   open,
   renderScreen,
   answerSurvivalRound,
-  pickAnotherWord,
   pickTheWordOfThePrompt,
   timerLabel,
   pass,
@@ -15,19 +14,6 @@ import {
 beforeEach(resetGameScreen);
 
 describe('the Games boards’ Lives and time (ADR 0137)', () => {
-  it('starts a Game with 3 Lives and loses one to a wrong answer', async () => {
-    await open({ switchedOn: ['gameThreeLives'] });
-    await renderScreen();
-
-    await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
-    await waitFor(() => {
-      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 3 з 3');
-    });
-    await pickAnotherWord();
-
-    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Життів: 2 з 3');
-  });
-
   it('ends «Виживання» on the first mistake with its 1 Life', async () => {
     await open({ corrections: 15, switchedOn: ['survivalOneLife'] });
     await renderScreen();
@@ -59,18 +45,18 @@ describe('the Games boards’ Lives and time (ADR 0137)', () => {
     });
 
     /** Starts «На час» with the faked system time, which the faked timers move and the timer reads too. */
-    async function startTimed(switchedOn: readonly string[]) {
+    async function startTimed() {
       await open({
         clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
         schedule: systemSchedule,
-        switchedOn: ['finishPoster', ...switchedOn],
+        switchedOn: ['finishPoster'],
       });
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
     }
 
     it('runs 20 seconds and goes straight to «Фініш» once they are up', async () => {
-      await startTimed(['timedTwentySeconds']);
+      await startTimed();
       await waitFor(() => {
         expect(timerLabel()).toBe('лишилось 20 секунд');
       });
@@ -91,20 +77,6 @@ describe('the Games boards’ Lives and time (ADR 0137)', () => {
       expect(screen.getByText('ФІНІШ')).toBeOnTheScreen();
       expect(screen.queryByText('ЧАС!')).toBeNull();
       expect(screen.getByText('1 з 1 влучання')).toBeOnTheScreen();
-    });
-
-    it('runs 60 seconds and heads the poster «Час!» with timedTwentySeconds off', async () => {
-      await startTimed([]);
-      await waitFor(() => {
-        expect(timerLabel()).toBe('лишилось 60 секунд');
-      });
-      await pass(60_000);
-
-      await waitFor(() => {
-        expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
-      });
-      expect(screen.getByText('ЧАС!')).toBeOnTheScreen();
-      expect(screen.queryByText('ФІНІШ')).toBeNull();
     });
   });
 });

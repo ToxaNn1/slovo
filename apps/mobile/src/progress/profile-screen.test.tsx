@@ -4,6 +4,7 @@ import {
   createMemorySessionStore,
   openAccount,
   systemRandom,
+  type Edition,
   type FeatureSwitch,
   type UserStateFact,
 } from '@slovo/core';
@@ -20,12 +21,18 @@ import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { edition, editionStrings } from '../edition/edition';
+import { edition as shipped, editionStrings } from '../edition/edition';
 import { openOnce } from '../opening';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider, type ShareCard } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { ProfileScreen } from './profile-screen';
+
+/** The UA Edition as it ships, with the Daily Crossword on, so its Badges show (ADR 0176). */
+const edition: Edition = {
+  ...shipped,
+  isFeatureEnabled: (feature) => feature === 'dailyCrossword' || shipped.isFeatureEnabled(feature),
+};
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
@@ -158,7 +165,16 @@ async function renderScreen({
     contentUpdate: undefined,
     store: createMemoryContentStore(),
   });
-  const composition = await testShell({ userState, languagePack }).composition.opened();
+  const remoteSwitches = switchedTo({
+    ...edition,
+    isFeatureEnabled: (feature) =>
+      feature === switchedOff ? false : feature === switchedOn || edition.isFeatureEnabled(feature),
+  });
+  const composition = await testShell({
+    userState,
+    languagePack,
+    remoteSwitches,
+  }).composition.opened();
   for (let round = 0; round < rounds; round += 1) {
     composition.xpLog
       .award({ source: 'game-round', mode: 'guess-word', rarity: undefined })
@@ -173,13 +189,7 @@ async function renderScreen({
         shell={testShell({
           userState,
           composition: opened(composition),
-          remoteSwitches: switchedTo({
-            ...edition,
-            isFeatureEnabled: (feature) =>
-              feature === switchedOff
-                ? false
-                : feature === switchedOn || edition.isFeatureEnabled(feature),
-          }),
+          remoteSwitches,
           settings: await settingsAt({ noCounters }),
           account,
           shareCard,

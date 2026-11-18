@@ -318,8 +318,6 @@ export const GameStringsSchema = z.strictObject({
     won: TextSchema,
     /** Over one with fewer right, e.g. «Ще раунд!». */
     more: TextSchema,
-    /** The head of a time-up, e.g. «Час!». */
-    timeUp: TextSchema,
     /** The right answers, e.g. «12 з 15 влучань». Takes `{count}`, the right answers, and `{total}`. */
     hits: pluralOf('total'),
     /** Over a new Best result, e.g. «Новий рекорд!». */

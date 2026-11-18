@@ -202,16 +202,16 @@ describe('a Game of «На час»', () => {
     expect(app.game.state.current?.end).toMatchObject({ kind: 'time-up', right: 1, played: 1 });
   });
 
-  it('lasts 60 seconds of play with timedTwentySeconds off, with no Lives, and asks Definition picks of Words', async () => {
+  it('has no Lives and asks Definition picks of Words', async () => {
     const time = handTime();
-    const app = await run({ time, off: ['timedTwentySeconds'] });
+    const app = await run({ time });
     await app.game.start('timed');
 
     expect(current(app)).toMatchObject({
       lives: undefined,
       status: 'playing',
-      timeLimit: 60_000,
-      time: { left: 60_000, endsAt: new Date(time.clock.now().getTime() + 60_000) },
+      timeLimit: 20_000,
+      time: { left: 20_000, endsAt: new Date(time.clock.now().getTime() + 20_000) },
     });
     for (let answered = 0; answered < 5; answered += 1) {
       const { round } = current(app);
@@ -221,7 +221,7 @@ describe('a Game of «На час»', () => {
       await pick(app, true);
     }
 
-    await pass(app, time, 59_999);
+    await pass(app, time, 19_999);
 
     expect(current(app).status).toBe('playing');
 
@@ -263,26 +263,26 @@ describe('a Game of «На час»', () => {
 
   it('stops its clock while paused in the background and runs it again on resume', async () => {
     const time = handTime();
-    const app = await run({ time, off: ['timedTwentySeconds'] });
+    const app = await run({ time });
     await app.game.start('timed');
-    await pass(app, time, 20_000);
+    await pass(app, time, 5_000);
 
     await app.game.pause();
 
-    expect(current(app).time).toEqual({ left: 40_000, endsAt: undefined });
+    expect(current(app).time).toEqual({ left: 15_000, endsAt: undefined });
 
     await pass(app, time, 5 * 60_000);
 
-    expect(current(app)).toMatchObject({ status: 'playing', time: { left: 40_000 } });
+    expect(current(app)).toMatchObject({ status: 'playing', time: { left: 15_000 } });
 
     await app.game.resume();
 
     expect(current(app).time).toEqual({
-      left: 40_000,
-      endsAt: new Date(time.clock.now().getTime() + 40_000),
+      left: 15_000,
+      endsAt: new Date(time.clock.now().getTime() + 15_000),
     });
 
-    await pass(app, time, 39_999);
+    await pass(app, time, 14_999);
 
     expect(current(app).status).toBe('playing');
 

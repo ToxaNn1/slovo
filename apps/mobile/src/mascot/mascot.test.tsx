@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import { openComposition, type Composition, type UserStateFact } from '@slovo/core';
+import { openComposition, type Composition, type Edition, type UserStateFact } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, SEEN_DWELL_MS } from '@slovo/core/testing';
 import { EditionProvider, RouteProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
@@ -8,12 +8,18 @@ import { renderInGestureRoot } from '../shell/test-render';
 import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { edition, editionStrings } from '../edition/edition';
+import { edition as shipped, editionStrings } from '../edition/edition';
 import { fill } from '@slovo/contracts';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { CELEBRATION_MS, MascotCelebrations } from './mascot';
+
+/** The UA Edition as it ships, with the Daily Crossword on, so its Badges show (ADR 0176). */
+const edition: Edition = {
+  ...shipped,
+  isFeatureEnabled: (feature) => feature === 'dailyCrossword' || shipped.isFeatureEnabled(feature),
+};
 
 const { mascot } = edition;
 
@@ -42,10 +48,9 @@ const word: Word = {
   retired: false,
 };
 
-/** The celebrations over a Core composition with one Word, whose clock moves with the fake timers, with the Mascot and the new Level screen on or off in effect and the counters hidden or not. */
+/** The celebrations over a Core composition with one Word, whose clock moves with the fake timers, with the Mascot on or off in effect and the counters hidden or not. */
 async function renderCelebrations({
   on = true,
-  levelScreen = false,
   noCounters = false,
   badgeToast = false,
   crosswordStamp = false,
@@ -66,13 +71,11 @@ async function renderCelebrations({
       isFeatureEnabled: (feature) =>
         feature === 'mascot'
           ? on
-          : feature === 'newLevelScreen'
-            ? levelScreen
-            : feature === 'badgeToast'
-              ? badgeToast
-              : feature === 'crosswordBadgeStamp'
-                ? crosswordStamp
-                : edition.isFeatureEnabled(feature),
+          : feature === 'badgeToast'
+            ? badgeToast
+            : feature === 'crosswordBadgeStamp'
+              ? crosswordStamp
+              : edition.isFeatureEnabled(feature),
     }),
     settings: await settingsAt({ noCounters }),
   });
@@ -133,6 +136,10 @@ async function solveCrossword(composition: Composition) {
     // Settles the writes without running the celebration's timer out.
     await jest.advanceTimersByTimeAsync(0);
   });
+  // The 7th solve's XP also reaches a new Level, whose screen comes first.
+  await fireEvent.press(
+    screen.getByRole('button', { name: editionStrings.settings.profile.newLevel.done }),
+  );
 }
 
 /** Wins a Game for the first time, which earns a Badge. */
@@ -174,7 +181,7 @@ afterEach(() => {
 
 // Ticket #1386: the Mascot's celebrations, which never interrupt the Feed.
 describe('the Mascot’s celebrations', () => {
-  it('celebrates the first Streak day, the Daily Goal met and a new Level, each for a while', async () => {
+  it('celebrates the first Streak day and the Daily Goal met, each for a while, and screens a new Level', async () => {
     const composition = await renderCelebrations();
     expect(shownMascot()).toBeNull();
 
@@ -206,7 +213,7 @@ describe('the Mascot’s celebrations', () => {
 
     // The 50th XP reaches Level 1.
     await playRounds(composition, 45);
-    expect(celebration('newLevel')).toHaveTextContent(mascot.newLevel);
+    expect(screen.getByTestId('new-level-line')).toHaveTextContent(mascot.newLevel);
   });
 
   it('celebrates a Badge earned by the first win in a Game Mode group', async () => {
@@ -354,7 +361,7 @@ describe('the new Level screen', () => {
   const title = fill(strings.title, { level: '1', name: edition.levels.names[0] ?? '' });
 
   it('shows at a new Level with its number and name and the Mascot, and «ГОТОВО» closes it', async () => {
-    const composition = await renderCelebrations({ levelScreen: true });
+    const composition = await renderCelebrations();
     await playRounds(composition, 49);
     expect(screen.queryByText(title)).toBeNull();
 
@@ -384,20 +391,11 @@ describe('the new Level screen', () => {
   });
 
   it('shows nothing while the reader hides the counters («Без лічильників», ADR 0066)', async () => {
-    const composition = await renderCelebrations({ levelScreen: true, noCounters: true });
+    const composition = await renderCelebrations({ noCounters: true });
 
     await playRounds(composition, 50);
 
     expect(screen.queryByText(title)).toBeNull();
     expect(shownMascot()).toBeNull();
-  });
-
-  it('leaves the Mascot’s overlay with its Feature Switch off', async () => {
-    const composition = await renderCelebrations();
-
-    await playRounds(composition, 50);
-
-    expect(screen.queryByText(title)).toBeNull();
-    expect(celebration('newLevel')).toHaveTextContent(mascot.newLevel);
   });
 });

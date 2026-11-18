@@ -20,7 +20,7 @@ type Answers = Partial<Record<OptionQuestion, string>>;
 /**
  * Settings › Пройти опитування ще раз (ADR 0067), one screen: «Рівень» and
  * «Навіщо» while the questionnaire is on, the self-rating while the Rarity
- * Test is on, and the interests. The screen holds the answers and «ГОТОВО»
+ * Test is on, and the interests while «Що тобі цікаво?» is on. The screen holds the answers and «ГОТОВО»
  * applies them through the Core's questionnaire, as the onboarding and the
  * Feed Notices do; leaving without it drops them. The Rarity Test has its own
  * row.
@@ -85,10 +85,16 @@ export function QuestionnaireScreen() {
             </View>
           </View>
         ))}
-        <View style={styles.section}>
-          <SectionLabel>{feedNotices.laterQuestions.interests.title}</SectionLabel>
-          <InterestChips testIDPrefix="questionnaire" picked={interests} onChange={setInterests} />
-        </View>
+        {shown.interests && (
+          <View style={styles.section}>
+            <SectionLabel>{feedNotices.laterQuestions.interests.title}</SectionLabel>
+            <InterestChips
+              testIDPrefix="questionnaire"
+              picked={interests}
+              onChange={setInterests}
+            />
+          </View>
+        )}
       </ScrollView>
       <View style={styles.footer}>
         <Button
@@ -103,7 +109,8 @@ export function QuestionnaireScreen() {
               const answerId = answers[question];
               return answerId === undefined ? [] : [{ question, answerId }];
             });
-            const changed = sameIds(interests, categoryIds) ? undefined : interests;
+            const changed =
+              !shown.interests || sameIds(interests, categoryIds) ? undefined : interests;
             // `apply` keeps going past a failed write, so the screen always closes after it.
             void apply(questionnaire, answered, changed).then(() => {
               router.back();

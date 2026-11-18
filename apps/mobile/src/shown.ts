@@ -23,11 +23,9 @@ export interface Shown {
   /** The streak counter of «Виживання» and its record, in place of the Rounds passed (spec #1674). */
   readonly survivalStreak: boolean;
   /** 3 Lives by default in place of 5 (ADR 0137). */
-  readonly gameThreeLives: boolean;
   /** 1 Life in «Виживання» in place of 3 (ADR 0137). */
   readonly survivalOneLife: boolean;
   /** 20 seconds in «На час» and no time-up poster, in place of 60 seconds and «Час!» (ADR 0137). */
-  readonly timedTwentySeconds: boolean;
   /** The Mascot beside the question of a Round (ADR 0139). */
   readonly gameRoundMascot: boolean;
   /** The question on the background, labels without numbers and the visible Lives line (ADR 0139). */
@@ -162,6 +160,8 @@ export interface Shown {
   readonly dailyGoal: boolean;
   /** The Search button of the «Стрічка» header, which opens the Search screen. */
   readonly search: boolean;
+  /** The search field of the Saved tab, which opens the Search screen; it is Search itself, so it goes with it (ADR 0054). */
+  readonly searchField: boolean;
   /** The fast reveal of the Feed's Entry cards after the first one in a visit; off, each plays the full reveal. */
   readonly fastReveal: boolean;
   /** Whether the home is the Dashboard, which opens the Feed; else the Feed is the home (ADR 0076). */
@@ -202,9 +202,15 @@ export interface Shown {
   /**
    * The «Пройти опитування ще раз» row of Settings, while any of its questions
    * is on: «Рівень» and «Навіщо» under the questionnaire, the self-rating
-   * under the Rarity Test it offers.
+   * under the Rarity Test it offers, the interests under «Що тобі цікаво?».
    */
-  readonly questionnaire: { readonly levelWhy: boolean; readonly selfRating: boolean } | undefined;
+  readonly questionnaire:
+    | {
+        readonly levelWhy: boolean;
+        readonly selfRating: boolean;
+        readonly interests: boolean;
+      }
+    | undefined;
 }
 
 /**
@@ -233,9 +239,7 @@ export function shownOf({
     gameReview: on('gameReview'),
     finishPoster: on('finishPoster'),
     survivalStreak: on('survivalStreak'),
-    gameThreeLives: on('gameThreeLives'),
     survivalOneLife: on('survivalOneLife'),
-    timedTwentySeconds: on('timedTwentySeconds'),
     gameRoundMascot: on('gameRoundMascot'),
     gameQuestionOnGround: on('gameQuestionOnGround'),
     gameOptionStamp: on('gameOptionStamp'),
@@ -294,6 +298,7 @@ export function shownOf({
     sync: on('sync'),
     dailyGoal: on('dailyGoal'),
     search: on('searchButton'),
+    searchField: on('search'),
     fastReveal: on('fastReveal'),
     dashboard: on('dashboard'),
     dashboardWordmark: on('dashboardWordmark'),
@@ -312,8 +317,12 @@ export function shownOf({
     rarity: on('rarityCeiling') ? (on('rarityRange') ? 'range' : 'top') : 'off',
     rarityTest: on('rarityTest'),
     questionnaire:
-      on('questionnaire') || on('rarityTest')
-        ? { levelWhy: on('questionnaire'), selfRating: on('rarityTest') }
+      on('questionnaire') || on('rarityTest') || on('interestsQuestion')
+        ? {
+            levelWhy: on('questionnaire'),
+            selfRating: on('rarityTest'),
+            interests: on('interestsQuestion'),
+          }
         : undefined,
   };
 }

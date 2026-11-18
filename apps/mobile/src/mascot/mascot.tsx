@@ -110,11 +110,10 @@ export function ShippedMascot({ state }: { state: MascotState }) {
 }
 
 /**
- * The Mascot's celebrations: a new Level, a Badge earned, the Daily Goal met
- * and a Streak milestone each show it for a while over the bottom of the
- * screen. It takes no touch and VoiceOver skips it, so it never interrupts
- * the Feed. While its Feature Switch is on, a new Level shows the new Level
- * screen instead, until the reader closes it. Nothing while the reader hides
+ * The Mascot's celebrations: a Badge earned, the Daily Goal met and a Streak
+ * milestone each show it for a while over the bottom of the screen. It takes
+ * no touch and VoiceOver skips it, so it never interrupts the Feed. A new
+ * Level shows the new Level screen, until the reader closes it. Nothing while the reader hides
  * the counters («Без лічильників», ADR 0066). With the `badgeToast` switch
  * on, a Badge earned shows its ink toast during a Game and its stamp anywhere
  * else (board 10.7), instead of the Mascot alone; the stamp's «ГОТОВО» opens
@@ -128,9 +127,7 @@ export function MascotCelebrations() {
   const [reached, setReached] = useState<{ level: number; name: string } | undefined>(undefined);
   const [earnedBadge, setEarnedBadge] = useState<Earned | undefined>(undefined);
   const route = useRouteOnScreen();
-  const screensNewLevel = useEffectEvent(
-    () => celebrations && edition.isFeatureEnabled('newLevelScreen'),
-  );
+  const screensNewLevel = useEffectEvent(() => celebrations);
   /**
    * How a Badge just earned shows: toasted or stamped, or with the Mascot
    * alone; a Badge of Daily Crosswords in a row earned on the crossword's
@@ -166,7 +163,6 @@ export function MascotCelebrations() {
     const stops = [
       xpLog.onLevelReached(({ level, name }) => {
         if (screensNewLevel()) setReached({ level, name });
-        else celebrate('newLevel');
       }),
       xpLog.subscribeGoalMet(() => {
         celebrate('dailyGoal');

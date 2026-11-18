@@ -420,7 +420,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** The Level ladder of the Profile: one card per Level name with its range of Levels, and the bar to the next name (spec #1641, ADR 0085); off while `xpLog` is. */
   levelLadder: FeatureSwitchStateSchema,
   /** The new Level screen: the full red ground with the Level stamped in, at every new Level, in place of the Mascot celebration (ADR 0085); off while `xpLog` is. */
-  newLevelScreen: FeatureSwitchStateSchema,
   /** The Badge sheet: a tap on any Badge opens its name, date or progress, and an unearned one answers with a toast (ADR 0085); off while `xpLog` or `badges` is. */
   badgeSheet: FeatureSwitchStateSchema,
   /** The Badge toast: a Badge earned during a Game shows a toast in place of the stamp (ADR 0085); off while `xpLog` or `badges` is. */
@@ -454,11 +453,9 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** The answer banner: after an answer a banner tells right or wrong, and the Game moves on by itself after a Core delay, with no «Далі →» (ADR 0138); off, the answer card of `gameAnswerCard`. Off while `game` is. */
   gameAnswerBanner: FeatureSwitchStateSchema,
   /** Three Lives: a Game starts with 3 Lives by default (ADR 0137); off, 5. Off while `game` is. */
-  gameThreeLives: FeatureSwitchStateSchema,
   /** One Life in «Виживання» (ADR 0137); off, 3. Off while `gameSurvival` is. */
   survivalOneLife: FeatureSwitchStateSchema,
   /** 20 seconds in «На час», then straight to «ФІНІШ» with no time-up poster (ADR 0137); off, 60 seconds and «Час!». Off while `gameTimed` is. */
-  timedTwentySeconds: FeatureSwitchStateSchema,
   /** The Mascot beside the question of a Round, in its waiting, glad, wincing and sad states (ADR 0139); off while `game` is. */
   gameRoundMascot: FeatureSwitchStateSchema,
   /** The question of a Round on the background with no card, labels with no Round number and the visible Lives line «Життів: {n} з {N}» (ADR 0139); off while `game` is. */

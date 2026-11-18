@@ -17,9 +17,7 @@ const everything: Shown = {
   gameReview: true,
   finishPoster: true,
   survivalStreak: true,
-  gameThreeLives: true,
   survivalOneLife: true,
-  timedTwentySeconds: true,
   gameRoundMascot: true,
   gameQuestionOnGround: true,
   gameOptionStamp: true,
@@ -73,6 +71,7 @@ const everything: Shown = {
   sync: true,
   dailyGoal: true,
   search: true,
+  searchField: true,
   fastReveal: true,
   dashboard: true,
   dashboardWordmark: true,
@@ -90,7 +89,7 @@ const everything: Shown = {
   wordOfTheDayArchive: true,
   rarity: 'range',
   rarityTest: true,
-  questionnaire: { levelWhy: true, selfRating: true },
+  questionnaire: { levelWhy: true, selfRating: true, interests: true },
 };
 
 interface Case {
@@ -176,6 +175,10 @@ describe('what the reader is shown', () => {
       { off: ['searchButton'], shown: { search: false } },
     ],
     [
+      'no search field on Saved with Search off',
+      { off: ['search'], shown: { searchField: false } },
+    ],
+    [
       'the full reveal on every Feed card with the fast reveal off',
       { off: ['fastReveal'], shown: { fastReveal: false } },
     ],
@@ -222,16 +225,8 @@ describe('what the reader is shown', () => {
       { off: ['survivalStreak'], shown: { survivalStreak: false } },
     ],
     [
-      'the spec #1674 Game with gameThreeLives off',
-      { off: ['gameThreeLives'], shown: { gameThreeLives: false } },
-    ],
-    [
       'the spec #1674 Game with survivalOneLife off',
       { off: ['survivalOneLife'], shown: { survivalOneLife: false } },
-    ],
-    [
-      'the spec #1674 Game with timedTwentySeconds off',
-      { off: ['timedTwentySeconds'], shown: { timedTwentySeconds: false } },
     ],
     [
       'the spec #1674 Game with gameRoundMascot off',
@@ -289,17 +284,40 @@ describe('what the reader is shown', () => {
       'no «Пройти тест ще раз» and no self-rating with the Rarity Test off',
       {
         off: ['rarityTest'],
-        shown: { rarityTest: false, questionnaire: { levelWhy: true, selfRating: false } },
+        shown: {
+          rarityTest: false,
+          questionnaire: { levelWhy: true, selfRating: false, interests: true },
+        },
       },
     ],
     [
       'the self-rating alone in «Пройти опитування ще раз» with the questionnaire off',
-      { off: ['questionnaire'], shown: { questionnaire: { levelWhy: false, selfRating: true } } },
+      {
+        off: ['questionnaire'],
+        shown: { questionnaire: { levelWhy: false, selfRating: true, interests: true } },
+      },
     ],
     [
-      'no «Пройти опитування ще раз» with the questionnaire and the Rarity Test off',
+      'no interests in «Пройти опитування ще раз» with «Що тобі цікаво?» off',
+      {
+        off: ['interestsQuestion'],
+        shown: { questionnaire: { levelWhy: true, selfRating: true, interests: false } },
+      },
+    ],
+    [
+      'the interests alone in «Пройти опитування ще раз» with the questionnaire and the Rarity Test off',
       {
         off: ['questionnaire', 'rarityTest'],
+        shown: {
+          rarityTest: false,
+          questionnaire: { levelWhy: false, selfRating: false, interests: true },
+        },
+      },
+    ],
+    [
+      'no «Пройти опитування ще раз» with its three questions off',
+      {
+        off: ['questionnaire', 'rarityTest', 'interestsQuestion'],
         shown: { rarityTest: false, questionnaire: undefined },
       },
     ],

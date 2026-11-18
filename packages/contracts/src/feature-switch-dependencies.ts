@@ -41,7 +41,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   badges: ['xpLog'],
   // The board 10 parts of the Profile and the Badges (ADR 0085).
   levelLadder: ['xpLog'],
-  newLevelScreen: ['xpLog'],
   streakFreezeCard: ['xpLog'],
   breakCard: ['xpLog'],
   calendarDayLines: ['xpLog'],
@@ -71,9 +70,7 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   finishPoster: ['game'],
   // The board «slogo game last» parts of a Game (spec #1880).
   gameAnswerBanner: ['game'],
-  gameThreeLives: ['game'],
   survivalOneLife: ['gameSurvival'],
-  timedTwentySeconds: ['gameTimed'],
   gameRoundMascot: ['game'],
   gameQuestionOnGround: ['game'],
   gameOptionStamp: ['game'],

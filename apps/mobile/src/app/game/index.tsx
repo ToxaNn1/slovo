@@ -69,7 +69,6 @@ function Game() {
     gameQuestionOnGround,
     gameRoundMascot,
     gameOptionStamp,
-    timedTwentySeconds,
     livesOverWarmup,
     plainGameReview,
   } = useShown();
@@ -116,7 +115,6 @@ function Game() {
             actions.start(current.modeId);
           }}
           onToGames={actions.leave}
-          timeUpToFinish={timedTwentySeconds}
           review={review}
           mascot={
             // The board's Mascot: glad for «ВЛУЧНО!», sad for «ЩЕ РАУНД!» and «Розминка!».

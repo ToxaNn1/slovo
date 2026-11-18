@@ -39,7 +39,6 @@ export function GameEndPoster({
   onToGames,
   review,
   mascot,
-  timeUpToFinish = false,
 }: {
   /** The Game just over. */
   game: CurrentGame;
@@ -57,8 +56,6 @@ export function GameEndPoster({
   review: ResultReview;
   /** The Mascot at the Game's end, drawn for the red panel; none without it. */
   mascot?: ReactNode;
-  /** Whether a time-up is headed «Фініш» like a finished Game, not «Час!». */
-  timeUpToFinish?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -104,7 +101,7 @@ export function GameEndPoster({
               adjustsFontSizeToFit
               style={[typeStyle('resultTitle', tokens), styles.finish, { color: keyInk }]}
             >
-              {upper(end.kind === 'time-up' && !timeUpToFinish ? finish.timeUp : finish.title)}
+              {upper(finish.title)}
             </Text>
           </FlyIn>
           {end.newBest ? (

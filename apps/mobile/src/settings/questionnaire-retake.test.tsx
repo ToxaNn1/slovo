@@ -28,8 +28,8 @@ import { SettingsProvider } from './settings';
 const { config } = activeEditionFiles;
 
 /**
- * The UA Edition as it ships, with the Feature Switches `off` given off and,
- * given one, the Daily Goal a reader has until they choose one.
+ * The UA Edition as it ships, with «Що тобі цікаво?» on, the Feature
+ * Switches `off` given off and, given one, the Daily Goal a reader has until they choose one.
  */
 function shippedEdition({ off = [] }: { off?: readonly FeatureSwitch[] } = {}): Edition {
   const { featureSwitches, userSettingDefaults, ...rest } = config as {
@@ -41,6 +41,7 @@ function shippedEdition({ off = [] }: { off?: readonly FeatureSwitch[] } = {}): 
     featureSwitches: {
       ...featureSwitches,
       account: 'off',
+      interestsQuestion: 'on',
       ...Object.fromEntries(off.map((feature) => [feature, 'off'])),
     },
     userSettingDefaults,
@@ -217,8 +218,19 @@ describe('Settings › «Пройти опитування ще раз»', () =>
     expect(screen.getByTestId('questionnaire-selfRating-many')).toBeTruthy();
   });
 
-  it('is not in Settings while the questionnaire and the Rarity Test are off', async () => {
-    await openWith(editionWithout('questionnaire', 'rarityTest'));
+  it('has no interests while «Що тобі цікаво?» is off', async () => {
+    await openWith(editionWithout('interestsQuestion'));
+    await render();
+    screenSettled();
+    await press(settings.rows.questionnaire);
+
+    expect(screen.getByTestId('questionnaire-level-good')).toBeTruthy();
+    expect(screen.queryByText(feedNotices.laterQuestions.interests.title)).toBeNull();
+    expect(screen.queryByTestId('questionnaire-interest-food')).toBeNull();
+  });
+
+  it('is not in Settings while the questionnaire, the Rarity Test and «Що тобі цікаво?» are off', async () => {
+    await openWith(editionWithout('questionnaire', 'rarityTest', 'interestsQuestion'));
     await render();
 
     expect(

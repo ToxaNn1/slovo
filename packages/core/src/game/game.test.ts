@@ -35,7 +35,7 @@ import { renderStress } from '../entries/stress';
 import { SEEN_DWELL_MS } from '../feed/feed';
 import { type GameMode } from './game-mode';
 import { type UserStateChanges } from '../ports';
-import { streakOf } from './game';
+import { GAME_LIVES, streakOf } from './game';
 import { createMemoryContentPort } from '../testing';
 import {
   fakeClock,
@@ -48,9 +48,6 @@ import {
 } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
-
-/** The Lives a Game starts with here, where `gameThreeLives` is off like every switch not named. */
-const LIVES_SWITCHED_OFF = 5;
 
 function word(
   id: string,
@@ -521,8 +518,8 @@ describe('a Round of «Вгадай слово»', () => {
       modeId: 'guess-word',
       roundsPassed: 0,
       roundLimit: GAME_ROUNDS,
-      lives: LIVES_SWITCHED_OFF,
-      livesAtStart: LIVES_SWITCHED_OFF,
+      lives: GAME_LIVES,
+      livesAtStart: GAME_LIVES,
       status: 'playing',
     });
     expect(game.round).toMatchObject({ number: 1, answer: undefined });
@@ -1357,7 +1354,7 @@ describe('the rules of a Game', () => {
 
     await app.game.start('guess-word');
 
-    expect(current(app)).toMatchObject({ roundsPassed: 0, lives: 5, status: 'playing' });
+    expect(current(app)).toMatchObject({ roundsPassed: 0, lives: GAME_LIVES, status: 'playing' });
     expect(current(app).round.number).toBe(1);
   });
 
@@ -1453,7 +1450,7 @@ describe('the rules of a Game', () => {
     expect(writes).toEqual([]);
     expect(current(app)).toMatchObject({
       roundsPassed: 0,
-      lives: LIVES_SWITCHED_OFF,
+      lives: GAME_LIVES,
       status: 'playing',
       round: { number: 1, answer: undefined },
     });
@@ -1604,7 +1601,7 @@ describe('the Words a Game asks about', () => {
     writes.length = 0;
 
     await playGame(app, [3, 4]);
-    await playGame(app, [1, 2, 3, 4, 5]);
+    await playGame(app, [3, 4, 5]);
 
     expect(writes).toEqual([userStateRecords.gameBest.record('guess-word').change(15)]);
     expect(app.history.list).toEqual([]);
@@ -1766,7 +1763,11 @@ describe('the Knowledge Marks a Game leaves', () => {
     ).rejects.toThrow('The disk is full');
     await app.game.next();
 
-    expect(current(app)).toMatchObject({ lives: 4, roundsPassed: 1, status: 'playing' });
+    expect(current(app)).toMatchObject({
+      lives: GAME_LIVES - 1,
+      roundsPassed: 1,
+      status: 'playing',
+    });
     expect(app.knowledge.state.shown.get(asked)).toBeUndefined();
     expect(learningOf(app)).toEqual([]);
   });
@@ -1775,7 +1776,7 @@ describe('the Knowledge Marks a Game leaves', () => {
     const records = dueOnThreeDays();
     const app = await run({ records, on: ['rarityCeiling'] });
 
-    await playGame(app, [1, 2, 3, 4, 5]);
+    await playGame(app, [3, 4, 5]);
     await playWrongOn(app, 'w_cnoun01');
 
     const on = await run({ records });
@@ -1802,7 +1803,7 @@ describe('the Best result per mode', () => {
     const records = new Map<string, string>();
     const app = await run({ records });
 
-    await playGame(app, [1, 2, 3, 4, 5]);
+    await playGame(app, [3, 4, 5]);
 
     expect(current(app)).toMatchObject({ roundsPassed: 4, status: 'lost' });
     expect(app.game.state.bestResults).toEqual({ 'guess-word': 4 });
@@ -1817,13 +1818,13 @@ describe('the Best result per mode', () => {
     writes.length = 0;
 
     // Lost in Round 8: 7 Rounds passed.
-    await playGame(app, [3, 5, 6, 7, 8]);
+    await playGame(app, [6, 7, 8]);
     expect(app.game.state.bestResults['guess-word']).toBe(7);
     // Lost in Round 5: 4 Rounds passed, fewer than 7.
-    await playGame(app, [1, 2, 3, 4, 5]);
+    await playGame(app, [3, 4, 5]);
     expect(app.game.state.bestResults['guess-word']).toBe(7);
     // Lost in Round 8 again: as many as 7, which doesn't beat it.
-    await playGame(app, [1, 2, 3, 4, 8]);
+    await playGame(app, [3, 4, 8]);
     expect(app.game.state.bestResults['guess-word']).toBe(7);
     await playGame(app, [2]);
     expect(app.game.state.bestResults['guess-word']).toBe(15);
@@ -1846,7 +1847,7 @@ describe('the Best result per mode', () => {
     expect(app.progress.state.bestResult).toBe(7);
 
     // A shorter Game of «Вгадай слово» leaves the other mode's Best result as it is.
-    await playGame(app, [1, 2, 3, 4, 5]);
+    await playGame(app, [3, 4, 5]);
     expect(app.game.state.bestResults).toEqual({ 'guess-word': 7, 'test-lemma': 15 });
   });
 
@@ -1875,8 +1876,8 @@ describe('the Best result per mode', () => {
       }
     });
 
-    await playGame(app, [9, 10, 11, 12, 13]);
-    await playGame(app, [1, 2, 3, 4, 5]);
+    await playGame(app, [11, 12, 13]);
+    await playGame(app, [3, 4, 5]);
 
     expect(finished).toEqual([
       { roundsPassed: 12, bestResult: 12 },
@@ -1892,9 +1893,9 @@ describe('the Best result per mode', () => {
     writes.length = 0;
     await app.game.start('guess-word');
     for (let round = 1; round <= 10; round += 1) await play(app, true);
-    // The fifth Life lost, but «Далі» not tapped: the Game isn't over yet.
+    // The last Life lost, but «Далі» not tapped: the Game isn't over yet.
     await app.game.start('guess-word');
-    for (let round = 1; round <= 4; round += 1) await play(app, false);
+    for (let round = 1; round < GAME_LIVES; round += 1) await play(app, false);
     void app.game.answer({ form: 'pick', option: (rightOf(current(app).round) + 1) % 4 });
 
     app.game.leave();
@@ -1915,7 +1916,7 @@ describe('the Best result per mode', () => {
       },
     });
     await app.game.start('guess-word');
-    for (let round = 1; round <= 4; round += 1) await play(app, false);
+    for (let round = 1; round < GAME_LIVES; round += 1) await play(app, false);
     await app.game.answer({ form: 'pick', option: (rightOf(current(app).round) + 1) % 4 });
     const answered = app.game.state;
 
@@ -1925,14 +1926,14 @@ describe('the Best result per mode', () => {
 
     failing = false;
     await app.game.next();
-    expect(current(app)).toMatchObject({ roundsPassed: 4, status: 'lost' });
-    expect(app.game.state.bestResults['guess-word']).toBe(4);
-    expect(guessWordBest.decode(records.get(guessWordBest.key))).toBe(4);
+    expect(current(app)).toMatchObject({ roundsPassed: GAME_LIVES - 1, status: 'lost' });
+    expect(app.game.state.bestResults['guess-word']).toBe(GAME_LIVES - 1);
+    expect(guessWordBest.decode(records.get(guessWordBest.key))).toBe(GAME_LIVES - 1);
   });
 
   it('survives reopening, a new Cycle and a cleared History', async () => {
     const records = new Map<string, string>();
-    await playGame(await run({ records }), [3, 5, 6, 7, 8]);
+    await playGame(await run({ records }), [6, 7, 8]);
     let now = new Date('2026-10-12T09:00:00+03:00').getTime();
     const time: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
     const app = await run({ records, time });
@@ -2065,7 +2066,7 @@ describe('the Best result per mode', () => {
       told += 1;
     });
 
-    await playGame(app, [3, 5, 6, 7, 8]);
+    await playGame(app, [6, 7, 8]);
 
     expect(app.progress.state).toEqual({ ...before, bestResult: 7 });
     expect(told).toBe(1);
@@ -2083,7 +2084,7 @@ describe('the Best result per mode', () => {
     expect(app.progress.state.bestResult).toBe(9);
 
     // A Game that passes 10 Rounds beats it; one that passes 9 would not.
-    await playGame(app, [7, 8, 9, 10, 11]);
+    await playGame(app, [9, 10, 11]);
     expect(app.game.state.bestResults).toEqual({ 'guess-word': 10 });
   });
 
@@ -2135,7 +2136,7 @@ describe('the Game Mode Extension Point', () => {
     expect(current(app)).toMatchObject({
       modeId: 'test-lemma',
       roundsPassed: 15,
-      lives: 4,
+      lives: GAME_LIVES - 1,
       status: 'won',
     });
     expect(new Set(prompts).size).toBe(GAME_ROUNDS);
@@ -2257,15 +2258,15 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
 
     expect(current(app)).toMatchObject({
       roundsPassed: 10,
-      lives: LIVES_SWITCHED_OFF,
+      lives: GAME_LIVES,
       status: 'won',
     });
     expect(new Set(prompts).size).toBe(10);
   });
 
-  it('plays «Вгадай слово» as before: 15 Rounds with 5 Lives', async () => {
+  it('plays «Вгадай слово» as before: 15 Rounds with 3 Lives', async () => {
     const app = await run();
-    const rounds = await playGame(app, [2, 4, 6, 8, 10]);
+    const rounds = await playGame(app, [6, 8, 10]);
 
     expect(rounds).toHaveLength(10);
     expect(current(app)).toMatchObject({ roundsPassed: 9, lives: 0, status: 'lost' });
@@ -2877,7 +2878,7 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
       expect(round).toMatchObject({ number, form: 'typed', blanks: undefined });
       expect(round.highlight).toBeUndefined();
       await app.game.answer({ form: 'typed', text: renderStress(asked).toUpperCase() });
-      expect(current(app)).toMatchObject({ status: 'answered', lives: LIVES_SWITCHED_OFF });
+      expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES });
       expect(current(app).round.answer).toMatchObject({
         form: 'typed',
         right: true,
@@ -2895,7 +2896,7 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
 
     await app.game.answer({ form: 'typed', text: asked.lemma.slice(1) });
 
-    expect(current(app)).toMatchObject({ status: 'answered', lives: LIVES_SWITCHED_OFF - 1 });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES - 1 });
     expect(current(app).round.answer).toMatchObject({
       form: 'typed',
       typed: asked.lemma.slice(1),
@@ -2958,7 +2959,7 @@ describe('the widget hint', () => {
     const app = await run({ on: hintOn });
     expect(app.game.state.widgetHint).toBe(false);
 
-    await playGame(app, [2, 6, 7, 15]);
+    await playGame(app, [2, 15]);
 
     expect(current(app)).toMatchObject({ lives: 1, status: 'won' });
     expect(app.game.state.widgetHint).toBe(true);
@@ -2967,7 +2968,7 @@ describe('the widget hint', () => {
   it('is not offered after losing all Lives, and is after the next Game with a Life left', async () => {
     const app = await run({ on: hintOn });
 
-    await playGame(app, [1, 2, 3, 4, 5]);
+    await playGame(app, [3, 4, 5]);
     expect(current(app).status).toBe('lost');
     expect(app.game.state.widgetHint).toBe(false);
 
@@ -3127,21 +3128,21 @@ describe('the end of a Game', () => {
   it('is `lives-over` once the last Life is lost', async () => {
     const app = await run();
 
-    await playGame(app, [1, 2, 4, 6, 8]);
+    await playGame(app, [4, 6, 8]);
 
-    expect(current(app).end).toMatchObject({ kind: 'lives-over', played: 8, right: 3 });
+    expect(current(app).end).toMatchObject({ kind: 'lives-over', played: 8, right: 5 });
   });
 
   it('says a new Best result only when the Game beats the one before', async () => {
     const app = await run();
 
-    await playGame(app, [1, 2, 3, 4, 5]);
+    await playGame(app, [3, 4, 5]);
     expect(current(app).end?.newBest).toBe(true);
 
-    await playGame(app, [1, 2, 3, 4, 5]);
+    await playGame(app, [3, 4, 5]);
     expect(current(app).end?.newBest).toBe(false);
 
-    await playGame(app, [2, 3, 4, 5, 6]);
+    await playGame(app, [4, 5, 6]);
     expect(current(app).end?.newBest).toBe(true);
   });
 
