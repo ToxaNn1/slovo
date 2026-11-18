@@ -1,16 +1,16 @@
 ---
-summary: The app's domain is one proxied Cloudflare zone split by path: `/<edition>/c/*` and `/.well-known/*` go to the Deployment, everything else to GitHub Pages; the API and the Owner admin stay at the Deployment's own address; the rule lives in Cloudflare and `docs/deploy.md` records it; amends 0049, 0058, 0063, 0071
+summary: The app's domain is one proxied Cloudflare zone split by path: `/<edition>/c/*` and `/.well-known/*` go to the Deployment, everything else to GitHub Pages; the API and the Owner admin stay at the Deployment's own address; the rule lives in Cloudflare and `docs/deploy.md` records it; amends 0049 and 0063
 ---
 
 # Cloudflare splits the app's domain by path
 
-Two sets of ADRs gave the app's domain (the AppConfig `domain`, `slovoapp.org` today) to two hosts. ADR 0049 and 0071 publish the landing and each Edition's legal pages there from GitHub Pages, and `apps/site/public/CNAME` names the domain. ADR 0058 and 0063 have the Deployment answer at the same domain: a Collection Link's page at `/<edition>/c/<id>` and `/.well-known/apple-app-site-association` for universal links. No ADR said who divides the paths, so a Collection Link had nowhere to live outside a simulator (the ADR audit of 2026-11-14).
+Two sets of ADRs gave the app's domain (the AppConfig `domain`, `slovoapp.org` today) to two hosts. ADR 0049 publishes the landing and each Edition's legal pages there from GitHub Pages, and `apps/site/public/CNAME` names the domain. ADR 0063 has the Deployment answer at the same domain: a Collection Link's page at `/<edition>/c/<id>` and `/.well-known/apple-app-site-association` for universal links. No ADR said who divides the paths, so a Collection Link had nowhere to live outside a simulator (the ADR audit of 2026-11-14).
 
 **The app's domain is one Cloudflare zone, proxied, and Cloudflare sends each request by its path:**
 
-- `/<edition>/c/*` goes to the Deployment: the Collection Link pages (ADR 0058).
-- `/.well-known/*` goes to the Deployment: `apple-app-site-association` (ADR 0058) and whatever a platform asks for there later.
-- Everything else goes to GitHub Pages: the landing at the root (ADR 0071) and the legal pages under `/<edition>/` (ADR 0049).
+- `/<edition>/c/*` goes to the Deployment: the Collection Link pages.
+- `/.well-known/*` goes to the Deployment: `apple-app-site-association` and whatever a platform asks for there later.
+- Everything else goes to GitHub Pages: the landing at the root and the legal pages under `/<edition>/` (ADR 0049).
 
 **The API and the Owner admin are not part of the split.** They stay at the Deployment's own address, the one the app takes from the EAS build environment (ADR 0063) and the Cloudflare zone already proxies for the Patch cache (ADR 0090). `/v1/*` and `/admin` at the app's domain reach GitHub Pages and answer its `404`.
 
@@ -18,7 +18,7 @@ Two sets of ADRs gave the app's domain (the AppConfig `domain`, `slovoapp.org` t
 
 **The Deployment sees two proxy hops on these paths**, Cloudflare and Railway's proxy, as it does on the API once the zone proxies it; `TRUSTED_PROXY_HOPS` is `2` (this amends the «exactly one hop» of ADR 0063, which stays the rule while only Railway's proxy stands in front).
 
-This amends ADR 0049, 0058, 0063 and 0071: each keeps its decision and now names the split for the paths it does not own.
+This amends ADRs 0049 and 0063: each keeps its decision and now names the split for the paths it does not own.
 
 ## Considered Options
 
