@@ -602,6 +602,8 @@ const contentWriteContract = {
         retired: z.stringbool().optional(),
         /** Only the records of this Category; a kind without Categories then lists none. */
         categoryId: z.string().min(1).max(200).optional(),
+        /** Only the records of these ids, at most a page of them; an unknown id lists none. */
+        ids: z.array(z.string().min(1).max(200)).max(CONTENT_PAGE_SIZE).optional(),
         /** The page from 1, of `CONTENT_PAGE_SIZE` records in label order; past the last one it lists none. */
         page: z.coerce.number<number>().int().positive().optional(),
       }),

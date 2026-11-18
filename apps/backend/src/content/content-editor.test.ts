@@ -154,6 +154,24 @@ describe('the content editor through an admin session', () => {
     expect(narrowed.records.map((each) => each.id)).toContain(WORD_ID);
   });
 
+  it('lists the records of the given ids, a Retired one on request, and none for an unknown id', async () => {
+    const backend = await editorBackend();
+    const { client: adminClient } = await signedInAdmin(backend, 'owner');
+    const snapshot = await backend.client.content.snapshot({ editionId: 'uk' });
+    const [first, second] = snapshot.words.filter((each) => each.retired !== true);
+    if (first === undefined || second === undefined) throw new Error('no Words');
+
+    const { records, total } = await adminClient.admin.content.records({
+      editionId: 'uk',
+      kind: 'word',
+      ids: [second.id, first.id, 'w_unknown0'],
+      retired: true,
+    });
+
+    expect(total).toBe(2);
+    expect(records.map((each) => each.id).sort()).toEqual([first.id, second.id].sort());
+  });
+
   it('lists the records a page of 50 at a time, with the count of every match', async () => {
     const backend = await editorBackend();
     const { client: adminClient } = await signedInAdmin(backend, 'owner');
