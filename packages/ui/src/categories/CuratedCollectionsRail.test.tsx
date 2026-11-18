@@ -37,6 +37,7 @@ function card(
       name: `Name ${id}`,
       description: `About ${id}`,
       publishedOn: '2026-11-01',
+      retired: false,
       entryIds: ['w_one', 'w_two', 'w_three'],
     },
     pictogram: { of: 'category', categoryId: 'feelings', position: 1 },

@@ -88,6 +88,8 @@ export function RecordForm({
   const [pending, setPending] = useState<PendingWrite>();
   const [busy, setBusy] = useState(false);
   const kind = editor.kind;
+  // The record as last written: a retired one is brought back instead of retired.
+  const retired = base.fields['retired'] === true;
   const card = useQuery({
     queryKey: ['edition-card', editionId],
     queryFn: () => adminApi.editionCard({ editionId }),
@@ -113,7 +115,9 @@ export function RecordForm({
     return Object.keys(unread).length === 0 ? next : undefined;
   };
 
+  /** Writes `fields` with `run`; once written they are the form's base. */
   const write = async (
+    fields: Fields,
     run: (batchId: string) => Promise<Written>,
   ): Promise<Written | undefined> => {
     setBusy(true);
@@ -123,7 +127,7 @@ export function RecordForm({
       const written = await run(batchId);
       setStale(undefined);
       setFieldErrors({});
-      setBase((previous) => ({ ...previous, recordVersion: written.recordVersion }));
+      setBase({ fields, recordVersion: written.recordVersion });
       onWritten(written);
       return written;
     } catch (error) {
@@ -173,14 +177,14 @@ export function RecordForm({
         title: 'Додати запис',
         confirm: 'Додати',
         run: (confirmed) =>
-          write((batchId) =>
+          write(next, (batchId) =>
             adminApi.content.create({ editionId, kind, batchId, fields: next, reason: confirmed }),
           ),
       });
       return;
     }
     setBase(over);
-    void write((batchId) =>
+    void write(next, (batchId) =>
       adminApi.content.edit({
         editionId,
         kind,
@@ -199,13 +203,38 @@ export function RecordForm({
       title: 'Вивести запис з ужитку',
       confirm: 'Вивести з ужитку',
       run: (confirmed) =>
-        write((batchId) =>
+        write({ ...base.fields, retired: true }, (batchId) =>
           adminApi.content.retire({
             editionId,
             kind,
             id: record.id,
             batchId,
             recordVersion: base.recordVersion,
+            reason: confirmed,
+          }),
+        ),
+    });
+  };
+
+  /**
+   * Brings a retired record back into use: an edit of its saved fields with
+   * `retired: false`, leaving the form's unsaved edits for a later save.
+   */
+  const bringBack = () => {
+    if (record.at !== 'edit') return;
+    const next = { ...base.fields, retired: false };
+    setPending({
+      title: 'Повернути запис в ужиток',
+      confirm: 'Повернути в ужиток',
+      run: (confirmed) =>
+        write(next, (batchId) =>
+          adminApi.content.edit({
+            editionId,
+            kind,
+            id: record.id,
+            batchId,
+            recordVersion: base.recordVersion,
+            fields: next,
             reason: confirmed,
           }),
         ),
@@ -298,7 +327,12 @@ export function RecordForm({
           <Button type="submit" disabled={busy}>
             Зберегти
           </Button>
-          {record.at === 'edit' && (
+          {record.at === 'edit' && retired && (
+            <Button type="button" variant="secondary" disabled={busy} onClick={bringBack}>
+              Повернути в ужиток
+            </Button>
+          )}
+          {record.at === 'edit' && !retired && (
             <Button type="button" variant="danger" disabled={busy} onClick={retire}>
               Вивести з ужитку
             </Button>

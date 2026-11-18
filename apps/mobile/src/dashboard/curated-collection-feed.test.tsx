@@ -117,6 +117,7 @@ async function open({ curatedCollectionFeed = true } = {}) {
           name: 'Мішанина',
           description: 'Слова й Виправлення впереміш.',
           publishedOn: '2026-10-25',
+          retired: false,
           entryIds: ['c_tipa', 'w_tykhyi', 'w_staryi', 'w_sumyrnyi'],
         },
       ],

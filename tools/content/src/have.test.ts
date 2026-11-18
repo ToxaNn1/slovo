@@ -35,6 +35,19 @@ describe('have', () => {
     expect(printed).toEqual([`${first.id}\tword\t${first.lemma}`]);
   });
 
+  it('leaves a Retired Curated Collection out', async () => {
+    const [live, gone] = seed.curatedCollections;
+    if (live === undefined || gone === undefined)
+      throw new Error('The seed has too few collections');
+    const withRetired = { ...seed, curatedCollections: [live, { ...gone, retired: true }] };
+    const { api } = backend({}, { content: { snapshot: () => withRetired } });
+    const { io, printed } = fakeIo();
+
+    expect(await have(api, { editionId: 'uk', kind: 'curatedCollection' }, io)).toBe(0);
+
+    expect(printed).toEqual([`${live.id}\tcuratedCollection\t${live.name}`]);
+  });
+
   it('exits 1 with the API refusal when there is no snapshot', async () => {
     const { api } = backend(
       {},
