@@ -208,7 +208,7 @@ export type PlayingGame = GameRounds & {
 
 /**
  * How long the answer banner shows before the Game moves on by itself, in
- * milliseconds (ADR 0138, 0178): after a right and a wrong answer, and in a
+ * milliseconds (ADR 0138, 0179): after a right and a wrong answer, and in a
  * Game Mode with a time limit, whose clock keeps running under it. A wrong
  * answer in a Game with no time limit keeps its banner, with the right
  * answer, until «Далі».
@@ -221,7 +221,7 @@ const ANSWER_BANNER_DELAYS = {
 /**
  * How long the banner of an answered Round shows before the Game moves on by
  * itself, in milliseconds; undefined when it waits for «Далі»: with no banner,
- * or after a wrong answer in a Game with no time limit (ADR 0178).
+ * or after a wrong answer in a Game with no time limit (ADR 0179).
  */
 export function answerBannerDelay(game: CurrentGame): number | undefined {
   if (game.status !== 'answered' || !game.banner) return undefined;

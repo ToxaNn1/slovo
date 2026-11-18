@@ -32,7 +32,7 @@ const ANNOUNCEMENT_LIMIT = 5000;
  * the praise and the XP the answer earned, on the ink for a wrong one with
  * «МИМО», or «ЖИТТЯ ВСЕ» when it took the last Life, and the right answer.
  * The Game moves on by itself after its delay, or, when the Core gives none
- * (a wrong answer with no time limit, ADR 0178), on the banner's «Далі →»,
+ * (a wrong answer with no time limit, ADR 0179), on the banner's «Далі →»,
  * which `onNext` names. With «Менше руху» it shows without
  * sliding. With VoiceOver on it is announced, and `onWaitFor` gets the
  * announcement, so the Game holds the Round until VoiceOver has read it.

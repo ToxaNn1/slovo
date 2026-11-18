@@ -654,7 +654,7 @@ describe('the Game screen', () => {
       }
       warning.mockClear();
       await pickAnotherWord();
-      // The wrong answer's banner shows no «Далі» in «На час» and moves on after 3 s (ADR 0178).
+      // The wrong answer's banner shows no «Далі» in «На час» and moves on after 3 s (ADR 0179).
       expect(warning).toHaveBeenCalled();
       expect(screen.queryByTestId('game-next')).toBeNull();
       await pass(3_000);
