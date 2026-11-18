@@ -459,7 +459,7 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 3, status: 'won' });
   });
 
-  it('highlights the non-standard form where the sentence holds it as written, and nothing where it is inflected', async () => {
+  it('highlights the whole words holding the non-standard form where the sentence holds it as written, and nothing where it is inflected', async () => {
     const rounds: Round[] = [];
     // One composition plays four Games, as in the test of stress traps below.
     const app = await run(1);
@@ -472,9 +472,12 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     expect(plain.length).toBeGreaterThan(0);
     for (const round of highlighted) {
       const { start = 0, end = 0 } = round.highlight ?? {};
-      expect(round.prompt.slice(start, end).toLowerCase()).toBe(
+      // «фан» lights up as the whole «фани».
+      expect(round.prompt.slice(start, end).toLowerCase()).toContain(
         askedOf(round).nonStandardForm.toLowerCase(),
       );
+      expect(round.prompt.charAt(start - 1)).not.toMatch(/\p{L}/u);
+      expect(round.prompt.charAt(end)).not.toMatch(/\p{L}/u);
     }
     for (const round of plain) {
       expect(round.prompt.toLowerCase()).not.toContain(
