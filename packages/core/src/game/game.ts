@@ -526,7 +526,7 @@ export interface Game {
   /**
    * «Далі» after an answer: at 0 Lives the Game is lost; after the last Round
    * of the mode's limit, or the last one it has, it is won; otherwise the next Round comes. A Game that ends with more
-   * Rounds passed than the best result becomes it, kept before it shows; when
+   * right answers than the best result makes them it, kept before it shows; when
    * that write fails, nothing changes. Nothing changes before an answer.
    */
   next(): Promise<void>;
@@ -585,12 +585,10 @@ const inPlay = <Game extends { readonly status: GameStatus }>(
   game.status === 'playing' || game.status === 'answered';
 
 /**
- * The result of a finished Game, which its mode's Best result keeps: the
- * right answers in a mode with no Lives, such as «На час», else the Rounds
- * passed (ADR 0052).
+ * The result of a finished Game, which its mode's Best result keeps: its
+ * right answers, in every mode, as its result screen counts them (ADR 0052).
  */
-const resultOf = (over: EndedGame): number =>
-  over.lives === undefined ? over.played.filter(({ right }) => right).length : over.roundsPassed;
+const resultOf = (over: EndedGame): number => over.played.filter(({ right }) => right).length;
 
 /**
  * How a Game just over ended, by its status: its last Life lost, its time up,
@@ -965,7 +963,7 @@ export async function openGame({
   }
 
   /**
-   * Ends the Game, its Rounds passed the best result when they beat it, kept
+   * Ends the Game, its right answers the best result when they beat it, kept
    * in the user state in one write with the XP of the last Round, of the
    * finished Game and of the new Best result, so a failed write changes
    * nothing, and offers the widget hint when it is due and a Life is left. A
@@ -977,10 +975,10 @@ export async function openGame({
     roundXp?: Omit<XpAward, 'amount'>,
     roundAmount = 0,
   ): Promise<void> {
-    const result = resultOf(ended);
+    // The right answers are the Game's result, which its mode's Best result keeps.
+    const right = resultOf(ended);
     const best = state.bestResults[ended.modeId];
-    const beaten = best === undefined || result > best;
-    const right = ended.played.filter((round) => round.right).length;
+    const beaten = best === undefined || right > best;
     // A Game with no right answer still sets the mode's first Best result but
     // earns no XP for it: the bonus rewards effort, not random tapping (story 3).
     const bestXp = beaten && right > 0;
@@ -995,7 +993,7 @@ export async function openGame({
     ];
     await writeAwards(
       [...(roundXp === undefined ? [] : [roundXp]), ...awards],
-      beaten ? gameBest.record(bestIdOf(ended.modeId)).change(result) : new Map(),
+      beaten ? gameBest.record(bestIdOf(ended.modeId)).change(right) : new Map(),
     );
     const over: GameOver = {
       ...ended,
@@ -1003,7 +1001,7 @@ export async function openGame({
         played: ended.played.length,
         right,
         xp: earned + roundAmount + awards.reduce((sum, { amount }) => sum + amount, 0),
-        newBest: beaten && result > 0,
+        newBest: beaten && right > 0,
       }),
     };
     void analytics
@@ -1020,10 +1018,10 @@ export async function openGame({
     change({
       ...state,
       modes: state.modes.map((offer) =>
-        offer.modeId === mode?.id ? { ...offer, best: offeredBest(mode, result) } : offer,
+        offer.modeId === mode?.id ? { ...offer, best: offeredBest(mode, right) } : offer,
       ),
       current: state.current === game ? over : state.current,
-      bestResults: beaten ? { ...state.bestResults, [over.modeId]: result } : state.bestResults,
+      bestResults: beaten ? { ...state.bestResults, [over.modeId]: right } : state.bestResults,
     });
   }
 
