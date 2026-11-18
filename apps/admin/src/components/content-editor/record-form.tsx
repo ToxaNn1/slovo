@@ -240,6 +240,7 @@ export function RecordForm({
             value={values[field.name]}
             siblings={values}
             categories={categories}
+            editionId={editionId}
             error={fieldErrors[field.name]}
             fixed={appeared && field.control.type === 'publish-date'}
             onChange={(value) => {

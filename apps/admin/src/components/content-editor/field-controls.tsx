@@ -1,5 +1,6 @@
 import { RARITIES } from '@slovo/contracts';
 
+import { EntryPicker } from './entry-picker';
 import {
   type CategoryOptions,
   type EditorField,
@@ -38,6 +39,8 @@ interface ControlProps {
   /** The values of the fields beside this one, which a Stress control reads its text from. */
   readonly siblings: FormObject;
   readonly categories: CategoryOptions;
+  /** The Edition whose records an Entry picker lists. */
+  readonly editionId: string;
   readonly onChange: (value: FormValue) => void;
   /** Whether the value is shown and kept, not edited: a publish date once its collection appeared. */
   readonly fixed?: boolean;
@@ -172,8 +175,18 @@ function Leaf({
 
 /** A Stress, chips, rarity, list or object control. */
 function Composite(props: ControlProps) {
-  const { id, label, control, value, siblings, categories, onChange } = props;
+  const { id, label, control, value, siblings, categories, editionId, onChange } = props;
   switch (control.type) {
+    case 'entries':
+      return (
+        <EntryPicker
+          id={id}
+          editionId={editionId}
+          value={value}
+          categories={categories}
+          onChange={onChange}
+        />
+      );
     case 'stress': {
       const positions = isList(value) ? value : [];
       const text = siblings[control.of];
@@ -263,6 +276,7 @@ function Composite(props: ControlProps) {
       return (
         <SubFields
           id={id}
+          editionId={editionId}
           fields={control.fields}
           value={isObject(value) ? value : {}}
           categories={categories}
@@ -290,6 +304,7 @@ function Composite(props: ControlProps) {
                     value={each}
                     siblings={{}}
                     categories={categories}
+                    editionId={editionId}
                     onChange={(next) => {
                       onChange(replaced(index, next));
                     }}
@@ -303,6 +318,7 @@ function Composite(props: ControlProps) {
                     {item.type === 'object' ? (
                       <SubFields
                         id={rowId}
+                        editionId={editionId}
                         fields={item.fields}
                         value={isObject(each) ? each : {}}
                         categories={categories}
@@ -357,12 +373,14 @@ function Composite(props: ControlProps) {
 /** The labelled sub-fields of an object. */
 function SubFields({
   id,
+  editionId,
   fields,
   value,
   categories,
   onChange,
 }: {
   readonly id: string;
+  readonly editionId: string;
   readonly fields: readonly EditorField[];
   readonly value: FormObject;
   readonly categories: CategoryOptions;
@@ -379,6 +397,7 @@ function SubFields({
           value={value[field.name]}
           siblings={value}
           categories={categories}
+          editionId={editionId}
           onChange={(next) => {
             onChange({ ...value, [field.name]: next });
           }}

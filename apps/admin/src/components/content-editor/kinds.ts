@@ -36,6 +36,8 @@ export type FieldControl =
   | { readonly type: 'stress'; readonly of: string }
   | { readonly type: 'rarity' }
   | { readonly type: 'list'; readonly item: FieldControl }
+  /** A Curated Collection's Entries, picked from the records of the five kinds, in their order. */
+  | { readonly type: 'entries' }
   | { readonly type: 'object'; readonly fields: readonly EditorField[] };
 
 export interface EditorField {
@@ -282,7 +284,7 @@ export const CONTENT_KINDS: readonly KindEditor[] = [
       field('name', 'Назва', TEXT),
       field('description', 'Опис', LONG_TEXT),
       field('publishedOn', 'Дата публікації', { type: 'publish-date' }),
-      field('entryIds', 'Записи добірки', TEXTS),
+      field('entryIds', 'Записи добірки', { type: 'entries' }),
     ],
   },
   {
@@ -333,6 +335,7 @@ export function formValueOf(control: FieldControl, value: unknown): FormValue {
     case 'rarity':
       return typeof value === 'number' ? value : undefined;
     case 'chips':
+    case 'entries':
       return Array.isArray(value) ? value.filter((item) => typeof item === 'string') : [];
     case 'stress':
       return Array.isArray(value) ? value.filter((item) => typeof item === 'number') : [];
@@ -370,6 +373,7 @@ export function recordValueOf(control: FieldControl, value: FormValue): Read {
       return { ok: true, value: typeof value === 'number' ? value : undefined };
     case 'chips':
     case 'stress':
+    case 'entries':
       return isList(value) && value.length > 0 ? { ok: true, value } : EMPTY;
     case 'list': {
       if (!isList(value)) return EMPTY;
@@ -415,6 +419,8 @@ export function shownOf(control: FieldControl, value: FormValue): string {
         : '';
     case 'rarity':
       return typeof value === 'number' ? String(value) : '';
+    case 'entries':
+      return isList(value) ? value.filter((id) => typeof id === 'string').join('; ') : '';
     case 'list':
       return isList(value)
         ? value
