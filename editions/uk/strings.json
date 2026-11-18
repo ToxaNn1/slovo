@@ -171,7 +171,7 @@
       "confirmedOfRarity": "Рідкість {rarity}: {count}",
       "badges": "Відзнаки",
       "gameBest": "Найкраще в Грі",
-      "noGameBest": "Ще не грали",
+      "noGameBest": "Ще жодної гри",
       "shareLevel": "Поділитися рівнем",
       "shareMessage": "Мій рівень — {level} · {name}",
       "level": "{level} · {name}",
@@ -191,7 +191,7 @@
         "current": "ЗАРАЗ",
         "ahead": "ПОПЕРЕДУ",
         "bar": "РІВЕНЬ {level} · {name}",
-        "toNext": "{name}: ще {xp} XP"
+        "toNext": "{name}: ЩЕ {xp} XP"
       },
       "newLevel": {
         "kicker": "РІВЕНЬ",
@@ -1191,7 +1191,7 @@
         "Грудень"
       ],
       "weekdays": ["пн", "вт", "ср", "чт", "пт", "сб", "нд"],
-      "hint": "Проведи угору або вниз, щоб змінити місяць",
+      "hint": "Проведи вгору або вниз, щоб змінити місяць",
       "days": {
         "active": "{day} {month}, активний день",
         "missed": "{day} {month}, неактивний день",
@@ -1199,7 +1199,7 @@
         "todayActive": "Сьогодні, {day} {month}, активний день",
         "future": "{day} {month}, ще попереду",
         "break": "{day} {month}, перерва",
-        "frozen": "{day} {month}, день врятовано заморозкою"
+        "frozen": "{day} {month}, заморозка врятувала день"
       },
       "lines": {
         "active": "{day} {month}: слово відкрито, ціль виконано.",

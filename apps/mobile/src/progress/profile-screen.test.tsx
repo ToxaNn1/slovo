@@ -334,16 +334,16 @@ describe('the Profile', () => {
     expect(screen.getByTestId('profile-level-name')).toHaveTextContent(/^Початківець$/);
     expect(screen.queryByText(/Рівень 1/)).toBeNull();
     expect(screen.getByTestId('profile-level-progress')).toHaveTextContent('10 / 55 XP');
-    expect(screen.getByTestId('profile-level-left')).toHaveTextContent('Читач: ще 246 XP');
+    expect(screen.getByTestId('profile-level-left')).toHaveTextContent('Читач: ЩЕ 246 XP');
   });
 
   // Owner decision 16 (#1915): N is the XP to the first Level of the next name.
   it.each([
-    [0, 0, 'Читач: ще 306 XP'],
-    [4, 233, 'Читач: ще 73 XP'],
-    [5, 306, 'Знавець: ще 492 XP'],
-    [19, 1878, 'Словолюб: ще 120 XP'],
-    [20, 1998, 'Мовознавець: ще 600 XP'],
+    [0, 0, 'Читач: ЩЕ 306 XP'],
+    [4, 233, 'Читач: ЩЕ 73 XP'],
+    [5, 306, 'Знавець: ЩЕ 492 XP'],
+    [19, 1878, 'Словолюб: ЩЕ 120 XP'],
+    [20, 1998, 'Мовознавець: ЩЕ 600 XP'],
   ])(
     'at Level %i reads «<next name>: ще N XP» on the card and under the row',
     async (level, xp, line) => {
