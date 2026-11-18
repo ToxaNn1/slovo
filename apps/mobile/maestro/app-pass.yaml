@@ -141,6 +141,26 @@ appId: ${APP_ID || 'app.slovo.uk'}
     env:
       ROUTE: '/curated-collection/[collectionId]'
       SCREEN: curated-collection(-error)?
+# The grid of every Curated Collection, and a collection's screen from its tile.
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/curated-collections'
+      LINK_PATH: 'curated-collections'
+      SCREEN: curated-collections
+- scrollUntilVisible:
+    element:
+      id: 'curated-collections-(?!back|title)(?!.*-(cascade|name|count|mark)$).+'
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: 'curated-collections-(?!back|title)(?!.*-(cascade|name|count|mark)$).+'
+    index: 0
+- runFlow:
+    file: app-pass/screen.yaml
+    env:
+      ROUTE: '/curated-collection/[collectionId]'
+      SCREEN: curated-collection(-error)?
 - runFlow:
     file: app-pass/open.yaml
     env:

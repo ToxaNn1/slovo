@@ -3,6 +3,7 @@ import type { CuratedCollectionCard } from '@slovo/core';
 import {
   CategoriesRail,
   coreTokens,
+  CuratedCollectionGrid,
   CuratedCollectionsRail,
   EditionProvider,
   TokensProvider,
@@ -15,6 +16,7 @@ import { testStrings } from '../test-strings';
 const strings = testStrings({
   dashboard: {
     curatedCollectionsTitle: 'SLOVO suggests',
+    curatedCollectionsGridTitle: 'Picks',
     curatedCollectionCount: { one: '{count} word', other: '{count} words' },
     curatedCollectionNew: 'New',
     curatedCollection: { added: 'Added ✓' },
@@ -67,7 +69,12 @@ function wedgesIn(testID: string): unknown[] {
 describe('CuratedCollectionsRail', () => {
   it('heads the rail with its title and the count of every collection published by today', async () => {
     await renderIn(
-      <CuratedCollectionsRail cards={[card('cc_a')]} published={12} onOpen={() => undefined} />,
+      <CuratedCollectionsRail
+        cards={[card('cc_a')]}
+        published={12}
+        onOpenAll={() => undefined}
+        onOpen={() => undefined}
+      />,
     );
 
     expect(screen.getByTestId('dashboard-curated-collections-title')).toHaveTextContent(
@@ -84,6 +91,7 @@ describe('CuratedCollectionsRail', () => {
           card('cc_added', { state: 'opened', added: true }),
         ]}
         published={3}
+        onOpenAll={() => undefined}
         onOpen={() => undefined}
       />,
     );
@@ -104,7 +112,12 @@ describe('CuratedCollectionsRail', () => {
   it("draws the pictogram of the Category it names, as that Category's own tile does", async () => {
     await renderIn(
       <>
-        <CuratedCollectionsRail cards={[card('cc_a')]} published={1} onOpen={() => undefined} />
+        <CuratedCollectionsRail
+          cards={[card('cc_a')]}
+          published={1}
+          onOpenAll={() => undefined}
+          onOpen={() => undefined}
+        />
         <CategoriesRail
           tiles={[
             { id: 'nature', name: 'Nature' },
@@ -125,10 +138,109 @@ describe('CuratedCollectionsRail', () => {
   it('opens the collection of the tapped tile', async () => {
     const onOpen = jest.fn();
     await renderIn(
-      <CuratedCollectionsRail cards={[card('cc_a'), card('cc_b')]} published={2} onOpen={onOpen} />,
+      <CuratedCollectionsRail
+        cards={[card('cc_a'), card('cc_b')]}
+        published={2}
+        onOpenAll={() => undefined}
+        onOpen={onOpen}
+      />,
     );
 
     await fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_b'));
+
+    expect(onOpen).toHaveBeenCalledWith('cc_b');
+  });
+
+  it('opens the grid of every collection from its header', async () => {
+    const onOpenAll = jest.fn();
+    await renderIn(
+      <CuratedCollectionsRail
+        cards={[card('cc_a')]}
+        published={12}
+        onOpenAll={onOpenAll}
+        onOpen={() => undefined}
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('dashboard-curated-collections-title'));
+
+    expect(onOpenAll).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('CuratedCollectionGrid', () => {
+  it('titles the grid with the count of its collections and shows them in the given order', async () => {
+    await renderIn(
+      <CuratedCollectionGrid
+        testID="grid"
+        cards={[card('cc_b'), card('cc_a'), card('cc_c')]}
+        onOpen={() => undefined}
+      />,
+    );
+
+    expect(screen.getByTestId('grid-title')).toHaveProp('accessibilityLabel', 'Picks, 3');
+    expect(screen.getAllByText(/^Name cc_/).map((text) => String(text.props['children']))).toEqual([
+      'Name cc_b',
+      'Name cc_a',
+      'Name cc_c',
+    ]);
+  });
+
+  it('shows on each tile its Entry count, «New» until opened and «Added ✓» once copied', async () => {
+    await renderIn(
+      <CuratedCollectionGrid
+        testID="grid"
+        cards={[
+          card('cc_new'),
+          card('cc_opened', { state: 'opened' }),
+          card('cc_added', { state: 'opened', added: true }),
+        ]}
+        onOpen={() => undefined}
+      />,
+    );
+
+    const tile = (id: string) => within(screen.getByTestId(`grid-${id}`));
+    expect(tile('cc_new').getByText('3 words')).toBeTruthy();
+    expect(tile('cc_new').getByText('New')).toBeTruthy();
+    expect(tile('cc_opened').queryByText('New')).toBeNull();
+    expect(tile('cc_opened').queryByText('Added ✓')).toBeNull();
+    expect(tile('cc_added').getByText('Added ✓')).toBeTruthy();
+    expect(screen.getByTestId('grid-cc_new')).toHaveProp(
+      'accessibilityLabel',
+      'New. Name cc_new. 3 words',
+    );
+  });
+
+  it('draws on a tile the pictogram the rail draws, and none without one', async () => {
+    await renderIn(
+      <>
+        <CuratedCollectionsRail
+          cards={[card('cc_a')]}
+          published={1}
+          onOpenAll={() => undefined}
+          onOpen={() => undefined}
+        />
+        <CuratedCollectionGrid
+          testID="grid"
+          cards={[card('cc_b', { pictogram: undefined }), card('cc_a')]}
+          onOpen={() => undefined}
+        />
+      </>,
+    );
+
+    const drawn = wedgesIn('grid-cc_a');
+    expect(drawn.length).toBeGreaterThan(0);
+    expect(drawn).toEqual(wedgesIn('dashboard-curated-collection-cc_a'));
+    expect(wedgesIn('grid-cc_b')).toEqual([]);
+  });
+
+  it('opens the collection of the tapped tile', async () => {
+    const onOpen = jest.fn();
+    await renderIn(
+      <CuratedCollectionGrid testID="grid" cards={[card('cc_a'), card('cc_b')]} onOpen={onOpen} />,
+    );
+
+    await fireEvent.press(screen.getByTestId('grid-cc_b'));
 
     expect(onOpen).toHaveBeenCalledWith('cc_b');
   });

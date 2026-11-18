@@ -176,10 +176,39 @@ describe('The Curated Collections rail', () => {
     expect(idsOf(app)).not.toContain('cc_00:new');
   });
 
+  it('lists every collection published by today on the grid, in rail order, a future one absent', async () => {
+    const many = Array.from({ length: 12 }, (_, i) =>
+      collection(`cc_${String(i).padStart(2, '0')}`, `2026-01-${String(i + 1).padStart(2, '0')}`),
+    );
+    const { app, time } = await run({
+      curatedCollections: [...many, collection('cc_tomorrow', '2026-11-05')],
+      start: '2026-11-04T23:59:00+02:00',
+    });
+    const gridOf = () =>
+      app.curatedCollections.grid.map(({ collection: { id }, state }) => `${id}:${state}`);
+
+    await app.curatedCollections.open('cc_11');
+    await settle();
+
+    expect(gridOf()).toEqual([
+      ...Array.from({ length: 11 }, (_, i) => `cc_${String(10 - i).padStart(2, '0')}:new`),
+      'cc_11:opened',
+    ]);
+    expect(app.curatedCollections.rail).toEqual(app.curatedCollections.grid.slice(0, 10));
+    expect(app.curatedCollections.published).toBe(12);
+
+    time.advance(2 * 60 * 1000);
+    await app.resume();
+
+    expect(gridOf()[0]).toBe('cc_tomorrow:new');
+    expect(gridOf()).toHaveLength(13);
+  });
+
   it('has no rail and no block with `curatedCollections` off', async () => {
     const { app } = await run({ on: ['wordOfTheDay', 'dashboard'] });
 
     expect(app.curatedCollections.rail).toEqual([]);
+    expect(app.curatedCollections.grid).toEqual([]);
     expect(app.dashboard.blocks.map(({ kind }) => kind)).toEqual(['wordOfTheDay']);
   });
 

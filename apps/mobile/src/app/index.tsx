@@ -57,6 +57,7 @@ function DashboardBlocks() {
     openPreviousWord,
     openCorrectionType,
     openCuratedCollection,
+    openCuratedCollections,
     openCategories,
     openCategory,
     openCorrectionCategories,
@@ -155,6 +156,7 @@ function DashboardBlocks() {
           <CuratedCollectionsRail
             cards={block.cards}
             published={block.published}
+            onOpenAll={openCuratedCollections}
             onOpen={openCuratedCollection}
           />
         );
