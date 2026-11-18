@@ -172,7 +172,9 @@ describe('Settings › «Пройти опитування ще раз»', () =>
 
     screenSettled();
     await press(settings.rows.questionnaire);
-    // The self-rating only decides whether to offer the Rarity Test (ADR 0072).
+    // «Рівень» sets no Rarity Range (ADR 0183); the self-rating only decides
+    // whether to offer the Rarity Test (ADR 0072).
+    await fireEvent.press(screen.getByTestId('questionnaire-level-good'));
     await press('Знаю дуже багато');
     await fireEvent.press(screen.getByTestId('questionnaire-interest-food'));
     await press(settings.questionnaireRetake.done);
