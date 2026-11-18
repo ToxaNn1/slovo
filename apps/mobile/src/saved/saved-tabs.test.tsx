@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
+import {
+  loadEdition,
+  openComposition,
+  systemRandom,
+  type Composition,
+  type FeatureSwitch,
+} from '@slovo/core';
 import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Tabs } from 'expo-router';
@@ -77,8 +83,12 @@ async function settle(action: () => unknown = () => undefined) {
   });
 }
 
-/** The app's tabs with the Saved tab's stack, on `url`. */
-async function renderApp(url: string) {
+/** The app's tabs with the Saved tab's stack, on `url`, with the Feature Switches `off` off in effect. */
+async function renderApp(url: string, off: readonly FeatureSwitch[] = []) {
+  const inEffect: typeof edition = {
+    ...edition,
+    isFeatureEnabled: (feature) => !off.includes(feature) && edition.isFeatureEnabled(feature),
+  };
   const app = await renderRoutes(
     {
       _layout: () => (
@@ -86,7 +96,7 @@ async function renderApp(url: string) {
           <ShellProvider
             shell={testShell({
               composition: opened(composition),
-              remoteSwitches: switchedTo(edition),
+              remoteSwitches: switchedTo(inEffect),
             })}
           >
             <SettingsProvider>
@@ -149,5 +159,12 @@ describe('the Saved tab', () => {
     await settle(() => fireEvent.press(screen.getByTestId('saved-search')));
 
     expect(app.pathname()).toBe('/search');
+  });
+
+  it('has no search field while Search is off', async () => {
+    await renderApp('/saved', ['search']);
+
+    expect(screen.getByTestId('saved')).toBeTruthy();
+    expect(screen.queryByTestId('saved-search')).toBeNull();
   });
 });

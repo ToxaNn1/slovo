@@ -73,6 +73,7 @@ const everything: Shown = {
   sync: true,
   dailyGoal: true,
   search: true,
+  searchField: true,
   fastReveal: true,
   dashboard: true,
   dashboardWordmark: true,
@@ -174,6 +175,10 @@ describe('what the reader is shown', () => {
     [
       'no Search button with the Search button off',
       { off: ['searchButton'], shown: { search: false } },
+    ],
+    [
+      'no search field on Saved with Search off',
+      { off: ['search'], shown: { searchField: false } },
     ],
     [
       'the full reveal on every Feed card with the fast reveal off',

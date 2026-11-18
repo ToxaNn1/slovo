@@ -162,6 +162,8 @@ export interface Shown {
   readonly dailyGoal: boolean;
   /** The Search button of the «Стрічка» header, which opens the Search screen. */
   readonly search: boolean;
+  /** The search field of the Saved tab, which opens the Search screen; it is Search itself, so it goes with it (ADR 0054). */
+  readonly searchField: boolean;
   /** The fast reveal of the Feed's Entry cards after the first one in a visit; off, each plays the full reveal. */
   readonly fastReveal: boolean;
   /** Whether the home is the Dashboard, which opens the Feed; else the Feed is the home (ADR 0076). */
@@ -300,6 +302,7 @@ export function shownOf({
     sync: on('sync'),
     dailyGoal: on('dailyGoal'),
     search: on('searchButton'),
+    searchField: on('search'),
     fastReveal: on('fastReveal'),
     dashboard: on('dashboard'),
     dashboardWordmark: on('dashboardWordmark'),
