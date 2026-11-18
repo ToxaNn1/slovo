@@ -7,9 +7,10 @@ import {
   type FeatureSwitch,
   type Haptics,
 } from '@slovo/core';
+import { seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
-import { fireEvent, screen, within } from 'expo-router/testing-library';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
@@ -684,5 +685,34 @@ describe('Settings › «Рідкість» (ADR 0156)', () => {
 
     expect(composition.rarityRange.state).toEqual({ from: 1, to: 3 });
     expect(screen.getByTestId('settings-rarity-3')).toBeSelected();
+  });
+});
+
+describe('Settings › «Перерва» row', () => {
+  it('says while a Break runs that it is on and until when, and the offer once it ends', async () => {
+    const userState = opened(
+      await seedUserState(
+        {},
+        { clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' } },
+      ),
+    );
+    const composition = await testShell({ userState }).composition.opened();
+    await renderSettings({ streakBreak: true }, undefined, composition);
+    const row = () => screen.getByTestId('settings-row-streak-break');
+    expect(row()).toHaveTextContent(editionStrings.settings.rowSubtitles.streakBreak, {
+      exact: false,
+    });
+
+    await act(async () => {
+      await composition.streakBreak.start(3);
+    });
+    expect(row()).toHaveTextContent('Триває до 15 жовтня включно', { exact: false });
+
+    await act(async () => {
+      await composition.streakBreak.end();
+    });
+    expect(row()).toHaveTextContent(editionStrings.settings.rowSubtitles.streakBreak, {
+      exact: false,
+    });
   });
 });
