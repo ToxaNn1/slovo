@@ -143,15 +143,15 @@ describe('the 0.8.12 Game strings', () => {
       challenge: 'Виклик',
     });
     expect(parsed.modeBest).toEqual({
-      outOf: 'Найкраще: {n} з {total}',
-      count: 'Найкраще: {n}',
+      outOf: 'Рекорд: {n} з {total}',
+      count: 'Рекорд: {n}',
     });
     expect(parsed.openLetter).toBe('Відкрити літеру');
     expect(parsed.dailyCrossword).toMatchObject({
       title: 'Кросворд дня',
       start: 'Почати',
       resume: 'Продовжити',
-      solved: 'Розв’язано!',
+      solved: 'Розгадано!',
     });
   });
 
@@ -185,8 +185,8 @@ describe('the 0.8.12 Game strings', () => {
   );
 
   it.each([
-    ['modeBest.outOf', { modeBest: { outOf: 'Найкраще: {n}', count: 'Найкраще: {n}' } }],
-    ['modeBest.count', { modeBest: { outOf: 'Найкраще: {n} з {total}', count: 'Найкраще' } }],
+    ['modeBest.outOf', { modeBest: { outOf: 'Рекорд: {n}', count: 'Рекорд: {n}' } }],
+    ['modeBest.count', { modeBest: { outOf: 'Рекорд: {n} з {total}', count: 'Найкраще' } }],
     [
       'dailyCrossword.dated',
       { dailyCrossword: { ...(game['dailyCrossword'] as object), dated: 'Кросворд дня' } },
@@ -1094,7 +1094,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       anglicism: 'Заміни англіцизм українським',
       'idiom-meaning': 'Вгадай, що означає вислів',
       'build-idiom': 'Читаєш значення — складаєш вислів.',
-      survival: 'Одне життя. Як далеко зайдеш?',
+      survival: 'Три життя. Як далеко зайдеш?',
       timed: undefined,
     });
     expect(
@@ -1105,7 +1105,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       'type-word': 'Аб|',
       origin: '→А',
       'build-idiom': '«…»',
-      survival: '♥ 1',
+      survival: '⚑⚑⚑',
       timed: '20 с',
     });
     expect(parsed.modes['timed']?.oneLiner).toBe('Двадцять секунд. Скільки слів встигнеш?');

@@ -167,8 +167,8 @@ describe('the card of each Game Mode on offer', () => {
   });
 
   it.each([
-    [{ result: 12, of: 15 }, '★ 12', 'Найкраще: 12 з 15'],
-    [{ result: 23 }, '★ 23', 'Найкраще: 23'],
+    [{ result: 12, of: 15 }, '★ 12', 'Рекорд: 12 з 15'],
+    [{ result: 23 }, '★ 23', 'Рекорд: 23'],
   ])('shows the Best result %j as «%s», read as «%s»', (best, text, label) => {
     const card = gameModeCard(
       { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true, best },
