@@ -101,12 +101,12 @@ const cardsOf = ({ game }: Composition) =>
 const guessWordCard = {
   glyph: 'Д?',
   title: 'Вгадай слово',
-  line: 'Обери слово за визначенням',
+  line: 'Визначення є. Яке це слово?',
 };
 const correctionCard = {
   glyph: '?!',
   title: 'Обери правильне',
-  line: 'Обери, як кажуть українською',
+  line: 'Як кажуть українською',
 };
 
 describe('the card of each Game Mode on offer', () => {
@@ -117,8 +117,8 @@ describe('the card of each Game Mode on offer', () => {
       ...guessWordCard,
       canStart: true,
       refusal: undefined,
-      best: '—',
-      bestLabel: undefined,
+      best: 'Ще жодної гри',
+      bestLabel: 'Ще жодної гри',
     });
   });
 
@@ -132,8 +132,8 @@ describe('the card of each Game Mode on offer', () => {
       ...guessWordCard,
       canStart: false,
       refusal: undefined,
-      best: '—',
-      bestLabel: undefined,
+      best: 'Ще жодної гри',
+      bestLabel: 'Ще жодної гри',
     });
   });
 
@@ -147,45 +147,32 @@ describe('the card of each Game Mode on offer', () => {
         canStart: false,
         refusal:
           'Цьому режиму бракує слів і висловів. Поверни категорії в Налаштуваннях, розділ «Мій Мікс».',
-        best: '—',
-        bestLabel: undefined,
+        best: 'Ще жодної гри',
+        bestLabel: 'Ще жодної гри',
       },
       {
         ...correctionCard,
         canStart: false,
         refusal:
           'Цьому режиму бракує виправлень. Поверни категорії виправлень у Налаштуваннях, розділ «Мій Мікс».',
-        best: '—',
-        bestLabel: undefined,
+        best: 'Ще жодної гри',
+        bestLabel: 'Ще жодної гри',
       },
     ]);
     expect(outOfMix[1]).toEqual({
       ...correctionCard,
       canStart: false,
       refusal: 'Виправлення вимкнено. Увімкни їх у Налаштуваннях, розділ «Мій Мікс».',
-      best: '—',
-      bestLabel: undefined,
+      best: 'Ще жодної гри',
+      bestLabel: 'Ще жодної гри',
     });
-  });
-
-  it.each([
-    [{ result: 12, of: 15 }, '★ 12', 'Рекорд: 12 з 15'],
-    [{ result: 23 }, '★ 23', 'Рекорд: 23'],
-  ])('shows the Best result %j as «%s», read as «%s»', (best, text, label) => {
-    const card = gameModeCard(
-      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: true, best },
-      strings,
-    );
-
-    expect(card.best).toBe(text);
-    expect(card.bestLabel).toBe(label);
   });
 
   it.each([
     [{ result: 12, of: 15 }, 'Рекорд: 12 з 15'],
     [{ result: 23 }, 'Рекорд: 23'],
     [undefined, 'Ще жодної гри'],
-  ])('with the hub record, shows the Best result %j as «%s», read the same', (best, text) => {
+  ])('shows the Best result %j as «%s», read the same', (best, text) => {
     const card = gameModeCard(
       {
         modeId: 'stress',
@@ -195,7 +182,6 @@ describe('the card of each Game Mode on offer', () => {
         ...(best === undefined ? {} : { best }),
       },
       strings,
-      { record: true },
     );
 
     expect(card).toEqual({

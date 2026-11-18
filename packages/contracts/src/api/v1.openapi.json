@@ -9272,14 +9272,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameHubRecord": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameModeToast": {
                           "enum": [
                             "on",
@@ -9727,7 +9719,6 @@
                         "gameRoundMascot",
                         "gameEndToFeed",
                         "plainGameReview",
-                        "gameHubRecord",
                         "gameModeToast",
                         "notificationFarewell",
                         "notificationExplainer",
@@ -11107,14 +11098,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameHubRecord": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameModeToast": {
                           "enum": [
                             "on",
@@ -11562,7 +11545,6 @@
                         "gameRoundMascot",
                         "gameEndToFeed",
                         "plainGameReview",
-                        "gameHubRecord",
                         "gameModeToast",
                         "notificationFarewell",
                         "notificationExplainer",
@@ -12866,14 +12848,6 @@
                           ],
                           "type": "string"
                         },
-                        "gameHubRecord": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameModeToast": {
                           "enum": [
                             "on",
@@ -13321,7 +13295,6 @@
                         "gameRoundMascot",
                         "gameEndToFeed",
                         "plainGameReview",
-                        "gameHubRecord",
                         "gameModeToast",
                         "notificationFarewell",
                         "notificationExplainer",

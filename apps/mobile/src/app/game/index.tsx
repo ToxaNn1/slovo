@@ -134,7 +134,7 @@ function ModeScreen({
   const crossword = useDailyCrosswordCard();
   const openScreen = useOpenScreen();
   const showToast = useUndoToast();
-  const { gameHubRecord, gameModeToast: toast } = useShown();
+  const { gameModeToast: toast } = useShown();
   let place = 0;
   return (
     <View testID="game-modes" style={styles.screen}>
@@ -162,7 +162,7 @@ function ModeScreen({
               <GameModeCard
                 key={offer.modeId}
                 testID={`game-mode-${offer.modeId}`}
-                {...gameModeCard(offer, strings, { record: gameHubRecord, toast })}
+                {...gameModeCard(offer, strings, { toast })}
                 cascadeIndex={place++}
                 onPress={() => {
                   const warmingUp = () => {

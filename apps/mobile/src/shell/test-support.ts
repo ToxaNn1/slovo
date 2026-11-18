@@ -62,7 +62,6 @@ export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
   'gameRoundMascot',
   'gameEndToFeed',
   'plainGameReview',
-  'gameHubRecord',
   'gameModeToast',
 ];
 

@@ -109,7 +109,6 @@ const validConfig = {
     gameRoundMascot: 'on',
     gameEndToFeed: 'on',
     plainGameReview: 'on',
-    gameHubRecord: 'on',
     gameModeToast: 'on',
     notificationFarewell: 'on',
     notificationExplainer: 'on',
@@ -390,7 +389,6 @@ describe('loadEdition', () => {
     'gameRoundMascot',
     'gameEndToFeed',
     'plainGameReview',
-    'gameHubRecord',
     'gameModeToast',
     'fastReveal',
     'dashboard',
@@ -612,20 +610,17 @@ describe('loadEdition', () => {
     );
   });
 
-  it.each([
-    'gameRoundMascot',
-    'gameEndToFeed',
-    'plainGameReview',
-    'gameHubRecord',
-    'gameModeToast',
-  ] as const)('refuses an Edition without the %s Feature Switch (spec #1880)', (feature) => {
-    const switches = Object.fromEntries(
-      Object.entries(validConfig.featureSwitches).filter(([name]) => name !== feature),
-    );
-    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
-      `featureSwitches.${feature}`,
-    );
-  });
+  it.each(['gameRoundMascot', 'gameEndToFeed', 'plainGameReview', 'gameModeToast'] as const)(
+    'refuses an Edition without the %s Feature Switch (spec #1880)',
+    (feature) => {
+      const switches = Object.fromEntries(
+        Object.entries(validConfig.featureSwitches).filter(([name]) => name !== feature),
+      );
+      expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
+        `featureSwitches.${feature}`,
+      );
+    },
+  );
 
   it('refuses an Edition without the levels Feature Switch', () => {
     const { levels, ...switches } = validConfig.featureSwitches;
@@ -1546,7 +1541,6 @@ const dependentSwitches = [
   ['gameRoundMascot', ['game']],
   ['gameEndToFeed', ['game']],
   ['plainGameReview', ['gameReview']],
-  ['gameHubRecord', ['game']],
   ['gameModeToast', ['game']],
   ['quickQuestion', ['game']],
   ['quickQuestionWordMeaning', ['quickQuestion', 'game']],

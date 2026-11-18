@@ -1084,7 +1084,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
     expect(parsed.hubToast).toBe('«{mode}» ще розминається. Влучай поки в «{other}»!');
     expect(parsed.hubToastFallback).toBe('«{mode}» ще розминається. Спробуй поки «{other}»!');
     expect(
-      Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.hubLine])),
+      Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.oneLiner])),
     ).toEqual({
       'guess-word': 'Визначення є. Яке це слово?',
       stress: 'Торкнись наголошеної голосної',
@@ -1098,7 +1098,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       'idiom-meaning': 'Вгадай, що означає вислів',
       'build-idiom': 'Читаєш значення — складаєш вислів.',
       survival: 'Три життя. Як далеко зайдеш?',
-      timed: undefined,
+      timed: 'Двадцять секунд. Скільки слів встигнеш?',
     });
     expect(
       Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.glyph])),
@@ -1111,7 +1111,6 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       survival: '⚑⚑⚑',
       timed: '20 с',
     });
-    expect(parsed.modes['timed']?.oneLiner).toBe('Двадцять секунд. Скільки слів встигнеш?');
   });
 
   it.each([
