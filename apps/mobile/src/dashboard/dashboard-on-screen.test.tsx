@@ -351,7 +351,7 @@ describe('«Попередні слова»', () => {
 
     expect(screen.getByText(editionStrings.dashboard.previousWords.title)).toBeTruthy();
     const row = screen.getByTestId('dashboard-previous-word-2026-10-27');
-    expect(within(row).getByText('27\nжовт.')).toBeTruthy();
+    expect(within(row).getByText('27\nжовт')).toBeTruthy();
     expect(within(row).getByText('Значення слова лагідний.')).toBeTruthy();
     await settle(() => fireEvent.press(row));
 
