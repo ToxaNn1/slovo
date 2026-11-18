@@ -117,7 +117,6 @@ describe('openUserState', () => {
 
     expect(await settings.read()).toEqual({
       theme: 'dark',
-      fontSize: 'L',
       textSize: 'larger',
       vibration: true,
       sounds: true,

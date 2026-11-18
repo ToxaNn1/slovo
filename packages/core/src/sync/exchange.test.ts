@@ -649,7 +649,7 @@ describe('the first sign-in', () => {
     await phone.sync();
 
     for (const each of [phone, tablet]) {
-      expect(await each.settings.read()).toMatchObject({ theme: 'dark', fontSize: 'L' });
+      expect(await each.settings.read()).toMatchObject({ theme: 'dark', textSize: 'larger' });
       expect([...(await each.userState.list(favorites)).keys()].sort()).toEqual(['w_one', 'w_two']);
     }
     expect(server.sync.records.get('favorites.w_two')).toMatchObject({ changedAt: 0 });
