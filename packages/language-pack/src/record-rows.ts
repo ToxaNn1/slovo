@@ -22,7 +22,10 @@ export interface Statement {
  * The SQL that writes each content record of a pack, the one copy both the
  * build (`writePack`) and a Patch (`applyPatch`) run. A record's own row is
  * an upsert, so a Patch replaces it in place; its child rows are plain
- * inserts, which a Patch runs after `childDeletes` removed the old ones.
+ * inserts, which a Patch runs after `childDeletes` removed the old ones. A
+ * Curated Collection is the exception: its own row is a plain insert too, run
+ * after `curatedCollectionDeletes` removed the old one, so a Retired one is
+ * left out of the pack (ADR 0178).
  */
 const SQL = {
   entry:
@@ -108,12 +111,8 @@ const SQL = {
     INSERT INTO crossword_words (date, position, entry_id, answer, clue, start_row, start_column, direction)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `,
-  collection: `
-    INSERT INTO curated_collections (id, name, description, published_on, pictogram) VALUES (?, ?, ?, ?, ?)
-    ON CONFLICT (id) DO UPDATE SET
-      name = excluded.name, description = excluded.description, published_on = excluded.published_on,
-      pictogram = excluded.pictogram
-  `,
+  collection:
+    'INSERT INTO curated_collections (id, name, description, published_on, pictogram) VALUES (?, ?, ?, ?, ?)',
   collectionEntry:
     'INSERT INTO curated_collection_entries (collection_id, position, entry_id) VALUES (?, ?, ?)',
 } as const;
@@ -338,6 +337,15 @@ export function crosswordDayRows({ date, words, retired }: CrosswordDay): Statem
   );
 }
 
+/** Removes a Curated Collection, its Entries first: a Patch writes it afresh, or not at all once Retired. */
+export function curatedCollectionDeletes(id: string): Statement[] {
+  return [
+    ...childDeletes('curatedCollection', id),
+    statement('DELETE FROM curated_collections WHERE id = ?', id),
+  ];
+}
+
+/** The rows of a Curated Collection; a Retired one has none (ADR 0178). */
 export function curatedCollectionRows({
   id,
   name,
@@ -345,7 +353,9 @@ export function curatedCollectionRows({
   publishedOn,
   entryIds,
   pictogram,
+  retired,
 }: CuratedCollection): Statement[] {
+  if (retired) return [];
   return [
     statement(SQL.collection, id, name, description, publishedOn, pictogram ?? null),
     ...entryIds.map((entryId, position) => statement(SQL.collectionEntry, id, position, entryId)),

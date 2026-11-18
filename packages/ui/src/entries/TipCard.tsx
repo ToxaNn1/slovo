@@ -8,13 +8,12 @@ import { EntryKicker } from './EntryKicker';
 import { KickerRow } from './KickerRow';
 import { LinkChips } from './LinkChips';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
+import type { TextSize } from '../providers/FontSizeProvider';
 import { Wedge } from '../primitives/Wedge';
 import { entryCardFrame, space, titleSize, typeStyle, wedges } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
-import { NonStandardForm, StandardForm } from './CorrectionCard';
-import { ExampleText } from './WordCard';
+import { NonStandardForm } from './CorrectionCard';
 import { capitalised } from './capitalised';
 import { SourceLine } from './SourceLine';
 import { CardTabs } from './CardTabs';
@@ -24,10 +23,8 @@ import { tipTabsOf, type TipTab } from './tip-tabs';
  * The Tip card's blocks inside the Entry card's frame (board XEntry2 e9): the
  * red kicker «ПОРАДА», the title, the rule in a few words, over the red bar,
  * the non-standard form under «Так часто кажуть» when the Tip has one (kept
- * though the board has none, owner 13.11), then the rest. Without tabs the
- * rest is the standard form under «Українською краще», drawn as on a
- * Correction card, the explanation, the Example and the source line. With
- * `tabs` it is the one tab «Правило» (ADR 0091), so no tab bar: the
+ * though the board has none, owner 13.11), then the rest: the one tab
+ * «Правило» (ADR 0091), so no tab bar: the
  * explanation, the standard form and the Example's text in chips, and the
  * source line; with `sourceTab` the sources leave it for a last tab «Джерело»
  * (ADR 0116), and with `exceptionsTab` a Tip with exceptions gets «Винятки»
@@ -41,7 +38,6 @@ export function TipCardBody({
   lemmaSize,
   concealed,
   corner,
-  tabs,
   sourceTab,
   exceptionsTab,
   headless = false,
@@ -53,8 +49,6 @@ export function TipCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The rest under the title in the tab «Правило» (ADR 0091). */
-  tabs: boolean;
   /** The last tab «Джерело» with the sources, which leave the tab «Правило», while `sourceTab` is on (ADR 0116). */
   sourceTab: boolean;
   /** The tab «Винятки» of a Tip with exceptions, while `tipExceptions` is on (ADR 0120). */
@@ -64,7 +58,6 @@ export function TipCardBody({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const sizes = useWordTextSizes();
   const edition = useEdition();
   const { voice } = edition;
   const strings = edition.strings.tipCard;
@@ -116,29 +109,15 @@ export function TipCardBody({
           spoken={withoutStress(nonStandardForm)}
         />
       )}
-      {tabs ? (
-        <CardTabs
-          testID="tip"
-          tabs={tipTabsOf(card, { exceptions: exceptionsTab })}
-          sources={sourceTab ? card.sourceNames : undefined}
-          nameOf={({ key }) => strings.tabs[key]}
-          disabled={shown.concealed}
-        >
-          {(tab) => <TipRule tab={tab} sourceLine={!sourceTab} />}
-        </CardTabs>
-      ) : shown.concealed ? null : (
-        <>
-          <TipEssence
-            standardForm={shown.card.standardForm}
-            explanation={shown.card.explanation}
-            sourceNames={shown.card.sourceNames}
-            size={lemmaSize}
-          />
-          {shown.card.example === undefined ? null : (
-            <ExampleText testID="tip-example" example={shown.card.example} size={sizes.example} />
-          )}
-        </>
-      )}
+      <CardTabs
+        testID="tip"
+        tabs={tipTabsOf(card, { exceptions: exceptionsTab })}
+        sources={sourceTab ? card.sourceNames : undefined}
+        nameOf={({ key }) => strings.tabs[key]}
+        disabled={shown.concealed}
+      >
+        {(tab) => <TipRule tab={tab} sourceLine={!sourceTab} />}
+      </CardTabs>
     </>
   );
 }
@@ -174,49 +153,6 @@ function TipRule({ tab, sourceLine }: { tab: TipTab; sourceLine: boolean }) {
           sourceNames={tab.sourceNames}
         />
       ) : null}
-    </>
-  );
-}
-
-/**
- * The standard form, a phrase at a share of the Lemma's size (board С2.6), the
- * explanation and the line naming the sources.
- */
-function TipEssence({
-  standardForm,
-  explanation,
-  sourceNames,
-  size,
-}: {
-  standardForm: string;
-  explanation: string;
-  sourceNames: readonly string[];
-  size: TextSize;
-}) {
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const { voice, strings } = useEdition();
-  return (
-    <>
-      <StandardForm
-        testID="tip-standard"
-        form={standardForm}
-        spoken={withoutStress(standardForm)}
-        size={size}
-      />
-      <WholeLinesText
-        testID="tip-explanation"
-        accessibilityLabel={withoutStress(explanation)}
-        {...voice}
-        style={[typeStyle('explanation', tokens), { color: colors.ink }]}
-      >
-        {capitalised(explanation, voice.accessibilityLanguage)}
-      </WholeLinesText>
-      <SourceLine
-        testID="tip-source"
-        template={strings.correctionCard.source}
-        sourceNames={sourceNames}
-      />
     </>
   );
 }

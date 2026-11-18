@@ -35942,6 +35942,10 @@
                                   "pictogram": {
                                     "type": "string",
                                     "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                                  },
+                                  "retired": {
+                                    "type": "boolean",
+                                    "default": false
                                   }
                                 },
                                 "required": [
@@ -37126,6 +37130,10 @@
                           "pictogram": {
                             "type": "string",
                             "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                          },
+                          "retired": {
+                            "type": "boolean",
+                            "default": false
                           }
                         },
                         "required": [

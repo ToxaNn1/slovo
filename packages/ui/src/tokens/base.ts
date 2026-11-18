@@ -371,7 +371,7 @@ export const typeRoles = {
   partOfSpeech: role('ui', '600', 15, 18),
   /** A Word named as a link inside a line of reading text, such as a Synonym Row's dominant. */
   linkWord: role('word', '800', 15, 21),
-  /** An accent text button's label, such as a Word card's "more". */
+  /** An accent text button's label, such as «Детальніше» under a long tab. */
   textLink: role('ui', '700', 15, 15),
   /** The text under a section heading of a card: the Word History, the etymology. */
   sectionText: role('ui', '400', 15, 22),

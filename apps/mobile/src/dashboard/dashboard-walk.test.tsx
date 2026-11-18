@@ -136,6 +136,7 @@ async function renderApp(feedScreen: () => ReactElement = FeedScreen) {
           name: 'Лагідні слова',
           description: 'Слова, що звучать м’яко.',
           publishedOn: '2026-10-20',
+          retired: false,
           entryIds: ['w_lahidnyi', 'w_tykhyi'],
         },
         {
@@ -143,6 +144,7 @@ async function renderApp(feedScreen: () => ReactElement = FeedScreen) {
           name: 'Мішанина',
           description: 'Слова й Виправлення впереміш.',
           publishedOn: '2026-10-25',
+          retired: false,
           entryIds: ['c_tipa', 'w_tykhyi', 'w_retired', 'w_sumyrnyi'],
         },
         {
@@ -150,6 +152,7 @@ async function renderApp(feedScreen: () => ReactElement = FeedScreen) {
           name: 'Завтрашня',
           description: 'Ще не вийшла.',
           publishedOn: '2026-10-29',
+          retired: false,
           entryIds: ['w_tykhyi'],
         },
       ],

@@ -5,6 +5,7 @@ import {
   childDeletes,
   correctionRows,
   crosswordDayRows,
+  curatedCollectionDeletes,
   curatedCollectionRows,
   entryRow,
   idiomRows,
@@ -76,7 +77,7 @@ export async function applyPatch(db: PackWriteDatabase, patch: Patch, etag: stri
       ...patch.synonymRows.flatMap(({ id }) => childDeletes('synonymRow', id)),
       ...patch.tips.flatMap(({ id }) => childDeletes('tip', id)),
       ...patch.crosswordDays.flatMap(({ date }) => childDeletes('crosswordDay', date)),
-      ...patch.curatedCollections.flatMap(({ id }) => childDeletes('curatedCollection', id)),
+      ...patch.curatedCollections.flatMap(({ id }) => curatedCollectionDeletes(id)),
       ...[
         ...patch.words,
         ...patch.corrections,

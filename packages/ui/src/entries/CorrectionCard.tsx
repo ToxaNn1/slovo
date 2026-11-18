@@ -43,15 +43,14 @@ import { correctionTabs, type CorrectionTab } from './word-tabs';
  * Stress marks (ADR 0045): VoiceOver reads each form with where its Stress
  * falls, as for a Lemma, and every other text without the mark. Under Self-check it keeps only the non-standard form and
  * asks how to say it right; the Entry card draws the button that reveals the
- * rest under it. With `tabs`, the blocks under the non-standard
- * form sit in the tabs «Як краще», «Чому» and «Приклади» (ADR 0091).
+ * rest under it. The blocks under the non-standard form sit in the tabs
+ * «Як краще», «Чому» and «Приклади» (ADR 0091).
  */
 export function CorrectionCardBody({
   card,
   lemmaSize: mainSize,
   concealed,
   corner,
-  tabs,
   sourceTab,
   headless = false,
 }: {
@@ -62,8 +61,6 @@ export function CorrectionCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The tabs under the non-standard form in place of the one column (ADR 0091). */
-  tabs: boolean;
   /** The last tab «Джерело» with the sources, which leave the other tabs, while `sourceTab` is on (ADR 0116). */
   sourceTab: boolean;
   /** The kicker and the headline are drawn in Entry details' red panel, so the body leaves them out. */
@@ -94,27 +91,17 @@ export function CorrectionCardBody({
           {strings.howToSay}
         </Text>
       )}
-      {tabs ? (
-        <CardTabs
-          testID="correction"
-          tabs={correctionTabs}
-          nameOf={({ key }) => strings.tabs[key]}
-          sources={sourceTab ? card.sourceNames : undefined}
-          disabled={concealed}
-        >
-          {(tab) => (
-            <CorrectionTabContent tab={tab} card={card} mainSize={mainSize} sourceTab={sourceTab} />
-          )}
-        </CardTabs>
-      ) : concealed ? null : (
-        <>
-          <CorrectionBlock block="standard" card={card} mainSize={mainSize} />
-          <CorrectionBlock block="explanation" card={card} mainSize={mainSize} />
-          <CorrectionBlock block="examplePair" card={card} mainSize={mainSize} />
-          <CorrectionBlock block="literaryUses" card={card} mainSize={mainSize} />
-          <CorrectionBlock block="sources" card={card} mainSize={mainSize} />
-        </>
-      )}
+      <CardTabs
+        testID="correction"
+        tabs={correctionTabs}
+        nameOf={({ key }) => strings.tabs[key]}
+        sources={sourceTab ? card.sourceNames : undefined}
+        disabled={concealed}
+      >
+        {(tab) => (
+          <CorrectionTabContent tab={tab} card={card} mainSize={mainSize} sourceTab={sourceTab} />
+        )}
+      </CardTabs>
     </>
   );
 }
@@ -153,10 +140,10 @@ function CorrectionTabContent({
   );
 }
 
-/** The blocks of a Correction card under its non-standard form, in the column's order. */
+/** The blocks of a Correction card under its non-standard form. */
 type Block = 'standard' | 'explanation' | 'examplePair' | 'literaryUses' | 'sources';
 
-/** One block of a Correction card, which the column and the tabs both draw. */
+/** One block of a Correction card's tab. */
 function CorrectionBlock({
   block,
   card,

@@ -49,10 +49,10 @@ export async function have(
       retired: false,
     })),
     tip: snapshot.tips.map(({ id, title }) => ({ id, text: title, retired: false })),
-    curatedCollection: snapshot.curatedCollections.map(({ id, name }) => ({
+    curatedCollection: snapshot.curatedCollections.map(({ id, name, retired }) => ({
       id,
       text: name,
-      retired: false,
+      retired,
     })),
   };
   for (const [kind, records] of Object.entries(texts)) {

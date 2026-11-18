@@ -247,6 +247,10 @@ _Avoid_: Home, start screen, overview
 «Добірка»: an editorial list of Entries of any kind shipped in the Language Pack with a publish date, unlocking on it, shown on the Dashboard's «SLOVO пропонує» rail right above «Категорії», its tile drawing the pictogram of the Category or Correction Category it names, else the Edition's default; not a Collection, though «ДОДАТИ» copies it into one.
 _Avoid_: Playlist, featured, set
 
+**Retired Curated Collection**:
+A Curated Collection marked Retired in the content database (never deleted), so it leaves the Language Pack and the Patches: no rail, grid, screen or Feed shows it, and it can be brought back. A copy the reader already made stays in their Collections.
+_Avoid_: Deleted collection, archived collection
+
 **Collection**:
 A list of Entries the user created and named; an Entry may be in many Collections. A Collection can be shared by a Collection Link, and «Додати собі» on a Collection Link, and «+ Додати» on a Curated Collection, copy it as the reader's own Collection, which syncs like any other; a copy of a Curated Collection remembers its source.
 _Avoid_: Folder, playlist, list
