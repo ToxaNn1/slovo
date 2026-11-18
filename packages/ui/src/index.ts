@@ -56,7 +56,6 @@ export {
 export { GameModeCard, GameModeGroupTitle, GamesTitle } from './game/GameModeCard';
 export { CrosswordSolvedPoster } from './game/CrosswordSolvedPoster';
 export { GameEndPoster } from './game/GameEndPoster';
-export { GameResult } from './game/GameResult';
 export { AnswerCard } from './game/AnswerCard';
 export { GameReview, type ResultReview } from './game/GameReview';
 export { GameRound, QuickQuestionRound } from './game/GameRound';

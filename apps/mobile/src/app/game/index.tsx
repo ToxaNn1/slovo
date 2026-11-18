@@ -4,7 +4,6 @@ import {
   CrosswordDayCard,
   GameEndPoster,
   GameModeCard,
-  GameResult,
   GameRound,
   GameModeGroupTitle,
   GamesTitle,
@@ -14,37 +13,28 @@ import {
   UndoToastProvider,
   useTokens,
   useUndoToast,
-  WidgetGuideSheet,
   XpPill,
 } from '@slovo/ui';
-import { Redirect, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { Redirect } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
 import { useDailyCrosswordCard } from '@/game/daily-crossword';
-import {
-  useGameActions,
-  useGameState,
-  usePauseInBackground,
-  useTimeLeft,
-  useWidgetHintShown,
-} from '@/game/game';
+import { useGameActions, useGameState, usePauseInBackground, useTimeLeft } from '@/game/game';
 import { gameModeCard, gameModeGroups, gameModeStrings, gameModeToast } from '@/game/game-modes';
-import { MascotAs, MascotIn } from '@/mascot/mascot';
+import { MascotAs } from '@/mascot/mascot';
 import { useXpLogState } from '@/progress/xp-log';
 import { useShown } from '@/shown-in-effect';
 
-const { game: strings, widget: widgetStrings, settings: settingsStrings } = editionStrings;
+const { game: strings, settings: settingsStrings } = editionStrings;
 
 /**
- * The Game tab: the mode screen, a Round with its answer sheet, or the result
- * screen with its Game Review (the end poster while its switch is on, whose
- * «До ігор» goes back to the mode screen), as the Core's Game stands, while the Game is on
- * in effect. A result that offers the widget hint shows the widget guide in a
- * sheet over it, until the reader closes it. A timed Game's timer ticks, and stops while the app is in the
+ * The Game tab: the mode screen, a Round with its answer sheet, or the end
+ * poster with its Game Review, whose «До ігор» goes back to the mode screen,
+ * as the Core's Game stands, while the Game is on in effect. A timed Game's
+ * timer ticks, and stops while the app is in the
  * background. The Game stays in the Core composition, so another tab and back,
  * or an Entry the Game Review opens and back, finds it where it was.
  * A Round's question stands on the ground and the Mascot beside it while
@@ -59,26 +49,13 @@ export default function GameScreen() {
 function Game() {
   const state = useGameState();
   const actions = useGameActions();
-  const router = useRouter();
   const openScreen = useOpenScreen();
-  const {
-    gameReview,
-    finishPoster,
-    gameQuestionOnGround,
-    gameRoundMascot,
-    gameOptionStamp,
-    plainGameReview,
-  } = useShown();
+  const { gameReview, gameQuestionOnGround, gameRoundMascot, gameOptionStamp, plainGameReview } =
+    useShown();
   const { colors } = useTokens();
   usePauseInBackground();
-  /** Whether the reader closed the widget hint, which is offered once ever. */
-  const [hintClosed, setHintClosed] = useState(false);
   const { current } = state;
-  const result = current?.end !== undefined;
-  // The end poster shows no widget hint for now (DESIGN-06).
-  const poster = finishPoster ? current?.end : undefined;
-  const hintShown = result && poster === undefined && state.widgetHint && !hintClosed;
-  useWidgetHintShown(hintShown);
+  const end = current?.end;
 
   const timeLeft = useTimeLeft(current?.time);
   const review: ResultReview = !gameReview
@@ -101,10 +78,10 @@ function Game() {
         <UndoToastProvider>
           <ModeScreen modes={state.modes} onStart={actions.start} />
         </UndoToastProvider>
-      ) : result && poster !== undefined ? (
+      ) : end !== undefined ? (
         <GameEndPoster
           game={current}
-          end={poster}
+          end={end}
           bestResult={state.bestResults[current.modeId]}
           onAgain={() => {
             actions.start(current.modeId);
@@ -113,40 +90,9 @@ function Game() {
           review={review}
           mascot={
             // The board's Mascot: glad for «ВЛУЧНО!», sad for «ЩЕ РАУНД!» and «Розминка!».
-            <MascotAs
-              state={poster.kind !== 'lives-over' && poster.onTarget ? 'happy' : 'sad'}
-              onRed
-            />
+            <MascotAs state={end.kind !== 'lives-over' && end.onTarget ? 'happy' : 'sad'} onRed />
           }
         />
-      ) : result ? (
-        <>
-          <GameResult
-            game={current}
-            bestResult={state.bestResults[current.modeId]}
-            onAgain={() => {
-              actions.start(current.modeId);
-            }}
-            onHome={() => {
-              actions.leave();
-              router.navigate('/');
-            }}
-            review={review}
-            mascot={<MascotIn state="gameEnd" onRed />}
-          />
-          <WidgetGuideSheet
-            visible={hintShown}
-            title={widgetStrings.guide.title}
-            closeLabel={widgetStrings.guide.close}
-            onClose={() => {
-              setHintClosed(true);
-            }}
-            steps={widgetStrings.guide.steps}
-            caption={widgetStrings.guide.sizes}
-            mode={widgetStrings.allEntries}
-            {...widgetStrings.guide.sample}
-          />
-        </>
       ) : (
         <GameRound
           game={current}

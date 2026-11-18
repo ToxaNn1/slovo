@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { PluralLabelSchema, PluralSchema, pluralOf, templateOf } from './shared';
+import { PluralSchema, pluralOf, templateOf } from './shared';
 
 /**
  * The texts of one Game Mode, alike for every mode: its row on the mode
@@ -326,28 +326,5 @@ export const GameStringsSchema = z.strictObject({
     toGames: TextSchema,
     /** The title over the plain Game Review behind `plainGameReview`, e.g. «Огляд раундів» (ADR 0139). */
     review: TextSchema,
-  }),
-  /** The result screen. */
-  result: z.strictObject({
-    won: z.strictObject({
-      title: TextSchema,
-      /** The line under the title, e.g. «Усі 15 раундів пройдено.». Takes `{count}`, the Rounds of a Game. */
-      line: PluralSchema,
-    }),
-    lost: z.strictObject({ title: TextSchema, line: TextSchema }),
-    /** The end of a Game in a mode with a time limit, once its time is up, e.g. «Час вийшов!». */
-    timeUp: z.strictObject({ title: TextSchema, line: TextSchema }),
-    /** The word under the right answers of a Game in a mode with a time limit, e.g. «правильних відповідей». */
-    right: PluralLabelSchema,
-    /** The word under the Rounds passed, «11 / 15», agreeing with the Rounds of a Game, e.g. «раундів». */
-    rounds: PluralLabelSchema,
-    /** The word under the Lives left, e.g. «життів». */
-    lives: PluralLabelSchema,
-    /** The word under the best result, the Game just over included, e.g. «рекорд». */
-    best: PluralLabelSchema,
-    /** The button that starts a new Game in the same mode. */
-    again: TextSchema,
-    /** The button that goes to the Feed. */
-    home: TextSchema,
   }),
 });

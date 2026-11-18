@@ -293,7 +293,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Печатка відзнаки за кросворд',
     line: 'Відзнаку за кросворд показано на весь екран.',
   },
-  finishPoster: { name: 'Плакат «Фініш»', line: 'Наприкінці гри з’являється плакат «Фініш».' },
   gameAnswerBanner: {
     name: 'Смужка відповіді',
     line: 'Після відповіді смужка каже, правильно чи ні, і гра йде далі сама.',

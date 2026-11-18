@@ -139,7 +139,6 @@ const testEditionConfig = {
     streakMilestone: 'Streak grows',
     gameRight: 'Right',
     gameWrong: 'Almost',
-    gameEnd: 'Game over',
     empty: 'Nothing yet',
   },
 };

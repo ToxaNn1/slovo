@@ -1,13 +1,10 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
-import { editionStrings } from '../edition/edition';
+import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import {
-  composition,
   mockRouted,
   open,
   renderScreen,
   answerSurvivalRound,
-  winStress,
   resetGameScreen,
 } from './test-support';
 
@@ -31,7 +28,7 @@ async function loseSurvival({ fromCard = true } = {}) {
 describe('the Game screen', () => {
   describe('the end posters', () => {
     it('ends a whole «Наголос» on «ФІНІШ», «ВЛУЧНО!», with its XP, the new record stamp and the glad Mascot, and «До ігор» opens the Games hub', async () => {
-      await open({ switchedOn: ['finishPoster'] });
+      await open({});
       await renderScreen();
 
       await fireEvent.press(screen.getByTestId('game-mode-stress'));
@@ -54,8 +51,6 @@ describe('the Game screen', () => {
       expect(screen.getByTestId('mascot-happy')).toBeTruthy();
       expect(screen.queryByTestId('game-end-time-up')).toBeNull();
       expect(screen.getByTestId('game-end-best')).toHaveTextContent('Рекорд15');
-      expect(screen.queryByText('Перемога!')).toBeNull();
-      expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
       // Off `gameEndToFeed` and `plainGameReview`, the two buttons and the Game Review of #1674 stay.
       expect(screen.queryByTestId('game-to-feed')).toBeNull();
       expect(screen.getByRole('header', { name: 'Твої раунди' })).toBeOnTheScreen();
@@ -67,7 +62,7 @@ describe('the Game screen', () => {
     });
 
     it('ends «Виживання» on its third mistake on «ФІНІШ» and «ЩЕ РАУНД!» with the tiles (board «slogo game last»)', async () => {
-      await open({ corrections: 15, switchedOn: ['finishPoster'] });
+      await open({ corrections: 15 });
       await renderScreen();
 
       await loseSurvival();
@@ -75,7 +70,6 @@ describe('the Game screen', () => {
       expect(screen.getByText('ФІНІШ')).toBeOnTheScreen();
       expect(screen.getByText('ЩЕ РАУНД!')).toBeOnTheScreen();
       expect(screen.getByTestId('game-end-xp')).toBeOnTheScreen();
-      expect(screen.queryByText('Життя закінчилися')).toBeNull();
       expect(screen.queryByText('Розминка!')).toBeNull();
       expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз!');
       expect(screen.getByTestId('game-to-games')).toHaveTextContent('До ігор');
@@ -83,7 +77,7 @@ describe('the Game screen', () => {
     });
 
     it('offers «Ще раз!» and «До ігор» one under the other and no «До стрічки», even with `gameEndToFeed` on (owner, 15.11)', async () => {
-      await open({ corrections: 15, switchedOn: ['finishPoster', 'gameEndToFeed'] });
+      await open({ corrections: 15, switchedOn: ['gameEndToFeed'] });
       await renderScreen();
       await loseSurvival();
       expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз!');
@@ -104,7 +98,7 @@ describe('the Game screen', () => {
     });
 
     it('lists «Огляд раундів», a plain row for each Round whose tap does nothing', async () => {
-      await open({ corrections: 15, switchedOn: ['finishPoster', 'plainGameReview'] });
+      await open({ corrections: 15, switchedOn: ['plainGameReview'] });
       await renderScreen();
       await loseSurvival();
 
@@ -122,66 +116,6 @@ describe('the Game screen', () => {
 
       expect(screen.toJSON()).toEqual(before);
       expect(mockRouted).toEqual([]);
-    });
-  });
-
-  describe('the widget hint', () => {
-    it('shows the widget guide over the result of the first won Game, with its 3 steps, until «Зрозуміло» closes it', async () => {
-      await renderScreen();
-
-      await winStress();
-
-      const sheet = await screen.findByTestId('widget-guide-sheet');
-      expect(within(sheet).getByRole('header', { name: 'Слово на головному екрані' })).toBeTruthy();
-      for (const [index, step] of editionStrings.widget.guide.steps.entries()) {
-        expect(
-          screen.getByTestId(`widget-guide-sheet-step-${String(index + 1)}`),
-        ).toHaveTextContent(`${String(index + 1)}${step.title}${step.hint}`);
-      }
-
-      await fireEvent.press(screen.getByRole('button', { name: 'Зрозуміло' }));
-
-      await waitFor(() => {
-        expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
-      });
-      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
-    });
-
-    it('keeps the widget guide as shown once it is on screen: a Game left from under it and the next won one offer none', async () => {
-      await renderScreen();
-      await winStress();
-      expect(await screen.findByTestId('widget-guide-sheet')).toBeOnTheScreen();
-
-      // Left without «Зрозуміло»: only the Core remembers that the hint was shown.
-      await act(() => {
-        composition.game.leave();
-      });
-      await winStress();
-
-      expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
-    });
-
-    it('offers the widget guide once ever: the next won Game shows none', async () => {
-      await renderScreen();
-      await winStress();
-      await fireEvent.press(await screen.findByRole('button', { name: 'Зрозуміло' }));
-      await waitFor(() => {
-        expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
-      });
-
-      await fireEvent.press(screen.getByTestId('game-again'));
-      await winStress({ fromCard: false });
-
-      expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
-    });
-
-    it('offers no widget guide with the widget switched off', async () => {
-      await open({ switchedOff: ['widget'] });
-      await renderScreen();
-
-      await winStress();
-
-      expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
     });
   });
 });

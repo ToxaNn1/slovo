@@ -1,4 +1,4 @@
-import type { GameEnd, GameOver, Haptics } from '@slovo/core';
+import type { CurrentGame, GameEnd, Haptics } from '@slovo/core';
 import { EditionProvider, GameEndPoster, HapticsProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -8,7 +8,6 @@ import { testStrings } from '../test-strings';
 
 const strings = testStrings({
   game: {
-    result: { lost: { title: 'Out of lives' } },
     finish: {
       title: 'Finish',
       won: 'Bullseye!',
@@ -25,7 +24,7 @@ const strings = testStrings({
 
 const end: GameEnd = { kind: 'lives-over', played: 5, right: 2, xp: 0, newBest: false };
 
-const game: GameOver = {
+const game = {
   modeId: 'survival',
   round: {
     number: 2,
@@ -46,7 +45,7 @@ const game: GameOver = {
   played: [],
   status: 'lost',
   end,
-};
+} satisfies CurrentGame;
 
 const haptics: Haptics = {
   selection: jest.fn(),
@@ -88,7 +87,6 @@ describe('GameEndPoster', () => {
     expect(screen.getByText('ONE MORE ROUND!')).toBeOnTheScreen();
     expect(screen.getByText('2 of 5 hits')).toBeOnTheScreen();
     expect(screen.getByTestId('game-end-xp')).toHaveTextContent('+0 XP', { exact: false });
-    expect(screen.queryByText('Out of lives')).toBeNull();
     expect(screen.queryByText('SURVIVAL · 2/5')).toBeNull();
   });
 

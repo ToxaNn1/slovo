@@ -105,7 +105,6 @@
     "crosswordSolveTime": "off",
     "crosswordSolvedScreen": "off",
     "crosswordBadgeStamp": "off",
-    "finishPoster": "off",
     "gameAnswerBanner": "off",
     "gameRoundMascot": "off",
     "gameQuestionOnGround": "off",
@@ -362,7 +361,6 @@
     "streakMilestone": "Mascot streakMilestone",
     "gameRight": "Mascot gameRight",
     "gameWrong": "Mascot gameWrong",
-    "gameEnd": "Mascot gameEnd",
     "empty": "Mascot empty"
   }
 }

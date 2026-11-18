@@ -57,7 +57,6 @@
     "eveningNotification": "on",
     "fastReveal": "on",
     "feedTab": "on",
-    "finishPoster": "off",
     "gameAnswerBanner": "off",
     "gameRoundMascot": "off",
     "gameQuestionOnGround": "off",
@@ -383,7 +382,6 @@
     "streakMilestone": "Mascot streakMilestone",
     "gameRight": "Mascot gameRight",
     "gameWrong": "Mascot gameWrong",
-    "gameEnd": "Mascot gameEnd",
     "empty": "Mascot empty"
   }
 }
