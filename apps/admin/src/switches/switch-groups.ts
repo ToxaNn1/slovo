@@ -120,7 +120,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   gameRoundMascot: 'games',
   gameQuestionOnGround: 'games',
   gameOptionStamp: 'games',
-  livesOverWarmup: 'games',
   gameEndToFeed: 'games',
   plainGameReview: 'games',
   gameHubGroups: 'games',

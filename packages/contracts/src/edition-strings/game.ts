@@ -323,17 +323,6 @@ export const GameStringsSchema = z.strictObject({
     /** The label over the Best result, e.g. «Рекорд». */
     best: TextSchema,
   }),
-  /** The head of the Lives-over screen, e.g. «ВГАДАЙ СЛОВО · 7/15». Takes `{mode}`, `{score}` and `{total}` (spec #1674). */
-  livesOver: templateOf('mode', 'score', 'total'),
-  /** The Lives-over poster behind `livesOverWarmup` (ADR 0139). */
-  warmup: z.strictObject({
-    /** Its head, e.g. «Розминка!». */
-    title: TextSchema,
-    /** The line under it, e.g. «Майже. Наступне вийде.». */
-    line: TextSchema,
-    /** The word under the count of right answers, e.g. «влучних». */
-    hits: TextSchema,
-  }),
   /** The texts both final screens share (spec #1674). */
   finals: z.strictObject({
     /** The title over the Game Review rows, e.g. «Твої раунди». */

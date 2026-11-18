@@ -71,7 +71,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   gameRoundMascot: ['game'],
   gameQuestionOnGround: ['game'],
   gameOptionStamp: ['game'],
-  livesOverWarmup: ['finishPoster'],
   gameEndToFeed: ['finishPoster'],
   plainGameReview: ['gameReview'],
   gameHubGroups: ['game'],

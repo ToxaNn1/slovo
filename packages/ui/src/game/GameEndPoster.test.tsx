@@ -8,7 +8,6 @@ import { testStrings } from '../test-strings';
 
 const strings = testStrings({
   game: {
-    livesOver: '{mode} · {score}/{total}',
     result: { lost: { title: 'Out of lives' } },
     finish: {
       title: 'Finish',
@@ -70,11 +69,9 @@ async function renderPoster({
         <GameEndPoster
           game={{ ...game, end: ended }}
           end={ended}
-          modeName="Survival"
           bestResult={undefined}
           onAgain={jest.fn()}
           onToGames={jest.fn()}
-          warmup={false}
           review={review}
           mascot={<Text>Game over. Nice warm-up! A line far wider than any Mascot figure.</Text>}
         />

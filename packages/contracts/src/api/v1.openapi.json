@@ -9320,14 +9320,6 @@
                           ],
                           "type": "string"
                         },
-                        "livesOverWarmup": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameEndToFeed": {
                           "enum": [
                             "on",
@@ -9861,7 +9853,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "livesOverWarmup",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",
@@ -11299,14 +11290,6 @@
                           ],
                           "type": "string"
                         },
-                        "livesOverWarmup": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameEndToFeed": {
                           "enum": [
                             "on",
@@ -11840,7 +11823,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "livesOverWarmup",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",
@@ -13202,14 +13184,6 @@
                           ],
                           "type": "string"
                         },
-                        "livesOverWarmup": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gameEndToFeed": {
                           "enum": [
                             "on",
@@ -13743,7 +13717,6 @@
                         "gameRoundMascot",
                         "gameQuestionOnGround",
                         "gameOptionStamp",
-                        "livesOverWarmup",
                         "gameEndToFeed",
                         "plainGameReview",
                         "gameHubGroups",
