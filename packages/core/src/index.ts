@@ -77,7 +77,6 @@ export {
 } from './game/game';
 export {
   GAME_HUB_GROUPS,
-  type GameHubGroup,
   type AnswerSheet,
   type FixedChip,
   type RoundContent,
