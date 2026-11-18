@@ -64,8 +64,8 @@ const rarityTopSegments = RARITIES.map((rarity) => ({
  * a row that opens a screen with its value beside the chevron, the groups in
  * the board's order. Each row is shown while its feature is on in effect: the
  * Account, «Менше руху», «Звуки», «Голос диктора», the Daily Goal, the Rarity
- * Range (ADR 0156), «Пройти тест ще раз», «Відзнаки», «Пройти опитування
- * ще раз», «Перерва», the counters, «Самоперевірка» and «Конфіденційність»,
+ * Range (ADR 0156), «Пройти тест ще раз», «Відзнаки», «Анкета: підлаштувати
+ * Стрічку», «Перерва», the counters, «Самоперевірка» and «Конфіденційність»,
  * which holds the privacy switch and the Data export (ADR 0135; the privacy
  * policy link lives in «Про SLOVO»). Seasonal Decor has no row (ADR 0055).
  * Under the groups, «Скинути прогрес» asks in its sheet and starts the
@@ -450,10 +450,10 @@ function SettingsList() {
               testID="settings-row-about"
               icon="triangle"
               label={strings.rows.about}
-              // «Версія <version> (<build>)» (ADR 0044), unknown to a binary without `expo-application`.
+              // «Версія <version> (<build>)» (ADR 0044); «Версія <version>» without a build of the app's own.
               subtitle={
-                build === undefined
-                  ? undefined
+                build.build === undefined
+                  ? fill(strings.about.versionAlone, { version: build.version })
                   : fill(subtitles.about, { version: build.version, build: build.build })
               }
               end={{

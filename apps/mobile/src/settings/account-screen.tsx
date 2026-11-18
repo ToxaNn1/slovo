@@ -137,7 +137,7 @@ function AccountContent({
 type StateOf<S extends AccountState['status']> = Extract<AccountState, { status: S }>;
 
 /**
- * Signed out: «Увійти через Apple», then «Увійти через Google», each when it
+ * Signed out: the line on why to sign in, then «Увійти через Apple», then «Увійти через Google», each when it
  * is offered, the divider «або поштою» under them, then the email field and
  * «Надіслати код». Once the code is sent, «Код надіслано на <email>» stands
  * over the code's six cells, which sign in as soon as they hold the code,
@@ -171,6 +171,9 @@ function SignIn({
     };
     return (
       <View style={styles.form}>
+        <Text {...voice} style={[typeStyle('sub', tokens), { color: tokens.colors.muted }]}>
+          {strings.whySignIn}
+        </Text>
         {withApple && (
           <AppleSignInButton
             testID="account-apple"

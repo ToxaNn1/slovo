@@ -250,21 +250,21 @@ describe('what the reader is shown', () => {
       },
     ],
     [
-      'the self-rating alone in «Пройти опитування ще раз» with the questionnaire off',
+      'the self-rating alone in «Анкета: підлаштувати Стрічку» with the questionnaire off',
       {
         off: ['questionnaire'],
         shown: { questionnaire: { levelWhy: false, selfRating: true, interests: true } },
       },
     ],
     [
-      'no interests in «Пройти опитування ще раз» with «Що тобі цікаво?» off',
+      'no interests in «Анкета: підлаштувати Стрічку» with «Що тобі цікаво?» off',
       {
         off: ['interestsQuestion'],
         shown: { questionnaire: { levelWhy: true, selfRating: true, interests: false } },
       },
     ],
     [
-      'the interests alone in «Пройти опитування ще раз» with the questionnaire and the Rarity Test off',
+      'the interests alone in «Анкета: підлаштувати Стрічку» with the questionnaire and the Rarity Test off',
       {
         off: ['questionnaire', 'rarityTest'],
         shown: {
@@ -274,7 +274,7 @@ describe('what the reader is shown', () => {
       },
     ],
     [
-      'no «Пройти опитування ще раз» with its three questions off',
+      'no «Анкета: підлаштувати Стрічку» with its three questions off',
       {
         off: ['questionnaire', 'rarityTest', 'interestsQuestion'],
         shown: { rarityTest: false, questionnaire: undefined },

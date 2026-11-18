@@ -47,6 +47,19 @@ jest.mock('../device/device-native-modules', () => {
     },
   };
 });
+/** Where the app runs, set by a test: Expo Go is `storeClient`. */
+let mockEnvironment = 'standalone';
+// The app config's version, which jest-expo leaves empty.
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  ExecutionEnvironment: { Bare: 'bare', Standalone: 'standalone', StoreClient: 'storeClient' },
+  default: {
+    expoConfig: { version: '0.9' },
+    get executionEnvironment() {
+      return mockEnvironment;
+    },
+  },
+}));
 jest.mock('expo-application', () => ({
   nativeApplicationVersion: '0.9',
   nativeBuildVersion: '42',
@@ -249,6 +262,20 @@ describe('Settings, as the board', () => {
       'accessibilityHint',
       'Версія 0.9 (42)',
     );
+  });
+
+  it("names the app's own version, without Expo Go's build, under «Про SLOVO» in Expo Go", async () => {
+    mockEnvironment = 'storeClient';
+    try {
+      await renderSettings();
+
+      expect(screen.getByRole('button', { name: 'Про SLOVO' })).toHaveProp(
+        'accessibilityHint',
+        'Версія 0.9',
+      );
+    } finally {
+      mockEnvironment = 'standalone';
+    }
   });
 
   it('gives every row a line under its title', async () => {

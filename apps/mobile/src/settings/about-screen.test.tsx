@@ -16,12 +16,15 @@ import { edition, editionStrings } from '../edition/edition';
 const mockBuild: {
   version: string | null;
   build: string | null;
+  environment: string;
   updateId: string | null;
   channel: string | null;
   modules: boolean;
 } = {
-  version: '0.9',
+  // The native version differs from the app config's, so a test sees which one shows.
+  version: '9.9',
   build: '42',
+  environment: 'standalone',
   updateId: null,
   channel: 'beta',
   modules: true,
@@ -31,6 +34,17 @@ jest.mock('../device/device-native-modules', () => ({
   nativeModules: {
     has: () => mockBuild.modules,
     load: (_name: string, require: () => unknown) => (mockBuild.modules ? require() : undefined),
+  },
+}));
+// The app config's version, and where the app runs: Expo Go is `storeClient`.
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  ExecutionEnvironment: { Bare: 'bare', Standalone: 'standalone', StoreClient: 'storeClient' },
+  default: {
+    expoConfig: { version: '0.9' },
+    get executionEnvironment() {
+      return mockBuild.environment;
+    },
   },
 }));
 jest.mock('expo-application', () => ({
@@ -89,13 +103,31 @@ describe('About', () => {
     expect(openURL).toHaveBeenCalledWith(address);
   });
 
-  it('shows the version, the build and the update the app runs', async () => {
+  it("shows the app's own version and the build, never the raw update id", async () => {
     mockBuild.modules = true;
     mockBuild.updateId = '0198e3a1-7c2b-7f00-9a4e-3b5d6c7e8f90';
     await renderAbout();
 
-    expect(screen.getByText('Версія 0.9 · збірка 42')).toBeTruthy();
-    expect(screen.getByText('Оновлення 0198e3a1-7c2b-7f00-9a4e-3b5d6c7e8f90')).toBeTruthy();
+    expect(screen.getByTestId('about-version')).toHaveTextContent('Версія 0.9 · збірка 42');
+    expect(screen.queryByText(/0198e3a1/)).toBeNull();
+    expect(screen.queryByText(/^Оновлення /)).toBeNull();
+  });
+
+  it("shows the app's version, not Expo Go's, and no build under Expo Go", async () => {
+    mockBuild.modules = true;
+    mockBuild.environment = 'storeClient';
+    mockBuild.version = '58.0.7';
+    mockBuild.build = '1017';
+    try {
+      await renderAbout();
+
+      expect(screen.getByTestId('about-version')).toHaveTextContent('Версія 0.9');
+      expect(screen.queryByText(/58\.0\.7|1017/)).toBeNull();
+    } finally {
+      mockBuild.environment = 'standalone';
+      mockBuild.version = '9.9';
+      mockBuild.build = '42';
+    }
   });
 
   it('shows the Update channel the build listens to (ADR 0167)', async () => {
@@ -105,22 +137,11 @@ describe('About', () => {
     expect(screen.getByText('Канал оновлень beta')).toBeTruthy();
   });
 
-  it('shows no update line when the app runs without updates', async () => {
-    mockBuild.modules = true;
-    mockBuild.updateId = null;
-    await renderAbout();
-
-    expect(screen.getByText('Версія 0.9 · збірка 42')).toBeTruthy();
-    expect(screen.queryByText(/^Оновлення /)).toBeNull();
-  });
-
-  it('opens without the version and update lines on a binary that lacks the modules reporting them', async () => {
+  it('shows the version without a build on a binary that lacks the modules reporting it', async () => {
     mockBuild.modules = false;
-    mockBuild.updateId = '0198e3a1-7c2b-7f00-9a4e-3b5d6c7e8f90';
     await renderAbout();
 
     expect(screen.getByText(edition.displayName)).toBeTruthy();
-    expect(screen.queryByTestId('about-version')).toBeNull();
-    expect(screen.queryByTestId('about-update')).toBeNull();
+    expect(screen.getByTestId('about-version')).toHaveTextContent('Версія 0.9');
   });
 });
