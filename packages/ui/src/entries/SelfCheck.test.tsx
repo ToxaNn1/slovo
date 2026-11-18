@@ -39,14 +39,15 @@ const strings = testStrings({
     registers: {},
     category: '{category}',
     reveal: 'Show the meaning',
-    extraDefinitions: 'Other meanings',
     example: '{text}',
+    tabs: { essence: 'Essence', example: 'Example', links: 'Links', history: 'History' },
   },
   idiomCard: {
     idiomTypes: { idiom: 'idiom', placeName: 'place name' },
     heading: '{expression}, {type}',
     etymology: 'Origin',
     source: 'Source: {source}',
+    tabs: { essence: 'Essence', origin: 'Origin', example: 'Example' },
   },
   correctionCard: {
     title: 'Correction',
@@ -60,6 +61,7 @@ const strings = testStrings({
     source: 'Source: {source}',
     howToSay: 'How to say it?',
     reveal: 'Show',
+    tabs: { better: 'Better', why: 'Why', examples: 'Examples' },
   },
   knowledge: { known: 'Known', unknown: 'Unknown' },
 });

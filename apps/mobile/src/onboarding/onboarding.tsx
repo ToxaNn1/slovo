@@ -22,6 +22,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { MascotAs } from '../mascot/mascot';
 import { useComposition } from '../composition';
+import { useShown } from '../shown-in-effect';
 import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { keep } from '../keep';
@@ -167,6 +168,7 @@ function FirstWord({
   onNext: () => void;
   onSkip: () => void;
 }) {
+  const { sourceTab } = useShown();
   return (
     <OnboardingStep
       testID="onboarding-first-word"
@@ -180,7 +182,11 @@ function FirstWord({
       <View style={stepStyles.heading}>
         <Title>{strings.firstWord.title}</Title>
       </View>
-      <EntryCard card={{ kind: 'word', entryId: word.wordId, model: word }} />
+      {/* The Feed's tabbed card in its frame, with no corner or swipe (owner decision Р29). */}
+      <EntryCard
+        card={{ kind: 'word', entryId: word.wordId, model: word }}
+        sourceTab={sourceTab}
+      />
     </OnboardingStep>
   );
 }

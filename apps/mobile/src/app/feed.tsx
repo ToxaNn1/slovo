@@ -396,7 +396,7 @@ function useHeaderRows() {
 function SwipedEntryCard(
   props: Omit<
     ComponentProps<typeof EntryCard>,
-    'slots' | 'selfCheck' | 'tabs' | 'sourceTab' | 'tipExceptions'
+    'slots' | 'selfCheck' | 'sourceTab' | 'tipExceptions'
   >,
 ) {
   const { selfCheck, sourceTab, tipExceptions } = useShown();
@@ -405,7 +405,6 @@ function SwipedEntryCard(
       {...props}
       slots={useEntrySlots(props.card)}
       selfCheck={selfCheck}
-      tabs
       sourceTab={sourceTab}
       tipExceptions={tipExceptions}
     />

@@ -115,34 +115,30 @@ export const entryRow = {
 } as const;
 
 /**
- * The Word card's small controls: the Category chip's vertical padding, the
- * gap inside the «more» button and the side of its chevron, and the side of
- * the icon on the «often said» line.
+ * The Word card's small controls: the Category chip's vertical padding and
+ * the side of the icon on the «often said» line.
  */
 export const wordCardControls = {
   chipPaddingVertical: 7,
-  moreGap: 6,
-  moreChevron: 14,
   oftenSaidIcon: 16,
 } as const;
 
 /**
- * The red card of the Word of the Day in the Feed (XActions a1–a2): its
- * corner, padding, least height and gap between blocks; where the giant
- * letter overhangs the top right corner, closed and open; the width the
- * shout wraps in, the Mascot's width, the alpha of the Category chip's cream
- * fill, and the cream panel the open card's meaning sits on.
+ * The red card of the Word of the Day in the Feed while Self-check keeps it
+ * closed (XActions a1): its corner, padding, least height and gap between
+ * blocks; where the giant «?» overhangs the top right corner; the width the
+ * shout wraps in, the Mascot's width and the alpha of the Category chip's
+ * cream fill.
  */
 export const wordHero = {
   radius: 28,
   padding: 22,
   minHeight: 392,
   gap: 12,
-  letter: { closed: { right: -30, top: -40 }, open: { right: -40, top: -50 } },
+  letter: { right: -30, top: -40 },
   shoutWidth: 220,
   mascot: 120,
   chipFill: 0.7,
-  panel: { radius: 18, padding: 16, gap: 8 },
 } as const;
 
 /**

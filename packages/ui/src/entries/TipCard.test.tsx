@@ -54,28 +54,13 @@ function inEdition(children: React.ReactNode) {
 }
 
 describe('the Tip card', () => {
-  it('shows the kicker, the title over its red bar, both forms under the Correction card labels, the explanation, the example and the sources', async () => {
+  it('shows the kicker and the title over its red bar, and reads the title, then the non-standard form under its label, to VoiceOver', async () => {
     await render(inEdition(<EntryCard card={card} />));
 
-    expect(screen.getByTestId('tip-card')).toBeTruthy();
-    expect(screen.getByTestId('tip-title')).toHaveTextContent('What time is it?');
     expect(screen.getByTestId('tip-kicker')).toHaveTextContent('tip');
     expect(screen.getByTestId('tip-rule')).toBeTruthy();
-    expect(screen.getByTestId('tip-non-standard')).toHaveProp(
-      'accessibilityLabel',
-      'Often said: How much is the time?',
-    );
-    expect(screen.getByTestId('tip-standard')).toHaveProp(
-      'accessibilityLabel',
-      'Better: What time is it?',
-    );
-    expect(screen.getByTestId('tip-explanation')).toHaveTextContent(
-      'Time is asked by its hour, not by its amount.',
-    );
-    expect(screen.getByTestId('tip-example')).toHaveTextContent('Excuse me, what time is it?');
-    expect(screen.getByTestId('tip-source')).toHaveTextContent(
-      'Source: A style guide; A dictionary of usage',
-    );
+    expect(screen.getByRole('header', { name: 'Tip: What time is it?' })).toBeTruthy();
+    expect(screen.getByLabelText('Often said: How much is the time?')).toBeTruthy();
   });
 
   it('shows only the right way when the Tip has no non-standard form', async () => {
@@ -83,32 +68,14 @@ describe('the Tip card', () => {
 
     expect(screen.queryByTestId('tip-non-standard')).toBeNull();
     expect(screen.queryByText('Often said')).toBeNull();
-    expect(screen.getByLabelText('Better: What time is it?')).toBeTruthy();
-    expect(screen.getByTestId('tip-explanation')).toBeTruthy();
-    expect(screen.queryByTestId('tip-example')).toBeNull();
+    expect(screen.getByTestId('tip-word-0')).toHaveTextContent('What time is it?');
     expect(screen.queryByTestId('tip-source')).toBeNull();
-  });
-
-  it('reads the title, then each form under its label, to VoiceOver', async () => {
-    await render(inEdition(<EntryCard card={card} />));
-
-    expect(screen.getByRole('header', { name: 'Tip: What time is it?' })).toBeTruthy();
-    expect(screen.getByLabelText('Often said: How much is the time?')).toBeTruthy();
-    expect(screen.getByLabelText('Better: What time is it?')).toBeTruthy();
-  });
-
-  it('sets the standard form as a phrase at the board size, not at the Lemma size', async () => {
-    await render(inEdition(<EntryCard card={card} />));
-
-    const form = within(screen.getByTestId('tip-standard')).getByText('What time is it?');
-    // Board С2.6: «Українською краще» at 30 pt, where the Lemma at step M is 50.
-    expect(form).toHaveStyle({ fontSize: 30 });
   });
 });
 
 describe('the Tip card with the Source tab (ADR 0116)', () => {
   it('moves the sources out of the rule tab into a last tab, so the bar reads Rule · Source', async () => {
-    await render(inEdition(<EntryCard card={card} tabs sourceTab />));
+    await render(inEdition(<EntryCard card={card} sourceTab />));
 
     expect(
       screen.getAllByRole('tab').map((tab) => tab.props['accessibilityLabel'] as string),
@@ -127,7 +94,7 @@ describe('the Tip card with the Source tab (ADR 0116)', () => {
   it('shows the exceptions of a Tip in a tab after the rule, their text and their words in chips', async () => {
     const exceptions = { explanation: 'Not on the hour itself:', words: ['noon', 'midnight'] };
     const withExceptions: TipFeedCard = { ...card, model: { ...model, exceptions } };
-    await render(inEdition(<EntryCard card={withExceptions} tabs sourceTab tipExceptions />));
+    await render(inEdition(<EntryCard card={withExceptions} sourceTab tipExceptions />));
 
     expect(
       screen.getAllByRole('tab').map((tab) => tab.props['accessibilityLabel'] as string),
@@ -144,42 +111,40 @@ describe('the Tip card with the Source tab (ADR 0116)', () => {
   it('keeps the exceptions out while their Feature Switch is off', async () => {
     const exceptions = { explanation: 'Not on the hour itself:', words: ['noon'] };
     const withExceptions: TipFeedCard = { ...card, model: { ...model, exceptions } };
-    await render(inEdition(<EntryCard card={withExceptions} tabs sourceTab />));
+    await render(inEdition(<EntryCard card={withExceptions} sourceTab />));
 
     expect(screen.queryByTestId('tip-tab-exceptions')).toBeNull();
   });
 
   it('keeps one tab and no bar for a Tip without sources', async () => {
-    await render(inEdition(<EntryCard card={withoutNonStandard} tabs sourceTab />));
+    await render(inEdition(<EntryCard card={withoutNonStandard} sourceTab />));
 
     expect(screen.queryByRole('tablist')).toBeNull();
   });
 });
 
-describe('the Tip card in tabs (board e9)', () => {
+describe('the rule tab of a Tip card (board e9)', () => {
   it('starts the title at 36 on the title scale, on a line of 1.1 (ADR 0157)', async () => {
-    await render(inEdition(<EntryCard card={card} tabs />));
+    await render(inEdition(<EntryCard card={card} />));
 
     expect(screen.getByTestId('tip-title')).toHaveStyle({ fontSize: 36, lineHeight: 39.6 });
   });
 
   it('keeps «Often said» over the rule tab: the explanation, a chip of the standard form and of the Example, and the sources', async () => {
-    await render(inEdition(<EntryCard card={card} tabs />));
+    await render(inEdition(<EntryCard card={card} />));
 
     expect(screen.getByLabelText('Often said: How much is the time?')).toBeTruthy();
     expect(screen.queryByRole('tablist')).toBeNull();
     expect(screen.getByTestId('tip-explanation')).toHaveStyle({ fontSize: 20, lineHeight: 28 });
     expect(screen.getByTestId('tip-word-0')).toHaveTextContent('What time is it?');
     expect(screen.getByTestId('tip-word-1')).toHaveTextContent('Excuse me, what time is it?');
-    expect(screen.queryByTestId('tip-standard')).toBeNull();
-    expect(screen.queryByTestId('tip-example')).toBeNull();
     expect(screen.getByTestId('tip-source')).toHaveTextContent(
       'Source: A style guide; A dictionary of usage',
     );
   });
 
   it('shows only the title and the non-standard form under Self-check, the rule empty until the reveal', async () => {
-    await render(inEdition(<EntryCard card={card} tabs selfCheck />));
+    await render(inEdition(<EntryCard card={card} selfCheck />));
 
     expect(screen.getByLabelText('Often said: How much is the time?')).toBeTruthy();
     expect(screen.queryByTestId('tip-explanation')).toBeNull();
@@ -188,37 +153,6 @@ describe('the Tip card in tabs (board e9)', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
 
     expect(screen.getByTestId('tip-explanation')).toBeTruthy();
-  });
-});
-
-describe('Self-check on a Tip card', () => {
-  it('shows only the title and the non-standard form until the reader reveals it', async () => {
-    await render(inEdition(<EntryCard card={card} selfCheck />));
-
-    expect(screen.getByRole('header', { name: 'Tip: What time is it?' })).toBeTruthy();
-    expect(screen.getByLabelText('Often said: How much is the time?')).toBeTruthy();
-    for (const concealed of ['tip-standard', 'tip-explanation', 'tip-example', 'tip-source']) {
-      expect(screen.queryByTestId(concealed)).toBeNull();
-    }
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
-
-    expect(screen.getByLabelText('Better: What time is it?')).toBeTruthy();
-    expect(screen.getByTestId('tip-explanation')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Show' })).toBeNull();
-  });
-
-  it('shows only the title until the reveal when the Tip has no non-standard form', async () => {
-    await render(inEdition(<EntryCard card={withoutNonStandard} selfCheck />));
-
-    expect(screen.getByRole('header', { name: 'Tip: What time is it?' })).toBeTruthy();
-    expect(screen.queryByTestId('tip-non-standard')).toBeNull();
-    expect(screen.queryByTestId('tip-standard')).toBeNull();
-    expect(screen.queryByTestId('tip-explanation')).toBeNull();
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
-
-    expect(screen.getByLabelText('Better: What time is it?')).toBeTruthy();
   });
 });
 
@@ -239,9 +173,9 @@ describe('the texts of a Tip card', () => {
 
     expect(screen.getByTestId('tip-title')).toHaveTextContent('What time is it?');
     expect(screen.getByTestId('tip-non-standard')).toHaveTextContent(/How much is the time\?/);
-    expect(screen.getByTestId('tip-standard')).toHaveTextContent(/What time is it\?/);
     expect(screen.getByTestId('tip-explanation')).toHaveTextContent('Time is asked by its hour.');
-    expect(screen.getByTestId('tip-example')).toHaveTextContent(/Excuse me, what time is it\?/);
+    expect(screen.getByTestId('tip-word-0')).toHaveTextContent(/What time is it\?/);
+    expect(screen.getByTestId('tip-word-1')).toHaveTextContent(/Excuse me, what time is it\?/);
   });
 });
 

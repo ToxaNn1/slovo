@@ -45,7 +45,7 @@ import { synonymRowPagesOf, type SynonymRowPage } from './word-tabs';
  * any other member is plain text. VoiceOver reads the dominant with the
  * whole row, then each member. Under Self-check it keeps the kicker and the
  * dominant (ADR 0051); the Entry card draws the button that reveals the rest
- * under them. With `tabs` the members sit four to a page, a tab each
+ * under them. The members sit four to a page, a tab each
  * («Ряд · 1/2»), the meaning on the first page and the Example and the
  * sources on the last (ADR 0114). With `sourceTab` the sources leave the
  * last page for their own last tab «Джерело» (ADR 0116).
@@ -56,7 +56,6 @@ export function SynonymRowCardBody({
   concealed,
   onOpenWord,
   corner,
-  tabs,
   sourceTab,
   headless = false,
 }: {
@@ -69,8 +68,6 @@ export function SynonymRowCardBody({
   onOpenWord: ((wordId: string) => void) | undefined;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The members in pages of four under tabs (ADR 0114). */
-  tabs: boolean;
   /** The last tab «Джерело» with the sources, which leave the last page, while `sourceTab` is on (ADR 0116). */
   sourceTab: boolean;
   /** The kicker and the headline are drawn in Entry details' red panel, so the body leaves them out. */
@@ -136,7 +133,7 @@ export function SynonymRowCardBody({
           </View>
         </>
       )}
-      {shown.concealed ? null : tabs ? (
+      {shown.concealed ? null : (
         <CardTabs
           testID="synonymRow"
           tabs={synonymRowPagesOf(shown.card)}
@@ -154,17 +151,14 @@ export function SynonymRowCardBody({
             />
           )}
         </CardTabs>
-      ) : (
-        <SynonymRowContent card={shown.card} page={undefined} sourceLine onOpenWord={onOpenWord} />
       )}
     </>
   );
 }
 
 /**
- * The revealed row at the font size of the frame it sits in: the meaning,
- * the members, the Example and the source line, or with a `page` only its
- * part: the meaning on the first page, the Example and the sources on the
+ * One page of the revealed row at the font size of the frame it sits in: its
+ * members, the meaning on the first page, the Example and the sources on the
  * last. Without `sourceLine` the sources sit in the «Джерело» tab instead.
  */
 function SynonymRowContent({
@@ -174,7 +168,7 @@ function SynonymRowContent({
   onOpenWord,
 }: {
   card: SynonymRowCardModel;
-  page: SynonymRowPage | undefined;
+  page: SynonymRowPage;
   sourceLine: boolean;
   onOpenWord: ((wordId: string) => void) | undefined;
 }) {
@@ -185,10 +179,9 @@ function SynonymRowContent({
   const { voice } = edition;
   const strings = edition.strings.synonymRowCard;
   const turnActions = usePageTurnActions();
-  const first = page === undefined || page.number === 1;
-  const last = page === undefined || page.number === page.pages;
-  const firstIndex = page?.firstIndex ?? 0;
-  const members = page?.members ?? card.members;
+  const first = page.number === 1;
+  const last = page.number === page.pages;
+  const { firstIndex, members } = page;
   const memberSize = roleAt(
     'synonymMember',
     (sizes.definition.fontSize * typeRoles.synonymMember.size) / typeRoles.definition.size,

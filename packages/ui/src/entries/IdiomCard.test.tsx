@@ -31,7 +31,7 @@ const model: IdiomCardModel = {
 async function renderTabbed() {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <EntryCard card={{ kind: 'idiom', entryId: 'i1', model }} tabs />
+      <EntryCard card={{ kind: 'idiom', entryId: 'i1', model }} />
     </EditionProvider>,
   );
 }
@@ -115,7 +115,7 @@ describe('the tabbed Idiom card (board XEntry2 e7)', () => {
               etymology: 'from the hunt.',
             },
           }}
-          tabs
+         
         />
       </EditionProvider>,
     );

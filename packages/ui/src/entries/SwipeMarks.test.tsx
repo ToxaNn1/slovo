@@ -20,12 +20,18 @@ import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
-  wordCard: { stress: 'stress on {vowels}', stressOr: 'or', category: 'Category: {category}' },
+  wordCard: {
+    stress: 'stress on {vowels}',
+    stressOr: 'or',
+    category: 'Category: {category}',
+    tabs: { essence: 'Essence', example: 'Example', links: 'Links', history: 'History' },
+  },
   idiomCard: {
     idiomTypes: { idiom: 'idiom', placeName: 'place name', proverb: 'proverb' },
     heading: '{expression}, {type}',
     etymology: 'Origin',
     source: 'Source: {source}',
+    tabs: { essence: 'Essence', origin: 'Origin', example: 'Example' },
   },
   correctionCard: {
     title: 'Correction',
@@ -47,6 +53,7 @@ const strings = testStrings({
     literaryUses: 'How it is really written',
     literaryUseSource: '{author}, {work}',
     literaryUseSourceWithYear: '{author}, {work}, {year}',
+    tabs: { better: 'Better', why: 'Why', examples: 'Examples' },
   },
   knowledge: {
     known: 'Known',

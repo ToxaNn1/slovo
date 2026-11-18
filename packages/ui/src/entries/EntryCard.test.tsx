@@ -15,21 +15,17 @@ const strings = testStrings({
     registers: { dialectal: { short: 'dial.', full: 'dialectal' } },
     registerWithRegion: '{register}, {region}',
     category: 'Category: {category}',
-    synonym: 'Synonym',
-    synonyms: 'Synonyms',
-    antonym: 'Antonym',
-    antonyms: 'Antonyms',
     example: '{text}',
     exampleAuthor: '— {author}',
     reveal: 'Show the meaning',
     pronunciation: { label: 'Pronounce', stop: 'Stop', noVoice: 'No voice' },
     stress: 'stress on {vowels}',
     stressOr: 'or',
-    extraDefinitions: 'Other meanings',
-    moreExamples: 'More examples',
     etymology: 'Etymology',
-    more: 'More',
     history: 'History of the word',
+    tabs: { essence: 'Essence', example: 'Example', links: 'Links', history: 'History' },
+    tabMore: 'More',
+    tabLess: 'Less',
     synonymRow: 'In the synonym row: {dominant}',
     synonymRowHint: 'Opens the synonym row',
   },
@@ -38,6 +34,7 @@ const strings = testStrings({
     heading: '{expression}, {type}',
     etymology: 'Origin',
     source: 'Source: {source}',
+    tabs: { essence: 'Essence', origin: 'Origin', example: 'Example' },
   },
   correctionCard: {
     title: 'Correction',
@@ -59,6 +56,7 @@ const strings = testStrings({
     literaryUses: 'How it is really written',
     literaryUseSource: '{author}, {work}',
     literaryUseSourceWithYear: '{author}, {work}, {year}',
+    tabs: { better: 'Better', why: 'Why', examples: 'Examples' },
   },
   wordOfTheDay: { badge: 'Word of the day · {day} {month}' },
   dates: { months: [] },
@@ -840,8 +838,8 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
 
   it('shows every Definition in the Essence tab, the others numbered on from the primary one', async () => {
     await render(
-      <EditionProvider edition={{ locale: 'en' }} strings={testStrings(tabbedStrings)}>
-        <EntryCard card={stressedWord} tabs />
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <EntryCard card={stressedWord} />
       </EditionProvider>,
     );
 
@@ -854,8 +852,8 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
 
   it('shows the etymology alone in the History tab', async () => {
     await render(
-      <EditionProvider edition={{ locale: 'en' }} strings={testStrings(tabbedStrings)}>
-        <EntryCard card={stressedWord} tabs />
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <EntryCard card={stressedWord} />
       </EditionProvider>,
     );
     await fireEvent.press(screen.getByTestId('word-tab-history'));
@@ -1017,7 +1015,7 @@ describe("a Word card's kicker", () => {
     await render(inEdition(<EntryCard card={wordCard} kicker={kicker} />));
     expect(screen.getByTestId('word-card-kicker')).toHaveTextContent(kicker);
 
-    await render(inEdition(<EntryCard card={wordCard} kicker={kicker} tabs />));
+    await render(inEdition(<EntryCard card={wordCard} kicker={kicker} />));
     expect(screen.getByTestId('word-card-kicker')).toHaveTextContent(kicker);
     // Level with the corner tiles' middle, as the board's CSS centres it (EntryKicker).
     expect(StyleSheet.flatten(screen.getByTestId('word-card-kicker').props['style'])).toMatchObject(
@@ -1048,25 +1046,6 @@ describe("a Word card's kicker", () => {
   });
 });
 
-/** The file's strings with the names of each kind's tabs. */
-const tabbedStrings = testStrings({
-  ...strings,
-  wordCard: {
-    ...strings.wordCard,
-    tabs: { essence: 'Essence', example: 'Example', links: 'Links', history: 'History' },
-    tabMore: 'More',
-    tabLess: 'Less',
-  },
-  correctionCard: {
-    ...strings.correctionCard,
-    tabs: { better: 'Better', why: 'Why', examples: 'Examples' },
-  },
-  idiomCard: {
-    ...strings.idiomCard,
-    tabs: { essence: 'Essence', origin: 'Origin', example: 'Example' },
-  },
-});
-
 describe('the frame of a tabbed Entry card (board XEntry2)', () => {
   it.each([
     ['word', wordCard],
@@ -1076,8 +1055,8 @@ describe('the frame of a tabbed Entry card (board XEntry2)', () => {
     'draws a %s card at radius 24, outlined 2.5, padded 20/22/18, blocks 16 apart',
     async (kind, entry) => {
       await render(
-        <EditionProvider edition={{ locale: 'en' }} strings={tabbedStrings}>
-          <EntryCard card={entry} tabs />
+        <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+          <EntryCard card={entry} />
         </EditionProvider>,
       );
 
@@ -1100,12 +1079,12 @@ describe('the page an Entry card lays itself out on', () => {
   );
   const wordOfTheDay = { ...wordWithEverything, wordOfTheDay: { year: 2026, month: 11, day: 5 } };
   const wordOfTheDayStrings = {
-    ...tabbedStrings,
-    wordOfTheDay: { ...tabbedStrings.wordOfTheDay, kicker: 'Word of the day · {day}.{month}' },
+    ...strings,
+    wordOfTheDay: { ...strings.wordOfTheDay, kicker: 'Word of the day · {day}.{month}' },
   };
 
   it('is a fixed frame for a tabbed card', async () => {
-    await render(inEdition(<EntryCard card={wordCard} tabs page={page} />));
+    await render(inEdition(<EntryCard card={wordCard} page={page} />));
 
     expect(within(screen.getByTestId('framed-page')).getByTestId('word-card')).toBeTruthy();
   });
@@ -1119,7 +1098,7 @@ describe('the page an Entry card lays itself out on', () => {
   it('scrolls the red Word of the Day card while Self-check keeps it closed, and frames it once revealed', async () => {
     await render(
       <EditionProvider edition={{ locale: 'en' }} strings={wordOfTheDayStrings}>
-        <EntryCard card={wordOfTheDay} tabs selfCheck page={page} />
+        <EntryCard card={wordOfTheDay} selfCheck page={page} />
       </EditionProvider>,
     );
 
@@ -1133,8 +1112,8 @@ describe('the page an Entry card lays itself out on', () => {
 
 describe('the Source tab of a tabbed Entry card (ADR 0116)', () => {
   const sourceStrings = testStrings({
-    ...tabbedStrings,
-    wordCard: { ...tabbedStrings.wordCard, tabSource: 'Source' },
+    ...strings,
+    wordCard: { ...strings.wordCard, tabSource: 'Source' },
   });
   const sourced = ['A dictionary', 'A book of proverbs'];
   const cases = [
@@ -1159,7 +1138,7 @@ describe('the Source tab of a tabbed Entry card (ADR 0116)', () => {
     async (kind, entry) => {
       await render(
         <EditionProvider edition={{ locale: 'en' }} strings={sourceStrings}>
-          <EntryCard card={entry} tabs sourceTab />
+          <EntryCard card={entry} sourceTab />
         </EditionProvider>,
       );
 
@@ -1184,7 +1163,7 @@ describe('the Source tab of a tabbed Entry card (ADR 0116)', () => {
     async (kind, entry) => {
       await render(
         <EditionProvider edition={{ locale: 'en' }} strings={sourceStrings}>
-          <EntryCard card={entry} tabs />
+          <EntryCard card={entry} />
         </EditionProvider>,
       );
 
