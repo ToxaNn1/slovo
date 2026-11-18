@@ -3,7 +3,7 @@ import type { Word } from '@slovo/contracts';
 import type { ApiClient } from '@slovo/contracts/api';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
 import { sql } from 'drizzle-orm';
-import { describe, expect, it, onTestFinished } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
@@ -17,6 +17,7 @@ import {
   importedDatabases,
   silentLogger,
   testApp,
+  passTime,
   testDatabaseUrl,
 } from '../test-support';
 
@@ -434,5 +435,103 @@ describe('the content write API', () => {
     ).toMatchObject({ words: live.filter((found) => found.categoryId === word.categoryId).length });
     // The UA Edition declares 500 Words at least.
     expect(missed.some(({ target }) => target === 'minWords')).toBe(live.length < 500);
+  });
+});
+
+describe("a Curated Collection's publish date", () => {
+  /** A collection of the seed's first Entries, with its date when one is given. */
+  async function collectionBackend() {
+    const backend = await contentBackend();
+    const { words } = await snapshotOf(backend.client);
+    const entryIds = words
+      .filter((word) => !word.retired)
+      .slice(0, 3)
+      .map(({ id }) => id);
+    const save = (publishedOn?: string) =>
+      backend.agent.admin.content.create({
+        editionId: 'uk',
+        kind: 'curatedCollection',
+        batchId: backend.batchId,
+        fields: {
+          name: 'Слова зими',
+          description: 'Рідкісні слова холодної пори.',
+          entryIds,
+          ...(publishedOn === undefined ? {} : { publishedOn }),
+        },
+      });
+    const record = (id: string) =>
+      backend.agent.admin.content.record({ editionId: 'uk', kind: 'curatedCollection', id });
+    return { ...backend, save, record };
+  }
+
+  it('publishes a save without a date today in Kyiv, appearing at the save moment', async () => {
+    const { save, record } = await collectionBackend();
+    // Past midnight in Kyiv, still the day before in UTC.
+    vi.setSystemTime(new Date('2026-11-18T22:30:00.000Z'));
+
+    const { id } = await save();
+
+    expect(await record(id)).toMatchObject({
+      fields: { publishedOn: '2026-11-19' },
+      appearedAt: '2026-11-18T22:30:00.000Z',
+    });
+  });
+
+  it('appears from the start of a future date in Kyiv', async () => {
+    const { save, record } = await collectionBackend();
+    vi.setSystemTime(new Date('2026-11-18T10:00:00.000Z'));
+
+    const winter = await save('2026-12-01');
+    const summer = await save('2027-06-01');
+
+    expect(await record(winter.id)).toMatchObject({
+      fields: { publishedOn: '2026-12-01' },
+      appearedAt: '2026-11-30T22:00:00.000Z',
+    });
+    expect(await record(summer.id)).toMatchObject({ appearedAt: '2027-05-31T21:00:00.000Z' });
+  });
+
+  it('moves the date of a collection not appeared yet, and refuses it once it appeared', async () => {
+    const { agent, batchId, save, record } = await collectionBackend();
+    vi.setSystemTime(new Date('2026-11-18T10:00:00.000Z'));
+    const { id } = await save('2026-11-20');
+    const edit = async (publishedOn: string) => {
+      const { fields, recordVersion } = await record(id);
+      return agent.admin.content.edit({
+        editionId: 'uk',
+        kind: 'curatedCollection',
+        id,
+        batchId,
+        recordVersion,
+        fields: { ...fields, publishedOn },
+      });
+    };
+
+    await edit('2026-11-21');
+    expect(await record(id)).toMatchObject({ appearedAt: '2026-11-20T22:00:00.000Z' });
+
+    passTime(4 * 24 * 60 * 60 * 1000);
+    await expect(edit('2026-11-25')).rejects.toMatchObject({
+      code: 'REFUSED',
+      data: {
+        refusals: [
+          expect.objectContaining({ rule: 'curated-collection-appeared', field: 'publishedOn' }),
+        ],
+      },
+    });
+    // The rest of an appeared collection is still edited, its date kept.
+    const { fields, recordVersion } = await record(id);
+    await agent.admin.content.edit({
+      editionId: 'uk',
+      kind: 'curatedCollection',
+      id,
+      batchId,
+      recordVersion,
+      fields: { ...fields, name: 'Слова зими і снігу' },
+    });
+    expect(await record(id)).toMatchObject({
+      fields: { publishedOn: '2026-11-21', name: 'Слова зими і снігу' },
+      appearedAt: '2026-11-20T22:00:00.000Z',
+    });
   });
 });

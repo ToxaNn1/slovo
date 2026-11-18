@@ -19222,6 +19222,10 @@
                         "hash",
                         "url"
                       ]
+                    },
+                    "appearedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   },
                   "required": [

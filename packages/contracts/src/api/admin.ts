@@ -576,6 +576,11 @@ const contentWriteContract = {
         needsNewRecording: z.boolean().optional(),
         /** Words only: the live Illustration, when the Word has one. */
         illustration: LiveIllustrationSchema.optional(),
+        /**
+         * Curated Collections only: when the collection appears on the rail.
+         * Once it has passed, a change of its publish date is refused.
+         */
+        appearedAt: z.iso.datetime().optional(),
       }),
     ),
   records: contentProcedure

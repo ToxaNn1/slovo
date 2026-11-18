@@ -1,7 +1,7 @@
 import type { Entry } from '@slovo/contracts';
 import type { BuildError, SnapshotSource } from '@slovo/language-pack';
 import { readEditionWithSnapshot } from '@slovo/language-pack';
-import type { Clock, EditionRegistry } from '@slovo/server-core';
+import { editionDayStart, type Clock, type EditionRegistry } from '@slovo/server-core';
 import type { ContentSnapshot, Patch } from '@slovo/contracts/api';
 import { and, eq, gt, inArray, notInArray, sql } from 'drizzle-orm';
 
@@ -247,9 +247,12 @@ export function createContentStore({
       await inChunks(rowsOf(content.synonymRows), (rows) =>
         tx.insert(contentSynonymRows).values(rows),
       );
-      await inChunks(rowsOf(content.curatedCollections ?? []), (rows) =>
-        tx.insert(contentCuratedCollections).values(rows),
-      );
+      // An imported collection appears from the start of its date.
+      const collections = rowsOf(content.curatedCollections ?? []).map((row) => ({
+        ...row,
+        appearedAt: editionDayStart(row.fields.publishedOn),
+      }));
+      await inChunks(collections, (rows) => tx.insert(contentCuratedCollections).values(rows));
       await inChunks(crosswordDays, (rows) => tx.insert(contentCrosswordDays).values(rows));
       await inChunks(
         registry.map((id) => ({ editionId, id, registeredAt: now })),
