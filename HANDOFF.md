@@ -12,5 +12,8 @@ Integration branch: `feat/2022-retire-curated-collection`. Grant: commits, pushe
 ## Log
 - Step 1 (done): contracts `retired`, OpenAPI regenerated, test fixtures. Commit on the integration branch.
 
+- Step 2 (done): ADR 0178 amended («Retiring»), index line, glossary «Retired Curated Collection».
+- Step 3 (running): local worktree implementers A (Pack+Core, branch feat/2022-a-pack-core), B (backend+content-rules+tools/content, feat/2022-b-backend), C (admin, feat/2022-c-admin). If lost, relaunch each from the integration branch with the ticket.
+
 ## Next
-- Parallel implementers: A Pack+Core, B backend+content-rules+tools/content, C admin. Then ADR 0178 amend, code-review, PR.
+- Merge A, B, C into the integration branch; checks; code-review; PR with «Питання власнику», «Handbook», «Перевірки власника»; CI green.
