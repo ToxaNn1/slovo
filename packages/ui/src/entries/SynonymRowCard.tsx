@@ -69,7 +69,7 @@ export function SynonymRowCardBody({
   onOpenWord: ((wordId: string) => void) | undefined;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The members in pages of four under tabs, while `wordTabs` is on (ADR 0114). */
+  /** The members in pages of four under tabs (ADR 0114). */
   tabs: boolean;
   /** The last tab «Джерело» with the sources, which leave the last page, while `sourceTab` is on (ADR 0116). */
   sourceTab: boolean;

@@ -9392,14 +9392,6 @@
                           ],
                           "type": "string"
                         },
-                        "wordTabs": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "sourceTab": {
                           "enum": [
                             "on",
@@ -9409,14 +9401,6 @@
                           "type": "string"
                         },
                         "tipExceptions": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "entryPanelAllKinds": {
                           "enum": [
                             "on",
                             "off",
@@ -9702,10 +9686,8 @@
                         "curatedCollections",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "wordTabs",
                         "sourceTab",
                         "tipExceptions",
-                        "entryPanelAllKinds",
                         "searchButton",
                         "dashboardWordmark",
                         "dailySplash",
@@ -11182,14 +11164,6 @@
                           ],
                           "type": "string"
                         },
-                        "wordTabs": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "sourceTab": {
                           "enum": [
                             "on",
@@ -11199,14 +11173,6 @@
                           "type": "string"
                         },
                         "tipExceptions": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "entryPanelAllKinds": {
                           "enum": [
                             "on",
                             "off",
@@ -11492,10 +11458,8 @@
                         "curatedCollections",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "wordTabs",
                         "sourceTab",
                         "tipExceptions",
-                        "entryPanelAllKinds",
                         "searchButton",
                         "dashboardWordmark",
                         "dailySplash",
@@ -12896,14 +12860,6 @@
                           ],
                           "type": "string"
                         },
-                        "wordTabs": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "sourceTab": {
                           "enum": [
                             "on",
@@ -12913,14 +12869,6 @@
                           "type": "string"
                         },
                         "tipExceptions": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "entryPanelAllKinds": {
                           "enum": [
                             "on",
                             "off",
@@ -13206,10 +13154,8 @@
                         "curatedCollections",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "wordTabs",
                         "sourceTab",
                         "tipExceptions",
-                        "entryPanelAllKinds",
                         "searchButton",
                         "dashboardWordmark",
                         "dailySplash",

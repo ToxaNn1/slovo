@@ -88,10 +88,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   // The demo plays the side swipes on the Feed's card (ADR 0112).
   gesturesHintDemo: ['knowledge'],
   gesturesHintAgain: ['knowledge'],
-  // The source tab is the last of the Entry card's tabs (ADR 0116).
-  sourceTab: ['wordTabs'],
-  // «Винятки» is a tab of the Tip card's tabs (ADR 0120).
-  tipExceptions: ['wordTabs'],
   // The Feed header's Search button opens the Search screen.
   searchButton: ['search'],
   // The grid of the Categories of Corrections opens from the Dashboard's Corrections rail (ADR 0081).

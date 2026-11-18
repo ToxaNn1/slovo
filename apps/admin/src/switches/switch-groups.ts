@@ -129,7 +129,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   curatedCollections: 'content',
   gesturesHintDemo: 'feed',
   gesturesHintAgain: 'feed',
-  wordTabs: 'feed',
   sourceTab: 'content',
   tipExceptions: 'content',
   searchButton: 'content',
@@ -153,7 +152,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   readerName: 'account',
   widgetPreviews: 'widgets',
   statisticsOffCounter: 'analytics',
-  entryPanelAllKinds: 'content',
 };
 
 /** The Feature Switches by group, in table order; a group with none is left out. */

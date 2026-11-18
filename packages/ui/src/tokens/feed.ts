@@ -1,11 +1,5 @@
 /** The tokens of the Feed: its header and Feed Notices. */
 
-/** The XP bar's side padding. */
-export const xpBarPadding = 14;
-
-/** The XP bar's height, the Search button's beside it. */
-export const xpBarHeight = 40;
-
 /**
  * The gestures hint's demo (board XSwipeV): how long one round takes, how far
  * the card and the finger travel to a side and how far the card tilts there,

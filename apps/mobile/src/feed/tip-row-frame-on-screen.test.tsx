@@ -102,18 +102,16 @@ const row: SynonymRow = {
   retired: false,
 };
 
-/** Opens the composition over the Word of the Day and one Tip or one Synonym Row, with `wordTabs` on or off. */
-async function open(entry: { tips: Tip[] } | { synonymRows: SynonymRow[] }, wordTabs = true) {
+/** Opens the composition over the Word of the Day and one Tip or one Synonym Row. */
+async function open(entry: { tips: Tip[] } | { synonymRows: SynonymRow[] }) {
   const shipped = loadEdition(config);
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
-      feature === 'wordTabs'
-        ? wordTabs
-        : feature === 'tips' || feature === 'synonymRows'
-          ? true
-          : // No later question takes the Word of the Day's place in the Feed.
-            feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
+      feature === 'tips' || feature === 'synonymRows'
+        ? true
+        : // No later question takes the Word of the Day's place in the Feed.
+          feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
   // The gestures hint was shown on an earlier launch.
@@ -298,16 +296,6 @@ describe('the Tip card in the fixed frame', () => {
     expect(card.queryByTestId('tip-tab-more', hidden)).toBeNull();
     expect(card.getByText('Час не рахують, а питають, котра година.', hidden)).toBeTruthy();
   });
-
-  it("keeps today's card with its Example in one column with `wordTabs` off", async () => {
-    await open({ tips: [tip] }, false);
-    await renderApp();
-
-    const card = await cardOf('tip');
-    expect(tabsOf(card)).toEqual([]);
-    expect(card.getByText('Час не рахують, а питають, котра година.', hidden)).toBeTruthy();
-    expect(card.getByText(/Котра година, пане\?/, hidden)).toBeTruthy();
-  });
 });
 
 describe('the Synonym Row card in the fixed frame', () => {
@@ -350,14 +338,5 @@ describe('the Synonym Row card in the fixed frame', () => {
     ]);
     expect(membersOf(card)).toEqual(members.slice(0, 4));
     expect(card.getByTestId('synonymRow-tab-panel', hidden)).toBeTruthy();
-  });
-
-  it("keeps today's card with `wordTabs` off", async () => {
-    await open({ synonymRows: [row] }, false);
-    await renderApp();
-
-    const card = await cardOf('synonymRow');
-    expect(card.queryByTestId('synonymRow-tab-panel', hidden)).toBeNull();
-    expect(membersOf(card)).toEqual(members);
   });
 });

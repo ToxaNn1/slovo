@@ -4,7 +4,7 @@ Owner app pass of 2026-11-18, decision Р10: on a Word's tabbed Entry card the o
 
 **Why.** «Історія» reads as the story of the Word, yet it opened on its other meanings. A reader who wanted what the Word means had to read «Ще {count} значення — у вкладці «Історія».» and switch tabs, and the etymology came only after the meanings.
 
-**Decision.** On a Word card behind `wordTabs`:
+**Decision.** On a Word card:
 
 - **«Суть»**: every Definition one under another, the primary one first and the other ones numbered from 2 under it, then the Synonym Row line and «Часто кажуть», then the Word History when the Word has one. The line «Ще {count} значення — у вкладці «Історія».» is gone, with its string.
 - **«Історія»**: the etymology alone, in its paragraphs. A Word without an etymology has no «Історія» tab.

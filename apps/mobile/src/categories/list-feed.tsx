@@ -157,7 +157,7 @@ function ListFeedPageView({
   testID: string;
   kicker: string;
 }) {
-  const { selfCheck, stressFall, wordTabs, sourceTab, tipExceptions } = useShown();
+  const { selfCheck, stressFall, sourceTab, tipExceptions } = useShown();
   const slots = useEntrySlots(card);
   return (
     <View testID={testID} style={styles.page}>
@@ -167,7 +167,7 @@ function ListFeedPageView({
         kicker={kicker}
         selfCheck={selfCheck}
         stressFalls={stressFall}
-        tabs={wordTabs}
+        tabs
         sourceTab={sourceTab}
         tipExceptions={tipExceptions}
         // A tabbed card is a fixed frame the page's height, as in the Feed: only

@@ -1,22 +1,22 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Icon } from '../primitives/Icon';
 import { PressedTile } from '../primitives/PressedTile';
 import { useEdition } from '../providers/EditionProvider';
-import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
+import { useLemmaSize } from '../providers/FontSizeProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { entryPanel, iconButton, space, swipeStampLayout, wedges, wordCardSide } from '../tokens';
 import { AccentGround } from './AccentGround';
 import { SwipeMarks, type EntrySwipe } from './SwipeMarks';
-import { EntryCard, type EntryCardProps } from './EntryCard';
+import type { EntryCardProps } from './EntryCard';
 import { CorrectionCardBody } from './CorrectionCard';
 import { EntryPanelHeadline, headlineOf, type OtherKindCard } from './EntryPanelHeadline';
 import { IdiomCardBody } from './IdiomCard';
 import { SynonymRowCardBody } from './SynonymRowCard';
 import { TipCardBody } from './TipCard';
 import { EntryReveal } from './reveal';
-import { WordHeadline, WordSections } from './WordCard';
+import { WordHeadline } from './WordCard';
 import { WordTabs } from './WordTabs';
 import { firstLetter } from './WordHero';
 import { WordOfTheDayBadge } from './WordOfTheDayBadge';
@@ -26,12 +26,10 @@ import { WordOfTheDayBadge } from './WordOfTheDayBadge';
  * edge, under the halftone raster, with the ink back tile. A Word's panel
  * carries the giant first letter of its Lemma, the Word of the Day's kicker
  * when it is one, the Lemma, part of speech and the Pronunciation button.
- * With `panelAllKinds`, every other kind is headed the same way (owner
- * 15.11): the giant first letter of its headline, its expression, dominant,
+ * Every other kind is headed the same way (owner 15.11, ADR 0142): the giant first letter of its headline, its expression, dominant,
  * title or struck form, and the name of its kind under it. The meaning
  * follows on the screen's ground, with no card frame, and the corner sits at
- * the panel's top right. Without it, another kind keeps its Entry card, with
- * its corner, under a bare panel. It never conceals the meaning.
+ * the panel's top right. It never conceals the meaning.
  */
 export function EntryDetails({
   card,
@@ -45,13 +43,9 @@ export function EntryDetails({
   onOpenSynonymRow,
   onWordHistoryShown,
   slots,
-  tabs = false,
   sourceTab = false,
   tipExceptions = false,
-  panelAllKinds = false,
-}: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont'> & {
-  /** Every kind is headed in the panel as a Word (`entryPanelAllKinds`); off, another kind keeps its Entry card under the panel. */
-  panelAllKinds?: boolean;
+}: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont' | 'tabs'> & {
   /** The name of the screen the back tile returns to, which VoiceOver reads. */
   back: string;
   onBack: () => void;
@@ -61,10 +55,7 @@ export function EntryDetails({
   bottomInset: number;
 }) {
   const lemmaSize = useLemmaSize();
-  const compact = useCompactLayout();
   const swipe = slots?.swipe;
-  // Another kind's card under a bare panel keeps its own corner.
-  const ownCard = card.kind !== 'word' && !panelAllKinds;
   // The tab bar stands at the screen's foot (owner 08.11): under it only the room
   // the swipe's stamp keeps, which takes in the home indicator.
   const stampRoom = swipe ? swipeStampLayout.room : 0;
@@ -73,16 +64,12 @@ export function EntryDetails({
   // the bar stands lower (owner 14.11).
   const drop = Math.min(entryPanel.tabBarDrop, Math.max(bottomInset, stampRoom));
   const body = (
-    <Swiped swipe={swipe} correction={card.kind === 'correction'} fill={tabs}>
+    <Swiped swipe={swipe} correction={card.kind === 'correction'} fill>
       <AccentGround
         id="entry-panel"
         testID="entry-panel"
         letter={
-          card.kind === 'word'
-            ? firstLetter(card.model.lemma)
-            : ownCard
-              ? ''
-              : firstLetter(headlineOf(card))
+          card.kind === 'word' ? firstLetter(card.model.lemma) : firstLetter(headlineOf(card))
         }
         letterRole="panelLetter"
         letterAt={entryPanel.letter}
@@ -91,7 +78,7 @@ export function EntryDetails({
         style={[styles.panel, { paddingTop: topInset + space[3] }]}
       >
         <BackTile label={back} onPress={onBack} />
-        {!ownCard && slots !== undefined && (
+        {slots !== undefined && (
           <View
             style={[styles.corner, { top: topInset + space[3] }]}
             testID={`${card.kind}-corner`}
@@ -101,7 +88,7 @@ export function EntryDetails({
         )}
         <View style={styles.panelText}>
           {card.kind !== 'word' ? (
-            !ownCard && <EntryPanelHeadline card={card} />
+            <EntryPanelHeadline card={card} />
           ) : (
             <>
               {card.wordOfTheDay !== undefined && <WordOfTheDayBadge day={card.wordOfTheDay} />}
@@ -117,77 +104,38 @@ export function EntryDetails({
           )}
         </View>
       </AccentGround>
-      {card.kind !== 'word' && ownCard ? (
-        <View style={[styles.otherKind, tabs && styles.fill]}>
-          <EntryCard
-            card={card}
-            onOpenCorrection={onOpenCorrection}
-            onOpenWord={onOpenWord}
-            onOpenSynonymRow={onOpenSynonymRow}
-            onWordHistoryShown={onWordHistoryShown}
-            // The swipes take the whole of Entry details, so the card keeps only its corner.
-            slots={slots && { ...slots, swipe: undefined }}
-            stressFalls={stressFalls}
-            tabs={tabs}
-            sourceTab={sourceTab}
-            tipExceptions={tipExceptions}
-          />
-        </View>
-      ) : card.kind !== 'word' ? (
-        <View testID="entry-body" style={[styles.body, tabs && styles.tabbed]}>
+      {card.kind !== 'word' ? (
+        <View testID="entry-body" style={[styles.body, styles.tabbed]}>
           <OtherKindBody
             card={card}
             onOpenWord={onOpenWord}
-            tabs={tabs}
             sourceTab={sourceTab}
             tipExceptions={tipExceptions}
           />
         </View>
       ) : (
-        <View testID="word-card" style={[styles.body, tabs && styles.tabbed]}>
-          {tabs ? (
-            <WordTabs
-              card={card.model}
-              onOpenCorrection={onOpenCorrection}
-              onOpenSynonymRow={onOpenSynonymRow}
-              onHistoryShown={onWordHistoryShown}
-              sources={sourceTab ? card.model.sourceNames : undefined}
-            />
-          ) : (
-            <WordSections
-              card={card.model}
-              compact={compact}
-              onOpenCorrection={onOpenCorrection}
-              onOpenSynonymRow={onOpenSynonymRow}
-              onHistoryShown={onWordHistoryShown}
-            />
-          )}
+        <View testID="word-card" style={[styles.body, styles.tabbed]}>
+          <WordTabs
+            card={card.model}
+            onOpenCorrection={onOpenCorrection}
+            onOpenSynonymRow={onOpenSynonymRow}
+            onHistoryShown={onWordHistoryShown}
+            sources={sourceTab ? card.model.sourceNames : undefined}
+          />
         </View>
       )}
     </Swiped>
   );
   return (
     <EntryReveal>
-      {tabs ? (
-        // A tabbed card is a fixed frame the rest of the screen's height: nothing around it
-        // scrolls, only an opened tab inside it (ADR 0091, ADR 0113).
-        <View
-          testID="entry-frame"
-          style={[styles.scroll, { paddingBottom: foot }, drop > 0 && { marginBottom: -drop }]}
-        >
-          {body}
-        </View>
-      ) : (
-        <ScrollView
-          testID="entry-scroll"
-          style={styles.scroll}
-          // The sheet of the action row is a child in React's tree, so a tap in its
-          // name field must not be swallowed to put the keyboard away.
-          keyboardShouldPersistTaps="handled"
-        >
-          {body}
-        </ScrollView>
-      )}
+      {/* The tabbed card is a fixed frame the rest of the screen's height: nothing around it
+      scrolls, only an opened tab inside it (ADR 0091, ADR 0113). */}
+      <View
+        testID="entry-frame"
+        style={[styles.scroll, { paddingBottom: foot }, drop > 0 && { marginBottom: -drop }]}
+      >
+        {body}
+      </View>
     </EntryReveal>
   );
 }
@@ -196,13 +144,11 @@ export function EntryDetails({
 function OtherKindBody({
   card,
   onOpenWord,
-  tabs,
   sourceTab,
   tipExceptions,
 }: {
   card: OtherKindCard;
   onOpenWord: ((wordId: string) => void) | undefined;
-  tabs: boolean;
   sourceTab: boolean;
   tipExceptions: boolean;
 }) {
@@ -211,7 +157,7 @@ function OtherKindBody({
     lemmaSize,
     concealed: false,
     corner: undefined,
-    tabs,
+    tabs: true,
     sourceTab,
     headless: true,
   };
@@ -275,7 +221,6 @@ function BackTile({ label, onPress }: { label: string; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  fill: { flexGrow: 1 },
   // A tabbed Word fills the rest of the screen, its tab bar at the foot (ADR 0091).
   tabbed: { flexGrow: 1, paddingBottom: 0 },
   panel: {
@@ -293,7 +238,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  otherKind: { paddingHorizontal: space[6], paddingBottom: space[6] },
   body: {
     paddingHorizontal: wordCardSide - space[1],
     paddingTop: space[1],

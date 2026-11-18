@@ -68,10 +68,8 @@ let shellOf: () => ReturnType<typeof testShell>;
 /** Opens the composition over two Categories of Words, «Емоції» with three live Words and a Retired one, «Порожня» with none. */
 async function open({
   categoryFeed = true,
-  wordTabs = false,
 }: {
   categoryFeed?: boolean;
-  wordTabs?: boolean;
 } = {}) {
   const shipped = loadEdition(activeEditionFiles.config);
   editionInEffect = {
@@ -79,9 +77,7 @@ async function open({
     isFeatureEnabled: (feature) =>
       feature === 'categoryFeed'
         ? categoryFeed
-        : feature === 'wordTabs'
-          ? wordTabs
-          : feature === 'categoryScreens' || shipped.isFeatureEnabled(feature),
+        : feature === 'categoryScreens' || shipped.isFeatureEnabled(feature),
   };
   const userState = await seedUserState(
     { onboardingFinished: '2026-09-01T09:00:00.000Z' },
@@ -374,7 +370,7 @@ describe("the Category's Feed", () => {
   });
 
   it('lays a tabbed card in a fixed frame: no page scroll around its tab bar (ADR 0113)', async () => {
-    await open({ wordTabs: true });
+    await open();
     await renderCategory('emotions-character');
     await settle(() => fireEvent.press(screen.getByTestId('category-entry-w_lahidnyi')));
     await layOut();

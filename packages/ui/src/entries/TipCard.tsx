@@ -53,7 +53,7 @@ export function TipCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The rest under the title in the tab «Правило», while `wordTabs` is on (ADR 0091). */
+  /** The rest under the title in the tab «Правило» (ADR 0091). */
   tabs: boolean;
   /** The last tab «Джерело» with the sources, which leave the tab «Правило», while `sourceTab` is on (ADR 0116). */
   sourceTab: boolean;
