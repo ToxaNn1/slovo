@@ -346,7 +346,7 @@ describe('«Попередні слова»', () => {
 
     expect(screen.getByText(editionStrings.dashboard.previousWords.title)).toBeTruthy();
     const row = screen.getByTestId('dashboard-previous-word-2026-10-27');
-    expect(within(row).getByText('27\nжов')).toBeTruthy();
+    expect(within(row).getByText('27\nжовт.')).toBeTruthy();
     expect(within(row).getByText('Значення слова лагідний.')).toBeTruthy();
     await settle(() => fireEvent.press(row));
 
@@ -566,7 +566,7 @@ describe('the Curated Collections rail', () => {
     expect(screen.getByTestId('curated-collection-entry-w_lahidnyi')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
     expect(
-      screen.getByRole('togglebutton', { name: 'ДОДАТИ' }).props['accessibilityState'],
+      screen.getByRole('togglebutton', { name: 'ДОДАТИ СОБІ' }).props['accessibilityState'],
     ).toMatchObject({ checked: false });
   });
 
@@ -620,18 +620,18 @@ describe('the Curated Collections rail', () => {
     expect(composition.history.list).toEqual([]);
   });
 
-  it('«ДОДАТИ» copies it into the Collections and turns to «ДОДАНО» with the tick', async () => {
+  it('«ДОДАТИ СОБІ» copies it into the Collections and turns to «У МІКСІ» with the tick', async () => {
     await open(true);
     await renderApp();
     await settle(() =>
       fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
     );
 
-    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'ДОДАТИ СОБІ' })));
 
-    expect(screen.queryByText('ДОДАТИ')).toBeNull();
+    expect(screen.queryByText('ДОДАТИ СОБІ')).toBeNull();
     expect(
-      screen.getByRole('togglebutton', { name: 'ДОДАНО' }).props['accessibilityState'],
+      screen.getByRole('togglebutton', { name: 'У МІКСІ' }).props['accessibilityState'],
     ).toMatchObject({ checked: true });
     expect(screen.getByTestId('curated-collection-add-icon')).toBeTruthy();
     expect(composition.curatedCollections.rail.map((card) => card.added)).toEqual([true]);

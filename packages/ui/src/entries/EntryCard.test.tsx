@@ -891,7 +891,7 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
     expect(screen.getByTestId('word-example')).toHaveTextContent('The adónis bloomed.— A poét');
     expect(screen.getByTestId('word-example')).toHaveProp(
       'accessibilityLabel',
-      'The adonis bloomed., — A poet',
+      'The adonis bloomed. — A poet',
     );
     expect(screen.getByText('Named after Adónis.')).toHaveProp(
       'accessibilityLabel',

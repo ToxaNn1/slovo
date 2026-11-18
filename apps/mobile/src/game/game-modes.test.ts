@@ -145,14 +145,16 @@ describe('the card of each Game Mode on offer', () => {
       {
         ...guessWordCard,
         canStart: false,
-        refusal: 'Замало слів і висловів у твоєму Міксі. Поверни кілька категорій у Налаштуваннях.',
+        refusal:
+          'Цьому режиму бракує слів і висловів. Поверни категорії в Налаштуваннях, розділ «Мій Мікс».',
         best: '—',
         bestLabel: undefined,
       },
       {
         ...correctionCard,
         canStart: false,
-        refusal: 'Замало виправлень у твоєму Міксі. Поверни приховані в Налаштуваннях.',
+        refusal:
+          'Цьому режиму бракує виправлень. Поверни категорії виправлень у Налаштуваннях, розділ «Мій Мікс».',
         best: '—',
         bestLabel: undefined,
       },
@@ -160,15 +162,15 @@ describe('the card of each Game Mode on offer', () => {
     expect(outOfMix[1]).toEqual({
       ...correctionCard,
       canStart: false,
-      refusal: 'Виправлень немає у твоєму Міксі. Увімкни їх у Налаштуваннях.',
+      refusal: 'Виправлення вимкнено. Увімкни їх у Налаштуваннях, розділ «Мій Мікс».',
       best: '—',
       bestLabel: undefined,
     });
   });
 
   it.each([
-    [{ result: 12, of: 15 }, '★ 12', 'Найкраще: 12 з 15'],
-    [{ result: 23 }, '★ 23', 'Найкраще: 23'],
+    [{ result: 12, of: 15 }, '★ 12', 'Рекорд: 12 з 15'],
+    [{ result: 23 }, '★ 23', 'Рекорд: 23'],
   ])('shows the Best result %j as «%s», read as «%s»', (best, text, label) => {
     const card = gameModeCard(
       { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true, best },
@@ -238,7 +240,7 @@ describe('the label over a Round', () => {
     ['anglicism', 'Як сказати краще?'],
     ['idiom-meaning', 'Що це означає?'],
     ['origin', 'Звідки це слово?'],
-    ['survival', 'Виживання'],
+    ['survival', 'Твій хід'],
     ['timed', 'Визначення'],
   ])('reads the %s mode’s own label', (modeId, label) => {
     expect(gameModeStrings(strings.modes, modeId).roundLabel).toBe(label);

@@ -41,6 +41,6 @@ describe('the History hooks', () => {
     jest.setSystemTime(new Date('2026-10-14T09:00:00Z'));
     await settled(() => hook.rerender(undefined));
 
-    expect(hook.result.current.map(({ day }) => day)).toEqual([{ label: 'вчора', today: false }]);
+    expect(hook.result.current.map(({ day }) => day)).toEqual([{ label: 'учора', today: false }]);
   });
 });

@@ -631,7 +631,7 @@ describe('the Game screen', () => {
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
 
       await waitFor(() => {
-        expect(timerLabel()).toBe('лишилось 20 секунд');
+        expect(timerLabel()).toBe('лишилося 20 секунд');
       });
       expect(screen.getByTestId('game-timer')).toHaveTextContent('20 с');
       expect(screen.getByTestId('game-progress')).toHaveTextContent('Пройдено: 0');
@@ -655,7 +655,7 @@ describe('the Game screen', () => {
 
       await pass(5_000);
 
-      expect(timerLabel()).toBe('лишилось 15 секунд');
+      expect(timerLabel()).toBe('лишилося 15 секунд');
       expect(screen.getByTestId('game-timer')).toHaveTextContent('15 с');
 
       await pass(15_000);
@@ -676,7 +676,7 @@ describe('the Game screen', () => {
 
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
       await waitFor(() => {
-        expect(timerLabel()).toBe('лишилось 20 секунд');
+        expect(timerLabel()).toBe('лишилося 20 секунд');
       });
       await pickTheWordOfThePrompt();
       await pickAnotherWord();
@@ -695,20 +695,20 @@ describe('the Game screen', () => {
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
       await waitFor(() => {
-        expect(timerLabel()).toBe('лишилось 20 секунд');
+        expect(timerLabel()).toBe('лишилося 20 секунд');
       });
       await pass(5_000);
 
       await moveApp('background');
       await pass(5 * 60_000);
 
-      expect(timerLabel()).toBe('лишилось 15 секунд');
+      expect(timerLabel()).toBe('лишилося 15 секунд');
       expect(screen.getByTestId('game-round')).toBeOnTheScreen();
 
       await moveApp('foreground');
       await pass(14_000);
 
-      expect(timerLabel()).toBe('лишилась 1 секунда');
+      expect(timerLabel()).toBe('лишилася 1 секунда');
       expect(screen.getByTestId('game-round')).toBeOnTheScreen();
 
       await pass(1_000);
@@ -725,7 +725,7 @@ describe('the Game screen', () => {
 
     const card = screen.getByTestId('game-mode-origin');
     expect(card.props['accessibilityState']).toEqual({ disabled: true });
-    expect(card).toHaveTextContent(/Замало слів із відомим походженням у твоєму Міксі\./);
+    expect(card).toHaveTextContent(/Цьому режиму бракує слів із відомим походженням\./);
   });
 
   it('starts «Звідки слово» from its card and plays a whole Game of 8 Rounds, picking each Word’s language, to the result screen', async () => {

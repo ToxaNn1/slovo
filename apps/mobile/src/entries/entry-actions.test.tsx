@@ -274,7 +274,7 @@ describe.each([
     'a Tip',
     't_hour',
     'Котра година?',
-    'Порада: Котра година? Так часто кажуть: Скільки часу? Українською краще: Котра година?',
+    'Порада: Котра година? Так часто кажуть: Скільки часу? Так правильно: Котра година?',
   ],
 ])('the action row of %s', (_, entryId, title, shareCardName) => {
   it('shares it from its own Share Card', async () => {
@@ -520,8 +520,8 @@ describe.each([
     await renderCard(entryId);
     await settle();
 
-    expect(line()).toHaveTextContent('Знають 0 з 0 читачів · зберегли 0');
-    expect(line()).toHaveAccessibleName('Знають 0 з 0 читачів, зберегли 0');
+    expect(line()).toHaveTextContent('«Знаю» — 0 з 0 читачів · зберегли 0');
+    expect(line()).toHaveAccessibleName('«Знаю» — 0 з 0 читачів, зберегли 0');
   });
 });
 
@@ -530,10 +530,10 @@ describe('the Community Counters line', () => {
   const line = () => screen.getByTestId('community-counters');
 
   it.each([
-    [{ known: 1, unknown: 0, saved: 4 }, 'Знають 1 з 1 читача · зберегли 4'],
-    [{ known: 1, unknown: 1, saved: 1 }, 'Знають 1 з 2 читачів · зберегли 1'],
-    [{ known: 3, unknown: 2, saved: 0 }, 'Знають 3 з 5 читачів · зберегли 0'],
-    [{ known: 20, unknown: 1, saved: 7 }, 'Знають 20 з 21 читача · зберегли 7'],
+    [{ known: 1, unknown: 0, saved: 4 }, '«Знаю» — 1 з 1 читача · зберегли 4'],
+    [{ known: 1, unknown: 1, saved: 1 }, '«Знаю» — 1 з 2 читачів · зберегли 1'],
+    [{ known: 3, unknown: 2, saved: 0 }, '«Знаю» — 3 з 5 читачів · зберегли 0'],
+    [{ known: 20, unknown: 1, saved: 7 }, '«Знаю» — 20 з 21 читача · зберегли 7'],
   ])('says %o under the mark buttons as %s', async (counts, text) => {
     countersApi.counters.count(entryId, counts);
     await renderCard(entryId);
@@ -558,12 +558,12 @@ describe('the Community Counters line', () => {
 
     await fireEvent.press(screen.getByTestId('knowledge-unknown'));
     await settle();
-    expect(line()).toHaveTextContent('Знають 3 з 6 читачів · зберегли 0');
+    expect(line()).toHaveTextContent('«Знаю» — 3 з 6 читачів · зберегли 0');
 
     await fireEvent.press(screen.getByTestId('knowledge-known'));
     await fireEvent.press(screen.getByTestId('favorite-button'));
     await settle();
-    expect(line()).toHaveTextContent('Знають 4 з 6 читачів · зберегли 1');
+    expect(line()).toHaveTextContent('«Знаю» — 4 з 6 читачів · зберегли 1');
     expect(countersApi.counters.asked).toEqual([[entryId]]);
   });
 
@@ -714,7 +714,7 @@ describe('the corner of an Entry card while marks are swiped', () => {
     expect(menu.getByRole('button', { name: 'Знаю' })).toBeOnTheScreen();
     expect(menu.getByRole('button', { name: 'Не знаю' })).toBeOnTheScreen();
     expect(menu.queryByRole('button', { name: 'Зняти позначку' })).toBeNull();
-    for (const name of ['Поділитися', 'Сховати', 'Повідомити про помилку', 'Скасувати'])
+    for (const name of ['Поділитися', 'Не показувати', 'Повідомити про помилку', 'Скасувати'])
       expect(menu.getByRole('button', { name })).toBeOnTheScreen();
   });
 
@@ -753,7 +753,9 @@ describe('the corner of an Entry card while marks are swiped', () => {
     await pressItem('Змінити на «Не знаю»');
     await menuGone();
     expect(composition.knowledge.state.shown.get('w_test')).toBe('unknown');
-    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Позначено: не знаю');
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent(
+      'Позначено: не знаю. Повторимо завтра',
+    );
 
     await openMenu();
     expect(
@@ -779,7 +781,7 @@ describe('the corner of an Entry card while marks are swiped', () => {
   it('hides it from the sheet with the hide choice', async () => {
     await renderSlotted('w_test');
     await openMenu();
-    await pressItem('Сховати');
+    await pressItem('Не показувати');
     await menuGone();
 
     expect((await screen.findAllByTestId(/^hide-choice/)).length).toBeGreaterThan(0);

@@ -166,8 +166,8 @@ describe('the onboarding', () => {
     await press('onboarding-done');
 
     expect(composition.xpLog.state.dailyGoal?.goal).toBe(25);
-    expect(screen.getByText('НАГАДУВАННЯ')).toBeTruthy();
-    expect(screen.getByText('Коли нагадати?')).toBeTruthy();
+    expect(screen.getByText('ДЗИНЬ!')).toBeTruthy();
+    expect(screen.getByText('Коли нагадати про слово?')).toBeTruthy();
     for (const chip of ['9:00', '13:00', '20:30', 'Без нагадувань']) {
       expect(screen.getByRole('button', { name: chip })).toBeTruthy();
     }

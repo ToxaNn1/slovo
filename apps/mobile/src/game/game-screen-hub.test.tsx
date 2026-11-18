@@ -76,11 +76,11 @@ describe('the Game screen', () => {
     await renderScreen();
 
     expect(screen.getByTestId('game-mode-guess-word')).toHaveAccessibleName(
-      'Вгадай слово. Обери слово за визначенням. Найкраще: 12 з 15',
+      'Вгадай слово. Обери слово за визначенням. Рекорд: 12 з 15',
     );
     // «Виживання» has no Round limit, so its Best result stands alone.
     expect(screen.getByTestId('game-mode-survival')).toHaveAccessibleName(
-      'Виживання. Грай, доки не схибиш. Далеко зайдеш? Найкраще: 23',
+      'Виживання. Грай, доки не схибиш. Далеко зайдеш? Рекорд: 23',
     );
     expect(screen.getByTestId('game-mode-stress')).toHaveAccessibleName(
       'Наголос. Влуч у правильний склад',
@@ -158,7 +158,7 @@ describe('the Game screen', () => {
       await renderScreen();
 
       const rows: readonly (readonly [string, string, string])[] = [
-        ['survival', '♥ 1', 'Одне життя. Як далеко зайдеш?'],
+        ['survival', '⚑⚑⚑', 'Три життя. Як далеко зайдеш?'],
         ['timed', '20 с', 'Двадцять секунд. Скільки слів встигнеш?'],
         ['pairs', '=', 'З’єднай чотири слова з їхніми значеннями.'],
         ['type-word', 'Аб|', 'Помилка, яку часто чуєш. Впиши, як краще.'],
@@ -190,7 +190,7 @@ describe('the Game screen', () => {
       await renderScreen();
 
       expect(screen.getByTestId('game-mode-correction')).not.toBeDisabled();
-      expect(screen.queryByText(/Замало виправлень/)).toBeNull();
+      expect(screen.queryByText(/Цьому режиму бракує виправлень/)).toBeNull();
     });
   });
 
@@ -211,7 +211,7 @@ describe('the Game screen', () => {
     return crossword;
   }
 
-  it('puts the Daily Crossword’s card «Кросворд дня · {date}» above the groups, with its size, its count of Words and «Почати»', async () => {
+  it('puts the Daily Crossword’s card «Кросворд дня · {date}» above the groups, with its size, its count of Words and «Розгадати»', async () => {
     await open({ crossing: true });
     const { words } = (await crossingCrossword()).puzzle;
     await renderScreen();
@@ -219,9 +219,9 @@ describe('the Game screen', () => {
     const card = await screen.findByTestId('daily-crossword');
     expect(within(card).getByText('Кросворд дня · 26 жовтня')).toBeOnTheScreen();
     expect(within(card).getByText(`5×5 · ${String(words.length)} слів`)).toBeOnTheScreen();
-    expect(within(card).getByText('Почати')).toBeOnTheScreen();
+    expect(within(card).getByText('Розгадати')).toBeOnTheScreen();
     expect(card.props['accessibilityLabel']).toBe(
-      `Кросворд дня · 26 жовтня. 5×5 · ${String(words.length)} слів. Почати`,
+      `Кросворд дня · 26 жовтня. 5×5 · ${String(words.length)} слів. Розгадати`,
     );
     const cards = within(screen.getByTestId('game-modes'))
       .getAllByTestId(/^(daily-crossword|game-mode-.+)$/)
@@ -247,14 +247,14 @@ describe('the Game screen', () => {
     expect(within(card).queryByText(/слів$/)).toBeNull();
   });
 
-  it('marks the card «✓ Розв’язано» «за {time} · без підказок» with its grid of cells once today’s is solved', async () => {
+  it('marks the card «✓ Розгадано» «за {time} · без підказок» with its grid of cells once today’s is solved', async () => {
     await open({ crossing: true, switchedOn: ['crosswordSolveTime'] });
     const crossword = await solveCrossing(252);
     await renderScreen();
 
     const card = await screen.findByTestId('daily-crossword');
     expect(card.props['accessibilityLabel']).toBe(
-      'Кросворд дня · 26 жовтня. ✓ Розв’язано. за 4:12 · без підказок',
+      'Кросворд дня · 26 жовтня. ✓ Розгадано. за 4:12 · без підказок',
     );
     expect(within(card).getByText('за 4:12 · без підказок')).toBeOnTheScreen();
     expect(within(card).queryByText('Продовжити')).toBeNull();
@@ -279,7 +279,7 @@ describe('the Game screen', () => {
     await renderScreen();
 
     const card = await screen.findByTestId('daily-crossword');
-    expect(card.props['accessibilityLabel']).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано');
+    expect(card.props['accessibilityLabel']).toBe('Кросворд дня · 26 жовтня. ✓ Розгадано');
     expect(within(card).queryByText(/^за /)).toBeNull();
   });
 

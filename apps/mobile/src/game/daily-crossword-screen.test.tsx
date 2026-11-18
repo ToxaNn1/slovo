@@ -302,7 +302,7 @@ async function solveWord(target: CrossingWord) {
 describe('the Daily Crossword’s card, as the Core opens the crossword', () => {
   it('shows the crossing one while the Daily Crossword is on', async () => {
     await renderGame();
-    expect(card()).toBe('Кросворд дня · 26 жовтня. 5×5 · 5 слів. Почати');
+    expect(card()).toBe('Кросворд дня · 26 жовтня. 5×5 · 5 слів. Розгадати');
   });
 
   it('shows none on a day no pattern fills the crossing one', async () => {
@@ -414,18 +414,18 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
     expect(screen.getByText('Веди пальцем по літерах, щоб скласти слово')).toBeOnTheScreen();
   });
 
-  it('shows «Розв’язано!» once every Word is solved, and the card marks it solved', async () => {
+  it('shows «Розгадано!» once every Word is solved, and the card marks it solved', async () => {
     await renderGame();
     await openFromCard();
     const { words } = await crossingPuzzle();
 
     for (const target of words) await solveWord(target);
 
-    expect(screen.getByTestId('daily-crossword-solved')).toHaveTextContent('Розв’язано!');
+    expect(screen.getByTestId('daily-crossword-solved')).toHaveTextContent('Розгадано!');
     expect(screen.queryByTestId('crossing-crossword-wheel')).toBeNull();
-    expect(screen.queryByText('Розгадано!')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'До ігор' })).toBeNull();
     await back();
-    expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано');
+    expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розгадано');
   });
   it('opens «Розгадано!» once every Word is solved: the grid with no letter, the share line, «Поділитися» and «До ігор» to the hub', async () => {
     const shared = jest
@@ -455,7 +455,7 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
 
     await settle(() => fireEvent.press(screen.getByRole('button', { name: 'До ігор' })));
     expect(app.pathname()).toBe('/game');
-    expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано. за 0:33 · без підказок');
+    expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розгадано. за 0:33 · без підказок');
   });
 
   it('shows today solved on another device from the synced XP log: the card, «Розгадано!» and its time', async () => {
@@ -463,7 +463,7 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
       on: ['crosswordSolvedScreen', 'crosswordSolveTime'],
       solvedElsewhere: { solveSeconds: 222 },
     });
-    expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано. за 3:42 · без підказок');
+    expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розгадано. за 3:42 · без підказок');
 
     await openFromCard();
 
@@ -474,12 +474,12 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
     );
   });
 
-  it('shows «Розв’язано!» and every letter for today solved on another device, with the solved screen off', async () => {
+  it('shows «Розгадано!» and every letter for today solved on another device, with the solved screen off', async () => {
     await renderGame({ solvedElsewhere: { hinted: true } });
     await openFromCard();
     const { words } = await crossingPuzzle();
 
-    expect(screen.getByTestId('daily-crossword-solved')).toHaveTextContent('Розв’язано!');
+    expect(screen.getByTestId('daily-crossword-solved')).toHaveTextContent('Розгадано!');
     const [first] = words;
     if (first === undefined) throw new Error('Expected a Word');
     const { row, column } = first.start;

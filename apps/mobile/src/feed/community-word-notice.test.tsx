@@ -75,18 +75,18 @@ describe('the Community Word card in the Feed', () => {
     await renderNotice(12);
 
     expect(screen.getByText('Слово тижня спільноти')).toBeTruthy();
-    expect(screen.getByText('додали 12 читачів')).toBeTruthy();
+    expect(screen.getByText('до Улюбленого додали 12 читачів')).toBeTruthy();
     expect(screen.getByText('зважати на')).toBeTruthy();
     expect(screen.getByText('замість «приймати до уваги»')).toBeTruthy();
   });
 
   it.each([
-    [1, 'додав 1 читач'],
-    [3, 'додали 3 читачі'],
-    [5, 'додали 5 читачів'],
-    [21, 'додав 21 читач'],
-    [24, 'додали 24 читачі'],
-    [111, 'додали 111 читачів'],
+    [1, 'до Улюбленого додав 1 читач'],
+    [3, 'до Улюбленого додали 3 читачі'],
+    [5, 'до Улюбленого додали 5 читачів'],
+    [21, 'до Улюбленого додав 21 читач'],
+    [24, 'до Улюбленого додали 24 читачі'],
+    [111, 'до Улюбленого додали 111 читачів'],
   ])('says %i adds in the Edition’s plural form', async (adds, text) => {
     await renderNotice(adds);
 

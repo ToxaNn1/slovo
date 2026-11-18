@@ -374,7 +374,7 @@ describe('the Feed Notices on the Feed', () => {
     await swipeTo(screen.getByTestId('feed-notice-enoughForToday', hidden));
     expect(
       within(screen.getByTestId('feed-notice-enoughForToday', hidden)).getByRole('button', {
-        name: 'Гортати далі',
+        name: 'Ще одне слово',
         ...hidden,
       }),
     ).toBeTruthy();
