@@ -239,7 +239,9 @@ describe('the 0.8.13 strings', () => {
       subtitle: '10 слів — і Стрічка підбере слова, нові саме для тебе',
       progress: '{n} з {total}',
       retake: 'Перевірити рівень ще раз',
-      result: 'Твоя рідкість — до {n}. Стрічка бере незнайоме, рідші почекають.',
+      resultChanged: 'Рідкість тепер {range}',
+      resultKept: 'Рідкість лишається {range}',
+      known: '{known} з {total} слів знайомі. Змінити рідкість можна в Налаштуваннях.',
     });
     expect(parsed.knowledge).toMatchObject({ known: 'Знаю', unknown: 'Не знаю' });
   });

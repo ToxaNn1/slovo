@@ -196,7 +196,8 @@ describe('the onboarding', () => {
     expect(screen.queryByText(editionStrings.rarityTest.done)).toBeNull();
     await press('onboarding-rarity-next');
 
-    expect(composition.rarityRange.state).toEqual({ from: 1, to: 5 });
+    // The rarest Word asked about is of rarity 3, and the reader knows it (ADR 0182).
+    expect(composition.rarityRange.state).toEqual({ from: 1, to: 3 });
     expect(screen.getByText(strings.why.title)).toBeTruthy();
   });
 
