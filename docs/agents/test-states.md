@@ -17,7 +17,7 @@ Each state is built from the declared user-state records of the Core (`changesOf
 | `all-badges`           | `slovo://dev/state/all-badges`           | Every Badge of the Edition earned, «Рік без пропусків» included.                               |
 | `no-badges`            | `slovo://dev/state/no-badges`            | Two Active Days, under Level 1, no Badge.                                                      |
 | `reviews-due`          | `slovo://dev/state/reviews-due`          | Five Words marked Unknown two days ago, due for Review since yesterday.                        |
-| `cycle-end`            | `slovo://dev/state/cycle-end`            | Every Entry Seen in the Cycle but the first Word: one more card, then the end of a Cycle.      |
+| `cycle-end`            | `slovo://dev/state/cycle-end`            | Every Entry Seen in the Cycle but the first Word: one more Entry, then the end of a Cycle.     |
 | `weekly-recap`         | `slovo://dev/state/weekly-recap`         | Last week's reading: 7 Active Days, 7 Seen, 3 Favorites, 4 Known, yesterday's Word of the Day. |
 | `empty-saved`          | `slovo://dev/state/empty-saved`          | Past the onboarding, nothing saved.                                                            |
 | `full-saved`           | `slovo://dev/state/full-saved`           | 12 Favorites, 6 in Learning, 30 in History, 4 Collections of 5 Entries.                        |
@@ -36,4 +36,4 @@ Every test state link without `?day=` takes the shift back to the system day; a 
 Limits:
 
 - `weekly-recap`: the Weekly Recap shows on a local Monday only (ADR 0054); on another day the state holds last week but no Recap shows, unless the link adds `?day=monday`.
-- `crossword-solved`, `crossword-7-in-a-row`: the solves are XP log records only, so the crossing Daily Crossword's card (ADR 0087) reads solved while its grid opens empty; the traced Daily Crossword (ADR 0073) starts with no Word found.
+- `crossword-solved`, `crossword-7-in-a-row`: the solves are XP log records only, so the crossing Daily Crossword's card (ADR 0087) reads solved while its grid opens empty.

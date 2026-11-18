@@ -1,5 +1,7 @@
 # Learning and habit: Search, the Rarity Test, Feed Notices, the Daily Limit
 
+Amended by 0156 and 0183: from 1.0 the Rarity Test sets the top of the Rarity Range (by the rule of ADR 0182) under the `rarityCeiling` switch, no longer the Rarity Ceiling of ADR 0072, and «Рівень» sets no rarity at all.
+
 Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active Days calendar, the Daily Limit (retired in 1.0 for the Daily Goal), the polite pause, notification templates, the first week, and the widget hint help the reader find a word, remember it and come back; the decisions come from spec #832 and the owner's grilling of 2026-10-25.
 
 **Feature Switches.** Each feature has its own Feature Switch: `search`, `rarityTest`, `weeklyRecap`, `yesterday`, `wordOfTheDayArchive`, `activeDaysCalendar`, `dailyLimit`, `politePause` and `firstWeek` (`moods` left the list in ADR 0076, `widgetHint` in ADR 0176). They are required of every Edition and all on in the UA Edition. A feature whose switch is off is absent: no header button, no Settings row, no Feed Notice, no list; its records are kept. A remote Rule turns a feature on or off (ADR 0089).
@@ -19,7 +21,7 @@ Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active D
 
 **The Rarity Test** («Перевірка рівня», the step «Перевірити рівень») is offered once in onboarding after the Mix, skippable, and again from Settings («Пройти тест ще раз»).
 
-- **The draw.** 10 Words, 2 of each rarity 1–5, drawn with injected randomness from the Words that are eligible but for the Rarity Floor (not Retired, not Hidden, of a Category in the Mix), asked the commonest first; a rarity with fewer than 2 such Words gives what it has. Each shows only its Lemma with Stress and the buttons «Знаю» / «Не знаю». The test sets the Rarity Floor, so it is absent while the `rarityFloor` switch is off as well as while `rarityTest` is (from 1.0 it sets the Rarity Ceiling, under the `rarityCeiling` switch, ADR 0072).
+- **The draw.** 10 Words, 2 of each rarity 1–5, drawn with injected randomness from the Words that are eligible but for the Rarity Floor (not Retired, not Hidden, of a Category in the Mix), asked the commonest first; a rarity with fewer than 2 such Words gives what it has. Each shows only its Lemma with Stress and the buttons «Знаю» / «Не знаю». The test sets the Rarity Floor, so it is absent while the `rarityFloor` switch is off as well as while `rarityTest` is (from 1.0 it sets the top of the Rarity Range, under the `rarityCeiling` switch, ADR 0156, 0182).
 - **The floor.** The Rarity Floor becomes the lowest rarity with a «Не знаю», or «від 5» when the reader knew all 10, and applies at once; the result screen says «Ваша рідкість: до {n}». The floor stays a part of the Mix the reader changes there (ADR 0019); a test from Settings overwrites it.
 - **Amended by ADR 0182.** The top of the Rarity Range becomes the highest rarity of which the reader knew at least half of the Words asked, or 1 when there is none, and the result says whether the range changed: «Рідкість тепер {range}» or «Рідкість лишається {range}».
 - **Nothing else changes.** Test answers set no Knowledge Mark, start no Review and make no Word Seen.

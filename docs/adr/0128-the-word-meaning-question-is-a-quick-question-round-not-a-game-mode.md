@@ -4,7 +4,7 @@ The Feed's Quick Question asked only Rounds of Game Modes (ADR 0052), and none o
 
 **Not a Game Mode.** The Word Meaning question is a round type of the Quick Question. It is not registered through the Game Mode Extension Point, has no card on the Game screen, no Lives, no Round limit, no Best result and no `game.modes` strings. ADR 0052 is amended on this point only: a Quick Question's Round may come from a Game Mode or from the Word Meaning question; everything else of 0052 stands.
 
-**Its Feature Switch.** `quickQuestionWordMeaning`, declared by every Edition and `on` in the UA Edition, needs `quickQuestion` in the one table of switch dependencies (ADR 0040). Off, or with the Quick Question off, the question never comes.
+**Its Feature Switch.** `quickQuestionWordMeaning`, declared by every Edition and `on` in the UA Edition, needs `quickQuestion` in the one table of switch dependencies (ADR 0089). Off, or with the Quick Question off, the question never comes.
 
 **The same chance.** The Quick Question's candidates are the enabled Game Modes whose Round is a pick of options plus the Word Meaning question. They are shuffled with the injected Random and tried in turn, so each has the same chance, and the first that gives a Round wins.
 
