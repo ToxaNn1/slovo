@@ -13,7 +13,8 @@ Integration branch: `feat/2022-retire-curated-collection`. Grant: commits, pushe
 - Step 1 (done): contracts `retired`, OpenAPI regenerated, test fixtures. Commit on the integration branch.
 
 - Step 2 (done): ADR 0178 amended («Retiring»), index line, glossary «Retired Curated Collection».
-- Step 3 (running): local worktree implementers A (Pack+Core, branch feat/2022-a-pack-core), B (backend+content-rules+tools/content, feat/2022-b-backend), C (admin, feat/2022-c-admin). If lost, relaunch each from the integration branch with the ticket.
+- Step 3 (done): A, B, C merged; full lint/typecheck/test green (backend needs DATABASE_URL=postgres://slovo:slovo@localhost:5432/slovo).
+- Step 4 (running): code-review done; a fixer works on the admin stale-fields bug, record-rows doc, Core refresh after Patch, directly on the integration branch (uncommitted work there is the fixer's).
 
 ## Next
-- Merge A, B, C into the integration branch; checks; code-review; PR with «Питання власнику», «Handbook», «Перевірки власника»; CI green.
+- Merge-check fixer commits, push, open the PR (one, no auto-merge), wait for CI, STATUS: FINISHED.
