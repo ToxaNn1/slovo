@@ -1,3 +1,7 @@
+---
+summary: Every CI test run also writes its Istanbul map `coverage-final.json`; `scripts/ci-history.mjs` merges a package and runner's maps from all parts with `istanbul-lib-coverage` and counts lines and branches of the merged map, so Якість shows one real number per sharded package (amends 0096).
+---
+
 # A sharded run's coverage is merged into one number
 
 Owner decision of 2026-11-16. The UI's Vitest and Jest tests and the app's Jest tests run in three CI parts each. Every part wrote only a coverage summary, and the CI history added the parts' covered and total counts, so a file two parts load counted twice and Якість showed no package's real coverage.

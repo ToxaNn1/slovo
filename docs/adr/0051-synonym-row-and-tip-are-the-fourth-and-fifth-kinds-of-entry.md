@@ -1,3 +1,7 @@
+---
+summary: A Synonym Row and a Tip are full kinds of Entry with Feed turns and Mix switches of their own; notifications stay Words. Amended by 0089, 0090: the database issues the ids.
+---
+
 # Synonym Row and Tip are the fourth and fifth kinds of Entry
 
 Until 0.8.11 SLOVO had three kinds of Entry: Words, Corrections and Idioms (ADR 0046). Two kinds of knowledge a reader wants fitted none of them. A row of synonyms such as «іти → простувати, чимчикувати, шкандибати», each with its shade, is many words side by side, while a Word card shows one. A rule of good speech that is not one wrong form, such as «Котра година?» instead of «Скільки час?», the vocative «пане Андрію», how to sign a letter or where the comma goes, has nothing a Correction can swap. 0.8.11 (spec #730) adds the Synonym Row («синонімічний ряд»), the fourth kind of Entry, and the Tip («порада»), the fifth. Both are full Entries: they come in the Feed on turns of their own, sit in the Mix as wholes, take Knowledge Marks and come back for Review, work with Self-check, Favorites, Collections, History, hiding, Share Cards and the widget, and play in the Game. Notifications stay Words only. A Retired Synonym Row or Tip behaves like a Retired Word.

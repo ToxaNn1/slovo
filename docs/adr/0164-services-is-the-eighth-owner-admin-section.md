@@ -1,3 +1,7 @@
+---
+summary: «Сервіси» is the eighth Owner admin section, a Власник only (Адмін and Агент `FORBIDDEN`, cards on a phone): a `services` table seeded with the eleven known Services (kind, plan, USD-cent price, billing day, limits, fixed place, links by name, constant or scheduled), drawn as blocks on a black dotted canvas dark in every theme with solid and dashed SVG lines, a block opening a side panel in the native modal dialog (a wide window by 0173); a limit at 90 % or more marks the block yellow and raises the alerts Cron's `service-limit` Alert once per Service, limit and UTC month (amends 0088).
+---
+
 # «Сервіси» is the eighth Owner admin section, a Власник only
 
 SLOVO runs on about a dozen outside Services, and the owner had no single place that shows them (spec #1949). ADR 0088 gave the Owner admin seven sections, none for the Services themselves.

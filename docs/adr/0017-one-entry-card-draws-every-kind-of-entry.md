@@ -1,3 +1,7 @@
+---
+summary: One Entry card draws every kind; the Core builds the card, Round, Share Card and Entry row models; strings come from `EditionProvider`. Amended by 0091.
+---
+
 # One Entry card draws every kind of Entry; the Edition's words and voice come from a provider
 
 The UI draws every Entry, a Word, a Correction or an Idiom (ADR 0046), with one Entry card. It takes the Core's card model and draws it in one frame: the compact layout of narrow screens, the same plain card for every kind, and a slot for the action row under it. A screen never assembles a card from parts, so the Feed and the Saved detail show the same card and each action is added in one place.

@@ -1,3 +1,7 @@
+---
+summary: Superseded by 0126 (Maestro still runs only on the owner's command; a UI ticket now carries one screenshot).
+---
+
 # Maestro runs only on the owner's command
 
 The Maestro flows in `apps/mobile/maestro/` drive the development client on a simulator, and that client is a native build. Native builds go through EAS (ADR 0004) and are rare by the owner's policy. The PR checks in CI (`lint`, `typecheck`, `test`, `deps`, `knip`) cannot tell that a change broke a screen beyond what the Jest component tests (ADR 0029) cover.

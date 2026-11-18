@@ -1,3 +1,7 @@
+---
+summary: One app per platform with the Editions inside, one active at a time (a switch restarts the app), the others downloaded on choice; the first is the UA Edition, id `uk`.
+---
+
 # One app per platform with the Editions inside, and the UA Edition
 
 ADR 0002 made every language its own App Store app, an Edition built from the shared Core, and named the risk itself: App Store Review Guideline 4.3(a) ("Don't create multiple Bundle IDs of the same app") starts to bite with the second Edition. Its fallback was a single SLOVO app that loads Editions as language packs. The 1.0 strategy review of 31.10 (Q81–Q88) takes that fallback as the plan before the second Edition exists, so no Edition is ever rejected under 4.3 and the owner keeps one listing, one review queue and one subscription.

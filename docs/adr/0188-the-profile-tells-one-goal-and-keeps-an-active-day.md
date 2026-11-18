@@ -1,3 +1,7 @@
+---
+summary: A day that reached 5 XP before its goal was set stays an Active Day; the Profile says when today waits for its goal; the Level card measures to one mark (the next name; before Level 1 the XP to Level 1, no «Рівень 0») on the tile surface; a Badge's progress is its best reach; «Без лічильників» hides the Badge counts. Amends 0066, 0074, 0145.
+---
+
 # The Profile tells one goal and keeps an Active Day
 
 Owner's app pass of 2026-11-18 (items 46–54). This ADR amends ADR 0074 (the Active Day under a goal set later that day), ADR 0066 (a Badge's progress, the counters) and ADR 0145 (the Level card).

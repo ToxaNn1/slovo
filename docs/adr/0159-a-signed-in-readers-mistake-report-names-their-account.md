@@ -1,3 +1,7 @@
+---
+summary: A signed-in reader's Mistake Report goes out with the Session and keeps the Account (`account_id`, `on delete set null`), an anonymous one stays anonymous and a Session not on makes it anonymous; the Content queue shows each report with its Entry's fields and the reader's email as `mailto:`; `report.resolve` keeps no Account; no device id, no IP (supersedes 0056's «Anonymous», amends 0056, 0088).
+---
+
 # A signed-in reader's Mistake Report names their Account
 
 Status: accepted (owner, 16.11). Supersedes ADR 0056's «Anonymous» for a signed-in reader. Amends ADR 0056 and 0088.

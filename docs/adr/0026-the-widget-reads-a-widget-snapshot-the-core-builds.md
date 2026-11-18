@@ -1,3 +1,7 @@
+---
+summary: The Core builds the Widget Snapshot, the app writes it into the App Group, the widget only reads it.
+---
+
 # The widget reads a Widget Snapshot the Core builds
 
 The master spec put the local database in the App Group's shared container, so the SwiftUI widget (ADR 0001) could read the user state and the Language Pack itself. Instead, the Core builds a Widget Snapshot: everything each Widget Mode may show, already decided and ready to draw. The app writes it as one JSON file into the App Group's container, and the widget only reads that file, picks an Entry and draws it. The widget never writes.

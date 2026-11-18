@@ -1,3 +1,7 @@
+---
+summary: Behind `savedSwipesOff` an Entry opened from any tab of Saved («Вчу», Favorites, History, «Слова дня», a Collection) takes no side swipes; its corner stays and «⋯» sets the Knowledge Mark; the Feed, links, Search and the Game keep them; off while `swipeMarks` is.
+---
+
 # An Entry opened from Saved takes no side swipes
 
 Status: accepted (owner, 15.11)

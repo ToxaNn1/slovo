@@ -1,3 +1,7 @@
+---
+summary: «Рідкість» is one Rarity Range «від N до M» (default 1–5, «лише N» allowed) that every surface obeys, picked on five slanted bars by tap or drag; onboarding and the Rarity Test set only the top; `settings.rarityRange`, migration 9 from the Ceiling; switch `rarityCeiling` alone, `rarityRange` retired by 0176 (supersedes 0072). Amended by 0183.
+---
+
 # One Rarity Range for every surface
 
 ADR 0072 left one bound, the Rarity Ceiling «до 1»…«до 5». The owner wants to leave out the commonest Words too, «від 2 до 4», without the two settings that pulled against each other before 1.0.

@@ -1,3 +1,7 @@
+---
+summary: One Cloudflare rate limiting rule on media.slovoapp.org only: 120 requests per 10 s per IP and data centre, Block 10 s (the free plan's one rule), never a challenge; $0.
+---
+
 # The Media Store's host has one rate limiting rule
 
 Owner decision of 2026-11-17 (a deferred idea of 2026-11-09). This ADR adds to ADR 0099 (the Media Store).

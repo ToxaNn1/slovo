@@ -1,3 +1,7 @@
+---
+summary: The repo keeps no `editions/<edition>/content/`: `pnpm content import` always takes `--snapshot <file>`, `pnpm build:pack` has no `--record`; no code reads records from a folder, tests feed snapshots (amends 0052, 0090).
+---
+
 # The repository keeps no Edition content folder
 
 Status: accepted (owner, 16.11). Amends ADR 0052 and 0090.

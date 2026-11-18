@@ -1,3 +1,7 @@
+---
+summary: A stress trap writes its Stress in its text; the Correction Types and Literary Uses, which the build checks.
+---
+
 # A Correction writes its Stress in its text
 
 Until 0.8.7 a Correction could show no stress mistake: no Correction Type fitted, and its forms carried no Stress. A Word records its Stress as vowel positions in the Lemma (ADR 0090's content checks, the `stress` field) and the Core draws the combining acute mark over the stressed vowel when it shows the Lemma. 0.8.7 adds the Correction Type `wrongStress`, a stress trap: the right word said with the wrong Stress, such as «випа́док» for «ви́падок». A stress trap writes its Stress into its text: the combining acute mark (U+0301) follows the stressed vowel in its non-standard form, in each standard equivalent and on the word in its example pair. The texts travel through the pack and the Core as written, and the Entry card, the Share Card, History, Hidden and the «Вчу» list show them without any Stress logic of their own.

@@ -1,3 +1,7 @@
+---
+summary: The Railway project (backend and the alerts, quote-check and Recordings Cron services, EU West Amsterdam, one replica, no source) is Infrastructure as Code in `.railway/railway.ts` with the pinned `railway` package; secrets are `preserve()`, the Cron services reference the backend's variables.
+---
+
 # The Railway project is Infrastructure as Code in `.railway/railway.ts`
 
 Railway no longer takes Config as Code (`railway.json` and the per-service JSON files) for new services, and stops reading those files on 2026-12-01. The Deployment moves to SLOVO's own Railway account (#1796), so its services are new and need the replacement: Infrastructure as Code.

@@ -1,3 +1,7 @@
+---
+summary: Superseded by 0090 (the version is a per-Edition database counter; two contents still never share one).
+---
+
 # The content version follows the content checksum
 
 **Superseded by ADR 0090.** The manifest, the content checksum and `--record` are gone; the rule that two different contents never share one version lives in ADR 0090 (the database counter). Kept for history.

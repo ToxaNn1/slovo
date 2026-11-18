@@ -1,3 +1,7 @@
+---
+summary: `onAccent` is ink `#140C0A` in both Themes, as the boards draw text on red; cream that is not on red (ink-tile labels, Switch knob, Mascot body, splash S, Share Card, video) takes the light Theme's `background`; `accentText` unchanged; amends 0070
+---
+
 # Text on red is ink
 
 ADR 0070 named the `onAccent` colour role «cream on red». The 2026-11-12 boards draw text on a red fill in ink, `#140C0A`, in both Themes: 79 red fills carry `color:#140C0A` against one with cream (an icon tile in XEntry2). Every red button, chip, crossword letter and badge of the boards has an ink label.

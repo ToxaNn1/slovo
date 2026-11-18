@@ -1,3 +1,7 @@
+---
+summary: The Due Quiz «Перевір себе» on «Вчу» asks the Words due for Review today as the Yesterday quiz of 0130 does (three meanings, Distractors as in 0101, seeded by the day and the Word); right sets Known, wrong Unknown; behind `dueQuiz` (needs `knowledge`); not the Self-check.
+---
+
 # 0131 The Due Quiz checks the Words due today in «Вчу»
 
 Status: accepted (owner, 14.11)

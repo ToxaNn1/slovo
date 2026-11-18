@@ -5,11 +5,11 @@ How the engineering skills consume this repo's domain documentation. Single-cont
 ## Where they live
 
 - **`CONTEXT.md`** at the repo root is the glossary. Wherever a skill says `GLOSSARY.md`, read `CONTEXT.md`. Do not create a `GLOSSARY.md` or a `GLOSSARY-MAP.md`.
-- **`docs/adr/`** holds the decisions; `docs/adr/README.md` indexes every ADR in one line each.
+- **`docs/adr/`** holds the decisions; every ADR opens with a one-line `summary:`, and `pnpm -s adr:index` prints them as the index (ADR 0193); the index is never committed.
 
 ## How to read them
 
-`CONTEXT.md` is over 50 KB. Never read it whole: `grep -n` it for the terms your change names and read those entries. Read `docs/adr/README.md` first, then only the ADRs that touch your area.
+`CONTEXT.md` is over 50 KB. Never read it whole: `grep -n` it for the terms your change names and read those entries. Grep the index first (`pnpm -s adr:index | grep -i <term>`), then read only the ADRs that touch your area.
 
 ## Use the glossary's vocabulary
 
@@ -29,6 +29,6 @@ An ADR that blocks sensible work (the code or a later decision has moved on, or 
 
 ## ADR cleanup at the end of a version
 
-The last PR of a version (milestone) is followed by one docs PR that sweeps `docs/adr/`: every ADR the version made untrue is marked superseded or amended in its file and in its `docs/adr/README.md` line, and every ADR that blocks goes to the owner as a proposal, as above.
+The last PR of a version (milestone) is followed by one docs PR that sweeps `docs/adr/`: every ADR the version made untrue is marked superseded or amended in its file and in its `summary:` line, and every ADR that blocks goes to the owner as a proposal, as above.
 
-A new decision is recorded as an ADR in the same change, with a line in `docs/adr/README.md`.
+A new decision is recorded as an ADR in the same change, numbered by `pnpm -s adr:index --next`, with a one-line `summary:` frontmatter on top of the file. An ADR it amends or supersedes gets its `summary:` updated; a number that goes without a file gets a line in `docs/adr/retired.md`. Never write `docs/adr/README.md`: it is generated and gitignored.

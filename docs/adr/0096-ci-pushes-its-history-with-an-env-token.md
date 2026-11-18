@@ -1,3 +1,7 @@
+---
+summary: CI pushes each run on `main` to `POST /v1/admin/ci-runs` with the Deployment's `CI_HISTORY_TOKEN` as Bearer, which admits that procedure alone (no Агент token, no Action log row); a run is kept once; flaky is failed in one kept run and not in another; the push step never makes `main` red.
+---
+
 # CI pushes its history with an env token
 
 Owner decision of 2026-11-08 (ticket #1728, spec #1709). Якість shows coverage, flaky tests and job durations over time, which GitHub keeps only as long as its retention. CI pushes one run to the backend after each run on `main`, so CI is a caller of the admin API, beside the three of ADR 0088 (a Власник, an Адмін, an Агент).

@@ -1,3 +1,7 @@
+---
+summary: One Core composition opens the Feed and the user's words, linked through named subjects; it takes the whole Edition.
+---
+
 # One Core composition opens the Feed and the user's words together
 
 The Feed, Favorites, Collections, History, Hidden Entries and the Mix depend on each other. Hiding an Entry or changing the Mix changes which Entries are eligible, so the Cycle reads them again and the Feed drops the cards that are no longer eligible. An Entry that becomes Seen joins History in the same write. A heart tapped in the Feed changes the counts on the Saved tab.

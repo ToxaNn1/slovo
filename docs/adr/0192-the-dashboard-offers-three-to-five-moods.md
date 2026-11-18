@@ -1,3 +1,7 @@
+---
+summary: `dashboardMoods` names three to five Moods (UA: Бадьоро, Радісно, Спокійно; «Сумно» and «Закохано» hidden), a hidden Mood stays in `moods` so a saved one still reads, and three Moods sit in one row (amends 0076, 0105).
+---
+
 # The Dashboard offers three to five Moods
 
 Owner app pass of 2026-11-18, decision Р31. This ADR amends ADR 0076 and ADR 0105 for the number of Moods the Dashboard's Mood check-in offers.

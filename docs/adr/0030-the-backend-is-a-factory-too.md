@@ -1,3 +1,7 @@
+---
+summary: One backend deployment for every Edition: a server Core plus an HTTP edge, data partitioned by Edition, Sessions, limits and the client address. Amended by 0088, 0089.
+---
+
 # The backend is a factory too
 
 All Editions share one backend deployment and one Postgres database, with data partitioned by Edition. That is what lets one Account (SLOVO ID) work across Editions with a single deployment, migration and bill, and because every deployment runs the same code, an Edition that ever needs isolation can get its own copy of the server without a rewrite. Inside, the backend is built like the app: a second Edition must get sign-in in its own language and its own content updates from the same deployment without a line of server code changing.

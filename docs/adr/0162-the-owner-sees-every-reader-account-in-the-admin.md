@@ -1,3 +1,7 @@
+---
+summary: Безпека lists every Account for a Власник alone (email, date, Google/Apple methods and every Edition's Sync records in plain words, read only, paged, searched by email) and deletes one with a required reason through «Видалити SLOVO ID», logged in the Action log; the registered count is the number of Accounts (supersedes 0127, amends 0088's «never a list of people»).
+---
+
 # A Власник sees every reader's Account in the admin
 
 Owner decision of 2026-11-17. ADR 0127 let a Власник find one Account by email in Безпека, showing only its date and sign-in methods, and said «There is still no list of Accounts». The owner wants to see who has signed in, help a reader with their words and progress, and clear spam and test Accounts without knowing their email first. This ADR supersedes ADR 0127 and amends ADR 0088, whose admin «never shows a list of people».

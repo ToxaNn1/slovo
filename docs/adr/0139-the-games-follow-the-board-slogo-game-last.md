@@ -1,3 +1,7 @@
+---
+summary: The Games follow the board «slogo game last»: five groups (sound, meaning, letters, speed, new), the hub row «Рекорд: N з M» / «Ще жодної гри» and a toast for a mode that cannot be played, a plain Game Review, three end actions with «Розминка!» for `lives-over`, «Склади вислів» with decoys and «Перевірити», «За літерами», the board's Round look, the prompt on the ground always (`gameQuestionOnGround` retired by 0176); each behind its own Feature Switch; supersedes G1 (Mascot), G3, G6, G10, G12, G13 (Game Review); amends 0052.
+---
+
 # The Games follow the board «slogo game last»
 
 Status: accepted (owner, 14.11)

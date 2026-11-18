@@ -1,3 +1,7 @@
+---
+summary: The walkthrough boards (`SlovoApp` profile, `XSaved` p1–p6, `XBadges`) override board 10.x: the Profile's board blocks first and its name header below the Badges, the Badges screen heads with the families over 21 cards, the stamp only for an unopened Badge, the family shape everywhere; the shared Button 62 pt (60 in a sheet), label 15; the checker cut 10%; the Level wedge as the board; the 0066 Level curve and names stay (amends 0085, 0136). Amended by 0188.
+---
+
 # The walkthrough boards override board 10
 
 Status: accepted (owner, 15.11)

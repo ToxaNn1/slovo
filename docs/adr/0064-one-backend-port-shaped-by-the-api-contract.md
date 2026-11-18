@@ -1,3 +1,7 @@
+---
+summary: The Core reaches the backend through one port, the contract's client; `answerOf` and the retry rule live in the Core; tests serve the contract in process.
+---
+
 # One Backend port shaped by the API contract
 
 Until now the Core reached the backend through eight ports (`AccountApi`, `SyncApi`, `ReportsApi`, `CollectionLinksApi`, `ContentApi`, `CommunityWordApi`, `SwitchesApi`, `CountersApi`), each with its own failure union. Every port had one production adapter in the app, a pass-through over `answerOf` in `apps/mobile/src/api.ts`, and one hand-written fake in the Core. The mapping of no answer, a 429 and a 5xx to `RequestFailure` (ADR 0037) lived in the app, so the Core could not test how a feature behaves on each failure, and every fake re-encoded it. One new endpoint cost a port, a failure union, a fake, a `testing.ts` export, a barrel export, an app adapter, an adapter test and a key on `openComposition`. The architecture review of 30.10 rated this the strongest deepening.

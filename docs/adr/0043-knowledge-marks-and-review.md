@@ -1,3 +1,7 @@
+---
+summary: A Known or Unknown mark schedules Review at 1, 3, 7, 30 and 90 days, then Learned (1.0: extended from 7 days); due Entries return in the Feed and the Game; marking amended by 0077.
+---
+
 # Knowledge Marks and Review
 
 Until 0.8.6 SLOVO could not tell whether the reader knew an Entry: an unknown Entry came back only in the next Cycle, weeks later, and the Game forgot every mistake. Spec #461 adds Knowledge Marks and Review (extended to 30 and 90 days by spec #1358), which change which Entries the Feed picks next (ADR 0015, 0016) and which the Game asks about (ADR 0024).

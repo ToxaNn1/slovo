@@ -1,3 +1,7 @@
+---
+summary: `PATCH_FORMAT` 3: a Patch may carry `**` standard-form marks (0117) and Tip `exceptions` (0120); the backend answers a format-2 request `unsupported-format` and such an app keeps its content until updated
+---
+
 # Patch format 3 carries standard-form marks and Tip exceptions
 
 A Patch now carries content that an app of Patch format 2 cannot draw: a Correction's `examplePair.standard` marks its standard form `**like this**` (ADR 0117), and a Tip may have `exceptions` (ADR 0120). An app on format 2 would show the raw `**` and drop the exceptions. The owner decided (13.11.2026, review item R136) to bump the Patch format.

@@ -1,3 +1,7 @@
+---
+summary: With `moodEffect` on, a line under the Mood check-in says what the picked Mood changed in the Feed (the Mood's `effect`, owned by the Edition and required for every Mood of `dashboardMoods`), and a second tap on the picked Mood unpicks it: the day's record keeps `unpicked`, which reads as asking, and the Feed is back on its plain parameters (amends 0076, 0105).
+---
+
 # A line says what the Mood changed, and a second tap unpicks it
 
 Owner app pass of 2026-11-18, decision Р9. This ADR amends ADR 0076 and ADR 0105 for the Dashboard's Mood check-in.

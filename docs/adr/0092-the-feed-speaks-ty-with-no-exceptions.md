@@ -1,3 +1,7 @@
+---
+summary: The Feed's board texts in «ти»: the «⋯» sheet closes with «Скасувати», the hint sheet says «ГОРТАЙ ПАЛЬЦЕМ» and «Нове слово — коли захочеш.», «Може, на сьогодні досить?» gains «Уже {n} карток позаду. …» with {n} = 50; owner «текст ок» 07.11; the «ти» test allows no «ви» (amends 0075, 0077).
+---
+
 # The Feed speaks «ти» with no exceptions
 
 ADR 0075 moved the UA Edition to «ти», and ADR 0077 kept two «ви» texts of the board in the swipe hint sheet. Owner decision 07.11 (spec #1696): «ти» everywhere, and the board's Feed texts are in «ти» too.

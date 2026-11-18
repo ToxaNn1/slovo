@@ -1,3 +1,7 @@
+---
+summary: While `dashboardWordmark` is on, the Feed header's wordmark is a button to the Dashboard, read by VoiceOver as «SLOVO, на головну» (`dashboard.open`); with it off the wordmark stays the Feed's header (amends 0076).
+---
+
 # The Feed's wordmark opens the Dashboard
 
 Owner test pass of 2026-11-05 (spec #1578). The Dashboard is the home behind «Стрічка» and opens the Feed (ADR 0076), but the Feed's header gave no way back to it but the tab bar. This amends ADR 0076.

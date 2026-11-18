@@ -19,7 +19,7 @@ The short map. `README.md` is for people; grep it for one section when you need 
 | `tools/sourcing`         | Drafts Entries for review (`pnpm source:*`).                        |
 | `tools/content`          | Writes Entries through the write API, checks them (`pnpm content`). |
 | `scripts/content-wave`   | The content wave launcher and two page helpers.                     |
-| `docs/adr/`              | Decisions; `docs/adr/README.md` has one line per ADR.               |
+| `docs/adr/`              | Decisions; `pnpm -s adr:index` prints one line per ADR.             |
 | `docs/agents/`           | This map, brief, waves, content waves, test states, domain, issues. |
 | `docs/research/`         | Research behind a decision not yet taken, one dated file each.      |
 

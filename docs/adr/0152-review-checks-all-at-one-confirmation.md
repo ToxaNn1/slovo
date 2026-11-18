@@ -1,3 +1,7 @@
+---
+summary: «Перегляд» shows «Позначити перевіреними всі (N)» per kind: one admin confirmation with N and a reason, `content.checkAll` {editionId, kind, total, reason} checks every unchecked live record at its current record version in one transaction in Postgres (no fields read), each with the single check's Action log row plus the reason; a count other than `total` is refused (`CHANGED`), an Агент `FORBIDDEN` (amends 0143).
+---
+
 # «Перегляд» checks every unchecked record of a kind at one confirmation
 
 Status: accepted (owner, 16.11). Amends ADR 0143.

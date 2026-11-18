@@ -1,3 +1,7 @@
+---
+summary: Crash reports go to Sentry only with a DSN from the environment and carry no personal data.
+---
+
 # Crash reports go to Sentry, with no personal data
 
 Until 0.8.9 a crash on a reader's phone or an unexpected failure of the backend reached nobody: the app had no reporting at all, and the backend only logged the failure on its own host. Before beta testers arrive the owner needs to hear of both. Any report leaves SLOVO for a third-party service, so what crosses the wire must be decided as well as where it goes (spec #603: #606, #607, #650, #661).

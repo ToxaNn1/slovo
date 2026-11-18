@@ -1,3 +1,7 @@
+---
+summary: The landing's 2D videos are a Remotion project in `apps/video` reading the UA Edition's tokens, Mascot, fonts, sounds and Entries from the repo; it has no lint, typecheck or test script, oxlint, Prettier, dependency-cruiser and Knip ignore it, and a pull request that touches only the videos runs no tests.
+---
+
 # The landing's videos are made with Remotion in `apps/video`, left out of CI
 
 The landing (ADR 0071) gets two 2D videos in the Рупор style: the 30 s promo «Спочатку було слово» and the 15 s series «Тобі бракувало слова», one rare word a week. They are made by agents in code, not drawn by hand, so a new episode of the series is a new word, not a new animation.

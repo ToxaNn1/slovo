@@ -1,3 +1,7 @@
+---
+summary: The Dashboard is the home behind «Стрічка» and the Feed is opened from it; Mood is a daily set of Feed parameters (rarity band, kind-weight shifts) with four moods named by the Edition; Curated Collections and the Correction Types rail; a tab bar; the roulette and the Words' `moods` go; supersedes the Mood part of 0054 and amends 0016, 0032, 0067. Amended by 0079, 0081, 0093, 0178, 0185.
+---
+
 # The Dashboard is the home and Mood sets Feed parameters
 
 **Amended by ADR 0081.** The Dashboard rail headers open the Category screens.

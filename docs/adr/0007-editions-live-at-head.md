@@ -1,3 +1,7 @@
+---
+summary: Every Edition builds from `main`; per-Edition control is switches, turned on or off remotely by Rules (amended by 0089, 0167); one app, built once per Update channel (`beta`, `production`, 0167).
+---
+
 # Every Edition builds from the latest Core; per-Edition control comes from switches
 
 The Core is not versioned or published. Every Edition always builds from the Core on `main`. Each Edition is controlled separately in two ways:

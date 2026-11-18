@@ -1,3 +1,7 @@
+---
+summary: The shell tells the Feed which card is on screen; the Feed owns Seen, the place, the next card and the Feed Notices. Amended by 0076, 0184.
+---
+
 # The Feed is told which card is on screen and keeps the next card ready
 
 The Core's Feed holds every rule that decides whether Seen is right. A shell tells it one thing: which card is on screen now, or that none is. The shell builds that from one signal, whether the Feed is in sight (Home focused, the app in the foreground, no onboarding over it), and reads the foreground from the one source it shares with the lifecycle adapter (ADR 0022). From that the Feed counts the dwell time of the card that leaves the screen, keeps the reader's place, and keeps the card after the one on screen ready, never more than one card ahead. Its cards are an array it never edits: each change makes a new one and tells the Feed's subscribers, so a shell subscribes (in React with `useSyncExternalStore`), turns its pager to the Feed's position after the cards change, and holds no Feed rules and no place of its own. The Feed opens in the Core composition with the user's words (ADR 0018).

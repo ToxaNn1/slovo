@@ -1,3 +1,7 @@
+---
+summary: Badge families (id, name, description, shape, tone) are Edition config and every Badge names one; catalogue kinds `flawlessGame` and `rightRun`, read from a finished Game's right and played counts and a `wrong-answer` record; a `badge-opened` XP log record ends «НОВА» on every device; calendar days gain `break` and `frozen`; the Active Days calendar is a rolling 35 days; seven board 10 Feature Switches (amends 0066; shape `checker`, 0087). Amended by 0145.
+---
+
 # Badge families, two new Badge kinds, the `badge-opened` record and a rolling calendar
 
 **Amended by ADR 0145.** The walkthrough boards override board 10.x: the Badges screen heads with the «Родини» overview over a card for each Badge (status «Отримано» or «Ще ні · N%»), the stamp opens only for an earned Badge not yet opened, and a Badge's mark takes its family's shape everywhere.

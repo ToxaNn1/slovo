@@ -1,3 +1,7 @@
+---
+summary: The backend sends its emails over HTTPS: to ZeptoMail's EU API (`ZEPTOMAIL_API_URL`, `ZEPTOMAIL_TOKEN`) when it has a token, required in production, otherwise to Mailpit's send API (`MAILPIT_URL`); Railway Hobby blocks outbound SMTP, Zoho Mail Lite includes ZeptoMail credits.
+---
+
 # Backend mail goes over the ZeptoMail HTTPS API
 
 Owner decision of 2026-11-13 (ticket #1796). ADR 0063 sent the Sign-in codes over SMTP with the owner's credentials. Railway's Hobby plan blocks every outbound SMTP port (25, 465, 587 and 2525), so a backend on Railway cannot reach any SMTP server, and no Sign-in code leaves.

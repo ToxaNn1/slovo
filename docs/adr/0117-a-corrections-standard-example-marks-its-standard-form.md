@@ -1,3 +1,7 @@
+---
+summary: A Correction's `examplePair.standard` marks its standard form `**like this**` (in parts when split); `ExamplePairSchema` refuses broken marks; the Core's card model gives `examplePair.standardSegments` (text | standardForm) to draw bold and `standard` without marks
+---
+
 # A Correction's standard example marks its standard form
 
 Board e6 (2026-11-12 Feed board) draws a Correction's «Приклади» as plain lines: the non-standard sentence struck through, then the standard sentence with its standard form in bold, «Ми **беремо участь** у конкурсі.», the whole phrase and not only the changed word. The content had no way to say which part that is: a word diff finds «беремо», never «беремо участь», and an inflected standard equivalent («взяли участь» for «брати участь») cannot be found by matching text.

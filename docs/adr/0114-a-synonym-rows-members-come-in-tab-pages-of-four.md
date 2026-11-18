@@ -1,3 +1,7 @@
+---
+summary: A Synonym Row card shows its members four to a tab named «Ряд · {page}/{pages}», the meaning on the first page, the Example and sources on the last, no tab bar for one page (`synonymRowPagesOf`); the dominant is one line with a red stressed vowel, the members rows with their shade notes on the right; amends 0091
+---
+
 # A Synonym Row's members come in tab pages of four
 
 ADR 0091 put a Synonym Row card's meaning, every member, the Example and the sources in the fixed frame, with no tab bar and no pages. Board e8 (2026-11-12 Feed board) draws the dominant large on one line with its stressed vowel in red, the members as rows with their shade notes on the right, and a row of 5 to 12 members split over tabs.

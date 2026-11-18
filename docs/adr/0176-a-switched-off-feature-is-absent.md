@@ -1,3 +1,7 @@
+---
+summary: A Feature Switch off means its feature is absent, never an older version; a new version replaces the old code and its switch in one change; `tracedCrossword`, `crossingCrossword` and `dailyCrosswordShare` go, `dailyCrossword` on is the crossing crossword; a retired switch may leave an admin answer's `states` (supersedes 0073; amends 0052, 0087, 0089, 0122).
+---
+
 # A switched-off feature is absent
 
 Owner decision of 2026-11-17, after the app pass. This ADR supersedes ADR 0073 (the traced Daily Crossword), amends ADR 0087 (the crossing crossword is no longer behind its own switch), ADR 0052 and ADR 0089 (what a Feature Switch's `off` means), and amends ADR 0122 for one more change an admin output may make.

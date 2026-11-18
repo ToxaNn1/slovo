@@ -1,3 +1,7 @@
+---
+summary: The Rarity Test sets the top of the Rarity Range to the highest rarity of which the reader knew at least half of the Words asked (1 when none), and its result says whether the range changed: «Рідкість тепер {range}» / «Рідкість лишається {range}», with a note on where to change it (amends 0054).
+---
+
 # The Rarity Test takes the highest rarity the reader knows
 
 Owner decision from the app pass (items 83–86). This ADR amends ADR 0054.

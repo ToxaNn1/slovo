@@ -6,7 +6,7 @@ Cost = steps × context. Every step resends the whole session, so a step costs a
 
 ## 0. Read first
 
-- `CLAUDE.md` (project): glossary, ADRs, language, git, code rules. `CONTEXT.md` and `docs/adr/` override everything, including the ticket. Read them with `grep` for the terms and ADR numbers your ticket names (`docs/adr/README.md` has one line per ADR); never read `CONTEXT.md` or an ADR whole unless the ticket is about it. If the ticket conflicts with the glossary or an ADR, stop and report it.
+- `CLAUDE.md` (project): glossary, ADRs, language, git, code rules. `CONTEXT.md` and `docs/adr/` override everything, including the ticket. Read them with `grep` for the terms and ADR numbers your ticket names (`pnpm -s adr:index` prints one line per ADR); never read `CONTEXT.md` or an ADR whole unless the ticket is about it. If the ticket conflicts with the glossary or an ADR, stop and report it.
 - Ticket: `gh issue view <n>` once. Its **Result** checklist is the definition of done. Do not read the version spec: its Testing Decisions are quoted in the launch message; the seams named there are the only ones to test through, the rest only as needed. Where there is behaviour, write the test first.
 - Only if you touch a screen, component or hook in `apps/mobile` or `packages/ui`: read `docs/react-native.md` first, and load the `expo-overview` skill if it is available.
 - Load the skills `mattpocock-skills:tdd` and, if you design an interface, `mattpocock-skills:codebase-design` when they are available; otherwise work test-first anyway.

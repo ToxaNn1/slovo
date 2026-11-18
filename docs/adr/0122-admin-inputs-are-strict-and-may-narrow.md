@@ -1,3 +1,7 @@
+---
+summary: Every `/v1/admin/` input is strict (`z.strictObject`) and every admin reason is `ReasonSchema` (1–500); the admin ships with the backend, so its request may narrow within `/v1` and the breaking-change check skips it; admin outputs stay held (amends 0031 for admin routes only; amended by 0170: an admin strict output may gain a field)
+---
+
 # Admin inputs are strict and may narrow
 
 ADR 0031 says every `/v1` input schema is strict, yet many admin procedures took plain objects, so a typo in a field passed silently, and the content writes took a reason of any length while every other admin write caps it at 500. Tightening them is a narrowing that ADR 0031 forbids within `/v1`. That rule exists because an app in the field updates late. The admin has no such caller: `apps/admin` is served built by the backend (ADR 0088), and the Агент tooling and CI's history push run from the same repository as the backend. The owner decided (13.11.2026, review items R125 and R165) to tighten them.

@@ -1,3 +1,7 @@
+---
+summary: A Progress reset («Скинути прогрес») is a reset marker in the append-only XP log; every derived value, Badges and Best results included, folds only the records after the latest marker; the Daily Goal in force is written again after it; Sync unchanged; Favorites, Collections, History, Seen, Knowledge Marks, Hidden Entries, the Mix, the Rarity Range, settings, the name and the Account are kept; own Feature Switch (needs the XP log); amends 0066, touches 0041.
+---
+
 # A Progress reset is a marker in the XP log
 
 Status: accepted (owner, 14.11)

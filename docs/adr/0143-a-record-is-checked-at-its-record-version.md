@@ -1,3 +1,7 @@
+---
+summary: Every content table keeps `checked_version`, the record version an Admin user marked checked in «Перегляд» under Контент (one card, «Так» / «Ні» retires with an optional reason / «Редагувати» saves and checks, keys 1 2 3, «N з M»); any later write leaves the record unchecked; `content.unchecked` gives the count and the newest-changed live record first, `content.check` refuses an old version (`STALE`) and an Агент (`FORBIDDEN`), needs no reason or confirmation, changes no content and leaves an Action log row `content.<kind>.check`; a batch review checks no record; amends 0088, 0090. Amended by 0150, 0152.
+---
+
 # A record is checked at its record version
 
 Status: accepted (owner, 15.11; admin fast review). Amended by ADR 0150 («Далі» passes a record by) and ADR 0152 (all unchecked records of a kind at one confirmation). Amends ADR 0088 (a check is an Admin user's change with no reason and no confirmation) and ADR 0090 (a record carries the version it was checked at, beside the batch review of the Content queue).

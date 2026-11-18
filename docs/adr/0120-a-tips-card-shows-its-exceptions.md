@@ -1,3 +1,7 @@
+---
+summary: A Tip may have `exceptions` (explanation ≤ 300, at least one word); behind `tipExceptions` such a Tip card gets «Винятки» after «Правило»: the text and the words in chips, no source line; pack format 13 (`exceptions_explanation`, `tip_exception_words`), and `openPack` refuses a pack of another format; amends 0119
+---
+
 # A Tip's card shows its exceptions in «Винятки»
 
 ADR 0119 drew a Tip card as board e9 does, with the tabs «Правило · Винятки», but gave the content model no field for exceptions, so no Tip showed «Винятки». The owner asked for the tab now (decision 17, 13.11.2026): a rule such as «Апостроф після «р»» has words that break it (буряк, крякати, Рязань), and the reader looks for them next to the rule.

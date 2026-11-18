@@ -1,3 +1,7 @@
+---
+summary: The domain root is the UA Edition's landing: the Astro site `apps/site`, built from the Edition's tokens and Mascot, that `pages.yml` publishes beside the legal pages; placeholders stay visible until decided. Amended by 0125, 0147.
+---
+
 # The domain root is the UA Edition's landing
 
 **Amended by ADR 0149.** The site is rebuilt daily from the content snapshot: the counter shows the live Words, Слово дня changes every day, and every live Word has a page.

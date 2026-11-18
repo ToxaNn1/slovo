@@ -1,3 +1,7 @@
+---
+summary: Offline-first: the backend keeps opaque records, devices exchange changes, the client's change time, cut to the server's, wins.
+---
+
 # Offline-first sync: opaque records, and the client's change time wins
 
 The app always reads and writes a local database. When it is online and the user has an Account, it syncs changes with the server in the background. Conflicts are resolved per record by last write wins, and deletions are kept as tombstones so they can't be resurrected by another device. The Streak is derived from synced Active Days, never stored, so merging two devices always gives the right number. Notification times stay per device. One Account (SLOVO ID) spans every Edition, with data partitioned per Edition. The Core owns the user-state schema and marks how each record syncs (ADR 0013); this records what the backend keeps, how a device exchanges changes, and which of two changes wins.

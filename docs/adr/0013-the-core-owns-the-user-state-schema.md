@@ -1,3 +1,7 @@
+---
+summary: The Core owns the user-state keys, encoding, migrations and sync marks; adapters store text records by key.
+---
+
 # The Core owns the user-state schema; adapters store text records by key
 
 The user state lives behind a narrow Core port: get one text record by key, list every record whose key starts with a prefix, and write a batch of changes all at once or not at all. A prefix is matched as it is, with case counting and no wildcards, and the records come in no set order. The Core owns everything about what is stored: the keys, the encoding of each value and the schema version. The adapters only keep records: in memory for tests, and one `records (key, value)` table in a writable SQLite database apart from the Language Pack in the app (matching prefixes with `instr`, since `LIKE` ignores case and reads `%` and `_` as wildcards). That layout never changes, so the adapters need no migrations of their own, and one contract suite holds both to the same behaviour, migrations included.

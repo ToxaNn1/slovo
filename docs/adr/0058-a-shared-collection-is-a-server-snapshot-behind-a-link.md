@@ -1,3 +1,7 @@
+---
+summary: A Collection Link is an immutable server snapshot at `https://<domain>/<edition>/c/<id>`, with a web page and universal links. Amended by 0125.
+---
+
 # A shared Collection is a server snapshot behind a link
 
 Until 0.8.15 a Collection couldn't leave the phone: a teacher who built «Осінь» for a class had no way to hand it to anyone. Spec #937 adds the Collection Link: «Поділитися посиланням» stores a snapshot of the Collection on the server and shares `https://<domain>/<edition>/c/<id>`; whoever opens it sees a preview and «Додати собі» makes their own copy. Most readers have no Account and many recipients are pupils without one, so neither side may need it. The decisions come from the owner's grilling of 2026-10-25 and 2026-10-26; spec #1293 gives the link its real domain and a web page.

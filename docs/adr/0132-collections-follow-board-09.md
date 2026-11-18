@@ -1,3 +1,7 @@
+---
+summary: Collections follow board 09 (amends 0082 for Collections only): a two-column grid with a dashed «Нова колекція» first, a Collection's screen of rows with a chevron and «Поділитися посиланням», bottom sheets for menu, name (N/40), delete (with an undo toast) and share (copy behind `collectionLinkCopy`, system Share kept, id link of 0058).
+---
+
 # 0132 Collections follow board 09
 
 Status: accepted (owner, 14.11)

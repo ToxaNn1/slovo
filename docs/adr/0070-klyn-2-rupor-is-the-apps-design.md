@@ -1,3 +1,7 @@
+---
+summary: Amended by 0118. «Клин 2.0: Рупор» is the app's design: palette and fonts are Edition tokens, shapes, type, motion and the Mascot's states are Core; four interface sounds behind the `sounds` switch; Game haptics stay.
+---
+
 # «Клин 2.0: Рупор» is the app's design
 
 The owner chose «Клин 2.0: Рупор» for the whole app after the design grill of 2026-11-02 (spec #1445): a red, cream and near-black poster language with chunky pressed 3D tiles, wedge cuts, Unbounded and Onest, loud motion on the peaks and quiet lists. It replaces the warm-paper design of the 2026-10-11 Claude Design export (Literata, Manrope, dark red on beige, thin outlined buttons), and with it the old design brief, its 60 screenshots, its animation audit, its export and its design prompt, which leave the repository.

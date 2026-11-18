@@ -1,3 +1,7 @@
+---
+summary: Entry details always head a Correction, an Idiom, a Synonym Row and a Tip as a Word: first letter, headline and kind in the red panel (a Correction's form struck in cream), the meaning on the ground with no card frame; off, the kind's card under a bare panel.
+---
+
 # Entry details head every kind as a Word
 
 Status: accepted (owner, 15.11)

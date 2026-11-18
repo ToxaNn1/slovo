@@ -1,3 +1,7 @@
+---
+summary: Text size is «Як у системі» (the OS size within a cap), «Більший» or «Найбільший» on one ordered ladder; a tab too tall steps down the ladder to its lowest step, then «Детальніше»; stored S, M → system, L → larger, XL → largest once (0013); no switch, the S…XL scale is gone (0176); amends 0091, 0113. Amended by 0157, 0176.
+---
+
 # Text size follows the system in three steps
 
 Status: accepted (owner, 14.11). Amended by 0157

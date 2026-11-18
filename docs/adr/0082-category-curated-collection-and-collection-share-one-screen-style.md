@@ -1,3 +1,7 @@
+---
+summary: Category, Curated Collection and Collection share the 05.1 hero and cards, each with its kicker («КАТЕГОРІЯ», «ДОБІРКА», «КОЛЕКЦІЯ») and right button (Mix button, copy, Collection menu); the Collections list becomes the k1 grid. Amended by 0132, 0178.
+---
+
 # Category, Curated Collection and Collection share one screen style
 
 Amended by 0132: Collections (their grid and a Collection's screen) follow board 09; Category and Curated Collection keep this ADR.

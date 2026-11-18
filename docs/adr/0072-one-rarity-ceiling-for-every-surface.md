@@ -1,3 +1,7 @@
+---
+summary: Superseded by 0156 (one Rarity Range «від–до» instead of the Rarity Ceiling).
+---
+
 # One Rarity Ceiling for every surface
 
 Superseded by [ADR 0156](0156-one-rarity-range-for-every-surface.md): the Rarity Range «від–до» replaces the Rarity Ceiling.

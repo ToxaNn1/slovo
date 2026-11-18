@@ -1,3 +1,7 @@
+---
+summary: The app's domain is one proxied Cloudflare zone split by path: `/<edition>/c/*` and `/.well-known/*` go to the Deployment, everything else to GitHub Pages; the API and the Owner admin stay at the Deployment's own address; the rule lives in Cloudflare and `docs/deploy.md` records it; amends 0049, 0058, 0063, 0071
+---
+
 # Cloudflare splits the app's domain by path
 
 Two sets of ADRs gave the app's domain (the AppConfig `domain`, `slovoapp.org` today) to two hosts. ADR 0049 and 0071 publish the landing and each Edition's legal pages there from GitHub Pages, and `apps/site/public/CNAME` names the domain. ADR 0058 and 0063 have the Deployment answer at the same domain: a Collection Link's page at `/<edition>/c/<id>` and `/.well-known/apple-app-site-association` for universal links. No ADR said who divides the paths, so a Collection Link had nowhere to live outside a simulator (the ADR audit of 2026-11-14).

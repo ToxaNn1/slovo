@@ -1,3 +1,7 @@
+---
+summary: The Core's `CounterReads` and the Shell's `counterReads` are gone with the Community Counters line (0176); the device still counts and sends, the backend still answers (amends 0060).
+---
+
 # The device no longer reads the Community Counters
 
 Owner app pass of 2026-11-18, decision Р26. This ADR amends ADR 0060 for the part «The device reads counters» and «The line».

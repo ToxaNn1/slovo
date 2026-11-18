@@ -1,3 +1,7 @@
+---
+summary: The Daily Goal is a number of Words Seen per local day (10 / 25 / 50 from the Edition, none when skipped), met once by a `goal-met` record; a day with a goal is an Active Day only when met, one without at 5 XP; onboarding order СЛОВО → ПЕРШЕ → ГРАЙ! → РІВЕНЬ? → НАВІЩО? → ЦІЛЬ → НАГАДУВАННЯ → Feed, with the three Notification times from the Edition; Seen-Word XP up to the goal; each part behind its own Feature Switch. Amends 0066, 0067. Amended by 0188.
+---
+
 # The Daily Goal counts Words Seen, and onboarding asks the Notification time after it
 
 ADR 0066 counted the Daily Goal in XP, which viewing Words never earns, so a reader who only reads the Feed never met it. Owner decision 04.11 (spec #1553): the Daily Goal becomes a number of Words Seen per local day. This amends ADR 0066 (Daily Goal, Active Day) and reverses part of ADR 0067 (onboarding order, the notification explainer).

@@ -1,3 +1,7 @@
+---
+summary: Count strings come in CLDR plural forms, chosen with `Intl.PluralRules`, polyfilled on Hermes.
+---
+
 # Counts take CLDR plural forms, with a polyfill for Hermes
 
 From 0.3 the app shows counts of Entries: «1 запис», «2 записи», «17 записів». Languages differ in how many plural forms they have and which numbers take which, so the Core can't hold the rule. An Edition gives every count string in each CLDR plural category its language has (`zero`, `one`, `two`, `few`, `many`, `other`; `other` is required), with a `{count}` placeholder, and the UI picks the form with `Intl.PluralRules` for the Edition's locale.

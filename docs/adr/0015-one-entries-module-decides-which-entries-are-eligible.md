@@ -1,3 +1,7 @@
+---
+summary: One Entries module decides eligibility, the Rarity Range included (0156), and owns the table of Entry kinds; any Entry stays reachable by id (amended by 0089, 0090: eligibility follows the Feature Switch in effect, the live Entries are read per Patch).
+---
+
 # One Entries module decides which Entries are eligible
 
 The Core's Entries module is the only place that decides which Entries may appear anywhere new: the Feed, the Word of the Day, notifications, the widget and the Game. An Eligible Entry is live (not Retired), of a kind the Edition turns on and not off remotely (ADR 0089), in the reader's Mix and not Hidden; a Word must also meet the Rarity Floor, which Corrections and Idioms, having no rarity, ignore (from 1.0 a Word must be within the Rarity Range instead, a setting of its own, and the Rarity Floor is gone, ADR 0156). Corrections and Idioms are each in or out of the Mix as a whole, each under a record of its own (`mix.corrections`, `mix.idioms`) that syncs last write wins (ADR 0041) and falls back to the Edition's default; a Correction must also have its Category of Corrections in the Mix (ADR 0033). Every other module asks the Entries and never checks Retired, a Feature Switch or the Mix itself. Any Entry stays reachable by id, Retired or switched off, so Favorites, Collections, History and the Knowledge Marks keep showing what the reader kept.

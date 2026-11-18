@@ -1,3 +1,7 @@
+---
+summary: «Ціль дня виконано!» is a Feed Notice behind `goalReachedCard`, once a day the Daily Goal is met, before «Може, на сьогодні досить?».
+---
+
 # 0129 The goal-reached card is a Feed Notice
 
 Status: accepted (owner, 14.11)

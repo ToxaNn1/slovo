@@ -1,3 +1,7 @@
+---
+summary: Community Counters are anonymous deltas aggregated per Entry; the Community Word is the week's most saved; one switch covers them and Analytics (0068); amended by 0191: the device no longer reads them.
+---
+
 # Anonymous Community Counters
 
 Until 0.8.14 a reader was alone with the app: they never learned whether a word is rare for others too, or which word other readers saved this week. Spec #886 adds Community Counters under an Entry's mark buttons («Знають 3 з 5 читачів · зберегли 0») and the Community Word («Слово тижня спільноти»), the Entry most added to Favorites last week. Both must work for a reader without an Account and must not let anyone, the owner included, tell what one reader marked or saved. The decisions come from the owner's grilling of 2026-10-25 and 2026-10-26.

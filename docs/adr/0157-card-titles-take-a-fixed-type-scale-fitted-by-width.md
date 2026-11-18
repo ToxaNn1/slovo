@@ -1,3 +1,7 @@
+---
+summary: Card titles take one fixed scale `50 · 44 · 40 · 36 · 32 · 28 · 26 · 24 · 22 · 20` at M, grown by the Lemma's in-app and compact factors, drawn at the largest step at which the widest word and the lines fit, 0.7 shrink below the floor; titles from 36 ignore the OS text size; supersedes 0091's sizes by length, amends 0134.
+---
+
 # Card titles take a fixed type scale, fitted by width
 
 Status: accepted (owner, 16.11). Supersedes ADR 0091's «long head texts take a size by their length». Amends ADR 0134.

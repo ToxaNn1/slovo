@@ -1,3 +1,7 @@
+---
+summary: The reader's optional name (trimmed, at most 24 characters) is user state the Core owns, synced through the Account, never sent with Analytics or any counter; the Profile gains a header (avatar letter, name, «Рівень N — назва»); own Feature Switch (needs the Profile). Amended by 0145.
+---
+
 # The reader's name on the Profile
 
 **Amended by ADR 0145.** The Profile's header sits below the Badges, with the other extra blocks.

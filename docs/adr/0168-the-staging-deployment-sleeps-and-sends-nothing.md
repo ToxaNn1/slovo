@@ -1,3 +1,7 @@
+---
+summary: The Staging Deployment is the `staging` Railway environment of `.railway/railway.ts`: the backend alone, sleep on, no Cron service, its own variables and `staging.slovoapp.org`, Postgres a 0.25 CU scale-to-zero Neon branch; `DEPLOYMENT=staging` refuses PostHog and R2 keys, writes nothing to the Media Store and tags Sentry `staging`; deployed and reset from production by two hand-started workflows, set up by `scripts/staging.ts wizard` (≈ $1.6 Neon + $1–5 Railway a month).
+---
+
 # The Staging Deployment is a sleeping Railway environment that sends nothing
 
 The backend is one Deployment (ADR 0063): a backend change or a migration can only be tried where the readers are. The owner needs a second running copy for his tests that costs next to nothing and cannot touch what readers see.

@@ -46,7 +46,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 ## Documents
 
 - [`CONTEXT.md`](CONTEXT.md): the domain glossary.
-- [`docs/adr/`](docs/adr/README.md): architecture decision records, with an index of every number.
+- [`docs/adr/`](docs/adr/): architecture decision records; `pnpm adr:index` prints the index of every number.
 - [`docs/deploy.md`](docs/deploy.md): the Deployment on Railway, its container image and every variable it reads.
 - The steps only the owner takes, by version, are the Owner checks in the admin's Розробка; an agent adds one with `pnpm admin check add <version> <text>`.
 - [Master spec, issue #1](https://github.com/ToxaNn1/slovo/issues/1): product vision, every decision so far and the roadmap from 0.1 to 1.0.

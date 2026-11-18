@@ -1,3 +1,7 @@
+---
+summary: The Dashboard hero's Mascot throws the board's five sparks (`slLeaf`: diamonds in the key ink and the cream, the board's paths, turns, durations and delays) from its megaphone in both hero states, always, not as seasonal Decor; behind the new switch `heroSparks`, none under Reduce Motion or without the Decor's Mascot figure.
+---
+
 # The Dashboard hero's Mascot throws sparks, always
 
 Owner recording of 2026-11-12 against the «Рупор» Dashboard board. The board's hero draws five small diamonds (`v.leaves`, `@keyframes slLeaf`) flying from the Mascot's megaphone; the board gates them on its seasonal Decor (`s.decor`), the owner wants them always.

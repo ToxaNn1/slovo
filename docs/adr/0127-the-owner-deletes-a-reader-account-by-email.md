@@ -1,3 +1,7 @@
+---
+summary: **Superseded by 0162.** A Власник finds a reader's Account by email in Безпека (date and Google/Apple sign-in methods only) and deletes it with a required reason through the app's own deletion path; every deletion lands in the Action log; Адмін and Агент refused; amends 0088
+---
+
 # A Власник deletes a reader's Account by email in the admin
 
 **Superseded by ADR 0162**: a Власник now sees a list of every Account with its Sync records.

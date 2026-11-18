@@ -1,3 +1,7 @@
+---
+summary: Every Entry's text is the Edition's own plain Ukrainian, nothing copied from a dictionary, `sources` «Власна лексикографічна редакція», authors only from the public domain; rarity (Words only) by `wordfreq` Zipf on bands of the collection (≥2.5 / 1.93 / 1.48 / >0 / absent → 1–5), +1 for archaic or dialectal, the editor ±1 with a reason, a Word absent from the corpus lowered 1–2 when it is known; NFC and the schema always; nothing written before the owner's yes (amends 0090 for agents); new content gathered with 30% to spare, deduplicated against the snapshot; per-kind rules: Words 1–4 synonyms of their part of speech and 2–3 Examples, Corrections one standard equivalent in the same grammatical form, Idioms an exact Idiom Type and a real figurative meaning, Synonym Rows mixed in tone, Tips readable in seconds with their exceptions; existing Entries rewritten in batches through the admin API (supersedes 0012; amends 0090, 0094, 0095).
+---
+
 # An Entry's text is the Edition's own
 
 Status: accepted (owner, 15.11). Supersedes ADR 0012; amends ADR 0090, 0094 and 0095.

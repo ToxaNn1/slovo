@@ -1,3 +1,7 @@
+---
+summary: The Rounds about Entries the reader is weak on take places drawn at random among the first 15 Rounds of a Game, each Round built at its own place, a weak Round that cannot be built there moving to the next place (amends 0052).
+---
+
 # Weak Rounds take random places among the first 15 Rounds
 
 Owner app pass of 2026-11-18, decision Р24: after a wrong answer every Game Mode that asks about Words started with the same Word. This ADR amends ADR 0052 (and the Round order ADR 0043 left to it).

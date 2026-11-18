@@ -1,3 +1,7 @@
+---
+summary: The Dashboard follows the «Рупор» board: `dashboardMoods` names exactly five Moods (UA: Бадьоро, Радісно, Сумно, Закохано, Спокійно), the UA Dashboard has no «Добірки» (`curatedCollections` off), the Correction Types run in the board's order (суржик, наголос, кальки, канцелярит, пароніми, росіянізми, англіцизми), the unrevealed hero reads «Слово дня · №N» (N = the reader's kept archive days before it + 1), the revealed hero is a cream card with no giant letter, the reveal alone plays the letters' flight, the Mascot's shout and the sound «shout», and the logo plays the daily splash behind the new switch `dailySplash` (amends 0076). Amended by 0178, 0185.
+---
+
 # The Dashboard follows the board: five Moods, a numbered hero, the reveal motion and the daily splash
 
 **Amends ADR 0076.**

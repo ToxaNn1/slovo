@@ -1,3 +1,7 @@
+---
+summary: The Core's Account opens apart from the composition and keeps the Session.
+---
+
 # The Core's Account opens apart from the composition
 
 From 0.7 the Core has an Account module that owns every rule of the SLOVO ID screen, and the app talks to the backend. This records where the Account opens and how it keeps the Session.

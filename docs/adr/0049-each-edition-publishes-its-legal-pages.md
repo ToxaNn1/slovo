@@ -1,3 +1,7 @@
+---
+summary: An Edition's legal pages are Markdown in its folder, published on GitHub Pages at `/<edition>/` on the app's domain. Amended by 0125 and 0187.
+---
+
 # Each Edition publishes its legal pages
 
 The App Store asks every app for a privacy policy at a public address, and an app with Accounts owes its readers terms of use. Each Edition speaks its own language to its own readers, so its legal pages are its own text, like its strings (spec #603, #630). Until 0.8.9 SLOVO had neither the pages nor a place to publish them.

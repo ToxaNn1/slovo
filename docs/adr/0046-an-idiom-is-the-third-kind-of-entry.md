@@ -1,3 +1,7 @@
+---
+summary: An Idiom is a kind of Entry with an Idiom Type (idiom, place name, proverb), not a Word.
+---
+
 # An Idiom is the third kind of Entry
 
 Until 0.8.8 SLOVO had two kinds of Entry, Words and Corrections. A fixed expression such as «бити байдики», a place name such as «Бердичів» or a proverb fitted neither, so it could not be authored. 0.8.8 adds the Idiom: a fixed expression whose meaning is not the sum of its words, with its Definitions, Examples and, where known, its origin. An Idiom has an opaque id with the `i_` prefix from the append-only id registry (ADR 0010), its expression in NFC, an Idiom Type, a primary Definition and extra Definitions, Examples in the Word's Example shape, an optional etymology, at least one source and `retired`. It has no Lemma, Stress, part of speech, Category, rarity or Pronunciation. The Edition authors Idioms in `content/idioms`, the Language Pack build writes them into tables of their own and records `idiom` as a kind of Entry, and the Core's content read port reads them, so every Entry the reader keeps stays reachable by id whatever its kind. A Retired Idiom behaves like a Retired Word. The Synonym Row and the Tip followed in 0.8.11 as the fourth and fifth kinds of Entry (ADR 0051). An Edition turns Idioms on through the Feature Switch `idioms`, and its default Mix says whether they are in.

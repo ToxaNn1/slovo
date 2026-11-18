@@ -1,3 +1,7 @@
+---
+summary: The Game asks about eligible Entries in History (15 or more), else the whole pack, and draws Distractors from every eligible Entry; Round planning alone decides a start (amended by 0101: Distractors by part of speech, no Distractor rule).
+---
+
 # The Game asks about Words in History and draws Distractors from the whole pack
 
 The Core has a Game: Rounds in one Game Mode, up to 15 Rounds with 5 Lives unless the mode sets its own (ADR 0052). The master spec says the Game asks about "Seen Entries", but Seen is reset by every new Cycle, so a reader who finished a Cycle would drop back to the whole Language Pack the next day.

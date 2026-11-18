@@ -1,3 +1,7 @@
+---
+summary: CI's job "Deploy to Railway" deploys on every push to `main` once the checks pass: with the project token `RAILWAY_TOKEN` (environment `production`) and the pinned `@railway/cli`, it runs `railway config apply --yes`, then `railway up --ci` for `backend`, `alerts`, `quote-check` and, once `recordings.Dockerfile` exists, `recordings`; one deploy at a time, never on a pull request.
+---
+
 # CI deploys the Railway project from main with a project token
 
 Owner decision of 2026-11-11 (ticket #1796). Amended by ADR 0151 (a push deploys only what it changed). The Railway project has no source (ADR 0103), so Railway builds nothing on its own when `main` changes; someone has to run `railway up`. A deploy from a laptop depends on whoever is signed in there and on what their checkout holds.

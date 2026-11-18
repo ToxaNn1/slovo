@@ -1,3 +1,7 @@
+---
+summary: An Edition changes the Core only through Feature Switches, Extension Points and Decor; its config names its assets (fonts, widget palette, notification sound); it brings its own fonts, the Core names none.
+---
+
 # Editions extend the Core only through switches, extension points and decor
 
 An Edition can change what it gets from the Core in three ways only:

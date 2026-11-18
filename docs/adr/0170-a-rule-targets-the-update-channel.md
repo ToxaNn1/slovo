@@ -1,3 +1,7 @@
+---
+summary: A Rule's targets gain an optional Update channel (`beta` or `production`, `UpdateChannelSchema`), matched on the device against `deviceFacts.updateChannel` with every other target; no channel (a development build) matches none; stored in the targets `jsonb`; «Канал: бета / основний» in the admin (amends 0089); an admin strict output may gain a field, which the breaking-change check skips (amends 0122).
+---
+
 # A Rule targets the Update channel
 
 Owner decision of 2026-11-17 (spec #1961). A Rule targets Edition, app version, platform, the phone's region, a share of readers, signed-in state and a schedule (ADR 0089), but cannot target the owner's testers. ADR 0167 gives the app two Update channels, `beta` for testers and `production` for readers. This ADR amends ADR 0089: a Rule gets one more target, the channel. It also amends ADR 0122: an admin output may grow.

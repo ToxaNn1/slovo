@@ -1,3 +1,7 @@
+---
+summary: `edition-folder.ts` is the only code that knows an Edition folder's layout; the Edition check refuses missing glyphs and release placeholders.
+---
+
 # One module reads an Edition folder
 
 Until 0.7 about ten modules (the build, the id registry, the build CLI, the sourcing tool, the app config, Metro, the tests) each knew how `editions/<id>/` is laid out, and each copy could drift.

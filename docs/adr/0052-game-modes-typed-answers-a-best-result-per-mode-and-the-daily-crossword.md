@@ -1,3 +1,7 @@
+---
+summary: Thirteen Game Modes with their own Lives, limits and answer forms, one typed-answer comparison by the Comparison Key, a Best result per mode; the Daily Crossword is not a Game and its Words are within the Rarity Range. Amended by 0087, 0101, 0128, 0153, 0176, 0189, 0190.
+---
+
 # Game Modes, typed answers, a Best result per mode and the Daily Crossword
 
 The Game has thirteen Game Modes with answer forms of their own, typed answers, a Best result per Game Mode and the Daily Crossword; the decisions come from spec #772 and the owner's grilling of 2026-10-25.

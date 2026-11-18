@@ -1,3 +1,7 @@
+---
+summary: The UA Edition addresses the reader with «ти» everywhere (UI strings, Mascot, notifications, widget, App Intents, email), with gender-free phrasing where a past-tense verb would name the reader; a test refuses every «ви» form (0092). Reverses the «ви» of #1561. Amended by 0077.
+---
+
 # The UA Edition addresses the reader with «ти»
 
 Ticket #1561 first moved the UA Edition to «ви». Owner decision 04.11 (spec #1553) reverses it: the UA Edition addresses the reader with «ти», in every text it shows or sends.

@@ -1,3 +1,7 @@
+---
+summary: An append-only XP log derives XP, Level, Active Day (≥5 XP), Streak, freezes and Break, merged by id; the Daily Goal replaces the Daily Limit (amends 0054). Amended by 0074, 0085, 0133, 0180, 0188.
+---
+
 # The XP log derives the Streak, the Active Day, the Level, freezes and the Break; the Daily Goal replaces the Daily Limit
 
 **Amended by ADR 0074.** The Daily Goal is a number of Words Seen per local day; a day with a goal is an Active Day only when the goal is met, a day without one at 5 XP.

@@ -1,3 +1,7 @@
+---
+summary: With `curatedCollections` on (now in UA) the Dashboard shows «SLOVO пропонує» right before «Категорії», drawn from the Categories rail and tiles: header count of every collection published by today, ten cards at most unopened first, a tile with a pictogram (the collection's `pictogram`, a Category id, else the Edition's `curatedCollectionPictogram`), name, Entry count, «Нова» and the added mark; the build refuses a pictogram naming no Category; with `curatedCollectionFeed` a tapped Entry opens the collection's Feed, round again, each kind its own card, «Добірка · {name} · k з n»; an optional `publishedOn` (empty = today, Kyiv) with a backend-only `appearedAt`, fixed once appeared; a Retired collection (#2022) has no Pack rows and leaves the rail, its count, the grid, its screen and Feed, a reader's copy in their Collections stays; replaces the old «Добірки» rail code (0176) (amends 0076, 0081, 0082, 0105).
+---
+
 # «SLOVO пропонує» is the Curated Collections rail above the Categories
 
 Owner decision of spec #1992, ticket #1994. This ADR amends ADR 0076, 0081, 0082 and 0105.

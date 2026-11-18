@@ -1,3 +1,7 @@
+---
+summary: Every Entry id ever issued is kept; ids are never reused, a Word that goes is Retired. Amended by 0153: the ids live in the content database, the repo has no `content/ids.json`.
+---
+
 # Each Edition keeps an append-only registry of the Entry ids it has issued
 
 Amended by 0153: the repo keeps no `content/ids.json`; the ids live in the content database (ADR 0090), and an id is still never reused.
