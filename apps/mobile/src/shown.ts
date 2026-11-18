@@ -164,6 +164,8 @@ export interface Shown {
   readonly mood: boolean;
   /** The Curated Collections rail of the Dashboard, «SLOVO пропонує» (ADR 0076, 0178). */
   readonly curatedCollections: boolean;
+  /** A tap on an Entry of a Curated Collection's screen opens the collection's Feed (ADR 0178). */
+  readonly curatedCollectionFeed: boolean;
   /** Side swipes mark an Entry Known or Unknown; the card corner holds the heart, Collections and «⋯» in place of the action row (ADR 0077). */
   readonly swipeMarks: boolean;
   /** While the gestures hint is open, the Feed's card plays the swipes it names (ADR 0112). */
@@ -283,6 +285,7 @@ export function shownOf({
     categoryFeed: on('categoryFeed'),
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
+    curatedCollectionFeed: on('curatedCollectionFeed'),
     swipeMarks: on('swipeMarks'),
     gesturesHintDemo: on('gesturesHintDemo'),
     gesturesHintAgain: on('gesturesHintAgain'),

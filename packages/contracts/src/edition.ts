@@ -523,6 +523,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   correctionTypeGrid: FeatureSwitchStateSchema,
   /** The Category's Feed: a tap on a Word of a Category's screen opens a Feed of that Category's Words alone, from the tapped one in Language Pack order and round again after the last (ADR 0110); off, the tap opens the Word's card as Search does. Off while `categoryScreens` is. */
   categoryFeed: FeatureSwitchStateSchema,
+  /** A Curated Collection's Feed: a tap on an Entry of a Curated Collection's screen opens a Feed of that collection's Entries of every kind alone, from the tapped one in its order and round again after the last (ADR 0178); off, the tap opens the Entry's card as Search does. Off while `curatedCollections` is. */
+  curatedCollectionFeed: FeatureSwitchStateSchema,
   /** «Скопіювати посилання» on the share sheet of a Collection, which copies its Collection Link with `expo-clipboard` (ADR 0132); off until the EAS build with that module is out, and off the sheet keeps the system Share alone. Off while `collectionLinks` is. */
   collectionLinkCopy: FeatureSwitchStateSchema,
   /** The Due Quiz «Перевір себе» on «Вчу»: three meanings for each Word due for Review today, right sets Known and wrong Unknown (ADR 0131); off, «Вчу» has no card. Off while `knowledge` is. */

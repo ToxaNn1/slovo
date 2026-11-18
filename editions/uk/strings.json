@@ -1538,7 +1538,8 @@
       "added": "У Міксі ✓",
       "kicker": "ДОБІРКА · {count}",
       "addButton": "ДОДАТИ СОБІ",
-      "addedButton": "У МІКСІ"
+      "addedButton": "У МІКСІ",
+      "feedKicker": "Добірка · {name} · {place} з {of}"
     },
     "categories": {
       "title": "Категорії",

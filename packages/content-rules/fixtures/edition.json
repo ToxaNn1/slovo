@@ -39,6 +39,7 @@
     "correctionCategoryScreens": "on",
     "correctionTypeGrid": "on",
     "categoryFeed": "on",
+    "curatedCollectionFeed": "on",
     "correctionTypes": "on",
     "corrections": "on",
     "crosswordBadgeStamp": "off",

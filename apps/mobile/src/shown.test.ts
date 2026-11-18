@@ -74,6 +74,7 @@ const everything: Shown = {
   categoryFeed: true,
   mood: true,
   curatedCollections: true,
+  curatedCollectionFeed: true,
   swipeMarks: true,
   gesturesHintDemo: true,
   gesturesHintAgain: true,
