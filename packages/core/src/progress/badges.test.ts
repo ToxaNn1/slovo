@@ -18,7 +18,6 @@ const content = createMemoryContentPort({
 });
 const ALL_ON: readonly FeatureSwitch[] = [
   'game',
-  'dailyCrossword',
   'xpLog',
   'levels',
   'badges',
@@ -195,18 +194,6 @@ describe('the Badges', () => {
       'rare',
       'win-words',
     ]);
-  });
-
-  it('shows and earns no Daily Crossword Badge, earned before or not, with the Daily Crossword off', async () => {
-    const records = await readerWith(
-      xp('2026-10-12', 15, { source: 'daily-crossword' }),
-      xp('2026-10-13', 15, { source: 'daily-crossword' }),
-    );
-    expect(earned((await run({ records })).app)).toHaveProperty('crossword-2');
-
-    const { app } = await run({ records, off: ['dailyCrossword'] });
-    expect(app.badges.state.map(({ id }) => id)).not.toContain('crossword-2');
-    expect(app.badges.state.map(({ id }) => id)).toContain('rare');
   });
 
   it('keeps an earned Badge with its date when its condition no longer holds', async () => {

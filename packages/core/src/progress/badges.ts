@@ -115,8 +115,6 @@ export async function openBadges({
   analytics: Pick<Analytics, 'track'>;
 }): Promise<Badges> {
   const on = edition.isFeatureEnabled('badges');
-  // A Daily Crossword Badge goes with the Daily Crossword, earned or not (ADR 0176).
-  const crosswordOn = edition.isFeatureEnabled('dailyCrossword');
   const subscribers = createSubscribers();
   const earnedSubscribers = createSubscribers<BadgeState>();
   const inTurn = createInTurn();
@@ -172,7 +170,6 @@ export async function openBadges({
     const state: BadgeState[] = [];
     const due: string[] = [];
     for (const { id, name, symbol, family, condition } of edition.badges) {
-      if (condition.kind === 'dailyCrosswordRun' && !crosswordOn) continue;
       const date = milestones.badges.get(id);
       if (date !== undefined) {
         const isNew = !milestones.opened.has(id);
