@@ -84,7 +84,6 @@
     "playStep": "on",
     "seenWordXp": "on",
     "levels": "on",
-    "noCounters": "on",
     "dailyGoal": "on",
     "enoughForToday": "on",
     "goalReachedCard": "on",
@@ -94,7 +93,6 @@
     "badges": "on",
     "levelLadder": "off",
     "badgeSheet": "off",
-    "badgeToast": "off",
     "badgeFamiliesOverview": "off",
     "streakFreezeCard": "off",
     "breakCard": "off",
@@ -352,7 +350,6 @@
   "mascot": {
     "onboarding": "Mascot onboarding",
     "newLevel": "Mascot newLevel",
-    "badge": "Mascot badge",
     "dailyGoal": "Mascot dailyGoal",
     "streakMilestone": "Mascot streakMilestone",
     "gameRight": "Mascot gameRight",

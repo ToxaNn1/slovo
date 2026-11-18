@@ -219,10 +219,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   },
   playStep: { name: 'Крок «Грай!»', line: 'У вступі після першого слова читачеві показують ігри.' },
   levels: { name: 'Рівні', line: 'Рівень читача росте від набраного досвіду й має назву видання.' },
-  noCounters: {
-    name: 'Без лічильників',
-    line: 'Налаштування, що ховає досвід, рівень, серію та святкування.',
-  },
   dailyGoal: { name: 'Ціль дня', line: 'Денна ціль із прогресом на смужці досвіду.' },
   seenWordXp: {
     name: 'Досвід за перегляд слів',
@@ -248,10 +244,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   badgeSheet: {
     name: 'Картка відзнаки',
     line: 'Дотик до відзнаки відкриває її назву, дату або прогрес.',
-  },
-  badgeToast: {
-    name: 'Сповіщення про відзнаку',
-    line: 'Відзнаку, здобуту в грі, показує коротке повідомлення.',
   },
   badgeFamiliesOverview: {
     name: 'Огляд родин відзнак',

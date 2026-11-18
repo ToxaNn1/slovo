@@ -22,7 +22,6 @@
     "analyticsSessions": "on",
     "appIntents": "on",
     "badgeSheet": "off",
-    "badgeToast": "off",
     "badgeFamiliesOverview": "off",
     "badges": "on",
     "breakCard": "off",
@@ -102,7 +101,6 @@
     "mixKindWeights": "on",
     "mood": "on",
     "narratorVoice": "on",
-    "noCounters": "on",
     "notificationExplainer": "on",
     "notificationFarewell": "on",
     "notificationTimeStep": "on",
@@ -373,7 +371,6 @@
   "mascot": {
     "onboarding": "Mascot onboarding",
     "newLevel": "Mascot newLevel",
-    "badge": "Mascot badge",
     "dailyGoal": "Mascot dailyGoal",
     "streakMilestone": "Mascot streakMilestone",
     "gameRight": "Mascot gameRight",

@@ -134,7 +134,6 @@ const testEditionConfig = {
   mascot: {
     onboarding: 'Hello',
     newLevel: 'New Level',
-    badge: 'New Badge',
     dailyGoal: 'Goal met',
     streakMilestone: 'Streak grows',
     gameRight: 'Right',

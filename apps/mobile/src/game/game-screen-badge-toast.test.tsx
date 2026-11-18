@@ -64,7 +64,6 @@ describe('a Badge earned in a Game with the answer banner', () => {
     await open({
       clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
       schedule: systemSchedule,
-      switchedOn: ['badgeToast'],
     });
   });
 

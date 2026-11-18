@@ -130,8 +130,7 @@ async function goalRingOf({
   const on = edition.isFeatureEnabled.bind(edition);
   const { dailyGoal } = xpLog.state;
   if (!on('widgetGoalRing') || !on('xpLog') || dailyGoal === null) return undefined;
-  const hidden = (await userState.read(userStateRecords.noCounters)) === true;
-  if (hidden && on('noCounters')) return undefined;
+  if ((await userState.read(userStateRecords.noCounters)) === true) return undefined;
   // `xp` carries the Words Seen toward the Daily Goal (ADR 0074).
   const ring = {
     // The date `dailyGoal` was derived for, which lags today till the day change reaches the log.
@@ -142,7 +141,7 @@ async function goalRingOf({
   };
   // The next day starts empty, and a missed day breaks the Streak only once it ends (ADR 0066).
   const after = { xp: 0, met: false };
-  return on('statistics') && !hidden
+  return on('statistics')
     ? {
         ...ring,
         streak: progress.state.streak,

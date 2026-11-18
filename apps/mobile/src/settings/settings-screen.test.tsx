@@ -582,7 +582,6 @@ describe('Settings › «Без лічильників»', () => {
     const row = screen.getByRole('switch', { name: 'Без лічильників' });
     expect(row).not.toBeChecked();
     expect(screen.getByHintText(editionStrings.settings.noCounters.explanation)).toBe(row);
-    expect(screen.queryByRole('switch', { name: 'Приховати Серію' })).not.toBeOnTheScreen();
 
     await fireEvent.press(row);
     expect((await settings.read()).noCounters).toBe(true);
@@ -591,11 +590,10 @@ describe('Settings › «Без лічильників»', () => {
     expect((await settings.read()).noCounters).toBe(false);
   });
 
-  it('is «Приховати Серію» of 0.9 while its Feature Switch is off', async () => {
-    const settings = await renderSettings({ noCounters: false });
+  it('stays while the statistics are off', async () => {
+    const settings = await renderSettings({ statistics: false });
 
-    expect(screen.queryByRole('switch', { name: 'Без лічильників' })).not.toBeOnTheScreen();
-    await fireEvent.press(screen.getByRole('switch', { name: 'Приховати Серію' }));
+    await fireEvent.press(screen.getByRole('switch', { name: 'Без лічильників' }));
 
     expect((await settings.read()).noCounters).toBe(true);
   });

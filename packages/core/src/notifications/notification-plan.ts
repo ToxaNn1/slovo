@@ -391,10 +391,7 @@ export function createNotificationPlanner({
    */
   async function eveningSilent(): Promise<boolean> {
     if (!edition.isFeatureEnabled('eveningNotification')) return true;
-    return (
-      edition.isFeatureEnabled('noCounters') &&
-      (await userState.read(userStateRecords.noCounters)) === true
-    );
+    return (await userState.read(userStateRecords.noCounters)) === true;
   }
 
   /**

@@ -9112,14 +9112,6 @@
                           ],
                           "type": "string"
                         },
-                        "noCounters": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "dailyGoal": {
                           "enum": [
                             "on",
@@ -9177,14 +9169,6 @@
                           "type": "string"
                         },
                         "badgeSheet": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "badgeToast": {
                           "enum": [
                             "on",
                             "off",
@@ -9755,7 +9739,6 @@
                         "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
-                        "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
@@ -9764,7 +9747,6 @@
                         "badges",
                         "levelLadder",
                         "badgeSheet",
-                        "badgeToast",
                         "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",
@@ -11001,14 +10983,6 @@
                           ],
                           "type": "string"
                         },
-                        "noCounters": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "dailyGoal": {
                           "enum": [
                             "on",
@@ -11066,14 +11040,6 @@
                           "type": "string"
                         },
                         "badgeSheet": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "badgeToast": {
                           "enum": [
                             "on",
                             "off",
@@ -11644,7 +11610,6 @@
                         "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
-                        "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
@@ -11653,7 +11618,6 @@
                         "badges",
                         "levelLadder",
                         "badgeSheet",
-                        "badgeToast",
                         "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",
@@ -12814,14 +12778,6 @@
                           ],
                           "type": "string"
                         },
-                        "noCounters": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "dailyGoal": {
                           "enum": [
                             "on",
@@ -12879,14 +12835,6 @@
                           "type": "string"
                         },
                         "badgeSheet": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "badgeToast": {
                           "enum": [
                             "on",
                             "off",
@@ -13457,7 +13405,6 @@
                         "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
-                        "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
@@ -13466,7 +13413,6 @@
                         "badges",
                         "levelLadder",
                         "badgeSheet",
-                        "badgeToast",
                         "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",

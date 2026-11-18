@@ -52,7 +52,6 @@ const word: Word = {
 async function renderCelebrations({
   on = true,
   noCounters = false,
-  badgeToast = false,
   crosswordStamp = false,
   crosswordDays = 0,
   route = '/feed',
@@ -71,11 +70,9 @@ async function renderCelebrations({
       isFeatureEnabled: (feature) =>
         feature === 'mascot'
           ? on
-          : feature === 'badgeToast'
-            ? badgeToast
-            : feature === 'crosswordBadgeStamp'
-              ? crosswordStamp
-              : edition.isFeatureEnabled(feature),
+          : feature === 'crosswordBadgeStamp'
+            ? crosswordStamp
+            : edition.isFeatureEnabled(feature),
     }),
     settings: await settingsAt({ noCounters }),
   });
@@ -216,20 +213,6 @@ describe('the Mascot’s celebrations', () => {
     expect(screen.getByTestId('new-level-line')).toHaveTextContent(mascot.newLevel);
   });
 
-  it('celebrates a Badge earned by the first win in a Game Mode group', async () => {
-    const composition = await renderCelebrations();
-
-    await act(async () => {
-      composition.xpLog
-        .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
-        .commit();
-      // Settles the writes without running the celebration's timer out.
-      await jest.advanceTimersByTimeAsync(0);
-    });
-
-    expect(celebration('badge')).toHaveTextContent(mascot.badge);
-  });
-
   it('celebrates nothing while the reader hides the counters («Без лічильників», ADR 0066)', async () => {
     const composition = await renderCelebrations({ noCounters: true });
 
@@ -250,12 +233,12 @@ describe('the Mascot’s celebrations', () => {
 
 // Ticket #1649: the new Level screen (p6) replaces the Mascot's overlay for a new Level.
 // Ticket #1647: a Badge earned during a Game toasts; elsewhere it is stamped (board 10.7).
-describe('a Badge earned with the badge toast on', () => {
+describe('a Badge earned', () => {
   const stamp = editionStrings.settings.profile.badgeStamp;
   const hidden = { includeHiddenElements: true };
 
   it('toasts in a Game, with the line, and goes after a while', async () => {
-    const composition = await renderCelebrations({ badgeToast: true, route: '/game/guess-word' });
+    const composition = await renderCelebrations({ route: '/game/guess-word' });
 
     await winGame(composition);
 
@@ -269,7 +252,7 @@ describe('a Badge earned with the badge toast on', () => {
   });
 
   it('is stamped outside a Game, and «ГОТОВО» closes the stamp', async () => {
-    const composition = await renderCelebrations({ badgeToast: true });
+    const composition = await renderCelebrations();
 
     await winGame(composition);
 
@@ -277,16 +260,6 @@ describe('a Badge earned with the badge toast on', () => {
     expect(screen.queryByTestId('badge-toast', hidden)).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: stamp.done }));
     expect(screen.queryByText(stamp.kicker)).toBeNull();
-  });
-
-  it('only celebrates with the Mascot with the badge toast off, in a Game too', async () => {
-    const composition = await renderCelebrations({ route: '/game/guess-word' });
-
-    await winGame(composition);
-
-    expect(celebration('badge')).toHaveTextContent(mascot.badge);
-    expect(screen.queryByTestId('badge-toast', hidden)).toBeNull();
-    expect(screen.queryByText(stamp.kicker, hidden)).toBeNull();
   });
 });
 
@@ -297,7 +270,6 @@ describe('a Badge earned with the crossword Badge stamp on', () => {
 
   it('stamps the 7th solve in a row with its kicker, mark, name and line, with no Mascot or ribbon', async () => {
     const composition = await renderCelebrations({
-      badgeToast: true,
       crosswordStamp: true,
       crosswordDays: 6,
       route: '/game/crossword',
@@ -318,7 +290,6 @@ describe('a Badge earned with the crossword Badge stamp on', () => {
 
   it('still toasts a Badge earned in a Game', async () => {
     const composition = await renderCelebrations({
-      badgeToast: true,
       crosswordStamp: true,
       route: '/game/guess-word',
     });
@@ -331,7 +302,6 @@ describe('a Badge earned with the crossword Badge stamp on', () => {
 
   it('toasts a Badge of another family earned on the crossword’s screen', async () => {
     const composition = await renderCelebrations({
-      badgeToast: true,
       crosswordStamp: true,
       route: '/game/crossword',
     });
@@ -344,7 +314,6 @@ describe('a Badge earned with the crossword Badge stamp on', () => {
 
   it('toasts the 7th solve as before with its Feature Switch off', async () => {
     const composition = await renderCelebrations({
-      badgeToast: true,
       crosswordDays: 6,
       route: '/game/crossword',
     });

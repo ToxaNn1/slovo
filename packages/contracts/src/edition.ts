@@ -402,7 +402,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** Levels: the Level derived from total XP, its Edition name and the level-milestone Feed Notices (ADR 0066). */
   levels: FeatureSwitchStateSchema,
   /** «Без лічильників»: the setting hides XP, Level, Streak, celebrations, level milestones and in-Game XP feedback while counting goes on; off, «Приховати Серію» of 0.9, which hides only the Streak (ADR 0066). */
-  noCounters: FeatureSwitchStateSchema,
   /** The Daily Goal: its Settings row, its progress on the XP bar and its celebration trigger (ADR 0066). */
   dailyGoal: FeatureSwitchStateSchema,
   /** The Seen-Word XP: 1 XP for each Word Seen for the first time, up to the day's Daily Goal; off, viewing earns nothing. */
@@ -421,7 +420,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** The Badge sheet: a tap on any Badge opens its name, date or progress, and an unearned one answers with a toast (ADR 0085); off while `xpLog` or `badges` is. */
   badgeSheet: FeatureSwitchStateSchema,
   /** The Badge toast: a Badge earned during a Game shows a toast in place of the stamp (ADR 0085); off while `xpLog` or `badges` is. */
-  badgeToast: FeatureSwitchStateSchema,
   /** The Badge families overview heading the Badges screen: each family's mark, name, count, description and shape (ADR 0145); off while `xpLog` or `badges` is. */
   badgeFamiliesOverview: FeatureSwitchStateSchema,
   /** The Streak freeze card of the Profile: the freezes held, the last 7 days and the days saved (ADR 0085); off while `xpLog` is. */
@@ -697,14 +695,13 @@ export type Badge = z.infer<typeof BadgeSchema>;
 
 /**
  * The Mascot's short line for each moment it shows in: the onboarding, the
- * celebrations of a new Level, a Badge, the Daily Goal and a Streak
+ * celebrations of a new Level, the Daily Goal and a Streak
  * milestone, a right and a wrong Game answer, the Game's end, and an empty
  * state.
  */
 export const MascotLinesSchema = z.strictObject({
   onboarding: TextSchema,
   newLevel: TextSchema,
-  badge: TextSchema,
   dailyGoal: TextSchema,
   streakMilestone: TextSchema,
   gameRight: TextSchema,

@@ -12,7 +12,7 @@ import { BadgeMark } from './BadgeMark';
 import { REDUCED_FADE } from '../primitives/timing';
 
 /**
- * A Badge earned during a Game (board 10.7, `badgeToast` on): a toast on the
+ * A Badge earned during a Game (board 10.7): a toast on the
  * Theme's ink over the bottom of the screen with the Badge's mark, its name
  * and the line, instead of the stamp, so the Game goes on. In the dark Theme
  * it inverts to cream with dark words (decision 22). It takes no touch, and

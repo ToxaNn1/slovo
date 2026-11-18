@@ -14,7 +14,7 @@ const newLevelStrings = editionStrings.settings.profile.newLevel;
 const stampStrings = editionStrings.settings.profile.badgeStamp;
 
 /**
- * A Badge just earned, with the `badgeToast` switch on: toasted in a Game,
+ * A Badge just earned: toasted in a Game,
  * stamped elsewhere, and stamped bare on the Daily Crossword with the
  * `crosswordBadgeStamp` switch on (board 08.2).
  */
@@ -37,7 +37,6 @@ export const CELEBRATION_MS = 4000;
 const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
   onboarding: 'shouts',
   newLevel: 'celebrates',
-  badge: 'celebrates',
   dailyGoal: 'celebrates',
   streakMilestone: 'celebrates',
   gameRight: 'happy',
@@ -109,14 +108,13 @@ export function ShippedMascot({ state }: { state: MascotState }) {
 }
 
 /**
- * The Mascot's celebrations: a Badge earned, the Daily Goal met and a Streak
- * milestone each show it for a while over the bottom of the screen. It takes
- * no touch and VoiceOver skips it, so it never interrupts the Feed. A new
- * Level shows the new Level screen, until the reader closes it. Nothing while the reader hides
- * the counters («Без лічильників», ADR 0066). With the `badgeToast` switch
- * on, a Badge earned shows its ink toast during a Game and its stamp anywhere
- * else (board 10.7), instead of the Mascot alone; the stamp's «ГОТОВО» opens
- * the Badge, which ends its «НОВА» mark (ADR 0085).
+ * The Mascot's celebrations: the Daily Goal met and a Streak milestone each
+ * show it for a while over the bottom of the screen. It takes no touch and
+ * VoiceOver skips it, so it never interrupts the Feed. A new Level shows the
+ * new Level screen, until the reader closes it. Nothing while the reader hides
+ * the counters («Без лічильників», ADR 0066). A Badge earned shows its ink
+ * toast during a Game and its stamp anywhere else (board 10.7); the stamp's
+ * «ГОТОВО» opens the Badge, which ends its «НОВА» mark (ADR 0085).
  */
 export function MascotCelebrations() {
   const { xpLog, badges, progress } = useComposition();
@@ -128,12 +126,10 @@ export function MascotCelebrations() {
   const route = useRouteOnScreen();
   const screensNewLevel = useEffectEvent(() => celebrations);
   /**
-   * How a Badge just earned shows: toasted or stamped, or with the Mascot
-   * alone; a Badge of Daily Crosswords in a row earned on the crossword's
-   * screen gets board 08's stamp.
+   * How a Badge just earned shows: toasted or stamped; a Badge of Daily
+   * Crosswords in a row earned on the crossword's screen gets board 08's stamp.
    */
-  const badgeShownAs = useEffectEvent((badge: BadgeState): Earned['kind'] | undefined => {
-    if (!edition.isFeatureEnabled('badgeToast')) return undefined;
+  const badgeShownAs = useEffectEvent((badge: BadgeState): Earned['kind'] => {
     if (
       route === CROSSWORD_ROUTE &&
       badge.condition.kind === 'dailyCrosswordRun' &&
@@ -152,12 +148,7 @@ export function MascotCelebrations() {
       }, CELEBRATION_MS);
     };
     const showBadge = (badge: BadgeState) => {
-      const kind = badgeShownAs(badge);
-      if (kind === undefined) {
-        celebrate('badge');
-        return;
-      }
-      setEarnedBadge({ kind, badge });
+      setEarnedBadge({ kind: badgeShownAs(badge), badge });
     };
     const stops = [
       xpLog.onLevelReached(({ level, name }) => {
