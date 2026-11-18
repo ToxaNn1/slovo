@@ -5,10 +5,8 @@ import { templateOf } from './shared';
 
 /** The texts of a Mistake Report: the card menu's action, the sheet and its toasts (ADR 0056). */
 export const MistakeReportStringsSchema = z.strictObject({
-  /** The card menu's action that opens the sheet, e.g. «Повідомити про помилку». */
+  /** The sheet's title, as the card menu's action names it, e.g. «Повідомити про помилку». */
   action: TextSchema,
-  /** The label under the flag of the action row's tile, «Помилка». */
-  tile: TextSchema,
   /** The name of every type of mistake the reader picks from. */
   types: z.strictObject({
     typo: TextSchema,

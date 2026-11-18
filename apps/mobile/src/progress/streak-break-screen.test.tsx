@@ -50,6 +50,7 @@ describe('the Break screen', () => {
     expect(screen.getByText(strings.explanation)).toBeOnTheScreen();
     const value = () => screen.getByTestId('streak-break-days-value');
     expect(value()).toHaveTextContent('7');
+    expect(screen.getByTestId('streak-break-most')).toHaveTextContent(strings.most);
     expect(screen.queryByTestId('streak-break-running')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-waiting')).not.toBeOnTheScreen();
 
@@ -59,6 +60,7 @@ describe('the Break screen', () => {
       await fireEvent.press(screen.getByLabelText(strings.fewerDays));
     }
     expect(value()).toHaveTextContent('1');
+    expect(screen.queryByTestId('streak-break-most')).not.toBeOnTheScreen();
     await fireEvent.press(screen.getByLabelText(strings.moreDays));
     await fireEvent.press(screen.getByLabelText(strings.moreDays));
 
@@ -69,31 +71,52 @@ describe('the Break screen', () => {
 
     expect(composition.streakBreak.state.kind).toBe('running');
     expect([...composition.xpLog.days.breaks.values()]).toEqual([3]);
-    expect(screen.getByTestId('streak-break-running')).toHaveTextContent(
-      'Перерва триває до 15 жовтня включно.',
-    );
+    expect(screen.getByText('Перерва триває до 15 жовтня включно.')).toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-start')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-days')).not.toBeOnTheScreen();
   });
 
-  it('while a Break runs, shows its last day and when the next one can start', async () => {
-    await renderScreen(breakFrom('2026-10-12', 3));
-    expect(screen.getByTestId('streak-break-running')).toHaveTextContent(
-      'Перерва триває до 14 жовтня включно.',
-    );
-    expect(screen.getByTestId('streak-break-waiting')).toHaveTextContent(
-      /^Наступну перерву можна почати з \d+ \S+\.$/,
-    );
+  it('while a Break runs, lays out its days left, last day and «Завершити перерву», then ends it early', async () => {
+    const composition = await renderScreen(breakFrom('2026-10-12', 3));
+    expect(screen.getByText(strings.title)).toBeOnTheScreen();
+    expect(screen.getByTestId('streak-break-running')).toBeOnTheScreen();
+    expect(screen.getByText('ПЕРЕРВА')).toBeOnTheScreen();
+    // 13 and 14 October, today included.
+    expect(screen.getByTestId('streak-break-days-left')).toHaveTextContent('Лишилося 2 дні.');
+    expect(screen.getByText('Перерва триває до 14 жовтня включно.')).toBeOnTheScreen();
+    expect(screen.getByText('Наступну перерву можна почати з 11 листопада.')).toBeOnTheScreen();
+    expect(screen.queryByText(strings.explanation)).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('streak-break-waiting')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-days')).not.toBeOnTheScreen();
+
+    await act(async () => {
+      await fireEvent.press(screen.getByRole('button', { name: strings.end }));
+      await Promise.resolve();
+    });
+
+    // 12 October was the one Break day used: 6 of the 7 come back.
+    expect(composition.streakBreak.state).toEqual({ kind: 'available', longest: 6 });
+    expect(screen.queryByTestId('streak-break-running')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('streak-break-days-value')).toHaveTextContent('6');
   });
 
-  it('after a Break, before the next one is allowed, shows only when it can start', async () => {
+  it('after a short Break, offers the days left of the 7', async () => {
     await renderScreen(breakFrom('2026-10-01', 2));
+    expect(screen.getByTestId('streak-break-days-value')).toHaveTextContent('5');
+    expect(screen.getByTestId('streak-break-most')).toHaveTextContent(
+      'Більше не можна: на ці 30 днів лишилося 5 днів перерви.',
+    );
+    expect(screen.queryByTestId('streak-break-waiting')).not.toBeOnTheScreen();
+  });
+
+  it('once the 7 days are spent, before the next Break is allowed, shows only when it can start', async () => {
+    await renderScreen(breakFrom('2026-10-01', 7));
     expect(screen.getByTestId('streak-break-waiting')).toHaveTextContent(
-      /^Наступну перерву можна почати з \d+ \S+\.$/,
+      'Наступну перерву можна почати з 31 жовтня.',
     );
     expect(screen.queryByTestId('streak-break-running')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-days')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-start')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('streak-break-end')).not.toBeOnTheScreen();
   });
 });

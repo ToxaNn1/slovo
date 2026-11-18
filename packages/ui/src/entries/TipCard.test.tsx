@@ -1,6 +1,6 @@
 import type { TipCardModel, TipFeedCard } from '@slovo/core';
-import { ActionRow, EditionProvider, EntryCard, KnowledgeButtons } from '@slovo/ui';
-import { describe, expect, it, jest } from '@jest/globals';
+import { EditionProvider, EntryCard } from '@slovo/ui';
+import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
@@ -192,40 +192,20 @@ describe('the Tip card in tabs (board e9)', () => {
 });
 
 describe('Self-check on a Tip card', () => {
-  it('shows only the title and the non-standard form, its marks inactive, until the reader reveals it', async () => {
-    const onMark = jest.fn();
-    await render(
-      inEdition(
-        <EntryCard
-          card={card}
-          selfCheck
-          slots={{
-            slot: 'actions',
-            actions: (
-              <ActionRow
-                marks={<KnowledgeButtons entryKind="word" mark={undefined} onTap={onMark} />}
-              />
-            ),
-          }}
-        />,
-      ),
-    );
+  it('shows only the title and the non-standard form until the reader reveals it', async () => {
+    await render(inEdition(<EntryCard card={card} selfCheck />));
 
     expect(screen.getByRole('header', { name: 'Tip: What time is it?' })).toBeTruthy();
     expect(screen.getByLabelText('Often said: How much is the time?')).toBeTruthy();
     for (const concealed of ['tip-standard', 'tip-explanation', 'tip-example', 'tip-source']) {
       expect(screen.queryByTestId(concealed)).toBeNull();
     }
-    await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: true }));
-    expect(onMark).not.toHaveBeenCalled();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
 
     expect(screen.getByLabelText('Better: What time is it?')).toBeTruthy();
     expect(screen.getByTestId('tip-explanation')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Show' })).toBeNull();
-    await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: false }));
-    expect(onMark).toHaveBeenCalledWith('known');
   });
 
   it('shows only the title until the reveal when the Tip has no non-standard form', async () => {

@@ -1,8 +1,10 @@
+import { pluralCount } from '@slovo/contracts';
+import { BREAK_DAYS_AT_MOST } from '@slovo/core';
 import {
-  BackLink,
+  BackHeader,
+  BreakCard,
   fill,
   Button,
-  ScreenTitle,
   SectionLabel,
   space,
   Stepper,
@@ -17,17 +19,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
 import { keep } from '../keep';
-import { editionStrings } from '../edition/edition';
+import { edition, editionStrings } from '../edition/edition';
 import { useSubscribed } from '../opening';
 import { dayText } from './day-text';
 
 const strings = editionStrings.settings.streakBreak;
+const card = editionStrings.settings.profile.breakCard;
+const plural = pluralCount(edition.locale);
 
 /**
- * Settings › Перерва (ADR 0066, board 11, 90): what a Break does, and either
- * its length on a − N + stepper from 1 to the longest with the button that
- * starts it, or why none can start today: while one runs, its last day; and
- * while the next one is not yet allowed, the day it can start.
+ * Settings › Перерва (ADR 0066, 0180, board 11, 90): what a Break does, and
+ * either its length on a − N + stepper from 1 to the Break days left, with a
+ * line saying so at its top, and the button that starts it; or, while one
+ * runs, the Break card of board 10 p1 (the paused Streak, its last day, its
+ * strip, the next start), its days left and «Завершити перерву», which ends it
+ * today; or, once the 7 days are spent, the day the next Break can start.
  */
 export function StreakBreakScreen() {
   const tokens = useTokens();
@@ -36,8 +42,11 @@ export function StreakBreakScreen() {
   const router = useRouter();
   const streakBreak = useComposition().streakBreak;
   const state = useSubscribed(streakBreak, ({ state }) => state);
+  const progress = useComposition().progress;
+  const streak = useSubscribed(progress, ({ state }) => state.streak);
   const [days, setDays] = useState(7);
   const longest = state.kind === 'available' ? state.longest : 0;
+  const chosen = Math.min(days, longest);
   const textStyle = [typeStyle('noticeText', tokens), { color: colors.muted }];
 
   return (
@@ -47,19 +56,24 @@ export function StreakBreakScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <BackLink
-          testID="streak-break-back"
-          label={editionStrings.settings.title}
-          onPress={() => {
-            router.back();
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={strings.title}
+          back={{
+            label: editionStrings.settings.title,
+            testID: 'streak-break-back',
+            onPress: () => {
+              router.back();
+            },
           }}
         />
-        <View style={styles.section}>
-          <ScreenTitle>{strings.title}</ScreenTitle>
-          <Text {...voice} style={textStyle}>
-            {strings.explanation}
-          </Text>
-        </View>
+        {state.kind !== 'running' && (
+          <View style={styles.section}>
+            <Text {...voice} style={textStyle}>
+              {strings.explanation}
+            </Text>
+          </View>
+        )}
         {state.kind === 'available' && (
           <View style={styles.section}>
             <SectionLabel>{strings.length}</SectionLabel>
@@ -68,26 +82,49 @@ export function StreakBreakScreen() {
               accessibilityLabel={strings.length}
               fewerLabel={strings.fewerDays}
               moreLabel={strings.moreDays}
-              value={Math.min(days, longest)}
+              value={chosen}
               min={1}
               max={longest}
               onChange={setDays}
             />
+            {chosen === longest && (
+              <Text {...voice} testID="streak-break-most" style={textStyle}>
+                {longest >= BREAK_DAYS_AT_MOST ? strings.most : plural(strings.mostLeft, longest)}
+              </Text>
+            )}
             <Button
               testID="streak-break-start"
               label={strings.start}
               onPress={() => {
-                void keep('the Break', streakBreak.start(Math.min(days, longest)));
+                void keep('the Break', streakBreak.start(chosen));
               }}
             />
           </View>
         )}
         {state.kind === 'running' && (
-          <Text {...voice} testID="streak-break-running" style={textStyle}>
-            {fill(strings.running, { date: dayText(state.lastDay) })}
-          </Text>
+          <View style={styles.section}>
+            <BreakCard
+              testID="streak-break-running"
+              streak={streak}
+              kicker={card.kicker}
+              paused={fill(card.paused, { count: String(streak) })}
+              until={fill(strings.running, { date: dayText(state.lastDay) })}
+              strip={state.strip}
+              next={fill(card.next, { date: dayText(state.nextStart) })}
+            />
+            <Text {...voice} testID="streak-break-days-left" style={textStyle}>
+              {plural(strings.daysLeft, state.daysLeft)}
+            </Text>
+            <Button
+              testID="streak-break-end"
+              label={strings.end}
+              onPress={() => {
+                void keep('the Break end', streakBreak.end());
+              }}
+            />
+          </View>
         )}
-        {(state.kind === 'running' || state.kind === 'waiting') && (
+        {state.kind === 'waiting' && (
           <Text {...voice} testID="streak-break-waiting" style={textStyle}>
             {fill(strings.waiting, { date: dayText(state.nextStart) })}
           </Text>

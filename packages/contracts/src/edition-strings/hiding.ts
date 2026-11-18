@@ -3,13 +3,9 @@ import { z } from 'zod';
 import { TextSchema } from '../shared';
 import { templateOf } from './shared';
 
-/** The texts of hiding from a card: the hide button, the hide choice and its undo toasts. */
+/** The texts of hiding from a card: the hide choice and its undo toasts. */
 export const HidingStringsSchema = z.strictObject({
-  /** The hide button's VoiceOver label: what a tap will do. */
-  button: TextSchema,
-  /** The label under the thumb of the action row's tile, «Сховати». */
-  tile: TextSchema,
-  /** The hide choice: the sheet the hide button opens. */
+  /** The hide choice: the sheet the card's menu opens. */
   choice: z.strictObject({
     /** Hides this Entry. */
     entry: TextSchema,

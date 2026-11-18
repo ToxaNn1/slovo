@@ -219,10 +219,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   },
   playStep: { name: 'Крок «Грай!»', line: 'У вступі після першого слова читачеві показують ігри.' },
   levels: { name: 'Рівні', line: 'Рівень читача росте від набраного досвіду й має назву видання.' },
-  noCounters: {
-    name: 'Без лічильників',
-    line: 'Налаштування, що ховає досвід, рівень, серію та святкування.',
-  },
   dailyGoal: { name: 'Ціль дня', line: 'Денна ціль із прогресом на смужці досвіду.' },
   seenWordXp: {
     name: 'Досвід за перегляд слів',
@@ -248,10 +244,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   badgeSheet: {
     name: 'Картка відзнаки',
     line: 'Дотик до відзнаки відкриває її назву, дату або прогрес.',
-  },
-  badgeToast: {
-    name: 'Сповіщення про відзнаку',
-    line: 'Відзнаку, здобуту в грі, показує коротке повідомлення.',
   },
   badgeFamiliesOverview: {
     name: 'Огляд родин відзнак',
@@ -313,10 +305,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Підказка про недоступну гру',
     line: 'Дотик до гри, у яку ще не можна грати, показує коротке пояснення.',
   },
-  eveningNotification: {
-    name: 'Вечірнє сповіщення',
-    line: 'Удень — слово дня, увечері — нагадування про серію чи ціль.',
-  },
   notificationFarewell: {
     name: 'Прощання',
     line: 'Коли сповіщення вщухають, застосунок на прощання пише слово від видання.',
@@ -359,10 +347,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Добірки редакції',
     line: 'На головній є стрічка «Добірки» з підбором записів від редакції.',
   },
-  swipeMarks: {
-    name: 'Позначки свайпом',
-    line: 'Картку проводять праворуч — «Знаю», ліворуч — «Не знаю».',
-  },
   gesturesHintDemo: {
     name: 'Показ жестів',
     line: 'У підказці про жести картка сама показує свайпи.',
@@ -370,10 +354,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   gesturesHintAgain: {
     name: 'Підказка жестів знову',
     line: 'У Налаштуваннях є рядок, що ще раз показує підказку про жести в Стрічці.',
-  },
-  savedSwipesOff: {
-    name: 'Без свайпів у «Збереженому»',
-    line: 'Слово, відкрите з «Збереженого», не гортається вбік, «Знаю» і «Не знаю» в меню «⋯».',
   },
   wordTabs: {
     name: 'Вкладки на картці',

@@ -16,11 +16,11 @@ export const entryReveal = {
   from: { x: 40, y: 240, scale: 0.15, rotate: -30 },
   full: {
     headline: { duration: 450, delay: 80 },
-    details: { at: [500, 560, 620, 680], duration: 300 },
+    details: { at: [500, 560], duration: 300 },
   },
   fast: {
     headline: { duration: 180, delay: 40 },
-    details: { at: [220, 240, 270, 300], duration: 130 },
+    details: { at: [220, 240], duration: 130 },
   },
 } as const satisfies {
   readonly headlineEasing: Easing;

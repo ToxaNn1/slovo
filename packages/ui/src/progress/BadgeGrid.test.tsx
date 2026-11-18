@@ -47,12 +47,13 @@ const strings = testStrings({
   },
 });
 
-async function draw(onPress: (badge: BadgeGridItem) => void) {
+async function draw(onPress: (badge: BadgeGridItem) => void, counts = true) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <BadgeGrid
         families={families}
         badges={badges}
+        counts={counts}
         statusOf={(badge) => (badge.earned ? 'Earned' : 'Not yet')}
         onPress={onPress}
       />
@@ -78,6 +79,14 @@ describe('BadgeGrid', () => {
     expect(heads[1]).toHaveTextContent('Streak');
     expect(screen.getByTestId('badge-family-streak-count')).toHaveTextContent('1 of 2');
     expect(screen.getByTestId('badge-family-levels-count')).toHaveTextContent('0 of 1');
+  });
+
+  // App pass 7a, item 51: «Без лічильників» hides the counts, not the families.
+  it('heads each family without its count while the counts are hidden', async () => {
+    await draw(() => undefined, false);
+    expect(screen.getAllByRole('header')).toHaveLength(2);
+    expect(screen.queryByTestId('badge-family-streak-count')).toBeNull();
+    expect(screen.queryByText('1 of 2')).toBeNull();
   });
 
   it('hands the pressed Badge to onPress', async () => {

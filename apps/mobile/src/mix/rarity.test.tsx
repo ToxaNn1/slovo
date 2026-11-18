@@ -28,12 +28,12 @@ describe('the Rarity hooks', () => {
 
     await settled(async () => {
       set = await hook.result.current.apply([
-        ...RARITIES.filter((rarity) => rarity < target).map((rarity) => ({ rarity, known: true })),
-        { rarity: target, known: false },
+        ...RARITIES.filter((rarity) => rarity <= target).map((rarity) => ({ rarity, known: true })),
+        { rarity: 4, known: false },
       ]);
     });
 
-    expect(set).toEqual({ top: target, known: target - 1, total: target });
+    expect(set).toEqual({ top: target, changed: true, known: target, total: target + 1 });
     expect(hook.result.current.range).toEqual({ from: 1, to: target });
   });
 });

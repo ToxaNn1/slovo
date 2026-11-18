@@ -103,3 +103,37 @@ describe('the duplicate hint', () => {
     expect(screen.getByTestId('notifications-duplicate-hint')).toBeTruthy();
   });
 });
+
+describe('removing a time', () => {
+  it('says under the times how a time is removed', () => {
+    // VoiceOver skips the line: each time offers «Видалити» as its action.
+    expect(
+      screen.getByTestId('notifications-remove-hint', { includeHiddenElements: true }),
+    ).toHaveTextContent(strings.removeHint);
+  });
+
+  it('has no hint with no times left', async () => {
+    for (const time of mockComposition.notifications.state.times) await removeTime(time);
+
+    expect(
+      screen.queryByTestId('notifications-remove-hint', { includeHiddenElements: true }),
+    ).toBeNull();
+  });
+});
+
+describe('the time picker', () => {
+  it('closes on «Скасувати» and keeps no time', async () => {
+    await removeTime('09:00');
+    const before = mockComposition.notifications.state.times;
+    await fireEvent.press(screen.getByTestId('notifications-add-time'));
+
+    await fireEvent.press(screen.getByRole('button', { name: strings.cancel }));
+    // The sheet slides away before it unmounts.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    });
+
+    expect(screen.queryByTestId('time-picker-done')).toBeNull();
+    expect(mockComposition.notifications.state.times).toEqual(before);
+  });
+});

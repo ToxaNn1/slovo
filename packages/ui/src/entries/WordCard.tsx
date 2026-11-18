@@ -148,7 +148,7 @@ export function WordHeadline({
             height={entryCardFrame.rule.height}
           />
         )}
-        <RevealDetail step={0}>
+        <RevealDetail step={0} testID="word-details">
           {tabbed ? (
             <View testID="word-grammar" style={styles.grammarRow}>
               <View style={[styles.grammar, styles.grammarLine]}>{grammarLine}</View>

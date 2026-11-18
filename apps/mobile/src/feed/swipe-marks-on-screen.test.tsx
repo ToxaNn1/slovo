@@ -27,12 +27,12 @@ import { SettingsProvider } from '../settings/settings';
 
 const { config } = activeEditionFiles;
 
-/** The UA Edition with the Knowledge switch on and the side swipes as `swipeMarks` says. */
-function editionWith(swipeMarks: boolean): Edition {
+/** The UA Edition with the Knowledge switch on, the side swipes with it. */
+function editionWithKnowledge(): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   return loadEdition({
     ...rest,
-    featureSwitches: { ...featureSwitches, knowledge: 'on', swipeMarks: swipeMarks ? 'on' : 'off' },
+    featureSwitches: { ...featureSwitches, knowledge: 'on' },
   });
 }
 
@@ -89,8 +89,8 @@ function word(id: string, lemma: string): Word {
  * Opens the composition over three Words, «лагідний» kept as yesterday's Word
  * of the Day, the other two the meanings its Yesterday quiz offers beside its own.
  */
-async function open(swipeMarks: boolean) {
-  editionInEffect = editionWith(swipeMarks);
+async function open() {
+  editionInEffect = editionWithKnowledge();
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
   userState = await seedUserState(
     {
@@ -236,8 +236,8 @@ async function swipeUp() {
 }
 
 describe('the side swipes on the Feed (ADR 0077)', () => {
-  it('wrap the Entry cards with swipeMarks on', async () => {
-    await open(true);
+  it('wrap the Entry cards', async () => {
+    await open();
     await renderApp();
 
     expect(getByGestureTestId('entry-card-side-swipe')).toBeDefined();
@@ -246,17 +246,8 @@ describe('the side swipes on the Feed (ADR 0077)', () => {
     ).toBeOnTheScreen();
   });
 
-  it('are not there with swipeMarks off', async () => {
-    await open(false);
-    await renderApp();
-
-    expect(screen.getByTestId('feed')).toBeOnTheScreen();
-    expect(swipedPages()).toHaveLength(0);
-    expect(() => getByGestureTestId('entry-card-side-swipe')).toThrow();
-  });
-
   it('leave Yesterday’s Word, a Feed Notice, without them', async () => {
-    await open(true);
+    await open();
     await renderApp();
 
     const page = yesterdayPage();
@@ -265,7 +256,7 @@ describe('the side swipes on the Feed (ADR 0077)', () => {
   });
 
   it('close the undo toast once the Feed turns to another page', async () => {
-    await open(true);
+    await open();
     await renderApp();
     await swipeRight();
     expect(screen.getByTestId('undo-toast', hidden)).toBeOnTheScreen();
@@ -278,7 +269,7 @@ describe('the side swipes on the Feed (ADR 0077)', () => {
 
 describe('the «⋯» sheet of an Entry card on the Feed', () => {
   it('closes with «Скасувати», as on the board (ADR 0092)', async () => {
-    await open(true);
+    await open();
     await renderApp();
     const page = within(screen.getByTestId('feed-card-0'));
     await settle(() => fireEvent.press(page.getByRole('button', { name: 'Більше дій' })));

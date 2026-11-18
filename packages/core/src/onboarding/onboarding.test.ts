@@ -176,14 +176,15 @@ describe('the onboarding', () => {
     expect(app.onboarding.state.status).toBe('finished');
   });
 
-  it('sets the Rarity Range by «Рівень» and the kind weights by «Навіщо»', async () => {
+  it('leaves the Rarity Range as it is on «Рівень» and sets the kind weights by «Навіщо»', async () => {
     const { app } = await run();
+    await app.rarityRange.set({ from: 1, to: 3 });
     await app.onboarding.next();
     await app.onboarding.next();
     await app.onboarding.answer('good');
     expect(kinds(app)).toBe('why');
     await app.onboarding.answer('write-correctly');
-    expect(app.rarityRange.state).toEqual({ from: 1, to: 4 });
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 3 });
     expect(app.mix.state.kindWeights.correction).toBe('more');
   });
 

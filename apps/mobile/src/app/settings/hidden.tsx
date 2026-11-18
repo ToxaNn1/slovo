@@ -1,8 +1,7 @@
 import {
-  BackLink,
+  BackHeader,
   Button,
   rowPadding,
-  ScreenTitle,
   space,
   STACK_AT_FONT_SCALE,
   typeStyle,
@@ -23,7 +22,7 @@ import { ListTopButton } from '@/shell/list-top';
 const strings = editionStrings.hidden;
 
 /**
- * Settings › Приховане (board 11, screen 88): everything hidden from the
+ * Settings › Приховані записи (board 11, screen 88): everything hidden from the
  * Feed in one list, the Hidden Categories, the kinds out of the Mix and the
  * Hidden Entries, each with its name, its kind and «Показати», which brings
  * it back and shows an undo toast. Nothing hidden says so.
@@ -87,9 +86,12 @@ function HiddenHeader({ empty, onBack }: { empty: boolean; onBack: () => void })
   const { voice } = useEdition();
   return (
     <View style={styles.header}>
-      <BackLink testID="hidden-back" label={editionStrings.settings.title} onPress={onBack} />
+      <BackHeader
+        titleRole="settingsSubTitle"
+        title={strings.title}
+        back={{ label: editionStrings.settings.title, testID: 'hidden-back', onPress: onBack }}
+      />
       <View style={styles.titles}>
-        <ScreenTitle>{strings.title}</ScreenTitle>
         <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
           {strings.subtitle}
         </Text>

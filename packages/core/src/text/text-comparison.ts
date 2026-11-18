@@ -32,13 +32,15 @@ export interface TextComparison {
    * Key shares (case, Stress marks, apostrophes), as written in the text, the
    * Stress marks after its last letter included; with `wholeWord`, only where
    * no letter, mark, digit, hyphen or apostrophe of the Edition stands next to
-   * it. Nothing when it holds none, or the sought text is empty. Both texts
-   * are taken as written in one Unicode form.
+   * it; with `toWordEdges`, grown over the letters, marks, digits, hyphens
+   * and apostrophes next to it, so it holds the whole words it falls in. Nothing
+   * when it holds none, or the sought text is empty. Both texts are taken as
+   * written in one Unicode form.
    */
   find(
     text: string,
     sought: string,
-    options?: { readonly wholeWord?: boolean },
+    options?: { readonly wholeWord?: boolean; readonly toWordEdges?: boolean },
   ): FoundRange | undefined;
   /** Whether the Edition reads the character as an apostrophe. */
   isApostrophe(character: string): boolean;
@@ -80,7 +82,10 @@ export function createTextComparison({
   function find(
     text: string,
     sought: string,
-    { wholeWord = false }: { readonly wholeWord?: boolean } = {},
+    {
+      wholeWord = false,
+      toWordEdges = false,
+    }: { readonly wholeWord?: boolean; readonly toWordEdges?: boolean } = {},
   ): FoundRange | undefined {
     const wanted = keyed(sought);
     if (wanted === '') return undefined;
@@ -106,7 +111,12 @@ export function createTextComparison({
         (isWordCharacter(text.charAt(start - 1)) || isWordCharacter(text.charAt(end)))
       )
         continue;
-      return { start, end };
+      if (!toWordEdges) return { start, end };
+      let from = start;
+      let to = end;
+      while (from > 0 && isWordCharacter(text.charAt(from - 1))) from -= 1;
+      while (to < text.length && isWordCharacter(text.charAt(to))) to += 1;
+      return { start: from, end: to };
     }
     return undefined;
   }

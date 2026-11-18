@@ -127,4 +127,11 @@ describe('EntryRow', () => {
 
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps the buttons behind the row away from VoiceOver, which reaches them as the row’s actions', async () => {
+    await renderRow({ onPress: jest.fn(), actions: [deleteAction(jest.fn())] });
+
+    expect(screen.getByTestId('entry-row-w1-delete', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.queryByTestId('entry-row-w1-delete')).toBeNull();
+  });
 });

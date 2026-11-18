@@ -15,15 +15,16 @@ const strings = testStrings({
   rarityTest: {
     progress: '{n} of {total}',
     announcement: 'Word {n} of {total}: {word}',
-    result: 'Your rarity: up to {n}',
     next: 'Next',
     question: 'Do you know this word?',
-    resultLine: 'Your rarity is up to {n}.',
+    resultChanged: 'Rarity is now {range}',
+    resultKept: 'Rarity stays {range}',
     known: '{known} of {total} words known.',
     done: 'DONE',
     again: 'Test again',
   },
   knowledge: { known: 'Known', unknown: 'Unknown' },
+  settings: { rarity: { range: 'from {from} to {to}', single: 'only {rarity}' } },
 });
 
 const words: RarityTestQuestion[] = [
@@ -64,7 +65,7 @@ async function renderTest(result: RarityTestResult | undefined, onAgain?: () => 
 
 describe('RarityTestQuestions', () => {
   it('asks each Word in turn under where the test is', async () => {
-    const { onApply } = await renderTest({ top: 2, known: 1, total: 2 });
+    const { onApply } = await renderTest({ top: 2, changed: true, known: 1, total: 2 });
 
     expect(screen.getByTestId('test-question')).toBeTruthy();
     expect(screen.getByText('1 of 2')).toBeTruthy();
@@ -79,7 +80,7 @@ describe('RarityTestQuestions', () => {
   });
 
   it('takes two taps before the screen redraws as answers to two Words', async () => {
-    const { onApply } = await renderTest({ top: 2, known: 1, total: 2 });
+    const { onApply } = await renderTest({ top: 2, changed: true, known: 1, total: 2 });
     const unknown = screen.getByRole('button', { name: 'Unknown' });
     const known = screen.getByRole('button', { name: 'Known' });
 
@@ -97,7 +98,7 @@ describe('RarityTestQuestions', () => {
 
   it("announces each next Word to VoiceOver with where the test is, in the Edition's words", async () => {
     const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
-    await renderTest({ top: 2, known: 1, total: 2 });
+    await renderTest({ top: 2, changed: true, known: 1, total: 2 });
 
     expect(announce).not.toHaveBeenCalled();
 
@@ -107,7 +108,7 @@ describe('RarityTestQuestions', () => {
   });
 
   it('asks with «Unknown» before «Known», as the board has them', async () => {
-    await renderTest({ top: 2, known: 1, total: 2 });
+    await renderTest({ top: 2, changed: true, known: 1, total: 2 });
 
     expect(screen.getAllByRole('button')).toEqual([
       screen.getByRole('button', { name: 'Unknown' }),
@@ -116,7 +117,7 @@ describe('RarityTestQuestions', () => {
   });
 
   it('applies all the answers on the last one and shows the Rarity Range they set', async () => {
-    const { onApply, onDone } = await renderTest({ top: 2, known: 1, total: 2 });
+    const { onApply, onDone } = await renderTest({ top: 2, changed: true, known: 1, total: 2 });
 
     await fireEvent.press(screen.getByRole('button', { name: 'Unknown' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Known' }));
@@ -126,9 +127,8 @@ describe('RarityTestQuestions', () => {
       { rarity: 3, known: true },
     ]);
     expect(await screen.findByTestId('test-result')).toBeTruthy();
-    expect(screen.getByRole('header', { name: 'Your rarity is up to 2.' })).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Rarity is now from 1 to 2' })).toBeTruthy();
     expect(screen.getByText('1 of 2 words known.')).toBeTruthy();
-    expect(screen.queryByText('Your rarity: up to 2')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Test again' })).toBeNull();
     expect(onDone).not.toHaveBeenCalled();
 
@@ -137,9 +137,17 @@ describe('RarityTestQuestions', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
+  it('says the Rarity Range stays when the test set the one the reader had', async () => {
+    await renderTest({ top: 1, changed: false, known: 0, total: 2 });
+    await fireEvent.press(screen.getByRole('button', { name: 'Unknown' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Unknown' }));
+
+    expect(await screen.findByRole('header', { name: 'Rarity stays only 1' })).toBeTruthy();
+  });
+
   it('offers «DONE» and the test again when its caller takes it again', async () => {
     const onAgain = jest.fn();
-    const { onDone } = await renderTest({ top: 2, known: 1, total: 2 }, onAgain);
+    const { onDone } = await renderTest({ top: 2, changed: true, known: 1, total: 2 }, onAgain);
     await fireEvent.press(screen.getByRole('button', { name: 'Unknown' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Known' }));
 

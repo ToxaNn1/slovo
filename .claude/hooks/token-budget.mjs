@@ -8,8 +8,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-// One limit for every role, local and cloud (owner 14.11): hand off near the soft limit, between tasks.
-const LIMIT = { soft: 180_000, hard: 200_000 };
+// One limit for every role, local and cloud (owner 14.11; raised 18.11): hand off near the soft limit, between tasks.
+const LIMIT = { soft: 200_000, hard: 230_000 };
 const LIMITS = { coordinator: LIMIT, session: LIMIT, subagent: LIMIT };
 const FORK_MAX = 60_000;
 const BIG_FILE = 40_000;
@@ -17,7 +17,7 @@ const NOTICE_STEP = 20_000;
 const COORDINATOR = /coordinator-prompt|coordinator chat|координатор/i;
 
 const RULES = `SLOVO token budget (enforced by .claude/hooks/token-budget.mjs, local and cloud):
-- Context limits: every session, the coordinator included, and every subagent, local and cloud, 180k soft / 200k hard. Hand off near the soft limit, between tasks, never mid-task. At the hard limit every tool except git and writing a handoff file is blocked: hand off, do not push on.
+- Context limits: every session, the coordinator included, and every subagent, local and cloud, 200k soft / 230k hard. Hand off near the soft limit, between tasks, never mid-task. At the hard limit every tool except git and writing a handoff file is blocked: hand off, do not push on.
 - Subagents: a fresh agent with a brief of at most 1.5 KB; never a fork once the context is over 60k. Long results go to a file; return 5-10 lines.
 - Models: code on Opus; Fable only for Core logic, sync, architecture, specs, the version review and proofreading; the coordinator and questions on Opus.
 - Output: read in parts; never print README.md, CONTEXT.md or any file over 40 KB whole; tests and CI logs through tail or grep; a text snapshot before a screenshot.

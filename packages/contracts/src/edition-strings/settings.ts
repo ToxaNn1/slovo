@@ -25,8 +25,6 @@ export const SettingsStringsSchema = z.strictObject({
   soon: TextSchema,
   /** What VoiceOver reads for a row that a later version brings. Takes `{label}`. */
   soonAccessibilityLabel: templateOf('label'),
-  /** The switch that hides the Streak everywhere it is drawn, while «Без лічильників» is switched off. */
-  hideStreak: TextSchema,
   /** «Без лічильників»: the switch that hides every counter while counting goes on, and the explanation under it. */
   noCounters: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The switch that turns Self-check on. */
@@ -67,6 +65,8 @@ export const SettingsStringsSchema = z.strictObject({
     single: templateOf('rarity'),
     /** What a screen reader names one bar of the picker, `{rarity}`, e.g. «Рідкість 3». */
     bar: templateOf('rarity'),
+    /** The line under the picker's bars that says how a range is picked. */
+    hint: TextSchema,
   }),
   /** The heads of the Settings groups, as the board names them. */
   groups: z.strictObject({
@@ -89,7 +89,7 @@ export const SettingsStringsSchema = z.strictObject({
     streakBreak: TextSchema,
     /** The row that opens the Badges screen, e.g. «Відзнаки». */
     badges: TextSchema,
-    /** The row that retakes the questionnaire, e.g. «Пройти опитування ще раз». */
+    /** The row that retakes the questionnaire, e.g. «Анкета: підлаштувати Стрічку». */
     questionnaire: TextSchema,
     /** The row that shows the Feed's gestures hint once more, e.g. «Показати підказку жестів». */
     gesturesHint: TextSchema,
@@ -113,11 +113,12 @@ export const SettingsStringsSchema = z.strictObject({
     widgets: TextSchema,
     textSize: TextSchema,
     dailyGoal: TextSchema,
-    hideStreak: TextSchema,
     selfCheck: TextSchema,
     myMix: TextSchema,
     hidden: TextSchema,
     streakBreak: TextSchema,
+    /** The Break row's line while a Break runs. Takes `{date}`, its last day. */
+    streakBreakRunning: templateOf('date'),
     badges: TextSchema,
     questionnaire: TextSchema,
     gesturesHint: TextSchema,
@@ -237,6 +238,13 @@ export const SettingsStringsSchema = z.strictObject({
     }),
     /** The word under the Level's number in its ring, e.g. «Рівень». */
     levelLabel: TextSchema,
+    /** The word under the XP in the ring before the first Level, e.g. «XP» (ADR 0188). */
+    xpLabel: TextSchema,
+    /**
+     * The line under the Active Days calendar while today waits for its Daily Goal (ADR 0188), by the goal's
+     * plural form: `{seen}` Words Seen today of `{count}`, e.g. «Сьогодні зарахується, коли виконаєш ціль: 3 з 10 слів».
+     */
+    todayPending: pluralOf('seen'),
     /** The XP towards the next Level, e.g. «40 з 120 XP до наступного рівня». */
     toNext: templateOf('progress', 'toNext'),
     /** All XP ever earned, e.g. «Усього XP: 860». */
@@ -326,7 +334,7 @@ export const SettingsStringsSchema = z.strictObject({
       line: TextSchema,
     }),
   }),
-  /** The Break screen: what a Break does, its length and whether one can start today (ADR 0066). */
+  /** The Break screen: what a Break does, its length, whether one can start today and how one ends early (ADR 0066, 0180). */
   streakBreak: z.strictObject({
     title: TextSchema,
     /** What a Break does and how often it can start. */
@@ -338,8 +346,16 @@ export const SettingsStringsSchema = z.strictObject({
     /** What VoiceOver reads for the stepper's − and + buttons. */
     fewerDays: TextSchema,
     moreDays: TextSchema,
+    /** Under the stepper at 7, the longest a Break can be (ADR 0066). */
+    most: TextSchema,
+    /** Under the stepper at the Break days left in the 30 days, fewer than 7 (ADR 0180). */
+    mostLeft: PluralSchema,
+    /** While a Break runs, its days from today to its last day, both included. */
+    daysLeft: PluralSchema,
     /** While a Break runs. Takes `{date}`, its last day, e.g. «20.10». */
     running: templateOf('date'),
+    /** The button that ends the running Break today (ADR 0180). */
+    end: TextSchema,
     /** While the next Break waits. Takes `{date}`, the first day it can start, e.g. «13.11». */
     waiting: templateOf('date'),
   }),
@@ -375,8 +391,8 @@ export const SettingsStringsSchema = z.strictObject({
     editionLine: TextSchema,
     /** The installed build's line. Takes `{version}` and `{build}`. */
     versionLine: templateOf('version', 'build'),
-    /** The OTA update the app runs (ADR 0062). Takes `{id}`. */
-    updateLine: templateOf('id'),
+    /** The same line without a build number of the app's own, under Expo Go. Takes `{version}`. */
+    versionAlone: templateOf('version'),
     /** The Update channel the build listens to, `beta` or `production` (ADR 0167). Takes `{channel}`. */
     channelLine: templateOf('channel'),
     /** What SLOVO is. */

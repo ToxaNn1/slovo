@@ -120,6 +120,15 @@ const seededXp = (amount: number): UserStateFact<'xpLog'>[string] => ({
   amount,
 });
 
+/** 5 XP earned this morning of the test's today: an Active Day while no Daily Goal is in force. */
+const xpToday: UserStateFact<'xpLog'>[string] = {
+  kind: 'xp',
+  date: '2026-10-13',
+  at: '2026-10-13T05:00:00.000Z',
+  source: 'game-round',
+  amount: 5,
+};
+
 async function renderScreen({
   withAccount = false,
   rounds = 0,
@@ -130,7 +139,10 @@ async function renderScreen({
   seed = {},
   shareCard,
   name,
+  goal,
 }: {
+  /** The Daily Goal set before the Profile opens, before the Game rounds' XP. */
+  goal?: number;
   /** The reader's name, set before the Profile opens. */
   name?: string;
   withAccount?: boolean;
@@ -175,6 +187,7 @@ async function renderScreen({
     languagePack,
     remoteSwitches,
   }).composition.opened();
+  if (goal !== undefined) await composition.xpLog.setDailyGoal(goal);
   for (let round = 0; round < rounds; round += 1) {
     composition.xpLog
       .award({ source: 'game-round', mode: 'guess-word', rarity: undefined })
@@ -258,7 +271,6 @@ describe('the Profile', () => {
     expect(within(best).getByText(strings.record)).toBeOnTheScreen();
     expect(best).toHaveAccessibleName('найдовша 0 днів');
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('0');
-    expect(screen.getByText(strings.levelLabel)).toBeOnTheScreen();
     expect(screen.getByTestId('profile-level-name')).toHaveTextContent('Початківець');
     expect(screen.getByTestId('stats-calendar')).toBeOnTheScreen();
     expect(screen.getByTestId('profile-badges-count')).toHaveTextContent(
@@ -333,13 +345,49 @@ describe('the Profile', () => {
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('1');
     expect(screen.getByTestId('profile-level-name')).toHaveTextContent(/^Початківець$/);
     expect(screen.queryByText(/Рівень 1/)).toBeNull();
-    expect(screen.getByTestId('profile-level-progress')).toHaveTextContent('10 / 55 XP');
+    // One goal on the card (ADR 0188): the total XP of the next name's first Level.
+    expect(screen.getByTestId('profile-level-progress')).toHaveTextContent('60 / 306 XP');
     expect(screen.getByTestId('profile-level-left')).toHaveTextContent('Читач: ЩЕ 246 XP');
+    expect(screen.getByText(strings.levelLabel)).toBeOnTheScreen();
+  });
+
+  it('before the first Level holds the XP in the ring and reads the XP left to Level 1, never «Рівень 0»', async () => {
+    await renderScreen({ rounds: 20 });
+
+    expect(screen.getByTestId('profile-level-number')).toHaveTextContent('20');
+    expect(screen.getByText(strings.xpLabel)).toBeOnTheScreen();
+    expect(screen.queryByText(strings.levelLabel)).toBeNull();
+    expect(screen.queryByText(/Рівень 0/)).toBeNull();
+    expect(screen.getByTestId('profile-level-name')).toHaveTextContent(/^Початківець$/);
+    expect(screen.getByTestId('profile-level-progress')).toHaveTextContent('20 / 50 XP');
+    expect(screen.getByTestId('profile-level-left')).toHaveTextContent('ще 30 XP до рівня 1');
+  });
+
+  describe('today waiting for its Daily Goal', () => {
+    it('says today counts once the goal is met, with the Words Seen of the goal', async () => {
+      await renderScreen({ goal: 10, rounds: 5 });
+
+      expect(screen.getByTestId('profile-today-pending')).toHaveTextContent(
+        'Сьогодні зарахується, коли виконаєш ціль: 0 з 10 слів',
+      );
+    });
+
+    it('says nothing without a Daily Goal', async () => {
+      await renderScreen({ rounds: 5 });
+
+      expect(screen.queryByTestId('profile-today-pending')).toBeNull();
+    });
+
+    it('says nothing once today is an Active Day by the XP earned before the goal', async () => {
+      await renderScreen({ seed: { xpLog: { today: xpToday } }, goal: 10 });
+
+      expect(screen.queryByTestId('profile-today-pending')).toBeNull();
+    });
   });
 
   // Owner decision 16 (#1915): N is the XP to the first Level of the next name.
   it.each([
-    [0, 0, 'Читач: ЩЕ 306 XP'],
+    [1, 50, 'Читач: ЩЕ 256 XP'],
     [4, 233, 'Читач: ЩЕ 73 XP'],
     [5, 306, 'Знавець: ЩЕ 492 XP'],
     [19, 1878, 'Словолюб: ЩЕ 120 XP'],

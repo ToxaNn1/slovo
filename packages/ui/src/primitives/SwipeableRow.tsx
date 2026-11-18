@@ -44,8 +44,8 @@ export function rowActionProps(
 /**
  * A row whose actions slide out from the right on a swipe to the left, on
  * `react-native-gesture-handler`. The actions are buttons of their own, named
- * `<testID>-<name>`; the row's content offers them to VoiceOver with
- * `rowActionProps`. Needs a `GestureHandlerRootView` above it.
+ * `<testID>-<name>`, hidden from VoiceOver: they sit behind the row unseen,
+ * and the row's content offers them as its actions with `rowActionProps`. Needs a `GestureHandlerRootView` above it.
  */
 export function SwipeableRow({
   actions,
@@ -72,7 +72,12 @@ export function SwipeableRow({
       enabled={actions.length > 0}
       containerStyle={containerStyle}
       renderRightActions={() => (
-        <View style={styles.actions}>
+        <View
+          // Unseen behind the row; VoiceOver reaches each as an action of the row's content.
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.actions}
+        >
           {actions.map((action) => (
             <Pressable
               key={action.name}

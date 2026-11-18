@@ -519,38 +519,65 @@ describe('GameRound', () => {
     expect(screen.getByRole('button', { name: 'Leave the Game' })).toBeOnTheScreen();
   });
 
-  it('fills a segment per Round passed out of the Round limit, then the current one, then the rest', async () => {
-    const played = (right: boolean): PlayedRound => {
+  it('fills a segment per Round passed out of the Round limit, a miss in its own colour, then the current one, then the rest', async () => {
+    const played = (number: number, right: boolean): PlayedRound => {
       const { round } = answeredPick(first, { form: 'pick', option: right ? CORRECT : 0 });
       if (round.answer === undefined) throw new Error('No answer');
       const entry = { kind: 'word', id: 'w_candid' } as PlayedRound['entry'];
-      return { ...round, answer: round.answer, entry, right };
+      return { ...round, number, answer: round.answer, entry, right };
     };
-    await renderRound(jest.fn(), jest.fn(), {
-      ...first,
-      round: { ...first.round, number: 7 },
-      roundsPassed: 6,
-      played: [
-        played(true),
-        played(false),
-        played(true),
-        played(true),
-        played(false),
-        played(true),
-      ],
-    });
+    const colors = { ...coreTokens.colors.light, accent: '#FF3B2F', wrong: '#140C0A' };
+    await render(
+      <TokensProvider
+        tokens={{ ...coreTokens, colors: { ...coreTokens.colors, light: colors } }}
+        colorScheme="light"
+      >
+        <SafeAreaProvider initialMetrics={metrics}>
+          <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+            <HapticsProvider haptics={haptics}>
+              <InterfaceSoundsProvider sounds={{ play }}>
+                <Game
+                  start={{
+                    ...first,
+                    round: { ...first.round, number: 7 },
+                    roundsPassed: 6,
+                    played: [
+                      played(1, true),
+                      played(2, false),
+                      played(3, true),
+                      played(4, true),
+                      played(5, true),
+                      played(6, true),
+                    ],
+                  }}
+                  onAnswer={jest.fn()}
+                  onLeave={jest.fn()}
+                  onOpenLetter={jest.fn()}
+                />
+              </InterfaceSoundsProvider>
+            </HapticsProvider>
+          </EditionProvider>
+        </SafeAreaProvider>
+      </TokensProvider>,
+    );
     const fillOf = (place: number): unknown => {
       const style: unknown = screen.getByTestId(`game-progress-${String(place)}`).props['style'];
       return (StyleSheet.flatten(style as ViewStyle) as ViewStyle | undefined)?.backgroundColor;
     };
 
     expect(screen.getAllByTestId(/^game-progress-\d+$/)).toHaveLength(15);
-    // 6 of 15 Rounds passed fill 6 segments; the 7th is the current one.
-    expect(fillOf(5)).toBe(fillOf(0));
-    expect(fillOf(6)).not.toBe(fillOf(5));
-    expect(fillOf(7)).not.toBe(fillOf(6));
-    expect(fillOf(7)).not.toBe(fillOf(5));
-    expect(fillOf(14)).toBe(fillOf(7));
+    // 6 of 15 Rounds passed fill 6 segments, the 2nd the miss; the 7th is the current one.
+    expect([0, 1, 2, 3, 4, 5].map(fillOf)).toEqual([
+      colors.accent,
+      colors.wrong,
+      colors.accent,
+      colors.accent,
+      colors.accent,
+      colors.accent,
+    ]);
+    expect(fillOf(6)).toBe(colors.muted);
+    expect(fillOf(7)).toBe(colors.silhouette);
+    expect(fillOf(14)).toBe(colors.silhouette);
   });
 
   it('counts the Rounds passed with no limit in a mode without one, and its own Lives', async () => {
@@ -1198,6 +1225,28 @@ describe('GameRound', () => {
 
       expect(screen.getByTestId('game-answer-banner')).toBeOnTheScreen();
       expect(screen.queryByTestId('game-sheet')).toBeNull();
+    });
+
+    it('keeps the banner of a wrong answer with a button to the next Round', async () => {
+      const shown = answeredPick(first, { form: 'pick', option: 0 });
+      if (shown.status !== 'answered') throw new Error('Not answered');
+      await renderRound(jest.fn(), jest.fn(), { ...shown, banner: true });
+
+      expect(screen.getByTestId('game-answer-banner')).toBeOnTheScreen();
+      expect(screen.getByRole('button', { name: 'Next →' })).toBeOnTheScreen();
+    });
+
+    it('shows no button on the banner of a wrong answer in a Game with a time limit', async () => {
+      const shown = answeredPick(first, { form: 'pick', option: 0 });
+      if (shown.status !== 'answered') throw new Error('Not answered');
+      await renderRound(jest.fn(), jest.fn(), {
+        ...shown,
+        banner: true,
+        timeLimit: 20_000,
+        time: { left: 20_000, endsAt: undefined },
+      });
+      expect(screen.getByTestId('game-answer-banner')).toBeOnTheScreen();
+      expect(screen.queryByRole('button', { name: 'Next →' })).toBeNull();
     });
 
     it('draws the banner’s slab over the whole banner as it is measured, not at a size in percents', async () => {

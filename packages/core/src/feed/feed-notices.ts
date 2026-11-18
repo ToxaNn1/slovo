@@ -308,7 +308,7 @@ export function openFeedNotices({
    */
   const levelMilestone: NoticeRule = async (day) => {
     if (xpLog.state.level === undefined) return undefined;
-    if (on('noCounters') && (await userState.read(noCounters)) === true) return undefined;
+    if ((await userState.read(noCounters)) === true) return undefined;
     const date = dateKeyOf(day);
     const closed = (await userState.read(levelMilestonesClosed)) ?? [];
     const level = LEVEL_MILESTONES.find((milestone) => {

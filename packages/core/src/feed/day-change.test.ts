@@ -32,7 +32,7 @@ async function run({
     content: createMemoryContentPort({ words }),
     edition: testEdition({
       // With the XP log off, opening the app records the day as an Active Day, as before 1.0.
-      isFeatureEnabled: (feature) => feature !== 'xpLog' && feature !== 'eveningNotification',
+      isFeatureEnabled: (feature) => feature !== 'xpLog',
       userSettingDefaults: {
         mix: { kinds: { correction: false } },
         notificationTimes: ['09:00', '19:00'],
@@ -97,7 +97,7 @@ describe('the day change', () => {
 
     expect(activeDaysIn(records)).toEqual(['2026-10-14']);
     expect(app.progress.state.streak).toBe(1);
-    expect(planOf(scheduler)).toHaveLength(30); // Two times up to the 14th day, the farewell last.
+    expect(planOf(scheduler)).toHaveLength(16); // A morning Word up to the 14th day, the farewell last.
     // The Feed opens on today's Word of the Day, which the morning notification carries.
     expect(cardsOf(app)).toEqual([`${wordAt(planOf(scheduler), '2026-10-14T09:00')}@14`]);
   });
@@ -228,18 +228,18 @@ describe('the day change', () => {
       },
     };
     const { app } = await run({ clock: time.clock, scheduler });
-    const evening = wordAt(planOf(scheduler), '2026-10-14T19:00');
-    // The evening notification has passed when the app comes back, so its Word is no longer Reserved.
+    const passed = wordAt(planOf(scheduler), '2026-10-14T09:00');
+    // The morning notification has passed when the app comes back, so its Word is no longer Reserved.
     time.set('2026-10-14T20:00:00+03:00');
     await app.resume();
 
     // The next morning the reader taps it, and the device's scheduler hangs on the new day's plan.
     time.set('2026-10-15T09:05:00+03:00');
     hold = true;
-    const card = await app.openedFromNotification(evening);
+    const card = await app.openedFromNotification(passed);
 
-    expect(card?.entryId).toBe(evening);
-    expect(app.history.list[0]?.entryId).toBe(evening);
+    expect(card?.entryId).toBe(passed);
+    expect(app.history.list[0]?.entryId).toBe(passed);
     // The day's plan goes on after the card is given, and hangs there.
     await vi.waitFor(() => {
       expect(held).toBe(1);

@@ -21,8 +21,8 @@ const at = '2026-10-12T10:00:00.000Z';
 
 /** Game records and an XP log entry kept before. */
 const stored = {
-  'game.best.timed': '2',
-  'game.best.guess-word': '9',
+  'game.bestRight.timed': '2',
+  'game.bestRight.guess-word': '9',
   'game.widgetHintOffered': 'true',
   'xp.finished-before': `{"kind":"xp","date":"2026-10-12","at":"${at}","source":"game-finished","amount":10,"mode":"timed","right":2,"played":4}`,
 };
@@ -111,8 +111,8 @@ describe('the current Game over the Game records kept before', () => {
       time: { left: 0, endsAt: undefined },
       end: { kind: 'time-up', played: 4, right: 3, onTarget: true, newBest: true },
     });
-    expect(records.get('game.best.timed')).toBe('3');
-    expect(records.get('game.best.guess-word')).toBe('9');
+    expect(records.get('game.bestRight.timed')).toBe('3');
+    expect(records.get('game.bestRight.guess-word')).toBe('9');
     expect(records.get('game.widgetHintOffered')).toBe('true');
     expect(records.get('xp.finished-before')).toBe(stored['xp.finished-before']);
     expect(written(records).filter((raw) => raw.includes('"game-finished"'))).toEqual([
@@ -136,6 +136,6 @@ describe('the current Game over the Game records kept before', () => {
       end: { kind: 'lives-over', right: 0, newBest: false },
     });
     expect(current(app).end).not.toHaveProperty('onTarget');
-    expect(records.get('game.best.guess-word')).toBe('9');
+    expect(records.get('game.bestRight.guess-word')).toBe('9');
   });
 });

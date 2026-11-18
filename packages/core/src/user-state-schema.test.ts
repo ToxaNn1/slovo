@@ -113,9 +113,9 @@ describe('the 0.4 user-state records', () => {
 describe('the 0.8.12 Best result records', () => {
   const { gameBest } = userStateRecords;
 
-  it("keeps each mode's Best result under `game.best.` and its mode id, marked to keep the higher of two values in sync", () => {
-    expect(gameBest.record('guess-word').key).toBe('game.best.guess-word');
-    expect(gameBest.record('survival').key).toBe('game.best.survival');
+  it("keeps each mode's Best result under `game.bestRight.` and its mode id, marked to keep the higher of two values in sync", () => {
+    expect(gameBest.record('guess-word').key).toBe('game.bestRight.guess-word');
+    expect(gameBest.record('survival').key).toBe('game.bestRight.survival');
     expect(gameBest.sync).toBe('highest');
   });
 
@@ -192,6 +192,7 @@ describe('the 0.8 sync marks', () => {
 
   it('keeps every device’s Active Days and the higher Best result of each Game Mode', () => {
     expect(syncMarkOf('activeDays.2026-10-18')).toBe('union');
+    expect(syncMarkOf('game.bestRight.guess-word')).toBe('highest');
     expect(syncMarkOf('game.best.guess-word')).toBe('highest');
     expect(syncMarkOf('game.best.timed')).toBe('highest');
   });
@@ -345,6 +346,7 @@ const storedIn1_0: readonly (readonly [
     'questionnaire.later',
     '{"asked":["wordGoalChoice"],"date":"2026-10-30","offerRarityTest":true}',
   ],
+  ['questionnaireAnswers', undefined, 'questionnaire.answers', '{"level":"good","why":"play"}'],
   ['firstWeekFrom', undefined, 'firstWeek.from', '"2026-10-24"'],
   ['contentUpdateCheckedAt', undefined, 'contentUpdate.checkedAt', '"2026-10-30T08:15:00.000Z"'],
   [
@@ -355,7 +357,8 @@ const storedIn1_0: readonly (readonly [
   ],
   ['installId', undefined, 'edition.installId', '"k3f9q2zx7m1c0b8v5n4h"'],
   ['widgetHintShown', undefined, 'game.widgetHintOffered', 'true'],
-  ['gameBest', 'guess-word', 'game.best.guess-word', '11'],
+  ['gameBest', 'guess-word', 'game.bestRight.guess-word', '11'],
+  ['gameBestRoundsPassed', 'guess-word', 'game.best.guess-word', '11'],
   [
     'crosswordProgress',
     undefined,

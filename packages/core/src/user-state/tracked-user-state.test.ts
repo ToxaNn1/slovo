@@ -107,7 +107,7 @@ describe('the tracked user state', () => {
     expect([...(await userState.pendingChanges()).keys()].sort()).toEqual([
       'activeDays.2026-10-18',
       'collections.k_1',
-      'game.best.guess-word',
+      'game.bestRight.guess-word',
     ]);
   });
 
@@ -316,9 +316,9 @@ describe('merging what Sync makes', () => {
       new Map([
         ['settings.theme', '"dark"'],
         ['sync.cursor', '7'],
-        ['game.best.guess-word', '9'],
+        ['game.bestRight.guess-word', '9'],
         [
-          'sync.pending.game.best.guess-word',
+          'sync.pending.game.bestRight.guess-word',
           '{"changedAt":"2026-10-18T09:00:00.000Z","value":"9"}',
         ],
       ]),

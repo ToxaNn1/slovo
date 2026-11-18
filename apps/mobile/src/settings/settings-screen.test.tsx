@@ -7,9 +7,10 @@ import {
   type FeatureSwitch,
   type Haptics,
 } from '@slovo/core';
+import { seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
-import { fireEvent, screen, within } from 'expo-router/testing-library';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
@@ -47,6 +48,19 @@ jest.mock('../device/device-native-modules', () => {
     },
   };
 });
+/** Where the app runs, set by a test: Expo Go is `storeClient`. */
+let mockEnvironment = 'standalone';
+// The app config's version, which jest-expo leaves empty.
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  ExecutionEnvironment: { Bare: 'bare', Standalone: 'standalone', StoreClient: 'storeClient' },
+  default: {
+    expoConfig: { version: '0.9' },
+    get executionEnvironment() {
+      return mockEnvironment;
+    },
+  },
+}));
 jest.mock('expo-application', () => ({
   nativeApplicationVersion: '0.9',
   nativeBuildVersion: '42',
@@ -251,6 +265,20 @@ describe('Settings, as the board', () => {
     );
   });
 
+  it("names the app's own version, without Expo Go's build, under «Про SLOVO» in Expo Go", async () => {
+    mockEnvironment = 'storeClient';
+    try {
+      await renderSettings();
+
+      expect(screen.getByRole('button', { name: 'Про SLOVO' })).toHaveProp(
+        'accessibilityHint',
+        'Версія 0.9',
+      );
+    } finally {
+      mockEnvironment = 'standalone';
+    }
+  });
+
   it('gives every row a line under its title', async () => {
     await renderSettings({
       reduceMotion: true,
@@ -298,6 +326,11 @@ describe('Settings › the text size (ADR 0134)', () => {
 
     const sizeScreen = await screen.findByTestId('text-size-screen');
     expect(within(sizeScreen).getByRole('header', { name: 'Шрифт і розмір' })).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('text-size-list')).queryByRole('header', {
+        name: 'Шрифт і розмір',
+      }),
+    ).toBeNull();
     const sample = within(sizeScreen).getByTestId('text-size-sample');
     expect(within(sample).getByTestId('option-sample-lemma')).toHaveTextContent('Загра́ва');
     expect(within(sample).getByTestId('option-sample-definition')).toHaveTextContent(
@@ -582,7 +615,6 @@ describe('Settings › «Без лічильників»', () => {
     const row = screen.getByRole('switch', { name: 'Без лічильників' });
     expect(row).not.toBeChecked();
     expect(screen.getByHintText(editionStrings.settings.noCounters.explanation)).toBe(row);
-    expect(screen.queryByRole('switch', { name: 'Приховати Серію' })).not.toBeOnTheScreen();
 
     await fireEvent.press(row);
     expect((await settings.read()).noCounters).toBe(true);
@@ -591,11 +623,10 @@ describe('Settings › «Без лічильників»', () => {
     expect((await settings.read()).noCounters).toBe(false);
   });
 
-  it('is «Приховати Серію» of 0.9 while its Feature Switch is off', async () => {
-    const settings = await renderSettings({ noCounters: false });
+  it('stays while the statistics are off', async () => {
+    const settings = await renderSettings({ statistics: false });
 
-    expect(screen.queryByRole('switch', { name: 'Без лічильників' })).not.toBeOnTheScreen();
-    await fireEvent.press(screen.getByRole('switch', { name: 'Приховати Серію' }));
+    await fireEvent.press(screen.getByRole('switch', { name: 'Без лічильників' }));
 
     expect((await settings.read()).noCounters).toBe(true);
   });
@@ -686,5 +717,45 @@ describe('Settings › «Рідкість» (ADR 0156)', () => {
 
     expect(composition.rarityRange.state).toEqual({ from: 1, to: 3 });
     expect(screen.getByTestId('settings-rarity-3')).toBeSelected();
+  });
+});
+
+describe('Settings › «Перерва» row', () => {
+  it('says while a Break runs that it is on and until when, and the offer once it ends', async () => {
+    const userState = opened(
+      await seedUserState(
+        {},
+        { clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' } },
+      ),
+    );
+    const composition = await testShell({ userState }).composition.opened();
+    await renderSettings({ streakBreak: true }, undefined, composition);
+    const row = () => screen.getByTestId('settings-row-streak-break');
+    expect(row()).toHaveTextContent(editionStrings.settings.rowSubtitles.streakBreak, {
+      exact: false,
+    });
+
+    await act(async () => {
+      await composition.streakBreak.start(3);
+    });
+    expect(row()).toHaveTextContent('Триває до 15 жовтня включно', { exact: false });
+
+    await act(async () => {
+      await composition.streakBreak.end();
+    });
+    expect(row()).toHaveTextContent(editionStrings.settings.rowSubtitles.streakBreak, {
+      exact: false,
+    });
+  });
+});
+
+describe('Settings › its header (app pass 91)', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await renderSettings();
+
+    expect(screen.getByRole('header', { name: 'Налаштування' })).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('settings-scroll')).queryByRole('header', { name: 'Налаштування' }),
+    ).toBeNull();
   });
 });

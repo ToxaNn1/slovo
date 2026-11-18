@@ -42,7 +42,6 @@ const everything: Shown = {
   textSizeSteps: true,
   shareCountersSetting: true,
   dataExport: true,
-  countersSetting: 'noCounters',
   learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   xpBar: true,
@@ -53,6 +52,7 @@ const everything: Shown = {
   calendarDayLines: true,
   streakFreezeCard: true,
   badges: true,
+  badgeCounts: true,
   progressShareCards: true,
   crosswordSolvedScreen: true,
   crosswordSolveTime: true,
@@ -75,10 +75,8 @@ const everything: Shown = {
   mood: true,
   curatedCollections: true,
   curatedCollectionFeed: true,
-  swipeMarks: true,
   gesturesHintDemo: true,
   gesturesHintAgain: true,
-  savedSwipesOff: true,
   wordOfTheDayArchive: true,
   rarity: 'range',
   rarityTest: true,
@@ -146,10 +144,6 @@ describe('what the reader is shown', () => {
     [
       'no «Показати підказку жестів» with its switch off',
       { off: ['gesturesHintAgain'], shown: { gesturesHintAgain: false } },
-    ],
-    [
-      'an Entry opened from Saved swiped as anywhere else with `savedSwipesOff` off',
-      { off: ['savedSwipesOff'], shown: { savedSwipesOff: false } },
     ],
     [
       "a Word's card from a Category's screen with the Category's Feed off",
@@ -256,21 +250,21 @@ describe('what the reader is shown', () => {
       },
     ],
     [
-      'the self-rating alone in «Пройти опитування ще раз» with the questionnaire off',
+      'the self-rating alone in «Анкета: підлаштувати Стрічку» with the questionnaire off',
       {
         off: ['questionnaire'],
         shown: { questionnaire: { levelWhy: false, selfRating: true, interests: true } },
       },
     ],
     [
-      'no interests in «Пройти опитування ще раз» with «Що тобі цікаво?» off',
+      'no interests in «Анкета: підлаштувати Стрічку» with «Що тобі цікаво?» off',
       {
         off: ['interestsQuestion'],
         shown: { questionnaire: { levelWhy: true, selfRating: true, interests: false } },
       },
     ],
     [
-      'the interests alone in «Пройти опитування ще раз» with the questionnaire and the Rarity Test off',
+      'the interests alone in «Анкета: підлаштувати Стрічку» with the questionnaire and the Rarity Test off',
       {
         off: ['questionnaire', 'rarityTest'],
         shown: {
@@ -280,7 +274,7 @@ describe('what the reader is shown', () => {
       },
     ],
     [
-      'no «Пройти опитування ще раз» with its three questions off',
+      'no «Анкета: підлаштувати Стрічку» with its three questions off',
       {
         off: ['questionnaire', 'rarityTest', 'interestsQuestion'],
         shown: { rarityTest: false, questionnaire: undefined },
@@ -363,22 +357,8 @@ describe('what the reader is shown', () => {
           levelLadder: false,
           streakFreezeCard: false,
           breakCard: false,
+          badgeCounts: false,
           progressShareCards: false,
-        },
-      },
-    ],
-    [
-      'the Streak and the XP bar of 0.9, with «Приховати Серію» in place of «Без лічильників» while its switch is off',
-      { off: ['noCounters'], shown: { countersSetting: 'hideStreak' } },
-    ],
-    [
-      'the XP bar to a reader who hid the Streak while «Без лічильників» is switched off',
-      {
-        off: ['noCounters'],
-        noCounters: true,
-        shown: {
-          countersSetting: 'hideStreak',
-          stats: { streak: false, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
         },
       },
     ],
@@ -434,13 +414,6 @@ describe('what the reader is shown', () => {
     [
       'no statistics, with statistics off, and still «Без лічильників» for the XP bar',
       { off: ['statistics'], shown: { stats: undefined } },
-    ],
-    [
-      'no statistics and no setting to hide the Streak, with statistics and «Без лічильників» off',
-      {
-        off: ['statistics', 'noCounters'],
-        shown: { stats: undefined, countersSetting: undefined },
-      },
     ],
     // Owner decision 19.10, #478: no count of Known Corrections while the reader sees none.
     [

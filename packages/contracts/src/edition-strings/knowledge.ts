@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { pluralOf, templateOf } from './shared';
 
 /** A text for each Knowledge Mark a swipe or the «⋯» sheet sets: Known, Unknown, and Known on a Correction. */
 const ByMarkSchema = z.strictObject({
@@ -55,27 +54,14 @@ const SwipeStringsSchema = z.strictObject({
   }),
 });
 
-/** The texts of Knowledge Marks: the action row's buttons, the swipes and «⋯» sheet, and the Review label. */
+/** The texts of Knowledge Marks: their names, the swipes and «⋯» sheet, and the Review label. */
 export const KnowledgeStringsSchema = z.strictObject({
   /** The button that marks the Entry Known. */
   known: TextSchema,
-  /** What the Known button means on a Correction, for a screen reader. */
-  correctionKnownHint: TextSchema,
   /** The button that marks the Entry Unknown. */
   unknown: TextSchema,
-  /** The side swipes on the Entry card and its «⋯» sheet, under the `swipeMarks` Feature Switch. */
+  /** The side swipes on the Entry card and its «⋯» sheet. */
   swipe: SwipeStringsSchema,
   /** The label on a card the Feed brought back for Review. */
   review: TextSchema,
-  /** The Community Counters line under the mark buttons, e.g. «Знають 3 з 5 читачів · зберегли 0». */
-  communityCounters: z.strictObject({
-    /** Who know the Entry, by the readers who marked it, `{count}`; takes `{known}`. */
-    known: pluralOf('known'),
-    /** Who saved the Entry. Takes `{saved}`. */
-    saved: templateOf('saved'),
-    /** How the two join, e.g. "{known} · {saved}". */
-    line: templateOf('known', 'saved'),
-    /** How VoiceOver reads the two as one sentence, e.g. "{known}, {saved}". */
-    spokenLine: templateOf('known', 'saved'),
-  }),
 });

@@ -1,15 +1,10 @@
 import { type WordFeedCard } from '@slovo/core/testing';
 import { type CorrectionCardModel, type EntryFeedCard, type IdiomCardModel } from '@slovo/core';
-import {
-  ActionRow,
-  EditionProvider,
-  EntryCard,
-  KnowledgeButtons,
-  PronunciationButton,
-} from '@slovo/ui';
+import { EditionProvider, EntryCard, PronunciationButton } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
+import { useConcealed } from './self-check';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
@@ -70,7 +65,6 @@ const strings = testStrings({
   knowledge: {
     known: 'Known',
     unknown: 'Unknown',
-    correctionKnownHint: 'I already say it right',
     review: 'Review',
   },
 });
@@ -326,71 +320,6 @@ describe('EntryCard', () => {
     } finally {
       Dimensions.set({ window });
     }
-  });
-});
-
-/** The Correction card with its action row and the mark buttons there. */
-function correctionWithMarks({
-  mark,
-  onTap = jest.fn(),
-}: {
-  mark?: 'known' | 'unknown';
-  onTap?: (mark: 'known' | 'unknown') => void;
-} = {}) {
-  return inEdition(
-    <EntryCard
-      card={card}
-      slots={{
-        slot: 'actions',
-        actions: (
-          <ActionRow
-            marks={<KnowledgeButtons entryKind="correction" mark={mark} onTap={onTap} />}
-            favorite={<Text>♡</Text>}
-            collection={<Text>+</Text>}
-            hide={<Text>×</Text>}
-          />
-        ),
-      }}
-    />,
-  );
-}
-
-describe('the mark buttons on a Correction card', () => {
-  it('marks a Correction with no mark Known', async () => {
-    const onTap = jest.fn();
-    await render(correctionWithMarks({ onTap }));
-
-    expect(screen.getByRole('button', { name: 'Unknown', selected: false })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Known', selected: false }));
-
-    expect(onTap).toHaveBeenCalledWith('known');
-  });
-
-  it('says on Known that the reader already says it right', async () => {
-    await render(correctionWithMarks());
-
-    expect(screen.getByHintText('I already say it right')).toBe(
-      screen.getByRole('button', { name: 'Known' }),
-    );
-  });
-
-  it('changes a Known Correction to Unknown', async () => {
-    const onTap = jest.fn();
-    await render(correctionWithMarks({ mark: 'known', onTap }));
-
-    expect(screen.getByRole('button', { name: 'Known', selected: true })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Unknown', selected: false }));
-
-    expect(onTap).toHaveBeenCalledWith('unknown');
-  });
-
-  it('removes the mark when its button is tapped again', async () => {
-    const onTap = jest.fn();
-    await render(correctionWithMarks({ mark: 'unknown', onTap }));
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Unknown', selected: true }));
-
-    expect(onTap).toHaveBeenCalledWith('unknown');
   });
 });
 
@@ -960,19 +889,20 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
   });
 });
 
+/** A corner button that reads whether the card is concealed, as the corner's actions do. */
+function CornerStandIn() {
+  const concealed = useConcealed();
+  return <Pressable accessibilityRole="button" accessibilityLabel="Known" disabled={concealed} />;
+}
+
 describe('the corner of an Entry card', () => {
-  /** Mark buttons stand in the corner, as they read whether the card is concealed. */
-  const cornerMarks = (
-    <KnowledgeButtons entryKind="word" mark={undefined} onTap={() => undefined} />
-  );
+  /** A button stands in the corner, disabled while the card is concealed. */
+  const cornerMarks = <CornerStandIn />;
 
   it('draws the corner in the card, with no action row', async () => {
     await render(
       inEdition(
-        <EntryCard
-          card={wordWithEverything}
-          slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
-        />,
+        <EntryCard card={wordWithEverything} slots={{ corner: cornerMarks, swipe: undefined }} />,
       ),
     );
 
@@ -987,7 +917,7 @@ describe('the corner of an Entry card', () => {
       inEdition(
         <EntryCard
           card={{ ...wordWithEverything, wordOfTheDay: { year: 2026, month: 11, day: 5 } }}
-          slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
+          slots={{ corner: cornerMarks, swipe: undefined }}
         />,
       ),
     );
@@ -1000,9 +930,7 @@ describe('the corner of an Entry card', () => {
 
   it('keeps the Correction kicker whole on one line beside the corner', async () => {
     await render(
-      inEdition(
-        <EntryCard card={card} slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }} />,
-      ),
+      inEdition(<EntryCard card={card} slots={{ corner: cornerMarks, swipe: undefined }} />),
     );
 
     // Squeezed by the corner tiles, the kicker shrinks to fit rather than break inside its word.
@@ -1019,12 +947,7 @@ describe('the corner of an Entry card', () => {
     'gives the corner of the %s card a row of its own over the headline, beside its kicker if any',
     async (kind, entry, kicker) => {
       await render(
-        inEdition(
-          <EntryCard
-            card={entry}
-            slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
-          />,
-        ),
+        inEdition(<EntryCard card={entry} slots={{ corner: cornerMarks, swipe: undefined }} />),
       );
 
       const row = screen.getByTestId(`${kind}-kicker-row`);
@@ -1041,12 +964,7 @@ describe('the corner of an Entry card', () => {
     'sets the corner of a %s card brought back for Review in one row beside its Review label',
     async (kind, entry) => {
       await render(
-        inEdition(
-          <EntryCard
-            card={entry}
-            slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
-          />,
-        ),
+        inEdition(<EntryCard card={entry} slots={{ corner: cornerMarks, swipe: undefined }} />),
       );
 
       const row = screen.getByTestId(`${kind}-review-row`);
@@ -1073,7 +991,7 @@ describe('the corner of an Entry card', () => {
       inEdition(
         <EntryCard
           card={wordWithEverything}
-          slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
+          slots={{ corner: cornerMarks, swipe: undefined }}
           selfCheck
         />,
       ),

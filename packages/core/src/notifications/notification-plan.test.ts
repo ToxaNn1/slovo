@@ -41,7 +41,6 @@ async function run({
   mixCategoryIds = ['test'],
   switchedOff = [],
   politePause = false,
-  evening = false,
   titles = ['{word}'],
   editionId = 'test',
 }: {
@@ -57,8 +56,6 @@ async function run({
   switchedOff?: readonly FeatureSwitch[];
   /** Whether the polite pause is on; off unless a test is about it. */
   politePause?: boolean;
-  /** Whether the 1.0 plan with its evening notification is on; off unless a test is about it. */
-  evening?: boolean;
   /** The Edition's notification title templates. */
   titles?: readonly string[];
   /** The id of the Edition the app runs as. */
@@ -85,9 +82,7 @@ async function run({
     edition: testEdition({
       id: editionId,
       isFeatureEnabled: (feature) =>
-        !switchedOff.includes(feature) &&
-        (politePause || feature !== 'politePause') &&
-        (evening || feature !== 'eveningNotification'),
+        !switchedOff.includes(feature) && (politePause || feature !== 'politePause'),
       userSettingDefaults: {
         mix: { categoryIds: mixCategoryIds },
         notificationTimes: defaultTimes,
@@ -144,14 +139,12 @@ function datesFrom(first: string, count: number): string[] {
 }
 
 describe('the notification plan', () => {
-  it("plans the Edition's default times for 14 days from the next time ahead", async () => {
+  it("plans a Word at the earliest of the Edition's default times for 14 days from the next time ahead", async () => {
     const { scheduler } = await run();
 
     const plan = planOf(scheduler);
-    expect(plan).toHaveLength(42);
-    expect(slotsOf(plan)).toEqual(
-      datesFrom('2026-10-14', 14).flatMap((date) => defaultTimes.map((time) => `${date}T${time}`)),
-    );
+    expect(plan).toHaveLength(14);
+    expect(slotsOf(plan)).toEqual(datesFrom('2026-10-14', 14).map((date) => `${date}T09:00`));
   });
 
   it.each([
@@ -191,12 +184,8 @@ describe('the notification plan', () => {
     const { scheduler } = await run({ records });
 
     const plan = planOf(scheduler);
-    expect(plan).toHaveLength(28);
-    expect(slotsOf(plan).slice(0, 3)).toEqual([
-      '2026-10-14T21:30',
-      '2026-10-15T07:15',
-      '2026-10-15T21:30',
-    ]);
+    expect(plan).toHaveLength(14);
+    expect(slotsOf(plan).slice(0, 2)).toEqual(['2026-10-15T07:15', '2026-10-16T07:15']);
     expect(slotsOf(plan).at(-1)).toBe('2026-10-28T07:15');
   });
 
@@ -204,8 +193,8 @@ describe('the notification plan', () => {
     const { scheduler } = await run({ clock: fakeClock('2026-10-14T10:00:00+03:00').clock });
 
     const slots = slotsOf(planOf(scheduler));
-    expect(slots).toHaveLength(42);
-    expect(slots[0]).toBe('2026-10-14T13:00');
+    expect(slots).toHaveLength(14);
+    expect(slots[0]).toBe('2026-10-15T09:00');
     expect(slots.at(-1)).toBe('2026-10-28T09:00');
   });
 
@@ -214,19 +203,7 @@ describe('the notification plan', () => {
 
     const slots = slotsOf(planOf(scheduler));
     expect(slots[0]).toBe('2026-10-15T09:00');
-    expect(slots.at(-1)).toBe('2026-10-28T19:00');
-  });
-
-  it('never plans more than 64 notifications', async () => {
-    const tenTimes = Array.from({ length: 10 }, (_, index) => `${String(index + 10)}:00`);
-    const records = new Map([['notifications.times', JSON.stringify(tenTimes)]]);
-
-    const { scheduler } = await run({ records });
-
-    const slots = slotsOf(planOf(scheduler));
-    expect(slots).toHaveLength(64);
-    expect(slots[0]).toBe('2026-10-14T10:00');
-    expect(slots.at(-1)).toBe('2026-10-20T13:00');
+    expect(slots.at(-1)).toBe('2026-10-28T09:00');
   });
 
   it('reads the planned Words together, however many it plans', async () => {
@@ -236,7 +213,7 @@ describe('the notification plan', () => {
       const { app, scheduler, reads } = await run({ records });
       const before = reads();
       await app.resume();
-      expect(planOf(scheduler)).toHaveLength(times.length === 1 ? 14 : 64);
+      expect(planOf(scheduler)).toHaveLength(14);
       return reads() - before;
     }
     const tenTimes = Array.from({ length: 10 }, (_, index) => `${String(index + 10)}:00`);
@@ -280,12 +257,12 @@ describe('the notification plan', () => {
     });
 
     const plan = planOf(scheduler);
-    // Too few unseen Words for every time: the earliest times get one each.
-    expect(slotsOf(plan)).toEqual(['2026-10-14T09:00', '2026-10-14T13:00', '2026-10-14T19:00']);
+    // Too few unseen Words for every day: the earliest days get one each.
+    expect(slotsOf(plan)).toEqual(['2026-10-14T09:00', '2026-10-15T09:00', '2026-10-16T09:00']);
     expect(plan.map(wordIdOf).sort()).toEqual(['w_one', 'w_three', 'w_two']);
   });
 
-  it('keeps the notifications still valid when it plans again, and gives a new time a new Word', async () => {
+  it('keeps the notifications still valid when it plans again, and gives the new last day a new Word', async () => {
     const time = fakeClock(start);
     const records = new Map<string, string>();
     const { scheduler: first } = await run({ records, clock: time.clock });
@@ -293,32 +270,25 @@ describe('the notification plan', () => {
 
     // 09:00 passes; the next app run plans again over the same records.
     time.set('2026-10-14T10:00:00+03:00');
-    const { app, scheduler } = await run({ records, clock: time.clock });
+    const { scheduler } = await run({ records, clock: time.clock });
 
     const kept = wordsBySlot(planOf(scheduler));
-    expect(kept.size).toBe(42);
+    expect(kept.size).toBe(14);
     for (const [slot, wordId] of kept) {
       if (slot !== '2026-10-28T09:00') expect([slot, wordId]).toEqual([slot, before.get(slot)]);
     }
     // The new last notification gets a Word no notification had, not the one that passed.
     expect([...before.values()]).not.toContain(kept.get('2026-10-28T09:00'));
-
-    await app.notifications.keepTime('11:00');
-
-    const withNewTime = wordsBySlot(planOf(scheduler));
-    expect(withNewTime.has('2026-10-14T11:00')).toBe(true);
-    expect(new Set(withNewTime.values()).size).toBe(withNewTime.size);
-    for (const [slot, wordId] of kept) expect(withNewTime.get(slot)).toBe(wordId);
   });
 
   it('plans again on every time change and on the sound switch', async () => {
     const { app, scheduler } = await run();
 
-    await app.notifications.keepTime('14:30', '13:00');
-    expect(planOf(scheduler)[1]).toMatchObject({ date: '2026-10-14', time: '14:30' });
+    await app.notifications.keepTime('08:30', '09:00');
+    expect(planOf(scheduler)[0]).toMatchObject({ date: '2026-10-14', time: '08:30' });
 
-    await app.notifications.removeTime('19:00');
-    expect(planOf(scheduler)).toHaveLength(28);
+    await app.notifications.removeTime('08:30');
+    expect(planOf(scheduler)[0]).toMatchObject({ date: '2026-10-14', time: '13:00' });
 
     await app.notifications.setSound(false);
     expect(planOf(scheduler).every(({ sound }) => sound === 'silent')).toBe(true);
@@ -338,7 +308,7 @@ describe('the notification plan', () => {
     const time = fakeClock(start);
     const scheduler = createFakeNotificationScheduler();
     const { app } = await run({ clock: time.clock, scheduler });
-    expect(planOf(scheduler)).toHaveLength(42);
+    expect(planOf(scheduler)).toHaveLength(14);
 
     scheduler.setPermission('denied');
     await app.resume();
@@ -362,7 +332,7 @@ describe('the notification plan', () => {
 
     expect(await app.notifications.askPermission()).toBe('allowed');
 
-    expect(planOf(scheduler)).toHaveLength(42);
+    expect(planOf(scheduler)).toHaveLength(14);
   });
 
   it('reports the permission in the state, and tells the subscribers when it changes', async () => {
@@ -418,7 +388,7 @@ describe('the notification plan', () => {
     const { scheduler } = await run({ words, titles });
 
     const plan = planOf(scheduler);
-    expect(plan).toHaveLength(20);
+    expect(plan).toHaveLength(14);
     const used = plan.map((notification) => templateOf(titleOf(notification)));
     expect(plan.map(titleOf)).toEqual(used.map((template) => `${template}: сло́во`));
     expect(used.every((template) => titles.some((title) => title.startsWith(`${template}:`)))).toBe(
@@ -590,13 +560,13 @@ describe('the Feature Switches of notifications and the Word of the Day', () => 
 
     const { scheduler } = await run({ records });
 
-    expect(planOf(scheduler)).toHaveLength(42);
+    expect(planOf(scheduler)).toHaveLength(14);
   });
 
   it('plans as before with both switches on', async () => {
     const { scheduler } = await run({ switchedOff: [] });
 
-    expect(planOf(scheduler)).toHaveLength(42);
+    expect(planOf(scheduler)).toHaveLength(14);
   });
 
   it("keeps today's Word of the Day for no notification with it switched on, and plans it like any Word with it off", async () => {
@@ -627,9 +597,10 @@ describe('the polite pause', () => {
     const { scheduler } = await run({ politePause: true });
 
     const plan = planOf(scheduler);
-    expect(slotsOf(plan)).toEqual(
-      datesFrom('2026-10-14', 15).flatMap((date) => defaultTimes.map((time) => `${date}T${time}`)),
-    );
+    expect(slotsOf(plan)).toEqual([
+      ...datesFrom('2026-10-14', 15).map((date) => `${date}T09:00`),
+      '2026-10-28T19:00',
+    ]);
     expect(plan.at(-1)).toEqual({
       kind: 'farewell',
       editionId: 'test',
@@ -646,8 +617,8 @@ describe('the polite pause', () => {
     await app.resume();
 
     const words = planOf(scheduler).flatMap((notification) => wordIdOf(notification) ?? []);
-    expect(words).toHaveLength(44);
-    expect(new Set(words).size).toBe(44);
+    expect(words).toHaveLength(15);
+    expect(new Set(words).size).toBe(15);
   });
 
   it('moves the farewell to the 14th day after an open on day 5', async () => {
@@ -658,25 +629,12 @@ describe('the polite pause', () => {
     await app.resume();
 
     const plan = planOf(scheduler);
-    expect(slotsOf(plan)[0]).toBe('2026-10-19T13:00');
+    expect(slotsOf(plan)[0]).toBe('2026-10-20T09:00');
     expect(slotsOf(plan).at(-1)).toBe('2026-11-02T19:00');
     expect(plan.filter(({ kind }) => kind === 'farewell')).toEqual([
       expect.objectContaining({ date: '2026-11-02', time: '19:00', body: farewell }),
     ]);
-    expect(wordsBySlot(plan).get('2026-10-28T19:00')).toBeDefined();
-  });
-
-  it('keeps the farewell as the last of the 64 notifications when the times hold more', async () => {
-    const tenTimes = Array.from({ length: 10 }, (_, index) => `${String(index + 10)}:00`);
-    const records = new Map([['notifications.times', JSON.stringify(tenTimes)]]);
-
-    const { scheduler } = await run({ records, politePause: true });
-
-    const slots = slotsOf(planOf(scheduler));
-    expect(slots).toHaveLength(64);
-    expect(slots.at(-2)).toBe('2026-10-20T12:00');
-    expect(slots.at(-1)).toBe('2026-10-28T19:00');
-    expect(planOf(scheduler).at(-1)?.body).toBe(farewell);
+    expect(wordsBySlot(plan).get('2026-10-28T09:00')).toBeDefined();
   });
 
   it('gives the farewell when the only time is the morning, and no morning Word that day', async () => {
@@ -694,7 +652,7 @@ describe('the polite pause', () => {
     const { scheduler } = await run();
 
     const plan = planOf(scheduler);
-    expect(plan).toHaveLength(42);
+    expect(plan).toHaveLength(14);
     expect(plan.every(({ kind }) => kind === 'word')).toBe(true);
   });
 
@@ -743,12 +701,11 @@ describe('the plan following the Feed', () => {
     const time = fakeClock(start);
     const records = new Map<string, string>();
     const { app, scheduler } = await run({ records, clock: time.clock });
-    const nine = wordAt(planOf(scheduler), '2026-10-15T09:00');
 
-    // An earlier time added ahead of the 09:00 notification, which keeps its Word.
+    // An earlier time added ahead of 09:00 takes the morning Word.
     await app.notifications.keepTime('07:15');
     const plan = planOf(scheduler);
-    expect(wordAt(plan, '2026-10-15T09:00')).toBe(nine);
+    expect(wordsBySlot(plan).has('2026-10-15T09:00')).toBe(false);
 
     time.set('2026-10-15T10:00:00+03:00');
     const { app: later } = await run({ records, clock: time.clock });
@@ -792,14 +749,14 @@ describe('the plan following the Feed', () => {
     const { app, scheduler } = await run({ records, clock: time.clock });
     const before = wordsBySlot(planOf(scheduler));
     const hidden = [
-      wordAt(planOf(scheduler), '2026-10-16T13:00'),
+      wordAt(planOf(scheduler), '2026-10-16T09:00'),
       wordAt(planOf(scheduler), '2026-10-17T09:00'),
     ];
 
     for (const entryId of hidden) await app.hide({ kind: 'entry', entryId });
 
     const after = wordsBySlot(planOf(scheduler));
-    expect(after.size).toBe(42);
+    expect(after.size).toBe(14);
     for (const [slot, wordId] of before) {
       if (hidden.includes(wordId)) expect(after.get(slot)).not.toBe(wordId);
       else expect([slot, after.get(slot)]).toEqual([slot, wordId]);
@@ -827,7 +784,7 @@ describe('the plan following the Feed', () => {
     await app.mix.takeOut('other');
 
     const after = wordsBySlot(planOf(scheduler));
-    expect(after.size).toBe(42);
+    expect(after.size).toBe(14);
     expect([...after.values()].filter(isOther)).toEqual([]);
     for (const [slot, wordId] of before) {
       if (!isOther(wordId)) expect([slot, after.get(slot)]).toEqual([slot, wordId]);
@@ -867,7 +824,7 @@ describe('the plan following the Feed', () => {
     expect(before.get('2026-10-14T09:00')).toBe(seen[0]);
     expect([...before.values()]).toContain(seen[1]);
     const after = wordsBySlot(planOf(scheduler));
-    expect(after.size).toBe(42);
+    expect(after.size).toBe(14);
     for (const [slot, wordId] of before) {
       if (seen.includes(wordId)) expect(after.get(slot)).not.toBe(wordId);
       else expect([slot, after.get(slot)]).toEqual([slot, wordId]);
@@ -913,7 +870,7 @@ describe('the plan following the Feed', () => {
     const cycle = records.get('feed.cycle');
 
     const plan = planOf(scheduler);
-    expect(slotsOf(plan)).toEqual(['2026-10-14T09:00', '2026-10-14T13:00', '2026-10-14T19:00']);
+    expect(slotsOf(plan)).toEqual(['2026-10-14T09:00', '2026-10-15T09:00', '2026-10-16T09:00']);
     expect(wordAt(plan, '2026-10-14T09:00')).toBe(wordsOfTheDayIn(app).get('2026-10-14'));
 
     // The reader reads the last unseen Words in the Feed.
@@ -930,10 +887,10 @@ describe('the Reserved Words', () => {
     const records = new Map<string, string>();
     const { app, scheduler } = await run({ records });
     const before = planOf(scheduler);
-    await app.hide({ kind: 'entry', entryId: wordAt(before, '2026-10-16T13:00') });
+    await app.hide({ kind: 'entry', entryId: wordAt(before, '2026-10-16T09:00') });
     const after = planOf(scheduler);
     // The notification after it keeps its Word, so the plan no longer follows the Cycle's order.
-    expect(wordAt(after, '2026-10-16T19:00')).toBe(wordAt(before, '2026-10-16T19:00'));
+    expect(wordAt(after, '2026-10-17T09:00')).toBe(wordAt(before, '2026-10-17T09:00'));
 
     const { scheduler: next } = await run({ records });
 
@@ -945,10 +902,9 @@ describe('the Reserved Words', () => {
     const records = new Map<string, string>();
     const { app, scheduler } = await run({ records, clock: time.clock });
     const nine = wordAt(planOf(scheduler), '2026-10-15T09:00');
-    const one = wordAt(planOf(scheduler), '2026-10-15T13:00');
 
     await app.notifications.removeTime('09:00');
-    expect(wordAt(planOf(scheduler), '2026-10-15T13:00')).toBe(one);
+    const one = wordAt(planOf(scheduler), '2026-10-15T13:00');
 
     time.set('2026-10-15T14:00:00+03:00');
     const { app: later } = await run({ records, clock: time.clock });
@@ -1039,7 +995,7 @@ const sevenDays = datesFrom('2026-10-07', 7);
 
 describe('the evening notification', () => {
   it('plans the Word of the Day at the earliest time and one evening slot at the latest, never more than 2 a day', async () => {
-    const { scheduler } = await run({ evening: true, records: new Map([goalSet]) });
+    const { scheduler } = await run({ records: new Map([goalSet]) });
 
     const plan = planOf(scheduler);
     const perDay = new Map<string, number>();
@@ -1059,7 +1015,7 @@ describe('the evening notification', () => {
 
   it('plans one notification a day when only one time is set', async () => {
     const records = new Map([goalSet, ['notifications.times', JSON.stringify(['09:00'])]]);
-    const { scheduler } = await run({ evening: true, records });
+    const { scheduler } = await run({ records });
 
     const plan = planOf(scheduler);
     expect(plan.length).toBeGreaterThan(1);
@@ -1068,7 +1024,7 @@ describe('the evening notification', () => {
   });
 
   it('covers 14 days with 5 times set: only the earliest and the latest take a slot', async () => {
-    const { app, scheduler } = await run({ evening: true, records: new Map([goalSet]) });
+    const { app, scheduler } = await run({ records: new Map([goalSet]) });
     await app.notifications.keepTime('11:00');
     await app.notifications.keepTime('15:00');
 
@@ -1080,7 +1036,7 @@ describe('the evening notification', () => {
 
   it('warns of the Streak while it is 7 or more, today is below 5 XP and no freeze is held', async () => {
     const records = new Map([goalSet, ...activeOn(sevenDays), xpOn('2026-10-14', 4)]);
-    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+    const { scheduler } = await run({ records, switchedOff: ['streakFreezes'] });
 
     const plan = planOf(scheduler);
     expect(eveningOf(plan, '2026-10-14')).toBe(streakWarning);
@@ -1095,35 +1051,35 @@ describe('the evening notification', () => {
       frozenOn('2026-10-11'),
       ...activeOn(['2026-10-12', '2026-10-13']),
     ]);
-    const { scheduler } = await run({ evening: true, records });
+    const { scheduler } = await run({ records });
 
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(streakWarning);
   });
 
   it('notifies of the goal not met, not the Streak, while a freeze is held', async () => {
     const records = new Map([goalSet, ...activeOn(sevenDays)]);
-    const { scheduler } = await run({ evening: true, records });
+    const { scheduler } = await run({ records });
 
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
   });
 
   it('notifies of the goal not met, not the Streak, below a Streak of 7', async () => {
     const records = new Map([goalSet, ...activeOn(sevenDays.slice(1))]);
-    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+    const { scheduler } = await run({ records, switchedOff: ['streakFreezes'] });
 
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
   });
 
   it('warns of the Streak, not the goal, while a set goal is not met, however much XP today has', async () => {
     const records = new Map([goalSet, ...activeOn(sevenDays), xpOn('2026-10-14', 50)]);
-    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+    const { scheduler } = await run({ records, switchedOff: ['streakFreezes'] });
 
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(streakWarning);
   });
 
   it('plans no evening notification once today has 5 XP and no goal is set', async () => {
     const records = new Map([...activeOn(sevenDays), xpOn('2026-10-14', 5)]);
-    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+    const { scheduler } = await run({ records, switchedOff: ['streakFreezes'] });
 
     const plan = planOf(scheduler);
     expect(eveningOf(plan, '2026-10-14')).toBeUndefined();
@@ -1138,7 +1094,7 @@ describe('the evening notification', () => {
         JSON.stringify({ seenAt: '2026-10-14T04:00:00.000Z', wordOfTheDay: false }),
       ],
     ]);
-    const { scheduler } = await run({ evening: true, records });
+    const { scheduler } = await run({ records });
 
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
   });
@@ -1150,7 +1106,7 @@ describe('the evening notification', () => {
         JSON.stringify({ seenAt: '2026-10-14T04:00:00.000Z', wordOfTheDay: false }),
       ],
     ]);
-    const { scheduler } = await run({ evening: true, records });
+    const { scheduler } = await run({ records });
 
     const plan = planOf(scheduler);
     expect(plan.filter(({ kind }) => kind === 'evening')).toEqual([]);
@@ -1159,7 +1115,7 @@ describe('the evening notification', () => {
 
   it('plans no evening notification today once the goal is met', async () => {
     const records = new Map([goalSet, ...activeOn(sevenDays), goalMetOn('2026-10-14')]);
-    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+    const { scheduler } = await run({ records, switchedOff: ['streakFreezes'] });
 
     const plan = planOf(scheduler);
     expect(eveningOf(plan, '2026-10-14')).toBeUndefined();
@@ -1169,7 +1125,7 @@ describe('the evening notification', () => {
   });
 
   it('plans no evening notification with the Daily Goal off and no Streak at risk', async () => {
-    const { scheduler } = await run({ evening: true, switchedOff: ['dailyGoal'] });
+    const { scheduler } = await run({ switchedOff: ['dailyGoal'] });
 
     const plan = planOf(scheduler);
     expect(plan.filter(({ kind }) => kind === 'evening')).toEqual([]);
@@ -1178,7 +1134,7 @@ describe('the evening notification', () => {
 
   it('plans no evening notification on the days of a Break', async () => {
     const records = new Map([...activeOn(sevenDays), breakFrom('2026-10-14', 3)]);
-    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+    const { scheduler } = await run({ records, switchedOff: ['streakFreezes'] });
 
     const plan = planOf(scheduler);
     for (const date of datesFrom('2026-10-14', 3)) expect(eveningOf(plan, date)).toBeUndefined();
@@ -1194,7 +1150,7 @@ describe('the evening notification', () => {
         JSON.stringify({ seenAt: '2026-10-14T04:00:00.000Z', wordOfTheDay: false }),
       ],
     ]);
-    const { app, scheduler } = await run({ evening: true, records });
+    const { app, scheduler } = await run({ records });
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
 
     await app.xpLog.setDailyGoal(1);
@@ -1226,7 +1182,7 @@ describe('the evening notification', () => {
         JSON.stringify({ seenAt: '2026-10-14T04:00:00.000Z', wordOfTheDay: false }),
       ],
     ]);
-    const { app } = await run({ evening: true, records, scheduler });
+    const { app } = await run({ records, scheduler });
 
     failing = true;
     await app.xpLog.setDailyGoal(1);
@@ -1246,7 +1202,7 @@ describe('the evening notification', () => {
       xpOn('2026-10-14', 4),
       ['settings.hideStreak', 'true'] as [string, string],
     ]);
-    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+    const { scheduler } = await run({ records, switchedOff: ['streakFreezes'] });
 
     const plan = planOf(scheduler);
     expect(plan.filter(({ kind }) => kind === 'evening')).toEqual([]);
@@ -1256,7 +1212,7 @@ describe('the evening notification', () => {
 
   it('plans only the Word of the Day with one Notification time', async () => {
     const records = new Map([['notifications.times', JSON.stringify(['09:00'])]]);
-    const { scheduler } = await run({ evening: true, records });
+    const { scheduler } = await run({ records });
 
     const plan = planOf(scheduler);
     expect(plan.every(({ kind, time }) => kind === 'word' && time === '09:00')).toBe(true);
@@ -1265,7 +1221,7 @@ describe('the evening notification', () => {
 
 describe('the farewell of the 1.0 plan', () => {
   it('fires once, at the last time of the 14th day, which brings no more than 2', async () => {
-    const { scheduler } = await run({ evening: true, politePause: true });
+    const { scheduler } = await run({ politePause: true });
 
     const plan = planOf(scheduler);
     expect(plan.filter(({ kind }) => kind === 'farewell')).toEqual([
@@ -1280,7 +1236,6 @@ describe('the farewell of the 1.0 plan', () => {
 
   it('ends the pause in silence with the farewell switched off', async () => {
     const { scheduler } = await run({
-      evening: true,
       politePause: true,
       switchedOff: ['notificationFarewell'],
     });
@@ -1361,9 +1316,9 @@ describe('the plan made again', () => {
   it('gives a new time the Words after the furthest planned, not the Word of a notification passed unopened', async () => {
     const time = fakeClock(start);
     const { app, scheduler } = await run({ clock: time.clock });
-    const passed = wordAt(planOf(scheduler), '2026-10-14T13:00');
+    const passed = wordAt(planOf(scheduler), '2026-10-14T09:00');
 
-    time.set('2026-10-14T13:30:00+03:00');
+    time.set('2026-10-14T09:30:00+03:00');
     await app.notifications.keepTime('07:00');
 
     const plan = planOf(scheduler);

@@ -37,7 +37,7 @@ import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { swipeEdgeLayout, swipeMarkLayout, swipeStampLayout, typeStyle, wedges } from '../tokens';
 
-/** The side swipes of an Entry card, under the `swipeMarks` Feature Switch (ADR 0077). */
+/** The side swipes of an Entry card (ADR 0077). */
 export interface EntrySwipe {
   /** The Knowledge Mark the card shows; none on an Entry with no mark. */
   readonly mark: KnowledgeMark | undefined;

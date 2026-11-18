@@ -33,7 +33,7 @@ export function useShowGesturesHintAgain(): () => Promise<void> {
 
 /**
  * The Feed's gestures hint sheet, «ГОРТАЙ ПАЛЬЦЕМ», shown once on this
- * device while the side swipes mark an Entry (`on`, `Shown.swipeMarks`). It is
+ * device while the side swipes mark an Entry (`on`, the Knowledge switch in effect). It is
  * due until it has been shown once, and it counts as shown only when
  * `GesturesHintSheet` is drawn (`markShown`), so a launch that ends in
  * loading, an error or an empty Feed leaves it for the next one. It goes once

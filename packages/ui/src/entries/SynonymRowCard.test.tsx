@@ -1,5 +1,5 @@
 import type { SynonymRowCardModel, SynonymRowFeedCard } from '@slovo/core';
-import { ActionRow, EditionProvider, EntryCard, KnowledgeButtons } from '@slovo/ui';
+import { EditionProvider, EntryCard } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { Dimensions } from 'react-native';
@@ -245,24 +245,8 @@ describe('the tabbed Synonym Row card (board XEntry2 e8)', () => {
 });
 
 describe('Self-check on a Synonym Row card', () => {
-  it('shows only the dominant, its marks inactive, until the reader reveals it', async () => {
-    const onMark = jest.fn();
-    await render(
-      inEdition(
-        <EntryCard
-          card={card}
-          selfCheck
-          slots={{
-            slot: 'actions',
-            actions: (
-              <ActionRow
-                marks={<KnowledgeButtons entryKind="word" mark={undefined} onTap={onMark} />}
-              />
-            ),
-          }}
-        />,
-      ),
-    );
+  it('shows only the dominant until the reader reveals it', async () => {
+    await render(inEdition(<EntryCard card={card} selfCheck />));
 
     expect(screen.getByRole('header', { name: 'walk, synonym row' })).toBeTruthy();
     expect(screen.getByTestId('synonym-row-dominant')).toHaveTextContent('Wálk');
@@ -274,16 +258,12 @@ describe('Self-check on a Synonym Row card', () => {
     ]) {
       expect(screen.queryByTestId(concealed)).toBeNull();
     }
-    await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: true }));
-    expect(onMark).not.toHaveBeenCalled();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
 
     expect(screen.getByTestId('synonym-row-meaning')).toHaveTextContent('To move on foot.');
     expect(screen.getAllByTestId(/^synonym-row-member-\d+$/)).toHaveLength(3);
     expect(screen.queryByRole('button', { name: 'Show the meaning' })).toBeNull();
-    await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: false }));
-    expect(onMark).toHaveBeenCalledWith('known');
   });
 });
 
