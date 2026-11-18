@@ -135,7 +135,7 @@
     "fastReveal": "on",
     "dashboard": "on",
     "mood": "on",
-    "curatedCollections": "off",
+    "curatedCollections": "on",
     "swipeMarks": "on",
     "gesturesHintDemo": "on",
     "gesturesHintAgain": "on",
@@ -326,6 +326,7 @@
     }
   ],
   "categoriesRequiringHistory": ["repressed-words", "chameleon-words"],
+  "curatedCollectionPictogram": "language-speech",
   "originLanguages": [
     {
       "code": "la",

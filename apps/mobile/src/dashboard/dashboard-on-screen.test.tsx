@@ -517,12 +517,12 @@ describe('the Categories rail', () => {
 });
 
 describe('the Curated Collections rail', () => {
-  it('reads «Добірки» with the count of cards, a tile with its name, and a tap opens it', async () => {
+  it('reads «SLOVO пропонує» with the count of collections, a tile with its name, and a tap opens it', async () => {
     await open(true);
     await renderApp();
 
     const title = screen.getByTestId('dashboard-curated-collections-title');
-    expect(within(title).getByText('Добірки')).toBeTruthy();
+    expect(within(title).getByText('SLOVO пропонує')).toBeTruthy();
     expect(within(title).getByText('1')).toBeTruthy();
     const tile = screen.getByTestId('dashboard-curated-collection-cc_lahidni');
     expect(within(tile).getByText('Лагідні слова')).toBeTruthy();

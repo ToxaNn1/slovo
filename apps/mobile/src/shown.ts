@@ -162,7 +162,7 @@ export interface Shown {
   readonly categoryFeed: boolean;
   /** The Mood check-in block of the Dashboard, «Як настрій?» (ADR 0076). */
   readonly mood: boolean;
-  /** The Curated Collections rail of the Dashboard, «Добірки» (ADR 0076). */
+  /** The Curated Collections rail of the Dashboard, «SLOVO пропонує» (ADR 0076, 0178). */
   readonly curatedCollections: boolean;
   /** Side swipes mark an Entry Known or Unknown; the card corner holds the heart, Collections and «⋯» in place of the action row (ADR 0077). */
   readonly swipeMarks: boolean;

@@ -151,7 +151,13 @@ function DashboardBlocks() {
           />
         );
       case 'curatedCollections':
-        return <CuratedCollectionsRail cards={block.cards} onOpen={openCuratedCollection} />;
+        return (
+          <CuratedCollectionsRail
+            cards={block.cards}
+            published={block.published}
+            onOpen={openCuratedCollection}
+          />
+        );
     }
   }
 }

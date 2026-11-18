@@ -55,7 +55,7 @@ export const DashboardStringsSchema = z.strictObject({
     /** Each Correction Type's line under its title on its screen, «Слова, що прослизають у мову непомітно.». */
     descriptions: z.record(CorrectionTypeSchema, TextSchema),
   }),
-  /** The title over the Curated Collections rail, «Добірки» (ADR 0081). */
+  /** The title over the Curated Collections rail, «SLOVO пропонує» (ADR 0081, 0178). */
   curatedCollectionsTitle: TextSchema,
   /** A Curated Collection's count of Entries on its tile, «{count} слів». */
   curatedCollectionCount: PluralSchema,
