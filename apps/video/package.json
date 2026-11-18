@@ -9,12 +9,12 @@
     "render": "remotion render src/index.ts"
   },
   "dependencies": {
-    "@remotion/cli": "4.0.541",
-    "@remotion/fonts": "4.0.541",
+    "@remotion/cli": "4.0.543",
+    "@remotion/fonts": "4.0.543",
     "@slovo/contracts": "workspace:*",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "remotion": "4.0.541"
+    "remotion": "4.0.543"
   },
   "devDependencies": {
     "@types/react": "~19.3.0",
