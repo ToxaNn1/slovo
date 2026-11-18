@@ -492,7 +492,7 @@
     "level": [
       {
         "id": "only-starting",
-        "label": "Тільки починаю",
+        "label": "Поки небагато",
         "rarityCeiling": 2
       },
       {
@@ -512,7 +512,7 @@
       },
       {
         "id": "dont-know",
-        "label": "Не знаю",
+        "label": "Перевір мене",
         "rarityTest": true
       }
     ],

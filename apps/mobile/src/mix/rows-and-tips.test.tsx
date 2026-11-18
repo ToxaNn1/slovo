@@ -183,7 +183,7 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
   it('have a Mix kind weight under their switch that sets how often they come in the Feed', async () => {
     await renderInApp(<MixChoices />);
     const normal = screen.getByTestId(`mix-${feature}-weight-normal`);
-    expect(normal).toHaveAccessibleName(`${title} у Стрічці: Звичайно`);
+    expect(normal).toHaveAccessibleName(`${title} у Стрічці: Помірно`);
     expect(normal).toBeSelected();
 
     await fireEvent.press(screen.getByTestId(`mix-${feature}-weight-more`));
