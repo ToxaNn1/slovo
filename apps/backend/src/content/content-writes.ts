@@ -829,7 +829,7 @@ export function createContentWrites({
 
   /**
    * The records of a kind the content editor lists: by a text query in their
-   * label, retired ones on request, one page of `CONTENT_PAGE_SIZE` in label
+   * label and a Category (only Words and Corrections have one), retired ones on request, one page of `CONTENT_PAGE_SIZE` in label
    * then id order, with the count of every match.
    */
   async function list(
@@ -838,10 +838,12 @@ export function createContentWrites({
     {
       query = '',
       retired = false,
+      categoryId,
       page = 1,
     }: {
       query?: string | undefined;
       retired?: boolean | undefined;
+      categoryId?: string | undefined;
       page?: number | undefined;
     } = {},
   ) {
@@ -853,14 +855,18 @@ export function createContentWrites({
       const records = (await recordsAt(tx, editionId, contentVersion))[kind]
         .map((row) => {
           const fields: Readonly<Record<string, unknown>> = row.fields;
+          const category = fields['categoryId'];
           return {
             id: row.id,
+            kind,
             label: labelOf(kind, fields),
+            ...(typeof category === 'string' ? { categoryId: category } : {}),
             retired: fields['retired'] === true,
             recordVersion: row.recordVersion,
           };
         })
         .filter((row) => retired || !row.retired)
+        .filter((row) => categoryId === undefined || row.categoryId === categoryId)
         .filter((row) => needle === '' || row.label.toLocaleLowerCase().includes(needle))
         .sort((a, b) => a.label.localeCompare(b.label) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
       const start = (page - 1) * CONTENT_PAGE_SIZE;
