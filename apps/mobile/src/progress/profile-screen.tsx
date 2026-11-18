@@ -70,7 +70,7 @@ export function ProfileScreen() {
 function ProfileBlocks() {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { voice } = useEdition();
+  const { voice, count } = useEdition();
   const router = useRouter();
   const toast = useUndoToast();
   const composition = useComposition();
@@ -137,37 +137,7 @@ function ProfileBlocks() {
         </View>
         {shown.xpBar && level !== undefined && (
           <View style={styles.card}>
-            <LevelCard
-              testID="profile-level"
-              level={level.level}
-              label={strings.levelLabel}
-              name={level.name}
-              progress={level.progress}
-              toNext={level.toNext}
-              lines={[
-                {
-                  testID: 'profile-level-progress',
-                  text: fill(strings.levelProgress, {
-                    progress: String(level.progress),
-                    toNext: String(level.toNext),
-                  }),
-                },
-                {
-                  testID: 'profile-level-left',
-                  // The XP to the next name's first Level; under the last name, to the next Level.
-                  text:
-                    level.next === undefined
-                      ? fill(strings.levelLeft, {
-                          left: String(level.toNext - level.progress),
-                          next: String(level.level + 1),
-                        })
-                      : fill(strings.ladder.toNext, {
-                          name: level.next.name,
-                          xp: String(level.next.xp),
-                        }),
-                },
-              ]}
-            />
+            <LevelCard testID="profile-level" {...levelCardOf(level, xp.total)} />
           </View>
         )}
         {shown.xpBar && level === undefined && (
@@ -191,6 +161,16 @@ function ProfileBlocks() {
             todayWord={todayWord}
           />
         </View>
+        {xp.dailyGoal !== null &&
+          !xp.dailyGoal.met &&
+          today?.state === 'today' &&
+          !today.active && (
+            <Text {...voice} testID="profile-today-pending" style={[textStyle, styles.pending]}>
+              {fill(count(strings.todayPending, xp.dailyGoal.goal), {
+                seen: String(xp.dailyGoal.seen),
+              })}
+            </Text>
+          )}
         <View style={styles.badges}>
           <View style={styles.badgesHead}>
             <Text
@@ -453,6 +433,58 @@ function SaveProgressOffer({ opening, onSave }: { opening: Opening<Account>; onS
   );
 }
 
+/**
+ * The Level card's one goal (ADR 0188). From Level 1 it is the next name's
+ * first Level, in total XP, as the board; under the last name, the next
+ * Level. Before Level 1 the ring holds the XP and measures to Level 1.
+ */
+function levelCardOf(level: LevelState, total: number) {
+  const { next } = level;
+  if (level.level > 0 && next !== undefined) {
+    const mark = total + next.xp;
+    return {
+      number: level.level,
+      label: strings.levelLabel,
+      name: level.name,
+      progress: total,
+      toNext: mark,
+      lines: [
+        {
+          testID: 'profile-level-progress',
+          text: fill(strings.levelProgress, { progress: String(total), toNext: String(mark) }),
+        },
+        {
+          testID: 'profile-level-left',
+          text: fill(strings.ladder.toNext, { name: next.name, xp: String(next.xp) }),
+        },
+      ],
+    };
+  }
+  return {
+    number: level.level > 0 ? level.level : total,
+    label: level.level > 0 ? strings.levelLabel : strings.xpLabel,
+    name: level.name,
+    progress: level.progress,
+    toNext: level.toNext,
+    lines: [
+      {
+        testID: 'profile-level-progress',
+        text: fill(strings.levelProgress, {
+          progress: String(level.progress),
+          toNext: String(level.toNext),
+        }),
+      },
+      {
+        testID: 'profile-level-left',
+        text: fill(strings.levelLeft, {
+          left: String(level.toNext - level.progress),
+          next: String(level.level + 1),
+        }),
+      },
+    ],
+  };
+}
+
 /** The row of the Level names under the Level card, captioned by range of Levels (owner decisions 12, 16). */
 function ProfileLadder({ level }: { level: LevelState }) {
   const { ladder } = strings;
@@ -514,6 +546,7 @@ const styles = StyleSheet.create({
     borderRadius: profileScreen.record.radius,
   },
   calendar: { paddingTop: profileScreen.calendarTop },
+  pending: { paddingTop: space[3] },
   badges: {
     gap: profileScreen.badgesGap,
     paddingTop: profileScreen.badgesTop,

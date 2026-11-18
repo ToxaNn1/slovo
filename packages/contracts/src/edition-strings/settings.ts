@@ -236,6 +236,13 @@ export const SettingsStringsSchema = z.strictObject({
     }),
     /** The word under the Level's number in its ring, e.g. «Рівень». */
     levelLabel: TextSchema,
+    /** The word under the XP in the ring before the first Level, e.g. «XP» (ADR 0188). */
+    xpLabel: TextSchema,
+    /**
+     * The line under the Active Days calendar while today waits for its Daily Goal (ADR 0188), by the goal's
+     * plural form: `{seen}` Words Seen today of `{count}`, e.g. «Сьогодні зарахується, коли виконаєш ціль: 3 з 10 слів».
+     */
+    todayPending: pluralOf('seen'),
     /** The XP towards the next Level, e.g. «40 з 120 XP до наступного рівня». */
     toNext: templateOf('progress', 'toNext'),
     /** All XP ever earned, e.g. «Усього XP: 860». */

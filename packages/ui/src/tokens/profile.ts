@@ -64,7 +64,7 @@ export const profileScreen = {
   record: { padX: 16, padY: 8, radius: 14, edge: 4, gap: 2 },
 } as const;
 
-/** The Profile's Level card, from the design: an ink card with a red wedge and the XP ring. */
+/** The Profile's Level card, from the design: a tile card with a red wedge and the XP ring (ADR 0188). */
 /** The Profile's header (board 11, t8): the avatar, the reader's name and the Level. */
 export const profileHeader = {
   padding: 16,
