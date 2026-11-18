@@ -59,7 +59,10 @@ const OPEN = 1;
         <div class="faq-body flex flex-col items-start gap-2.5 pr-[72px] pb-[22px] pl-5">
           <p class="m-0 text-[17px] leading-[1.55] text-pretty">{item.a}</p>
           {item.mail !== undefined && (
-            <a href={`mailto:${item.mail}`} class="text-[17px] font-bold no-underline hover:underline focus-visible:underline">
+            <a
+              href={`mailto:${item.mail}`}
+              class="text-[17px] font-bold no-underline hover:underline focus-visible:underline"
+            >
               {item.mail}
             </a>
           )}
