@@ -1,3 +1,7 @@
+---
+summary: The site stays in the monorepo: CI tests only the app or the site when a pull request touches only one, dependency-cruiser keeps React Native and the UI components out of the site, and the site pins its Astro stack, updated by its own Dependabot group.
+---
+
 # The site stays in the monorepo, kept apart from the app
 
 The site, `apps/site` (ADR 0071), takes the Edition's tokens, Mascot, legal pages and Слово дня from the same repository as the app, through `@slovo/language-pack`, `@slovo/contracts` and `@slovo/ui/tokens`. A repository of its own would have to copy them or publish them as packages, and the site would drift from the app the day the design changed, the problem the Astro site was built to end. The price of sharing one repository is coupling: a change to the site waited for the app's Jest shards, the site could import a React Native component from `packages/ui` and break its static build, and a Dependabot or Expo update could move the site's Astro stack along with the app's.

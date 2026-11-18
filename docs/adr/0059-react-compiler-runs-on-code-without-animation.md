@@ -1,3 +1,7 @@
+---
+summary: The React Compiler is on; animated modules opt out with `'use no memo'`.
+---
+
 # The React Compiler runs on code without animation
 
 The app and `@slovo/ui` memoise by hand with `useMemo`, `useCallback` and `React.memo`. The React Compiler does this at build time, and Expo SDK 57 supports it. It assumes the rules of React: values used in render are not mutated after render, and refs are not read during render. Reanimated shared values and gesture callbacks bend those rules by design (a shared value is written outside render, a gesture handler closes over mutable state), so the animated modules are where the compiler can change behaviour.

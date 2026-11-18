@@ -1,3 +1,7 @@
+---
+summary: The Weekly Recap and Yesterday share one Feed page, the week first; Yesterday is a quiz of three meanings (Distractors as in 0101, seeded by the day and the Word), right sets Known and wrong Unknown; «Готово» folds the Weekly Recap for its week, «Повернути» once from a toast; Share stays an icon; Monday kept; amends 0054
+---
+
 # The Weekly Recap and Yesterday share one Feed page; Yesterday is a quiz; «Готово» folds the week
 
 ADR 0054 gives every Feed Notice its own Feed page, makes Yesterday a Self-check card with «Знаю» and «Не знаю», and puts «Поділитися» under the Weekly Recap's numbers. The owner chose the board XFeed f5 (spec #1842) over those three points. This ADR amends ADR 0054 and keeps the rest of it.

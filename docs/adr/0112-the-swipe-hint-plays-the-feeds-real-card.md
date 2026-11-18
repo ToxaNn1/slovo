@@ -1,3 +1,7 @@
+---
+summary: Behind `gesturesHintDemo`, while «ГОРТАЙ ПАЛЬЦЕМ» is open the Feed's real card plays board XSwipeV's 8.4 s loop: right with «✓ ЗНАЮ», left with «НЕ ЗНАЮ», up with the next card, a finger dragging each swipe and each row lit in turn; nothing is marked; still under Reduce Motion or with the switch off.
+---
+
 # The swipe hint plays the Feed's real card
 
 The gestures hint «ГОРТАЙ ПАЛЬЦЕМ» (ADR 0092) opens once on the Feed with `swipeMarks` on. In the app it drew a finger over an empty spot and lit its three rows in turn, 2.8 s each, while the card under it stood still. The board (`docs/design/export/XSwipeV.dc.html`, and the owner's recording of it) plays the Feed's own card instead: while the sheet is open, the card on screen swings right with its «✓ ЗНАЮ» edge label sliding in and comes back, swings left with «НЕ ЗНАЮ» and comes back, then lifts up together with the next card and comes back, in one 8.4 s loop. A finger in the board's cream circle drags each swipe, and each row of the sheet lights red while its gesture plays.

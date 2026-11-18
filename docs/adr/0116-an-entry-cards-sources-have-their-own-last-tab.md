@@ -1,3 +1,7 @@
+---
+summary: Behind `sourceTab` every tabbed Entry card ends with a tab «Джерело» naming its sources one to a line, no «Джерело:» prefix; the source line leaves the other tabs; `CardTabs` `sources`, `useShown().sourceTab`; amends 0091, 0114, 0119
+---
+
 # An Entry card's sources have their own last tab «Джерело»
 
 ADR 0091 put a tabbed Entry card's sources inside its other tabs: a Word's in «Історія», a Correction's in «Чому», an Idiom's in «Суть», a Tip's in «Правило» (ADR 0119), a Synonym Row's on its last page (ADR 0114), each as a line «Джерело: …». On the phone check of 13.11.2026 the owner asked for the sources in a tab of their own, the last one, on every kind.

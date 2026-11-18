@@ -1,3 +1,7 @@
+---
+summary: «Повідомити про помилку» sends an anonymous report to `POST /v1/reports`; the owner reads and resolves them in the Content queue of the Owner admin, or with scripts from a shell (amended by 0075, 0088, 0159).
+---
+
 # Mistake Reports
 
 Until 0.8.14 a reader who spotted a wrong Stress or a typo in a Definition couldn't say so, and the mistake stayed until the owner happened to find it. Spec #886 adds the Mistake Report («Повідомлення про помилку»): a reader reports a mistake from an Entry's card, anonymously, and the owner works through the reports with a backend script. The decisions come from the owner's grilling of 2026-10-25 and 2026-10-26.

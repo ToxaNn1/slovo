@@ -1,3 +1,7 @@
+---
+summary: Superseded by 0095 and 0090.
+---
+
 # Quotes are verified in CI, and every kind goroh carries is sourced by a command
 
 **Superseded by ADR 0095** (with ADR 0090). The quote check is a background job (ADR 0090, 0095); the matching rule and the `pnpm source:*` drafters are in ADR 0095; ADR 0094 still limits a quotation to one sentence. Kept for history.

@@ -1,3 +1,7 @@
+---
+summary: Pronunciation plays the Word's pre-generated Recording in the Narrator Voice the reader chooses in Settings › «Голос диктора» behind `narratorVoice` (a tap on a voice reads the sample Word in it, UA «заграва», default Оксана); the device voice reads a Word without one; silent with «Звуки» off and in iOS silent mode. Where the Recordings live and how they are made: 0099. Amended by 0169: the job stops for an Edition after two runs in a row whose generator made no file, and tells the owner.
+---
+
 # Pronunciation plays Recordings of Narrator Voices, the device voice as fallback
 
 Pronunciation was the device's voice for the Edition's language, which on many devices is missing or poor for Ukrainian. From spec #1633 Pronunciation plays a pre-generated Recording of a Word in the chosen Narrator Voice, and the device's voice reads a Word without one.

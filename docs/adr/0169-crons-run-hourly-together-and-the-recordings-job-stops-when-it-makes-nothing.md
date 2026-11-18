@@ -1,3 +1,7 @@
+---
+summary: Every Cron service runs hourly at `0 * * * *`, `alerts` included, so Neon wakes once an hour (≈ $11 → $2–3 a month); the API 5xx alert reads the last hour; the Recordings job tells the owner and stops for an Edition after two runs in a row whose generator made no file, until its content version or the Railway deployment changes, counted in `recording_stalls` (amends 0083 and 0088). Amended by 0172: a run whose generator hits its time limit is stuck too, though it made files.
+---
+
 # The Cron services run hourly at :00 together, and the Recordings job stops when it makes nothing
 
 Owner decision of 2026-11-17, after the cost audit (items 2 and 3). This ADR amends ADR 0088 (the alerts cadence and the API 5xx window) and ADR 0083 (the Recordings job).

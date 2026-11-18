@@ -1,3 +1,7 @@
+---
+summary: Pull requests test the affected packages; main tests everything: the `changes` job runs `scripts/ci-affected-parts.mjs`, which takes `turbo ls --affected` from the base (dependents count), and each test part (Core, UI shards, other packages by name, site, admin build, app Vitest and shards, Backend) passes without running when its package is not affected; docs-only runs none; Edition legal pages and `pages.yml` count for the site, `maestro.yml` and `ota-update.yml` for the app; any other change outside `apps/`, `packages/`, `tools/` (Edition content, root configs, the lockfile, workflows, scripts), a push to `main` and a failed detection run every part (amends 0086).
+---
+
 # Pull requests test the affected packages; main tests everything
 
 ADR 0086 let a pull request skip the app's tests when it changed only the site, and the site's when it changed only the app. Every other pull request still ran every test part: a change to `packages/core` ran the site's tests and the admin build, and a change to the admin ran the Core, the UI shards and the app's Jest shards. The parts cost CI minutes and, more to the point, places in the runner queue: a pull request waited behind another's parts that could not fail.

@@ -1,3 +1,7 @@
+---
+summary: The backend keeps each Edition's records (id, fields, record version) in memory at the content version it last saw: a write, the content report and the editor's list read them whole only when the version changed, a committed write keeps them with its record in place, a save still reads its own record (stale check, «needs new recording»); every change of fields raises the content version; the open-batch list and the alert count records in SQL with no logged fields, a rollback alone reads its batch's before; the quote check reads fields of unverified records only and a page once a run (amends 0084, 0090).
+---
+
 # The backend keeps an Edition's records by content version
 
 Status: accepted (the owner's task of 15.11 on the Neon network transfer). Amends ADR 0090 (how a save is checked and what the Content queue reads) and ADR 0084 (what the quote check job reads).

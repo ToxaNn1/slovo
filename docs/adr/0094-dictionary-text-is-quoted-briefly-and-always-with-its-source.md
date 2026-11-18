@@ -1,3 +1,7 @@
+---
+summary: Dictionary text (СУМ-20, ЕСУМ, Караванський, Пономарів, Антоненко-Давидович, Єфімова …) is quoted only briefly, at most one sentence, always with its source named; Examples by a protected author prefer the Edition's own sentence to a quotation; Literary Uses keep the public-domain rule of 0045; the Edition's terms name the dictionaries in a «Джерела» section; current content does not meet the one-sentence rule yet and a content ticket trims it; no check enforces it yet (amends 0012, 0084). Amended by 0146: an Entry quotes no dictionary, so these rules bind only Entries not yet rewritten.
+---
+
 # Dictionary text is quoted briefly and always with its source
 
 **Amended by ADR 0146.** An Entry quotes no dictionary; these rules bind Entries not yet rewritten.

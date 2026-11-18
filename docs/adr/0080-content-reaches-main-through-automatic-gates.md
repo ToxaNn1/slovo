@@ -1,3 +1,7 @@
+---
+summary: Superseded by 0090 (the drafters and the quoting rule: 0095).
+---
+
 # Content reaches main through automatic gates, without the owner's review
 
 **Superseded by ADR 0090.** Agent content no longer reaches `main`; the route, the gates and the review are in ADR 0090. The drafters and the quoting rule that stayed live are in ADR 0095. Kept for history.

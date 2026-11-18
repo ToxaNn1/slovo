@@ -1,3 +1,7 @@
+---
+summary: A push to `main` deploys Railway only when it changed a file outside documentation, `apps/mobile|site|widget|video`, `packages/ui`, an Edition's `legal/`, `.github/`, `.maestro/`, `.claude/`, `copy-review/`, counted from the last successful deploy (job "Deploy scope", `scripts/ci-deploy-scope.mjs`); every Edition's snapshot is checked only when the content Contract's imports, the content rules, the backend's content or database code or its migrations changed; a failed detection deploys and checks everything (amends 0104).
+---
+
 # A push deploys only what it changed and checks the snapshot only when it can break
 
 Status: accepted (owner, 16.11). Amends ADR 0104.

@@ -1,3 +1,7 @@
+---
+summary: The legal pages open inside the app in the system's in-app browser on a page sheet closed by «Готово» (`expo-web-browser`, `openLegalPage`), never in Safari. Amends 0049.
+---
+
 # The legal pages open in an in-app browser sheet
 
 Owner decision of 2026-11-18, in the app pass (Р12). This ADR amends ADR 0049.

@@ -1,3 +1,7 @@
+---
+summary: The site is built daily (21:05 and 22:05 UTC, on push, by hand) from the backend's content snapshot (`SLOVO_BACKEND_URL`; the seed snapshot when unset; a failed fetch fails the build) instead of server rendering: the counter shows the live Words, its own Слово дня by the Kyiv date from rarity 3 and up, a page per live Word at `/slovo/<slug>` (KMU 2010 transliteration) in the sitemap (amends 0090's site part, 0071).
+---
+
 # The site is built daily from the content snapshot
 
 Status: accepted (owner, 15.11). Amends ADR 0090 (its site part) and 0071.

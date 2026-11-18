@@ -1,3 +1,7 @@
+---
+summary: Once the Feed opened its local day on the Word of the Day's card, that Word takes no other card of the Feed that day, swiped past unseen or in a new Cycle started that day; one chosen anew during the day is not held back (amends 0016).
+---
+
 # The Word of the Day takes no ordinary card that day
 
 Owner app pass of 2026-11-18, decision Р8: today's Word of the Day came again later in the same day's Feed as an ordinary card. This ADR amends ADR 0016 (the next card).

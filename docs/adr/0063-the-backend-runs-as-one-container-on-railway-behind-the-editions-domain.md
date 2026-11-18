@@ -1,3 +1,7 @@
+---
+summary: The backend runs as one container on Railway behind the app's domain; migrations in the release step, one trusted proxy hop (two behind Cloudflare), HTTPS only; amended by 0125: at the app's domain it answers only the Collection Link and `/.well-known/` paths.
+---
+
 # The backend runs as one container image on Railway behind the app's domain
 
 Until 0.9 the backend ran only in the owner's local Docker (`compose.yaml`: the server, Postgres and Mailpit), so nobody but the owner could sign in, sync, send a Mistake Report or open a Collection Link. ADR 0030 decides that every Edition shares one backend deployment and ADR 0003 that the backend is our own TypeScript service on Postgres; spec #1293 puts that one deployment on the internet. Where it runs, how it is built and migrated, how it reads the client's address behind a proxy, how it sends email and how it reports are decided here.

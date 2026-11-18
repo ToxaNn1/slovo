@@ -10,7 +10,7 @@ SLOVO is a factory of single-language rare-word apps: one language-agnostic Core
 
 ## Source of truth
 
-`CONTEXT.md` (glossary) and `docs/adr/` (decisions) override every other document, including tickets and specs. `docs/adr/README.md` indexes every ADR in one line each; read it before opening ADRs one by one.
+`CONTEXT.md` (glossary) and `docs/adr/` (decisions) override every other document, including tickets and specs. Every ADR opens with a one-line `summary:`; `pnpm -s adr:index` prints them all as the index (ADR 0193): grep it before opening ADRs one by one.
 
 - Use glossary terms exactly, in code, tests, docs and commit messages. Avoid the words each term lists under _Avoid_.
 - Read `CONTEXT.md` and an ADR with `grep` for the terms and numbers your change names; read one whole only when the change is about it. Every file you read stays in the context of every later step.

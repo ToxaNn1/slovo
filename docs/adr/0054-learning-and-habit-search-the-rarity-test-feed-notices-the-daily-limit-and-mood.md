@@ -1,3 +1,7 @@
+---
+summary: Search, the Rarity Test, the Feed Notices, the Word of the Day archive, the Active Days calendar, the polite pause, the first week and the widget guide (the widget hint went in 0176); the Daily Goal (0066, 0074) takes the place of the Daily Limit and Mood is 0076. Amended by 0076, 0101, 0130, 0156, 0176, 0182, 0183.
+---
+
 # Learning and habit: Search, the Rarity Test, Feed Notices, the Daily Limit
 
 Amended by 0156 and 0183: from 1.0 the Rarity Test sets the top of the Rarity Range (by the rule of ADR 0182) under the `rarityCeiling` switch, no longer the Rarity Ceiling of ADR 0072, and «Рівень» sets no rarity at all.

@@ -1,3 +1,7 @@
+---
+summary: The traced 5×5 letter grid; superseded by 0087 and 0176: the traced grid, its switch and code are gone.
+---
+
 # The Daily Crossword is a traced letter grid
 
 **Superseded by ADR 0087 and ADR 0176.** The crossing crossword of ADR 0087 is the Daily Crossword; the traced grid below, its `tracedCrossword` switch and its code are gone (ADR 0176). What both shared (the card, the XP once a day, «not a Game», nothing Seen, no Knowledge Mark changed) is stated in ADR 0087.

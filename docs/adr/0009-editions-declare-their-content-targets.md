@@ -1,3 +1,7 @@
+---
+summary: Superseded by 0123 (the floors live in `edition.json` and block nothing).
+---
+
 # Each Edition declares its content targets, and the pack build enforces them
 
 **Superseded by ADR 0123.** The targets live in `contentTargets` of `edition.json`, `content/targets.json` is gone, and a miss blocks nothing: the admin shows it, and the pack build prints it and never fails on it. Kept for history.

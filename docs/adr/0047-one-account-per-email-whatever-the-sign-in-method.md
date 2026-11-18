@@ -1,3 +1,7 @@
+---
+summary: One Account per email; the backend verifies Google's and Apple's tokens itself.
+---
+
 # One Account per email, whatever the Sign-in method
 
 Until 0.8.9 the only Sign-in method was a Sign-in code by email (spec #333, ADR 0030): the backend mails a six-digit code, the first right code for an email creates its Account, and better-auth keeps the codes and the Sessions. Spec #603 adds Sign in with Google and spec #1293 Sign in with Apple: the app shows the provider's native sheet, gets an identity token for the reader and sends it to the backend. The backend must decide what the token proves, which Account it reaches and what refuses it, without trusting the app.

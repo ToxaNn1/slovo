@@ -1,3 +1,7 @@
+---
+summary: The admin's confirmation is a native modal `<dialog>` (Esc and the back gesture cancel, focus stays inside, the page behind does not scroll); the site prefetches a link's static page on hover or focus (`prefetchAll`, `hover`), about 1.4 GB a month at 10 000 visits.
+---
+
 # The web surfaces use a native modal dialog and prefetch on hover
 
 The admin's confirmation, which every admin write goes through (ADR 0088), was a `div` with `role="dialog"`: Esc did nothing, focus could leave it for the page behind, and the page scrolled under it. The site opened every page only on the click, though its pages are static files (ADR 0071).

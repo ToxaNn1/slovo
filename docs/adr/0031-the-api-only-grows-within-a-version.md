@@ -1,3 +1,7 @@
+---
+summary: The API is one oRPC contract that only grows within `/v1`, held by a committed description; amended by 0122: admin inputs are strict and may narrow.
+---
+
 # The API only grows within a version
 
 The app talks to the backend (ADR 0003, 0030). An app in the field updates late: a reader may run a build from months ago, and an old build can't be fixed from the server. So a change of the API that an old app doesn't understand breaks a reader's app, not a test.

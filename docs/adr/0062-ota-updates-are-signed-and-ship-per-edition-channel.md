@@ -1,3 +1,7 @@
+---
+summary: OTA updates are signed, bound to the native fingerprint, on the Update channel its store build profile names (`beta` or `production`, amended by 0167), published by hand.
+---
+
 # OTA updates are signed and ship on the app's one channel
 
 **Amended by ADR 0167.** «One channel for the one app» no longer holds: the app has the Update channels `production` and `beta`, each bound to its store build profile, and the channel stays out of the fingerprinted app config.

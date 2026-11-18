@@ -1,3 +1,7 @@
+---
+summary: One folder per glossary domain, the same name in every package; folders import one way; routes import through `@/` (amended by 0101: the main entry exports only what non-test code outside the Core imports).
+---
+
 # Source folders group modules by glossary domain
 
 The modules of `packages/core/src`, `packages/ui/src` and `apps/mobile/src` are grouped into folders named after the domains of `CONTEXT.md`, and the files inside a folder stay flat. A domain that has a folder in one of the three packages has a folder of the same name in every one of them where it appears, even with a single module, so everything about Collections lies in `saved/` in the Core, the UI and the app, and everything about the Game, the Daily Crossword included, in `game/`. A loose file at the root of `src/` is either the top or the shared base, and the root names each one; the rest of a package lives in its domain folders and in the package's own layers.

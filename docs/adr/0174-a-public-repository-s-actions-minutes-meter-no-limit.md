@@ -1,3 +1,7 @@
+---
+summary: The GitHub usage bar leaves the repository's own Actions minutes out while it is public (`GET /repos/{GITHUB_REPOSITORY}`, `private`), as GitHub Free's 2,000 minutes meter private repositories only; other repositories' minutes count, and a failed visibility read counts the repository as private (amends 0164).
+---
+
 # A public repository's Actions minutes meter no limit
 
 Owner decision of 2026-11-17, after the cost audit. This ADR amends ADR 0164 (GitHub Actions' usage bar).

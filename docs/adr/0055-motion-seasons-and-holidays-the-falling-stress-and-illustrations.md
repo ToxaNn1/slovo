@@ -1,3 +1,7 @@
+---
+summary: Animations last 200–300 ms (the Рупор design's peaks may run longer) on the UI thread and become one short fade under Reduce Motion; Decor follows the Season or Holiday (paused in 1.0); the falling Stress; Illustrations. Media location: 0099.
+---
+
 # Motion, Seasons and Holidays, the falling Stress and Illustrations
 
 One set of rules governs every animation of the app, Decor follows the Season and the Edition's Holidays, a Word's Stress falls into place and a Word may carry an Illustration; the decisions come from spec #886 and the owner's grilling of 2026-10-25.

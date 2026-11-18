@@ -1,3 +1,7 @@
+---
+summary: A Game has 3 Lives by default, «Виживання» too, «На час» 20 seconds and then straight to «ФІНІШ»; the values stay in the Core default and each mode, the 3 Lives and the 20 seconds have no switch (`gameThreeLives`, `timedTwentySeconds` retired by 0176), `survivalOneLife` retired by 0176 too; a Game in play keeps its Lives; supersedes G8, G9; amends 0052.
+---
+
 # A Game has 3 Lives, «Виживання» too, «На час» 20 seconds
 
 Status: accepted (owner, 14.11)

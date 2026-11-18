@@ -1,3 +1,7 @@
+---
+summary: The «Сервіси» canvas follows the admin Theme, white with black dots in the light one, zooms 30–200 % with «−», «+», «Вмістити» and Ctrl/⌘ with the wheel, opening fitted to the window, moves anywhere by dragging its empty room or the wheel, and its blocks are 230 × 115 px (amends 0164).
+---
+
 # The «Сервіси» canvas follows the admin Theme, zooms and pans
 
 Owner decision of 2026-11-17, after the first look at «Сервіси» in production. This ADR amends ADR 0164 (the Railway-like canvas).

@@ -1,3 +1,7 @@
+---
+summary: The shell opens each resource once through `opening.ts`, draws every screen over it open, and hands one Shell down (amended by 0090: a Patch changes the pack under its open reader inside a transaction; by 0189: a reopen waits for the Game on screen).
+---
+
 # The shell opens each resource once through one module and draws every screen over it open
 
 Until 0.7 the shell had four ways to open something once per app run and retry or fall back, two separate in-memory fallbacks for the user state, and screens that read a Core module through a hook returning a stand-in until the composition opened, so each route told loading from empty and drew its own error state.

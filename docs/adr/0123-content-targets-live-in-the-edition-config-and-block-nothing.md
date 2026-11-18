@@ -1,3 +1,7 @@
+---
+summary: An Edition's content targets live in `contentTargets` of `edition.json`, parsed once with the config; the admin's content report shows every miss as a check that blocks nothing, and the pack build prints the misses and never fails on them; `content/targets.json` is gone (supersedes 0009).
+---
+
 # Content targets live in the Edition config and block nothing
 
 Content lives in Postgres (ADR 0090), so an Edition's content folder has nothing left to hold, and a floor that stops the pack build only stops a build whose content was already published. The owner decided (14.11.2026) that the floors leave the content folder, stay in the repo with the Edition config, and stop blocking.

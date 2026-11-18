@@ -1,3 +1,7 @@
+---
+summary: While `feedTab` is on, a tap on the «Стрічка» tab opens the Feed, from the Dashboard or any tab, and keeps it on the Feed; the Dashboard stays the home at launch, at the end of Onboarding and for every path that opens the home, the Feed's wordmark included; with it off the tab opens the Dashboard (amends 0076).
+---
+
 # The «Стрічка» tab opens the Feed
 
 Owner decision of 2026-11-08 (spec #1696 visual pass). The Dashboard is the home behind «Стрічка» and opens the Feed (ADR 0076), so a tap on «Стрічка» on the Feed went back to the Dashboard, while the Feed's wordmark already leads there (ADR 0079). This amends ADR 0076.

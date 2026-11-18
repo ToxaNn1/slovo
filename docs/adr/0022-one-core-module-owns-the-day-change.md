@@ -1,3 +1,7 @@
+---
+summary: One Core module owns the day change in a fixed order; the shell only reports the foreground.
+---
+
 # One Core module owns the day change, and the shell only reports the foreground
 
 A new local day changes several Core features at once: the Word of the Day module takes the Word of the day's morning notification (ADR 0021), the Knowledge Marks turn to the day (ADR 0043), today becomes an Active Day, the notification plan is made again and the Feed opens the day with its Word of the Day.

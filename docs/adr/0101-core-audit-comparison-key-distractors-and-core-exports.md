@@ -1,3 +1,7 @@
+---
+summary: The Core audit (#1778): one text comparison module, built once in the composition, gives the Comparison Key per purpose from the Edition's Language Traits (locale case folding, the Edition's `apostrophes`), the letter modes included; «Вгадай слово» picks Distractors by part of speech with no Distractor rule; `index.ts` exports only what non-test code outside the Core imports, checked by `scripts/core-exports.mjs`, `testing.ts` the rest tests use (amends 0024, 0027, 0052, 0054).
+---
+
 # The Core audit: one Comparison Key, Distractors by part of speech, the Core's main entry
 
 The Core audit of spec #1778 put each rule of the Core in one place. Three of its changes amend earlier decisions; the ADRs they amend keep their text and point here.

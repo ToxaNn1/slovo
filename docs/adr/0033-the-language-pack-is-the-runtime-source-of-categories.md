@@ -1,3 +1,7 @@
+---
+summary: The app reads Categories only from the Language Pack; Corrections have a list of Categories of their own. Amended by 0081.
+---
+
 # The Language Pack is the runtime source of Categories
 
 **Amended by ADR 0081.** Every Category carries a required `description` and `tone`, and Categories get screens of their own.

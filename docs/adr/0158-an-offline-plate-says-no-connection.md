@@ -1,3 +1,7 @@
+---
+summary: «Немає з’єднання. Спробуй пізніше.» is one plate under the status bar (board XSettings m6) where an action needs the network and finds none: Collection Link sharing, every Account request and Sync on the Account screen, replacing their offline toasts and lines; never over the Feed; `OfflinePlateProvider` / `useOfflinePlate`; no switch (0176).
+---
+
 # An offline plate says there is no connection
 
 Before this, each action that needs the network said «no connection» its own way: sharing a Collection Link in a toast at the bottom, signing in in a red line under the field, Sync in the line «Синхронізація чекає на мережу». The board XSettings (m6) draws one look for all of them.

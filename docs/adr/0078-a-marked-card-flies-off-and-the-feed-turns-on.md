@@ -1,3 +1,7 @@
+---
+summary: A release past 40% of the card's width or a fling the way it goes marks; a marked Entry card flies off its side to ±520 in 0.3 s and the pager turns to the next Entry (springs back with no next page), its toast shows on the next Entry and its undo turns back; no «ВГОРУ — НАСТУПНЕ» chip or nudge; edge wedges inside the card; the stamp on the card's bottom edge (amends 0077).
+---
+
 # A marked card flies off and the Feed turns on
 
 The owner's test pass of spec #1578 (2026-11-05) found the side swipe of ADR 0077 felt frozen: after a mark the card sprang back to its place, nudged up and showed a «ВГОРУ — НАСТУПНЕ» chip beside the undo toast, and its stamp landed over the Definition. Board 04 (`XSwipe.dc.html`) draws none of that: the marked card flies off and the next one comes up. This amends ADR 0077.

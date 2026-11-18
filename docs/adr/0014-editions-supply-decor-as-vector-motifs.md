@@ -1,3 +1,7 @@
+---
+summary: Decor is vector data in `decor/decor.json` (the Mascot, its Season and Holiday accessories, the Category pictograms); no ornament layer; the native splash is a plain colour.
+---
+
 # Editions supply Decor as vector data; the Core draws it
 
 An Edition describes its Decor as data in `decor/decor.json`: the Mascot's vector, the accessory the Mascot wears for each Season and Holiday, and the Category pictograms and covers. Each drawing is SVG path data with its colours, so the Core draws it with `react-native-svg` at any size and in either Theme. A contract schema checks the file. The Core owns where Decor appears and how it moves; the Edition only supplies the drawings, so the Core knows nothing about any one culture's motifs.

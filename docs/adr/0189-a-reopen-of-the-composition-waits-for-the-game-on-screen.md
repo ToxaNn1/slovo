@@ -1,3 +1,7 @@
+---
+summary: While a Game is on screen, in play or its result, a reopen of the composition (sync, Patch, remote switch) waits until the Game is left, and the asks made meanwhile reopen once; the Best result of every Game Mode counts right answers, kept under `game.bestRight.<mode id>`, the old Rounds-passed records not read (amends 0036, 0052).
+---
+
 # A reopen of the composition waits for the Game on screen
 
 Owner app pass of 2026-11-18, finding 29: «Фразеологізми» closed by themselves after a wrong answer in Round 3, with no result screen and no leave confirmation; findings 25 and 32: the Best result did not match the right answers the result screen showed. This ADR amends ADR 0036 and ADR 0052.

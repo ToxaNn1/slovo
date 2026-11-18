@@ -1,3 +1,7 @@
+---
+summary: An answer banner replaces the answer card: the Core holds an answered state (a discriminated union: right or wrong, XP, the right answer, the last Life) and moves on by itself 950 ms after a right answer, 550 ms in «На час», a wrong one waits for «Далі» (3 s in «На час», 0179), from the injected clock and schedule; «Пари» has no banner; VoiceOver waits, «Менше руху» drops motion, always, its switch gone by 0176; supersedes G5; amends 0052.
+---
+
 # An answer banner replaces the answer card, and the Game moves on by itself
 
 Status: accepted (owner, 14.11)

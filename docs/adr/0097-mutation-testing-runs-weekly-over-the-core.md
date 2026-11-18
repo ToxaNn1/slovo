@@ -1,3 +1,7 @@
+---
+summary: Stryker with its Vitest runner mutates `packages/core/src` (tests, test support and fakes excepted) in its own workflow, weekly and on demand, never on a pull request; runs are incremental through the Actions cache, keep the HTML report and write the score to the job summary; no score fails a run until the owner sets a floor (amended by 0141: a floor of 85); the apps and `packages/ui` are out of scope.
+---
+
 # Mutation testing runs weekly over the Core, not on every PR
 
 **Amended by ADR 0141.** A run scoring under 85% now fails; a run stopped at its time limit still fails nothing.

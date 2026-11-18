@@ -1,3 +1,7 @@
+---
+summary: React Native and Expo; the JavaScript side also runs in Expo Go, the native targets only in the development build; the widget is SwiftUI over an App Group.
+---
+
 # React Native + Expo, with the widget written natively
 
 SLOVO is built with React Native and Expo (TypeScript), run as an Expo development build rather than in Expo Go. Two things drove the choice: the owner already knows React, and the same code can later ship to Android, where most Ukrainian phones are. The home-screen widget is the exception. WidgetKit cannot run JavaScript, so the widget is written in SwiftUI and reads data the app shares through an App Group.

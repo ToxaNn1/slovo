@@ -1,3 +1,7 @@
+---
+summary: A side swipe on the Entry card sets a Knowledge Mark, only «⋯» «Зняти позначку» removes it, undo within 4 s restores the record; the «⋯» sheet ends with «Скасувати» and the hint sheet speaks «ти» (0092) (amends 0043, 0075); the motion after a mark amended by 0078.
+---
+
 # A side swipe sets a Knowledge Mark
 
 Spec #1578 (owner decisions of 2026-11-05). The Entry card set a Knowledge Mark with two buttons under it, and tapping the shown mark again removed it (ADR 0043). Board 04 v2 of the «Рупор» design sets the mark with a side swipe on the card and moves the other actions to the card's corner. This amends ADR 0043 («Tapping a mark») and ADR 0075 (the «ти» guard).

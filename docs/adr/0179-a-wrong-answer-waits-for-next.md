@@ -1,3 +1,7 @@
+---
+summary: After a wrong answer the answer banner with the right answer stays until «Далі →» on it; in «На час» it shows no button and the Game moves on after 3 s; `answerBannerDelay` in the Core says which (amends 0138).
+---
+
 # A wrong answer keeps its right answer until «Далі»
 
 Owner decision of 2026-11-18, in the app pass of the Games. This ADR amends ADR 0138.

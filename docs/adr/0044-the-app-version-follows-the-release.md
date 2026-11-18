@@ -1,3 +1,7 @@
+---
+summary: The app version is the milestone the code on `main` belongs to; EAS keeps the build number.
+---
+
 # The app version follows the release
 
 The app's version, `version` in `apps/mobile/app.config.ts`, is the version of the release the code on `main` belongs to: the milestone (`0.1` to `1.0`), such as `0.8.6`, `0.8.7`, `0.9` and `1.0`. When the work moves on to the next milestone, the version moves with it. The native build gets the version from the app config, and About shows it («Версія 0.9 · збірка 42»). It stayed `0.1.0` from the first build until 0.8.6, so About named a version long gone.

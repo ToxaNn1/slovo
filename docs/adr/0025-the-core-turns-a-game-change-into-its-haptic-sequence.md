@@ -1,3 +1,7 @@
+---
+summary: `createGameHaptics` in the Core turns each Game change into its haptic sequence.
+---
+
 # The Core turns a Game change into its haptic sequence
 
 Until 0.5 the haptics of a Game were played by the views that animate it. An answer option played success or warning in an effect when its answer changed, a Life played the medium haptic in a timer that waited for the wrong choice to fill, and the result screen played success on a win and again 300 ms later. The sequence of a wrong answer (warning, then a lost Life) or of a win lived in three effects across two files, and `packages/ui` has no test runner, so nothing tested it.

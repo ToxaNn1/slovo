@@ -1,3 +1,7 @@
+---
+summary: `pnpm app-pass` runs `apps/mobile/maestro/app-pass.yaml`, one step per screen route of `apps/mobile/src/app` plus the Feed's sheets, on the booted simulator against the one Metro, keeping the user state and a screenshot per step; `app-pass.test.ts` fails CI naming each route file no step names, so a PR that adds a route adds its step (amends 0126).
+---
+
 # The app pass is one command and opens every screen route
 
 Owner decision of 2026-11-17, after the full app walk of that night: «сценарій завжди має бути актуальний». This ADR amends ADR 0126.

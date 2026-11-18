@@ -1,3 +1,7 @@
+---
+summary: Behind `correctionTypeGrid` (needs `correctionCategoryScreens`) the «Виправлення» rail's header counts its Correction Types and opens a grid of the same tiles alone, no k2 on it; amends 0081.
+---
+
 # The «Виправлення» rail opens a grid of its Correction Types
 
 Status: accepted (owner, 15.11)

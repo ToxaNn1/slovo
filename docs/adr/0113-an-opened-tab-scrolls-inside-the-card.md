@@ -1,3 +1,7 @@
+---
+summary: An Entry card keeps its frame when «Детальніше» opens a tab: the tab scrolls inside the card and the page never scrolls; amends 0091. Amended by 0134.
+---
+
 # An opened tab scrolls inside the card
 
 ADR 0091 opened a clamped tab under «Детальніше» by growing the card to the tab's whole content, so the page scrolled over the card: in the Feed the `PagerScrollView`, on the Entry screen its scroll. On the owner's phone (13.11.2026) a rich Correction's «Чому» opened that way pushed the card's top off the screen under a page scroll bar.

@@ -1,3 +1,7 @@
+---
+summary: Amended by 0120. A Tip card has one tab «Правило»: the explanation (Onest 500 20/28), the standard form and the Example's text in chips, the source line; «Винятки» only with exceptions in the data, so no tab bar; kicker «ПОРАДА», title 30/33 over the red bar; the non-standard form and Self-check unchanged; amends 0091
+---
+
 # A Tip's card shows its rule in chips
 
 ADR 0091 gave a Tip card its title, its chip «порада» and its non-standard form above two tabs, «Суть» (the standard form, the explanation, the sources) and «Приклад» (the Example). Board e9 (2026-11-12 Feed board) draws a Tip as the red kicker «ПОРАДА», the title at 30 on 33 over the red slanted bar, and the tabs «Правило · Винятки»: a rule in reading text with its words in raised chips, then the exceptions the same way.

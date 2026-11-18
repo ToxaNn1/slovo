@@ -1,3 +1,7 @@
+---
+summary: A ticket that changes a screen carries one screenshot of it against its board (text snapshot first); Maestro runs only on the owner's command and tickets touch no flow; the version's visual pass updates the flows; the smoke runs against the one Metro on port 8082; supersedes 0028
+---
+
 # A UI ticket carries one screenshot of its screen against the board
 
 ADR 0028 kept every screenshot for one visual pass at the end of a version: a ticket's PR touched no flow and took none. With the app drawn from design boards (ADR 0070) that was too late. A screen that missed its board was found only when the whole version was built, and the owner's rule since 2026-11-03 is that a UI change is done only when a screenshot of it matches the board. ADR 0028 also had the two halves of the smoke run each against its own Metro, while the laptop keeps one Metro, on port 8082, that nothing restarts or doubles (the owner's rule of 2026-11-13). This ADR supersedes ADR 0028 and keeps the rest of it.

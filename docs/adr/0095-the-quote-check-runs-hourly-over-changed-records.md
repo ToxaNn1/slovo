@@ -1,3 +1,7 @@
+---
+summary: The quote check runs hourly as a Railway Cron command over Words, Corrections, Idioms, Synonym Rows and Tips changed since their last check, not Literary Uses; imported records count as checked, records with no source page are not checked; pages cached 30 days in Postgres; a miss is flagged with the finding and the record stays live ; its matching rule and the `pnpm source:*` drafters (from 0084, 0080) are here (amends 0090; supersedes 0084, 0080). Amended by 0146: a rewritten Entry has no source page, so it is not checked.
+---
+
 # The quote check runs hourly over changed records
 
 **Amended by ADR 0146.** A rewritten Entry has no source page, so the check skips it.

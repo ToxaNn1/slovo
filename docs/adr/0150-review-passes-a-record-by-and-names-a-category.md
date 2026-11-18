@@ -1,3 +1,7 @@
+---
+summary: «Перегляд» passes a record by: «Далі» (key 4 or →) shows the next with no answer, the record left unchecked, `content.unchecked` takes an optional `skip`, «Назад» answers a passed-by one («Не переглянуто»); the card names a Category by its Edition `displayName`, as the app does (amends 0143).
+---
+
 # «Перегляд» passes a record by and names a Category
 
 Status: accepted (owner, 16.11). Amends ADR 0143.

@@ -1,3 +1,7 @@
+---
+summary: The Word Meaning question («„{word}“ — це…», four whole Definitions) is a round type of the Quick Question, not a Game Mode: behind `quickQuestionWordMeaning` (needs `quickQuestion`), with the same chance as each pick Game Mode; Distractors are primary Definitions of other Eligible Words, same part of speech first; analytics carry `word-meaning`; amends 0052 on that point only
+---
+
 # The Word Meaning question is a Quick Question round type, not a Game Mode
 
 The Feed's Quick Question asked only Rounds of Game Modes (ADR 0052), and none of them asks the plainest thing: what a Word means. The owner decided on 14.11.2026 (spec #1831) to add the Word Meaning question, «„{word}“ — це…» with four Definitions, to the Quick Question alone.

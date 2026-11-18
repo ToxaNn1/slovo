@@ -1,3 +1,7 @@
+---
+summary: The site counts visits with Cloudflare Web Analytics (cookieless JS snippet in `Base.astro`, as the domain is DNS-only) and search with Google Search Console (Domain property by DNS); it publishes `robots.txt`, `sitemap.xml`, a canonical on the app's domain, `og:image` and Organization/WebSite structured data; no Google Analytics, no cookies (amends 0071).
+---
+
 # The site counts visits with Cloudflare Web Analytics and Search Console
 
 Status: accepted (owner, 15.11). Amends ADR 0071.

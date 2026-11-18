@@ -1,3 +1,7 @@
+---
+summary: Superseded by 0146 (an Entry's text is the Edition's own; nothing is copied from goroh or СУМ).
+---
+
 # Ukrainian Definitions and Examples come from goroh «Тлумачення»
 
 **Superseded by ADR 0146.** An Entry's text is now the Edition's own; nothing is copied from goroh or СУМ. Kept for history.

@@ -1,3 +1,7 @@
+---
+summary: A Word card is a fixed frame with tabs «Суть», «Приклад», «Зв’язки», «Історія» under its Lemma, empty tabs left out and no tab bar for «Суть» alone; a tab too tall takes the text size a step smaller down to the floor (S, or the lowest step of 0134's ladder), then is clamped under «Детальніше», which grows it smoothly and lets the page scroll; long head texts take a size by their length; a Correction card takes the same frame with «Як краще», «Чому», «Приклади» under its struck non-standard form, an Idiom card gets «Суть», «Звідки», «Приклад» the same way, its expression underlined in red, and a Tip and a Synonym Row take the frame too; the Word of the Day is the red card only while Self-check keeps it closed, then the tabbed card with a red kicker, and the Feed draws no XP bar (with the switch on, the Daily Goal progress of 0074 shows in Profile only). Amends 0017. Amended by 0113, 0114, 0119, 0134, 0157, 0186.
+---
+
 # A Word card shows its sections in tabs in a fixed frame
 
 A Word's Entry card grew into a long column: the Definition, the Example, the Synonym Row line, «Часто кажуть», Synonyms and antonyms, and behind «Детальніше» the other meanings, the etymology and further Examples. In the Feed a page held a card of any height, so the next card's place moved from Word to Word and the reader scrolled inside a page before swiping to the next one.

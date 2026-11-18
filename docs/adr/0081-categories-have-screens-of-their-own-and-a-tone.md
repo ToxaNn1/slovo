@@ -1,3 +1,7 @@
+---
+summary: The Categories of Words (k1) and of Corrections (k2) get grid screens opened from the Dashboard rail headers and a Category screen of live Entries with the Mix button, the fourth place to take a Category out of the Mix; every Category carries a required `description` and `tone` (`loud` | `quiet`), a quiet one drawing the k3 variant; rails «Категорії», «Добірки» and Correction Types; behind `categoryScreens` and `correctionCategoryScreens` (amends 0019, 0033, 0076). Amended by 0178.
+---
+
 # Categories have screens of their own and a tone
 
 **Amended by ADR 0178.** The Curated Collections rail is «SLOVO пропонує», right before «Категорії», built from this rail's header and tiles.

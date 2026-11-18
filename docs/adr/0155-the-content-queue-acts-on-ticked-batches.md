@@ -1,3 +1,7 @@
+---
+summary: «Пачки Агентів» in the Content queue: a checkbox per batch, «Вибрати всі», «Позначити перевіреними (N)» and «Відкотити (N)» at one confirmation with one reason; the admin calls `review` or `rollback` per batch in turn (rollback newest first), no new procedure, one Action log row per batch (amends 0090).
+---
+
 # The Content queue acts on the batches ticked at once
 
 Status: accepted (owner, 16.11). Amends ADR 0090.

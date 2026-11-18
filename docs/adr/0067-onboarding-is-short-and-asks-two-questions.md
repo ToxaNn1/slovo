@@ -1,3 +1,7 @@
+---
+summary: Onboarding: welcome, the first Word, «Рівень» (whose «Не знаю» opens the Rarity Test) and «Навіщо», the Daily Goal, the Notification time, the Feed; the rest comes later as Feed Notices. The order and the explainer are 0074's. Amended by 0074, 0076, 0156, 0183.
+---
+
 # Onboarding is short: welcome, the first Word, two questions, the Daily Goal, the Notification time, the home
 
 Spec #1358 wants a new reader in the Feed within a minute, already knowing what SLOVO is and with a Feed in their taste.

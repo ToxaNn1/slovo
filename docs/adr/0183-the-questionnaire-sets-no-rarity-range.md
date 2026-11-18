@@ -1,3 +1,7 @@
+---
+summary: No answer to «Рівень» sets the Rarity Range, in the onboarding or on the retake: only the reader in Settings and the Rarity Test do; «Не знаю» still opens the test and the level option's `rarityCeiling` stays in the contract unread (amends 0067, 0156).
+---
+
 # The questionnaire sets no Rarity Range
 
 Owner decision from the app pass (item 87). This ADR amends ADR 0067 and ADR 0156.

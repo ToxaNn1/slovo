@@ -1,3 +1,7 @@
+---
+summary: The Daily Crossword is a 5×5 crossing crossword with blocks, numbered cells and 2–3 pre-filled crossings, generated on the device per (local date, Words within the Rarity Range) and entered one clue at a time on a Letter Wheel (the Word's letters plus one decoy); a free Crossword Hint; the Solve time and the hint kept on its XP log record; Badge shape `checker` and a per-Badge stamp kicker; behind `dailyCrossword` (0176) (supersedes 0073, whose card, XP, Share Card and «not a Game» it now holds; amends 0052, 0085).
+---
+
 # The Daily Crossword is a crossing crossword played on a letter wheel
 
 Owner decisions 07.11 (spec #1674, board 08): the traced grid of ADR 0073 gives way to a classic crossing crossword entered on a letter wheel. This ADR supersedes ADR 0073's Puzzle, Generation, Play, Progress and fallback; ADR 0073's card, XP, Share Card and «not a Game» stay, now stated here (ADR 0073 is superseded by this one). It amends ADR 0085 (one new Badge family shape) and ADR 0052 (the typed fallback goes). Behind `dailyCrossword` (amended by ADR 0176: `crossingCrossword` is gone and off means no Daily Crossword) and its parts `crosswordHint`, `crosswordSolveTime`, `crosswordSolvedScreen` and `crosswordBadgeStamp` (needs `badges`).

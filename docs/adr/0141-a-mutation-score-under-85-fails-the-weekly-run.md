@@ -1,3 +1,7 @@
+---
+summary: `thresholds.break` in `packages/core/stryker.config.js` is 85: a weekly or on-demand mutation run scoring under 85% fails, a run stopped at its time limit fails nothing; amends 0097.
+---
+
 # A mutation score under 85 fails the weekly run
 
 Status: accepted (owner, 15.11; ticket #1817). Amends ADR 0097 where it says no score fails a run.

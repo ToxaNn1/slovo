@@ -1,3 +1,7 @@
+---
+summary: Switching «Ділитися анонімною статистикою» off sends one anonymous unit (no Session, no Install id) counted per Edition and day, nothing after; Аналітика shows registered readers, unregistered readers at least (PostHog's active over 1 day minus Accounts, never below 0) and switch-offs; switch `statisticsOffCounter` (amends 0068, 0135).
+---
+
 # Switching statistics off sends one anonymous unit; the admin estimates unregistered readers
 
 Owner decision of 2026-11-17. ADR 0068 says of the one privacy switch «Off, nothing is sent and nothing is queued». The owner cannot then tell how many readers turn statistics off, nor how many people read SLOVO without an Account. This ADR amends ADR 0068 and ADR 0135.

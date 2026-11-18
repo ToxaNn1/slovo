@@ -1,3 +1,7 @@
+---
+summary: The Recordings generator runs on two threads (`OMP_NUM_THREADS`, MKL, OpenBLAS and `torch.set_num_threads` at `GENERATOR_THREADS`), the `recordings` service on 2 vCPU and 5 GB, and the script's lines (seconds per request, `RTF`) reach the log as they come; a run whose generator hits its time limit counts as stuck like one that made no file, so two in a row tell the owner (`recordings-stalled` with its `cause`) and stop the job for the Edition (amends 0099 and 0169).
+---
+
 # The Recordings generator runs on two threads, and a run that hits its time limit is stuck
 
 Owner decision of 2026-11-17, after the `recordings` crash report. This ADR amends ADR 0169 (when the Recordings job stops) and ADR 0099 (the Recordings service).

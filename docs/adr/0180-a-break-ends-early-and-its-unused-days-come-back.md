@@ -1,3 +1,7 @@
+---
+summary: «Завершити перерву» ends a running Break today with a Break-ended record (one per Break, the earlier day holds); the reader has 7 Break days in the 30 days from the first Break of them, so days a Break did not use come back for a later one (amends 0066).
+---
+
 # A Break ends early and its unused days come back
 
 Owner decision of 2026-11-18, after the app pass (finding 72: a Break once started could not be ended; the only way out was «Скинути прогрес»). This ADR amends ADR 0066.

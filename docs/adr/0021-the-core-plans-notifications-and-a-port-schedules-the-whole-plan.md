@@ -1,3 +1,7 @@
+---
+summary: The Core plans every notification; a port replaces the whole pending plan.
+---
+
 # The Core plans notifications, and a port schedules the whole plan
 
 Each notification carries one Word the reader hasn't Seen. Which Word comes at which time is a rule about eligibility, Seen and the Cycle, so the Core decides it, in the Notifications module of the composition (ADR 0018). The Core declares a notification scheduler port and the shell implements it on `expo-notifications`. The port reports the permission (allowed, denied or not asked yet), asks for it, and replaces every pending notification with a given plan. Tests use a fake that keeps the last plan and lets the test set the permission.

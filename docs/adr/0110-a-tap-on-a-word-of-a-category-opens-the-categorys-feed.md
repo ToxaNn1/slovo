@@ -1,3 +1,7 @@
+---
+summary: Behind `categoryFeed` (needs `categoryScreens`) a tap on a Word of a Category's screen opens the Category's Feed: its live Words alone from the tapped one in Language Pack order and round again after the last, endlessly, each kicker «Категорія · <name> · k з n»; no Cycle, nothing Seen, no History (amends 0081).
+---
+
 # A tap on a Word of a Category opens the Category's Feed
 
 A tap on a Word card of a Category's screen (ADR 0081) opened the Word's card as Search does. The owner wants the board's way (`SlovoApp.dc.html`, `pgWords` and `catWord`): the tap opens a Feed of that Category's Words alone. Behind the Feature Switch `categoryFeed` (needs `categoryScreens`), a tap on a Word of a Category of Words opens the Category's Feed: the Category's live Words, one card a page, from the tapped Word on in the Language Pack's order, and after the last the first again, endlessly (four Words: the fifth card is the first). Each card's kicker names its place, «Категорія · <name> · k з n» in capitals, k counted from the tapped Word, as the board's. The board's list ends after n cards; the owner's wrap-round overrides it. A tapped Word the Category no longer holds opens on its first Word. The back tile, named for the Category, returns to its screen; the tab bar is hidden as over the Category's screen.

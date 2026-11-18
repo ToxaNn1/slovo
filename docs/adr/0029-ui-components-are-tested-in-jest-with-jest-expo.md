@@ -1,3 +1,7 @@
+---
+summary: UI components and app routes are tested in Jest with `jest-expo`; everything else in Vitest.
+---
+
 # UI components and app routes are tested in Jest with jest-expo
 
 The Maestro flows, which drive the screens, don't run on a PR's CI (ADR 0126), so without component tests a regression in the pager, a Round of the Game or a toast passed CI.

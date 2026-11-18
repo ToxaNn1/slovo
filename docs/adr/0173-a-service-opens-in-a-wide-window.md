@@ -1,3 +1,7 @@
+---
+summary: A «Сервіси» block opens a wide centred window in the native modal `<dialog>` with «Гроші», «Використання» and «Записи» side by side, fitting 1280 × 800 without a scroll and stacking on a phone, in plain words with no raw JSON; the Railway reading gains `spendParts` (USD by `cpu`, `memory`, `egress`, `disk`); its motion stops under `prefers-reduced-motion` (amends 0164).
+---
+
 # A Service opens in a wide window
 
 Owner decision of 2026-11-17, after the first look at «Сервіси» in production. This ADR amends ADR 0164 (a block opens a side panel) and builds on ADR 0160 (the native modal `<dialog>`).

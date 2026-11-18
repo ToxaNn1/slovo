@@ -1,3 +1,7 @@
+---
+summary: A Category is hidden exactly when it is out of the Mix; other kinds of Entry are in or out as a whole. Amended by 0081.
+---
+
 # A Hidden Category is a Category outside the Mix
 
 The Mix and Hidden Categories are one state: a Category is hidden exactly when it is out of the user's Mix. The reader can take it out in four places: the Mix screen, the hide action on a card ("don't show this Category"), the Hidden screen, where turning it back on puts it back in the Mix, and the Category screen's «ДОДАТИ» / «У МІКСІ» (ADR 0081).

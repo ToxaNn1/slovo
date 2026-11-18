@@ -1,3 +1,7 @@
+---
+summary: On a tabbed Word card «Суть» shows every Definition, the other ones numbered from 2 under the primary one, then the Synonym Row line, «Часто кажуть» and the Word History; «Історія» shows the etymology alone and is left out without one; the «Ще {count} значення» line is gone (amends 0091).
+---
+
 # «Суть» shows every Definition and «Історія» the etymology alone
 
 Owner app pass of 2026-11-18, decision Р10: on a Word's tabbed Entry card the other meanings sat in «Історія», behind a line in «Суть» that sent the reader there. This ADR amends ADR 0091 (the tabs of a Word card).

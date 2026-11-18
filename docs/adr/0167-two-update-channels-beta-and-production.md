@@ -1,3 +1,7 @@
+---
+summary: Two Update channels, `production` and `beta`, each named by its store build profile in `eas.json` (the `testflight` profile goes); the channel stays out of the fingerprinted app config, so both profiles share one fingerprint; a release with no or an unknown channel fails; the app reads it as `deviceFacts.updateChannel` and About shows it (amends 0007, 0062); the OTA workflow publishes to a chosen channel and promotes a `beta` update group to `production` by republishing it, refusing a `production` run against any address but the production Deployment's.
+---
+
 # Two Update channels, beta and production, each bound to its store build profile
 
 Owner decision of 2026-11-17 (spec #1961). ADR 0062 gives the app one Update channel, `updateChannel` in the AppConfig (`uk`), and ADR 0007 one build and one channel for the one app, so a JavaScript update published to test it reaches every reader at once. This ADR amends ADR 0007 and ADR 0062: the app gets a second channel for the owner and one more tester.

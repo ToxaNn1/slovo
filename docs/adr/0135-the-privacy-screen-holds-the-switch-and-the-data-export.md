@@ -1,3 +1,7 @@
+---
+summary: The one privacy switch moves to the screen «Конфіденційність» beside «Експортувати мої дані» (one switch, one screen); the Data export is one versioned JSON file built on the device, shared only through the system share window, never holding the Session, a token, the Install id or content the reader did not make; own Feature Switch; amends 0068.
+---
+
 # The privacy screen holds the one switch and the Data export
 
 Status: accepted (owner, 14.11)
