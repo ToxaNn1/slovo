@@ -402,7 +402,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** Levels: the Level derived from total XP, its Edition name and the level-milestone Feed Notices (ADR 0066). */
   levels: FeatureSwitchStateSchema,
   /** «Без лічильників»: the setting hides XP, Level, Streak, celebrations, level milestones and in-Game XP feedback while counting goes on; off, «Приховати Серію» of 0.9, which hides only the Streak (ADR 0066). */
-  noCounters: FeatureSwitchStateSchema,
   /** The Daily Goal: its Settings row, its progress on the XP bar and its celebration trigger (ADR 0066). */
   dailyGoal: FeatureSwitchStateSchema,
   /** The Seen-Word XP: 1 XP for each Word Seen for the first time, up to the day's Daily Goal; off, viewing earns nothing. */

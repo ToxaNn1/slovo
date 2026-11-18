@@ -75,12 +75,6 @@ export interface Shown {
   readonly shareCountersSetting: boolean;
   /** «Експортувати мої дані» on the privacy screen (ADR 0135). */
   readonly dataExport: boolean;
-  /**
-   * The Settings switch of the counters: «Без лічильників» while its Feature
-   * Switch is on; else «Приховати Серію» of 0.9 while the statistics are on;
-   * else none.
-   */
-  readonly countersSetting: 'noCounters' | 'hideStreak' | undefined;
   /** The «Вчу» card of the Saved tab and the list it opens. */
   readonly learning: boolean;
   /**
@@ -214,8 +208,8 @@ export function shownOf({
 }): Shown {
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
   const knowledge = on('knowledge');
-  // «Без лічильників» hides every counter; with its switch off it is «Приховати Серію» of 0.9 and hides only the Streak.
-  const noCounters = on('noCounters') && settings.noCounters;
+  // «Без лічильників» hides every counter.
+  const noCounters = settings.noCounters;
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
@@ -246,7 +240,6 @@ export function shownOf({
     textSizeSteps: on('textSizeSteps'),
     shareCountersSetting: on('communityCounters') || on('analytics'),
     dataExport: on('dataExport'),
-    countersSetting: on('noCounters') ? 'noCounters' : on('statistics') ? 'hideStreak' : undefined,
     learning: knowledge,
     stats: on('statistics')
       ? {

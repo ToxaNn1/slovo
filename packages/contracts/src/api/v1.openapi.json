@@ -9112,14 +9112,6 @@
                           ],
                           "type": "string"
                         },
-                        "noCounters": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "dailyGoal": {
                           "enum": [
                             "on",
@@ -9755,7 +9747,6 @@
                         "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
-                        "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
@@ -11001,14 +10992,6 @@
                           ],
                           "type": "string"
                         },
-                        "noCounters": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "dailyGoal": {
                           "enum": [
                             "on",
@@ -11644,7 +11627,6 @@
                         "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
-                        "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
@@ -12814,14 +12796,6 @@
                           ],
                           "type": "string"
                         },
-                        "noCounters": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "dailyGoal": {
                           "enum": [
                             "on",
@@ -13457,7 +13431,6 @@
                         "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
-                        "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",

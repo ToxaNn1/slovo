@@ -25,8 +25,7 @@ export interface UserSettings {
   /**
    * Whether «Без лічильників» is on: XP, Level, Streak, celebrations, level
    * milestones and in-Game XP feedback are hidden while counting goes on
-   * (ADR 0066). While the Edition's `noCounters` switch is off it is
-   * «Приховати Серію» of 0.9 and hides only the Streak.
+   * (ADR 0066).
    */
   readonly noCounters: boolean;
   /** Whether Self-check hides the answer on an Entry card until the reader taps. */

@@ -32,14 +32,7 @@ const content = createMemoryContentPort({
 });
 const byDefinition = new Map(words.map((w) => [w.primaryDefinition, w]));
 
-const ALL_ON: readonly FeatureSwitch[] = [
-  'game',
-  'gameGuessWord',
-  'xpLog',
-  'levels',
-  'noCounters',
-  'analytics',
-];
+const ALL_ON: readonly FeatureSwitch[] = ['game', 'gameGuessWord', 'xpLog', 'levels', 'analytics'];
 
 /** One XP record of `amount` on the local day `date`, at 08:00 in Kyiv. */
 const xp = (date: string, amount: number): XpRecord => ({
@@ -374,16 +367,6 @@ describe('the level-milestone Feed Notices', () => {
     await userState.write(userStateRecords.noCounters.change(false));
 
     expect(await milestonesIn((await run({ records })).app)).toEqual([
-      expect.objectContaining({ level: 5 }),
-    ]);
-  });
-
-  it('shows the milestone to a reader who hid the Streak while «Без лічильників» is switched off', async () => {
-    const records = await readerWith(xp('2026-10-13', 300), xp('2026-10-14', 6));
-    const hiding = await openUserState({ port: createMemoryUserStatePort(records) });
-    await hiding.write(userStateRecords.noCounters.change(true));
-
-    expect(await milestonesIn((await run({ records, off: ['noCounters'] })).app)).toEqual([
       expect.objectContaining({ level: 5 }),
     ]);
   });

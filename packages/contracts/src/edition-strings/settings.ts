@@ -25,8 +25,6 @@ export const SettingsStringsSchema = z.strictObject({
   soon: TextSchema,
   /** What VoiceOver reads for a row that a later version brings. Takes `{label}`. */
   soonAccessibilityLabel: templateOf('label'),
-  /** The switch that hides the Streak everywhere it is drawn, while «Без лічильників» is switched off. */
-  hideStreak: TextSchema,
   /** «Без лічильників»: the switch that hides every counter while counting goes on, and the explanation under it. */
   noCounters: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The switch that turns Self-check on. */
@@ -113,7 +111,6 @@ export const SettingsStringsSchema = z.strictObject({
     widgets: TextSchema,
     textSize: TextSchema,
     dailyGoal: TextSchema,
-    hideStreak: TextSchema,
     selfCheck: TextSchema,
     myMix: TextSchema,
     hidden: TextSchema,

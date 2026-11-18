@@ -94,7 +94,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   quickQuestionWordMeaning: 'feed',
   playStep: 'feed',
   levels: 'progress',
-  noCounters: 'progress',
   dailyGoal: 'progress',
   seenWordXp: 'progress',
   enoughForToday: 'progress',

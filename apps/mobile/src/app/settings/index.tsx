@@ -385,36 +385,19 @@ function SettingsList() {
                 }}
               />
             )}
-            {shown.countersSetting === 'noCounters' && (
-              <SettingsRow
-                testID="settings-no-counters"
-                icon="bar"
-                label={strings.noCounters.title}
-                subtitle={strings.noCounters.explanation}
-                end={{
-                  kind: 'switch',
-                  value: current.noCounters,
-                  onChange: (noCounters) => {
-                    update({ noCounters });
-                  },
-                }}
-              />
-            )}
-            {shown.countersSetting === 'hideStreak' && (
-              <SettingsRow
-                testID="settings-hide-streak"
-                icon="bar"
-                label={strings.hideStreak}
-                subtitle={subtitles.hideStreak}
-                end={{
-                  kind: 'switch',
-                  value: current.noCounters,
-                  onChange: (noCounters) => {
-                    update({ noCounters });
-                  },
-                }}
-              />
-            )}
+            <SettingsRow
+              testID="settings-no-counters"
+              icon="bar"
+              label={strings.noCounters.title}
+              subtitle={strings.noCounters.explanation}
+              end={{
+                kind: 'switch',
+                value: current.noCounters,
+                onChange: (noCounters) => {
+                  update({ noCounters });
+                },
+              }}
+            />
             {shown.selfCheckSetting && (
               <SettingsRow
                 testID="settings-self-check"

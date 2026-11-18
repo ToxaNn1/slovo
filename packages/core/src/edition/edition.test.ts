@@ -88,7 +88,6 @@ const validConfig = {
     playStep: 'on',
     seenWordXp: 'on',
     levels: 'on',
-    noCounters: 'on',
     dailyGoal: 'on',
     enoughForToday: 'on',
     goalReachedCard: 'on',
