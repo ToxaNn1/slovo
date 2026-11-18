@@ -6,7 +6,7 @@ ADR 0072 left one bound, the Rarity Ceiling «до 1»…«до 5». The owner w
 
 **The picker.** Settings draws five slanted bars of rising height, numbered 1 to 5, with «РІДКІСТЬ» and the range over them; the bars of the range are the accent. A tap on a bar outside the range pulls the nearer end out to it; a tap on an end of a range of several bars leaves that rarity alone; a tap inside moves the nearer end in to it, the top on a tie; a tap on the one bar of a single rarity takes every rarity back. A line under the bars says how a range is picked. A drag across the bars picks the range from the bar it starts on to the one under the finger, shown as it goes and kept when the finger lifts. A bar that joins the range springs up as it reddens, with a light haptic; under Reduce Motion it only fades.
 
-**Who sets it.** The reader in Settings sets both ends. Onboarding's «Рівень» and the Rarity Test set the top alone, and the bottom goes back to 1 (ADR 0054, 0067).
+**Who sets it.** The reader in Settings sets both ends. Onboarding's «Рівень» and the Rarity Test set the top alone, and the bottom goes back to 1 (ADR 0054, 0067). Amended by ADR 0183: «Рівень» sets nothing, so the Rarity Test alone sets the top (by the rule of ADR 0182).
 
 **The Core.** `entries/rarity-range.ts` holds the rule every surface filters by (`withinRarityRange`) and the setting (`RarityRangeSetting`); the Daily Crossword takes `wordsInRarityRange`. A Mood's band clips to the range: `upper` is its top and the one below, `lower` its bottom and the one above (ADR 0076). The app's hook is `useRarityRange` in `mix/`, for the folder reason of ADR 0072.
 

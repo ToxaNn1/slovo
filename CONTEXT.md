@@ -398,7 +398,7 @@ The set of Categories of Words, plus Corrections as a whole with their own Categ
 _Avoid_: Filter, preferences
 
 **Rarity Range**:
-«Рідкість»: the rarities of Words the reader wants, from a bottom to a top, «від 1 до 5» by default, «лише 3» when both are one. Only Words within it appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings on five slanted bars, and its top alone by onboarding's «Рівень» and by the Rarity Test, which put the bottom back to 1 (ADR 0156).
+«Рідкість»: the rarities of Words the reader wants, from a bottom to a top, «від 1 до 5» by default, «лише 3» when both are one. Only Words within it appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings on five slanted bars, and its top alone by the Rarity Test, which puts the bottom back to 1 (ADR 0156, 0182); onboarding's «Рівень» sets nothing (ADR 0183).
 _Avoid_: Rarity Ceiling, Rarity Floor, ceiling, floor, difficulty, level, maximum difficulty
 
 **Mix kind weight**:
@@ -438,7 +438,7 @@ _Avoid_: Normalized text, search key, folded form
 _Avoid_: Lookup, filter, dictionary
 
 **Rarity Test**:
-«Перевірка рівня»: 10 Words, 2 of each rarity, each shown as its Lemma with Stress for «Знаю» or «Не знаю», which set the top of the Rarity Range to the lowest rarity with «Не знаю» («до 5» if all are known). Optional in onboarding after the Mix and again from Settings. It sets no Knowledge Mark, starts no Review and makes nothing Seen.
+«Перевірка рівня»: 10 Words, 2 of each rarity, each shown as its Lemma with Stress for «Знаю» or «Не знаю», which set the top of the Rarity Range to the highest rarity of which the reader knew at least half of the Words asked («до 1» when there is none; ADR 0182). Optional in onboarding, from «Не знаю» on «Рівень», and again from Settings. It sets no Knowledge Mark, starts no Review and makes nothing Seen.
 _Avoid_: Level test, placement test, quiz
 
 **Weekly Recap**:
