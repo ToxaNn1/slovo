@@ -256,23 +256,23 @@ describe('a Game of «Виживання»', () => {
     ]);
   });
 
-  it('keeps the Rounds passed as its Best result, with no upper bound', async () => {
+  it('keeps the right answers as its Best result, with no upper bound', async () => {
     const app = await run();
     await app.game.start('survival');
     await play(app, { wrong: [1, 18, 20] });
 
-    expect(app.game.state.bestResults['survival']).toBe(19);
+    expect(app.game.state.bestResults['survival']).toBe(17);
     expect(survivalOffer(app)).toEqual({
       modeId: 'survival',
       entryKind: 'correction',
       group: 'new',
-      best: { result: 19 },
+      best: { result: 17 },
       canStart: true,
     });
 
     await app.game.start('survival');
     await play(app, { wrong: [1, 2, 3] });
 
-    expect(app.game.state.bestResults['survival']).toBe(19);
+    expect(app.game.state.bestResults['survival']).toBe(17);
   });
 });

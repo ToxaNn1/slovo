@@ -333,7 +333,7 @@ export function recordsBlocks(
     ['correctionsWorkedThrough.', countedInto(workedThrough)],
     ['curatedCollections.opened.', countedInto(curatedOpened)],
     [
-      'game.best.',
+      'game.bestRight.',
       (id, value) => {
         if (typeof value !== 'number') return false;
         bests.push({ id, result: value });

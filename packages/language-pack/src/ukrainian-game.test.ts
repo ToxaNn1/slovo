@@ -324,7 +324,8 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
 
     await playGame(app);
 
-    const { roundsPassed, played } = current(app);
+    const { played } = current(app);
+    const right = played.filter((round) => round.right).length;
     const confirmed = writes.filter((write) =>
       [...write.keys()].every((key) => key.startsWith('confirmed.')),
     );
@@ -333,7 +334,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     );
     // The XP of a right Round goes in its own write; the XP of the finished
     // Game and of the new Best result share the Best result's write.
-    const bestKey = 'game.best.guess-word';
+    const bestKey = 'game.bestRight.guess-word';
     // Each Badge the Game earns goes in its own write of its XP log record.
     const badges = writes.filter((write) =>
       [...write.keys()].every((key) => key.startsWith('xp.badge-')),
@@ -342,8 +343,8 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     const others = writes.filter((write) => !confirmed.includes(write) && !badges.includes(write));
     const withBest = others.filter((write) => write.has(bestKey));
     expect(withBest).toHaveLength(1);
-    expect(withBest[0]?.get(bestKey)).toBe(String(roundsPassed));
-    expect(await readFact(userState, 'gameBest')).toEqual(new Map([['guess-word', roundsPassed]]));
+    expect(withBest[0]?.get(bestKey)).toBe(String(right));
+    expect(await readFact(userState, 'gameBest')).toEqual(new Map([['guess-word', right]]));
     for (const write of others) {
       const xpKeys = [...write.keys()].filter((key) => key !== bestKey);
       expect(xpKeys.length).toBeGreaterThan(0);

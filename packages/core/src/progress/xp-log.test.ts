@@ -250,7 +250,7 @@ describe('the XP log and the Game', () => {
 
     expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
     expect(xpKeys(records)).toEqual([]);
-    expect(records.has('game.best.guess-word')).toBe(true);
+    expect(records.has('game.bestRight.guess-word')).toBe(true);
   });
 
   it('counts today in the clock’s time zone: yesterday’s XP leaves today on the day change', async () => {
