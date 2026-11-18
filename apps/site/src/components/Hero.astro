@@ -22,12 +22,13 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
       <AppStoreBadge />
     </div>
     <div class="relative w-full max-w-[480px] justify-self-end">
-      <div class="relative aspect-[4/5] overflow-hidden rounded-[18px] bg-coal-sunk">
+      <!-- The whole 9:16 video fits the 4:5 frame; the frame is the video's own cream (#fff4e6, sampled), so the side bars do not show. -->
+      <div class="relative aspect-[4/5] overflow-hidden rounded-[18px] bg-[#fff4e6]">
         <video
-          data-hero-loop
-          class="absolute inset-0 size-full object-cover"
-          src={`${base}video/hero-loop.mp4`}
-          poster={`${base}video/hero-loop.jpg`}
+          data-hero-video
+          class="absolute inset-0 size-full object-contain"
+          src={`${base}video/say-nicer-1-9x16.mp4`}
+          poster={`${base}video/say-nicer-1-9x16.jpg`}
           autoplay
           muted
           loop
@@ -49,11 +50,11 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 </section>
 
 <script>
-  // Reduced motion keeps the loop still: its poster, the word formed.
-  const loop = document.querySelector<HTMLVideoElement>('[data-hero-loop]');
-  if (loop && matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    loop.autoplay = false;
-    loop.pause();
-    loop.load();
+  // Reduced motion keeps the video still: its poster, «навза́єм» said.
+  const video = document.querySelector<HTMLVideoElement>('[data-hero-video]');
+  if (video && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    video.autoplay = false;
+    video.pause();
+    video.load();
   }
 </script>

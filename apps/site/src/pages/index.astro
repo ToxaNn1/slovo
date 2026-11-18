@@ -55,3 +55,41 @@ const structuredData = JSON.stringify({
   </main>
   <Footer />
 </Base>
+
+<script>
+  // Each section's parts below the first screen rise into place once, as the
+  // reader scrolls to them (global.css `[data-rise]`). Nothing moves for a
+  // reader who asks for less motion.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) continue;
+          observer.unobserve(entry.target);
+          entry.target.dataset['rise'] = 'shown';
+        }
+      },
+      { rootMargin: '0px 0px -8% 0px' },
+    );
+    for (const section of document.querySelectorAll('main > section:not(:first-child)')) {
+      [...section.children].forEach((part, i) => {
+        if (!(part instanceof HTMLElement) || part.getBoundingClientRect().top < innerHeight)
+          return;
+        part.dataset['rise'] = 'hidden';
+        part.style.setProperty('--rise-i', String(Math.min(i, 3)));
+        part.addEventListener('transitionend', function settle(event) {
+          if (
+            event.target !== part ||
+            event.propertyName !== 'translate' ||
+            part.dataset['rise'] !== 'shown'
+          )
+            return;
+          part.removeEventListener('transitionend', settle);
+          delete part.dataset['rise'];
+          part.style.removeProperty('--rise-i');
+        });
+        observer.observe(part);
+      });
+    }
+  }
+</script>

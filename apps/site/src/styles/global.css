@@ -43,6 +43,9 @@
 
   --animate-ray: ray 0.45s steps(2) infinite;
 
+  /* The landing's motion: a strong ease-out for anything entering or answering a press. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
   @keyframes ray {
     50% {
       opacity: 0.25;
@@ -57,6 +60,14 @@
     font-family: var(--font-ui);
     -webkit-font-smoothing: antialiased;
     -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    /* The header's links glide to their sections; from 720 px the header sticks, so a section lands below it. */
+    scroll-behavior: smooth;
+  }
+  @media (width >= 720px) {
+    html {
+      scroll-padding-top: 66px;
+    }
   }
   body {
     font-size: 17px;
@@ -74,8 +85,15 @@
     text-decoration-thickness: 2px;
     text-underline-offset: 4px;
   }
-  a:hover {
-    color: var(--red);
+  @media (hover: hover) and (pointer: fine) {
+    a:hover {
+      color: var(--red);
+    }
+  }
+  a,
+  summary,
+  button {
+    touch-action: manipulation;
   }
   summary {
     list-style: none;
@@ -86,11 +104,33 @@
   }
 }
 
+/*
+ * A section's parts rise into place once, as the reader scrolls to them.
+ * index.astro marks only the parts below the first screen, and only with
+ * JavaScript and motion allowed, so the page never stays hidden without it.
+ * `data-rise` lives just for the transition, so it never overrides a part's own.
+ */
+[data-rise] {
+  transition:
+    opacity 320ms var(--ease-out),
+    translate 320ms var(--ease-out);
+  transition-delay: calc(var(--rise-i, 0) * 60ms);
+}
+/* Hiding is instant: only the rise itself moves. */
+[data-rise='hidden'] {
+  opacity: 0;
+  translate: 0 16px;
+  transition: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation: none !important;
     transition: none !important;
+  }
+  html {
+    scroll-behavior: auto;
   }
 }
