@@ -260,7 +260,6 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
               fields={record.data.fields}
               record={{ at: 'edit', id: open.id, recordVersion: record.data.recordVersion }}
               appeared={record.data.appeared}
-              retired={record.data.retired}
               onWritten={onWritten}
             />
           )}
