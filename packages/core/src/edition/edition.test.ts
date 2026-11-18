@@ -154,7 +154,6 @@ const validConfig = {
     correctionTypeGrid: 'on',
     categoryFeed: 'on',
     categoryKnownFirst: 'on',
-    quietCategories: 'on',
     collectionBoardStyle: 'on',
     collectionLinkCopy: 'on',
     dueQuiz: 'on',
@@ -1059,11 +1058,6 @@ describe('loadEdition', () => {
       'featureSwitches.correctionCategoryScreens',
     ],
     [
-      'a missing quietCategories Feature Switch',
-      withoutSwitch('quietCategories'),
-      'featureSwitches.quietCategories',
-    ],
-    [
       'a missing collectionBoardStyle Feature Switch',
       withoutSwitch('collectionBoardStyle'),
       'featureSwitches.collectionBoardStyle',
@@ -1632,7 +1626,6 @@ const dependentSwitches = [
   ['categoryScreens', ['dashboard', 'wordOfTheDay']],
   ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],
   ['correctionTypeGrid', ['correctionCategoryScreens', 'dashboard', 'wordOfTheDay', 'corrections']],
-  ['quietCategories', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
   ['categoryFeed', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
   ['categoryKnownFirst', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
   ['gameSurvival', ['corrections', 'game']],

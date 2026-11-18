@@ -3,7 +3,6 @@ import type { CategoryKind } from '@slovo/core';
 import { toneByPosition, type CategoryTone } from '@slovo/ui';
 
 import { useComposition } from '../composition';
-import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed } from '../opening';
 
 const none: readonly Category[] = [];
@@ -30,14 +29,9 @@ export function useBlockCategories(of: CategoryKind): readonly Category[] {
   });
 }
 
-/**
- * Whether a Category draws quiet, its k3 screen and quiet tile: its tone is
- * `quiet` and the Edition in effect has `quietCategories` on; off, it draws
- * loud (ADR 0081).
- */
-export function useIsQuiet(): (category: Category) => boolean {
-  const quiet = useEditionInEffect().isFeatureEnabled('quietCategories');
-  return (category) => quiet && category.tone === 'quiet';
+/** Whether a Category draws quiet, its k3 screen and quiet tile: its tone is `quiet` (ADR 0081). */
+export function isQuiet(category: Category): boolean {
+  return category.tone === 'quiet';
 }
 
 /**
@@ -47,7 +41,6 @@ export function useIsQuiet(): (category: Category) => boolean {
 export function useTonesOf(
   quietTone: Extract<CategoryTone, 'quietGrid' | 'quietRail'>,
 ): (categories: readonly Category[]) => (index: number) => CategoryTone {
-  const isQuiet = useIsQuiet();
   return (categories) => (index) => {
     const category = categories[index];
     return category !== undefined && isQuiet(category) ? quietTone : toneByPosition(index);

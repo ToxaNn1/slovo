@@ -133,7 +133,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   categoryFeed: ['categoryScreens'],
   categoryKnownFirst: ['categoryScreens'],
   // The quiet variant is a variant of a Category screen (ADR 0081).
-  quietCategories: ['categoryScreens'],
   notificationTimeStep: ['notifications'],
   // The explainer card asks for the permission the Notifications need.
   notificationExplainer: ['notifications'],

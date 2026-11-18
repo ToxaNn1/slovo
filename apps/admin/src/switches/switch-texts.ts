@@ -442,10 +442,6 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
     name: 'Знайомі спершу',
     line: 'На екрані категорії спершу йдуть слова з позначкою «ЗНАЮ».',
   },
-  quietCategories: {
-    name: 'Тихі категорії',
-    line: 'Тиха категорія має спокійніший вигляд і приглушену плитку.',
-  },
   collectionBoardStyle: {
     name: 'Добірки плитками',
     line: 'Список добірок має вигляд сітки категорій.',

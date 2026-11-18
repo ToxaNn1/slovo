@@ -9632,14 +9632,6 @@
                           ],
                           "type": "string"
                         },
-                        "quietCategories": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "collectionBoardStyle": {
                           "enum": [
                             "on",
@@ -9892,7 +9884,6 @@
                         "correctionTypeGrid",
                         "categoryFeed",
                         "categoryKnownFirst",
-                        "quietCategories",
                         "collectionBoardStyle",
                         "collectionLinkCopy",
                         "dueQuiz",
@@ -11602,14 +11593,6 @@
                           ],
                           "type": "string"
                         },
-                        "quietCategories": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "collectionBoardStyle": {
                           "enum": [
                             "on",
@@ -11862,7 +11845,6 @@
                         "correctionTypeGrid",
                         "categoryFeed",
                         "categoryKnownFirst",
-                        "quietCategories",
                         "collectionBoardStyle",
                         "collectionLinkCopy",
                         "dueQuiz",
@@ -13496,14 +13478,6 @@
                           ],
                           "type": "string"
                         },
-                        "quietCategories": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "collectionBoardStyle": {
                           "enum": [
                             "on",
@@ -13756,7 +13730,6 @@
                         "correctionTypeGrid",
                         "categoryFeed",
                         "categoryKnownFirst",
-                        "quietCategories",
                         "collectionBoardStyle",
                         "collectionLinkCopy",
                         "dueQuiz",

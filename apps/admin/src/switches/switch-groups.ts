@@ -158,7 +158,6 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   correctionTypeGrid: 'feed',
   categoryFeed: 'feed',
   categoryKnownFirst: 'feed',
-  quietCategories: 'feed',
   collectionBoardStyle: 'content',
   collectionLinkCopy: 'content',
   dueQuiz: 'feed',

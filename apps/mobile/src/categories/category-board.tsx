@@ -19,7 +19,7 @@ import {
 import { Redirect, useRouter } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { useBlockCategories, useIsQuiet } from '@/categories/categories';
+import { isQuiet, useBlockCategories } from '@/categories/categories';
 import { useCategoryScreen } from '@/categories/category-screen';
 import { editionStrings } from '@/edition/edition';
 import { ReadFailed } from '@/read-failed';
@@ -67,7 +67,6 @@ export function CategoryRoute({ of }: { of: CategoryKind }) {
  * quiet.
  */
 function CategoryBoardScreen(props: { of: CategoryKind; category: Category; place: number }) {
-  const isQuiet = useIsQuiet();
   const quiet = props.of === 'word' && isQuiet(props.category);
   return (
     <UndoToastProvider>
