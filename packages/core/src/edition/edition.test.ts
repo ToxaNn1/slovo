@@ -110,7 +110,6 @@ const validConfig = {
     crosswordSolvedScreen: 'on',
     crosswordBadgeStamp: 'on',
     gameAnswerCard: 'on',
-    letterTiles: 'on',
     survivalStreak: 'on',
     finishPoster: 'on',
     gameAnswerBanner: 'on',
@@ -417,7 +416,6 @@ describe('loadEdition', () => {
     'crosswordSolvedScreen',
     'crosswordBadgeStamp',
     'gameAnswerCard',
-    'letterTiles',
     'survivalStreak',
     'finishPoster',
     'gameAnswerBanner',
@@ -1613,7 +1611,6 @@ const dependentSwitches = [
   ['crosswordSolvedScreen', ['dailyCrossword', 'game']],
   ['crosswordBadgeStamp', ['dailyCrossword', 'badges', 'xpLog', 'game']],
   ['gameAnswerCard', ['game']],
-  ['letterTiles', ['gameByLetters', 'game']],
   ['survivalStreak', ['gameSurvival', 'game']],
   ['finishPoster', ['game']],
   // The board «slogo game last» parts of a Game (spec #1880).

@@ -32,7 +32,6 @@ function Round({
   expected,
   kind,
   fixed,
-  tiles,
   eraseLabel,
   onAnswer,
 }: {
@@ -40,7 +39,6 @@ function Round({
   expected: readonly string[];
   kind: 'letter' | 'word';
   fixed: readonly FixedChip[] | undefined;
-  tiles: boolean;
   eraseLabel: string | undefined;
   onAnswer: (chosen: number[]) => void;
 }) {
@@ -50,7 +48,6 @@ function Round({
       chips={chips}
       kind={kind}
       fixed={fixed}
-      {...(tiles ? { layout: 'tiles' as const, slots: expected.length } : {})}
       eraseLabel={eraseLabel}
       answer={answer}
       onAnswer={(chosen) => {
@@ -66,7 +63,6 @@ async function renderChips({
   expected = WORD,
   kind = 'letter',
   fixed,
-  tiles = false,
   eraseLabel,
   onAnswer = jest.fn(),
 }: {
@@ -74,7 +70,6 @@ async function renderChips({
   expected?: readonly string[];
   kind?: 'letter' | 'word';
   fixed?: readonly FixedChip[];
-  tiles?: boolean;
   eraseLabel?: string;
   onAnswer?: (chosen: number[]) => void;
 } = {}) {
@@ -85,7 +80,6 @@ async function renderChips({
         expected={expected}
         kind={kind}
         fixed={fixed}
-        tiles={tiles}
         eraseLabel={eraseLabel}
         onAnswer={onAnswer}
       />
@@ -409,45 +403,6 @@ describe('OrderedChips', () => {
 
       expect(fillOf(0)).toBe(rgba(accent));
       expect(shiftOf(0)).toBe(0);
-    });
-  });
-
-  describe('as letter tiles', () => {
-    /** «obrok» shuffled with three decoys: 8 tiles. */
-    const TILES = ['k', 'x', 'o', 'r', 'z', 'b', 'o', 'q'];
-
-    it('stands the tiles, decoys among them, in rows of 4 under a slot for each letter', async () => {
-      await renderChips({ chips: TILES, tiles: true });
-
-      expect(screen.getAllByTestId(/^chips-row-\d+$/)).toHaveLength(2);
-      for (const row of screen.getAllByTestId(/^chips-row-\d+$/)) {
-        expect(within(row).getAllByRole('button')).toHaveLength(4);
-      }
-      expect(
-        screen.getAllByTestId(/^chips-slot-\d+$/, { includeHiddenElements: true }),
-      ).toHaveLength(WORD.length);
-    });
-
-    it('returns the letter of a filled slot tapped to its tile', async () => {
-      await renderChips({ chips: TILES, tiles: true });
-
-      await tap(2, 5);
-      await fireEvent.press(screen.getByTestId('chips-line-0'));
-
-      expect(lineText()).toEqual(['B']);
-      expect(screen.getByTestId('chips-2')).toBeEnabled();
-    });
-
-    it('gives the answer once every slot is filled, decoys left over', async () => {
-      const onAnswer = jest.fn();
-      await renderChips({ chips: TILES, tiles: true, onAnswer });
-
-      await tap(2, 5, 3, 6);
-      expect(onAnswer).not.toHaveBeenCalled();
-      await tap(0);
-
-      expect(onAnswer).toHaveBeenCalledWith([2, 5, 3, 6, 0]);
-      expect(lineText()).toEqual(['O', 'B', 'R', 'O', 'K']);
     });
   });
 });

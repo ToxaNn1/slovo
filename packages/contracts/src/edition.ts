@@ -445,7 +445,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** The inline answer card of a Game Round, in place of the bottom sheet (spec #1674); off while `game` is. */
   gameAnswerCard: FeatureSwitchStateSchema,
   /** The letter tiles of «За літерами»: tiles with decoys tapped into the slots, in place of the text field (spec #1674); off while `gameByLetters` is. */
-  letterTiles: FeatureSwitchStateSchema,
   /** The streak counter of «Виживання»: the right answers in a row and the record (spec #1674); off while `gameSurvival` is. */
   survivalStreak: FeatureSwitchStateSchema,
   /** The «Фініш» poster at the end of a Game and a time-up (spec #1674); off while `game` is. */
