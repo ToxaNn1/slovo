@@ -199,8 +199,8 @@ export type PlayingGame = GameRounds & {
         /**
          * Whether the answered Round shows the answer banner and moves on by
          * itself after its delay, in place of the sheet and its «Далі» (ADR
-         * 0138): as `gameAnswerBanner` said when the Game started, and never
-         * after a pair of a pairs grid or in a Game with no schedule to move on by.
+         * 0138): always, but never after a pair of a pairs grid or in a Game
+         * with no schedule to move on by.
          */
         readonly banner: boolean;
       }
@@ -303,7 +303,7 @@ function createGameInPlay({
   mode: GameMode;
   /** The Lives the Game starts with, which it keeps however the Edition changes; none without Lives. */
   lives: number | undefined;
-  /** Whether the Game shows the answer banner, as `gameAnswerBanner` said when it started, so a mode that moves on waits for it too. */
+  /** Whether the Game shows the answer banner: it does whenever a schedule moves it on, so a mode that moves on waits for it too. */
   banner: boolean;
   /** The Rounds the Game starts over, as the mode planned them. */
   rounds: readonly PlannedRound[];
@@ -821,8 +821,8 @@ export async function openGame({
             planRounds,
             eligible,
             comparison,
-            // Read as the Game starts, as its Lives and time limit are; with no schedule, nothing moves it on.
-            banner: edition.isFeatureEnabled('gameAnswerBanner') && schedule !== undefined,
+            // With no schedule, nothing moves it on.
+            banner: schedule !== undefined,
           })
         : undefined;
     stopTime();

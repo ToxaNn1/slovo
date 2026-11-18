@@ -643,17 +643,20 @@ describe('the Game screen', () => {
       ).toBeOnTheScreen();
       for (let answered = 0; answered < 3; answered += 1) {
         await pickTheWordOfThePrompt();
-        // The next Round comes at once, with no sheet.
+        // The banner shows with no sheet, and the next Round comes 550 ms on, the time running under it.
+        expect(screen.getByTestId('game-answer-banner')).toBeOnTheScreen();
         expect(screen.queryByTestId('game-next')).toBeNull();
+        await pass(550);
         expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
       }
       warning.mockClear();
       await pickAnotherWord();
       expect(warning).toHaveBeenCalled();
       expect(screen.queryByTestId('game-next')).toBeNull();
+      await pass(900);
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
 
-      await pass(5_000);
+      await pass(5_000 - 3 * 550 - 900);
 
       expect(timerLabel()).toBe('лишилося 15 секунд');
       expect(screen.getByTestId('game-timer')).toHaveTextContent('15 с');
@@ -679,9 +682,11 @@ describe('the Game screen', () => {
         expect(timerLabel()).toBe('лишилося 20 секунд');
       });
       await pickTheWordOfThePrompt();
+      await pass(550);
       await pickAnotherWord();
+      await pass(900);
       await pickAnotherWord();
-      await pass(20_000);
+      await pass(20_000 - 550 - 900);
 
       await waitFor(() => {
         expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();

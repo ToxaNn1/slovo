@@ -71,8 +71,7 @@ async function run({
   const app = await openComposition({
     content: createMemoryContentPort({ words: [...words] }),
     edition: testEdition({
-      // The answer banner's shorter delays are tested in `game-play.test.ts`; here «На час» moves on at once, as with it off.
-      isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' && !off.includes(feature),
+      isFeatureEnabled: (feature) => !off.includes(feature),
       userSettingDefaults: { mix: { categoryIds: [...categoryIds] } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
@@ -124,10 +123,15 @@ async function pass(app: Composition, time: ReturnType<typeof handTime>, ms: num
   await app.game.next();
 }
 
-/** Answers the Round in play, right or wrong. */
+/**
+ * Answers the Round in play, right or wrong, and moves on past the answer
+ * banner at once: its delays are tested in `game-play.test.ts`, and no play
+ * time passes.
+ */
 async function pick(app: Composition, right: boolean): Promise<void> {
   const { round } = current(app);
   await app.game.answer({ form: 'pick', option: right ? rightOf(round) : wrongOf(round) });
+  await app.game.next();
 }
 
 describe('«На час» on offer', () => {

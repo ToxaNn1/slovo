@@ -184,7 +184,7 @@ export const GameStringsSchema = z.strictObject({
       /** Its button to the next Round, e.g. «Далі →». */
       next: TextSchema,
     }),
-    /** The answer banner behind `gameAnswerBanner` (ADR 0138). */
+    /** The answer banner (ADR 0138). */
     banner: z.strictObject({
       /** Its head after a right answer, in turn, e.g. «Влучив!». */
       right: z.array(TextSchema).min(1),

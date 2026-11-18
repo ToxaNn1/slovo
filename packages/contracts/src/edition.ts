@@ -442,8 +442,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   crosswordSolvedScreen: FeatureSwitchStateSchema,
   /** The full-screen Badge stamp after a solved Daily Crossword that earns a Badge (ADR 0087); off while `dailyCrossword` or `badges` is. */
   crosswordBadgeStamp: FeatureSwitchStateSchema,
-  /** The answer banner: after an answer a banner tells right or wrong, and the Game moves on by itself after a Core delay, with no «Далі →» (ADR 0138); off, the answer card. Off while `game` is. */
-  gameAnswerBanner: FeatureSwitchStateSchema,
   /** Three Lives: a Game starts with 3 Lives by default (ADR 0137); off, 5. Off while `game` is. */
   /** One Life in «Виживання» (ADR 0137); off, 3. Off while `gameSurvival` is. */
   /** 20 seconds in «На час», then straight to «ФІНІШ» with no time-up poster (ADR 0137); off, 60 seconds and «Час!». Off while `gameTimed` is. */

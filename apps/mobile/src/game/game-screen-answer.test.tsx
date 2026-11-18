@@ -41,7 +41,6 @@ describe('the Game screen', () => {
       await open({
         clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
         schedule: systemSchedule,
-        switchedOn: ['gameAnswerBanner'],
       });
     });
 

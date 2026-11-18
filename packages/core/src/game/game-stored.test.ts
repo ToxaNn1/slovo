@@ -34,8 +34,7 @@ async function open() {
   let waiting: { at: number; run: () => void }[] = [];
   const app = await openComposition({
     content: createMemoryContentPort({ words: [...words] }),
-    // The answer banner's move on is tested in `game-play.test.ts`; here a timed Game moves on at once.
-    edition: testEdition({ isFeatureEnabled: (feature) => feature !== 'gameAnswerBanner' }),
+    edition: testEdition(),
     userState: await seedUserState({}, { port: createMemoryUserStatePort(records) }),
     clock: time.clock,
     schedule: (run, delay) => {
@@ -80,6 +79,7 @@ function rightOf(round: Round): number {
   return optionsOf(round).findIndex(({ text }) => text.replace('́', '') === asked.lemma);
 }
 
+/** Answers the Round in play and moves on past the answer banner at once: its delays are tested in `game-play.test.ts`. */
 async function pick(app: Composition, right: boolean) {
   const { round } = current(app);
   const option = rightOf(round);
@@ -87,6 +87,7 @@ async function pick(app: Composition, right: boolean) {
     form: 'pick',
     option: right ? option : (option + 1) % optionsOf(round).length,
   });
+  await app.game.next();
 }
 
 /** The XP log entries written since the stored ones. */

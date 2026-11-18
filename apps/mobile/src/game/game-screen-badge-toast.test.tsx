@@ -57,14 +57,14 @@ async function renderGameWithCelebrations() {
   await advance(0);
 }
 
-describe('a Badge earned in a Game with the answer banner on', () => {
+describe('a Badge earned in a Game with the answer banner', () => {
   beforeEach(async () => {
     await resetGameScreen();
     jest.useFakeTimers({ now: new Date('2026-10-26T09:00:00Z') });
     await open({
       clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
       schedule: systemSchedule,
-      switchedOn: ['gameAnswerBanner', 'badgeToast'],
+      switchedOn: ['badgeToast'],
     });
   });
 

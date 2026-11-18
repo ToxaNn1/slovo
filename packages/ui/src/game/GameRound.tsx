@@ -34,7 +34,7 @@ import { VowelRound } from './VowelRound';
  * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
  * prompt under its label, the four options and, once answered, the sheet,
  * or the banner when the Core says the answered Round moves on by itself
- * (`gameAnswerBanner`, never after a pair of a pairs grid).
+ * (never after a pair of a pairs grid).
  * It plays the pick form, the vowel form, whose Word stands in the card
  * with each vowel a button, and the pairs form, whose grid stands under the
  * mode's label in place of the card and the options, the chips form, whose
