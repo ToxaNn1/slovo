@@ -10,7 +10,7 @@ Owner decision of 2026-11-17. ADR 0068 says of the one privacy switch «Off, not
 
 **Counts in the admin.** Аналітика shows, for the period and Edition filter:
 
-- **Registered readers**: the number of Accounts (ADR 0162).
+- **Registered readers**: the number of Accounts.
 - **Unregistered readers, at least**: the people active over the last day in PostHog (the `activeByDay` query, only readers who share statistics) minus the number of Accounts, never below 0, labelled as a lower estimate.
 - **Statistics switched off**: the sum of switch-off units.
 

@@ -1,10 +1,10 @@
 ---
-summary: Analytics go through one Core port behind the one privacy switch; questionnaire counters carry no reader id (amends 0060; amended by 0089: the anonymous id is the Install id; amended by 0135: one switch, one screen «Конфіденційність»; amended by 0163: switching off sends one anonymous unit).
+summary: Analytics go through one Core port behind the one privacy switch; questionnaire counters carry no reader id (amended by 0089: the anonymous id is the Install id; amended by 0135: one switch, one screen «Конфіденційність»; amended by 0163: switching off sends one anonymous unit).
 ---
 
 # Analytics go through one port; questionnaire counters carry no reader id
 
-The owner must measure D1/D7/D30 retention and goal completion and learn who the readers are, with no one identifiable. ADR 0060 allowed only anonymous Community Counters and named Analytics among the things to avoid; spec #1358 adds Analytics with the reader's consent.
+The owner must measure D1/D7/D30 retention and goal completion and learn who the readers are, with no one identifiable. The earlier rule allowed only anonymous Community Counters and named Analytics among the things to avoid; spec #1358 adds Analytics with the reader's consent.
 
 **Amended by ADR 0163.** Switching the privacy switch off sends one anonymous unit at that moment and nothing after.
 
@@ -12,7 +12,7 @@ The owner must measure D1/D7/D30 retention and goal completion and learn who the
 
 **One port.** The Core composition gains the port `track(event, properties)` with a typed event union for the 1.0 list: onboarding steps and questionnaire answers, Daily Goal chosen and changed, Game started and finished, the Daily Crossword, Review and Quick Question answers, Daily Goal met, freeze used, Break started, Streak broken, new Level, Badge, notification opened, Share Card shared, Account created, setting changed, screen viewed, Seen, Known and Unknown, Favorites. The Core emits an event where it changes state. The default adapter does nothing. The app shell provides the PostHog adapter: EU host, an anonymous id, no session recording, no tracking prompt, no advertising id, no location, no contacts. The Core imports nothing from PostHog or React Native (ADR 0006).
 
-**One switch, one screen.** «Ділитися анонімною статистикою» gates both the adapter and the Community Counters (ADR 0060). It sits on the screen «Конфіденційність» beside the Data export, not in the Settings list (ADR 0135). Off, nothing is sent and nothing is queued. A Feature Switch of the analytics adapter is required of every Edition and is turned on or off remotely by Rules (ADR 0089).
+**One switch, one screen.** «Ділитися анонімною статистикою» gates both the adapter and the Community Counters. It sits on the screen «Конфіденційність» beside the Data export, not in the Settings list (ADR 0135). Off, nothing is sent and nothing is queued. A Feature Switch of the analytics adapter is required of every Edition and is turned on or off remotely by Rules (ADR 0089).
 
 **Questionnaire counters.** A backend endpoint takes anonymous per-answer increments, like Community Counters: no Session, no reader id, no device id, the Edition in the body, no per-reader rows, rate limits. The same answers also travel as properties of the anonymous Analytics id, which links to nothing else.
 

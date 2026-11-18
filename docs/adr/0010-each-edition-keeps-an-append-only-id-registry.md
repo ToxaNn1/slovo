@@ -1,10 +1,10 @@
 ---
-summary: Every Entry id ever issued is kept; ids are never reused, a Word that goes is Retired. Amended by 0153: the ids live in the content database, the repo has no `content/ids.json`.
+summary: Every Entry id ever issued is kept; ids are never reused, a Word that goes is Retired. The ids live in the content database; the repo has no `content/ids.json`.
 ---
 
 # Each Edition keeps an append-only registry of the Entry ids it has issued
 
-Amended by 0153: the repo keeps no `content/ids.json`; the ids live in the content database (ADR 0090), and an id is still never reused.
+The repo keeps no `content/ids.json`; the ids live in the content database (ADR 0090), and an id is still never reused.
 
 Every Entry id an Edition has ever issued is listed in `content/ids.json`, oldest first. The Language Pack build fails when a listed id has no Entry file, and when an Entry's id is not listed yet. An id therefore never becomes free again: a Word that should go is marked retired, so it stays reachable from Favorites, Collections and History, and no later Entry can take its id over. `pnpm build:pack <edition-id> --record` appends the ids of new Entries; nothing in the tooling removes one, and a line removed by hand shows up as a deletion in review.
 

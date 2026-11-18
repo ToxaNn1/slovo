@@ -1,14 +1,14 @@
 ---
-summary: Every Entry's text is the Edition's own plain Ukrainian, nothing copied from a dictionary, `sources` «Власна лексикографічна редакція», authors only from the public domain; rarity (Words only) by `wordfreq` Zipf on bands of the collection (≥2.5 / 1.93 / 1.48 / >0 / absent → 1–5), +1 for archaic or dialectal, the editor ±1 with a reason, a Word absent from the corpus lowered 1–2 when it is known; NFC and the schema always; nothing written before the owner's yes (amends 0090 for agents); new content gathered with 30% to spare, deduplicated against the snapshot; per-kind rules: Words 1–4 synonyms of their part of speech and 2–3 Examples, Corrections one standard equivalent in the same grammatical form, Idioms an exact Idiom Type and a real figurative meaning, Synonym Rows mixed in tone, Tips readable in seconds with their exceptions; existing Entries rewritten in batches through the admin API (supersedes 0012; amends 0090, 0094, 0095).
+summary: Every Entry's text is the Edition's own plain Ukrainian, nothing copied from a dictionary, `sources` «Власна лексикографічна редакція», authors only from the public domain; rarity (Words only) by `wordfreq` Zipf on bands of the collection (≥2.5 / 1.93 / 1.48 / >0 / absent → 1–5), +1 for archaic or dialectal, the editor ±1 with a reason, a Word absent from the corpus lowered 1–2 when it is known; NFC and the schema always; nothing written before the owner's yes (amends 0090 for agents); new content gathered with 30% to spare, deduplicated against the snapshot; per-kind rules: Words 1–4 synonyms of their part of speech and 2–3 Examples, Corrections one standard equivalent in the same grammatical form, Idioms an exact Idiom Type and a real figurative meaning, Synonym Rows mixed in tone, Tips readable in seconds with their exceptions; existing Entries rewritten in batches through the admin API (supersedes the earlier quoting rules; amends 0090 and 0094).
 ---
 
 # An Entry's text is the Edition's own
 
-Status: accepted (owner, 15.11). Supersedes ADR 0012; amends ADR 0090, 0094 and 0095.
+Status: accepted (owner, 15.11). Supersedes the earlier quoting rules; amends ADRs 0090 and 0094.
 
 ## Context
 
-ADR 0012 had Definitions and Examples copied word for word from СУМ through goroh, and ADR 0094 limited each quotation to one sentence that always names its dictionary. In practice Entries shipped whole dictionary articles: Definitions as СУМ words them, its abbreviations («перев.», «заст.»), etymologies of a thousand characters with «псл.» and reference lists, and Examples by authors whose works are still protected. The owner wants the text to be the Edition's own work, easy for a reader, and free of any claim from a dictionary's rights holder. A dry run on 10 Words (15.11) showed the result and the owner accepted its quality; the owner then set the rules for the other four kinds.
+The earlier rules had Definitions and Examples copied word for word from СУМ through goroh, and ADR 0094 limited each quotation to one sentence that always names its dictionary. In practice Entries shipped whole dictionary articles: Definitions as СУМ words them, its abbreviations («перев.», «заст.»), etymologies of a thousand characters with «псл.» and reference lists, and Examples by authors whose works are still protected. The owner wants the text to be the Edition's own work, easy for a reader, and free of any claim from a dictionary's rights holder. A dry run on 10 Words (15.11) showed the result and the owner accepted its quality; the owner then set the rules for the other four kinds.
 
 ## Decision
 
@@ -16,8 +16,8 @@ ADR 0012 had Definitions and Examples copied word for word from СУМ through g
 
 - Every Definition, meaning, explanation, etymology and history is written by the Edition in plain modern literary Ukrainian. Nothing is copied from a dictionary: no sentence, no construction, no dictionary abbreviation.
 - `sources` is `[{ "title": "Власна лексикографічна редакція" }]`: no address, no dictionary name. Dictionaries stay working material for the editor, never shipped text.
-- An Example or a Literary Use by an author stays only when the author is in the public domain (died 70 or more years ago, as ADR 0045) and the sentence is apt, not coarse or bleak, cleaned of editorial brackets and «..» cuts.
-- Rarity, 1 «чув, не вживаю» to 5 «майже ніхто не знає», follows present-day frequency and recognisability. Only Words carry one; the other kinds have no rarity (ADR 0046, 0051). How a Word's rarity is set is under Words.
+- An Example or a Literary Use by an author stays only when the author is in the public domain (died 70 or more years ago, as the public-domain rule has it) and the sentence is apt, not coarse or bleak, cleaned of editorial brackets and «..» cuts.
+- Rarity, 1 «чув, не вживаю» to 5 «майже ніхто не знає», follows present-day frequency and recognisability. Only Words carry one; the other kinds have no rarity. How a Word's rarity is set is under Words.
 - Every text is in Unicode NFC, and every record matches its schema in `packages/contracts` before it is shown or written.
 - **Nothing is written before the owner confirms it.** An agent shows the result first: «БУЛО / СТАЛО» for a revision, the list of candidates for new content; it writes only after the owner's yes in the current conversation. This replaces, for agents, ADR 0090's «agents publish at once».
 
@@ -51,7 +51,7 @@ ADR 0012 had Definitions and Examples copied word for word from СУМ through g
 
 - The rule reads in 3 to 5 seconds: what to say and what to avoid.
 - A Tip is about live speech (etiquette, verb government, prepositions, stress), not rare spelling exceptions.
-- When the avoided form is standard in another meaning or context, that is an exception in `exceptions` (ADR 0120).
+- When the avoided form is standard in another meaning or context, that is an exception in `exceptions`.
 - At least one Example of the right use, and one for each exception.
 
 ### New content
@@ -62,8 +62,8 @@ ADR 0012 had Definitions and Examples copied word for word from СУМ through g
 
 ## Consequences
 
-- Existing Entries are rewritten in one editorial pass through the admin write API (ADR 0090), kind by kind and in batches, so every save runs the fast checks and leaves the record unchecked for «Перегляд» (ADR 0143). Until an Entry is rewritten, ADR 0094 still binds its old text.
-- The quote check of ADR 0095 has nothing to check in a rewritten Entry: it has no source page, so it drops out of the check.
+- Existing Entries are rewritten in one editorial pass through the admin write API (ADR 0090), kind by kind and in batches, so every save runs the fast checks and leaves the record unchecked for «Перегляд». Until an Entry is rewritten, ADR 0094 still binds its old text.
+- The quote check has nothing to check in a rewritten Entry: it has no source page, so it drops out of the check.
 - The «Джерела» section of the «Умови користування» changes once the pass is done: it no longer names quoted dictionaries.
 - The `pnpm source:*` drafters give raw material; a draft is rewritten before `pnpm content add`.
 - A `history` or `placeName` fact loses its shipped reference (e.g. the register of repressed words). The editor checks it against a reliable source before writing it.
