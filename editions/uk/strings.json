@@ -564,7 +564,7 @@
     "source": "Джерело: {source}",
     "insteadOf": "замість «{form}»",
     "howToSay": "Як правильно?",
-    "reveal": "Показати",
+    "reveal": "Відповідь",
     "literaryUses": "Як пишуть насправді",
     "literaryUseSource": "{author}, «{work}»",
     "literaryUseSourceWithYear": "{author}, «{work}», {year}"
