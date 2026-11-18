@@ -24,3 +24,4 @@ Wave #1992 «SLOVO пропонує». Integration branch feat/1992-slovo-propon
 - 16:57Z ADR 0178 gets the #1997 publish-date rules (pushed to integration)
 - 16:57Z safety net steps back: the coordinator is alive (merged #1996 at 16:55Z); its implementer stopped, nothing pushed by it. ADR 0178 publish-date fold NOT done: still the coordinator's step.
 - 2026-11-18T17:14Z safety net takeover (last commit 2026-11-18T16:57:54Z)
+- 17:20Z ADR 0178 publish-date fold done; merged origin/main (swipeMarks retired, ADR index both); pushed integration
