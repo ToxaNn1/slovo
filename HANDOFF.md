@@ -1,3 +1,5 @@
 # HANDOFF coord/proponuie-1992
 
 - 2026-11-18T15:24:44Z coordinator started; wave #1992 tickets #1994-#1998
+- 2026-11-18T15:26:46Z Postgres 18 cluster recreated (setup hook failed); integration branch feat/1992-slovo-proponuie pushed from origin/main 2fa9a72
+- 2026-11-18T15:26:46Z launching implementers #1994 (rail, contracts, ADR 0178) and #1997 (publish date, migration 0033)
