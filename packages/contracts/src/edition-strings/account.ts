@@ -50,6 +50,8 @@ const SyncStatusStringsSchema = z.strictObject({
 export const AccountStringsSchema = z.strictObject({
   /** The Settings row's value while the reader is signed out. */
   signedOut: TextSchema,
+  /** The line under the screen's name while signed out: why to sign in (Sync between devices, progress kept). */
+  whySignIn: TextSchema,
   /** The button that signs in with Google, above the email field, in the words of Google's branding rules (ADR 0047). */
   signInWithGoogle: TextSchema,
   /** The accessibility label of Apple's own button that signs in with Apple, after Google's, on iOS only (ADR 0047). */

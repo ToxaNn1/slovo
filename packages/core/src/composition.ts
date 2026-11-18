@@ -543,7 +543,6 @@ export async function openComposition({
     userState,
     clock,
     mix,
-    rarityRange,
     xpLog,
     analytics,
   });
@@ -661,7 +660,6 @@ export async function openComposition({
   const badges = await openBadges({
     edition,
     userState,
-    clock,
     xpLog,
     knowledge,
     activeDays,
@@ -725,7 +723,6 @@ export async function openComposition({
     entries,
     wordOfTheDay,
     mix,
-    rarityRange,
     xpLog,
     analytics,
     backend,

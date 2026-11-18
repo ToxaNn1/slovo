@@ -69,6 +69,7 @@ const XpRecord = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('goal-met'), ...Dated }),
   z.object({ kind: z.literal('freeze'), ...Dated }),
   z.object({ kind: z.literal('break'), ...Dated, days: z.number() }),
+  z.object({ kind: z.literal('break-end'), ...Dated, start: z.string() }),
   z.object({ kind: z.literal('badge'), ...Dated, badge: z.string() }),
   z.object({ kind: z.literal('badge-opened'), ...Dated }),
   z.object({ kind: z.literal('wrong-answer'), ...Dated }),
@@ -332,7 +333,7 @@ export function recordsBlocks(
     ['correctionsWorkedThrough.', countedInto(workedThrough)],
     ['curatedCollections.opened.', countedInto(curatedOpened)],
     [
-      'game.best.',
+      'game.bestRight.',
       (id, value) => {
         if (typeof value !== 'number') return false;
         bests.push({ id, result: value });

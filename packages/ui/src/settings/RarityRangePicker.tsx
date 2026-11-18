@@ -23,6 +23,7 @@ import { useEdition } from '../providers/EditionProvider';
 import { useHaptics } from '../providers/HapticsProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
+import { rarityRangeLabel } from './rarity-range-label';
 import { motion, rarityRangeDrawing as drawing, settingsRowDrawing, typeStyle } from '../tokens';
 
 /** Both ends of a Rarity Range, the lowest rarity first; they may be the same. */
@@ -32,16 +33,22 @@ export interface RarityRangeValue {
 }
 
 /**
- * Where a tap on the bar of `rarity` takes the range: a bar outside it pulls
- * the nearer end out to it; an end of a range of several bars leaves that
- * rarity alone («лише 3»); a bar inside moves the nearer end in to it, the top
- * on a tie. A tap on the one bar of a single rarity changes nothing.
+ * Where a tap on the bar of `rarity` takes the range, among the rarities from
+ * `lowest` to `highest`: a bar outside it pulls the nearer end out to it; an
+ * end of a range of several bars leaves that rarity alone («лише 3»); a bar
+ * inside moves the nearer end in to it, the top on a tie. A tap on the one bar
+ * of a single rarity takes every rarity back.
  */
-function tapped(range: RarityRangeValue, rarity: number): RarityRangeValue {
+function tapped(
+  range: RarityRangeValue,
+  rarity: number,
+  lowest: number,
+  highest: number,
+): RarityRangeValue {
   const { from, to } = range;
   if (rarity < from) return { from: rarity, to };
   if (rarity > to) return { from, to: rarity };
-  if (from === to) return range;
+  if (from === to) return { from: lowest, to: highest };
   if (rarity === from || rarity === to) return { from: rarity, to: rarity };
   return rarity - from < to - rarity ? { from: rarity, to } : { from, to: rarity };
 }
@@ -51,7 +58,8 @@ const same = (a: RarityRangeValue, b: RarityRangeValue) => a.from === b.from && 
 /**
  * «Рідкість» in Settings, the Rarity Range (ADR 0156): its heading and the
  * range it holds, «від 2 до 4» or «лише 3», over one slanted bar per rarity,
- * each taller than the last; the bars of the range are red. A tap on a bar
+ * each taller than the last; the bars of the range are red; and a line under
+ * them that says how a range is picked. A tap on a bar
  * moves the range as `tapped` says, from the range shown; a drag across the bars picks the range
  * from the bar it starts on to the one under the finger, shown as it goes and
  * handed to `onChange` when the finger lifts. A bar the range takes springs
@@ -100,7 +108,7 @@ export function RarityRangePicker({
   });
 
   const tap = (rarity: number) => {
-    const next = tapped(held, rarity);
+    const next = tapped(held, rarity, rarities[0] ?? rarity, rarities.at(-1) ?? rarity);
     if (same(next, held)) return;
     haptics.impactLight();
     hand(next);
@@ -178,9 +186,7 @@ export function RarityRangePicker({
           testID={`${testID}-value`}
           style={[typeStyle('rangeValue', tokens), { color: colors.ink }]}
         >
-          {shown.from === shown.to
-            ? fill(texts.single, { rarity: String(shown.from) })
-            : fill(texts.range, { from: String(shown.from), to: String(shown.to) })}
+          {rarityRangeLabel(texts, shown)}
         </Text>
       </View>
       <GestureDetector gesture={pan}>
@@ -201,6 +207,13 @@ export function RarityRangePicker({
           ))}
         </View>
       </GestureDetector>
+      <Text
+        {...voice}
+        testID={`${testID}-hint`}
+        style={[typeStyle('hint', tokens), styles.hint, { color: colors.muted }]}
+      >
+        {texts.hint}
+      </Text>
     </View>
   );
 }
@@ -291,6 +304,7 @@ const styles = StyleSheet.create({
     marginBottom: drawing.headerGap,
   },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: drawing.gap },
+  hint: { marginTop: drawing.headerGap },
   slot: { flex: 1, justifyContent: 'flex-end' },
   face: {
     borderRadius: drawing.radius,

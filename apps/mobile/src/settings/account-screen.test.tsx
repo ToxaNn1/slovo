@@ -154,6 +154,24 @@ describe("the Account screen's name", () => {
   });
 });
 
+describe('the line on why to sign in on the Account screen', () => {
+  it('stands over the sign-in buttons while signed out, and leaves once the code is sent and once signed in', async () => {
+    const { backend, account } = createFakeBackend();
+    await renderScreen({ backend });
+
+    expect(screen.getByText(strings.whySignIn)).toBeOnTheScreen();
+
+    await fireEvent.changeText(screen.getByTestId('account-email'), 'olena@ukr.net');
+    await settle(() => fireEvent.press(screen.getByTestId('account-send-code')));
+    expect(screen.queryByText(strings.whySignIn)).not.toBeOnTheScreen();
+
+    const code = account.sentCodes[0]?.code ?? '';
+    await settle(() => fireEvent.changeText(screen.getByLabelText(strings.codeLabel), code));
+    expect(screen.getByTestId('account-signed-in-email')).toBeOnTheScreen();
+    expect(screen.queryByText(strings.whySignIn)).not.toBeOnTheScreen();
+  });
+});
+
 describe('«Увійти через Google» on the SLOVO ID screen', () => {
   it('shows above the email field while signed out, with the switch on and a client id', async () => {
     await renderScreen();

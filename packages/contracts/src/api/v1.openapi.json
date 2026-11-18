@@ -9112,14 +9112,6 @@
                           ],
                           "type": "string"
                         },
-                        "noCounters": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "dailyGoal": {
                           "enum": [
                             "on",
@@ -9177,14 +9169,6 @@
                           "type": "string"
                         },
                         "badgeSheet": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "badgeToast": {
                           "enum": [
                             "on",
                             "off",
@@ -9312,14 +9296,6 @@
                           ],
                           "type": "string"
                         },
-                        "eveningNotification": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "notificationFarewell": {
                           "enum": [
                             "on",
@@ -9440,14 +9416,6 @@
                           ],
                           "type": "string"
                         },
-                        "swipeMarks": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gesturesHintDemo": {
                           "enum": [
                             "on",
@@ -9457,14 +9425,6 @@
                           "type": "string"
                         },
                         "gesturesHintAgain": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "savedSwipesOff": {
                           "enum": [
                             "on",
                             "off",
@@ -9763,7 +9723,6 @@
                         "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
-                        "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
@@ -9772,7 +9731,6 @@
                         "badges",
                         "levelLadder",
                         "badgeSheet",
-                        "badgeToast",
                         "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",
@@ -9788,7 +9746,6 @@
                         "gameHubGroups",
                         "gameHubRecord",
                         "gameModeToast",
-                        "eveningNotification",
                         "notificationFarewell",
                         "notificationExplainer",
                         "notificationTimeStep",
@@ -9804,10 +9761,8 @@
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",
-                        "swipeMarks",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",
@@ -11010,14 +10965,6 @@
                           ],
                           "type": "string"
                         },
-                        "noCounters": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "dailyGoal": {
                           "enum": [
                             "on",
@@ -11075,14 +11022,6 @@
                           "type": "string"
                         },
                         "badgeSheet": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "badgeToast": {
                           "enum": [
                             "on",
                             "off",
@@ -11210,14 +11149,6 @@
                           ],
                           "type": "string"
                         },
-                        "eveningNotification": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "notificationFarewell": {
                           "enum": [
                             "on",
@@ -11338,14 +11269,6 @@
                           ],
                           "type": "string"
                         },
-                        "swipeMarks": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gesturesHintDemo": {
                           "enum": [
                             "on",
@@ -11355,14 +11278,6 @@
                           "type": "string"
                         },
                         "gesturesHintAgain": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "savedSwipesOff": {
                           "enum": [
                             "on",
                             "off",
@@ -11661,7 +11576,6 @@
                         "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
-                        "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
@@ -11670,7 +11584,6 @@
                         "badges",
                         "levelLadder",
                         "badgeSheet",
-                        "badgeToast",
                         "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",
@@ -11686,7 +11599,6 @@
                         "gameHubGroups",
                         "gameHubRecord",
                         "gameModeToast",
-                        "eveningNotification",
                         "notificationFarewell",
                         "notificationExplainer",
                         "notificationTimeStep",
@@ -11702,10 +11614,8 @@
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",
-                        "swipeMarks",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",
@@ -12832,14 +12742,6 @@
                           ],
                           "type": "string"
                         },
-                        "noCounters": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "dailyGoal": {
                           "enum": [
                             "on",
@@ -12897,14 +12799,6 @@
                           "type": "string"
                         },
                         "badgeSheet": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "badgeToast": {
                           "enum": [
                             "on",
                             "off",
@@ -13032,14 +12926,6 @@
                           ],
                           "type": "string"
                         },
-                        "eveningNotification": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "notificationFarewell": {
                           "enum": [
                             "on",
@@ -13160,14 +13046,6 @@
                           ],
                           "type": "string"
                         },
-                        "swipeMarks": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
                         "gesturesHintDemo": {
                           "enum": [
                             "on",
@@ -13177,14 +13055,6 @@
                           "type": "string"
                         },
                         "gesturesHintAgain": {
-                          "enum": [
-                            "on",
-                            "off",
-                            "unavailable"
-                          ],
-                          "type": "string"
-                        },
-                        "savedSwipesOff": {
                           "enum": [
                             "on",
                             "off",
@@ -13483,7 +13353,6 @@
                         "quickQuestionWordMeaning",
                         "playStep",
                         "levels",
-                        "noCounters",
                         "dailyGoal",
                         "seenWordXp",
                         "enoughForToday",
@@ -13492,7 +13361,6 @@
                         "badges",
                         "levelLadder",
                         "badgeSheet",
-                        "badgeToast",
                         "badgeFamiliesOverview",
                         "streakFreezeCard",
                         "breakCard",
@@ -13508,7 +13376,6 @@
                         "gameHubGroups",
                         "gameHubRecord",
                         "gameModeToast",
-                        "eveningNotification",
                         "notificationFarewell",
                         "notificationExplainer",
                         "notificationTimeStep",
@@ -13524,10 +13391,8 @@
                         "previousWords",
                         "correctionTypes",
                         "curatedCollections",
-                        "swipeMarks",
                         "gesturesHintDemo",
                         "gesturesHintAgain",
-                        "savedSwipesOff",
                         "wordTabs",
                         "sourceTab",
                         "tipExceptions",

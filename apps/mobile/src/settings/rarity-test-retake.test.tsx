@@ -190,8 +190,8 @@ describe('Settings › «Пройти тест ще раз»', () => {
 
     await open(rarityTest.retake);
     expect(screen.getByText('1 з 10')).toBeOnTheScreen();
-    // Both Words of rarity 1 are known, the first of rarity 2 is not.
-    for (const known of [true, true, false, true, true, true, true, true, true, true]) {
+    // One stray «Не знаю» of rarity 2; no Word of rarity 4 or 5 is known.
+    for (const known of [true, true, false, true, true, true, false, false, false, false]) {
       await fireEvent.press(
         screen.getByRole('button', { name: known ? knowledge.known : knowledge.unknown }),
       );
@@ -200,16 +200,17 @@ describe('Settings › «Пройти тест ще раз»', () => {
 
     expect(
       screen.getByRole('header', {
-        name: 'Твоя рідкість — до 2. Стрічка бере незнайоме, рідші почекають.',
+        name: 'Рідкість тепер від 1 до 3',
       }),
     ).toBeOnTheScreen();
-    expect(screen.getByText('9 з 10 слів знайомі.')).toBeOnTheScreen();
-    expect(screen.queryByText(/від \d до/)).toBeNull();
+    expect(
+      screen.getByText('5 з 10 слів знайомі. Змінити рідкість можна в Налаштуваннях.'),
+    ).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: rarityTest.done }));
     await settle();
     expect(screen.getByRole('header', { name: editionStrings.settings.title })).toBeOnTheScreen();
 
-    expect(screen.getByTestId('settings-rarity-bar-2')).toBeSelected();
+    expect(screen.getByTestId('settings-rarity-bar-3')).toBeSelected();
     expect(screen.getByTestId('settings-rarity-bar-4')).not.toBeSelected();
   });
 

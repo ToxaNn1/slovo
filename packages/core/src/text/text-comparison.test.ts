@@ -187,6 +187,19 @@ describe('a text found in another', () => {
     expect(ua.find('Ма́ти, ти тут?', 'ти', { wholeWord: true })).toEqual({ start: 7, end: 9 });
   });
 
+  it('grows to the edges of the words it falls in when asked, an ending and a Stress mark included', () => {
+    const grown = (text: string, sought: string) => {
+      const range = ua.find(text, sought, { toWordEdges: true });
+      return range === undefined ? undefined : text.slice(range.start, range.end);
+    };
+    expect(grown('Гружчики пішли.', 'гружчик')).toBe('Гружчики');
+    expect(grown('Вони приймали міри вчасно.', 'приймал')).toBe('приймали');
+    expect(grown('Дзво́нарі прийшли.', 'дзвонар')).toBe('Дзво́нарі');
+    expect(grown('Підкова і кова', 'ков')).toBe('Підкова');
+    expect(grown('ось-ось прийде', 'ось')).toBe('ось-ось');
+    expect(grown('старий ганок', 'двір')).toBeUndefined();
+  });
+
   it('finds nothing in a text that does not hold it', () => {
     expect(ua.find('старий ганок', 'двір')).toBeUndefined();
     expect(ua.find('кіт', '')).toBeUndefined();

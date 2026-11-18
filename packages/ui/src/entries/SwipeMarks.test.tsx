@@ -51,7 +51,6 @@ const strings = testStrings({
   knowledge: {
     known: 'Known',
     unknown: 'Unknown',
-    correctionKnownHint: 'I already say it right',
     review: 'Review',
     swipe: {
       edges: { known: 'KNOW', unknown: "DON'T KNOW" },
@@ -140,7 +139,6 @@ function MarkedCard({
       card={card}
       selfCheck={selfCheck}
       slots={{
-        slot: 'corner',
         corner: undefined,
         swipe: {
           mark,
@@ -384,7 +382,7 @@ describe('SwipeMarks', () => {
       providers(
         <EntryCard
           card={correction}
-          slots={{ slot: 'corner', corner: undefined, swipe: { ...swipe, mark: undefined } }}
+          slots={{ corner: undefined, swipe: { ...swipe, mark: undefined } }}
         />,
       ),
     );
@@ -393,7 +391,7 @@ describe('SwipeMarks', () => {
       providers(
         <EntryCard
           card={correction}
-          slots={{ slot: 'corner', corner: undefined, swipe: { ...swipe, mark: 'unknown' } }}
+          slots={{ corner: undefined, swipe: { ...swipe, mark: 'unknown' } }}
         />,
       ),
     );

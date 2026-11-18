@@ -27,7 +27,7 @@ export const XpSourceSchema = z.literal([
  * One record of the XP log (ADR 0066): its local date and instant, and what
  * it records: XP a learning action earned on its date, a Streak freeze
  * consumed for its date, a missed day it covers, a Break started on its
- * date, with its length in days, the Daily Goal the reader set from that
+ * date, with its length in days, a Break ended early, the Daily Goal the reader set from that
  * day on, a Badge earned on its date, a Badge the reader first opened, or a
  * Game Round answered wrong (ADR 0085). The kinds the ADR names besides these come with their own
  * tickets. The stored XP entry keeps the fields of every source; it reads as
@@ -59,6 +59,18 @@ const StoredXpRecordSchema = z.discriminatedUnion('kind', [
     at: InstantSchema,
     /** The length in days, 1 to 7 (ADR 0066): a longer record, from Sync or storage, is dropped. */
     days: z.number().int().min(1).max(BREAK_DAYS_AT_MOST),
+  }),
+  /**
+   * The reader ended the Break that starts on `start` early, on `date` (ADR 0180):
+   * the Break started at `startedAt` covers the days before `date` only, and
+   * one started again later on that day is not ended; one per Break by its id.
+   */
+  z.object({
+    kind: z.literal('break-end'),
+    date: LocalDateKeySchema,
+    at: InstantSchema,
+    start: LocalDateKeySchema,
+    startedAt: InstantSchema,
   }),
   /**
    * A Daily Goal in XP, set before the Daily Goal counted Words (ADR 0074):

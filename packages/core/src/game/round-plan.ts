@@ -102,8 +102,11 @@ function checkedRound(mode: GameMode, round: RoundContent, upTo: number): RoundC
  * Makes the `RoundPlanner` of the Game over History and the Knowledge Marks,
  * for `openGame`. Up to `WEAK_ROUNDS` Rounds of a Game, in every mode, ask
  * about eligible Entries the reader is weak on, marked Unknown or due for
- * Review (ADR 0043, 0052), and come first; the Rounds already `asked` about
- * such Entries count. The others ask first about the pool, the eligible
+ * Review (ADR 0043, 0052); the Rounds already `asked` about such Entries
+ * count. They take places drawn at random among the first `GAME_ROUNDS`
+ * Rounds a plan makes, so no two Games start alike (ADR 0190); every Round is
+ * built at its own place, and a weak Round the mode cannot build at its
+ * place moves to the next one. The others ask first about the pool, the eligible
  * Entries in History when at least `GAME_ROUNDS` of them make a Round (a
  * place name makes none, ADR 0024), else every eligible one; should the pool
  * make too few fair Rounds, the other eligible Entries fill in, the weak ones
@@ -154,80 +157,128 @@ export function createRoundPlanner({
       random,
     );
     const others = unasked.filter((entry) => !weak.has(entry.id));
+    /** The answers in turns of their kinds in a mode whose Rounds take turns, else as given. */
+    const ordered = (answers: readonly AskableEntry[]) =>
+      mode.takesTurns === true ? inTurns(answers) : answers;
+    const weakInOrder = ordered(weakDrawn);
+    const othersInOrder = ordered([
+      ...shuffled(
+        others.filter((entry) => pool.has(entry)),
+        random,
+      ),
+      ...shuffled(
+        others.filter((entry) => !pool.has(entry)),
+        random,
+      ),
+    ]);
     const built: PlannedRound[] = [];
-    /** The Rounds built, each pair of a grid counted. */
+    /** The Rounds built, each pair of a grid counted: the place of the next one, from 0. */
     let planned = 0;
     /** The Entries the Rounds built ask about. */
     const taken = new Set<string>();
     /** How many more Rounds may ask about Entries the reader is weak on. */
     let weakLeft = WEAK_ROUNDS - [...asked].filter((id) => weak.has(id)).length;
-    /**
-     * Builds a Round about each answer in turn not asked yet, until there are
-     * `count`; within `WEAK_ROUNDS` when `weakAtMost`, so a weak answer past
-     * them waits and the next ones hold no more weak Entries than are left.
-     */
-    function build(answers: readonly AskableEntry[], weakAtMost: boolean): void {
+    /** How many of the Rounds built ask about Entries the reader is weak on. */
+    let weakBuilt = 0;
+    /** The places of the weak Rounds, drawn among the first `GAME_ROUNDS` planned; none without a weak Entry to ask. */
+    const weakPlaces =
+      weakLeft > 0 && weakInOrder.length > 0
+        ? shuffled(
+            Array.from({ length: Math.min(count, GAME_ROUNDS) }, (_, place) => place),
+            random,
+          ).slice(0, Math.min(weakLeft, weakInOrder.length))
+        : [];
+    /** How many weak Rounds are due by the place and not built: one that could not be built waits here. */
+    const weakDue = (place: number, weakAsked: number) =>
+      weakPlaces.filter((weakPlace) => weakPlace <= place).length - weakAsked;
+    /** Builds the Round about the answer at the next place, the answers after it `next`; whether the mode made one. */
+    function build(answer: AskableEntry, next: readonly AskableEntry[]): boolean {
+      const upTo = count - planned;
+      const round = mode.buildRound({
+        answer,
+        eligible,
+        next,
+        upTo,
+        round: from + planned,
+        random,
+        edition,
+        comparison,
+      });
+      if (round === undefined) return false;
+      const content = checkedRound(mode, round, upTo);
+      for (const id of new Set([answer.id, ...entriesIn(content)])) {
+        taken.add(id);
+        if (!weak.has(id)) continue;
+        weakLeft -= 1;
+        weakBuilt += 1;
+      }
+      built.push({ entry: answer, content });
+      planned += roundsIn(content);
+      return true;
+    }
+    /** The Entries not asked yet the plan would ask after the answer, in order: the weak ones at their places, then every other. */
+    function after(answer: AskableEntry, othersFrom: number): AskableEntry[] {
+      const free = (entry: AskableEntry) => !taken.has(entry.id) && entry !== answer;
+      const weakNext = weakInOrder.filter(free);
+      const othersNext = othersInOrder.slice(othersFrom).filter(free);
+      const isWeak = weak.has(answer.id) ? 1 : 0;
+      let left = weakLeft - isWeak;
+      let weakAsked = weakBuilt + isWeak;
+      const next: AskableEntry[] = [];
+      let other = 0;
+      for (let place = planned + 1; place < count; place += 1) {
+        const weakAnswer = left > 0 && weakDue(place, weakAsked) > 0 ? weakNext.shift() : undefined;
+        const nextAnswer = weakAnswer ?? othersNext[other];
+        if (nextAnswer === undefined) break;
+        if (weakAnswer === undefined) other += 1;
+        else {
+          left -= 1;
+          weakAsked += 1;
+        }
+        next.push(nextAnswer);
+      }
+      return [...next, ...othersNext.slice(other)];
+    }
+    /** Builds a Round about each answer in turn not asked yet, until there are `count`. */
+    function fill(answers: readonly AskableEntry[]): void {
       for (const [place, answer] of answers.entries()) {
         if (planned >= count) return;
         if (taken.has(answer.id)) continue;
-        if (weakAtMost && weak.has(answer.id) && weakLeft <= 0) continue;
-        let weakNext = weakLeft - (weak.has(answer.id) ? 1 : 0);
-        const next = answers.slice(place + 1).filter((entry) => {
-          if (taken.has(entry.id)) return false;
-          if (!weakAtMost || !weak.has(entry.id)) return true;
-          weakNext -= 1;
-          return weakNext >= 0;
-        });
-        const upTo = count - planned;
-        const round = mode.buildRound({
+        build(
           answer,
-          eligible,
-          next,
-          upTo,
-          round: from + planned,
-          random,
-          edition,
-          comparison,
-        });
-        if (round === undefined) continue;
-        const content = checkedRound(mode, round, upTo);
-        for (const id of new Set([answer.id, ...entriesIn(content)])) {
-          taken.add(id);
-          if (weak.has(id)) weakLeft -= 1;
-        }
-        built.push({ entry: answer, content });
-        planned += roundsIn(content);
+          answers.slice(place + 1).filter((entry) => !taken.has(entry.id)),
+        );
       }
     }
-    /** The answers in turns of their kinds in a mode whose Rounds take turns, else as given. */
-    const ordered = (answers: readonly AskableEntry[]) =>
-      mode.takesTurns === true ? inTurns(answers) : answers;
-    build(
-      [
-        ...ordered(weakDrawn),
-        ...ordered([
-          ...shuffled(
-            others.filter((entry) => pool.has(entry)),
-            random,
-          ),
-          ...shuffled(
-            others.filter((entry) => !pool.has(entry)),
-            random,
-          ),
-        ]),
-      ],
-      true,
-    );
-    build(weakDrawn, false);
+    /** The place in `othersInOrder` of the next Entry to try: one that made no Round is not tried again. */
+    let othersAt = 0;
+    while (planned < count) {
+      const tried = othersAt;
+      if (
+        weakLeft > 0 &&
+        weakDue(planned, weakBuilt) > 0 &&
+        weakInOrder.some((answer) => !taken.has(answer.id) && build(answer, after(answer, tried)))
+      ) {
+        continue;
+      }
+      let made = false;
+      while (!made && othersAt < othersInOrder.length) {
+        const answer = othersInOrder[othersAt];
+        othersAt += 1;
+        if (answer === undefined || taken.has(answer.id)) continue;
+        made = build(answer, after(answer, othersAt));
+      }
+      if (!made) break;
+    }
+    fill(weakDrawn);
     if (planned < count && asked.size > 0 && roundLimitOf(mode) === undefined) {
-      build(
+      fill(
         ordered(
           shuffled(
             eligible.filter((entry) => !taken.has(entry.id)),
             random,
           ),
         ),
-        false,
       );
     }
     return planned === count ? { rounds: built } : { refusal: 'too-few-entries' };

@@ -58,7 +58,12 @@ export {
 export { entryCardTitle } from './feed/entry-feed-card';
 export { type FeedNotice, LATER_QUESTIONS, type LaterQuestion } from './feed-notice';
 export { ENOUGH_FOR_TODAY_SEEN, type FirstWeekDay, type YesterdayQuiz } from './feed/feed-notices';
-export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
+export {
+  answerBannerDelay,
+  type GameModeOffer,
+  type GameState,
+  type OfferedBest,
+} from './game/game';
 export {
   type CurrentGame,
   type GameEnd,
@@ -100,11 +105,7 @@ export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
 export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
 export type { DueQuestion } from './knowledge/due-quiz';
-export {
-  openCounterReads,
-  type CounterLine,
-  type CounterReads,
-} from './community-counters/counter-reads';
+export { openCounterReads, type CounterReads } from './community-counters/counter-reads';
 export { openCounterSending } from './community-counters/counter-sending';
 export {
   createAnalytics,
@@ -168,6 +169,7 @@ export type {
 } from './ports';
 export { createMedia, PREFETCH_CARDS, type Media } from './media/media';
 export { type ProgressState } from './progress/progress';
+export { BREAK_DAYS_AT_MOST } from './progress/streak';
 export type { CrosswordSolve, XpLogState } from './progress/xp-log';
 export type { BadgeState } from './progress/badges';
 export { totalFor, type LevelMilestone, type LevelState } from './progress/levels';

@@ -63,7 +63,7 @@ export const correctionMode: GameMode = {
     const right = mainEquivalentOf(answer);
     const options = shuffled([right, ...distractors], random);
     const prompt = answer.examplePair.nonStandard;
-    const highlight = comparison.find(prompt, answer.nonStandardForm);
+    const highlight = comparison.find(prompt, answer.nonStandardForm, { toWordEdges: true });
     return {
       form: 'pick',
       prompt,

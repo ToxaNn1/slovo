@@ -1,40 +1,38 @@
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+
 import { nativeModules } from '../device/device-native-modules';
 
-/** What «Про застосунок» names of the code the app runs (ADR 0062). */
+/** What «Про SLOVO» names of the code the app runs (ADR 0062). */
 export interface InstalledBuild {
-  /** The app version of the installed build, «0.9». */
+  /** The app's own version, from its app config, «0.9». */
   readonly version: string;
-  /** The build number TestFlight accepted the build with. */
-  readonly build: string;
-  /** The id of the OTA update the app runs, or undefined while it runs without updates. */
-  readonly updateId: string | undefined;
+  /**
+   * The build number TestFlight accepted the build with, or undefined under
+   * Expo Go, whose binary is not the app's, and on a binary that lacks the
+   * module reporting it.
+   */
+  readonly build: string | undefined;
 }
 
 type ApplicationModule = typeof import('expo-application');
-type UpdatesModule = typeof import('expo-updates');
 
 /**
- * The installed build and the update it runs, as `expo-application` and
- * `expo-updates` report them, or undefined while the installed binary lacks
- * the module that reports the version (a dev client built before the 0.9
- * batch). Both modules are required here (and `expo-updates` for the Update channel in `device-facts`) and nowhere else: a static import
- * of a module the binary lacks stops the app at start.
+ * The app's version, as its app config names it, and the build number
+ * `expo-application` reports. The native version is not read: under Expo Go
+ * it is Expo Go's own («58.0.7»). `expo-application` is required here and
+ * nowhere else: a static import of a module the binary lacks stops the app at
+ * start.
  */
-export function installedBuild(): InstalledBuild | undefined {
+export function installedBuild(): InstalledBuild {
+  const version = Constants.expoConfig?.version ?? '';
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+    return { version, build: undefined };
+  }
   const application = nativeModules.load(
     'application',
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     () => require('expo-application') as ApplicationModule,
   );
-  if (application === undefined) return undefined;
-  const updates = nativeModules.load(
-    'updates',
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    () => require('expo-updates') as UpdatesModule,
-  );
-  return {
-    version: application.nativeApplicationVersion ?? '',
-    build: application.nativeBuildVersion ?? '',
-    updateId: updates?.updateId ?? undefined,
-  };
+  const build = application?.nativeBuildVersion ?? undefined;
+  return { version, build: build === '' ? undefined : build };
 }

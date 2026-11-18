@@ -9,7 +9,7 @@ import {
 import { createFakeBackend } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
-import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
+import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import PrivacyScreen from '../app/settings/privacy';
@@ -184,5 +184,20 @@ describe('Settings › «Конфіденційність»', () => {
 
     expect(statsSwitch()).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: 'Експортувати мої дані' })).not.toBeOnTheScreen();
+  });
+});
+
+describe('Privacy › its header (app pass 91)', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await renderPrivacy();
+
+    expect(
+      screen.getByRole('header', { name: editionStrings.settings.privacy.title }),
+    ).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('privacy-scroll')).queryByRole('header', {
+        name: editionStrings.settings.privacy.title,
+      }),
+    ).toBeNull();
   });
 });

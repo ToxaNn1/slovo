@@ -232,7 +232,7 @@ describe('openUserState', () => {
     }
   });
 
-  it('makes the single best result a 0.8.11 app kept the Best result of «Вгадай слово», waiting to sync, in one write with its version', async () => {
+  it('makes the single best result a 0.8.11 app kept its old Rounds-passed record of «Вгадай слово», waiting to sync, in one write with its version', async () => {
     const records = new Map([
       ['schema.version', '5'],
       ['app.installed', 'true'],
@@ -258,8 +258,12 @@ describe('openUserState', () => {
       new Map([['schema.version', '8']]),
       new Map([['schema.version', '9']]),
     ]);
-    expect(await userState.read(userStateRecords.gameBest.record('guess-word'))).toBe(9);
-    expect(await userState.read(userStateRecords.gameBest.record('correction'))).toBeUndefined();
+    expect(await userState.read(userStateRecords.gameBestRoundsPassed.record('guess-word'))).toBe(
+      9,
+    );
+    expect(
+      await userState.read(userStateRecords.gameBestRoundsPassed.record('correction')),
+    ).toBeUndefined();
   });
 
   it('gives «Вгадай слово» no Best result when 0.8.11 kept none, or one that does not read', async () => {

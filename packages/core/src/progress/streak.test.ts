@@ -377,6 +377,8 @@ describe('the Break', () => {
       firstDay: '2026-10-28',
       lastDay: '2026-11-01',
       nextStart: '2026-11-27',
+      // 30 October to 1 November, today included.
+      daysLeft: 3,
     });
     if (state.kind !== 'running') throw new Error('The Break does not run');
     // The 14 days ending the day after the Break's last day: 20 October to 2 November.
@@ -427,15 +429,19 @@ describe('the Break', () => {
     expect(reset.app.progress.state).toMatchObject({ streak: 0, bestStreak: 4 });
   });
 
-  it('refuses a second Break within 30 days and allows one from the 30th day', async () => {
+  it('refuses a second Break within 30 days once its 7 days are spent and allows one from the 30th day', async () => {
     const records = earned(new Map<string, string>(), 5, ...october(10, 13));
     await (await openOn(records, '2026-10-14', BREAK_ON)).app.streakBreak.start(3);
+    await (await openOn(records, '2026-10-20', BREAK_ON)).app.streakBreak.start(4);
 
     const within = await openOn(records, '2026-11-12', BREAK_ON);
     expect(within.app.streakBreak.state).toEqual({ kind: 'waiting', nextStart: '2026-11-13' });
     expect(await within.app.streakBreak.start(1)).toBe('refused');
     expect(within.events.filter(([event]) => event === 'breakStarted')).toEqual([]);
-    expect(breaks(records)).toEqual([{ date: '2026-10-14', days: 3 }]);
+    expect(breaks(records)).toEqual([
+      { date: '2026-10-14', days: 3 },
+      { date: '2026-10-20', days: 4 },
+    ]);
 
     const running = await openOn(records, '2026-10-15', BREAK_ON);
     expect(running.app.streakBreak.state).toMatchObject({ kind: 'running', lastDay: '2026-10-16' });
@@ -444,7 +450,80 @@ describe('the Break', () => {
     const later = await openOn(records, '2026-11-13', BREAK_ON);
     expect(later.app.streakBreak.state).toEqual({ kind: 'available', longest: 7 });
     expect(await later.app.streakBreak.start(1)).toBe('started');
-    expect(breaks(records)).toHaveLength(2);
+    expect(breaks(records)).toHaveLength(3);
+  });
+
+  // ADR 0180: «Завершити перерву» ends it early and its unused days come back.
+  it('ends early: today counts again and the days not used come back for a later Break', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    await (await openOn(records, '2026-10-14', BREAK_ON)).app.streakBreak.start(7);
+
+    const back = await openOn(records, '2026-10-16', BREAK_ON);
+    expect(await back.app.streakBreak.end()).toBe('ended');
+    // 14 and 15 October were Break days; 5 of the 7 are left in the 30 days.
+    expect(back.app.streakBreak.state).toEqual({ kind: 'available', longest: 5 });
+    await earnRounds(back.app, 5, records);
+    expect(back.app.progress.state).toMatchObject({ streak: 5, freezesHeld: 2 });
+
+    // 17 October is no Break day any more: missing it takes a freeze.
+    const later = await openOn(records, '2026-10-19', BREAK_ON);
+    expect(later.app.progress.state).toMatchObject({ streak: 5, freezesHeld: 0 });
+    expect(frozenDays(records)).toEqual(['2026-10-17', '2026-10-18']);
+    expect(await later.app.streakBreak.start(6)).toBe('refused');
+    expect(await later.app.streakBreak.start(5)).toBe('started');
+    expect(later.app.streakBreak.state).toMatchObject({ kind: 'running', lastDay: '2026-10-23' });
+  });
+
+  it('gives all 7 days back when ended on its first day, and can start again that day', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    const { app, time } = await openOn(records, '2026-10-14', BREAK_ON);
+    await app.streakBreak.start(3);
+
+    time.advance(60_000);
+    expect(await app.streakBreak.end()).toBe('ended');
+    expect(app.streakBreak.state).toEqual({ kind: 'available', longest: 7 });
+    time.advance(60_000);
+    expect(await app.streakBreak.start(2)).toBe('started');
+    expect(app.streakBreak.state).toMatchObject({ kind: 'running', lastDay: '2026-10-15' });
+
+    const reopened = await openOn(records, '2026-10-15', BREAK_ON);
+    expect(reopened.app.streakBreak.state).toMatchObject({
+      kind: 'running',
+      lastDay: '2026-10-15',
+    });
+  });
+
+  it('holds the earlier end of two devices that ended the same Break on different days', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    const at = '2026-10-14T06:00:00.000Z';
+    records.set(
+      'xp.seed-break',
+      JSON.stringify({ kind: 'break', date: '2026-10-14', at, days: 7 }),
+    );
+    for (const date of ['2026-10-17', '2026-10-16']) {
+      records.set(
+        `xp.seed-end-${date}`,
+        JSON.stringify({
+          kind: 'break-end',
+          date,
+          at: `${date}T06:00:00.000Z`,
+          start: '2026-10-14',
+          startedAt: at,
+        }),
+      );
+    }
+
+    const { app } = await openOn(records, '2026-10-16', BREAK_ON);
+    expect(app.streakBreak.state).toEqual({ kind: 'available', longest: 5 });
+  });
+
+  it('refuses to end with no Break running, with nothing written', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    const { app } = await openOn(records, '2026-10-14', BREAK_ON);
+    const before = records.size;
+
+    expect(await app.streakBreak.end()).toBe('refused');
+    expect(records.size).toBe(before);
   });
 
   it('refuses a length of none or over 7 days', async () => {

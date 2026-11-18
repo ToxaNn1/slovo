@@ -48,20 +48,20 @@ export default function NotificationsScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <BackHeader
-            titleRole="settingsSubTitle"
-            title={strings.title}
-            back={{
-              label: editionStrings.settings.title,
-              testID: 'notifications-back',
-              onPress: () => {
-                router.back();
-              },
-            }}
-          />
-        </View>
+      <View style={styles.bar}>
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={strings.title}
+          back={{
+            label: editionStrings.settings.title,
+            testID: 'notifications-back',
+            onPress: () => {
+              router.back();
+            },
+          }}
+        />
+      </View>
+      <ScrollView testID="notifications-scroll" contentContainerStyle={styles.content}>
         {state.permission === 'not-asked' && (
           <View style={styles.enable}>
             <Button testID="notifications-enable" label={strings.enable} onPress={askPermission} />
@@ -103,8 +103,9 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
-  header: { paddingBottom: space[2] },
+  // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
+  bar: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[2] },
+  content: { paddingHorizontal: space[5], paddingBottom: space[8] },
   section: { marginTop: space[6] },
   enable: { marginBottom: space[6] },
   denied: { gap: space[3], marginBottom: space[6] },

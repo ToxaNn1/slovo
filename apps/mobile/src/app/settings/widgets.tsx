@@ -55,20 +55,22 @@ export default function WidgetsScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* The title beside the back tile, as on every screen a Settings row opens (owner 08.11). */}
+      {/* The title beside the back tile, as on every screen a Settings row opens (owner 08.11). */}
+      <View style={styles.bar}>
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={strings.title}
+          back={{
+            label: editionStrings.settings.title,
+            testID: 'widget-guide-back',
+            onPress: () => {
+              router.back();
+            },
+          }}
+        />
+      </View>
+      <ScrollView testID="widgets-scroll" contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <BackHeader
-            titleRole="settingsSubTitle"
-            title={strings.title}
-            back={{
-              label: editionStrings.settings.title,
-              testID: 'widget-guide-back',
-              onPress: () => {
-                router.back();
-              },
-            }}
-          />
           <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
             {strings.subtitle}
           </Text>
@@ -91,6 +93,8 @@ export default function WidgetsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
-  header: { paddingBottom: space[4], gap: space[2] },
+  // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
+  bar: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[2] },
+  content: { paddingHorizontal: space[5], paddingBottom: space[8] },
+  header: { paddingBottom: space[4] },
 });

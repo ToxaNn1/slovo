@@ -208,13 +208,27 @@ export type PlayingGame = GameRounds & {
 
 /**
  * How long the answer banner shows before the Game moves on by itself, in
- * milliseconds (ADR 0138): after a right and a wrong answer, and shorter in a
- * Game Mode with a time limit, whose clock keeps running under it.
+ * milliseconds (ADR 0138, 0179): after a right and a wrong answer, and in a
+ * Game Mode with a time limit, whose clock keeps running under it. A wrong
+ * answer in a Game with no time limit keeps its banner, with the right
+ * answer, until «Далі».
  */
-export const ANSWER_BANNER_DELAYS = {
-  untimed: { right: 950, wrong: 1600 },
-  timed: { right: 550, wrong: 900 },
+const ANSWER_BANNER_DELAYS = {
+  untimed: { right: 950, wrong: undefined },
+  timed: { right: 550, wrong: 3000 },
 } as const;
+
+/**
+ * How long the banner of an answered Round shows before the Game moves on by
+ * itself, in milliseconds; undefined when it waits for «Далі»: with no banner,
+ * or after a wrong answer in a Game with no time limit (ADR 0179).
+ */
+export function answerBannerDelay(game: CurrentGame): number | undefined {
+  if (game.status !== 'answered' || !game.banner) return undefined;
+  return ANSWER_BANNER_DELAYS[game.timeLimit === undefined ? 'untimed' : 'timed'][
+    game.answered.kind
+  ];
+}
 
 /** A Game the moment it ends, before its end is counted. */
 type EndedGame = GameRounds & { readonly status: GameOverStatus };
@@ -475,7 +489,8 @@ export interface GameState {
  * the app session and never in the user state. A Game asks as many
  * different eligible Entries of the kinds its mode asks about as the mode's
  * Round limit, 15 by default (`roundsToPlanOf`), each pair of a grid
- * counted: up to 5 the reader is weak on, first (ADR 0043, 0052), the rest
+ * counted: up to 5 the reader is weak on, at places drawn at random among
+ * its first 15 Rounds (ADR 0043, 0052, 0190), the rest
  * those in History when there are at least 15, else any (ADR 0024). A mode
  * with no Round limit asks them again, reshuffled, once it has asked them all. A mode may set its own Lives too, or none, and a time limit (ADR 0052). Playing never writes Seen, History or Active Days; a Round
  * answered right writes its XP, and a finished Game its mode's Best result,
@@ -512,7 +527,7 @@ export interface Game {
   /**
    * «Далі» after an answer: at 0 Lives the Game is lost; after the last Round
    * of the mode's limit, or the last one it has, it is won; otherwise the next Round comes. A Game that ends with more
-   * Rounds passed than the best result becomes it, kept before it shows; when
+   * right answers than the best result makes them it, kept before it shows; when
    * that write fails, nothing changes. Nothing changes before an answer.
    */
   next(): Promise<void>;
@@ -571,12 +586,10 @@ const inPlay = <Game extends { readonly status: GameStatus }>(
   game.status === 'playing' || game.status === 'answered';
 
 /**
- * The result of a finished Game, which its mode's Best result keeps: the
- * right answers in a mode with no Lives, such as «На час», else the Rounds
- * passed (ADR 0052).
+ * The result of a finished Game, which its mode's Best result keeps: its
+ * right answers, in every mode, as its result screen counts them (ADR 0052).
  */
-const resultOf = (over: EndedGame): number =>
-  over.lives === undefined ? over.played.filter(({ right }) => right).length : over.roundsPassed;
+const resultOf = (over: EndedGame): number => over.played.filter(({ right }) => right).length;
 
 /**
  * How a Game just over ended, by its status: its last Life lost, its time up,
@@ -848,15 +861,15 @@ export async function openGame({
 
   /**
    * With the answer banner on, moves the Game on from the answered Round by
-   * itself once its delay has passed and what the screen waits for has come,
+   * itself once its delay, if it has one, has passed and what the screen waits for has come,
    * unless the Game moved on, ended or was left since. A Round answered
    * with no banner, such as a pair of a pairs grid, waits for «Далі». A move
    * on that fails to write takes the banner down, so the sheet's «Далі»
    * tries again.
    */
   function moveOnLater(shown: PlayingGame): void {
-    if (schedule === undefined || shown.status !== 'answered' || !shown.banner) return;
-    const delays = ANSWER_BANNER_DELAYS[shown.timeLimit === undefined ? 'untimed' : 'timed'];
+    const delay = answerBannerDelay(shown);
+    if (schedule === undefined || delay === undefined) return;
     stopMoveOn();
     cancelMoveOn = schedule(() => {
       const waits = moveOnWaits;
@@ -876,7 +889,7 @@ export async function openGame({
           }),
         )
         .catch(() => undefined);
-    }, delays[shown.answered.kind]);
+    }, delay);
   }
 
   /** Whether the play time of the Game has run out by the clock. */
@@ -951,7 +964,7 @@ export async function openGame({
   }
 
   /**
-   * Ends the Game, its Rounds passed the best result when they beat it, kept
+   * Ends the Game, its right answers the best result when they beat it, kept
    * in the user state in one write with the XP of the last Round, of the
    * finished Game and of the new Best result, so a failed write changes
    * nothing, and offers the widget hint when it is due and a Life is left. A
@@ -963,10 +976,10 @@ export async function openGame({
     roundXp?: Omit<XpAward, 'amount'>,
     roundAmount = 0,
   ): Promise<void> {
-    const result = resultOf(ended);
+    // The right answers are the Game's result, which its mode's Best result keeps.
+    const right = resultOf(ended);
     const best = state.bestResults[ended.modeId];
-    const beaten = best === undefined || result > best;
-    const right = ended.played.filter((round) => round.right).length;
+    const beaten = best === undefined || right > best;
     // A Game with no right answer still sets the mode's first Best result but
     // earns no XP for it: the bonus rewards effort, not random tapping (story 3).
     const bestXp = beaten && right > 0;
@@ -981,7 +994,7 @@ export async function openGame({
     ];
     await writeAwards(
       [...(roundXp === undefined ? [] : [roundXp]), ...awards],
-      beaten ? gameBest.record(bestIdOf(ended.modeId)).change(result) : new Map(),
+      beaten ? gameBest.record(bestIdOf(ended.modeId)).change(right) : new Map(),
     );
     const over: GameOver = {
       ...ended,
@@ -989,7 +1002,7 @@ export async function openGame({
         played: ended.played.length,
         right,
         xp: earned + roundAmount + awards.reduce((sum, { amount }) => sum + amount, 0),
-        newBest: beaten && result > 0,
+        newBest: beaten && right > 0,
       }),
     };
     void analytics
@@ -1006,10 +1019,10 @@ export async function openGame({
     change({
       ...state,
       modes: state.modes.map((offer) =>
-        offer.modeId === mode?.id ? { ...offer, best: offeredBest(mode, result) } : offer,
+        offer.modeId === mode?.id ? { ...offer, best: offeredBest(mode, right) } : offer,
       ),
       current: state.current === game ? over : state.current,
-      bestResults: beaten ? { ...state.bestResults, [over.modeId]: result } : state.bestResults,
+      bestResults: beaten ? { ...state.bestResults, [over.modeId]: right } : state.bestResults,
     });
   }
 

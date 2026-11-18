@@ -45,7 +45,6 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   breakCard: ['xpLog'],
   calendarDayLines: ['xpLog'],
   badgeSheet: ['xpLog', 'badges'],
-  badgeToast: ['xpLog', 'badges'],
   badgeFamiliesOverview: ['xpLog', 'badges'],
   profile: ['xpLog'],
   profileConfirmedByRarity: ['profile', 'confirmedEntries'],
@@ -95,15 +94,11 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   correctionTypes: ['dashboard', 'corrections'],
   // The Curated Collections rail is a Dashboard block (ADR 0076).
   curatedCollections: ['dashboard'],
-  // A swipe sets a Knowledge Mark.
-  swipeMarks: ['knowledge'],
   dueQuiz: ['knowledge'],
   collectionLinkCopy: ['collectionLinks'],
   // The demo plays the side swipes on the Feed's card (ADR 0112).
-  gesturesHintDemo: ['swipeMarks'],
-  gesturesHintAgain: ['swipeMarks'],
-  // Only the side swipes are taken off an Entry opened from Saved.
-  savedSwipesOff: ['swipeMarks'],
+  gesturesHintDemo: ['knowledge'],
+  gesturesHintAgain: ['knowledge'],
   // The source tab is the last of the Entry card's tabs (ADR 0116).
   sourceTab: ['wordTabs'],
   // «Винятки» is a tab of the Tip card's tabs (ADR 0120).

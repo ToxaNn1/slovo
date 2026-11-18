@@ -4,7 +4,7 @@ import { useShown } from '../shown-in-effect';
 
 /**
  * The Streak the seventh first-week card shows, or undefined while the reader
- * doesn't see it: the statistics switched off or «Приховати Серію» on.
+ * doesn't see it: the statistics switched off or «Без лічильників» on.
  */
 export function useFirstWeekStreak(): number | undefined {
   const shown = useShown().stats;

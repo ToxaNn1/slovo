@@ -19,7 +19,6 @@ import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
 import type { Backend, Clock } from '../ports';
 import type { XpLog } from '../progress/xp-log';
-import type { RarityRangeSetting } from '../entries/rarity-range';
 import {
   applyAnswer,
   dailyGoalAsked,
@@ -113,8 +112,8 @@ export interface Onboarding {
   next(): Promise<void>;
   /**
    * Answers the question on screen with the option `answerId` and goes on:
-   * «Рівень» sets the Rarity Range, or with «Не знаю» opens the Rarity Test,
-   * and «Навіщо» the Mix kind weights by the Edition's mapping. The answer is counted by the backend with no reader id
+   * «Рівень» sets nothing (ADR 0183), or with «Не знаю» opens the Rarity Test,
+   * and «Навіщо» sets the Mix kind weights by the Edition's mapping. The answer is counted by the backend with no reader id
    * while the reader shares their anonymous statistics; a count that fails is
    * lost. An id that is no option, or another step on screen, does nothing.
    */
@@ -158,7 +157,6 @@ export async function openOnboarding({
   entries,
   wordOfTheDay,
   mix,
-  rarityRange,
   xpLog,
   analytics,
   backend,
@@ -176,7 +174,6 @@ export async function openOnboarding({
   >;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   mix: Pick<Mix, 'setKindWeight'>;
-  rarityRange: Pick<RarityRangeSetting, 'set'>;
   xpLog: Pick<XpLog, 'setDailyGoal'>;
   analytics: Pick<Analytics, 'track'>;
   backend: Pick<Backend, 'counters'> | undefined;
@@ -219,7 +216,7 @@ export async function openOnboarding({
     if (kind === 'notificationTime') return { kind, ...place, times: offeredTimes };
     if (kind === 'level') {
       const options = questionnaire.level.filter(
-        (option) => 'rarityCeiling' in option || edition.isFeatureEnabled('rarityTest'),
+        (option) => !('rarityTest' in option) || edition.isFeatureEnabled('rarityTest'),
       );
       return { kind, ...place, options: options.map(({ id, label }) => ({ id, label })) };
     }
@@ -324,7 +321,7 @@ export async function openOnboarding({
       endStep(async ({ kind, number, total }) => {
         if (kind !== 'level' && kind !== 'why') return;
         const rarityTest = kind === 'level' && opensRarityTest(answerId);
-        if (!rarityTest && !(await applyAnswer({ edition, mix, rarityRange }, kind, answerId)))
+        if (!rarityTest && !(await applyAnswer({ edition, userState, mix }, kind, answerId)))
           return;
         await count(kind, answerId);
         analytics

@@ -42,6 +42,7 @@ export function markStateOf(badge: BadgeGridItem): BadgeMarkState {
  * Badges screen each Badge is a card (ADR 0145): its mark at 96 over its
  * name, `conditionOf` and `statusOf` (`badge-<id>-name`,
  * `badge-<id>-condition`, `badge-<id>-status`).
+ * With `counts` false («Без лічильників», ADR 0188) a family's count is left out.
  * The marks carry the test IDs `badge-<id>-mark`, a family's count
  * `badge-family-<family>-count`.
  */
@@ -52,6 +53,7 @@ export function BadgeGrid<B extends BadgeGridItem>({
   statusOf,
   conditionOf,
   size = 'profile',
+  counts = true,
 }: {
   families: readonly BadgeFamily[];
   badges: readonly B[];
@@ -61,6 +63,8 @@ export function BadgeGrid<B extends BadgeGridItem>({
   /** What a Badge's condition asks, written under its mark on the Badges screen. */
   conditionOf?: (badge: B) => string;
   size?: 'profile' | 'screen';
+  /** Whether each family's head shows how many of it are earned. */
+  counts?: boolean;
 }) {
   const screen = size === 'screen';
   // The Profile's marks fill five columns of the grid's width, as the board's
@@ -102,19 +106,21 @@ export function BadgeGrid<B extends BadgeGridItem>({
             >
               {family.name}
             </Text>
-            <Text
-              testID={`badge-family-${family.id}-count`}
-              {...voice}
-              style={[
-                typeStyle(screen ? 'progressCount' : 'badgeFamily', tokens),
-                { color: colors.muted },
-              ]}
-            >
-              {fill(words.earnedOf, {
-                earned: String(members.filter(({ earned }) => earned).length),
-                total: String(members.length),
-              })}
-            </Text>
+            {counts && (
+              <Text
+                testID={`badge-family-${family.id}-count`}
+                {...voice}
+                style={[
+                  typeStyle(screen ? 'progressCount' : 'badgeFamily', tokens),
+                  { color: colors.muted },
+                ]}
+              >
+                {fill(words.earnedOf, {
+                  earned: String(members.filter(({ earned }) => earned).length),
+                  total: String(members.length),
+                })}
+              </Text>
+            )}
           </View>
           <View style={screen ? styles.cards : styles.marks}>
             {members.map((badge) => (

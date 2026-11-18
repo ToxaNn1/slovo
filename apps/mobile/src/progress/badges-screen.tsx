@@ -1,9 +1,8 @@
 import {
-  BackLink,
+  BackHeader,
   BadgeFamilies,
   BadgeGrid,
   fill,
-  ScreenTitle,
   space,
   typeStyle,
   useEdition,
@@ -18,13 +17,14 @@ import { conditionOf, useBadgeOpening, useBadgeStatus } from './badge-opening';
 import { edition, editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed } from '../opening';
+import { useShown } from '../shown-in-effect';
 
 const strings = editionStrings.settings.badges;
 
 /**
  * The Badge families overview, while its Feature Switch is on, then every
  * Badge of the Edition as a card, by the Edition's Badge families, under how
- * many of all are earned; each card shows its name, its condition and its
+ * many of all are earned (left out with «Без лічильників», ADR 0188); each card shows its name, its condition and its
  * status, «Отримано» or «Ще ні · N%» (ADR 0145). A tap opens it
  * (`useBadgeOpening`).
  */
@@ -36,6 +36,7 @@ function Badges() {
   const { statusOf } = useBadgeStatus();
   const { onPress, opening } = useBadgeOpening();
   const familiesShown = useEditionInEffect().isFeatureEnabled('badgeFamiliesOverview');
+  const shown = useShown();
 
   return (
     <>
@@ -44,20 +45,23 @@ function Badges() {
           <BadgeFamilies families={edition.badgeFamilies} badges={badges} />
         </View>
       )}
-      <Text
-        {...voice}
-        testID="badges-count"
-        style={[typeStyle('progressCount', tokens), styles.count, { color: colors.muted }]}
-      >
-        {fill(strings.earnedOf, {
-          earned: String(badges.filter(({ earned }) => earned).length),
-          total: String(badges.length),
-        })}
-      </Text>
+      {shown.badgeCounts && (
+        <Text
+          {...voice}
+          testID="badges-count"
+          style={[typeStyle('progressCount', tokens), styles.count, { color: colors.muted }]}
+        >
+          {fill(strings.earnedOf, {
+            earned: String(badges.filter(({ earned }) => earned).length),
+            total: String(badges.length),
+          })}
+        </Text>
+      )}
       <BadgeGrid
         families={edition.badgeFamilies}
         badges={badges}
         size="screen"
+        counts={shown.badgeCounts}
         statusOf={statusOf}
         conditionOf={conditionOf}
         onPress={onPress}
@@ -79,16 +83,17 @@ export function BadgesScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <BackLink
-          testID="badges-back"
-          label={editionStrings.settings.title}
-          onPress={() => {
-            router.back();
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={strings.title}
+          back={{
+            label: editionStrings.settings.title,
+            testID: 'badges-back',
+            onPress: () => {
+              router.back();
+            },
           }}
         />
-        <View style={styles.section}>
-          <ScreenTitle>{strings.title}</ScreenTitle>
-        </View>
         <Badges />
       </ScrollView>
     </SafeAreaView>

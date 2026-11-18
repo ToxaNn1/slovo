@@ -28,8 +28,8 @@ export function timePickerAvailable(): boolean {
 
 /**
  * The system time picker in a bottom sheet: it starts at `value`, «Готово»
- * hands the picked time to `onPick`, and a tap on the scrim, a drag down or
- * VoiceOver's escape closes it without a pick. The screen opens it only
+ * hands the picked time to `onPick`, and «Скасувати», a tap on the scrim, a
+ * drag down on its top or VoiceOver's escape close it without a pick. The screen opens it only
  * while `timePickerAvailable()`.
  */
 export function TimePickerSheet({
@@ -45,12 +45,20 @@ export function TimePickerSheet({
 }) {
   return (
     <BottomSheet visible={visible} onClose={onClose} testID="time-picker-sheet">
-      <SheetContent value={value} onPick={onPick} />
+      <SheetContent value={value} onPick={onPick} onCancel={onClose} />
     </BottomSheet>
   );
 }
 
-function SheetContent({ value, onPick }: { value: Date; onPick: (picked: Date) => void }) {
+function SheetContent({
+  value,
+  onPick,
+  onCancel,
+}: {
+  value: Date;
+  onPick: (picked: Date) => void;
+  onCancel: () => void;
+}) {
   const { colors, colorScheme } = useTokens();
   const { voice } = useEdition();
   const strings = editionStrings.notifications;
@@ -85,6 +93,12 @@ function SheetContent({ value, onPick }: { value: Date; onPick: (picked: Date) =
             onPick(picked);
           }}
         />
+        <Button
+          testID="time-picker-cancel"
+          variant="neutral"
+          label={strings.cancel}
+          onPress={onCancel}
+        />
       </View>
     </>
   );
@@ -92,5 +106,5 @@ function SheetContent({ value, onPick }: { value: Date; onPick: (picked: Date) =
 
 const styles = StyleSheet.create({
   picker: { alignItems: 'center', paddingVertical: space[2] },
-  done: { marginTop: space[4] },
+  done: { marginTop: space[4], gap: space[3] },
 });

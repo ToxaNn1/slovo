@@ -3,10 +3,8 @@ import { z } from 'zod';
 import { TextSchema } from '../shared';
 import { pluralOf, templateOf } from './shared';
 
-/** The texts of sharing an Entry: the share button, the share sheet and the Share Card's own labels. */
+/** The texts of sharing an Entry: the share sheet and the Share Card's own labels. */
 export const ShareStringsSchema = z.strictObject({
-  /** The action row's share button, as VoiceOver reads it: what a tap will do. */
-  button: TextSchema,
   /** The title of the sheet with the Share Card's preview. */
   title: TextSchema,
   /** What the sheet's format control picks, as VoiceOver reads it before the format's name. */

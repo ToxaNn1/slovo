@@ -239,7 +239,9 @@ describe('the 0.8.13 strings', () => {
       subtitle: '10 слів — і Стрічка підбере слова, нові саме для тебе',
       progress: '{n} з {total}',
       retake: 'Перевірити рівень ще раз',
-      result: 'Твоя рідкість — до {n}. Стрічка бере незнайоме, рідші почекають.',
+      resultChanged: 'Рідкість тепер {range}',
+      resultKept: 'Рідкість лишається {range}',
+      known: '{known} з {total} слів знайомі. Змінити рідкість можна в Налаштуваннях.',
     });
     expect(parsed.knowledge).toMatchObject({ known: 'Знаю', unknown: 'Не знаю' });
   });
@@ -338,7 +340,10 @@ describe('the 0.8.13 strings', () => {
   );
 
   it.each([
-    ['rarityTest.result', { rarityTest: { ...strings['rarityTest'], result: 'Ваш рівень' } }],
+    [
+      'rarityTest.resultChanged',
+      { rarityTest: { ...strings['rarityTest'], resultChanged: 'Рідкість' } },
+    ],
     ['rarityTest.progress', { rarityTest: { ...strings['rarityTest'], progress: '{n} з 10' } }],
     ['search.resultLabel', { search: { ...strings['search'], resultLabel: '{kind}' } }],
   ])('needs every placeholder in %s', (path, changed) => {
@@ -408,7 +413,6 @@ describe('the 0.8.14 strings', () => {
   it('the UA Edition carries the agreed Mistake Report texts verbatim', () => {
     expect(parsed.mistakeReport).toEqual({
       action: 'Повідомити про помилку',
-      tile: 'Помилка',
       types: {
         typo: 'Друкарська помилка',
         stress: 'Наголос',
@@ -440,22 +444,6 @@ describe('the 0.8.14 strings', () => {
   });
 
   it.each([
-    [1, '«Знаю» — 1 з 1 читача · зберегли 0'],
-    [2, '«Знаю» — 1 з 2 читачів · зберегли 0'],
-    [5, '«Знаю» — 1 з 5 читачів · зберегли 0'],
-    [21, '«Знаю» — 1 з 21 читача · зберегли 0'],
-  ])('the Ukrainian counter line of %i readers reads «%s»', (total, line) => {
-    const counters = parsed.knowledge.communityCounters;
-
-    expect(
-      fill(counters.line, {
-        known: countText(counters.known, total, { known: '1' }),
-        saved: fill(counters.saved, { saved: '0' }),
-      }),
-    ).toBe(line);
-  });
-
-  it.each([
     [1, 'до Улюбленого додав 1 читач'],
     [2, 'до Улюбленого додали 2 читачі'],
     [5, 'до Улюбленого додали 5 читачів'],
@@ -475,7 +463,6 @@ describe('the 0.8.14 strings', () => {
     ['settings', 'seasonalDecor'],
     ['settings', 'reduceMotion'],
     ['settings', 'anonymousStats'],
-    ['knowledge', 'communityCounters'],
     ['feedNotices', 'communityWord'],
     ['wordCard', 'illustration'],
   ])('every Edition needs %s.%s', (group, key) => {
@@ -486,19 +473,17 @@ describe('the 0.8.14 strings', () => {
     expect(issuesOf({ ...strings, [group]: without })).toEqual([`${group}.${key}`]);
   });
 
-  it.each([
-    ['knowledge.communityCounters.known.other', 'knowledge', 'communityCounters', 'known'],
-    ['knowledge.communityCounters.saved', 'knowledge', 'communityCounters', 'saved'],
-    ['knowledge.communityCounters.line', 'knowledge', 'communityCounters', 'line'],
-    ['feedNotices.communityWord.added.other', 'feedNotices', 'communityWord', 'added'],
-  ])('needs every placeholder in %s', (path, group, area, key) => {
-    const groupStrings = strings[group] as Record<string, Record<string, unknown>>;
-    const value = groupStrings[area]?.[key];
-    const broken = typeof value === 'string' ? 'текст' : { ...(value as object), other: 'текст' };
-    const changed = { ...groupStrings, [area]: { ...groupStrings[area], [key]: broken } };
+  it.each([['feedNotices.communityWord.added.other', 'feedNotices', 'communityWord', 'added']])(
+    'needs every placeholder in %s',
+    (path, group, area, key) => {
+      const groupStrings = strings[group] as Record<string, Record<string, unknown>>;
+      const value = groupStrings[area]?.[key];
+      const broken = typeof value === 'string' ? 'текст' : { ...(value as object), other: 'текст' };
+      const changed = { ...groupStrings, [area]: { ...groupStrings[area], [key]: broken } };
 
-    expect(issuesOf({ ...strings, [group]: changed })).toEqual([path]);
-  });
+      expect(issuesOf({ ...strings, [group]: changed })).toEqual([path]);
+    },
+  );
 
   it('needs the {lemma} of the Illustration label', () => {
     const wordCard = { ...strings['wordCard'], illustration: 'Ілюстрація' };
@@ -989,6 +974,16 @@ describe('the board 11 strings', () => {
       '50',
       'none',
     ]);
+    expect(parsed.settings.dailyGoal.explanations['10']).toBe(
+      'Десять слів на день — легкий початок, коли часу обмаль.',
+    );
+  });
+
+  it('the UA Edition names the Category «Фразеологізми» by its set expressions and proverbs', () => {
+    expect(parsed.mix.idioms).toEqual({
+      title: 'Фразеологізми',
+      subtitle: 'Сталі вирази й прислів’я з їхнім походженням',
+    });
   });
 
   it('the UA Edition carries the reset sheet, the Break, the Hidden and the Widgets texts verbatim', () => {
@@ -996,7 +991,7 @@ describe('the board 11 strings', () => {
       button: 'Скинути прогрес',
       title: 'СКИНУТИ ПРОГРЕС?',
       message:
-        'Серія, XP, відзнаки, рекорди ігор, перерва і підказки зникнуть назавжди. Збережені слова й колекції залишаться.',
+        'Серія, XP, відзнаки, рекорди ігор і перерва зникнуть назавжди. Збережені слова й колекції залишаться.',
       cancel: 'СКАСУВАТИ',
       confirm: 'СКИНУТИ',
       done: 'Прогрес скинуто. Слова збережено.',
@@ -1004,6 +999,7 @@ describe('the board 11 strings', () => {
     expect(parsed.settings.streakBreak.explanation).toBe(
       'Серія завмре, нагадування замовкнуть. Повертайся, коли зручно.',
     );
+    expect(parsed.hidden.title).toBe('Приховані записи');
     expect(parsed.hidden.subtitle).toBe('Те, що сховано зі Стрічки.');
     expect(parsed.hidden.show).toBe('Показати');
     expect(parsed.settings.widgets).toEqual({
@@ -1019,8 +1015,9 @@ describe('the board 11 strings', () => {
     expect(parsed.settings.questionnaireRetake.title).toBe('Анкета: підлаштувати Стрічку');
     expect(parsed.rarityTest).toMatchObject({
       question: 'Чи знаєш ти це слово?',
-      resultLine: 'Твоя рідкість — до {n}. Стрічка бере незнайоме, рідші почекають.',
-      known: '{known} з {total} слів знайомі.',
+      resultChanged: 'Рідкість тепер {range}',
+      resultKept: 'Рідкість лишається {range}',
+      known: '{known} з {total} слів знайомі. Змінити рідкість можна в Налаштуваннях.',
       again: 'Перевірити рівень ще раз',
     });
     expect(parsed.mix.selectedOf).toBe('{selected} з {total} обрано');
@@ -1595,7 +1592,6 @@ describe('the 0.6 share strings group', () => {
   });
 
   it.each([
-    'button',
     'title',
     'format',
     'story',

@@ -75,12 +75,6 @@ export interface Shown {
   readonly shareCountersSetting: boolean;
   /** «Експортувати мої дані» on the privacy screen (ADR 0135). */
   readonly dataExport: boolean;
-  /**
-   * The Settings switch of the counters: «Без лічильників» while its Feature
-   * Switch is on; else «Приховати Серію» of 0.9 while the statistics are on;
-   * else none.
-   */
-  readonly countersSetting: 'noCounters' | 'hideStreak' | undefined;
   /** The «Вчу» card of the Saved tab and the list it opens. */
   readonly learning: boolean;
   /**
@@ -118,6 +112,8 @@ export interface Shown {
   readonly streakFreezeCard: boolean;
   /** The Settings row that opens the Badges (ADR 0066). */
   readonly badges: boolean;
+  /** How many Badges are earned («1 з 21», a family's «0 з 4»), while the reader has not hidden the counters (ADR 0188). */
+  readonly badgeCounts: boolean;
   /**
    * The offers to share a Level reached, a Badge earned or a Streak
    * milestone today, while Share Cards and the XP log are on and the reader
@@ -166,14 +162,10 @@ export interface Shown {
   readonly curatedCollections: boolean;
   /** A tap on an Entry of a Curated Collection's screen opens the collection's Feed (ADR 0178). */
   readonly curatedCollectionFeed: boolean;
-  /** Side swipes mark an Entry Known or Unknown; the card corner holds the heart, Collections and «⋯» in place of the action row (ADR 0077). */
-  readonly swipeMarks: boolean;
   /** While the gestures hint is open, the Feed's card plays the swipes it names (ADR 0112). */
   readonly gesturesHintDemo: boolean;
   /** Settings offers «Показати підказку жестів», which shows the gestures hint once more (owner 16.11). */
   readonly gesturesHintAgain: boolean;
-  /** Whether an Entry opened from Saved takes no side swipes, its mark set from the «⋯» sheet (owner 15.11). */
-  readonly savedSwipesOff: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
   /**
@@ -184,7 +176,7 @@ export interface Shown {
   /** The «Пройти тест ще раз» row of Settings, while the Rarity Range it sets is on as well. */
   readonly rarityTest: boolean;
   /**
-   * The «Пройти опитування ще раз» row of Settings, while any of its questions
+   * The «Анкета: підлаштувати Стрічку» row of Settings, while any of its questions
    * is on: «Рівень» and «Навіщо» under the questionnaire, the self-rating
    * under the Rarity Test it offers, the interests under «Що тобі цікаво?».
    */
@@ -216,8 +208,8 @@ export function shownOf({
 }): Shown {
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
   const knowledge = on('knowledge');
-  // «Без лічильників» hides every counter; with its switch off it is «Приховати Серію» of 0.9 and hides only the Streak.
-  const noCounters = on('noCounters') && settings.noCounters;
+  // «Без лічильників» hides every counter.
+  const noCounters = settings.noCounters;
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
@@ -248,7 +240,6 @@ export function shownOf({
     textSizeSteps: on('textSizeSteps'),
     shareCountersSetting: on('communityCounters') || on('analytics'),
     dataExport: on('dataExport'),
-    countersSetting: on('noCounters') ? 'noCounters' : on('statistics') ? 'hideStreak' : undefined,
     learning: knowledge,
     stats: on('statistics')
       ? {
@@ -264,6 +255,7 @@ export function shownOf({
     calendarDayLines: on('calendarDayLines'),
     streakFreezeCard: on('streakFreezeCard') && on('streakFreezes') && !noCounters,
     badges: on('badges'),
+    badgeCounts: !noCounters,
     progressShareCards: on('progressShareCards') && !noCounters,
     crosswordSolvedScreen: on('crosswordSolvedScreen'),
     crosswordSolveTime: on('crosswordSolveTime'),
@@ -286,10 +278,8 @@ export function shownOf({
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
     curatedCollectionFeed: on('curatedCollectionFeed'),
-    swipeMarks: on('swipeMarks'),
     gesturesHintDemo: on('gesturesHintDemo'),
     gesturesHintAgain: on('gesturesHintAgain'),
-    savedSwipesOff: on('savedSwipesOff'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
     rarity: on('rarityCeiling') ? (on('rarityRange') ? 'range' : 'top') : 'off',
     rarityTest: on('rarityTest'),

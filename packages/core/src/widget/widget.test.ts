@@ -761,23 +761,11 @@ describe('the goal ring and the lock-screen widget in the Widget Snapshot', () =
     });
   });
 
-  it('hides the whole ring with «Без лічильників», and only the Streak with «Приховати Серію»', async () => {
-    const hidden = () => {
-      const records = earned();
-      records.set('settings.hideStreak', 'true');
-      return records;
-    };
-    const noCounters = await run({ records: hidden(), on: [...ring, 'noCounters'] });
-    const hideStreak = await run({ records: hidden(), on: ring });
+  it('hides the whole ring with «Без лічильників»', async () => {
+    const records = earned();
+    records.set('settings.hideStreak', 'true');
 
-    expect((await snapshotOf(noCounters)).goalRing).toBeUndefined();
-    expect((await snapshotOf(hideStreak)).goalRing).toEqual({
-      on: '2026-10-16',
-      xp: 3,
-      goal: 20,
-      met: false,
-      after: { xp: 0, met: false },
-    });
+    expect((await snapshotOf(await run({ records, on: ring }))).goalRing).toBeUndefined();
   });
 
   it('says the lock-screen widget is on only while its Feature Switch is', async () => {

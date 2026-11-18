@@ -8,7 +8,8 @@ import {
   type Edition,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HideButton, HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
+import { Pressable } from 'react-native';
+import { EditionProvider, HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -129,7 +130,7 @@ function CardHide({ card }: { card: Parameters<typeof useHide>[0] }) {
   const hide = useHide(card);
   return (
     <>
-      <HideButton onPress={hide.open} />
+      <Pressable accessibilityRole="button" testID="hide-button" onPress={hide.open} />
       <HideChoiceSheet {...hide.choice} />
     </>
   );

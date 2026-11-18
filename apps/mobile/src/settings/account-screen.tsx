@@ -2,7 +2,7 @@ import { SIGN_IN_CODE_DIGITS } from '@slovo/contracts';
 import type { Account, AccountState } from '@slovo/core';
 import {
   accountCardRadius,
-  BackLink,
+  BackHeader,
   CodeCells,
   DeleteAccountButton,
   disabledOpacity,
@@ -11,7 +11,6 @@ import {
   Button,
   ProblemLine,
   ResendButton,
-  ScreenTitle,
   signInButtonHeight,
   space,
   TextField,
@@ -102,18 +101,17 @@ function AccountContent({
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
-        <BackLink
-          testID="account-back"
-          label={back.label}
-          onPress={() => {
-            back.onPress(account);
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={state.status === 'code-sent' ? strings.codeLabel : edition.accountName}
+          back={{
+            label: back.label,
+            testID: 'account-back',
+            onPress: () => {
+              back.onPress(account);
+            },
           }}
         />
-        <View style={styles.header}>
-          <ScreenTitle>
-            {state.status === 'code-sent' ? strings.codeLabel : edition.accountName}
-          </ScreenTitle>
-        </View>
         {state.status === 'signed-in' ? (
           <SignedIn account={account} state={state} problem={problem} />
         ) : (
@@ -139,7 +137,7 @@ function AccountContent({
 type StateOf<S extends AccountState['status']> = Extract<AccountState, { status: S }>;
 
 /**
- * Signed out: «Увійти через Apple», then «Увійти через Google», each when it
+ * Signed out: the line on why to sign in, then «Увійти через Apple», then «Увійти через Google», each when it
  * is offered, the divider «або поштою» under them, then the email field and
  * «Надіслати код». Once the code is sent, «Код надіслано на <email>» stands
  * over the code's six cells, which sign in as soon as they hold the code,
@@ -173,6 +171,9 @@ function SignIn({
     };
     return (
       <View style={styles.form}>
+        <Text {...voice} style={[typeStyle('sub', tokens), { color: tokens.colors.muted }]}>
+          {strings.whySignIn}
+        </Text>
         {withApple && (
           <AppleSignInButton
             testID="account-apple"

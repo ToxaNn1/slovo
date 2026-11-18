@@ -172,6 +172,14 @@ describe('the Badges', () => {
     expect(earned((await run({ records: three })).app)).toMatchObject({ 'streak-3': '2026-10-14' });
   });
 
+  // App pass 7a, item 50: «Тиждень поспіль 0%» beside a Best Streak of 2.
+  it('shows a Streak Badge not earned at its best run, the one that earns it', async () => {
+    const lost = await readerWith(xp('2026-10-10', 5), xp('2026-10-11', 5));
+    const { app } = await run({ records: lost });
+    expect(app.progress.state).toMatchObject({ streak: 0, bestStreak: 2 });
+    expect(progressOf(app, 'streak-3')).toMatchObject({ progress: { current: 2, target: 3 } });
+  });
+
   it('earns a win, a rarity-5 answer, a crossword run and the Edition-specific Badge at their thresholds', async () => {
     const below = await readerWith(
       xp('2026-10-13', 1, { mode: 'correction' }),
@@ -376,7 +384,8 @@ describe('the Badges', () => {
     );
     const { app } = await run({ records: broken, catalogue: [rightRun] });
     expect(earned(app)).toEqual({});
-    expect(progressOf(app, 'run-3')).toMatchObject({ progress: { current: 1, target: 3 } });
+    // The progress is the best run, 2, not the run since the wrong answer (ADR 0188).
+    expect(progressOf(app, 'run-3')).toMatchObject({ progress: { current: 2, target: 3 } });
 
     expect(
       await earnedWith(

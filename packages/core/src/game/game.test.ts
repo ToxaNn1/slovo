@@ -1601,7 +1601,7 @@ describe('the Words a Game asks about', () => {
     await playGame(app, [3, 4]);
     await playGame(app, [3, 4, 5]);
 
-    expect(writes).toEqual([userStateRecords.gameBest.record('guess-word').change(15)]);
+    expect(writes).toEqual([userStateRecords.gameBest.record('guess-word').change(13)]);
     expect(app.history.list).toEqual([]);
   });
 });
@@ -1621,6 +1621,37 @@ describe('the Rounds about Entries marked «Не знаю» or due', () => {
 
     expect(ids.filter((id) => unknown.includes(id))).toHaveLength(5);
     expect(new Set(ids).size).toBe(GAME_ROUNDS);
+  });
+
+  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  it('asks the Words marked «Не знаю» at places drawn anew for each Game, not first', async () => {
+    const places: number[][] = [];
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const app = await run({ seed });
+      for (const id of unknown) await app.knowledge.tap(id, 'unknown');
+
+      const ids = asked(await playGame(app));
+
+      places.push(ids.flatMap((id, place) => (unknown.includes(id) ? [place] : [])));
+    }
+
+    for (const ofGame of places) expect(ofGame).toHaveLength(5);
+    expect(new Set(places.map(String)).size).toBeGreaterThan(1);
+    expect(places.some((ofGame) => ofGame[0] !== 0)).toBe(true);
+    expect(places.some((ofGame) => ofGame.some((place) => place >= 5))).toBe(true);
+  });
+
+  it('keeps the stages of «Вгадай слово» whatever the places of the Words marked «Не знаю»', async () => {
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const app = await run({ seed });
+      for (const id of unknown) await app.knowledge.tap(id, 'unknown');
+
+      const rounds = await playGame(app);
+
+      expect(rounds).toHaveLength(GAME_ROUNDS);
+      expect(rounds.slice(0, 5).every(({ form }) => form === 'pick')).toBe(true);
+      expect(rounds.slice(10).map(({ form }) => form)).toEqual(Array(5).fill('typed'));
+    }
   });
 
   it('asks both of 2 Words marked «Не знаю», the rest from History as before', async () => {
@@ -1803,9 +1834,10 @@ describe('the Best result per mode', () => {
 
     await playGame(app, [3, 4, 5]);
 
+    // 4 Rounds passed, 2 of them right: the result screen's «2 з 5».
     expect(current(app)).toMatchObject({ roundsPassed: 4, status: 'lost' });
-    expect(app.game.state.bestResults).toEqual({ 'guess-word': 4 });
-    expect(guessWordBest.decode(records.get(guessWordBest.key))).toBe(4);
+    expect(app.game.state.bestResults).toEqual({ 'guess-word': 2 });
+    expect(guessWordBest.decode(records.get(guessWordBest.key))).toBe(2);
   });
 
   it('is written by a finished Game that beats it, won or lost, and unchanged by one that does not', async () => {
@@ -1815,20 +1847,21 @@ describe('the Best result per mode', () => {
     const app = await run({ port, on: ['rarityCeiling'] });
     writes.length = 0;
 
-    // Lost in Round 8: 7 Rounds passed.
+    // Lost in Round 8: 5 right answers.
     await playGame(app, [6, 7, 8]);
-    expect(app.game.state.bestResults['guess-word']).toBe(7);
-    // Lost in Round 5: 4 Rounds passed, fewer than 7.
+    expect(app.game.state.bestResults['guess-word']).toBe(5);
+    // Lost in Round 5: 2 right answers, fewer than 5.
     await playGame(app, [3, 4, 5]);
-    expect(app.game.state.bestResults['guess-word']).toBe(7);
-    // Lost in Round 8 again: as many as 7, which doesn't beat it.
+    expect(app.game.state.bestResults['guess-word']).toBe(5);
+    // Lost in Round 8 again: 5 right answers, which don't beat it.
     await playGame(app, [3, 4, 8]);
-    expect(app.game.state.bestResults['guess-word']).toBe(7);
+    expect(app.game.state.bestResults['guess-word']).toBe(5);
+    // Won with one wrong answer: 14 right answers, though all 15 Rounds passed.
     await playGame(app, [2]);
-    expect(app.game.state.bestResults['guess-word']).toBe(15);
+    expect(app.game.state.bestResults['guess-word']).toBe(14);
 
-    expect(writes).toEqual([guessWordBest.change(7), guessWordBest.change(15)]);
-    expect(guessWordBest.decode(records.get(guessWordBest.key))).toBe(15);
+    expect(writes).toEqual([guessWordBest.change(5), guessWordBest.change(14)]);
+    expect(guessWordBest.decode(records.get(guessWordBest.key))).toBe(14);
   });
 
   it("beats only the Best result of the finished Game's mode", async () => {
@@ -1849,7 +1882,7 @@ describe('the Best result per mode', () => {
     expect(app.game.state.bestResults).toEqual({ 'guess-word': 7, 'test-lemma': 15 });
   });
 
-  it('counts the right answers of a finished Game in a mode with no Lives', async () => {
+  it('counts the right answers of a finished Game in a mode with no Lives too', async () => {
     const records = new Map<string, string>();
     const app = await run({ records, gameModes: [{ ...lemmaMode, lives: 'none' }] });
 
@@ -1861,16 +1894,17 @@ describe('the Best result per mode', () => {
     // Right in the 8 odd Rounds of 15.
     expect(current(app)).toMatchObject({ roundsPassed: 15, status: 'won' });
     expect(app.game.state.bestResults['test-lemma']).toBe(8);
-    expect(gameBest.record('test-lemma').decode(records.get('game.best.test-lemma'))).toBe(8);
+    expect(gameBest.record('test-lemma').decode(records.get('game.bestRight.test-lemma'))).toBe(8);
   });
 
   it('shows the Game just finished in the Best result of the same snapshot', async () => {
     const app = await run({ records: guessWordBest.change(3) as Map<string, string> });
-    const finished: { roundsPassed: number; bestResult: number | undefined }[] = [];
+    const finished: { right: number; bestResult: number | undefined }[] = [];
     app.game.subscribe(() => {
       const { current: game, bestResults } = app.game.state;
       if (game?.status === 'won' || game?.status === 'lost') {
-        finished.push({ roundsPassed: game.roundsPassed, bestResult: bestResults[game.modeId] });
+        const right = game.played.filter((round) => round.right).length;
+        finished.push({ right, bestResult: bestResults[game.modeId] });
       }
     });
 
@@ -1878,8 +1912,8 @@ describe('the Best result per mode', () => {
     await playGame(app, [3, 4, 5]);
 
     expect(finished).toEqual([
-      { roundsPassed: 12, bestResult: 12 },
-      { roundsPassed: 4, bestResult: 12 },
+      { right: 10, bestResult: 10 },
+      { right: 2, bestResult: 10 },
     ]);
   });
 
@@ -1925,8 +1959,8 @@ describe('the Best result per mode', () => {
     failing = false;
     await app.game.next();
     expect(current(app)).toMatchObject({ roundsPassed: GAME_LIVES - 1, status: 'lost' });
-    expect(app.game.state.bestResults['guess-word']).toBe(GAME_LIVES - 1);
-    expect(guessWordBest.decode(records.get(guessWordBest.key))).toBe(GAME_LIVES - 1);
+    expect(app.game.state.bestResults['guess-word']).toBe(0);
+    expect(guessWordBest.decode(records.get(guessWordBest.key))).toBe(0);
   });
 
   it('survives reopening, a new Cycle and a cleared History', async () => {
@@ -1935,7 +1969,7 @@ describe('the Best result per mode', () => {
     let now = new Date('2026-10-12T09:00:00+03:00').getTime();
     const time: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
     const app = await run({ records, time });
-    expect(app.game.state.bestResults['guess-word']).toBe(7);
+    expect(app.game.state.bestResults['guess-word']).toBe(5);
 
     // Read every card, then the card after the end-of-Cycle card starts a new Cycle.
     while (app.feed.cards.at(-1)?.kind !== 'end-of-cycle') {
@@ -1948,11 +1982,11 @@ describe('the Best result per mode', () => {
     await app.history.clear();
 
     expect(app.history.list).toEqual([]);
-    expect(app.game.state.bestResults['guess-word']).toBe(7);
-    expect(app.progress.state.bestResult).toBe(7);
+    expect(app.game.state.bestResults['guess-word']).toBe(5);
+    expect(app.progress.state.bestResult).toBe(5);
     const reopened = await run({ records, time });
-    expect(reopened.game.state.bestResults['guess-word']).toBe(7);
-    expect(reopened.progress.state.bestResult).toBe(7);
+    expect(reopened.game.state.bestResults['guess-word']).toBe(5);
+    expect(reopened.progress.state.bestResult).toBe(5);
   });
 
   it("rides on its mode's offer, out of the mode's Round limit, or bare in a mode with none", async () => {
@@ -1979,14 +2013,14 @@ describe('the Best result per mode', () => {
       await play(app, right, () => 0);
     }
 
-    // «4», a bare number, once its first Game is over.
+    // «2», a bare number of right answers, once its first Game is over.
     expect(current(app)).toMatchObject({ roundsPassed: 4, status: 'lost' });
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'test-lemma',
       entryKind: 'word',
       group: 'words',
       canStart: true,
-      best: { result: 4 },
+      best: { result: 2 },
     });
     expect(app.game.state.modes[0]).toMatchObject({ best: { result: 12, of: 15 } });
   });
@@ -2025,11 +2059,11 @@ describe('the Best result per mode', () => {
 
     await playGame(app, [6, 7, 8]);
 
-    expect(app.progress.state).toEqual({ ...before, bestResult: 7 });
+    expect(app.progress.state).toEqual({ ...before, bestResult: 5 });
     expect(told).toBe(1);
   });
 
-  it('shows the single best result a 0.8.11 app kept as the Best result of «Вгадай слово»', async () => {
+  it('reads no Best result a 0.8.11 app kept, which counted Rounds passed', async () => {
     const records = new Map([
       ['schema.version', '5'],
       ['app.installed', 'true'],
@@ -2037,12 +2071,12 @@ describe('the Best result per mode', () => {
     ]);
     const app = await run({ records, gameModes: [lemmaMode] });
 
-    expect(app.game.state.bestResults).toEqual({ 'guess-word': 9 });
-    expect(app.progress.state.bestResult).toBe(9);
+    expect(app.game.state.bestResults).toEqual({});
+    expect(app.progress.state.bestResult).toBeUndefined();
 
-    // A Game that passes 10 Rounds beats it; one that passes 9 would not.
+    // The first finished Game sets it: 8 right answers.
     await playGame(app, [9, 10, 11]);
-    expect(app.game.state.bestResults).toEqual({ 'guess-word': 10 });
+    expect(app.game.state.bestResults).toEqual({ 'guess-word': 8 });
   });
 
   it('is absent on the Game and in the progress snapshot when the Edition turns the Game off', async () => {
@@ -2625,14 +2659,37 @@ describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
     expect(ids.filter((id) => unknown.includes(id))).toHaveLength(5);
   });
 
-  it('asks 5 of 8 Words marked «Не знаю» at the start of a mode with no Round limit', async () => {
-    const ids = await playRight(await startWeak(endlessMode), 30);
+  it('moves a weak Round the mode cannot build at its place to the next place, dropping none', async () => {
+    /** A mode with a stage: it asks about a Word marked «Не знаю» from Round 11 only. */
+    const stagedMode: GameMode = {
+      ...lemmaMode,
+      id: 'test-staged',
+      buildRound: (input) =>
+        unknown.includes(input.answer.id) && input.round < 11
+          ? undefined
+          : lemmaMode.buildRound(input),
+    };
+    for (const seed of [1, 2, 3, 4]) {
+      const app = await run({ seed, gameModes: [stagedMode] });
+      for (const id of unknown) await app.knowledge.tap(id, 'unknown');
+      await app.game.start(stagedMode.id);
 
-    expect(ids.slice(0, 5).every((id) => unknown.includes(id))).toBe(true);
-    expect(ids.slice(5, GAME_ROUNDS).some((id) => unknown.includes(id))).toBe(false);
+      const ids = await playRight(app);
+
+      expect(ids).toHaveLength(GAME_ROUNDS);
+      expect(ids.slice(0, 10).some((id) => unknown.includes(id))).toBe(false);
+      expect(ids.slice(10).every((id) => unknown.includes(id))).toBe(true);
+    }
   });
 
-  it('counts pairs in a pairs mode: 15 pairs in grids of 4, 4, 4 and 3, the first 5 about Words marked «Не знаю»', async () => {
+  it('asks 5 of 8 Words marked «Не знаю» in the first 15 Rounds of a mode with no Round limit', async () => {
+    const ids = await playRight(await startWeak(endlessMode), 30);
+
+    expect(ids.slice(0, GAME_ROUNDS).filter((id) => unknown.includes(id))).toHaveLength(5);
+    expect(ids.slice(0, 5).every((id) => unknown.includes(id))).toBe(false);
+  });
+
+  it('counts pairs in a pairs mode: 15 pairs in grids of 4, 4, 4 and 3, 5 of them about Words marked «Не знаю»', async () => {
     const app = await startWeak({ ...pairsMode, roundLimit: GAME_ROUNDS });
     const grids: number[] = [];
     while (current(app).status === 'playing') {
@@ -2648,7 +2705,6 @@ describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
     expect(current(app)).toMatchObject({ roundsPassed: GAME_ROUNDS, status: 'won' });
     expect(grids).toEqual([4, 4, 4, 3]);
     expect(new Set(ids).size).toBe(GAME_ROUNDS);
-    expect(ids.slice(0, 5).every((id) => unknown.includes(id))).toBe(true);
     expect(ids.filter((id) => unknown.includes(id))).toHaveLength(5);
   });
 

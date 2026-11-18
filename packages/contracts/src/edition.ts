@@ -402,7 +402,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** Levels: the Level derived from total XP, its Edition name and the level-milestone Feed Notices (ADR 0066). */
   levels: FeatureSwitchStateSchema,
   /** «Без лічильників»: the setting hides XP, Level, Streak, celebrations, level milestones and in-Game XP feedback while counting goes on; off, «Приховати Серію» of 0.9, which hides only the Streak (ADR 0066). */
-  noCounters: FeatureSwitchStateSchema,
   /** The Daily Goal: its Settings row, its progress on the XP bar and its celebration trigger (ADR 0066). */
   dailyGoal: FeatureSwitchStateSchema,
   /** The Seen-Word XP: 1 XP for each Word Seen for the first time, up to the day's Daily Goal; off, viewing earns nothing. */
@@ -421,7 +420,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** The Badge sheet: a tap on any Badge opens its name, date or progress, and an unearned one answers with a toast (ADR 0085); off while `xpLog` or `badges` is. */
   badgeSheet: FeatureSwitchStateSchema,
   /** The Badge toast: a Badge earned during a Game shows a toast in place of the stamp (ADR 0085); off while `xpLog` or `badges` is. */
-  badgeToast: FeatureSwitchStateSchema,
   /** The Badge families overview heading the Badges screen: each family's mark, name, count, description and shape (ADR 0145); off while `xpLog` or `badges` is. */
   badgeFamiliesOverview: FeatureSwitchStateSchema,
   /** The Streak freeze card of the Profile: the freezes held, the last 7 days and the days saved (ADR 0085); off while `xpLog` is. */
@@ -458,7 +456,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   /** The toast on a tap of a Game Mode that cannot be played, which keeps its normal look (ADR 0139); off while `game` is. */
   gameModeToast: FeatureSwitchStateSchema,
   /** The evening notification: at most 2 a day, the morning Word of the Day and one evening slot with the Streak warning or the unmet Daily Goal, or nothing; off, a Word at every Notification time. */
-  eveningNotification: FeatureSwitchStateSchema,
   /** The farewell: the polite pause ends with the Edition's farewell on the 14th day without an open; off, it ends in silence. */
   notificationFarewell: FeatureSwitchStateSchema,
   /** The notification explainer: the sheet before the system permission prompt, after the first met Daily Goal or on day 3, and its one re-ask Feed Notice 7 days after a refusal. */
@@ -489,14 +486,10 @@ export const FeatureSwitchesSchema = z.strictObject({
   correctionTypes: FeatureSwitchStateSchema,
   /** Curated Collections: the Dashboard's «SLOVO пропонує» rail of editorial Entry sets from the Language Pack, above «Категорії» (ADR 0076, 0178). Off while `dashboard` is. */
   curatedCollections: FeatureSwitchStateSchema,
-  /** Swipe marks: the reader swipes an Entry card right for Known and left for Unknown, with an undo; off, the card's mark buttons stay. Off while `knowledge` is. */
-  swipeMarks: FeatureSwitchStateSchema,
-  /** The gestures hint's demo: while «ГОРТАЙ ПАЛЬЦЕМ» is open, the Feed's card plays the swipes right, left and up in a loop, its edge labels sliding in, with a finger over it and each row of the sheet lit in turn (ADR 0112); off, the sheet stands still. Off while `swipeMarks` is. */
+  /** The gestures hint's demo: while «ГОРТАЙ ПАЛЬЦЕМ» is open, the Feed's card plays the swipes right, left and up in a loop, its edge labels sliding in, with a finger over it and each row of the sheet lit in turn (ADR 0112); off, the sheet stands still. Off while `knowledge` is. */
   gesturesHintDemo: FeatureSwitchStateSchema,
-  /** «Показати підказку жестів» in Settings (owner 16.11): forgets that the gestures hint was shown, so the Feed shows «ГОРТАЙ ПАЛЬЦЕМ» once more. Off while `swipeMarks` is. */
+  /** «Показати підказку жестів» in Settings (owner 16.11): forgets that the gestures hint was shown, so the Feed shows «ГОРТАЙ ПАЛЬЦЕМ» once more. Off while `knowledge` is. */
   gesturesHintAgain: FeatureSwitchStateSchema,
-  /** Saved without swipes (owner 15.11): an Entry opened from any tab of «Збережене» takes no side swipes, its Knowledge Mark set from the «⋯» sheet. Off, it is swiped as anywhere else. Off while `swipeMarks` is. */
-  savedSwipesOff: FeatureSwitchStateSchema,
   /** Word tabs: every Entry card in a fixed-height frame (ADR 0091), the Word of the Day's once it is open, with tabs under its head: a Word's «Суть», «Приклад», «Зв’язки» and «Історія», a Correction's «Як краще», «Чому» and «Приклади», an Idiom's «Суть», «Звідки» and «Приклад», a Tip's «Суть» and «Приклад»; a Synonym Row's in the same frame. Content too tall for the frame shrinks a font size at a time, then is clamped under «Детальніше», which opens it whole. The Word of the Day card is the red card while Self-check keeps it closed; the Feed's header draws no XP bar. Off, the cards are one column, the Word's with «Детальніше». */
   wordTabs: FeatureSwitchStateSchema,
   /** The source tab: every tabbed Entry card's last tab «Джерело» names its sources, each on its own line, and the source line leaves the other tabs (ADR 0116). Off, the source line stays in its tab. Off while `wordTabs` is. */
@@ -699,14 +692,13 @@ export type Badge = z.infer<typeof BadgeSchema>;
 
 /**
  * The Mascot's short line for each moment it shows in: the onboarding, the
- * celebrations of a new Level, a Badge, the Daily Goal and a Streak
+ * celebrations of a new Level, the Daily Goal and a Streak
  * milestone, a right and a wrong Game answer, the Game's end, and an empty
  * state.
  */
 export const MascotLinesSchema = z.strictObject({
   onboarding: TextSchema,
   newLevel: TextSchema,
-  badge: TextSchema,
   dailyGoal: TextSchema,
   streakMilestone: TextSchema,
   gameRight: TextSchema,
@@ -934,7 +926,7 @@ export const QuestionnaireAnswerIdSchema = KebabCaseIdSchema;
 
 /**
  * The Edition's questionnaire (ADR 0067): the options of the level
- * question, each setting the Rarity Range or opening the Rarity Test, of
+ * question, which set nothing (ADR 0183) but for the one opening the Rarity Test, of
  * «Навіщо», each setting the Mix kind weights it names (the others stay), and
  * of the self-rating. Ids are unique within a question.
  */
@@ -945,6 +937,7 @@ export const QuestionnaireSchema = z.strictObject({
         z.strictObject({
           id: QuestionnaireAnswerIdSchema,
           label: TextSchema,
+          /** No longer read: «Рівень» sets no Rarity Range (ADR 0183). Kept so Edition configs written before stay valid. */
           rarityCeiling: RaritySchema,
         }),
         /** «Не знаю»: the onboarding opens the Rarity Test, whose result sets the top of the Rarity Range. */

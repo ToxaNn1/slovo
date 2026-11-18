@@ -4,13 +4,12 @@ import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Knowledge } from '../knowledge/knowledge';
-import { dayNumber, parseLocalDate, todayKey } from '../local-date';
-import type { Clock } from '../ports';
+import { dayNumber, parseLocalDate } from '../local-date';
 import type { UserState } from '../user-state/user-state';
 import type { ActiveDays } from './active-days';
 import type { XpLog, XpLogMilestones } from './xp-log';
 
-/** How far a Badge's condition has come: `current` of `target`, `current` never above it. */
+/** How far a Badge's condition has come at its best: `current` of `target`, `current` never above it. */
 export interface BadgeProgress {
   readonly current: number;
   readonly target: number;
@@ -55,15 +54,14 @@ export interface Badges {
   onEarned(listener: (badge: BadgeState) => void): () => void;
 }
 
-/** What a condition reaches now (`current`) and at its best (`best`), out of `target`. */
+/** What a condition reaches at its best, out of `target`. */
 interface Reach {
-  readonly current: number;
   readonly best: number;
   readonly target: number;
 }
 
-/** The days in a row ending today or yesterday, and the longest run, of the local dates. */
-function runsOf(dates: ReadonlySet<string>, today: string): { current: number; longest: number } {
+/** The longest run of days in a row of the local dates. */
+function longestRunOf(dates: ReadonlySet<string>): number {
   const numbers = [...dates].map((date) => dayNumber(parseLocalDate(date))).sort((a, b) => a - b);
   let longest = 0;
   let run = 0;
@@ -73,19 +71,15 @@ function runsOf(dates: ReadonlySet<string>, today: string): { current: number; l
     longest = Math.max(longest, run);
     last = day;
   }
-  const todayNumber = dayNumber(parseLocalDate(today));
-  return { current: last >= todayNumber - 1 ? run : 0, longest };
+  return longest;
 }
 
 /**
- * The right answers in a row in the modes at the end of the answers
- * (`current`) and at their longest (`best`): a wrong answer in the modes
- * breaks a run, an answer in another mode neither adds to it nor breaks it.
+ * The longest run of right answers in a row in the modes: a wrong answer in
+ * the modes breaks a run, an answer in another mode neither adds to it nor
+ * breaks it.
  */
-function runOf(
-  answers: XpLogMilestones['answers'],
-  modes: readonly string[],
-): { current: number; best: number } {
+function bestRunOf(answers: XpLogMilestones['answers'], modes: readonly string[]): number {
   let current = 0;
   let best = 0;
   for (const { mode, right } of answers) {
@@ -93,14 +87,13 @@ function runOf(
     current = right ? current + 1 : 0;
     best = Math.max(best, current);
   }
-  return { current, best };
+  return best;
 }
 
 /** Opens the Badges over the XP log, the Knowledge Marks and the Active Days, for the Core composition. */
 export async function openBadges({
   edition,
   userState,
-  clock,
   xpLog,
   knowledge,
   activeDays,
@@ -108,7 +101,6 @@ export async function openBadges({
 }: {
   edition: Pick<Edition, 'isFeatureEnabled' | 'badges'>;
   userState: Pick<UserState, 'write'>;
-  clock: Clock;
   xpLog: Pick<XpLog, 'state' | 'milestones' | 'earn' | 'open' | 'subscribe' | 'resetMarker'>;
   knowledge: Pick<Knowledge, 'state' | 'confirmedAfter' | 'subscribe'>;
   activeDays: Pick<ActiveDays, 'streak' | 'subscribe'>;
@@ -123,11 +115,10 @@ export async function openBadges({
 
   /** What the condition reaches; nothing for a Level Badge with Levels off. */
   function reachOf(condition: BadgeCondition, milestones: XpLogMilestones): Reach | undefined {
-    const once = (met: boolean): Reach => ({ current: met ? 1 : 0, best: met ? 1 : 0, target: 1 });
+    const once = (met: boolean): Reach => ({ best: met ? 1 : 0, target: 1 });
     switch (condition.kind) {
       case 'streak': {
-        const { streak, bestStreak } = activeDays.streak;
-        return { current: streak, best: bestStreak, target: condition.days };
+        return { best: activeDays.streak.bestStreak, target: condition.days };
       }
       case 'confirmedEntries': {
         // After a Progress reset only the Entries confirmed since count (ADR 0133).
@@ -136,33 +127,29 @@ export async function openBadges({
           marker === undefined
             ? knowledge.state.confirmed.total
             : knowledge.confirmedAfter(marker.at);
-        return { current: total, best: total, target: condition.entries };
+        return { best: total, target: condition.entries };
       }
       case 'gameWin':
         return once(condition.modes.some((mode) => milestones.wins.has(mode)));
-      case 'dailyCrosswordRun': {
-        const { current, longest } = runsOf(milestones.crosswords, todayKey(clock));
-        return { current, best: longest, target: condition.days };
-      }
+      case 'dailyCrosswordRun':
+        return { best: longestRunOf(milestones.crosswords), target: condition.days };
       case 'rightAnswers': {
         const right = condition.modes.reduce(
           (sum, mode) => sum + (milestones.rightByMode.get(mode) ?? 0),
           0,
         );
-        return { current: right, best: right, target: condition.count };
+        return { best: right, target: condition.count };
       }
       case 'rightOnRarity':
         return once(milestones.rightRarities.has(condition.rarity));
       case 'level': {
         const level = xpLog.state.level?.level;
-        return level === undefined
-          ? undefined
-          : { current: level, best: level, target: condition.level };
+        return level === undefined ? undefined : { best: level, target: condition.level };
       }
       case 'flawlessGame':
         return once(condition.modes.some((mode) => milestones.flawless.has(mode)));
       case 'rightRun':
-        return { ...runOf(milestones.answers, condition.modes), target: condition.count };
+        return { best: bestRunOf(milestones.answers, condition.modes), target: condition.count };
     }
   }
 
@@ -182,7 +169,8 @@ export async function openBadges({
       const reach = reachOf(condition, milestones);
       if (reach === undefined) continue;
       if (reach.best >= reach.target) due.push(id);
-      const progress = { current: Math.min(reach.current, reach.target), target: reach.target };
+      // The progress is the best reach, the one that earns the Badge (ADR 0188).
+      const progress = { current: Math.min(reach.best, reach.target), target: reach.target };
       state.push({ id, name, symbol, family, condition, earned: false, progress });
     }
     return { state, due };

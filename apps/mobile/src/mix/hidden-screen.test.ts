@@ -138,7 +138,7 @@ const without = (feature: string): Edition => ({
 const rowsOf = (app: Composition) =>
   modelOf(app).rows.map(({ name, kindLabel }) => [name, kindLabel]);
 
-describe('the «Приховане» screen', () => {
+describe('the «Приховані записи» screen', () => {
   it('is empty while nothing is hidden', async () => {
     const { app } = await open();
 

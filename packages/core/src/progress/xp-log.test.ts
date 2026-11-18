@@ -250,7 +250,7 @@ describe('the XP log and the Game', () => {
 
     expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
     expect(xpKeys(records)).toEqual([]);
-    expect(records.has('game.best.guess-word')).toBe(true);
+    expect(records.has('game.bestRight.guess-word')).toBe(true);
   });
 
   it('counts today in the clock’s time zone: yesterday’s XP leaves today on the day change', async () => {
@@ -771,10 +771,13 @@ describe('the Active Day with a Daily Goal', () => {
     expect(app.xpLog.days.active).toEqual(new Set(['2026-10-14']));
   });
 
-  it('is a day with a goal only once the goal is met, whatever its XP', async () => {
+  it('is a day with a goal only once the goal is met, whatever the XP earned under it', async () => {
     const time = fakeClock('2026-10-14T08:00:00+03:00');
-    const { app } = await run({ on, time, records: fiveXp });
+    const { app } = await run({ on, time });
     await app.xpLog.setDailyGoal(1);
+    await app.game.start('guess-word');
+    for (let round = 0; round < 5; round += 1) await play(app, true);
+    expect(app.xpLog.state.today).toBeGreaterThanOrEqual(5);
     expect(app.xpLog.days.active).toEqual(new Set());
     expect(app.progress.state.streak).toBe(0);
 
@@ -783,12 +786,22 @@ describe('the Active Day with a Daily Goal', () => {
     expect(app.progress.state.streak).toBe(1);
   });
 
+  // App pass 7a, item 46: a Streak Badge earned on a day the goal set later took back.
+  it('keeps a day that reached 5 XP before its goal was set an Active Day', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const { app } = await run({ on, time, records: new Map(fiveXp) });
+    await app.xpLog.setDailyGoal(10);
+
+    expect(app.xpLog.days.active).toEqual(new Set(['2026-10-14']));
+    expect(app.progress.state.streak).toBe(1);
+  });
+
   it('is a day with the goal turned off by the 5 XP rule, and a day met before it is turned off stays one', async () => {
     const time = fakeClock('2026-10-14T08:00:00+03:00');
-    // Its own records: the store writes into the records it is given.
-    const records = earned(['a', '2026-10-14', '2026-10-14T04:00:00.000Z', 5]);
-    const { app } = await run({ on, time, records });
+    const { app } = await run({ on, time });
     await app.xpLog.setDailyGoal(10);
+    await app.game.start('guess-word');
+    for (let round = 0; round < 5; round += 1) await play(app, true);
     expect(app.xpLog.days.active).toEqual(new Set());
 
     await app.xpLog.setDailyGoal(null);
@@ -838,9 +851,10 @@ describe('the Active Day with a Daily Goal', () => {
     const { app } = await run({ on: [...on, 'seenWordXp', 'streakFreezes'], time, records });
     expect(app.progress.state.streak).toBe(24);
 
+    time.advance(60_000);
     await app.xpLog.setDailyGoal(10);
-    // Today has a goal not met yet: the Streak counts back from yesterday.
-    expect(app.progress.state.streak).toBe(23);
+    // Today reached 5 XP before its goal was set: it stays an Active Day (ADR 0188).
+    expect(app.progress.state.streak).toBe(24);
     for (let looks = 0; looks < 30 && app.xpLog.state.dailyGoal?.met !== true; looks += 1) {
       await look(app, time);
     }

@@ -21,8 +21,10 @@ export function useGameState(): GameState {
 export function useGameActions() {
   const { game } = useComposition();
   return {
-    start: (modeId: string) => {
-      void keep('the Game start', game.start(modeId));
+    /** Starts a Game of the mode, and says whether one started: a mode short of Entries starts none. */
+    start: async (modeId: string): Promise<boolean> => {
+      await keep('the Game start', game.start(modeId));
+      return game.state.current !== undefined;
     },
     answer: (given: GivenAnswer) => {
       void keep('the Knowledge Mark', game.answer(given));

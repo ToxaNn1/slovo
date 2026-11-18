@@ -68,6 +68,14 @@ describe('WidgetGuide', () => {
     for (const mode of modes) expect(mode).toHaveStyle({ fontSize: 8 });
   });
 
+  it('shrinks a long Word to fit its line, as the widget does, instead of cutting it', async () => {
+    await renderGuide();
+
+    for (const word of screen.getAllByText('word', { includeHiddenElements: true })) {
+      expect(word.props).toMatchObject({ adjustsFontSizeToFit: true, minimumFontScale: 0.4 });
+    }
+  });
+
   it('numbers the steps, which VoiceOver reads with their hints', async () => {
     await renderGuide();
 

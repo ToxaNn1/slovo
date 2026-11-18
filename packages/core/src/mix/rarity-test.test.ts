@@ -124,52 +124,106 @@ describe('the Rarity Test draw', () => {
 });
 
 describe('the Rarity Test result', () => {
-  /** Answers each drawn Word: «Не знаю» for the rarities in `unknown`, «Знаю» for the rest. */
-  const answer = async (app: Composition, unknown: readonly number[] = []) =>
-    (await app.rarityTest.draw()).map((drawn) => ({
-      ...drawn,
-      known: !unknown.includes(drawn.rarity),
+  /**
+   * Answers each drawn Word: «Не знаю» for both Words of the rarities in
+   * `unknown` and for the first Word of those in `halfKnown`, «Знаю» for the rest.
+   */
+  const answer = async (
+    app: Composition,
+    unknown: readonly number[] = [],
+    halfKnown: readonly number[] = [],
+  ) => {
+    const drawn = await app.rarityTest.draw();
+    return drawn.map((each, index) => ({
+      ...each,
+      known:
+        !unknown.includes(each.rarity) &&
+        !(halfKnown.includes(each.rarity) && drawn[index - 1]?.rarity !== each.rarity),
     }));
+  };
 
-  it('sets the Rarity Range to the lowest rarity with «Не знаю», at once', async () => {
+  it('sets the Rarity Range, at once, to the highest rarity with half of its Words known', async () => {
     const app = await open();
-    const answers = (await answer(app, [3, 5])).map((each, index) =>
-      each.rarity === 3 && index % 2 === 0 ? { ...each, known: true } : each,
-    );
 
-    // One of the two Words of rarity 3 and both of rarity 5 are not known.
-    expect(await app.rarityTest.apply(answers)).toEqual({ top: 3, known: 7, total: 10 });
+    // Both Words of rarity 4 and 5 are not known; one of rarity 3 is.
+    expect(await app.rarityTest.apply(await answer(app, [4, 5], [3]))).toEqual({
+      top: 3,
+      changed: true,
+      known: 5,
+      total: 10,
+    });
     expect(app.rarityRange.state).toEqual({ from: 1, to: 3 });
   });
 
-  it('sets «до 5» when every Word is known', async () => {
+  it('keeps a rarity for one «Не знаю» of its two Words', async () => {
+    const app = await open();
+
+    expect((await app.rarityTest.apply(await answer(app, [], [1, 5])))?.top).toBe(5);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 5 });
+  });
+
+  it('takes the highest rarity known, whatever the reader missed below it', async () => {
+    const app = await open();
+
+    // Rare Words known, commoner ones not: 5 of 10, as in the owner's pass.
+    expect(await app.rarityTest.apply(await answer(app, [1, 2], [3, 4, 5]))).toEqual({
+      top: 5,
+      changed: false,
+      known: 3,
+      total: 10,
+    });
+    expect((await app.rarityTest.apply(await answer(app, [1, 3, 5])))?.top).toBe(4);
+  });
+
+  it('sets «від 1 до 5» when every Word is known', async () => {
     const app = await open();
     await app.rarityRange.set({ from: 1, to: 2 });
 
     expect(await app.rarityTest.apply(await answer(app))).toEqual({
       top: 5,
+      changed: true,
       known: 10,
       total: 10,
     });
     expect(app.rarityRange.state).toEqual({ from: 1, to: 5 });
   });
 
-  it('sets «до 1» when no Word is known', async () => {
+  it('sets «лише 1» when no Word is known', async () => {
     const app = await open();
 
     expect(await app.rarityTest.apply(await answer(app, [1, 2, 3, 4, 5]))).toEqual({
       top: 1,
+      changed: true,
       known: 0,
       total: 10,
     });
     expect(app.rarityRange.state).toEqual({ from: 1, to: 1 });
   });
 
+  it('counts a rarity by the Words asked of it', async () => {
+    const app = await open({
+      words: threeOfEachRarity.filter(({ id }) => id !== 'w_r5_0' && id !== 'w_r5_1'),
+    });
+
+    // The one Word of rarity 5 is not known, one of the two of rarity 4 is.
+    expect((await app.rarityTest.apply(await answer(app, [5], [4])))?.top).toBe(4);
+  });
+
+  it('says whether the Rarity Range changed', async () => {
+    const app = await open();
+    await app.rarityRange.set({ from: 2, to: 4 });
+
+    // The bottom goes back to 1, so the range changed though its top did not.
+    expect((await app.rarityTest.apply(await answer(app, [5])))?.changed).toBe(true);
+    expect((await app.rarityTest.apply(await answer(app, [5])))?.changed).toBe(false);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 4 });
+  });
+
   it('overwrites the range on a retake', async () => {
     const app = await open();
-    await app.rarityTest.apply(await answer(app, [2]));
+    await app.rarityTest.apply(await answer(app, [2, 3, 4, 5]));
 
-    await app.rarityTest.apply(await answer(app, [4]));
+    await app.rarityTest.apply(await answer(app, [5]));
 
     expect(app.rarityRange.state).toEqual({ from: 1, to: 4 });
   });

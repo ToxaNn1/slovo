@@ -577,7 +577,7 @@ describe('the Game screen', () => {
     expect(warning).toHaveBeenCalled();
   });
 
-  it('starts «Виживання» from its card with 3 Lives and no Round limit, mixing Words and Corrections, and ends on the third mistake with the Rounds passed', async () => {
+  it('starts «Виживання» from its card with 3 Lives and no Round limit, mixing Words and Corrections, and ends on the third mistake with its right answers as the Best result', async () => {
     await open({ corrections: 15 });
     await renderScreen();
 
@@ -611,7 +611,7 @@ describe('the Game screen', () => {
       expect(screen.getByTestId('game-end-lives-over')).toBeOnTheScreen();
     });
     expect(kinds).toEqual(new Set(['word', 'correction']));
-    expect(screen.getByTestId('game-end-best')).toHaveTextContent(/11$/);
+    expect(screen.getByTestId('game-end-best')).toHaveTextContent(/9$/);
   });
 
   describe('«На час»', () => {
@@ -654,12 +654,13 @@ describe('the Game screen', () => {
       }
       warning.mockClear();
       await pickAnotherWord();
+      // The wrong answer's banner shows no «Далі» in «На час» and moves on after 3 s (ADR 0179).
       expect(warning).toHaveBeenCalled();
       expect(screen.queryByTestId('game-next')).toBeNull();
-      await pass(900);
+      await pass(3_000);
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
 
-      await pass(5_000 - 3 * 550 - 900);
+      await pass(5_000 - 3 * 550 - 3_000);
 
       expect(timerLabel()).toBe('лишилося 15 секунд');
       expect(screen.getByTestId('game-timer')).toHaveTextContent('15 с');
@@ -687,9 +688,9 @@ describe('the Game screen', () => {
       await pickTheWordOfThePrompt();
       await pass(550);
       await pickAnotherWord();
-      await pass(900);
+      await pass(3_000);
       await pickAnotherWord();
-      await pass(20_000 - 550 - 900);
+      await pass(20_000 - 550 - 3_000);
 
       await waitFor(() => {
         expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();

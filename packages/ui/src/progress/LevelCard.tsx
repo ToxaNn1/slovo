@@ -30,14 +30,15 @@ export interface LevelCardLine {
 }
 
 /**
- * The Profile's Level card: an ink card with a red wedge, the Level's number
- * over its `label` inside a red ring that fills to `progress` of `toNext`,
+ * The Profile's Level card: a tile card with a red wedge and ink words (ADR
+ * 0188), the `number` over its `label` inside a red ring that fills to
+ * `progress` of `toNext`,
  * and beside it the Level's name, loud, over the card's quieter lines. The
  * ring fills as the card shows; under Reduce Motion it is drawn full at once.
  * The number carries the test ID `${testID}-number`, the name `${testID}-name`.
  */
 export function LevelCard({
-  level,
+  number,
   label,
   name,
   progress,
@@ -45,8 +46,9 @@ export function LevelCard({
   lines,
   testID,
 }: {
-  level: number;
-  /** The word under the number, such as «Рівень». */
+  /** The number in the ring: the Level, or the XP before the first Level. */
+  number: number;
+  /** The word under the number, such as «Рівень» or «XP». */
   label: string;
   /** The Level's name. */
   name: string;
@@ -74,10 +76,9 @@ export function LevelCard({
   const ringProps = useAnimatedProps(() => ({
     strokeDashoffset: CIRCUMFERENCE * (1 - filled.value),
   }));
-  const ink = colors.background;
 
   return (
-    <View testID={testID} style={[styles.card, { backgroundColor: colors.ink }]}>
+    <View testID={testID} style={[styles.card, { backgroundColor: colors.tile }]}>
       <Wedge
         points={levelCard.wedgeShape}
         color={colors.accent}
@@ -110,11 +111,14 @@ export function LevelCard({
           <Text
             testID={testID === undefined ? undefined : `${testID}-number`}
             maxFontSizeMultiplier={1}
-            style={[typeStyle('levelNumber', tokens), { color: ink }]}
+            style={[typeStyle('levelNumber', tokens), { color: colors.ink }]}
           >
-            {String(level)}
+            {String(number)}
           </Text>
-          <Text maxFontSizeMultiplier={1} style={[typeStyle('levelLabel', tokens), { color: ink }]}>
+          <Text
+            maxFontSizeMultiplier={1}
+            style={[typeStyle('levelLabel', tokens), { color: colors.ink }]}
+          >
             {label}
           </Text>
         </View>
@@ -126,7 +130,7 @@ export function LevelCard({
           // A Level name is one word: it shrinks to the line rather than break mid-word.
           numberOfLines={1}
           adjustsFontSizeToFit
-          style={[typeStyle('levelName', tokens), { color: ink }]}
+          style={[typeStyle('levelName', tokens), { color: colors.ink }]}
         >
           {name}
         </Text>
@@ -137,7 +141,7 @@ export function LevelCard({
             testID={line.testID}
             style={[
               index === 0 ? typeStyle('levelXp', tokens) : typeStyle('meta', tokens),
-              { color: ink },
+              { color: colors.ink },
               index > 0 && styles.quiet,
             ]}
           >

@@ -15,7 +15,7 @@ import { EntryPanelHeadline, headlineOf, type OtherKindCard } from './EntryPanel
 import { IdiomCardBody } from './IdiomCard';
 import { SynonymRowCardBody } from './SynonymRowCard';
 import { TipCardBody } from './TipCard';
-import { EntryReveal, RevealDetail } from './reveal';
+import { EntryReveal } from './reveal';
 import { WordHeadline, WordSections } from './WordCard';
 import { WordTabs } from './WordTabs';
 import { firstLetter } from './WordHero';
@@ -29,10 +29,9 @@ import { WordOfTheDayBadge } from './WordOfTheDayBadge';
  * With `panelAllKinds`, every other kind is headed the same way (owner
  * 15.11): the giant first letter of its headline, its expression, dominant,
  * title or struck form, and the name of its kind under it. The meaning
- * follows on the screen's ground, with no card frame, and the action row is
- * docked at the screen's foot, or while marks are swiped the corner sits at
+ * follows on the screen's ground, with no card frame, and the corner sits at
  * the panel's top right. Without it, another kind keeps its Entry card, with
- * its row or corner, under a bare panel. It never conceals the meaning.
+ * its corner, under a bare panel. It never conceals the meaning.
  */
 export function EntryDetails({
   card,
@@ -58,25 +57,21 @@ export function EntryDetails({
   onBack: () => void;
   /** The status bar's height: the panel runs under it. */
   topInset: number;
-  /** The home indicator's height: a Word's dock, or else the tabbed card's tab bar, keeps above it. */
+  /** The home indicator's height: the tabbed card's tab bar keeps above it. */
   bottomInset: number;
 }) {
-  const { colors } = useTokens();
   const lemmaSize = useLemmaSize();
   const compact = useCompactLayout();
-  const swipe = slots?.slot === 'corner' ? slots.swipe : undefined;
-  // Another kind's card under a bare panel keeps its own row or corner.
+  const swipe = slots?.swipe;
+  // Another kind's card under a bare panel keeps its own corner.
   const ownCard = card.kind !== 'word' && !panelAllKinds;
-  // The action row docked at the screen's foot, for any kind headed in the panel.
-  const dock = !ownCard && slots?.slot === 'actions' ? slots.actions : undefined;
-  const docked = dock !== undefined;
-  // The tab bar stands at the screen's foot (owner 08.11): under it only the docked
-  // action row, or the room the swipe's stamp keeps, which takes in the home indicator.
+  // The tab bar stands at the screen's foot (owner 08.11): under it only the room
+  // the swipe's stamp keeps, which takes in the home indicator.
   const stampRoom = swipe ? swipeStampLayout.room : 0;
-  const foot = docked ? 0 : Math.max(0, bottomInset - stampRoom);
-  // Off the dock the frame runs a little past the screen's foot, into the room under the
-  // bar, so the bar stands lower (owner 14.11).
-  const drop = docked ? 0 : Math.min(entryPanel.tabBarDrop, Math.max(bottomInset, stampRoom));
+  const foot = Math.max(0, bottomInset - stampRoom);
+  // The frame runs a little past the screen's foot, into the room under the bar, so
+  // the bar stands lower (owner 14.11).
+  const drop = Math.min(entryPanel.tabBarDrop, Math.max(bottomInset, stampRoom));
   const body = (
     <Swiped swipe={swipe} correction={card.kind === 'correction'} fill={tabs}>
       <AccentGround
@@ -96,7 +91,7 @@ export function EntryDetails({
         style={[styles.panel, { paddingTop: topInset + space[3] }]}
       >
         <BackTile label={back} onPress={onBack} />
-        {!ownCard && slots?.slot === 'corner' && (
+        {!ownCard && slots !== undefined && (
           <View
             style={[styles.corner, { top: topInset + space[3] }]}
             testID={`${card.kind}-corner`}
@@ -131,7 +126,7 @@ export function EntryDetails({
             onOpenSynonymRow={onOpenSynonymRow}
             onWordHistoryShown={onWordHistoryShown}
             // The swipes take the whole of Entry details, so the card keeps only its corner.
-            slots={slots?.slot === 'corner' ? { ...slots, swipe: undefined } : slots}
+            slots={slots && { ...slots, swipe: undefined }}
             stressFalls={stressFalls}
             tabs={tabs}
             sourceTab={sourceTab}
@@ -192,22 +187,6 @@ export function EntryDetails({
         >
           {body}
         </ScrollView>
-      )}
-      {docked && (
-        <View
-          style={[
-            styles.dock,
-            {
-              paddingBottom: Math.max(bottomInset, space[3]),
-              backgroundColor: colors.background,
-              borderTopColor: colors.line,
-            },
-          ]}
-        >
-          <RevealDetail step={3} testID={`${card.kind}-actions`}>
-            {dock}
-          </RevealDetail>
-        </View>
       )}
     </EntryReveal>
   );
@@ -299,11 +278,6 @@ const styles = StyleSheet.create({
   fill: { flexGrow: 1 },
   // A tabbed Word fills the rest of the screen, its tab bar at the foot (ADR 0091).
   tabbed: { flexGrow: 1, paddingBottom: 0 },
-  // A Word's action row stays at the screen's foot over the scrolling text (XActions a4).
-  dock: {
-    paddingHorizontal: space[3],
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
   panel: {
     paddingHorizontal: space[4],
     paddingBottom: entryPanel.paddingBottom,

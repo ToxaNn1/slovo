@@ -7,6 +7,7 @@ import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition as shipped, editionStrings } from '../edition/edition';
+import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { BadgesScreen } from './badges-screen';
@@ -61,7 +62,9 @@ async function renderScreen({
         <EditionProvider edition={edition} strings={editionStrings}>
           <ReduceMotionProvider reduceMotion={reduceMotion}>
             <InterfaceSoundsProvider sounds={{ play: (sound) => played.push(sound) }}>
-              <BadgesScreen />
+              <SettingsProvider>
+                <BadgesScreen />
+              </SettingsProvider>
             </InterfaceSoundsProvider>
           </ReduceMotionProvider>
         </EditionProvider>

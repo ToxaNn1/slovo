@@ -88,7 +88,6 @@ const validConfig = {
     playStep: 'on',
     seenWordXp: 'on',
     levels: 'on',
-    noCounters: 'on',
     dailyGoal: 'on',
     enoughForToday: 'on',
     goalReachedCard: 'on',
@@ -98,7 +97,6 @@ const validConfig = {
     badges: 'on',
     levelLadder: 'on',
     badgeSheet: 'on',
-    badgeToast: 'on',
     badgeFamiliesOverview: 'on',
     streakFreezeCard: 'on',
     breakCard: 'on',
@@ -114,7 +112,6 @@ const validConfig = {
     gameHubGroups: 'on',
     gameHubRecord: 'on',
     gameModeToast: 'on',
-    eveningNotification: 'on',
     notificationFarewell: 'on',
     notificationExplainer: 'on',
     notificationTimeStep: 'on',
@@ -130,10 +127,8 @@ const validConfig = {
     previousWords: 'on',
     correctionTypes: 'on',
     curatedCollections: 'on',
-    swipeMarks: 'on',
     gesturesHintDemo: 'on',
     gesturesHintAgain: 'on',
-    savedSwipesOff: 'on',
     wordTabs: 'on',
     sourceTab: 'on',
     tipExceptions: 'on',
@@ -260,7 +255,6 @@ const validConfig = {
   mascot: {
     onboarding: 'Hello',
     newLevel: 'New Level',
-    badge: 'New Badge',
     dailyGoal: 'Goal met',
     streakMilestone: 'Streak grows',
     gameRight: 'Right',
@@ -301,7 +295,6 @@ const learningSwitches = [
   'firstWeek',
   'levelLadder',
   'badgeSheet',
-  'badgeToast',
   'streakFreezeCard',
   'breakCard',
   'calendarDayLines',
@@ -325,11 +318,7 @@ function withoutQuestionnaireSwitch() {
   return { featureSwitches };
 }
 /** The Feature Switches of the 1.0 notification plan. */
-const notificationSwitches = [
-  'eveningNotification',
-  'notificationFarewell',
-  'notificationExplainer',
-] as const;
+const notificationSwitches = ['notificationFarewell', 'notificationExplainer'] as const;
 
 describe('loadEdition', () => {
   it('reports the Edition id, locale and whether it marks Stress', () => {
@@ -1078,11 +1067,6 @@ describe('loadEdition', () => {
       'featureSwitches.searchButton',
     ],
     [
-      'a missing swipe marks Feature Switch',
-      withoutSwitch('swipeMarks'),
-      'featureSwitches.swipeMarks',
-    ],
-    [
       'a missing gestures hint demo Feature Switch',
       withoutSwitch('gesturesHintDemo'),
       'featureSwitches.gesturesHintDemo',
@@ -1557,7 +1541,6 @@ const dependentSwitches = [
   ['breakCard', ['xpLog']],
   ['calendarDayLines', ['xpLog']],
   ['badgeSheet', ['xpLog', 'badges']],
-  ['badgeToast', ['xpLog', 'badges']],
   ['profile', ['xpLog']],
   ['profileConfirmedByRarity', ['profile', 'xpLog', 'confirmedEntries']],
   ['profileGameBest', ['profile', 'xpLog', 'game']],
@@ -1584,12 +1567,10 @@ const dependentSwitches = [
   ['mood', ['dashboard', 'wordOfTheDay']],
   ['previousWords', ['dashboard', 'wordOfTheDayArchive', 'wordOfTheDay']],
   ['correctionTypes', ['dashboard', 'wordOfTheDay', 'corrections']],
-  ['swipeMarks', ['knowledge']],
   ['dueQuiz', ['knowledge']],
   ['collectionLinkCopy', ['collectionLinks']],
-  ['gesturesHintDemo', ['swipeMarks', 'knowledge']],
-  ['gesturesHintAgain', ['swipeMarks', 'knowledge']],
-  ['savedSwipesOff', ['swipeMarks', 'knowledge']],
+  ['gesturesHintDemo', ['knowledge']],
+  ['gesturesHintAgain', ['knowledge']],
   ['searchButton', ['search']],
   ['dashboardWordmark', ['dashboard', 'wordOfTheDay']],
   ['dailySplash', ['dashboard', 'wordOfTheDay']],

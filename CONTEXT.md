@@ -226,7 +226,7 @@ A rule of good speech with its standard form, a short explanation and its own Ga
 _Avoid_: Hack, advice, lifehack
 
 **Entry card**:
-How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. With `swipeMarks` on, the action row moves to the card's top-right corner as heart, Collections and «⋯», whose sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). With `wordTabs` on, every card but the Word of the Day's is a fixed frame the height of the Feed's page (ADR 0091): a Word card with the tabs «Суть», «Приклад», «Зв’язки» and «Історія» under its Lemma, a Correction card with «Як краще», «Чому» and «Приклади» under its struck non-standard form, an Idiom card with «Суть», «Звідки» and «Приклад» under its expression, a Tip card with «Правило» (and, with `tipExceptions` on, «Винятки» for a Tip with exceptions, ADR 0120), and a Synonym Row card with its members four to a tab, «Ряд · 1/2», «Ряд · 2/2» (ADR 0114), empty tabs left out. With `sourceTab` on too, each of them ends with a tab «Джерело» that names the Entry's sources one to a line, and the source line leaves the other tabs (ADR 0116). Content too tall for the frame shrinks a Text size step at a time down to the floor, then is clamped under «Детальніше», which opens it whole in a scroll inside the card (ADR 0113). The Feed and every screen that opens a kept Entry show the same Entry card.
+How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with heart, Collections and «⋯» in its top-right corner; the «⋯» sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). With `wordTabs` on, every card but the Word of the Day's is a fixed frame the height of the Feed's page (ADR 0091): a Word card with the tabs «Суть», «Приклад», «Зв’язки» and «Історія» under its Lemma, a Correction card with «Як краще», «Чому» and «Приклади» under its struck non-standard form, an Idiom card with «Суть», «Звідки» and «Приклад» under its expression, a Tip card with «Правило» (and, with `tipExceptions` on, «Винятки» for a Tip with exceptions, ADR 0120), and a Synonym Row card with its members four to a tab, «Ряд · 1/2», «Ряд · 2/2» (ADR 0114), empty tabs left out. With `sourceTab` on too, each of them ends with a tab «Джерело» that names the Entry's sources one to a line, and the source line leaves the other tabs (ADR 0116). Content too tall for the frame shrinks a Text size step at a time down to the floor, then is clamped under «Детальніше», which opens it whole in a scroll inside the card (ADR 0113). The Feed and every screen that opens a kept Entry show the same Entry card.
 _Avoid_: Item, tile (for a card; a tile is the pressed button of the design)
 
 **Text size**:
@@ -301,7 +301,7 @@ A cover for one missed day that keeps the Streak, used automatically. A new read
 _Avoid_: Streak saver, repair, shield
 
 **Break**:
-A pause of the Streak the reader starts: up to 7 days, once every 30 days, free. Break days keep the Streak and add nothing to it.
+A pause of the Streak the reader starts: up to 7 days, at most 7 Break days in the 30 days from the first Break of them, free; the reader can end it early, and the days it did not use come back (ADR 0180). Break days keep the Streak and add nothing to it.
 _Avoid_: Vacation, pause (the polite pause is a notification rule), repair
 
 **Badge**:
@@ -371,7 +371,7 @@ One pass through all eligible Entries. The first Cycle opens with the Starter Wo
 _Avoid_: Round (that is a Game term), loop
 
 **Knowledge Mark**:
-What the reader says about an Entry on its card: Known («Знаю») or Unknown («Не знаю»). Tapping the other mark changes it, tapping the same one again removes it. With `swipeMarks` on, a side swipe sets it instead (right Known, left Unknown) or the «⋯» sheet does; a repeated swipe to the same side changes nothing, only «Зняти позначку» removes it, and undo within 4 s restores the previous state (ADR 0077). A mark set from 0.8.13 on keeps the time it was set; only marks with a time count in a Weekly Recap. On a Correction, Known means "I already say it right". A mistake in any Game Mode is an Unknown mark; there is no separate list of hard words.
+What the reader says about an Entry on its card: Known («Знаю») or Unknown («Не знаю»). A side swipe sets it (right Known, left Unknown) or the «⋯» sheet does; a repeated swipe to the same side changes nothing, only «Зняти позначку» removes it, and undo within 4 s restores the previous state (ADR 0077). A mark set from 0.8.13 on keeps the time it was set; only marks with a time count in a Weekly Recap. On a Correction, Known means "I already say it right". A mistake in any Game Mode is an Unknown mark; there is no separate list of hard words.
 _Avoid_: Rating, grade
 
 **Review**:
@@ -398,7 +398,7 @@ The set of Categories of Words, plus Corrections as a whole with their own Categ
 _Avoid_: Filter, preferences
 
 **Rarity Range**:
-«Рідкість»: the rarities of Words the reader wants, from a bottom to a top, «від 1 до 5» by default, «лише 3» when both are one. Only Words within it appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings on five slanted bars, and its top alone by onboarding's «Рівень» and by the Rarity Test, which put the bottom back to 1 (ADR 0156).
+«Рідкість»: the rarities of Words the reader wants, from a bottom to a top, «від 1 до 5» by default, «лише 3» when both are one. Only Words within it appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings on five slanted bars, and its top alone by the Rarity Test, which puts the bottom back to 1 (ADR 0156, 0182); onboarding's «Рівень» sets nothing (ADR 0183).
 _Avoid_: Rarity Ceiling, Rarity Floor, ceiling, floor, difficulty, level, maximum difficulty
 
 **Mix kind weight**:
@@ -438,7 +438,7 @@ _Avoid_: Normalized text, search key, folded form
 _Avoid_: Lookup, filter, dictionary
 
 **Rarity Test**:
-«Перевірка рівня»: 10 Words, 2 of each rarity, each shown as its Lemma with Stress for «Знаю» or «Не знаю», which set the top of the Rarity Range to the lowest rarity with «Не знаю» («до 5» if all are known). Optional in onboarding after the Mix and again from Settings. It sets no Knowledge Mark, starts no Review and makes nothing Seen.
+«Перевірка рівня»: 10 Words, 2 of each rarity, each shown as its Lemma with Stress for «Знаю» or «Не знаю», which set the top of the Rarity Range to the highest rarity of which the reader knew at least half of the Words asked («до 1» when there is none; ADR 0182). Optional in onboarding, from «Не знаю» on «Рівень», and again from Settings. It sets no Knowledge Mark, starts no Review and makes nothing Seen.
 _Avoid_: Level test, placement test, quiz
 
 **Weekly Recap**:
@@ -553,7 +553,7 @@ _Avoid_: Heart, attempt
 A wrong option in a Round.
 
 **Best result**:
-The highest result of one finished Game in a Game Mode: the Rounds passed, or the right answers in «На час»; one per Game Mode per Edition. Stored, since finished Games are not kept, and written only when a finished Game beats it; a Game left before its end never counts.
+The highest result of one finished Game in a Game Mode: its right answers, in every Game Mode; one per Game Mode per Edition. Stored, since finished Games are not kept, and written only when a finished Game beats it; a Game left before its end never counts.
 _Avoid_: High score, top score
 
 **Game Review**:

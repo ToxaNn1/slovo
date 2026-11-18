@@ -21,7 +21,7 @@ When a mode can make no fair Round of an Entry, such as a Word without three oth
 
 **Each mode reaches its card in one shape.** A mode's offer carries the mode id, the Entry kind and, when it can't start, the refusal. The Game strings hold `game.modes`, one entry per mode id: the card's words, the label over its Rounds' prompt and a text per refusal it can give (every mode has one for too few eligible Entries; only a mode asking about Corrections has one for Corrections out of the Mix). An Edition's own mode brings its strings under its id in `game.modes` of its `strings.json`, checked by the same schema. The shell draws any offer as a card and names no mode. The app checks the modes' strings once the composition opens: a mode without them fails the launch, and one without a text for its refusal throws when its card is drawn.
 
-**The Best result** is kept per Game Mode (ADR 0052): the most Rounds passed in one finished Game of the mode, or the right answers in «На час». Finished Games aren't kept, so each is its own user-state record, `game.best.<mode id>`, written only when a finished Game of the mode beats it, with a `highest` sync mark so sync keeps the higher of two devices' results.
+**The Best result** is kept per Game Mode (ADR 0052): the most right answers in one finished Game of the mode (ADR 0189). Finished Games aren't kept, so each is its own user-state record, `game.bestRight.<mode id>`, written only when a finished Game of the mode beats it, with a `highest` sync mark so sync keeps the higher of two devices' results.
 
 ## Considered Options
 

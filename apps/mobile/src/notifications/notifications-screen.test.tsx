@@ -12,7 +12,7 @@ import {
 } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
-import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { Linking } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -125,5 +125,18 @@ describe('Settings › Сповіщення while iOS denies notifications', () 
 
     expect(openSettings).toHaveBeenCalledTimes(1);
     expect(asks).not.toHaveBeenCalled();
+  });
+});
+
+describe('Notifications › its header (app pass 91)', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await render('allowed');
+
+    expect(screen.getByRole('header', { name: strings.title })).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('notifications-scroll')).queryByRole('header', {
+        name: strings.title,
+      }),
+    ).toBeNull();
   });
 });

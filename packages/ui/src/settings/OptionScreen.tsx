@@ -50,38 +50,46 @@ export function OptionScreen<T extends string>({
   const { colors, radii } = tokens;
   const { voice } = useEdition();
   return (
-    <ScrollView testID={testID} contentContainerStyle={styles.content}>
-      <BackHeader titleRole="settingsSubTitle" title={title} back={back} />
-      <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
-        {subtitle}
-      </Text>
-      <View
-        testID={testID === undefined ? undefined : `${testID}-sample`}
-        style={[styles.card, { backgroundColor: colors.surfaceSunken, borderRadius: radii.card }]}
-      >
-        {sample}
-        <Text
-          {...voice}
-          testID={testID === undefined ? undefined : `${testID}-explanation`}
-          style={[styles.explanation, typeStyle('sub', tokens), { color: colors.muted }]}
-        >
-          {explanation}
-        </Text>
+    // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
+    <View testID={testID} style={styles.screen}>
+      <View style={styles.bar}>
+        <BackHeader titleRole="settingsSubTitle" title={title} back={back} />
       </View>
-      <SettingsGroup>
-        {options.map((option) => (
-          <Option
-            key={option.value}
-            label={option.label}
-            on={option.value === selected}
-            testID={option.testID}
-            onPress={() => {
-              onSelect(option.value);
-            }}
-          />
-        ))}
-      </SettingsGroup>
-    </ScrollView>
+      <ScrollView
+        testID={testID === undefined ? undefined : `${testID}-list`}
+        contentContainerStyle={styles.content}
+      >
+        <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
+          {subtitle}
+        </Text>
+        <View
+          testID={testID === undefined ? undefined : `${testID}-sample`}
+          style={[styles.card, { backgroundColor: colors.surfaceSunken, borderRadius: radii.card }]}
+        >
+          {sample}
+          <Text
+            {...voice}
+            testID={testID === undefined ? undefined : `${testID}-explanation`}
+            style={[styles.explanation, typeStyle('sub', tokens), { color: colors.muted }]}
+          >
+            {explanation}
+          </Text>
+        </View>
+        <SettingsGroup>
+          {options.map((option) => (
+            <Option
+              key={option.value}
+              label={option.label}
+              on={option.value === selected}
+              testID={option.testID}
+              onPress={() => {
+                onSelect(option.value);
+              }}
+            />
+          ))}
+        </SettingsGroup>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -160,6 +168,8 @@ function Option({
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  bar: { paddingHorizontal: space[4], paddingBottom: space[4] },
   content: { paddingHorizontal: space[4], paddingBottom: space[8], gap: space[4] },
   card: {
     flexDirection: 'row',

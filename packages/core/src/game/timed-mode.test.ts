@@ -362,19 +362,23 @@ describe('a Game of «На час»', () => {
     });
   });
 
-  it('asks first about the Words the reader marked «Не знаю»', async () => {
-    const app = await run();
+  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  it('asks about the Words the reader marked «Не знаю» at places drawn among the first 15 Rounds', async () => {
     const weak = ['w_word07', 'w_word19', 'w_word23'];
-    for (const id of weak) await app.knowledge.tap(id, 'unknown');
-    await app.game.start('timed');
+    const places: number[] = [];
+    for (const seed of [1, 2, 3, 4]) {
+      const app = await run({ seed });
+      for (const id of weak) await app.knowledge.tap(id, 'unknown');
 
-    for (const _ of weak) await pick(app, true);
+      await app.game.start('timed');
+      for (let round = 0; round < 15; round += 1) await pick(app, true);
+      const asked = current(app).played.map((round) => askedOf(round).id);
 
-    expect(
-      current(app)
-        .played.map((round) => askedOf(round).id)
-        .sort(),
-    ).toEqual(weak);
+      places.push(...weak.map((one) => asked.indexOf(one)));
+    }
+
+    expect(places.every((place) => place >= 0 && place < 15)).toBe(true);
+    expect(places.some((place) => place >= weak.length)).toBe(true);
   });
 
   it('marks the Word of a wrong pick «Не знаю», moves no Review and lists it in the Game Review', async () => {

@@ -444,8 +444,6 @@ export const typeRoles = {
   chipCount: role('ui', '600', 12, 14),
   /** The seconds left beside a timed Game's bar. */
   timerSeconds: role('word', '800', 14, 17),
-  /** The Community Counters line under an Entry card's mark buttons. */
-  communityCounters: role('ui', '400', 13, 17),
   /** The giant ∞ behind the end-of-Cycle card. */
   endOfCycleInfinity: role('word', '900', 330, 330),
   /** A Badge's symbol on its mark, at a 156-wide mark; the mark scales it to a third of its side. */

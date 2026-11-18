@@ -18,12 +18,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { AccountRow } from '@/account/account-row';
+import { useComposition } from '@/composition';
 import { useAccountInEffect } from '@/account/account';
 import { editionStrings } from '@/edition/edition';
 import { useEditionInEffect } from '@/edition/remote-switches';
 import { useShowGesturesHintAgain } from '@/feed/gestures-hint';
 import { useHiddenSummary } from '@/mix/hidden';
 import { keep } from '@/keep';
+import { useSubscribed } from '@/opening';
+import { dayText } from '@/progress/day-text';
 import { useMixSummary } from '@/mix/mix';
 import { useRarityRange } from '@/mix/rarity-range';
 import { useNotificationsSummary } from '@/notifications/notifications';
@@ -64,8 +67,8 @@ const rarityTopSegments = RARITIES.map((rarity) => ({
  * a row that opens a screen with its value beside the chevron, the groups in
  * the board's order. Each row is shown while its feature is on in effect: the
  * Account, «Менше руху», «Звуки», «Голос диктора», the Daily Goal, the Rarity
- * Range (ADR 0156), «Пройти тест ще раз», «Відзнаки», «Пройти опитування
- * ще раз», «Перерва», the counters, «Самоперевірка» and «Конфіденційність»,
+ * Range (ADR 0156), «Пройти тест ще раз», «Відзнаки», «Анкета: підлаштувати
+ * Стрічку», «Перерва», the counters, «Самоперевірка» and «Конфіденційність»,
  * which holds the privacy switch and the Data export (ADR 0135; the privacy
  * policy link lives in «Про SLOVO»). Seasonal Decor has no row (ADR 0055).
  * Under the groups, «Скинути прогрес» asks in its sheet and starts the
@@ -95,6 +98,9 @@ function SettingsList() {
   const privacyRows = usePrivacyRows();
   const router = useRouter();
   const showGesturesHintAgain = useShowGesturesHintAgain();
+  const breakLastDay = useSubscribed(useComposition().streakBreak, ({ state }) =>
+    state.kind === 'running' ? state.lastDay : undefined,
+  );
   const build = installedBuild();
   const resetProgress = useResetProgress();
   const [askingReset, setAskingReset] = useState(false);
@@ -104,7 +110,7 @@ function SettingsList() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.bar}>
         <BackHeader
           titleRole="settingsTitle"
           title={strings.title}
@@ -121,6 +127,8 @@ function SettingsList() {
               : undefined
           }
         />
+      </View>
+      <ScrollView testID="settings-scroll" contentContainerStyle={styles.content}>
         <View testID="settings-group-look" style={styles.section}>
           <SettingsGroup title={strings.groups.look}>
             <ChoiceRow
@@ -376,7 +384,11 @@ function SettingsList() {
                 testID="settings-row-streak-break"
                 icon="bar"
                 label={strings.rows.streakBreak}
-                subtitle={subtitles.streakBreak}
+                subtitle={
+                  breakLastDay === undefined
+                    ? subtitles.streakBreak
+                    : fill(subtitles.streakBreakRunning, { date: dayText(breakLastDay) })
+                }
                 end={{
                   kind: 'chevron',
                   onPress: () => {
@@ -385,36 +397,19 @@ function SettingsList() {
                 }}
               />
             )}
-            {shown.countersSetting === 'noCounters' && (
-              <SettingsRow
-                testID="settings-no-counters"
-                icon="bar"
-                label={strings.noCounters.title}
-                subtitle={strings.noCounters.explanation}
-                end={{
-                  kind: 'switch',
-                  value: current.noCounters,
-                  onChange: (noCounters) => {
-                    update({ noCounters });
-                  },
-                }}
-              />
-            )}
-            {shown.countersSetting === 'hideStreak' && (
-              <SettingsRow
-                testID="settings-hide-streak"
-                icon="bar"
-                label={strings.hideStreak}
-                subtitle={subtitles.hideStreak}
-                end={{
-                  kind: 'switch',
-                  value: current.noCounters,
-                  onChange: (noCounters) => {
-                    update({ noCounters });
-                  },
-                }}
-              />
-            )}
+            <SettingsRow
+              testID="settings-no-counters"
+              icon="bar"
+              label={strings.noCounters.title}
+              subtitle={strings.noCounters.explanation}
+              end={{
+                kind: 'switch',
+                value: current.noCounters,
+                onChange: (noCounters) => {
+                  update({ noCounters });
+                },
+              }}
+            />
             {shown.selfCheckSetting && (
               <SettingsRow
                 testID="settings-self-check"
@@ -467,10 +462,10 @@ function SettingsList() {
               testID="settings-row-about"
               icon="triangle"
               label={strings.rows.about}
-              // «Версія <version> (<build>)» (ADR 0044), unknown to a binary without `expo-application`.
+              // «Версія <version> (<build>)» (ADR 0044); «Версія <version>» without a build of the app's own.
               subtitle={
-                build === undefined
-                  ? undefined
+                build.build === undefined
+                  ? fill(strings.about.versionAlone, { version: build.version })
                   : fill(subtitles.about, { version: build.version, build: build.build })
               }
               end={{
@@ -515,6 +510,8 @@ function SettingsList() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
+  // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
+  bar: { paddingHorizontal: space[5], paddingTop: space[2] },
+  content: { paddingHorizontal: space[5], paddingBottom: space[8] },
   section: { marginTop: space[4] },
 });
