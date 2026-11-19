@@ -1,5 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
 import { Slot, type NativeIntent } from 'expo-router';
-import { isValidElement, type ComponentType, type ReactElement } from 'react';
+import { Fragment, isValidElement, type ComponentType, type ReactElement, type ReactNode } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, type EdgeInsets } from 'react-native-safe-area-context';
 
@@ -58,7 +59,7 @@ function InApp({
   shell: Shell;
   decor: Decor;
   insets: EdgeInsets;
-  children: ReactElement;
+  children: ReactNode;
 }) {
   return (
     <SafeAreaProvider initialMetrics={{ frame, insets }}>
@@ -121,6 +122,33 @@ export async function renderApp(
     },
     { initialUrl },
   );
+}
+
+/**
+ * Renders `hook` as a screen of the app calls it: inside the app's tree, under
+ * the same Shell, settings, Edition, Decor and screen gates as `renderApp`.
+ */
+export async function renderHookInApp<T>(
+  hook: () => T,
+  {
+    shell = testShell(),
+    settings,
+    decor = coreDecor,
+    insets = noInsets,
+    Screen = Fragment,
+  }: InApp & {
+    /** What the hook's own screen draws around it, such as its undo toast; nothing by default. */
+    readonly Screen?: ComponentType<{ children: ReactNode }>;
+  } = {},
+) {
+  const drawn = settings === undefined ? shell : await withSettings(shell, settings);
+  return renderHook(hook, {
+    wrapper: ({ children }) => (
+      <InApp shell={drawn} decor={decor} insets={insets}>
+        <Screen>{children}</Screen>
+      </InApp>
+    ),
+  });
 }
 
 /** `shell` with its settings at the Edition's defaults and `changes`, over the Shell's own user state. */
