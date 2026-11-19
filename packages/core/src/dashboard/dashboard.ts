@@ -191,7 +191,7 @@ export async function openDashboard({
     const today = wordOfTheDay.chosen() ?? (await feed.wordOfTheDay());
     if (today === undefined) return undefined;
     const { wordId, date } = today;
-    const number = (await archiveDaysBefore(date)).length + 1;
+    const number = archiveDaysBefore(date).length + 1;
     const isSeen = cycle.covers(wordId) && !cycle.unseen().words.includes(wordId);
     const word = isSeen ? await entries.get(wordId) : undefined;
     if (word?.kind !== 'word') return { state: 'unrevealed', wordId, date, number };
@@ -218,14 +218,14 @@ export async function openDashboard({
   }
 
   /** The kept archive days before `day`, newest first. */
-  async function archiveDaysBefore(day: LocalDate): Promise<readonly WordOfTheDayArchiveDay[]> {
+  function archiveDaysBefore(day: LocalDate): readonly WordOfTheDayArchiveDay[] {
     const dayKey = dateKeyOf(day);
-    return (await archive.list()).filter(({ date }) => dateKeyOf(date) < dayKey);
+    return archive.list.filter(({ date }) => dateKeyOf(date) < dayKey);
   }
 
-  async function previousWords(): Promise<PreviousWordsBlock | undefined> {
+  function previousWords(): PreviousWordsBlock | undefined {
     // Today's day is the hero's, so it is left out.
-    const days = (await archiveDaysBefore(todayDate(clock))).slice(0, PREVIOUS_WORDS);
+    const days = archiveDaysBefore(todayDate(clock)).slice(0, PREVIOUS_WORDS);
     return days.length === 0 ? undefined : { kind: 'previousWords', days };
   }
 
@@ -236,7 +236,7 @@ export async function openDashboard({
       blocks.push({ kind: 'wordOfTheDay', hero: wordOfTheDayHero });
     const moodCheckIn = moodBlock();
     if (moodCheckIn !== undefined) blocks.push(moodCheckIn);
-    const previous = previousWordsOn ? await previousWords() : undefined;
+    const previous = previousWordsOn ? previousWords() : undefined;
     if (previous !== undefined) blocks.push(previous);
     const { rail, published } = curatedCollections;
     if (rail.length > 0) blocks.push({ kind: 'curatedCollections', cards: rail, published });

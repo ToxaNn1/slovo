@@ -1,37 +1,22 @@
-import type { Composition, WordOfTheDayArchiveDay } from '@slovo/core';
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import type { WordOfTheDayArchiveDay } from '@slovo/core';
 
 import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
+import { useSubscribed } from '../opening';
 
 /**
- * The Word of the Day archive «Слова дня», newest first, read each time the
- * screen comes into view, so it holds the days the Feed and the Sync kept
- * since; nothing until the first read ends.
+ * The Word of the Day archive «Слова дня», newest first, with the days the
+ * Feed and the Sync kept since: the screen draws again only when it changes.
  */
-export function useWordOfTheDayArchive(): readonly WordOfTheDayArchiveDay[] | undefined {
-  const composition = useComposition();
-  const [read, setRead] = useState<{
-    in: Composition;
-    days: readonly WordOfTheDayArchiveDay[];
-  }>();
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      composition.wordOfTheDayArchive.list().then(
-        (days) => {
-          if (active) setRead({ in: composition, days });
-        },
-        (error: unknown) => {
-          logError('Could not read the Word of the Day archive', error);
-        },
-      );
-      return () => {
-        active = false;
-      };
-    }, [composition]),
+export function useWordOfTheDayArchive(): readonly WordOfTheDayArchiveDay[] {
+  return useSubscribed(useComposition().wordOfTheDayArchive, ({ list }) => list);
+}
+
+/**
+ * The Word of the Day the archive keeps under the local date `YYYY-MM-DD`,
+ * once it keeps one: the screen draws again only when that day changes.
+ */
+export function useWordOfTheDayOn(dateKey: string | undefined): WordOfTheDayArchiveDay | undefined {
+  return useSubscribed(useComposition().wordOfTheDayArchive, (archive) =>
+    dateKey === undefined ? undefined : archive.day(dateKey),
   );
-  // A read of a composition since reopened is not shown.
-  return read?.in === composition ? read.days : undefined;
 }

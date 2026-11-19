@@ -45,14 +45,12 @@ export function WordOfTheDayArchiveList({ header }: { header: ListHeader }) {
         )}
         ListHeaderComponent={header(null)}
         ListEmptyComponent={
-          days === undefined ? undefined : (
-            <EmptyState
-              mascot={(width) => <MascotAs state="sleeps" width={width} />}
-              testID="words-of-the-day-empty"
-              title={strings.empty.title}
-              message={strings.empty.message}
-            />
-          )
+          <EmptyState
+            mascot={(width) => <MascotAs state="sleeps" width={width} />}
+            testID="words-of-the-day-empty"
+            title={strings.empty.title}
+            message={strings.empty.message}
+          />
         }
         contentContainerStyle={styles.content}
       />

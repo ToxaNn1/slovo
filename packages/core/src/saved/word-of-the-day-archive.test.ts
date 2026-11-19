@@ -10,7 +10,7 @@ import {
 } from '../index';
 import { SEEN_DWELL_MS } from '../feed/feed';
 import { type UserStateChanges } from '../ports';
-import { createWordOfTheDayArchive } from './word-of-the-day-archive';
+import { openWordOfTheDayArchive } from './word-of-the-day-archive';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -38,6 +38,9 @@ async function run({
       return memory.write(changes);
     },
   };
+  /** A record kept behind the composition's back, as nothing in one app run does. */
+  const keepUnseen = (date: string, wordId: string) =>
+    memory.write(new Map([[`wordOfTheDayArchive.${date}`, JSON.stringify(wordId)]]));
   const app: Composition = await openComposition({
     content,
     edition: testEdition({
@@ -48,7 +51,7 @@ async function run({
     clock,
     random: { next: () => 0.25 },
   });
-  return { app, records, writes };
+  return { app, records, writes, keepUnseen };
 }
 
 /** Shows the card at `position` for `ms` and takes it off screen, as the UI reports it. */
@@ -149,7 +152,7 @@ describe('The Word of the Day archive', () => {
 
 /** The archive list of the UA Edition over the kept records, its Feature Switch on. */
 async function listOf(records: Map<string, string>) {
-  const archive = createWordOfTheDayArchive({
+  const { archive } = await openWordOfTheDayArchive({
     content: createMemoryContentPort({
       words: [
         word('w_sumyrnyi', { lemma: 'сумирний', stress: [3] }),
@@ -160,8 +163,9 @@ async function listOf(records: Map<string, string>) {
     edition: { locale: 'uk-UA', isFeatureEnabled: () => true },
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: fakeClock('2026-10-27T09:00:00+02:00').clock,
+    dayTurned: { subscribe: () => undefined },
   });
-  return (await archive.list()).map(({ date, dateLabel, row }) => [
+  return archive.list.map(({ date, dateLabel, row }) => [
     keyOf(date),
     dateLabel,
     row.entryId,
@@ -237,13 +241,106 @@ describe('The Word of the Day archive list', () => {
     const time = fakeClock('2026-10-26T09:00:00+03:00');
     const { app } = await run({ clock: time.clock });
     const today = idAt(app, 0);
-    expect(await app.wordOfTheDayArchive.list()).toEqual([]);
+    expect(app.wordOfTheDayArchive.list).toEqual([]);
 
     await look(app, time, 0, SEEN_DWELL_MS);
 
-    const list = await app.wordOfTheDayArchive.list();
+    const { list } = app.wordOfTheDayArchive;
     expect(list.map(({ date, row }) => [keyOf(date), row.entryId])).toEqual([
       ['2026-10-26', today],
     ]);
+  });
+
+  it('tells its subscribers once the Feed keeps a day, with a new list that has it', async () => {
+    const time = fakeClock('2026-10-26T09:00:00+03:00');
+    const { app } = await run({ clock: time.clock });
+    const today = idAt(app, 0);
+    const before = app.wordOfTheDayArchive.list;
+    const told: string[][] = [];
+    app.wordOfTheDayArchive.subscribe(() => {
+      told.push(app.wordOfTheDayArchive.list.map(({ row }) => row.entryId));
+    });
+
+    await look(app, time, 0, SEEN_DWELL_MS);
+
+    expect(told).toEqual([[today]]);
+    expect(before).toEqual([]);
+  });
+
+  it('tells a subscriber no more once it stops', async () => {
+    const time = fakeClock('2026-10-26T09:00:00+03:00');
+    const { app } = await run({ clock: time.clock });
+    let told = 0;
+    const stop = app.wordOfTheDayArchive.subscribe(() => {
+      told += 1;
+    });
+    stop();
+
+    await look(app, time, 0, SEEN_DWELL_MS);
+
+    expect(told).toBe(0);
+  });
+
+  it('gives the day kept under a date, the one in the list, and nothing for a date not kept', async () => {
+    const { app } = await run({
+      records: kept({ '2026-10-25': 'w_one', '2026-10-24': 'w_gone' }),
+    });
+    const { list } = app.wordOfTheDayArchive;
+
+    expect(list).toHaveLength(1);
+    expect(app.wordOfTheDayArchive.day('2026-10-25')).toBe(list[0]);
+    expect(app.wordOfTheDayArchive.day('2026-10-24')).toBeUndefined();
+    expect(app.wordOfTheDayArchive.day('2026-10-26')).toBeUndefined();
+  });
+
+  it('keeps one list, read when it opens, while a card that is not the Word of the Day is Seen', async () => {
+    const time = fakeClock('2026-10-26T09:00:00+03:00');
+    const { app, keepUnseen } = await run({ clock: time.clock });
+    const { list } = app.wordOfTheDayArchive;
+    let told = 0;
+    app.wordOfTheDayArchive.subscribe(() => {
+      told += 1;
+    });
+    await keepUnseen('2026-10-20', 'w_one');
+
+    await look(app, time, 1, SEEN_DWELL_MS);
+    await app.resume();
+
+    expect(app.wordOfTheDayArchive.list).toBe(list);
+    expect(told).toBe(0);
+  });
+
+  it('gives the dates of the year before their year once the first day of a year comes', async () => {
+    const time = fakeClock('2026-12-31T09:00:00+02:00');
+    const { app } = await run({
+      clock: time.clock,
+      records: kept({ '2026-12-30': 'w_one' }),
+    });
+    const labels = () => app.wordOfTheDayArchive.list.map(({ dateLabel }) => dateLabel);
+    let told = 0;
+    app.wordOfTheDayArchive.subscribe(() => {
+      told += 1;
+    });
+    expect(labels()).toEqual(['December 30']);
+
+    time.advance(24 * 60 * 60 * 1000);
+    await app.resume();
+
+    expect(labels()).toEqual(['December 30, 2026']);
+    expect(told).toBe(1);
+  });
+
+  it('tells nothing while the Feature Switch `wordOfTheDayArchive` is off', async () => {
+    const time = fakeClock('2026-10-26T09:00:00+03:00');
+    const { app } = await run({ clock: time.clock, on: [] });
+    let told = 0;
+    app.wordOfTheDayArchive.subscribe(() => {
+      told += 1;
+    });
+
+    await look(app, time, 0, SEEN_DWELL_MS);
+
+    expect(told).toBe(0);
+    expect(app.wordOfTheDayArchive.list).toEqual([]);
   });
 });

@@ -64,7 +64,7 @@ export default function SavedScreen() {
     wordOfTheDayArchive: archiveShown,
     searchField: searchShown,
   } = useShown();
-  const archive = useWordOfTheDayArchive() ?? [];
+  const archive = useWordOfTheDayArchive();
   const history = useHistoryCount();
   const { colors } = useTokens();
   const { count } = useEdition();

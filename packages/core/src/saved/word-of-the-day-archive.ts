@@ -1,12 +1,21 @@
 import type { Edition } from '../edition/edition';
 import { createEntries, EVERYTHING_IN } from '../entries/entries';
 import { createEntryRows, type EntryRowModel } from '../entries/entry-row';
+import { createInTurn, createSubscribers } from '../in-turn';
 import { dateKeyOf, parseLocalDate, todayDate, type LocalDate } from '../local-date';
 import type { Clock, ContentReadPort, UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
 const { wordOfTheDayArchive: archiveRecords } = userStateRecords;
+
+/** A day of the Word of the Day archive on its way into a write. */
+export interface WordOfTheDayArchiveRecording {
+  /** The change that keeps the Word under the date, to go in the write. */
+  readonly changes: UserStateChanges;
+  /** Takes the day into the archive's list, once the write is made. */
+  commit(): Promise<void>;
+}
 
 /**
  * How the Feed records the Word of the Day archive («Слова дня», ADR 0054)
@@ -15,26 +24,11 @@ const { wordOfTheDayArchive: archiveRecords } = userStateRecords;
  */
 export interface WordOfTheDayArchiveRecorder {
   /**
-   * The change that keeps the Word under the date, to go in the write that
-   * marks its Word of the Day card Seen; no change while the Feature Switch
-   * `wordOfTheDayArchive` is off, so an absent feature keeps its records and
-   * writes none.
+   * The day to keep in the write that marks its Word of the Day card Seen;
+   * nothing while the Feature Switch `wordOfTheDayArchive` is off, so an
+   * absent feature keeps its records and writes none.
    */
-  record(date: LocalDate, wordId: string): UserStateChanges;
-}
-
-/** The archive recorder over the Edition, for the Core composition. */
-export function createWordOfTheDayArchiveRecorder({
-  edition,
-}: {
-  edition: Pick<Edition, 'isFeatureEnabled'>;
-}): WordOfTheDayArchiveRecorder {
-  return {
-    record: (date, wordId) =>
-      edition.isFeatureEnabled('wordOfTheDayArchive')
-        ? archiveRecords.record(dateKeyOf(date)).change(wordId)
-        : new Map(),
-  };
+  record(date: LocalDate, wordId: string): WordOfTheDayArchiveRecording | undefined;
 }
 
 /** A Word's row in a list. */
@@ -52,14 +46,24 @@ export interface WordOfTheDayArchiveDay {
   readonly row: WordRowModel;
 }
 
-/** The Word of the Day archive as «Слова дня» in «Збережене» lists it (ADR 0054). */
+/**
+ * The Word of the Day archive as «Слова дня» in «Збережене» lists it (ADR
+ * 0054). It is read from the user state once, when it opens, like Favorites,
+ * and again only when it changes: once the Feed keeps a day, and on the first
+ * day of a year, which gives the dates of the year before their year.
+ */
 export interface WordOfTheDayArchive {
   /**
-   * Every kept day, newest first, read from the user state on each call, so
-   * it holds the days the Feed and the Sync kept since. A Retired Word stays;
-   * a Word the Language Pack no longer has is left out.
+   * Every kept day, newest first; its length is the count. A Retired Word
+   * stays; a Word the Language Pack no longer has is left out. A change never
+   * edits this array: it makes a new one and tells the subscribers, so the
+   * array stays the same until something changes.
    */
-  list(): Promise<readonly WordOfTheDayArchiveDay[]>;
+  readonly list: readonly WordOfTheDayArchiveDay[];
+  /** The day kept under the local date `YYYY-MM-DD`, the same object as in the list; nothing for a date not kept. */
+  day(dateKey: string): WordOfTheDayArchiveDay | undefined;
+  /** Calls `listener` after each change of the list. Returns the call that stops it. */
+  subscribe(listener: () => void): () => void;
 }
 
 /**
@@ -75,12 +79,17 @@ function withoutYearSuffix(format: Intl.DateTimeFormat, instant: number): string
     .join('');
 }
 
-/** The Word of the Day archive over the Language Pack and the user state. */
-export function createWordOfTheDayArchive({
+/**
+ * Opens the Word of the Day archive over the Language Pack and the user
+ * state, for the Core composition, with the recorder the Feed keeps a day
+ * through.
+ */
+export async function openWordOfTheDayArchive({
   content,
   edition,
   userState,
   clock,
+  dayTurned,
 }: {
   content: ContentReadPort;
   /** Its `locale` writes the dates. */
@@ -88,7 +97,9 @@ export function createWordOfTheDayArchive({
   userState: Pick<UserState, 'list'>;
   /** Tells the current year, whose dates go without it. */
   clock: Clock;
-}): WordOfTheDayArchive {
+  /** Each new day, the first of a year among them. */
+  dayTurned: { subscribe(listener: (day: LocalDate) => unknown): unknown };
+}): Promise<{ archive: WordOfTheDayArchive; recorder: WordOfTheDayArchiveRecorder }> {
   const rows = createEntryRows(createEntries({ content, edition, choices: EVERYTHING_IN }));
   // The date as a calendar day, the same in every time zone.
   const thisYearFormat = new Intl.DateTimeFormat(edition.locale, {
@@ -102,14 +113,22 @@ export function createWordOfTheDayArchive({
     year: 'numeric',
     timeZone: 'UTC',
   });
-  return {
-    async list() {
-      const kept = [...(await userState.list(archiveRecords))].sort(([one], [other]) =>
-        other.localeCompare(one),
-      );
-      const rowOf = await rows.rows(kept.map(([, wordId]) => wordId));
-      const thisYear = todayDate(clock).year;
-      return kept.flatMap(([dateKey, wordId]) => {
+  const subscribers = createSubscribers();
+  const inTurn = createInTurn();
+  let list: readonly WordOfTheDayArchiveDay[] = [];
+  let byDate: ReadonlyMap<string, WordOfTheDayArchiveDay> = new Map();
+  /** The year the list's dates are written in: its own dates go without it. */
+  let writtenIn = todayDate(clock).year;
+
+  /** Reads the kept days from the user state and writes their dates as of this year. */
+  async function read(): Promise<void> {
+    const kept = [...(await userState.list(archiveRecords))].sort(([one], [other]) =>
+      other.localeCompare(one),
+    );
+    const rowOf = await rows.rows(kept.map(([, wordId]) => wordId));
+    const thisYear = todayDate(clock).year;
+    const days = new Map(
+      kept.flatMap(([dateKey, wordId]): [string, WordOfTheDayArchiveDay][] => {
         const row = rowOf.get(wordId);
         if (row?.kind !== 'word') return [];
         const date = parseLocalDate(dateKey);
@@ -118,8 +137,37 @@ export function createWordOfTheDayArchive({
           date.year < thisYear
             ? withoutYearSuffix(pastYearFormat, instant)
             : thisYearFormat.format(instant);
-        return [{ date, dateLabel, row }];
-      });
+        return [[dateKey, { date, dateLabel, row }]];
+      }),
+    );
+    byDate = days;
+    list = [...days.values()];
+    writtenIn = thisYear;
+  }
+
+  /** Reads the list again, in turn with the other reads, and tells the subscribers. */
+  const readAgain = () =>
+    inTurn(async () => {
+      await read();
+      subscribers.tell();
+    });
+
+  await read();
+  dayTurned.subscribe(({ year }) => (year === writtenIn ? undefined : readAgain()));
+
+  return {
+    archive: {
+      get list() {
+        return list;
+      },
+      day: (dateKey) => byDate.get(dateKey),
+      subscribe: subscribers.subscribe,
+    },
+    recorder: {
+      record: (date, wordId) =>
+        edition.isFeatureEnabled('wordOfTheDayArchive')
+          ? { changes: archiveRecords.record(dateKeyOf(date)).change(wordId), commit: readAgain }
+          : undefined,
     },
   };
 }

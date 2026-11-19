@@ -27,10 +27,6 @@ jest.mock('expo-router', () => ({
       mockPushed.push(href);
     },
   }),
-  // The screen comes into view as it renders.
-  useFocusEffect: (effect: () => () => void) => {
-    jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]);
-  },
 }));
 
 const strings = editionStrings.wordOfTheDayArchive;
@@ -156,5 +152,18 @@ describe('the Word of the Day archive screen «Слова дня»', () => {
     );
     expect(screen.getByTestId('mascot-sleeps')).toBeOnTheScreen();
     expect(screen.queryAllByTestId(/^words-of-the-day-row-/)).toEqual([]);
+  });
+
+  it('lists the day the Feed keeps while the screen is shown', async () => {
+    await open({});
+    await renderArchive();
+    const today = composition.feed.cards[0]?.entryId ?? '';
+
+    await act(async () => {
+      await composition.openedFromNotification(today);
+    });
+
+    expect(screen.getByTestId('words-of-the-day-row-2026-10-27')).toBeOnTheScreen();
+    expect(screen.queryByTestId('words-of-the-day-empty')).toBeNull();
   });
 });

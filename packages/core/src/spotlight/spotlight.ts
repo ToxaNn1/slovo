@@ -4,7 +4,6 @@ import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import type { Collections } from '../saved/collections';
 import type { Favorites } from '../saved/favorites';
-import type { History } from '../saved/history';
 import type { WordOfTheDayArchive } from '../saved/word-of-the-day-archive';
 import { eligibleWidgetEntries } from '../widget/widget';
 
@@ -37,40 +36,25 @@ export function createSpotlight({
   entries,
   favorites,
   collections,
-  history,
   wordOfTheDayArchive,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled' | 'locale'>;
   entries: Entries;
   favorites: Favorites;
   collections: Collections;
-  history: Pick<History, 'list' | 'subscribe'>;
-  wordOfTheDayArchive: WordOfTheDayArchive;
+  wordOfTheDayArchive: Pick<WordOfTheDayArchive, 'list' | 'subscribe'>;
 }): Spotlight {
-  /**
-   * The newest Word of the Day card in History. The archive gains its day in
-   * the very write that marks that card Seen and records it in History.
-   */
-  const newestWordOfTheDay = () => {
-    const newest = history.list.find(({ wordOfTheDay }) => wordOfTheDay);
-    return newest === undefined
-      ? undefined
-      : `${newest.entryId} ${String(newest.seenAt.getTime())}`;
-  };
   const countOf = pluralCount(edition.locale);
   return {
     async snapshot(strings) {
       if (!edition.isFeatureEnabled('spotlight')) return { entries: [], collections: [] };
-      const [eligible, archive] = await Promise.all([
-        eligibleWidgetEntries(entries, strings.notificationBody),
-        wordOfTheDayArchive.list(),
-      ]);
+      const eligible = await eligibleWidgetEntries(entries, strings.notificationBody);
       const kept = new Set([
         ...favorites.list.map(({ entryId }) => entryId),
         ...collections.list.flatMap(({ id }) =>
           collections.entries(id).map(({ entryId }) => entryId),
         ),
-        ...archive.map(({ row }) => row.entryId),
+        ...wordOfTheDayArchive.list.map(({ row }) => row.entryId),
       ]);
       const byId = new Map(eligible.map((entry) => [entry.id, entry]));
       return {
@@ -87,16 +71,10 @@ export function createSpotlight({
       };
     },
     subscribe(listener) {
-      let archived = newestWordOfTheDay();
       const stops = [
         favorites.subscribe(listener),
         collections.subscribe(listener),
-        history.subscribe(() => {
-          const newest = newestWordOfTheDay();
-          if (newest === archived) return;
-          archived = newest;
-          listener();
-        }),
+        wordOfTheDayArchive.subscribe(listener),
       ];
       return () => {
         for (const stop of stops) stop();

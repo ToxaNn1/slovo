@@ -37,10 +37,6 @@ const edition: Edition = {
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: jest.fn(), push: mockPush }),
-  // The screen comes into view as it renders.
-  useFocusEffect: (effect: () => () => void) => {
-    jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]);
-  },
 }));
 
 const strings = editionStrings.settings.profile;
@@ -663,7 +659,6 @@ describe('the Profile', () => {
       await fireEvent.press(
         within(screen.getByTestId('stats-calendar')).getByTestId(`stats-calendar-${date}`),
       );
-      // The Word of the Day archive is read as the screen comes into view.
       return screen.findByTestId('undo-toast-message');
     };
 

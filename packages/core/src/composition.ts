@@ -39,11 +39,7 @@ import { survivalMode } from './game/survival-mode';
 import { timedMode } from './game/timed-mode';
 import { typeWordMode } from './game/type-word-mode';
 import { openHistory, type History } from './saved/history';
-import {
-  createWordOfTheDayArchive,
-  createWordOfTheDayArchiveRecorder,
-  type WordOfTheDayArchive,
-} from './saved/word-of-the-day-archive';
+import { openWordOfTheDayArchive, type WordOfTheDayArchive } from './saved/word-of-the-day-archive';
 import { openDueQuiz, type DueQuiz } from './knowledge/due-quiz';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
 import { seededRandomOf } from './game/seeded-random';
@@ -118,8 +114,8 @@ export interface Composition extends Hiding {
   readonly dataExport: () => Promise<DataExport>;
   /**
    * The Word of the Day archive «Слова дня», the days whose Word of the Day's
-   * card was Seen, read afresh on each call (ADR 0054). Opening a Word from it
-   * makes nothing Seen: open it with `entryCard`.
+   * card was Seen (ADR 0054). Opening a Word from it makes nothing Seen: open
+   * it with `entryCard`.
    */
   readonly wordOfTheDayArchive: WordOfTheDayArchive;
   /** The Hidden Entries, eligible nowhere until restored. */
@@ -555,6 +551,10 @@ export async function openComposition({
     analytics,
     rarityRange,
   });
+  // The Feed keeps a day in the archive, which the Dashboard and the Spotlight read.
+  const { archive: wordOfTheDayArchive, recorder: archiveRecorder } = await openWordOfTheDayArchive(
+    { content, edition, userState, clock, dayTurned },
+  );
   const feed = await openFeed({
     entries,
     userState,
@@ -563,7 +563,7 @@ export async function openComposition({
     knowledge,
     wordOfTheDay,
     history: recorder,
-    archive: createWordOfTheDayArchiveRecorder({ edition }),
+    archive: archiveRecorder,
     notices: openFeedNotices({
       edition,
       userState,
@@ -687,7 +687,6 @@ export async function openComposition({
   });
   await day.resume();
   // Once the day is turned to, so its hero is today's Word of the Day.
-  const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   const correctionTypes = await openCorrectionTypes({ edition, entries, userState, seen });
   const curatedCollections = await openCuratedCollections({
     edition,
@@ -828,7 +827,6 @@ export async function openComposition({
       entries,
       favorites,
       collections,
-      history,
       wordOfTheDayArchive,
     }),
     analytics: {

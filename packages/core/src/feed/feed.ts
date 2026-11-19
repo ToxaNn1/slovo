@@ -795,12 +795,13 @@ export async function openFeed({
     const archived =
       becomesSeen && seen.wordOfTheDay !== undefined
         ? archive.record(seen.wordOfTheDay, seen.entryId)
-        : new Map<string, string | undefined>();
-    const all = new Map([...(mark?.changes ?? []), ...archived, ...changes]);
+        : undefined;
+    const all = new Map([...(mark?.changes ?? []), ...(archived?.changes ?? []), ...changes]);
     if (becomesSeen)
       await history.record({ ...seen, wordOfTheDay: seen.wordOfTheDay !== undefined }, all);
     else if (all.size > 0) await userState.write(all);
     mark?.commit();
+    await archived?.commit();
     return becomesSeen ? seen.entryId : undefined;
   }
 
