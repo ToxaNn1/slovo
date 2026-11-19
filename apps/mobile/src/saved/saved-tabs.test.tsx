@@ -8,18 +8,14 @@ import {
   type FeatureSwitch,
 } from '@slovo/core';
 import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
 import { Tabs } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
 import { Text } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SavedLayout from '../app/saved/_layout';
 import SavedScreen from '../app/saved/index';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
-import { SettingsProvider } from '../settings/settings';
+import { activeEditionFiles, edition } from '../edition/edition';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
 
@@ -27,11 +23,6 @@ const { config } = activeEditionFiles;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** A Word with its Lemma and nothing else the screens read. */
 const word = (id: string, lemma: string): Word => ({
@@ -84,40 +75,32 @@ async function settle(action: () => unknown = () => undefined) {
 }
 
 /** The app's tabs with the Saved tab's stack, on `url`, with the Feature Switches `off` off in effect. */
-async function renderApp(url: string, off: readonly FeatureSwitch[] = []) {
+async function openApp(url: string, off: readonly FeatureSwitch[] = []) {
   const inEffect: typeof edition = {
     ...edition,
     isFeatureEnabled: (feature) => !off.includes(feature) && edition.isFeatureEnabled(feature),
   };
-  const app = await renderRoutes(
+  const app = await renderApp(
     {
       _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider
-            shell={testShell({
-              composition: opened(composition),
-              remoteSwitches: switchedTo(inEffect),
-            })}
-          >
-            <SettingsProvider>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                {/* Expo Router 58 draws only the screens a Tabs layout declares. */}
-                <Tabs screenOptions={{ headerShown: false }}>
-                  <Tabs.Screen name="index" />
-                  <Tabs.Screen name="search/index" />
-                  <Tabs.Screen name="saved" />
-                </Tabs>
-              </EditionProvider>
-            </SettingsProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
+        <Tabs screenOptions={{ headerShown: false }}>
+          <Tabs.Screen name="index" />
+          <Tabs.Screen name="search/index" />
+          <Tabs.Screen name="saved" />
+        </Tabs>
       ),
       index: () => <Text>Feed</Text>,
       'search/index': () => <Text>Search</Text>,
       'saved/_layout': SavedLayout,
       'saved/index': SavedScreen,
     },
-    { initialUrl: url },
+    {
+      shell: testShell({
+        composition: opened(composition),
+        remoteSwitches: switchedTo(inEffect),
+      }),
+      initialUrl: url,
+    },
   );
   await settle();
   return { pathname: () => app.getPathname() };
@@ -125,7 +108,7 @@ async function renderApp(url: string, off: readonly FeatureSwitch[] = []) {
 
 describe('the Saved tab', () => {
   it('shows the list of the tab tapped in place', async () => {
-    const app = await renderApp('/saved');
+    const app = await openApp('/saved');
 
     await settle(() => fireEvent.press(screen.getByTestId('saved-history')));
 
@@ -136,7 +119,7 @@ describe('the Saved tab', () => {
   });
 
   it('keeps the row of tabs, and where it was scrolled to, when a tab is tapped', async () => {
-    await renderApp('/saved');
+    await openApp('/saved');
     const row = screen.getByTestId('saved-row');
 
     await settle(() => fireEvent.press(screen.getByTestId('saved-collections')));
@@ -147,14 +130,14 @@ describe('the Saved tab', () => {
   });
 
   it('opens on the list its `list` parameter names', async () => {
-    await renderApp('/saved?list=collections');
+    await openApp('/saved?list=collections');
 
     expect(screen.getByTestId('saved-collections')).toBeSelected();
     expect(screen.getByTestId('collections-empty')).toBeOnTheScreen();
   });
 
   it('opens Search from its search field', async () => {
-    const app = await renderApp('/saved');
+    const app = await openApp('/saved');
 
     await settle(() => fireEvent.press(screen.getByTestId('saved-search')));
 
@@ -162,7 +145,7 @@ describe('the Saved tab', () => {
   });
 
   it('has no search field while Search is off', async () => {
-    await renderApp('/saved', ['search']);
+    await openApp('/saved', ['search']);
 
     expect(screen.getByTestId('saved')).toBeTruthy();
     expect(screen.queryByTestId('saved-search')).toBeNull();
