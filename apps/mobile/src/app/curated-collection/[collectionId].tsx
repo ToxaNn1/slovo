@@ -27,7 +27,7 @@ const { curatedCollection: words, curatedCollectionCount } = editionStrings.dash
  */
 export default function CuratedCollectionRoute() {
   const collectionId = useSegmentParam('collectionId');
-  const { screen, retry, pictogram, add, openEntry } = useCuratedCollectionScreen(collectionId);
+  const { screen, retry, pictogram, add, openCopy, openEntry } = useCuratedCollectionScreen(collectionId);
   const { count } = useEdition();
   const router = useRouter();
   const scroll = useListScroll<FlatList<RailBoardCard>>();
@@ -66,15 +66,20 @@ export default function CuratedCollectionRoute() {
             },
           }}
           {...(screen !== undefined && {
-            action: {
-              kind: 'toggle',
-              testID: 'curated-collection-add',
-              label: screen.added ? words.addedButton : words.addButton,
-              on: screen.added,
-              onPress: () => {
-                if (!screen.added) add();
-              },
-            },
+            action: screen.added
+              ? {
+                  kind: 'opens',
+                  testID: 'curated-collection-add',
+                  label: words.addedButton,
+                  onPress: openCopy,
+                }
+              : {
+                  kind: 'toggle',
+                  testID: 'curated-collection-add',
+                  label: words.addButton,
+                  on: false,
+                  onPress: add,
+                },
           })}
         />
       }

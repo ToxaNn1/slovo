@@ -1277,7 +1277,7 @@
     },
     "nothingFound": "Нічого не знайдено",
     "resultLabel": "{kind}: {text}",
-    "nothingFoundHint": "Спробуй інше написання. Пошук за значенням працює від трьох літер. Бракує слова? Запропонуй його в Налаштуваннях, у пункті «Про SLOVO».",
+    "nothingFoundHint": "Спробуй інше написання. Пошук за значенням працює від трьох літер.",
     "inputPlaceholder": "Шукати слово",
     "cancel": "Скасувати",
     "found": "Знайдено",
@@ -1502,10 +1502,10 @@
     "curatedCollection": {
       "known": "Знаю {x} з {n}",
       "add": "+ Додати собі",
-      "added": "У Міксі ✓",
+      "added": "Додано ✓",
       "kicker": "ДОБІРКА · {count}",
       "addButton": "ДОДАТИ СОБІ",
-      "addedButton": "У МІКСІ",
+      "addedButton": "У КОЛЕКЦІЯХ",
       "feedKicker": "Добірка · {name} · {place} з {of}"
     },
     "categories": {

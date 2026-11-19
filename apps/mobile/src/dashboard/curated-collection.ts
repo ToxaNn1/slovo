@@ -47,6 +47,8 @@ export interface CuratedCollectionScreen {
   readonly pictogram: CuratedCollectionPictogram | undefined;
   /** «+ Додати»: copies it into the reader's Collections. */
   readonly add: () => void;
+  /** «У Колекціях»: opens the reader's copy, the Collection made from it. */
+  readonly openCopy: () => void;
   /**
    * Opens the collection's Feed from an Entry while `curatedCollectionFeed` is
    * on (ADR 0178), else its card; neither makes anything Seen (ADR 0076).
@@ -59,7 +61,7 @@ export interface CuratedCollectionScreen {
  * Core tells of, so a Knowledge Mark or a copy shows at once.
  */
 export function useCuratedCollectionScreen(collectionId: string): CuratedCollectionScreen {
-  const { curatedCollections } = useComposition();
+  const { curatedCollections, collections } = useComposition();
   const openScreen = useOpenScreen();
   const { curatedCollectionFeed } = useShown();
   const read = useCallback(
@@ -76,6 +78,10 @@ export function useCuratedCollectionScreen(collectionId: string): CuratedCollect
       ?.pictogram,
     add: () => {
       void keep('the copy of a Curated Collection', curatedCollections.add(collectionId));
+    },
+    openCopy: () => {
+      const copy = collections.list.find(({ source }) => source === collectionId);
+      if (copy !== undefined) openScreen(`/saved/collections/${copy.id}`);
     },
     // The Entry route of Search opens the card through `entryCard`, with the way back named.
     openEntry: (entryId) => {

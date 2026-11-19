@@ -150,10 +150,13 @@ export function RailScreenHero({
 
 /**
  * The hero's right button: a toggle reads its label beside a plus, and once
- * on, beside a tick in reverse; the menu is an ink tile with the «more» glyph.
+ * on, beside a tick in reverse; `opens` looks like a toggle that is on but is
+ * a plain button that opens what it names, with an optional VoiceOver hint;
+ * the menu is an ink tile with the «more» glyph.
  */
 export type HeroAction =
   | { kind: 'toggle'; label: string; on: boolean; onPress: () => void; testID?: string }
+  | { kind: 'opens'; label: string; hint?: string; onPress: () => void; testID?: string }
   | { kind: 'menu'; label: string; onPress: () => void; testID?: string };
 
 function HeroActionButton({ id, action, top }: { id: string; action: HeroAction; top: number }) {
@@ -181,7 +184,14 @@ function HeroActionButton({ id, action, top }: { id: string; action: HeroAction;
       </Pressable>
     );
   }
-  const { on } = action;
+  const on = action.kind === 'opens' || action.on;
+  const role =
+    action.kind === 'opens'
+      ? ({
+          accessibilityRole: 'button',
+          ...(action.hint !== undefined && { accessibilityHint: action.hint }),
+        } as const)
+      : ({ accessibilityRole: 'togglebutton', accessibilityState: { checked: on } } as const);
   return (
     <View style={[styles.addPlace, { top }]}>
       {/* The board's hard shadow, below the button and over the red, while it is off. */}
@@ -193,8 +203,7 @@ function HeroActionButton({ id, action, top }: { id: string; action: HeroAction;
       )}
       <Pressable
         {...common}
-        accessibilityRole="togglebutton"
-        accessibilityState={{ checked: on }}
+        {...role}
         style={({ pressed }) => [
           styles.add,
           { backgroundColor: on ? keyInk : cream },
