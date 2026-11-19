@@ -21,6 +21,7 @@ export {
   OnboardingNotificationTimesSchema,
   EditionConfigSchema,
   FeatureSwitchesSchema,
+  featureSwitchStates,
   FeatureSwitchStateSchema,
   XpTableSchema,
   LevelsSchema,
@@ -276,7 +277,6 @@ export {
 export { DEPENDS_ON, switchedOn } from './feature-switch-dependencies';
 export {
   FEATURE_SWITCHES,
-  featureSwitchStates,
   type FeatureSwitchGroup,
   type FeatureSwitchRecord,
 } from './feature-switch-catalogue';

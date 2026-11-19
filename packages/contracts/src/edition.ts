@@ -438,6 +438,17 @@ export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
 
 export type FeatureSwitch = keyof FeatureSwitches;
 
+/**
+ * The states of a test or fixture Edition: every Feature Switch `on` but the
+ * ones it states (ADR 0196). The real Edition declares every switch itself.
+ */
+export function featureSwitchStates(stated: Partial<FeatureSwitches> = {}): FeatureSwitches {
+  return FeatureSwitchesSchema.parse({
+    ...Object.fromEntries(Object.keys(FEATURE_SWITCHES).map((feature) => [feature, 'on'])),
+    ...stated,
+  });
+}
+
 /** The user's light/dark choice. */
 export const ThemeSchema = z.enum(['system', 'light', 'dark']);
 
