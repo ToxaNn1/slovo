@@ -1,8 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
 import { expect, test } from 'vitest';
 
 import { FIXTURES } from './mock/fixtures';
+import { override, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -48,13 +48,11 @@ test('Якість charts the coverage, the flaky tests and the CI durations of 
 
 test('Якість says which source is down: Sentry per number, GitHub for the CI history', async () => {
   server.use(
-    http.get('*/admin/quality', () =>
-      HttpResponse.json({
-        ...FIXTURES.quality,
-        kpis: { ...FIXTURES.quality.kpis, errors: { state: 'unavailable' } },
-      }),
-    ),
-    http.get('*/admin/quality/ci', () => HttpResponse.json({}, { status: 502 })),
+    override('quality', () => ({
+      ...FIXTURES.quality,
+      kpis: { ...FIXTURES.quality.kpis, errors: { state: 'unavailable' } },
+    })),
+    override('ciHistory', () => refusal(502, {})),
   );
   window.history.replaceState(null, '', '/admin/quality');
   render(<Admin />);
@@ -69,7 +67,7 @@ test('Якість says which source is down: Sentry per number, GitHub for the 
 });
 
 test('Якість with no CI run yet shows «Немає даних» in each chart', async () => {
-  server.use(http.get('*/admin/quality/ci', () => HttpResponse.json({ runs: [] })));
+  server.use(override('ciHistory', () => ({ runs: [] })));
   window.history.replaceState(null, '', '/admin/quality');
   render(<Admin />);
 
@@ -82,9 +80,9 @@ test('Якість with no CI run yet shows «Немає даних» in each ch
 test('on Якість 90 days reads as 30 days with a hint, and longer periods are off', async () => {
   const periods: (string | null)[] = [];
   server.use(
-    http.get('*/admin/quality', ({ request }) => {
+    override('quality', ({ request }) => {
       periods.push(new URL(request.url).searchParams.get('period'));
-      return HttpResponse.json(FIXTURES.quality);
+      return FIXTURES.quality;
     }),
   );
   window.history.replaceState(null, '', '/admin/quality?period=90d');

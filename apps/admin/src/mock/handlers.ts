@@ -1,5 +1,5 @@
 import { adminApiContract, type AdminApiOutputs } from '@slovo/contracts/admin-api';
-import { HttpHandler, HttpResponse, type JsonBodyType } from 'msw';
+import { HttpHandler, HttpResponse, type HttpResponseResolver, type JsonBodyType } from 'msw';
 
 import { FIXTURES } from './fixtures';
 
@@ -8,15 +8,21 @@ type ContentName = keyof typeof adminApiContract.content;
 type QueueName = keyof typeof adminApiContract.contentQueue;
 type ServicesName = keyof typeof adminApiContract.services;
 
-/** A handler at a contract route, answering the fixture. */
-function routeHandler(
-  route: { method?: string; path?: string },
-  name: string,
-  fixture: JsonBodyType,
-): HttpHandler {
-  // `{param}` in the contract is `:param` in MSW; any origin, for the Vite middleware too.
+interface Route {
+  method?: string;
+  path?: string;
+}
+
+/** The MSW method and path of a contract route: `{param}` becomes `:param`, any origin (the Vite middleware too). */
+function mswRoute(route: Route, name: string): { method: string; path: string } {
   const path = `*${(route.path ?? `/${name}`).replace(/\{(\w+)\}/g, ':$1')}`;
-  return new HttpHandler(route.method ?? 'POST', path, () => HttpResponse.json(fixture));
+  return { method: route.method ?? 'POST', path };
+}
+
+/** A handler at a contract route, answering the fixture. */
+function routeHandler(route: Route, name: string, fixture: JsonBodyType): HttpHandler {
+  const { method, path } = mswRoute(route, name);
+  return new HttpHandler(method, path, () => HttpResponse.json(fixture));
 }
 
 /**
@@ -141,4 +147,63 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     ...Object.values(queueHandlers),
     ...Object.values(servicesHandlers),
   ];
+}
+
+/** Every admin API procedure by name; a grouped one as `content.records`, `services.list`. */
+type Outputs = { [N in Name]: AdminApiOutputs[N] } & {
+  [N in ContentName as `content.${N}`]: AdminApiOutputs['content'][N];
+} & { [N in QueueName as `contentQueue.${N}`]: AdminApiOutputs['contentQueue'][N] } & {
+  [N in ServicesName as `services.${N}`]: AdminApiOutputs['services'][N];
+};
+export type Procedure = keyof Outputs;
+
+/** An error answer of an override: the status and the body the API would send. */
+export class Refusal {
+  readonly response: Response;
+  constructor(status: number, body: JsonBodyType) {
+    if (status < 400) throw new Error(`A refusal answers 4xx or 5xx, not ${String(status)}`);
+    this.response = HttpResponse.json(body, { status });
+  }
+}
+
+/** An error answer of `status`, with the body the API would send. */
+export function refusal(status: number, body: JsonBodyType = {}): Refusal {
+  return new Refusal(status, body);
+}
+
+type Answer<O> = O | Refusal;
+type Resolver<O> = (info: Parameters<HttpResponseResolver>[0]) => Answer<O> | Promise<Answer<O>>;
+
+/** The contract route of a procedure name, read from the contract itself. */
+function routeOf(procedure: Procedure): Route {
+  let node: unknown = adminApiContract;
+  for (const key of procedure.split('.')) {
+    node = typeof node === 'object' && node !== null ? Reflect.get(node, key) : undefined;
+  }
+  const orpc: unknown =
+    typeof node === 'object' && node !== null ? Reflect.get(node, '~orpc') : undefined;
+  const route: unknown =
+    typeof orpc === 'object' && orpc !== null ? Reflect.get(orpc, 'route') : undefined;
+  if (typeof route !== 'object' || route === null) throw new Error(`No route for ${procedure}`);
+  const method: unknown = Reflect.get(route, 'method');
+  const path: unknown = Reflect.get(route, 'path');
+  return {
+    ...(typeof method === 'string' ? { method } : {}),
+    ...(typeof path === 'string' ? { path } : {}),
+  };
+}
+
+/**
+ * A test override of one procedure: its method and path come from the contract,
+ * and the resolver answers the procedure's output type, or a `refusal`.
+ */
+export function override<P extends Procedure>(
+  procedure: P,
+  resolver: Resolver<Outputs[P]>,
+): HttpHandler {
+  const { method, path } = mswRoute(routeOf(procedure), procedure.split('.').at(-1) ?? procedure);
+  return new HttpHandler(method, path, async (info) => {
+    const answer = await resolver(info);
+    return answer instanceof Refusal ? answer.response : HttpResponse.json(answer);
+  });
 }

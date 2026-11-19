@@ -1,9 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { HttpResponse, http } from 'msw';
 import { expect, test } from 'vitest';
 
 import { periodDays } from './filters';
+import { override, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -54,16 +54,13 @@ test('Аналітика draws the fixtures, the Counters and the Variant result
 
 test('Аналітика says PostHog is down when its read fails', async () => {
   server.use(
-    http.get('*/admin/editions/:editionId/analytics', () =>
-      HttpResponse.json(
-        {
-          defined: true,
-          code: 'ANALYTICS_UNAVAILABLE',
-          status: 503,
-          message: 'PostHog недоступний',
-        },
-        { status: 503 },
-      ),
+    override('analytics', () =>
+      refusal(503, {
+        defined: true,
+        code: 'ANALYTICS_UNAVAILABLE',
+        status: 503,
+        message: 'PostHog недоступний',
+      }),
     ),
   );
   const user = userEvent.setup();
@@ -96,14 +93,12 @@ test('Аналітика counts the readers, each number with the one line sayin
 
 test('the unregistered estimate says PostHog is down, and the other counts stay', async () => {
   server.use(
-    http.get('*/admin/editions/:editionId/reader-counts', () =>
-      HttpResponse.json({
-        registered: 312,
-        unregisteredAtLeast: null,
-        statisticsOff: 27,
-        syncing: 198,
-      }),
-    ),
+    override('readerCounts', () => ({
+      registered: 312,
+      unregisteredAtLeast: null,
+      statisticsOff: 27,
+      syncing: 198,
+    })),
   );
   const { section } = await openAnalytics();
   const readers = within(await section.findByRole('list', { name: 'Читачі' }));
@@ -117,11 +112,7 @@ test('the unregistered estimate says PostHog is down, and the other counts stay'
 });
 
 test('the reader counts say they are unavailable when their read fails', async () => {
-  server.use(
-    http.get('*/admin/editions/:editionId/reader-counts', () =>
-      HttpResponse.json({ message: 'down' }, { status: 500 }),
-    ),
-  );
+  server.use(override('readerCounts', () => refusal(500, { message: 'down' })));
   const { section } = await openAnalytics();
 
   expect(await section.findByText('Кількість читачів недоступна')).toBeDefined();
