@@ -41,9 +41,7 @@ import { z } from 'zod';
 
 import type { SnapshotBuildResult } from './build';
 import { editionFiles } from './edition-folder';
-import { fontWith } from './test-support';
-
-const fixture = (name: string) => fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
+import { fixtureDir, fixtureFile, fontWith } from './test-support';
 
 const workDirs: string[] = [];
 
@@ -58,7 +56,7 @@ const packPath = () => join(workDir(), 'language-pack.db');
 /** A writable copy of a fixture Edition, for tests that need a variation of it. */
 function copyFixture(name: string): string {
   const editionDir = join(workDir(), 'edition');
-  cpSync(fixture(name), editionDir, { recursive: true });
+  cpSync(fixtureDir(name), editionDir, { recursive: true });
   return editionDir;
 }
 
@@ -249,7 +247,9 @@ afterEach(() => {
 
 /** The snapshot fixture: the valid fixture's records at content version 7, one Correction retired, one Word needing a new Recording. */
 function snapshotFixture(): ContentSnapshot {
-  return ContentSnapshotSchema.parse(JSON.parse(readFileSync(fixture('snapshot.json'), 'utf8')));
+  return ContentSnapshotSchema.parse(
+    JSON.parse(readFileSync(fixtureFile('snapshot.json'), 'utf8')),
+  );
 }
 
 /** The ids of the Words the pack marks as needing a new Recording. */
@@ -270,7 +270,7 @@ describe('buildFromSnapshot', () => {
     const snapshot = snapshotFixture();
     const outFile = packPath();
 
-    const result = buildFromSnapshot({ editionDir: fixture('valid'), snapshot, outFile });
+    const result = buildFromSnapshot({ editionDir: fixtureDir('valid'), snapshot, outFile });
 
     expect(result).toMatchObject({
       ok: true,
@@ -291,7 +291,7 @@ describe('buildFromSnapshot', () => {
     const snapshot = snapshotFixture();
 
     const result = buildFromSnapshot({
-      editionDir: fixture('valid'),
+      editionDir: fixtureDir('valid'),
       snapshot,
       outFile: packPath(),
     });
@@ -311,7 +311,7 @@ describe('buildFromSnapshot', () => {
     );
 
     const result = buildFromSnapshot({
-      editionDir: fixture('valid'),
+      editionDir: fixtureDir('valid'),
       snapshot: { ...snapshot, words },
       outFile,
     });
@@ -327,7 +327,7 @@ describe('buildFromSnapshot', () => {
     const outFile = packPath();
 
     const result = buildFromSnapshot({
-      editionDir: fixture('valid'),
+      editionDir: fixtureDir('valid'),
       snapshot: { ...snapshotFixture(), editionId: 'uk' },
       outFile,
     });
@@ -342,7 +342,7 @@ describe('buildFromBackend', () => {
     const outFile = packPath();
 
     const build = buildFromBackend({
-      editionDir: fixture('valid'),
+      editionDir: fixtureDir('valid'),
       apiUrl: 'http://127.0.0.1:9',
       outFile,
     });
@@ -357,7 +357,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
   it('compiles a valid Edition so the Core returns its Words', async () => {
     const outFile = packPath();
 
-    const result = build({ editionDir: fixture('valid'), outFile });
+    const result = build({ editionDir: fixtureDir('valid'), outFile });
 
     expect(result.ok).toBe(true);
     await withEntries(outFile, async (entries) => {
@@ -385,13 +385,13 @@ describe('the build of a fixture Edition from its snapshot', () => {
 
   it('round-trips a full Correction: every field written to the pack comes back from the Core', async () => {
     const outFile = packPath();
-    const authored = recordJson(fixture('valid'), 'c_fx0001');
+    const authored = recordJson(fixtureDir('valid'), 'c_fx0001');
     // The fixture must fill every Correction field, so a new field can't skip the pack.
     expect(Object.keys(authored).toSorted()).toEqual(
       Object.keys(CorrectionSchema.shape).toSorted(),
     );
 
-    build({ editionDir: fixture('valid'), outFile });
+    build({ editionDir: fixtureDir('valid'), outFile });
 
     await withEntries(outFile, async (entries) => {
       expect(await entries.get('c_fx0001')).toEqual(authored);
@@ -401,7 +401,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
   it('returns a Correction with its standard equivalents, the main one first', async () => {
     const outFile = packPath();
 
-    build({ editionDir: fixture('valid'), outFile });
+    build({ editionDir: fixtureDir('valid'), outFile });
 
     await withEntries(outFile, async (entries) => {
       expect(await entries.get('c_fx0002')).toEqual({
@@ -427,7 +427,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
   it('reaches the Corrections a Word links', async () => {
     const outFile = packPath();
 
-    build({ editionDir: fixture('valid'), outFile });
+    build({ editionDir: fixtureDir('valid'), outFile });
 
     await withEntries(outFile, async (entries) => {
       expect(await linkedIds(entries, 'w_fx0002')).toEqual(['c_fx0002']);
@@ -438,7 +438,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
   it('keeps the links of a Retired Word', async () => {
     const outFile = packPath();
 
-    build({ editionDir: fixture('valid'), outFile });
+    build({ editionDir: fixtureDir('valid'), outFile });
 
     await withEntries(outFile, async (entries) => {
       expect(await linkedIds(entries, 'w_fx0001')).toEqual(['c_fx0003']);
@@ -486,11 +486,11 @@ describe('the build of a fixture Edition from its snapshot', () => {
 
   it('round-trips a full Word: every field written to the pack comes back from the Core', async () => {
     const outFile = packPath();
-    const authored = recordJson(fixture('valid'), 'w_fx0001');
+    const authored = recordJson(fixtureDir('valid'), 'w_fx0001');
     // The fixture must fill every Word field, so a new field can't skip the pack.
     expect(Object.keys(authored).toSorted()).toEqual(Object.keys(WordSchema.shape).toSorted());
 
-    build({ editionDir: fixture('valid'), outFile });
+    build({ editionDir: fixtureDir('valid'), outFile });
 
     await withEntries(outFile, async (entries) => {
       expect(await entries.get('w_fx0001')).toEqual(authored);
@@ -500,7 +500,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
   it('round-trips a Word with two valid Stresses', async () => {
     const outFile = packPath();
 
-    build({ editionDir: fixture('valid'), outFile });
+    build({ editionDir: fixtureDir('valid'), outFile });
 
     await withEntries(outFile, async (entries) => {
       expect(await entries.get('w_fx0003')).toMatchObject({
@@ -536,7 +536,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
   it('keeps a Retired Word reachable by id but out of the eligible Words', async () => {
     const outFile = packPath();
 
-    build({ editionDir: fixture('valid'), outFile });
+    build({ editionDir: fixtureDir('valid'), outFile });
 
     expect((await readBack(outFile)).ids).toEqual(['w_fx0002', 'w_fx0003']);
     await withEntries(outFile, async (entries) => {
@@ -546,7 +546,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
   });
 
   it('fails on an invalid Word with an error naming the Entry id and field', () => {
-    const errors = buildErrors(fixture('invalid-word'));
+    const errors = buildErrors(fixtureDir('invalid-word'));
 
     expect(errors).toEqual([
       expect.objectContaining({ entryId: 'w_fx0002', field: 'partOfSpeech' }),
@@ -555,7 +555,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
   });
 
   describe('rejects broken Entries, naming the Entry id and the field', () => {
-    const errors = () => buildErrors(fixture('invalid-entries'));
+    const errors = () => buildErrors(fixtureDir('invalid-entries'));
 
     it.each([
       ['a duplicate id', 'w_fx1001', 'id', /duplicate.*snapshot:word\/w_fx1001/i],
@@ -1494,7 +1494,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
   });
 
   it('reports Words per Category, the rarity histogram and field coverage', () => {
-    const result = build({ editionDir: fixture('valid'), outFile: packPath() });
+    const result = build({ editionDir: fixtureDir('valid'), outFile: packPath() });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -1787,7 +1787,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
   );
 
   it('rounds coverage down in the printed report, so 100% means every Word', () => {
-    const result = build({ editionDir: fixture('valid'), outFile: packPath() });
+    const result = build({ editionDir: fixtureDir('valid'), outFile: packPath() });
     if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
 
     const printed = formatContentReport({
@@ -1806,8 +1806,8 @@ describe('the build of a fixture Edition from its snapshot', () => {
     const first = packPath();
     const second = packPath();
 
-    build({ editionDir: fixture('valid'), outFile: first });
-    build({ editionDir: fixture('valid'), outFile: second });
+    build({ editionDir: fixtureDir('valid'), outFile: first });
+    build({ editionDir: fixtureDir('valid'), outFile: second });
 
     const a = await readBack(first);
     const b = await readBack(second);
@@ -1826,7 +1826,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
   it('records the pack format in the pack and reports it from the build', async () => {
     const outFile = packPath();
 
-    const result = build({ editionDir: fixture('valid'), outFile });
+    const result = build({ editionDir: fixtureDir('valid'), outFile });
 
     expect(result).toMatchObject({ ok: true, metadata: { packFormat: 14 } });
     expect((await readBack(outFile)).metadata.packFormat).toBe(14);
@@ -2159,7 +2159,7 @@ describe('the fonts of the word and UI families', () => {
 describe('Curated Collections', () => {
   it('writes the collections to the pack and reads them back in id order, their Entries in order', async () => {
     const outFile = packPath();
-    const result = build({ editionDir: fixture('valid'), outFile });
+    const result = build({ editionDir: fixtureDir('valid'), outFile });
     expect(result.ok).toBe(true);
 
     const pack = openLanguagePack(outFile);
@@ -2471,7 +2471,7 @@ describe('content targets', () => {
   });
 
   it('declares no targets when the Edition config names none', () => {
-    expect(missedTargets(fixture('valid'))).toEqual([]);
+    expect(missedTargets(fixtureDir('valid'))).toEqual([]);
   });
 
   it('rejects content targets it cannot read, so a typo never switches a target off', () => {
