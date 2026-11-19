@@ -176,7 +176,11 @@ describe('the onboarding', () => {
     }
     await press('onboarding-time-20:30');
 
-    expect(composition.notifications.state.times).toEqual(['20:30']);
+    expect(composition.notifications.state.times).toEqual({
+      kind: 'on',
+      word: '20:30',
+      reminder: undefined,
+    });
     expect(composition.onboarding.state).toEqual({ status: 'finished', finishedAt: clock.now() });
     expect(screen.queryByTestId('onboarding-daily-goal')).toBeNull();
   });

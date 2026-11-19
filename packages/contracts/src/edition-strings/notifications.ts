@@ -1,34 +1,23 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { PluralSchema, templateOf } from './shared';
 
 /**
- * The texts of Settings › Сповіщення, which the onboarding's notifications
- * step shares: the times, the sound switch, the ask for permission and the
+ * The texts of Settings › Сповіщення: the switch, the two Notification times
+ * (ADR 0200), the sound switch, the ask for permission and the
  * denied-permission state.
  */
 export const NotificationsStringsSchema = z.strictObject({
-  /** The screen's title; the name of the Settings row. */
+  /** The screen's title; the name of the Settings row and of the switch on top of the screen. */
   title: TextSchema,
-  /** The Settings row's value with no times, or while permission is denied or not asked yet. */
+  /** The Settings row's value while off, or while permission is denied or not asked yet; the Reminder row's value with no Reminder. */
   off: TextSchema,
-  /** The Settings row's value past three times, e.g. «4 рази на день». Takes `{count}`. */
-  timesCount: PluralSchema,
-  /** Adds a time. */
-  addTime: TextSchema,
-  /** Why «Додати час» is disabled at the limit. VoiceOver reads it as that button's hint. Takes `{count}`, the limit. */
-  limitHint: PluralSchema,
-  /** The one-line hint when the time is already in the list. */
-  duplicateHint: TextSchema,
-  /** What VoiceOver reads for a time in the list, e.g. «Сповіщення о 09:00». Takes `{time}`. */
-  timeLabel: templateOf('time'),
-  /** What VoiceOver says a tap on a time does: it changes the time. */
-  change: TextSchema,
-  /** The action that removes a time (a swipe, and the same for VoiceOver). */
-  remove: TextSchema,
-  /** The line under the times that says how a time is removed: a swipe to the left. VoiceOver skips it, as the row offers the action. */
-  removeHint: TextSchema,
+  /** The row of the Word's time. */
+  word: TextSchema,
+  /** The row of the Reminder's time. */
+  reminder: TextSchema,
+  /** The one-line hint when a picked time would put the Reminder at or before the Word. */
+  orderHint: TextSchema,
   /** The label of the time picker. */
   pickerLabel: TextSchema,
   /** The button that keeps the picked time and closes the picker. */
