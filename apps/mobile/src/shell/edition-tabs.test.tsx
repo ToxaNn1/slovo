@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import type { Edition } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
-import { router } from 'expo-router';
+import { router, useIsFocused } from 'expo-router';
+import { useSyncExternalStore, type ReactNode } from 'react';
 import { renderRoutes } from './test-render';
 import { StyleSheet, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
@@ -23,7 +24,11 @@ const metrics = {
 };
 
 /** The app's tabs over `editionInEffect` (the shipped Edition by default), opened on `url`. */
-async function renderTabs(url: string, editionInEffect: Edition = edition) {
+async function renderTabs(
+  url: string,
+  editionInEffect: Edition = edition,
+  screens: Record<string, () => ReactNode> = {},
+) {
   const shell = testShell({
     composition: opened(await testShell().composition.opened()),
     settings: await settingsAt({}),
@@ -64,6 +69,7 @@ async function renderTabs(url: string, editionInEffect: Edition = edition) {
       'category-feed/[categoryId]': () => <Text>Category Feed</Text>,
       'correction-categories': () => <Text>Correction Categories</Text>,
       'correction-category/[categoryId]': () => <Text>Correction Category</Text>,
+      ...screens,
     },
     { initialUrl: url },
   );
@@ -386,5 +392,61 @@ describe('the entrance of a tab', () => {
     await settle(() => undefined);
 
     expect(shiftOf('index')).toBe(0);
+  });
+});
+
+/** A value the Saved screen of the test reads, as a screen reads a source of the Core. */
+function counterSource() {
+  let value = 0;
+  const listeners = new Set<() => void>();
+  return {
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    read: () => value,
+    bump() {
+      value += 1;
+      for (const listener of listeners) listener();
+    },
+  };
+}
+
+describe('a tab out of sight (memory pass, 19.11)', () => {
+  it('stays still while what it shows changes, and catches up when it comes back', async () => {
+    const source = counterSource();
+    let renders = 0;
+    function SavedReading() {
+      renders += 1;
+      const value = useSyncExternalStore(source.subscribe, source.read);
+      return <Text>{`Saved ${String(value)}`}</Text>;
+    }
+    await renderTabs('/saved', edition, { 'saved/index': SavedReading });
+    await settle(() => fireEvent.press(screen.getByText(tabs.profile)));
+    // The Saved goes into hiding a frame after it lost focus.
+    await settle(() => undefined);
+
+    const before = renders;
+    await settle(() => {
+      source.bump();
+      source.bump();
+    });
+    expect(renders).toBe(before);
+
+    await settle(() => fireEvent.press(screen.getByText(tabs.saved)));
+    expect(screen.getByText('Saved 2')).toBeVisible();
+  });
+
+  it('learns it is out of sight before it stays still', async () => {
+    const seen: boolean[] = [];
+    function SavedFocus() {
+      const focused = useIsFocused();
+      seen.push(focused);
+      return <Text>Saved</Text>;
+    }
+    await renderTabs('/saved', edition, { 'saved/index': SavedFocus });
+    await settle(() => fireEvent.press(screen.getByText(tabs.profile)));
+
+    expect(seen.at(-1)).toBe(false);
   });
 });
