@@ -1,9 +1,10 @@
+import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test } from 'vitest';
 
 import { FIXTURES } from './mock/fixtures';
+import { override, type Refusal, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -18,20 +19,18 @@ function backend() {
   let issued = false;
   const bodies: unknown[] = [];
   server.use(
-    http.get('*/admin/agent-tokens', () =>
-      HttpResponse.json({
-        tokens: [
-          ...FIXTURES.agentTokens.tokens,
-          ...(issued
-            ? [{ name: ISSUED.name, createdAt: '2026-11-08T10:00:00.000Z', revokedAt: null }]
-            : []),
-        ],
-      }),
-    ),
-    http.post('*/admin/agent-tokens', async ({ request }) => {
+    override('agentTokens', () => ({
+      tokens: [
+        ...FIXTURES.agentTokens.tokens,
+        ...(issued
+          ? [{ name: ISSUED.name, createdAt: '2026-11-08T10:00:00.000Z', revokedAt: null }]
+          : []),
+      ],
+    })),
+    override('issueAgentToken', async ({ request }) => {
       bodies.push(await request.json());
       issued = true;
-      return HttpResponse.json(ISSUED);
+      return ISSUED;
     }),
   );
   return bodies;
@@ -104,9 +103,9 @@ test('every write opens the confirmation, its button disabled until a reason is 
 test('an alert threshold changes only with a reason, and shows its default', async () => {
   const bodies: unknown[] = [];
   server.use(
-    http.post('*/admin/alert-thresholds/:key', async ({ params, request }) => {
+    override('setAlertThreshold', async ({ params, request }) => {
       bodies.push({ key: params['key'], ...Object(await request.json()) });
-      return HttpResponse.json(FIXTURES.setAlertThreshold);
+      return FIXTURES.setAlertThreshold;
     }),
   );
   const user = userEvent.setup();
@@ -147,12 +146,12 @@ test('the Action log names its author, with the same texts in both Themes', asyn
 });
 
 test('a write keeps its confirmation open until it ends, and a refusal stays in it', async () => {
-  let answer: (response: Response) => void = () => undefined;
+  let answer: (refused: Refusal) => void = () => undefined;
   const writes: unknown[] = [];
   server.use(
-    http.post('*/admin/agent-tokens', async ({ request }) => {
+    override('issueAgentToken', async ({ request }) => {
       writes.push(await request.json());
-      return new Promise<Response>((resolve) => {
+      return new Promise<Refusal>((resolve) => {
         answer = resolve;
       });
     }),
@@ -171,16 +170,13 @@ test('a write keeps its confirmation open until it ends, and a refusal stays in 
   });
   expect(dialog.getByRole('button', { name: 'Видати токен' })).toHaveProperty('disabled', true);
   answer(
-    HttpResponse.json(
-      {
-        defined: true,
-        code: 'CONFLICT',
-        status: 409,
-        message: 'CONFLICT',
-        data: { refusal: 'name-taken' },
-      },
-      { status: 409 },
-    ),
+    refusal(409, {
+      defined: true,
+      code: 'CONFLICT',
+      status: 409,
+      message: 'CONFLICT',
+      data: { refusal: 'name-taken' },
+    }),
   );
 
   expect(await dialog.findByText('Цю назву вже видано; оберіть іншу.')).toBeDefined();
@@ -189,7 +185,7 @@ test('a write keeps its confirmation open until it ends, and a refusal stays in 
 });
 
 test('a Безпека list that fails to load says so instead of reading empty', async () => {
-  server.use(http.get('*/admin/people', () => HttpResponse.json({}, { status: 502 })));
+  server.use(override('people', () => refusal(502, {})));
   render(<Admin />);
   const people = within(await screen.findByRole('region', { name: 'Люди і доступ' }));
 
@@ -200,28 +196,31 @@ test('a Безпека list that fails to load says so instead of reading empty'
 function accountsBackend() {
   const deleted: unknown[] = [];
   const queries: { page: string | null; search: string | null }[] = [];
-  let accounts = Array.from({ length: 51 }, (_, i) => ({
-    id: `account-${String(i)}`,
-    email: i === 0 ? 'reader@example.com' : `reader-${String(i)}@example.com`,
-    createdAt: '2026-10-01T09:00:00.000Z',
-    signInMethods: i === 0 ? ['google', 'apple'] : [],
-  }));
+  let accounts: AdminApiOutputs['listAccounts']['accounts'] = Array.from(
+    { length: 51 },
+    (_, i) => ({
+      id: `account-${String(i)}`,
+      email: i === 0 ? 'reader@example.com' : `reader-${String(i)}@example.com`,
+      createdAt: '2026-10-01T09:00:00.000Z',
+      signInMethods: i === 0 ? ['google', 'apple'] : [],
+    }),
+  );
   server.use(
-    http.get('*/admin/accounts', ({ request }) => {
+    override('listAccounts', ({ request }) => {
       const params = new URL(request.url).searchParams;
       const page = Number(params.get('page') ?? '1');
       const search = (params.get('search') ?? '').trim().toLowerCase();
       queries.push({ page: params.get('page'), search: params.get('search') });
       const matching = accounts.filter(({ email }) => email.includes(search));
-      return HttpResponse.json({
+      return {
         accounts: matching.slice((page - 1) * 50, page * 50),
         total: matching.length,
-      });
+      };
     }),
-    http.post('*/admin/accounts/:email/delete', async ({ params, request }) => {
+    override('deleteAccount', async ({ params, request }) => {
       deleted.push({ email: params['email'], ...Object(await request.json()) });
       accounts = accounts.filter(({ email }) => email !== params['email']);
-      return HttpResponse.json({ deleted: true });
+      return { deleted: true };
     }),
   );
   return { deleted, queries };

@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
+import { override } from './mock/handlers';
 import { server } from './mock/server';
 import { SENTRY_USAGE, SERVICE_COSTS, SERVICE_IDS, SERVICES } from './mock/services-fixtures';
 import { Admin } from './router';
@@ -18,36 +18,32 @@ afterEach(() => {
 /** The fixture Services with Neon on a plan: $19 a month, charged on the 31st. */
 function neonOnAPlan() {
   server.use(
-    http.get('*/admin/services', () =>
-      HttpResponse.json({
-        services: SERVICES.map((service) =>
-          service.id === SERVICE_IDS.Neon
-            ? { ...service, plan: 'Launch', monthlyPriceUsdCents: 1900, billingDay: 31 }
-            : service,
-        ),
-        costs: SERVICE_COSTS,
-      }),
-    ),
-    http.get('*/admin/services/usage', () =>
-      HttpResponse.json({
-        usage: [
-          {
-            serviceId: SERVICE_IDS.Neon,
-            read: {
-              ...SENTRY_USAGE.read,
-              reading: {
-                kind: 'metered',
-                usage: [
-                  { name: 'compute', unit: 'CU-hours', used: 25, limit: 100 },
-                  { name: 'storage', unit: 'GB', used: 0.25, limit: 0.5 },
-                  { name: 'egress', unit: 'GB', used: 4.5, limit: 5 },
-                ],
-              },
+    override('services.list', () => ({
+      services: SERVICES.map((service) =>
+        service.id === SERVICE_IDS.Neon
+          ? { ...service, plan: 'Launch', monthlyPriceUsdCents: 1900, billingDay: 31 }
+          : service,
+      ),
+      costs: SERVICE_COSTS,
+    })),
+    override('services.usage', () => ({
+      usage: [
+        {
+          serviceId: SERVICE_IDS.Neon,
+          read: {
+            ...SENTRY_USAGE.read,
+            reading: {
+              kind: 'metered',
+              usage: [
+                { name: 'compute', unit: 'CU-hours', used: 25, limit: 100 },
+                { name: 'storage', unit: 'GB', used: 0.25, limit: 0.5 },
+                { name: 'egress', unit: 'GB', used: 4.5, limit: 5 },
+              ],
             },
           },
-        ],
-      }),
-    ),
+        },
+      ],
+    })),
   );
 }
 
@@ -97,16 +93,14 @@ test('nothing in the window reads as raw JSON or a key', async () => {
 
 test('a Service without a usage port shows the limits of its plan', async () => {
   server.use(
-    http.get('*/admin/services', () =>
-      HttpResponse.json({
-        services: SERVICES.map((service) =>
-          service.id === SERVICE_IDS['Zoho Mail']
-            ? { ...service, limits: [{ name: 'storage', unit: 'GB', limit: 5 }] }
-            : service,
-        ),
-        costs: SERVICE_COSTS,
-      }),
-    ),
+    override('services.list', () => ({
+      services: SERVICES.map((service) =>
+        service.id === SERVICE_IDS['Zoho Mail']
+          ? { ...service, limits: [{ name: 'storage', unit: 'GB', limit: 5 }] }
+          : service,
+      ),
+      costs: SERVICE_COSTS,
+    })),
   );
   const usage = within(
     within(await openService('Zoho Mail')).getByRole('region', { name: 'Використання' }),

@@ -1,28 +1,27 @@
+import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { CONTENT_KINDS } from './components/content-editor/kinds';
 import { FIXTURES, WORD_FIELDS } from './mock/fixtures';
+import { override, type Refusal, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
-
-const RECORD = '*/admin/content/:editionId/records/:kind/:id';
 
 beforeEach(() => {
   window.history.replaceState(null, '', '/admin/content?edition=uk');
 });
 
 /** The edit requests' bodies, answered by `answer` in turn. */
-function edits(...answers: (() => Response)[]) {
+function edits(...answers: (() => AdminApiOutputs['content']['edit'] | Refusal)[]) {
   const bodies: Record<string, unknown>[] = [];
   server.use(
-    http.put(RECORD, async ({ request }) => {
+    override('content.edit', async ({ request }) => {
       const body = await request.json();
       if (typeof body === 'object' && body !== null && !Array.isArray(body)) bodies.push(body);
       const answer = answers[bodies.length - 1] ?? answers[answers.length - 1];
-      return answer === undefined ? HttpResponse.json(FIXTURES.content.edit) : answer();
+      return answer === undefined ? FIXTURES.content.edit : answer();
     }),
   );
   return bodies;
@@ -39,15 +38,13 @@ async function openWord() {
 
 test('lists the records of a kind as a table of label, version and state', async () => {
   server.use(
-    http.get('*/admin/content/:editionId/records/:kind', () =>
-      HttpResponse.json({
-        records: [
-          { id: 'w_a1', label: 'обруч', retired: false, recordVersion: 3 },
-          { id: 'w_a2', label: 'жупан', retired: true, recordVersion: 1 },
-        ],
-        total: 2,
-      }),
-    ),
+    override('content.records', () => ({
+      records: [
+        { id: 'w_a1', kind: 'word', label: 'обруч', retired: false, recordVersion: 3 },
+        { id: 'w_a2', kind: 'word', label: 'жупан', retired: true, recordVersion: 1 },
+      ],
+      total: 2,
+    })),
   );
   render(<Admin />);
 
@@ -64,21 +61,22 @@ test('lists the records of a kind as a table of label, version and state', async
 test('lists 50 records a page, moves between pages, and a search starts again on the first', async () => {
   const asked: URL[] = [];
   server.use(
-    http.get('*/admin/content/:editionId/records/:kind', ({ request }) => {
+    override('content.records', ({ request }) => {
       const url = new URL(request.url);
       asked.push(url);
       const page = Number(url.searchParams.get('page') ?? '1');
-      return HttpResponse.json({
+      return {
         records: [
           {
             id: `w_p${String(page)}`,
+            kind: 'word',
             label: `слово ${String(page)}`,
             retired: false,
             recordVersion: 1,
           },
         ],
         total: 120,
-      });
+      };
     }),
   );
   const user = userEvent.setup();
@@ -120,19 +118,16 @@ test('shows the Edition card read-only, and opens an editor with its fields for 
 test('a save answers the new content version; a refused rule shows its name at the field', async () => {
   const bodies = edits(
     () =>
-      HttpResponse.json(
-        {
-          defined: true,
-          code: 'REFUSED',
-          status: 422,
-          message: 'The record breaks a content rule',
-          data: {
-            refusals: [{ rule: 'word-category', field: 'categoryId', message: 'Немає такої' }],
-          },
+      refusal(422, {
+        defined: true,
+        code: 'REFUSED',
+        status: 422,
+        message: 'The record breaks a content rule',
+        data: {
+          refusals: [{ rule: 'word-category', field: 'categoryId', message: 'Немає такої' }],
         },
-        { status: 422 },
-      ),
-    () => HttpResponse.json(FIXTURES.content.edit),
+      }),
+    () => FIXTURES.content.edit,
   );
   const user = await openWord();
 
@@ -150,23 +145,18 @@ test('a stale answer shows the diff and the save asks again over the current ver
   const current = { ...WORD_FIELDS, primaryDefinition: 'Чужа правка.' };
   const bodies = edits(
     () =>
-      HttpResponse.json(
-        {
-          defined: true,
-          code: 'STALE',
-          status: 409,
-          message: 'The record changed since the version the write saw',
-          data: { currentVersion: 4 },
-        },
-        { status: 409 },
-      ),
-    () => HttpResponse.json(FIXTURES.content.edit),
+      refusal(409, {
+        defined: true,
+        code: 'STALE',
+        status: 409,
+        message: 'The record changed since the version the write saw',
+        data: { currentVersion: 4 },
+      }),
+    () => FIXTURES.content.edit,
   );
   const user = await openWord();
   server.use(
-    http.get(RECORD, () =>
-      HttpResponse.json({ fields: current, recordVersion: 4, retired: false }),
-    ),
+    override('content.record', () => ({ fields: current, recordVersion: 4, retired: false })),
   );
   const definition = screen.getByLabelText('Основне тлумачення');
   await user.clear(definition);
@@ -183,7 +173,7 @@ test('a stale answer shows the diff and the save asks again over the current ver
 });
 
 test('the Word form has no JSON: vowels, labelled choices, rows with + and ×, rarity buttons', async () => {
-  const bodies = edits(() => HttpResponse.json(FIXTURES.content.edit));
+  const bodies = edits(() => FIXTURES.content.edit);
   const user = await openWord();
   expect(screen.queryByText(/JSON/)).toBeNull();
 
@@ -247,7 +237,7 @@ test('a number sub-field that is not a number is named at its field, and nothing
 });
 
 test('after a Word Stress change the record shows «потребує нового запису»', async () => {
-  edits(() => HttpResponse.json({ ...FIXTURES.content.edit, needsNewRecording: true }));
+  edits(() => ({ ...FIXTURES.content.edit, needsNewRecording: true }));
   const user = await openWord();
   const stress = within(screen.getByRole('group', { name: 'Наголос' }));
   await user.click(stress.getByRole('button', { name: 'о' }));
@@ -257,7 +247,7 @@ test('after a Word Stress change the record shows «потребує новог�
 });
 
 test('an Entry save goes through with an empty reason', async () => {
-  const bodies = edits(() => HttpResponse.json(FIXTURES.content.edit));
+  const bodies = edits(() => FIXTURES.content.edit);
   const user = await openWord();
 
   await user.click(screen.getByRole('button', { name: 'Зберегти' }));
@@ -269,9 +259,9 @@ test('an Entry save goes through with an empty reason', async () => {
 test('retire asks for the confirmation and a reason', async () => {
   const bodies: unknown[] = [];
   server.use(
-    http.post(`${RECORD}/retire`, async ({ request }) => {
+    override('content.retire', async ({ request }) => {
       bodies.push(await request.json());
-      return HttpResponse.json(FIXTURES.content.retire);
+      return FIXTURES.content.retire;
     }),
   );
   const user = await openWord();
@@ -291,9 +281,9 @@ test('retire asks for the confirmation and a reason', async () => {
 test('a new Crossword day sends its date and words to the crosswordDay kind', async () => {
   const sent: { kind: string | readonly string[] | undefined; body: unknown }[] = [];
   server.use(
-    http.post('*/admin/content/:editionId/records/:kind', async ({ params, request }) => {
+    override('content.create', async ({ params, request }) => {
       sent.push({ kind: params['kind'], body: await request.json() });
-      return HttpResponse.json(FIXTURES.content.create);
+      return FIXTURES.content.create;
     }),
   );
   const user = userEvent.setup();
@@ -343,36 +333,40 @@ test('a new Crossword day sends its date and words to the crosswordDay kind', as
 /** One Curated Collection, retired while `retired()` says so. */
 function collection(appearedAt: string, retired: () => boolean = () => false) {
   server.use(
-    http.get('*/admin/content/:editionId/records/:kind', () =>
-      HttpResponse.json({
-        records: [{ id: 'cc_a1', label: 'Слова зими', retired: retired(), recordVersion: 1 }],
-        total: 1,
-      }),
-    ),
-    http.get(RECORD, () =>
-      HttpResponse.json({
-        fields: {
+    override('content.records', () => ({
+      records: [
+        {
           id: 'cc_a1',
-          name: 'Слова зими',
-          description: 'Рідкісні слова холодної пори.',
-          publishedOn: '2026-12-01',
-          entryIds: ['w_a1'],
+          kind: 'curatedCollection',
+          label: 'Слова зими',
           retired: retired(),
+          recordVersion: 1,
         },
-        recordVersion: 1,
+      ],
+      total: 1,
+    })),
+    override('content.record', () => ({
+      fields: {
+        id: 'cc_a1',
+        name: 'Слова зими',
+        description: 'Рідкісні слова холодної пори.',
+        publishedOn: '2026-12-01',
+        entryIds: ['w_a1'],
         retired: retired(),
-        appearedAt,
-      }),
-    ),
+      },
+      recordVersion: 1,
+      retired: retired(),
+      appearedAt,
+    })),
   );
 }
 
 test('a new Curated Collection with no date is sent without one, which means «одразу»', async () => {
   const sent: unknown[] = [];
   server.use(
-    http.post('*/admin/content/:editionId/records/:kind', async ({ request }) => {
+    override('content.create', async ({ request }) => {
       sent.push(await request.json());
-      return HttpResponse.json(FIXTURES.content.create);
+      return FIXTURES.content.create;
     }),
   );
   const user = userEvent.setup();
@@ -421,9 +415,9 @@ test('a Curated Collection that appeared retires as any record: marked «вив�
   const retires: unknown[] = [];
   collection('2026-11-01T00:00:00.000Z', () => retires.length > 0);
   server.use(
-    http.post(`${RECORD}/retire`, async ({ request, params }) => {
+    override('content.retire', async ({ request, params }) => {
       retires.push({ kind: params['kind'], body: await request.json() });
-      return HttpResponse.json(FIXTURES.content.retire);
+      return FIXTURES.content.retire;
     }),
   );
   const user = userEvent.setup();
@@ -482,9 +476,9 @@ test('a record that was just retired stays retired on the next save', async () =
   const bodies = edits();
   collection('2026-11-01T00:00:00.000Z', () => retires.length > 0);
   server.use(
-    http.post(`${RECORD}/retire`, async ({ request }) => {
+    override('content.retire', async ({ request }) => {
       retires.push(await request.json());
-      return HttpResponse.json(FIXTURES.content.retire);
+      return FIXTURES.content.retire;
     }),
   );
   const user = userEvent.setup();
@@ -539,16 +533,15 @@ test('bringing a record back sends its saved fields, and the next save keeps it 
   });
 });
 
-const ILLUSTRATION = `${RECORD}/illustration`;
 const LIVE = { hash: 'a'.repeat(64), url: 'https://media.slovo.test/illustrations/w_a1.old.png' };
 
 test("a Word shows its Illustration, and an upload sends the file's bytes and shows the new one", async () => {
   const sent: unknown[] = [];
   server.use(
-    http.get(RECORD, () => HttpResponse.json({ ...FIXTURES.content.record, illustration: LIVE })),
-    http.put(ILLUSTRATION, async ({ request }) => {
+    override('content.record', () => ({ ...FIXTURES.content.record, illustration: LIVE })),
+    override('content.uploadIllustration', async ({ request }) => {
       sent.push(await request.json());
-      return HttpResponse.json(FIXTURES.content.uploadIllustration);
+      return FIXTURES.content.uploadIllustration;
     }),
   );
   const user = await openWord();
@@ -568,19 +561,16 @@ test("a Word shows its Illustration, and an upload sends the file's bytes and sh
 
 test('a refused Illustration shows the rule it breaks', async () => {
   server.use(
-    http.put(ILLUSTRATION, () =>
-      HttpResponse.json(
-        {
-          defined: true,
-          code: 'REFUSED',
-          status: 422,
-          message: 'The record breaks a content rule',
-          data: {
-            refusals: [{ rule: 'illustration-size', message: 'Файл більший за 150 КБ' }],
-          },
+    override('content.uploadIllustration', () =>
+      refusal(422, {
+        defined: true,
+        code: 'REFUSED',
+        status: 422,
+        message: 'The record breaks a content rule',
+        data: {
+          refusals: [{ rule: 'illustration-size', message: 'Файл більший за 150 КБ' }],
         },
-        { status: 422 },
-      ),
+      }),
     ),
   );
   const user = await openWord();
@@ -593,12 +583,12 @@ test('a refused Illustration shows the rule it breaks', async () => {
 });
 
 test('retire keeps its confirmation open until the write ends', async () => {
-  let answer: (response: Response) => void = () => undefined;
+  let answer: (retired: AdminApiOutputs['content']['retire']) => void = () => undefined;
   const bodies: unknown[] = [];
   server.use(
-    http.post(`${RECORD}/retire`, async ({ request }) => {
+    override('content.retire', async ({ request }) => {
       bodies.push(await request.json());
-      return new Promise<Response>((resolve) => {
+      return new Promise<AdminApiOutputs['content']['retire']>((resolve) => {
         answer = resolve;
       });
     }),
@@ -615,7 +605,7 @@ test('retire keeps its confirmation open until the write ends', async () => {
   });
   expect(screen.getByRole('dialog')).toBeDefined();
   expect(dialog.getByRole('button', { name: 'Вивести з ужитку' })).toHaveProperty('disabled', true);
-  answer(HttpResponse.json(FIXTURES.content.retire));
+  answer(FIXTURES.content.retire);
   await waitFor(() => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
@@ -624,19 +614,16 @@ test('retire keeps its confirmation open until the write ends', async () => {
 
 test('a stale answer whose re-read fails says the save did not go through', async () => {
   edits(() =>
-    HttpResponse.json(
-      {
-        defined: true,
-        code: 'STALE',
-        status: 409,
-        message: 'The record changed since the version the write saw',
-        data: { currentVersion: 4 },
-      },
-      { status: 409 },
-    ),
+    refusal(409, {
+      defined: true,
+      code: 'STALE',
+      status: 409,
+      message: 'The record changed since the version the write saw',
+      data: { currentVersion: 4 },
+    }),
   );
   const user = await openWord();
-  server.use(http.get(RECORD, () => HttpResponse.json({}, { status: 502 })));
+  server.use(override('content.record', () => refusal(502, {})));
 
   await user.click(screen.getByRole('button', { name: 'Зберегти' }));
   expect(await screen.findByText('Не вдалося. Спробуйте ще раз.')).toBeDefined();
@@ -673,19 +660,23 @@ test('on a narrow screen the open record sits under the list, and opening one sc
 });
 
 /** The records the Entry picker finds, each of its kind and Category. */
-const PICKABLE = [
-  { id: 'w_a1', kind: 'word', label: 'обруч', categoryId: 'objects' },
-  { id: 'w_a2', kind: 'word', label: 'жупан', categoryId: 'clothes' },
-  { id: 'w_a3', kind: 'word', label: 'кунтуш', categoryId: 'clothes' },
-  { id: 'c_a1', kind: 'correction', label: 'дякуючи', categoryId: 'grammar' },
-  { id: 'i_a1', kind: 'idiom', label: 'бити байдики' },
-  { id: 'cc_a1', kind: 'curatedCollection', label: 'Слова зими' },
-].map((record) => ({ ...record, retired: false, recordVersion: 1 }));
+type Listed = AdminApiOutputs['content']['records']['records'][number];
+
+const PICKABLE: Listed[] = (
+  [
+    { id: 'w_a1', kind: 'word', label: 'обруч', categoryId: 'objects' },
+    { id: 'w_a2', kind: 'word', label: 'жупан', categoryId: 'clothes' },
+    { id: 'w_a3', kind: 'word', label: 'кунтуш', categoryId: 'clothes' },
+    { id: 'c_a1', kind: 'correction', label: 'дякуючи', categoryId: 'grammar' },
+    { id: 'i_a1', kind: 'idiom', label: 'бити байдики' },
+    { id: 'cc_a1', kind: 'curatedCollection', label: 'Слова зими' },
+  ] satisfies Omit<Listed, 'retired' | 'recordVersion'>[]
+).map((record) => ({ ...record, retired: false, recordVersion: 1 }));
 
 /** The records answered by kind, text query, Category and ids; the Edition card with its Categories. */
 function pickable() {
   server.use(
-    http.get('*/admin/content/:editionId/records/:kind', ({ params, request }) => {
+    override('content.records', ({ params, request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query') ?? '';
       const categoryId = url.searchParams.get('categoryId');
@@ -699,18 +690,18 @@ function pickable() {
           (categoryId === null || record.categoryId === categoryId) &&
           (ids.length === 0 || ids.includes(record.id)),
       );
-      return HttpResponse.json({ records, total: records.length });
+      return { records, total: records.length };
     }),
-    http.get('*/admin/editions/:editionId', () =>
-      HttpResponse.json({
-        ...FIXTURES.editionCard,
-        categories: [
-          { id: 'objects', displayName: 'Предмети' },
-          { id: 'clothes', displayName: 'Одяг' },
-        ],
-        correctionCategories: [{ id: 'grammar', displayName: 'Граматика' }],
-      }),
-    ),
+    override('editionCard', () => ({
+      ...FIXTURES.editionCard,
+      categories: [
+        { id: 'objects', displayName: 'Предмети', description: 'Речі', tone: 'loud' },
+        { id: 'clothes', displayName: 'Одяг', description: 'Вбрання', tone: 'loud' },
+      ],
+      correctionCategories: [
+        { id: 'grammar', displayName: 'Граматика', description: 'Правила', tone: 'loud' },
+      ],
+    })),
   );
 }
 
@@ -719,9 +710,9 @@ async function newCollection() {
   const sent: unknown[] = [];
   pickable();
   server.use(
-    http.post('*/admin/content/:editionId/records/:kind', async ({ request }) => {
+    override('content.create', async ({ request }) => {
       sent.push(await request.json());
-      return HttpResponse.json(FIXTURES.content.create);
+      return FIXTURES.content.create;
     }),
   );
   const user = userEvent.setup();
@@ -792,34 +783,29 @@ test('the Entry picker finds by Category, and «Додати всі показа
 test('an open collection lists its Entries by kind, label and Category; remove and reorder save the shown order, and a refused save names its rule', async () => {
   pickable();
   server.use(
-    http.get(RECORD, () =>
-      HttpResponse.json({
-        fields: {
-          id: 'cc_a1',
-          name: 'Слова зими',
-          description: 'Рідкісні слова холодної пори.',
-          entryIds: ['w_a1', 'c_a1', 'w_a2', 'w_gone'],
-        },
-        recordVersion: 1,
-        retired: false,
-      }),
-    ),
+    override('content.record', () => ({
+      fields: {
+        id: 'cc_a1',
+        name: 'Слова зими',
+        description: 'Рідкісні слова холодної пори.',
+        entryIds: ['w_a1', 'c_a1', 'w_a2', 'w_gone'],
+      },
+      recordVersion: 1,
+      retired: false,
+    })),
   );
   const bodies = edits(() =>
-    HttpResponse.json(
-      {
-        defined: true,
-        code: 'REFUSED',
-        status: 422,
-        message: 'The record breaks a content rule',
-        data: {
-          refusals: [
-            { rule: 'collection-entry', field: 'entryIds', message: 'w_gone is an unknown entry' },
-          ],
-        },
+    refusal(422, {
+      defined: true,
+      code: 'REFUSED',
+      status: 422,
+      message: 'The record breaks a content rule',
+      data: {
+        refusals: [
+          { rule: 'collection-entry', field: 'entryIds', message: 'w_gone is an unknown entry' },
+        ],
       },
-      { status: 422 },
-    ),
+    }),
   );
   const user = userEvent.setup();
   render(<Admin />);
@@ -867,19 +853,17 @@ test("a collection's pictogram is a Category or Correction Category, and empty m
 test('an open collection shows its pictogram, and the Edition default saves it without one', async () => {
   pickable();
   server.use(
-    http.get(RECORD, () =>
-      HttpResponse.json({
-        fields: {
-          id: 'cc_a1',
-          name: 'Слова зими',
-          description: 'Рідкісні слова холодної пори.',
-          entryIds: ['w_a1'],
-          pictogram: 'clothes',
-        },
-        recordVersion: 1,
-        retired: false,
-      }),
-    ),
+    override('content.record', () => ({
+      fields: {
+        id: 'cc_a1',
+        name: 'Слова зими',
+        description: 'Рідкісні слова холодної пори.',
+        entryIds: ['w_a1'],
+        pictogram: 'clothes',
+      },
+      recordVersion: 1,
+      retired: false,
+    })),
   );
   const bodies = edits();
   const user = userEvent.setup();
@@ -900,14 +884,12 @@ test('an open collection shows its pictogram, and the Edition default saves it w
   expect(bodies[0]).not.toHaveProperty('fields.pictogram');
 });
 
-const RECORDS = '*/admin/content/:editionId/records/:kind';
-
 test("shows each Word's Recordings as «N з M» and filters the Words by them", async () => {
   const asked: (string | null)[] = [];
   server.use(
-    http.get(RECORDS, ({ request }) => {
+    override('content.records', ({ request }) => {
       asked.push(new URL(request.url).searchParams.get('recordings'));
-      return HttpResponse.json({
+      return {
         records: [
           {
             id: 'w_a1',
@@ -927,7 +909,7 @@ test("shows each Word's Recordings as «N з M» and filters the Words by them",
           },
         ],
         total: 2,
-      });
+      };
     }),
   );
   const user = userEvent.setup();
@@ -955,21 +937,19 @@ test("shows each Word's Recordings as «N з M» and filters the Words by them",
 
 test('a Retired Word in fewer than every voice has no «Додати інші голоси»', async () => {
   server.use(
-    http.get(RECORDS, () =>
-      HttpResponse.json({
-        records: [
-          {
-            id: 'w_a3',
-            kind: 'word',
-            label: 'кунтуш',
-            retired: true,
-            recordVersion: 2,
-            recordings: { live: 1, of: 4, allVoices: false },
-          },
-        ],
-        total: 1,
-      }),
-    ),
+    override('content.records', () => ({
+      records: [
+        {
+          id: 'w_a3',
+          kind: 'word',
+          label: 'кунтуш',
+          retired: true,
+          recordVersion: 2,
+          recordings: { live: 1, of: 4, allVoices: false },
+        },
+      ],
+      total: 1,
+    })),
   );
   render(<Admin />);
 
@@ -982,9 +962,9 @@ test('a Retired Word in fewer than every voice has no «Додати інші г
 test('adds the other voices to a Word at one confirmation with no reason', async () => {
   const added: string[] = [];
   server.use(
-    http.post(`${RECORDS}/:id/voices`, ({ params }) => {
+    override('content.addOtherVoices', ({ params }) => {
       added.push(String(params['id']));
-      return HttpResponse.json({ id: params['id'] });
+      return { id: String(params['id']) };
     }),
   );
   const user = userEvent.setup();
@@ -1007,17 +987,14 @@ test('adds the other voices to a Word at one confirmation with no reason', async
 
 test('says why the other voices were not added to a Word', async () => {
   server.use(
-    http.post(`${RECORDS}/:id/voices`, () =>
-      HttpResponse.json(
-        {
-          defined: true,
-          code: 'NOT_ADDABLE',
-          status: 409,
-          message: 'no',
-          data: { reason: 'listed' },
-        },
-        { status: 409 },
-      ),
+    override('content.addOtherVoices', () =>
+      refusal(409, {
+        defined: true,
+        code: 'NOT_ADDABLE',
+        status: 409,
+        message: 'no',
+        data: { reason: 'listed' },
+      }),
     ),
   );
   const user = userEvent.setup();

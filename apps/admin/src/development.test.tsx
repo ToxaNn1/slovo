@@ -1,9 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { expect, test } from 'vitest';
 
 import { FIXTURES } from './mock/fixtures';
+import { override } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -36,9 +36,10 @@ test('Розробка shows the pull requests, CI on main, versions, releases a
 
 test('a failing GitHub or EAS shows its own unavailable state, the same in both themes', async () => {
   server.use(
-    http.get('*/admin/development', () =>
-      HttpResponse.json({ github: { state: 'unavailable' }, eas: { state: 'unavailable' } }),
-    ),
+    override('development', () => ({
+      github: { state: 'unavailable' },
+      eas: { state: 'unavailable' },
+    })),
   );
   const user = userEvent.setup();
   const section = await openDevelopment();

@@ -1,17 +1,18 @@
 import { FeatureSwitchesSchema, type Rule } from '@slovo/contracts';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { expect, test, vi } from 'vitest';
 
+import { FIXTURES } from './mock/fixtures';
+import { override, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 import { GROUPED_FEATURES, SWITCH_GROUPS } from './switches/switch-groups';
 import { SWITCH_TEXTS } from './switches/switch-texts';
 
 /** The admin API's refusal as the backend answers it. */
-const refusal = (status: number, code: string, data?: object) =>
-  HttpResponse.json({ defined: true, code, status, message: code, data }, { status });
+const refused = (status: number, code: string, data?: object) =>
+  refusal(status, { defined: true, code, status, message: code, ...(data ? { data } : {}) });
 
 const EDITIONS = [
   { id: 'uk', displayName: 'Рідкісні слова' },
@@ -33,18 +34,15 @@ function statesOf(editionId: string) {
 function threeEditions() {
   const rules = new Map<string, Rule[]>(EDITIONS.map(({ id }) => [id, []]));
   const writes: unknown[] = [];
-  const answer = (editionId: string) =>
-    HttpResponse.json({
-      states: statesOf(editionId),
-      rules: rules.get(editionId) ?? [],
-      minimums: {},
-    });
+  const answer = (editionId: string) => ({
+    states: statesOf(editionId),
+    rules: rules.get(editionId) ?? [],
+    minimums: {},
+  });
   server.use(
-    http.get('*/admin/editions', () => HttpResponse.json({ editions: EDITIONS })),
-    http.get('*/admin/editions/:editionId/switches', ({ params }) =>
-      answer(String(params['editionId'])),
-    ),
-    http.post('*/admin/switches/:feature/kill', async ({ params, request }) => {
+    override('editions', () => ({ editions: EDITIONS })),
+    override('switches', ({ params }) => answer(String(params['editionId']))),
+    override('kill', async ({ params, request }) => {
       const body = await request.json();
       writes.push(body);
       const feature = String(params['feature']);
@@ -54,7 +52,7 @@ function threeEditions() {
           ...kept.filter((rule) => rule.feature !== feature),
         ]);
       }
-      return HttpResponse.json({ editionIds: EDITIONS.map(({ id }) => id) });
+      return { editionIds: EDITIONS.map(({ id }) => id) };
     }),
   );
   return { writes };
@@ -126,9 +124,9 @@ test('a switch change asks for a reason, and a refused Rule names the switch it 
   threeEditions();
   const sent: unknown[] = [];
   server.use(
-    http.put('*/admin/editions/:editionId/switches/:feature/rules', async ({ request }) => {
+    override('setRules', async ({ request }) => {
       sent.push(await request.json());
-      return refusal(400, 'BAD_REQUEST', { refusal: 'dependency-off', feature: 'xpLog' });
+      return refused(400, 'BAD_REQUEST', { refusal: 'dependency-off', feature: 'xpLog' });
     }),
   );
   const user = userEvent.setup();
@@ -194,9 +192,9 @@ test('the Rule editor saves over a Kill switch written since it opened, never un
   threeEditions();
   const sent: unknown[] = [];
   server.use(
-    http.put('*/admin/editions/:editionId/switches/:feature/rules', async ({ request }) => {
+    override('setRules', async ({ request }) => {
       sent.push(await request.json());
-      return HttpResponse.json({ editionId: 'uk' });
+      return FIXTURES.setRules;
     }),
   );
   const user = userEvent.setup();
@@ -229,7 +227,7 @@ test('the Rule editor saves over a Kill switch written since it opened, never un
 });
 
 test('while the Editions fail to load, the Kill switch stays off and the screen says so', async () => {
-  server.use(http.get('*/admin/editions', () => HttpResponse.json({}, { status: 502 })));
+  server.use(override('editions', () => refusal(502, {})));
   window.history.replaceState(null, '', '/admin/switches/kill');
   render(<Admin />);
 
@@ -241,9 +239,9 @@ test('the Rule editor offers the Update channel, saves it and shows it in plain 
   threeEditions();
   const sent: unknown[] = [];
   server.use(
-    http.put('*/admin/editions/:editionId/switches/:feature/rules', async ({ request }) => {
+    override('setRules', async ({ request }) => {
       sent.push(await request.json());
-      return HttpResponse.json({ editionId: 'uk' });
+      return FIXTURES.setRules;
     }),
   );
   const user = userEvent.setup();
