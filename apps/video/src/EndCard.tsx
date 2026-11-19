@@ -4,7 +4,7 @@ import { light, uiFont, wordFont } from './look';
 import { Rupor } from './Rupor';
 import { safeFor } from './safe';
 import { levels, Sfx, sfx } from './sound';
-import { type Store, StoreBadge } from './StoreBadge';
+import { appReleased, comingSoon, type Store, StoreBadge } from './StoreBadge';
 import { clamp, pop } from './shared/motion';
 
 /** The brand's one slogan and its descriptor: the same on every video's end card. */
@@ -43,7 +43,8 @@ export type EndCardProps = {
 
 /**
  * The one end card of every video, on red: the video's line, «Тримай слово.»,
- * SLOVO in black, the descriptor, the store badge and Рупор glad. Portrait
+ * SLOVO in black, the descriptor, the store badge (before the release, «Скоро
+ * в App Store» in its place) and Рупор glad. Portrait
  * keeps everything inside the 9:16 safe zone (safe.ts), Рупор in his band.
  * Silent by itself: `EndCardSound` or `EndCardAt` brings the swish and the chime.
  */
@@ -84,10 +85,29 @@ export function EndCard({ line, orientation, qrUrl, store = 'appStore' }: EndCar
   const ruporTop = portrait ? safe.rupor.top + 40 * s : safe.centerY - ruporHeight / 2;
   const rise = (t: number) => `0px ${(1 - t) * 24 * s}px`;
 
-  const badge = (
+  // Before the release (appReleased) a plain «Скоро в App Store» stands in the badge's place.
+  const badge = appReleased ? (
     <div style={{ display: 'flex', alignItems: 'center', gap: 28 * s }}>
       <StoreBadge height={size.badge * s} store={store} />
       {qrUrl !== undefined && <Qr url={qrUrl} size={size.badge * s} />}
+    </div>
+  ) : (
+    <div
+      style={{
+        height: size.badge * s,
+        display: 'flex',
+        alignItems: 'center',
+        whiteSpace: 'pre-line',
+        fontFamily: uiFont,
+        fontWeight: 800,
+        fontSize: size.badge * 0.5 * s,
+        lineHeight: 1.08,
+        letterSpacing: '-0.01em',
+        color: light.ink,
+      }}
+    >
+      {/* Portrait: two lines, to stay clear of Рупор on the same row. */}
+      {portrait ? comingSoon[store].replace(' в ', ' в\n') : comingSoon[store]}
     </div>
   );
 
