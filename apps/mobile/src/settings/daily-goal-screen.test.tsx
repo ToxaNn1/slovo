@@ -7,16 +7,12 @@ import {
   type Edition,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import DailyGoalScreen from '../app/settings/daily-goal';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { opened, switchedTo, testShell } from '../shell/test-support';
-import { SettingsProvider } from './settings';
+import { renderApp } from '../shell/test-app';
 
 const { config } = activeEditionFiles;
 
@@ -39,15 +35,11 @@ let userState: Awaited<ReturnType<typeof seedUserState>>;
 let composition: Composition;
 
 jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
   useRouter: () => ({ back: () => undefined }),
   // With the Daily Goal off the screen leads back to Settings and draws nothing of its own.
   Redirect: () => null,
 }));
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 const strings = editionStrings.settings.dailyGoal;
 
@@ -74,23 +66,13 @@ beforeEach(async () => {
 });
 
 async function renderDailyGoal() {
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider
-        shell={testShell({
-          userState: opened(userState),
-          remoteSwitches: switchedTo(editionInEffect),
-          composition: opened(composition),
-        })}
-      >
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <SettingsProvider>
-            <DailyGoalScreen />
-          </SettingsProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<DailyGoalScreen />, {
+    shell: testShell({
+      userState: opened(userState),
+      remoteSwitches: switchedTo(editionInEffect),
+      composition: opened(composition),
+    }),
+  });
   await settle();
 }
 
