@@ -16,7 +16,7 @@ import { BlockTitle } from './BlockTitle';
  * row (an odd last tile keeps half a row) or three in one row (ADR 0192), each with its own red mark. A tap chooses the Mood, or changes it, and
  * a toast says its reply; the chosen tile turns red. While the block carries
  * the chosen Mood's effect (ADR 0185), a line under the tiles says it and a
- * tap on the chosen tile unpicks the Mood, with no toast. It needs an
+ * tap on the chosen tile unpicks the Mood, with no toast; VoiceOver hints it. It needs an
  * `UndoToastProvider` above it.
  */
 export function MoodCheckIn({
@@ -52,6 +52,7 @@ export function MoodCheckIn({
                 mood={mood}
                 index={index}
                 chosen={mood.id === chosenId}
+                hint={effect !== undefined && mood.id === chosenId ? words.unpickHint : undefined}
                 onPress={() => {
                   if (effect !== undefined && mood.id === chosenId) {
                     onUnpick();
@@ -86,11 +87,13 @@ function MoodTile({
   mood,
   index,
   chosen,
+  hint,
   onPress,
 }: {
   mood: Mood;
   index: number;
   chosen: boolean;
+  hint: string | undefined;
   onPress: () => void;
 }) {
   const tokens = useTokens();
@@ -108,6 +111,7 @@ function MoodTile({
         radius={moodTile.radius}
         accessibilityLabel={mood.name}
         accessibilityLanguage={voice.accessibilityLanguage}
+        accessibilityHint={hint}
         accessibilityState={{ selected: chosen }}
         faceStyle={styles.face}
         onPress={onPress}
