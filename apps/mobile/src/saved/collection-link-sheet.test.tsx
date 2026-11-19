@@ -34,6 +34,9 @@ let mockLinkId: string;
 /** The screens the sheet pushed, in order. */
 const mockPushed: string[] = [];
 
+/** The screens the sheet replaced itself with, in order. */
+const mockReplaced: string[] = [];
+
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ linkId: mockLinkId }),
   useRouter: () => ({
@@ -43,6 +46,9 @@ jest.mock('expo-router', () => ({
     },
     push: (href: string) => {
       mockPushed.push(href);
+    },
+    replace: (href: string) => {
+      mockReplaced.push(href);
     },
   }),
 }));
@@ -141,6 +147,7 @@ async function renderSheet() {
 
 beforeEach(async () => {
   mockPushed.length = 0;
+  mockReplaced.length = 0;
   await open();
 });
 
@@ -182,9 +189,22 @@ describe('the recipient sheet of a Collection Link', () => {
     expect(screen.getByRole('button', { name: strings.add })).toBeEnabled();
   });
 
-  it('«Додати собі» makes the reader’s own Collection of it and opens it', async () => {
+  it('shows that it is loading until the link is read', async () => {
+    jest
+      .spyOn(composition.collectionLinkCopy, 'preview')
+      .mockReturnValue(new Promise(() => undefined));
+    mockLinkId = UNKNOWN_ID;
+
+    await renderSheet();
+
+    expect(screen.getByTestId('collection-link-loading')).toBeOnTheScreen();
+    expect(screen.queryByTestId('collection-link-failure')).toBeNull();
+  });
+
+  it('«Додати собі» makes the reader’s own Collection of it, which takes the link screen’s place', async () => {
     await share('Осінь', ['w_two', 'w_one']);
     await renderSheet();
+    expect(screen.queryByTestId('collection-link-loading')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: strings.add }));
     await settle();
@@ -193,7 +213,23 @@ describe('the recipient sheet of a Collection Link', () => {
     expect(copy?.name).toBe('Осінь');
     const copied = composition.collections.entries(copy?.id ?? '').map((e) => e.entryId);
     expect(copied.toSorted()).toEqual(['w_one', 'w_two']);
-    expect(mockPushed).toEqual([`/saved/collections/${copy?.id ?? ''}`]);
+    expect(mockReplaced).toEqual([`/saved/collections/${copy?.id ?? ''}`]);
+    expect(mockPushed).toEqual([]);
+  });
+
+  it('a second «Додати собі» opens the copy made and makes no «(2)»', async () => {
+    await share('Осінь', ['w_two', 'w_one']);
+    await renderSheet();
+
+    await fireEvent.press(screen.getByRole('button', { name: strings.add }));
+    await settle();
+    await fireEvent.press(screen.getByRole('button', { name: strings.add }));
+    await settle();
+
+    const [copy, ...more] = composition.collections.list;
+    expect(more).toEqual([]);
+    const href = `/saved/collections/${copy?.id ?? ''}`;
+    expect(mockReplaced).toEqual([href, href]);
   });
 
   it('says when «Додати собі» could not make the copy, and opens nothing', async () => {
@@ -208,6 +244,7 @@ describe('the recipient sheet of a Collection Link', () => {
     ).toHaveTextContent(strings.addFailed);
     expect(composition.collections.list).toEqual([]);
     expect(mockPushed).toEqual([]);
+    expect(mockReplaced).toEqual([]);
   });
 
   it('with none of its Entries in the pack, shows only how many are unavailable and disables «Додати собі»', async () => {
@@ -226,6 +263,7 @@ describe('the recipient sheet of a Collection Link', () => {
 
     expect(composition.collections.list).toEqual([]);
     expect(mockPushed).toEqual([]);
+    expect(mockReplaced).toEqual([]);
   });
 
   it.each([
