@@ -50,7 +50,7 @@ const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
  * smaller figure, such as the Round head's; `onRed` draws it for a red ground,
  * `plate` sets its line on a plate for a Mascot over any screen.
  */
-export function MascotIn({
+function MascotIn({
   state,
   onRed = false,
   plate = false,
@@ -95,16 +95,6 @@ export function MascotAs({
       {...(width === undefined ? {} : { width })}
     />
   );
-}
-
-/**
- * The Mascot in `state` with no line, while its Feature Switch is on in the
- * shipped Edition; else nothing. For the gate of an opening, drawn before the
- * remote Feature Switches are open.
- */
-export function ShippedMascot({ state }: { state: MascotState }) {
-  if (!shippedEdition.isFeatureEnabled('mascot')) return null;
-  return <Mascot state={state} testID={`mascot-${state}`} />;
 }
 
 /**
