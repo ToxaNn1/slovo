@@ -64,6 +64,8 @@ export {
   CiRunSchema,
   ACCOUNTS_PAGE_SIZE,
   CONTENT_PAGE_SIZE,
+  RecordingsFilterSchema,
+  type RecordingsFilter,
   ACTION_PAGE_SIZE,
   type AccountRow,
   type AccountDetail,
