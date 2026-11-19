@@ -17,6 +17,12 @@ export const WordCardStringsSchema = z.strictObject({
     stop: TextSchema,
     /** Shown when the device has no voice for the Edition's language. */
     noVoice: TextSchema,
+    /** Shown at a tap on a Word with Recordings but none in the chosen Narrator Voice, e.g. "У голосі {voice} цього слова ще немає" (ADR 0195). */
+    otherVoices: templateOf('voice'),
+    /** Shown at a tap on a Word with no Recording at all (ADR 0195). */
+    noRecording: TextSchema,
+    /** Shown at a tap on a Word whose Recording is not cached while the device is offline (ADR 0195). */
+    offline: TextSchema,
   }),
   /** Every part of speech, e.g. "ім." / "іменник". */
   partsOfSpeech: z.record(PartOfSpeechSchema, LabelSchema),
