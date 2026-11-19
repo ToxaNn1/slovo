@@ -165,6 +165,27 @@ describe('the media of a Word card', () => {
     });
   });
 
+  it('answers the Recording of a Word with Recordings in other voices only as other-voices', async () => {
+    const { media } = await device({
+      rows: { recordings: [recording('w1', hashOf('a'), { narratorVoice: 'taras' })] },
+    });
+
+    expect((await media.ofWord('w1', 'oksana')).recording).toEqual({ kind: 'other-voices' });
+    expect((await media.ofWord('w1', 'taras')).recording).toEqual({
+      kind: 'remote',
+      url: `${BASE}/recordings/taras/plain/w1.${hashOf('a')}.mp3`,
+    });
+  });
+
+  it('answers a tap on a Word with Recordings in other voices only as other-voices, with no download', async () => {
+    const { media, fetcher } = await device({
+      rows: { recordings: [recording('w1', hashOf('a'), { narratorVoice: 'taras' })] },
+    });
+
+    expect(await media.downloadRecording('w1', 'oksana')).toEqual({ kind: 'other-voices' });
+    expect(fetcher.asked).toEqual([]);
+  });
+
   it('answers the Recording of a Word marked «needs new recording» absent', async () => {
     const { media } = await device({
       rows: { recordings: [recording('w1', hashOf('a'))] },
