@@ -1,0 +1,12 @@
+# lemma category rarity (К, session k05, third run)
+кошениля science 5
+кліщовина folk-names 5
+куфер household-crafts 3
+кружало old-crafts 4
+китайка household-crafts 3
+камка household-crafts 4
+кшталт language-speech 1
+кам'яниця history-antiquity 1
+конотація language-speech 3
+криця old-crafts 2
+кумач household-crafts 4
