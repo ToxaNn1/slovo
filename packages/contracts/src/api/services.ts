@@ -10,26 +10,25 @@ import { ReasonSchema } from './reason';
  */
 export const SERVICE_KINDS = ['railway', 'cron', 'metered'] as const;
 export const ServiceKindSchema = z.enum(SERVICE_KINDS);
-export type ServiceKind = z.infer<typeof ServiceKindSchema>;
 
 /** A line on the canvas: a constant link is solid, a scheduled run is dashed. */
-export const SERVICE_LINK_KINDS = ['constant', 'scheduled'] as const;
-export const ServiceLinkKindSchema = z.enum(SERVICE_LINK_KINDS);
+const SERVICE_LINK_KINDS = ['constant', 'scheduled'] as const;
+const ServiceLinkKindSchema = z.enum(SERVICE_LINK_KINDS);
 
 const ServiceIdSchema = z.uuid();
 
 /** A link from a Service to another, by the other's id. */
-export const ServiceLinkSchema = z.object({ to: ServiceIdSchema, kind: ServiceLinkKindSchema });
+const ServiceLinkSchema = z.object({ to: ServiceIdSchema, kind: ServiceLinkKindSchema });
 
 /** One limit of a Service's plan, as `limit` of `unit`. */
-export const ServiceLimitSchema = z.object({
+const ServiceLimitSchema = z.object({
   name: z.string().min(1),
   unit: z.string().min(1),
   limit: z.number().positive(),
 });
 
 /** A block's fixed place on the canvas, its top left corner in CSS pixels. */
-export const CanvasPositionSchema = z.object({
+const CanvasPositionSchema = z.object({
   x: z.number().int().min(0),
   y: z.number().int().min(0),
 });
@@ -81,7 +80,7 @@ export const ServiceEntrySchema = z.discriminatedUnion('type', [
 export type ServiceEntry = z.infer<typeof ServiceEntrySchema>;
 
 /** Whether the Deployment has a `VAULT_KEY`: without it no entry is written. */
-export const VaultStateSchema = z.enum(['on', 'off']);
+const VaultStateSchema = z.enum(['on', 'off']);
 
 /** The errors of an entry write: `VAULT_OFF` while `VAULT_KEY` is unset. */
 const ENTRY_WRITE_ERRORS = {
@@ -263,7 +262,7 @@ const SERVICE_WRITE_ERRORS = {
 } as const;
 
 /** The «Сервіси» writes of a Service's money and of a new Service: a Власник only, with a reason. */
-export const serviceMoneyContract = {
+const serviceMoneyContract = {
   add: procedure
     .route({
       method: 'POST',
@@ -366,7 +365,7 @@ export const UsdRateSchema = z.object({
 export type UsdRate = z.infer<typeof UsdRateSchema>;
 
 /** The «Сервіси» read of the NBU rate: a Власник only. */
-export const serviceRateContract = {
+const serviceRateContract = {
   usdRate: procedure
     .route({
       method: 'GET',

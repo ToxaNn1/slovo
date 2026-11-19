@@ -127,7 +127,7 @@ export type AnalyticsCount = z.infer<typeof AnalyticsCountSchema>;
 const FetchedAtSchema = z.iso.datetime();
 
 /** The Аналітика of an Edition over a period, from PostHog: aggregates only. */
-export const AnalyticsOverviewSchema = z.object({
+const AnalyticsOverviewSchema = z.object({
   activeByDay: z.array(AnalyticsCountSchema),
   visitsByDay: z.array(AnalyticsCountSchema),
   medianVisitSeconds: z.number().int().min(0),
@@ -138,7 +138,7 @@ export const AnalyticsOverviewSchema = z.object({
 export type AnalyticsOverview = z.infer<typeof AnalyticsOverviewSchema>;
 
 /** People active in each Variant of an A/B Feature Switch. */
-export const VariantResultsSchema = z.object({
+const VariantResultsSchema = z.object({
   variants: z.array(AnalyticsCountSchema),
   fetchedAt: FetchedAtSchema,
 });
@@ -152,7 +152,7 @@ const TopWordSchema = z.object({
 });
 
 /** The Community Counters sums and the questionnaire counters of an Edition. */
-export const CountersSummarySchema = z.object({
+const CountersSummarySchema = z.object({
   known: z.number().int().min(0),
   unknown: z.number().int().min(0),
   saved: z.number().int().min(0),
@@ -253,7 +253,7 @@ const SwitchesOfEditionSchema = z.object({
 });
 
 /** The kinds of record the content write API writes. */
-export const ContentRecordKindSchema = z.enum([
+const ContentRecordKindSchema = z.enum([
   'word',
   'correction',
   'idiom',
@@ -267,7 +267,7 @@ export const ContentRecordKindSchema = z.enum([
  * The kinds of record a flag names. A Crossword day takes no flag, so the
  * Content queue's flags keep their kinds (ADR 0031).
  */
-export const FlaggableKindSchema = ContentRecordKindSchema.exclude(['crosswordDay']);
+const FlaggableKindSchema = ContentRecordKindSchema.exclude(['crosswordDay']);
 
 /** What every content procedure can be refused with. */
 const contentProcedure = procedure.errors({
@@ -331,7 +331,7 @@ export const RecordingsFilterSchema = z.enum(['complete', 'incomplete']);
 export type RecordingsFilter = z.infer<typeof RecordingsFilterSchema>;
 
 /** A record as the content editor lists it. */
-export const ContentRecordSummarySchema = z.object({
+const ContentRecordSummarySchema = z.object({
   id: z.string(),
   kind: ContentRecordKindSchema,
   /** The lemma, expression, form, title, name or date the record is known by. */
@@ -352,7 +352,6 @@ export const ContentRecordSummarySchema = z.object({
     })
     .optional(),
 });
-export type ContentRecordSummary = z.infer<typeof ContentRecordSummarySchema>;
 
 /** One reader Account in the Безпека list (ADR 0162). */
 export const AccountRowSchema = z.object({
@@ -400,7 +399,7 @@ export const CONTENT_PAGE_SIZE = 50;
 export const ACTION_PAGE_SIZE = 50;
 
 /** The Edition card: what the Edition registry holds of an Edition, shown read-only (story 44). */
-export const EditionCardSchema = z.object({
+const EditionCardSchema = z.object({
   id: EditionIdSchema,
   displayName: z.string().min(1),
   locale: z.string(),
@@ -416,7 +415,6 @@ export const EditionCardSchema = z.object({
   /** The Narrator Voices the Edition offers, which name an Account's chosen voice. */
   narratorVoices: z.array(z.object({ id: z.string(), name: z.string() })),
 });
-export type EditionCard = z.infer<typeof EditionCardSchema>;
 
 /** What a write answers: the record's new version and the Edition's content version it published. */
 const WrittenSchema = z.object({
@@ -985,10 +983,10 @@ export type Release = z.infer<typeof ReleaseSchema>;
 export type EasBuild = z.infer<typeof EasBuildSchema>;
 
 /** A milestone `0.1` to `1.0`: the version an Owner check belongs to. */
-export const OwnerCheckVersionSchema = z.string().regex(/^\d+\.\d+$/);
+const OwnerCheckVersionSchema = z.string().regex(/^\d+\.\d+$/);
 
 /** An Owner check; who added or ticked it is an email, an Агент or a server command. */
-export const OwnerCheckSchema = z.object({
+const OwnerCheckSchema = z.object({
   id: z.number().int(),
   version: OwnerCheckVersionSchema,
   text: z.string(),
@@ -1016,7 +1014,7 @@ const AlertThresholdSchema = z.object({
 });
 
 /** An alert the owner was told of, or is still to be told of while `sentAt` is null. */
-export const SentAlertSchema = z.object({
+const SentAlertSchema = z.object({
   id: z.number().int(),
   at: z.iso.datetime(),
   kind: z.string(),
