@@ -6,7 +6,6 @@ import {
   type Composition,
   type TrackedUserState,
   type Edition,
-  type Haptics,
   type NotificationSchedulerPort,
 } from '@slovo/core';
 import {
@@ -15,21 +14,17 @@ import {
   type UserStateFacts,
   type XpRecord,
 } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, ReduceMotionProvider, TokensProvider } from '@slovo/ui';
-import { Slot } from 'expo-router';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
 import HomeScreen from '../app/feed';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
-import { SettingsProvider } from '../settings/settings';
 
 const { config } = activeEditionFiles;
 
@@ -57,14 +52,6 @@ const clock = { now: () => new Date('2026-11-02T09:00:00Z'), timeZone: () => 'Eu
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
 
 /** A Word of the Edition's first Category, with the Stress on its second letter. */
 function word(id: string, lemma: string): Word {
@@ -186,27 +173,15 @@ const AccountStandIn = () => null;
 
 /** The app on the Feed, with the Entry screen a link opens and the Account screen a Notice opens. */
 async function openApp(reduceMotion = false) {
-  const app = await renderApp({
-    _layout: () => (
-      <ReduceMotionProvider reduceMotion={reduceMotion}>
-        <TokensProvider tokens={editionTokens} colorScheme="light">
-          <ShellProvider shell={shell()}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <HapticsProvider haptics={haptics}>
-                <SettingsProvider>
-                  <Slot />
-                </SettingsProvider>
-              </HapticsProvider>
-            </EditionProvider>
-          </ShellProvider>
-        </TokensProvider>
-      </ReduceMotionProvider>
-    ),
-    index: HomeScreen,
-    'entry/_layout': EntryLayout,
-    'entry/[entryId]': EntryFromLinkScreen,
-    'settings/account': AccountStandIn,
-  });
+  const app = await renderApp(
+    {
+      index: HomeScreen,
+      'entry/_layout': EntryLayout,
+      'entry/[entryId]': EntryFromLinkScreen,
+      'settings/account': AccountStandIn,
+    },
+    { shell: shell(), settings: { reduceMotion } },
+  );
   await settle();
   // The pager lays its pages out once it knows its height.
   await fireEvent(screen.getByTestId('feed'), 'layout', {
