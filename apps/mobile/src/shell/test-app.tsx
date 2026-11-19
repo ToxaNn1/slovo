@@ -1,5 +1,5 @@
 import { Slot } from 'expo-router';
-import { isValidElement, type ReactElement } from 'react';
+import { isValidElement, type ComponentType, type ReactElement } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { coreDecor, createSettings, type Decor, type UserSettings } from '@slovo/core';
@@ -12,6 +12,8 @@ import { opened, testShell } from './test-support';
 
 // The one entry of the app's screen and route tests: a screen or a route map
 // drawn as the device draws it. No screen or module of the app imports it.
+// `expo-router/testing-library` puts Reanimated's mock in every module loaded
+// after it: a test that animates as the device does imports this entry first.
 
 /** The safe area of an iPhone 15 with no insets, which the router gives the screens on the device. */
 const metrics = {
@@ -19,8 +21,8 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-/** A route map as Expo Router's test renderer takes it, without the root layout. */
-type Routes = Exclude<Parameters<typeof renderRoutes>[0], string | string[]>;
+/** A route map as Expo Router's test renderer takes it: a screen or a layout per route. */
+type Routes = Readonly<Record<string, ComponentType>>;
 
 export interface InApp {
   /**
@@ -57,6 +59,11 @@ function InApp({ shell, decor, children }: { shell: Shell; decor: Decor; childre
  * tokens, the haptics, the open composition, the text size, Reduce Motion, the
  * route on screen and the offline plate.
  */
+export function renderApp(
+  screen: ReactElement,
+  options?: InApp,
+): ReturnType<typeof renderInGestureRoot>;
+export function renderApp(routes: Routes, options?: InApp): ReturnType<typeof renderRoutes>;
 export async function renderApp(
   screen: ReactElement | Routes,
   { shell = testShell(), settings, decor = coreDecor, initialUrl = '/' }: InApp = {},
@@ -69,14 +76,16 @@ export async function renderApp(
       </InApp>,
     );
   }
+  // A route map's own root layout, a navigator, draws inside the app's tree; a `Slot` by default.
+  const { _layout: Layout = Slot, ...routes } = screen;
   return renderRoutes(
     {
       _layout: () => (
         <InApp shell={drawn} decor={decor}>
-          <Slot />
+          <Layout />
         </InApp>
       ),
-      ...screen,
+      ...routes,
     },
     { initialUrl },
   );
