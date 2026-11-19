@@ -110,7 +110,11 @@ export { NameSheet } from './primitives/NameSheet';
 export { TitledSheet } from './primitives/TitledSheet';
 export { Mascot } from './primitives/Mascot';
 export { Placeholder } from './primitives/Placeholder';
-export { PronunciationButton } from './entries/PronunciationButton';
+export {
+  PronunciationButton,
+  type PronunciationButtonState,
+  type PronunciationMessage,
+} from './entries/PronunciationButton';
 export { SegmentedControl } from './primitives/SegmentedControl';
 export { CodeCells } from './primitives/CodeCells';
 export { Stepper } from './primitives/Stepper';

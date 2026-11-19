@@ -9,8 +9,11 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { useEdition } from '../providers/EditionProvider';
+import type { EditionStrings } from '@slovo/contracts';
+
+import { fill, useEdition } from '../providers/EditionProvider';
 import {
+  disabledOpacity,
   minTouchTarget,
   space,
   toastElevation,
@@ -23,30 +26,45 @@ import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useOnAccent } from './on-accent';
 
 /**
- * What the button shows: ready, the Lemma being spoken, or the message that
- * the device has no voice for the Edition's language.
+ * What the button shows: ready, the Lemma being spoken, or disabled because
+ * the Word has no Recording in the chosen Narrator Voice (ADR 0195); a tap on
+ * it still opens the message that says why.
  */
-export type PronunciationButtonState = 'idle' | 'playing' | 'no-voice';
+export type PronunciationButtonState = 'idle' | 'playing' | 'unavailable';
+
+/**
+ * Why a tap read nothing, shown in a small message under the button: the
+ * device has no voice for the Edition's language, the Word has Recordings
+ * but none in the chosen Narrator Voice (its name in `voice`), it has none at
+ * all, or its Recording is not cached and the device is offline.
+ */
+export type PronunciationMessage =
+  | { readonly reason: 'no-voice' | 'no-recording' | 'offline' }
+  | { readonly reason: 'other-voices'; readonly voice: string };
 
 export interface PronunciationButtonProps {
   state: PronunciationButtonState;
-  /** Speaks the Lemma, or stops it while it plays. */
+  /** The message open under the button, if any. */
+  message?: PronunciationMessage | undefined;
+  /** Speaks the Lemma, or stops it while it plays; on a disabled button, opens why. */
   onPress: () => void;
-  /** Hides the missing-voice message. */
+  /** Hides the message. */
   onDismissMessage: () => void;
 }
 
-/** How long the missing-voice message stays when the reader leaves it. */
+/** How long the message stays when the reader leaves it. */
 const MESSAGE_MS = 8000;
 
 /**
  * The Pronunciation button of the Word card: an outlined accent circle with a
- * speaker, filled while the Lemma is spoken. When the device has no voice for
- * the language, a message opens under it; a tap closes it. On the red
- * ground the circle and speaker take the key ink instead of the accent.
+ * speaker, filled while the Lemma is spoken and faded while the Word has no
+ * Recording to play. When a tap reads nothing, a message under it says why;
+ * a tap closes it. On the red ground the circle and speaker take the key ink
+ * instead of the accent.
  */
 export function PronunciationButton({
   state,
+  message,
   onPress,
   onDismissMessage,
 }: PronunciationButtonProps) {
@@ -60,15 +78,17 @@ export function PronunciationButton({
   const strings = editionStrings.wordCard.pronunciation;
   const window = useWindowDimensions();
   const playing = state === 'playing';
+  const unavailable = state === 'unavailable';
+  const text = message === undefined ? undefined : messageText(message, strings);
 
   useEffect(() => {
-    if (state !== 'no-voice') return;
-    AccessibilityInfo.announceForAccessibility(strings.noVoice);
+    if (text === undefined) return;
+    AccessibilityInfo.announceForAccessibility(text);
     const timer = setTimeout(onDismissMessage, MESSAGE_MS);
     return () => {
       clearTimeout(timer);
     };
-  }, [state, strings.noVoice, onDismissMessage]);
+  }, [text, onDismissMessage]);
 
   return (
     <View>
@@ -76,6 +96,7 @@ export function PronunciationButton({
         testID="word-pronunciation"
         accessibilityRole="button"
         accessibilityLabel={playing ? strings.stop : strings.label}
+        accessibilityState={{ disabled: unavailable }}
         {...voice}
         onPress={onPress}
         style={({ pressed }) => [
@@ -83,17 +104,17 @@ export function PronunciationButton({
           {
             borderColor: playing ? colors.accent : withAlpha(colors.accent, 0.45),
             backgroundColor: playing ? colors.accent : 'transparent',
-            opacity: pressed ? 0.7 : 1,
+            opacity: unavailable ? disabledOpacity : pressed ? 0.7 : 1,
           },
         ]}
       >
         <SpeakerIcon color={playing ? colors.surface : colors.accent} filled={playing} />
       </Pressable>
-      {state === 'no-voice' ? (
+      {message !== undefined && text !== undefined ? (
         <Pressable
-          testID="pronunciation-no-voice"
+          testID={`pronunciation-${message.reason}`}
           accessibilityRole="alert"
-          accessibilityLabel={strings.noVoice}
+          accessibilityLabel={text}
           accessibilityLiveRegion="polite"
           {...voice}
           onPress={onDismissMessage}
@@ -105,13 +126,28 @@ export function PronunciationButton({
             },
           ]}
         >
-          <Text style={[typeStyle('toast', tokens), { color: colors.surface }]}>
-            {strings.noVoice}
-          </Text>
+          <Text style={[typeStyle('toast', tokens), { color: colors.surface }]}>{text}</Text>
         </Pressable>
       ) : null}
     </View>
   );
+}
+
+/** The text of a message, from the Edition's strings. */
+function messageText(
+  message: PronunciationMessage,
+  strings: EditionStrings['wordCard']['pronunciation'],
+): string {
+  switch (message.reason) {
+    case 'no-voice':
+      return strings.noVoice;
+    case 'no-recording':
+      return strings.noRecording;
+    case 'offline':
+      return strings.offline;
+    case 'other-voices':
+      return fill(strings.otherVoices, { voice: message.voice });
+  }
 }
 
 /** A speaker with two sound waves. */

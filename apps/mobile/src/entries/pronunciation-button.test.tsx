@@ -127,6 +127,78 @@ describe('A Word card › Narrator Voice', () => {
   });
 });
 
+/** Renders the Pronunciation button of a Word card under the settings and switches given. */
+async function renderCard(
+  entryId: string,
+  changes: Partial<UserSettings>,
+  switches: Partial<Record<FeatureSwitch, boolean>>,
+) {
+  const shell = testShell({
+    composition: opened(await testShell().composition.opened()),
+    languagePack: pack(),
+    remoteSwitches: switchedTo(editionWith(switches)),
+    settings: await settingsAt(changes),
+  });
+  await renderInGestureRoot(
+    <ShellProvider shell={shell}>
+      <EditionProvider edition={edition} strings={editionStrings}>
+        <SettingsProvider>
+          <LemmaPronunciation lemma="заграва" entryId={entryId} />
+        </SettingsProvider>
+      </EditionProvider>
+    </ShellProvider>,
+  );
+  played.length = 0;
+}
+
+const { pronunciation: texts } = editionStrings.wordCard;
+
+describe('A Word card › Recordings only (ADR 0195)', () => {
+  it('shows a Word with no Recording in the chosen voice disabled, and a tap says which voice lacks it', async () => {
+    await renderCard(word, { narratorVoice: 'marta' }, { recordedOnly: true });
+
+    const button = await screen.findByTestId('word-pronunciation');
+    expect(await screen.findByRole('button', { disabled: true })).toBe(button);
+    await fireEvent.press(button);
+
+    expect(
+      await screen.findByText(texts.otherVoices.replace('{voice}', 'Марта')),
+    ).toBeOnTheScreen();
+    expect(played).toEqual([]);
+  });
+
+  it('shows a Word with no Recording at all disabled, and a tap says so', async () => {
+    await renderCard('w_silent', {}, { recordedOnly: true });
+
+    const button = await screen.findByRole('button', { disabled: true });
+    await fireEvent.press(button);
+
+    expect(await screen.findByText(texts.noRecording)).toBeOnTheScreen();
+    expect(played).toEqual([]);
+  });
+
+  it('keeps a Word with a Recording in the chosen voice enabled and plays it', async () => {
+    await renderCard(word, { narratorVoice: 'taras' }, { recordedOnly: true });
+
+    const button = await screen.findByTestId('word-pronunciation');
+    await fireEvent.press(button);
+
+    expect(screen.queryByRole('button', { disabled: true })).toBeNull();
+    expect(played.map(({ recording }) => recording)).toEqual([cardRecordings['taras']]);
+    await act(() => {
+      played[0]?.end();
+    });
+  });
+
+  it('keeps a Word without a Recording enabled while the switch is off', async () => {
+    await renderCard('w_silent', {}, { recordedOnly: false });
+
+    await screen.findByTestId('word-pronunciation');
+
+    expect(screen.queryByRole('button', { disabled: true })).toBeNull();
+  });
+});
+
 /** The voice screen's sample, read from one button, beside a «Звуки» switch. */
 function SampleWithSounds() {
   const sample = useSampleReading();
