@@ -146,6 +146,8 @@ export const GameStringsSchema = z.strictObject({
       title: templateOf('n'),
       /** The toast once it is copied, e.g. «Скопійовано. Жодної літери — тільки клини.». */
       copied: TextSchema,
+      /** The last line of the shared text, e.g. «Розгадай і ти: https://slovoapp.org». */
+      link: TextSchema,
     }),
   }),
   /**
