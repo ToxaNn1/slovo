@@ -1,51 +1,19 @@
-import { BackHeader, space, useTokens } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
-import { MixChoices } from '@/mix/mix-choices';
+import { MyMixScreen } from '@/mix/my-mix-screen';
 
-const strings = editionStrings.mix;
-
-/**
- * Settings › Мій Мікс (board 11, screen 87), with no line under the title: a
- * tile for every Category of the Edition under «N з M обрано» and «Усі», and
- * the switches of Corrections, Idioms, Synonym Rows and Tips, each when the
- * Edition turns it on. The Rarity Range stays a Settings row of its own
- * (ADR 0072). A change applies at once (the Core's Mix, ADR 0019). The last
- * Category's tile is disabled, with a hint why.
- */
+/** Settings › Мій Мікс: the screen of the tab «Мікс», with the way back to Settings. */
 export default function MixScreen() {
-  const { colors } = useTokens();
   const router = useRouter();
-
   return (
-    <SafeAreaView
-      testID="mix"
-      edges={['top']}
-      style={[styles.screen, { backgroundColor: colors.background }]}
-    >
-      <ScrollView contentContainerStyle={styles.content}>
-        <BackHeader
-          titleRole="settingsSubTitle"
-          title={strings.title}
-          back={{
-            label: editionStrings.settings.title,
-            testID: 'mix-back',
-            onPress: () => {
-              router.back();
-            },
-          }}
-        />
-        <MixChoices />
-      </ScrollView>
-    </SafeAreaView>
+    <MyMixScreen
+      back={{
+        label: editionStrings.settings.title,
+        onPress: () => {
+          router.back();
+        },
+      }}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
-  header: { paddingTop: space[2], paddingBottom: space[5] },
-});

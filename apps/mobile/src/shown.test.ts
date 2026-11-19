@@ -13,7 +13,7 @@ function editionWithout(...off: FeatureSwitch[]) {
 }
 
 const everything: Shown = {
-  tabs: ['home', 'game', 'saved', 'settings'],
+  tabs: ['home', 'game', 'mix', 'saved', 'settings'],
   gameReview: true,
   gameRoundMascot: true,
   gameEndToFeed: true,
@@ -95,7 +95,14 @@ describe('what the reader is shown', () => {
       'no Game tab with the Game off',
       {
         off: ['game'],
-        shown: { tabs: ['home', 'saved', 'settings'] },
+        shown: { tabs: ['home', 'mix', 'saved', 'settings'] },
+      },
+    ],
+    [
+      'the four tabs of before, no «Мікс», with the mixTab switch off (ADR 0201)',
+      {
+        off: ['mixTab'],
+        shown: { tabs: ['home', 'game', 'saved', 'settings'] },
       },
     ],
     [

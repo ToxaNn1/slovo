@@ -2,13 +2,15 @@ import Svg, { Path, Polygon } from 'react-native-svg';
 
 /**
  * The design's geometric, slanted icon set (`docs/design/export/SlovoApp.dc.html`),
- * as polygons on a 100 × 100 box: the four tabs, and the controls of the
+ * as polygons on a 100 × 100 box: the tabs, and the controls of the
  * screens' icon buttons.
  */
 const shapes = {
   feed: ['0,10 100,0 100,38 0,46 0,56 100,50 100,100 0,100'],
   games: ['50,0 100,50 50,100 0,50 22,50 50,78 78,50 50,22 22,50 0,50'],
   saved: ['12,8 88,0 88,100 50,74 12,100'],
+  // «Мікс»: three slanted bars of a mix, of different lengths.
+  mix: ['0,8 100,0 100,24 0,32', '0,42 72,36 72,60 0,66', '0,76 100,68 100,92 0,100'],
   profile: ['30,0 70,0 74,40 50,48 26,40 30,0 30,0 0,100 8,58 92,54 100,100 0,100'],
   back: ['62.5,8.3 79.2,25 50,50 79.2,75 62.5,91.7 16.7,50'],
   /** An arrow up, for «Нагору». */

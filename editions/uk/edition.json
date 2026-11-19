@@ -80,6 +80,7 @@
     "dueQuiz": "on",
     "replaceOpenEntry": "on",
     "mixKindWeights": "on",
+    "mixTab": "on",
     "xpLog": "on",
     "streakFreezes": "on",
     "streakBreak": "on",
