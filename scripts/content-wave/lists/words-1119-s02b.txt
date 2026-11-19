@@ -27,3 +27,14 @@
 грум history-antiquity 2
 відшарування science 2
 внучок household-crafts 2
+# third pass, from the seed 3 and seed 4 picks
+віддзеркалювати arts-culture 4
+героїзація arts-culture 3
+гармонізувати arts-culture 3
+віднова history-antiquity 3
+горошина household-crafts 3
+гіперболізація language-speech 4
+відносність science 2
+гойдання household-crafts 3
+головоногі nature-weather 3
+гуглити technology 3
