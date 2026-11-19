@@ -20,3 +20,7 @@ apps/admin/src/routeTree.gen.ts
 
 # The videos, left out of lint, typecheck and tests (ADR 0102)
 apps/video/
+
+# Third-party agent skills, installed as they are (skills-lock.json).
+.claude/skills/
+skills-lock.json
