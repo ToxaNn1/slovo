@@ -145,3 +145,6 @@
 кільцювання science 3 # noun, Zipf 1.72
 кіптява household-crafts 4 # noun, Zipf 1.40
 кірха arts-culture 3 # noun, Zipf 1.75
+кавунник old-crafts 4 # noun, Zipf 1.36
+кипіти household-crafts 2 # verb, Zipf 2.30
+кланятися emotions-character 2 # verb, Zipf 2.09
