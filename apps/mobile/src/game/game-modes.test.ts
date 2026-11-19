@@ -334,10 +334,7 @@ describe('the groups of the modes on offer', () => {
       ['Значення', ['correction', 'pairs', 'idiom-meaning']],
       ['Букви', ['anagram']],
       ['Швидкість', ['timed']],
-      [
-        'Нове',
-        ['guess-word', 'by-letters', 'type-word', 'origin', 'anglicism', 'build-idiom', 'survival'],
-      ],
+      ['Нове', ['by-letters', 'type-word', 'origin', 'anglicism', 'build-idiom', 'survival']],
     ]);
   });
 
