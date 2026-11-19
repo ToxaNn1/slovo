@@ -1,4 +1,4 @@
-import { Slot } from 'expo-router';
+import { Slot, type NativeIntent } from 'expo-router';
 import { isValidElement, type ComponentType, type ReactElement } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, type EdgeInsets } from 'react-native-safe-area-context';
@@ -42,6 +42,8 @@ export interface InApp {
   readonly decor?: Decor;
   /** The route the router opens first, for a route map. `/` by default. */
   readonly initialUrl?: string;
+  /** The route map's `+native-intent`: how the app takes a link from outside it. */
+  readonly nativeIntent?: NativeIntent;
   /** The device's safe-area insets, such as a home indicator's; none by default. */
   readonly insets?: EdgeInsets;
 }
@@ -89,6 +91,7 @@ export async function renderApp(
     decor = coreDecor,
     initialUrl = '/',
     insets = noInsets,
+    nativeIntent,
   }: InApp = {},
 ) {
   const drawn = settings === undefined ? shell : await withSettings(shell, settings);
@@ -114,6 +117,7 @@ export async function renderApp(
         </InApp>
       ),
       ...routes,
+      ...(nativeIntent === undefined ? {} : { '+native-intent': nativeIntent }),
     },
     { initialUrl },
   );

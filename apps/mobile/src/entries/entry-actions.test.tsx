@@ -7,7 +7,6 @@ import {
   systemRandom,
   type AnyEntryCard,
   type Composition,
-  type Haptics,
   type MistakeReports,
 } from '@slovo/core';
 import {
@@ -16,16 +15,12 @@ import {
   type FakeBackend,
   seedUserState,
 } from '@slovo/core/testing';
-import { EditionProvider, EntryCard, HapticsProvider, UndoToastProvider } from '@slovo/ui';
+import { EntryCard, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
-import { SettingsProvider } from '../settings/settings';
+import { activeEditionFiles } from '../edition/edition';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
 import { useEntrySlots } from './entry-actions';
@@ -147,19 +142,6 @@ const tip: Tip = {
     wrongAnswers: ['A', 'B', 'C'],
   },
   retired: false,
-};
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
 const clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
@@ -472,23 +454,6 @@ describe('the side swipes of an Entry card (ADR 0077)', () => {
   });
 });
 
-/** The Shell and providers a card draws under. */
-function underShell(children: React.ReactNode) {
-  return (
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={shell()}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <HapticsProvider haptics={haptics}>
-            <SettingsProvider>
-              <UndoToastProvider>{children}</UndoToastProvider>
-            </SettingsProvider>
-          </HapticsProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>
-  );
-}
-
 /** An Entry card with the slots the feed gives it. */
 function SlottedCard({ card, selfCheck = false }: { card: AnyEntryCard; selfCheck?: boolean }) {
   return <EntryCard card={card} slots={useEntrySlots(card)} selfCheck={selfCheck} />;
@@ -498,7 +463,12 @@ function SlottedCard({ card, selfCheck = false }: { card: AnyEntryCard; selfChec
 async function renderSlotted(entryId: string, selfCheck = false): Promise<AnyEntryCard> {
   const card = await composition.entryCard(entryId);
   if (card === undefined) throw new Error(`No card for ${entryId}`);
-  await renderInGestureRoot(underShell(<SlottedCard card={card} selfCheck={selfCheck} />));
+  await renderApp(
+    <UndoToastProvider>
+      <SlottedCard card={card} selfCheck={selfCheck} />
+    </UndoToastProvider>,
+    { shell: shell() },
+  );
   return card;
 }
 
