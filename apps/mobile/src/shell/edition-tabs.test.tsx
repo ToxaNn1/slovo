@@ -265,6 +265,23 @@ describe('the «Стрічка» tab', () => {
     expect(screen.getByTestId('tab-home')).toBeSelected();
   });
 
+  it('shows as selected when the app opens on the Feed', async () => {
+    await renderTabs('/feed');
+
+    expect(await screen.findByText('Feed opened')).toBeVisible();
+    expect(screen.getByTestId('tab-home')).toBeSelected();
+    expect(screen.getByTestId('tab-saved')).not.toBeSelected();
+  });
+
+  it('shows as not selected once another tab is opened from the Feed', async () => {
+    await renderTabs('/feed');
+    await settle(() => fireEvent.press(screen.getByText(tabs.saved)));
+
+    expect(await screen.findByText('Saved')).toBeVisible();
+    expect(screen.getByTestId('tab-home')).not.toBeSelected();
+    expect(screen.getByTestId('tab-saved')).toBeSelected();
+  });
+
   it('shows as not selected over the Feed with the Feed tab off', async () => {
     await renderTabs('/feed', feedTabOff);
 

@@ -2,7 +2,7 @@ import { fill, ScreenEnter, TabBarButton, type IconName } from '@slovo/ui';
 import { tabBar } from '@slovo/ui/tokens';
 import { router, Tabs, useIsFocused, usePathname } from 'expo-router';
 import { getFocusedRouteNameFromRoute } from 'expo-router/react-navigation';
-import { createContext, use, type ComponentProps } from 'react';
+import { createContext, use, type ComponentProps, type ReactNode } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
@@ -35,13 +35,28 @@ export const noTabButton = { tabBarItemStyle: { display: 'none' } } as const;
 type TabButtonProps = Parameters<NonNullable<TabOptions['tabBarButton']>>[0];
 type ScreenLayoutProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['screenLayout']>>[0];
 
+/** A tab button's own props, as `TabBarButton` takes them. */
+type ButtonProps = ComponentProps<typeof TabBarButton>;
+
+/** The «Стрічка» button, shown as selected over the Feed it opens too (ADR 0093). */
+function FeedTabButton(props: ButtonProps) {
+  // Read here, not in the navigator, so a route change re-renders this button alone.
+  const onFeed = usePathname() === '/feed';
+  return <TabBarButton {...props} selected={props.selected || onFeed} />;
+}
+
 /**
  * A tab's `name`, test id and button among the tabs shown in their order. Its
  * VoiceOver label counts the tabs shown only, not the hidden routes beside
  * them, in the Edition's language. A tab not shown has no button. A button
- * shows as selected while its tab is focused, or while `alsoSelected` holds.
+ * shows as selected while its tab is focused; `Button` draws it.
  */
-function tabOptions(tab: Tab, tabOrder: readonly Tab[], name: string, alsoSelected: boolean) {
+function tabOptions(
+  tab: Tab,
+  tabOrder: readonly Tab[],
+  name: string,
+  Button: (props: ButtonProps) => ReactNode = TabBarButton,
+) {
   if (!tabOrder.includes(tab)) return noTabButton;
   return {
     title: name,
@@ -59,10 +74,10 @@ function tabOptions(tab: Tab, tabOrder: readonly Tab[], name: string, alsoSelect
       'aria-label': ariaLabel,
       'aria-selected': ariaSelected,
     }: TabButtonProps) => (
-      <TabBarButton
+      <Button
         icon={tabIcons[tab]}
         label={name}
-        selected={ariaSelected === true || alsoSelected}
+        selected={ariaSelected === true}
         onPress={onPress}
         onLongPress={onLongPress}
         accessibilityLabel={ariaLabel}
@@ -71,6 +86,21 @@ function tabOptions(tab: Tab, tabOrder: readonly Tab[], name: string, alsoSelect
       />
     ),
   };
+}
+
+/**
+ * Each tab's options but the bar's, built once for the tabs shown and their
+ * names, so their buttons keep their identity across the navigator's renders.
+ */
+function tabsOptions(tabOrder: readonly Tab[], settingsName: string, feedTab: boolean) {
+  return {
+    // With `feedTab` on, «Стрічка» shows as selected over the Feed it opens (ADR 0093).
+    home: tabOptions('home', tabOrder, tabs.home, feedTab ? FeedTabButton : TabBarButton),
+    game: tabOptions('game', tabOrder, tabs.game),
+    saved: tabOptions('saved', tabOrder, tabs.saved),
+    // The fourth tab is the Profile while it is shown, Settings otherwise.
+    settings: tabOptions('settings', tabOrder, settingsName),
+  } as const satisfies Record<Tab, unknown>;
 }
 
 type TabRoute = Parameters<typeof getFocusedRouteNameFromRoute>[0];
@@ -91,9 +121,21 @@ function atRoot(route: DescribedRoute, first = 'index'): boolean {
   return !inState(route) || (getFocusedRouteNameFromRoute(route) ?? first) === first;
 }
 
-/** The tab bar as the screen options draw it, or hidden. */
-function barShown(shown: boolean, style: TabOptions['tabBarStyle']) {
-  return { tabBarStyle: shown ? style : [style, { display: 'none' as const }] };
+/** The tab bar over the screens rather than under them: the screens keep their height when it hides. */
+function overScreens(style: TabOptions['tabBarStyle'], barHeight: number) {
+  return [
+    style,
+    { position: 'absolute' as const, left: 0, right: 0, bottom: 0, height: barHeight },
+    { paddingBottom: barHeight - tabBar.height },
+  ];
+}
+
+/** The tab bar as the screen options draw it, and hidden. */
+function barStates(style: TabOptions['tabBarStyle']) {
+  return {
+    shown: { tabBarStyle: style },
+    hidden: { tabBarStyle: [style, { display: 'none' as const }] },
+  };
 }
 
 /** The tab bar's height: the tabs, and the room under them over the home indicator. */
@@ -136,26 +178,18 @@ function FocusedEnter({ route, children }: Pick<ScreenLayoutProps, 'route' | 'ch
  */
 export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
   const shown = useShown();
-  const tabOrder = shown.tabs;
-  // The fourth tab is the Profile while it is shown, Settings otherwise.
-  const names = { ...tabs, settings: shown.profile ? tabs.profile : tabs.settings };
+  const options = tabsOptions(
+    shown.tabs,
+    shown.profile ? tabs.profile : tabs.settings,
+    shown.feedTab,
+  );
   /** While a Game is on, its Round or its result fills the Game tab. */
   const gameOn = useGameState().current !== undefined;
-  /** With `feedTab` on, «Стрічка» shows as selected over the Feed it opens (ADR 0093). */
-  const pathname = usePathname();
-  const feedSelected = shown.feedTab && pathname === '/feed';
   const barHeight = useTabBarHeight();
-  // Over the screens rather than under them: the screens keep their height when it hides.
-  const tabBarStyle = [
-    screenOptions.tabBarStyle,
-    { position: 'absolute' as const, left: 0, right: 0, bottom: 0, height: barHeight },
-    { paddingBottom: barHeight - tabBar.height },
-  ];
-  const tab = (name: Tab, onRoot = true, alsoSelected = false) => ({
-    ...tabOptions(name, tabOrder, names[name], alsoSelected),
-    ...barShown(onRoot, tabBarStyle),
-  });
-  const offTabs = { ...noTabButton, ...barShown(false, tabBarStyle) };
+  const tabBarStyle = overScreens(screenOptions.tabBarStyle, barHeight);
+  const bar = barStates(tabBarStyle);
+  const barOn = (onRoot: boolean) => (onRoot ? bar.shown : bar.hidden);
+  const offTabs = { ...noTabButton, ...bar.hidden };
   /** A screen of the tabs the bar always shows over keeps clear of it. */
   const underBar = { sceneStyle: { paddingBottom: barHeight } };
   /** The tabs whose stack's first screen the bar shows over. */
@@ -175,7 +209,7 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
     >
       <Tabs.Screen
         name="index"
-        options={{ ...tab('home', true, feedSelected), ...underBar }}
+        options={{ ...options.home, ...bar.shown, ...underBar }}
         listeners={{
           tabPress: (event) => {
             // The Dashboard stays the home at launch; its tab opens the Feed (ADR 0093).
@@ -185,11 +219,20 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
           },
         }}
       />
-      <Tabs.Screen name="game" options={({ route }) => tab('game', atRoot(route) && !gameOn)} />
-      <Tabs.Screen name="saved" options={({ route }) => tab('saved', atRoot(route))} />
+      <Tabs.Screen
+        name="game"
+        options={({ route }) => ({ ...options.game, ...barOn(atRoot(route) && !gameOn) })}
+      />
+      <Tabs.Screen
+        name="saved"
+        options={({ route }) => ({ ...options.saved, ...barOn(atRoot(route)) })}
+      />
       <Tabs.Screen
         name="settings"
-        options={({ route }) => tab('settings', atRoot(route, shown.profile ? 'profile' : 'index'))}
+        options={({ route }) => ({
+          ...options.settings,
+          ...barOn(atRoot(route, shown.profile ? 'profile' : 'index')),
+        })}
         listeners={({ route }) => ({
           tabPress: (event) => {
             // Expo Router 58 builds a tab's stack from the route files alone, before the
@@ -207,10 +250,7 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       {/* The recipient sheet of a Collection Link opened from outside; no tab leads to it. */}
       <Tabs.Screen name="c/[linkId]" options={offTabs} />
       {/* The Feed, from the Dashboard. */}
-      <Tabs.Screen
-        name="feed"
-        options={{ ...noTabButton, ...barShown(true, tabBarStyle), ...underBar }}
-      />
+      <Tabs.Screen name="feed" options={{ ...noTabButton, ...bar.shown, ...underBar }} />
       {/* A Correction Type's screen, from its tile on the Dashboard; no tab leads to it. */}
       <Tabs.Screen name="correction-type/[type]" options={offTabs} />
       {/* A Curated Collection's screen, from its card on the Dashboard; no tab leads to it. */}
