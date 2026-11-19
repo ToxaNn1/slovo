@@ -27,6 +27,7 @@ import { activeEditionFiles, edition, editionStrings } from '../edition/edition'
 import { ShellProvider } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 import { useEntrySlots } from './entry-actions';
 
 const { config } = activeEditionFiles;
@@ -228,20 +229,11 @@ async function swipeBy(distance: number) {
 async function renderCard(entryId: string): Promise<AnyEntryCard> {
   const card = await composition.entryCard(entryId);
   if (card === undefined) throw new Error(`No card for ${entryId}`);
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={shell()}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <HapticsProvider haptics={haptics}>
-            <SettingsProvider>
-              <UndoToastProvider>
-                <SwipedCard card={card} />
-              </UndoToastProvider>
-            </SettingsProvider>
-          </HapticsProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
+  await renderApp(
+    <UndoToastProvider>
+      <SwipedCard card={card} />
+    </UndoToastProvider>,
+    { shell: shell() },
   );
   return card;
 }
