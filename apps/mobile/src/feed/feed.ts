@@ -1,7 +1,14 @@
 import { isTodaysWordOfTheDay, type Clock, type FeedCard, type LocalDate } from '@slovo/core';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useState, useSyncExternalStore, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type RefObject,
+} from 'react';
 
 import { useComposition } from '../composition';
 import { useInForeground } from '../foreground/in-foreground';
@@ -10,7 +17,7 @@ import { prefetchAhead } from '../media/shell-media';
 import { useSubscribed } from '../opening';
 import { useShell } from '../shell-value';
 import { wordIdsAhead } from './feed-ahead';
-import { cardOnScreen, type TurnedTo } from './feed-screen';
+import { cardOnReturn, type TurnedTo } from './feed-screen';
 import type { LandingAsked, WordOfTheDayLanding } from './word-of-the-day-landing';
 
 /** The Feed as the pager shows it: a page for each of its cards. */
@@ -63,19 +70,38 @@ export function useFeed(
   const shell = useShell();
   const cards = useSubscribed(feed, (open) => open.cards);
   const today = useSubscribed(feed, (open) => open.today);
-  /** The card the reader turned to last, by the Feed's position, in the Feed they turned it in. */
-  const [turnedTo, setTurnedTo] = useState<TurnedTo>();
-  const onCardChange = useCallback(
-    (to: number) => {
-      setTurnedTo({ in: feed, position: to });
-    },
-    [feed],
-  );
   const focused = useIsFocused();
   const inForeground = useInForeground();
   const covered = useSubscribed(onboarding, ({ state }) => state.status === 'open');
-  const onScreen = cardOnScreen({ feed, turnedTo, focused, inForeground, covered });
-  const inSight = onScreen !== undefined;
+  const inSight = focused && !covered && inForeground;
+  /** Whether the Feed is in sight as of the last render, for the turns between renders. */
+  const inSightNow = useRef(inSight);
+  useEffect(() => {
+    inSightNow.current = inSight;
+  }, [inSight]);
+  /** A page the reader turned to while the Feed was out of sight, which it is told once back. */
+  const turnedOutOfSight = useRef<TurnedTo>(undefined);
+  // The Feed keeps the reader's place itself: a turn goes straight to it, so
+  // a swipe re-renders the screen only when the Feed's cards change.
+  /** Tells the Feed the card at `to` is on screen, or keeps it for its return while out of sight. */
+  const turn = useCallback(
+    (to: number): boolean => {
+      if (!inSightNow.current) {
+        turnedOutOfSight.current = { in: feed, position: to };
+        return false;
+      }
+      void keep('the Feed state', feed.show(to));
+      return true;
+    },
+    [feed],
+  );
+  const onCardChange = useCallback(
+    (to: number) => {
+      if (!turn(to)) return;
+      void keep('the media ahead', prefetchAhead(shell, wordIdsAhead(feed.cards, to), voice));
+    },
+    [turn, feed, shell, voice],
+  );
   /** The page to turn to once it is drawn, such as a Correction opened from a Word. */
   const [turnTo, setTurnTo] = useState<{ readonly page: number }>();
   // Kept from render to render, so the Feed's pages re-render only when their card changes.
@@ -114,26 +140,26 @@ export function useFeed(
     void keep('the Weekly Recap brought back', feed.restoreWeeklyRecap());
   }, [feed]);
 
-  // A new position goes straight to the Feed, which takes the card that left
-  // off the screen itself; only the Feed going out of sight reports none. The
-  // Feed of a composition a reopen replaced is closed by then, so its
-  // cleanup keeps nothing, and the new Feed opens on the reader's card.
-  useEffect(() => {
-    if (onScreen === undefined) return;
-    void keep('the Feed state', feed.show(onScreen));
-  }, [feed, onScreen]);
-  // The Feed advancing downloads the media of the Words ahead (ADR 0099), and
-  // a Narrator Voice the reader chose downloads them again in that voice.
-  useEffect(() => {
-    if (onScreen === undefined) return;
-    void keep('the media ahead', prefetchAhead(shell, wordIdsAhead(cards, onScreen), voice));
-  }, [shell, cards, onScreen, voice]);
+  // The Feed coming in sight is told the reader's card, and going out of
+  // sight that none is; the Feed takes the card that left off the screen
+  // itself. The Feed of a composition a reopen replaced is closed by then, so
+  // its cleanup keeps nothing, and the new Feed opens on the reader's card.
   useEffect(() => {
     if (!inSight) return;
+    const position = cardOnReturn(feed, turnedOutOfSight.current);
+    turnedOutOfSight.current = undefined;
+    void keep('the Feed state', feed.show(position));
     return () => {
       void keep('the Feed state', feed.show(undefined));
     };
   }, [feed, inSight]);
+  // New cards, such as the next one the Feed got ready, download the media of
+  // the Words ahead (ADR 0099), and a Narrator Voice the reader chose
+  // downloads them again in that voice.
+  useEffect(() => {
+    if (!inSight) return;
+    void keep('the media ahead', prefetchAhead(shell, wordIdsAhead(cards, feed.position), voice));
+  }, [shell, feed, cards, inSight, voice]);
 
   // Each opening is a new turn, even to the same page.
   useEffect(() => {
@@ -144,18 +170,11 @@ export function useFeed(
   // with them, also out of sight: the pager shows it at once. When the Feed
   // has no card to put after a hidden one, the Feed is told no position past
   // its cards, and the pager shows its last card.
-  /** The cards the reader's position was last taken for, and that position. */
-  const [placed, setPlaced] = useState<{ cards: readonly FeedCard[]; page: number }>();
-  // The reader is on the Feed's position from this render on, as if they turned to it.
-  if (cards !== placed?.cards) {
-    const page = feed.position;
-    setPlaced({ cards, page });
-    if (page < cards.length) setTurnedTo({ in: feed, position: page });
-  }
+  // A turn out of sight before the change was taken on the cards before it.
   useEffect(() => {
-    if (placed === undefined || placed.page >= placed.cards.length) return;
-    pager.current?.showPage(placed.page);
-  }, [placed, pager]);
+    turnedOutOfSight.current = undefined;
+    if (feed.position < cards.length) pager.current?.showPage(feed.position);
+  }, [feed, cards, pager]);
 
   const asked = useSyncExternalStore(landing.subscribe, landing.asked);
   const landingPage =
@@ -167,13 +186,13 @@ export function useFeed(
   // The reader is on the landing page from this render on, as if they turned to it.
   if (asked !== undefined && landingPage !== -1 && asked !== landed?.ask) {
     setLanded({ ask: asked, page: landingPage });
-    setTurnedTo({ in: feed, position: landingPage });
   }
   useEffect(() => {
     if (landed === undefined) return;
     landing.landed();
     pager.current?.showPage(landed.page);
-  }, [landed, landing, pager]);
+    turn(landed.page);
+  }, [landed, landing, pager, turn]);
 
   return {
     cards,
