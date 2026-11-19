@@ -27,8 +27,8 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
         <video
           data-hero-video
           class="absolute inset-0 size-full object-contain"
-          src={`${base}video/say-nicer-1-9x16.mp4`}
-          poster={`${base}video/say-nicer-1-9x16.jpg`}
+          src={`${base}video/say-nicer-2-9x16.mp4`}
+          poster={`${base}video/say-nicer-2-9x16.jpg`}
           autoplay
           muted
           loop
@@ -50,7 +50,7 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 </section>
 
 <script>
-  // Reduced motion keeps the video still: its poster, «навза́єм» said.
+  // Reduced motion keeps the video still: its poster, «залю́бки» said.
   const video = document.querySelector<HTMLVideoElement>('[data-hero-video]');
   if (video && matchMedia('(prefers-reduced-motion: reduce)').matches) {
     video.autoplay = false;
