@@ -7,15 +7,13 @@ import {
   type FeatureSwitch,
 } from '@slovo/core';
 import { createFakeBackend } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import PrivacyScreen from '../app/settings/privacy';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider, type ShareFile, type SharedFile } from '../shell-value';
-import { renderRoutes } from '../shell/test-render';
+import { type ShareFile, type SharedFile } from '../shell-value';
 import {
   opened,
   recordedAnalytics,
@@ -23,7 +21,6 @@ import {
   switchedTo,
   testShell,
 } from '../shell/test-support';
-import { SettingsProvider } from './settings';
 
 const { config } = activeEditionFiles;
 
@@ -35,11 +32,6 @@ function editionWith(switches: Partial<Record<FeatureSwitch, boolean>>): Edition
   );
   return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...states } });
 }
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** A share window that keeps every file handed to it and is sent each one. */
 function recordedShareWindow() {
@@ -76,22 +68,12 @@ async function renderPrivacy({
     account: undefined,
     shareFile,
   });
-  await renderRoutes(
+  await renderApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider shell={shell}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <SettingsProvider>
-                <Stack screenOptions={{ headerShown: false }} />
-              </SettingsProvider>
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
-      ),
+      _layout: () => <Stack screenOptions={{ headerShown: false }} />,
       'settings/privacy': PrivacyScreen,
     },
-    { initialUrl: '/settings/privacy' },
+    { shell, initialUrl: '/settings/privacy' },
   );
   return (await settings.opened()).settings;
 }
