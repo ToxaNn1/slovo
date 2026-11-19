@@ -1,7 +1,8 @@
+import type { RecordKind } from '@slovo/content-rules';
 import type { Entry } from '@slovo/contracts';
 import type { BuildError, SnapshotSource } from '@slovo/language-pack';
 import { readEditionWithSnapshot } from '@slovo/language-pack';
-import { editionDayStart, type Clock, type EditionRegistry } from '@slovo/server-core';
+import type { Clock, EditionRegistry } from '@slovo/server-core';
 import type { ContentSnapshot, Patch } from '@slovo/contracts/api';
 import { and, eq, gt, inArray, notInArray, sql } from 'drizzle-orm';
 
@@ -19,7 +20,15 @@ import {
   contentWords,
   quoteChecks,
 } from '../database/schema';
-import { readMediaRows, readsDifferently, retireRecordings } from './media-rows';
+import {
+  ENTRY_KINDS,
+  type EntryKind,
+  needsNewRecordingOf,
+  RECORD_KINDS,
+  restoredAppearance,
+  TABLES,
+} from './content-records';
+import { readMediaRows } from './media-rows';
 
 /** How many records of each kind an import wrote. */
 export interface ImportCounts {
@@ -43,26 +52,6 @@ type ImportedContent = NonNullable<SnapshotSource['valid']>['content'];
 
 /** Rows a single insert sends, well inside Postgres's limit of parameters. */
 const ROWS_PER_INSERT = 500;
-
-/** Every content table, for what an import does to all of them. */
-const CONTENT_TABLES = [
-  contentWords,
-  contentIdioms,
-  contentCorrections,
-  contentTips,
-  contentSynonymRows,
-  contentCuratedCollections,
-  contentCrosswordDays,
-] as const;
-
-/** The content tables of the kinds of Entry. */
-const ENTRY_TABLES = [
-  contentWords,
-  contentCorrections,
-  contentIdioms,
-  contentSynonymRows,
-  contentTips,
-] as const;
 
 /** The records in code-unit order of their ids, as the Language Pack keeps them, whatever the collation. */
 function inIdOrder<F>(rows: readonly { readonly id: string; readonly fields: F }[]): F[] {
@@ -161,58 +150,53 @@ export function createContentStore({
           fields,
           retired: fields.retired ?? false,
         }));
-      // A Word whose Lemma or Stress the snapshot changes no longer reads as
-      // its Recordings: they retire and it needs new ones (ADR 0083).
       const stored = new Map(
         (
           await tx
             .select({
               id: contentWords.id,
               fields: contentWords.fields,
-              needs: contentWords.needsNewRecording,
+              needsNewRecording: contentWords.needsNewRecording,
             })
             .from(contentWords)
             .where(eq(contentWords.editionId, editionId))
         ).map((word) => [word.id, word]),
       );
-      const changed = new Set(
-        content.words
-          .filter((word) => {
-            const before = stored.get(word.id);
-            return before !== undefined && readsDifferently(before.fields, word);
-          })
-          .map(({ id }) => id),
-      );
-      for (const wordId of changed)
-        await retireRecordings(tx, { editionId, wordId, version: contentVersion, now });
       // A snapshot names the Words that already wait for new Recordings.
       const waiting = new Set(content.needsNewRecording);
-      const words = rowsOf(content.words).map((row) => ({
-        ...row,
-        needsNewRecording:
-          changed.has(row.id) || waiting.has(row.id) || stored.get(row.id)?.needs === true,
-      }));
+      const words = [];
+      for (const row of rowsOf(content.words)) {
+        const needsNewRecording = await needsNewRecordingOf(tx, {
+          editionId,
+          word: row.fields,
+          before: stored.get(row.id),
+          contentVersion,
+          now,
+        });
+        words.push({ ...row, needsNewRecording: needsNewRecording || waiting.has(row.id) });
+      }
       const crosswordDays = (content.crosswordDays ?? []).map((fields) => ({
         ...common,
         id: fields.date,
         fields,
         retired: fields.retired ?? false,
       }));
-      const importedIds = new Map<(typeof CONTENT_TABLES)[number], readonly string[]>([
-        [contentWords, content.words.map(({ id }) => id)],
-        [contentIdioms, content.idioms.map(({ id }) => id)],
-        [contentCorrections, content.corrections.map(({ id }) => id)],
-        [contentTips, content.tips.map(({ id }) => id)],
-        [contentSynonymRows, content.synonymRows.map(({ id }) => id)],
-        [contentCuratedCollections, (content.curatedCollections ?? []).map(({ id }) => id)],
-        [contentCrosswordDays, crosswordDays.map(({ id }) => id)],
-      ]);
+      const importedIds: Readonly<Record<RecordKind, readonly string[]>> = {
+        word: content.words.map(({ id }) => id),
+        idiom: content.idioms.map(({ id }) => id),
+        correction: content.corrections.map(({ id }) => id),
+        tip: content.tips.map(({ id }) => id),
+        synonymRow: content.synonymRows.map(({ id }) => id),
+        curatedCollection: (content.curatedCollections ?? []).map(({ id }) => id),
+        crosswordDay: crosswordDays.map(({ id }) => id),
+      };
       // Retire, never delete (ADR 0090): an Entry the snapshot no longer holds
       // is retired one version on, so a device's Patch retires it too. A
       // Curated Collection or Crossword Day the snapshot no longer holds stays
       // as it is: it is retired by a write, never by the import.
-      for (const table of ENTRY_TABLES) {
-        const ids = importedIds.get(table) ?? [];
+      for (const kind of ENTRY_KINDS) {
+        const table = TABLES[kind];
+        const ids = importedIds[kind];
         await tx
           .update(table)
           .set({
@@ -231,7 +215,9 @@ export function createContentStore({
             ),
           );
       }
-      for (const [table, ids] of importedIds) {
+      for (const kind of RECORD_KINDS) {
+        const table = TABLES[kind];
+        const ids = importedIds[kind];
         if (ids.length === 0) continue;
         await tx
           .delete(table)
@@ -248,10 +234,10 @@ export function createContentStore({
       await inChunks(rowsOf(content.synonymRows), (rows) =>
         tx.insert(contentSynonymRows).values(rows),
       );
-      // An imported collection appears from the start of its date.
+      // An imported collection is restored as new: it appears from the start of its date.
       const collections = rowsOf(content.curatedCollections ?? []).map((row) => ({
         ...row,
-        appearedAt: editionDayStart(row.fields.publishedOn),
+        appearedAt: restoredAppearance(row.fields.publishedOn, undefined),
       }));
       await inChunks(collections, (rows) => tx.insert(contentCuratedCollections).values(rows));
       await inChunks(crosswordDays, (rows) => tx.insert(contentCrosswordDays).values(rows));
@@ -286,7 +272,7 @@ export function createContentStore({
 
   /** The records of every kind of the Edition changed after the content version, in id order. */
   async function readKinds(tx: Reader, editionId: string, since: number) {
-    const changed = (table: (typeof CONTENT_TABLES)[number]) =>
+    const changed = (table: (typeof TABLES)[RecordKind]) =>
       and(eq(table.editionId, editionId), gt(table.contentVersion, since));
     const words = await tx
       .select({
@@ -408,7 +394,7 @@ export function createContentStore({
     if (ids.length === 0) return [];
     return db.transaction(
       async (tx) => {
-        const live = (table: (typeof ENTRY_TABLES)[number]) =>
+        const live = (table: (typeof TABLES)[EntryKind]) =>
           and(
             eq(table.editionId, editionId),
             inArray(table.id, [...ids]),

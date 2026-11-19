@@ -1,73 +1,28 @@
 import { ID_PREFIX } from '@slovo/contracts';
-import { parseRecord, recordFileOf, type RecordKind } from '@slovo/content-rules';
-import { editionDayStart, type Actor, type Clock, type Json } from '@slovo/server-core';
+import { parseRecord, recordFileOf } from '@slovo/content-rules';
+import type { Actor, Clock } from '@slovo/server-core';
 import { and, asc, eq, getTableColumns, inArray, isNull, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import type { Database } from '../database/database';
+import { accounts, actionLog, contentBatches, mistakeReports } from '../database/schema';
 import {
-  accounts,
-  actionLog,
-  contentBatches,
-  contentCorrections,
-  contentCrosswordDays,
-  contentCuratedCollections,
-  contentIdioms,
-  contentSynonymRows,
-  contentTips,
-  contentVersions,
-  contentWords,
-  mistakeReports,
-} from '../database/schema';
-import { readsDifferently, retireRecordings } from './media-rows';
-
-/** The kinds of record that are Entries, which a Mistake Report names (ADR 0056). */
-const ENTRY_KINDS = ['word', 'correction', 'idiom', 'synonymRow', 'tip'] as const;
-type EntryKindOfId = (typeof ENTRY_KINDS)[number];
-
-/** The table of each kind of record. */
-const TABLES = {
-  word: contentWords,
-  correction: contentCorrections,
-  idiom: contentIdioms,
-  synonymRow: contentSynonymRows,
-  tip: contentTips,
-  curatedCollection: contentCuratedCollections,
-  crosswordDay: contentCrosswordDays,
-} as const satisfies Record<RecordKind, unknown>;
-
-const RecordKindSchema = z.enum([
-  'word',
-  'correction',
-  'idiom',
-  'synonymRow',
-  'tip',
-  'curatedCollection',
-  'crosswordDay',
-]);
-
-/** A content write's Action log row, as `content-writes` keeps it. */
-const WriteWhatSchema = z.templateLiteral([
-  'content.',
+  ENTRY_KINDS,
+  holdContentVersion,
+  logged,
+  loggedWrite,
+  publishContentVersion,
   RecordKindSchema,
-  '.',
-  z.enum(['create', 'edit', 'retire']),
-]);
+  saveRecord,
+  TABLES,
+  type EntryKind,
+} from './content-records';
+
 // A Crossword day takes no flag.
 const FlagKindSchema = RecordKindSchema.exclude(['crosswordDay']);
 const FlagWhatSchema = z.templateLiteral(['content.', FlagKindSchema, '.flag']);
-const StoredSchema = z.object({
-  recordVersion: z.number().int(),
-  // A Crossword day's id is its date.
-  fields: z.looseObject({ id: z.string().optional(), date: z.string().optional() }),
-});
 const FlagAfterSchema = z.object({ id: z.string() });
 const ResolvedSchema = z.object({ flagId: z.number().int() });
-
-const kindOf = (what: string): RecordKind => RecordKindSchema.parse(what.split('.')[1]);
-
-/** The pattern of a content write's Action log row, as `WriteWhatSchema` takes it. */
-const WRITE_WHAT = `^content\\.(${RecordKindSchema.options.join('|')})\\.(create|edit|retire)$`;
 
 /** The Агент batches «не перевірено»: an Агент's, not reviewed yet. */
 const openBatch = and(like(contentBatches.changedBy, 'agent:%'), isNull(contentBatches.reviewedAt));
@@ -92,22 +47,14 @@ export function createContentQueue({ database, clock }: { database: Database; cl
     const rows = await tx
       .select({ what: actionLog.what, before: actionLog.before, after: actionLog.after })
       .from(actionLog)
-      .where(and(eq(actionLog.batchId, batchId), like(actionLog.what, 'content.%')))
+      .where(and(eq(actionLog.batchId, batchId), logged.isWrite))
       .orderBy(asc(actionLog.id));
-    const first = new Map<
-      string,
-      { kind: RecordKind; id: string; op: 'create' | 'edit' | 'retire'; before: Json }
-    >();
+    const first = new Map<string, NonNullable<ReturnType<typeof loggedWrite>>>();
     for (const row of rows) {
-      const what = WriteWhatSchema.safeParse(row.what);
-      if (!what.success) continue;
-      const kind = kindOf(what.data);
-      const { fields } = StoredSchema.parse(row.after);
-      const id = fields.id ?? fields.date ?? '';
-      const key = `${kind} ${id}`;
-      if (first.has(key)) continue;
-      const op = z.enum(['create', 'edit', 'retire']).parse(what.data.split('.')[2]);
-      first.set(key, { kind, id, op, before: row.before });
+      const write = loggedWrite(row);
+      if (write === undefined) continue;
+      const key = `${write.kind} ${write.id}`;
+      if (!first.has(key)) first.set(key, write);
     }
     return [...first.values()];
   }
@@ -119,15 +66,14 @@ export function createContentQueue({ database, clock }: { database: Database; cl
    */
   async function countsOf(batchIds: readonly string[]) {
     if (batchIds.length === 0) return new Map<string, { records: number; added: number }>();
-    const kind = sql`split_part(${actionLog.what}, '.', 2)`;
-    const id = sql`coalesce(${actionLog.after}->'fields'->>'id', ${actionLog.after}->'fields'->>'date', '')`;
+    const { kind, id } = logged;
     const firsts = db
       .selectDistinctOn([actionLog.batchId, kind, id], {
         batchId: actionLog.batchId,
-        op: sql<string>`split_part(${actionLog.what}, '.', 3)`.as('op'),
+        op: logged.op.as('op'),
       })
       .from(actionLog)
-      .where(and(inArray(actionLog.batchId, [...batchIds]), sql`${actionLog.what} ~ ${WRITE_WHAT}`))
+      .where(and(inArray(actionLog.batchId, [...batchIds]), logged.isWrite))
       .orderBy(actionLog.batchId, kind, id, asc(actionLog.id))
       .as('firsts');
     const rows = await db
@@ -222,12 +168,8 @@ export function createContentQueue({ database, clock }: { database: Database; cl
       const batch = await heldBatch(tx, batchId);
       if (batch === undefined) return { ok: false } as const;
       const { editionId } = batch;
-      const [held] = await tx
-        .select({ contentVersion: contentVersions.contentVersion })
-        .from(contentVersions)
-        .where(eq(contentVersions.editionId, editionId))
-        .for('update');
-      if (held === undefined) return { ok: false } as const;
+      const contentVersion = await holdContentVersion(tx, editionId);
+      if (contentVersion === undefined) return { ok: false } as const;
       const now = clock.now();
       const changedBy = `admin:${email}` as const;
       const [own] = await tx
@@ -235,7 +177,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
         .values({ editionId, changedBy, createdAt: now, reviewedAt: now })
         .returning({ id: contentBatches.id });
       if (own === undefined) throw new Error('the batch was not written');
-      const published = held.contentVersion + 1;
+      const published = contentVersion + 1;
       const retired: string[] = [];
       const restored: string[] = [];
       const skipped: string[] = [];
@@ -257,95 +199,27 @@ export function createContentQueue({ database, clock }: { database: Database; cl
         const parsed = parseRecord(
           write.kind,
           recordFileOf(write.kind, write.id),
-          write.op === 'create'
-            ? { ...current.fields, retired: true }
-            : StoredSchema.parse(write.before).fields,
+          write.op === 'create' ? { ...current.fields, retired: true } : write.fieldsBefore,
         );
         if (!parsed.ok) throw new Error(`the record ${write.id} before the batch does not parse`);
-        const { record } = parsed;
-        const where = and(eq(table.editionId, editionId), eq(table.id, write.id));
-        const set = {
-          retired: 'retired' in record.entry && record.entry.retired === true,
-          recordVersion: current.recordVersion + 1,
-          contentVersion: published,
-          changedBy,
-          changedAt: now,
-          batchId: own.id,
-        };
-        switch (record.kind) {
-          case 'word': {
-            const [word] = await tx
-              .select({ fields: contentWords.fields, needs: contentWords.needsNewRecording })
-              .from(contentWords)
-              .where(where);
-            // A Word's Recordings no longer read it once its Lemma or Stress changed (ADR 0083).
-            const textChanged = word !== undefined && readsDifferently(word.fields, record.entry);
-            const needsNewRecording = word !== undefined && (word.needs || textChanged);
-            if (textChanged)
-              await retireRecordings(tx, { editionId, wordId: write.id, version: published, now });
-            await tx
-              .update(contentWords)
-              .set({ ...set, fields: record.entry, needsNewRecording })
-              .where(where);
-            break;
-          }
-          case 'correction':
-            await tx
-              .update(contentCorrections)
-              .set({ ...set, fields: record.entry })
-              .where(where);
-            break;
-          case 'idiom':
-            await tx
-              .update(contentIdioms)
-              .set({ ...set, fields: record.entry })
-              .where(where);
-            break;
-          case 'synonymRow':
-            await tx
-              .update(contentSynonymRows)
-              .set({ ...set, fields: record.entry })
-              .where(where);
-            break;
-          case 'tip':
-            await tx
-              .update(contentTips)
-              .set({ ...set, fields: record.entry })
-              .where(where);
-            break;
-          case 'curatedCollection': {
-            // A restored publish date brings back its appearance, as the import sets it (ADR 0178).
-            const [collection] = await tx
-              .select({ fields: contentCuratedCollections.fields })
-              .from(contentCuratedCollections)
-              .where(where);
-            const { publishedOn } = record.entry;
-            const moved = collection !== undefined && collection.fields.publishedOn !== publishedOn;
-            await tx
-              .update(contentCuratedCollections)
-              .set({
-                ...set,
-                fields: record.entry,
-                ...(moved ? { appearedAt: editionDayStart(publishedOn) } : {}),
-              })
-              .where(where);
-            break;
-          }
-          case 'crosswordDay':
-            await tx
-              .update(contentCrosswordDays)
-              .set({ ...set, fields: record.entry })
-              .where(where);
-            break;
-        }
+        await saveRecord(
+          tx,
+          parsed.record,
+          {
+            editionId,
+            recordVersion: current.recordVersion + 1,
+            contentVersion: published,
+            changedBy,
+            changedAt: now,
+            batchId: own.id,
+          },
+          'restored',
+        );
         (write.op === 'create' ? retired : restored).push(write.id);
       }
       const changed = retired.length + restored.length > 0;
       if (changed) {
-        await tx
-          .update(contentVersions)
-          .set({ contentVersion: published, updatedAt: now })
-          .where(eq(contentVersions.editionId, editionId));
+        await publishContentVersion(tx, editionId, published, now);
       }
       await tx
         .update(contentBatches)
@@ -363,7 +237,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
       });
       return {
         ok: true,
-        contentVersion: changed ? published : held.contentVersion,
+        contentVersion: changed ? published : contentVersion,
         retired,
         restored,
         skipped,
@@ -485,7 +359,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
   async function entriesOf(rows: readonly { editionId: string; entryId: string }[]) {
     const found = new Map<
       string,
-      { kind: EntryKindOfId; fields: Readonly<Record<string, unknown>>; retired: boolean }
+      { kind: EntryKind; fields: Readonly<Record<string, unknown>>; retired: boolean }
     >();
     for (const kind of ENTRY_KINDS) {
       const named = new Map<string, string[]>();

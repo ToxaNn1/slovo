@@ -26,6 +26,7 @@ import {
   quoteChecks,
   sourcingCache,
 } from '../database/schema';
+import { ENTRY_KINDS, TABLES } from './content-records';
 
 /** The sourcing port: fetches a source page. */
 export interface SourcePages {
@@ -38,14 +39,6 @@ export const QUOTE_CHECK_FRESHNESS_MS = 30 * 24 * 60 * 60 * 1000;
 type Db = Pick<Database['db'], 'select'>;
 type QuotedKind = QuotedRecord['kind'];
 
-const QUOTED_TABLES = {
-  word: contentWords,
-  correction: contentCorrections,
-  idiom: contentIdioms,
-  synonymRow: contentSynonymRows,
-  tip: contentTips,
-} as const;
-
 /** A live quoted record changed since the import, unverified at its version, with its first source's page. */
 interface Unverified {
   readonly record: QuotedRecord;
@@ -54,9 +47,10 @@ interface Unverified {
   readonly url: string;
 }
 
-const QUOTED_KINDS = ['word', 'correction', 'idiom', 'synonymRow', 'tip'] as const;
+/** A quoted record is an Entry. */
+const QUOTED_KINDS: readonly QuotedKind[] = ENTRY_KINDS;
 
-type Table = (typeof QUOTED_TABLES)[QuotedKind];
+type Table = (typeof TABLES)[QuotedKind];
 type Check = 'unverified' | 'verified' | 'failed';
 
 /**
@@ -90,7 +84,7 @@ async function checkStates(db: Db, editionId: string) {
   const checkOf = await checkStateOf(db, editionId);
   const states: { kind: QuotedKind; id: string; check: Check }[] = [];
   for (const kind of QUOTED_KINDS) {
-    const table = QUOTED_TABLES[kind];
+    const table = TABLES[kind];
     const rows = await db
       .select({
         id: table.id,
