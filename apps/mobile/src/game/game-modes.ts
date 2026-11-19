@@ -113,23 +113,27 @@ export function bestText({ result, of }: OfferedBest, texts: GameStrings['modeBe
   return of === undefined ? fill(texts.count, { n }) : fill(texts.outOf, { n, total: String(of) });
 }
 
-/** A group of the mode screen: its title in the Edition's texts and its modes on offer. */
+/**
+ * A group of the mode screen: its title in the Edition's texts, none for the
+ * leading row, and its modes on offer.
+ */
 export interface GameModeGroup {
-  readonly title: string;
+  readonly title: string | undefined;
   readonly offers: readonly GameModeOffer[];
 }
 
 /**
  * The modes on offer in the mode screen's groups, each under the group its
- * offer names, the board's five in the board's order (ADR 0139), and the modes in the order they register; a group
- * with no mode on offer is left out.
+ * offer names: the leading row first, with no title, then the board's five in
+ * the board's order, and the modes in the order they register; a group with no
+ * mode on offer is left out.
  */
 export function gameModeGroups(
   offers: readonly GameModeOffer[],
   strings: GameStrings,
 ): GameModeGroup[] {
   return GAME_HUB_GROUPS.map((group) => ({
-    title: strings.groups[group],
+    title: group === 'lead' ? undefined : strings.groups[group],
     offers: offers.filter((offer) => offer.group === group),
   })).filter(({ offers: inGroup }) => inGroup.length > 0);
 }

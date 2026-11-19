@@ -119,7 +119,7 @@ describe('the card of each Game Mode on offer', () => {
 
   it("draws a mode still planned as one that can't start yet, with no refusal", () => {
     const card = gameModeCard(
-      { modeId: 'guess-word', entryKind: 'word', group: 'new', canStart: false, planning: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'lead', canStart: false, planning: true },
       strings,
     );
 
@@ -257,7 +257,7 @@ describe("the toast on a mode that can't start", () => {
   const stuck = stuckOffer('pairs', 'meaning');
 
   it('sends the reader to «Наголос» while it can start', () => {
-    const offers = [offer('guess-word', 'new'), offer('stress', 'sound'), stuck];
+    const offers = [offer('guess-word', 'lead'), offer('stress', 'sound'), stuck];
 
     expect(gameModeToast(stuck, offers, strings)).toBe(
       '«Пари» ще розминається. Влучай поки в «Наголос»!',
@@ -287,16 +287,14 @@ describe("the toast on a mode that can't start", () => {
   });
 });
 
-/** The board's five groups with every mode in its own, as ADR 0139 lists them. */
+/** «Вгадай слово» in the leading row, with no title, then the board's five groups with every mode in its own. */
 const HUB_GROUPS = [
+  [undefined, ['guess-word']],
   ['Звук', ['stress']],
   ['Значення', ['correction', 'pairs', 'idiom-meaning']],
   ['Букви', ['anagram']],
   ['Швидкість', ['timed']],
-  [
-    'Нове',
-    ['guess-word', 'by-letters', 'type-word', 'origin', 'anglicism', 'build-idiom', 'survival'],
-  ],
+  ['Нове', ['by-letters', 'type-word', 'origin', 'anglicism', 'build-idiom', 'survival']],
 ];
 
 describe('the groups of the modes on offer', () => {
@@ -309,15 +307,16 @@ describe('the groups of the modes on offer', () => {
       offer('idiom-meaning', 'meaning'),
       offer('stress', 'sound'),
       offer('correction', 'meaning'),
-      offer('guess-word'),
+      offer('guess-word', 'lead'),
     ];
 
     expect(shapeOf(gameModeGroups(offers, strings))).toEqual([
+      [undefined, ['guess-word']],
       ['Звук', ['stress']],
       ['Значення', ['idiom-meaning', 'correction']],
       ['Букви', ['anagram']],
       ['Швидкість', ['timed']],
-      ['Нове', ['build-idiom', 'origin', 'guess-word']],
+      ['Нове', ['build-idiom', 'origin']],
     ]);
   });
 
@@ -331,6 +330,7 @@ describe('the groups of the modes on offer', () => {
     const app = await open({ words: 15 });
 
     expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
+      [undefined, ['guess-word']],
       ['Значення', ['correction', 'pairs', 'idiom-meaning']],
       ['Букви', ['anagram']],
       ['Швидкість', ['timed']],
@@ -345,19 +345,20 @@ describe('the groups of the modes on offer', () => {
     const app = await open({ words: 15, switchedOff: ['corrections'] });
 
     expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
+      [undefined, ['guess-word']],
       ['Значення', ['pairs', 'idiom-meaning']],
       ['Букви', ['anagram']],
       ['Швидкість', ['timed']],
-      ['Нове', ['guess-word', 'by-letters', 'origin', 'build-idiom']],
+      ['Нове', ['by-letters', 'origin', 'build-idiom']],
     ]);
   });
 
   it('puts a Game Mode added only in the Core under the group its offer names', () => {
     expect(
-      shapeOf(gameModeGroups([offer('guess-word'), offer('test-new', 'letters')], strings)),
+      shapeOf(gameModeGroups([offer('guess-word', 'lead'), offer('test-new', 'letters')], strings)),
     ).toEqual([
+      [undefined, ['guess-word']],
       ['Букви', ['test-new']],
-      ['Нове', ['guess-word']],
     ]);
   });
 });
