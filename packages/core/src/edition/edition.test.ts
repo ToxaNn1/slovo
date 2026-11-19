@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import {
+  DEPENDS_ON,
+  FeatureSwitchesSchema,
+  featureSwitchStates,
+  type FeatureSwitch,
+} from '@slovo/contracts';
+
 import { loadEdition } from '../index';
 import { InvalidEditionConfigError } from './edition';
 
@@ -15,141 +22,8 @@ const validConfig = {
     alphabet: 'a b c',
     sortLocale: 'xx',
   },
-  featureSwitches: {
-    game: 'on',
-    corrections: 'on',
-    idioms: 'on',
-    synonymRows: 'on',
-    tips: 'on',
-    account: 'on',
-    googleSignIn: 'on',
-    signInWithApple: 'on',
-    sync: 'on',
-    contentUpdates: 'on',
-    notifications: 'on',
-    widget: 'on',
-    shareCards: 'on',
-    pronunciation: 'on',
-    narratorVoice: 'on',
-    recordedOnly: 'on',
-    wordOfTheDay: 'on',
-    statistics: 'on',
-    knowledge: 'on',
-    selfCheck: 'on',
-    rarityCeiling: 'on',
-    gameReview: 'on',
-    gameGuessWord: 'on',
-    gameCorrection: 'on',
-    gameStress: 'on',
-    gamePairs: 'on',
-    gameSurvival: 'on',
-    gameTimed: 'on',
-    gameIdiomMeaning: 'on',
-    gameAnglicism: 'on',
-    gameBuildIdiom: 'on',
-    gameTypeWord: 'on',
-    gameAnagram: 'on',
-    gameByLetters: 'on',
-    gameOrigin: 'on',
-    dailyCrossword: 'on',
-    search: 'on',
-    rarityTest: 'on',
-    weeklyRecap: 'on',
-    confirmedEntries: 'on',
-    yesterday: 'on',
-    wordOfTheDayArchive: 'on',
-    activeDaysCalendar: 'on',
-    politePause: 'on',
-    firstWeek: 'on',
-    seasonalDecor: 'on',
-    stressAnimation: 'on',
-    illustrations: 'on',
-    mistakeReports: 'on',
-    communityCounters: 'on',
-    communityWord: 'on',
-    calligraphy: 'on',
-    spotlight: 'on',
-    appIntents: 'on',
-    collectionLinks: 'on',
-    replaceOpenEntry: 'on',
-    mixKindWeights: 'on',
-    analytics: 'on',
-    analyticsSessions: 'on',
-    analyticsFeatureUsed: 'on',
-    analyticsSearchNoResult: 'on',
-    analyticsNotificationPermission: 'on',
-    analyticsNps: 'on',
-    analyticsGames: 'on',
-    xpLog: 'on',
-    streakFreezes: 'on',
-    streakBreak: 'on',
-    quickQuestion: 'on',
-    quickQuestionWordMeaning: 'on',
-    playStep: 'on',
-    seenWordXp: 'on',
-    levels: 'on',
-    dailyGoal: 'on',
-    enoughForToday: 'on',
-    goalReachedCard: 'on',
-    widgetGoalRing: 'on',
-    lockScreenWidget: 'on',
-    questionnaire: 'on',
-    badges: 'on',
-    levelLadder: 'on',
-    badgeSheet: 'on',
-    badgeFamiliesOverview: 'on',
-    streakFreezeCard: 'on',
-    breakCard: 'on',
-    calendarDayLines: 'on',
-    progressShareCards: 'on',
-    crosswordHint: 'on',
-    crosswordSolveTime: 'on',
-    crosswordSolvedScreen: 'on',
-    crosswordBadgeStamp: 'on',
-    gameRoundMascot: 'on',
-    gameEndToFeed: 'on',
-    gameModeToast: 'on',
-    notificationFarewell: 'on',
-    notificationExplainer: 'on',
-    notificationTimeStep: 'on',
-    laterQuestions: 'on',
-    interestsQuestion: 'on',
-    profile: 'on',
-    mascot: 'on',
-    sounds: 'on',
-    reduceMotion: 'on',
-    fastReveal: 'on',
-    mood: 'on',
-    moodEffect: 'on',
-    previousWords: 'on',
-    correctionTypes: 'on',
-    curatedCollections: 'on',
-    gesturesHintDemo: 'on',
-    gesturesHintAgain: 'on',
-    sourceTab: 'on',
-    tipExceptions: 'on',
-    searchButton: 'on',
-    dashboardWordmark: 'on',
-    dailySplash: 'on',
-    heroSparks: 'on',
-    feedTab: 'on',
-    categoryScreens: 'on',
-    correctionCategoryScreens: 'on',
-    correctionTypeGrid: 'on',
-    categoryFeed: 'on',
-    curatedCollectionFeed: 'on',
-    collectionLinkCopy: 'on',
-    dueQuiz: 'on',
-    profileConfirmedByRarity: 'on',
-    profileGameBest: 'on',
-    forceUpdate: 'on',
-    scrollToTop: 'on',
-    progressReset: 'on',
-    dataExport: 'on',
-    readerName: 'on',
-    widgetPreviews: 'on',
-    statisticsOffCounter: 'on',
-  },
+  featureSwitches: featureSwitchStates(),
+
   userSettingDefaults: {
     theme: 'system',
     textSize: 'system',
@@ -273,63 +147,6 @@ const validConfig = {
   },
 };
 
-/** The Feature Switches of the Game Modes and the Daily Crossword (ADR 0052). */
-const gamePartSwitches = [
-  'gameGuessWord',
-  'gameCorrection',
-  'gameStress',
-  'gamePairs',
-  'gameSurvival',
-  'gameTimed',
-  'gameIdiomMeaning',
-  'gameAnglicism',
-  'gameBuildIdiom',
-  'gameTypeWord',
-  'gameAnagram',
-  'gameByLetters',
-  'gameOrigin',
-  'dailyCrossword',
-] as const;
-
-/** The Feature Switches of the features of 0.8.13 (ADR 0054). */
-const learningSwitches = [
-  'search',
-  'rarityTest',
-  'weeklyRecap',
-  'yesterday',
-  'wordOfTheDayArchive',
-  'activeDaysCalendar',
-  'dailyGoal',
-  'enoughForToday',
-  'politePause',
-  'firstWeek',
-  'levelLadder',
-  'badgeSheet',
-  'streakFreezeCard',
-  'breakCard',
-  'calendarDayLines',
-] as const;
-
-/** The Feature Switches of the features of 0.8.14. */
-const feelSwitches = [
-  'seasonalDecor',
-  'stressAnimation',
-  'illustrations',
-  'mistakeReports',
-  'communityCounters',
-  'communityWord',
-] as const;
-
-/** The Feature Switches of the features of 0.8.15. */
-const nativeSwitches = ['calligraphy', 'spotlight', 'appIntents', 'collectionLinks'] as const;
-
-function withoutQuestionnaireSwitch() {
-  const { questionnaire: _removed, ...featureSwitches } = validConfig.featureSwitches;
-  return { featureSwitches };
-}
-/** The Feature Switches of the 1.0 notification plan. */
-const notificationSwitches = ['notificationFarewell', 'notificationExplainer'] as const;
-
 describe('loadEdition', () => {
   it('reports the Edition id, locale and whether it marks Stress', () => {
     const edition = loadEdition(validConfig);
@@ -360,87 +177,6 @@ describe('loadEdition', () => {
 
     expect(edition.isFeatureEnabled('game')).toBe(false);
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
-  });
-
-  it('turns every Game Mode and the Daily Crossword off while the Game is off', () => {
-    const edition = loadEdition({
-      ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, game: 'off' },
-    });
-
-    for (const feature of gamePartSwitches) expect(edition.isFeatureEnabled(feature)).toBe(false);
-    expect(edition.isFeatureEnabled('gameReview')).toBe(true);
-  });
-
-  it.each([
-    ...gamePartSwitches,
-    ...learningSwitches,
-    ...feelSwitches,
-    ...nativeSwitches,
-    ...notificationSwitches,
-    'signInWithApple',
-    'synonymRows',
-    'tips',
-    'account',
-    'sync',
-    'contentUpdates',
-    'notifications',
-    'widget',
-    'shareCards',
-    'pronunciation',
-    'wordOfTheDay',
-    'statistics',
-    'knowledge',
-    'selfCheck',
-    'rarityCeiling',
-    'gameReview',
-    'progressShareCards',
-    'crosswordHint',
-    'crosswordSolveTime',
-    'crosswordSolvedScreen',
-    'crosswordBadgeStamp',
-    'gameRoundMascot',
-    'gameEndToFeed',
-    'gameModeToast',
-    'fastReveal',
-    'correctionTypes',
-    'progressReset',
-    'dataExport',
-    'readerName',
-    'badgeFamiliesOverview',
-    'widgetPreviews',
-    'statisticsOffCounter',
-  ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
-    const on = loadEdition(validConfig);
-    const off = loadEdition({
-      ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, [feature]: 'off' },
-    });
-
-    expect(on.isFeatureEnabled(feature)).toBe(true);
-    expect(off.isFeatureEnabled(feature)).toBe(false);
-  });
-
-  it.each([
-    ['progressReset', 'xpLog'],
-    ['readerName', 'profile'],
-    ['widgetPreviews', 'widget'],
-  ] as const)('turns %s off while %s is off', (feature, needed) => {
-    const edition = loadEdition({
-      ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, [needed]: 'off' },
-    });
-
-    expect(edition.isFeatureEnabled(feature)).toBe(false);
-  });
-
-  it('keeps the Data export on whatever else is off', () => {
-    const edition = loadEdition({
-      ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, xpLog: 'off', profile: 'off' },
-    });
-
-    expect(edition.isFeatureEnabled('dataExport')).toBe(true);
   });
 
   it.each(['system', 'larger', 'largest'] as const)(
@@ -610,32 +346,6 @@ describe('loadEdition', () => {
     ).toThrow(InvalidEditionConfigError);
   });
 
-  it('refuses an Edition without the questionnaire Feature Switch', () => {
-    expect(() => loadEdition({ ...validConfig, ...withoutQuestionnaireSwitch() })).toThrow(
-      'featureSwitches.questionnaire',
-    );
-  });
-
-  it.each(['gameRoundMascot', 'gameEndToFeed', 'gameModeToast'] as const)(
-    'refuses an Edition without the %s Feature Switch (spec #1880)',
-    (feature) => {
-      const switches = Object.fromEntries(
-        Object.entries(validConfig.featureSwitches).filter(([name]) => name !== feature),
-      );
-      expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
-        `featureSwitches.${feature}`,
-      );
-    },
-  );
-
-  it('refuses an Edition without the levels Feature Switch', () => {
-    const { levels, ...switches } = validConfig.featureSwitches;
-    expect(levels).toBe('on');
-    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
-      InvalidEditionConfigError,
-    );
-  });
-
   it('reports the Badges the Edition chooses, their names and conditions, in order (ADR 0066)', () => {
     expect(loadEdition(validConfig).badges).toEqual(validConfig.badges);
   });
@@ -745,22 +455,6 @@ describe('loadEdition', () => {
     );
   });
 
-  it('refuses an Edition without the profile Feature Switch', () => {
-    const { profile, ...switches } = validConfig.featureSwitches;
-    expect(profile).toBe('on');
-    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
-      InvalidEditionConfigError,
-    );
-  });
-
-  it('refuses an Edition without the badges Feature Switch', () => {
-    const { badges, ...switches } = validConfig.featureSwitches;
-    expect(badges).toBe('on');
-    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
-      InvalidEditionConfigError,
-    );
-  });
-
   it('reports the Mascot line of each moment', () => {
     expect(loadEdition(validConfig).mascot).toEqual(validConfig.mascot);
   });
@@ -774,22 +468,6 @@ describe('loadEdition', () => {
       InvalidEditionConfigError,
     );
     expect(() => loadEdition({ ...validConfig, mascot: { ...mascot, gameRight: '' } })).toThrow(
-      InvalidEditionConfigError,
-    );
-  });
-
-  it('refuses an Edition without the mascot Feature Switch', () => {
-    const { mascot, ...switches } = validConfig.featureSwitches;
-    expect(mascot).toBe('on');
-    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
-      InvalidEditionConfigError,
-    );
-  });
-
-  it('refuses an Edition without the «Менше руху» Feature Switch', () => {
-    const { reduceMotion, ...switches } = validConfig.featureSwitches;
-    expect(reduceMotion).toBe('on');
-    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
   });
@@ -985,186 +663,7 @@ describe('loadEdition', () => {
 
   const { languageTraits, userSettingDefaults } = validConfig;
 
-  const withoutSwitch = (name: keyof typeof validConfig.featureSwitches) => {
-    const { [name]: _removed, ...featureSwitches } = validConfig.featureSwitches;
-    return { featureSwitches };
-  };
-
   it.each([
-    ['a missing Feature Switch', withoutSwitch('game'), 'featureSwitches.game'],
-    ['a missing Account Feature Switch', withoutSwitch('account'), 'featureSwitches.account'],
-    [
-      'a missing Google sign-in Feature Switch',
-      withoutSwitch('googleSignIn'),
-      'featureSwitches.googleSignIn',
-    ],
-    [
-      'a missing Sign in with Apple Feature Switch',
-      withoutSwitch('signInWithApple'),
-      'featureSwitches.signInWithApple',
-    ],
-    ['a missing sync Feature Switch', withoutSwitch('sync'), 'featureSwitches.sync'],
-    [
-      'a missing content updates Feature Switch',
-      withoutSwitch('contentUpdates'),
-      'featureSwitches.contentUpdates',
-    ],
-    [
-      'a missing notifications Feature Switch',
-      withoutSwitch('notifications'),
-      'featureSwitches.notifications',
-    ],
-    ['a missing widget Feature Switch', withoutSwitch('widget'), 'featureSwitches.widget'],
-    [
-      'a missing categoryScreens Feature Switch',
-      withoutSwitch('categoryScreens'),
-      'featureSwitches.categoryScreens',
-    ],
-    [
-      "a missing Category's Feed Feature Switch",
-      withoutSwitch('categoryFeed'),
-      'featureSwitches.categoryFeed',
-    ],
-    [
-      "a missing Curated Collection's Feed Feature Switch",
-      withoutSwitch('curatedCollectionFeed'),
-      'featureSwitches.curatedCollectionFeed',
-    ],
-    [
-      'a missing correctionCategoryScreens Feature Switch',
-      withoutSwitch('correctionCategoryScreens'),
-      'featureSwitches.correctionCategoryScreens',
-    ],
-    [
-      'a missing collectionLinkCopy Feature Switch',
-      withoutSwitch('collectionLinkCopy'),
-      'featureSwitches.collectionLinkCopy',
-    ],
-    ['a missing dueQuiz Feature Switch', withoutSwitch('dueQuiz'), 'featureSwitches.dueQuiz'],
-    [
-      'a missing profileConfirmedByRarity Feature Switch',
-      withoutSwitch('profileConfirmedByRarity'),
-      'featureSwitches.profileConfirmedByRarity',
-    ],
-    [
-      'a missing profileGameBest Feature Switch',
-      withoutSwitch('profileGameBest'),
-      'featureSwitches.profileGameBest',
-    ],
-    [
-      'a missing Dashboard wordmark Feature Switch',
-      withoutSwitch('dashboardWordmark'),
-      'featureSwitches.dashboardWordmark',
-    ],
-    [
-      'a missing daily splash Feature Switch',
-      withoutSwitch('dailySplash'),
-      'featureSwitches.dailySplash',
-    ],
-    [
-      "a missing hero's sparks Feature Switch",
-      withoutSwitch('heroSparks'),
-      'featureSwitches.heroSparks',
-    ],
-    ['a missing Feed tab Feature Switch', withoutSwitch('feedTab'), 'featureSwitches.feedTab'],
-    [
-      'a missing Search button Feature Switch',
-      withoutSwitch('searchButton'),
-      'featureSwitches.searchButton',
-    ],
-    [
-      'a missing gestures hint demo Feature Switch',
-      withoutSwitch('gesturesHintDemo'),
-      'featureSwitches.gesturesHintDemo',
-    ],
-    [
-      'a missing Share Cards Feature Switch',
-      withoutSwitch('shareCards'),
-      'featureSwitches.shareCards',
-    ],
-    [
-      'a missing Pronunciation Feature Switch',
-      withoutSwitch('pronunciation'),
-      'featureSwitches.pronunciation',
-    ],
-    [
-      'a missing Word of the Day Feature Switch',
-      withoutSwitch('wordOfTheDay'),
-      'featureSwitches.wordOfTheDay',
-    ],
-    [
-      'a missing statistics Feature Switch',
-      withoutSwitch('statistics'),
-      'featureSwitches.statistics',
-    ],
-    ['a missing knowledge Feature Switch', withoutSwitch('knowledge'), 'featureSwitches.knowledge'],
-    [
-      'a missing self-check Feature Switch',
-      withoutSwitch('selfCheck'),
-      'featureSwitches.selfCheck',
-    ],
-    [
-      'a missing Rarity Range Feature Switch',
-      withoutSwitch('rarityCeiling'),
-      'featureSwitches.rarityCeiling',
-    ],
-    [
-      'a missing Game Review Feature Switch',
-      withoutSwitch('gameReview'),
-      'featureSwitches.gameReview',
-    ],
-    [
-      'a missing Synonym Rows Feature Switch',
-      withoutSwitch('synonymRows'),
-      'featureSwitches.synonymRows',
-    ],
-    ['a missing Tips Feature Switch', withoutSwitch('tips'), 'featureSwitches.tips'],
-    [
-      'a missing Seasonal Decor Feature Switch',
-      withoutSwitch('seasonalDecor'),
-      'featureSwitches.seasonalDecor',
-    ],
-    [
-      'a missing falling Stress Feature Switch',
-      withoutSwitch('stressAnimation'),
-      'featureSwitches.stressAnimation',
-    ],
-    [
-      'a missing Illustrations Feature Switch',
-      withoutSwitch('illustrations'),
-      'featureSwitches.illustrations',
-    ],
-    [
-      'a missing Mistake Reports Feature Switch',
-      withoutSwitch('mistakeReports'),
-      'featureSwitches.mistakeReports',
-    ],
-    [
-      'a missing Community Counters Feature Switch',
-      withoutSwitch('communityCounters'),
-      'featureSwitches.communityCounters',
-    ],
-    [
-      'a missing Community Word Feature Switch',
-      withoutSwitch('communityWord'),
-      'featureSwitches.communityWord',
-    ],
-    [
-      'a missing calligraphic Lemma Feature Switch',
-      withoutSwitch('calligraphy'),
-      'featureSwitches.calligraphy',
-    ],
-    ['a missing Spotlight Feature Switch', withoutSwitch('spotlight'), 'featureSwitches.spotlight'],
-    [
-      'a missing App Intents Feature Switch',
-      withoutSwitch('appIntents'),
-      'featureSwitches.appIntents',
-    ],
-    [
-      'a missing Collection Links Feature Switch',
-      withoutSwitch('collectionLinks'),
-      'featureSwitches.collectionLinks',
-    ],
     [
       'an unknown Feature Switch',
       { featureSwitches: { ...validConfig.featureSwitches, share: 'on' } },
@@ -1534,84 +1033,60 @@ describe('loadEdition', () => {
     expect(load).toThrow(InvalidEditionConfigError);
     expect(load).toThrow(`\n${field}: `);
   });
-
-  it.each([...gamePartSwitches, ...learningSwitches])(
-    'rejects a missing %s Feature Switch, naming the field',
-    (feature) => {
-      const load = () => loadEdition({ ...validConfig, ...withoutSwitch(feature) });
-
-      expect(load).toThrow(InvalidEditionConfigError);
-      expect(load).toThrow(`\nfeatureSwitches.${feature}: `);
-    },
-  );
 });
 
-/** Each Feature Switch that depends on others, with the switches it needs on. */
-const dependentSwitches = [
-  ['streakBreak', ['xpLog']],
-  ['badges', ['xpLog']],
-  ['levelLadder', ['xpLog']],
-  ['streakFreezeCard', ['xpLog']],
-  ['breakCard', ['xpLog']],
-  ['calendarDayLines', ['xpLog']],
-  ['badgeSheet', ['xpLog', 'badges']],
-  ['profile', ['xpLog']],
-  ['profileConfirmedByRarity', ['profile', 'xpLog', 'confirmedEntries']],
-  ['profileGameBest', ['profile', 'xpLog', 'game']],
-  ['dailyGoal', ['xpLog']],
-  ['seenWordXp', ['xpLog', 'dailyGoal']],
-  ['progressShareCards', ['shareCards', 'xpLog']],
-  ['crosswordHint', ['dailyCrossword', 'game']],
-  ['crosswordSolveTime', ['dailyCrossword', 'game']],
-  ['crosswordSolvedScreen', ['dailyCrossword', 'game']],
-  ['crosswordBadgeStamp', ['dailyCrossword', 'badges', 'xpLog', 'game']],
-  // The board «slogo game last» parts of a Game (spec #1880).
-  ['gameRoundMascot', ['game']],
-  ['gameEndToFeed', ['game']],
-  ['gameModeToast', ['game']],
-  ['quickQuestion', ['game']],
-  ['quickQuestionWordMeaning', ['quickQuestion', 'game']],
-  ['playStep', ['game']],
-  ['rarityTest', ['rarityCeiling']],
-  ['previousWords', ['wordOfTheDayArchive']],
-  ['correctionTypes', ['corrections']],
-  ['dueQuiz', ['knowledge']],
-  ['collectionLinkCopy', ['collectionLinks']],
-  ['gesturesHintDemo', ['knowledge']],
-  ['gesturesHintAgain', ['knowledge']],
-  ['moodEffect', ['mood']],
-  ['searchButton', ['search']],
-  ['narratorVoice', ['pronunciation']],
-  ['correctionCategoryScreens', ['corrections']],
-  ['correctionTypeGrid', ['correctionCategoryScreens', 'corrections']],
-  ['categoryFeed', ['categoryScreens']],
-  ['curatedCollectionFeed', ['curatedCollections']],
-  ['gameSurvival', ['corrections', 'game']],
-  ['gameAnglicism', ['corrections', 'game']],
-  ['gameTypeWord', ['corrections', 'game']],
-  ['gameCorrection', ['corrections', 'game']],
-  ['gameIdiomMeaning', ['idioms', 'game']],
-  ['gameBuildIdiom', ['idioms', 'game']],
-  ['communityWord', ['communityCounters']],
-  ['sync', ['account']],
-  ['notificationExplainer', ['notifications']],
-  ['levels', ['xpLog']],
-  ['streakFreezes', ['xpLog']],
-] as const;
+/** Every Feature Switch of the catalogue (ADR 0196). */
+const FEATURES = FeatureSwitchesSchema.keyof().options;
 
-describe('the Feature Switches a feature depends on', () => {
-  it.each(dependentSwitches)('turn %s off while any of %j is off', (feature, needs) => {
-    expect(loadEdition(validConfig).isFeatureEnabled(feature)).toBe(true);
-    for (const need of needs) {
-      const edition = loadEdition({
-        ...validConfig,
-        featureSwitches: { ...validConfig.featureSwitches, [need]: 'off' },
-      });
+/** Whether a feature stands on another, directly or through a switch between them. */
+const standsOn = (feature: FeatureSwitch, needed: FeatureSwitch): boolean =>
+  (DEPENDS_ON[feature] ?? []).some(
+    (dependency) => dependency === needed || standsOn(dependency, needed),
+  );
 
-      expect(edition.isFeatureEnabled(feature)).toBe(false);
+describe('every Feature Switch of the catalogue', () => {
+  it('is in effect while on, and not while off or unavailable', () => {
+    const on = loadEdition(validConfig);
+    for (const feature of FEATURES) {
+      expect(on.isFeatureEnabled(feature)).toBe(true);
+      for (const state of ['off', 'unavailable'] as const) {
+        const edition = loadEdition({
+          ...validConfig,
+          featureSwitches: featureSwitchStates({ [feature]: state }),
+        });
+        expect(edition.isFeatureEnabled(feature)).toBe(false);
+      }
     }
   });
 
+  it('is refused when the Edition leaves it out, naming the field', () => {
+    for (const feature of FEATURES) {
+      const featureSwitches = Object.fromEntries(
+        Object.entries(validConfig.featureSwitches).filter(([name]) => name !== feature),
+      );
+      const load = () => loadEdition({ ...validConfig, featureSwitches });
+
+      expect(load).toThrow(InvalidEditionConfigError);
+      expect(load).toThrow(`\nfeatureSwitches.${feature}: `);
+    }
+  });
+
+  it('turns off with any switch it stands on, and stays on while any other is off', () => {
+    for (const off of FEATURES) {
+      const edition = loadEdition({
+        ...validConfig,
+        featureSwitches: featureSwitchStates({ [off]: 'off' }),
+      });
+      for (const feature of FEATURES) {
+        expect(edition.isFeatureEnabled(feature), `${feature} while ${off} is off`).toBe(
+          feature !== off && !standsOn(feature, off),
+        );
+      }
+    }
+  });
+});
+
+describe('the Feature Switches a feature depends on', () => {
   it('keep a feature on while only a feature that depends on it is off', () => {
     const edition = loadEdition({
       ...validConfig,
