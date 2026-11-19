@@ -410,3 +410,12 @@ describe('the Badges screen', () => {
     expect(within(words).queryByTestId('badge-win-words-mark-checker')).toBeNull();
   });
 });
+
+describe('the Badges screen › its header', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await renderScreen();
+
+    expect(screen.getByTestId('badges-back')).toBeOnTheScreen();
+    expect(within(screen.getByTestId('badges-scroll')).queryByTestId('badges-back')).toBeNull();
+  });
+});
