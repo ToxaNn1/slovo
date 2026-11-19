@@ -5,7 +5,11 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
-const strings = testStrings({ dashboard: { mood: { question: 'How are you?', note: 'Mood' } } });
+const strings = testStrings({
+  dashboard: {
+    mood: { question: 'How are you?', note: 'Mood', unpickHint: 'Tap again to unpick.' },
+  },
+});
 
 function mood(id: string): Mood {
   return { id, name: id, emoji: '·', reply: `${id}!`, rarityBand: 'whole', shifts: {} };
@@ -91,6 +95,23 @@ describe('MoodCheckIn', () => {
     expect(onUnpick).not.toHaveBeenCalled();
   });
 
+  it('with an effect, hints the unpick on the chosen tile alone', async () => {
+    await show(['energetic', 'joyful', 'calm'], {
+      state: 'chosen',
+      mood: mood('joyful'),
+      effect: 'More idioms.',
+    });
+
+    expect(screen.getByTestId('dashboard-mood-joyful')).toHaveProp(
+      'accessibilityHint',
+      'Tap again to unpick.',
+    );
+    expect(screen.getByTestId('dashboard-mood-calm')).not.toHaveProp(
+      'accessibilityHint',
+      'Tap again to unpick.',
+    );
+  });
+
   it('without an effect, says no line and a tap on the chosen tile chooses it again', async () => {
     const { onChoose, onUnpick } = await show(['energetic', 'joyful', 'calm'], {
       state: 'chosen',
@@ -99,6 +120,10 @@ describe('MoodCheckIn', () => {
     });
 
     expect(screen.queryByTestId('dashboard-mood-effect')).toBeNull();
+    expect(screen.getByTestId('dashboard-mood-joyful')).not.toHaveProp(
+      'accessibilityHint',
+      'Tap again to unpick.',
+    );
     await fireEvent.press(screen.getByTestId('dashboard-mood-joyful'));
 
     expect(onChoose).toHaveBeenCalledWith('joyful');

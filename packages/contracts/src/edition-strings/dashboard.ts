@@ -30,6 +30,8 @@ export const DashboardStringsSchema = z.strictObject({
     question: TextSchema,
     /** The note at the end of the title, «Настрій дня». */
     note: TextSchema,
+    /** VoiceOver's hint on the chosen tile while a second tap unpicks it (ADR 0185), «Торкнися ще раз, щоб зняти настрій.». */
+    unpickHint: TextSchema,
   }),
   /** The block «Минулі Слова дня» under the Mood check-in: the Word of the Day archive's newest days before today. */
   previousWords: z.strictObject({

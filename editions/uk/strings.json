@@ -1484,7 +1484,8 @@
     "rarity": "Рідкість {rarity} з 5",
     "mood": {
       "question": "Як настрій?",
-      "note": "Настрій дня"
+      "note": "Настрій дня",
+      "unpickHint": "Торкнися ще раз, щоб зняти настрій."
     },
     "curatedCollectionsTitle": "SLOVO пропонує",
     "curatedCollectionsGridTitle": "Добірки",
