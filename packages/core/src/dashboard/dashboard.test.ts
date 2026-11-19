@@ -119,7 +119,7 @@ describe('The Dashboard', () => {
     expect(hero).toMatchObject({ partOfSpeech, gender, rarity });
     expect(told).toBeGreaterThan(0);
     expect(app.history.list.map(({ entryId }) => entryId)).toEqual([wordId]);
-    expect((await app.wordOfTheDayArchive.list()).map(({ row }) => row.entryId)).toEqual([wordId]);
+    expect(app.wordOfTheDayArchive.list.map(({ row }) => row.entryId)).toEqual([wordId]);
   });
 
   it('stays revealed after a reopen the same day, and is unrevealed the next day', async () => {

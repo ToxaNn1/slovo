@@ -1,11 +1,5 @@
 import { RARITIES } from '@slovo/contracts';
-import {
-  dateKeyOf,
-  READER_NAME_AT_MOST,
-  readerNameLength,
-  type Account,
-  type LevelState,
-} from '@slovo/core';
+import { READER_NAME_AT_MOST, readerNameLength, type Account, type LevelState } from '@slovo/core';
 import {
   ActiveDaysCalendar,
   IconButton,
@@ -29,7 +23,7 @@ import {
   useUndoToast,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useEffect, useReducer, useState } from 'react';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { profileScreen } from '@slovo/ui/tokens';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,7 +34,7 @@ import { edition, editionStrings } from '../edition/edition';
 import { bestText, gameModeStrings } from '../game/game-modes';
 import { type Opening, useSubscribed } from '../opening';
 import { ShareCardSheet } from '../share/share-card-sheet';
-import { useWordOfTheDayArchive } from '../saved/word-of-the-day-archive';
+import { useWordOfTheDayOn } from '../saved/word-of-the-day-archive';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { useBadgeOpening } from './badge-opening';
@@ -76,15 +70,12 @@ function ProfileBlocks() {
   const composition = useComposition();
   const xp = useSubscribed(composition.xpLog, ({ state }) => state);
   const streakBreak = useSubscribed(composition.streakBreak, ({ state }) => state);
+  // Progress makes a new state for each change it tells of, so each draws the calendar again.
   const progress = useSubscribed(composition.progress, ({ state }) => state);
   const confirmed = useSubscribed(composition.knowledge, ({ state }) => state.confirmed);
   const badges = useSubscribed(composition.badges, ({ state }) => state);
   const { onPress, opening } = useBadgeOpening();
   const modes = useSubscribed(composition.game, ({ state }) => state.modes);
-  // A change of the Active Days may leave every number as it was, so any change draws the calendar again.
-  const [, changed] = useReducer((version: number) => version + 1, 0);
-  useEffect(() => composition.progress.subscribe(changed), [composition.progress]);
-  const archive = useWordOfTheDayArchive();
   const account = useAccountInEffect();
   const shown = useShown();
   const { shareCard } = useShell();
@@ -114,7 +105,7 @@ function ProfileBlocks() {
   const weeks = composition.progress.calendar();
   const today = weeks.flat().find(({ state }) => state === 'today');
   /** The Lemma of today's Word of the Day, once the archive keeps it. */
-  const todayWord = archive?.find(({ date }) => dateKeyOf(date) === today?.date)?.row.title;
+  const todayWord = useWordOfTheDayOn(today?.date)?.row.title;
 
   return (
     <SafeAreaView

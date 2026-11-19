@@ -29,9 +29,6 @@ jest.mock('expo-router', () => ({
   }),
   Redirect: () => null,
   useIsFocused: () => true,
-  useFocusEffect: (effect: () => () => void) => {
-    jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]);
-  },
 }));
 
 const count = pluralCount(edition.locale);
