@@ -194,8 +194,18 @@ export async function openBadges({
       if (badge.earned && due.includes(badge.id)) earnedSubscribers.tell(badge);
   }
 
+  /**
+   * Checks once for every change told before the check starts: one change of
+   * the XP log comes both from the log and through the Active Days.
+   */
+  let waiting = false;
   const checkInTurn = () => {
-    inTurn(check).catch(() => undefined);
+    if (waiting) return;
+    waiting = true;
+    inTurn(() => {
+      waiting = false;
+      return check();
+    }).catch(() => undefined);
   };
   if (on) {
     xpLog.subscribe(checkInTurn);
