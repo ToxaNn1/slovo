@@ -31,6 +31,10 @@ export function HistoryList({ header }: { header: ListHeader }) {
         testID="history"
         data={rows}
         keyExtractor={(entry) => entry.entryId}
+        // History holds up to its cap of rows: draw about three screens around the
+        // visible one, a few rows a frame, in place of the default ten screens.
+        windowSize={7}
+        maxToRenderPerBatch={8}
         renderItem={({ item }) => (
           <EntryRow
             row={item.row}
