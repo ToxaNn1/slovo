@@ -215,6 +215,7 @@ async function renderScreen({
   await act(async () => {
     await Promise.resolve();
   });
+  return composition;
 }
 
 /** The Profile's blocks, as the reader meets them from the top. */
@@ -478,6 +479,36 @@ describe('the Profile', () => {
 
     const card = within(screen.getByTestId('share-preview')).getByTestId('share-card');
     expect(card).toHaveAccessibleName(/13 жовтня\. Новий рівень у SLOVO\. Рівень 1/);
+  });
+
+  it('reads the Active Days calendar again only when Progress changes, not at each redraw of the screen', async () => {
+    const composition = await renderScreen({ rounds: 50, shareCard: sendingShareCard });
+    const calendar = jest.spyOn(composition.progress, 'calendar');
+
+    // Opening the Level's Share Card redraws the Profile; Progress stays as it was.
+    await fireEvent.press(screen.getByRole('button', { name: strings.shareLevel }));
+    expect(screen.getByTestId('share-preview')).toBeOnTheScreen();
+
+    expect(calendar).not.toHaveBeenCalled();
+  });
+
+  it('draws today as an Active Day once 5 XP earned on the open Profile make it one', async () => {
+    const composition = await renderScreen();
+    const days = editionStrings.stats.calendar.days;
+    const today = { day: '13', month: editionStrings.dates.months[9] ?? '' };
+    const calendar = () => within(screen.getByTestId('stats-calendar'));
+    expect(calendar().getByLabelText(fill(days.today, today))).toBeOnTheScreen();
+
+    await act(async () => {
+      for (let round = 0; round < 5; round += 1) {
+        composition.xpLog
+          .award({ source: 'game-round', mode: 'guess-word', rarity: undefined })
+          .commit();
+      }
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(calendar().getByLabelText(fill(days.todayActive, today))).toBeOnTheScreen();
   });
 
   it('offers no share of the Level before the first one is reached', async () => {
