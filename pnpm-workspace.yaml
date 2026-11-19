@@ -17,6 +17,9 @@ allowBuilds:
 # Peers that pnpm installs on its own, pinned to the versions Expo SDK 58
 # expects (see expo/bundledNativeModules.json).
 overrides:
+  # wasm-runtime's peer would otherwise resolve to the 2.x beta, which breaks astro check
+  '@emnapi/runtime': 1.11.3
+  '@emnapi/core': 1.11.3
   '@react-native/metro-config': 0.88.1
   react-dom: 19.3.0
   # drizzle-orm's optional expo-sqlite peer: only the backend uses drizzle,
