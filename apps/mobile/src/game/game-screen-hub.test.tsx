@@ -124,6 +124,19 @@ describe('the Game screen', () => {
       expect(composition.game.state.current).toBeUndefined();
     });
 
+    it('names the reason on a tap of a mode the reader took out of their Mix, and starts nothing', async () => {
+      await open({ switchedOn: HUB, corrections: 15, outOfMix: ['correction'] });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-correction'));
+
+      expect(
+        screen.getByText('Виправлення вимкнено. Увімкни їх у Налаштуваннях, розділ «Мій Мікс».'),
+      ).toBeTruthy();
+      expect(screen.queryByText(/ще розминається/)).toBeNull();
+      expect(composition.game.state.current).toBeUndefined();
+    });
+
     it('shows the toast when a mode on offer turns out short of Entries as it starts, and starts nothing', async () => {
       await open({ switchedOn: HUB, corrections: 15, anglicisms: 15 });
       // The Entries went short since the offer was planned: the start makes no Game.

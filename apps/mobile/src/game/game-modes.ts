@@ -69,22 +69,31 @@ function recordText(best: OfferedBest | undefined, texts: GameStrings['hubRow'])
     : fill(texts.record, { n, total: String(best.of) });
 }
 
+/** The end of a refusal whose reason is the reader's own Mix, such as `corrections-out-of-mix`. */
+const OUT_OF_MIX = '-out-of-mix';
+
 /** The mode a toast sends the reader to while it can start. */
 const TOAST_MODE = 'stress';
 /** The mode the toast sends the reader to while «Наголос» itself cannot start. */
 const FALLBACK_TOAST_MODE = 'pairs';
 
 /**
- * The toast on a tap of a mode that can't start, such as «Пари» ще
- * розминається. Влучай поки в «Наголос»!: it names «Наголос» while it can
- * start; else, in its own words («Спробуй поки „Пари“!»), «Пари» while it can,
- * else the first mode on offer that can (still «Пари» when none can).
+ * The toast on a tap of a mode that can't start. When the reader took the
+ * mode's kind out of their Mix, it names that reason in the mode's own text
+ * («Виправлення вимкнено. …»). Otherwise it is «Пари» ще розминається.
+ * Влучай поки в «Наголос»!: it names «Наголос» while it can start; else, in
+ * its own words («Спробуй поки „Пари“!»), «Пари» while it can, else the first
+ * mode on offer that can (still «Пари» when none can).
  */
 export function gameModeToast(
   offer: GameModeOffer,
   offers: readonly GameModeOffer[],
   strings: GameStrings,
 ): string {
+  if ('refusal' in offer && offer.refusal.endsWith(OUT_OF_MIX)) {
+    const refusal = gameModeStrings(strings.modes, offer.modeId).refusals[offer.refusal];
+    if (refusal !== undefined) return refusal;
+  }
   const startable = offers.filter(({ canStart }) => canStart);
   const titleOf = (modeId: string) => gameModeStrings(strings.modes, modeId).title;
   const mode = titleOf(offer.modeId);
