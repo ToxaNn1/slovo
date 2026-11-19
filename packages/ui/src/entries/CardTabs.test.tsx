@@ -105,6 +105,21 @@ describe("an Entry card's tab bar (board XEntry2)", () => {
   });
 });
 
+describe("an Entry card's tab content", () => {
+  it('draws only the selected tab on opening, so a Feed swipe mounts one tab, and another on its first visit', async () => {
+    await renderTabs();
+
+    expect(screen.getByText('Essence content')).toBeOnTheScreen();
+    expect(screen.queryByText('Example content')).toBeNull();
+    expect(screen.queryByText('Word history content')).toBeNull();
+
+    await fireEvent.press(screen.getByTestId('word-tab-example'));
+    expect(screen.getByText('Example content')).toBeOnTheScreen();
+    expect(screen.queryByText('Essence content')).toBeNull();
+    expect(screen.queryByText('Word history content')).toBeNull();
+  });
+});
+
 /** Names the text size it is drawn at. */
 function DrawnAt() {
   const { size } = useWordTextSizes();
