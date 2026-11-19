@@ -42,7 +42,7 @@
     "dependency-cruiser": "^18.7.2",
     "istanbul-lib-coverage": "^3.2.2",
     "knip": "^6.45.1",
-    "oxlint": "~1.93.0",
+    "oxlint": "~1.94.0",
     "prettier": "^3.10.1",
     "railway": "3.17.0",
     "turbo": "^2.11.11",
