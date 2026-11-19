@@ -1,8 +1,9 @@
 import type { Cycle } from './cycle';
 import { createInTurn } from '../in-turn';
 import { todayKey, parseLocalDate, type LocalDate } from '../local-date';
-import type { Clock, UserStateChanges } from '../ports';
+import type { Clock } from '../ports';
 import { createReservedWords } from './reserved-words';
+import { staged, writeStaged, type StagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -103,11 +104,15 @@ export async function openWordOfTheDay({
     return record?.date === today ? record.dayBefore : record?.entryId;
   }
 
-  /** Makes `entryId` today's Word of the Day, with the `changes` in the same write. */
-  async function choose(entryId: string, today: string, changes: UserStateChanges = new Map()) {
+  /** Makes `entryId` today's Word of the Day, with the `also` piece in the same write. */
+  async function choose(entryId: string, today: string, also?: StagedPiece) {
     const chosen = { entryId, date: today, dayBefore: dayBeforeOf(today) };
-    await userState.write(new Map([...changes, ...wordOfTheDayRecord.change(chosen)]));
-    record = chosen;
+    await writeStaged(userState, [
+      also,
+      staged(wordOfTheDayRecord.change(chosen), () => {
+        record = chosen;
+      }),
+    ]);
   }
 
   /** The Word Reserved for this morning, if today takes it, kept as today's Word of the Day. */
@@ -151,8 +156,7 @@ export async function openWordOfTheDay({
           next === undefined && cycle.order().words.length > 0 ? await cycle.start() : undefined;
         if (started !== undefined) next = nextWordId(started.order.words, dayBefore, new Set());
         if (next === undefined) return undefined;
-        await choose(next, today, started?.changes);
-        started?.commit();
+        await choose(next, today, started);
         return { wordId: next, date, startedCycle: started !== undefined };
       }),
   };

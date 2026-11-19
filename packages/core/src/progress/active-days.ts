@@ -1,8 +1,9 @@
 import type { Analytics } from '../analytics/analytics';
 import { createInTurn, createSubscribers } from '../in-turn';
 import { dateKeyOf, localDateAfter, todayDate, todayKey } from '../local-date';
-import type { Clock, UserStateChanges } from '../ports';
+import type { Clock } from '../ports';
 import type { Edition } from '../edition/edition';
+import { staged, stagedTogether, writeStaged, type StagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import { deriveStreak, type DerivedStreak, type StreakState } from './streak';
@@ -12,17 +13,6 @@ const { activeDays: activeDayRecords, streakBrokenReported } = userStateRecords;
 
 /** Lets an Analytics event go; a failure is lost, since Analytics never stands in the reader's way. */
 const emit = (event: Promise<void>) => void event.catch(() => undefined);
-
-/**
- * The change the day change makes of today, for a caller to make in one write
- * with its own, and the step that makes it in memory once they are written
- * (ADR 0013).
- */
-export interface ActiveDayChange {
-  readonly changes: UserStateChanges;
-  /** Makes the change in memory. Call it once the changes are written. */
-  commit(): void;
-}
 
 /**
  * The Active Days, the local dates `YYYY-MM-DD` with at least 5 XP from
@@ -53,7 +43,7 @@ export interface ActiveDays {
    */
   recordToday(): Promise<void>;
   /** Today's change for another write; none once there is nothing to write. */
-  todayChange(): ActiveDayChange;
+  todayChange(): StagedPiece;
   /**
    * Calls `listener` after each change of the days, with what it came from:
    * the XP log's change, or `other` for today's own. Returns the call that stops it.
@@ -105,21 +95,18 @@ export async function openActiveDays({
   }
   xpLog.subscribe(tell);
 
-  function todayChange(): ActiveDayChange {
+  function todayChange(): StagedPiece {
     const today = todayKey(clock);
     const record = !xpOn && !recorded.has(today);
     const { toFreeze, broken, freezesHeld } = derive();
     const freeze = xpLog.freeze(toFreeze);
     const report = broken !== undefined && broken.lastDay !== reported ? broken : undefined;
-    return {
-      changes: new Map([
-        ...(record ? activeDayRecords.record(today).change(true) : []),
-        ...freeze.changes,
-        ...(report === undefined ? [] : streakBrokenReported.change(report.lastDay)),
-      ]),
-      commit() {
-        if (record) recorded.add(today);
-        freeze.commit();
+    return stagedTogether([
+      record
+        ? staged(activeDayRecords.record(today).change(true), () => void recorded.add(today))
+        : undefined,
+      freeze,
+      staged(report === undefined ? new Map() : streakBrokenReported.change(report.lastDay), () => {
         // Each event carries the freezes held once its own freeze was used.
         toFreeze.forEach((_, used) => {
           emit(
@@ -133,19 +120,18 @@ export async function openActiveDays({
           emit(analytics.track('streakBroken', { streak: report.streak }));
         }
         tell();
-      },
-    };
+      }),
+    ]);
   }
 
   async function recordToday(): Promise<void> {
     const change = todayChange();
     try {
-      if (change.changes.size > 0) await userState.write(change.changes);
+      await writeStaged(userState, [change]);
     } catch (error) {
       subscribers.tell('other');
       throw error;
     }
-    change.commit();
   }
 
   return {

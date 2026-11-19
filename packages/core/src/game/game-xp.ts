@@ -1,6 +1,6 @@
 import type { Rarity } from '@slovo/contracts';
 
-import type { UserStateChanges } from '../ports';
+import type { StagedPiece } from '../user-state/staged-write';
 
 /**
  * A learning action that earns XP (ADR 0066): a Game Round answered right, a
@@ -39,12 +39,9 @@ export type XpAction =
  * An action that earns 0 XP, or any action with the switch off, appends
  * nothing: the changes are empty and `commit` changes nothing.
  */
-export interface XpAward {
-  readonly changes: UserStateChanges;
+export interface XpAward extends StagedPiece {
   /** How much the action earned, 0 when nothing is appended. */
   readonly amount: number;
-  /** Makes the change in memory. Call it once the changes are written. */
-  commit(): void;
 }
 
 /**
@@ -62,7 +59,7 @@ export interface GameXp {
  */
 export interface GameRecords extends GameXp {
   /** The record a Round answered wrong in `mode` appends, for the write of the answer. */
-  answeredWrong(mode: string): Omit<XpAward, 'amount'>;
+  answeredWrong(mode: string): StagedPiece;
   /** The latest reset marker of a Progress reset: each Game Mode's Best result counts the Games after it (ADR 0133). */
   readonly resetMarker: { readonly id: string } | undefined;
   /** Tells the listener the log changed, a Progress reset included. */

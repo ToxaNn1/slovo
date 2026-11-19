@@ -1,6 +1,7 @@
 import type { AskableEntry, Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
 import type { Random } from '../ports';
+import { writeStaged } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { shuffled } from '../shuffled';
 import type { GameEdition, GameMode, RoundContent } from './game-mode';
@@ -137,9 +138,7 @@ export function createQuickQuestion({
   async function answer(content: QuickQuestionContent, option: number): Promise<boolean> {
     const right = option === content.round.correct;
     if (right) {
-      const award = xp.award({ source: 'quick-question' });
-      if (award.changes.size > 0) await userState.write(award.changes);
-      award.commit();
+      await writeStaged(userState, [xp.award({ source: 'quick-question' })]);
       await knowledge.confirm(content.entry.id);
     } else await knowledge.answer(content.entry.id, 'unknown');
     await answered?.(content, right);

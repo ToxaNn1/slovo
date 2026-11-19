@@ -13,8 +13,9 @@ import {
   type NotificationScheduling,
   type PlanEdition,
 } from './notification-plan';
-import type { Clock, NotificationPermission, Random, UserStateChanges } from '../ports';
+import type { Clock, NotificationPermission, Random } from '../ports';
 import type { Subject } from '../subject';
+import { staged, writeStaged, type StagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
@@ -217,17 +218,18 @@ export async function openNotifications({
   }
 
   /**
-   * Writes the times, an empty list included, with the `also` records, then
+   * Writes the times, an empty list included, with the `also` piece, then
    * makes the change in memory and plans again.
    */
-  async function writeTimes(
-    times: readonly string[],
-    also: UserStateChanges = new Map(),
-  ): Promise<void> {
+  async function writeTimes(times: readonly string[], also?: StagedPiece): Promise<void> {
     const next = stateOf(times, state.sound, state.permission);
-    await userState.write(new Map([...timesRecord.change([...next.times]), ...also]));
-    state = next;
-    subscribers.tell();
+    await writeStaged(userState, [
+      staged(timesRecord.change([...next.times]), () => {
+        state = next;
+        subscribers.tell();
+      }),
+      also,
+    ]);
     await plan();
   }
 
@@ -252,7 +254,7 @@ export async function openNotifications({
     if (time !== undefined) TimeOfDaySchema.parse(time);
     await writeTimes(
       time === undefined ? [] : [time],
-      notificationAsk.change({ step: 'onboarding' }),
+      staged(notificationAsk.change({ step: 'onboarding' })),
     );
     // A device that fails to ask keeps the time and the reader going on.
     if (time !== undefined) await askPermission().catch(() => undefined);

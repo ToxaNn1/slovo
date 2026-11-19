@@ -3,12 +3,13 @@ import type { EntryKind } from '@slovo/contracts';
 import type { Analytics } from '../analytics/analytics';
 import type { AskableEntry, AskableKind, EligibleOfKind, Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
-import type { GameRecords, XpAward } from './game-xp';
+import type { GameRecords } from './game-xp';
 import type { History } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { LocalDate } from '../local-date';
-import type { Clock, Random, Schedule, UserStateChanges } from '../ports';
+import type { Clock, Random, Schedule } from '../ports';
 import type { Subject } from '../subject';
+import { staged, writeStaged, type StagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import type {
@@ -923,7 +924,7 @@ export async function openGame({
       changeCurrent(shown);
       moveOnLater(shown);
       if (roundXp !== undefined && roundXp.changes.size > 0)
-        await inTurn(() => writeAwards([roundXp]));
+        await inTurn(() => writeStaged(userState, [roundXp]));
       earned += rightXp?.amount ?? 0;
     } else await inTurn(() => finish(game, answered, roundXp, rightXp?.amount ?? 0));
     if (round === undefined) return;
@@ -941,16 +942,6 @@ export async function openGame({
     else await finish(game, after);
   }
 
-  /** Writes the XP the awards append, at once, then makes them in memory. */
-  async function writeAwards(
-    awards: readonly Omit<XpAward, 'amount'>[],
-    own: UserStateChanges = new Map(),
-  ) {
-    const changes = new Map([...own, ...awards.flatMap((award) => [...award.changes])]);
-    if (changes.size > 0) await userState.write(changes);
-    for (const award of awards) award.commit();
-  }
-
   /**
    * Ends the Game, its right answers the best result when they beat it, kept
    * in the user state in one write with the XP of the last Round, of the
@@ -961,7 +952,7 @@ export async function openGame({
   async function finish(
     game: PlayingGame,
     ended: EndedGame,
-    roundXp?: Omit<XpAward, 'amount'>,
+    roundXp?: StagedPiece,
     roundAmount = 0,
   ): Promise<void> {
     // The right answers are the Game's result, which its mode's Best result keeps.
@@ -980,10 +971,11 @@ export async function openGame({
       }),
       ...(bestXp ? [xp.award({ source: 'game-best' })] : []),
     ];
-    await writeAwards(
-      [...(roundXp === undefined ? [] : [roundXp]), ...awards],
-      beaten ? gameBest.record(bestIdOf(ended.modeId)).change(right) : new Map(),
-    );
+    await writeStaged(userState, [
+      beaten ? staged(gameBest.record(bestIdOf(ended.modeId)).change(right)) : undefined,
+      roundXp,
+      ...awards,
+    ]);
     const over: GameOver = {
       ...ended,
       end: endOf(ended, {
