@@ -111,7 +111,10 @@ const shell = () =>
 
 /** The app on the Feed, in the Theme `colorScheme`. */
 async function renderApp(colorScheme: ColorScheme) {
-  await renderInApp({ index: HomeScreen }, { shell: shell(), settings: { theme: colorScheme }, insets });
+  await renderInApp(
+    { index: HomeScreen },
+    { shell: shell(), settings: { theme: colorScheme }, insets },
+  );
   await settle();
   // The pager lays its pages out once it knows its height.
   await fireEvent(screen.getByTestId('feed'), 'layout', {

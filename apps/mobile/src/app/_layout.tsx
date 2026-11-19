@@ -11,7 +11,7 @@ import { deviceClock } from '@/device/device-clock';
 import { deviceFacts } from '@/device/device-facts';
 import { ForceUpdateGate } from '@/force-update/force-update';
 import { startCrashReports } from '@/diagnostics/crash-reports';
-import { AppProviders, ScreenProviders } from '@/shell/app-providers';
+import { AppProviders, ScreenProviders } from '@/app-providers';
 import { DecorInEffect } from '@/shell/decor-in-effect';
 import { InterfaceSoundsInEffect, soundEngine } from '@/sounds/interface-sounds';
 import { appShell } from '@/shell/app-shell';

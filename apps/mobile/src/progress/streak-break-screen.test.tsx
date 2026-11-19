@@ -20,7 +20,9 @@ async function renderScreen(seed: Parameters<typeof seedUserState>[0] = {}) {
     }),
   );
   const composition = await testShell({ userState }).composition.opened();
-  await renderApp(<StreakBreakScreen />, { shell: testShell({ composition: opened(composition) }) });
+  await renderApp(<StreakBreakScreen />, {
+    shell: testShell({ composition: opened(composition) }),
+  });
   return composition;
 }
 
