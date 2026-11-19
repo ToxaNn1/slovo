@@ -13,15 +13,12 @@ import {
   type FakeBackend,
   seedUserState,
 } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionLinkScreen from '../app/c/[linkId]';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 
 const { config } = activeEditionFiles;
 
@@ -35,6 +32,7 @@ let mockLinkId: string;
 const mockPushed: string[] = [];
 
 jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
   useLocalSearchParams: () => ({ linkId: mockLinkId }),
   useRouter: () => ({
     back: () => undefined,
@@ -74,11 +72,6 @@ const PACK = ['w_one', 'w_two', 'w_three', 'w_four', 'w_five', 'w_six'];
 
 /** An id no link was made with. */
 const UNKNOWN_ID = 'Ab3dE5gH9k';
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 let api: FakeBackend;
 
@@ -122,20 +115,12 @@ async function settle() {
 }
 
 async function renderSheet() {
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider
-        shell={testShell({
-          composition: opened(composition),
-          remoteSwitches: switchedTo(edition),
-        })}
-      >
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <CollectionLinkScreen />
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<CollectionLinkScreen />, {
+    shell: testShell({
+      composition: opened(composition),
+      remoteSwitches: switchedTo(edition),
+    }),
+  });
   await settle();
 }
 
