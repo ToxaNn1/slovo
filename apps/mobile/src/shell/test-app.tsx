@@ -1,6 +1,12 @@
 import { renderHook } from '@testing-library/react-native';
 import { Slot, type NativeIntent } from 'expo-router';
-import { Fragment, isValidElement, type ComponentType, type ReactElement, type ReactNode } from 'react';
+import {
+  Fragment,
+  isValidElement,
+  type ComponentType,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, type EdgeInsets } from 'react-native-safe-area-context';
 
@@ -9,7 +15,7 @@ import { coreDecor, createSettings, type Decor, type UserSettings } from '@slovo
 import { edition } from '../edition/edition';
 import { Opened } from '../opened';
 import type { Shell } from '../shell-value';
-import { AppProviders, ScreenProviders } from './app-providers';
+import { AppProviders, ScreenProviders } from '../app-providers';
 import { renderInGestureRoot, renderRoutes } from './test-render';
 import { opened, testShell } from './test-support';
 

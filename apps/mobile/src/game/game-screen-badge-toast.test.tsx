@@ -2,12 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import { systemSchedule } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 // First, so its mocks stand before the screen loads.
-import {
-  composition,
-  editionInEffect,
-  open,
-  resetGameScreen,
-} from './test-support';
+import { composition, editionInEffect, open, resetGameScreen } from './test-support';
 
 import GameScreen from '../app/game';
 import { CELEBRATION_MS, MascotCelebrations } from '../mascot/mascot';

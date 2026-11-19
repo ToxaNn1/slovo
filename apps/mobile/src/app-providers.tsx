@@ -12,22 +12,22 @@ import {
 import { DarkTheme, DefaultTheme, ThemeProvider, usePathname } from 'expo-router';
 import { useMemo, type ReactNode } from 'react';
 
-import { edition, editionStrings, editionTokens } from '../edition/edition';
-import { LemmaPronunciation } from '../entries/pronunciation-button';
-import { hapticEngine } from '../game/haptics';
-import { useWordIllustration } from '../media/shell-media';
-import { Opened } from '../opened';
-import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings/settings';
-import { ShellProvider, useShell, type Shell } from '../shell-value';
-import { useShown } from '../shown-in-effect';
+import { edition, editionStrings, editionTokens } from './edition/edition';
+import { LemmaPronunciation } from './entries/pronunciation-button';
+import { hapticEngine } from './game/haptics';
+import { useWordIllustration } from './media/shell-media';
+import { Opened } from './opened';
+import { SettingsProvider, useColorSchemeInEffect, useSettings } from './settings/settings';
+import { ShellProvider, useShell, type Shell } from './shell-value';
+import { useShown } from './shown-in-effect';
 
 // The provider tree of the app, which `app/_layout.tsx` draws the tabs under
-// and the screen tests draw a screen under (`test-app.tsx`), so the two never drift.
+// and the screen tests draw a screen under (`shell/test-app.tsx`), so the two never drift.
 
 /**
  * The providers of the whole app around `children`: the Shell, the settings,
  * the Edition, its Decor, the tokens, the navigation theme and the haptics in
- * effect. The screen tests draw under the same tree (`test-app.tsx`), with a
+ * effect. The screen tests draw under the same tree (`shell/test-app.tsx`), with a
  * `decor` of their own.
  */
 export function AppProviders({
@@ -97,7 +97,7 @@ function ThemedProviders({ children }: { children: ReactNode }) {
 /**
  * What every screen draws under inside `AppProviders`: the open Language Pack
  * and composition, the text size, Reduce Motion, the route on screen and the
- * offline plate. The screen tests draw under the same gates (`test-app.tsx`).
+ * offline plate. The screen tests draw under the same gates (`shell/test-app.tsx`).
  */
 export function ScreenProviders({ children }: { children: ReactNode }) {
   const { languagePack, composition } = useShell();
