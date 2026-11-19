@@ -1,5 +1,5 @@
 import { logError } from '../diagnostics/log';
-import type { RecordingSource } from '../media/recording-source';
+import type { RecordingLookup } from '../media/recording-source';
 import type { RecordingPlayer } from '../sounds/recording-player';
 
 /** A voice the device can speak with, as `expo-speech` lists it. */
@@ -34,11 +34,18 @@ export interface PronouncedWord {
 }
 
 /**
- * What a Pronunciation button shows for its Word: nothing special, the Word
- * being read, or the message that the Word has no Recording and the device no
- * voice for the Edition's language.
+ * Why a tap read nothing, which the button's message says: the Word has no
+ * Recording and the device no voice for the Edition's language; or, with
+ * `recordedOnly` on, the Word has Recordings but none in the chosen Narrator
+ * Voice, none at all, or one not cached while offline (ADR 0195).
  */
-export type PronunciationState = 'idle' | 'playing' | 'no-voice';
+export type PronunciationMessageReason = 'no-voice' | 'other-voices' | 'no-recording' | 'offline';
+
+/**
+ * What a Pronunciation button shows for its Word: nothing special, the Word
+ * being read, or the message why a tap read nothing.
+ */
+export type PronunciationState = 'idle' | 'playing' | PronunciationMessageReason;
 
 export interface Pronunciation {
   /** Reads the Word, or stops it when it is already being read. */
@@ -47,7 +54,7 @@ export interface Pronunciation {
   stateOf(id: string): PronunciationState;
   /** Stops whatever is being read. */
   stop(): Promise<void>;
-  /** Hides the missing-voice message. */
+  /** Hides the message. */
   dismiss(): void;
   /** Calls the listener after every change of state; returns how to stop. */
   subscribe(listener: () => void): () => void;
@@ -61,7 +68,9 @@ const STRESS_MARK = /́/g;
  * Narrator Voice, or by the device's voice for the Edition's language when it
  * has none. One Word is read at a time, and nothing with «Звуки» off. When
  * the Word has no Recording and the device no voice for the language, the
- * tapped Word shows the missing-voice message instead.
+ * tapped Word shows the missing-voice message instead. With `recordedOnly`
+ * on the device voice never reads: a Word without a Recording to play shows
+ * why (ADR 0195).
  */
 export function createPronunciation({
   speech,
@@ -69,15 +78,18 @@ export function createPronunciation({
   player,
   recordingOf,
   soundsOn,
+  recordedOnly,
 }: {
   speech: Speech;
   /** The Edition's locale (BCP 47), e.g. "uk-UA". */
   locale: string;
   player: RecordingPlayer;
-  /** The Recording of the Word with this id in the Narrator Voice, if it has one; it may download first. */
-  recordingOf: (id: string) => Promise<RecordingSource | undefined>;
+  /** The Recording of the Word with this id in the Narrator Voice, or why it has none; it may download first. */
+  recordingOf: (id: string) => Promise<RecordingLookup>;
   /** Whether «Звуки» are on now. */
   soundsOn: () => boolean;
+  /** Whether `recordedOnly` is in effect now. */
+  recordedOnly: () => boolean;
 }): Pronunciation {
   const listeners = new Set<() => void>();
   let state: { readonly id: string; readonly state: PronunciationState } | undefined;
@@ -119,22 +131,23 @@ export function createPronunciation({
         return;
       }
 
-      let recording: RecordingSource | undefined;
+      let recording: RecordingLookup;
       try {
         recording = await recordingOf(id);
       } catch (error) {
-        // The device voice reads a Word whose Recording cannot be found.
         logError('Could not find the Recording for Pronunciation', error);
+        recording = { kind: 'missing', reason: 'no-recording' };
       }
       // A later tap came while the Recording was found; it reads instead.
       if (latestTap !== tap) return;
-      if (recording !== undefined) {
+      if (recording.kind === 'found' || recordedOnly()) {
         if (state?.state === 'playing') {
           await silence();
           // A later tap came while the voice stopped; it reads instead.
           if (latestTap !== tap) return;
         }
-        player.play(recording, start(id));
+        if (recording.kind === 'found') player.play(recording.source, start(id));
+        else set({ id, state: recording.reason });
         return;
       }
 
@@ -182,7 +195,7 @@ export function createPronunciation({
     stop: silence,
 
     dismiss() {
-      if (state?.state === 'no-voice') set(undefined);
+      if (state !== undefined && state.state !== 'playing') set(undefined);
     },
 
     subscribe(listener) {

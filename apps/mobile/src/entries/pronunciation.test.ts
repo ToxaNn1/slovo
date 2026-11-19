@@ -6,7 +6,7 @@ import {
   type SpeechVoice,
   type SpokenLemmaOptions,
 } from './pronunciation';
-import type { RecordingSource } from '../media/recording-source';
+import type { RecordingLookup, RecordingSource } from '../media/recording-source';
 import type { RecordingPlayer } from '../sounds/recording-player';
 
 interface Utterance {
@@ -106,11 +106,18 @@ function fakePlayer() {
   };
 }
 
-/** No Word has a Recording, and «Звуки» are on: only the device voice reads. */
+/** The lookup of a Word with no Recording at all. */
+const NO_RECORDING: RecordingLookup = { kind: 'missing', reason: 'no-recording' };
+
+/** The lookup of a Word whose Recording is this source. */
+const found = (source: RecordingSource): RecordingLookup => ({ kind: 'found', source });
+
+/** No Word has a Recording, «Звуки» are on and `recordedOnly` off: only the device voice reads. */
 const deviceVoiceOnly = {
   player: fakePlayer().player,
-  recordingOf: () => Promise.resolve(undefined),
+  recordingOf: () => Promise.resolve(NO_RECORDING),
   soundsOn: () => true,
+  recordedOnly: () => false,
 };
 
 const VEREMIIA = 'веремі́я';
@@ -408,14 +415,22 @@ describe('Pronunciation', () => {
       w_0004: { uri: 'file:///media/w_0004.mp3' },
     };
 
+    /** The lookup of each Word: its Recording, else none at all. */
+    const lookupOf = (id: string): RecordingLookup => {
+      const source = recordings[id];
+      return source === undefined ? NO_RECORDING : found(source);
+    };
+
     function setUp({
       voices = [ukrainian],
       soundsOn = true,
-      recordingOf = (id: string) => Promise.resolve(recordings[id]),
+      recordedOnly = false,
+      recordingOf = (id: string) => Promise.resolve(lookupOf(id)),
     }: {
       voices?: SpeechVoice[];
       soundsOn?: boolean;
-      recordingOf?: (id: string) => Promise<RecordingSource | undefined>;
+      recordedOnly?: boolean;
+      recordingOf?: (id: string) => Promise<RecordingLookup>;
     } = {}) {
       const fake = fakeSpeech(voices);
       const player = fakePlayer();
@@ -426,6 +441,7 @@ describe('Pronunciation', () => {
         player: player.player,
         recordingOf,
         soundsOn: () => sounds,
+        recordedOnly: () => recordedOnly,
       });
       return {
         fake,
@@ -515,19 +531,19 @@ describe('Pronunciation', () => {
     });
 
     it('plays only the last Word tapped while the Recording of the one before downloads', async () => {
-      let download: (source: RecordingSource) => void = () => undefined;
+      let download: (lookup: RecordingLookup) => void = () => undefined;
       const { player, pronunciation } = setUp({
         recordingOf: (id) =>
           id === 'w_0001'
             ? new Promise((resolve) => {
                 download = resolve;
               })
-            : Promise.resolve(recordings[id]),
+            : Promise.resolve(lookupOf(id)),
       });
 
       const first = pronunciation.toggle(VEREMIIA_WORD);
       await pronunciation.toggle(SHPARKYI_WORD);
-      download(11);
+      download(found(11));
       await first;
 
       expect(player.played).toEqual([12]);
@@ -560,6 +576,74 @@ describe('Pronunciation', () => {
       expect(player.played).toEqual([]);
       expect(fake.playing()).toBe('веремія');
       expect(pronunciation.stateOf('w_0001')).toBe('playing');
+    });
+
+    it.each(['other-voices', 'offline'] as const)(
+      'speaks a Word whose lookup is %s with the device voice while `recordedOnly` is off',
+      async (reason) => {
+        const { fake, pronunciation } = setUp({
+          recordingOf: () => Promise.resolve({ kind: 'missing', reason }),
+        });
+
+        await pronunciation.toggle(VEREMIIA_WORD);
+
+        expect(fake.playing()).toBe('веремія');
+        expect(pronunciation.stateOf('w_0001')).toBe('playing');
+      },
+    );
+
+    describe('with `recordedOnly` on (ADR 0195)', () => {
+      it.each(['other-voices', 'no-recording', 'offline'] as const)(
+        'never speaks a Word whose lookup is %s with the device voice, and shows why',
+        async (reason) => {
+          const { fake, player, pronunciation } = setUp({
+            recordedOnly: true,
+            recordingOf: () => Promise.resolve({ kind: 'missing', reason }),
+          });
+
+          await pronunciation.toggle(VEREMIIA_WORD);
+
+          expect(fake.spoken).toEqual([]);
+          expect(player.played).toEqual([]);
+          expect(pronunciation.stateOf('w_0001')).toBe(reason);
+        },
+      );
+
+      it('still plays a Word’s Recording', async () => {
+        const { player, pronunciation } = setUp({ recordedOnly: true });
+
+        await pronunciation.toggle(VEREMIIA_WORD);
+
+        expect(player.playing()).toBe(11);
+        expect(pronunciation.stateOf('w_0001')).toBe('playing');
+      });
+
+      it('shows a Word with no Recording at all when its Recording cannot be found', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        const { fake, pronunciation } = setUp({
+          recordedOnly: true,
+          recordingOf: () => Promise.reject(new Error('No media cache')),
+        });
+
+        await pronunciation.toggle(VEREMIIA_WORD);
+
+        expect(fake.spoken).toEqual([]);
+        expect(pronunciation.stateOf('w_0001')).toBe('no-recording');
+      });
+
+      it('stops what plays at a tap on a Word without a Recording, and hides the message when dismissed', async () => {
+        const { player, pronunciation } = setUp({ recordedOnly: true });
+
+        await pronunciation.toggle(VEREMIIA_WORD);
+        await pronunciation.toggle({ id: 'w_0003', lemma: 'загра́ва' });
+
+        expect(player.playing()).toBeUndefined();
+        expect(pronunciation.stateOf('w_0001')).toBe('idle');
+        expect(pronunciation.stateOf('w_0003')).toBe('no-recording');
+
+        pronunciation.dismiss();
+        expect(pronunciation.stateOf('w_0003')).toBe('idle');
+      });
     });
 
     it('stays silent with «Звуки» off, Recording or not', async () => {

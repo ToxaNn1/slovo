@@ -31,6 +31,7 @@ const validConfig = {
     shareCards: 'on',
     pronunciation: 'on',
     narratorVoice: 'on',
+    recordedOnly: 'on',
     wordOfTheDay: 'on',
     statistics: 'on',
     knowledge: 'on',

@@ -28,6 +28,7 @@
     "shareCards": "on",
     "pronunciation": "on",
     "narratorVoice": "on",
+    "recordedOnly": "off",
     "wordOfTheDay": "on",
     "statistics": "on",
     "knowledge": "on",

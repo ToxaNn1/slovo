@@ -164,7 +164,7 @@ export type {
   PackVersion,
   WordMedia,
 } from './ports';
-export { createMedia, PREFETCH_CARDS, type Media } from './media/media';
+export { createMedia, PREFETCH_CARDS, type Media, type RecordingMedia } from './media/media';
 export { type ProgressState } from './progress/progress';
 export { BREAK_DAYS_AT_MOST } from './progress/streak';
 export type { CrosswordSolve, XpLogState } from './progress/xp-log';

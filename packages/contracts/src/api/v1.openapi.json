@@ -8664,6 +8664,14 @@
                           ],
                           "type": "string"
                         },
+                        "recordedOnly": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "wordOfTheDay": {
                           "enum": [
                             "on",
@@ -9603,6 +9611,7 @@
                         "shareCards",
                         "pronunciation",
                         "narratorVoice",
+                        "recordedOnly",
                         "wordOfTheDay",
                         "statistics",
                         "knowledge",
@@ -10445,6 +10454,14 @@
                           ],
                           "type": "string"
                         },
+                        "recordedOnly": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "wordOfTheDay": {
                           "enum": [
                             "on",
@@ -11384,6 +11401,7 @@
                         "shareCards",
                         "pronunciation",
                         "narratorVoice",
+                        "recordedOnly",
                         "wordOfTheDay",
                         "statistics",
                         "knowledge",
@@ -12150,6 +12168,14 @@
                           ],
                           "type": "string"
                         },
+                        "recordedOnly": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "wordOfTheDay": {
                           "enum": [
                             "on",
@@ -13089,6 +13115,7 @@
                         "shareCards",
                         "pronunciation",
                         "narratorVoice",
+                        "recordedOnly",
                         "wordOfTheDay",
                         "statistics",
                         "knowledge",

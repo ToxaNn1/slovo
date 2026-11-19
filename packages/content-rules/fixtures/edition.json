@@ -96,6 +96,7 @@
     "mood": "on",
     "moodEffect": "on",
     "narratorVoice": "on",
+    "recordedOnly": "on",
     "notificationExplainer": "on",
     "notificationFarewell": "on",
     "notificationTimeStep": "on",
