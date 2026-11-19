@@ -805,6 +805,17 @@ export function adminProcedures(
         if (checked.reason === 'changed') throw errors.CHANGED({ data: { total: checked.total } });
         throw refusalOf(checked, errors);
       }),
+      addOtherVoices: content.addOtherVoices.handler(async ({ context, input, errors }) => {
+        const writer = await writerOf(context.headers, errors);
+        // Only an Admin user asks for the other voices; an Агент is refused (ADR 0195).
+        if (writer.kind !== 'admin-user') throw errors.FORBIDDEN();
+        const added = await contentWrites.addOtherVoices(writer.email, input);
+        if (added.ok) return { id: added.id };
+        if (added.reason === 'not-live' || added.reason === 'listed') {
+          throw errors.NOT_ADDABLE({ data: { reason: added.reason } });
+        }
+        throw refusalOf(added, errors);
+      }),
     },
     contentQueue: {
       batches: queue.batches.handler(async ({ context, input, errors }) => {

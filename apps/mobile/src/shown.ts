@@ -51,6 +51,8 @@ export interface Shown {
   readonly soundsSetting: boolean;
   /** The Settings row «Голос диктора» and its screen, where the reader chooses the Narrator Voice (ADR 0083). */
   readonly narratorVoiceSetting: boolean;
+  /** Recordings only: the device voice never reads a Word, and one without a Recording in the chosen voice shows a disabled sound button (ADR 0195). */
+  readonly recordedOnly: boolean;
   /** The Settings switch for «Сезонний декор» (ADR 0055). */
   readonly seasonalDecorSetting: boolean;
   /** The Settings switch «Менше руху», which joins the system's Reduce Motion. */
@@ -209,6 +211,7 @@ export function shownOf({
     selfCheckSetting: on('selfCheck'),
     soundsSetting: on('sounds'),
     narratorVoiceSetting: on('narratorVoice'),
+    recordedOnly: on('recordedOnly'),
     seasonalDecorSetting: on('seasonalDecor'),
     reduceMotionSetting: on('reduceMotion'),
     shareCountersSetting: on('communityCounters') || on('analytics'),

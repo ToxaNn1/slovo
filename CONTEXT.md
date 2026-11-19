@@ -485,7 +485,7 @@ One unseen Word fixed for the user's local calendar day; it is revealed on the D
 _Avoid_: Daily word
 
 **Pronunciation**:
-The Word read aloud by a recorded narrator voice; the device's voice when a Word has no recording (ADR 0083).
+The Word read aloud by a recorded narrator voice. Every live Word has a Recording in the default Narrator Voice, the others only on the owner's request; a Word without a Recording in the chosen voice shows a disabled sound button, and the device's voice reads only while `recordedOnly` is off (ADR 0195).
 _Avoid_: Audio, TTS
 
 **Narrator Voice**:

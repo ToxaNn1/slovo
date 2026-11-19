@@ -27,6 +27,7 @@ export function ConfirmDialog({
   refusalText,
   confirmLabel = 'Підтвердити',
   danger = false,
+  asksReason = true,
 }: {
   readonly title: string;
   /** What the write changes. */
@@ -40,6 +41,8 @@ export function ConfirmDialog({
   readonly confirmLabel?: string;
   /** Marks the write «небезпечна дія» and turns the confirm button red. */
   readonly danger?: boolean | undefined;
+  /** Whether the write takes a reason; one that takes none confirms with an empty one. */
+  readonly asksReason?: boolean;
 }) {
   const titleId = useId();
   const reasonId = useId();
@@ -53,6 +56,7 @@ export function ConfirmDialog({
     dialogRef.current?.showModal();
     reasonRef.current?.focus();
   }, []);
+  const missingReason = asksReason && reason.trim() === '';
 
   const confirm = () => {
     setBusy(true);
@@ -93,21 +97,25 @@ export function ConfirmDialog({
       </div>
       <div className="flex flex-col gap-3.5 px-6 py-4 text-[13px]">
         {children}
-        <label htmlFor={reasonId} className="flex flex-col gap-1.5">
-          <span className="text-[12.5px] text-muted-foreground after:content-['_*']">Причина</span>
-          <textarea
-            ref={reasonRef}
-            id={reasonId}
-            rows={2}
-            placeholder="Обов’язково: піде в Журнал дій"
-            className="resize-y rounded-xl border border-border bg-background px-3 py-2.5 text-[13.5px] placeholder:text-subtle"
-            maxLength={500}
-            value={reason}
-            onChange={(event) => {
-              setReason(event.target.value);
-            }}
-          />
-        </label>
+        {asksReason && (
+          <label htmlFor={reasonId} className="flex flex-col gap-1.5">
+            <span className="text-[12.5px] text-muted-foreground after:content-['_*']">
+              Причина
+            </span>
+            <textarea
+              ref={reasonRef}
+              id={reasonId}
+              rows={2}
+              placeholder="Обов’язково: піде в Журнал дій"
+              className="resize-y rounded-xl border border-border bg-background px-3 py-2.5 text-[13.5px] placeholder:text-subtle"
+              maxLength={500}
+              value={reason}
+              onChange={(event) => {
+                setReason(event.target.value);
+              }}
+            />
+          </label>
+        )}
         {error === undefined ? null : (
           <p role="alert" className="text-destructive">
             {error}
@@ -123,7 +131,7 @@ export function ConfirmDialog({
             'font-semibold',
             danger && 'bg-destructive text-white hover:bg-destructive/90',
           )}
-          disabled={busy || reason.trim() === ''}
+          disabled={busy || missingReason}
           onClick={confirm}
         >
           {confirmLabel}

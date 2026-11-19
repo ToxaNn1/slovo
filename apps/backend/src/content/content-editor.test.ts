@@ -111,6 +111,8 @@ describe('the content editor through an admin session', () => {
       categoryId: word.categoryId,
       retired: false,
       recordVersion: 1,
+      // The imported snapshot holds no Recordings: none of the four Narrator Voices.
+      recordings: { live: 0, of: 4, allVoices: false },
     });
     const card = await adminClient.admin.editionCard({ editionId: 'uk' });
     expect(card.id).toBe('uk');

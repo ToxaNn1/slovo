@@ -524,6 +524,23 @@ export const recordingStalls = pgTable('recording_stalls', {
   contentVersion: integer('content_version').notNull(),
 });
 
+/**
+ * The Edition's Words in all voices (ADR 0195): the Recordings job records
+ * these in every declared Narrator Voice, the others in the default one only.
+ * An Admin user adds a Word from the admin; the request stays, so a later
+ * change of its Lemma or Stress records it again in every voice. Kept by the
+ * backend, not content: no Patch carries it.
+ */
+export const wordsInAllVoices = pgTable(
+  'words_in_all_voices',
+  {
+    editionId: text('edition_id').notNull(),
+    wordId: text('word_id').notNull(),
+    addedAt: timestamp('added_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.wordId] })],
+);
+
 /** A Recording per Word, Narrator Voice and Recording Kind. */
 export const mediaRecordings = pgTable(
   'media_recordings',

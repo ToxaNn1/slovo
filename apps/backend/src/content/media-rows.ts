@@ -1,6 +1,6 @@
 import type { IllustrationRow, RecordingKind, RecordingRow, Word } from '@slovo/contracts';
 import type { Clock } from '@slovo/server-core';
-import { and, asc, eq, gt, gte, isNull, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import {
@@ -8,7 +8,9 @@ import {
   contentWords,
   mediaIllustrations,
   mediaRecordings,
+  wordsInAllVoices,
 } from '../database/schema';
+import { RECORDING_KINDS } from '../recordings/recording-text';
 
 type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
 
@@ -393,5 +395,50 @@ export async function mediaGaps(
       words: live.size - recordedIn(narratorVoice).size,
     })),
     withoutIllustration: live.size - withIllustration.size,
+  };
+}
+
+/**
+ * Per Word of the Edition, how many of the voices it has every Recording Kind
+ * of live in, and the Words on the list of Words in all voices or the sample
+ * Word (ADR 0195): the Words list's «N з M».
+ */
+export async function voicesRecorded(
+  tx: Pick<Transaction, 'select'>,
+  editionId: string,
+  { voices, sampleWord }: { voices: readonly string[]; sampleWord: string },
+) {
+  const live = await tx
+    .select({
+      wordId: mediaRecordings.wordId,
+      narratorVoice: mediaRecordings.narratorVoice,
+      recordingKind: mediaRecordings.recordingKind,
+    })
+    .from(mediaRecordings)
+    .where(
+      and(
+        eq(mediaRecordings.editionId, editionId),
+        isNull(mediaRecordings.retiredAt),
+        inArray(mediaRecordings.narratorVoice, [...voices]),
+        inArray(mediaRecordings.recordingKind, [...RECORDING_KINDS]),
+      ),
+    );
+  // Per Word, per voice: how many Recording Kinds are live.
+  const kinds = new Map<string, Map<string, number>>();
+  for (const { wordId, narratorVoice } of live) {
+    const ofWord = kinds.get(wordId) ?? new Map<string, number>();
+    ofWord.set(narratorVoice, (ofWord.get(narratorVoice) ?? 0) + 1);
+    kinds.set(wordId, ofWord);
+  }
+  const recorded = (wordId: string) =>
+    [...(kinds.get(wordId)?.values() ?? [])].filter((count) => count === RECORDING_KINDS.length)
+      .length;
+  const listed = await tx
+    .select({ wordId: wordsInAllVoices.wordId })
+    .from(wordsInAllVoices)
+    .where(eq(wordsInAllVoices.editionId, editionId));
+  return {
+    recorded,
+    allVoices: new Set([sampleWord, ...listed.map(({ wordId }) => wordId)]),
   };
 }

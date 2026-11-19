@@ -14,6 +14,7 @@ import {
   adminCommandDeps,
   importedDatabases,
   passTime,
+  signedInAdmin,
   silentLogger,
   testApp,
 } from '../test-support';
@@ -22,6 +23,7 @@ import { createRecordings, RECORDING_LEASE_MS, RETIRED_FILE_KEPT_MS } from './re
 
 const editions = readEditions(EDITIONS_DIR);
 const VOICES = ['oksana', 'taras', 'marta', 'ostap'];
+const DEFAULT_VOICE = 'oksana';
 
 /** A generator whose file is the voice and the text it read; it fails every text that starts with `failing`. */
 function fakeGenerator(
@@ -151,6 +153,7 @@ async function recordingsBackend(store = keptStore()) {
   if (token === undefined) throw new Error('no Агент token');
   const agent = backend.clientOf(token);
   const { batchId } = await agent.admin.content.openBatch({ editionId: 'uk' });
+  const { client: adminUser, email: adminEmail } = await signedInAdmin(backend, 'admin');
   const alerts = keptAlerts();
   const run = (generator: RecordingGenerator, batch = 50, deployment = 'first') =>
     createRecordings({
@@ -163,7 +166,7 @@ async function recordingsBackend(store = keptStore()) {
       deployment,
       batch,
     }).run();
-  return { ...backend, agent, batchId, store, alerts, run };
+  return { ...backend, database, agent, adminUser, adminEmail, batchId, store, alerts, run };
 }
 
 const versionOf = async (client: ApiClient) =>
@@ -213,7 +216,7 @@ describe('the Recordings job', () => {
     await (await importedDatabase()).drop();
   }, 180_000);
 
-  it('records a new Word in every Narrator Voice at one content version, and a second run writes nothing', async () => {
+  it('records a new Word in the default Narrator Voice only, at one content version, and a second run writes nothing', async () => {
     const { client, agent, batchId, store, run } = await recordingsBackend();
     const id = await createWord(client, agent, batchId, 'обручичок', 3);
     const before = await versionOf(client);
@@ -221,7 +224,7 @@ describe('the Recordings job', () => {
 
     await run(generator);
 
-    expect(generator.asked).toEqual(VOICES.map((voice) => ({ voice, text: 'обру́чичок' })));
+    expect(generator.asked).toEqual([{ voice: DEFAULT_VOICE, text: 'обру́чичок' }]);
     const patch = await patchSince(client, before);
     expect(patch.contentVersion).toBe(before + 1);
     expect(
@@ -232,15 +235,15 @@ describe('the Recordings job', () => {
         retired,
         durationMs,
       })),
-    ).toEqual(
-      ['marta', 'oksana', 'ostap', 'taras'].map((narratorVoice) => ({
+    ).toEqual([
+      {
         wordId: id,
-        narratorVoice,
+        narratorVoice: DEFAULT_VOICE,
         recordingKind: 'plain',
         retired: false,
         durationMs: 900,
-      })),
-    );
+      },
+    ]);
     for (const row of patch.recordings) {
       expect(store.keys.has(`recordings/${row.narratorVoice}/plain/${id}.${row.hash}.mp3`)).toBe(
         true,
@@ -270,7 +273,7 @@ describe('the Recordings job', () => {
     vi.setSystemTime(Date.now() + RECORDING_LEASE_MS + 1);
     const later = fakeGenerator();
     await run(later);
-    expect(later.asked).toEqual(VOICES.map((voice) => ({ voice, text: 'обру́чичок' })));
+    expect(later.asked).toEqual([{ voice: DEFAULT_VOICE, text: 'обру́чичок' }]);
     expect(await versionOf(client)).toBe(before + 1);
 
     // The run whose lease expired writes nothing when its generator answers at last.
@@ -336,8 +339,8 @@ describe('the Recordings job', () => {
       ['обручик', 3],
     ] as const)
       await createWord(client, agent, batchId, lemma, stress);
-    // One Word is four requests, one in each Narrator Voice.
-    const slow = timedOutGenerator(VOICES.length);
+    // One Word is one request, in the default Narrator Voice.
+    const slow = timedOutGenerator(1);
 
     expect(await run(slow)).toMatchObject({ recorded: 1, failed: 2, stalled: 0 });
     expect(alerts.sent).toEqual([]);
@@ -397,7 +400,7 @@ describe('the Recordings job', () => {
       fields: { ...fields, lemma: 'обручик' },
     });
     const afterEdit = await patchSince(client, before);
-    expect(afterEdit.recordings.map(({ retired }) => retired)).toEqual([true, true, true, true]);
+    expect(afterEdit.recordings.map(({ retired }) => retired)).toEqual([true]);
 
     const generator = fakeGenerator();
     await run(generator);
@@ -405,9 +408,119 @@ describe('the Recordings job', () => {
     const rows = (await patchSince(client, before)).recordings;
     const retired = rows.filter((row) => row.retired).map(({ hash }) => hash);
     const live = rows.filter((row) => !row.retired).map(({ hash }) => hash);
-    expect(retired).toHaveLength(4);
-    expect(live).toHaveLength(4);
+    expect(retired).toHaveLength(1);
+    expect(live).toHaveLength(1);
     expect(live.some((hash) => retired.includes(hash))).toBe(false);
+  });
+
+  it('records a Word on the list of Words in all voices in the missing ones, and again in every voice once its Lemma changed', async () => {
+    const { client, agent, adminUser, batchId, run } = await recordingsBackend();
+    const id = await createWord(client, agent, batchId, 'обручичок', 3);
+    await run(fakeGenerator());
+
+    await adminUser.admin.content.addOtherVoices({ editionId: 'uk', id });
+    const missing = fakeGenerator();
+    await run(missing);
+    expect(missing.asked).toEqual(
+      VOICES.filter((voice) => voice !== DEFAULT_VOICE).map((voice) => ({
+        voice,
+        text: 'обру́чичок',
+      })),
+    );
+
+    const word = (await client.content.snapshot({ editionId: 'uk' })).words.find(
+      (found) => found.id === id,
+    );
+    if (word === undefined) throw new Error('no Word');
+    const { id: _id, ...fields } = word;
+    await agent.admin.content.edit({
+      editionId: 'uk',
+      kind: 'word',
+      id,
+      batchId,
+      recordVersion: 1,
+      fields: { ...fields, lemma: 'обручик' },
+    });
+    const anew = fakeGenerator();
+    await run(anew);
+    expect(anew.asked).toEqual(VOICES.map((voice) => ({ voice, text: 'обру́чик' })));
+  });
+
+  it("records the Edition's sample Word in every Narrator Voice, and the other Words in the default one", async () => {
+    const { client } = await recordingsBackend();
+    const sample = editions.find(({ config }) => config.id === 'uk')?.config.narratorVoices.sample
+      .word;
+    const snapshot = await client.content.snapshot({ editionId: 'uk' });
+    const voicesOf = (wordId: string | undefined) =>
+      snapshot.recordings
+        .filter((row) => row.wordId === wordId)
+        .map(({ narratorVoice }) => narratorVoice)
+        .sort();
+    expect(voicesOf(sample)).toEqual([...VOICES].sort());
+    const other = snapshot.words.find(({ id }) => id !== sample);
+    expect(voicesOf(other?.id)).toEqual([DEFAULT_VOICE]);
+  });
+
+  it("lists each Word's Recordings as «N з M», filters by them, and puts a live Word on the list once at an Admin user's request", async () => {
+    const { client, agent, adminUser, adminEmail, batchId, database, run } =
+      await recordingsBackend();
+    const sample = editions.find(({ config }) => config.id === 'uk')?.config.narratorVoices.sample
+      .word;
+    const records = adminUser.admin.content.records;
+    const words = (await records({ editionId: 'uk', kind: 'word' })).total;
+    const complete = await records({ editionId: 'uk', kind: 'word', recordings: 'complete' });
+    expect(complete.records.map(({ id, recordings }) => ({ id, recordings }))).toEqual([
+      { id: sample, recordings: { live: 4, of: 4, allVoices: true } },
+    ]);
+    expect((await records({ editionId: 'uk', kind: 'word', recordings: 'incomplete' })).total).toBe(
+      words - 1,
+    );
+    expect((await records({ editionId: 'uk', kind: 'idiom', recordings: 'complete' })).total).toBe(
+      0,
+    );
+
+    const id = await createWord(client, agent, batchId, 'обручичок', 3);
+    await run(fakeGenerator());
+    const listed = async () =>
+      (await records({ editionId: 'uk', kind: 'word', query: 'обручичок' })).records[0]?.recordings;
+    expect(await listed()).toEqual({ live: 1, of: 4, allVoices: false });
+
+    await expect(agent.admin.content.addOtherVoices({ editionId: 'uk', id })).rejects.toMatchObject(
+      { code: 'FORBIDDEN' },
+    );
+    expect(await adminUser.admin.content.addOtherVoices({ editionId: 'uk', id })).toEqual({ id });
+    expect(await listed()).toEqual({ live: 1, of: 4, allVoices: true });
+    await expect(
+      adminUser.admin.content.addOtherVoices({ editionId: 'uk', id }),
+    ).rejects.toMatchObject({ code: 'NOT_ADDABLE', data: { reason: 'listed' } });
+    await expect(
+      adminUser.admin.content.addOtherVoices({ editionId: 'uk', id: 'no-such-word' }),
+    ).rejects.toMatchObject({ code: 'NOT_ADDABLE', data: { reason: 'not-live' } });
+    const actions = (await createAdminStore(database).actions('uk')).filter(
+      (row) => row.what === 'content.word.allVoices',
+    );
+    expect(actions).toEqual([
+      expect.objectContaining({
+        who: { kind: 'admin-user', email: adminEmail },
+        after: { id },
+      }),
+    ]);
+
+    await run(fakeGenerator());
+    expect(await listed()).toEqual({ live: 4, of: 4, allVoices: true });
+
+    const other = await createWord(client, agent, batchId, 'ґудзичок', 1);
+    await agent.admin.content.retire({
+      editionId: 'uk',
+      kind: 'word',
+      id: other,
+      batchId,
+      recordVersion: 1,
+      reason: 'Тест',
+    });
+    await expect(
+      adminUser.admin.content.addOtherVoices({ editionId: 'uk', id: other }),
+    ).rejects.toMatchObject({ code: 'NOT_ADDABLE', data: { reason: 'not-live' } });
   });
 
   it('tries a Word that failed after the Words that never did, so it never blocks the batch', async () => {
@@ -457,7 +570,7 @@ describe('the Recordings job', () => {
     passTime(2 * day);
     await run(fakeGenerator());
     expect(first.some((key) => store.keys.has(key))).toBe(false);
-    expect(keysOf()).toHaveLength(4);
+    expect(keysOf()).toHaveLength(1);
   });
 
   it('keeps a Recording retired when a run puts its file again while the sweep deletes it', async () => {
@@ -527,7 +640,7 @@ describe('the Recordings job', () => {
     const after = (await patchSince(client, before)).recordings.filter(
       (row) => row.wordId === id && !row.retired,
     );
-    expect(after).toHaveLength(VOICES.length);
+    expect(after).toHaveLength(1);
     expect(after.every((row) => store.keys.has(recordingPath(row)))).toBe(true);
   });
 });

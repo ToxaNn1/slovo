@@ -15,7 +15,7 @@ export type MediaSwitch = 'pronunciation' | 'illustrations' | 'narratorVoice';
 /**
  * Where a Recording or an Illustration of a Word card comes from: a file the
  * app bundles (Starter Media), one the media cache holds, one in the Media
- * Store not downloaded yet, or none, which the device voice reads instead.
+ * Store not downloaded yet, or none.
  */
 export type MediaSource<Asset> =
   | { readonly kind: 'bundled'; readonly asset: Asset }
@@ -23,9 +23,18 @@ export type MediaSource<Asset> =
   | { readonly kind: 'remote'; readonly url: string }
   | { readonly kind: 'absent' };
 
+/**
+ * The Recording of a Word card in the chosen Narrator Voice: its source, or
+ * `other-voices` when the Word has Recordings but none in that voice, or
+ * `absent` when it has none at all, the three states of Pronunciation behind
+ * `recordedOnly` (ADR 0195). With `recordedOnly` off the device voice reads
+ * both of the last two.
+ */
+export type RecordingMedia<Asset> = MediaSource<Asset> | { readonly kind: 'other-voices' };
+
 /** The Recording and the Illustration of a Word card. */
 export interface CardMedia<Asset> {
-  readonly recording: MediaSource<Asset>;
+  readonly recording: RecordingMedia<Asset>;
   readonly illustration: MediaSource<Asset>;
 }
 
@@ -49,7 +58,7 @@ export interface Media<Asset> {
   /** Downloads the missing media of the next Feed cards, the first {@link PREFETCH_CARDS} of those given. */
   prefetch(wordIds: readonly string[], voice: string): Promise<void>;
   /** Downloads a Word's Recording not yet cached, as a tap on it does, and answers its source. */
-  downloadRecording(wordId: string, voice: string): Promise<MediaSource<Asset>>;
+  downloadRecording(wordId: string, voice: string): Promise<RecordingMedia<Asset>>;
   /** Marks a Word's cached Recording played or Illustration shown, so the cache evicts it later. */
   used(wordId: string, media: 'recording' | 'illustration', voice: string): Promise<void>;
   /** Evicts the files of the rows a Patch applied retired. */
@@ -182,11 +191,14 @@ export function createMedia<Asset>({
   async function ofWord(wordId: string, voice: string): Promise<CardMedia<Asset>> {
     const media = await store.mediaOf(wordId);
     const files = storedFiles(wordId, media, voice);
+    const recording: RecordingMedia<Asset> =
+      !isOn('pronunciation') || media.needsNewRecording
+        ? { kind: 'absent' }
+        : files.recording === undefined && media.recordings.length > 0
+          ? { kind: 'other-voices' }
+          : await sourceOf(files.recording);
     return {
-      recording:
-        isOn('pronunciation') && !media.needsNewRecording
-          ? await sourceOf(files.recording)
-          : { kind: 'absent' },
+      recording,
       illustration: isOn('illustrations') ? await sourceOf(files.illustration) : { kind: 'absent' },
     };
   }

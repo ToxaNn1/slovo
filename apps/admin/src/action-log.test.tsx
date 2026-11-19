@@ -91,6 +91,12 @@ test('a new record and a Retired one name the record by its main field', async (
   ]);
 });
 
+test('a Word sent to every Narrator Voice reads as a sentence with its id (ADR 0195)', async () => {
+  const rows = await logOf(row('content.word.allVoices', null, { id: 'w_abc123' }));
+
+  expect(rows).toEqual([['Слово передано на запис у всіх голосах', '—', 'Запис w_abc123']]);
+});
+
 test('a Curated Collection retired and brought back reads as any record, by its name', async () => {
   const before = { name: 'Слова зими', retired: false };
   const rows = await logOf(

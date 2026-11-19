@@ -1,7 +1,8 @@
 /**
- * The Recordings job (ADR 0083, 0099): records every Word of an Edition that
- * misses a live Recording in one of its Narrator Voices and Recording Kinds,
- * or whose Lemma or Stress changed, puts the files in the Media Store and
+ * The Recordings job (ADR 0083, 0099, 0195): records every Word of an Edition
+ * that misses a live Recording in one of its Recording Kinds, or whose Lemma
+ * or Stress changed: in the default Narrator Voice, and in every declared one
+ * for the Words in all voices and the sample Word. It puts the files in the Media Store and
  * saves their rows at one content version per run. It then deletes the files
  * of rows retired longer than RETIRED_FILE_KEPT_MS, which no device on a
  * Patch that old still asks for. After STALL_RUNS stuck runs in a row, whose
@@ -24,6 +25,7 @@ import {
   mediaRecordings,
   recordingLeases,
   recordingStalls,
+  wordsInAllVoices,
 } from '../database/schema';
 import type { MediaStore } from '../media/media-store';
 import type { RecordingGenerator, RecordingOutcome } from './generator';
@@ -87,34 +89,43 @@ export function createRecordings({
 
   /**
    * The Edition's live Words that need Recordings, each with the slots it
-   * misses: the Words the job never failed for first, in id order, then the
+   * misses: in the default voice, or in every voice for a Word in all voices.
+   * The Words the job never failed for come first, in id order, then the
    * ones it failed for, longest ago first, so a Word that always fails never
    * holds the batch.
    */
-  async function candidates(editionId: string, voices: readonly string[]) {
-    const slots = voices.length * RECORDING_KINDS.length;
-    const liveCount = sql`(select count(*) from ${mediaRecordings} r
+  async function candidates(edition: Edition) {
+    const editionId = edition.config.id;
+    const { default: defaultVoice, voices: declared, sample } = edition.config.narratorVoices;
+    const voices = declared.map(({ id }) => id);
+    const liveCount = (of: readonly string[]) => sql`(select count(*) from ${mediaRecordings} r
       where r.edition_id = ${contentWords.editionId} and r.word_id = ${contentWords.id}
         and r.retired_at is null
         and r.narrator_voice in (${sql.join(
-          voices.map((voice) => sql`${voice}`),
+          of.map((voice) => sql`${voice}`),
           sql`, `,
         )})
         and r.recording_kind in (${sql.join(
           RECORDING_KINDS.map((kind) => sql`${kind}`),
           sql`, `,
         )}))`;
+    const allVoices = sql<boolean>`(${contentWords.id} = ${sample.word} or exists (
+      select 1 from ${wordsInAllVoices} l
+      where l.edition_id = ${contentWords.editionId} and l.word_id = ${contentWords.id}))`;
     const words = await db
       .select({
         id: contentWords.id,
         fields: contentWords.fields,
+        allVoices,
       })
       .from(contentWords)
       .where(
         and(
           eq(contentWords.editionId, editionId),
           eq(contentWords.retired, false),
-          sql`(${contentWords.needsNewRecording} or ${liveCount} < ${slots})`,
+          sql`(${contentWords.needsNewRecording}
+            or ${liveCount([defaultVoice])} < ${RECORDING_KINDS.length}
+            or (${allVoices} and ${liveCount(voices)} < ${voices.length * RECORDING_KINDS.length}))`,
         ),
       )
       .orderBy(sql`${contentWords.recordingFailedAt} asc nulls first`, asc(contentWords.id))
@@ -137,16 +148,20 @@ export function createRecordings({
           isNull(mediaRecordings.retiredAt),
         ),
       );
-    const all: Slot[] = voices.flatMap((narratorVoice) =>
-      RECORDING_KINDS.map((recordingKind) => ({ narratorVoice, recordingKind })),
-    );
+    const slotsIn = (of: readonly string[]): Slot[] =>
+      of.flatMap((narratorVoice) =>
+        RECORDING_KINDS.map((recordingKind) => ({ narratorVoice, recordingKind })),
+      );
+    const every = slotsIn(voices);
+    const onlyDefault = slotsIn([defaultVoice]);
     const slotOf = (wordId: string, { narratorVoice, recordingKind }: Slot) =>
       `${wordId}/${narratorVoice}/${recordingKind}`;
     const live = new Set(held.map((row) => slotOf(row.wordId, row)));
-    return words.map((word) => {
-      const missing = all.filter((slot) => !live.has(slotOf(word.id, slot)));
+    return words.map(({ allVoices: inAll, ...word }) => {
+      const own = inAll ? every : onlyDefault;
+      const missing = own.filter((slot) => !live.has(slotOf(word.id, slot)));
       // A flagged Word with every slot live reads text it no longer has: record it all again.
-      return { ...word, slots: missing.length === 0 ? all : missing };
+      return { ...word, slots: missing.length === 0 ? own : missing };
     });
   }
 
@@ -190,8 +205,7 @@ export function createRecordings({
    */
   async function recordEdition(edition: Edition, holder: string) {
     const editionId = edition.config.id;
-    const voices = edition.config.narratorVoices.voices.map(({ id }) => id);
-    const words = await candidates(editionId, voices);
+    const words = await candidates(edition);
     const requests = words.flatMap((word) =>
       word.slots.map((slot) => ({
         word,

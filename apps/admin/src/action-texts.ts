@@ -47,6 +47,7 @@ const CONTENT_OPS: Readonly<Record<string, (feminine: boolean) => string>> = {
   retire: () => 'виведено',
   check: (feminine) => `позначено перевірен${feminine ? 'ою' : 'им'}`,
   flag: () => 'позначено для Черги контенту',
+  allVoices: () => 'передано на запис у всіх голосах',
 };
 
 const WHATS: Readonly<Record<string, string>> = {

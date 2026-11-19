@@ -292,6 +292,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   pronunciation: FeatureSwitchStateSchema,
   /** «Голос диктора»: the reader's choice of the Narrator Voice that reads; off while `pronunciation` is, and off the default voice reads (ADR 0083). */
   narratorVoice: FeatureSwitchStateSchema,
+  /** Recordings only: the device voice never reads a Word, and a Word without a Recording in the chosen Narrator Voice shows a disabled sound button (ADR 0195). */
+  recordedOnly: FeatureSwitchStateSchema,
   /** The Word of the Day: its pick, its notification and its widget. */
   wordOfTheDay: FeatureSwitchStateSchema,
   /** The statistics screens and the Streak. */
