@@ -4,6 +4,19 @@ import { light, uiFont } from './look';
 
 export type Store = 'appStore' | 'googlePlay';
 
+/**
+ * Whether the app is in the store yet. Before the release the end cards say
+ * «Скоро в …» in plain text instead of drawing a badge; set it to true on the
+ * release day (10.12) to bring the badge back.
+ */
+export const appReleased = false;
+
+/** The pre-release line per store, shown in place of the badge. */
+export const comingSoon: Record<Store, string> = {
+  appStore: 'Скоро в App Store',
+  googlePlay: 'Скоро в Google Play',
+};
+
 /** The badge's two lines per store, as the official Ukrainian badges word them. */
 const lines: Record<Store, { small: string; big: string }> = {
   appStore: { small: 'Завантажити в', big: 'App Store' },

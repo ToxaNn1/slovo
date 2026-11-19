@@ -53,7 +53,8 @@ export const episodes: readonly Episode[] = [
     was: 'Взаємно!',
     nicer: 'навзаєм',
     mark: '!',
-    stress: 4,
+    // навзає́м, as СУМ stresses it.
+    stress: 5,
     meaning: 'взаємно, у відповідь',
     praise: 'О, гарно!',
   },
