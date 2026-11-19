@@ -2,15 +2,12 @@ import { beforeEach, describe, expect, it } from '@jest/globals';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { fill, type Category } from '@slovo/contracts';
-import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import MixScreen from '../app/settings/mix';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 
 const { config } = activeEditionFiles;
@@ -64,31 +61,15 @@ beforeEach(async () => {
   });
 });
 
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
-
 /** Settings › Мій Мікс as the app routes to it. */
 async function renderChoices() {
   const shell = testShell({
     composition: opened(composition),
     remoteSwitches: switchedTo(shippedEdition),
   });
-  await renderRoutes(
-    {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider shell={shell}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <Stack screenOptions={{ headerShown: false }} />
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
-      ),
-      'settings/mix': MixScreen,
-    },
-    { initialUrl: '/settings/mix' },
+  await renderApp(
+    { _layout: () => <Stack screenOptions={{ headerShown: false }} />, 'settings/mix': MixScreen },
+    { shell, initialUrl: '/settings/mix' },
   );
   await settle();
 }
