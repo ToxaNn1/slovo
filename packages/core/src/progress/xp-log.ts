@@ -182,7 +182,11 @@ export interface XpLog {
    * hint (ADR 0087).
    */
   crosswordSolveOn(date: string): CrosswordSolve | undefined;
-  /** Calls `listener` after each change of the XP, with what it came from. Returns the call that stops it. */
+  /**
+   * Calls `listener` after each change of the XP, with what it came from, and
+   * once after each change of History, with the XP it earned written or the
+   * write failed. Returns the call that stops it.
+   */
   subscribe(listener: (change: XpLogChange) => void): () => void;
   /** The XP and the Daily Goal of a local date `YYYY-MM-DD`: a past day keeps the goal it had. */
   dayOf(date: string): XpDay;
@@ -994,7 +998,10 @@ export async function openXpLog({
     }
     meeting = write(added)
       .then(markSeen)
-      .catch(() => undefined)
+      // The subscribers hear of the History change also when the write fails.
+      .catch(() => {
+        change();
+      })
       .finally(() => {
         meeting = undefined;
         if (!changedMeanwhile) return;

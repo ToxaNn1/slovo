@@ -105,7 +105,7 @@ export function openProgress({
   edition: Pick<Edition, 'isFeatureEnabled'>;
   clock: Clock;
   activeDays: Pick<ActiveDays, 'days' | 'frozen' | 'breaks' | 'streak' | 'subscribe'>;
-  history: History;
+  history: Pick<History, 'list'>;
   favorites: Favorites;
   collections: Collections;
   game: Pick<Game, 'state' | 'subscribe'>;
@@ -175,8 +175,10 @@ export function openProgress({
     if (celebrated) for (const listener of milestones) listener(next.streak);
   }
 
+  // The XP log follows every change of History with one of its own, which the
+  // Active Days pass on, so a Seen is followed once, with its XP and Streak.
   activeDays.subscribe(follow);
-  for (const source of [history, favorites, collections, game, knowledge]) {
+  for (const source of [favorites, collections, game, knowledge]) {
     source.subscribe(() => {
       follow();
     });
