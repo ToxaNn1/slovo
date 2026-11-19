@@ -50,8 +50,14 @@ if ! postgres_18_ready; then
     pg_ctlcluster 16 main start >>"$LOG" 2>&1 || true
   fi
 
-  STEP="start cluster 18 on 5432"
-  run pg_conftool 18 main set port 5432
+  # The package does not always create a main cluster (createcluster.conf may turn it off).
+  if pg_lsclusters --no-header 2>>"$LOG" | awk '$1 == 18 && $2 == "main"' | grep -q .; then
+    STEP="start cluster 18 on 5432"
+    run pg_conftool 18 main set port 5432
+  else
+    STEP="create cluster 18 on 5432"
+    run pg_createcluster 18 main -p 5432 --start
+  fi
   pg_lsclusters --no-header 2>>"$LOG" | awk '$1 == 18 && $4 == "online"' | grep -q . ||
     run pg_ctlcluster 18 main start
   postgres_18_ready || fail
