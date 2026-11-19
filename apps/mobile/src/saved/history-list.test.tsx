@@ -183,4 +183,66 @@ describe('History', () => {
 
     expect(screen.getByTestId('history-row-w_tykhyi')).toBeOnTheScreen();
   });
+
+  it('draws the rows near the screen and not the whole of a long History', async () => {
+    const ids = Array.from({ length: 120 }, (_, at) => `w_${String(at).padStart(3, '0')}`);
+    composition = await openComposition({
+      content: createMemoryContentPort({
+        categories: [
+          { id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' },
+        ],
+        words: ids.map((id) => word(id, id)),
+      }),
+      edition: shippedEdition,
+      userState: await seedUserState({
+        history: Object.fromEntries(
+          ids.map((id) => [id, { seenAt: '2026-10-20T08:00:00.000Z', wordOfTheDay: false }]),
+        ),
+      }),
+      clock: { now: () => new Date('2026-10-29T10:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+      random: { next: () => 0 },
+    });
+    await renderHistory(compositionOver(() => Promise.resolve()));
+    const drawn = () => screen.queryAllByTestId(/^history-row-w_\d+-open$/).length;
+    const list = screen.getByTestId('history');
+
+    // The screen lays the list out, 844 points high, each row 80 points.
+    await settle(async () => {
+      await fireEvent(list, 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 844 } },
+      });
+      await fireEvent(list, 'contentSizeChange', 390, ids.length * 80);
+    });
+    // Each drawn row's cell lays out 80 points high, in its place; the list draws the next batch.
+    const laidOut = new Set<string>();
+    for (let round = 0; round < 20; round += 1) {
+      const fresh = ids.filter(
+        (id) => !laidOut.has(id) && screen.queryByTestId(`history-row-${id}`),
+      );
+      if (fresh.length === 0) break;
+      await settle(async () => {
+        for (const id of fresh) {
+          let cell = screen.getByTestId(`history-row-${id}`).parent;
+          while (cell !== null && typeof cell.props['onLayout'] !== 'function') cell = cell.parent;
+          if (cell === null) continue;
+          const y = ids.indexOf(id) * 80;
+          await fireEvent(cell, 'layout', {
+            nativeEvent: { layout: { x: 0, y, width: 390, height: 80 } },
+          });
+          laidOut.add(id);
+        }
+        await fireEvent.scroll(list, {
+          nativeEvent: {
+            contentOffset: { x: 0, y: 0 },
+            contentSize: { width: 390, height: ids.length * 80 },
+            layoutMeasurement: { width: 390, height: 844 },
+          },
+        });
+      });
+    }
+
+    // About seven screens of rows (844 / 80 × 7 ≈ 74 at most), not all 120: half the list or less.
+    expect(drawn()).toBeGreaterThan(10);
+    expect(drawn()).toBeLessThanOrEqual(ids.length / 2);
+  });
 });
