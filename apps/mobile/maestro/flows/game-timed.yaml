@@ -1,4 +1,4 @@
-# The mode «На час», 20 seconds of Definition picks: it starts from its card
+# The mode «На час», 60 seconds of Definition picks: it starts from its card
 # with the timer on top, an answer moves on at once with no sheet, and once
 # the time is up the result screen shows the right answers; «На головну» goes
 # to the Feed. A subflow of `smoke.yaml`; run it from there. It leaves no Game

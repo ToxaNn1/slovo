@@ -56,7 +56,7 @@ The design sets its colours as CSS variables on `[data-slovo]`; `data-th` picks 
 
 The boards draw looks, not features. These are the design's own names, possibly invented: check each against `CONTEXT.md` and the ADRs before a screen draws it. What the Core and the Edition have (some Game Modes, Badges, Levels) takes the design's look; what they lack is not built, and the screen takes the nearest component's style or leaves it out. The list is verbatim from the inventory of 2026-11-02.
 
-- Game modes (13, 4 groups): ЗВУК: Наголос, Рими · ЗНАЧЕННЯ: Обери правильне, Пари, Синоніми, Фразеологізми · БУКВИ: Анаграми, Пропущена літера, Зайве слово · ШВИДКІСТЬ: На час (20 с), Бліц ("Три хвилини" in desc but 30 s in code), Марафон (до трьох помилок), Суржик-фікс. Plus Кросворд дня (5 слів, ~4 хв, №48). New Screens add: Вгадай слово, За буквами, Впиши слово, Звідки слово, Англіцизми, Склади вислів, Виживання.
+- Game modes (13, 4 groups): ЗВУК: Наголос, Рими · ЗНАЧЕННЯ: Обери правильне, Пари, Синоніми, Фразеологізми · БУКВИ: Анаграми, Пропущена літера, Зайве слово · ШВИДКІСТЬ: На час (60 с), Бліц ("Три хвилини" in desc but 30 s in code), Марафон (до трьох помилок), Суржик-фікс. Plus Кросворд дня (5 слів, ~4 хв, №48). New Screens add: Вгадай слово, За буквами, Впиши слово, Звідки слово, Англіцизми, Склади вислів, Виживання.
 - Categories (16): Погода, Почуття, Побут, Розстріляна лексика, Ремесла, Їжа, Природа, Звуки, Рухи, Кохання, Музика, Діалектизми, Архаїзми, Неологізми, Сленг, Наука. Fixes (7): Суржик, Наголоси, Кальки, Канцелярит, Пароніми, Відмінки, Правопис.
 - Mood дня: Бадьоро, Сонно, Допитливо, Задумливо (with Rupor replies).
 - Levels: «Словолов» (level 7, 640/1000 XP), next «Словотвор». XP: +15 know, +5 learn, +50 crossword.
