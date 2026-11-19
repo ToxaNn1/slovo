@@ -2,7 +2,15 @@ import { fill, ScreenEnter, TabBarButton, type IconName } from '@slovo/ui';
 import { tabBar } from '@slovo/ui/tokens';
 import { router, Tabs, useIsFocused, usePathname } from 'expo-router';
 import { getFocusedRouteNameFromRoute } from 'expo-router/react-navigation';
-import { createContext, use, type ComponentProps, type ReactNode } from 'react';
+import {
+  Activity,
+  createContext,
+  use,
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
@@ -156,15 +164,40 @@ export function useTabBarRoom(): number {
 }
 
 /**
+ * Whether a screen out of focus goes into hiding: a frame after it lost focus,
+ * so it learns it is out of sight (and stops what runs only in sight) first.
+ * It comes out in the same render that gives it focus back.
+ */
+function useHiddenOutOfFocus(focused: boolean): boolean {
+  const [settledOut, setSettledOut] = useState(false);
+  if (focused && settledOut) setSettledOut(false);
+  useEffect(() => {
+    if (focused) return;
+    const frame = requestAnimationFrame(() => {
+      setSettledOut(true);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [focused]);
+  return !focused && settledOut;
+}
+
+/**
  * A screen of the tabs, entering as the design has it each time it gains
  * focus. Its focus is read from the navigation state on each render, so no
- * focus is missed between the first render and a subscription.
+ * focus is missed between the first render and a subscription. Out of focus it
+ * waits in a hidden Activity (memory pass, 19.11): it keeps its state, but drops
+ * its subscriptions, so a Seen in the Feed, which changes the History, XP and
+ * Badges, no longer re-renders the Saved and the Profile behind it. Back in
+ * focus it subscribes again and draws what changed once.
  */
 function FocusedEnter({ route, children }: Pick<ScreenLayoutProps, 'route' | 'children'>) {
   const focused = useIsFocused();
+  const hidden = useHiddenOutOfFocus(focused);
   return (
     <ScreenEnter focused={focused} testID={`${route.name}-enter`}>
-      {children}
+      <Activity mode={hidden ? 'hidden' : 'visible'}>{children}</Activity>
     </ScreenEnter>
   );
 }
