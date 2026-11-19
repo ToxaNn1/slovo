@@ -1100,7 +1100,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       'idiom-meaning': 'Вгадай, що означає вислів',
       'build-idiom': 'Читаєш значення — складаєш вислів.',
       survival: 'Три життя. Як далеко зайдеш?',
-      timed: 'Двадцять секунд. Скільки слів встигнеш?',
+      timed: 'Шістдесят секунд. Скільки слів встигнеш?',
     });
     expect(
       Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.glyph])),
@@ -1111,7 +1111,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       origin: '→А',
       'build-idiom': '«…»',
       survival: '⚑⚑⚑',
-      timed: '20 с',
+      timed: '60 с',
     });
   });
 

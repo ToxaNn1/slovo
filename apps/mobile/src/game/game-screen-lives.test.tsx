@@ -52,17 +52,17 @@ describe('the Games boards’ Lives and time (ADR 0137)', () => {
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
     }
 
-    it('runs 20 seconds and goes straight to «Фініш» once they are up', async () => {
+    it('runs 60 seconds and goes straight to «Фініш» once they are up', async () => {
       await startTimed();
       await waitFor(() => {
-        expect(timerLabel()).toBe('лишилося 20 секунд');
+        expect(timerLabel()).toBe('лишилося 60 секунд');
       });
-      expect(screen.getByTestId('game-timer')).toHaveTextContent('20 с');
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('60 с');
       await pickTheWordOfThePrompt();
       await pass(5_000);
-      expect(screen.getByTestId('game-timer')).toHaveTextContent('15 с');
-      expect(timerLabel()).toBe('лишилося 15 секунд');
-      await pass(14_000);
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('55 с');
+      expect(timerLabel()).toBe('лишилося 55 секунд');
+      await pass(54_000);
 
       expect(screen.getByTestId('game-round')).toBeOnTheScreen();
 

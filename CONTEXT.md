@@ -536,7 +536,7 @@ The kind of challenge in a Game. A Game Mode sets its Lives (or none), its Round
 - «Звук»: «Наголос» (`stress`), tap the stressed vowel.
 - «Значення»: «Обери правильне» (`correction`), a sentence with a non-standard form → pick the standard equivalent; «Пари» (`pairs`), match 4 Words to 4 Definitions; «Фразеологізми» (`idiom-meaning`), an idiom or a proverb → pick its meaning.
 - «Букви»: «Анаграми» (`anagram`), assemble the Word from shuffled letters.
-- «Швидкість»: «На час» (`timed`), 20 seconds and no Lives.
+- «Швидкість»: «На час» (`timed`), 60 seconds and no Lives.
 - «Нове»: «Вгадай слово» (`guess-word`), a Definition → pick the Word, getting harder as it goes (Rounds 6–10 an Example with a gap, Rounds 11–15 a Definition → type the Word); it asks about idioms of Idiom Type `idiom` the same way, with four idioms (place names never play), about Synonym Rows with «Що є синонімом до „{домінанта}“?», one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and about Tips, each with its own Game question; «За літерами» (`by-letters`), tap letter tiles into the slots by the Definition (no typing, no opened letters); «Впиши слово» (`type-word`), a sentence with a non-standard form → type the standard form; «Звідки слово» (`origin`), pick the language a Word came from; «Англіцизми» (`anglicism`), the same as «Обери правильне» with anglicisms only; «Склади вислів» (`build-idiom`), assemble an expression from its words among decoy words of other expressions, judged on «Перевірити»; «Виживання» (`survival`), 1 Life and no Round limit.
 
 Editions may add modes through an Extension Point.

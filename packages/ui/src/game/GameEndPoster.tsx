@@ -17,9 +17,8 @@ const FINISH_SIZE = Math.round(typeRoles.resultTitle.size * 2.2);
 /**
  * The end poster of a Game (spec #1674, brought to the board by spec #1880),
  * over the red panel of the result screen. A finished Game and a time-up get
- * the huge turned «ФІНІШ» flying in, «Час!» for a time-up unless it goes
- * straight to «ФІНІШ» (ADR 0137), then «ВЛУЧНО!» at
- * 60% right or more, else «ЩЕ РАУНД!»; the right answers out of those played;
+ * the huge turned «ФІНІШ» flying in (a time-up goes straight to it, ADR 0197),
+ * then «ВЛУЧНО!» at 60% right or more, else «ЩЕ РАУНД!»; the right answers out of those played;
  * the framed «НОВИЙ РЕКОРД!» stamp once the Game beat the record; the XP and
  * Best result tiles. A Game that lost its last Life gets the same poster as a finished Game short of its target,
  * «ФІНІШ» and «ЩЕ РАУНД!» with the tiles (board «slogo game last», owner
