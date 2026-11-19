@@ -1,6 +1,6 @@
 # Content sourcing tool
 
-Dev-only tooling, never shipped in an app. It turns a list of Lemmas into draft Words for the UA Edition, taken from real dictionaries:
+Dev-only tooling, never shipped in an app. It turns a list of Lemmas into draft Words for the UA Edition, taken from real dictionaries (and picks such a list from an open headword list: [`source:lemmas`](#word-candidates-sourcelemmas)):
 
 - **[goroh.pp.ua](https://goroh.pp.ua)**, the main source:
   - «Тлумачення»: Definitions, Examples with their authors, register labels, part of speech, gender and Stress, from the explanatory dictionary the page cites (СУМ-20 up to П'ЯТЬ, СУМ-11 after it; see ADR 0012). The draft records that citation exactly as goroh prints it, with the goroh address. Definitions and Examples are copied word for word; only the markers СУМ puts in front of an Example (`* У порівн.`, `* Образно.`) are dropped, and the Latin look-alikes the dictionaries put into Cyrillic words (the `i` in `вiд`) are written in Cyrillic. Labels count whether goroh names them in full or prints them as bare abbreviations (`заст.`, `діал.`). A label on a meaning marks the Word only when every meaning carries it: СУМ may label just the first meaning `заст.`. Articles from other dictionaries or written by a language model are never drafted from.
@@ -77,6 +77,44 @@ Each kind of Entry writes into its own folder of the review folder; Words go to 
 The reference markers live in one list, `REFERENCE_MARKERS` in `src/word-filters.ts`; the next marker is one more line. They match case-insensitive at the start of the Definition.
 
 A Lemma list line whose Category is one of the Edition's `categoriesRequiringHistory` (in the UA Edition `repressed-words` and `chameleon-words`) is refused like an unknown Category, naming the line, before anything is fetched: the tool does not source a Word History, so such a Word cannot pass the build.
+
+## Word candidates: `source:lemmas`
+
+Picks the Lemmas of a Word list from a dictionary headword list, with no language model (ADR 0196), so a wave of 1000+ Words costs no tokens on picking.
+
+```sh
+pnpm source:lemmas --edition uk --count 200 --letters абв --out scripts/content-wave/lists/words-a.txt
+```
+
+| Option                  | Default                        | Meaning                                                                                      |
+| ----------------------- | ------------------------------ | -------------------------------------------------------------------------------------------- |
+| `--edition <id>`        | required                       | The Edition whose alphabet applies and whose Words are left out.                             |
+| `--snapshot <file>`     | `$SLOVO_API_URL`               | The content snapshot the Edition's Words, Retired ones too, are read from.                   |
+| `--count <n>`           | `100`                          | How many lines to write.                                                                     |
+| `--letters <letters>`   | all                            | The first letters a Lemma may have, e.g. `абв` or `а,б,в`.                                   |
+| `--pos <shares>`        | `noun:55,adj:20,verb:20,adv:5` | Shares of the parts of speech.                                                               |
+| `--rarity <shares>`     | `2:1,3:1,4:1,5:1`              | Shares of the rarities; even by default, since most of the list is absent from `wordfreq`.   |
+| `--exclude <list file>` | none                           | A Lemma list whose first field on each line is left out, e.g. an earlier wave's; repeatable. |
+| `--seed <n>`            | random, printed                | The same seed and inputs give the same list.                                                 |
+| `--out <file>`          | standard output                | Where the list goes; the pool per rarity and the seed go to standard error.                  |
+| `--cache <dir>`         | the shared cache               | Where the two downloaded files are kept.                                                     |
+
+**Sources**, each downloaded once into `<cache>/lemmas/`, pinned by version and SHA-256, never committed:
+
+- the headword list: `ukrainian.dict` of LanguageTool's [`morfologik-ukrainian-lt`](https://repo1.maven.org/maven2/ua/net/nlp/morfologik-ukrainian-lt/) 6.8.6, built from [dict_uk](https://github.com/brown-uk/dict_uk) (ВЕСУМ), **LGPL 2.1+**. dict_uk's own data files are CC BY-NC-SA and are not used. The tool reads only the Lemma forms out of it (about 15 s, once) and keeps them as `headwords-….tsv`, `<lemma>\t<tags>` per line;
+- the Zipf frequencies: `large_uk.msgpack.gz` of `wordfreq` 3.1.1 (ADR 0146).
+
+**What is kept**: common nouns, verbs, adjectives and adverbs whose Lemma is written in the Edition's lowercase alphabet with at most an apostrophe (so no proper names, Latin letters or hyphenated compounds), of rarity 2 to 5 on the bands of ADR 0146 (absent from `wordfreq` = 5), that are no Word of the Edition (same Lemma, stress and apostrophe aside, or its pair with or without `-ся`/`-сь`) and on no `--exclude` list. Left out by their dict_uk tags: proper names (`prop`, `fname`, `lname`, `patr`, `geo`), abbreviations (`abbr`), participles (`adjp`), pronouns and numerals, words tagged rare, dialect or archaic (`rare`, `arch`), non-standard, erroneous or obscene forms (`alt`, `bad`, `err`, `obsc`, `vulg`). A Lemma with several tag sets stays if one of them is clean.
+
+**The list** is in the `source:words` format, sorted, with the part of speech and the Zipf as a comment:
+
+```text
+мжичка ? 3 # noun, Zipf 1.11
+```
+
+The Category is a placeholder, `?`: the writer fills in each one (and may move the rarity ±1, or lower an absent Word the reader knows, ADR 0146) before `source:words`, which refuses `?`. The pick is random within each part of speech and rarity, so expect some dull Lemmas (relative adjectives of place names, technical compounds): the writer strikes them, which is why a list is written a third longer than the count.
+
+`source:words` still flags a Lemma whose Definition is only a reference («див. …», «те саме, що …») as `cross-reference`; it does not follow it to the main Lemma.
 
 ## Idioms: `source:idioms`
 

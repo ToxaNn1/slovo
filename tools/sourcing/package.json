@@ -2,7 +2,7 @@
   "name": "@slovo/sourcing",
   "version": "0.0.0",
   "private": true,
-  "description": "Dev-only tool that drafts Words from dictionary sources (СУМ-11 on sum.in.ua, goroh.pp.ua) for human review.",
+  "description": "Dev-only tool that drafts Words from dictionary sources (СУМ-11 on sum.in.ua, goroh.pp.ua) for human review, and picks Word candidates from an open headword list.",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
@@ -12,6 +12,7 @@
     "source-idioms": "tsx --disable-warning=ExperimentalWarning src/cli-idioms.ts",
     "source-corrections": "tsx --disable-warning=ExperimentalWarning src/cli-corrections.ts",
     "source-synonyms": "tsx --disable-warning=ExperimentalWarning src/cli-synonyms.ts",
+    "source-lemmas": "tsx --disable-warning=ExperimentalWarning src/cli-lemmas.ts",
     "lint": "eslint .",
     "typecheck": "tsc --build",
     "test": "vitest run"
