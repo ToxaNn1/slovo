@@ -198,11 +198,10 @@ describe('About › no rows that wait (audit D-14)', () => {
   it('lists no «ВІДГУК» section and no row marked «СКОРО»', async () => {
     await renderAbout();
 
-    const { about } = editionStrings.settings;
-    expect(screen.queryByText(about.feedback)).toBeNull();
-    expect(screen.queryByText(about.suggestWord.title)).toBeNull();
-    expect(screen.queryByText(about.reportError.title)).toBeNull();
-    expect(screen.queryByText(editionStrings.settings.soon)).toBeNull();
+    expect(screen.queryByText('ВІДГУК')).toBeNull();
+    expect(screen.queryByText('Запропонувати слово')).toBeNull();
+    expect(screen.queryByText('Повідомити про помилку')).toBeNull();
+    expect(screen.queryByText('СКОРО')).toBeNull();
     expect(screen.getByTestId('about-row-privacy')).toBeOnTheScreen();
   });
 });

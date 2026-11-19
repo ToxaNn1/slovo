@@ -11,10 +11,6 @@ export const SettingsStringsSchema = z.strictObject({
   theme: TextSchema,
   /** The name of every Theme. */
   themes: z.record(ThemeSchema, TextSchema),
-  /** The tag on a row that a later version brings. */
-  soon: TextSchema,
-  /** What VoiceOver reads for a row that a later version brings. Takes `{label}`. */
-  soonAccessibilityLabel: templateOf('label'),
   /** «Без лічильників»: the switch that hides every counter while counting goes on, and the explanation under it. */
   noCounters: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The switch that turns Self-check on. */
@@ -271,8 +267,6 @@ export const SettingsStringsSchema = z.strictObject({
       current: TextSchema,
       /** A name still ahead, e.g. «ПОПЕРЕДУ». */
       ahead: TextSchema,
-      /** The bar over the cards, e.g. «РІВЕНЬ 7 · ЧИТАЧ». Takes `{level}` and `{name}`. */
-      bar: templateOf('level', 'name'),
       /** The XP to the next name's first Level, e.g. «ДО ЗНАВЦЯ 340 XP». Takes `{name}` and `{xp}`. */
       toNext: templateOf('name', 'xp'),
     }),
@@ -387,10 +381,6 @@ export const SettingsStringsSchema = z.strictObject({
     description: TextSchema,
     /** Where the words come from. */
     sources: TextSchema,
-    /** The label over the feedback rows. */
-    feedback: TextSchema,
-    suggestWord: z.strictObject({ title: TextSchema, subtitle: TextSchema }),
-    reportError: z.strictObject({ title: TextSchema, subtitle: TextSchema }),
     /** The rows that open the Edition's legal pages in the browser. */
     privacyPolicy: TextSchema,
     terms: TextSchema,

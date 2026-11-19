@@ -1789,10 +1789,6 @@ describe('UI strings the app fills in', () => {
       { ...strings, wordOfTheDay: { ...wordOfTheDay, badge: 'Слово дня · {day}' } },
     ],
     [
-      'settings.soonAccessibilityLabel',
-      { ...strings, settings: { ...settings, soonAccessibilityLabel: 'скоро буде доступно' } },
-    ],
-    [
       'settings.about.versionLine',
       {
         ...strings,
