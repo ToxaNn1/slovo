@@ -1,7 +1,7 @@
 import { Slot } from 'expo-router';
 import { isValidElement, type ComponentType, type ReactElement } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, type EdgeInsets } from 'react-native-safe-area-context';
 
 import { coreDecor, createSettings, type Decor, type UserSettings } from '@slovo/core';
 
@@ -17,11 +17,11 @@ import { opened, testShell } from './test-support';
 // `expo-router/testing-library` puts Reanimated's mock in every module loaded
 // after it: a test that animates as the device does imports this entry first.
 
-/** The safe area of an iPhone 15 with no insets, which the router gives the screens on the device. */
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
+/** The frame of an iPhone 15, which the router gives the screens on the device. */
+const frame = { x: 0, y: 0, width: 390, height: 844 };
+
+/** No safe-area insets: the screens run edge to edge. */
+const noInsets: EdgeInsets = { top: 0, left: 0, right: 0, bottom: 0 };
 
 /** A route map as Expo Router's test renderer takes it: a screen or a layout per route. */
 type Routes = Readonly<Record<string, ComponentType>>;
@@ -42,12 +42,24 @@ export interface InApp {
   readonly decor?: Decor;
   /** The route the router opens first, for a route map. `/` by default. */
   readonly initialUrl?: string;
+  /** The device's safe-area insets, such as a home indicator's; none by default. */
+  readonly insets?: EdgeInsets;
 }
 
 /** The app's providers and screen gates around `children`, the very tree of `app/_layout.tsx`. */
-function InApp({ shell, decor, children }: { shell: Shell; decor: Decor; children: ReactElement }) {
+function InApp({
+  shell,
+  decor,
+  insets,
+  children,
+}: {
+  shell: Shell;
+  decor: Decor;
+  insets: EdgeInsets;
+  children: ReactElement;
+}) {
   return (
-    <SafeAreaProvider initialMetrics={metrics}>
+    <SafeAreaProvider initialMetrics={{ frame, insets }}>
       <AppProviders shell={shell} decor={decor}>
         {/* As `ForceUpdateGate` on the device, the screens wait for the remote switches; no test is below the minimum. */}
         <Opened opening={shell.remoteSwitches} failedTestID="language-pack-failed">
@@ -71,7 +83,13 @@ export function renderApp(
 export function renderApp(routes: Routes, options?: InApp): ReturnType<typeof renderRoutes>;
 export async function renderApp(
   screen: ReactElement | Routes,
-  { shell = testShell(), settings, decor = coreDecor, initialUrl = '/' }: InApp = {},
+  {
+    shell = testShell(),
+    settings,
+    decor = coreDecor,
+    initialUrl = '/',
+    insets = noInsets,
+  }: InApp = {},
 ) {
   const drawn = settings === undefined ? shell : await withSettings(shell, settings);
   if (isValidElement(screen)) {
@@ -79,7 +97,7 @@ export async function renderApp(
     return renderInGestureRoot(screen, {
       wrapper: ({ children }) => (
         <GestureHandlerRootView>
-          <InApp shell={drawn} decor={decor}>
+          <InApp shell={drawn} decor={decor} insets={insets}>
             {children}
           </InApp>
         </GestureHandlerRootView>
@@ -91,7 +109,7 @@ export async function renderApp(
   return renderRoutes(
     {
       _layout: () => (
-        <InApp shell={drawn} decor={decor}>
+        <InApp shell={drawn} decor={decor} insets={insets}>
           <Layout />
         </InApp>
       ),
