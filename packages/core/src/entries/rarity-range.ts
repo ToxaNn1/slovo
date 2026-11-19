@@ -12,7 +12,7 @@ const { rarityRange: record } = userStateRecords;
 export const LOWEST_RARITY: Rarity = 1;
 
 /** The highest rarity, at which every Word is within a Rarity Range from 1. */
-export const HIGHEST_RARITY: Rarity = 5;
+const HIGHEST_RARITY: Rarity = 5;
 
 /** The Rarity Range of every Word, «від 1 до 5». */
 export const EVERY_RARITY: RarityRange = { from: LOWEST_RARITY, to: HIGHEST_RARITY };

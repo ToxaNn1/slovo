@@ -150,7 +150,7 @@ const FIRST_WEEK_DAYS = 7;
 const isFirstWeekDay = (day: number): day is FirstWeekDay => day >= 1 && day <= FIRST_WEEK_DAYS;
 
 /** The most Words «Ціль дня виконано!» names. */
-export const GOAL_REACHED_WORDS = 3;
+const GOAL_REACHED_WORDS = 3;
 
 /** The most days the save-progress Feed Notice comes on. */
 const SAVE_PROGRESS_MOST_DAYS = 2;

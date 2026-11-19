@@ -34,7 +34,7 @@ export const quickQuestionSourceId = (source: QuickQuestionSource): string =>
  * The most characters a Quick Question prompt may hold: a Feed card fits no
  * longer one, so an Entry whose prompt runs past it is not asked.
  */
-export const QUICK_QUESTION_PROMPT_LIMIT = 140;
+const QUICK_QUESTION_PROMPT_LIMIT = 140;
 
 /**
  * The Quick Question (CONTEXT.md): it builds one Round from an enabled Game
