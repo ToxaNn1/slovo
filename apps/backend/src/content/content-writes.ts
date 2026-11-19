@@ -9,7 +9,7 @@ import {
   type RecordKind,
   type Refusal,
 } from '@slovo/content-rules';
-import { CONTENT_PAGE_SIZE } from '@slovo/contracts/admin-api';
+import { CONTENT_PAGE_SIZE, type RecordingsFilter } from '@slovo/contracts/admin-api';
 import { contentReport, missedTargets } from '@slovo/language-pack';
 import type { Word } from '@slovo/contracts';
 import {
@@ -25,7 +25,7 @@ import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import type { Database } from '../database/database';
-import { mediaGaps, readsDifferently, retireRecordings } from './media-rows';
+import { mediaGaps, readsDifferently, retireRecordings, voicesRecorded } from './media-rows';
 import { quoteCheckCounts } from './quote-check';
 import {
   actionLog,
@@ -39,6 +39,7 @@ import {
   contentTips,
   contentVersions,
   contentWords,
+  wordsInAllVoices,
   type ContentAuthor,
 } from '../database/schema';
 
@@ -840,20 +841,32 @@ export function createContentWrites({
       retired = false,
       categoryId,
       ids,
+      recordings,
       page = 1,
     }: {
       query?: string | undefined;
       retired?: boolean | undefined;
       categoryId?: string | undefined;
       ids?: readonly string[] | undefined;
+      recordings?: RecordingsFilter | undefined;
       page?: number | undefined;
     } = {},
   ) {
-    if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
+    const edition = editions.find(editionId);
+    if (edition === undefined) return { ok: false, reason: 'not-found' } as const;
     return db.transaction(async (tx) => {
       const contentVersion = await importedVersion(tx, editionId);
       if (contentVersion === undefined) return { ok: false, reason: 'not-imported' } as const;
       const needle = query.trim().toLocaleLowerCase();
+      // A Word's Recordings as «N з M» (ADR 0195).
+      const { voices, sample } = edition.config.narratorVoices;
+      const voiced =
+        kind === 'word'
+          ? await voicesRecorded(tx, editionId, {
+              voices: voices.map(({ id }) => id),
+              sampleWord: sample.word,
+            })
+          : undefined;
       const records = (await recordsAt(tx, editionId, contentVersion))[kind]
         .map((row) => {
           const fields: Readonly<Record<string, unknown>> = row.fields;
@@ -865,9 +878,24 @@ export function createContentWrites({
             ...(typeof category === 'string' ? { categoryId: category } : {}),
             retired: fields['retired'] === true,
             recordVersion: row.recordVersion,
+            ...(voiced === undefined
+              ? {}
+              : {
+                  recordings: {
+                    live: voiced.recorded(row.id),
+                    of: voices.length,
+                    allVoices: voiced.allVoices.has(row.id),
+                  },
+                }),
           };
         })
         .filter((row) => retired || !row.retired)
+        .filter(
+          (row) =>
+            recordings === undefined ||
+            (row.recordings !== undefined &&
+              (row.recordings.live === row.recordings.of) === (recordings === 'complete')),
+        )
         .filter((row) => categoryId === undefined || row.categoryId === categoryId)
         .filter((row) => ids === undefined || ids.includes(row.id))
         .filter((row) => needle === '' || row.label.toLocaleLowerCase().includes(needle))
@@ -1014,7 +1042,61 @@ export function createContentWrites({
     });
   }
 
-  return { openBatch, write, flag, report, record, list, unchecked, check, checkAll };
+  /**
+   * An Admin user puts a live Word on the Edition's list of Words in all
+   * voices, with an Action log row; the next run of the Recordings job
+   * records it in the missing Narrator Voices (ADR 0195).
+   */
+  async function addOtherVoices(
+    email: string,
+    { editionId, id }: { editionId: string; id: string },
+  ) {
+    const edition = editions.find(editionId);
+    if (edition === undefined) return { ok: false, reason: 'not-found' } as const;
+    return db.transaction(async (tx) => {
+      if ((await heldVersion(tx, editionId)) === undefined) {
+        return { ok: false, reason: 'not-imported' } as const;
+      }
+      const [word] = await tx
+        .select({ retired: contentWords.retired })
+        .from(contentWords)
+        .where(and(eq(contentWords.editionId, editionId), eq(contentWords.id, id)));
+      if (word === undefined || word.retired) return { ok: false, reason: 'not-live' } as const;
+      if (id === edition.config.narratorVoices.sample.word) {
+        return { ok: false, reason: 'listed' } as const;
+      }
+      const added = await tx
+        .insert(wordsInAllVoices)
+        .values({ editionId, wordId: id, addedAt: clock.now() })
+        .onConflictDoNothing()
+        .returning({ wordId: wordsInAllVoices.wordId });
+      if (added.length === 0) return { ok: false, reason: 'listed' } as const;
+      await tx.insert(actionLog).values({
+        who: { kind: 'admin-user', email },
+        at: clock.now(),
+        what: 'content.word.allVoices',
+        before: null,
+        after: { id },
+        reason: null,
+        editionId,
+        batchId: null,
+      });
+      return { ok: true, id } as const;
+    });
+  }
+
+  return {
+    openBatch,
+    write,
+    flag,
+    report,
+    record,
+    list,
+    unchecked,
+    check,
+    checkAll,
+    addOtherVoices,
+  };
 }
 
 export type ContentWrites = ReturnType<typeof createContentWrites>;

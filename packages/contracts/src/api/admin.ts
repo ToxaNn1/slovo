@@ -521,7 +521,8 @@ const contentWriteContract = {
     .route({
       method: 'POST',
       path: '/admin/content/{editionId}/records/word/{id}/voices',
-      summary: 'Put a Word on the list of Words in all voices: the next run of the Recordings job records it in the missing Narrator Voices',
+      summary:
+        'Put a Word on the list of Words in all voices: the next run of the Recordings job records it in the missing Narrator Voices',
       description:
         'An Admin user only, at one confirmation and no reason; an Агент token is refused. It leaves an Action log row. The request stays, so a later change of the Lemma or Stress records the Word again in every voice (ADR 0195).',
       tags: ['admin'],
