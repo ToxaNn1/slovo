@@ -153,9 +153,9 @@ export function createApiHandler({
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(
+      admin: adminProcedures({
         admin,
-        adminSignIn,
+        signIn: adminSignIn,
         editions,
         served,
         contentWrites,
@@ -164,9 +164,15 @@ export function createApiHandler({
         development,
         contentQueue,
         ownerChecks,
-        adminAnalytics,
-        { ...quality, accounts, services, serviceEntries, serviceMoney, serviceUsage, usdRates },
-      ),
+        analytics: adminAnalytics,
+        ...quality,
+        accounts,
+        services,
+        serviceEntries,
+        serviceMoney,
+        serviceUsage,
+        usdRates,
+      }),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(editions, contentStore, mediaBase),
       counters: countersProcedures(communityCounters),
