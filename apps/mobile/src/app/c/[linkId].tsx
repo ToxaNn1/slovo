@@ -73,8 +73,7 @@ export default function CollectionLinkScreen() {
             offline={preview.reason === 'offline'}
           />
         )}
-
-        </SafeAreaView>
+      </SafeAreaView>
     </UndoToastProvider>
   );
 }

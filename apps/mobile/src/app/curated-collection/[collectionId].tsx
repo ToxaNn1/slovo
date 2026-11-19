@@ -27,7 +27,8 @@ const { curatedCollection: words, curatedCollectionCount } = editionStrings.dash
  */
 export default function CuratedCollectionRoute() {
   const collectionId = useSegmentParam('collectionId');
-  const { screen, retry, pictogram, add, openCopy, openEntry } = useCuratedCollectionScreen(collectionId);
+  const { screen, retry, pictogram, add, openCopy, openEntry } =
+    useCuratedCollectionScreen(collectionId);
   const { count } = useEdition();
   const router = useRouter();
   const scroll = useListScroll<FlatList<RailBoardCard>>();
