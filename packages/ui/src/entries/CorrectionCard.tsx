@@ -11,7 +11,6 @@ import {
   entryCardFrame,
   fontScaleCap,
   space,
-  standardFormScale,
   titleSize,
   typeStyle,
   withAlpha,
@@ -307,56 +306,6 @@ export function NonStandardForm({
             textDecorationColor: withAlpha(colors.accent, 0.55),
           },
         ]}
-      />
-    </View>
-  );
-}
-
-/**
- * The standard form under the label «Українською краще», at a share of the
- * Lemma's size (`standardFormScale`), as one element VoiceOver reads with its
- * label; the Tip card shows its standard form the same way.
- */
-export function StandardForm({
-  form,
-  spoken,
-  size,
-  testID,
-}: {
-  form: string;
-  /** What VoiceOver reads for the form, such as with where its Stress falls. */
-  spoken: string;
-  /** The Lemma's size at the user's font size. */
-  size: TextSize;
-  testID: string;
-}) {
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const { strings, voice } = useEdition();
-  const turnActions = usePageTurnActions();
-  return (
-    <View
-      testID={testID}
-      accessible
-      accessibilityLabel={`${strings.correctionCard.standard}: ${spoken}`}
-      {...voice}
-      {...turnActions}
-      style={styles.form}
-    >
-      <WholeLinesText style={[typeStyle('formLabel', tokens), { color: colors.accentText }]}>
-        {strings.correctionCard.standard}
-      </WholeLinesText>
-      <WholeWordsText
-        text={capitalised(form, voice.accessibilityLanguage)}
-        typeRole="heroWord"
-        size={{
-          fontSize: size.fontSize * standardFormScale,
-          lineHeight: size.lineHeight * standardFormScale,
-        }}
-        tracking={-0.01}
-        maxFontSizeMultiplier={fontScaleCap.text}
-        lines={3}
-        style={[typeStyle('heroWord', tokens), { color: colors.ink }]}
       />
     </View>
   );
