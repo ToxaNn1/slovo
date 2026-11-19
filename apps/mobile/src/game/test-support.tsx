@@ -13,14 +13,11 @@ import {
   type Schedule,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, type XpRecord } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { renderApp } from '../shell/test-app';
 import GameScreen from '../app/game';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider, type ShareCard } from '../shell-value';
-import { SettingsProvider } from '../settings/settings';
+import { activeEditionFiles } from '../edition/edition';
+import type { ShareCard } from '../shell-value';
 import {
   GAMES_BOARD_SWITCHES,
   opened,
@@ -104,7 +101,10 @@ export async function moveApp(to: 'background' | 'foreground') {
 export const mockRouted: string[] = [];
 
 jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
   Redirect: () => null,
+  // The Game screen's own route, where a Badge earned toasts.
+  usePathname: () => '/game',
   useRouter: () => ({
     navigate: (href: string) => {
       mockRouted.push(`navigate ${href}`);
@@ -189,7 +189,7 @@ export const idiom = (index: number, longSense = false): Idiom => ({
 /** The haptic of a wrong answer. */
 export const warning = jest.fn();
 
-export const haptics: Haptics = {
+const mockHaptics: Haptics = {
   selection: jest.fn(),
   impactLight: jest.fn(),
   impactMedium: jest.fn(),
@@ -197,10 +197,15 @@ export const haptics: Haptics = {
   warning,
 };
 
-export const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
+/** The haptics the app plays, each a mock. */
+export const haptics = mockHaptics;
+
+// The app's haptics play on these instead of the device's motor; read late, once they stand.
+jest.mock('./haptics', () => ({
+  get hapticEngine() {
+    return mockHaptics;
+  },
+}));
 
 /** The UA Edition's origin languages, in its order. */
 const { originLanguages } = config as { originLanguages: { code: string; name: string }[] };
@@ -315,20 +320,7 @@ export async function renderScreen({
     settings: await settingsAt(settings),
     shareCard,
   });
-  await renderInGestureRoot(
-    // The screen inside the providers it reads; a `.ts` module, so no JSX.
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={shell}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <HapticsProvider haptics={haptics}>
-            <SettingsProvider>
-              <GameScreen />
-            </SettingsProvider>
-          </HapticsProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<GameScreen />, { shell });
   // The Game plans its offers once the composition is open.
   await waitFor(() => {
     expect(screen.getByTestId('game-mode-guess-word').props['accessibilityState']).toEqual({

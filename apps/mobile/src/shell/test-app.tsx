@@ -1,10 +1,12 @@
 import { Slot } from 'expo-router';
 import { isValidElement, type ComponentType, type ReactElement } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { coreDecor, createSettings, type Decor, type UserSettings } from '@slovo/core';
 
 import { edition } from '../edition/edition';
+import { Opened } from '../opened';
 import type { Shell } from '../shell-value';
 import { AppProviders, ScreenProviders } from './app-providers';
 import { renderInGestureRoot, renderRoutes } from './test-render';
@@ -47,7 +49,10 @@ function InApp({ shell, decor, children }: { shell: Shell; decor: Decor; childre
   return (
     <SafeAreaProvider initialMetrics={metrics}>
       <AppProviders shell={shell} decor={decor}>
-        <ScreenProviders>{children}</ScreenProviders>
+        {/* As `ForceUpdateGate` on the device, the screens wait for the remote switches; no test is below the minimum. */}
+        <Opened opening={shell.remoteSwitches} failedTestID="language-pack-failed">
+          <ScreenProviders>{children}</ScreenProviders>
+        </Opened>
       </AppProviders>
     </SafeAreaProvider>
   );
@@ -70,11 +75,16 @@ export async function renderApp(
 ) {
   const drawn = settings === undefined ? shell : await withSettings(shell, settings);
   if (isValidElement(screen)) {
-    return renderInGestureRoot(
-      <InApp shell={drawn} decor={decor}>
-        {screen}
-      </InApp>,
-    );
+    // The tree is the renderer's wrapper, so a `rerender` of the screen keeps it.
+    return renderInGestureRoot(screen, {
+      wrapper: ({ children }) => (
+        <GestureHandlerRootView>
+          <InApp shell={drawn} decor={decor}>
+            {children}
+          </InApp>
+        </GestureHandlerRootView>
+      ),
+    });
   }
   // A route map's own root layout, a navigator, draws inside the app's tree; a `Slot` by default.
   const { _layout: Layout = Slot, ...routes } = screen;
