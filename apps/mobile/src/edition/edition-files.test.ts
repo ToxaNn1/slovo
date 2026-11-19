@@ -1005,7 +1005,7 @@ describe('the board 11 strings', () => {
     expect(parsed.hidden.show).toBe('Показати');
     expect(parsed.settings.widgets).toEqual({
       title: 'Віджети',
-      subtitle: 'Слово дня на головному екрані та екрані блокування.',
+      subtitle: 'Рідкісні слова на головному екрані та екрані блокування.',
       previews: { small: 'Малий', medium: 'Середній', lockScreen: 'Екран блокування' },
     });
     expect(parsed.settings.privacy.dataExport.title).toBe('Експортувати мої дані');

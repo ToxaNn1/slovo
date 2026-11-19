@@ -194,6 +194,19 @@ describe('About', () => {
   });
 });
 
+describe('About › no rows that wait (audit D-14)', () => {
+  it('lists no «ВІДГУК» section and no row marked «СКОРО»', async () => {
+    await renderAbout();
+
+    const { about } = editionStrings.settings;
+    expect(screen.queryByText(about.feedback)).toBeNull();
+    expect(screen.queryByText(about.suggestWord.title)).toBeNull();
+    expect(screen.queryByText(about.reportError.title)).toBeNull();
+    expect(screen.queryByText(editionStrings.settings.soon)).toBeNull();
+    expect(screen.getByTestId('about-row-privacy')).toBeOnTheScreen();
+  });
+});
+
 describe('About › its header (app pass 91)', () => {
   it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
     await renderAbout();
