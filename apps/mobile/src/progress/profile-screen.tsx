@@ -1,5 +1,12 @@
 import { RARITIES } from '@slovo/contracts';
-import { READER_NAME_AT_MOST, readerNameLength, type Account, type LevelState } from '@slovo/core';
+import {
+  READER_NAME_AT_MOST,
+  readerNameLength,
+  type Account,
+  type CalendarWeek,
+  type LevelState,
+  type ProgressState,
+} from '@slovo/core';
 import {
   ActiveDaysCalendar,
   IconButton,
@@ -42,6 +49,26 @@ import { dayText } from './day-text';
 
 const strings = editionStrings.settings.profile;
 
+/** The Active Days calendar of each Progress state, read once per state. */
+const calendars = new WeakMap<ProgressState, readonly CalendarWeek[]>();
+
+/**
+ * The Active Days calendar as of Progress's state: read from the Core once per
+ * state, so a redraw that changes no Progress reads none. Read straight in the
+ * render, React Compiler kept the first read for good: it sees no state in
+ * `calendar()`.
+ */
+function calendarOf(progress: {
+  readonly state: ProgressState;
+  calendar(): readonly CalendarWeek[];
+}): readonly CalendarWeek[] {
+  const kept = calendars.get(progress.state);
+  if (kept !== undefined) return kept;
+  const weeks = progress.calendar();
+  calendars.set(progress.state, weeks);
+  return weeks;
+}
+
 /**
  * The Profile tab, as the board (ADR 0145): the title, the Level card (its
  * ring, its name, the XP to the next), the giant Streak and the Best Streak,
@@ -70,8 +97,9 @@ function ProfileBlocks() {
   const composition = useComposition();
   const xp = useSubscribed(composition.xpLog, ({ state }) => state);
   const streakBreak = useSubscribed(composition.streakBreak, ({ state }) => state);
-  // Progress makes a new state for each change it tells of, so each draws the calendar again.
   const progress = useSubscribed(composition.progress, ({ state }) => state);
+  // Progress makes a new state for each change it tells of, so each draws the calendar again.
+  const weeks = useSubscribed(composition.progress, calendarOf);
   const confirmed = useSubscribed(composition.knowledge, ({ state }) => state.confirmed);
   const badges = useSubscribed(composition.badges, ({ state }) => state);
   const { onPress, opening } = useBadgeOpening();
@@ -102,7 +130,6 @@ function ProfileBlocks() {
     level !== undefined && level.level > 0
       ? composition.xpLog.reachedOn(xp.total - level.progress)
       : undefined;
-  const weeks = composition.progress.calendar();
   const today = weeks.flat().find(({ state }) => state === 'today');
   /** The Lemma of today's Word of the Day, once the archive keeps it. */
   const todayWord = useWordOfTheDayOn(today?.date)?.row.title;
