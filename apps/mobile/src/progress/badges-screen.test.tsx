@@ -1,11 +1,10 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { Edition, FeatureSwitch, InterfaceSound, UserStateFact } from '@slovo/core';
 import { seedUserState } from '@slovo/core/testing';
-import { InterfaceSoundsProvider, ReduceMotionProvider } from '@slovo/ui';
+import { InterfaceSoundsProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 
 import { edition as shipped, editionStrings } from '../edition/edition';
-import { SettingsProvider } from '../settings/settings';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
 import { BadgesScreen } from './badges-screen';
@@ -48,18 +47,16 @@ async function renderScreen({
     ...(xpLog === undefined ? {} : { userState: opened(await seedUserState({ xpLog })) }),
   }).composition.opened();
   await renderApp(
-    <ReduceMotionProvider reduceMotion={reduceMotion}>
-      <InterfaceSoundsProvider sounds={{ play: (sound) => played.push(sound) }}>
-        <SettingsProvider>
-          <BadgesScreen />
-        </SettingsProvider>
-      </InterfaceSoundsProvider>
-    </ReduceMotionProvider>,
+    // The app's interface sounds play into `played` here.
+    <InterfaceSoundsProvider sounds={{ play: (sound) => played.push(sound) }}>
+      <BadgesScreen />
+    </InterfaceSoundsProvider>,
     {
       shell: testShell({
         composition: opened(composition),
         remoteSwitches,
       }),
+      settings: { reduceMotion },
     },
   );
   return composition;

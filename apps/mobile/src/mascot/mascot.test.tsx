@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import type { Word } from '@slovo/contracts';
 import { openComposition, type Composition, type Edition, type UserStateFact } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, SEEN_DWELL_MS } from '@slovo/core/testing';
-import { RouteProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
@@ -40,6 +39,13 @@ const word: Word = {
   retired: false,
 };
 
+/** The route on screen, as the router gives it to the app's tree. */
+let mockPathname = '/feed';
+jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
+  usePathname: () => mockPathname,
+}));
+
 /** The celebrations over a Core composition with one Word, whose clock moves with the fake timers, with the Mascot on or off in effect and the counters hidden or not. */
 async function renderCelebrations({
   on = true,
@@ -68,12 +74,8 @@ async function renderCelebrations({
     }),
     settings: await settingsAt({ noCounters }),
   });
-  await renderApp(
-    <RouteProvider route={route}>
-      <MascotCelebrations />
-    </RouteProvider>,
-    { shell },
-  );
+  mockPathname = route;
+  await renderApp(<MascotCelebrations />, { shell });
   return composition;
 }
 
