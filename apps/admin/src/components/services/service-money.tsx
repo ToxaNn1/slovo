@@ -180,7 +180,7 @@ const kyivDay = (now: Date) =>
  * day from the Kyiv day of `now`, else next month's; a day past a month's end
  * is its last day.
  */
-export function nextBillingDay(billingDay: number, now: Date): string {
+function nextBillingDay(billingDay: number, now: Date): string {
   const [year = 0, month = 1, day = 1] = kyivDay(now).split('-').map(Number);
   const on = (y: number, m: number) => {
     const last = new Date(Date.UTC(y, m, 0)).getUTCDate();

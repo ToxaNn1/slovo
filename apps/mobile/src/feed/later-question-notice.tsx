@@ -205,7 +205,7 @@ function InterestsQuestion({
  * and «Готово», which hides every Category not picked. The last picked chip
  * can't be unpicked, as on the Mix screen. For the Feed Notice.
  */
-export function InterestsChoice({
+function InterestsChoice({
   testIDPrefix,
   onDone,
 }: {

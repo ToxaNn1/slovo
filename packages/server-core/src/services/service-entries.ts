@@ -8,7 +8,7 @@ import type { AccessWrite, Actor, AdminAccess } from '../admin/admin-access';
 import type { Clock } from '../ports';
 
 /** How long a fresh TOTP opens «Показати» and «Копіювати» for one admin session (ADR 0164). */
-export const VAULT_OPEN_MS = 15 * 60 * 1000;
+const VAULT_OPEN_MS = 15 * 60 * 1000;
 
 /**
  * The Vault (ADR 0164): seals the secret Service entries under `VAULT_KEY`,

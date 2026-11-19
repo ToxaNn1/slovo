@@ -4,7 +4,7 @@ import type { WordMedia } from '@slovo/core';
 import type { Statement } from './record-rows';
 
 /** The `metadata` key of the URL root of the Edition's Media Store (ADR 0099). */
-export const MEDIA_BASE = 'media_base';
+const MEDIA_BASE = 'media_base';
 
 const SQL = {
   recording: `INSERT INTO media_recordings (word_id, narrator_voice, recording_kind, hash, size, duration_ms)

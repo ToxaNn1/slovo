@@ -35,7 +35,7 @@ export type PostHogRead<T> =
   { readonly ok: true; readonly value: T; readonly fetchedAt: Date } | { readonly ok: false };
 
 /** How many Words of each mark the Лічильники name. */
-export const TOP_WORDS = 10;
+const TOP_WORDS = 10;
 
 /** The Community Counters sums, top Words and questionnaire counts of some Editions. */
 export interface CountersSummary {

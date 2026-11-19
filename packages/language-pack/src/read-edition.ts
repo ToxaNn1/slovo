@@ -135,6 +135,6 @@ function sortedById<T extends { readonly id: string }>(authored: readonly Author
 }
 
 /** Code-unit order, independent of the machine's locale. */
-export function compare(a: string, b: string): number {
+function compare(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
