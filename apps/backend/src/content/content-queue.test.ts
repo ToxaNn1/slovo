@@ -134,6 +134,30 @@ describe('the Content queue', () => {
     expect(batches.map(({ id }) => id)).toEqual([later.batchId]);
   });
 
+  it('leaves a Word needing a new Recording when it rolls back an edit of its Lemma (ADR 0099, 0195)', async () => {
+    const { client, agent, owner } = await queueBackend();
+    const word = (await snapshotOf(client)).words.find(({ retired }) => !retired);
+    if (word === undefined) throw new Error('no Word');
+    const { batchId } = await agent.admin.content.openBatch({ editionId: 'uk' });
+    const edited = await agent.admin.content.edit({
+      editionId: 'uk',
+      kind: 'word',
+      id: word.id,
+      batchId,
+      recordVersion: 1,
+      fields: { ...word, lemma: `${word.lemma}ик` },
+    });
+    expect(edited).toMatchObject({ needsNewRecording: true });
+
+    await owner.admin.contentQueue.rollback({ batchId, reason: 'Погана пачка' });
+
+    expect(await wordOf(client, word.id)).toEqual(word);
+    // The Recordings of the edited Lemma were retired: the restored one is recorded anew.
+    expect(
+      await owner.admin.content.record({ editionId: 'uk', kind: 'word', id: word.id }),
+    ).toMatchObject({ recordVersion: 3, needsNewRecording: true });
+  });
+
   it('checks a save against the writes before it and the rollback between them', async () => {
     const { client, agent, owner } = await queueBackend();
     const { batchId, createdId } = await agentBatch(client, agent);
