@@ -141,7 +141,7 @@ function Board({ collectionId, created }: { collectionId: string; created: boole
           <CollectionHeader
             name={name}
             count={count(strings.wordCount, shown.length)}
-            back={{ testID: 'collection-back', label: collectionStrings.title, onPress: leave }}
+            back={{ testID: 'collection-back', label: editionStrings.back, onPress: leave }}
             menu={
               collection === undefined
                 ? undefined

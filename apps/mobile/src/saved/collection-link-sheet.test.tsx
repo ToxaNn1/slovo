@@ -300,6 +300,19 @@ describe('the recipient sheet of a Collection Link', () => {
     expect(screen.queryByRole('button', { name: strings.add })).toBeNull();
   });
 
+  it('«Спробувати ще» offline reads the link again once the connection is back', async () => {
+    await share('Осінь', PACK);
+    api.online = false;
+    await renderSheet();
+
+    api.online = true;
+    await fireEvent.press(screen.getByRole('button', { name: 'Спробувати ще' }));
+
+    expect(await screen.findByText('Осінь')).toBeTruthy();
+    expect(screen.queryByText(strings.offline)).toBeNull();
+    expect(screen.getByRole('button', { name: strings.add })).toBeTruthy();
+  });
+
   it('says an unknown link isn’t available, with nothing to add', async () => {
     mockLinkId = UNKNOWN_ID;
 

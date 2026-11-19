@@ -34,14 +34,16 @@ const strings = collectionStrings.link;
  * in a toast that it could not; a second tap opens the copy made, never a «(2)»;
  * with none of its Entries in the pack, «Додати собі» is disabled. A spinner
  * shows until the link is read.
- * Offline it says there is no connection; an unknown link, one of another Edition or one with Collection
+ * Offline it says there is no connection, with «Спробувати ще», which reads
+ * the link again; an unknown link, one of another Edition or one with Collection
  * Links off says the link isn't available.
  */
 export default function CollectionLinkScreen() {
   const linkId = useSegmentParam('linkId');
-  const preview = useCollectionLinkPreview(linkId);
   const { colors } = useTokens();
   const router = useRouter();
+  // Each «Спробувати ще» mounts the read afresh, so it reads the link again.
+  const [attempt, setAttempt] = useState(0);
 
   return (
     <UndoToastProvider>
@@ -59,22 +61,35 @@ export default function CollectionLinkScreen() {
             }}
           />
         </View>
-        {preview === undefined ? (
-          <ActivityIndicator
-            testID="collection-link-loading"
-            color={colors.muted}
-            style={styles.loading}
-          />
-        ) : preview.ok ? (
-          <Preview preview={preview} />
-        ) : (
-          <Failure
-            text={preview.reason === 'offline' ? strings.offline : strings.notFound}
-            offline={preview.reason === 'offline'}
-          />
-        )}
+        <LinkPreview
+          key={attempt}
+          linkId={linkId}
+          onRetry={() => {
+            setAttempt((done) => done + 1);
+          }}
+        />
       </SafeAreaView>
     </UndoToastProvider>
+  );
+}
+
+/** The link as read: a spinner until then, its preview, or why there is none. */
+function LinkPreview({ linkId, onRetry }: { linkId: string; onRetry: () => void }) {
+  const preview = useCollectionLinkPreview(linkId);
+  const { colors } = useTokens();
+  if (preview === undefined)
+    return (
+      <ActivityIndicator
+        testID="collection-link-loading"
+        color={colors.muted}
+        style={styles.loading}
+      />
+    );
+  if (preview.ok) return <Preview preview={preview} />;
+  return preview.reason === 'offline' ? (
+    <Failure text={strings.offline} onRetry={onRetry} />
+  ) : (
+    <Failure text={strings.notFound} />
   );
 }
 
@@ -157,14 +172,17 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
   );
 }
 
-/** Why the link opens no preview, under the Mascot asleep when it is offline. */
-function Failure({ text, offline }: { text: string; offline: boolean }) {
+/**
+ * Why the link opens no preview; offline, under the Mascot asleep and with
+ * «Спробувати ще», which reads it again.
+ */
+function Failure({ text, onRetry }: { text: string; onRetry?: () => void }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <View style={styles.failure}>
-      {offline && <MascotAs state="sleeps" />}
+      {onRetry !== undefined && <MascotAs state="sleeps" />}
       <Text
         testID="collection-link-failure"
         {...voice}
@@ -172,6 +190,9 @@ function Failure({ text, offline }: { text: string; offline: boolean }) {
       >
         {text}
       </Text>
+      {onRetry !== undefined && (
+        <Button testID="collection-link-retry" label={strings.retry} onPress={onRetry} />
+      )}
     </View>
   );
 }

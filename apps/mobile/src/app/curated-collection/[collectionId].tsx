@@ -5,6 +5,7 @@ import {
   RailBoard,
   type RailBoardCard,
   RailScreenHero,
+  UndoToastProvider,
   useEdition,
   useListScroll,
 } from '@slovo/ui';
@@ -26,7 +27,14 @@ const { curatedCollection: words, curatedCollectionCount } = editionStrings.dash
  * the error with its retry.
  */
 export default function CuratedCollectionRoute() {
-  const collectionId = useSegmentParam('collectionId');
+  return (
+    <UndoToastProvider>
+      <CuratedCollectionScreen collectionId={useSegmentParam('collectionId')} />
+    </UndoToastProvider>
+  );
+}
+
+function CuratedCollectionScreen({ collectionId }: { collectionId: string }) {
   const { screen, retry, pictogram, add, openCopy, openEntry } =
     useCuratedCollectionScreen(collectionId);
   const { count } = useEdition();
@@ -36,7 +44,7 @@ export default function CuratedCollectionRoute() {
   if (retry !== undefined)
     return (
       <ReadFailed
-        back={{ testID: 'curated-collection-back', label: editionStrings.tabs.home }}
+        back={{ testID: 'curated-collection-back', label: editionStrings.back }}
         onRetry={retry}
         testID="curated-collection-error"
       />
@@ -61,7 +69,7 @@ export default function CuratedCollectionRoute() {
           mascot="waits"
           back={{
             testID: 'curated-collection-back',
-            label: editionStrings.tabs.home,
+            label: editionStrings.back,
             onPress: () => {
               router.back();
             },
@@ -72,6 +80,7 @@ export default function CuratedCollectionRoute() {
                   kind: 'opens',
                   testID: 'curated-collection-add',
                   label: words.addedButton,
+                  hint: words.openCopyHint,
                   onPress: openCopy,
                 }
               : {

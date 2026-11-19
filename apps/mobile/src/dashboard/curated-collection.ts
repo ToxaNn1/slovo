@@ -4,9 +4,12 @@ import type {
   CuratedCollectionPictogram,
   CuratedCollectionScreen as Screen,
 } from '@slovo/core';
+import { fill } from '@slovo/contracts';
+import { useUndoToast } from '@slovo/ui';
 import { useCallback } from 'react';
 
 import { useComposition, useCompositionRead } from '../composition';
+import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { useShown } from '../shown-in-effect';
@@ -45,7 +48,7 @@ export interface CuratedCollectionScreen {
   readonly retry: (() => void) | undefined;
   /** The pictogram its tile draws, whose big shape is the hero's glyph (ADR 0178). */
   readonly pictogram: CuratedCollectionPictogram | undefined;
-  /** «+ Додати»: copies it into the reader's Collections. */
+  /** «+ Додати»: copies it into the reader's Collections and says so in a toast. */
   readonly add: () => void;
   /** «У Колекціях»: opens the reader's copy, the Collection made from it. */
   readonly openCopy: () => void;
@@ -64,6 +67,7 @@ export function useCuratedCollectionScreen(collectionId: string): CuratedCollect
   const { curatedCollections, collections } = useComposition();
   const openScreen = useOpenScreen();
   const { curatedCollectionFeed } = useShown();
+  const showToast = useUndoToast();
   const read = useCallback(
     async (open: Composition) => (await open.curatedCollections.screen(collectionId)) ?? null,
     [collectionId],
@@ -78,6 +82,9 @@ export function useCuratedCollectionScreen(collectionId: string): CuratedCollect
       ?.pictogram,
     add: () => {
       void keep('the copy of a Curated Collection', curatedCollections.add(collectionId));
+      showToast({
+        message: fill(editionStrings.dashboard.curatedCollection.toasts.added, { name }),
+      });
     },
     openCopy: () => {
       const copy = collections.list.find(({ source }) => source === collectionId);

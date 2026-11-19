@@ -641,6 +641,10 @@ describe('the Curated Collections rail', () => {
     expect(screen.queryByRole('togglebutton')).toBeNull();
     expect(screen.getByTestId('curated-collection-add-icon')).toBeTruthy();
     expect(composition.curatedCollections.rail.map((card) => card.added)).toEqual([true]);
+    expect(screen.getByText('Добірка «Лагідні слова» тепер у твоїх Колекціях.')).toBeTruthy();
+    expect(screen.getByTestId('curated-collection-add').props['accessibilityHint']).toBe(
+      'Торкнися, щоб відкрити копію в Колекціях.',
+    );
   });
 
   it('«У КОЛЕКЦІЯХ» opens the copy in the Collections and makes no second one', async () => {
