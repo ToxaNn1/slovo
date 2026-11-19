@@ -14,7 +14,7 @@ export function usd(cents: number): string {
 }
 
 /** Whole hryvnias of the dollar cents at the rate, «2 013 ₴». */
-export const uah = (cents: number, rate: UsdRate): string =>
+const uah = (cents: number, rate: UsdRate): string =>
   `${Math.round((cents / 100) * rate.uahPerUsd).toLocaleString('uk-UA')} ₴`;
 
 /** The NBU rate the hryvnias are counted at, kept by the backend for the Kyiv day. */

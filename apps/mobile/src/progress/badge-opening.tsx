@@ -14,7 +14,7 @@ const strings = editionStrings.settings.badges;
 const familyOf = ({ family }: BadgeState) => edition.badgeFamilies.find(({ id }) => id === family);
 
 /** The shape of a Badge's family. */
-export const shapeOf = (badge: BadgeState) => familyOf(badge)?.shape ?? 'circle';
+const shapeOf = (badge: BadgeState) => familyOf(badge)?.shape ?? 'circle';
 
 /** What a Badge's condition asks, in the Edition's short words (ADR 0085). */
 export const conditionOf = ({ id }: BadgeState) =>

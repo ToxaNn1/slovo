@@ -1,8 +1,8 @@
-import { ContentTargetsSchema, type ContentTargets } from '@slovo/contracts';
+import type { ContentTargets } from '@slovo/contracts';
 
 import type { ContentReport } from './report';
 
-export { ContentTargetsSchema, type ContentTargets };
+export type { ContentTargets };
 
 export type ContentTarget = keyof ContentTargets;
 

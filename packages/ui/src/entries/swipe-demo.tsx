@@ -153,7 +153,7 @@ export function demoCard(place: number): { x: number; tilt: number } {
 }
 
 /** How far the Feed is lifted at `place`, the card on screen and the next one together. */
-export function demoLift(place: number): number {
+function demoLift(place: number): number {
   'worklet';
   return keyframe(place, liftStops, lifts, glide);
 }

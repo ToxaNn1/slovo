@@ -28,11 +28,11 @@ const RESERVED_DOMAINS = [
 ];
 
 /** Whether the domain is a reserved one or a name under it. */
-export const isReservedDomain = (domain: string) =>
+const isReservedDomain = (domain: string) =>
   RESERVED_DOMAINS.some((reserved) => domain === reserved || domain.endsWith(`.${reserved}`));
 
 /** A message for a placeholder domain a release build refuses. */
-export const placeholderDomainMessage = (domain: string) =>
+const placeholderDomainMessage = (domain: string) =>
   `"${domain}" is a placeholder: a release build needs the real domain`;
 
 /** A path to a file, relative to the repository root, such as `editions/uk/assets/icon.png`. */

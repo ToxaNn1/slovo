@@ -20,7 +20,7 @@ export type CandidateRarity = (typeof CANDIDATE_RARITIES)[number];
 export type Rarity = 1 | CandidateRarity;
 
 /** The Category every line gets: the writer fills it in before `source:words` runs. */
-export const CATEGORY_PLACEHOLDER = '?';
+const CATEGORY_PLACEHOLDER = '?';
 
 const DEFAULT_COUNT = 100;
 const DEFAULT_POS_SHARES = 'noun:55,adj:20,verb:20,adv:5';

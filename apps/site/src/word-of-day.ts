@@ -1,7 +1,7 @@
 import type { Word } from '@slovo/contracts';
 
 /** The rarity a Word needs to be the site's Word of the Day. */
-export const WORD_OF_DAY_MIN_RARITY = 3;
+const WORD_OF_DAY_MIN_RARITY = 3;
 
 const kyivDate = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Europe/Kyiv',

@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { readJson, unavailableRead } from '../development/read-json';
 
 /** Railway's Hobby plan: $5 of usage a month is included. */
-export const RAILWAY_INCLUDED_USD = 5;
+const RAILWAY_INCLUDED_USD = 5;
 
 /**
  * Railway's price of each measurement its usage answers, in USD: a vCPU and

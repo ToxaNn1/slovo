@@ -49,7 +49,7 @@ const KIND_OF_PREFIX = {
  * A snapshot of the UA Edition whose only records are the given ones, each
  * under the kind its id prefix names, parsed as the backend's answer is.
  */
-export function snapshotWith(records: Record<string, unknown> = {}): ContentSnapshot {
+function snapshotWith(records: Record<string, unknown> = {}): ContentSnapshot {
   const kinds: Record<string, unknown[]> = {};
   for (const [id, record] of Object.entries(records)) {
     const prefix = id.slice(0, 2);

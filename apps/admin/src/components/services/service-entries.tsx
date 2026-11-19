@@ -16,7 +16,7 @@ import { Button } from '../ui/button';
 import { VaultUnlockDialog } from './vault-unlock-dialog';
 
 /** What the Власник reads of each entry type. */
-export const ENTRY_TYPE_LABELS: Readonly<Record<ServiceEntryType, string>> = {
+const ENTRY_TYPE_LABELS: Readonly<Record<ServiceEntryType, string>> = {
   login: 'Логін',
   password: 'Пароль',
   token: 'Токен / API-ключ',

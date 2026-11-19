@@ -87,7 +87,7 @@ export const nearLimitOf = (read: UsageAnswer | undefined) =>
   read !== undefined && limitsOf(read).some(nearLimit);
 
 /** The yellow mark of a Service at 90 % of a limit or more. */
-export function NearLimitMark({ read }: { readonly read: UsageAnswer }) {
+function NearLimitMark({ read }: { readonly read: UsageAnswer }) {
   if (!nearLimitOf(read)) return null;
   return (
     <span className="flex items-center gap-1.5 text-xs text-warn">

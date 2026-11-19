@@ -24,13 +24,13 @@ export interface ArchiveSource {
   readonly entry: string;
 }
 
-export const MORFOLOGIK_UKRAINIAN: ArchiveSource = {
+const MORFOLOGIK_UKRAINIAN: ArchiveSource = {
   url: 'https://repo1.maven.org/maven2/ua/net/nlp/morfologik-ukrainian-lt/6.8.6/morfologik-ukrainian-lt-6.8.6.jar',
   sha256: '4b8a06a731d12047dd91bfb3a63638f258b4477f1591e167fe0b286a4c22c645',
   entry: 'org/languagetool/resource/uk/ukrainian.dict',
 };
 
-export const WORDFREQ_UK: ArchiveSource = {
+const WORDFREQ_UK: ArchiveSource = {
   url: 'https://files.pythonhosted.org/packages/24/61/62835c475d69872d30689f284497853fe33fe1d6dd18f57346d13305861d/wordfreq-3.1.1-py3-none-any.whl',
   sha256: '4b1c6ecffc6198be3396d5cf871c4423ca71c907c231348d352dd54d62b97473',
   entry: 'wordfreq/data/large_uk.msgpack.gz',

@@ -20,7 +20,7 @@ export interface Section {
 }
 
 /** The eight sections in sidebar order (ADR 0088, 0164); Магазини is deferred whole. */
-export const SECTIONS = [
+const SECTIONS = [
   {
     path: '/',
     title: 'Огляд',

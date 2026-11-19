@@ -67,7 +67,7 @@ export function CardKicker({ text, testID }: { text: string; testID: string }) {
  * Moves a kicker's tight line down on iOS to where the board's CSS draws it,
  * so its capitals sit level with the middle of the corner tiles beside it.
  */
-export const kickerLevel =
+const kickerLevel =
   Platform.OS === 'ios' ? { transform: [{ translateY: tightLineDrop('cardKicker') }] } : {};
 
 const styles = StyleSheet.create({

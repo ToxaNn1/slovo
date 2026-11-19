@@ -30,7 +30,7 @@ export type Cell =
     };
 
 /** Whether a Rule's targets are every reader of the Edition. */
-export function targetsEveryone(targets: RuleTargets): boolean {
+function targetsEveryone(targets: RuleTargets): boolean {
   return Object.values(targets).every((target) => target === undefined);
 }
 

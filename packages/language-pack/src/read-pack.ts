@@ -29,7 +29,7 @@ export function nodePackDatabase(db: DatabaseSync): PackDatabase {
 }
 
 /** Puts `node:sqlite` behind the transaction a Patch is applied in. */
-export function nodePackWriter(db: DatabaseSync): PackWriteDatabase {
+function nodePackWriter(db: DatabaseSync): PackWriteDatabase {
   return {
     async transaction(run) {
       db.exec('BEGIN');
