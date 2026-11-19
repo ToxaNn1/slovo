@@ -22,8 +22,10 @@ export const DashboardStringsSchema = z.strictObject({
   subtitle: TextSchema,
   /** The line under the open hero's Lemma, «{stress} · {partOfSpeech}». Takes the Lemma with its Stress and the short part of speech. */
   wordLine: templateOf('stress', 'partOfSpeech'),
-  /** The label beside the open hero's rarity bars, «Рідкість {rarity} з 5». */
+  /** The label beside the open hero's rarity bars, «Рідкість {rarity}/5». */
   rarity: templateOf('rarity'),
+  /** What VoiceOver reads for the rarity bars, «Рідкість {rarity} з 5». */
+  rarityLabel: templateOf('rarity'),
   /** The Mood check-in block under the hero. */
   mood: z.strictObject({
     /** The block's title over the Mood tiles, «Як настрій?». */

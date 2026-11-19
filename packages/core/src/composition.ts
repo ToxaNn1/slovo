@@ -721,6 +721,7 @@ export async function openComposition({
     clock,
     entries,
     wordOfTheDay,
+    feed,
     mix,
     xpLog,
     analytics,
