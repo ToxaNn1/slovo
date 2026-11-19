@@ -16,16 +16,14 @@ import {
   seedUserState,
   createMemoryContentStore,
 } from '@slovo/core/testing';
-import { EditionProvider, fill } from '@slovo/ui';
+import { fill } from '@slovo/ui';
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition as shipped, editionStrings } from '../edition/edition';
 import { openOnce } from '../opening';
-import { SettingsProvider } from '../settings/settings';
-import { ShellProvider, type ShareCard } from '../shell-value';
+import { type ShareCard } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 import { ProfileScreen } from './profile-screen';
 
 /** The UA Edition as it ships, with the Daily Crossword on, so its Badges show (ADR 0176). */
@@ -36,15 +34,11 @@ const edition: Edition = {
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
   useRouter: () => ({ back: jest.fn(), push: mockPush }),
 }));
 
 const strings = editionStrings.settings.profile;
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** An Account no one is signed in to, opened. */
 async function signedOutAccount() {
@@ -192,26 +186,16 @@ async function renderScreen({
   if (name !== undefined) await composition.readerName.change(name);
   await new Promise((resolve) => setTimeout(resolve, 0));
   const account = withAccount ? await signedOutAccount() : undefined;
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider
-        shell={testShell({
-          userState,
-          composition: opened(composition),
-          remoteSwitches,
-          settings: await settingsAt({ noCounters }),
-          account,
-          shareCard,
-        })}
-      >
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <SettingsProvider>
-            <ProfileScreen />
-          </SettingsProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<ProfileScreen />, {
+    shell: testShell({
+      userState,
+      composition: opened(composition),
+      remoteSwitches,
+      settings: await settingsAt({ noCounters }),
+      account,
+      shareCard,
+    }),
+  });
   await act(async () => {
     await Promise.resolve();
   });

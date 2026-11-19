@@ -1,15 +1,13 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { Edition, FeatureSwitch, InterfaceSound, UserStateFact } from '@slovo/core';
 import { seedUserState } from '@slovo/core/testing';
-import { EditionProvider, InterfaceSoundsProvider, ReduceMotionProvider } from '@slovo/ui';
+import { InterfaceSoundsProvider, ReduceMotionProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition as shipped, editionStrings } from '../edition/edition';
 import { SettingsProvider } from '../settings/settings';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 import { BadgesScreen } from './badges-screen';
 
 /** The UA Edition as it ships, with the Daily Crossword on, so its Badges show (ADR 0176). */
@@ -18,12 +16,10 @@ const edition: Edition = {
   isFeatureEnabled: (feature) => feature === 'dailyCrossword' || shipped.isFeatureEnabled(feature),
 };
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn() }) }));
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
+jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
+  useRouter: () => ({ back: jest.fn() }),
+}));
 
 /** The Interface sounds the screen played, in order. */
 let played: InterfaceSound[] = [];
@@ -51,25 +47,20 @@ async function renderScreen({
     remoteSwitches,
     ...(xpLog === undefined ? {} : { userState: opened(await seedUserState({ xpLog })) }),
   }).composition.opened();
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider
-        shell={testShell({
-          composition: opened(composition),
-          remoteSwitches,
-        })}
-      >
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <ReduceMotionProvider reduceMotion={reduceMotion}>
-            <InterfaceSoundsProvider sounds={{ play: (sound) => played.push(sound) }}>
-              <SettingsProvider>
-                <BadgesScreen />
-              </SettingsProvider>
-            </InterfaceSoundsProvider>
-          </ReduceMotionProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
+  await renderApp(
+    <ReduceMotionProvider reduceMotion={reduceMotion}>
+      <InterfaceSoundsProvider sounds={{ play: (sound) => played.push(sound) }}>
+        <SettingsProvider>
+          <BadgesScreen />
+        </SettingsProvider>
+      </InterfaceSoundsProvider>
+    </ReduceMotionProvider>,
+    {
+      shell: testShell({
+        composition: opened(composition),
+        remoteSwitches,
+      }),
+    },
   );
   return composition;
 }
