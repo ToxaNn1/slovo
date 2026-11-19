@@ -1,4 +1,8 @@
-import { CONTENT_PAGE_SIZE } from '@slovo/contracts/admin-api';
+import {
+  CONTENT_PAGE_SIZE,
+  RecordingsFilterSchema,
+  type RecordingsFilter,
+} from '@slovo/contracts/admin-api';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 
@@ -9,6 +13,7 @@ import { IllustrationUpload } from './illustration';
 import { CONTENT_KINDS, type KindEditor } from './kinds';
 import { Pager } from '../pager';
 import { RecordForm, type Written } from './record-form';
+import { RecordingsCell } from './recordings-cell';
 
 /** The record the editor has open: none, a new one, or one by its id. */
 type Open =
@@ -36,18 +41,27 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
+  // Words only: the filter by Recordings (ADR 0195).
+  const [voiced, setVoiced] = useState<RecordingsFilter>();
   const [open, setOpen] = useState<Open>(NONE);
   const [written, setWritten] = useState<Written>();
   const kind = editor.kind;
+  const recordings = kind === 'word' ? voiced : undefined;
 
   const card = useQuery({
     queryKey: ['edition-card', editionId],
     queryFn: () => adminApi.editionCard({ editionId }),
   });
   const records = useQuery({
-    queryKey: ['content', 'records', editionId, kind, query, page],
+    queryKey: ['content', 'records', editionId, kind, query, recordings, page],
     queryFn: () =>
-      adminApi.content.records({ editionId, kind, page, ...(query === '' ? {} : { query }) }),
+      adminApi.content.records({
+        editionId,
+        kind,
+        page,
+        ...(query === '' ? {} : { query }),
+        ...(recordings === undefined ? {} : { recordings }),
+      }),
     placeholderData: keepPreviousData,
   });
   const openId = open.at === 'edit' ? open.id : undefined;
@@ -156,6 +170,21 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
                 Шукати
               </Button>
             </form>
+            {kind === 'word' && (
+              <select
+                aria-label="Озвучка"
+                className="h-9 rounded-[10px] bg-surface px-[10px] text-[13px] shadow-panel"
+                value={voiced ?? ''}
+                onChange={(event) => {
+                  setVoiced(RecordingsFilterSchema.safeParse(event.target.value).data);
+                  setPage(1);
+                }}
+              >
+                <option value="">Озвучка: усі</option>
+                <option value="incomplete">Не в усіх голосах</option>
+                <option value="complete">В усіх голосах</option>
+              </select>
+            )}
             <Button
               onClick={() => {
                 choose({ at: 'create' });
@@ -177,6 +206,11 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
                   <th scope="col" className="w-[140px] px-[18px] py-[9px] text-left font-normal">
                     Стан
                   </th>
+                  {kind === 'word' && (
+                    <th scope="col" className="px-[18px] py-[9px] text-left font-normal">
+                      Озвучка
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -206,6 +240,18 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
                     <td className="px-[18px] py-[9px] text-muted-foreground">
                       {each.retired ? 'виведено' : 'чинний'}
                     </td>
+                    {kind === 'word' && (
+                      <td className="px-[18px] py-[9px] text-muted-foreground">
+                        {each.recordings !== undefined && (
+                          <RecordingsCell
+                            editionId={editionId}
+                            id={each.id}
+                            label={each.label}
+                            recordings={each.recordings}
+                          />
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
