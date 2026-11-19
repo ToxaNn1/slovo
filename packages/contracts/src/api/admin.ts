@@ -326,6 +326,10 @@ const LiveIllustrationSchema = z.object({
  */
 const IllustrationFileSchema = z.base64().max(1_000_000);
 
+/** The Words list's filter by Recordings: in every declared Narrator Voice, or in fewer (ADR 0195). */
+export const RecordingsFilterSchema = z.enum(['complete', 'incomplete']);
+export type RecordingsFilter = z.infer<typeof RecordingsFilterSchema>;
+
 /** A record as the content editor lists it. */
 export const ContentRecordSummarySchema = z.object({
   id: z.string(),
@@ -336,6 +340,17 @@ export const ContentRecordSummarySchema = z.object({
   categoryId: z.string().optional(),
   retired: z.boolean(),
   recordVersion: z.number().int().positive(),
+  /** Words only: its Recordings as «N з M» (ADR 0195). */
+  recordings: z
+    .object({
+      /** The declared Narrator Voices the Word has every Recording Kind of live in. */
+      live: z.number().int().nonnegative(),
+      /** The Edition's declared Narrator Voices. */
+      of: z.number().int().positive(),
+      /** Whether the Word is on the list of Words in all voices: the job records the missing ones. */
+      allVoices: z.boolean(),
+    })
+    .optional(),
 });
 export type ContentRecordSummary = z.infer<typeof ContentRecordSummarySchema>;
 
@@ -502,6 +517,26 @@ const contentWriteContract = {
         illustration: LiveIllustrationSchema,
       }),
     ),
+  addOtherVoices: contentProcedure
+    .route({
+      method: 'POST',
+      path: '/admin/content/{editionId}/records/word/{id}/voices',
+      summary:
+        'Put a Word on the list of Words in all voices: the next run of the Recordings job records it in the missing Narrator Voices',
+      description:
+        'An Admin user only, at one confirmation and no reason; an Агент token is refused. It leaves an Action log row. The request stays, so a later change of the Lemma or Stress records the Word again in every voice (ADR 0195).',
+      tags: ['admin'],
+    })
+    .errors({
+      /** The Word is retired or gone, or it is on the list already. */
+      NOT_ADDABLE: {
+        status: 409,
+        message: 'The Word is not live, or it is on the list of Words in all voices already',
+        data: z.object({ reason: z.enum(['not-live', 'listed']) }),
+      },
+    })
+    .input(z.strictObject({ editionId: EditionIdSchema, id: z.string().min(1).max(200) }))
+    .output(z.object({ id: z.string() })),
   edit: contentProcedure
     .route({
       method: 'PUT',
@@ -604,6 +639,8 @@ const contentWriteContract = {
         categoryId: z.string().min(1).max(200).optional(),
         /** Only the records of these ids, at most a page of them; an unknown id lists none. */
         ids: z.array(z.string().min(1).max(200)).max(CONTENT_PAGE_SIZE).optional(),
+        /** Words only: those recorded in every declared Narrator Voice, or in fewer (ADR 0195); another kind then lists none. */
+        recordings: RecordingsFilterSchema.optional(),
         /** The page from 1, of `CONTENT_PAGE_SIZE` records in label order; past the last one it lists none. */
         page: z.coerce.number<number>().int().positive().optional(),
       }),

@@ -55,7 +55,7 @@ test('lists the records of a kind as a table of label, version and state', async
   await within(table).findByRole('button', { name: 'жупан' });
   const rows = within(table).getAllByRole('row');
   expect(rows.map((row) => row.textContent)).toEqual([
-    'ЗаписВерсіяСтан',
+    'ЗаписВерсіяСтанОзвучка',
     'обруч3чинний',
     'жупан1виведено',
   ]);
@@ -898,4 +898,112 @@ test('an open collection shows its pictogram, and the Edition default saves it w
   });
   expect(bodies[0]).toMatchObject({ fields: { entryIds: ['w_a1'] } });
   expect(bodies[0]).not.toHaveProperty('fields.pictogram');
+});
+
+const RECORDS = '*/admin/content/:editionId/records/:kind';
+
+test("shows each Word's Recordings as «N з M» and filters the Words by them", async () => {
+  const asked: (string | null)[] = [];
+  server.use(
+    http.get(RECORDS, ({ request }) => {
+      asked.push(new URL(request.url).searchParams.get('recordings'));
+      return HttpResponse.json({
+        records: [
+          {
+            id: 'w_a1',
+            kind: 'word',
+            label: 'обруч',
+            retired: false,
+            recordVersion: 1,
+            recordings: { live: 4, of: 4, allVoices: true },
+          },
+          {
+            id: 'w_a2',
+            kind: 'word',
+            label: 'жупан',
+            retired: false,
+            recordVersion: 1,
+            recordings: { live: 1, of: 4, allVoices: true },
+          },
+        ],
+        total: 2,
+      });
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+
+  const table = await screen.findByRole('table', { name: 'Записи' });
+  await within(table).findByRole('button', { name: 'жупан' });
+  expect(
+    within(table)
+      .getAllByRole('row')
+      .map((row) => row.textContent),
+  ).toEqual(['ЗаписВерсіяСтанОзвучка', 'обруч1чинний4 з 4', 'жупан1чинний1 з 4чекає запису']);
+  // A Word in all voices already, or on the list, has no button.
+  expect(within(table).queryByRole('button', { name: /Додати інші голоси/ })).toBeNull();
+
+  await user.selectOptions(screen.getByRole('combobox', { name: 'Озвучка' }), 'incomplete');
+  await waitFor(() => {
+    expect(asked.at(-1)).toBe('incomplete');
+  });
+  await user.selectOptions(screen.getByRole('combobox', { name: 'Озвучка' }), 'complete');
+  await waitFor(() => {
+    expect(asked.at(-1)).toBe('complete');
+  });
+});
+
+test('adds the other voices to a Word at one confirmation with no reason', async () => {
+  const added: string[] = [];
+  server.use(
+    http.post(`${RECORDS}/:id/voices`, ({ params }) => {
+      added.push(String(params['id']));
+      return HttpResponse.json({ id: params['id'] });
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+
+  const table = await screen.findByRole('table', { name: 'Записи' });
+  expect(await within(table).findByText('1 з 4')).toBeDefined();
+  await user.click(within(table).getByRole('button', { name: 'Додати інші голоси: обруч' }));
+  const dialog = await screen.findByRole('dialog', { name: 'Додати інші голоси до «обруч»?' });
+  expect(within(dialog).queryByLabelText(/Причина/)).toBeNull();
+  await user.click(within(dialog).getByRole('button', { name: 'Додати' }));
+
+  await waitFor(() => {
+    expect(added).toEqual(['w_a1']);
+  });
+  await waitFor(() => {
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
+test('says why the other voices were not added to a Word', async () => {
+  server.use(
+    http.post(`${RECORDS}/:id/voices`, () =>
+      HttpResponse.json(
+        {
+          defined: true,
+          code: 'NOT_ADDABLE',
+          status: 409,
+          message: 'no',
+          data: { reason: 'listed' },
+        },
+        { status: 409 },
+      ),
+    ),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+
+  const table = await screen.findByRole('table', { name: 'Записи' });
+  await user.click(await within(table).findByRole('button', { name: 'Додати інші голоси: обруч' }));
+  const dialog = await screen.findByRole('dialog');
+  await user.click(within(dialog).getByRole('button', { name: 'Додати' }));
+
+  expect(await within(dialog).findByRole('alert')).toHaveProperty(
+    'textContent',
+    'Слово вже чекає запису в усіх голосах',
+  );
 });
