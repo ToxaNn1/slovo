@@ -1,5 +1,3 @@
-import { FeatureSwitchesSchema, type FeatureSwitches } from './edition';
-
 /**
  * The catalogue of the Feature Switches (ADR 0196): one record per switch,
  * the only place that says what a switch is. The Edition's schema takes its
@@ -914,14 +912,3 @@ export const FEATURE_SWITCHES = catalogue({
     group: 'analytics',
   },
 });
-
-/**
- * The states of a test or fixture Edition: every Feature Switch `on` but the
- * ones it states (ADR 0196). The real Edition declares every switch itself.
- */
-export function featureSwitchStates(stated: Partial<FeatureSwitches> = {}): FeatureSwitches {
-  return FeatureSwitchesSchema.parse({
-    ...Object.fromEntries(Object.keys(FEATURE_SWITCHES).map((feature) => [feature, 'on'])),
-    ...stated,
-  });
-}
