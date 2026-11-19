@@ -156,3 +156,11 @@
 булькати nature-weather 5
 бурління nature-weather 3
 бухтіти witty-insults 5
+агломерат science 3
+альтиметр technology 3
+багатопартійність history-antiquity 3
+бамкнутися language-speech 5
+бардачок household-crafts 3
+бобік witty-insults 3
+богоспілкування history-antiquity 4
+бомбардувальний military 4
