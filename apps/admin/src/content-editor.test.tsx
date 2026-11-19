@@ -953,6 +953,32 @@ test("shows each Word's Recordings as «N з M» and filters the Words by them",
   });
 });
 
+test('a Retired Word in fewer than every voice has no «Додати інші голоси»', async () => {
+  server.use(
+    http.get(RECORDS, () =>
+      HttpResponse.json({
+        records: [
+          {
+            id: 'w_a3',
+            kind: 'word',
+            label: 'кунтуш',
+            retired: true,
+            recordVersion: 2,
+            recordings: { live: 1, of: 4, allVoices: false },
+          },
+        ],
+        total: 1,
+      }),
+    ),
+  );
+  render(<Admin />);
+
+  const table = await screen.findByRole('table', { name: 'Записи' });
+  await within(table).findByRole('button', { name: 'кунтуш' });
+  expect(within(table).getByText('1 з 4')).toBeDefined();
+  expect(within(table).queryByRole('button', { name: /Додати інші голоси/ })).toBeNull();
+});
+
 test('adds the other voices to a Word at one confirmation with no reason', async () => {
   const added: string[] = [];
   server.use(

@@ -46,6 +46,16 @@ describe('the Recording a Pronunciation plays', () => {
     expect(downloads).toEqual([]);
   });
 
+  it('is the cached file even when marking it used fails', async () => {
+    const { media } = fakeMedia({ kind: 'cached', uri: 'file:///cache/w1.mp3' });
+    media.used = () => Promise.reject(new Error('The cache order is locked'));
+
+    expect(await recordingSourceOf(media, 'w1', 'taras')).toEqual({
+      kind: 'found',
+      source: { uri: 'file:///cache/w1.mp3' },
+    });
+  });
+
   it('is the cached file, marked played so the cache keeps it longer', async () => {
     const { media, used } = fakeMedia({ kind: 'cached', uri: 'file:///cache/w1.mp3' });
 

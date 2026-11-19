@@ -248,6 +248,7 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
                             id={each.id}
                             label={each.label}
                             recordings={each.recordings}
+                            retired={each.retired}
                           />
                         )}
                       </td>

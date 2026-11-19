@@ -39,7 +39,10 @@ export async function recordingSourceOf(
       case 'bundled':
         return { kind: 'found', source: source.asset };
       case 'cached':
-        await media.used(wordId, 'recording', voice);
+        // A failed touch of the cache order never keeps a cached file from playing.
+        await media.used(wordId, 'recording', voice).catch((error: unknown) => {
+          logError('Could not mark a cached Recording used', error);
+        });
         return { kind: 'found', source: { uri: source.uri } };
       case 'remote':
         return { kind: 'missing', reason: 'offline' };

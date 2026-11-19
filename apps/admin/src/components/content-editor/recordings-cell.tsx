@@ -28,18 +28,20 @@ function refusalOf(error: unknown): string {
  * A Word's Recordings in the Words list as «N з M» (ADR 0195): a Word in
  * fewer than every voice and not on the list of Words in all voices has
  * «Додати інші голоси», one confirmation and no reason; one on the list
- * waits for the next run of the Recordings job.
+ * waits for the next run of the Recordings job. A Retired Word has no button.
  */
 export function RecordingsCell({
   editionId,
   id,
   label,
   recordings,
+  retired,
 }: {
   readonly editionId: string;
   readonly id: string;
   readonly label: string;
   readonly recordings: Recordings;
+  readonly retired: boolean;
 }) {
   const [confirming, setConfirming] = useState(false);
   const add = useAdminWrite(() => adminApi.content.addOtherVoices({ editionId, id }));
@@ -48,6 +50,7 @@ export function RecordingsCell({
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <span>{`${String(live)} з ${String(of)}`}</span>
       {live < of &&
+        !retired &&
         (allVoices ? (
           <span className="text-xs text-subtle">чекає запису</span>
         ) : (
