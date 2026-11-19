@@ -451,7 +451,7 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
     expect(message).toMatch(/^SLOVO · Кросворд №\d+\n\d+:\d\d · без підказок\n/);
     const letters = new Set(words.flatMap((w) => w.letters));
     expect([...letters].some((c) => message.split('\n').slice(2).join('').includes(c))).toBe(false);
-    expect(screen.getByText('Скопійовано. Жодної літери — тільки клини.')).toBeOnTheScreen();
+    expect(screen.getByText('Готово. Жодної літери, лише квадрати.')).toBeOnTheScreen();
 
     await settle(() => fireEvent.press(screen.getByRole('button', { name: 'До ігор' })));
     expect(app.pathname()).toBe('/game');
