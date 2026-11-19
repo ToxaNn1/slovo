@@ -46,6 +46,10 @@ export const SWITCH_TEXTS: Readonly<Record<FeatureSwitch, SwitchText>> = {
   },
   pronunciation: { name: 'Вимова', line: 'Кнопки, що озвучують слово.' },
   narratorVoice: { name: 'Голос диктора', line: 'Читач сам обирає голос, яким озвучуються слова.' },
+  recordedOnly: {
+    name: 'Лише записи',
+    line: 'Слово озвучує тільки записаний голос; без запису кнопка вимкнена й пояснює чому.',
+  },
   wordOfTheDay: { name: 'Слово дня', line: 'Щоденний вибір слова зі сповіщенням і віджетом.' },
   statistics: { name: 'Статистика', line: 'Екрани зі статистикою навчання і серія днів поспіль.' },
   knowledge: {

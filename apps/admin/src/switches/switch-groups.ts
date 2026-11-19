@@ -38,6 +38,7 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   shareCards: 'content',
   pronunciation: 'content',
   narratorVoice: 'content',
+  recordedOnly: 'content',
   wordOfTheDay: 'content',
   statistics: 'progress',
   knowledge: 'feed',
