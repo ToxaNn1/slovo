@@ -133,6 +133,44 @@ describe('the notification scheduler on expo-notifications', () => {
     );
   });
 
+  it('replaces one plan at a time, so a plan asked while the last is scheduled cancels all of it', async () => {
+    const { module, notifications } = mockNotifications();
+    const told: string[] = [];
+    module.cancelAllScheduledNotificationsAsync.mockImplementation(async () => {
+      told.push('cancel');
+      await Promise.resolve();
+    });
+    module.scheduleNotificationAsync.mockImplementation(async (request) => {
+      await Promise.resolve();
+      told.push(`schedule ${String(request.identifier)}`);
+      return 'id';
+    });
+    const scheduler = createNotificationScheduler(notifications, native);
+
+    await Promise.all([
+      scheduler.replacePlan([planned({ time: '09:00' })]),
+      scheduler.replacePlan([planned({ time: '10:00' })]),
+    ]);
+
+    expect(told).toEqual([
+      'cancel',
+      'schedule 2026-10-15T09:00',
+      'cancel',
+      'schedule 2026-10-15T10:00',
+    ]);
+  });
+
+  it('replaces the next plan after one that failed', async () => {
+    const { module, notifications } = mockNotifications();
+    module.cancelAllScheduledNotificationsAsync.mockRejectedValueOnce(new Error('denied'));
+    const scheduler = createNotificationScheduler(notifications, native);
+
+    await expect(scheduler.replacePlan([planned()])).rejects.toThrow('denied');
+    await scheduler.replacePlan([planned({ time: '10:00' })]);
+
+    expect(module.scheduleNotificationAsync).toHaveBeenCalledTimes(1);
+  });
+
   it("plays the Edition's sound, the system sound, or none in a native build", async () => {
     const { module, notifications } = mockNotifications();
     const scheduler = createNotificationScheduler(notifications, native);
