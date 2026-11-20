@@ -176,6 +176,7 @@ describe('DashboardHero', () => {
   it('opened already revealed, shows the Lemma still, with no letters flying', async () => {
     await renderHero(revealed);
 
+    expect(screen.getByTestId('dashboard-hero-lemma')).toHaveTextContent('harbour');
     expect(
       screen.queryAllByTestId('dashboard-hero-flying-letter', { includeHiddenElements: true }),
     ).toHaveLength(0);
@@ -197,6 +198,7 @@ describe('DashboardHero', () => {
   it('throws no sparks while the sparks are off', async () => {
     await renderHero(unrevealed);
 
+    expect(screen.getByText('Catch the word!')).toBeTruthy();
     expect(
       screen.queryAllByTestId('dashboard-hero-spark', { includeHiddenElements: true }),
     ).toHaveLength(0);
@@ -205,6 +207,7 @@ describe('DashboardHero', () => {
   it("throws no sparks without the Decor's Mascot figure, which has the megaphone", async () => {
     await renderHero(unrevealed, { sparks: true, decor: coreDecor });
 
+    expect(screen.getByText('Catch the word!')).toBeTruthy();
     expect(
       screen.queryAllByTestId('dashboard-hero-spark', { includeHiddenElements: true }),
     ).toHaveLength(0);
@@ -213,6 +216,7 @@ describe('DashboardHero', () => {
   it('throws no sparks under Reduce Motion', async () => {
     await renderHero(unrevealed, { sparks: true, reduceMotion: true });
 
+    expect(screen.getByText('Catch the word!')).toBeTruthy();
     expect(
       screen.queryAllByTestId('dashboard-hero-spark', { includeHiddenElements: true }),
     ).toHaveLength(0);
