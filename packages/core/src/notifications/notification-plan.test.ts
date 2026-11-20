@@ -212,12 +212,10 @@ describe('the notification plan', () => {
     let refusing = true;
     let refused = 0;
     const scheduler: FakeNotificationScheduler = {
+      ...inner,
       get plan() {
         return inner.plan;
       },
-      setPermission: inner.setPermission,
-      permission: inner.permission,
-      askPermission: inner.askPermission,
       replacePlan(plan) {
         if (!refusing) return inner.replacePlan(plan);
         refused += 1;

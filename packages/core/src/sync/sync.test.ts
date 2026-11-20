@@ -277,7 +277,12 @@ describe('Sync syncs nothing', () => {
     await advance(HOUR);
 
     expect(syncs()).toBe(0);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false, refused: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
   });
 
   it.each(['sync', 'account'] as const)('with `%s` off, read each time', async (feature) => {
@@ -354,7 +359,12 @@ describe('Sync tries a sync again', () => {
 
     expect(network.unanswered).toBe(4);
     expect(syncs()).toBe(0);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: true, refused: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: true,
+      refused: false,
+    });
 
     network.up = true;
     sync.background();
@@ -475,7 +485,12 @@ describe('Sync, when the device fails to write a sync', () => {
     sync.foreground();
     await advance(HOUR);
     expect(syncs()).toBe(1);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false, refused: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
 
     disk.refuses = () => false;
     sync.background();
@@ -538,7 +553,12 @@ describe('Sync and the end of a Session', () => {
     expect(await userState.cursor()).toBeUndefined();
     expect([...(await userState.pendingChanges()).keys()]).toEqual(['favorites.w_one']);
     expect(records.has('favorites.w_one')).toBe(true);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false, refused: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
   });
 
   it('forgets the cursor and the time of the last sync when the Account is deleted', async () => {
@@ -567,7 +587,12 @@ describe('Sync and the end of a Session', () => {
     await advance(HOUR);
 
     expect(network.unanswered).toBe(1);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false, refused: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
   });
 
   it('forgets the cursor once a sync running at the sign-out ends', async () => {
@@ -583,7 +608,12 @@ describe('Sync and the end of a Session', () => {
 
     expect(await userState.read(theme)).toBe('dark');
     expect(await userState.cursor()).toBeUndefined();
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false, refused: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
   });
 
   it.each([
@@ -653,7 +683,12 @@ describe('Sync and the end of a Session', () => {
       random: randomOf(0.5),
     });
 
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false, refused: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
   });
 });
 
@@ -667,7 +702,12 @@ describe('Sync says how it went', () => {
 
     sync.foreground();
     await advance(0);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: true, offline: false, refused: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: true,
+      offline: false,
+      refused: false,
+    });
     time.advance(2_000);
     release();
     await advance(0);
