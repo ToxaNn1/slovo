@@ -6,23 +6,18 @@ import {
   type Composition,
   type TrackedUserState,
   type Edition,
-  type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, feedHeader, HapticsProvider, TokensProvider } from '@slovo/ui';
-import { Slot } from 'expo-router';
+import { feedHeader } from '@slovo/ui';
+import { renderApp as renderInApp } from '../shell/test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
 import type { ColorScheme } from '@slovo/ui';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/feed';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
+import { activeEditionFiles, editionTokens } from '../edition/edition';
 import { LOGO_ROW } from '../edition/feed-loading';
 import { screenSettled } from '../use-open-screen';
-import { SettingsProvider } from '../settings/settings';
 
 const { config } = activeEditionFiles;
 
@@ -40,18 +35,8 @@ const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Eu
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
 
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 47, left: 0, right: 0, bottom: 34 },
-};
+/** The notch and the home indicator of an iPhone with Face ID. */
+const insets = { top: 47, left: 0, right: 0, bottom: 34 };
 
 /** A Word of the Edition's first Category, with the Stress on its second letter. */
 function word(id: string, lemma: string): Word {
@@ -126,26 +111,9 @@ const shell = () =>
 
 /** The app on the Feed, in the Theme `colorScheme`. */
 async function renderApp(colorScheme: ColorScheme) {
-  await renderRoutes(
-    {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme={colorScheme}>
-            <ShellProvider shell={shell()}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <SettingsProvider>
-                    <Slot />
-                  </SettingsProvider>
-                </HapticsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
-      ),
-      index: HomeScreen,
-    },
-    { initialUrl: '/' },
+  await renderInApp(
+    { index: HomeScreen },
+    { shell: shell(), settings: { theme: colorScheme }, insets },
   );
   await settle();
   // The pager lays its pages out once it knows its height.

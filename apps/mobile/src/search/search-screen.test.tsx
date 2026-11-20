@@ -2,17 +2,14 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import type { Word } from '@slovo/contracts';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
 import { AccessibilityInfo } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SearchScreen from '../app/search/index';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 
 const { config } = activeEditionFiles;
 
@@ -26,6 +23,7 @@ const mockPushed: string[] = [];
 let mockBacks = 0;
 
 jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
   useRouter: () => ({
     back: () => {
       mockBacks += 1;
@@ -58,11 +56,6 @@ const word = (id: string, lemma: string, stressed: number): Word => ({
   retired: false,
 });
 
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
-
 beforeEach(async () => {
   mockPushed.length = 0;
   // A screen an earlier test opened would hold the next tap.
@@ -91,17 +84,9 @@ async function settle() {
 }
 
 async function renderSearch() {
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider
-        shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) })}
-      >
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <SearchScreen />
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<SearchScreen />, {
+    shell: testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) }),
+  });
   await settle();
 }
 

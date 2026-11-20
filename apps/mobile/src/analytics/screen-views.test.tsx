@@ -1,13 +1,15 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { waitFor } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
+import { renderApp } from '../shell/test-app';
 
-import { ShellProvider } from '../shell-value';
 import { opened, testShell } from '../shell/test-support';
 import { ScreenViews } from './screen-views';
 
 let mockSegments: string[] = [];
-jest.mock('expo-router', () => ({ useSegments: () => mockSegments }));
+jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
+  useSegments: () => mockSegments,
+}));
 
 /** The test shell whose composition keeps each screen viewed it is told of. */
 async function shellKeepingScreens() {
@@ -33,21 +35,13 @@ describe('ScreenViews', () => {
   it('tells the composition each screen viewed by its route', async () => {
     const { shell, screens } = await shellKeepingScreens();
     mockSegments = ['(tabs)', 'settings'];
-    const view = await renderInGestureRoot(
-      <ShellProvider shell={shell}>
-        <ScreenViews />
-      </ShellProvider>,
-    );
+    const view = await renderApp(<ScreenViews />, { shell });
     await waitFor(() => {
       expect(screens).toEqual(['/(tabs)/settings']);
     });
 
     mockSegments = ['entry', '[id]'];
-    await view.rerender(
-      <ShellProvider shell={shell}>
-        <ScreenViews />
-      </ShellProvider>,
-    );
+    await view.rerender(<ScreenViews />);
 
     await waitFor(() => {
       expect(screens).toEqual(['/(tabs)/settings', '/entry/[id]']);

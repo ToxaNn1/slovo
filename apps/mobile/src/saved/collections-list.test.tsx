@@ -2,16 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import type { Word } from '@slovo/contracts';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, systemSchedule } from '@slovo/ui';
+import { systemSchedule } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionsScreen from '../app/saved/collections/index';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { handDeleteUndo } from './collection-undo';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 import { screenSettled } from '../use-open-screen';
 
 /** The composition the screen reads, opened afresh for each test. */
@@ -20,6 +18,7 @@ let composition: Composition;
 const mockPush = jest.fn<(href: string) => void>();
 
 jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
   useRouter: () => ({ back: () => undefined, push: mockPush }),
 }));
 
@@ -44,11 +43,6 @@ const word = (id: string, lemma: string): Word => ({
   correctionIds: [],
   retired: false,
 });
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** The device's time, which moves a minute on with each Collection a test makes. */
 let now: number;
@@ -92,20 +86,12 @@ async function settle() {
 }
 
 async function renderScreen() {
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider
-        shell={testShell({
-          composition: opened(composition),
-          remoteSwitches: switchedTo(edition),
-        })}
-      >
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <CollectionsScreen />
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<CollectionsScreen />, {
+    shell: testShell({
+      composition: opened(composition),
+      remoteSwitches: switchedTo(edition),
+    }),
+  });
   await settle();
 }
 

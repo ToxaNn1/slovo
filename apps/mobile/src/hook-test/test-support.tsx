@@ -1,13 +1,11 @@
 import { type Category } from '@slovo/contracts';
 import { openComposition, type Clock, type Composition, type UserStateFacts } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, UndoToastProvider } from '@slovo/ui';
-import { act, renderHook } from '@testing-library/react-native';
-import type { ReactNode } from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { UndoToastProvider } from '@slovo/ui';
+import { act } from '@testing-library/react-native';
 
-import { edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
+import { edition } from '../edition/edition';
+import { renderHookInApp } from '../shell/test-app';
 import { opened, testShell } from '../shell/test-support';
 
 // Helpers of the app's hook tests. No screen or module of the app imports them.
@@ -52,11 +50,6 @@ const content = createMemoryContentPort({
   })),
 });
 
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
-
 /**
  * Renders `hook` in a test Shell over a composition of the test Language Pack
  * and the user state `facts` give, under the Edition and an undo toast. Gives
@@ -85,16 +78,7 @@ export async function renderOverComposition<T>(hook: () => T, facts: UserStateFa
       subscribe: () => () => undefined,
     },
   });
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={shell}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <UndoToastProvider>{children}</UndoToastProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>
-  );
-  const rendered = await renderHook(hook, { wrapper });
+  const rendered = await renderHookInApp(hook, { shell, Screen: UndoToastProvider });
   return {
     composition,
     hook: rendered,

@@ -10,10 +10,9 @@ import {
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, type UserStateFacts } from '@slovo/core/testing';
 import type { VerticalPagerHandle } from '@slovo/ui';
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import type { ReactNode } from 'react';
+import { act, waitFor } from '@testing-library/react-native';
 
-import { ShellProvider } from '../shell-value';
+import { renderHookInApp } from '../shell/test-app';
 import { opened, testShell } from '../shell/test-support';
 import { useFeed } from './feed';
 import { createWordOfTheDayLanding, type WordOfTheDayLanding } from './word-of-the-day-landing';
@@ -25,7 +24,10 @@ const { config } = activeEditionFiles;
 let composition: Composition;
 
 // The Feed is in sight: its tab is focused.
-jest.mock('expo-router', () => ({ useIsFocused: () => true }));
+jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
+  useIsFocused: () => true,
+}));
 
 /** Whether the app is in the foreground, as a test moves it, and who listens to it. */
 let mockInForeground = true;
@@ -117,10 +119,8 @@ async function openFeed(clock: Clock, kept: UserStateFacts = {}) {
   const ref = { current: pager };
   const landing = createWordOfTheDayLanding();
   const shell = testShell({ composition: opened(composition) });
-  const feed = await renderHook(() => useFeed(ref, { clock, landing, voice: 'oksana' }), {
-    wrapper: ({ children }: { children: ReactNode }) => (
-      <ShellProvider shell={shell}>{children}</ShellProvider>
-    ),
+  const feed = await renderHookInApp(() => useFeed(ref, { clock, landing, voice: 'oksana' }), {
+    shell,
   });
   await waitFor(() => {
     expect(feed.result.current.cards.length).toBeGreaterThan(1);
