@@ -1,0 +1,15 @@
+фіскал witty-insults 4
+хазар history-antiquity 3
+хакан history-antiquity 3
+халіф history-antiquity 3
+хамсин nature-weather 4
+ханат history-antiquity 4
+хапун witty-insults 3
+харциз history-antiquity 4
+харчевня history-antiquity 4
+харя witty-insults 3
+харіус nature-weather 2
+хаща nature-weather 4
+хват witty-insults 2
+хвойда witty-insults 3
+хвощ nature-weather 2

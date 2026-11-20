@@ -1,0 +1,15 @@
+гільза military 2
+грабарка household-crafts 3
+грабина nature-weather 4
+гривастий nature-weather 4
+гюрза nature-weather 2
+архітектоніка arts-culture 3
+байронічний arts-culture 4
+бамія nature-weather 3
+барбос witty-insults 3
+безбатченко witty-insults 4
+буравчик old-crafts 4
+вирувати nature-weather 3
+вишколювати military 4
+відбриніти arts-culture 5
+віддячливий emotions-character 4

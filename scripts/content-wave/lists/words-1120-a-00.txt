@@ -1,0 +1,15 @@
+ангора household-crafts 3
+апперцепція science 4
+анімалізм arts-culture 4
+ангстрем science 3
+актиноліт science 4
+бетель nature-weather 4
+безриб'я language-speech 3
+вава language-speech 3
+висікати old-crafts 4
+вітруватий nature-weather 5
+вільнодумство history-antiquity 2
+водомет technology 3
+волопас old-crafts 4
+геогліф history-antiquity 4
+гідрографія science 4
