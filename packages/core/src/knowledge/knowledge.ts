@@ -134,9 +134,11 @@ export interface Knowledge {
    * tap does, and can be undone until the next change of a mark. The change
    * counts for the Community Counters. A set on an Entry due for
    * Review is a Review answer: it earns its XP once per Entry on a local day,
-   * up to the Edition's daily cap (ADR 0066).
+   * up to the Edition's daily cap (ADR 0066). The changes `also`, when
+   * given, are kept in the same write as the mark, so both hold or neither;
+   * they are kept alone when the mark stays as it is.
    */
-  set(entryId: string, mark: KnowledgeMark): Promise<void>;
+  set(entryId: string, mark: KnowledgeMark, also?: UserStateChanges): Promise<void>;
   /**
    * The reader clears the Entry's mark from the card's menu, deleting its
    * record; nothing changes for an Entry with no record. The change counts
@@ -309,11 +311,9 @@ export async function openKnowledge({
     subscribers.tell();
   }
 
-  /** The change that confirms the Entry now, or none when it is confirmed already. */
-  const confirmation = (entryId: string): UserStateChanges =>
-    confirmed.has(entryId)
-      ? new Map()
-      : confirmedRecords.record(entryId).change(clock.now().toISOString());
+  /** The change that confirms the Entry at the instant `at`, or none when it is confirmed already. */
+  const confirmation = (entryId: string, at: string): UserStateChanges =>
+    confirmed.has(entryId) ? new Map() : confirmedRecords.record(entryId).change(at);
 
   /** Whether the Entry's Review answer is its first on today's local day, after a restart too. */
   const firstReviewToday = (entryId: string): boolean =>
@@ -323,7 +323,7 @@ export async function openKnowledge({
    * Keeps the Entry's next record, or deletes it for nothing, with the
    * Community Counters' changes when it counts, the confirmation the answer
    * adds or the undo removes and, for a Review answer, its XP and its local
-   * day, then follows it.
+   * day, then follows it. The changes `also` are kept in the same write.
    * Any change of a mark ends the set that could be undone.
    */
   async function keep(
@@ -332,14 +332,16 @@ export async function openKnowledge({
     counts: boolean,
     confirming: 'add' | 'remove' | 'none',
     review = false,
+    also?: UserStateChanges,
   ): Promise<void> {
     undoable = undefined;
     const counted = counts ? await countMark(entryId, record?.mark) : new Map();
     const today = todayKey(clock);
+    const confirmedAt = clock.now().toISOString();
     const reviewXp = review ? xp.award({ source: 'review-answer', entryId }) : undefined;
     const confirmationChange =
       confirming === 'add'
-        ? confirmation(entryId)
+        ? confirmation(entryId, confirmedAt)
         : confirming === 'remove'
           ? confirmedRecords.record(entryId).change(undefined)
           : new Map();
@@ -349,14 +351,14 @@ export async function openKnowledge({
       staged(confirmationChange),
       reviewXp,
       review ? staged(reviewDays.record(entryId).change(today)) : undefined,
+      also === undefined ? undefined : staged(also),
     ]);
     if (review) reviewedOn = new Map([...reviewedOn, [entryId, today]]);
     const changed = new Map(records);
     if (record === undefined) changed.delete(entryId);
     else changed.set(entryId, record);
     records = changed;
-    if (confirming === 'add')
-      confirmed = new Map([...confirmed, [entryId, clock.now().toISOString()]]);
+    if (confirming === 'add') confirmed = new Map([...confirmed, [entryId, confirmedAt]]);
     if (confirming === 'remove')
       confirmed = new Map([...confirmed].filter(([id]) => id !== entryId));
     follow();
@@ -369,20 +371,24 @@ export async function openKnowledge({
    * the time it had (or none, for a mark set before 0.8.13). A tap `counts`
    * for the Community Counters; a Game answer doesn't. Known on a Review of
    * 7 days or later confirms the Entry. `same` changes nothing; a set that
-   * changes the record can be undone when `canUndo`.
+   * changes the record can be undone when `canUndo`. The changes `also` are
+   * kept in the same write as the mark, and alone when the mark stays.
    */
   const change = (
     entryId: string,
     next: (record: KnowledgeRecord | undefined) => KnowledgeRecord | undefined | 'same',
-    { counts, canUndo }: { counts: boolean; canUndo: boolean },
+    { counts, canUndo, also }: { counts: boolean; canUndo: boolean; also?: UserStateChanges },
   ) =>
     inTurn(async () => {
-      if (!edition.isFeatureEnabled('knowledge')) return;
+      const alone = async () => {
+        if (also !== undefined) await userState.write(also);
+      };
+      if (!edition.isFeatureEnabled('knowledge')) return alone();
       await readRow(entryId);
       const previous = records.get(entryId);
       const record = next(previous);
-      if (record === 'same' || (record === undefined && previous === undefined)) return;
-      if (record === undefined) return keep(entryId, undefined, counts, 'none');
+      if (record === 'same' || (record === undefined && previous === undefined)) return alone();
+      if (record === undefined) return keep(entryId, undefined, counts, 'none', false, also);
       const { mark } = record;
       const markedAt = mark === previous?.mark ? previous.markedAt : clock.now().toISOString();
       // Only the reader's own mark answers a Review, and earns XP once per Entry on a local day; a Game answer earns the Game's XP.
@@ -402,6 +408,7 @@ export async function openKnowledge({
         counts,
         confirms ? 'add' : 'none',
         review,
+        also,
       );
       if (canUndo) undoable = { entryId, previous, confirmed: confirms };
       if (review) await reviewAnswered(entryId, mark);
@@ -420,9 +427,10 @@ export async function openKnowledge({
     inTurn(async () => {
       if (!edition.isFeatureEnabled('confirmedEntries') || confirmed.has(entryId)) return;
       await readRow(entryId);
-      await userState.write(confirmation(entryId));
+      const confirmedAt = clock.now().toISOString();
+      await userState.write(confirmation(entryId, confirmedAt));
       undoable = undefined;
-      confirmed = new Map([...confirmed, [entryId, clock.now().toISOString()]]);
+      confirmed = new Map([...confirmed, [entryId, confirmedAt]]);
       follow();
     });
 
@@ -464,14 +472,14 @@ export async function openKnowledge({
         },
         { counts: true, canUndo: false },
       ),
-    set: (entryId, mark) =>
+    set: (entryId, mark, also) =>
       change(
         entryId,
         (record) => {
           const today = todayDate(clock);
           return shownMark(record, today) === mark ? 'same' : answerKnowledge(record, mark, today);
         },
-        { counts: true, canUndo: true },
+        { counts: true, canUndo: true, ...(also === undefined ? {} : { also }) },
       ),
     clear: (entryId) => change(entryId, () => undefined, { counts: true, canUndo: false }),
     undo,

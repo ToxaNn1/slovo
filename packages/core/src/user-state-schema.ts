@@ -176,6 +176,15 @@ export function syncs(key: string): boolean {
   return mark !== undefined && mark !== 'device-only';
 }
 
+/** The keys of the records a schema step dropped for good: the Mix's Rarity Floor and Ceiling (step 7). */
+const DROPPED_KEYS: readonly string[] = ['mix.rarityFloor', 'mix.rarityCeiling'];
+
+/**
+ * Whether a schema step dropped the record under the key for good: an Account
+ * that synced one before still holds it, and a pull brings none back.
+ */
+export const isDropped = (key: string): boolean => DROPPED_KEYS.includes(key);
+
 /**
  * The user-state schema, one step per version. Append a step to change it;
  * never edit or remove one that has shipped. A step names its keys as they

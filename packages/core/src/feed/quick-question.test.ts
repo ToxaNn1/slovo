@@ -204,6 +204,19 @@ describe('a Quick Question answered', () => {
     expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
   });
 
+  it('is answered once by two taps at once: the second changes nothing', async () => {
+    const { app } = await run();
+    const { card, position } = await firstQuestion(app);
+
+    const answers = await Promise.all([
+      app.feed.answerQuickQuestion(position, card.round.correct),
+      app.feed.answerQuickQuestion(position, card.round.correct),
+    ]);
+
+    expect(answers).toEqual([true, undefined]);
+    expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
+  });
+
   it('makes nothing Seen when the reader leaves it', async () => {
     const { app, events, time } = await run();
     const { position } = await firstQuestion(app);
@@ -441,6 +454,38 @@ describe('the Word Meaning question', () => {
       'quickQuestionAnswered',
       { right: false, mode: 'word-meaning', entryKind: 'word', rarity: 3, categoryId: 'test' },
     ]);
+  });
+});
+
+describe('a Quick Question of a Game Mode that cannot ask every Entry', () => {
+  const originLanguages = ['la', 'el', 'de', 'pl'].map((code) => ({ code, name: `From ${code}` }));
+  // The Origin Mode asks a Word with an origin alone: one Word in seven here.
+  const fewWithOrigin = words.map((each, index) =>
+    index % 7 === 3 ? { ...each, origin: 'la' } : each,
+  );
+
+  it('asks an Entry the Game Mode can ask, passing those it cannot', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const on: readonly FeatureSwitch[] = ['game', 'quickQuestion', 'gameOrigin'];
+    const app = await openComposition({
+      content: packOf(fewWithOrigin),
+      edition: testEdition({
+        isFeatureEnabled: (feature) => on.includes(feature),
+        originLanguages,
+      }),
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock: time.clock,
+      random: seededRandom(7),
+    });
+    await app.mix.setQuickQuestionEvery(6);
+
+    const cards = await cardsOf(app, 30);
+    const asked = cards.flatMap((card) => (card.kind === 'quick-question' ? [card] : []));
+
+    expect(asked.map(({ entry }) => entry.id).every((id) => ['w_03', 'w_10'].includes(id))).toBe(
+      true,
+    );
+    expect(asked).toHaveLength(5);
   });
 });
 

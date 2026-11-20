@@ -39,6 +39,8 @@ async function device({
     return Promise.reject(new TypeError('Network request failed'));
   };
   const { push, pull } = server.backend.sync;
+  /** The cursor each pull that reached the backend asked the records after. */
+  const pulledAfter: (number | undefined)[] = [];
   const googleSheet = createFakeGoogleSignInSheet();
   const appleSheet = createFakeAppleSignInSheet();
   const records = new Map<string, string>();
@@ -77,8 +79,11 @@ async function device({
       sync: {
         push: (...request: Parameters<typeof push>) =>
           network.up ? push(...request) : unanswered(),
-        pull: (...request: Parameters<typeof pull>) =>
-          network.up ? pull(...request) : unanswered(),
+        pull: (...request: Parameters<typeof pull>) => {
+          if (!network.up) return unanswered();
+          pulledAfter.push(request[0].after);
+          return pull(...request);
+        },
       },
     },
     account,
@@ -105,6 +110,7 @@ async function device({
     switchedOff,
     network,
     disk,
+    pulledAfter,
     /** How many times Sync said a pull wrote something. */
     changes: () => changes,
     /** How many syncs reached the backend: each starts with a pull. */
@@ -616,6 +622,32 @@ describe('Sync and the end of a Session', () => {
     });
   });
 
+  it('syncs no next Account from the cursor of a Session that failed to be forgotten', async () => {
+    const { sync, account, server, userState, disk, advance, syncs, pulledAfter } = await device();
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(1);
+    // The store refuses to forget the cursor, and nothing else.
+    disk.refuses = (changes) =>
+      changes.has(syncCursor.key) && changes.get(syncCursor.key) === undefined;
+    await account.signOut();
+    await advance(0);
+    expect(await userState.cursor()).toBe(CURSOR_AFTER_FIRST_PULL);
+
+    await account.requestCode('borys@mail.com');
+    await account.verifyCode(server.account.sentCodes.at(-1)?.code ?? '');
+    await advance(0);
+    expect(account.state).toMatchObject({ status: 'signed-in', email: 'borys@mail.com' });
+    expect(syncs()).toBe(1);
+
+    disk.refuses = () => false;
+    sync.background();
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(2);
+    expect(pulledAfter).toEqual([undefined, undefined]);
+  });
+
   it.each([
     ['a cursor', syncCursor.key, '7'],
     ['the time of the last sync', syncSyncedAt.key, JSON.stringify('2026-10-17T09:00:00.000Z')],
@@ -774,6 +806,22 @@ describe('Sync says how it went', () => {
     sync.background();
     sync.foreground();
     await advance(0);
+    expect(changes()).toBe(1);
+  });
+
+  it('brings back no record a later version of the user state dropped', async () => {
+    const { sync, pushFromElsewhere, records, advance, changes } = await device();
+    await pushFromElsewhere([
+      { key: 'mix.rarityFloor', value: 2, changedAt: 1 },
+      { key: 'mix.rarityCeiling', value: 4, changedAt: 1 },
+      { key: 'settings.theme', value: 'dark', changedAt: 1 },
+    ]);
+
+    sync.foreground();
+    await advance(0);
+
+    expect(records.get('settings.theme')).toBe(JSON.stringify('dark'));
+    expect([...records.keys()].filter((key) => key.startsWith('mix.rarity'))).toEqual([]);
     expect(changes()).toBe(1);
   });
 

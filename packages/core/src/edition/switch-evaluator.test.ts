@@ -220,4 +220,35 @@ describe('the switch evaluator', () => {
       new Set(['a', 'b', 'c']),
     );
   });
+
+  it('spreads the Variants over a share smaller than their number too', () => {
+    const rules = [
+      rule({
+        id: 'test',
+        feature: 'tips',
+        verdict: { variants: ['a', 'b', 'c'] },
+        targets: { share: 2 },
+      }),
+      rule({ id: 'rest', feature: 'tips', verdict: 'off' }),
+    ];
+    const verdicts = Array.from(
+      { length: 2000 },
+      (_, i) => evaluate(rules, statesWith(), facts({ installId: `install-${String(i)}` })).tips,
+    );
+
+    expect(new Set(verdicts.flatMap((verdict) => (verdict.on ? [verdict.variant] : [])))).toEqual(
+      new Set(['a', 'b', 'c']),
+    );
+  });
+
+  it('matches no Rule that targets an app version when the app version cannot be read', () => {
+    const from = [rule({ feature: 'tips', targets: { appVersion: { from: '9.0.0' } } })];
+    const until = [rule({ feature: 'tips', targets: { appVersion: { until: '0.1.0' } } })];
+    const any = [rule({ feature: 'tips', targets: { platform: 'ios' } })];
+    const dev = facts({ appVersion: 'dev' });
+
+    expect(evaluate(from, statesWith(), dev).tips).toEqual({ on: true });
+    expect(evaluate(until, statesWith(), dev).tips).toEqual({ on: true });
+    expect(evaluate(any, statesWith(), dev).tips).toEqual({ on: false });
+  });
 });

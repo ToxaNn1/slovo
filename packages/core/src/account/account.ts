@@ -250,24 +250,35 @@ export async function openAccount({
   /**
    * Forgets this device's Session, so the answers in flight with it are
    * outdated, and the Google sign-in with it, revoked when the Account is
-   * deleted; answers signed out. A Google sign-in that fails to be forgotten
-   * changes nothing.
+   * deleted; answers signed out. A Session or a Google sign-in that fails to
+   * be forgotten changes nothing: the Session the device still keeps is
+   * checked with the server, and forgotten again, after the next launch.
    */
   async function endSession({ revoke = false } = {}): Promise<AccountState> {
     endedSessions += 1;
     token = undefined;
     checkedAt = undefined;
-    await sessions.forget();
+    await sessions.forget().catch(() => undefined);
     await googleSheet.forget({ revoke }).catch(() => undefined);
     return signedOut;
   }
 
-  /** Keeps the Session a sign-in by `method` started, tells it to Analytics, and answers signed in. */
+  /**
+   * Keeps the Session a sign-in by `method` started, tells it to Analytics,
+   * and answers signed in. A Session the device fails to keep is signed out
+   * on the server, so none is left there that no device holds.
+   */
   async function startSession(
     session: { token: string; email: string },
     method: SignInMethod,
   ): Promise<AccountState> {
-    await sessions.keep(session);
+    try {
+      await sessions.keep(session);
+    } catch (error) {
+      untold.push(session.token);
+      await tellSignOuts().catch(() => undefined);
+      throw error;
+    }
     await analytics.track('signedIn', { method }).catch(() => undefined);
     token = session.token;
     checkedAt = clock.now().getTime();

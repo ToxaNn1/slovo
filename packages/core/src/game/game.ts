@@ -478,9 +478,12 @@ export async function openGame({
     return move?.game;
   }
 
+  /** The Games an answer is ending, which stay in play until their awards are written. */
+  const ending = new WeakSet<PlayingGame>();
+
   async function answer(given: GivenAnswer): Promise<void> {
     const game = state.current;
-    if (game === undefined || !inPlay(game)) return;
+    if (game === undefined || !inPlay(game) || ending.has(game)) return;
     const ran = game.time;
     if (ran !== undefined && time.isOut(ran)) {
       await inTurn(() => timeUp(ran));
@@ -502,7 +505,16 @@ export async function openGame({
         if (award.piece.changes.size > 0) await inTurn(() => awards.writeRound(award));
         awards.earned(award);
       }
-    } else await inTurn(() => finish(game, answered, award));
+    } else {
+      // A second answer on its way meanwhile is no move; after a failed write the Round is answered again.
+      ending.add(game);
+      try {
+        await inTurn(() => finish(game, answered, award));
+      } catch (error) {
+        ending.delete(game);
+        throw error;
+      }
+    }
     if (round === undefined) return;
     // The Knowledge Mark of the answer, written in the background of the Game going on.
     await inTurn(() =>

@@ -112,8 +112,19 @@ export async function openSync({
     }
   }
 
-  // What fails to be forgotten is forgotten at the next launch signed out.
-  if (!signedIn()) await forgetSession().catch(() => undefined);
+  /** Forgets them, and says whether it did. */
+  const forgot = () =>
+    forgetSession().then(
+      () => true,
+      () => false,
+    );
+
+  /**
+   * Whether an ended Session's cursor and time are still to be forgotten: no
+   * sync runs until they are, so the next Account is never pulled from the
+   * cursor of the one before.
+   */
+  let sessionOutdated = !signedIn() && !(await forgot());
   const kept = await userState.read(syncSyncedAt).catch(() => undefined);
   let state: SyncState = {
     syncedAt: kept === undefined ? undefined : new Date(kept),
@@ -125,8 +136,6 @@ export async function openSync({
   /** The syncs running and asked for after them, if one runs. */
   let draining: Promise<void> | undefined;
   let again = false;
-  /** Whether the cursor and the time of the last sync belong to a Session that ended. */
-  let sessionOutdated = false;
   /** How many Sessions have ended: a sync of an earlier one says nothing of this one. */
   let endedSessions = 0;
   /** Until when, in milliseconds, nothing syncs, by a 429's `Retry-After`. */
@@ -202,9 +211,9 @@ export async function openSync({
     do {
       again = false;
       if (sessionOutdated) {
-        sessionOutdated = false;
-        // What fails to be forgotten is forgotten at the next launch signed out.
-        await forgetSession().catch(() => undefined);
+        sessionOutdated = !(await forgot());
+        // What fails to be forgotten is tried again at the next moment, before any sync.
+        if (sessionOutdated) return;
       }
       if (!held()) await syncOnce();
     } while (waiting());
