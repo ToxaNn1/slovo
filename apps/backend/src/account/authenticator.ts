@@ -197,7 +197,7 @@ export function createAuthenticator(
    * better-auth's own social sign-in verifies the token itself, with no way
    * in for the server Core's verifiers, so the adapter does what it would:
    * finds or creates the Account, records the identity of the provider
-   * (Google, Apple) as a Sign-in method and starts a Session (ADR 0047).
+   * (Google, Apple) as its Sign-in method and starts a Session (ADR 0047).
    */
   async function signInWith(
     providerId: typeof GOOGLE | typeof APPLE,
@@ -230,8 +230,11 @@ export function createAuthenticator(
           createdAt: now,
           updatedAt: now,
         })
-        .onConflictDoNothing({
+        // An identity already linked to another Account reached it by an
+        // email the provider no longer gives: it moves to this one.
+        .onConflictDoUpdate({
           target: [signInMethods.providerId, signInMethods.providerAccountId],
+          set: { accountId: account.id, updatedAt: now },
         });
       return account;
     });

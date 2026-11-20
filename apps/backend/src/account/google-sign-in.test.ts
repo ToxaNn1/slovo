@@ -128,6 +128,25 @@ describe('one email reaches one Account (ADR 0047)', () => {
       signInMethods: [{ providerId: 'google' }, { providerId: 'google' }],
     });
   });
+
+  it("with Google after the Google identity's email changed: the new email's Account, and the identity moves to it", async () => {
+    const { client, clientOf, google, rowsOf } = signingIn();
+    const [before, after] = [newEmail(), newEmail()];
+    const subject = `google-${randomUUID()}`;
+    await client.account.signInWithGoogle({
+      idToken: google.token({ email: before, subject }),
+      editionId: 'uk',
+    });
+
+    const { token } = await client.account.signInWithGoogle({
+      idToken: google.token({ email: after, subject }),
+      editionId: 'uk',
+    });
+
+    await expect(clientOf(token).account.me()).resolves.toMatchObject({ email: after });
+    expect(await rowsOf(after)).toMatchObject({ signInMethods: [{ providerId: 'google' }] });
+    expect(await rowsOf(before)).toMatchObject({ accountRows: 1, signInMethods: [] });
+  });
 });
 
 describe('a Google identity token', () => {

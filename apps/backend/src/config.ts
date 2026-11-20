@@ -137,7 +137,7 @@ const ServerVariablesSchema = z.object({
   RAILWAY_ENVIRONMENT_ID: unsetWhenEmpty(z.string().min(1)),
   // How many proxies in front of the backend append to X-Forwarded-For, whose
   // addresses it trusts (ADR 0030): 0 when nothing is in front, as in local
-  // Docker; 1 behind Railway's proxy.
+  // Docker; 1 behind Railway's proxy. Production refuses 0.
   TRUSTED_PROXY_HOPS: z.coerce
     .number()
     .int('must be a whole number')
@@ -308,7 +308,17 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
         context.addIssue({ code: 'custom', path: [name], message: 'must be set in production' });
       }
     }
+    // With no trusted hop every reader shares the proxy's address, and so one
+    // limit per IP (ADR 0030).
+    if (variables.TRUSTED_PROXY_HOPS === 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['TRUSTED_PROXY_HOPS'],
+        message: 'must be 1 or more in production',
+      });
+    }
   }
+  refineVaultKey(variables, context);
   if (variables.DEPLOYMENT === 'staging') {
     // It reads the Media Store's public URLs only, so it needs no R2 keys.
     for (const name of STAGING_REFUSED_VARIABLES) {
@@ -323,7 +333,6 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     return;
   }
   refineR2(variables, context);
-  refineVaultKey(variables, context);
 }).transform(
   ({
     NODE_ENV: _environment,

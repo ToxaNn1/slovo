@@ -11,6 +11,9 @@ import {
 /** How long the keys are kept when the provider's answer doesn't say. */
 const DEFAULT_KEYS_MAX_AGE_MS = 60 * 60 * 1000;
 
+/** How long the keys are not asked for again after a fetch of them failed. */
+const RETRY_AFTER_FAILURE_MS = 30 * 1000;
+
 /**
  * What a token that is not a good identity token for SLOVO fails with: it is
  * no JWT, its algorithm is not the provider's, no key of the provider's
@@ -41,16 +44,27 @@ function maxAgeOf(response: Response): number {
  * `url` when first needed and kept for as long as the provider's answer says,
  * then fetched again. A token signed with a key not among them fetches them
  * again too, at most every 30 seconds (jose's cooldown), for a key the
- * provider has published since.
+ * provider has published since. A fetch that fails is not tried again for
+ * 30 seconds, so the provider's outage costs one request per 30 seconds, not
+ * one per sign-in.
  */
 export function publishedKeys(url: URL, fetch: typeof globalThis.fetch, clock: Clock) {
   let expiresAt = 0;
+  let retryAt = 0;
   const keys = createRemoteJWKSet(url, {
     // Kept until the provider's max-age, which `get` checks, not jose's own.
     cacheMaxAge: Number.POSITIVE_INFINITY,
     [customFetch]: async (url, init) => {
-      const response = await fetch(url, init);
-      if (response.ok) expiresAt = clock.now().getTime() + maxAgeOf(response);
+      const now = clock.now().getTime();
+      if (now < retryAt) {
+        throw new Error(`the keys at ${url} did not load; they are asked for again soon`);
+      }
+      const response = await fetch(url, init).catch((error: unknown) => {
+        retryAt = now + RETRY_AFTER_FAILURE_MS;
+        throw error;
+      });
+      if (response.ok) expiresAt = now + maxAgeOf(response);
+      else retryAt = now + RETRY_AFTER_FAILURE_MS;
       return response;
     },
   });

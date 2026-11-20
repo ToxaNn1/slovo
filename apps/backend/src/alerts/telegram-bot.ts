@@ -14,9 +14,12 @@ export interface TelegramBotOptions {
   readonly baseUrl?: string;
 }
 
+/** How long a call to Telegram may take before it is `failed`, so no alert holds its caller. */
+const TIMEOUT_MS = 10_000;
+
 /**
  * The bot that talks to the owner alone: a message to any chat but the
- * configured one is `refused` and never leaves. Telegram unreachable or
+ * configured one is `refused` and never leaves. Telegram unreachable, silent or
  * refusing the call is `failed`, never a throw.
  */
 export function createTelegramBot({
@@ -33,6 +36,7 @@ export function createTelegramBot({
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ chat_id: chatId, text }),
+          signal: AbortSignal.timeout(TIMEOUT_MS),
         });
         return response.ok ? 'sent' : 'failed';
       } catch {
