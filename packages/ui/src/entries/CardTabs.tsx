@@ -15,6 +15,7 @@ import { useDrawnLines, WholeLinesText, WholeLinesView } from '../primitives/Who
 import { wholeLinesCut } from '../primitives/whole-lines-cut';
 import { blockGap, entryCardFrame, minTouchTarget, typeStyle, wedges } from '../tokens';
 import { capitalised } from './capitalised';
+import { SeenDepthContext } from './seen-depth';
 
 /**
  * How content sits in the card's fixed frame: whole at a size from the
@@ -216,6 +217,25 @@ function FitPanel({
     room === undefined
       ? undefined
       : wholeLinesCut(room - linkHeight - entryCardFrame.moreGap, lines);
+  // How far down the content the opened scroll has reached, for the tab and size it was drawn at.
+  const [scrolled, setScrolled] = useState<{ at: string; depth: number } | undefined>(undefined);
+  const onScrolledTo = (depth: number) => {
+    setScrolled((was) =>
+      was?.at === drawnAt && was.depth >= depth ? was : { at: drawnAt, depth },
+    );
+  };
+  const seenDepth =
+    room === undefined
+      ? 0
+      : open
+        ? scrolled?.at === drawnAt
+          ? scrolled.depth
+          : 0
+        : clamped
+          ? (cut ?? 0)
+          : drawn?.at === drawnAt && drawn.height <= room
+            ? Number.POSITIVE_INFINITY
+            : 0;
   const content = (
     <WholeLinesView
       key={drawnAt}
@@ -226,7 +246,9 @@ function FitPanel({
         setDrawn({ at: drawnAt, height: nativeEvent.layout.height });
       }}
     >
-      <FontSizeProvider size={fitNow.size}>{children}</FontSizeProvider>
+      <FontSizeProvider size={fitNow.size}>
+        <SeenDepthContext value={seenDepth}>{children}</SeenDepthContext>
+      </FontSizeProvider>
     </WholeLinesView>
   );
   // «Детальніше» and «Сховати» take only their line in the room, their touch target reaching past it.
@@ -264,7 +286,11 @@ function FitPanel({
           «Детальніше»'s place under it, so the scroll fills the room down to the link (owner 13.11). */}
       {open ? (
         <>
-          <PagerScrollView testID={`${testID}-tab-scroll`} contentContainerStyle={styles.scrolled}>
+          <PagerScrollView
+            testID={`${testID}-tab-scroll`}
+            contentContainerStyle={styles.scrolled}
+            onScrolledTo={onScrolledTo}
+          >
             {content}
           </PagerScrollView>
           {link('less', true, () => {
