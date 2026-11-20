@@ -8,26 +8,30 @@ const strings = testStrings({ wordCard: { example: '«{text}»', exampleAuthor: 
 
 const renderExample = async (text: string) => {
   await render(
-    <EditionProvider edition={{ locale: 'uk' }} strings={strings}>
-      <ExampleText example={{ text, author: 'Леся Українка' }} size={{ fontSize: 16, lineHeight: 22 }} testID="example" />
+    <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+      <ExampleText
+        example={{ text, author: 'An Author' }}
+        size={{ fontSize: 16, lineHeight: 22 }}
+        testID="example"
+      />
     </EditionProvider>,
   );
 };
 
 describe('ExampleText as VoiceOver reads it', () => {
   it('reads a quoted Example ending in its own full stop with no comma before the author', async () => {
-    await renderExample('Ліс шумів.');
+    await renderExample('The wood rustled.');
     expect(screen.getByTestId('example')).toHaveProp(
       'accessibilityLabel',
-      '«Ліс шумів.» — Леся Українка',
+      '«The wood rustled.» — An Author',
     );
   });
 
   it('puts a comma before the author after a quoted Example with no full stop of its own', async () => {
-    await renderExample('Ліс шумів');
+    await renderExample('The wood rustled');
     expect(screen.getByTestId('example')).toHaveProp(
       'accessibilityLabel',
-      '«Ліс шумів», — Леся Українка',
+      '«The wood rustled», — An Author',
     );
   });
 });
