@@ -3,13 +3,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
-import type { CuratedCollection, Word } from '@slovo/contracts';
+import type { CuratedCollection, RecordingRow, Word } from '@slovo/contracts';
 import { PATCH_FORMAT, type Patch } from '@slovo/contracts/api';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
+import { buildFromSnapshot } from './build';
 import { applyPatch, openLanguagePack, patchStateOf, type NodeLanguagePack } from './index';
+import { mediaOf } from './media-rows';
 import { nodePackDatabase } from './read-pack';
-import { buildUkrainianPack, ukrainianSnapshot } from './test-support';
+import { buildUkrainianPack, ukrainianFolder, ukrainianSnapshot } from './test-support';
 
 // Patches applied to the UA Language Pack opened writable, as the app's pack is (ADR 0090).
 
@@ -186,6 +188,38 @@ describe('applying a Patch', () => {
       applyPatch(pack.writer, { ...patchOf(), since: snapshot.contentVersion - 1 }, '"x"'),
     ).rejects.toThrow(/does not apply/);
     expect((await pack.metadata()).contentVersion).toBe(snapshot.contentVersion);
+  });
+
+  it('clears the mark of a Word whose new Recording the Patch brings, and keeps it on the others', async () => {
+    const file = join(dir, 'marked.db');
+    const built = buildFromSnapshot({
+      editionDir: ukrainianFolder.dir,
+      snapshot: { ...snapshot, needsNewRecording: [first.id, second.id].sort() },
+      outFile: file,
+    });
+    if (!built.ok) throw new Error('No marked UA pack');
+    const pack = openLanguagePack(file, { writable: true });
+    opened.push(pack);
+    const recording: RecordingRow = {
+      wordId: first.id,
+      narratorVoice: 'oksana',
+      recordingKind: 'plain',
+      hash: 'a'.repeat(64),
+      size: 1000,
+      durationMs: 900,
+      retired: false,
+    };
+
+    await applyPatch(pack.writer, patchOf({ recordings: [recording] }), '"next"');
+
+    const db = new DatabaseSync(file, { readOnly: true });
+    const media = async (wordId: string) => mediaOf(nodePackDatabase(db), wordId);
+    expect(await media(first.id)).toMatchObject({ needsNewRecording: false });
+    expect((await media(first.id)).recordings).toContainEqual(
+      expect.objectContaining({ hash: recording.hash }),
+    );
+    expect(await media(second.id)).toMatchObject({ needsNewRecording: true });
+    db.close();
   });
 
   it('refuses a Patch that would lower the content version', async () => {

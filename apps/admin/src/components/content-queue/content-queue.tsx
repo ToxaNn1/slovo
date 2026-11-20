@@ -100,7 +100,7 @@ export function ContentQueue() {
           onClose={() => {
             setPending(null);
           }}
-          refusalText={String}
+          refusalText={(error) => (error instanceof PartlyDone ? error.message : String(error))}
         />
       )}
     </section>
@@ -112,10 +112,14 @@ type BulkDone =
   | { readonly action: 'review'; readonly count: number }
   | { readonly action: 'rollback'; readonly count: number; readonly skipped: number };
 
+/** A bulk write that failed after some batches went through: its message says how many. */
+class PartlyDone extends Error {}
+
 /**
  * One action over many batches: each batch is written in turn with the one
  * reason, a rollback newest first so a later batch never shadows an earlier
- * one. The queue reloads however it ends.
+ * one, and `onDone` hears of each batch written. A failure after some batches
+ * says how many went through. The queue reloads however it ends.
  */
 function useBulkWrite() {
   const queryClient = useQueryClient();
@@ -124,23 +128,35 @@ function useBulkWrite() {
       action,
       batches,
       reason,
+      onDone,
     }: {
       action: BulkDone['action'];
       batches: readonly Batch[];
       reason: string;
+      onDone: (batchId: string) => void;
     }): Promise<BulkDone> => {
-      if (action === 'review') {
-        for (const batch of batches) {
-          await adminApi.contentQueue.review({ batchId: batch.id, reason });
-        }
-        return { action, count: batches.length };
-      }
+      let count = 0;
       let skipped = 0;
-      for (const batch of batches.toReversed()) {
-        const output = await adminApi.contentQueue.rollback({ batchId: batch.id, reason });
-        skipped += output.skipped.length;
+      try {
+        for (const batch of action === 'review' ? batches : batches.toReversed()) {
+          if (action === 'review') {
+            await adminApi.contentQueue.review({ batchId: batch.id, reason });
+          } else {
+            const output = await adminApi.contentQueue.rollback({ batchId: batch.id, reason });
+            skipped += output.skipped.length;
+          }
+          count += 1;
+          onDone(batch.id);
+        }
+      } catch (error) {
+        if (count === 0) throw error;
+        const done = action === 'review' ? 'Позначено перевіреними' : 'Відкочено';
+        throw new PartlyDone(
+          `${done} ${batchesOf(count)} з ${String(batches.length)}; решта не вдалася. Спробуйте ще раз.`,
+          { cause: error },
+        );
       }
-      return { action, count: batches.length, skipped };
+      return action === 'review' ? { action, count } : { action, count, skipped };
     },
     onSettled: () => queryClient.invalidateQueries(),
   });
@@ -206,9 +222,21 @@ function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Con
       return next;
     });
   };
-  const runBulk = (action: BulkDone['action']) => async (reason: string) => {
-    await bulk.mutateAsync({ action, batches: chosen, reason });
-    setTicked(new Set());
+  const runBulk = (action: BulkDone['action']) => {
+    // What this confirmation still has to write: a retry leaves out the batches done.
+    let left = chosen;
+    return async (reason: string) => {
+      await bulk.mutateAsync({
+        action,
+        batches: left,
+        reason,
+        onDone: (batchId) => {
+          left = left.filter((batch) => batch.id !== batchId);
+          setTicked((current) => new Set([...current].filter((id) => id !== batchId)));
+        },
+      });
+      setTicked(new Set());
+    };
   };
   return (
     <Block title="Пачки Агентів">
