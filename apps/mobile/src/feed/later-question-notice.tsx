@@ -9,7 +9,7 @@ import {
   space,
   useTurnToNextPage,
 } from '@slovo/ui';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useComposition } from '../composition';
@@ -33,13 +33,23 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
   const turnToNext = useTurnToNextPage();
   const openScreen = useOpenScreen();
 
-  function settle(answer: Promise<unknown>, then?: () => void) {
+  // One answer at a time: a second tap before the first is kept would write it
+  // again and turn once more, past the next card once this one closes.
+  const settling = useRef(false);
+
+  function settle(answer: () => Promise<unknown>, then?: () => void) {
+    if (settling.current) return;
+    settling.current = true;
     void keep(
       'the answer to a later question',
-      answer.then(() => true),
+      answer().then(() => true),
       false,
     ).then((kept) => {
-      if (!kept) return;
+      // A card that keeps no answer takes the next tap; one that keeps it closes.
+      if (!kept) {
+        settling.current = false;
+        return;
+      }
       turnToNext?.();
       then?.();
     });
@@ -51,7 +61,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
       testID={`later-question-${question}-later`}
       label={strings.later}
       onPress={() => {
-        settle(questionnaire.later(question));
+        settle(() => questionnaire.later(question));
       }}
     />
   );
@@ -61,7 +71,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
       <DailyGoalQuestion
         later={later}
         onDone={(goal) => {
-          settle(questionnaire.chooseDailyGoal(goal));
+          settle(() => questionnaire.chooseDailyGoal(goal));
         }}
       />
     );
@@ -70,7 +80,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
       <InterestsQuestion
         later={later}
         onDone={(ids) => {
-          settle(questionnaire.chooseInterests(ids));
+          settle(() => questionnaire.chooseInterests(ids));
         }}
       />
     );
@@ -79,7 +89,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
       <SelfRatingQuestion
         later={later}
         onAnswer={(id) => {
-          settle(questionnaire.answer('selfRating', id));
+          settle(() => questionnaire.answer('selfRating', id));
         }}
       />
     );
@@ -91,9 +101,12 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
           testID={`later-question-${question}-open`}
           label={strings.open}
           onPress={() => {
-            settle(questionnaire.open(question), () => {
-              openScreen(question === 'rarityTest' ? '/settings/rarity-test' : '/settings/mix');
-            });
+            settle(
+              () => questionnaire.open(question),
+              () => {
+                openScreen(question === 'rarityTest' ? '/settings/rarity-test' : '/settings/mix');
+              },
+            );
           }}
         />
         <View style={styles.foot} />
