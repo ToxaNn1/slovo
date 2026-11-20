@@ -146,23 +146,29 @@ export function createShell(
   /**
    * Opens `open` over the device ports only while `feature` is on in effect
    * at launch; turned off, it stays closed, and a switch back on while the
-   * app runs opens it.
+   * app runs opens it. It follows the remote switches once while closed,
+   * however often it is read.
    */
   function whileOn<T>(
     feature: FeatureSwitch,
     failure: string,
     open: (opened: DevicePorts) => Promise<T> | T,
   ): Opening<T> {
+    let following = false;
     const opening: Opening<T> = over(ports, failure, async (opened) => {
       await keptRulesRead();
       if (editionInEffect.isFeatureEnabled(feature)) return open(opened);
       // Only the remote switches, open by now, turn off what shipped on.
       const switches = await remoteSwitches.opened();
-      const stopFollowing = switches.subscribe(() => {
-        if (!editionInEffect.isFeatureEnabled(feature)) return;
-        stopFollowing();
-        opening.opened().catch(() => undefined);
-      });
+      if (!following) {
+        following = true;
+        const stopFollowing = switches.subscribe(() => {
+          if (!editionInEffect.isFeatureEnabled(feature)) return;
+          stopFollowing();
+          following = false;
+          opening.opened().catch(() => undefined);
+        });
+      }
       throw new SwitchedOffError(feature);
     });
     return opening;
@@ -212,6 +218,17 @@ export function createShell(
         return openAccount;
       })
     : undefined;
+  /**
+   * The Account a Mistake Report goes out with, read as each report goes: none while it is
+   * off in effect or failed to open, so a report never waits on it then.
+   */
+  const reportsAccount: Pick<Account, 'withSession'> | undefined = account && {
+    async withSession(request) {
+      if (!editionInEffect.isFeatureEnabled('account')) return undefined;
+      const opened = await account.opened().catch(() => undefined);
+      return opened?.withSession(request);
+    },
+  };
   return {
     userState,
     settings: settingsOpening({
@@ -231,14 +248,14 @@ export function createShell(
             openSync({ ...opened, account: await account.opened() }),
           ),
     // Each report carries the app version the build declares and the content version of the Language Pack,
-    // and goes out with the Session while the reader is signed in (ADR 0159); an Account that failed to
-    // open leaves the reports anonymous.
+    // and goes out with the Session while the reader is signed in (ADR 0159); an Account off in effect or
+    // that failed to open leaves the reports anonymous.
     mistakeReports: over(ports, 'Could not open Mistake Reports', async (opened) =>
       openMistakeReports({
         ...opened,
         appVersion: deviceFacts.appVersion,
         contentVersion: (await languagePack.opened()).contentVersion,
-        account: await account?.opened().catch(() => undefined),
+        account: reportsAccount,
       }),
     ),
     counterSending: over(
