@@ -35,6 +35,8 @@ async function renderTabs(
       'game/_layout': () => <ScreenStack />,
       'game/index': () => <Text>Games</Text>,
       'game/crossword': () => <Text>Crossword</Text>,
+      'mix/_layout': () => <ScreenStack />,
+      'mix/index': () => <Text>My Mix</Text>,
       'saved/_layout': () => <ScreenStack />,
       'saved/index': () => <Text>Saved</Text>,
       'settings/_layout': () => <ScreenStack initialRouteName="profile" />,
@@ -83,29 +85,55 @@ async function settle(action: () => unknown) {
 }
 
 describe('the tab bar', () => {
-  it('names the tabs as the board: «Стрічка · Ігри · Збережене · Профіль»', async () => {
+  it('names the tabs as the board: «Стрічка · Ігри · Мікс · Збережене · Профіль»', async () => {
     await renderTabs('/');
 
     expect(screen.getByText('Feed')).toBeOnTheScreen();
-    for (const name of [tabs.home, tabs.game, tabs.saved, tabs.profile]) {
+    for (const name of [tabs.home, tabs.game, tabs.mix, tabs.saved, tabs.profile]) {
       expect(screen.getByText(name)).toBeVisible();
     }
   });
 
-  it('shows four tabs in order while the Game is on', async () => {
+  it('shows five tabs in order, «Мікс» in the centre, while the Game is on (ADR 0201)', async () => {
     await renderTabs('/');
 
-    expect(tabButtons()).toEqual(['tab-home', 'tab-game', 'tab-saved', 'tab-settings']);
+    expect(tabButtons()).toEqual(['tab-home', 'tab-game', 'tab-mix', 'tab-saved', 'tab-settings']);
   });
 
-  it('shows three tabs, without «Ігри», while the Game is off', async () => {
+  it('shows four tabs, without «Ігри», while the Game is off', async () => {
     await renderTabs('/', {
       ...edition,
       isFeatureEnabled: (feature) => feature !== 'game' && edition.isFeatureEnabled(feature),
     });
 
-    expect(tabButtons()).toEqual(['tab-home', 'tab-saved', 'tab-settings']);
+    expect(tabButtons()).toEqual(['tab-home', 'tab-mix', 'tab-saved', 'tab-settings']);
     expect(screen.queryByText(tabs.game)).toBeNull();
+  });
+
+  it('shows the four tabs of before, without «Мікс», while the mixTab switch is off', async () => {
+    await renderTabs('/', {
+      ...edition,
+      isFeatureEnabled: (feature) => feature !== 'mixTab' && edition.isFeatureEnabled(feature),
+    });
+
+    expect(tabButtons()).toEqual(['tab-home', 'tab-game', 'tab-saved', 'tab-settings']);
+    expect(screen.queryByText(tabs.mix)).toBeNull();
+  });
+
+  it('opens «Мій Мікс» on the centre tab, with the tab bar over it', async () => {
+    await renderTabs('/');
+    await settle(() => fireEvent.press(screen.getByText(tabs.mix)));
+
+    expect(await screen.findByText('My Mix')).toBeOnTheScreen();
+    expect(screen.getByText(tabs.mix)).toBeVisible();
+  });
+
+  it('reads the centre tab to VoiceOver as the third of five', async () => {
+    await renderTabs('/');
+
+    expect(screen.getByTestId('tab-mix').props['accessibilityLabel']).toBe(
+      `${tabs.mix}, вкладка 3 з 5`,
+    );
   });
 
   it('opens the Profile on the fourth tab', async () => {

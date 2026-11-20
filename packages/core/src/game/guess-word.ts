@@ -259,7 +259,7 @@ function tipRound({ gameQuestion, example }: Tip, random: Random): RoundContent 
  */
 export const guessWord: GameMode = {
   id: 'guess-word',
-  group: 'new',
+  group: 'lead',
   entryKind: 'word',
   alsoAsks: ['idiom', 'synonymRow', 'tip'],
   isOn: (edition) => edition.isFeatureEnabled('gameGuessWord'),

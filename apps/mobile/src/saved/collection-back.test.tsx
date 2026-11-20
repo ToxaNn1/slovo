@@ -103,11 +103,11 @@ async function openApp(url: string) {
   return { pathname: () => app.getPathname() };
 }
 
-/** Presses the Collection screen's «Колекції». */
+/** Presses the Collection screen's «Назад». */
 const pressBack = () =>
-  settle(() => fireEvent.press(screen.getByRole('button', { name: strings.title })));
+  settle(() => fireEvent.press(screen.getByRole('button', { name: 'Назад' })));
 
-describe('«Колекції» on a Collection', () => {
+describe('«Назад» on a Collection', () => {
   it('opens Collections from the copy «Додати собі» made of a Collection Link', async () => {
     const made = await api.backend.collectionLinks.create({
       edition: edition.id,

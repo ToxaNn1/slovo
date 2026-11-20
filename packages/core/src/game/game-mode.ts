@@ -21,8 +21,11 @@ export type GameEdition = Pick<Edition, 'isFeatureEnabled'> &
     readonly languageTraits: Pick<LanguageTraits, 'stress' | 'expressionPunctuation'>;
   };
 
-/** The board's five groups of the mode screen, in the board's order (ADR 0139). */
-export const GAME_HUB_GROUPS = ['sound', 'meaning', 'letters', 'speed', 'new'] as const;
+/**
+ * The groups of the mode screen, in the board's order: the leading row,
+ * which stands above all the others with no title, then the board's five.
+ */
+export const GAME_HUB_GROUPS = ['lead', 'sound', 'meaning', 'letters', 'speed', 'new'] as const;
 
 /** The board's group of the mode screen a Game Mode's card stands in. */
 export type GameHubGroup = (typeof GAME_HUB_GROUPS)[number];

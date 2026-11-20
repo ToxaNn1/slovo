@@ -464,6 +464,12 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Читач сам обирає, як часто в стрічці з’являються фрази, поради й інше.',
     group: 'feed',
   },
+  /** The tab «Мікс» in the centre of the tab bar, which opens «Мій Мікс»; off gives the four tabs of before (ADR 0201). */
+  mixTab: {
+    name: 'Вкладка «Мікс»',
+    line: 'Посередині панелі вкладок — «Мікс», що відкриває «Мій Мікс»; вимкнено — чотири вкладки.',
+    group: 'feed',
+  },
   /** The XP log: XP for Game learning actions, kept per Edition, and the XP bar on the Feed (ADR 0066). */
   xpLog: {
     name: 'Досвід (XP)',
@@ -663,7 +669,7 @@ export const FEATURE_SWITCHES = catalogue({
     group: 'notifications',
     dependsOn: ['notifications'],
   },
-  /** «Коли нагадати?»: the onboarding step after the Daily Goal that sets the one Notification time or none; off while `notifications` is. */
+  /** «Коли нагадати?»: the onboarding step after the Daily Goal that sets the Word's Notification time or switches notifications off; off while `notifications` is. */
   notificationTimeStep: {
     name: 'Крок «Коли нагадати?»',
     line: 'У вступі читач обирає час нагадування або вимикає його.',

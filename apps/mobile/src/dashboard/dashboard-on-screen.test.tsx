@@ -189,6 +189,7 @@ async function openApp() {
       'category/[categoryId]': CategoryScreen,
       'correction-categories': CorrectionCategoriesScreen,
       'correction-category/[categoryId]': CorrectionCategoryScreen,
+      'saved/collections/[collectionId]': () => null,
     },
     { shell: shell() },
   );
@@ -592,7 +593,7 @@ describe('the Curated Collections rail', () => {
     expect(composition.history.list).toEqual([]);
   });
 
-  it('«ДОДАТИ СОБІ» copies it into the Collections and turns to «У МІКСІ» with the tick', async () => {
+  it('«ДОДАТИ СОБІ» copies it into the Collections and turns to «У КОЛЕКЦІЯХ» with the tick', async () => {
     await open();
     await openApp();
     await settle(() =>
@@ -602,11 +603,31 @@ describe('the Curated Collections rail', () => {
     await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'ДОДАТИ СОБІ' })));
 
     expect(screen.queryByText('ДОДАТИ СОБІ')).toBeNull();
-    expect(
-      screen.getByRole('togglebutton', { name: 'У МІКСІ' }).props['accessibilityState'],
-    ).toMatchObject({ checked: true });
+    expect(screen.getByRole('button', { name: 'У КОЛЕКЦІЯХ' })).toBeTruthy();
+    expect(screen.queryByRole('togglebutton')).toBeNull();
     expect(screen.getByTestId('curated-collection-add-icon')).toBeTruthy();
     expect(composition.curatedCollections.rail.map((card) => card.added)).toEqual([true]);
+    expect(screen.getByText('Добірка «Лагідні слова» тепер у твоїх Колекціях.')).toBeTruthy();
+    expect(screen.getByTestId('curated-collection-add').props['accessibilityHint']).toBe(
+      'Торкнися, щоб відкрити копію в Колекціях.',
+    );
+  });
+
+  it('«У КОЛЕКЦІЯХ» opens the copy in the Collections and makes no second one', async () => {
+    await open();
+    await openApp();
+    await settle(() =>
+      fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
+    );
+    await settle(() => fireEvent.press(screen.getByTestId('curated-collection-add')));
+
+    // The opening of the collection's screen has settled.
+    screenSettled();
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'У КОЛЕКЦІЯХ' })));
+
+    const [copy, ...more] = composition.collections.list;
+    expect(more).toEqual([]);
+    expect(screen).toHavePathname(`/saved/collections/${copy?.id ?? '-'}`);
   });
 
   it('shows the added mark on the card once copied', async () => {

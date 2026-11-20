@@ -506,7 +506,6 @@ function levelCardOf(level: LevelState, total: number) {
 /** The row of the Level names under the Level card, captioned by range of Levels (owner decisions 12, 16). */
 function ProfileLadder({ level }: { level: LevelState }) {
   const { ladder } = strings;
-  const upper = (text: string) => text.toLocaleUpperCase(edition.locale);
   return (
     <LevelLadder
       testID="profile-ladder"
@@ -520,17 +519,6 @@ function ProfileLadder({ level }: { level: LevelState }) {
             : fill(ladder.range, { from: String(band.first), to: String(band.last) }),
       }))}
       tags={{ passed: ladder.passed, current: ladder.current, ahead: ladder.ahead }}
-      bar={fill(ladder.bar, { level: String(level.level), name: upper(level.name) })}
-      toNext={
-        level.next === undefined
-          ? undefined
-          : {
-              text: upper(
-                fill(ladder.toNext, { name: level.next.name, xp: String(level.next.xp) }),
-              ),
-              share: 1 - level.next.xp / level.next.nameXp,
-            }
-      }
     />
   );
 }

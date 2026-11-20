@@ -5,6 +5,7 @@ import {
   RailBoard,
   type RailBoardCard,
   RailScreenHero,
+  UndoToastProvider,
   useEdition,
   useListScroll,
 } from '@slovo/ui';
@@ -26,8 +27,16 @@ const { curatedCollection: words, curatedCollectionCount } = editionStrings.dash
  * the error with its retry.
  */
 export default function CuratedCollectionRoute() {
-  const collectionId = useSegmentParam('collectionId');
-  const { screen, retry, pictogram, add, openEntry } = useCuratedCollectionScreen(collectionId);
+  return (
+    <UndoToastProvider>
+      <CuratedCollectionScreen collectionId={useSegmentParam('collectionId')} />
+    </UndoToastProvider>
+  );
+}
+
+function CuratedCollectionScreen({ collectionId }: { collectionId: string }) {
+  const { screen, retry, pictogram, add, openCopy, openEntry } =
+    useCuratedCollectionScreen(collectionId);
   const { count } = useEdition();
   const router = useRouter();
   const scroll = useListScroll<FlatList<RailBoardCard>>();
@@ -35,7 +44,7 @@ export default function CuratedCollectionRoute() {
   if (retry !== undefined)
     return (
       <ReadFailed
-        back={{ testID: 'curated-collection-back', label: editionStrings.tabs.home }}
+        back={{ testID: 'curated-collection-back', label: editionStrings.back }}
         onRetry={retry}
         testID="curated-collection-error"
       />
@@ -60,21 +69,27 @@ export default function CuratedCollectionRoute() {
           mascot="waits"
           back={{
             testID: 'curated-collection-back',
-            label: editionStrings.tabs.home,
+            label: editionStrings.back,
             onPress: () => {
               router.back();
             },
           }}
           {...(screen !== undefined && {
-            action: {
-              kind: 'toggle',
-              testID: 'curated-collection-add',
-              label: screen.added ? words.addedButton : words.addButton,
-              on: screen.added,
-              onPress: () => {
-                if (!screen.added) add();
-              },
-            },
+            action: screen.added
+              ? {
+                  kind: 'opens',
+                  testID: 'curated-collection-add',
+                  label: words.addedButton,
+                  hint: words.openCopyHint,
+                  onPress: openCopy,
+                }
+              : {
+                  kind: 'toggle',
+                  testID: 'curated-collection-add',
+                  label: words.addButton,
+                  on: false,
+                  onPress: add,
+                },
           })}
         />
       }

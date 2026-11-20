@@ -1,13 +1,5 @@
 /** The tokens of Settings and its panels. */
 
-/** The drawing of a slider on a row that is not available yet: track, fill and thumb. */
-export const sliderDrawing = {
-  trackHeight: 4,
-  trackRadius: 2,
-  thumbSize: 20,
-  thumbRadius: 10,
-} as const;
-
 /**
  * A Settings row's drawing (design `SlovoApp`, Settings): its padding, the
  * gap between its parts, the sunken icon tile at its start with the slanted

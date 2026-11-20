@@ -288,3 +288,16 @@ describe('The Feed Notice of a later question', () => {
     },
   );
 });
+
+describe('Settings › «Анкета» › its header', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await render();
+    screenSettled();
+    await press(settings.rows.questionnaire);
+
+    expect(screen.getByTestId('questionnaire-back')).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('questionnaire-scroll')).queryByTestId('questionnaire-back'),
+    ).toBeNull();
+  });
+});

@@ -284,21 +284,21 @@ describe('the notification plan', () => {
   it('plans again on every time change and on the sound switch', async () => {
     const { app, scheduler } = await run();
 
-    await app.notifications.keepTime('08:30', '09:00');
+    await app.notifications.keepTime('word', '08:30');
     expect(planOf(scheduler)[0]).toMatchObject({ date: '2026-10-14', time: '08:30' });
 
-    await app.notifications.removeTime('08:30');
-    expect(planOf(scheduler)[0]).toMatchObject({ date: '2026-10-14', time: '13:00' });
+    await app.notifications.keepTime('word', '10:00');
+    expect(planOf(scheduler)[0]).toMatchObject({ date: '2026-10-14', time: '10:00' });
 
     await app.notifications.setSound(false);
     expect(planOf(scheduler).every(({ sound }) => sound === 'silent')).toBe(true);
   });
 
-  it('empties the plan and Reserves nothing once every time is removed', async () => {
+  it('empties the plan and Reserves nothing once notifications are switched off', async () => {
     const time = fakeClock(start);
     const { app, scheduler } = await run({ clock: time.clock });
 
-    for (const kept of defaultTimes) await app.notifications.removeTime(kept);
+    await app.notifications.setOn(false);
 
     expect(planOf(scheduler)).toEqual([]);
     await expectNothingReserved(app, scheduler, time);
@@ -314,7 +314,7 @@ describe('the notification plan', () => {
     await app.resume();
 
     expect(planOf(scheduler)).toEqual([]);
-    expect(app.notifications.state.times).toEqual(defaultTimes);
+    expect(app.notifications.state.times).toEqual({ kind: 'on', word: '09:00', reminder: '19:00' });
     await expectNothingReserved(app, scheduler, time);
 
     // A plan made while allowed, then a run with permission not asked yet.
@@ -413,7 +413,7 @@ describe('the notification plan', () => {
     // The 09:00 notification has come; the next run moves the time to 10:00.
     time.set('2026-10-14T09:30:00+03:00');
     const { app, scheduler: later } = await run({ records, clock: time.clock, titles });
-    await app.notifications.keepTime('10:00', '09:00');
+    await app.notifications.keepTime('word', '10:00');
 
     const [next] = planOf(later);
     expect(next).toMatchObject({ date: '2026-10-14', time: '10:00' });
@@ -541,14 +541,14 @@ describe('the Feature Switches of notifications and the Word of the Day', () => 
     const { app, scheduler } = await run({ clock: time.clock, switchedOff: ['notifications'] });
 
     expect(planOf(scheduler)).toEqual([]);
-    expect(app.notifications.state.times).toEqual(defaultTimes);
+    expect(app.notifications.state.times).toEqual({ kind: 'on', word: '09:00', reminder: '19:00' });
     await expectNothingReserved(app, scheduler, time);
   });
 
   it('plans nothing on a change of the times or the sound with notifications switched off', async () => {
     const { app, scheduler } = await run({ switchedOff: ['notifications'] });
 
-    await app.notifications.keepTime('21:00');
+    await app.notifications.keepTime('reminder', '21:00');
     await app.notifications.setSound(false);
 
     expect(planOf(scheduler)).toEqual([]);
@@ -703,7 +703,7 @@ describe('the plan following the Feed', () => {
     const { app, scheduler } = await run({ records, clock: time.clock });
 
     // An earlier time added ahead of 09:00 takes the morning Word.
-    await app.notifications.keepTime('07:15');
+    await app.notifications.keepTime('word', '07:15');
     const plan = planOf(scheduler);
     expect(wordsBySlot(plan).has('2026-10-15T09:00')).toBe(false);
 
@@ -897,13 +897,13 @@ describe('the Reserved Words', () => {
     expect(planOf(next)).toEqual(after);
   });
 
-  it("are replaced whole: a removed time's Word is no longer its day's morning Word", async () => {
+  it("are replaced whole: a changed time's Word is no longer its day's morning Word", async () => {
     const time = fakeClock(start);
     const records = new Map<string, string>();
     const { app, scheduler } = await run({ records, clock: time.clock });
     const nine = wordAt(planOf(scheduler), '2026-10-15T09:00');
 
-    await app.notifications.removeTime('09:00');
+    await app.notifications.keepTime('word', '13:00');
     const one = wordAt(planOf(scheduler), '2026-10-15T13:00');
 
     time.set('2026-10-15T14:00:00+03:00');
@@ -1023,10 +1023,11 @@ describe('the evening notification', () => {
     expect(plan.every(({ time }) => time === '09:00')).toBe(true);
   });
 
-  it('covers 14 days with 5 times set: only the earliest and the latest take a slot', async () => {
-    const { app, scheduler } = await run({ records: new Map([goalSet]) });
-    await app.notifications.keepTime('11:00');
-    await app.notifications.keepTime('15:00');
+  it('covers 14 days with 5 times stored before ADR 0200: only the earliest and the latest take a slot', async () => {
+    const times = ['09:00', '11:00', '13:00', '15:00', '19:00'];
+    const { scheduler } = await run({
+      records: new Map([goalSet, ['notifications.times', JSON.stringify(times)]]),
+    });
 
     const plan = planOf(scheduler);
     expect(plan).toHaveLength(28);
@@ -1287,10 +1288,10 @@ describe('the next morning notification', () => {
     expect(scheduler.plan ?? []).toEqual([]);
   });
 
-  it("is today's Word of the Day with no time while no time is left, and nothing once it is Seen", async () => {
+  it("is today's Word of the Day with no time while notifications are off, and nothing once it is Seen", async () => {
     const time = fakeClock(start);
     const { app } = await run({ clock: time.clock });
-    for (const kept of defaultTimes) await app.notifications.removeTime(kept);
+    await app.notifications.setOn(false);
 
     const today = wordsOfTheDayIn(app).get('2026-10-14');
     if (today === undefined) throw new Error('No Word of the Day');
@@ -1319,7 +1320,7 @@ describe('the plan made again', () => {
     const passed = wordAt(planOf(scheduler), '2026-10-14T09:00');
 
     time.set('2026-10-14T09:30:00+03:00');
-    await app.notifications.keepTime('07:00');
+    await app.notifications.keepTime('word', '07:00');
 
     const plan = planOf(scheduler);
     expect(plan.map(wordIdOf)).not.toContain(passed);
