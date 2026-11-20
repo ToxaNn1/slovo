@@ -57,9 +57,12 @@ const random: Random = { next: () => 0.5 };
 
 /** A user state in memory, which a second Shell opens over as the next launch does. */
 const userStateInMemory = () =>
-  openOnce(async () => ({ kind: 'stored', userState: await seedUserState({}, { clock }) }) as const, {
-    onError: () => undefined,
-  });
+  openOnce(
+    async () => ({ kind: 'stored', userState: await seedUserState({}, { clock }) }) as const,
+    {
+      onError: () => undefined,
+    },
+  );
 
 /** The Shell of the Edition opened over the Core's fake backend and a user state in memory. */
 function shellOverFakes({

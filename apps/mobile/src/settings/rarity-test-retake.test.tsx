@@ -205,7 +205,8 @@ describe('Settings › «Пройти тест ще раз»', () => {
       },
       { onError: () => undefined },
     );
-    const lemma = (): unknown => screen.getByTestId('settings-rarity-lemma').props['accessibilityLabel'];
+    const lemma = (): unknown =>
+      screen.getByTestId('settings-rarity-lemma').props['accessibilityLabel'];
     await renderSettings(reopening);
     await open(rarityTest.retake);
     for (let asked = 0; asked < 3; asked++) {
