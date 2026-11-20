@@ -390,6 +390,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   replaceOpenEntry: FeatureSwitchStateSchema,
   /** The Mix kind weights: «Менше», «Звичайно» or «Більше» for each kind beside Words, which space its Feed turns; off, every kind keeps its turn of 0.9. */
   mixKindWeights: FeatureSwitchStateSchema,
+  /** The tab «Мікс» in the centre of the tab bar, which opens «Мій Мікс»; off gives the four tabs of before (ADR 0201). */
+  mixTab: FeatureSwitchStateSchema,
   /** The XP log: XP for Game learning actions, kept per Edition, and the XP bar on the Feed (ADR 0066). */
   xpLog: FeatureSwitchStateSchema,
   /** Streak freezes: a held freeze covers a missed day automatically, 2 at the start, one more per 7 Streak days, at most 2 held (ADR 0066). */

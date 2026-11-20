@@ -196,6 +196,14 @@ appId: ${APP_ID || 'app.slovo.uk'}
       LINK_PATH: 'game/crossword'
       SCREEN: daily-crossword-screen|game
 
+# Мікс, the centre tab (ADR 0201)
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/mix'
+      LINK_PATH: 'mix'
+      SCREEN: mix
+
 # Saved
 - runFlow:
     file: app-pass/open.yaml
