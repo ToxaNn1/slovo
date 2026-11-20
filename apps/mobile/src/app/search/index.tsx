@@ -1,6 +1,7 @@
 import {
   EmptyState,
   EntryRow,
+  FeedError,
   LabelChip,
   RecentQueries,
   SearchField,
@@ -40,7 +41,7 @@ const strings = editionStrings.search;
  * in its group under its chip, «За значенням» last; from 3 letters a query
  * that finds nothing reads «Нічого не знайдено» with the sleeping Rupor. A
  * result opens its Entry card, which makes nothing Seen, and keeps the query
- * among the recent ones.
+ * among the recent ones. A search that fails shows the error with a retry.
  */
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
@@ -111,7 +112,17 @@ export default function SearchScreen() {
           </>
         }
         ListEmptyComponent={
-          !fieldEmpty && model.state === 'nothingFound' ? <NothingFound /> : undefined
+          fieldEmpty ? undefined : model.state === 'nothingFound' ? (
+            <NothingFound />
+          ) : model.state === 'failed' ? (
+            <FeedError
+              title={editionStrings.loadFailed.title}
+              message={editionStrings.loadFailed.message}
+              retry={editionStrings.loadFailed.retry}
+              onRetry={model.retry}
+              testID="search-error"
+            />
+          ) : undefined
         }
       />
       <ListTopButton scroll={scroll} />

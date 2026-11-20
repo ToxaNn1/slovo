@@ -171,6 +171,22 @@ describe('the Search screen', () => {
     expect(screen.getByRole('header', { name: strings.found })).toBeOnTheScreen();
   });
 
+  it('shows the error with a retry when the search fails, and the retry searches again', async () => {
+    await renderSearch();
+    jest.spyOn(composition.search, 'search').mockRejectedValueOnce(new Error('The pack is busy'));
+
+    await type('сум');
+
+    expect(screen.getByTestId('search-error')).toHaveTextContent(
+      new RegExp(editionStrings.loadFailed.title),
+    );
+    expect(screen.queryByTestId('search-result-w_quiet')).not.toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('search-error-retry'));
+    await settle();
+    expect(screen.queryByTestId('search-error')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('search-result-w_quiet')).toBeOnTheScreen();
+  });
+
   it('labels what the query finds «Знайдено»', async () => {
     await renderSearch();
 
