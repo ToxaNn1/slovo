@@ -28,7 +28,6 @@ import { useAnswerMotion, type AnswerDrop } from './useAnswerMotion';
 
 /** How a wrong tap drops: down, tilted and faded, the board's `slDrop`. */
 const VOWEL_DROP: AnswerDrop = { translateY: 12, rotate: -6, opacity: 0.55 };
-const VOWEL_SLOP = (minTouchTarget - vowelButtonsLayout.width) / 2;
 /** Whether a character is a letter, which counts for a vowel's place, unlike an apostrophe or a hyphen. */
 const LETTER = /\p{L}/u;
 
@@ -131,6 +130,7 @@ export function VowelButtons({
               .join(', ')}
             fill={fill}
             cell={cell}
+            slop={slopOf(cell.width, vowels.includes(position - 1), vowels.includes(position + 1))}
             marked={fill === 'right'}
             disabled={answer !== undefined}
             onPress={() => {
@@ -155,6 +155,7 @@ function Vowel({
   label,
   fill,
   cell,
+  slop,
   marked,
   disabled,
   onPress,
@@ -164,6 +165,8 @@ function Vowel({
   label: string;
   /** The letter's cell, its width and face size. */
   cell: Cell;
+  /** How far its touch area reaches past the cell on each side. */
+  slop: { readonly left: number; readonly right: number };
   /** How the judged answer fills it; nothing before the answer or for a vowel neither stressed nor tapped. */
   fill: 'right' | 'wrong' | undefined;
   /** Whether the red stress mark stands over it (board 06 «Наголос»). */
@@ -185,7 +188,7 @@ function Vowel({
         accessibilityLabel={label}
         inert={disabled}
         onPress={onPress}
-        hitSlop={{ left: VOWEL_SLOP, right: VOWEL_SLOP }}
+        hitSlop={slop}
         faceStyle={[
           styles.vowel,
           { width: cell.width, minWidth: cell.width },
@@ -272,6 +275,18 @@ function cellOf(room: number | undefined, letters: number): Cell {
   const fits = (room - vowelButtonsLayout.cellGap * (letters - 1)) / letters;
   const width = Math.min(full, Math.floor(fits));
   return { width, fontSize: (CELL_FACE * width) / full };
+}
+
+/**
+ * How far a vowel's touch area reaches past its cell on each side: out to a
+ * full touch target from the cell's width, narrowed for a long Word, but only
+ * half the gap towards a vowel beside it, so neighbours never take each
+ * other's taps.
+ */
+function slopOf(width: number, vowelLeft: boolean, vowelRight: boolean) {
+  const toTarget = Math.max(0, (minTouchTarget - width) / 2);
+  const between = Math.min(toTarget, vowelButtonsLayout.cellGap / 2);
+  return { left: vowelLeft ? between : toTarget, right: vowelRight ? between : toTarget };
 }
 
 /** The room over the vowels for the stress mark to land in. */
