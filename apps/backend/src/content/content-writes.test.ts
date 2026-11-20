@@ -1,6 +1,7 @@
 import { dateAfter } from '@slovo/content-rules';
 import type { Word } from '@slovo/contracts';
 import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
+import { ukrainianFolder, ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
 import { eq, sql } from 'drizzle-orm';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -202,6 +203,30 @@ describe('the content write API', () => {
     await expect(edit('Друга правка з тієї самої версії.')).rejects.toMatchObject({
       code: 'STALE',
       data: { currentVersion: 2 },
+    });
+  });
+
+  it('keeps refusing a stale record version after an override import: the import raises it too', async () => {
+    const { client, agent, batchId, importSnapshot } = await contentBackend();
+    const word = await wordOf(client, WORD_ID);
+    const edit = (recordVersion: number, primaryDefinition: string) =>
+      agent.admin.content.edit({
+        editionId: 'uk',
+        kind: 'word',
+        id: WORD_ID,
+        batchId,
+        recordVersion,
+        fields: { ...word, primaryDefinition },
+      });
+    await edit(1, 'Перша правка.');
+    const imported = await importSnapshot('uk', ukrainianFolder.dir, ukrainianSnapshot(), {
+      override: true,
+    });
+    expect(imported).toMatchObject({ ok: true });
+
+    await expect(edit(1, 'Правка з форми, відкритої до імпорту.')).rejects.toMatchObject({
+      code: 'STALE',
+      data: { currentVersion: 3 },
     });
   });
 
