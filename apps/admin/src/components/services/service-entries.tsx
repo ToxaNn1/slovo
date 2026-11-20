@@ -259,7 +259,7 @@ function SealedValue({
       {shown === null ? (
         <span aria-label="Приховано">{MASK}</span>
       ) : (
-        <span className="font-mono break-all">{shown}</span>
+        <span className="font-mono break-all whitespace-pre-wrap">{shown}</span>
       )}
       {vaultOn ? (
         <div className="flex flex-wrap items-center gap-2">
@@ -394,15 +394,28 @@ function EntryForm({
       </label>
       <label className="flex flex-col gap-1 text-sm">
         {entry !== undefined && sealed ? 'Нове значення (порожнє — без змін)' : 'Значення'}
-        <input
-          className={inputClass}
-          type={sealed ? 'password' : 'text'}
-          autoComplete="off"
-          value={value}
-          onChange={(event) => {
-            setValue(event.target.value);
-          }}
-        />
+        {type === 'recovery-codes' ? (
+          // A password field drops line breaks: the codes keep theirs, masked as one.
+          <textarea
+            className="min-h-24 rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm [-webkit-text-security:disc]"
+            autoComplete="off"
+            spellCheck={false}
+            value={value}
+            onChange={(event) => {
+              setValue(event.target.value);
+            }}
+          />
+        ) : (
+          <input
+            className={inputClass}
+            type={sealed ? 'password' : 'text'}
+            autoComplete="off"
+            value={value}
+            onChange={(event) => {
+              setValue(event.target.value);
+            }}
+          />
+        )}
       </label>
       <label className="flex flex-col gap-1 text-sm">
         Де використовується

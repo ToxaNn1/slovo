@@ -94,6 +94,30 @@ test('a new entry goes through the confirmation with a reason', async () => {
   });
 });
 
+test('recovery codes pasted one per line are sent with their line breaks', async () => {
+  const bodies: unknown[] = [];
+  server.use(
+    override('services.addEntry', async ({ request }) => {
+      bodies.push(await request.json());
+      return { entry: SERVICE_ENTRIES[3] };
+    }),
+  );
+  const { user, entries } = await neonEntries();
+  await user.click(await entries.findByRole('button', { name: 'Додати запис' }));
+  const form = within(entries.getByRole('form', { name: 'Новий запис' }));
+
+  await user.selectOptions(form.getByLabelText('Тип'), 'Коди відновлення');
+  await user.type(form.getByLabelText('Назва'), 'Codes');
+  await user.click(form.getByLabelText('Значення'));
+  await user.paste('aaaa-1111\nbbbb-2222');
+  await user.click(form.getByRole('button', { name: 'Додати запис' }));
+  await confirmWith('the backup codes', 'Додати');
+
+  await waitFor(() => {
+    expect(bodies).toEqual([expect.objectContaining({ value: 'aaaa-1111\nbbbb-2222' })]);
+  });
+});
+
 test('a change of a sealed entry leaves its value out unless a new one is typed', async () => {
   const bodies: unknown[] = [];
   server.use(
