@@ -95,6 +95,7 @@ describe('BadgeMark', () => {
 
   it('draws no checker on a Badge of another shape', async () => {
     await draw({ kind: 'earned', isNew: false });
+    expect(screen.getByTestId('badge-symbol')).toHaveTextContent('7');
     expect(screen.queryByTestId('badge-checker')).toBeNull();
   });
 });

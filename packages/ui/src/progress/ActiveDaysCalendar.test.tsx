@@ -132,6 +132,9 @@ describe('the Active Days calendar', () => {
   });
 
   it('is left out with no weeks, as with its Feature Switch off', async () => {
+    await renderCalendar(weeks);
+    expect(screen.getByTestId('stats-calendar')).toBeOnTheScreen();
+
     await renderCalendar([]);
 
     expect(screen.queryByTestId('stats-calendar')).not.toBeOnTheScreen();
