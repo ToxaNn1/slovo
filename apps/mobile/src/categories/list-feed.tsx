@@ -17,8 +17,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCompositionRead } from '../composition';
 import { editionStrings } from '../edition/edition';
+import { ShownCardFeatures } from '../entries/card-features';
 import { useEntrySlots } from '../entries/entry-actions';
-import { useShown } from '../shown-in-effect';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -134,13 +134,15 @@ function ListFeed({ read, failure, kicker, testID }: ListFeedProps) {
       </View>
       {/* Under the back tile's row, so a scrolled card passes under nothing. */}
       <View style={styles.pager}>
-        <VerticalPager
-          testID={testID}
-          items={pages}
-          renderPage={renderPage}
-          onIndexChange={onIndexChange}
-          turnActionLabels={turnActionLabels}
-        />
+        <ShownCardFeatures place="listFeed">
+          <VerticalPager
+            testID={testID}
+            items={pages}
+            renderPage={renderPage}
+            onIndexChange={onIndexChange}
+            turnActionLabels={turnActionLabels}
+          />
+        </ShownCardFeatures>
       </View>
     </View>
   );
@@ -156,7 +158,6 @@ function ListFeedPageView({
   testID: string;
   kicker: string;
 }) {
-  const { selfCheck, stressFall, sourceTab, tipExceptions } = useShown();
   const slots = useEntrySlots(card);
   return (
     <View testID={testID} style={styles.page}>
@@ -164,10 +165,6 @@ function ListFeedPageView({
         card={card}
         slots={slots}
         kicker={kicker}
-        selfCheck={selfCheck}
-        stressFalls={stressFall}
-        sourceTab={sourceTab}
-        tipExceptions={tipExceptions}
         // Right under the back tile's row, on the same page as in the Feed.
         page={{ testID, clearance: { framed: 0, scrolled: 0 } }}
       />

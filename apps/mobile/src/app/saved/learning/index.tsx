@@ -4,7 +4,7 @@ import { editionStrings } from '@/edition/edition';
 import { useLearningList } from '@/saved/learning';
 import { LearningList } from '@/saved/learning-list';
 import { SavedListScreen } from '@/saved/saved-list-screen';
-import { useShown } from '@/shown-in-effect';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 const { learning: strings } = editionStrings;
 
@@ -14,7 +14,7 @@ const { learning: strings } = editionStrings;
  */
 export default function LearningScreen() {
   // Turned off remotely while the reader is on it: its tab goes, and so does the screen.
-  if (!useShown().learning) return <Redirect href="/saved" />;
+  if (!useEditionInEffect().isFeatureEnabled('knowledge')) return <Redirect href="/saved" />;
   return <Learning />;
 }
 

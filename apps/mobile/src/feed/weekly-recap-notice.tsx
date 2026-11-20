@@ -11,6 +11,7 @@ import { useShell } from '../shell-value';
 import { sessionShareFormat } from '../share/share-card';
 import { useShown } from '../shown-in-effect';
 import { useWeeklyRecap } from './weekly-recap';
+import { useEditionInEffect } from '../edition/remote-switches';
 
 /**
  * The Weekly Recap's Feed page (board f5, ADR 0130): «Твій тиждень» on top,
@@ -68,10 +69,11 @@ export function WeeklyRecapNotice({
   onDone?: () => void;
 }) {
   const shown = useShown();
+  const inEffect = useEditionInEffect();
   const recap = withoutCounters(useWeeklyRecap(day), shown.xpBar);
   const hideStreak = shown.stats?.streak !== true;
   const { shareCard } = useShell();
-  const share = shown.entryButtons.shareCard ? shareCard : undefined;
+  const share = inEffect.isFeatureEnabled('shareCards') ? shareCard : undefined;
   const [open, setOpen] = useState(false);
   const composition = useComposition();
   return (

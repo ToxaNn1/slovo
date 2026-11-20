@@ -102,7 +102,7 @@ function SettingsList() {
           title={strings.title}
           // Opened from the Profile tab while the Profile is shown; otherwise Settings is the tab itself.
           back={
-            shown.profile
+            edition.isFeatureEnabled('profile')
               ? {
                   label: editionStrings.tabs.profile,
                   testID: 'settings-back',
@@ -127,7 +127,7 @@ function SettingsList() {
                 update({ theme });
               }}
             />
-            {shown.reduceMotionSetting && (
+            {edition.isFeatureEnabled('reduceMotion') && (
               <SettingsRow
                 testID="settings-reduce-motion"
                 icon="bar"
@@ -159,7 +159,7 @@ function SettingsList() {
         </View>
         <View testID="settings-group-sound" style={styles.section}>
           <SettingsGroup title={strings.groups.sound}>
-            {shown.soundsSetting && (
+            {edition.isFeatureEnabled('sounds') && (
               <SettingsRow
                 testID="settings-sounds"
                 icon="triangle"
@@ -174,7 +174,7 @@ function SettingsList() {
                 }}
               />
             )}
-            {shown.narratorVoiceSetting && (
+            {edition.isFeatureEnabled('narratorVoice') && (
               <SettingsRow
                 testID="settings-row-narrator-voice"
                 icon="triangle"
@@ -231,7 +231,7 @@ function SettingsList() {
         </View>
         <View testID="settings-group-learning" style={styles.section}>
           <SettingsGroup title={strings.groups.learning}>
-            {shown.dailyGoal && edition.isFeatureEnabled('xpLog') && (
+            {edition.isFeatureEnabled('dailyGoal') && edition.isFeatureEnabled('xpLog') && (
               <SettingsRow
                 testID="settings-row-daily-goal"
                 icon="wedge"
@@ -250,7 +250,7 @@ function SettingsList() {
                 }}
               />
             )}
-            {shown.rarity && (
+            {edition.isFeatureEnabled('rarityCeiling') && (
               <RarityRangePicker
                 testID="settings-rarity"
                 rarities={RARITIES}
@@ -271,7 +271,7 @@ function SettingsList() {
                 },
               }}
             />
-            {shown.rarityTest && (
+            {edition.isFeatureEnabled('rarityTest') && (
               <SettingsRow
                 testID="settings-row-rarity-test"
                 icon="bar"
@@ -285,7 +285,7 @@ function SettingsList() {
                 }}
               />
             )}
-            {shown.badges && (
+            {edition.isFeatureEnabled('badges') && (
               <SettingsRow
                 testID="settings-row-badges"
                 icon="diamond"
@@ -299,7 +299,7 @@ function SettingsList() {
                 }}
               />
             )}
-            {shown.gesturesHintAgain && (
+            {edition.isFeatureEnabled('gesturesHintAgain') && (
               <SettingsRow
                 testID="settings-row-gestures-hint"
                 icon="square"
@@ -331,7 +331,7 @@ function SettingsList() {
                 }}
               />
             )}
-            {shown.streakBreak && (
+            {edition.isFeatureEnabled('streakBreak') && (
               <SettingsRow
                 testID="settings-row-streak-break"
                 icon="bar"
@@ -362,7 +362,7 @@ function SettingsList() {
                 },
               }}
             />
-            {shown.selfCheckSetting && (
+            {edition.isFeatureEnabled('selfCheck') && (
               <SettingsRow
                 testID="settings-self-check"
                 icon="diamond"

@@ -46,6 +46,7 @@ import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { useBadgeOpening } from './badge-opening';
 import { dayText } from './day-text';
+import { useEditionInEffect } from '../edition/remote-switches';
 
 const strings = editionStrings.settings.profile;
 
@@ -106,6 +107,7 @@ function ProfileBlocks() {
   const modes = useSubscribed(composition.game, ({ state }) => state.modes);
   const account = useAccountInEffect();
   const shown = useShown();
+  const inEffect = useEditionInEffect();
   const { shareCard } = useShell();
   /** The share port of the Level Share Card, while the progress Share Cards are shown. */
   const share = shown.progressShareCards ? shareCard : undefined;
@@ -170,7 +172,7 @@ function ProfileBlocks() {
           <ActiveDaysCalendar
             weeks={weeks}
             onDayText={
-              shown.calendarDayLines
+              inEffect.isFeatureEnabled('calendarDayLines')
                 ? (message) => {
                     toast({ message });
                   }
@@ -280,7 +282,7 @@ function ProfileBlocks() {
             }}
           />
         )}
-        {shown.profileConfirmedByRarity && (
+        {inEffect.isFeatureEnabled('profileConfirmedByRarity') && (
           <View style={styles.section}>
             <SettingsGroup title={strings.confirmed}>
               {RARITIES.map((rarity) =>
@@ -295,7 +297,7 @@ function ProfileBlocks() {
             </SettingsGroup>
           </View>
         )}
-        {shown.profileGameBest && modes.length > 0 && (
+        {inEffect.isFeatureEnabled('profileGameBest') && modes.length > 0 && (
           <View style={styles.section}>
             <SettingsGroup title={strings.gameBest}>
               {modes.map(({ modeId, best }) =>
@@ -381,10 +383,10 @@ const nameStrings = strings.readerName;
  */
 function ReaderNameHead() {
   const composition = useComposition();
-  const shown = useShown();
+  const inEffect = useEditionInEffect();
   const name = useSubscribed(composition.readerName, ({ state }) => state);
   const [naming, setNaming] = useState(false);
-  if (!shown.readerName) return null;
+  if (!inEffect.isFeatureEnabled('readerName')) return null;
   return (
     <View style={styles.section}>
       <ProfileHeader

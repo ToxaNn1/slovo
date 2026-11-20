@@ -8,6 +8,7 @@ import { useLemmaSize } from '../providers/FontSizeProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { entryPanel, iconButton, space, swipeStampLayout, wedges, wordCardSide } from '../tokens';
 import { AccentGround } from './AccentGround';
+import { useCardFeatures } from './card-features';
 import { SwipeMarks, type EntrySwipe } from './SwipeMarks';
 import type { EntryCardProps } from './EntryCard';
 import { CorrectionCardBody } from './CorrectionCard';
@@ -37,15 +38,12 @@ export function EntryDetails({
   onBack,
   topInset,
   bottomInset,
-  stressFalls = false,
   onOpenCorrection,
   onOpenWord,
   onOpenSynonymRow,
   onWordHistoryShown,
   slots,
-  sourceTab = false,
-  tipExceptions = false,
-}: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont'> & {
+}: EntryCardProps & {
   /** The name of the screen the back tile returns to, which VoiceOver reads. */
   back: string;
   onBack: () => void;
@@ -55,6 +53,7 @@ export function EntryDetails({
   bottomInset: number;
 }) {
   const lemmaSize = useLemmaSize();
+  const { sourceTab } = useCardFeatures();
   const swipe = slots?.swipe;
   // The tab bar stands at the screen's foot (owner 08.11): under it only the room
   // the swipe's stamp keeps, which takes in the home indicator.
@@ -96,8 +95,7 @@ export function EntryDetails({
                 card={card.model}
                 lemmaSize={lemmaSize}
                 concealed={false}
-                stressFalls={stressFalls}
-                lemmaFont={undefined}
+                wordOfTheDay={false}
                 tabbed={false}
               />
             </>
@@ -106,12 +104,7 @@ export function EntryDetails({
       </AccentGround>
       {card.kind !== 'word' ? (
         <View testID="entry-body" style={[styles.body, styles.tabbed]}>
-          <OtherKindBody
-            card={card}
-            onOpenWord={onOpenWord}
-            sourceTab={sourceTab}
-            tipExceptions={tipExceptions}
-          />
+          <OtherKindBody card={card} onOpenWord={onOpenWord} />
         </View>
       ) : (
         <View testID="word-card" style={[styles.body, styles.tabbed]}>
@@ -144,20 +137,15 @@ export function EntryDetails({
 function OtherKindBody({
   card,
   onOpenWord,
-  sourceTab,
-  tipExceptions,
 }: {
   card: OtherKindCard;
   onOpenWord: ((wordId: string) => void) | undefined;
-  sourceTab: boolean;
-  tipExceptions: boolean;
 }) {
   const lemmaSize = useLemmaSize();
   const shared = {
     lemmaSize,
     concealed: false,
     corner: undefined,
-    sourceTab,
     headless: true,
   };
   switch (card.kind) {
@@ -168,7 +156,7 @@ function OtherKindBody({
     case 'synonymRow':
       return <SynonymRowCardBody card={card.model} onOpenWord={onOpenWord} {...shared} />;
     case 'tip':
-      return <TipCardBody card={card.model} exceptionsTab={tipExceptions} {...shared} />;
+      return <TipCardBody card={card.model} {...shared} />;
   }
 }
 

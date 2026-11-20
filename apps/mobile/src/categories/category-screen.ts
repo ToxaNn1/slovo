@@ -14,8 +14,8 @@ import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 import { useKnownCards } from '../knowledge/marks';
 import { useMixState } from '../mix/mix';
-import { useShown } from '../shown-in-effect';
 import { useOpenScreen } from '../use-open-screen';
+import { useEditionInEffect } from '../edition/remote-switches';
 
 const { toasts } = editionStrings.dashboard.category;
 /** What the Mix screen says under a list whose last Category can't be taken out (ADR 0019). */
@@ -58,7 +58,7 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
   const mixState = useMixState();
   const showToast = useUndoToast();
   const openScreen = useOpenScreen();
-  const { categoryFeed } = useShown();
+  const categoryFeed = useEditionInEffect().isFeatureEnabled('categoryFeed');
   const read = useCallback(
     async (open: Composition) =>
       (await open.categoryEntries(of, category.id)).map((entry) => {

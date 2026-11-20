@@ -2,7 +2,7 @@ import { Redirect } from 'expo-router';
 
 import { CuratedCollectionFeedScreen } from '@/dashboard/curated-collection-feed';
 import { useQueryParam, useSegmentParam } from '@/route-params';
-import { useShown } from '@/shown-in-effect';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 /**
  * A Curated Collection's Feed, from a tap on an Entry of its screen (ADR
@@ -12,7 +12,6 @@ import { useShown } from '@/shown-in-effect';
 export default function CuratedCollectionFeedRoute() {
   const collectionId = useSegmentParam('collectionId');
   const from = useQueryParam('from');
-  const { curatedCollectionFeed } = useShown();
-  if (!curatedCollectionFeed) return <Redirect href="/" />;
+  if (!useEditionInEffect().isFeatureEnabled('curatedCollectionFeed')) return <Redirect href="/" />;
   return <CuratedCollectionFeedScreen collectionId={collectionId} from={from ?? ''} />;
 }

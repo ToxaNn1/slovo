@@ -40,15 +40,15 @@ import {
   useFeedHeaderRows,
   type FeedHeaderRows,
 } from '@/feed/feed-page';
-import { wordOfTheDayFontFamily } from '@/edition/reported-edition';
+import { ShownCardFeatures } from '@/entries/card-features';
 import { StatsPillAndSheet } from '@/progress/progress';
-import { useShown } from '@/shown-in-effect';
 import { useGesturesHint } from '@/feed/gestures-hint';
 import { todayText } from '@/feed/today-text';
 import { WeeklyRecapPage } from '@/feed/weekly-recap-notice';
 import { CommunityWordNotice } from '@/feed/community-word-notice';
 import { useNotificationsChanges } from '@/notifications/notifications';
 import { LaterQuestionNotice } from '@/feed/later-question-notice';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -71,11 +71,13 @@ function FeedScreen() {
   const voice = useSettings().current.narratorVoice;
   const feed = useFeed(pager, { clock: deviceClock, landing: wordOfTheDayLanding, voice });
   const { colors } = useTokens();
-  const shown = useShown();
+  const inEffect = useEditionInEffect();
   const header = useFeedHeaderRows();
-  const gesturesHint = useGesturesHint(shown.entryButtons.knowledge);
+  const gesturesHint = useGesturesHint(inEffect.isFeatureEnabled('knowledge'));
   // While the hint is open the Feed's own card plays the gestures (board XSwipeV, ADR 0112).
-  const gesturesDemo = useGesturesDemo(gesturesHint.visible && shown.gesturesHintDemo);
+  const gesturesDemo = useGesturesDemo(
+    gesturesHint.visible && inEffect.isFeatureEnabled('gesturesHintDemo'),
+  );
   const openScreen = useOpenScreen();
 
   const {
@@ -129,16 +131,18 @@ function FeedScreen() {
     <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Each time the Feed comes back in sight, its first card plays the full reveal again. */}
       <SwipeDemoStage demo={gesturesDemo}>
-        <RevealPace fast={shown.fastReveal} visiting={feed.inSight}>
-          <VerticalPager
-            ref={pager}
-            testID="feed"
-            items={cards}
-            initialIndex={feed.startPosition}
-            renderPage={renderPage}
-            onIndexChange={onIndexChange}
-            turnActionLabels={turnActionLabels}
-          />
+        <RevealPace fast={inEffect.isFeatureEnabled('fastReveal')} visiting={feed.inSight}>
+          <ShownCardFeatures place="feed">
+            <VerticalPager
+              ref={pager}
+              testID="feed"
+              items={cards}
+              initialIndex={feed.startPosition}
+              renderPage={renderPage}
+              onIndexChange={onIndexChange}
+              turnActionLabels={turnActionLabels}
+            />
+          </ShownCardFeatures>
         </RevealPace>
       </SwipeDemoStage>
       <FeedHeaderBar
@@ -148,7 +152,7 @@ function FeedScreen() {
         streak={<StatsPillAndSheet />}
         // The Feed opened from the Dashboard leads back to it by its wordmark (ADR 0079).
         onLogo={
-          shown.dashboardWordmark
+          inEffect.isFeatureEnabled('dashboardWordmark')
             ? {
                 label: editionStrings.dashboard.open,
                 onPress: () => {
@@ -203,7 +207,6 @@ const FeedPage = memo(function FeedPage({
   /** «Повернути» of the Weekly Recap folded this session. */
   onRestoreWeeklyRecap: () => void;
 }) {
-  const { stressFall, calligraphicLemma } = useShown();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
     return (
@@ -321,35 +324,15 @@ const FeedPage = memo(function FeedPage({
         onOpenSynonymRow={(synonymRowId) => {
           openScreen(`/entry/${synonymRowId}`);
         }}
-        stressFalls={stressFall}
-        // Only here, on the Word of the Day card; in the Word font with the switch off.
-        wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
         page={page}
       />
     </FeedPageFrame>
   );
 });
 
-/**
- * An Entry's card in the Feed, with its action row or its corner and side
- * swipes (ADR 0077), under Self-check and the source and exceptions tabs as they are shown in effect.
- */
-function SwipedEntryCard(
-  props: Omit<
-    ComponentProps<typeof EntryCard>,
-    'slots' | 'selfCheck' | 'sourceTab' | 'tipExceptions'
-  >,
-) {
-  const { selfCheck, sourceTab, tipExceptions } = useShown();
-  return (
-    <EntryCard
-      {...props}
-      slots={useEntrySlots(props.card)}
-      selfCheck={selfCheck}
-      sourceTab={sourceTab}
-      tipExceptions={tipExceptions}
-    />
-  );
+/** An Entry's card in the Feed, with its action row or its corner and side swipes (ADR 0077). */
+function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'slots'>) {
+  return <EntryCard {...props} slots={useEntrySlots(props.card)} />;
 }
 
 /** Whether the Feed Notice is a later question of the questionnaire (ADR 0067). */

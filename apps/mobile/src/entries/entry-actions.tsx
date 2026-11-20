@@ -25,7 +25,7 @@ import { useHide } from '../mix/hiding';
 import { keep } from '../keep';
 import { sessionShareFormat } from '../share/share-card';
 import { useShell, type ShareCard } from '../shell-value';
-import { useShown } from '../shown-in-effect';
+import { useEditionInEffect } from '../edition/remote-switches';
 
 /** The Knowledge Mark of an Entry's card, as state plus callbacks. */
 type Knowledge = ReturnType<typeof useKnowledgeMark>;
@@ -40,10 +40,10 @@ export interface EntryMarks {
 
 /** The marks of the card of an Entry: its Knowledge Mark read once. */
 export function useEntryMarks(entryId: string): EntryMarks {
-  const shown = useShown();
+  const inEffect = useEditionInEffect();
   const knowledge = useKnowledgeMark(entryId);
   return {
-    knowledge: shown.entryButtons.knowledge ? knowledge : undefined,
+    knowledge: inEffect.isFeatureEnabled('knowledge') ? knowledge : undefined,
   };
 }
 
@@ -235,7 +235,7 @@ interface OpenedAction {
 function useShareAction(card: AnyEntryCard): OpenedAction | undefined {
   const [open, setOpen] = useState(false);
   const { shareCard } = useShell();
-  const share = useShown().entryButtons.shareCard ? shareCard : undefined;
+  const share = useEditionInEffect().isFeatureEnabled('shareCards') ? shareCard : undefined;
   if (share === undefined) return undefined;
   return {
     open: () => {
@@ -301,7 +301,7 @@ function useMistakeReportAction(entryId: string): OpenedAction | undefined {
   const [open, setOpen] = useState(false);
   const showToast = useUndoToast();
   const { mistakeReports } = useShell();
-  const shown = useShown().entryButtons.mistakeReport;
+  const shown = useEditionInEffect().isFeatureEnabled('mistakeReports');
   if (!shown) return undefined;
   const close = () => {
     setOpen(false);

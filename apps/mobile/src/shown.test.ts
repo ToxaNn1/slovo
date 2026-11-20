@@ -14,66 +14,16 @@ function editionWithout(...off: FeatureSwitch[]) {
 
 const everything: Shown = {
   tabs: ['home', 'game', 'mix', 'saved', 'settings'],
-  gameReview: true,
-  gameRoundMascot: true,
-  gameEndToFeed: true,
-  gameModeToast: true,
-  entryButtons: {
-    shareCard: true,
-    pronunciation: true,
-    knowledge: true,
-    mistakeReport: true,
-  },
-  stressFall: true,
-  sourceTab: true,
-  tipExceptions: true,
-  calligraphicLemma: true,
   selfCheck: false,
-  selfCheckSetting: true,
-  soundsSetting: true,
-  narratorVoiceSetting: true,
-  recordedOnly: true,
-  seasonalDecorSetting: true,
-  reduceMotionSetting: true,
   shareCountersSetting: true,
-  dataExport: true,
-  learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   xpBar: true,
   celebrations: true,
   levelLadder: true,
   breakCard: true,
-  streakBreak: true,
-  calendarDayLines: true,
   streakFreezeCard: true,
-  badges: true,
   badgeCounts: true,
   progressShareCards: true,
-  crosswordSolvedScreen: true,
-  crosswordSolveTime: true,
-  profile: true,
-  readerName: true,
-  profileConfirmedByRarity: true,
-  profileGameBest: true,
-  quickQuestion: true,
-  sync: true,
-  dailyGoal: true,
-  search: true,
-  searchField: true,
-  fastReveal: true,
-  dashboardWordmark: true,
-  dailySplash: true,
-  heroSparks: true,
-  feedTab: true,
-  categoryFeed: true,
-  mood: true,
-  curatedCollections: true,
-  curatedCollectionFeed: true,
-  gesturesHintDemo: true,
-  gesturesHintAgain: true,
-  wordOfTheDayArchive: true,
-  rarity: true,
-  rarityTest: true,
   questionnaire: { levelWhy: true, selfRating: true, interests: true },
 };
 
@@ -106,83 +56,6 @@ describe('what the reader is shown', () => {
       },
     ],
     [
-      'a still Stress mark with the falling Stress off',
-      { off: ['stressAnimation'], shown: { stressFall: false } },
-    ],
-    [
-      'the sources left in their tabs with the «Джерело» tab off',
-      { off: ['sourceTab'], shown: { sourceTab: false } },
-    ],
-    [
-      'a Tip card with «Правило» alone with its «Винятки» tab off',
-      { off: ['tipExceptions'], shown: { tipExceptions: false } },
-    ],
-    [
-      'the Word of the Day Lemma in the Word font with the calligraphic Lemma off',
-      { off: ['calligraphy'], shown: { calligraphicLemma: false } },
-    ],
-    [
-      'a plain wordmark with the Dashboard wordmark off',
-      { off: ['dashboardWordmark'], shown: { dashboardWordmark: false } },
-    ],
-    [
-      'a plain Dashboard logo with the daily splash off',
-      { off: ['dailySplash'], shown: { dailySplash: false } },
-    ],
-    [
-      "a still Mascot in the Dashboard's hero with the hero's sparks off",
-      { off: ['heroSparks'], shown: { heroSparks: false } },
-    ],
-    [
-      'a still gestures hint with its demo off',
-      { off: ['gesturesHintDemo'], shown: { gesturesHintDemo: false } },
-    ],
-    [
-      'no «Показати підказку жестів» with its switch off',
-      { off: ['gesturesHintAgain'], shown: { gesturesHintAgain: false } },
-    ],
-    [
-      "a Word's card from a Category's screen with the Category's Feed off",
-      { off: ['categoryFeed'], shown: { categoryFeed: false } },
-    ],
-    [
-      "an Entry's card from a Curated Collection's screen with the collection's Feed off",
-      { off: ['curatedCollectionFeed'], shown: { curatedCollectionFeed: false } },
-    ],
-    [
-      'a «Стрічка» tab to the Dashboard with the Feed tab off',
-      { off: ['feedTab'], shown: { feedTab: false } },
-    ],
-    [
-      'no Search button with the Search button off',
-      { off: ['searchButton'], shown: { search: false } },
-    ],
-    [
-      'no search field on Saved with Search off',
-      { off: ['search'], shown: { searchField: false } },
-    ],
-    [
-      'the full reveal on every Feed card with the fast reveal off',
-      { off: ['fastReveal'], shown: { fastReveal: false } },
-    ],
-    [
-      'no «Сезонний декор» switch with Seasonal Decor off',
-      { off: ['seasonalDecor'], shown: { seasonalDecorSetting: false } },
-    ],
-    ['no «Звуки» switch with the sounds off', { off: ['sounds'], shown: { soundsSetting: false } }],
-    [
-      'no «Голос диктора» row with its Feature Switch off',
-      { off: ['narratorVoice'], shown: { narratorVoiceSetting: false } },
-    ],
-    [
-      'the device voice reading with `recordedOnly` off',
-      { off: ['recordedOnly'], shown: { recordedOnly: false } },
-    ],
-    [
-      'no «Менше руху» switch with its Feature Switch off',
-      { off: ['reduceMotion'], shown: { reduceMotionSetting: false } },
-    ],
-    [
       'no «Ділитися анонімною статистикою» switch with Community Counters and Analytics off',
       { off: ['communityCounters', 'analytics'], shown: { shareCountersSetting: false } },
     ],
@@ -191,40 +64,10 @@ describe('what the reader is shown', () => {
       { off: ['communityCounters'], shown: { shareCountersSetting: true } },
     ],
     [
-      'no «Експортувати мої дані» row with the Data export off',
-      { off: ['dataExport'], shown: { dataExport: false } },
-    ],
-    [
-      'no «Слова дня» card with the Word of the Day archive off',
-      { off: ['wordOfTheDayArchive'], shown: { wordOfTheDayArchive: false } },
-    ],
-    ['no Game Review with its switch off', { off: ['gameReview'], shown: { gameReview: false } }],
-    [
-      'the spec #1674 Game with gameRoundMascot off',
-      { off: ['gameRoundMascot'], shown: { gameRoundMascot: false } },
-    ],
-    [
-      'the spec #1674 Game with gameEndToFeed off',
-      { off: ['gameEndToFeed'], shown: { gameEndToFeed: false } },
-    ],
-    [
-      'the spec #1674 Game with gameModeToast off',
-      { off: ['gameModeToast'], shown: { gameModeToast: false } },
-    ],
-    [
-      'no Daily Goal choice with the Daily Goal off',
-      { off: ['dailyGoal'], shown: { dailyGoal: false } },
-    ],
-    [
-      'no «Рідкість» with the Rarity Range off',
-      { off: ['rarityCeiling'], shown: { rarity: false } },
-    ],
-    [
       'no «Пройти тест ще раз» and no self-rating with the Rarity Test off',
       {
         off: ['rarityTest'],
         shown: {
-          rarityTest: false,
           questionnaire: { levelWhy: true, selfRating: false, interests: true },
         },
       },
@@ -248,7 +91,6 @@ describe('what the reader is shown', () => {
       {
         off: ['questionnaire', 'rarityTest'],
         shown: {
-          rarityTest: false,
           questionnaire: { levelWhy: false, selfRating: false, interests: true },
         },
       },
@@ -257,35 +99,7 @@ describe('what the reader is shown', () => {
       'no «Анкета: підлаштувати Стрічку» with its three questions off',
       {
         off: ['questionnaire', 'rarityTest', 'interestsQuestion'],
-        shown: { rarityTest: false, questionnaire: undefined },
-      },
-    ],
-    [
-      'no Share Card button with Share Cards off',
-      {
-        off: ['shareCards'],
-        shown: {
-          entryButtons: {
-            shareCard: false,
-            pronunciation: true,
-            knowledge: true,
-            mistakeReport: true,
-          },
-        },
-      },
-    ],
-    [
-      'no Pronunciation button with Pronunciation off',
-      {
-        off: ['pronunciation'],
-        shown: {
-          entryButtons: {
-            shareCard: true,
-            pronunciation: false,
-            knowledge: true,
-            mistakeReport: true,
-          },
-        },
+        shown: { questionnaire: undefined },
       },
     ],
     [
@@ -293,28 +107,7 @@ describe('what the reader is shown', () => {
       {
         off: ['knowledge'],
         shown: {
-          entryButtons: {
-            shareCard: true,
-            pronunciation: true,
-            knowledge: false,
-            mistakeReport: true,
-          },
-          learning: false,
           stats: { streak: true, knowledge: 'none' },
-        },
-      },
-    ],
-    [
-      'no «Повідомити про помилку» with Mistake Reports off',
-      {
-        off: ['mistakeReports'],
-        shown: {
-          entryButtons: {
-            shareCard: true,
-            pronunciation: true,
-            knowledge: true,
-            mistakeReport: false,
-          },
         },
       },
     ],
@@ -324,7 +117,7 @@ describe('what the reader is shown', () => {
     ],
     [
       'neither Self-check nor its setting with its switch off, whatever the reader set',
-      { off: ['selfCheck'], selfCheck: true, shown: { selfCheck: false, selfCheckSetting: false } },
+      { off: ['selfCheck'], selfCheck: true, shown: { selfCheck: false } },
     ],
     [
       'the statistics without the Streak, no XP bar and no celebrations, when the reader hides the counters',
@@ -351,11 +144,6 @@ describe('what the reader is shown', () => {
       { off: ['levelLadder'], shown: { levelLadder: false } },
     ],
     ['no Break card with its switch off', { off: ['breakCard'], shown: { breakCard: false } }],
-    ['no Break with its switch off', { off: ['streakBreak'], shown: { streakBreak: false } }],
-    [
-      'no calendar day lines with their switch off',
-      { off: ['calendarDayLines'], shown: { calendarDayLines: false } },
-    ],
     [
       'no Streak freeze card with its switch off',
       { off: ['streakFreezeCard'], shown: { streakFreezeCard: false } },
@@ -364,38 +152,14 @@ describe('what the reader is shown', () => {
       'no Streak freeze card with the freezes off',
       { off: ['streakFreezes'], shown: { streakFreezeCard: false } },
     ],
-    ['no Badges with their switch off', { off: ['badges'], shown: { badges: false } }],
-    ['no reader name with its switch off', { off: ['readerName'], shown: { readerName: false } }],
-    ['no Profile with its switch off', { off: ['profile'], shown: { profile: false } }],
-    [
-      'no confirmed Entries by rarity on the Profile with their switch off',
-      { off: ['profileConfirmedByRarity'], shown: { profileConfirmedByRarity: false } },
-    ],
-    [
-      'no Game Modes on the Profile with their switch off',
-      { off: ['profileGameBest'], shown: { profileGameBest: false } },
-    ],
     [
       'no progress Share Cards with their switch off',
       { off: ['progressShareCards'], shown: { progressShareCards: false } },
     ],
     [
-      'no «Розгадано!» screen with its switch off',
-      { off: ['crosswordSolvedScreen'], shown: { crosswordSolvedScreen: false } },
-    ],
-    [
-      'no Solve time with its switch off',
-      { off: ['crosswordSolveTime'], shown: { crosswordSolveTime: false } },
-    ],
-    [
-      'no Quick Question with its switch off',
-      { off: ['quickQuestion'], shown: { quickQuestion: false } },
-    ],
-    [
       'no statistics, with statistics off, and still «Без лічильників» for the XP bar',
       { off: ['statistics'], shown: { stats: undefined } },
     ],
-    // Owner decision 19.10, #478: no count of Known Corrections while the reader sees none.
     [
       'the Known Words alone with Corrections off',
       {
@@ -410,7 +174,6 @@ describe('what the reader is shown', () => {
         shown: { stats: { streak: true, knowledge: ['word', 'idiom', 'synonymRow', 'tip'] } },
       },
     ],
-    // Spec #549, #565: no count of Known Idioms while the reader sees none, as with Corrections.
     [
       'no Known Idioms with Idioms off',
       {
@@ -425,7 +188,6 @@ describe('what the reader is shown', () => {
         shown: { stats: { streak: true, knowledge: ['word', 'correction', 'synonymRow', 'tip'] } },
       },
     ],
-    // Spec #730 story 37, #1015: Known Synonym Rows and Tips count while the reader sees them.
     [
       'no Known Synonym Rows with Synonym Rows off',
       {
@@ -458,7 +220,6 @@ describe('what the reader is shown', () => {
         },
       },
     ],
-    ['no Sync status with Sync off', { off: ['sync'], shown: { sync: false } }],
   ])(
     'shows %s',
     (

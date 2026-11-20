@@ -21,6 +21,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
+import { CardFeaturesProvider, noCardFeatures } from './card-features';
 
 /** A reader's clock, for the Share Cards: no card here is today's Word of the Day. */
 const clock = { now: () => new Date('2026-10-11T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
@@ -157,7 +158,13 @@ describe('The falling Stress', () => {
   });
 
   it('falls onto its vowel in 300 ms when the Word card appears', async () => {
-    await render(inEdition(<EntryCard card={word} stressFalls />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, stressFalls: true }}>
+          <EntryCard card={word} />
+        </CardFeaturesProvider>,
+      ),
+    );
     await settle();
 
     const start = marks();
@@ -184,7 +191,11 @@ describe('The falling Stress', () => {
             items={[wordOf(first), wordOf('se\u0301cond')]}
             initialIndex={0}
             onIndexChange={jest.fn()}
-            renderPage={(card) => <EntryCard card={card} stressFalls />}
+            renderPage={(card) => (
+              <CardFeaturesProvider value={{ ...noCardFeatures, stressFalls: true }}>
+                <EntryCard card={card} />
+              </CardFeaturesProvider>
+            )}
             turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
           />
         </HapticsProvider>,
@@ -228,7 +239,11 @@ describe('The falling Stress', () => {
             items={[wordOf('fi\u0301rst'), wordOf(second)]}
             initialIndex={0}
             onIndexChange={jest.fn()}
-            renderPage={(card) => <EntryCard card={card} stressFalls />}
+            renderPage={(card) => (
+              <CardFeaturesProvider value={{ ...noCardFeatures, stressFalls: true }}>
+                <EntryCard card={card} />
+              </CardFeaturesProvider>
+            )}
             turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
           />
         </HapticsProvider>,
@@ -244,7 +259,13 @@ describe('The falling Stress', () => {
   });
 
   it('keeps what VoiceOver reads of the Lemma while the mark falls', async () => {
-    await render(inEdition(<EntryCard card={word} stressFalls />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, stressFalls: true }}>
+          <EntryCard card={word} />
+        </CardFeaturesProvider>,
+      ),
+    );
     await settle();
 
     expect(screen.getAllByRole('header')).toHaveLength(1);
@@ -256,7 +277,13 @@ describe('The falling Stress', () => {
 
   it('shows the mark in place with Reduce Motion', async () => {
     jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
-    await render(inEdition(<EntryCard card={word} stressFalls />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, stressFalls: true }}>
+          <EntryCard card={word} />
+        </CardFeaturesProvider>,
+      ),
+    );
     await settle();
 
     expect(screen.queryByTestId('word-lemma-falling', { includeHiddenElements: true })).toBeNull();

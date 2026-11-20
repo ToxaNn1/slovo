@@ -18,6 +18,7 @@ import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-han
 import { getAnimatedStyle } from 'react-native-reanimated';
 
 import { testStrings } from '../test-strings';
+import { CardFeaturesProvider, noCardFeatures } from './card-features';
 
 const strings = testStrings({
   wordCard: {
@@ -144,24 +145,25 @@ function MarkedCard({
 }) {
   const [mark, setMark] = useState(initial);
   return (
-    <EntryCard
-      card={card}
-      selfCheck={selfCheck}
-      slots={{
-        corner: undefined,
-        swipe: {
-          mark,
-          onMark: (to) => {
-            onMark(to);
-            setMark(to);
+    <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck }}>
+      <EntryCard
+        card={card}
+        slots={{
+          corner: undefined,
+          swipe: {
+            mark,
+            onMark: (to) => {
+              onMark(to);
+              setMark(to);
+            },
+            onUndo: () => {
+              onUndo();
+              setMark(initial);
+            },
           },
-          onUndo: () => {
-            onUndo();
-            setMark(initial);
-          },
-        },
-      }}
-    />
+        }}
+      />
+    </CardFeaturesProvider>
   );
 }
 

@@ -2,8 +2,7 @@ import { FeedHeader, HeaderFade, SearchButton, space, useTokens } from '@slovo/u
 import { useMemo, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { useShown } from '@/shown-in-effect';
+import { useEditionInEffect } from '../edition/remote-switches';
 
 /**
  * The Feed's header over the cards: the design's row of the logo, today and
@@ -30,7 +29,7 @@ export interface FeedHeaderRows {
 /** The Feed header's rows in effect, the same object while they stay. */
 export function useFeedHeaderRows(): FeedHeaderRows {
   const { top } = useSafeAreaInsets();
-  const toolsRow = useShown().search;
+  const toolsRow = useEditionInEffect().isFeatureEnabled('searchButton');
   return useMemo(() => ({ top, toolsRow }), [top, toolsRow]);
 }
 

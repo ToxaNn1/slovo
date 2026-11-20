@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCompositionRead } from '../composition';
 import { ReadFailed } from '../read-failed';
 import { useShell } from '../shell-value';
-import { useShown } from '../shown-in-effect';
+import { ShownCardFeatures } from './card-features';
 import { useEntrySlots } from './entry-actions';
 import { useOpenScreen } from '../use-open-screen';
 
@@ -52,7 +52,6 @@ export function EntryScreen({
   // The stack's Entry route, such as `/saved/favorites`: this screen's path without its Entry.
   const pathname = usePathname();
   const route = pathname.slice(0, pathname.lastIndexOf('/'));
-  const { stressFall, sourceTab, tipExceptions } = useShown();
   // `null` once read for an id the Language Pack doesn't have.
   const read = useCallback(
     async (open: Composition) => (await openEntry(open, entryId, openedFrom)) ?? null,
@@ -108,9 +107,6 @@ export function EntryScreen({
               openScreen(`${route}/${synonymRowId}?back=${encodeURIComponent(word)}`);
             }}
             onWordHistoryShown={onWordHistoryShown}
-            stressFalls={stressFall}
-            sourceTab={sourceTab}
-            tipExceptions={tipExceptions}
           />
         )}
         {/* Scrolled, the content passes under a red band behind the status bar. */}
@@ -132,7 +128,11 @@ function SlottedEntryDetails({
   ...props
 }: Omit<ComponentProps<typeof EntryDetails>, 'slots'> & { swipes: boolean }) {
   const slots = useEntrySlots(props.card);
-  return <EntryDetails {...props} slots={!swipes ? { ...slots, swipe: undefined } : slots} />;
+  return (
+    <ShownCardFeatures place="entry">
+      <EntryDetails {...props} slots={!swipes ? { ...slots, swipe: undefined } : slots} />
+    </ShownCardFeatures>
+  );
 }
 
 /** The Entry card, opened through the composition's path for where it opened from. */
