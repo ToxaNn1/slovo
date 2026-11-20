@@ -12,6 +12,7 @@ import {
   reopenedByTestState,
   testStateNames,
   testStateOf,
+  type TestProfileName,
   type TestStateName,
 } from '../user-state/test-states';
 import { openSqliteUserState } from '../user-state/user-state-sqlite';
@@ -39,6 +40,20 @@ async function load(name: TestStateName): Promise<void> {
     content: reader,
   });
   await reloadAppAsync(`test state ${name}`);
+}
+
+/**
+ * Loads a test profile of «Тестовий профіль» and reloads the app, for a guest
+ * alone: a signed-in reader's Sync would send the profile to the Account, so
+ * it refuses while signed in and loads nothing.
+ */
+export async function loadTestProfile(name: TestProfileName): Promise<void> {
+  await appShell.composition.opened();
+  const account = await appShell.account?.opened();
+  if (account?.state.status === 'signed-in') {
+    throw new Error('A test profile is for a guest alone: sign out first.');
+  }
+  await load(name);
 }
 
 /**
