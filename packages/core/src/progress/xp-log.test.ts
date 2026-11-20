@@ -893,6 +893,65 @@ describe('the Seen-Word XP', () => {
     expect(xpKeys(records).filter((key) => key.startsWith('xp.seen-word-'))).toHaveLength(2);
   });
 
+  // Ticket #2062, ADR 0202: the first Word of the onboarding is Seen before the Daily Goal step.
+  it('earns the XP of the Words Seen earlier today with no goal once the goal is set, each once', async () => {
+    const { app, time, records } = await run({ on });
+    await look(app, time);
+    await look(app, time);
+    expect(app.xpLog.state.today).toBe(0);
+
+    await app.xpLog.setDailyGoal(10);
+
+    expect(app.xpLog.state.today).toBe(2);
+    expect(xpKeys(records).filter((key) => key.startsWith('xp.seen-word-'))).toHaveLength(2);
+
+    await app.xpLog.setDailyGoal(25);
+    await app.xpLog.setDailyGoal(null);
+    await app.xpLog.setDailyGoal(10);
+
+    expect(app.xpLog.state.total).toBe(2);
+    await look(app, time);
+    expect(app.xpLog.state.total).toBe(3);
+  });
+
+  it('earns it after an app restart too, for today’s Words only', async () => {
+    const { app } = await run({
+      on,
+      records: seen(['w_00', '2026-10-14T04:00:00.000Z'], ['w_01', '2026-10-13T20:00:00.000Z']),
+    });
+
+    await app.xpLog.setDailyGoal(10);
+
+    expect(app.xpLog.state.today).toBe(1);
+  });
+
+  it('earns it up to the goal set, and nothing for a Word Seen past a goal in force', async () => {
+    const { app, time } = await run({ on });
+    for (let card = 0; card < 3; card += 1) await look(app, time);
+
+    await app.xpLog.setDailyGoal(2);
+    expect(app.xpLog.state.today).toBe(2);
+
+    // Seen past the goal of 2, with a goal in force: a later goal earns nothing for it.
+    await look(app, time);
+    await app.xpLog.setDailyGoal(3);
+    expect(app.xpLog.state.today).toBe(3);
+    await app.xpLog.setDailyGoal(10);
+    expect(app.xpLog.state.today).toBe(3);
+  });
+
+  it('earns nothing for the Words Seen earlier when the goal is turned off or the Seen-Word XP is off', async () => {
+    const { app, time } = await run({ on });
+    await look(app, time);
+    await app.xpLog.setDailyGoal(null);
+    expect(app.xpLog.state.today).toBe(0);
+
+    const off = await run({ on: ['dailyGoal'] });
+    await look(off.app, off.time);
+    await off.app.xpLog.setDailyGoal(10);
+    expect(off.app.xpLog.state.today).toBe(0);
+  });
+
   it('earns the amount the Edition’s XP table holds', async () => {
     const { app, time } = await run({ on, xp: { ...testEdition().xp, seenWord: 3 } });
     await app.xpLog.setDailyGoal(10);

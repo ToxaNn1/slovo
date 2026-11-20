@@ -397,35 +397,62 @@ describe('the onboarding', () => {
     const heroOf = ({ dashboard }: Awaited<ReturnType<typeof run>>['app']) =>
       dashboard.blocks.flatMap((block) => (block.kind === 'wordOfTheDay' ? [block.hero] : []))[0];
 
-    it('is Seen once the onboarding that showed it finishes: the Dashboard, XP, History and the Daily Goal count it', async () => {
+    // Owner decision 20.11: «Беру!» takes the Word then and there, not the end of the onboarding.
+    it('is Seen the moment «Беру!» goes on from it, the onboarding still open: the Dashboard, History and the Daily Goal count it', async () => {
       const { app } = await run({ on: [...ALL_ON, 'seenWordXp'] });
       await app.onboarding.next();
       const first = stepOf(app);
       if (first?.kind !== 'firstWord') throw new Error('The first Word is not on screen');
       expect(heroOf(app)?.state).toBe('unrevealed');
-      expect(app.xpLog.state.total).toBe(0);
+      expect(app.history.list).toEqual([]);
 
       await app.onboarding.next();
+
+      expect(app.onboarding.state.status).toBe('open');
+      expect(heroOf(app)).toMatchObject({ state: 'revealed', wordId: first.word.wordId });
+      expect(app.history.list.map(({ entryId }) => entryId)).toEqual([first.word.wordId]);
+
       await app.onboarding.next();
       await app.onboarding.next();
       await app.onboarding.chooseDailyGoal(3);
       await app.onboarding.next();
 
       expect(app.onboarding.state.status).toBe('finished');
-      expect(heroOf(app)).toMatchObject({ state: 'revealed', wordId: first.word.wordId });
       expect(app.history.list.map(({ entryId }) => entryId)).toEqual([first.word.wordId]);
-      expect(app.xpLog.state.total).toBeGreaterThan(0);
-      expect(app.xpLog.state.today).toBe(app.xpLog.state.total);
       expect(app.xpLog.state.dailyGoal).toMatchObject({ goal: 3, seen: 1 });
+      // ADR 0202: the goal set after «Беру!» earns the first Word its XP.
+      expect(app.xpLog.state.today).toBe(1);
     });
 
-    it('is Seen when the reader skips the rest on its step', async () => {
+    it('stays Seen when the app closes before the onboarding finishes, and «Беру!» in the next run counts it once', async () => {
+      const records = new Map<string, string>();
+      const on: readonly FeatureSwitch[] = [...ALL_ON, 'seenWordXp'];
+      const { app: closed } = await run({ records, on });
+      await closed.onboarding.next();
+      await closed.onboarding.next();
+
+      const { app } = await run({ records, on });
+      expect(kinds(app)).toBe('welcome');
+      expect(heroOf(app)?.state).toBe('revealed');
+      expect(app.history.list).toHaveLength(1);
+
+      await app.onboarding.next();
+      await app.onboarding.next();
+      await app.onboarding.next();
+      await app.onboarding.next();
+      await app.onboarding.chooseDailyGoal(3);
+      expect(app.history.list).toHaveLength(1);
+      expect(app.xpLog.state.dailyGoal).toMatchObject({ goal: 3, seen: 1 });
+      expect(app.xpLog.state.today).toBe(1);
+    });
+
+    it('stays unseen when the reader skips the rest on its step without «Беру!»', async () => {
       const { app } = await run();
       await app.onboarding.next();
       await app.onboarding.finish();
 
-      expect(heroOf(app)?.state).toBe('revealed');
-      expect(app.history.list).toHaveLength(1);
+      expect(heroOf(app)?.state).toBe('unrevealed');
+      expect(app.history.list).toEqual([]);
     });
 
     it('stays unseen when the onboarding is skipped before it was shown', async () => {
