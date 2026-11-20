@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { fakeClock, strings } from '../test-support';
 import { syncStatusLine } from './sync-status';
 
-const idle: SyncState = { syncedAt: undefined, running: false, offline: false };
+const idle: SyncState = { syncedAt: undefined, running: false, offline: false, refused: false };
 
 function lineOf(state: Partial<SyncState>, clock = fakeClock('2026-10-18T12:00:00Z').clock) {
   return syncStatusLine({
