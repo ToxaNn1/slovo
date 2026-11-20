@@ -7,23 +7,18 @@ import {
   type Composition,
   type Edition,
   type FeatureSwitch,
-  type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SettingsScreen from '../app/settings';
 import MixScreen from '../app/settings/mix';
 import RarityTestScreen from '../app/settings/rarity-test';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
-import { ShellProvider } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
-import { SettingsProvider } from './settings';
 
 const { config } = activeEditionFiles;
 
@@ -48,19 +43,6 @@ let composition: Composition;
 
 jest.mock('../account/account', () => ({ useAccountInEffect: () => undefined }));
 jest.mock('../notifications/notifications', () => ({ useNotificationsSummary: () => '' }));
-
-const haptics: Haptics = {
-  selection: () => undefined,
-  impactLight: () => undefined,
-  impactMedium: () => undefined,
-  success: () => undefined,
-  warning: () => undefined,
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 const { rarityTest, knowledge } = editionStrings;
 
@@ -119,26 +101,14 @@ async function renderSettings() {
     remoteSwitches: switchedTo(editionInEffect),
     settings: await settingsAt(),
   });
-  await renderRoutes(
+  await renderApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider shell={shell}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <HapticsProvider haptics={haptics}>
-                <SettingsProvider>
-                  <Stack screenOptions={{ headerShown: false }} />
-                </SettingsProvider>
-              </HapticsProvider>
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
-      ),
+      _layout: () => <Stack screenOptions={{ headerShown: false }} />,
       'settings/index': SettingsScreen,
       'settings/rarity-test': RarityTestScreen,
       'settings/mix': MixScreen,
     },
-    { initialUrl: '/settings' },
+    { shell, initialUrl: '/settings' },
   );
   await settle();
 }

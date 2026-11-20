@@ -1,14 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Correction, Word } from '@slovo/contracts';
-import { loadEdition, openComposition, type Composition, type Haptics } from '@slovo/core';
+import { loadEdition, openComposition, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot, useRouter } from 'expo-router';
 import type { ReactElement } from 'react';
 import { Pressable } from 'react-native';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/index';
 import CorrectionTypeScreen from '../app/correction-type/[type]';
@@ -16,12 +14,10 @@ import CuratedCollectionScreen from '../app/curated-collection/[collectionId]';
 import CuratedCollectionsScreen from '../app/curated-collections';
 import FeedScreen from '../app/feed';
 import EntryFromSearchScreen from '../app/search/[entryId]';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { Onboarding } from '../onboarding/onboarding';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
-import { SettingsProvider } from '../settings/settings';
 
 const { config } = activeEditionFiles;
 const { onboarding: steps } = editionStrings;
@@ -30,19 +26,6 @@ const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Eu
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 function word(id: string, lemma: string): Word {
   return {
@@ -93,7 +76,7 @@ let composition: Composition;
  * yesterday's лагідний, the gestures hint has been shown, and the Edition turns the Curated Collections rail on,
  * which the UA Edition ships off till a content spec (ADR 0076).
  */
-async function renderApp(feedScreen: () => ReactElement = FeedScreen) {
+async function openApp(feedScreen: () => ReactElement = FeedScreen) {
   const shipped = loadEdition(config);
   const editionInEffect = {
     ...shipped,
@@ -167,23 +150,13 @@ async function renderApp(feedScreen: () => ReactElement = FeedScreen) {
     remoteSwitches: switchedTo(editionInEffect),
     composition: opened(composition),
   });
-  const app = await renderRoutes(
+  const app = await renderApp(
     {
       _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme="light">
-            <ShellProvider shell={shell}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <SettingsProvider>
-                    <Slot />
-                    <Onboarding />
-                  </SettingsProvider>
-                </HapticsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
+        <>
+          <Slot />
+          <Onboarding />
+        </>
       ),
       index: HomeScreen,
       feed: feedScreen,
@@ -192,7 +165,7 @@ async function renderApp(feedScreen: () => ReactElement = FeedScreen) {
       'curated-collection/[collectionId]': CuratedCollectionScreen,
       'curated-collections': CuratedCollectionsScreen,
     },
-    { initialUrl: '/' },
+    { shell },
   );
   await settle();
   return { pathname: () => app.getPathname() };
@@ -226,7 +199,7 @@ async function back(testID: string) {
 // Spec #1564, ticket #1575: one walk over every block of the Dashboard (ADR 0076).
 describe('the whole Dashboard', () => {
   it('walks onboarding → hero → Mood → «Попередні слова» → Correction Type → Curated Collection → their grid → «До картки →» Feed → wordmark → Dashboard', async () => {
-    const app = await renderApp();
+    const app = await openApp();
 
     // Onboarding, the quickest way through: it lands on the Dashboard.
     expect(screen.getByText(steps.welcome.title)).toBeTruthy();
@@ -352,7 +325,7 @@ function FeedWithoutTheCard() {
 
 describe('a landing on the Word of the Day card', () => {
   it('opens the Feed once, so a return to the Dashboard stays there when the Feed lacks the card', async () => {
-    const app = await renderApp(FeedWithoutTheCard);
+    const app = await openApp(FeedWithoutTheCard);
     const onboarding = ['start', 'next', 'next', 'answer-good', 'later', 'done', 'time-20:30'];
     for (const step of onboarding) await press(`onboarding-${step}`);
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));

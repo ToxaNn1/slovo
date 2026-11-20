@@ -8,6 +8,7 @@ import { createInTurn, createSubscribers } from '../in-turn';
 import { dayNumber, parseLocalDate, todayDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { Subject } from '../subject';
+import { staged, writeStaged, type StagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import {
@@ -19,15 +20,9 @@ import {
   type KnowledgeRecord,
 } from './knowledge-record';
 
-/** The record a Review answer appends in the XP log, and the step that makes it in memory once written. */
-interface ReviewXpAward {
-  readonly changes: UserStateChanges;
-  commit(): void;
-}
-
 /** What Knowledge needs of the XP log (ADR 0066): the XP of a Review answer. */
 export interface ReviewXp {
-  award(action: { readonly source: 'review-answer'; readonly entryId: string }): ReviewXpAward;
+  award(action: { readonly source: 'review-answer'; readonly entryId: string }): StagedPiece;
 }
 
 /** An Entry the reader is learning, in the «Вчу» list. */
@@ -348,16 +343,13 @@ export async function openKnowledge({
         : confirming === 'remove'
           ? confirmedRecords.record(entryId).change(undefined)
           : new Map();
-    await userState.write(
-      new Map([
-        ...knowledge.record(entryId).change(record),
-        ...counted,
-        ...confirmationChange,
-        ...(reviewXp?.changes ?? []),
-        ...(review ? reviewDays.record(entryId).change(today) : []),
-      ]),
-    );
-    reviewXp?.commit();
+    await writeStaged(userState, [
+      staged(knowledge.record(entryId).change(record)),
+      staged(counted),
+      staged(confirmationChange),
+      reviewXp,
+      review ? staged(reviewDays.record(entryId).change(today)) : undefined,
+    ]);
     if (review) reviewedOn = new Map([...reviewedOn, [entryId, today]]);
     const changed = new Map(records);
     if (record === undefined) changed.delete(entryId);

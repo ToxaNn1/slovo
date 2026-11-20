@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { renderOverComposition, settled } from '../hook-test/test-support';
 import { useClearHistory, useHistoryCount, useHistoryRows } from './history';
 
-jest.mock('expo-router', () => ({ useIsFocused: () => true }));
+jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
+  useIsFocused: () => true,
+}));
 jest.mock('expo-localization', () => ({
   ...jest.requireActual<object>('expo-localization'),
   getCalendars: () => [{ timeZone: 'Europe/Kyiv' }],

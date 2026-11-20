@@ -1,9 +1,9 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test } from 'vitest';
 
-import { FIXTURES } from './mock/fixtures';
+import { ACCOUNT, FIXTURES } from './mock/fixtures';
+import { override } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -20,16 +20,12 @@ function backend() {
   const deleted: unknown[] = [];
   let gone = false;
   server.use(
-    http.get('*/admin/accounts', () =>
-      HttpResponse.json(gone ? { accounts: [], total: 0 } : FIXTURES.listAccounts),
-    ),
-    http.get('*/admin/accounts/:accountId', () =>
-      HttpResponse.json(gone ? { account: null } : FIXTURES.getAccount),
-    ),
-    http.post('*/admin/accounts/:email/delete', async ({ params, request }) => {
+    override('listAccounts', () => (gone ? { accounts: [], total: 0 } : FIXTURES.listAccounts)),
+    override('getAccount', () => (gone ? { account: null } : FIXTURES.getAccount)),
+    override('deleteAccount', async ({ params, request }) => {
       deleted.push({ email: params['email'], ...Object(await request.json()) });
       gone = true;
-      return HttpResponse.json({ deleted: true });
+      return { deleted: true };
     }),
   );
   return { deleted };
@@ -78,11 +74,7 @@ test("a Власник opens a reader's Account from the list and reads its reco
 
 test('an Account with no Sync records says so', async () => {
   backend();
-  server.use(
-    http.get('*/admin/accounts/:accountId', () =>
-      HttpResponse.json({ account: { ...FIXTURES.getAccount.account, editions: [] } }),
-    ),
-  );
+  server.use(override('getAccount', () => ({ account: { ...ACCOUNT, editions: [] } })));
   const page = await openFromList();
 
   expect(page.getByText('Немає даних синхронізації.')).toBeDefined();
@@ -112,7 +104,7 @@ test('a Власник deletes the Account from its page with a reason, and it l
 
 test('an Account no longer there says so', async () => {
   backend();
-  server.use(http.get('*/admin/accounts/:accountId', () => HttpResponse.json({ account: null })));
+  server.use(override('getAccount', () => ({ account: null })));
   window.history.replaceState(null, '', `/admin/security/accounts/${ID}`);
   render(<Admin />);
 
@@ -120,7 +112,10 @@ test('an Account no longer there says so', async () => {
 });
 
 /** An XP log record of the Account under its id. */
-const xpRecord = (id: string, value: Record<string, unknown>) => ({
+/** A Sync record's value, as the contract types it. */
+type RecordValue = (typeof ACCOUNT)['editions'][number]['records'][number]['value'];
+
+const xpRecord = (id: string, value: RecordValue) => ({
   key: `xp.${id}`,
   value,
   changedAt: 1,
@@ -147,14 +142,12 @@ test('the Account page folds the XP log as the Core does: only the records after
     xpRecord('wa', { kind: 'wrong-answer', ...at('06'), mode: 'quiz' }),
   ];
   server.use(
-    http.get('*/admin/accounts/:accountId', () =>
-      HttpResponse.json({
-        account: {
-          ...FIXTURES.getAccount.account,
-          editions: [{ editionId: 'uk', records, entries: [] }],
-        },
-      }),
-    ),
+    override('getAccount', () => ({
+      account: {
+        ...ACCOUNT,
+        editions: [{ editionId: 'uk', records, entries: [] }],
+      },
+    })),
   );
   const page = await openFromList();
 
@@ -168,22 +161,20 @@ test('the Account page folds the XP log as the Core does: only the records after
 });
 
 /** The Account's records in the UA Edition, every other part of the fixture kept. */
-function withRecords(records: readonly { key: string; value: unknown }[]) {
+function withRecords(records: readonly { key: string; value: RecordValue }[]) {
   server.use(
-    http.get('*/admin/accounts/:accountId', () =>
-      HttpResponse.json({
-        account: {
-          ...FIXTURES.getAccount.account,
-          editions: [
-            {
-              editionId: 'uk',
-              records: records.map((record, index) => ({ ...record, changedAt: index + 1 })),
-              entries: [],
-            },
-          ],
-        },
-      }),
-    ),
+    override('getAccount', () => ({
+      account: {
+        ...ACCOUNT,
+        editions: [
+          {
+            editionId: 'uk',
+            records: records.map((record, index) => ({ ...record, changedAt: index + 1 })),
+            entries: [],
+          },
+        ],
+      },
+    })),
   );
 }
 

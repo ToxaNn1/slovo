@@ -1,14 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Correction, Word } from '@slovo/contracts';
-import { loadEdition, openComposition, type Composition, type Haptics } from '@slovo/core';
+import { loadEdition, openComposition, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
-import { Slot } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
@@ -20,9 +17,7 @@ import LearningEntryScreen from '../app/saved/learning/[entryId]';
 import WordOfTheDayEntryScreen from '../app/saved/words-of-the-day/[entryId]';
 import SearchLayout from '../app/search/_layout';
 import EntryFromSearchScreen from '../app/search/[entryId]';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
-import { SettingsProvider } from '../settings/settings';
-import { ShellProvider } from '../shell-value';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import {
   opened,
   recordedAnalytics,
@@ -51,20 +46,6 @@ const shippedEdition = loadEdition(activeEditionFiles.config);
 
 /** The Edition in effect: as it ships. */
 const editionInEffect = (): typeof shippedEdition => shippedEdition;
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  // The home indicator of an iPhone with Face ID.
-  insets: { top: 0, left: 0, right: 0, bottom: 34 },
-};
 
 /** A Word of the Edition's first Category, with its Word History when `history` is given. */
 function word(id: string, lemma: string, history?: string): Word {
@@ -153,23 +134,8 @@ async function renderEntry(entryId: string, url = `/entry/${entryId}`) {
     composition: opened(composition),
     remoteSwitches: switchedTo(editionInEffect()),
   });
-  const app = await renderRoutes(
+  const app = await renderApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme="light">
-            <ShellProvider shell={shell}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <SettingsProvider>
-                    <Slot />
-                  </SettingsProvider>
-                </HapticsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
-      ),
       'entry/_layout': EntryLayout,
       'entry/[entryId]': EntryFromLinkScreen,
       'search/_layout': SearchLayout,
@@ -181,7 +147,7 @@ async function renderEntry(entryId: string, url = `/entry/${entryId}`) {
       'saved/words-of-the-day/[entryId]': WordOfTheDayEntryScreen,
       'saved/collections/[collectionId]/[entryId]': CollectionEntryScreen,
     },
-    { initialUrl: url },
+    { shell, initialUrl: url },
   );
   await settle();
   return { pathname: () => app.getPathname() };

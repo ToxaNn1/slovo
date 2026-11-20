@@ -2,18 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import type { Word } from '@slovo/contracts';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
 import { router, Tabs } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
 import { Text } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionLinkScreen from '../app/c/[linkId]';
 import SavedLayout from '../app/saved/_layout';
 import CollectionScreen from '../app/saved/collections/[collectionId]';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
 
@@ -23,11 +20,6 @@ const { config } = activeEditionFiles;
 let composition: Composition;
 
 const { collections: strings } = editionStrings;
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** A Word with its Lemma and nothing else the screens read. */
 const word = (id: string, lemma: string): Word => ({
@@ -80,29 +72,17 @@ async function settle(action: () => unknown = () => undefined) {
 }
 
 /** The app's tabs, with the Saved tab's stack and the recipient sheet, on `url`. */
-async function renderApp(url: string) {
-  const app = await renderRoutes(
+async function openApp(url: string) {
+  const app = await renderApp(
     {
       _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider
-            shell={testShell({
-              composition: opened(composition),
-              remoteSwitches: switchedTo(edition),
-            })}
-          >
-            <EditionProvider edition={edition} strings={editionStrings}>
-              {/* Expo Router 58 draws only the screens a Tabs layout declares. */}
-              <Tabs screenOptions={{ headerShown: false }}>
-                <Tabs.Screen name="index" />
-                <Tabs.Screen name="c/[linkId]" />
-                <Tabs.Screen name="saved" />
-                <Tabs.Screen name="saved/collections/index" />
-                <Tabs.Screen name="saved/collections/[collectionId]/index" />
-              </Tabs>
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
+        <Tabs screenOptions={{ headerShown: false }}>
+          <Tabs.Screen name="index" />
+          <Tabs.Screen name="c/[linkId]" />
+          <Tabs.Screen name="saved" />
+          <Tabs.Screen name="saved/collections/index" />
+          <Tabs.Screen name="saved/collections/[collectionId]/index" />
+        </Tabs>
       ),
       index: () => <Text>Feed</Text>,
       'c/[linkId]': CollectionLinkScreen,
@@ -111,7 +91,13 @@ async function renderApp(url: string) {
       'saved/collections/index': () => <Text>Collections</Text>,
       'saved/collections/[collectionId]/index': CollectionScreen,
     },
-    { initialUrl: url },
+    {
+      shell: testShell({
+        composition: opened(composition),
+        remoteSwitches: switchedTo(edition),
+      }),
+      initialUrl: url,
+    },
   );
   await settle();
   return { pathname: () => app.getPathname() };
@@ -128,7 +114,7 @@ describe('«Назад» on a Collection', () => {
       name: 'Осінь',
       entryIds: ['w_one', 'w_two'],
     });
-    const app = await renderApp(`/c/${made.id}`);
+    const app = await openApp(`/c/${made.id}`);
 
     await settle(() => fireEvent.press(screen.getByRole('button', { name: strings.link.add })));
     const [copy] = composition.collections.list;
@@ -143,7 +129,7 @@ describe('«Назад» on a Collection', () => {
   it('goes back to Collections it was opened from', async () => {
     const created = await composition.collections.create('Осінь', 'w_one');
     if (!created.ok) throw new Error(`The Collection was refused: ${created.reason}`);
-    const app = await renderApp('/saved/collections');
+    const app = await openApp('/saved/collections');
 
     await settle(() => {
       router.push(`/saved/collections/${created.collection.id}`);

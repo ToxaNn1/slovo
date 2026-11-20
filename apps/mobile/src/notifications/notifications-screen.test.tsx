@@ -10,22 +10,14 @@ import {
   createMemoryContentPort,
   seedUserState,
 } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
 import { Linking } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import NotificationsScreen from '../app/settings/notifications';
 import { edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 const strings = editionStrings.notifications;
 
@@ -70,20 +62,12 @@ async function render(permission: NotificationPermission): Promise<{
     composition: opened(composition),
     remoteSwitches: switchedTo(edition),
   });
-  await renderRoutes(
+  await renderApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider shell={shell}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <Stack screenOptions={{ headerShown: false }} />
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
-      ),
+      _layout: () => <Stack screenOptions={{ headerShown: false }} />,
       'settings/notifications': NotificationsScreen,
     },
-    { initialUrl: '/settings/notifications' },
+    { shell, initialUrl: '/settings/notifications' },
   );
   await settle();
   return { composition, asks };

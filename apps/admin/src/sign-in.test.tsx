@@ -1,15 +1,15 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { expect, test } from 'vitest';
 
 import { FIXTURES } from './mock/fixtures';
+import { override, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
 /** The admin API's refusal as the backend answers it. */
-const refusal = (status: number, code: string, data?: object) =>
-  HttpResponse.json({ defined: true, code, status, message: code, data }, { status });
+const refused = (status: number, code: string, data?: object) =>
+  refusal(status, { defined: true, code, status, message: code, ...(data ? { data } : {}) });
 
 /** A backend with no session until a sign-in succeeds; the bodies it was sent, in order. */
 function signedOut(role: 'owner' | 'admin' = 'owner') {
@@ -17,23 +17,23 @@ function signedOut(role: 'owner' | 'admin' = 'owner') {
   const bodies: unknown[] = [];
   const me = { email: `${role}@example.com`, role };
   server.use(
-    http.get('*/admin/me', () => (signedIn ? HttpResponse.json(me) : refusal(401, 'UNAUTHORIZED'))),
-    http.post('*/admin/sign-in/code', async ({ request }) => {
+    override('me', () => (signedIn ? me : refused(401, 'UNAUTHORIZED'))),
+    override('requestCode', async ({ request }) => {
       bodies.push(await request.json());
-      return HttpResponse.json({ sent: true });
+      return { sent: true };
     }),
-    http.post('*/admin/sign-in/code/verify', async ({ request }) => {
+    override('verifyCode', async ({ request }) => {
       bodies.push(await request.json());
-      return HttpResponse.json(FIXTURES.verifyCode);
+      return FIXTURES.verifyCode;
     }),
-    http.post('*/admin/sign-in', async ({ request }) => {
+    override('signIn', async ({ request }) => {
       bodies.push(await request.json());
       signedIn = true;
-      return HttpResponse.json(me);
+      return me;
     }),
-    http.post('*/admin/sessions/sign-out', () => {
+    override('signOutEverywhere', () => {
       signedIn = false;
-      return HttpResponse.json({ signedOut: true });
+      return { signedOut: true };
     }),
   );
   return bodies;
@@ -88,10 +88,10 @@ test('a wrong code shows the attempts left, and a blocked email when to try agai
   signedOut();
   let attemptsLeft = 2;
   server.use(
-    http.post('*/admin/sign-in/code/verify', () =>
+    override('verifyCode', () =>
       attemptsLeft > 0
-        ? refusal(401, 'UNAUTHORIZED', { attemptsLeft: attemptsLeft-- })
-        : refusal(429, 'TOO_MANY_REQUESTS', { retryAfterSeconds: 900 }),
+        ? refused(401, 'UNAUTHORIZED', { attemptsLeft: attemptsLeft-- })
+        : refused(429, 'TOO_MANY_REQUESTS', { retryAfterSeconds: 900 }),
     ),
   );
   render(<Admin />);
@@ -107,9 +107,7 @@ test('a wrong code shows the attempts left, and a blocked email when to try agai
 });
 
 test('an Адмін has no Безпека in the sidebar, and its page stays closed', async () => {
-  server.use(
-    http.get('*/admin/me', () => HttpResponse.json({ email: 'a@example.com', role: 'admin' })),
-  );
+  server.use(override('me', () => ({ email: 'a@example.com', role: 'admin' })));
   window.history.replaceState(null, '', '/admin/security');
   render(<Admin />);
 
@@ -139,10 +137,10 @@ test('«Мої сесії» lists the sessions, and «Вийти всюди» go
 test('a backend that fails to answer who is signed in offers to try again', async () => {
   let failing = true;
   server.use(
-    http.get('*/admin/me', () =>
+    override('me', () =>
       failing
-        ? refusal(502, 'INTERNAL_SERVER_ERROR')
-        : HttpResponse.json({ email: 'owner@example.com', role: 'owner' }),
+        ? refused(502, 'INTERNAL_SERVER_ERROR')
+        : { email: 'owner@example.com', role: 'owner' },
     ),
   );
   const user = userEvent.setup();

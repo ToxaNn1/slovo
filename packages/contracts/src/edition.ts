@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { FEATURE_SWITCHES } from './feature-switch-catalogue';
 import { ContentTargetsSchema } from './content-targets';
 import { MixKindSchema } from './entry';
 import { NotificationSoundFileSchema } from './notification-sound';
@@ -258,283 +259,34 @@ export const FeatureSwitchStateSchema = z.enum(['on', 'off', 'unavailable']);
 
 export type FeatureSwitchState = z.infer<typeof FeatureSwitchStateSchema>;
 
-/** The Edition's state of every Core feature's Feature Switch (ADR 0089). */
-export const FeatureSwitchesSchema = z.strictObject({
-  game: FeatureSwitchStateSchema,
-  corrections: FeatureSwitchStateSchema,
-  /** Idioms: the third kind of Entry, idioms and place names (ADR 0046). */
-  idioms: FeatureSwitchStateSchema,
-  /** Synonym Rows: the fourth kind of Entry, a dominant word and a row of its synonyms (ADR 0051). */
-  synonymRows: FeatureSwitchStateSchema,
-  /** Tips: the fifth kind of Entry, rules of good speech (ADR 0051). */
-  tips: FeatureSwitchStateSchema,
-  /** The Account, under the Edition's `accountName`: its Settings row, its screen and the backend's answers to it. */
-  account: FeatureSwitchStateSchema,
-  /** Sign in with Google: the second Sign-in method, its button and the backend's procedure for it (ADR 0047). */
-  googleSignIn: FeatureSwitchStateSchema,
-  /** Sign in with Apple: the third Sign-in method, its button on iOS and the backend's procedure for it. */
-  signInWithApple: FeatureSwitchStateSchema,
-  /** Sync: the background exchange of the reader's words with their Account. Apart from `account`, so Sync can stop while sign-in keeps working. */
-  sync: FeatureSwitchStateSchema,
-  /** Content updates: the app's daily check for a newer Language Pack. */
-  contentUpdates: FeatureSwitchStateSchema,
-  /** Notifications: the daily reminders the Core plans (ADR 0021). */
-  notifications: FeatureSwitchStateSchema,
-  /** The home-screen widget: the Widget Snapshot and the widget it feeds. */
-  widget: FeatureSwitchStateSchema,
-  /** The widget goal ring: today's Daily Goal progress and the Streak on the medium widget, in the Widget Snapshot. */
-  widgetGoalRing: FeatureSwitchStateSchema,
-  /** The lock-screen widget: its families in the widget extension and its content in the Widget Snapshot. */
-  lockScreenWidget: FeatureSwitchStateSchema,
-  /** Share Cards: the buttons that make and share an image of an Entry. */
-  shareCards: FeatureSwitchStateSchema,
-  /** Pronunciation: the buttons that play a Word's audio. */
-  pronunciation: FeatureSwitchStateSchema,
-  /** «Голос диктора»: the reader's choice of the Narrator Voice that reads; off while `pronunciation` is, and off the default voice reads (ADR 0083). */
-  narratorVoice: FeatureSwitchStateSchema,
-  /** Recordings only: the device voice never reads a Word, and a Word without a Recording in the chosen Narrator Voice shows a disabled sound button (ADR 0195). */
-  recordedOnly: FeatureSwitchStateSchema,
-  /** The Word of the Day: its pick, its notification and its widget. */
-  wordOfTheDay: FeatureSwitchStateSchema,
-  /** The statistics screens and the Streak. */
-  statistics: FeatureSwitchStateSchema,
-  /** Knowledge Marks: the Known / Unknown marks on Words, Corrections and Idioms, and the Review they feed. */
-  knowledge: FeatureSwitchStateSchema,
-  /** The confirmed-Entry counts the Profile and the Badges show; with it off they are hidden and nothing is confirmed, while Review goes on under `knowledge` (ADR 0043). */
-  confirmedEntries: FeatureSwitchStateSchema,
-  /** Self-check: the setting that hides a card's meaning until the reader reveals it. */
-  selfCheck: FeatureSwitchStateSchema,
-  /** «Рідкість», the Rarity Range every surface obeys (ADR 0156): «Рідкість» in Settings is five slanted bars, «від 2 до 4» or «лише 3», tapped or dragged, and every surface keeps the Words outside it out. Off, every Word up to rarity 5 is in, as before 1.0. */
-  rarityCeiling: FeatureSwitchStateSchema,
-  /** Game Review: the list of every Round on the Game's result. */
-  gameReview: FeatureSwitchStateSchema,
-  /** The Game Mode «Вгадай слово» (`guess-word`); off while `game` is (ADR 0052). */
-  gameGuessWord: FeatureSwitchStateSchema,
-  /** The Game Mode «Обери правильне» (`correction`); off while `game` is (ADR 0052). */
-  gameCorrection: FeatureSwitchStateSchema,
-  /** The Game Mode «Наголос» (`stress`); off while `game` is (ADR 0052). */
-  gameStress: FeatureSwitchStateSchema,
-  /** The Game Mode «Пари» (`pairs`); off while `game` is (ADR 0052). */
-  gamePairs: FeatureSwitchStateSchema,
-  /** The Game Mode «Виживання» (`survival`); off while `game` is (ADR 0052). */
-  gameSurvival: FeatureSwitchStateSchema,
-  /** The Game Mode «На час» (`timed`); off while `game` is (ADR 0052). */
-  gameTimed: FeatureSwitchStateSchema,
-  /** The Game Mode «Фразеологізми» (`idiom-meaning`); off while `game` is (ADR 0052). */
-  gameIdiomMeaning: FeatureSwitchStateSchema,
-  /** The Game Mode «Англіцизми» (`anglicism`); off while `game` is (ADR 0052). */
-  gameAnglicism: FeatureSwitchStateSchema,
-  /** The Game Mode «Склади вислів» (`build-idiom`); off while `game` is (ADR 0052). */
-  gameBuildIdiom: FeatureSwitchStateSchema,
-  /** The Game Mode «Впиши слово» (`type-word`); off while `game` is (ADR 0052). */
-  gameTypeWord: FeatureSwitchStateSchema,
-  /** The Game Mode «Анаграми» (`anagram`); off while `game` is (ADR 0052). */
-  gameAnagram: FeatureSwitchStateSchema,
-  /** The Game Mode «За літерами» (`by-letters`); off while `game` is (ADR 0052). */
-  gameByLetters: FeatureSwitchStateSchema,
-  /** The Game Mode «Звідки слово» (`origin`); off while `game` is (ADR 0052). */
-  gameOrigin: FeatureSwitchStateSchema,
-  /** The Daily Crossword; off while `game` is (ADR 0052). */
-  dailyCrossword: FeatureSwitchStateSchema,
-  /** Search: its header button and screen over every non-Retired, non-Hidden Entry (ADR 0054). */
-  search: FeatureSwitchStateSchema,
-  /** The Rarity Test: the short test that sets the top of the Rarity Range (ADR 0054, 0156). */
-  rarityTest: FeatureSwitchStateSchema,
-  /** The Weekly Recap «Твій тиждень»: the Monday Feed Notice about the week before (ADR 0054). */
-  weeklyRecap: FeatureSwitchStateSchema,
-  /** Yesterday: the Feed Notice «Пам’ятаєш учорашнє слово?» (ADR 0054). */
-  yesterday: FeatureSwitchStateSchema,
-  /** The Word of the Day archive «Слова дня» in Saved (ADR 0054). */
-  wordOfTheDayArchive: FeatureSwitchStateSchema,
-  /** The Active Days calendar on the statistics screen (ADR 0054). */
-  activeDaysCalendar: FeatureSwitchStateSchema,
-  /** The polite pause: the notification plan stops 14 days after the last open, with the Edition's farewell (ADR 0054). */
-  politePause: FeatureSwitchStateSchema,
-  /** The first week: one intro Feed Notice on each of a new reader's first 7 Active Days (ADR 0054). */
-  firstWeek: FeatureSwitchStateSchema,
-  /** «Сезонний декор»: the Decor motif of the local date's Holiday or Season, and its setting (ADR 0055). */
-  seasonalDecor: FeatureSwitchStateSchema,
-  /** The falling Stress: the Stress mark of a Word card's Lemma falls onto its vowel (ADR 0055). */
-  stressAnimation: FeatureSwitchStateSchema,
-  /** Illustrations: the Illustration a Word may carry above its Definition (ADR 0055). */
-  illustrations: FeatureSwitchStateSchema,
-  /** Mistake Reports: the Entry card's menu item, its sheet and the queue that sends them (ADR 0056). */
-  mistakeReports: FeatureSwitchStateSchema,
-  /** Community Counters: the line under the mark buttons and the changes the device sends (ADR 0060). */
-  communityCounters: FeatureSwitchStateSchema,
-  /** The Community Word «Слово тижня спільноти»: its Monday Feed Notice (ADR 0060). */
-  communityWord: FeatureSwitchStateSchema,
-  /** Analytics: the product events sent through the Core's port while the reader shares anonymous statistics (ADR 0068). */
-  analytics: FeatureSwitchStateSchema,
-  /** The Visit events «Відвідини»: the app coming to and leaving the foreground, with how long it stayed; off while `analytics` is (spec #1709). */
-  analyticsSessions: FeatureSwitchStateSchema,
-  /** The event of a Feature Switch's screen opened, named by the switch; off while `analytics` is (spec #1709). */
-  analyticsFeatureUsed: FeatureSwitchStateSchema,
-  /** The event of a Search query with nothing found, by its length only; off while `analytics` is (spec #1709). */
-  analyticsSearchNoResult: FeatureSwitchStateSchema,
-  /** The event of the reader's answer to the device's notification permission; off while `analytics` is (spec #1709). */
-  analyticsNotificationPermission: FeatureSwitchStateSchema,
-  /** The NPS answer event, 0 to 10; no screen asks it yet; off while `analytics` is (spec #1709). */
-  analyticsNps: FeatureSwitchStateSchema,
-  /** The Game events, started and finished; off while `analytics` is (spec #1709). */
-  analyticsGames: FeatureSwitchStateSchema,
-  /** The calligraphic Lemma: the Lemma on the Word of the Day card in the Feed set in the Edition's calligraphic font. */
-  calligraphy: FeatureSwitchStateSchema,
-  /** Spotlight: the Spotlight Snapshot the app writes into the system search; off, the snapshot is empty (ADR 0057). */
-  spotlight: FeatureSwitchStateSchema,
-  /** App Intents: «Слово дня» and «Відкрити гру» open the Word of the Day card and the Game; off, they open the app's start (ADR 0057). */
-  appIntents: FeatureSwitchStateSchema,
-  /** Collection Links: «Поділитися посиланням» on a Collection and the `c/<id>` links that open its copy (ADR 0058). */
-  collectionLinks: FeatureSwitchStateSchema,
-  /** A Word from the widget's link takes the place of the open Entry, so «Назад» returns to the Feed. */
-  replaceOpenEntry: FeatureSwitchStateSchema,
-  /** The Mix kind weights: «Менше», «Звичайно» or «Більше» for each kind beside Words, which space its Feed turns; off, every kind keeps its turn of 0.9. */
-  mixKindWeights: FeatureSwitchStateSchema,
-  /** The tab «Мікс» in the centre of the tab bar, which opens «Мій Мікс»; off gives the four tabs of before (ADR 0201). */
-  mixTab: FeatureSwitchStateSchema,
-  /** The XP log: XP for Game learning actions, kept per Edition, and the XP bar on the Feed (ADR 0066). */
-  xpLog: FeatureSwitchStateSchema,
-  /** Streak freezes: a held freeze covers a missed day automatically, 2 at the start, one more per 7 Streak days, at most 2 held (ADR 0066). */
-  streakFreezes: FeatureSwitchStateSchema,
-  /** The Break: the reader pauses the Streak for up to 7 days, once every 30 days, free; its days keep the Streak and add nothing (ADR 0066). */
-  streakBreak: FeatureSwitchStateSchema,
-  /** The Quick Question: every Nth Feed card asks one Round from an enabled Game Mode over an Eligible Entry; off, the Feed of 0.9. */
-  quickQuestion: FeatureSwitchStateSchema,
-  /** The Word Meaning question: the Quick Question may ask what an Eligible Word means, with four Definitions to pick from; off while `quickQuestion` is (ADR 0128). */
-  quickQuestionWordMeaning: FeatureSwitchStateSchema,
-  /** The onboarding step «ГРАЙ!» after the first Word, which shows the Games; off while `game` is (ADR 0067). */
-  playStep: FeatureSwitchStateSchema,
-  /** Levels: the Level derived from total XP, its Edition name and the level-milestone Feed Notices (ADR 0066). */
-  levels: FeatureSwitchStateSchema,
-  /** «Без лічильників»: the setting hides XP, Level, Streak, celebrations, level milestones and in-Game XP feedback while counting goes on; off, «Приховати Серію» of 0.9, which hides only the Streak (ADR 0066). */
-  /** The Daily Goal: its Settings row, its progress on the XP bar and its celebration trigger (ADR 0066). */
-  dailyGoal: FeatureSwitchStateSchema,
-  /** The Seen-Word XP: 1 XP for each Word Seen for the first time, up to the day's Daily Goal; off, viewing earns nothing. */
-  seenWordXp: FeatureSwitchStateSchema,
-  /** The Feed Notice «Може, на сьогодні досить?» once a local day after 50 distinct Seen Entries (ADR 0066). */
-  enoughForToday: FeatureSwitchStateSchema,
-  /** The Feed Notice «Ціль дня виконано!» once the reader meets the day's Daily Goal (ADR 0129). */
-  goalReachedCard: FeatureSwitchStateSchema,
-  /** The onboarding questions «Як добре ти знаєш мову?» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
-  questionnaire: FeatureSwitchStateSchema,
-  /** Badges: kept milestones from the Core's catalogue of conditions, chosen and named by the Edition (ADR 0066). */
-  badges: FeatureSwitchStateSchema,
-  /** The Level ladder of the Profile: one card per Level name with its range of Levels, and the bar to the next name (spec #1641, ADR 0085); off while `xpLog` is. */
-  levelLadder: FeatureSwitchStateSchema,
-  /** The new Level screen: the full red ground with the Level stamped in, at every new Level, in place of the Mascot celebration (ADR 0085); off while `xpLog` is. */
-  /** The Badge sheet: a tap on any Badge opens its name, date or progress, and an unearned one answers with a toast (ADR 0085); off while `xpLog` or `badges` is. */
-  badgeSheet: FeatureSwitchStateSchema,
-  /** The Badge toast: a Badge earned during a Game shows a toast in place of the stamp (ADR 0085); off while `xpLog` or `badges` is. */
-  /** The Badge families overview heading the Badges screen: each family's mark, name, count, description and shape (ADR 0145); off while `xpLog` or `badges` is. */
-  badgeFamiliesOverview: FeatureSwitchStateSchema,
-  /** The Streak freeze card of the Profile: the freezes held, the last 7 days and the days saved (ADR 0085); off while `xpLog` is. */
-  streakFreezeCard: FeatureSwitchStateSchema,
-  /** The Break card of the Profile while a Break runs: its dates, a 14-day strip and the next Break's date (ADR 0085); off while `xpLog` is. */
-  breakCard: FeatureSwitchStateSchema,
-  /** The Active Days calendar's day lines: a tap on a day tells what happened on it (ADR 0085); off while `xpLog` is. */
-  calendarDayLines: FeatureSwitchStateSchema,
-  /** The Share Cards of a Level reached, a Badge earned and a Streak milestone; off while `shareCards` or `xpLog` is. */
-  progressShareCards: FeatureSwitchStateSchema,
-  /** «Підказка»: the Crossword Hint, which fills one letter of the current Word, costs nothing and marks the day as hinted (ADR 0087); off while `dailyCrossword` is. */
-  crosswordHint: FeatureSwitchStateSchema,
-  /** The Solve time: the on-screen seconds of the Daily Crossword, kept with its XP log record and shown on the solved card (ADR 0087); off while `dailyCrossword` is. */
-  crosswordSolveTime: FeatureSwitchStateSchema,
-  /** The solved screen of the Daily Crossword, «Розгадано!» with its share buttons (ADR 0087); off while `dailyCrossword` is. */
-  crosswordSolvedScreen: FeatureSwitchStateSchema,
-  /** The full-screen Badge stamp after a solved Daily Crossword that earns a Badge (ADR 0087); off while `dailyCrossword` or `badges` is. */
-  crosswordBadgeStamp: FeatureSwitchStateSchema,
-  /** Three Lives: a Game starts with 3 Lives by default (ADR 0137); off, 5. Off while `game` is. */
-  /** One Life in «Виживання» (ADR 0137); off, 3. Off while `gameSurvival` is. */
-  /** The Mascot beside the question of a Round, in its waiting, glad, wincing and sad states (ADR 0139); off while `game` is. */
-  gameRoundMascot: FeatureSwitchStateSchema,
-  /** «Пари»: a found pair stays red, the captions «СЛОВО» and «ЗНАЧЕННЯ», no pause after a pair (ADR 0138, 0139); off while `gamePairs` is. */
-  /** «Склади вислів»: decoy fragments from other expressions and the answer judged on «Перевірити» (ADR 0139); off, on the last fragment. Off while `gameBuildIdiom` is. */
-  /** The third end action «До стрічки» beside «Ще раз» and «До ігор» (ADR 0139); off while `game` is. */
-  gameEndToFeed: FeatureSwitchStateSchema,
-  /** The toast on a tap of a Game Mode that cannot be played, which keeps its normal look (ADR 0139); off while `game` is. */
-  gameModeToast: FeatureSwitchStateSchema,
-  /** The evening notification: at most 2 a day, the morning Word of the Day and one evening slot with the Streak warning or the unmet Daily Goal, or nothing; off, a Word at every Notification time. */
-  /** The farewell: the polite pause ends with the Edition's farewell on the 14th day without an open; off, it ends in silence. */
-  notificationFarewell: FeatureSwitchStateSchema,
-  /** The notification explainer: the sheet before the system permission prompt, after the first met Daily Goal or on day 3, and its one re-ask Feed Notice 7 days after a refusal. */
-  notificationExplainer: FeatureSwitchStateSchema,
-  /** «Коли нагадати?»: the onboarding step after the Daily Goal that sets the Word's Notification time or switches notifications off; off while `notifications` is. */
-  notificationTimeStep: FeatureSwitchStateSchema,
-  /** The later questions through Feed Notices (the interests, the self-rating, the Mix review, the Rarity Test offer and, for an existing reader, the Daily Goal) and the questionnaire retake in Settings (ADR 0067). */
-  laterQuestions: FeatureSwitchStateSchema,
-  /** «Що тобі цікаво?», the interests among the later questions; off, the Feed skips it and asks the next one (owner 15.11). */
-  interestsQuestion: FeatureSwitchStateSchema,
-  /** The Profile: the screen of the reader's whole progress and the save-progress Feed Notice (ADR 0066). */
-  profile: FeatureSwitchStateSchema,
-  /** The Mascot: the Edition's silent figure with its short lines (CONTEXT.md, Mascot). */
-  mascot: FeatureSwitchStateSchema,
-  /** The Interface sounds (a shout, a right answer, a wrong answer, a tap) and the «Звуки» setting (ADR 0070). */
-  sounds: FeatureSwitchStateSchema,
-  /** «Менше руху»: the Settings switch that turns every animation into its calmer variant, as the system's Reduce Motion does (ADR 0055). */
-  reduceMotion: FeatureSwitchStateSchema,
-  /** The fast reveal: in one visit to the Feed the first Entry card plays the full reveal and every next card a fast one; off, every card plays the full reveal. */
-  fastReveal: FeatureSwitchStateSchema,
-  /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day (ADR 0076). */
-  mood: FeatureSwitchStateSchema,
-  /** The Mood's effect: the line under the Mood check-in that says what the picked Mood changed in the Feed, and the second tap that unpicks it (ADR 0185). Off while `mood` is. */
-  moodEffect: FeatureSwitchStateSchema,
-  /** «Попередні слова»: the Dashboard block with the three newest Word of the Day archive days before today (ADR 0076). Off while `wordOfTheDayArchive` is. */
-  previousWords: FeatureSwitchStateSchema,
-  /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `corrections` is. */
-  correctionTypes: FeatureSwitchStateSchema,
-  /** Curated Collections: the Dashboard's «SLOVO пропонує» rail of editorial Entry sets from the Language Pack, above «Категорії» (ADR 0076, 0178). */
-  curatedCollections: FeatureSwitchStateSchema,
-  /** The gestures hint's demo: while «ГОРТАЙ ПАЛЬЦЕМ» is open, the Feed's card plays the swipes right, left and up in a loop, its edge labels sliding in, with a finger over it and each row of the sheet lit in turn (ADR 0112); off, the sheet stands still. Off while `knowledge` is. */
-  gesturesHintDemo: FeatureSwitchStateSchema,
-  /** «Показати підказку жестів» in Settings (owner 16.11): forgets that the gestures hint was shown, so the Feed shows «ГОРТАЙ ПАЛЬЦЕМ» once more. Off while `knowledge` is. */
-  gesturesHintAgain: FeatureSwitchStateSchema,
-  /** The source tab: every tabbed Entry card's last tab «Джерело» names its sources, each on its own line, and the source line leaves the other tabs (ADR 0116). Off, the source line stays in its tab. */
-  sourceTab: FeatureSwitchStateSchema,
-  /** The Tip card's tab «Винятки»: a Tip with exceptions shows them after «Правило», their text and their words in chips (ADR 0120). Off, the card has «Правило» alone. */
-  tipExceptions: FeatureSwitchStateSchema,
-  /** The Search button of the Feed's header, which opens the Search screen; Search itself stays under `search`. Off while `search` is. */
-  searchButton: FeatureSwitchStateSchema,
-  /** The Feed header's wordmark as a button that opens the Dashboard (ADR 0079). */
-  dashboardWordmark: FeatureSwitchStateSchema,
-  /** The daily splash: a tap on the Dashboard's logo plays the short splash cut, then the Dashboard again (ADR 0105). */
-  dailySplash: FeatureSwitchStateSchema,
-  /** The hero's sparks: the Mascot in the Dashboard's hero throws sparks from its megaphone, always, not as Decor (ADR 0109). */
-  heroSparks: FeatureSwitchStateSchema,
-  /** The «Стрічка» tab opens the Feed, not the Dashboard, which stays the home at launch (ADR 0093). */
-  feedTab: FeatureSwitchStateSchema,
-  /** Category screens: the Dashboard's «Категорії» rail of Categories of Words, their grid and each one's screen (ADR 0081). */
-  categoryScreens: FeatureSwitchStateSchema,
-  /** The grid of the Categories of Corrections behind the «Виправлення» rail header and each one's screen (ADR 0081); off, the header is a plain title. Off while `corrections` is. */
-  correctionCategoryScreens: FeatureSwitchStateSchema,
-  /** The «Виправлення» rail's header counts its Correction Types and opens their grid, k2 «Категорії» under it (ADR 0140, owner 15.11). */
-  correctionTypeGrid: FeatureSwitchStateSchema,
-  /** The Category's Feed: a tap on a Word of a Category's screen opens a Feed of that Category's Words alone, from the tapped one in Language Pack order and round again after the last (ADR 0110); off, the tap opens the Word's card as Search does. Off while `categoryScreens` is. */
-  categoryFeed: FeatureSwitchStateSchema,
-  /** A Curated Collection's Feed: a tap on an Entry of a Curated Collection's screen opens a Feed of that collection's Entries of every kind alone, from the tapped one in its order and round again after the last (ADR 0178); off, the tap opens the Entry's card as Search does. Off while `curatedCollections` is. */
-  curatedCollectionFeed: FeatureSwitchStateSchema,
-  /** «Скопіювати посилання» on the share sheet of a Collection, which copies its Collection Link with `expo-clipboard` (ADR 0132); off until the EAS build with that module is out, and off the sheet keeps the system Share alone. Off while `collectionLinks` is. */
-  collectionLinkCopy: FeatureSwitchStateSchema,
-  /** The Due Quiz «Перевір себе» on «Вчу»: three meanings for each Word due for Review today, right sets Known and wrong Unknown (ADR 0131); off, «Вчу» has no card. Off while `knowledge` is. */
-  dueQuiz: FeatureSwitchStateSchema,
-  /** The Profile's confirmed Entries by rarity («Підтверджені записи за рідкістю»); off while `profile` or `confirmedEntries` is. */
-  profileConfirmedByRarity: FeatureSwitchStateSchema,
-  /** The Profile's Best result of each Game Mode («Найкраще в грі»); off while `profile` or `game` is. */
-  profileGameBest: FeatureSwitchStateSchema,
-  /** Force update: the banner below the soft minimum and the blocking screen below the hard minimum of the app version (ADR 0089); off, neither shows. */
-  forceUpdate: FeatureSwitchStateSchema,
-  /** «Нагору»: the round arrow-up button over a long list once the reader has scrolled down, which scrolls the list gently back to its top; off, no button. */
-  scrollToTop: FeatureSwitchStateSchema,
-  /** «Скинути прогрес»: the reset marker in the XP log, after which every progress value counts from zero (ADR 0133); off, no button. Off while `xpLog` is. */
-  progressReset: FeatureSwitchStateSchema,
-  /** «Експортувати мої дані»: one file of the reader's user state, built on the device and handed to the system share window (ADR 0135); off, the row is absent. */
-  dataExport: FeatureSwitchStateSchema,
-  /** The reader's name on the Profile: its header and its «Ім’я» row (ADR 0136); off, the header shows the Level alone. Off while `profile` is. */
-  readerName: FeatureSwitchStateSchema,
-  /** The widget previews «Малий», «Середній» and «Екран блокування» on the Widgets screen, drawn from the Widget Snapshot; off, the steps alone. Off while `widget` is. */
-  widgetPreviews: FeatureSwitchStateSchema,
-  /** The switch-off unit: turning «Ділитися анонімною статистикою» off sends one anonymous +1 with the Edition alone, and nothing after (ADR 0163); off, nothing is sent at switch-off. */
-  statisticsOffCounter: FeatureSwitchStateSchema,
-});
+/** A shape holding `value` under every key of `record`; each key keeps its JSDoc there. */
+function everyKeyOf<Record extends object, Value>(
+  record: Record,
+  value: Value,
+): { readonly [Key in keyof Record]: Value } {
+  const shape: object = Object.fromEntries(Object.keys(record).map((key) => [key, value]));
+  if (!holdsEveryKey(shape, record, value)) throw new Error('a key of the record is missing');
+  return shape;
+}
+
+/** Whether the shape holds `value` under every key of `record`. */
+function holdsEveryKey<Record extends object, Value>(
+  shape: object,
+  record: Record,
+  value: Value,
+): shape is { readonly [Key in keyof Record]: Value } {
+  return Object.keys(record).every(
+    (key) => Object.getOwnPropertyDescriptor(shape, key)?.value === value,
+  );
+}
+
+/**
+ * The Edition's state of every Core feature's Feature Switch (ADR 0089): one
+ * key per switch of the catalogue (ADR 0199), each required.
+ */
+export const FeatureSwitchesSchema = z.strictObject(
+  everyKeyOf(FEATURE_SWITCHES, FeatureSwitchStateSchema),
+);
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
 const XpAmountSchema = z.number().int().nonnegative();
@@ -704,6 +456,17 @@ export type MascotMoment = keyof MascotLines;
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
 
 export type FeatureSwitch = keyof FeatureSwitches;
+
+/**
+ * The states of a test or fixture Edition: every Feature Switch `on` but the
+ * ones it states (ADR 0199). The real Edition declares every switch itself.
+ */
+export function featureSwitchStates(stated: Partial<FeatureSwitches> = {}): FeatureSwitches {
+  return FeatureSwitchesSchema.parse({
+    ...Object.fromEntries(Object.keys(FEATURE_SWITCHES).map((feature) => [feature, 'on'])),
+    ...stated,
+  });
+}
 
 /** The user's light/dark choice. */
 export const ThemeSchema = z.enum(['system', 'light', 'dark']);

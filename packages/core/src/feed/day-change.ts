@@ -1,6 +1,7 @@
 import { createInTurn } from '../in-turn';
 import { parseLocalDate, todayKey, type LocalDate } from '../local-date';
-import type { Clock, UserStateChanges } from '../ports';
+import type { Clock } from '../ports';
+import type { StagedPiece } from '../user-state/staged-write';
 import type { ActiveDays } from '../progress/active-days';
 import type { Subject } from '../subject';
 import type { WordOfTheDay } from './word-of-the-day';
@@ -40,8 +41,8 @@ export interface DayChange {
   resume(): Promise<void>;
   /**
    * A notification or the widget opened the Entry: `opened` is published with
-   * it and `activeDay`, the changes that make today an Active Day, for the
-   * Feed to keep in one write, after the morning Word is taken. Resolves once
+   * it and `activeDay`, the staged piece that makes today an Active Day, for
+   * the Feed to keep in one write, after the morning Word is taken. Resolves once
    * it is kept: the rest of the turn goes on in turn without holding the Word
    * back, and a step of it that fails is left to the next report.
    */
@@ -55,10 +56,10 @@ export interface DayChange {
   takeMorningWord(): Promise<void>;
 }
 
-/** An Entry opened from outside the app, with the changes that make today an Active Day, to keep in one write with it. */
+/** An Entry opened from outside the app, with the staged piece that makes today an Active Day, to keep in one write with it. */
 export interface OpenedEntry {
   readonly entryId: string;
-  readonly activeDay: UserStateChanges;
+  readonly activeDay: StagedPiece;
 }
 
 /** The subjects the day change publishes; it is their only publisher. */
@@ -117,9 +118,7 @@ export function createDayChange({
         // Once the Word is kept, a later step that fails rejects nothing: it waits for the next report.
         inTurn(() =>
           follow(async () => {
-            const activeDay = activeDays.todayChange();
-            await opened.publish({ entryId, activeDay: activeDay.changes });
-            activeDay.commit();
+            await opened.publish({ entryId, activeDay: activeDays.todayChange() });
             resolve();
           }, false),
         ).catch(reject);

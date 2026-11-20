@@ -5,21 +5,16 @@ import {
   systemRandom,
   type Composition,
   type Edition,
-  type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { fill, type Category } from '@slovo/contracts';
-import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import MixTabScreen from '../app/mix';
 import MixScreen from '../app/settings/mix';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
-import { SettingsProvider } from '../settings/settings';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 
 const { config } = activeEditionFiles;
@@ -73,20 +68,6 @@ beforeEach(async () => {
   });
 });
 
-/** Haptics that do nothing: the Rarity Range's bars tick through them. */
-const haptics: Haptics = {
-  selection: () => undefined,
-  impactLight: () => undefined,
-  impactMedium: () => undefined,
-  success: () => undefined,
-  warning: () => undefined,
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
-
 /** Settings › Мій Мікс as the app routes to it, or the tab «Мікс» opened on `url`. */
 async function renderChoices(url = '/settings/mix', editionInEffect: Edition = shippedEdition) {
   const shell = testShell({
@@ -94,25 +75,13 @@ async function renderChoices(url = '/settings/mix', editionInEffect: Edition = s
     settings: await settingsAt({}),
     remoteSwitches: switchedTo(editionInEffect),
   });
-  await renderRoutes(
+  await renderApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider shell={shell}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <SettingsProvider>
-                <HapticsProvider haptics={haptics}>
-                  <Stack screenOptions={{ headerShown: false }} />
-                </HapticsProvider>
-              </SettingsProvider>
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
-      ),
+      _layout: () => <Stack screenOptions={{ headerShown: false }} />,
       'settings/mix': MixScreen,
       'mix/index': MixTabScreen,
     },
-    { initialUrl: url },
+    { shell, initialUrl: url },
   );
   await settle();
 }

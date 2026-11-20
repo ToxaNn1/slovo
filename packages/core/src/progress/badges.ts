@@ -5,6 +5,7 @@ import type { Edition } from '../edition/edition';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Knowledge } from '../knowledge/knowledge';
 import { dayNumber, parseLocalDate } from '../local-date';
+import { writeStaged } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import type { ActiveDays } from './active-days';
 import type { XpLog, XpLogMilestones } from './xp-log';
@@ -182,9 +183,7 @@ export async function openBadges({
   async function check(): Promise<void> {
     const { due } = derive();
     if (due.length > 0) {
-      const append = xpLog.earn(due);
-      await userState.write(append.changes);
-      append.commit();
+      await writeStaged(userState, [xpLog.earn(due)]);
       for (const badge of due)
         void analytics.track('badgeEarned', { badge }).catch(() => undefined);
     }
@@ -218,9 +217,7 @@ export async function openBadges({
   async function open(badge: string): Promise<void> {
     const shown = state.find(({ id }) => id === badge);
     if (shown === undefined || !shown.earned || !shown.isNew) return;
-    const append = xpLog.open(badge);
-    await userState.write(append.changes);
-    append.commit();
+    await writeStaged(userState, [xpLog.open(badge)]);
     state = derive().state;
   }
 

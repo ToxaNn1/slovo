@@ -1,9 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { afterEach, expect, test } from 'vitest';
 
 import { FIXTURES } from './mock/fixtures';
+import { override, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -107,15 +107,12 @@ test('Огляд reads every block of the picked Edition and period, each with t
 
 test('a failing source shows its own unavailable state in its blocks', async () => {
   server.use(
-    http.get('*/admin/editions/:editionId/analytics', () =>
-      HttpResponse.json({ code: 'INTERNAL_SERVER_ERROR' }, { status: 500 }),
-    ),
-    http.get('*/admin/quality', () =>
-      HttpResponse.json({ code: 'INTERNAL_SERVER_ERROR' }, { status: 500 }),
-    ),
-    http.get('*/admin/development', () =>
-      HttpResponse.json({ github: { state: 'unavailable' }, eas: { state: 'unavailable' } }),
-    ),
+    override('analytics', () => refusal(500, { code: 'INTERNAL_SERVER_ERROR' })),
+    override('quality', () => refusal(500, { code: 'INTERNAL_SERVER_ERROR' })),
+    override('development', () => ({
+      github: { state: 'unavailable' },
+      eas: { state: 'unavailable' },
+    })),
   );
   window.history.replaceState(null, '', '/admin/');
   render(<Admin />);
@@ -131,8 +128,8 @@ test('a failing source shows its own unavailable state in its blocks', async () 
 
 test('an empty queue and no alerts read as such', async () => {
   server.use(
-    http.get('*/admin/content-queue/batches', () => HttpResponse.json({ batches: [] })),
-    http.get('*/admin/alerts', () => HttpResponse.json({ alerts: [] })),
+    override('contentQueue.batches', () => ({ batches: [] })),
+    override('latestAlerts', () => ({ alerts: [] })),
   );
   const overview = await openOverview();
   expect(await block(overview, 'Відкриті пачки').findByText('0')).toBeDefined();

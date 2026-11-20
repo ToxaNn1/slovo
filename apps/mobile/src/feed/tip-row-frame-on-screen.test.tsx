@@ -6,23 +6,17 @@ import {
   type Composition,
   type TrackedUserState,
   type Edition,
-  type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
-import { Slot } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
 import HomeScreen from '../app/feed';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
-import { SettingsProvider } from '../settings/settings';
 
 const { config } = activeEditionFiles;
 
@@ -39,19 +33,6 @@ const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Eu
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** The Word of the Day the Feed opens on. */
 const wordOfTheDay: Word = {
@@ -160,28 +141,8 @@ const shell = () =>
   });
 
 /** The app on the Feed. */
-async function renderApp() {
-  await renderRoutes(
-    {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme="light">
-            <ShellProvider shell={shell()}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <SettingsProvider>
-                    <Slot />
-                  </SettingsProvider>
-                </HapticsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
-      ),
-      index: HomeScreen,
-    },
-    { initialUrl: '/' },
-  );
+async function openApp() {
+  await renderApp({ index: HomeScreen }, { shell: shell() });
   await settle();
   // The pager lays its pages out once it knows its height.
   await fireEvent(screen.getByTestId('feed'), 'layout', {
@@ -238,7 +199,7 @@ function membersOf(card: Awaited<ReturnType<typeof cardOf>>) {
 describe('the Tip card in the fixed frame', () => {
   it('opens on the board look: the kicker «ПОРАДА», the title over its red bar, «Так часто кажуть» kept', async () => {
     await open({ tips: [tip] });
-    await renderApp();
+    await openApp();
 
     const card = await cardOf('tip');
     expect(card.getByTestId('tip-kicker', hidden)).toHaveTextContent(editionStrings.tipCard.chip);
@@ -253,7 +214,7 @@ describe('the Tip card in the fixed frame', () => {
 
   it('shows «Правило» and «Джерело», no «Винятки»: the explanation and the chips of the standard form and the Example, the source on its own tab', async () => {
     await open({ tips: [tip] });
-    await renderApp();
+    await openApp();
 
     const card = await cardOf('tip');
     expect(tabsOf(card)).toEqual([
@@ -276,7 +237,7 @@ describe('the Tip card in the fixed frame', () => {
 
   it('clamps a Tip too long for the frame under «Детальніше», which opens it whole (owner 08.11)', async () => {
     await open({ tips: [tip] });
-    await renderApp();
+    await openApp();
     const card = await cardOf('tip');
     const layout = async (testID: string, height: number) => {
       await fireEvent(card.getByTestId(testID, hidden), 'layout', {
@@ -301,7 +262,7 @@ describe('the Tip card in the fixed frame', () => {
 describe('the Synonym Row card in the fixed frame', () => {
   it('shows the members four to a page, the meaning on the first page, the Example on the last and the source on «Джерело»', async () => {
     await open({ synonymRows: [row] });
-    await renderApp();
+    await openApp();
 
     const card = await cardOf('synonymRow');
     expect(tabsOf(card)).toEqual([
@@ -329,7 +290,7 @@ describe('the Synonym Row card in the fixed frame', () => {
 
   it('draws one page and «Джерело» for a row of four members', async () => {
     await open({ synonymRows: [{ ...row, members: row.members.slice(0, 4) }] });
-    await renderApp();
+    await openApp();
 
     const card = await cardOf('synonymRow');
     expect(tabsOf(card)).toEqual([

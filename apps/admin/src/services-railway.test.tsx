@@ -1,8 +1,9 @@
+import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test } from 'vitest';
 
+import { override } from './mock/handlers';
 import { server } from './mock/server';
 import { SERVICE_COSTS, SERVICE_IDS, SERVICES } from './mock/services-fixtures';
 import { Admin } from './router';
@@ -23,8 +24,12 @@ const cron = (id: string, name: string, x: number) => ({
   links: [{ to: SERVICE_IDS.Railway, kind: 'scheduled' as const }],
 });
 
+/** A Service's read port, as the contract types it. */
+type PortRead = AdminApiOutputs['services']['usage']['usage'][number]['read'];
+type Reading = Extract<PortRead, { state: 'read' }>['reading'];
+
 /** A fresh reading of the port, read now. */
-const read = (reading: unknown) => ({
+const read = (reading: Reading): PortRead => ({
   state: 'read',
   reading,
   readAt: new Date().toISOString(),
@@ -35,52 +40,48 @@ const read = (reading: unknown) => ({
 function railwayAnswers(state: 'online' | 'offline') {
   const inMinutes = (minutes: number) => new Date(Date.now() + minutes * 60_000).toISOString();
   server.use(
-    http.get('*/admin/services', () =>
-      HttpResponse.json({
-        services: [
-          ...SERVICES,
-          cron(ALERTS_ID, 'alerts', 640),
-          cron(QUOTE_CHECK_ID, 'quote-check', 340),
-        ],
-        costs: SERVICE_COSTS,
-      }),
-    ),
-    http.get('*/admin/services/usage', () =>
-      HttpResponse.json({
-        usage: [
-          {
-            serviceId: SERVICE_IDS.Railway,
-            read: read({
-              kind: 'railway',
-              state,
-              usage: [{ name: 'spend', unit: 'USD', used: 1.8, limit: 5 }],
-              spendParts: [
-                { part: 'cpu', usd: 0.56 },
-                { part: 'memory', usd: 1.15 },
-                { part: 'egress', usd: 0.09 },
-                { part: 'disk', usd: 0 },
-              ],
-            }),
-          },
-          {
-            serviceId: ALERTS_ID,
-            read: read({
-              kind: 'cron',
-              lastRun: { at: inMinutes(-1), succeeded: true },
-              nextRunAt: inMinutes(14.5),
-            }),
-          },
-          {
-            serviceId: QUOTE_CHECK_ID,
-            read: read({
-              kind: 'cron',
-              lastRun: { at: inMinutes(-30), succeeded: false },
-              nextRunAt: null,
-            }),
-          },
-        ],
-      }),
-    ),
+    override('services.list', () => ({
+      services: [
+        ...SERVICES,
+        cron(ALERTS_ID, 'alerts', 640),
+        cron(QUOTE_CHECK_ID, 'quote-check', 340),
+      ],
+      costs: SERVICE_COSTS,
+    })),
+    override('services.usage', () => ({
+      usage: [
+        {
+          serviceId: SERVICE_IDS.Railway,
+          read: read({
+            kind: 'railway',
+            state,
+            usage: [{ name: 'spend', unit: 'USD', used: 1.8, limit: 5 }],
+            spendParts: [
+              { part: 'cpu', usd: 0.56 },
+              { part: 'memory', usd: 1.15 },
+              { part: 'egress', usd: 0.09 },
+              { part: 'disk', usd: 0 },
+            ],
+          }),
+        },
+        {
+          serviceId: ALERTS_ID,
+          read: read({
+            kind: 'cron',
+            lastRun: { at: inMinutes(-1), succeeded: true },
+            nextRunAt: inMinutes(14.5),
+          }),
+        },
+        {
+          serviceId: QUOTE_CHECK_ID,
+          read: read({
+            kind: 'cron',
+            lastRun: { at: inMinutes(-30), succeeded: false },
+            nextRunAt: null,
+          }),
+        },
+      ],
+    })),
   );
 }
 

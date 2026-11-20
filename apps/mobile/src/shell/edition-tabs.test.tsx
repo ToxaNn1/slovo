@@ -1,27 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Edition } from '@slovo/core';
-import { EditionProvider } from '@slovo/ui';
+import { renderApp } from './test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
 import { router, useIsFocused } from 'expo-router';
 import { useSyncExternalStore, type ReactNode } from 'react';
-import { renderRoutes } from './test-render';
 import { StyleSheet, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ScreenStack } from '../entries/screen-stack';
 import { screenSettled } from '../use-open-screen';
 import { edition, editionStrings } from '../edition/edition';
-import { SettingsProvider } from '../settings/settings';
-import { ShellProvider } from '../shell-value';
 import { EditionTabs } from './edition-tabs';
 import { opened, settingsAt, switchedTo, testShell } from './test-support';
 
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  // The home indicator of an iPhone with Face ID.
-  insets: { top: 0, left: 0, right: 0, bottom: 34 },
-};
+/** The home indicator of an iPhone with Face ID. */
+const insets = { top: 0, left: 0, right: 0, bottom: 34 };
 
 /** The app's tabs over `editionInEffect` (the shipped Edition by default), opened on `url`. */
 async function renderTabs(
@@ -34,19 +27,9 @@ async function renderTabs(
     settings: await settingsAt({}),
     remoteSwitches: switchedTo(editionInEffect),
   });
-  await renderRoutes(
+  await renderApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider shell={shell}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <SettingsProvider>
-                <EditionTabs screenOptions={{ headerShown: false }} />
-              </SettingsProvider>
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
-      ),
+      _layout: () => <EditionTabs screenOptions={{ headerShown: false }} />,
       index: () => <Text>Feed</Text>,
       feed: () => <Text>Feed opened</Text>,
       'game/_layout': () => <ScreenStack />,
@@ -73,7 +56,7 @@ async function renderTabs(
       'correction-category/[categoryId]': () => <Text>Correction Category</Text>,
       ...screens,
     },
-    { initialUrl: url },
+    { shell, initialUrl: url, insets },
   );
 }
 

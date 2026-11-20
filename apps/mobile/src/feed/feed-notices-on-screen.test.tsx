@@ -6,7 +6,6 @@ import {
   type Composition,
   type TrackedUserState,
   type Edition,
-  type Haptics,
   type NotificationSchedulerPort,
 } from '@slovo/core';
 import {
@@ -16,22 +15,17 @@ import {
   type UserStateFacts,
   type XpRecord,
 } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
-import { Slot } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/feed';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
-import { SettingsProvider } from '../settings/settings';
 
 const { config } = activeEditionFiles;
 
@@ -59,19 +53,6 @@ const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Eu
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** A Word of the Edition's first Category, with the Stress on its second letter. */
 function word(id: string, lemma: string): Word {
@@ -192,30 +173,15 @@ const shell = () =>
 const AccountStandIn = () => null;
 
 /** The app on the Feed, with the Entry screen a link opens and the Account screen a Notice opens. */
-async function renderApp() {
-  const app = await renderRoutes(
+async function openApp() {
+  const app = await renderApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme="light">
-            <ShellProvider shell={shell()}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <SettingsProvider>
-                    <Slot />
-                  </SettingsProvider>
-                </HapticsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
-      ),
       index: HomeScreen,
       'entry/_layout': EntryLayout,
       'entry/[entryId]': EntryFromLinkScreen,
       'settings/account': AccountStandIn,
     },
-    { initialUrl: '/' },
+    { shell: shell() },
   );
   await settle();
   // The pager lays its pages out once it knows its height.
@@ -266,7 +232,7 @@ describe('the Feed Notices on the Feed', () => {
       onboardingFinished: '2026-10-28T08:00:00Z',
       firstWeekFrom: '2026-10-28',
     });
-    await renderApp();
+    await openApp();
 
     const card = screen.getByTestId('feed-notice-firstWeek', hidden);
     const [day1] = editionStrings.feedNotices.firstWeek.days;
@@ -275,7 +241,7 @@ describe('the Feed Notices on the Feed', () => {
 
   it('shows a reader past the first week with no other notice due only the Daily Goal later question', async () => {
     await open({ onboardingFinished: '2026-09-01T09:00:00Z' });
-    await renderApp();
+    await openApp();
 
     expect(screen.getAllByTestId('word-card', hidden).length).toBeGreaterThan(0);
     expect(
@@ -291,7 +257,7 @@ describe('the Feed Notices on the Feed', () => {
       { onboardingFinished: '2026-10-26T08:00:00Z' },
       { scheduler, edition: withoutLaterQuestions },
     );
-    await renderApp();
+    await openApp();
 
     const card = screen.getByTestId('feed-notice-notificationExplainer', hidden);
     const { title, yes } = editionStrings.feedNotices.notificationExplainer;
@@ -303,7 +269,7 @@ describe('the Feed Notices on the Feed', () => {
   it('shows no explainer to a reader the device asked already', async () => {
     const scheduler = createFakeNotificationScheduler({ permission: 'denied' });
     await open({ onboardingFinished: '2026-10-26T08:00:00Z' }, { scheduler });
-    await renderApp();
+    await openApp();
 
     expect(screen.queryByTestId('feed-notice-notificationExplainer', hidden)).toBeNull();
   });
@@ -317,7 +283,7 @@ describe('the Feed Notices on the Feed', () => {
         signedIn: () => false,
       },
     );
-    const app = await renderApp();
+    const app = await openApp();
 
     const card = screen.getByTestId('feed-notice-saveProgress', hidden);
     const { title, save } = editionStrings.feedNotices.saveProgress;
@@ -337,7 +303,7 @@ describe('the Feed Notices on the Feed', () => {
       { onboardingFinished: '2026-09-01T09:00:00Z' },
       { edition: withoutLaterQuestions, xp: [xp('2026-10-20', 300), xp('2026-10-28', 10)] },
     );
-    await renderApp();
+    await openApp();
 
     const card = screen.getByTestId('feed-notice-levelMilestone', hidden);
     expect(within(card).getByText('Рівень 5 — Читач', hidden)).toBeTruthy();
@@ -359,7 +325,7 @@ describe('the Feed Notices on the Feed', () => {
       },
       { edition: withoutLaterQuestions, words: seenWords },
     );
-    await renderApp();
+    await openApp();
 
     const card = within(screen.getByTestId('feed-notice-enoughForToday', hidden));
     expect(card.getByText('Може, на сьогодні досить?', hidden)).toBeTruthy();

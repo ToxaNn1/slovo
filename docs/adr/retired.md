@@ -161,5 +161,3 @@ Every ADR number with no file, one line each: unused, merged into another ADR, o
 - 0190: removed, not a lasting decision; the history is in the commit log.
 - 0191: removed, not a lasting decision; the history is in the commit log.
 - 0192: removed, not a lasting decision; the history is in the commit log.
-- 0198: unused.
-- 0199: unused.
