@@ -22,10 +22,36 @@ export async function migrateDatabase(url: string, logger: Logger): Promise<void
   }
 }
 
-/** The migrations in order, as drizzle-kit's journal lists them: each by its name and the time it was made. */
-const JOURNAL = z
-  .object({ entries: z.array(z.object({ tag: z.string(), when: z.number() })).nonempty() })
-  .parse(JSON.parse(readFileSync(join(MIGRATIONS_DIR, 'meta/_journal.json'), 'utf8')));
+/**
+ * drizzle-kit's journal of the migrations in order, each by its name and the
+ * time it was made. Each must be made after the one before it: drizzle runs
+ * only the migrations made after the last one it ran, so one made earlier
+ * would be skipped for good while the database reads as migrated.
+ */
+const JournalSchema = z.object({
+  entries: z
+    .array(z.object({ tag: z.string(), when: z.number() }))
+    .nonempty()
+    .superRefine((entries, context) => {
+      entries.forEach((entry, index) => {
+        const before = entries[index - 1];
+        if (before !== undefined && entry.when <= before.when) {
+          context.addIssue({
+            code: 'custom',
+            path: [index, 'when'],
+            message: `${entry.tag} must be made after ${before.tag}: run \`pnpm db:generate\` again on top of it`,
+          });
+        }
+      });
+    }),
+});
+
+/** Parses drizzle-kit's journal, refusing one whose migrations were made out of order. */
+export function parseJournal(text: string): z.infer<typeof JournalSchema> {
+  return JournalSchema.parse(JSON.parse(text));
+}
+
+const JOURNAL = parseJournal(readFileSync(join(MIGRATIONS_DIR, 'meta/_journal.json'), 'utf8'));
 
 /**
  * How far the database has migrated: the name of the last migration it ran
