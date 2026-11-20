@@ -558,6 +558,14 @@ export function useTurnToNextPageOnUI(): (() => void) | undefined {
 }
 
 /**
+ * Whether the element is on a page of a `VerticalPager`, current or not: a
+ * card's button that turns to the next card is only drawn there.
+ */
+export function useIsInPager(): boolean {
+  return useContext(PagerContext) !== undefined;
+}
+
+/**
  * Turns a `VerticalPager` back to this page in 300 ms, from whichever page is
  * current, such as an undo that brings back a card the reader left. None
  * outside a pager.
