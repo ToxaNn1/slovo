@@ -744,7 +744,12 @@ export function adminProcedures({
       return { check: ownerCheckView(check) };
     }),
 
-    quality: os.quality.handler(async ({ input }) => {
+    quality: os.quality.handler(async ({ input, errors }) => {
+      // A read is cached by its Edition: only an Edition served is read.
+      const { editionId } = input;
+      if (editionId !== undefined && !served.some(({ config }) => config.id === editionId)) {
+        throw errors.NOT_FOUND();
+      }
       const answer = await quality.read({
         editionId: input.editionId,
         days: PERIOD_DAYS[input.period],
