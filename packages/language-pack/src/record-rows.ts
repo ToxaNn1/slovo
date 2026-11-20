@@ -30,7 +30,8 @@ export interface Statement {
 const SQL = {
   entry:
     'INSERT INTO entries (id, kind) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET kind = excluded.kind',
-  // A Patch leaves `needs_new_recording` as the pack has it: a Patch carries no such flag.
+  // A Word's upsert leaves `needs_new_recording` as the pack has it: `applyPatch` clears it when
+  // the Patch brings the Word a live Recording.
   word: `
     INSERT INTO words (id, lemma, part_of_speech, gender, category_id, rarity, etymology, region, history, origin, illustration, retired, needs_new_recording)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

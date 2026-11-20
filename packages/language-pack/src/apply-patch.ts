@@ -94,6 +94,13 @@ export async function applyPatch(db: PackWriteDatabase, patch: Patch, etag: stri
       ...patch.crosswordDays.flatMap(crosswordDayRows),
       ...patch.curatedCollections.flatMap(curatedCollectionRows),
       ...mediaStatements(patch),
+      // A live Recording in a Patch is the new one of its Word, which clears its mark (ADR 0099).
+      ...[
+        ...new Set(patch.recordings.filter(({ retired }) => !retired).map(({ wordId }) => wordId)),
+      ].map((wordId) => ({
+        sql: 'UPDATE words SET needs_new_recording = 0 WHERE id = ?',
+        params: [wordId],
+      })),
       {
         sql: "UPDATE metadata SET value = ? WHERE key = 'content_version'",
         params: [String(patch.contentVersion)],
