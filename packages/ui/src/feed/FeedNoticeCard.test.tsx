@@ -180,6 +180,7 @@ describe('the first-week card', () => {
 
   it('shows no Mascot before day 7', async () => {
     await renderFeed(<FirstWeekCard day={6} streak={undefined} />);
+    expect(screen.getByText('Check yourself')).toBeTruthy();
     expect(screen.queryByTestId('mascot-happy')).toBeNull();
   });
 
