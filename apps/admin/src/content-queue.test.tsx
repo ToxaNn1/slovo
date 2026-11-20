@@ -1,9 +1,9 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test } from 'vitest';
 
 import { FIXTURES, QUEUE_BATCH as BATCH, QUEUE_REPORT as REPORT } from './mock/fixtures';
+import { override, type Refusal, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -16,14 +16,25 @@ beforeEach(() => {
 /** The writes the backend received: their path and body. */
 function writes() {
   const received: { path: string; body: unknown }[] = [];
+  const receive = async (request: Request) => {
+    received.push({ path: new URL(request.url).pathname, body: await request.json() });
+  };
   server.use(
-    http.post('*/admin/content-queue/*', async ({ request }) => {
-      const path = new URL(request.url).pathname;
-      received.push({ path, body: await request.json() });
-      if (path.endsWith('/rollback')) return HttpResponse.json(QUEUE.rollback);
-      if (path.endsWith('/review')) return HttpResponse.json(QUEUE.review);
-      if (path.includes('/flags/')) return HttpResponse.json(QUEUE.resolveFlag);
-      return HttpResponse.json(QUEUE.resolveReport);
+    override('contentQueue.rollback', async ({ request }) => {
+      await receive(request);
+      return QUEUE.rollback;
+    }),
+    override('contentQueue.review', async ({ request }) => {
+      await receive(request);
+      return QUEUE.review;
+    }),
+    override('contentQueue.resolveFlag', async ({ request }) => {
+      await receive(request);
+      return QUEUE.resolveFlag;
+    }),
+    override('contentQueue.resolveReport', async ({ request }) => {
+      await receive(request);
+      return QUEUE.resolveReport;
     }),
   );
   return received;
@@ -120,9 +131,9 @@ test('a Mistake Report opens the whole Entry it names and links the email of a s
 
 test('an anonymous report names no reader; one whose Entry is gone says so', async () => {
   server.use(
-    http.get('*/admin/content-queue/reports', () =>
-      HttpResponse.json({ reports: [{ ...REPORT, entry: null, accountEmail: null }] }),
-    ),
+    override('contentQueue.reports', () => ({
+      reports: [{ ...REPORT, entry: null, accountEmail: null }],
+    })),
   );
   const user = userEvent.setup();
   render(<Admin />);
@@ -137,9 +148,9 @@ test('an anonymous report names no reader; one whose Entry is gone says so', asy
 
 test('an empty queue reads «Усе перевірено»', async () => {
   server.use(
-    http.get('*/admin/content-queue/batches', () => HttpResponse.json({ batches: [] })),
-    http.get('*/admin/content-queue/flags', () => HttpResponse.json({ flags: [] })),
-    http.get('*/admin/content-queue/reports', () => HttpResponse.json({ reports: [] })),
+    override('contentQueue.batches', () => ({ batches: [] })),
+    override('contentQueue.flags', () => ({ flags: [] })),
+    override('contentQueue.reports', () => ({ reports: [] })),
   );
   render(<Admin />);
 
@@ -150,9 +161,9 @@ test('an empty queue reads «Усе перевірено»', async () => {
 test('the Контент link counts the open batches of the Edition filter', async () => {
   const asked: string[] = [];
   server.use(
-    http.get('*/admin/content-queue/batches', ({ request }) => {
+    override('contentQueue.batches', ({ request }) => {
       asked.push(new URL(request.url).search);
-      return HttpResponse.json(QUEUE.batches);
+      return QUEUE.batches;
     }),
   );
   window.history.replaceState(null, '', '/admin/?edition=uk');
@@ -164,12 +175,12 @@ test('the Контент link counts the open batches of the Edition filter', as
 });
 
 test('a queue write keeps its confirmation open until it ends, and a refusal stays in it', async () => {
-  let answer: (response: Response) => void = () => undefined;
+  let answer: (refused: Refusal) => void = () => undefined;
   const received: unknown[] = [];
   server.use(
-    http.post('*/admin/content-queue/*', async ({ request }) => {
+    override('contentQueue.review', async ({ request }) => {
       received.push(await request.json());
-      return new Promise<Response>((resolve) => {
+      return new Promise<Refusal>((resolve) => {
         answer = resolve;
       });
     }),
@@ -189,14 +200,18 @@ test('a queue write keeps its confirmation open until it ends, and a refusal sta
     'disabled',
     true,
   );
-  answer(HttpResponse.json({ code: 'INTERNAL_SERVER_ERROR', status: 500 }, { status: 500 }));
+  answer(refusal(500, { code: 'INTERNAL_SERVER_ERROR', status: 500 }));
 
   expect(await dialog.findByRole('alert')).toBeDefined();
   expect(screen.getByRole('dialog')).toBeDefined();
 });
 
 test('a queue that fails to load says so', async () => {
-  server.use(http.get('*/admin/content-queue/*', () => HttpResponse.json({}, { status: 502 })));
+  server.use(
+    override('contentQueue.batches', () => refusal(502, {})),
+    override('contentQueue.flags', () => refusal(502, {})),
+    override('contentQueue.reports', () => refusal(502, {})),
+  );
   render(<Admin />);
 
   expect(await screen.findByText('Не вдалося завантажити чергу.')).toBeDefined();
@@ -211,9 +226,7 @@ const THREE = ['a', 'b', 'c'].map((letter, index) => ({
 }));
 
 function threeBatches() {
-  server.use(
-    http.get('*/admin/content-queue/batches', () => HttpResponse.json({ batches: THREE })),
-  );
+  server.use(override('contentQueue.batches', () => ({ batches: THREE })));
 }
 
 test('«Вибрати всі» selects every batch and marks them all reviewed at one confirmation', async () => {

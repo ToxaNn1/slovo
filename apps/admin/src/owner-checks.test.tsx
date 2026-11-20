@@ -1,9 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { expect, test } from 'vitest';
 
 import { FIXTURES } from './mock/fixtures';
+import { override, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -19,13 +19,14 @@ function ownerChecksBackend() {
     return counts;
   };
   server.use(
-    http.get('*/admin/owner-checks', () => HttpResponse.json({ checks, open: open() })),
-    http.post('*/admin/owner-checks/:id/tick', async ({ params, request }) => {
+    override('ownerChecks', () => ({ checks, open: open() })),
+    override('tickOwnerCheck', async ({ params, request }) => {
       bodies.push([new URL(request.url).pathname, await request.text()]);
       const id = Number(params['id']);
       const ticked = { at: '2026-11-08T10:00:00.000Z', by: 'owner@example.com' };
       checks = checks.map((check) => (check.id === id ? { ...check, ticked } : check));
-      return HttpResponse.json({ check: checks.find((check) => check.id === id) });
+      const check = checks.find((check) => check.id === id);
+      return check === undefined ? refusal(404, {}) : { check };
     }),
   );
   return bodies;

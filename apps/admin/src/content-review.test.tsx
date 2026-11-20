@@ -1,9 +1,9 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test } from 'vitest';
 
 import { FIXTURES, WORD_FIELDS } from './mock/fixtures';
+import { override, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -34,39 +34,36 @@ function unchecked(
     if (at >= 0) left.splice(at, 1);
   };
   server.use(
-    http.get('*/admin/content/:editionId/unchecked/:kind', ({ request }) => {
+    override('content.unchecked', ({ request }) => {
       const next = left[Number(new URL(request.url).searchParams.get('skip') ?? 0)];
-      return HttpResponse.json({ total: left.length, ...(next ? { record: next } : {}) });
+      return { total: left.length, ...(next ? { record: next } : {}) };
     }),
-    http.get('*/admin/content/:editionId/records/:kind/:id', ({ params }) => {
+    override('content.record', ({ params }) => {
       const found = records.find((record) => record.id === params['id']);
-      return HttpResponse.json({
+      return {
         fields: found?.fields ?? {},
         recordVersion: found?.recordVersion ?? 1,
         retired: false,
-      });
+      };
     }),
-    http.post('*/admin/content/:editionId/records/:kind/:id/check', async ({ request, params }) => {
+    override('content.check', async ({ request, params }) => {
       checks.push(await request.json());
       take(params['id']);
-      return HttpResponse.json({ id: params['id'], recordVersion: 2 });
+      return { id: String(params['id']), recordVersion: 2 };
     }),
-    http.post('*/admin/content/:editionId/unchecked/:kind/check', async ({ request }) => {
+    override('content.checkAll', async ({ request }) => {
       checkAlls.push(await request.json());
       const checked = left.splice(0).length;
-      return HttpResponse.json({ checked });
+      return { checked };
     }),
-    http.post(
-      '*/admin/content/:editionId/records/:kind/:id/retire',
-      async ({ request, params }) => {
-        retires.push(await request.json());
-        take(params['id']);
-        return HttpResponse.json(FIXTURES.content.retire);
-      },
-    ),
-    http.put('*/admin/content/:editionId/records/:kind/:id', async ({ request, params }) => {
+    override('content.retire', async ({ request, params }) => {
+      retires.push(await request.json());
+      take(params['id']);
+      return FIXTURES.content.retire;
+    }),
+    override('content.edit', async ({ request, params }) => {
       edits.push(await request.json());
-      return HttpResponse.json({ ...FIXTURES.content.edit, id: params['id'], recordVersion: 3 });
+      return { ...FIXTURES.content.edit, id: String(params['id']), recordVersion: 3 };
     }),
   );
   return { checks, checkAlls, retires, edits };
@@ -226,13 +223,14 @@ test('a record retired here comes back into use from «Назад»', async () =
   );
   const rollbacks: unknown[] = [];
   server.use(
-    http.get('*/admin/content/:editionId/records/:kind/:id', () =>
-      HttpResponse.json({ ...FIXTURES.content.record, retired: rollbacks.length === 0 }),
-    ),
-    http.post('*/admin/content-queue/batches/:batchId/rollback', async ({ request, params }) => {
+    override('content.record', () => ({
+      ...FIXTURES.content.record,
+      retired: rollbacks.length === 0,
+    })),
+    override('contentQueue.rollback', async ({ request, params }) => {
       const body: unknown = await request.json();
       rollbacks.push({ batchId: params['batchId'], body });
-      return HttpResponse.json(FIXTURES.contentQueue.rollback);
+      return FIXTURES.contentQueue.rollback;
     }),
   );
   const user = userEvent.setup();
@@ -271,20 +269,15 @@ test('a Curated Collection retires and comes back into use as any record', async
   const kinds: unknown[] = [];
   const rollbacks: unknown[] = [];
   server.use(
-    http.post(
-      '*/admin/content/:editionId/records/:kind/:id/retire',
-      async ({ request, params }) => {
-        kinds.push(params['kind']);
-        retires.push(await request.json());
-        return HttpResponse.json(FIXTURES.content.retire);
-      },
-    ),
-    http.get('*/admin/content/:editionId/records/:kind/:id', () =>
-      HttpResponse.json({ ...collection, retired: rollbacks.length === 0 }),
-    ),
-    http.post('*/admin/content-queue/batches/:batchId/rollback', async ({ request }) => {
+    override('content.retire', async ({ request, params }) => {
+      kinds.push(params['kind']);
+      retires.push(await request.json());
+      return FIXTURES.content.retire;
+    }),
+    override('content.record', () => ({ ...collection, retired: rollbacks.length === 0 })),
+    override('contentQueue.rollback', async ({ request }) => {
       rollbacks.push(await request.json());
-      return HttpResponse.json(FIXTURES.contentQueue.rollback);
+      return FIXTURES.contentQueue.rollback;
     }),
   );
   const user = userEvent.setup();
@@ -357,14 +350,12 @@ test('a record passed by is answered later from «Назад» with «Так», 
 test('the card names the Category as the app does, by its display name', async () => {
   unchecked(word('w_a1', 'обруч', 'Зігнута кільцем смуга.'));
   server.use(
-    http.get('*/admin/editions/:editionId', () =>
-      HttpResponse.json({
-        ...FIXTURES.editionCard,
-        categories: [
-          { id: 'old-crafts', displayName: 'Старі ремесла', description: 'Ремесла.', tone: 'loud' },
-        ],
-      }),
-    ),
+    override('editionCard', () => ({
+      ...FIXTURES.editionCard,
+      categories: [
+        { id: 'old-crafts', displayName: 'Старі ремесла', description: 'Ремесла.', tone: 'loud' },
+      ],
+    })),
   );
   render(<Admin />);
 
@@ -398,11 +389,14 @@ test('«Позначити перевіреними всі (N)» checks them all
 test('a changed count keeps the dialog open with the count now', async () => {
   unchecked(word('w_a1', 'обруч', 'Зігнута кільцем смуга.'));
   server.use(
-    http.post('*/admin/content/:editionId/unchecked/:kind/check', () =>
-      HttpResponse.json(
-        { defined: true, code: 'CHANGED', status: 409, message: 'changed', data: { total: 3 } },
-        { status: 409 },
-      ),
+    override('content.checkAll', () =>
+      refusal(409, {
+        defined: true,
+        code: 'CHANGED',
+        status: 409,
+        message: 'changed',
+        data: { total: 3 },
+      }),
     ),
   );
   const user = userEvent.setup();

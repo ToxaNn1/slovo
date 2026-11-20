@@ -1,9 +1,9 @@
 import type { UsdRate } from '@slovo/contracts/admin-api';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test } from 'vitest';
 
+import { override } from './mock/handlers';
 import { server } from './mock/server';
 import { SERVICE_IDS, SERVICES } from './mock/services-fixtures';
 import { Admin } from './router';
@@ -15,20 +15,18 @@ beforeEach(() => {
 /** The API answers Neon at $19.50 on the 5th, the total $48.50, and the NBU rate. */
 function answer(rate: UsdRate | null) {
   server.use(
-    http.get('*/admin/services', () =>
-      HttpResponse.json({
-        services: SERVICES.map((service) =>
-          service.id === SERVICE_IDS.Neon
-            ? { ...service, plan: 'Launch', monthlyPriceUsdCents: 1950, billingDay: 5 }
-            : service,
-        ),
-        costs: {
-          monthlyTotalUsdCents: 4850,
-          nextCharge: { on: '2026-12-05', amountUsdCents: 1950, serviceIds: [SERVICE_IDS.Neon] },
-        },
-      }),
-    ),
-    http.get('*/admin/services/usd-rate', () => HttpResponse.json({ rate })),
+    override('services.list', () => ({
+      services: SERVICES.map((service) =>
+        service.id === SERVICE_IDS.Neon
+          ? { ...service, plan: 'Launch', monthlyPriceUsdCents: 1950, billingDay: 5 }
+          : service,
+      ),
+      costs: {
+        monthlyTotalUsdCents: 4850,
+        nextCharge: { on: '2026-12-05', amountUsdCents: 1950, serviceIds: [SERVICE_IDS.Neon] },
+      },
+    })),
+    override('services.usdRate', () => ({ rate })),
   );
 }
 
