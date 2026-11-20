@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
+import { logError } from '../diagnostics/log';
 import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 import { InterestChips } from '../feed/later-question-notice';
@@ -41,9 +42,15 @@ export function QuestionnaireScreen() {
   const [last, setLast] = useState<Answers>({});
   useEffect(() => {
     let open = true;
-    void questionnaire.answers().then((answered) => {
-      if (open) setLast(answered);
-    });
+    questionnaire.answers().then(
+      (answered) => {
+        if (open) setLast(answered);
+      },
+      (error: unknown) => {
+        // The chips start unmarked, as for a reader who never answered.
+        logError('Could not read the last answers of the questionnaire', error);
+      },
+    );
     return () => {
       open = false;
     };
