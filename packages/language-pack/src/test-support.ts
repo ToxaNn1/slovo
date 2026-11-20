@@ -1,11 +1,12 @@
-import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 
 import { FeatureSwitchStateSchema, featureSwitchStates } from '@slovo/contracts';
 import type { ContentSnapshot } from '@slovo/contracts/api';
 import { loadEdition } from '@slovo/core';
+import { afterAll } from 'vitest';
 import { z } from 'zod';
 
 import { buildFromSnapshot, type BuildResult } from './build';
@@ -41,10 +42,17 @@ export function fixtureFile(name: string): string {
 
 const fixtureCopies = new Map<string, string>();
 
+// The copies serve every test of the file that imports this module and go once it is done.
+afterAll(() => {
+  for (const dir of fixtureCopies.values()) rmSync(dirname(dir), { recursive: true, force: true });
+  fixtureCopies.clear();
+});
+
 /**
  * The folder of a fixture Edition of this package's `fixtures/`, as an
  * Edition is read: a copy whose `edition.json` declares every Feature Switch,
- * `on` but those the fixture states (ADR 0199). Made once per name.
+ * `on` but those the fixture states (ADR 0199). Made once per name and
+ * removed after the test file's tests.
  */
 export function fixtureDir(name: string): string {
   const made = fixtureCopies.get(name);
