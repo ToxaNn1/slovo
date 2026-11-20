@@ -206,7 +206,6 @@ export { openSync, type Sync, type SyncState } from './sync/sync';
 export {
   type NotificationSlot,
   type NotificationTimeRefusal,
-  type NotificationTimes,
   type NotificationsState,
 } from './notifications/notifications';
 export {
