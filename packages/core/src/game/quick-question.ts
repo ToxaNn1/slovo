@@ -100,7 +100,9 @@ export function createQuickQuestion({
           edition,
           comparison,
         });
-        if (round?.form !== 'pick') return undefined;
+        // An Entry the Game Mode cannot ask gives its place to the next.
+        if (round === undefined) continue;
+        if (round.form !== 'pick') return undefined;
         if (round.prompt.length <= QUICK_QUESTION_PROMPT_LIMIT)
           return { entry: answer, source: { kind: 'game-mode', modeId: mode.id }, round };
       }

@@ -457,6 +457,35 @@ describe('the Word Meaning question', () => {
   });
 });
 
+describe('a Quick Question of a Game Mode that cannot ask every Entry', () => {
+  const originLanguages = ['la', 'el', 'de', 'pl'].map((code) => ({ code, name: `From ${code}` }));
+  // The Origin Mode asks a Word with an origin alone: one Word in seven here.
+  const fewWithOrigin = words.map((each, index) =>
+    index % 7 === 3 ? { ...each, origin: 'la' } : each,
+  );
+
+  it('asks an Entry the Game Mode can ask, passing those it cannot', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const on: readonly FeatureSwitch[] = ['game', 'quickQuestion', 'gameOrigin'];
+    const app = await openComposition({
+      content: packOf(fewWithOrigin),
+      edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature), originLanguages }),
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock: time.clock,
+      random: seededRandom(7),
+    });
+    await app.mix.setQuickQuestionEvery(6);
+
+    const cards = await cardsOf(app, 30);
+    const asked = cards.flatMap((card) => (card.kind === 'quick-question' ? [card] : []));
+
+    expect(asked.map(({ entry }) => entry.id).every((id) => ['w_03', 'w_10'].includes(id))).toBe(
+      true,
+    );
+    expect(asked).toHaveLength(5);
+  });
+});
+
 describe('a Quick Question prompt', () => {
   /** Words whose Definitions run past what a Feed card holds, all but those in `short`. */
   function overLong(short: readonly string[]): readonly Word[] {
