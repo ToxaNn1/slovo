@@ -106,6 +106,25 @@ test('a wrong code shows the attempts left, and a blocked email when to try agai
   expect(await screen.findByText('Забагато невдалих спроб. Спробуйте за 15 хв.')).toBeDefined();
 });
 
+test('once the emailed code has expired, the TOTP step sends a new one and goes back to it', async () => {
+  const bodies = signedOut();
+  server.use(override('signIn', () => refused(401, 'UNAUTHORIZED')));
+  render(<Admin />);
+  await typeInto('Пошта', 'owner@example.com', 'Надіслати код');
+  await typeInto('Код із листа', '123456', 'Далі');
+  await typeInto('Код із застосунку', '654321', 'Увійти');
+  expect((await screen.findByRole('alert')).textContent).toContain('застарів');
+
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Надіслати новий код' }));
+
+  expect(await screen.findByRole('heading', { name: 'Код з листа' })).toBeDefined();
+  expect(screen.queryByRole('alert')).toBeNull();
+  expect(bodies.at(-1)).toEqual({ email: 'owner@example.com' });
+  expect(
+    bodies.filter((body) => JSON.stringify(body) === '{"email":"owner@example.com"}'),
+  ).toHaveLength(2);
+});
+
 test('an Адмін has no Безпека in the sidebar, and its page stays closed', async () => {
   server.use(override('me', () => ({ email: 'a@example.com', role: 'admin' })));
   window.history.replaceState(null, '', '/admin/security');

@@ -52,6 +52,37 @@ export function SignIn() {
           setBusy(false);
         });
     };
+  /** Sends a new emailed code and goes back to its step: the way out once the code has expired. */
+  const resend = (email: string) => {
+    setBusy(true);
+    setError(undefined);
+    adminApi
+      .requestCode({ email })
+      .then(() => {
+        setRecovery(false);
+        setStep({ at: 'code', email });
+      })
+      .catch((refusal: unknown) => {
+        setError(refusalText(refusal));
+      })
+      .finally(() => {
+        setBusy(false);
+      });
+  };
+  /** The button of `resend`, under the steps that use the emailed code. */
+  const resendButton = (email: string) => (
+    <Button
+      type="button"
+      variant="ghost"
+      className={BIG}
+      disabled={busy}
+      onClick={() => {
+        resend(email);
+      }}
+    >
+      Надіслати новий код
+    </Button>
+  );
   const text = (form: FormData, name: string) => {
     const value = form.get(name);
     return typeof value === 'string' ? value.trim() : '';
@@ -103,6 +134,7 @@ export function SignIn() {
         <Button className={BIG} disabled={busy}>
           Далі
         </Button>
+        {resendButton(step.email)}
       </form>
     );
   } else {
@@ -147,6 +179,8 @@ export function SignIn() {
             {recovery ? 'Увійти кодом із застосунку' : 'Увійти кодом відновлення'}
           </Button>
         ) : null}
+        <Hint>Код із листа діє 10 хвилин. Якщо він застарів, надішліть новий.</Hint>
+        {resendButton(step.email)}
       </form>
     );
   }
