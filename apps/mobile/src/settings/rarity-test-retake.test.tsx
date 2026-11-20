@@ -6,6 +6,7 @@ import {
   type Composition,
   type Edition,
   type FeatureSwitch,
+  type Random,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { Stack } from 'expo-router';
@@ -17,6 +18,7 @@ import MixScreen from '../app/settings/mix';
 import RarityTestScreen from '../app/settings/rarity-test';
 import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
+import { openOnce, type Opening } from '../opening';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 
 const { config } = activeEditionFiles;
@@ -81,22 +83,31 @@ async function settle() {
 
 async function openWith(edition: Edition) {
   editionInEffect = edition;
-  composition = await openComposition({
+  userState = await seedUserState();
+  composition = await openCompositionOf(edition);
+}
+
+/** The reader's user state, which every composition of a test opens over. */
+let userState: Awaited<ReturnType<typeof seedUserState>>;
+
+/** A composition over the test's Words, as each opening or reopen opens it. */
+function openCompositionOf(edition: Edition, random: Random = systemRandom) {
+  return openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       words,
     }),
     edition,
-    userState: await seedUserState(),
+    userState,
     clock: { now: () => new Date('2026-10-27T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
-    random: systemRandom,
+    random,
   });
 }
 
 /** Settings as the app routes to it, with the Rarity Test and «Мій Мікс» a push away. */
-async function renderSettings() {
+async function renderSettings(compositionOpening: Opening<Composition> = opened(composition)) {
   const shell = testShell({
-    composition: opened(composition),
+    composition: compositionOpening,
     remoteSwitches: switchedTo(editionInEffect),
     settings: await settingsAt(),
   });
@@ -181,6 +192,35 @@ describe('Settings › «Пройти тест ще раз»', () => {
 
     expect(screen.getByTestId('settings-rarity-bar-3')).toBeSelected();
     expect(screen.getByTestId('settings-rarity-bar-4')).not.toBeSelected();
+  });
+
+  it('keeps the questions it drew when the composition reopens halfway', async () => {
+    // Each opening draws at its own end of the randomness, so a second draw would differ.
+    let opens = 0;
+    const reopening = openOnce(
+      async () => {
+        const at = opens++ === 0 ? 0 : 0.99;
+        composition = await openCompositionOf(editionInEffect, { next: () => at });
+        return composition;
+      },
+      { onError: () => undefined },
+    );
+    const lemma = (): unknown => screen.getByTestId('settings-rarity-lemma').props['accessibilityLabel'];
+    await renderSettings(reopening);
+    await open(rarityTest.retake);
+    for (let asked = 0; asked < 3; asked++) {
+      await fireEvent.press(screen.getByRole('button', { name: knowledge.known }));
+    }
+    await settle();
+    expect(screen.getByText('4 з 10')).toBeOnTheScreen();
+    const asked: unknown = lemma();
+
+    await act(() => reopening.reopen());
+    await settle();
+
+    expect(opens).toBe(2);
+    expect(screen.getByText('4 з 10')).toBeOnTheScreen();
+    expect(lemma()).toBe(asked);
   });
 
   it('offers the Rarity Test again from its result, drawn anew', async () => {

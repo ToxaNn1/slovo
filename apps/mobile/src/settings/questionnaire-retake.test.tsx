@@ -182,6 +182,24 @@ describe('Settings › «Анкета: підлаштувати Стрічку»
     expect(composition.rarityRange.state).toEqual({ from: 2, to: 3 });
   });
 
+  it('logs why the last answers could not be read, and still shows the questions', async () => {
+    jest
+      .spyOn(composition.questionnaire, 'answers')
+      .mockRejectedValue(new Error('The user state is closed'));
+    const logged = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    await render();
+    screenSettled();
+
+    await press(settings.rows.questionnaire);
+
+    expect(screen.getByTestId('questionnaire-level-good')).toBeOnTheScreen();
+    expect(logged).toHaveBeenCalledWith(
+      'Could not read the last answers of the questionnaire',
+      expect.any(Error),
+    );
+    logged.mockRestore();
+  });
+
   it('applies the answers once when «ГОТОВО» is tapped twice before they are written', async () => {
     await render();
     screenSettled();

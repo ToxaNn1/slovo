@@ -187,12 +187,21 @@ export function useFeed(
   if (asked !== undefined && landingPage !== -1 && asked !== landed?.ask) {
     setLanded({ ask: asked, page: landingPage });
   }
+  /**
+   * The turn of the Feed as of the last render: a reopen gives a new Feed, and
+   * with it a new `turn`, which must not land the last ask again.
+   */
+  const turnNow = useRef(turn);
+  useEffect(() => {
+    turnNow.current = turn;
+  }, [turn]);
+  // Lands once per ask.
   useEffect(() => {
     if (landed === undefined) return;
     landing.landed();
     pager.current?.showPage(landed.page);
-    turn(landed.page);
-  }, [landed, landing, pager, turn]);
+    turnNow.current(landed.page);
+  }, [landed, landing, pager]);
 
   return {
     cards,

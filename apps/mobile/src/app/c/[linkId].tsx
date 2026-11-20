@@ -104,6 +104,8 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
   const router = useRouter();
   const showToast = useUndoToast();
   const [adding, setAdding] = useState(false);
+  // The copy under way, so a second tap before the screen draws again makes none.
+  const addingNow = useRef(false);
   // The copy once made, which a second tap opens instead of a copy of it.
   const made = useRef<string | undefined>(undefined);
   const { add } = preview;
@@ -145,19 +147,22 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
             busy={adding}
             disabled={add === undefined}
             onPress={() => {
-              if (add === undefined || adding) return;
+              if (add === undefined || addingNow.current) return;
               if (made.current !== undefined) {
                 openCopy(made.current);
                 return;
               }
+              addingNow.current = true;
               setAdding(true);
               add().then(
                 (copy) => {
                   made.current = copy.id;
+                  addingNow.current = false;
                   setAdding(false);
                   openCopy(copy.id);
                 },
                 (error: unknown) => {
+                  addingNow.current = false;
                   setAdding(false);
                   logError('Could not copy the Collection Link', error);
                   showToast({ message: strings.addFailed });

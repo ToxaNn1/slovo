@@ -117,6 +117,14 @@ function schedulerOn(
     return permissionOf(await notifications.getPermissionsAsync());
   }
 
+  /** The last replacement asked, which the next one waits for, so two never interleave. */
+  let replacing = Promise.resolve();
+
+  async function replace(plan: readonly PlannedNotification[]) {
+    await notifications.cancelAllScheduledNotificationsAsync();
+    await Promise.all(plan.map(schedule));
+  }
+
   return {
     permission,
     async askPermission() {
@@ -128,9 +136,11 @@ function schedulerOn(
         }),
       );
     },
-    async replacePlan(plan) {
-      await notifications.cancelAllScheduledNotificationsAsync();
-      await Promise.all(plan.map(schedule));
+    replacePlan(plan) {
+      const replaced = replacing.then(() => replace(plan));
+      // The next replacement waits for this one, whether it fails or not.
+      replacing = replaced.catch(() => undefined);
+      return replaced;
     },
   };
 }
