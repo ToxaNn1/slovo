@@ -390,7 +390,7 @@ export function writeLogged(
   };
 }
 
-/** The write an Action log row logged, with the record's fields before it; none for another row. */
+/** The write an Action log row logged, with how to read the record's fields before it; none for another row. */
 export function loggedWrite(row: {
   readonly what: string;
   readonly before: Json;
@@ -400,19 +400,19 @@ export function loggedWrite(row: {
       readonly kind: RecordKind;
       readonly id: string;
       readonly op: WriteOp;
-      readonly fieldsBefore: Readonly<Record<string, unknown>> | undefined;
+      /** Reads the record's fields before the write: only the write a rollback restores needs them. */
+      readonly fieldsBefore: () => Readonly<Record<string, unknown>> | undefined;
     }
   | undefined {
   const what = WhatSchema.safeParse(row.what);
   if (!what.success) return undefined;
   const [, kind, op] = what.data.split('.');
   const { fields } = LoggedSchema.parse(row.after);
-  const before = row.before === null ? undefined : LoggedSchema.parse(row.before).fields;
   return {
     kind: RecordKindSchema.parse(kind),
     id: fields.id ?? fields.date ?? '',
     op: WriteOpSchema.parse(op),
-    fieldsBefore: before,
+    fieldsBefore: () => (row.before === null ? undefined : LoggedSchema.parse(row.before).fields),
   };
 }
 
