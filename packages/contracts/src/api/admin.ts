@@ -1560,7 +1560,7 @@ export const adminContract = {
       path: '/admin/quality/ci',
       summary: 'Якість: the CI runs on main of a period, oldest first',
       description:
-        'Each run with its coverage per package, job durations and its flaky tests: failed in it and passed in another run of the period.',
+        'Each run with its coverage per package, job durations and its flaky tests: failed in it and passed in another run of the same commit in the period.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
