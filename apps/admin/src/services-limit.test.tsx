@@ -1,14 +1,19 @@
+import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test } from 'vitest';
 
+import { override } from './mock/handlers';
 import { server } from './mock/server';
 import { SERVICE_COSTS, SERVICE_IDS, SERVICES } from './mock/services-fixtures';
 import { Admin } from './router';
 
+/** A Service's read port, as the contract types it. */
+type PortRead = AdminApiOutputs['services']['usage']['usage'][number]['read'];
+type Reading = Extract<PortRead, { state: 'read' }>['reading'];
+
 /** A fresh metered reading of the limits, read now. */
-const metered = (usage: { name: string; unit: string; used: number; limit: number }[]) => ({
+const metered = (usage: Extract<Reading, { kind: 'metered' }>['usage']): PortRead => ({
   state: 'read',
   reading: { kind: 'metered', usage },
   readAt: new Date().toISOString(),
@@ -18,23 +23,19 @@ const metered = (usage: { name: string; unit: string; used: number; limit: numbe
 beforeEach(() => {
   window.history.replaceState(null, '', '/admin/services');
   server.use(
-    http.get('*/admin/services', () =>
-      HttpResponse.json({ services: SERVICES, costs: SERVICE_COSTS }),
-    ),
-    http.get('*/admin/services/usage', () =>
-      HttpResponse.json({
-        usage: [
-          {
-            serviceId: SERVICE_IDS.Sentry,
-            read: metered([{ name: 'errors', unit: 'errors', used: 4500, limit: 5000 }]),
-          },
-          {
-            serviceId: SERVICE_IDS.PostHog,
-            read: metered([{ name: 'events', unit: 'events', used: 899_999, limit: 1_000_000 }]),
-          },
-        ],
-      }),
-    ),
+    override('services.list', () => ({ services: SERVICES, costs: SERVICE_COSTS })),
+    override('services.usage', () => ({
+      usage: [
+        {
+          serviceId: SERVICE_IDS.Sentry,
+          read: metered([{ name: 'errors', unit: 'errors', used: 4500, limit: 5000 }]),
+        },
+        {
+          serviceId: SERVICE_IDS.PostHog,
+          read: metered([{ name: 'events', unit: 'events', used: 899_999, limit: 1_000_000 }]),
+        },
+      ],
+    })),
   );
 });
 

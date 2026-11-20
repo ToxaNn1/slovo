@@ -1,8 +1,9 @@
+import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test } from 'vitest';
 
+import { override } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -12,8 +13,15 @@ beforeEach(() => {
 
 const BY = { kind: 'admin-user', email: 'owner@example.com' } as const;
 
+type Action = AdminApiOutputs['actions']['actions'][number];
+
 /** One row of the Action log as the backend answers it. */
-const row = (what: string, before: unknown, after: unknown, reason: string | null = null) => ({
+const row = (
+  what: string,
+  before: Action['before'],
+  after: Action['after'],
+  reason: string | null = null,
+): Action => ({
   at: '2026-11-16T10:00:00.000Z',
   who: BY,
   what,
@@ -24,10 +32,8 @@ const row = (what: string, before: unknown, after: unknown, reason: string | nul
 });
 
 /** The Action log answering these rows; its table rows, each as [Що, Було, Стало]. */
-async function logOf(...rows: readonly ReturnType<typeof row>[]) {
-  server.use(
-    http.get('*/admin/actions', () => HttpResponse.json({ actions: rows, total: rows.length })),
-  );
+async function logOf(...rows: readonly Action[]) {
+  server.use(override('actions', () => ({ actions: [...rows], total: rows.length })));
   render(<Admin />);
   const log = within(await screen.findByRole('region', { name: 'Журнал дій' }));
   await log.findAllByText('owner@example.com');
@@ -128,7 +134,7 @@ test('switches, people, thresholds and the Content queue read in Ukrainian', asy
     ),
     row(
       'switches.minimum.set',
-      { platform: 'ios', minimum: undefined },
+      { platform: 'ios' },
       {
         platform: 'ios',
         minimum: { soft: '1.2.0', hard: '1.0.0' },
@@ -179,15 +185,15 @@ test('the log lists a page of rows, the total, and the next page of the Edition 
   window.history.replaceState(null, '', '/admin/security?edition=uk');
   const asked: string[] = [];
   server.use(
-    http.get('*/admin/actions', ({ request }) => {
+    override('actions', ({ request }) => {
       const url = new URL(request.url);
       asked.push(url.search);
       const page = url.searchParams.get('page') ?? '1';
       const at = page === '1' ? '2026-11-16T10:00:00.000Z' : '2026-11-15T10:00:00.000Z';
-      return HttpResponse.json({
+      return {
         actions: [{ ...row('content.crosswordDay.check', null, null, `row-of-page-${page}`), at }],
         total: 53,
-      });
+      };
     }),
   );
   const user = userEvent.setup();
