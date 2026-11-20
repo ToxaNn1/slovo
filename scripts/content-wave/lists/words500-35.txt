@@ -1,0 +1,16 @@
+тапір nature-weather 4
+тарань nature-weather 4
+тарган nature-weather 2
+тарпан nature-weather 3
+тартюф witty-insults 2
+тачка household-crafts 2
+терем history-antiquity 2
+терн nature-weather 3
+терня nature-weather 3
+тертка household-crafts 4
+тесати old-crafts 4
+тесляр old-crafts 2
+тивун history-antiquity 4
+тин household-crafts 2
+тиньк old-crafts 3
+титло language-speech 4

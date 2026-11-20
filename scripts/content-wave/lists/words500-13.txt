@@ -1,0 +1,14 @@
+згуба emotions-character 3
+згір'я nature-weather 5
+здоба household-crafts 3
+здовж language-speech 2
+зебу nature-weather 4
+зеленина nature-weather 5
+зерня nature-weather 2
+зимородок nature-weather 4
+злак nature-weather 2
+злидень witty-insults 3
+зліпок arts-culture 3
+знайда folk-names 4
+знетяма emotions-character 5
+знидіти emotions-character 5

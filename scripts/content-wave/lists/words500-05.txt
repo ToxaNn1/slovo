@@ -1,0 +1,14 @@
+возівня household-crafts 5
+ворох household-crafts 3
+воша nature-weather 3
+вусань witty-insults 3
+вушанка household-crafts 3
+війт history-antiquity 2
+вільшаник nature-weather 3
+віслюк nature-weather 2
+віття nature-weather 4
+віть nature-weather 2
+віщун folk-names 2
+віщівниця folk-names 5
+гаврик witty-insults 2
+гадина witty-insults 2

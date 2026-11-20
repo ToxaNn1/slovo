@@ -1,0 +1,15 @@
+желяр history-antiquity 5
+жерех nature-weather 3
+жерло nature-weather 3
+жертівник history-antiquity 4
+жижа household-crafts 4
+жмот witty-insults 5
+жмурик witty-insults 5
+жмут household-crafts 2
+жнець old-crafts 3
+жниво old-crafts 2
+жниця old-crafts 4
+жовтяк witty-insults 3
+жох witty-insults 4
+жриця history-antiquity 2
+жура emotions-character 2

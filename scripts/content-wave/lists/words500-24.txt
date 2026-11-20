@@ -1,0 +1,16 @@
+нужда emotions-character 3
+нурт nature-weather 4
+нірка nature-weather 4
+обшир nature-weather 3
+обіддя old-crafts 4
+огир nature-weather 4
+огріх old-crafts 4
+одвіку language-speech 4
+одежа household-crafts 3
+одинцем language-speech 3
+окіп military 3
+олеандр nature-weather 3
+онагр nature-weather 4
+орало old-crafts 4
+оркан nature-weather 4
+орлиця nature-weather 3

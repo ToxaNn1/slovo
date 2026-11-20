@@ -1,0 +1,14 @@
+праля old-crafts 4
+праотець history-antiquity 3
+прач old-crafts 4
+привереда witty-insults 5
+присінок household-crafts 3
+проталина nature-weather 5
+прочухан language-speech 4
+пряжка household-crafts 2
+пряслице old-crafts 4
+пуант arts-culture 4
+пуд history-antiquity 2
+пурга nature-weather 4
+путо old-crafts 4
+пучина nature-weather 4

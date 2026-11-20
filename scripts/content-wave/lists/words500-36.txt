@@ -1,0 +1,14 @@
+тлін emotions-character 3
+товкти household-crafts 4
+точило old-crafts 3
+трель arts-culture 3
+тропак arts-culture 4
+трунок household-crafts 2
+трут household-crafts 2
+тяжба history-antiquity 4
+тіара history-antiquity 2
+убрід language-speech 4
+удав nature-weather 2
+удій household-crafts 4
+умілець emotions-character 3
+унція history-antiquity 2

@@ -1,0 +1,16 @@
+гамарня old-crafts 4
+гарматник military 4
+гать old-crafts 2
+гидь witty-insults 4
+гичка nature-weather 3
+глей nature-weather 3
+глива nature-weather 2
+глушина nature-weather 4
+гнус nature-weather 3
+говоруха witty-insults 3
+говір language-speech 2
+гоже language-speech 2
+голець nature-weather 2
+голяк witty-insults 3
+гонт old-crafts 3
+гончак nature-weather 4

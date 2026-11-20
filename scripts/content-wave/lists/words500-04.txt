@@ -1,0 +1,14 @@
+везун emotions-character 5
+велет history-antiquity 3
+веприк nature-weather 2
+вербиця nature-weather 4
+вервечка household-crafts 3
+веред emotions-character 4
+вершок household-crafts 3
+веселуха emotions-character 3
+взір arts-culture 3
+винокурня old-crafts 3
+вкривало household-crafts 4
+владар history-antiquity 2
+водяник folk-names 3
+водяниця folk-names 5

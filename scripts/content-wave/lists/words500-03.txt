@@ -1,0 +1,15 @@
+бідка old-crafts 5
+білоручка witty-insults 4
+біляк nature-weather 2
+в'юк household-crafts 5
+в'юн nature-weather 2
+в'яз nature-weather 2
+в'язь arts-culture 2
+вабити emotions-character 3
+вагант history-antiquity 5
+вакар old-crafts 4
+варниця old-crafts 4
+вартівня military 4
+ватаг old-crafts 2
+ватрушка household-crafts 4
+вдовиця folk-names 3
