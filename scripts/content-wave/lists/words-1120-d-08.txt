@@ -1,0 +1,15 @@
+трудодень history-antiquity 3
+трюмо household-crafts 3
+трійнята human-body 3
+тріскачка arts-culture 3
+тріумфатор history-antiquity 3
+тсуга nature-weather 4
+тубероза nature-weather 4
+туніка history-antiquity 2
+тургор science 3
+турнепс nature-weather 4
+турнюр household-crafts 4
+тушкувати household-crafts 3
+тюбетейка household-crafts 4
+тюлька nature-weather 3
+тягарець household-crafts 4

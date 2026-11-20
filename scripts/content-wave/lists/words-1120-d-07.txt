@@ -1,0 +1,15 @@
+тарабарщина language-speech 4
+тарадайка old-crafts 5
+тафта household-crafts 3
+телиця nature-weather 3
+темниця history-antiquity 2
+теодицея arts-culture 4
+теократія history-antiquity 3
+тиховодий nature-weather 5
+токамак science 4
+топінамбур nature-weather 3
+топірець old-crafts 3
+трав'янка nature-weather 3
+трамонтана nature-weather 4
+траулер technology 3
+трефа arts-culture 4

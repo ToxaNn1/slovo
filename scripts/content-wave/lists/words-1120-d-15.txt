@@ -1,0 +1,13 @@
+шурпа household-crafts 4
+шухер language-speech 2
+шухляда household-crafts 2
+щедрувати arts-culture 4
+щипавка nature-weather 4
+щодуху language-speech 4
+юродство emotions-character 4
+ягель nature-weather 4
+яглиця nature-weather 3
+ялик technology 4
+ясенець nature-weather 3
+ясновельможний history-antiquity 2
+ятрівка household-crafts 4

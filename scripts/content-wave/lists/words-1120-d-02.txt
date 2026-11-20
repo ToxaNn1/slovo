@@ -1,0 +1,15 @@
+сапати household-crafts 3
+свинцюватий nature-weather 5
+свояцтво household-crafts 4
+святці arts-culture 3
+священнодіяти arts-culture 4
+севрюга nature-weather 3
+сейнер technology 4
+сексот history-antiquity 3
+серцеїд witty-insults 3
+сибілянт language-speech 5
+сивобородий human-body 4
+сизаль nature-weather 4
+сикофант witty-insults 5
+сисун nature-weather 4
+ситець household-crafts 3

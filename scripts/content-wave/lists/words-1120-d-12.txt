@@ -1,0 +1,15 @@
+чадра household-crafts 4
+чарунка nature-weather 4
+часина language-speech 4
+частувати household-crafts 4
+частуха nature-weather 4
+чвертка household-crafts 3
+червивий nature-weather 4
+черезсмужжя history-antiquity 4
+черкеска history-antiquity 4
+чехоня nature-weather 3
+чимдалі language-speech 3
+чирка nature-weather 3
+чирчик nature-weather 3
+чирянка nature-weather 4
+чистець nature-weather 3

@@ -1,0 +1,15 @@
+фацелія nature-weather 4
+фехтувати military 3
+флоема science 4
+форшлаг arts-culture 5
+форшмак household-crafts 4
+форштадт history-antiquity 5
+фраєр witty-insults 3
+фрикціон technology 3
+фухтель military 5
+фізаліс nature-weather 3
+фіміам arts-culture 3
+фіорд nature-weather 3
+фірман history-antiquity 2
+хвилеріз technology 3
+хибити language-speech 5

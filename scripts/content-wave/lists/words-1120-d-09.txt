@@ -1,0 +1,15 @@
+ужинок old-crafts 3
+узголів'я household-crafts 3
+улар nature-weather 4
+ульва nature-weather 4
+умоглядний science 4
+уніатство history-antiquity 3
+усипальня history-antiquity 3
+утерпіти emotions-character 3
+уїзд history-antiquity 4
+фабрикант history-antiquity 3
+факір arts-culture 3
+фанза household-crafts 5
+фармакопея science 3
+фаска household-crafts 4
+фасція human-body 3

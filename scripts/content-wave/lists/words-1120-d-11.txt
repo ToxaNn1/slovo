@@ -1,0 +1,15 @@
+хирляк witty-insults 5
+хмельник nature-weather 3
+хмизувати old-crafts 5
+холка human-body 4
+холодати nature-weather 3
+холонути nature-weather 4
+хохма language-speech 4
+хрипун witty-insults 4
+цапфа technology 3
+царедворець history-antiquity 4
+цедра household-crafts 3
+цесаревич history-antiquity 4
+цехмайстер old-crafts 5
+цинамон household-crafts 3
+цукровар old-crafts 4

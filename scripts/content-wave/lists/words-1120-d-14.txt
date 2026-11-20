@@ -1,0 +1,15 @@
+шикувати military 3
+шиньйон household-crafts 3
+шипун nature-weather 3
+шихта old-crafts 3
+шкалик household-crafts 4
+шкребок household-crafts 4
+шкуродер witty-insults 5
+шліхта old-crafts 4
+шобла witty-insults 4
+шовкопряд nature-weather 4
+шовківництво old-crafts 3
+шпаківня household-crafts 4
+шпала technology 4
+шпергель nature-weather 4
+шпінель science 3

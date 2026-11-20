@@ -1,0 +1,15 @@
+чорба household-crafts 4
+чотар military 3
+чудити emotions-character 3
+чужовірець history-antiquity 5
+чумацтво history-antiquity 4
+чумбур old-crafts 5
+чуфа nature-weather 4
+шабатура household-crafts 3
+шагрень old-crafts 4
+шалька household-crafts 4
+шаманство arts-culture 3
+шевро old-crafts 4
+шелак household-crafts 3
+шемая nature-weather 3
+шибер technology 3
