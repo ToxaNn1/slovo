@@ -222,6 +222,24 @@ test('the Word form has no JSON: vowels, labelled choices, rows with + and ×, r
   });
 });
 
+test('a new Lemma drops the Stress positions that no longer fall on a vowel', async () => {
+  const bodies = edits(() => FIXTURES.content.edit);
+  const user = await openWord();
+  const lemma = screen.getByLabelText('Лема');
+  await user.clear(lemma);
+  await user.type(lemma, 'кобза');
+
+  const stress = within(screen.getByRole('group', { name: 'Наголос' }));
+  expect(stress.getAllByRole('button').map((vowel) => vowel.getAttribute('aria-pressed'))).toEqual([
+    'false',
+    'false',
+  ]);
+  await user.click(stress.getByRole('button', { name: 'о' }));
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  await screen.findByText('Опубліковано, версія контенту 2');
+  expect(bodies[0]?.['fields']).toMatchObject({ lemma: 'кобза', stress: [1] });
+});
+
 test('a number sub-field that is not a number is named at its field, and nothing is sent', async () => {
   const user = userEvent.setup();
   render(<Admin />);
