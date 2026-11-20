@@ -13,6 +13,7 @@ import {
   correction,
   countingReads,
   fakeClock,
+  settle,
   testEdition,
   titleOf,
   word,
@@ -204,6 +205,47 @@ describe('the notification plan', () => {
     const slots = slotsOf(planOf(scheduler));
     expect(slots[0]).toBe('2026-10-15T09:00');
     expect(slots.at(-1)).toBe('2026-10-28T09:00');
+  });
+
+  it('never stops the app when the device refuses the plan: the day opens, and the next return plans again', async () => {
+    const inner = createFakeNotificationScheduler();
+    let refusing = true;
+    let refused = 0;
+    const scheduler: FakeNotificationScheduler = {
+      get plan() {
+        return inner.plan;
+      },
+      setPermission: inner.setPermission,
+      permission: inner.permission,
+      askPermission: inner.askPermission,
+      replacePlan(plan) {
+        if (!refusing) return inner.replacePlan(plan);
+        refused += 1;
+        return Promise.reject(new Error('The device refused to schedule'));
+      },
+    };
+    const time = fakeClock(start);
+
+    // The first open turns to a new local day, which plans.
+    const { app } = await run({ scheduler, clock: time.clock });
+
+    expect(refused).toBe(1);
+    expect(app.feed.cards[0]?.kind).toBe('word');
+    // A Seen Word that was reserved, the XP and the Streak plan again too.
+    await app.feed.show(0);
+    time.advance(60_000);
+    await app.feed.show(undefined);
+    await settle();
+    // The next local day turns though the plan is refused again.
+    time.set('2026-10-15T08:00:00+03:00');
+    const before = refused;
+    await expect(app.resume()).resolves.toBeUndefined();
+    expect(refused).toBe(before + 1);
+    expect(scheduler.plan).toBeUndefined();
+
+    refusing = false;
+    await app.resume();
+    expect(planOf(scheduler).length).toBeGreaterThan(0);
   });
 
   it('reads the planned Words together, however many it plans', async () => {
