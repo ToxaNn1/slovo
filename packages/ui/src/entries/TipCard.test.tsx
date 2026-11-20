@@ -4,6 +4,7 @@ import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 import { titleScale, typeRoles } from '../tokens';
+import { CardFeaturesProvider, noCardFeatures } from './card-features';
 
 const strings = testStrings({
   wordCard: {
@@ -96,7 +97,13 @@ describe('the Tip card', () => {
 
 describe('the Tip card with the Source tab (ADR 0116)', () => {
   it('moves the sources out of the rule tab into a last tab, so the bar reads Rule · Source', async () => {
-    await render(inEdition(<EntryCard card={card} sourceTab />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, sourceTab: true }}>
+          <EntryCard card={card} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(
       screen.getAllByRole('tab').map((tab) => tab.props['accessibilityLabel'] as string),
@@ -115,7 +122,13 @@ describe('the Tip card with the Source tab (ADR 0116)', () => {
   it('shows the exceptions of a Tip in a tab after the rule, their text and their words in chips', async () => {
     const exceptions = { explanation: 'Not on the hour itself:', words: ['noon', 'midnight'] };
     const withExceptions: TipFeedCard = { ...card, model: { ...model, exceptions } };
-    await render(inEdition(<EntryCard card={withExceptions} sourceTab tipExceptions />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, sourceTab: true, tipExceptions: true }}>
+          <EntryCard card={withExceptions} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(
       screen.getAllByRole('tab').map((tab) => tab.props['accessibilityLabel'] as string),
@@ -132,13 +145,25 @@ describe('the Tip card with the Source tab (ADR 0116)', () => {
   it('keeps the exceptions out while their Feature Switch is off', async () => {
     const exceptions = { explanation: 'Not on the hour itself:', words: ['noon'] };
     const withExceptions: TipFeedCard = { ...card, model: { ...model, exceptions } };
-    await render(inEdition(<EntryCard card={withExceptions} sourceTab />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, sourceTab: true }}>
+          <EntryCard card={withExceptions} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.queryByTestId('tip-tab-exceptions')).toBeNull();
   });
 
   it('keeps one tab and no bar for a Tip without sources', async () => {
-    await render(inEdition(<EntryCard card={withoutNonStandard} sourceTab />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, sourceTab: true }}>
+          <EntryCard card={withoutNonStandard} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.queryByRole('tablist')).toBeNull();
   });
@@ -173,7 +198,13 @@ describe('the Tip card in tabs (board e9)', () => {
   });
 
   it('shows only the title and the non-standard form under Self-check, the rule empty until the reveal', async () => {
-    await render(inEdition(<EntryCard card={card} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={card} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.getByLabelText('Often said: How much is the time?')).toBeTruthy();
     expect(screen.queryByTestId('tip-explanation')).toBeNull();
@@ -187,7 +218,13 @@ describe('the Tip card in tabs (board e9)', () => {
 
 describe('Self-check on a Tip card', () => {
   it('shows only the title until the reveal when the Tip has no non-standard form', async () => {
-    await render(inEdition(<EntryCard card={withoutNonStandard} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={withoutNonStandard} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.getByRole('header', { name: 'Tip: What time is it?' })).toBeTruthy();
     expect(screen.queryByTestId('tip-non-standard')).toBeNull();

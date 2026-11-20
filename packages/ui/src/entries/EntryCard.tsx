@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { CardPage, type EntryCardPage } from './CardPage';
 import { CorrectionCardBody } from './CorrectionCard';
 import { IdiomCardBody } from './IdiomCard';
+import { useCardFeatures } from './card-features';
 import { CardKicker } from './EntryKicker';
 import { KickerRow } from './KickerRow';
 import { ConcealedProvider, useSelfCheck } from './self-check';
@@ -38,38 +39,6 @@ export interface EntryCardProps {
   onWordHistoryShown?: (() => void) | undefined;
   /** The corner and the side swipes; none on a bare card. */
   slots?: EntryCardSlots | undefined;
-  /**
-   * Self-check applies to the card: until the reader reveals it, a Word card
-   * shows only its Lemma, part of speech and Category, a Correction card only
-   * its non-standard form, an Idiom card only its expression and its chip, a
-   * Synonym Row card only its dominant and its chip, a Tip card only its
-   * title, its chip and its non-standard form, and the Knowledge Mark buttons in `actions` are
-   * inactive. The reveal resets once the card leaves the screen.
-   */
-  selfCheck?: boolean;
-  /**
-   * The falling Stress of a Word card (ADR 0055): only in the Feed and on the
-   * Entry screen, while the Edition's `stressAnimation` is on in effect.
-   */
-  stressFalls?: boolean | undefined;
-  /**
-   * The Edition's calligraphic font family, which the Lemma on the card of
-   * the Word of the Day is set in: only in the Feed, while the Edition's
-   * `calligraphy` is on in effect. Any other card keeps the Word font.
-   */
-  wordOfTheDayFont?: string | undefined;
-  /**
-  /**
-   * The tabbed card's last tab «Джерело» names the Entry's sources, which
-   * leave its other tabs, while the Edition's `sourceTab` is on in effect
-   * (ADR 0116). Only a tabbed card has it.
-   */
-  sourceTab?: boolean | undefined;
-  /**
-   * A tabbed Tip card with exceptions gets the tab «Винятки», while the
-   * Edition's `tipExceptions` is on in effect (ADR 0120).
-   */
-  tipExceptions?: boolean | undefined;
   /** The card's place in a Category's or a Curated Collection's Feed (ADR 0110, 0178); none in the Feed. */
   kicker?: string | undefined;
   /**
@@ -108,15 +77,10 @@ export function EntryCard({
   onOpenSynonymRow,
   onWordHistoryShown,
   slots,
-  selfCheck = false,
-  stressFalls = false,
-  wordOfTheDayFont,
-  sourceTab = false,
-  tipExceptions = false,
   kicker,
   page,
 }: EntryCardProps) {
-  const { concealed, reveal } = useSelfCheck(selfCheck);
+  const { concealed, reveal } = useSelfCheck(useCardFeatures().selfCheck);
   const framed = fixedFrame(card, concealed);
   const face = (
     <EntryCardFace
@@ -126,10 +90,6 @@ export function EntryCard({
       onOpenSynonymRow={onOpenSynonymRow}
       onWordHistoryShown={onWordHistoryShown}
       slots={slots}
-      stressFalls={stressFalls}
-      wordOfTheDayFont={wordOfTheDayFont}
-      sourceTab={sourceTab}
-      tipExceptions={tipExceptions}
       kicker={kicker}
       concealed={concealed}
       reveal={reveal}
@@ -164,14 +124,10 @@ function EntryCardFace({
   onOpenSynonymRow,
   onWordHistoryShown,
   slots,
-  stressFalls = false,
-  wordOfTheDayFont,
-  sourceTab = false,
-  tipExceptions = false,
   kicker,
   concealed,
   reveal,
-}: Omit<EntryCardProps, 'selfCheck'> & { concealed: boolean; reveal: () => void }) {
+}: EntryCardProps & { concealed: boolean; reveal: () => void }) {
   const { strings } = useEdition();
   const { colors } = useTokens();
   const lemmaSize = useLemmaSize();
@@ -202,8 +158,6 @@ function EntryCardFace({
             day={card.wordOfTheDay}
             lemmaSize={lemmaSize}
             onReveal={reveal}
-            stressFalls={stressFalls}
-            lemmaFont={wordOfTheDayFont}
             corner={corner}
           />
         </RevealFrame>
@@ -255,10 +209,7 @@ function EntryCardFace({
             onOpenSynonymRow={onOpenSynonymRow}
             onHistoryShown={onWordHistoryShown}
             concealed={concealed}
-            stressFalls={stressFalls}
-            wordOfTheDayFont={wordOfTheDayFont}
             corner={bodyCorner}
-            sourceTab={sourceTab}
             kicker={kicker}
           />
         ) : card.kind === 'correction' ? (
@@ -267,7 +218,6 @@ function EntryCardFace({
             lemmaSize={lemmaSize}
             concealed={concealed}
             corner={bodyCorner}
-            sourceTab={sourceTab}
           />
         ) : card.kind === 'idiom' ? (
           <IdiomCardBody
@@ -275,7 +225,6 @@ function EntryCardFace({
             lemmaSize={lemmaSize}
             concealed={concealed}
             corner={bodyCorner}
-            sourceTab={sourceTab}
           />
         ) : card.kind === 'synonymRow' ? (
           <SynonymRowCardBody
@@ -284,7 +233,6 @@ function EntryCardFace({
             concealed={concealed}
             onOpenWord={onOpenWord}
             corner={bodyCorner}
-            sourceTab={sourceTab}
           />
         ) : (
           <TipCardBody
@@ -292,8 +240,6 @@ function EntryCardFace({
             lemmaSize={lemmaSize}
             concealed={concealed}
             corner={bodyCorner}
-            sourceTab={sourceTab}
-            exceptionsTab={tipExceptions}
           />
         )}
         {concealed && (

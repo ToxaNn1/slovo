@@ -5,6 +5,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Pressable, View } from 'react-native';
 import { testStrings } from '../test-strings';
 import { useConcealed } from './self-check';
+import { CardFeaturesProvider, noCardFeatures } from './card-features';
 
 /** The corner's marks stand-in: inactive while the card is concealed, as the corner's actions are. */
 function CornerMarks({ onMark }: { onMark: (mark: 'known' | 'unknown') => void }) {
@@ -168,11 +169,12 @@ async function renderFeed(
           initialIndex={0}
           onIndexChange={jest.fn()}
           renderPage={(card) => (
-            <EntryCard
-              card={card}
-              selfCheck={on}
-              slots={{ corner: <CornerMarks onMark={onMark} />, swipe: undefined }}
-            />
+            <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: on }}>
+              <EntryCard
+                card={card}
+                slots={{ corner: <CornerMarks onMark={onMark} />, swipe: undefined }}
+              />
+            </CardFeaturesProvider>
           )}
           turnActionLabels={TURN_LABELS}
         />

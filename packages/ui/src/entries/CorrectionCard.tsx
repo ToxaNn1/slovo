@@ -27,6 +27,7 @@ import { capitalised } from './capitalised';
 import { SourceLine } from './SourceLine';
 import { CardTabs } from './CardTabs';
 import { correctionTabs, type CorrectionTab } from './word-tabs';
+import { useCardFeatures } from './card-features';
 
 /**
  * The Correction card's blocks inside the Entry card's frame (board XEntry2
@@ -50,7 +51,6 @@ export function CorrectionCardBody({
   lemmaSize: mainSize,
   concealed,
   corner,
-  sourceTab,
   headless = false,
 }: {
   card: CorrectionCardModel;
@@ -60,11 +60,10 @@ export function CorrectionCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The last tab «Джерело» with the sources, which leave the other tabs, while `sourceTab` is on (ADR 0116). */
-  sourceTab: boolean;
   /** The kicker and the headline are drawn in Entry details' red panel, so the body leaves them out. */
   headless?: boolean;
 }) {
+  const { sourceTab } = useCardFeatures();
   const tokens = useTokens();
   const { colors } = tokens;
   const edition = useEdition();

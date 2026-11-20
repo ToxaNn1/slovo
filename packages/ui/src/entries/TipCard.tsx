@@ -18,6 +18,7 @@ import { capitalised } from './capitalised';
 import { SourceLine } from './SourceLine';
 import { CardTabs } from './CardTabs';
 import { tipTabsOf, type TipTab } from './tip-tabs';
+import { useCardFeatures } from './card-features';
 
 /**
  * The Tip card's blocks inside the Entry card's frame (board XEntry2 e9): the
@@ -26,8 +27,8 @@ import { tipTabsOf, type TipTab } from './tip-tabs';
  * though the board has none, owner 13.11), then the rest: the one tab
  * «Правило» (ADR 0091), so no tab bar: the
  * explanation, the standard form and the Example's text in chips, and the
- * source line; with `sourceTab` the sources leave it for a last tab «Джерело»
- * (ADR 0116), and with `exceptionsTab` a Tip with exceptions gets «Винятки»
+ * source line; with the card's `sourceTab` the sources leave it for a last tab «Джерело»
+ * (ADR 0116), and with its `tipExceptions` a Tip with exceptions gets «Винятки»
  * after it, their text and words in chips (ADR 0120). VoiceOver reads the title as «Порада: …», then each form with
  * its label. Under Self-check it keeps the kicker, the title and the
  * non-standard form (ADR 0051); the Entry card draws the button that reveals
@@ -38,8 +39,6 @@ export function TipCardBody({
   lemmaSize,
   concealed,
   corner,
-  sourceTab,
-  exceptionsTab,
   headless = false,
 }: {
   card: TipCardModel;
@@ -49,13 +48,10 @@ export function TipCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The last tab «Джерело» with the sources, which leave the tab «Правило», while `sourceTab` is on (ADR 0116). */
-  sourceTab: boolean;
-  /** The tab «Винятки» of a Tip with exceptions, while `tipExceptions` is on (ADR 0120). */
-  exceptionsTab: boolean;
   /** The kicker and the headline are drawn in Entry details' red panel, so the body leaves them out. */
   headless?: boolean;
 }) {
+  const { sourceTab, tipExceptions } = useCardFeatures();
   const tokens = useTokens();
   const { colors } = tokens;
   const edition = useEdition();
@@ -111,7 +107,7 @@ export function TipCardBody({
       )}
       <CardTabs
         testID="tip"
-        tabs={tipTabsOf(card, { exceptions: exceptionsTab })}
+        tabs={tipTabsOf(card, { exceptions: tipExceptions })}
         sources={sourceTab ? card.sourceNames : undefined}
         nameOf={({ key }) => strings.tabs[key]}
         disabled={shown.concealed}

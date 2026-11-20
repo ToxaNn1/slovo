@@ -32,16 +32,12 @@ export function WordHero({
   day,
   lemmaSize,
   onReveal,
-  stressFalls,
-  lemmaFont,
   corner,
 }: {
   card: WordCardModel;
   day: LocalDate;
   lemmaSize: TextSize;
   onReveal: () => void;
-  stressFalls: boolean;
-  lemmaFont: string | undefined;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
 }) {
@@ -69,14 +65,7 @@ export function WordHero({
           {strings.wordOfTheDay.shout}
         </Text>
       </RevealDetail>
-      <WordHeadline
-        card={card}
-        lemmaSize={lemmaSize}
-        concealed
-        stressFalls={stressFalls}
-        lemmaFont={lemmaFont}
-        tabbed={false}
-      />
+      <WordHeadline card={card} lemmaSize={lemmaSize} concealed wordOfTheDay tabbed={false} />
       {card.categoryName !== undefined && (
         <CategoryChip testID="word-category" name={card.categoryName} />
       )}

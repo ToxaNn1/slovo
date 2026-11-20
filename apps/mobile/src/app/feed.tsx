@@ -40,7 +40,7 @@ import {
   useFeedHeaderRows,
   type FeedHeaderRows,
 } from '@/feed/feed-page';
-import { wordOfTheDayFontFamily } from '@/edition/reported-edition';
+import { ShownCardFeatures } from '@/entries/card-features';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { useShown } from '@/shown-in-effect';
 import { useGesturesHint } from '@/feed/gestures-hint';
@@ -130,15 +130,17 @@ function FeedScreen() {
       {/* Each time the Feed comes back in sight, its first card plays the full reveal again. */}
       <SwipeDemoStage demo={gesturesDemo}>
         <RevealPace fast={shown.fastReveal} visiting={feed.inSight}>
-          <VerticalPager
-            ref={pager}
-            testID="feed"
-            items={cards}
-            initialIndex={feed.startPosition}
-            renderPage={renderPage}
-            onIndexChange={onIndexChange}
-            turnActionLabels={turnActionLabels}
-          />
+          <ShownCardFeatures place="feed">
+            <VerticalPager
+              ref={pager}
+              testID="feed"
+              items={cards}
+              initialIndex={feed.startPosition}
+              renderPage={renderPage}
+              onIndexChange={onIndexChange}
+              turnActionLabels={turnActionLabels}
+            />
+          </ShownCardFeatures>
         </RevealPace>
       </SwipeDemoStage>
       <FeedHeaderBar
@@ -203,7 +205,6 @@ const FeedPage = memo(function FeedPage({
   /** «Повернути» of the Weekly Recap folded this session. */
   onRestoreWeeklyRecap: () => void;
 }) {
-  const { stressFall, calligraphicLemma } = useShown();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
     return (
@@ -321,35 +322,15 @@ const FeedPage = memo(function FeedPage({
         onOpenSynonymRow={(synonymRowId) => {
           openScreen(`/entry/${synonymRowId}`);
         }}
-        stressFalls={stressFall}
-        // Only here, on the Word of the Day card; in the Word font with the switch off.
-        wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
         page={page}
       />
     </FeedPageFrame>
   );
 });
 
-/**
- * An Entry's card in the Feed, with its action row or its corner and side
- * swipes (ADR 0077), under Self-check and the source and exceptions tabs as they are shown in effect.
- */
-function SwipedEntryCard(
-  props: Omit<
-    ComponentProps<typeof EntryCard>,
-    'slots' | 'selfCheck' | 'sourceTab' | 'tipExceptions'
-  >,
-) {
-  const { selfCheck, sourceTab, tipExceptions } = useShown();
-  return (
-    <EntryCard
-      {...props}
-      slots={useEntrySlots(props.card)}
-      selfCheck={selfCheck}
-      sourceTab={sourceTab}
-      tipExceptions={tipExceptions}
-    />
-  );
+/** An Entry's card in the Feed, with its action row or its corner and side swipes (ADR 0077). */
+function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'slots'>) {
+  return <EntryCard {...props} slots={useEntrySlots(props.card)} />;
 }
 
 /** Whether the Feed Notice is a later question of the questionnaire (ADR 0067). */

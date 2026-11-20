@@ -32,6 +32,7 @@ import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { RevealDetail, useFlyingText } from './reveal';
 import { capitalised } from './capitalised';
+import { useCardFeatures } from './card-features';
 import { CategoryChip } from './CategoryChip';
 
 /**
@@ -45,22 +46,21 @@ export function WordHeadline({
   card,
   lemmaSize,
   concealed,
-  stressFalls,
-  lemmaFont: calligraphic,
+  wordOfTheDay,
   tabbed,
 }: {
   card: WordCardModel;
   lemmaSize: TextSize;
   /** Self-check: no register chips yet. */
   concealed: boolean;
-  stressFalls: boolean;
-  /** The calligraphic font family of the Word of the Day's Lemma, if it is set in one. */
-  lemmaFont: string | undefined;
+  /** The Word of the Day's Lemma, which the card's calligraphic font, if any, is set in. */
+  wordOfTheDay: boolean;
   /** The tabbed card's headline (ADR 0091, board p1). */
   tabbed: boolean;
 }) {
   const tokens = useTokens();
   const { fontFamilies } = tokens;
+  const { stressFalls, wordOfTheDayFont } = useCardFeatures();
   const keyInk = useSchemeColors('light').ink;
   const onAccent = useOnAccent();
   const colors = onAccent ? { ink: keyInk, muted: keyInk } : tokens.colors;
@@ -77,7 +77,7 @@ export function WordHeadline({
     stressFalls && reduceMotion !== true && card.stressedVowels.length > 0
       ? { mark: STRESS_MARK, playing: onScreen && reduceMotion === false }
       : undefined;
-  const lemmaFont = calligraphic ?? fontFamilies.word;
+  const lemmaFont = (wordOfTheDay ? wordOfTheDayFont : undefined) ?? fontFamilies.word;
   const grammar = (form: 'short' | 'full') => partOfSpeechText(strings, card, form);
   // The tabbed card keeps its Category chip in the grammar line, even under Self-check.
   const category = tabbed ? card.categoryName : undefined;

@@ -29,6 +29,7 @@ import { ExampleMark } from './ExampleMark';
 import { useFlyingText } from './reveal';
 import { ExampleText } from './WordCard';
 import { idiomTabsOf, type IdiomTab } from './word-tabs';
+import { useCardFeatures } from './card-features';
 
 /**
  * The Idiom card's blocks inside the Entry card's frame: the red kicker of
@@ -45,7 +46,6 @@ export function IdiomCardBody({
   lemmaSize,
   concealed,
   corner,
-  sourceTab,
   headless = false,
 }: {
   card: IdiomCardModel;
@@ -55,11 +55,10 @@ export function IdiomCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The last tab «Джерело» with the sources, which leave «Суть», while `sourceTab` is on (ADR 0116). */
-  sourceTab: boolean;
   /** The kicker and the headline are drawn in Entry details' red panel, so the body leaves them out. */
   headless?: boolean;
 }) {
+  const { sourceTab } = useCardFeatures();
   const tokens = useTokens();
   const { colors } = tokens;
   const edition = useEdition();

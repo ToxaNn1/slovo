@@ -2,6 +2,7 @@ import type { LocalDate, WordCardModel } from '@slovo/core';
 import type { ReactNode } from 'react';
 
 import type { TextSize } from '../providers/FontSizeProvider';
+import { useCardFeatures } from './card-features';
 import { CardKicker } from './EntryKicker';
 import { KickerRow } from './KickerRow';
 import { WordHeadline } from './WordCard';
@@ -14,7 +15,8 @@ import { WordTabs } from './WordTabs';
  * under them (ADR 0091). It draws only the sections the Core put in the card,
  * at the user's font size. Under Self-check it keeps the Lemma,
  * part of speech and Category; the Entry card draws the button that reveals
- * the rest under them. Where the Stress falls, the Lemma's Stress mark falls
+ * the rest under them. While the card's sources tab is on, the sources leave
+ * the other tabs for «Джерело» (ADR 0116). Where the Stress falls, the Lemma's Stress mark falls
  * onto its vowel each time the card comes on screen, unless the reader turned
  * on Reduce Motion (ADR 0055).
  */
@@ -26,10 +28,7 @@ export function WordCardBody({
   onOpenSynonymRow,
   onHistoryShown,
   concealed,
-  stressFalls,
-  wordOfTheDayFont,
   corner,
-  sourceTab,
   kicker,
 }: {
   card: WordCardModel;
@@ -43,17 +42,12 @@ export function WordCardBody({
   onHistoryShown: (() => void) | undefined;
   /** Self-check: only the Lemma, part of speech and Category. */
   concealed: boolean;
-  /** The falling Stress: on a Word card in the Feed and on the Entry screen, while its Feature Switch is on. */
-  stressFalls: boolean;
-  /** The calligraphic font family the Lemma is set in on the card of the Word of the Day. */
-  wordOfTheDayFont: string | undefined;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The last tab «Джерело» with the sources, which leave the other tabs, while `sourceTab` is on (ADR 0116). */
-  sourceTab: boolean;
   /** The card's kicker beside its corner, such as its place in a Category's Feed (ADR 0110). */
   kicker?: string | undefined;
 }) {
+  const { sourceTab } = useCardFeatures();
   return (
     <>
       <KickerRow testID="word-kicker-row" corner={corner}>
@@ -69,8 +63,7 @@ export function WordCardBody({
         card={card}
         lemmaSize={lemmaSize}
         concealed={concealed}
-        stressFalls={stressFalls}
-        lemmaFont={wordOfTheDay === undefined ? undefined : wordOfTheDayFont}
+        wordOfTheDay={wordOfTheDay !== undefined}
         tabbed
       />
       <WordTabs

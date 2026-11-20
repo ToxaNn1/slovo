@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useConcealed } from './self-check';
 import { testStrings } from '../test-strings';
 import { tightLineDrop, typeRoles } from '../tokens';
+import { CardFeaturesProvider, noCardFeatures } from './card-features';
 
 const strings = testStrings({
   wordCard: {
@@ -289,7 +290,13 @@ describe('EntryCard', () => {
     ['Word', wordCard, 'Show the meaning'],
     ['Correction', card, 'Show'],
   ])('keeps the Review label on a %s card Self-check conceals', async (_kind, entry, reveal) => {
-    await render(inEdition(<EntryCard card={{ ...entry, review: true }} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={{ ...entry, review: true }} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.getByRole('button', { name: reveal })).toBeTruthy();
     expect(screen.getByText('Review')).toBeTruthy();
@@ -351,7 +358,13 @@ describe('the region of a dialect Word', () => {
   });
 
   it('shows with the label once the reader reveals a Self-check card', async () => {
-    await render(inEdition(<EntryCard card={dialectWord} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={dialectWord} />
+        </CardFeaturesProvider>,
+      ),
+    );
     expect(screen.queryByTestId('word-register-dialectal')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
@@ -382,7 +395,13 @@ describe('the Word History on a Word card', () => {
   });
 
   it('stays hidden under Self-check until revealed', async () => {
-    await render(inEdition(<EntryCard card={wordWithHistory} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={wordWithHistory} />
+        </CardFeaturesProvider>,
+      ),
+    );
     expect(screen.queryByTestId('word-history')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
@@ -448,7 +467,13 @@ describe('the Synonym Row line on a Word card', () => {
   });
 
   it('stays hidden under Self-check until revealed', async () => {
-    await render(inEdition(<EntryCard card={wordInRow} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={wordInRow} />
+        </CardFeaturesProvider>,
+      ),
+    );
     expect(screen.queryByTestId('word-synonym-row')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
@@ -459,7 +484,13 @@ describe('the Synonym Row line on a Word card', () => {
 
 describe('Self-check on a Word card', () => {
   it('shows only the Lemma, part of speech and Category until revealed', async () => {
-    await render(inEdition(<EntryCard card={wordWithEverything} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={wordWithEverything} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.getByTestId('word-lemma')).toHaveTextContent('Lemma');
     expect(screen.getByTestId('word-part-of-speech')).toHaveTextContent('N.');
@@ -471,7 +502,13 @@ describe('Self-check on a Word card', () => {
   });
 
   it('shows the whole card once the reader taps «Show the meaning»', async () => {
-    await render(inEdition(<EntryCard card={wordWithEverything} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={wordWithEverything} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
 
@@ -484,10 +521,11 @@ describe('Self-check on a Word card', () => {
   it('keeps the Word of the Day badge on a concealed card', async () => {
     await render(
       inEdition(
-        <EntryCard
-          card={{ ...wordWithEverything, wordOfTheDay: { year: 2026, month: 10, day: 19 } }}
-          selfCheck
-        />,
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard
+            card={{ ...wordWithEverything, wordOfTheDay: { year: 2026, month: 10, day: 19 } }}
+          />
+        </CardFeaturesProvider>,
       ),
     );
 
@@ -507,7 +545,13 @@ function correctionWithEverything(): EntryFeedCard {
 
 describe('Self-check on a Correction card', () => {
   it('shows only the non-standard form and asks how to say it until revealed', async () => {
-    await render(inEdition(<EntryCard card={correctionWithEverything()} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={correctionWithEverything()} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.getByTestId('correction-non-standard')).toBeTruthy();
     expect(screen.getByText('Take part')).toBeTruthy();
@@ -528,7 +572,13 @@ describe('Self-check on a Correction card', () => {
   });
 
   it('shows the right form and the explanation once the reader taps «Show»', async () => {
-    await render(inEdition(<EntryCard card={correctionWithEverything()} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={correctionWithEverything()} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
 
@@ -598,7 +648,13 @@ describe('the literary uses on a Correction card', () => {
   });
 
   it('stays hidden under Self-check until revealed', async () => {
-    await render(inEdition(<EntryCard card={withUses} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={withUses} />
+        </CardFeaturesProvider>,
+      ),
+    );
     expect(screen.queryByTestId('correction-standard')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
@@ -654,7 +710,13 @@ describe('VoiceOver on a stress trap', () => {
   });
 
   it('says where the Stress of the non-standard form falls in Self-check', async () => {
-    await render(inEdition(<EntryCard card={stressTrap} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={stressTrap} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.getByTestId('correction-non-standard')).toHaveProp(
       'accessibilityLabel',
@@ -790,7 +852,9 @@ describe('the Idiom card', () => {
   it('keeps the expression and its chip under Self-check and shows the rest once revealed', async () => {
     await render(
       inEdition(
-        <EntryCard card={{ kind: 'idiom', entryId: 'i1', model: idiomCard() }} selfCheck />,
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={{ kind: 'idiom', entryId: 'i1', model: idiomCard() }} />
+        </CardFeaturesProvider>,
       ),
     );
 
@@ -1002,11 +1066,9 @@ describe('the corner of an Entry card', () => {
   it('keeps the corner concealed under Self-check until the reader reveals the card', async () => {
     await render(
       inEdition(
-        <EntryCard
-          card={wordWithEverything}
-          slots={{ corner: cornerMarks, swipe: undefined }}
-          selfCheck
-        />,
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={wordWithEverything} slots={{ corner: cornerMarks, swipe: undefined }} />
+        </CardFeaturesProvider>,
       ),
     );
 
@@ -1086,7 +1148,13 @@ describe('the page an Entry card lays itself out on', () => {
   });
 
   it('scrolls the red Word of the Day card while Self-check keeps it closed, and frames it once revealed', async () => {
-    await render(onPager(<EntryCard card={wordOfTheDay} selfCheck page={page} />));
+    await render(
+      onPager(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={wordOfTheDay} page={page} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.getByTestId('page-scroll')).toBeTruthy();
 
@@ -1096,7 +1164,13 @@ describe('the page an Entry card lays itself out on', () => {
   });
 
   it('starts the card under the room its page leaves above it, framed or scrolled', async () => {
-    await render(onPager(<EntryCard card={wordOfTheDay} selfCheck page={page} />));
+    await render(
+      onPager(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={wordOfTheDay} page={page} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.getByTestId('page-scroll')).toHaveProp(
       'contentContainerStyle',
@@ -1146,7 +1220,9 @@ describe('the Source tab of a tabbed Entry card (ADR 0116)', () => {
     async (kind, entry) => {
       await render(
         <EditionProvider edition={{ locale: 'en' }} strings={sourceStrings}>
-          <EntryCard card={entry} sourceTab />
+          <CardFeaturesProvider value={{ ...noCardFeatures, sourceTab: true }}>
+            <EntryCard card={entry} />
+          </CardFeaturesProvider>
         </EditionProvider>,
       );
 
