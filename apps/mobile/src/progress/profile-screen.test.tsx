@@ -389,18 +389,14 @@ describe('the Profile', () => {
     [5, 306, 'Знавець: ЩЕ 492 XP'],
     [19, 1878, 'Словолюб: ЩЕ 120 XP'],
     [20, 1998, 'Мовознавець: ЩЕ 600 XP'],
-  ])(
-    'at Level %i reads «<next name>: ще N XP» on the card and under the row',
-    async (level, xp, line) => {
-      await renderScreen({ xp });
+  ])('at Level %i reads «<next name>: ще N XP» on the card only', async (level, xp, line) => {
+    await renderScreen({ xp });
 
-      expect(screen.getByTestId('profile-level-number')).toHaveTextContent(String(level));
-      expect(screen.getByTestId('profile-level-left')).toHaveTextContent(line);
-      expect(screen.getByTestId('profile-ladder-to-next')).toHaveTextContent(
-        line.toLocaleUpperCase(edition.locale),
-      );
-    },
-  );
+    expect(screen.getByTestId('profile-level-number')).toHaveTextContent(String(level));
+    expect(screen.getByTestId('profile-level-left')).toHaveTextContent(line);
+    expect(screen.queryByTestId('profile-ladder-to-next')).not.toBeOnTheScreen();
+    expect(screen.queryByText(line.toLocaleUpperCase(edition.locale))).not.toBeOnTheScreen();
+  });
 
   it('under the last name reads the XP to the next Level and draws no line to a next name', async () => {
     await renderScreen({ xp: 2598 });
@@ -410,7 +406,7 @@ describe('the Profile', () => {
     expect(screen.queryByTestId('profile-ladder-to-next')).not.toBeOnTheScreen();
   });
 
-  it('shows the ladder of Level names by range, passed, current and ahead, and the bar to the next name', async () => {
+  it('shows the ladder of Level names by range, passed, current and ahead, and no second Level line or bar under it', async () => {
     await renderScreen({ rounds: 60 });
     const { ladder } = strings;
 
@@ -426,8 +422,9 @@ describe('the Profile', () => {
       );
     }
     expect(screen.queryByTestId('profile-ladder-6')).not.toBeOnTheScreen();
-    expect(screen.getByTestId('profile-ladder-bar')).toHaveTextContent(/^РІВЕНЬ 1 · ПОЧАТКІВЕЦЬ/);
-    expect(screen.getByTestId('profile-ladder-to-next')).toHaveTextContent('ЧИТАЧ: ЩЕ 246 XP');
+    expect(screen.queryByTestId('profile-ladder-bar')).not.toBeOnTheScreen();
+    expect(screen.queryByText(/^РІВЕНЬ 1 · ПОЧАТКІВЕЦЬ/)).not.toBeOnTheScreen();
+    expect(screen.queryByText('ЧИТАЧ: ЩЕ 246 XP')).not.toBeOnTheScreen();
     expect(screen.queryByText(/^ДО /)).not.toBeOnTheScreen();
   });
 

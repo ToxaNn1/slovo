@@ -73,6 +73,7 @@ const validConfig = {
     collectionLinks: 'on',
     replaceOpenEntry: 'on',
     mixKindWeights: 'on',
+    mixTab: 'on',
     analytics: 'on',
     analyticsSessions: 'on',
     analyticsFeatureUsed: 'on',

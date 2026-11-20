@@ -1,16 +1,15 @@
-import { MAX_NOTIFICATION_TIMES } from '@slovo/contracts';
+import type { NotificationSlot } from '@slovo/core';
 import {
-  fill,
-  minTouchTarget,
-  space,
+  NavigationRow,
   SettingsGroup,
-  TimeRow,
+  space,
+  SwitchRow,
   typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
 import { useState } from 'react';
-import { AccessibilityInfo, Pressable, StyleSheet, Text } from 'react-native';
+import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 
 import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
@@ -21,137 +20,81 @@ import { TimePickerSheet, timePickerAvailable } from './time-picker';
 const strings = editionStrings.notifications;
 
 /**
- * The Notification times, for Settings › Сповіщення and the onboarding's last
- * step: the times in time order, each with a swipe (and a VoiceOver action)
- * that removes it, «+ Додати час», disabled at the limit with a line saying
- * why, and the line for a time that is in the list already. A change applies
- * at once. Tapping a time, or «+ Додати час», opens the system time picker,
- * which a dev client built before the native batch lacks: then adding and
- * changing a time stay off, and removing still works. Needs a
- * `GestureHandlerRootView` above it.
+ * The Notification times of Settings › Сповіщення (ADR 0200): the switch
+ * «Сповіщення» on top and, while it is on, the rows «Слово» and
+ * «Нагадування» with their times («Вимкнено» on the Reminder's with none).
+ * A change applies at once. Tapping a row opens the system time picker, which
+ * a dev client built before the native batch lacks: then the rows do nothing.
+ * A Reminder picked at or before the Word, or a Word at or after the
+ * Reminder, is not kept and a line under the rows says why.
  */
 export function NotificationTimes() {
-  const state = useNotificationsState();
-  const { keepTime, removeTime } = useNotificationsChanges();
+  const { times } = useNotificationsState();
+  const { keepTime, setOn } = useNotificationsChanges();
   const tokens = useTokens();
-  const { colors } = tokens;
-  const { count, voice } = useEdition();
-  /** The time being picked: the one it replaces (none when adding), and where the picker starts. */
-  const [picking, setPicking] = useState<{ replacing?: string; value: Date }>();
-  /** The list a time was refused for as a duplicate; the hint shows while the list is still that list. */
-  const [refusedFor, setRefusedFor] = useState<string>();
-  const duplicate = refusedFor === listKey(state.times);
+  const { voice } = useEdition();
+  /** The row being picked for, and where the picker starts. */
+  const [picking, setPicking] = useState<{ slot: NotificationSlot; value: Date }>();
+  /** The times a pick was refused for; the hint shows while they stay as they are. */
+  const [refusedFor, setRefusedFor] = useState<typeof times>();
 
-  const limitHint = count(strings.limitHint, MAX_NOTIFICATION_TIMES);
-  const pickerAvailable = timePickerAvailable();
-  const canAdd = state.canAddTime && pickerAvailable;
-
-  function pick(replacing?: string) {
-    if (!pickerAvailable) return;
+  function pick(slot: NotificationSlot, time: string | undefined) {
+    if (!timePickerAvailable()) return;
     const now = deviceClock.now();
     setRefusedFor(undefined);
-    setPicking({
-      ...(replacing === undefined ? {} : { replacing }),
-      value: replacing === undefined ? now : dateOfTime(replacing, now),
-    });
+    setPicking({ slot, value: time === undefined ? now : dateOfTime(time, now) });
   }
 
   function keep(picked: Date) {
-    const replacing = picking?.replacing;
-    const list = listKey(state.times);
+    if (picking === undefined) return;
+    const pickedFor = times;
     setPicking(undefined);
-    void keepTime(timeOfDay(picked), replacing).then((refusal) => {
-      // A refusal writes nothing, so the list is the one the time was picked for.
-      setRefusedFor(refusal === 'duplicate' ? list : undefined);
-      if (refusal === 'duplicate')
-        AccessibilityInfo.announceForAccessibility(strings.duplicateHint);
+    void keepTime(picking.slot, timeOfDay(picked)).then((refusal) => {
+      // A refusal writes nothing, so the times are the ones the time was picked for.
+      setRefusedFor(refusal === 'order' ? pickedFor : undefined);
+      if (refusal === 'order') AccessibilityInfo.announceForAccessibility(strings.orderHint);
     });
   }
 
   return (
     <>
-      {state.times.length > 0 && (
-        <SettingsGroup>
-          {state.times.map((time) => (
-            <TimeRow
-              key={time}
-              testID={`notifications-time-${time}`}
-              time={time}
-              accessibilityLabel={fill(strings.timeLabel, { time })}
-              accessibilityHint={strings.change}
-              {...(pickerAvailable && {
-                onPress: () => {
-                  pick(time);
-                },
-              })}
-              actions={[
-                {
-                  name: 'remove',
-                  label: strings.remove,
-                  accessibilityLabel: strings.remove,
-                  tone: 'destructive',
-                  onPress: () => {
-                    removeTime(time);
-                  },
-                },
-              ]}
+      <SettingsGroup>
+        <SwitchRow
+          testID="notifications-on"
+          label={strings.title}
+          value={times.kind === 'on'}
+          onChange={setOn}
+        />
+      </SettingsGroup>
+      {times.kind === 'on' && (
+        <View style={styles.times}>
+          <SettingsGroup>
+            <NavigationRow
+              testID="notifications-word"
+              label={strings.word}
+              value={times.word}
+              onPress={() => {
+                pick('word', times.word);
+              }}
             />
-          ))}
-        </SettingsGroup>
+            <NavigationRow
+              testID="notifications-reminder"
+              label={strings.reminder}
+              value={times.reminder ?? strings.off}
+              onPress={() => {
+                pick('reminder', times.reminder);
+              }}
+            />
+          </SettingsGroup>
+        </View>
       )}
-      {state.times.length > 0 && (
+      {refusedFor !== undefined && refusedFor === times && (
         <Text
-          testID="notifications-remove-hint"
-          // VoiceOver offers «Видалити» as an action of each time instead.
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
+          testID="notifications-order-hint"
           {...voice}
-          style={[typeStyle('hint', tokens), styles.removeHint, { color: colors.muted }]}
+          style={[typeStyle('hint', tokens), styles.hint, { color: tokens.colors.ink }]}
         >
-          {strings.removeHint}
-        </Text>
-      )}
-      <Pressable
-        testID="notifications-add-time"
-        accessibilityRole="button"
-        accessibilityLabel={strings.addTime}
-        accessibilityState={{ disabled: !canAdd }}
-        accessibilityHint={state.canAddTime ? undefined : limitHint}
-        disabled={!canAdd}
-        onPress={() => {
-          pick();
-        }}
-        {...voice}
-        style={styles.addTime}
-      >
-        <Text
-          style={[
-            typeStyle('textLink', tokens),
-            { color: canAdd ? colors.accentText : colors.muted },
-          ]}
-        >
-          {strings.addTime}
-        </Text>
-      </Pressable>
-      {!state.canAddTime && (
-        <Text
-          testID="notifications-limit-hint"
-          // VoiceOver reads it as the hint of the disabled «+ Додати час» instead.
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          {...voice}
-          style={[typeStyle('hint', tokens), { color: colors.muted }]}
-        >
-          {limitHint}
-        </Text>
-      )}
-      {duplicate && (
-        <Text
-          testID="notifications-duplicate-hint"
-          {...voice}
-          style={[typeStyle('hint', tokens), { color: colors.ink }]}
-        >
-          {strings.duplicateHint}
+          {strings.orderHint}
         </Text>
       )}
       <TimePickerSheet
@@ -166,12 +109,7 @@ export function NotificationTimes() {
   );
 }
 
-/** The Notification times as one key, the same for the same list whatever object holds it. */
-function listKey(times: readonly string[]): string {
-  return times.join(',');
-}
-
 const styles = StyleSheet.create({
-  removeHint: { marginTop: space[2] },
-  addTime: { minHeight: minTouchTarget, justifyContent: 'center', alignSelf: 'flex-start' },
+  times: { marginTop: space[6] },
+  hint: { marginTop: space[2] },
 });

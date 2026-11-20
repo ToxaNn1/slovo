@@ -82,7 +82,7 @@ describe('a closed composition', () => {
     await app.close();
     time.advance(24 * 60 * 60 * SECOND);
     await app.resume();
-    await app.notifications.keepTime('11:00');
+    await app.notifications.keepTime('word', '11:00');
 
     expect(records).toEqual(kept);
     expect(scheduler.plan).toBe(plan);

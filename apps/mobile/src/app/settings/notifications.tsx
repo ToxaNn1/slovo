@@ -21,18 +21,13 @@ import { NotificationTimes } from '@/notifications/notification-times';
 const strings = editionStrings.notifications;
 
 /**
- * Settings › Сповіщення: the Notification times in time order, each with a
- * swipe (and a VoiceOver action) that removes it, «+ Додати час», disabled
- * at the limit with a line saying why, and the switch for the notification
- * sound. A change applies at once. Tapping a time, or «+ Додати час», opens
- * the system time picker, which a dev client built before the native batch
- * lacks: then adding and changing a time stay off, and removing still works.
- * A time that is in the list already shows a one-line hint and is not kept.
- * While the reader hasn't been asked for permission, as after «Пізніше» in the
- * onboarding, «Увімкнути сповіщення» above the times asks, and a grant plans
- * the notifications. While iOS denies notifications, a line above the times
- * says so, with a row that opens the app's iOS settings; the times stay as
- * they are.
+ * Settings › Сповіщення: the switch «Сповіщення» with the Word's and the
+ * Reminder's times under it (ADR 0200), and the switch for the notification
+ * sound. A change applies at once. While the reader hasn't been asked for
+ * permission, as after «Пізніше» in the onboarding, «Увімкнути сповіщення»
+ * above the times asks, and a grant plans the notifications. While iOS denies
+ * notifications, a line above the times says so, with a row that opens the
+ * app's iOS settings; the times stay as they are.
  */
 export default function NotificationsScreen() {
   const state = useNotificationsState();

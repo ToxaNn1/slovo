@@ -240,9 +240,8 @@ describe('the whole Dashboard', () => {
     expect(composition.onboarding.state).toEqual({ status: 'finished', finishedAt: clock.now() });
     expect(screen.getByTestId('dashboard')).toBeTruthy();
 
-    // The hero: «Розкрити» reveals the Word of the Day in place and makes it Seen.
-    expect(screen.queryByText('Значення слова сумирний.')).toBeNull();
-    await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.reveal)));
+    // The hero: «Беру!» took the first Word, so it is revealed and Seen already (ticket #2062).
+    expect(screen.queryByText(editionStrings.dashboard.reveal)).toBeNull();
     expect(screen.getByText('Значення слова сумирний.')).toBeTruthy();
     expect(composition.history.list.map(({ entryId }) => entryId)).toEqual(['w_sumyrnyi']);
 
@@ -268,6 +267,8 @@ describe('the whole Dashboard', () => {
     expect(screen.getByTestId('correction-type')).toBeTruthy();
     await press('correction-type-reveal-c_shoby');
     expect(screen.getByText('Пояснення до шоби.')).toBeTruthy();
+    // Every way back of these screens is the neutral «Назад»: they open from more than one place.
+    expect(screen.getByTestId('correction-type-back')).toHaveProp('accessibilityLabel', 'Назад');
     await back('correction-type-back');
     expect(composition.correctionTypes.tiles).toEqual([
       { type: 'surzhyk', total: 2, workedThrough: 1 },
@@ -281,6 +282,7 @@ describe('the whole Dashboard', () => {
     expect(screen.getByTestId('curated-collection')).toBeTruthy();
     expect(screen.getByText('Знаю 0 з 2')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
+    expect(screen.getByTestId('curated-collection-back')).toHaveProp('accessibilityLabel', 'Назад');
     await back('curated-collection-back');
     expect(screen.queryByTestId('dashboard-curated-collection-cc_lahidni-mark')).toBeNull();
 
@@ -353,7 +355,6 @@ describe('a landing on the Word of the Day card', () => {
     const app = await renderApp(FeedWithoutTheCard);
     const onboarding = ['start', 'next', 'next', 'answer-good', 'later', 'done', 'time-20:30'];
     for (const step of onboarding) await press(`onboarding-${step}`);
-    await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.reveal)));
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));
     expect(app.pathname()).toBe('/feed');
     screenSettled();

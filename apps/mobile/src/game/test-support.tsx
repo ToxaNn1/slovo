@@ -55,10 +55,22 @@ const MODES_UNDER_TEST = [
 export function editionWithout(
   switchedOff: readonly string[],
   switchedOn: readonly string[] = [],
+  outOfMix: readonly string[] = [],
 ): Edition {
-  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
+  const { featureSwitches, userSettingDefaults, ...rest } = config as {
+    featureSwitches: Record<string, string>;
+    userSettingDefaults: { mix: { kinds: Record<string, boolean> } };
+  };
+  const { mix } = userSettingDefaults;
   return loadEdition({
     ...rest,
+    userSettingDefaults: {
+      ...userSettingDefaults,
+      mix: {
+        ...mix,
+        kinds: { ...mix.kinds, ...Object.fromEntries(outOfMix.map((kind) => [kind, false])) },
+      },
+    },
     featureSwitches: {
       ...featureSwitches,
       ...Object.fromEntries(GAMES_BOARD_SWITCHES.map((name) => [name, 'off'])),
@@ -232,6 +244,7 @@ export async function open({
   origins = 0,
   switchedOff = [],
   switchedOn = [],
+  outOfMix = [],
   crossing = false,
   clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
   schedule,
@@ -249,6 +262,8 @@ export async function open({
   switchedOff?: readonly string[];
   /** Feature Switches turned on, such as the Games boards' ones. */
   switchedOn?: readonly string[];
+  /** Entry kinds the reader took out of their Mix, such as `correction`. */
+  outOfMix?: readonly string[];
   /** Lemmas that fill the Daily Crossword, so a day opens one. */
   crossing?: boolean;
   /** The clock the Core reads; a stopped one on the morning of 26 October by default. */
@@ -256,7 +271,7 @@ export async function open({
   /** What the Core runs something later by; nothing by default. */
   schedule?: Schedule;
 } = {}) {
-  editionInEffect = editionWithout(switchedOff, switchedOn);
+  editionInEffect = editionWithout(switchedOff, switchedOn, outOfMix);
   const xpLog = Object.fromEntries(
     xp.map(({ date, amount }, index): [string, XpRecord] => [
       `seeded-${String(index)}`,

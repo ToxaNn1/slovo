@@ -390,6 +390,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   replaceOpenEntry: FeatureSwitchStateSchema,
   /** The Mix kind weights: «Менше», «Звичайно» or «Більше» for each kind beside Words, which space its Feed turns; off, every kind keeps its turn of 0.9. */
   mixKindWeights: FeatureSwitchStateSchema,
+  /** The tab «Мікс» in the centre of the tab bar, which opens «Мій Мікс»; off gives the four tabs of before (ADR 0201). */
+  mixTab: FeatureSwitchStateSchema,
   /** The XP log: XP for Game learning actions, kept per Edition, and the XP bar on the Feed (ADR 0066). */
   xpLog: FeatureSwitchStateSchema,
   /** Streak freezes: a held freeze covers a missed day automatically, 2 at the start, one more per 7 Streak days, at most 2 held (ADR 0066). */
@@ -456,7 +458,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   notificationFarewell: FeatureSwitchStateSchema,
   /** The notification explainer: the sheet before the system permission prompt, after the first met Daily Goal or on day 3, and its one re-ask Feed Notice 7 days after a refusal. */
   notificationExplainer: FeatureSwitchStateSchema,
-  /** «Коли нагадати?»: the onboarding step after the Daily Goal that sets the one Notification time or none; off while `notifications` is. */
+  /** «Коли нагадати?»: the onboarding step after the Daily Goal that sets the Word's Notification time or switches notifications off; off while `notifications` is. */
   notificationTimeStep: FeatureSwitchStateSchema,
   /** The later questions through Feed Notices (the interests, the self-rating, the Mix review, the Rarity Test offer and, for an existing reader, the Daily Goal) and the questionnaire retake in Settings (ADR 0067). */
   laterQuestions: FeatureSwitchStateSchema,
@@ -774,18 +776,22 @@ export const OnboardingNotificationTimesSchema = z
 
 export type OnboardingNotificationTimes = z.infer<typeof OnboardingNotificationTimesSchema>;
 
-/** The most notification times a user may have. */
-export const MAX_NOTIFICATION_TIMES = 10;
+/**
+ * The most notification times a stored list may hold: a list kept before ADR
+ * 0200 holds up to 10; since then it holds the Word's time and the Reminder's.
+ */
+const MAX_STORED_NOTIFICATION_TIMES = 10;
 
 /**
- * A user's notification times: valid, no two equal and at most
- * `MAX_NOTIFICATION_TIMES`. The order is not checked here: the Edition's
- * defaults are sorted when the config is read, and the user's list is kept in
- * time order by whoever writes it.
+ * A list of notification times: valid and no two equal. The Core reads its
+ * first time as the Word's and its last as the Reminder's (ADR 0200), so a
+ * list kept before then with more times still reads. The order is not checked
+ * here: the Edition's defaults are sorted when the config is read, and the
+ * user's list is kept in time order by whoever writes it.
  */
 export const NotificationTimesSchema = z
   .array(TimeOfDaySchema)
-  .max(MAX_NOTIFICATION_TIMES)
+  .max(MAX_STORED_NOTIFICATION_TIMES)
   .refine(hasNoRepeats, 'Expected unique times');
 
 export const MixConfigSchema = z.strictObject({
@@ -820,7 +826,7 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
   textSize: TextSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),
-  /** The default notification times, kept in time order. */
+  /** The default notification times, kept in time order: the Word's first, the Reminder's last (ADR 0200). */
   notificationTimes: NotificationTimesSchema.transform((times) => [...times].sort()),
   /** The top of the Rarity Range a new user starts with, «до 1» to «до 5» (ADR 0156). */
   rarityCeiling: RaritySchema,

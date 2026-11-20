@@ -22,8 +22,10 @@ export const DashboardStringsSchema = z.strictObject({
   subtitle: TextSchema,
   /** The line under the open hero's Lemma, «{stress} · {partOfSpeech}». Takes the Lemma with its Stress and the short part of speech. */
   wordLine: templateOf('stress', 'partOfSpeech'),
-  /** The label beside the open hero's rarity bars, «Рідкість {rarity} з 5». */
+  /** The label beside the open hero's rarity bars, «Рідкість {rarity}/5». */
   rarity: templateOf('rarity'),
+  /** What VoiceOver reads for the rarity bars, «Рідкість {rarity} з 5». */
+  rarityLabel: templateOf('rarity'),
   /** The Mood check-in block under the hero. */
   mood: z.strictObject({
     /** The block's title over the Mood tiles, «Як настрій?». */
@@ -79,6 +81,13 @@ export const DashboardStringsSchema = z.strictObject({
     addButton: TextSchema,
     /** The screen's button beside its tick once a copy is kept, «ДОДАНО». */
     addedButton: TextSchema,
+    /** The VoiceOver hint of the screen's button once a copy is kept, «Торкнися, щоб відкрити копію в Колекціях.». */
+    openCopyHint: TextSchema,
+    /** The toasts of the screen's button. */
+    toasts: z.strictObject({
+      /** The copy is made, «Добірка «{name}» тепер у твоїх Колекціях.». Takes `{name}`, the collection's name. */
+      added: templateOf('name'),
+    }),
     /**
      * The kicker of each card of the collection's Feed (ADR 0178), «Добірка · {name} · {place} з {of}».
      * Takes `{name}`, the collection's name, `{place}`, the card's place from the tapped Entry, and `{of}`, the collection's Entries.

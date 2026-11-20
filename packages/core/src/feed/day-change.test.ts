@@ -204,7 +204,7 @@ describe('the day change', () => {
     // The app stays in the foreground into the next morning, with no report
     // yet, such as across a time-zone change; then a time change plans again.
     time.set('2026-10-15T10:00:00+03:00');
-    await app.notifications.keepTime('21:00');
+    await app.notifications.keepTime('reminder', '21:00');
     await app.resume();
     await app.feed.show(0);
 

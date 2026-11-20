@@ -82,7 +82,7 @@ export function BadgesScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.bar}>
         <BackHeader
           titleRole="settingsSubTitle"
           title={strings.title}
@@ -94,6 +94,8 @@ export function BadgesScreen() {
             },
           }}
         />
+      </View>
+      <ScrollView testID="badges-scroll" contentContainerStyle={styles.content}>
         <Badges />
       </ScrollView>
     </SafeAreaView>
@@ -102,7 +104,9 @@ export function BadgesScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[8] },
+  // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
+  bar: { paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[2] },
+  content: { paddingHorizontal: space[4], paddingBottom: space[8] },
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[2] },
   families: { paddingBottom: space[6] },
   count: { paddingBottom: space[4] },

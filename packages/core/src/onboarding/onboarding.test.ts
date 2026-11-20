@@ -392,6 +392,52 @@ describe('the onboarding', () => {
     expect(again.app.onboarding.state.status).toBe('finished');
     expect(again.events.filter(([event]) => event === 'onboardingStepViewed')).toEqual([]);
   });
+  // Spec #2060, ticket #2062: the Dashboard asked «Розкрий слово» for the Word «Беру!» took.
+  describe('the first Word', () => {
+    const heroOf = ({ dashboard }: Awaited<ReturnType<typeof run>>['app']) =>
+      dashboard.blocks.flatMap((block) => (block.kind === 'wordOfTheDay' ? [block.hero] : []))[0];
+
+    it('is Seen once the onboarding that showed it finishes: the Dashboard, XP, History and the Daily Goal count it', async () => {
+      const { app } = await run({ on: [...ALL_ON, 'seenWordXp'] });
+      await app.onboarding.next();
+      const first = stepOf(app);
+      if (first?.kind !== 'firstWord') throw new Error('The first Word is not on screen');
+      expect(heroOf(app)?.state).toBe('unrevealed');
+      expect(app.xpLog.state.total).toBe(0);
+
+      await app.onboarding.next();
+      await app.onboarding.next();
+      await app.onboarding.next();
+      await app.onboarding.chooseDailyGoal(3);
+      await app.onboarding.next();
+
+      expect(app.onboarding.state.status).toBe('finished');
+      expect(heroOf(app)).toMatchObject({ state: 'revealed', wordId: first.word.wordId });
+      expect(app.history.list.map(({ entryId }) => entryId)).toEqual([first.word.wordId]);
+      expect(app.xpLog.state.total).toBeGreaterThan(0);
+      expect(app.xpLog.state.today).toBe(app.xpLog.state.total);
+      expect(app.xpLog.state.dailyGoal).toMatchObject({ goal: 3, seen: 1 });
+    });
+
+    it('is Seen when the reader skips the rest on its step', async () => {
+      const { app } = await run();
+      await app.onboarding.next();
+      await app.onboarding.finish();
+
+      expect(heroOf(app)?.state).toBe('revealed');
+      expect(app.history.list).toHaveLength(1);
+    });
+
+    it('stays unseen when the onboarding is skipped before it was shown', async () => {
+      const { app } = await run({ on: [...ALL_ON, 'seenWordXp'] });
+      await app.onboarding.finish();
+
+      expect(heroOf(app)?.state).toBe('unrevealed');
+      expect(app.history.list).toEqual([]);
+      expect(app.xpLog.state.total).toBe(0);
+    });
+  });
+
   // Spec #1553, ticket #1559.
   describe('«Коли нагадати?»', () => {
     /** Goes on to the step of `kind`. */
@@ -409,7 +455,11 @@ describe('the onboarding', () => {
 
       await app.onboarding.chooseNotificationTime('07:45');
 
-      expect(app.notifications.state.times).toEqual(['07:45']);
+      expect(app.notifications.state.times).toEqual({
+        kind: 'on',
+        word: '07:45',
+        reminder: undefined,
+      });
       expect(app.onboarding.state.status).toBe('finished');
     });
 
@@ -444,7 +494,11 @@ describe('the onboarding', () => {
 
       await app.onboarding.chooseNotificationTime('09:00');
 
-      expect(app.notifications.state.times).toEqual(['09:00']);
+      expect(app.notifications.state.times).toEqual({
+        kind: 'on',
+        word: '09:00',
+        reminder: undefined,
+      });
       expect(app.onboarding.state.status).toBe('finished');
     });
 
@@ -454,7 +508,7 @@ describe('the onboarding', () => {
 
       await app.onboarding.chooseNotificationTime(undefined);
 
-      expect(app.notifications.state.times).toEqual([]);
+      expect(app.notifications.state.times).toEqual({ kind: 'off' });
       expect(app.onboarding.state.status).toBe('finished');
     });
 

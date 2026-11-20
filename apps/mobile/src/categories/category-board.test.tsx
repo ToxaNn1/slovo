@@ -178,6 +178,13 @@ describe('the Category screen', () => {
     expect(within(hero).getByText('ЗНАЮ 1 З 3')).toBeTruthy();
   });
 
+  it('names its way back «Назад», since it opens from the rail, its grid and Search alike', async () => {
+    await open();
+    await renderCategory('emotions-character');
+
+    expect(screen.getByTestId('category-back')).toHaveProp('accessibilityLabel', 'Назад');
+  });
+
   it('«ДОДАТИ» puts the Category in the Mix as «У МІКСІ», and a second tap takes it out, each with its toast', async () => {
     await open();
     await composition.mix.setCategory('emotions-character', false);

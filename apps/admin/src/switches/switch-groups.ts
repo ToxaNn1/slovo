@@ -87,6 +87,7 @@ const GROUP_OF: Readonly<Record<FeatureSwitch, SwitchGroup>> = {
   collectionLinks: 'content',
   replaceOpenEntry: 'feed',
   mixKindWeights: 'feed',
+  mixTab: 'feed',
   xpLog: 'progress',
   streakFreezes: 'progress',
   streakBreak: 'progress',

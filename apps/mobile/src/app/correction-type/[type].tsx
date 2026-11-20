@@ -68,7 +68,7 @@ function CorrectionTypeScreen({ type }: { type: CorrectionType }) {
           mascot="shouts"
           back={{
             testID: 'correction-type-back',
-            label: editionStrings.tabs.home,
+            label: editionStrings.back,
             onPress: () => {
               router.back();
             },
