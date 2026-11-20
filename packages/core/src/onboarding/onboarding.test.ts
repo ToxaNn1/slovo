@@ -455,7 +455,11 @@ describe('the onboarding', () => {
 
       await app.onboarding.chooseNotificationTime('07:45');
 
-      expect(app.notifications.state.times).toEqual(['07:45']);
+      expect(app.notifications.state.times).toEqual({
+        kind: 'on',
+        word: '07:45',
+        reminder: undefined,
+      });
       expect(app.onboarding.state.status).toBe('finished');
     });
 
@@ -490,7 +494,11 @@ describe('the onboarding', () => {
 
       await app.onboarding.chooseNotificationTime('09:00');
 
-      expect(app.notifications.state.times).toEqual(['09:00']);
+      expect(app.notifications.state.times).toEqual({
+        kind: 'on',
+        word: '09:00',
+        reminder: undefined,
+      });
       expect(app.onboarding.state.status).toBe('finished');
     });
 
@@ -500,7 +508,7 @@ describe('the onboarding', () => {
 
       await app.onboarding.chooseNotificationTime(undefined);
 
-      expect(app.notifications.state.times).toEqual([]);
+      expect(app.notifications.state.times).toEqual({ kind: 'off' });
       expect(app.onboarding.state.status).toBe('finished');
     });
 

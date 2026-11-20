@@ -97,7 +97,7 @@ describe('Settings › Сповіщення while the permission is not asked ye
   it('offers «Увімкнути сповіщення», which asks once, and a grant takes the offer away', async () => {
     const { composition, asks } = await render('not-asked');
 
-    expect(screen.getByTestId('notifications-time-09:00-content')).toBeTruthy();
+    expect(screen.getByTestId('notifications-word')).toBeTruthy();
     expect(screen.queryByTestId('notifications-denied')).toBeNull();
     const enable = screen.getByRole('button', { name: strings.enable });
 
@@ -118,7 +118,7 @@ describe('Settings › Сповіщення while iOS denies notifications', () 
     expect(screen.getByTestId('notifications-denied')).toBeTruthy();
     expect(screen.getByText(strings.denied.message)).toBeTruthy();
     expect(screen.queryByTestId('notifications-enable')).toBeNull();
-    expect(screen.getByTestId('notifications-time-09:00-content')).toBeTruthy();
+    expect(screen.getByTestId('notifications-word')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: strings.denied.openSettings }));
     await settle();

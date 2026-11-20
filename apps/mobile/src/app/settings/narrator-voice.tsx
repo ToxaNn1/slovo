@@ -34,7 +34,7 @@ export default function NarratorVoiceScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.bar}>
         <BackHeader
           titleRole="settingsSubTitle"
           title={strings.title}
@@ -46,6 +46,8 @@ export default function NarratorVoiceScreen() {
             },
           }}
         />
+      </View>
+      <ScrollView testID="narrator-voice-scroll" contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
             {strings.lead}
@@ -70,6 +72,8 @@ export default function NarratorVoiceScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
+  // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
+  bar: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[2] },
+  content: { paddingHorizontal: space[5], paddingBottom: space[8] },
   header: { gap: space[2], paddingTop: space[2], paddingBottom: space[5] },
 });

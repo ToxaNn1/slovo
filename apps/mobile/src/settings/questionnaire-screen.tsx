@@ -68,7 +68,7 @@ export function QuestionnaireScreen() {
       edges={['top', 'bottom']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.bar}>
         <BackHeader
           titleRole="settingsSubTitle"
           title={settings.questionnaireRetake.title}
@@ -80,6 +80,8 @@ export function QuestionnaireScreen() {
             },
           }}
         />
+      </View>
+      <ScrollView testID="questionnaire-scroll" contentContainerStyle={styles.content}>
         {questions.map(({ question, title }) => (
           <View key={question} style={styles.section}>
             <SectionLabel>{title}</SectionLabel>
@@ -156,7 +158,9 @@ function sameIds(a: readonly string[], b: readonly string[]) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[5] },
+  // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
+  bar: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[2] },
+  content: { paddingHorizontal: space[5], paddingBottom: space[5] },
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[5] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   footer: { paddingHorizontal: space[5], paddingVertical: space[4] },

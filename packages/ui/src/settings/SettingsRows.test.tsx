@@ -5,7 +5,6 @@ import {
   SettingsActionCard,
   SettingsGroup,
   SettingsRow,
-  SoonRow,
   SwitchRow,
 } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
@@ -177,25 +176,5 @@ describe('Settings action card', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Reset progress' }));
 
     expect(onPress).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('Soon row', () => {
-  it('reads its subtitle on its label’s phrase, then that it comes soon', async () => {
-    await render(
-      <EditionProvider
-        edition={{ locale: 'en' }}
-        strings={testStrings({
-          settings: { soon: 'SOON', soonAccessibilityLabel: '{label}, coming soon' },
-        })}
-      >
-        <SoonRow testID="suggest" label="Suggest a word" subtitle="or a Correction" />
-      </EditionProvider>,
-    );
-
-    expect(screen.getByTestId('suggest')).toHaveProp(
-      'accessibilityLabel',
-      'Suggest a word or a Correction, coming soon',
-    );
   });
 });

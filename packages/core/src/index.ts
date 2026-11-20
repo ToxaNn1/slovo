@@ -204,7 +204,9 @@ export { type CollectionShareRefusal } from './collection-links/share-collection
 export { openMistakeReports, type MistakeReports } from './mistake-reports/mistake-reports';
 export { openSync, type Sync, type SyncState } from './sync/sync';
 export {
+  type NotificationSlot,
   type NotificationTimeRefusal,
+  type NotificationTimes,
   type NotificationsState,
 } from './notifications/notifications';
 export {

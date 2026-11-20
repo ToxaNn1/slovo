@@ -4,9 +4,7 @@ import {
   fill,
   NavigationRow,
   rowPadding,
-  SectionLabel,
   SettingsGroup,
-  SoonRow,
   space,
   typeStyle,
   useEdition,
@@ -26,8 +24,7 @@ const strings = editionStrings.settings;
 /**
  * About: the Edition's name on the red shout panel, the app's version and the installed build
  * (ADR 0062) and the Update channel it listens to (ADR 0167), so a bug report names the code; what SLOVO is and where its words come from, and its privacy policy
- * and terms, which open in the browser. Suggesting a word and reporting a
- * mistake wait for the backend (0.7).
+ * and terms, which open in the browser.
  */
 export function AboutScreen() {
   const tokens = useTokens();
@@ -96,21 +93,6 @@ export function AboutScreen() {
             </Text>
           </View>
         </SettingsGroup>
-        <View style={styles.section}>
-          <SectionLabel>{strings.about.feedback}</SectionLabel>
-          <SettingsGroup>
-            <SoonRow
-              testID="about-row-suggest-word"
-              label={strings.about.suggestWord.title}
-              subtitle={strings.about.suggestWord.subtitle}
-            />
-            <SoonRow
-              testID="about-row-report-error"
-              label={strings.about.reportError.title}
-              subtitle={strings.about.reportError.subtitle}
-            />
-          </SettingsGroup>
-        </View>
         <View style={styles.section}>
           <SettingsGroup>
             <NavigationRow

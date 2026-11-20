@@ -129,7 +129,6 @@ export {
   SettingsActionCard,
   SettingsGroup,
   SettingsRow,
-  SoonRow,
   SwitchRow,
   TimeRow,
 } from './settings/SettingsRows';

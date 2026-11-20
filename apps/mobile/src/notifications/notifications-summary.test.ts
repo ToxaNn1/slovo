@@ -5,7 +5,6 @@ import {
   type FakeNotificationScheduler,
   seedUserState,
 } from '@slovo/core/testing';
-import { pluralCount } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { notificationsSummary } from './notifications-summary';
@@ -32,38 +31,30 @@ async function open(
 }
 
 const summaryOf = ({ notifications }: Composition) =>
-  notificationsSummary({
-    notifications: notifications.state,
-    strings: strings.notifications,
-    count: pluralCount('uk'),
-  });
+  notificationsSummary({ notifications: notifications.state, strings: strings.notifications });
 
 describe('the «Сповіщення» row of Settings', () => {
-  it("shows every one of the Edition's default times, in the order of the day", async () => {
+  it("shows the Edition's default Word and Reminder times, in the order of the day", async () => {
     const composition = await open();
 
-    expect(composition.notifications.state.times).toEqual(['09:00', '13:00', '19:00']);
-    expect(summaryOf(composition)).toBe('09:00, 13:00, 19:00');
+    expect(summaryOf(composition)).toBe('09:00, 19:00');
   });
 
-  it('counts the times instead once there are more than three', async () => {
+  it('follows the times as they change, and reads «Вимкнено» once switched off', async () => {
     const composition = await open();
 
-    await composition.notifications.keepTime('07:30');
-    expect(summaryOf(composition)).toBe('4 рази на день');
-  });
+    await composition.notifications.keepTime('word', '07:30');
+    expect(summaryOf(composition)).toBe('07:30, 19:00');
 
-  it('follows the list as times are removed, and reads «Вимкнено» with none left', async () => {
-    const composition = await open();
-
-    await composition.notifications.removeTime('09:00');
-    expect(summaryOf(composition)).toBe('13:00, 19:00');
-
-    await composition.notifications.removeTime('13:00');
-    expect(summaryOf(composition)).toBe('19:00');
-
-    await composition.notifications.removeTime('19:00');
+    await composition.notifications.setOn(false);
     expect(summaryOf(composition)).toBe('Вимкнено');
+  });
+
+  it('shows the Word time alone with no Reminder', async () => {
+    const composition = await open();
+
+    await composition.notifications.chooseOnboardingTime('20:30');
+    expect(summaryOf(composition)).toBe('20:30');
   });
 
   it('reads «Вимкнено» while iOS denies notifications, and the times again once allowed', async () => {
@@ -71,11 +62,10 @@ describe('the «Сповіщення» row of Settings', () => {
     const composition = await open(scheduler);
 
     expect(summaryOf(composition)).toBe('Вимкнено');
-    expect(composition.notifications.state.times).toEqual(['09:00', '13:00', '19:00']);
 
     scheduler.setPermission('allowed');
     await composition.resume();
-    expect(summaryOf(composition)).toBe('09:00, 13:00, 19:00');
+    expect(summaryOf(composition)).toBe('09:00, 19:00');
   });
 
   it('reads «Вимкнено» while permission is not asked yet, and the times once the reader allows them', async () => {
@@ -84,6 +74,6 @@ describe('the «Сповіщення» row of Settings', () => {
     expect(summaryOf(composition)).toBe('Вимкнено');
 
     await composition.notifications.askPermission();
-    expect(summaryOf(composition)).toBe('09:00, 13:00, 19:00');
+    expect(summaryOf(composition)).toBe('09:00, 19:00');
   });
 });

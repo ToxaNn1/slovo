@@ -151,7 +151,7 @@
     "theme": "system",
     "textSize": "system",
     "vibration": true,
-    "notificationTimes": ["09:00", "13:00", "19:00"],
+    "notificationTimes": ["09:00", "19:00"],
     "rarityCeiling": 5,
     "mix": {
       "categories": "all",
