@@ -20,7 +20,7 @@ import { PressedTile } from '../primitives/PressedTile';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { narratorVoiceDrawing as drawing, typeStyle } from '../tokens';
+import { fontScaleCap, narratorVoiceDrawing as drawing, typeStyle } from '../tokens';
 
 /**
  * The Narrator Voice screen's body (design `XVoice`): the red scene where the
@@ -154,11 +154,16 @@ export function NarratorVoicePicker({
                     ]}
                     testID={testID === undefined ? undefined : `${testID}-voice-${option.id}`}
                   >
-                    <Text {...voice} style={[typeStyle('voiceName', tokens), { color: ink }]}>
+                    <Text
+                      {...voice}
+                      maxFontSizeMultiplier={fontScaleCap.text}
+                      style={[typeStyle('voiceName', tokens), { color: ink }]}
+                    >
                       {option.name}
                     </Text>
                     <Text
                       {...voice}
+                      maxFontSizeMultiplier={fontScaleCap.text}
                       style={[
                         typeStyle('voiceDescription', tokens),
                         styles.description,
@@ -319,7 +324,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: drawing.tileGap },
   cell: { flex: 1 },
   tile: {
-    height: drawing.tile,
+    minHeight: drawing.tile,
     paddingHorizontal: drawing.tilePaddingHorizontal,
     justifyContent: 'center',
     alignItems: 'flex-start',

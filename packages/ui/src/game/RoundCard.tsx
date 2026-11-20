@@ -309,6 +309,9 @@ function WordTile({ word, whole }: { word: string; whole: boolean }) {
       <Text
         maxFontSizeMultiplier={roundLayout.textMaxFontScale}
         {...voice}
+        // One Word: it shrinks to the line rather than break inside itself.
+        numberOfLines={1}
+        adjustsFontSizeToFit
         style={[typeStyle(whole ? 'roundOriginWord' : 'roundAsk', tokens), { color: colors.ink }]}
       >
         {whole ? (

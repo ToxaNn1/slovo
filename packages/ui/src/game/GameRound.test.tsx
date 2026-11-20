@@ -776,6 +776,18 @@ describe('GameRound', () => {
     expect(screen.getByTestId('game-prompt')).toHaveAccessibleName('Definition. candid');
   });
 
+  it('keeps the Word of an origin Round on one line, shrunk to it rather than broken inside', async () => {
+    await renderRound(jest.fn(), jest.fn(), {
+      ...first,
+      modeId: 'origin',
+      round: { ...first.round, prompt: 'candid' },
+    });
+
+    const word = within(screen.getByTestId('game-word')).getByText('andid', { exact: false });
+    expect(word).toHaveProp('numberOfLines', 1);
+    expect(word).toHaveProp('adjustsFontSizeToFit', true);
+  });
+
   it('keeps the plain prompt in any other mode', async () => {
     await renderRound(jest.fn(), jest.fn(), highlightRound);
 

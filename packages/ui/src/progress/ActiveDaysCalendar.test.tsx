@@ -1,7 +1,13 @@
 import type { CalendarDay, CalendarWeek } from '@slovo/core';
-import { ActiveDaysCalendar, coreTokens, EditionProvider, TokensProvider } from '@slovo/ui';
+import {
+  ActiveDaysCalendar,
+  coreTokens,
+  EditionProvider,
+  fontScaleCap,
+  TokensProvider,
+} from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
-import { render, screen } from '@testing-library/react-native';
+import { render, screen, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
 
@@ -94,6 +100,19 @@ describe('the Active Days calendar', () => {
     expect(screen.getByLabelText('12 Oct., break')).toBeOnTheScreen();
     expect(screen.getByLabelText('Today, 28 Oct.')).toBeOnTheScreen();
     expect(screen.getByLabelText('1 Nov., to come')).toBeOnTheScreen();
+  });
+
+  it('keeps the day numbers and weekday names to their cells at the largest text sizes', async () => {
+    await renderCalendar(weeks);
+
+    const day = within(screen.getByLabelText('30 Sep., active')).getByText('30', {
+      includeHiddenElements: true,
+    });
+    expect(day).toHaveProp('maxFontSizeMultiplier', fontScaleCap.number);
+    expect(screen.getByText('Mo', { includeHiddenElements: true })).toHaveProp(
+      'maxFontSizeMultiplier',
+      fontScaleCap.number,
+    );
   });
 
   it('draws each day as a tile in its state: active red, today ink, missed plain, to come none', async () => {

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { calendarDay, space, typeStyle } from '../tokens';
+import { calendarDay, fontScaleCap, space, typeStyle } from '../tokens';
 import { dayDate, dayLabel } from './day-label';
 import { Frost } from './Frost';
 
@@ -70,6 +70,7 @@ export function CalendarDayTile({
       >
         {day.state === 'frozen' && <Frost />}
         <Text
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[typeStyle(square ? 'freezeDay' : 'calendarDay', tokens), { color: look.number }]}
         >
           {day.day}
@@ -154,6 +155,7 @@ export function ActiveDaysCalendar({
         {words.weekdays.map((weekday) => (
           <Text
             key={weekday}
+            maxFontSizeMultiplier={fontScaleCap.number}
             style={[typeStyle('calendarWeekday', tokens), styles.weekday, { color: colors.muted }]}
           >
             {weekday}
