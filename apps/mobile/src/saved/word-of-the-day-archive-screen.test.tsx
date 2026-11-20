@@ -83,6 +83,8 @@ async function settle() {
   });
 }
 
+// A tree of its own on purpose: the chips are checked against the Core's tokens,
+// which a screen reads with no `TokensProvider` over it; the app's tree gives the Edition's.
 async function renderArchive() {
   await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>

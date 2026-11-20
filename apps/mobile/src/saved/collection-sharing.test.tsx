@@ -13,16 +13,14 @@ import {
   type FakeBackend,
   seedUserState,
 } from '@slovo/core/testing';
-import { EditionProvider, OfflinePlateProvider, systemSchedule } from '@slovo/ui';
+import { systemSchedule } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
 import { Share } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionsScreen from '../app/saved/collections/index';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 
 const { config } = activeEditionFiles;
 
@@ -38,6 +36,7 @@ let collectionLinksOff: boolean;
 let api: FakeBackend;
 
 jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
   useRouter: () => ({ back: () => undefined, push: () => undefined }),
 }));
 
@@ -62,11 +61,6 @@ const word = (id: string, lemma: string): Word => ({
   correctionIds: [],
   retired: false,
 });
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 let share: jest.SpiedFunction<typeof Share.share>;
 
@@ -132,19 +126,9 @@ async function openMenuOf(collectionId: string) {
     isFeatureEnabled: (feature) =>
       !(feature === 'collectionLinks' && collectionLinksOff) && edition.isFeatureEnabled(feature),
   };
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider
-        shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(cards) })}
-      >
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <OfflinePlateProvider message={editionStrings.offlinePlate}>
-            <CollectionsScreen />
-          </OfflinePlateProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<CollectionsScreen />, {
+    shell: testShell({ composition: opened(composition), remoteSwitches: switchedTo(cards) }),
+  });
   await settle();
   await fireEvent(screen.getByTestId(`collection-card-${collectionId}`), 'longPress');
   await settle();

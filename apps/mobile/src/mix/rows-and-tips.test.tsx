@@ -9,15 +9,13 @@ import {
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { Pressable } from 'react-native';
-import { EditionProvider, HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
+import { HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HiddenScreen from '../app/settings/hidden';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { opened, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 import { useHide } from './hiding';
 import { MixChoices } from './mix-choices';
 
@@ -45,7 +43,10 @@ let editionInEffect: Edition;
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: () => undefined }) }));
+jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
+  useRouter: () => ({ back: () => undefined }),
+}));
 
 const row: SynonymRow = {
   kind: 'synonymRow',
@@ -76,11 +77,6 @@ const tip: Tip = {
   retired: false,
 };
 
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
-
 async function open(on: boolean, mixKindWeights = true) {
   editionInEffect = editionWith(on, mixKindWeights);
   composition = await openComposition({
@@ -108,20 +104,12 @@ async function settle() {
 }
 
 async function renderInApp(children: React.ReactNode) {
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider
-        shell={testShell({
-          composition: opened(composition),
-          remoteSwitches: switchedTo(editionInEffect),
-        })}
-      >
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <UndoToastProvider>{children}</UndoToastProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<UndoToastProvider>{children}</UndoToastProvider>, {
+    shell: testShell({
+      composition: opened(composition),
+      remoteSwitches: switchedTo(editionInEffect),
+    }),
+  });
   await settle();
 }
 

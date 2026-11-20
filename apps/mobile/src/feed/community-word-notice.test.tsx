@@ -2,13 +2,10 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Correction } from '@slovo/contracts';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { renderApp } from '../shell/test-app';
 
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
+import { activeEditionFiles } from '../edition/edition';
 import { opened, testShell } from '../shell/test-support';
 import { CommunityWordNotice } from './community-word-notice';
 
@@ -38,11 +35,6 @@ jest.mock('../use-open-screen', () => ({
   useOpenScreen: () => (href: string) => mockOpened.push(href),
 }));
 
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
-
 beforeEach(async () => {
   mockOpened.length = 0;
   composition = await openComposition({
@@ -55,15 +47,9 @@ beforeEach(async () => {
 });
 
 async function renderNotice(adds: number) {
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={testShell({ composition: opened(composition) })}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <CommunityWordNotice entryId="c_abc123" adds={adds} />
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<CommunityWordNotice entryId="c_abc123" adds={adds} />, {
+    shell: testShell({ composition: opened(composition) }),
+  });
   // The Entry's row is read once the card is drawn.
   await act(async () => {
     await Promise.resolve();

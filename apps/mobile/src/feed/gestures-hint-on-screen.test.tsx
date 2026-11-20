@@ -6,22 +6,17 @@ import {
   type Composition,
   type TrackedUserState,
   type Edition,
-  type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
 import { AccessibilityInfo, Pressable } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/feed';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
+import { activeEditionFiles } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
-import { SettingsProvider } from '../settings/settings';
 import { useShowGesturesHintAgain } from './gestures-hint';
 
 const { config } = activeEditionFiles;
@@ -57,19 +52,6 @@ const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Eu
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 47, left: 0, right: 0, bottom: 34 },
-};
 
 /** A Word of the Edition's first Category, with the Stress on its second letter. */
 function word(id: string, lemma: string): Word {
@@ -156,28 +138,18 @@ function ShowAgain() {
 }
 
 /** The app on the Feed. */
-async function renderApp() {
-  await renderRoutes(
+async function openApp() {
+  await renderApp(
     {
       _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme="light">
-            <ShellProvider shell={shell()}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <SettingsProvider>
-                    <Slot />
-                    <ShowAgain />
-                  </SettingsProvider>
-                </HapticsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
+        <>
+          <Slot />
+          <ShowAgain />
+        </>
       ),
       index: HomeScreen,
     },
-    { initialUrl: '/' },
+    { shell: shell() },
   );
   await settle();
   // The pager lays its pages out once it knows its height.
@@ -190,7 +162,7 @@ async function renderApp() {
 describe('the gestures hint sheet on the Feed', () => {
   it('shows «ГОРТАЙ ПАЛЬЦЕМ» with its three rows on the first launch ', async () => {
     await open(true);
-    await renderApp();
+    await openApp();
     await settle();
     expect(screen.getByTestId('gestures-hint')).toBeOnTheScreen();
     // The board's texts in «ти» (ADR 0092).
@@ -203,7 +175,7 @@ describe('the gestures hint sheet on the Feed', () => {
 
   it('goes on «ЗРОЗУМІЛО» and stays gone after a restart', async () => {
     await open(true);
-    await renderApp();
+    await openApp();
     await settle(() => fireEvent.press(screen.getByTestId('gestures-hint-dismiss')));
     // The sheet slides away.
     await waitFor(() => {
@@ -212,14 +184,14 @@ describe('the gestures hint sheet on the Feed', () => {
     await screen.unmount();
     screenSettled();
     await reopen();
-    await renderApp();
+    await openApp();
     expect(screen.getByTestId('feed')).toBeOnTheScreen();
     expect(screen.queryByTestId('gestures-hint')).toBeNull();
   });
 
   it('comes back on the open Feed after «Показати підказку жестів», once it was dismissed', async () => {
     await open(true);
-    await renderApp();
+    await openApp();
     await settle(() => fireEvent.press(screen.getByTestId('gestures-hint-dismiss')));
     await waitFor(() => {
       expect(screen.queryByTestId('gestures-hint')).toBeNull();
@@ -234,19 +206,19 @@ describe('the gestures hint sheet on the Feed', () => {
 
   it('is shown once: not on the next launch even when it was not dismissed', async () => {
     await open(true);
-    await renderApp();
+    await openApp();
     expect(screen.getByTestId('gestures-hint')).toBeOnTheScreen();
     await screen.unmount();
     screenSettled();
     await reopen();
-    await renderApp();
+    await openApp();
     expect(screen.getByTestId('feed')).toBeOnTheScreen();
     expect(screen.queryByTestId('gestures-hint')).toBeNull();
   });
 
   it('shows no hint at all with the Knowledge switch off', async () => {
     await open(false);
-    await renderApp();
+    await openApp();
     expect(screen.getByTestId('feed')).toBeOnTheScreen();
     expect(screen.queryByTestId('gestures-hint')).toBeNull();
     expect(screen.queryByText('ГОРТАЙ ПАЛЬЦЕМ')).toBeNull();
@@ -262,14 +234,14 @@ describe("the swipe hint's demo on the Feed", () => {
 
   it('drags a finger over the card with gesturesHintDemo on', async () => {
     await open(true, true);
-    await renderApp();
+    await openApp();
     expect(screen.getByTestId('gestures-hint')).toBeOnTheScreen();
     expect(screen.getByTestId('gestures-hint-finger')).toBeOnTheScreen();
   });
 
   it('shows the sheet without a finger with gesturesHintDemo off', async () => {
     await open(true, false);
-    await renderApp();
+    await openApp();
     expect(screen.getByTestId('gestures-hint')).toBeOnTheScreen();
     expect(screen.getByText('ГОРТАЙ ПАЛЬЦЕМ')).toBeOnTheScreen();
     expect(screen.queryByTestId('gestures-hint-finger')).toBeNull();

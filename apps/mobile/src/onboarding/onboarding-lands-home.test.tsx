@@ -1,18 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import { loadEdition, openComposition, type Composition, type Haptics } from '@slovo/core';
+import { loadEdition, openComposition, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/index';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
-import { SettingsProvider } from '../settings/settings';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
 import { Onboarding } from './onboarding';
 
@@ -24,19 +20,6 @@ jest.mock('expo-constants', () => ({
 }));
 
 const clock = { now: () => new Date('2026-11-04T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 function word(id: string, lemma: string): Word {
   return {
@@ -62,7 +45,7 @@ function word(id: string, lemma: string): Word {
 let composition: Composition;
 
 /** The app of a new reader on 2026-11-04 in Kyiv: the home, with the Onboarding over it as the root layout draws it. */
-async function renderApp() {
+async function openApp() {
   const shipped = loadEdition(activeEditionFiles.config);
   const userState = await seedUserState({}, { clock });
   composition = await openComposition({
@@ -84,27 +67,17 @@ async function renderApp() {
     remoteSwitches: switchedTo(shipped),
     composition: opened(composition),
   });
-  await renderRoutes(
+  await renderApp(
     {
       _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme="light">
-            <ShellProvider shell={shell}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <SettingsProvider>
-                    <Slot />
-                    <Onboarding />
-                  </SettingsProvider>
-                </HapticsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
+        <>
+          <Slot />
+          <Onboarding />
+        </>
       ),
       index: HomeScreen,
     },
-    { initialUrl: '/' },
+    { shell },
   );
   await settle();
 }
@@ -151,7 +124,7 @@ afterEach(() => {
 // Spec #1553, ticket #1562: the whole onboarding flow lands on the home, the Dashboard (ADR 0076).
 describe('the whole onboarding flow', () => {
   it('walks СЛОВО → ПЕРШЕ → ГРАЙ! → РІВЕНЬ? → НАВІЩО? → ЦІЛЬ → НАГАДУВАННЯ and lands on the Dashboard', async () => {
-    await renderApp();
+    await openApp();
     // The Onboarding covers the home: a modal over it hides it from the reader.
     expect(screen.queryByTestId('dashboard')).toBeNull();
     expect(shouts).toEqual(['СЛОВО', 'ТРИМАЙ!', 'ГРАЙ!', 'РІВЕНЬ?', 'НАВІЩО?', 'ЦІЛЬ', 'ДЗИНЬ!']);

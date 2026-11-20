@@ -4,9 +4,8 @@ import { act, screen } from 'expo-router/testing-library';
 import { Text } from 'react-native';
 
 import { useCompositionRead } from './composition';
-import { ShellProvider } from './shell-value';
-import { renderInGestureRoot } from './shell/test-render';
 import { testShell } from './shell/test-support';
+import { renderApp } from './shell/test-app';
 
 /** The compositions read, in turn, each with a resolve of its read. */
 const reads: { in: Composition; resolve: (text: string) => void }[] = [];
@@ -24,11 +23,7 @@ describe('useCompositionRead', () => {
   it('shows nothing read from a composition reopened over it until the new one is read', async () => {
     const shell = testShell();
     await shell.composition.opened();
-    await renderInGestureRoot(
-      <ShellProvider shell={shell}>
-        <Reading />
-      </ShellProvider>,
-    );
+    await renderApp(<Reading />, { shell });
     await act(() => Promise.resolve(reads[0]?.resolve('first')));
     expect(screen.getByText('first')).toBeTruthy();
 

@@ -2,27 +2,18 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import type { Word } from '@slovo/contracts';
 import { loadEdition, openComposition, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HistoryScreen from '../app/saved/history';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
+import { activeEditionFiles, editionStrings, editionTokens } from '../edition/edition';
 import { Opened } from '../opened';
 import { openOnce, type Opening } from '../opening';
-import { SettingsProvider } from '../settings/settings';
-import { ShellProvider } from '../shell-value';
 import { switchedTo, testShell } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
 
 const shippedEdition = loadEdition(activeEditionFiles.config);
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** A Word with its Lemma and nothing else History reads. */
 const word = (id: string, lemma: string): Word => ({
@@ -90,26 +81,16 @@ function compositionOver(dependency: () => Promise<void>): Opening<Composition> 
 /** The History screen under the composition's gate. */
 async function renderHistory(opening: Opening<Composition>) {
   const shell = testShell({ composition: opening, remoteSwitches: switchedTo(shippedEdition) });
-  await renderRoutes(
+  await renderApp(
     {
       _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme="light">
-            <ShellProvider shell={shell}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <SettingsProvider>
-                  <Opened opening={opening} failedTestID="feed-error">
-                    <Slot />
-                  </Opened>
-                </SettingsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
+        <Opened opening={opening} failedTestID="feed-error">
+          <Slot />
+        </Opened>
       ),
       'saved/history/index': HistoryScreen,
     },
-    { initialUrl: '/saved/history' },
+    { shell, initialUrl: '/saved/history' },
   );
   await settle();
 }

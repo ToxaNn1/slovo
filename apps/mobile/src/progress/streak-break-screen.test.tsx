@@ -1,21 +1,16 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { renderApp } from '../shell/test-app';
 
-import { edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
+import { editionStrings } from '../edition/edition';
 import { opened, testShell } from '../shell/test-support';
 import { seedUserState } from '@slovo/core/testing';
 import { StreakBreakScreen } from './streak-break-screen';
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn() }) }));
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
+jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
+  useRouter: () => ({ back: jest.fn() }),
+}));
 
 /** The Break screen over the Core's composition of a test Shell, as the UA Edition ships it. */
 async function renderScreen(seed: Parameters<typeof seedUserState>[0] = {}) {
@@ -25,15 +20,9 @@ async function renderScreen(seed: Parameters<typeof seedUserState>[0] = {}) {
     }),
   );
   const composition = await testShell({ userState }).composition.opened();
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={testShell({ composition: opened(composition) })}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <StreakBreakScreen />
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<StreakBreakScreen />, {
+    shell: testShell({ composition: opened(composition) }),
+  });
   return composition;
 }
 

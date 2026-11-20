@@ -1,9 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 import type { CorrectionTypeRow } from '@slovo/core';
-import { act, renderHook } from '@testing-library/react-native';
-import type { ReactNode } from 'react';
+import { act } from '@testing-library/react-native';
 
-import { ShellProvider } from '../shell-value';
+import { renderHookInApp } from '../shell/test-app';
 import { opened, testShell } from '../shell/test-support';
 import { useCorrectionTypeScreen } from './correction-type';
 
@@ -28,10 +27,7 @@ describe('the Correction Type screen', () => {
         },
       }),
     });
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <ShellProvider shell={shell}>{children}</ShellProvider>
-    );
-    const hook = await renderHook(() => useCorrectionTypeScreen('surzhyk'), { wrapper });
+    const hook = await renderHookInApp(() => useCorrectionTypeScreen('surzhyk'), { shell });
     const older: readonly CorrectionTypeRow[] = [];
     const newer: readonly CorrectionTypeRow[] = [];
 
