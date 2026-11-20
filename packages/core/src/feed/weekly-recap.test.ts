@@ -154,6 +154,18 @@ describe('the Weekly Recap', () => {
     });
   });
 
+  it('counts the Entries Seen in the week that a clear took out of History', async () => {
+    const records = fakeWeek();
+    // Sunday evening, the week's last day: four of the five entries are within the days a clear counts.
+    const sunday = await run({ records, at: '2026-10-25T20:00:00+02:00' });
+    await sunday.history.clear();
+    expect(sunday.history.list).toEqual([]);
+
+    const app = await run({ records, at: monday });
+
+    expect((await app.weeklyRecap.of({ year: 2026, month: 10, day: 26 }))?.seen).toBe(3);
+  });
+
   it('comes on Monday only', async () => {
     const records = fakeWeek();
     const app = await run({ records, at: tuesday });

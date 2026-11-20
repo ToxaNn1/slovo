@@ -66,7 +66,7 @@ export function createWeeklyRecap({
   edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: UserState;
   clock: Clock;
-  history: Pick<History, 'list'>;
+  history: Pick<History, 'list' | 'cleared'>;
   favorites: Pick<Favorites, 'list'>;
   progress: Pick<Progress, 'state'>;
   activeDays: Pick<ActiveDays, 'days'>;
@@ -100,7 +100,10 @@ export function createWeeklyRecap({
       return {
         firstDay: localDateAfter(day, -7),
         lastDay: localDateAfter(day, -1),
-        seen: history.list.filter(({ seenAt }) => inWeek(seenAt)).length,
+        // Those a clear took out of History count too.
+        seen:
+          history.list.filter(({ seenAt }) => inWeek(seenAt)).length +
+          [...week].reduce((sum, date) => sum + history.cleared(date).entries, 0),
         saved: favorites.list.filter(({ addedAt }) => inWeek(addedAt)).length,
         ...(edition.isFeatureEnabled('knowledge') ? { known: await knownInWeek() } : {}),
         streak: progress.state.streak,

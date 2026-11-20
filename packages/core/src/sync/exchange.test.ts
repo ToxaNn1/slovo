@@ -52,6 +52,9 @@ function account(start = '2026-10-18T09:00:00.000Z') {
       records,
       userState,
       sync: () => sync.sync('a-session'),
+      forgetRefused: () => {
+        sync.forgetRefused();
+      },
       /** Opens the composition as a launch does, over the user state as it stands. */
       open: () =>
         openComposition({ content, edition, userState, clock: time.clock, random: randomOf(0.25) }),
@@ -850,6 +853,82 @@ describe('an interrupted sync', () => {
 
     expect(await tablet.sync()).toEqual({ ok: false, reason, changed: false });
     expect([...(await tablet.userState.pendingChanges()).keys()]).toEqual(['settings.theme']);
+  });
+
+  it.each(['too-many-records', 'not-found', 'unexpected'] as const)(
+    'sends a batch refused with `%s` no more until the next launch, and still answers the refusal',
+    async (reason) => {
+      const { device, server, time } = account();
+      const tablet = await device();
+      await tablet.sync();
+      await tablet.settings.update({ theme: 'dark' });
+      server.failNext({ procedure: 'sync.push', reason });
+      expect(await tablet.sync()).toEqual({ ok: false, reason, changed: false });
+      const pushes = () => server.calls.filter((call) => call === 'sync.push').length;
+      const before = pushes();
+
+      // The refused change stays pending and is not sent; the sync still pulls.
+      expect(await tablet.sync()).toEqual({ ok: false, reason, changed: false });
+      expect(pushes()).toBe(before);
+      expect([...(await tablet.userState.pendingChanges()).keys()]).toEqual(['settings.theme']);
+
+      // A later change is sent, and the refusal stands while the refused one waits.
+      await tablet.write(favorites.record('w_one').change('2026-10-18T09:00:00.000Z'));
+      expect(await tablet.sync()).toEqual({ ok: false, reason, changed: false });
+      expect(pushes()).toBe(before + 1);
+      expect(server.sync.records.has('favorites.w_one')).toBe(true);
+      expect(server.sync.records.has('settings.theme')).toBe(false);
+
+      // The refused record changed again is a new change, sent with the next sync.
+      time.advance(1000);
+      await tablet.settings.update({ theme: 'light' });
+      expect(await tablet.sync()).toEqual({ ok: true, changed: false });
+      expect(server.sync.records.get('settings.theme')?.value).toBe('light');
+    },
+  );
+
+  it('sends a refused batch again at the next launch, and to the next Session', async () => {
+    const { device, server, time } = account();
+    const tablet = await device();
+    await tablet.sync();
+    await tablet.settings.update({ theme: 'dark' });
+    server.failNext({ procedure: 'sync.push', reason: 'too-many-records' });
+    await tablet.sync();
+
+    // The next launch: a new exchange over the same user state.
+    const relaunched = await device(tablet.records);
+    expect(await relaunched.sync()).toEqual({ ok: true, changed: false });
+    expect(server.sync.records.get('settings.theme')?.value).toBe('dark');
+
+    time.advance(1000);
+    await relaunched.settings.update({ theme: 'light' });
+    server.failNext({ procedure: 'sync.push', reason: 'too-many-records' });
+    await relaunched.sync();
+    relaunched.forgetRefused();
+    expect(await relaunched.sync()).toEqual({ ok: true, changed: false });
+    expect(server.sync.records.get('settings.theme')?.value).toBe('light');
+  });
+
+  it('stops pulling when the backend says more follow but the cursor did not move, and still pushes', async () => {
+    const { device, server } = account();
+    let pulls = 0;
+    const tablet = await device(new Map(), {
+      sync: {
+        push: server.backend.sync.push,
+        pull: () => {
+          pulls += 1;
+          if (pulls > 5) throw new Error('The pull never ends');
+          return Promise.resolve({ records: [], cursor: 7, more: true });
+        },
+      },
+    });
+    await tablet.settings.update({ theme: 'dark' });
+
+    expect(await tablet.sync()).toEqual({ ok: true, changed: false });
+
+    // The first pull moved the cursor to 7; the second did not move it.
+    expect(pulls).toBe(2);
+    expect(server.sync.records.get('settings.theme')?.value).toBe('dark');
   });
 
   it('writes nothing of a pull that fails, and pushes nothing', async () => {

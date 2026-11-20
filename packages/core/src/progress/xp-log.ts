@@ -302,7 +302,7 @@ export async function openXpLog({
   edition: Pick<Edition, 'isFeatureEnabled' | 'xp' | 'levels'>;
   userState: Pick<UserState, 'list' | 'write'>;
   /** The Entries Seen, whose Words today count toward the Daily Goal. */
-  history: Pick<History, 'list' | 'subscribe'>;
+  history: Pick<History, 'list' | 'subscribe' | 'cleared'>;
   /** Whether a Word Seen now may be Seen for the first time: only in the first Cycle. */
   isFirstCycle: () => boolean;
   clock: Clock;
@@ -482,13 +482,13 @@ export async function openXpLog({
   }
 
   /**
-   * The Words Seen today. History is newest first, so the count stops at the
-   * first Entry Seen before today; an Entry ahead of today, after the clock
-   * moved back, is not today's.
+   * The Words Seen today, those a clear took out of History included. History
+   * is newest first, so the count stops at the first Entry Seen before today;
+   * an Entry ahead of today, after the clock moved back, is not today's.
    */
   function seenToday(): number {
     const { start, end } = todayBounds(clock);
-    let seen = 0;
+    let seen = history.cleared(todayKey(clock)).words;
     for (const { seenAt, row } of history.list) {
       const time = seenAt.getTime();
       if (time < start) break;

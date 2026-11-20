@@ -33,4 +33,14 @@ export const savedRecords = {
     'history.',
     z.object({ seenAt: InstantSchema, wordOfTheDay: z.boolean() }),
   ),
+  /**
+   * The Entries Seen on a local date that a clear took out of History, one
+   * record per local date of the last week, by its date key: how many
+   * Entries, and how many of them Words. Today's Words Seen and the Weekly
+   * Recap count them, so clearing History costs neither.
+   */
+  historyCleared: declareRecords(
+    'historyCleared.',
+    z.object({ entries: z.number().int().nonnegative(), words: z.number().int().nonnegative() }),
+  ),
 };
