@@ -248,6 +248,31 @@ describe('CrossingGrid and CrossingClueBar', () => {
     expect(blockCell()).toHaveStyle({ width: side });
   });
 
+  it('never draws a cell below the smallest legible side, and keeps the room for it', async () => {
+    const { minCell, cellGap } = crossingCrosswordLayout;
+    const edge = offsetShadow.rest.depth;
+    await renderIn(
+      <CrossingGrid
+        cells={[
+          [cell({ label: 'r0c0' }), cell({ label: 'r0c1' })],
+          [cell({ label: 'r1c0' }), cell({ label: 'r1c1' })],
+        ]}
+        onSelect={jest.fn()}
+        testID="grid"
+      />,
+    );
+    // The room never shrinks past two rows of the smallest cells, their edges and a gap.
+    expect(screen.getByTestId('grid-room')).toHaveStyle({
+      minHeight: 2 * (minCell + edge) + cellGap,
+    });
+
+    // A room squeezed to almost nothing still draws the smallest cells, never tiny or negative ones.
+    await fireEvent(screen.getByTestId('grid-room'), 'layout', {
+      nativeEvent: { layout: { width: 20, height: 10 } },
+    });
+    expect(screen.getByTestId('grid-1-1-face')).toHaveStyle({ width: minCell, height: minCell });
+  });
+
   it('fits letter cells with their pressed edge into the room the screen leaves', async () => {
     const { cell: boardSide, cellGap } = crossingCrosswordLayout;
     const edge = offsetShadow.rest.depth;
