@@ -22,6 +22,7 @@ import type { HostInstance } from 'react-native';
 
 import type { LaunchPack } from './content-update/launch-pack';
 import type { Opening } from './opening';
+import type { StoredUserState } from './user-state/stored-user-state';
 
 /** The remote Feature Switches over the Edition the app ships. */
 export type EditionSwitches = Awaited<ReturnType<typeof openRemoteSwitches<Edition>>>;
@@ -35,7 +36,7 @@ export interface DeviceSources {
   readonly clock: Clock;
   readonly schedule: Schedule;
   readonly random: Random;
-  readonly userState: Opening<TrackedUserState>;
+  readonly userState: Opening<StoredUserState>;
 }
 
 /**

@@ -79,7 +79,7 @@ describe('the user state of each Edition', () => {
     const before = await openSqliteUserState(await openDatabase('user-state.db'));
     await seedUserState({ noCounters: true }, { port: before });
 
-    const userState = await storedUserStateOpening('uk', openDatabase).opened();
+    const userState = (await storedUserStateOpening('uk', openDatabase).opened()).userState;
 
     expect(await readFact(userState, 'noCounters')).toBe(true);
   });
@@ -88,10 +88,23 @@ describe('the user state of each Edition', () => {
     const ukPort = await openSqliteUserState(await openDatabase('user-state.db'));
     await seedUserState({ selfCheck: true }, { port: ukPort });
 
-    const pl = await storedUserStateOpening('pl', openDatabase).opened();
-    const uk = await storedUserStateOpening('uk', openDatabase).opened();
+    const pl = (await storedUserStateOpening('pl', openDatabase).opened()).userState;
+    const uk = (await storedUserStateOpening('uk', openDatabase).opened()).userState;
 
     expect(await readFact(pl, 'selfCheck')).toBeUndefined();
     expect(await readFact(uk, 'selfCheck')).toBe(true);
+  });
+
+  it('opens in memory, marked so, when the database fails to open', async () => {
+    const failing: OpenDatabase = () => Promise.reject(new Error('disk I/O error'));
+
+    const opened = await storedUserStateOpening('uk', failing).opened();
+
+    expect(opened.kind).toBe('in-memory');
+    expect(await readFact(opened.userState, 'selfCheck')).toBeUndefined();
+  });
+
+  it('opens from the database, marked so, when it opens', async () => {
+    expect((await storedUserStateOpening('uk', openDatabase).opened()).kind).toBe('stored');
   });
 });
