@@ -1,0 +1,15 @@
+рахуба language-speech 4
+ревінь nature-weather 2
+рогівка human-body 2
+рустикальний arts-culture 4
+сапати household-crafts 3
+ставрида nature-weather 3
+сторицею language-speech 2
+стрільбище military 3
+стусувати emotions-character 5
+сюдою language-speech 4
+таборище history-antiquity 4
+теократія history-antiquity 3
+тубероза nature-weather 4
+туніка history-antiquity 2
+утерпіти emotions-character 3

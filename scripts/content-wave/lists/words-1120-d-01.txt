@@ -1,0 +1,13 @@
+фасція human-body 3
+флоема science 4
+фухтель military 5
+холодати nature-weather 3
+хохма language-speech 4
+частувати household-crafts 4
+частуха nature-weather 4
+черкеска history-antiquity 4
+чистець nature-weather 3
+шагрень old-crafts 4
+шемая nature-weather 3
+шкуродер witty-insults 5
+ягель nature-weather 4
