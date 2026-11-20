@@ -51,7 +51,7 @@ The launch message names the owner's permission and the tickets it covers; work 
 
 The launch message says how this ticket is verified. In general:
 
-- No Maestro in tickets (ADR 0126): a ticket runs no flow and writes none but the app pass: a route added, renamed or removed in `apps/mobile/src/app` updates its step in `apps/mobile/maestro/app-pass.yaml` (ADR 0177, checked in CI). Screens verify with Jest component tests, and a ticket that changes a screen carries one screenshot of that screen against its board: a text snapshot first, one screenshot, and the report says what matches and what does not. Where there is no simulator (a cloud session), name the screen and its board in the report for the coordinator to take it. One visual pass per version, at its end, updates the flows; any other look the Result asks to see goes to «Owner checks».
+- No Maestro in tickets: a ticket runs no flow and writes none but the app pass: a route added, renamed or removed in `apps/mobile/src/app` updates its step in `apps/mobile/maestro/app-pass.yaml` (checked in CI). Screens verify with Jest component tests, and a ticket that changes a screen carries one screenshot of that screen against its board: a text snapshot first, one screenshot, and the report says what matches and what does not. Where there is no simulator (a cloud session), name the screen and its board in the report for the coordinator to take it. One visual pass per version, at its end, updates the flows; any other look the Result asks to see goes to «Owner checks».
 
 ## 4. Before the report
 

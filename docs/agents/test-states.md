@@ -35,5 +35,5 @@ Every test state link without `?day=` takes the shift back to the system day; a 
 
 Limits:
 
-- `weekly-recap`: the Weekly Recap shows on a local Monday only (ADR 0054); on another day the state holds last week but no Recap shows, unless the link adds `?day=monday`.
-- `crossword-solved`, `crossword-7-in-a-row`: the solves are XP log records only, so the crossing Daily Crossword's card (ADR 0087) reads solved while its grid opens empty.
+- `weekly-recap`: the Weekly Recap shows on a local Monday only; on another day the state holds last week but no Recap shows, unless the link adds `?day=monday`.
+- `crossword-solved`, `crossword-7-in-a-row`: the solves are XP log records only, so the crossing Daily Crossword's card reads solved while its grid opens empty.
