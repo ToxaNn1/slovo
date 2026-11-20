@@ -1,6 +1,6 @@
 import { Button, EditionProvider, IconButton, PressedTile } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { AccessibilityInfo, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
@@ -137,5 +137,24 @@ describe('IconButton', () => {
     );
     await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PressedTile inert', () => {
+  it('takes no press and does not sink, but is not read as dimmed', async () => {
+    const onPress = jest.fn();
+    await renderWith(
+      false,
+      <PressedTile testID="it" accessibilityLabel="Answer" onPress={onPress} inert>
+        <Text>Answer</Text>
+      </PressedTile>,
+    );
+
+    const tile = screen.getByRole('button', { name: 'Answer' });
+    await userEvent.setup().press(tile);
+
+    expect(onPress).not.toHaveBeenCalled();
+    expect(await face()).toEqual({ opacity: 1, sunk: 0 });
+    expect(tile).toBeEnabled();
   });
 });

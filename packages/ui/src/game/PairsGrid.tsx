@@ -192,7 +192,7 @@ function Cell({
           tone={TONES[look]}
           radius={pairsGridLayout.cellRadius}
           accessibilityLabel={label}
-          accessibilityState={{ selected: look === 'selected', disabled: inert || empty }}
+          accessibilityState={{ selected: look === 'selected', disabled: empty }}
           inert={inert || empty}
           onPress={onPress}
           faceStyle={[styles.cell, look === 'wrong' && { backgroundColor: colors.surfaceSunken }]}

@@ -1,7 +1,7 @@
 import type { GridCell, RoundAnswer, RoundOption } from '@slovo/core';
 import { coreTokens, EditionProvider, PairsGrid } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import { useState } from 'react';
 import { AccessibilityInfo, Pressable, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
@@ -169,9 +169,11 @@ describe('PairsGrid', () => {
     await match(0, 1);
 
     expect(onAnswer).toHaveBeenCalledWith(0, 1);
-    // The answered Round waits for «Далі»: no cell takes a tap.
-    expect(word(1)).toBeDisabled();
-    expect(definition(0)).toBeDisabled();
+    // The answered Round waits for «Далі»: no cell takes a tap, and none is read as dimmed.
+    await userEvent.setup().press(word(1));
+    expect(word(1)).not.toBeSelected();
+    expect(word(1)).toBeEnabled();
+    expect(definition(0)).toBeEnabled();
   });
 
   it('takes a right pair out of the grid in the next Round', async () => {

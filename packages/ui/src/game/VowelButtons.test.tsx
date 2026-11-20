@@ -1,7 +1,7 @@
 import type { RoundAnswer } from '@slovo/core';
 import { coreTokens, EditionProvider, VowelButtons } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
@@ -102,10 +102,11 @@ describe('VowelButtons', () => {
     const onAnswer = jest.fn();
     await render(<Vowels answer={answered(3, [3])} onAnswer={onAnswer} />);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'a, second letter' }));
+    await userEvent.setup().press(screen.getByRole('button', { name: 'a, second letter' }));
 
-    expect(screen.getByRole('button', { name: 'a, fourth letter, Right' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'a, second letter' })).toBeDisabled();
+    // VoiceOver does not read the answered letters as dimmed.
+    expect(screen.getByRole('button', { name: 'a, fourth letter, Right' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'a, second letter' })).toBeEnabled();
     expect(onAnswer).not.toHaveBeenCalled();
   });
 

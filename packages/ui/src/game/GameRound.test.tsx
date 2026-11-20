@@ -15,7 +15,7 @@ import {
   type DesignTokens,
 } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent, waitFor, within } from '@testing-library/react-native';
 import { useState } from 'react';
 import { AccessibilityInfo, Platform, StyleSheet, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
@@ -673,8 +673,9 @@ describe('GameRound', () => {
     await renderRound(onAnswer);
 
     await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'dour' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'brittle, Your choice' }));
+    const user = userEvent.setup();
+    await user.press(screen.getByRole('button', { name: 'dour' }));
+    await user.press(screen.getByRole('button', { name: 'brittle, Your choice' }));
 
     expect(onAnswer).toHaveBeenCalledTimes(1);
     expect(onAnswer).toHaveBeenCalledWith({ form: 'pick', option: 1 });
@@ -868,7 +869,7 @@ describe('GameRound', () => {
       await renderRound(onAnswer, jest.fn(), trapVowelRound);
 
       await fireEvent.press(screen.getByRole('button', { name: 'o, fifth letter' }));
-      await fireEvent.press(screen.getByRole('button', { name: 'a, second letter, Right' }));
+      await userEvent.setup().press(screen.getByRole('button', { name: 'a, second letter, Right' }));
 
       expect(onAnswer).toHaveBeenCalledTimes(1);
       expect(onAnswer).toHaveBeenCalledWith({ form: 'vowel', position: 4 });
