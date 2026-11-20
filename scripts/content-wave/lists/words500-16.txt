@@ -1,0 +1,15 @@
+кисляк household-crafts 2
+китиця nature-weather 3
+клир arts-culture 4
+ключар history-antiquity 3
+клясти language-speech 3
+кліть household-crafts 3
+кліф nature-weather 4
+кнур nature-weather 2
+коала nature-weather 2
+козуля nature-weather 2
+колотуха household-crafts 4
+коняка nature-weather 2
+копач old-crafts 2
+копиця old-crafts 2
+корольок nature-weather 3

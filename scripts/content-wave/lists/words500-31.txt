@@ -1,0 +1,16 @@
+рядович history-antiquity 5
+ряса arts-culture 3
+ряст nature-weather 2
+різь human-body 3
+різьбити old-crafts 4
+рінь nature-weather 3
+савана nature-weather 3
+сажа household-crafts 2
+сайга nature-weather 4
+салага witty-insults 4
+сапа old-crafts 2
+сапка old-crafts 4
+саржа household-crafts 4
+сатир arts-culture 2
+сваволя emotions-character 3
+свара emotions-character 4

@@ -1,0 +1,15 @@
+зойк emotions-character 2
+зола household-crafts 2
+золотуха human-body 3
+зорина nature-weather 4
+зубр nature-weather 2
+зяб old-crafts 4
+зяблик nature-weather 3
+ирій folk-names 2
+йовбак witty-insults 3
+каганчик household-crafts 5
+кадуб household-crafts 4
+казнокрад witty-insults 4
+кайма household-crafts 3
+калан nature-weather 3
+калган nature-weather 3

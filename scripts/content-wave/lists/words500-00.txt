@@ -1,0 +1,16 @@
+агава nature-weather 3
+агама nature-weather 3
+айва nature-weather 2
+алича nature-weather 3
+алюр nature-weather 3
+амок emotions-character 4
+апорія language-speech 4
+арба old-crafts 4
+аронія nature-weather 3
+багор old-crafts 3
+баддя household-crafts 4
+бадя household-crafts 4
+балабуха household-crafts 3
+балясина household-crafts 4
+баньян nature-weather 4
+бараболя household-crafts 3

@@ -1,0 +1,15 @@
+гончарка old-crafts 4
+горлань witty-insults 4
+горнець household-crafts 3
+горниця household-crafts 4
+грак nature-weather 3
+гребти household-crafts 2
+гривна history-antiquity 2
+гризюка witty-insults 5
+громило witty-insults 4
+громовиця nature-weather 3
+груда nature-weather 3
+грузило old-crafts 3
+гуж old-crafts 4
+гузно human-body 3
+гульбище history-antiquity 4

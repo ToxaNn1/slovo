@@ -1,0 +1,15 @@
+сваха folk-names 2
+свинар old-crafts 3
+секвоя nature-weather 4
+сель nature-weather 2
+селюк witty-insults 2
+сердак household-crafts 4
+сетер nature-weather 3
+сипняк human-body 4
+сирин arts-culture 3
+скляр old-crafts 2
+скопа nature-weather 3
+скупиндя witty-insults 5
+скіт history-antiquity 4
+слиж nature-weather 3
+слівце language-speech 2

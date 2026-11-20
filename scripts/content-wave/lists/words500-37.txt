@@ -1,0 +1,15 @@
+упир folk-names 3
+упряж old-crafts 2
+урюк household-crafts 4
+усмак language-speech 5
+утнути language-speech 3
+учта history-antiquity 4
+ущент language-speech 2
+фавн arts-culture 3
+фатум emotions-character 2
+ферт witty-insults 2
+флюгер household-crafts 2
+фляки household-crafts 4
+фрак household-crafts 2
+фрезія nature-weather 4
+фіглі emotions-character 3

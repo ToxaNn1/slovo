@@ -1,0 +1,15 @@
+боцян folk-names 3
+бузинник nature-weather 5
+бузько folk-names 2
+бундз household-crafts 4
+буран nature-weather 2
+бурозубка nature-weather 4
+бурт old-crafts 4
+бушель history-antiquity 3
+буян witty-insults 3
+бювар household-crafts 5
+бязь household-crafts 3
+бівак military 4
+бігль nature-weather 3
+бігос household-crafts 3
+бідак emotions-character 4

@@ -1,0 +1,17 @@
+шопа household-crafts 3
+шори old-crafts 3
+шпуля old-crafts 4
+шуляк nature-weather 2
+шурин folk-names 2
+шурф old-crafts 3
+шхуна military 2
+щем emotions-character 3
+щупак nature-weather 2
+юнь emotions-character 2
+юрма language-speech 4
+юрта household-crafts 4
+яйла nature-weather 3
+ямб arts-culture 2
+ярка nature-weather 2
+ярок nature-weather 2
+ярчук folk-names 2

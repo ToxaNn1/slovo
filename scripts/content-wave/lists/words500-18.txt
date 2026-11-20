@@ -1,0 +1,15 @@
+кудла human-body 3
+кужіль old-crafts 2
+кузька nature-weather 3
+кулан nature-weather 2
+кумис household-crafts 3
+курія history-antiquity 2
+кутя household-crafts 2
+кібчик nature-weather 4
+ківш household-crafts 2
+кізяк household-crafts 3
+кілок household-crafts 2
+кітч arts-culture 2
+лабуда witty-insults 4
+лавр nature-weather 2
+ларго arts-culture 2

@@ -1,0 +1,15 @@
+камбуз household-crafts 4
+камео arts-culture 3
+канва household-crafts 2
+карагач nature-weather 5
+каракурт nature-weather 3
+картяр witty-insults 3
+кастет military 2
+каюк language-speech 2
+квач household-crafts 2
+кейф emotions-character 4
+кельт history-antiquity 2
+кендюх household-crafts 3
+кепкун witty-insults 5
+кила human-body 3
+кисет household-crafts 4

@@ -1,0 +1,15 @@
+латянка household-crafts 5
+мигцем language-speech 2
+мазер science 4
+меланізм science 4
+муфлон nature-weather 3
+опалесценція science 4
+палеографія history-antiquity 4
+палтус nature-weather 3
+пасифлора nature-weather 3
+парнас arts-culture 2
+передгрозовий nature-weather 4
+помор'я nature-weather 3
+нанос nature-weather 4
+олександрит science 4
+орлики nature-weather 4
