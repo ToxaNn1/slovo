@@ -50,7 +50,8 @@ export const RuleTargetsSchema = z.strictObject({
   appVersion: z
     .strictObject({ from: AppVersionSchema.optional(), until: AppVersionSchema.optional() })
     .refine(
-      ({ from, until }) => from === undefined || until === undefined || !isLaterVersion(from, until),
+      ({ from, until }) =>
+        from === undefined || until === undefined || !isLaterVersion(from, until),
       'Expected `from` no later than `until`',
     )
     .optional(),

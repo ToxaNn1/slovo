@@ -78,18 +78,15 @@ describe('Rules that only turn a feature off', () => {
       reason: 'xp bug',
     });
 
-    await expect(
-      client.admin.setRules({
-        editionId: 'parent',
-        feature: 'badges',
-        rules: [{ id: 'off', verdict: 'off', targets: { platform: 'ios' } }],
-        reason: 'keep badges off on iOS',
-      }),
-    ).resolves.toMatchObject({
-      rules: expect.arrayContaining([
-        expect.objectContaining({ id: 'off', feature: 'badges', verdict: 'off' }),
-      ]),
+    const taken = await client.admin.setRules({
+      editionId: 'parent',
+      feature: 'badges',
+      rules: [{ id: 'off', verdict: 'off', targets: { platform: 'ios' } }],
+      reason: 'keep badges off on iOS',
     });
+    expect(taken.rules.filter((rule) => rule.feature === 'badges')).toMatchObject([
+      { id: 'off', verdict: 'off' },
+    ]);
     await expect(
       client.admin.setRules({
         editionId: 'parent',
