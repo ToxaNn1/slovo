@@ -13,6 +13,7 @@ import type {
   Platform,
   Rule,
 } from '@slovo/contracts';
+import type { Action } from './admin/admin-access';
 import type { EasBuild, MainCi, Milestone, PullRequest, Release } from '@slovo/contracts/admin-api';
 
 /** The current time, injected so the rules that read it stay testable. */
@@ -150,9 +151,10 @@ export interface Authenticator {
   /**
    * Deletes the Account with its Sessions, sign-in methods and the records
    * Sync keeps of it in every Edition, and the Sign-in codes waiting for its
-   * email, all at once.
+   * email, and appends the Action of an owner admin's deletion to the Action
+   * log (ADR 0088), all at once.
    */
-  delete(account: AccountRecord): Promise<void>;
+  delete(account: AccountRecord, logged?: Action): Promise<void>;
   /**
    * The Account of the email, normalised already, with the Google and Apple
    * sign-in methods recorded for it; none when the email has no Account.

@@ -1,6 +1,7 @@
 import { AccountEmailSchema, fill } from '@slovo/contracts';
 import { ACCOUNTS_PAGE_SIZE } from '@slovo/contracts/admin-api';
 
+import type { ActionEntry } from '../admin/admin-access';
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type {
   AccountRecord,
@@ -144,10 +145,14 @@ export interface Accounts {
   get(accountId: string): Promise<AccountWithRecords | undefined>;
   /**
    * Deletes the email's Account as `delete` does a Session's, for the owner
-   * admin alone, and answers the Account deleted; none, and
-   * nothing changes, when the email has no Account.
+   * admin alone, with the Action log's entry of the Account deleted in the
+   * same write, and answers the Account deleted; none, and nothing changes,
+   * when the email has no Account.
    */
-  deleteByEmail(email: string): Promise<AccountRecord | undefined>;
+  deleteByEmail(
+    email: string,
+    entryOf: (deleted: AccountRecord) => ActionEntry,
+  ): Promise<AccountRecord | undefined>;
 }
 
 /** An Account as the owner admin opens it, with the records Sync keeps of it per Edition. */
@@ -289,12 +294,12 @@ export function createAccounts({
       };
     },
 
-    async deleteByEmail(typedEmail) {
+    async deleteByEmail(typedEmail, entryOf) {
       const email = normalised(typedEmail);
       if (email === undefined) return undefined;
       const found = await authenticator.accountOf(email);
       if (found === undefined) return undefined;
-      await authenticator.delete(found.account);
+      await authenticator.delete(found.account, { ...entryOf(found.account), at: clock.now() });
       return found.account;
     },
   };

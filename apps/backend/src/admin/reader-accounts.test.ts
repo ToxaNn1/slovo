@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { sql } from 'drizzle-orm';
 import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { ACCOUNTS_PAGE_SIZE } from '@slovo/contracts/admin-api';
@@ -266,7 +267,7 @@ describe('a reader Account in Безпека', () => {
     });
   });
 
-  it('deletes the Account as the app does, signing its devices out, and logs who, which email and why', async () => {
+  it('deletes the Account as the app does, signing its devices out, and logs who, which Account and why', async () => {
     const backend = await ownerOn();
     const email = newEmail();
     const other = newEmail();
@@ -289,7 +290,7 @@ describe('a reader Account in Безпека', () => {
     expect(actions[0]).toMatchObject({
       who: { kind: 'admin-user', email: backend.owner.email },
       what: 'account.delete',
-      before: { email, createdAt: created?.createdAt.toISOString() },
+      before: { id: created?.id, email, createdAt: created?.createdAt.toISOString() },
       after: null,
       reason: 'spam Account',
       editionId: null,
@@ -305,6 +306,26 @@ describe('a reader Account in Безпека', () => {
     ).rejects.toMatchObject({ code: 'CONFLICT', data: { refusal: 'unknown' } });
 
     expect((await backend.owner.client.admin.actions({})).actions).toEqual(before);
+  });
+
+  it('keeps the Account when its Action log row cannot be written', async () => {
+    const backend = await ownerOn();
+    const email = newEmail();
+    const phone = await backend.signInReader(email);
+    // The Action log refuses the row, as a database failing the write would.
+    await backend.database.db.execute(
+      sql`alter table action_log add constraint no_deletes check (what <> 'account.delete') not valid`,
+    );
+    onTestFinished(async () => {
+      await backend.database.db.execute(sql`alter table action_log drop constraint no_deletes`);
+    });
+
+    await expect(
+      backend.owner.client.admin.deleteAccount({ email, reason: 'spam Account' }),
+    ).rejects.toMatchObject({ status: 500 });
+
+    expect((await backend.rowsOf(email)).account).toBeDefined();
+    await expect(phone.me()).resolves.toMatchObject({ email });
   });
 
   it('needs a reason', async () => {

@@ -412,17 +412,17 @@ export function adminProcedures({
     // The app's own deletion path: the Account goes as «Видалити SLOVO ID» deletes it.
     deleteAccount: os.deleteAccount.handler(async ({ context, input, errors }) => {
       const { who, reason } = writeOf(context.caller, input.reason);
-      const deleted = await accounts.deleteByEmail(input.email);
-      if (deleted === undefined) throw errors.CONFLICT({ data: { refusal: 'unknown' } });
-      await admin.log({
+      // The Action log keeps the deleted Account's id and email (ADR 0204).
+      const deleted = await accounts.deleteByEmail(input.email, ({ id, email, createdAt }) => ({
         who,
         what: 'account.delete',
-        before: { email: deleted.email, createdAt: deleted.createdAt.toISOString() },
+        before: { id, email, createdAt: createdAt.toISOString() },
         after: null,
         reason,
         editionId: null,
         batchId: null,
-      });
+      }));
+      if (deleted === undefined) throw errors.CONFLICT({ data: { refusal: 'unknown' } });
       return { deleted: true as const };
     }),
 

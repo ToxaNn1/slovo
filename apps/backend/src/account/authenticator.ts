@@ -15,7 +15,7 @@ import { count, desc, eq, inArray, like, type SQL } from 'drizzle-orm';
 import type { Logger } from 'pino';
 
 import type { Database } from '../database/database';
-import { accounts, sessions, signInCodes, signInMethods } from '../database/schema';
+import { accounts, actionLog, sessions, signInCodes, signInMethods } from '../database/schema';
 
 /**
  * The rules of a Sign-in code (spec #333). better-auth enforces them, so they
@@ -309,10 +309,11 @@ export function createAuthenticator(
     // transaction, so the adapter deletes in one: the database's cascade takes
     // the Sessions, sign-in methods and Sync's records with the Account
     // (ADR 0030, 0041).
-    async delete({ id, email }) {
+    async delete({ id, email }, logged) {
       await database.db.transaction(async (tx) => {
         await tx.delete(signInCodes).where(eq(signInCodes.identifier, codeIdentifier(email)));
         await tx.delete(accounts).where(eq(accounts.id, id));
+        if (logged !== undefined) await tx.insert(actionLog).values(logged);
       });
     },
 
