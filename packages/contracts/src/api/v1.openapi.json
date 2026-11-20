@@ -1491,7 +1491,7 @@
       "delete": {
         "operationId": "account.delete",
         "summary": "Delete the Session's Account at once and for good",
-        "description": "Its Sessions and sign-in methods go with it, and so does any Sign-in code waiting for its email. There is no grace period; the same email can sign in again to a new, empty Account.",
+        "description": "Its Sessions, sign-in methods and the records Sync keeps of it in every Edition go with it, and so does any Sign-in code waiting for its email. There is no grace period; the same email can sign in again to a new, empty Account.",
         "tags": [
           "account"
         ],
@@ -32919,7 +32919,7 @@
       "get": {
         "operationId": "admin.ciHistory",
         "summary": "Якість: the CI runs on main of a period, oldest first",
-        "description": "Each run with its coverage per package, job durations and its flaky tests: failed in it and passed in another run of the period.",
+        "description": "Each run with its coverage per package, job durations and its flaky tests: failed in it and passed in another run of the same commit in the period.",
         "tags": [
           "admin"
         ],

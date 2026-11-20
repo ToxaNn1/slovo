@@ -131,10 +131,38 @@ export function createAdminSignIn({
   });
 
   /** Whether the TOTP is the user's, of a step newer than the last that signed in, which it spends. */
+  /**
+   * The user's TOTP secret; undefined when there is none, or when the vault
+   * no longer opens it because `AUTH_SECRET` was rotated: then it counts as none.
+   */
+  const totpSecretOf = (user: AdminUser) =>
+    user.totp.state === 'none' ? undefined : vault.open(user.totp.sealedSecret);
+
   async function spendTotp(user: AdminUser, totp: string, at: Date): Promise<boolean> {
-    if (user.totp.state === 'none') return false;
-    const step = totpStep(hmacSha1, vault.open(user.totp.sealedSecret), totp, at);
+    const secret = totpSecretOf(user);
+    if (secret === undefined) return false;
+    const step = totpStep(hmacSha1, secret, totp, at);
     return step !== undefined && (await store.spendTotpStep(user.id, step));
+  }
+
+  /**
+   * The pending TOTP secret the user enrols with: the one already pending, so
+   * a repeated request answers the QR and recovery codes just shown; else a
+   * new one, set unless a request beside it set its own first.
+   */
+  async function pendingSecret(user: AdminUser): Promise<string> {
+    const kept = totpSecretOf(user);
+    if (user.totp.state === 'pending' && kept !== undefined) return kept;
+    const secret = letters(32, BASE32);
+    const replacing = user.totp.state === 'none' ? null : user.totp.sealedSecret;
+    const hashes = recoveryCodesOf(hmacSha1, secret).map((recovery) => hash(recovery));
+    if (await store.setPendingTotp(user.id, replacing, vault.seal(secret), hashes)) return secret;
+    const now = await store.adminUserByEmail(user.email);
+    const theirs = now === undefined ? undefined : totpSecretOf(now);
+    if (now?.totp.state !== 'pending' || theirs === undefined) {
+      throw new Error('The pending TOTP changed under the enrolment and is not pending');
+    }
+    return theirs;
   }
 
   /** Answers the refusal a wrong attempt, already taken, earns. */
@@ -204,16 +232,11 @@ export function createAdminSignIn({
       if ('ok' in user) return user;
       // The code is checked, not spent: its attempt is not one of the failures.
       await giveBackAttempt(rateLimits, failuresKey(email));
-      if (user.totp.state === 'on') return { ok: true, next: 'totp' };
-      const secret = letters(32, BASE32);
-      const recoveryCodes = Array.from({ length: RECOVERY_CODES }, () =>
-        letters(10, '23456789abcdefghjkmnpqrstuvwxyz'),
-      );
-      await store.setPendingTotp(
-        user.id,
-        vault.seal(secret),
-        recoveryCodes.map((recovery) => hash(recovery)),
-      );
+      if (user.totp.state === 'on' && totpSecretOf(user) !== undefined) {
+        return { ok: true, next: 'totp' };
+      }
+      const secret = await pendingSecret(user);
+      const recoveryCodes = recoveryCodesOf(hmacSha1, secret);
       const label = encodeURIComponent(`SLOVO admin:${email}`);
       return {
         ok: true,
@@ -289,7 +312,7 @@ export function createAdminSignIn({
     },
 
     async signOutEverywhere(token) {
-      const row = await store.adminSession(hash(token));
+      const row = await sessionRow(token);
       if (row !== undefined) await store.deleteAdminSessionsOf(row.user.id);
     },
   };
@@ -317,6 +340,20 @@ function hotp(hmacSha1: HmacSha1, secret: string, counter: number): string {
   const binary =
     new DataView(mac.buffer, mac.byteOffset, mac.byteLength).getUint32(offset) & 0x7fffffff;
   return (binary % 1_000_000).toString().padStart(6, '0');
+}
+
+/**
+ * The recovery codes of a TOTP secret: ten letters of its HMAC each, so the
+ * pending secret answers the same codes again; the store keeps their hashes.
+ */
+function recoveryCodesOf(hmacSha1: HmacSha1, secret: string): string[] {
+  const alphabet = '23456789abcdefghjkmnpqrstuvwxyz';
+  const key = base32Bytes(secret);
+  return Array.from({ length: RECOVERY_CODES }, (_, index) => {
+    const message = Uint8Array.from(`recovery:${String(index)}`, (letter) => letter.charCodeAt(0));
+    const mac = hmacSha1(key, message).slice(0, 10);
+    return Array.from(mac, (byte) => alphabet.charAt(byte % alphabet.length)).join('');
+  });
 }
 
 const stepOf = (at: Date) => Math.floor(at.getTime() / 1000 / TOTP_STEP_SECONDS);
