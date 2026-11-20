@@ -70,10 +70,11 @@ export function AnswerBanner({
   // The banner announces itself once, as it shows; the screen keys it by its Round.
   const [shown] = useState(() => ({ announcement, onWaitFor }));
   useEffect(() => {
+    // A check that fails counts as no screen reader, so the Round still moves on.
     shown.onWaitFor(
-      AccessibilityInfo.isScreenReaderEnabled().then((on) =>
-        on ? announced(shown.announcement) : undefined,
-      ),
+      AccessibilityInfo.isScreenReaderEnabled()
+        .catch(() => false)
+        .then((on) => (on ? announced(shown.announcement) : undefined)),
     );
   }, [shown]);
 

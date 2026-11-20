@@ -21,7 +21,7 @@ import Animated, {
 import { useEdition } from '../providers/EditionProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { useTokens } from '../providers/TokensProvider';
-import { motion, tabBar, typeStyle } from '../tokens';
+import { fontScaleCap, motion, tabBar, typeStyle } from '../tokens';
 import { Icon, type IconName } from './Icon';
 
 const tabEasing = Easing.bezier(...motion.tab.easing);
@@ -91,7 +91,11 @@ export function TabBarButton({
         style={[styles.indicator, { backgroundColor: tokens.colors.accent }, indicatorStyle]}
       />
       <Icon name={icon} color={color} size={tabBar.icon} />
-      <Text style={[typeStyle('tabLabel', tokens), { color }]} numberOfLines={1}>
+      <Text
+        style={[typeStyle('tabLabel', tokens), { color }]}
+        numberOfLines={1}
+        maxFontSizeMultiplier={fontScaleCap.number}
+      >
         {label}
       </Text>
     </Pressable>

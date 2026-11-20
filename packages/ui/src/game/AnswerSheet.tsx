@@ -30,9 +30,11 @@ export function AnswerSheet({
   line: string | undefined;
   onNext: () => void;
 }) {
-  // The answer it shows and its line, kept while the sheet leaves after «Далі» took the Round's away.
-  const [shown, setShown] = useState(answer === undefined ? undefined : { answer, line });
-  if (answer !== undefined && answer !== shown?.answer) setShown({ answer, line });
+  // The answer it shows and its line, kept while the sheet leaves after «Далі» took the Round's away,
+  // and how many it has shown: each answer gets a card of its own, which VoiceOver hears.
+  const [shown, setShown] = useState(answer === undefined ? undefined : { answer, line, count: 0 });
+  if (answer !== undefined && answer !== shown?.answer)
+    setShown({ answer, line, count: (shown?.count ?? -1) + 1 });
   return (
     <BottomSheet
       visible={answer !== undefined}
@@ -40,7 +42,12 @@ export function AnswerSheet({
       testID="game-sheet"
     >
       {shown === undefined ? null : (
-        <AnswerCard right={shown.answer.right} line={shown.line} onNext={onNext} />
+        <AnswerCard
+          key={shown.count}
+          right={shown.answer.right}
+          line={shown.line}
+          onNext={onNext}
+        />
       )}
     </BottomSheet>
   );

@@ -1,5 +1,11 @@
 import type { CalendarDay } from '@slovo/core';
-import { coreTokens, EditionProvider, StreakFreezeCard, TokensProvider } from '@slovo/ui';
+import {
+  coreTokens,
+  EditionProvider,
+  fontScaleCap,
+  StreakFreezeCard,
+  TokensProvider,
+} from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { render, screen, within } from '@testing-library/react-native';
 
@@ -74,5 +80,14 @@ describe('StreakFreezeCard', () => {
     expect(screen.getByText('A freeze covers a missed day.')).toBeOnTheScreen();
     expect(screen.getAllByLabelText(/, (active|frozen|today)$/)).toHaveLength(7);
     expect(screen.getByLabelText('15, today')).toBeOnTheScreen();
+  });
+
+  it('keeps the chip and the day numbers to their boxes at the largest text sizes', async () => {
+    await renderCard(23, 1);
+
+    expect(screen.getByText('2 HELD')).toHaveProp('maxFontSizeMultiplier', fontScaleCap.number);
+    expect(
+      within(screen.getByLabelText('15, today')).getByText('15', { includeHiddenElements: true }),
+    ).toHaveProp('maxFontSizeMultiplier', fontScaleCap.number);
   });
 });

@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { freezeCard, typeStyle } from '../tokens';
+import { fontScaleCap, freezeCard, typeStyle } from '../tokens';
 import { Frost } from './Frost';
 import { dayLabel } from './day-label';
 
@@ -37,7 +37,12 @@ function Day({ day }: { day: CalendarDay }) {
       style={[styles.day, { backgroundColor: look.face }]}
     >
       {day.state === 'frozen' && <Frost />}
-      <Text style={[typeStyle('freezeDay', tokens), { color: look.number }]}>{day.day}</Text>
+      <Text
+        maxFontSizeMultiplier={fontScaleCap.number}
+        style={[typeStyle('freezeDay', tokens), { color: look.number }]}
+      >
+        {day.day}
+      </Text>
     </View>
   );
 }
@@ -94,7 +99,11 @@ export function StreakFreezeCard({
             {words.title}
           </Text>
           <View style={[styles.chip, { backgroundColor: key.background }]}>
-            <Text {...voice} style={[typeStyle('freezeChip', tokens), { color: key.ink }]}>
+            <Text
+              {...voice}
+              maxFontSizeMultiplier={fontScaleCap.number}
+              style={[typeStyle('freezeChip', tokens), { color: key.ink }]}
+            >
               {fill(words.held, { count: String(held) })}
             </Text>
           </View>

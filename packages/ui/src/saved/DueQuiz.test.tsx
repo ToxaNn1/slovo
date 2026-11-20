@@ -1,7 +1,7 @@
 import type { DueQuestion, Haptics } from '@slovo/core';
 import { DueQuizCard, DueQuizSheet, EditionProvider, HapticsProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
@@ -131,7 +131,7 @@ describe('DueQuizSheet', () => {
     expect(screen.getByTestId('due-quiz-option-1-check')).toBeTruthy();
   });
 
-  it('keeps the answer in the options for VoiceOver, each disabled once picked', async () => {
+  it('keeps the answer in the options for VoiceOver, none read as dimmed or taking a second pick', async () => {
     await renderSheet();
 
     await fireEvent.press(screen.getByLabelText('A, A cloud.'));
@@ -141,8 +141,10 @@ describe('DueQuizSheet', () => {
       'B, Quiet and gentle., Right one',
     );
     expect(screen.getByTestId('due-quiz-option-2')).toHaveAccessibleName('C, A coin.');
+    await userEvent.setup().press(screen.getByTestId('due-quiz-option-2'));
+    expect(screen.getByTestId('due-quiz-option-2')).toHaveAccessibleName('C, A coin.');
     for (const option of [0, 1, 2])
-      expect(screen.getByTestId(`due-quiz-option-${String(option)}`)).toBeDisabled();
+      expect(screen.getByTestId(`due-quiz-option-${String(option)}`)).toBeEnabled();
   });
 
   it('moves on with «Next» and ends with «Done», telling how many were right', async () => {
