@@ -54,6 +54,12 @@ export interface Judged<Answer> {
  * keeps only its state machine.
  */
 export interface AnswerForm<Content, Shown, Given, Answer> {
+  /**
+   * Whether an answer in the form shows the answer banner, which moves the
+   * Game on by itself (ADR 0138): not a pair of a pairs grid, whose grid
+   * stays for its other pairs.
+   */
+  readonly bannerAfterAnswer: boolean;
   /** Whether the content has exactly one right answer in the form. */
   wellFormed(content: Content): boolean;
   /** How many Rounds of the Game the content spans, such as one per pair of a grid. */
@@ -72,4 +78,9 @@ export interface AnswerForm<Content, Shown, Given, Answer> {
     given: Given,
     comparison: TextComparison,
   ): Judged<Answer> | undefined;
+  /**
+   * The Round with «Відкрити літеру»: a letter of its answer opened, at no
+   * cost. Nothing when the form has no letter to open, or the Round none left.
+   */
+  openLetter(content: Content, shown: Shown): Shown | undefined;
 }
