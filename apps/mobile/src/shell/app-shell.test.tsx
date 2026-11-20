@@ -150,6 +150,41 @@ describe('the Shell of the device', () => {
     expect((await shell.sync?.opened())?.state.running).toBe(false);
   });
 
+  it('follows the remote switches once however often the Account is read while switched off', async () => {
+    const { shell, turnOffRemotely } = shellOverFakes();
+    await turnOffRemotely('account');
+    const switches = await shell.remoteSwitches.opened();
+    const subscribe = switches.subscribe.bind(switches);
+    let following = 0;
+    jest.spyOn(switches, 'subscribe').mockImplementation((listener) => {
+      following += 1;
+      const stop = subscribe(listener);
+      return () => {
+        following -= 1;
+        stop();
+      };
+    });
+
+    for (const _read of [1, 2, 3]) await expect(shell.account?.opened()).rejects.toThrow('account');
+
+    expect(following).toBe(1);
+  });
+
+  it('sends a Mistake Report with the Session of an Account switched back on after the reports opened', async () => {
+    const { fake, shell, turnOffRemotely } = shellOverFakes();
+    await turnOffRemotely('account');
+    const reports = await shell.mistakeReports.opened();
+
+    await turnOffRemotely();
+    const account = await shell.account?.opened();
+    await account?.requestCode('olena@ukr.net');
+    await account?.verifyCode(fake.account.sentCodes[0]?.code ?? '');
+    expect(account?.state.status).toBe('signed-in');
+    await reports.report({ entryId: 'w_one', type: 'typo', comment: '' });
+
+    expect(fake.reports.sessions).toEqual([expect.any(String)]);
+  });
+
   it('opens by the Rules the device read last when the next launch is offline', async () => {
     const userState = userStateInMemory();
     await shellOverFakes({ userState }).turnOffRemotely('account');
