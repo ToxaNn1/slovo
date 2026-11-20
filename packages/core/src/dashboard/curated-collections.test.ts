@@ -434,3 +434,75 @@ describe('A Curated Collection screen', () => {
     expect((await app.curatedCollections.screen('cc_picks'))?.added).toBe(false);
   });
 });
+
+// Audit 1.8: a refresh nobody awaits keeps its failed read to itself. A rejection
+// left unhandled fails the test run.
+describe('A refresh whose read fails', () => {
+  it('leaves the rail as it was with nothing rejected unhandled, and reads again on the next change', async () => {
+    const memory = createMemoryUserStatePort();
+    let failing = false;
+    const port: UserStatePort = {
+      ...memory,
+      list: (prefix) =>
+        failing && prefix.startsWith('curatedCollections.opened.')
+          ? Promise.reject(new Error('The disk is gone'))
+          : memory.list(prefix),
+    };
+    const { app } = await run({ port });
+    const before = app.curatedCollections.rail;
+
+    failing = true;
+    await app.collections.create('Мої слова');
+    await settle();
+
+    expect(app.curatedCollections.rail).toBe(before);
+
+    failing = false;
+    await app.curatedCollections.open('cc_today');
+    expect(idsOf(app)).toEqual(['cc_oct:new', 'cc_jan:new', 'cc_today:opened']);
+  });
+
+  it('leaves the Dashboard as it was with nothing rejected unhandled, and reads again on the next change', async () => {
+    const words = createMemoryContentPort({
+      words: [word('w_one'), word('w_two'), word('w_three')],
+      curatedCollections: collections,
+    });
+    let failing = false;
+    const app = await openComposition({
+      content: {
+        ...words,
+        getEntries: (ids) =>
+          failing ? Promise.reject(new Error('The disk is gone')) : words.getEntries(ids),
+      },
+      edition: testEdition({
+        isFeatureEnabled: (feature) => ['wordOfTheDay', 'curatedCollections'].includes(feature),
+      }),
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock: fakeClock('2026-11-04T09:00:00+02:00').clock,
+      random: { next: () => 0.25 },
+    });
+    await app.dashboard.reveal();
+    const before = app.dashboard.blocks;
+    expect(before.find((block) => block.kind === 'wordOfTheDay')).toMatchObject({
+      hero: { state: 'revealed' },
+    });
+    const railOf = () => app.dashboard.blocks.find((block) => block.kind === 'curatedCollections');
+
+    failing = true;
+    await app.curatedCollections.open('cc_today');
+    await settle();
+
+    expect(app.dashboard.blocks).toBe(before);
+
+    failing = false;
+    await app.curatedCollections.open('cc_oct');
+    await settle();
+    expect(railOf()).toMatchObject({
+      cards: [
+        { collection: { id: 'cc_jan' }, state: 'new' },
+        { collection: { id: 'cc_today' }, state: 'opened' },
+        { collection: { id: 'cc_oct' }, state: 'opened' },
+      ],
+    });
+  });
+});
