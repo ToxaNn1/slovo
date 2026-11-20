@@ -13,6 +13,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 /** Opens Neon's window and answers its entries section. */
@@ -282,6 +283,48 @@ test('a wrong TOTP is refused in the prompt and shows nothing', async () => {
   expect((await prompt.findByRole('alert')).textContent).toContain('Невірний код');
   expect(screen.queryByText(FAKE_VALUE)).toBeNull();
   expect(calls).toEqual([`reveal ${SERVICE_ENTRIES[3].id}`, 'unlock 000000']);
+});
+
+/** A browser's `ClipboardItem`, which jsdom lacks: the type of each value and its Blob. */
+class FakeClipboardItem {
+  readonly #data: Readonly<Record<string, Promise<Blob>>>;
+  constructor(data: Readonly<Record<string, Promise<Blob>>>) {
+    this.#data = data;
+  }
+  get types(): string[] {
+    return Object.keys(this.#data);
+  }
+  async getType(type: string): Promise<Blob> {
+    const blob = this.#data[type];
+    if (blob === undefined) throw new Error(`No ${type} in the item`);
+    return blob;
+  }
+}
+
+test('«Копіювати» starts the clipboard write in the tap itself, before the value arrives', async () => {
+  vi.stubGlobal('ClipboardItem', FakeClipboardItem);
+  let answer = () => undefined;
+  const answered = new Promise<undefined>((resolve) => {
+    answer = () => {
+      resolve(undefined);
+    };
+  });
+  server.use(
+    override('services.copyEntry', async () => {
+      await answered;
+      return { value: FAKE_VALUE };
+    }),
+  );
+  const { user, entries } = await neonEntries();
+  const write = vi.spyOn(navigator.clipboard, 'write');
+  const token = within(await entries.findByRole('listitem', { name: 'API-ключ' }));
+
+  await user.click(token.getByRole('button', { name: 'Копіювати' }));
+  expect(write).toHaveBeenCalledOnce();
+  answer();
+
+  expect(await token.findByText('Скопійовано')).toBeDefined();
+  expect(await navigator.clipboard.readText()).toBe(FAKE_VALUE);
 });
 
 test('«Копіювати» writes the clipboard without ever showing the value', async () => {
