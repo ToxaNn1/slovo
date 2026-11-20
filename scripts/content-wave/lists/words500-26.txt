@@ -1,0 +1,15 @@
+патлач witty-insults 5
+пахта household-crafts 4
+паща nature-weather 2
+педант witty-insults 3
+перга nature-weather 2
+перкаль household-crafts 4
+перст human-body 2
+першоцвіт nature-weather 4
+петрати language-speech 5
+печія human-body 2
+пияка witty-insults 2
+плакса witty-insults 2
+планида emotions-character 4
+плаха history-antiquity 4
+плескіт nature-weather 3

@@ -1,0 +1,15 @@
+корч nature-weather 2
+косар old-crafts 2
+косиця nature-weather 3
+кофр household-crafts 4
+кощій folk-names 2
+кпини language-speech 2
+красоля nature-weather 4
+краяти household-crafts 4
+крилас arts-culture 4
+критикан witty-insults 4
+криця old-crafts 2
+кропило arts-culture 4
+кроїти household-crafts 4
+кружало old-crafts 4
+кряж nature-weather 2

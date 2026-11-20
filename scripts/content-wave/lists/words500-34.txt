@@ -1,0 +1,14 @@
+струп human-body 3
+студенець nature-weather 3
+сугубо language-speech 2
+сургуч history-antiquity 4
+сусак nature-weather 3
+сухар household-crafts 2
+сухота emotions-character 4
+схлип emotions-character 4
+сям language-speech 2
+сяєво nature-weather 4
+сіромаха emotions-character 4
+сіяч old-crafts 2
+сієна arts-culture 3
+тамариск nature-weather 3

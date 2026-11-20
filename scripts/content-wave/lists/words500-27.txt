@@ -1,0 +1,14 @@
+плис household-crafts 3
+побіч language-speech 2
+поклажа household-crafts 4
+покруч witty-insults 4
+полба nature-weather 4
+поміст household-crafts 2
+поночі nature-weather 4
+понура emotions-character 4
+пообіч language-speech 4
+попруга old-crafts 3
+порати household-crafts 5
+посмітюха nature-weather 4
+пострах emotions-character 4
+почесть history-antiquity 3

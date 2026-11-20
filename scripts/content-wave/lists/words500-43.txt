@@ -1,0 +1,14 @@
+ятріти human-body 5
+ящір nature-weather 2
+євнух history-antiquity 2
+єзуїт history-antiquity 2
+єралаш emotions-character 3
+іволга nature-weather 4
+інок history-antiquity 3
+ірбіс nature-weather 2
+їдець witty-insults 4
+ґава nature-weather 3
+ґатунок household-crafts 3
+ґедзь nature-weather 2
+ґешефт language-speech 3
+ґудзь household-crafts 3

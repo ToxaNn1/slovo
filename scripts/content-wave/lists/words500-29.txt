@@ -1,0 +1,15 @@
+пшоно household-crafts 2
+пюпітр arts-culture 4
+підкіп military 5
+підлиза witty-insults 4
+підмурок old-crafts 3
+підойма old-crafts 4
+піжон witty-insults 3
+пілястра arts-culture 4
+піснеспів arts-culture 3
+пічник old-crafts 3
+піїт arts-culture 4
+раж emotions-character 3
+ракія household-crafts 4
+ратай old-crafts 3
+рвач witty-insults 4

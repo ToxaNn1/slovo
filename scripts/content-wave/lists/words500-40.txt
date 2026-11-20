@@ -1,0 +1,15 @@
+цвенькати language-speech 5
+цебро household-crafts 3
+цибух household-crafts 3
+цнота emotions-character 3
+цокотати language-speech 5
+цукерня household-crafts 3
+цяця household-crafts 3
+ціп old-crafts 2
+чабер nature-weather 3
+чага nature-weather 3
+чагар nature-weather 4
+чата military 4
+червак nature-weather 3
+череп'я household-crafts 4
+черінь household-crafts 2
