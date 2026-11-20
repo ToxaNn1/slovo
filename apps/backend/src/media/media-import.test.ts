@@ -7,9 +7,11 @@ import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
 import type { Word } from '@slovo/contracts';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { systemClock } from '@slovo/server-core';
+import { and, eq, sql } from 'drizzle-orm';
 import { beforeAll, describe, expect, it, onTestFinished } from 'vitest';
 
 import { createDatabase } from '../database/database';
+import { contentWords } from '../database/schema';
 import { readEditions } from '../edition/edition-folders';
 import { RECORDING_TEXTS } from '../recordings/recording-text';
 import { importedDatabases, png, silentLogger, testApp } from '../test-support';
@@ -101,6 +103,7 @@ async function importBackend() {
     createMediaImport({ database, clock: systemClock, store }).run(edition, dir, { force });
   return {
     client,
+    database,
     store,
     run,
     contentVersion: snapshot.contentVersion,
@@ -253,6 +256,32 @@ describe('the media import', () => {
       problems: [
         'assets/recordings/taras/texts.json: not JSON',
         `assets/illustrations/${words.illustrated.illustration}: The picture is 640×480 px, not square`,
+      ],
+    });
+    expect(store.files.size).toBe(0);
+    expect((await client.content.snapshot({ editionId: 'uk' })).contentVersion).toBe(
+      contentVersion,
+    );
+  });
+
+  it('refuses an Illustration two Words name, and writes nothing', async () => {
+    const { client, database, store, run, contentVersion, words } = await importBackend();
+    const name = words.illustrated.illustration;
+    await database.db
+      .update(contentWords)
+      .set({
+        fields: sql`${contentWords.fields} || ${JSON.stringify({ illustration: name })}::jsonb`,
+      })
+      .where(and(eq(contentWords.editionId, 'uk'), eq(contentWords.id, words.first.id)));
+    const folder = mediaFolder();
+    folder.illustration(name, png(512, 512));
+
+    const named = [words.illustrated.id, words.first.id].sort().join(', ');
+    expect(await run(folder.dir)).toEqual({
+      ok: false,
+      reason: 'refused',
+      problems: [
+        `assets/illustrations/${name}: more than one Word names this Illustration: ${named}`,
       ],
     });
     expect(store.files.size).toBe(0);
