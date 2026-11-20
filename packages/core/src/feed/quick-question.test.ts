@@ -204,6 +204,19 @@ describe('a Quick Question answered', () => {
     expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
   });
 
+  it('is answered once by two taps at once: the second changes nothing', async () => {
+    const { app } = await run();
+    const { card, position } = await firstQuestion(app);
+
+    const answers = await Promise.all([
+      app.feed.answerQuickQuestion(position, card.round.correct),
+      app.feed.answerQuickQuestion(position, card.round.correct),
+    ]);
+
+    expect(answers).toEqual([true, undefined]);
+    expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
+  });
+
   it('makes nothing Seen when the reader leaves it', async () => {
     const { app, events, time } = await run();
     const { position } = await firstQuestion(app);
