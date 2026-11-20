@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { type Random } from '../index';
-import { openCycle, type Cycle, type CycleChange } from './cycle';
+import type { StagedPiece } from '../user-state/staged-write';
+import { openCycle, type Cycle } from './cycle';
 import { randomOf, randomSequence } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
@@ -35,7 +36,7 @@ async function open({
 }
 
 /** Writes the changes of a Cycle change and then applies it, as its caller does. */
-async function keep(records: Map<string, string>, change: CycleChange): Promise<void> {
+async function keep(records: Map<string, string>, change: StagedPiece): Promise<void> {
   await createMemoryUserStatePort(records).write(change.changes);
   change.commit();
 }

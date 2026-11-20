@@ -1,5 +1,6 @@
 import { createInTurn } from '../in-turn';
 import { todayKey } from '../local-date';
+import { staged, writeStaged } from '../user-state/staged-write';
 import { userStateRecords } from '../user-state-schema';
 import { generateCrossingCrossword, type CrossingPuzzle } from './crossing-crossword';
 import {
@@ -132,8 +133,7 @@ export async function openCrossingCrossword({
               ...(next.hinted ? { hinted: true } : {}),
             })
           : undefined;
-        await userState.write(new Map([...progressOf(next), ...(award?.changes ?? [])]));
-        award?.commit();
+        await writeStaged(userState, [staged(progressOf(next)), award]);
         state = next;
         // Out of turn: the next play never waits for the network.
         if (solves) void analytics?.track('dailyCrosswordSolved', { date }).catch(() => undefined);
