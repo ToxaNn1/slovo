@@ -153,6 +153,41 @@ test('«Мої сесії» lists the sessions, and «Вийти всюди» go
   expect(await screen.findByRole('heading', { name: 'Увійти' })).toBeDefined();
 });
 
+test('a sign-out drops what the signed-out user loaded, so the next one never sees it', async () => {
+  signedOut();
+  let release = () => undefined;
+  const released = new Promise<undefined>((resolve) => {
+    release = () => {
+      resolve(undefined);
+    };
+  });
+  let loads = 0;
+  server.use(
+    override('sessions', async () => {
+      loads += 1;
+      if (loads > 1) await released;
+      return FIXTURES.sessions;
+    }),
+  );
+  render(<Admin />);
+  await typeInto('Пошта', 'owner@example.com', 'Надіслати код');
+  await typeInto('Код із листа', '123456', 'Далі');
+  await typeInto('Код із застосунку', '654321', 'Увійти');
+  const user = userEvent.setup();
+  await user.click(await screen.findByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(screen.getByRole('link', { name: 'Мої сесії' }));
+  expect(await screen.findByText(/ця сесія/)).toBeDefined();
+  await user.click(screen.getByRole('button', { name: 'Вийти всюди' }));
+
+  await typeInto('Пошта', 'owner@example.com', 'Надіслати код');
+  await typeInto('Код із листа', '123456', 'Далі');
+  await typeInto('Код із застосунку', '654321', 'Увійти');
+  expect(await screen.findByRole('button', { name: 'Вийти всюди' })).toBeDefined();
+  expect(screen.queryByText(/ця сесія/)).toBeNull();
+  release();
+  expect(await screen.findByText(/ця сесія/)).toBeDefined();
+});
+
 test('a backend that fails to answer who is signed in offers to try again', async () => {
   let failing = true;
   server.use(
