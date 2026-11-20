@@ -83,8 +83,10 @@ export interface Progress {
   onStreakMilestone(listener: (streak: number) => void): () => void;
 }
 
-const sameState = (one: ProgressState, other: ProgressState) =>
-  (Object.keys(one) as (keyof ProgressState)[]).every((key) => one[key] === other[key]);
+const sameState = (one: ProgressState, other: ProgressState) => {
+  const others: Readonly<Record<string, unknown>> = { ...other };
+  return Object.entries({ ...one }).every(([key, value]) => others[key] === value);
+};
 
 /**
  * Opens Progress over the Active Days, which the day change records, for the Core composition. It follows them, History, Favorites,

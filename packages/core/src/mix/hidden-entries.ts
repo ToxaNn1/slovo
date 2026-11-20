@@ -69,7 +69,8 @@ export async function openHiddenEntries({
 }): Promise<HiddenEntries> {
   const hiddenEntries = await openEntryList({
     records: userStateRecords.hiddenEntries,
-    timeKey: 'hiddenAt',
+    listed: (entryId, row, hiddenAt) => ({ entryId, row, hiddenAt }),
+    timeOf: (entry) => entry.hiddenAt,
     rows,
     userState,
     clock,
