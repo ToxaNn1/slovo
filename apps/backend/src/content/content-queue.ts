@@ -199,7 +199,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
         const parsed = parseRecord(
           write.kind,
           recordFileOf(write.kind, write.id),
-          write.op === 'create' ? { ...current.fields, retired: true } : write.fieldsBefore,
+          write.op === 'create' ? { ...current.fields, retired: true } : write.fieldsBefore(),
         );
         if (!parsed.ok) throw new Error(`the record ${write.id} before the batch does not parse`);
         await saveRecord(
