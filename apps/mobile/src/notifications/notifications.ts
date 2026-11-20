@@ -1,9 +1,8 @@
-import { pluralCount } from '@slovo/contracts';
-import type { NotificationsState, NotificationTimeRefusal } from '@slovo/core';
+import type { NotificationSlot, NotificationsState, NotificationTimeRefusal } from '@slovo/core';
 import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
-import { edition, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { notificationsSummary } from './notifications-summary';
@@ -13,33 +12,27 @@ export function useNotificationsState(): NotificationsState {
   return useSubscribed(useComposition().notifications, ({ state }) => state);
 }
 
-/** The value of the «Сповіщення» row of Settings: the Notification times, their count past three, or «Вимкнено». */
+/** The value of the «Сповіщення» row of Settings: the Word's and the Reminder's times, or «Вимкнено». */
 export function useNotificationsSummary(): string {
   const state = useNotificationsState();
   return useMemo(
-    () =>
-      notificationsSummary({
-        notifications: state,
-        strings: editionStrings.notifications,
-        count: pluralCount(edition.locale),
-      }),
+    () => notificationsSummary({ notifications: state, strings: editionStrings.notifications }),
     [state],
   );
 }
 
 /**
- * The calls that change the Notification times and the sound, and ask for
+ * The calls that switch notifications, change their times and the sound, and ask for
  * permission. A change that could not be kept is logged and leaves things as
  * they were.
  */
 export function useNotificationsChanges(): {
   /**
-   * Keeps the time the reader picked: it replaces the time `replacing`, or is
-   * added without one. Resolves to why it was refused, or nothing when it is
-   * kept or could not be written.
+   * Keeps the time the reader picked for the Word or the Reminder. Resolves
+   * to why it was refused, or nothing when it is kept or could not be written.
    */
-  keepTime: (time: string, replacing?: string) => Promise<NotificationTimeRefusal | undefined>;
-  removeTime: (time: string) => void;
+  keepTime: (slot: NotificationSlot, time: string) => Promise<NotificationTimeRefusal | undefined>;
+  setOn: (on: boolean) => void;
   setSound: (on: boolean) => void;
   /** Asks the reader for permission to notify; a grant plans the notifications. */
   askPermission: () => void;
@@ -47,9 +40,9 @@ export function useNotificationsChanges(): {
   const { notifications } = useComposition();
   const subject = 'the notifications';
   return {
-    keepTime: (time, replacing) => keep(subject, notifications.keepTime(time, replacing)),
-    removeTime: (time) => {
-      void keep(subject, notifications.removeTime(time));
+    keepTime: (slot, time) => keep(subject, notifications.keepTime(slot, time)),
+    setOn: (on) => {
+      void keep(subject, notifications.setOn(on));
     },
     setSound: (on) => {
       void keep(subject, notifications.setSound(on));

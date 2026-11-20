@@ -37,7 +37,6 @@ export {
   MascotLinesSchema,
   TextSizeSchema,
   LanguageTraitsSchema,
-  MAX_NOTIFICATION_TIMES,
   MixConfigSchema,
   NotificationTimesSchema,
   ThemeSchema,

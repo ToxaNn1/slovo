@@ -698,3 +698,16 @@ describe('Settings › its header (app pass 91)', () => {
     ).toBeNull();
   });
 });
+
+describe('Settings › «Голос диктора» › its header', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await renderSettings();
+    await fireEvent.press(screen.getByTestId('settings-row-narrator-voice'));
+    await screen.findByTestId('narrator-voice-screen');
+
+    expect(screen.getByTestId('narrator-voice-back')).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('narrator-voice-scroll')).queryByTestId('narrator-voice-back'),
+    ).toBeNull();
+  });
+});

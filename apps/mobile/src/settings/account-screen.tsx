@@ -96,11 +96,7 @@ function AccountContent({
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
-      >
+      <View style={styles.bar}>
         <BackHeader
           titleRole="settingsSubTitle"
           title={state.status === 'code-sent' ? strings.codeLabel : edition.accountName}
@@ -112,6 +108,13 @@ function AccountContent({
             },
           }}
         />
+      </View>
+      <ScrollView
+        testID="account-scroll"
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
         {state.status === 'signed-in' ? (
           <SignedIn account={account} state={state} problem={problem} />
         ) : (
@@ -408,7 +411,9 @@ function SignedIn({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
+  // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
+  bar: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[2] },
+  content: { paddingHorizontal: space[5], paddingBottom: space[8] },
   header: { paddingTop: space[2], paddingBottom: space[5] },
   form: { gap: space[4] },
   appleButton: { height: signInButtonHeight },

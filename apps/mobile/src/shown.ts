@@ -7,14 +7,14 @@ import {
   type UserSettings,
 } from '@slovo/core';
 
-/** Every tab in its final order: Home, Game, Saved, Settings. */
-const allTabs = ['home', 'game', 'saved', 'settings'] as const;
+/** Every tab in its final order: Home, Game, Mix in the centre, Saved, Settings (ADR 0201). */
+const allTabs = ['home', 'game', 'mix', 'saved', 'settings'] as const;
 
 export type Tab = (typeof allTabs)[number];
 
 /** What the reader is shown of the features an Edition can switch off or the reader can hide. */
 export interface Shown {
-  /** The tabs, in order: the Game's only when the Game is on. */
+  /** The tabs, in order: the Game's only when the Game is on, the Mix's only when the mixTab switch is. */
   readonly tabs: readonly Tab[];
   /** The Game Review under the Game's result. */
   readonly gameReview: boolean;
@@ -192,7 +192,9 @@ export function shownOf({
   // «Без лічильників» hides every counter.
   const noCounters = settings.noCounters;
   return {
-    tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
+    tabs: allTabs.filter(
+      (tab) => (tab !== 'game' || on('game')) && (tab !== 'mix' || on('mixTab')),
+    ),
     gameReview: on('gameReview'),
     gameRoundMascot: on('gameRoundMascot'),
     gameEndToFeed: on('gameEndToFeed'),

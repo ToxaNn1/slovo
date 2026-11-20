@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { renderApp } from '../shell/test-app';
 
 import { editionStrings } from '../edition/edition';
@@ -107,5 +107,16 @@ describe('the Break screen', () => {
     expect(screen.queryByTestId('streak-break-days')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-start')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-end')).not.toBeOnTheScreen();
+  });
+});
+
+describe('the Break screen › its header', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await renderScreen();
+
+    expect(screen.getByTestId('streak-break-back')).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('streak-break-scroll')).queryByTestId('streak-break-back'),
+    ).toBeNull();
   });
 });

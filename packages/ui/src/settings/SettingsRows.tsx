@@ -2,7 +2,7 @@ import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Polygon } from 'react-native-svg';
 
-import { fill, useEdition } from '../providers/EditionProvider';
+import { useEdition } from '../providers/EditionProvider';
 import { RowChevron } from '../primitives/RowChevron';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
 import { SegmentedControl, type Segment } from '../primitives/SegmentedControl';
@@ -11,15 +11,11 @@ import {
   minTouchTarget,
   onFill,
   settingsRowDrawing,
-  sliderDrawing,
   space,
   STACK_AT_FONT_SCALE,
   typeStyle,
 } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-
-/** How much a row that a later version brings is dimmed. */
-const SOON_OPACITY = 0.5;
 
 /**
  * A card that holds rows under one another, with a hairline between two rows,
@@ -361,54 +357,6 @@ export function TimeRow({
   );
 }
 
-/**
- * A row that a later version brings: dimmed, tagged with the Edition's
- * "soon", not tappable, and read by VoiceOver as unavailable. It may keep the
- * look of what it will be (a switch, a slider).
- */
-export function SoonRow({
-  label,
-  subtitle,
-  testID,
-  control,
-}: RowProps & { subtitle?: string; control?: 'switch' | 'slider' }) {
-  const look = useRowLook();
-  const { strings } = useEdition();
-  const { soon, soonAccessibilityLabel } = strings.settings;
-  return (
-    <View
-      testID={testID}
-      accessible
-      accessibilityState={{ disabled: true }}
-      // The subtitle goes on the label's phrase («Запропонувати слово або Виправлення»),
-      // so VoiceOver reads them as one before the "soon".
-      accessibilityLabel={fill(soonAccessibilityLabel, {
-        label: subtitle === undefined ? label : `${label} ${subtitle}`,
-      })}
-      {...look.voice}
-      style={[styles.row, styles.soonRow]}
-    >
-      <View style={styles.soonLine}>
-        <View style={styles.soonText}>
-          <Text style={look.label}>{label}</Text>
-          {subtitle !== undefined && <Text style={look.value}>{subtitle}</Text>}
-        </View>
-        <Text
-          style={[typeStyle('soonTag', look.tokens), styles.soon, { color: look.colors.muted }]}
-        >
-          {soon}
-        </Text>
-        {control === 'switch' && (
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Switch disabled value onValueChange={noChange} />
-          </View>
-        )}
-      </View>
-      {control === 'slider' && <SliderTrack />}
-    </View>
-  );
-}
-
 /** A slider's track and thumb, drawn only, for the row that waits for its version. */
 /** The cross on a destructive card's tile (design `SlovoApp`, the reset button), on a 20 × 20 box. */
 const CROSS = '0,3 3,0 10,7 17,0 20,3 13,10 20,17 17,20 10,13 3,20 0,17 7,10';
@@ -459,18 +407,6 @@ export function SettingsActionCard({
   );
 }
 
-function SliderTrack() {
-  const { colors } = useTokens();
-  return (
-    <View style={[styles.sliderTrack, { backgroundColor: colors.silhouette }]}>
-      <View style={[styles.sliderFill, { backgroundColor: colors.accent }]} />
-      <View
-        style={[styles.sliderThumb, { backgroundColor: colors.surface, borderColor: colors.line }]}
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   divider: { height: StyleSheet.hairlineWidth },
   titled: { gap: space[2] },
@@ -495,38 +431,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  soonRow: {
-    opacity: SOON_OPACITY,
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    justifyContent: 'center',
-    gap: space[2],
-  },
-  soonLine: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   actionCard: { justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth },
   grow: { flex: 1 },
   trailing: { flexShrink: 1, textAlign: 'right' },
-  soonText: { flex: 1 },
-  soon: { flexShrink: 0 },
-  sliderTrack: {
-    height: sliderDrawing.trackHeight,
-    borderRadius: sliderDrawing.trackRadius,
-    justifyContent: 'center',
-  },
-  sliderFill: {
-    width: '35%',
-    height: sliderDrawing.trackHeight,
-    borderRadius: sliderDrawing.trackRadius,
-  },
-  sliderThumb: {
-    position: 'absolute',
-    left: '35%',
-    width: sliderDrawing.thumbSize,
-    height: sliderDrawing.thumbSize,
-    borderRadius: sliderDrawing.thumbRadius,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
 });
-
-/** The toggle of a row that waits for its version takes no change. */
-const noChange = () => undefined;

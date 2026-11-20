@@ -12,13 +12,12 @@ import {
   useUndoToast,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { logError } from '@/diagnostics/log';
 import { editionStrings } from '@/edition/edition';
-import { useOpenScreen } from '@/use-open-screen';
 import { MascotAs } from '@/mascot/mascot';
 import { useCollectionLinkPreview } from '@/saved/collection-link';
 import { useSegmentParam } from '@/route-params';
@@ -31,16 +30,20 @@ const strings = collectionStrings.link;
  * `https://<domain>/<edition>/c/<id>` or `slovo://c/<id>?edition=<edition>` (ADR 0058, 0065):
  * the shared Collection's name, how many Entries it holds and its first 5
  * Entries this Language Pack has, how many it lacks, and «Додати собі», which
- * makes the reader's own copy and opens it, or says in a toast that it could
- * not; with none of its Entries in the pack, «Додати собі» is disabled.
- * Offline it says there is no connection; an unknown link, one of another Edition or one with Collection
+ * makes the reader's own copy and opens it in the link screen's place, or says
+ * in a toast that it could not; a second tap opens the copy made, never a «(2)»;
+ * with none of its Entries in the pack, «Додати собі» is disabled. A spinner
+ * shows until the link is read.
+ * Offline it says there is no connection, with «Спробувати ще», which reads
+ * the link again; an unknown link, one of another Edition or one with Collection
  * Links off says the link isn't available.
  */
 export default function CollectionLinkScreen() {
   const linkId = useSegmentParam('linkId');
-  const preview = useCollectionLinkPreview(linkId);
   const { colors } = useTokens();
   const router = useRouter();
+  // Each «Спробувати ще» mounts the read afresh, so it reads the link again.
+  const [attempt, setAttempt] = useState(0);
 
   return (
     <UndoToastProvider>
@@ -58,17 +61,35 @@ export default function CollectionLinkScreen() {
             }}
           />
         </View>
-        {preview !== undefined &&
-          (preview.ok ? (
-            <Preview preview={preview} />
-          ) : (
-            <Failure
-              text={preview.reason === 'offline' ? strings.offline : strings.notFound}
-              offline={preview.reason === 'offline'}
-            />
-          ))}
+        <LinkPreview
+          key={attempt}
+          linkId={linkId}
+          onRetry={() => {
+            setAttempt((done) => done + 1);
+          }}
+        />
       </SafeAreaView>
     </UndoToastProvider>
+  );
+}
+
+/** The link as read: a spinner until then, its preview, or why there is none. */
+function LinkPreview({ linkId, onRetry }: { linkId: string; onRetry: () => void }) {
+  const preview = useCollectionLinkPreview(linkId);
+  const { colors } = useTokens();
+  if (preview === undefined)
+    return (
+      <ActivityIndicator
+        testID="collection-link-loading"
+        color={colors.muted}
+        style={styles.loading}
+      />
+    );
+  if (preview.ok) return <Preview preview={preview} />;
+  return preview.reason === 'offline' ? (
+    <Failure text={strings.offline} onRetry={onRetry} />
+  ) : (
+    <Failure text={strings.notFound} />
   );
 }
 
@@ -80,10 +101,15 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
   const tokens = useTokens();
   const { colors } = tokens;
   const { count, voice } = useEdition();
-  const openScreen = useOpenScreen();
+  const router = useRouter();
   const showToast = useUndoToast();
   const [adding, setAdding] = useState(false);
+  // The copy once made, which a second tap opens instead of a copy of it.
+  const made = useRef<string | undefined>(undefined);
   const { add } = preview;
+  const openCopy = (copyId: string) => {
+    router.replace(`/saved/collections/${copyId}`);
+  };
 
   return (
     <FlatList
@@ -119,12 +145,17 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
             busy={adding}
             disabled={add === undefined}
             onPress={() => {
-              if (add === undefined) return;
+              if (add === undefined || adding) return;
+              if (made.current !== undefined) {
+                openCopy(made.current);
+                return;
+              }
               setAdding(true);
               add().then(
                 (copy) => {
+                  made.current = copy.id;
                   setAdding(false);
-                  openScreen(`/saved/collections/${copy.id}`);
+                  openCopy(copy.id);
                 },
                 (error: unknown) => {
                   setAdding(false);
@@ -141,14 +172,17 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
   );
 }
 
-/** Why the link opens no preview, under the Mascot asleep when it is offline. */
-function Failure({ text, offline }: { text: string; offline: boolean }) {
+/**
+ * Why the link opens no preview; offline, under the Mascot asleep and with
+ * «Спробувати ще», which reads it again.
+ */
+function Failure({ text, onRetry }: { text: string; onRetry?: () => void }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <View style={styles.failure}>
-      {offline && <MascotAs state="sleeps" />}
+      {onRetry !== undefined && <MascotAs state="sleeps" />}
       <Text
         testID="collection-link-failure"
         {...voice}
@@ -156,6 +190,9 @@ function Failure({ text, offline }: { text: string; offline: boolean }) {
       >
         {text}
       </Text>
+      {onRetry !== undefined && (
+        <Button testID="collection-link-retry" label={strings.retry} onPress={onRetry} />
+      )}
     </View>
   );
 }
@@ -168,4 +205,5 @@ const styles = StyleSheet.create({
   line: { marginTop: space[2] },
   footer: { gap: space[4], paddingHorizontal: space[6], paddingTop: space[5] },
   failure: { gap: space[4], paddingHorizontal: space[6], paddingTop: space[6] },
+  loading: { paddingTop: space[6] },
 });

@@ -14,6 +14,7 @@ import type { Entries } from '../entries/entries';
 import type { Mix } from '../entries/mix';
 import type { Notifications } from '../notifications/notifications';
 import { buildWordCard, type WordCardModel } from '../entries/word-card';
+import type { Feed } from '../feed/feed';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
 import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
@@ -156,6 +157,7 @@ export async function openOnboarding({
   clock,
   entries,
   wordOfTheDay,
+  feed,
   mix,
   xpLog,
   analytics,
@@ -173,6 +175,8 @@ export async function openOnboarding({
     'get' | 'getMany' | 'linkedCorrections' | 'categories' | 'linkingSynonymRow'
   >;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
+  /** Makes the first Word Seen as «Розкрий слово» does. */
+  feed: Pick<Feed, 'seeWordOfTheDay'>;
   mix: Pick<Mix, 'setKindWeight'>;
   xpLog: Pick<XpLog, 'setDailyGoal'>;
   analytics: Pick<Analytics, 'track'>;
@@ -260,7 +264,11 @@ export async function openOnboarding({
     }
   }
 
+  /** Whether the first Word step was on screen in this run. */
+  let firstWordShown = false;
   async function keepFinished(skipped: boolean): Promise<void> {
+    // The reader read the first Word, so it is Seen: XP, History and the Daily Goal count it.
+    if (firstWordShown) await feed.seeWordOfTheDay();
     const finishedAt = clock.now();
     // The first week counts from this day (ADR 0054).
     await userState.write(
@@ -276,6 +284,7 @@ export async function openOnboarding({
   }
 
   function show(step: OnboardingStep): void {
+    if (step.kind === 'firstWord') firstWordShown = true;
     change({ status: 'open', step });
     viewed(step);
   }

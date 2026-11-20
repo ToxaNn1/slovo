@@ -17,6 +17,8 @@ export const appStringsShape = {
   }),
   /** The VoiceOver label of the round button that glides a long list back to its top, e.g. "Нагору". */
   scrollToTop: TextSchema,
+  /** The label of a screen's back button that goes to wherever the reader came from, e.g. "Назад". */
+  back: TextSchema,
   /**
    * The offline plate under the status bar when an action that needs the
    * network finds none (ADR 0158), e.g. "Немає з’єднання. Спробуй пізніше.".
