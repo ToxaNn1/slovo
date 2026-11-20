@@ -9,9 +9,9 @@ import { recordingSourceOf } from '../media/recording-source';
 import { shellMedia } from '../media/shell-media';
 import { useSettings } from '../settings/settings';
 import { useShell, type Shell } from '../shell-value';
-import { useShown } from '../shown-in-effect';
 import { recordingPlayer } from '../sounds/interface-sounds';
 import { createPronunciation, type PronunciationState } from './pronunciation';
+import { useEditionInEffect } from '../edition/remote-switches';
 
 /** «Звуки» as the cards last drew them. */
 let soundsOn = true;
@@ -55,7 +55,9 @@ const subscribe = (listener: () => void) => pronunciation.subscribe(listener);
  */
 function useNarratorVoice(): NarratorVoice {
   const chosen = useSettings().current.narratorVoice;
-  return edition.narratorVoiceOf(useShown().narratorVoiceSetting ? chosen : undefined);
+  return edition.narratorVoiceOf(
+    useEditionInEffect().isFeatureEnabled('narratorVoice') ? chosen : undefined,
+  );
 }
 
 /**
@@ -116,7 +118,7 @@ const dismiss = () => {
  * that starts playing is a Pronunciation played for Analytics (ADR 0068).
  */
 export function LemmaPronunciation({ lemma, entryId }: { lemma: string; entryId: string }) {
-  return useShown().entryButtons.pronunciation ? (
+  return useEditionInEffect().isFeatureEnabled('pronunciation') ? (
     <PlayingLemma lemma={lemma} entryId={entryId} />
   ) : null;
 }
@@ -146,7 +148,7 @@ function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
   const composition = shell.composition;
   const sounds = useSettings().current.sounds;
   const voice = useNarratorVoice();
-  const only = useShown().recordedOnly;
+  const only = useEditionInEffect().isFeatureEnabled('recordedOnly');
   const unrecorded = useUnrecorded(entryId, voice.id, only);
   const state = useSyncExternalStore(subscribe, () => pronunciation.stateOf(entryId));
 
@@ -200,7 +202,7 @@ export function useSampleReading(): SampleReading {
 
   useStopsWhenGone(word, sounds);
 
-  const only = useShown().recordedOnly;
+  const only = useEditionInEffect().isFeatureEnabled('recordedOnly');
   const read = useCallback(
     async (reader: string, fromStart: boolean) => {
       soundsOn = sounds;

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Correction } from '@slovo/contracts';
-import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { openComposition, systemRandom, type Composition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderApp } from '../shell/test-app';
 

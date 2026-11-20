@@ -26,6 +26,7 @@ import { gameModeCard, gameModeGroups, gameModeStrings, gameModeToast } from '@/
 import { MascotAs } from '@/mascot/mascot';
 import { useXpLogState } from '@/progress/xp-log';
 import { useShown } from '@/shown-in-effect';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 const { game: strings, settings: settingsStrings } = editionStrings;
 
@@ -48,7 +49,7 @@ export default function GameScreen() {
 function Game() {
   const state = useGameState();
   const actions = useGameActions();
-  const { gameReview, gameRoundMascot } = useShown();
+  const inEffect = useEditionInEffect();
   const { colors } = useTokens();
   usePauseInBackground();
   const { current } = state;
@@ -74,7 +75,7 @@ function Game() {
             void actions.start(current.modeId);
           }}
           onToGames={actions.leave}
-          review={gameReview}
+          review={inEffect.isFeatureEnabled('gameReview')}
           mascot={
             // The board's Mascot: glad for «ВЛУЧНО!», sad for «ЩЕ РАУНД!» and «Розминка!».
             <MascotAs state={end.kind !== 'lives-over' && end.onTarget ? 'happy' : 'sad'} onRed />
@@ -91,7 +92,7 @@ function Game() {
           onLeave={actions.leave}
           onOpenLetter={actions.openLetter}
           mascot={
-            gameRoundMascot
+            inEffect.isFeatureEnabled('gameRoundMascot')
               ? ({ state, width }) => <MascotAs state={state} width={width} />
               : undefined
           }
@@ -122,7 +123,7 @@ function ModeScreen({
   const crossword = useDailyCrosswordCard();
   const openScreen = useOpenScreen();
   const showToast = useUndoToast();
-  const { gameModeToast: toast } = useShown();
+  const toast = useEditionInEffect().isFeatureEnabled('gameModeToast');
   let place = 0;
   return (
     <View testID="game-modes" style={styles.screen}>

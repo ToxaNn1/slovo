@@ -7,7 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { editionStrings } from '@/edition/edition';
 import { useEditionInEffect } from '@/edition/remote-switches';
 import { useSetDailyGoal, useXpLogState } from '@/progress/xp-log';
-import { useShown } from '@/shown-in-effect';
 
 const strings = editionStrings.settings.dailyGoal;
 
@@ -27,10 +26,10 @@ export default function DailyGoalScreen() {
   const { colors } = useTokens();
   const router = useRouter();
   const edition = useEditionInEffect();
-  const shown = useShown();
   const { dailyGoal } = useXpLogState();
   const setDailyGoal = useSetDailyGoal();
-  if (!shown.dailyGoal || !edition.isFeatureEnabled('xpLog')) return <Redirect href="/settings" />;
+  if (!edition.isFeatureEnabled('dailyGoal') || !edition.isFeatureEnabled('xpLog'))
+    return <Redirect href="/settings" />;
   const goals = edition.dailyGoals.options;
   const goalLabel = pluralCount(edition.locale);
   const selected = dailyGoal === null ? NO_DAILY_GOAL : String(dailyGoal.goal);

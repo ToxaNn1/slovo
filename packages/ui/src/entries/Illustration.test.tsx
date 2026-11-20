@@ -5,6 +5,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useSyncExternalStore, type ReactNode } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import { testStrings } from '../test-strings';
+import { CardFeaturesProvider, noCardFeatures } from './card-features';
 
 const strings = testStrings({
   wordCard: {
@@ -125,7 +126,13 @@ describe('The Illustration on a Word card', () => {
   });
 
   it('stays hidden with the meaning under Self-check', async () => {
-    await render(inEdition(<EntryCard card={word} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={word} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.queryByRole('image')).toBeNull();
     await fireEvent.press(screen.getByText('Show the meaning'));

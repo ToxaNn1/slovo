@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import type { SeasonalMotif } from '@slovo/contracts';
-import { loadEdition, type Clock } from '@slovo/core';
+import { type Clock } from '@slovo/core';
+import { loadEdition } from '@slovo/core/testing';
 import { Mascot } from '@slovo/ui';
 import { act, screen } from '@testing-library/react-native';
 
-import { activeEditionFiles, edition, seasonalMotifs } from '../edition/edition';
+import { activeEditionFiles, seasonalMotifs } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { DecorInEffect } from './decor-in-effect';
 import { settingsAt, switchedTo, testShell } from './test-support';
 import { renderApp } from './test-app';

@@ -17,7 +17,7 @@ import {
 import { waitFor } from '@testing-library/react-native';
 import type { AppStateStatus } from 'react-native';
 
-import { edition } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { openOnce, type Opening, type OpeningState } from '../opening';
 import { listen } from './lifecycle';
 import { opened, switchedTo, testShell } from './test-support';

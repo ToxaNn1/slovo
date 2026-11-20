@@ -1,13 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Idiom, TextSize, Word } from '@slovo/contracts';
 import {
-  loadEdition,
   openComposition,
   type Composition,
   type TrackedUserState,
   type Edition,
 } from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { Dimensions, StyleSheet } from 'react-native';
@@ -18,7 +17,7 @@ import HomeScreen from '../app/feed';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, editionStrings, editionTokens } from '../edition/edition';
 import { entryCardFrame, linkChip, textSizeSteps } from '@slovo/ui/tokens';
-import { LOGO_ROW } from '../edition/feed-loading';
+import { LOGO_ROW } from './feed-page';
 import { screenSettled } from '../use-open-screen';
 
 const { config } = activeEditionFiles;

@@ -1,12 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import {
-  loadEdition,
-  openComposition,
-  systemRandom,
-  type Composition,
-  type Edition,
-} from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { openComposition, systemRandom, type Composition, type Edition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 
 import DailyGoalScreen from '../app/settings/daily-goal';

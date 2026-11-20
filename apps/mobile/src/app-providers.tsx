@@ -19,7 +19,7 @@ import { useWordIllustration } from './media/shell-media';
 import { Opened } from './opened';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from './settings/settings';
 import { ShellProvider, useShell, type Shell } from './shell-value';
-import { useShown } from './shown-in-effect';
+import { useEditionInEffect } from './edition/remote-switches';
 
 // The provider tree of the app, which `app/_layout.tsx` draws the tabs under
 // and the screen tests draw a screen under (`shell/test-app.tsx`), so the two never drift.
@@ -126,7 +126,7 @@ export function ScreenProviders({ children }: { children: ReactNode }) {
  * effect; the system's Reduce Motion counts either way.
  */
 function ReduceMotionInEffect({ children }: { children: ReactNode }) {
-  const { reduceMotionSetting } = useShown();
+  const reduceMotionSetting = useEditionInEffect().isFeatureEnabled('reduceMotion');
   const { reduceMotion } = useSettings().current;
   return (
     <ReduceMotionProvider reduceMotion={reduceMotionSetting && reduceMotion}>

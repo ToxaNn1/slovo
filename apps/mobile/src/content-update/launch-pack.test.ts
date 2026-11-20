@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 
-import { createContentUpdate, loadEdition, systemRandom, type Edition } from '@slovo/core';
-import { createFakeBackend, createMemoryContentStore } from '@slovo/core/testing';
+import { createContentUpdate, systemRandom, type Edition } from '@slovo/core';
+import { createFakeBackend, createMemoryContentStore, loadEdition } from '@slovo/core/testing';
 import { PACK_FORMAT } from '@slovo/language-pack/reader';
 import { describe, expect, it } from 'vitest';
 

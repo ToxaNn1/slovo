@@ -107,13 +107,28 @@ export interface Edition {
    * Collection's tile draws when the collection names none (ADR 0178).
    */
   readonly curatedCollectionPictogram: string | undefined;
+  /**
+   * Whether the given Core feature is in effect (ADR 0203): by the remote
+   * Rules the device read last, else as the Edition shipped it (ADR 0089),
+   * and every switch it depends on in effect.
+   */
+  isFeatureEnabled(feature: FeatureSwitch): boolean;
+}
+
+/**
+ * The Edition as the build shipped it (ADR 0203): everything of the Edition
+ * but the answer in effect. A reader that asks it takes the shipped answer on
+ * purpose; every other reader asks the `Edition` the remote Feature Switches
+ * give (`openRemoteSwitches`), and the compiler refuses one for the other.
+ */
+export interface ShippedEdition extends Omit<Edition, 'isFeatureEnabled'> {
   /** The Edition's own Feature Switch states, which hold where no remote Rule matches (ADR 0089). */
   readonly featureSwitches: FeatureSwitches;
   /**
-   * Whether the given Core feature is in effect: its Feature Switch on, not
-   * off remotely (ADR 0040), and every switch it depends on in effect.
+   * Whether the build shipped the given Core feature on, and every switch it
+   * depends on: no remote Rule changes this answer.
    */
-  isFeatureEnabled(feature: FeatureSwitch): boolean;
+  readonly isShippedOn: (feature: FeatureSwitch) => boolean;
 }
 
 /** Thrown when an Edition config doesn't match the contracts. */
@@ -122,10 +137,29 @@ export class InvalidEditionConfigError extends Error {
 }
 
 /**
- * Validates an Edition config and reports the Edition. Every feature asks
- * the Edition returned here instead of reading the config directly.
+ * The Edition in effect where no remote Rule is read: each Feature Switch as
+ * the Edition shipped it. The Shell runs on it until the Rules the device
+ * kept are read (ADR 0203).
+ */
+export function inEffectWithoutRules(shipped: ShippedEdition): Edition {
+  const { featureSwitches: _shippedStates, isShippedOn, ...edition } = shipped;
+  return { ...edition, isFeatureEnabled: isShippedOn };
+}
+
+/**
+ * Validates an Edition config and reports the Edition in effect of a run no
+ * remote Rule reaches: each Feature Switch as the config states it. For
+ * tests alone (`@slovo/core/testing`); the app loads `loadShippedEdition`.
  */
 export function loadEdition(config: unknown): Edition {
+  return inEffectWithoutRules(loadShippedEdition(config));
+}
+
+/**
+ * Validates an Edition config and reports the Edition as the build shipped
+ * it. Every feature asks the Edition instead of reading the config directly.
+ */
+export function loadShippedEdition(config: unknown): ShippedEdition {
   const result = EditionConfigSchema.safeParse(config);
   if (!result.success) {
     const problems = result.error.issues.map(
@@ -199,6 +233,6 @@ export function loadEdition(config: unknown): Edition {
     mascot,
     curatedCollectionPictogram,
     featureSwitches,
-    isFeatureEnabled: switchedOn((feature) => featureSwitches[feature] === 'on'),
+    isShippedOn: switchedOn((feature) => featureSwitches[feature] === 'on'),
   };
 }

@@ -6,17 +6,12 @@ import {
   SaveProgressCard,
   EndOfCycleCard,
   EntryCard,
-  FeedHeader,
   FirstWeekCard,
   GesturesHintSheet,
-  HeaderFade,
-  PagerScrollView,
   RevealPace,
   SwipeDemoStage,
   Placeholder,
   QuickQuestionRound,
-  SearchButton,
-  space,
   UndoToastProvider,
   useCloseUndoToast,
   useTokens,
@@ -26,9 +21,8 @@ import {
   useGesturesDemo,
 } from '@slovo/ui';
 import { LATER_QUESTIONS, type FeedCard, type FeedNoticeCard } from '@slovo/core';
-import { memo, useCallback, useRef, type ComponentProps, type ReactNode } from 'react';
+import { memo, useCallback, useRef, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
 import { useEntrySlots } from '@/entries/entry-actions';
@@ -39,16 +33,22 @@ import { useSettings } from '@/settings/settings';
 import { gameModeStrings } from '@/game/game-modes';
 import { wordOfTheDayLanding } from '@/feed/word-of-the-day-landing';
 import { useFirstWeekStreak } from '@/feed/first-week';
-import { LOGO_ROW, TOP_ROW } from '@/edition/feed-loading';
-import { wordOfTheDayFontFamily } from '@/edition/reported-edition';
+import {
+  entryPage,
+  FeedHeaderBar,
+  FeedPageFrame,
+  useFeedHeaderRows,
+  type FeedHeaderRows,
+} from '@/feed/feed-page';
+import { ShownCardFeatures } from '@/entries/card-features';
 import { StatsPillAndSheet } from '@/progress/progress';
-import { useShown } from '@/shown-in-effect';
 import { useGesturesHint } from '@/feed/gestures-hint';
 import { todayText } from '@/feed/today-text';
 import { WeeklyRecapPage } from '@/feed/weekly-recap-notice';
 import { CommunityWordNotice } from '@/feed/community-word-notice';
 import { useNotificationsChanges } from '@/notifications/notifications';
 import { LaterQuestionNotice } from '@/feed/later-question-notice';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -71,12 +71,13 @@ function FeedScreen() {
   const voice = useSettings().current.narratorVoice;
   const feed = useFeed(pager, { clock: deviceClock, landing: wordOfTheDayLanding, voice });
   const { colors } = useTokens();
-  const { top } = useSafeAreaInsets();
-  const shown = useShown();
-  const { toolsRow, topRow } = useHeaderRows();
-  const gesturesHint = useGesturesHint(shown.entryButtons.knowledge);
+  const inEffect = useEditionInEffect();
+  const header = useFeedHeaderRows();
+  const gesturesHint = useGesturesHint(inEffect.isFeatureEnabled('knowledge'));
   // While the hint is open the Feed's own card plays the gestures (board XSwipeV, ADR 0112).
-  const gesturesDemo = useGesturesDemo(gesturesHint.visible && shown.gesturesHintDemo);
+  const gesturesDemo = useGesturesDemo(
+    gesturesHint.visible && inEffect.isFeatureEnabled('gesturesHintDemo'),
+  );
   const openScreen = useOpenScreen();
 
   const {
@@ -98,6 +99,7 @@ function FeedScreen() {
         key={pageKey(card)}
         card={card}
         position={position}
+        header={header}
         onOpenCorrection={openCorrection}
         onAnswerQuickQuestion={answerQuickQuestion}
         onAnswerYesterday={answerYesterday}
@@ -105,7 +107,14 @@ function FeedScreen() {
         onRestoreWeeklyRecap={restoreWeeklyRecap}
       />
     ),
-    [openCorrection, answerQuickQuestion, answerYesterday, foldWeeklyRecap, restoreWeeklyRecap],
+    [
+      header,
+      openCorrection,
+      answerQuickQuestion,
+      answerYesterday,
+      foldWeeklyRecap,
+      restoreWeeklyRecap,
+    ],
   );
   const onIndexChange = useCallback(
     (position: number) => {
@@ -122,66 +131,40 @@ function FeedScreen() {
     <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Each time the Feed comes back in sight, its first card plays the full reveal again. */}
       <SwipeDemoStage demo={gesturesDemo}>
-        <RevealPace fast={shown.fastReveal} visiting={feed.inSight}>
-          <VerticalPager
-            ref={pager}
-            testID="feed"
-            items={cards}
-            initialIndex={feed.startPosition}
-            renderPage={renderPage}
-            onIndexChange={onIndexChange}
-            turnActionLabels={turnActionLabels}
-          />
+        <RevealPace fast={inEffect.isFeatureEnabled('fastReveal')} visiting={feed.inSight}>
+          <ShownCardFeatures place="feed">
+            <VerticalPager
+              ref={pager}
+              testID="feed"
+              items={cards}
+              initialIndex={feed.startPosition}
+              renderPage={renderPage}
+              onIndexChange={onIndexChange}
+              turnActionLabels={turnActionLabels}
+            />
+          </ShownCardFeatures>
         </RevealPace>
       </SwipeDemoStage>
-      {/*
-        The header stays put over the cards, on the screen's background from the top edge, so a
-        scrolled card passes under it unseen. Its lower edge fades out inside the top row, so the
-        card fades under it and the first card at rest stays clear of the fade.
-      */}
-      <View
-        testID="feed-header"
-        pointerEvents="box-none"
-        style={[styles.header, { paddingTop: top, height: top + topRow }]}
-      >
-        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          <View
-            testID="feed-header-backdrop"
-            style={[styles.headerBackdrop, { backgroundColor: colors.background }]}
-          />
-          <HeaderFade testID="feed-header-fade" color={colors.background} />
-        </View>
-        <FeedHeader
-          wordmark={edition.displayName}
-          today={todayText(feed.today, editionStrings)}
-          streak={<StatsPillAndSheet />}
-          // The Feed opened from the Dashboard leads back to it by its wordmark (ADR 0079).
-          onLogo={
-            shown.dashboardWordmark
-              ? {
-                  label: editionStrings.dashboard.open,
-                  onPress: () => {
-                    openScreen('/');
-                  },
-                }
-              : undefined
-          }
-        />
-        {/* The Feed has no XP bar over its cards (board p1, ADR 0091). */}
-        {toolsRow && (
-          <View testID="feed-header-tools" pointerEvents="box-none" style={styles.tools}>
-            <View style={styles.headerButtons}>
-              {shown.search && (
-                <SearchButton
-                  onPress={() => {
-                    openScreen('/search');
-                  }}
-                />
-              )}
-            </View>
-          </View>
-        )}
-      </View>
+      <FeedHeaderBar
+        header={header}
+        wordmark={edition.displayName}
+        today={todayText(feed.today, editionStrings)}
+        streak={<StatsPillAndSheet />}
+        // The Feed opened from the Dashboard leads back to it by its wordmark (ADR 0079).
+        onLogo={
+          inEffect.isFeatureEnabled('dashboardWordmark')
+            ? {
+                label: editionStrings.dashboard.open,
+                onPress: () => {
+                  openScreen('/');
+                },
+              }
+            : undefined
+        }
+        onSearch={() => {
+          openScreen('/search');
+        }}
+      />
       <GesturesHintSheet
         visible={gesturesHint.visible}
         texts={editionStrings.knowledge.swipe.hint}
@@ -203,6 +186,7 @@ function pageKey(card: FeedCard): string {
 const FeedPage = memo(function FeedPage({
   card,
   position,
+  header,
   onOpenCorrection,
   onAnswerQuickQuestion,
   onAnswerYesterday,
@@ -211,6 +195,7 @@ const FeedPage = memo(function FeedPage({
 }: {
   card: FeedCard;
   position: number;
+  header: FeedHeaderRows;
   /** Opens the Correction that the Word card at `position` links. */
   onOpenCorrection: (position: number, correctionId: string) => void;
   /** Keeps the option picked on the Quick Question at `position`. */
@@ -222,21 +207,11 @@ const FeedPage = memo(function FeedPage({
   /** «Повернути» of the Weekly Recap folded this session. */
   onRestoreWeeklyRecap: () => void;
 }) {
-  const { top } = useSafeAreaInsets();
-  const { stressFall, calligraphicLemma } = useShown();
-  const { toolsRow, topRow } = useHeaderRows();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
     return (
-      <View
-        testID={`feed-card-${String(position)}`}
-        // In the Word card's frame, so both cards are the same height (owner 16.11).
-        style={[
-          styles.page,
-          styles.heroContent,
-          { paddingTop: top + (toolsRow ? topRow + space[2] : topRow) },
-        ]}
-      >
+      // In the Word card's frame, so both cards are the same height (owner 16.11).
+      <FeedPageFrame position={position} header={header} layout={{ style: 'hero', under: 'card' }}>
         <QuickQuestionRound
           title={feedStrings.quickQuestion}
           round={card.round}
@@ -251,164 +226,113 @@ const FeedPage = memo(function FeedPage({
             onAnswerQuickQuestion(position, option);
           }}
         />
-      </View>
+      </FeedPageFrame>
     );
-  // The week on top under the header, Yesterday under it (board f5, ADR 0130).
+  // The week on top under the header, Yesterday under it (board f5, ADR 0130). Nothing
+  // around the cards scrolls: Yesterday fills the rest and scrolls inside its card.
   if (card.kind === 'notice' && card.notice === 'weeklyRecap')
     return (
-      <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
-        {/* Nothing around the cards scrolls: Yesterday fills the rest and scrolls inside its card. */}
-        <View style={[styles.page, styles.stack, { paddingTop: topRow }]}>
-          <WeeklyRecapPage
-            day={card.day}
-            folded={card.folded}
-            yesterday={
-              card.yesterday === undefined ? undefined : (
-                <YesterdayCard
-                  word={card.yesterday.word}
-                  quiz={card.yesterday.quiz}
-                  fill
-                  onAnswer={(option) => {
-                    onAnswerYesterday(position, option);
-                  }}
-                />
-              )
-            }
-            onFold={() => {
-              onFoldWeeklyRecap(position);
-            }}
-            onRestore={onRestoreWeeklyRecap}
-          />
-        </View>
-      </View>
+      <FeedPageFrame position={position} header={header} layout={{ style: 'stack', under: 'row' }}>
+        <WeeklyRecapPage
+          day={card.day}
+          folded={card.folded}
+          yesterday={
+            card.yesterday === undefined ? undefined : (
+              <YesterdayCard
+                word={card.yesterday.word}
+                quiz={card.yesterday.quiz}
+                fill
+                onAnswer={(option) => {
+                  onAnswerYesterday(position, option);
+                }}
+              />
+            )
+          }
+          onFold={() => {
+            onFoldWeeklyRecap(position);
+          }}
+          onRestore={onRestoreWeeklyRecap}
+        />
+      </FeedPageFrame>
     );
   if (card.kind === 'end-of-cycle' || (card.kind === 'notice' && card.notice !== 'yesterday'))
     return (
-      <View
-        testID={`feed-card-${String(position)}`}
-        style={[
-          styles.page,
-          card.kind === 'notice' && card.notice === 'goalReached'
-            ? styles.goal
-            : // A later question fills its page edge to edge as Yesterday does (owner, 16.11).
-              card.kind === 'notice' && isLaterQuestion(card.notice)
-              ? styles.heroContent
-              : styles.centred,
-          { paddingTop: top + topRow },
-        ]}
+      <FeedPageFrame
+        position={position}
+        header={header}
+        layout={{
+          style:
+            card.kind === 'notice' && card.notice === 'goalReached'
+              ? 'goal'
+              : // A later question fills its page edge to edge as Yesterday does (owner, 16.11).
+                card.kind === 'notice' && isLaterQuestion(card.notice)
+                ? 'hero'
+                : 'centred',
+          under: 'row',
+        }}
       >
         {card.kind === 'end-of-cycle' ? <EndOfCycleCard /> : <NoticeCard card={card} />}
-      </View>
+      </FeedPageFrame>
     );
-  // A tabbed card is a fixed frame the page's height: nothing around it scrolls, only
-  // an opened tab inside it, so its frame and tab bar never move (ADR 0091, ADR 0113).
-  // Any other card, the red one of the Word of the Day Self-check keeps closed among them, scrolls.
-  const page = (entry: ReactNode, framed: boolean) => (
-    <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
-      {framed ? (
-        <View
-          style={[
-            styles.page,
-            styles.heroContent,
-            // Under the logo row alone the card starts where the header ends.
-            { paddingTop: toolsRow ? topRow + space[2] : topRow },
-          ]}
-        >
-          {entry}
-        </View>
-      ) : (
-        // The content scrolls under the top row but stops at the status bar.
-        <PagerScrollView
-          testID={`feed-card-${String(position)}-scroll`}
-          // The red card of the Word of the Day hangs from the top row, closer to the edges (board p1).
-          contentContainerStyle={
-            card.kind === 'word' && card.wordOfTheDay !== undefined
-              ? [styles.heroContent, { paddingTop: topRow + space[2] }]
-              : [styles.content, { paddingTop: topRow }]
-          }
-        >
-          {entry}
-        </PagerScrollView>
-      )}
-    </View>
-  );
   // Yesterday on its own page fills it, edge to edge as the Word cards (owner 15.11), and
   // scrolls inside its card when its meanings run longer: nothing around it scrolls (owner 16.11).
   if (card.kind === 'notice')
     return (
-      <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
-        <View style={[styles.page, styles.heroContent, { paddingTop: topRow + space[2] }]}>
-          <YesterdayCard
-            word={card.word}
-            quiz={card.quiz}
-            fill
-            onAnswer={(option) => {
-              onAnswerYesterday(position, option);
-            }}
-          />
-        </View>
-      </View>
+      <FeedPageFrame
+        position={position}
+        header={header}
+        layout={{ style: 'hero', under: 'hanging' }}
+      >
+        <YesterdayCard
+          word={card.word}
+          quiz={card.quiz}
+          fill
+          onAnswer={(option) => {
+            onAnswerYesterday(position, option);
+          }}
+        />
+      </FeedPageFrame>
     );
-  if (card.kind === 'tip') return <SwipedEntryCard card={card} page={page} />;
+  const page = entryPage(header, position);
+  if (card.kind === 'tip')
+    return (
+      <FeedPageFrame position={position} header={header}>
+        <SwipedEntryCard card={card} page={page} />
+      </FeedPageFrame>
+    );
   if (card.kind === 'synonymRow')
     return (
+      <FeedPageFrame position={position} header={header}>
+        <SwipedEntryCard
+          card={card}
+          // A member opens its Word over the Feed, Hidden or out of the Mix alike.
+          onOpenWord={(wordId) => {
+            openScreen(`/entry/${wordId}`);
+          }}
+          page={page}
+        />
+      </FeedPageFrame>
+    );
+  return (
+    <FeedPageFrame position={position} header={header}>
       <SwipedEntryCard
         card={card}
-        // A member opens its Word over the Feed, Hidden or out of the Mix alike.
-        onOpenWord={(wordId) => {
-          openScreen(`/entry/${wordId}`);
+        onOpenCorrection={(correctionId) => {
+          onOpenCorrection(position, correctionId);
+        }}
+        // The row the Word is a member of opens over the Feed, as a member opens its Word.
+        onOpenSynonymRow={(synonymRowId) => {
+          openScreen(`/entry/${synonymRowId}`);
         }}
         page={page}
       />
-    );
-  return (
-    <SwipedEntryCard
-      card={card}
-      onOpenCorrection={(correctionId) => {
-        onOpenCorrection(position, correctionId);
-      }}
-      // The row the Word is a member of opens over the Feed, as a member opens its Word.
-      onOpenSynonymRow={(synonymRowId) => {
-        openScreen(`/entry/${synonymRowId}`);
-      }}
-      stressFalls={stressFall}
-      // Only here, on the Word of the Day card; in the Word font with the switch off.
-      wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
-      page={page}
-    />
+    </FeedPageFrame>
   );
 });
 
-/**
- * The Feed header's rows: the logo row, and the row of Search under it while
- * Search is shown (board p1, ADR 0091), with the header's height under the
- * status bar.
- */
-function useHeaderRows() {
-  const toolsRow = useShown().search;
-  return { toolsRow, topRow: toolsRow ? TOP_ROW : LOGO_ROW };
-}
-
-/**
- * An Entry's card in the Feed, with its action row or its corner and side
- * swipes (ADR 0077), under Self-check and the source and exceptions tabs as they are shown in effect.
- */
-function SwipedEntryCard(
-  props: Omit<
-    ComponentProps<typeof EntryCard>,
-    'slots' | 'selfCheck' | 'sourceTab' | 'tipExceptions'
-  >,
-) {
-  const { selfCheck, sourceTab, tipExceptions } = useShown();
-  return (
-    <EntryCard
-      {...props}
-      slots={useEntrySlots(props.card)}
-      selfCheck={selfCheck}
-      sourceTab={sourceTab}
-      tipExceptions={tipExceptions}
-    />
-  );
+/** An Entry's card in the Feed, with its action row or its corner and side swipes (ADR 0077). */
+function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'slots'>) {
+  return <EntryCard {...props} slots={useEntrySlots(props.card)} />;
 }
 
 /** Whether the Feed Notice is a later question of the questionnaire (ADR 0067). */
@@ -455,41 +379,4 @@ function NoticeCard({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: space[6],
-    justifyContent: 'center',
-    gap: space[2],
-  },
-  headerBackdrop: { flex: 1 },
-  // Under the header: Search at the end.
-  tools: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerButtons: { marginLeft: 'auto', flexDirection: 'row', gap: space[2] },
-  page: { flex: 1 },
-  // A card that fits sits in the middle of the page; a taller one starts at the top.
-  content: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: space[6],
-    paddingBottom: space[6],
-  },
-  // The Weekly Recap's page starts under the top row, closer to the edges, and ends the board's
-  // 12 points over the tab bar (board f5: 100 under the page, a bar of 88; check 15.11).
-  stack: {
-    flexGrow: 1,
-    paddingHorizontal: space[3],
-    paddingBottom: space[3],
-  },
-  heroContent: {
-    flexGrow: 1,
-    paddingHorizontal: space[3],
-    paddingBottom: space[6],
-  },
-  // The end-of-Cycle card and a Feed Notice but Yesterday sit in the middle of the page, under the top row.
-  centred: { paddingHorizontal: space[6], paddingBottom: space[6] },
-  // The goal-reached card fills its page to the board's 12 points from its sides (XFeed f4).
-  goal: { paddingHorizontal: space[3], paddingBottom: space[3] },
 });

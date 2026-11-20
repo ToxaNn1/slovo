@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 import {
-  loadEdition,
   openComposition,
   openMistakeReports,
   systemRandom,
@@ -14,8 +13,9 @@ import {
   createMemoryContentPort,
   type FakeBackend,
   seedUserState,
+  loadEdition,
 } from '@slovo/core/testing';
-import { EntryCard, UndoToastProvider } from '@slovo/ui';
+import { CardFeaturesProvider, EntryCard, noCardFeatures, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
@@ -191,7 +191,11 @@ async function settle() {
 
 /** An Entry's card as the Feed draws it: its slots, and its side swipes when they are on. */
 function SwipedCard({ card, selfCheck = false }: { card: AnyEntryCard; selfCheck?: boolean }) {
-  return <EntryCard card={card} slots={useEntrySlots(card)} selfCheck={selfCheck} />;
+  return (
+    <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck }}>
+      <EntryCard card={card} slots={useEntrySlots(card)} />
+    </CardFeaturesProvider>
+  );
 }
 
 /** Swipes the card sideways by `distance` points and lets it land; a mark takes past 40% of the unmeasured 360 pt card. */
@@ -456,7 +460,11 @@ describe('the side swipes of an Entry card (ADR 0077)', () => {
 
 /** An Entry card with the slots the feed gives it. */
 function SlottedCard({ card, selfCheck = false }: { card: AnyEntryCard; selfCheck?: boolean }) {
-  return <EntryCard card={card} slots={useEntrySlots(card)} selfCheck={selfCheck} />;
+  return (
+    <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck }}>
+      <EntryCard card={card} slots={useEntrySlots(card)} />
+    </CardFeaturesProvider>
+  );
 }
 
 /** The card of the Entry with the slots the feed gives it. */

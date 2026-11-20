@@ -22,7 +22,6 @@ import { useEditionInEffect } from '@/edition/remote-switches';
 import { edition, editionStrings } from '@/edition/edition';
 import { todayText } from '@/feed/today-text';
 import { StatsPillAndSheet } from '@/progress/progress';
-import { useShown } from '@/shown-in-effect';
 
 /**
  * The home behind «Стрічка», the Dashboard, which opens the Feed (ADR 0076):
@@ -57,7 +56,7 @@ function DashboardBlocks() {
   const tonesOf = useTonesOf('quietRail');
   const typeGrid = useEditionInEffect().isFeatureEnabled('correctionTypeGrid');
   const { colors } = useTokens();
-  const shown = useShown();
+  const inEffect = useEditionInEffect();
   // The daily splash from the logo plays over the Dashboard, then hands it back (ADR 0105).
   const [splash, setSplash] = useState(false);
   return (
@@ -74,7 +73,7 @@ function DashboardBlocks() {
             today={todayText(today, editionStrings)}
             streak={<StatsPillAndSheet />}
             onLogo={
-              shown.dailySplash
+              inEffect.isFeatureEnabled('dailySplash')
                 ? {
                     label: editionStrings.dashboard.dailySplash,
                     onPress: () => {
@@ -110,7 +109,7 @@ function DashboardBlocks() {
         return (
           <DashboardHero
             hero={block.hero}
-            sparks={shown.heroSparks}
+            sparks={inEffect.isFeatureEnabled('heroSparks')}
             onReveal={reveal}
             onToCard={toCard}
           />

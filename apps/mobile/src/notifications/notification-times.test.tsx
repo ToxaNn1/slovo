@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { openComposition, systemRandom, type Composition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';

@@ -3,7 +3,6 @@ import type { AnyEntryCard, CategoryFeedPage, Composition } from '@slovo/core';
 import {
   BackLink,
   EntryCard,
-  PagerScrollView,
   Placeholder,
   space,
   UndoToastProvider,
@@ -18,8 +17,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCompositionRead } from '../composition';
 import { editionStrings } from '../edition/edition';
+import { ShownCardFeatures } from '../entries/card-features';
 import { useEntrySlots } from '../entries/entry-actions';
-import { useShown } from '../shown-in-effect';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -135,13 +134,15 @@ function ListFeed({ read, failure, kicker, testID }: ListFeedProps) {
       </View>
       {/* Under the back tile's row, so a scrolled card passes under nothing. */}
       <View style={styles.pager}>
-        <VerticalPager
-          testID={testID}
-          items={pages}
-          renderPage={renderPage}
-          onIndexChange={onIndexChange}
-          turnActionLabels={turnActionLabels}
-        />
+        <ShownCardFeatures place="listFeed">
+          <VerticalPager
+            testID={testID}
+            items={pages}
+            renderPage={renderPage}
+            onIndexChange={onIndexChange}
+            turnActionLabels={turnActionLabels}
+          />
+        </ShownCardFeatures>
       </View>
     </View>
   );
@@ -157,7 +158,6 @@ function ListFeedPageView({
   testID: string;
   kicker: string;
 }) {
-  const { selfCheck, stressFall, sourceTab, tipExceptions } = useShown();
   const slots = useEntrySlots(card);
   return (
     <View testID={testID} style={styles.page}>
@@ -165,19 +165,8 @@ function ListFeedPageView({
         card={card}
         slots={slots}
         kicker={kicker}
-        selfCheck={selfCheck}
-        stressFalls={stressFall}
-        sourceTab={sourceTab}
-        tipExceptions={tipExceptions}
-        // A tabbed card is a fixed frame the page's height, as in the Feed: only
-        // an opened tab inside it scrolls (ADR 0091, ADR 0113). Any other card scrolls.
-        page={(entry, framed) =>
-          framed ? (
-            <View style={[styles.page, styles.content]}>{entry}</View>
-          ) : (
-            <PagerScrollView contentContainerStyle={styles.content}>{entry}</PagerScrollView>
-          )
-        }
+        // Right under the back tile's row, on the same page as in the Feed.
+        page={{ testID, clearance: { framed: 0, scrolled: 0 } }}
       />
     </View>
   );
@@ -188,5 +177,4 @@ const styles = StyleSheet.create({
   header: { paddingLeft: space[3], paddingBottom: space[2] },
   pager: { flex: 1, overflow: 'hidden' },
   page: { flex: 1 },
-  content: { flexGrow: 1, paddingHorizontal: space[3], paddingBottom: space[6] },
 });

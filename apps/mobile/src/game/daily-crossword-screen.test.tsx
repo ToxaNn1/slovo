@@ -17,7 +17,8 @@ import { AccessibilityInfo, Share } from 'react-native';
 import GameScreen from '../app/game';
 import GameLayout from '../app/game/_layout';
 import DailyCrosswordScreen from '../app/game/crossword';
-import { edition, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import {
   GAMES_BOARD_SWITCHES,
   opened,

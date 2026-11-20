@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
-  loadEdition,
   openComposition,
   systemRandom,
   type Composition,
@@ -8,7 +7,7 @@ import {
   type FeatureSwitch,
   LATER_QUESTIONS,
 } from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { Stack } from 'expo-router';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';

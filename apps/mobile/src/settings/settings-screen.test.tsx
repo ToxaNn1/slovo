@@ -1,12 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import {
-  loadEdition,
   type AnalyticsPort,
   type Composition,
   type Edition,
   type FeatureSwitch,
 } from '@slovo/core';
-import { seedUserState } from '@slovo/core/testing';
+import { seedUserState, loadEdition } from '@slovo/core/testing';
 import { typeRoles } from '@slovo/ui/tokens';
 import { Stack } from 'expo-router';
 import { renderApp } from '../shell/test-app';

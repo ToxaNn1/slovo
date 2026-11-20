@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { Correction, Word } from '@slovo/contracts';
-import { loadEdition, openComposition, type Composition } from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { openComposition, type Composition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 

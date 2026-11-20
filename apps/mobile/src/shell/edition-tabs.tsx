@@ -17,6 +17,7 @@ import { editionStrings } from '@/edition/edition';
 import { useGameState } from '@/game/game';
 import type { Tab } from '@/shown';
 import { useShown } from '@/shown-in-effect';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 const { tabs } = editionStrings;
 
@@ -214,10 +215,11 @@ function FocusedEnter({ route, children }: Pick<ScreenLayoutProps, 'route' | 'ch
  */
 export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
   const shown = useShown();
+  const inEffect = useEditionInEffect();
   const options = tabsOptions(
     shown.tabs,
-    shown.profile ? tabs.profile : tabs.settings,
-    shown.feedTab,
+    inEffect.isFeatureEnabled('profile') ? tabs.profile : tabs.settings,
+    inEffect.isFeatureEnabled('feedTab'),
   );
   /** While a Game is on, its Round or its result fills the Game tab. */
   const gameOn = useGameState().current !== undefined;
@@ -251,7 +253,7 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
         listeners={{
           tabPress: (event) => {
             // The Dashboard stays the home at launch; its tab opens the Feed (ADR 0093).
-            if (!shown.feedTab) return;
+            if (!inEffect.isFeatureEnabled('feedTab')) return;
             event.preventDefault();
             router.navigate('/feed');
           },
@@ -273,7 +275,7 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
         name="settings"
         options={({ route }) => ({
           ...options.settings,
-          ...barOn(atRoot(route, shown.profile ? 'profile' : 'index')),
+          ...barOn(atRoot(route, inEffect.isFeatureEnabled('profile') ? 'profile' : 'index')),
         })}
         listeners={({ route }) => ({
           tabPress: (event) => {
@@ -281,7 +283,7 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
             // layout's `initialRouteName` is read, so the first press on the tab would open
             // Settings under no Profile. While the Profile is shown it opens the Profile.
             const stackBuilt = getFocusedRouteNameFromRoute(route) !== undefined;
-            if (!shown.profile || stackBuilt) return;
+            if (!inEffect.isFeatureEnabled('profile') || stackBuilt) return;
             event.preventDefault();
             router.navigate('/settings/profile');
           },

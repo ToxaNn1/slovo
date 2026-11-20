@@ -5,6 +5,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react-native
 import { Dimensions } from 'react-native';
 import { testStrings } from '../test-strings';
 import { typeRoles } from '../tokens';
+import { CardFeaturesProvider, noCardFeatures } from './card-features';
 
 const strings = testStrings({
   wordCard: {
@@ -213,7 +214,11 @@ describe('the tabbed Synonym Row card (board XEntry2 e8)', () => {
 
   it('with the Source tab, names the sources in a last tab after the pages, not on the last page', async () => {
     await render(
-      inEdition(<EntryCard card={{ ...card, model: { ...model, members } }} sourceTab />),
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, sourceTab: true }}>
+          <EntryCard card={{ ...card, model: { ...model, members } }} />
+        </CardFeaturesProvider>,
+      ),
     );
 
     expect(
@@ -249,7 +254,13 @@ describe('the tabbed Synonym Row card (board XEntry2 e8)', () => {
 
 describe('Self-check on a Synonym Row card', () => {
   it('shows only the dominant until the reader reveals it', async () => {
-    await render(inEdition(<EntryCard card={card} selfCheck />));
+    await render(
+      inEdition(
+        <CardFeaturesProvider value={{ ...noCardFeatures, selfCheck: true }}>
+          <EntryCard card={card} />
+        </CardFeaturesProvider>,
+      ),
+    );
 
     expect(screen.getByRole('header', { name: 'walk, synonym row' })).toBeTruthy();
     expect(screen.getByTestId('synonym-row-dominant')).toHaveTextContent('Wálk');

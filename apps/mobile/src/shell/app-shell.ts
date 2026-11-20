@@ -6,8 +6,10 @@ import {
   evaluateSwitches,
   readInstallId,
   systemRandom,
+  type Account,
   type AnalyticsSink,
   type Edition,
+  type FeatureSwitch,
   type ReaderFacts,
 } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
@@ -27,6 +29,7 @@ import { deviceAnalytics } from '../analytics/posthog-analytics';
 import { shareCardOnDevice, shareFileOnDevice } from '../share/device-share';
 import { storedUserStateOpening } from '../user-state/stored-user-state';
 import type { DevicePorts, DeviceSources, EditionSwitches, Shell } from '../shell-value';
+import { editionAtLaunch } from '../edition/edition-at-launch';
 
 /** The device's own sources for an Edition: its backend, clock, schedule, randomness and stored user state. */
 function deviceSources(editionId: string): DeviceSources {
@@ -39,7 +42,24 @@ function deviceSources(editionId: string): DeviceSources {
   };
 }
 
-/** Opens `open` over what `base` opened, on its first read, once per app run; a failure is logged as `failure`. */
+/**
+ * How long the Account and Sync wait for the remote Rules the device kept to
+ * be read before they open by the shipped states (ADR 0203).
+ */
+export const KEPT_RULES_WAIT_MS = 2000;
+
+/** Why an opening stays closed: its Feature Switch is off in effect (ADR 0203). No failure, so nothing logs it. */
+class SwitchedOffError extends Error {
+  override readonly name = 'SwitchedOffError';
+  constructor(feature: FeatureSwitch) {
+    super(`The Feature Switch ${feature} is off in effect`);
+  }
+}
+
+/**
+ * Opens `open` over what `base` opened, on its first read, once per app run; a failure is logged as `failure`,
+ * but a Feature Switch off in effect, which is none.
+ */
 function over<S, T>(
   base: Opening<S>,
   failure: string,
@@ -47,7 +67,7 @@ function over<S, T>(
 ): Opening<T> {
   return openOnce(async () => open(await base.opened()), {
     onError(error) {
-      logError(failure, error);
+      if (!(error instanceof SwitchedOffError)) logError(failure, error);
     },
   });
 }
@@ -58,11 +78,14 @@ function over<S, T>(
  * until something reads it. The remote Feature Switches open over the
  * answer the device kept (ADR 0040); every other opening opens over the one
  * set of device ports, which waits for the user state alone. Their Edition
- * in effect takes the remote switches once they are open, and the Edition's
- * own until then or when they fail, so a slow or failed answer holds nothing
- * back. The Account and Sync open apart from the composition (ADR 0037);
- * Sync, Mistake Reports and the Community Counters apart from it too, and
- * nothing waits for them.
+ * in effect takes the remote switches once they are open, and the shipped
+ * states (`editionAtLaunch`) until then or when they fail, so a slow or
+ * failed answer holds nothing back. The Account and Sync open apart from the
+ * composition (ADR 0037); Sync, Mistake Reports and the Community Counters
+ * apart from it too, and nothing waits for them. The Shell has an Account and
+ * a Sync when the build shipped them on, the one reader here that takes the
+ * shipped answer on purpose; each opens only while it is on in effect by the
+ * Rules the device kept, and never waits for the backend (ADR 0203).
  */
 export function createShell(
   editionId: string,
@@ -72,14 +95,15 @@ export function createShell(
   const installId = over(userState, 'Could not read the Install id', (opened) =>
     readInstallId({ userState: opened, random: sources.random }),
   );
+  /** The Account once it is open: the reader's facts read it here, so working out the verdicts never opens it. */
+  let openAccount: Account | undefined;
   /** The reader the Rules target, read afresh each time the verdicts are worked out. */
   const factsOf =
     (id: string): (() => ReaderFacts) =>
     () => ({
       ...deviceFacts,
       region: getLocales().at(0)?.regionCode ?? undefined,
-      signedIn:
-        account?.state.status === 'ready' && account.state.value.state.status === 'signed-in',
+      signedIn: openAccount?.state.status === 'signed-in',
       installId: id,
     });
   const remoteSwitches: Opening<EditionSwitches> = over(
@@ -88,7 +112,7 @@ export function createShell(
     async (opened) =>
       openRemoteSwitches({
         ...sources,
-        edition,
+        edition: editionAtLaunch,
         states: edition.featureSwitches,
         facts: factsOf(await installId.opened()),
         userState: opened,
@@ -96,14 +120,59 @@ export function createShell(
   );
   // One Edition whose every read of a switch takes the remote ones as they stand.
   const editionInEffect: Edition = {
-    ...edition,
+    ...editionAtLaunch,
     isFeatureEnabled(feature) {
       const switches = remoteSwitches.state;
-      return (switches.status === 'ready' ? switches.value.edition : edition).isFeatureEnabled(
-        feature,
-      );
+      return (
+        switches.status === 'ready' ? switches.value.edition : editionAtLaunch
+      ).isFeatureEnabled(feature);
     },
   };
+  /**
+   * The launch-time choice (ADR 0203): settles once the Rules the device kept
+   * are read, so what opens after it opens by the Edition in effect. A read
+   * that fails or outlasts `KEPT_RULES_WAIT_MS` leaves the shipped states,
+   * and the backend is never waited for.
+   */
+  const keptRulesRead = () =>
+    new Promise<void>((resolve) => {
+      const stopWaiting = sources.schedule(resolve, KEPT_RULES_WAIT_MS);
+      const settle = () => {
+        stopWaiting();
+        resolve();
+      };
+      remoteSwitches.opened().then(settle, settle);
+    });
+  /**
+   * Opens `open` over the device ports only while `feature` is on in effect
+   * at launch; turned off, it stays closed, and a switch back on while the
+   * app runs opens it. It follows the remote switches once while closed,
+   * however often it is read.
+   */
+  function whileOn<T>(
+    feature: FeatureSwitch,
+    failure: string,
+    open: (opened: DevicePorts) => Promise<T> | T,
+  ): Opening<T> {
+    let following = false;
+    const opening: Opening<T> = over(ports, failure, async (opened) => {
+      await keptRulesRead();
+      if (editionInEffect.isFeatureEnabled(feature)) return open(opened);
+      // Only the remote switches, open by now, turn off what shipped on.
+      const switches = await remoteSwitches.opened();
+      if (!following) {
+        following = true;
+        const stopFollowing = switches.subscribe(() => {
+          if (!editionInEffect.isFeatureEnabled(feature)) return;
+          stopFollowing();
+          following = false;
+          opening.opened().catch(() => undefined);
+        });
+      }
+      throw new SwitchedOffError(feature);
+    });
+    return opening;
+  }
   // The Analytics events carry the Install id and the Variants of the remote switches as they
   // stand; the Edition's own states, so no Variant, until they open (ADR 0068, 0089).
   const analytics = openOnce<AnalyticsSink>(
@@ -143,9 +212,23 @@ export function createShell(
     { onError: () => undefined },
   );
   const languagePack = languagePackOpening({ remoteSwitches });
-  const account = edition.isFeatureEnabled('account')
-    ? over(ports, 'Could not read the Session', openDeviceAccount)
+  const account = edition.isShippedOn('account')
+    ? whileOn('account', 'Could not read the Session', async (opened) => {
+        openAccount = await openDeviceAccount(opened);
+        return openAccount;
+      })
     : undefined;
+  /**
+   * The Account a Mistake Report goes out with, read as each report goes: none while it is
+   * off in effect or failed to open, so a report never waits on it then.
+   */
+  const reportsAccount: Pick<Account, 'withSession'> | undefined = account && {
+    async withSession(request) {
+      if (!editionInEffect.isFeatureEnabled('account')) return undefined;
+      const opened = await account.opened().catch(() => undefined);
+      return opened?.withSession(request);
+    },
+  };
   return {
     userState,
     settings: settingsOpening({
@@ -159,20 +242,20 @@ export function createShell(
     composition: compositionOpening({ languagePack, ports, account }),
     account,
     sync:
-      account === undefined || !edition.isFeatureEnabled('sync')
+      account === undefined || !edition.isShippedOn('sync')
         ? undefined
-        : over(ports, 'Could not open Sync', async (opened) =>
+        : whileOn('sync', 'Could not open Sync', async (opened) =>
             openSync({ ...opened, account: await account.opened() }),
           ),
     // Each report carries the app version the build declares and the content version of the Language Pack,
-    // and goes out with the Session while the reader is signed in (ADR 0159); an Account that failed to
-    // open leaves the reports anonymous.
+    // and goes out with the Session while the reader is signed in (ADR 0159); an Account off in effect or
+    // that failed to open leaves the reports anonymous.
     mistakeReports: over(ports, 'Could not open Mistake Reports', async (opened) =>
       openMistakeReports({
         ...opened,
         appVersion: deviceFacts.appVersion,
         contentVersion: (await languagePack.opened()).contentVersion,
-        account: await account?.opened().catch(() => undefined),
+        account: reportsAccount,
       }),
     ),
     counterSending: over(

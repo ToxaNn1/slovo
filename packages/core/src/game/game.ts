@@ -1,49 +1,52 @@
 import type { EntryKind } from '@slovo/contracts';
 
 import type { Analytics } from '../analytics/analytics';
-import type { AskableEntry, AskableKind, EligibleOfKind, Entries } from '../entries/entries';
+import type { Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
-import type { GameRecords } from './game-xp';
 import type { History } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { LocalDate } from '../local-date';
 import type { Clock, Random, Schedule } from '../ports';
 import type { Subject } from '../subject';
-import { staged, writeStaged, type StagedPiece } from '../user-state/staged-write';
-import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state-schema';
-import type {
-  GameEdition,
-  GameMode,
-  GameHubGroup,
-  GameModeRefusal,
-  RoundLabelKind,
-  TextRange,
-} from './game-mode';
-import {
-  entriesIn,
-  judge,
-  roundsIn,
-  shownRound,
-  type GivenAnswer,
-  type RoundAnswer,
-  type ShownRound,
-} from './answer-forms';
-import { LIFE_LOST_DELAY } from './game-haptics';
-import {
-  createRoundPlanner,
-  GAME_ROUNDS,
-  roundLimitOf,
-  type PlannedRound,
-  type RoundPlan,
-  type RoundPlanner,
-} from './round-plan';
-import { typedForm } from './typed-form';
 import type { TextComparison } from '../text/text-comparison';
+import type { UserState } from '../user-state/user-state';
+import type { GivenAnswer } from './answer-forms';
+import { createGameAwards, type RoundAward } from './game-awards';
+import type { GameEdition, GameMode, GameHubGroup, GameModeRefusal } from './game-mode';
+import { createGameClock, TIME_UP } from './game-time';
+import type { GameRecords } from './game-xp';
+import { createMoveOn } from './move-on';
+import { createOfferPlanning } from './offer-planning';
+import {
+  answerRound,
+  firstGame,
+  nextRound,
+  openRoundLetter,
+  replanRounds,
+  type EndedGame,
+  type GameInPlayStatus,
+  type GameOverStatus,
+  type GameStatus,
+  type GameTime,
+  type PlayingGame,
+  type RoundMove,
+  type RoundRules,
+  type RoundsPlan,
+} from './round-machine';
+import { createRoundPlanner, roundLimitOf, type RoundPlan } from './round-plan';
 
 export type { RoundBlank } from './typed-form';
 export type { GivenAnswer, RoundAnswer } from './answer-forms';
 export type { GridCell, GridCellState } from './pairs-form';
+export { answerBannerDelay } from './move-on';
+export type {
+  AnsweredRound,
+  GameStatus,
+  GameTime,
+  PlayedRound,
+  PlayingGame,
+  Round,
+} from './round-machine';
 
 /** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own (ADR 0137). */
 export const GAME_LIVES = 3;
@@ -58,77 +61,12 @@ const timeLimitOf = ({ timeLimit }: GameMode, edition: GameEdition): number | un
   typeof timeLimit === 'function' ? timeLimit(edition) : timeLimit;
 
 /**
- * A Round as the reader plays it, in its answer form, the right answer kept
- * out, and resolved for the shell to draw: whether its prompt has a gap, how
- * each blank shows and when a wrong answer costs its Life (ADR 0017).
- */
-export type Round = {
-  /** Which Round of the Game it is, from 1 up to the mode's Round limit, `GAME_ROUNDS` by default. */
-  readonly number: number;
-  /** The kind of Entry it asks about, by which the shell lays it out, such as a Synonym Row's question. */
-  readonly entryKind: AskableKind;
-  readonly prompt: string;
-  /** The part of the prompt to mark, which the shell draws and VoiceOver names; none to mark. */
-  readonly highlight: TextRange | undefined;
-  /**
-   * The gap in the prompt: the highlight when it stands for the Lemma in an
-   * Example, which the shell labels and reads aloud as a gap, and marks no
-   * further; none in another Round.
-   */
-  readonly gap: TextRange | undefined;
-  /** Which label the Round shows over its prompt: the Game Mode's, or its own kind's. */
-  readonly labelKind: RoundLabelKind;
-  /** The Definition shown under the prompt, such as a Word's in «Звідки слово»; none when left out. */
-  readonly definition?: string;
-  /**
-   * How long after a wrong answer its Life is lost, in milliseconds: when its
-   * haptic comes (`LIFE_LOST_DELAY`), so the shell pops the Life then too.
-   */
-  readonly lifeLostAfter: number;
-  /** The answer, once given; a Round is answered once. */
-  readonly answer: RoundAnswer | undefined;
-} & ShownRound;
-
-/** A Round the reader answered: what the Game Review lists. */
-export type PlayedRound = Round & {
-  /** The Entry the Round asked about: of a pairs grid, the Word tapped. */
-  readonly entry: AskableEntry;
-  readonly answer: RoundAnswer;
-  /** Whether the reader answered right. */
-  readonly right: boolean;
-};
-
-/**
- * Where a Game stands: in play, a Round to answer or a Round answered and
- * waiting for «Далі»; or over, won at its Round limit, lost with its last
- * Life, or ended once its time was up.
- */
-export type GameStatus = GameInPlayStatus | GameOverStatus;
-
-/** Where a Game in play stands: a Round to answer, or one answered and waiting for «Далі». */
-type GameInPlayStatus = 'playing' | 'answered';
-
-/** How a Game over ended: won at its Round limit, lost with its last Life, or its time up. */
-type GameOverStatus = 'won' | 'lost' | 'time-up';
-
-/**
  * Whether a Game over counts as won: one won at its Round limit and one whose
  * time is up do, one lost with its last Life does not. The one place that
  * decides it, for the Game's end, its analytics event and its result screen.
  */
 export const countsAsWon = ({ status }: { readonly status: GameOverStatus }): boolean =>
   status !== 'lost';
-
-/**
- * The play time a Game in a mode with a time limit has left: `left`
- * milliseconds when it last paused or started, and while its clock runs, the
- * moment it ends, which pauses leave out.
- */
-export interface GameTime {
-  readonly left: number;
-  /** When the Game ends while its clock runs; none while it is paused or over. */
-  readonly endsAt: Date | undefined;
-}
 
 /**
  * How a Game ended (spec #1674): `finished` at its Round limit, `time-up` once
@@ -149,298 +87,11 @@ export type GameEnd = (
   readonly newBest: boolean;
 };
 
-/** What a Game in play and a Game just over both hold. */
-interface GameRounds {
-  readonly modeId: string;
-  /** The current Round; the last one played once the Game is over. */
-  readonly round: Round;
-  /**
-   * The Rounds answered, right or wrong, but for the one that cost the last
-   * Life; it moves up on «Далі». A won Game passed every Round the mode had.
-   */
-  readonly roundsPassed: number;
-  /** The mode's Round limit (`GAME_ROUNDS` by default); none in a mode without one. */
-  readonly roundLimit: number | undefined;
-  /** The Lives left, from the Lives the Game started with to 0; none in a mode without Lives. */
-  readonly lives: number | undefined;
-  /** The mode's Lives, which the Game starts with; none in a mode without Lives. */
-  readonly livesAtStart: number | undefined;
-  /** The mode's time limit, in milliseconds of play; none in a mode without one. */
-  readonly timeLimit?: number;
-  /** The play time left, in a mode with a time limit; none in another mode. */
-  readonly time?: GameTime;
-  /**
-   * Every Round answered so far, in order, the one that cost the last Life
-   * included; kept in memory only, until the Game is left.
-   */
-  readonly played: readonly PlayedRound[];
-}
-
-/**
- * What the answer banner after an answer shows (ADR 0138): a right answer
- * with the XP the XP log records for it, none when it records none; or a
- * wrong one with the right answer's text, and whether it took the last Life.
- */
-export type AnsweredRound =
-  | { readonly kind: 'right'; readonly xp: number | undefined }
-  | { readonly kind: 'wrong'; readonly answer: string; readonly lastLife: boolean };
-
-/**
- * The Game in play: a Round to answer, or one answered, with what its answer
- * banner shows, and waiting for «Далі» or, with the banner on, its delay.
- */
-export type PlayingGame = GameRounds & {
-  /** A Game in play has no end yet. */
-  readonly end?: never;
-} & (
-    | { readonly status: 'playing'; readonly answered?: never }
-    | {
-        readonly status: 'answered';
-        readonly answered: AnsweredRound;
-        /**
-         * Whether the answered Round shows the answer banner and moves on by
-         * itself after its delay, in place of the sheet and its «Далі» (ADR
-         * 0138): always, but never after a pair of a pairs grid or in a Game
-         * with no schedule to move on by.
-         */
-        readonly banner: boolean;
-      }
-  );
-
-/**
- * How long the answer banner shows before the Game moves on by itself, in
- * milliseconds (ADR 0138, 0179): after a right and a wrong answer, and in a
- * Game Mode with a time limit, whose clock keeps running under it. A wrong
- * answer in a Game with no time limit keeps its banner, with the right
- * answer, until «Далі».
- */
-const ANSWER_BANNER_DELAYS = {
-  untimed: { right: 950, wrong: undefined },
-  timed: { right: 550, wrong: 3000 },
-} as const;
-
-/**
- * How long the banner of an answered Round shows before the Game moves on by
- * itself, in milliseconds; undefined when it waits for «Далі»: with no banner,
- * or after a wrong answer in a Game with no time limit (ADR 0179).
- */
-export function answerBannerDelay(game: CurrentGame): number | undefined {
-  if (game.status !== 'answered' || !game.banner) return undefined;
-  return ANSWER_BANNER_DELAYS[game.timeLimit === undefined ? 'untimed' : 'timed'][
-    game.answered.kind
-  ];
-}
-
-/** A Game the moment it ends, before its end is counted. */
-type EndedGame = GameRounds & { readonly status: GameOverStatus };
-
 /** A Game over, with how it ended. */
 export type GameOver = EndedGame & { readonly end: GameEnd };
 
 /** The Game in play, or just over with how it ended. */
 export type CurrentGame = PlayingGame | GameOver;
-
-/**
- * The Game in play: the Rounds, planned when the Game starts, and the moves
- * of a `CurrentGame` through them, which `openGame` wraps with what the
- * Rounds know nothing of: the play time, the Knowledge Marks, the Best
- * result and the order of the Game's changes (ADR 0052). A move never edits
- * the Game it takes: it makes a new one, and leaves showing it to `openGame`.
- */
-interface GameInPlay {
-  /** The Game at its first Round, with every Life. */
-  readonly first: PlayingGame;
-  /**
-   * The Game with its Round answered: a wrong answer costs a Life, in a mode
-   * with Lives. In a mode that moves on, the Game goes on to its next Round
-   * at once, as `next` does. Nothing unless a Round waits for an answer in that form and
-   * the answer names something the Round has.
-   */
-  answer(game: PlayingGame, given: GivenAnswer): PlayingGame | EndedGame | undefined;
-  /**
-   * The Game after «Далі»: lost at 0 Lives, won after the last Round of the
-   * mode's limit or, without one, after the last Round the mode can plan,
-   * else at the next Round. Nothing before an answer.
-   */
-  next(game: PlayingGame): PlayingGame | EndedGame | undefined;
-  /**
-   * The Game with «Відкрити літеру»: the first blank of the Round's typed
-   * text opened, at no cost. Nothing unless the Round waits for an answer
-   * and more than one blank is left.
-   */
-  openLetter(game: PlayingGame): PlayingGame | undefined;
-  /**
-   * Builds the Rounds after the ones the Game has shown anew from the
-   * eligible Entries of the mode's kind, while the Game is not over. When the
-   * mode can't make the rest, they stay as they were.
-   */
-  replan(game: PlayingGame, eligible: EligibleOfKind<AskableEntry>): void;
-}
-
-/** The Round as the reader sees it, its right answer kept out, after the answers given in its earlier Rounds, such as the pairs played in a grid. */
-function roundOf(
-  { entry, content }: PlannedRound,
-  number: number,
-  played: readonly PlayedRound[],
-  inGrid: number,
-): Round {
-  const base = {
-    number,
-    entryKind: entry.kind,
-    prompt: content.prompt,
-    highlight: content.highlight,
-    gap: content.gap,
-    labelKind: content.labelKind ?? 'mode',
-    ...(content.definition !== undefined && { definition: content.definition }),
-    lifeLostAfter: LIFE_LOST_DELAY,
-    answer: undefined,
-  };
-  const answered = played.slice(played.length - inGrid).map(({ answer }) => answer);
-  return { ...base, ...shownRound(content, answered) };
-}
-
-/**
- * Starts a Game in the mode over the Rounds planned for it, which
- * `planRounds` builds anew from the eligible Entries on `replan`; nothing
- * without a Round. The pairs of a pairs grid are Rounds of their own, one
- * after another, until the grid is empty. In a mode with no Round limit, the
- * Game plans `GAME_ROUNDS` more Rounds whenever it runs out of them.
- */
-function createGameInPlay({
-  mode,
-  lives,
-  rounds: planned,
-  planRounds,
-  eligible: eligibleAtStart,
-  comparison,
-  banner,
-}: {
-  mode: GameMode;
-  /** The Lives the Game starts with, which it keeps however the Edition changes; none without Lives. */
-  lives: number | undefined;
-  /** Whether the Game shows the answer banner: it does whenever a schedule moves it on, so a mode that moves on waits for it too. */
-  banner: boolean;
-  /** The Rounds the Game starts over, as the mode planned them. */
-  rounds: readonly PlannedRound[];
-  planRounds: RoundPlanner;
-  /** The eligible Entries of the mode's kinds the Rounds were planned from. */
-  eligible: EligibleOfKind<AskableEntry>;
-  /** How the Edition compares a typed answer. */
-  comparison: TextComparison;
-}): GameInPlay | undefined {
-  const first = planned[0];
-  if (first === undefined) return undefined;
-  let rounds = planned;
-  let eligible = eligibleAtStart;
-  const roundLimit = roundLimitOf(mode);
-
-  /** The ids of the Entries the planned Rounds ask about, a grid's pairs included. */
-  const askedIn = (some: readonly PlannedRound[]) =>
-    new Set(some.flatMap(({ entry, content }) => [entry.id, ...entriesIn(content)]));
-
-  /**
-   * The planned Round the Game's Round of that number comes from, its place
-   * among the planned ones and how many Rounds of the Game come before it in
-   * the same pairs grid; nothing past the last.
-   */
-  function plannedAt(
-    number: number,
-  ): { planned: PlannedRound; place: number; inGrid: number } | undefined {
-    let start = 1;
-    for (const [place, item] of rounds.entries()) {
-      const span = roundsIn(item.content);
-      if (number < start + span) return { planned: item, place, inGrid: number - start };
-      start += span;
-    }
-    return undefined;
-  }
-
-  function next(game: PlayingGame): PlayingGame | EndedGame | undefined {
-    if (game.status !== 'answered') return undefined;
-    // The banner's answer goes with the Round it answered.
-    const { answered: _answered, banner: _banner, ...onward } = game;
-    if (game.lives === 0) return { ...onward, status: 'lost' };
-    const roundsPassed = game.roundsPassed + 1;
-    if (roundLimit === undefined && plannedAt(roundsPassed + 1) === undefined) {
-      const more = planRounds(mode, eligible, GAME_ROUNDS, askedIn(rounds), roundsPassed + 1);
-      if ('rounds' in more) rounds = [...rounds, ...more.rounds];
-    }
-    const upcoming =
-      roundLimit === undefined || roundsPassed < roundLimit
-        ? plannedAt(roundsPassed + 1)
-        : undefined;
-    if (upcoming === undefined) return { ...onward, roundsPassed, status: 'won' };
-    return {
-      ...onward,
-      roundsPassed,
-      round: roundOf(upcoming.planned, roundsPassed + 1, game.played, upcoming.inGrid),
-      status: 'playing',
-    };
-  }
-
-  return {
-    first: {
-      modeId: mode.id,
-      round: roundOf(first, 1, [], 0),
-      roundsPassed: 0,
-      roundLimit,
-      lives,
-      livesAtStart: lives,
-      played: [],
-      status: 'playing',
-    },
-    answer(game, given) {
-      if (game.status !== 'playing') return undefined;
-      const at = plannedAt(game.round.number);
-      const judged =
-        at && judge(at.planned.content, game.round, given, at.planned.entry, comparison);
-      if (judged === undefined) return undefined;
-      const { answer, entry } = judged;
-      const lives = answer.right || game.lives === undefined ? game.lives : game.lives - 1;
-      const answered: PlayingGame = {
-        ...game,
-        round: { ...game.round, answer },
-        played: [...game.played, { ...game.round, answer, entry, right: answer.right }],
-        lives,
-        status: 'answered',
-        answered: answer.right
-          ? { kind: 'right', xp: undefined }
-          : { kind: 'wrong', answer: answer.sheet.answer.text, lastLife: lives === 0 },
-        banner: banner && answer.form !== 'pairs',
-      };
-      const movesOn = mode.movesOn === true && !banner;
-      return movesOn ? next(answered) : answered;
-    },
-    next,
-    openLetter(game) {
-      const { round } = game;
-      if (game.status !== 'playing' || round.form !== 'typed') return undefined;
-      const at = plannedAt(round.number);
-      if (at?.planned.content.form !== 'typed') return undefined;
-      const opened = typedForm.openLetter(at.planned.content, round);
-      return opened && { ...game, round: { ...round, ...opened } };
-    },
-    replan(game, eligibleNow) {
-      eligible = eligibleNow;
-      const at = plannedAt(game.round.number);
-      if (at === undefined) return;
-      const shown = rounds.slice(0, at.place + 1);
-      const shownRounds = shown.reduce((sum, { content }) => sum + roundsIn(content), 0);
-      const all = rounds.reduce((sum, { content }) => sum + roundsIn(content), 0);
-      const rest = planRounds(
-        mode,
-        eligible,
-        (roundLimit ?? all) - shownRounds,
-        askedIn(shown),
-        shownRounds + 1,
-      );
-      if ('rounds' in rest) rounds = [...shown, ...rest.rounds];
-    },
-  };
-}
-
-/** How long the Game waits before each new try of a failed planning of its offers, in milliseconds. */
-const OFFER_PLANNING_RETRY_DELAYS: readonly number[] = [1_000, 2_000, 4_000];
 
 /**
  * A Game Mode on offer, with what its card needs from the Core: the mode's
@@ -578,19 +229,11 @@ const sameOffer = (one: GameModeOffer, other: GameModeOffer | undefined) => {
 const sameOffers = (one: readonly GameModeOffer[], other: readonly GameModeOffer[]) =>
   one.length === other.length && one.every((offer, index) => sameOffer(offer, other[index]));
 
-const { gameBest } = userStateRecords;
-
 /** Whether the Game is still in play: a Round to answer, or one answered and waiting for «Далі». */
 const inPlay = <Game extends { readonly status: GameStatus }>(
   game: Game,
 ): game is Extract<Game, { readonly status: GameInPlayStatus }> =>
   game.status === 'playing' || game.status === 'answered';
-
-/**
- * The result of a finished Game, which its mode's Best result keeps: its
- * right answers, in every mode, as its result screen counts them (ADR 0052).
- */
-const resultOf = (over: EndedGame): number => over.played.filter(({ right }) => right).length;
 
 /**
  * How a Game just over ended, by its status: its last Life lost, its time up,
@@ -687,8 +330,9 @@ export async function openGame({
   const modes = gameOn ? registered.filter((mode) => mode.isOn(edition)) : [];
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
+  const awards = createGameAwards({ xp, userState });
 
-  const bestResults = await bestResultsOf(modes);
+  const bestResults = await awards.bestResults(modes);
   let state: GameState = {
     modes: modes.map((mode) => ({
       ...offeredMode(mode, bestResults[mode.id]),
@@ -698,18 +342,10 @@ export async function openGame({
     current: undefined,
     bestResults,
   };
-  /** The Game in play, or just over; none on the mode screen. */
-  let played: GameInPlay | undefined;
+  /** The Rounds of the Game in play, or just over; none on the mode screen. */
+  let played: { readonly rules: RoundRules; readonly plan: RoundsPlan } | undefined;
   /** When the Game in play started, by the clock. */
   let startedAt = clock.now();
-  /** The XP the Game in play has earned so far, kept in the user state. */
-  let earned = 0;
-  /** Cancels the end of the timed Game in play, scheduled while its clock runs. */
-  let cancelTimeUp: (() => void) | undefined;
-  /** Cancels the move on from the answered Round, scheduled as its banner shows. */
-  let cancelMoveOn: (() => void) | undefined;
-  /** What the move on from the answered Round waits for besides its delay, such as VoiceOver. */
-  let moveOnWaits: Promise<unknown>[] = [];
 
   function change(next: GameState): void {
     state = next;
@@ -745,48 +381,57 @@ export async function openGame({
     if (!sameOffers(offers, state.modes)) change({ ...state, modes: offers });
     const game = state.current;
     const eligible = read.find(({ mode }) => mode.id === game?.modeId)?.eligible;
-    if (game !== undefined && inPlay(game) && eligible !== undefined) {
-      played?.replan(game, eligible);
+    if (played !== undefined && game !== undefined && inPlay(game) && eligible !== undefined) {
+      played = { ...played, plan: replanRounds(played.rules, played.plan, game, eligible) };
     }
   }
 
-  /** Whether a planning of the offers is under way, or waits to try again. */
-  let planningOffers = false;
   const unplanned = () => state.modes.some((offer) => 'planning' in offer);
 
   /**
    * Plans the offers in the background, in turn with the Game's other
-   * changes, unless they are planned already or a planning is under way. A
-   * planning that fails is tried again after each delay of
-   * `OFFER_PLANNING_RETRY_DELAYS` (1, 2 and 4 s), then no more: the offers
-   * keep saying they are still planned until the next day turned to, return,
-   * hide, restore or Mix change.
+   * changes: the offers keep saying they are still planned until the next
+   * day turned to, return, hide, restore or Mix change, should every try fail.
    */
-  function planOffers(): void {
-    if (planningOffers || !unplanned()) return;
-    planningOffers = true;
-    const tryPlanning = (delays: readonly number[]) => {
+  const planOffers = createOfferPlanning({
+    schedule,
+    unplanned,
+    plan: () =>
       inTurn(async () => {
         // A hide, a restore or a Mix change may have planned them meanwhile.
         if (unplanned()) await followEligibility();
-      }).then(
-        () => {
-          planningOffers = false;
-        },
-        () => {
-          const [delay, ...rest] = delays;
-          if (schedule === undefined || delay === undefined) {
-            planningOffers = false;
-            return;
-          }
-          schedule(() => {
-            tryPlanning(rest);
-          }, delay);
-        },
-      );
-    };
-    tryPlanning(OFFER_PLANNING_RETRY_DELAYS);
-  }
+      }),
+  });
+
+  /** The play time of a timed Game, which ends it once it has run out. */
+  const time = createGameClock({
+    clock,
+    schedule,
+    timeUp(ran) {
+      // A write that fails leaves the Game to end on its next answer.
+      inTurn(() => timeUp(ran)).catch(() => undefined);
+    },
+  });
+
+  /**
+   * The move on from an answered Round by itself, unless the Game moved on,
+   * ended or was left since. A move on that fails to write takes the banner
+   * down, so the sheet's «Далі» tries again.
+   */
+  const moveOn = createMoveOn({
+    schedule,
+    moveOn: (shown) =>
+      inTurn(async () => {
+        const game = state.current;
+        if (game?.status !== 'answered' || game.round !== shown.round) return;
+        try {
+          await next();
+        } catch {
+          // The write failed and the Round stays answered: «Далі» tries again.
+          changeCurrent({ ...game, banner: false });
+        }
+      }),
+  });
 
   async function start(modeId: string): Promise<void> {
     const mode = modes.find(({ id }) => id === modeId);
@@ -798,136 +443,75 @@ export async function openGame({
       offer.modeId === modeId ? offerOf(mode, plan, state.bestResults[modeId]) : offer,
     );
     const modesNow = sameOffers(offers, state.modes) ? state.modes : offers;
-    played =
-      'rounds' in plan
-        ? createGameInPlay({
-            mode,
-            lives: livesOf(mode),
-            rounds: plan.rounds,
-            planRounds,
-            eligible,
-            comparison,
-            // With no schedule, nothing moves it on.
-            banner: schedule !== undefined,
-          })
-        : undefined;
-    stopTime();
-    stopMoveOn();
+    const rules: RoundRules = {
+      mode,
+      lives: livesOf(mode),
+      planRounds,
+      comparison,
+      // With no schedule, nothing moves it on.
+      banner: schedule !== undefined,
+    };
+    const rounds: RoundsPlan = { rounds: 'rounds' in plan ? plan.rounds : [], eligible };
+    const firstRound = firstGame(rules, rounds);
+    played = firstRound && { rules, plan: rounds };
+    time.stop();
+    moveOn.stop();
     const timeLimit = timeLimitOf(mode, edition);
     const first =
-      played && timeLimit !== undefined
-        ? { ...played.first, timeLimit, time: runTime(timeLimit) }
-        : played?.first;
+      firstRound && timeLimit !== undefined
+        ? { ...firstRound, timeLimit, time: time.run(timeLimit) }
+        : firstRound;
     change({ ...state, modes: modesNow, current: first });
     if (first === undefined) return;
     startedAt = clock.now();
-    earned = 0;
+    awards.start();
     void analytics?.track('gameStarted', { mode: modeId }).catch(() => undefined);
   }
 
-  /** Cancels the scheduled end of the timed Game in play, if any. */
-  function stopTime(): void {
-    cancelTimeUp?.();
-    cancelTimeUp = undefined;
-  }
-
-  /** The clock of a timed Game run from the play time left, its end scheduled. */
-  function runTime(left: number): GameTime {
-    const time: GameTime = { left, endsAt: new Date(clock.now().getTime() + left) };
-    cancelTimeUp = schedule?.(() => {
-      // A write that fails leaves the Game to end on its next answer.
-      inTurn(() => timeUp(time)).catch(() => undefined);
-    }, left);
-    return time;
-  }
-
-  /** Cancels the scheduled move on from the answered Round, if any. */
-  function stopMoveOn(): void {
-    cancelMoveOn?.();
-    cancelMoveOn = undefined;
-    moveOnWaits = [];
-  }
-
   /**
-   * With the answer banner on, moves the Game on from the answered Round by
-   * itself once its delay, if it has one, has passed and what the screen waits for has come,
-   * unless the Game moved on, ended or was left since. A Round answered
-   * with no banner, such as a pair of a pairs grid, waits for «Далі». A move
-   * on that fails to write takes the banner down, so the sheet's «Далі»
-   * tries again.
-   */
-  function moveOnLater(shown: PlayingGame): void {
-    const delay = answerBannerDelay(shown);
-    if (schedule === undefined || delay === undefined) return;
-    stopMoveOn();
-    cancelMoveOn = schedule(() => {
-      const waits = moveOnWaits;
-      cancelMoveOn = undefined;
-      moveOnWaits = [];
-      void Promise.allSettled(waits)
-        .then(() =>
-          inTurn(async () => {
-            const game = state.current;
-            if (game?.status !== 'answered' || game.round !== shown.round) return;
-            try {
-              await next();
-            } catch {
-              // The write failed and the Round stays answered: «Далі» tries again.
-              changeCurrent({ ...game, banner: false });
-            }
-          }),
-        )
-        .catch(() => undefined);
-    }, delay);
-  }
-
-  /** Whether the play time of the Game has run out by the clock. */
-  const outOfTime = ({ time }: PlayingGame) =>
-    time?.endsAt !== undefined && time.endsAt.getTime() <= clock.now().getTime();
-
-  /**
-   * Ends the Game in play once the clock that `time` started has run out,
+   * Ends the Game in play once the clock that `ran` started has run out,
    * unless the Game paused or ended since.
    */
-  async function timeUp(time: GameTime): Promise<void> {
+  async function timeUp(ran: GameTime): Promise<void> {
     const game = state.current;
-    if (game?.time !== time || !inPlay(game)) return;
-    stopTime();
-    await finish(game, { ...game, time: { left: 0, endsAt: undefined }, status: 'time-up' });
+    if (game?.time !== ran || !inPlay(game)) return;
+    time.stop();
+    await finish(game, { ...game, time: TIME_UP, status: 'time-up' });
+  }
+
+  /** The move of the Round machine kept: the Rounds planned after it; the Game it made is for the caller to show. */
+  function moved(move: RoundMove | undefined): RoundMove['game'] | undefined {
+    if (played !== undefined && move !== undefined) played = { ...played, plan: move.plan };
+    return move?.game;
   }
 
   async function answer(given: GivenAnswer): Promise<void> {
     const game = state.current;
     if (game === undefined || !inPlay(game)) return;
-    const { time } = game;
-    if (time !== undefined && outOfTime(game)) {
-      await inTurn(() => timeUp(time));
+    const ran = game.time;
+    if (ran !== undefined && time.isOut(ran)) {
+      await inTurn(() => timeUp(ran));
       return;
     }
-    const answered = played?.answer(game, given);
+    const answered = moved(played && answerRound(played.rules, played.plan, game, given));
     if (answered === undefined) return;
     const round = answered.played.at(-1);
-    const rightXp = round?.right
-      ? xp.award({
-          source: 'game-round',
-          mode: game.modeId,
-          rarity: round.entry.kind === 'word' ? round.entry.rarity : undefined,
-        })
-      : undefined;
-    const roundXp = round === undefined ? undefined : (rightXp ?? xp.answeredWrong(game.modeId));
+    const award = round && awards.round(game.modeId, round);
     if (inPlay(answered)) {
-      const xpShown = rightXp !== undefined && rightXp.amount > 0 ? rightXp.amount : undefined;
+      const xpShown = award !== undefined && award.amount > 0 ? award.amount : undefined;
       const shown: PlayingGame =
         answered.status === 'answered' && answered.answered.kind === 'right'
           ? { ...answered, answered: { kind: 'right', xp: xpShown } }
           : answered;
       changeCurrent(shown);
-      moveOnLater(shown);
-      if (roundXp !== undefined && roundXp.changes.size > 0)
-        await inTurn(() => writeStaged(userState, [roundXp]));
-      earned += rightXp?.amount ?? 0;
-    } else await inTurn(() => finish(game, answered, roundXp, rightXp?.amount ?? 0));
+      moveOn.later(shown);
+      if (award !== undefined) {
+        if (award.piece.changes.size > 0) await inTurn(() => awards.writeRound(award));
+        awards.earned(award);
+      }
+    } else await inTurn(() => finish(game, answered, award));
     if (round === undefined) return;
+    // The Knowledge Mark of the answer, written in the background of the Game going on.
     await inTurn(() =>
       round.right ? knowledge.confirm(round.entry.id) : knowledge.answer(round.entry.id, 'unknown'),
     );
@@ -936,54 +520,30 @@ export async function openGame({
   async function next(): Promise<void> {
     const game = state.current;
     if (game === undefined || !inPlay(game)) return;
-    const after = played?.next(game);
+    const after = moved(played && nextRound(played.rules, played.plan, game));
     if (after === undefined) return;
     if (inPlay(after)) changeCurrent(after);
     else await finish(game, after);
   }
 
   /**
-   * Ends the Game, its right answers the best result when they beat it, kept
-   * in the user state in one write with the XP of the last Round, of the
-   * finished Game and of the new Best result, so a failed write changes
-   * nothing, and offers the widget hint when it is due and a Life is left. A
-   * Game left during the write stays left.
+   * Ends the Game with what its awards came to, written before it shows, so
+   * a failed write changes nothing. A Game left during the write stays left.
    */
   async function finish(
     game: PlayingGame,
     ended: EndedGame,
-    roundXp?: StagedPiece,
-    roundAmount = 0,
+    lastRound?: RoundAward,
   ): Promise<void> {
-    // The right answers are the Game's result, which its mode's Best result keeps.
-    const right = resultOf(ended);
-    const best = state.bestResults[ended.modeId];
-    const beaten = best === undefined || right > best;
-    // A Game with no right answer still sets the mode's first Best result but
-    // earns no XP for it: the bonus rewards effort, not random tapping (story 3).
-    const bestXp = beaten && right > 0;
-    const awards = [
-      xp.award({
-        source: 'game-finished',
-        mode: ended.modeId,
-        right,
-        played: ended.played.length,
-      }),
-      ...(bestXp ? [xp.award({ source: 'game-best' })] : []),
-    ];
-    await writeStaged(userState, [
-      beaten ? staged(gameBest.record(bestIdOf(ended.modeId)).change(right)) : undefined,
-      roundXp,
-      ...awards,
-    ]);
+    const {
+      right,
+      beaten,
+      newBest,
+      xp: earned,
+    } = await awards.finish(ended, state.bestResults[ended.modeId], lastRound);
     const over: GameOver = {
       ...ended,
-      end: endOf(ended, {
-        played: ended.played.length,
-        right,
-        xp: earned + roundAmount + awards.reduce((sum, { amount }) => sum + amount, 0),
-        newBest: beaten && right > 0,
-      }),
+      end: endOf(ended, { played: ended.played.length, right, xp: earned, newBest }),
     };
     void analytics
       ?.track('gameFinished', {
@@ -1009,30 +569,17 @@ export async function openGame({
   /** Stops the clock of the timed Game in play while it runs. */
   function pause(): void {
     const game = state.current;
-    const endsAt = game?.time?.endsAt;
-    if (game === undefined || endsAt === undefined || !inPlay(game)) return;
-    stopTime();
-    const left = Math.max(0, endsAt.getTime() - clock.now().getTime());
-    changeCurrent({ ...game, time: { left, endsAt: undefined } });
+    if (game === undefined || !inPlay(game)) return;
+    const paused = time.paused(game.time);
+    if (paused !== undefined) changeCurrent({ ...game, time: paused });
   }
 
   /** Runs the clock of the paused timed Game in play again. */
   function resume(): void {
     const game = state.current;
-    const time = game?.time;
-    if (game === undefined || time === undefined || time.endsAt !== undefined || !inPlay(game)) {
-      return;
-    }
-    changeCurrent({ ...game, time: runTime(time.left) });
-  }
-
-  /**
-   * The record id of a mode's Best result: one per reset marker, so after a
-   * Progress reset the mode has none until a Game after it (ADR 0133).
-   */
-  function bestIdOf(modeId: string): string {
-    const marker = xp.resetMarker;
-    return marker === undefined ? modeId : `${modeId}~${marker.id}`;
+    if (game === undefined || !inPlay(game)) return;
+    const resumed = time.resumed(game.time);
+    if (resumed !== undefined) changeCurrent({ ...game, time: resumed });
   }
 
   /** After a Progress reset, reads each mode's Best result again, which is none until a Game after it. */
@@ -1040,7 +587,7 @@ export async function openGame({
   async function followReset(): Promise<void> {
     if (xp.resetMarker?.id === resetFollowed) return;
     resetFollowed = xp.resetMarker?.id;
-    const bestResults = await bestResultsOf(modes);
+    const bestResults = await awards.bestResults(modes);
     change({
       ...state,
       bestResults,
@@ -1052,16 +599,6 @@ export async function openGame({
         return next;
       }),
     });
-  }
-
-  /** The Best result of each mode, read from the user state; a mode with none is left out. */
-  async function bestResultsOf(
-    on: readonly GameMode[],
-  ): Promise<Readonly<Partial<Record<string, number>>>> {
-    const read = await Promise.all(
-      on.map(async ({ id }) => [id, await userState.read(gameBest.record(bestIdOf(id)))] as const),
-    );
-    return Object.fromEntries(read.filter(([, best]) => best !== undefined));
   }
 
   eligibility.subscribe(() => inTurn(followEligibility));
@@ -1091,16 +628,17 @@ export async function openGame({
       }),
     openLetter() {
       const game = state.current;
-      const opened = game && inPlay(game) ? played?.openLetter(game) : undefined;
+      const opened =
+        played && game && inPlay(game) ? openRoundLetter(played.plan, game) : undefined;
       if (opened !== undefined) changeCurrent(opened);
     },
     waitFor(done) {
-      if (cancelMoveOn !== undefined) moveOnWaits.push(done);
+      moveOn.waitFor(done);
     },
     leave() {
       played = undefined;
-      stopTime();
-      stopMoveOn();
+      time.stop();
+      moveOn.stop();
       if (state.current !== undefined) changeCurrent(undefined);
     },
   };

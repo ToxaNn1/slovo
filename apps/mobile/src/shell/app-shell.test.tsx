@@ -54,15 +54,27 @@ const atOnce: Schedule = (run) => {
 };
 const random: Random = { next: () => 0.5 };
 
+/** A user state in memory, which a second Shell opens over as the next launch does. */
+const userStateInMemory = () =>
+  openOnce(() => seedUserState({}, { clock }), { onError: () => undefined });
+
 /** The Shell of the Edition opened over the Core's fake backend and a user state in memory. */
-function shellOverFakes() {
+function shellOverFakes({
+  userState = userStateInMemory(),
+  rulesNeverAnswer = false,
+}: { userState?: ReturnType<typeof userStateInMemory>; rulesNeverAnswer?: boolean } = {}) {
   const fake = createFakeBackend({ clock });
   const shell = createShell(edition.id, {
-    backend: fake.backend,
+    backend: rulesNeverAnswer
+      ? {
+          ...fake.backend,
+          edition: { ...fake.backend.edition, switches: () => new Promise<never>(() => undefined) },
+        }
+      : fake.backend,
     clock,
     schedule: atOnce,
     random,
-    userState: openOnce(() => seedUserState({}, { clock }), { onError: () => undefined }),
+    userState,
   });
   /** Turns `features` off on the backend, and the Shell asks for the switches as at a return to the foreground. */
   async function turnOffRemotely(...features: FeatureSwitch[]) {
@@ -106,13 +118,95 @@ describe('the Shell of the device', () => {
     expect(sync?.state.running).toBe(false);
   });
 
-  it('opens the Account while the Account is switched off remotely, for the screens to hide', async () => {
+  it('opens neither the Account nor Sync while the Account is switched off remotely', async () => {
     const { shell, turnOffRemotely } = shellOverFakes();
 
     await turnOffRemotely('account');
-    const account = await shell.account?.opened();
 
-    expect(account?.state.status).toBe('signed-out');
+    await expect(shell.account?.opened()).rejects.toThrow('account');
+    await expect(shell.sync?.opened()).rejects.toThrow('sync');
+    expect(shell.account?.state.status).toBe('failed');
+    expect(shell.sync?.state.status).toBe('failed');
+  });
+
+  it('opens the Account and leaves Sync closed while Sync alone is switched off remotely', async () => {
+    const { shell, turnOffRemotely } = shellOverFakes();
+
+    await turnOffRemotely('sync');
+
+    expect((await shell.account?.opened())?.state.status).toBe('signed-out');
+    await expect(shell.sync?.opened()).rejects.toThrow('sync');
+  });
+
+  it('opens the Account and Sync once they are switched back on remotely', async () => {
+    const { shell, turnOffRemotely } = shellOverFakes();
+    await turnOffRemotely('account');
+    await expect(shell.account?.opened()).rejects.toThrow('account');
+    await expect(shell.sync?.opened()).rejects.toThrow('sync');
+
+    await turnOffRemotely();
+
+    expect((await shell.account?.opened())?.state.status).toBe('signed-out');
+    expect((await shell.sync?.opened())?.state.running).toBe(false);
+  });
+
+  it('follows the remote switches once however often the Account is read while switched off', async () => {
+    const { shell, turnOffRemotely } = shellOverFakes();
+    await turnOffRemotely('account');
+    const switches = await shell.remoteSwitches.opened();
+    const subscribe = switches.subscribe.bind(switches);
+    let following = 0;
+    jest.spyOn(switches, 'subscribe').mockImplementation((listener) => {
+      following += 1;
+      const stop = subscribe(listener);
+      return () => {
+        following -= 1;
+        stop();
+      };
+    });
+
+    for (const _read of [1, 2, 3]) await expect(shell.account?.opened()).rejects.toThrow('account');
+
+    expect(following).toBe(1);
+  });
+
+  it('sends a Mistake Report with the Session of an Account switched back on after the reports opened', async () => {
+    const { fake, shell, turnOffRemotely } = shellOverFakes();
+    await turnOffRemotely('account');
+    const reports = await shell.mistakeReports.opened();
+
+    await turnOffRemotely();
+    const account = await shell.account?.opened();
+    await account?.requestCode('olena@ukr.net');
+    await account?.verifyCode(fake.account.sentCodes[0]?.code ?? '');
+    expect(account?.state.status).toBe('signed-in');
+    await reports.report({ entryId: 'w_one', type: 'typo', comment: '' });
+
+    expect(fake.reports.sessions).toEqual([expect.any(String)]);
+  });
+
+  it('opens by the Rules the device read last when the next launch is offline', async () => {
+    const userState = userStateInMemory();
+    await shellOverFakes({ userState }).turnOffRemotely('account');
+
+    const { fake, shell } = shellOverFakes({ userState });
+    fake.online = false;
+
+    await expect(shell.account?.opened()).rejects.toThrow('account');
+    await expect(shell.sync?.opened()).rejects.toThrow('sync');
+  });
+
+  it('holds the launch up for no answer when the Rules never answer', async () => {
+    const { shell } = shellOverFakes({ rulesNeverAnswer: true });
+    // Asked as at launch; the backend never answers.
+    void (await shell.remoteSwitches.opened()).ask();
+
+    expect((await shell.account?.opened())?.state.status).toBe('signed-out');
+    expect((await shell.sync?.opened())?.state.running).toBe(false);
+    expect((await shell.mistakeReports.opened()).available()).toBe(true);
+    await expect(shell.counterSending.opened()).resolves.toEqual(
+      expect.objectContaining({ foreground: expect.any(Function) }),
+    );
   });
 
   it.each(['fails', 'hangs'] as const)(

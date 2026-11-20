@@ -34,6 +34,7 @@ export { UnderWeeklyRecap, WeeklyRecapCard } from './feed/WeeklyRecapCard';
 export { CommunityWordCard } from './feed/CommunityWordCard';
 export { YesterdayCard } from './feed/YesterdayCard';
 export { EntryCard, type EntryCardSlots } from './entries/EntryCard';
+export { CardFeaturesProvider, noCardFeatures, type CardFeatures } from './entries/card-features';
 export { RevealPace } from './entries/reveal';
 export { EntryDetails } from './entries/EntryDetails';
 export { EntryKicker } from './entries/EntryKicker';

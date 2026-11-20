@@ -1,10 +1,10 @@
 import type { Edition, Media } from '@slovo/core';
 
-import { edition } from '../edition/edition';
+import { editionAtLaunch } from '../edition/edition-at-launch';
 import { openDeviceMedia } from './device-media';
 
-/** The Edition in effect the last shell opened, whose Feature Switches the media follows. */
-let inEffect: Pick<Edition, 'isFeatureEnabled' | 'narratorVoiceOf'> = edition;
+/** The Edition in effect the last shell opened, whose Feature Switches the media follows; the shipped states until one opens (ADR 0203). */
+let inEffect: Pick<Edition, 'isFeatureEnabled' | 'narratorVoiceOf'> = editionAtLaunch;
 
 /** Makes the media follow the Feature Switches of the Edition in effect. */
 export function followEditionInEffect(

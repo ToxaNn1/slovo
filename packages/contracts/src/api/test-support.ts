@@ -177,7 +177,7 @@ export function answeringWith(
  * a Language Pack: `File` is a web global that the Core's own lib doesn't name.
  */
 export function fileOf(bytes: Uint8Array, name: string, type: string): File {
-  return new File([bytes], name, { type });
+  return new File([Uint8Array.from(bytes)], name, { type });
 }
 
 /**

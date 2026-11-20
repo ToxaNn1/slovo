@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import type { WeeklyRecapModel } from '@slovo/core';
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
 
-import { edition } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
 import { WeeklyRecapNotice } from './weekly-recap-notice';

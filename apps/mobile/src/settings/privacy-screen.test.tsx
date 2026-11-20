@@ -1,12 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
-import {
-  loadEdition,
-  type AnalyticsPort,
-  type Backend,
-  type Edition,
-  type FeatureSwitch,
-} from '@slovo/core';
-import { createFakeBackend } from '@slovo/core/testing';
+import { type AnalyticsPort, type Backend, type Edition, type FeatureSwitch } from '@slovo/core';
+import { createFakeBackend, loadEdition } from '@slovo/core/testing';
 import { Stack } from 'expo-router';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';

@@ -26,8 +26,8 @@ import { LearningList } from '@/saved/learning-list';
 import type { ListHeader } from '@/saved/list-header';
 import { useWordOfTheDayArchive } from '@/saved/word-of-the-day-archive';
 import { WordOfTheDayArchiveList } from '@/saved/word-of-the-day-archive-list';
-import { useShown } from '@/shown-in-effect';
 import { useQueryParam } from '@/route-params';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 const {
   favorites: favoriteStrings,
@@ -59,11 +59,10 @@ export default function SavedScreen() {
   const favorites = useFavoriteList();
   const collections = useCollectionList();
   const learning = useLearningList();
-  const {
-    learning: learningShown,
-    wordOfTheDayArchive: archiveShown,
-    searchField: searchShown,
-  } = useShown();
+  const inEffect = useEditionInEffect();
+  const learningShown = inEffect.isFeatureEnabled('knowledge');
+  const archiveShown = inEffect.isFeatureEnabled('wordOfTheDayArchive');
+  const searchShown = inEffect.isFeatureEnabled('search');
   const archive = useWordOfTheDayArchive();
   const history = useHistoryCount();
   const { colors } = useTokens();

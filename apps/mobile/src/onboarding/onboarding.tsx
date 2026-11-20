@@ -1,7 +1,9 @@
 import type { DailyGoal, MascotState } from '@slovo/contracts';
 import type { OnboardingStep as Step, QuestionnaireOption, WordCardModel } from '@slovo/core';
 import {
+  CardFeaturesProvider,
   EntryCard,
+  noCardFeatures,
   LaterButton,
   OnboardingStep,
   OnboardingWelcome,
@@ -182,7 +184,10 @@ function FirstWord({
       <View style={stepStyles.heading}>
         <Title>{strings.firstWord.title}</Title>
       </View>
-      <EntryCard card={{ kind: 'word', entryId: word.wordId, model: word }} />
+      {/* A bare sample: no Self-check, a still Stress mark, the sources in their tabs. */}
+      <CardFeaturesProvider value={noCardFeatures}>
+        <EntryCard card={{ kind: 'word', entryId: word.wordId, model: word }} />
+      </CardFeaturesProvider>
     </OnboardingStep>
   );
 }

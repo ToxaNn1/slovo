@@ -1,13 +1,7 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { type Correction, type Category } from '@slovo/contracts';
-import {
-  loadEdition,
-  openComposition,
-  systemRandom,
-  type Composition,
-  type EntryFeedCard,
-} from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { openComposition, systemRandom, type Composition, type EntryFeedCard } from '@slovo/core';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
 import { Link, Stack } from 'expo-router';
 import { renderApp } from '../shell/test-app';

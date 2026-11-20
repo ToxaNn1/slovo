@@ -1,14 +1,13 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Rarity, Word } from '@slovo/contracts';
 import {
-  loadEdition,
   openComposition,
   systemRandom,
   type Composition,
   type Edition,
   type FeatureSwitch,
 } from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { Stack } from 'expo-router';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';

@@ -1,5 +1,5 @@
 import { AppConfigSchema, EditionStringsSchema, EditionTokensSchema } from '@slovo/contracts';
-import { loadDecor, loadEdition, loadSeasonalMotifs } from '@slovo/core';
+import { loadDecor, loadSeasonalMotifs, loadShippedEdition } from '@slovo/core';
 import { designTokens } from '@slovo/ui';
 import appConfig from 'slovo-app/config';
 
@@ -18,8 +18,8 @@ export const activeEditionFiles = bundledEditions.files(activeEditionId);
 
 const { config, strings, tokens, decor } = activeEditionFiles;
 
-/** The active Edition, validated by the Core at startup. */
-export const edition = loadEdition(config);
+/** The active Edition as the build shipped it, validated by the Core at startup; the Shell gives the one in effect (ADR 0203). */
+export const edition = loadShippedEdition(config);
 
 const app = AppConfigSchema.parse(appConfig);
 

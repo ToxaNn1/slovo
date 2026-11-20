@@ -17,6 +17,7 @@ import { editionStrings } from '../edition/edition';
 import { useShell, type ShareFile } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { useSettings } from './settings';
+import { useEditionInEffect } from '../edition/remote-switches';
 
 const strings = editionStrings.settings;
 const privacy = strings.privacy;
@@ -34,10 +35,11 @@ export interface PrivacyRows {
  */
 export function usePrivacyRows(): PrivacyRows {
   const shown = useShown();
+  const inEffect = useEditionInEffect();
   const { shareFile } = useShell();
   return {
     shareCounters: shown.shareCountersSetting,
-    dataExport: shown.dataExport ? shareFile : undefined,
+    dataExport: inEffect.isFeatureEnabled('dataExport') ? shareFile : undefined,
   };
 }
 
