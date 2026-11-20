@@ -114,6 +114,22 @@ describe('LetterWheel', () => {
     expect(screen.getByTestId('solved')).toBeTruthy();
   });
 
+  it('drops a trace the system cancels, unchecked, so the next trace starts afresh', async () => {
+    await renderIn(<Wheel />);
+    const [first, ...rest] = [1, 2, 0].map(centreOf);
+    await act(() => {
+      fireGestureHandler(getByGestureTestId('wheel-trace'), [
+        { state: State.BEGAN, ...first },
+        ...rest.map((point) => ({ state: State.ACTIVE, ...point })),
+        { state: State.CANCELLED, ...centreOf(0) },
+      ]);
+    });
+    expect(screen.queryByTestId('solved')).toBeNull();
+    expect(screen.queryByTestId('wheel-chip-0')).toBeNull();
+    await drag([1, 2, 0]);
+    expect(screen.getByTestId('solved')).toBeTruthy();
+  });
+
   it('shows a trace that spelled nothing as a miss in the path chips', async () => {
     await renderIn(<Wheel />);
     await drag([0, 1]);
