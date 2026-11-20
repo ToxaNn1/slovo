@@ -43,7 +43,7 @@ const write = <Callers extends typeof OWNER | typeof PEOPLE | typeof WRITERS>(ca
   ({ callers, access: 'write' }) as const;
 
 /** Who may call each admin procedure, and whether it writes (ADR 0198). */
-export const ADMISSION = {
+const ADMISSION = {
   requestCode: { callers: ['sign-in'], access: 'write' },
   verifyCode: { callers: ['sign-in'], access: 'write' },
   signIn: { callers: ['sign-in'], access: 'write' },

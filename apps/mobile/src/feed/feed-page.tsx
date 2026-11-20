@@ -8,7 +8,7 @@ import { useEditionInEffect } from '../edition/remote-switches';
  * The Feed's header over the cards: the design's row of the logo, today and
  * the Streak pill (32), a gap (8), and the row of Search (40).
  */
-export const TOP_ROW = 80;
+const TOP_ROW = 80;
 
 /**
  * The Feed's header with nothing under the logo row (board p1):

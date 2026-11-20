@@ -19,8 +19,6 @@
       "entry": ["editions/*/assets/*.mjs", ".claude/hooks/*.mjs", "scripts/content-wave/*.mjs"],
       // The design export is kept byte for byte, never run by the repo.
       "ignore": ["docs/design/export/**"],
-      // The Maestro CLI is installed on the Mac, not by pnpm (scripts/smoke-halves.mjs).
-      "ignoreBinaries": ["maestro"],
     },
     "apps/mobile": {
       // The Expo plugin finds the routes in src/app, app.config.ts and
@@ -31,18 +29,11 @@
       // and imports only its types, so Knip sees none of its exports used.
       "entry": ["**/*.d.ts", "maestro/*.js", "plugins/app-intents.ts"],
       "ignoreDependencies": [
-        // Native module the Expo SDK pins; autolinking only finds it while the
-        // app lists it, though no source file imports it.
-        "expo-asset",
-        // A false positive: Knip's Expo plugin expects it from Expo's default
-        // config, but no file of the app imports it and it is not installed.
-        "expo-updates",
         // Expo's CLI loads it by name when EXPO_ATLAS is set; it is run by
         // hand (README, «Check the bundle with Expo Atlas»).
         "expo-atlas",
-        // Not packages: Metro resolves `slovo-edition/*` into the Edition's
-        // folder and `slovo-app/*` to the AppConfig's files (metro.config.cjs).
-        "slovo-edition",
+        // Not a package: Metro resolves `slovo-app/*` to the AppConfig's files
+        // (metro.config.cjs).
         "slovo-app",
         // Not a package either: Metro serves `slovo-editions` as a module it
         // generates from the bundled Editions (metro.config.cjs).
@@ -54,8 +45,6 @@
         // @expo/config-plugins names them in its own declarations.
         "@types/xcode",
       ],
-      // Maestro is installed on the machine, not through pnpm.
-      "ignoreBinaries": ["maestro"],
     },
     "apps/backend": {
       // The content CLI tests run the root `pnpm content` script, not a binary.
