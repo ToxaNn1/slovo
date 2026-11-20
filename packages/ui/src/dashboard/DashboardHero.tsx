@@ -7,7 +7,14 @@ import {
   type WordOfTheDayHero,
 } from '@slovo/core';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type TextProps,
+  type TextStyle,
+} from 'react-native';
 
 import { AccentGround } from '../entries/AccentGround';
 import { Mascot } from '../primitives/Mascot';
@@ -20,6 +27,7 @@ import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import {
   capitalMarkRoom,
   dashboard,
+  fontScaleCap,
   roleSize,
   space,
   typeStyle,
@@ -221,9 +229,20 @@ function RevealedWord({
           ))}
         </View>
       </View>
-      <HeroText role="dashboardDefinition">{hero.definition}</HeroText>
+      {/* The hero keeps the board's height, so a long Definition draws smaller to fit its lines
+          above «Ще про слово →», and at the largest text sizes keeps its size (audit 9.M1). */}
+      <HeroText
+        role="dashboardDefinition"
+        numberOfLines={card.definitionLines}
+        adjustsFontSizeToFit
+        minimumFontScale={card.definitionMinScale}
+        maxFontSizeMultiplier={fontScaleCap.fixed}
+      >
+        {hero.definition}
+      </HeroText>
       <Text
         {...voice}
+        maxFontSizeMultiplier={fontScaleCap.number}
         importantForAccessibility="no"
         accessibilityElementsHidden
         style={[typeStyle('dashboardRarity', tokens), { color: accentText }]}
@@ -282,6 +301,7 @@ function WordLine({ text }: { text: string }) {
       <Text
         {...voice}
         numberOfLines={1}
+        maxFontSizeMultiplier={fontScaleCap.number}
         style={[
           lineStyle,
           { fontSize: full.fontSize * (scale ?? 1), lineHeight: full.lineHeight * (scale ?? 1) },
@@ -298,6 +318,7 @@ function WordLine({ text }: { text: string }) {
       >
         <Text
           {...voice}
+          maxFontSizeMultiplier={fontScaleCap.number}
           onTextLayout={(event) => {
             measured(Math.max(...event.nativeEvent.lines.map((line) => line.width)));
           }}
@@ -328,16 +349,20 @@ function HeroText({
   role,
   style,
   children,
+  ...fit
 }: {
   role: TypeRole;
   style?: StyleProp<TextStyle>;
   children: string;
-}) {
+} & Pick<
+  TextProps,
+  'numberOfLines' | 'adjustsFontSizeToFit' | 'minimumFontScale' | 'maxFontSizeMultiplier'
+>) {
   const tokens = useTokens();
   const keyInk = useSchemeColors('light').ink;
   const { voice } = useEdition();
   return (
-    <Text {...voice} style={[typeStyle(role, tokens), style, { color: keyInk }]}>
+    <Text {...voice} {...fit} style={[typeStyle(role, tokens), style, { color: keyInk }]}>
       {children}
     </Text>
   );

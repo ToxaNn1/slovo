@@ -177,6 +177,14 @@ export const dashboard = {
       gap: 12,
       rowGap: 10,
       bars: { gap: 3, width: 12, height: 10, skew: '-20deg' },
+      /**
+       * The lines the Definition may take, drawn smaller to fit them: the most
+       * that keep the card above «Ще про слово →» with the card's other lines
+       * at their largest text size.
+       */
+      definitionLines: 4,
+      /** How small the Definition may draw to fit its lines, before it ends in an ellipsis. */
+      definitionMinScale: 0.75,
     },
     button: {
       right: 20,
