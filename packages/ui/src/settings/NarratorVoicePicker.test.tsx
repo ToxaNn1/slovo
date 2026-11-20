@@ -64,10 +64,14 @@ describe('NarratorVoicePicker', () => {
   it("keeps a voice's name and description to its tile at the largest text sizes", async () => {
     await draw();
 
-    expect(screen.getByText('Female · calm')).toHaveProp('maxFontSizeMultiplier', fontScaleCap.text);
-    expect(
-      screen.getByText('Anna', { includeHiddenElements: true }),
-    ).toHaveProp('maxFontSizeMultiplier', fontScaleCap.text);
+    expect(screen.getByText('Female · calm')).toHaveProp(
+      'maxFontSizeMultiplier',
+      fontScaleCap.text,
+    );
+    expect(screen.getByText('Anna', { includeHiddenElements: true })).toHaveProp(
+      'maxFontSizeMultiplier',
+      fontScaleCap.text,
+    );
   });
 
   it("draws the bars in the chosen voice's own height pattern", async () => {
