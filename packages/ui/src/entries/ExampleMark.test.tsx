@@ -16,6 +16,16 @@ async function renderMark(example: string, edge: 'open' | 'close' = 'open') {
   );
 }
 
+/** Both marks of one Example, so a test of the missing one sees the other drawn. */
+async function renderBoth(example: string) {
+  await render(
+    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({ wordCard: { example } })}>
+      <ExampleMark testID="open" edge="open" />
+      <ExampleMark testID="close" edge="close" />
+    </EditionProvider>,
+  );
+}
+
 describe("the big red quote mark over a card's first Example (boards p1 and XEntry2 e7)", () => {
   it("draws the Edition's opening quote whole, its line never tighter than the font, in the board's 26 box", async () => {
     await renderMark('«{text}»');
@@ -38,10 +48,11 @@ describe("the big red quote mark over a card's first Example (boards p1 and XEnt
   });
 
   it('draws nothing when the Edition quotes an Example without an opening mark', async () => {
-    await renderMark('{text}');
+    await renderBoth('{text}»');
 
-    expect(screen.queryByTestId('mark', hidden)).toBeNull();
-    expect(screen.queryByTestId('mark-box', hidden)).toBeNull();
+    expect(screen.getByTestId('close', hidden)).toHaveTextContent('»');
+    expect(screen.queryByTestId('open', hidden)).toBeNull();
+    expect(screen.queryByTestId('open-box', hidden)).toBeNull();
   });
 
   it("closes the quote with the Edition's closing mark in the same style, at the right (owner 14.11)", async () => {
@@ -59,9 +70,10 @@ describe("the big red quote mark over a card's first Example (boards p1 and XEnt
   });
 
   it('draws no closing mark when the Edition quotes an Example without one', async () => {
-    await renderMark('— {text}', 'close');
+    await renderBoth('— {text}');
 
-    expect(screen.queryByTestId('mark', hidden)).toBeNull();
-    expect(screen.queryByTestId('mark-box', hidden)).toBeNull();
+    expect(screen.getByTestId('open', hidden)).toHaveTextContent('—');
+    expect(screen.queryByTestId('close', hidden)).toBeNull();
+    expect(screen.queryByTestId('close-box', hidden)).toBeNull();
   });
 });

@@ -83,6 +83,7 @@ describe('the Synonym Row card', () => {
       ),
     );
 
+    expect(screen.getByTestId('synonym-row-meaning')).toHaveTextContent('To move on foot.');
     expect(screen.queryByTestId('synonym-row-example')).toBeNull();
     expect(screen.queryByTestId('synonym-row-source')).toBeNull();
   });

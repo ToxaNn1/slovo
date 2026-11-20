@@ -153,6 +153,7 @@ describe('the Tip card with the Source tab', () => {
       ),
     );
 
+    expect(screen.getByTestId('tip-explanation')).toBeOnTheScreen();
     expect(screen.queryByTestId('tip-tab-exceptions')).toBeNull();
   });
 
@@ -165,6 +166,7 @@ describe('the Tip card with the Source tab', () => {
       ),
     );
 
+    expect(screen.getByTestId('tip-title')).toHaveTextContent('What time is it?');
     expect(screen.queryByRole('tablist')).toBeNull();
   });
 });

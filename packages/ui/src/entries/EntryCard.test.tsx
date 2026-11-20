@@ -390,6 +390,7 @@ describe('the Word History on a Word card', () => {
   it('is absent when the Word has none', async () => {
     await render(inEdition(<EntryCard card={wordCard} />));
 
+    expect(screen.getByTestId('word-definition')).toHaveTextContent('What it means.');
     expect(screen.queryByTestId('word-history')).toBeNull();
     expect(screen.queryByText('History of the word')).toBeNull();
   });
@@ -462,6 +463,7 @@ describe('the Synonym Row line on a Word card', () => {
   it('is absent when the Word is in no row', async () => {
     await render(inEdition(<EntryCard card={wordCard} />));
 
+    expect(screen.getByTestId('word-definition')).toHaveTextContent('What it means.');
     expect(screen.queryByTestId('word-synonym-row')).toBeNull();
     expect(screen.queryByText(/In the synonym row/)).toBeNull();
   });
@@ -1054,12 +1056,14 @@ describe('the corner of an Entry card', () => {
   it('draws no kicker row without a corner', async () => {
     await render(inEdition(<EntryCard card={card} />));
 
+    expect(screen.getByTestId('correction-type')).toHaveTextContent('calque');
     expect(screen.queryByTestId('correction-kicker-row')).toBeNull();
   });
 
   it('has no corner when none is given', async () => {
     await render(inEdition(<EntryCard card={wordWithEverything} />));
 
+    expect(screen.getByTestId('word-definition')).toHaveTextContent('What it means.');
     expect(screen.queryByTestId('word-corner')).toBeNull();
   });
 
