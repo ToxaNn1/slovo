@@ -19,6 +19,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { HalftoneGround } from '../primitives/HalftoneGround';
@@ -140,13 +141,24 @@ export function OnboardingStep({
   const reduceMotion = known === true;
   const progress = useSharedValue(0);
   const fly = useSharedValue(0);
+  // A step after the welcome replaces the one VoiceOver was on: start at its number, once the
+  // step has slid in, as VoiceOver cannot land on a view that is still clear.
+  const [slidIn, setSlidIn] = useState(false);
   useEffect(() => {
-    progress.value = withTiming(1, {
-      duration: SLIDE_MS,
-      easing: Easing.out(Easing.cubic),
-      reduceMotion: ReduceMotion.Never,
-    });
+    progress.value = withTiming(
+      1,
+      { duration: SLIDE_MS, easing: Easing.out(Easing.cubic), reduceMotion: ReduceMotion.Never },
+      (finished) => {
+        'worklet';
+        if (finished === true) scheduleOnRN(setSlidIn, true);
+      },
+    );
   }, [progress]);
+  const dots = useRef<HostInstance>(null);
+  useEffect(() => {
+    if (!slidIn || step === 1) return;
+    if (dots.current !== null) AccessibilityInfo.sendAccessibilityEvent(dots.current, 'focus');
+  }, [slidIn, step]);
   // The shout word waits for the system's answer, so it never begins its full flight under Reduce Motion.
   useEffect(() => {
     if (known === undefined) return;
@@ -158,12 +170,6 @@ export function OnboardingStep({
       reduceMotion: ReduceMotion.Never,
     });
   }, [fly, known]);
-  // A step after the welcome replaces the one VoiceOver was on: start at its number.
-  const dots = useRef<HostInstance>(null);
-  useEffect(() => {
-    if (step === 1) return;
-    if (dots.current !== null) AccessibilityInfo.sendAccessibilityEvent(dots.current, 'focus');
-  }, [step]);
   const slide = useAnimatedStyle(() => ({
     opacity: progress.value,
     transform: [
@@ -245,6 +251,7 @@ export function OnboardingStep({
           <Pressable
             testID="onboarding-skip"
             accessibilityRole="button"
+            accessibilityLabel={onboarding.skip}
             {...voice}
             onPress={onSkip}
             hitSlop={space[2]}
@@ -306,6 +313,7 @@ export function LaterButton({ testID, onPress }: { testID: string; onPress: () =
     <Pressable
       testID={testID}
       accessibilityRole="button"
+      accessibilityLabel={strings.onboarding.later}
       {...voice}
       onPress={onPress}
       style={styles.later}
@@ -362,5 +370,10 @@ const styles = StyleSheet.create({
   },
   dots: { flexDirection: 'row', alignItems: 'center', gap: dot.gap },
   dot: { height: dot.height, transform: [{ skewX: dot.skew }] },
-  later: { minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' },
+  later: {
+    minHeight: minTouchTarget,
+    minWidth: minTouchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
