@@ -3,7 +3,7 @@ import { type CorrectionCardModel, type EntryFeedCard, type IdiomCardModel } fro
 import { EditionProvider, EntryCard, PronunciationButton } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
-import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
+import { Dimensions, Pressable, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useConcealed } from './self-check';
 import { testStrings } from '../test-strings';
