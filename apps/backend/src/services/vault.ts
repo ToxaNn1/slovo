@@ -8,7 +8,8 @@ export const VAULT_OFF: ServiceVault = { state: 'off' };
 /**
  * The Vault: seals a Service entry's value with AES-256-GCM under
  * `VAULT_KEY`, a fresh 12-byte IV each time, as `iv.tag.body` in base64url.
- * A sealed value opens only under the same key; a changed one is refused.
+ * A sealed value opens only under the same key; a changed one, or one
+ * whose tag is cut short of its 16 bytes, is refused.
  */
 export function createVault(
   key: Uint8Array,
@@ -26,7 +27,9 @@ export function createVault(
     },
     open(sealed) {
       const [nonce = '', tag = '', body = ''] = sealed.split('.');
-      const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(nonce, 'base64url'));
+      const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(nonce, 'base64url'), {
+        authTagLength: 16,
+      });
       decipher.setAuthTag(Buffer.from(tag, 'base64url'));
       return Buffer.concat([
         decipher.update(Buffer.from(body, 'base64url')),

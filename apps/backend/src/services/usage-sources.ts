@@ -208,12 +208,25 @@ const GitHubUsageSchema = z.object({
   usageItems: z.array(
     z.object({
       product: z.string(),
+      /** The runner, e.g. `Actions Linux`, `Actions macOS`. */
+      sku: z.string().optional(),
       unitType: z.string(),
       quantity: z.number().min(0),
       repositoryName: z.string().optional(),
     }),
   ),
 });
+
+/**
+ * How many of the included minutes one minute on the runner takes: a macOS
+ * minute 10, a Windows minute 2, a Linux one 1.
+ */
+function minuteFactor(sku: string | undefined): number {
+  const runner = sku?.toLowerCase() ?? '';
+  if (runner.includes('macos')) return 10;
+  if (runner.includes('windows')) return 2;
+  return 1;
+}
 
 /** Whether a repository is private: GitHub Free's minutes meter private repositories only. */
 const GitHubRepositorySchema = z.object({ private: z.boolean() });
@@ -272,7 +285,7 @@ export function createGitHubActionsUsage({
       const minutes = answer.value.usageItems
         .filter((item) => item.product === 'actions' && item.unitType.toLowerCase() === 'minutes')
         .filter((item) => !(isPublic && item.repositoryName === name))
-        .reduce((sum, item) => sum + item.quantity, 0);
+        .reduce((sum, item) => sum + item.quantity * minuteFactor(item.sku), 0);
       return metered('minutes', 'minutes', Math.round(minutes), GITHUB_ACTIONS_MINUTES_LIMIT);
     },
   };

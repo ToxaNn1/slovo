@@ -136,6 +136,31 @@ describe('the usage sources', () => {
     expect(asked[0]?.headers.get('authorization')).toBe('Bearer a-fake-token');
   });
 
+  it("counts a macOS minute as 10 and a Windows minute as 2 of GitHub Free's 2,000", async () => {
+    const { fetch } = fetchAnswering(200, {
+      usageItems: [
+        { product: 'actions', sku: 'Actions Linux', unitType: 'Minutes', quantity: 100 },
+        { product: 'actions', sku: 'Actions macOS', unitType: 'Minutes', quantity: 30 },
+        { product: 'actions', sku: 'Actions Windows', unitType: 'Minutes', quantity: 50 },
+      ],
+    });
+    const github = createGitHubActionsUsage({
+      token: 'a-fake-token',
+      repository: 'ToxaNn1/slovo',
+      clock,
+      logger,
+      fetch,
+    });
+
+    expect(await github.read()).toEqual({
+      ok: true,
+      value: {
+        kind: 'metered',
+        usage: [{ name: 'minutes', unit: 'minutes', used: 500, limit: 2000 }],
+      },
+    });
+  });
+
   it("leaves a public repository's Actions minutes out of GitHub Free's 2,000", async () => {
     const asked: Request[] = [];
     const fetch: typeof globalThis.fetch = (input, init) => {

@@ -33,8 +33,24 @@ export interface SourcePages {
   get(url: string): Promise<SourcePage>;
 }
 
-/** How long a cached page stands in for the source: 30 days. */
+/** How long a cached page (a 200 or a 404) stands in for the source: 30 days. */
 export const QUOTE_CHECK_FRESHNESS_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * How long a source's refusal (a 403, a 429, a 5xx) stands: a day, so a
+ * source that blocks the check is not asked again every hour.
+ */
+export const QUOTE_CHECK_FAILURE_FRESHNESS_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * The most of a page the check reads and the sourcing cache keeps: a quote
+ * sits in the page's dictionary article, near its top, and a whole page per
+ * source would outgrow the database.
+ */
+export const QUOTE_CHECK_PAGE_MAX_CHARS = 300_000;
+
+/** Whether a page answer is the source's own (a page or no such page), not a refusal. */
+const answered = (status: number) => status === 200 || status === 404;
 
 type Db = Pick<Database['db'], 'select'>;
 type QuotedKind = QuotedRecord['kind'];
@@ -191,29 +207,36 @@ export function createQuoteCheck({
 }) {
   const { db } = database;
 
-  /** The page from the sourcing cache while fresh, else from the source; a 200 or 404 is cached. */
+  /**
+   * The page from the sourcing cache while fresh, else from the source, cut
+   * to the most the check reads. Every answer with a status is cached: a page
+   * or a 404 for 30 days, a refusal for a day.
+   */
   async function pageOf(url: string): Promise<SourcePage | undefined> {
     const now = clock.now();
     const [cached] = await db.select().from(sourcingCache).where(eq(sourcingCache.pageUrl, url));
     if (
       cached !== undefined &&
-      now.getTime() - cached.fetchedAt.getTime() < QUOTE_CHECK_FRESHNESS_MS
+      now.getTime() - cached.fetchedAt.getTime() <
+        (answered(cached.httpStatus) ? QUOTE_CHECK_FRESHNESS_MS : QUOTE_CHECK_FAILURE_FRESHNESS_MS)
     ) {
       return { status: cached.httpStatus, body: cached.body };
     }
-    let page: SourcePage;
+    let fetched: SourcePage;
     try {
-      page = await pages.get(url);
+      fetched = await pages.get(url);
     } catch {
       return undefined;
     }
-    if (page.status === 200 || page.status === 404) {
-      const row = { pageUrl: url, httpStatus: page.status, body: page.body, fetchedAt: now };
-      await db
-        .insert(sourcingCache)
-        .values(row)
-        .onConflictDoUpdate({ target: sourcingCache.pageUrl, set: row });
-    }
+    const page = {
+      status: fetched.status,
+      body: fetched.body.slice(0, QUOTE_CHECK_PAGE_MAX_CHARS),
+    };
+    const row = { pageUrl: url, httpStatus: page.status, body: page.body, fetchedAt: now };
+    await db
+      .insert(sourcingCache)
+      .values(row)
+      .onConflictDoUpdate({ target: sourcingCache.pageUrl, set: row });
     return page;
   }
 

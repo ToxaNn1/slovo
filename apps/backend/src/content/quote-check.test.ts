@@ -16,10 +16,20 @@ import {
   testApp,
   testDatabaseUrl,
 } from '../test-support';
-import { createQuoteCheck, QUOTE_CHECK_FRESHNESS_MS, type SourcePages } from './quote-check';
+import { sourcingCache } from '../database/schema';
+import {
+  createQuoteCheck,
+  QUOTE_CHECK_FAILURE_FRESHNESS_MS,
+  QUOTE_CHECK_FRESHNESS_MS,
+  QUOTE_CHECK_PAGE_MAX_CHARS,
+  type SourcePages,
+} from './quote-check';
 
-/** A source that holds the given pages and counts every fetch. */
-function fakePages(pages: Record<string, string>): SourcePages & { readonly fetched: string[] } {
+/** A source that holds the given pages and counts every fetch; it answers `missing` for any other page. */
+function fakePages(
+  pages: Record<string, string>,
+  missing = 404,
+): SourcePages & { readonly fetched: string[] } {
   const fetched: string[] = [];
   return {
     fetched,
@@ -27,7 +37,7 @@ function fakePages(pages: Record<string, string>): SourcePages & { readonly fetc
       fetched.push(url);
       const body = pages[url];
       return Promise.resolve(
-        body === undefined ? { status: 404, body: '' } : { status: 200, body },
+        body === undefined ? { status: missing, body: '' } : { status: 200, body },
       );
     },
   };
@@ -64,7 +74,7 @@ async function quoteCheckBackend() {
   const { batchId } = await agent.admin.content.openBatch({ editionId: 'uk' });
   const job = (pages: SourcePages) =>
     createQuoteCheck({ database, clock: systemClock, pages }).run();
-  return { ...backend, admin, agent, batchId, job };
+  return { ...backend, admin, agent, batchId, job, database };
 }
 
 const QUOTE = 'Невеличке кільце з металу чи дерева.';
@@ -158,5 +168,30 @@ describe('the quote check job', () => {
     await edit(2);
     await job(pages);
     expect(pages.fetched).toEqual([url, url]);
+  });
+
+  it('asks a source that refused the page again only a day later', async () => {
+    const { client, agent, batchId, job } = await quoteCheckBackend();
+    const { url } = await createQuoted(client, agent, batchId);
+    const pages = fakePages({}, 429);
+    await job(pages);
+    await job(pages);
+    expect(pages.fetched).toEqual([url]);
+    expect(await quoteCheckOf(agent)).toEqual({ unverified: 1, failed: 0 });
+
+    passTime(QUOTE_CHECK_FAILURE_FRESHNESS_MS + 1);
+    await job(pages);
+    expect(pages.fetched).toEqual([url, url]);
+  });
+
+  it('keeps no more of a page than the check reads', async () => {
+    const { client, agent, batchId, job, database } = await quoteCheckBackend();
+    const { url } = await createQuoted(client, agent, batchId);
+    const huge = pageWith(QUOTE) + 'ї'.repeat(QUOTE_CHECK_PAGE_MAX_CHARS * 2);
+    await job(fakePages({ [url]: huge }));
+    const cached = await database.db.select().from(sourcingCache);
+    expect(cached.map(({ pageUrl }) => pageUrl)).toEqual([url]);
+    expect(cached[0]?.body.length).toBe(QUOTE_CHECK_PAGE_MAX_CHARS);
+    expect(await quoteCheckOf(agent)).toEqual({ unverified: 0, failed: 0 });
   });
 });

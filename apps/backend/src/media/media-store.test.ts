@@ -97,6 +97,23 @@ describe('the R2 Media Store', () => {
     expect(await store.head('missing.mp3')).toBeUndefined();
     await expect(store.put('a.mp3', new Uint8Array([1]), 'audio/mpeg')).rejects.toThrow(/500/);
   });
+
+  it('gives up on a request R2 never answers, so no caller waits on it for good', async () => {
+    const hanging: typeof fetch = (_url, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(new Error('aborted'));
+        });
+      });
+    const store = r2MediaStore(config, {
+      clock: { now: () => new Date('2026-11-10T00:00:00Z') },
+      fetch: hanging,
+      timeoutMs: 10,
+    });
+    await expect(store.delete('a.mp3')).rejects.toThrow(/aborted/);
+    await expect(store.head('a.mp3')).rejects.toThrow(/aborted/);
+    await expect(store.put('a.mp3', new Uint8Array([1]), 'audio/mpeg')).rejects.toThrow(/aborted/);
+  });
 });
 
 describe('the Recordings configuration', () => {

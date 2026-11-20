@@ -70,23 +70,38 @@ function runScript(
       }),
   );
   let timedOut = false;
-  const timer = setTimeout(() => {
-    timedOut = true;
-    child.kill('SIGKILL');
-  }, timeoutMs);
   return new Promise((resolve) => {
-    child.on('error', (error) => {
+    let settled = false;
+    const settle = (result: { readonly timedOut: boolean; readonly error?: Error }) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
-      resolve({ timedOut, error });
+      resolve(result);
+    };
+    const timeout = () => {
+      // The run ends here: a process the script started may still hold its
+      // output open, and waiting for that would outlive the time limit.
+      child.stdout.destroy();
+      child.stderr.destroy();
+      settle({ timedOut, error: new Error(`timed out after ${String(timeoutMs)} ms`) });
+    };
+    const timer = setTimeout(() => {
+      timedOut = true;
+      if (child.exitCode !== null || child.signalCode !== null) timeout();
+      else child.kill('SIGKILL');
+    }, timeoutMs);
+    child.on('error', (error) => {
+      settle({ timedOut, error });
+    });
+    child.on('exit', () => {
+      if (timedOut) timeout();
     });
     child.on('close', (code, signal) => {
-      clearTimeout(timer);
       void Promise.all(read).then(() => {
-        if (timedOut)
-          resolve({ timedOut, error: new Error(`timed out after ${String(timeoutMs)} ms`) });
-        else if (code === 0) resolve({ timedOut });
+        if (timedOut) timeout();
+        else if (code === 0) settle({ timedOut });
         else
-          resolve({
+          settle({
             timedOut,
             error: new Error(`the script exited with ${signal ?? String(code)}`),
           });
