@@ -231,7 +231,11 @@ describe('the whole Dashboard', () => {
     // Onboarding, the quickest way through: it lands on the Dashboard.
     expect(screen.getByText(steps.welcome.title)).toBeTruthy();
     await press('onboarding-start');
+    expect(composition.history.list).toEqual([]);
+    // «Беру!» makes the first Word Seen then, the onboarding still open (ticket #2062).
     await press('onboarding-next');
+    expect(composition.onboarding.state.status).toBe('open');
+    expect(composition.history.list.map(({ entryId }) => entryId)).toEqual(['w_sumyrnyi']);
     await press('onboarding-next');
     await press('onboarding-answer-good');
     await press('onboarding-later');
@@ -240,7 +244,7 @@ describe('the whole Dashboard', () => {
     expect(composition.onboarding.state).toEqual({ status: 'finished', finishedAt: clock.now() });
     expect(screen.getByTestId('dashboard')).toBeTruthy();
 
-    // The hero: «Беру!» took the first Word, so it is revealed and Seen already (ticket #2062).
+    // The hero: «Беру!» took the first Word, so it is revealed already.
     expect(screen.queryByText(editionStrings.dashboard.reveal)).toBeNull();
     expect(screen.getByText('Значення слова сумирний.')).toBeTruthy();
     expect(composition.history.list.map(({ entryId }) => entryId)).toEqual(['w_sumyrnyi']);

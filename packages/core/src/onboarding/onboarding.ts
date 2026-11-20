@@ -109,6 +109,8 @@ export interface Onboarding {
   /**
    * Goes on to the next step without an answer, so a question skipped keeps
    * the defaults and the Daily Goal stays as it is. Past the last step it finishes.
+   * Going on from the first Word («Беру!») makes that Word Seen then, whether
+   * or not the onboarding is finished later; the skip on that step does not.
    */
   next(): Promise<void>;
   /**
@@ -175,7 +177,7 @@ export async function openOnboarding({
     'get' | 'getMany' | 'linkedCorrections' | 'categories' | 'linkingSynonymRow'
   >;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
-  /** Makes the first Word Seen as «Розкрий слово» does. */
+  /** Makes the first Word Seen as «Розкрий слово» does, when the reader goes on from its step. */
   feed: Pick<Feed, 'seeWordOfTheDay'>;
   mix: Pick<Mix, 'setKindWeight'>;
   xpLog: Pick<XpLog, 'setDailyGoal'>;
@@ -264,11 +266,7 @@ export async function openOnboarding({
     }
   }
 
-  /** Whether the first Word step was on screen in this run. */
-  let firstWordShown = false;
   async function keepFinished(skipped: boolean): Promise<void> {
-    // The reader read the first Word, so it is Seen: XP, History and the Daily Goal count it.
-    if (firstWordShown) await feed.seeWordOfTheDay();
     const finishedAt = clock.now();
     // The first week counts from this day (ADR 0054).
     await userState.write(
@@ -284,7 +282,6 @@ export async function openOnboarding({
   }
 
   function show(step: OnboardingStep): void {
-    if (step.kind === 'firstWord') firstWordShown = true;
     change({ status: 'open', step });
     viewed(step);
   }
@@ -323,6 +320,8 @@ export async function openOnboarding({
     },
     next: () =>
       endStep(async ({ kind }) => {
+        // «Беру!» takes the first Word, so it is Seen: XP, History and the Daily Goal count it.
+        if (kind === 'firstWord') await feed.seeWordOfTheDay();
         await countSkipped(kind);
         await goOn(kind);
       }),
