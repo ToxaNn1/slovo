@@ -122,6 +122,27 @@ describe('the ZeptoMail client', () => {
       'the email was not sent (ZeptoMail unreachable)',
     );
   });
+
+  it('gives up on a ZeptoMail that does not answer, so no sign-in code request hangs', async () => {
+    const signals: (AbortSignal | null | undefined)[] = [];
+    const mailer = createMailer(
+      {
+        kind: 'zeptomail',
+        apiUrl: 'https://api.zeptomail.eu/v1.1/email',
+        token: TOKEN,
+        from: 'a@b.c',
+      },
+      (_input, init) => {
+        signals.push(init?.signal);
+        return Promise.reject(new DOMException('The operation timed out.', 'TimeoutError'));
+      },
+    );
+
+    await expect(mailer.send(CODE_EMAIL)).rejects.toThrow(
+      'the email was not sent (ZeptoMail unreachable)',
+    );
+    expect(signals).toEqual([expect.any(AbortSignal)]);
+  });
 });
 
 describe('the Mailpit client', () => {
