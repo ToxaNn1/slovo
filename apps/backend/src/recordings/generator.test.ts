@@ -73,6 +73,25 @@ ${STUB}`,
     expect(Date.now() - started).toBeLessThan(10_000);
   });
 
+  it('stops at its time limit a script whose child process still holds its output', async () => {
+    const holding = join(dir, 'holding.cjs');
+    writeFileSync(
+      holding,
+      "require('node:child_process').spawn(process.execPath, ['-e', 'setTimeout(() => {}, 8_000)'], { stdio: 'inherit' });" +
+        'setTimeout(() => {}, 60_000);',
+    );
+    const generator = scriptGenerator({
+      command: [process.execPath, holding],
+      modelDir: dir,
+      timeoutMs: 300,
+    });
+    const started = Date.now();
+    await expect(generator.record([{ voice: 'oksana', text: 'обру́ч' }])).rejects.toThrow(
+      /timed out/,
+    );
+    expect(Date.now() - started).toBeLessThan(5_000);
+  });
+
   it('keeps the Recordings a script made before its time limit stopped it', async () => {
     // Makes the first request's Recording, lists it, then hangs on the second.
     const slow = join(dir, 'slow.cjs');
