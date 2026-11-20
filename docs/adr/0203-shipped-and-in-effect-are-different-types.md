@@ -4,7 +4,7 @@ summary: A Feature Switch has two answers of two types: `Edition.isFeatureEnable
 
 # «As shipped» and «in effect» are different types
 
-Decision of 2026-11-20, ticket #2058 (spec #2049). The rule for the Account and Sync is the coordinator's default until the owner confirms it.
+Decision of 2026-11-20, ticket #2058 (spec #2049). The owner confirmed the rule for the Account and Sync the same day.
 
 **Why.** One type gave two answers. `isFeatureEnabled` on the Edition from `loadEdition` meant «as the build shipped it», and the same method on the Edition of the remote Feature Switches meant «after the Rules» (ADR 0089). Which one a caller held, and whether the Rules were read yet, was kept by convention at each call site. The Shell opened the Account and Sync by the shipped answer, so a kill switch on `account` hid the screens while the Session was still read and Sync still ran in that launch.
 
