@@ -4,7 +4,7 @@ import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { UndoToastProvider } from '@slovo/ui';
 import { act } from '@testing-library/react-native';
 
-import { edition } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { renderHookInApp } from '../shell/test-app';
 import { opened, testShell } from '../shell/test-support';
 

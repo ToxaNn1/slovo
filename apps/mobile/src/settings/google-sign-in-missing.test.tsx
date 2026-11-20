@@ -31,8 +31,11 @@ describe('A binary without the Google sign-in module', () => {
   });
 
   it('hides «Увійти через Google» on the SLOVO ID screen', async () => {
-    const { edition, editionStrings } =
+    const { editionStrings } =
       jest.requireActual<typeof import('../edition/edition')>('../edition/edition');
+    const { editionAtLaunch: edition } = jest.requireActual<
+      typeof import('../edition/edition-at-launch')
+    >('../edition/edition-at-launch');
     const { googleClientId, hasAppleSignIn } = jest.requireActual<
       typeof import('../account/device-account')
     >('../account/device-account');

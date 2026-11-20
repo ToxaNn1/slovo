@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 import {
-  loadEdition,
   openComposition,
   openMistakeReports,
   systemRandom,
@@ -14,6 +13,7 @@ import {
   createMemoryContentPort,
   type FakeBackend,
   seedUserState,
+  loadEdition,
 } from '@slovo/core/testing';
 import { EntryCard, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';

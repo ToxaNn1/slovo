@@ -23,9 +23,16 @@ import {
   seedUserState,
 } from '@slovo/core/testing';
 
-import type { FeatureSwitch, IllustrationRow, RecordingRow } from '@slovo/contracts';
+import {
+  FeatureSwitchesSchema,
+  type FeatureSwitch,
+  type FeatureSwitches,
+  type IllustrationRow,
+  type RecordingRow,
+} from '@slovo/contracts';
 
-import { edition } from '../edition/edition';
+import { edition as shipped } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { openOnce, type Opening } from '../opening';
 import type { EditionSwitches, OpenedSettings, Shell } from '../shell-value';
 
@@ -76,13 +83,24 @@ export function switchedTo(
   return opened(switchesOf(edition, minimums));
 }
 
+/** The states that give `edition` its answers where no Rule matches: each switch on or off as it is in effect. */
+const statesOf = (edition: Edition): FeatureSwitches =>
+  FeatureSwitchesSchema.parse(
+    Object.fromEntries(
+      FeatureSwitchesSchema.keyof().options.map((feature) => [
+        feature,
+        edition.isFeatureEnabled(feature) ? 'on' : 'off',
+      ]),
+    ),
+  );
+
 /** The remote Feature Switches of the test device, with no Rule, as `edition` has them. */
 function switchesOf(edition: Edition, minimums: EditionSwitches['minimums'] = {}): EditionSwitches {
   return {
     edition,
     verdicts: evaluateSwitches({
       rules: [],
-      states: edition.featureSwitches,
+      states: statesOf(edition),
       facts: { ...testReader, clock, clockOffsetMs: 0 },
     }),
     installId: TEST_INSTALL_ID,
@@ -212,7 +230,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       async () =>
         openRemoteSwitches({
           edition,
-          states: edition.featureSwitches,
+          states: shipped.featureSwitches,
           facts: () => testReader,
           backend: unreachableBackend(),
           userState: await userState.opened(),

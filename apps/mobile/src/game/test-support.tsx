@@ -2,7 +2,6 @@
 import { expect, jest } from '@jest/globals';
 import { type Correction, type Idiom, type Word } from '@slovo/contracts';
 import {
-  loadEdition,
   openComposition,
   systemRandom,
   type AnalyticsPort,
@@ -12,7 +11,12 @@ import {
   type Haptics,
   type Schedule,
 } from '@slovo/core';
-import { createMemoryContentPort, seedUserState, type XpRecord } from '@slovo/core/testing';
+import {
+  createMemoryContentPort,
+  seedUserState,
+  type XpRecord,
+  loadEdition,
+} from '@slovo/core/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { renderApp } from '../shell/test-app';
 import GameScreen from '../app/game';

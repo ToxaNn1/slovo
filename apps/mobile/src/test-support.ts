@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 import type { Plural } from '@slovo/contracts';
-import { loadEdition } from '@slovo/core';
+import { loadEdition } from '@slovo/core/testing';
 import { EDITIONS_DIR, openEditionWithoutRecords } from '@slovo/language-pack/edition';
 
 export { fakeClock } from '@slovo/core/testing';

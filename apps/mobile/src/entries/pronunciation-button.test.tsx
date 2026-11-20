@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { RecordingRow } from '@slovo/contracts';
-import { loadEdition, type Edition, type FeatureSwitch, type UserSettings } from '@slovo/core';
+import { type Edition, type FeatureSwitch, type UserSettings } from '@slovo/core';
+import { loadEdition } from '@slovo/core/testing';
 import { Pressable, Text } from 'react-native';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 

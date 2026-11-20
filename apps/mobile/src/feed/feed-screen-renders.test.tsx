@@ -1,14 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
 import {
-  loadEdition,
   openComposition,
   type Clock,
   type Composition,
   type Edition,
   type TrackedUserState,
 } from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
 import { State } from 'react-native-gesture-handler';

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import {
   DEPENDS_ON,
@@ -7,8 +7,9 @@ import {
   type FeatureSwitch,
 } from '@slovo/contracts';
 
-import { loadEdition } from '../index';
-import { InvalidEditionConfigError } from './edition';
+import { inEffectWithoutRules, loadShippedEdition, type Edition } from '../index';
+import { loadEdition } from '../testing';
+import { InvalidEditionConfigError, type ShippedEdition } from './edition';
 
 const validConfig = {
   id: 'test',
@@ -1096,5 +1097,34 @@ describe('the Feature Switches a feature depends on', () => {
     expect(edition.isFeatureEnabled('xpLog')).toBe(true);
     expect(edition.isFeatureEnabled('game')).toBe(true);
     expect(edition.isFeatureEnabled('streakBreak')).toBe(true);
+  });
+});
+
+describe('loadShippedEdition', () => {
+  const shipped = loadShippedEdition({
+    ...validConfig,
+    featureSwitches: { ...validConfig.featureSwitches, game: 'off' },
+  });
+
+  it('answers as the build shipped it, under a name of its own', () => {
+    expect(shipped.isShippedOn('game')).toBe(false);
+    expect(shipped.isShippedOn('corrections')).toBe(true);
+    expect(shipped.featureSwitches.game).toBe('off');
+    expect(shipped).not.toHaveProperty('isFeatureEnabled');
+  });
+
+  it('is no Edition in effect to the compiler, nor the Edition in effect a shipped one', () => {
+    expectTypeOf(shipped).not.toExtend<Pick<Edition, 'isFeatureEnabled'>>();
+    expectTypeOf<Edition>().not.toExtend<Pick<ShippedEdition, 'isShippedOn' | 'featureSwitches'>>();
+    expectTypeOf(inEffectWithoutRules(shipped)).toEqualTypeOf<Edition>();
+  });
+
+  it('is in effect as shipped where no remote Rule is read', () => {
+    const edition = inEffectWithoutRules(shipped);
+
+    expect(edition.isFeatureEnabled('game')).toBe(false);
+    expect(edition.isFeatureEnabled('corrections')).toBe(true);
+    expect(edition).not.toHaveProperty('isShippedOn');
+    expect(edition).not.toHaveProperty('featureSwitches');
   });
 });

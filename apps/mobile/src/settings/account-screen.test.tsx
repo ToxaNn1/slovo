@@ -1,7 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import {
   createMemorySessionStore,
-  loadEdition,
   openAccount,
   systemRandom,
   type AppleSignInSheet,
@@ -13,6 +12,7 @@ import {
   createFakeBackend,
   createFakeGoogleSignInSheet,
   seedUserState,
+  loadEdition,
 } from '@slovo/core/testing';
 import { EditionProvider, OfflinePlateProvider, fill } from '@slovo/ui';
 import { act, fireEvent, screen, within } from '@testing-library/react-native';

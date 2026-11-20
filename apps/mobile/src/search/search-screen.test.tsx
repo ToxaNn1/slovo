@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
+import { openComposition, systemRandom, type Composition } from '@slovo/core';
 import type { Word } from '@slovo/contracts';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 
 import SearchScreen from '../app/search/index';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { screenSettled } from '../use-open-screen';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';

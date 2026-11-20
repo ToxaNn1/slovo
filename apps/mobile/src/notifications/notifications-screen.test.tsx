@@ -16,7 +16,8 @@ import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { Linking } from 'react-native';
 
 import NotificationsScreen from '../app/settings/notifications';
-import { edition, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 
 const strings = editionStrings.notifications;

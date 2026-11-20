@@ -380,7 +380,7 @@ export async function openComposition({
   ...ports
 }: {
   content: ContentReadPort;
-  /** The Edition as the app runs it (`loadEdition`); each module reads of it what it names. */
+  /** The Edition as the app runs it (the Edition in effect, ADR 0202); each module reads of it what it names. */
   edition: Edition;
   userState: UserState;
   clock: Clock;

@@ -1,14 +1,20 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
+import { openComposition, systemRandom, type Composition } from '@slovo/core';
 import type { Word } from '@slovo/contracts';
-import { createMemoryContentPort, type UserStateFacts, seedUserState } from '@slovo/core/testing';
+import {
+  createMemoryContentPort,
+  type UserStateFacts,
+  seedUserState,
+  loadEdition,
+} from '@slovo/core/testing';
 import { coreTokens, EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import WordOfTheDayArchiveScreen from '../app/saved/words-of-the-day/index';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 

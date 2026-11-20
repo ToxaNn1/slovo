@@ -4,7 +4,8 @@ import { seedUserState } from '@slovo/core/testing';
 import { InterfaceSoundsProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 
-import { edition as shipped, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
+import { editionAtLaunch as shipped } from '../edition/edition-at-launch';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
 import { BadgesScreen } from './badges-screen';

@@ -9,7 +9,8 @@ import { getAnimatedStyle } from 'react-native-reanimated';
 
 import { ScreenStack } from '../entries/screen-stack';
 import { screenSettled } from '../use-open-screen';
-import { edition, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { EditionTabs } from './edition-tabs';
 import { opened, settingsAt, switchedTo, testShell } from './test-support';
 
