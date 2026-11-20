@@ -24,9 +24,10 @@ import type { KnowledgeMark } from '../knowledge/knowledge-record';
 import type { Subject } from '../subject';
 import type { OpenedEntry } from './day-change';
 import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
-import type { Clock, UserStateChanges } from '../ports';
+import type { Clock } from '../ports';
 import type { Mix } from '../entries/mix';
 import type { MoodCheckIns, MoodFeedParameters } from '../mood/mood';
+import { staged, writeStaged, type StagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import { buildWordCard, type WordCardModel } from '../entries/word-card';
@@ -429,9 +430,7 @@ export async function openFeed({
     if (cycle.isEmpty()) return undefined;
     // The card after the end-of-Cycle card starts a new Cycle.
     if (atEnd && tooEarly === undefined) {
-      const started = await cycle.start();
-      await userState.write(started.changes);
-      started.commit();
+      await writeStaged(userState, [await cycle.start()]);
       session.startCycle();
     }
     const today = mood.feedParameters();
@@ -769,10 +768,10 @@ export async function openFeed({
       seenId === undefined
         ? undefined
         : { entryId: seenId, seenAt: new Date(now), wordOfTheDay: leftWordOfTheDay },
-      new Map([
-        ...closed,
-        ...(entryId === undefined ? new Map() : feedPosition.change({ entryId, date })),
-      ]),
+      [
+        staged(closed),
+        entryId === undefined ? undefined : staged(feedPosition.change({ entryId, date })),
+      ],
     );
   }
 
@@ -780,14 +779,14 @@ export async function openFeed({
   type Seeing = Omit<Seen, 'wordOfTheDay'> & { readonly wordOfTheDay: LocalDate | undefined };
 
   /**
-   * Writes `changes` in one write with the Entry's Seen mark and History
+   * Writes the `pieces` in one write with the Entry's Seen mark and History
    * entry, if given and it isn't Seen yet (ADR 0018), and the archive's day
-   * for the Word of the Day's card, and then makes the Seen mark in memory.
-   * Returns the Entry that became Seen, if one did.
+   * for the Word of the Day's card. Returns the Entry that became Seen, if
+   * one did.
    */
   async function keepSeen(
     seen: Seeing | undefined,
-    changes: UserStateChanges,
+    pieces: readonly (StagedPiece | undefined)[],
   ): Promise<string | undefined> {
     const mark = seen === undefined ? undefined : cycle.markSeen(seen.entryId);
     // An Entry that becomes Seen joins History in the same write.
@@ -796,12 +795,11 @@ export async function openFeed({
       becomesSeen && seen.wordOfTheDay !== undefined
         ? archive.record(seen.wordOfTheDay, seen.entryId)
         : undefined;
-    const all = new Map([...(mark?.changes ?? []), ...(archived?.changes ?? []), ...changes]);
-    if (becomesSeen)
-      await history.record({ ...seen, wordOfTheDay: seen.wordOfTheDay !== undefined }, all);
-    else if (all.size > 0) await userState.write(all);
-    mark?.commit();
-    await archived?.commit();
+    const joined = becomesSeen
+      ? await history.record({ ...seen, wordOfTheDay: seen.wordOfTheDay !== undefined })
+      : undefined;
+    // History first, then the Seen mark, then the archive's day.
+    await writeStaged(userState, [joined, mark, archived, ...pieces]);
     return becomesSeen ? seen.entryId : undefined;
   }
 
@@ -941,7 +939,7 @@ export async function openFeed({
 
   async function markOpenedSeen(
     entryId: string,
-    changes: UserStateChanges,
+    activeDay?: StagedPiece,
   ): Promise<string | undefined> {
     const chosen = wordOfTheDay.chosen();
     const seen = {
@@ -949,7 +947,7 @@ export async function openFeed({
       seenAt: clock.now(),
       wordOfTheDay: chosen?.wordId === entryId ? chosen.date : undefined,
     };
-    return keepSeen(cycle.covers(entryId) ? seen : undefined, changes);
+    return keepSeen(cycle.covers(entryId) ? seen : undefined, [activeDay]);
   }
 
   async function openDay(day: LocalDate): Promise<void> {
@@ -1003,7 +1001,7 @@ export async function openFeed({
       const chosen = wordOfTheDay.chosen();
       return chosen === undefined
         ? Promise.resolve()
-        : inTurnTellingSeen(() => markOpenedSeen(chosen.wordId, new Map()));
+        : inTurnTellingSeen(() => markOpenedSeen(chosen.wordId));
     },
   };
 }
