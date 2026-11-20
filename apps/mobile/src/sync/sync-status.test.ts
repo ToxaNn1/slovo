@@ -6,7 +6,7 @@ import { syncStatusLine } from './sync-status';
 
 const idle: SyncState = { syncedAt: undefined, running: false, offline: false, refused: false };
 
-function lineOf(state: Partial<SyncState>, clock = fakeClock('2026-10-18T12:00:00Z').clock) {
+function statusOf(state: Partial<SyncState>, clock = fakeClock('2026-10-18T12:00:00Z').clock) {
   return syncStatusLine({
     state: { ...idle, ...state },
     strings: strings.account.sync,
@@ -14,6 +14,9 @@ function lineOf(state: Partial<SyncState>, clock = fakeClock('2026-10-18T12:00:0
     clock,
   });
 }
+
+const lineOf = (state: Partial<SyncState>, clock?: Parameters<typeof statusOf>[1]) =>
+  statusOf(state, clock)?.text;
 
 describe('the status line of the SLOVO ID screen', () => {
   it('says a sync runs, whatever else is known', () => {
@@ -52,6 +55,20 @@ describe('the status line of the SLOVO ID screen', () => {
     expect(lineOf({ syncedAt: new Date('2026-10-17T22:30:00Z') })).toBe(
       'Синхронізовано сьогодні, 01:30',
     );
+  });
+
+  it('marks the words synced only once the last sync went through', () => {
+    const syncedAt = new Date('2026-10-18T09:05:00Z');
+    expect(statusOf({ syncedAt })?.synced).toBe(true);
+    expect(statusOf({ syncedAt, running: true })?.synced).toBe(false);
+    expect(statusOf({ syncedAt, offline: true })?.synced).toBe(false);
+  });
+
+  it('marks nothing synced while the Account refuses the changes for good, and gives the last sync', () => {
+    expect(statusOf({ refused: true, syncedAt: new Date('2026-10-18T09:05:00Z') })).toEqual({
+      text: 'Синхронізовано сьогодні, 12:05',
+      synced: false,
+    });
   });
 
   it('has no line before a first sync has gone through', () => {
