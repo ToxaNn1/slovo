@@ -1,9 +1,12 @@
-import { readFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 
+import { FeatureSwitchStateSchema, featureSwitchStates } from '@slovo/contracts';
 import type { ContentSnapshot } from '@slovo/contracts/api';
 import { loadEdition } from '@slovo/core';
+import { z } from 'zod';
 
 import { buildFromSnapshot, type BuildResult } from './build';
 import { EDITIONS_DIR, openEditionWithoutRecords } from './edition-folder';
@@ -31,9 +34,31 @@ export function ukrainianSnapshot(): ContentSnapshot {
   return readSnapshotFile(UK_SEED_SNAPSHOT);
 }
 
-/** The folder of a fixture Edition of this package's `fixtures/`. */
-export function fixtureDir(name: string): string {
+/** A file of this package's `fixtures/`. */
+export function fixtureFile(name: string): string {
   return fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
+}
+
+const fixtureCopies = new Map<string, string>();
+
+/**
+ * The folder of a fixture Edition of this package's `fixtures/`, as an
+ * Edition is read: a copy whose `edition.json` declares every Feature Switch,
+ * `on` but those the fixture states (ADR 0199). Made once per name.
+ */
+export function fixtureDir(name: string): string {
+  const made = fixtureCopies.get(name);
+  if (made !== undefined) return made;
+  const dir = join(mkdtempSync(join(tmpdir(), 'slovo-fixture-')), name);
+  cpSync(fixtureFile(name), dir, { recursive: true });
+  const configFile = join(dir, 'edition.json');
+  const config = z
+    .looseObject({ featureSwitches: z.record(z.string(), FeatureSwitchStateSchema) })
+    .parse(JSON.parse(readFileSync(configFile, 'utf8')));
+  const featureSwitches = featureSwitchStates(config.featureSwitches);
+  writeFileSync(configFile, `${JSON.stringify({ ...config, featureSwitches }, null, 2)}\n`);
+  fixtureCopies.set(name, dir);
+  return dir;
 }
 
 /**

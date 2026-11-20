@@ -1,7 +1,6 @@
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { EditionConfigSchema, type EditionConfig } from '@slovo/contracts';
 import { ContentSnapshotSchema, type ContentSnapshot } from '@slovo/contracts/api';
@@ -15,11 +14,10 @@ import {
   STARTER_WORDS,
   type StarterMediaList,
 } from './starter-media';
-
-const fixture = (name: string) => fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
+import { fixtureDir, fixtureFile } from './test-support';
 
 const config: EditionConfig = EditionConfigSchema.parse(
-  JSON.parse(readFileSync(fixture('valid/edition.json'), 'utf8')),
+  JSON.parse(readFileSync(join(fixtureDir('valid'), 'edition.json'), 'utf8')),
 );
 
 const hash = (n: number) => n.toString(16).padStart(64, '0');
@@ -27,7 +25,7 @@ const hash = (n: number) => n.toString(16).padStart(64, '0');
 /** The snapshot fixture grown to 320 Words, every one recorded in both voices and illustrated. */
 function snapshotOf320(): ContentSnapshot {
   const base = ContentSnapshotSchema.parse(
-    JSON.parse(readFileSync(fixture('snapshot.json'), 'utf8')),
+    JSON.parse(readFileSync(fixtureFile('snapshot.json'), 'utf8')),
   );
   const [first] = base.words;
   if (first === undefined) throw new Error('The snapshot fixture has no Word');
