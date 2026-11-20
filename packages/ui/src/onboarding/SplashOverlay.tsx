@@ -177,7 +177,9 @@ export function SplashOverlay({
   return (
     <View
       testID="splash"
-      accessibilityLabel={wordmark}
+      // One element, so VoiceOver reads the wordmark its letters draw, and the tagline after it.
+      accessible
+      accessibilityLabel={`${wordmark}, ${tagline}`}
       onLayout={() => {
         if (shown.current) return;
         shown.current = true;
