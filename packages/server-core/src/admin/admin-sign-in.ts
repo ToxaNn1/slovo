@@ -312,7 +312,7 @@ export function createAdminSignIn({
     },
 
     async signOutEverywhere(token) {
-      const row = await store.adminSession(hash(token));
+      const row = await sessionRow(token);
       if (row !== undefined) await store.deleteAdminSessionsOf(row.user.id);
     },
   };
