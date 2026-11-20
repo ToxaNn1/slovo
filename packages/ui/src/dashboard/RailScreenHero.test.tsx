@@ -91,6 +91,23 @@ describe('RailScreenHero', () => {
     expect(screen.queryByTestId('hero-action-edge')).toBeNull();
   });
 
+  it('draws a button that opens what it names as a kept toggle, with its hint', async () => {
+    const onPress = jest.fn();
+    await renderHero({
+      action: { kind: 'opens', label: 'In the collections', hint: 'Opens the copy.', onPress },
+    });
+
+    const opens = screen.getByRole('button', { name: 'In the collections' });
+    expect(opens).toHaveProp('accessibilityHint', 'Opens the copy.');
+    expect(screen.queryByRole('togglebutton')).toBeNull();
+    expect(screen.getByTestId('hero-action-icon')).toBeOnTheScreen();
+    expect(screen.queryByTestId('hero-action-edge')).toBeNull();
+
+    await fireEvent.press(opens);
+
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
   describe('the tick of the toggle', () => {
     afterEach(() => {
       jest.useRealTimers();

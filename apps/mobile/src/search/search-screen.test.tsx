@@ -143,6 +143,7 @@ describe('the Search screen', () => {
     expect(screen.getByTestId('search-nothing-found')).toHaveTextContent(
       `${strings.nothingFound}${strings.nothingFoundHint}`,
     );
+    expect(screen.getByTestId('search-nothing-found')).not.toHaveTextContent(/Про SLOVO/);
     expect(screen.queryByTestId('search-label')).not.toBeOnTheScreen();
 
     await type('жж');

@@ -879,7 +879,7 @@ describe('the strings of the Category screens and the board style (spec #1604)',
       addedToMix: '«Емоції» тепер у твоєму Міксі.',
       removedFromMix: '«Емоції» прибрано з Міксу.',
       curatedAdd: 'ДОДАТИ СОБІ',
-      curatedAdded: 'У МІКСІ',
+      curatedAdded: 'У КОЛЕКЦІЯХ',
     });
   });
 

@@ -34,11 +34,6 @@ const kickerOf: Record<CategoryKind, typeof dashboard.categories> = {
 };
 /** The shape pairs of the Category's grid, k1 or k2, whose big shape at its place is the hero's glyph. */
 const shapesOf = { word: categoryGrid.shapes, correction: correctionGrid.shapes } as const;
-/** Where the way back leads: the grid the Category was opened from, k1 «Категорії» or k2 «Виправлення». */
-const backOf: Record<CategoryKind, string> = {
-  word: dashboard.categories.title,
-  correction: dashboard.correctionCategories.title,
-};
 
 /**
  * The route of a Category's screen, of Words from its tile on the rail or in
@@ -87,7 +82,7 @@ function Board({ of, category, place }: { of: CategoryKind; category: Category; 
   if (retry !== undefined)
     return (
       <ReadFailed
-        back={{ testID: 'category-back', label: backOf[of] }}
+        back={{ testID: 'category-back', label: editionStrings.back }}
         onRetry={retry}
         testID="category-error"
       />
@@ -113,7 +108,7 @@ function Board({ of, category, place }: { of: CategoryKind; category: Category; 
           mascot="waits"
           back={{
             testID: 'category-back',
-            label: backOf[of],
+            label: editionStrings.back,
             onPress: () => {
               router.back();
             },
@@ -140,7 +135,7 @@ function QuietBoard({ of, category }: { of: CategoryKind; category: Category }) 
   if (retry !== undefined)
     return (
       <ReadFailed
-        back={{ testID: 'category-back', label: backOf[of] }}
+        back={{ testID: 'category-back', label: editionStrings.back }}
         onRetry={retry}
         testID="category-error"
       />
@@ -170,7 +165,7 @@ function QuietBoard({ of, category }: { of: CategoryKind; category: Category }) 
             description={category.description}
             back={{
               testID: 'category-back',
-              label: backOf[of],
+              label: editionStrings.back,
               onPress: () => {
                 router.back();
               },
